@@ -10,6 +10,7 @@ param(
     [string]$HermesHome = "",
     [switch]$BuildIfMissing,
     [switch]$ForceRestart,
+    [switch]$Stop,
     # Bound go build so restart-hermes-stack never hangs on go mod tidy / network.
     [int]$BuildTimeoutSec = 180,
     # Default skip go test for operator start path (full test via Build-HermesGoWatchdog.ps1).
@@ -20,8 +21,27 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+function Test-IsElevatedOperator {
+    try {
+        $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+        $principal = New-Object Security.Principal.WindowsPrincipal($identity)
+        return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    } catch {
+        return $false
+    }
+}
+
+# The launcher is intentionally operator-only. Starting it elevated also gives
+# the independent watchdog an OS boundary from a normal Hermes Agent process.
+# Maintenance automation uses a separate fenced lifecycle path.
+if (-not (Test-IsElevatedOperator)) {
+    throw "Operator-only Go watchdog launcher requires an elevated PowerShell session."
+}
+
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$RepoRoot = if ($HermesRoot) { $HermesRoot } else { (Resolve-Path (Join-Path $ScriptDir "..\..")).Path }
+$RepoRootCandidate = if ($HermesRoot) { $HermesRoot } else { Join-Path $ScriptDir "..\.." }
+$RepoRoot = (Resolve-Path -LiteralPath $RepoRootCandidate -ErrorAction Stop).Path
 if (-not $HermesHome) { $HermesHome = Join-Path $env:USERPROFILE ".hermes" }
 $env:HERMES_HOME = $HermesHome
 
@@ -62,6 +82,148 @@ function Invoke-GoWatchdogBuildBounded {
     }
 }
 
+$DataDir = Join-Path $env:LOCALAPPDATA "HermesWatchdog"
+$LockPath = Join-Path $DataDir "watchdog.lock"
+
+function Get-NormalizedPath {
+    param([AllowEmptyString()][string]$Path)
+    if ([string]::IsNullOrWhiteSpace($Path)) { return "" }
+    try {
+        return [System.IO.Path]::GetFullPath($Path).TrimEnd('\')
+    } catch {
+        return ""
+    }
+}
+
+function Test-SamePath {
+    param([string]$Left, [string]$Right)
+    $leftPath = Get-NormalizedPath $Left
+    $rightPath = Get-NormalizedPath $Right
+    if (-not $leftPath -or -not $rightPath) { return $false }
+    return [string]::Equals($leftPath, $rightPath, [System.StringComparison]::OrdinalIgnoreCase)
+}
+
+function Get-WindowsProcessIdentity {
+    param([int]$ProcessId)
+    if ($ProcessId -le 0) { return $null }
+    try {
+        $proc = Get-Process -Id $ProcessId -ErrorAction Stop
+        $processPath = [string]$proc.Path
+        $startedUtc = $proc.StartTime.ToUniversalTime()
+        if ([string]::IsNullOrWhiteSpace($processPath)) { return $null }
+        return [pscustomobject]@{
+            Pid = [int]$proc.Id
+            ProcessCreated = [uint64]($startedUtc.ToFileTimeUtc())
+            ExecutablePath = Get-NormalizedPath $processPath
+            StartedUtc = $startedUtc
+        }
+    } catch {
+        return $null
+    }
+}
+
+function Get-GoWatchdogLockState {
+    if (-not (Test-Path -LiteralPath $LockPath)) {
+        return [pscustomobject]@{ Status = "missing"; Pid = 0; Reason = "lock missing" }
+    }
+    try {
+        $obj = Get-Content -LiteralPath $LockPath -Raw -Encoding utf8 | ConvertFrom-Json -ErrorAction Stop
+        $pidLock = [int]$obj.pid
+    } catch {
+        return [pscustomobject]@{ Status = "foreign"; Pid = 0; Reason = "lock is unreadable" }
+    }
+    if ($pidLock -le 0) {
+        return [pscustomobject]@{ Status = "stale"; Pid = $pidLock; Reason = "lock has no valid PID" }
+    }
+    $identity = Get-WindowsProcessIdentity -ProcessId $pidLock
+    if (-not $identity) {
+        return [pscustomobject]@{ Status = "stale"; Pid = $pidLock; Reason = "process is absent" }
+    }
+    if (-not (Test-SamePath ([string]$obj.repoRoot) $RepoRoot)) {
+        return [pscustomobject]@{ Status = "foreign"; Pid = $pidLock; Reason = "repository root mismatch" }
+    }
+    if (-not (Test-SamePath $identity.ExecutablePath $Exe)) {
+        return [pscustomobject]@{ Status = "foreign"; Pid = $pidLock; Reason = "process executable mismatch" }
+    }
+    if ($obj.executablePath -and -not (Test-SamePath ([string]$obj.executablePath) $identity.ExecutablePath)) {
+        return [pscustomobject]@{ Status = "foreign"; Pid = $pidLock; Reason = "lock executable mismatch" }
+    }
+
+    $creationMatches = $false
+    if ($obj.processCreated) {
+        try {
+            $creationMatches = ([uint64]$obj.processCreated -eq [uint64]$identity.ProcessCreated)
+        } catch {
+            $creationMatches = $false
+        }
+    } elseif ($obj.startedAt) {
+        try {
+            $lockedStart = [DateTimeOffset]::Parse(
+                [string]$obj.startedAt,
+                [Globalization.CultureInfo]::InvariantCulture,
+                [Globalization.DateTimeStyles]::RoundtripKind
+            ).UtcDateTime
+            $creationMatches = ([math]::Abs(($lockedStart - $identity.StartedUtc).TotalSeconds) -le 10)
+        } catch {
+            $creationMatches = $false
+        }
+    }
+    if (-not $creationMatches) {
+        return [pscustomobject]@{ Status = "foreign"; Pid = $pidLock; Reason = "process creation time mismatch" }
+    }
+    return [pscustomobject]@{ Status = "owned"; Pid = $pidLock; Reason = "full identity matched" }
+}
+
+function Test-GoWatchdogAlive {
+    $state = Get-GoWatchdogLockState
+    return $state.Status -eq "owned"
+}
+
+function Stop-GoWatchdog {
+    $state = Get-GoWatchdogLockState
+    if ($state.Status -eq "owned") {
+        Stop-Process -Id $state.Pid -Force -ErrorAction Stop
+        for ($attempt = 0; $attempt -lt 20; $attempt++) {
+            if (-not (Get-Process -Id $state.Pid -ErrorAction SilentlyContinue)) { break }
+            Start-Sleep -Milliseconds 100
+        }
+        if (Get-Process -Id $state.Pid -ErrorAction SilentlyContinue) {
+            Write-Warning "Go watchdog pid $($state.Pid) did not exit; preserving its lock."
+            return $false
+        }
+        $state = Get-GoWatchdogLockState
+    }
+    if ($state.Status -eq "stale") {
+        Remove-Item -LiteralPath $LockPath -Force -ErrorAction Stop
+    } elseif ($state.Status -eq "foreign") {
+        Write-Warning "Go watchdog lock identity is foreign ($($state.Reason)); refusing to stop or remove its lock."
+        return $false
+    }
+    return $true
+}
+
+function Stop-PsDesktopBackendWatchdog {
+    # PS and Go watchdogs use different lock files; running both causes dual
+    # Hermes.exe relaunch loops. Prefer Go; stop the legacy PS mutual watchdog.
+    $psLock = Join-Path $HermesHome "logs\desktop-backend-watchdog.lock"
+    $LegacyWatchdogScript = (Resolve-Path -LiteralPath (Join-Path $ScriptDir "Start-HermesDesktopBackendWatchdog.ps1") -ErrorAction Stop).Path
+    $legacyScriptPattern = [regex]::Escape($LegacyWatchdogScript)
+    Get-CimInstance Win32_Process -Property ProcessId, CommandLine -OperationTimeoutSec 8 -ErrorAction SilentlyContinue | Where-Object {
+        $_.CommandLine -and $_.CommandLine -match $legacyScriptPattern
+    } | ForEach-Object {
+        Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+    }
+    Remove-Item -LiteralPath $psLock -Force -ErrorAction SilentlyContinue
+}
+
+if ($Stop) {
+    if (Stop-GoWatchdog) {
+        Write-Host "Go watchdog stopped or was not running."
+        exit 0
+    }
+    exit 1
+}
+
 if (-not (Test-Path -LiteralPath $Exe)) {
     if ($BuildIfMissing) {
         $buildScript = Join-Path $ScriptDir "Build-HermesGoWatchdog.ps1"
@@ -69,65 +231,15 @@ if (-not (Test-Path -LiteralPath $Exe)) {
             Invoke-GoWatchdogBuildBounded -BuildScript $buildScript -TimeoutSec $BuildTimeoutSec -SkipTest:(-not $RunBuildTests)
         } catch {
             Write-Warning $_.Exception.Message
-            Write-Warning "Skipping Go watchdog start — run Build-HermesGoWatchdog.ps1 manually when ready."
+            Write-Warning "Skipping Go watchdog start; run Build-HermesGoWatchdog.ps1 manually when ready."
             exit 0
         }
         if (-not (Test-Path -LiteralPath $Exe)) {
-            Write-Warning "Build finished but missing $Exe — skipping Go watchdog start."
+            Write-Warning "Build finished but missing $Exe; skipping Go watchdog start."
             exit 0
         }
     } else {
-        throw "Missing $Exe — run Build-HermesGoWatchdog.ps1 first or pass -BuildIfMissing"
-    }
-}
-
-$DataDir = Join-Path $env:LOCALAPPDATA "HermesWatchdog"
-$LockPath = Join-Path $DataDir "watchdog.lock"
-
-function Test-GoWatchdogAlive {
-    if (-not (Test-Path -LiteralPath $LockPath)) { return $false }
-    try {
-        $obj = Get-Content -LiteralPath $LockPath -Raw | ConvertFrom-Json
-        $pidLock = [int]$obj.pid
-        if ($pidLock -le 0) { return $false }
-        $proc = Get-Process -Id $pidLock -ErrorAction SilentlyContinue
-        return [bool]$proc
-    } catch {
-        return $false
-    }
-}
-
-function Stop-GoWatchdog {
-    if (Test-GoWatchdogAlive) {
-        try {
-            $obj = Get-Content -LiteralPath $LockPath -Raw | ConvertFrom-Json
-            Stop-Process -Id ([int]$obj.pid) -Force -ErrorAction SilentlyContinue
-            Start-Sleep -Seconds 1
-        } catch {}
-    }
-    Get-Process -Name hermes-watchdog -ErrorAction SilentlyContinue | ForEach-Object {
-        Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
-    }
-    Remove-Item -LiteralPath $LockPath -Force -ErrorAction SilentlyContinue
-}
-
-function Stop-PsDesktopBackendWatchdog {
-    # PS and Go watchdogs use different lock files — running both causes dual
-    # Hermes.exe relaunch loops. Prefer Go; stop the legacy PS mutual watchdog.
-    $psLock = Join-Path $HermesHome "logs\desktop-backend-watchdog.lock"
-    if (Test-Path -LiteralPath $psLock) {
-        try {
-            $obj = Get-Content -LiteralPath $psLock -Raw | ConvertFrom-Json
-            if ($obj.pid) {
-                Stop-Process -Id ([int]$obj.pid) -Force -ErrorAction SilentlyContinue
-            }
-        } catch {}
-        Remove-Item -LiteralPath $psLock -Force -ErrorAction SilentlyContinue
-    }
-    Get-CimInstance Win32_Process -Property ProcessId, CommandLine -OperationTimeoutSec 8 -ErrorAction SilentlyContinue | Where-Object {
-        $_.CommandLine -and $_.CommandLine -match 'Start-HermesDesktopBackendWatchdog\.ps1'
-    } | ForEach-Object {
-        Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+        throw "Missing $Exe; run Build-HermesGoWatchdog.ps1 first or pass -BuildIfMissing"
     }
 }
 
@@ -230,11 +342,18 @@ json.dump(payload, sys.stdout, ensure_ascii=False)
     )
 }
 
-Stop-PsDesktopBackendWatchdog
-
 if ($ForceRestart -or $Once) {
-    Stop-GoWatchdog
-} elseif (Test-GoWatchdogAlive) {
+    if (-not (Stop-GoWatchdog)) {
+        throw "Cannot replace a watchdog whose full process identity is not owned by this launcher."
+    }
+} else {
+    $startupState = Get-GoWatchdogLockState
+    if ($startupState.Status -eq "foreign") {
+        throw "Go watchdog lock identity is foreign ($($startupState.Reason)); refusing to start a second owner."
+    }
+}
+Stop-PsDesktopBackendWatchdog
+if (Test-GoWatchdogAlive) {
     Write-Host "Go watchdog already running (lock=$LockPath)"
     exit 0
 }
@@ -319,5 +438,5 @@ Start-Sleep -Seconds 2
 if (Test-GoWatchdogAlive) {
     Write-Host "Go watchdog launched (logs: $(Join-Path $HermesHome 'logs\hermes-go-watchdog.log'))"
 } else {
-    Write-Warning "Go watchdog may still be starting — check $(Join-Path $HermesHome 'logs\hermes-go-watchdog.log')"
+    Write-Warning "Go watchdog may still be starting; check $(Join-Path $HermesHome 'logs\hermes-go-watchdog.log')"
 }

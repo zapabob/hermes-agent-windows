@@ -50,7 +50,7 @@ uv run hermes desktop
 
 - Python、Electron、Go、upstream API 兼容、regression 与 security lock 的 Windows Tier-1 CI
 - 覆盖非管理员与含空格 path 的 installer、portable、旧版 upgrade E2E
-- 固定 upstream snapshot `5a8e8a6b87487c0e0785cd9eb561cc6a96c64f5e`，不使用移动基线
+- 固定 upstream snapshot `b51c055a12220f8c7c18660e8599365012e19532`，不使用移动基线
 - 通过官方 provider/memory seam 连接 local llama.cpp/GGUF 与 embedding lifecycle
 - 由外部 Go watchdog 对 Desktop/backend 及可选 embedding 执行有限恢复
 - consumer NVIDIA workstation 实机证据与无 GPU 的 hosted CI 分开记录

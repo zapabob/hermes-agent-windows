@@ -100,7 +100,7 @@ procedure is in the [Windows installation guide](docs/windows/INSTALL.md).
 
 - Native Windows Tier-1 CI for Python, Electron, Go, upstream API compatibility, regressions, and security locks.
 - Qualified installer, portable, and prior-version upgrade paths with spaces and non-admin operation.
-- Frozen upstream snapshot `5a8e8a6b87487c0e0785cd9eb561cc6a96c64f5e`, never a moving release baseline.
+- Frozen upstream snapshot `b51c055a12220f8c7c18660e8599365012e19532`, never a moving release baseline.
 - Local llama.cpp/GGUF and embedding lifecycles through official provider and memory seams.
 - External Go watchdog for bounded Desktop/backend and optional embedding recovery.
 - Consumer NVIDIA workstation evidence kept separate from GPU-free hosted CI.

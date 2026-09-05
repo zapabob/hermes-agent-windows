@@ -131,6 +131,7 @@ jobs:
           tests/tools/test_windows_native_support.py
           tests/test_windows_subprocess_no_window_flags.py
           tests/test_desktop_update_windows_pipe_drain.py
+          tests/test_go_watchdog_launcher_authority.py
           tests/tools/test_mcp_stdio_encoding_handler.py
           tests/tools/test_mcp_stdio_init_timeout.py
           tests/tools/test_mcp_stdio_watchdog.py

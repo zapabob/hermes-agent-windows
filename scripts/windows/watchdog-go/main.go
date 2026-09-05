@@ -1,7 +1,7 @@
 // Hermes Desktop↔backend mutual watchdog (Windows).
 //
-// ISOLATION: standalone operator binary — NOT registered in Hermes plugins,
-// tools, skills, MCP, or cron. Mutating HTTP APIs require HERMES_WATCHDOG_ADMIN_TOKEN.
+// ISOLATION: standalone operator binary - NOT registered in Hermes plugins,
+// tools, skills, MCP, or cron. Its HTTP surface is strictly read-only.
 package main
 
 import (
@@ -42,7 +42,7 @@ func main() {
 	embeddingArgsJSON := flag.String("embedding-args-json", "[]", "JSON array of fixed embedding llama-server arguments")
 	embeddingStartTimeout := flag.Int("embedding-start-timeout", 180, "Seconds an owned embedding server may initialize before restart")
 	once := flag.Bool("once", false, "Run a single watchdog cycle then exit")
-	noHTTP := flag.Bool("no-http", false, "Disable HTTP control plane (watch loop only)")
+	noHTTP := flag.Bool("no-http", false, "Disable read-only HTTP status endpoints (watch loop only)")
 	flag.Parse()
 
 	root := sanitizePathFlag(*repoRoot)
@@ -87,7 +87,6 @@ func main() {
 		HermesHome:               home,
 		PackagedExe:              *packagedExe,
 		DataDir:                  *dataDir,
-		AdminToken:               loadAdminToken(),
 		TsAuthKey:                loadTsAuthKey(),
 	}
 	if cfg.PackagedExe == "" {
@@ -125,18 +124,11 @@ func main() {
 	}
 
 	stop := make(chan struct{})
-	shutdown := func() {
-		select {
-		case <-stop:
-		default:
-			close(stop)
-		}
-	}
 
-	// Start control plane + probe loop before prewarm so BuildIfMissing/serve
+	// Start read-only status plane + probe loop before prewarm so BuildIfMissing/serve
 	// cold-start cannot block HTTP readiness or mutual monitoring for minutes.
 	if !*noHTTP {
-		srv := NewHTTPServer(cfg, wd, shutdown)
+		srv := NewHTTPServer(wd)
 		handler := srv.Handler()
 		if cfg.ListenAddr != "" {
 			go serveHTTP(logger, "local", cfg.ListenAddr, handler)

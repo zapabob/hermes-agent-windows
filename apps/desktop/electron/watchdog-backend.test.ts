@@ -117,3 +117,20 @@ describe('resolveWatchdogPrewarmedBackend', () => {
     assert.equal(await resolveWatchdogPrewarmedBackend({ hermesRoot: 'C:\\repo', platform: 'win32' }), null)
   })
 })
+
+test('production primary startup adopts the watchdog prewarmed backend before spawning', () => {
+  const mainSource = fs.readFileSync(new URL('./main.ts', import.meta.url), 'utf8').replace(/\r\n/g, '\n')
+  const startupStart = mainSource.indexOf('const setup = await runPrimaryBackendStartup({')
+  const startupEnd = mainSource.indexOf('\n    })', startupStart)
+
+  assert.notEqual(startupStart, -1, 'primary startup wiring must exist')
+  assert.notEqual(startupEnd, -1, 'primary startup wiring must have a bounded options object')
+
+  const startupOptions = mainSource.slice(startupStart, startupEnd)
+
+  assert.match(mainSource, /import \{ resolveWatchdogPrewarmedBackend \} from '\.\/watchdog-backend'/)
+  assert.match(startupOptions, /resolvePrewarmedLocal:\s*async/)
+  assert.match(startupOptions, /resolveWatchdogPrewarmedBackend\(/)
+  assert.match(startupOptions, /source:\s*'watchdog'/)
+  assert.match(startupOptions, /waitForHermes\(prewarmed\.baseUrl, prewarmed\.token\)/)
+})

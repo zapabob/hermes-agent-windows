@@ -1,0 +1,166 @@
+version: 1
+snapshot_sha: 5a8e8a6b87487c0e0785cd9eb561cc6a96c64f5e
+generated_from: repository code and tests at integration snapshot
+features:
+  - id: windows-native-runtime
+    status: verified
+    owner_path: downstream/platform/windows
+    public_surface: native Windows runtime policy helpers
+    upstream_touch: false
+    tests: [tests/downstream/test_windows_contracts.py]
+    windows_required: true
+    upstream_equivalent: partial cross-platform primitives
+    integration_policy: COMPOSE
+  - id: go-watchdog
+    status: verified
+    owner_path: scripts/windows/watchdog-go
+    public_surface: scripts/windows/Start-HermesGoWatchdog.ps1
+    upstream_touch: false
+    tests: [scripts/windows/watchdog-go/backend_test.go, scripts/windows/watchdog-go/process_windows_test.go]
+    windows_required: true
+    upstream_equivalent: none
+    integration_policy: KEEP_DOWNSTREAM
+  - id: local-llama-gguf-runtime
+    status: verified
+    owner_path: hermes_cli/llama_fallback_runtime.py
+    public_surface: Hermes local fallback configuration
+    upstream_touch: true
+    tests: [tests/hermes_cli/test_llama_fallback_runtime.py, tests/local/test_llama_server_contract.py]
+    windows_required: true
+    upstream_equivalent: official provider and fallback contracts
+    integration_policy: COMPOSE
+  - id: llama-hotswap-hot-standby
+    status: verified
+    owner_path: scripts/windows/start-llama-hotswap.ps1
+    public_surface: scripts/windows/switch-llama-hotswap.ps1
+    upstream_touch: false
+    tests: [tests/local/test_llama_server_contract.py]
+    windows_required: true
+    upstream_equivalent: none
+    integration_policy: KEEP_DOWNSTREAM
+  - id: local-secretary
+    status: verified
+    owner_path: agent/local_secretary
+    public_surface: skills/secretary/SKILL.md
+    upstream_touch: false
+    tests: [tests/downstream/test_upstream_api_contracts.py]
+    windows_required: true
+    upstream_equivalent: official agent and approval contracts
+    integration_policy: COMPOSE
+  - id: hypura-local-provider
+    status: verified
+    owner_path: plugins/model-providers/hypura
+    public_surface: Hypura model-provider plugin
+    upstream_touch: false
+    tests: [tests/fork/test_hypura_oai_proxy.py]
+    windows_required: true
+    upstream_equivalent: official provider registry
+    integration_policy: COMPOSE
+  - id: semantic-graph-hybrid-retrieval
+    status: verified
+    owner_path: plugins/semantic_graph
+    public_surface: semantic_graph plugin and memory tools
+    upstream_touch: false
+    tests: [tests/plugins/test_semantic_graph_registration.py, tests/plugins/test_semantic_graph_retrieval_rrf.py]
+    windows_required: false
+    upstream_equivalent: official memory provider interface
+    integration_policy: COMPOSE
+  - id: ebbinghaus-cognitive-memory
+    status: verified
+    owner_path: plugins/memory/ebbinghaus
+    public_surface: Ebbinghaus memory-provider plugin
+    upstream_touch: false
+    tests: [tests/plugins/test_ebbinghaus_plugin.py, tests/plugins/test_ebbinghaus_semantic_graph_bridge.py]
+    windows_required: false
+    upstream_equivalent: official memory provider interface
+    integration_policy: COMPOSE
+  - id: vrchat-autonomy-tooling
+    status: verified
+    owner_path: plugins/vrchat-autonomy
+    public_surface: VRChat plugin, tools, and operator scripts
+    upstream_touch: false
+    tests: [tests/plugins/test_vrchat_autonomy_plugin.py, tests/tools/test_vrchat_autonomy.py]
+    windows_required: true
+    upstream_equivalent: official plugin and tool registries
+    integration_policy: COMPOSE
+  - id: unity-vrchat-bridge
+    status: verified
+    owner_path: plugins/unity_vrchat_bridge
+    public_surface: Unity package and Hermes bridge plugin
+    upstream_touch: false
+    tests: [tests/plugins/unity_vrchat_bridge/test_core.py]
+    windows_required: true
+    upstream_equivalent: official plugin registry
+    integration_policy: COMPOSE
+  - id: local-voice-tts
+    status: verified
+    owner_path: plugins/irodori_tts
+    public_surface: Irodori, VOICEVOX, and local TTS plugins
+    upstream_touch: false
+    tests: [tests/plugins/test_irodori_tts_plugin.py, tests/plugins/test_voicevox_tts_plugin.py]
+    windows_required: true
+    upstream_equivalent: official TTS provider contract
+    integration_policy: COMPOSE
+  - id: aituber-integrations
+    status: verified
+    owner_path: plugins/aituber_onair
+    public_surface: AITuber OnAir and AITuber Kit plugins
+    upstream_touch: false
+    tests: [tests/plugins/test_aituber_onair_plugin.py, tests/plugins/test_aituber_kit_plugin.py]
+    windows_required: false
+    upstream_equivalent: official plugin registry
+    integration_policy: COMPOSE
+  - id: osint-shinka-extensions
+    status: verified
+    owner_path: plugins/shinka-osint
+    public_surface: Shinka, SitDeck, WorldMonitor, and OSINT plugins
+    upstream_touch: false
+    tests: [tests/plugins/test_shinka_osint_plugin.py, tests/plugins/test_osint_agent.py]
+    windows_required: false
+    upstream_equivalent: official plugin and browser contracts
+    integration_policy: COMPOSE
+  - id: desktop-git-review
+    status: verified
+    owner_path: apps/desktop/electron/git-review-ops.ts
+    public_surface: Desktop Git and review panes
+    upstream_touch: true
+    tests: [apps/desktop/electron/git-review-ops.test.ts]
+    windows_required: true
+    upstream_equivalent: official Desktop IPC and pane contracts
+    integration_policy: COMPOSE
+  - id: downstream-security-hardening
+    status: verified
+    owner_path: plugins/security-guidance
+    public_surface: security guidance plugin and hardened execution boundaries
+    upstream_touch: true
+    tests: [tests/plugins/test_security_guidance_plugin.py, tests/tools/test_tirith_security.py]
+    windows_required: false
+    upstream_equivalent: official security and approval boundaries
+    integration_policy: COMPOSE
+  - id: local-embedding-recovery
+    status: verified
+    owner_path: scripts/windows/watchdog-go/embedding.go
+    public_surface: Go watchdog embedding lifecycle
+    upstream_touch: false
+    tests: [scripts/windows/watchdog-go/embedding_test.go, tests/plugins/test_semantic_graph_llama_cpp_runtime.py]
+    windows_required: true
+    upstream_equivalent: official memory and embedding provider seams
+    integration_policy: COMPOSE
+  - id: provider-rotation-fallbacks
+    status: verified
+    owner_path: hermes_cli/fallback_chain.py
+    public_surface: CLI and runtime fallback-provider configuration
+    upstream_touch: true
+    tests: [tests/hermes_cli/test_fallback_chain.py, tests/run_agent/test_provider_fallback.py]
+    windows_required: false
+    upstream_equivalent: official provider catalogue and agent loop
+    integration_policy: COMPOSE
+  - id: watchdog-managed-desktop-backend
+    status: verified
+    owner_path: scripts/windows/watchdog-go/backend.go
+    public_surface: packaged Desktop prewarmed backend manifest
+    upstream_touch: true
+    tests: [scripts/windows/watchdog-go/backend_test.go, apps/desktop/electron/watchdog-backend.test.ts]
+    windows_required: true
+    upstream_equivalent: official Desktop backend ownership and serve lifecycle
+    integration_policy: COMPOSE

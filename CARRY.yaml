@@ -1,5 +1,5 @@
 version: 1
-snapshot_sha: 5a8e8a6b87487c0e0785cd9eb561cc6a96c64f5e
+snapshot_sha: b51c055a12220f8c7c18660e8599365012e19532
 carry:
   - id: terminal-environment-provider-bridge
     upstream_paths: [tools/terminal_tool.py, tools/environments/base.py]
@@ -25,6 +25,13 @@ carry:
     invariants: [Go watchdog is outer restart authority, official backend claim remains authoritative]
     tests: [apps/desktop/electron/backend-claim.test.ts, apps/desktop/electron/primary-backend-startup.test.ts]
     integration_policy: COMPOSE
+  - id: windows-watchdog-lifecycle-fence
+    upstream_paths: [hermes_cli/update_cmd.py, hermes_cli/uninstall.py, tools/approval.py]
+    downstream_reason: suppress the independent Windows watchdog while official update and uninstall owners perform planned process mutation
+    invariants: [maintenance lease is identity-bound and expiring, uninstall decommission requires operator elevation, failed recovery remains fenced]
+    tests: [tests/hermes_cli/test_watchdog_maintenance.py, tests/hermes_cli/test_watchdog_lifecycle.py, tests/tools/test_hardline_blocklist.py]
+    integration_policy: COMPOSE
+    removal_condition: official update and uninstall lifecycle provides an equivalent external-watchdog maintenance contract
   - id: codex-cloudflare-routing
     upstream_paths: [agent/agent_init.py]
     downstream_reason: preserve Codex Cloudflare routing headers while following the effective official base URL

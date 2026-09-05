@@ -153,6 +153,23 @@ def test_only_go_watchdog_owns_automatic_restart() -> None:
     assert request_restart("embedding", "health probe failed").service == "embedding"
 
 
+def test_go_watchdog_http_surface_is_read_only() -> None:
+    root = Path(__file__).resolve().parents[2]
+    go_root = root / "scripts" / "windows" / "watchdog-go"
+    server = (go_root / "server.go").read_text(encoding="utf-8")
+    config = (go_root / "config.go").read_text(encoding="utf-8")
+
+    assert server.count("mux.HandleFunc(") == 3
+    assert 'mux.HandleFunc("/health", s.handleHealth)' in server
+    assert 'mux.HandleFunc("/api/status", s.handleStatus)' in server
+    assert 'mux.HandleFunc("/api/v1/status", s.handleStatus)' in server
+    for mutation in ("pause", "resume", "cycle", "stop", "restart", "force-restart"):
+        assert f'/api/v1/{mutation}' not in server
+    assert "requireAdmin" not in server
+    assert "AdminToken" not in server + config
+    assert "HERMES_WATCHDOG_ADMIN_TOKEN" not in server + config
+
+
 def test_local_service_health_endpoints_are_loopback_only() -> None:
     assert LLAMA_HEALTH.url() == "http://127.0.0.1:8080/health"
     assert EMBEDDING_HEALTH.url() == "http://127.0.0.1:8082/health"

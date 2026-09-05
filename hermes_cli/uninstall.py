@@ -10,11 +10,63 @@ import os
 import shutil
 import subprocess
 import sys
+from contextlib import contextmanager
 from pathlib import Path
 
 from hermes_constants import get_hermes_home
 
 from hermes_cli.colors import Colors, color
+
+
+@contextmanager
+def _watchdog_uninstall_fence(project_root: Path, *, reason: str):
+    """Fence and decommission the independent watchdog during uninstall."""
+    if not _is_windows():
+        yield None
+        return
+
+    from hermes_cli import watchdog_maintenance
+
+    lease = watchdog_maintenance.acquire(project_root, reason=reason)
+    try:
+        watchdog_maintenance.transition(
+            lease,
+            watchdog_maintenance.UPSTREAM_DRAIN,
+            reason="Hermes uninstaller is quiescing managed runtimes",
+        )
+        watchdog_maintenance.transition(
+            lease,
+            watchdog_maintenance.UPDATE,
+            reason="Hermes uninstaller owns installation removal",
+        )
+        from hermes_cli.watchdog_lifecycle import decommission_for_uninstall
+
+        decommission_for_uninstall(
+            project_root=project_root,
+            hermes_home=get_hermes_home(),
+            lease=lease,
+        )
+        yield lease
+    except BaseException:
+        # Fail closed. Keep the expiring lease live so the watchdog cannot
+        # resurrect a partially removed installation. A later operator run
+        # can reclaim it after this owner exits.
+        watchdog_maintenance.transition(
+            lease,
+            watchdog_maintenance.RECOVERY,
+            reason="Hermes uninstall failed; operator recovery is required",
+        )
+        raise
+    else:
+        watchdog_maintenance.transition(
+            lease,
+            watchdog_maintenance.RECOVERY,
+            reason="Hermes uninstall removal completed",
+        )
+        watchdog_maintenance.release(
+            lease,
+            reason="Hermes uninstall lifecycle completed",
+        )
 
 def log_info(msg: str):
     print(f"{color('→', Colors.CYAN)} {msg}")
@@ -635,7 +687,11 @@ def run_gui_uninstall(args):
     print()
     print(color("Uninstalling Chat GUI...", Colors.CYAN, Colors.BOLD))
     print()
-    uninstall_gui(hermes_home)
+    with _watchdog_uninstall_fence(
+        get_project_root(),
+        reason="Hermes GUI uninstall owns planned process lifecycle",
+    ):
+        uninstall_gui(hermes_home)
 
     print()
     print(color("┌─────────────────────────────────────────────────────────┐", Colors.GREEN, Colors.BOLD))
@@ -820,6 +876,27 @@ def _print_uninstall_dry_run(*, project_root: Path, hermes_home: Path, full_unin
 
 
 def _perform_uninstall(
+    *,
+    project_root: Path,
+    hermes_home: Path,
+    full_uninstall: bool,
+    remove_profiles: bool,
+    named_profiles: list,
+) -> None:
+    with _watchdog_uninstall_fence(
+        project_root,
+        reason="Hermes uninstall owns planned process lifecycle",
+    ):
+        _perform_uninstall_impl(
+            project_root=project_root,
+            hermes_home=hermes_home,
+            full_uninstall=full_uninstall,
+            remove_profiles=remove_profiles,
+            named_profiles=named_profiles,
+        )
+
+
+def _perform_uninstall_impl(
     *,
     project_root: Path,
     hermes_home: Path,

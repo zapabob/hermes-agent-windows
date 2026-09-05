@@ -1,0 +1,13 @@
+{
+  "archived_at": "2026-09-05T17:00:27.3045850+09:00",
+  "campaign_date": "2026-09-01",
+  "files": {
+    ".codex/UPSTREAM_POLICY.md": "30ef1c0771a747dd8981b0ba8b338684052694fc19e6c0e53389160a3dab789a",
+    ".codex/UPSTREAM_SNAPSHOT.json": "1864d40be63981252ddbf7ad951397b2d771149721c8b799028c2a51aed51f95",
+    "CARRY.yaml": "7c0a29bb6e6db93d34076cea3b517b531fbb3d813810519397e4e7ae89816a1f",
+    "FEATURES.yaml": "8f062f79f261a56bee77d827391d7ebab14e9e0f09d616996b81604558d0abd2",
+    "UPSTREAM_ADOPTION.yaml": "b736ed099e0e22936b295cc3f6bbe20dd6430b3cdb89cb2c044f430e782e1aa9"
+  },
+  "schema_version": 1,
+  "upstream_head_sha": "5a8e8a6b87487c0e0785cd9eb561cc6a96c64f5e"
+}

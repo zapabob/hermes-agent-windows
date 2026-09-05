@@ -9,9 +9,9 @@ reset, cleaned, stashed, or incorporated implicitly.
 ## Frozen input
 
 The only permitted upstream input for this campaign is
-`5a8e8a6b87487c0e0785cd9eb561cc6a96c64f5e`. The semantic three-way BASE is
+`b51c055a12220f8c7c18660e8599365012e19532`. The semantic three-way BASE is
 the previous frozen snapshot
-`5fc308a70719a83cccdbba4c0e39c23f5a8239d5`. Run
+`5a8e8a6b87487c0e0785cd9eb561cc6a96c64f5e`. Run
 `scripts/upstream/snapshot_sync.py --upstream-sha <sha> --downstream-ref <ref>
 --base-sha <previous-upstream-sha> --report-only` before semantic integration.
 The helper must not resolve a moving branch.

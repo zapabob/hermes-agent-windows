@@ -548,7 +548,71 @@ _HARDLINE_SYSTEM_DIRS = (
 # catching `rm -rf "/"`.
 _RM_FLAG_PREFIX = _CMDPOS + r'rm\s+(-[^\s]*\s+)*'
 
+_WATCHDOG_OPERATOR_SCRIPT = (
+    r'(?:start-hermesgowatchdog|invoke-hermesgowatchdoglifecycle|'
+    r'restart-hermes-stack|(?:start|restart)-hermesfullstack|'
+    r'register-hermesfullautostart|repair-hermes-autostart|'
+    r'restart-hermes-autostart-admin)\.ps1'
+)
+
 HARDLINE_PATTERNS = [
+    # The Go watchdog is an independent recovery authority. Hermes may inspect
+    # its read-only health/state surfaces, but commands that invoke its
+    # operator launcher must never pass through the agent terminal, even under
+    # yolo or approvals.mode=off. Operator stack/autostart wrappers can reach
+    # the same launcher or its elevated Scheduled Task indirectly, so the
+    # first pattern covers every powershell -File route and the second covers
+    # direct script invocation (including call operator + quoted paths).
+    (
+        _CMDPOS
+        + r'(?:powershell|pwsh)(?:\.exe)?\b.*?'
+        + _WATCHDOG_OPERATOR_SCRIPT
+        + r'\b',
+        "operator-only Go watchdog launcher or wrapper",
+    ),
+    (
+        _CMDPOS
+        + r'(?:&\s*)?(?:["\'][^"\']*'
+        + _WATCHDOG_OPERATOR_SCRIPT
+        + r'["\']|[^\s;&|]*'
+        + _WATCHDOG_OPERATOR_SCRIPT
+        + r')'
+        + r'(?:\s|$)',
+        "operator-only Go watchdog launcher or wrapper",
+    ),
+    (
+        _CMDPOS
+        + r'(?:start|stop|enable|disable|register|unregister|set)-scheduledtask\b'
+        + r'.*?\bhermesgowatchdogbootautostart\b',
+        "operator-only Go watchdog scheduled task mutation",
+    ),
+    (
+        _CMDPOS
+        + r'schtasks(?:\.exe)?\b.*?/(?:run|end|create|delete|change)\b'
+        + r'.*?\bhermesgowatchdogbootautostart\b',
+        "operator-only Go watchdog scheduled task mutation",
+    ),
+    (
+        _CMDPOS
+        + r'(?:&\s*)?(?:["\'][^"\']*hermes-watchdog\.exe["\']|'
+        + r'[^\s;&|]*hermes-watchdog\.exe)(?:\s|$)',
+        "operator-only Go watchdog executable",
+    ),
+    (
+        _CMDPOS
+        + r'taskkill(?:\.exe)?\b[^\n]*?/im\s+["\']?hermes-watchdog(?:\.exe)?\b',
+        "operator-only Go watchdog process termination",
+    ),
+    (
+        _CMDPOS
+        + r'(?:stop-process|kill|pkill)\b[^\n]*?hermes-watchdog(?:\.exe)?\b',
+        "operator-only Go watchdog process termination",
+    ),
+    (
+        _CMDPOS
+        + r'(?:remove-item|rm|del|erase)\b[^\n]*?watchdog\.lock\b',
+        "operator-only Go watchdog lock removal",
+    ),
     # rm recursive targeting the root filesystem or protected roots.
     # `${HOME}` brace form and quoted paths (`rm -rf "/"`, `rm -rf "$HOME"`)
     # are handled via _hardline_rm_path so the floor cannot be bypassed with

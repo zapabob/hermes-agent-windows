@@ -53,7 +53,7 @@ installer または portable ZIP を使う場合は、
 
 - Python、Electron、Go、upstream API 互換、regression、security lock の Windows Tier-1 CI
 - 非管理者・空白入り path を含む installer、portable、旧版からの upgrade E2E
-- 移動しない upstream snapshot `5a8e8a6b87487c0e0785cd9eb561cc6a96c64f5e`
+- 移動しない upstream snapshot `b51c055a12220f8c7c18660e8599365012e19532`
 - 公式 provider/memory seam 上の local llama.cpp/GGUF と embedding lifecycle
 - Desktop/backend と任意 embedding を限定的に復旧する外部 Go watchdog
 - GPU のない hosted CI と分離した consumer NVIDIA workstation の実機証拠

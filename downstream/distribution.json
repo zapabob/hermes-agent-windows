@@ -16,7 +16,7 @@
     "slug": "NousResearch/hermes-agent",
     "version": "0.21.0",
     "release_commit_sha": "29112bef099274229cadff79cdff7bf7b99c4b77",
-    "snapshot_sha": "5a8e8a6b87487c0e0785cd9eb561cc6a96c64f5e"
+    "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532"
   },
   "platform": {
     "os": "windows",

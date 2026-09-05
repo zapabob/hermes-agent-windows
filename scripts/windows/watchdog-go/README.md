@@ -10,8 +10,8 @@ Hermes Desktop（`Hermes.exe`）と Desktop が spawn する `hermes serve` バ�
 | プロセス | Hermes Python/Electron とは別バイナリ |
 | 設定 | `%LOCALAPPDATA%\HermesWatchdog\`（ロック・状態 JSON） |
 | ログ | `%HERMES_HOME%\logs\hermes-go-watchdog.log` |
-| 変更 API | `HERMES_WATCHDOG_ADMIN_TOKEN` 必須（未設定なら **403**） |
-| 読取 API | `GET /health`, `GET /api/status`（ローカル / tailnet） |
+| 変更 API | 公開しない（認証付き管理口も存在しない） |
+| 読取 API | `GET /health`, `GET /api/status`, `GET /api/v1/status`（ローカル / tailnet） |
 
 ## ビルド
 
@@ -23,13 +23,22 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\windows\Build-Hermes
 
 ## 起動
 
+通常のワークステーション起動では、管理者が登録した
+`HermesGoWatchdogBootAutoStart` Scheduled Task がブート時に
+`Start-HermesGoWatchdog.ps1` を非表示 PowerShell で実行します。手動操作では、
+管理者 PowerShell から同じ launcher を実行します。どちらも最終的に
+Windows GUI subsystem の `hermes-watchdog.exe` を画面なしで起動し、別の
+Watchdog 起動機構は設けません。
+
 ```powershell
 # 環境変数（例）
-$env:HERMES_WATCHDOG_ADMIN_TOKEN = "<operator-secret>"
 $env:HERMES_WATCHDOG_TS_AUTHKEY = "<ts-authkey>"   # 任意: tsnet 有効化
 
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\windows\Start-HermesGoWatchdog.ps1
 ```
+
+launcher は管理者として実行した PowerShell だけを受け付けます。これにより、通常権限の
+Hermes Agent と watchdog プロセスの間に Windows のプロセス権限境界を設けます。
 
 ### フラグ（Start スクリプト経由）
 
@@ -60,12 +69,11 @@ watchdog に渡します。watchdog は `/health` が healthy な既存プロセ
 |--------|------|------|------|
 | GET | `/health` | 不要 | 生存確認 |
 | GET | `/api/status` | 不要 | ウォッチドッグ状態 JSON |
-| POST | `/api/v1/pause` | Admin | 監視一時停止 |
-| POST | `/api/v1/resume` | Admin | 監視再開 |
-| POST | `/api/v1/cycle` | Admin | 即時 1 周期 |
-| POST | `/api/v1/stop` | Admin | Graceful stop |
+| GET | `/api/v1/status` | 不要 | バージョン付き状態 JSON |
 
-Admin 認証: `Authorization: Bearer <token>` または `X-Admin-Token: <token>`
+HTTP は読み取り専用です。pause、resume、cycle、stop、restart、force-restart、
+ロック削除、PID 指定停止を行う API は、HTTP、MCP、tool、plugin、skill、cron の
+いずれにも公開しません。
 
 ## 監視ロジック
 
@@ -74,6 +82,7 @@ Admin 認証: `Authorization: Bearer <token>` または `X-Admin-Token: <token>`
 3. Desktop 生存 + backend 不在 → **Electron 再起動の前に** managed serve を起動/復旧
 4. 連続失敗が `-FailThreshold` 以上 → Desktop 強制再起動
 5. 予約 ops ポート (9120/8787/9920/…) は backend 判定・reap 対象外（従来どおり）
+6. A2A Hub (`:9123`) と A2A Round-Robin (`:9124`) は別系統のバックグラウンドサービスであり、watchdog の直接監視・reap 対象外
 
 ### Desktop ショートカット
 
@@ -97,12 +106,17 @@ Admin 認証: `Authorization: Bearer <token>` または `X-Admin-Token: <token>`
 
 ## 停止
 
-- タスクマネージャで `hermes-watchdog.exe` を終了
-- または Admin API: `POST /api/v1/stop` + Bearer token
+- ユーザーまたは管理者が `Start-HermesGoWatchdog.ps1 -Stop` を直接実行
+- 強制置換は同スクリプトの `-ForceRestart` を operator-only 経路で実行
 - ロック: `%LOCALAPPDATA%\HermesWatchdog\watchdog.lock`
+
+更新、計画停止、uninstall は launcher を Agent から呼ぶ経路では行わず、承認付き
+ライフサイクル管理経路が `maintenance.json` の fence を取得してから実行します。
+watchdog は有効な fence が存在する間、Desktop、backend、embedding を復旧しません。
 
 ## スタック再起動との関係
 
 `restart-hermes-stack.ps1 -StartGoWatchdog` で**明示指定時のみ**起動（既定 OFF）。  
 既存 `dist/hermes-watchdog.exe` があれば rebuild しない。欠落時のみ `BuildIfMissing`（SkipTest・180s タイムアウト）。失敗時はスタック全体を止めず watchdog 起動をスキップ。  
-Hermes Agent からは到達不可。
+Hermes Agent から launcher の直接実行と変更操作は到達不可です。状態と PID、直近結果
+だけを読み取れます。

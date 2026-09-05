@@ -1,5 +1,5 @@
 version: 1
-snapshot_sha: 5a8e8a6b87487c0e0785cd9eb561cc6a96c64f5e
+snapshot_sha: b51c055a12220f8c7c18660e8599365012e19532
 generated_from: repository code and tests at integration snapshot
 features:
   - id: windows-native-runtime

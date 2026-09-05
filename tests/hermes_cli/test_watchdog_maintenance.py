@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from hermes_cli import uninstall
 from hermes_cli import update_cmd
 from hermes_cli import watchdog_maintenance as maintenance
 
@@ -161,4 +162,64 @@ def test_failed_official_recovery_keeps_watchdog_in_recovery(
     assert read_state(path)["state"] == maintenance.RECOVERY
     assert update_cmd._ACTIVE_WATCHDOG_MAINTENANCE is not None
     update_cmd._release_watchdog_update_maintenance_at_exit()
+    assert read_state(path)["state"] == maintenance.RECOVERY
+    assert update_cmd._ACTIVE_WATCHDOG_MAINTENANCE is None
+
+
+def test_uninstall_lifecycle_is_fenced_until_success(tmp_path, monkeypatch):
+    path = tmp_path / "maintenance.json"
+    calls = []
+    monkeypatch.setattr(uninstall, "_is_windows", lambda: True)
+    monkeypatch.setattr(maintenance, "maintenance_path", lambda: path)
+    monkeypatch.setattr(
+        "hermes_cli.watchdog_lifecycle.decommission_for_uninstall",
+        lambda **kwargs: calls.append(kwargs),
+    )
+
+    with uninstall._watchdog_uninstall_fence(tmp_path, reason="test uninstall"):
+        payload = read_state(path)
+        assert payload["state"] == maintenance.UPDATE
+        assert payload["owner"].startswith("hermes-update:")
+        assert len(calls) == 1
+        assert calls[0]["project_root"] == tmp_path
+        assert calls[0]["lease"].nonce == payload["nonce"]
+
     assert read_state(path)["state"] == maintenance.NORMAL
+
+
+def test_failed_uninstall_keeps_expiring_recovery_fence(tmp_path, monkeypatch):
+    path = tmp_path / "maintenance.json"
+    monkeypatch.setattr(uninstall, "_is_windows", lambda: True)
+    monkeypatch.setattr(maintenance, "maintenance_path", lambda: path)
+    monkeypatch.setattr(
+        "hermes_cli.watchdog_lifecycle.decommission_for_uninstall",
+        lambda **_kwargs: None,
+    )
+
+    with pytest.raises(RuntimeError, match="removal failed"):
+        with uninstall._watchdog_uninstall_fence(tmp_path, reason="test uninstall"):
+            raise RuntimeError("removal failed")
+
+    payload = read_state(path)
+    assert payload["state"] == maintenance.RECOVERY
+    assert payload["leaseExpiresAt"] > payload["timestamp"]
+
+
+def test_failed_watchdog_decommission_keeps_recovery_fence(tmp_path, monkeypatch):
+    path = tmp_path / "maintenance.json"
+    monkeypatch.setattr(uninstall, "_is_windows", lambda: True)
+    monkeypatch.setattr(maintenance, "maintenance_path", lambda: path)
+
+    def refuse(**_kwargs):
+        raise RuntimeError("operator denied")
+
+    monkeypatch.setattr(
+        "hermes_cli.watchdog_lifecycle.decommission_for_uninstall",
+        refuse,
+    )
+
+    with pytest.raises(RuntimeError, match="operator denied"):
+        with uninstall._watchdog_uninstall_fence(tmp_path, reason="test uninstall"):
+            pytest.fail("destructive uninstall body must not run")
+
+    assert read_state(path)["state"] == maintenance.RECOVERY

@@ -84,7 +84,7 @@ def test_translated_readmes_keep_distribution_metadata_in_parity() -> None:
             "zapabob/hermes-agent-windows",
             "NousResearch/hermes-agent",
             "0.21.0",
-            "5a8e8a6b87487c0e0785cd9eb561cc6a96c64f5e",
+            "b51c055a12220f8c7c18660e8599365012e19532",
             "stable",
             "preview",
             "docs/windows/INSTALL.md",

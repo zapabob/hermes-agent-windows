@@ -41,6 +41,62 @@ from hermes_constants import venv_python_path
 
 logger = logging.getLogger(__name__)
 
+_ACTIVE_WATCHDOG_MAINTENANCE = None
+_WATCHDOG_MAINTENANCE_ATEXIT_REGISTERED = False
+
+
+def _begin_watchdog_update_maintenance() -> None:
+    """Fence the independent Windows watchdog before updater quiescence."""
+    global _ACTIVE_WATCHDOG_MAINTENANCE
+    global _WATCHDOG_MAINTENANCE_ATEXIT_REGISTERED
+
+    if not _m()._is_windows() or _ACTIVE_WATCHDOG_MAINTENANCE is not None:
+        return
+    from hermes_cli import watchdog_maintenance
+
+    _ACTIVE_WATCHDOG_MAINTENANCE = watchdog_maintenance.acquire(
+        _m().PROJECT_ROOT,
+        reason="Hermes update owns planned process lifecycle",
+    )
+    if not _WATCHDOG_MAINTENANCE_ATEXIT_REGISTERED:
+        import atexit
+
+        atexit.register(_release_watchdog_update_maintenance_at_exit)
+        _WATCHDOG_MAINTENANCE_ATEXIT_REGISTERED = True
+
+
+def _transition_watchdog_update_maintenance(state: str, *, reason: str) -> None:
+    lease = _ACTIVE_WATCHDOG_MAINTENANCE
+    if lease is None:
+        return
+    from hermes_cli import watchdog_maintenance
+
+    watchdog_maintenance.transition(lease, state, reason=reason)
+
+
+def _release_watchdog_update_maintenance_at_exit() -> None:
+    """Leave a bounded recovery fence when verified recovery did not finish."""
+    global _ACTIVE_WATCHDOG_MAINTENANCE
+
+    lease = _ACTIVE_WATCHDOG_MAINTENANCE
+    if lease is None:
+        return
+    from hermes_cli import watchdog_maintenance
+
+    try:
+        watchdog_maintenance.transition(
+            lease,
+            watchdog_maintenance.RECOVERY,
+            reason=(
+                "Hermes update lifecycle owner exited before verified recovery; "
+                "operator recovery is required"
+            ),
+        )
+    except Exception:
+        logger.exception("Could not retain the watchdog recovery fence at exit")
+    finally:
+        _ACTIVE_WATCHDOG_MAINTENANCE = None
+
 
 def _m():
     """Lazy ``hermes_cli.main`` reference.
@@ -6869,6 +6925,30 @@ def _refresh_bootstrap_cache_scripts(branch: str = "main") -> None:
         logger.debug("Could not refresh bootstrap-cache scripts after update: %s", exc)
 
 def _resume_windows_gateways_after_update(token: dict | None) -> None:
+    """Run official recovery, then release the watchdog maintenance fence."""
+    global _ACTIVE_WATCHDOG_MAINTENANCE
+
+    lease = _ACTIVE_WATCHDOG_MAINTENANCE
+    if lease is not None:
+        from hermes_cli import watchdog_maintenance
+
+        watchdog_maintenance.transition(
+            lease,
+            watchdog_maintenance.RECOVERY,
+            reason="Hermes update is restoring supervised services",
+        )
+    _resume_windows_gateways_after_update_impl(token)
+    if lease is not None:
+        from hermes_cli import watchdog_maintenance
+
+        watchdog_maintenance.release(
+            lease,
+            reason="Hermes update recovery completed",
+        )
+        _ACTIVE_WATCHDOG_MAINTENANCE = None
+
+
+def _resume_windows_gateways_after_update_impl(token: dict | None) -> None:
     """Restart Windows profile gateways previously paused for update."""
     if not token or not token.get("resume_needed"):
         return
@@ -7366,6 +7446,12 @@ def _cmd_update_impl(args, gateway_mode: bool):
                     )
                     sys.exit(2)
 
+    # The watchdog is an independent outer recovery authority. Acquire its
+    # owned, expiring fence before any planned process stop or code mutation;
+    # the atexit fallback retains a bounded RECOVERY fence if an early refusal
+    # or exception exits before the verified recovery path.
+    _begin_watchdog_update_maintenance()
+
     # Pre-update backup — runs before any git/file mutation so users can
     # always roll back to the exact state they had before this update.
     # Returns the quick-snapshot id (or None when disabled/failed); the
@@ -7382,6 +7468,10 @@ def _cmd_update_impl(args, gateway_mode: bool):
     except Exception:
         pass
 
+    _transition_watchdog_update_maintenance(
+        "UPSTREAM_DRAIN",
+        reason="Hermes updater is quiescing managed runtimes",
+    )
     _windows_gateway_resume = _m()._pause_windows_gateways_for_update()
     if _windows_gateway_resume:
         import atexit as _atexit
@@ -7558,6 +7648,11 @@ def _cmd_update_impl(args, gateway_mode: bool):
     # swap, immediately before the dependency sync — the only phase the lock
     # can actually break — and only when the sync would truly rewrite the
     # loaded distribution.
+
+    _transition_watchdog_update_maintenance(
+        "UPDATE",
+        reason="Hermes updater owns code and dependency replacement",
+    )
 
     # Capture this after every fail-closed venv guard, but before either
     # update path can remove the ignored release tree.

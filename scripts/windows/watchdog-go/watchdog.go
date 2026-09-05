@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -21,7 +23,6 @@ type cycleResult struct {
 type WatchdogState struct {
 	UpdatedAt               string      `json:"updatedAt"`
 	WatchdogPID             int         `json:"watchdogPid"`
-	Paused                  bool        `json:"paused"`
 	MaintenanceState        string      `json:"maintenanceState"`
 	MaintenanceOwner        string      `json:"maintenanceOwner,omitempty"`
 	Result                  cycleResult `json:"result"`
@@ -39,7 +40,6 @@ type Watchdog struct {
 
 	cycleMu          sync.Mutex
 	mu               sync.RWMutex
-	paused           bool
 	failCount        int
 	maintenanceState string
 	maintenanceOwner string
@@ -92,19 +92,6 @@ func (w *Watchdog) State() WatchdogState {
 	return w.lastState
 }
 
-func (w *Watchdog) SetPaused(v bool) {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	w.paused = v
-	w.lastState.Paused = v
-}
-
-func (w *Watchdog) IsPaused() bool {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-	return w.paused
-}
-
 func (w *Watchdog) maintenanceSuspended() bool {
 	state, active, err := maintenanceMode(w.cfg.MaintenancePath, time.Now())
 	if err != nil {
@@ -123,7 +110,6 @@ func (w *Watchdog) saveState(result cycleResult) {
 	w.lastState = WatchdogState{
 		UpdatedAt:               time.Now().Format(time.RFC3339),
 		WatchdogPID:             os.Getpid(),
-		Paused:                  w.paused,
 		MaintenanceState:        w.maintenanceState,
 		MaintenanceOwner:        w.maintenanceOwner,
 		Result:                  result,
@@ -143,11 +129,6 @@ func (w *Watchdog) saveState(result cycleResult) {
 func (w *Watchdog) RunCycle() cycleResult {
 	w.cycleMu.Lock()
 	defer w.cycleMu.Unlock()
-	if w.IsPaused() {
-		res := cycleResult{Desktop: "paused", Backend: "paused", Embedding: "paused"}
-		w.saveState(res)
-		return res
-	}
 	if w.maintenanceSuspended() {
 		res := cycleResult{Desktop: "maintenance", Backend: "maintenance", Embedding: "maintenance"}
 		w.saveState(res)
@@ -254,33 +235,175 @@ func (w *Watchdog) RunLoop(stop <-chan struct{}) {
 }
 
 type lockFile struct {
-	PID       int    `json:"pid"`
-	StartedAt string `json:"startedAt"`
-	RepoRoot  string `json:"repoRoot"`
+	PID            int    `json:"pid"`
+	ProcessCreated uint64 `json:"processCreated"`
+	ExecutablePath string `json:"executablePath"`
+	StartedAt      string `json:"startedAt"`
+	RepoRoot       string `json:"repoRoot"`
+}
+
+type processIdentity struct {
+	PID            int
+	CreationTime   uint64
+	ExecutablePath string
+	StartedAt      time.Time
+}
+
+const legacyLockStartTolerance = 10 * time.Second
+
+func sameExecutablePath(left, right string) bool {
+	if strings.TrimSpace(left) == "" || strings.TrimSpace(right) == "" {
+		return false
+	}
+	return strings.EqualFold(filepath.Clean(left), filepath.Clean(right))
+}
+
+func readProcessIdentity(pid int) (processIdentity, bool) {
+	if pid <= 0 {
+		return processIdentity{}, false
+	}
+	handle, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION, false, uint32(pid))
+	if err != nil {
+		return processIdentity{}, false
+	}
+	defer windows.CloseHandle(handle)
+
+	var exitCode uint32
+	if err := windows.GetExitCodeProcess(handle, &exitCode); err != nil {
+		return processIdentity{}, false
+	}
+	const stillActiveExitCode = 259
+	if exitCode != stillActiveExitCode {
+		return processIdentity{}, false
+	}
+
+	var created, exited, kernel, user windows.Filetime
+	if err := windows.GetProcessTimes(handle, &created, &exited, &kernel, &user); err != nil {
+		return processIdentity{}, false
+	}
+	image := make([]uint16, 32_768)
+	imageLength := uint32(len(image))
+	if err := windows.QueryFullProcessImageName(handle, 0, &image[0], &imageLength); err != nil || imageLength == 0 {
+		return processIdentity{}, false
+	}
+	creationTime := uint64(created.HighDateTime)<<32 | uint64(created.LowDateTime)
+
+	return processIdentity{
+		PID:            pid,
+		CreationTime:   creationTime,
+		ExecutablePath: windows.UTF16ToString(image[:imageLength]),
+		StartedAt:      time.Unix(0, created.Nanoseconds()).UTC(),
+	}, true
+}
+
+func lockMatchesProcess(lock lockFile, identity processIdentity) bool {
+	if lock.PID <= 0 || lock.PID != identity.PID || !sameExecutablePath(lock.ExecutablePath, identity.ExecutablePath) {
+		return false
+	}
+	if lock.ProcessCreated != 0 {
+		return lock.ProcessCreated == identity.CreationTime
+	}
+	startedAt, err := time.Parse(time.RFC3339Nano, lock.StartedAt)
+	if err != nil || identity.StartedAt.IsZero() {
+		return false
+	}
+	delta := startedAt.Sub(identity.StartedAt)
+	if delta < 0 {
+		delta = -delta
+	}
+	return delta <= legacyLockStartTolerance
+}
+
+func writeLockExclusive(lockPath string, lock lockFile) error {
+	raw, err := json.MarshalIndent(lock, "", "  ")
+	if err != nil {
+		return err
+	}
+	file, err := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
+	if err != nil {
+		return err
+	}
+	written := false
+	defer func() {
+		_ = file.Close()
+		if !written {
+			_ = os.Remove(lockPath)
+		}
+	}()
+	if _, err := file.Write(raw); err != nil {
+		return err
+	}
+	if err := file.Sync(); err != nil {
+		return err
+	}
+	if err := file.Close(); err != nil {
+		return err
+	}
+	written = true
+	return nil
 }
 
 func acquireLock(lockPath, repoRoot string, logger *Logger) (func(), bool) {
-	if fileExists(lockPath) {
+	self, ok := readProcessIdentity(os.Getpid())
+	if !ok {
+		logger.Infof("cannot establish watchdog process identity — refusing lock acquisition")
+		return nil, false
+	}
+	lf := lockFile{
+		PID:            self.PID,
+		ProcessCreated: self.CreationTime,
+		ExecutablePath: self.ExecutablePath,
+		StartedAt:      self.StartedAt.Format(time.RFC3339Nano),
+		RepoRoot:       repoRoot,
+	}
+	acquired := false
+	for attempt := 0; attempt < 3; attempt++ {
+		if err := writeLockExclusive(lockPath, lf); err == nil {
+			acquired = true
+			break
+		} else if !os.IsExist(err) {
+			logger.Infof("failed to create lock: %v", err)
+			return nil, false
+		}
+
 		raw, err := os.ReadFile(lockPath)
-		if err == nil {
-			var lf lockFile
-			if json.Unmarshal(raw, &lf) == nil && lf.PID > 0 {
-				if processAlive(lf.PID) {
-					logger.Infof("another watchdog holds %s (pid=%d) — exiting", lockPath, lf.PID)
+		if err != nil {
+			logger.Infof("failed to inspect existing lock: %v", err)
+			return nil, false
+		}
+		var existing lockFile
+		if err := json.Unmarshal(raw, &existing); err != nil {
+			if info, statErr := os.Stat(lockPath); statErr == nil && time.Since(info.ModTime()) < time.Second && attempt < 2 {
+				time.Sleep(25 * time.Millisecond)
+				continue
+			}
+		} else if existing.PID > 0 {
+			if actual, alive := readProcessIdentity(existing.PID); alive {
+				candidate := existing
+				if candidate.ExecutablePath == "" && sameExecutablePath(actual.ExecutablePath, self.ExecutablePath) {
+					candidate.ExecutablePath = self.ExecutablePath
+				}
+				if lockMatchesProcess(candidate, actual) {
+					logger.Infof("another watchdog holds %s (pid=%d) — exiting", lockPath, existing.PID)
+					return nil, false
+				}
+				if sameExecutablePath(actual.ExecutablePath, self.ExecutablePath) {
+					logger.Infof("live watchdog identity conflicts with %s (pid=%d) — refusing a second owner", lockPath, existing.PID)
 					return nil, false
 				}
 			}
 		}
-		_ = os.Remove(lockPath)
+		if err := os.Remove(lockPath); err != nil && !os.IsNotExist(err) {
+			logger.Infof("failed to remove stale lock: %v", err)
+			return nil, false
+		}
+		if attempt == 2 {
+			logger.Infof("lock acquisition raced repeatedly — refusing startup")
+			return nil, false
+		}
 	}
-	lf := lockFile{
-		PID:       os.Getpid(),
-		StartedAt: time.Now().Format(time.RFC3339),
-		RepoRoot:  repoRoot,
-	}
-	raw, _ := json.MarshalIndent(lf, "", "  ")
-	if err := os.WriteFile(lockPath, raw, 0o644); err != nil {
-		logger.Infof("failed to write lock: %v", err)
+	if !acquired {
+		logger.Infof("failed to establish exclusive lock ownership")
 		return nil, false
 	}
 	release := func() {
@@ -289,7 +412,7 @@ func acquireLock(lockPath, repoRoot string, logger *Logger) (func(), bool) {
 			return
 		}
 		var existing lockFile
-		if json.Unmarshal(raw, &existing) == nil && existing.PID == os.Getpid() {
+		if json.Unmarshal(raw, &existing) == nil && lockMatchesProcess(existing, self) {
 			_ = os.Remove(lockPath)
 		}
 	}
@@ -297,18 +420,6 @@ func acquireLock(lockPath, repoRoot string, logger *Logger) (func(), bool) {
 }
 
 func processAlive(pid int) bool {
-	if pid <= 0 {
-		return false
-	}
-	handle, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION, false, uint32(pid))
-	if err != nil {
-		return false
-	}
-	defer windows.CloseHandle(handle)
-	var exitCode uint32
-	if err := windows.GetExitCodeProcess(handle, &exitCode); err != nil {
-		return false
-	}
-	const stillActiveExitCode = 259
-	return exitCode == stillActiveExitCode
+	_, ok := readProcessIdentity(pid)
+	return ok
 }

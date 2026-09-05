@@ -53,9 +53,12 @@ func getDesktopProcesses() ([]win32Process, error) {
 	return procs, nil
 }
 
-// reservedOpsPorts are stack-owned listeners — never treat as Desktop's ephemeral hermes serve.
+// reservedOpsPorts are stack-owned listeners — never treat as Desktop's
+// ephemeral hermes serve.  In particular, the independently launched A2A Hub
+// (:9123) and deterministic round-robin service (:9124) are outside the Go
+// watchdog's direct supervision boundary.
 var reservedOpsPorts = map[int]struct{}{
-	8080: {}, 8081: {}, 8646: {}, 8765: {}, 8787: {}, 9120: {}, 9920: {}, 18794: {},
+	8080: {}, 8081: {}, 8646: {}, 8765: {}, 8787: {}, 9120: {}, 9123: {}, 9124: {}, 9920: {}, 18794: {},
 }
 
 func isReservedOpsPort(port int) bool {

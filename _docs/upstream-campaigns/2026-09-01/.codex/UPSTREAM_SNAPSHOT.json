@@ -1,0 +1,10 @@
+{
+  "captured_at": "2026-09-01T20:18:29+09:00",
+  "upstream_repo": "https://github.com/NousResearch/hermes-agent.git",
+  "upstream_ref": "frozen commit supplied by operator",
+  "upstream_head_sha": "5a8e8a6b87487c0e0785cd9eb561cc6a96c64f5e",
+  "downstream_start_sha": "2c9e426a59c02a6bbe7f9beab9fbfdf081e24bd7",
+  "merge_base_sha": "1fe0f2f3ac9748ce799272eb93bee2937b5ab802",
+  "comparison_base_sha": "5fc308a70719a83cccdbba4c0e39c23f5a8239d5",
+  "scope_note": "Commits newer than upstream_head_sha are explicitly out of scope."
+}

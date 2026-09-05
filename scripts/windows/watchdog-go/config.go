@@ -33,7 +33,6 @@ type Config struct {
 	LockPath                 string
 	StatePath                string
 	MaintenancePath          string
-	AdminToken               string
 	TsAuthKey                string
 }
 
@@ -86,10 +85,6 @@ func loadTsAuthKey() string {
 		}
 	}
 	return ""
-}
-
-func loadAdminToken() string {
-	return strings.TrimSpace(os.Getenv("HERMES_WATCHDOG_ADMIN_TOKEN"))
 }
 
 func fileExists(path string) bool {

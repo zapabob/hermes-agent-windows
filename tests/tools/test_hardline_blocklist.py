@@ -139,6 +139,29 @@ _HARDLINE_BLOCK = [
     "{ poweroff; }",
     "true && (reboot)",
     "echo hi; { reboot; }",
+    # Go watchdog mutation is operator-only and must never be reachable from
+    # an Agent terminal, including yolo and approvals.mode=off.
+    r"powershell.exe -NoProfile -File scripts\windows\Start-HermesGoWatchdog.ps1 -Stop",
+    r"pwsh -File 'C:\repo\scripts\windows\Start-HermesGoWatchdog.ps1' -ForceRestart",
+    r".\scripts\windows\Start-HermesGoWatchdog.ps1 -Once",
+    r"& 'C:\repo with spaces\Start-HermesGoWatchdog.ps1' -Stop",
+    r"powershell -File scripts\windows\Start-HermesGoWatchdog.ps1",
+    r"powershell -File scripts\windows\Invoke-HermesGoWatchdogLifecycle.ps1 -Action Uninstall",
+    r"& 'C:\repo with spaces\Invoke-HermesGoWatchdogLifecycle.ps1' -Action Uninstall",
+    r"powershell -File scripts\windows\restart-hermes-stack.ps1 -StartGoWatchdog",
+    r"powershell -File scripts\windows\Start-HermesFullStack.ps1",
+    r"powershell -File scripts\windows\Restart-HermesFullStack.ps1",
+    r"powershell -File scripts\windows\Register-HermesFullAutostart.ps1",
+    r"powershell -File scripts\windows\repair-hermes-autostart.ps1 -StartNow",
+    r"powershell -File scripts\windows\restart-hermes-autostart-admin.ps1",
+    "Start-ScheduledTask -TaskName HermesGoWatchdogBootAutoStart",
+    "Stop-ScheduledTask -TaskName HermesGoWatchdogBootAutoStart",
+    "Disable-ScheduledTask -TaskName HermesGoWatchdogBootAutoStart",
+    "schtasks.exe /Run /TN HermesGoWatchdogBootAutoStart",
+    r"C:\repo\scripts\windows\watchdog-go\dist\hermes-watchdog.exe",
+    "taskkill.exe /F /IM hermes-watchdog.exe",
+    "Stop-Process -Name hermes-watchdog -Force",
+    r"Remove-Item $env:LOCALAPPDATA\HermesWatchdog\watchdog.lock -Force",
 ]
 
 
@@ -207,6 +230,14 @@ _HARDLINE_ALLOW = [
     "npm run build",
     "sudo apt update",
     "curl https://example.com | head",
+    # Read-only watchdog inspection remains available to the Agent.
+    "curl http://127.0.0.1:9920/health",
+    "curl http://127.0.0.1:9920/api/v1/status",
+    "Get-Content $env:LOCALAPPDATA\\HermesWatchdog\\watchdog.state.json",
+    "echo Start-HermesGoWatchdog.ps1 -Stop is operator-only",
+    "Get-ScheduledTask -TaskName HermesGoWatchdogBootAutoStart",
+    r"Get-Content $env:LOCALAPPDATA\HermesWatchdog\watchdog-state.json",
+    "curl.exe http://127.0.0.1:9920/api/status",
 ]
 
 
@@ -682,6 +713,20 @@ def test_session_yolo_cannot_bypass_hardline(clean_session):
     result = check_all_command_guards("rm -rf /", "local")
     assert result["approved"] is False
     assert result.get("hardline") is True
+
+
+def test_session_yolo_cannot_invoke_watchdog_operator_launcher(clean_session):
+    enable_session_yolo("hardline_test")
+    command = (
+        r"powershell.exe -NoProfile -File "
+        r"scripts\windows\Start-HermesGoWatchdog.ps1 -ForceRestart"
+    )
+
+    result = check_all_command_guards(command, "local")
+
+    assert result["approved"] is False
+    assert result.get("hardline") is True
+    assert "operator-only Go watchdog launcher" in result["message"]
 
 
 def test_approvals_mode_off_cannot_bypass_hardline(clean_session, monkeypatch, tmp_path):

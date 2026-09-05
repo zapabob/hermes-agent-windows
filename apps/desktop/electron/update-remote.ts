@@ -1,12 +1,10 @@
 /**
  * Pure helpers for choosing a remote URL during passive update checks.
  *
- * A public install can end up with `origin=git@github.com:NousResearch/hermes-agent.git`.
- * If the user's GitHub SSH key is FIDO2/passkey-backed, a background `git fetch
- * origin` triggers an unexplained hardware-touch prompt. For passive checks
- * against the official repo we substitute the public HTTPS `ls-remote` path,
- * which needs no auth and cannot prompt. Active update/apply flows are left
- * unchanged.
+ * An install can end up with an SSH origin whose key is FIDO2/passkey-backed.
+ * A background `git fetch origin` can then trigger an unexplained hardware-touch
+ * prompt. Passive checks translate GitHub SSH remotes to HTTPS and refuse other
+ * SSH transports. Active update/apply flows are left unchanged.
  *
  * Extracted from main.ts so the security-critical remote detection is unit
  * testable without booting Electron (main.ts requires('electron') at load).
@@ -25,10 +23,13 @@ function canonicalGitHubRemote(url) {
 
   let value = String(url).trim()
 
-  if (value.startsWith('git@github.com:')) {
-    value = `github.com/${value.slice('git@github.com:'.length)}`
-  } else if (value.startsWith('ssh://git@github.com/')) {
-    value = `github.com/${value.slice('ssh://git@github.com/'.length)}`
+  const scpLike = /^git@github\.com:(.+)$/i.exec(value)
+  const sshUrl = /^ssh:\/\/git@github\.com\/(.+)$/i.exec(value)
+
+  if (scpLike) {
+    value = `github.com/${scpLike[1]}`
+  } else if (sshUrl) {
+    value = `github.com/${sshUrl[1]}`
   } else {
     try {
       const parsed = new URL(value)
@@ -62,4 +63,34 @@ function isOfficialSshRemote(url) {
   return isSshRemote(url) && canonicalGitHubRemote(url) === OFFICIAL_REPO_CANONICAL
 }
 
-export { canonicalGitHubRemote, isOfficialSshRemote, isSshRemote, OFFICIAL_REPO_CANONICAL, OFFICIAL_REPO_HTTPS_URL }
+/**
+ * Choose the transport used by an automatic, passive update check.
+ *
+ * Returning `origin` preserves non-SSH behavior. A GitHub SSH URL is mapped to
+ * the same HTTPS repository URL, so no SSH agent or FIDO2 authenticator can be
+ * consulted. The caller also disables Git credential helpers for that anonymous
+ * probe. Other SSH hosts fail closed with `null`: a passive check may report
+ * itself unavailable, but it must never request native credentials.
+ */
+function resolvePassiveUpdateRemote(url) {
+  if (!isSshRemote(url)) {
+    return 'origin'
+  }
+
+  const value = String(url).trim()
+
+  const githubRepo =
+    /^git@github\.com:([^/]+\/[^/]+?)(?:\.git)?\/?$/i.exec(value) ||
+    /^ssh:\/\/git@github\.com\/([^/]+\/[^/]+?)(?:\.git)?\/?$/i.exec(value)
+
+  return githubRepo ? `https://github.com/${githubRepo[1]}.git` : null
+}
+
+export {
+  canonicalGitHubRemote,
+  isOfficialSshRemote,
+  isSshRemote,
+  OFFICIAL_REPO_CANONICAL,
+  OFFICIAL_REPO_HTTPS_URL,
+  resolvePassiveUpdateRemote
+}

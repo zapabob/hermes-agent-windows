@@ -1,0 +1,33 @@
+version: 1
+snapshot_sha: 5a8e8a6b87487c0e0785cd9eb561cc6a96c64f5e
+carry:
+  - id: terminal-environment-provider-bridge
+    upstream_paths: [tools/terminal_tool.py, tools/environments/base.py]
+    downstream_reason: preserve plugin terminal backends through the official environment selection path
+    invariants: [one terminal authority, profile-scoped provider registration]
+    tests: [tests/agent/test_terminal_env_registry.py, tests/tools/test_terminal_tool.py]
+    integration_policy: COMPOSE
+  - id: windows-docker-media-paths
+    upstream_paths: [gateway/platforms/base.py]
+    downstream_reason: preserve native Windows host translation while adopting upstream multi-sandbox media roots
+    invariants: [PurePosixPath for container paths, profile and session isolation]
+    tests: [tests/gateway/test_platform_base.py]
+    integration_policy: COMPOSE
+  - id: desktop-preview-surface-separation
+    upstream_paths: [apps/desktop/src/store/preview.ts, apps/desktop/src/app/chat/preview-tile.tsx]
+    downstream_reason: retain separate Browser and file preview behavior through official pane ownership
+    invariants: [explicit new Browser tabs, one stable file-preview zone]
+    tests: [apps/desktop/src/store/preview.test.ts, apps/desktop/src/app/chat/preview-tile.test.ts]
+    integration_policy: COMPOSE
+  - id: watchdog-backend-prewarm
+    upstream_paths: [apps/desktop/electron/main.ts, apps/desktop/electron/primary-backend-startup.ts]
+    downstream_reason: consume the watchdog-owned backend manifest without creating another backend owner
+    invariants: [Go watchdog is outer restart authority, official backend claim remains authoritative]
+    tests: [apps/desktop/electron/backend-claim.test.ts, apps/desktop/electron/primary-backend-startup.test.ts]
+    integration_policy: COMPOSE
+  - id: codex-cloudflare-routing
+    upstream_paths: [agent/agent_init.py]
+    downstream_reason: preserve Codex Cloudflare routing headers while following the effective official base URL
+    invariants: [no credential logging, official client construction remains authoritative]
+    tests: [tests/agent/test_codex_cloudflare_headers.py]
+    integration_policy: COMPOSE
