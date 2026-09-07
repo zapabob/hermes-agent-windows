@@ -210,9 +210,29 @@ function waitForDashboardPortAnnouncement(
   return waitForDashboardPort(child, timeoutMs, describeOutputTail)
 }
 
+/**
+ * Unwrap `{ port, token? }` (or a legacy bare number) into a positive TCP port.
+ * Call sites MUST use this (or `.port`) — string-interpolating the announcement
+ * object yields `http://127.0.0.1:[object Object]` and the desktop boot fails
+ * with `Invalid URL: Invalid URL` after a 45s readiness timeout.
+ */
+function coerceAnnouncedPort(
+  announcement: { port: number; token?: string } | number | null | undefined,
+  label = 'Hermes backend'
+): number {
+  const port = typeof announcement === 'number' ? announcement : Number(announcement?.port)
+
+  if (!Number.isInteger(port) || port <= 0) {
+    throw new Error(`${label} announced an invalid port: ${String((announcement as any)?.port ?? announcement)}`)
+  }
+
+  return port
+}
+
 export {
   DEFAULT_PORT_ANNOUNCE_TIMEOUT_MS,
   MIN_PORT_ANNOUNCE_TIMEOUT_MS,
+  coerceAnnouncedPort,
   readDashboardReadyFile,
   resolvePortAnnounceTimeoutMs,
   waitForDashboardPort,

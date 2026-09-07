@@ -1,0 +1,56 @@
+# Nous-approved MCP catalog entry.
+# CodeGraph — local-first code intelligence over stdio MCP.
+manifest_version: 1
+
+name: codegraph
+description: Local codegraph MCP for symbol query, explore, and impact maps.
+source: https://github.com/colbymchenry/codegraph
+
+transport:
+  type: stdio
+  # Portable npx launch. On Windows, Hermes prefers sibling ``.exe`` over
+  # ``.cmd`` shims when resolving the command path (avoids console flash).
+  # Prefer a local node.exe + entry under ~/.hermes/mcp-servers/codegraph
+  # for Desktop (documented below) — never hardcode a user home path here.
+  command: npx
+  args:
+    - -y
+    - "@colbymchenry/codegraph@1.6.0"
+    - serve
+    - --mcp
+
+auth:
+  type: none
+
+tools:
+  default_enabled:
+    - codegraph_explore
+
+suggest:
+  keywords:
+    - codegraph
+    - call graph
+    - symbol impact
+  hosts:
+    - colbymchenry.github.io
+
+post_install: |
+  Index each project once: `npx -y @colbymchenry/codegraph init .`
+  then `npx -y @colbymchenry/codegraph sync .` (or let serve --mcp catch up).
+
+  Heavy stdio servers should defer spawn until first tool use:
+
+    mcp_servers:
+      codegraph:
+        lazy: true
+
+  Windows Desktop tip (no flashing .cmd console): install locally under
+  ~/.hermes/mcp-servers/codegraph and point command at the bundled
+  win32-x64 node.exe + codegraph.js entry (use ${USERPROFILE} / Hermes
+  home expansion in YOUR config.yaml — never commit absolute machine paths):
+
+    npm --prefix "%USERPROFILE%\.hermes\mcp-servers\codegraph" install @colbymchenry/codegraph
+    # then set command/args to that tree's node.exe + ...\codegraph.js serve --mcp
+
+  MCP tool schemas refresh only at turn boundary / compaction /
+  `/reload-mcp` — do not mutate mid-turn. Start a new session after install.

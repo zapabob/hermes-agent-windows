@@ -22,6 +22,7 @@ import { test } from 'vitest'
 import {
   DEFAULT_PORT_ANNOUNCE_TIMEOUT_MS,
   MIN_PORT_ANNOUNCE_TIMEOUT_MS,
+  coerceAnnouncedPort,
   readDashboardReadyFile,
   resolvePortAnnounceTimeoutMs,
   waitForDashboardPort,
@@ -273,4 +274,14 @@ test('token is undefined when the ready line omits it (dashboard path)', async (
   const p = waitForDashboardPort(child, 1000)
   child.stdout.emit('data', 'HERMES_DASHBOARD_READY port=7777\n')
   assert.deepEqual(await p, { port: 7777, token: undefined })
+})
+
+test('coerceAnnouncedPort unwraps { port } and rejects object interpolation', () => {
+  assert.equal(coerceAnnouncedPort({ port: 59825 }), 59825)
+  assert.equal(coerceAnnouncedPort(9119), 9119)
+  assert.throws(() => coerceAnnouncedPort({ port: 0 }), /invalid port/)
+  assert.throws(() => coerceAnnouncedPort(null), /invalid port/)
+  // Guards the desktop boot bug: `http://127.0.0.1:${announcement}` → [object Object]
+  assert.notEqual(String({ port: 59825 }), '59825')
+  assert.equal(coerceAnnouncedPort({ port: 59825, token: 'x' }), 59825)
 })

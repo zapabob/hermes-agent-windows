@@ -8,8 +8,13 @@ source: https://github.com/takurot/egov-law-mcp
 
 transport:
   type: stdio
+  # egov-law-mcp 0.1.0 still uses the low-level Server `@list_tools` API.
+  # Pin mcp<2 so uvx does not pull a FastMCP-only SDK that raises
+  # AttributeError: 'Server' object has no attribute 'list_tools'.
   command: uvx
   args:
+    - --with
+    - mcp==1.9.4
     - egov-law-mcp==0.1.0
 
 auth:

@@ -5,7 +5,13 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 
-from tools.mcp_tool import MCPServerTask, _format_connect_error, _resolve_stdio_command, _MCP_AVAILABLE
+from tools.mcp_tool import (
+    MCPServerTask,
+    _format_connect_error,
+    _prefer_windows_exe,
+    _resolve_stdio_command,
+    _MCP_AVAILABLE,
+)
 
 # Ensure the mcp module symbols exist for patching even when the SDK isn't installed
 if not _MCP_AVAILABLE:
@@ -64,6 +70,22 @@ def test_resolve_stdio_command_falls_back_to_usr_local_bin():
     # /usr/local/bin must be prepended so npx's shebang (`/usr/bin/env node`)
     # can find node in the same directory.
     assert env["PATH"].split(os.pathsep)[0] == os.path.dirname(target)
+
+
+def test_prefer_windows_exe_swaps_cmd_shim_when_sibling_exists(tmp_path):
+    """Pure helper: platform is data — prefer sibling .exe over .cmd/.bat."""
+    cmd_shim = tmp_path / "uvx.cmd"
+    exe = tmp_path / "uvx.exe"
+    cmd_shim.write_text("@echo off\r\n", encoding="utf-8")
+    exe.write_bytes(b"MZ")
+
+    assert _prefer_windows_exe(str(cmd_shim), is_windows=True) == str(exe)
+    assert _prefer_windows_exe(str(cmd_shim), is_windows=False) == str(cmd_shim)
+
+    bat_only = tmp_path / "lonely.bat"
+    bat_only.write_text("@echo off\r\n", encoding="utf-8")
+    assert _prefer_windows_exe(str(bat_only), is_windows=True) == str(bat_only)
+    assert _prefer_windows_exe(str(exe), is_windows=True) == str(exe)
 
 
 # ---------------------------------------------------------------------------

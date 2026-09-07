@@ -70,7 +70,7 @@ import {
   shouldTrustHermesOverride,
   verifyHermesCli
 } from './backend-probes'
-import { waitForDashboardPortAnnouncement } from './backend-ready'
+import { waitForDashboardPortAnnouncement, coerceAnnouncedPort } from './backend-ready'
 import { isPidAliveWindows, waitForBackendRelease } from './backend-release-gate'
 import {
   isHostKeyChangedBootFailure,
@@ -12024,11 +12024,13 @@ async function spawnPoolBackend(profile, entry, opts: { forceLocal?: boolean; po
     }
   })
 
-  // Discover the ephemeral port the child bound to
-  const port = await Promise.race([
+  // Discover the ephemeral port the child bound to. Announcement is
+  // `{ port, token? }` — coerceAnnouncedPort rejects object-into-URL bugs.
+  const announced = (await Promise.race([
     waitForDashboardPortAnnouncement(child, { describeOutputTail: () => outputTail.describe(), readyFile }),
     startFailed
-  ])
+  ])) as { port: number; token?: string }
+  const port = coerceAnnouncedPort(announced, `Hermes backend for profile "${profile}"`)
 
   if (readyFile) {
     fs.unlink(readyFile, () => {})
@@ -12037,6 +12039,8 @@ async function spawnPoolBackend(profile, entry, opts: { forceLocal?: boolean; po
   entry.port = port
 
   const baseUrl = `http://127.0.0.1:${port}`
+  // Keep readiness probe public (pre-fix behavior). authMode is set on the
+  // returned connection descriptor below — do not change probe semantics here.
   await Promise.race([waitForHermes(baseUrl, token), startFailed])
   ready = true
 
@@ -12507,14 +12511,16 @@ async function startHermes() {
 
     await advanceBootProgress('backend.port', 'Waiting for Hermes backend to launch', 86)
 
-    // Discover the ephemeral port the child bound to
-    const port = await Promise.race([
+    // Discover the ephemeral port the child bound to. Announcement is
+    // `{ port, token? }` — coerceAnnouncedPort rejects object-into-URL bugs.
+    const announced = (await Promise.race([
       waitForDashboardPortAnnouncement(hermesProcess, {
         describeOutputTail: () => primaryOutputTail.describe(),
         readyFile
       }),
       backendStartFailed
-    ])
+    ])) as { port: number; token?: string }
+    const port = coerceAnnouncedPort(announced)
 
     if (readyFile) {
       fs.unlink(readyFile, () => {})
@@ -12522,6 +12528,8 @@ async function startHermes() {
 
     const baseUrl = `http://127.0.0.1:${port}`
     await advanceBootProgress('backend.wait', 'Waiting for Hermes backend to become ready', 90)
+    // Keep readiness probe public (pre-fix behavior). authMode is set on the
+    // returned connection descriptor below — do not change probe semantics here.
     await Promise.race([waitForHermes(baseUrl, token), backendStartFailed])
     backendReady = true
     backendStartFailure = null

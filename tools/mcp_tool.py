@@ -998,6 +998,29 @@ def _mcp_types():
     return _t
 
 
+def _prefer_windows_exe(command: str, *, is_windows: bool | None = None) -> str:
+    """Prefer a sibling ``.exe`` over ``.cmd``/``.bat`` shims on Windows.
+
+    PATHEXT often resolves bare names (``npx``, ``uvx``, package CLIs) to
+    batch shims. Those still work via CreateProcessW, but they briefly route
+    through ``cmd.exe`` and can flash a console under Desktop / windowless
+    parents. A real ``.exe`` next to the shim inherits ``CREATE_NO_WINDOW``
+    cleanly. No-op on POSIX, when the path is not a batch shim, or when no
+    sibling ``.exe`` exists.
+    """
+    if is_windows is None:
+        is_windows = sys.platform == "win32"
+    if not is_windows:
+        return command
+    suffix = os.path.splitext(command)[1].lower()
+    if suffix not in {".cmd", ".bat"}:
+        return command
+    exe_candidate = os.path.splitext(command)[0] + ".exe"
+    if os.path.isfile(exe_candidate):
+        return exe_candidate
+    return command
+
+
 def _resolve_stdio_command(command: str, env: dict) -> tuple[str, dict]:
     """Resolve a stdio MCP command against the exact subprocess environment.
 
@@ -1058,6 +1081,8 @@ def _resolve_stdio_command(command: str, env: dict) -> tuple[str, dict]:
                 if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
                     resolved_command = candidate
                     break
+
+    resolved_command = _prefer_windows_exe(resolved_command)
 
     command_dir = os.path.dirname(resolved_command)
     if command_dir:

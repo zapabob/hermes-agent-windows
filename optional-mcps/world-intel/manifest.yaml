@@ -1,0 +1,71 @@
+# Nous-approved MCP catalog entry.
+# World Intel — local stdio OSINT surface (113 tools; curated default_enabled).
+manifest_version: 1
+
+name: world-intel
+description: Real-time global intelligence MCP (markets, cyber, news, posture).
+source: https://github.com/marc-shade/world-intel-mcp
+
+transport:
+  type: stdio
+  # Portable launch — no machine-local paths. uvx materializes the pinned
+  # commit into its cache and runs the console script on every host.
+  # Windows tip: prefer a resolved ``world-intel-mcp.exe`` (Hermes stdio
+  # resolution already swaps sibling ``.cmd`` → ``.exe`` when present).
+  command: uvx
+  args:
+    - --from
+    - git+https://github.com/marc-shade/world-intel-mcp.git@4528a6ed69f97ab93f91111ae814871bc1bc6a1a
+    - world-intel-mcp
+
+auth:
+  type: none
+
+# Full catalog is ~113 tools — keep prompt-cache prefixes small by default.
+# Users expand via `hermes mcp configure world-intel`.
+tools:
+  default_enabled:
+    - intel_status
+    - intel_world_brief
+    - intel_signal_summary
+    - intel_alert_digest
+    - intel_news_feed
+    - intel_risk_scores
+    - intel_country_brief
+    - intel_country_dossier
+    - intel_cyber_threats
+    - intel_focal_points
+    - intel_hotspot_escalation
+    - intel_collect
+    - intel_generate_report
+    - intel_weekly_trends
+    - intel_signal_convergence
+
+suggest:
+  keywords:
+    - world intel
+    - osint
+    - geopolitics
+  hosts:
+    - github.com
+
+post_install: |
+  World Intel is a heavy stdio MCP. Prefer:
+
+    mcp_servers:
+      world-intel:
+        lazy: true
+
+  Lazy mode advertises tools from the schema cache without spawning until
+  first use — keeps prompt-cache prefixes stable and avoids Windows console
+  flash from unused servers. MCP refresh still only happens at turn
+  boundary / compaction / explicit `/reload-mcp`.
+
+  Optional API tokens (ACLED, FRED, …) go in ~/.hermes/.env only.
+
+  Local venv alternative (Windows):
+    py -3 -m venv %USERPROFILE%\.hermes\mcp-servers\world-intel-mcp\.venv
+    %USERPROFILE%\.hermes\mcp-servers\world-intel-mcp\.venv\Scripts\pip install git+https://github.com/marc-shade/world-intel-mcp.git@4528a6ed69f97ab93f91111ae814871bc1bc6a1a
+    hermes mcp add world-intel --command "%USERPROFILE%\.hermes\mcp-servers\world-intel-mcp\.venv\Scripts\world-intel-mcp.exe"
+
+  Start a new Hermes session (or `/reload-mcp`) to load tools.

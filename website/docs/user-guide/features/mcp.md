@@ -383,6 +383,7 @@ Hermes reads MCP config from `~/.hermes/config.yaml` under `mcp_servers`.
 | `connect_timeout` | number | Initial connection timeout (also bounds the MCP `initialize` handshake) |
 | `idle_timeout_seconds` | number | Recycle a stdio server after this many seconds without a tool call (`0` = never, default). The server restarts transparently on the next tool call. |
 | `max_lifetime_seconds` | number | Recycle a stdio server after this total age (`0` = never, default). Restarts transparently on next use. |
+| `lazy` | bool | If `true`, advertise tools from the schema cache and connect only on first use (default `false`). Prefer for heavy stdio servers. |
 | `enabled` | bool | If `false`, Hermes skips the server entirely |
 | `supports_parallel_tool_calls` | bool | If `true`, tools from this server may run concurrently |
 | `tools` | mapping | Per-server tool filtering and utility policy |
@@ -395,6 +396,28 @@ mcp_servers:
     command: "npx"
     args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
 ```
+
+### Lazy start for heavy stdio servers
+
+Large local MCPs (OSINT catalogs, codegraph, browser stacks) can delay
+process spawn until the first tool call while still advertising schemas
+from the on-disk cache:
+
+```yaml
+mcp_servers:
+  world-intel:
+    command: "uvx"
+    args:
+      - "--from"
+      - "git+https://github.com/marc-shade/world-intel-mcp.git@4528a6ed69f97ab93f91111ae814871bc1bc6a1a"
+      - "world-intel-mcp"
+    lazy: true
+```
+
+Lazy mode does **not** mutate the live toolset mid-turn. Cache-sensitive
+refresh still happens only at turn boundary, context compaction, or an
+explicit `/reload-mcp`. Pair with `tools.include` / catalog
+`default_enabled` so the advertised surface stays small.
 
 ### Recycling memory-heavy stdio servers
 
