@@ -284,3 +284,4 @@ native/fts5_cjk/*.so
 /.runtime/
 /_runtime/
 /dependabot_raw.json
+/mcp-installs/

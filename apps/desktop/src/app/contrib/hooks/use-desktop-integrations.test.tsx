@@ -1,8 +1,9 @@
-﻿import { renderHook } from '@testing-library/react'
+import { renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { requestMcpInstallFromDeepLink } from '@/store/mcp-deeplink-install'
 import { openBrowserTab, openPreview } from '@/store/preview'
+import type * as PreviewStore from '@/store/preview'
 import { _resetLegacyDiscardForTests } from '@/store/session'
 import type * as WindowsStore from '@/store/windows'
 import type { SessionInfo } from '@/types/hermes'
@@ -24,26 +25,46 @@ const { hudWindowMock } = vi.hoisted(() => ({ hudWindowMock: vi.fn(() => false) 
 vi.mock('@icons-pack/react-simple-icons', () => {
   const icon = () => null
   const target: Record<string, unknown> = { __esModule: true }
+
   return new Proxy(target, {
     get(t, prop) {
-      if (prop === '__esModule') return true
-      if (prop === 'then') return undefined
-      if (typeof prop === 'string' && prop.endsWith('Hex')) return '#000000'
+      if (prop === '__esModule') {
+        return true
+      }
+
+      if (prop === 'then') {
+        return undefined
+      }
+
+      if (typeof prop === 'string' && prop.endsWith('Hex')) {
+        return '#000000'
+      }
+
       if (typeof prop === 'string') {
-        if (!(prop in t)) t[prop] = icon
+        if (!(prop in t)) {
+          t[prop] = icon
+        }
+
         return t[prop]
       }
+
       return undefined
     },
     has: () => true,
     getOwnPropertyDescriptor(t, prop) {
-      if (typeof prop !== 'string') return undefined
-      if (!(prop in t)) t[prop] = prop === '__esModule' ? true : icon
+      if (typeof prop !== 'string') {
+        return undefined
+      }
+
+      if (!(prop in t)) {
+        t[prop] = prop === '__esModule' ? true : icon
+      }
+
       return { configurable: true, enumerable: true, writable: true, value: t[prop] }
     },
     ownKeys(t) {
       return Reflect.ownKeys(t)
-    },
+    }
   })
 })
 
@@ -52,7 +73,7 @@ vi.mock('@/store/mcp-deeplink-install', () => ({
 }))
 
 vi.mock('@/store/preview', async importOriginal => {
-  const actual = await importOriginal<typeof import('@/store/preview')>()
+  const actual = await importOriginal<typeof PreviewStore>()
 
   return {
     ...actual,

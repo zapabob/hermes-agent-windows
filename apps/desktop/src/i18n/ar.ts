@@ -20,8 +20,7 @@ export const ar = defineLocale({
     nousDoneTitle: 'تم إرسال التشخيصات إلى Nous',
     nousDoneDescription: 'رُفعت الحزمة بشكل خاص إلى التخزين الداخلي لدى Nous. شارك الرابط أدناه في محادثة الدعم.',
     failedTitle: 'فشل التشخيص',
-    failedHint:
-      'أعد محاولة التصدير المحلي، أو شغّل `hermes debug share --local` من الطرفية. رفع Nous يظل اختيارياً.',
+    failedHint: 'أعد محاولة التصدير المحلي، أو شغّل `hermes debug share --local` من الطرفية. رفع Nous يظل اختيارياً.',
     handoffLead: 'تابع النقاش في:',
     links: {
       github: 'GitHub Issues',

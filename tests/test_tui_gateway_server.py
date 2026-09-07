@@ -19601,7 +19601,7 @@ def test_prompt_submit_releases_old_history_before_heap_trim(monkeypatch):
 
     class _Agent:
         def run_conversation(
-            self, prompt, conversation_history=None, stream_callback=None
+            self, prompt, conversation_history=None, stream_callback=None, **_kwargs
         ):
             return {
                 "final_response": "reply",

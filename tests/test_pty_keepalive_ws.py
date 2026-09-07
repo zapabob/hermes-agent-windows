@@ -15,6 +15,7 @@ class FakeBridge:
 
     def write(self, data):
         self.written.extend(data)
+        return True
 
     def resize(self, cols, rows):
         pass

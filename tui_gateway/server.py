@@ -2354,8 +2354,12 @@ def _response_profile_name(profile: str | None = None) -> str:
     otherwise the process launch profile.
     """
     name = (profile or "").strip()
-    if name and _profile_home(name) is not None:
-        return name
+    if name:
+        try:
+            if _profile_home(name) is not None:
+                return name
+        except FileNotFoundError:
+            return name
     return _current_profile_name()
 
 
@@ -12150,6 +12154,42 @@ def _start_notification_poller(sid: str, session: dict) -> threading.Event:
     _notification_pollers.append((stop, t))
     t.start()
     return stop
+
+
+def _pending_reaction_notes(session: dict) -> str:
+    """Note block describing reactions the user added since the last turn, or "".
+
+    Applied to the MODEL INPUT only (``run_message``, beside the
+    speech-interrupted note) — never to the text that gets persisted. Prefixing
+    the persisted prompt bakes scaffolding into the transcript. Each reaction is
+    announced once — the row is stamped ``seen`` on read.
+    """
+    session_key = str(session.get("session_key") or "")
+    if not session_key:
+        return ""
+
+    try:
+        display = _load_cfg().get("display")
+        if not (isinstance(display, dict) and bool(display.get("message_reactions", False))):
+            return ""
+    except Exception:
+        return ""
+
+    try:
+        with _session_db(session) as db:
+            if db is None:
+                return ""
+            pending = db.take_unseen_reactions(session_key, author="user")
+    except Exception:
+        logger.debug("Failed to read pending reactions", exc_info=True)
+        return ""
+
+    if not pending:
+        return ""
+
+    from agent.prompt_builder import pending_reactions_note
+
+    return pending_reactions_note(pending)
 
 
 def _hud_surface_note(session: dict) -> str:

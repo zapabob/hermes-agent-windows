@@ -4,8 +4,8 @@ import { KEYBIND_ACTIONS } from '@/lib/keybinds/actions'
 import {
   COMMAND_PALETTE_DEFAULT_COMBOS,
   commandPaletteDefaultsIncludeCtrlP,
-  dangerousPaletteAuthorityAllowed,
   DANGEROUS_PALETTE_ACTION_IDS,
+  dangerousPaletteAuthorityAllowed,
   isDangerousPaletteActionId,
   paletteSelectIsNotHostExec
 } from '@/lib/palette-security'
@@ -15,6 +15,7 @@ describe('palette-security (Ctrl+P / dangerous-action)', () => {
     const meta = KEYBIND_ACTIONS.find(a => a.id === 'nav.commandPalette')
     expect(meta).toBeTruthy()
     expect(commandPaletteDefaultsIncludeCtrlP(meta!.defaults)).toBe(true)
+
     for (const combo of COMMAND_PALETTE_DEFAULT_COMBOS) {
       expect(meta!.defaults).toContain(combo)
     }

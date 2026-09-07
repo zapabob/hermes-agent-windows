@@ -38,15 +38,19 @@ test('normal Desktop quit persists until the same installation is explicitly lau
 
 test('Desktop quit waits for the exact watchdog maintenance acknowledgement', async () => {
   const { root, filePath } = temporaryFence()
+
   const result = writeDesktopStopFence({
     filePath,
     repoRoot: path.join(root, 'repo'),
     now: new Date('2026-09-06T01:00:00.000Z')
   })
+
   assert.equal(result.written, true)
+
   if (!result.written) {
     throw new Error('expected a new Desktop stop fence')
   }
+
   fs.writeFileSync(path.join(root, 'watchdog.lock'), JSON.stringify({ pid: 4242 }), 'utf8')
   fs.writeFileSync(
     path.join(root, 'watchdog.state.json'),
@@ -73,15 +77,19 @@ test('Desktop quit waits for the exact watchdog maintenance acknowledgement', as
 
 test('Desktop quit remains cancelled when a live watchdog has not acknowledged the fence', async () => {
   const { root, filePath } = temporaryFence()
+
   const result = writeDesktopStopFence({
     filePath,
     repoRoot: path.join(root, 'repo'),
     now: new Date('2026-09-06T01:00:00.000Z')
   })
+
   assert.equal(result.written, true)
+
   if (!result.written) {
     throw new Error('expected a new Desktop stop fence')
   }
+
   fs.writeFileSync(path.join(root, 'watchdog.lock'), JSON.stringify({ pid: 4242 }), 'utf8')
 
   assert.equal(
@@ -97,6 +105,7 @@ test('Desktop quit remains cancelled when a live watchdog has not acknowledged t
 
 test('normal Desktop quit never overwrites a live updater fence', () => {
   const { root, filePath } = temporaryFence()
+
   const update = {
     state: 'UPDATE',
     owner: 'hermes-update:42',

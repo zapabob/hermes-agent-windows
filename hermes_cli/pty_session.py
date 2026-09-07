@@ -9,6 +9,7 @@ docs/superpowers/specs/2026-06-20-pty-keepalive-reattach-design.md.
 from __future__ import annotations
 
 import asyncio
+import inspect
 import time
 from typing import Callable, Dict, Optional, Tuple
 
@@ -90,7 +91,11 @@ class PtySession:
             if self._ws is not ws:
                 return True
             generation = self._attach_generation
-            delivered = await self.bridge.write(data)
+            res = self.bridge.write(data)
+            if inspect.isawaitable(res):
+                delivered = await res
+            else:
+                delivered = True if res is None else bool(res)
             # A replacement socket can attach while the bridge write is
             # suspended on backpressure. A late failure from the superseded
             # socket must not poison the replacement's shared PTY session.

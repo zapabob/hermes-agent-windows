@@ -18,10 +18,7 @@ export const COMMAND_PALETTE_DEFAULT_COMBOS = ['mod+k', 'mod+p'] as const
  * Palette action ids that change security posture or restart processes.
  * They remain allowed as discovery doors onto *existing* authorities only.
  */
-export const DANGEROUS_PALETTE_ACTION_IDS = [
-  'session.yolo',
-  'cc-restart-gateway'
-] as const
+export const DANGEROUS_PALETTE_ACTION_IDS = ['session.yolo', 'cc-restart-gateway'] as const
 
 export type DangerousPaletteActionId = (typeof DANGEROUS_PALETTE_ACTION_IDS)[number]
 
@@ -40,15 +37,14 @@ export function isDangerousPaletteActionId(id: string): boolean {
  * Desktop palette items navigate, toggle stores, or RPC through existing
  * gateways — they must never invent a palette-local subprocess.
  */
-export function paletteSelectIsNotHostExec(kind: 'navigate' | 'toggle' | 'rpc' | 'run' | 'unavailable' | 'exec'): boolean {
+export function paletteSelectIsNotHostExec(
+  kind: 'navigate' | 'toggle' | 'rpc' | 'run' | 'unavailable' | 'exec'
+): boolean {
   return kind !== 'exec'
 }
 
 /** Allowed authority labels for dangerous palette actions. */
-export const DANGEROUS_PALETTE_ALLOWED_AUTHORITIES = [
-  'setYoloEnabled',
-  'runGatewayRestart'
-] as const
+export const DANGEROUS_PALETTE_ALLOWED_AUTHORITIES = ['setYoloEnabled', 'runGatewayRestart'] as const
 
 export function dangerousPaletteAuthorityAllowed(authority: string): boolean {
   return (DANGEROUS_PALETTE_ALLOWED_AUTHORITIES as readonly string[]).includes(authority)

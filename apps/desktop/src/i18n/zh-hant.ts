@@ -226,8 +226,7 @@ export const zhHant = defineLocale({
     nousDoneTitle: '診斷資訊已傳送到 Nous',
     nousDoneDescription: '偵錯套件已私密上傳到 Nous 內部儲存。在支援討論串中分享以下連結即可。',
     failedTitle: '診斷處理失敗',
-    failedHint:
-      '請重試「匯出到本機」，或在終端機執行 `hermes debug share --local`。上傳到 Nous 仍為選用項目。',
+    failedHint: '請重試「匯出到本機」，或在終端機執行 `hermes debug share --local`。上傳到 Nous 仍為選用項目。',
     handoffLead: '在以下位置繼續討論:',
     links: {
       github: 'GitHub Issues',

@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  buildBrowserOpenDeepLink,
-  normalizeBrowserOpenUrl,
-  resolveBrowserOpenDeepLink
-} from './browser-deeplink'
+import { buildBrowserOpenDeepLink, normalizeBrowserOpenUrl, resolveBrowserOpenDeepLink } from './browser-deeplink'
 import { resolveDeepLinkAction } from './deeplink-routes'
 
 describe('browser-deeplink', () => {

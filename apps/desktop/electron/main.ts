@@ -70,7 +70,7 @@ import {
   shouldTrustHermesOverride,
   verifyHermesCli
 } from './backend-probes'
-import { waitForDashboardPortAnnouncement, coerceAnnouncedPort } from './backend-ready'
+import { coerceAnnouncedPort, waitForDashboardPortAnnouncement } from './backend-ready'
 import { isPidAliveWindows, waitForBackendRelease } from './backend-release-gate'
 import {
   isHostKeyChangedBootFailure,
@@ -3433,6 +3433,7 @@ function releaseBackendChild(child) {
 
   try {
     backendOwnership.release(identity)
+
     if (managedBackendChildren.get(identity.pid) === child) {
       managedBackendChildren.delete(identity.pid)
     }
@@ -3544,11 +3545,13 @@ async function releaseBackendLock(updateRoot, tag) {
       },
       stopManagedChild: pid => {
         const current = backendConnectionState.getProcess()
+
         if (current?.pid === pid) {
           stopBackendChild(current)
 
           return
         }
+
         for (const entry of backendPool.values()) {
           if (entry.process?.pid === pid) {
             stopBackendChild(entry.process)
@@ -12030,6 +12033,7 @@ async function spawnPoolBackend(profile, entry, opts: { forceLocal?: boolean; po
     waitForDashboardPortAnnouncement(child, { describeOutputTail: () => outputTail.describe(), readyFile }),
     startFailed
   ])) as { port: number; token?: string }
+
   const port = coerceAnnouncedPort(announced, `Hermes backend for profile "${profile}"`)
 
   if (readyFile) {
@@ -12520,6 +12524,7 @@ async function startHermes() {
       }),
       backendStartFailed
     ])) as { port: number; token?: string }
+
     const port = coerceAnnouncedPort(announced)
 
     if (readyFile) {
@@ -17528,16 +17533,19 @@ app.on('before-quit', event => {
           filePath,
           repoRoot: ACTIVE_HERMES_ROOT
         })
+
         desktopStopFenceAckWait = (result.preserved
           ? Promise.resolve(true)
           : waitForDesktopStopFenceAck({ filePath, fence: result.fence })
         ).then(acknowledged => {
           desktopStopFenceAckWait = null
+
           if (!acknowledged) {
             rememberLog('[watchdog] intentional Desktop stop was not acknowledged; quit remains cancelled')
 
             return
           }
+
           desktopStopFenceAckDone = true
           app.quit()
         })

@@ -52,6 +52,7 @@ function passiveGitEnvironment(base = {}, nullDevice = '/dev/null', isolatedHome
     'TMPDIR',
     'WINDIR'
   ])
+
   const env = {}
 
   for (const [key, value] of Object.entries(base)) {
@@ -152,6 +153,7 @@ function resolvePassiveUpdateRemote(url) {
   }
 
   const httpAuthority = /^https?:\/\/([^/?#]*)/i.exec(value)
+
   if (httpAuthority?.[1].includes('@')) {
     return null
   }

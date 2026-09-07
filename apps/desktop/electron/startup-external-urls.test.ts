@@ -13,6 +13,7 @@ function makeHermesHome(): string {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-startup-urls-'))
 
   tempRoots.push(root)
+
   return root
 }
 

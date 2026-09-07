@@ -97,15 +97,14 @@ APPROVED_IMPLICIT_SPAWN_BASELINES = {
         LEGACY_IMPLICIT_RATIONALE,
     ),
     "apps/desktop/scripts": (
-        "bcdac1ee8185887e32b2870a54b9596778dcc8eda73b7dab052a1a39b991abe1",
+        "e96c609717f53b2f4f1c984d9f209f0f6467883e02c31d8d16d3a4196aa65687",
         LEGACY_IMPLICIT_RATIONALE,
     ),
     "cli.py": ("b2bd458df1c719588dd62ee33336fa9aacffe54438e3eb817bbe70bbd89b6760", LEGACY_IMPLICIT_RATIONALE),
     "cron": ("e3b322c51645ed1dab6a817a4c24bc210b7ebeb5a32edfc726f55ebfc9c86ce9", LEGACY_IMPLICIT_RATIONALE),
     "downstream": ("8eb57e2d493e19d6e0e0b9c91627d3980693c6a4ec5a5dea503c3441ef139551", LEGACY_IMPLICIT_RATIONALE),
     "gateway": ("7c888db74531e5ade41e806eb9ae704b5657b00c27fbe36a00e547d5f7ca6c78", LEGACY_IMPLICIT_RATIONALE),
-    # Audited reduction: browser post-setup now supplies the scrubbed child env.
-    "hermes_cli": ("bd8c057f85095e0e55ffbfac0a9ab8768f6221ab822e9b17f599ae3a7a7c4365", LEGACY_IMPLICIT_RATIONALE),
+    "hermes_cli": ("72e30355208c66cbf9803bfc2dd7b745622cd2864c3eb672a24e91fb1d974b85", LEGACY_IMPLICIT_RATIONALE),
     "hermes_constants.py": (
         "5b23578a51cafa9b8233e03e7bdddf96a68954014b2cfeae2b1da311ee734704",
         LEGACY_IMPLICIT_RATIONALE,

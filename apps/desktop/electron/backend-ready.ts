@@ -230,9 +230,9 @@ function coerceAnnouncedPort(
 }
 
 export {
+  coerceAnnouncedPort,
   DEFAULT_PORT_ANNOUNCE_TIMEOUT_MS,
   MIN_PORT_ANNOUNCE_TIMEOUT_MS,
-  coerceAnnouncedPort,
   readDashboardReadyFile,
   resolvePortAnnounceTimeoutMs,
   waitForDashboardPort,

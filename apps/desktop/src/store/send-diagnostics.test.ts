@@ -95,6 +95,7 @@ describe('send-diagnostics store (local-first)', () => {
       path: '/tmp/Hermes-Diagnostics-20260908-120000.zip',
       filename: 'Hermes-Diagnostics-20260908-120000.zip'
     })
+
     const restoreGateway = stubGateway(request)
     const restoreDesktop = stubDesktopLogs(null)
 
@@ -115,6 +116,7 @@ describe('send-diagnostics store (local-first)', () => {
       view_url: 'https://nas.example/view/x1',
       upload_id: 'x1'
     })
+
     const restoreGateway = stubGateway(request)
     const restoreDesktop = stubDesktopLogs(null)
 

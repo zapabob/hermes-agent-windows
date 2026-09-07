@@ -81,9 +81,10 @@ export function releaseInstallScopedDesktopLocks(appOutDir, deps = {}) {
     return []
   }
 
+  const platformPath = platform === 'win32' ? path.win32 : path.posix
   let releaseRoot
   try {
-    releaseRoot = path.resolve(path.dirname(appOutDir))
+    releaseRoot = platformPath.resolve(platformPath.dirname(appOutDir))
   } catch {
     return []
   }

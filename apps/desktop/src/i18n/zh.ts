@@ -226,8 +226,7 @@ export const zh: Translations = {
     nousDoneTitle: '诊断信息已发送到 Nous',
     nousDoneDescription: '调试包已私密上传到 Nous 内部存储。在支持会话中分享以下链接即可。',
     failedTitle: '诊断处理失败',
-    failedHint:
-      '请重试「导出到本地」，或在终端运行 `hermes debug share --local`。上传到 Nous 仍为可选项。',
+    failedHint: '请重试「导出到本地」，或在终端运行 `hermes debug share --local`。上传到 Nous 仍为可选项。',
     handoffLead: '在以下位置继续讨论:',
     links: {
       github: 'GitHub Issues',

@@ -115,11 +115,7 @@ export async function confirmExportLocalDiagnostics(): Promise<void> {
       return
     }
 
-    const response = await gateway.request<ExportLocalResponse>(
-      'diagnostics.export_local',
-      params,
-      ACTION_TIMEOUT_MS
-    )
+    const response = await gateway.request<ExportLocalResponse>('diagnostics.export_local', params, ACTION_TIMEOUT_MS)
 
     if (!stillCurrent(startedGeneration)) {
       return
@@ -181,11 +177,7 @@ export async function confirmUploadNousDiagnostics(): Promise<void> {
       return
     }
 
-    const response = await gateway.request<ShareNousResponse>(
-      'diagnostics.share_nous',
-      params,
-      ACTION_TIMEOUT_MS
-    )
+    const response = await gateway.request<ShareNousResponse>('diagnostics.share_nous', params, ACTION_TIMEOUT_MS)
 
     if (!stillCurrent(startedGeneration)) {
       return

@@ -232,9 +232,10 @@ export function isWindowsVenvHermesExeShim(
     return false
   }
 
-  const basename = opts.basename ?? path.basename
-  const dirname = opts.dirname ?? path.dirname
-  const resolvePath = opts.resolvePath ?? path.resolve
+  const platformPath = isWindows ? path.win32 : path.posix
+  const basename = opts.basename ?? platformPath.basename
+  const dirname = opts.dirname ?? platformPath.dirname
+  const resolvePath = opts.resolvePath ?? platformPath.resolve
   const resolved = resolvePath(String(command))
 
   if (!/^hermes(?:\.exe)?$/i.test(basename(resolved))) {

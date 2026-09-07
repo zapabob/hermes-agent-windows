@@ -58,11 +58,16 @@ export function normalizeBrowserOpenUrl(raw: string | null | undefined): string 
  * Resolve an `open/browser` deep-link payload.
  * Returns null when the payload is not the browser-open contract.
  */
-export function resolveBrowserOpenDeepLink(payload: {
-  kind?: string
-  name?: string
-  params?: Record<string, string>
-} | null | undefined): BrowserOpenDeepLink | null {
+export function resolveBrowserOpenDeepLink(
+  payload:
+    | {
+        kind?: string
+        name?: string
+        params?: Record<string, string>
+      }
+    | null
+    | undefined
+): BrowserOpenDeepLink | null {
   if (!payload || payload.kind !== 'open') {
     return null
   }
