@@ -4701,8 +4701,17 @@ def _build_job_prompt(
             has_injected_data = True
 
     # Inject output from referenced cron jobs as context.
+    # Continuity / context_from payloads are historical untrusted data:
+    # force-redacted, size-bounded, control-normalized, and never auto-
+    # promoted into Semantic Graph / Ebbinghaus memory (see continuity_sanitize).
+    # CodeGraph: impact(_build_job_prompt) ≈ 32 symbols — keep sanitizer
+    # focused in cron/continuity_sanitize.py; do not widen this facade.
     context_from = job.get("context_from")
     if context_from:
+        from cron.continuity_sanitize import (
+            format_continuity_section,
+            load_sanitized_job_output,
+        )
         from cron.jobs import get_cron_output_dir
         output_dir = get_cron_output_dir()
         if isinstance(context_from, str):
@@ -4729,43 +4738,17 @@ def _build_job_prompt(
                 )
                 continue
             try:
-                job_output_dir = output_dir / source_job_id
-                if not job_output_dir.exists():
-                    continue  # silent skip — no output yet
-                output_files = sorted(
-                    job_output_dir.glob("*.md"),
-                    key=lambda f: f.stat().st_mtime,
-                    reverse=True,
+                latest_output = load_sanitized_job_output(output_dir, source_job_id)
+                if not latest_output:
+                    continue  # silent skip — missing/empty after sanitize
+                section = format_continuity_section(
+                    latest_output,
+                    is_self=is_self,
+                    source_job_id=source_job_id,
                 )
-                if not output_files:
-                    continue  # silent skip — no output yet
-                latest_output = output_files[0].read_text(encoding="utf-8").strip()
-                # Truncate to 8K characters to avoid prompt bloat
-                _MAX_CONTEXT_CHARS = 8000
-                if len(latest_output) > _MAX_CONTEXT_CHARS:
-                    latest_output = latest_output[:_MAX_CONTEXT_CHARS] + "\n\n[... output truncated ...]"
-                if latest_output:
-                    if is_self:
-                        prompt = (
-                            "## Your previous run's output\n"
-                            "The following is this job's most recent output from its "
-                            "previous run. Use it for continuity: avoid repeating what "
-                            "was already reported, and continue where the last run "
-                            "left off.\n\n"
-                            f"```\n{latest_output}\n```\n\n"
-                            f"{prompt}"
-                        )
-                    else:
-                        prompt = (
-                            f"## Output from job '{source_job_id}'\n"
-                            "The following is the most recent output from a preceding "
-                            "cron job. Use it as context for your analysis.\n\n"
-                            f"```\n{latest_output}\n```\n\n"
-                            f"{prompt}"
-                        )
+                if section:
+                    prompt = f"{section}{prompt}"
                     has_injected_data = True
-                else:
-                    continue  # silent skip — empty output
             except (OSError, PermissionError) as e:
                 logger.warning("context_from: failed to read output for job %r: %s", source_job_id, e)
                 # silent skip — do not pollute the prompt with error messages

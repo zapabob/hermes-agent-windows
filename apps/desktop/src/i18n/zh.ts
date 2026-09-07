@@ -208,20 +208,26 @@ export const zh: Translations = {
   },
 
   sendDiagnostics: {
-    title: '向 Nous 发送诊断信息',
+    title: '导出诊断信息',
     privacyNotice:
-      '这会将调试包上传到 Nous 内部存储（并非公开粘贴板）。内容包括系统信息（操作系统、版本、服务商、已配置的 API 密钥种类 — 绝不包含密钥本身）以及完整的 agent、gateway 和桌面端日志（每个最多 512 KB，很可能包含对话内容、工具输出与文件路径）。上传前会先脱敏。仅 Nous 员工与获准的 Discord 版主可查看，14 天后自动删除。',
-    upload: '上传',
+      '默认操作是将已脱敏的 ZIP 写入本机（不联网）。内容包括系统信息（操作系统、版本、服务商名称 — 绝不包含 API 密钥）以及已脱敏的 agent、gateway 与桌面端日志。脱敏强制启用，无法关闭。如需官方支持，可另行点击上传到 Nous 内部存储；该路径不是默认操作。',
+    upload: '导出到本地',
+    exportLocal: '导出到本地',
+    exporting: '正在导出…',
+    uploadNous: '上传到 Nous…',
     uploading: '上传中…',
     cancel: '取消',
     close: '关闭',
     copyLink: '复制链接',
+    copyPath: '复制路径',
     uploadIdFallback: id => `未返回查看链接 — 请向支持人员提供上传 ID ${id}`,
-    doneTitle: '诊断信息已发送',
-    doneDescription: '调试包已私密上传。在您的支持会话中分享以下链接，团队即可查看您的日志。',
-    failedTitle: '上传失败',
+    doneTitle: '诊断信息已导出',
+    doneDescription: '已在本地写入脱敏 ZIP。如需支持，可将其附加到 GitHub Issue 或支持会话。',
+    nousDoneTitle: '诊断信息已发送到 Nous',
+    nousDoneDescription: '调试包已私密上传到 Nous 内部存储。在支持会话中分享以下链接即可。',
+    failedTitle: '诊断处理失败',
     failedHint:
-      '您也可以在终端运行 `hermes debug share --nous`，或运行 `hermes debug share --local` 在不上传的情况下查看报告。',
+      '请重试「导出到本地」，或在终端运行 `hermes debug share --local`。上传到 Nous 仍为可选项。',
     handoffLead: '在以下位置继续讨论:',
     links: {
       github: 'GitHub Issues',

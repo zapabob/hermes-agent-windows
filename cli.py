@@ -11438,11 +11438,12 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
 
     def _open_command_palette(self) -> None:
         """Open the Ctrl+P fuzzy command palette modal."""
-        if getattr(self, "_command_palette_state", None):
-            return
-        # Don't stack over other modals.
-        if (self._model_picker_state or self._clarify_state or self._approval_state
-                or self._slash_confirm_state or self._sudo_state or self._secret_state):
+        from hermes_cli.command_palette_security import (
+            cli_modal_flags_from_instance,
+            palette_may_open,
+        )
+
+        if not palette_may_open(**cli_modal_flags_from_instance(self)):
             return
         self._capture_modal_input_snapshot()
         self._command_palette_state = {
@@ -11505,6 +11506,8 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
 
     def _handle_command_palette_selection(self) -> None:
         """Insert the selected command into the composer (does not auto-run)."""
+        from hermes_cli.command_palette_security import format_palette_prefill
+
         state = self._command_palette_state
         if not state:
             return
@@ -11517,12 +11520,14 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         self._close_command_palette()
         # Prefill the composer so the user can add args / confirm — never
         # auto-execute (a palette pick should be explicit, and many commands
-        # take arguments).
+        # take arguments). Dangerous slashes still require a manual Enter and
+        # then the normal approval / YOLO gates. Selection mode is always
+        # prefill_only (hermes_cli.command_palette_security).
         try:
             app = getattr(self, "_app", None)
             if app is not None:
                 buf = app.current_buffer
-                buf.text = cmd + " "
+                buf.text = format_palette_prefill(cmd)
                 buf.cursor_position = len(buf.text)
                 self._invalidate(min_interval=0.0)
         except Exception:

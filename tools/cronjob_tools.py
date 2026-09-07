@@ -1070,9 +1070,11 @@ def _latest_job_output_excerpt(job_id: str, max_chars: int = 2000) -> Optional[s
 
     Included in the background-run completion block so the parent agent sees
     what the job actually produced without having to dig through
-    ``~/.hermes/cron/output/``. Never raises.
+    ``~/.hermes/cron/output/``. Never raises. Force-redacts via continuity
+    sanitizer (same boundary as prompt injection).
     """
     try:
+        from cron.continuity_sanitize import sanitize_continuity_text
         from cron.jobs import get_cron_output_dir
 
         out_dir = get_cron_output_dir() / job_id
@@ -1082,9 +1084,8 @@ def _latest_job_output_excerpt(job_id: str, max_chars: int = 2000) -> Optional[s
         text = files[-1].read_text(encoding="utf-8", errors="replace").strip()
         if not text:
             return None
-        if len(text) > max_chars:
-            text = text[:max_chars] + f"\n… (truncated; full output: {files[-1]})"
-        return text
+        text = sanitize_continuity_text(text, max_chars=max_chars)
+        return text or None
     except Exception:
         return None
 

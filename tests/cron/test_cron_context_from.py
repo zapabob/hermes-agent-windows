@@ -76,7 +76,9 @@ class TestBuildJobPromptContextFrom:
 
         prompt = _build_job_prompt(job_b)
         assert "Today's top story: AI is everywhere." in prompt
-        assert f"Output from job '{job_a['id']}'" in prompt
+        assert "UNTRUSTED historical cron output" in prompt
+        assert f"job '{job_a['id']}'" in prompt
+        assert f"Output from job '{job_a['id']}'" not in prompt
 
     def test_uses_most_recent_output(self, cron_env):
         from cron.jobs import create_job, OUTPUT_DIR
@@ -241,8 +243,11 @@ class TestSelfContext:
         prompt = _build_job_prompt(job)
         assert "Reported: story A, story B" in prompt
         assert "previous run" in prompt.lower()
+        assert "UNTRUSTED historical cron output" in prompt
+        assert "this job" in prompt.lower()
         # Self-context uses continuity framing, not the upstream-job framing.
         assert f"Output from job '{job['id']}'" not in prompt
+        assert f"job '{job['id']}'" not in prompt
 
     def test_self_case_insensitive(self, cron_env):
         from cron.jobs import create_job, OUTPUT_DIR

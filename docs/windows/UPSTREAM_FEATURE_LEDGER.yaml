@@ -1,0 +1,333 @@
+# Parallel Upstream Feature Adoption — Feature Ledger
+# Campaign §§38–67. Status from CodeGraph probe 2026-09-08.
+# Companion lockfile: UPSTREAM_PARALLEL_OWNERSHIP.yaml
+#
+# Verdict legend:
+#   ALREADY_EQUIVALENT         — present; gap-fill only
+#   ALREADY_EQUIVALENT_HARDEN  — present; security/review harden
+#   COMPOSE_HARDEN             — compose through existing owner + harden
+#   HARDEN                     — real gap vs Windows Edition policy
+#   PORT                       — missing observable contract
+#   COMPARE_EXISTING           — downstream equivalent needs feature matrix
+#   BLOCKED                    — wait for TRACK A / security suite
+#
+# Implementation priority (operator lock):
+#   manifest/ledger → local diagnostics → cron harden → CLI palette
+
+version: 1
+updated: "2026-09-08"
+downstream_base_sha: "37aade8afb6ff944dfbe1b6ee32485b1b1c71e3e"
+codegraph_probe: "2026-09-08"
+
+features:
+  command-palette:
+    id: command-palette
+    upstream_status: available
+    downstream_status: gap_filled
+    priority: P0
+    track: ux-cli-cron
+    conflict_risk: low
+    security_policy: compose
+    verdict: ALREADY_EQUIVALENT
+    parallel_edit: true
+    codegraph:
+      query: command-palette / Ctrl+P / toggleCommandPalette
+      symbols:
+        - apps/desktop/src/app/command-palette/index.tsx::CommandPalette
+        - apps/desktop/src/store/command-palette.ts::$commandPaletteOpen
+        - apps/desktop/src/lib/keybinds/actions.ts::nav.commandPalette
+        - hermes_cli/command_palette_security.py
+        - cli.py::_open_command_palette
+      explore: command palette Ctrl+P slash commands
+      impact_symbols_observed:
+        toggleCommandPalette: 7
+      observed:
+        - "Desktop global palette exists (Cmd/Ctrl+K + Cmd/Ctrl+P)"
+        - "CLI Ctrl+P palette prefills only (select≠exec)"
+        - "surfaces: action | picker | rpc | exec | unavailable"
+        - "not a new execution authority — discovery → existing dispatcher"
+    owner: hermes_cli.command_palette_security + apps/desktop/src/lib/palette-security.ts
+    impact_radius: low
+    gap: []
+    gap_closed:
+      - cli-palette
+      - ctrl-p
+      - dangerous-action-security-contract
+    implement_order: 3
+    notes: |
+      Gap-fill 2026-09-08. Desktop defaults already include mod+p; contracts
+      locked in palette-security + command_palette_security. Forbidden:
+      palette-specific subprocess / credential / approval bypass.
+
+  cron-continuity:
+    id: cron-continuity
+    upstream_status: available
+    downstream_status: hardened
+    priority: P0
+    track: ux-cli-cron
+    conflict_risk: low
+    security_policy: harden
+    verdict: COMPOSE_HARDEN
+    parallel_edit: true
+    codegraph:
+      query: continuity / context_from / _build_job_prompt
+      owner_symbol: cron.continuity_sanitize.sanitize_continuity_text
+      inject_symbol: cron.scheduler._build_job_prompt
+      sugar_symbol: tools.cronjob_tools._apply_continuity
+      path: cron/continuity_sanitize.py
+      impact_symbols_observed:
+        _build_job_prompt: 32
+        _apply_continuity: tool+UI sugar only
+        get_cron_output_dir: inject + excerpt paths
+      tests:
+        - tests/cron/test_continuity_sanitize.py
+        - tests/cron/test_cron_context_from.py
+    owner: cron.continuity_sanitize
+    impact_radius: 32
+    gap: []
+    gap_closed:
+      - secret-redaction
+      - profile-isolation
+      - untrusted-context-marking
+      - size-bound-and-control-char-normalization
+      - no-auto-enable-all-jobs
+      - no-memory-auto-promotion
+    implement_order: 2
+    notes: |
+      Hardened 2026-09-08 via CodeGraph survey on main index.
+      Continuity remains explicit opt-in (continuity / context_from=self).
+      Inject path force-redacts + UNTRUSTED framing; write-side sanitize on
+      save_job_output; excerpt path shares sanitizer. Never promotes to
+      Semantic Graph / Ebbinghaus. Do not conflate with gateway
+      build_channel_continuity_note (different seam).
+
+  help-status-ux:
+    id: help-status-ux
+    upstream_status: available
+    downstream_status: partial
+    priority: P0
+    track: ux-cli-cron
+    conflict_risk: low
+    security_policy: compose
+    verdict: COMPOSE_HARDEN
+    parallel_edit: true
+    codegraph:
+      related: gateway/slash_commands.py
+      note: "/status observability only — must not mutate runtime state"
+    gap:
+      - help-filtering
+      - help-skills
+      - model-fuzzy-filtering
+      - status-redact-endpoint-to-scheme-host
+    implement_order: 3
+    bundled_with: command-palette
+
+  mcp-deeplink:
+    id: mcp-deeplink
+    upstream_status: available
+    downstream_status: present
+    priority: P0
+    track: ux-mcp-diagnostics
+    conflict_risk: low
+    security_policy: harden
+    verdict: ALREADY_EQUIVALENT_HARDEN
+    parallel_edit: true
+    codegraph:
+      query: mcp deeplink
+      owner_symbol: parseMcpInstallDeepLink
+      path: apps/desktop/src/lib/mcp-deeplink.ts
+      impact_symbols_observed: 1
+      constants:
+        MCP_DEEPLINK_MAX_CONFIG_BYTES: 32768
+      observed:
+        - "hostile input treatment"
+        - "32 KiB config bound"
+        - "transport ambiguity reject (url XOR command)"
+        - "http/https only for HTTP MCP"
+    owner: apps/desktop/src/lib/mcp-deeplink.ts
+    impact_radius: 1
+    gap:
+      - stdio-review-details
+      - security-classification-before-save
+      - declare-env-names-not-values-in-confirm
+      - no-execute-on-parse-regression-suite
+    implement_order: 1
+    notes: |
+      Parser must remain pure. Background health must not start OAuth.
+
+  mcp-command-centre:
+    id: mcp-command-centre
+    upstream_status: available
+    downstream_status: candidate
+    priority: P0
+    track: ux-mcp-diagnostics
+    conflict_risk: medium
+    security_policy: harden
+    verdict: COMPOSE_HARDEN
+    parallel_edit: true
+    depends_shared_wiring_on: carry-profile-session
+    codegraph:
+      related:
+        - apps/desktop/src/store/mcp-deeplink-install.ts
+        - apps/desktop/src/app/contrib/mcp-install-deeplink-dialog.tsx
+    gap:
+      - single-mcp-page-inventory
+      - health-and-reauth-needed-state
+      - schema-token-usage-estimates
+      - paste-import-review-list
+    implement_order: 1
+
+  diagnostics:
+    id: diagnostics
+    upstream_status: available
+    downstream_status: local-export-implemented
+    priority: P0
+    track: ux-mcp-diagnostics
+    conflict_risk: medium
+    security_policy: local-first
+    verdict: HARDEN
+    parallel_edit: true
+    implement_first: true
+    implement_order: 0
+    codegraph:
+      explore: send diagnostics local export redaction
+      current_authority: diagnostics.export_local
+      optional_authority: diagnostics.share_nous
+      paths:
+        - hermes_cli/diagnostics_local_export.py
+        - apps/desktop/src/store/send-diagnostics.ts
+        - apps/desktop/src/components/send-diagnostics-dialog.tsx
+        - tests/tui_gateway/test_diagnostics_export_local.py
+      observed:
+        - "primary Desktop action is local ZIP export"
+        - "Nous upload remains secondary opt-in"
+        - "force redaction on local path; redacted flag not client-disableable"
+    owner: hermes_cli/diagnostics_local_export.py
+    current_authority: diagnostics.export_local
+    gap:
+      - optional-open-in-explorer-ipc
+      - runtime-neutral-collector-extensions
+    implemented:
+      - local-export-first
+      - offline-export
+      - forced-server-side-redaction-non-disableable
+      - bundle-name-Hermes-Diagnostics-YYYYMMDD-HHMMSS-zip
+      - diagnostics.export_local-rpc
+    forbidden_in_bundle:
+      - API keys / OAuth tokens / cookies / auth headers
+      - .env values / credential files
+      - raw memory DB / Semantic Graph private data
+      - full user prompts by default
+      - private SSH keys / browser profile contents
+    allowed_in_bundle:
+      - version / downstream SHA / frozen upstream SHA
+      - Windows / Python / Node-Electron versions
+      - provider name / model name / feature flags
+      - sanitized logs / watchdog state / health summaries
+      - CI / qualification identity
+    notes: |
+      NEXT IMPLEMENTATION TARGET.
+      New focused modules: collector → forced redactor → local exporter → UI state.
+      Remote upload only later, per-upload consent, no remember-allow.
+
+  model-overrides:
+    id: model-overrides
+    upstream_status: available
+    downstream_status: blocked-by-auth-carry
+    priority: P1
+    track: ux-model-control
+    conflict_risk: high
+    security_policy: harden
+    verdict: BLOCKED
+    depends_on: [carry-auth-provider]
+    parallel_production_wiring: false
+    gap:
+      - allowlisted-metadata-fields-only
+      - no-secret-headers
+      - no-legacy-max_output_tokens
+    codegraph:
+      blocked_by_authority: credential
+      note: "CredentialPool impact 77 — do not parallel-edit"
+
+  session-import:
+    id: session-import
+    upstream_status: available
+    downstream_status: blocked-by-profile-carry
+    priority: P1
+    track: ux-session-import
+    conflict_risk: high
+    security_policy: harden
+    verdict: BLOCKED
+    depends_on: [carry-profile-session]
+    parallel_production_wiring: false
+    gap:
+      - parse-validate-preview-explicit-profile
+      - no-default-profile-fallback
+      - no-tool-history-reexec
+      - credential-field-redact-reject
+
+  bot-mode-peer:
+    id: bot-mode-peer
+    upstream_status: available
+    downstream_status: compare-existing
+    priority: P1
+    track: ux-agent-society
+    conflict_risk: high
+    security_policy: compose
+    verdict: COMPARE_EXISTING
+    depends_on: [carry-profile-session]
+    parallel_production_wiring: false
+    codegraph:
+      query: hermes-bots Bot Chat
+      path: apps/desktop/src/plugins/hermes-bots/
+      note: "downstream Bot Mode exists — feature-by-feature matrix before PORT"
+    classification_pending:
+      - ALREADY_EQUIVALENT
+      - COMPOSE
+      - PORT
+      - SKIP
+    must_preserve:
+      - Hakua
+      - VRChat
+      - local voice
+
+  agent-browser:
+    id: agent-browser
+    upstream_status: available
+    downstream_status: blocked-by-browser-security
+    priority: P1
+    track: ux-browser-agent
+    conflict_risk: high
+    security_policy: harden
+    verdict: BLOCKED
+    depends_on: [carry-profile-session]
+    parallel_production_wiring: false
+    must_preserve:
+      - hermes://open/browser in-app path
+      - setWindowOpenHandler always deny
+    forbidden:
+      - agent → window.open → OS browser
+
+intentionally_not_copied:
+  - arbitrary-pip-provider-auto-discovery
+  - automatic-remote-uploads
+  - implicit-remote-auth-flows
+  - automatic-stdio-mcp-execution
+  - unbounded-session-imports
+  - shared-plaintext-peer-credentials
+  - browser-popup-opening
+  - moving-main-release-updates
+  - internal-import-compatibility-mega-shims
+
+cross_track_regression_targets:
+  - path: tests/downstream/test_parallel_upstream_feature_contracts.py
+    status: active
+    must_cover:
+      - command-palette-select-ne-exec
+      - cron-continuity-secret-removed
+      - cron-continuity-job-and-profile-isolation
+      - diagnostics-no-network-before-consent
+      - diagnostics-secrets-absent-local-export-offline
+      - mcp-oversized-malformed-scheme-ambiguity-reject
+      - mcp-stdio-not-executed-on-parse
+      - mcp-oauth-not-from-health-probe

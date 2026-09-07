@@ -208,20 +208,26 @@ export const zhHant = defineLocale({
   },
 
   sendDiagnostics: {
-    title: '向 Nous 傳送診斷資訊',
+    title: '匯出診斷資訊',
     privacyNotice:
-      '這會將偵錯套件上傳到 Nous 內部儲存空間（並非公開貼上板）。內容包括系統資訊（作業系統、版本、服務商、已設定的 API 金鑰種類 — 絕不包含金鑰本身）以及完整的 agent、gateway 與桌面端日誌（每個最多 512 KB，很可能包含對話內容、工具輸出與檔案路徑）。上傳前會先遮罩機密資訊。僅 Nous 員工與獲准的 Discord 版主可檢視，14 天後自動刪除。',
-    upload: '上傳',
+      '預設操作是將已遮罩的 ZIP 寫入本機（不連網）。內容包括系統資訊（作業系統、版本、服務商名稱 — 絕不包含 API 金鑰）以及已遮罩的 agent、gateway 與桌面端日誌。遮罩強制啟用，無法關閉。如需官方支援，可另行點選上傳到 Nous 內部儲存；該路徑不是預設操作。',
+    upload: '匯出到本機',
+    exportLocal: '匯出到本機',
+    exporting: '正在匯出…',
+    uploadNous: '上傳到 Nous…',
     uploading: '上傳中…',
     cancel: '取消',
     close: '關閉',
     copyLink: '複製連結',
+    copyPath: '複製路徑',
     uploadIdFallback: id => `未回傳檢視連結 — 請向支援人員提供上傳 ID ${id}`,
-    doneTitle: '診斷資訊已傳送',
-    doneDescription: '偵錯套件已私密上傳。在您的支援討論串中分享以下連結，團隊即可檢視您的日誌。',
-    failedTitle: '上傳失敗',
+    doneTitle: '診斷資訊已匯出',
+    doneDescription: '已在本機寫入遮罩 ZIP。如需支援，可將其附加到 GitHub Issue 或支援討論串。',
+    nousDoneTitle: '診斷資訊已傳送到 Nous',
+    nousDoneDescription: '偵錯套件已私密上傳到 Nous 內部儲存。在支援討論串中分享以下連結即可。',
+    failedTitle: '診斷處理失敗',
     failedHint:
-      '您也可以在終端機執行 `hermes debug share --nous`，或執行 `hermes debug share --local` 在不上傳的情況下檢視報告。',
+      '請重試「匯出到本機」，或在終端機執行 `hermes debug share --local`。上傳到 Nous 仍為選用項目。',
     handoffLead: '在以下位置繼續討論:',
     links: {
       github: 'GitHub Issues',

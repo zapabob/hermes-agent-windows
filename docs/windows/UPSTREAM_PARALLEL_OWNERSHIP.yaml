@@ -1,0 +1,306 @@
+# Parallel Upstream Feature Adoption — Ownership Lockfile
+# Campaign §§32–67. Cursor MUST read this before any production edit.
+#
+# Rule:
+#   parallel investigation: YES
+#   parallel implementation: YES
+#   parallel modification of the same ownership seam: NO
+#
+# CodeGraph = prepared navigation context only (not CI / merge evidence).
+# Probe date: 2026-09-08 | downstream base: 37aade8afb6ff944dfbe1b6ee32485b1b1c71e3e
+
+version: 1
+updated: "2026-09-08"
+integration_branch: integration/upstream-2026-09
+priority_order:
+  - manifest_ledger          # this file + UPSTREAM_FEATURE_LEDGER.yaml
+  - local_diagnostics        # feat/ux-mcp-diagnostics
+  - cron_harden              # feat/ux-cli-cron
+  - cli_palette              # feat/ux-cli-cron (after cron harden)
+
+codegraph:
+  status: usable_but_truncated
+  cli_candidates:
+    - "npx @colbymchenry/codegraph"
+    - ".tools/codegraph-cli/node_modules/.bin/codegraph.cmd"
+  notes:
+    - "sync failed: cannot rollback - no transaction is active"
+    - "re-run codegraph index before treating impact edges as complete"
+  probes_2026_09_08:
+    queries:
+      - commandPalette
+      - cron continuity
+      - mcp deeplink
+      - share_nous diagnostics
+      - win_pty_bridge
+      - credential_pool
+      - CredentialPool
+      - get_hermes_home profile
+    explores:
+      - session authority profile resolution
+      - command palette Ctrl+P slash commands
+      - send diagnostics local export redaction
+
+# ---------------------------------------------------------------------------
+# Authority seams (machine-readable lock)
+# ---------------------------------------------------------------------------
+authorities:
+  credential:
+    owner: agent.credential_pool.CredentialPool
+    owner_paths:
+      - agent/credential_pool.py
+    exclusive_track: carry-auth-provider
+    parallel_edit: false
+    conflict_risk: critical
+    codegraph:
+      query: CredentialPool
+      impact_symbols_observed: 77
+      related:
+        - agent/auxiliary_client.py
+        - agent/agent_runtime_helpers.py
+        - agent/chat_completion_helpers.py
+        - hermes_cli/auth.py
+    stop_rule: "Any file in owner_paths / related credential refresh→ exclusive to carry-auth-provider"
+
+  session:
+    owner: apps/desktop/src/store/session-owner-resolution.ts
+    owner_paths:
+      - apps/desktop/src/store/session-owner-resolution.ts
+      - apps/desktop/src/store/session-request-router.ts
+      - apps/desktop/src/api/sessions.ts
+      - hermes_state.py
+    exclusive_track: carry-profile-session
+    parallel_edit: false
+    conflict_risk: high
+    codegraph:
+      explore: session authority profile resolution
+      symbols:
+        - SessionOwnerResolutionError
+        - ambientGatewayOwnsEverySession
+        - sessionOwnerIsKnown
+      note: "fail-closed owner ladder already present — harden, do not replace"
+    stop_rule: "Session owner resolution / profile fallback changes → carry-profile-session only"
+
+  profile:
+    owner: hermes_constants.get_hermes_home
+    owner_paths:
+      - hermes_constants.py
+      - hermes_cli/main.py   # _apply_profile_override
+    exclusive_track: carry-profile-session
+    parallel_edit: false
+    conflict_risk: high
+    codegraph:
+      query: get_hermes_home profile
+    logical_seam_with: session
+
+  pty:
+    owners:
+      - hermes_cli/pty_session.py
+      - hermes_cli/win_pty_bridge.py
+    owner_paths:
+      - hermes_cli/pty_session.py
+      - hermes_cli/win_pty_bridge.py
+      - hermes_cli/pty_bridge.py
+    exclusive_track: carry-win-runtime
+    parallel_edit: false
+    conflict_risk: high
+    codegraph:
+      query: win_pty_bridge
+      symbols: [WinPtyBridge, PtySessionRegistry]
+      note: "web_server.py PTY call sites = shared facade; prefer integration wiring"
+    stop_rule: "ConPTY / PTY lifecycle / async write backpressure → carry-win-runtime only"
+
+  updater-fleet:
+    owner: hermes_cli.update_cmd
+    owner_paths:
+      - hermes_cli/update_cmd.py
+      - gateway/status.py
+    exclusive_track: carry-win-runtime
+    parallel_edit: false
+    conflict_risk: high
+    codegraph:
+      query: _fleet_probe_expected_runtimes
+
+  cron-continuity:
+    owner: tools.cronjob_tools._apply_continuity
+    owner_paths:
+      - tools/cronjob_tools.py
+      - tests/cron/test_cron_context_from.py
+    exclusive_track: ux-cli-cron
+    parallel_edit: true
+    conflict_risk: low
+    codegraph:
+      query: cron continuity
+      symbol: _apply_continuity
+      impact_symbols_observed: 1
+    stop_rule: "Do not auto-promote continuity output into Semantic Graph / Ebbinghaus"
+
+  mcp-deeplink:
+    owner: apps/desktop/src/lib/mcp-deeplink.ts
+    owner_paths:
+      - apps/desktop/src/lib/mcp-deeplink.ts
+      - apps/desktop/src/store/mcp-deeplink-install.ts
+      - apps/desktop/src/app/contrib/mcp-install-deeplink-dialog.tsx
+    exclusive_track: ux-mcp-diagnostics
+    parallel_edit: true
+    conflict_risk: low
+    codegraph:
+      query: mcp deeplink
+      symbol: parseMcpInstallDeepLink
+      impact_symbols_observed: 1
+      constants:
+        - MCP_DEEPLINK_MAX_CONFIG_BYTES  # 32 KiB
+        - MCP_DEEPLINK_ERROR_KEYS
+    stop_rule: "Parser stays pure; no execute-on-parse; no OAuth from health probe"
+
+  diagnostics-export:
+    owner: hermes_cli/diagnostics_local_export.py
+    owner_paths:
+      - hermes_cli/diagnostics_local_export.py
+      - apps/desktop/src/store/send-diagnostics.ts
+      - apps/desktop/src/components/send-diagnostics-dialog.tsx
+      - tests/tui_gateway/test_diagnostics_export_local.py
+      - tests/tui_gateway/test_diagnostics_share_nous.py
+    exclusive_track: ux-mcp-diagnostics
+    parallel_edit: true
+    conflict_risk: medium
+    codegraph:
+      explore: send diagnostics local export redaction
+      current_rpc: diagnostics.export_local
+      optional_rpc: diagnostics.share_nous
+      gap: optional-open-in-explorer-ipc
+    stop_rule: "Local ZIP is the Windows Edition default; Nous upload stays secondary opt-in"
+
+  command-palette:
+    owner: apps/desktop/src/app/command-palette/index.tsx
+    owner_paths:
+      - apps/desktop/src/app/command-palette/index.tsx
+      - apps/desktop/src/store/command-palette.ts
+      - apps/desktop/src/lib/desktop-slash-commands.ts
+      - apps/desktop/src/app/hooks/use-keybinds.ts
+    exclusive_track: ux-cli-cron
+    parallel_edit: true
+    conflict_risk: low
+    codegraph:
+      query: commandPalette
+      symbols:
+        - CommandPalette
+        - $commandPaletteOpen
+        - toggleCommandPalette
+      note: "Desktop Cmd/Ctrl+K global palette already exists — not a new execution authority"
+    stop_rule: "Palette → discovery → existing dispatcher only; no palette-specific exec/secrets"
+
+  browser:
+    owner: desktop in-app Browser authority
+    owner_paths:
+      - apps/desktop/src/app/contrib/  # hermes://open/browser router
+    exclusive_track: ux-browser-agent
+    parallel_edit: false
+    conflict_risk: high
+    depends_on: [carry-profile-session]
+    investigation_only_until_dependency: true
+    must_preserve:
+      - "Chrome/Edge → hermes://open/browser → in-app Browser"
+      - "setWindowOpenHandler: always deny"
+
+# ---------------------------------------------------------------------------
+# Tracks
+# ---------------------------------------------------------------------------
+tracks:
+  carry-win-runtime:
+    branch: feat/carry-win-runtime
+    # current live TRACK A branch on this machine may be:
+    #   feat/upstream-windows-semantic-carry-2026-09-08
+    campaign_track: A
+    exclusive_authorities: [pty, updater-fleet]
+    parallel_edit: false
+
+  carry-auth-provider:
+    branch: feat/carry-auth-provider
+    campaign_track: A
+    exclusive_authorities: [credential]
+    parallel_edit: false
+
+  carry-profile-session:
+    branch: feat/carry-profile-session
+    campaign_track: A
+    exclusive_authorities: [session, profile]
+    parallel_edit: false
+
+  ux-cli-cron:
+    branch: feat/ux-cli-cron
+    campaign_track: B
+    priority: P0
+    exclusive_authorities: [command-palette, cron-continuity]
+    parallel_edit: true
+    implement_after: local_diagnostics
+
+  ux-mcp-diagnostics:
+    branch: feat/ux-mcp-diagnostics
+    campaign_track: B
+    priority: P0
+    exclusive_authorities: [mcp-deeplink, diagnostics-export]
+    parallel_edit: true
+    implement_first: true
+    note: "NEXT IMPLEMENTATION TARGET — local diagnostics export"
+
+  ux-agent-society:
+    branch: feat/ux-agent-society
+    campaign_track: B
+    priority: P1
+    depends_on: [carry-profile-session]
+    investigation_only_until_dependency: true
+    exclusive_authorities: []
+
+  ux-session-import:
+    branch: feat/ux-session-import
+    campaign_track: B
+    priority: P1
+    depends_on: [carry-profile-session]
+    investigation_only_until_dependency: true
+
+  ux-model-control:
+    branch: feat/ux-model-control
+    campaign_track: B
+    priority: P1
+    depends_on: [carry-auth-provider]
+    investigation_only_until_dependency: true
+
+  ux-browser-agent:
+    branch: feat/ux-browser-agent
+    campaign_track: B
+    priority: P1
+    depends_on: [carry-profile-session]
+    investigation_only_until_dependency: true
+
+collision_protocol: |
+  1. Read this manifest.
+  2. If planned file ∈ another track exclusive authority → STOP.
+  3. Record as integration task; do not edit.
+  4. git diff --name-only integration/upstream-2026-09...HEAD
+  5. Cross-check other active track diffs for same file OR same logical seam.
+  6. Authority conflict → halt one track; never auto-merge authority collisions.
+
+god_file_ban:
+  - apps/desktop/src/main.ts
+  - gateway/run.py
+  - cli.py
+  - agent/agent_init.py
+
+preferred_pattern: |
+  focused module (parser / collector / redactor / exporter / UI state)
+    ↓
+  existing authority / dispatcher
+    ↓
+  minimal shared-facade wiring in integration commit only
+
+merge_order_into_integration:
+  - carry-win-runtime
+  - ux-cli-cron
+  - carry-auth-provider
+  - carry-profile-session
+  - ux-mcp-diagnostics
+  - ux-model-control
+  - ux-session-import
+  - ux-agent-society
+  - ux-browser-agent
