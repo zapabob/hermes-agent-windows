@@ -3989,7 +3989,11 @@ def _prune_job_output(job_output_dir: Path, keep: int) -> int:
 
 
 def save_job_output(job_id: str, output: str):
-    """Save job output to file."""
+    """Save job output to file.
+
+    Continuity consumers re-read these files into prompts, so write-side
+    sanitize (force redact / control normalize / size bound) runs here too.
+    """
     ensure_dirs()
     job_output_dir = _job_output_dir(job_id)
     job_output_dir.mkdir(parents=True, exist_ok=True)
@@ -3998,10 +4002,16 @@ def save_job_output(job_id: str, output: str):
     timestamp = _hermes_now().strftime("%Y-%m-%d_%H-%M-%S")
     output_file = job_output_dir / f"{timestamp}.md"
 
+    from cron.continuity_sanitize import sanitize_continuity_text
+
+    # No max_chars on save — keep full redacted history on disk; inject path
+    # applies DEFAULT_MAX_CONTINUITY_CHARS when re-reading into prompts.
+    safe_output = sanitize_continuity_text(output or "", max_chars=10_000_000)
+
     fd, tmp_path = tempfile.mkstemp(dir=str(job_output_dir), suffix='.tmp', prefix='.output_')
     try:
         with os.fdopen(fd, 'w', encoding='utf-8') as f:
-            f.write(output)
+            f.write(safe_output)
             f.flush()
             os.fsync(f.fileno())
         atomic_replace(tmp_path, output_file)

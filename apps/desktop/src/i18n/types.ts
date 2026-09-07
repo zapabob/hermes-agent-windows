@@ -255,14 +255,21 @@ export interface Translations {
   sendDiagnostics: {
     title: string
     privacyNotice: string
+    /** @deprecated Prefer exportLocal — retained for older copy consumers. */
     upload: string
+    exportLocal: string
+    exporting: string
+    uploadNous: string
     uploading: string
     cancel: string
     close: string
     copyLink: string
+    copyPath: string
     uploadIdFallback: (id: string) => string
     doneTitle: string
     doneDescription: string
+    nousDoneTitle: string
+    nousDoneDescription: string
     failedTitle: string
     failedHint: string
     handoffLead: string

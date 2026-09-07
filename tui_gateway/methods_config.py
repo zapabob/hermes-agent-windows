@@ -553,6 +553,45 @@ def _(rid, params: dict) -> dict:
         return _ok(rid, {"ok": False, "error": str(e)})
 
 
+@method("diagnostics.export_local")
+def _(rid, params: dict) -> dict:
+    """Write a force-redacted diagnostics ZIP to the local profile home.
+
+    Windows Workstation Edition primary diagnostics action. Same collection +
+    forced redaction pipeline as ``diagnostics.share_nous``, but the destination
+    is a local ZIP (``Hermes-Diagnostics-YYYYMMDD-HHMMSS.zip``) under
+    ``~/.hermes/diagnostics-exports/`` — no network I/O.
+
+    Params (all optional) match ``diagnostics.share_nous``:
+      - ``error_context``
+      - ``extra_files``
+      - ``log_lines``
+    """
+    try:
+        from hermes_cli.diagnostics_local_export import export_local_diagnostics
+
+        log_lines = params.get("log_lines")
+        if not isinstance(log_lines, int) or not (10 <= log_lines <= 2000):
+            log_lines = 200
+
+        error_context = params.get("error_context")
+        if not isinstance(error_context, str):
+            error_context = None
+
+        extra_files = params.get("extra_files")
+        if not isinstance(extra_files, dict):
+            extra_files = None
+
+        result = export_local_diagnostics(
+            log_lines=log_lines,
+            error_context=error_context,
+            extra_files=extra_files,
+        )
+        return _ok(rid, result)
+    except Exception as e:
+        return _ok(rid, {"ok": False, "error": str(e)})
+
+
 def register(server) -> None:
     """Bind this module's handlers onto ``server``'s globals and registry."""
     _registry.install(server)

@@ -214,21 +214,28 @@ export const en: Translations = {
   },
 
   sendDiagnostics: {
-    title: 'Send diagnostics to Nous',
+    title: 'Export diagnostics',
     privacyNotice:
-      'This uploads a debug bundle to Nous-internal storage (not a public paste). It includes system info (OS, versions, provider, which API keys are configured — never the keys themselves) and full agent, gateway, and desktop logs (up to 512 KB each), which likely contain conversation content, tool outputs, and file paths. Secrets are redacted before upload. The bundle is viewable only by Nous staff and allowlisted Discord moderators, and auto-deletes after 14 days.',
-    upload: 'Upload',
+      'Primary action writes a redacted ZIP to this machine (no network). The bundle includes system info (OS, versions, provider names — never API keys) and sanitized agent, gateway, and desktop logs. Secrets are force-redacted and cannot be disabled. Optionally you may upload a copy to Nous-internal storage for official support; that path requires a separate click and is never the default.',
+    upload: 'Export locally',
+    exportLocal: 'Export locally',
+    exporting: 'Exporting…',
+    uploadNous: 'Upload to Nous…',
     uploading: 'Uploading…',
     cancel: 'Cancel',
     close: 'Close',
     copyLink: 'Copy link',
+    copyPath: 'Copy path',
     uploadIdFallback: id => `No view link returned — quote upload ID ${id} to support`,
-    doneTitle: 'Diagnostics sent',
+    doneTitle: 'Diagnostics exported',
     doneDescription:
-      'Your bundle was uploaded privately. Share the link below in your support thread so the team can see your logs.',
-    failedTitle: 'Upload failed',
+      'A redacted ZIP was written locally. Attach it to a GitHub issue or your support thread if needed.',
+    nousDoneTitle: 'Diagnostics sent to Nous',
+    nousDoneDescription:
+      'Your bundle was uploaded privately to Nous-internal storage. Share the link below in your support thread.',
+    failedTitle: 'Diagnostics failed',
     failedHint:
-      'You can also run `hermes debug share --nous` from a terminal, or `hermes debug share --local` to print the report without uploading.',
+      'Try Export locally again, or run `hermes debug share --local` from a terminal. Nous upload remains optional.',
     handoffLead: 'Pick up the discussion in:',
     links: {
       github: 'GitHub Issues',

@@ -216,21 +216,28 @@ export const ja = defineLocale({
   },
 
   sendDiagnostics: {
-    title: 'Nous に診断情報を送信',
+    title: '診断情報をエクスポート',
     privacyNotice:
-      'デバッグバンドルを Nous 内部ストレージにアップロードします（公開ペーストではありません）。システム情報（OS、バージョン、プロバイダー、設定済み API キーの種類 — キー自体は含まれません）と、エージェント/ゲートウェイ/デスクトップの完全なログ（各最大 512 KB。会話内容、ツール出力、ファイルパスを含む可能性が高い）が含まれます。シークレットはアップロード前にマスクされます。閲覧できるのは Nous スタッフと許可された Discord モデレーターのみで、14 日後に自動削除されます。',
-    upload: 'アップロード',
+      '既定の操作は、このマシンへマスク済み ZIP を書き出すことです（ネットワーク通信なし）。バンドルにはシステム情報（OS、バージョン、プロバイダー名 — API キーは含まれません）と、マスク済みの agent / gateway / desktop ログが含まれます。シークレットのマスクは必須で無効化できません。公式サポート向けに Nous 内部ストレージへのアップロードも選べますが、別ボタンの明示操作が必要で、既定にはなりません。',
+    upload: 'ローカルへエクスポート',
+    exportLocal: 'ローカルへエクスポート',
+    exporting: 'エクスポート中…',
+    uploadNous: 'Nous にアップロード…',
     uploading: 'アップロード中…',
     cancel: 'キャンセル',
     close: '閉じる',
     copyLink: 'リンクをコピー',
+    copyPath: 'パスをコピー',
     uploadIdFallback: id => `表示リンクが返されませんでした — サポートにアップロード ID ${id} をお伝えください`,
-    doneTitle: '診断情報を送信しました',
+    doneTitle: '診断情報をエクスポートしました',
     doneDescription:
-      'バンドルは非公開でアップロードされました。サポートスレッドで以下のリンクを共有すると、チームがログを確認できます。',
-    failedTitle: 'アップロードに失敗しました',
+      'マスク済み ZIP をローカルに書き出しました。必要なら GitHub Issue やサポートスレッドに添付してください。',
+    nousDoneTitle: 'Nous に診断情報を送信しました',
+    nousDoneDescription:
+      'バンドルは Nous 内部ストレージへ非公開でアップロードされました。サポートスレッドで以下のリンクを共有してください。',
+    failedTitle: '診断の処理に失敗しました',
     failedHint:
-      'ターミナルから `hermes debug share --nous` を実行するか、`hermes debug share --local` でアップロードせずにレポートを表示することもできます。',
+      '「ローカルへエクスポート」を再試行するか、ターミナルで `hermes debug share --local` を実行してください。Nous へのアップロードは任意です。',
     handoffLead: '続きは次の場所で:',
     links: {
       github: 'GitHub Issues',

@@ -1,13 +1,7 @@
-// Send Diagnostics — the consent-gated debug-bundle upload dialog.
+// Diagnostics export host — local-first consent dialog.
 //
-// Rendered globally (wiring.tsx, beside ConfirmHost) and driven by the
-// $sendDiagnostics store: any surface (the failed-turn error card today)
-// opens it via requestSendDiagnostics(). Three faces:
-//   consent   — privacy notice (what's collected, who can see it, retention)
-//               with an explicit Upload button; nothing is sent before it.
-//   uploading — spinner while the backend collects, redacts and uploads.
-//   done      — the private view link (copyable) + where to pick up the
-//               discussion: GitHub Issues · Nous Portal Support · Discord.
+// Primary: Export locally (diagnostics.export_local → ZIP on disk).
+// Secondary: Upload to Nous (diagnostics.share_nous) — explicit opt-in only.
 import { useStore } from '@nanostores/react'
 
 import { Button } from '@/components/ui/button'
@@ -23,7 +17,12 @@ import {
 import { useI18n } from '@/i18n'
 import { ExternalLink as ExternalLinkAnchor, openExternalLink } from '@/lib/external-link'
 import { ExternalLink, Loader2Icon, Lock } from '@/lib/icons'
-import { $sendDiagnostics, confirmSendDiagnostics, dismissSendDiagnostics } from '@/store/send-diagnostics'
+import {
+  $sendDiagnostics,
+  confirmExportLocalDiagnostics,
+  confirmUploadNousDiagnostics,
+  dismissSendDiagnostics
+} from '@/store/send-diagnostics'
 
 const SUPPORT_LINKS = [
   { key: 'github', url: 'https://github.com/NousResearch/hermes-agent/issues' },
@@ -40,16 +39,13 @@ export function SendDiagnosticsHost() {
     return null
   }
 
-  const busy = state.phase === 'uploading'
+  const busy = state.phase === 'exporting' || state.phase === 'uploading'
+  const localDone = state.phase === 'done' && state.destination === 'local'
 
   return (
-    // Dismissal is allowed in EVERY phase, including mid-upload: the store's
-    // generation guard makes a dismissed upload's completion a no-op, so Esc/
-    // backdrop/Cancel are always an immediate way out (cancellation of the
-    // in-flight request itself stays best-effort).
     <Dialog onOpenChange={open => (!open ? dismissSendDiagnostics() : undefined)} open>
       <DialogContent className="max-w-[30rem]">
-        {state.phase === 'consent' || state.phase === 'uploading' ? (
+        {state.phase === 'consent' || state.phase === 'exporting' || state.phase === 'uploading' ? (
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
@@ -58,18 +54,36 @@ export function SendDiagnosticsHost() {
               </DialogTitle>
               <DialogDescription className="whitespace-pre-line text-left">{copy.privacyNotice}</DialogDescription>
             </DialogHeader>
-            <DialogFooter>
-              <Button onClick={dismissSendDiagnostics} variant="ghost">
-                {copy.cancel}
-              </Button>
-              <Button disabled={busy} onClick={() => void confirmSendDiagnostics()}>
-                {busy ? (
+            <DialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
+              <div className="flex w-full flex-wrap justify-end gap-2">
+                <Button disabled={busy} onClick={dismissSendDiagnostics} variant="ghost">
+                  {copy.cancel}
+                </Button>
+                <Button disabled={busy} onClick={() => void confirmExportLocalDiagnostics()}>
+                  {state.phase === 'exporting' ? (
+                    <span className="flex items-center gap-1.5">
+                      <Loader2Icon className="size-3.5 animate-spin" />
+                      {copy.exporting}
+                    </span>
+                  ) : (
+                    copy.exportLocal
+                  )}
+                </Button>
+              </div>
+              <Button
+                className="self-end"
+                disabled={busy}
+                onClick={() => void confirmUploadNousDiagnostics()}
+                size="sm"
+                variant="outline"
+              >
+                {state.phase === 'uploading' ? (
                   <span className="flex items-center gap-1.5">
                     <Loader2Icon className="size-3.5 animate-spin" />
                     {copy.uploading}
                   </span>
                 ) : (
-                  copy.upload
+                  copy.uploadNous
                 )}
               </Button>
             </DialogFooter>
@@ -90,11 +104,51 @@ export function SendDiagnosticsHost() {
               </Button>
             </DialogFooter>
           </>
-        ) : (
+        ) : localDone ? (
           <>
             <DialogHeader>
               <DialogTitle>{copy.doneTitle}</DialogTitle>
               <DialogDescription className="text-left">{copy.doneDescription}</DialogDescription>
+            </DialogHeader>
+            {state.result?.localPath && (
+              <div
+                className="flex items-center gap-2 rounded-md border border-(--ui-stroke-tertiary) px-3 py-2"
+                data-selectable-text="true"
+              >
+                <code
+                  className="min-w-0 flex-1 truncate font-mono text-[0.78rem] text-(--ui-text-secondary)"
+                  title={state.result.localPath}
+                >
+                  {state.result.localPath}
+                </code>
+                <CopyButton
+                  appearance="inline"
+                  className="shrink-0"
+                  label={copy.copyPath}
+                  text={state.result.localPath}
+                />
+              </div>
+            )}
+            <div className="text-[0.8rem] text-(--ui-text-secondary)">{copy.handoffLead}</div>
+            <div className="flex flex-wrap gap-1.5">
+              {SUPPORT_LINKS.map(link => (
+                <Button key={link.key} onClick={() => openExternalLink(link.url)} size="sm" variant="outline">
+                  <ExternalLink className="size-3" />
+                  {copy.links[link.key]}
+                </Button>
+              ))}
+            </div>
+            <DialogFooter>
+              <Button onClick={dismissSendDiagnostics} variant="ghost">
+                {copy.close}
+              </Button>
+            </DialogFooter>
+          </>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>{copy.nousDoneTitle}</DialogTitle>
+              <DialogDescription className="text-left">{copy.nousDoneDescription}</DialogDescription>
             </DialogHeader>
             {(state.result?.viewUrl || state.result?.uploadId) && (
               <div
@@ -102,13 +156,6 @@ export function SendDiagnosticsHost() {
                 data-selectable-text="true"
               >
                 {state.result.viewUrl ? (
-                  // A real anchor, not a <code> span: right-click resolves the
-                  // link context menu (open / copy URL), left-click opens it,
-                  // and the row's data-selectable-text keeps drag-to-select
-                  // working. `truncate` only clips the paint — selection and
-                  // copy still carry the full URL. `native` because the in-app
-                  // preview pane would open BEHIND this modal dialog; the
-                  // support buttons below already go to the system browser.
                   <ExternalLinkAnchor
                     className="min-w-0 flex-1 truncate font-mono text-[0.78rem] text-(--ui-text-secondary)"
                     href={state.result.viewUrl}
