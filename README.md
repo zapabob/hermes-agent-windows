@@ -185,6 +185,27 @@ models, memory, voice, VR/Unity, and recovery.
 The product ledger is [FEATURES.yaml](FEATURES.yaml). Direct patches carried in
 upstream-owned files are tracked separately in [CARRY.yaml](CARRY.yaml).
 
+### AI workstation harness (agents)
+
+This checkout is operated as a **Windows AI workstation harness**. Agents must:
+
+1. Read root [`AGENTS.md`](AGENTS.md) (CodeGraph §16, root layout §17).
+2. Use **CodeGraph before broad exploration**:
+
+```powershell
+npx --yes @colbymchenry/codegraph sync .
+npx --yes @colbymchenry/codegraph query <symbol>
+npx --yes @colbymchenry/codegraph impact <symbol>
+```
+
+3. Follow fork routes in [`fork/AGENTS.md`](fork/AGENTS.md) (merge harness vs
+   Hypura agent-harness vs operations vs local-workspace).
+4. Keep the repository **surface** clean: move scratch into `output/`, `tmp/`,
+   or `notes/archives/` — never delete operator data, never relocate packaging
+   entry modules. See [`fork/local-workspace/README.md`](fork/local-workspace/README.md).
+
+Architecture map: [`docs/maps/REPOSITORY_MAP.md`](docs/maps/REPOSITORY_MAP.md).
+
 ## 2. Windows-first goals
 
 The primary target is Windows 11 x64 with native Python, native Node/Electron,

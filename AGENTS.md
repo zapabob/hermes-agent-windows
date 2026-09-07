@@ -952,7 +952,52 @@ test('windowsHide defaults to true on Windows, is left alone elsewhere', () => {
 })
 ```
 
-## 16. Learned User Preferences, Workspace Invariants & MILSPEC Standards
+## 16. CodeGraph (required navigation on this workstation)
+
+On **zapabob/hermes-agent-windows**, CodeGraph is a **mandatory first-pass
+navigation tool** before broad exploration, ownership surveys, or mid-size
+refactors. Prefer it over grepping the whole tree when you need symbol
+location, call impact, or area maps.
+
+```powershell
+npx --yes @colbymchenry/codegraph status .
+npx --yes @colbymchenry/codegraph sync .
+npx --yes @colbymchenry/codegraph query <symbol-or-text>
+npx --yes @colbymchenry/codegraph explore <area-or-task>
+npx --yes @colbymchenry/codegraph impact <symbol>
+```
+
+Index lives under `.codegraph/` (machine-local; never commit). Sync after
+pulling tip if symbols look stale. CodeGraph output is **prepared local
+code-intelligence context only** — it is not execution, review, CI,
+merge-readiness, or merge evidence. After CodeGraph narrows the owner, open
+the concrete files and run real tests for proof.
+
+Fork-local routes that also require CodeGraph: `fork/AGENTS.md`,
+`docs/windows/UPSTREAM_SEMANTIC_CARRY_2026-09-08.md`, and the local-workspace
+guides under `fork/local-workspace/`.
+
+## 17. Root layout policy (AI workstation harness)
+
+Keep the repository **surface** (files directly under the repo root) limited to
+packaging, entry modules, and product ledgers. Do **not** delete operator
+scratch — **move** it into classified folders:
+
+| Kind | Keep at root | Store under |
+|------|--------------|-------------|
+| Entry / packaging | `run_agent.py`, `cli.py`, `model_tools.py`, `hermes_*.py`, `toolsets.py`, `pyproject.toml`, lockfiles, `README*`, `AGENTS.md` | — |
+| Product ledgers | `FEATURES.yaml`, `CARRY.yaml`, `UPSTREAM_ADOPTION.yaml`, `DOWNSTREAM_POLICY.md` | — |
+| Ignored scratch | — | `output/media/`, `output/reports/`, `output/logs/`, `tmp/probes/`, `tmp/snapshots/` |
+| Tracked operator archives | — | `notes/archives/` |
+| Maps / handoffs | — | `docs/maps/`, `docs/windows/` |
+| Fork navigation | — | `fork/` (harness, operations, local-workspace, agent-harness) |
+
+Never relocate official root entry modules to "tidy" the tree — packaging and
+upstream parity depend on them. Details:
+[`fork/local-workspace/AGENTS.md`](fork/local-workspace/AGENTS.md) and
+[`fork/local-workspace/README.md`](fork/local-workspace/README.md).
+
+## 18. Learned User Preferences, Workspace Invariants & MILSPEC Standards
 
 1. **Hermes Restart Protocol**: Rebuild desktop via `hermes desktop --build-only --force-build` combined with `-StartLlama`. Never launch from `.worktrees/`.
 2. **Canonical Desktop Target**: Packaged binary at `apps/desktop/release/win-unpacked/Hermes.exe`.
@@ -963,3 +1008,4 @@ test('windowsHide defaults to true on Windows, is left alone elsewhere', () => {
    - **Zero `print` calls**: `logging` is mandatory across all Python files; `print` is strictly forbidden.
    - **Fixed Character Encoding**: UTF-8 without BOM across all files.
    - **Implementation Audit Logs**: Every substantive change generates a record under `_docs/yyyy-mm-dd_<feature>_<agent>.md`.
+7. **CodeGraph before broad search**: See §16 — sync/query/explore/impact before inventing owners.

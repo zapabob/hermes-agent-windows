@@ -325,7 +325,21 @@ def register(ctx):
 
 ---
 
-## 16. Learned User Preferences, Workspace Invariants & MILSPEC Standards
+## 16. CodeGraph (required navigation on this workstation)
+
+On **zapabob/hermes-agent-windows**, CodeGraph is a **mandatory first-pass
+navigation tool** before broad exploration. Prefer:
+
+```powershell
+npx --yes @colbymchenry/codegraph sync .
+npx --yes @colbymchenry/codegraph query <symbol>
+npx --yes @colbymchenry/codegraph impact <symbol>
+```
+
+Index: `.codegraph/` (do not commit). Prepared navigation only — not CI/merge evidence.
+See root `AGENTS.md` §16–17 for the full contract and root layout policy.
+
+## 17. Learned User Preferences, Workspace Invariants & MILSPEC Standards
 
 1. **Hermes Restart Protocol**: Rebuild desktop via `hermes desktop --build-only --force-build` combined with `-StartLlama`. Never launch from `.worktrees/`.
 2. **Canonical Desktop Target**: Packaged binary at `apps/desktop/release/win-unpacked/Hermes.exe`.
@@ -336,3 +350,4 @@ def register(ctx):
    - **Zero `print` calls**: `logging` is mandatory across all Python files; `print` is strictly forbidden.
    - **Fixed Character Encoding**: UTF-8 without BOM across all files.
    - **Implementation Audit Logs**: Every substantive change generates a record under `_docs/yyyy-mm-dd_<feature>_<agent>.md`.
+7. **CodeGraph before broad search**: See §16.

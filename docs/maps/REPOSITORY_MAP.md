@@ -21,7 +21,7 @@
 hermes-agent/
 ├── AGENTS.md                  # Master development guide and contribution rubric
 ├── GEMINI.md                  # HardLink mirror of AGENTS.md for AI assistants
-├── REPOSITORY_MAP.md          # Comprehensive AI navigation and architectural map (this file)
+├── docs/maps/REPOSITORY_MAP.md # Comprehensive AI navigation and architectural map (this file)
 ├── pyproject.toml             # Python packaging, exact pinned dependencies, pytest/ruff config
 ├── package.json               # Monorepo workspaces definition (apps/*, ui-tui, web, tests-js)
 ├── pnpm-workspace.yaml        # PNPM workspace package config & overrides
