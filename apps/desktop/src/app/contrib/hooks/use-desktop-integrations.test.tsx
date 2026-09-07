@@ -24,21 +24,29 @@ const { hudWindowMock } = vi.hoisted(() => ({ hudWindowMock: vi.fn(() => false) 
 vi.mock('@icons-pack/react-simple-icons', () => {
   const icon = () => null
   const target: Record<string, unknown> = { __esModule: true }
+
   return new Proxy(target, {
     get(t, prop) {
-      if (prop === '__esModule') return true
-      if (prop === 'then') return undefined
-      if (typeof prop === 'string' && prop.endsWith('Hex')) return '#000000'
+      if (prop === '__esModule') {return true}
+
+      if (prop === 'then') {return undefined}
+
+      if (typeof prop === 'string' && prop.endsWith('Hex')) {return '#000000'}
+
       if (typeof prop === 'string') {
-        if (!(prop in t)) t[prop] = icon
+        if (!(prop in t)) {t[prop] = icon}
+
         return t[prop]
       }
+
       return undefined
     },
     has: () => true,
     getOwnPropertyDescriptor(t, prop) {
-      if (typeof prop !== 'string') return undefined
-      if (!(prop in t)) t[prop] = prop === '__esModule' ? true : icon
+      if (typeof prop !== 'string') {return undefined}
+
+      if (!(prop in t)) {t[prop] = prop === '__esModule' ? true : icon}
+
       return { configurable: true, enumerable: true, writable: true, value: t[prop] }
     },
     ownKeys(t) {

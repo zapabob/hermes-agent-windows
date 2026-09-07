@@ -83,6 +83,7 @@ export function installLinkTitleRequestGuard(partitionSession, blockedResourceTy
         cancel: blockedResourceTypes.has(details.resourceType)
       })
     })
+
     return true
   } catch {
     return false

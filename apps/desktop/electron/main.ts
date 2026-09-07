@@ -3433,6 +3433,7 @@ function releaseBackendChild(child) {
 
   try {
     backendOwnership.release(identity)
+
     if (managedBackendChildren.get(identity.pid) === child) {
       managedBackendChildren.delete(identity.pid)
     }
@@ -3544,11 +3545,13 @@ async function releaseBackendLock(updateRoot, tag) {
       },
       stopManagedChild: pid => {
         const current = backendConnectionState.getProcess()
+
         if (current?.pid === pid) {
           stopBackendChild(current)
 
           return
         }
+
         for (const entry of backendPool.values()) {
           if (entry.process?.pid === pid) {
             stopBackendChild(entry.process)
@@ -17520,16 +17523,19 @@ app.on('before-quit', event => {
           filePath,
           repoRoot: ACTIVE_HERMES_ROOT
         })
+
         desktopStopFenceAckWait = (result.preserved
           ? Promise.resolve(true)
           : waitForDesktopStopFenceAck({ filePath, fence: result.fence })
         ).then(acknowledged => {
           desktopStopFenceAckWait = null
+
           if (!acknowledged) {
             rememberLog('[watchdog] intentional Desktop stop was not acknowledged; quit remains cancelled')
 
             return
           }
+
           desktopStopFenceAckDone = true
           app.quit()
         })
