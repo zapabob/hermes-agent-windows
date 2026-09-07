@@ -11,6 +11,9 @@ function compilerPreset() {
 }
 import path from "path";
 
+const rawWorkers = process.env.VITEST_MAX_WORKERS;
+const maxWorkers = rawWorkers ? Math.max(1, Number.parseInt(rawWorkers, 10)) : undefined;
+
 export default defineConfig({
   plugins: [react(), babel({ presets: [compilerPreset()] })],
   resolve: {
@@ -19,6 +22,7 @@ export default defineConfig({
     },
   },
   test: {
+    maxWorkers,
     environment: "node",
     include: ["src/**/*.test.{ts,tsx}"],
   },

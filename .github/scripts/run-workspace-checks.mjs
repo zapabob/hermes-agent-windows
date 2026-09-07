@@ -63,10 +63,13 @@ function runUnit(unit) {
       chunks.push(Buffer.from(`failed to spawn: ${err.message}\n`))
       resolve({ unit, code: 1, output: Buffer.concat(chunks).toString('utf-8'), ms: Date.now() - started })
     })
-    child.on('close', (code) => {
+    child.on('close', (code, signal) => {
+      if (signal) {
+        chunks.push(Buffer.from(`\nprocess terminated with signal: ${signal}\n`))
+      }
       resolve({
         unit,
-        code: code ?? 1,
+        code: code ?? (signal ? 1 : 0),
         output: Buffer.concat(chunks).toString('utf-8'),
         ms: Date.now() - started,
       })
@@ -137,7 +140,8 @@ async function main() {
   if (failed.length > 0) {
     for (const r of failed) console.error(`::error::${r.unit.pkg} :: ${r.unit.script} failed`)
     console.error(`::error::${failed.length} of ${results.length} checks failed`)
-    process.exit(1)
+    process.exitCode = 1
+    return
   }
   console.log(`\nall ${results.length} checks passed`)
 }

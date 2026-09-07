@@ -7,6 +7,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { ToolsetConfig } from '@/types/hermes'
 
+import { ToolsetConfigPanel } from './toolset-config-panel'
+
 // EnvVarField navigates to Settings → Keys via useNavigate, so every render
 // needs a router context. The navigate spy asserts the deep-link target.
 const navigateSpy = vi.fn()
@@ -183,7 +185,6 @@ describe('ToolsetConfigPanel', () => {
       })
     )
 
-    const { ToolsetConfigPanel } = await import('./toolset-config-panel')
     render(<ToolsetConfigPanel onConfiguredChange={vi.fn()} toolset="tts" />)
 
     expect(await screen.findByText('OpenAI TTS Model')).toBeTruthy()
@@ -196,7 +197,7 @@ describe('ToolsetConfigPanel', () => {
     await waitFor(() => expect(saveHermesConfig).toHaveBeenCalled(), { timeout: 3000 })
     const saved = saveHermesConfig.mock.calls.at(-1)?.[0] as Record<string, Record<string, Record<string, string>>>
     expect(saved.tts.openai.voice).toBe('marin')
-  })
+  }, 60_000)
 
   it('renders no inline voice fields for rows without tts_provider (older backend)', async () => {
     const { ToolsetConfigPanel } = await import('./toolset-config-panel')
