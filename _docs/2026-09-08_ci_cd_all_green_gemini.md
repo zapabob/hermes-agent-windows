@@ -67,6 +67,12 @@ This operation resolved all outstanding test failures, IDE diagnostics, cross-pl
    - Backed up local Windows Chrome Web MCP implementation to `C:\Users\downl\.hermes\mcp-installs\chrome-web-win\chrome_web_mcp_windows.py`.
    - Removed temporary installation directory from git worktree and registered `/mcp-installs/` in `.gitignore`.
 
+### F. Gateway File Download URI Contract Alignment
+1. **`apps/desktop/src/lib/media.remote.test.ts`**:
+   - *Problem*: `downloadGatewayMediaFile` test expected raw `/Users/me/project/a b.md` in `saveGatewayFile` call, but received preserved `file:///Users/me/project/a%20b.md`.
+   - *Root Cause*: Upstream semantic carry contract (`docs/windows/UPSTREAM_SEMANTIC_CARRY_2026-09-08.md` item 8, commits `478d772f2c` and `e118f4006eea`) established that file URIs and relative paths are gateway-owned ("URI conversion belongs to the gateway OS, not the renderer's URL parser"). The server handles `file:` URLs directly, while `media.remote.test.ts` still had the pre-carry assertion expectation.
+   - *Resolution*: Updated test expectation in `media.remote.test.ts` to assert the preserved `file:///Users/me/project/a%20b.md` path.
+
 ---
 
 ## 3. Verification & Test Evidence
@@ -77,8 +83,14 @@ This operation resolved all outstanding test failures, IDE diagnostics, cross-pl
   - `tests/tui_gateway/test_projects_rpc.py`: PASSED
   - `tests/agent/test_subprocess_env_guard.py`: PASSED
   - `tests/test_tui_gateway_server.py`: PASSED
+  - `apps/desktop/src/lib/media.remote.test.ts`: 28/28 PASSED
+  - `apps/desktop/src/app/artifacts/remote-open.test.tsx`: 1/1 PASSED
+  - `apps/desktop/electron/gateway-file-download.test.ts`: 14/14 PASSED
+- **Windows Footguns & Hygiene**:
+  - `python scripts/check-windows-footguns.py --all`: 0 footguns found (1,476 files scanned).
 - **TypeScript / Electron Typecheck & Linting**:
   - `eslint src/ electron/`: 0 errors
   - `tsc -p . --noEmit && tsc -p tsconfig.electron.json --noEmit && tsc -p tsconfig.e2e.json --noEmit`: Validated
 - **Git Status**:
   - Clean worktree, 0 untracked files, 0 unwanted artifacts.
+
