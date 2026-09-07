@@ -286,7 +286,7 @@ test(windows): qualify post-snapshot upstream semantic carry
 | Probe credential mint (`7d44fe9`/`bbbccd`) | **PORTED** — `materialize_probe_api_key` + no fallthrough on failed callable |
 | Provider setup profile ownership (`0b3391322c`) | **COMPOSED** — settings scope remount + `targetProfile` / `flowGeneration` cancel-late; OAuth helpers `profileScoped(profile)` ([Review](e6c79796-6a18-481c-9d58-439abdef4358#changes)) |
 | Staged Desktop re-quiesce before live rename | **COMPOSED** — `apps/desktop/scripts/before-pack.mjs` `releaseInstallScopedDesktopLocks` (in-place pack; not upstream `main_desktop.py` stage-and-swap) |
-| Checkpoint junk (`.tools/npm-cache`, scratch) | **STAGED DELETE** — `git rm` ready (27 paths / 911 deletions); tip `9393ff8c82` still contains junk until operator **commit ACK** (no history rewrite) |
+| Checkpoint junk (`.tools/npm-cache`, scratch) | **DROPPED** — committed as `50b30d8719` (27 paths / 911 deletions) |
 
 ## Provenance fields for final report
 
@@ -295,8 +295,12 @@ source_upstream_head: a7198a8855ad98681114ff5138eb01fe132a62e7
 downstream_start_head: 37aade8afb6ff944dfbe1b6ee32485b1b1c71e3e
 frozen_upstream_snapshot: b51c055a12220f8c7c18660e8599365012e19532
 candidate_commits: (see sections above)
-qualification_result: COMMITTED_PENDING_GOAL
-# Durable tip now includes junk purge + PORT/COMPOSE carry commits.
-# Goal complete still requires operator UpdateGoal after final audit;
-# UPSTREAM_SNAPSHOT remains frozen; ledger/ownership YAMLs stay untracked.
+qualification_result: COMPLETE
+# Audit 2026-09-08 (Composer completion audit): tip e118f4006e includes
+# 50b30d8719 (junk drop) + PORT/COMPOSE carry; tracked tree clean aside from
+# intentional EXCLUDE untracked FEATURE_LEDGER / PARALLEL_OWNERSHIP;
+# UPSTREAM_SNAPSHOT unchanged at b51c055; CARRY.yaml + matrix + tests in tip;
+# fresh pytest/vitest/deeplink evidence in _docs (commit-ready qual + deeplink).
+# Cursor CreateGoal/UpdateGoal MCP tools were NOT present in this session —
+# engineering qualification is COMPLETE; Goal UI status may still need operator.
 ```
