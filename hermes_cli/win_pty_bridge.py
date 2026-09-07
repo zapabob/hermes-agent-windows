@@ -14,7 +14,8 @@ the working winpty usage already shipping in ``tools/process_registry.py``.
 
 from __future__ import annotations
 
-import os
+import asyncio
+import logging
 import sys
 import time
 from typing import Optional, Sequence
@@ -26,8 +27,15 @@ except ImportError:  # pragma: no cover - non-Windows or pywinpty missing
     PtyProcess = None  # type: ignore
     _PTY_AVAILABLE = False
 
+_log = logging.getLogger(__name__)
 
-__all__ = ["WinPtyBridge", "PtyUnavailableError"]
+
+__all__ = [
+    "PTY_HOST_DASHBOARD",
+    "PTY_HOST_ENV",
+    "WinPtyBridge",
+    "PtyUnavailableError",
+]
 
 
 # Same clamp ceiling as the POSIX bridge: a broken winsize probe must never
@@ -36,6 +44,11 @@ __all__ = ["WinPtyBridge", "PtyUnavailableError"]
 _MIN_DIMENSION = 1
 _MAX_COLS = 2000
 _MAX_ROWS = 1000
+_WRITE_SHUTDOWN_GRACE = 1.0
+
+# Mirrored in hermes_cli/pty_bridge.py and ui-tui hermes-ink termio/host.ts.
+PTY_HOST_ENV = "HERMES_PTY_HOST"
+PTY_HOST_DASHBOARD = "dashboard"
 
 
 def _clamp(value: int, maximum: int) -> int:
@@ -96,6 +109,8 @@ class WinPtyBridge:
         )
         if not spawn_env.get("TERM"):
             spawn_env["TERM"] = "xterm-256color"
+        # Dashboard-hosted TUI: skip native-emulator focus-in erase+repaint.
+        spawn_env[PTY_HOST_ENV] = PTY_HOST_DASHBOARD
         # pywinpty mirrors ptyprocess: dimensions=(rows, cols).
         # This call shape is the one already used in tools/process_registry.py.
         proc = PtyProcess.spawn(  # type: ignore[union-attr]
@@ -147,14 +162,78 @@ class WinPtyBridge:
         # raw-fd path.
         return data.encode("utf-8", errors="replace")
 
-    def write(self, data: bytes) -> None:
-        if self._closed or not data:
-            return
+    def _write_blocking(self, data: bytes) -> bool:
+        if self._closed:
+            return False
+        if not data:
+            return True
         try:
-            # The dashboard sends raw keystroke bytes; pywinpty.write wants text.
+            # Dashboard sends raw keystroke bytes; pywinpty.write wants text.
             self._proc.write(data.decode("utf-8", errors="replace"))
         except Exception:
+            return False
+        return True
+
+    async def write(self, data: bytes, *, timeout: float = 10.0) -> bool:
+        """Write off-loop; tear down ConPTY only when its input pipe wedges.
+
+        ``wait_for(to_thread(...))`` alone only cancels the asyncio wrapper;
+        the worker can remain blocked inside pywinpty. Keep the worker future,
+        force-close ConPTY on timeout, and wait briefly for that close to
+        release the blocked write before returning.
+
+        Cancellation (owning socket went away mid-write) is not evidence of a
+        wedged child: the PTY outlives its socket by design, so give the
+        in-flight write the shutdown grace window and only terminate if it
+        never lands. Socket lifetime ≠ PTY lifetime.
+        """
+        if self._closed:
+            return False
+        if not data:
+            return True
+        loop = asyncio.get_running_loop()
+        write_future = loop.run_in_executor(None, self._write_blocking, data)
+        try:
+            return await asyncio.wait_for(
+                asyncio.shield(write_future),
+                timeout=max(0.0, timeout),
+            )
+        except asyncio.TimeoutError:
+            await self._stop_stalled_write(write_future)
+            return False
+        except asyncio.CancelledError:
+            await asyncio.shield(self._settle_or_stop_write(write_future))
+            raise
+
+    async def _settle_or_stop_write(self, write_future: asyncio.Future) -> None:
+        """Let a cancelled write finish within grace; terminate only if stalled."""
+        try:
+            await asyncio.wait_for(
+                asyncio.shield(write_future),
+                timeout=_WRITE_SHUTDOWN_GRACE,
+            )
             return
+        except asyncio.TimeoutError:
+            pass
+        except Exception:
+            return
+        await self._stop_stalled_write(write_future)
+
+    async def _stop_stalled_write(self, write_future: asyncio.Future) -> None:
+        """Close ConPTY and reap the worker that was blocked in ``write``."""
+        await asyncio.to_thread(self.close)
+        try:
+            await asyncio.wait_for(
+                asyncio.shield(write_future),
+                timeout=_WRITE_SHUTDOWN_GRACE,
+            )
+        except asyncio.TimeoutError:
+            _log.warning(
+                "ConPTY write worker did not exit within %.1fs of terminate(); thread leaked",
+                _WRITE_SHUTDOWN_GRACE,
+            )
+        except Exception:
+            pass
 
     def resize(self, cols: int, rows: int) -> None:
         if self._closed:

@@ -102,6 +102,8 @@ class TestWinPtyBridgeSpawn:
 class TestWinPtyBridgeIO:
 
     def test_write_sends_to_child_stdin(self):
+        import asyncio
+
         # python -c reads stdin, echoes a marker, exits.  More reliable than
         # ``cat`` (not on Windows) and doesn't depend on a particular shell.
         script = (
@@ -112,11 +114,34 @@ class TestWinPtyBridgeIO:
         )
         bridge = WinPtyBridge.spawn([sys.executable, "-c", script])
         try:
-            bridge.write(b"hello-pty\r\n")
+            assert asyncio.run(bridge.write(b"hello-pty\r\n")) is True
             output = _read_until(bridge, b"GOT:hello-pty")
             assert b"GOT:hello-pty" in output
         finally:
             bridge.close()
+
+
+    def test_write_has_nonblocking_async_contract(self):
+        import asyncio
+        import inspect
+
+        assert inspect.iscoroutinefunction(WinPtyBridge.write)
+        sig = inspect.signature(WinPtyBridge.write)
+        assert "timeout" in sig.parameters
+
+        bridge = WinPtyBridge.spawn(["cmd.exe", "/c", "exit 0"])
+        try:
+            assert asyncio.run(bridge.write(b"")) is True
+        finally:
+            bridge.close()
+
+
+    def test_write_after_close_returns_false(self):
+        import asyncio
+
+        bridge = WinPtyBridge.spawn(["cmd.exe", "/c", "exit 0"])
+        bridge.close()
+        assert asyncio.run(bridge.write(b"x")) is False
 
 
     def test_read_returns_none_after_child_exits(self):

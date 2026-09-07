@@ -10576,7 +10576,13 @@ def _fleet_probe_expected_runtimes(
     if pre_restart_pids is None or pre_restart_pids:
         return True
     try:
-        if pre_update_plan is not None and pre_update_plan.runtimes:
+        # Gateway-kind only: serve/dashboard plan records never publish a
+        # gateway_state.json row, so a dashboard-only plan cannot ground a
+        # rows-expected verdict (#97332 / upstream b8e3c5c700).
+        if pre_update_plan is not None and any(
+            getattr(runtime, "kind", None) == "gateway"
+            for runtime in pre_update_plan.runtimes
+        ):
             return True
     except Exception:
         pass

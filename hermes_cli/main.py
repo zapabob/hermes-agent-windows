@@ -7668,11 +7668,17 @@ def _stop_desktop_processes_locking_build(desktop_dir: Path) -> list[int]:
         # Wait for the handles (and thus the file locks) to actually release.
         try:
             _, alive = psutil.wait_procs(victims, timeout=5)
+            killed = []
             for proc in alive:
                 try:
                     proc.kill()
+                    killed.append(proc)
                 except Exception:
                     continue
+            # Second bounded wait after escalate — promotion must not race
+            # lingering WinError 32 locks (upstream f17f18cd11 semantics).
+            if killed:
+                psutil.wait_procs(killed, timeout=5)
         except Exception:
             pass
     return stopped

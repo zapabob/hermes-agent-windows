@@ -37,14 +37,21 @@ class FakeBridge:
             return b""                # idle
         return self._chunks.pop(0)
 
-    def write(self, data):
+    async def write(self, data, *, timeout: float = 10.0):
         self.written.extend(data)
+        return True
 
     def resize(self, cols, rows):
         self.resized = (cols, rows)
 
     def close(self):
         self.closed = True
+
+
+class FailingBridge(FakeBridge):
+    async def write(self, data, *, timeout: float = 10.0):
+        self.written.extend(data)
+        return False
 
 
 class FakeWS:
@@ -87,12 +94,46 @@ async def test_reattach_can_force_complete_tui_redraw_after_replay():
     await asyncio.sleep(0.05)
 
     ws = FakeWS()
-    await s.attach(ws, force_redraw=True)
+    ok = await s.attach(ws, force_redraw=True)
+    assert ok is True
 
     replay = b"".join(p for kind, p in ws.sent if kind == "bytes")
     assert replay == b"partial differential frame"
     assert bytes(bridge.written) == b"\x0c"
     await s.close()
+
+
+@pytest.mark.asyncio
+async def test_superseded_socket_write_failure_does_not_kill_replacement():
+    from hermes_cli.pty_session import PtySession
+
+    bridge = FailingBridge([b""])
+    s = PtySession("k", bridge, buffer_cap=1024, read_timeout=0.01)
+    await s.start()
+    old = FakeWS()
+    new = FakeWS()
+    await s.attach(old)
+    await s.attach(new)
+    # Late failure from the superseded socket must not mark the session dead.
+    assert await s.write(old, b"late") is True
+    assert s.alive is True
+    # Current socket with same generation genuinely failing does mark dead.
+    assert await s.write(new, b"now") is False
+    assert s.alive is False
+    await s.close()
+
+
+@pytest.mark.asyncio
+async def test_close_marks_alive_false_immediately():
+    from hermes_cli.pty_session import PtySession
+
+    bridge = FakeBridge([b""])
+    s = PtySession("k", bridge, buffer_cap=1024, read_timeout=0.01)
+    await s.start()
+    close_task = asyncio.create_task(s.close())
+    await asyncio.sleep(0)
+    assert s.alive is False
+    await close_task
 
 
 @pytest.mark.asyncio

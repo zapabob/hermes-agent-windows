@@ -1,0 +1,52 @@
+{
+  "timestamp": "2026-09-07T08:20:00.000000+00:00",
+  "bridge_status": {
+    "loginState": "error",
+    "startedAt": null,
+    "loginError": null,
+    "profile": null,
+    "auth": {
+      "authToken": false,
+      "email": false,
+      "password": false,
+      "qrAvailable": false,
+      "pinAvailable": false
+    },
+    "qrUrl": null,
+    "pinCode": null,
+    "device": "DESKTOPWIN",
+    "allowedUsersConfigured": false,
+    "allowedGroupMids": [],
+    "groupAdminConfigured": false,
+    "banlistChats": 0,
+    "autoReply": {
+      "enabled": true,
+      "triggers": ["#はくあ", "#hermesagent"],
+      "onlyGroups": true,
+      "cooldownMs": 5000,
+      "webhookConfigured": true,
+      "webhookTimeoutMs": 90000
+    },
+    "eventCount": 0
+  },
+  "synced_sessions": 0,
+  "synced_messages": 0,
+  "synced_x_records": 0,
+  "valid_x_posts": 0,
+  "x_artifacts_saved": 0,
+  "policy_facts_saved": 0,
+  "total_saved": 0,
+  "excluded_intake": 0,
+  "excluded_guard": 0,
+  "total_excluded": 0,
+  "verified_rows": 0,
+  "guard_violations": 0,
+  "residual_risk": "low",
+  "delta_since_last_sync": {
+    "new_line_messages": 0,
+    "new_telegram_messages": 0,
+    "new_discord_messages": 0,
+    "new_x_posts": 0,
+    "new_x_mentions": 0
+  }
+}
