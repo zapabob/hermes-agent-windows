@@ -10,11 +10,20 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import Optional
+from typing import Callable, Dict, Optional, Tuple
 
 WS_CLOSE_PROCESS_EXITED = 4410
 WS_CLOSE_SUPERSEDED = 4409
 TUI_FORCE_REDRAW = b"\x0c"
+
+
+async def _close_ws(ws, code: int) -> None:
+    if ws is None:
+        return
+    try:
+        await ws.close(code=code)
+    except Exception:
+        pass
 
 
 class RingBuffer:
@@ -50,7 +59,9 @@ class PtySession:
         self.last_detached_at: Optional[float] = None
         self._read_timeout = read_timeout
         self._ws = None
+        self._attach_generation = 0
         self._drain_task: Optional[asyncio.Task] = None
+        self._write_lock = asyncio.Lock()
 
     async def start(self) -> None:
         self._drain_task = asyncio.create_task(self._drain())
@@ -61,25 +72,37 @@ class PtySession:
             chunk = await loop.run_in_executor(None, self.bridge.read, self._read_timeout)
             if chunk is None:                       # EOF — the agent process exited
                 self.alive = False
-                ws = self._ws
-                if ws is not None:
-                    try:
-                        await ws.close(code=WS_CLOSE_PROCESS_EXITED)
-                    except Exception:
-                        pass
+                await _close_ws(self._ws, WS_CLOSE_PROCESS_EXITED)
                 return
             if not chunk:                            # idle tick
                 await asyncio.sleep(0)
                 continue
             self.buffer.append(chunk)
-            ws = self._ws
-            if ws is not None:
-                try:
-                    await ws.send_bytes(chunk)
-                except Exception:
-                    pass                             # detached mid-send; keep buffering
+            try:
+                if self._ws is not None:
+                    await self._ws.send_bytes(chunk)
+            except Exception:
+                pass                                 # detached mid-send; keep buffering
 
-    async def attach(self, ws, *, force_redraw: bool = False) -> None:
+    async def write(self, ws, data: bytes) -> bool:
+        """Serialize input and discard bytes from a superseded socket."""
+        async with self._write_lock:
+            if self._ws is not ws:
+                return True
+            generation = self._attach_generation
+            delivered = await self.bridge.write(data)
+            # A replacement socket can attach while the bridge write is
+            # suspended on backpressure. A late failure from the superseded
+            # socket must not poison the replacement's shared PTY session.
+            if (
+                not delivered
+                and self._ws is ws
+                and self._attach_generation == generation
+            ):
+                self.alive = False
+            return delivered
+
+    async def attach(self, ws, *, force_redraw: bool = False) -> bool:
         """Attach a browser terminal and replay buffered PTY output.
 
         The TUI uses an alternate screen and differential rendering, so a
@@ -87,20 +110,18 @@ class PtySession:
         Reattaching a fresh xterm therefore asks the live TUI to emit one
         complete redraw after the replay.
         """
-        old = self._ws
-        if old is not None and old is not ws:
-            try:
-                await old.close(code=WS_CLOSE_SUPERSEDED)
-            except Exception:
-                pass
+        if self._ws is not ws:
+            await _close_ws(self._ws, WS_CLOSE_SUPERSEDED)
         self._ws = ws
+        self._attach_generation += 1
         self.attached = True
         self.last_detached_at = None
         snap = self.buffer.snapshot()
         if snap:
             await ws.send_bytes(snap)
         if force_redraw:
-            self.bridge.write(TUI_FORCE_REDRAW)
+            return await self.write(ws, TUI_FORCE_REDRAW)
+        return True
 
     def detach(self, ws) -> None:
         # Only the currently-attached socket may mark the session detached.
@@ -115,6 +136,7 @@ class PtySession:
         self.last_detached_at = time.monotonic()
 
     async def close(self) -> None:
+        self.alive = False
         if self._drain_task is not None:
             self._drain_task.cancel()
             try:
@@ -127,9 +149,6 @@ class PtySession:
             await asyncio.to_thread(self.bridge.close)
         except Exception:
             pass
-
-
-from typing import Callable, Dict, Tuple
 
 
 class RegistryFull(Exception):
@@ -198,8 +217,14 @@ class PtySessionRegistry:
             raise RegistryFull()
         oldest = min(idle, key=lambda s: s.last_detached_at or 0.0)
         self._sessions.pop(oldest.key, None)
+        # Fire-and-forget close of the reaped idle session is intentional:
+        # this path runs while attach_or_spawn is about to spawn a replacement
+        # and must not await a blocking bridge.close on the event loop.
         asyncio.create_task(oldest.close())
 
     async def close_all(self) -> None:
-        for key in list(self._sessions):
-            await self._sessions.pop(key).close()
+        keys = list(self._sessions.keys())
+        for key in keys:
+            session = self._sessions.pop(key, None)
+            if session is not None:
+                await session.close()

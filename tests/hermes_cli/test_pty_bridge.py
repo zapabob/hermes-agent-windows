@@ -59,15 +59,59 @@ class TestPtyBridgeSpawn:
 class TestPtyBridgeIO:
 
     def test_write_sends_to_child_stdin(self):
+        import asyncio
+
         # `cat` with no args echoes stdin back to stdout.  We write a line,
         # read it back, then signal EOF to let cat exit cleanly.
         bridge = PtyBridge.spawn([shutil.which("cat") or "cat"])
         try:
-            bridge.write(b"hello-pty\n")
+            assert asyncio.run(bridge.write(b"hello-pty\n")) is True
             output = _read_until(bridge, b"hello-pty")
             assert b"hello-pty" in output
         finally:
             bridge.close()
+
+    def test_write_has_nonblocking_async_contract(self):
+        import asyncio
+        import inspect
+
+        assert inspect.iscoroutinefunction(PtyBridge.write)
+        bridge = PtyBridge.spawn([shutil.which("cat") or "cat"])
+        try:
+            assert asyncio.run(bridge.write(b"")) is True
+            assert asyncio.run(bridge.write(b"x\n")) is True
+        finally:
+            bridge.close()
+
+    def test_spawn_sets_dashboard_pty_host(self, monkeypatch):
+        captured = {}
+
+        class _FakeProc:
+            fd = 0
+            pid = 1
+
+            def isalive(self):
+                return False
+
+            def kill(self, *_a, **_k):
+                return None
+
+            def close(self, force=True):
+                return None
+
+        def _fake_spawn(argv, cwd=None, env=None, dimensions=(24, 80)):
+            captured["env"] = dict(env or {})
+            return _FakeProc()
+
+        monkeypatch.setattr(
+            "hermes_cli.pty_bridge.ptyprocess.PtyProcess.spawn",
+            _fake_spawn,
+        )
+        monkeypatch.setattr("hermes_cli.pty_bridge.os.set_blocking", lambda *_a, **_k: None)
+        from hermes_cli.pty_bridge import PTY_HOST_DASHBOARD, PTY_HOST_ENV
+
+        PtyBridge.spawn(["true"], env={"TERM": "xterm-256color"})
+        assert captured["env"][PTY_HOST_ENV] == PTY_HOST_DASHBOARD
 
     def test_read_returns_none_after_child_exits(self):
         bridge = PtyBridge.spawn(["/bin/sh", "-c", "printf done"])

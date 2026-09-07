@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react'
+﻿import { renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { requestMcpInstallFromDeepLink } from '@/store/mcp-deeplink-install'
@@ -15,6 +15,37 @@ import { useDesktopIntegrations } from './use-desktop-integrations'
 // hook believes it runs in. Default false keeps the pre-existing restore
 // coverage exercising the real main-window path.
 const { hudWindowMock } = vi.hoisted(() => ({ hudWindowMock: vi.fn(() => false) }))
+
+// Incomplete local installs of @icons-pack/react-simple-icons can miss
+// individual icon modules (e.g. SiIcon.mjs) while still exporting them from
+// the package barrel — which aborts this suite before any Browser hand-off
+// assertions run. Stub the barrel for unit tests; production bundling is
+// unaffected. getOwnPropertyDescriptor lets Vitest resolve arbitrary Si* exports.
+vi.mock('@icons-pack/react-simple-icons', () => {
+  const icon = () => null
+  const target: Record<string, unknown> = { __esModule: true }
+  return new Proxy(target, {
+    get(t, prop) {
+      if (prop === '__esModule') return true
+      if (prop === 'then') return undefined
+      if (typeof prop === 'string' && prop.endsWith('Hex')) return '#000000'
+      if (typeof prop === 'string') {
+        if (!(prop in t)) t[prop] = icon
+        return t[prop]
+      }
+      return undefined
+    },
+    has: () => true,
+    getOwnPropertyDescriptor(t, prop) {
+      if (typeof prop !== 'string') return undefined
+      if (!(prop in t)) t[prop] = prop === '__esModule' ? true : icon
+      return { configurable: true, enumerable: true, writable: true, value: t[prop] }
+    },
+    ownKeys(t) {
+      return Reflect.ownKeys(t)
+    },
+  })
+})
 
 vi.mock('@/store/mcp-deeplink-install', () => ({
   requestMcpInstallFromDeepLink: vi.fn()
@@ -199,7 +230,7 @@ describe('useDesktopIntegrations', () => {
       const sessions = [session({ id: 'ai-session', profile: 'ai-engineer' })]
 
       // The route belongs to ai-engineer; active profile is default.
-      // No navigation should happen — wrong owner.
+      // No navigation should happen 窶・wrong owner.
       render({ activeProfile: 'default', profileReady: true, sessions })
 
       expect(navigate).not.toHaveBeenCalled()
@@ -224,7 +255,7 @@ describe('useDesktopIntegrations', () => {
 
       render({ activeProfile: 'ai-engineer', profileReady: true, sessions })
 
-      // The route and session match the active profile — should restore.
+      // The route and session match the active profile 窶・should restore.
       expect(navigate).toHaveBeenCalledWith('/ai-session', { replace: true })
     })
   })
@@ -255,7 +286,7 @@ describe('useDesktopIntegrations', () => {
         sessions
       })
 
-      // No navigation — coder's remembered route doesn't belong to ops.
+      // No navigation 窶・coder's remembered route doesn't belong to ops.
       expect(navigate).not.toHaveBeenCalled()
     })
   })
@@ -273,7 +304,7 @@ describe('useDesktopIntegrations', () => {
 
       // The HUD is a fresh full renderer booting at the default route, but its
       // destination was chosen explicitly by hudTargetSessionId() at open time
-      // — remembered-navigation restore must not hijack it to the last session.
+      // 窶・remembered-navigation restore must not hijack it to the last session.
       expect(navigate).not.toHaveBeenCalled()
     })
 
@@ -380,7 +411,7 @@ describe('useDesktopIntegrations', () => {
 
       render({ profileReady: true, sessions })
 
-      // /skills is not a session route — no ownership validation needed.
+      // /skills is not a session route 窶・no ownership validation needed.
       expect(navigate).toHaveBeenCalledWith('/skills', { replace: true })
     })
 
@@ -524,7 +555,7 @@ describe('useDesktopIntegrations', () => {
       expect(navigate).not.toHaveBeenCalled()
     })
 
-    it('opens hermes://open/browser?url=… in the in-app Browser pane (Chrome/Edge hand-off)', () => {
+    it('opens hermes://open/browser?url=窶ｦ in the in-app Browser pane (Chrome/Edge hand-off)', () => {
       let deepLink: ((payload: { kind: string; name: string; params: Record<string, string> }) => void) | undefined
       desktopWindow.hermesDesktop = {
         ...desktopWindow.hermesDesktop,

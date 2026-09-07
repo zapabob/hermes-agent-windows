@@ -213,7 +213,7 @@ _FS_MIME_TYPES = {
 }
 
 
-def _fs_path(raw_path: str) -> Path:
+def _fs_path(raw_path: str, *, cwd: str | None = None) -> Path:
     raw = str(raw_path or "").strip()
     if not raw:
         raise HTTPException(status_code=400, detail="Path is required")
@@ -233,7 +233,13 @@ def _fs_path(raw_path: str) -> Path:
             raise PermissionError("network share path")
         candidate = Path(raw).expanduser()
         if not candidate.is_absolute():
-            candidate = Path.cwd() / candidate
+            base = Path(cwd).expanduser() if cwd is not None else Path.cwd()
+            if not base.is_absolute():
+                raise HTTPException(
+                    status_code=400,
+                    detail="Session working directory is unavailable",
+                )
+            candidate = base / candidate
         return candidate.resolve(strict=False)
     except PermissionError:
         raise HTTPException(status_code=403, detail="Network share paths are not allowed")

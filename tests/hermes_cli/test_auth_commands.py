@@ -959,12 +959,22 @@ def test_seed_from_singletons_respects_hermes_pkce_suppression(tmp_path, monkeyp
         "suppressed_sources": {"anthropic": ["hermes_pkce"]},
     }))
 
-    # Stub the readers so only hermes_pkce is "available"; claude_code returns None
-    import agent.anthropic_adapter as aa
-    monkeypatch.setattr(aa, "read_hermes_oauth_credentials", lambda: {
-        "accessToken": "tok", "refreshToken": "r", "expiresAt": 9999999999000,
-    })
-    monkeypatch.setattr(aa, "read_claude_code_credentials", lambda: None)
+    # Stub the readers so only hermes_pkce is "available"; claude_code returns None.
+    # _seed_from_singletons imports from agent.anthropic_credentials (not the
+    # adapter re-export) — patch that module so a live ~/.claude credentials
+    # file on the host cannot leak into an isolated HERMES_HOME test.
+    import agent.anthropic_credentials as ac
+
+    monkeypatch.setattr(
+        ac,
+        "read_hermes_oauth_credentials",
+        lambda: {
+            "accessToken": "tok",
+            "refreshToken": "r",
+            "expiresAt": 9999999999000,
+        },
+    )
+    monkeypatch.setattr(ac, "read_claude_code_credentials", lambda: None)
 
     from agent.credential_pool import _seed_from_singletons
     entries = []
@@ -1110,3 +1120,170 @@ def test_auth_remove_env_seeded_dotenv_with_bom_no_shell_hint(tmp_path, monkeypa
     out = capsys.readouterr().out
     assert "Cleared DEEPSEEK_API_KEY from .env" in out
     assert "still set in your shell environment" not in out
+
+
+def test_auth_list_shows_entry_id_and_priority(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    _write_auth_store(
+        tmp_path,
+        {
+            "version": 1,
+            "providers": {},
+            "credential_pool": {
+                "openrouter": [
+                    {
+                        "id": "ab12cd",
+                        "label": "primary",
+                        "auth_type": "api_key",
+                        "priority": 0,
+                        "source": "manual",
+                        "access_token": "secret-1",
+                    },
+                    {
+                        "id": "ef56gh",
+                        "label": "backup",
+                        "auth_type": "api_key",
+                        "priority": 1,
+                        "source": "manual",
+                        "access_token": "secret-2",
+                    },
+                ]
+            },
+        },
+    )
+
+    from hermes_cli.auth_commands import auth_list_command
+
+    auth_list_command(type("Args", (), {"provider": "openrouter"})())
+
+    out = capsys.readouterr().out
+    assert "id=ab12cd priority=0" in out
+    assert "id=ef56gh priority=1" in out
+
+
+def test_auth_priority_reorders_entries(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    _write_auth_store(
+        tmp_path,
+        {
+            "version": 1,
+            "providers": {},
+            "credential_pool": {
+                "openrouter": [
+                    {
+                        "id": "aaa111",
+                        "label": "first",
+                        "auth_type": "api_key",
+                        "priority": 0,
+                        "source": "manual",
+                        "access_token": "secret-1",
+                    },
+                    {
+                        "id": "bbb222",
+                        "label": "second",
+                        "auth_type": "api_key",
+                        "priority": 1,
+                        "source": "manual",
+                        "access_token": "secret-2",
+                    },
+                ]
+            },
+        },
+    )
+
+    from hermes_cli.auth_commands import auth_list_command, auth_priority_command
+
+    auth_priority_command(
+        type("Args", (), {"provider": "openrouter", "target": "bbb222", "priority": 0})()
+    )
+    auth_list_command(type("Args", (), {"provider": "openrouter"})())
+    out = capsys.readouterr().out
+    assert "id=bbb222 priority=0" in out
+    assert "id=aaa111 priority=1" in out
+
+
+def test_auth_reset_target_preserves_sibling_cooldown(tmp_path, monkeypatch):
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    now = time.time()
+    _write_auth_store(
+        tmp_path,
+        {
+            "version": 1,
+            "providers": {},
+            "credential_pool": {
+                "openrouter": [
+                    {
+                        "id": "keep1",
+                        "label": "keep",
+                        "auth_type": "api_key",
+                        "priority": 0,
+                        "source": "manual",
+                        "access_token": "secret-1",
+                        "last_status": "exhausted",
+                        "last_status_at": now,
+                        "last_error_code": 429,
+                        "last_error_reset_at": now + 3600,
+                    },
+                    {
+                        "id": "clear2",
+                        "label": "clear",
+                        "auth_type": "api_key",
+                        "priority": 1,
+                        "source": "manual",
+                        "access_token": "secret-2",
+                        "last_status": "exhausted",
+                        "last_status_at": now,
+                        "last_error_code": 429,
+                        "last_error_reset_at": now + 3600,
+                    },
+                ]
+            },
+        },
+    )
+
+    from agent.credential_pool import load_pool
+    from hermes_cli.auth_commands import auth_reset_command
+
+    auth_reset_command(type("Args", (), {"provider": "openrouter", "target": "clear2"})())
+    pool = load_pool("openrouter")
+    by_id = {e.id: e for e in pool.entries()}
+    assert by_id["clear2"].last_status is None
+    assert by_id["keep1"].last_status == "exhausted"
+
+
+def test_auth_refresh_multi_entry_requires_target(tmp_path, monkeypatch):
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes"))
+    _write_auth_store(
+        tmp_path,
+        {
+            "version": 1,
+            "providers": {},
+            "credential_pool": {
+                "openai-codex": [
+                    {
+                        "id": "c1",
+                        "label": "one",
+                        "auth_type": "oauth",
+                        "priority": 0,
+                        "source": "manual:device_code",
+                        "access_token": "tok1",
+                        "refresh_token": "ref1",
+                    },
+                    {
+                        "id": "c2",
+                        "label": "two",
+                        "auth_type": "oauth",
+                        "priority": 1,
+                        "source": "manual:device_code",
+                        "access_token": "tok2",
+                        "refresh_token": "ref2",
+                    },
+                ]
+            },
+        },
+    )
+
+    from hermes_cli.auth_commands import auth_refresh_command
+
+    with pytest.raises(SystemExit, match="pass an index"):
+        auth_refresh_command(type("Args", (), {"provider": "openai-codex", "target": None})())

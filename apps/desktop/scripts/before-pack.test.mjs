@@ -4,7 +4,11 @@ import os from 'node:os'
 import path from 'node:path'
 import { test } from 'vitest'
 
-import beforePack, { cleanStaleAppOutDir, preserveRollbackBackup } from '../scripts/before-pack.mjs'
+import beforePack, {
+  cleanStaleAppOutDir,
+  preserveRollbackBackup,
+  releaseInstallScopedDesktopLocks
+} from '../scripts/before-pack.mjs'
 
 test('cleanStaleAppOutDir removes a populated unpacked directory', () => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-before-pack-'))
@@ -152,4 +156,41 @@ test('beforePack on linux keeps the plain wipe (no .bak)', async () => {
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true })
   }
+})
+
+test('releaseInstallScopedDesktopLocks is a no-op off Windows', () => {
+  assert.deepEqual(
+    releaseInstallScopedDesktopLocks('C:\\release\\win-unpacked', { platform: 'linux' }),
+    []
+  )
+})
+
+test('releaseInstallScopedDesktopLocks terminate then escalate with second wait', () => {
+  const events = []
+  const pids = releaseInstallScopedDesktopLocks('C:\\apps\\desktop\\release\\win-unpacked', {
+    platform: 'win32',
+    listLockingPids: root => {
+      events.push(`list:${root.replaceAll('\\', '/')}`)
+      return [101, 202]
+    },
+    stopPids: (ids, force) => {
+      events.push(`${force ? 'kill' : 'term'}:${ids.join(',')}`)
+    },
+    waitForExit: (ids, timeoutMs) => {
+      events.push(`wait:${ids.join(',')}:${timeoutMs}`)
+      // First wait leaves one survivor so escalate path runs.
+      return events.filter(e => e.startsWith('wait:')).length === 1 ? [202] : []
+    },
+    terminateWaitMs: 5000,
+    killWaitMs: 5000
+  })
+
+  assert.deepEqual(pids, [101, 202])
+  assert.deepEqual(events, [
+    'list:C:/apps/desktop/release',
+    'term:101,202',
+    'wait:101,202:5000',
+    'kill:202',
+    'wait:202:5000'
+  ])
 })

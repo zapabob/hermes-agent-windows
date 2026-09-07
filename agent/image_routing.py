@@ -356,8 +356,14 @@ def _resolve_inference_api_key(
     """
     try:
         from agent.auxiliary_client import _runtime_main_value
+        from agent.command_token_source import materialize_probe_api_key
 
-        runtime_key = str(_runtime_main_value("api_key") or "").strip()
+        runtime = _runtime_main_value("api_key")
+        # A declared callable source owns authentication even when mint fails —
+        # never fall through to configured model/provider keys.
+        if callable(runtime):
+            return materialize_probe_api_key(runtime)
+        runtime_key = materialize_probe_api_key(runtime)
         if runtime_key:
             return runtime_key
     except Exception:

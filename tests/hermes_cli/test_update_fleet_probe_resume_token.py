@@ -86,8 +86,27 @@ class TestRowCapableSignalsStillCount:
     def test_plan_inventory_still_expects_rows_alongside_token(self):
         token = {"resume_needed": False, "unmapped": [{"pid": 99, "argv": ["x"]}]}
         assert (
-            _fleet_probe_expected_runtimes(_plan([object()]), [], token, [], set())
+            _fleet_probe_expected_runtimes(
+                _plan([types.SimpleNamespace(kind="gateway")]),
+                [],
+                token,
+                [],
+                set(),
+            )
             is True
+        )
+
+    def test_dashboard_plan_with_token_still_not_expected(self):
+        token = {"resume_needed": False, "profiles": {"default": 1}}
+        assert (
+            _fleet_probe_expected_runtimes(
+                _plan([types.SimpleNamespace(kind="dashboard")]),
+                [],
+                token,
+                [],
+                set(),
+            )
+            is False
         )
 
     def test_unreadable_pre_state_still_expects_rows(self):

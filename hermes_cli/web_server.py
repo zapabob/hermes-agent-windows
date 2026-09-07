@@ -2839,9 +2839,35 @@ async def fs_write_text(payload: FsWriteText):
     return {"ok": True, "path": str(target), "byteSize": len(text.encode("utf-8"))}
 
 
+async def _fs_download_path(
+    path: str,
+    profile: Optional[str],
+    session_id: Optional[str],
+) -> Path:
+    """Resolve a download/read path under session/profile ownership when given.
+
+    Relative ``~/`` ``./`` ``../`` paths must expand against the originating
+    session cwd on the gateway — never the Windows Desktop client's cwd.
+    """
+    if session_id is not None:
+        from hermes_cli.web_routers.sessions import get_session_detail
+
+        if not session_id.strip():
+            raise HTTPException(status_code=404, detail="Session not found")
+        session = await get_session_detail(session_id, profile)
+        return _fs_path(path, cwd=session.get("cwd") or "")
+    if profile is not None:
+        _cron_profile_home(profile)
+    return _fs_path(path)
+
+
 @app.get("/api/fs/read-data-url")
-async def fs_read_data_url(path: str):
-    target, st = _fs_regular_file(_fs_path(path))
+async def fs_read_data_url(
+    path: str,
+    profile: Optional[str] = None,
+    session_id: Optional[str] = None,
+):
+    target, st = _fs_regular_file(await _fs_download_path(path, profile, session_id))
     if st.st_size > _FS_DATA_URL_MAX_BYTES:
         raise HTTPException(status_code=413, detail="File too large")
     try:
@@ -2854,8 +2880,12 @@ async def fs_read_data_url(path: str):
 
 
 @app.get("/api/fs/download")
-async def fs_download(path: str):
-    target, _st = _fs_regular_file(_fs_path(path))
+async def fs_download(
+    path: str,
+    profile: Optional[str] = None,
+    session_id: Optional[str] = None,
+):
+    target, _st = _fs_regular_file(await _fs_download_path(path, profile, session_id))
     if _is_sensitive_path(target):
         raise HTTPException(status_code=403, detail="Access to sensitive files is not allowed")
     return FileResponse(
@@ -16482,6 +16512,19 @@ PTY_REGISTRY = PtySessionRegistry(
 )
 
 
+async def _close_stalled_pty_input(ws: "WebSocket", *, path: str) -> None:
+    """Close only the terminal socket when its child stops accepting input.
+
+    Must never kill the Dashboard process, gateway, Desktop, or request a
+    watchdog restart — recycle the stalled session alone (WS 1013).
+    """
+    _log.warning("pty input stalled path=%s; recycling terminal session", path)
+    try:
+        await ws.close(code=1013, reason="PTY input stalled")
+    except Exception:
+        pass
+
+
 async def _legacy_pump(ws: "WebSocket", bridge) -> None:
     """Original 1:1 socket<->PTY pump: stream until disconnect, then close the
     bridge. Used when no ``?attach=`` token is supplied (keep-alive opt-in).
@@ -16556,7 +16599,9 @@ async def _legacy_pump(ws: "WebSocket", bridge) -> None:
             if match and match.end() == len(raw):
                 bridge.resize(cols=int(match.group(1)), rows=int(match.group(2)))
                 continue
-            bridge.write(raw)
+            if not await bridge.write(raw):
+                await _close_stalled_pty_input(ws, path="legacy")
+                break
     except WebSocketDisconnect:
         pass
     finally:
@@ -17918,7 +17963,10 @@ async def pty_ws(ws: WebSocket) -> None:
     # A fresh xterm cannot reliably reconstruct the TUI from an arbitrary
     # bounded tail of alternate-screen, differential ANSI output. Reused PTYs
     # emit a complete frame after replay so reconnects never reopen blank.
-    await session.attach(ws, force_redraw=not _created)
+    if not await session.attach(ws, force_redraw=not _created):
+        await _close_stalled_pty_input(ws, path="keepalive-redraw")
+        PTY_REGISTRY.detach(attach_token, ws)
+        return
 
     # --- writer loop: WebSocket → PTY master ----------------------------
     # No reader task here: the session's drain task (spawned once per PTY,
@@ -17949,7 +17997,9 @@ async def pty_ws(ws: WebSocket) -> None:
                 session.bridge.resize(cols=int(match.group(1)), rows=int(match.group(2)))
                 continue
 
-            session.bridge.write(raw)
+            if not await session.write(ws, raw):
+                await _close_stalled_pty_input(ws, path="keepalive")
+                break
     except WebSocketDisconnect:
         pass
     finally:

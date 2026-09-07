@@ -126,6 +126,13 @@ SUPPORTED_POOL_STRATEGIES = {
     STRATEGY_LEAST_USED,
 }
 
+# Providers whose pooled OAuth entries ``_refresh_entry_impl`` can refresh.
+# Used by ``hermes auth refresh`` fail-closed gating (CLI only — pool refresh
+# internals remain the sole token authority).
+REFRESHABLE_OAUTH_PROVIDERS = frozenset(
+    {"anthropic", "nous", "openai-codex", "xai-oauth"}
+)
+
 # Cooldown before retrying an exhausted credential.
 # Transient 401 auth failures cool down briefly so single-key setups can recover.
 # 429 (rate-limited), 402 (billing/quota), and other failures cool down after 1 hour.
@@ -752,6 +759,20 @@ def _write_through_provider_state_to_global_root(
         )
 
 
+def _cleared_status_copy(entry: PooledCredential) -> PooledCredential:
+    """Return a copy of *entry* with local exhaustion / error fields cleared."""
+    return replace(
+        entry,
+        last_status=None,
+        last_status_at=None,
+        last_error_code=None,
+        last_error_reason=None,
+        last_error_message=None,
+        last_error_reset_at=None,
+        extra={k: v for k, v in entry.extra.items() if k != "failure_reason"},
+    )
+
+
 class CredentialPool:
     def __init__(self, provider: str, entries: List[PooledCredential]):
         self.provider = provider
@@ -879,7 +900,12 @@ class CredentialPool:
                     self._entries[idx] = new
                     return
 
-    def _persist(self, *, removed_ids: Optional[List[str]] = None) -> None:
+    def _persist(
+        self,
+        *,
+        removed_ids: Optional[List[str]] = None,
+        status_cleared_ids: Optional[List[str]] = None,
+    ) -> None:
         # Self-locking (RLock): snapshotting self._entries must not race a
         # concurrent rotation when called from the deferred refresh path.
         with self._lock:
@@ -887,6 +913,7 @@ class CredentialPool:
                 self.provider,
                 [entry.to_dict() for entry in self._entries],
                 removed_ids=removed_ids,
+                status_cleared_ids=status_cleared_ids,
             )
 
     def _is_terminal_auth_failure(
@@ -2717,30 +2744,51 @@ class CredentialPool:
             self._current_id = refreshed.id
         return refreshed
 
+    def reset_status(self, credential_id: str) -> Optional[PooledCredential]:
+        """Clear only the target's local error state, preserving sibling cooldowns."""
+        with self._lock:
+            entry = next((e for e in self._entries if e.id == credential_id), None)
+            if entry is None:
+                return None
+            cleared = _cleared_status_copy(entry)
+            self._replace_entry(entry, cleared)
+            self._persist(status_cleared_ids=[cleared.id])
+            return cleared
+
     def reset_statuses(self) -> int:
         with self._lock:
             count = 0
             new_entries = []
+            cleared_ids: List[str] = []
             for entry in self._entries:
                 if entry.last_status or entry.last_status_at or entry.last_error_code:
-                    new_entries.append(
-                        replace(
-                            entry,
-                            last_status=None,
-                            last_status_at=None,
-                            last_error_code=None,
-                            last_error_reason=None,
-                            last_error_message=None,
-                            last_error_reset_at=None,
-                        )
-                    )
+                    cleared = _cleared_status_copy(entry)
+                    new_entries.append(cleared)
+                    cleared_ids.append(cleared.id)
                     count += 1
                 else:
                     new_entries.append(entry)
             if count:
                 self._entries = new_entries
-                self._persist()
+                self._persist(status_cleared_ids=cleared_ids)
             return count
+
+    def move_entry(
+        self, credential_id: str, priority: int
+    ) -> Optional[PooledCredential]:
+        """Place an entry at a clamped zero-based position and persist contiguous priorities."""
+        with self._lock:
+            entry = next((e for e in self._entries if e.id == credential_id), None)
+            if entry is None:
+                return None
+            others = [e for e in self._entries if e.id != credential_id]
+            others.insert(max(0, min(int(priority), len(others))), entry)
+            entries = [replace(e, priority=p) for p, e in enumerate(others)]
+            # Apply load-time ordering now so the reported position survives reload.
+            _normalize_pool_priorities(self.provider, entries)
+            self._entries = sorted(entries, key=lambda e: e.priority)
+            self._persist()
+            return next((e for e in self._entries if e.id == credential_id), None)
 
     def remove_index(self, index: int) -> Optional[PooledCredential]:
         with self._lock:

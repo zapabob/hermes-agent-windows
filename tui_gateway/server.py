@@ -2373,20 +2373,23 @@ def _db_unavailable_error(rid, *, code: int):
 # message persistence all resolve to the right profile. Omitted/own profile → the
 # launch profile (unchanged for single-profile and per-profile-remote setups).
 def _profile_home(profile: str | None) -> Path | None:
-    """Resolve a named profile's home on THIS host, or None for the launch profile."""
+    """Resolve a named profile's home on THIS host, or None for the launch profile.
+
+    Explicit missing/unreadable profile targets raise ``FileNotFoundError`` —
+    never silently fall back to the launch profile.
+    """
     name = (profile or "").strip()
     if not name:
         return None
-    try:
-        from hermes_cli import profiles as profiles_mod
+    from hermes_cli import profiles as profiles_mod
 
-        home = Path(profiles_mod.get_profile_dir(name))
-    except Exception:
-        return None
+    home = Path(profiles_mod.get_profile_dir(name))
+    if not home.is_dir():
+        raise FileNotFoundError(f"Profile '{name}' does not exist.")
     # Already the launch profile? No override needed.
     if home.resolve() == Path(_hermes_home).resolve():
         return None
-    return home if (home / "state.db").exists() or home.exists() else None
+    return home
 
 
 def _profile_scoped(handler):
@@ -13641,6 +13644,7 @@ def _respond(rid, params, key, *, allow_expired=False):
 # opt/model-resolution-core PR touches its body; move it to methods_config.py
 # in a follow-up once that PR lands.
 @method("config.set")
+@_profile_scoped
 def _(rid, params: dict) -> dict:
     key, value = params.get("key", ""), params.get("value", "")
     session = _sessions.get(params.get("session_id", ""))

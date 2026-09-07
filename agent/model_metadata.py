@@ -713,8 +713,10 @@ def _normalize_base_url(base_url: str) -> str:
     return (base_url or "").strip().rstrip("/")
 
 
-def _auth_headers(api_key: str = "") -> Dict[str, str]:
-    token = str(api_key or "").strip()
+def _auth_headers(api_key: object = "") -> Dict[str, str]:
+    from agent.command_token_source import materialize_probe_api_key
+
+    token = materialize_probe_api_key(api_key)
     if not token:
         return {}
     return {"Authorization": f"Bearer {token}"}
@@ -1382,7 +1384,7 @@ def fetch_endpoint_model_metadata(
     if alternate and alternate not in candidates:
         candidates.append(alternate)
 
-    headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+    headers = _auth_headers(api_key)
     last_error: Optional[Exception] = None
 
     if is_local_endpoint(normalized):

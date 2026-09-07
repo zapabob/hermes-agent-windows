@@ -34,19 +34,43 @@ def _plan(runtimes):
 class TestEmptySnapshotFailClosed:
     """Signals under which zero fleet rows means verification failure."""
 
-    def test_incomplete_when_pre_update_plan_saw_runtimes(self):
-        # (a) The plan inventoried a live runtime pre-update but the restart
+    def test_incomplete_when_pre_update_plan_saw_gateway_runtimes(self):
+        # (a) The plan inventoried a live gateway pre-update but the restart
         # phase's POSIX bookkeeping is empty (e.g. Windows, or an
         # externally-supervised gateway). Zero rows must fail closed.
         assert (
             _fleet_probe_expected_runtimes(
-                _plan([object()]),
+                _plan([types.SimpleNamespace(kind="gateway")]),
                 [],  # pre_restart_pids: probe saw nothing
                 None,  # no Windows resume token
                 [],  # restarted_services
                 set(),  # killed_pids
             )
             is True
+        )
+
+    def test_dashboard_only_plan_does_not_expect_fleet_rows(self):
+        # serve/dashboard plan records never publish gateway_state.json rows
+        # (#97332 / upstream b8e3c5c700).
+        assert (
+            _fleet_probe_expected_runtimes(
+                _plan([types.SimpleNamespace(kind="dashboard")]),
+                [],
+                None,
+                [],
+                set(),
+            )
+            is False
+        )
+        assert (
+            _fleet_probe_expected_runtimes(
+                _plan([types.SimpleNamespace(kind="serve")]),
+                [],
+                None,
+                [],
+                set(),
+            )
+            is False
         )
 
     def test_windows_resume_token_alone_is_not_expected(self):

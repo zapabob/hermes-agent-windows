@@ -1581,6 +1581,16 @@ def _(rid, params: dict) -> dict:
     if not targets:
         return _err(rid, 4018, "names required")
 
+    # Explicit session_id must resolve before any config mutation (026e3e84):
+    # a stale Desktop/TUI runtime id must never rewrite the launch profile's
+    # toolsets and then quietly skip the session reset.
+    sid = params.get("session_id", "")
+    session = None
+    if sid:
+        session, err = _sess_nowait(params, rid)
+        if err:
+            return err
+
     try:
         from hermes_cli.config import load_config, save_config
         from hermes_cli.tools_config import (
@@ -1608,9 +1618,8 @@ def _(rid, params: dict) -> dict:
         )
         save_config(cfg)
 
-        session = _sessions.get(params.get("session_id", ""))
         info = (
-            _reset_session_agent(params.get("session_id", ""), session)
+            _reset_session_agent(str(sid or ""), session)
             if session
             else None
         )
