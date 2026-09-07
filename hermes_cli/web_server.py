@@ -2839,9 +2839,35 @@ async def fs_write_text(payload: FsWriteText):
     return {"ok": True, "path": str(target), "byteSize": len(text.encode("utf-8"))}
 
 
+async def _fs_download_path(
+    path: str,
+    profile: Optional[str],
+    session_id: Optional[str],
+) -> Path:
+    """Resolve a download/read path under session/profile ownership when given.
+
+    Relative ``~/`` ``./`` ``../`` paths must expand against the originating
+    session cwd on the gateway — never the Windows Desktop client's cwd.
+    """
+    if session_id is not None:
+        from hermes_cli.web_routers.sessions import get_session_detail
+
+        if not session_id.strip():
+            raise HTTPException(status_code=404, detail="Session not found")
+        session = await get_session_detail(session_id, profile)
+        return _fs_path(path, cwd=session.get("cwd") or "")
+    if profile is not None:
+        _cron_profile_home(profile)
+    return _fs_path(path)
+
+
 @app.get("/api/fs/read-data-url")
-async def fs_read_data_url(path: str):
-    target, st = _fs_regular_file(_fs_path(path))
+async def fs_read_data_url(
+    path: str,
+    profile: Optional[str] = None,
+    session_id: Optional[str] = None,
+):
+    target, st = _fs_regular_file(await _fs_download_path(path, profile, session_id))
     if st.st_size > _FS_DATA_URL_MAX_BYTES:
         raise HTTPException(status_code=413, detail="File too large")
     try:
@@ -2854,8 +2880,12 @@ async def fs_read_data_url(path: str):
 
 
 @app.get("/api/fs/download")
-async def fs_download(path: str):
-    target, _st = _fs_regular_file(_fs_path(path))
+async def fs_download(
+    path: str,
+    profile: Optional[str] = None,
+    session_id: Optional[str] = None,
+):
+    target, _st = _fs_regular_file(await _fs_download_path(path, profile, session_id))
     if _is_sensitive_path(target):
         raise HTTPException(status_code=403, detail="Access to sensitive files is not allowed")
     return FileResponse(

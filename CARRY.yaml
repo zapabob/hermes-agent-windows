@@ -69,3 +69,35 @@ carry:
     tests: [apps/desktop/electron/backend-claim.test.ts, apps/desktop/electron/windows-child-options.test.ts, apps/desktop/electron/backend-release-gate.test.ts]
     integration_policy: COMPOSE
     removal_condition: upstream Desktop backend ownership uses an equivalent non-reopenable kernel-handle authority contract
+  - id: windows-conpty-pty-ownership
+    upstream_paths: [hermes_cli/win_pty_bridge.py, hermes_cli/pty_bridge.py, hermes_cli/pty_session.py, hermes_cli/web_server.py]
+    current_upstream_owner: async WinPtyBridge/PtyBridge.write with timeout + PtySession attach generation
+    downstream_reason: carry upstream ConPTY input backpressure and PTY ownership generation on the native Windows bridges without adopting COMPAT_MANIFEST layout
+    invariants: [async write with timeout, socket lifetime != PTY lifetime, WS 1013 stalls close only the terminal socket, HERMES_PTY_HOST=dashboard]
+    tests: [tests/downstream/test_upstream_windows_semantic_contracts.py, tests/hermes_cli/test_win_pty_bridge.py, web/src/lib/pty-focus.test.ts]
+    integration_policy: PORT
+    removal_condition: upstream async ConPTY write and attach-generation contracts land on main and pass the same Windows observability suite
+  - id: windows-staged-desktop-promotion-locks
+    upstream_paths: [apps/desktop/scripts/before-pack.mjs, hermes_cli/main.py]
+    current_upstream_owner: install-scoped Desktop quiesce before live release rename (upstream main_desktop.py stage-and-swap)
+    downstream_reason: compose the same re-quiesce + second wait_procs semantics into in-place pack and CLI stop helpers without inventing main_desktop.py
+    invariants: [install-scoped exe only, no PID-only taskkill, second bounded wait after escalate kill, unresolved lock fails closed]
+    tests: [apps/desktop/scripts/before-pack.test.mjs, tests/downstream/test_upstream_windows_semantic_contracts.py]
+    integration_policy: COMPOSE
+    removal_condition: upstream in-place Windows pack path provides equivalent install-scoped lock release before promotion
+  - id: windows-remote-artifact-unc-fail-closed
+    upstream_paths: [apps/desktop/electron/gateway-file-download.ts, apps/desktop/src/app/artifacts/artifact-utils.ts, apps/desktop/src/lib/media.ts]
+    current_upstream_owner: gateway-owned remote path resolution with originating session/profile
+    downstream_reason: keep tilde/relative paths gateway-owned and preserve fork UNC fail-closed while carrying session/profile provenance on downloads
+    invariants: [no Windows client cwd expansion for remote ~/ ./ ../, sessionId and profile on download bridge, UNC rejected fail-closed]
+    tests: [apps/desktop/electron/gateway-file-download.test.ts, apps/desktop/src/app/artifacts/remote-open.test.tsx]
+    integration_policy: COMPOSE
+    removal_condition: upstream Desktop remote download bridge matches session/profile provenance and Windows UNC fail-closed
+  - id: desktop-browser-chrome-edge-handoff
+    upstream_paths: [apps/desktop/src/lib/browser-deeplink.ts, apps/desktop/src/lib/deeplink-routes.ts, apps/desktop/src/app/contrib/hooks/use-desktop-integrations.ts, apps/desktop/electron/main.ts]
+    current_upstream_owner: hermes://open/browser deep-link to in-app Browser pane
+    downstream_reason: preserve Chrome/Edge hand-off to the official Browser pane while carrying PTY focus restore that must not steal Browser focus
+    invariants: [http(s) only, blank open/browser re-fronts pane, rejected schemes do not navigate, Browser pane owner remains openPreview/openBrowserTab]
+    tests: [apps/desktop/src/lib/browser-deeplink.test.ts, apps/desktop/src/lib/deeplink-routes.test.ts, apps/desktop/src/app/contrib/hooks/use-desktop-integrations.test.tsx]
+    integration_policy: COMPOSE
+    removal_condition: upstream Browser hand-off remains the sole Chrome/Edge ingress and PTY focus restore never steals it

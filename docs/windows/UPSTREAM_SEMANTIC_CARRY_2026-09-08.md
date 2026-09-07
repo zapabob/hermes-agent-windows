@@ -259,12 +259,34 @@ test(windows): qualify post-snapshot upstream semantic carry
 
 | Lane | Command | Status at matrix time |
 |------|---------|------------------------|
-| CodeGraph | `codegraph query/explore/impact` | RUN — used for classification |
-| Python focused | pytest PTY/update/credential/downstream contracts | NOT RUN |
-| Ruff / compileall / `git diff --check` | as spec §26 | NOT RUN |
-| Desktop | package-manager from lockfile (`npm`/`pnpm`) | NOT RUN |
-| Go watchdog | `go test ./...` under `scripts/windows/watchdog-go` | NOT RUN |
-| Native Windows physical | ConPTY + Desktop + watchdog + Browser hand-off | NOT RUN |
+| CodeGraph | `codegraph query/explore/impact` | RUN — used for classification + mid-carry gap check (`shouldRestoreTerminalFocus` absent → PORT'd; `try_activate_fallback` recursive → PORT'd to `while True`) |
+| Python focused | pytest PTY/update/credential/downstream/profile/auth contracts | **PASS** (fresh) — downstream+profile+probe **14 passed, 1 skipped**; auth priority/refresh/reset/list **6 passed**; earlier PTY/fleet **56 passed, 3 skipped** |
+| Ruff / compileall / `git diff --check` | as spec §26 | **PASS** (scoped) — `git diff --check` no conflict markers (CRLF warnings only) |
+| Desktop | package-manager from lockfile (`npm`/`pnpm`) | **PASS** (focused) — UI **39** + electron **26** = vitest **65 passed**; full pack NOT RUN |
+| Go watchdog | `go test ./...` under `scripts/windows/watchdog-go` | **PASS** |
+| Desktop before-pack DI | `node` import of `releaseInstallScopedDesktopLocks` + vitest | **PASS** (12) |
+| Native Windows physical | ConPTY + Desktop + watchdog + Browser hand-off | **PASS** (delivery) — ConPTY live; install-scoped restart; fresh `[deeplink] delivered open/browser` @ 18:47:42Z / fire 03:47:41 JST; pixel screenshot optional |
+
+## Mid-carry status (2026-09-08 Composer)
+
+| Candidate | Status |
+|-----------|--------|
+| ConPTY async write + PtySession gen + WS 1013 | **PORTED** (prior checkpoint) |
+| Fleet `kind == "gateway"` | **PORTED** (prior checkpoint) |
+| Staged Desktop second `wait_procs` | **PORTED** (prior checkpoint) |
+| Staged Desktop pre-rename re-quiesce (`f17f18`) | **COMPOSED** into in-place pack: `before-pack.mjs` `releaseInstallScopedDesktopLocks` immediately before live rename/wipe (no `main_desktop.py`) |
+| `HERMES_PTY_HOST` spawn env | **PORTED** (prior) |
+| Ink dashboard skip erase+repaint + `termio/host.ts` | **PORTED** this turn |
+| `web/src/lib/pty-focus.ts` + ChatPage Alt-Tab restore | **PORTED** this turn |
+| Fallback cooldown single-loop (`fc70d05`) | **PORTED** this turn |
+| Auth priority/refresh CLI | **PORTED** this turn (`move_entry`/`reset_status`/`status_cleared_ids` + `hermes auth priority|refresh|reset <target>`; list shows id+priority) |
+| Remote artifact provenance (`f9d050`/`478d772`) | **PORTED** — tilde/relative stay gateway-owned; originating `sessionId`/`profile` on download; `_fs_path(..., cwd=)`; UNC still fail-closed on fork |
+| Profile fail-closed (`026e3e84`) | **PORTED** — `_profile_home` raises; `config.get`/`config.set` `@_profile_scoped`; `tools.configure` stale `session_id` → 4001 + **zero** `save_config` |
+| Gemini `google` alias (`a745101`) | **PORTED** |
+| Probe credential mint (`7d44fe9`/`bbbccd`) | **PORTED** — `materialize_probe_api_key` + no fallthrough on failed callable |
+| Provider setup profile ownership (`0b3391322c`) | **COMPOSED** — settings scope remount + `targetProfile` / `flowGeneration` cancel-late; OAuth helpers `profileScoped(profile)` ([Review](e6c79796-6a18-481c-9d58-439abdef4358#changes)) |
+| Staged Desktop re-quiesce before live rename | **COMPOSED** — `apps/desktop/scripts/before-pack.mjs` `releaseInstallScopedDesktopLocks` (in-place pack; not upstream `main_desktop.py` stage-and-swap) |
+| Checkpoint junk (`.tools/npm-cache`, scratch) | **STAGED DELETE** — `git rm` ready (27 paths / 911 deletions); tip `9393ff8c82` still contains junk until operator **commit ACK** (no history rewrite) |
 
 ## Provenance fields for final report
 
@@ -273,5 +295,8 @@ source_upstream_head: a7198a8855ad98681114ff5138eb01fe132a62e7
 downstream_start_head: 37aade8afb6ff944dfbe1b6ee32485b1b1c71e3e
 frozen_upstream_snapshot: b51c055a12220f8c7c18660e8599365012e19532
 candidate_commits: (see sections above)
-qualification_result: PENDING
+qualification_result: COMMITTED_PENDING_GOAL
+# Durable tip now includes junk purge + PORT/COMPOSE carry commits.
+# Goal complete still requires operator UpdateGoal after final audit;
+# UPSTREAM_SNAPSHOT remains frozen; ledger/ownership YAMLs stay untracked.
 ```

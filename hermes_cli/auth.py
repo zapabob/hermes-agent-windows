@@ -1912,6 +1912,7 @@ def write_credential_pool(
     entries: List[Dict[str, Any]],
     *,
     removed_ids: Optional[Iterable[str]] = None,
+    status_cleared_ids: Optional[Iterable[str]] = None,
 ) -> Path:
     """Persist one provider's credential pool under auth.json.
 
@@ -1930,8 +1931,14 @@ def write_credential_pool(
 
     Pass ``removed_ids`` for entries the caller intentionally removed, so the
     merge does not resurrect them from the on-disk copy.
+
+    Pass ``status_cleared_ids`` for entries whose cooldown was intentionally
+    cleared (``hermes auth reset <target>`` / successful refresh). Without this,
+    the disk merge would resurrect the still-binding exhausted state because a
+    cleared ``last_status_at=None`` loses the recency comparison.
     """
     removed = {rid for rid in (removed_ids or ()) if rid}
+    cleared = {cid for cid in (status_cleared_ids or ()) if cid}
     with _auth_store_lock():
         auth_store = _load_auth_store()
         pool = auth_store.get("credential_pool")
@@ -1956,14 +1963,20 @@ def write_credential_pool(
             for entry in sanitized_entries
             if isinstance(entry, dict) and entry.get("id")
         }
-        merged: List[Dict[str, Any]] = [
-            _merge_disk_cooldown_state(
-                entry, existing_by_id.get(entry.get("id")), provider_id
-            )
-            if isinstance(entry, dict)
-            else entry
-            for entry in sanitized_entries
-        ]
+        merged: List[Dict[str, Any]] = []
+        for entry in sanitized_entries:
+            if not isinstance(entry, dict):
+                merged.append(entry)
+                continue
+            entry_id = entry.get("id")
+            if entry_id and entry_id in cleared:
+                merged.append(entry)
+            else:
+                merged.append(
+                    _merge_disk_cooldown_state(
+                        entry, existing_by_id.get(entry_id), provider_id
+                    )
+                )
         for disk_entry in existing_list:
             if not isinstance(disk_entry, dict):
                 continue

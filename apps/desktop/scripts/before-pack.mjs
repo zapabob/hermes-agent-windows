@@ -58,9 +58,123 @@
  *   - arch:                 Arch enum (0=ia32, 1=x64, 2=armv7l, 3=arm64, 4=universal)
  */
 import { existsSync, rmSync, renameSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
 import path from 'node:path'
 import { Arch } from 'electron-builder'
 import { stageNodePty, stageGetWindows } from './stage-native-deps.mjs'
+
+/**
+ * Install-scoped Desktop lock release before live release rename/wipe.
+ *
+ * Mirrors hermes_cli.main._stop_desktop_processes_locking_build for the
+ * in-place pack path (fork has no stage-and-swap promotion): a Desktop may
+ * reopen after the Python pre-pack stop, and preserveRollbackBackup's
+ * renameSync then hits WinError 32. Only processes whose ExecutablePath
+ * lives under this desktop's release/ tree are touched.
+ *
+ * DI-testable: pass listLockingPids / stopPids / waitForExit to avoid
+ * spawning PowerShell in unit tests.
+ */
+export function releaseInstallScopedDesktopLocks(appOutDir, deps = {}) {
+  const platform = deps.platform ?? process.platform
+  if (platform !== 'win32' || !appOutDir || typeof appOutDir !== 'string') {
+    return []
+  }
+
+  let releaseRoot
+  try {
+    releaseRoot = path.resolve(path.dirname(appOutDir))
+  } catch {
+    return []
+  }
+
+  const listLockingPids =
+    deps.listLockingPids ??
+    ((root) => {
+      const script = [
+        `$root = [IO.Path]::GetFullPath(${JSON.stringify(root)})`,
+        'Get-CimInstance Win32_Process |',
+        '  Where-Object {',
+        '    $_.ExecutablePath -and',
+        '    ([IO.Path]::GetFullPath($_.ExecutablePath)).StartsWith($root, [StringComparison]::OrdinalIgnoreCase)',
+        '  } |',
+        '  ForEach-Object { $_.ProcessId }'
+      ].join(' ')
+      const result = spawnSync(
+        'powershell.exe',
+        ['-NoProfile', '-NonInteractive', '-Command', script],
+        { encoding: 'utf8', windowsHide: true, timeout: 15000 }
+      )
+      if (result.status !== 0) {
+        return []
+      }
+      return String(result.stdout || '')
+        .split(/\r?\n/)
+        .map(line => Number.parseInt(line.trim(), 10))
+        .filter(pid => Number.isInteger(pid) && pid > 0)
+    })
+
+  const stopPids =
+    deps.stopPids ??
+    ((pids, force) => {
+      for (const pid of pids) {
+        spawnSync(
+          'powershell.exe',
+          [
+            '-NoProfile',
+            '-NonInteractive',
+            '-Command',
+            force
+              ? `Stop-Process -Id ${pid} -Force -ErrorAction SilentlyContinue`
+              : `Stop-Process -Id ${pid} -ErrorAction SilentlyContinue`
+          ],
+          { encoding: 'utf8', windowsHide: true, timeout: 10000 }
+        )
+      }
+    })
+
+  const waitForExit =
+    deps.waitForExit ??
+    ((pids, timeoutMs) => {
+      const deadline = Date.now() + timeoutMs
+      const remaining = () =>
+        pids.filter(pid => {
+          const probe = spawnSync(
+            'powershell.exe',
+            [
+              '-NoProfile',
+              '-NonInteractive',
+              '-Command',
+              `Get-Process -Id ${pid} -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Id`
+            ],
+            { encoding: 'utf8', windowsHide: true, timeout: 5000 }
+          )
+          return String(probe.stdout || '').trim() === String(pid)
+        })
+      let alive = remaining()
+      while (alive.length && Date.now() < deadline) {
+        spawnSync('powershell.exe', ['-NoProfile', '-Command', 'Start-Sleep -Milliseconds 200'], {
+          windowsHide: true,
+          timeout: 2000
+        })
+        alive = remaining()
+      }
+      return alive
+    })
+
+  const pids = [...new Set(listLockingPids(releaseRoot))]
+  if (!pids.length) {
+    return []
+  }
+
+  stopPids(pids, false)
+  let alive = waitForExit(pids, deps.terminateWaitMs ?? 5000)
+  if (alive.length) {
+    stopPids(alive, true)
+    waitForExit(alive, deps.killWaitMs ?? 5000)
+  }
+  return pids
+}
 
 export function cleanStaleAppOutDir(appOutDir) {
   if (!appOutDir || typeof appOutDir !== 'string') {
@@ -114,6 +228,16 @@ export default async function beforePack(context) {
   const appOutDir = context && context.appOutDir
   const platformName = context && context.electronPlatformName
   try {
+    // Windows: re-quiesce install-scoped Desktop lockers immediately before
+    // live release rename/wipe (f17f18 semantics on the in-place pack path).
+    if (platformName === 'win32') {
+      const stopped = releaseInstallScopedDesktopLocks(appOutDir)
+      if (stopped.length) {
+        console.log(
+          `[before-pack] stopped desktop processes before live release rename: ${stopped.join(', ')}`
+        )
+      }
+    }
     // Windows: keep the previous working build as rollback material for the
     // post-build integrity gate (#69179) instead of destroying it. Falls
     // through to the plain wipe when the old tree is partial/corrupt or the

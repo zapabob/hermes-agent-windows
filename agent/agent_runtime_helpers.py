@@ -2750,7 +2750,10 @@ def create_openai_client(agent, client_kwargs: dict, *, reason: str, shared: boo
             agent._client_log_context(),
         )
         return client
-    if agent.provider == "gemini":
+    # Aliases of the "gemini" profile (e.g. a "google" fallback_providers entry)
+    # must route through the native client too, else thinking_config gets sent
+    # unnested to the raw REST endpoint and Google 400s.
+    if agent.provider in {"gemini", "google", "google-gemini", "google-ai-studio"}:
         from agent.gemini_native_adapter import GeminiNativeClient, is_native_gemini_base_url
 
         base_url = str(client_kwargs.get("base_url", "") or "")

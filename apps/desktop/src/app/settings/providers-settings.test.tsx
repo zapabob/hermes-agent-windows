@@ -14,15 +14,16 @@ const startManualLocalEndpoint = vi.fn()
 const onboarding = atom({ manual: false })
 
 vi.mock('@/hermes', () => ({
-  disconnectOAuthProvider: (providerId: string) => disconnectOAuthProvider(providerId),
-  getEnvVars: () => getEnvVars(),
-  listOAuthProviders: () => listOAuthProviders()
+  disconnectOAuthProvider: (providerId: string, profile?: string) => disconnectOAuthProvider(providerId, profile),
+  getEnvVars: (profile?: string) => getEnvVars(profile),
+  listOAuthProviders: (profile?: string) => listOAuthProviders(profile),
+  setApiRequestProfile: () => undefined
 }))
 
 vi.mock('@/store/onboarding', () => ({
   $desktopOnboarding: onboarding,
-  startManualProviderOAuth: (providerId: string) => startManualProviderOAuth(providerId),
-  startManualLocalEndpoint: (reason: null | string) => startManualLocalEndpoint(reason)
+  startManualProviderOAuth: (providerId: string, profile?: string) => startManualProviderOAuth(providerId, profile),
+  startManualLocalEndpoint: (reason: null | string, profile?: string) => startManualLocalEndpoint(reason, profile)
 }))
 
 function provider(id: string, loggedIn: boolean, patch: Partial<OAuthProvider> = {}): OAuthProvider {
@@ -93,6 +94,26 @@ async function renderProvidersSettings() {
 }
 
 describe('ProvidersSettings', () => {
+  it('uses the settings target for account reads, removal and sign-in', async () => {
+    const { $settingsScopeOverride } = await import('@/store/settings-scope')
+    $settingsScopeOverride.set('beta')
+
+    try {
+      await renderProvidersSettings()
+      expect(getEnvVars).toHaveBeenCalledWith('beta')
+      expect(listOAuthProviders).toHaveBeenCalledWith('beta')
+
+      fireEvent.click(await screen.findByText('Nous Portal'))
+      expect(startManualProviderOAuth).toHaveBeenCalledWith('nous', 'beta')
+
+      fireEvent.click(await screen.findByRole('button', { name: 'Remove Nous Portal' }))
+      fireEvent.click(await screen.findByRole('button', { name: 'Disconnect' }))
+      await waitFor(() => expect(disconnectOAuthProvider).toHaveBeenCalledWith('nous', 'beta'))
+    } finally {
+      $settingsScopeOverride.set(null)
+    }
+  })
+
   it('disconnects a connected provider account and refreshes the accounts list', async () => {
     await renderProvidersSettings()
 
@@ -109,7 +130,7 @@ describe('ProvidersSettings', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Disconnect' }))
     })
 
-    await waitFor(() => expect(disconnectOAuthProvider).toHaveBeenCalledWith('nous'))
+    await waitFor(() => expect(disconnectOAuthProvider).toHaveBeenCalledWith('nous', undefined))
     expect(listOAuthProviders).toHaveBeenCalledTimes(2)
   }, 15_000)
 
@@ -134,7 +155,7 @@ describe('ProvidersSettings', () => {
       fireEvent.click(await screen.findByText('Nous Portal'))
     })
 
-    expect(startManualProviderOAuth).toHaveBeenCalledWith('nous')
+    expect(startManualProviderOAuth).toHaveBeenCalledWith('nous', undefined)
     expect(disconnectOAuthProvider).not.toHaveBeenCalled()
   })
 
@@ -232,6 +253,6 @@ describe('ProvidersSettings', () => {
 
     fireEvent.click(row)
 
-    await waitFor(() => expect(startManualLocalEndpoint).toHaveBeenCalledWith(null))
+    await waitFor(() => expect(startManualLocalEndpoint).toHaveBeenCalledWith(null, undefined))
   })
 })

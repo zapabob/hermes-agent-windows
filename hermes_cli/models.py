@@ -3211,11 +3211,13 @@ def _get_ollama_native_headers(
     api_key: Optional[str] = None,
 ) -> dict[str, str]:
     """Resolve Ollama credentials and headers for one endpoint origin."""
+    from agent.command_token_source import materialize_probe_api_key
+
     entry = _get_provider_config_dict("ollama")
     configured_base = str(
         entry.get("base_url") or entry.get("api") or entry.get("url") or ""
     ).strip()
-    explicit_key = str(api_key or "").strip()
+    explicit_key = materialize_probe_api_key(api_key)
     configured_matches = bool(
         configured_base
         and base_url
@@ -3224,12 +3226,13 @@ def _get_ollama_native_headers(
     if not configured_matches and not explicit_key:
         return {}
     headers = _get_ollama_request_headers() if configured_matches else {}
-    if explicit_key:
-        # A provider-specific key must not inherit any configured Authorization
-        # variant from the Ollama origin when both share a native root.
+    if explicit_key or callable(api_key):
+        # A declared probe source (even a failed mint) must not inherit
+        # configured Authorization for this origin.
         for key in tuple(headers):
             if key.lower() == "authorization":
                 del headers[key]
+    if explicit_key:
         headers["Authorization"] = f"Bearer {explicit_key}"
     return headers
 
@@ -5273,8 +5276,10 @@ def _lmstudio_server_root(base_url: Optional[str]) -> Optional[str]:
 
 def _lmstudio_request_headers(api_key: Optional[str] = None) -> dict:
     """Build HTTP headers for LM Studio native API requests."""
+    from agent.command_token_source import materialize_probe_api_key
+
     headers = {"User-Agent": _HERMES_USER_AGENT}
-    token = str(api_key or "").strip()
+    token = materialize_probe_api_key(api_key)
     if token:
         headers["Authorization"] = f"Bearer {token}"
     return headers
@@ -5576,7 +5581,9 @@ def ollama_model_supports_thinking(
     if not bare_model:
         return None
 
-    token = str(api_key or "").strip()
+    from agent.command_token_source import materialize_probe_api_key
+
+    token = materialize_probe_api_key(api_key)
     headers = {"Authorization": f"Bearer {token}"} if token else {}
 
     try:

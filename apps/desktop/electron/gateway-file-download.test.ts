@@ -171,9 +171,9 @@ test('filenameFromContentDisposition prefers filename* and reduces to a basename
   assert.equal(filenameFromContentDisposition(undefined), '')
 })
 
-test('gatewayFilePath normalizes bare paths and file:// URLs', () => {
+test('gatewayFilePath preserves bare paths and file URIs for the gateway', () => {
   assert.equal(gatewayFilePath('/Users/me/report.md'), '/Users/me/report.md')
-  assert.equal(gatewayFilePath('file:///Users/me/a%20b.md'), '/Users/me/a b.md')
+  assert.equal(gatewayFilePath('file:///Users/me/a%20b.md'), 'file:///Users/me/a%20b.md')
   assert.equal(gatewayFilePath(''), '')
   assert.equal(gatewayFilePath(null), '')
 })
@@ -186,6 +186,21 @@ test('gatewayFileRequestPaths keeps streaming and fallback requests on the same 
   assert.deepEqual(paths, {
     dataUrl: '/api/fs/read-data-url?path=%2Fsrv%2Foutput%2Fimage+one.png&profile=research',
     download: '/api/fs/download?path=%2Fsrv%2Foutput%2Fimage+one.png&profile=research'
+  })
+})
+
+test('gatewayFileRequestPaths includes originating session id when provided', () => {
+  const paths = gatewayFileRequestPaths(
+    '~/report.md',
+    requestPath => pathForRegistryBackendRequest(requestPath, 'research', { sharedRemote: true }),
+    'artifact-session'
+  )
+
+  assert.deepEqual(paths, {
+    dataUrl:
+      '/api/fs/read-data-url?path=%7E%2Freport.md&session_id=artifact-session&profile=research',
+    download:
+      '/api/fs/download?path=%7E%2Freport.md&session_id=artifact-session&profile=research'
   })
 })
 
