@@ -3276,8 +3276,12 @@ async function backendParentMatches(entry) {
 }
 
 async function stopOwnedBackend(identity) {
-  if ((await processIdentityMatches(identity)) !== true) {
+  const matched = await processIdentityMatches(identity)
+  if (matched === false) {
     return
+  }
+  if (matched !== true) {
+    throw new Error(`Cannot verify ownership of backend PID ${identity.pid}; retaining its ownership record.`)
   }
 
   if (IS_WINDOWS) {
@@ -3346,8 +3350,9 @@ const backendOwnership = createBackendOwnership({
     read: () => {
       try {
         return fs.readFileSync(DESKTOP_BACKEND_OWNERSHIP_PATH, 'utf8')
-      } catch {
-        return null
+      } catch (error) {
+        if (error?.code === 'ENOENT') return null
+        throw error
       }
     },
     write: writeBackendOwnership,
@@ -3428,6 +3433,13 @@ function releaseBackendChild(child) {
   const identity = child?.hermesBackendIdentity
 
   if (!identity) {
+    return
+  }
+
+  // A kill request (or an error event) does not confirm process termination.
+  // Retain both durable ownership and the only handle authorized to stop it.
+  if (child.exitCode == null && child.signalCode == null) {
+    rememberLog(`Backend PID ${identity.pid} has no confirmed exit; retaining ownership.`)
     return
   }
 
