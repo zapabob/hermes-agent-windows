@@ -45,6 +45,8 @@ uv run hermes desktop
 For an installer or portable archive, consult the
 [downstream Releases page](https://github.com/zapabob/hermes-agent-windows/releases).
 Use only an actually published asset with its matching manifest and checksums.
+The Windows release workflow produces a per-user NSIS installer and a portable
+archive when its publication gates are satisfied; local source builds are separate.
 The [installation guide](docs/windows/INSTALL.md) describes the layout and
 verification procedure; older version examples are not evidence of a 0.21.1 release.
 

@@ -3351,7 +3351,9 @@ const backendOwnership = createBackendOwnership({
       try {
         return fs.readFileSync(DESKTOP_BACKEND_OWNERSHIP_PATH, 'utf8')
       } catch (error) {
-        if (error?.code === 'ENOENT') return null
+        if (error?.code === 'ENOENT') {
+          return null
+        }
         throw error
       }
     },
