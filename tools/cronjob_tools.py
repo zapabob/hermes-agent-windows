@@ -1412,6 +1412,8 @@ def cronjob(
     monitor_script: Optional[str] = None,
     monitor_url: Optional[str] = None,
     reasoning_effort: Optional[str] = None,
+    paused: bool = False,
+    paused_reason: Optional[str] = None,
     task_id: str = None,
     session_id: Optional[str] = None,
 ) -> str:
@@ -1532,14 +1534,18 @@ def cronjob(
                     # dispatch below: models do not make model-config
                     # decisions (standing policy).
                     reasoning_effort=reasoning_effort,
+                    **({"paused": paused, "paused_reason": paused_reason}
+                       if paused is not False or paused_reason is not None else {}),
                 )
             except CronSchedulerRegistrationError as exc:
                 _partial = exc.to_dict()
                 return tool_error(_partial.pop("error"), success=False, **_partial)
-            _create_message = f"Cron job '{job['name']}' created."
             _local_notice = _local_delivery_notice(job, _normalize_deliver_param(deliver))
-            if _local_notice:
-                _create_message = f"{_create_message} {_local_notice}"
+            _create_message = " ".join(filter(None, (
+                f"Cron job '{job['name']}' created.",
+                "Created PAUSED — resume to schedule, or explicitly run now." if not job.get("enabled", True) else None,
+                _local_notice,
+            )))
             # Gateway liveness surfacing (#87033): the builtin scheduler's
             # ticker lives in the gateway process, so a job created with no
             # gateway running is stored but will never fire. Tell the model
@@ -1887,6 +1893,8 @@ Jobs run in a fresh session with no current-chat context, so prompts must be sel
     "parameters": {
         "type": "object",
         "properties": {
+            "paused": {"type": "boolean", "description": "Create only: persist disabled atomically. Resume to schedule; explicit run remains available. Default false."},
+            "paused_reason": {"type": "string", "description": "Create only: auditable reason; requires paused=true."},
             "action": {
                 "type": "string",
                 "description": "One of: create, list, update, pause, resume, remove, run. When action=create, the 'schedule' and 'prompt' fields are REQUIRED."
@@ -2025,6 +2033,8 @@ def _cronjob_handler(args, **kw):
         monitor_url=_mon_url,
         task_id=kw.get("task_id"),
         session_id=kw.get("session_id"),
+        paused=args.get("paused", False),
+        paused_reason=args.get("paused_reason"),
     )
 
 

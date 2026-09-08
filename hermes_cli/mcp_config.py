@@ -841,13 +841,11 @@ def cmd_mcp_test(args):
 
 # ─── hermes mcp login ────────────────────────────────────────────────────────
 
-def _reauth_oauth_server(name: str, server_config: dict) -> bool:
+def _reauth_oauth_server(name: str, server_config: dict, *, flow: str | None = None) -> bool:
     """Force a fresh OAuth flow for one server. Returns True on success.
 
-    Wipes cached OAuth state (disk + in-process MCPOAuthManager cache),
-    re-probes to trigger the browser flow, and verifies a token actually
-    landed before reporting success. Shared by ``hermes mcp login`` and
-    ``hermes mcp reauth`` so both behave identically for a single server.
+    Browser login clears cached state and re-probes. Device login replaces state only after
+    approval. Both verify a token landed. Shared by ``login`` and ``reauth``.
     """
     url = server_config.get("url")
     if not url:
@@ -858,11 +856,16 @@ def _reauth_oauth_server(name: str, server_config: dict) -> bool:
         _info("Use `hermes mcp remove` + `hermes mcp add` to reconfigure auth.")
         return False
 
-    # Wipe both disk and in-memory cache so the next probe forces a fresh
-    # OAuth flow.
+    oauth_cfg = server_config.get("oauth") or {}
+    selected_flow = flow or oauth_cfg.get("flow", "browser")
+    if selected_flow not in {"browser", "device"}:
+        _error("oauth.flow must be browser or device")
+        return False
+
     try:
         from tools.mcp_oauth_manager import get_manager
-        get_manager().remove(name)
+        if selected_flow == "browser":
+            get_manager().remove(name)
     except Exception as exc:
         _warning(f"Could not clear existing OAuth state: {exc}")
 
@@ -895,13 +898,18 @@ def _reauth_oauth_server(name: str, server_config: dict) -> bool:
         except (TypeError, ValueError):
             _login_connect_timeout = 0.0
         _login_connect_timeout = max(_login_connect_timeout, 315.0)
+        if selected_flow == "device":
+            import asyncio
+            from tools.mcp_oauth_device import login_device
+            asyncio.run(login_device(name, url, oauth_cfg))
+        probe_config = {**server_config, "oauth": {**oauth_cfg, "flow": selected_flow}}
         with force_interactive_oauth():
-            if preregistered_client:
-                _force_oauth_login(name, server_config)
-                tools = _probe_single_server(name, server_config)
+            if preregistered_client and selected_flow != "device":
+                _force_oauth_login(name, probe_config)
+                tools = _probe_single_server(name, probe_config)
             else:
                 tools = _probe_single_server(
-                    name, server_config, connect_timeout=_login_connect_timeout
+                    name, probe_config, connect_timeout=_login_connect_timeout
                 )
         # A clean probe is NOT proof of authentication. Some MCP servers
         # (notably Google's official Drive server) serve initialize +
@@ -973,7 +981,7 @@ def cmd_mcp_login(args):
             _info(f"Available servers: {', '.join(servers)}")
         return
 
-    _reauth_oauth_server(name, servers[name])
+    _reauth_oauth_server(name, servers[name], flow=getattr(args, "flow", None))
 
 
 def cmd_mcp_reauth(args):

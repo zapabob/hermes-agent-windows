@@ -51,6 +51,14 @@ class _SessionDB:
 
 
 def _runner(adapter, *, session_db=...):
+    handler = adapter.handle_message
+
+    async def accept(event):
+        await handler(event)
+        event._gateway_accepted = True
+
+    # These fixtures model successful platform admission, including its receipt.
+    adapter.handle_message = AsyncMock(side_effect=accept)
     runner = object.__new__(GatewayRunner)
     runner._running = True
     runner.adapters = {Platform.TELEGRAM: adapter}

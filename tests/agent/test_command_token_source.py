@@ -404,3 +404,75 @@ class TestAuxiliaryResolverHonoursKeyCmd:
             self._resolve(monkeypatch, {**self.BASE, "key_cmd": "   "})
             == "no-key-required"
         )
+
+
+class TestSecCred01Acceptance:
+    """Explicit acceptance tests for SEC-CRED-01 (T-CRED-01 ~ T-CRED-04)."""
+
+    def test_t_cred_01_unrelated_provider_gateway_secret_not_leaked(self, monkeypatch):
+        """T-CRED-01: Parent's ambient provider/gateway secrets must not leak to key_cmd child."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "secret-anthropic-sentinel")
+        monkeypatch.setenv("OPENAI_API_KEY", "secret-openai-sentinel")
+        monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "secret-telegram-token")
+        monkeypatch.setenv("SLACK_BOT_TOKEN", "secret-slack-token")
+
+        check_script = (
+            "import os, json; "
+            "leaked = [k for k in ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'TELEGRAM_BOT_TOKEN', 'SLACK_BOT_TOKEN'] "
+            "if k in os.environ]; "
+            "print(json.dumps({'access_token': 'ok', 'leaked': leaked}))"
+        )
+        source = CommandTokenSource(_python_key_cmd(check_script), "test_provider")
+        assert source() == "ok"
+
+    def test_t_cred_02_explicit_permitted_env_vars_preserved(self):
+        """T-CRED-02: Operating system runtime environment (PATH, SystemRoot/TEMP) is preserved."""
+        script = (
+            "import os; "
+            "has_path = bool(os.getenv('PATH')); "
+            "print('ok' if has_path else 'missing_path')"
+        )
+        source = CommandTokenSource(_python_key_cmd(script), "test_provider")
+        assert source() == "ok"
+
+    def test_t_cred_03_env_generation_failure_prevents_spawn(self, monkeypatch):
+        """T-CRED-03: When env preparation fails, zero subprocess spawns occur and error contains no secrets."""
+        import subprocess as real_subprocess
+        import tools.environments.local as local_env
+
+        spawn_calls = []
+        orig_run = real_subprocess.run
+
+        def _spy_run(*args, **kwargs):
+            spawn_calls.append((args, kwargs))
+            return orig_run(*args, **kwargs)
+
+        def _exploding_build_subprocess_env():
+            raise RuntimeError("Injected env preparation failure (contains-sentinel-SECRET)")
+
+        monkeypatch.setattr(local_env, "build_subprocess_env", _exploding_build_subprocess_env)
+        monkeypatch.setattr("agent.command_token_source.subprocess.run", _spy_run)
+
+        source = CommandTokenSource(_python_text_key_cmd("never-runs"), "sensitive_provider")
+        with pytest.raises(CommandTokenError) as exc_info:
+            source()
+
+        assert len(spawn_calls) == 0, "No subprocess must be spawned when env generation fails"
+        err_msg = str(exc_info.value)
+        assert "sensitive_provider" in err_msg
+        assert "could not prepare a credential-scoped environment" in err_msg
+        assert "contains-sentinel-SECRET" not in err_msg
+
+    def test_t_cred_04_case_insensitive_secret_scrubbing(self, monkeypatch):
+        """T-CRED-04: Windows case variants of credential keys are scrubbed."""
+        # On Windows, environment variables are case-insensitive
+        monkeypatch.setenv("openai_api_key", "sentinel-lower-case")
+        monkeypatch.setenv("OpenAI_Api_Key", "sentinel-mixed-case")
+
+        check_script = (
+            "import os; "
+            "keys = [k for k in os.environ if k.lower() == 'openai_api_key']; "
+            "print('leaked' if keys else 'scrubbed')"
+        )
+        source = CommandTokenSource(_python_key_cmd(check_script), "test_provider")
+        assert source() == "scrubbed"

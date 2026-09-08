@@ -173,24 +173,39 @@ def _is_official_ssh_remote(url: str | None) -> bool:
     return _is_ssh_remote(url) and _canonical_github_remote(url) == _OFFICIAL_REPO_CANONICAL
 
 
-def _git_stdout(args: list[str], *, cwd: Path, timeout: int = 5) -> Optional[str]:
+_GIT_TEXT_KW = {"text": True, "encoding": "utf-8", "errors": "replace"}
+
+
+def _git_run(
+    args: list[str],
+    *,
+    cwd: Optional[Path] = None,
+    timeout: int = 5,
+    text: bool = True,
+    network: bool = False,
+):
+    """Run ``git <args>`` with shared subprocess flags, UTF-8 encoding, and hidden console window."""
+    from hermes_cli._subprocess_compat import noninteractive_git_env, windows_hide_flags
+
+    kwargs: dict = {"creationflags": windows_hide_flags()}
+    if network:
+        kwargs.update({"stdin": subprocess.DEVNULL, "env": noninteractive_git_env()})
     try:
-        result = subprocess.run(
+        return subprocess.run(
             ["git", *args],
-            creationflags=windows_hide_flags(),
             capture_output=True,
-            text=True,
-            # git output is UTF-8; on Windows text=True defaults to the ANSI
-            # code page and bytes like 0x90 (3rd byte of 🐛 in a commit
-            # subject) crash the stdlib reader thread (#52649).
-            encoding="utf-8",
-            errors="replace",
             timeout=timeout,
-            cwd=str(cwd),
+            cwd=str(cwd) if cwd is not None else None,
+            **(_GIT_TEXT_KW if text else {}),
+            **kwargs,
         )
     except Exception:
         return None
-    if result.returncode != 0:
+
+
+def _git_stdout(args: list[str], *, cwd: Path, timeout: int = 5, network: bool = False) -> Optional[str]:
+    result = _git_run(args, cwd=cwd, timeout=timeout, network=network)
+    if result is None or result.returncode != 0:
         return None
     return (result.stdout or "").strip()
 
@@ -243,23 +258,16 @@ def _is_full_sha(value: Optional[str]) -> bool:
 
 def _upstream_main_sha() -> Optional[str]:
     """Tip SHA of upstream main via HTTPS ls-remote (no auth, no prompts)."""
-    from hermes_cli._subprocess_compat import noninteractive_git_env
-
-    try:
-        result = subprocess.run(
-            ["git", "ls-remote", _UPSTREAM_REPO_URL, "refs/heads/main"],
-            creationflags=windows_hide_flags(),
-            capture_output=True, text=True, encoding="utf-8", errors="replace",
-            timeout=10,
-            stdin=subprocess.DEVNULL,
-            env=noninteractive_git_env(),
-        )
-    except Exception:
-        return None
-    if result.returncode != 0 or not result.stdout:
+    result = _git_run(
+        ["ls-remote", _UPSTREAM_REPO_URL, "refs/heads/main"],
+        timeout=10,
+        network=True,
+    )
+    if result is None or result.returncode != 0 or not result.stdout:
         return None
     upstream_rev = result.stdout.split()[0]
     return upstream_rev or None
+
 
 
 def _check_via_rev(local_rev: str) -> Optional[int]:
@@ -286,7 +294,7 @@ def _check_via_local_git(repo_dir: Path) -> Optional[int]:
     """Count commits behind origin/main in a local checkout."""
     from hermes_cli._subprocess_compat import noninteractive_git_env
 
-    origin_url = _git_stdout(["remote", "get-url", "origin"], cwd=repo_dir)
+    origin_url = _git_stdout(["remote", "get-url", "origin"], cwd=repo_dir, network=True)
     if _is_official_ssh_remote(origin_url):
         head_rev = _git_stdout(["rev-parse", "HEAD"], cwd=repo_dir)
         if not head_rev:
@@ -350,19 +358,12 @@ def _check_via_local_git(repo_dir: Path) -> Optional[int]:
         # ref on a scoped fetch, so the ``HEAD..origin/main`` count below is
         # unaffected; the shallow path compares against FETCH_HEAD, which a
         # scoped fetch also updates.
-        fetch_args = ["git", "fetch", "origin", "main"]
+        fetch_args = ["fetch", "origin", "main"]
         if is_shallow:
             fetch_args += ["--depth", "1"]
         fetch_args.append("--quiet")
-        fetch_proc = subprocess.run(
-            fetch_args,
-            creationflags=windows_hide_flags(),
-            capture_output=True, timeout=10,
-            cwd=str(repo_dir),
-            stdin=subprocess.DEVNULL,
-            env=noninteractive_git_env(),
-        )
-        fetch_ok = fetch_proc.returncode == 0
+        fetch_proc = _git_run(fetch_args, cwd=repo_dir, timeout=10, network=True)
+        fetch_ok = fetch_proc is not None and fetch_proc.returncode == 0
     except Exception:
         fetch_ok = False  # Offline or timeout — don't use stale refs
 

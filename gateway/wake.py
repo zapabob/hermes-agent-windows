@@ -53,6 +53,22 @@ def adapter_supports_push(adapter: Any) -> bool:
     return bool(getattr(adapter, "supports_async_delivery", True))
 
 
+class WakeNotAccepted(RuntimeError):
+    """No adapter admission: retry without treating a healthy chat as dead."""
+
+
+async def admit_internal_event(adapter: Any, event: Any) -> None:
+    """Require a concrete adapter admission, not merely a handler returning None.
+
+    The public handler return stays unchanged. This receipt means scheduled/queued,
+    not model execution, authorization of a later turn, or successful outbound delivery.
+    """
+    event._gateway_accepted = False
+    await adapter.handle_message(event)
+    if event._gateway_accepted is not True:
+        raise WakeNotAccepted("internal wake not accepted by adapter")
+
+
 async def deliver_wake(
     adapter: Any,
     *,
@@ -83,7 +99,7 @@ async def deliver_wake(
             source=source,
             internal=True,
         )
-        await adapter.handle_message(synth_event)
+        await admit_internal_event(adapter, synth_event)
         return
 
     if not session_id:

@@ -1044,6 +1044,7 @@ def _mandatory_aslr_enabled() -> "bool | None":
             text=True, encoding="utf-8", errors="replace",
             timeout=10,
             creationflags=windows_hide_flags(),
+            stdin=subprocess.DEVNULL,
         )
         if result.returncode != 0:
             return None
@@ -1110,6 +1111,7 @@ def _bash_starts(bash: str) -> bool:
             text=True, encoding="utf-8", errors="replace",
             timeout=15,
             creationflags=windows_hide_flags() if _IS_WINDOWS else 0,
+            stdin=subprocess.DEVNULL,
         )
         ok = result.returncode == 0
         if not ok:

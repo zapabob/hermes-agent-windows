@@ -545,6 +545,8 @@ def cron_create(args):
         monitor_url=getattr(args, "monitor_url", None),
         continuity=getattr(args, "continuity", None),
         reasoning_effort=getattr(args, "reasoning_effort", None),
+        **({"paused": args.paused, "paused_reason": getattr(args, "paused_reason", None)}
+           if getattr(args, "paused", False) or getattr(args, "paused_reason", None) is not None else {}),
     )
     if not result.get("success"):
         print(color(f"Failed to create job: {result.get('error', 'unknown error')}", Colors.RED))
@@ -567,7 +569,10 @@ def cron_create(args):
         print("  Continuity: on (each run sees the previous run's output)")
     if job_data.get("workdir"):
         print(f"  Workdir: {job_data['workdir']}")
-    print(f"  Next run: {result['next_run_at']}")
+    if not result.get("job", {}).get("enabled", True):
+        print("  Created PAUSED — resume to schedule, or explicitly run now.")
+    else:
+        print(f"  Next run: {result['next_run_at']}")
     _warn_if_gateway_not_running()
     return 0
 

@@ -7152,6 +7152,9 @@ class APIServerAdapter(BasePlatformAdapter):
                 "deliver": deliver,
                 "origin": self._cron_origin_from_request(request),
             }
+            for key in ("paused", "paused_reason"):
+                if key in body:
+                    kwargs[key] = body[key]
             if skills:
                 kwargs["skills"] = skills
             if repeat is not None:
@@ -7161,6 +7164,8 @@ class APIServerAdapter(BasePlatformAdapter):
             return web.json_response({"job": job})
         except _CronSchedulerRegistrationError as e:
             return web.json_response(e.to_dict(), status=424)
+        except ValueError as e:
+            return web.json_response({"error": str(e)}, status=400)
         except Exception as e:
             return web.json_response({"error": _redact_api_error_text(e)}, status=500)
 

@@ -6203,6 +6203,7 @@ class BasePlatformAdapter(ABC):
         This allows new messages to be processed even while an agent is running,
         enabling interruption support.
         """
+        event._gateway_accepted = False
         if not self._message_handler:
             return
 
@@ -6371,12 +6372,18 @@ class BasePlatformAdapter(ABC):
                 except Exception as e:
                     logger.error("[%s] Busy-session handler failed: %s", self.name, e, exc_info=True)
 
+            # Without a runner FIFO, do not merge a wake into an occupied human slot
+            # (or collapse distinct wakes into one turn). Its caller can retry admission.
+            if event.internal and session_key in self._pending_messages:
+                return
+
             # Special case: photo bursts/albums frequently arrive as multiple near-
             # simultaneous messages. Queue them without interrupting the active run,
             # then process them immediately after the current task finishes.
             if event.message_type == MessageType.PHOTO:
                 logger.debug("[%s] Queuing photo follow-up for session %s without interrupt", self.name, session_key)
                 merge_pending_message_event(self._pending_messages, session_key, event)
+                event._gateway_accepted = True
                 return  # Don't interrupt now - will run after current task completes
 
             if self._is_queue_text_debounce_candidate(event):
@@ -6388,6 +6395,7 @@ class BasePlatformAdapter(ABC):
                     self._busy_text_debounce_seconds,
                 )
                 await self._queue_text_debounce(session_key, event)
+                event._gateway_accepted = True
             else:
                 logger.debug(
                     "[%s] New message while session %s is active — queuing follow-up "
@@ -6401,6 +6409,7 @@ class BasePlatformAdapter(ABC):
                     event,
                     merge_text=event.message_type == MessageType.TEXT,
                 )
+                event._gateway_accepted = True
             return  # Don't process now - will be handled after current task finishes
         
         # Mark session as active BEFORE spawning background task to close
@@ -6410,7 +6419,7 @@ class BasePlatformAdapter(ABC):
         # pattern — set the guard synchronously, not inside the task.)
         # _start_session_processing installs the guard AND the owner-task
         # mapping atomically so stale-lock detection works.
-        self._start_session_processing(event, session_key)
+        event._gateway_accepted = self._start_session_processing(event, session_key)
     
     @staticmethod
     def _get_human_delay() -> float:

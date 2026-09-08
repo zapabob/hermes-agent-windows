@@ -531,6 +531,20 @@ def release_completion_delivery(delegation_id: str, claim_id: str) -> bool:
         return cur.rowcount == 1
 
 
+def defer_completion_delivery(delegation_id: str, claim_id: str) -> bool:
+    """Return an unadmitted completion to pending without spending a delivery attempt."""
+    now = time.time()
+    with _DB_LOCK, _transaction() as conn:
+        cur = conn.execute(
+            """UPDATE async_delegations SET delivery_claim=NULL,
+                      delivery_claimed_at=NULL, delivery_attempts=MAX(0, delivery_attempts-1),
+                      updated_at=?
+               WHERE delegation_id=? AND delivery_state='pending' AND delivery_claim=?""",
+            (now, delegation_id, claim_id),
+        )
+        return cur.rowcount == 1
+
+
 def drop_completion_delivery(delegation_id: str, claim_id: str) -> bool:
     """Terminally drop a claimed completion that can never be delivered.
 
@@ -571,6 +585,11 @@ def complete_completion_delivery(delegation_id: str, claim_id: str) -> bool:
 def complete_event_delivery(evt: Dict[str, Any], claim_id: str) -> None:
     if claim_id and evt.get("type") == "async_delegation":
         complete_completion_delivery(str(evt.get("delegation_id") or ""), claim_id)
+
+
+def defer_event_delivery(evt: Dict[str, Any], claim_id: str) -> None:
+    if claim_id and evt.get("type") == "async_delegation":
+        defer_completion_delivery(str(evt.get("delegation_id") or ""), claim_id)
 
 
 def release_event_delivery(evt: Dict[str, Any], claim_id: str) -> None:

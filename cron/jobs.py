@@ -1983,6 +1983,8 @@ def create_job(
     monitor_script: Optional[str] = None,
     monitor_url: Optional[str] = None,
     reasoning_effort: Optional[str] = None,
+    paused: bool = False,
+    paused_reason: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Create a new cron job.
@@ -2054,6 +2056,12 @@ def create_job(
     Returns:
         The created job dict
     """
+    if not isinstance(paused, bool):
+        raise ValueError("paused must be a boolean.")
+    if paused_reason is not None and not isinstance(paused_reason, str):
+        raise ValueError("paused_reason must be a string.")
+    if paused_reason is not None and not paused:
+        raise ValueError("paused_reason requires paused=True.")
     parsed_schedule = parse_schedule(schedule)
 
     # Normalize repeat: treat 0 or negative values as None (infinite)
@@ -2173,12 +2181,12 @@ def create_job(
             "times": repeat,  # None = forever
             "completed": 0
         },
-        "enabled": True,
-        "state": "scheduled",
-        "paused_at": None,
-        "paused_reason": None,
+        "enabled": not paused,
+        "state": "paused" if paused else "scheduled",
+        "paused_at": now if paused else None,
+        "paused_reason": ((paused_reason or "").strip() or "Created paused; awaiting operator approval.") if paused else None,
         "created_at": now,
-        "next_run_at": next_run_at,
+        "next_run_at": None if paused else next_run_at,
         "last_run_at": None,
         "last_status": None,
         "last_error": None,

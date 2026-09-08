@@ -34,6 +34,15 @@ def isolated_registry(tmp_path, monkeypatch):
 
 
 def _runner(adapter, *, origins=None):
+    handler = adapter.handle_message
+
+    async def accept(event):
+        await handler(event)
+        event._gateway_accepted = True
+
+    # A successful fixture handler represents accepted/queued platform work.
+    # Exceptions still leave the receipt absent and exercise retry handling.
+    adapter.handle_message = AsyncMock(side_effect=accept)
     runner = object.__new__(GatewayRunner)
     runner._running = True
     runner.adapters = {Platform.TELEGRAM: adapter}
@@ -113,7 +122,7 @@ def test_duplicate_async_queue_replay_injects_once(monkeypatch, isolated_registr
     adapter.handle_message.assert_awaited_once()
 
 
-def test_unroutable_async_event_is_not_requeued_forever(
+def test_temporarily_unroutable_async_event_retains_its_payload(
     monkeypatch, isolated_registry,
 ):
     isolated = queue.Queue()
@@ -129,7 +138,11 @@ def test_unroutable_async_event_is_not_requeued_forever(
     asyncio.run(runner._async_delegation_watcher(interval=0))
 
     adapter.handle_message.assert_not_awaited()
-    assert isolated.empty()
+    # A missing adapter does not prove the owning Desktop/CLI session was deleted.
+    # Retain the exact payload; durable restart/attempt checks live in
+    # test_completion_owner_retry_budget.py.
+    assert isolated.qsize() == 1
+    assert isolated.get_nowait() == event
 
 
 def test_concurrent_claims_share_the_same_narrow_delivery_seam():

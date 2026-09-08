@@ -9250,6 +9250,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             )
         else:
             pending_slot[session_key] = queued_event
+        queued_event._gateway_accepted = True
 
     def _promote_queued_event(
         self,
@@ -10361,6 +10362,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 event,
                 merge_text=event.message_type == MessageType.TEXT,
             )
+            event._gateway_accepted = True
             return
 
         if self._queue_depth(session_key, adapter=adapter) >= self._BUSY_QUEUE_MAX_PENDING:
@@ -25897,6 +25899,24 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             logger.warning("%s transcription failed: %s", log_context, trans_exc)
             return text, []
 
+    _DURABLE_CLAIM_OPS = {
+        "drop": ("drop_completion_delivery", "Could not drop durable completion claim"),
+        "release": ("release_completion_delivery", "Could not release durable completion claim"),
+        "defer": ("defer_completion_delivery", "Could not defer unadmitted completion claim"),
+        "complete": ("complete_completion_delivery", "Could not acknowledge durable completion claim"),
+    }
+
+    @staticmethod
+    def _raw_process_event_session_id(evt: dict) -> str:
+        """Recognize API routes, not malformed structured or partial messaging routes."""
+        session_key = str(evt.get("session_key") or "").strip()
+        platform = str(evt.get("platform") or "").strip().lower()
+        if session_key.startswith("agent:") or platform not in {"", "api_server"}:
+            return ""
+        if not platform and any(evt.get(field) for field in ("chat_id", "chat_type", "thread_id")):
+            return ""
+        return str(evt.get("origin_session_id") or session_key or "").strip()
+
     def _build_process_event_source(self, evt: dict):
         """Resolve the canonical source for a synthetic background-process event.
 
@@ -25938,6 +25958,10 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         chat_type = str(evt.get("chat_type") or derived_chat_type or "").strip().lower()
         chat_id = str(evt.get("chat_id") or derived_chat_id or "").strip()
         if not platform_name or not chat_type or not chat_id:
+            # Raw API keys legitimately have no messaging source. Resolve persisted
+            # origins first, then leave this recognized route to the API dispatcher.
+            if self._raw_process_event_session_id(evt):
+                return None
             logger.warning(
                 "Synthetic event source unresolvable: "
                 "session_key=%r platform=%r chat_type=%r chat_id=%r "
@@ -26007,124 +26031,101 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             if not synth_text:
                 continue
             try:
-                await self._inject_watch_notification(synth_text, evt)
-            except Exception as exc:
-                logger.error("Watch notification injection error: %s", exc)
+                delivered = await self._inject_watch_notification(synth_text, evt)
+            except Exception:
+                logger.exception("Watch notification injection error")
+                delivered = False
+            if delivered is False:
+                completion_queue.put(evt)
+
+    def _resolve_injection_adapter(self, platform_name: str, source=None):
+        """Adapter for a synthetic-event platform: alias-aware transport resolver first (one
+        Platform.RELAY adapter fronts N logical platforms; native wins), literal ``p.value`` scan as
+        fallback for minimal runner stubs / exotic platform strings when the resolver can't run."""
+        from gateway.delivery import resolve_delivery_transport
+        if source is not None:
+            owner = self._transport_owner(source)
+            if owner is not None:
+                return owner[0]
+            if getattr(source, "delivered_via_upstream_relay", False) is True:
+                return self.adapters.get(Platform.RELAY)
+        profile = getattr(source, "profile", None)
+        adapters = self.adapters
+        if profile and profile not in ("default", getattr(self, "_primary_profile_name", None)):
+            adapters = (getattr(self, "_profile_adapters", None) or {}).get(profile, {})
+        try:
+            _transport = resolve_delivery_transport(Platform(platform_name), self.config, adapters)
+        except Exception:
+            _transport = None
+        if _transport is not None:
+            return _transport.adapter
+        return next((a for p, a in adapters.items() if p.value == platform_name), None)
 
     async def _inject_watch_notification(
-        self, synth_text: str, evt: dict,
+        self, synth_text: str, evt: dict, *, raise_not_accepted: bool = False,
     ) -> Optional[bool]:
         """Inject a watch/completion notification as a synthetic message event.
 
-        Routing must come from the queued event itself, not from whatever
-        foreground message happened to be active when the queue was drained.
-        Returns ``True`` after adapter acceptance, ``False`` after a retryable
-        adapter failure, and ``None`` when the event has no gateway route. This
-        is not a transactional boundary: a process crash after adapter
-        acceptance can still cause durable at-least-once replay.
+        Routing comes from the queued event, never the active foreground message. Returns
+        ``True`` on adapter acceptance, ``False`` on retryable adapter failure, ``None`` with no
+        gateway route. Not transactional: a crash after acceptance can replay (at-least-once).
         """
+        from gateway.wake import WakeNotAccepted, adapter_supports_push, admit_internal_event
         source = await asyncio.to_thread(self._build_process_event_source, evt)
         if not source:
-            # API-server-originated sessions bind a RAW session key (the
-            # X-Hermes-Session-Id value — see _bind_api_server_session), not a
-            # structured ``agent:main:...`` key, so _build_process_event_source
-            # cannot derive routing metadata from it and returns None above.
-            # Recover the raw session id and wake the real session via the API
-            # server's own /v1/chat/completions entry point instead of
-            # dropping the event.
-            raw_sid = str(evt.get("origin_session_id") or "").strip()
-            if not raw_sid:
-                _sk = str(evt.get("session_key") or "").strip()
-                if _sk and _parse_session_key(_sk) is None:
-                    raw_sid = _sk
+            raw_sid = self._raw_process_event_session_id(evt)
             if raw_sid:
                 adapter = self.adapters.get(Platform.API_SERVER)
-                from gateway.wake import adapter_supports_push, deliver_wake
                 if adapter is not None and not adapter_supports_push(adapter):
                     try:
                         logger.info(
-                            "Watch pattern notification — waking api_server "
-                            "session %s via self-post",
+                            "Watch pattern notification — waking api_server session %s via self-post",
                             raw_sid,
                         )
+                        from gateway.wake import deliver_wake
                         await deliver_wake(adapter, text=synth_text, session_id=raw_sid)
                         return True
                     except Exception as e:
                         logger.warning(
-                            "Watch notification self-post wake failed for "
-                            "session %s: %s",
+                            "Watch notification self-post wake failed for session %s: %s",
                             raw_sid, e,
                         )
                         return False
-                logger.warning(
-                    "Dropping watch notification for raw session %s: no "
-                    "api_server adapter to self-post through",
+                logger.debug(
+                    "Deferring watch notification for raw session %s: no api_server adapter to self-post through",
                     raw_sid,
                 )
-                return None
+                return False
             logger.warning(
                 "Dropping watch notification with no routing metadata for process %s",
                 evt.get("session_id", "unknown"),
             )
             return None
         platform_name = source.platform.value if hasattr(source.platform, "value") else str(source.platform)
-        # Alias-aware resolution (relay-plane): a relay-fronted gateway
-        # registers ONE adapter under Platform.RELAY fronting N logical
-        # platforms, so a literal ``p.value == platform_name`` scan misses
-        # "slack" and silently drops the completion as "no gateway route"
-        # (staging incident 2026-08-09, second occurrence). Resolve through
-        # the shared transport resolver — native adapter wins; relay is
-        # eligible only when it advertises fronting the logical platform.
-        adapter = None
-        try:
-            _platform_enum = Platform(platform_name)
-        except (ValueError, KeyError):
-            _platform_enum = None
-        if _platform_enum is not None:
-            try:
-                _transport = resolve_delivery_transport(
-                    _platform_enum, self.config, self.adapters,
-                )
-            except Exception:
-                _transport = None
-            if _transport is not None:
-                adapter = _transport.adapter
-        if adapter is None:
-            # Legacy literal scan — still correct for native adapters, and
-            # keeps minimal runner stubs (tests) and exotic platform strings
-            # working when the resolver can't run.
-            for p, a in self.adapters.items():
-                if p.value == platform_name:
-                    adapter = a
-                    break
+        adapter = self._resolve_injection_adapter(platform_name, source)
         if not adapter:
-            return None
-        from gateway.wake import adapter_supports_push as _wake_push_ok
-        if not _wake_push_ok(adapter):
-            # Non-push adapter (api_server) resolved WITH routing metadata:
-            # its chat_id is the raw session id (see _bind_api_server_session,
-            # which binds chat_id = session_id). handle_message would run the
-            # wake under a build_session_key()-derived key that never matches
-            # the raw X-Hermes-Session-Id session — self-post instead.
+            return False
+        if not adapter_supports_push(adapter):
             from gateway.wake import deliver_wake
             raw_sid = str(evt.get("origin_session_id") or "").strip() or str(source.chat_id or "")
             try:
                 logger.info(
-                    "Watch pattern notification — waking api_server session "
-                    "%s via self-post",
+                    "Watch pattern notification — waking api_server session %s via self-post",
                     raw_sid,
                 )
                 await deliver_wake(adapter, text=synth_text, session_id=raw_sid)
                 return True
             except Exception as e:
                 logger.warning(
-                    "Watch notification self-post wake failed for session "
-                    "%s: %s",
+                    "Watch notification self-post wake failed for session %s: %s",
                     raw_sid, e,
                 )
                 return False
         try:
             metadata = {}
+            session_key = str(evt.get("session_key") or "").strip()
+            if session_key.startswith("agent:"):
+                metadata["gateway_session_key"] = session_key
             parent_session_id = str(evt.get("parent_session_id") or "").strip()
             if parent_session_id:
                 metadata["gateway_session_id"] = parent_session_id
@@ -26142,17 +26143,15 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 source.chat_id,
                 source.thread_id,
             )
-            # Relay-plane egress priming (defect #4, staging 2026-08-09): a
-            # synthetic turn injected right after a restart reaches a relay
-            # adapter whose per-chat routing caches are cold (they warm only
-            # on inbound), so its replies egress without tenant
-            # discriminators and the connector's fail-closed guard declines
-            # them. Prime the caches from this event's session-store origin.
             _prime = getattr(adapter, "prime_routing_cache", None)
             if callable(_prime):
                 _prime(synth_event)
-            await adapter.handle_message(synth_event)
+            await admit_internal_event(adapter, synth_event)
             return True
+        except WakeNotAccepted:
+            if raise_not_accepted:
+                raise
+            return False
         except Exception as e:
             logger.error("Watch notification injection error: %s", e)
             return False
@@ -26177,6 +26176,28 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             if producer_id and started_at is not None:
                 return (evt_type, producer_id, started_at)
         return None
+
+    def _mark_completions_delivered_locked(self, identities) -> None:
+        """Move identities inflight -> delivered and trim retention. Caller holds ``_completion_delivery_lock``."""
+        for identity in identities:
+            self._completion_deliveries_inflight.discard(identity)
+            self._completion_deliveries_delivered[identity] = None
+        while len(self._completion_deliveries_delivered) > self._completion_delivery_retention:
+            self._completion_deliveries_delivered.popitem(last=False)
+
+    def _completion_identity_seen(self, identity, *, claim: bool = False) -> bool:
+        """True when ``identity`` is inflight or already delivered this gateway lifecycle.
+
+        With ``claim`` an unseen identity is atomically marked inflight (same lock hold).
+        """
+        with self._completion_delivery_lock:
+            seen = (
+                identity in self._completion_deliveries_inflight
+                or identity in self._completion_deliveries_delivered
+            )
+            if claim and not seen:
+                self._completion_deliveries_inflight.add(identity)
+            return seen
 
     async def _classify_completion_target(self, parent_session_id: str) -> str:
         """Classify an async-completion delivery target before adapter acceptance.
@@ -26245,150 +26266,154 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             return "retry"
         return "deliver"
 
-    async def _deliver_completion_notification(
-        self, synth_text: str, evt: dict,
-    ) -> Optional[bool]:
-        """Deliver once per live gateway, or return False for a retry.
+    @dataclasses.dataclass
+    class _CompletionClaim:
+        """Pre-flight outcome for one completion delivery."""
 
-        ``True`` means this caller reached adapter acceptance, ``False`` means
-        injection failed and the claim was released for retry, and ``None``
-        means either another same-lifecycle caller owns/delivered the producer
-        event or the event has no gateway route. No cross-process exactly-once
-        guarantee is claimed.
-        """
-        identity = self._completion_delivery_identity(evt)
-        durable_claim_id = ""
-        durable_delegation_id = ""
-        if evt.get("type") == "async_delegation":
-            parent_session_id = str(evt.get("parent_session_id") or "").strip()
-            verdict = await self._classify_completion_target(parent_session_id) if parent_session_id else "deliver"
-            if verdict == "retry":
-                # No delivery was attempted while the destination owner is unavailable.
+        delegation_id: str = ""
+        claim_id: str = ""
+        proceed: bool = True
+        early_result: Optional[bool] = None
+
+    @classmethod
+    def _settle_durable_claim(cls, kind: str, delegation_id: str, claim_id: str) -> None:
+        """Best-effort settlement of a durable completion claim."""
+        fn_name, fail_msg = cls._DURABLE_CLAIM_OPS[kind]
+        try:
+            import tools.async_delegation as _ad
+            getattr(_ad, fn_name)(delegation_id, claim_id)
+        except Exception:
+            logger.log(logging.WARNING if kind == "complete" else logging.DEBUG, fail_msg, exc_info=True)
+
+    async def _completion_delivery_ready(self, evt: dict) -> bool:
+        """Unavailable owners/transports must not spend a durable delivery attempt."""
+        from gateway.wake import adapter_supports_push
+
+        parent_session_id = str(evt.get("parent_session_id") or "").strip()
+        if parent_session_id:
+            verdict = await self._classify_completion_target(parent_session_id)
+            if verdict != "deliver":
+                return verdict == "terminal"
+        source = await asyncio.to_thread(self._build_process_event_source, evt)
+        if source is not None:
+            platform = source.platform.value if hasattr(source.platform, "value") else str(source.platform)
+            adapter = self._resolve_injection_adapter(platform, source)
+        else:
+            raw_sid = self._raw_process_event_session_id(evt)
+            adapter = self.adapters.get(Platform.API_SERVER) if raw_sid else None
+            if adapter is not None and adapter_supports_push(adapter):
                 return False
-            durable_delegation_id = str(evt.get("delegation_id") or "")
-            if durable_delegation_id:
+        if adapter is None:
+            return False
+        if not adapter_supports_push(adapter):
+            ensure = getattr(adapter, "_ensure_session_db", None)
+            try:
+                if not callable(ensure) or await asyncio.to_thread(ensure) is None:
+                    return False
+            except Exception:
+                logger.debug("Async-completion delivery DB unavailable", exc_info=True)
+                return False
+        return True
+
+    async def _preflight_completion_delivery(self, evt: dict) -> "_CompletionClaim":
+        """Claim the durable row (async delegations) and verify the target before adapter acceptance.
+
+        Adapter acceptance is not proof of delivery: the inner resolver can still fail closed inside
+        the pipeline after acceptance, falsely acking the durable row. Verifying first gives drops an
+        honest durable disposition.
+        """
+        claim = self._CompletionClaim()
+        evt_type = evt.get("type")
+        if evt_type == "async_delegation" and not await self._completion_delivery_ready(evt):
+            claim.proceed, claim.early_result = False, False
+            return claim
+        if evt_type == "async_delegation" and not evt.get("task_failure_notice"):
+            claim.delegation_id = str(evt.get("delegation_id") or "")
+            if claim.delegation_id:
                 try:
                     from tools.async_delegation import claim_completion_delivery
-
-                    durable_claim_id = f"gateway:{id(self)}:{__import__('uuid').uuid4().hex}"
-                    if not claim_completion_delivery(
-                        durable_delegation_id, durable_claim_id,
-                    ):
-                        return None
+                    claim.claim_id = f"gateway:{id(self)}:{__import__('uuid').uuid4().hex}"
+                    if not claim_completion_delivery(claim.delegation_id, claim.claim_id):
+                        claim.proceed = False
+                        return claim
                 except Exception as exc:
-                    logger.warning(
-                        "Could not claim durable async completion %s: %s",
-                        durable_delegation_id, exc,
-                    )
-                    return False
-            if parent_session_id:
-                # Pre-flight (#65838-class): adapter acceptance is NOT proof of
-                # delivery — the inner #55578 resolver can still fail closed
-                # inside the message pipeline AFTER the adapter accepted, which
-                # would falsely acknowledge the durable row as delivered.
-                # Verify the target here, before acceptance, and give drops an
-                # honest durable disposition.
-                if verdict == "terminal":
-                    logger.warning(
-                        "Async delegation %s targets permanently-gone session %s; "
-                        "terminally dropping delivery (result remains in the "
-                        "delegation records).",
-                        durable_delegation_id or "<legacy>", parent_session_id,
-                    )
-                    if durable_claim_id:
-                        try:
-                            from tools.async_delegation import drop_completion_delivery
+                    logger.warning("Could not claim durable async completion %s: %s", claim.delegation_id, exc)
+                    claim.proceed, claim.early_result = False, False
+                    return claim
+        elif evt_type != "completion":
+            return claim
+        parent_session_id = str(evt.get("parent_session_id") or "").strip()
+        if not parent_session_id:
+            return claim
+        verdict = await self._classify_completion_target(parent_session_id)
+        if verdict == "terminal":
+            if evt_type == "async_delegation":
+                logger.warning(
+                    "Async delegation %s targets permanently-gone session %s; "
+                    "terminally dropping delivery (result remains in the delegation records).",
+                    claim.delegation_id or "<legacy>", parent_session_id,
+                )
+                if claim.claim_id:
+                    self._settle_durable_claim("drop", claim.delegation_id, claim.claim_id)
+            else:
+                logger.warning(
+                    "Background process %s completion targets "
+                    "permanently-gone session %s (user boundary such as "
+                    "/new); dropping notification (output remains available via process(action='log')).",
+                    evt.get("session_id") or "<unknown>", parent_session_id,
+                )
+            claim.proceed = False
+            claim.early_result = None
+            return claim
+        if verdict == "retry":
+            if claim.claim_id:
+                self._settle_durable_claim("release", claim.delegation_id, claim.claim_id)
+            claim.proceed, claim.early_result = False, False
+        return claim
 
-                            drop_completion_delivery(
-                                durable_delegation_id, durable_claim_id,
-                            )
-                        except Exception:
-                            logger.debug(
-                                "Could not drop durable completion claim",
-                                exc_info=True,
-                            )
-                    return None
-        elif evt.get("type") == "completion":
-            # Background-process completions carry only session_key (chat/
-            # thread routing), so after /new the notification from the OLD
-            # session would land in the chat's NEW session. Stamped events
-            # (spawn-time parent_session_id from terminal_tool) get the same
-            # session-boundary pre-flight as async delegations — one policy
-            # owner (_classify_completion_target), never a forked predicate.
-            # Legacy/unstamped events keep today's behavior and deliver.
-            parent_session_id = str(evt.get("parent_session_id") or "").strip()
-            if parent_session_id:
-                verdict = await self._classify_completion_target(parent_session_id)
-                if verdict == "terminal":
-                    logger.warning(
-                        "Background process %s completion targets "
-                        "permanently-gone session %s (user boundary such as "
-                        "/new); dropping notification (output remains "
-                        "available via process(action='log')).",
-                        evt.get("session_id") or "<unknown>", parent_session_id,
-                    )
-                    return None
-                if verdict == "retry":
-                    # Transient uncertainty (session DB unavailable or a
-                    # compression rotation mid-flight): signal the watcher to
-                    # re-poll and try again rather than dropping or
-                    # misrouting the result.
-                    return False
-        if identity is not None:
-            with self._completion_delivery_lock:
-                if (
-                    identity in self._completion_deliveries_inflight
-                    or identity in self._completion_deliveries_delivered
-                ):
-                    return None
-                self._completion_deliveries_inflight.add(identity)
+    async def _deliver_completion_notification(
+        self, synth_text: str, evt: dict, *, sibling_claims=(),
+    ) -> Optional[bool]:
+        """Acknowledge one admitted batch, refund refusals, or release failed deliveries.
 
-        accepted = False
+        True means adapter admission, not model execution; None means deduplicated or
+        terminal. False remains retryable. Claims are settled together for every sibling.
+        """
+        from gateway.wake import WakeNotAccepted
+        identity = self._completion_delivery_identity(evt)
+        claim = self._CompletionClaim()
+        accepted = identity_claimed = refused = False
         try:
-            injection_result = await self._inject_watch_notification(synth_text, evt)
+            claim = await self._preflight_completion_delivery(evt)
+            if not claim.proceed:
+                return claim.early_result
+            if identity is not None:
+                if self._completion_identity_seen(identity, claim=True):
+                    return None
+                identity_claimed = True
+            injection_result = await self._inject_watch_notification(synth_text, evt, raise_not_accepted=True)
             if injection_result is not True:
                 return injection_result
             accepted = True
-
             if identity is not None:
                 with self._completion_delivery_lock:
-                    self._completion_deliveries_inflight.discard(identity)
-                    self._completion_deliveries_delivered[identity] = None
-                    while (
-                        len(self._completion_deliveries_delivered)
-                        > self._completion_delivery_retention
-                    ):
-                        self._completion_deliveries_delivered.popitem(last=False)
-
-            # If the durable async-delegation producer branch is present, its
-            # SQLite row remains the authoritative replay state. Acknowledge it
-            # after adapter acceptance; this gateway keeps no parallel ledger.
-            if durable_claim_id:
-                try:
-                    from tools.async_delegation import complete_completion_delivery
-
-                    complete_completion_delivery(
-                        durable_delegation_id, durable_claim_id,
-                    )
-                except Exception as exc:
-                    logger.warning(
-                        "Could not acknowledge durable async completion %s: %s",
-                        durable_delegation_id, exc,
-                    )
+                    self._mark_completions_delivered_locked((identity,))
             return True
+        except WakeNotAccepted:
+            refused = True
+            return False
         finally:
-            if identity is not None and not accepted:
+            if identity_claimed and not accepted:
                 with self._completion_delivery_lock:
                     self._completion_deliveries_inflight.discard(identity)
-            if durable_claim_id and not accepted:
-                try:
-                    from tools.async_delegation import release_completion_delivery
-
-                    release_completion_delivery(
-                        durable_delegation_id, durable_claim_id,
-                    )
-                except Exception:
-                    logger.debug("Could not release durable completion claim", exc_info=True)
+            operation = "complete" if accepted else "defer" if refused else "release"
+            if claim.claim_id:
+                self._settle_durable_claim(operation, claim.delegation_id, claim.claim_id)
+            for sibling, claim_id in sibling_claims:
+                if claim_id:
+                    self._settle_durable_claim(operation, sibling["delegation_id"], claim_id)
+            if accepted and sibling_claims:
+                self._record_coalesced_completion_siblings([event for event, _claim_id in sibling_claims])
 
     @staticmethod
     def _completion_notification_batch_key(evt: dict) -> tuple[str, ...]:
@@ -26676,11 +26701,11 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             evt, synth_text = deliverable[0]
             return await self._deliver_completion_notification(synth_text, evt)
 
-        from tools.async_delegation import (
-            claim_event_delivery,
-            complete_event_delivery,
-            release_event_delivery,
-        )
+        for evt, _text in deliverable:
+            if not await self._completion_delivery_ready(evt):
+                return False
+
+        from tools.async_delegation import claim_event_delivery
 
         # Check every destination before reserving any sibling delivery attempt.
         for evt, _text in deliverable:
@@ -26706,61 +26731,27 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             )
 
         consolidated = self._format_coalesced_async_delegations(blocks)
-        delivered: Optional[bool] = False
-        try:
-            delivered = await self._deliver_completion_notification(
-                consolidated, primary_evt,
-            )
-        finally:
-            if delivered is True:
-                for evt, claim_id in siblings:
-                    try:
-                        complete_event_delivery(evt, claim_id)
-                    except Exception:
-                        logger.debug(
-                            "Could not acknowledge coalesced durable completion",
-                            exc_info=True,
-                        )
-                self._record_coalesced_completion_siblings(
-                    [evt for evt, _claim_id in siblings]
-                )
-            else:
-                # Not delivered — release every sibling claim so a retry (or
-                # another consumer) can claim it, honestly leaving the durable
-                # rows pending.
-                for evt, claim_id in siblings:
-                    try:
-                        release_event_delivery(evt, claim_id)
-                    except Exception:
-                        logger.debug(
-                            "Could not release coalesced durable claim",
-                            exc_info=True,
-                        )
-                if delivered is None:
-                    # The primary was dropped/owned elsewhere but the siblings
-                    # still need delivery — requeue just them for the next tick.
-                    for evt, _claim_id in siblings:
-                        _pr.completion_queue.put(evt)
+        delivered = await self._deliver_completion_notification(
+            consolidated, primary_evt, sibling_claims=siblings,
+        )
+        if delivered is None:
+            # Primary dropped/owned elsewhere: retry the unadmitted siblings.
+            for evt, _claim_id in siblings:
+                _pr.completion_queue.put(evt)
         return delivered
 
     async def _async_delegation_watcher(self, interval: float = 2.0) -> None:
-        """Drain async-delegation completions and inject them as new turns.
+        """Drain async completions and pattern notifications even while sessions are idle.
 
-        Background subagents (``delegate_task(background=true)``) run on the
-        async-delegation daemon executor — they have no per-process watcher
-        task, so their completion events would only be seen by the post-turn
-        queue drain. This watcher covers the IDLE case: when a background
-        subagent finishes while no agent turn is running, its result still
-        re-enters the originating session promptly.
-
-        Mirrors the CLI's idle ``process_loop`` drain. Stays silent when the
-        queue has nothing for us; ignores non-async event types (those are
-        handled by ``_run_process_watcher`` / the post-turn drain).
+        Background subagents and process pattern events have no per-process notification
+        consumer; both must progress without a later foreground turn.
         """
         await asyncio.sleep(3)  # let platforms finish connecting
         from tools.process_registry import process_registry as _pr
         while self._running:
             try:
+                # Pattern events also need an idle consumer; foreground turns are optional.
+                await self._drain_watch_notifications(_pr.completion_queue)
                 # Peek the queue for async-delegation events. We must NOT
                 # consume watch/completion events here (other drains own them),
                 # so requeue anything that isn't ours.
@@ -26806,6 +26797,24 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             except Exception as e:
                 logger.debug("Async delegation watcher error: %s", e)
             await asyncio.sleep(interval)
+
+    async def _send_watcher_message(
+        self, platform_name: str, chat_id, thread_id, message_text: str, watcher: Optional[dict] = None,
+    ) -> None:
+        source = None
+        if watcher is not None:
+            source = await asyncio.to_thread(self._build_process_event_source, watcher)
+        adapter = self._resolve_injection_adapter(platform_name, source)
+        if adapter and chat_id:
+            try:
+                send_meta = {"thread_id": thread_id} if thread_id else None
+                await adapter.send(
+                    chat_id,
+                    message_text,
+                    metadata=_non_conversational_metadata(send_meta, platform=platform_name),
+                )
+            except Exception as e:
+                logger.error("Watcher delivery error: %s", e)
 
     async def _run_process_watcher(self, watcher: dict) -> None:
         """
@@ -26982,21 +26991,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                             f"[Background process {session_id} finished with exit code {session.exit_code}~ "
                             f"Here's the final output:\n{new_output}]"
                         )
-                    adapter = None
-                    for p, a in self.adapters.items():
-                        if p.value == platform_name:
-                            adapter = a
-                            break
-                    if adapter and chat_id:
-                        try:
-                            send_meta = {"thread_id": thread_id} if thread_id else None
-                            await adapter.send(
-                                chat_id,
-                                message_text,
-                                metadata=_non_conversational_metadata(send_meta, platform=platform_name),
-                            )
-                        except Exception as e:
-                            logger.error("Watcher delivery error: %s", e)
+                    await self._send_watcher_message(platform_name, chat_id, thread_id, message_text, watcher)
                 break
 
             elif has_new_output and notify_mode == "all" and not agent_notify:
@@ -27013,21 +27008,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                     f"[Background process {session_id} is still running~ "
                     f"New output:\n{new_output}]"
                 )
-                adapter = None
-                for p, a in self.adapters.items():
-                    if p.value == platform_name:
-                        adapter = a
-                        break
-                if adapter and chat_id:
-                    try:
-                        send_meta = {"thread_id": thread_id} if thread_id else None
-                        await adapter.send(
-                            chat_id,
-                            message_text,
-                            metadata=_non_conversational_metadata(send_meta, platform=platform_name),
-                        )
-                    except Exception as e:
-                        logger.error("Watcher delivery error: %s", e)
+                await self._send_watcher_message(platform_name, chat_id, thread_id, message_text, watcher)
 
         logger.debug("Process watcher ended: %s", session_id)
 

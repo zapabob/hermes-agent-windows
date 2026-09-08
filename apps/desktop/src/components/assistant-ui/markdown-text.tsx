@@ -266,6 +266,16 @@ function MarkdownLink({ children, className, href, ...props }: ComponentProps<'a
       return <PreviewAttachment source="tool-result" target={mediaPath} />
     }
 
+    // Non-media files (PDFs, data files, anything outside MEDIA_BY_EXT):
+    // MediaAttachment's kind==='file' branch is a degraded dead-end (bare
+    // "Open <name>" anchor). Route through the preview pipeline instead —
+    // the same file card + "Open preview" the bare-path markdown-link
+    // branch below produces — so MEDIA: uniformly delivers the richest
+    // rendering for every file type.
+    if (mediaKind(mediaPath) === 'file') {
+      return <PreviewAttachment source="tool-result" target={mediaPath} />
+    }
+
     return <MediaAttachment path={mediaPath} />
   }
 
@@ -439,6 +449,8 @@ interface MarkdownTextSurfaceProps {
   /** Disable artifact-card promotion for fenced blocks (reasoning text — a
    *  model's scratchpad draft must not register artifact versions). */
   disableArtifacts?: boolean
+  /** Foreign history must not load images or mount live transcript directives. */
+  previewOnly?: boolean
 }
 
 // Headings shrink to chat scale rather than the prose default (h1≈xl). Kept
@@ -467,94 +479,6 @@ const MARKDOWN_CONTAINER_CLASS_NAME = cn(
 )
 
 const MAX_MARKDOWN_CHARS = 200_000
-
-/** Module-stable Streamdown component map (everything except SyntaxHighlighter).
- *  Identity must not change across renders — Streamdown remounts Blocks when
- *  the components object / member identities flip. */
-const STABLE_MARKDOWN_COMPONENTS = {
-  h1: ({ className, ...props }: ComponentProps<'h1'>) => (
-    <h1 className={cn('my-1 font-semibold', HEADING_SIZES.h1, className)} {...props} />
-  ),
-  h2: ({ className, ...props }: ComponentProps<'h2'>) => (
-    <h2 className={cn('my-1 font-semibold', HEADING_SIZES.h2, className)} {...props} />
-  ),
-  h3: ({ className, ...props }: ComponentProps<'h3'>) => (
-    <h3 className={cn('my-1 font-semibold', HEADING_SIZES.h3, className)} {...props} />
-  ),
-  h4: ({ className, ...props }: ComponentProps<'h4'>) => (
-    <h4 className={cn('my-1 font-semibold', HEADING_SIZES.h4, className)} {...props} />
-  ),
-  p: ({ className, ...props }: ComponentProps<'p'>) => (
-    // Vertical rhythm is owned by styles.css (`--paragraph-gap`), which
-    // must out-specify Tailwind Typography's `prose` margins — so no
-    // `my-*` here on purpose.
-    <p className={cn('wrap-anywhere leading-(--dt-line-height)', className)} {...props} />
-  ),
-  a: MarkdownLink,
-  // Inline code must not vote when an ancestor resolves `dir="auto"`
-  // (HTML's algorithm skips descendants that carry their own dir),
-  // mirroring the CSS isolate that already keeps it out of the
-  // plaintext scan. Fenced code never reaches this override; it goes
-  // through the code plugin's CodeCard path.
-  inlineCode: ({ className, ...props }: ComponentProps<'code'>) => <code className={className} dir="ltr" {...props} />,
-  // `---` as quiet spacing, not a heavy full-width rule.
-  hr: (_props: ComponentProps<'hr'>) => <div aria-hidden className="my-3" />,
-  // Lists and blockquotes: `dir="auto"` so markers/borders follow content
-  // direction. GFM alert callouts (`> [!NOTE]`) promote to MarkdownAlert.
-  blockquote: ({ children, className, ...props }: ComponentProps<'blockquote'>) => {
-    const alert = extractAlert(children)
-
-    if (alert) {
-      return <MarkdownAlert type={alert.type}>{alert.body}</MarkdownAlert>
-    }
-
-    return (
-      <blockquote
-        className={cn('border-s-2 border-border ps-3 text-muted-foreground italic', className)}
-        dir="auto"
-        {...props}
-      >
-        {children}
-      </blockquote>
-    )
-  },
-  ul: ({ className, ...props }: ComponentProps<'ul'>) => (
-    <ul className={cn('my-1 gap-0', className)} dir="auto" {...props} />
-  ),
-  ol: ({ className, ...props }: ComponentProps<'ol'>) => (
-    <ol className={cn('my-1 gap-0', className)} dir="auto" {...props} />
-  ),
-  li: ({ className, ...props }: ComponentProps<'li'>) => (
-    <li className={cn('leading-(--dt-line-height)', className)} {...props} />
-  ),
-  table: ({ className, ...props }: ComponentProps<'table'>) => (
-    <div className="aui-md-table my-2 max-w-full overflow-x-auto rounded-[0.375rem] border border-border">
-      <table
-        className={cn(
-          'm-0 w-full min-w-[18rem] border-collapse text-[0.8125rem] [&_tr]:border-b [&_tr]:border-border last:[&_tr]:border-0',
-          className
-        )}
-        {...props}
-      />
-    </div>
-  ),
-  thead: ({ className, ...props }: ComponentProps<'thead'>) => (
-    <thead className={cn('m-0 bg-muted/35 text-muted-foreground', className)} {...props} />
-  ),
-  th: ({ className, ...props }: ComponentProps<'th'>) => (
-    <th
-      className={cn(
-        'whitespace-nowrap px-2.5 py-1.5 text-left align-middle text-[0.75rem] font-medium text-muted-foreground',
-        className
-      )}
-      {...props}
-    />
-  ),
-  td: ({ className, ...props }: ComponentProps<'td'>) => (
-    <td className={cn('px-2.5 py-1.5 align-top text-[0.8125rem] leading-snug', className)} {...props} />
-  ),
-  img: MarkdownImage
-} as const
 
 function HugeTextFallback({ containerClassName, text }: { containerClassName?: string; text: string }) {
   const chunks = useMemo(() => chunkByLines(text, 200), [text])
@@ -615,7 +539,8 @@ function MarkdownTextSurface({
   containerClassName,
   containerProps,
   defer,
-  disableArtifacts
+  disableArtifacts,
+  previewOnly
 }: MarkdownTextSurfaceProps) {
   const { status, text } = useMessagePartText()
   const isStreaming = status.type === 'running'
@@ -627,10 +552,6 @@ function MarkdownTextSurface({
   const code = useCodePlugin()
   const plugins = useMemo(() => (code ? { math: mathPlugin, code } : { math: mathPlugin }), [code])
 
-  // Stable heading/paragraph/list chrome lives at module scope so flipping
-  // `isStreaming` (or disableArtifacts) only swaps the SyntaxHighlighter —
-  // Streamdown otherwise remounts every Block when the components object
-  // identity changes.
   const components = useMemo(
     () =>
       ({
@@ -646,8 +567,9 @@ function MarkdownTextSurface({
         h4: ({ className, ...props }: ComponentProps<'h4'>) => (
           <h4 className={cn('my-1 font-semibold', HEADING_SIZES.h4, className)} {...props} />
         ),
-        p: (props: ComponentProps<'p'>) => <MarkdownParagraph {...props} streaming={isStreaming} />,
-        a: MarkdownLink,
+        p: (props: ComponentProps<'p'>) =>
+          previewOnly ? <p {...props} /> : <MarkdownParagraph {...props} streaming={isStreaming} />,
+        a: previewOnly ? ({ children }: ComponentProps<'a'>) => <span>{children}</span> : MarkdownLink,
         // Inline code must not vote when an ancestor resolves `dir="auto"`
         // (HTML's algorithm skips descendants that carry their own dir),
         // mirroring the CSS isolate that already keeps it out of the
@@ -706,13 +628,13 @@ function MarkdownTextSurface({
         td: ({ className, ...props }: ComponentProps<'td'>) => (
           <td className={cn('px-2.5 py-1.5 align-top text-[0.8125rem] leading-snug', className)} {...props} />
         ),
-        img: MarkdownImage,
+        img: previewOnly ? ({ alt }: ComponentProps<'img'>) => <span>{alt}</span> : MarkdownImage,
         // ```mermaid / ```svg fences route to their lazy renderers; substantial
         // html/svg/code fences promote to an artifact card that opens in the
         // right rail; every other language falls back to the Shiki-highlighted
         // code block.
         SyntaxHighlighter: (props: SyntaxHighlighterProps) => {
-          const artifact = disableArtifacts ? null : detectArtifact(props.language, props.code)
+          const artifact = disableArtifacts || previewOnly ? null : detectArtifact(props.language, props.code)
 
           if (artifact) {
             return <ArtifactCard code={props.code} detection={artifact} streaming={isStreaming} />
@@ -728,7 +650,7 @@ function MarkdownTextSurface({
           )
         }
       }) as StreamdownTextComponents,
-    [disableArtifacts, isStreaming]
+    [disableArtifacts, isStreaming, previewOnly]
   )
 
   if (text.length > MAX_MARKDOWN_CHARS) {

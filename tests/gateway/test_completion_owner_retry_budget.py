@@ -12,7 +12,8 @@ from tools import async_delegation as delegation
 
 
 @pytest.mark.parametrize("batch_size", [1, 2])
-def test_temporary_owner_unavailability_does_not_spend_attempts(tmp_path, monkeypatch, batch_size):
+@pytest.mark.parametrize("parent_verdict", ["retry", "deliver"])
+def test_temporary_owner_unavailability_does_not_spend_attempts(tmp_path, monkeypatch, batch_size, parent_verdict):
     monkeypatch.setenv("HERMES_HOME", str(tmp_path))
     events = []
     for index in range(batch_size):
@@ -34,7 +35,7 @@ def test_temporary_owner_unavailability_does_not_spend_attempts(tmp_path, monkey
         runner._completion_deliveries_delivered = OrderedDict()
         runner._completion_delivery_retention = 2048
         runner._background_tasks = set()
-        runner._classify_completion_target = AsyncMock(return_value="retry")
+        runner._classify_completion_target = AsyncMock(return_value=parent_verdict)
         result = asyncio.run(runner._deliver_async_delegation_group(events))
         observations.append(dict(iteration=iteration, result=result, rows=[
             {key: delegation.get_durable_delegation(event["delegation_id"])[key]
@@ -67,9 +68,10 @@ def _native_restart_worker(seed):
     runner._completion_deliveries_delivered = OrderedDict()
     runner._completion_delivery_retention = 2048
     runner._background_tasks = set()
-    runner._classify_completion_target = AsyncMock(return_value='retry')
-    for _ in range(5):
-        assert asyncio.run(runner._deliver_async_delegation_group(events)) is False
+    for verdict in ['retry', 'deliver']:
+        runner._classify_completion_target = AsyncMock(return_value=verdict)
+        for _ in range(5):
+            assert asyncio.run(runner._deliver_async_delegation_group(events)) is False
     for event in events:
         row = delegation.get_durable_delegation(event['delegation_id'])
         assert row['delivery_state'] == 'pending'

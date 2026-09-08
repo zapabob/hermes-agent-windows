@@ -151,6 +151,31 @@ class GatewayAuthorizationMixin:
             getattr(source, "profile", None),
         )
 
+    def _owning_profile(self, adapter, platform):
+        """Return (registered, profile) for a live adapter: profile is None for primary."""
+        if adapter is (getattr(self, "adapters", None) or {}).get(platform):
+            return True, None
+        profile_maps = getattr(self, "_profile_adapters", None) or {}
+        for profile, profile_adapters in profile_maps.items():
+            if adapter is profile_adapters.get(platform):
+                return True, profile
+        return False, None
+
+    def _transport_owner(self, source: SessionSource):
+        """``(adapter, profile)`` of the registered adapter that created *source*, if retained; else None.
+
+        ``source.profile`` may differ from the adapter profile when one shared credential serves
+        several routed runtimes; ``build_source`` keeps the receiving adapter as provenance so replies
+        stay on that transport. Restored/hand-built sources fall back (fail-closed) to profile lookup.
+        """
+        adapter_ref = getattr(source, "_transport_adapter_ref", None)
+        adapter = adapter_ref() if callable(adapter_ref) else None
+        platform = getattr(source, "platform", None)
+        if adapter is None or platform is None:
+            return None
+        registered, profile = self._owning_profile(adapter, platform)
+        return (adapter, profile) if registered else None
+
     def _registered_transport_adapter(self, source: SessionSource):
         """Return the registered adapter that created *source*, if retained.
 
@@ -161,18 +186,8 @@ class GatewayAuthorizationMixin:
         intake-policy checks stay on that transport without weakening the
         fail-closed fallback for restored or hand-built sources.
         """
-        adapter_ref = getattr(source, "_transport_adapter_ref", None)
-        adapter = adapter_ref() if callable(adapter_ref) else None
-        platform = getattr(source, "platform", None)
-        if adapter is None or platform is None:
-            return None
-        if adapter is (getattr(self, "adapters", None) or {}).get(platform):
-            return adapter
-        profile_maps = getattr(self, "_profile_adapters", None) or {}
-        for profile_adapters in profile_maps.values():
-            if adapter is profile_adapters.get(platform):
-                return adapter
-        return None
+        owner = self._transport_owner(source)
+        return owner[0] if owner is not None else None
 
     def _adapter_profile_for_source(self, source: SessionSource) -> Optional[str]:
         """Resolve the transport-owning profile for adapter policy lookups."""

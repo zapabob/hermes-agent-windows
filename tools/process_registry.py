@@ -52,6 +52,14 @@ from typing import Any, Dict, List, Optional
 from hermes_cli.config import get_hermes_home
 
 from agent.redact import redact_sensitive_text
+from tools.process_registry_notifications import (
+    format_process_notification,
+    _process_accounting_lines,
+    _format_async_delegation,
+    _delegation_attribution_line,
+    _format_age,
+)
+from tools.process_registry_results import load_completed_results, save_completed_result
 
 logger = logging.getLogger(__name__)
 
@@ -380,6 +388,7 @@ class ProcessSession:
     id: str                                     # Unique session ID ("proc_xxxxxxxxxxxx")
     command: str                                 # Original command string
     task_id: str = ""                           # Task/sandbox isolation key
+    owner_task_id: str = ""                     # Spawning execution owner (for delegation handoff / tracking)
     session_key: str = ""                       # Gateway session key (for reset protection)
     pid: Optional[int] = None                   # OS process ID
     process: Optional[subprocess.Popen] = None  # Popen handle (local only)
@@ -396,6 +405,7 @@ class ProcessSession:
     detached: bool = False                      # True if recovered from crash (no pipe)
     pid_scope: str = "host"                     # "host" for local/PTY PIDs, "sandbox" for env-local PIDs
     systemd_unit: str = ""                      # transient scope unit name when spawned under systemd-run (#70716)
+    handoff_note: str = ""                      # why a subagent handed this process to its parent (rides the notice)
     # Watcher/notification metadata (persisted for crash recovery)
     watcher_platform: str = ""
     watcher_chat_id: str = ""
@@ -1039,6 +1049,7 @@ class ProcessRegistry:
         session_key: str = "",
         env_vars: dict = None,
         use_pty: bool = False,
+        owner_task_id: str = "",
     ) -> ProcessSession:
         """
         Spawn a background process locally.
@@ -1063,6 +1074,7 @@ class ProcessRegistry:
             id=f"proc_{uuid.uuid4().hex[:12]}",
             command=command,
             task_id=task_id,
+            owner_task_id=owner_task_id or task_id,
             session_key=session_key,
             cwd=_resolve_safe_cwd(cwd or os.getcwd()),
             started_at=time.time(),
@@ -1128,12 +1140,10 @@ class ProcessRegistry:
                     daemon=True,
                     name=f"proc-pty-reader-{session.id}",
                 )
-                session._reader_thread = reader
-                reader.start()
-
                 with self._lock:
                     self._prune_if_needed()
                     self._running[session.id] = session
+                reader.start()
 
                 self._write_checkpoint()
                 return session
@@ -1235,11 +1245,11 @@ class ProcessRegistry:
                 name=f"proc-reader-{session.id}",
             )
             session._reader_thread = reader
-            reader.start()
 
             with self._lock:
                 self._prune_if_needed()
                 self._running[session.id] = session
+            reader.start()
 
             self._write_checkpoint()
         except Exception:
@@ -1282,6 +1292,7 @@ class ProcessRegistry:
         task_id: str = "",
         session_key: str = "",
         timeout: int = 10,
+        owner_task_id: str = "",
     ) -> ProcessSession:
         """
         Spawn a background process through a non-local environment backend.
@@ -1298,6 +1309,7 @@ class ProcessRegistry:
             id=f"proc_{uuid.uuid4().hex[:12]}",
             command=command,
             task_id=task_id,
+            owner_task_id=owner_task_id or task_id,
             session_key=session_key,
             cwd=cwd,
             started_at=time.time(),
@@ -1625,9 +1637,13 @@ class ProcessRegistry:
         completion notification is enqueued.
         """
         with self._lock:
-            was_running = self._running.pop(session.id, None) is not None
+            was_running = session.id in self._running
+            if was_running:
+                # Keep the session tracked until its result is durable. A finite
+                # parent must not observe completion and exit during this write.
+                save_completed_result(session)
+                self._running.pop(session.id)
             self._finished[session.id] = session
-        session._completion_event.set()
         self._write_checkpoint()
 
         # Only enqueue completion notification on the FIRST move.  Without
@@ -1641,6 +1657,7 @@ class ProcessRegistry:
                 "session_id": session.id,
                 "session_key": session.session_key,
                 "task_id": session.task_id,
+                "owner_task_id": session.owner_task_id or session.task_id,
                 "command": session.command,
                 "exit_code": session.exit_code,
                 "completion_reason": session.completion_reason,
@@ -1650,9 +1667,11 @@ class ProcessRegistry:
                 # a consumer-observed completion timestamp, this does not vary
                 # based on which watcher notices exit first.
                 "started_at": session.started_at,
+                **({"handoff_note": session.handoff_note} if session.handoff_note else {}),
             }
             _redact_process_result(notification)
             self.completion_queue.put(notification)
+        session._completion_event.set()
 
     # ----- Query Methods -----
 
@@ -1750,7 +1769,7 @@ class ProcessRegistry:
                 s
                 for s in self._running.values()
                 if s.notify_on_complete
-                and not s.exited
+                and not s._completion_event.is_set()
                 and (task_id is None or s.task_id == task_id)
             ]
         if not pending or timeout <= 0:
@@ -1773,7 +1792,7 @@ class ProcessRegistry:
         interrupted = False
         for session in pending:
             try:
-                while not session.exited:
+                while not session._completion_event.is_set():
                     if interrupted or _is_interrupted():
                         interrupted = True
                         break
@@ -1788,7 +1807,7 @@ class ProcessRegistry:
                         self._refresh_detached_session(session)
                     except Exception:
                         pass
-                    if session.exited:
+                    if session._completion_event.is_set():
                         break
                     session._completion_event.wait(min(remaining, interval))
             except KeyboardInterrupt:
@@ -1796,10 +1815,7 @@ class ProcessRegistry:
                 # never let the interrupt skip the caller's durable teardown
                 # (session flush, end_session) that follows this wait.
                 interrupted = True
-            if session.exited:
-                result["completed"].append(session.id)
-            else:
-                result["timed_out"].append(session.id)
+            result["completed" if session._completion_event.is_set() else "timed_out"].append(session.id)
         if result["timed_out"]:
             logger.warning(
                 "One-shot exit linger timed out after %ss with %d background "
@@ -1956,7 +1972,7 @@ class ProcessRegistry:
             # requeued (children never drain notify events, so requeueing
             # would pin them in the queue forever). Type 'async_delegation'
             # is the delegation result itself and is NEVER suppressed.
-            _evt_task_id = str(evt.get("task_id") or "")
+            _evt_task_id = str(evt.get("owner_task_id") or evt.get("task_id") or "")
             if not is_async_delegation and _evt_task_id.startswith("sa-"):
                 if surface_child is None:
                     surface_child = self._surface_child_process_notifications()
@@ -1992,11 +2008,13 @@ class ProcessRegistry:
         or too-short prefixes resolve to None (callers already report
         "No process with ID ..."), never to an arbitrary pick.
         """
+        if not isinstance(session_id, str) or not session_id:
+            return None
         with self._lock:
             session = self._running.get(session_id) or self._finished.get(session_id)
         if session is None:
-            session = self._resolve_prefix(session_id)
-        return self._refresh_detached_session(session)
+            session = load_completed_results(session_id).get(session_id)
+        return self._refresh_detached_session(session if session is not None else self._resolve_prefix(session_id))
 
     def _resolve_prefix(self, session_id: str) -> Optional[ProcessSession]:
         """Resolve a unique session-ID prefix to its session, else None.
@@ -2017,16 +2035,13 @@ class ProcessRegistry:
         suffix = query[len("proc_"):]
         if len(suffix) < self._MIN_PREFIX_CHARS:
             return None
+        matches = load_completed_results(query)
         with self._lock:
-            matches = [
-                s
-                for store in (self._running, self._finished)
-                for sid, s in store.items()
-                if sid.startswith(query)
-            ]
-        if len(matches) == 1:
-            return matches[0]
-        return None
+            matches.update({
+                sid: s for store in (self._running, self._finished)
+                for sid, s in store.items() if sid.startswith(query)
+            })
+        return next(iter(matches.values())) if len(matches) == 1 else None
 
     def _reconcile_local_exit(self, session: "ProcessSession") -> None:
         """Reconcile session.exited against the real child process state.
@@ -2575,10 +2590,11 @@ class ProcessRegistry:
         reset (#29177). Such cross-task entries are flagged with
         ``"session_scoped": true``.
         """
+        sessions = load_completed_results()
         with self._lock:
-            all_sessions = list(self._running.values()) + list(self._finished.values())
-
-        all_sessions = [self._refresh_detached_session(s) for s in all_sessions]
+            sessions.update(self._finished)
+            sessions.update(self._running)
+        all_sessions = [self._refresh_detached_session(s) for s in sessions.values()]
 
         if task_id or session_key:
             all_sessions = [
@@ -2634,6 +2650,39 @@ class ProcessRegistry:
                 s.task_id == task_id and not s.exited
                 for s in self._running.values()
             )
+
+    def running_owned_by(self, owner_task_id: str) -> List[ProcessSession]:
+        """Running processes whose RAW spawning owner is ``owner_task_id``."""
+        with self._lock:
+            return [s for s in self._running.values() if (s.owner_task_id or s.task_id) == owner_task_id and not s.exited]
+
+    def transfer_ownership(
+        self,
+        session_id: str,
+        *,
+        from_owner: str,
+        to_owner: str,
+        to_task_id: str,
+        to_session_key: str,
+        note: str = "",
+    ) -> Optional[ProcessSession]:
+        """Move a RUNNING process from one owner to another under the registry lock.
+
+        Ownership is the ``owner_task_id`` field: completion notices are stamped
+        from it at exit time and teardown kills by it, so flipping it here is the
+        whole transfer. Returns the session, or None when it is unknown, already
+        exited, or not owned by ``from_owner`` (the caller must not report a transfer
+        that did not happen).
+        """
+        session = self.get(session_id)
+        with self._lock:
+            if session is None or session.exited or (session.owner_task_id or session.task_id) != from_owner:
+                return None
+            session.owner_task_id = to_owner
+            session.task_id = to_task_id
+            session.session_key = to_session_key
+            session.handoff_note = note
+            return session
 
     def has_active_for_session(
         self, session_key: str, max_active_age: Optional[float] = None,
@@ -2955,295 +3004,6 @@ class ProcessRegistry:
 process_registry = ProcessRegistry()
 
 
-def _format_age(seconds: float) -> str:
-    """Human-friendly elapsed string ('18m', '2h3m', '45s')."""
-    try:
-        s = int(max(0, seconds))
-    except (TypeError, ValueError):
-        return "?"
-    if s < 60:
-        return f"{s}s"
-    m, s = divmod(s, 60)
-    if m < 60:
-        return f"{m}m" if s == 0 else f"{m}m{s}s"
-    h, m = divmod(m, 60)
-    return f"{h}h" if m == 0 else f"{h}h{m}m"
-
-
-def _format_async_delegation(evt: dict) -> str:
-    """Format an async-delegation completion into a self-contained re-injection.
-
-    Carries the FULL original task source (goal, the context the parent
-    supplied, toolsets, role, model) plus dispatch time, status, and the
-    complete result summary. When this re-enters the conversation the agent
-    may be deep in unrelated context and won't remember why the subagent
-    existed, so the block is written to stand entirely on its own — enough to
-    use the result OR re-dispatch if the world has moved on.
-    """
-    import time as _time
-
-    deleg_id = evt.get("delegation_id", "unknown")
-    goal = evt.get("goal", "") or ""
-    context = evt.get("context")
-    toolsets = evt.get("toolsets")
-    role = evt.get("role") or "leaf"
-    model = evt.get("model") or "?"
-    status = evt.get("status") or "completed"
-    summary = evt.get("summary")
-    error = evt.get("error")
-    api_calls = evt.get("api_calls", 0)
-    duration = evt.get("duration_seconds", "?")
-    truncated = evt.get("truncated") or evt.get("exit_reason") == "max_iterations"
-    dispatched_at = evt.get("dispatched_at")
-    completed_at = evt.get("completed_at") or _time.time()
-
-    # ----- Batch (fan-out) completion: consolidated multi-task block -----
-    # A whole delegate_task fan-out dispatched as one background unit finishes
-    # together and carries a per-task `results` list. Render every subagent's
-    # summary in one block so the model gets the consolidated outcome at once.
-    batch_results = evt.get("results")
-    if evt.get("is_batch") or isinstance(batch_results, list):
-        results = batch_results or []
-        goals = evt.get("goals") or []
-        n = len(results) if results else len(goals)
-        total_dur = evt.get("total_duration_seconds", duration)
-        lines = [
-            f"[ASYNC DELEGATION BATCH COMPLETE — {deleg_id}]",
-            f"A background fan-out of {n} subagent(s) you dispatched earlier "
-            "has finished. All ran in parallel and waited on each other; their "
-            "consolidated results are below. You may have moved on since "
-            "dispatching — act on these or re-dispatch if things have changed.",
-            "",
-        ]
-        if isinstance(dispatched_at, (int, float)):
-            ts = _time.strftime("%Y-%m-%d %H:%M:%S", _time.localtime(dispatched_at))
-            age = f" ({_format_age(completed_at - dispatched_at)} ago)"
-            lines.append(f"Dispatched: {ts}{age}")
-        if context:
-            lines.append(f"Context you provided: {context}")
-        if toolsets:
-            lines.append(f"Toolsets: {', '.join(toolsets)}")
-        lines.append(f"Role: {role}   Model: {model}   Total duration: {total_dur}s")
-        if error and not results:
-            lines.append("--- ERROR ---")
-            lines.append(f"The batch did not complete successfully: {error}")
-            return "\n".join(lines)
-        for r in sorted(results, key=lambda x: x.get("task_index", 0)):
-            idx = r.get("task_index", 0)
-            r_status = r.get("status", "?")
-            r_summary = r.get("summary")
-            r_error = r.get("error")
-            r_goal = goals[idx] if idx < len(goals) else r.get("goal", "")
-            r_truncated = r.get("truncated") or r.get("exit_reason") == "max_iterations"
-            icon = "⚠" if r_truncated else ("✓" if r_status in ("completed", "success") else "✗")
-            lines.append("")
-            header = f"--- {icon} TASK {idx + 1}/{n}"
-            if r_goal:
-                header += f": {r_goal}"
-            header += f"  (status={r_status}"
-            if r.get("api_calls"):
-                header += f", api_calls={r['api_calls']}"
-            if r.get("duration_seconds") is not None:
-                header += f", {r['duration_seconds']}s"
-            if r_truncated:
-                header += ", TRUNCATED: hit max_iterations — work may be incomplete"
-            header += ") ---"
-            lines.append(header)
-            if r_status in ("completed", "success") and r_summary:
-                if r_truncated:
-                    lines.append(
-                        "[TRUNCATED — subagent hit its iteration cap; the "
-                        "summary below may be incomplete. Verify before relying "
-                        "on it, or re-dispatch the unfinished part.]"
-                    )
-                lines.append(r_summary)
-            elif r_summary:
-                if r_error:
-                    lines.append(f"({r_status}: {r_error})")
-                lines.append("Partial output:")
-                lines.append(r_summary)
-            else:
-                lines.append(
-                    f"(no summary — status={r_status}"
-                    + (f": {r_error}" if r_error else "")
-                    + ")"
-                )
-            r_live = r.get("live_transcript")
-            if r_live:
-                lines.append(
-                    f"Full live transcript (complete tool/assistant trace): {r_live}"
-                )
-        return "\n".join(lines)
-
-    age = ""
-    if isinstance(dispatched_at, (int, float)):
-        age = f" ({_format_age(completed_at - dispatched_at)} ago)"
-
-    lines = [
-        f"[ASYNC DELEGATION COMPLETE — {deleg_id}]",
-        "A background subagent you dispatched earlier has finished. You may "
-        "have moved on since dispatching it; the full task source is below so "
-        "you can act on the result or re-dispatch if things have changed.",
-        "",
-    ]
-    if isinstance(dispatched_at, (int, float)):
-        ts = _time.strftime("%Y-%m-%d %H:%M:%S", _time.localtime(dispatched_at))
-        lines.append(f"Dispatched: {ts}{age}")
-    lines.append(f"Original goal: {goal}")
-    if context:
-        lines.append(f"Context you provided: {context}")
-    if toolsets:
-        lines.append(f"Toolsets: {', '.join(toolsets)}")
-    lines.append(f"Role: {role}   Model: {model}")
-    _trunc = " [TRUNCATED: hit max_iterations — work may be incomplete]" if truncated else ""
-    lines.append(f"Status: {status}   API calls: {api_calls}   Duration: {duration}s{_trunc}")
-    lines.append("--- RESULT ---")
-    if status in ("completed", "success") and summary:
-        if truncated:
-            lines.append(
-                "[TRUNCATED — subagent hit its iteration cap; the summary below "
-                "may be incomplete. Verify before relying on it, or re-dispatch "
-                "the unfinished part.]"
-            )
-        lines.append(summary)
-    elif status == "interrupted":
-        lines.append(
-            "The subagent was interrupted before completing"
-            + (f": {error}" if error else ".")
-        )
-        if summary:
-            lines.append("Partial output:")
-            lines.append(summary)
-    else:
-        # error / timeout / failed
-        lines.append(
-            f"The subagent did not complete successfully (status={status})."
-            + (f"\n{error}" if error else "")
-        )
-        if summary:
-            lines.append("Partial output:")
-            lines.append(summary)
-    return "\n".join(lines)
-
-
-def _delegation_attribution_line(evt: dict) -> "str | None":
-    """One-line delegation attribution for a child-originated process event.
-
-    Subagents run their terminal sessions under ``task_id == subagent_id``
-    (delegate_tool._run_single_child). When a background process they started
-    completes, its notification is routed to the PARENT conversation by
-    design (children consume their own waits via process(wait); anything
-    that outlives the child must land where a durable consumer exists).
-    Without attribution the parent-facing user sees an anonymous raw output
-    wall mid-conversation with no hint it came from a delegation. Resolve
-    the task_id against the live + recently-finished subagent registry and
-    return a short provenance line, or None for parent-owned processes.
-    """
-    task_id = str(evt.get("task_id") or "")
-    if not task_id.startswith("sa-"):
-        return None
-    try:
-        from tools.delegate_tool import get_subagent_attribution
-
-        info = get_subagent_attribution(task_id)
-    except Exception:
-        info = None
-    if not info:
-        # The task_id shape says "subagent" even when the registry entry has
-        # aged out — still attribute generically rather than anonymously.
-        return f"Started by subagent {task_id} (delegate_task)."
-    goal = str(info.get("goal") or "").strip()
-    if len(goal) > 120:
-        goal = goal[:117] + "..."
-    deleg = info.get("delegation_id")
-    parts = [f"Started by subagent {task_id}"]
-    if deleg:
-        parts.append(f"of delegation {deleg}")
-    line = " ".join(parts) + "."
-    if goal:
-        line += f' Task: "{goal}"'
-    return line
-
-
-def format_process_notification(evt: dict) -> "str | None":
-    """Format a process notification event into a [IMPORTANT: ...] message.
-
-    Handles completion events (notify_on_complete), watch pattern matches,
-    and watch disabled events from the unified completion_queue.
-    """
-    evt_type = evt.get("type", "completion")
-    _sid = evt.get("session_id", "unknown")
-    _cmd = evt.get("command", "unknown")
-    _attribution = _delegation_attribution_line(evt)
-
-    if evt_type == "watch_disabled":
-        return f"[IMPORTANT: {evt.get('message', '')}]"
-
-    # Overflow events carry their human-readable summary in `message` —
-    # without this case they fall through to the completion formatter and
-    # surface as a phantom "process exited (exit code ?)" notification.
-    if evt_type in ("watch_overflow_tripped", "watch_overflow_released"):
-        return f"[IMPORTANT: {evt.get('message', '')}]"
-
-    if evt_type == "watch_match":
-        _pat = evt.get("pattern", "?")
-        _out = evt.get("output", "")
-        _sup = evt.get("suppressed", 0)
-        text = (
-            f"[IMPORTANT: Background process {_sid} matched "
-            f"watch pattern \"{_pat}\".\n"
-        )
-        if _attribution:
-            text += f"{_attribution}\n"
-        text += (
-            f"Command: {_cmd}\n"
-            f"Matched output:\n{_out}"
-        )
-        if _sup:
-            text += f"\n({_sup} earlier matches were suppressed by rate limit)"
-        text += "]"
-        return text
-
-    if evt_type == "async_delegation":
-        return _format_async_delegation(evt)
-
-    _exit = evt.get("exit_code", "?")
-    _out = evt.get("output", "")
-    _reason = evt.get("completion_reason") or "exited"
-    _source = evt.get("termination_source") or ""
-    _signal = ""
-    if _exit in {-15, 143, "-15", "143"}:
-        _signal = ", SIGTERM"
-    if _reason == "killed":
-        _status = f"terminated by {_source or 'Hermes'}"
-    elif _reason == "lost":
-        _status = "marked lost because the process backend disappeared"
-    elif _reason == "failed_start":
-        _status = "failed to start"
-    elif _exit == 0:
-        _status = "completed normally"
-    else:
-        _status = "exited"
-    text = (
-        f"[IMPORTANT: Background process {_sid} {_status} "
-        f"(exit code {_exit}{_signal}).\n"
-    )
-    if _attribution:
-        text += f"{_attribution}\n"
-        # A subagent-owned process's full output belongs in the child's
-        # transcript/summary, not as a raw wall in the parent conversation —
-        # trim the tail hard while keeping enough to recognise failures.
-        if isinstance(_out, str) and len(_out) > 600:
-            _out = (
-                "...(output trimmed — subagent-owned process; see the "
-                "delegation's live transcript for full output)\n"
-                + _out[-600:]
-            )
-    text += (
-        f"Command: {_cmd}\n"
-        f"Output:\n{_out}]"
-    )
-    return text
 
 
 # ---------------------------------------------------------------------------
@@ -3258,14 +3018,17 @@ PROCESS_SCHEMA = {
         "Actions: 'list' (show all), 'poll' (check status + new output), "
         "'log' (full output with pagination), 'wait' (block until done or timeout), "
         "'kill' (terminate), 'write' (send raw stdin data without newline), "
-        "'submit' (send data + Enter, for answering prompts), 'close' (close stdin/send EOF)."
+        "'submit' (send data + Enter, for answering prompts), 'close' (close stdin/send EOF). "
+        "handoff (subagents only): transfer a running process you started to your parent agent, which then "
+        "receives its completion; `data` = one sentence on its purpose. Subagent-owned processes are otherwise "
+        "killed when the subagent finishes and their notifications never reach the parent."
     ),
     "parameters": {
         "type": "object",
         "properties": {
             "action": {
                 "type": "string",
-                "enum": ["list", "poll", "log", "wait", "kill", "write", "submit", "close"],
+                "enum": ["list", "poll", "log", "wait", "kill", "write", "submit", "close", "handoff"],
                 "description": "Action to perform on background processes"
             },
             "session_id": {
@@ -3274,7 +3037,7 @@ PROCESS_SCHEMA = {
             },
             "data": {
                 "type": "string",
-                "description": "Text to send to process stdin (for 'write' and 'submit' actions)"
+                "description": "Text to send to process stdin (for 'write' and 'submit' actions); purpose sentence for handoff."
             },
             "timeout": {
                 "type": "integer",
@@ -3321,6 +3084,47 @@ def _redact_process_result(result: dict) -> dict:
     return result
 
 
+_MAX_HANDOFFS_PER_CHILD = 3
+
+
+def _handoff_process(session_id: str, args: dict, task_id: Optional[str]) -> dict:
+    """Subagent-only: transfer a running background process to the parent agent so its completion is delivered THERE
+    (child-owned process notices are suppressed and child teardown kills what it owns). Validated against the live spawn
+    tree: the caller must be a registered child and must own the process; anything else is an error, never a silent
+    no-op, so a PID mentioned in prose can't masquerade as a transfer."""
+    from tools.delegate_tool import _active_subagents, _active_subagents_lock
+    from tools.terminal_tool import _resolve_container_task_id
+    with _active_subagents_lock:
+        record = _active_subagents.get(str(task_id or ""))
+    child = record.get("agent") if record else None
+    parent_ref = getattr(child, "_delegate_parent_ref", None)
+    parent = parent_ref() if callable(parent_ref) else None
+    if parent is None:
+        return {"error": "handoff is only available to a running subagent with a live parent; you are not one."}
+    parent_owner = str(getattr(parent, "_current_task_id", "") or getattr(parent, "session_id", "") or "")
+    if not parent_owner:
+        return {"error": "parent has no process owner id yet; retry after the parent's turn has started."}
+    handed = getattr(child, "_handed_off_processes", None)
+    if handed is None:
+        handed = child._handed_off_processes = []
+    if len(handed) >= _MAX_HANDOFFS_PER_CHILD:
+        return {"error": f"handoff cap reached ({_MAX_HANDOFFS_PER_CHILD} per subagent); wait on or kill the rest yourself."}
+    note = str(args.get("data") or "").strip()
+    if not note:
+        return {"error": "handoff requires `data`: one sentence saying what the process is for and what the parent should do with its result."}
+    session = process_registry.transfer_ownership(
+        session_id, from_owner=str(task_id or ""), to_owner=parent_owner,
+        to_task_id=_resolve_container_task_id(parent_owner),
+        to_session_key=str(getattr(parent, "session_id", "") or ""), note=note)
+    if session is None:
+        return {"error": f"cannot hand off {session_id}: not a running process you own (already exited? read its result "
+                         "with poll/log and report it instead)."}
+    handed.append({"session_id": session.id, "command": session.command, "note": note})
+    return {"status": "handed_off", "session_id": session.id, "command": session.command,
+            "note": "Your parent now owns this process and will receive its completion; you will not. Mention the handoff "
+                    "in your final answer."}
+
+
 def _handle_process(args, **kw):
     task_id = kw.get("task_id")
     action = args.get("action", "")
@@ -3345,6 +3149,10 @@ def _handle_process(args, **kw):
             },
             ensure_ascii=False,
         )
+    if action == "handoff":
+        if not session_id:
+            return tool_error("session_id is required for handoff")
+        return json.dumps(_handoff_process(session_id, args, kw.get("task_id")), ensure_ascii=False)
     elif action in {"poll", "log", "wait", "kill", "write", "submit", "close"}:
         if not session_id:
             return tool_error(f"session_id is required for {action}")
@@ -3366,11 +3174,19 @@ def _handle_process(args, **kw):
             return json.dumps(process_registry.submit_stdin(session_id, str(args.get("data", ""))), ensure_ascii=False)
         elif action == "close":
             return json.dumps(process_registry.close_stdin(session_id), ensure_ascii=False)
-    return tool_error(f"Unknown process action: {action}. Use: list, poll, log, wait, kill, write, submit, close")
+    return tool_error(f"Unknown process action: {action}. Use: list, poll, log, wait, kill, write, submit, close, handoff")
 
 
 registry.register(
     name="process",
+    toolset="terminal",
+    schema=PROCESS_SCHEMA,
+    handler=_handle_process,
+    emoji="⚙️",
+)
+
+registry.register(
+    name="process_manage",
     toolset="terminal",
     schema=PROCESS_SCHEMA,
     handler=_handle_process,

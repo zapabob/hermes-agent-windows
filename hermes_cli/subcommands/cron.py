@@ -132,6 +132,13 @@ def build_cron_parser(subparsers, *, cmd_cron: Callable) -> None:
             "monitors, incremental digests). First run is unchanged."
         ),
     )
+    cron_create.add_argument(
+        "--paused",
+        action="store_true",
+        default=False,
+        help="Create disabled in one write; resume to schedule, or explicitly run now.",
+    )
+    cron_create.add_argument("--paused-reason", help="Auditable reason; requires --paused.")
 
     # cron edit
     cron_edit = cron_subparsers.add_parser(

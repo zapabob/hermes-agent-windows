@@ -879,7 +879,7 @@ def _match_user_deny_rule(command: str) -> str | None:
              if isinstance(p, str) and p.strip()]
     if not globs:
         return None
-    for command_variant in _command_detection_variants(command):
+    for command_variant in _deny_command_variants(command):
         candidate = command_variant.lower().strip()
         for pattern in globs:
             if fnmatch.fnmatchcase(candidate, pattern.lower()):
@@ -1559,14 +1559,8 @@ _PARAM_DEFAULT_RE = re.compile(r"\$\{[^}:}\s]+:-(?P<default>[^}]*)\}")
 _SIMPLE_SHELL_LITERAL_RE = re.compile(r"^[A-Za-z0-9_./:@%+=,-]+$")
 _ENV_ASSIGNMENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=.*")
 _COMMAND_WRAPPER_WORDS = {
-    "sudo",
-    "env",
-    "exec",
-    "nohup",
-    "setsid",
-    "time",
-    "command",
-    "builtin",
+    "sudo", "env", "exec", "nohup", "setsid", "time", "command", "builtin",
+    "nice", "timeout", "stdbuf", "ionice", "chrt", "taskset", "chroot",
 }
 _SUDO_OPTIONS_WITH_ARG = {
     "-c", "--close-from",
@@ -1575,6 +1569,26 @@ _SUDO_OPTIONS_WITH_ARG = {
     "-p", "--prompt",
     "-u", "--user",
 }
+_COMMAND_WRAPPER_OPTIONS_WITH_ARG = {
+    "chroot": {"--groups", "--userspec"},
+    "sudo": _SUDO_OPTIONS_WITH_ARG,
+    "env": {"-C", "--chdir", "-S", "--split-string", "-u", "--unset"},
+    "exec": {"-a"},
+    "nice": {"-n", "--adjustment"},
+    "time": {"-f", "--format", "-o", "--output"},
+    "timeout": {"-k", "--kill-after", "-s", "--signal"},
+    "stdbuf": {"-e", "--error", "-i", "--input", "-o", "--output"},
+    "ionice": {"-c", "--class", "-n", "--classdata"},
+}
+_COMMAND_WRAPPER_NON_EXECUTING_OPTIONS = {
+    "command": {"-v", "-V"},
+    "chrt": {"-p", "--pid"},
+    "ionice": {"-p", "--pid", "--pgid", "--uid"},
+    "taskset": {"-p", "--pid"},
+}
+_COMMAND_WRAPPER_POSITIONAL_ARGS = {"chroot": 1, "chrt": 1, "taskset": 1, "timeout": 1}
+_SHELL_COMMAND_TRANSITIONS = {"if", "then", "else", "elif", "do", "while", "until", "!"}
+_SHELL_REDIRECTION_RE = re.compile(r"(?:[0-9]+)?(?:>>|<<|<>|>&|<&|>\||[<>])")
 
 _INTERPRETER_EXEC_FLAGS = {
     "python": {"-c"},
@@ -2115,53 +2129,57 @@ def _scan_backtick_end(command: str, start: int) -> int | None:
     return None
 
 
+def _is_shell_comment_start(command: str, index: int) -> bool:
+    return command[index] == "#" and (index == 0 or command[index - 1].isspace()
+                                      or command[index - 1] in ";&|()<>")
+
+
+def _scan_shell(text: str, start: int = 0, end: int | None = None, *, subst: str = "",
+                brace: bool = False, stop_unterminated: bool = False, naive_backtick: bool = False,
+                comments: bool = False):
+    """Yield ``(kind, i, j, quote)`` lexical steps over ``text[start:end]`` without expanding."""
+    n = len(text) if end is None else end
+    quote: str | None = None
+    i = start
+    while i < n:
+        ch = text[i]
+        kind, j = "char", i + 1
+        if comments and quote is None and _is_shell_comment_start(text, i):
+            kind, j = "comment", text.find("\n", i, n)
+            if j < 0:
+                j = n
+        elif quote != "'" and ch == "\\" and i + 1 < n:
+            kind, j = "esc", i + 2
+        elif ch == quote or (quote is None and ch in "'\""):
+            kind = "quote"
+        elif quote != "'" and ("q" if quote else "u") in subst and (
+            ch == "`" or text.startswith("$(", i) or (brace and not quote and text.startswith("${", i))
+        ):
+            if ch == "`":
+                close = text.find("`", i + 1) + 1 or None if naive_backtick else _scan_backtick_end(text, i)
+            elif text.startswith("$(", i):
+                close = _scan_dollar_paren_end(text, i)
+            else:
+                close = text.find("}", i + 2) + 1 or None
+            if close is not None:
+                kind, j = "subst", close
+            elif stop_unterminated:
+                yield ("subst", i, None, quote)
+                return
+        yield (kind, i, j, quote)
+        if kind == "quote":
+            quote = None if quote else ch
+        i = j
+
+
 def _read_shell_word(command: str, pos: int) -> tuple[int, int, str]:
     """Read one shell word without executing expansions."""
-    start = _skip_shell_whitespace(command, pos)
-    i = start
-    quote: str | None = None
-    while i < len(command):
-        ch = command[i]
-        if quote:
-            if ch == "\\" and quote == '"' and i + 1 < len(command):
-                i += 2
-                continue
-            if ch == quote:
-                quote = None
-            i += 1
-            continue
-        if ch in ("'", '"'):
-            quote = ch
-            i += 1
-            continue
-        if ch == "\\" and i + 1 < len(command):
-            i += 2
-            continue
-        if command.startswith("$(", i):
-            end = _scan_dollar_paren_end(command, i)
-            if end is None:
-                i += 2
-            else:
-                i = end
-            continue
-        if command.startswith("${", i):
-            end = command.find("}", i + 2)
-            if end == -1:
-                i += 2
-            else:
-                i = end + 1
-            continue
-        if ch == "`":
-            end = _scan_backtick_end(command, i)
-            if end is None:
-                i += 1
-            else:
-                i = end
-            continue
-        if ch.isspace() or ch in ";&|":
+    start = end = _skip_shell_whitespace(command, pos)
+    for kind, i, j, quote in _scan_shell(command, start, subst="u", brace=True):
+        if kind == "char" and quote is None and (command[i].isspace() or command[i] in ";&|<>()"):
             break
-        i += 1
-    return (start, i, command[start:i])
+        end = j
+    return (start, end, command[start:end])
 
 
 def _strip_optional_shell_quotes(word: str) -> str:
@@ -2287,75 +2305,32 @@ def _iter_shell_command_starts(command: str):
     starts = [0]
 
     def scan(start: int, end: int) -> None:
-        quote: str | None = None
-        i = start
-        while i < end:
-            ch = command[i]
-            if quote == "'":
-                if ch == "'":
-                    quote = None
-                i += 1
-                continue
-            if quote == '"':
-                if ch == "\\" and i + 1 < end:
-                    i += 2
-                    continue
-                if ch == '"':
-                    quote = None
-                    i += 1
-                    continue
-                if command.startswith("$(", i):
-                    nested_end = _scan_dollar_paren_end(command, i)
-                    starts.append(i + 2)
-                    scan(i + 2, nested_end - 1 if nested_end is not None else end)
-                    i = nested_end if nested_end is not None else end
-                    continue
-                if ch == "`":
-                    nested_end = _scan_backtick_end(command, i)
-                    starts.append(i + 1)
-                    scan(i + 1, nested_end - 1 if nested_end is not None else end)
-                    i = nested_end if nested_end is not None else end
-                    continue
-                i += 1
-                continue
-            if ch in ("'", '"'):
-                quote = ch
-                i += 1
-                continue
-            if ch == "\\" and i + 1 < end:
-                i += 2
-                continue
-            if command.startswith("$(", i):
-                nested_end = _scan_dollar_paren_end(command, i)
-                starts.append(i + 2)
-                scan(i + 2, nested_end - 1 if nested_end is not None else end)
-                i = nested_end if nested_end is not None else end
-                continue
-            if ch == "`":
-                nested_end = _scan_backtick_end(command, i)
-                starts.append(i + 1)
-                scan(i + 1, nested_end - 1 if nested_end is not None else end)
-                i = nested_end if nested_end is not None else end
-                continue
-            if ch in ("(", "{"):
-                starts.append(i + 1)
-            elif ch in ";\n":
-                starts.append(i + 1)
-            elif ch in "&|":
-                repeated = i + 1 < end and command[i + 1] == ch
-                starts.append(i + 2 if repeated else i + 1)
-                if repeated:
-                    i += 1
-            i += 1
+        skip = -1
+        for kind, i, j, quote in _scan_shell(command, start, end, subst="uq", stop_unterminated=True,
+                                            comments=True):
+            if kind == "subst":
+                # Record a nested $(...)/backtick command start and scan its body.
+                inner = i + (1 if command[i] == "`" else 2)
+                starts.append(inner)
+                scan(inner, j - 1 if j is not None else end)
+            elif kind == "char" and quote is None and command[i] in ";&|(\n{":
+                repeated = (command[i] in "&|" and i + 1 < end and command[i + 1] == command[i])
+                # Skip the redundant second start for a compound-operator sequence like ;& or ||
+                if i >= skip:
+                    skip = i + 1 + repeated
+                    starts.append(i + 1 + repeated)
 
     scan(0, len(command))
-
-    seen: set[int] = set()
+    seen = set()
     for start in starts:
         start = _skip_shell_whitespace(command, start)
-        if start < len(command) and start not in seen:
-            seen.add(start)
-            yield start
+        if start >= len(command) or start in seen or _is_shell_comment_start(command, start):
+            continue
+        seen.add(start)
+        yield start
+        _, end, word = _read_shell_word(command, start)
+        if word in _SHELL_COMMAND_TRANSITIONS:
+            starts.append(end)
 
 
 def _mark_command_starts(command: str) -> str:
@@ -2436,44 +2411,122 @@ def _mask_quoted_newlines(command: str) -> str:
 
 def _iter_shell_command_word_spans(command: str):
     """Yield command-position words that may be executable names."""
-    for command_start in _iter_shell_command_starts(command):
-        pos = command_start
-        prefix_words = 0
-        skip_wrapper_options = False
-        skip_next_wrapper_arg = False
-        while prefix_words < 12:
+    for pos in _iter_shell_command_starts(command):
+        wrapper, positionals = None, 0
+        options, skip_arg = True, False
+        while pos < len(command):
+            redirect = _SHELL_REDIRECTION_RE.match(command, _skip_shell_whitespace(command, pos))
+            if redirect:
+                _, pos, _ = _read_shell_word(command, redirect.end())
+                continue
             word_start, word_end, word = _read_shell_word(command, pos)
             if word_start == word_end:
                 break
+            pos = word_end
             deobfuscated = _deobfuscate_shell_word_for_detection(word)
-            lower_word = deobfuscated.lower()
-            if skip_next_wrapper_arg:
-                skip_next_wrapper_arg = False
-                pos = word_end
-                prefix_words += 1
+            name = os.path.basename(deobfuscated).lower()
+            if skip_arg:
+                skip_arg = False
                 continue
-            if skip_wrapper_options and lower_word.startswith("-"):
-                option_name = lower_word.split("=", 1)[0]
-                skip_next_wrapper_arg = (
-                    "=" not in lower_word
-                    and option_name in _SUDO_OPTIONS_WITH_ARG
-                )
-                pos = word_end
-                prefix_words += 1
+            if wrapper and options and deobfuscated == "--":
+                options = False
                 continue
-
+            if wrapper and options and deobfuscated.startswith("-"):
+                option = deobfuscated.split("=", 1)[0]
+                queries = _COMMAND_WRAPPER_NON_EXECUTING_OPTIONS.get(wrapper, set())
+                if option in queries or (wrapper == "command" and not option.startswith("--")
+                                         and set(option[1:]) & {"v", "V"}):
+                    break
+                skip_arg = "=" not in deobfuscated and option in _COMMAND_WRAPPER_OPTIONS_WITH_ARG.get(wrapper, set())
+                continue
+            if positionals:
+                positionals -= 1
+                continue
+            if _ENV_ASSIGNMENT_RE.fullmatch(word):
+                continue
             yield (word_start, word_end, word)
-            prefix_words += 1
+            if name not in _COMMAND_WRAPPER_WORDS:
+                break
+            wrapper, options = name, True
+            positionals = _COMMAND_WRAPPER_POSITIONAL_ARGS.get(name, 0)
 
-            if lower_word in _COMMAND_WRAPPER_WORDS:
-                skip_wrapper_options = lower_word in {"sudo", "env"}
-                pos = word_end
-                continue
-            if _ENV_ASSIGNMENT_RE.fullmatch(deobfuscated):
-                skip_wrapper_options = False
-                pos = word_end
-                continue
+
+def _shell_command_segment(command: str, start: int) -> str:
+    """Bound a candidate to its command, preserving quoted argument bytes."""
+    end = len(command)
+    for kind, i, _, quote in _scan_shell(command, start, subst="uq", brace=True, comments=True):
+        if kind == "comment" or (kind == "char" and quote is None and command[i] in ";&|\n)`"):
+            end = i
             break
+    return command[start:end].strip()
+
+
+def _shell_segment_tokens(segment: str, start: int) -> list[str] | None:
+    """Tokenize an already-bounded command segment."""
+    try:
+        lexer = shlex.shlex(segment[start:], posix=True, punctuation_chars="<>")
+        lexer.whitespace_split, lexer.commenters = True, ""
+        return list(lexer)
+    except ValueError:
+        return None
+
+
+def _env_split_payload(tokens: list[str]) -> str | None:
+    index = 1
+    while index < len(tokens):
+        token = tokens[index]
+        if token == "--" or not token.startswith("-"):
+            return None
+        option, equals, value = token.partition("=")
+        if option == "--split-string" or token.startswith("-S"):
+            payload = value if equals else token[2:] if token.startswith("-S") else ""
+            return payload or (tokens[index + 1] if index + 1 < len(tokens) else None)
+        index += 2 if not equals and option in _COMMAND_WRAPPER_OPTIONS_WITH_ARG.get("env", set()) else 1
+    return None
+
+
+def _deny_command_variants(command: str):
+    """Add executable projections without reparsing normalized argument data.
+
+    Whole-input matching is retained for existing globs. New projections parse
+    the original quote state, preserve path-specific rules, and fold only the
+    executable basename (never arbitrary argument paths).
+    """
+    yield from _command_detection_variants(command)
+    pending, seen = [command], set()
+    while pending:
+        source = pending.pop()
+        if source in seen:
+            continue
+        seen.add(source)
+        for start, end, word in _iter_shell_command_word_spans(source):
+            segment = _shell_command_segment(source, start)
+            executable = _deobfuscate_shell_word_for_detection(word)
+            tail = segment[end - start:]
+            # Collapse only unquoted inter-word whitespace; quoted prose is data.
+            parts = []
+            for kind, i, j, quote in _scan_shell(tail):
+                if kind == "char" and quote is None and tail[i].isspace():
+                    if not parts or parts[-1] != " ":
+                        parts.append(" ")
+                else:
+                    parts.append(tail[i:j])
+            tail = "".join(parts)
+            for name in dict.fromkeys((executable, os.path.basename(executable))):
+                candidate = name + tail
+                yield candidate
+                # Apply the existing text matching semantics only AFTER locating
+                # executable positions; never parse its rewritten quotes again.
+                yield _normalize_command_for_detection(candidate)
+            if os.path.basename(executable) == "env":
+                tokens = _shell_segment_tokens(segment, 0)
+                if tokens:
+                    payload = _env_split_payload(tokens)
+                    if payload:
+                        pending.append(payload)
+        for _, payload in _execution_flag_findings(source):
+            if payload:
+                pending.append(payload)
 
 
 def _command_detection_variants(command: str):

@@ -2830,6 +2830,14 @@ def _foreground_background_guidance(command: str) -> str | None:
     return None
 
 
+_SUBAGENT_NOTIFY_NOTE = (
+    "You are a subagent: this process's completion notice will NOT reach your parent, and the process is killed when "
+    "you finish. Before you finish, either wait for it (process_manage wait), kill it, or hand it to your parent with "
+    "process_manage(action='handoff', session_id=..., data='<purpose>') so the parent receives its completion. For CI "
+    "watchers prefer returning the fact (PR number, SHA) and letting the parent watch."
+)
+
+
 def _resolve_notification_flag_conflict(
     *,
     notify_on_complete: bool,
@@ -3636,6 +3644,10 @@ def terminal_tool(
                 if notify_on_complete and background:
                     proc_session.notify_on_complete = True
                     result_data["notify_on_complete"] = True
+                    from agent.delegation_context import is_delegated_child_context
+                    if is_delegated_child_context():
+                        result_data["notify_on_complete"] = False
+                        result_data["subagent_note"] = _SUBAGENT_NOTIFY_NOTE
 
                     # In gateway mode, auto-register a fast watcher so the
                     # gateway can detect completion and trigger a new agent

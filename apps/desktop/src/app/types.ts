@@ -66,6 +66,10 @@ export interface SessionCompressResponse {
     usage?: Partial<UsageStats>
   }
   messages?: SessionMessage[]
+  /** Set with `status: 'pending'` when the gateway's compute-host wait expired
+   *  while compression is still running; the transcript refreshes from the
+   *  pushed session.info / `compacted` status edge (#97948). */
+  message?: string
   removed?: number
   status?: string
   summary?: {
@@ -159,7 +163,7 @@ export type CommandDispatchResponse =
   | PrefillCommandDispatchResponse
 
 export type SidebarNavId =
-  'artifacts' | 'command-center' | 'cron' | 'messaging' | 'new-session' | 'security' | 'settings' | 'skills'
+  'artifacts' | 'command-center' | 'cron' | 'messaging' | 'new-session' | 'security' | 'session-import' | 'settings' | 'skills'
 
 export interface SidebarNavItem {
   /** Built-in view id, or a contributed row's namespaced contribution id. */

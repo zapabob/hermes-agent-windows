@@ -4,6 +4,7 @@ import { type ToolCallMessagePartProps, useAuiState } from '@assistant-ui/react'
 import { useStore } from '@nanostores/react'
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { capabilityScoped } from '@/api/client'
 import { useSessionView } from '@/app/chat/session-view'
 import { ToolFallback } from '@/components/assistant-ui/tool/fallback'
 import { WIDGET_SHELL_CLASS } from '@/components/chat/widget-shell'
@@ -12,11 +13,8 @@ import { Codicon } from '@/components/ui/codicon'
 import { Input } from '@/components/ui/input'
 import {
   addMcpServer,
-  authMcpServer,
-  cancelMcpOAuthFlow,
   getActionStatus,
   getMcpCatalog,
-  getMcpOAuthFlow,
   installMcpCatalogEntry,
   type McpCatalogEntry,
   removeMcpServer,
@@ -30,7 +28,7 @@ import { completeMcpDesktopOAuth, McpOAuthCancelled } from '@/lib/mcp-dashboard-
 import { directoryEntry } from '@/lib/mcp-directory'
 import { prettyName } from '@/lib/text'
 import { cn } from '@/lib/utils'
-import { gatewayForScope } from '@/store/gateway'
+import { $gateway } from '@/store/gateway'
 import { clearMcpSetupRequest, type McpSetupOutcome, sessionMcpSetupRequest } from '@/store/mcp-setup'
 import { notifyError } from '@/store/notifications'
 import { invalidateMcpSuggestionIndex } from '@/store/suggestion-providers/mcp'
@@ -171,6 +169,7 @@ function McpSetupPending({ args }: ToolCallMessagePartProps) {
   const sessionId = useStore(useSessionView().$runtimeId)
   const $request = useMemo(() => sessionMcpSetupRequest(sessionId), [sessionId])
   const request = useStore($request)
+  const gateway = useStore($gateway)
   const fromArgs = useMemo(() => readSetupArgs(args), [args])
 
   const server = fromArgs.server || request?.server || ''
@@ -198,8 +197,6 @@ function McpSetupPending({ args }: ToolCallMessagePartProps) {
       if (!request || sessionMcpSetupRequest(request.sessionId).get()?.requestId !== request.requestId) {
         return
       }
-
-      const gateway = request.scope ? gatewayForScope(request.scope) : null
 
       if (!gateway) {
         notifyError(new Error(copy.gatewayDisconnected), copy.sendFailed)
@@ -238,7 +235,7 @@ function McpSetupPending({ args }: ToolCallMessagePartProps) {
         notifyError(error, copy.sendFailed)
       }
     },
-    [copy.gatewayDisconnected, copy.reloadFailed, copy.sendFailed, request]
+    [copy.gatewayDisconnected, copy.reloadFailed, copy.sendFailed, gateway, request]
   )
 
   const decline = useCallback(() => {
@@ -251,16 +248,8 @@ function McpSetupPending({ args }: ToolCallMessagePartProps) {
 
   const approve = useCallback(async () => {
     cancelRef.current = false
+    const oauthScope = capabilityScoped()
     setWorking(true)
-
-    const scope = request?.scope
-
-    if (!scope) {
-      notifyError(new Error(copy.gatewayDisconnected), copy.sendFailed)
-      setWorking(false)
-
-      return
-    }
 
     // Poll-boundary abort for the background-install loop; the OAuth flows
     // carry their own cancel via completeMcpDesktopOAuth's `cancelled`.
@@ -274,7 +263,7 @@ function McpSetupPending({ args }: ToolCallMessagePartProps) {
 
     try {
       if (action === 'enable') {
-        await setMcpServerEnabled(server, true, scope)
+        await setMcpServerEnabled(server, true)
         triggerHaptic('submit')
         await respond({ server, status: 'enabled' })
 
@@ -284,11 +273,8 @@ function McpSetupPending({ args }: ToolCallMessagePartProps) {
       if (action === 'authorize') {
         const flow = await completeMcpDesktopOAuth({
           serverName: server,
-          start: name => authMcpServer(name, scope),
-          status: flowId => getMcpOAuthFlow(flowId, scope),
-          cancelled: () => cancelRef.current,
-          cancel: flowId => cancelMcpOAuthFlow(flowId, scope),
-          openExternal: url => window.hermesDesktop.openExternal(url)
+          profile: oauthScope,
+          cancelled: () => cancelRef.current
         })
 
         triggerHaptic('submit')
@@ -305,7 +291,7 @@ function McpSetupPending({ args }: ToolCallMessagePartProps) {
       let resolved = entry
 
       if (resolved === undefined) {
-        const catalog = await getMcpCatalog(scope)
+        const catalog = await getMcpCatalog()
         resolved = catalog.entries.find(candidate => candidate.name === server) ?? null
         setEntry(resolved)
       }
@@ -324,21 +310,18 @@ function McpSetupPending({ args }: ToolCallMessagePartProps) {
         // flow dies after the config write (cancel, closed OAuth tab), roll
         // the write back — decline means "no server", not an unauthorized
         // entry squatting in mcp_servers (authoritative-write rule).
-        await addMcpServer({ name: known.name, url: known.url }, scope)
+        await addMcpServer({ name: known.name, url: known.url }, oauthScope)
 
         let flow
 
         try {
           flow = await completeMcpDesktopOAuth({
             serverName: known.name,
-            start: name => authMcpServer(name, scope),
-            status: flowId => getMcpOAuthFlow(flowId, scope),
-            cancelled: () => cancelRef.current,
-            cancel: flowId => cancelMcpOAuthFlow(flowId, scope),
-            openExternal: url => window.hermesDesktop.openExternal(url)
+            profile: oauthScope,
+            cancelled: () => cancelRef.current
           })
         } catch (error) {
-          await removeMcpServer(known.name, scope).catch(() => {
+          await removeMcpServer(known.name, oauthScope).catch(() => {
             // Rollback is best-effort; the primary error/cancel wins.
           })
           throw error
@@ -359,13 +342,13 @@ function McpSetupPending({ args }: ToolCallMessagePartProps) {
         return
       }
 
-      const res = await installMcpCatalogEntry(server, envDraft, scope)
+      const res = await installMcpCatalogEntry(server, envDraft)
 
       // Git-backed entries clone in the background — poll to completion so a
       // non-zero exit surfaces as a real failure instead of a false success.
       if (res.background && res.action) {
         for (;;) {
-          const status = throwIfCancelled(await getActionStatus(res.action, 1, scope))
+          const status = throwIfCancelled(await getActionStatus(res.action, 1))
 
           if (!status.running) {
             if (status.exit_code !== 0) {
@@ -397,7 +380,7 @@ function McpSetupPending({ args }: ToolCallMessagePartProps) {
     } finally {
       setWorking(false)
     }
-  }, [action, copy, entry, envDraft, request?.scope, respond, server])
+  }, [action, copy, entry, envDraft, respond, server])
 
   const title =
     action === 'enable'

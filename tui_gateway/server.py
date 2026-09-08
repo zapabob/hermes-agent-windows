@@ -231,6 +231,9 @@ _DETAIL_MODES = frozenset({"hidden", "collapsed", "expanded"})
 # response writes are safe.
 _LONG_HANDLERS = frozenset(
     {
+        "session.foreign.list",
+        "session.foreign.preview",
+        "session.foreign.import",
         # Billing/usage reads each do a blocking portal HTTP fetch (state + usage
         # is two serial round-trips); keep them off the main stdin loop so a slow
         # portal can't stall approval.respond / session.interrupt / other RPCs.
@@ -7609,12 +7612,11 @@ def _on_tool_progress(
     _args: dict | None = None,
     **_kwargs,
 ):
-    if not _tool_progress_enabled(sid):
-        return
     if event_type == "tool.started" and name:
-        # `_on_tool_start` already emits the authoritative `tool.start` with
-        # the stable tool id and args. Emitting another id-less progress row
-        # here makes the desktop live view diverge from hydrated history.
+        return
+    # Subagent lifecycle is application state (Desktop status stack, TUI spawn tree), not
+    # tool-progress chrome: it must survive display.tool_progress=off like todo.updated does.
+    if not event_type.startswith("subagent.") and not _tool_progress_enabled(sid):
         return
     if event_type == "tool.output_risk" and name:
         metadata = _kwargs.get("risk_metadata")
@@ -11613,6 +11615,39 @@ def _maybe_fire_tui_loop_tick(sid: str, session: dict) -> None:
             pass
 
 
+def _maybe_fire_tui_heartbeat_tick(sid: str, session: dict) -> None:
+    """Fire a due /heartbeat prompt for an idle TUI/Desktop/dashboard session (#102056, #103044)."""
+    try:
+        from hermes_cli.heartbeat import HeartbeatManager
+    except Exception:
+        return
+    sid_key = session.get("session_key") or ""
+    if not sid_key:
+        return
+    try:
+        mgr = HeartbeatManager(session_id=sid_key)
+        if not mgr.is_active() or not mgr.state.is_due() or not _notif_claim_turn(session):
+            return
+        prompt = mgr.due_prompt()
+        if not prompt:
+            _notif_release_turn(session)
+            return
+        started = False
+        try:
+            _emit("status.update", sid, {"kind": "heartbeat", "text": f"♥ heartbeat #{mgr.state.fire_count} firing…"})
+            started = bool(_run_prompt_submit(f"__heartbeat__{int(time.time() * 1000)}", sid, session, prompt))
+        except Exception as exc:
+            print(f"[tui_gateway] heartbeat dispatch failed: {type(exc).__name__}: {exc}", file=sys.stderr)
+        if not started:
+            _notif_release_turn(session)
+            try:
+                mgr.abandon_fire()
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+
 def _format_kanban_event_text(sub: dict, task, ev, board_slug: str) -> Optional[str]:
     """Single-line notification text for one kanban event.
 
@@ -11768,6 +11803,174 @@ def _collect_kanban_notifications(session: dict) -> list:
     return texts
 
 
+def _notif_poll_kanban(sid: str, session: dict) -> None:
+    """One kanban poll: emit new texts, buffer them, and run the buffered batch as a turn if idle."""
+    try:
+        texts = _collect_kanban_notifications(session)
+    except Exception as _kb_exc:
+        print(
+            f"[tui_gateway] kanban notification poll failed: "
+            f"{type(_kb_exc).__name__}: {_kb_exc}",
+            file=sys.stderr,
+        )
+        texts = []
+    if texts:
+        for _kb_text in texts:
+            _emit("status.update", sid, {"kind": "process", "text": _kb_text})
+        session.setdefault("_kanban_pending", []).extend(texts)
+    _pending = session.get("_kanban_pending") or []
+    if not _pending or not _notif_claim_turn(session):
+        return
+    with session["history_lock"]:
+        batch = list(session.get("_kanban_pending") or [])
+        session["_kanban_pending"] = []
+    if batch:
+        rid = f"__notif__{int(time.time() * 1000)}"
+        try:
+            _emit("message.start", sid)
+            _run_prompt_submit(rid, sid, session, "\n".join(batch))
+        except Exception as exc:
+            print(
+                f"[tui_gateway] kanban notification dispatch failed: "
+                f"{type(exc).__name__}: {exc}",
+                file=sys.stderr,
+            )
+            with session["history_lock"]:
+                session["running"] = False
+
+
+def _notif_release_turn(session: dict) -> None:
+    with session["history_lock"]:
+        session["running"] = False
+
+
+def _notif_claim_turn(session: dict) -> bool:
+    """Claim the idle session (running=True) under history_lock; False if a turn is live."""
+    with session["history_lock"]:
+        claimed = not session.get("running")
+        session["running"] = True
+        return claimed
+
+
+def _notif_submit(rid: str, sid: str, session: dict, text: str, what: str, **kwargs) -> None:
+    """message.start + _run_prompt_submit for a claimed (running=True) turn; releases on failure."""
+    try:
+        _emit("message.start", sid)
+        _run_prompt_submit(rid, sid, session, text, **kwargs)
+    except Exception as exc:
+        print(f"[tui_gateway] {what}: {type(exc).__name__}: {exc}", file=sys.stderr)
+        _notif_release_turn(session)
+        raise
+
+
+def _notif_dispatch_event(sid: str, session: dict, evt: dict, text: str) -> None:
+    """Run the claimed (running=True) agent turn for one notification event."""
+    from tools.async_delegation import claim_event_delivery, complete_event_delivery, release_event_delivery
+    if (claim := claim_event_delivery(evt, "tui-poller")) is None:
+        return
+    kwargs = ({"display_kind": "async_delegation_complete", "display_metadata": _async_delegation_display_metadata(evt)}
+              if evt.get("type") == "async_delegation" else {})
+    try:
+        _notif_submit(f"__notif__{int(time.time() * 1000)}", sid, session, text, "notification poller dispatch failed", **kwargs)
+    except Exception:
+        release_event_delivery(evt, claim)
+        return
+    complete_event_delivery(evt, claim)
+
+
+def _notif_handle_event(sid, session, evt, emitted, registry, fmt, deferred, completions=None, *, owned=False) -> bool:
+    """Route one dequeued event: foreign (another live session owns it) -> requeued, or onto ``deferred`` during the
+    shutdown drain; unowned (addressed but unprovable -- never adopt an orphan) -> dropped, except delegation payloads
+    deferred for a resume; ours (or ownerless legacy, kept process-global) -> status.update once, then an agent turn if
+    idle. False = the drain must stop (session busy). ``owned`` skips the ownership gates for events a caller already
+    drained through ``_session_owns_notification_event`` (the post-turn safety net), so lineage resolves once."""
+    queue = registry.completion_queue
+    evt_type, is_delegation = evt.get("type", "completion"), evt.get("type") == "async_delegation"
+    if not owned and _notification_event_belongs_elsewhere(sid, session, evt):
+        if deferred is not None:
+            deferred.append(evt)
+        else:
+            queue.put(evt)
+            time.sleep(0.1)
+        return True
+    if not owned and _notification_event_requires_owner(evt) and not _session_owns_notification_event(sid, session, evt):
+        origin, key = str(evt.get("origin_ui_session_id") or ""), str(evt.get("session_key") or "")
+        if deferred is None:
+            (logger.warning if is_delegation else logger.debug)(
+                "Dropping unowned %s notification (origin=%r key=%r) instead of delivering to session %s",
+                evt_type, origin, key, sid)
+        elif is_delegation:
+            deferred.append(evt)
+        else:
+            logger.debug("Dropping unowned %s notification during shutdown drain (origin=%r key=%r)", evt_type, origin, key)
+        return True
+    if evt_type == "completion" and registry.is_completion_consumed(evt.get("session_id", "")):
+        return True
+    text = fmt(evt)
+    if not text:
+        return True
+    dedup_key = _notification_event_dedup_key(evt)
+    if dedup_key not in emitted:
+        from tools.process_registry_notifications import async_delegation_display_text
+        display_text = async_delegation_display_text(evt) if is_delegation else text
+        _emit("status.update", sid, {"kind": "process", "text": display_text})
+        emitted.add(dedup_key)
+    if evt_type == "completion" and completions is not None:
+        completions.append((evt, text))
+        return True
+    if not _notif_claim_turn(session):
+        queue.put(evt)
+        if deferred is not None:
+            return False
+        time.sleep(0.25)
+        return True
+    _notif_dispatch_event(sid, session, evt, text)
+    return True
+
+
+def _notif_dispatch_completions(sid, session, notifications, registry, deferred):
+    from tools.process_registry_notifications import ProcessNotificationBatch
+    from tools.async_delegation import claim_event_delivery, complete_event_delivery, release_event_delivery
+
+    if not notifications:
+        return
+    if not _notif_claim_turn(session):
+        for event, _text in notifications:
+            (deferred.append if deferred is not None else registry.completion_queue.put)(event)
+        if deferred is None:
+            time.sleep(0.25)
+        return
+    claimed = [(event, text, claim) for event, text in notifications
+               if (claim := claim_event_delivery(event, "tui-completion-batch")) is not None]
+    text = ProcessNotificationBatch(tuple((event, text) for event, text, _claim in claimed)).render(registry)
+    if text is None:
+        _notif_release_turn(session)
+    try:
+        if text is not None:
+            _notif_submit(f"__notif__{int(time.time() * 1000)}", sid, session, text,
+                          "completion batch dispatch failed")
+    except Exception:
+        for event, _text, claim in claimed:
+            release_event_delivery(event, claim)
+        return
+    for event, _text, claim in claimed:
+        complete_event_delivery(event, claim)
+
+
+def _notif_handle_ready(sid, session, events, emitted, registry, fmt, deferred, *, owned=False):
+    """One ready snapshot: ownership and UI emission per event, one turn per completion run."""
+    completions = []
+    for index, event in enumerate(events):
+        if event.get("type", "completion") != "completion":
+            _notif_dispatch_completions(sid, session, completions, registry, deferred)
+            completions = []
+        if not _notif_handle_event(sid, session, event, emitted, registry, fmt, deferred, completions, owned=owned):
+            for remaining in events[index + 1:]:
+                (deferred.append if deferred is not None else registry.completion_queue.put)(remaining)
+            break
+    _notif_dispatch_completions(sid, session, completions, registry, deferred)
+
+
 def _notification_poller_loop(
     stop_event: threading.Event, sid: str, session: dict
 ) -> None:
@@ -11786,19 +11989,20 @@ def _notification_poller_loop(
     same way (status.update + agent turn) — the delivery path
     tools/kanban_tools.py documents for platform="tui" rows (issue #59890).
     """
-    from tools.process_registry import process_registry, format_process_notification
+    from tools.process_registry import process_registry
+    from tools.process_registry_notifications import format_process_notification
 
-    _emitted = set()  # dedup re-queued events so same completion isn't emitted 50 times while session is busy
-    _last_kanban_poll = 0.0
-    _last_loop_poll = 0.0
+    queue = process_registry.completion_queue
+    emitted = session.setdefault("_notification_emitted", set())
+    handle = lambda events, deferred: _notif_handle_ready(
+        sid, session, events, emitted, process_registry, format_process_notification, deferred)
+    last_kanban_poll = 0.0
+    last_loop_poll = 0.0
     while not stop_event.is_set() and not session.get("_finalized"):
-        _now = time.monotonic()
+        now = time.monotonic()
         # ── /loop wakeup driver ──────────────────────────────────────
-        # Fire a due /loop tick for THIS session while it's idle. Same
-        # claim-under-lock pattern as the kanban dispatch below. Active
-        # non-parked /goal owns the idle boundary and defers the tick.
-        if _now - _last_loop_poll >= _LOOP_POLL_SECONDS:
-            _last_loop_poll = _now
+        if now - last_loop_poll >= _LOOP_POLL_SECONDS:
+            last_loop_poll = now
             try:
                 _maybe_fire_tui_loop_tick(sid, session)
             except Exception as _loop_exc:
@@ -11807,228 +12011,37 @@ def _notification_poller_loop(
                     f"{type(_loop_exc).__name__}: {_loop_exc}",
                     file=sys.stderr,
                 )
-        if _now - _last_kanban_poll >= _KANBAN_POLL_SECONDS:
-            _last_kanban_poll = _now
-            try:
-                _kanban_texts = _collect_kanban_notifications(session)
-            except Exception as _kb_exc:
-                print(
-                    f"[tui_gateway] kanban notification poll failed: "
-                    f"{type(_kb_exc).__name__}: {_kb_exc}",
-                    file=sys.stderr,
-                )
-                _kanban_texts = []
-            if _kanban_texts:
-                for _kb_text in _kanban_texts:
-                    _emit("status.update", sid, {"kind": "process", "text": _kb_text})
-                # Events are cursor-claimed (never re-queued), so buffer them
-                # until the session is idle instead of dropping the agent turn.
-                session.setdefault("_kanban_pending", []).extend(_kanban_texts)
-            _pending = session.get("_kanban_pending") or []
-            if _pending:
-                _batch: list = []
-                with session["history_lock"]:
-                    if not session.get("running"):
-                        session["running"] = True
-                        _batch = list(_pending)
-                        session["_kanban_pending"] = []
-                if _batch:
-                    rid = f"__notif__{int(time.time() * 1000)}"
-                    try:
-                        _emit("message.start", sid)
-                        _run_prompt_submit(rid, sid, session, "\n".join(_batch))
-                    except Exception as exc:
-                        print(
-                            f"[tui_gateway] kanban notification dispatch failed: "
-                            f"{type(exc).__name__}: {exc}",
-                            file=sys.stderr,
-                        )
-                        with session["history_lock"]:
-                            session["running"] = False
+        if now - last_kanban_poll >= _KANBAN_POLL_SECONDS:
+            last_kanban_poll = now
+            _notif_poll_kanban(sid, session)
         try:
-            evt = process_registry.completion_queue.get(timeout=0.5)
+            _maybe_fire_tui_heartbeat_tick(sid, session)
+        except Exception:
+            pass
+        try:
+            evt = queue.get(timeout=0.5)
         except Exception:
             continue
+        ready = [evt]
+        for _ in range(queue.qsize()):
+            try:
+                ready.append(queue.get_nowait())
+            except Exception:
+                break
+        handle(ready, None)
 
-        # Multiple desktop sessions share this one process-wide queue. Only
-        # consume events that belong to *this* session — otherwise a background
-        # process started in session A would surface its completion in whichever
-        # session's poller happened to wake first (Ben's "reported in a
-        # different session" bug). Leave foreign events for their owner.
-        if _notification_event_belongs_elsewhere(sid, session, evt):
-            process_registry.completion_queue.put(evt)
-            time.sleep(0.1)
-            continue
-
-        # What reaches here is not owned by another LIVE session. Addressed
-        # events still require positive proof before injection: exact UI origin,
-        # direct durable key, or compression lineage. If none proves ownership,
-        # the event is orphaned and must not be adopted by this chat. Truly
-        # ownerless ordinary notifications retain legacy global delivery.
-        requires_owner = _notification_event_requires_owner(evt)
-        if requires_owner and not _session_owns_notification_event(sid, session, evt):
-            log = (
-                logger.warning
-                if evt.get("type") == "async_delegation"
-                else logger.debug
-            )
-            log(
-                "Dropping unowned %s notification (origin=%r key=%r) instead "
-                "of delivering to session %s",
-                evt.get("type", "completion"),
-                str(evt.get("origin_ui_session_id") or ""),
-                str(evt.get("session_key") or ""),
-                sid,
-            )
-            continue
-
-        _evt_sid = evt.get("session_id", "")
-        if evt.get("type") == "completion" and process_registry.is_completion_consumed(
-            _evt_sid
-        ):
-            continue
-
-        text = format_process_notification(evt)
-        if not text:
-            continue
-
-        # Only emit the same notification identity to TUI once — re-queued
-        # completions get re-emitted every 0.5s otherwise when session is busy,
-        # while distinct watch_match events from the same process must remain
-        # visible independently.
-        _dedup_key = _notification_event_dedup_key(evt)
-        if _dedup_key not in _emitted:
-            _emit("status.update", sid, {"kind": "process", "text": text})
-            _emitted.add(_dedup_key)
-
-        _requeued = False
-        with session["history_lock"]:
-            if session.get("running"):
-                process_registry.completion_queue.put(evt)
-                _requeued = True
-            else:
-                session["running"] = True
-        if _requeued:
-            # Back off before re-polling: the re-queued event keeps the queue
-            # non-empty, so without a sleep this loop spins at full speed
-            # (100% CPU, GIL churn) for as long as the session stays busy.
-            time.sleep(0.25)
-            continue
-
-        rid = f"__notif__{int(time.time() * 1000)}"
-        from tools.async_delegation import (
-            claim_event_delivery, complete_event_delivery, release_event_delivery,
-        )
-        _claim = claim_event_delivery(evt, "tui-poller")
-        if _claim is None:
-            continue
-        try:
-            _emit("message.start", sid)
-            if evt.get("type") == "async_delegation":
-                _run_prompt_submit(
-                    rid,
-                    sid,
-                    session,
-                    text,
-                    display_kind="async_delegation_complete",
-                    display_metadata=_async_delegation_display_metadata(evt),
-                )
-            else:
-                _run_prompt_submit(rid, sid, session, text)
-            complete_event_delivery(evt, _claim)
-        except Exception as exc:
-            release_event_delivery(evt, _claim)
-            print(
-                f"[tui_gateway] notification poller dispatch failed: "
-                f"{type(exc).__name__}: {exc}",
-                file=sys.stderr,
-            )
-            with session["history_lock"]:
-                session["running"] = False
-
-    # Drain any remaining events after stop signal (process all pending
-    # before exiting so nothing is lost on shutdown). Events owned by other
-    # live sessions are set aside and re-queued so their poller still sees them.
-    # Orphaned events (owner gone) are dropped — same guard as the main loop.
+    # Drain remaining events after the stop signal so nothing is lost on shutdown; foreign and orphaned-delegation
+    # events are handed back to the shared queue afterwards.
     deferred: list = []
-    while not process_registry.completion_queue.empty():
+    ready = []
+    for _ in range(queue.qsize()):
         try:
-            evt = process_registry.completion_queue.get_nowait()
+            ready.append(queue.get_nowait())
         except Exception:
             break
-        if _notification_event_belongs_elsewhere(sid, session, evt):
-            deferred.append(evt)
-            continue
-        # Same positive-proof rule as the live loop. Preserve the existing
-        # shutdown behavior for orphaned delegation payloads by deferring them
-        # for a later resume; ordinary addressed orphans are dropped.
-        requires_owner = _notification_event_requires_owner(evt)
-        if requires_owner and not _session_owns_notification_event(sid, session, evt):
-            if evt.get("type") == "async_delegation":
-                deferred.append(evt)
-            else:
-                logger.debug(
-                    "Dropping unowned %s notification during shutdown drain "
-                    "(origin=%r key=%r)",
-                    evt.get("type", "completion"),
-                    str(evt.get("origin_ui_session_id") or ""),
-                    str(evt.get("session_key") or ""),
-                )
-            continue
-        _evt_sid = evt.get("session_id", "")
-        if evt.get("type") == "completion" and process_registry.is_completion_consumed(
-            _evt_sid
-        ):
-            continue
-        text = format_process_notification(evt)
-        if not text:
-            continue
-
-        _dedup_key = _notification_event_dedup_key(evt)
-        if _dedup_key not in _emitted:
-            _emit("status.update", sid, {"kind": "process", "text": text})
-            _emitted.add(_dedup_key)
-
-        with session["history_lock"]:
-            if session.get("running"):
-                process_registry.completion_queue.put(evt)
-                break
-            session["running"] = True
-
-        rid = f"__notif__{int(time.time() * 1000)}"
-        from tools.async_delegation import (
-            claim_event_delivery, complete_event_delivery, release_event_delivery,
-        )
-        _claim = claim_event_delivery(evt, "tui-poller")
-        if _claim is None:
-            continue
-        try:
-            _emit("message.start", sid)
-            if evt.get("type") == "async_delegation":
-                _run_prompt_submit(
-                    rid,
-                    sid,
-                    session,
-                    text,
-                    display_kind="async_delegation_complete",
-                    display_metadata=_async_delegation_display_metadata(evt),
-                )
-            else:
-                _run_prompt_submit(rid, sid, session, text)
-            complete_event_delivery(evt, _claim)
-        except Exception as exc:
-            release_event_delivery(evt, _claim)
-            print(
-                f"[tui_gateway] notification poller dispatch failed: "
-                f"{type(exc).__name__}: {exc}",
-                file=sys.stderr,
-            )
-            with session["history_lock"]:
-                session["running"] = False
-
-    # Hand any other sessions' events back to the shared queue.
+    handle(ready, deferred)
     for evt in deferred:
-        process_registry.completion_queue.put(evt)
+        queue.put(evt)
 
 
 def _async_delegation_display_metadata(evt: dict) -> dict:
@@ -12376,6 +12389,65 @@ def _start_usage_ticker(
     thread = _RealThread(target=_loop, daemon=True)
     thread.start()
     return stop, thread
+
+
+def _run_post_turn_followups(
+    rid: str, sid: str, session: dict, result: dict | None, goal_followup: str | None
+) -> None:
+    if not isinstance(result, dict):
+        result = {}
+    _leftover_steer = result.get("pending_steer")
+    if isinstance(_leftover_steer, str) and _leftover_steer.strip():
+        with session["history_lock"]:
+            _enqueue_prompt(session, _leftover_steer, session.get("transport"))
+    if _drain_queued_prompt(rid, sid, session):
+        return
+
+    if goal_followup:
+        with session["history_lock"]:
+            if session.get("running"):
+                return
+            session["running"] = True
+        try:
+            _emit("message.start", sid)
+            _run_prompt_submit(rid, sid, session, goal_followup)
+        except Exception as _cont_exc:
+            print(
+                f"[tui_gateway] goal continuation dispatch failed: "
+                f"{type(_cont_exc).__name__}: {_cont_exc}",
+                file=sys.stderr,
+            )
+            with session["history_lock"]:
+                session["running"] = False
+
+    try:
+        from tools.process_registry import process_registry
+        from tools.process_registry_notifications import format_process_notification
+
+        drained = process_registry.drain_notifications(
+            session_key=session.get("session_key", ""),
+            owns_event=lambda e: _session_owns_notification_event(sid, session, e),
+            skip_poll_observed=False,
+        )
+        deferred = []
+        _notif_handle_ready(
+            sid,
+            session,
+            [event for event, _text in drained],
+            session.setdefault("_notification_emitted", set()),
+            process_registry,
+            format_process_notification,
+            deferred,
+            owned=True,
+        )
+        for event in deferred:
+            process_registry.completion_queue.put(event)
+    except Exception as _drain_exc:
+        print(
+            f"[tui_gateway] completion queue drain failed: "
+            f"{type(_drain_exc).__name__}: {_drain_exc}",
+            file=sys.stderr,
+        )
 
 
 def _run_prompt_submit(
@@ -13267,100 +13339,7 @@ def _run_prompt_submit(
             session.pop("_auto_continue_scheduled", None)
             _emit_settled_session_info(sid, session, agent)
 
-        # A user prompt that arrived mid-turn (interrupt + queue) wins over
-        # every auto follow-up below — drain it first and skip them this cycle;
-        # the goal judge / notifications re-evaluate at the end of that turn.
-        # Leftover /steer: the steer arrived after the last tool batch (e.g.
-        # during the final API call), so the agent couldn't inject it and
-        # returned it in result["pending_steer"]. Requeue it as the next turn
-        # so it isn't silently dropped — same rule as cli.py and gateway/run.py.
-        # A real queued prompt still wins: the merge in _enqueue_prompt keeps
-        # both texts.
-        _leftover_steer = result.get("pending_steer") if isinstance(result, dict) else None
-        if isinstance(_leftover_steer, str) and _leftover_steer.strip():
-            with session["history_lock"]:
-                _enqueue_prompt(session, _leftover_steer, session.get("transport"))
-        if _drain_queued_prompt(rid, sid, session):
-            return
-
-        # Chain a goal-continuation turn if the judge said so. We do
-        # this AFTER the finally releases session["running"], so the
-        # nested _run_prompt_submit doesn't deadlock on the busy
-        # guard. A real user prompt that races us wins because
-        # prompt.submit sets running=True under the history_lock and
-        # we check that guard before re-firing.
-        if goal_followup:
-            with session["history_lock"]:
-                if session.get("running"):
-                    # User already sent something — their turn wins,
-                    # the judge will re-run on the next turn anyway.
-                    return
-                session["running"] = True
-            try:
-                _emit("message.start", sid)
-                _run_prompt_submit(rid, sid, session, goal_followup)
-            except Exception as _cont_exc:
-                print(
-                    f"[tui_gateway] goal continuation dispatch failed: "
-                    f"{type(_cont_exc).__name__}: {_cont_exc}",
-                    file=sys.stderr,
-                )
-                with session["history_lock"]:
-                    session["running"] = False
-
-        # Drain completion notifications that arrived during this turn.
-        # The background poller handles between-turn delivery; this is
-        # the safety net for events that arrived mid-turn.
-        #
-        # Ownership filter (#42674, #35652): a turn finishing in session B
-        # must not consume an event that belongs to session A. The registry
-        # requeues every addressed event this session cannot positively claim;
-        # the poller then delivers it to a live owner or drops an orphan.
-        try:
-            from tools.process_registry import process_registry
-
-            # Positive-proof ownership (compression-chain aware) — the same
-            # fail-closed gate the poller uses, so the post-turn drain can't
-            # adopt another session's addressed notification while a
-            # post-compression session still claims its own pre-compression
-            # dispatches (#55578).
-            drained = process_registry.drain_notifications(
-                session_key=session.get("session_key", ""),
-                owns_event=lambda e: _session_owns_notification_event(sid, session, e),
-                skip_poll_observed=False,
-            )
-            for index, (_evt, synth) in enumerate(drained):
-                with session["history_lock"]:
-                    if session.get("running"):
-                        for pending_evt, _pending_synth in drained[index:]:
-                            process_registry.completion_queue.put(pending_evt)
-                        break
-                    session["running"] = True
-                from tools.async_delegation import (
-                    claim_event_delivery, complete_event_delivery, release_event_delivery,
-                )
-                _claim = claim_event_delivery(_evt, "tui-post-turn")
-                if _claim is None:
-                    continue
-                try:
-                    _emit("message.start", sid)
-                    _run_prompt_submit(rid, sid, session, synth)
-                    complete_event_delivery(_evt, _claim)
-                except Exception as _n_exc:
-                    release_event_delivery(_evt, _claim)
-                    print(
-                        f"[tui_gateway] completion notification dispatch failed: "
-                        f"{type(_n_exc).__name__}: {_n_exc}",
-                        file=sys.stderr,
-                    )
-                    with session["history_lock"]:
-                        session["running"] = False
-        except Exception as _drain_exc:
-            print(
-                f"[tui_gateway] completion queue drain failed: "
-                f"{type(_drain_exc).__name__}: {_drain_exc}",
-                file=sys.stderr,
-            )
+        _run_post_turn_followups(rid, sid, session, result, goal_followup)
 
     run_thread = threading.Thread(target=run, daemon=True)
     with _sessions_lock:
@@ -17464,6 +17443,7 @@ from . import (  # noqa: E402
     methods_session as _methods_session,
     methods_tools as _methods_tools,
     methods_vault as _methods_vault,
+    methods_session_foreign as _methods_session_foreign,
 )
 
 for _m in (
@@ -17477,6 +17457,7 @@ for _m in (
     _methods_images,
     _methods_bot_relay,
     _methods_vault,
+    _methods_session_foreign,
 ):
     _m.register(sys.modules[__name__])
 del _m

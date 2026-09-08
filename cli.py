@@ -62,6 +62,7 @@ except ImportError:  # pragma: no cover - mixed/partial checkout shim
 from hermes_cli.cli_agent_setup_mixin import CLIAgentSetupMixin
 from hermes_cli.cli_commands_mixin import CLICommandsMixin
 from hermes_cli.cli_billing_mixin import CLIBillingMixin
+from hermes_cli.cli_process_notifications import CLIProcessNotificationsMixin
 from agent.interrupt_compat import request_hard_interrupt
 
 # prompt_toolkit for fixed input area TUI
@@ -5311,7 +5312,20 @@ class _VoiceInputMessage:
         return self.text
 
 
-class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
+class _SeededQueryMessage:
+    """Sentinel for a ``-q`` prompt seeded into an interactive session; treated LITERALLY (no slash/!/file-drop)."""
+
+    __slots__ = ("text", "images")
+
+    def __init__(self, text: str, images=None):
+        self.text = text or ""
+        self.images = list(images or [])
+
+    def __str__(self) -> str:
+        return self.text
+
+
+class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProcessNotificationsMixin):
     """
     Interactive CLI for the Hermes Agent.
 
@@ -13585,55 +13599,6 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
 
 
 
-    def _owns_process_notification(self, event: dict) -> bool:
-        """Return whether this CLI session provably owns a delegation event.
-
-        Delegations dispatched before context compression retain the original
-        session key, so resolve that key to its continuation before comparing.
-        Missing or foreign keys fail closed and remain queued for their owner.
-        """
-        event_key = str(event.get("session_key") or "")
-        current_key = str(getattr(self, "session_id", "") or "")
-        if not event_key or not current_key:
-            return False
-        if event_key == current_key:
-            return True
-        try:
-            session_db = getattr(self, "_session_db", None)
-            resolved_key = (
-                session_db.resolve_resume_session_id(event_key)
-                if session_db is not None
-                else event_key
-            ) or event_key
-        except Exception:
-            resolved_key = event_key
-        return str(resolved_key) == current_key
-
-    def _drain_process_notifications(self, consumer: str) -> None:
-        """Queue background notifications owned by this visible CLI session.
-
-        ``process_registry`` restores durable delegation completions into every
-        process using the same Hermes profile.  Always pass this CLI's stable
-        session identity when draining so another window cannot claim and mark
-        delivered a completion that belongs to this one.
-        """
-        from tools.process_registry import process_registry
-        from tools.async_delegation import (
-            claim_event_delivery,
-            complete_event_delivery,
-        )
-
-        session_key = getattr(self, "session_id", "") or ""
-        for event, synthetic_message in process_registry.drain_notifications(
-            session_key=session_key,
-            owns_event=self._owns_process_notification,
-        ):
-            claim = claim_event_delivery(event, consumer)
-            if claim is None:
-                continue
-            self._pending_input.put(synthetic_message)
-            complete_event_delivery(event, claim)
-
     def _drain_interrupt_queue_to_pending_input(self) -> None:
         """Move stray messages from ``_interrupt_queue`` into ``_pending_input``.
 
@@ -18402,6 +18367,109 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             if item is not None
         ]
 
+    def _tui_process_one_input(self, user_input):
+        """Route one submitted input: file drop, /resume pick, ! shell, slash command, or a chat turn."""
+        from tools.process_registry_notifications import SubagentNotification
+        notification_preview = user_input if isinstance(user_input, SubagentNotification) else None
+        user_input, is_voice_input, is_seeded_query = self._tui_unwrap_input(user_input)
+        if not user_input:
+            return
+        self._status_bar_suppressed_after_resize = False  # input ends post-resize suppression
+
+        submit_images = []
+        if isinstance(user_input, tuple):
+            user_input, submit_images = user_input
+
+        if isinstance(user_input, str):
+            user_input = _strip_leaked_bracketed_paste_wrappers(user_input)
+            user_input, _had_mouse_reports = _strip_leaked_terminal_responses_with_meta(user_input)
+            if _had_mouse_reports and hasattr(self, "_recover_terminal_input_modes"):
+                self._recover_terminal_input_modes(reason="mouse reports leaked into submitted input")
+
+        # A typed bare stop phrase ends an active voice chat (transcripts are checked earlier).
+        if not is_voice_input and hasattr(self, "_typed_voice_stop") and self._typed_voice_stop(user_input):
+            return
+
+        # File drops are detected before any dispatch; seeded -q prompts are literal text.
+        _file_drop = _detect_file_drop(user_input) if isinstance(user_input, str) and not is_seeded_query else None
+        if _file_drop:
+            _drop_path = _file_drop["path"]
+            _remainder = _file_drop["remainder"]
+            if _file_drop["is_image"]:
+                submit_images.append(_drop_path)
+                user_input = _remainder or f"[User attached image: {_drop_path.name}]"
+                _cprint(f"  📎 Auto-attached image: {_drop_path.name}")
+            else:
+                _cprint(f"  📄 Detected file: {_drop_path.name}")
+                user_input = f"[User attached file: {_drop_path}]" + (f"\n{_remainder}" if _remainder else "")
+        elif isinstance(user_input, str):
+            # A bare number right after a bare `/resume` selects that session (never sent to the agent).
+            if getattr(self, "_pending_resume_sessions", None) and hasattr(self, "_consume_pending_resume_selection") and self._consume_pending_resume_selection(user_input):
+                return
+            if not is_seeded_query:
+                if hasattr(self, "handle_bang_shell") and self.handle_bang_shell(user_input):
+                    return
+                if _looks_like_slash_command(user_input):
+                    user_input = self._tui_run_slash_input(user_input)
+                    if user_input is None:
+                        return
+
+        _paste_ref_re = re.compile(r"\[Pasted text #\d+: \d+ lines \u2192 (.+?)\]")
+        paste_refs = list(_paste_ref_re.finditer(user_input)) if isinstance(user_input, str) else []
+        if paste_refs:
+            user_input = self._expand_paste_references(user_input)
+        print()
+        if hasattr(self, "_print_user_message_preview"):
+            self._print_user_message_preview(notification_preview or user_input)
+
+        if submit_images:
+            n = len(submit_images)
+            _cprint(f"  {_DIM}📎 {n} image{'s' if n > 1 else ''} attached{_RST}")
+
+        self._agent_running = self._interactive_turn = True
+        self._pet_turn_error = self._pet_reasoning = False
+        if hasattr(self, "_turn_summary_begin"):
+            self._turn_summary_begin()
+        app = getattr(self, "_app", None)
+        if app and hasattr(app, "invalidate"):
+            app.invalidate()
+        try:
+            self.chat(notification_preview or user_input, images=submit_images or None, voice_input=is_voice_input)
+        finally:
+            self._tui_after_turn()
+
+    def _tui_run_slash_input(self, user_input: str):
+        """Dispatch a slash command. Returns the pending agent seed to run as a chat turn, else None."""
+        _cprint(f"\n⚙️  {user_input}")
+        try:
+            if not self.process_command(user_input):
+                self._should_exit = True
+                app = getattr(self, "_app", None)
+                if app and getattr(app, "is_running", False):
+                    app.exit()
+        except KeyboardInterrupt:
+            _cprint("\n[dim]Command interrupted.[/dim]")
+            return None
+        _seed = getattr(self, "_pending_agent_seed", None)
+        self._pending_agent_seed = None
+        return _seed or None
+
+    def _tui_after_turn(self):
+        """Post-turn bookkeeping after chat() returns (normal, error, or interrupt)."""
+        self._agent_running = self._pet_reasoning = False
+        self._spinner_text = self._last_scrollback_tool = ""
+        self._tool_start_time = 0.0
+        if hasattr(self, "_pending_tool_info") and isinstance(self._pending_tool_info, (dict, list)):
+            self._pending_tool_info.clear()
+        if hasattr(self, "_pet_react_turn_end"):
+            self._pet_react_turn_end()
+        if hasattr(self, "_turn_summary_emit"):
+            self._turn_summary_emit()
+        self._interactive_turn = False
+        app = getattr(self, "_app", None)
+        if app and hasattr(app, "invalidate"):
+            app.invalidate()
+
     def run(self):
         """Run the interactive CLI loop with persistent input at bottom."""
         if not self._claim_active_session("cli"):
@@ -21487,227 +21555,8 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                             except Exception:
                                 pass
                         continue
-
-                    # Voice-transcribed messages arrive wrapped in a sentinel
-                    # so only genuine STT output gets the voice prefix (#65827).
-                    is_voice_input = isinstance(user_input, _VoiceInputMessage)
-                    if is_voice_input:
-                        user_input = user_input.text
-
-                    if not user_input:
-                        continue
-
-                    # The user has typed and submitted something, so any
-                    # post-resize transient suppression should end here.
-                    self._status_bar_suppressed_after_resize = False
-
-                    # Unpack image payload: (text, [Path, ...]) or plain str
-                    submit_images = []
-                    if isinstance(user_input, tuple):
-                        user_input, submit_images = user_input
-
-                    if isinstance(user_input, str):
-                        user_input = _strip_leaked_bracketed_paste_wrappers(user_input)
-                        user_input, _had_mouse_reports = (
-                            _strip_leaked_terminal_responses_with_meta(user_input)
-                        )
-                        if _had_mouse_reports:
-                            self._recover_terminal_input_modes(reason="mouse reports leaked into submitted input")
-
-                    # Typed bare stop phrase while a voice chat is active ends
-                    # the voice chat (same semantics as SAYING "stop") instead
-                    # of sending the word to the agent. Voice transcripts are
-                    # already stop-checked at the transcription points, so this
-                    # only intercepts typed input.
-                    if not is_voice_input and self._typed_voice_stop(user_input):
-                        continue
-                    
-                    # Check for commands — but detect dragged/pasted file paths first.
-                    # See _detect_file_drop() for details.
-                    _file_drop = (
-                        _detect_file_drop(user_input)
-                        if isinstance(user_input, str)
-                        else None
-                    )
-                    if _file_drop:
-                        _drop_path = _file_drop["path"]
-                        _remainder = _file_drop["remainder"]
-                        if _file_drop["is_image"]:
-                            submit_images.append(_drop_path)
-                            user_input = (
-                                _remainder
-                                or f"[User attached image: {_drop_path.name}]"
-                            )
-                            _cprint(f"  📎 Auto-attached image: {_drop_path.name}")
-                        else:
-                            _cprint(f"  📄 Detected file: {_drop_path.name}")
-                            user_input = f"[User attached file: {_drop_path}]" + (
-                                f"\n{_remainder}" if _remainder else ""
-                            )
-
-                    # A bare number right after a bare `/resume` prompt selects
-                    # that session (see #34584). Checked before chat routing so
-                    # the digit isn't sent to the agent as a message.
-                    if (
-                        not _file_drop
-                        and self._pending_resume_sessions
-                        and isinstance(user_input, str)
-                        and self._consume_pending_resume_selection(user_input)
-                    ):
-                        continue
-
-                    # `!<command>` shell mode — run it here and loop back to
-                    # idle. Checked BEFORE slash routing and before the chat
-                    # path so nothing enters conversation history and no model
-                    # turn is spent. See handle_bang_shell().
-                    if (
-                        not _file_drop
-                        and isinstance(user_input, str)
-                        and self.handle_bang_shell(user_input)
-                    ):
-                        continue
-
-                    if not _file_drop and isinstance(user_input, str) and _looks_like_slash_command(user_input):
-                        _cprint(f"\n⚙️  {user_input}")
-                        try:
-                            if not self.process_command(user_input):
-                                self._should_exit = True
-                                # Schedule app exit
-                                if app.is_running:
-                                    app.exit()
-                        except KeyboardInterrupt:
-                            # Ctrl+C during a slow slash command (e.g. /skills browse,
-                            # /sessions list with a large DB) should interrupt the
-                            # command and return to the prompt, NOT exit the entire
-                            # session. Without this guard a KeyboardInterrupt unwinds
-                            # to the outer prompt_toolkit loop and the session dies.
-                            _cprint("\n[dim]Command interrupted.[/dim]")
-                        continue
-
-                    # Expand paste references back to full content
-                    _paste_ref_re = re.compile(
-                        r"\[Pasted text #\d+: \d+ lines \u2192 (.+?)\]"
-                    )
-                    paste_refs = (
-                        list(_paste_ref_re.finditer(user_input))
-                        if isinstance(user_input, str)
-                        else []
-                    )
-                    if paste_refs:
-                        user_input = self._expand_paste_references(user_input)
-                    print()
-                    self._print_user_message_preview(user_input)
-
-                    # Show image attachment count
-                    if submit_images:
-                        n = len(submit_images)
-                        _cprint(
-                            f"  {_DIM}📎 {n} image{'s' if n > 1 else ''} attached{_RST}"
-                        )
-
-                    # Regular chat - run agent
-                    self._agent_running = True
-                    self._interactive_turn = True
-                    self._pet_turn_error = False
-                    self._pet_reasoning = False
-                    self._turn_summary_begin()
-                    app.invalidate()  # Refresh status line
-
-                    try:
-                        self.chat(user_input, images=submit_images or None, voice_input=is_voice_input)
-                    finally:
-                        self._agent_running = False
-                        self._spinner_text = ""
-                        self._tool_start_time = 0.0
-                        self._pending_tool_info.clear()
-                        self._last_scrollback_tool = ""
-                        self._pet_reasoning = False
-                        self._pet_react_turn_end()
-                        # Post-turn accounting line (display.turn_summary).
-                        # Emitted after the response box, before the prompt
-                        # returns, so it reads as a footer for the turn.
-                        self._turn_summary_emit()
-                        self._interactive_turn = False
-
-                        app.invalidate()  # Refresh status line
-
-                        # Post-turn terminal recovery (#33271): after an
-                        # interrupt the prompt_toolkit renderer may have
-                        # drifted from the physical terminal state — CSI 6n
-                        # cursor position reports can leak as literal text
-                        # (^[[19;1R), and the VT100 input parser can stall in
-                        # a partial-escape state, accepting no further
-                        # keystrokes.  Drain stray escape bytes from the OS
-                        # input buffer and force a clean renderer redraw.
-                        if self._last_turn_interrupted:
-                            self._recover_terminal_after_interrupt()
-
-                        # Re-queue any messages that arrived in _interrupt_queue
-                        # while the agent was running and were never claimed by
-                        # the explicit interrupt path. See
-                        # _drain_interrupt_queue_to_pending_input for the full
-                        # rationale. Regression of #17666 / #18760 — the drain
-                        # block from the original PR #17939 was deferred as
-                        # "worth its own review" and never re-landed (#20271).
-                        self._drain_interrupt_queue_to_pending_input()
-
-                        # Goal continuation: if a standing goal is active, ask
-                        # the judge whether the turn satisfied it. If not, and
-                        # there's no real user message already queued, push the
-                        # continuation prompt back into _pending_input so the
-                        # next loop iteration picks it up naturally (and any
-                        # user input that arrives in between still preempts).
-                        try:
-                            self._maybe_continue_goal_after_turn()
-                        except Exception as _goal_exc:
-                            logging.debug(
-                                "goal continuation hook failed: %s", _goal_exc
-                            )
-
-                        # /loop tick completion: if the turn that just ended
-                        # was a loop wakeup, evaluate it (LOOP_COMPLETE marker,
-                        # --until judge, caps) and schedule the next tick.
-                        try:
-                            self._maybe_complete_loop_tick_after_turn()
-                        except Exception as _loop_exc:
-                            logging.debug("loop completion hook failed: %s", _loop_exc)
-
-                        # Continuous voice: auto-restart recording after agent responds.
-                        # Dispatch to a daemon thread so play_beep (sd.wait) and
-                        # AudioRecorder.start (lock acquire) never block process_loop —
-                        # otherwise queued user input would stall silently.
-                        if (
-                            self._voice_mode
-                            and self._voice_continuous
-                            and not self._voice_recording
-                        ):
-
-                            def _restart_recording():
-                                try:
-                                    if self._voice_tts:
-                                        self._voice_tts_done.wait(timeout=60)
-                                        time.sleep(0.3)
-                                    # A barge-in capture already owns the mic and
-                                    # will submit the interruption itself.
-                                    if self._voice_barge_capture.is_set():
-                                        return
-                                    self._voice_start_recording()
-                                    app.invalidate()
-                                except Exception as e:
-                                    _cprint(
-                                        f"{_DIM}Voice auto-restart failed: {e}{_RST}"
-                                    )
-
-                            threading.Thread(
-                                target=_restart_recording, daemon=True
-                            ).start()
-
-                        # Drain process notifications (completions + watch matches)
-                        # that arrived while the agent was running.
-                        try:
-                            self._drain_process_notifications("cli-post-turn")
-                        except Exception:
-                            pass  # Non-fatal — don't break the main loop
+                    self._tui_process_one_input(user_input)
+                    self._tui_after_turn()
 
                 except OSError as e:
                     if getattr(e, "errno", None) == errno.EIO:
@@ -22229,6 +22078,7 @@ def main(
     pass_session_id: bool = False,
     ignore_user_config: bool = False,
     ignore_rules: bool = False,
+    oneshot: bool = False,
 ):
     """
     Hermes Agent CLI - Interactive AI Assistant

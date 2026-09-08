@@ -55,7 +55,7 @@ def test_check_via_local_git_ssh_fastpath_ahead_not_behind(tmp_path):
     repo_dir = tmp_path / "repo"
     (repo_dir / ".git").mkdir(parents=True)
 
-    def fake_git_stdout(args, *, cwd, timeout=5):
+    def fake_git_stdout(args, *, cwd, timeout=5, network=False):
         if args == ["remote", "get-url", "origin"]:
             return "git@github.com:NousResearch/hermes-agent.git"
         if args == ["rev-parse", "HEAD"]:
@@ -82,7 +82,7 @@ def test_check_via_local_git_ssh_fastpath_genuinely_behind(tmp_path):
     repo_dir = tmp_path / "repo"
     (repo_dir / ".git").mkdir(parents=True)
 
-    def fake_git_stdout(args, *, cwd, timeout=5):
+    def fake_git_stdout(args, *, cwd, timeout=5, network=False):
         if args == ["remote", "get-url", "origin"]:
             return "git@github.com:NousResearch/hermes-agent.git"
         if args == ["rev-parse", "HEAD"]:
@@ -110,7 +110,7 @@ def test_check_via_local_git_ssh_fastpath_offline_keeps_sentinel(tmp_path):
     repo_dir = tmp_path / "repo"
     (repo_dir / ".git").mkdir(parents=True)
 
-    def fake_git_stdout(args, *, cwd, timeout=5):
+    def fake_git_stdout(args, *, cwd, timeout=5, network=False):
         if args == ["remote", "get-url", "origin"]:
             return "git@github.com:NousResearch/hermes-agent.git"
         if args == ["rev-parse", "HEAD"]:
@@ -126,3 +126,68 @@ def test_check_via_local_git_ssh_fastpath_offline_keeps_sentinel(tmp_path):
         behind = banner._check_via_local_git(repo_dir)
 
     assert behind == banner.UPDATE_AVAILABLE_NO_COUNT
+
+
+def test_check_via_local_git_insteadof_rewrite_routes_to_ssh_fastpath(tmp_path, monkeypatch):
+    """#104591: the origin-URL probe must run under the fetch's config-isolated env."""
+    import os
+    import subprocess
+    from unittest.mock import MagicMock
+
+    from hermes_cli import banner
+
+    repo_dir = tmp_path / "repo"
+    repo_dir.mkdir()
+    setup_env = {
+        **os.environ,
+        "GIT_CONFIG_GLOBAL": os.devnull,
+        "GIT_CONFIG_SYSTEM": os.devnull,
+        "GIT_AUTHOR_NAME": "Test",
+        "GIT_AUTHOR_EMAIL": "test@example.invalid",
+        "GIT_COMMITTER_NAME": "Test",
+        "GIT_COMMITTER_EMAIL": "test@example.invalid",
+    }
+    setup_cmds = [
+        ["git", "init", "-q"],
+        ["git", "commit", "--allow-empty", "-q", "-m", "init"],
+        ["git", "remote", "add", "origin", "git@github.com:NousResearch/hermes-agent.git"],
+        ["git", "rev-parse", "HEAD"],
+    ]
+    head_sha = None
+    for argv in setup_cmds:
+        done = subprocess.run(
+            argv, cwd=repo_dir, env=setup_env, check=True, capture_output=True, text=True
+        )
+        if argv[1] == "rev-parse":
+            head_sha = done.stdout.strip()
+    assert head_sha
+
+    home = tmp_path / "home"
+    home.mkdir()
+    (home / ".gitconfig").write_text(
+        '[url "https://github.com/"]\n\tinsteadOf = git@github.com:\n', encoding="utf-8"
+    )
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))
+
+    calls = []
+    real_run = banner._git_run
+
+    def spy_run(args, **kwargs):
+        calls.append((list(args), kwargs))
+        if "ls-remote" in args:
+            return MagicMock(returncode=0, stdout=f"{head_sha}\trefs/heads/main\n")
+        return real_run(args, **kwargs)
+
+    monkeypatch.setattr(banner, "_git_run", spy_run)
+
+    behind = banner._check_via_local_git(repo_dir)
+
+    assert behind == 0
+    assert not any("fetch" in args for args, _ in calls)
+    probe = next(
+        (kwargs for args, kwargs in calls if "remote" in args and "get-url" in args),
+        None,
+    )
+    assert probe is not None
+    assert probe.get("network") is True

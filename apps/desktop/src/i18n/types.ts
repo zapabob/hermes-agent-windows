@@ -49,6 +49,39 @@ interface AuxTaskCopy {
 }
 
 export interface Translations {
+  sessionImport: {
+    title: string
+    subtitle: string
+    action: string
+    readingFrom: string
+    connectedComputer: string
+    destination: string
+    all: string
+    search: string
+    scanning: string
+    scanError: string
+    scanHelp: string
+    empty: string
+    emptyHelp: string
+    noMatches: string
+    searchHelp: string
+    skipped: string
+    more: string
+    messages: string
+    choose: string
+    chooseHelp: string
+    previewLoading: string
+    previewError: string
+    previewHelp: string
+    previewLimit: string
+    you: string
+    snapshot: string
+    copyNotice: string
+    importing: string
+    open: string
+    continue: string
+    importError: string
+  }
   common: {
     apply: string
     back: string

@@ -344,43 +344,73 @@ def windows_detach_popen_kwargs() -> dict:
 # -----------------------------------------------------------------------------
 
 
+# GIT_CONFIG_KEY_n/VALUE_n overrides for internal git children: no credential/askpass prompts, no
+# repo-configured fsmonitor/hooks/pager/editor/external-diff programs.
+_GIT_CONFIG_INJECT_PREFIXES = ("GIT_CONFIG_KEY_", "GIT_CONFIG_VALUE_")
+_GIT_CONFIG_OVERRIDES = {
+    "credential.helper": "",
+    "core.askPass": "",
+    "core.fsmonitor": "false",
+    "core.untrackedCache": "false",
+    "core.hooksPath": os.devnull,
+    "core.pager": "cat",
+    "core.editor": "true",
+    "sequence.editor": "true",
+    "diff.external": "",
+    # ssh itself bypasses stdin=DEVNULL/GIT_TERMINAL_PROMPT and opens /dev/tty directly — an
+    # unknown host key (or password auth) prompts there and steals the caller's terminal (#104591).
+    # BatchMode makes ssh fail instead of prompting; a working ssh-agent still succeeds. Injected
+    # at the config layer so an explicit user GIT_SSH_COMMAND (env) still takes precedence.
+    "core.sshCommand": "ssh -o BatchMode=yes",
+}
+
+
 def noninteractive_git_env(
     base: "Mapping[str, str] | None" = None,
 ) -> dict[str, str]:
     """Environment for *internal* git invocations that must never prompt.
 
-    Hermes shells out to git from many non-interactive contexts — MCP catalog
-    installs, plugin install/update, profile distribution staging, worktree
-    base fetches, desktop review-pane fetch/push. When the remote is private,
-    misconfigured, or requires auth, git's default behavior is to prompt on
-    the inherited terminal (or via an askpass helper), which silently hangs
-    the operation until its timeout — or forever at call sites without one.
-    Ported from openai/codex#34540 / #34612 ("detach non-interactive
-    subprocesses from stdin"): a background tool invocation must fail fast
-    with a readable error, not wait for input nobody can type.
+    Copy of ``base`` (default ``os.environ``) with ``GIT_TERMINAL_PROMPT=0`` (fail instead of
+    prompting), ``GCM_INTERACTIVE=Never`` (no Git Credential Manager dialog), and isolated git
+    config: inherited ``GIT_CONFIG_*`` injection, global/system config, pagers, editors, fsmonitor,
+    external diff and hooks are all disabled so a user's repo/global config cannot hang or mutate
+    Hermes's plumbing calls. ``core.sshCommand`` is pinned to ``ssh -o BatchMode=yes`` so the ssh
+    child of a fetch/ls-remote fails instead of prompting — ssh bypasses ``stdin=DEVNULL`` and
+    opens ``/dev/tty`` directly (#104591); an agent-authenticated ssh still succeeds, and an
+    explicit user ``GIT_SSH_COMMAND`` env var still takes precedence over this config-layer pin.
+    ``GIT_ASKPASS``/``SSH_ASKPASS`` env vars are left alone, but OpenSSH BatchMode disables
+    passphrase/password prompts, including SSH askpass. Usable keys and ssh-agent authentication
+    still work; Git's own working askpass helper is unaffected. Pair with
+    ``stdin=subprocess.DEVNULL``. Internal plumbing only — the agent-facing terminal tool has its
+    own policy layer and visible PTY.
 
-    Returns a copy of ``base`` (default ``os.environ``) with:
-
-    * ``GIT_TERMINAL_PROMPT=0`` — git fails with "terminal prompts disabled"
-      instead of prompting for credentials.
-    * ``GCM_INTERACTIVE=Never`` — Git Credential Manager (the default
-      credential helper on Windows installs) never pops its own dialog.
-
-    ``GIT_ASKPASS`` / ``SSH_ASKPASS`` are deliberately left alone: when the
-    user has a *working* askpass helper or ssh-agent configured, auth should
-    still succeed non-interactively. The env only disables paths that block
-    on a human.
-
-    Pair with ``stdin=subprocess.DEVNULL`` so git (and any credential helper
-    it spawns) also can't read the parent's inherited stdin.
-
-    This is for internal plumbing calls only — the agent-facing terminal tool
-    has its own policy layer and user-visible PTY, where prompting can be
-    legitimate.
+    Hermes shells out to git from many non-interactive contexts — MCP catalog installs, plugin
+    install/update, profile distribution staging, worktree base fetches, desktop review-pane fetch/push.
+    When the remote is private, misconfigured, or requires auth, git's default behavior is to prompt on the
+    inherited terminal (or via an askpass helper), which silently hangs the operation until its timeout — or
+    forever at call sites without one. Ported from openai/codex#34540 / #34612 ("detach non-interactive
+    subprocesses from stdin"): a background tool invocation must fail fast with a readable error, not wait
+    for input nobody can type.
     """
     env = dict(base if base is not None else os.environ)
     env["GIT_TERMINAL_PROMPT"] = "0"
     env["GCM_INTERACTIVE"] = "Never"
+    # Drop caller-supplied config injection; the GIT_CONFIG_COUNT block is rebuilt below so
+    # ambient -c values cannot re-enable pagers, hooks, fsmonitor, editors or credential prompts.
+    for key in list(env):
+        if key == "GIT_CONFIG_PARAMETERS" or key.startswith(_GIT_CONFIG_INJECT_PREFIXES):
+            env.pop(key, None)
+    env.pop("GIT_CONFIG_COUNT", None)
+    env["GIT_CONFIG_GLOBAL"] = os.devnull
+    env["GIT_CONFIG_SYSTEM"] = os.devnull
+    env["GIT_CONFIG_NOSYSTEM"] = "1"
+    env["GIT_PAGER"] = "cat"
+    env["PAGER"] = "cat"
+    env["GIT_EDITOR"] = "true"
+    env["GIT_CONFIG_COUNT"] = str(len(_GIT_CONFIG_OVERRIDES))
+    for idx, (key, value) in enumerate(_GIT_CONFIG_OVERRIDES.items()):
+        env[f"GIT_CONFIG_KEY_{idx}"] = key
+        env[f"GIT_CONFIG_VALUE_{idx}"] = value
     return env
 
 

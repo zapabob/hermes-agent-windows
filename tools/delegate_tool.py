@@ -1603,6 +1603,38 @@ def _inherit_parent_base_url(parent_agent, fallback_base_url: Optional[str]) -> 
     return fallback_base_url or None
 
 
+def _resolve_child_fallback_chain(parent_agent, routing_cfg: Any, pinned: bool) -> Optional[List[Dict[str, Any]]]:
+    """Fallback chain for a child, owned by the same config block as its route.
+
+    Pinned children (provider, endpoint or model override) never borrow the parent chain;
+    unpinned children inherit it when ``fallback_providers`` is absent/null. An explicit ``[]``
+    disables fallback either way. Malformed entries are dropped by the canonical normalizer.
+    """
+    default = None if pinned else (getattr(parent_agent, "_fallback_chain", None) or None)
+    declared = routing_cfg.get("fallback_providers") if isinstance(routing_cfg, dict) else None
+    if declared is None:
+        return default
+    if declared == []:
+        return None
+    try:
+        from hermes_cli.fallback_config import get_fallback_chain
+
+        normalized = get_fallback_chain({"fallback_providers": declared})
+    except Exception as exc:
+        logger.warning(
+            "Could not normalize delegation fallback_providers (%s); using the %s default",
+            exc,
+            "pinned" if pinned else "inherited",
+        )
+        return default
+    if not normalized:
+        logger.warning(
+            "delegation fallback_providers has no usable routes; using the %s default",
+            "pinned" if pinned else "inherited",
+        )
+    return normalized or default
+
+
 def _build_child_agent(
     task_index: int,
     goal: str,
@@ -1622,6 +1654,8 @@ def _build_child_agent(
     # ACP transport overrides from trusted delegation config.
     override_acp_command: Optional[str] = None,
     override_acp_args: Optional[List[str]] = None,
+    # Configuration block that owns the selected provider/model route.
+    routing_cfg: Optional[Dict[str, Any]] = None,
     # Per-call role controlling whether the child can further delegate.
     # 'leaf' (default) cannot; 'orchestrator' retains the delegation
     # toolset subject to depth/kill-switch bounds applied below.
@@ -1880,11 +1914,14 @@ def _build_child_agent(
     # the parent's fallback models with no surfaced signal (#80450) — the
     # same class of silent-drag the override_provider filter-clearing below
     # already prevents for OpenRouter routing preferences.  Predictability >
-    # liveness for explicit pins: the pinned child fails loudly instead.
-    parent_fallback = (
-        None
-        if override_provider
-        else (getattr(parent_agent, "_fallback_chain", None) or None)
+    # Resolve routing and recovery policy from the same configuration owner. A pinned provider, endpoint, or
+    # model never borrows the parent's chain; an explicitly declared child chain still remains available.
+    is_pinned = bool(override_provider or override_base_url or model)
+    fallback_cfg = delegation_cfg if routing_cfg is None else routing_cfg
+    parent_fallback = _resolve_child_fallback_chain(
+        parent_agent,
+        fallback_cfg,
+        pinned=is_pinned,
     )
 
     # Inherit the parent's OpenRouter provider-preference filters by default
@@ -3282,6 +3319,21 @@ def _run_single_child(
             except Exception as e:
                 logger.debug("Progress callback completion failed: %s", e)
 
+        # Name the child's background processes on the result BEFORE cleanup kills them
+        handed = list(getattr(child, "_handed_off_processes", None) or [])
+        if handed:
+            entry["handed_off_processes"] = handed
+        try:
+            from tools.process_registry import process_registry
+            leftover = process_registry.running_owned_by(child_task_id)
+            if leftover:
+                entry["orphaned_processes"] = [
+                    {"session_id": s.id, "command": s.command[:200], "runtime_seconds": round(time.time() - s.started_at)}
+                    for s in leftover
+                ]
+        except Exception:
+            pass
+
         _attach_worktree(entry)
         return entry
 
@@ -3730,14 +3782,13 @@ def delegate_task(
     # used by CLI/gateway startup.  When unconfigured, returns None values so
     # children inherit from the parent.
     #
-    # ``credentials_cfg`` (internal callers only — never model-facing) is a
-    # per-call override shaped like the delegation config section
-    # ({provider, model, base_url, api_key, api_mode}); the /review engine
-    # uses it to route its reviewer subagent onto ``auxiliary.review``
-    # without touching the global delegation pin.
+    # credentials_cfg (internal callers only, e.g. /review -> auxiliary.review) is
+    # a per-call routing owner shaped like the delegation config section. Keep
+    # the route and its fallback policy together through child construction.
+    routing_cfg = credentials_cfg if credentials_cfg is not None else cfg
     try:
         creds = _resolve_delegation_credentials(
-            credentials_cfg if credentials_cfg else cfg, parent_agent
+            routing_cfg, parent_agent
         )
     except ValueError as exc:
         return tool_error(str(exc))
@@ -3899,6 +3950,7 @@ def delegate_task(
                 override_max_tokens=creds.get("max_output_tokens"),
                 override_acp_command=creds.get("command"),
                 override_acp_args=creds.get("args"),
+                routing_cfg=routing_cfg,
                 role=effective_role,
             )
         except ValueError as exc:

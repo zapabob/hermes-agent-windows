@@ -10,7 +10,7 @@ from __future__ import annotations
 import math
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, SecretStr, field_validator
+from pydantic import BaseModel, SecretStr, StrictBool, field_validator
 
 
 # --- from web_server.py (originally lines 1273-1372) ---
@@ -446,6 +446,8 @@ class SessionPrune(BaseModel):
 # --- from web_server.py (originally lines 12335-12352) ---
 
 class CronJobCreate(BaseModel):
+    paused: StrictBool = False
+    paused_reason: Optional[str] = None
     prompt: str = ""
     schedule: str
     name: str = ""

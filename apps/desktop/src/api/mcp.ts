@@ -48,6 +48,19 @@ export function saveMcpServers(
   })
 }
 
+/** Capture the source before the first await. Every OAuth RPC, including
+ *  cleanup after a foreground switch, belongs to this (connection, profile).
+ *  Import the store lazily: it consumes the API barrel during initialization. */
+export function mcpOAuthRpc(scope?: ProfileScope) {
+  const { connectionId = null, profile = 'default' } = capabilityScoped(scope)
+
+  return async <T>(action: 'start' | 'poll' | 'callback' | 'cancel', params: Record<string, unknown>): Promise<T> => {
+    const { requestGatewayForAgent } = await import('@/store/gateway')
+
+    return requestGatewayForAgent<T>(connectionId, profile, `mcp.servers.oauth.${action}`, params, 60_000)
+  }
+}
+
 /** Start an MCP OAuth flow and return the authorization URL. */
 export function authMcpServer(name: string, scope?: ProfileScope): Promise<McpOAuthFlow> {
   return window.hermesDesktop.api<McpOAuthFlow>({

@@ -13,6 +13,7 @@ import {
   HUD_SURFACE,
   HUD_TEXT
 } from '@/app/floating-hud'
+import { SESSION_IMPORT_ROUTE } from '@/app/routes'
 import { codiconIcon } from '@/components/ui/codicon'
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { HighlightMatches } from '@/components/ui/highlight-matches'
@@ -56,6 +57,7 @@ import {
   Wrench,
   Zap
 } from '@/lib/icons'
+import { getServers } from '@/lib/mcp-servers'
 import { normalize } from '@/lib/text'
 import { cn } from '@/lib/utils'
 import { resolveVersionStatus } from '@/lib/version-status'
@@ -142,7 +144,7 @@ interface PaletteItem {
   runWithEvent?: (event?: { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean }) => void
   /** Action to run when selected. Mutually exclusive with `to`. */
   run?: () => void
-  /** Open a nested palette page (VS Code-style "choose X ↁEoptions"). */
+  /** Open a nested palette page (VS Code-style "choose X → options"). */
   to?: string
 }
 
@@ -153,7 +155,7 @@ interface PaletteGroup {
   items: PaletteItem[]
 }
 
-// Nested page ↁEits parent, so Back / Esc step up one level instead of closing
+// Nested page → its parent, so Back / Esc step up one level instead of closing
 // the palette. Pages absent here go straight back to the root list.
 const PAGE_PARENTS: Record<string, string> = { 'install-theme': 'theme' }
 
@@ -604,7 +606,7 @@ function CommandPaletteBody({ onExited }: { onExited: () => void }) {
   }, [backendApply, backendStatus, clientApply, clientStatus, connection?.mode, desktopVersion?.appVersion, t])
 
   // cmdk's onSelect doesn't forward the triggering event — keep the last
-  // click/keydown modifiers so session rows can honour ⌁EEnter / ⌁Eclick.
+  // click/keydown modifiers so session rows can honour ⌘-Enter / ⌘-click.
   const lastSelectMods = useRef<{ ctrlKey: boolean; metaKey: boolean; shiftKey: boolean }>({
     ctrlKey: false,
     metaKey: false,
@@ -659,13 +661,9 @@ function CommandPaletteBody({ onExited }: { onExited: () => void }) {
     queryFn: () => listAllProfileSessions(200, 0, 'only')
   })
 
-  const mcpServers = useMemo(() => {
-    const raw = configQuery.data?.mcp_servers
-
-    return raw && typeof raw === 'object' && !Array.isArray(raw)
-      ? Object.keys(raw as Record<string, unknown>).sort()
-      : []
-  }, [configQuery.data])
+  // getServers is the shared choke point that also drops malformed (null/
+  // scalar) entries, so the palette never lists a server the MCP tab dropped.
+  const mcpServers = useMemo(() => Object.keys(getServers(configQuery.data ?? null)).sort(), [configQuery.data])
 
   const sessions = useMemo(() => (sessionsQuery.data?.sessions ?? []).map(toSessionEntry), [sessionsQuery.data])
   const archivedSessions = useMemo(() => (archivedQuery.data?.sessions ?? []).map(toSessionEntry), [archivedQuery.data])
@@ -673,7 +671,7 @@ function CommandPaletteBody({ onExited }: { onExited: () => void }) {
   // Search/sub-page are local to a mount, and this component remounts per open
   // (keyed by open count), so each open starts clean without a reset effect.
 
-  // Deep-link into a nested page (e.g. `/pet list` ↁEpets picker).
+  // Deep-link into a nested page (e.g. `/pet list` → pets picker).
   useEffect(() => {
     if (pendingPage) {
       setPage(pendingPage)
@@ -703,7 +701,7 @@ function CommandPaletteBody({ onExited }: { onExited: () => void }) {
 
   // Sessions: plain select = open beside what's already loaded (focus existing
   // tile/main, else a new tab — main only when it's a blank draft);
-  // ⌁E⌁Eselect / ⌁EEnter = force a new tab; ⇧⌁E= own window. Same door as the
+  // ⌘/⌃-select / ⌘-Enter = force a new tab; ⇧⌘ = own window. Same door as the
   // sidebar, minus the sidebar's licence to spend main.
   const goSession = useCallback(
     (sessionId: string) => (event?: { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean }) => {
@@ -902,6 +900,13 @@ function CommandPaletteBody({ onExited }: { onExited: () => void }) {
             run: go(`${COMMAND_CENTER_ROUTE}?section=sessions`)
           },
           {
+            icon: Download,
+            id: 'session-import',
+            keywords: ['import', 'claude', 'codex', 'conversation'],
+            label: t.sessionImport.action,
+            run: go(SESSION_IMPORT_ROUTE)
+          },
+          {
             icon: Activity,
             id: 'cc-system',
             keywords: ['command center', 'system', 'status', 'logs'],
@@ -1048,7 +1053,7 @@ function CommandPaletteBody({ onExited }: { onExited: () => void }) {
 
     const result: PaletteGroup[] = []
 
-    // Paste a raw session id ↁEjump straight to it, even if it predates the
+    // Paste a raw session id → jump straight to it, even if it predates the
     // recent-200 window the lists below are built from.
     const directId = search.trim()
 
@@ -1115,7 +1120,7 @@ function CommandPaletteBody({ onExited }: { onExited: () => void }) {
       ]
     })
 
-    // Apply a theme directly from the root search (e.g. "nous" ↁENous). Live
+    // Apply a theme directly from the root search (e.g. "nous" → Nous). Live
     // preview via keepOpen, mirroring the nested theme picker. If the theme
     // can't render the current light/dark mode, flip to the one it supports.
     result.push({
@@ -1507,7 +1512,7 @@ function CommandPaletteBody({ onExited }: { onExited: () => void }) {
       item.run?.()
     }
 
-    // Clear stashed modifiers so a plain Enter after a ⌁Eclick isn't sticky.
+    // Clear stashed modifiers so a plain Enter after a ⌘-click isn't sticky.
     lastSelectMods.current = { ctrlKey: false, metaKey: false, shiftKey: false }
 
     if (!item.keepOpen) {

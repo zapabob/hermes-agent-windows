@@ -610,6 +610,9 @@ class HermesTokenStorage:
         if OAuthMetadata is None and not _ensure_sdk_loaded():
             return None
         try:
+            if isinstance(data, dict) and data.get("device_authorization_endpoint"):
+                from tools.mcp_oauth_device import DeviceOAuthMetadata
+                return DeviceOAuthMetadata.model_validate(data)
             return OAuthMetadata.model_validate(data)
         except (ValueError, TypeError, KeyError) as exc:
             logger.warning("Corrupt OAuth metadata at %s -- ignoring: %s", self._meta_path(), exc)

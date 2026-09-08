@@ -135,11 +135,13 @@ def _make_hermes_provider_class() -> Optional[type]:
             server_name: str = "",
             preregistered: bool = False,
             token_user_agent: "str | None" = None,
+            oauth_flow: str = "browser",
             **kwargs: Any,
         ):
             super().__init__(*args, **kwargs)
             self._hermes_server_name = server_name
             self._hermes_home = ""
+            self._hermes_oauth_flow = oauth_flow
             # When the client_id comes from config.yaml (pre-registered), an
             # invalid_client rejection means the *config* is wrong — deleting
             # client.json would just be re-seeded from config and re-running
@@ -150,11 +152,25 @@ def _make_hermes_provider_class() -> Optional[type]:
             # some authorization servers/WAFs reject httpx's default (#75576).
             self._hermes_token_user_agent = token_user_agent
 
-        def _stamp_token_user_agent(self, request):
+        async def _perform_authorization(self):
+            info = getattr(self.context, "client_info", None)
+            grants = getattr(info, "grant_types", None) or []
+            if (getattr(self, "_hermes_oauth_flow", "browser") == "device"
+                    or ("urn:ietf:params:oauth:grant-type:device_code" in grants and "authorization_code" not in grants)):
+                from tools.mcp_oauth import OAuthNonInteractiveError
+                raise OAuthNonInteractiveError(
+                    "MCP device authorization requires `hermes mcp login <server> --flow device`; "
+                    "background reconnects cannot start a device login")
+            return await super()._perform_authorization()
+
+        def _prepare_token_request(self, request):
+            """Stamp the configured User-Agent onto a token/refresh request."""
             ua = getattr(self, "_hermes_token_user_agent", None)
             if ua:
                 request.headers["User-Agent"] = ua
             return request
+
+        _stamp_token_user_agent = _prepare_token_request
 
         def _coerce_client_secret_post(self) -> None:
             """Use client_secret_post when dynamic registration returned a secret.
@@ -550,6 +566,7 @@ def _make_hermes_provider_class() -> Optional[type]:
 
 # Cached at import time. Tested and used by :class:`MCPOAuthManager`.
 _HERMES_PROVIDER_CLS: Optional[type] = _make_hermes_provider_class()
+HermesMCPOAuthProvider = _HERMES_PROVIDER_CLS
 
 
 # ---------------------------------------------------------------------------
@@ -706,6 +723,7 @@ class MCPOAuthManager:
             redirect_handler=redirect_handler,
             callback_handler=callback_handler,
             token_user_agent=token_request_user_agent(cfg),
+            oauth_flow=cfg.get("flow", "browser"),
             **cimd_provider_kwargs(cfg),
         )
 
