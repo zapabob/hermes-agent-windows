@@ -1055,7 +1055,7 @@ class TestChildCredentialLeasing(unittest.TestCase):
         child = MagicMock()
         child._credential_pool = MagicMock()
         child._credential_pool.acquire_lease.return_value = "cred-b"
-        child._credential_pool.current.return_value = leased_entry
+        child._credential_pool.leased_entry.return_value = leased_entry
         child.run_conversation.return_value = {
             "final_response": "done",
             "completed": True,
@@ -1073,6 +1073,8 @@ class TestChildCredentialLeasing(unittest.TestCase):
 
         self.assertEqual(result["status"], "completed")
         child._credential_pool.acquire_lease.assert_called_once_with()
+        child._credential_pool.leased_entry.assert_called_once_with("cred-b")
+        child._credential_pool.current.assert_not_called()
         child._swap_credential.assert_called_once_with(leased_entry)
         child._credential_pool.release_lease.assert_called_once_with("cred-b")
 
@@ -1082,7 +1084,7 @@ class TestChildCredentialLeasing(unittest.TestCase):
         child = MagicMock()
         child._credential_pool = MagicMock()
         child._credential_pool.acquire_lease.return_value = "cred-a"
-        child._credential_pool.current.return_value = MagicMock(id="cred-a")
+        child._credential_pool.leased_entry.return_value = MagicMock(id="cred-a")
         child.run_conversation.side_effect = RuntimeError("boom")
 
         result = _run_single_child(
