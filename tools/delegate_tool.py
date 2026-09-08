@@ -2481,15 +2481,6 @@ def _run_single_child(
 
     child_pool = getattr(child, "_credential_pool", None)
     leased_cred_id = None
-    if child_pool is not None:
-        leased_cred_id = child_pool.acquire_lease()
-        if leased_cred_id is not None:
-            try:
-                leased_entry = child_pool.current()
-                if leased_entry is not None and hasattr(child, "_swap_credential"):
-                    child._swap_credential(leased_entry)
-            except Exception as exc:
-                logger.debug("Failed to bind child to leased credential: %s", exc)
 
     # Heartbeat: periodically propagate child activity to the parent so the
     # gateway inactivity timeout doesn't fire while the subagent is working.
@@ -2697,6 +2688,13 @@ def _run_single_child(
 
     try:
         _heartbeat_thread.start()
+        if child_pool is not None:
+            leased_cred_id = child_pool.acquire_lease()
+            if leased_cred_id is not None:
+                leased_entry = child_pool.leased_entry(leased_cred_id)
+                if leased_entry is None:
+                    raise RuntimeError("Leased child credential is no longer available")
+                child._swap_credential(leased_entry)
         if child_progress_cb:
             try:
                 child_progress_cb("subagent.start", preview=goal)

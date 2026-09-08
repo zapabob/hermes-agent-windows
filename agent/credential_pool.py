@@ -2679,6 +2679,20 @@ class CredentialPool:
             self._current_id = chosen.id
             return chosen.id, pending_refresh
 
+    def leased_entry(self, credential_id: str) -> Optional[PooledCredential]:
+        """Resolve a reserved identity without consulting the shared selection cursor.
+
+        Acquisition (including deferred refresh) finishes before this lookup.
+        Client construction must happen after this method releases the pool lock.
+        """
+        with self._lock:
+            if self._active_leases.get(credential_id, 0) <= 0:
+                return None
+            entry = next((entry for entry in self._entries if entry.id == credential_id), None)
+            if entry is None or entry.last_status in {STATUS_DEAD, STATUS_EXHAUSTED}:
+                return None
+            return entry if entry.runtime_api_key else None
+
     def release_lease(self, credential_id: str) -> None:
         """Release a previously acquired credential lease."""
         with self._lock:
