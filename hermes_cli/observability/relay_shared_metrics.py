@@ -1246,11 +1246,12 @@ def handles_hook(hook_name: str) -> bool:
     return hook_name in HANDLED_HOOKS and enabled()
 
 
-_consent_reconcile_done = False
+_consent_reconcile_done: set[str] = set()
+_consent_reconcile_lock = threading.RLock()
 
 
 def _reconcile_send_consent_once() -> None:
-    """Reconcile consent windows with config, once per process.
+    """Reconcile consent windows with config, once per profile per process.
 
     Runs BEFORE and INDEPENDENT of the collection gate — that placement is
     the fix for the round-5 D1 leak, where the only idle-path consent
@@ -1263,10 +1264,18 @@ def _reconcile_send_consent_once() -> None:
     and creating ``~/.hermes/telemetry`` for every fully-disabled user would
     be a behaviour change in the wrong direction.
     """
-    global _consent_reconcile_done
-    if _consent_reconcile_done:
-        return
-    _consent_reconcile_done = True
+    from hermes_constants import hermes_home_key
+
+    profile = hermes_home_key()
+    with _consent_reconcile_lock:
+        if profile in _consent_reconcile_done:
+            return
+        if _reconcile_send_consent():
+            _consent_reconcile_done.add(profile)
+
+
+def _reconcile_send_consent() -> bool:
+    """Return success only after reconciliation or a proven no-store skip."""
     try:
         from hermes_cli.config import read_raw_config_readonly
         from hermes_cli.observability.shared_metrics import SharedMetricsStore
@@ -1288,15 +1297,17 @@ def _reconcile_send_consent_once() -> None:
             get_hermes_home() / "telemetry" / "shared_metrics" / "metrics.sqlite3"
         )
         if not resolved.send and not default_path.exists():
-            return
+            return True
         store = SharedMetricsStore()
         with store._connection() as connection:
             with write_txn(connection):
                 reconcile_send_consent(connection, resolved.send)
+        return True
     except Exception:
         logger.warning(
             "Unable to reconcile shared-metrics send consent", exc_info=True
         )
+        return False
 
 
 def observe_lifecycle(hook_name: str, **kwargs: Any) -> None:

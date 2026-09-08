@@ -340,7 +340,7 @@ class TestConsentWindows:
             lambda *a, **k: store,
         )
         _set_config(monkeypatch, _config(enabled=False, send=False))
-        monkeypatch.setattr(mod, "_consent_reconcile_done", False)
+        monkeypatch.setattr(mod, "_consent_reconcile_done", set())
 
         # The full lifecycle entry point, with collection OFF.
         mod.observe_lifecycle("finish_task")
