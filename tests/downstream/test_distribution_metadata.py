@@ -26,11 +26,11 @@ def test_distribution_metadata_is_the_downstream_product_authority() -> None:
 
     assert distribution.id == "hermes-agent-windows"
     assert distribution.display_name == "Hermes Agent Windows Workstation Edition"
-    assert distribution.version == "0.21.0"
-    assert distribution.version_source == "upstream"
+    assert distribution.version == "0.21.1"
+    assert distribution.version_source == "downstream"
     assert distribution.repository.slug == "zapabob/hermes-agent-windows"
     assert distribution.upstream.snapshot_sha == UPSTREAM_SNAPSHOT_SHA
-    assert distribution.upstream.version == distribution.version
+    assert distribution.upstream.version == "0.21.0"
     assert distribution.upstream.release_commit_sha == (
         "29112bef099274229cadff79cdff7bf7b99c4b77"
     )
@@ -48,7 +48,7 @@ def test_distribution_metadata_accessors_are_read_only() -> None:
         setattr(distribution, "version", "changed")
 
 
-def test_product_version_tracks_the_frozen_official_release() -> None:
+def test_windows_patch_version_is_consistent_without_relabeling_upstream() -> None:
     distribution = load_distribution()
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     desktop = json.loads(
@@ -56,11 +56,14 @@ def test_product_version_tracks_the_frozen_official_release() -> None:
     )
     package_lock = json.loads((ROOT / "package-lock.json").read_text(encoding="utf-8"))
 
-    assert distribution.version_source == "upstream"
-    assert distribution.version == distribution.upstream.version == "0.21.0"
+    assert distribution.version_source == "downstream"
+    assert distribution.upstream.version == "0.21.0"
+    assert distribution.version == "0.21.1"
     assert pyproject["project"]["version"] == distribution.version
     assert desktop["version"] == distribution.version
     assert package_lock["packages"]["apps/desktop"]["version"] == distribution.version
+    lock = tomllib.loads((ROOT / "uv.lock").read_text(encoding="utf-8"))
+    assert next(package["version"] for package in lock["package"] if package["name"] == "hermes-agent") == distribution.version
 
     from hermes_cli import __release_date__, __version__
 
@@ -95,11 +98,33 @@ def test_version_lines_identify_distribution_snapshot_and_checkout() -> None:
     lines = distribution_version_lines(downstream_sha="b" * 40)
 
     assert lines == (
-        "Distribution: Hermes Agent Windows Workstation Edition 0.21.0",
+        "Distribution: Hermes Agent Windows Workstation Edition 0.21.1",
         f"Frozen upstream: {UPSTREAM_SNAPSHOT_SHA[:12]}",
         "Downstream revision: bbbbbbbbbbbb",
         "Update channel: stable",
     )
+
+
+@pytest.mark.parametrize("source, version, valid", [
+    ("upstream", "0.21.0", True),
+    ("upstream", "0.21.1", False),
+    ("downstream", "0.21.1", True),
+    ("unknown", "0.21.1", False),
+    ("downstream", "not-semver", False),
+])
+def test_version_authority_preserves_upstream_contract(tmp_path, source, version, valid):
+    payload = json.loads((ROOT / "downstream/distribution.json").read_text(encoding="utf-8"))
+    payload.update(version_source=source, version=version)
+    path = tmp_path / "distribution.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    if valid:
+        loaded = load_distribution(path)
+        assert loaded.version == version
+        assert loaded.upstream.version == "0.21.0"
+        assert loaded.upstream.snapshot_sha == UPSTREAM_SNAPSHOT_SHA
+    else:
+        with pytest.raises(ValueError):
+            load_distribution(path)
 
 
 def test_distribution_json_is_packaged_with_the_python_distribution() -> None:
@@ -131,7 +156,7 @@ def test_desktop_packaging_has_downstream_identity_installer_and_portable_target
     )
 
     assert package["productName"] == "Hermes Agent Windows Workstation Edition"
-    assert package["version"] == "0.21.0"
+    assert package["version"] == load_distribution().version
     assert package["build"]["appId"] == "io.github.zapabob.hermes-agent-windows"
     assert package["build"]["executableName"] == "Hermes"
     assert package["build"]["nsis"]["guid"] == ("48ae4bdc-0f8d-5252-af1e-bf7c0a8c3649")

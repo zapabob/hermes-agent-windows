@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "hermes-agent-windows",
   "display_name": "Hermes Agent Windows Workstation Edition",
-  "version": "0.21.0",
-  "version_source": "upstream",
+  "version": "0.21.1",
+  "version_source": "downstream",
   "repository": {
     "slug": "zapabob/hermes-agent-windows",
     "web": "https://github.com/zapabob/hermes-agent-windows",

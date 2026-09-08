@@ -97,11 +97,13 @@ def load_distribution(path: Path | None = None) -> DistributionMetadata:
     upstream_version = _require_string(upstream, "version")
     release_commit_sha = _require_string(upstream, "release_commit_sha").lower()
     snapshot_sha = _require_string(upstream, "snapshot_sha").lower()
-    if version_source != "upstream":
-        raise ValueError("distribution.version_source must be 'upstream'")
+    if version_source not in {"upstream", "downstream"}:
+        raise ValueError("distribution.version_source must be 'upstream' or 'downstream'")
     if not _SEMVER.fullmatch(version):
         raise ValueError("distribution.version must be a semantic version")
-    if version != upstream_version:
+    if not _SEMVER.fullmatch(upstream_version):
+        raise ValueError("upstream.version must be a semantic version")
+    if version_source == "upstream" and version != upstream_version:
         raise ValueError("distribution.version must match upstream.version")
     if not _FULL_SHA.fullmatch(release_commit_sha):
         raise ValueError("upstream.release_commit_sha must be a 40-character lowercase SHA")
