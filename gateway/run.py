@@ -26260,6 +26260,11 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         durable_claim_id = ""
         durable_delegation_id = ""
         if evt.get("type") == "async_delegation":
+            parent_session_id = str(evt.get("parent_session_id") or "").strip()
+            verdict = await self._classify_completion_target(parent_session_id) if parent_session_id else "deliver"
+            if verdict == "retry":
+                # No delivery was attempted while the destination owner is unavailable.
+                return False
             durable_delegation_id = str(evt.get("delegation_id") or "")
             if durable_delegation_id:
                 try:
@@ -26276,7 +26281,6 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                         durable_delegation_id, exc,
                     )
                     return False
-            parent_session_id = str(evt.get("parent_session_id") or "").strip()
             if parent_session_id:
                 # Pre-flight (#65838-class): adapter acceptance is NOT proof of
                 # delivery — the inner #55578 resolver can still fail closed
@@ -26284,7 +26288,6 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 # would falsely acknowledge the durable row as delivered.
                 # Verify the target here, before acceptance, and give drops an
                 # honest durable disposition.
-                verdict = await self._classify_completion_target(parent_session_id)
                 if verdict == "terminal":
                     logger.warning(
                         "Async delegation %s targets permanently-gone session %s; "
@@ -26305,20 +26308,6 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                                 exc_info=True,
                             )
                     return None
-                if verdict == "retry":
-                    if durable_claim_id:
-                        try:
-                            from tools.async_delegation import release_completion_delivery
-
-                            release_completion_delivery(
-                                durable_delegation_id, durable_claim_id,
-                            )
-                        except Exception:
-                            logger.debug(
-                                "Could not release durable completion claim",
-                                exc_info=True,
-                            )
-                    return False
         elif evt.get("type") == "completion":
             # Background-process completions carry only session_key (chat/
             # thread routing), so after /new the notification from the OLD
@@ -26692,6 +26681,12 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             complete_event_delivery,
             release_event_delivery,
         )
+
+        # Check every destination before reserving any sibling delivery attempt.
+        for evt, _text in deliverable:
+            parent_id = str(evt.get("parent_session_id") or "").strip()
+            if parent_id and await self._classify_completion_target(parent_id) == "retry":
+                return False
 
         primary_evt, primary_text = deliverable[0]
         blocks = [primary_text]
