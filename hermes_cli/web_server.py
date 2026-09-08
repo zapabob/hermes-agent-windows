@@ -4885,6 +4885,7 @@ def _recent_upstream_commits(n: int = 20) -> List[Dict[str, Any]]:
                 "HEAD..origin/main",
                 f"-n{int(n)}",
             ],
+            creationflags=windows_hide_flags(),
             capture_output=True,
             text=True,
             # git log emits UTF-8 (commit subjects can carry emoji/CJK). On
@@ -6204,6 +6205,7 @@ def _run_setup_command(
 ) -> subprocess.CompletedProcess:
     return subprocess.run(
         command,
+        creationflags=windows_hide_flags(),
         shell=shell,
         executable="/bin/bash" if shell else None,
         env=_memory_provider_setup_env(),
@@ -15885,6 +15887,7 @@ def _probe_docker_backend() -> tuple:
     try:
         proc = subprocess.run(
             ["docker", "info", "--format", "{{.ServerVersion}}"],
+            creationflags=windows_hide_flags(),
             capture_output=True,
             text=True,
             encoding="utf-8",
