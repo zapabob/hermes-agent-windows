@@ -1,44 +1,28 @@
 # Hermes Agent Windows Workstation Edition
-A Windows-native AI workstation, built on Hermes Agent.
-Agent runtime · IDE workspace · Local AI · Memory · Browser · Security · Voice · VR/Unity
-<p align="center"><strong>Language · 言語 · 语言</strong></p>
 
-<details open>
-<summary><strong>King's English</strong></summary>
+A native Windows workspace for Hermes: an Electron desktop, CLI and messaging
+gateway, with optional local inference, memory, voice and automation integrations.
 
-Run the five commands in <a href="#setup-in-30-seconds">Setup in 30 seconds</a>.
-The shared <a href="#plug-ins-and-git-submodules">plug-in and submodule inventory</a>
-lists every bundled integration. The complete British English guide continues
-below.
+This is the independent Windows downstream maintained at
+[zapabob/hermes-agent-windows](https://github.com/zapabob/hermes-agent-windows).
+The original [Hermes Agent](https://github.com/NousResearch/hermes-agent) is
+developed by Nous Research. This fork is not endorsed by Nous Research.
+Both the upstream attribution and the [MIT licence](LICENSE) are retained.
 
-</details>
+**Current source version: 0.21.1.** This is a downstream patch version; the
+recorded upstream release remains 0.21.0. A source version or a main-branch push
+does not establish that a stable installer has been published.
 
-<details>
-<summary><strong>日本語</strong> — README内で30秒導入を表示</summary>
+日本語: Windows向けの独立派生版です。今回のソース版は **0.21.1** です。
+下のPowerShell手順から導入できます。既存環境の更新前には作業差分と各プロファイルを保存してください。
+旧版の詳説は [日本語](README.ja.md)・[简体中文](README.zh-CN.md) にあります。
+今回の版番号と検証状況は、このREADMEを参照してください。
 
-Windows 11 x64、PowerShell、Git、<code>uv</code>、Python 3.11–3.13を用意し、
-次の5コマンドを実行します。基本CLIに任意のGitサブモジュールは不要です。
+## Start from source
 
-```powershell
-git clone https://github.com/zapabob/hermes-agent-windows.git
-Set-Location hermes-agent-windows
-uv sync --locked --all-extras
-uv run hermes setup
-uv run hermes chat
-```
-
-Desktopは <code>uv run hermes desktop</code> で起動できます。標準ルートプラグイン
-51件、全154件のmanifest、Gitサブモジュール16件は
-<a href="#plug-ins-and-git-submodules">共通一覧</a>に掲載しています。
-詳説は <a href="README.ja.md">日本語版README</a> を参照してください。
-
-</details>
-
-<details>
-<summary><strong>简体中文</strong> — 在README内查看30秒安装</summary>
-
-准备Windows 11 x64、PowerShell、Git、<code>uv</code>和Python 3.11–3.13，
-然后运行以下五条命令。核心CLI不要求初始化可选Git子模块。
+The target is Windows 11 x64. Use PowerShell, Git, `uv`, and Python 3.11–3.13.
+Dependency installation can take several minutes and may require native build
+tools for optional extras. WSL is not required for the native application.
 
 ```powershell
 git clone https://github.com/zapabob/hermes-agent-windows.git
@@ -48,360 +32,126 @@ uv run hermes setup
 uv run hermes chat
 ```
 
-使用 <code>uv run hermes desktop</code> 启动Desktop。51个标准根插件、全部154个
-manifest及16个Git子模块列于<a href="#plug-ins-and-git-submodules">共用清单</a>。
-完整说明请参阅<a href="README.zh-CN.md">简体中文版README</a>。
+The setup wizard selects a model provider. A GPU is optional when using a
+remote provider. Local models require separately supplied model files and a
+compatible inference runtime; this repository does not include model weights.
 
-</details>
-
-> [!NOTE]
-> `README.md` is the canonical British English document. The Japanese and Simplified Chinese translations follow this file.
-
-An unofficial, Windows-native downstream of Hermes Agent for Windows 11 AI workstations.
-
-This single-maintainer fork is independent of, and not endorsed by, Nous Research.
-The original Hermes Agent is developed by Nous Research and licensed under MIT.
-Developed as a **generic agent harness** and **Windows universal AI workstation base**.
-
-> [!IMPORTANT]
-> **Release policy:** Hermes compatibility remains a project goal; source-tree parity with `NousResearch/hermes-agent` does not.
-> This downstream maintains its own Windows-first roadmap and release policy. Upstream remains an important reference and source of security, protocol, compatibility, and correctness fixes, which are integrated selectively when they strengthen the Windows-native product.
->
-> **Same lineage. Windows-first engineering. Independent roadmap.**
-
-[![Windows Workstation Tier-1 CI](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml/badge.svg)](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml)
-
-## Setup in 30 seconds
-
-> **TL;DR:** Run the five commands below. The wizard asks for a model provider;
-> optional plug-ins and Git submodules are not required for the core CLI.
-
-Use the source route today. You need Windows 11 x64, PowerShell, Git, `uv`,
-and Python 3.11-3.13. Node.js is needed only when building the Desktop app.
-
-```powershell
-git clone https://github.com/zapabob/hermes-agent-windows.git
-Set-Location hermes-agent-windows
-uv sync --locked --all-extras
-uv run hermes setup
-uv run hermes chat
-```
-
-This is the 30-second command path; dependency downloads and compilation may
-take longer on a fresh workstation.
-
-The setup wizard configures your model provider. The last command opens the
-CLI chat. To open the Desktop app from the same checkout, run:
+To launch Desktop from the same checkout:
 
 ```powershell
 uv run hermes desktop
 ```
 
-Prefer an installer or portable ZIP? Use a matching asset from the
-[downstream Releases page](https://github.com/zapabob/hermes-agent-windows/releases)
-only when it is published, and verify it against `SHA256SUMS.txt`. The complete
-procedure is in the [Windows installation guide](docs/windows/INSTALL.md).
-
-## What this fork adds
-
-- Native Windows Tier-1 CI for Python, Electron, Go, upstream API compatibility, regressions, and security locks.
-- Qualified installer, portable, and prior-version upgrade paths with spaces and non-admin operation.
-- Frozen upstream snapshot `b51c055a12220f8c7c18660e8599365012e19532`, never a moving release baseline.
-- Local llama.cpp/GGUF and embedding lifecycles through official provider and memory seams.
-- External Go watchdog for bounded Desktop/backend and optional embedding recovery.
-- Consumer NVIDIA workstation evidence kept separate from GPU-free hosted CI.
-
-Release candidate: `0.21.0`. This version follows the official Hermes release;
-downstream revisions are identified by commit SHA rather than a forked version
-suffix. Supported channels are `stable` and `preview`. Qualified artifacts are
-published only from the matching official-form version tag on the
+For an installer or portable archive, consult the
 [downstream Releases page](https://github.com/zapabob/hermes-agent-windows/releases).
-Until the first stable asset is present there, use the source route above. See
-the [release policy](docs/windows/RELEASE_POLICY.md) and
-[official upstream](https://github.com/NousResearch/hermes-agent).
+Use only an actually published asset with its matching manifest and checksums.
+The [installation guide](docs/windows/INSTALL.md) describes the layout and
+verification procedure; older version examples are not evidence of a 0.21.1 release.
 
-## Plug-ins and Git submodules
+## What lives in this fork
 
-Hermes discovers standard directory plug-ins through `plugin.yaml`,
-`__init__.py`, and `register(ctx)`. The 51 bundled standard root plug-ins are
-grouped below; `lmcache` is also shipped as a legacy manifest with its own
-registration path. Run `uv run hermes plugins` to see what is enabled for the
-active profile.
-
-| Area | Bundled root plug-ins |
+| Area | Implementation and entry points |
 | --- | --- |
-| Agents and operations | `ai-employee-org`, `ai-partner-os`, `airi`, `aituber-onair`, `aituber-kit`, `book-to-skill`, `desktop-dashboard`, `disk-cleanup`, `freebuff`, `freellmapi`, `google-colab`, `google_meet`, `hermes-gpt`, `hermes-bot-mode`, `line-ai-bot`, `lm-twitterer`, `memory-llm-wiki`, `notebooklm`, `oh-my-hermes`, `openclaw-vendor`, `openmanus`, `plugin-doctor`, `research-desk`, `scrapling-feeds`, `teams_pipeline`, `warashibe-reselling` |
-| Media, voice and XR | `akari-video`, `buzz`, `fish-audio-tts`, `hakua-tts-bridge`, `heygen`, `hyperframes`, `irodori-tts`, `questframe-fh6vr`, `sillytavern`, `spotify`, `unity-cli`, `unity-vrchat-bridge`, `unsloth-studio`, `voicebox`, `voicevox-tts`, `vrchat-autonomy` |
-| Knowledge, security and OSINT | `osint-agent`, `security-guidance`, `semantic-graph`, `shinka-osint`, `sitdeck-osint`, `surfsense`, `tookie-osint`, `world-intel-osint`, `worldmonitor-osint` |
-| Legacy manifest | `lmcache` |
+| Desktop and terminal | Electron UI, profile-aware Python backend, native process and terminal handling in `apps/desktop/`, `tui_gateway/` and `tools/` |
+| CLI and messaging | Shared agent runtime with CLI and platform adapters in `hermes_cli/` and `gateway/` |
+| Local inference | llama.cpp/GGUF launch and hot-swap helpers under `scripts/windows/`; models remain operator configuration |
+| Recovery | External [Go watchdog](scripts/windows/watchdog-go/README.md) with explicit process ownership |
+| Memory and retrieval | Profile-scoped state, memory-provider extensions and optional embedding services |
+| Optional capabilities | Plug-ins for voice, browser work, research, avatars and Unity/VR workflows |
 
-The repository contains 154 plug-in manifests in total. Specialised discovery
-families are kept separate so that only configured capabilities enter a
-session.
+The [integration inventory](docs/windows/INTEGRATIONS.md) retains the plug-in
+and submodule catalogue. These integrations have their own dependencies and
+configuration. They are not all enabled or qualified by installing the CLI.
+The feature ledger is [FEATURES.yaml](FEATURES.yaml); direct carried changes are
+tracked in [CARRY.yaml](CARRY.yaml).
 
-| Discovery family | Included providers/adapters |
-| --- | --- |
-| Browser (3) | `browser_use`, `browserbase`, `firecrawl` |
-| Cron (1) | `chronos` |
-| Dashboard authentication (4) | `basic`, `drain`, `nous`, `self_hosted` |
-| Image generation (7) | `deepinfra`, `fal`, `krea`, `openai`, `openai-codex`, `openrouter`, `xai` |
-| Memory (9) | `byterover`, `ebbinghaus`, `hindsight`, `holographic`, `honcho`, `mem0`, `openviking`, `retaindb`, `supermemory` |
-| Model providers (42) | `actual`, `ai-gateway`, `alibaba`, `alibaba-coding-plan`, `anthropic`, `arcee`, `azure-foundry`, `bedrock`, `commandcode`, `copilot`, `copilot-acp`, `custom`, `deepinfra`, `deepseek`, `fireworks`, `freebuff`, `freellmapi`, `gemini`, `gmi`, `huggingface`, `hypura`, `kilocode`, `kimi-coding`, `meta-ai`, `minimax`, `nebius-token-factory`, `nous`, `novita`, `nvidia`, `ollama-cloud`, `openai-codex`, `opencode-free`, `opencode-zen`, `openrouter`, `qwen-oauth`, `router`, `stepfun`, `upstage`, `vertex`, `xai`, `xiaomi`, `zai` |
-| Observability (1) | `langfuse` |
-| Messaging platforms (22) | `a2a`, `buzz`, `dingtalk`, `discord`, `email`, `feishu`, `google_chat`, `homeassistant`, `irc`, `line`, `matrix`, `mattermost`, `ntfy`, `photon`, `raft`, `simplex`, `slack`, `sms`, `teams`, `telegram`, `wecom`, `whatsapp` |
-| Video generation (3) | `deepinfra`, `fal`, `xai` |
-| Web search/extraction (11) | `brave_free`, `cloakbrowser`, `ddgs`, `exa`, `firecrawl`, `keenable`, `parallel`, `scrapling`, `searxng`, `tavily`, `xai` |
+## Changes in the 0.21.1 work
 
-Git submodules are optional integrations. Initialise all of them only when you
-need their features: `git submodule update --init --recursive`.
+Windows background Git and web helper calls use hidden-process creation flags
+to avoid opening separate console windows. The Git wrapper also separates
+non-interactive probes from the user-facing terminal. This addresses known
+helper launch paths; it is not a claim that every possible console source has
+been eliminated.
 
-| Path | Repository | Purpose |
-| --- | --- | --- |
-| `plugins/hermes-bot-mode/desktop` | [Hermes-Bot-Mode](https://github.com/zapabob/Hermes-Bot-Mode.git) | Desktop bot roster UI |
-| `vendor/openclaw-mirror/AI-Scientist` | [AI-Scientist](https://github.com/zapabob/AI-Scientist.git) | Scientific-agent vendor mirror |
-| `vendor/openclaw-mirror/ATLAS` | [ATLAS](https://github.com/zapabob/ATLAS.git) | Research-agent vendor mirror |
-| `vendor/openclaw-mirror/ShinkaEvolve` | [ShinkaEvolve](https://github.com/zapabob/ShinkaEvolve.git) | Evolution workflow vendor mirror |
-| `vendor/neuro-sdk` | [neuro-sdk](https://github.com/zapabob/neuro-sdk.git) | Neuro integration SDK |
-| `vendor/openmanus` | [OpenManus](https://github.com/zapabob/OpenManus.git) | OpenManus runtime |
-| `vendor/SillyTavern` | [SillyTavern](https://github.com/zapabob/SillyTavern.git) | Local character-chat frontend |
-| `vendor/shinka-osint` | [ShinkaEvolve-OSINT](https://github.com/zapabob/ShinkaEvolve-OSINT.git) | OSINT analysis runtime |
-| `vendor/buzz` | [buzz](https://github.com/zapabob/buzz.git) | Speech transcription runtime |
-| `vendor/officecli` | [OfficeCLI](https://github.com/zapabob/OfficeCLI.git) | Office document command-line tools |
-| `vendor/akari-video` | [akari-video](https://github.com/zapabob/akari-video.git) | AI video editor |
-| `vendor/cloakbrowser` | [cloakbrowser](https://github.com/zapabob/cloakbrowser.git) | Browser automation runtime |
-| `vendor/airi` | [airi](https://github.com/zapabob/airi.git) | Avatar and companion runtime |
-| `vendor/oh-my-hermes` | [oh-my-hermes](https://github.com/zapabob/oh-my-hermes.git) | Hermes workflow extension |
-| `vendor/OpenMausBot` | [OpenMausBot](https://github.com/zapabob/OpenMausBot.git) | Desktop automation bot |
-| `vendor/heygen-cli` | [heygen-cli](https://github.com/heygen-com/heygen-cli.git) | HeyGen command-line client |
+Credential leases remain bound to the selected entry, and an empty credential
+pool cannot silently start a delegated child with an inherited client.
+Telemetry consent follows the owning profile. Process completion and
+delegation work preserves parent ownership, durable results and retry state.
+Desktop backend exit handling checks the identity of the child it owns.
 
-## 1. Product identity
+The reviewed local feature set also includes paused-at-creation cron jobs,
+explicit MCP device login, foreign-session browsing/import, and Desktop media,
+todo and capability-scope handling. A similarity to upstream code is not used
+as a substitute for testing these contracts.
 
-Hermes Agent Windows Workstation Edition is a feature-rich Windows-first
-downstream distribution for persistent local AI workstations. It retains the
-Hermes CLI command, public contracts, plugin model, and upstream history while
-maintaining an explicit downstream policy for native Windows operation, local
-models, memory, voice, VR/Unity, and recovery.
+## Build Desktop
 
-The product ledger is [FEATURES.yaml](FEATURES.yaml). Direct patches carried in
-upstream-owned files are tracked separately in [CARRY.yaml](CARRY.yaml).
-
-### AI workstation harness (agents)
-
-This checkout is operated as a **Windows AI workstation harness**. Agents must:
-
-1. Read root [`AGENTS.md`](AGENTS.md) (CodeGraph §16, root layout §17).
-2. Use **CodeGraph before broad exploration**:
-
-```powershell
-npx --yes @colbymchenry/codegraph sync .
-npx --yes @colbymchenry/codegraph query <symbol>
-npx --yes @colbymchenry/codegraph impact <symbol>
-```
-
-3. Follow fork routes in [`fork/AGENTS.md`](fork/AGENTS.md) (merge harness vs
-   Hypura agent-harness vs operations vs local-workspace).
-4. Keep the repository **surface** clean: move scratch into `output/`, `tmp/`,
-   or `notes/archives/` — never delete operator data, never relocate packaging
-   entry modules. See [`fork/local-workspace/README.md`](fork/local-workspace/README.md).
-
-Architecture map: [`docs/maps/REPOSITORY_MAP.md`](docs/maps/REPOSITORY_MAP.md).
-
-## 2. Windows-first goals
-
-The primary target is Windows 11 x64 with native Python, native Node/Electron,
-an interactive desktop, and a consumer NVIDIA GPU. The design supports
-continuous operation with local LLM and embedding services, voice services,
-VRChat/Unity integrations, and remote management.
-
-Windows is a Tier-1 target independently of upstream platform priorities.
-Native behavior is tested on `windows-latest`; Linux cross-compilation is not
-accepted as Windows runtime evidence.
-
-## 3. Who this is for
-
-This distribution is intended for operators and developers who maintain a
-Windows AI workstation and need source-level control over local inference,
-long-lived services, memory, desktop behavior, and recovery. It assumes comfort
-with PowerShell, Git, Python environments, Node tooling, and reading CI results.
-
-For the simplest official Hermes installation and the upstream support model,
-use the original project linked in section 15.
-
-## 4. Downstream advantages
-
-The downstream adds native Windows runtime and recovery contracts, an external
-Go watchdog, local llama.cpp/GGUF and embedding lifecycles, local secretary and
-provider integrations, semantic and cognitive memory extensions, VRChat/Unity
-and local voice routes, OSINT/Shinka extensions, Desktop Git/review surfaces,
-and additional security and provider-fallback coverage.
-
-These capabilities compose with official Hermes APIs. The fork does not create
-parallel session, approval, profile, gateway, model-catalogue, or tool-registry
-authorities.
-
-## 5. Verified feature matrix
-
-| Area | Verified implementation | Contract evidence |
-| --- | --- | --- |
-| Windows runtime | Native path, process, IPC, NTFS handoff, terminal, credentials, power and GPU helpers | `tests/downstream/test_windows_contracts.py` |
-| Recovery | External Go watchdog and watchdog-managed Desktop backend | `scripts/windows/watchdog-go/*_test.go` |
-| Local inference | llama.cpp/GGUF fallback and hot-swap scripts | `tests/hermes_cli/test_llama_fallback_runtime.py` |
-| Local embeddings | Watchdog embedding lifecycle and semantic graph backends | `scripts/windows/watchdog-go/embedding_test.go` |
-| Local secretary | Read/write action separation over official agent boundaries | `tests/downstream/test_upstream_api_contracts.py` |
-| Providers | Hypura/local provider integration and provider rotation/fallbacks | `tests/fork/test_hypura_oai_proxy.py` |
-| Memory | Semantic Graph hybrid retrieval and Ebbinghaus cognitive extensions | `tests/plugins/test_semantic_graph_registration.py` |
-| VR and Unity | VRChat autonomy tooling and Unity bridge | `tests/plugins/test_vrchat_autonomy_plugin.py` |
-| Voice | Irodori, VOICEVOX, and local TTS routes | `tests/plugins/test_irodori_tts_plugin.py` |
-| AITuber | AITuber OnAir and AITuber Kit plugins | `tests/plugins/test_aituber_onair_plugin.py` |
-| OSINT/Shinka | Shinka, SitDeck, WorldMonitor, and OSINT plugin surfaces | `tests/plugins/test_shinka_osint_plugin.py` |
-| Desktop | Git/review extensions through official Desktop IPC and pane contracts | `apps/desktop/electron/git-review-ops.test.ts` |
-| Security | Security guidance plus hardened approval and execution boundaries | `tests/plugins/test_security_guidance_plugin.py` |
-
-The complete per-feature owner, public surface, upstream overlap, Windows
-requirement, tests, and integration policy are recorded in `FEATURES.yaml`.
-
-## 6. Windows Tier-1 support contract
-
-Tier-1 coverage includes native drive paths, MSYS `/c/...` and supported WSL
-`/mnt/c/...` aliases, NTFS locks, locked executable and extension-module
-updates, process trees, applicable Job Object behavior, PowerShell quoting, Git
-Bash boundaries, CP932/UTF-8 boundaries, CRLF, venv `Scripts\`, and Electron
-stdio pipes.
-
-Runtime qualification covers sleep/resume, network and loopback-provider
-recovery, Desktop relaunch, updater handoff, watchdog recovery, llama restart
-and hot-swap, embedding restart, and profile/session persistence. The normative
-contract is [.codex/WINDOWS_PLATFORM_CONTRACT.md](.codex/WINDOWS_PLATFORM_CONTRACT.md).
-
-## 7. Local AI architecture
-
-Official Hermes provider and model-catalogue contracts remain authoritative.
-Downstream local runtimes connect through those contracts: llama.cpp/GGUF via
-the local fallback runtime, Hypura through the provider plugin seam, and local
-embeddings through Semantic Graph backends and the watchdog-managed loopback
-service.
-
-Operator scripts remain under `scripts/windows/`. Runtime plugin entrypoints
-remain under `plugins/` so official discovery continues to work.
-
-## 8. Watchdog and recovery architecture
-
-`scripts/windows/watchdog-go` is the sole outer automatic restart authority. It
-can supervise the packaged Desktop, publish the prewarmed backend manifest, and
-coordinate the configured local embedding process. Desktop, backend, llama,
-and embedding components may expose health or request recovery, but they do not
-form independent automatic restart loops.
-
-The downstream Python service modules are side-effect-free contracts. Actual
-operator startup and deployment remain in the PowerShell and Go surfaces under
-`scripts/windows/`.
-
-## 9. Memory and semantic retrieval
-
-The Semantic Graph plugin provides graph storage, hybrid retrieval, embeddings,
-fusion, abstention, and cognitive helpers through official plugin and memory
-interfaces. The Ebbinghaus provider adds experience and retention policies and
-can bridge to Semantic Graph. Both retain isolated plugin entrypoints and
-focused test suites.
-
-## 10. VRChat, Unity, and voice integrations
-
-VRChat autonomy tools, observation and relay helpers, the Unity bridge package,
-VOICEVOX, Irodori, and other local TTS routes remain downstream-owned features.
-They use official plugin, tool, and TTS contracts rather than modifying the core
-into a VR- or voice-specific runtime.
-
-External publishing and write actions remain approval-gated. Local generation
-does not imply authorization to publish or mutate an external account.
-
-## 11. Installation
-
-The Windows release workflow produces a per-user NSIS installer and a portable
-ZIP, then runs clean-install, launch, and upgrade E2E before a stable tag may
-publish them. Obtain published artifacts only from the
-[downstream Releases page](https://github.com/zapabob/hermes-agent-windows/releases)
-and verify `SHA256SUMS.txt`. The current candidate is reported as unsigned
-unless its `release-manifest.json` says otherwise. Full instructions are in
-[docs/windows/INSTALL.md](docs/windows/INSTALL.md).
-
-The source/development route remains available in PowerShell:
-
-```powershell
-git clone https://github.com/zapabob/hermes-agent-windows.git
-Set-Location hermes-agent-windows
-uv sync --locked --all-extras
-uv run hermes --version
-uv run hermes setup
-```
-
-For Desktop development and a source build:
+Use a Node.js version accepted by
+[`apps/desktop/package.json`](apps/desktop/package.json). Install JavaScript
+dependencies at the repository root; Desktop is an npm workspace.
 
 ```powershell
 npm ci
-npm --workspace apps/desktop run typecheck
-npm --workspace apps/desktop run build
+npm run typecheck --workspace apps/desktop
+npm run build --workspace apps/desktop
 ```
 
-Review configuration before enabling any 24/7 service or Scheduled Task. API
-keys and tokens belong in the profile-scoped Hermes secret store or `.env` as
-documented by Hermes; non-secret settings belong in `config.yaml`.
+The build produces application files. Packaging and installing a new Desktop
+binary are separate operations. Do not infer the running version from source
+files alone, and do not replace an executable while its process is running.
 
-## 12. Update and upstream integration policy
+## Update an existing workstation
 
-Upstream is an integration input, not the downstream product authority. Source-tree parity with upstream is explicitly not a project objective. Each
-campaign freezes an exact SHA in `.codex/UPSTREAM_SNAPSHOT.json`, classifies its
-commits in `UPSTREAM_ADOPTION.yaml`, and records direct carry in `CARRY.yaml`.
-`scripts/upstream/snapshot_sync.py` accepts an explicit SHA and never resolves a
-moving latest branch.
+Save uncommitted source work before changing commits. Keep credentials,
+profile databases, model files and local operational records out of commits.
+Record the current commit and retain a rollback copy of the deployed Desktop.
 
-Official public APIs are preferred. Security and data-integrity fixes are
-composed with stronger verified downstream properties. A downstream feature is
-not removed merely because upstream adds a similar name; replacement requires
-parity evidence.
+Review the selected downstream commit, test it, then update the checkout and
+rebuild the application. Restart only services whose executable path and
+process identity are confirmed. The Desktop control backend, messaging gateway,
+llama server, embedding server and Go watchdog have distinct lifecycles;
+closing one window does not establish that all of them restarted.
 
-Semantic-preserving refactoring is an explicit maintenance policy. The present
-refactored surfaces continue to operate normally even where their internal
-implementation has been reorganised, provided that externally observable
-behaviour remains equivalent. Acceptance therefore follows preserved public
-contracts, side-effect boundaries, profile isolation, relevant test coverage,
-and live service health rather than source-level resemblance to the previous
-implementation.
+After restarting, check the application window, backend response and actual
+model readiness. A listening port alone does not prove a successful agent turn.
+See [local runtime configuration](docs/local-secretary-runtime.md) and the
+[watchdog documentation](scripts/windows/watchdog-go/README.md).
 
-## 13. Architecture
+## Validation status and limits
 
-Fork-owned Python boundaries live under `downstream/`: `compat/hermes` delegates
-to official contracts, `platform/windows` owns native policy, `services` defines
-long-lived service contracts, and `features` validates the product ledger.
-There is deliberately no top-level Python package named `platform`.
+The 2026-09-08 local Windows work has recorded Desktop type checking and 28
+focused Desktop tests, native child-process spawn/kill tests, hidden-console
+helper probes, credential-routing tests, and loopback completion/OAuth tests.
+These are scoped checks, not qualification of every optional integration.
 
-Core Hermes remains the narrow waist. Plugins and skills hold capabilities,
-profile-aware official path helpers own state paths, and prompt-cache and
-message-role invariants remain mandatory.
+The initial combined Python run had failures and skips. Individual reruns
+separated missing test dependencies, blocked test-only loopback traffic,
+fixture synchronisation and real integration defects. Skipped POSIX permission
+tests do not establish Windows ACL correctness.
 
-## 14. Security
+Full upstream-history adoption, all private security contracts, clean-machine
+installation, signed artifacts, exact-head hosted CI and complete Desktop
+first-run readiness remain separate gates. An isolated packaged first-run
+probe reached the backend but remained on onboarding; that path is not yet
+qualified. Do not interpret this README, a build, or a version bump as a
+COMPLETE or stable-release certificate.
 
-Do not commit secrets, personal runtime data, profile databases, model files,
-local artifacts, or generated credentials. Keep write, publish, destructive,
-and shell actions behind explicit approval. Child service environments should
-project only required variables rather than inherit ambient credentials.
+## Frozen comparisons and contribution policy
 
-Security gates check the locked Python graph, Python advisories, production npm
-advisories, Go module integrity, OSV results, supply-chain policies, and the
-repository's security regression tests. A green local unit test is not a
-substitute for exact-head CI or live runtime evidence.
+For the 2026-09-08 implementation campaign, the fork comparison base is
+`20c7dd9d87fc6d0dc6b5cb2ed675e139b788be34` and the upstream comparison endpoint is
+`6e2b8e070d28b1a3381a3fb290b6b8d6cce13cef`. Neither is replaced by a moving main.
+The older upstream release/snapshot fields in
+[`downstream/distribution.json`](downstream/distribution.json) retain their
+own provenance; they are not the campaign endpoint.
 
-## 15. Upstream project
+Integrate missing behaviour through its canonical owner. Preserve the fork's
+profile isolation, prompt caching, approval boundaries and demonstrated
+features. Do not use a wholesale upstream merge, rebase or cherry-pick as a
+substitute for contract review.
 
-Original Hermes Agent is maintained by Nous Research:
-[NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent).
-
-The official upstream installer, website, documentation, issue tracker, and
-support channels apply to the upstream distribution. They do not install or
-endorse this downstream repository.
-
-## 16. License and attribution
-
-This downstream remains licensed under the repository's MIT License. Original
-Hermes Agent copyright and contributor history are preserved. Downstream work
-is maintained independently by the fork contributors; upstream and downstream
-issues, releases, and product claims must remain clearly distinguished.
+Read [AGENTS.md](AGENTS.md) before implementation. The campaign pins CodeGraph
+1.6.0 and obtains its CLI/MCP schema from the installed executable. An index
+with extraction limits is incomplete evidence, even if it has no pending
+references. See the [release policy](docs/windows/RELEASE_POLICY.md) for the
+separate publication gates.

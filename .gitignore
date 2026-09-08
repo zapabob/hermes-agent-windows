@@ -285,3 +285,8 @@ native/fts5_cjk/*.so
 /_runtime/
 /dependabot_raw.json
 /mcp-installs/
+
+# Operator campaign records and independent local PR checkouts are not Hermes source.
+/.codex/campaigns/
+/ANTIGRAVITY_IMPLEMENTATION_SPEC_JA.md
+/airi-pr2477/

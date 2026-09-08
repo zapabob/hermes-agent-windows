@@ -4,23 +4,17 @@ Official Hermes is the innovation stream. Hermes Agent Windows Workstation
 Edition is a qualified downstream baseline for native Windows workstations.
 The two projects retain separate release, issue, and support authorities.
 
-## Upstream-aligned release trains
+## Downstream semantic versions and upstream provenance
 
-A release train starts from one exact official release and retains its semantic
-version without a downstream suffix:
+The downstream may increment its own semantic version for Windows fixes.
+Version 0.21.1 is a downstream patch over the recorded upstream 0.21.0 release.
+`downstream/distribution.json` declares `version_source: downstream`; its
+upstream version, release commit and frozen snapshot retain their independent
+provenance. Updating the downstream version does not advance those references.
 
-```text
-official Hermes vX.Y.Z
-  -> Windows qualification at vX.Y.Z
-  -> downstream revision identified by its commit SHA
-```
-
-The train may contain selected security backports, Windows-critical fixes, and
-downstream feature fixes. It never follows moving upstream `main`, and it does
-not mint an independent semantic-version series. Every manifest records the
-official version and release commit, frozen upstream SHA, downstream SHA,
-channel, architecture, artifact hashes, signing state, and qualification state.
-The official release history and changelog are the version authority.
+Python metadata, the CLI, Desktop package metadata and lockfiles must agree on
+the downstream version. Each candidate also has an exact Git SHA. A version
+increment does not waive any qualification or publication gate.
 
 ## Stable and preview
 
@@ -38,8 +32,8 @@ and is never inferred from GitHub-hosted runners.
 ## Publication
 
 Main-branch pushes build and qualify preview artifacts but do not publish a
-public GitHub Release. Only a version tag matching the official-form
-distribution metadata, such as `v0.21.0`, may publish the stable bundle. The
+public GitHub Release. Only a version tag matching the downstream
+distribution metadata, such as `v0.21.1`, may publish the stable bundle. The
 release contains the
 NSIS installer, portable ZIP, `release-manifest.json`, `SHA256SUMS.txt`, release
 notes, qualification reports, and upgrade-baseline identity.
