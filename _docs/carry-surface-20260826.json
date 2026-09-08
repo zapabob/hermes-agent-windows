@@ -17,12 +17,12 @@
   "schema_version": 1,
   "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
   "summary": {
-    "all_fork_specific_loc": 2706244,
-    "carry_surface_files": 5055,
-    "cwc": 83873385,
-    "fork_owned_loc": 1162335,
-    "upstream_owned_fork_loc": 1543909,
-    "utr": 0.570499
+    "all_fork_specific_loc": 2706442,
+    "carry_surface_files": 5057,
+    "cwc": 83882614,
+    "fork_owned_loc": 1162384,
+    "upstream_owned_fork_loc": 1544058,
+    "utr": 0.570512
   },
   "top_carry_risks": [
     {
@@ -44,10 +44,10 @@
       "upstream_frequency": 95
     },
     {
-      "added": 21506,
-      "cwc": 3848460,
+      "added": 21510,
+      "cwc": 3849076,
       "deleted": 3484,
-      "patch_size": 24990,
+      "patch_size": 24994,
       "path": "cli.py",
       "semantic_coupling": 2,
       "upstream_frequency": 77

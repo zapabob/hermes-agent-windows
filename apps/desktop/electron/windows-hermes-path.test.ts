@@ -241,10 +241,7 @@ test('getVenvSitePackagesEntries: returns empty for a falsy venvRoot', () => {
 })
 
 test('isWindowsVenvHermesExeShim: true for Scripts/hermes.exe on Windows', () => {
-  assert.equal(
-    isWindowsVenvHermesExeShim('C:\\root\\venv\\Scripts\\hermes.exe', { isWindows: true }),
-    true
-  )
+  assert.equal(isWindowsVenvHermesExeShim('C:\\root\\venv\\Scripts\\hermes.exe', { isWindows: true }), true)
 })
 
 test('isWindowsVenvHermesExeShim: false off Windows and for non-Scripts paths', () => {

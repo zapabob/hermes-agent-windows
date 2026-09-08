@@ -112,9 +112,13 @@ def test_update_network_git_calls_never_prompt_for_credentials():
     assert kwargs["stdin"] is subprocess.DEVNULL
     assert kwargs["env"]["GIT_TERMINAL_PROMPT"] == "0"
     assert kwargs["env"]["GCM_INTERACTIVE"] == "Never"
-    assert "GIT_CONFIG_COUNT" not in kwargs["env"] or kwargs["env"]["GIT_CONFIG_COUNT"] == os.environ.get(
-        "GIT_CONFIG_COUNT"
-    )
+    config = {
+        kwargs["env"][f"GIT_CONFIG_KEY_{index}"]: kwargs["env"][f"GIT_CONFIG_VALUE_{index}"]
+        for index in range(int(kwargs["env"].get("GIT_CONFIG_COUNT", "0")))
+    }
+    assert config["credential.helper"] == ""
+    assert config["core.askPass"] == ""
+    assert config["core.fsmonitor"] == "false"
 
     source = inspect.getsource(update_cmd)
     missing = _network_git_calls_without_prompt_guard(source)

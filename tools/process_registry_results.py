@@ -1,6 +1,6 @@
 """Bounded, profile-local receipts for completed terminal processes.
 
-Receipts are read through process_manage, never replayed as notifications or
+Receipts are read through process, never replayed as notifications or
 adopted as live PIDs. Each producer writes its own file so independent one-shot
 parents cannot overwrite each other's results in the running-PID checkpoint.
 """

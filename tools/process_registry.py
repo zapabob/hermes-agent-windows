@@ -3184,11 +3184,3 @@ registry.register(
     handler=_handle_process,
     emoji="⚙️",
 )
-
-registry.register(
-    name="process_manage",
-    toolset="terminal",
-    schema=PROCESS_SCHEMA,
-    handler=_handle_process,
-    emoji="⚙️",
-)

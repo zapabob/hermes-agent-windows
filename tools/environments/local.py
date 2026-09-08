@@ -529,17 +529,18 @@ def _sanitize_subprocess_env(base_env: dict | None, extra_env: dict | None = Non
         _resolve_passthrough_value = lambda _name, fallback: fallback  # noqa: E731
 
     sanitized: dict[str, str] = {}
-    _plugin_strip = _plugin_terminal_env_strip_keys()
+    _plugin_strip = {key.upper() for key in _plugin_terminal_env_strip_keys()}
+    _provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST}
 
     for key, value in (base_env or {}).items():
         if key.startswith(_HERMES_PROVIDER_ENV_FORCE_PREFIX):
             continue
         if _is_hermes_internal_secret(key):
             continue
-        if key in _plugin_strip:
+        if key.upper() in _plugin_strip:
             continue
         passthrough = _is_passthrough(key)
-        if key in _HERMES_PROVIDER_ENV_BLOCKLIST and not passthrough:
+        if key.upper() in _provider_strip and not passthrough:
             continue
         resolved = _resolve_passthrough_value(key, value) if passthrough else value
         if resolved is not None:
@@ -553,11 +554,11 @@ def _sanitize_subprocess_env(base_env: dict | None, extra_env: dict | None = Non
             sanitized[real_key] = value
         elif _is_hermes_internal_secret(key):
             continue
-        elif key in _plugin_strip:
+        elif key.upper() in _plugin_strip:
             continue
         else:
             passthrough = _is_passthrough(key)
-            if key in _HERMES_PROVIDER_ENV_BLOCKLIST and not passthrough:
+            if key.upper() in _provider_strip and not passthrough:
                 continue
             resolved = _resolve_passthrough_value(key, value) if passthrough else value
             if resolved is not None:
@@ -777,11 +778,15 @@ def hermes_subprocess_env(
             raise ValueError(f"credential-shaped environment key is not allowed: {key}")
         env[key] = value
 
-    # Tier 1 — always strip.
-    for key in _ALWAYS_STRIP_KEYS:
-        env.pop(key, None)
-    for key in _plugin_terminal_env_strip_keys():
-        env.pop(key, None)
+    # Compare names case-insensitively even when the host uses a plain dict.
+    # A POSIX caller can pass Windows-style case variants to a child.
+    always_strip = {key.upper() for key in _ALWAYS_STRIP_KEYS}
+    always_strip.update(key.upper() for key in _plugin_terminal_env_strip_keys())
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST}
+    for key in list(env):
+        upper = key.upper()
+        if upper in always_strip or (not inherit_credentials and upper in provider_strip):
+            env.pop(key, None)
     # Internal routing hints and Hermes-internal dynamic secrets
     # (``AUXILIARY_<TASK>_API_KEY`` / ``_BASE_URL`` side-LLM credentials,
     # ``GATEWAY_RELAY_*`` relay-auth material) must never reach a child,

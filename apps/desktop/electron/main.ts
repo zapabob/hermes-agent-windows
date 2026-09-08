@@ -2866,12 +2866,7 @@ function runGit(args, options: any = {}): Promise<{ code: number; stdout: string
     const isolation = noCredentialUI ? getPassiveGitIsolation() : null
 
     const env = noCredentialUI
-      ? passiveGitEnvironment(
-          inheritedEnv,
-          IS_WINDOWS ? 'NUL' : '/dev/null',
-          isolation?.home,
-          isolation?.cwd
-        )
+      ? passiveGitEnvironment(inheritedEnv, IS_WINDOWS ? 'NUL' : '/dev/null', isolation?.home, isolation?.cwd)
       : inheritedEnv
 
     const child = spawn(
@@ -2991,8 +2986,7 @@ async function checkUpdates() {
     }
   }
 
-  const git = args =>
-    runGit(passiveGitArgs(args), { cwd: updateRoot, noCredentialUI: true }).then(r => r.stdout.trim())
+  const git = args => runGit(passiveGitArgs(args), { cwd: updateRoot, noCredentialUI: true }).then(r => r.stdout.trim())
 
   const [currentSha, target, dirtyStr, currentBranch] = await Promise.all([
     git(['rev-parse', 'HEAD']),
@@ -3277,9 +3271,11 @@ async function backendParentMatches(entry) {
 
 async function stopOwnedBackend(identity) {
   const matched = await processIdentityMatches(identity)
+
   if (matched === false) {
     return
   }
+
   if (matched !== true) {
     throw new Error(`Cannot verify ownership of backend PID ${identity.pid}; retaining its ownership record.`)
   }
@@ -3288,11 +3284,7 @@ async function stopOwnedBackend(identity) {
     const child = managedBackendChildren.get(identity.pid)
     const childIdentity = child?.hermesBackendIdentity
 
-    if (
-      !child ||
-      childIdentity?.nonce !== identity.nonce ||
-      childIdentity?.startMarker !== identity.startMarker
-    ) {
+    if (!child || childIdentity?.nonce !== identity.nonce || childIdentity?.startMarker !== identity.startMarker) {
       throw new Error(`No live ChildProcess handle authorizes stopping backend PID ${identity.pid}.`)
     }
 
@@ -3354,6 +3346,7 @@ const backendOwnership = createBackendOwnership({
         if (error?.code === 'ENOENT') {
           return null
         }
+
         throw error
       }
     },
@@ -3442,6 +3435,7 @@ function releaseBackendChild(child) {
   // Retain both durable ownership and the only handle authorized to stop it.
   if (child.exitCode == null && child.signalCode == null) {
     rememberLog(`Backend PID ${identity.pid} has no confirmed exit; retaining ownership.`)
+
     return
   }
 
@@ -4710,39 +4704,39 @@ function resolveHermesBackend(backendArgs) {
           `Ignoring venv Hermes console shim at ${hermesCommand}: refuse direct spawn (console flash); falling through.`
         )
       } else {
-      // Smoke-test the candidate before trusting it. A `hermes` shim
-      // left behind by a half-uninstalled pip install (or a venv
-      // entry-point pointing at a deleted interpreter) still resolves
-      // via findOnPath but explodes on spawn -- the user then sees a
-      // dead backend instead of the first-launch installer. The cheap
-      // `--version` probe (see backend-probes.ts) catches that case
-      // and lets the resolver fall through to step 6 / bootstrap.
-      const shellForProbe = isCommandScript(hermesCommand)
+        // Smoke-test the candidate before trusting it. A `hermes` shim
+        // left behind by a half-uninstalled pip install (or a venv
+        // entry-point pointing at a deleted interpreter) still resolves
+        // via findOnPath but explodes on spawn -- the user then sees a
+        // dead backend instead of the first-launch installer. The cheap
+        // `--version` probe (see backend-probes.ts) catches that case
+        // and lets the resolver fall through to step 6 / bootstrap.
+        const shellForProbe = isCommandScript(hermesCommand)
 
-      // HERMES_DESKTOP_HERMES is an explicit deployment override (used by
-      // the Nix wrapper), not a discovered PATH candidate. It must not fall
-      // through to the install-script bootstrap if the optional probe times
-      // out under load; the pinned backend is the only valid runtime there.
-      if (shouldTrustHermesOverride(hermesOverride) || verifyHermesCli(hermesCommand, { shell: shellForProbe })) {
-        // `unwrapped` above already answered "is this a Windows venv shim?" —
-        // it was null (not a shim, or its import probe failed). Do NOT re-run
-        // unwrapWindowsVenvHermesCommand here: the second call repeats the
-        // same un-memoized import probe, costing up to another full probe
-        // timeout on the boot path for an answer we already have.
-        return {
-          label: `existing Hermes CLI at ${hermesCommand}`,
-          command: hermesCommand,
-          args: backendArgs,
-          bootstrap: false,
-          env: {},
-          kind: 'command',
-          shell: shellForProbe
+        // HERMES_DESKTOP_HERMES is an explicit deployment override (used by
+        // the Nix wrapper), not a discovered PATH candidate. It must not fall
+        // through to the install-script bootstrap if the optional probe times
+        // out under load; the pinned backend is the only valid runtime there.
+        if (shouldTrustHermesOverride(hermesOverride) || verifyHermesCli(hermesCommand, { shell: shellForProbe })) {
+          // `unwrapped` above already answered "is this a Windows venv shim?" —
+          // it was null (not a shim, or its import probe failed). Do NOT re-run
+          // unwrapWindowsVenvHermesCommand here: the second call repeats the
+          // same un-memoized import probe, costing up to another full probe
+          // timeout on the boot path for an answer we already have.
+          return {
+            label: `existing Hermes CLI at ${hermesCommand}`,
+            command: hermesCommand,
+            args: backendArgs,
+            bootstrap: false,
+            env: {},
+            kind: 'command',
+            shell: shellForProbe
+          }
         }
-      }
 
-      rememberLog(
-        `Ignoring existing Hermes CLI at ${hermesCommand}: --version probe failed; falling through to bootstrap.`
-      )
+        rememberLog(
+          `Ignoring existing Hermes CLI at ${hermesCommand}: --version probe failed; falling through to bootstrap.`
+        )
       }
     }
   }
@@ -17548,9 +17542,8 @@ app.on('before-quit', event => {
           repoRoot: ACTIVE_HERMES_ROOT
         })
 
-        desktopStopFenceAckWait = (result.preserved
-          ? Promise.resolve(true)
-          : waitForDesktopStopFenceAck({ filePath, fence: result.fence })
+        desktopStopFenceAckWait = (
+          result.preserved ? Promise.resolve(true) : waitForDesktopStopFenceAck({ filePath, fence: result.fence })
         ).then(acknowledged => {
           desktopStopFenceAckWait = null
 

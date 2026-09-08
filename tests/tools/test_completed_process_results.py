@@ -120,9 +120,9 @@ def test_headless_terminal_result_survives_cli_exit(tmp_path):
         import json, sys
         import tools.process_registry as pr
         from tools.registry import registry
-        result = registry.get_entry("process_manage").handler(
+        result = registry.get_entry("process").handler(
             {"action": "log", "session_id": sys.argv[1]})
-        status = registry.get_entry("process_manage").handler(
+        status = registry.get_entry("process").handler(
             {"action": "poll", "session_id": sys.argv[1]})
         print(json.dumps({"result": json.loads(result), "status": json.loads(status),
                           "replayed": not pr.process_registry.completion_queue.empty()}))

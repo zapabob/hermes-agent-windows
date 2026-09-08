@@ -105,6 +105,40 @@ README was rewritten for downstream 0.21.1. The previous integration inventory i
 
 ## Evidence and remaining gates
 
+### CI follow-up: case-sensitive hosts and canonical tool routing
+
+The hosted Python run exposed lower/mixed-case credential names surviving the
+child-environment scrub on Linux. Both existing environment owners now compare
+credential names case-insensitively, preserving the explicit provider-inheritance
+tier and leaving the parent mapping unchanged. Factory mapping tests pass on
+Windows independently of the operating system's environment-key normalization.
+
+The refactored CLI input loop had lost interrupt recovery and skipped post-turn
+bookkeeping after exceptions. The loop now finalizes each submitted turn in a
+finally block and invokes recovery only after an interrupted turn. Tests execute
+the actual nested input-loop function with normal, failed and interrupted turns.
+
+The duplicate process_manage schema registration was removed. Handoff, durable
+completion and receipt retrieval remain on the existing process tool; native
+Windows receipt recovery (2 tests) and child handoff (3 tests) pass through that
+canonical registration. Blank-slate setup asserts the effective catalog before
+Tool Search wraps deferred tools, without changing its expected tool list.
+
+Successful notification fixtures now return admission receipts after accepting an
+event; rejecting fixtures still do not acknowledge. Version checks compare the
+actual downstream metadata instead of a stale 0.21.0 literal. README navigation,
+installation links, historical inventory and attribution are retained.
+
+The subprocess audit delta was reviewed: the banner's same Git spawn moved from
+_git_stdout to _git_run, with network calls retaining credential-isolated options.
+The reviewed fingerprint records that rename; no runtime spawn was added.
+Two .node-test.mjs child-process fixtures are now recognized as test files, like
+.test and .spec files. Dependency directories are pruned before audit traversal;
+the production source scopes and mandatory sanitized-boundary assertions remain.
+The audit passes all five checks. CodeGraph 1.6.0 re-extraction covers the token
+source, both environment owners, CLI input loop and process registry, but retains
+unresolved references and is not a complete graph qualification.
+
 Desktop type checking and 28 focused UI tests passed. Windows process tests cover native spawn/output/exit/kill, and handoff covers a live child surviving sibling cleanup. Git helper tests check hidden native children. Approval regression: 180 passed, one symlink-availability skip. OAuth loopback: 57 passed, one POSIX permission skip. Token-source tests: 34 passed in the installed dependency runtime, with isolated profile state. Completion backlog: two tests passed using an owned loopback HTTP fixture.
 
 The first combined Python run recorded 205 passes, six failures and three skips. It is retained as a failed run. Subsequent isolated runs diagnosed dependencies, fixture networking/synchronisation and composition defects. A hung pre-admission-fixture run was interrupted and is not a pass.

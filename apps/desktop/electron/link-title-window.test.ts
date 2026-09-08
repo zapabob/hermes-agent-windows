@@ -134,12 +134,9 @@ test('title request guard allows ordinary HTTPS and preserves title reads', () =
 
   let decision
 
-  beforeRequest(
-    { resourceType: 'mainFrame', url: 'https://example.com/docs' },
-    value => {
-      decision = value
-    }
-  )
+  beforeRequest({ resourceType: 'mainFrame', url: 'https://example.com/docs' }, value => {
+    decision = value
+  })
 
   assert.equal(installed, true)
   assert.deepEqual(decision, { cancel: false })

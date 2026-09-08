@@ -63,6 +63,9 @@ class TestBlankSlateMinimalToolsets:
             enabled_toolsets=enabled,
             disabled_toolsets=disabled,
             quiet_mode=True,
+            # Assert the effective tool catalog before Tool Search wraps
+            # deferred tools in its three transport schemas.
+            skip_tool_search_assembly=True,
         )
         names = sorted(
             {(d.get("function") or {}).get("name") or d.get("name") for d in defs}
@@ -119,4 +122,3 @@ class TestBlankSlateFork:
         assert walked["called"] is False
         # Finish-now path records the skill opt-out (no bundled skills).
         assert opted_out["value"] is True
-

@@ -18,7 +18,12 @@ guard.
 """
 
 import inspect
+import ast
+import errno
+import queue
 import re
+import textwrap
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -110,3 +115,27 @@ class TestFinallyBlockWiring:
     def test_recovery_helper_exists(self):
         assert hasattr(HermesCLI, "_recover_terminal_after_interrupt")
         assert callable(HermesCLI._recover_terminal_after_interrupt)
+
+    @pytest.mark.parametrize("interrupted", [False, True])
+    @pytest.mark.parametrize("raises", [False, True])
+    def test_actual_input_loop_finalizes_failed_and_interrupted_turns(self, interrupted, raises):
+        tree = ast.parse(textwrap.dedent(inspect.getsource(HermesCLI.run)))
+        loop = next(node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef) and node.name == "process_loop")
+        events = []
+        instance = SimpleNamespace(_should_exit=False, _last_turn_interrupted=interrupted,
+                                   _pending_input=queue.Queue())
+        instance._pending_input.put("question")
+
+        def process(value):
+            assert value == "question"
+            instance._should_exit = True
+            if raises:
+                raise ValueError("turn failure")
+
+        instance._tui_process_one_input = process
+        instance._tui_after_turn = lambda: events.append("finalize")
+        instance._recover_terminal_after_interrupt = lambda: events.append("recover")
+        namespace = {"self": instance, "queue": queue, "errno": errno, "logger": MagicMock()}
+        exec(compile(ast.Module(body=[loop], type_ignores=[]), "<actual-process-loop>", "exec"), namespace)
+        namespace["process_loop"]()
+        assert events == (["finalize", "recover"] if interrupted else ["finalize"])

@@ -1,5 +1,6 @@
 import ast
 import hashlib
+import os
 import re
 from collections import Counter
 from functools import lru_cache
@@ -104,7 +105,9 @@ APPROVED_IMPLICIT_SPAWN_BASELINES = {
     "cron": ("e3b322c51645ed1dab6a817a4c24bc210b7ebeb5a32edfc726f55ebfc9c86ce9", LEGACY_IMPLICIT_RATIONALE),
     "downstream": ("8eb57e2d493e19d6e0e0b9c91627d3980693c6a4ec5a5dea503c3441ef139551", LEGACY_IMPLICIT_RATIONALE),
     "gateway": ("7c888db74531e5ade41e806eb9ae704b5657b00c27fbe36a00e547d5f7ca6c78", LEGACY_IMPLICIT_RATIONALE),
-    "hermes_cli": ("72e30355208c66cbf9803bfc2dd7b745622cd2864c3eb672a24e91fb1d974b85", LEGACY_IMPLICIT_RATIONALE),
+    # Same reviewed Git spawn moved from _git_stdout to shared _git_run;
+    # network=True still supplies the noninteractive credential-isolated env.
+    "hermes_cli": ("82ba2826f5306c2dec98ed96ec8817cf88f1fa4969e494ffbf6ddc2d863b83aa", LEGACY_IMPLICIT_RATIONALE),
     "hermes_constants.py": (
         "5b23578a51cafa9b8233e03e7bdddf96a68954014b2cfeae2b1da311ee734704",
         LEGACY_IMPLICIT_RATIONALE,
@@ -134,14 +137,22 @@ APPROVED_RAW_ENV_BASELINES = {
 }
 
 
+def _walk_files(root, excluded):
+    # Prune dependency trees before traversal, including Windows junctions.
+    for directory, children, files in os.walk(root):
+        children[:] = [name for name in children if name not in excluded]
+        for name in files:
+            yield Path(directory) / name
+
+
 def _iter_python_files():
     for directory in PYTHON_SCAN_DIRS:
         root = REPO_ROOT / directory
         if root.is_dir():
             yield from (
                 path
-                for path in root.rglob("*.py")
-                if "tests" not in path.relative_to(REPO_ROOT).parts
+                for path in _walk_files(root, {"tests", "node_modules", ".gitnexus"})
+                if path.suffix == ".py" and "tests" not in path.relative_to(REPO_ROOT).parts
                 and "node_modules" not in path.relative_to(REPO_ROOT).parts
                 and ".gitnexus" not in path.relative_to(REPO_ROOT).parts
             )
@@ -157,7 +168,7 @@ def _iter_typescript_files():
         root = REPO_ROOT / directory
         if not root.is_dir():
             continue
-        for path in root.rglob("*"):
+        for path in _walk_files(root, {"node_modules", "dist", ".gitnexus"}):
             rel_parts = path.relative_to(REPO_ROOT).parts
             if (
                 path.is_file()
@@ -166,6 +177,7 @@ def _iter_typescript_files():
                 and "dist" not in rel_parts
                 and ".gitnexus" not in rel_parts
                 and ".test." not in path.name
+                and ".node-test." not in path.name
                 and ".spec." not in path.name
             ):
                 yield path

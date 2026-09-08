@@ -55,7 +55,9 @@ def test_release_bundle_contains_required_identity_hashes_and_truthful_signing(
 
     assert manifest["product_name"] == "Hermes Agent Windows Workstation Edition"
     assert manifest["distribution_id"] == "hermes-agent-windows"
-    assert manifest["downstream_version"] == "0.21.0"
+    from pathlib import Path
+    metadata = json.loads((Path(__file__).resolve().parents[2] / "downstream/distribution.json").read_text(encoding="utf-8"))
+    assert manifest["downstream_version"] == metadata["version"]
     assert manifest["downstream_commit_sha"] == "a" * 40
     assert manifest["upstream_snapshot_sha"] == UPSTREAM_SNAPSHOT_SHA
     assert manifest["release_channel"] == "stable"

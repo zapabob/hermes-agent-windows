@@ -169,7 +169,9 @@ test('main-process title fetching uses only the guarded renderer transport', () 
   assert.notEqual(start, -1)
   assert.match(fetcher, /!linkTitleTransportAllowsRemoteFetch\(\)/)
   assert.doesNotMatch(fetcher, /fetchHtmlTitleWithCurl/)
-  assert.ok(fetcher.indexOf('!linkTitleTransportAllowsRemoteFetch()') < fetcher.indexOf('fetchHtmlTitleWithRenderer(url)'))
+  assert.ok(
+    fetcher.indexOf('!linkTitleTransportAllowsRemoteFetch()') < fetcher.indexOf('fetchHtmlTitleWithRenderer(url)')
+  )
 })
 
 test('no-credential Git mode suppresses helpers, GCM, askpass, and repository inheritance', () => {

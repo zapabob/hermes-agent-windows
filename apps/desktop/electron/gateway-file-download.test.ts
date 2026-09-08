@@ -197,10 +197,8 @@ test('gatewayFileRequestPaths includes originating session id when provided', ()
   )
 
   assert.deepEqual(paths, {
-    dataUrl:
-      '/api/fs/read-data-url?path=%7E%2Freport.md&session_id=artifact-session&profile=research',
-    download:
-      '/api/fs/download?path=%7E%2Freport.md&session_id=artifact-session&profile=research'
+    dataUrl: '/api/fs/read-data-url?path=%7E%2Freport.md&session_id=artifact-session&profile=research',
+    download: '/api/fs/download?path=%7E%2Freport.md&session_id=artifact-session&profile=research'
   })
 })
 

@@ -11,6 +11,28 @@ import pytest
 from tools.environments.local import build_subprocess_env
 
 
+@pytest.mark.parametrize("inherit", [False, True])
+def test_case_variants_in_plain_mapping_obey_credential_tiers(monkeypatch, inherit):
+    from tools.environments import local
+
+    parent = {"openai_api_key": "provider", "OpenAI_Api_Key": "provider-2",
+              "telegram_bot_token": "gateway", "SLACK_BOT_TOKEN": "gateway-2"}
+    monkeypatch.setattr(local.os, "environ", parent)
+    child = local.hermes_subprocess_env(inherit_credentials=inherit)
+    assert child.get("openai_api_key") == ("provider" if inherit else None)
+    assert child.get("OpenAI_Api_Key") == ("provider-2" if inherit else None)
+    assert "telegram_bot_token" not in child
+    assert "SLACK_BOT_TOKEN" not in child
+    assert parent["telegram_bot_token"] == "gateway"
+
+
+def test_factory_scrubs_case_variants_from_base_and_extra():
+    parent = {"openai_api_key": "provider"}
+    child = build_subprocess_env(parent, extra={"OpenAI_Api_Key": "other-provider"})
+    assert not any(key.upper() == "OPENAI_API_KEY" for key in child)
+    assert parent == {"openai_api_key": "provider"}
+
+
 # ---------------------------------------------------------------------------
 # Unit: scrub path delegates to _sanitize_subprocess_env semantics
 # ---------------------------------------------------------------------------

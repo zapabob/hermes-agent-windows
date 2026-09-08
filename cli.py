@@ -21555,8 +21555,12 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                             except Exception:
                                 pass
                         continue
-                    self._tui_process_one_input(user_input)
-                    self._tui_after_turn()
+                    try:
+                        self._tui_process_one_input(user_input)
+                    finally:
+                        self._tui_after_turn()
+                        if self._last_turn_interrupted:
+                            self._recover_terminal_after_interrupt()
 
                 except OSError as e:
                     if getattr(e, "errno", None) == errno.EIO:

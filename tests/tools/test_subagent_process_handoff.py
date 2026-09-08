@@ -1,4 +1,4 @@
-"""Subagent → parent background-process handoff (process_manage action='handoff').
+"""Subagent → parent background-process handoff (process action='handoff').
 
 Ownership is the process's ``owner_task_id``: completion notices are stamped from it at exit and the parent's
 ``drain_notifications`` suppresses ``sa-`` owners, so a child's watcher never reaches the parent and is killed at child

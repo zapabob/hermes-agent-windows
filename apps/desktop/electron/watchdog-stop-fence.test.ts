@@ -113,10 +113,10 @@ test('normal Desktop quit never overwrites a live updater fence', () => {
   }
 
   fs.writeFileSync(filePath, JSON.stringify(update), 'utf8')
-  assert.deepEqual(
-    writeDesktopStopFence({ filePath, repoRoot: root, now: new Date('2026-09-06T01:00:00.000Z') }),
-    { written: false, preserved: true }
-  )
+  assert.deepEqual(writeDesktopStopFence({ filePath, repoRoot: root, now: new Date('2026-09-06T01:00:00.000Z') }), {
+    written: false,
+    preserved: true
+  })
   assert.deepEqual(JSON.parse(fs.readFileSync(filePath, 'utf8')), update)
 })
 
@@ -132,8 +132,5 @@ test('Windows default and portable fallback match the Go watchdog data paths', (
     watchdogMaintenancePath({ LOCALAPPDATA: 'C:\\Users\\test\\AppData\\Local' }),
     path.join('C:\\Users\\test\\AppData\\Local', 'HermesWatchdog', 'maintenance.json')
   )
-  assert.equal(
-    watchdogMaintenancePath({}),
-    path.join(os.homedir(), '.hermes', 'watchdog-go', 'maintenance.json')
-  )
+  assert.equal(watchdogMaintenancePath({}), path.join(os.homedir(), '.hermes', 'watchdog-go', 'maintenance.json'))
 })

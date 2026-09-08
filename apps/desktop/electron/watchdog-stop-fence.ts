@@ -78,7 +78,15 @@ function atomicWriteFence(filePath: string, payload: Record<string, unknown>) {
   }
 }
 
-function writeDesktopStopFence({ filePath, repoRoot, now = new Date() }: { filePath: string; repoRoot: string; now?: Date }) {
+function writeDesktopStopFence({
+  filePath,
+  repoRoot,
+  now = new Date()
+}: {
+  filePath: string
+  repoRoot: string
+  now?: Date
+}) {
   const existing = readFence(filePath)
 
   if (liveFence(existing, now) && existing?.state !== DESKTOP_STOP) {
@@ -171,7 +179,15 @@ async function waitForDesktopStopFenceAck({
   return false
 }
 
-function clearDesktopStopFence({ filePath, repoRoot, now = new Date() }: { filePath: string; repoRoot: string; now?: Date }) {
+function clearDesktopStopFence({
+  filePath,
+  repoRoot,
+  now = new Date()
+}: {
+  filePath: string
+  repoRoot: string
+  now?: Date
+}) {
   const existing = readFence(filePath)
 
   if (

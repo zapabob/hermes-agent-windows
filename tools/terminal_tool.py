@@ -2832,8 +2832,8 @@ def _foreground_background_guidance(command: str) -> str | None:
 
 _SUBAGENT_NOTIFY_NOTE = (
     "You are a subagent: this process's completion notice will NOT reach your parent, and the process is killed when "
-    "you finish. Before you finish, either wait for it (process_manage wait), kill it, or hand it to your parent with "
-    "process_manage(action='handoff', session_id=..., data='<purpose>') so the parent receives its completion. For CI "
+    "you finish. Before you finish, either wait for it (process wait), kill it, or hand it to your parent with "
+    "process(action='handoff', session_id=..., data='<purpose>') so the parent receives its completion. For CI "
     "watchers prefer returning the fact (PR number, SHA) and letting the parent watch."
 )
 
