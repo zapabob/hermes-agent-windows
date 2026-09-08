@@ -2690,6 +2690,8 @@ def _run_single_child(
         _heartbeat_thread.start()
         if child_pool is not None:
             leased_cred_id = child_pool.acquire_lease()
+            if leased_cred_id is None:
+                raise RuntimeError("No child credential is available for reservation")
             if leased_cred_id is not None:
                 leased_entry = child_pool.leased_entry(leased_cred_id)
                 if leased_entry is None:

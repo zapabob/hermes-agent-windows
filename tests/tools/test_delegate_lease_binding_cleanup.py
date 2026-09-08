@@ -7,13 +7,13 @@ from agent.credential_pool import CredentialPool, PooledCredential
 from tools import delegate_tool
 
 
-@pytest.mark.parametrize('failure', ['removed', 'bind-error'])
+@pytest.mark.parametrize('failure', ['removed', 'bind-error', 'empty'])
 def test_binding_failure_releases_once_without_starting_child(monkeypatch, failure):
     entry = PooledCredential(id='synthetic', label='synthetic', provider='anthropic',
                              auth_type='oauth', source='oauth', priority=0, access_token='synthetic-token')
     pool = CredentialPool.__new__(CredentialPool)
     pool._lock = threading.RLock()
-    pool._entries = [entry]
+    pool._entries = [] if failure == 'empty' else [entry]
     pool._current_id = None
     pool._active_leases = {}
     pool._max_concurrent = 1
@@ -44,7 +44,7 @@ def test_binding_failure_releases_once_without_starting_child(monkeypatch, failu
     monkeypatch.setattr(delegate_tool, '_get_worktree_isolation', lambda: False)
     result = delegate_tool._run_single_child(task_index=0, goal='synthetic', child=child, parent_agent=parent)
     assert result['status'] == 'error'
-    assert releases == [entry.id]
+    assert releases == ([] if failure == 'empty' else [entry.id])
     assert pool._active_leases == {}
     assert not ran and closed == [True]
     assert parent._active_children == []
