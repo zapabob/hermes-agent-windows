@@ -110,3 +110,53 @@ test('native ownership read failure preserves the filesystem and prevents writes
     fs.rmdirSync(directory)
   }
 })
+
+test('stale native child exit preserves the replacement connection and ownership', { skip: process.platform !== 'win32', timeout: 15000 }, async () => {
+  const children = []
+  const closes = []
+  const emergency = setTimeout(() => children.forEach(child => child.kill('SIGKILL')), 10000)
+  try {
+    for (let index = 0; index < 2; index++) {
+      const child = spawn(process.execPath, ['-e', 'process.stdout.write("ready");setInterval(()=>{},1000)'], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
+      children.push(child)
+      closes.push(once(child, 'close'))
+      await once(child.stdout, 'data')
+      child.hermesBackendIdentity = { pid: child.pid, nonce: `synthetic-${index}`, startMarker: `marker-${index}` }
+    }
+    const [oldChild, replacement] = children
+    const callbacks = []
+    function visit(node) {
+      if (ts.isCallExpression(node) && node.expression.getText(tree) === 'hermesProcess.once' && node.arguments[0]?.text === 'exit') callbacks.push(node.arguments[1])
+      ts.forEachChild(node, visit)
+    }
+    visit(tree)
+    assert.equal(callbacks.length, 1)
+    const managed = new Map(children.map(child => [child.pid, child]))
+    const released = []
+    const context = vm.createContext({ exports: {}, managedBackendChildren: managed,
+      backendOwnership: { release: identity => released.push(identity.pid) }, rememberLog: () => {},
+      sendBackendExit: () => { throw Error('Stale exit reached current connection UI') },
+      backendReady: true, hermesProcess: oldChild
+    })
+    vm.runInContext(compile(fs.readFileSync(new URL('../electron/backend-connection-state.ts', import.meta.url), 'utf8')), context)
+    const state = context.exports.createBackendConnectionState()
+    context.backendConnectionState = state
+    context.processOwner = state.attachProcess(state.startAttempt(), oldChild)
+    assert.equal(state.invalidate(), oldChild)
+    state.attachProcess(state.startAttempt(), replacement)
+    vm.runInContext(compile(extract('releaseBackendChild') + '\nglobalThis.onExit = ' + callbacks[0].getText(tree)), context)
+    oldChild.once('exit', context.onExit)
+    oldChild.kill('SIGKILL')
+    await closes[0]
+    assert.deepEqual(released, [oldChild.pid])
+    assert.equal(managed.has(oldChild.pid), false)
+    assert.equal(managed.get(replacement.pid), replacement)
+    assert.equal(state.getProcess(), replacement)
+    assert.equal(replacement.exitCode, null)
+    assert.equal(replacement.signalCode, null)
+  } finally {
+    clearTimeout(emergency)
+    children.forEach(child => { if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL') })
+    await Promise.allSettled(closes)
+  }
+})
