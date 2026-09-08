@@ -12,6 +12,7 @@ import time
 from pathlib import Path
 from urllib.parse import urlparse
 from hermes_constants import get_hermes_home
+from hermes_cli._subprocess_compat import windows_hide_flags
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 # rich and prompt_toolkit are imported lazily (inside the functions that use
@@ -176,6 +177,7 @@ def _git_stdout(args: list[str], *, cwd: Path, timeout: int = 5) -> Optional[str
     try:
         result = subprocess.run(
             ["git", *args],
+            creationflags=windows_hide_flags(),
             capture_output=True,
             text=True,
             # git output is UTF-8; on Windows text=True defaults to the ANSI
@@ -246,6 +248,7 @@ def _upstream_main_sha() -> Optional[str]:
     try:
         result = subprocess.run(
             ["git", "ls-remote", _UPSTREAM_REPO_URL, "refs/heads/main"],
+            creationflags=windows_hide_flags(),
             capture_output=True, text=True, encoding="utf-8", errors="replace",
             timeout=10,
             stdin=subprocess.DEVNULL,
@@ -303,6 +306,7 @@ def _check_via_local_git(repo_dir: Path) -> Optional[int]:
         # ref) so a stale ref can't fake an up-to-date report.
         ancestor = subprocess.run(
             ["git", "merge-base", "--is-ancestor", upstream_rev, "HEAD"],
+            creationflags=windows_hide_flags(),
             capture_output=True, timeout=5, cwd=str(repo_dir),
         )
         if ancestor.returncode == 0:
@@ -352,6 +356,7 @@ def _check_via_local_git(repo_dir: Path) -> Optional[int]:
         fetch_args.append("--quiet")
         fetch_proc = subprocess.run(
             fetch_args,
+            creationflags=windows_hide_flags(),
             capture_output=True, timeout=10,
             cwd=str(repo_dir),
             stdin=subprocess.DEVNULL,
@@ -372,6 +377,7 @@ def _check_via_local_git(repo_dir: Path) -> Optional[int]:
             try:
                 result = subprocess.run(
                     ["git", "rev-list", "--count", "HEAD..origin/main"],
+                    creationflags=windows_hide_flags(),
                     capture_output=True, text=True, encoding="utf-8", errors="replace",
                     timeout=5,
                     cwd=str(repo_dir),
@@ -407,6 +413,7 @@ def _check_via_local_git(repo_dir: Path) -> Optional[int]:
     try:
         result = subprocess.run(
             ["git", "rev-list", "--count", "HEAD..origin/main"],
+            creationflags=windows_hide_flags(),
             capture_output=True, text=True, encoding="utf-8", errors="replace",
             timeout=5,
             cwd=str(repo_dir),
@@ -515,6 +522,7 @@ def _git_short_hash(repo_dir: Path, rev: str) -> Optional[str]:
     try:
         result = subprocess.run(
             ["git", "rev-parse", "--short=8", rev],
+            creationflags=windows_hide_flags(),
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -592,6 +600,7 @@ def _compute_git_banner_state(repo_dir: Optional[Path] = None) -> Optional[dict]
     try:
         result = subprocess.run(
             ["git", "rev-list", "--count", "origin/main..HEAD"],
+            creationflags=windows_hide_flags(),
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -630,6 +639,7 @@ def get_latest_release_tag(repo_dir: Optional[Path] = None) -> Optional[tuple]:
     try:
         result = subprocess.run(
             ["git", "describe", "--tags", "--abbrev=0"],
+            creationflags=windows_hide_flags(),
             capture_output=True,
             text=True,
             encoding="utf-8",
