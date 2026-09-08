@@ -18,6 +18,17 @@ describe('formatRefValue', () => {
 })
 
 describe('hermesDirectiveFormatter.parse', () => {
+  it.each(['file', 'image'])('round-trips a quoted Windows %s path with spaces', (kind) => {
+    const path = String.raw`C:\Users\Test User\profile home\cat photo.png`
+    const source = `caption @${kind}:${formatRefValue(path)} after`
+    const segments = hermesDirectiveFormatter.parse(source)
+
+    expect(segments).toHaveLength(3)
+    expect(segments[0]).toEqual({ kind: 'text', text: 'caption ' })
+    expect(segments[1]).toMatchObject({ kind: 'mention', type: kind, id: path })
+    expect(segments[2]).toEqual({ kind: 'text', text: ' after' })
+  })
+
   it('keeps quoted file paths whole when parsing', () => {
     const segments = hermesDirectiveFormatter.parse('see @image:`apple-touch-icon (1).png` for the icon')
 

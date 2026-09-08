@@ -7289,8 +7289,9 @@ def test_run_prompt_submit_delivers_completion_observed_by_poll(monkeypatch, tmp
         process_registry._poll_observed.discard(event["session_id"])
 
 
+@pytest.mark.parametrize("with_barrier", [False, True])
 def test_run_prompt_submit_requeues_all_unstarted_notifications_with_real_threading(
-    monkeypatch, tmp_path
+    monkeypatch, tmp_path, with_barrier
 ):
     import queue as _queue_mod
 
@@ -7305,10 +7306,10 @@ def test_run_prompt_submit_requeues_all_unstarted_notifications_with_real_thread
     release_nested = threading.Event()
     turns = []
 
-    def _recording_thread(*args, **kwargs):
-        thread = real_thread_class(*args, **kwargs)
-        threads.append(thread)
-        return thread
+    class _RecordingThread(real_thread_class):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            threads.append(self)
 
     class _BlockingNotificationAgent(_RecordingAgent):
         def run_conversation(self, prompt, conversation_history=None, stream_callback=None, **_kwargs):
@@ -7319,7 +7320,7 @@ def test_run_prompt_submit_requeues_all_unstarted_notifications_with_real_thread
                     raise TimeoutError("notification turn was not released")
             return {"final_response": "", "messages": []}
 
-    monkeypatch.setattr(server.threading, "Thread", _recording_thread)
+    monkeypatch.setattr(server.threading, "Thread", _RecordingThread)
     session = _session(
         session_key="session-a",
         agent=_BlockingNotificationAgent(turns),
@@ -7336,6 +7337,10 @@ def test_run_prompt_submit_requeues_all_unstarted_notifications_with_real_thread
         }
         for index in range(1, 4)
     ]
+    if with_barrier:
+        # Watches split consecutive completion batches. The next completion
+        # must remain pending while the first group's turn is in flight.
+        events[1].update(type="watch_match", pattern="READY")
     isolated_queue: _queue_mod.Queue = _queue_mod.Queue()
     for event in events:
         isolated_queue.put(event)
@@ -7356,18 +7361,21 @@ def test_run_prompt_submit_requeues_all_unstarted_notifications_with_real_thread
         # queued (never consumed) while batch_1's turn is in flight — so drain
         # with a deadline (an event may be transiently held by a poller
         # mid-cycle) and assert exactly {batch_2, batch_3} come back.
+        expected_pending = {"proc_batch_2", "proc_batch_3"} if with_barrier else set()
+        if not with_barrier:
+            notification_turns = [prompt for prompt in turns if "proc_batch_1" in prompt]
+            assert len(notification_turns) == 1
+            assert all(event["session_id"] in notification_turns[0] for event in events)
+            assert isolated_queue.empty()
         queued: dict = {}
         deadline = time.time() + 5.0
-        while time.time() < deadline and set(queued) != {
-            "proc_batch_2",
-            "proc_batch_3",
-        }:
+        while time.time() < deadline and set(queued) != expected_pending:
             try:
                 evt = isolated_queue.get(timeout=0.1)
             except _queue_mod.Empty:
                 continue
             queued[evt["session_id"]] = evt
-        assert set(queued) == {"proc_batch_2", "proc_batch_3"}
+        assert set(queued) == expected_pending
     finally:
         release_nested.set()
         for thread in threads:
@@ -10449,7 +10457,7 @@ def test_file_attach_uploads_remote_file_into_session_workspace(monkeypatch, tmp
     """
     workspace = tmp_path / "workspace"
     workspace.mkdir()
-    home = tmp_path / "home"
+    home = tmp_path / "profile home"
     fake_cli = types.ModuleType("cli")
     fake_cli._detect_file_drop = lambda raw: None
     fake_cli._split_path_input = lambda raw: (raw, "")
@@ -10476,7 +10484,13 @@ def test_file_attach_uploads_remote_file_into_session_workspace(monkeypatch, tmp
         assert resp["result"]["attached"] is True
         assert resp["result"]["uploaded"] is True
         assert resp["result"]["path"] == str(stored)
-        assert resp["result"]["ref_text"] == f"@file:{stored}"
+        assert resp["result"]["ref_text"] == f"@file:`{stored}`"
+        from agent.context_references import parse_context_references
+
+        refs = parse_context_references(resp["result"]["ref_text"])
+        assert len(refs) == 1
+        assert refs[0].kind == "file"
+        assert Path(refs[0].target) == stored
         assert stored.read_text(encoding="utf-8") == "hello world"
     finally:
         server._sessions.pop("sid", None)
@@ -10486,7 +10500,7 @@ def test_file_attach_copies_gateway_visible_file_outside_workspace(monkeypatch, 
     """Local case: gateway can see the file but it's outside the workspace → copy in."""
     workspace = tmp_path / "workspace"
     workspace.mkdir()
-    home = tmp_path / "home"
+    home = tmp_path / "profile home"
     source = tmp_path / "outside.txt"
     source.write_text("outside workspace", encoding="utf-8")
     fake_cli = types.ModuleType("cli")
@@ -10509,7 +10523,13 @@ def test_file_attach_copies_gateway_visible_file_outside_workspace(monkeypatch, 
         stored = home / "attachments" / "outside.txt"
         assert resp["result"]["attached"] is True
         assert resp["result"]["uploaded"] is True
-        assert resp["result"]["ref_text"] == f"@file:{stored}"
+        assert resp["result"]["ref_text"] == f"@file:`{stored}`"
+        from agent.context_references import parse_context_references
+
+        refs = parse_context_references(resp["result"]["ref_text"])
+        assert len(refs) == 1
+        assert refs[0].kind == "file"
+        assert Path(refs[0].target) == stored
         assert stored.read_text(encoding="utf-8") == "outside workspace"
     finally:
         server._sessions.pop("sid", None)
@@ -19423,12 +19443,12 @@ def test_build_persist_message_with_image_refs_appends_existing_paths(monkeypatc
     """Attached images that still exist on disk are persisted as trailing
     ``@image:<path>`` directive lines so the desktop renders them after a
     restart (instead of the vision-only enrichment that silently breaks)."""
-    img = tmp_path / "cat.png"
+    img = tmp_path / "cat photo.png"
     img.write_bytes(b"\x89PNG")
 
     result = server._build_persist_message_with_image_refs("what is in this photo?", [str(img)])
 
-    assert result == f"what is in this photo?\n@image:{img}"
+    assert result == f"what is in this photo?\n@image:`{img}`"
 
 
 def test_build_persist_message_keeps_the_caption_on_the_first_line(tmp_path):
@@ -19446,22 +19466,22 @@ def test_build_persist_message_keeps_the_caption_on_the_first_line(tmp_path):
 def test_build_persist_message_with_image_refs_skips_missing_paths(monkeypatch, tmp_path):
     """Only paths that still exist are persisted; a missing file must not
     inject a dangling @image ref into the transcript."""
-    existing = tmp_path / "a.png"
+    existing = tmp_path / "existing photo.png"
     existing.write_bytes(b"png")
     missing = str(tmp_path / "gone.png")
 
     result = server._build_persist_message_with_image_refs("compare them", [str(existing), missing])
 
-    assert result == f"compare them\n@image:{existing}"
+    assert result == f"compare them\n@image:`{existing}`"
 
 
 def test_build_persist_message_with_image_refs_without_text_is_refs_only(monkeypatch, tmp_path):
     """A stand-alone attachment (no caption) persists as just the directive
     line, so a bare image survives in history and is not dropped as empty."""
-    img = tmp_path / "only.png"
+    img = tmp_path / "only photo.png"
     img.write_bytes(b"png")
 
-    assert server._build_persist_message_with_image_refs("", [str(img)]) == f"@image:{img}"
+    assert server._build_persist_message_with_image_refs("", [str(img)]) == f"@image:`{img}`"
 
 
 def test_build_persist_message_quotes_paths_containing_spaces(tmp_path):
@@ -19484,25 +19504,25 @@ def test_persist_user_message_mirrors_the_shape_sent_to_the_model(tmp_path):
     store ignores a plain-string override for a list payload. The override must
     mirror the list shape (ref text + the original image parts) or it is
     silently dropped and the attachment never reaches history."""
-    img = tmp_path / "cat.png"
+    img = tmp_path / "cat photo.png"
     img.write_bytes(b"png")
     image_part = {"type": "image_url", "image_url": {"url": "data:image/png;base64,AAAA"}}
     native_parts = [{"type": "text", "text": "api-only text"}, image_part]
 
     override = server._build_persist_user_message("what is this?", [str(img)], native_parts)
 
-    assert override == [{"type": "text", "text": f"what is this?\n@image:{img}"}, image_part]
+    assert override == [{"type": "text", "text": f"what is this?\n@image:`{img}`"}, image_part]
 
 
 def test_persist_user_message_stays_a_string_for_text_mode(tmp_path):
     """Text-mode (vision-preprocessed) turns send a string, so the override
     stays a string — the shape the session store rewrites directly."""
-    img = tmp_path / "cat.png"
+    img = tmp_path / "cat photo.png"
     img.write_bytes(b"png")
 
     override = server._build_persist_user_message("what is this?", [str(img)], "enriched api-only text")
 
-    assert override == f"what is this?\n@image:{img}"
+    assert override == f"what is this?\n@image:`{img}`"
 
 
 def test_native_vision_turn_persists_a_renderable_image_ref(tmp_path):

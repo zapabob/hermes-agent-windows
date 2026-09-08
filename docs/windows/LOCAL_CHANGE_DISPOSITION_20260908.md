@@ -139,8 +139,18 @@ The audit passes all five checks. CodeGraph 1.6.0 re-extraction covers the token
 source, both environment owners, CLI input loop and process registry, but retains
 unresolved references and is not a complete graph qualification.
 
+The threaded TUI notification regression now covers both consecutive completions
+(one consolidated turn containing every result) and a watch-event barrier
+(unstarted groups remain queued while the first turn runs). It retains real
+threads, exact queue-membership assertions and all result identities. The thread
+recorder subclasses threading.Thread so imports which subclass Thread remain
+valid; replacing the global Thread class with a function caused an unrelated
+standalone-test import failure. No runtime delivery rule was relaxed for this test.
+
 Desktop type checking and 28 focused UI tests passed. Windows process tests cover native spawn/output/exit/kill, and handoff covers a live child surviving sibling cleanup. Git helper tests check hidden native children. Approval regression: 180 passed, one symlink-availability skip. OAuth loopback: 57 passed, one POSIX permission skip. Token-source tests: 34 passed in the installed dependency runtime, with isolated profile state. Completion backlog: two tests passed using an owned loopback HTTP fixture.
 
 The first combined Python run recorded 205 passes, six failures and three skips. It is retained as a failed run. Subsequent isolated runs diagnosed dependencies, fixture networking/synchronisation and composition defects. A hung pre-admission-fixture run was interrupted and is not a pass.
 
 CodeGraph 1.6.0 extraction was rerun for the existing credential/consent/Desktop-owner supplement. It is source extraction, not a complete resolved graph of this change set. Full history classification, remaining P0/private contracts, clean-machine installer/upgrade qualification, exact-head CI and the isolated first-run onboarding issue remain unresolved. Native tests do not by themselves qualify the complete application.
+
+The full native TUI run exposed seven fixture assumptions that temporary paths contain no spaces (609 passed, 7 failed). Attachment fixtures now deliberately contain spaces on every OS and assert exact quoted directives; file references additionally round-trip through the real context-reference parser with exact target identity. Image tests retain caption, missing-file exclusion, native content-part identity, and string/list shape assertions. Production quoting is unchanged; removing quoting would truncate actual Windows paths.
