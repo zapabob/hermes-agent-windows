@@ -122,6 +122,9 @@ class _Runtime:
     """Own shared-metrics state layered on the Hermes core Relay host."""
 
     def __init__(self, host: relay_runtime.RelayRuntime | None = None) -> None:
+        from hermes_constants import get_hermes_home
+
+        self._profile_home = get_hermes_home()
         resolved_host = host or relay_runtime.get_runtime()
         if resolved_host is None:
             raise RuntimeError("Hermes core Relay runtime is unavailable")
@@ -1111,6 +1114,15 @@ class _Runtime:
             )
 
     def _send_exported_packages(self) -> None:
+        from hermes_constants import set_hermes_home_override, reset_hermes_home_override
+
+        token = set_hermes_home_override(self._profile_home)
+        try:
+            self._send_exported_packages_in_profile()
+        finally:
+            reset_hermes_home_override(token)
+
+    def _send_exported_packages_in_profile(self) -> None:
         from hermes_cli.observability.shared_metrics_send_config import (
             resolve_send_config,
         )
@@ -1151,6 +1163,15 @@ class _Runtime:
             thread.start()
 
     def _run_send_pass(self, endpoint: str) -> None:
+        from hermes_constants import set_hermes_home_override, reset_hermes_home_override
+
+        token = set_hermes_home_override(self._profile_home)
+        try:
+            self._run_send_pass_in_profile(endpoint)
+        finally:
+            reset_hermes_home_override(token)
+
+    def _run_send_pass_in_profile(self, endpoint: str) -> None:
         from hermes_cli.observability.shared_metrics_sender import (
             SharedMetricsSender,
         )

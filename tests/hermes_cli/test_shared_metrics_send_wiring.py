@@ -57,6 +57,8 @@ class Runtime(mod._Runtime):
     """A _Runtime with the relay host stubbed out."""
 
     def __init__(self):
+        from hermes_constants import get_hermes_home
+        self._profile_home = get_hermes_home()
         self._sessions_lock = threading.RLock()
         self._sessions = {}
         self._task_creation_lock = threading.RLock()
