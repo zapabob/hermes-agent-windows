@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import Any
 
 from .audio_buffer import _buffer_dir_from_config
-from .audio_buffer import add_audio as _add_audio
 from .audio_buffer import buffer_status as _buffer_status
 from .audio_buffer import maybe_zip as _maybe_zip
 from .core import IrodoriScriptTTSProvider, synthesize_text, status_payload
@@ -31,14 +29,10 @@ def _synthesize_handler(
         model=model,
         output_format=format,
         speed=speed,
+        buffer=False,
     )
-    if result.get("ok") and result.get("file_path"):
-        try:
-            buf_dir = _buffer_dir_from_config()
-            _add_audio(Path(result["file_path"]))
-            result["buffer"] = _maybe_zip(buf_dir)
-        except Exception as exc:
-            result["buffer_error"] = str(exc)
+    # Temporary synthesis is owned by the caller; do not persist it in the
+    # audio buffer. The normal GUI path removes it in a finally block.
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 

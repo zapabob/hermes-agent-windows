@@ -7,10 +7,14 @@ import mimetypes
 import os
 import subprocess
 import sys
+import tempfile
+import threading
+from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
 SUPPORTED_PROVIDERS = ("auto", "irodori", "voicevox", "none")
+_IRODORI_START_LOCK = threading.Lock()
 
 
 def _irodori_status() -> dict[str, Any]:
@@ -78,31 +82,53 @@ def start_backend(provider: str | None = None, *, timeout_seconds: int = 120) ->
             from plugins.irodori_tts import core as irodori_core
         except Exception as exc:
             return {"ok": False, "provider": "irodori", "error": str(exc)}
-        before = _irodori_status()
-        if before.get("usable"):
-            return {"ok": True, "provider": "irodori", "already_running": True, "status": before}
-        cfg = irodori_core.settings()
-        ps = irodori_core.powershell_path()
-        if not ps or not cfg.start_script.is_file():
-            return {"ok": False, "provider": "irodori", "error": "irodori start script unavailable"}
-        import subprocess
-
-        proc = subprocess.run(
-            [ps, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(cfg.start_script), "-RepoDir", str(cfg.repo_dir)],
-            cwd=str(cfg.repo_dir),
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=timeout_seconds,
-        )
-        after = _irodori_status()
-        return {
-            "ok": proc.returncode == 0 and bool(after.get("usable")),
-            "provider": "irodori",
-            "returncode": proc.returncode,
-            "status": after,
-        }
+        with _IRODORI_START_LOCK:
+            before = _irodori_status()
+            if before.get("usable"):
+                return {"ok": True, "provider": "irodori", "already_running": True, "status": before}
+            cfg = irodori_core.settings()
+            ps = irodori_core.powershell_path()
+            if not ps or not cfg.start_script.is_file():
+                return {"ok": False, "provider": "irodori", "error": "irodori start script unavailable"}
+            proc = subprocess.run(
+                [
+                    ps,
+                    "-NoProfile",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-File",
+                    str(cfg.start_script),
+                    "-RepoDir",
+                    str(cfg.repo_dir),
+                    "-HostName",
+                    "127.0.0.1",
+                    "-Port",
+                    "8088",
+                    "-ModelDevice",
+                    "cpu",
+                    "-CodecDevice",
+                    "cpu",
+                    "-BackendExtra",
+                    "",
+                    "-StartupTimeoutSeconds",
+                    str(timeout_seconds),
+                ],
+                cwd=str(cfg.repo_dir),
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=timeout_seconds + 15,
+            )
+            after = _irodori_status()
+            return {
+                "ok": proc.returncode == 0 and bool(after.get("usable")),
+                "provider": "irodori",
+                "returncode": proc.returncode,
+                "status": after,
+                "stdout": proc.stdout[-2000:],
+                "stderr": proc.stderr[-2000:],
+            }
     if selected == "voicevox":
         return {
             "ok": bool(_voicevox_status().get("usable")),
@@ -124,8 +150,13 @@ def synthesize(
     clean = (text or "").strip()
     if not clean:
         raise ValueError("text must not be empty")
-    selected = select_provider(provider)
+    requested = (provider or "").strip().lower()
+    selected = requested if requested in SUPPORTED_PROVIDERS and requested != "auto" else "irodori"
     if selected == "irodori":
+        startup = start_backend("irodori")
+        if not startup.get("ok"):
+            detail = startup.get("stderr") or startup.get("stdout") or startup.get("error") or "unknown startup failure"
+            raise RuntimeError(f"Irodori TTS server startup failed: {detail}")
         from plugins.irodori_tts import core as irodori_core
 
         return irodori_core.synthesize_text(
@@ -133,6 +164,7 @@ def synthesize(
             output_path=output_path,
             voice=str(voice) if voice is not None else None,
             speed=speed,
+            buffer=False,
         )
     if selected == "voicevox":
         from plugins.voicevox_tts import core as voicevox_core
@@ -163,12 +195,44 @@ def synthesize_data_url(
     voice: str | int | None = None,
     speed: float | None = None,
 ) -> dict[str, Any]:
-    result = synthesize(text, provider=provider, voice=voice, speed=speed)
+    temporary_path: Path | None = None
+    try:
+        if (provider or "").strip().lower() in {"", "auto", "irodori"}:
+            fd, raw_path = tempfile.mkstemp(prefix="hermes-irodori-", suffix=".wav")
+            os.close(fd)
+            temporary_path = Path(raw_path)
+        result = synthesize(
+            text,
+            provider=provider,
+            voice=voice,
+            speed=speed,
+            output_path=temporary_path,
+        )
+        file_path = result.get("file_path")
+        if not file_path:
+            raise RuntimeError("TTS synthesis did not return file_path")
+        data_url = file_to_data_url(file_path)
+        return {
+            **result,
+            "data_url": data_url,
+            "data_url_bytes": len(data_url),
+            "temporary_file": temporary_path is not None,
+        }
+    except Exception:
+        if temporary_path is not None:
+            with suppress(OSError):
+                temporary_path.unlink(missing_ok=True)
+        raise
+
+
+def cleanup_synthesized_file(result: dict[str, Any]) -> None:
+    """Remove a generated temporary file after playback/upload completes."""
+    if not result.get("temporary_file"):
+        return
     file_path = result.get("file_path")
-    if not file_path:
-        raise RuntimeError("TTS synthesis did not return file_path")
-    data_url = file_to_data_url(file_path)
-    return {**result, "data_url": data_url, "data_url_bytes": len(data_url)}
+    if file_path:
+        with suppress(OSError):
+            Path(file_path).unlink(missing_ok=True)
 
 
 def play_audio_local(path: str | Path, *, blocking: bool = False) -> dict[str, Any]:

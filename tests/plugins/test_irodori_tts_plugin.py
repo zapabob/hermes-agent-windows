@@ -74,3 +74,31 @@ def test_synthesize_uses_windows_script(monkeypatch, tmp_path: Path) -> None:
     assert "-InputPath" in captured["command"]
     assert "-OutputPath" in captured["command"]
     assert captured["kwargs"]["cwd"] == str(repo_dir)
+
+
+def test_synthesize_can_skip_persistent_audio_buffer(monkeypatch, tmp_path: Path) -> None:
+    core = importlib.import_module("plugins.irodori_tts.core")
+    invoke_script = tmp_path / "invoke.ps1"
+    invoke_script.write_text("# test", encoding="utf-8")
+    repo_dir = tmp_path / "irodori"
+    repo_dir.mkdir()
+    output_path = tmp_path / "temporary.wav"
+    monkeypatch.setenv("IRODORI_TTS_REPO_DIR", str(repo_dir))
+    monkeypatch.setenv("IRODORI_TTS_INVOKE_SCRIPT", str(invoke_script))
+    monkeypatch.setattr(core, "_load_tts_section", lambda: {})
+    monkeypatch.setattr(core, "powershell_path", lambda: "powershell")
+
+    class Completed:
+        returncode = 0
+        stdout = ""
+        stderr = ""
+
+    def fake_run(command, **kwargs):
+        output_path.write_bytes(b"RIFFtest")
+        return Completed()
+
+    monkeypatch.setattr(core.subprocess, "run", fake_run)
+    monkeypatch.setattr(core, "_auto_buffer", lambda *_: (_ for _ in ()).throw(AssertionError("buffered")))
+    result = core.synthesize_text("hello", output_path=output_path, buffer=False)
+    assert result["ok"] is True
+    assert output_path.exists()

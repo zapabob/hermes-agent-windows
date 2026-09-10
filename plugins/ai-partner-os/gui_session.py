@@ -132,6 +132,7 @@ def present_reply(
                 result["ui"]["proactive_lan_error"] = str(lan_exc)
 
     if speak and display_text:
+        tts = None
         try:
             tts = tts_bridge.synthesize_data_url(
                 display_text,
@@ -143,7 +144,9 @@ def present_reply(
             try:
                 eel_call("play_tts_on_pc", tts["data_url"], timeout=30.0)
             except Exception as eel_exc:
-                local = tts_bridge.play_audio_local(tts["file_path"], blocking=False)
+                # Keep the temporary file until synchronous fallback playback
+                # has consumed it; the Eel path uses the in-memory data URL.
+                local = tts_bridge.play_audio_local(tts["file_path"], blocking=True)
                 if not local.get("ok"):
                     raise RuntimeError(f"{eel_exc}; local playback also failed: {local.get('error')}") from eel_exc
                 played_via = str(local.get("via") or "local")
@@ -162,8 +165,12 @@ def present_reply(
                     "file_path": tts.get("file_path"),
                     "played_via": played_via,
                 }
+            # The finally block removes the unique temporary file after use.
         except Exception as exc:
             result["tts"] = {"ok": False, "error": str(exc)}
+        finally:
+            if tts:
+                tts_bridge.cleanup_synthesized_file(tts)
 
     for item in actions:
         queued = queue_action(item["action"], item.get("params") or {})

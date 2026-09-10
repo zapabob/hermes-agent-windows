@@ -4,9 +4,10 @@ param(
     [int]$Port = 8088,
     [int]$StartupTimeoutSeconds = 90,
     [string]$HfCacheRoot = "",
-    [string]$ModelDevice = "auto",
-    [string]$CodecDevice = "auto",
-    [string]$BackendExtra = "cu128"
+    # CPU is the safe default because the local llama server owns the GPU.
+    [string]$ModelDevice = "cpu",
+    [string]$CodecDevice = "cpu",
+    [string]$BackendExtra = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -51,6 +52,11 @@ if (-not [string]::IsNullOrWhiteSpace($ModelDevice)) {
 if (-not [string]::IsNullOrWhiteSpace($CodecDevice)) {
     $env:IRODORI_CODEC_DEVICE = $CodecDevice
 }
+# CPU-only runtime: keep llama's GPU allocation untouched.
+$env:IRODORI_PRELOAD = "false"
+$env:IRODORI_MODEL_PRECISION = "fp32"
+$env:IRODORI_CODEC_PRECISION = "fp32"
+$env:IRODORI_COMPILE_MODEL = "false"
 
 $healthUrl = "http://${HostName}:${Port}/health"
 try {
@@ -64,12 +70,11 @@ try {
 
 $stdout = Join-Path $logDir "irodori-tts-stdout.log"
 $stderr = Join-Path $logDir "irodori-tts-stderr.log"
-$arguments = @("run")
-if (-not [string]::IsNullOrWhiteSpace($BackendExtra)) {
-    $arguments += @("--extra", $BackendExtra)
+$pythonPath = Join-Path $RepoDir ".venv\Scripts\python.exe"
+if (-not (Test-Path -LiteralPath $pythonPath)) {
+    throw "Irodori CPU virtual environment was not found: $pythonPath"
 }
-$arguments += @(
-    "python",
+$arguments = @(
     "-m",
     "irodori_openai_tts",
     "--host",
@@ -79,7 +84,7 @@ $arguments += @(
 )
 
 $process = Start-Process `
-    -FilePath "uv" `
+    -FilePath $pythonPath `
     -ArgumentList $arguments `
     -WorkingDirectory $RepoDir `
     -WindowStyle Hidden `

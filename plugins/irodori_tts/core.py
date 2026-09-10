@@ -298,6 +298,7 @@ def synthesize_text(
     model: str | None = None,
     output_format: str | None = None,
     speed: float | None = None,
+    buffer: bool = True,
 ) -> dict[str, Any]:
     if not text or not text.strip():
         raise ValueError("text must not be empty")
@@ -370,8 +371,10 @@ def synthesize_text(
         "media_tag": f"MEDIA:{destination}",
     }
 
-    # Auto-buffer: add to audio buffer, then trigger zip if threshold reached
-    _auto_buffer(str(destination), result)
+    # Persistent buffering is opt-in for temporary playback paths.  Callers
+    # which only need the audio for immediate playback must pass buffer=False.
+    if buffer:
+        _auto_buffer(str(destination), result)
 
     return result
 
