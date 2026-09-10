@@ -18,7 +18,7 @@ describe('formatRefValue', () => {
 })
 
 describe('hermesDirectiveFormatter.parse', () => {
-  it.each(['file', 'image'])('round-trips a quoted Windows %s path with spaces', (kind) => {
+  it.each(['file', 'image'])('round-trips a quoted Windows %s path with spaces', kind => {
     const path = String.raw`C:\Users\Test User\profile home\cat photo.png`
     const source = `caption @${kind}:${formatRefValue(path)} after`
     const segments = hermesDirectiveFormatter.parse(source)
