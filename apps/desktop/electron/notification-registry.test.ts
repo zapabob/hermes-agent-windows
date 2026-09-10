@@ -9,6 +9,7 @@ afterEach(() => vi.useRealTimers())
 it('retains a dismissed banner until its later click or action is consumed', () => {
   vi.useFakeTimers()
   const registry = createNotificationRegistry()
+
   for (const event of ['click', 'action']) {
     const notification = Object.assign(new EventEmitter(), { close: vi.fn() })
     const handler = vi.fn()
@@ -20,6 +21,7 @@ it('retains a dismissed banner until its later click or action is consumed', () 
     expect(handler).toHaveBeenCalledOnce()
     expect(registry.has(notification)).toBe(false)
   }
+
   expect(vi.getTimerCount()).toBe(0)
 })
 

@@ -47,6 +47,7 @@ it('returns native clicks and approval actions to the emitting window, not the p
   const focusWindow = vi.fn()
   registerNativeNotifications({ getMainWindow: () => primary as unknown as BrowserWindow, focusWindow })
   const notify = host.handle.mock.calls[0][1] as (event: IpcMainInvokeEvent, payload: HermesNotification) => boolean
+
   const payload = {
     kind: 'approval',
     sessionId: 'runtime-source',
@@ -54,6 +55,7 @@ it('returns native clicks and approval actions to the emitting window, not the p
     title: 'Approval',
     actions: [{ id: 'approve', text: 'Approve' }, { id: 'reject', text: 'Reject' }]
   }
+
   expect(notify({ sender: source.webContents } as unknown as IpcMainInvokeEvent, payload)).toBe(true)
   expect(focusWindow).not.toHaveBeenCalled()
   expect(primary.webContents.send).not.toHaveBeenCalled()

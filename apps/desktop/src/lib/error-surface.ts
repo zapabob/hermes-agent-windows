@@ -53,6 +53,7 @@ export function parseErrorSurface(value: unknown): ErrorSurface | null {
     provider_label?: unknown
     retryable?: unknown
   }
+
   const layer = typeof raw.layer === 'string' ? (raw.layer as ErrorSurfaceLayer) : null
 
   if (!layer || !ERROR_SURFACE_LAYERS.includes(layer)) {

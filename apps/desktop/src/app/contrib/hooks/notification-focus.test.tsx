@@ -21,6 +21,7 @@ beforeAll(() => {
     render: () => null,
     title: 'Chat'
   })
+
   tree.watchContributedPanes()
   paneMirror({
     source: $sessionTiles,
@@ -79,12 +80,14 @@ it('a native click reveals the existing remote Bot tab without changing its owne
       sessions: []
     })
   )
+
   const scope = {
     ownerRoute: { connectionId: 'remote-writer', profile: 'writer', mode: 'remote' as const },
     workspaceMode: 'bots' as const,
     workspaceOwnerKey: 'remote-writer::writer',
     workspaceTabTitle: 'Bot Chat'
   }
+
   openSessionTile('bot-chat', 'center', 'workspace', undefined, scope)
   patchSessionTile('bot-chat', { runtimeId: 'bot-runtime' })
   tree.revealTreePane('workspace')
