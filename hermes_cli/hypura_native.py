@@ -69,10 +69,30 @@ def _http_json(path: str, method: str = "GET", payload: dict[str, Any] | None = 
 
 
 def _start_background(command: list[str], cwd: Path) -> int:
+    from hermes_cli._subprocess_compat import (
+        windows_detach_flags,
+        windows_detach_flags_without_breakaway,
+    )
+
     log = _log_file().open("a", encoding="utf-8")
     if os.name == "nt":
-        flags = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS  # type: ignore[attr-defined]
-        proc = subprocess.Popen(command, cwd=str(cwd), creationflags=flags, stdout=log, stderr=log)
+        # CREATE_NO_WINDOW (not DETACHED_PROCESS): see windows_detach_flags docstring.
+        try:
+            proc = subprocess.Popen(
+                command,
+                cwd=str(cwd),
+                creationflags=windows_detach_flags(),
+                stdout=log,
+                stderr=log,
+            )
+        except OSError:
+            proc = subprocess.Popen(
+                command,
+                cwd=str(cwd),
+                creationflags=windows_detach_flags_without_breakaway(),
+                stdout=log,
+                stderr=log,
+            )
     else:
         proc = subprocess.Popen(command, cwd=str(cwd), start_new_session=True, stdout=log, stderr=log)
     return proc.pid

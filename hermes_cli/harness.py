@@ -13,6 +13,10 @@ from typing import Any
 
 import httpx
 
+from hermes_cli._subprocess_compat import (
+    windows_detach_flags,
+    windows_detach_flags_without_breakaway,
+)
 from hermes_cli.config import load_config
 from hermes_constants import get_hermes_home
 
@@ -171,14 +175,13 @@ def start_harness_daemon(wait_seconds: float = 30.0) -> bool:
     cmd = _start_command(script_path)
     env = _build_env(script_path)
     log_path = _harness_log_path()
-    creationflags = 0
+    # Windows: CREATE_NO_WINDOW (via windows_detach_flags), NEVER DETACHED_PROCESS.
+    # DETACHED leaves the child console-less so CUI python.exe / Hermes.exe shims
+    # allocate a visible black console (#54220 / #56747). CREATE_NO_WINDOW gives
+    # one hidden console descendants inherit.
+    creationflags = windows_detach_flags()
     popen_kwargs: dict[str, Any] = {}
-    if platform.system() == "Windows":
-        creationflags = (
-            getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
-            | getattr(subprocess, "DETACHED_PROCESS", 0)
-        )
-    else:
+    if platform.system() != "Windows":
         popen_kwargs["start_new_session"] = True
 
     try:
@@ -188,16 +191,31 @@ def start_harness_daemon(wait_seconds: float = 30.0) -> bool:
         return False
 
     try:
-        subprocess.Popen(
-            cmd,
-            cwd=str(script_path.parent),
-            env=env,
-            stdin=subprocess.DEVNULL,
-            stdout=log_file,
-            stderr=log_file,
-            creationflags=creationflags,
-            **popen_kwargs,
-        )
+        try:
+            subprocess.Popen(
+                cmd,
+                cwd=str(script_path.parent),
+                env=env,
+                stdin=subprocess.DEVNULL,
+                stdout=log_file,
+                stderr=log_file,
+                creationflags=creationflags,
+                **popen_kwargs,
+            )
+        except OSError:
+            # Job forbids breakaway — retry without CREATE_BREAKAWAY_FROM_JOB.
+            if platform.system() != "Windows":
+                raise
+            subprocess.Popen(
+                cmd,
+                cwd=str(script_path.parent),
+                env=env,
+                stdin=subprocess.DEVNULL,
+                stdout=log_file,
+                stderr=log_file,
+                creationflags=windows_detach_flags_without_breakaway(),
+                **popen_kwargs,
+            )
     except Exception:
         logger.exception("Failed to launch harness daemon")
         return False
