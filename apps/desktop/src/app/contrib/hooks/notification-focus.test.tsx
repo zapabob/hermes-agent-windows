@@ -73,7 +73,6 @@ it('a native click reveals the existing remote Bot tab without changing its owne
       navigate,
       profileReady: false,
       refreshSessions: vi.fn(),
-      resumeLastSession: false,
       resumeExhaustedSessionId: null,
       routedSessionId: null,
       runtimeIdByStoredSessionId: { current: new Map() },
