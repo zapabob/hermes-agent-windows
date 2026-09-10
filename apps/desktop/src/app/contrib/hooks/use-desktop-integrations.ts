@@ -21,10 +21,12 @@ import { openFolderAsProject } from '@/store/projects'
 import {
   getRememberedRoute,
   getRememberedSessionId,
+  $selectedStoredSessionId,
   sessionBelongsToProfile,
   setRememberedRoute,
   setRememberedSessionId
 } from '@/store/session'
+import { $sessionTiles, storedSessionIdForRuntimeId } from '@/store/session-states'
 import { onSessionsChanged } from '@/store/session-sync'
 import { openUpdatesWindow, startUpdatePoller, stopUpdatePoller } from '@/store/updates'
 import { isBrowserWindow, isHudWindow, isSecondaryWindow } from '@/store/windows'
@@ -189,12 +191,28 @@ export function useDesktopIntegrations({
   useEffect(() => {
     const unsubscribe = window.hermesDesktop?.onFocusSession?.(sessionId => {
       if (sessionId) {
-        openSession(storedSessionIdForNotification(sessionId, runtimeIdByStoredSessionId.current), navigate, 'stack')
+        // Reloads and runtime recovery can leave only the shared mirror bound.
+        const viaLocalMap = storedSessionIdForNotification(sessionId, runtimeIdByStoredSessionId.current)
+        const storedId = viaLocalMap !== sessionId ? viaLocalMap : (storedSessionIdForRuntimeId(sessionId) ?? sessionId)
+
+        // A notification reveals a tab; it must not reclassify a Bot chat.
+        const scope = $sessionTiles.get().find(tile => tile.storedSessionId === storedId)
+
+        if (isOverlayView(appViewForPath(locationPathname))) {
+          navigate(sessionRoute($selectedStoredSessionId.get() ?? ''), { replace: true })
+        }
+
+        openSession(
+          storedId,
+          navigate,
+          'stack',
+          scope ? { ...scope, workspaceMode: scope.workspaceMode ?? 'sessions' } : undefined
+        )
       }
     })
 
     return () => unsubscribe?.()
-  }, [navigate, runtimeIdByStoredSessionId])
+  }, [locationPathname, navigate, runtimeIdByStoredSessionId])
 
   useEffect(() => {
     const unsubscribe = window.hermesDesktop?.onNotificationAction?.(

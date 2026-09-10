@@ -15,6 +15,7 @@ import {
 
 import { requestComposerFocus, requestComposerInsert } from '@/app/chat/composer/focus'
 import { useSessionView } from '@/app/chat/session-view'
+import { handleClarifySubmitShortcut } from '@/components/assistant-ui/clarify-submit-shortcut'
 import { ToolFallback } from '@/components/assistant-ui/tool/fallback'
 import { WIDGET_SHELL_CLASS } from '@/components/chat/widget-shell'
 import { Button } from '@/components/ui/button'
@@ -717,6 +718,7 @@ function ClarifyToolSinglePending({
     <form
       className="my-1.5 grid gap-4"
       data-clarify-choices={hasChoices ? choices.length : undefined}
+      onKeyDownCapture={handleClarifySubmitShortcut}
       onSubmit={handleSubmit}
     >
       <ClarifyShell className="grid gap-2">
@@ -1119,7 +1121,12 @@ function ClarifyToolBatchPending({ onAnswered, request }: { onAnswered: () => vo
   }
 
   return (
-    <form className="my-1.5 grid gap-4" data-clarify-batch={questions.length} onSubmit={handleSubmit}>
+    <form
+      className="my-1.5 grid gap-4"
+      data-clarify-batch={questions.length}
+      onKeyDownCapture={handleClarifySubmitShortcut}
+      onSubmit={handleSubmit}
+    >
       <ClarifyShell className="grid gap-3">
         <div className="flex items-start gap-2">
           <span className="flex-1 text-[0.6875rem] leading-4 text-(--ui-text-tertiary)">

@@ -2516,14 +2516,43 @@ def trigger_job(job_id: str) -> Optional[Dict[str, Any]]:
     )
 
 
+def _claim_owner_is_dead(claim: Dict[str, Any]) -> bool:
+    """True when the claim's ``by`` names a process on THIS host that provably no longer exists.
+
+    ``_machine_id()`` stamps ``host:pid`` (plus an optional token after ``:``); a foreign host,
+    an explicit ``HERMES_MACHINE_ID``, or any liveness-probe failure returns False (fail safe:
+    only a proven death shortens the TTL).
+    """
+    parts = str(claim.get("by") or "").split(":")
+    if len(parts) < 2 or not parts[1].isdigit():
+        return False
+    try:
+        import socket
+
+        if parts[0] != socket.gethostname():
+            return False
+        from gateway.status import _pid_exists
+
+        return not _pid_exists(int(parts[1]))
+    except Exception:
+        return False
+
+
 def _claim_is_live(claim: Any, now: datetime, ttl_seconds: float) -> bool:
+    """True for a well-formed claim aged within ``[0, ttl)`` whose owner is not
+    provably dead: future-dated (clock/TZ skew) or malformed claims count as
+    stale so they can never wedge a job, and a same-host owner pid that has
+    exited releases the claim immediately instead of after the TTL.
+    """
     if not isinstance(claim, dict) or not claim.get("at"):
         return False
     try:
         age = (now - _ensure_aware(datetime.fromisoformat(claim["at"]))).total_seconds()
     except (TypeError, ValueError):
         return False
-    return 0 <= age < ttl_seconds
+    if not (0 <= age < ttl_seconds):
+        return False
+    return not _claim_owner_is_dead(claim)
 
 
 def rearm_oneshot(job_id: str, run_at: Any) -> Optional[Dict[str, Any]]:
@@ -3248,21 +3277,11 @@ def _claim_job_for_fire_locked(
                 if canonical_fire_at(scheduled_fire_at) != expected_fire:
                     return False
             now = _hermes_now()
-            existing = job.get("fire_claim")
-            if existing:
-                try:
-                    claimed_at = _ensure_aware(datetime.fromisoformat(existing["at"]))
-                    # Bounded on BOTH sides (#60703): a claim stamped in the
-                    # future (clock/TZ skew across a restart, or a corrupted
-                    # timestamp) would otherwise have a negative age and stay
-                    # "fresh" forever — the job becomes permanently unfireable
-                    # and every manual `cron run` reports "already being
-                    # fired". Treat future-dated claims as stale/overwritable.
-                    _age = (now - claimed_at).total_seconds()
-                    if 0 <= _age < claim_ttl_seconds:
-                        return False  # someone holds a fresh claim
-                except Exception:
-                    pass  # malformed claim → overwrite
+            # Same freshness gate as rearm / status paths: TTL age plus
+            # same-host dead-owner PID reap (#ff76e65e14). Inline age-only
+            # checks would keep a crashed owner's claim live until TTL.
+            if _claim_is_live(job.get("fire_claim"), now, claim_ttl_seconds):
+                return False  # someone holds a fresh claim
             if force:
                 job["enabled"] = True
                 job["state"] = "scheduled"

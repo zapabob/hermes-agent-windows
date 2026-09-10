@@ -170,7 +170,7 @@ from agent.model_metadata import (
 )
 from hermes_cli.config import get_hermes_home
 from hermes_constants import OPENROUTER_BASE_URL
-from utils import base_url_host_matches, base_url_hostname, env_float, is_truthy_value, model_forces_max_completion_tokens, normalize_proxy_env_vars
+from utils import base_url_host_matches, base_url_hostname, base_url_origin, env_float, is_truthy_value, model_forces_max_completion_tokens, normalize_proxy_env_vars
 
 logger = logging.getLogger(__name__)
 
@@ -3556,7 +3556,10 @@ def _relay_sync_completion(
     api_mode: str | None = None,
     create: Callable[[dict[str, Any]], Any] | None = None,
 ) -> Any:
-    callback = create or (lambda request: client.chat.completions.create(**request))
+    # Progress hook is per TASK: every attempt (retries, recovery, fallbacks)
+    # must stream through _create_with_progress or the compression watchdog
+    # sees silence (#98466 / upstream e6b890e584).
+    callback = create or (lambda request: _create_with_progress(client, request))
     route = _relay_auxiliary_metadata(provider=provider, api_mode=api_mode)
     # Protected compression calls isolate only the provider callback and stream
     # aggregation.  The owning thread remains free to unwind its lease/DB
@@ -3584,7 +3587,8 @@ async def _relay_async_completion(
     api_mode: str | None = None,
     create: Callable[[dict[str, Any]], Any] | None = None,
 ) -> Any:
-    callback = create or (lambda request: client.chat.completions.create(**request))
+    # Async twin of the sync seam default above (#98466).
+    callback = create or (lambda request: _acreate_with_progress(client, request))
     route = _relay_auxiliary_metadata(provider=provider, api_mode=api_mode)
     if route is None:
         return await callback(kwargs)
@@ -4933,9 +4937,35 @@ def _recoverable_pool_provider(
 ) -> Optional[str]:
     """Infer which provider pool can recover the current auxiliary client."""
     normalized = _normalize_aux_provider(resolved_provider)
+    base = str(getattr(client, "base_url", "") or "")
+    if main_runtime:
+        runtime = _normalize_main_runtime(main_runtime)
+        rt_base = str(runtime.get("base_url") or "")
+        rt_key = runtime.get("api_key")
+        client_key = getattr(client, "api_key", None)
+        # Only the SESSION's own key is shielded, and only when it was sent
+        # somewhere other than the session's origin (scheme+host+port). An
+        # independently owned auxiliary pool keeps rotating at its own origin.
+        if (
+            base
+            and rt_base
+            and normalized == runtime.get("provider")
+            and isinstance(rt_key, str)
+            and rt_key
+            and client_key == rt_key
+            and base_url_origin(base) != base_url_origin(rt_base)
+        ):
+            logger.info(
+                "Auxiliary: %s rejected the session key at %s, but the session's "
+                "endpoint is %s — endpoint mismatch, not a dead key; skipping "
+                "credential rotation",
+                normalized,
+                base_url_hostname(base),
+                base_url_hostname(rt_base),
+            )
+            return None
     if normalized not in {"", "auto", "custom"}:
         return normalized
-    base = str(getattr(client, "base_url", "") or "")
     if base_url_host_matches(base, "chatgpt.com"):
         return "openai-codex"
     if base_url_host_matches(base, "openrouter.ai"):
@@ -7022,23 +7052,37 @@ def resolve_provider_client(
         if custom_entry is None:
             custom_entry = _get_named_custom_provider(provider)
         if custom_entry:
-            custom_base = (custom_entry.get("base_url") or "").strip()
-            custom_key = (custom_entry.get("api_key") or "").strip()
-            custom_key_env = (custom_entry.get("key_env") or custom_entry.get("api_key_env") or "").strip()
-            if not custom_key and custom_key_env:
-                custom_key = _scoped_key_env(custom_key_env)
-            # Auxiliary tasks resolve named custom providers here rather than
-            # through _resolve_named_custom_runtime, so key_cmd has to be
-            # honoured on both paths at matching precedence: otherwise the main
-            # agent turn works while every auxiliary call (title generation,
-            # compression, vision, embedding) 401s on the placeholder below.
-            custom_key_cmd = str(custom_entry.get("key_cmd", "") or "").strip()
-            if custom_key_cmd:
-                from agent.command_token_source import build_command_token_provider
-                custom_key = build_command_token_provider(
-                    custom_key_cmd, custom_entry.get("name") or provider
-                ) or custom_key
-            custom_key = custom_key or "no-key-required"
+            # Per-task/explicit base_url or api_key compose OVER the named
+            # entry field-by-field: the entry fills blanks only (upstream
+            # edac5f6378). Silently swapping the destination would reroute
+            # compression prompts that carry conversation history.
+            custom_base = (
+                explicit_base_url or custom_entry.get("base_url") or ""
+            ).strip()
+            explicit_key = (explicit_api_key or "").strip()
+            if explicit_key:
+                custom_key = explicit_key
+            else:
+                custom_key = (custom_entry.get("api_key") or "").strip()
+                custom_key_env = (
+                    custom_entry.get("key_env")
+                    or custom_entry.get("api_key_env")
+                    or ""
+                ).strip()
+                if not custom_key and custom_key_env:
+                    custom_key = _scoped_key_env(custom_key_env)
+                # Auxiliary tasks resolve named custom providers here rather than
+                # through _resolve_named_custom_runtime, so key_cmd has to be
+                # honoured on both paths at matching precedence: otherwise the main
+                # agent turn works while every auxiliary call (title generation,
+                # compression, vision, embedding) 401s on the placeholder below.
+                custom_key_cmd = str(custom_entry.get("key_cmd", "") or "").strip()
+                if custom_key_cmd:
+                    from agent.command_token_source import build_command_token_provider
+                    custom_key = build_command_token_provider(
+                        custom_key_cmd, custom_entry.get("name") or provider
+                    ) or custom_key
+                custom_key = custom_key or "no-key-required"
             if custom_key == "no-key-required":
                 local_endpoint = _is_probably_local_model_endpoint(custom_base)
                 provider_name = custom_entry.get("name") or provider
@@ -8522,6 +8566,58 @@ _AUX_DIRECT_API_BASE_URLS: Dict[str, str] = {
 }
 
 
+def _expand_direct_api_alias(
+    prov: Optional[str], existing_base: Optional[str]
+) -> Tuple[Optional[str], Optional[str]]:
+    """``provider: openai`` → custom + the user's OpenAI endpoint; api.openai.com/v1 last.
+
+    A ``providers.openai`` entry keeps the provider name so the named-custom branch
+    applies its base_url and key; otherwise ``OPENAI_BASE_URL`` (a proxy/gateway the
+    OPENAI_API_KEY was issued for) wins over the public endpoint — sending the proxy
+    key to api.openai.com 401s and then quarantines a valid key (upstream edac5f6378).
+    """
+    if not prov:
+        return prov, existing_base
+    target_base = _AUX_DIRECT_API_BASE_URLS.get(prov.strip().lower())
+    if target_base is None:
+        return prov, existing_base
+    with contextlib.suppress(Exception):
+        from hermes_cli.runtime_provider import _get_named_custom_provider
+
+        if _get_named_custom_provider(prov) is not None:
+            return prov, existing_base
+    return (
+        "custom",
+        existing_base
+        or os.getenv("OPENAI_BASE_URL", "").strip().rstrip("/")
+        or target_base,
+    )
+
+
+def _preserve_provider_with_base_url(prov: Optional[str]) -> bool:
+    """True when a first-class provider keeps its identity alongside an explicit base_url."""
+    normalized = str(prov or "").strip().lower()
+    if normalized in {"", "auto", "custom"} or normalized.startswith("custom:"):
+        return False
+    try:
+        from hermes_cli.providers import get_provider
+
+        return get_provider(normalized) is not None
+    except Exception:
+        # Keep the high-risk provider-backed routes safe even if provider
+        # catalog loading is unavailable during early import/test paths.
+        return normalized in {
+            "anthropic",
+            "copilot",
+            "copilot-acp",
+            "minimax-oauth",
+            "nous",
+            "openai-codex",
+            "qwen-oauth",
+            "xai-oauth",
+        }
+
+
 def _resolve_task_provider_model(
     task: str = None,
     provider: str = None,
@@ -8622,43 +8718,7 @@ def _resolve_task_provider_model(
             cfg_api_key = None
 
     # Convenience aliases for direct API-key endpoints that aren't first-class
-    # providers (e.g. ``provider: openai`` → custom + api.openai.com/v1).
-    # Applied to both explicit args and config-derived values. When the user
-    # has already supplied a base_url we keep their endpoint but still rewrite
-    # the provider to ``custom`` so resolution doesn't hit the
-    # PROVIDER_REGISTRY-only path (which has no ``openai`` entry).
-    def _expand_direct_api_alias(
-        prov: Optional[str], existing_base: Optional[str]
-    ) -> Tuple[Optional[str], Optional[str]]:
-        if not prov:
-            return prov, existing_base
-        target_base = _AUX_DIRECT_API_BASE_URLS.get(prov.strip().lower())
-        if target_base is None:
-            return prov, existing_base
-        return "custom", existing_base or target_base
-
-    def _preserve_provider_with_base_url(prov: Optional[str]) -> bool:
-        normalized = str(prov or "").strip().lower()
-        if normalized in {"", "auto", "custom"} or normalized.startswith("custom:"):
-            return False
-        try:
-            from hermes_cli.providers import get_provider
-
-            return get_provider(normalized) is not None
-        except Exception:
-            # Keep the high-risk provider-backed routes safe even if provider
-            # catalog loading is unavailable during early import/test paths.
-            return normalized in {
-                "anthropic",
-                "copilot",
-                "copilot-acp",
-                "minimax-oauth",
-                "nous",
-                "openai-codex",
-                "qwen-oauth",
-                "xai-oauth",
-            }
-
+    # providers (module-level _expand_direct_api_alias / _preserve_provider_with_base_url).
     if provider:
         provider, base_url = _expand_direct_api_alias(provider, base_url)
     if cfg_provider:
@@ -9784,6 +9844,61 @@ async def _acreate_with_stream(
     )
 
 
+def _async_client_streams_internally(client: Any) -> bool:
+    """Async twin of :func:`_client_streams_internally`."""
+    return isinstance(client, (
+        AsyncCodexAuxiliaryClient,
+        AsyncAnthropicAuxiliaryClient,
+        AsyncBedrockAuxiliaryClient,
+    ))
+
+
+async def _acreate_with_progress(
+    client: Any,
+    kwargs: Dict[str, Any],
+    task: Optional[str] = None,
+    *,
+    force_stream: bool = False,
+) -> Any:
+    """Async :func:`_create_with_progress`: stream + re-aggregate when a progress
+    hook is active or the provider is stream-only; plain create otherwise.
+
+    Plain-create fallback covers stream NEGOTIATION rejections only; a failure
+    after content has streamed propagates to the recovery ladder (upstream
+    edac5f6378).
+    """
+    _notify_aux_progress()
+    if (not _aux_progress_active() and not force_stream) or _async_client_streams_internally(client):
+        return await client.chat.completions.create(**kwargs)
+
+    total_ceiling = _aux_stream_total_ceiling(kwargs.get("timeout"))
+    stream_kwargs = dict(kwargs)
+    stream_kwargs["stream"] = True
+    stream_kwargs["stream_options"] = {"include_usage": True}
+    try:
+        chunks = await client.chat.completions.create(**stream_kwargs)
+    except Exception as exc:
+        if (
+            force_stream
+            or _is_transient_transport_error(exc)
+            or _is_auth_error(exc)
+            or _is_payment_error(exc)
+            or _is_rate_limit_error(exc)
+        ):
+            raise
+        logger.debug(
+            "Auxiliary %s: streamed async request failed (%s); retrying "
+            "non-streaming", task or "call", exc,
+        )
+        return await client.chat.completions.create(**kwargs)
+    if hasattr(chunks, "choices"):
+        _notify_aux_progress()
+        return chunks
+    return await _aggregate_chat_stream_async(
+        chunks, model=str(kwargs.get("model") or ""), total_ceiling=total_ceiling,
+    )
+
+
 @_relay_auxiliary_call
 def call_llm(
     task: str = None,
@@ -10895,21 +11010,14 @@ async def _async_call_llm_impl(
         # Retry ONCE on the same provider for a transient transport blip
         # before the except-chain escalates to fallback — see call_llm()
         # for the rationale. (PR #16587)
-        _force_stream_async = (
-            _provider_requires_stream(
-                request_provider, _client_base or resolved_base_url,
-            )
-            and not isinstance(client, (
-                AsyncCodexAuxiliaryClient,
-                AsyncAnthropicAuxiliaryClient,
-                AsyncBedrockAuxiliaryClient,
-            ))
+        _force_stream_async = _provider_requires_stream(
+            request_provider, _client_base or resolved_base_url,
         )
 
         async def _acreate(_kwargs: Dict[str, Any]) -> Any:
-            if _force_stream_async:
-                return await _acreate_with_stream(client, _kwargs, task)
-            return await client.chat.completions.create(**_kwargs)
+            return await _acreate_with_progress(
+                client, _kwargs, task, force_stream=_force_stream_async,
+            )
 
         try:
             return _validate_llm_response(

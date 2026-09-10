@@ -6839,6 +6839,12 @@ def run_conversation(
                         "completed": False,
                         "failed": True,
                         "error": _nonretryable_summary,
+                        # Same verdict fields as the max-retries path: without
+                        # them the UI descriptor (agent/error_surface.py) reads
+                        # a rejected OAuth token as a retryable "Provider error"
+                        # and offers Retry instead of a re-login.
+                        "failure_reason": classified.reason.value,
+                        "failure_retryable": bool(classified.retryable),
                     }
 
                 if retry_count >= max_retries:

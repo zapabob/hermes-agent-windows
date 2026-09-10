@@ -150,7 +150,34 @@ def _surface(
         out["provider"] = provider
     if model:
         out["model"] = model
+    if layer == LAYER_AUTH and provider:
+        # OAuth providers are fixed by signing in again; API-key providers by
+        # replacing the key. The client's one-click recovery needs to know which
+        # and how to name the account it re-opens.
+        out["auth_kind"] = _auth_kind(provider)
+        out["provider_label"] = _provider_label(provider)
     return out
+
+
+def _provider_label(provider: str) -> str:
+    try:
+        from hermes_cli.models import provider_label
+
+        return provider_label(provider)
+    except Exception:  # pragma: no cover — advisory only
+        return provider
+
+
+def _auth_kind(provider: Optional[str]) -> str:
+    """``"oauth"`` for providers whose credential is an OAuth/subscription grant
+    (desktop Accounts tab), ``"api_key"`` for everything else."""
+    try:
+        from hermes_cli.provider_catalog import provider_catalog_by_slug
+
+        descriptor = provider_catalog_by_slug().get((provider or "").strip().lower())
+        return "oauth" if descriptor is not None and descriptor.tab == "accounts" else "api_key"
+    except Exception:  # pragma: no cover — advisory only
+        return "api_key"
 
 
 def build_error_surface_from_result(

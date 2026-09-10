@@ -6,7 +6,7 @@
 // supplied, matching how onDismissError/onRestoreToMessage already behave.
 import { AssistantRuntimeProvider, type ThreadMessage, useExternalStoreRuntime } from '@assistant-ui/react'
 import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { $displayTimestamps } from '@/store/display-timestamps'
 
@@ -15,6 +15,13 @@ import { stubThreadEnvironment } from '../test-utils'
 import { formatTimelineRange, formatTimelineTimestamp } from './timestamp'
 
 import { Thread } from '.'
+
+const startManualProviderOAuth = vi.hoisted(() => vi.fn())
+
+vi.mock('@/store/onboarding', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  startManualProviderOAuth: (...args: unknown[]) => startManualProviderOAuth(...args)
+}))
 
 // Timeline timestamps render only when `display.timestamps` is enabled.
 $displayTimestamps.set(true)
@@ -25,6 +32,7 @@ stubThreadEnvironment()
 
 afterEach(() => {
   cleanup()
+  startManualProviderOAuth.mockClear()
 })
 
 function userMessage(): ThreadMessage {
@@ -68,6 +76,33 @@ function assistantMessage(): ThreadMessage {
   } as unknown as ThreadMessage
 }
 
+function oauthExpiredMessage(): ThreadMessage {
+  return {
+    id: 'assistant-error-2',
+    role: 'assistant',
+    content: [],
+    status: { type: 'incomplete', reason: 'error', error: 'HTTP 401: User not found.' },
+    createdAt,
+    metadata: {
+      unstable_state: null,
+      unstable_annotations: [],
+      unstable_data: [],
+      steps: [],
+      // What agent/error_surface.py stamps on a rejected OAuth grant.
+      custom: {
+        errorSurface: {
+          authKind: 'oauth',
+          code: 'auth',
+          layer: 'auth',
+          provider: 'nous',
+          providerLabel: 'Nous Portal',
+          retryable: false
+        }
+      }
+    }
+  } as unknown as ThreadMessage
+}
+
 function Harness({
   assistant = assistantMessage(),
   onBranchInNewChat
@@ -104,6 +139,19 @@ describe('AssistantMessage branch button visibility (bug #2 fix)', () => {
     await screen.findByText('done')
 
     expect(screen.queryByRole('button', { name: 'Branch in new chat' })).toBeNull()
+  })
+})
+
+describe('expired OAuth grant recovery', () => {
+  it('explains the expiry and re-runs that provider sign-in in one click', async () => {
+    render(<Harness assistant={oauthExpiredMessage()} />)
+
+    expect(await screen.findByText(/Nous Portal sign-in has expired/)).toBeTruthy()
+    // Signing in changes the outcome, so Retry stays as the follow-up click.
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy()
+
+    screen.getByRole('button', { name: 'Sign in to Nous Portal again' }).click()
+    expect(startManualProviderOAuth).toHaveBeenCalledWith('nous', undefined)
   })
 })
 

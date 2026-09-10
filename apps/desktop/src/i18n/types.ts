@@ -2959,6 +2959,12 @@ export interface Translations {
       }
       errorRetry: string
       errorSwitchProvider: string
+      /** One-click recovery for an expired/revoked OAuth grant: re-runs that
+       *  provider's sign-in flow (auth layer, authKind 'oauth'). */
+      errorSignInAgain: (provider: string) => string
+      /** Explains WHY the turn failed for an OAuth 401 — the raw body
+       *  ("HTTP 401: User not found.") doesn't say "sign in again". */
+      errorOauthExpired: (provider: string) => string
       errorOpenLogs: string
       errorOpenLogsFailed: string
       errorOpenDesktopLogs: string
