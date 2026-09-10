@@ -18,6 +18,8 @@ does not establish that a stable installer has been published.
 下のPowerShell手順から導入できます。既存環境の更新前には作業差分と各プロファイルを保存してください。
 旧版の詳説は [日本語](README.ja.md)・[简体中文](README.zh-CN.md) にあります。
 今回の版番号と検証状況は、このREADMEを参照してください。
+If this Windows-native downstream is useful to you, consider starring the repository — it helps other Windows users discover the project.
+このWindowsネイティブ版が役に立ったら、Starで応援していただけると、他のWindowsユーザーにも見つけてもらいやすくなります.
 
 ## Setup in 30 seconds
 
