@@ -81,6 +81,7 @@ export function registerNativeNotifications({ getMainWindow, focusWindow }: Noti
           return
         }
 
+        // Approvals keep the existing session-scoped channel.
         window.webContents.send('hermes:notification-action', {
           connectionId: payload?.connectionId,
           profile: payload?.profile,
