@@ -2,6 +2,7 @@ import type { GatewayWsUrlResult } from '@hermes/shared'
 import type { TranslucencyState } from '@hermes/shared/translucency'
 
 import type { HermesNotification } from '../electron/notification-types'
+
 import type { WakeIndicatorState } from './lib/wake-indicator'
 import type {
   PetOverlayBounds,

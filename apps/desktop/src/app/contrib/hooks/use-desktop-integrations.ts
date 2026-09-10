@@ -19,9 +19,9 @@ import { openPluginInstallRequest } from '@/store/plugin-install-request'
 import { openBrowserTab, openPreview } from '@/store/preview'
 import { openFolderAsProject } from '@/store/projects'
 import {
+  $selectedStoredSessionId,
   getRememberedRoute,
   getRememberedSessionId,
-  $selectedStoredSessionId,
   sessionBelongsToProfile,
   setRememberedRoute,
   setRememberedSessionId
