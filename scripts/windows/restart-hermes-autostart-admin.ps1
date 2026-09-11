@@ -158,7 +158,8 @@ try {
             [Parameter(Mandatory = $true)][string]$Description,
             [Parameter(Mandatory = $true)][string]$PowerShellCommand,
             [Parameter(Mandatory = $true)][string]$WorkingDirectory,
-            [int]$DelaySeconds = 30
+            [int]$DelaySeconds = 30,
+            [ValidateSet("Limited", "Highest")][string]$RunLevel = "Limited"
         )
 
         $actionArgs = "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -Command $PowerShellCommand"
@@ -167,7 +168,7 @@ try {
         if ($DelaySeconds -gt 0) {
             $trigger.Delay = "PT${DelaySeconds}S"
         }
-        $principal = New-ScheduledTaskPrincipal -UserId $CurrentUser -LogonType Interactive -RunLevel Limited
+        $principal = New-ScheduledTaskPrincipal -UserId $CurrentUser -LogonType Interactive -RunLevel $RunLevel
         $settings = New-HermesTaskSettings
 
         Register-ScheduledTask `
@@ -179,7 +180,7 @@ try {
             -Description $Description `
             -Force | Out-Null
 
-        Write-Step "Registered logon task: $TaskName"
+        Write-Step "Registered logon task: $TaskName (RunLevel=$RunLevel)"
     }
 
     $envPrefix = Join-EnvPrefix @{
@@ -202,6 +203,16 @@ try {
         -PowerShellCommand "$envPrefix& '$GoWatchdogScript' -HermesRoot '$RepoRoot' -HermesHome '$HermesHome' -ManagedBackendPort 9119" `
         -WorkingDirectory $RepoRoot `
         -DelaySeconds 15
+
+    # Interactive+Highest logon task displaces the S4U Session 0 boot owner so
+    # Desktop kill/relaunch stays inside the console user's session.
+    Register-HermesLogonTask `
+        -TaskName "HermesGoWatchdogLogonAutoStart" `
+        -Description "Logon displace Session 0 Go watchdog into the interactive desktop session" `
+        -PowerShellCommand "$envPrefix& '$GoWatchdogScript' -HermesRoot '$RepoRoot' -HermesHome '$HermesHome' -ManagedBackendPort 9119" `
+        -WorkingDirectory $RepoRoot `
+        -DelaySeconds 20 `
+        -RunLevel Highest
 
     Register-HermesBootTask `
         -TaskName "HermesGatewayBootAutoStart" `
@@ -324,6 +335,7 @@ try {
 
     Write-Step "Starting Hermes tasks in order..."
     Start-HermesTask -TaskName "HermesGoWatchdogBootAutoStart" -WaitSeconds 4
+    Start-HermesTask -TaskName "HermesGoWatchdogLogonAutoStart" -WaitSeconds 4
     Start-HermesTask -TaskName "HermesGatewayBootAutoStart" -WaitSeconds 12
     Start-HermesTask -TaskName "HermesHypuraHarnessBootAutoStart" -WaitSeconds 6
     Start-HermesTask -TaskName "HermesLineNgrokBootAutoStart" -WaitSeconds 4
@@ -372,6 +384,7 @@ try {
     Write-Step "Verification: boot task triggers"
     foreach ($name in @(
         "HermesGoWatchdogBootAutoStart",
+        "HermesGoWatchdogLogonAutoStart",
         "HermesGatewayBootAutoStart",
         "HermesHypuraHarnessBootAutoStart",
         "HermesLineNgrokBootAutoStart",

@@ -24,6 +24,7 @@ def test_watchdog_uses_the_documented_single_startup_and_probe_defaults() -> Non
     assert 'flag.Int("interval", 20,' in main
     assert 'flag.Int("fail-threshold", 2,' in main
     assert '"HermesGoWatchdogBootAutoStart"' in autostart
+    assert '"HermesGoWatchdogLogonAutoStart"' in autostart
     assert "-WindowStyle Hidden" in autostart
 
 
@@ -45,3 +46,19 @@ def test_a2a_sidecars_are_outside_direct_watchdog_management() -> None:
     assert "9124: {}" in process
     assert "go-a2a-hub" not in process
     assert "go-a2a-roundrobin" not in process
+
+
+def test_session0_watchdog_cannot_orphan_desktop() -> None:
+    """S4U boot owners must not kill interactive Hermes.exe without relaunch."""
+    process = _read(GO / "process_windows.go")
+    launcher = _read(WINDOWS / "Start-HermesGoWatchdog.ps1")
+
+    assert "isNonInteractiveSession" in process
+    assert "Session 0: refusing Desktop kill" in process
+    assert "HermesDesktopAutoStart" in process
+    assert "startDesktopInInteractiveSession" in process
+    assert "Replacing Session 0 Go watchdog" in launcher
+    assert "Get-GoWatchdogSessionId" in launcher
+    assert '$state.Status -ne "owned"' in launcher
+    assert "lock matched visible process without OpenProcess query" in launcher
+    assert "$replaceSession0Owner" in launcher
