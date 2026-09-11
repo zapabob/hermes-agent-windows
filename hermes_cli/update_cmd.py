@@ -10531,9 +10531,12 @@ def _restart_phase_failure_is_incomplete(surviving, pre_restart_pids) -> bool:
 
     Fail closed unless we can positively prove the fleet is safe:
 
-    * ``surviving is None`` — the survivor probe could not determine state
-      (typically the freshly-pulled ``hermes_cli.gateway`` no longer imports,
-      one of the ways the phase aborts). Assume stale.
+    * ``pre_restart_pids == []`` — discovery never ran / nothing was touched.
+      An ImportError while *importing* restart helpers cannot have left a live
+      gateway on mixed modules (Install & Update E2E 2026-09-11: no gateway
+      running, stale ``utils`` ImportError, previously failed closed wrongly).
+    * ``surviving is None`` — survivor probe could not determine state after we
+      may already have touched gateways. Assume stale.
     * ``surviving`` non-empty — a gateway is still running pre-update code.
     * ``surviving == []`` — nothing is running now. That is proof-of-safety
       ONLY when nothing was running before we touched anything. If a gateway
@@ -10541,6 +10544,8 @@ def _restart_phase_failure_is_incomplete(surviving, pre_restart_pids) -> bool:
       meaning the pre-state could not be read), it was stopped without a
       verified replacement, so we still fail closed (#78574).
     """
+    if pre_restart_pids is not None and not pre_restart_pids:
+        return False
     if surviving is None or surviving:
         return True
     # surviving == []: safe only if we know nothing was running beforehand.
