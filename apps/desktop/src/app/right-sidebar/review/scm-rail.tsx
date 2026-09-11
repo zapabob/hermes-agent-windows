@@ -1,6 +1,6 @@
 import { useStore } from '@nanostores/react'
 import type { FormEvent, ReactNode } from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { ActionStatus } from '@/components/ui/action-status'
 import { Button } from '@/components/ui/button'
@@ -101,6 +101,8 @@ function ScmNameDialog({
   const [value, setValue] = useState(initialValue)
   const [status, setStatus] = useState<'done' | 'idle' | 'saving'>('idle')
   const [error, setError] = useState<null | string>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
 
   const trimmed = value.trim()
   const invalid = !optional && trimmed === ''
@@ -113,6 +115,20 @@ function ScmNameDialog({
       setError(null)
     }
   }, [initialValue, open])
+
+  // Close after a brief "done" flash. Timer must clear on unmount or the
+  // callback races vitest teardown (ReferenceError: window is not defined).
+  useEffect(() => {
+    if (status !== 'done') {
+      return
+    }
+    const id = window.setTimeout(() => {
+      onCloseRef.current()
+    }, 600)
+    return () => {
+      window.clearTimeout(id)
+    }
+  }, [status])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -127,7 +143,6 @@ function ScmNameDialog({
     try {
       await onSubmit(trimmed)
       setStatus('done')
-      window.setTimeout(onClose, 600)
     } catch (err) {
       setStatus('idle')
       setError(err instanceof Error ? err.message : t.errors.genericFailure)

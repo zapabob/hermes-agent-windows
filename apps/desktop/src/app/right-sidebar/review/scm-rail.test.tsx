@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { HermesGitBranch, HermesGitStash, HermesGitTag } from '@/global'
@@ -247,6 +247,41 @@ describe('ReviewScmRail', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'New tag' }))
 
     await waitFor(() => expect(git.tagCreate).toHaveBeenCalledWith('/repo', 'v2.0', null))
+  })
+
+  it('clears the post-submit close timer when the rail unmounts', async () => {
+    vi.useFakeTimers()
+    try {
+      const clearSpy = vi.spyOn(window, 'clearTimeout')
+      const git = stubGit()
+      const { unmount } = renderRail()
+
+      fireEvent.click(screen.getByRole('button', { name: 'New tag' }))
+      const dialog = screen.getByRole('dialog')
+      fireEvent.change(within(dialog).getByRole('textbox', { name: 'Tag name' }), {
+        target: { value: 'v2.1' }
+      })
+      fireEvent.click(within(dialog).getByRole('button', { name: 'New tag' }))
+
+      // Resolve submit + schedule the 600ms close timer without firing it.
+      await act(async () => {
+        await Promise.resolve()
+        await Promise.resolve()
+      })
+      expect(git.tagCreate).toHaveBeenCalledWith('/repo', 'v2.1', null)
+
+      clearSpy.mockClear()
+      unmount()
+      // ScmNameDialog effect cleanup must clearTimeout so vitest teardown
+      // cannot fire into a destroyed env (ReferenceError: window is not defined).
+      expect(clearSpy).toHaveBeenCalled()
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1_000)
+      })
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('deletes a tag from its row after confirming', async () => {
