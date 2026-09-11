@@ -84,7 +84,8 @@ function Register-HermesTask {
         [Parameter(Mandatory = $true)][string]$Command,
         [Parameter(Mandatory = $true)][string]$WorkingDirectory,
         [ValidateSet("Boot", "Logon")][string]$TriggerKind,
-        [int]$DelaySeconds
+        [int]$DelaySeconds,
+        [ValidateSet("Limited", "Highest")][string]$RunLevel = "Limited"
     )
 
     $action = New-ScheduledTaskAction `
@@ -96,7 +97,7 @@ function Register-HermesTask {
         $principal = New-ScheduledTaskPrincipal -UserId $currentUser -LogonType S4U -RunLevel Highest
     } else {
         $trigger = New-ScheduledTaskTrigger -AtLogOn -User $currentUser
-        $principal = New-ScheduledTaskPrincipal -UserId $currentUser -LogonType Interactive -RunLevel Limited
+        $principal = New-ScheduledTaskPrincipal -UserId $currentUser -LogonType Interactive -RunLevel $RunLevel
     }
     if ($DelaySeconds -gt 0) {
         $trigger.Delay = "PT${DelaySeconds}S"
@@ -110,7 +111,7 @@ function Register-HermesTask {
         -Settings (New-TaskSettings) `
         -Description $Description `
         -Force | Out-Null
-    Write-Host "Registered $TriggerKind task: $TaskName"
+    Write-Host "Registered $TriggerKind task: $TaskName (RunLevel=$($principal.RunLevel))"
 }
 
 $homeLiteral = Escape-PowerShellLiteral $HermesHome
@@ -127,6 +128,7 @@ $gatewayEnvPrefix = "$envPrefix`$env:HERMES_STARTUP_DELAY_SECONDS='20'; `$env:HE
 
 $taskCommands = @{
     HermesGoWatchdogBootAutoStart = "$envPrefix& '$goLiteral' -HermesRoot '$rootLiteral' -HermesHome '$homeLiteral' -ManagedBackendPort 9119"
+    HermesGoWatchdogLogonAutoStart = "$envPrefix& '$goLiteral' -HermesRoot '$rootLiteral' -HermesHome '$homeLiteral' -ManagedBackendPort 9119"
     HermesGatewayBootAutoStart = "$gatewayEnvPrefix& '$gatewayLiteral'"
     HermesHypuraHarnessBootAutoStart = "$envPrefix& '$pythonLiteral' -m hermes_cli.main harness start"
     HermesMemoryGraphBootAutoStart = "$envPrefix& '$memoryLiteral'"
@@ -137,14 +139,15 @@ $taskCommands = @{
 }
 
 $taskSpecs = @(
-    @{Name = "HermesGoWatchdogBootAutoStart"; Kind = "Boot"; Delay = 15; Description = "Boot auto-start Hermes Go watchdog from the canonical checkout"; WorkingDirectory = $repoRoot},
-    @{Name = "HermesGatewayBootAutoStart"; Kind = "Boot"; Delay = 20; Description = "Boot auto-start Hermes Gateway from the canonical checkout"; WorkingDirectory = $repoRoot},
-    @{Name = "HermesHypuraHarnessBootAutoStart"; Kind = "Boot"; Delay = 40; Description = "Boot auto-start Hypura Harness from the canonical checkout"; WorkingDirectory = $repoRoot},
-    @{Name = "HermesMemoryGraphBootAutoStart"; Kind = "Boot"; Delay = 55; Description = "Boot auto-start Hermes MemoryGraph from the canonical checkout"; WorkingDirectory = $repoRoot},
-    @{Name = "HermesDashboardBootAutoStart"; Kind = "Boot"; Delay = 70; Description = "Boot auto-start Hermes Dashboard from the canonical checkout"; WorkingDirectory = $repoRoot},
-    @{Name = "HermesDesktopAutoStart"; Kind = "Logon"; Delay = 90; Description = "Logon auto-start Hermes Desktop through the canonical launcher"; WorkingDirectory = $repoRoot},
-    @{Name = "HermesDashboardAutoStart"; Kind = "Logon"; Delay = 75; Description = "Logon auto-start Hermes Dashboard from the canonical checkout"; WorkingDirectory = $repoRoot},
-    @{Name = "HermesMemoryGraphAutoStart"; Kind = "Logon"; Delay = 78; Description = "Logon auto-start Hermes MemoryGraph from the canonical checkout"; WorkingDirectory = $repoRoot}
+    @{Name = "HermesGoWatchdogBootAutoStart"; Kind = "Boot"; Delay = 15; RunLevel = "Highest"; Description = "Boot auto-start Hermes Go watchdog from the canonical checkout"; WorkingDirectory = $repoRoot},
+    @{Name = "HermesGoWatchdogLogonAutoStart"; Kind = "Logon"; Delay = 20; RunLevel = "Highest"; Description = "Logon displace Session 0 Go watchdog into the interactive desktop session"; WorkingDirectory = $repoRoot},
+    @{Name = "HermesGatewayBootAutoStart"; Kind = "Boot"; Delay = 20; RunLevel = "Highest"; Description = "Boot auto-start Hermes Gateway from the canonical checkout"; WorkingDirectory = $repoRoot},
+    @{Name = "HermesHypuraHarnessBootAutoStart"; Kind = "Boot"; Delay = 40; RunLevel = "Highest"; Description = "Boot auto-start Hypura Harness from the canonical checkout"; WorkingDirectory = $repoRoot},
+    @{Name = "HermesMemoryGraphBootAutoStart"; Kind = "Boot"; Delay = 55; RunLevel = "Highest"; Description = "Boot auto-start Hermes MemoryGraph from the canonical checkout"; WorkingDirectory = $repoRoot},
+    @{Name = "HermesDashboardBootAutoStart"; Kind = "Boot"; Delay = 70; RunLevel = "Highest"; Description = "Boot auto-start Hermes Dashboard from the canonical checkout"; WorkingDirectory = $repoRoot},
+    @{Name = "HermesDesktopAutoStart"; Kind = "Logon"; Delay = 90; RunLevel = "Limited"; Description = "Logon auto-start Hermes Desktop through the canonical launcher"; WorkingDirectory = $repoRoot},
+    @{Name = "HermesDashboardAutoStart"; Kind = "Logon"; Delay = 75; RunLevel = "Limited"; Description = "Logon auto-start Hermes Dashboard from the canonical checkout"; WorkingDirectory = $repoRoot},
+    @{Name = "HermesMemoryGraphAutoStart"; Kind = "Logon"; Delay = 78; RunLevel = "Limited"; Description = "Logon auto-start Hermes MemoryGraph from the canonical checkout"; WorkingDirectory = $repoRoot}
 )
 
 if (-not $VerifyOnly) {
@@ -155,7 +158,8 @@ if (-not $VerifyOnly) {
             -Command $taskCommands[$spec.Name] `
             -WorkingDirectory $spec.WorkingDirectory `
             -TriggerKind $spec.Kind `
-            -DelaySeconds $spec.Delay
+            -DelaySeconds $spec.Delay `
+            -RunLevel $spec.RunLevel
     }
 }
 

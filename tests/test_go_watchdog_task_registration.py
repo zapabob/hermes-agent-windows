@@ -46,8 +46,16 @@ def test_watchdog_task_registration_matches_the_go_default_backend_port() -> Non
         legacy_start,
         "legacy PowerShell default",
     )
-    registered_default = _single_port(
-        r"-ManagedBackendPort\s+(\d+)", autostart, "scheduled-task port"
+    registered_ports = [
+        int(match)
+        for match in re.findall(r"-ManagedBackendPort\s+(\d+)", autostart)
+    ]
+    assert registered_ports, "scheduled-task port registrations are missing"
+    assert set(registered_ports) == {expected}, (
+        f"scheduled-task ports {registered_ports} must all equal {expected}"
+    )
+    assert len(registered_ports) >= 2, (
+        "boot and logon Go watchdog tasks must both pin the managed port"
     )
     documented_default = _single_port(
         r"\|\s*`-managed-backend-port`\s*\|\s*(\d+)\s*\|",
@@ -58,7 +66,6 @@ def test_watchdog_task_registration_matches_the_go_default_backend_port() -> Non
     assert {
         go_default,
         legacy_default,
-        registered_default,
         documented_default,
     } == {expected}
 

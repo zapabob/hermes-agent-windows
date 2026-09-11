@@ -25,10 +25,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\windows\Build-Hermes
 
 通常のワークステーション起動では、管理者が登録した
 `HermesGoWatchdogBootAutoStart` Scheduled Task がブート時に
-`Start-HermesGoWatchdog.ps1` を非表示 PowerShell で実行します。手動操作では、
-管理者 PowerShell から同じ launcher を実行します。どちらも最終的に
-Windows GUI subsystem の `hermes-watchdog.exe` を画面なしで起動し、別の
-Watchdog 起動機構は設けません。
+`Start-HermesGoWatchdog.ps1` を非表示 PowerShell で実行します。S4U ブートは
+Session 0 に落ちるため、続けて `HermesGoWatchdogLogonAutoStart`
+（Interactive + Highest）がログオン後に同一 launcher を実行し、Session 0
+所有者を対話セッションへ置換します。手動操作では、管理者 PowerShell から
+同じ launcher を実行します。どちらも最終的に Windows GUI subsystem の
+`hermes-watchdog.exe` を画面なしで起動し、別の Watchdog 起動機構は設けません。
+
+Session 0 のまま残った watchdog は Desktop を kill できても再表示できないため、
+Go 本体は Session 0 での Desktop 強制停止を拒否し、不在時は
+`HermesDesktopAutoStart` 経由で対話セッションへ起動を依頼します。
 
 ```powershell
 # 環境変数（例）

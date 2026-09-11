@@ -445,10 +445,56 @@ func readLaunchManifest(cfg Config, bm *BackendManager) *DesktopBackendManifest 
 	return &manifest
 }
 
+// currentProcessSessionID returns the Windows session that hosts this process.
+// Session 0 is the non-interactive services session (S4U boot tasks land here).
+func currentProcessSessionID() (uint32, error) {
+	var sessionID uint32
+	err := windows.ProcessIdToSessionId(uint32(os.Getpid()), &sessionID)
+	return sessionID, err
+}
+
+func isNonInteractiveSession() bool {
+	sessionID, err := currentProcessSessionID()
+	return err == nil && sessionID == 0
+}
+
+const desktopLogonTaskName = "HermesDesktopAutoStart"
+
+// startDesktopInInteractiveSession asks the logon-registered Desktop task to
+// run in the user's interactive session. Direct CreateProcess from Session 0
+// either fails silently or produces a window the console user never sees.
+func startDesktopInInteractiveSession(logger *Logger) bool {
+	cmd := exec.Command("schtasks.exe", "/Run", "/TN", desktopLogonTaskName)
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	out, err := cmd.CombinedOutput()
+	trimmed := strings.TrimSpace(string(out))
+	if err != nil {
+		if logger != nil {
+			logger.Infof("Session 0 Desktop relaunch via %s failed: %v (%s)", desktopLogonTaskName, err, trimmed)
+		}
+		return false
+	}
+	if logger != nil {
+		logger.Infof("requested interactive Desktop launch via scheduled task %s", desktopLogonTaskName)
+	}
+	return true
+}
+
 func startPackagedDesktop(cfg Config, logger *Logger, bm *BackendManager, mutationAllowed func() bool) bool {
 	if !fileExists(cfg.PackagedExe) {
 		logger.Infof("Hermes.exe missing at %s", cfg.PackagedExe)
 		return false
+	}
+	if mutationAllowed != nil && !mutationAllowed() {
+		logger.Infof("Desktop launch revoked by maintenance fence")
+		return false
+	}
+	// S4U boot tasks host the watchdog in Session 0. Never CreateProcess a GUI
+	// Desktop there — kill+skip left the console without Hermes.exe and burned
+	// the recovery budget. Prefer the Interactive logon task instead.
+	if isNonInteractiveSession() {
+		logger.Infof("watchdog is running in Session 0 (non-interactive); launching Desktop via %s (Desktop belongs in user session)", desktopLogonTaskName)
+		return startDesktopInInteractiveSession(logger)
 	}
 	work := filepath.Dir(cfg.PackagedExe)
 	cmd := exec.Command(cfg.PackagedExe)
@@ -456,10 +502,6 @@ func startPackagedDesktop(cfg Config, logger *Logger, bm *BackendManager, mutati
 	manifest := readLaunchManifest(cfg, bm)
 	cmd.Env = append(stripInheritedDesktopRemotes(os.Environ()), desktopLaunchEnv(cfg, manifest)...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	if mutationAllowed != nil && !mutationAllowed() {
-		logger.Infof("Desktop launch revoked by maintenance fence")
-		return false
-	}
 	if err := cmd.Start(); err != nil {
 		logger.Infof("failed to launch Desktop: %v", err)
 		return false
@@ -475,6 +517,17 @@ func startPackagedDesktop(cfg Config, logger *Logger, bm *BackendManager, mutati
 func restartPackagedDesktop(cfg Config, logger *Logger, bm *BackendManager, mutationAllowed func() bool) bool {
 	if mutationAllowed != nil && !mutationAllowed() {
 		logger.Infof("Desktop restart revoked before stop")
+		return false
+	}
+	// Session 0 can terminate interactive Hermes.exe but cannot put a visible
+	// window back. Refusing the stop avoids "Desktop mysteriously dies".
+	if isNonInteractiveSession() {
+		logger.Infof("Session 0: refusing Desktop kill; recovering managed backend only")
+		if bm != nil {
+			if _, err := bm.EnsureHealthy(); err != nil {
+				logger.Infof("Session 0 backend recovery: %v", err)
+			}
+		}
 		return false
 	}
 	logger.Infof("restarting Desktop (force backend respawn)")

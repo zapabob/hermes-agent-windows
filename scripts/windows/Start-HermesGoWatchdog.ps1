@@ -181,6 +181,28 @@ function Get-GoWatchdogLockState {
     }
     $identity = Get-WindowsProcessIdentity -ProcessId $pidLock
     if (-not $identity) {
+        # Session 0 S4U owners often deny PROCESS_QUERY_LIMITED_INFORMATION to an
+        # Interactive launcher. If Get-Process still sees the PID and the lock
+        # names our packaged exe + repo, treat it as owned so stop/displace works.
+        $visible = Get-Process -Id $pidLock -ErrorAction SilentlyContinue
+        if (
+            $visible -and
+            $obj.executablePath -and
+            (Test-SamePath ([string]$obj.executablePath) $Exe) -and
+            (Test-SamePath ([string]$obj.repoRoot) $RepoRoot)
+        ) {
+            $created = 0UL
+            try { $created = [uint64]$obj.processCreated } catch { $created = 0UL }
+            return [pscustomobject]@{
+                Status = "owned"
+                Pid = $pidLock
+                ProcessCreated = $created
+                ExecutablePath = Get-NormalizedPath ([string]$obj.executablePath)
+                RepoRoot = Get-NormalizedPath ([string]$obj.repoRoot)
+                SessionId = [int]$visible.SessionId
+                Reason = "lock matched visible process without OpenProcess query"
+            }
+        }
         return [pscustomobject]@{ Status = "stale"; Pid = $pidLock; Reason = "process is absent" }
     }
     if (-not (Test-SamePath ([string]$obj.repoRoot) $RepoRoot)) {
@@ -203,12 +225,15 @@ function Get-GoWatchdogLockState {
     if (-not $creationMatches) {
         return [pscustomobject]@{ Status = "foreign"; Pid = $pidLock; Reason = "process creation time mismatch" }
     }
+    $sessionId = -1
+    try { $sessionId = [int](Get-Process -Id $pidLock -ErrorAction Stop).SessionId } catch { $sessionId = -1 }
     return [pscustomobject]@{
         Status = "owned"
         Pid = $pidLock
         ProcessCreated = [uint64]$identity.ProcessCreated
         ExecutablePath = $identity.ExecutablePath
         RepoRoot = Get-NormalizedPath ([string]$obj.repoRoot)
+        SessionId = $sessionId
         Reason = "full identity matched"
     }
 }
@@ -224,27 +249,80 @@ function Stop-GoWatchdog {
         $access = 0x1000 -bor 0x0001 -bor 0x00100000
         $handle = [HermesWatchdog.NativeProcess]::OpenProcess($access, $false, [uint32]$state.Pid)
         if ($handle -eq [IntPtr]::Zero) {
-            Write-Warning "Could not open the validated watchdog process; preserving its lock."
-            return $false
-        }
-        try {
-            $current = Get-WindowsProcessIdentityFromHandle -Handle $handle -ProcessId $state.Pid
+            # S4U Session 0 owners often deny TERMINATE (and sometimes image-name
+            # query) even to an elevated Interactive launcher. Re-validate with
+            # QUERY_LIMITED only, then Stop-Process to displace the boot owner.
+            $queryHandle = [HermesWatchdog.NativeProcess]::OpenProcess(0x1000, $false, [uint32]$state.Pid)
+            $queryOk = $false
+            try {
+                if ($queryHandle -ne [IntPtr]::Zero) {
+                    $current = Get-WindowsProcessIdentityFromHandle -Handle $queryHandle -ProcessId $state.Pid
+                    $queryOk = (
+                        $current -and
+                        [uint64]$current.ProcessCreated -eq [uint64]$state.ProcessCreated -and
+                        (
+                            -not $current.ExecutablePath -or
+                            (Test-SamePath $current.ExecutablePath $state.ExecutablePath)
+                        ) -and
+                        (Test-SamePath $state.RepoRoot $RepoRoot)
+                    )
+                }
+            } finally {
+                if ($queryHandle -ne [IntPtr]::Zero) {
+                    [void][HermesWatchdog.NativeProcess]::CloseHandle($queryHandle)
+                }
+            }
+            $alive = $null -ne (Get-Process -Id ([int]$state.Pid) -ErrorAction SilentlyContinue)
+            $sessionId = -1
+            try { $sessionId = [int](Get-Process -Id ([int]$state.Pid) -ErrorAction Stop).SessionId } catch {}
             if (
-                -not $current -or
-                [uint64]$current.ProcessCreated -ne [uint64]$state.ProcessCreated -or
-                -not (Test-SamePath $current.ExecutablePath $state.ExecutablePath) -or
-                -not (Test-SamePath $state.RepoRoot $RepoRoot)
+                $alive -and
+                (
+                    $queryOk -or
+                    (
+                        $sessionId -eq 0 -and
+                        (Test-SamePath $state.ExecutablePath $Exe) -and
+                        (Test-SamePath $state.RepoRoot $RepoRoot)
+                    )
+                )
             ) {
-                Write-Warning "Watchdog identity changed before stop; preserving its lock."
+                Write-Warning ("OpenProcess terminate denied for pid={0} session={1}; falling back to Stop-Process." -f $state.Pid, $sessionId)
+                try {
+                    Stop-Process -Id ([int]$state.Pid) -Force -ErrorAction Stop
+                    Start-Sleep -Milliseconds 800
+                } catch {
+                    Write-Warning "Stop-Process fallback failed: $($_.Exception.Message); trying taskkill."
+                    $tk = Start-Process -FilePath "$env:SystemRoot\System32\taskkill.exe" -ArgumentList @("/F","/PID","$($state.Pid)") -Wait -PassThru -WindowStyle Hidden
+                    if ($tk.ExitCode -notin 0, 128) {
+                        Write-Warning "taskkill fallback failed (exit $($tk.ExitCode)); preserving its lock."
+                        return $false
+                    }
+                    Start-Sleep -Milliseconds 800
+                }
+            } else {
+                Write-Warning "Could not open the validated watchdog process; preserving its lock."
                 return $false
             }
-            if (-not [HermesWatchdog.NativeProcess]::TerminateProcess($handle, 1)) {
-                Write-Warning "Exact watchdog process handle could not be terminated; preserving its lock."
-                return $false
+        } else {
+            try {
+                $current = Get-WindowsProcessIdentityFromHandle -Handle $handle -ProcessId $state.Pid
+                if (
+                    -not $current -or
+                    [uint64]$current.ProcessCreated -ne [uint64]$state.ProcessCreated -or
+                    -not (Test-SamePath $current.ExecutablePath $state.ExecutablePath) -or
+                    -not (Test-SamePath $state.RepoRoot $RepoRoot)
+                ) {
+                    Write-Warning "Watchdog identity changed before stop; preserving its lock."
+                    return $false
+                }
+                if (-not [HermesWatchdog.NativeProcess]::TerminateProcess($handle, 1)) {
+                    Write-Warning "Exact watchdog process handle could not be terminated; preserving its lock."
+                    return $false
+                }
+                [void][HermesWatchdog.NativeProcess]::WaitForSingleObject($handle, 2000)
+            } finally {
+                [void][HermesWatchdog.NativeProcess]::CloseHandle($handle)
             }
-            [void][HermesWatchdog.NativeProcess]::WaitForSingleObject($handle, 2000)
-        } finally {
-            [void][HermesWatchdog.NativeProcess]::CloseHandle($handle)
         }
         $state = Get-GoWatchdogLockState
     }
@@ -252,6 +330,9 @@ function Stop-GoWatchdog {
         Remove-Item -LiteralPath $LockPath -Force -ErrorAction Stop
     } elseif ($state.Status -eq "foreign") {
         Write-Warning "Go watchdog lock identity is foreign ($($state.Reason)); refusing to stop or remove its lock."
+        return $false
+    } elseif ($state.Status -eq "owned") {
+        Write-Warning "Go watchdog still owned after stop attempt; preserving its lock."
         return $false
     }
     return $true
@@ -392,6 +473,47 @@ json.dump(payload, sys.stdout, ensure_ascii=False)
     )
 }
 
+function Get-CurrentProcessSessionId {
+    try {
+        return [int](Get-Process -Id $PID -ErrorAction Stop).SessionId
+    } catch {
+        return -1
+    }
+}
+
+function Get-GoWatchdogSessionId {
+    $state = Get-GoWatchdogLockState
+    if ($state.Status -ne "owned" -or -not $state.Pid) {
+        return $null
+    }
+    if ($null -ne $state.PSObject.Properties["SessionId"] -and $null -ne $state.SessionId -and [int]$state.SessionId -ge 0) {
+        return [int]$state.SessionId
+    }
+    try {
+        return [int](Get-Process -Id ([int]$state.Pid) -ErrorAction Stop).SessionId
+    } catch {
+        return $null
+    }
+}
+
+# Boot S4U tasks park hermes-watchdog.exe in Session 0. That owner can kill
+# interactive Hermes.exe but cannot relaunch a visible Desktop, so an
+# Interactive elevated launcher must displace it instead of "already running".
+$launcherSessionId = Get-CurrentProcessSessionId
+$existingWatchdogSessionId = Get-GoWatchdogSessionId
+$replaceSession0Owner = (
+    -not $ForceRestart -and
+    -not $Once -and
+    -not $Stop -and
+    $null -ne $existingWatchdogSessionId -and
+    [int]$existingWatchdogSessionId -eq 0 -and
+    [int]$launcherSessionId -gt 0
+)
+if ($replaceSession0Owner) {
+    Write-Warning ("Replacing Session 0 Go watchdog (pid session={0}) with interactive-session owner (launcher session={1})." -f $existingWatchdogSessionId, $launcherSessionId)
+    $ForceRestart = $true
+}
+
 if ($ForceRestart -or $Once) {
     if (-not (Stop-GoWatchdog)) {
         throw "Cannot replace a watchdog whose full process identity is not owned by this launcher."
@@ -403,6 +525,21 @@ if ($ForceRestart -or $Once) {
     }
 }
 Stop-PsDesktopBackendWatchdog
+
+# Burned recovery budgets survive reboot and suppress Desktop relaunch
+# ("defer until managed backend auth-ok" / desktop_restart cooldown). Interactive
+# logon must start clean so HermesDesktopAutoStart is not undone by a stale
+# circuit from the previous boot flap.
+if ((Get-CurrentProcessSessionId) -gt 0 -and -not $Stop) {
+    $recoveryBudgetPath = Join-Path $DataDir "recovery-budget.json"
+    if (Test-Path -LiteralPath $recoveryBudgetPath) {
+        $stamp = Get-Date -Format "yyyyMMddHHmmss"
+        Copy-Item -LiteralPath $recoveryBudgetPath -Destination ("{0}.bak-logon-{1}" -f $recoveryBudgetPath, $stamp) -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath $recoveryBudgetPath -Force -ErrorAction SilentlyContinue
+        Write-Host "Cleared recovery-budget.json for interactive logon start"
+    }
+}
+
 if (Test-GoWatchdogAlive) {
     Write-Host "Go watchdog already running (lock=$LockPath)"
     exit 0
