@@ -396,6 +396,10 @@ override-dependencies = [
   # requests with RSA and AES, and that API did not break in 49 or 50.
   # Remove this line when alibabacloud-tea-openapi lifts the cap.
   "cryptography>=50,<51",
+  # h2 arrives via httpx[http2] / grpclib. CVE-2026-71554 (duplicate Host
+  # header / request-smuggling primitive) is fixed in 4.4.1; keep the floor
+  # so exclude-newer / transitive float cannot regress the lock.
+  "h2>=4.4.1",
 ]
 exclude-newer = "14 days"
 # aiohttp, cryptography: same shape — the advisory fixes are newer than the
