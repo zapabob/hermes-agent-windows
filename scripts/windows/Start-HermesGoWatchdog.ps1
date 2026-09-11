@@ -525,6 +525,21 @@ if ($ForceRestart -or $Once) {
     }
 }
 Stop-PsDesktopBackendWatchdog
+
+# Burned recovery budgets survive reboot and suppress Desktop relaunch
+# ("defer until managed backend auth-ok" / desktop_restart cooldown). Interactive
+# logon must start clean so HermesDesktopAutoStart is not undone by a stale
+# circuit from the previous boot flap.
+if ((Get-CurrentProcessSessionId) -gt 0 -and -not $Stop) {
+    $recoveryBudgetPath = Join-Path $DataDir "recovery-budget.json"
+    if (Test-Path -LiteralPath $recoveryBudgetPath) {
+        $stamp = Get-Date -Format "yyyyMMddHHmmss"
+        Copy-Item -LiteralPath $recoveryBudgetPath -Destination ("{0}.bak-logon-{1}" -f $recoveryBudgetPath, $stamp) -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath $recoveryBudgetPath -Force -ErrorAction SilentlyContinue
+        Write-Host "Cleared recovery-budget.json for interactive logon start"
+    }
+}
+
 if (Test-GoWatchdogAlive) {
     Write-Host "Go watchdog already running (lock=$LockPath)"
     exit 0

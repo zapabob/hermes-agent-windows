@@ -388,10 +388,53 @@ func (bm *BackendManager) EnsureHealthy() (*backendInfo, error) {
 	// Refuse to publish a token that does not authenticate (squatter race).
 	if !testBackendAuth(port, token) {
 		bm.logger.Infof("managed backend status-ready but auth failed on port %d; refusing drifted manifest", port)
+		reusedToken := preferredToken != "" && token == preferredToken
 		bm.stopLocked()
 		_ = waitManagedPortCleared(port, 15*time.Second, bm.logger)
 		bm.clearManifest()
-		return nil, fmt.Errorf("managed backend on port %d failed session-token auth", port)
+		// Boot/logon often reuses a stale preferred token while serve minted a
+		// different gate. One fresh-token retry avoids burning the recovery
+		// budget and killing interactive Desktop.
+		if reusedToken {
+			bm.logger.Infof("retrying managed serve on port %d with freshly minted session token", port)
+			bm.token = ""
+			cmd2, token2, port2, err2 := buildServeCommand(bm.cfg, "")
+			if err2 != nil {
+				bm.clearManifest()
+				return nil, fmt.Errorf("managed backend on port %d failed session-token auth (fresh mint: %w)", port, err2)
+			}
+			hideWindowsProcess(cmd2)
+			stdout2, err2 := cmd2.StdoutPipe()
+			if err2 != nil {
+				return nil, err2
+			}
+			cmd2.Stderr = io.Discard
+			if err2 := cmd2.Start(); err2 != nil {
+				bm.clearManifest()
+				return nil, err2
+			}
+			bm.cmd = cmd2
+			bm.pid = cmd2.Process.Pid
+			bm.port = port2
+			bm.token = token2
+			go io.Copy(io.Discard, stdout2)
+			if err2 := bm.waitForReadyPort(port2, time.Duration(bm.cfg.BackendStartTimeoutSec)*time.Second); err2 != nil {
+				if err3 := bm.waitForReadyPort(port2, time.Duration(bm.cfg.BackendReadyTimeoutSec)*time.Second); err3 != nil {
+					bm.stopLocked()
+					bm.clearManifest()
+					return nil, fmt.Errorf("managed backend on port %d failed session-token auth (fresh ready: %w)", port, err3)
+				}
+			}
+			if !testBackendAuth(port2, token2) {
+				bm.stopLocked()
+				_ = waitManagedPortCleared(port2, 15*time.Second, bm.logger)
+				bm.clearManifest()
+				return nil, fmt.Errorf("managed backend on port %d failed session-token auth after fresh mint", port2)
+			}
+			port = port2
+		} else {
+			return nil, fmt.Errorf("managed backend on port %d failed session-token auth", port)
+		}
 	}
 
 	if err := bm.publishManifestLocked(port, bm.pid); err != nil {
