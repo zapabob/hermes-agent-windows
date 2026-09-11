@@ -867,6 +867,31 @@ def base_url_hostname(base_url: str) -> str:
     return (parsed.hostname or "").lower().rstrip(".")
 
 
+def base_url_origin(base_url: str) -> tuple[str, str, int]:
+    """Return ``(scheme, hostname, effective_port)`` for a base URL.
+
+    Origin, not just host: ``https://h`` vs ``http://h`` and two ports on one
+    host are different trust boundaries. Port defaults to 443/80 so
+    ``https://h`` equals ``https://h:443``. Returns ``("", "", 0)`` when the
+    host is missing or the port is unusable.
+    """
+    raw = (base_url or "").strip()
+    if not raw:
+        return ("", "", 0)
+    parsed = urlparse(raw if "://" in raw else f"//{raw}")
+    hostname = (parsed.hostname or "").lower().rstrip(".")
+    if not hostname:
+        return ("", "", 0)
+    scheme = (parsed.scheme or "").lower()
+    try:
+        port = parsed.port
+    except ValueError:
+        return ("", "", 0)
+    if port is None:
+        port = {"https": 443, "http": 80}.get(scheme, 0)
+    return (scheme, hostname, port)
+
+
 # ─── Model Capability Detection ──────────────────────────────────────────────
 
 

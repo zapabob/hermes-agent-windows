@@ -40,6 +40,14 @@ _log = logging.getLogger(__name__)
 # to flush a WS frame before we mark the transport dead. Protects handler
 # threads from a wedged socket.
 _WS_WRITE_TIMEOUT_S = 10.0
+# Max seconds one send_text may await the socket once it is actually running on
+# the loop. A healthy socket returns from send_text without waiting (the frame
+# lands in the transport buffer); only kernel backpressure parks it, so a
+# GIL/loop stall cannot start this clock. Deliberately 3x the worker wait above
+# and under the client's 45s heartbeat deadline: a peer that cannot drain
+# ~48 KiB in 30s is gone, and closing here starts its reconnect instead of
+# leaving every later frame and RPC reply parked behind the writer lock (#106369).
+_WS_SEND_DEADLINE_S = 30.0
 _WS_LOG_PAYLOAD_PREVIEW = 240
 
 # Per-token streaming frames are coalesced: buffered and flushed as a batch on
@@ -256,7 +264,27 @@ class WSTransport:
                 for line in lines:
                     if self._closed:
                         return
-                    await self._ws.send_text(line)
+                    try:
+                        await asyncio.wait_for(
+                            self._ws.send_text(line),
+                            timeout=_WS_SEND_DEADLINE_S,
+                        )
+                    except asyncio.TimeoutError:
+                        # The loop is responsive (the timer fired) but the socket
+                        # never drained: unlike the loop-stall wait in write(),
+                        # this is a dead peer. Latch under the writer lock so
+                        # queued batches bail, and close the socket so handle_ws's
+                        # read loop ends and its teardown (session detach/reap,
+                        # client reconnect) runs. See #106369.
+                        self._closed = True
+                        _log.warning(
+                            "ws send deadline exceeded (socket stalled, loop responsive) "
+                            "peer=%s deadline=%ss — closing",
+                            self._peer,
+                            _WS_SEND_DEADLINE_S,
+                        )
+                        self._loop.create_task(self._close_stalled_socket())
+                        return
             except Exception as exc:
                 # Latch while still holding the writer lock so queued batches
                 # observe the failure before they get a chance to touch the
@@ -275,6 +303,18 @@ class WSTransport:
         if handle is not None:
             handle.cancel()
             self._token_flush_handle = None
+
+    async def _close_stalled_socket(self) -> None:
+        """Close the peer socket after a send deadline so ``handle_ws``'s
+        ``receive_text`` unblocks and its disconnect teardown runs."""
+        try:
+            await self._ws.close(code=1011)
+        except Exception as exc:  # noqa: BLE001 - peer already gone; teardown matters
+            _log.debug(
+                "ws close after send deadline failed peer=%s error=%s",
+                self._peer,
+                exc,
+            )
 
 
 def _ws_peer_label(ws: Any) -> str:

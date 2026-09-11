@@ -101,3 +101,83 @@ carry:
     tests: [apps/desktop/src/lib/browser-deeplink.test.ts, apps/desktop/src/lib/deeplink-routes.test.ts, apps/desktop/src/app/contrib/hooks/use-desktop-integrations.test.tsx]
     integration_policy: COMPOSE
     removal_condition: upstream Browser hand-off remains the sole Chrome/Edge ingress and PTY focus restore never steals it
+  - id: windows-system-ca-expiry-dedup
+    upstream_paths: [apps/desktop/electron/windows-system-ca.ts]
+    current_upstream_owner: apps/desktop/electron/windows-system-ca.ts (upstream b8d09d785d)
+    downstream_reason: drop expired Windows store PEMs and fingerprint256-dedup while keeping defaults first; unparseable PEMs retained
+    invariants: [validToDate <= now dropped, fingerprint256 unique, defaults precede store PEMs]
+    tests: [apps/desktop/electron/windows-system-ca.test.ts]
+    integration_policy: PORT
+    removal_condition: upstream Windows CA filter lands on main and passes the same Electron fixture suite
+  - id: relay-provision-secret-issued-f004
+    upstream_paths: [gateway/relay/__init__.py]
+    current_upstream_owner: gateway/relay._post_provision + self_provision_relay (upstream f97a4102dd)
+    downstream_reason: treat literal secretIssued:false as success without writing creds; all-platforms-answered-but-no-secret warns with /relay/rotate
+    invariants: [only bool false withholds, malformed fail-closed, write creds only when secret present]
+    tests: [tests/gateway/relay/test_provision_secret_optional.py]
+    integration_policy: PORT
+    removal_condition: upstream F-004 secretIssued contract is on main and the fork urlopen path is replaced by shared _json_post without semantic drift
+  - id: tui-gateway-ws-send-deadline
+    upstream_paths: [tui_gateway/ws.py]
+    current_upstream_owner: tui_gateway.ws._safe_send_many (upstream ecfcbb6276)
+    downstream_reason: bound websocket sends with a 30s wait_for so a stalled peer cannot freeze the loop; close with 1011 after latch
+    invariants: [_WS_SEND_DEADLINE_S=30, timeout latches _closed, close code 1011, loop remains responsive]
+    tests: [tests/tui_gateway/test_ws_send_timeout.py]
+    integration_policy: PORT
+    removal_condition: upstream WS send-deadline and 1011 close land on main and pass the same timeout suite
+  - id: desktop-queue-discovery-gate
+    upstream_paths: [apps/desktop/src/app/chat/composer/hooks/use-composer-queue.ts, apps/desktop/src/app/session/hooks/use-background-queue-drain.ts]
+    current_upstream_owner: composer + background queue drain (upstream fad7cfca42)
+    downstream_reason: gate auto-drain while session discovery ($sessionsLoading) is true so restored queues do not burn retries against reaped runtimes
+    invariants: [no auto-drain while sessionsLoading, drain resumes after discovery settles, hidden-session queues preserved after transient drain failure]
+    tests: [apps/desktop/src/app/chat/composer/hooks/use-composer-queue.test.tsx, apps/desktop/src/app/session/hooks/use-background-queue-drain.test.tsx, apps/desktop/src/app/session/hooks/use-background-queue-preservation.test.tsx]
+    integration_policy: PORT
+    removal_condition: upstream discovery-gated drain lands on main and the fork owner-hint forget helper stays equivalent
+  - id: cron-fire-claim-dead-owner-reap
+    upstream_paths: [cron/jobs.py]
+    current_upstream_owner: cron.jobs._claim_is_live + claim_job_for_fire (upstream ff76e65e14)
+    downstream_reason: treat same-host fire_claim owners whose pid has exited as stale immediately so a killed cron run does not block reclaim for the full TTL
+    invariants: [live same-host owner blocks, dead same-host owner reclaimable, foreign host / probe failure keep TTL]
+    tests: [tests/cron/test_claim_job_for_fire.py]
+    integration_policy: PORT
+    removal_condition: upstream dead-owner reap is on main and claim_job_for_fire continues to route freshness through _claim_is_live
+  - id: desktop-native-notification-ipc-cluster
+    upstream_paths: [apps/desktop/electron/notification-ipc.ts, apps/desktop/electron/notification-actions.ts, apps/desktop/electron/notification-registry.ts, apps/desktop/electron/notification-types.ts, apps/desktop/src/store/native-notifications.ts]
+    current_upstream_owner: notification IPC cluster (upstream 7107458d96 / a245d9aaa4 / f557829bff / 78052fe437 / 85571c16b6)
+    downstream_reason: route OS notifications to the source window, keep durable focusSessionId, retain handlers across dismiss, and preserve Windows connectionId/profile/requestId on approval actions
+    invariants: [source-window click/action routing, focusSessionId from storedSessionIdForRuntimeId, action index resolution, registry retain-until-consume, Windows approval fields forwarded]
+    tests: [apps/desktop/electron/notification-ipc.test.ts, apps/desktop/electron/notification-actions.test.ts, apps/desktop/electron/notification-registry.test.ts, apps/desktop/src/store/native-notifications.test.ts, apps/desktop/src/app/contrib/hooks/notification-focus.test.tsx, apps/desktop/src/app/contrib/hooks/use-desktop-integrations.test.tsx, apps/desktop/src/app/open-session.test.ts]
+    integration_policy: COMPOSE
+    removal_condition: upstream notification IPC cluster lands with equivalent Windows approval provenance fields
+  - id: dashboard-auth-native-provider-chooser
+    upstream_paths: [hermes_cli/dashboard_auth/login_page.py, hermes_cli/dashboard_auth/routes.py]
+    current_upstream_owner: hermes_cli.dashboard_auth native authorize (upstream f6ddd89692)
+    downstream_reason: when OAuth and password providers coexist, empty provider shows an HTML chooser before minting cookie/broker; each link re-enters authorize with the same PKCE and an explicit provider
+    invariants: [multi-provider chooser before broker, single provider still auto-selects, chooser links complete native flow with shared PKCE]
+    tests: [tests/hermes_cli/test_dashboard_auth_native_flow.py]
+    integration_policy: PORT
+    removal_condition: upstream native provider chooser lands on main and passes the same mixed-provider authorize suite
+  - id: desktop-oauth-sign-in-again
+    upstream_paths: [agent/error_surface.py, agent/conversation_loop.py, apps/desktop/src/lib/error-surface.ts, apps/desktop/src/components/assistant-ui/thread/assistant-message.tsx, apps/desktop/src/store/onboarding.ts]
+    current_upstream_owner: auth error surface + desktop recovery (upstream 97ca90f184)
+    downstream_reason: stamp auth_kind/provider_label on auth-layer surfaces; non-retryable abort carries failure_reason/failure_retryable; Desktop OAuth expiry offers Sign in again via startManualProviderOAuth instead of opaque Retry
+    invariants: [oauth vs api_key from catalog tab, label from provider_label(), OAuth button before Retry, same-provider re-login keeps model]
+    tests: [tests/agent/test_error_surface.py, tests/agent/test_nonretryable_result_carries_verdict.py, apps/desktop/src/lib/error-surface.test.ts, apps/desktop/src/components/assistant-ui/thread/assistant-message.test.tsx]
+    integration_policy: PORT
+    removal_condition: upstream auth_kind/Sign-in-again cluster lands without requiring a full turn_recovery extract on this fork
+  - id: auxiliary-origin-async-progress
+    upstream_paths: [utils.py, agent/auxiliary_client.py]
+    current_upstream_owner: agent.auxiliary_client origin shield + async progress (upstream edac5f6378 / e6b890e584)
+    downstream_reason: origin-scoped session-key shield (scheme+host+port); named custom fields compose under explicit overrides; relay defaults stream through _create_with_progress/_acreate_with_progress; mid-stream failures do not silently retry non-streaming
+    invariants: [foreign origin skips rotation, same-origin and independent pool still rotate, OPENAI_BASE_URL preferred over public openai alias, negotiation-only plain-create fallback]
+    tests: [tests/agent/test_aux_relay_progress_seam.py, tests/agent/test_aux_session_endpoint_affinity.py, tests/agent/test_auxiliary_explicit_cancellation.py]
+    integration_policy: PORT
+    removal_condition: upstream origin shield and async progress seam land on main without requiring a full auxiliary_client tree sync
+  - id: desktop-clarify-submit-shortcut
+    upstream_paths: [apps/desktop/src/components/assistant-ui/clarify-submit-shortcut.ts, apps/desktop/src/components/assistant-ui/clarify-tool.tsx]
+    current_upstream_owner: clarify form Cmd/Ctrl+Enter (upstream ff7a1e8953 / b5c0a7ebe2)
+    downstream_reason: capture-phase Cmd/Ctrl+Enter submits via the enabled form submit button without toggling focused choices or accepting incomplete batch answers
+    invariants: [meta/ctrl only, no alt/shift/composing/repeat, requestSubmit on enabled submit, single and batch forms]
+    tests: [apps/desktop/src/components/assistant-ui/clarify-tool.test.tsx]
+    integration_policy: PORT
+    removal_condition: upstream clarify submit shortcut lands on the same assistant-ui clarify owner

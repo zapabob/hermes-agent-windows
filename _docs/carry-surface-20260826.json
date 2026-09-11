@@ -17,12 +17,12 @@
   "schema_version": 1,
   "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
   "summary": {
-    "all_fork_specific_loc": 2707363,
-    "carry_surface_files": 5063,
-    "cwc": 83885679,
-    "fork_owned_loc": 1162700,
-    "upstream_owned_fork_loc": 1544663,
-    "utr": 0.570542
+    "all_fork_specific_loc": 2709571,
+    "carry_surface_files": 5075,
+    "cwc": 86068366,
+    "fork_owned_loc": 1163969,
+    "upstream_owned_fork_loc": 1545602,
+    "utr": 0.570423
   },
   "top_carry_risks": [
     {
@@ -80,6 +80,15 @@
       "upstream_frequency": 73
     },
     {
+      "added": 8462,
+      "cwc": 3409590,
+      "deleted": 4308,
+      "patch_size": 12770,
+      "path": "agent/auxiliary_client.py",
+      "semantic_coupling": 3,
+      "upstream_frequency": 89
+    },
+    {
       "added": 10388,
       "cwc": 2916690,
       "deleted": 1050,
@@ -89,13 +98,13 @@
       "upstream_frequency": 85
     },
     {
-      "added": 8374,
-      "cwc": 2260956,
-      "deleted": 4328,
-      "patch_size": 12702,
-      "path": "agent/auxiliary_client.py",
-      "semantic_coupling": 2,
-      "upstream_frequency": 89
+      "added": 8584,
+      "cwc": 2429130,
+      "deleted": 942,
+      "patch_size": 9526,
+      "path": "agent/conversation_loop.py",
+      "semantic_coupling": 3,
+      "upstream_frequency": 85
     },
     {
       "added": 6842,
@@ -105,15 +114,6 @@
       "path": "agent/context_compressor.py",
       "semantic_coupling": 2,
       "upstream_frequency": 82
-    },
-    {
-      "added": 8578,
-      "cwc": 1618400,
-      "deleted": 942,
-      "patch_size": 9520,
-      "path": "agent/conversation_loop.py",
-      "semantic_coupling": 2,
-      "upstream_frequency": 85
     },
     {
       "added": 9192,

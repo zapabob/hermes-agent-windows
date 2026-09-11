@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { createClientSessionState } from '@/lib/chat-runtime'
+
 import { gatewayScope, setPrimaryGateway } from './gateway'
 import {
   clearPluginNotifyHandlers,
@@ -16,6 +18,7 @@ import {
 import { __resetNativeNotifyBaselineForTests, markNativeNotifyBaseline } from './notify-baseline'
 import { $approvalRequest, setApprovalRequest } from './prompts'
 import { $activeSessionId, setActiveSessionId } from './session'
+import { dropSessionState, publishSessionState } from './session-states'
 
 const desktopWindow = window as unknown as { hermesDesktop?: Window['hermesDesktop'] }
 const initialHermesDesktop = desktopWindow.hermesDesktop
@@ -58,6 +61,20 @@ afterEach(() => {
     desktopWindow.hermesDesktop = initialHermesDesktop
   } else {
     delete desktopWindow.hermesDesktop
+  }
+})
+
+it('captures durable navigation identity while keeping the runtime id for approval actions', () => {
+  const runtimeId = freshSession()
+  publishSessionState(runtimeId, createClientSessionState('durable-chat'))
+
+  try {
+    dispatchNativeNotification({ kind: 'approval', sessionId: runtimeId, title: 'Approval' })
+    expect(notify).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId: runtimeId, focusSessionId: 'durable-chat' })
+    )
+  } finally {
+    dropSessionState(runtimeId)
   }
 })
 

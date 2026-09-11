@@ -7,7 +7,7 @@ import { gatewayForScope } from './gateway'
 import { withinNativeNotifyBaseline } from './notify-baseline'
 import { approvalRequestForSession, clearApprovalRequest } from './prompts'
 import { $activeSessionId } from './session'
-import { requestForOwnedSession } from './session-states'
+import { requestForOwnedSession, storedSessionIdForRuntimeId } from './session-states'
 
 export type { HermesOpenTarget }
 
@@ -216,6 +216,7 @@ export function dispatchNativeNotification(input: NativeNotificationInput): bool
     activate: input.activate,
     body: input.body,
     connectionId: input.connectionId,
+    focusSessionId: input.sessionId ? (storedSessionIdForRuntimeId(input.sessionId) ?? undefined) : undefined,
     icon: input.icon,
     kind: input.kind,
     notifyId: input.notifyId,

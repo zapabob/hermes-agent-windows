@@ -1,6 +1,8 @@
 import type { GatewayWsUrlResult } from '@hermes/shared'
 import type { TranslucencyState } from '@hermes/shared/translucency'
 
+import type { HermesNotification } from '../electron/notification-types'
+
 import type { WakeIndicatorState } from './lib/wake-indicator'
 import type {
   PetOverlayBounds,
@@ -1238,26 +1240,7 @@ export interface HermesApiRequest {
   connectionId?: string | null
 }
 
-export interface HermesNotification {
-  title?: string
-  body?: string
-  silent?: boolean
-  kind?: string
-  sessionId?: string
-  /** Source identity for an approval action; forwarded back to the renderer unchanged. */
-  connectionId?: string
-  profile?: string
-  requestId?: string
-  /** Dedupe discriminator for session-less notifications (e.g. plugin id). */
-  tag?: string
-  /** Absolute icon path for Electron `Notification`. */
-  icon?: string
-  /** Resolved hash-router path opened on body click (plugin / deeplink-compatible). */
-  activate?: string
-  /** Renderer handle for onActivate / onAction callbacks. */
-  notifyId?: string
-  actions?: { id: string; text: string; activate?: string }[]
-}
+export type { HermesNotification }
 
 export interface HermesPreviewTarget {
   binary?: boolean

@@ -1050,6 +1050,10 @@ function readMain() {
   return fs.readFileSync(path.join(__dirname, 'main.ts'), 'utf8').replace(/\r\n/g, '\n')
 }
 
+function readNotificationIpc() {
+  return fs.readFileSync(path.join(__dirname, 'notification-ipc.ts'), 'utf8').replace(/\r\n/g, '\n')
+}
+
 test('registry JSON helpers retain native OAuth bearer authentication', () => {
   const source = readMain()
   const postStart = source.indexOf('async function postJsonForBackend(')
@@ -1109,7 +1113,10 @@ test('connection-config save and apply IPC handlers route payloads through coerc
 })
 
 test('approval notification actions preserve source identity through the renderer IPC payload', () => {
-  const source = readMain()
+  // Notify IPC lives in notification-ipc.ts; main only wires registerNativeNotifications.
+  assert.match(readMain(), /registerNativeNotifications\b/, 'main must register native notifications')
+
+  const source = readNotificationIpc()
   const notifyStart = source.indexOf("ipcMain.handle('hermes:notify'")
   assert.notEqual(notifyStart, -1, 'hermes:notify handler must exist')
 
@@ -1124,7 +1131,7 @@ test('approval notification actions preserve source identity through the rendere
   assert.match(approvalBranch, /profile: payload\?\.profile/)
   assert.match(approvalBranch, /requestId: payload\?\.requestId/)
   assert.match(approvalBranch, /sessionId: payload\.sessionId/)
-  assert.match(approvalBranch, /mainWindow\.webContents\.send\('hermes:notification-action'/)
+  assert.match(approvalBranch, /webContents\.send\('hermes:notification-action'/)
 })
 
 test('whenReady enables basic password-store encryption before createWindow', () => {

@@ -867,6 +867,29 @@ export function forgetSessionOwnerHintsForConnection(connectionId: string): void
   }
 }
 
+/** Drop every hint naming `sessionId` — used by tests and teardown when a
+ *  specific chat's owner route must not linger after the session is gone. */
+export function forgetSessionOwnerHintsForSession(sessionId: string): void {
+  const id = sessionId.trim()
+
+  if (!id) {
+    return
+  }
+
+  let changed = false
+
+  for (const [key, entry] of [...sessionOwnerHints]) {
+    if (entry.id === id) {
+      sessionOwnerHints.delete(key)
+      changed = true
+    }
+  }
+
+  if (changed) {
+    persistSessionOwnerHints()
+  }
+}
+
 /** @internal Tests: forget every in-memory hint (storage untouched unless asked). */
 export function _resetSessionOwnerHintsForTests({ storage = false }: { storage?: boolean } = {}): void {
   sessionOwnerHints.clear()
