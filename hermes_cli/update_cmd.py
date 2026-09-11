@@ -143,17 +143,50 @@ _UPDATE_RUNTIME_RELOAD_MODULES = (
     "tools.lazy_deps",
 )
 
-#: Package prefixes whose cached modules become stale the moment the checkout
-#: changes under this process. Purged (not reloaded) by
+#: Root module names whose cached entries become stale the moment the
+#: checkout changes under this process. Purged (not reloaded) by
 #: ``_purge_stale_hermes_modules`` so any LATER import chain resolves against
-#: fresh on-disk source only.
-_STALE_PURGE_PREFIXES = (
-    "hermes_cli",
-    "gateway",
-    "tools",
-    "tui_gateway",
-    "agent",
+#: fresh on-disk source only. Match on the first dotted segment so
+#: lookalikes (``gatewayd``, ``toolshed``) are spared.
+_STALE_PURGE_ROOTS = frozenset(
+    {
+        # Package trees
+        "hermes_cli",
+        "gateway",
+        "tools",
+        "tui_gateway",
+        "agent",
+        # Top-level checkout modules. Package-prefix-only purge missed these
+        # and recreated the 2026-08-20 ImportError class on 2026-09-11:
+        # Install & Update E2E — freshly pulled ``agent.auxiliary_client``
+        # did ``from utils import base_url_origin`` while stale ``utils``
+        # (pre-symbol) stayed in ``sys.modules`` → gateway auto-restart
+        # aborted → ``hermes update`` exited 1.
+        "utils",
+        "hermes_constants",
+        "hermes_logging",
+        "hermes_state",
+        "hermes_state_common",
+        "hermes_state_portability",
+        "hermes_state_schema",
+        "hermes_state_search",
+        "hermes_time",
+        "hermes_bootstrap",
+        "hermes_api_server",
+        "model_tools",
+        "toolsets",
+        "toolset_distributions",
+        "run_agent",
+        "cli",
+        "batch_runner",
+        "registration_lifecycle",
+        "trajectory_compressor",
+        "mcp_serve",
+    }
 )
+
+# Back-compat alias for any out-of-tree references / older tests.
+_STALE_PURGE_PREFIXES = tuple(sorted(_STALE_PURGE_ROOTS))
 
 #: Modules that must survive the purge: they are (or are referenced by) the
 #: code currently EXECUTING the update, so evicting them buys nothing — the
@@ -202,12 +235,8 @@ def _purge_stale_hermes_modules() -> None:
         for name in list(_m().sys.modules):
             if name in _STALE_PURGE_PROTECTED:
                 continue
-            if not name.startswith(_STALE_PURGE_PREFIXES):
-                continue
             root = name.split(".", 1)[0]
-            if root not in _STALE_PURGE_PREFIXES:
-                # Prefix-string match caught an unrelated package
-                # (e.g. ``gateway_foo``) — leave it alone.
+            if root not in _STALE_PURGE_ROOTS:
                 continue
             if _m().sys.modules.pop(name, None) is not None:
                 purged.append(name)

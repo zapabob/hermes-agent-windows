@@ -56,6 +56,10 @@ def test_purge_evicts_hermes_prefixed_modules():
         "tools.ansi_strip",
         "tui_gateway.server",
         "agent.memory_store",
+        # Top-level checkout modules (Install & Update E2E 2026-09-11).
+        "utils",
+        "hermes_constants",
+        "model_tools",
     ]
     added = []
     for name in victims:
@@ -130,6 +134,33 @@ def test_stale_symbol_scenario_end_to_end():
 
         # Post-purge, the import resolves against real on-disk source.
         from hermes_cli.cli_output import line_input  # noqa: F401
+    finally:
+        sys.modules.pop(name, None)
+        if real is not None:
+            sys.modules[name] = real
+
+
+def test_stale_top_level_utils_symbol_after_pull():
+    """Install & Update E2E (2026-09-11): stale top-level ``utils`` lacked
+    ``base_url_origin`` while freshly pulled ``agent.auxiliary_client``
+    imported it — package-prefix-only purge left ``utils`` cached."""
+    name = "utils"
+    real = sys.modules.get(name)
+    stale = types.ModuleType(name)
+    sys.modules[name] = stale
+    try:
+        try:
+            from utils import base_url_origin  # noqa: F401
+            raised = False
+        except ImportError:
+            raised = True
+        assert raised, "precondition: stale utils must lack base_url_origin"
+
+        cli_main._purge_stale_hermes_modules()
+
+        from utils import base_url_origin  # noqa: F401
+
+        assert callable(base_url_origin)
     finally:
         sys.modules.pop(name, None)
         if real is not None:
