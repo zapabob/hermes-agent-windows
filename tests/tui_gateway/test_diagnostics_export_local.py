@@ -10,6 +10,7 @@ Contract:
 from __future__ import annotations
 
 import json
+import threading
 import zipfile
 from pathlib import Path
 
@@ -36,10 +37,15 @@ def export_home(tmp_path, monkeypatch):
 
 def test_export_local_writes_zip_without_network(export_home, monkeypatch):
     calls: list[str] = []
+    main_ident = threading.get_ident()
 
     def _boom(*_a, **_k):
-        calls.append("network")
-        raise AssertionError("network must not be called for local export")
+        # Only the export caller's thread counts: tui_gateway import can leave
+        # daemon helpers that race a global urlopen patch on busy CI hosts.
+        if threading.get_ident() == main_ident:
+            calls.append("network")
+            raise AssertionError("network must not be called for local export")
+        raise OSError("blocked background network")
 
     import hermes_cli.diagnostics_upload as du
     import urllib.request

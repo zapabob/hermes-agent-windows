@@ -191,7 +191,9 @@ def test_windows_release_workflow_is_pinned_and_downstream_only() -> None:
     assert "HERMES_DEV_SANDBOX_UPSTREAM: https://github.com/${{ github.repository }}.git" in (
         install_e2e_run
     )
-    assert "8447bf369a0977b0dadf5c78896e194001dd1584" in install_e2e
+    # Fallback install-ref when no v*-win.* tags exist: must stay past the
+    # base_url_origin / stale-utils purge boundary (see install-e2e.yml).
+    assert "3f9544ef0978073686b975d7c22f4c68a945cb92" in install_e2e
 
 
 def test_windows_demo_requires_exact_clean_candidate_and_dedicated_ports() -> None:
