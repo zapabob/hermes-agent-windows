@@ -27,6 +27,7 @@ python-olm = false
 [manifest]
 overrides = [
     { name = "cryptography", specifier = ">=50,<51" },
+    { name = "h2", specifier = ">=4.4.1,<5" },
     { name = "pynacl", specifier = ">=1.6,<1.7" },
 ]
 
