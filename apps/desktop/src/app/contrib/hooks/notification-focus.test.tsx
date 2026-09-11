@@ -7,7 +7,13 @@ import { group } from '@/components/pane-shell/tree/model'
 import * as tree from '@/components/pane-shell/tree/store'
 import { registry } from '@/contrib/registry'
 import { $selectedStoredSessionId } from '@/store/session'
-import { $sessionTiles, closeSessionTile, discardSessionTile, openSessionTile, patchSessionTile } from '@/store/session-states'
+import {
+  $sessionTiles,
+  closeSessionTile,
+  discardSessionTile,
+  openSessionTile,
+  patchSessionTile
+} from '@/store/session-states'
 
 import { useDesktopIntegrations } from './use-desktop-integrations'
 
