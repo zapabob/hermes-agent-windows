@@ -80,6 +80,44 @@ describe('JsonRpcGatewayClient event-seq tracking + replay resume', () => {
     client.close()
   })
 
+  it('heals when the socket is already OPEN before listeners attach', async () => {
+    const client = new JsonRpcGatewayClient({
+      socketFactory: url => {
+        const ws = new FakeWebSocket(url)
+        // Localhost warm backends can finish the handshake before connect()
+        // attaches `open` listeners — readyState alone must settle connect().
+        ws.readyState = FakeWebSocket.OPEN
+        return ws as unknown as WebSocket
+      },
+      heartbeatIntervalMs: 0,
+      heartbeatDeadlineMs: 0,
+      connectTimeoutMs: 1000
+    })
+
+    await expect(client.connect('ws://x')).resolves.toBeUndefined()
+    expect(client.connectionState).toBe('open')
+    client.close()
+  })
+
+  it('rediials after a zombie connecting state with a dead socket', async () => {
+    const client = makeClient()
+    const first = client.connect('ws://x')
+    const sock = sockets[0]
+    sock.open()
+    await first
+    expect(client.connectionState).toBe('open')
+
+    // Simulate a half-torn connection: state stuck connecting, socket gone.
+    ;(client as unknown as { state: string; socket: null }).state = 'connecting'
+    ;(client as unknown as { socket: null }).socket = null
+
+    const second = client.connect('ws://y')
+    sockets[sockets.length - 1].open()
+    await second
+    expect(client.connectionState).toBe('open')
+    client.close()
+  })
+
   it('fetches replay on reconnect for sessions it has watermarks for', async () => {
     const client = makeClient()
 
