@@ -12330,13 +12330,30 @@ async function startHermes() {
         await advanceBootProgress('backend.watchdog', `Using watchdog prewarmed backend at ${prewarmed.baseUrl}`, 50)
         rememberLog(`Watchdog prewarmed backend ready at ${prewarmed.baseUrl}`)
         await waitForHermes(prewarmed.baseUrl, prewarmed.token)
+
+        // Match the owned local-spawn gate: HTTP-only readiness leaves the
+        // renderer forever on CONNECTING when /api/ws rejects the token.
+        const prewarmedWsUrl = buildGatewayWsUrl(prewarmed.baseUrl, prewarmed.token)
+        const prewarmedWsProbe = await probeGatewayWebSocket(prewarmedWsUrl, {
+          WebSocketImpl: globalThis.WebSocket
+        })
+
+        if (!prewarmedWsProbe.ok) {
+          rememberLog(
+            `Watchdog prewarmed backend WS probe failed (${prewarmedWsProbe.reason}); falling through to owned local serve`
+          )
+
+          return null
+        }
+
         updateBootProgress({
           phase: 'backend.ready',
-          message: 'Watchdog-managed Hermes backend is ready',
+          message: 'Hermes backend is ready. Finalizing desktop startup',
           progress: 94,
           running: true,
           error: null
         })
+        rememberLog('Watchdog-managed Hermes backend is ready (HTTP+WS)')
 
         return {
           baseUrl: prewarmed.baseUrl,
@@ -12344,7 +12361,7 @@ async function startHermes() {
           source: 'watchdog' as const,
           authMode: 'token' as const,
           token: prewarmed.token,
-          wsUrl: buildGatewayWsUrl(prewarmed.baseUrl, prewarmed.token),
+          wsUrl: prewarmedWsUrl,
           logs: hermesLog.slice(-80),
           ...getWindowState()
         }

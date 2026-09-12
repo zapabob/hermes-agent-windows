@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react'
 
 import { shouldApplyPostBootProgressError } from '@/components/boot-failure-reauth'
 import type { HermesConnection } from '@/global'
-import { HermesGateway } from '@/hermes'
+import { HermesGateway, STARTUP_REQUEST_TIMEOUT_MS } from '@/hermes'
 import { translateNow } from '@/i18n'
 import { desktopDefaultCwd } from '@/lib/desktop-fs'
 import { decideLivenessForceClose, LIVENESS_REPROBE_DELAY_MS } from '@/lib/gateway-liveness-policy'
@@ -1029,6 +1029,10 @@ export function useGatewayBoot({
         )
 
         await gateway.connect(wsUrl)
+        // CONNECTING keys off $gatewayState. Re-publish immediately after
+        // connect so a missed onState race or brief activeKey drift cannot
+        // leave the overlay latched while the socket is already live.
+        reportPrimaryGatewayState(gateway.connectionState)
 
         if (cancelled) {
           return
@@ -1047,12 +1051,20 @@ export function useGatewayBoot({
           progress: 97
         })
 
+        // Bound the boot-burst REST calls. refreshHermesConfig walks profile /
+        // skill trees and can wedge under GIL pressure (20-profile cron) —
+        // hanging here used to block completeDesktopBoot() forever even with
+        // an open gateway socket.
         await Promise.all([
           // The pre-connect seed already applied the configured default; this
           // post-connect pass covers the remote backend default. Non-fatal: a
           // failed sync must not abort boot (the remembered cwd remains).
           seedDefaultCwd().catch(err => console.warn('Failed to sync default workspace cwd post-connect', err)),
-          callbacksRef.current.refreshHermesConfig(),
+          withTimeout(
+            callbacksRef.current.refreshHermesConfig(),
+            STARTUP_REQUEST_TIMEOUT_MS,
+            'Timed out loading Hermes settings during boot'
+          ).catch(err => console.warn('Boot config refresh failed', err)),
           // Session-list population is never boot-fatal. The gateway WS is
           // already open by this point — a failed sidebar fetch (transient
           // blip, or an endpoint the fallback couldn't cover) must leave the

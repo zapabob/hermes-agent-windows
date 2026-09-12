@@ -166,7 +166,26 @@ export class JsonRpcGatewayClient {
       throw invalidUrl()
     }
 
-    if (this.socket?.readyState === WebSocket.OPEN || this.state === 'connecting') {
+    // Heal a live socket that already completed the handshake while we were
+    // still advertising 'connecting' (missed `open` race on fast localhost).
+    // Without this, CONNECTING sticks forever and every later connect() no-ops
+    // on the early-return below.
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      if (this.state !== 'open') {
+        this.setState('open')
+        void this.fetchReplay()
+      }
+
+      return
+    }
+
+    // Only short-circuit when a handshake is genuinely in flight. A zombie
+    // `connecting` with a null/dead socket must fall through and redial.
+    if (
+      this.state === 'connecting' &&
+      this.socket &&
+      this.socket.readyState === WebSocket.CONNECTING
+    ) {
       return
     }
 
@@ -241,6 +260,18 @@ export class JsonRpcGatewayClient {
 
       socket.addEventListener('open', onOpen, { once: true })
       socket.addEventListener('error', onError, { once: true })
+
+      // Localhost / warm backends can finish the handshake before listeners
+      // attach. If we miss `open`, state stays `connecting` and CONNECTING
+      // never clears — heal by sampling readyState after subscribe.
+      if (socket.readyState === WebSocket.OPEN) {
+        onOpen()
+      } else if (
+        socket.readyState === WebSocket.CLOSING ||
+        socket.readyState === WebSocket.CLOSED
+      ) {
+        onError()
+      }
 
       if (this.options.connectTimeoutMs > 0) {
         timer = setTimeout(() => {

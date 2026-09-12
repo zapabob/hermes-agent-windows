@@ -430,6 +430,22 @@ function reportGatewayState(profile: string, state: ConnectionState): void {
 }
 
 export function reportPrimaryGatewayState(state: ConnectionState): void {
+  // Cold-boot CONNECTING latches on $gatewayState !== 'open'. During tile /
+  // secondary hydration, activeKey can briefly leave the primary while the
+  // primary socket itself is already open — the strict activeKey gate then
+  // drops the 'open' transition and the overlay never exits. Always mirror
+  // terminal primary transitions so CONNECTING can clear; non-terminal
+  // updates still respect the active-route gate.
+  if (state === 'open' || state === 'closed' || state === 'error') {
+    if (state === 'open') {
+      markNativeNotifyBaseline()
+    }
+
+    setGatewayState(state)
+
+    return
+  }
+
   reportGatewayState(g.primaryProfile, state)
 }
 

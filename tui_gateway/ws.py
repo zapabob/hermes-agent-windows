@@ -406,7 +406,25 @@ async def handle_ws(
         # burst (setup.status, session.list, ...) without a stall
         # (#60800). The skin payload is small (a dict of strings/arrays),
         # so the to_thread overhead is negligible.
-        skin_payload = await asyncio.to_thread(server.resolve_skin)
+        #
+        # Bound the wait: under GIL pressure / saturated default executors
+        # (Desktop cron ticking many profiles), to_thread(resolve_skin) can
+        # stall indefinitely. That defers gateway.ready AND the receive loop,
+        # so the Desktop overlay stays on CONNECTING with an ESTABLISHED
+        # socket that never processes RPCs or close frames.
+        _SKIN_RESOLVE_TIMEOUT_S = 5.0
+        try:
+            skin_payload = await asyncio.wait_for(
+                asyncio.to_thread(server.resolve_skin),
+                timeout=_SKIN_RESOLVE_TIMEOUT_S,
+            )
+        except Exception:
+            _log.warning(
+                "resolve_skin timed out or failed peer=%s; sending empty skin",
+                peer,
+                exc_info=True,
+            )
+            skin_payload = {}
         from tui_gateway.event_replay import EPOCH as _replay_epoch
         ready_ok = await transport.write_async(
             {
