@@ -69,7 +69,7 @@ jobs:
           if git tag --list 'v*.*.*-win.*' | grep -q .; then
             tags="$(scripts/sandbox/pick-release-tags.sh --count '${{ inputs.tag-count || 5 }}')"
           else
-            tags='["8447bf369a0977b0dadf5c78896e194001dd1584"]'
+            tags='["3f9544ef0978073686b975d7c22f4c68a945cb92"]'
           fi
           echo "Testing updates from: $tags"
           echo "tags=$tags" >> "$GITHUB_OUTPUT"

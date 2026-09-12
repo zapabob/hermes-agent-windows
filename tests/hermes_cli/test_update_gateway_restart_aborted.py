@@ -64,8 +64,14 @@ class TestRestartPhaseFailureIsIncomplete:
     def test_stale_when_a_gateway_still_survives(self):
         assert _restart_phase_failure_is_incomplete([4321], [4321]) is True
 
-    def test_stale_when_survivor_probe_is_undeterminable(self):
-        assert _restart_phase_failure_is_incomplete(None, []) is True
+    def test_clean_when_probe_undeterminable_but_nothing_was_touched(self):
+        # ImportError while importing restart helpers before discovery leaves
+        # pre_restart as []. Nothing was stopped; fail-closed here strands
+        # no-gateway installs (Install & Update E2E 2026-09-11).
+        assert _restart_phase_failure_is_incomplete(None, []) is False
+
+    def test_stale_when_survivor_probe_undeterminable_after_discovery(self):
+        assert _restart_phase_failure_is_incomplete(None, [4321]) is True
 
     def test_stale_when_preexisting_gateway_stopped_without_replacement(self):
         # The gap egilewski flagged: a gateway was running, we stopped it, and
