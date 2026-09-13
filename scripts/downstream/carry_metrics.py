@@ -17,7 +17,10 @@ SNAPSHOT = ROOT / ".codex/UPSTREAM_SNAPSHOT.json"
 CARRY = ROOT / "CARRY.yaml"
 JSON_REPORT = ROOT / "_docs/carry-surface-20260826.json"
 MD_REPORT = ROOT / "_docs/carry-surface-20260826.md"
+# Exact report paths stay listed for ledger/docs compatibility; the whole
+# `_docs/` tree is excluded below so impl logs cannot self-invalidate --check.
 EXCLUDED = {path.relative_to(ROOT).as_posix() for path in (JSON_REPORT, MD_REPORT)}
+EXCLUDED_PREFIXES = ("_docs/",)
 LOW_COUPLING = ("tests/", "docs/", "_docs/", ".github/", "website/docs/")
 
 
@@ -31,6 +34,12 @@ def git(*args: str) -> str:
         errors="replace",
         text=True,
     ).stdout
+
+
+def is_excluded(path: str) -> bool:
+    if path in EXCLUDED:
+        return True
+    return path.startswith(EXCLUDED_PREFIXES)
 
 
 def semantic_coupling(path: str, carry_paths: set[str]) -> int:
@@ -69,10 +78,15 @@ def calculate() -> dict[str, Any]:
         path for entry in carry_data["carry"] for path in entry["upstream_paths"]
     }
 
+    # Diff committed HEAD against frozen upstream — never the dirty worktree.
+    # Worktree diffs baked local WIP into prior regenerations and made CI
+    # (clean checkout) disagree with the committed reports.
     rows: list[tuple[int, int, str]] = []
-    for line in git("diff", "--numstat", "--no-renames", upstream, "--").splitlines():
+    for line in git(
+        "diff", "--numstat", "--no-renames", upstream, "HEAD", "--"
+    ).splitlines():
         added, deleted, path = line.split("\t", 2)
-        if path not in EXCLUDED and added != "-" and deleted != "-":
+        if not is_excluded(path) and added != "-" and deleted != "-":
             rows.append((int(added), int(deleted), path))
 
     all_loc = sum(added + deleted for added, deleted, _ in rows)
@@ -98,7 +112,7 @@ def calculate() -> dict[str, Any]:
         "snapshot_sha": upstream,
         "merge_base_sha": merge_base,
         "definitions": {
-            "loc": "added plus deleted lines from frozen upstream to checkout",
+            "loc": "added plus deleted lines from frozen upstream to committed HEAD",
             "upstream_owned": "path exists in the frozen upstream tree",
             "utr": "upstream-owned fork LOC divided by all fork-specific LOC",
             "cs": "count of upstream-owned files directly modified",
@@ -107,6 +121,7 @@ def calculate() -> dict[str, Any]:
             "coupling_2": "other runtime or source path",
             "coupling_1": "test, docs, workflow, or generated documentation path",
             "excluded": sorted(EXCLUDED),
+            "excluded_prefixes": list(EXCLUDED_PREFIXES),
         },
         "summary": {
             "all_fork_specific_loc": all_loc,
@@ -137,7 +152,9 @@ def markdown(report: dict[str, Any]) -> str:
         f"| CWC | {summary['cwc']} |",
         "",
         "LOC is added plus deleted lines relative to the frozen upstream tree.",
-        "Generated metric reports are excluded to avoid self-referential totals.",
+        "The `_docs/` tree (including these reports) is excluded to avoid",
+        "self-referential totals from impl logs and regenerated metrics.",
+        "Totals are computed from committed HEAD, not a dirty worktree.",
         "Coupling is 3 for CARRY.yaml paths, 2 for other runtime/source paths,",
         "and 1 for tests, docs, workflows, and generated documentation.",
         "",

@@ -24,3 +24,15 @@ def test_semantic_coupling_is_policy_driven() -> None:
 def test_generated_reports_are_excluded_from_their_own_totals() -> None:
     assert "_docs/carry-surface-20260826.json" in carry_metrics.EXCLUDED
     assert "_docs/carry-surface-20260826.md" in carry_metrics.EXCLUDED
+    assert carry_metrics.is_excluded("_docs/carry-surface-20260826.json")
+    assert carry_metrics.is_excluded("_docs/2026-09-13_impl-log_Cursor.md")
+    assert not carry_metrics.is_excluded("agent/system_prompt.py")
+
+
+def test_definitions_document_committed_head_and_docs_exclusion() -> None:
+    report = carry_metrics.calculate()
+    assert "committed HEAD" in report["definitions"]["loc"]
+    assert "_docs/" in report["definitions"]["excluded_prefixes"]
+    assert all(
+        not item["path"].startswith("_docs/") for item in report["top_carry_risks"]
+    )
