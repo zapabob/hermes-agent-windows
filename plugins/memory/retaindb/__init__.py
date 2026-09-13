@@ -588,8 +588,9 @@ class RetainDBMemoryProvider(MemoryProvider):
         # when the env var is unset: env -> config.yaml -> default.
         provider_config = _load_retaindb_config()
         api_key = get_secret("RETAINDB_API_KEY", "") or ""
+        # Non-secret fields resolve env (profile-scoped) -> config.yaml -> default.
         base_url_raw = (
-            os.environ.get("RETAINDB_BASE_URL")
+            get_secret("RETAINDB_BASE_URL", "")
             or _config_str(provider_config.get("base_url"))
             or _DEFAULT_BASE_URL
         )
@@ -612,9 +613,9 @@ class RetainDBMemoryProvider(MemoryProvider):
         except Exception as exc:
             logger.debug("RetainDB base URL always-blocked check skipped: %s", exc)
 
-        # Project resolution: RETAINDB_PROJECT > config.yaml project > hermes-<profile> > "default"
-        # If unset, the API auto-creates and uses the "default" project — no config required.
-        explicit = os.environ.get("RETAINDB_PROJECT") or _config_str(provider_config.get("project"))
+        # Project: RETAINDB_PROJECT (profile-scoped) > config.yaml > hermes-<profile> > "default".
+        # The project is the data partition: never borrow the default profile's project.
+        explicit = get_secret("RETAINDB_PROJECT", "") or _config_str(provider_config.get("project"))
         if explicit:
             project = explicit
         else:

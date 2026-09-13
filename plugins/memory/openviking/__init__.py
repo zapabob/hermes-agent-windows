@@ -51,6 +51,7 @@ from urllib.request import url2pathname
 
 from agent.message_content import flatten_message_text
 from agent.memory_provider import MemoryProvider
+from agent.secret_scope import get_secret
 from agent.skill_commands import extract_user_instruction_from_skill_message
 from hermes_cli import __version__ as _HERMES_VERSION
 from tools.registry import tool_error
@@ -331,9 +332,13 @@ class _VikingClient:
         # Account/user are local/trusted-mode tenant identity. API-key requests
         # omit these headers by default; trusted-mode retry may send them only
         # after OpenViking explicitly asks for asserted tenant identity.
-        self._account = account or os.environ.get("OPENVIKING_ACCOUNT", "default")
-        self._user = user or os.environ.get("OPENVIKING_USER", "default")
-        self._agent = agent if agent is not None else os.environ.get("OPENVIKING_AGENT", _DEFAULT_AGENT)
+        # Tenant identity is a profile .env value: scope-read so a multiplexed
+        # secondary never writes into the default profile's tenant.
+        self._account = account or get_secret("OPENVIKING_ACCOUNT", "") or "default"
+        self._user = user or get_secret("OPENVIKING_USER", "") or "default"
+        self._agent = agent if agent is not None else (
+            get_secret("OPENVIKING_AGENT", "") or _DEFAULT_AGENT
+        )
         self._httpx = _get_httpx()
         if self._httpx is None:
             raise ImportError("httpx is required for OpenViking: pip install httpx")
@@ -1148,7 +1153,11 @@ def _load_hermes_openviking_config() -> dict:
 
 
 def _env_value(name: str) -> Optional[str]:
-    return os.environ[name].strip() if name in os.environ else None
+    """Profile-scoped env read; miss under multiplex is unset (never os.environ)."""
+    val = get_secret(name)
+    if val is None:
+        return None
+    return val.strip()
 
 
 def _first_nonempty(*values: Optional[str], default: str = "") -> str:
@@ -2340,7 +2349,7 @@ class OpenVikingMemoryProvider(MemoryProvider):
 
     def is_available(self) -> bool:
         """Check if OpenViking endpoint is configured. No network calls."""
-        if os.environ.get("OPENVIKING_ENDPOINT"):
+        if get_secret("OPENVIKING_ENDPOINT", ""):
             return True
         provider_config = _load_hermes_openviking_config()
         # A non-secret endpoint saved to config.yaml (e.g. via the Dashboard)

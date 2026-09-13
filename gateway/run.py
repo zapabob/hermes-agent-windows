@@ -5811,20 +5811,13 @@ class TurnRunner:
         # teardown never blocks the gateway event loop or the cache lock
         # the session-expiry watcher needs (#52197).
         if _xproc_evicted_agent is not None:
-            try:
-                threading.Thread(
-                    target=self._runner._release_evicted_agent_soft,
-                    args=(_xproc_evicted_agent,),
-                    daemon=True,
-                    name=f"agent-xproc-evict-{str(ctx.session_key)[:24]}",
-                ).start()
-            except Exception:
-                # Interpreter shutdown or thread-spawn failure — release
-                # inline as a best-effort fallback.
-                try:
-                    self._runner._release_evicted_agent_soft(_xproc_evicted_agent)
-                except Exception:
-                    pass
+            self._runner._spawn_release_thread(
+                self._runner._release_evicted_agent_soft,
+                (_xproc_evicted_agent,),
+                f"agent-xproc-evict-{str(ctx.session_key)[:24]}",
+                inline_fallback=True,
+                session_key=ctx.session_key,
+            )
 
         if agent is None:
             # Config changed or first message — create fresh agent
@@ -27972,20 +27965,65 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         if id(agent) in running_ids:
             return
 
+        self._spawn_release_thread(
+            self._release_evicted_agent_soft,
+            (agent,),
+            f"agent-evict-{str(session_key)[:24]}",
+            inline_fallback=True,
+            session_key=session_key,
+        )
+
+    def _spawn_release_thread(
+        self,
+        target,
+        args: tuple,
+        name: str,
+        *,
+        inline_fallback: bool,
+        session_key: Optional[str] = None,
+    ) -> None:
+        """Run a release on a daemon thread inside the owning profile's scope.
+
+        Threads start with an EMPTY contextvars context, so a bare Thread would
+        commit end-of-session memory under the launch profile. ``copy_context``
+        preserves an in-turn scope; unscoped housekeeping resolves the owner
+        from the session key (``agent:<profile>:...``).
+        """
+        ctx = copy_context()
         try:
             threading.Thread(
-                target=self._release_evicted_agent_soft,
-                args=(agent,),
+                target=ctx.run,
+                args=(self._run_release_in_profile_scope, target, args, session_key),
                 daemon=True,
-                name=f"agent-evict-{str(session_key)[:24]}",
+                name=name,
             ).start()
         except Exception:
-            # If we can't spawn a thread (interpreter shutdown), release
-            # inline as a best-effort fallback.
+            if not inline_fallback:
+                raise
             try:
-                self._release_evicted_agent_soft(agent)
+                ctx.run(self._run_release_in_profile_scope, target, args, session_key)
             except Exception:
                 pass
+
+    def _run_release_in_profile_scope(
+        self, target, args: tuple, session_key: Optional[str]
+    ) -> None:
+        """Call ``target(*args)`` under the profile that owns ``session_key``."""
+        from agent.secret_scope import current_secret_scope, is_multiplex_active
+        from hermes_constants import get_hermes_home
+
+        if current_secret_scope() is not None or not is_multiplex_active():
+            target(*args)
+            return
+        home = None
+        store = getattr(self, "session_store", None)
+        if session_key and store is not None:
+            try:
+                home = store._profile_home_for_key(session_key)
+            except Exception:
+                home = None
+        with _profile_runtime_scope(home or get_hermes_home()):
+            target(*args)
 
     @staticmethod
     def _init_cached_agent_for_turn(agent: Any, interrupt_depth: int) -> None:
@@ -28286,7 +28324,11 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         while plan:
             key, agent = plan.pop(0)  # FIFO — evict LRU-first order preserved
             try:
-                self._commit_then_release_soft(agent, key)
+                # Pressure sweeps run from the unscoped housekeeping watcher:
+                # enter each owner's scope before commit_memory_session.
+                self._run_release_in_profile_scope(
+                    self._commit_then_release_soft, (agent, key), key
+                )
             except Exception as _e:
                 logger.debug("Pressure release failed for %s: %s", key, _e)
             del agent
@@ -28373,12 +28415,13 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 # only fires for finalizable-not-yet-expired sessions whose
                 # agent would otherwise vanish before the expiry watcher can
                 # fire on_session_end (#11205, LRU-cap variant).
-                threading.Thread(
-                    target=self._commit_then_release_soft,
-                    args=(agent, key),
-                    daemon=True,
-                    name=f"agent-cache-evict-{key[:24]}",
-                ).start()
+                self._spawn_release_thread(
+                    self._commit_then_release_soft,
+                    (agent, key),
+                    f"agent-cache-evict-{key[:24]}",
+                    inline_fallback=False,
+                    session_key=key,
+                )
 
     def _sweep_idle_cached_agents(self) -> int:
         """Evict cached agents whose AIAgent has been idle past the idle TTL.
@@ -28461,12 +28504,13 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 "Agent cache idle-TTL evict: session=%s (idle=%.0fs)",
                 key, now - getattr(agent, "_last_activity_ts", now),
             )
-            threading.Thread(
-                target=self._release_evicted_agent_soft,
-                args=(agent,),
-                daemon=True,
-                name=f"agent-cache-idle-{key[:24]}",
-            ).start()
+            self._spawn_release_thread(
+                self._release_evicted_agent_soft,
+                (agent,),
+                f"agent-cache-idle-{key[:24]}",
+                inline_fallback=False,
+                session_key=key,
+            )
         return len(to_evict)
 
     # ------------------------------------------------------------------
@@ -28478,8 +28522,22 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
 
         Checks GATEWAY_PROXY_URL env var first (convenient for Docker),
         then ``gateway.proxy_url`` in config.yaml.
+
+        Per-profile like GATEWAY_PROXY_KEY: under multiplex a raw environ
+        read would ship a secondary's turns (authenticated with ITS scoped
+        key) to the default profile's proxy. Same fallback shape as the
+        key — only ``UnscopedSecretError`` (the unscoped default-profile
+        path) reads the env.
         """
-        url = os.getenv("GATEWAY_PROXY_URL", "").strip()
+        try:
+            from agent.secret_scope import UnscopedSecretError, get_secret
+
+            try:
+                url = (get_secret("GATEWAY_PROXY_URL") or "").strip()
+            except UnscopedSecretError:
+                url = os.getenv("GATEWAY_PROXY_URL", "").strip()
+        except Exception:
+            url = os.getenv("GATEWAY_PROXY_URL", "").strip()
         if url:
             return url.rstrip("/")
         cfg = _load_gateway_config()

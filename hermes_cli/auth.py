@@ -2721,11 +2721,24 @@ def _nous_inference_env_override() -> Optional[str]:
     This is the documented dev/staging escape hatch. The env source is
     trusted (the OS user set it themselves), so it is intentionally NOT
     gated by the network host allowlist — unlike Portal-returned URLs.
+    Read through the profile-aware resolver so a multiplexed profile uses
+    its own override and never inherits the default profile's process-wide
+    value (#65941).
 
     Returns a trailing-slash-stripped non-empty string, or ``None`` when
     the env var is unset/blank.
     """
-    return _optional_base_url(os.getenv("NOUS_INFERENCE_BASE_URL"))
+    try:
+        from agent.secret_scope import UnscopedSecretError, get_secret
+
+        try:
+            override = get_secret("NOUS_INFERENCE_BASE_URL")
+        except UnscopedSecretError:
+            # Unscoped default-profile/CLI path: environ IS its own value.
+            override = os.getenv("NOUS_INFERENCE_BASE_URL")
+    except Exception:
+        override = os.getenv("NOUS_INFERENCE_BASE_URL")
+    return _optional_base_url(override)
 
 
 def _nous_portal_env_override() -> Optional[str]:

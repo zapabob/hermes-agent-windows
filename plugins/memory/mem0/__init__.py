@@ -41,7 +41,7 @@ import time
 from typing import Any, Dict, List
 
 from agent.memory_provider import MemoryProvider
-from agent.secret_scope import get_secret
+from agent.secret_scope import UnscopedSecretError, get_secret
 from tools.registry import tool_error
 
 logger = logging.getLogger(__name__)
@@ -75,6 +75,20 @@ def _is_client_error(exc: Exception) -> bool:
 # Config
 # ---------------------------------------------------------------------------
 
+def _scoped_env(name: str) -> str:
+    """Profile-scoped read of a non-secret mem0 setting.
+
+    Under multiplexing a miss must stay unset (never ``os.environ``): identity
+    fields like ``MEM0_USER_ID`` would otherwise write a secondary profile's
+    memories into the default profile's account. Only the API key may fail
+    closed via ``get_secret`` without a default.
+    """
+    try:
+        return get_secret(name, "") or ""
+    except UnscopedSecretError:
+        return ""
+
+
 def _load_config() -> dict:
     """Load config from env vars, with $HERMES_HOME/mem0.json overrides.
 
@@ -84,17 +98,20 @@ def _load_config() -> dict:
     """
     from hermes_constants import get_hermes_home
 
+    # Identity (user/agent id), host and mode are .env values like the key:
+    # read them through the profile scope too, or a secondary profile's
+    # memories land in the default profile's account.
     config = {
-        "mode": os.environ.get("MEM0_MODE", "platform"),
+        "mode": _scoped_env("MEM0_MODE") or "platform",
         "api_key": get_secret("MEM0_API_KEY", ""),
-        "host": os.environ.get("MEM0_HOST", ""),
-        "agent_id": os.environ.get("MEM0_AGENT_ID", "hermes"),
+        "host": _scoped_env("MEM0_HOST"),
+        "agent_id": _scoped_env("MEM0_AGENT_ID") or "hermes",
         "oss": {},
     }
     # Only carry user_id when the operator explicitly configured one (env or
     # mem0.json). An absent key tells initialize() to fall back to the
     # gateway-native id from kwargs instead of overriding it with a placeholder.
-    env_user_id = os.environ.get("MEM0_USER_ID")
+    env_user_id = _scoped_env("MEM0_USER_ID")
     if env_user_id:
         config["user_id"] = env_user_id
 

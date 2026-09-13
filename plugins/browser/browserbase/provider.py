@@ -73,8 +73,8 @@ class BrowserbaseBrowserProvider(BrowserProvider):
             return {
                 "api_key": api_key,
                 "project_id": project_id,
-                "base_url": os.environ.get(
-                    "BROWSERBASE_BASE_URL", "https://api.browserbase.com"
+                "base_url": (
+                    get_secret("BROWSERBASE_BASE_URL", "") or "https://api.browserbase.com"
                 ).rstrip("/"),
             }
         return None

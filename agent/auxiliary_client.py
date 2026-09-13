@@ -1547,7 +1547,7 @@ def _nous_min_key_ttl_seconds() -> int:
 
 
 def _scoped_key_env(name: str) -> str:
-    """Read a provider API key env var through the profile secret scope.
+    """Read a provider API key (or its paired base-URL) env var through the profile secret scope.
 
     Auxiliary-client resolution runs both inside agent turns (secret scope
     installed — its verdict is authoritative under multiplex, so a scoped
@@ -2686,7 +2686,7 @@ def _nous_api_key(provider: dict) -> str:
 
 def _nous_base_url() -> str:
     """Resolve the Nous inference base URL from env or default."""
-    return os.getenv("NOUS_INFERENCE_BASE_URL", _NOUS_DEFAULT_BASE_URL)
+    return _scoped_key_env("NOUS_INFERENCE_BASE_URL") or _NOUS_DEFAULT_BASE_URL
 
 
 def _resolve_nous_pool_runtime_api(*, force_refresh: bool = False) -> Optional[tuple[str, str]]:
@@ -2799,8 +2799,8 @@ def _resolve_xai_oauth_for_aux() -> Optional[Tuple[str, str]]:
                     or ""
                 ).strip()
                 base_url = _xai_validate_inference_base_url(
-                    os.getenv("HERMES_XAI_BASE_URL", "").strip().rstrip("/")
-                    or os.getenv("XAI_BASE_URL", "").strip().rstrip("/")
+                    _scoped_key_env("HERMES_XAI_BASE_URL").rstrip("/")
+                    or _scoped_key_env("XAI_BASE_URL").rstrip("/")
                     or str(getattr(entry, "runtime_base_url", None) or "")
                     .strip()
                     .rstrip("/")
@@ -3779,7 +3779,9 @@ def _resolve_custom_runtime() -> Tuple[Optional[str], Optional[str], Optional[st
         runtime = None
 
     if not isinstance(runtime, dict):
-        openai_base = os.getenv("OPENAI_BASE_URL", "").strip().rstrip("/")
+        # Base URL is per-profile like the key one line below (a scoped key
+        # must not hit the default's proxy).
+        openai_base = _scoped_key_env("OPENAI_BASE_URL").rstrip("/")
         openai_key = _scoped_key_env("OPENAI_API_KEY")
         if not openai_base:
             return None, None, None
@@ -6281,7 +6283,7 @@ def _resolve_auto_route(
     #    scenario where a user switches providers via `hermes model` but the
     #    old OPENAI_BASE_URL lingers in ~/.hermes/.env. ──
     if not _stale_base_url_warned:
-        _env_base = os.getenv("OPENAI_BASE_URL", "").strip()
+        _env_base = _scoped_key_env("OPENAI_BASE_URL")
         _cfg_provider = runtime_provider or _read_main_provider()
         if (
             _env_base
@@ -8589,7 +8591,7 @@ def _expand_direct_api_alias(
     return (
         "custom",
         existing_base
-        or os.getenv("OPENAI_BASE_URL", "").strip().rstrip("/")
+        or _scoped_key_env("OPENAI_BASE_URL").rstrip("/")
         or target_base,
     )
 

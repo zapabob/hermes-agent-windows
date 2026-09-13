@@ -85,7 +85,9 @@ def resolve_active_host() -> str:
       3. defaultHost from the active config, but only for the default profile
       4. Fallback: ``"hermes"`` (default profile)
     """
-    explicit = os.environ.get("HERMES_HONCHO_HOST", "").strip()
+    # Profile-scoped: raw environ under multiplex folds every secondary onto
+    # the default profile's host block and peer.
+    explicit = (get_secret("HERMES_HONCHO_HOST", "") or "").strip()
     if explicit:
         return explicit
 
@@ -386,6 +388,19 @@ def _resolve_observation(
     }
 
 
+def _env_base_url() -> str | None:
+    """HONCHO_BASE_URL / HONCHO_URL via the profile secret scope.
+
+    A self-hosted URL varies per profile; the scoped HONCHO_API_KEY beside it
+    must not be sent to the default profile's server under multiplexing.
+    """
+    return (
+        (get_secret("HONCHO_BASE_URL", "") or "").strip()
+        or (get_secret("HONCHO_URL", "") or "").strip()
+        or None
+    )
+
+
 @dataclass
 class HonchoClientConfig:
     """Configuration for Honcho client, resolved for a specific host."""
@@ -518,23 +533,16 @@ class HonchoClientConfig:
         """Create config from environment variables (fallback)."""
         resolved_host = host or resolve_active_host()
         api_key = get_secret("HONCHO_API_KEY")
-        # HONCHO_URL is the SDK's own env var (honcho.client resolves it when
-        # no environment is passed); accept it here so the fallback path
-        # behaves the same as from_global_config() when no config file exists.
-        # Read straight from os.environ, matching HONCHO_BASE_URL: a base URL
-        # is a deployment setting, not a profile-scoped credential.
-        base_url = _sanitize_url(
-            os.environ.get("HONCHO_BASE_URL", "").strip()
-            or os.environ.get("HONCHO_URL", "").strip()
-            or None
-        )
+        # Self-hosted URL varies per profile: scoped so the keyed API call
+        # never hits the default profile's Honcho server under multiplex.
+        base_url = _sanitize_url(_env_base_url())
         timeout = _resolve_optional_float(os.environ.get("HONCHO_TIMEOUT"))
         _resolved_path = resolve_config_path()
         return cls(
             host=resolved_host,
             workspace_id=workspace_id,
             api_key=api_key,
-            environment=os.environ.get("HONCHO_ENVIRONMENT", "production"),
+            environment=get_secret("HONCHO_ENVIRONMENT", "") or "production",
             base_url=base_url,
             timeout=timeout,
             ai_peer=resolved_host,
@@ -617,8 +625,7 @@ class HonchoClientConfig:
             or native_base_url
             or raw.get("baseUrl")
             or raw.get("base_url")
-            or os.environ.get("HONCHO_BASE_URL", "").strip()
-            or os.environ.get("HONCHO_URL", "").strip()
+            or _env_base_url()
             or None
         )
         # Host config wins over flat/global config and environment.

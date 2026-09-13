@@ -1,6 +1,6 @@
 {
   "campaign": "windows-semantic-refresh-2026-09-13",
-  "as_of": "2026-09-13T13:10:05+09:00",
+  "as_of": "2026-09-13T15:08:45+09:00",
   "completion_gates": {
     "SOURCE_IMPLEMENTATION_COMPLETE": false,
     "SEMANTIC_SCOPE_VERIFIED": false,
@@ -27,7 +27,20 @@
       "id": "SR-20260913-001",
       "status": "IMPLEMENTED_FOCUSED_PASS",
       "command": "python -m pytest tests/tools/test_file_write_safety.py::TestMultiplexProfileCacheGuardsAreProfileScoped -q",
-      "result": "5 passed in ~5s",
+      "result": "5 passed",
+      "os": "Windows 11",
+      "isolated_home": true
+    },
+    {
+      "id": "SR-20260913-004a",
+      "status": "IMPLEMENTED_FOCUSED_PASS",
+      "result": "2 passed (tool credential gates)"
+    },
+    {
+      "id": "SR-20260913-004b-c-d",
+      "status": "IMPLEMENTED_FOCUSED_PASS",
+      "command": "python -m pytest tests/plugins/memory/test_multiplex_memory_identity_scope.py tests/agent/test_multiplex_base_url_scope.py tests/gateway/test_agent_cache_release_profile_scope.py tests/tools/test_multiplex_tool_credential_scope.py tests/tools/test_file_write_safety.py::TestMultiplexProfileCacheGuardsAreProfileScoped -q",
+      "result": "12 passed in 7.65s",
       "os": "Windows 11",
       "isolated_home": true
     }
@@ -37,6 +50,7 @@
     "private GHSA full matrix",
     "packaged Desktop installer",
     "live VRChat/voice device",
-    "full H..U 2129-commit individual classification"
+    "full H..U 2129-commit individual classification",
+    "MCP same-name per-profile connection keys"
   ]
 }

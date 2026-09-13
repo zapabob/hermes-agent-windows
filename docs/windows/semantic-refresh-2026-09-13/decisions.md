@@ -17,6 +17,8 @@ Plan draft U (`205645ee…`) was **26 commits behind** live upstream at start; f
 2. First implementable security slice: **SR-20260913-001** COMPOSE into `tools/file_tools.py` (D0 owner), do not force U's `file_tools_write_guards.py` module split unless a later slice requires it.
 3. Dirty main working tree (watchdog-go WIP) left untouched; all work in `.worktrees/semantic-refresh-d1`.
 4. CodeGraph indexes on H: junctions after C: disk-full failure.
+5. **SR-20260913-004b/c/d** COMPOSE into existing owners (`plugins/memory/*`, `agent/auxiliary_client.py`, `gateway/run.py` + `session.py::_profile_home_for_key`). Do not invent `gateway/run_agent_cache.py` or `tools/mcp_tool_scope.py` solely to match U layout.
+6. Resume checkpoint was `a537893…`; continued from legitimate later HEAD `f5b3fcc…` (GPT Pro report) without reset.
 
 ## Adoption posture for priority seeds
 

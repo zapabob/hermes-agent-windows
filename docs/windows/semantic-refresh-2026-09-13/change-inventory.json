@@ -105,23 +105,69 @@
       "in_D0": false,
       "decision": "COMPOSE",
       "verification_status": "PARTIAL_PASS",
-      "completed_subset": {
-        "id": "SR-20260913-004a",
-        "owners": [
-          "tools/tool_backend_helpers.py::has_direct_modal_credentials",
-          "tools/browser_use_cli.py::is_legacy_browser_use_cloud_config",
-          "tools/send_message_tool.py::_weixin_home_channel_override"
-        ],
-        "tests": ["tests/tools/test_multiplex_tool_credential_scope.py"],
-        "result": "2 passed (+5 write-guard still green)"
-      },
-      "remaining": [
-        "memory provider identity/tenant env (mem0/honcho/hindsight/...)",
-        "aux base URL scope",
-        "agent-cache release thread context copy",
-        "MCP same-name per-profile servers",
-        "read_extract FIRECRAWL hosted OCR (absent on this fork revision)"
+      "completed_subset": [
+        {
+          "id": "SR-20260913-004a",
+          "owners": [
+            "tools/tool_backend_helpers.py::has_direct_modal_credentials",
+            "tools/browser_use_cli.py::is_legacy_browser_use_cloud_config",
+            "tools/send_message_tool.py::_weixin_home_channel_override"
+          ],
+          "tests": ["tests/tools/test_multiplex_tool_credential_scope.py"],
+          "result": "2 passed"
+        },
+        {
+          "id": "SR-20260913-004b",
+          "owners": [
+            "plugins/memory/mem0/__init__.py::_scoped_env",
+            "plugins/memory/honcho/client.py::_env_base_url+resolve_active_host",
+            "plugins/memory/hindsight/__init__.py::_load_config",
+            "plugins/memory/supermemory/__init__.py::_resolve_container_tag",
+            "plugins/memory/retaindb/__init__.py::initialize",
+            "plugins/memory/openviking/__init__.py::_env_value+_VikingClient"
+          ],
+          "tests": ["tests/plugins/memory/test_multiplex_memory_identity_scope.py"],
+          "result": "1 passed",
+          "intentional_delta": "Secondary multiplex profile no longer inherits default MEM0/Honcho/Hindsight/Supermemory/RetainDB/OpenViking identity/tenant/endpoint from os.environ"
+        },
+        {
+          "id": "SR-20260913-004c",
+          "owners": [
+            "agent/auxiliary_client.py::_scoped_key_env OPENAI/XAI/NOUS base URLs",
+            "hermes_cli/auth.py::_nous_inference_env_override",
+            "gateway/run.py::_get_proxy_url",
+            "plugins/browser/browserbase/provider.py",
+            "plugins/browser/firecrawl/provider.py"
+          ],
+          "tests": ["tests/agent/test_multiplex_base_url_scope.py"],
+          "result": "2 passed",
+          "intentional_delta": "Scoped API keys no longer hit default-profile proxy/host URLs under multiplex"
+        },
+        {
+          "id": "SR-20260913-004d",
+          "owners": [
+            "gateway/run.py::_spawn_release_thread+_run_release_in_profile_scope",
+            "gateway/session.py::_profile_home_for_key"
+          ],
+          "tests": ["tests/gateway/test_agent_cache_release_profile_scope.py"],
+          "result": "2 passed",
+          "intentional_delta": "Unscoped agent-cache eviction commits memory under owning profile scope via copy_context + _profile_runtime_scope; no second cache owner"
+        }
       ],
+      "remaining": [
+        "MCP same-name per-profile servers (ceaf622; D1 monolithic tools/mcp_tool.py — COMPOSE connection-key, do not force U module split)",
+        "tool-side memo key-by-profile-home (4b8c01f — browser_camofox/skill_manager/tirith/…; verify ALREADY_EQUIVALENT per owner)",
+        "mem0 OSS DirectOpenAILLM (absent on this fork)",
+        "read_extract FIRECRAWL hosted OCR (absent on this fork revision)",
+        "outbound webhook secret_env + i18n HERMES_LANGUAGE (a9838c F11; deferred next pass)"
+      ],
+      "verification_receipt": {
+        "command": "python -m pytest tests/plugins/memory/test_multiplex_memory_identity_scope.py tests/agent/test_multiplex_base_url_scope.py tests/gateway/test_agent_cache_release_profile_scope.py tests/tools/test_multiplex_tool_credential_scope.py tests/tools/test_file_write_safety.py::TestMultiplexProfileCacheGuardsAreProfileScoped -q",
+        "result": "12 passed",
+        "os": "Windows 11",
+        "isolated_home": true,
+        "as_of": "2026-09-13T15:08:45+09:00"
+      },
       "dag_bucket": "B_profile_credential_write_guards",
       "depends_on": ["SR-20260913-001"]
     },

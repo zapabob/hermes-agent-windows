@@ -64,7 +64,8 @@ class FirecrawlBrowserProvider(BrowserProvider):
     # ------------------------------------------------------------------
 
     def _api_url(self) -> str:
-        return os.environ.get("FIRECRAWL_API_URL", _BASE_URL)
+        # Per-profile like the key: scoped key must not hit the default profile's endpoint.
+        return get_secret("FIRECRAWL_API_URL", "") or _BASE_URL
 
     def _headers(self) -> Dict[str, str]:
         api_key = get_secret("FIRECRAWL_API_KEY")

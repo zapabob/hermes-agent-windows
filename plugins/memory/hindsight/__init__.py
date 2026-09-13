@@ -444,18 +444,22 @@ def _load_config() -> dict:
             pass
 
     return {
-        "mode": os.environ.get("HINDSIGHT_MODE", "cloud"),
+        # Mode, bank (data partition), endpoint and retain shaping are
+        # per-profile .env values like the key: scope-read so a multiplexed
+        # secondary never inherits the default profile's bank/mode. Tuning
+        # knobs (timeouts, budget) stay process-global.
+        "mode": get_secret("HINDSIGHT_MODE", "") or "cloud",
         "apiKey": get_secret("HINDSIGHT_API_KEY", ""),
         "timeout": _parse_int_setting(os.environ.get("HINDSIGHT_TIMEOUT"), _DEFAULT_TIMEOUT),
         "idle_timeout": _parse_int_setting(os.environ.get("HINDSIGHT_IDLE_TIMEOUT"), _DEFAULT_IDLE_TIMEOUT),
-        "retain_tags": os.environ.get("HINDSIGHT_RETAIN_TAGS", ""),
-        "observation_scopes": os.environ.get("HINDSIGHT_RETAIN_OBSERVATION_SCOPES", ""),
+        "retain_tags": get_secret("HINDSIGHT_RETAIN_TAGS", "") or "",
+        "observation_scopes": get_secret("HINDSIGHT_RETAIN_OBSERVATION_SCOPES", "") or "",
         "retain_source": os.environ.get("HINDSIGHT_RETAIN_SOURCE", _DEFAULT_RETAIN_SOURCE),
         "retain_user_prefix": os.environ.get("HINDSIGHT_RETAIN_USER_PREFIX", "User"),
         "retain_assistant_prefix": os.environ.get("HINDSIGHT_RETAIN_ASSISTANT_PREFIX", "Assistant"),
         "banks": {
             "hermes": {
-                "bankId": os.environ.get("HINDSIGHT_BANK_ID", "hermes"),
+                "bankId": get_secret("HINDSIGHT_BANK_ID", "") or "hermes",
                 "budget": os.environ.get("HINDSIGHT_BUDGET", "mid"),
                 "enabled": True,
             }
@@ -902,7 +906,7 @@ class HindsightMemoryProvider(MemoryProvider):
                 or cfg.get("api_key")
                 or get_secret("HINDSIGHT_API_KEY", "")
             )
-            has_url = bool(cfg.get("api_url") or os.environ.get("HINDSIGHT_API_URL", ""))
+            has_url = bool(cfg.get("api_url") or get_secret("HINDSIGHT_API_URL", ""))
             return has_key or has_url
         except Exception:
             return False
@@ -1677,7 +1681,7 @@ class HindsightMemoryProvider(MemoryProvider):
                 return
         self._api_key = self._config.get("apiKey") or self._config.get("api_key") or get_secret("HINDSIGHT_API_KEY", "")
         default_url = _DEFAULT_LOCAL_URL if self._mode in {"local_embedded", "local_external"} else _DEFAULT_API_URL
-        self._api_url = self._config.get("api_url") or os.environ.get("HINDSIGHT_API_URL", default_url)
+        self._api_url = self._config.get("api_url") or get_secret("HINDSIGHT_API_URL", "") or default_url
         self._llm_base_url = self._config.get("llm_base_url", "")
 
         banks = cfg_get(self._config, "banks", "hermes", default={})
