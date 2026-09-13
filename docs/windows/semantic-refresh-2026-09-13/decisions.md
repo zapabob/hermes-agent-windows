@@ -24,18 +24,59 @@ Plan draft U (`205645ee…`) was **26 commits behind** live upstream at start; f
 
 See `change-inventory.json`. Security/profile isolation comes before Desktop feature onboarding.
 
-## SR-20260913-003 (2026-09-13)
+## Implementation methods (addendum 2026-09-13)
 
-**Decision: SKIP_WITH_REASON** (was pending COMPOSE).
+Adoption decision and implementation method are **separate** fields.
 
-U seeds `876e444e` / `6806a380` assume `hermes_state_registry.acquire()` already owns the process-wide writer boundary. D1 has `hermes_state_common.py` and `SessionDB` but **no** `hermes_state_registry.py`; `git merge-base --is-ancestor db339f0051 HEAD` is false. Gateway sharing is a runner-local `RecoverableHandleCache`, not the U registry. CLI + Goals still mint bare `SessionDB()`.
+| Method | Meaning |
+|---|---|
+| `KEEP` | No runtime change; equivalence verified |
+| `REUSE_UPSTREAM` / `NATIVE_PORT` | Small reuse or OS-adapted port |
+| `REUSE_AND_EXTEND` | Compose onto existing Windows owner |
+| **`REIMPLEMENT_NATIVE`** | Extract observable contract from U; realize on existing Windows owner with **different** internal structure. Not a full rewrite. Prefer when PORT of U layout would invent a second supervisor/DB/credential owner or force unused module splits |
+| `NONE` | SKIP / DEFER — no implementation |
 
-Composing only the seed call-site diffs would require inventing a parallel owner (forbidden) or bulk-porting `#90837` / `db339f0051` outside seed scope (forbidden). Re-open when the registry owner lands.
+**Allowed under REIMPLEMENT_NATIVE:** helpers under the existing owner, typed boundaries, OS adapters, local extractions modules with clear responsibility.  
+**Forbidden:** second supervisor, second credential SoT, competing DB lifecycle authority, speculative event buses / frameworks / future hooks “because U has them”.
+
+Missing a same-named U registry/module is **not** alone grounds for SKIP.
+
+## SR-20260913-003 (reopened 2026-09-13 — Feature Inventory addendum)
+
+**Prior decision:** SKIP_WITH_REASON (registry-name absence).  
+**Revised:** **ADOPT** via **`REIMPLEMENT_NATIVE`** on SessionDB / Goals / gateway opener — **not** a port of `hermes_state_registry.py`.
+
+### Contract decomposition (mechanism ≠ family)
+
+| Contract | U carrier | Downstream owner | Method |
+|---|---|---|---|
+| One writable handle per resolved `state.db` path per process (refcount) | `hermes_state_registry.acquire/release` | New helper `hermes_state_shared` under SessionDB family + Goals/gateway call sites | REIMPLEMENT_NATIVE (slice 003a) |
+| `close()` on shared handle = release, not teardown | SessionDB `_shared_registry_owned` | SessionDB `_shared_owned` + shared helper | REIMPLEMENT_NATIVE (003a) |
+| Profile A/B independent DBs | path key = resolved home/`state.db` | same | ALREADY via path key; tests required |
+| Closed-handle reuse raises typed/clear error | SessionDB | Existing `RuntimeError("SessionDB connection is closed")` | ALREADY_EQUIVALENT |
+| Backup / FTS repair / WAL PASSIVE close | SessionDB | Existing `hermes_state.py` | ALREADY_EQUIVALENT (keep) |
+| Gateway open heal / backoff | RecoverableHandleCache | Keep as caller-side recovery **on top of** shared acquire | COMPOSE (opener uses shared acquire) |
+| Inode-replacement generation retire/drain | registry generations | Deferred 003b (Windows value; not POSIX-only) | DEFER_WITH_BLOCKER → next slice |
+| POSIX fd-close drops advisory lock fault injection | U tests | **SKIP per-mechanism** (Windows locks differ) | SKIP_WITH_REASON |
+
+**Must not:** invent a second DB lifecycle authority beside SessionDB; wholesale skip DB safety because registry filename is absent.
+
+## SR-20260913-004f
+
+**ALREADY_EQUIVALENT** on main (`7f8a608445`, `tools/mcp_tool_scope.py`). Do not re-implement.
+
+## SR-20260913-007 (reopened)
+
+**Prior:** DEFER_WITH_BLOCKER (onboarding cards).  
+**Revised split:**
+
+- Upstream “card look” / promotional onboarding chrome → SKIP_WITH_REASON (keep Windows UX).
+- Useful setup / provider select / auth recovery / reach-conversation after update → evaluate **REIMPLEMENT_NATIVE** into existing Desktop Settings / gateway boot overlays (not a second onboarding framework). Slice plan after 003a.
 
 ## Explicit non-goals this campaign pass
 
-- Version number bump to 0.21.2 without coverage
 - Enabling `allow_upstream_sync`
-- Touching hakuapulse-orchestrator
-- 24h soak (record NOT_RUN)
-- Push / PR / release
+- Touching hakuapulse-orchestrator / MoA / HOLD / model swap
+- 24h soak (record NOT_RUN until real time elapsed)
+- Force push / protection bypass / UAC weaken
+- Bulk port of U `hermes_state_*.py` module decomposition

@@ -2,28 +2,18 @@
 
 ## Scope
 
-Local feature branch only. No push/tag/release performed by this campaign.
+Verified slices may land on main (per COMPLETE_MAIN_DEPLOY). Prefer `git revert` of the slice commit. Preserve unrelated WIP (Watchdog scripts, readme contract tests).
 
-## Code rollback
+## SR-003a rollback
 
-```powershell
-cd "C:\Users\downl\Documents\New project\hermes-agent\.worktrees\semantic-refresh-d1"
-git log --oneline -5
-# Revert a single slice commit (example):
-git revert --no-edit <slice-commit-sha>
-```
-
-Do **not** `git reset --hard` on the dirty main checkout. Main WIP
-(`scripts/windows/watchdog-go/*`) is unrelated and must stay preserved.
+Revert the commit that adds `hermes_state_shared.py`, SessionDB `_shared_owned`/`close` release path, Goals `_acquire_session_db`, gateway openers using `acquire`, and `tests/hermes_state/test_shared_session_db_native.py`. Keep `RecoverableHandleCache` (pre-existing).
 
 ## Config / DB / binary
 
-- No production `HERMES_HOME`, secrets, or live DBs were modified.
-- Test HOME used under `%TEMP%\hermes-sr-test-*` only — safe to delete.
-- No installer / Desktop package was rebuilt for production.
+- Isolated test HOME only under `%TEMP%`.
+- No force push / protection bypass.
 
 ## Lease / process
 
-- No production Watchdog / Gateway / Desktop / llama processes were stopped.
-- If a future slice touches maintenance fences, restore via existing
-  `watchdog_maintenance` lease expiry rather than PID-only kill.
+- Prefer `watchdog_maintenance` lease expiry over PID-only kill.
+- Do not treat raw Hermes.exe counts as app instance counts.

@@ -687,33 +687,43 @@ _DB_BOOTSTRAP_LOOP_WAIT_S = 0.25
 _DB_BOOTSTRAP_INIT_WAIT_S = 1.5
 
 
+def _acquire_session_db(home: str):
+    """Shared writer for ``home/state.db`` (SR-003a).
+
+    A bare ``SessionDB()`` here was a second writer beside the gateway handle
+    for the same path — own token-writer thread and close-time checkpoint
+    (#90837 corruption shape), doubled under multiplexing.
+    """
+    from pathlib import Path
+
+    from hermes_state_shared import acquire
+
+    return acquire(Path(home) / "state.db")
+
+
+def _release_session_db(db) -> None:
+    from hermes_state_shared import release_or_close
+
+    try:
+        release_or_close(db)
+    except Exception:
+        pass
+
+
 def _bootstrap_session_db(home: str, done: threading.Event) -> None:
     """Construct SessionDB off-loop and populate the cache (worker thread)."""
     try:
-        from hermes_constants import (
-            reset_hermes_home_override,
-            set_hermes_home_override,
-        )
-        from hermes_state import SessionDB
-
-        # Bind the caller's home for this thread. The cache key is the
-        # caller's scoped home, so the constructed SessionDB must point at
-        # that home's state.db too. Without the override, a multiplexed
-        # worker thread resolves the process env (the default profile's
-        # HERMES_HOME). It then caches the wrong profile's DB under this
-        # profile's key.
-        token = set_hermes_home_override(home)
-        try:
-            db = SessionDB()
-        finally:
-            reset_hermes_home_override(token)
+        db = _acquire_session_db(home)
     except Exception as exc:  # pragma: no cover
         logger.debug("GoalManager: background SessionDB() raised (%s)", exc)
         db = None
     with _DB_BOOTSTRAP_LOCK:
         if db is not None and home not in _DB_CACHE:
             _DB_CACHE[home] = db
+            db = None
         _DB_BOOTSTRAP_INFLIGHT.pop(home, None)
+    if db is not None:  # lost the race; drop our reference
+        _release_session_db(db)
     done.set()
 
 
@@ -741,7 +751,6 @@ def _get_session_db() -> Optional[Any]:
     """
     try:
         from hermes_constants import get_hermes_home
-        from hermes_state import SessionDB
 
         home = str(get_hermes_home())
     except Exception as exc:  # pragma: no cover
@@ -793,19 +802,16 @@ def _get_session_db() -> Optional[Any]:
         return _DB_CACHE.get(home)
 
     try:
-        db = SessionDB()
+        db = _acquire_session_db(home)
     except Exception as exc:  # pragma: no cover
         logger.debug("GoalManager: SessionDB() raised (%s)", exc)
         return None
     with _DB_BOOTSTRAP_LOCK:
         existing = _DB_CACHE.get(home)
         if existing is not None:
-            # A concurrent bootstrap won the race; keep one instance and
-            # close ours so connections don't leak.
-            try:
-                db.close()
-            except Exception:
-                pass
+            # A concurrent bootstrap won the race; drop our reference so
+            # connections don't leak.
+            _release_session_db(db)
             return existing
         _DB_CACHE[home] = db
     return db

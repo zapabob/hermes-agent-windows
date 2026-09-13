@@ -1343,12 +1343,14 @@ class SessionStore:
         once it expires, one caller reopens while concurrent callers keep
         using the JSONL fallback.
         """
-        from hermes_state import SessionDB, _default_db_path
+        from hermes_state import _default_db_path
 
         path = Path(_default_db_path())
         def _open():
             try:
-                return SessionDB()
+                from hermes_state_shared import acquire
+
+                return acquire(path)
             except RuntimeError as e:
                 if "live-system guard" in str(e):
                     # Test-isolation guard fired: a pytest-context process

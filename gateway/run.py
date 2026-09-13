@@ -7506,7 +7506,11 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
 
         def _open():
             try:
-                return AsyncSessionDB(SessionDB())
+                from hermes_state_shared import acquire
+
+                # Shared acquire so Goals/CLI and this gateway opener do not
+                # mint competing writers for the same path (SR-003a).
+                return AsyncSessionDB(acquire(path))
             except Exception as exc:
                 logger.warning("SQLite session store not available: %s", exc)
                 raise
@@ -7549,10 +7553,12 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         """
         def _close(db) -> None:
             inner = getattr(db, "_db", db)
-            if inner is None or not hasattr(inner, "close"):
+            if inner is None:
                 return
             try:
-                inner.close()
+                from hermes_state_shared import release_or_close
+
+                release_or_close(inner)
             except Exception as exc:
                 logger.debug("SessionDB close error during handle sweep: %s", exc)
 

@@ -4521,6 +4521,9 @@ class SessionDB(SessionSearchMixin, SessionSchemaMixin, SessionPortabilityMixin)
         # live-DB test-isolation guard block near _default_db_path().
         _ensure_test_isolation(self.db_path)
         self.read_only = read_only
+        # Set True only by hermes_state_shared.acquire — close() then releases
+        # one refcount instead of tearing down under sibling holders (SR-003a).
+        self._shared_owned = False
 
         self._lock = threading.Lock()
         # Read-path split (WAL only): recall/browse queries borrow a
@@ -5792,7 +5795,16 @@ class SessionDB(SessionSearchMixin, SessionSchemaMixin, SessionPortabilityMixin)
         many times an hour, and a TRUNCATE fires a full WAL reset that
         races the gateway's live writer and tears B-tree pages — issue
         #45383). Read-only connections never request a checkpoint.
+
+        When opened via ``hermes_state_shared.acquire``, ``close()`` RELEASES
+        one shared refcount instead of tearing down the writer other callers
+        still hold (SR-20260913-003a / upstream #90837 contract).
         """
+        if getattr(self, "_shared_owned", False):
+            from hermes_state_shared import release
+
+            release(self)
+            return
         self._stop_token_writer()
         hook, self._token_atexit_hook = self._token_atexit_hook, None
         if hook is not None:

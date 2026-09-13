@@ -21,10 +21,24 @@
       "note": "Prior ledger ends at H; does not prove adoption through H. New unclassified window is H..U mechanically, with R..U as post-release delta."
     }
   },
+  "schema_notes": {
+    "implementation_method_enum": [
+      "KEEP",
+      "REUSE_UPSTREAM",
+      "NATIVE_PORT",
+      "REUSE_AND_EXTEND",
+      "REIMPLEMENT_NATIVE",
+      "NONE"
+    ],
+    "implementation_method_vs_decision": "decision is ADOPT/PORT/COMPOSE/ALREADY_EQUIVALENT/KEEP_DOWNSTREAM/SKIP_WITH_REASON/DEFER_WITH_BLOCKER; implementation_method records how the contract is realized. REIMPLEMENT_NATIVE is not a completion gate.",
+    "addendum_spec": "CURSOR_FEATURE_INVENTORY_NATIVE_REIMPLEMENTATION_2026-09-13.md",
+    "resume_receipt": "docs/windows/semantic-refresh-2026-09-13/resume-receipt-feature-inventory-2026-09-13.md"
+  },
   "enumeration_method": [
     "git_log_reverse_topo H..U and R..U",
     "git_diff_name_status_find_renames",
     "priority_path_filter for Task7 audit seeds",
+    "U public entrypoints / registry / manifest / docs / tests (including unchanged-in-H..U families)",
     "NOT release_notes_only",
     "NOT search_top_100"
   ],
@@ -83,29 +97,51 @@
     },
     {
       "id": "SR-20260913-003",
-      "title": "Session store via state.db registry (no bare SessionDB)",
-      "upstream_shas": ["876e444e4e070cd424dea6501d9d15eaade4640a", "6806a3808453f4a8374f4d5692060f3bf556fa46"],
+      "title": "Session store DB safety contracts (path-keyed shared writer)",
+      "upstream_shas": [
+        "876e444e4e070cd424dea6501d9d15eaade4640a",
+        "6806a3808453f4a8374f4d5692060f3bf556fa46",
+        "db339f0051e76733923d3d8c4e4319e3e45444a3"
+      ],
       "in_U": true,
       "in_D0": false,
-      "decision": "SKIP_WITH_REASON",
-      "verification_status": "CLASSIFIED",
-      "reason": "Prerequisite process-wide hermes_state_registry (upstream db339f0051 / #90837) is absent from D1. Seed SHAs 876e444e/6806a380 only rewire CLI/Goals onto that registry; D1 still uses bare SessionDB() at cli.py + hermes_cli goals/mixins, with gateway-local RecoverableHandleCache only. Composing call sites without the registry would invent a second DB owner; landing the full registry+gateway/tui/cron rewires exceeds this SR seed scope (no bulk cherry-pick). SR-002 (POSIX 0600) is orthogonal and already SKIP.",
-      "review_when": "After a dedicated SR lands hermes_state_registry (or SR-003 seeds expand to include db339f0051 + SessionDB._shared_registry_owned + long-lived call-site rewires), re-open as thin COMPOSE of 876e444e/6806a380",
-      "note": "Must not invent a second DB owner; compose into existing SessionDB/registry — no such process-wide registry exists on D1 today",
-      "evidence": {
-        "d1_registry_module": false,
-        "u_registry_module": "hermes_state_registry.py",
-        "d1_bare_sessiondb_sites": [
-          "cli.py::_init path SessionDB()",
-          "hermes_cli/cli_agent_setup_mixin.py",
-          "hermes_cli/cli_commands_mixin.py",
-          "hermes_cli/goals.py::_bootstrap_session_db/_get_session_db"
-        ],
-        "d1_gateway_owner": "gateway/run.py::_open_session_db_for_active_scope RecoverableHandleCache(AsyncSessionDB(SessionDB()))",
-        "prerequisite_sha_not_in_d1": "db339f0051e76733923d3d8c4e4319e3e45444a3"
+      "decision": "ADOPT",
+      "implementation_method": "REIMPLEMENT_NATIVE",
+      "verification_status": "PASS_FOCUSED",
+      "verification_receipt": {
+        "command": "py -3 -m pytest tests/hermes_state/test_shared_session_db_native.py -q",
+        "result": "5 passed",
+        "os": "Windows 11",
+        "isolated_home": true,
+        "as_of": "2026-09-13T19:00:00+09:00",
+        "tested_head_note": "commit after slice on main"
       },
+      "prior_decision": "SKIP_WITH_REASON",
+      "reopen_reason": "Feature-inventory addendum: absence of hermes_state_registry.py is not sufficient to skip DB safety. Extract contracts; realize on SessionDB family without porting U module layout.",
+      "contract": "Per resolved state.db path: one process-wide writable SessionDB generation with refcounted acquire/release; close() on a shared handle releases rather than tearing down under other holders; profile A/B paths stay independent; gateway RecoverableHandleCache remains recovery layer atop shared acquire; POSIX fd-close lock fault SKIP per-mechanism",
+      "intentional_delta": "Goals + gateway no longer mint independent bare writers for the same path in one process (WAL checkpoint race / #90837 class)",
+      "compose_owners": [
+        "hermes_state_shared.py (new helper under SessionDB family — NOT hermes_state_registry.py)",
+        "hermes_state.py::SessionDB.close/_shared_owned",
+        "hermes_cli/goals.py::_acquire_session_db/_release_session_db",
+        "gateway/run.py::_open_session_db_for_active_scope opener"
+      ],
+      "deferred_subset": [
+        {
+          "id": "SR-20260913-003b",
+          "title": "Inode-replacement generation retire/drain",
+          "status": "DEFER_WITH_BLOCKER",
+          "blocker": "Requires stat identity helper + generation tables; schedule after 003a GREEN"
+        }
+      ],
+      "skip_mechanisms": [
+        "POSIX advisory-lock drop via descriptor close — Windows ACL/lock semantics differ (S4)"
+      ],
+      "tests": [
+        "tests/hermes_state/test_shared_session_db_native.py"
+      ],
       "dag_bucket": "C_storage_durable_config",
-      "depends_on": ["SR-20260913-002"]
+      "depends_on": []
     },
     {
       "id": "SR-20260913-004",
@@ -261,13 +297,18 @@
     },
     {
       "id": "SR-20260913-007",
-      "title": "Desktop onboarding / connector cards (#108292)",
+      "title": "Desktop setup / auth recovery UX (decompose upstream onboarding cards)",
       "upstream_shas": ["4f1966edac94032801b7b0057383df73e60413f8"],
       "in_U": true,
       "in_D0": false,
-      "decision": "DEFER_WITH_BLOCKER",
-      "verification_status": "NOT_STARTED",
-      "blocker": "Must not flip existing provider defaults, telemetry opt-in, or Browser handoff; needs UX + Windows E2E plan",
+      "decision": "ADOPT_PARTIAL",
+      "implementation_method": "REIMPLEMENT_NATIVE",
+      "verification_status": "CLASSIFIED",
+      "split": {
+        "skip_card_look": "Upstream promotional/connector card chrome — SKIP_WITH_REASON (keep Windows Settings/boot UX)",
+        "adopt_useful": "Provider select, auth recovery, post-update path to conversation — REIMPLEMENT into existing Desktop Settings + gateway boot overlays"
+      },
+      "blocker_cleared": "No longer wholesale DEFER for missing card UI; execute useful contracts after SR-003a",
       "dag_bucket": "F_edge_features_plus_nonregression"
     },
     {
