@@ -84,8 +84,15 @@ Logs under `tmp/probes/*-20260914.log`.
 
 - Base HEAD before commits: `b8c3a13727350cd32e50b18cb7ff1246dc132801`
 - Branch: `main`
-- **Push: no**
-- Impl log: `_docs/2026-09-14_24x7-runtime-stability_Cursor.md`
+- Commits (local, **push: no**):
+  - `de3d902eaf` probe classification
+  - `e5352c06b3` health states + soft-fail grace
+  - `f7f76f88b1` unit + native health tests
+  - `56a4756b13` architecture contract update
+  - `8f6898fc47` README health/CLI docs
+  - `56e6098f29` this handoff (+ soak NOT_RUN)
+- Tip: `56e6098f29`
+- Impl log (local exclude, on disk): `_docs/2026-09-14_24x7-runtime-stability_Cursor.md`
 
 ## Operator next step
 
