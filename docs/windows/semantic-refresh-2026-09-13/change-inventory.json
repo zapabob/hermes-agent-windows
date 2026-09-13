@@ -393,8 +393,29 @@
       "id": "SR-20260913-CARRY-RECHECK",
       "title": "Prior PORT carry items vs frozen U (ConPTY, WS deadline, OAuth UI, aux origin, …)",
       "decision": "ALREADY_EQUIVALENT_OR_KEEP",
-      "verification_status": "PENDING_PER_ITEM",
-      "note": "Do not double-implement; run existing CARRY tests and retire only with Windows evidence"
+      "verification_status": "PASS_FOCUSED",
+      "tested_sha": "c11161a68f52a4126a884ee75b1e1631b0f3f958",
+      "as_of": "2026-09-13T21:11:05+09:00",
+      "note": "Do not double-implement; existing CARRY tests green on HEAD — no new runtime code this phase",
+      "items_verified": [
+        "tui-gateway-ws-send-deadline",
+        "cron-fire-claim-dead-owner-reap",
+        "relay-provision-secret-issued-f004",
+        "dashboard-auth-native-provider-chooser",
+        "desktop-oauth-sign-in-again",
+        "auxiliary-origin-async-progress",
+        "windows-conpty-pty-ownership",
+        "windows-system-ca-expiry-dedup",
+        "desktop-queue-discovery-gate",
+        "desktop-clarify-submit-shortcut"
+      ],
+      "results": {
+        "pytest": "96 passed, 1 skipped (batches A+B+win_pty)",
+        "vitest": "75 passed (5 files) + assistant-message 5 passed",
+        "LOCAL_DEPLOYED": "NOT_RUN",
+        "soak": "NOT_RUN"
+      },
+      "intentional_delta": "none — verification-only; FI-CLI/TUI/CRON/DELEGATION evidence rows deepened in functional-inventory.md"
     }
   ],
   "unresolved": [

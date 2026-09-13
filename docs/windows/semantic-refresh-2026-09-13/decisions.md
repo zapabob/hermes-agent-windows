@@ -93,6 +93,21 @@ Focused: `test_breaker_opened_by_tool_errors_says_rejected_not_unreachable` + fu
 Tests: managed_tool_gateway **32 passed**; onboarding vitest **19 passed**.  
 `LOCAL_DEPLOYED` / soak: **NOT_RUN**.
 
+## SR-20260913-CARRY-RECHECK (2026-09-13 evening)
+
+**Decision:** ALREADY_EQUIVALENT_OR_KEEP — **verification-only**, no new runtime code.
+
+Prior CARRY PORT rows re-checked against frozen U (`6dd091a89c…`) symbol presence and existing Windows suites on HEAD `c11161a68f`:
+
+- Python: WS send-deadline, cron dead-owner reap, relay F-004, dashboard native auth chooser, error-surface / nonretryable, aux origin+progress, ConPTY bridge → **96 passed, 1 skipped**
+- Desktop vitest: system-CA dedup, queue discovery gate, error-surface, clarify shortcut (+ assistant-message OAuth UI) → **75+ passed**
+
+Method: **KEEP**. Do not re-PORT. Residual CARRY COMPOSE rows remain protected contracts (watchdog fence, handle teardown, etc.) — not reopened.
+
+FI census: FI-CLI / TUI / CRON / DELEGATION evidence rows filled (entry counts, owners, test dirs). No invented executable slice — inventory had no ready gap beyond recheck.
+
+`LOCAL_DEPLOYED` / soak: **NOT_RUN**.
+
 ## Explicit non-goals this campaign pass
 
 - Enabling `allow_upstream_sync`

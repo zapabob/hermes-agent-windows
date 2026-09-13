@@ -51,20 +51,20 @@ All entries remain active. Do **not** retire on name similarity alone.
 | desktop-link-title-popup-fail-closed | COMPOSE | Keep |
 | desktop-operator-startup-pages | COMPOSE | Keep |
 | windows-desktop-handle-bound-teardown | COMPOSE | No PID-only kill |
-| windows-conpty-pty-ownership | PORT | Prior campaign; verify vs U before re-PORT |
+| windows-conpty-pty-ownership | PORT→KEEP | CARRY-RECHECK PASS @ `c11161a68f` (`test_win_pty_bridge` 15p/1s) |
 | windows-staged-desktop-promotion-locks | COMPOSE | Keep |
 | windows-remote-artifact-unc-fail-closed | COMPOSE | Keep |
 | desktop-browser-chrome-edge-handoff | COMPOSE | Protect `hermes://open/browser` |
-| windows-system-ca-expiry-dedup | PORT | Check ALREADY_EQUIVALENT on U |
-| relay-provision-secret-issued-f004 | PORT | Check vs U |
-| tui-gateway-ws-send-deadline | PORT | Check vs U |
-| desktop-queue-discovery-gate | PORT | Check vs U |
-| cron-fire-claim-dead-owner-reap | PORT | Check vs U |
+| windows-system-ca-expiry-dedup | PORT→KEEP | CARRY-RECHECK PASS (vitest `windows-system-ca`) |
+| relay-provision-secret-issued-f004 | PORT→KEEP | CARRY-RECHECK PASS (`test_provision_secret_optional`) |
+| tui-gateway-ws-send-deadline | PORT→KEEP | CARRY-RECHECK PASS (`test_ws_send_timeout`) |
+| desktop-queue-discovery-gate | PORT→KEEP | CARRY-RECHECK PASS (composer + background drain vitest) |
+| cron-fire-claim-dead-owner-reap | PORT→KEEP | CARRY-RECHECK PASS (`test_claim_job_for_fire` + dead-owner) |
 | desktop-native-notification-ipc-cluster | COMPOSE | Keep Windows approval fields |
-| dashboard-auth-native-provider-chooser | PORT | Check vs U |
-| desktop-oauth-sign-in-again | PORT | Check vs U |
-| auxiliary-origin-async-progress | PORT | Check vs U |
-| desktop-clarify-submit-shortcut | PORT | Check vs U |
+| dashboard-auth-native-provider-chooser | PORT→KEEP | CARRY-RECHECK PASS (`test_dashboard_auth_native_flow`) |
+| desktop-oauth-sign-in-again | PORT→KEEP | CARRY-RECHECK PASS (error-surface + OAuth UI vitest) |
+| auxiliary-origin-async-progress | PORT→KEEP | CARRY-RECHECK PASS (aux relay + session affinity) |
+| desktop-clarify-submit-shortcut | PORT→KEEP | CARRY-RECHECK PASS (`clarify-tool` vitest) |
 
 ## Sacred process / session / auth invariants (must not regress)
 
