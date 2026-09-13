@@ -189,6 +189,8 @@ _artifacts/
 vendor/openclaw-mirror/AI-Scientist
 vendor/openclaw-mirror/ShinkaEvolve
 vendor/akari-video
+# Local PR2 mirror checkout (operator scratch; not part of hermes packaging)
+vendor/airi-pr2/
 
 hermes_cli/tui_dist/*
 hermes_cli/scripts/
