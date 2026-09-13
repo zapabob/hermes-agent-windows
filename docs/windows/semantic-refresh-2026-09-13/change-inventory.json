@@ -74,8 +74,10 @@
       "upstream_shas": ["1916cb249d566948b1b8dd29b907892aae1a70b0"],
       "in_U": true,
       "in_D0": false,
-      "decision": "PORT",
-      "verification_status": "PENDING",
+      "decision": "SKIP_WITH_REASON",
+      "verification_status": "CLASSIFIED",
+      "reason": "Upstream helper early-returns on os.name == 'nt'; contract is POSIX 0600/0700 mode bits. Windows Tier-1 needs ACL-specific design if required later; do not pretend chmod PORT equals Windows hardening.",
+      "review_when": "If Windows ACL owner-only for state.db/WAL is explicitly required",
       "dag_bucket": "C_storage_durable_config",
       "depends_on": []
     },
@@ -102,7 +104,24 @@
       "in_U": true,
       "in_D0": false,
       "decision": "COMPOSE",
-      "verification_status": "PENDING",
+      "verification_status": "PARTIAL_PASS",
+      "completed_subset": {
+        "id": "SR-20260913-004a",
+        "owners": [
+          "tools/tool_backend_helpers.py::has_direct_modal_credentials",
+          "tools/browser_use_cli.py::is_legacy_browser_use_cloud_config",
+          "tools/send_message_tool.py::_weixin_home_channel_override"
+        ],
+        "tests": ["tests/tools/test_multiplex_tool_credential_scope.py"],
+        "result": "2 passed (+5 write-guard still green)"
+      },
+      "remaining": [
+        "memory provider identity/tenant env (mem0/honcho/hindsight/...)",
+        "aux base URL scope",
+        "agent-cache release thread context copy",
+        "MCP same-name per-profile servers",
+        "read_extract FIRECRAWL hosted OCR (absent on this fork revision)"
+      ],
       "dag_bucket": "B_profile_credential_write_guards",
       "depends_on": ["SR-20260913-001"]
     },
