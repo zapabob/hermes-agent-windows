@@ -54,10 +54,22 @@ type BackendManager struct {
 	rotMu          sync.Mutex
 	publishedToken string
 	tokenRotated   bool
+
+	// Soft-failure hysteresis for owned-backend application probes.
+	// Independent of Watchdog.failCount (Desktop restart layer).
+	healthMu           sync.Mutex
+	health             BackendHealthState
+	softFailures       int
+	firstSoftFailureAt time.Time
+	lastProbeOKAt      time.Time
+	lastProbeKind      string
+	lastProbeLatency   time.Duration
+	stopCount          int // test observability for stopLocked
+	probeHooks         backendProbeFns
 }
 
 func NewBackendManager(cfg Config, logger *Logger) *BackendManager {
-	return &BackendManager{cfg: cfg, logger: logger}
+	return &BackendManager{cfg: cfg, logger: logger, health: BackendHealthy}
 }
 
 func (bm *BackendManager) ManifestPath() string {
@@ -252,21 +264,46 @@ func (bm *BackendManager) ConsumeTokenRotation() bool {
 }
 
 func (bm *BackendManager) currentHealthy() *backendInfo {
+	return bm.currentUsable()
+}
+
+// currentUsable returns the owned backend when its process is alive and either
+// HEALTHY or DEGRADED (within grace). Dead/unresponsive-after-policy return nil
+// so RunCycle can recover without treating soft stalls as backend==nil.
+func (bm *BackendManager) currentUsable() *backendInfo {
 	bm.mu.Lock()
 	pid := bm.pid
 	port := bm.port
+	cmd := bm.cmd
 	bm.mu.Unlock()
 	if pid <= 0 || port <= 0 {
-		return nil
-	}
-	if !processAlive(pid) {
 		return nil
 	}
 	if isReservedOpsPort(port) {
 		return nil
 	}
-	if !testBackendStatus(port) {
+	p := bm.probes()
+	alive := false
+	if cmd != nil && cmd.Process != nil {
+		// Exact owned handle: Wait with zero timeout isn't available; use Alive helper.
+		alive = p.processAlive(pid)
+	} else {
+		alive = p.processAlive(pid)
+	}
+	if !alive {
+		bm.recordDead("process_dead")
 		return nil
+	}
+	state, _, _, _, _, _ := bm.HealthSnapshot()
+	if state == BackendUnresponsive || state == BackendDead {
+		// Still alive but policy may want replace; usable until EnsureHealthy acts.
+		if state == BackendDead {
+			return nil
+		}
+	}
+	// Soft-degraded owned process remains usable for Desktop failCount purposes.
+	if state == BackendDegraded || state == BackendHealthy || state == "" || state == BackendUnresponsive {
+		return &backendInfo{PID: uint32(pid), Port: port, Cmd: "watchdog-managed serve"}
 	}
 	return &backendInfo{PID: uint32(pid), Port: port, Cmd: "watchdog-managed serve"}
 }
@@ -282,6 +319,9 @@ func (bm *BackendManager) stopLocked() {
 	bm.cmd = nil
 	bm.pid = 0
 	bm.port = 0
+	bm.healthMu.Lock()
+	bm.stopCount++
+	bm.healthMu.Unlock()
 	// Intentionally keep bm.token: Desktop may still hold this value via
 	// HERMES_DESKTOP_REMOTE_TOKEN until the next relaunch. Clearing it here
 	// forced a new mint on every serve restart and produced sessions 401 drift.
@@ -299,83 +339,230 @@ func (bm *BackendManager) waitForReadyPort(port int, timeout time.Duration) erro
 }
 
 // EnsureHealthy keeps (or starts) the watchdog-managed serve and publishes desktop-backend.json.
+// Transient /api/status timeouts on an alive owned process are DEGRADED (keep), not death.
 func (bm *BackendManager) EnsureHealthy() (*backendInfo, error) {
 	if bm.cfg.HermesRoot == "" {
 		return nil, fmt.Errorf("hermes root not configured")
 	}
-	if existing := bm.currentHealthy(); existing != nil {
-		// Prefer published manifest token over a stale in-memory copy so we
-		// do not kill a healthy serve after an unrelated token rotation race.
-		if manifest, err := bm.readManifest(); err == nil && manifest.Token != "" {
-			bm.token = manifest.Token
+	p := bm.probes()
+	now := p.now()
+
+	bm.mu.Lock()
+	ownedPID := bm.pid
+	ownedPort := bm.port
+	hasCmd := bm.cmd != nil && bm.cmd.Process != nil
+	token := bm.token
+	bm.mu.Unlock()
+
+	// --- Observe owned child first ---
+	if ownedPID > 0 && ownedPort > 0 && !isReservedOpsPort(ownedPort) {
+		alive := p.processAlive(ownedPID)
+		if !alive {
+			bm.recordDead("process_dead")
+			bm.logger.Infof("backend process dead pid=%d action=restart", ownedPID)
+			bm.mu.Lock()
+			bm.stopLocked()
+			bm.mu.Unlock()
+			_ = waitManagedPortCleared(ownedPort, 15*time.Second, bm.logger)
+			// fall through to spawn with token reuse
+		} else {
+			status := p.status(ownedPort, bm.cfg.statusProbeTimeout())
+			if status.OK() {
+				if manifest, err := bm.readManifest(); err == nil && manifest.Token != "" {
+					token = manifest.Token
+					bm.mu.Lock()
+					bm.token = token
+					bm.mu.Unlock()
+				}
+				if token == "" {
+					bm.recordProbeOK(now, status.Kind, status.Latency)
+					bm.mu.Lock()
+					_ = bm.publishManifestLocked(ownedPort, ownedPID)
+					bm.mu.Unlock()
+					return &backendInfo{PID: uint32(ownedPID), Port: ownedPort, Cmd: "watchdog-managed serve"}, nil
+				}
+				auth := p.auth(ownedPort, token, bm.cfg.authProbeTimeout())
+				switch {
+				case auth.OK():
+					bm.recordProbeOK(now, status.Kind, status.Latency)
+					bm.mu.Lock()
+					_ = bm.publishManifestLocked(ownedPort, ownedPID)
+					info := &backendInfo{PID: uint32(ownedPID), Port: ownedPort, Cmd: "watchdog-managed serve"}
+					bm.mu.Unlock()
+					bm.logger.Infof("backend probe recovered pid=%d port=%d kind=%s latency=%dms action=keep",
+						ownedPID, ownedPort, status.Kind, status.Latency.Milliseconds())
+					return info, nil
+				case auth.Kind == ProbeTimeout || auth.Kind == ProbeTransportError || auth.Kind == ProbeHTTPError:
+					state := bm.recordSoftFailure(now, auth.Kind, auth.Latency)
+					bm.logger.Infof("backend probe degraded pid=%d port=%d kind=%s latency=%dms failures=%d grace_remaining=%s action=keep",
+						ownedPID, ownedPort, auth.Kind, auth.Latency.Milliseconds(),
+						func() int { _, f, _, _, _, _ := bm.HealthSnapshot(); return f }(),
+						bm.graceRemaining(now).Round(time.Second))
+					if bm.shouldReplaceOwnedBackend(state, now) {
+						bm.logger.Infof("backend unresponsive pid=%d failures=%d duration=%s action=restart",
+							ownedPID,
+							func() int { _, f, first, _, _, _ := bm.HealthSnapshot(); _ = first; return f }(),
+							now.Sub(func() time.Time { _, _, first, _, _, _ := bm.HealthSnapshot(); return first }()).Round(time.Second))
+						bm.mu.Lock()
+						bm.stopLocked()
+						bm.mu.Unlock()
+						_ = waitManagedPortCleared(ownedPort, 15*time.Second, bm.logger)
+						// fall through to respawn, keep token
+					} else {
+						bm.mu.Lock()
+						_ = bm.publishManifestLocked(ownedPort, ownedPID)
+						bm.mu.Unlock()
+						return &backendInfo{PID: uint32(ownedPID), Port: ownedPort, Cmd: "watchdog-managed serve"}, nil
+					}
+				case auth.DefinitiveAuthFailure():
+					// Confirm with a second probe before destructive replace.
+					p.sleep(bm.cfg.authConfirmDelay())
+					auth2 := p.auth(ownedPort, token, bm.cfg.authProbeTimeout())
+					if !auth2.DefinitiveAuthFailure() {
+						state := bm.recordSoftFailure(now, auth.Kind, auth.Latency)
+						bm.logger.Infof("backend probe degraded pid=%d port=%d kind=%s (unconfirmed auth) action=keep",
+							ownedPID, ownedPort, auth.Kind)
+						if !bm.shouldReplaceOwnedBackend(state, now) {
+							bm.mu.Lock()
+							_ = bm.publishManifestLocked(ownedPort, ownedPID)
+							bm.mu.Unlock()
+							return &backendInfo{PID: uint32(ownedPID), Port: ownedPort, Cmd: "watchdog-managed serve"}, nil
+						}
+					} else {
+						bm.logger.Infof("backend confirmed unauthorized pid=%d port=%d action=restart", ownedPID, ownedPort)
+						bm.mu.Lock()
+						bm.stopLocked()
+						bm.token = "" // definitive drift → fresh mint path
+						bm.mu.Unlock()
+						_ = waitManagedPortCleared(ownedPort, 15*time.Second, bm.logger)
+					}
+				}
+			} else if status.SoftFailure() {
+				state := bm.recordSoftFailure(now, status.Kind, status.Latency)
+				fails, _ := func() (int, time.Duration) {
+					_, f, _, _, _, _ := bm.HealthSnapshot()
+					return f, bm.graceRemaining(now)
+				}()
+				bm.logger.Infof("backend probe degraded pid=%d port=%d kind=%s latency=%dms failures=%d grace_remaining=%s action=keep",
+					ownedPID, ownedPort, status.Kind, status.Latency.Milliseconds(), fails, bm.graceRemaining(now).Round(time.Second))
+				if bm.shouldReplaceOwnedBackend(state, now) {
+					bm.logger.Infof("backend unresponsive pid=%d failures=%d action=restart", ownedPID, fails)
+					bm.mu.Lock()
+					bm.stopLocked()
+					bm.mu.Unlock()
+					_ = waitManagedPortCleared(ownedPort, 15*time.Second, bm.logger)
+				} else {
+					// KEEP same process — never stopLocked on single timeout.
+					bm.mu.Lock()
+					_ = bm.publishManifestLocked(ownedPort, ownedPID)
+					bm.mu.Unlock()
+					return &backendInfo{PID: uint32(ownedPID), Port: ownedPort, Cmd: "watchdog-managed serve"}, nil
+				}
+			} else if status.DefinitiveAuthFailure() {
+				// /api/status should not be unauthorized; treat as soft.
+				state := bm.recordSoftFailure(now, status.Kind, status.Latency)
+				if !bm.shouldReplaceOwnedBackend(state, now) {
+					bm.mu.Lock()
+					_ = bm.publishManifestLocked(ownedPort, ownedPID)
+					bm.mu.Unlock()
+					return &backendInfo{PID: uint32(ownedPID), Port: ownedPort, Cmd: "watchdog-managed serve"}, nil
+				}
+				bm.mu.Lock()
+				bm.stopLocked()
+				bm.mu.Unlock()
+				_ = waitManagedPortCleared(ownedPort, 15*time.Second, bm.logger)
+			} else if hasCmd {
+				// Unexpected classification — degrade and keep.
+				state := bm.recordSoftFailure(now, status.Kind, status.Latency)
+				if !bm.shouldReplaceOwnedBackend(state, now) {
+					bm.mu.Lock()
+					_ = bm.publishManifestLocked(ownedPort, ownedPID)
+					bm.mu.Unlock()
+					return &backendInfo{PID: uint32(ownedPID), Port: ownedPort, Cmd: "watchdog-managed serve"}, nil
+				}
+				bm.mu.Lock()
+				bm.stopLocked()
+				bm.mu.Unlock()
+				_ = waitManagedPortCleared(ownedPort, 15*time.Second, bm.logger)
+			}
 		}
-		if bm.token != "" && testBackendAuth(existing.Port, bm.token) {
-			_ = bm.publishManifestLocked(existing.Port, int(existing.PID))
-			return existing, nil
-		}
-		// Last chance: if the live port still accepts ANY known token from
-		// the previous in-memory value after a rematch, keep it.
-		bm.logger.Infof("in-memory backend auth mismatch on port %d; replacing only if port auth-dead", existing.Port)
-		bm.mu.Lock()
-		bm.stopLocked()
-		bm.mu.Unlock()
-		_ = waitManagedPortCleared(existing.Port, 15*time.Second, bm.logger)
 	}
 
 	bm.mu.Lock()
 	defer bm.mu.Unlock()
 
-	if bm.cmd != nil && bm.port > 0 && processAlive(bm.pid) && testBackendStatus(bm.port) {
-		info := &backendInfo{PID: uint32(bm.pid), Port: bm.port, Cmd: "watchdog-managed serve"}
-		_ = bm.publishManifestLocked(bm.port, bm.pid)
-		return info, nil
+	// If we still have a live owned child with OK status, publish and return.
+	if bm.cmd != nil && bm.port > 0 && p.processAlive(bm.pid) {
+		st := p.status(bm.port, bm.cfg.statusProbeTimeout())
+		if st.OK() {
+			_ = bm.publishManifestLocked(bm.port, bm.pid)
+			bm.recordProbeOK(p.now(), st.Kind, st.Latency)
+			return &backendInfo{PID: uint32(bm.pid), Port: bm.port, Cmd: "watchdog-managed serve"}, nil
+		}
 	}
-
-	bm.stopLocked()
 
 	if port := bm.cfg.ManagedBackendPort; port <= 0 {
 		port = DefaultManagedBackendPort
 	} else if isReservedOpsPort(port) {
 		bm.clearManifest()
 		return nil, fmt.Errorf("managed backend port %d is reserved", port)
-	} else if testBackendStatus(port) {
-		bm.port = port
-		if manifest, err := bm.readManifest(); err == nil && manifest.Token != "" {
-			bm.token = manifest.Token
-		} else if err != nil {
-			bm.logger.Infof("managed port %d up but manifest unreadable: %v", port, err)
-		}
-		// Only reuse when token unlocks gated APIs. Otherwise we'd publish a
-		// fresh token while the live serve still expects the old one (Desktop 401).
-		if bm.token != "" && testBackendAuth(port, bm.token) {
-			pid := 0
-			if listeners := listeningPIDsOnPort(port); len(listeners) > 0 {
-				pid = int(listeners[0])
-			}
+	} else {
+		status := p.status(port, bm.cfg.statusProbeTimeout())
+		if status.OK() {
 			bm.port = port
-			bm.pid = pid
-			_ = bm.publishManifestLocked(port, pid)
-			bm.logger.Infof("reusing healthy managed backend on port %d (auth ok pid=%d)", port, pid)
-			return &backendInfo{PID: uint32(pid), Port: port, Cmd: "existing serve on managed port"}, nil
-		}
-		if bm.token == "" {
-			bm.logger.Infof("managed port %d is up but no reusable session token; replacing occupant", port)
-		} else {
-			bm.logger.Infof("managed port %d is up but session token drifted; replacing occupant", port)
-		}
-		if !waitManagedPortCleared(port, 15*time.Second, bm.logger) {
-			bm.clearManifest()
-			return nil, fmt.Errorf("managed port %d still occupied after token-drift replace", port)
-		}
-		bm.port = 0
-		// Drift replace must mint a fresh token; the live occupant rejected ours.
-		bm.token = ""
-	} else if listeners := listeningPIDsOnPort(port); len(listeners) > 0 {
-		// LISTEN-but-dead (HTTP 000) blocks bind; force-clear before spawn.
-		bm.logger.Infof("managed port %d has LISTEN without /api/status; clearing zombie pid(s)=%v", port, listeners)
-		if !waitManagedPortCleared(port, 15*time.Second, bm.logger) {
-			bm.clearManifest()
-			return nil, fmt.Errorf("managed port %d zombie LISTEN uncleared", port)
+			if manifest, err := bm.readManifest(); err == nil && manifest.Token != "" {
+				bm.token = manifest.Token
+			} else if err != nil {
+				bm.logger.Infof("managed port %d up but manifest unreadable: %v", port, err)
+			}
+			if bm.token != "" {
+				auth := p.auth(port, bm.token, bm.cfg.authProbeTimeout())
+				if auth.OK() {
+					pid := 0
+					if listeners := listeningPIDsOnPort(port); len(listeners) > 0 {
+						pid = int(listeners[0])
+					}
+					bm.port = port
+					bm.pid = pid
+					_ = bm.publishManifestLocked(port, pid)
+					bm.recordProbeOK(p.now(), status.Kind, status.Latency)
+					bm.logger.Infof("reusing healthy managed backend on port %d (auth ok pid=%d)", port, pid)
+					return &backendInfo{PID: uint32(pid), Port: port, Cmd: "existing serve on managed port"}, nil
+				}
+				if auth.Kind == ProbeTimeout || auth.Kind == ProbeTransportError || auth.Kind == ProbeHTTPError {
+					// Occupant alive but auth soft-fail — do not clear port on timeout.
+					bm.logger.Infof("managed port %d auth soft-fail kind=%s action=keep_observe", port, auth.Kind)
+				} else if auth.DefinitiveAuthFailure() {
+					p.sleep(bm.cfg.authConfirmDelay())
+					auth2 := p.auth(port, bm.token, bm.cfg.authProbeTimeout())
+					if auth2.DefinitiveAuthFailure() {
+						bm.logger.Infof("managed port %d confirmed token drift; replacing occupant", port)
+						if !waitManagedPortCleared(port, 15*time.Second, bm.logger) {
+							bm.clearManifest()
+							return nil, fmt.Errorf("managed port %d still occupied after token-drift replace", port)
+						}
+						bm.port = 0
+						bm.token = ""
+					}
+				}
+			} else {
+				bm.logger.Infof("managed port %d is up but no reusable session token; replacing occupant", port)
+				if !waitManagedPortCleared(port, 15*time.Second, bm.logger) {
+					bm.clearManifest()
+					return nil, fmt.Errorf("managed port %d still occupied after token-drift replace", port)
+				}
+				bm.port = 0
+				bm.token = ""
+			}
+		} else if listeners := listeningPIDsOnPort(port); len(listeners) > 0 {
+			// LISTEN without ready status: only clear if not our soft-degraded owned child.
+			if bm.cmd == nil || !p.processAlive(bm.pid) {
+				bm.logger.Infof("managed port %d has LISTEN without /api/status; clearing zombie pid(s)=%v", port, listeners)
+				if !waitManagedPortCleared(port, 15*time.Second, bm.logger) {
+					bm.clearManifest()
+					return nil, fmt.Errorf("managed port %d zombie LISTEN uncleared", port)
+				}
+			}
 		}
 	}
 
@@ -412,12 +599,11 @@ func (bm *BackendManager) EnsureHealthy() (*backendInfo, error) {
 	go io.Copy(io.Discard, stdout)
 
 	if err := bm.waitForReadyPort(port, time.Duration(bm.cfg.BackendStartTimeoutSec)*time.Second); err != nil {
-		if cmd.Process != nil && !processAlive(cmd.Process.Pid) {
+		if cmd.Process != nil && !p.processAlive(cmd.Process.Pid) {
 			bm.stopLocked()
 			bm.clearManifest()
 			return nil, fmt.Errorf("managed backend exited before /api/status became ready")
 		}
-		// Child uvicorn may outlive the parent wrapper — keep waiting on the fixed port.
 		if err2 := bm.waitForReadyPort(port, time.Duration(bm.cfg.BackendReadyTimeoutSec)*time.Second); err2 != nil {
 			bm.stopLocked()
 			bm.clearManifest()
@@ -425,16 +611,12 @@ func (bm *BackendManager) EnsureHealthy() (*backendInfo, error) {
 		}
 	}
 
-	// Refuse to publish a token that does not authenticate (squatter race).
-	if !testBackendAuth(port, token) {
+	if !p.auth(port, token, bm.cfg.authProbeTimeout()).OK() {
 		bm.logger.Infof("managed backend status-ready but auth failed on port %d; refusing drifted manifest", port)
 		reusedToken := preferredToken != "" && token == preferredToken
 		bm.stopLocked()
 		_ = waitManagedPortCleared(port, 15*time.Second, bm.logger)
 		bm.clearManifest()
-		// Boot/logon often reuses a stale preferred token while serve minted a
-		// different gate. One fresh-token retry avoids burning the recovery
-		// budget and killing interactive Desktop.
 		if reusedToken {
 			bm.logger.Infof("retrying managed serve on port %d with freshly minted session token", port)
 			bm.token = ""
@@ -465,7 +647,7 @@ func (bm *BackendManager) EnsureHealthy() (*backendInfo, error) {
 					return nil, fmt.Errorf("managed backend on port %d failed session-token auth (fresh ready: %w)", port, err3)
 				}
 			}
-			if !testBackendAuth(port2, token2) {
+			if !p.auth(port2, token2, bm.cfg.authProbeTimeout()).OK() {
 				bm.stopLocked()
 				_ = waitManagedPortCleared(port2, 15*time.Second, bm.logger)
 				bm.clearManifest()
@@ -480,8 +662,8 @@ func (bm *BackendManager) EnsureHealthy() (*backendInfo, error) {
 	if err := bm.publishManifestLocked(port, bm.pid); err != nil {
 		bm.logger.Infof("manifest write failed: %v", err)
 	}
-
-	bm.logger.Infof("managed backend ready pid=%d port=%d", bm.pid, bm.port)
+	bm.recordProbeOK(p.now(), ProbeOK, 0)
+	bm.logger.Infof("managed backend ready pid=%d port=%d action=restart", bm.pid, bm.port)
 	return &backendInfo{PID: uint32(bm.pid), Port: port, Cmd: "watchdog-managed serve"}, nil
 }
 

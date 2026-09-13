@@ -35,6 +35,11 @@ func main() {
 	backendStartTimeout := flag.Int("backend-start-timeout", 300, "Seconds to wait for managed serve /api/status")
 	backendReadyTimeout := flag.Int("backend-ready-timeout", 180, "Extra seconds waiting for managed serve readiness")
 	managedPort := flag.Int("managed-backend-port", DefaultManagedBackendPort, "Fixed localhost port for watchdog-managed hermes serve")
+	softFailThreshold := flag.Int("backend-soft-fail-threshold", 3, "Consecutive soft probe failures before unresponsive candidacy")
+	unresponsiveGrace := flag.Int("backend-unresponsive-grace", 120, "Wall-clock seconds of soft failure before owned-backend restart")
+	statusTimeoutMs := flag.Int("backend-status-timeout-ms", 2000, "HTTP timeout for /api/status probe")
+	authTimeoutMs := flag.Int("backend-auth-timeout-ms", 3000, "HTTP timeout for authenticated /api/sessions probe")
+	authConfirmDelayMs := flag.Int("backend-auth-confirm-delay-ms", 500, "Delay between confirmed unauthorized probes")
 	embeddingEnabled := flag.Bool("embedding-enabled", false, "Supervise the configured local embedding llama-server")
 	embeddingEndpoint := flag.String("embedding-endpoint", "", "Configured local embedding endpoint, for example http://127.0.0.1:8082")
 	embeddingServer := flag.String("embedding-server", "", "Configured llama-server executable for embeddings")
@@ -67,27 +72,32 @@ func main() {
 	}
 
 	cfg := Config{
-		IntervalSec:              *interval,
-		FailThreshold:            *failThreshold,
-		Once:                     *once,
-		PrewarmBackend:           *prewarm,
-		BackendStartTimeoutSec:   *backendStartTimeout,
-		BackendReadyTimeoutSec:   *backendReadyTimeout,
-		ManagedBackendPort:       *managedPort,
-		EmbeddingEnabled:         *embeddingEnabled,
-		EmbeddingEndpoint:        *embeddingEndpoint,
-		EmbeddingServer:          *embeddingServer,
-		EmbeddingModel:           *embeddingModel,
-		EmbeddingArgsJSON:        *embeddingArgsJSON,
-		EmbeddingStartTimeoutSec: *embeddingStartTimeout,
-		ListenAddr:               strings.TrimSpace(*listen),
-		TsnetHostname:            *tsnetHost,
-		EnableTsnet:              *enableTsnet,
-		HermesRoot:               root,
-		HermesHome:               home,
-		PackagedExe:              *packagedExe,
-		DataDir:                  *dataDir,
-		TsAuthKey:                loadTsAuthKey(),
+		IntervalSec:                 *interval,
+		FailThreshold:               *failThreshold,
+		Once:                        *once,
+		PrewarmBackend:              *prewarm,
+		BackendStartTimeoutSec:      *backendStartTimeout,
+		BackendReadyTimeoutSec:      *backendReadyTimeout,
+		ManagedBackendPort:          *managedPort,
+		BackendSoftFailThreshold:    *softFailThreshold,
+		BackendUnresponsiveGraceSec: *unresponsiveGrace,
+		BackendStatusTimeoutMs:      *statusTimeoutMs,
+		BackendAuthTimeoutMs:        *authTimeoutMs,
+		BackendAuthConfirmDelayMs:   *authConfirmDelayMs,
+		EmbeddingEnabled:            *embeddingEnabled,
+		EmbeddingEndpoint:           *embeddingEndpoint,
+		EmbeddingServer:             *embeddingServer,
+		EmbeddingModel:              *embeddingModel,
+		EmbeddingArgsJSON:           *embeddingArgsJSON,
+		EmbeddingStartTimeoutSec:    *embeddingStartTimeout,
+		ListenAddr:                  strings.TrimSpace(*listen),
+		TsnetHostname:               *tsnetHost,
+		EnableTsnet:                 *enableTsnet,
+		HermesRoot:                  root,
+		HermesHome:                  home,
+		PackagedExe:                 *packagedExe,
+		DataDir:                     *dataDir,
+		TsAuthKey:                   loadTsAuthKey(),
 	}
 	if cfg.PackagedExe == "" {
 		cfg.PackagedExe = defaultPackagedExe(root)

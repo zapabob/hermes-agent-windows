@@ -5,7 +5,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -265,40 +264,6 @@ func appendUniqueInt(list []int, v int) []int {
 		}
 	}
 	return append(list, v)
-}
-
-func testBackendStatus(port int) bool {
-	client := &http.Client{Timeout: 2 * time.Second}
-	resp, err := client.Get(fmt.Sprintf("http://127.0.0.1:%d/api/status", port))
-	if err != nil {
-		return false
-	}
-	defer resp.Body.Close()
-	return resp.StatusCode == http.StatusOK
-}
-
-// testBackendAuth verifies the session token unlocks a gated API.
-// /api/status is public, so LISTEN+status-OK can still be token-drift.
-// Matches Desktop electron/watchdog-backend.ts: Authorization Bearer +
-// X-Hermes-Session-Token (post-7/20 gate accepts Bearer).
-func testBackendAuth(port int, token string) bool {
-	if port <= 0 || strings.TrimSpace(token) == "" {
-		return false
-	}
-	tok := strings.TrimSpace(token)
-	client := &http.Client{Timeout: 3 * time.Second}
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://127.0.0.1:%d/api/sessions", port), nil)
-	if err != nil {
-		return false
-	}
-	req.Header.Set("Authorization", "Bearer "+tok)
-	req.Header.Set("X-Hermes-Session-Token", tok)
-	resp, err := client.Do(req)
-	if err != nil {
-		return false
-	}
-	defer resp.Body.Close()
-	return resp.StatusCode == http.StatusOK
 }
 
 // waitManagedPortCleared is deliberately observational. A port number alone is

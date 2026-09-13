@@ -4,37 +4,82 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // Config holds runtime paths and secrets loaded from flags/env.
 // This binary is intentionally outside Hermes tool/plugin discovery.
 type Config struct {
-	IntervalSec              int
-	FailThreshold            int
-	Once                     bool
-	PrewarmBackend           bool
-	BackendStartTimeoutSec   int
-	BackendReadyTimeoutSec   int
-	ManagedBackendPort       int
-	EmbeddingEnabled         bool
-	EmbeddingEndpoint        string
-	EmbeddingServer          string
-	EmbeddingModel           string
-	EmbeddingArgsJSON        string
-	EmbeddingStartTimeoutSec int
-	ListenAddr               string
-	TsnetHostname            string
-	EnableTsnet              bool
-	HermesRoot               string
-	HermesHome               string
-	PackagedExe              string
-	DataDir                  string
-	LogPath                  string
-	LockPath                 string
-	StatePath                string
-	MaintenancePath          string
-	RecoveryPath             string
-	TsAuthKey                string
+	IntervalSec                 int
+	FailThreshold               int
+	Once                        bool
+	PrewarmBackend              bool
+	BackendStartTimeoutSec      int
+	BackendReadyTimeoutSec      int
+	ManagedBackendPort          int
+	BackendSoftFailThreshold    int
+	BackendUnresponsiveGraceSec int
+	BackendStatusTimeoutMs      int
+	BackendAuthTimeoutMs        int
+	BackendAuthConfirmDelayMs   int
+	EmbeddingEnabled            bool
+	EmbeddingEndpoint           string
+	EmbeddingServer             string
+	EmbeddingModel              string
+	EmbeddingArgsJSON           string
+	EmbeddingStartTimeoutSec    int
+	ListenAddr                  string
+	TsnetHostname               string
+	EnableTsnet                 bool
+	HermesRoot                  string
+	HermesHome                  string
+	PackagedExe                 string
+	DataDir                     string
+	LogPath                     string
+	LockPath                    string
+	StatePath                   string
+	MaintenancePath             string
+	RecoveryPath                string
+	TsAuthKey                   string
+}
+
+func (c Config) statusProbeTimeout() time.Duration {
+	ms := c.BackendStatusTimeoutMs
+	if ms <= 0 {
+		ms = 2000
+	}
+	return time.Duration(ms) * time.Millisecond
+}
+
+func (c Config) authProbeTimeout() time.Duration {
+	ms := c.BackendAuthTimeoutMs
+	if ms <= 0 {
+		ms = 3000
+	}
+	return time.Duration(ms) * time.Millisecond
+}
+
+func (c Config) softFailThreshold() int {
+	if c.BackendSoftFailThreshold <= 0 {
+		return 3
+	}
+	return c.BackendSoftFailThreshold
+}
+
+func (c Config) unresponsiveGrace() time.Duration {
+	sec := c.BackendUnresponsiveGraceSec
+	if sec <= 0 {
+		sec = 120
+	}
+	return time.Duration(sec) * time.Second
+}
+
+func (c Config) authConfirmDelay() time.Duration {
+	ms := c.BackendAuthConfirmDelayMs
+	if ms <= 0 {
+		ms = 500
+	}
+	return time.Duration(ms) * time.Millisecond
 }
 
 func defaultHermesHome() string {

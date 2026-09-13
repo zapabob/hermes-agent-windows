@@ -30,6 +30,12 @@ type WatchdogState struct {
 	MaintenanceTimestamp     string      `json:"maintenanceTimestamp,omitempty"`
 	Result                   cycleResult `json:"result"`
 	ConsecutiveBackendFails  int         `json:"consecutiveBackendFails"`
+	BackendHealth            string      `json:"backendHealth,omitempty"`
+	BackendSoftFailures      int         `json:"backendSoftFailures,omitempty"`
+	BackendFirstFailureAt    string      `json:"backendFirstFailureAt,omitempty"`
+	BackendLastHealthyAt     string      `json:"backendLastHealthyAt,omitempty"`
+	BackendLastProbeKind     string      `json:"backendLastProbeKind,omitempty"`
+	BackendLastProbeLatencyMs int64      `json:"backendLastProbeLatencyMs,omitempty"`
 	RecoveryEvents           int         `json:"recoveryEvents"`
 	RecoveryNextAllowedAt    string      `json:"recoveryNextAllowedAt,omitempty"`
 	RecoveryCircuitOpenUntil string      `json:"recoveryCircuitOpenUntil,omitempty"`
@@ -167,23 +173,38 @@ func (w *Watchdog) maintenanceSuspended() bool {
 func (w *Watchdog) saveState(result cycleResult) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
+	health, softFails, firstFail, lastOK, probeKind, probeLatency := w.back.HealthSnapshot()
+	firstFailStr := ""
+	if !firstFail.IsZero() {
+		firstFailStr = firstFail.Format(time.RFC3339Nano)
+	}
+	lastOKStr := ""
+	if !lastOK.IsZero() {
+		lastOKStr = lastOK.Format(time.RFC3339Nano)
+	}
 	w.lastState = WatchdogState{
-		UpdatedAt:                time.Now().Format(time.RFC3339Nano),
-		WatchdogPID:              os.Getpid(),
-		MaintenanceState:         w.maintenanceState,
-		MaintenanceOwner:         w.maintenanceOwner,
-		MaintenanceNonce:         w.maintenanceNonce,
-		MaintenanceEpoch:         w.maintenanceEpoch,
-		MaintenanceTimestamp:     w.maintenanceTimestamp,
-		Result:                   result,
-		ConsecutiveBackendFails:  w.failCount,
-		RecoveryEvents:           len(w.recovery.Events),
-		RecoveryNextAllowedAt:    w.recovery.NextAllowedAt,
-		RecoveryCircuitOpenUntil: w.recovery.CircuitOpenUntil,
-		PackagedExe:              w.cfg.PackagedExe,
-		ListenAddr:               w.cfg.ListenAddr,
-		TsnetHostname:            w.cfg.TsnetHostname,
-		TsnetEnabled:             w.cfg.EnableTsnet && w.cfg.TsAuthKey != "",
+		UpdatedAt:                 time.Now().Format(time.RFC3339Nano),
+		WatchdogPID:               os.Getpid(),
+		MaintenanceState:          w.maintenanceState,
+		MaintenanceOwner:          w.maintenanceOwner,
+		MaintenanceNonce:          w.maintenanceNonce,
+		MaintenanceEpoch:          w.maintenanceEpoch,
+		MaintenanceTimestamp:      w.maintenanceTimestamp,
+		Result:                    result,
+		ConsecutiveBackendFails:   w.failCount,
+		BackendHealth:             string(health),
+		BackendSoftFailures:       softFails,
+		BackendFirstFailureAt:     firstFailStr,
+		BackendLastHealthyAt:      lastOKStr,
+		BackendLastProbeKind:      probeKind,
+		BackendLastProbeLatencyMs: probeLatency.Milliseconds(),
+		RecoveryEvents:            len(w.recovery.Events),
+		RecoveryNextAllowedAt:     w.recovery.NextAllowedAt,
+		RecoveryCircuitOpenUntil:  w.recovery.CircuitOpenUntil,
+		PackagedExe:               w.cfg.PackagedExe,
+		ListenAddr:                w.cfg.ListenAddr,
+		TsnetHostname:             w.cfg.TsnetHostname,
+		TsnetEnabled:              w.cfg.EnableTsnet && w.cfg.TsAuthKey != "",
 	}
 	raw, err := json.MarshalIndent(w.lastState, "", "  ")
 	if err != nil {
@@ -211,8 +232,14 @@ func (w *Watchdog) RunCycle() cycleResult {
 	managedReady := !w.cfg.PrewarmBackend
 	backendRecoveryAttempted := false
 	if w.cfg.PrewarmBackend {
-		if w.back.currentHealthy() != nil {
-			managedReady = true
+		if w.back.currentUsable() != nil {
+			// Always re-observe so soft-fail hysteresis advances; do not spend
+			// recovery budget on a still-owned degraded backend.
+			if _, err := w.back.EnsureHealthy(); err != nil {
+				w.logger.Infof("ensure managed backend: %v", err)
+			}
+			managedReady = w.back.currentUsable() != nil
+			backendRecoveryAttempted = true
 		} else if !w.reserveRecovery("backend_start") {
 			managedReady = false
 		} else if w.maintenanceSuspended() {
