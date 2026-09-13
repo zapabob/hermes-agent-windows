@@ -318,6 +318,44 @@ func (w *Watchdog) RunCycle() cycleResult {
 		return res
 	}
 
+	// Managed serve reminted the session token while Desktop stayed up —
+	// renderer still holds the old Bearer and flaps 401 / CONNECTING.
+	if w.back.TokenRotationPending() {
+		if !w.reserveRecovery("desktop_restart") {
+			res := withEmbedding(cycleResult{
+				Desktop:     "cooldown",
+				Backend:     "up",
+				BackendPID:  backend.PID,
+				BackendPort: backend.Port,
+			})
+			w.saveState(res)
+			return res
+		}
+		if w.maintenanceSuspended() {
+			res := withEmbedding(cycleResult{Desktop: "maintenance", Backend: "maintenance"})
+			w.saveState(res)
+			return res
+		}
+		_ = w.back.ConsumeTokenRotation()
+		w.logger.Infof("session token rotated — restarting Desktop")
+		if !restartPackagedDesktop(w.cfg, w.logger, w.back, func() bool { return !w.maintenanceSuspended() }) && w.maintenanceSuspended() {
+			res := withEmbedding(cycleResult{Desktop: "maintenance", Backend: "maintenance"})
+			w.saveState(res)
+			return res
+		}
+		w.mu.Lock()
+		w.failCount = 0
+		w.mu.Unlock()
+		res := withEmbedding(cycleResult{
+			Desktop:     "restarted",
+			Backend:     "up",
+			BackendPID:  backend.PID,
+			BackendPort: backend.Port,
+		})
+		w.saveState(res)
+		return res
+	}
+
 	w.mu.Lock()
 	w.failCount = 0
 	w.mu.Unlock()

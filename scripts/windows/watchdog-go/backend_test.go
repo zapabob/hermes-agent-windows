@@ -85,7 +85,7 @@ func TestResolvePythonExe(t *testing.T) {
 	}
 }
 
-func TestDesktopLaunchEnvIncludesRemoteWhenManifest(t *testing.T) {
+func TestDesktopLaunchEnvClearsLoopbackManagedRemote(t *testing.T) {
 	cfg := Config{
 		HermesRoot: `C:\repo`,
 		HermesHome: `C:\Users\u\.hermes`,
@@ -97,7 +97,35 @@ func TestDesktopLaunchEnvIncludesRemoteWhenManifest(t *testing.T) {
 	env := desktopLaunchEnv(cfg, manifest)
 	joined := stringsJoinEnv(env)
 	for _, want := range []string{
-		"HERMES_DESKTOP_REMOTE_URL=http://127.0.0.1:54321",
+		"HERMES_DESKTOP_HERMES_ROOT=C:\\repo",
+		"HERMES_DESKTOP_REMOTE_URL=",
+		"HERMES_DESKTOP_REMOTE_TOKEN=",
+	} {
+		if !containsSubstr(joined, want) {
+			t.Fatalf("missing %q in %q", want, joined)
+		}
+	}
+	if containsSubstr(joined, "HERMES_DESKTOP_REMOTE_URL=http://127.0.0.1:54321") {
+		t.Fatalf("loopback managed serve must not inject REMOTE_URL: %q", joined)
+	}
+	if containsSubstr(joined, "HERMES_DESKTOP_REMOTE_TOKEN=tok") {
+		t.Fatalf("loopback managed serve must not inject REMOTE_TOKEN: %q", joined)
+	}
+}
+
+func TestDesktopLaunchEnvSetsNonLoopbackManagedRemote(t *testing.T) {
+	cfg := Config{
+		HermesRoot: `C:\repo`,
+		HermesHome: `C:\Users\u\.hermes`,
+	}
+	manifest := &DesktopBackendManifest{
+		BaseURL: "http://10.0.0.8:9119",
+		Token:   "tok",
+	}
+	env := desktopLaunchEnv(cfg, manifest)
+	joined := stringsJoinEnv(env)
+	for _, want := range []string{
+		"HERMES_DESKTOP_REMOTE_URL=http://10.0.0.8:9119",
 		"HERMES_DESKTOP_REMOTE_TOKEN=tok",
 		"HERMES_DESKTOP_HERMES_ROOT=C:\\repo",
 	} {
@@ -183,6 +211,38 @@ func TestBackendManagerWriteReadManifest(t *testing.T) {
 	}
 	if got.Port != 12345 || got.Token != "abc" || !got.Managed {
 		t.Fatalf("unexpected manifest: %+v", got)
+	}
+}
+
+func TestTokenRotationArmedOnRemintNotFirstPublish(t *testing.T) {
+	dir := t.TempDir()
+	bm := NewBackendManager(Config{DataDir: dir, HermesRoot: dir, HermesHome: dir}, NewLogger(filepath.Join(dir, "t.log")))
+	bm.token = "tok-a"
+	if err := bm.publishManifestLocked(9119, 1); err != nil {
+		t.Fatal(err)
+	}
+	if bm.TokenRotationPending() {
+		t.Fatal("first publish must not arm token rotation")
+	}
+	bm.token = "tok-a"
+	if err := bm.publishManifestLocked(9119, 1); err != nil {
+		t.Fatal(err)
+	}
+	if bm.TokenRotationPending() {
+		t.Fatal("same-token republish must not arm rotation")
+	}
+	bm.token = "tok-b"
+	if err := bm.publishManifestLocked(9119, 2); err != nil {
+		t.Fatal(err)
+	}
+	if !bm.TokenRotationPending() {
+		t.Fatal("token remint must arm Desktop restart")
+	}
+	if !bm.ConsumeTokenRotation() {
+		t.Fatal("ConsumeTokenRotation should return true once")
+	}
+	if bm.TokenRotationPending() || bm.ConsumeTokenRotation() {
+		t.Fatal("rotation flag must clear after consume")
 	}
 }
 
