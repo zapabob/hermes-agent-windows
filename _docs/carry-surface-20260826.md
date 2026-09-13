@@ -4,12 +4,12 @@ Frozen upstream: b51c055a12220f8c7c18660e8599365012e19532
 
 | Metric | Value |
 | --- | ---: |
-| All fork-specific LOC | 2710977 |
-| Upstream-owned fork LOC | 1545818 |
-| Fork-owned LOC | 1165159 |
-| UTR | 0.570207 |
-| Carry Surface | 5076 files |
-| CWC | 86081853 |
+| All fork-specific LOC | 2713949 |
+| Upstream-owned fork LOC | 1546692 |
+| Fork-owned LOC | 1167257 |
+| UTR | 0.569905 |
+| Carry Surface | 5078 files |
+| CWC | 86151349 |
 
 LOC is added plus deleted lines relative to the frozen upstream tree.
 Generated metric reports are excluded to avoid self-referential totals.
@@ -20,13 +20,13 @@ and 1 for tests, docs, workflows, and generated documentation.
 
 | Path | Frequency | Patch | Coupling | CWC |
 | --- | ---: | ---: | ---: | ---: |
-| gateway/run.py | 158 | 32575 | 2 | 10293700 |
+| gateway/run.py | 158 | 32674 | 2 | 10324984 |
 | hermes_cli/web_server.py | 95 | 21370 | 3 | 6090450 |
 | cli.py | 77 | 24994 | 2 | 3849076 |
 | tui_gateway/server.py | 96 | 19383 | 2 | 3721536 |
 | hermes_state.py | 112 | 16244 | 2 | 3638656 |
 | hermes_cli/main.py | 73 | 15990 | 3 | 3501810 |
-| agent/auxiliary_client.py | 89 | 12770 | 3 | 3409590 |
+| agent/auxiliary_client.py | 89 | 12800 | 3 | 3417600 |
 | hermes_cli/update_cmd.py | 85 | 11474 | 3 | 2925870 |
 | agent/conversation_loop.py | 85 | 9526 | 3 | 2429130 |
 | agent/context_compressor.py | 82 | 9921 | 2 | 1627044 |
@@ -36,12 +36,12 @@ and 1 for tests, docs, workflows, and generated documentation.
 | agent/chat_completion_helpers.py | 73 | 7601 | 2 | 1109746 |
 | cron/scheduler.py | 56 | 9812 | 2 | 1098944 |
 | hermes_cli/models.py | 67 | 7713 | 2 | 1033542 |
-| gateway/slash_commands.py | 71 | 7090 | 2 | 1006780 |
-| hermes_cli/auth.py | 46 | 10809 | 2 | 994428 |
+| gateway/slash_commands.py | 71 | 7095 | 2 | 1007490 |
+| hermes_cli/auth.py | 46 | 10822 | 2 | 995624 |
 | hermes_cli/gateway.py | 57 | 8320 | 2 | 948480 |
-| gateway/platforms/base.py | 36 | 8368 | 3 | 903744 |
+| gateway/platforms/base.py | 36 | 8381 | 3 | 905148 |
+| tools/mcp_tool.py | 46 | 9248 | 2 | 850816 |
 | hermes_cli/kanban_db.py | 30 | 13923 | 2 | 835380 |
-| tools/mcp_tool.py | 46 | 9074 | 2 | 834808 |
 | hermes_cli/config.py | 54 | 6789 | 2 | 733212 |
 | plugins/platforms/telegram/adapter.py | 30 | 11674 | 2 | 700440 |
 | agent/agent_runtime_helpers.py | 55 | 6284 | 2 | 691240 |
