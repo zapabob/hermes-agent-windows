@@ -29,14 +29,16 @@ def test_watchdog_uses_the_documented_single_startup_and_probe_defaults() -> Non
 
 
 def test_watchdog_backend_probe_requires_status_and_session_token() -> None:
-    process = _read(GO / "process_windows.go")
+    probe = _read(GO / "probe.go")
     backend = _read(GO / "backend.go")
 
-    assert "/api/status" in process
-    assert "/api/sessions" in process
-    assert 'req.Header.Set("Authorization", "Bearer "+tok)' in process
-    assert 'req.Header.Set("X-Hermes-Session-Token", tok)' in process
+    assert "/api/status" in probe
+    assert "/api/sessions" in probe
+    assert 'req.Header.Set("Authorization", "Bearer "+tok)' in probe
+    assert 'req.Header.Set("X-Hermes-Session-Token", tok)' in probe
     assert "const DefaultManagedBackendPort = 9119" in backend
+    assert "BackendHealthy" in _read(GO / "health.go")
+    assert "shouldReplaceOwnedBackend" in _read(GO / "health.go")
 
 
 def test_a2a_sidecars_are_outside_direct_watchdog_management() -> None:
