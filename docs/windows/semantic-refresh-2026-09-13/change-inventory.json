@@ -152,11 +152,25 @@
           "tests": ["tests/gateway/test_agent_cache_release_profile_scope.py"],
           "result": "2 passed",
           "intentional_delta": "Unscoped agent-cache eviction commits memory under owning profile scope via copy_context + _profile_runtime_scope; no second cache owner"
+        },
+        {
+          "id": "SR-20260913-004f",
+          "owners": [
+            "tools/mcp_tool_scope.py",
+            "tools/mcp_tool.py::_server_key ledgers + register/select/status/breaker/cooldown/lazy"
+          ],
+          "upstream_seed": "ceaf622c6d348c570b141898bee5916ca115a8d5",
+          "tests": [
+            "tests/tools/test_mcp_multiplex_connection_keys.py",
+            "tests/tools/test_mcp_circuit_breaker.py"
+          ],
+          "result": "11 passed",
+          "intentional_delta": "Under multiplex, same-named MCP servers with different credentials are separate connections; sibling breaker/cooldown does not shadow; same-route+cred adoption remains; single-profile bare name keys unchanged. U module split not forced."
         }
       ],
       "remaining": [
-        "MCP same-name per-profile servers (ceaf622; D1 monolithic tools/mcp_tool.py — COMPOSE connection-key, do not force U module split)",
         "tool-side memo remainder from 4b8c01f (aux semaphore, image_token_cost, computer_use aux-vision, MCP discovery lock)",
+        "MCP reload generation / orphaned adopter re-registration (partial via adopt; full owner-reload path still thin vs U lifecycle)",
         "mem0 OSS DirectOpenAILLM (absent on this fork)",
         "read_extract FIRECRAWL hosted OCR (absent on this fork revision)",
         "outbound webhook secret_env + i18n HERMES_LANGUAGE (a9838c F11; deferred next pass)"
