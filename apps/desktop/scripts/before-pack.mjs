@@ -225,14 +225,17 @@ export function preserveRollbackBackup(appOutDir, productExeName = 'Hermes.exe')
   }
 }
 
-export default async function beforePack(context) {
+export default async function beforePack(context, deps = {}) {
   const appOutDir = context && context.appOutDir
   const platformName = context && context.electronPlatformName
   try {
     // Windows: re-quiesce install-scoped Desktop lockers immediately before
     // live release rename/wipe (f17f18 semantics on the in-place pack path).
+    // Optional deps.lockDeps (or deps) stubs keep unit tests free of live
+    // PowerShell CIM scans that otherwise race vitest's 15s default timeout.
     if (platformName === 'win32') {
-      const stopped = releaseInstallScopedDesktopLocks(appOutDir)
+      const lockDeps = deps.lockDeps ?? deps
+      const stopped = releaseInstallScopedDesktopLocks(appOutDir, lockDeps)
       if (stopped.length) {
         console.log(
           `[before-pack] stopped desktop processes before live release rename: ${stopped.join(', ')}`

@@ -130,7 +130,12 @@ test('beforePack on win32 preserves the previous build instead of wiping it', as
 
     // No packager info in the context → default 'Hermes.exe' product name.
     // node-pty staging is skipped because arch is not a number here.
-    await beforePack({ appOutDir, electronPlatformName: 'win32' })
+    // Stub lock release so CI runners never spend the vitest budget on a live
+    // Win32_Process CIM scan (flake: Test timed out in 15000ms).
+    await beforePack(
+      { appOutDir, electronPlatformName: 'win32' },
+      { listLockingPids: () => [] }
+    )
 
     assert.equal(fs.existsSync(appOutDir), false)
     assert.equal(
