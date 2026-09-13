@@ -17,7 +17,9 @@ import time -> no import cycle. The lazy import preserves the exact logger name
 
 from __future__ import annotations
 
+import contextlib
 import os
+from pathlib import Path
 from typing import Optional
 
 from gateway.config import Platform
@@ -87,42 +89,76 @@ def _coerce_allow_set(raw) -> set[str]:
 class GatewayAuthorizationMixin:
     """User/chat authorization methods for ``GatewayRunner``."""
 
+    def _primary_adapters(self) -> dict:
+        return getattr(self, "adapters", None) or {}
+
+    def _profile_adapters_map(self) -> dict:
+        return getattr(self, "_profile_adapters", None) or {}
+
     def _authorization_adapter(
         self,
         platform: Optional[Platform],
         profile: Optional[str] = None,
     ):
-        """Resolve the live adapter whose intake policy should gate authorization.
+        """Live adapter whose intake policy gates authorization.
 
-        In multiplex mode, secondary-profile adapters live in
-        ``_profile_adapters[profile]`` while the default/active profile uses
-        ``self.adapters``. ``SessionSource.profile`` selects which map to consult.
-        When a stamped profile has its own adapter registry entry, the default
-        profile's same-platform adapter must not be consulted as a fallback.
+        Resolves through ``_adapters_for_profile`` so shared-bot satellites keep
+        the primary transport and disconnected secondaries stay fail-closed.
         """
         if not platform:
             return None
+        return self._adapters_for_profile(profile).get(platform)
+
+    def _adapters_for_profile(self, profile: Optional[str]) -> dict:
+        """Adapter map *profile* may deliver through.
+
+        Consult ``_profile_adapters`` before the active profile name: multiplex
+        turns override ``HERMES_HOME`` so ``_active_profile_name()`` reports the
+        secondary mid-turn, and treating it as primary would hand it the default
+        bot. A named profile with an empty map borrows the primary only when it
+        is a shared-bot satellite; otherwise ``{}`` (fail closed).
+        """
         profile_name = (profile or "").strip() or None
-        if profile_name and profile_name != "default":
-            active_profile = None
-            active_profile_fn = getattr(self, "_active_profile_name", None)
-            if callable(active_profile_fn):
-                try:
-                    active_profile = active_profile_fn()
-                except Exception:
-                    active_profile = None
-            if profile_name == active_profile:
-                adapters = getattr(self, "adapters", None) or {}
-                return adapters.get(platform)
-            profile_adapters = getattr(self, "_profile_adapters", None) or {}
-            if profile_name in profile_adapters:
-                return profile_adapters[profile_name].get(platform)
-            # Fail closed: a stamped secondary profile with no registry entry
-            # (e.g. its adapter failed to connect) must NOT fall back to the
-            # default profile's adapter — that sends replies out the wrong bot.
-            return None
-        adapters = getattr(self, "adapters", None) or {}
-        return adapters.get(platform)
+        if not profile_name or profile_name == "default":
+            return self._primary_adapters()
+        profile_adapters = self._profile_adapters_map()
+        if profile_name in profile_adapters:
+            adapters = profile_adapters[profile_name]
+            if adapters or not self._is_shared_bot_satellite(profile_name):
+                return adapters
+            return self._primary_adapters()
+        primary_profile = getattr(self, "_primary_profile_name", None)
+        if not primary_profile:
+            with contextlib.suppress(Exception):
+                primary_profile = self._active_profile_name()
+        return self._primary_adapters() if profile_name == primary_profile else {}
+
+    def _is_shared_bot_satellite(self, profile_name: str) -> bool:
+        """Served profile with no bot of its own, targeted by a default-bot route.
+
+        Its ``_profile_adapters`` entry is the ``{}`` startup placeholder; a
+        secondary connected on ANY platform (or queued for reconnect) is its own
+        credential boundary and never borrows the primary.
+        """
+        config = getattr(self, "config", None)
+        if not getattr(config, "multiplex_profiles", False):
+            return False
+        if (getattr(self, "_profile_failed_platforms", None) or {}).get(profile_name):
+            return False
+        routes = getattr(config, "profile_routes", None) or []
+        if not any(
+            getattr(r, "enabled", True)
+            and r.profile == profile_name
+            and getattr(r, "bot_profile", None) is None
+            for r in routes
+        ):
+            return False
+        from gateway.run import _multiplex_profile_homes
+
+        try:
+            return profile_name in {name for name, _home in _multiplex_profile_homes(config)}
+        except Exception:
+            return False
 
     def _adapter_for_source(self, source: Optional[SessionSource]):
         """Resolve the live adapter for an inbound ``SessionSource``."""
@@ -189,19 +225,38 @@ class GatewayAuthorizationMixin:
         owner = self._transport_owner(source)
         return owner[0] if owner is not None else None
 
+    def _authorization_home_for_source(self, source: SessionSource):
+        """HERMES_HOME whose allowlist admits *source*.
+
+        Prefer the ingress-stamped transport home; else the home of the profile
+        owning the delivering adapter. ``None`` = authorize in the ambient scope
+        (multiplex off, or no live adapter — the check then fails closed alone).
+
+        Inside a routed satellite's turn the ambient scope is the satellite's
+        (no token/allowlist); mid-turn decisions must read the admitting bot's
+        allowlist instead.
+        """
+        stamped = getattr(source, "_authorization_profile_home", None)
+        if stamped is not None:
+            return Path(stamped)
+        if not getattr(getattr(self, "config", None), "multiplex_profiles", False):
+            return None
+        adapter = self._adapter_for_source(source)
+        if adapter is None:
+            return None
+        _registered, profile = self._owning_profile(adapter, getattr(source, "platform", None))
+        if profile is None:
+            from hermes_constants import get_process_hermes_home
+
+            return get_process_hermes_home()
+        from hermes_cli.profiles import get_profile_dir
+
+        return get_profile_dir(profile)
+
     def _adapter_profile_for_source(self, source: SessionSource) -> Optional[str]:
         """Resolve the transport-owning profile for adapter policy lookups."""
-        adapter = self._registered_transport_adapter(source)
-        platform = getattr(source, "platform", None)
-        if adapter is not None:
-            if adapter is (getattr(self, "adapters", None) or {}).get(platform):
-                return None
-            for profile, profile_adapters in (
-                getattr(self, "_profile_adapters", None) or {}
-            ).items():
-                if adapter is profile_adapters.get(platform):
-                    return profile
-        return getattr(source, "profile", None)
+        owner = self._transport_owner(source)
+        return owner[1] if owner is not None else getattr(source, "profile", None)
 
     def _adapter_authorization_is_upstream(
         self,

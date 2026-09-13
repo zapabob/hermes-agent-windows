@@ -41,14 +41,29 @@ and ``thread_id`` is non-empty.
 import asyncio
 import importlib.util
 import sys
+import threading
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 import yaml
 
 from hermes_cli.config import get_hermes_home
+from hermes_constants import hermes_home_key
 
 
 HOOKS_DIR = get_hermes_home() / "hooks"
+_HOOKS_DIR_AT_IMPORT = HOOKS_DIR
+
+
+def _resolve_hooks_dir() -> Path:
+    """Active profile's hooks dir at call time.
+
+    A patched ``HOOKS_DIR`` still wins (tests); otherwise ``get_hermes_home()/hooks``.
+    The import-time constant is the LAUNCH profile's; under multiplex each served
+    profile has its own ``hooks/``.
+    """
+    configured = Path(HOOKS_DIR)
+    return configured if configured != _HOOKS_DIR_AT_IMPORT else get_hermes_home() / "hooks"
 
 
 class HookRegistry:
@@ -92,10 +107,11 @@ class HookRegistry:
         """
         self._register_builtin_hooks()
 
-        if not HOOKS_DIR.exists():
+        hooks_dir = _resolve_hooks_dir()
+        if not hooks_dir.exists():
             return
 
-        for hook_dir in sorted(HOOKS_DIR.iterdir()):
+        for hook_dir in sorted(hooks_dir.iterdir()):
             if not hook_dir.is_dir():
                 continue
 
@@ -227,3 +243,47 @@ class HookRegistry:
             except Exception as e:
                 print(f"[hooks] Error in handler for '{event_type}': {e}", flush=True)
         return results
+
+
+class ProfileHookRegistries:
+    """``HookRegistry`` per served profile home, picked at emit from active HERMES_HOME.
+
+    The gateway holds ONE of these. Hook emit already runs inside the routed
+    profile's ``_profile_runtime_scope``, so resolving by ``get_hermes_home()``
+    gives each profile its own ``hooks/`` and keeps the default profile's
+    handlers from seeing other profiles' traffic.
+    """
+
+    def __init__(self):
+        self._by_home: Dict[str, HookRegistry] = {}
+        self._lock = threading.Lock()
+
+    def _active(self) -> HookRegistry:
+        key = hermes_home_key(get_hermes_home())
+        registry = self._by_home.get(key)
+        if registry is None:
+            with self._lock:
+                registry = self._by_home.get(key)
+                if registry is None:
+                    registry = HookRegistry()
+                    registry.discover_and_load()
+                    self._by_home[key] = registry
+        return registry
+
+    @property
+    def loaded_hooks(self) -> List[dict]:
+        return self._active().loaded_hooks
+
+    def discover_and_load(self) -> None:
+        """Load the active home's hooks now (startup / secondary scoped startup)."""
+        self._active()
+
+    async def emit(self, event_type: str, context: Optional[Dict[str, Any]] = None) -> None:
+        await self._active().emit(event_type, context)
+
+    async def emit_collect(
+        self,
+        event_type: str,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> List[Any]:
+        return await self._active().emit_collect(event_type, context)

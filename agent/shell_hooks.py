@@ -791,9 +791,21 @@ def _serialize_payload(event: str, kwargs: Dict[str, Any]) -> str:
         "tool_input": kwargs.get("args") if isinstance(kwargs.get("args"), dict) else None,
         "session_id": kwargs.get("session_id") or kwargs.get("parent_session_id") or "",
         "cwd": cwd,
+        # Resolved at fire time: a multiplexed gateway's hook script must know
+        # which profile fired it.
+        "profile": _active_profile_name_for_hook(),
         "extra": extras,
     }
     return json.dumps(payload, ensure_ascii=False, default=str)
+
+
+def _active_profile_name_for_hook() -> str:
+    try:
+        from hermes_cli.profiles import get_active_profile_name
+
+        return get_active_profile_name() or "default"
+    except Exception:
+        return "default"
 
 
 def _block_message(primary: Any, secondary: Any) -> str:

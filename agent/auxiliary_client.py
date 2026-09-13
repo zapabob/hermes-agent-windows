@@ -1240,6 +1240,23 @@ _NOUS_MODEL = "google/gemini-3.6-flash"
 _NOUS_DEFAULT_BASE_URL = "https://inference-api.nousresearch.com/v1"
 _ANTHROPIC_DEFAULT_BASE_URL = "https://api.anthropic.com"
 _AUTH_JSON_PATH = get_hermes_home() / "auth.json"
+_AUTH_JSON_PATH_AT_IMPORT = _AUTH_JSON_PATH
+
+
+def _auth_json_path():
+    """Active profile's ``auth.json`` at call time (a patched ``_AUTH_JSON_PATH`` still wins).
+
+    The import-time constant is the LAUNCH profile's; under multiplexing a
+    secondary's auxiliary calls would otherwise authenticate to Nous with the
+    default profile's token.
+    """
+    from hermes_cli.auth import _auth_file_path
+
+    return (
+        _AUTH_JSON_PATH
+        if _AUTH_JSON_PATH != _AUTH_JSON_PATH_AT_IMPORT
+        else _auth_file_path()
+    )
 
 # Codex OAuth endpoint used when a caller explicitly requests
 # provider="openai-codex".  There is deliberately no hardcoded default
@@ -2649,9 +2666,10 @@ def _read_nous_auth() -> Optional[dict]:
         }
 
     try:
-        if not _AUTH_JSON_PATH.is_file():
+        auth_path = _auth_json_path()
+        if not auth_path.is_file():
             return None
-        data = json.loads(_AUTH_JSON_PATH.read_text(encoding="utf-8-sig"))
+        data = json.loads(auth_path.read_text(encoding="utf-8-sig"))
         if data.get("active_provider") != "nous":
             return None
         provider = data.get("providers", {}).get("nous", {})

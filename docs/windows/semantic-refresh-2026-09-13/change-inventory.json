@@ -210,7 +210,38 @@
       "in_U": true,
       "in_D0": false,
       "decision": "COMPOSE",
-      "verification_status": "PENDING",
+      "verification_status": "PASS_FOCUSED",
+      "upstream_owner": "gateway/authz_mixin.py + gateway/run.py mid-turn authz / routed policy",
+      "contract": "Mid-turn authz reads admitting bot allowlist via _is_user_authorized_for_source/_authorization_home_for_source; shared-bot satellites keep primary transport; scoped miss under multiplex never falls through to os.environ; routed turns resolve max_turns/fallback/hooks/aux auth.json/media policy from active HERMES_HOME",
+      "intentional_delta": "Satellite mid-turn /topic,/stop,plugin,voice,auto-resume no longer refuse shared-bot owner or leak default allowlist; secondaries no longer inherit launch-profile turn budget/fallback/hooks/media/aux token",
+      "compose_owners": [
+        "gateway/authz_mixin.py",
+        "gateway/run.py",
+        "gateway/slash_commands.py",
+        "gateway/hooks.py",
+        "gateway/media_policy.py",
+        "gateway/platforms/base.py",
+        "agent/auxiliary_client.py",
+        "agent/shell_hooks.py"
+      ],
+      "tests": [
+        "tests/gateway/test_multiplex_mid_turn_authz.py",
+        "tests/gateway/test_multiplex_routed_policy_isolation.py",
+        "tests/gateway/test_multiplex_profile_authz.py",
+        "tests/gateway/test_platform_authz_scope.py"
+      ],
+      "verification_receipt": {
+        "command": "python -m pytest tests/gateway/test_multiplex_mid_turn_authz.py tests/gateway/test_multiplex_routed_policy_isolation.py tests/gateway/test_multiplex_profile_authz.py tests/gateway/test_platform_authz_scope.py -q",
+        "result": "30 passed",
+        "os": "Windows 11",
+        "isolated_home": true,
+        "as_of": "2026-09-13T16:27:03+09:00"
+      },
+      "gaps": [
+        "ProfileRoute.bot_profile field not ported (getattr None keeps default-bot-route semantics)",
+        "U layout split (run_inbound/run_voice/...) not forced — call sites composed into D1 monolithic run.py/slash_commands.py",
+        "Shell-hook spawn kept hermes_subprocess_env(allowlist_only=True); only profile payload field added"
+      ],
       "dag_bucket": "B_profile_credential_write_guards",
       "depends_on": ["SR-20260913-001", "SR-20260913-004"]
     },

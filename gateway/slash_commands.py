@@ -1469,7 +1469,7 @@ class GatewaySlashCommandsMixin:
         # (#bernard-thread-stop).  Fall back to interrupting any running
         # agent(s) that share this thread, gated on authorization.
         sibling_keys = self._sibling_thread_run_keys(source, session_key)
-        if sibling_keys and self._is_user_authorized(source):
+        if sibling_keys and self._is_user_authorized_for_source(source):
             for sibling_key in sibling_keys:
                 await self._interrupt_and_clear_session(
                     sibling_key,
@@ -4768,8 +4768,11 @@ class GatewaySlashCommandsMixin:
         # Authorization: /topic activates multi-session mode and mutates
         # SQLite side tables. Unauthorized senders (not in allowlist) must
         # not be able to do that. Gateway routes already authorize the
-        # message before reaching here, but defense in depth.
-        auth_fn = getattr(self, "_is_user_authorized", None)
+        # message before reaching here, but defense in depth. Prefer the
+        # admitting-bot allowlist under multiplex (satellite turns have none).
+        auth_fn = getattr(self, "_is_user_authorized_for_source", None) or getattr(
+            self, "_is_user_authorized", None
+        )
         if callable(auth_fn):
             try:
                 if not auth_fn(source):

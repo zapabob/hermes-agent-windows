@@ -1311,10 +1311,12 @@ def _kanban_attachment_roots() -> List[Path]:
 
 def _media_delivery_allowed_roots() -> List[Path]:
     """Return roots from which model-emitted local media may be delivered."""
+    from gateway.media_policy import media_delivery_allow_dirs
+
     roots = [Path(root) for root in MEDIA_DELIVERY_SAFE_ROOTS]
     roots.extend(_profile_cache_roots())
     roots.extend(_kanban_attachment_roots())
-    extra_roots = os.environ.get(MEDIA_DELIVERY_ALLOW_DIRS_ENV, "")
+    extra_roots = media_delivery_allow_dirs()
     for chunk in extra_roots.split(os.pathsep):
         for raw_root in chunk.split(","):
             raw_root = raw_root.strip()
@@ -1331,11 +1333,15 @@ def _media_delivery_recency_seconds() -> float:
 
     0 disables recency-based trust entirely (pure-allowlist mode).
     """
-    raw = os.environ.get(MEDIA_DELIVERY_TRUST_RECENT_ENV, "1").strip().lower()
-    if raw in ("0", "false", "no", "off", ""):
+    from gateway.media_policy import (
+        media_delivery_trust_recent,
+        media_delivery_trust_recent_seconds,
+    )
+
+    if not media_delivery_trust_recent():
         return 0.0
     try:
-        custom = os.environ.get(MEDIA_DELIVERY_TRUST_RECENT_SECONDS_ENV, "").strip()
+        custom = media_delivery_trust_recent_seconds().strip()
         if custom:
             seconds = float(custom)
             return max(0.0, seconds)
@@ -1354,10 +1360,13 @@ def _media_delivery_strict_mode() -> bool:
     allowlist+recency-window logic for operators running public-facing
     gateways where prompt injection from one user shouldn't be able to
     exfiltrate the host's secrets to that same user.
-    """
-    raw = os.environ.get(MEDIA_DELIVERY_STRICT_ENV, "0").strip().lower()
-    return raw in ("1", "true", "yes", "on")
 
+    Under a HERMES_HOME override the routed profile's ``gateway.strict``
+    wins over the process-wide env bridge (launch-profile value).
+    """
+    from gateway.media_policy import media_delivery_strict
+
+    return media_delivery_strict()
 
 def _media_delivery_home() -> Path:
     """Return the runtime home, honoring ``HOME`` on every host platform.
