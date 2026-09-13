@@ -4674,6 +4674,10 @@ def _connect_cooldown_active(server_name: str) -> bool:
 # this state — they keep the count and timestamp in sync.
 _server_error_counts: Dict[ServerKey, int] = {}
 _server_breaker_opened_at: Dict[ServerKey, float] = {}
+# True while every strike in the current streak was the tool's own error
+# payload (server reachable, call rejected). Picks open-breaker wording:
+# "unreachable" is false for that case (#11113 / SR-006).
+_server_errors_all_application: Dict[ServerKey, bool] = {}
 _CIRCUIT_BREAKER_THRESHOLD = 3
 _CIRCUIT_BREAKER_COOLDOWN_SEC = 60.0
 
@@ -4822,16 +4826,23 @@ def _trust_gate_check(server_name: str, tool_name: str) -> Optional[str]:
     )
 
 
-def _bump_server_error(server_name: str) -> None:
+def _bump_server_error(server_name: str, *, application: bool = False) -> None:
     """Increment the consecutive-failure count for ``server_name``.
 
     When the count crosses :data:`_CIRCUIT_BREAKER_THRESHOLD`, stamp the
     breaker-open timestamp so the cooldown clock starts (or re-starts,
     for probe failures in the half-open state). Keyed per connection-scope.
+
+    *application*: the RPC completed and the payload was an error (transport
+    is fine). Tracks whether the open-breaker message should say "rejected"
+    instead of "unreachable" (#11113 / SR-006).
     """
     key = _server_key(server_name)
     n = _server_error_counts.get(key, 0) + 1
     _server_error_counts[key] = n
+    _server_errors_all_application[key] = application and (
+        n == 1 or _server_errors_all_application.get(key, False)
+    )
     if n >= _CIRCUIT_BREAKER_THRESHOLD:
         _server_breaker_opened_at[key] = time.monotonic()
 
@@ -4846,6 +4857,7 @@ def _reset_server_error(server_name: str) -> None:
     key = _server_key(server_name)
     _server_error_counts[key] = 0
     _server_breaker_opened_at.pop(key, None)
+    _server_errors_all_application.pop(key, None)
 
 
 def _signal_reconnect(server: Any) -> bool:
@@ -6215,9 +6227,21 @@ def _make_tool_handler(server_name: str, tool_name: str, tool_timeout: float):
             age = time.monotonic() - opened_at
             if age < _CIRCUIT_BREAKER_COOLDOWN_SEC:
                 remaining = max(1, int(_CIRCUIT_BREAKER_COOLDOWN_SEC - age))
+                failures = _server_error_counts[_server_key(server_name)]
+                if _server_errors_all_application.get(_server_key(server_name)):
+                    # Server answered every time; calls were rejected.
+                    # "unreachable" sent the model to the user instead of
+                    # fixing arguments (#11113 / SR-006).
+                    return tool_error(
+                        f"MCP server '{server_name}' rejected the last "
+                        f"{failures} calls (it is reachable; see the error "
+                        f"text those calls returned). Paused for ~{remaining}s. "
+                        f"Do NOT repeat the same call — fix the "
+                        f"arguments/URL/target or use a different approach."
+                    )
                 return tool_error(
                     f"MCP server '{server_name}' is unreachable after "
-                    f"{_server_error_counts[_server_key(server_name)]} consecutive "
+                    f"{failures} consecutive "
                     f"failures. Auto-retry available in ~{remaining}s. "
                     f"Do NOT retry this tool yet — use alternative "
                     f"approaches or ask the user to check the MCP server."
@@ -6378,6 +6402,8 @@ def _make_tool_handler(server_name: str, tool_name: str, tool_timeout: float):
                     res_text = getattr(getattr(block, "resource", None), "text", None)
                     if res_text:
                         error_text += str(res_text)
+                # Return as tool_error JSON; the sync wrapper below bumps the
+                # breaker with application=True (#10447 / #11113 / SR-006).
                 return tool_error(_sanitize_error(
                     _truncate_mcp_text_result(
                         error_text or "MCP tool returned an error"
@@ -6497,7 +6523,7 @@ def _make_tool_handler(server_name: str, tool_name: str, tool_timeout: float):
             try:
                 parsed = json.loads(result)
                 if "error" in parsed:
-                    _bump_server_error(server_name)
+                    _bump_server_error(server_name, application=True)
                 else:
                     _reset_server_error(server_name)  # success — reset
             except (json.JSONDecodeError, TypeError):
