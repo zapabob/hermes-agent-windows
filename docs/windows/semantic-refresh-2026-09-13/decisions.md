@@ -24,6 +24,14 @@ Plan draft U (`205645ee…`) was **26 commits behind** live upstream at start; f
 
 See `change-inventory.json`. Security/profile isolation comes before Desktop feature onboarding.
 
+## SR-20260913-003 (2026-09-13)
+
+**Decision: SKIP_WITH_REASON** (was pending COMPOSE).
+
+U seeds `876e444e` / `6806a380` assume `hermes_state_registry.acquire()` already owns the process-wide writer boundary. D1 has `hermes_state_common.py` and `SessionDB` but **no** `hermes_state_registry.py`; `git merge-base --is-ancestor db339f0051 HEAD` is false. Gateway sharing is a runner-local `RecoverableHandleCache`, not the U registry. CLI + Goals still mint bare `SessionDB()`.
+
+Composing only the seed call-site diffs would require inventing a parallel owner (forbidden) or bulk-porting `#90837` / `db339f0051` outside seed scope (forbidden). Re-open when the registry owner lands.
+
 ## Explicit non-goals this campaign pass
 
 - Version number bump to 0.21.2 without coverage

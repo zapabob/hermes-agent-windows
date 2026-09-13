@@ -111,7 +111,7 @@ Windowsネイティブ長時間稼働ハーネスの契約を維持したまま�
 |---|---|---|---|
 | SR-001 | COMPOSE | **PASS_FOCUSED** | write-guard per-call |
 | SR-002 | SKIP_WITH_REASON | CLASSIFIED | POSIX state.db modes |
-| SR-003 | COMPOSE | PENDING | SessionDB registry |
+| SR-003 | SKIP_WITH_REASON | CLASSIFIED | No hermes_state_registry on D1; seeds need db339f first |
 | SR-004 | COMPOSE | **PARTIAL_PASS** | 004a–004e 済；MCP same-name 等残り |
 | SR-005 | COMPOSE | PENDING | gateway mid-turn authz（004 MCP残と依存） |
 | SR-006 | PORT | PENDING | MCP breaker / SSE |
@@ -238,7 +238,7 @@ git revert --no-edit 734d6a6b57   # 004b/c/d
 
 1. **SR-004 残: MCP same-name connection-key** を `tools/mcp_tool.py` 台帳へ COMPOSE（U の `mcp_tool_scope.py` を参照するが、module 分割を強制しない）。合成 credential + 隔離 profile で A/B 同名サーバが別接続になること、cooldown/breaker が sibling を汚染しないことを RED→GREEN。
 2. 4b8c01 残 memo（aux semaphore / image_token_cost / computer_use / MCP lock）を owner 単位で。
-3. **SR-003** SessionDB registry（第二 DB owner 禁止）。
+3. **SR-003** SessionDB registry — **CLASSIFIED SKIP_WITH_REASON**（`hermes_state_registry` / `db339f0051` 未上陸。seed のみでは第二 owner 捏造になる）。registry owner 専用 SR 後に再オープン。
 4. **SR-005** gateway mid-turn authz（004 MCP が閉じるか、依存を明示して部分進行）。
 5. CARRY ALREADY_EQUIVALENT 再確認（二重実装禁止）。
 6. 専用 test install で Windows-native 拡大。本番 claim/port に戻らない。

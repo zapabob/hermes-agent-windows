@@ -24,6 +24,14 @@
   },
   "slices": [
     {
+      "id": "SR-20260913-003",
+      "status": "SKIP_WITH_REASON_CLASSIFIED",
+      "decision": "SKIP_WITH_REASON",
+      "result": "No runtime change. Prerequisite hermes_state_registry (db339f0051) absent from D1; seed SHAs only rewire CLI/Goals onto that registry.",
+      "os": "Windows 11",
+      "tests": "none (classification only; no ALREADY_EQUIVALENT proof path)"
+    },
+    {
       "id": "SR-20260913-001",
       "status": "IMPLEMENTED_FOCUSED_PASS",
       "command": "python -m pytest tests/tools/test_file_write_safety.py::TestMultiplexProfileCacheGuardsAreProfileScoped -q",
