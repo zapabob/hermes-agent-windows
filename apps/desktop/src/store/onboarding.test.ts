@@ -731,3 +731,64 @@ describe('saveOnboardingLocalEndpoint', () => {
     expect($desktopOnboarding.get().configured).not.toBe(true)
   })
 })
+
+describe('requestDesktopOnboarding credential-miss routing (SR-007b)', () => {
+  beforeEach(() => {
+    window.localStorage.clear()
+    $desktopOnboarding.set(baseState())
+    vi.restoreAllMocks()
+  })
+
+  afterEach(() => {
+    window.localStorage.clear()
+    $desktopOnboarding.set(baseState())
+    vi.restoreAllMocks()
+  })
+
+  it('keeps the first-run blocking path when the app is unconfigured', () => {
+    $desktopOnboarding.set(baseState({ configured: false, firstRunSkipped: false, manual: false }))
+    requestDesktopOnboarding('Add a provider credential before sending your first message.')
+
+    expect($desktopOnboarding.get()).toMatchObject({
+      configured: false,
+      manual: false,
+      requested: true,
+      reason: 'Add a provider credential before sending your first message.'
+    })
+  })
+
+  it('opens the manual add-provider overlay when already configured', async () => {
+    const api = vi.fn(async ({ path }: { path: string }) => {
+      if (path === '/api/providers/oauth') {
+        return { providers: [makeOAuthProvider('nous')] }
+      }
+
+      throw new Error(`unexpected api path: ${path}`)
+    })
+
+    installApiMock(api)
+    $desktopOnboarding.set(baseState({ configured: true, requested: false, manual: false }))
+    requestDesktopOnboarding("No API key configured for provider 'openrouter'. First message will fail.")
+
+    expect($desktopOnboarding.get()).toMatchObject({
+      configured: true,
+      manual: true,
+      requested: true
+    })
+    expect($desktopOnboarding.get().reason).toContain('No API key configured')
+  })
+
+  it('opens the manual overlay after first-run was skipped ("choose later")', () => {
+    $desktopOnboarding.set(
+      baseState({ configured: false, firstRunSkipped: true, requested: false, manual: false })
+    )
+    requestDesktopOnboarding('Need provider setup')
+
+    expect($desktopOnboarding.get()).toMatchObject({
+      firstRunSkipped: true,
+      manual: true,
+      requested: true,
+      reason: 'Need provider setup'
+    })
+  })
+})

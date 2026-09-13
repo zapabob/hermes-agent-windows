@@ -443,7 +443,20 @@ async function refreshProviders() {
 }
 
 export function requestDesktopOnboarding(reason = DEFAULT_ONBOARDING_REASON) {
-  patch({ reason: reason.trim() || DEFAULT_ONBOARDING_REASON, requested: true })
+  const trimmed = reason.trim() || DEFAULT_ONBOARDING_REASON
+  const state = $desktopOnboarding.get()
+  // Past first-run (already configured, or "choose later") the overlay is
+  // gated away unless manual=true — see DesktopOnboardingOverlay. A
+  // credential-miss submit that only flipped `requested` looked like a no-op
+  // while the draft stayed stuck. Reuse the Settings-equivalent add-provider
+  // path so recovery is visible without inventing card chrome (SR-007b).
+  if (state.configured === true || state.firstRunSkipped) {
+    startManualOnboarding(trimmed)
+
+    return
+  }
+
+  patch({ reason: trimmed, requested: true })
 }
 
 /** Credential warning delivered passively (session create/activate/resume
