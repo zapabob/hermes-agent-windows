@@ -45,7 +45,7 @@ def test_readme_exposes_verified_windows_install_surfaces() -> None:
     assert "https://github.com/zapabob/hermes-agent-windows/releases" in README
     assert "installer" in README.lower()
     assert "portable" in README.lower()
-    assert "0.21.0" in README
+    assert "0.21.2" in README
     assert "docs/windows/INSTALL.md" in README
     assert "curl -fsSL https://raw.githubusercontent.com/NousResearch" not in README
     assert "official upstream installer" in README.lower()
@@ -83,7 +83,7 @@ def test_translated_readmes_keep_distribution_metadata_in_parity() -> None:
             "README.zh-CN.md",
             "zapabob/hermes-agent-windows",
             "NousResearch/hermes-agent",
-            "0.21.0",
+            "0.21.2",
             "b51c055a12220f8c7c18660e8599365012e19532",
             "stable",
             "preview",

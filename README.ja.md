@@ -58,7 +58,7 @@ installer または portable ZIP を使う場合は、
 - Desktop/backend と任意 embedding を限定的に復旧する外部 Go watchdog
 - GPU のない hosted CI と分離した consumer NVIDIA workstation の実機証拠
 
-release candidate は `0.21.0` です。本家 Hermes の version に追随し、
+現在のソース版は `0.21.2` です。本家 Hermes の version に追随し、
 下流改訂は独自 suffix ではなく commit SHA で識別します。対応 channel は
 `stable` と `preview` です。認定済み成果物は本家と同形式の対応 tag からのみ
 [ダウンストリーム Releases](https://github.com/zapabob/hermes-agent-windows/releases)
