@@ -7,10 +7,11 @@ The two projects retain separate release, issue, and support authorities.
 ## Downstream semantic versions and upstream provenance
 
 The downstream may increment its own semantic version for Windows fixes.
-Version 0.21.1 is a downstream patch over the recorded upstream 0.21.0 release.
-`downstream/distribution.json` declares `version_source: downstream`; its
-upstream version, release commit and frozen snapshot retain their independent
-provenance. Updating the downstream version does not advance those references.
+Version 0.21.2 aligns the product SemVer with the recorded upstream 0.21.2
+release (`v2026.9.11`, peeled commit in `upstream.release_commit_sha`).
+`downstream/distribution.json` still declares `version_source: downstream`;
+the frozen historical `snapshot_sha` (H) remains independent provenance and
+is not advanced merely because the recorded upstream release moved.
 
 Python metadata, the CLI, Desktop package metadata and lockfiles must agree on
 the downstream version. Each candidate also has an exact Git SHA. A version
@@ -33,7 +34,7 @@ and is never inferred from GitHub-hosted runners.
 
 Main-branch pushes build and qualify preview artifacts but do not publish a
 public GitHub Release. Only a version tag matching the downstream
-distribution metadata, such as `v0.21.1`, may publish the stable bundle. The
+distribution metadata, such as `v0.21.2`, may publish the stable bundle. The
 release contains the
 NSIS installer, portable ZIP, `release-manifest.json`, `SHA256SUMS.txt`, release
 notes, qualification reports, and upgrade-baseline identity.

@@ -57,7 +57,7 @@ Windowsネイティブ長時間稼働ハーネスの契約を維持したまま�
 | merge-base(D0,U) | `1fe0f2f3ac9748ce799272eb93bee2937b5ab802` |
 
 比較窓: H..U = 2129 commits / 3130 files；R..U = 391 / 861。  
-製品版は D0 時点のまま **0.21.1**（本 campaign で SemVer 未更新）。`allow_upstream_sync: false` 維持。
+製品版は **0.21.2**（本 campaign で SemVer 更新）。`allow_upstream_sync: false` 維持。
 
 ### 本家 main dirty（未取り込み・未破壊）
 
@@ -213,9 +213,10 @@ Tested:  89b2004b4bea5fa3b8ab365097533b8cccd5f9ed
 
 | 層 | 現状 | 本 campaign |
 |---|---|---|
-| downstream product | 0.21.1 | 未更新 |
+| downstream product | 0.21.2 | SemVer align with upstream R |
+| recorded upstream release | 0.21.2 / R peel=`939e45c…` (`v2026.9.11`) | `distribution.json` upstream.version + release_commit_sha |
 | upstream semantic target（候補） | 0.21.2 + U=`6dd091a…` | coverage 未完；宣言不可 |
-| historical provenance | 0.21.0 / H=`b51c055…` | **上書き禁止** |
+| historical snapshot provenance | H=`b51c055…`（旧 release 0.21.0 / `29112bef…`） | **snapshot_sha 上書き禁止** |
 
 ---
 

@@ -2,7 +2,7 @@
   "name": "hermes",
   "productName": "Hermes Agent Windows Workstation Edition",
   "private": true,
-  "version": "0.21.1",
+  "version": "0.21.2",
   "description": "Native desktop shell for Hermes Agent.",
   "author": "zapabob and Nous Research contributors",
   "repository": {

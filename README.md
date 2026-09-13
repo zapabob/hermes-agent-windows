@@ -10,11 +10,12 @@ The original [Hermes Agent](https://github.com/NousResearch/hermes-agent) is
 developed by Nous Research. This fork is not endorsed by Nous Research.
 Both the upstream attribution and the [MIT licence](LICENSE) are retained.
 
-**Current source version: 0.21.1.** This is a downstream patch version; the
-recorded upstream release remains 0.21.0. A source version or a main-branch push
-does not establish that a stable installer has been published.
+**Current source version: 0.21.2.** The recorded upstream release is also
+0.21.2 (`v2026.9.11`); this fork keeps `version_source: downstream` and the
+frozen historical snapshot SHA. A source version or a main-branch push does
+not establish that a stable installer has been published.
 
-日本語: Windows向けの独立派生版です。今回のソース版は **0.21.1** です。
+日本語: Windows向けの独立派生版です。今回のソース版は **0.21.2**（上流記録も 0.21.2）です。
 下のPowerShell手順から導入できます。既存環境の更新前には作業差分と各プロファイルを保存してください。
 旧版の詳説は [日本語](README.ja.md)・[简体中文](README.zh-CN.md) にあります。
 今回の版番号と検証状況は、このREADMEを参照してください。
@@ -30,21 +31,21 @@ dependency downloads and native builds take longer than 30 seconds.
 <details open>
 <summary><strong>日本語</strong></summary>
 
-Windows向け独立派生版のソースは0.21.1です。導入手順は第11節をご覧ください。
+Windows向け独立派生版のソースは0.21.2です。導入手順は第11節をご覧ください。
 安定版の公開、署名、クリーン環境の検証は、それぞれ別に確認する必要があります。
 
 </details>
 <details>
 <summary><strong>简体中文</strong></summary>
 
-这是独立维护的 Windows 衍生版本，当前源码版本为0.21.1。
+这是独立维护的 Windows 衍生版本，当前源码版本为0.21.2。
 请参阅第11节安装步骤；源码构建不代表已发布经过完整验证的稳定安装包。
 
 </details>
 
 ## 1. Product identity
 
-The source and release identity is Windows Workstation Edition 0.21.1.
+The source and release identity is Windows Workstation Edition 0.21.2.
 Upstream provenance remains independent of the downstream semantic version.
 
 ## 2. Windows-first goals
@@ -171,7 +172,7 @@ Use only an actually published asset with its matching manifest and checksums.
 The Windows release workflow produces a per-user NSIS installer and a portable
 archive when its publication gates are satisfied; local source builds are separate.
 The [installation guide](docs/windows/INSTALL.md) describes the layout and
-verification procedure; older version examples are not evidence of a 0.21.1 release.
+verification procedure; older version examples are not evidence of a 0.21.2 release.
 
 The official upstream installer targets the upstream product; use this
 downstream repository or its published release assets for this distribution.

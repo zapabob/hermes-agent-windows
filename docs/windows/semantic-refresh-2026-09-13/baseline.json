@@ -67,6 +67,15 @@
     "historical_upstream_version": "0.21.0",
     "allow_upstream_sync": false
   },
+  "product_versions_current": {
+    "downstream_product": "0.21.2",
+    "recorded_upstream_version": "0.21.2",
+    "recorded_upstream_release_commit_sha": "939e45c91d751fadd94dcd1b873ac3cb44846213",
+    "historical_snapshot_sha_unchanged": "b51c055a12220f8c7c18660e8599365012e19532",
+    "historical_upstream_version_at_D0": "0.21.0",
+    "allow_upstream_sync": false,
+    "note": "Product SemVer matches upstream R=v0.21.2/v2026.9.11; version_source remains downstream; H snapshot not rewritten"
+  },
   "candidate": {
     "branch": "feat/windows-semantic-refresh-2026-09-13",
     "worktree": ".worktrees/semantic-refresh-d1",
