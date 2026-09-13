@@ -48,6 +48,26 @@ def semantic_coupling(path: str, carry_paths: set[str]) -> int:
     return 1 if path.startswith(LOW_COUPLING) else 2
 
 
+def report_definitions() -> dict[str, Any]:
+    """Metric definitions — pure, no git object reachability required.
+
+    Python CI checks out with depth=1; callers that only need the HEAD-based
+    diff / `_docs/` exclusion contracts must not invoke calculate().
+    """
+    return {
+        "loc": "added plus deleted lines from frozen upstream to committed HEAD",
+        "upstream_owned": "path exists in the frozen upstream tree",
+        "utr": "upstream-owned fork LOC divided by all fork-specific LOC",
+        "cs": "count of upstream-owned files directly modified",
+        "cwc": "sum(upstream frequency * patch size * semantic coupling)",
+        "coupling_3": "path is named by CARRY.yaml",
+        "coupling_2": "other runtime or source path",
+        "coupling_1": "test, docs, workflow, or generated documentation path",
+        "excluded": sorted(EXCLUDED),
+        "excluded_prefixes": list(EXCLUDED_PREFIXES),
+    }
+
+
 def upstream_frequencies(merge_base: str, upstream: str) -> Counter[str]:
     output = git(
         "log",
@@ -111,18 +131,7 @@ def calculate() -> dict[str, Any]:
         "schema_version": 1,
         "snapshot_sha": upstream,
         "merge_base_sha": merge_base,
-        "definitions": {
-            "loc": "added plus deleted lines from frozen upstream to committed HEAD",
-            "upstream_owned": "path exists in the frozen upstream tree",
-            "utr": "upstream-owned fork LOC divided by all fork-specific LOC",
-            "cs": "count of upstream-owned files directly modified",
-            "cwc": "sum(upstream frequency * patch size * semantic coupling)",
-            "coupling_3": "path is named by CARRY.yaml",
-            "coupling_2": "other runtime or source path",
-            "coupling_1": "test, docs, workflow, or generated documentation path",
-            "excluded": sorted(EXCLUDED),
-            "excluded_prefixes": list(EXCLUDED_PREFIXES),
-        },
+        "definitions": report_definitions(),
         "summary": {
             "all_fork_specific_loc": all_loc,
             "upstream_owned_fork_loc": upstream_loc,
