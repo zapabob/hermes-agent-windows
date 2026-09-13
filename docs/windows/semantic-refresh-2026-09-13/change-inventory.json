@@ -156,11 +156,12 @@
       ],
       "remaining": [
         "MCP same-name per-profile servers (ceaf622; D1 monolithic tools/mcp_tool.py — COMPOSE connection-key, do not force U module split)",
-        "tool-side memo key-by-profile-home (4b8c01f — browser_camofox/skill_manager/tirith/…; verify ALREADY_EQUIVALENT per owner)",
+        "tool-side memo remainder from 4b8c01f (aux semaphore, image_token_cost, computer_use aux-vision, MCP discovery lock)",
         "mem0 OSS DirectOpenAILLM (absent on this fork)",
         "read_extract FIRECRAWL hosted OCR (absent on this fork revision)",
         "outbound webhook secret_env + i18n HERMES_LANGUAGE (a9838c F11; deferred next pass)"
       ],
+      "completed_subset_note": "004e camofox/tirith/skill_sync timers committed separately; see git log",
       "verification_receipt": {
         "command": "python -m pytest tests/plugins/memory/test_multiplex_memory_identity_scope.py tests/agent/test_multiplex_base_url_scope.py tests/gateway/test_agent_cache_release_profile_scope.py tests/tools/test_multiplex_tool_credential_scope.py tests/tools/test_file_write_safety.py::TestMultiplexProfileCacheGuardsAreProfileScoped -q",
         "result": "12 passed",

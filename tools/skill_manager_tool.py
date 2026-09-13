@@ -1527,7 +1527,8 @@ def apply_skill_pending(payload: Dict[str, Any]) -> str:
 # Debounce state for the sync push hook. A burst of skill_manage writes
 # (e.g. create + several write_file calls) collapses into a single push after
 # a short quiet window, on a daemon timer so the agent write never blocks.
-_sync_push_timer = None
+# One timer per profile home: in a multiplexed process B's write must not cancel A's pending push.
+_sync_push_timers: dict = {}
 _sync_push_lock = None
 _SYNC_PUSH_DEBOUNCE_S = 5.0
 
@@ -1541,7 +1542,7 @@ def _maybe_debounced_sync_push(skill_name: str) -> None:
     and swallows all errors. Never blocks the caller (M1-C: agent never blocks
     on sync).
     """
-    global _sync_push_timer, _sync_push_lock
+    global _sync_push_lock
     try:
         from tools.skill_usage import is_sync_enabled
 
@@ -1552,8 +1553,15 @@ def _maybe_debounced_sync_push(skill_name: str) -> None:
 
     import threading
 
+    from hermes_constants import hermes_home_key
+
     if _sync_push_lock is None:
         _sync_push_lock = threading.Lock()
+
+    home_key = hermes_home_key()
+    # Timer threads start with empty ContextVars; without the scheduling
+    # turn's context the push would resolve the launch profile's home.
+    ctx = _ctxvars.copy_context()
 
     def _fire():
         try:
@@ -1564,14 +1572,16 @@ def _maybe_debounced_sync_push(skill_name: str) -> None:
             pass
 
     with _sync_push_lock:
-        if _sync_push_timer is not None:
+        pending = _sync_push_timers.get(home_key)
+        if pending is not None:
             try:
-                _sync_push_timer.cancel()
+                pending.cancel()
             except Exception:
                 pass
-        _sync_push_timer = threading.Timer(_SYNC_PUSH_DEBOUNCE_S, _fire)
-        _sync_push_timer.daemon = True
-        _sync_push_timer.start()
+        timer = threading.Timer(_SYNC_PUSH_DEBOUNCE_S, ctx.run, args=(_fire,))
+        timer.daemon = True
+        _sync_push_timers[home_key] = timer
+        timer.start()
 
 
 def skill_manage(
