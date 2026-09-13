@@ -679,26 +679,54 @@ _SENSITIVE_PATH_PREFIXES = (
 )
 _SENSITIVE_EXACT_PATHS = {"/var/run/docker.sock", "/run/docker.sock"}
 
+# NOTE: these slots are a TEST-OVERRIDE surface, not a process cache. Both
+# getters resolve per call in production because ``get_hermes_home()`` /
+# ``get_config_path()`` are per-turn contextvar-scoped: a multiplexed gateway
+# (``gateway.multiplex_profiles: true``) serves many profiles in one process, and
+# a process-wide memo would freeze whichever profile's home/config ran first —
+# making the protected-instruction gate and the ``config.yaml`` hard-block
+# order-dependent, up to letting a later profile rewrite its own ``config.yaml``
+# the block exists to protect (#107327). A test can still pin a value by setting
+# the slot and its ``_loaded`` flag.
 _hermes_config_resolved: str | None = None
 _hermes_config_resolved_loaded = False
 
 
+def _config_path_resolved() -> str:
+    from hermes_cli.config import get_config_path
+
+    return str(get_config_path().resolve())
+
+
+def _hermes_home_real() -> str:
+    from hermes_constants import get_hermes_home
+
+    return os.path.realpath(str(get_hermes_home()))
+
+
 def _get_hermes_config_resolved() -> str | None:
-    """Return the resolved absolute path of the Hermes config file (cached)."""
-    global _hermes_config_resolved, _hermes_config_resolved_loaded
+    """Resolved absolute path of the Hermes config file for the ACTIVE profile.
+
+    Resolved per call so it tracks the per-turn ``HERMES_HOME`` scope (#107327);
+    a test may pin it via ``_hermes_config_resolved`` + ``_hermes_config_resolved_loaded``.
+    """
     if _hermes_config_resolved_loaded:
         return _hermes_config_resolved
-    _hermes_config_resolved_loaded = True
     try:
-        from hermes_cli.config import get_config_path
-
-        _hermes_config_resolved = str(get_config_path().resolve())
+        return _config_path_resolved()
     except Exception:
+        # Resolver failure must stay bound to the ACTIVE profile's home, not the
+        # subprocess HOME. ``_expand_tilde("~/...")`` follows the subprocess-HOME
+        # contract, which under host ``auto`` mode can be the real/default user
+        # home rather than the active multiplex ``HERMES_HOME``. Re-derive from
+        # the same ``get_hermes_home()`` key the happy path uses (#107327 follow-up;
+        # PR #107335 / upstream 7af5006).
         try:
-            _hermes_config_resolved = str(Path(_expand_tilde("~/.hermes/config.yaml")).resolve())
+            from hermes_constants import get_hermes_home
+
+            return str((Path(str(get_hermes_home())) / "config.yaml").resolve())
         except Exception:
-            _hermes_config_resolved = None
-    return _hermes_config_resolved
+            return None
 
 
 def _check_sensitive_path(filepath: str, task_id: str = "default") -> str | None:
@@ -776,20 +804,25 @@ _real_hermes_home_loaded = False
 
 
 def _get_real_hermes_home() -> str | None:
-    """Return the realpath of the authoritative Hermes home (cached)."""
-    global _real_hermes_home_cached, _real_hermes_home_loaded
+    """Realpath of the authoritative Hermes home for the ACTIVE profile.
+
+    Resolved per call so it tracks the per-turn ``HERMES_HOME`` scope (#107327);
+    a test may pin it via ``_real_hermes_home_cached`` + ``_real_hermes_home_loaded``.
+    """
     if _real_hermes_home_loaded:
         return _real_hermes_home_cached
-    _real_hermes_home_loaded = True
     try:
-        from hermes_constants import get_hermes_home
-        _real_hermes_home_cached = os.path.realpath(str(get_hermes_home()))
+        return _hermes_home_real()
     except Exception:
+        # Same active-profile binding on the exception path (see
+        # ``_get_hermes_config_resolved``). A ``None`` here fails closed at the
+        # consumer: the ``~/.hermes`` exemption is skipped, so the gate runs.
         try:
-            _real_hermes_home_cached = os.path.realpath(_expand_tilde("~/.hermes"))
+            from hermes_constants import get_hermes_home
+
+            return os.path.realpath(str(get_hermes_home()))
         except Exception:
-            _real_hermes_home_cached = None
-    return _real_hermes_home_cached
+            return None
 
 
 def _protected_instruction_config() -> tuple[bool, list[str]]:
