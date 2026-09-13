@@ -73,12 +73,14 @@ func TestHealthyResetClearsBackoffButKeepsRollingBudget(t *testing.T) {
 	}
 }
 
-func TestMalformedRecoveryStateFailsClosed(t *testing.T) {
+func TestMalformedRecoveryStateHealsToEmpty(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "recovery.json")
-	if err := os.WriteFile(path, []byte("{"), 0o600); err != nil {
+	// PowerShell Set-Content -Encoding utf8 prefixes U+FEFF; also cover truncated JSON.
+	if err := os.WriteFile(path, append([]byte{0xEF, 0xBB, 0xBF}, '{'), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if _, allowed, _, err := reserveRecovery(path, "desktop_relaunch", time.Now()); err == nil || allowed {
-		t.Fatalf("malformed state must fail closed: allowed=%v err=%v", allowed, err)
+	state, allowed, _, err := reserveRecovery(path, "desktop_relaunch", time.Now())
+	if err != nil || !allowed {
+		t.Fatalf("corrupt/BOM budget must heal to empty allow: allowed=%v err=%v state=%+v", allowed, err, state)
 	}
 }

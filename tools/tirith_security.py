@@ -34,7 +34,7 @@ import threading
 import time
 import urllib.request
 
-from hermes_constants import get_hermes_home
+from hermes_constants import get_hermes_home, get_hermes_home_override, hermes_home_key
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +96,8 @@ def _load_security_config() -> dict:
 _resolved_path: str | None | bool = None
 _INSTALL_FAILED = False  # sentinel: distinct from "not yet tried"
 _install_failure_reason: str = ""  # reason tag when _resolved_path is _INSTALL_FAILED
+# Routed profiles resolve their own binary; launch-profile slot must not answer for them.
+_resolved_path_by_home: dict[str, str | bool] = {}
 
 # Circuit breaker: after _CRASH_LIMIT consecutive spawn/execution failures,
 # disable tirith for the rest of the process to prevent agent hangs (#41400).
@@ -479,6 +481,21 @@ def _is_explicit_path(configured_path: str) -> bool:
     return configured_path != "tirith"
 
 
+def _cached_path() -> str | None | bool:
+    """The path resolved on a previous call for the active profile home."""
+    if get_hermes_home_override() is not None:
+        return _resolved_path_by_home.get(hermes_home_key())
+    return _resolved_path
+
+
+def _store_resolved(path: str | bool) -> None:
+    global _resolved_path
+    if get_hermes_home_override() is not None:
+        _resolved_path_by_home[hermes_home_key()] = path
+    else:
+        _resolved_path = path
+
+
 def _resolve_tirith_path(configured_path: str) -> str:
     """Resolve the tirith binary path, auto-installing if necessary.
 
@@ -496,35 +513,36 @@ def _resolve_tirith_path(configured_path: str) -> str:
     """
     global _resolved_path, _install_failure_reason
 
-    # Fast path: successfully resolved on a previous call.
-    if _resolved_path is not None and _resolved_path is not _INSTALL_FAILED:
-        return _resolved_path
+    # Fast path: successfully resolved on a previous call (per profile home).
+    cached = _cached_path()
+    if cached is not None and cached is not _INSTALL_FAILED:
+        return cached  # type: ignore[return-value]
 
     expanded = os.path.expanduser(configured_path)
     explicit = _is_explicit_path(configured_path)
-    install_failed = _resolved_path is _INSTALL_FAILED
+    install_failed = cached is _INSTALL_FAILED
 
     # Platform has no tirith build (Windows etc.). Cache the verdict and
     # return the unexpanded configured path — the spawn loop will fail-open
     # via the dedupe'd OSError handler, but only after the first call; on
     # subsequent calls the fast-path above short-circuits before spawning.
     if not explicit and not is_platform_supported():
-        _resolved_path = _INSTALL_FAILED
+        _store_resolved(_INSTALL_FAILED)
         _install_failure_reason = "unsupported_platform"
         return expanded
 
     # Explicit path: check it and stop. Never auto-download a replacement.
     if explicit:
         if os.path.isfile(expanded) and os.access(expanded, os.X_OK):
-            _resolved_path = expanded
+            _store_resolved(expanded)
             return expanded
         # Also try shutil.which in case it's a bare name on PATH
         found = shutil.which(expanded)
         if found:
-            _resolved_path = found
+            _store_resolved(found)
             return found
         logger.warning("Configured tirith path %r not found; scanning disabled", configured_path)
-        _resolved_path = _INSTALL_FAILED
+        _store_resolved(_INSTALL_FAILED)
         _install_failure_reason = "explicit_path_missing"
         return expanded
 
@@ -533,14 +551,14 @@ def _resolve_tirith_path(configured_path: str) -> str:
     # long-lived gateway/CLI recovers without restart).
     found = shutil.which("tirith")
     if found:
-        _resolved_path = found
+        _store_resolved(found)
         _install_failure_reason = ""
         _clear_install_failed()
         return found
 
     hermes_bin = os.path.join(_hermes_bin_dir(), "tirith")
     if os.path.isfile(hermes_bin) and os.access(hermes_bin, os.X_OK):
-        _resolved_path = hermes_bin
+        _store_resolved(hermes_bin)
         _install_failure_reason = ""
         _clear_install_failed()
         return hermes_bin
@@ -551,7 +569,10 @@ def _resolve_tirith_path(configured_path: str) -> str:
     if install_failed:
         if _install_failure_reason == "cosign_missing" and shutil.which("cosign"):
             # Retryable cause resolved — clear sentinel and fall through to retry
-            _resolved_path = None
+            if get_hermes_home_override() is not None:
+                _resolved_path_by_home.pop(hermes_home_key(), None)
+            else:
+                _resolved_path = None
             _install_failure_reason = ""
             _clear_install_failed()
             install_failed = False
@@ -569,19 +590,19 @@ def _resolve_tirith_path(configured_path: str) -> str:
     # detect retryable causes (e.g. cosign_missing) without restart.
     disk_reason = _read_failure_reason()
     if disk_reason is not None and _is_install_failed_on_disk():
-        _resolved_path = _INSTALL_FAILED
+        _store_resolved(_INSTALL_FAILED)
         _install_failure_reason = disk_reason
         return expanded
 
     installed, reason = _install_tirith()
     if installed:
-        _resolved_path = installed
+        _store_resolved(installed)
         _install_failure_reason = ""
         _clear_install_failed()
         return installed
 
     # Install failed — cache the miss and persist reason to disk
-    _resolved_path = _INSTALL_FAILED
+    _store_resolved(_INSTALL_FAILED)
     _install_failure_reason = reason
     _mark_install_failed(reason)
     return expanded

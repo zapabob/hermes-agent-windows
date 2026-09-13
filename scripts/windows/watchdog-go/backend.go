@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -46,6 +47,13 @@ type BackendManager struct {
 	pid   int
 	port  int
 	token string
+
+	// publishedToken / tokenRotated track session-token changes that Desktop
+	// already bound at launch. A remint while Hermes.exe stays up leaves the
+	// renderer on a stale Bearer → 401 / CONNECTING flap until relaunch.
+	rotMu          sync.Mutex
+	publishedToken string
+	tokenRotated   bool
 }
 
 func NewBackendManager(cfg Config, logger *Logger) *BackendManager {
@@ -209,6 +217,38 @@ func (bm *BackendManager) writeManifest(manifest DesktopBackendManifest) error {
 
 func (bm *BackendManager) clearManifest() {
 	_ = os.Remove(bm.ManifestPath())
+}
+
+// markPublishedToken records the token written to desktop-backend.json.
+// A change from a previously published non-empty token arms TokenRotationPending
+// so RunCycle can restart Desktop (first publish / same token = no arm).
+func (bm *BackendManager) markPublishedToken(next string) {
+	next = strings.TrimSpace(next)
+	bm.rotMu.Lock()
+	defer bm.rotMu.Unlock()
+	prev := strings.TrimSpace(bm.publishedToken)
+	if prev != "" && next != "" && prev != next {
+		bm.tokenRotated = true
+	}
+	if next != "" {
+		bm.publishedToken = next
+	}
+}
+
+// TokenRotationPending reports whether a remint needs a Desktop restart.
+func (bm *BackendManager) TokenRotationPending() bool {
+	bm.rotMu.Lock()
+	defer bm.rotMu.Unlock()
+	return bm.tokenRotated
+}
+
+// ConsumeTokenRotation clears and returns the rotation arm (call after recovery budget).
+func (bm *BackendManager) ConsumeTokenRotation() bool {
+	bm.rotMu.Lock()
+	defer bm.rotMu.Unlock()
+	r := bm.tokenRotated
+	bm.tokenRotated = false
+	return r
 }
 
 func (bm *BackendManager) currentHealthy() *backendInfo {
@@ -462,7 +502,11 @@ func (bm *BackendManager) publishManifestLocked(port, pid int) error {
 		UpdatedAt:  updatedAt,
 		Managed:    true,
 	}
-	return bm.writeManifest(manifest)
+	if err := bm.writeManifest(manifest); err != nil {
+		return err
+	}
+	bm.markPublishedToken(bm.token)
+	return nil
 }
 
 func loadManifestBackend(cfg Config) *backendInfo {
@@ -498,6 +542,15 @@ func loadManifestBackend(cfg Config) *backendInfo {
 	return &backendInfo{PID: uint32(manifest.PID), Port: port, Cmd: "manifest serve"}
 }
 
+func isLoopbackManagedURL(raw string) bool {
+	u, err := url.Parse(strings.TrimSpace(raw))
+	if err != nil || u == nil {
+		return false
+	}
+	host := strings.ToLower(u.Hostname())
+	return host == "127.0.0.1" || host == "localhost" || host == "::1"
+}
+
 func desktopLaunchEnv(cfg Config, manifest *DesktopBackendManifest) []string {
 	env := []string{
 		"HERMES_HOME=" + cfg.HermesHome,
@@ -508,12 +561,26 @@ func desktopLaunchEnv(cfg Config, manifest *DesktopBackendManifest) []string {
 	if webDist != "" {
 		env = append(env, "HERMES_DESKTOP_DASHBOARD_WEB_DIST="+webDist)
 	}
-	if manifest != nil && strings.TrimSpace(manifest.BaseURL) != "" && strings.TrimSpace(manifest.Token) != "" {
-		env = append(env,
-			"HERMES_DESKTOP_REMOTE_URL="+strings.TrimSpace(manifest.BaseURL),
-			"HERMES_DESKTOP_REMOTE_TOKEN="+strings.TrimSpace(manifest.Token),
-		)
-	} else {
+	// Loopback managed serve must NOT be injected as HERMES_DESKTOP_REMOTE_*.
+	// That forces Electron's "remote" primary path, skips the prewarm
+	// HTTP+WS probe, and on this host leaves Desktop stuck on CONNECTING
+	// (renderer dial flaps while Settings thinks the session is remote).
+	// Packaged Desktop already adopts %LOCALAPPDATA%\HermesWatchdog\
+	// desktop-backend.json for loopback — same contract as
+	// scripts/windows/start-hermes-desktop.ps1.
+	useRemoteEnv := false
+	if manifest != nil {
+		base := strings.TrimSpace(manifest.BaseURL)
+		tok := strings.TrimSpace(manifest.Token)
+		if base != "" && tok != "" && !isLoopbackManagedURL(base) {
+			useRemoteEnv = true
+			env = append(env,
+				"HERMES_DESKTOP_REMOTE_URL="+base,
+				"HERMES_DESKTOP_REMOTE_TOKEN="+tok,
+			)
+		}
+	}
+	if !useRemoteEnv {
 		// Explicit clear: inherited User/process remotes must not reach Desktop as
 		// URL-without-TOKEN (hard boot error) or a stale remote override.
 		env = append(env,

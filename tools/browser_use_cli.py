@@ -356,7 +356,10 @@ def is_legacy_browser_use_cloud_config(browser_cfg: dict) -> bool:
             return False
     except Exception as e:
         logger.debug("Camofox activity check failed during migration: %s", e)
-    return bool(os.getenv("BROWSER_USE_API_KEY"))
+    # Profile credential: a multiplexed secondary must not inherit the default's cloud mode.
+    from agent.secret_scope import get_secret
+
+    return bool(get_secret("BROWSER_USE_API_KEY", ""))
 
 
 def is_browser_use_cli_mode() -> bool:

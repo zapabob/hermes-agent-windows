@@ -2224,9 +2224,24 @@ def _current_max_iterations() -> int:
     ``agent.max_turns: none`` / ``unlimited`` (bridged into
     ``HERMES_MAX_ITERATIONS`` as a string) resolves to the unlimited sentinel
     instead of crashing ``int()``.
+
+    A routed profile (HERMES_HOME override, multiplexed turns) reads ITS
+    ``agent.max_turns`` from config: the ``HERMES_MAX_ITERATIONS`` bridge is one
+    process-wide slot holding the launch profile's value.
     """
     _reload_runtime_env_preserving_config_authority()
     from hermes_cli.config import resolve_turn_limit as _resolve_turn_limit
+    override = get_hermes_home_override()
+    if override:
+        config_path = Path(override) / "config.yaml"
+        try:
+            cfg = _load_gateway_config(config_path) if config_path.exists() else {}
+        except Exception:
+            cfg = {}
+        agent_cfg = cfg.get("agent")
+        return _resolve_turn_limit(
+            agent_cfg.get("max_turns") if isinstance(agent_cfg, dict) else None
+        )
     return _resolve_turn_limit(os.getenv("HERMES_MAX_ITERATIONS"))
 
 
@@ -5811,20 +5826,13 @@ class TurnRunner:
         # teardown never blocks the gateway event loop or the cache lock
         # the session-expiry watcher needs (#52197).
         if _xproc_evicted_agent is not None:
-            try:
-                threading.Thread(
-                    target=self._runner._release_evicted_agent_soft,
-                    args=(_xproc_evicted_agent,),
-                    daemon=True,
-                    name=f"agent-xproc-evict-{str(ctx.session_key)[:24]}",
-                ).start()
-            except Exception:
-                # Interpreter shutdown or thread-spawn failure — release
-                # inline as a best-effort fallback.
-                try:
-                    self._runner._release_evicted_agent_soft(_xproc_evicted_agent)
-                except Exception:
-                    pass
+            self._runner._spawn_release_thread(
+                self._runner._release_evicted_agent_soft,
+                (_xproc_evicted_agent,),
+                f"agent-xproc-evict-{str(ctx.session_key)[:24]}",
+                inline_fallback=True,
+                session_key=ctx.session_key,
+            )
 
         if agent is None:
             # Config changed or first message — create fresh agent
@@ -7425,9 +7433,10 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         self.pairing_store = PairingStore()
         self.pairing_stores: Dict[str, "PairingStore"] = {}
         
-        # Event hook system
-        from gateway.hooks import HookRegistry
-        self.hooks = HookRegistry()
+        # Event hook system — one HookRegistry per served profile home,
+        # resolved from the active HERMES_HOME scope at emit time.
+        from gateway.hooks import ProfileHookRegistries
+        self.hooks = ProfileHookRegistries()
 
         # Per-chat voice reply mode: "off" | "voice_only" | "all"
         self._voice_mode: Dict[str, str] = self._load_voice_modes()
@@ -9575,7 +9584,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             return []
         path = Path(file_path).expanduser()
         if not path.is_absolute():
-            path = _hermes_home / path
+            path = _gateway_config_home() / path
         if not path.exists():
             logger.warning("Prefill messages file not found: %s", path)
             return []
@@ -10076,16 +10085,28 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         reached messaging sessions even though the same process's cron jobs
         fell back correctly. Fixes #60955.
 
+        Reads the ACTIVE gateway home (routed profile under multiplexing, else
+        the launch home) and keeps one last-known-good chain per home: a single
+        runner-wide slot filled from the launch home handed every secondary
+        the default profile's fallback chain.
+
         A TRANSIENT read/parse failure (user mid-edit of config.yaml with a
         non-atomic write) keeps the last known-good chain instead of wiping a
         cached agent's working fallback for that turn.  Only a successful read
         that genuinely lacks the key clears the chain.
         """
+        from hermes_constants import hermes_home_key
+
+        home = _gateway_config_home()
+        by_home = getattr(self, "_fallback_model_by_home", None)
+        if by_home is None:
+            by_home = self._fallback_model_by_home = {}
+        home_key = hermes_home_key(home)
         try:
             from hermes_cli.config import read_user_config_raw
-            cfg_path = _hermes_home / "config.yaml"
+            cfg_path = home / "config.yaml"
             if not cfg_path.exists():
-                self._fallback_model = None
+                by_home[home_key] = self._fallback_model = None
                 return self._fallback_model
             # Raw primitive (raises on parse failure) is required here: the
             # canonical fail-open loader would return {} on a torn mid-edit
@@ -10105,13 +10126,14 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             except Exception:
                 pass
         except Exception:
-            # Transient failure — keep last known-good chain.
+            # Transient failure — keep last known-good chain for this home.
             logger.debug(
                 "fallback_providers refresh: config.yaml read failed; "
                 "keeping last known-good chain", exc_info=True,
             )
+            self._fallback_model = by_home.get(home_key, self._fallback_model)
             return self._fallback_model
-        self._fallback_model = get_fallback_chain(cfg) or None
+        by_home[home_key] = self._fallback_model = get_fallback_chain(cfg) or None
         return self._fallback_model
 
     @staticmethod
@@ -10418,7 +10440,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         # creating a session.  The busy path must enforce the same check;
         # otherwise unauthorized users in shared threads (Slack/Telegram/Discord)
         # can inject messages into an active session they don't own.
-        if not self._is_user_authorized(event.source):
+        if not self._is_user_authorized_for_source(event.source):
             logger.warning(
                 "Dropping message from unauthorized user in active session: "
                 "user=%s (%s), platform=%s, session=%s",
@@ -12612,7 +12634,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             # receive a full agent response on gateway restart just
             # because it has a resume-pending marker (issue #23778).
             try:
-                if not self._is_user_authorized(source):
+                if not self._is_user_authorized_for_source(source):
                     logger.warning(
                         "Skipping auto-resume for %s: session owner is no "
                         "longer authorized under the current allowlist",
@@ -16431,10 +16453,10 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
 
         A primary adapter may route one chat into another profile's agent/session
         namespace. That runtime profile need not (and normally should not) copy the
-        shared bot token or allowlist. The primary message/platform-event handlers
-        stamp the transport home as an in-process-only attribute before entering
-        the routed scope; consult it here for the narrow authorization read, then
-        restore the routed scope for the remainder of the turn.
+        shared bot token or allowlist. Prefer an ingress-stamped transport home;
+        when absent (restored/cached sources), derive it from the delivering
+        adapter's owner so mid-turn checks (/topic, sibling /stop, plugin
+        injection, voice, auto-resume) still read the admitting bot's allowlist.
         """
         def _check() -> bool:
             # Preserve the historical one-argument seam used by plugins/tests;
@@ -16446,11 +16468,14 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 allow_adapter_delegation=False,
             )
 
-        authorization_home = getattr(source, "_authorization_profile_home", None)
-        if authorization_home is not None:
-            with _profile_runtime_scope(Path(authorization_home)):
-                return _check()
-        return _check()
+        return self._under_authorization_profile(source, _check)
+
+    def _under_authorization_profile(self, source: SessionSource, check):
+        authorization_home = self._authorization_home_for_source(source)
+        if authorization_home is None:
+            return check()
+        with _profile_runtime_scope(Path(authorization_home)):
+            return check()
 
     def _primary_platform_event_handler(self):
         if getattr(self.config, "multiplex_profiles", False):
@@ -19541,7 +19566,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
 
         source = dataclasses.replace(entry.origin)
         try:
-            if not self._is_user_authorized(
+            if not self._is_user_authorized_for_source(
                 source,
                 allow_adapter_delegation=False,
             ):
@@ -22935,7 +22960,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             )
 
         # Check authorization before processing voice input
-        if not self._is_user_authorized(source):
+        if not self._is_user_authorized_for_source(source):
             logger.debug("Unauthorized voice input from user %d, ignoring", user_id)
             return
 
@@ -26049,10 +26074,9 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 return owner[0]
             if getattr(source, "delivered_via_upstream_relay", False) is True:
                 return self.adapters.get(Platform.RELAY)
-        profile = getattr(source, "profile", None)
-        adapters = self.adapters
-        if profile and profile not in ("default", getattr(self, "_primary_profile_name", None)):
-            adapters = (getattr(self, "_profile_adapters", None) or {}).get(profile, {})
+        # Shared-bot satellites drain through the primary map; a disconnected
+        # secondary that owns a credential stays fail-closed to ``{}``.
+        adapters = self._adapters_for_profile(getattr(source, "profile", None) if source else None)
         try:
             _transport = resolve_delivery_transport(Platform(platform_name), self.config, adapters)
         except Exception:
@@ -27972,20 +27996,65 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         if id(agent) in running_ids:
             return
 
+        self._spawn_release_thread(
+            self._release_evicted_agent_soft,
+            (agent,),
+            f"agent-evict-{str(session_key)[:24]}",
+            inline_fallback=True,
+            session_key=session_key,
+        )
+
+    def _spawn_release_thread(
+        self,
+        target,
+        args: tuple,
+        name: str,
+        *,
+        inline_fallback: bool,
+        session_key: Optional[str] = None,
+    ) -> None:
+        """Run a release on a daemon thread inside the owning profile's scope.
+
+        Threads start with an EMPTY contextvars context, so a bare Thread would
+        commit end-of-session memory under the launch profile. ``copy_context``
+        preserves an in-turn scope; unscoped housekeeping resolves the owner
+        from the session key (``agent:<profile>:...``).
+        """
+        ctx = copy_context()
         try:
             threading.Thread(
-                target=self._release_evicted_agent_soft,
-                args=(agent,),
+                target=ctx.run,
+                args=(self._run_release_in_profile_scope, target, args, session_key),
                 daemon=True,
-                name=f"agent-evict-{str(session_key)[:24]}",
+                name=name,
             ).start()
         except Exception:
-            # If we can't spawn a thread (interpreter shutdown), release
-            # inline as a best-effort fallback.
+            if not inline_fallback:
+                raise
             try:
-                self._release_evicted_agent_soft(agent)
+                ctx.run(self._run_release_in_profile_scope, target, args, session_key)
             except Exception:
                 pass
+
+    def _run_release_in_profile_scope(
+        self, target, args: tuple, session_key: Optional[str]
+    ) -> None:
+        """Call ``target(*args)`` under the profile that owns ``session_key``."""
+        from agent.secret_scope import current_secret_scope, is_multiplex_active
+        from hermes_constants import get_hermes_home
+
+        if current_secret_scope() is not None or not is_multiplex_active():
+            target(*args)
+            return
+        home = None
+        store = getattr(self, "session_store", None)
+        if session_key and store is not None:
+            try:
+                home = store._profile_home_for_key(session_key)
+            except Exception:
+                home = None
+        with _profile_runtime_scope(home or get_hermes_home()):
+            target(*args)
 
     @staticmethod
     def _init_cached_agent_for_turn(agent: Any, interrupt_depth: int) -> None:
@@ -28286,7 +28355,11 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         while plan:
             key, agent = plan.pop(0)  # FIFO — evict LRU-first order preserved
             try:
-                self._commit_then_release_soft(agent, key)
+                # Pressure sweeps run from the unscoped housekeeping watcher:
+                # enter each owner's scope before commit_memory_session.
+                self._run_release_in_profile_scope(
+                    self._commit_then_release_soft, (agent, key), key
+                )
             except Exception as _e:
                 logger.debug("Pressure release failed for %s: %s", key, _e)
             del agent
@@ -28373,12 +28446,13 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 # only fires for finalizable-not-yet-expired sessions whose
                 # agent would otherwise vanish before the expiry watcher can
                 # fire on_session_end (#11205, LRU-cap variant).
-                threading.Thread(
-                    target=self._commit_then_release_soft,
-                    args=(agent, key),
-                    daemon=True,
-                    name=f"agent-cache-evict-{key[:24]}",
-                ).start()
+                self._spawn_release_thread(
+                    self._commit_then_release_soft,
+                    (agent, key),
+                    f"agent-cache-evict-{key[:24]}",
+                    inline_fallback=False,
+                    session_key=key,
+                )
 
     def _sweep_idle_cached_agents(self) -> int:
         """Evict cached agents whose AIAgent has been idle past the idle TTL.
@@ -28461,12 +28535,13 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 "Agent cache idle-TTL evict: session=%s (idle=%.0fs)",
                 key, now - getattr(agent, "_last_activity_ts", now),
             )
-            threading.Thread(
-                target=self._release_evicted_agent_soft,
-                args=(agent,),
-                daemon=True,
-                name=f"agent-cache-idle-{key[:24]}",
-            ).start()
+            self._spawn_release_thread(
+                self._release_evicted_agent_soft,
+                (agent,),
+                f"agent-cache-idle-{key[:24]}",
+                inline_fallback=False,
+                session_key=key,
+            )
         return len(to_evict)
 
     # ------------------------------------------------------------------
@@ -28478,8 +28553,22 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
 
         Checks GATEWAY_PROXY_URL env var first (convenient for Docker),
         then ``gateway.proxy_url`` in config.yaml.
+
+        Per-profile like GATEWAY_PROXY_KEY: under multiplex a raw environ
+        read would ship a secondary's turns (authenticated with ITS scoped
+        key) to the default profile's proxy. Same fallback shape as the
+        key — only ``UnscopedSecretError`` (the unscoped default-profile
+        path) reads the env.
         """
-        url = os.getenv("GATEWAY_PROXY_URL", "").strip()
+        try:
+            from agent.secret_scope import UnscopedSecretError, get_secret
+
+            try:
+                url = (get_secret("GATEWAY_PROXY_URL") or "").strip()
+            except UnscopedSecretError:
+                url = os.getenv("GATEWAY_PROXY_URL", "").strip()
+        except Exception:
+            url = os.getenv("GATEWAY_PROXY_URL", "").strip()
         if url:
             return url.rstrip("/")
         cfg = _load_gateway_config()

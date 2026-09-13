@@ -1,0 +1,64 @@
+{
+  "campaign": "windows-semantic-refresh-2026-09-13",
+  "as_of": "2026-09-13T15:08:45+09:00",
+  "completion_gates": {
+    "SOURCE_IMPLEMENTATION_COMPLETE": false,
+    "SEMANTIC_SCOPE_VERIFIED": false,
+    "WINDOWS_NATIVE_VERIFIED": false,
+    "PRIVATE_SECURITY_VERIFIED": false,
+    "LONG_RUNNING_VERIFIED": false,
+    "PACKAGING_VERIFIED": false,
+    "RELEASE_READY": false,
+    "PUBLISHED": false
+  },
+  "task_0_3": {
+    "status": "COMPLETE",
+    "artifacts": [
+      "docs/windows/semantic-refresh-2026-09-13/baseline.json",
+      "docs/windows/semantic-refresh-2026-09-13/owner-map.md",
+      "docs/windows/semantic-refresh-2026-09-13/protected-contracts.md",
+      "docs/windows/semantic-refresh-2026-09-13/change-inventory.json",
+      "docs/windows/semantic-refresh-2026-09-13/decisions.md",
+      "docs/windows/semantic-refresh-2026-09-13/rollback.md"
+    ]
+  },
+  "slices": [
+    {
+      "id": "SR-20260913-003",
+      "status": "SKIP_WITH_REASON_CLASSIFIED",
+      "decision": "SKIP_WITH_REASON",
+      "result": "No runtime change. Prerequisite hermes_state_registry (db339f0051) absent from D1; seed SHAs only rewire CLI/Goals onto that registry.",
+      "os": "Windows 11",
+      "tests": "none (classification only; no ALREADY_EQUIVALENT proof path)"
+    },
+    {
+      "id": "SR-20260913-001",
+      "status": "IMPLEMENTED_FOCUSED_PASS",
+      "command": "python -m pytest tests/tools/test_file_write_safety.py::TestMultiplexProfileCacheGuardsAreProfileScoped -q",
+      "result": "5 passed",
+      "os": "Windows 11",
+      "isolated_home": true
+    },
+    {
+      "id": "SR-20260913-004a",
+      "status": "IMPLEMENTED_FOCUSED_PASS",
+      "result": "2 passed (tool credential gates)"
+    },
+    {
+      "id": "SR-20260913-004b-c-d",
+      "status": "IMPLEMENTED_FOCUSED_PASS",
+      "command": "python -m pytest tests/plugins/memory/test_multiplex_memory_identity_scope.py tests/agent/test_multiplex_base_url_scope.py tests/gateway/test_agent_cache_release_profile_scope.py tests/tools/test_multiplex_tool_credential_scope.py tests/tools/test_file_write_safety.py::TestMultiplexProfileCacheGuardsAreProfileScoped -q",
+      "result": "12 passed in 7.65s",
+      "os": "Windows 11",
+      "isolated_home": true
+    }
+  ],
+  "not_run": [
+    "24h soak",
+    "private GHSA full matrix",
+    "packaged Desktop installer",
+    "live VRChat/voice device",
+    "full H..U 2129-commit individual classification",
+    "MCP same-name per-profile connection keys"
+  ]
+}

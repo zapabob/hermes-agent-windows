@@ -19,6 +19,8 @@ const OVERLAY_OUT_MS = 520
 // Preview-only: how long to "connect" for, and the pause before replaying.
 const PREVIEW_CONNECT_MS = 2600
 const PREVIEW_REPLAY_MS = 1100
+/** Hard ceiling: never pin CONNECTING forever if boot/WS stalls mid-flight. */
+const CONNECTING_MAX_DWELL_MS = 45_000
 
 type Phase = 'live' | 'text-out' | 'overlay-out' | 'gone'
 
@@ -93,6 +95,41 @@ export function GatewayConnectingOverlay() {
       // rely on this to avoid catching the overlay mid-fade.
       setPhase(reduce ? 'gone' : 'text-out')
     }
+  }, [phase, previewing, gatewayState, reduce])
+
+  // Boot finished without ever publishing `open` (in-flight connect() early-
+  // return race, or a dropped state transition). `connecting` flips false via
+  // coldBootDoneRef while shownRef stays true — without an exit kick the
+  // overlay pins CONNECTING forever. Dismiss so the shell stays usable.
+  useEffect(() => {
+    if (phase !== 'live' || previewing) {
+      return
+    }
+
+    const bootDone = !boot.running && boot.progress >= 100 && !boot.error && !boot.visible
+
+    if (bootDone && gatewayState !== 'open' && shownRef.current) {
+      setPhase(reduce ? 'gone' : 'text-out')
+    }
+  }, [phase, previewing, gatewayState, boot.running, boot.progress, boot.error, boot.visible, reduce])
+
+  // Absolute dwell cap: if the gateway never opens and boot never completes
+  // (hung IPC / sanitize / adopt), still clear the modal so settings/recovery
+  // stay reachable instead of a permanent CONNECTING screen.
+  useEffect(() => {
+    if (phase !== 'live' || previewing || !shownRef.current) {
+      return
+    }
+
+    if (gatewayState === 'open') {
+      return
+    }
+
+    const id = window.setTimeout(() => {
+      setPhase(reduce ? 'gone' : 'text-out')
+    }, CONNECTING_MAX_DWELL_MS)
+
+    return () => window.clearTimeout(id)
   }, [phase, previewing, gatewayState, reduce])
 
   // Advance the exit choreography: text-out -> overlay-out -> gone.

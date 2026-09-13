@@ -80,15 +80,26 @@ def _sanitize_tag(raw: str) -> str:
 
 
 def _resolve_base_url(config_value: Any = "") -> str:
-    """Resolve the API base URL: config > SUPERMEMORY_BASE_URL env var > default.
+    """Resolve the API base URL: config > SUPERMEMORY_BASE_URL (profile-scoped) > default.
 
     Supports self-hosted Supermemory servers (e.g. http://localhost:6767).
     """
     raw = (
         str(config_value or "").strip()
-        or os.environ.get("SUPERMEMORY_BASE_URL", "").strip()
+        or (get_secret("SUPERMEMORY_BASE_URL", "") or "").strip()
     )
     return (raw or _DEFAULT_BASE_URL).rstrip("/") or _DEFAULT_BASE_URL
+
+
+def _resolve_container_tag(config_tag: str, identity: str) -> str:
+    """SUPERMEMORY_CONTAINER_TAG (profile-scoped) > config > default.
+
+    ``{identity}`` expands to the agent identity, then sanitize. The container
+    is the data partition, so it must never be borrowed from the default
+    profile's environ under multiplexing.
+    """
+    raw_tag = (get_secret("SUPERMEMORY_CONTAINER_TAG", "") or "").strip() or config_tag
+    return _sanitize_tag(raw_tag.replace("{identity}", identity))
 
 
 def _clamp_entity_context(text: str) -> str:
@@ -420,9 +431,7 @@ class _SupermemoryClient:
 
 def _resolve_container_tag_for_setup(hermes_home: str, *, identity: str = "default") -> str:
     config = _load_supermemory_config(hermes_home)
-    env_tag = os.environ.get("SUPERMEMORY_CONTAINER_TAG", "").strip()
-    raw_tag = env_tag or config["container_tag"]
-    return _sanitize_tag(raw_tag.replace("{identity}", identity))
+    return _resolve_container_tag(config["container_tag"], identity)
 
 
 def _probe_supermemory_connection(api_key: str, hermes_home: str, *, identity: str = "default") -> dict:
@@ -656,13 +665,12 @@ class SupermemoryMemoryProvider(MemoryProvider):
         self._config = _load_supermemory_config(self._hermes_home)
         self._api_key = get_secret("SUPERMEMORY_API_KEY", "") or ""
 
-        # Resolve container tag: env var > config > default.
+        # Resolve container tag: scoped env > config > default.
         # Supports {identity} template for profile-scoped containers.
-        env_tag = os.environ.get("SUPERMEMORY_CONTAINER_TAG", "").strip()
-        raw_tag = env_tag or self._config["container_tag"]
         identity = kwargs.get("agent_identity", "default")
-        self._container_tag = _sanitize_tag(raw_tag.replace("{identity}", identity))
-
+        self._container_tag = _resolve_container_tag(
+            self._config["container_tag"], identity
+        )
         self._auto_recall = self._config["auto_recall"]
         self._auto_capture = self._config["auto_capture"]
         self._max_recall_results = self._config["max_recall_results"]

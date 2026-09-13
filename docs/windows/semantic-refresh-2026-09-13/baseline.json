@@ -1,0 +1,93 @@
+{
+  "campaign": "windows-semantic-refresh-2026-09-13",
+  "frozen_at": "2026-09-13T13:10:05+09:00",
+  "executor": "Cursor",
+  "workspace_root_at_start": "C:/Users/downl/Documents/New project/hermes-agent",
+  "start_branch": "main",
+  "start_head": "7c697a8a658d4ceadb80276f37b90cd93d84d6a9",
+  "start_dirty_preserved": {
+    "modified": [
+      "scripts/windows/watchdog-go/backend.go",
+      "scripts/windows/watchdog-go/backend_test.go",
+      "scripts/windows/watchdog-go/watchdog.go"
+    ],
+    "untracked": [
+      "airi-pr2520-work/",
+      "quake_check.py",
+      "tmp_status.json"
+    ],
+    "policy": "preserved_untouched; implementation uses isolated worktree"
+  },
+  "remotes": {
+    "origin": "https://github.com/zapabob/hermes-agent-windows.git",
+    "upstream": "https://github.com/NousResearch/hermes-agent.git"
+  },
+  "frozen": {
+    "D0": {
+      "role": "downstream_baseline",
+      "sha": "7c697a8a658d4ceadb80276f37b90cd93d84d6a9",
+      "source": ["git_rev_parse_HEAD", "git_rev_parse_origin/main", "github_api_branches_main"],
+      "matches_plan_recorded_downstream_main": true
+    },
+    "U": {
+      "role": "upstream_target",
+      "sha": "6dd091a89c33e6e4909a80f78343bb384deb5ca8",
+      "source": ["git_fetch_upstream_main", "git_rev_parse_upstream/main", "github_api_list_commits_main"],
+      "note": "Plan draft recorded 205645ee424163c7b6cfc032c331c3557797497b; start-time refetch advanced 26 commits. Frozen once at campaign start.",
+      "plan_draft_sha": "205645ee424163c7b6cfc032c331c3557797497b",
+      "commits_plan_draft_to_frozen_U": 26
+    },
+    "R": {
+      "role": "upstream_release_v0.21.2",
+      "tag": "v2026.9.11",
+      "release_name": "Hermes Agent v0.21.2 (v2026.9.11)",
+      "target_commitish": "main",
+      "annotated_tag_object": "2160b2d59c87316e82f749d77c1f25969bea1533",
+      "peeled_commit": "939e45c91d751fadd94dcd1b873ac3cb44846213",
+      "published_at": "2026-09-11T19:20:31Z",
+      "source": ["gh_api_releases_latest", "git_cat_file_tag", "git_rev_list_-n_1"],
+      "note": "target_commitish=main is NOT identical to tag peeled commit; peeled commit is authoritative for R."
+    },
+    "H": {
+      "role": "historical_snapshot_provenance",
+      "release_commit_sha": "29112bef099274229cadff79cdff7bf7b99c4b77",
+      "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
+      "source": ["downstream/distribution.json", ".codex/UPSTREAM_SNAPSHOT.json"]
+    }
+  },
+  "comparison_windows": {
+    "H_to_U_commits": 2129,
+    "H_to_U_files": 3130,
+    "R_to_U_commits": 391,
+    "R_to_U_files": 861,
+    "merge_base_D0_U": "1fe0f2f3ac9748ce799272eb93bee2937b5ab802"
+  },
+  "product_versions_at_D0": {
+    "downstream_product": "0.21.1",
+    "historical_upstream_version": "0.21.0",
+    "allow_upstream_sync": false
+  },
+  "candidate": {
+    "branch": "feat/windows-semantic-refresh-2026-09-13",
+    "worktree": ".worktrees/semantic-refresh-d1",
+    "head_at_branch_create": "7c697a8a658d4ceadb80276f37b90cd93d84d6a9"
+  },
+  "reference_worktrees": {
+    "D1_candidate": ".worktrees/semantic-refresh-d1",
+    "U_upstream": ".worktrees/semantic-refresh-u"
+  },
+  "codegraph": {
+    "cli_path": ".tools/codegraph-cli/node_modules/.bin/codegraph.cmd",
+    "version": "1.6.0",
+    "approved_pin_matches_readme": true,
+    "policy": "navigation_evidence_only_not_execution_proof"
+  },
+  "prohibitions_acknowledged": [
+    "no_bulk_merge_rebase_cherry_pick",
+    "no_wsl_escape",
+    "no_second_supervisor_or_credential_owner",
+    "no_push_main_merge_tag_release_install_reboot",
+    "no_touch_hakuapulse_orchestrator_moa",
+    "no_production_profile_secret_db_in_tests"
+  ]
+}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -44,9 +45,17 @@ func readRecoveryState(path string, now time.Time) (recoveryState, error) {
 	if err != nil {
 		return recoveryState{}, err
 	}
+	// UTF-8 BOM (e.g. PowerShell Set-Content -Encoding utf8) and partial
+	// writes must not permanently deny all recovery — treat as empty and
+	// let the next successful reserve rewrite a clean document.
+	raw = bytes.TrimPrefix(raw, []byte{0xEF, 0xBB, 0xBF})
+	raw = bytes.TrimSpace(raw)
+	if len(raw) == 0 {
+		return recoveryState{}, nil
+	}
 	var state recoveryState
 	if err := json.Unmarshal(raw, &state); err != nil {
-		return recoveryState{}, fmt.Errorf("invalid recovery state: %w", err)
+		return recoveryState{}, nil
 	}
 	cutoff := now.Add(-recoveryWindow)
 	kept := state.Events[:0]

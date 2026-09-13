@@ -1979,6 +1979,31 @@ class SessionStore:
         namespace = parts[1] or "main"
         return "default" if namespace == "main" else namespace
 
+    def _named_profile_for_key(self, session_key: Optional[str]) -> Optional[str]:
+        """Non-default profile owning *session_key*, or None when multiplex is off / ambient."""
+        if not getattr(self.config, "multiplex_profiles", False):
+            return None
+        profile = self._profile_from_session_key(session_key)
+        return None if not profile or profile == "default" else profile
+
+    def _profile_home_for_key(self, session_key: Optional[str]) -> Optional[Path]:
+        """HERMES_HOME of the profile owning *session_key*, or None if unresolvable.
+
+        Used by unscoped housekeeping (agent-cache eviction) to enter the
+        owning profile's ``_profile_runtime_scope`` before commit_memory_session.
+        """
+        profile = self._named_profile_for_key(session_key)
+        if profile is None:
+            return None
+        try:
+            from hermes_cli.profiles import get_profile_dir, profile_exists
+
+            if profile_exists(profile):
+                return Path(get_profile_dir(profile))
+        except Exception:
+            return None
+        return None
+
     @staticmethod
     def _active_profile_name() -> str:
         try:

@@ -18,6 +18,12 @@ from agent.secret_scope import get_secret
 
 logger = logging.getLogger(__name__)
 
+
+def _weixin_home_channel_override() -> str:
+    """Profile-scoped Weixin home chat id, or empty when unset for this profile."""
+    return (get_secret("WEIXIN_HOME_CHANNEL", "") or "").strip()
+
+
 _TELEGRAM_TOPIC_TARGET_RE = re.compile(r"^\s*(-?\d+)(?::(\d+))?\s*$")
 _FEISHU_TARGET_RE = re.compile(r"^\s*((?:oc|ou|on|chat|open)_[-A-Za-z0-9]+)(?::([-A-Za-z0-9_]+))?\s*$")
 # Slack conversation IDs: C (public channel), G (private/group channel), D (DM).
@@ -443,7 +449,10 @@ def _handle_send(args):
     if not chat_id:
         home = config.get_home_channel(platform)
         if not home and platform_name == "weixin":
-            wx_home = os.getenv("WEIXIN_HOME_CHANNEL", "").strip()
+            # Home channel is a per-profile target like the token beside it: a raw
+            # environ read would post a multiplexed secondary's message into the
+            # default profile's Weixin chat.
+            wx_home = _weixin_home_channel_override()
             if wx_home:
                 from gateway.config import HomeChannel
                 home = HomeChannel(platform=platform, chat_id=wx_home, name="Weixin Home")
