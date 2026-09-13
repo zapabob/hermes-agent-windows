@@ -108,6 +108,21 @@ FI census: FI-CLI / TUI / CRON / DELEGATION evidence rows filled (entry counts, 
 
 `LOCAL_DEPLOYED` / soak: **NOT_RUN**.
 
+## FI-SKILL / FI-PLUGIN / FI-BROWSER (2026-09-13 night)
+
+**Decision:** KEEP / KEEP_DOWNSTREAM — **census evidence only**, no runtime delta.
+
+| Family | Posture |
+|---|---|
+| FI-SKILL | Same owners as U (`skills_hub`, `skill_manager_tool`, `skill_commands`); count deltas in bundled vs optional SKILL.md are content drift, not a missing Windows contract |
+| FI-PLUGIN | U plugin tops ⊆ D; D-only plugins are KEEP_DOWNSTREAM (do not delete to match U) |
+| FI-BROWSER | Shared providers + core `browser_*` tools; Desktop handoff remains CARRY COMPOSE already KEEP |
+
+CodeGraph root index absent this phase — probes are source/registry + tests, not claimed as CodeGraph.  
+Rejected invent: `ProfileRoute.bot_profile`, second plugin supervisor, skill symlink privilege escalation.
+
+`LOCAL_DEPLOYED` / soak: **NOT_RUN**.
+
 ## Explicit non-goals this campaign pass
 
 - Enabling `allow_upstream_sync`

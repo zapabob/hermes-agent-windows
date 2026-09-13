@@ -4,15 +4,17 @@ Frozen upstream: b51c055a12220f8c7c18660e8599365012e19532
 
 | Metric | Value |
 | --- | ---: |
-| All fork-specific LOC | 2714999 |
+| All fork-specific LOC | 2676207 |
 | Upstream-owned fork LOC | 1546955 |
-| Fork-owned LOC | 1168044 |
-| UTR | 0.569781 |
+| Fork-owned LOC | 1129252 |
+| UTR | 0.578040 |
 | Carry Surface | 5079 files |
 | CWC | 86164887 |
 
 LOC is added plus deleted lines relative to the frozen upstream tree.
-Generated metric reports are excluded to avoid self-referential totals.
+The `_docs/` tree (including these reports) is excluded to avoid
+self-referential totals from impl logs and regenerated metrics.
+Totals are computed from committed HEAD, not a dirty worktree.
 Coupling is 3 for CARRY.yaml paths, 2 for other runtime/source paths,
 and 1 for tests, docs, workflows, and generated documentation.
 

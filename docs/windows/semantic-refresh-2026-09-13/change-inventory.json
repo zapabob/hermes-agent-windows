@@ -416,6 +416,46 @@
         "soak": "NOT_RUN"
       },
       "intentional_delta": "none — verification-only; FI-CLI/TUI/CRON/DELEGATION evidence rows deepened in functional-inventory.md"
+    },
+    {
+      "id": "SR-20260913-FI-SKILL-PLUGIN-BROWSER",
+      "title": "FI-SKILL / FI-PLUGIN / FI-BROWSER census evidence (no runtime invent)",
+      "decision": "KEEP_OR_KEEP_DOWNSTREAM",
+      "verification_status": "PASS_FOCUSED_CENSUS",
+      "tested_sha_base": "501d4e5eacb63875d34c793276d5f50cd651c791",
+      "as_of": "2026-09-13T21:30:00+09:00",
+      "note": "Evidence from source/registry probes + focused tests; root CodeGraph index ABSENT — not claimed as CodeGraph navigation",
+      "families": {
+        "FI-SKILL": {
+          "decision": "KEEP",
+          "owners": [
+            "tools/skills_hub.py",
+            "tools/skill_manager_tool.py",
+            "agent/skill_commands.py",
+            "skills/",
+            "optional-skills/"
+          ],
+          "evidence": "D 87 bundled + 120 optional SKILL.md; U 58 + 143; OptionalSkillSource present; 44 tests/skills"
+        },
+        "FI-PLUGIN": {
+          "decision": "KEEP_DOWNSTREAM",
+          "owners": ["hermes_cli/plugins.py", "plugins/", "plugins/plugin_storage.py"],
+          "evidence": "U 18 tops subset of D 67; discovery entrypoints; 190 tests/plugins"
+        },
+        "FI-BROWSER": {
+          "decision": "KEEP",
+          "owners": [
+            "tools/browser_tool.py",
+            "tools/browser_camofox.py",
+            "plugins/browser/",
+            "apps/desktop/src/lib/browser-deeplink.ts"
+          ],
+          "evidence": "shared browserbase/browser_use/firecrawl; deeplink vitest 10 passed; prior 004e camofox memo; pytest FI-SPB 89p/3s"
+        }
+      },
+      "runtime_delta": "none",
+      "LOCAL_DEPLOYED": "NOT_RUN",
+      "soak": "NOT_RUN"
     }
   ],
   "unresolved": [

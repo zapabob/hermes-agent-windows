@@ -9,7 +9,10 @@
       "_docs/carry-surface-20260826.json",
       "_docs/carry-surface-20260826.md"
     ],
-    "loc": "added plus deleted lines from frozen upstream to checkout",
+    "excluded_prefixes": [
+      "_docs/"
+    ],
+    "loc": "added plus deleted lines from frozen upstream to committed HEAD",
     "upstream_owned": "path exists in the frozen upstream tree",
     "utr": "upstream-owned fork LOC divided by all fork-specific LOC"
   },
@@ -17,12 +20,12 @@
   "schema_version": 1,
   "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
   "summary": {
-    "all_fork_specific_loc": 2714999,
+    "all_fork_specific_loc": 2676207,
     "carry_surface_files": 5079,
     "cwc": 86164887,
-    "fork_owned_loc": 1168044,
+    "fork_owned_loc": 1129252,
     "upstream_owned_fork_loc": 1546955,
-    "utr": 0.569781
+    "utr": 0.57804
   },
   "top_carry_risks": [
     {
