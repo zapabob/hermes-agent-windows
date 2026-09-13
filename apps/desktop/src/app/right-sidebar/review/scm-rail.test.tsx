@@ -251,6 +251,7 @@ describe('ReviewScmRail', () => {
 
   it('clears the post-submit close timer when the rail unmounts', async () => {
     vi.useFakeTimers()
+
     try {
       const clearSpy = vi.spyOn(window, 'clearTimeout')
       const git = stubGit()
