@@ -337,13 +337,39 @@
       "in_D0": false,
       "decision": "ADOPT_PARTIAL",
       "implementation_method": "REIMPLEMENT_NATIVE",
-      "verification_status": "CLASSIFIED",
+      "verification_status": "PARTIAL_PASS",
       "split": {
         "skip_card_look": "Upstream promotional/connector card chrome, guided first-launch film, brand marks — SKIP_WITH_REASON (keep Windows Settings/boot UX)",
-        "adopt_useful": "Provider select on credential miss, auth recovery into conversation, share_auth connector gate via get_provider_auth_state, retry backoff live status — REIMPLEMENT into existing Desktop onboarding store + Settings + gateway overlays",
-        "next_slice": "SR-007a: inventory D manage_connections / share_auth gate vs U get_provider_auth_state path; only implement if D still strips tools on share_auth profiles"
+        "adopt_useful": "share_auth connector gate + provider retry live wait notice — REIMPLEMENT into existing owners (managed_tool_gateway + conversation_loop)"
       },
-      "blocker_cleared": "No longer wholesale DEFER for missing card UI; execute useful contracts after SR-003",
+      "completed_subset": [
+        {
+          "id": "SR-20260913-007a",
+          "title": "share_auth Nous gate + provider retry wait notice",
+          "status": "PASS_FOCUSED",
+          "owners": [
+            "tools/managed_tool_gateway.py::_read_nous_provider_state",
+            "agent/conversation_loop.py::emit_provider_retry_wait_notice"
+          ],
+          "tests": [
+            "tests/tools/test_managed_tool_gateway.py::test_read_nous_provider_state_falls_back_to_global_root_for_share_auth_profiles",
+            "tests/agent/test_provider_retry_wait_notice.py",
+            "tests/tools/test_managed_tool_gateway.py"
+          ],
+          "result": "32 passed (gateway suite incl. share_auth) + wait-notice unit",
+          "as_of": "2026-09-13T20:10:56+09:00",
+          "intentional_delta": "share_auth profiles no longer look signed-out to the connector gate; provider backoff names itself on the live status line"
+        }
+      ],
+      "deferred_subset": [
+        {
+          "id": "SR-20260913-007b",
+          "title": "Desktop credential-miss → Settings/onboarding without card chrome",
+          "status": "DEFER_WITH_BLOCKER",
+          "blocker": "Needs focused UX contract against existing onboarding.ts requestDesktopOnboarding paths; not blocked on share_auth anymore"
+        }
+      ],
+      "blocker_cleared": "007a share_auth gate + retry wait notice landed; card chrome remains SKIP",
       "LOCAL_DEPLOYED": "NOT_RUN",
       "soak": "NOT_RUN",
       "dag_bucket": "F_edge_features_plus_nonregression"

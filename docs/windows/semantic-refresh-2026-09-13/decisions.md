@@ -78,16 +78,19 @@ Missing a same-named U registry/module is **not** alone grounds for SKIP.
 
 Focused: `test_breaker_opened_by_tool_errors_says_rejected_not_unreachable` + full `test_mcp_circuit_breaker.py` → **8 passed**.
 
-## SR-20260913-007 (reopened)
+## SR-20260913-007 (reopened → 007a DONE 2026-09-13)
 
 **Prior:** DEFER_WITH_BLOCKER (onboarding cards).  
 **Revised split:**
 
 - Upstream “card look” / promotional onboarding chrome / guided film → SKIP_WITH_REASON (keep Windows UX).
-- Useful setup / provider select / auth recovery / reach-conversation after update / share_auth connector gate → evaluate **REIMPLEMENT_NATIVE** into existing Desktop Settings / onboarding store / gateway boot overlays (not a second onboarding framework).
-- Next: **007a** verify whether D still strips `manage_connections` on share_auth profiles; only then implement gate via `get_provider_auth_state`.
+- **007a DONE (REIMPLEMENT_NATIVE / NATIVE_PORT):**
+  - `tools/managed_tool_gateway._read_nous_provider_state` → `get_provider_auth_state("nous")` so share_auth profiles see root identity (no second auth SoT).
+  - `agent/conversation_loop.emit_provider_retry_wait_notice` names provider backoff on the live status line (U `turn_recovery` contract; D has no `turn_recovery.py`).
+- **007b DEFER:** credential-miss → existing Settings/onboarding without card chrome.
 
-`LOCAL_DEPLOYED` / soak: **NOT_RUN** this phase.
+Tests: managed_tool_gateway suite **32 passed** + `test_provider_retry_wait_notice`.  
+`LOCAL_DEPLOYED` / soak: **NOT_RUN**.
 
 ## Explicit non-goals this campaign pass
 
