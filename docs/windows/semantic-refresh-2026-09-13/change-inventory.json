@@ -110,30 +110,41 @@
       "verification_status": "PASS_FOCUSED",
       "verification_receipt": {
         "command": "py -3 -m pytest tests/hermes_state/test_shared_session_db_native.py -q",
-        "result": "5 passed",
+        "result": "7 passed",
         "os": "Windows 11",
         "isolated_home": true,
-        "as_of": "2026-09-13T19:00:00+09:00",
-        "tested_head_note": "commit after slice on main"
+        "as_of": "2026-09-13T19:49:54+09:00",
+        "tested_head_note": "SR-003a+003b on main after 003b commit"
       },
       "prior_decision": "SKIP_WITH_REASON",
       "reopen_reason": "Feature-inventory addendum: absence of hermes_state_registry.py is not sufficient to skip DB safety. Extract contracts; realize on SessionDB family without porting U module layout.",
-      "contract": "Per resolved state.db path: one process-wide writable SessionDB generation with refcounted acquire/release; close() on a shared handle releases rather than tearing down under other holders; profile A/B paths stay independent; gateway RecoverableHandleCache remains recovery layer atop shared acquire; POSIX fd-close lock fault SKIP per-mechanism",
-      "intentional_delta": "Goals + gateway no longer mint independent bare writers for the same path in one process (WAL checkpoint race / #90837 class)",
+      "contract": "Per resolved state.db path: one process-wide writable SessionDB generation with refcounted acquire/release; close() on a shared handle releases rather than tearing down under other holders; known (st_dev,st_ino) identity change retires live generation without closing holders; st_ino=0/unknown identity never false-retires; profile A/B paths stay independent; gateway RecoverableHandleCache remains recovery layer atop shared acquire; POSIX fd-close lock fault SKIP per-mechanism",
+      "intentional_delta": "Goals + gateway no longer mint independent bare writers for the same path in one process (WAL checkpoint race / #90837 class); snapshot restore / path remap retires generations without stranding holders",
       "compose_owners": [
         "hermes_state_shared.py (new helper under SessionDB family — NOT hermes_state_registry.py)",
         "hermes_state.py::SessionDB.close/_shared_owned",
         "hermes_cli/goals.py::_acquire_session_db/_release_session_db",
         "gateway/run.py::_open_session_db_for_active_scope opener"
       ],
-      "deferred_subset": [
+      "completed_subset": [
+        {
+          "id": "SR-20260913-003a",
+          "title": "Path-keyed refcounted shared SessionDB",
+          "status": "PASS_FOCUSED",
+          "as_of": "2026-09-13"
+        },
         {
           "id": "SR-20260913-003b",
           "title": "Inode-replacement generation retire/drain",
-          "status": "DEFER_WITH_BLOCKER",
-          "blocker": "Requires stat identity helper + generation tables; schedule after 003a GREEN"
+          "status": "PASS_FOCUSED",
+          "as_of": "2026-09-13T19:49:54+09:00",
+          "tests": [
+            "tests/hermes_state/test_shared_session_db_native.py::test_identity_change_retires_generation_keeps_holders",
+            "tests/hermes_state/test_shared_session_db_native.py::test_unknown_identity_does_not_false_retire"
+          ]
         }
       ],
+      "deferred_subset": [],
       "skip_mechanisms": [
         "POSIX advisory-lock drop via descriptor close — Windows ACL/lock semantics differ (S4)"
       ],
@@ -291,7 +302,30 @@
       "in_U": true,
       "in_D0": false,
       "decision": "PORT",
-      "verification_status": "PENDING",
+      "implementation_method": "NATIVE_PORT",
+      "verification_status": "PARTIAL_PASS",
+      "contract": "Application-error streaks (isError / JSON tool error) still open the breaker (#10447) but open-breaker copy says rejected/reachable not unreachable (#11113); one transport strike in the streak restores unreachable wording; SSE fallback already uses _ever_connected not _ready",
+      "completed_subset": [
+        {
+          "id": "SR-20260913-006a",
+          "title": "Breaker rejected vs unreachable wording",
+          "status": "PASS_FOCUSED",
+          "owners": ["tools/mcp_tool.py::_bump_server_error+_make_tool_handler"],
+          "tests": [
+            "tests/tools/test_mcp_circuit_breaker.py::test_breaker_opened_by_tool_errors_says_rejected_not_unreachable"
+          ],
+          "result": "1 focused + full breaker suite 8 passed",
+          "as_of": "2026-09-13T19:49:54+09:00"
+        }
+      ],
+      "already_equivalent_subset": [
+        {
+          "id": "SR-20260913-006b",
+          "title": "SSE fallback _ever_connected guards",
+          "status": "ALREADY_EQUIVALENT",
+          "evidence": "tools/mcp_tool.py MCPServerTask._ever_connected + SSE fallback path present on D; do not re-port a565e2"
+        }
+      ],
       "dag_bucket": "E_mcp_provider_compression",
       "depends_on": ["SR-20260913-004"]
     },
@@ -305,10 +339,13 @@
       "implementation_method": "REIMPLEMENT_NATIVE",
       "verification_status": "CLASSIFIED",
       "split": {
-        "skip_card_look": "Upstream promotional/connector card chrome — SKIP_WITH_REASON (keep Windows Settings/boot UX)",
-        "adopt_useful": "Provider select, auth recovery, post-update path to conversation — REIMPLEMENT into existing Desktop Settings + gateway boot overlays"
+        "skip_card_look": "Upstream promotional/connector card chrome, guided first-launch film, brand marks — SKIP_WITH_REASON (keep Windows Settings/boot UX)",
+        "adopt_useful": "Provider select on credential miss, auth recovery into conversation, share_auth connector gate via get_provider_auth_state, retry backoff live status — REIMPLEMENT into existing Desktop onboarding store + Settings + gateway overlays",
+        "next_slice": "SR-007a: inventory D manage_connections / share_auth gate vs U get_provider_auth_state path; only implement if D still strips tools on share_auth profiles"
       },
-      "blocker_cleared": "No longer wholesale DEFER for missing card UI; execute useful contracts after SR-003a",
+      "blocker_cleared": "No longer wholesale DEFER for missing card UI; execute useful contracts after SR-003",
+      "LOCAL_DEPLOYED": "NOT_RUN",
+      "soak": "NOT_RUN",
       "dag_bucket": "F_edge_features_plus_nonregression"
     },
     {

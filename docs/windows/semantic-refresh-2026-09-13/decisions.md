@@ -56,22 +56,38 @@ Missing a same-named U registry/module is **not** alone grounds for SKIP.
 | Closed-handle reuse raises typed/clear error | SessionDB | Existing `RuntimeError("SessionDB connection is closed")` | ALREADY_EQUIVALENT |
 | Backup / FTS repair / WAL PASSIVE close | SessionDB | Existing `hermes_state.py` | ALREADY_EQUIVALENT (keep) |
 | Gateway open heal / backoff | RecoverableHandleCache | Keep as caller-side recovery **on top of** shared acquire | COMPOSE (opener uses shared acquire) |
-| Inode-replacement generation retire/drain | registry generations | Deferred 003b (Windows value; not POSIX-only) | DEFER_WITH_BLOCKER → next slice |
+| Inode-replacement generation retire/drain | registry generations | `hermes_state_shared` identity + `_retired` | REIMPLEMENT_NATIVE (003b DONE) |
 | POSIX fd-close drops advisory lock fault injection | U tests | **SKIP per-mechanism** (Windows locks differ) | SKIP_WITH_REASON |
 
 **Must not:** invent a second DB lifecycle authority beside SessionDB; wholesale skip DB safety because registry filename is absent.
 
+### SR-003b receipt (2026-09-13)
+
+- Contract: known `(st_dev, st_ino)` change retires live generation; holders keep connection; unknown/`st_ino=0` never false-retires.
+- Tests: `py -3 -m pytest tests/hermes_state/test_shared_session_db_native.py -q` → **7 passed**
+- Method remains REIMPLEMENT_NATIVE (not a port of U registry tables).
+
 ## SR-20260913-004f
 
 **ALREADY_EQUIVALENT** on main (`7f8a608445`, `tools/mcp_tool_scope.py`). Do not re-implement.
+
+## SR-20260913-006 (2026-09-13)
+
+**006a PORT (NATIVE_PORT)** into monolithic `tools/mcp_tool.py`: `_server_errors_all_application` + open-breaker rejected wording; JSON/`isError` tool-error path bumps with `application=True`.  
+**006b ALREADY_EQUIVALENT**: SSE `_ever_connected` fallback guards already on D — do not re-port `a565e2`.
+
+Focused: `test_breaker_opened_by_tool_errors_says_rejected_not_unreachable` + full `test_mcp_circuit_breaker.py` → **8 passed**.
 
 ## SR-20260913-007 (reopened)
 
 **Prior:** DEFER_WITH_BLOCKER (onboarding cards).  
 **Revised split:**
 
-- Upstream “card look” / promotional onboarding chrome → SKIP_WITH_REASON (keep Windows UX).
-- Useful setup / provider select / auth recovery / reach-conversation after update → evaluate **REIMPLEMENT_NATIVE** into existing Desktop Settings / gateway boot overlays (not a second onboarding framework). Slice plan after 003a.
+- Upstream “card look” / promotional onboarding chrome / guided film → SKIP_WITH_REASON (keep Windows UX).
+- Useful setup / provider select / auth recovery / reach-conversation after update / share_auth connector gate → evaluate **REIMPLEMENT_NATIVE** into existing Desktop Settings / onboarding store / gateway boot overlays (not a second onboarding framework).
+- Next: **007a** verify whether D still strips `manage_connections` on share_auth profiles; only then implement gate via `get_provider_auth_state`.
+
+`LOCAL_DEPLOYED` / soak: **NOT_RUN** this phase.
 
 ## Explicit non-goals this campaign pass
 
