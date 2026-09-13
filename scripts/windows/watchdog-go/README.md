@@ -51,7 +51,7 @@ Hermes Agent と watchdog プロセスの間に Windows のプロセス権限境
 | フラグ | 既定 | 説明 |
 |--------|------|------|
 | `-IntervalSec` | 20 | 監視周期 |
-| `-FailThreshold` | 2 | backend 連続失敗で Desktop 再起動 |
+| `-FailThreshold` | 2 | **Desktop 層**の連続失敗で Desktop 再起動（`Watchdog.failCount`）。backend soft-fail とは別 |
 | `-Once` | off | 1 周期だけ実行して終了 |
 | `-NoTsnet` | off | tsnet を強制 OFF |
 | `-Listen` | 127.0.0.1:9920 | ローカル HTTP |
@@ -61,6 +61,23 @@ Start スクリプトは同じ `config.yaml` から 8082 の llama.cpp 起動情
 watchdog に渡します。watchdog は `/health` が healthy な既存プロセスを置換せず、
 停止後または自ら起動したプロセスが初期化 timeout を超えた場合だけ stock
 `llama-server` を再起動します。モデル取得、8080 への操作、未知 PID の停止は行いません。
+
+## Backend ヘルス状態機械（24/7 安定化）
+
+owned backend（固定ポート **9119**、Process handle 所有）の応答性と生死を分離する。
+
+| 状態 | 意味 | `stopLocked` |
+|------|------|--------------|
+| `HEALTHY` | `/api/status` + 認証付き `/api/sessions` 成功 | しない |
+| `DEGRADED` | プロセス生存 + soft probe 失敗（timeout / transport / HTTP error）。**nil backend ではない** | しない |
+| `UNRESPONSIVE` | soft-fail が閾値以上 **かつ** wall-clock grace 経過 | **許可**（制御された再起動） |
+| `DEAD` | owned PID が死んでいる | **即許可** |
+
+原則:
+
+- **slow ≠ dead** — 単一の probe timeout では kill しない
+- **token 再利用** — soft failure / hang restart ではトークンを回転しない（remint 時のみ Desktop 再起動アーム）
+- **Desktop `failCount`** は Desktop 層のみ。DEGRADED backend で Desktop を再起動しない
 
 ## Tailscale（tsnet）
 
@@ -101,8 +118,13 @@ HTTP は読み取り専用です。pause、resume、cycle、stop、restart、for
 |--------|------|------|
 | `-prewarm-backend` | on | serve の prewarm / 常時監督 |
 | `-managed-backend-port` | 9119 | watchdog 管理の固定 serve ポート（9120/8787/9920 とは別） |
-| `-backend-start-timeout` | 120 | `/api/status` 待ち (秒) |
-| `-backend-ready-timeout` | 45 | `/api/status` 待ち (秒) |
+| `-backend-start-timeout` | 300 | managed serve 起動待ち (秒) |
+| `-backend-ready-timeout` | 180 | managed serve readiness 追加待ち (秒) |
+| `-backend-soft-fail-threshold` | 3 | soft probe 連続失敗で UNRESPONSIVE 候補になる回数 |
+| `-backend-unresponsive-grace` | 120 | soft failure 開始からの wall-clock 秒。経過後のみ owned restart |
+| `-backend-status-timeout-ms` | 2000 | `/api/status` probe HTTP timeout |
+| `-backend-auth-timeout-ms` | 3000 | 認証付き `/api/sessions` probe HTTP timeout |
+| `-backend-auth-confirm-delay-ms` | 500 | unauthorized 確定前の確認間隔 |
 | `-embedding-enabled` | off | 設定済み loopback embedding server の監督 |
 | `-embedding-endpoint` | なし | `http://127.0.0.1:8082` のような健康確認先 |
 | `-embedding-server` / `-embedding-model` | なし | 既存 llama-server と GGUF の絶対パス |
