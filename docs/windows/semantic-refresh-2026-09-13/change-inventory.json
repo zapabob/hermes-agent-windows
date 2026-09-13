@@ -1,0 +1,186 @@
+{
+  "campaign": "windows-semantic-refresh-2026-09-13",
+  "frozen": {
+    "D0": "7c697a8a658d4ceadb80276f37b90cd93d84d6a9",
+    "U": "6dd091a89c33e6e4909a80f78343bb384deb5ca8",
+    "R_tag": "v2026.9.11",
+    "R_annotated_tag_object": "2160b2d59c87316e82f749d77c1f25969bea1533",
+    "R_peeled_commit": "939e45c91d751fadd94dcd1b873ac3cb44846213",
+    "H_snapshot": "b51c055a12220f8c7c18660e8599365012e19532",
+    "H_release_commit": "29112bef099274229cadff79cdff7bf7b99c4b77"
+  },
+  "windows": {
+    "H_to_U_commits": 2129,
+    "H_to_U_files": 3130,
+    "R_to_U_commits": 391,
+    "R_to_U_files": 861,
+    "plan_draft_U_to_frozen_U": 26,
+    "prior_ledger": {
+      "path": "UPSTREAM_ADOPTION.yaml",
+      "upstream_head_sha": "b51c055a12220f8c7c18660e8599365012e19532",
+      "note": "Prior ledger ends at H; does not prove adoption through H. New unclassified window is H..U mechanically, with R..U as post-release delta."
+    }
+  },
+  "enumeration_method": [
+    "git_log_reverse_topo H..U and R..U",
+    "git_diff_name_status_find_renames",
+    "priority_path_filter for Task7 audit seeds",
+    "NOT release_notes_only",
+    "NOT search_top_100"
+  ],
+  "dependency_dag_order": [
+    "B_profile_credential_write_guards",
+    "C_storage_durable_config",
+    "D_execution_handoff_windows_lifecycle",
+    "E_mcp_provider_compression",
+    "F_edge_features_plus_nonregression",
+    "G_deps_packaging_version_metadata",
+    "H_combined_native_soak_review"
+  ],
+  "candidates": [
+    {
+      "id": "SR-20260913-001",
+      "title": "Multiplex write-guard home/config resolve per call (#107327 / #108440)",
+      "upstream_shas": [
+        "1271622e4b302ac0c4c0fe0b175c92717ee7fc5f",
+        "7af5006b24c8d08cd7cd66b2faa7a295250ffa34"
+      ],
+      "in_U": true,
+      "in_D0": false,
+      "upstream_owner": "tools/file_tools_write_guards.py",
+      "d0_owner": "tools/file_tools.py::_get_hermes_config_resolved + _get_real_hermes_home",
+      "decision": "COMPOSE",
+      "verification_status": "PASS_FOCUSED",
+      "contract": "Active-profile HERMES_HOME/config paths resolve per call; A→B→A order-independent; exception fallback stays bound to active get_hermes_home(); config.yaml hard-block never fails open across profiles",
+      "intentional_delta": "Rejects writes that previously succeeded after a sibling profile warmed the process memo",
+      "tests": ["tests/tools/test_file_write_safety.py::TestMultiplexProfileCacheGuardsAreProfileScoped"],
+      "verification_receipt": {
+        "command": "python -m pytest tests/tools/test_file_write_safety.py::TestMultiplexProfileCacheGuardsAreProfileScoped -q",
+        "result": "5 passed",
+        "tested_head_note": "commit after slice; isolated HERMES_HOME under %TEMP%",
+        "preexisting_windows_failures_unrelated": [
+          "TestAtomicWrite::test_patch_routes_through_atomic_write (POSIX 0o600 mode assert)",
+          "TestProtectedInstructionFiles::test_symlink_to_protected_file_is_gated (WinError 1314 symlink privilege)"
+        ]
+      },
+      "rollback": "Revert the single commit that touches file_tools getters + tests",
+      "credit": "PRATHAMESH75 / upstream #107327 #107335",
+      "priority": 1,
+      "dag_bucket": "B_profile_credential_write_guards"
+    },
+    {
+      "id": "SR-20260913-002",
+      "title": "State DB owner-only permissions",
+      "upstream_shas": ["1916cb249d566948b1b8dd29b907892aae1a70b0"],
+      "in_U": true,
+      "in_D0": false,
+      "decision": "PORT",
+      "verification_status": "PENDING",
+      "dag_bucket": "C_storage_durable_config",
+      "depends_on": []
+    },
+    {
+      "id": "SR-20260913-003",
+      "title": "Session store via state.db registry (no bare SessionDB)",
+      "upstream_shas": ["876e444e4e070cd424dea6501d9d15eaade4640a", "6806a3808453f4a8374f4d5692060f3bf556fa46"],
+      "in_U": true,
+      "in_D0": false,
+      "decision": "COMPOSE",
+      "verification_status": "PENDING",
+      "note": "Must not invent a second DB owner; compose into existing SessionDB/registry",
+      "dag_bucket": "C_storage_durable_config",
+      "depends_on": ["SR-20260913-002"]
+    },
+    {
+      "id": "SR-20260913-004",
+      "title": "Multiplex tool/memory env + MCP per-profile credentials",
+      "upstream_shas": [
+        "a9838c21007e5a3716c4d6c79526457c3bc992e8",
+        "ceaf622c6d348c570b141898bee5916ca115a8d5",
+        "4b8c01f691974adaa5d07d7c2a65e922c7edb723"
+      ],
+      "in_U": true,
+      "in_D0": false,
+      "decision": "COMPOSE",
+      "verification_status": "PENDING",
+      "dag_bucket": "B_profile_credential_write_guards",
+      "depends_on": ["SR-20260913-001"]
+    },
+    {
+      "id": "SR-20260913-005",
+      "title": "Gateway mid-turn authz + routed profile policy isolation",
+      "upstream_shas": [
+        "77180acc2cbb8519b45b2950c28957da9740ea71",
+        "819517fbac168cbec6c487c3678decf57a3d7e71"
+      ],
+      "in_U": true,
+      "in_D0": false,
+      "decision": "COMPOSE",
+      "verification_status": "PENDING",
+      "dag_bucket": "B_profile_credential_write_guards",
+      "depends_on": ["SR-20260913-001", "SR-20260913-004"]
+    },
+    {
+      "id": "SR-20260913-006",
+      "title": "MCP breaker wording + SSE fallback hardening",
+      "upstream_shas": [
+        "d62716c7043e57ef7a29e81a02ddbc19334e29df",
+        "a565e2d49350a75885bd533b2f5cd636d40bae87"
+      ],
+      "in_U": true,
+      "in_D0": false,
+      "decision": "PORT",
+      "verification_status": "PENDING",
+      "dag_bucket": "E_mcp_provider_compression",
+      "depends_on": ["SR-20260913-004"]
+    },
+    {
+      "id": "SR-20260913-007",
+      "title": "Desktop onboarding / connector cards (#108292)",
+      "upstream_shas": ["4f1966edac94032801b7b0057383df73e60413f8"],
+      "in_U": true,
+      "in_D0": false,
+      "decision": "DEFER_WITH_BLOCKER",
+      "verification_status": "NOT_STARTED",
+      "blocker": "Must not flip existing provider defaults, telemetry opt-in, or Browser handoff; needs UX + Windows E2E plan",
+      "dag_bucket": "F_edge_features_plus_nonregression"
+    },
+    {
+      "id": "SR-20260913-008",
+      "title": "Linux terminal LC_CTYPE fix",
+      "upstream_shas": ["6f8d975fe7a9074febcb00fd5474f3928f6ec49d", "5b0103ffdcfacc7c896ca8b61b6eb7a5bc471fff"],
+      "decision": "SKIP_WITH_REASON",
+      "reason": "Linux-only terminal locale; Windows-native Tier-1 path unaffected",
+      "review_when": "If shared Desktop terminal IPC regresses Windows locale"
+    },
+    {
+      "id": "SR-20260913-CARRY-RECHECK",
+      "title": "Prior PORT carry items vs frozen U (ConPTY, WS deadline, OAuth UI, aux origin, …)",
+      "decision": "ALREADY_EQUIVALENT_OR_KEEP",
+      "verification_status": "PENDING_PER_ITEM",
+      "note": "Do not double-implement; run existing CARRY tests and retire only with Windows evidence"
+    }
+  ],
+  "unresolved": [
+    {
+      "id": "UNRES-PRIVATE-GHSA",
+      "status": "UNVERIFIED_PRIVATE_CONTRACT",
+      "note": "No private advisory text ingested into public campaign records"
+    },
+    {
+      "id": "UNRES-FULL-H-U-CLASSIFICATION",
+      "status": "IN_PROGRESS",
+      "note": "2129 commits H..U not each individually classified in first pass; priority path + keyword scan seeded; remaining commits tracked as mechanical backlog under tmp/probes"
+    },
+    {
+      "id": "UNRES-LONG-RUNNING",
+      "status": "NOT_RUN",
+      "note": "24h soak not executed"
+    },
+    {
+      "id": "UNRES-HAKUAPULSE",
+      "status": "OUT_OF_SCOPE",
+      "note": "MoA/model state explicitly untouched"
+    }
+  ]
+}

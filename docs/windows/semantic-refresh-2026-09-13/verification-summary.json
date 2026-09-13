@@ -1,0 +1,42 @@
+{
+  "campaign": "windows-semantic-refresh-2026-09-13",
+  "as_of": "2026-09-13T13:10:05+09:00",
+  "completion_gates": {
+    "SOURCE_IMPLEMENTATION_COMPLETE": false,
+    "SEMANTIC_SCOPE_VERIFIED": false,
+    "WINDOWS_NATIVE_VERIFIED": false,
+    "PRIVATE_SECURITY_VERIFIED": false,
+    "LONG_RUNNING_VERIFIED": false,
+    "PACKAGING_VERIFIED": false,
+    "RELEASE_READY": false,
+    "PUBLISHED": false
+  },
+  "task_0_3": {
+    "status": "COMPLETE",
+    "artifacts": [
+      "docs/windows/semantic-refresh-2026-09-13/baseline.json",
+      "docs/windows/semantic-refresh-2026-09-13/owner-map.md",
+      "docs/windows/semantic-refresh-2026-09-13/protected-contracts.md",
+      "docs/windows/semantic-refresh-2026-09-13/change-inventory.json",
+      "docs/windows/semantic-refresh-2026-09-13/decisions.md",
+      "docs/windows/semantic-refresh-2026-09-13/rollback.md"
+    ]
+  },
+  "slices": [
+    {
+      "id": "SR-20260913-001",
+      "status": "IMPLEMENTED_FOCUSED_PASS",
+      "command": "python -m pytest tests/tools/test_file_write_safety.py::TestMultiplexProfileCacheGuardsAreProfileScoped -q",
+      "result": "5 passed in ~5s",
+      "os": "Windows 11",
+      "isolated_home": true
+    }
+  ],
+  "not_run": [
+    "24h soak",
+    "private GHSA full matrix",
+    "packaged Desktop installer",
+    "live VRChat/voice device",
+    "full H..U 2129-commit individual classification"
+  ]
+}
