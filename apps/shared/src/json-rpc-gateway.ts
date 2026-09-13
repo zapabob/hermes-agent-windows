@@ -116,6 +116,13 @@ export class JsonRpcGatewayClient {
   /** Seqs dispatched LIVE while a replay RPC is in flight, per session —
    * the replay response overlaps with these and must not re-dispatch them. */
   private liveSeqsDuringReplay: Map<string, Set<number>> | null = null
+  /**
+   * In-flight dial waiter. Concurrent `connect()` must join this promise —
+   * a bare `return` while `readyState===CONNECTING` lets boot call
+   * `completeDesktopBoot()` with `$gatewayState` still not `open`, which pins
+   * the CONNECTING overlay via `shownRef` forever.
+   */
+  private inFlightConnect: Promise<void> | null = null
   private readonly eventHandlers = new Map<string, Set<(event: GatewayEvent) => void>>()
   private readonly stateHandlers = new Set<(state: ConnectionState) => void>()
   private readonly options: Required<Omit<GatewayClientOptions, 'socketFactory'>> &
@@ -179,14 +186,24 @@ export class JsonRpcGatewayClient {
       return
     }
 
-    // Only short-circuit when a handshake is genuinely in flight. A zombie
-    // `connecting` with a null/dead socket must fall through and redial.
+    // Join a genuine in-flight handshake. A zombie `connecting` with a
+    // null/dead socket (or a lost waiter) must fall through and redial.
     if (
       this.state === 'connecting' &&
       this.socket &&
       this.socket.readyState === WebSocket.CONNECTING
     ) {
-      return
+      if (this.inFlightConnect) {
+        return this.inFlightConnect
+      }
+
+      try {
+        this.socket.close()
+      } catch {
+        // ignore — orphan handle; redial below
+      }
+
+      this.socket = null
     }
 
     this.setState('connecting')
@@ -219,7 +236,7 @@ export class JsonRpcGatewayClient {
       this.rejectAllPending(new Error(this.options.closedErrorMessage))
     })
 
-    await new Promise<void>((resolve, reject) => {
+    const handshake = new Promise<void>((resolve, reject) => {
       let settled = false
       let timer: ReturnType<typeof setTimeout> | undefined
 
@@ -299,6 +316,16 @@ export class JsonRpcGatewayClient {
         }, this.options.connectTimeoutMs)
       }
     })
+
+    this.inFlightConnect = handshake
+
+    try {
+      await handshake
+    } finally {
+      if (this.inFlightConnect === handshake) {
+        this.inFlightConnect = null
+      }
+    }
   }
 
   close(): void {
