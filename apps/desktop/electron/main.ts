@@ -12334,6 +12334,7 @@ async function startHermes() {
         // Match the owned local-spawn gate: HTTP-only readiness leaves the
         // renderer forever on CONNECTING when /api/ws rejects the token.
         const prewarmedWsUrl = buildGatewayWsUrl(prewarmed.baseUrl, prewarmed.token)
+
         const prewarmedWsProbe = await probeGatewayWebSocket(prewarmedWsUrl, {
           WebSocketImpl: globalThis.WebSocket
         })
