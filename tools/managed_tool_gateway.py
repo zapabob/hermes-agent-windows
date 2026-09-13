@@ -34,19 +34,23 @@ def auth_json_path():
 
 
 def _read_nous_provider_state() -> Optional[dict]:
+    """Return the active profile's Nous auth state, or None.
+
+    Resolves through the same profile-then-global-root fallback every other
+    credential reader uses: a profile created with ``share_auth`` has no
+    ``auth.json`` of its own and signs in with the root identity. Reading
+    only ``HERMES_HOME/auth.json`` made that profile look signed out to the
+    connector gate alone, so managed Nous tools (and ``manage_connections``)
+    vanished from its tool list while other readers still worked (SR-007a).
+    """
     try:
-        path = auth_json_path()
-        if not path.is_file():
-            return None
-        data = json.loads(path.read_text(encoding="utf-8-sig"))
-        providers = data.get("providers", {})
-        if not isinstance(providers, dict):
-            return None
-        nous_provider = providers.get("nous", {})
+        from hermes_cli.auth import get_provider_auth_state
+
+        nous_provider = get_provider_auth_state("nous")
         if isinstance(nous_provider, dict):
             return nous_provider
     except Exception:
-        pass
+        logger.debug("Failed to read Nous provider auth state", exc_info=True)
     return None
 
 

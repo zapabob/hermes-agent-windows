@@ -410,3 +410,46 @@ def test_is_managed_tool_gateway_ready_skips_refresh_for_expired_cached_token(tm
         assert is_managed_tool_gateway_ready("modal") is True
 
     assert refresh_calls == []
+
+
+def test_read_nous_provider_state_falls_back_to_global_root_for_share_auth_profiles(
+    tmp_path, monkeypatch
+):
+    """share_auth profiles have no local auth.json; gate must see root Nous state.
+
+    Without the get_provider_auth_state fallback, managed tools /
+    manage_connections vanish from the profile tool list while other
+    credential readers still work (SR-007a).
+    """
+    root = tmp_path / ".hermes"
+    profile = root / "profiles" / "hermes-setup"
+    profile.mkdir(parents=True)
+    (root / "auth.json").write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "providers": {
+                    "nous": {
+                        "auth_method": "device_code",
+                        "access_token": "root-tok",
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("HERMES_HOME", str(profile))
+
+    import hermes_constants
+    from hermes_cli import auth as auth_mod
+
+    monkeypatch.setattr(hermes_constants, "get_default_hermes_root", lambda: root)
+    monkeypatch.setattr(auth_mod, "get_hermes_home", lambda: profile)
+    monkeypatch.setattr(auth_mod, "_global_auth_store_cache", None)
+    monkeypatch.setattr(auth_mod, "_auth_file_path", lambda: profile / "auth.json")
+
+    state = managed_tool_gateway._read_nous_provider_state()
+
+    assert state is not None
+    assert state["access_token"] == "root-tok"
+    assert state["auth_method"] == "device_code"
