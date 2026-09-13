@@ -78,7 +78,7 @@ Missing a same-named U registry/module is **not** alone grounds for SKIP.
 
 Focused: `test_breaker_opened_by_tool_errors_says_rejected_not_unreachable` + full `test_mcp_circuit_breaker.py` → **8 passed**.
 
-## SR-20260913-007 (reopened → 007a DONE 2026-09-13)
+## SR-20260913-007 (reopened → 007a+007b DONE 2026-09-13)
 
 **Prior:** DEFER_WITH_BLOCKER (onboarding cards).  
 **Revised split:**
@@ -87,9 +87,10 @@ Focused: `test_breaker_opened_by_tool_errors_says_rejected_not_unreachable` + fu
 - **007a DONE (REIMPLEMENT_NATIVE / NATIVE_PORT):**
   - `tools/managed_tool_gateway._read_nous_provider_state` → `get_provider_auth_state("nous")` so share_auth profiles see root identity (no second auth SoT).
   - `agent/conversation_loop.emit_provider_retry_wait_notice` names provider backoff on the live status line (U `turn_recovery` contract; D has no `turn_recovery.py`).
-- **007b DEFER:** credential-miss → existing Settings/onboarding without card chrome.
+- **007b DONE (REIMPLEMENT_NATIVE):**
+  - `requestDesktopOnboarding` routes past first-run (`configured` or `firstRunSkipped`) into `startManualOnboarding` — same overlay Settings → Providers uses — so credential-miss submit is not a silent `requested=true` no-op behind the overlay gate.
 
-Tests: managed_tool_gateway suite **32 passed** + `test_provider_retry_wait_notice`.  
+Tests: managed_tool_gateway **32 passed**; onboarding vitest **19 passed**.  
 `LOCAL_DEPLOYED` / soak: **NOT_RUN**.
 
 ## Explicit non-goals this campaign pass

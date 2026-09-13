@@ -340,7 +340,7 @@
       "verification_status": "PARTIAL_PASS",
       "split": {
         "skip_card_look": "Upstream promotional/connector card chrome, guided first-launch film, brand marks — SKIP_WITH_REASON (keep Windows Settings/boot UX)",
-        "adopt_useful": "share_auth connector gate + provider retry live wait notice — REIMPLEMENT into existing owners (managed_tool_gateway + conversation_loop)"
+        "adopt_useful": "share_auth connector gate + provider retry live wait notice + credential-miss → existing onboarding/Settings path"
       },
       "completed_subset": [
         {
@@ -359,17 +359,24 @@
           "result": "32 passed (gateway suite incl. share_auth) + wait-notice unit",
           "as_of": "2026-09-13T20:10:56+09:00",
           "intentional_delta": "share_auth profiles no longer look signed-out to the connector gate; provider backoff names itself on the live status line"
-        }
-      ],
-      "deferred_subset": [
+        },
         {
           "id": "SR-20260913-007b",
-          "title": "Desktop credential-miss → Settings/onboarding without card chrome",
-          "status": "DEFER_WITH_BLOCKER",
-          "blocker": "Needs focused UX contract against existing onboarding.ts requestDesktopOnboarding paths; not blocked on share_auth anymore"
+          "title": "Desktop credential-miss → existing Settings/onboarding without card chrome",
+          "status": "PASS_FOCUSED",
+          "owners": [
+            "apps/desktop/src/store/onboarding.ts::requestDesktopOnboarding"
+          ],
+          "tests": [
+            "apps/desktop/src/store/onboarding.test.ts"
+          ],
+          "result": "19 passed (3 new credential-miss routing + prior suite)",
+          "as_of": "2026-09-13T20:18:00+09:00",
+          "intentional_delta": "When configured or firstRunSkipped, credential-miss opens manual add-provider overlay (same path as Settings → Providers) instead of a silent requested=true no-op"
         }
       ],
-      "blocker_cleared": "007a share_auth gate + retry wait notice landed; card chrome remains SKIP",
+      "deferred_subset": [],
+      "blocker_cleared": "007a+007b useful auth/setup contracts landed; card chrome remains SKIP",
       "LOCAL_DEPLOYED": "NOT_RUN",
       "soak": "NOT_RUN",
       "dag_bucket": "F_edge_features_plus_nonregression"
