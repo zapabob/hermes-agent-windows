@@ -33,24 +33,36 @@ class _RecordingDB:
 
     constructed_on: list = []
 
-    def __init__(self):
+    def __init__(self, db_path=None):
+        # Shared acquire opens via _open_session_db(path) → SessionDB(db_path=…).
         _RecordingDB.constructed_on.append(threading.get_ident())
 
     def get_meta(self, key):
         return None
 
+    def close(self):
+        return None
+
 
 @pytest.fixture(autouse=True)
 def _clean_cache(monkeypatch):
+    import hermes_state_shared
+
     _RecordingDB.constructed_on = []
     monkeypatch.setattr(goals, "_DB_CACHE", {})
+    hermes_state_shared.close_all()
     yield
+    hermes_state_shared.close_all()
 
 
-def _patch_sessiondb(monkeypatch):
-    import hermes_state
+def _patch_sessiondb(monkeypatch, cls=_RecordingDB):
+    # goals.py acquires through hermes_state_shared (one writer per home);
+    # patch the documented construction seam and accept db_path.
+    import hermes_state_shared
 
-    monkeypatch.setattr(hermes_state, "SessionDB", _RecordingDB)
+    monkeypatch.setattr(
+        hermes_state_shared, "_open_session_db", lambda path: cls(db_path=path)
+    )
 
 
 def test_loop_thread_cache_miss_constructs_off_loop(monkeypatch):
@@ -119,13 +131,11 @@ def test_slow_construction_does_not_block_the_loop(monkeypatch):
     1.5s window plus margins; the two-window CONTRACT is what's under
     test, not the production constants.
     """
-    import hermes_state
-
     monkeypatch.setattr(goals, "_DB_BOOTSTRAP_INIT_WAIT_S", 0.3)
     monkeypatch.setattr(goals, "_DB_BOOTSTRAP_LOOP_WAIT_S", 0.05)
 
     class _BlockingDB:
-        def __init__(self):
+        def __init__(self, db_path=None):
             # Far past both (shrunk) wait windows. The margin keeps the
             # "still None" assertions from racing the bootstrap thread on
             # a loaded runner (negative-timing race, flake policy).
@@ -134,7 +144,10 @@ def test_slow_construction_does_not_block_the_loop(monkeypatch):
         def get_meta(self, key):
             return None
 
-    monkeypatch.setattr(hermes_state, "SessionDB", _BlockingDB)
+        def close(self):
+            return None
+
+    _patch_sessiondb(monkeypatch, _BlockingDB)
     elapsed = None
     elapsed2 = None
     result = "UNSET"

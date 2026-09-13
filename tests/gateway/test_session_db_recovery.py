@@ -111,18 +111,24 @@ def test_runtime_health_is_sanitized_and_recovers() -> None:
 
 def test_session_store_and_runner_reopen_after_failed_construction(monkeypatch, tmp_path) -> None:
     import hermes_state
+    import hermes_state_shared
     from gateway.run import GatewayRunner, _SESSION_DB_UNPINNED
     from gateway.session import SessionStore, _DB_UNPINNED
+
+    class _FakeHandle:
+        """Mutable stand-in: shared acquire stamps ``_shared_owned`` on success."""
 
     db_path = tmp_path / "state.db"
     clock = _Clock()
     opened: list[object] = []
+    hermes_state_shared.close_all()
 
-    def fail_once_session_db():
+    def fail_once_session_db(db_path=None, **_kwargs):
+        # Shared acquire opens via SessionDB(db_path=path) (SR-003a).
         if not opened:
             opened.append(None)
             raise OSError("temporary open failure")
-        handle = object()
+        handle = _FakeHandle()
         opened.append(handle)
         return handle
 
@@ -147,14 +153,15 @@ def test_session_store_and_runner_reopen_after_failed_construction(monkeypatch, 
 
     runner_opened: list[object] = []
 
-    def runner_fail_once():
+    def runner_fail_once(db_path=None, **_kwargs):
         if not runner_opened:
             runner_opened.append(None)
             raise OSError("temporary open failure")
-        handle = object()
+        handle = _FakeHandle()
         runner_opened.append(handle)
         return handle
 
+    hermes_state_shared.close_all()
     monkeypatch.setattr(hermes_state, "SessionDB", runner_fail_once)
     monkeypatch.setattr(hermes_state, "AsyncSessionDB", lambda db: ("async", db))
     runner = object.__new__(GatewayRunner)
@@ -174,6 +181,7 @@ def test_session_store_and_runner_reopen_after_failed_construction(monkeypatch, 
     clock.now = 2.0
     assert runner._session_db == ("async", runner_opened[-1])
     assert runner._session_db_init_error is None
+    hermes_state_shared.close_all()
 
 
 def test_non_cacheable_guard_is_retried_immediately() -> None:
