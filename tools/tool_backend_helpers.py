@@ -91,13 +91,18 @@ def normalize_modal_mode(value: object | None) -> str:
 
 
 def has_direct_modal_credentials() -> bool:
-    """Return True when direct Modal credentials/config are available."""
+    """Return True when direct Modal credentials/config are available.
+
+    The token pair is a profile credential: read it through the secret scope so
+    the default profile's Modal account never selects the direct backend for a
+    multiplexed secondary (#a9838c / SR-20260913-004).
+    """
     try:
         modal_file_exists = (Path.home() / ".modal.toml").exists()
     except (PermissionError, OSError):
         modal_file_exists = False
     return bool(
-        (os.getenv("MODAL_TOKEN_ID") and os.getenv("MODAL_TOKEN_SECRET"))
+        (_scoped_credential("MODAL_TOKEN_ID") and _scoped_credential("MODAL_TOKEN_SECRET"))
         or modal_file_exists
     )
 
