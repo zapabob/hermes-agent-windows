@@ -3655,6 +3655,8 @@ def _(rid, params: dict) -> dict:
     from tui_gateway import event_replay
 
     frames, latest, truncated = event_replay.events_since(sid, last_seen)
+    from tui_gateway.server import _open_requests
+
     return _ok(rid, {
         "events": frames,
         "latest_seq": latest,
@@ -3666,6 +3668,8 @@ def _(rid, params: dict) -> dict:
         # and reset watermarks on mismatch, doing a full state reload instead
         # of trusting replay.
         "epoch": event_replay.EPOCH,
+        # Unanswered server→client requests — reconnecting clients re-deliver.
+        "open_requests": _open_requests(sid),
     })
 
 

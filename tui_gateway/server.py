@@ -2554,6 +2554,23 @@ def _emit(event: str, sid: str, payload: dict | None = None):
     write_json(_event_frame(event, sid, payload))
 
 
+# U_NEXT server→client request sinks (NC-0213-D1). Bound after write_json/_emit
+# exist so server_requests never imports server (sys.modules patch safe).
+from tui_gateway import server_requests as _server_requests  # noqa: E402
+
+_server_requests.bind_sinks(
+    lambda frame: write_json(frame),
+    lambda event, sid, payload: _emit(event, sid, payload),
+)
+
+
+def _open_requests(sid: str) -> list[dict]:
+    """Server→client requests still waiting on *sid*'s renderer (reconnect snapshots)."""
+    from tui_gateway import server_requests
+
+    return server_requests.open_requests(sid)
+
+
 # Live client transports, one per connected WS peer (maintained by tui_gateway.ws).
 # A session-less event from a background thread has neither a session transport
 # nor a contextvar binding, so write_json would drop it on stdio — this registry
@@ -3014,6 +3031,18 @@ def dispatch(req: dict, transport: Optional[Transport] = None) -> dict | None:
     t = transport or _stdio_transport
     token = bind_transport(t)
     try:
+        from tui_gateway import server_requests
+
+        if server_requests.is_response_frame(req):
+            # Renderer answering one of OUR server→client requests. No response
+            # frame goes back. Unknown/stale ids are dropped (late completion).
+            if not server_requests.resolve_response(req):
+                logger.debug(
+                    "dropping response for unknown server request id=%r",
+                    req.get("id"),
+                )
+            return None
+
         normalized = _normalize_request(req)
         if isinstance(normalized, dict):
             return normalized
@@ -4773,12 +4802,18 @@ def _clear_pending(sid: str | None = None) -> None:
     collaterally cancel clarify/sudo/secret prompts on unrelated
     sessions sharing the same tui_gateway process.  When *sid* is
     None, every pending prompt is released (used during shutdown).
+
+    Also withdraws open server→client JSON-RPC requests (U_NEXT wire)
+    so interrupt/shutdown cannot leave a renderer card waiting.
     """
     with _prompt_lock:
         for rid, (owner_sid, ev) in list(_pending.items()):
             if sid is None or owner_sid == sid:
                 _answers[rid] = ""
                 ev.set()
+    from tui_gateway import server_requests
+
+    server_requests.cancel(sid, reason="interrupted" if sid else "shutdown")
 
 
 # ── Agent factory ────────────────────────────────────────────────────
@@ -10654,6 +10689,8 @@ def _live_session_payload(
         payload["pending_approval"] = approval
     if clarify := _pending_clarify_request_payload(sid):
         payload["pending_clarify"] = clarify
+    if open_reqs := _open_requests(sid):
+        payload["open_requests"] = open_reqs
     return payload
 
 

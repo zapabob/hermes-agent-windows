@@ -1,4 +1,10 @@
-import { type ConnectionState, type GatewayEvent, registryBackendScopeKey, resolveGatewayWsUrl } from '@hermes/shared'
+import { type ConnectionState, type GatewayEvent, type ServerRequest, registryBackendScopeKey, resolveGatewayWsUrl } from '@hermes/shared'
+
+/** Server→client request stamped with the socket's profile / connectionId. */
+export interface ScopedServerRequest extends ServerRequest {
+  connectionId?: string
+  profile: string
+}
 import { atom } from 'nanostores'
 
 import type { HermesConnection } from '@/global'
@@ -49,6 +55,8 @@ interface RegistryConfig {
    * the connection store. */
   activeConnectionId?: () => null | string
   onEvent: (event: GatewayEvent) => void
+  /** Server→client JSON-RPC requests (clarify/approval/…); answer on same socket. */
+  onServerRequest?: (request: ScopedServerRequest) => void
   onActiveConnectionInvalidated?: (fallbackProfile: string, activationEpoch: number) => void
   onActiveConnectionChanged?: (connection: HermesConnection) => void
   /**
@@ -89,6 +97,7 @@ interface Secondary {
   activeRequests: number
   connectPromise: Promise<void> | null
   offEvent: () => void
+  offRequest: () => void
   offState: () => void
   reconnectTimer: ReturnType<typeof setTimeout> | null
   reconnectAttempt: number
@@ -733,6 +742,7 @@ function createSecondary(profile: string, connectionId: null | string = null): S
     activeRequests: 0,
     connectPromise: null,
     offEvent: () => {},
+    offRequest: () => {},
     offState: () => {},
     reconnectTimer: null,
     reconnectAttempt: 0,
@@ -749,6 +759,9 @@ function createSecondary(profile: string, connectionId: null | string = null): S
   entry.offEvent = gateway.onEvent(event => {
     g.config?.onEvent({ ...event, profile, ...(connectionId ? { connectionId } : {}) })
     releaseTerminalTurnLease(entry.scope, event)
+  })
+  entry.offRequest = gateway.onRequest(request => {
+    g.config?.onServerRequest?.({ ...request, ...(connectionId ? { connectionId } : {}), profile })
   })
   entry.offState = gateway.onState(state => {
     reportGatewayState(scope, state)
@@ -1604,6 +1617,7 @@ function disposeSecondary(entry: Secondary): void {
   entry.wantOpen = false
   clearTimer(entry)
   entry.offEvent()
+  entry.offRequest()
   entry.offState()
   entry.gateway.close()
 }

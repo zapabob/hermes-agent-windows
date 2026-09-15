@@ -46,9 +46,36 @@ export interface JsonRpcFrame {
   error?: JsonRpcErrorPayload
   id?: GatewayRequestId | null
   method?: string
-  params?: GatewayEvent
+  params?: GatewayEvent | ServerRequestParams
   result?: unknown
 }
+
+/**
+ * Params of a server→client request (`tui_gateway/server_requests.py`): the
+ * backend asking the renderer a question. `session_id` names the session
+ * blocked on the answer.
+ */
+export interface ServerRequestParams extends Record<string, unknown> {
+  session_id?: string
+}
+
+/** One inbound server→client request handed to a `ServerRequestHandler`. */
+export interface ServerRequest<M extends string = string, P extends ServerRequestParams = ServerRequestParams> {
+  id: string
+  method: M
+  params: P
+  respond: (result: Record<string, unknown>) => void
+  fail: (code: number, message: string) => void
+  replayed?: boolean
+}
+
+export type ServerRequestHandler = (request: ServerRequest) => boolean | void
+
+/** JSON-RPC "method not found" — channel answers this when no handler accepts. */
+export const JSON_RPC_METHOD_NOT_FOUND = -32601
+
+const isServerRequestFrame = (frame: JsonRpcFrame): frame is JsonRpcFrame & { id: string; method: string } =>
+  typeof frame.id === 'string' && typeof frame.method === 'string' && frame.method !== 'event'
 
 /** JSON-RPC error with optional structured `data` from the gateway. */
 export class JsonRpcGatewayError extends Error {
@@ -80,6 +107,8 @@ export interface GatewayClientOptions {
   heartbeatIntervalMs?: number
   /** Return true to intercept the default closed-state transition. */
   onSocketClose?: (event: CloseEvent) => boolean | void
+  /** Inbound server→client request nobody handled (after -32601 answer). */
+  onUnhandledRequest?: (request: { id: string; method: string; params: ServerRequestParams }) => void
   requestIdPrefix?: string
   requestTimeoutMs?: number
   socketFactory?: (url: string) => WebSocketLike
@@ -125,8 +154,11 @@ export class JsonRpcGatewayClient {
   private inFlightConnect: Promise<void> | null = null
   private readonly eventHandlers = new Map<string, Set<(event: GatewayEvent) => void>>()
   private readonly stateHandlers = new Set<(state: ConnectionState) => void>()
-  private readonly options: Required<Omit<GatewayClientOptions, 'socketFactory'>> &
-    Pick<GatewayClientOptions, 'socketFactory'>
+  private readonly requestHandlers: ServerRequestHandler[] = []
+  private readonly options: Required<
+    Omit<GatewayClientOptions, 'socketFactory' | 'onUnhandledRequest'>
+  > &
+    Pick<GatewayClientOptions, 'socketFactory' | 'onUnhandledRequest'>
 
   constructor(options: GatewayClientOptions = {}) {
     this.options = {
@@ -138,6 +170,7 @@ export class JsonRpcGatewayClient {
       heartbeatIntervalMs: options.heartbeatIntervalMs ?? DEFAULT_HEARTBEAT_INTERVAL_MS,
       notConnectedErrorMessage: options.notConnectedErrorMessage ?? 'gateway not connected',
       onSocketClose: options.onSocketClose ?? (() => false),
+      onUnhandledRequest: options.onUnhandledRequest,
       requestIdPrefix: options.requestIdPrefix ?? 'r',
       requestTimeoutMs: options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS,
       socketFactory: options.socketFactory
@@ -387,6 +420,85 @@ export class JsonRpcGatewayClient {
     return () => this.stateHandlers.delete(handler)
   }
 
+  /**
+   * Register a handler for server→client requests (clarify, approval, sudo, …).
+   * Handlers run in order until one accepts (returns anything but `false`);
+   * unhandled requests get `-32601` so the backend does not wait out its deadline.
+   */
+  onRequest(handler: ServerRequestHandler): () => void {
+    this.requestHandlers.push(handler)
+
+    return () => {
+      const index = this.requestHandlers.indexOf(handler)
+
+      if (index >= 0) {
+        this.requestHandlers.splice(index, 1)
+      }
+    }
+  }
+
+  /**
+   * Deliver a server request to handlers. Live frames arrive via `handleMessage`;
+   * owners also call this for `open_requests` on reconnect (`replayed: true`).
+   */
+  deliverRequest(id: string, method: string, params: ServerRequestParams, replayed = false): boolean {
+    let settled = false
+
+    const send = (frame: Record<string, unknown>) => {
+      if (settled) {
+        return
+      }
+
+      settled = true
+      const socket = this.socket
+
+      if (!socket || socket.readyState !== WebSocket.OPEN) {
+        return
+      }
+
+      try {
+        socket.send(JSON.stringify({ jsonrpc: '2.0', id, ...frame }))
+      } catch {
+        // Generation gone; backend withdraws via timeout / cancel.
+      }
+    }
+
+    const request: ServerRequest = {
+      id,
+      method,
+      params,
+      replayed,
+      respond: result => send({ result }),
+      fail: (code, message) => send({ error: { code, message } })
+    }
+
+    for (const handler of this.requestHandlers) {
+      if (handler(request) !== false) {
+        return true
+      }
+    }
+
+    request.fail(JSON_RPC_METHOD_NOT_FOUND, `no handler for server request: ${method}`)
+    this.options.onUnhandledRequest?.({ id, method, params })
+
+    return false
+  }
+
+  private deliverOpenRequests(result: unknown): void {
+    const open = (result as { open_requests?: unknown } | null)?.open_requests
+
+    if (!Array.isArray(open)) {
+      return
+    }
+
+    for (const entry of open as Array<{ id?: unknown; method?: unknown; params?: unknown }>) {
+      if (typeof entry?.id === 'string' && typeof entry.method === 'string') {
+        const params = entry.params && typeof entry.params === 'object' ? (entry.params as ServerRequestParams) : {}
+        this.deliverRequest(entry.id, entry.method, params, true)
+      }
+    }
+  }
+
   request<T>(
     method: string,
     params: Record<string, unknown> = {},
@@ -485,6 +597,15 @@ export class JsonRpcGatewayClient {
       return
     }
 
+    // Server→client request: string id + method (not the `event` notification).
+    if (isServerRequestFrame(frame)) {
+      const params =
+        frame.params && typeof frame.params === 'object' ? (frame.params as ServerRequestParams) : {}
+      this.deliverRequest(frame.id, frame.method, params, false)
+
+      return
+    }
+
     if (frame.id !== undefined && frame.id !== null) {
       const call = this.pending.get(frame.id)
 
@@ -502,15 +623,19 @@ export class JsonRpcGatewayClient {
           })
         )
       } else {
+        // Reconnect snapshots may carry unanswered server requests.
+        this.deliverOpenRequests(frame.result)
         call.resolve(frame.result)
       }
 
       return
     }
 
-    if (frame.method === 'event' && frame.params?.type) {
-      if (frame.params.type === 'gateway.ready') {
-        if (this.gatewayReadyAdvertisesHeartbeat(frame.params.payload)) {
+    if (frame.method === 'event' && frame.params && typeof frame.params === 'object' && 'type' in frame.params) {
+      const event = frame.params as GatewayEvent
+
+      if (event.type === 'gateway.ready') {
+        if (this.gatewayReadyAdvertisesHeartbeat(event.payload)) {
           const socket = this.socket
 
           if (socket) {
@@ -524,7 +649,7 @@ export class JsonRpcGatewayClient {
         // replay return empty ("client ahead") and can suppress gap
         // detection forever. Drop all watermarks so this connection starts
         // fresh; the app layer re-hydrates state via session.resume anyway.
-        const payload = frame.params.payload as { epoch?: unknown } | undefined
+        const payload = event.payload as { epoch?: unknown } | undefined
         const epoch = typeof payload?.epoch === 'string' ? payload.epoch : null
 
         if (epoch) {
@@ -536,14 +661,14 @@ export class JsonRpcGatewayClient {
         }
       }
 
-      this.recordSeq(frame.params)
+      this.recordSeq(event)
 
       // While a replay RPC is in flight, remember which seqs arrived live —
       // the replay response overlaps with them (server returns everything
       // > our pre-replay watermark) and must not re-dispatch those.
       if (this.liveSeqsDuringReplay) {
-        const sid = frame.params.session_id
-        const seq = (frame.params as { seq?: unknown }).seq
+        const sid = event.session_id
+        const seq = (event as { seq?: unknown }).seq
 
         if (sid && typeof seq === 'number') {
           let set = this.liveSeqsDuringReplay.get(sid)
@@ -557,7 +682,7 @@ export class JsonRpcGatewayClient {
         }
       }
 
-      this.dispatchEvent(frame.params)
+      this.dispatchEvent(event)
     }
   }
 

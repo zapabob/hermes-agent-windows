@@ -56,6 +56,10 @@ export {
   type JsonRpcFrame,
   JsonRpcGatewayClient,
   JsonRpcGatewayError,
+  JSON_RPC_METHOD_NOT_FOUND,
+  type ServerRequest,
+  type ServerRequestHandler,
+  type ServerRequestParams,
   type WebSocketLike
 } from './json-rpc-gateway'
 export { skillInvocationText } from './skill-scaffold'
