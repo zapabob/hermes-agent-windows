@@ -16,6 +16,16 @@ interface DesktopStopFenceIdentity extends Record<string, unknown> {
   timestamp: string
 }
 
+/**
+ * Stable Desktop lifecycle identity for DESKTOP_STOP ownership.
+ *
+ * Must NOT be a mutable checkout / repoRoot (Documents vs %HERMES_HOME%\hermes-agent).
+ * HERMES_HOME is shared across those equivalent roots for one Windows deployment.
+ */
+function resolveDesktopLifecycleId(hermesHome: string): string {
+  return path.resolve(String(hermesHome || '')).toLowerCase()
+}
+
 function watchdogMaintenancePath(env: NodeJS.ProcessEnv = process.env) {
   const explicit = String(env.HERMES_WATCHDOG_DATA || '').trim()
   const localAppData = String(env.LOCALAPPDATA || '').trim()
@@ -55,6 +65,53 @@ function normalizedRoot(value: unknown) {
   }
 }
 
+function activeHermesRootForHome(hermesHome: string) {
+  return path.join(path.resolve(hermesHome), 'hermes-agent')
+}
+
+/**
+ * Whether a stored fence belongs to this Desktop lifecycle.
+ *
+ * New fences key on desktopLifecycleId (== resolved HERMES_HOME).
+ * Legacy C2 fences keyed only on repoRoot: accept when that path is one of the
+ * equivalent roots for the clearer’s hermesHome (active install and/or known
+ * checkout spellings). Never “ignore any mismatch”.
+ */
+function fenceMatchesDesktopLifecycle(
+  existing: Record<string, unknown>,
+  options: {
+    hermesHome: string
+    equivalentRoots?: string[]
+  }
+): boolean {
+  const hermesHome = String(options.hermesHome || '').trim()
+
+  if (!hermesHome) {
+    return false
+  }
+
+  const clearerId = resolveDesktopLifecycleId(hermesHome)
+  const storedId = existing.desktopLifecycleId ?? existing.hermesHome
+
+  if (typeof storedId === 'string' && storedId.trim()) {
+    return normalizedRoot(storedId) === clearerId
+  }
+
+  // Legacy C2: ownership was mutable repoRoot.
+  const storedRoot = normalizedRoot(existing.repoRoot)
+
+  if (!storedRoot) {
+    return false
+  }
+
+  const equivalents = [
+    activeHermesRootForHome(hermesHome),
+    ...(options.equivalentRoots || []).map(root => path.resolve(String(root || '')))
+  ]
+
+  return equivalents.some(root => normalizedRoot(root) === storedRoot)
+}
+
 function atomicWriteFence(filePath: string, payload: Record<string, unknown>) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true })
   const temporary = path.join(path.dirname(filePath), `.${path.basename(filePath)}.${process.pid}.${randomUUID()}.tmp`)
@@ -80,11 +137,18 @@ function atomicWriteFence(filePath: string, payload: Record<string, unknown>) {
 
 function writeDesktopStopFence({
   filePath,
+  hermesHome,
   repoRoot,
   now = new Date()
 }: {
   filePath: string
-  repoRoot: string
+  /** Canonical Desktop lifecycle identity (HERMES_HOME). Preferred. */
+  hermesHome?: string
+  /**
+   * Optional checkout path retained as metadata / legacy C2 compatibility.
+   * NOT the ownership key when hermesHome is provided.
+   */
+  repoRoot?: string
   now?: Date
 }) {
   const existing = readFence(filePath)
@@ -93,7 +157,27 @@ function writeDesktopStopFence({
     return { written: false, preserved: true }
   }
 
+  const resolvedHome = String(hermesHome || '').trim()
+  const resolvedRepo = String(repoRoot || '').trim()
+
+  // C2 callers passed only repoRoot. Derive lifecycle id when repoRoot is the
+  // active install (.../hermes-agent) by using its parent as HERMES_HOME.
+  let lifecycleHome = resolvedHome
+
+  if (!lifecycleHome && resolvedRepo) {
+    const base = path.basename(path.resolve(resolvedRepo)).toLowerCase()
+
+    if (base === 'hermes-agent') {
+      lifecycleHome = path.dirname(path.resolve(resolvedRepo))
+    }
+  }
+
+  if (!lifecycleHome && !resolvedRepo) {
+    throw new Error('writeDesktopStopFence requires hermesHome (or legacy repoRoot)')
+  }
+
   const expiresAt = new Date(now.getTime() + DESKTOP_STOP_LEASE_MS)
+  const desktopLifecycleId = lifecycleHome ? resolveDesktopLifecycleId(lifecycleHome) : undefined
 
   const payload: DesktopStopFenceIdentity = {
     schemaVersion: 1,
@@ -107,7 +191,11 @@ function writeDesktopStopFence({
     leaseExpiresAt: expiresAt.toISOString(),
     pid: process.pid,
     processStartTime: null,
-    repoRoot: path.resolve(repoRoot)
+    // Ownership key (stable). repoRoot remains informational for operators.
+    ...(desktopLifecycleId
+      ? { desktopLifecycleId, hermesHome: path.resolve(lifecycleHome) }
+      : {}),
+    ...(resolvedRepo ? { repoRoot: path.resolve(resolvedRepo) } : {})
   }
 
   atomicWriteFence(filePath, payload)
@@ -181,21 +269,59 @@ async function waitForDesktopStopFenceAck({
 
 function clearDesktopStopFence({
   filePath,
+  hermesHome,
   repoRoot,
+  equivalentRoots,
   now = new Date()
 }: {
   filePath: string
-  repoRoot: string
+  hermesHome?: string
+  /** Legacy C2 clearer path / Documents checkout spelling. */
+  repoRoot?: string
+  /** Additional checkout paths that belong to the same Desktop lifecycle. */
+  equivalentRoots?: string[]
   now?: Date
 }) {
   const existing = readFence(filePath)
 
-  if (
-    existing?.state !== DESKTOP_STOP ||
-    existing.owner !== DESKTOP_STOP_OWNER ||
-    normalizedRoot(existing.repoRoot) !== normalizedRoot(repoRoot)
-  ) {
+  if (existing?.state !== DESKTOP_STOP || existing.owner !== DESKTOP_STOP_OWNER) {
     return false
+  }
+
+  const resolvedHome = String(hermesHome || '').trim()
+  const resolvedRepo = String(repoRoot || '').trim()
+
+  // Derive hermesHome from legacy-only callers that pass the active root.
+  let lifecycleHome = resolvedHome
+
+  if (!lifecycleHome && resolvedRepo) {
+    const base = path.basename(path.resolve(resolvedRepo)).toLowerCase()
+
+    if (base === 'hermes-agent') {
+      lifecycleHome = path.dirname(path.resolve(resolvedRepo))
+    }
+  }
+
+  if (!lifecycleHome) {
+    // Pure repoRoot equality (C2). Documents vs .hermes\hermes-agent fails here
+    // by design of the broken identity — callers must pass hermesHome.
+    if (!resolvedRepo) {
+      return false
+    }
+
+    if (normalizedRoot(existing.repoRoot) !== normalizedRoot(resolvedRepo)) {
+      return false
+    }
+  } else {
+    const roots = [...(equivalentRoots || [])]
+
+    if (resolvedRepo) {
+      roots.push(resolvedRepo)
+    }
+
+    if (!fenceMatchesDesktopLifecycle(existing, { hermesHome: lifecycleHome, equivalentRoots: roots })) {
+      return false
+    }
   }
 
   atomicWriteFence(filePath, {
@@ -214,6 +340,8 @@ export {
   clearDesktopStopFence,
   DESKTOP_STOP,
   DESKTOP_STOP_OWNER,
+  fenceMatchesDesktopLifecycle,
+  resolveDesktopLifecycleId,
   waitForDesktopStopFenceAck,
   watchdogMaintenancePath,
   writeDesktopStopFence

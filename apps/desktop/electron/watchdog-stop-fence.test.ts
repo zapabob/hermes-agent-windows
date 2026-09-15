@@ -134,3 +134,114 @@ test('Windows default and portable fallback match the Go watchdog data paths', (
   )
   assert.equal(watchdogMaintenancePath({}), path.join(os.homedir(), '.hermes', 'watchdog-go', 'maintenance.json'))
 })
+
+/**
+ * C2 regression (951dad8f…): DESKTOP_STOP ownership is keyed by mutable
+ * checkout `repoRoot`. Writer and clearer can observe different absolute roots
+ * for the SAME Windows Desktop deployment:
+ *   - writer:  %HERMES_HOME%\hermes-agent   (.hermes\hermes-agent)
+ *   - clearer: Documents\...\hermes-agent   (source / HERMES_DESKTOP_HERMES_ROOT)
+ * Exact-path equality then refuses clear → DESKTOP_STOP lingers → watchdog
+ * stays in maintenance → healthy backend is not re-attached after restart.
+ *
+ * Contract: Desktop lifecycle identity ≠ repo checkout path. Clear must succeed
+ * across equivalent roots of one installation; a foreign HERMES_HOME must still
+ * be rejected. Backend process identity is out of scope for the fence module
+ * but the restart path must leave it unchanged (asserted as a fixture here).
+ */
+test('clears DESKTOP_STOP across equivalent Windows desktop roots before reconnecting', () => {
+  const { root, filePath } = temporaryFence()
+  const hermesHome = path.join(root, '.hermes')
+  const activeRoot = path.join(hermesHome, 'hermes-agent')
+  const documentsRoot = path.join(root, 'Documents', 'New project', 'hermes-agent')
+  const foreignHome = path.join(root, 'other-profile', '.hermes')
+  const now = new Date('2026-09-15T12:19:02.311Z')
+  const later = new Date('2026-09-15T22:15:00.000Z')
+
+  // Fixture: one healthy watchdog-managed backend that must survive restart.
+  const backendBefore = { pid: 12692, port: 9119, baseUrl: 'http://127.0.0.1:9119', creationCount: 1 }
+  let backendAfter = { ...backendBefore }
+
+  fs.mkdirSync(activeRoot, { recursive: true })
+  fs.mkdirSync(documentsRoot, { recursive: true })
+
+  // On-disk shape of a C2 fence: ownership keyed ONLY by repoRoot (no lifecycle id).
+  fs.writeFileSync(
+    filePath,
+    `${JSON.stringify(
+      {
+        schemaVersion: 1,
+        state: DESKTOP_STOP,
+        owner: 'hermes-desktop-intentional-stop',
+        nonce: 'd7b3119c578140dfa86e2cd5039adcdb',
+        epoch: 1789474742311000,
+        timestamp: now.toISOString(),
+        reason: 'User intentionally closed Hermes Desktop',
+        leaseSeconds: 315360000,
+        leaseExpiresAt: '2036-09-12T12:19:02.311Z',
+        pid: 2868,
+        processStartTime: null,
+        repoRoot: path.resolve(activeRoot)
+      },
+      null,
+      2
+    )}\n`,
+    'utf8'
+  )
+
+  assert.equal(JSON.parse(fs.readFileSync(filePath, 'utf8')).state, DESKTOP_STOP)
+
+  // Pure checkout-path clear (C2 clearer observing Documents) — must not be
+  // the ownership model; with only repoRoot equality this stays false.
+  assert.equal(
+    clearDesktopStopFence({
+      filePath,
+      repoRoot: documentsRoot,
+      now: later
+    }),
+    false,
+    'Documents vs .hermes\\hermes-agent must not match on raw repoRoot equality'
+  )
+
+  // Foreign HERMES_HOME must still be refused (ownership boundary intact).
+  assert.equal(
+    clearDesktopStopFence({
+      filePath,
+      hermesHome: foreignHome,
+      equivalentRoots: [path.join(foreignHome, 'hermes-agent'), documentsRoot],
+      now: later
+    }),
+    false,
+    'foreign HERMES_HOME / install must not clear DESKTOP_STOP'
+  )
+  assert.equal(JSON.parse(fs.readFileSync(filePath, 'utf8')).state, DESKTOP_STOP)
+
+  // Same Desktop lifecycle: clearer observes Documents checkout spelling but
+  // owns the shared hermesHome. Must clear without normalizing the two roots
+  // into each other.
+  const cleared = clearDesktopStopFence({
+    filePath,
+    hermesHome,
+    repoRoot: documentsRoot,
+    equivalentRoots: [documentsRoot],
+    now: later
+  })
+
+  assert.equal(
+    cleared,
+    true,
+    'repoRoot identity mismatch -> DESKTOP_STOP not cleared (Desktop lifecycle identity must not be the mutable checkout path)'
+  )
+  assert.equal(JSON.parse(fs.readFileSync(filePath, 'utf8')).state, 'NORMAL')
+
+  // After clear, attach to the existing healthy backend — no respawn.
+  const reconnectAllowed = JSON.parse(fs.readFileSync(filePath, 'utf8')).state === 'NORMAL'
+  assert.equal(reconnectAllowed, true)
+  assert.equal(backendAfter.pid, backendBefore.pid)
+  assert.equal(backendAfter.port, backendBefore.port)
+  assert.equal(backendAfter.creationCount, 1)
+  assert.equal(backendAfter.creationCount, backendBefore.creationCount)
+
+  backendAfter = { ...backendBefore }
+  assert.deepEqual(backendAfter, backendBefore)
+})

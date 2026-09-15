@@ -399,6 +399,7 @@ import {
 import { fetchMarketplaceThemes, searchMarketplaceThemes } from './vscode-marketplace'
 import { createWakeIndicatorWindowController } from './wake-indicator-window'
 import { resolveWatchdogPrewarmedBackend } from './watchdog-backend'
+import { shouldWriteDesktopStopFence } from './desktop-restart-lifecycle'
 import {
   clearDesktopStopFence,
   waitForDesktopStopFenceAck,
@@ -649,9 +650,11 @@ if (IS_WINDOWS) {
     )
 
     try {
+      isQuittingForRestart = true
       app.relaunch({ args: buildNoSandboxRelaunchArgs(process.argv.slice(1)) })
       void exitAfterBackendShutdown(0)
     } catch (error) {
+      isQuittingForRestart = false
       console.error(`[hermes] --no-sandbox relaunch failed: ${error?.message || error}`)
     }
   })
@@ -3103,6 +3106,8 @@ let updateInFlight = false
 // set, window-all-closed calls app.quit() on every platform so the process
 // actually dies and the hand-off script can proceed immediately.
 let isQuittingForHandoff = false
+/** True when this quit is paired with app.relaunch() — must not write DESKTOP_STOP. */
+let isQuittingForRestart = false
 let desktopStopFenceAckDone = false
 let desktopStopFenceAckWait: Promise<void> | null = null
 
@@ -14098,9 +14103,11 @@ function createWindow() {
         rememberLog('[renderer] Windows sandbox crash loop detected; relaunching once with --no-sandbox (#38216)')
 
         try {
+          isQuittingForRestart = true
           app.relaunch({ args: buildNoSandboxRelaunchArgs(process.argv.slice(1)) })
           void exitAfterBackendShutdown(0)
         } catch (err) {
+          isQuittingForRestart = false
           rememberLog(`[renderer] --no-sandbox relaunch failed: ${err?.message || err}`)
         }
       },
@@ -17229,7 +17236,15 @@ if (!isPrimaryInstance) {
     try {
       clearDesktopStopFence({
         filePath: watchdogMaintenancePath(),
-        repoRoot: ACTIVE_HERMES_ROOT
+        // DESKTOP_STOP ownership is the Desktop lifecycle (HERMES_HOME), not a
+        // mutable checkout path — Documents vs %HERMES_HOME%\hermes-agent must
+        // clear the same stop marker for one Windows deployment.
+        hermesHome: HERMES_HOME,
+        repoRoot: ACTIVE_HERMES_ROOT,
+        equivalentRoots: [
+          process.env.HERMES_DESKTOP_HERMES_ROOT,
+          typeof SOURCE_REPO_ROOT === 'string' ? SOURCE_REPO_ROOT : null
+        ].filter((value): value is string => Boolean(value && String(value).trim()))
       })
     } catch (error) {
       rememberLog(`[watchdog] could not clear intentional Desktop stop fence: ${error.message}`)
@@ -17474,7 +17489,15 @@ app.on('before-quit', event => {
     return
   }
 
-  if (IS_WINDOWS && !isQuittingForHandoff && !systemShutdownInProgress && !desktopStopFenceAckDone) {
+  if (
+    shouldWriteDesktopStopFence({
+      isWindows: IS_WINDOWS,
+      isQuittingForHandoff,
+      systemShutdownInProgress,
+      isQuittingForRestart,
+      desktopStopFenceAckDone
+    })
+  ) {
     event.preventDefault()
 
     if (!desktopStopFenceAckWait) {
@@ -17483,6 +17506,8 @@ app.on('before-quit', event => {
       try {
         const result = writeDesktopStopFence({
           filePath,
+          hermesHome: HERMES_HOME,
+          // Informative checkout spelling only — ownership key is hermesHome.
           repoRoot: ACTIVE_HERMES_ROOT
         })
 
