@@ -56,10 +56,10 @@
     }
   },
   "product_versions_at_D0_NEXT": {
-    "downstream_product": "0.21.2",
-    "recorded_upstream_version": "0.21.2",
+    "downstream_product": "0.21.3",
+    "recorded_upstream_version": "0.21.3",
     "allow_upstream_sync": false,
-    "note": "Compatibility target for U_NEXT 0.21.3 is recorded separately from product SemVer; H not rewritten"
+    "note": "Product SemVer synced to U_NEXT 0.21.3 during main deployment; H snapshot_sha unchanged"
   },
   "candidate": {
     "branch": "feat/windows-native-carry-v0.21.3",

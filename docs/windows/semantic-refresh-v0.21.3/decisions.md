@@ -10,7 +10,7 @@
 | U_PREV (prior campaign) | `6dd091a89c33e6e4909a80f78343bb384deb5ca8` (not overwritten) |
 | H snapshot | `b51c055a12220f8c7c18660e8599365012e19532` (unchanged) |
 
-`allow_upstream_sync: false` retained. Product SemVer remains 0.21.2; U_NEXT 0.21.3 is the compatibility target for this campaign.
+`allow_upstream_sync: false` retained. Product SemVer synced to 0.21.3 with U_NEXT 0.21.3 (operator-approved sync during main deployment).
 
 ## Slice NC-0213-A — MCP / profile trust
 

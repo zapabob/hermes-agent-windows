@@ -7,8 +7,8 @@ The two projects retain separate release, issue, and support authorities.
 ## Downstream semantic versions and upstream provenance
 
 The downstream may increment its own semantic version for Windows fixes.
-Version 0.21.2 aligns the product SemVer with the recorded upstream 0.21.2
-release (`v2026.9.11`, peeled commit in `upstream.release_commit_sha`).
+Version 0.21.3 aligns the product SemVer with the recorded upstream 0.21.3
+release (`v2026.9.14`, peeled commit in `upstream.release_commit_sha`).
 `downstream/distribution.json` still declares `version_source: downstream`;
 the frozen historical `snapshot_sha` (H) remains independent provenance and
 is not advanced merely because the recorded upstream release moved.
@@ -34,7 +34,7 @@ and is never inferred from GitHub-hosted runners.
 
 Main-branch pushes build and qualify preview artifacts but do not publish a
 public GitHub Release. Only a version tag matching the downstream
-distribution metadata, such as `v0.21.2`, may publish the stable bundle. The
+distribution metadata, such as `v0.21.3`, may publish the stable bundle. The
 release contains the
 NSIS installer, portable ZIP, `release-manifest.json`, `SHA256SUMS.txt`, release
 notes, qualification reports, and upgrade-baseline identity.

@@ -26,13 +26,13 @@ def test_distribution_metadata_is_the_downstream_product_authority() -> None:
 
     assert distribution.id == "hermes-agent-windows"
     assert distribution.display_name == "Hermes Agent Windows Workstation Edition"
-    assert distribution.version == "0.21.2"
+    assert distribution.version == "0.21.3"
     assert distribution.version_source == "downstream"
     assert distribution.repository.slug == "zapabob/hermes-agent-windows"
     assert distribution.upstream.snapshot_sha == UPSTREAM_SNAPSHOT_SHA
-    assert distribution.upstream.version == "0.21.2"
+    assert distribution.upstream.version == "0.21.3"
     assert distribution.upstream.release_commit_sha == (
-        "939e45c91d751fadd94dcd1b873ac3cb44846213"
+        "345cd2b057a452236de401d3534b8502a7465e8d"
     )
     assert distribution.platform.tier == 1
     assert distribution.platform.architectures == ("x64",)
@@ -57,8 +57,8 @@ def test_product_version_aligns_with_recorded_upstream_release() -> None:
     package_lock = json.loads((ROOT / "package-lock.json").read_text(encoding="utf-8"))
 
     assert distribution.version_source == "downstream"
-    assert distribution.upstream.version == "0.21.2"
-    assert distribution.version == "0.21.2"
+    assert distribution.upstream.version == "0.21.3"
+    assert distribution.version == "0.21.3"
     assert pyproject["project"]["version"] == distribution.version
     assert desktop["version"] == distribution.version
     assert package_lock["packages"]["apps/desktop"]["version"] == distribution.version
@@ -68,7 +68,7 @@ def test_product_version_aligns_with_recorded_upstream_release() -> None:
     from hermes_cli import __release_date__, __version__
 
     assert __version__ == distribution.version
-    assert __release_date__ == "2026.9.13"
+    assert __release_date__ == "2026.9.14"
 
 
 def test_distribution_network_urls_never_target_upstream() -> None:
@@ -98,7 +98,7 @@ def test_version_lines_identify_distribution_snapshot_and_checkout() -> None:
     lines = distribution_version_lines(downstream_sha="b" * 40)
 
     assert lines == (
-        "Distribution: Hermes Agent Windows Workstation Edition 0.21.2",
+        "Distribution: Hermes Agent Windows Workstation Edition 0.21.3",
         f"Frozen upstream: {UPSTREAM_SNAPSHOT_SHA[:12]}",
         "Downstream revision: bbbbbbbbbbbb",
         "Update channel: stable",
@@ -106,10 +106,10 @@ def test_version_lines_identify_distribution_snapshot_and_checkout() -> None:
 
 
 @pytest.mark.parametrize("source, version, valid", [
-    ("upstream", "0.21.2", True),
+    ("upstream", "0.21.3", True),
     ("upstream", "0.21.0", False),
-    ("downstream", "0.21.2", True),
-    ("unknown", "0.21.2", False),
+    ("downstream", "0.21.3", True),
+    ("unknown", "0.21.3", False),
     ("downstream", "not-semver", False),
 ])
 def test_version_authority_preserves_upstream_contract(tmp_path, source, version, valid):
@@ -120,7 +120,7 @@ def test_version_authority_preserves_upstream_contract(tmp_path, source, version
     if valid:
         loaded = load_distribution(path)
         assert loaded.version == version
-        assert loaded.upstream.version == "0.21.2"
+        assert loaded.upstream.version == "0.21.3"
         assert loaded.upstream.snapshot_sha == UPSTREAM_SNAPSHOT_SHA
     else:
         with pytest.raises(ValueError):
