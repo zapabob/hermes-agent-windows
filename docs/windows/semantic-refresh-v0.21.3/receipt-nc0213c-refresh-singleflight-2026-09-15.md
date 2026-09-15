@@ -1,4 +1,4 @@
-# Receipt — NC-0213-C dashboard refresh single-flight
+# Receipt  ENC-0213-C dashboard refresh single-flight
 
 | Field | Value |
 |---|---|
@@ -8,9 +8,10 @@
 | U commits | `5dea46d13d`, `f561155a70` |
 | Decision | ADOPT |
 | Method | PORT/COMPOSE into `hermes_cli/dashboard_auth` |
-| Contract | Same RT → one IdP exchange; cookie gate + native route share flight table; refresh off event loop |
+| Contract | Same RT ↁEone IdP exchange; cookie gate + native route share flight table; refresh off event loop |
 | Command | `python -m pytest tests/hermes_cli/test_refresh_singleflight.py -q` |
 | Result | **13 passed** |
+| Exact tested SHA | `fbdea4ab460f8247d7a4f74095ac8363314493c7` |
 | LOCAL_DEPLOYED | NOT_RUN |
 | soak_24h | NOT_RUN |
 | PRIVATE_SECURITY | NOT_RUN |
@@ -20,6 +21,6 @@
 
 - `hermes_cli/dashboard_auth/refresh_singleflight.py` (new)
 - `hermes_cli/dashboard_auth/request_utils.py` (new; scan helper)
-- `hermes_cli/dashboard_auth/middleware.py` — coalesced + threadpool
-- `hermes_cli/dashboard_auth/routes.py` — native refresh coalesced + threadpool
+- `hermes_cli/dashboard_auth/middleware.py`  Ecoalesced + threadpool
+- `hermes_cli/dashboard_auth/routes.py`  Enative refresh coalesced + threadpool
 - `tests/hermes_cli/test_refresh_singleflight.py` (new)
