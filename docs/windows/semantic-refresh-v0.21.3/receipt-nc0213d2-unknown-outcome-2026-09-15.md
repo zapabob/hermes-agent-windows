@@ -1,4 +1,4 @@
-﻿# Receipt — NC-0213-D2 unknown-outcome / tool failure inference
+# Receipt — NC-0213-D2 unknown-outcome / tool failure inference
 
 | Field | Value |
 |---|---|
@@ -10,7 +10,7 @@
 | Method | COMPOSE into desktop tool presentation owners |
 | Contract | failureDeclared gate; completedAt without result → warning; notice tier; toolResultRecord separates metadata; no auto-red from stdout diagnostics |
 | Command | vitest (workspace install required; deferred to promotion gate) + static COMPOSE from U tests ported |
-| Exact tested SHA | *(filled after commit)* |
+| Exact tested SHA | `409181b96936c482cf604ea8b80c0a5521953824` |
 | main integration | NOT_DONE |
 
 ## Files
