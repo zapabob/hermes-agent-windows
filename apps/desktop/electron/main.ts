@@ -164,6 +164,7 @@ import { adoptServedDashboardToken } from './dashboard-token'
 import { loadOrCreateInstallationId, sshOwnershipId } from './desktop-installation'
 import { formatDesktopLogLine } from './desktop-log-line'
 import { resolveDesktopRemoteRoute } from './desktop-remote-route'
+import { shouldWriteDesktopStopFence } from './desktop-restart-lifecycle'
 import {
   buildPosixCleanupScript,
   buildWindowsCleanupScript,
@@ -399,7 +400,6 @@ import {
 import { fetchMarketplaceThemes, searchMarketplaceThemes } from './vscode-marketplace'
 import { createWakeIndicatorWindowController } from './wake-indicator-window'
 import { resolveWatchdogPrewarmedBackend } from './watchdog-backend'
-import { shouldWriteDesktopStopFence } from './desktop-restart-lifecycle'
 import {
   clearDesktopStopFence,
   waitForDesktopStopFenceAck,
@@ -12350,6 +12350,7 @@ async function startHermes() {
         // Match the owned local-spawn gate: HTTP-only readiness leaves the
         // renderer forever on CONNECTING when /api/ws rejects the token.
         const prewarmedWsUrl = buildGatewayWsUrl(prewarmed.baseUrl, prewarmed.token)
+
         const prewarmedWsProbe = await probeGatewayWebSocket(prewarmedWsUrl, {
           WebSocketImpl: globalThis.WebSocket
         })
