@@ -7,6 +7,8 @@ import {
   claimDecision,
   createBackendOutputTail,
   DEFAULT_OUTPUT_TAIL_LIMIT,
+  isPidOnlyStartMarker,
+  pidOnlyStartMarker,
   probeStartMarker,
   processStartMarker
 } from './backend-claim'
@@ -26,11 +28,14 @@ test('probe success claims even when the child already exited (ownership records
   assert.deepEqual(decision, { action: 'claim', startMarker: 'win:99' })
 })
 
-test('probe failure on a LIVE child fails closed while its exact handle is retained', () => {
+test('probe failure on a LIVE child degrades to PID-only identity (never kills healthy backend)', () => {
   const decision = claimDecision(true, { ok: false, reason: 'powershell.exe timed out after 30000ms' })
 
-  assert.equal(decision.action, 'fail')
+  assert.equal(decision.action, 'degrade')
   assert.match((decision as { reason: string }).reason, /timed out/)
+  assert.equal(pidOnlyStartMarker(4242), 'pid-only:4242')
+  assert.equal(isPidOnlyStartMarker('pid-only:4242'), true)
+  assert.equal(isPidOnlyStartMarker('win:99'), false)
 })
 
 test('probe failure on a DEAD child fails closed so the caller can attach the stderr tail', () => {

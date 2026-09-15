@@ -38,6 +38,7 @@ import {
   claimDecision,
   createBackendOutputTail,
   execText,
+  pidOnlyStartMarker,
   probeStartMarker,
   processStartMarker
 } from './backend-claim'
@@ -3395,7 +3396,17 @@ async function claimBackendChild(child, command, profile, nonce, outputTail: Bac
     )
   }
 
-  const startMarker = decision.startMarker
+  let startMarker: string
+
+  if (decision.action === 'degrade') {
+    startMarker = pidOnlyStartMarker(child.pid)
+    rememberLog(
+      `WARNING: process start marker probe failed for live Hermes backend PID ${child.pid}; ` +
+        `claiming with PID-only identity instead of stopping it: ${decision.reason}`
+    )
+  } else {
+    startMarker = decision.startMarker
+  }
 
   try {
     const identity = await backendOwnership.claim({

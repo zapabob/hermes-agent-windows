@@ -97,25 +97,10 @@ export function GatewayConnectingOverlay() {
     }
   }, [phase, previewing, gatewayState, reduce])
 
-  // Boot finished without ever publishing `open` (in-flight connect() early-
-  // return race, or a dropped state transition). `connecting` flips false via
-  // coldBootDoneRef while shownRef stays true — without an exit kick the
-  // overlay pins CONNECTING forever. Dismiss so the shell stays usable.
-  useEffect(() => {
-    if (phase !== 'live' || previewing) {
-      return
-    }
-
-    const bootDone = !boot.running && boot.progress >= 100 && !boot.error && !boot.visible
-
-    if (bootDone && gatewayState !== 'open' && shownRef.current) {
-      setPhase(reduce ? 'gone' : 'text-out')
-    }
-  }, [phase, previewing, gatewayState, boot.running, boot.progress, boot.error, boot.visible, reduce])
-
-  // Absolute dwell cap: if the gateway never opens and boot never completes
-  // (hung IPC / sanitize / adopt), still clear the modal so settings/recovery
-  // stay reachable instead of a permanent CONNECTING screen.
+  // Absolute dwell cap (Windows): if the gateway never opens and boot never
+  // completes (hung IPC / sanitize / adopt), still clear the modal so
+  // settings/recovery stay reachable. Overlay dismissal is NOT readiness —
+  // consumers must still require gatewayState === 'open'.
   useEffect(() => {
     if (phase !== 'live' || previewing || !shownRef.current) {
       return

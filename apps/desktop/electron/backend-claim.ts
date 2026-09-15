@@ -108,22 +108,44 @@ export async function probeStartMarker(
   }
 }
 
-export type ClaimDecision = { action: 'claim'; startMarker: string } | { action: 'fail'; reason: string }
+const PID_ONLY_MARKER_PREFIX = 'pid-only:'
+
+/**
+ * Degraded identity marker recorded when the start-marker probe failed but
+ * the child was verifiably alive. It satisfies the ownership schema (a
+ * non-empty startMarker) while telling identity matchers that only PID
+ * liveness — plus the command-line check layered on top — can be verified.
+ */
+export function pidOnlyStartMarker(pid: number): string {
+  return `${PID_ONLY_MARKER_PREFIX}${pid}`
+}
+
+export function isPidOnlyStartMarker(startMarker: unknown): boolean {
+  return typeof startMarker === 'string' && startMarker.startsWith(PID_ONLY_MARKER_PREFIX)
+}
+
+export type ClaimDecision =
+  | { action: 'claim'; startMarker: string }
+  | { action: 'degrade'; reason: string }
+  | { action: 'fail'; reason: string }
 
 /**
  * Pure claim policy for a freshly spawned backend child:
  *
  * - probe succeeded            → claim with the full start marker (unchanged).
- * - probe failed               → fail closed while the caller still owns the
- *                                exact ChildProcess handle. PID-only identity
- *                                is never persisted for destructive use.
+ * - probe failed, child ALIVE  → degrade to PID-only identity; NEVER kill a
+ *                                healthy backend over a flaky identity probe.
+ * - probe failed, child DEAD   → fail closed; the child's death is the real
+ *                                story and the caller attaches its stderr tail.
  */
-export function claimDecision(_childAlive: boolean, probe: StartMarkerProbe): ClaimDecision {
+export function claimDecision(childAlive: boolean, probe: StartMarkerProbe): ClaimDecision {
   if (probe.ok === true) {
     return { action: 'claim', startMarker: probe.startMarker }
   }
 
-  return { action: 'fail', reason: probe.reason }
+  const { reason } = probe
+
+  return childAlive ? { action: 'degrade', reason } : { action: 'fail', reason }
 }
 
 export interface BackendOutputTail {
