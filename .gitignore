@@ -297,3 +297,6 @@ native/fts5_cjk/*.so
 /.codex/campaigns/
 /ANTIGRAVITY_IMPLEMENTATION_SPEC_JA.md
 /airi-pr2477/
+
+# Local operator / recovery probe receipts (never source).
+/artifacts/
