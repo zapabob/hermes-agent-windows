@@ -1,4 +1,4 @@
-# Receipt — NC-0213-B state.db foreign-holder repair preflight
+# Receipt  ENC-0213-B state.db foreign-holder repair preflight
 
 | Field | Value |
 |---|---|
@@ -12,6 +12,7 @@
 | SKIP | virtiofs/9p WAL refuse (Linux `/proc/mountinfo`; U skips non-Linux) |
 | Command | `python -m pytest tests/hermes_state/test_foreign_holder_repair_preflight_native.py tests/hermes_state/test_shared_session_db_native.py -q` |
 | Result | **10 passed, 1 skipped** |
+| Exact tested SHA | `c7a670213c646bb990adf27f65a612837dc37890` |
 | LOCAL_DEPLOYED | NOT_RUN |
 | soak_24h | NOT_RUN |
 | PRIVATE_SECURITY | NOT_RUN |
@@ -19,5 +20,5 @@
 
 ## Files
 
-- `hermes_state.py` — `foreign_state_db_holders`, realpath canonicalization, `_live_writer_holds_db` fail-closed on holders
-- `tests/hermes_state/test_foreign_holder_repair_preflight_native.py` — new
+- `hermes_state.py`  E`foreign_state_db_holders`, realpath canonicalization, `_live_writer_holds_db` fail-closed on holders
+- `tests/hermes_state/test_foreign_holder_repair_preflight_native.py`  Enew
