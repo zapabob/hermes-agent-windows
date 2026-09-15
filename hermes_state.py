@@ -3136,31 +3136,105 @@ def _db_opens_cleanly(db_path: Path) -> Optional[str]:
         conn.close()
 
 
-def _live_writer_holds_db(db_path: Path) -> bool:
-    """True when a connection outside this call still holds ``db_path`` open.
+def _canonical_sqlite_holder_path(path: str) -> str:
+    """Normalize a path for holder matching (strip deleted suffix; realpath)."""
+    clean = path.removesuffix(" (deleted)")
+    return os.path.normcase(os.path.realpath(clean))
 
-    Detection works by asking SQLite for the thing a repair actually needs and
-    a live writer cannot grant: ``PRAGMA locking_mode=EXCLUSIVE`` followed by
-    ``BEGIN IMMEDIATE``.  In WAL mode, entering exclusive locking mode
-    requires exclusive locks on the WAL index, so any other open connection —
-    reader or writer — makes it fail with SQLITE_BUSY.  Neither statement
-    parses the schema, so this works on the malformed databases repair exists
-    to handle.
 
-    Fails **open** (returns False) on anything other than a positive
-    busy/locked signal: refusing to repair a database that nobody is actually
-    holding would strand the very self-heal path this guard protects.
+def foreign_state_db_holders(db_path: Path) -> List[Tuple[int, str]]:
+    """Return foreign holders of the DB or one of its WAL sidecars.
 
-    Scope: the WAL-index exclusive lock is what makes this detect a holder, so
-    the guard is effective in WAL mode. On SQLite builds carrying the WAL-reset
-    bug and on NFS/SMB, Hermes deliberately runs ``state.db`` in
-    ``journal_mode=DELETE`` (see :func:`apply_wal_with_fallback`); there a held
-    reader takes only a SHARED lock, ``BEGIN IMMEDIATE`` still acquires
-    RESERVED, and this probe returns False. In that mode repair is serialised
-    only by the cross-process repairer lock rather than by this holder probe.
-    The 2026-08 incident that motivated the guard was in WAL mode, which this
-    covers; broadening detection to DELETE mode is left to a follow-up.
+    Windows returns ``[]``: querying arbitrary processes for open handles can
+    block for minutes on device-backed files, and Windows refuses replacing
+    SQLite sidecars while another process holds them open.
+
+    Elsewhere uses ``realpath`` (not ``abspath``) so a symlinked HERMES_HOME
+    still matches kernel-resolved paths from psutil/libproc (#110914).
     """
+    if _IS_WINDOWS:
+        return []
+
+    db_path_str = os.path.realpath(os.fspath(db_path))
+    watched = {
+        _canonical_sqlite_holder_path(db_path_str),
+        _canonical_sqlite_holder_path(db_path_str + "-wal"),
+        _canonical_sqlite_holder_path(db_path_str + "-shm"),
+    }
+    holders: List[Tuple[int, str]] = []
+
+    if sys.platform.startswith("linux"):
+        try:
+            own_pid = os.getpid()
+            for pid_str in os.listdir("/proc"):
+                if not pid_str.isdigit():
+                    continue
+                pid = int(pid_str)
+                if pid == own_pid:
+                    continue
+                fd_dir = f"/proc/{pid}/fd"
+                try:
+                    fds = os.listdir(fd_dir)
+                except OSError:
+                    cmdline = _read_proc_cmdline(pid)
+                    if cmdline is not None and _looks_like_hermes(cmdline):
+                        holders.append((pid, f"uninspectable holder: {cmdline[:80]}"))
+                    continue
+                for fd in fds:
+                    try:
+                        target = os.readlink(f"{fd_dir}/{fd}")
+                    except OSError:
+                        continue
+                    if _canonical_sqlite_holder_path(target) in watched:
+                        holders.append((pid, target))
+        except Exception as exc:
+            logger.warning(
+                "Could not prove state.db has no foreign holders; "
+                "deferring structural maintenance: %s",
+                exc,
+            )
+            holders.append((-1, f"open-file scan failed: {exc}"))
+        return holders
+
+    if psutil is None:
+        return [(-1, "open-file scan unavailable")]
+    try:
+        for process in psutil.process_iter(["pid", "open_files"]):
+            info = process.info
+            pid = int(info["pid"])
+            if pid == os.getpid():
+                continue
+            for opened in info.get("open_files") or ():
+                path = getattr(opened, "path", "")
+                if path and _canonical_sqlite_holder_path(path) in watched:
+                    holders.append((pid, path))
+    except Exception as exc:
+        logger.warning(
+            "Could not prove state.db has no foreign holders; "
+            "deferring structural maintenance: %s",
+            exc,
+        )
+        holders.append((-1, f"open-file scan failed: {exc}"))
+    return holders
+
+
+def _live_writer_holds_db(db_path: Path) -> bool:
+    """True when repair lacks proven exclusive ownership of ``db_path``.
+
+    ANY foreign process holding the DB or a sidecar is a live holder (#103339):
+    the lock probe below cannot see a DELETE-mode reader (SHARED only) and
+    cannot run at all on a malformed file — exactly the states repair gets
+    invoked in. The holder scan is the authority and fails closed on its own
+    failures (unknown/uninspectable sentinels); the EXCLUSIVE probe only adds
+    a positive lock signal on top.
+
+    On Windows the holder scan is intentionally empty (see
+    :func:`foreign_state_db_holders`); the EXCLUSIVE probe remains the local
+    signal there.
+    """
+    if foreign_state_db_holders(db_path):
+        return True
+
     probe = None
     try:
         probe = _connect_repair_durable(db_path, timeout=0.0)
@@ -3172,15 +3246,13 @@ def _live_writer_holds_db(db_path: Path) -> bool:
         lowered = str(exc).lower()
         return "locked" in lowered or "busy" in lowered
     except sqlite3.DatabaseError:
-        # Malformed/unreadable: no evidence of a live holder either way.
+        # Malformed/unreadable with no holder on the scan: repair may run.
         return False
     except Exception:
         return False
     finally:
         if probe is not None:
             try:
-                # Drop exclusive locking mode before closing so the probe
-                # itself never leaves the file pinned.
                 probe.execute("PRAGMA locking_mode=NORMAL")
             except Exception:
                 pass
@@ -5440,101 +5512,11 @@ class SessionDB(SessionSearchMixin, SessionSchemaMixin, SessionPortabilityMixin)
         sidecar reset under that holder can leave the two processes writing
         through different WAL inodes.
 
-        A scan failure is represented as an unknown holder.  Skipping optional
-        automatic maintenance is safer than assuming quiescence; canonical
-        writes continue through the stale-FTS fail-open path.
+        Delegates to module-level :func:`foreign_state_db_holders` so repair
+        preflight and FTS maintenance share one realpath-aware scan (#103339 /
+        #110914 COMPOSE from U_NEXT).
         """
-        # The split-brain mechanism requires POSIX unlink semantics: Windows
-        # refuses to replace SQLite sidecars while another process has them
-        # open.  Avoid psutil.open_files() there; querying arbitrary Windows
-        # processes can block for minutes on device-backed handles.
-        if _IS_WINDOWS:
-            return []
-        if psutil is None:
-            return [(-1, "open-file scan unavailable")]
-
-        def _canonical(path: str) -> str:
-            clean = path.removesuffix(" (deleted)")
-            return os.path.normcase(os.path.abspath(clean))
-
-        db_path = os.path.abspath(os.fspath(self.db_path))
-        watched = {
-            _canonical(db_path),
-            _canonical(db_path + "-wal"),
-            _canonical(db_path + "-shm"),
-        }
-        holders: List[Tuple[int, str]] = []
-
-        # On Linux, read /proc/<pid>/fd symlinks directly.  psutil's
-        # open_files() filters through isfile_strict(), which stats the
-        # literal path — for an unlinked WAL sidecar the kernel returns
-        # "/path/state.db-wal (deleted)" and stat fails, so the entry is
-        # silently dropped and the split-brain holder is never seen.
-        # /proc readlinks preserve the "(deleted)" suffix so _canonical can
-        # strip it and match.
-        if sys.platform.startswith("linux"):
-            try:
-                own_pid = os.getpid()
-                for pid_str in os.listdir("/proc"):
-                    if not pid_str.isdigit():
-                        continue
-                    pid = int(pid_str)
-                    if pid == own_pid:
-                        continue
-                    fd_dir = f"/proc/{pid}/fd"
-                    try:
-                        fds = os.listdir(fd_dir)
-                    except OSError:
-                        # Cannot read this process's fd table (different
-                        # user, e.g. root gateway vs user desktop).
-                        # /proc/<pid>/cmdline is world-readable by default,
-                        # so check whether this is a Hermes process —
-                        # only flag uninspectable holders that look like
-                        # another Hermes instance, not every system daemon.
-                        cmdline = _read_proc_cmdline(pid)
-                        if cmdline is not None and _looks_like_hermes(cmdline):
-                            holders.append((pid, f"uninspectable holder: {cmdline[:80]}"))
-                        continue
-                    for fd in fds:
-                        try:
-                            target = os.readlink(f"{fd_dir}/{fd}")
-                        except OSError:
-                            continue
-                        if _canonical(target) in watched:
-                            holders.append((pid, target))
-            except Exception as exc:
-                logger.warning(
-                    "Could not prove state.db has no foreign holders; "
-                    "deferring automatic FTS maintenance: %s",
-                    exc,
-                )
-                return holders or [(-1, f"open-file scan failed: {exc}")]
-            return holders
-
-        # macOS / BSD: use psutil.open_files().  macOS does not use the
-        # "(deleted)" suffix convention, so psutil's filtering is safe here.
-        try:
-            for process in psutil.process_iter(["pid", "open_files"]):
-                info = process.info
-                pid = int(info["pid"])
-                if pid == os.getpid():
-                    continue
-                # psutil's as_dict() converts AccessDenied to None, which
-                # or-() turns into an empty iteration.  On macOS this is
-                # acceptable: the gateway/desktop topology from the issue is
-                # Linux-specific (systemd units running as root).
-                for opened in info.get("open_files") or ():
-                    path = getattr(opened, "path", "")
-                    if path and _canonical(path) in watched:
-                        holders.append((pid, path))
-        except Exception as exc:
-            logger.warning(
-                "Could not prove state.db has no foreign holders; "
-                "deferring automatic FTS maintenance: %s",
-                exc,
-            )
-            return holders or [(-1, f"open-file scan failed: {exc}")]
-        return holders
+        return foreign_state_db_holders(self.db_path)
 
     def _reap_inactive_orphan_desktop_holders(
         self, holders: List[Tuple[int, str]], *, min_age_seconds: float
