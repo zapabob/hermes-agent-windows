@@ -3516,6 +3516,7 @@ export const en: Translations = {
       statusRecovered: 'Recovered',
       statusDone: 'Done',
       memoryWriteNoted: 'Memory write noted',
+      resultUnavailable: 'Result unavailable',
       actions: {
         read: 'Read',
         reading: 'Reading',

@@ -2693,6 +2693,7 @@ export const ar = defineLocale({
       statusRecovered: 'تم الاسترداد',
       statusDone: 'تم',
       memoryWriteNoted: 'تم تسجيل كتابة الذاكرة',
+      resultUnavailable: 'النتيجة غير متاحة',
       actions: {
         read: 'قراءة',
         reading: 'جار القراءة',

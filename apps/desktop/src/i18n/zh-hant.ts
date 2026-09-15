@@ -2901,6 +2901,7 @@ export const zhHant = defineLocale({
       statusRecovered: '已復原',
       statusDone: '完成',
       memoryWriteNoted: '已記下記憶寫入',
+      resultUnavailable: '結果無法使用',
       actions: {
         read: '已讀取',
         reading: '正在讀取',

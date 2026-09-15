@@ -3,6 +3,7 @@ import { normalizeExternalUrl } from '@/lib/external-link'
 import { summarizeShellCommand } from '@/lib/summarize-command'
 import { capitalize, firstStringField, normalize } from '@/lib/text'
 import { isCardTool, isFileEditTool, isSilentTool } from '@/lib/tool-render-class'
+import { envelopeErrorText, toolResultRecord } from '@/lib/tool-result-metadata'
 import { extractToolErrorMessage, formatToolResultSummary } from '@/lib/tool-result-summary'
 
 import {
@@ -657,11 +658,12 @@ function toolErrorText(part: ToolPart, result: Record<string, unknown>): string 
   const extractedError = extractToolErrorMessage(part.result)
 
   if (part.isError) {
-    return extractedError || (typeof part.result === 'string' && part.result.trim()) || 'Tool returned an error.'
-  }
-
-  if (typeof result.error === 'string' && result.error.trim()) {
-    return result.error.trim()
+    return (
+      extractedError ||
+      envelopeErrorText(part.toolResultMetadata) ||
+      (typeof part.result === 'string' && part.result.trim()) ||
+      'Tool returned an error.'
+    )
   }
 
   if (extractedError) {
@@ -672,7 +674,7 @@ function toolErrorText(part: ToolPart, result: Record<string, unknown>): string 
     return firstStringField(result, ['message', 'reason', 'detail']) || 'Tool returned success=false.'
   }
 
-  if (typeof result.status === 'string' && /\b(error|failed|failure)\b/i.test(result.status)) {
+  if (typeof result.status === 'string' && /^(error|failed|failure|fatal|exception)$/i.test(result.status.trim())) {
     return firstStringField(result, ['message', 'reason', 'detail']) || `Tool returned status "${result.status}".`
   }
 
@@ -695,8 +697,12 @@ function toolErrorText(part: ToolPart, result: Record<string, unknown>): string 
 }
 
 function toolStatus(part: ToolPart, resultRecord: Record<string, unknown>): ToolStatus {
-  if (part.result === undefined) {
+  if (part.result === undefined && part.completedAt === undefined) {
     return 'running'
+  }
+
+  if (part.result === undefined && !part.isError) {
+    return 'warning'
   }
 
   // Explicit success wins over isError / nested-error heuristics. Memory writes
@@ -706,8 +712,21 @@ function toolStatus(part: ToolPart, resultRecord: Record<string, unknown>): Tool
     return 'success'
   }
 
-  if (!toolErrorText(part, resultRecord)) {
+  const error = toolErrorText(part, resultRecord)
+
+  if (!error) {
     return 'success'
+  }
+
+  // A guessed read path missing is routine exploration, not a broken tool.
+  // Keep the explanation available without a destructive alarm. Writes and
+  // permission failures deliberately do not take this path.
+  if (part.toolName === 'read_file' && /^File not found:/i.test(error)) {
+    return 'notice'
+  }
+
+  if (part.toolName === 'terminal' && error === 'Command failed with exit code 1.') {
+    return 'notice'
   }
 
   // A rejected memory write is a budget negotiation, not a failure: the store
@@ -1411,7 +1430,7 @@ function dynamicTitle(
 
 export function buildToolView(part: ToolPart, inlineDiff: string): ToolView {
   const argsRecord = parseMaybeObject(part.args)
-  const resultRecord = parseMaybeObject(part.result)
+  const resultRecord = toolResultRecord(part)
   const meta = toolMeta(part.toolName)
   const status = toolStatus(part, resultRecord)
   // Skip residual error-heuristic text once status is success (stale isError
@@ -1434,7 +1453,8 @@ export function buildToolView(part: ToolPart, inlineDiff: string): ToolView {
     titlePartsFromAction(baseTitle, part.result === undefined ? meta.pendingAction : undefined)
   )
 
-  const title = titleParts.title
+  const unavailable = part.result === undefined && part.completedAt !== undefined
+  const title = unavailable ? translateNow('assistant.tool.resultUnavailable') : titleParts.title
   const titleEnriched = title !== baseTitle
   const baseSubtitle = error || toolSubtitle(part, argsRecord, resultRecord)
 

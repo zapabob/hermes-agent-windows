@@ -3068,6 +3068,7 @@ export interface Translations {
       statusDone: string
       /** Over-budget / rejected memory write title — not "Saved to memory". */
       memoryWriteNoted: string
+      resultUnavailable: string
       actions: {
         read: string
         reading: string
