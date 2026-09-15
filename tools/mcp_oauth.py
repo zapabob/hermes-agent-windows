@@ -478,6 +478,11 @@ class HermesTokenStorage:
     def __init__(self, server_name: str, *, hermes_home: str | Path | None = None):
         self._server_name = _safe_filename(server_name)
         self._hermes_home = Path(hermes_home) if hermes_home is not None else None
+        # Issuer binding: ``loaded_issuer`` is what the token file on disk recorded
+        # (the authorization server that granted the stored refresh token);
+        # ``_bound_issuer`` is stamped onto the next ``set_tokens`` write.
+        self.loaded_issuer: str | None = None
+        self._bound_issuer: str | None = None
 
     def _tokens_path(self) -> Path:
         return _get_token_dir(self._hermes_home) / f"{self._server_name}.json"
@@ -494,11 +499,14 @@ class HermesTokenStorage:
     # -- tokens ------------------------------------------------------------
 
     async def get_tokens(self) -> "OAuthToken | None":
+        self.loaded_issuer = None
         data = _read_json(self._tokens_path())
         if data is None:
             return None
         if OAuthToken is None and not _ensure_sdk_loaded():
             return None
+        # ``hermes_issuer`` is Hermes bookkeeping, not an SDK OAuthToken field.
+        self.loaded_issuer = data.pop("hermes_issuer", None)
         # Hermes records an absolute wall-clock ``expires_at`` alongside the
         # SDK's serialized token (see ``set_tokens``). On read we rewrite
         # ``expires_in`` to the remaining seconds so the SDK's downstream
@@ -551,8 +559,51 @@ class HermesTokenStorage:
                 # Mock tokens or unusual shapes: skip the expires_at write
                 # rather than fail persistence.
                 pass
+        if self._bound_issuer:
+            payload["hermes_issuer"] = self._bound_issuer
+            self.loaded_issuer = self._bound_issuer
         _write_json(self._tokens_path(), payload)
         logger.debug("OAuth tokens saved for %s", self._server_name)
+
+    def bind_issuer(self, issuer: str | None) -> None:
+        """Set the authorization-server issuer stamped on future token writes."""
+        self._bound_issuer = str(issuer) if issuer else None
+
+    def stamp_issuer(self, issuer: str) -> None:
+        """Backfill ``hermes_issuer`` onto a pre-binding token file once."""
+        data = _read_json(self._tokens_path())
+        if data is None or data.get("hermes_issuer"):
+            return
+        data["hermes_issuer"] = str(issuer)
+        try:
+            _write_json(self._tokens_path(), data)
+        except OSError as exc:
+            logger.debug(
+                "Could not stamp issuer on tokens for %s: %s", self._server_name, exc
+            )
+            return
+        self.loaded_issuer = str(issuer)
+
+    def strip_refresh_token(self) -> None:
+        """Drop the refresh token (and issuer record) from disk; keep access token."""
+        data = _read_json(self._tokens_path())
+        if data is None or not data.get("refresh_token"):
+            return
+        data.pop("refresh_token", None)
+        data.pop("hermes_issuer", None)
+        self.loaded_issuer = None
+        try:
+            _write_json(self._tokens_path(), data)
+        except OSError as exc:
+            logger.warning(
+                "Could not strip refresh token for %s: %s", self._server_name, exc
+            )
+            return
+        logger.info(
+            "Removed issuer-mismatched refresh token for %s "
+            "(re-authorization will be required when the access token expires)",
+            self._server_name,
+        )
 
     # -- client info -------------------------------------------------------
 

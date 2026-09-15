@@ -4591,7 +4591,13 @@ def _adopt_server(name: str, server: "MCPServerTask") -> ServerKey:
 
 
 def _connection_identity(config: dict) -> tuple:
-    """Fingerprint of route + credentials used for same-route adoption checks."""
+    """Fingerprint of route + credentials used for same-route adoption checks.
+
+    Includes static auth material (headers/env/auth type) and mTLS client
+    certificate paths. ``config_fingerprint`` deliberately excludes secrets so
+    the schema cache survives token rotation; this identity must not, or two
+    profiles with different client certificates would share a live connection.
+    """
     try:
         from tools.mcp_schema_cache import config_fingerprint
         fp = config_fingerprint(config)
@@ -4613,14 +4619,31 @@ def _connection_identity(config: dict) -> tuple:
         fp,
         _frozen(config.get("env")),
         _frozen(config.get("headers")),
-        (config.get("auth") or "").lower().strip(),
+        _auth_type(config),
+        _frozen(config.get("client_cert")),
+        _frozen(config.get("client_key")),
     )
 
 
-def _same_server_route(server: Any, config: dict) -> bool:
-    return _connection_identity(getattr(server, "_config", {}) or {}) == _connection_identity(
+def _auth_type(config: dict) -> str:
+    return (config.get("auth") or "").lower().strip()
+
+
+def _same_server_route(
+    server: Any, config: dict, *, cross_profile: bool = False
+) -> bool:
+    """Whether *server* matches *config* for adoption.
+
+    OAuth credentials live in the owning profile's token storage rather than
+    the static config, so identical OAuth configs cannot prove that two
+    profiles authenticate as the same account. Cross-profile OAuth adoption is
+    therefore refused even when the connection identity matches.
+    """
+    if _connection_identity(getattr(server, "_config", {}) or {}) != _connection_identity(
         config
-    )
+    ):
+        return False
+    return not (cross_profile and _auth_type(config) == "oauth")
 
 
 def _record_connect_failure(server_name: str) -> None:
@@ -4708,8 +4731,12 @@ _CIRCUIT_BREAKER_COOLDOWN_SEC = 60.0
 # Classification happens at CALL TIME from data captured at DISCOVERY —
 # no toolset or schema mutation, so the conversation's toolset stays
 # byte-stable and prompt caching is preserved.
-_server_trust_levels: Dict[str, str] = {}
-_tool_read_only_hints: Dict[str, Dict[str, bool]] = {}
+#
+# Trust is the CONSUMING profile's policy (keyed by that profile's own
+# connection key). readOnlyHint describes the connection's tools and is keyed
+# by the live connection key (owner key when adopted).
+_server_trust_levels: Dict[ServerKey, str] = {}
+_tool_read_only_hints: Dict[ServerKey, Dict[str, bool]] = {}
 
 _TRUST_FULL = "full"
 _TRUST_UNTRUSTED = "untrusted"
@@ -4755,18 +4782,40 @@ def _annotation_read_only_hint(mcp_tool: Any) -> bool:
 
 
 def _record_tool_trust_metadata(
-    server_name: str, config: dict, tools: List[Any]
+    server_name: str,
+    config: dict,
+    tools: List[Any],
+    key: Optional[ServerKey] = None,
 ) -> None:
-    """Capture per-server trust and per-tool readOnlyHint at discovery."""
+    """Capture trust + readOnlyHint at discovery.
+
+    *key* defaults to the registering profile's own connection key. An adopting
+    profile records its own trust via :func:`_record_scope_trust` without
+    overwriting the owner's readOnlyHint map.
+    """
     with _lock:
-        _server_trust_levels[server_name] = _normalize_server_trust(
+        if key is None:
+            key = _server_key(server_name)
+        _server_trust_levels[key] = _normalize_server_trust(
             (config or {}).get("trust")
         )
-        hints = _tool_read_only_hints.setdefault(server_name, {})
+        hints = _tool_read_only_hints.setdefault(key, {})
         for tool in tools:
             name = getattr(tool, "name", None)
             if name:
                 hints[name] = _annotation_read_only_hint(tool)
+
+
+def _record_scope_trust(server_name: str, config: dict, scope: str) -> None:
+    """Record the consuming profile's trust policy under its own key.
+
+    An ``untrusted`` profile that adopts a ``full`` profile's live connection
+    must still be asked before every write-capable call.
+    """
+    with _lock:
+        _server_trust_levels[_server_key(server_name, scope, current=False)] = (
+            _normalize_server_trust((config or {}).get("trust"))
+        )
 
 
 def _trust_gate_check(server_name: str, tool_name: str) -> Optional[str]:
@@ -4775,11 +4824,14 @@ def _trust_gate_check(server_name: str, tool_name: str) -> Optional[str]:
     Returns None when the call may proceed, or an error string (already
     formatted via ``tool_error``) when the call is blocked. Fail-closed:
     approval-system errors block the call.
+
+    Trust is the calling profile's own policy; readOnlyHint is looked up under
+    the resolved live connection key.
     """
-    trust = _server_trust_levels.get(server_name, _TRUST_FULL)
+    trust = _server_trust_levels.get(_server_key(server_name), _TRUST_FULL)
     if trust != _TRUST_UNTRUSTED:
         return None
-    if _tool_read_only_hints.get(server_name, {}).get(tool_name) is True:
+    if _tool_read_only_hints.get(_resolve_server_key(server_name), {}).get(tool_name) is True:
         return None
 
     # Lazy import mirrors the elicitation handler's pattern: tools.approval
@@ -5354,9 +5406,9 @@ def _handle_session_expired_and_retry(
     return None
 
 
-# Exact raw server names whose ``supports_parallel_tool_calls`` config is True.
-# Raw identity matters: distinct names such as ``foo-bar`` and ``foo_bar`` both
-# sanitize to ``foo_bar`` but must not share policy.
+# Servers opted into parallel tool calls, keyed by the consuming profile's own
+# connection key (bare name outside multiplex). Distinct sanitized names and
+# two profiles' same-named servers must not share policy.
 _parallel_safe_servers: set = set()
 
 # Exact MCP tool-name provenance. The generated registry name is lossy because
@@ -7786,13 +7838,22 @@ def _select_new_servers(servers: Dict[str, dict]) -> Dict[str, dict]:
     """Return connect candidates for *servers* under the current scope.
 
     Same selection predicate as ``register_mcp_servers`` without mutating
-    connecting state. Exposed for multiplex connection-key tests.
+    connecting state. Also records per-profile ``supports_parallel_tool_calls``
+    under the consuming profile's own key (exposed for multiplex tests).
     """
     with _lock:
         current_scope = _mcp_registry_scope()
         keys = {
             k: _resolve_server_key(k, current_scope, current=False) for k in servers
         }
+        for srv_name, srv_cfg in servers.items():
+            own_key = _server_key(srv_name, current_scope, current=False)
+            if _parse_boolish(
+                srv_cfg.get("supports_parallel_tool_calls", False), default=False
+            ):
+                _parallel_safe_servers.add(own_key)
+            else:
+                _parallel_safe_servers.discard(own_key)
         return {
             k: v
             for k, v in servers.items()
@@ -7809,12 +7870,15 @@ def register_connected_into_current_scope(servers: dict) -> int:
 
     A shared live connection remains owned by the profile that opened it, but a
     profile with the same route+credentials must still see that connection.
-    Different credentials never adopt (#106005).
+    Different credentials never adopt (#106005). OAuth is never shared across
+    profiles (token storage is per-profile). Adopters keep their own trust
+    policy via :func:`_record_scope_trust`.
     """
     scope = _mcp_registry_scope()
     if scope is None:
         return 0
     adopted = 0
+    adopted_trust: List[tuple] = []
     with _lock:
         for name, config in servers.items():
             if not _parse_boolish(config.get("enabled", True), default=True):
@@ -7827,13 +7891,16 @@ def register_connected_into_current_scope(servers: dict) -> int:
                 for key, live in _servers.items()
                 if _key_name(key) == name
                 and getattr(live, "session", None) is not None
-                and _same_server_route(live, config)
+                and _same_server_route(live, config, cross_profile=True)
             ]
             if not shared:
                 continue
             key, _live = shared[0]
             _server_tool_scopes.setdefault(key, set()).add(scope)
+            adopted_trust.append((name, config, scope))
             adopted += 1
+    for name, config, adopt_scope in adopted_trust:
+        _record_scope_trust(name, config, adopt_scope)
     return adopted
 
 
@@ -7911,11 +7978,14 @@ def register_mcp_servers(servers: Dict[str, dict]) -> List[str]:
             _server_scope_keys[keys[srv_name]] = current_scope
             _server_connect_errors.pop(keys[srv_name], None)
         # Track which servers opt-in to parallel tool calls (idempotent).
+        # Keyed by THIS profile's own key so B's parallel-safe `x` never makes
+        # A's same-named serial `x` run two calls at once.
         for srv_name, srv_cfg in servers.items():
+            own_key = _server_key(srv_name, current_scope, current=False)
             if _parse_boolish(srv_cfg.get("supports_parallel_tool_calls", False), default=False):
-                _parallel_safe_servers.add(srv_name)
+                _parallel_safe_servers.add(own_key)
             else:
-                _parallel_safe_servers.discard(srv_name)
+                _parallel_safe_servers.discard(own_key)
 
     for srv in stale_cached:
         _signal_reconnect(srv)
@@ -8179,7 +8249,9 @@ def is_mcp_tool_parallel_safe(tool_name: str) -> bool:
         return False
     with _lock:
         server_name = _mcp_tool_server_names.get(tool_name)
-        return bool(server_name and server_name in _parallel_safe_servers)
+        return bool(
+            server_name and _server_key(server_name) in _parallel_safe_servers
+        )
 
 
 def get_mcp_status() -> List[dict]:

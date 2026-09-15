@@ -1,7 +1,7 @@
 """Multiplexed profiles with the same MCP server name get separate connections.
 
-COMPOSE contract from upstream ceaf622 / mcp_tool_scope: ledgers in
-``tools.mcp_tool`` are keyed per owning profile scope under a multiplexer.
+COMPOSE contracts from upstream ceaf622 / e609efb / 9d39267 / bbe4089 / 399238f
+into the Windows monolithic ``tools.mcp_tool`` owner (no module split).
 """
 
 from __future__ import annotations
@@ -61,6 +61,10 @@ def two_profiles(tmp_path, monkeypatch):
         "_lazy_server_configs",
         "_lazy_server_fingerprints",
         "_lazy_server_tool_names",
+        "_mcp_tool_server_names",
+        "_parallel_safe_servers",
+        "_server_trust_levels",
+        "_tool_read_only_hints",
     )
     saved = {n: type(getattr(core, n))(getattr(core, n)) for n in ledgers}
     for n in ledgers:
@@ -96,11 +100,9 @@ def test_same_named_server_with_other_credentials_is_a_separate_connection(two_p
     core._record_connect_failure("y")
 
     two_profiles("b")
-    # B must not see A's connection as "already connected".
     assert "x" in core._select_new_servers({"x": cfg_b})
     assert not core._connect_cooldown_active("y")
     assert core._server_error_counts.get(_server_key("x"), 0) == 0
-    # A's breaker must remain under A's key.
     two_profiles("a")
     assert core._server_error_counts.get(_server_key("x"), 0) >= core._CIRCUIT_BREAKER_THRESHOLD
     assert scope_a in {core._server_scope_keys.get(k) for k in core._servers}
@@ -146,9 +148,109 @@ def test_same_credentials_can_adopt_sibling_connection(two_profiles):
     two_profiles("b")
     assert core.register_connected_into_current_scope({"x": cfg}) == 1
     assert _resolve_server_key("x") == key_a
-    # Different credentials must NOT adopt.
     cfg_other = {"url": "https://mcp.example/x", "headers": {"Authorization": "Bearer other"}}
     assert core.register_connected_into_current_scope({"x": cfg_other}) == 0
+
+
+def test_oauth_server_is_not_adopted_across_profiles(two_profiles):
+    import tools.mcp_tool as core
+
+    cfg = {"url": "https://mcp.example/x", "auth": "oauth"}
+
+    two_profiles("a")
+    with core._lock:
+        core._adopt_server("x", _server("x", cfg))
+    assert core.register_connected_into_current_scope({"x": dict(cfg)}) == 0
+
+    two_profiles("b")
+    assert core.register_connected_into_current_scope({"x": dict(cfg)}) == 0
+    assert "x" in core._select_new_servers({"x": dict(cfg)})
+
+
+def test_same_named_server_with_other_mtls_identity_is_a_separate_connection(two_profiles):
+    import tools.mcp_tool as core
+
+    cfg_a = {
+        "url": "https://mcp.example/x",
+        "client_cert": "/certs/profile-a.pem",
+        "client_key": "/certs/profile-a.key",
+    }
+    cfg_b = {
+        "url": "https://mcp.example/x",
+        "client_cert": "/certs/profile-b.pem",
+        "client_key": "/certs/profile-b.key",
+    }
+
+    two_profiles("a")
+    with core._lock:
+        core._adopt_server("x", _server("x", cfg_a))
+
+    two_profiles("b")
+    assert core.register_connected_into_current_scope({"x": cfg_b}) == 0
+    assert "x" in core._select_new_servers({"x": cfg_b})
+
+
+def test_untrusted_adopter_of_a_full_profiles_connection_keeps_its_own_trust_gate(
+    two_profiles, monkeypatch
+):
+    """Trust is the consuming profile's policy under shared connections."""
+    import tools.mcp_tool as core
+    import tools.approval as approval
+
+    route = {"url": "https://mcp.example/x", "headers": {"Authorization": "Bearer shared"}}
+    cfg_a, cfg_b = dict(route, trust="full"), dict(route, trust="untrusted")
+    asked = []
+    monkeypatch.setattr(
+        approval,
+        "request_elicitation_consent",
+        lambda *a, **k: asked.append(a) or "deny",
+    )
+
+    two_profiles("a")
+    srv_a = _server("x", cfg_a)
+    with core._lock:
+        core._adopt_server("x", srv_a)
+    srv_a._registered_tool_names = core._register_server_tools("x", srv_a, cfg_a)
+
+    two_profiles("b")
+    assert core.register_connected_into_current_scope({"x": cfg_b}) == 1
+    assert core._trust_gate_check("x", "t") is not None and asked
+
+    two_profiles("a")
+    assert core._trust_gate_check("x", "t") is None and len(asked) == 1
+
+
+def test_parallel_safe_opt_in_is_per_profile(two_profiles):
+    """B's parallel opt-in must not make A's same-named serial server parallel-safe."""
+    import tools.mcp_tool as core
+
+    cfg_a = {"url": "https://mcp.example/x", "headers": {"Authorization": "Bearer A"}}
+    cfg_b = dict(
+        cfg_a,
+        headers={"Authorization": "Bearer B"},
+        supports_parallel_tool_calls=True,
+    )
+
+    two_profiles("a")
+    core._select_new_servers({"x": cfg_a})
+    srv_a = _server("x", cfg_a)
+    with core._lock:
+        core._adopt_server("x", srv_a)
+    srv_a._registered_tool_names = core._register_server_tools("x", srv_a, cfg_a)
+
+    two_profiles("b")
+    core._select_new_servers({"x": cfg_b})
+    # B has no tool provenance yet; register a stub provenance under B's key path
+    # by adopting its own connection for the parallel-safe check on B's config.
+    with core._lock:
+        core._adopt_server("x", _server("x", cfg_b))
+        core._mcp_tool_server_names["mcp__x__t"] = "x"
+    assert core.is_mcp_tool_parallel_safe("mcp__x__t") is True
+
+    two_profiles("a")
+    with core._lock:
+        core._mcp_tool_server_names["mcp__x__t"] = "x"
+    assert core.is_mcp_tool_parallel_safe("mcp__x__t") is False
 
 
 def test_single_profile_keeps_bare_name_keys(monkeypatch, tmp_path):

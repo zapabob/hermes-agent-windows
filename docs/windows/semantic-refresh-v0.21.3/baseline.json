@@ -1,0 +1,94 @@
+{
+  "campaign": "windows-native-carry-v0.21.3",
+  "mode": "selective_semantic + composed_windows_hardening",
+  "frozen_at": "2026-09-15T20:02:07+09:00",
+  "executor": "Cursor",
+  "workspace_root_at_start": "C:/Users/downl/Documents/New project/hermes-agent",
+  "start_branch": "main",
+  "start_head": "af685eba691784c703a5a19c3b2ffa0d741a6c39",
+  "start_dirty_preserved": {
+    "untracked": [
+      "airi/",
+      "lm_twitterer_reply_mentions_result.json",
+      "parse_quake.py",
+      "quake.json",
+      "run_sync.py",
+      "social_sync*.py",
+      "social_sync_*.json",
+      "sync_result.json",
+      "temp_secret_scan.py"
+    ],
+    "policy": "preserved_untouched; implementation uses isolated worktree only"
+  },
+  "remotes": {
+    "origin": "https://github.com/zapabob/hermes-agent-windows.git",
+    "upstream": "https://github.com/NousResearch/hermes-agent.git"
+  },
+  "frozen": {
+    "D0_NEXT": {
+      "role": "downstream_baseline",
+      "sha": "af685eba691784c703a5a19c3b2ffa0d741a6c39",
+      "source": ["git_rev_parse_HEAD", "git_rev_parse_origin/main", "matches_instruction_public_main"],
+      "note": "Actual local main HEAD at campaign start; not a reset target for WIP or prior campaigns"
+    },
+    "U_NEXT": {
+      "role": "upstream_target_peeled",
+      "sha": "345cd2b057a452236de401d3534b8502a7465e8d",
+      "tag": "v2026.9.14",
+      "release_name": "Hermes Agent 0.21.3",
+      "annotated_tag_object": "7a963716b81be13ba513d4f127633b7da493aff2",
+      "source": ["git_fetch_upstream_tag_v2026.9.14", "git_rev_parse_tag^{}", "git_cat_file_tag"],
+      "matches_instruction": true
+    },
+    "U_PREV": {
+      "role": "prior_campaign_upstream_reference_only",
+      "sha": "6dd091a89c33e6e4909a80f78343bb384deb5ca8",
+      "note": "Old campaign frozen U; not overwritten; U_PREV..U_NEXT window = 648 commits"
+    },
+    "H": {
+      "role": "historical_snapshot_provenance_unchanged",
+      "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532"
+    },
+    "prior_campaign": {
+      "id": "windows-semantic-refresh-2026-09-13",
+      "ledger": "docs/windows/semantic-refresh-2026-09-13/",
+      "policy": "do_not_overwrite; inherit residual IDs by reference"
+    }
+  },
+  "product_versions_at_D0_NEXT": {
+    "downstream_product": "0.21.2",
+    "recorded_upstream_version": "0.21.2",
+    "allow_upstream_sync": false,
+    "note": "Compatibility target for U_NEXT 0.21.3 is recorded separately from product SemVer; H not rewritten"
+  },
+  "candidate": {
+    "branch": "feat/windows-native-carry-v0.21.3",
+    "worktree": ".worktrees/windows-native-carry-v0.21.3",
+    "head_at_branch_create": "af685eba691784c703a5a19c3b2ffa0d741a6c39"
+  },
+  "reference_worktrees": {
+    "D1_candidate": ".worktrees/windows-native-carry-v0.21.3",
+    "U_NEXT_readonly": ".worktrees/upstream-v0.21.3"
+  },
+  "codegraph": {
+    "cli_path": ".tools/codegraph-cli/node_modules/.bin/codegraph.cmd",
+    "version": "1.6.0",
+    "approved_pin_matches": true,
+    "index_note": "Existing root index reflects main tree; worktree-local init deferred; navigation evidence supplemented by source/tests",
+    "policy": "navigation_evidence_only_not_execution_proof"
+  },
+  "defer_post_tag": {
+    "policy": "post-tag upstream/main commits after U_NEXT peeled are DEFER_POST_TAG; not mixed into this campaign"
+  },
+  "prohibitions_acknowledged": [
+    "no_bulk_merge_rebase_cherry_pick",
+    "no_reset_to_historical_reported_shas",
+    "no_overwrite_old_ledgers_baselines",
+    "no_second_supervisor_or_credential_owner",
+    "no_production_profile_secret_db_in_tests",
+    "no_claim_worktree_as_security_sandbox",
+    "no_touch_hakuapulse_orchestrator_moa",
+    "allow_upstream_sync_remains_false",
+    "no_push_main_merge_tag_release_install_reboot_in_isolation_phase"
+  ]
+}

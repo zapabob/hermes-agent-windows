@@ -74,9 +74,21 @@ class HermesProviderMixin:
         self._coerce_client_secret_post()
         return self._prepare_token_request(await super()._refresh_token())
 
+    async def _initialize(self) -> None:
+        """Load stored state, restore persisted server metadata, enforce issuer binding."""
+        await super()._initialize()
+        storage = self.context.storage
+        from tools.mcp_oauth import HermesTokenStorage
+        if isinstance(storage, HermesTokenStorage) and self.context.oauth_metadata is None:
+            meta = storage.load_oauth_metadata()
+            if meta is not None:
+                self.context.oauth_metadata = meta
+        enforce_refresh_token_issuer(self.context)
+
     async def _store_tokens(self, token_response) -> None:
         self.context.current_tokens = token_response
         self.context.update_token_expiry(token_response)
+        bind_issuer_from_context(self.context)
         await self.context.storage.set_tokens(token_response)
 
     async def _handle_token_response(self, response):
@@ -107,8 +119,66 @@ class HermesProviderMixin:
             self._hermes_logger.warning("Invalid refresh response: %s", response.status_code)
             self.context.clear_tokens()
             return False
+        # RFC 6749 §6: a refresh response may omit refresh_token / scope.
+        prior = self.context.current_tokens
+        if prior is not None:
+            if token_response.refresh_token is None:
+                token_response.refresh_token = prior.refresh_token
+            if token_response.scope is None:
+                token_response.scope = prior.scope
         await self._store_tokens(token_response)
         return True
+
+
+def _metadata_issuer(context: Any) -> str | None:
+    """Discovered authorization-server issuer, without trailing slash."""
+    meta = getattr(context, "oauth_metadata", None)
+    issuer = getattr(meta, "issuer", None) if meta is not None else None
+    return (str(issuer).rstrip("/") or None) if issuer else None
+
+
+def bind_issuer_from_context(context: Any) -> None:
+    """Record the discovered issuer so the next ``storage.set_tokens`` carries it."""
+    from tools.mcp_oauth import HermesTokenStorage
+    storage = getattr(context, "storage", None)
+    issuer = _metadata_issuer(context)
+    if isinstance(storage, HermesTokenStorage) and issuer:
+        storage.bind_issuer(issuer)
+
+
+def enforce_refresh_token_issuer(context: Any) -> None:
+    """Refuse to reuse a refresh token minted by a different issuer.
+
+    On mismatch the refresh token is stripped (memory + disk) while an
+    unexpired access token stays usable. Legacy token files without an issuer
+    adopt the current issuer once rather than forcing a re-login.
+    """
+    from tools.mcp_oauth import HermesTokenStorage
+    storage = getattr(context, "storage", None)
+    tokens = getattr(context, "current_tokens", None)
+    if (
+        not isinstance(storage, HermesTokenStorage)
+        or tokens is None
+        or not getattr(tokens, "refresh_token", None)
+    ):
+        return
+    current = _metadata_issuer(context)
+    if current is None:
+        return
+    stored = (storage.loaded_issuer or "").rstrip("/") or None
+    if stored is None:
+        storage.stamp_issuer(current)
+        return
+    if stored != current:
+        logger.warning(
+            "MCP OAuth: authorization server issuer changed (%s -> %s); "
+            "dropping the stored refresh token rather than sending it to a "
+            "different issuer",
+            stored,
+            current,
+        )
+        storage.strip_refresh_token()
+        tokens.refresh_token = None
 
 
 def prepare_oauth_config(server_name: str, server_url: str, oauth_config: dict | None) -> tuple[dict, "HermesTokenStorage"]:

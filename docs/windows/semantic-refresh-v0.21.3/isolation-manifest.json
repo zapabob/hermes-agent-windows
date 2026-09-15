@@ -1,0 +1,50 @@
+{
+  "campaign": "windows-native-carry-v0.21.3",
+  "recorded_at": "2026-09-15T20:02:07+09:00",
+  "gates": {
+    "WORKSPACE_ISOLATED": {
+      "status": "PASS",
+      "evidence": {
+        "branch": "feat/windows-native-carry-v0.21.3",
+        "D1": ".worktrees/windows-native-carry-v0.21.3 @ af685eba691784c703a5a19c3b2ffa0d741a6c39",
+        "U_NEXT": ".worktrees/upstream-v0.21.3 @ 345cd2b057a452236de401d3534b8502a7465e8d (detached)",
+        "main_untouched": "main remains af685eba… with prior untracked WIP preserved"
+      },
+      "limits": "Git worktree shares objects/refs/config; directory isolation only — not an OS security sandbox"
+    },
+    "RUNTIME_NAMESPACE_VERIFIED": {
+      "status": "PARTIAL",
+      "planned": {
+        "python": "D1-local .venv or py -3 with synthetic HERMES_HOME under tmp/v0213-isolation/runtime",
+        "profile_db_memory": "tmp/v0213-isolation/runtime/profiles/{a,b} — no copy of production ~/.hermes",
+        "credentials": "synthetic tokens / fake issuer fixtures only",
+        "desktop": "NOT_STARTED this slice — no Desktop launch from worktree",
+        "watchdog": "NOT_STARTED — production Go Watchdog namespace untouched",
+        "loopback": "unit tests only; no production localhost service attach"
+      },
+      "verified_this_slice": "pytest MCP suites with set_hermes_home_override / tmp_path; no production HOME"
+    },
+    "HOST_SECURITY_BOUNDARY": {
+      "status": "OPS_ISOLATION_ONLY",
+      "note": "Same Windows user; no separate ACL/VM. Untrusted plugin live / destructive fault injection = BLOCKED without forced OS boundary"
+    },
+    "CODEGRAPH_COVERAGE": {
+      "status": "PARTIAL",
+      "version": "1.6.0",
+      "note": "CLI --version/--help OK; root index exists but warns worktree mismatch; source+test probes used for Slice A"
+    },
+    "SEMANTIC_SCOPE_VERIFIED": {"status": "IN_PROGRESS", "slice": "A_MCP_profile_trust"},
+    "WINDOWS_NATIVE_VERIFIED": {"status": "NOT_RUN"},
+    "PACKAGING_VERIFIED": {"status": "NOT_RUN"},
+    "PRIVATE_SECURITY_VERIFIED": {"status": "NOT_RUN"},
+    "LONG_RUNNING_VERIFIED": {"status": "NOT_RUN", "soak_24h": "NOT_RUN"}
+  },
+  "forbidden_fallbacks": [
+    "production ~/.hermes",
+    "production Credential Manager / browser Codex session",
+    "production Desktop primary / backend claim",
+    "production Watchdog lock/recovery",
+    "real voice/VRChat",
+    "worktree-direct Desktop as production"
+  ]
+}

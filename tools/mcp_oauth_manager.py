@@ -325,6 +325,10 @@ def _make_hermes_provider_class() -> Optional[type]:
                         "failed (non-fatal): %s",
                         self._hermes_server_name, exc,
                     )
+                else:
+                    from tools.mcp_oauth_provider import enforce_refresh_token_issuer
+                    # Issuer only becomes known after prefetch; re-check now.
+                    enforce_refresh_token_issuer(self.context)
 
         async def _prefetch_oauth_metadata(self) -> None:
             """Fetch PRM + ASM from the well-known endpoints, cache on context.
