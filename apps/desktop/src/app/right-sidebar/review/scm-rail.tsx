@@ -122,9 +122,11 @@ function ScmNameDialog({
     if (status !== 'done') {
       return
     }
+
     const id = window.setTimeout(() => {
       onCloseRef.current()
     }, 600)
+
     return () => {
       window.clearTimeout(id)
     }
