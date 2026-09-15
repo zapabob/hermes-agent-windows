@@ -4,7 +4,8 @@
 |---|---|
 | Gate | NC-0213-D-PROMOTION |
 | Campaign | windows-native-carry-v0.21.3 |
-| Candidate tip SHA | `7b5592ef32372690a604e9d0a464ec760c9aeea7` |
+| Candidate tip SHA (code under gate) | `7b5592ef32372690a604e9d0a464ec760c9aeea7` |
+| Gate receipt commit | `0245cde77ae2f55c6b031489491a845209e29a20` |
 | U_NEXT | `345cd2b057a452236de401d3534b8502a7465e8d` |
 | Ran at | `2026-09-15T21:08:06+09:00` |
 | main integration | **NOT_DONE** (gate only; no merge / prod restart) |
