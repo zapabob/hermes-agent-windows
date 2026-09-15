@@ -601,6 +601,7 @@ export class JsonRpcGatewayClient {
     if (isServerRequestFrame(frame)) {
       const params =
         frame.params && typeof frame.params === 'object' ? (frame.params as ServerRequestParams) : {}
+
       this.deliverRequest(frame.id, frame.method, params, false)
 
       return
