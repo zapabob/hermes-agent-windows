@@ -21,6 +21,7 @@ from typing import Awaitable, Callable
 
 from fastapi import Request
 from fastapi.responses import JSONResponse, RedirectResponse, Response
+from starlette.concurrency import run_in_threadpool
 
 from hermes_cli.dashboard_auth import list_session_providers
 from hermes_cli.dashboard_auth.audit import AuditEvent, audit_log
@@ -38,6 +39,7 @@ from hermes_cli.dashboard_auth.cookies import (
     set_sso_attempt_cookie,
 )
 from hermes_cli.dashboard_auth.public_paths import PUBLIC_API_PATHS
+from hermes_cli.dashboard_auth.refresh_singleflight import refresh_session_coalesced
 
 _log = logging.getLogger(__name__)
 
@@ -467,7 +469,8 @@ async def gated_auth_middleware(
         # serve the request transparently; only after every provider rejects
         # the RT do we fall through to clear-and-relogin.
         try:
-            refreshed = _attempt_refresh(
+            refreshed = await run_in_threadpool(
+                _attempt_refresh,
                 request,
                 refresh_token=_rt,
                 provider_hint=provider_hint,
@@ -558,47 +561,29 @@ def _expires_in_seconds(session) -> int:
 
 
 def _attempt_refresh(request: Request, *, refresh_token, provider_hint: str | None = None):
-    """Try to rotate an expired session via the refresh token.
+    """Rotate an expired session via the refresh token; ``(Session, name)`` or ``None``.
 
-    The provider hint only changes candidate order. ``RefreshExpiredError``
-    rejects the token for that candidate, but cannot prove ownership because
-    providers such as Basic raise it for foreign opaque tokens too. Likewise,
-    ``ProviderError`` only makes that candidate unavailable. Both are audited
-    and the remaining providers are tried. Returns ``None`` only when there is
-    no RT or every reachable provider rejects it. If no provider succeeds and
-    at least one raised ``ProviderError``, re-raises with that provider's name
-    so the caller can return 503 without clearing potentially valid cookies.
+    Concurrent requests carrying the same stale RT are coalesced
+    (``refresh_singleflight``): a burst after AT expiry must not replay a
+    rotated RT into the provider's reuse detection. Synchronous network I/O —
+    the gate runs this in a threadpool so a slow IdP never blocks the loop.
     """
     if not refresh_token:
         return None
-    unavailable_provider: str | None = None
-    for provider in _ordered_session_providers(provider_hint):
-        try:
-            new_session = provider.refresh_session(refresh_token=refresh_token)
-        except RefreshExpiredError:
-            audit_log(
-                AuditEvent.REFRESH_FAILURE,
-                provider=provider.name,
-                reason="refresh_expired",
-                ip=_client_ip(request),
-            )
-            continue
-        except ProviderError as e:
-            _log.warning(
-                "dashboard-auth: provider %r unreachable during refresh: %s",
-                provider.name, e,
-            )
-            audit_log(
-                AuditEvent.REFRESH_FAILURE,
-                provider=provider.name,
-                reason="provider_unreachable",
-                ip=_client_ip(request),
-            )
-            if unavailable_provider is None:
-                unavailable_provider = provider.name
-            continue
-        if new_session is not None:
-            return new_session, provider.name
-    if unavailable_provider is not None:
-        raise ProviderError(unavailable_provider)
-    return None
+
+    def _audit_failure(reason):
+        return lambda provider: audit_log(
+            AuditEvent.REFRESH_FAILURE,
+            provider=provider.name,
+            reason=reason,
+            ip=_client_ip(request),
+        )
+
+    return refresh_session_coalesced(
+        refresh_token,
+        provider_hint or "",
+        phase="refresh",
+        log=_log,
+        on_rejected=_audit_failure("refresh_expired"),
+        on_unreachable=_audit_failure("provider_unreachable"),
+    )
