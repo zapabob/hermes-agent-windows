@@ -11,7 +11,7 @@
 | Contract | `srq-*` server→client JSON-RPC requests; same-socket respond; stale id drop; session-scoped cancel + `request.cancel`; `open_requests` on resume / events.since |
 | Command | `python -m pytest tests/tui_gateway/test_server_requests_wire.py -q` |
 | Result | **5 passed** |
-| Exact tested SHA | *(filled after commit)* |
+| Exact tested SHA | `c272a2a3e9f89d3eacc89db4ace5d9492d8df20c` |
 | LOCAL_DEPLOYED | NOT_RUN |
 | main integration | NOT_DONE |
 
