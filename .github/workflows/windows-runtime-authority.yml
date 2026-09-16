@@ -50,7 +50,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path $evidence | Out-Null
           "AUTHORITY_EVIDENCE=$evidence" >> $env:GITHUB_ENV
           git rev-parse HEAD | Set-Content -LiteralPath (Join-Path $evidence 'tested-sha.txt')
-          git archive --format=zip --output="$evidence/source.zip" HEAD scripts/windows/Start-HermesGoWatchdog.ps1 scripts/windows/watchdog-go tests/test_go_watchdog_runtime_authority.py tests/test_go_watchdog_launcher_authority.py tests/test_go_watchdog_architecture_contract.py tests/test_go_watchdog_task_registration.py apps/desktop/tsconfig.json apps/desktop/tsconfig.electron.json apps/desktop/tsconfig.e2e.json apps/desktop/package.json .mailmap scripts/downstream .codex/UPSTREAM_SNAPSHOT.json _docs/carry-surface-20260826.json _docs/carry-surface-20260826.md
+          git archive --format=zip --output="$evidence/source.zip" HEAD scripts/windows/Start-HermesGoWatchdog.ps1 scripts/windows/watchdog-go tests/test_go_watchdog_runtime_authority.py tests/test_go_watchdog_launcher_authority.py tests/test_go_watchdog_architecture_contract.py tests/test_go_watchdog_task_registration.py tests/test_go_watchdog_privilege_authority.py apps/desktop/tsconfig.json apps/desktop/tsconfig.electron.json apps/desktop/tsconfig.e2e.json apps/desktop/package.json .mailmap scripts/downstream .codex/UPSTREAM_SNAPSHOT.json _docs/carry-surface-20260826.json _docs/carry-surface-20260826.md
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git archive --format=zip --output="$evidence/python-source.zip" HEAD hermes_cli tools cron tui_gateway agent tests downstream scripts pyproject.toml hermes_constants.py .github/workflows
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -94,13 +94,41 @@ jobs:
             throw 'Expected seven authority counterexamples and one separately classified legacy syntax failure'
           }
           Write-Output 'G2 baseline: seven authority failures; one legacy PowerShell 5.1 syntax failure'
-          # pytest's expected failure is evidence, not the job result. All
-          # classifications above must pass before clearing its native exit.
+          exit 0
+      - name: Prove privilege API errors did not establish process absence
+        run: |
+          $before = Join-Path $env:RUNNER_TEMP 'privilege-authority-before'
+          git worktree add --detach $before bceee3c62ff617122349661a5df069279113c564
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          # Keep old production byte-for-byte. Use the corrected C# fixture,
+          # whose HighPart initialisation avoids an unrelated compiler error.
+          $test = 'tests/test_go_watchdog_privilege_authority.py'
+          Copy-Item -LiteralPath $test -Destination (Join-Path $before $test)
+          Get-FileHash -Algorithm SHA256 -LiteralPath $test | Format-List | Out-File (Join-Path $env:AUTHORITY_EVIDENCE 'privilege-fixture-sha256.txt')
+          $xmlPath = Join-Path $env:AUTHORITY_EVIDENCE 'privilege-before.xml'
+          Push-Location $before
+          try {
+            python -m pytest --noconftest -o 'addopts=' $test --junitxml=$xmlPath -q 2>&1 | Tee-Object -FilePath (Join-Path $env:AUTHORITY_EVIDENCE 'privilege-before.log')
+            $beforeCode = $LASTEXITCODE
+            git diff --exit-code -- scripts/windows/Start-HermesGoWatchdog.ps1
+            if ($LASTEXITCODE -ne 0) { throw 'Pre-fix production source was changed' }
+          } finally { Pop-Location }
+          if ($beforeCode -ne 1) { throw "Expected privilege-provenance assertion failures, got $beforeCode" }
+          [xml]$report = Get-Content -Raw -LiteralPath $xmlPath
+          if ($report.SelectNodes('//testcase').Count -ne 18 -or $report.SelectNodes('//testcase/failure').Count -ne 8 -or $report.SelectNodes('//testcase/error|//testcase/skipped').Count -ne 0) {
+            throw 'Expected eight provenance failures and ten passing control cases'
+          }
+          foreach ($failure in $report.SelectNodes('//testcase/failure')) {
+            if ($failure.InnerText -notmatch 'Privilege API failure must preserve the unverified lock') {
+              throw 'Unexpected privilege regression failure'
+            }
+          }
+          Write-Output 'Privilege provenance: eight pre-fix failures, ten passing controls'
           exit 0
       - name: Current native process-authority and lifecycle suites
         if: ${{ !cancelled() && env.AUTHORITY_EVIDENCE != '' }}
         run: |
-          python -m pytest --noconftest -o 'addopts=' tests/test_go_watchdog_runtime_authority.py tests/test_go_watchdog_launcher_authority.py tests/test_go_watchdog_architecture_contract.py tests/test_go_watchdog_task_registration.py --junitxml="$env:AUTHORITY_EVIDENCE/authority-current.xml" -q 2>&1 | Tee-Object -FilePath (Join-Path $env:AUTHORITY_EVIDENCE 'authority-current.log')
+          python -m pytest --noconftest -o 'addopts=' tests/test_go_watchdog_runtime_authority.py tests/test_go_watchdog_privilege_authority.py tests/test_go_watchdog_launcher_authority.py tests/test_go_watchdog_architecture_contract.py tests/test_go_watchdog_task_registration.py --junitxml="$env:AUTHORITY_EVIDENCE/authority-current.xml" -q 2>&1 | Tee-Object -FilePath (Join-Path $env:AUTHORITY_EVIDENCE 'authority-current.log')
           exit $LASTEXITCODE
       - name: Full native watchdog Go suite
         if: ${{ !cancelled() && env.AUTHORITY_EVIDENCE != '' }}
