@@ -4,12 +4,12 @@ Frozen upstream: b51c055a12220f8c7c18660e8599365012e19532
 
 | Metric | Value |
 | --- | ---: |
-| All fork-specific LOC | 2682632 |
-| Upstream-owned fork LOC | 1547498 |
+| All fork-specific LOC | 2682655 |
+| Upstream-owned fork LOC | 1547521 |
 | Fork-owned LOC | 1135134 |
-| UTR | 0.576858 |
-| Carry Surface | 5087 files |
-| CWC | 86189240 |
+| UTR | 0.576862 |
+| Carry Surface | 5089 files |
+| CWC | 86189490 |
 
 LOC is added plus deleted lines relative to the frozen upstream tree.
 The `_docs/` tree (including these reports) is excluded to avoid
