@@ -20,19 +20,19 @@
   "schema_version": 1,
   "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
   "summary": {
-    "all_fork_specific_loc": 2677976,
-    "carry_surface_files": 5079,
-    "cwc": 86164943,
-    "fork_owned_loc": 1131002,
-    "upstream_owned_fork_loc": 1546974,
-    "utr": 0.577665
+    "all_fork_specific_loc": 2681516,
+    "carry_surface_files": 5087,
+    "cwc": 86181627,
+    "fork_owned_loc": 1134093,
+    "upstream_owned_fork_loc": 1547423,
+    "utr": 0.57707
   },
   "top_carry_risks": [
     {
-      "added": 29815,
-      "cwc": 10325616,
+      "added": 29852,
+      "cwc": 10337308,
       "deleted": 2861,
-      "patch_size": 32676,
+      "patch_size": 32713,
       "path": "gateway/run.py",
       "semantic_coupling": 2,
       "upstream_frequency": 158
@@ -56,19 +56,19 @@
       "upstream_frequency": 77
     },
     {
-      "added": 16810,
-      "cwc": 3721536,
-      "deleted": 2573,
-      "patch_size": 19383,
+      "added": 16846,
+      "cwc": 3728256,
+      "deleted": 2572,
+      "patch_size": 19418,
       "path": "tui_gateway/server.py",
       "semantic_coupling": 2,
       "upstream_frequency": 96
     },
     {
-      "added": 15161,
-      "cwc": 3641344,
+      "added": 15143,
+      "cwc": 3637312,
       "deleted": 1095,
-      "patch_size": 16256,
+      "patch_size": 16238,
       "path": "hermes_state.py",
       "semantic_coupling": 2,
       "upstream_frequency": 112
@@ -209,10 +209,10 @@
       "upstream_frequency": 36
     },
     {
-      "added": 8757,
-      "cwc": 853208,
-      "deleted": 517,
-      "patch_size": 9274,
+      "added": 8831,
+      "cwc": 860200,
+      "deleted": 519,
+      "patch_size": 9350,
       "path": "tools/mcp_tool.py",
       "semantic_coupling": 2,
       "upstream_frequency": 46
