@@ -1,4 +1,10 @@
-import { type ConnectionState, type GatewayEvent, type ServerRequest, registryBackendScopeKey, resolveGatewayWsUrl } from '@hermes/shared'
+import {
+  type ConnectionState,
+  type GatewayEvent,
+  registryBackendScopeKey,
+  resolveGatewayWsUrl,
+  type ServerRequest
+} from '@hermes/shared'
 
 /** Server→client request stamped with the socket's profile / connectionId. */
 export interface ScopedServerRequest extends ServerRequest {

@@ -1,15 +1,16 @@
 import assert from 'node:assert/strict'
+
 import { describe, test } from 'vitest'
 
 import {
   authorityFromConnection,
+  type BackendDescriptor,
   descriptorsMatchIdentity,
+  type DesktopOwnedChild,
   mayTerminateBackendProcess,
   runDesktopRestartCycle,
   runTransportReconnect,
-  shouldWriteDesktopStopFence,
-  type BackendDescriptor,
-  type DesktopOwnedChild
+  shouldWriteDesktopStopFence
 } from './desktop-restart-lifecycle'
 
 /**

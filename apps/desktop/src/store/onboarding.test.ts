@@ -779,9 +779,7 @@ describe('requestDesktopOnboarding credential-miss routing (SR-007b)', () => {
   })
 
   it('opens the manual overlay after first-run was skipped ("choose later")', () => {
-    $desktopOnboarding.set(
-      baseState({ configured: false, firstRunSkipped: true, requested: false, manual: false })
-    )
+    $desktopOnboarding.set(baseState({ configured: false, firstRunSkipped: true, requested: false, manual: false }))
     requestDesktopOnboarding('Need provider setup')
 
     expect($desktopOnboarding.get()).toMatchObject({

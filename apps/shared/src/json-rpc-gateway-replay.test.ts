@@ -87,6 +87,7 @@ describe('JsonRpcGatewayClient event-seq tracking + replay resume', () => {
         // Localhost warm backends can finish the handshake before connect()
         // attaches `open` listeners — readyState alone must settle connect().
         ws.readyState = FakeWebSocket.OPEN
+
         return ws as unknown as WebSocket
       },
       heartbeatIntervalMs: 0,

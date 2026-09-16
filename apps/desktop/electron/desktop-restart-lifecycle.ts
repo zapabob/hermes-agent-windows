@@ -127,6 +127,7 @@ export function authorityFromConnection(connection: {
   }
 
   const token = typeof connection.token === 'string' ? connection.token : ''
+
   const source = connection.source === 'watchdog' || connection.source === 'local' || connection.source === 'remote'
     ? connection.source
     : 'unknown'
@@ -195,6 +196,7 @@ export async function runDesktopRestartCycle(
   await deps.releaseDesktopConnectionClaim()
 
   const owned = deps.listDesktopOwnedChildren()
+
   for (const child of owned) {
     try {
       child.kill('SIGTERM')
@@ -204,6 +206,7 @@ export async function runDesktopRestartCycle(
   }
 
   let ownedChildrenExited = true
+
   for (const child of owned) {
     const ok = await deps.waitForChildExit(child, childExitTimeoutMs)
     ownedChildrenExited = ownedChildrenExited && ok
