@@ -1,0 +1,53 @@
+name: Semantic carry metrics evidence (one shot)
+on:
+  push:
+    branches: [feat/windows-semantic-adoption-20260917]
+    paths: [.github/workflows/semantic-metrics-once.yml]
+permissions:
+  contents: read
+jobs:
+  measure:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: '3.11'
+      - name: Generate exact final-tree carry evidence
+        shell: python
+        run: |
+          import difflib, hashlib, json, os, pathlib, subprocess, sys
+          assert os.name == 'nt'
+          def run(args, cwd=None):
+              p = subprocess.run(args, cwd=cwd, capture_output=True, text=True,
+                                 encoding='utf-8', errors='replace', timeout=300)
+              if p.returncode:
+                  raise RuntimeError(p.stdout[-1500:] + p.stderr[-1500:])
+              return p.stdout
+          head = 'c0ee9ed8d42ccecc283ece78e7dad3971f797c5b'
+          root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'metrics repository'
+          work = pathlib.Path(os.environ['RUNNER_TEMP']) / 'metrics worktree 日本語'
+          run(['git','init','--quiet',str(root)])
+          run(['git','-C',str(root),'config','core.longpaths','true'])
+          run(['git','-C',str(root),'fetch','--quiet','--no-tags','https://github.com/zapabob/hermes-agent-windows.git',head])
+          run(['git','-C',str(root),'worktree','add','--quiet','--detach',str(work),head])
+          assert run(['git','-C',str(work),'rev-parse','HEAD']).strip() == head
+          snap = json.loads((work / '.codex/UPSTREAM_SNAPSHOT.json').read_text(encoding='utf-8'))
+          for sha in (snap['upstream_head_sha'], snap['merge_base_sha']):
+              run(['git','-C',str(root),'cat-file','-e',sha + '^{commit}'])
+          run([sys.executable,'-m','pip','install','-q','--disable-pip-version-check','pyyaml==6.0.3'])
+          outputs = ['_docs/carry-surface-20260826.json','_docs/carry-surface-20260826.md']
+          before = {name: (work / name).read_text(encoding='utf-8') for name in outputs}
+          print('METRICS_SOURCE_HEAD=' + head)
+          print(run([sys.executable,'scripts/downstream/carry_metrics.py'], cwd=work))
+          print(run([sys.executable,'scripts/downstream/carry_metrics.py','--check'], cwd=work))
+          assert sorted(run(['git','-C',str(work),'diff','--name-only']).splitlines()) == sorted(outputs)
+          for name in outputs:
+              data = (work / name).read_bytes()
+              after = data.decode('utf-8')
+              print('OUTPUT_FILE=' + name + '; SHA256=' + hashlib.sha256(data).hexdigest())
+              print(''.join(difflib.unified_diff(before[name].splitlines(True), after.splitlines(True), fromfile=name, tofile=name)))
+          print('Remove this one-shot workflow before evaluating the final carry gate; reports were calculated at the reviewed source tree, not at this workflow commit.')
