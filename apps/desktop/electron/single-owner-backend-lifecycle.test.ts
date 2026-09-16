@@ -179,10 +179,7 @@ describe('Single-Owner Desktop Backend Lifecycle (Phase 2 RED Tests)', () => {
     const controller = new AbortController()
     controller.abort(new Error('Desktop shutdown'))
 
-    await assert.rejects(
-      () => runBackendStartStep(controller.signal, async () => 'should not run'),
-      /Desktop shutdown/
-    )
+    await assert.rejects(() => runBackendStartStep(controller.signal, async () => 'should not run'), /Desktop shutdown/)
   })
 
   // Phase 26: Cross-authority negative tests (Desktop side)

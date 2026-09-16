@@ -114,23 +114,27 @@ export function mayTerminateBackendProcess(authority: BackendAuthority | null | 
   return authority.kind === 'desktop-owned' && authority.hasRetainedChildHandle === true
 }
 
-export function authorityFromConnection(connection: {
-  source?: string | null
-  baseUrl?: string | null
-  port?: number | null
-  token?: string | null
-  pid?: number | null
-  generation?: string | null
-} | null, hasRetainedChildHandle: boolean): BackendAuthority {
+export function authorityFromConnection(
+  connection: {
+    source?: string | null
+    baseUrl?: string | null
+    port?: number | null
+    token?: string | null
+    pid?: number | null
+    generation?: string | null
+  } | null,
+  hasRetainedChildHandle: boolean
+): BackendAuthority {
   if (!connection?.baseUrl) {
     return { kind: 'none', descriptor: null, hasRetainedChildHandle: false }
   }
 
   const token = typeof connection.token === 'string' ? connection.token : ''
 
-  const source = connection.source === 'watchdog' || connection.source === 'local' || connection.source === 'remote'
-    ? connection.source
-    : 'unknown'
+  const source =
+    connection.source === 'watchdog' || connection.source === 'local' || connection.source === 'remote'
+      ? connection.source
+      : 'unknown'
 
   const descriptor: BackendDescriptor = {
     baseUrl: String(connection.baseUrl),

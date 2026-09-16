@@ -125,9 +125,7 @@ export function isPidOnlyStartMarker(startMarker: unknown): boolean {
 }
 
 export type ClaimDecision =
-  | { action: 'claim'; startMarker: string }
-  | { action: 'degrade'; reason: string }
-  | { action: 'fail'; reason: string }
+  { action: 'claim'; startMarker: string } | { action: 'degrade'; reason: string } | { action: 'fail'; reason: string }
 
 /**
  * Pure claim policy for a freshly spawned backend child:
