@@ -1,0 +1,117 @@
+name: Windows semantic adoption audit
+
+on:
+  push:
+    branches: [feat/windows-semantic-adoption-20260917]
+    paths: [.github/workflows/windows-semantic-adoption-audit.yml]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-semantic-adoption-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  inventory:
+    name: Frozen-input Windows worktree inventory (not parity proof)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: '3.11'
+      - name: Materialize immutable inputs without merging upstream
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $downstream = '4aba35ed84aa8096c7394f0d26538bcdcdcab769'
+          $upstream = '260da4ef6251b29aa830c8c949dbe7c92d58df5f'
+          git config core.longpaths true
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot enable long paths' }
+          git fetch --no-tags --depth=1 origin $downstream
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot fetch frozen downstream' }
+          git fetch --no-tags --depth=1 https://github.com/NousResearch/hermes-agent.git $upstream
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot fetch frozen upstream' }
+          $d = Join-Path $env:RUNNER_TEMP 'semantic adoption downstream'
+          $u = Join-Path $env:RUNNER_TEMP 'semantic adoption upstream'
+          git worktree add --detach $d $downstream
+          if ($LASTEXITCODE -ne 0) { throw 'Downstream worktree creation failed' }
+          git worktree add --detach $u $upstream
+          if ($LASTEXITCODE -ne 0) { throw 'Upstream worktree creation failed' }
+          if ((git -C $d rev-parse HEAD) -ne $downstream) { throw 'Downstream SHA drift' }
+          if ((git -C $u rev-parse HEAD) -ne $upstream) { throw 'Upstream SHA drift' }
+          "SEMANTIC_DOWNSTREAM=$d" >> $env:GITHUB_ENV
+          "SEMANTIC_UPSTREAM=$u" >> $env:GITHUB_ENV
+          git worktree list --porcelain
+      - name: Report candidate surfaces without importing upstream code
+        shell: python
+        run: |
+          import ast
+          import hashlib
+          import json
+          import os
+          import pathlib
+          import subprocess
+
+          roots = {key: pathlib.Path(os.environ['SEMANTIC_' + key.upper()])
+                   for key in ('downstream', 'upstream')}
+          terms = {
+              'plugins': ('plugin',),
+              'mcp': ('mcp',),
+              'memory': ('memory_provider', 'memory_manager', 'memory_context', 'memory_checkpoint'),
+              'router': ('model_router', 'model_routing', 'auto_model', 'fallback'),
+              'prompt_cache': ('prompt_cache', 'cache_policy', 'prompt_builder', 'turn_context'),
+          }
+          inventory = {}
+          for label, root in roots.items():
+              names = subprocess.check_output(
+                  ['git', '-C', str(root), 'ls-files', '-z'], text=True, encoding='utf-8'
+              ).split('\0')
+              inventory[label] = {
+                  name: root / name for name in names
+                  if name.endswith('.py') and name.split('/')[0] in
+                  {'agent', 'hermes_cli', 'tools', 'plugins', 'tests', 'downstream'}
+              }
+          for area, needles in terms.items():
+              print('\n=== ' + area.upper() + ' CANDIDATE SURFACES ===')
+              names = sorted({name for files in inventory.values() for name in files
+                              if any(term in name.lower() for term in needles)})
+              for name in names:
+                  if name.startswith('tests/'):
+                      continue
+                  row = {'path': name}
+                  for label, files in inventory.items():
+                      path = files.get(name)
+                      if path is None or not path.is_file():
+                          row[label] = None
+                          continue
+                      data = path.read_bytes()
+                      info = {'sha256': hashlib.sha256(data).hexdigest(), 'bytes': len(data)}
+                      if len(data) < 100000:
+                          try:
+                              tree = ast.parse(data)
+                              info['definitions'] = [
+                                  node.name for node in tree.body
+                                  if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+                              ]
+                          except (SyntaxError, UnicodeError) as exc:
+                              info['parse_error'] = type(exc).__name__
+                      row[label] = info
+                  if row['downstream'] != row['upstream']:
+                      print(json.dumps(row, ensure_ascii=True))
+              print('Related test paths:')
+              for name in names:
+                  if name.startswith('tests/'):
+                      print(name)
+          print('\nINVENTORY_ONLY: path/hash differences are not behavioral gaps or test evidence.')
+          for label, root in roots.items():
+              status = subprocess.check_output(
+                  ['git', '-C', str(root), 'status', '--porcelain'], text=True, encoding='utf-8'
+              )
+              if status.strip():
+                  raise SystemExit(label + ' immutable worktree was modified')
