@@ -121,3 +121,33 @@ func TestDestructiveProcessCodeHasNoImageKillOrNetstatFallback(t *testing.T) {
 		}
 	}
 }
+
+func TestWatchdogDefaultDisablesDesktopBackendPrewarm(t *testing.T) {
+	cfg := Config{}
+	if cfg.PrewarmBackend {
+		t.Fatal("PrewarmBackend default must be false for single-owner Desktop backend architecture")
+	}
+}
+
+func TestEmbeddingSupervisorDoesNotSpawnOrKillDesktopBackend(t *testing.T) {
+	dir := t.TempDir()
+	cfg := Config{
+		HermesRoot:     dir,
+		HermesHome:     dir,
+		DataDir:        dir,
+		PrewarmBackend: false, // single-owner mode
+	}
+	logger := NewLogger(filepath.Join(dir, "test.log"))
+	wd := NewWatchdog(cfg, logger)
+
+	// PrewarmBackend must be a no-op
+	wd.PrewarmBackend()
+	if wd.back.currentHealthy() != nil {
+		t.Fatal("embedding supervisor must not prewarm desktop backend")
+	}
+
+	// Desktop backend manifest must not exist
+	if _, err := os.Stat(wd.back.ManifestPath()); !os.IsNotExist(err) {
+		t.Fatal("embedding supervisor must not write desktop-backend.json")
+	}
+}
