@@ -633,9 +633,23 @@ Write-Step ("TEST 2 (Relaunch) completed: {0}/{1} executed, {2}/{3} passed (medi
 # =============================================================================
 Write-Step "=== Starting TEST 3: Bulk Stale Ownership Reap ==="
 $ownershipScript = Join-Path $PSScriptRoot "Test-HermesOwnershipLedger.ps1"
+$ownershipResultFile = Join-Path $ArtifactsDir "ownership-ledger-test-result.json"
+if (Test-Path -LiteralPath $ownershipResultFile) {
+    Remove-Item -LiteralPath $ownershipResultFile -Force -ErrorAction SilentlyContinue
+}
 $ownershipResult = @{ passed = $false; status = "not_run" }
 if (Test-Path -LiteralPath $ownershipScript) {
-    $ownershipResult = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $ownershipScript -RepoRoot $RepoRoot -ArtifactsDir $ArtifactsDir
+    # Invoke as background process; result is written to ownership-ledger-test-result.json
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $ownershipScript -RepoRoot $RepoRoot -ArtifactsDir $ArtifactsDir | Out-Null
+    if (Test-Path -LiteralPath $ownershipResultFile) {
+        try {
+            $ownershipResult = Get-Content -Raw -LiteralPath $ownershipResultFile | ConvertFrom-Json
+        } catch {
+            $ownershipResult = @{ passed = $false; status = "parse_error"; error = $_.Exception.Message }
+        }
+    } else {
+        $ownershipResult = @{ passed = $false; status = "result_file_missing" }
+    }
 } else {
     Write-Warning "Ownership ledger test script missing: $ownershipScript"
     $ownershipResult = @{ passed = $false; status = "skipped"; reason = "script_missing" }
@@ -801,12 +815,23 @@ $reconnectStormResult = @{
 # TEST 13 — Authentication Measurement (/api/sessions)
 # =============================================================================
 Write-Step "=== Starting TEST 13: Live Authentication Measurement ==="
-$liveMains = Get-DesktopMainProcess
-$liveDpid = if ($liveMains.Count -gt 0) { [int]$liveMains[0].ProcessId } else { 0 }
-$liveBackend = Get-DesktopOwnedBackend $liveDpid
-$livePort = if ($liveBackend -and $liveBackend.Port -gt 0) { [int]$liveBackend.Port } else { 0 }
-if ($livePort -eq 0 -and $liveBackend) {
-    $livePort = Get-ListeningPortForPid ([int]$liveBackend.ProcessId)
+# Wait up to 35s for a live Desktop + backend to recover from any crash cycles
+$auth13Deadline = (Get-Date).AddSeconds(35)
+$liveDpid = 0; $livePort = 0
+while ((Get-Date) -lt $auth13Deadline) {
+    $liveMains = Get-DesktopMainProcess
+    $liveDpid = if ($liveMains.Count -gt 0) { [int]$liveMains[0].ProcessId } else { 0 }
+    if ($liveDpid -gt 0) {
+        $liveBackend = Get-DesktopOwnedBackend $liveDpid
+        if ($liveBackend) {
+            $livePort = if ($liveBackend.Port -gt 0) { [int]$liveBackend.Port } else { Get-ListeningPortForPid ([int]$liveBackend.ProcessId) }
+            if ($livePort -gt 0) {
+                Write-Step ("TEST 13: Found live backend on port {0} (Desktop PID={1})" -f $livePort, $liveDpid)
+                break
+            }
+        }
+    }
+    Start-Sleep -Milliseconds 500
 }
 
 $authMeasurement = if ($livePort -gt 0) {
