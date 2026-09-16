@@ -54,6 +54,7 @@ export async function processStartMarker(
 
   if (process.platform === 'linux') {
     let stat: string
+
     try {
       stat = await fs.promises.readFile(`/proc/${pid}/stat`, 'utf8')
     } catch (err: any) {
@@ -62,6 +63,7 @@ export async function processStartMarker(
         error.code = 'ESRCH'
         throw error
       }
+
       throw err
     }
 
