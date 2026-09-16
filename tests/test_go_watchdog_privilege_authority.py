@@ -54,7 +54,7 @@ public static class AuthorityProbe {
     }
     private static bool LookupPrivilegeValue(string system, string name, out Luid luid) {
         if (name != "SeDebugPrivilege") { throw new Exception("Unexpected privilege"); }
-        luid = new Luid { LowPart = 20 };
+        luid = new Luid { LowPart = 20, HighPart = 0 };
         LastError = Scenario == "lookup_error" ? 87 : 0;
         return LastError == 0;
     }
