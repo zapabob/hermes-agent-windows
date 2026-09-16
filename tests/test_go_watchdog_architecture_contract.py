@@ -62,5 +62,6 @@ def test_session0_watchdog_cannot_orphan_desktop() -> None:
     assert "Replacing Session 0 Go watchdog" in launcher
     assert "Get-GoWatchdogSessionId" in launcher
     assert '$state.Status -ne "owned"' in launcher
-    assert "lock matched visible process without OpenProcess query" in launcher
+    assert "OpenProcessForAuthority" in launcher
+    assert "process identity is unverified" in launcher
     assert "$replaceSession0Owner" in launcher
