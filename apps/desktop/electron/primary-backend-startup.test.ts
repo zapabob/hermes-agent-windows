@@ -20,7 +20,6 @@ function startupOptions(overrides: Record<string, unknown> = {}) {
     connectRemote: vi.fn(async remote => ({ baseUrl: remote.baseUrl, mode: 'remote' as const })),
     ensureLocalRuntime: vi.fn(async backend => ({ ...backend, command: 'hermes' })),
     prepareLocalBackend: vi.fn(async () => bootstrapBackend),
-    resolvePrewarmedLocal: vi.fn(async () => null),
     resolveRemote: vi.fn(async () => null),
     waitForDecision: vi.fn(async () => 'continue-local' as const),
     waitForLocalStart: vi.fn(async () => {}),
@@ -125,43 +124,7 @@ test('an already-saved remote bypasses every local startup step', async () => {
   assert.equal(options.waitForLocalStart.mock.calls.length, 0)
   assert.equal(options.prepareLocalBackend.mock.calls.length, 0)
   assert.equal(options.waitForDecision.mock.calls.length, 0)
-  assert.equal(options.resolvePrewarmedLocal.mock.calls.length, 0)
   assert.equal(options.ensureLocalRuntime.mock.calls.length, 0)
-})
-
-test('valid prewarmed local succeeds before a broken runtime install is entered', async () => {
-  const prewarmedConnection = {
-    baseUrl: 'http://127.0.0.1:9119',
-    mode: 'local' as const,
-    source: 'watchdog'
-  }
-
-  const options = startupOptions({
-    ensureLocalRuntime: vi.fn(async () => {
-      throw new Error('managed runtime is broken')
-    }),
-    resolvePrewarmedLocal: vi.fn(async () => prewarmedConnection)
-  })
-
-  assert.deepEqual(await runPrimaryBackendStartup(options), {
-    kind: 'prewarmed-local',
-    connection: prewarmedConnection
-  })
-  assert.deepEqual(options.resolvePrewarmedLocal.mock.calls, [[bootstrapBackend]])
-  assert.equal(options.ensureLocalRuntime.mock.calls.length, 0)
-})
-
-test('invalid prewarmed local falls through to the runtime resolver', async () => {
-  const runtimeBackend = { ...bootstrapBackend, command: 'hermes' }
-
-  const options = startupOptions({
-    ensureLocalRuntime: vi.fn(async () => runtimeBackend),
-    resolvePrewarmedLocal: vi.fn(async () => null)
-  })
-
-  assert.deepEqual(await runPrimaryBackendStartup(options), { kind: 'local', backend: runtimeBackend })
-  assert.deepEqual(options.resolvePrewarmedLocal.mock.calls, [[bootstrapBackend]])
-  assert.deepEqual(options.ensureLocalRuntime.mock.calls, [[bootstrapBackend]])
 })
 
 test('remote apply fails clearly when no saved remote can be resolved', async () => {
@@ -194,7 +157,6 @@ test('continue local waits for update exclusion and ensures the prepared runtime
   assert.deepEqual(await pending, { kind: 'local', backend: runtimeBackend })
   assert.deepEqual(options.waitForLocalStart.mock.calls, [[]])
   assert.deepEqual(options.prepareLocalBackend.mock.calls, [[]])
-  assert.deepEqual(options.resolvePrewarmedLocal.mock.calls, [[bootstrapBackend]])
   assert.deepEqual(options.ensureLocalRuntime.mock.calls, [[bootstrapBackend]])
   assert.deepEqual(options.resolveRemote.mock.calls, [[]])
 })
@@ -209,6 +171,5 @@ test('reset rejects with a typed error and never enters either backend', async (
 
   await assert.rejects(pending, error => error instanceof FirstRunSetupResetError && error.firstRunSetupReset)
   assert.equal(options.connectRemote.mock.calls.length, 0)
-  assert.equal(options.resolvePrewarmedLocal.mock.calls.length, 0)
   assert.equal(options.ensureLocalRuntime.mock.calls.length, 0)
 })

@@ -1,24 +1,18 @@
+import { runBackendStartStep } from './backend-start-cancellation'
 import type { FirstRunSetupDecision } from './first-run-setup-gate'
 
-export interface PrimaryBackendStartupOptions<
-  Backend,
-  RuntimeBackend,
-  Remote,
-  Connection,
-  PrewarmedConnection = Connection
-> {
+export interface PrimaryBackendStartupOptions<Backend, RuntimeBackend, Remote, Connection> {
+  signal?: AbortSignal
   connectRemote: (remote: Remote) => Promise<Connection>
   ensureLocalRuntime: (backend: Backend) => Promise<RuntimeBackend>
   prepareLocalBackend: () => Backend | Promise<Backend>
-  resolvePrewarmedLocal?: (backend: Backend) => Promise<PrewarmedConnection | null>
   resolveRemote: () => Promise<Remote | null>
   waitForDecision: (backend: Backend) => Promise<FirstRunSetupDecision>
   waitForLocalStart: () => Promise<unknown>
 }
 
-export type PrimaryBackendStartupResult<RuntimeBackend, Connection, PrewarmedConnection = Connection> =
+export type PrimaryBackendStartupResult<RuntimeBackend, Connection> =
   | { kind: 'local'; backend: RuntimeBackend }
-  | { kind: 'prewarmed-local'; connection: PrewarmedConnection }
   | { kind: 'remote'; connection: Connection }
 
 interface ResolvedPrimaryRemote {
@@ -83,47 +77,42 @@ export class FirstRunSetupResetError extends Error {
 // test: an already-saved remote wins immediately; otherwise update exclusion
 // and local backend resolution happen before the setup gate, and a remote Apply
 // re-resolves persisted config without ever entering ensureRuntime/bootstrap.
-export async function runPrimaryBackendStartup<Backend, RuntimeBackend, Remote, Connection, PrewarmedConnection>({
+export async function runPrimaryBackendStartup<Backend, RuntimeBackend, Remote, Connection>({
   connectRemote,
   ensureLocalRuntime,
   prepareLocalBackend,
-  resolvePrewarmedLocal,
   resolveRemote,
   waitForDecision,
-  waitForLocalStart
-}: PrimaryBackendStartupOptions<Backend, RuntimeBackend, Remote, Connection, PrewarmedConnection>): Promise<
-  PrimaryBackendStartupResult<RuntimeBackend, Connection, PrewarmedConnection>
+  waitForLocalStart,
+  signal
+}: PrimaryBackendStartupOptions<Backend, RuntimeBackend, Remote, Connection>): Promise<
+  PrimaryBackendStartupResult<RuntimeBackend, Connection>
 > {
-  const savedRemote = await resolveRemote()
+  const step = <T>(run: () => T | Promise<T>) => runBackendStartStep(signal, run)
+  const savedRemote = await step(resolveRemote)
 
   if (savedRemote) {
-    return { kind: 'remote', connection: await connectRemote(savedRemote) }
+    return { kind: 'remote', connection: await step(() => connectRemote(savedRemote)) }
   }
 
-  await waitForLocalStart()
+  await step(waitForLocalStart)
 
-  const backend = await prepareLocalBackend()
-  const decision = await waitForDecision(backend)
+  const backend = await step(prepareLocalBackend)
+  const decision = await step(() => waitForDecision(backend))
 
   if (decision === 'remote-applied') {
-    const appliedRemote = await resolveRemote()
+    const appliedRemote = await step(resolveRemote)
 
     if (!appliedRemote) {
       throw new Error('First-run remote setup completed without a saved remote backend.')
     }
 
-    return { kind: 'remote', connection: await connectRemote(appliedRemote) }
+    return { kind: 'remote', connection: await step(() => connectRemote(appliedRemote)) }
   }
 
   if (decision === 'reset') {
     throw new FirstRunSetupResetError()
   }
 
-  const prewarmed = await resolvePrewarmedLocal?.(backend)
-
-  if (prewarmed) {
-    return { kind: 'prewarmed-local', connection: prewarmed }
-  }
-
-  return { kind: 'local', backend: await ensureLocalRuntime(backend) }
+  return { kind: 'local', backend: await step(() => ensureLocalRuntime(backend)) }
 }

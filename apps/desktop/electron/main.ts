@@ -398,7 +398,6 @@ import {
 } from './venv-blocker-scan'
 import { fetchMarketplaceThemes, searchMarketplaceThemes } from './vscode-marketplace'
 import { createWakeIndicatorWindowController } from './wake-indicator-window'
-import { resolveWatchdogPrewarmedBackend } from './watchdog-backend'
 import { shouldWriteDesktopStopFence } from './desktop-restart-lifecycle'
 import {
   clearDesktopStopFence,
@@ -12330,58 +12329,6 @@ async function startHermes() {
 
         return resolveHermesBackend(backendArgs)
       },
-      resolvePrewarmedLocal: async () => {
-        const prewarmed = await resolveWatchdogPrewarmedBackend({
-          hermesRoot: process.env.HERMES_DESKTOP_HERMES_ROOT
-            ? path.resolve(process.env.HERMES_DESKTOP_HERMES_ROOT)
-            : null,
-          platform: process.platform,
-          timeoutMs: 5_000
-        })
-
-        if (!prewarmed) {
-          return null
-        }
-
-        await advanceBootProgress('backend.watchdog', `Using watchdog prewarmed backend at ${prewarmed.baseUrl}`, 50)
-        rememberLog(`Watchdog prewarmed backend ready at ${prewarmed.baseUrl}`)
-        await waitForHermes(prewarmed.baseUrl, prewarmed.token)
-
-        // Match the owned local-spawn gate: HTTP-only readiness leaves the
-        // renderer forever on CONNECTING when /api/ws rejects the token.
-        const prewarmedWsUrl = buildGatewayWsUrl(prewarmed.baseUrl, prewarmed.token)
-        const prewarmedWsProbe = await probeGatewayWebSocket(prewarmedWsUrl, {
-          WebSocketImpl: globalThis.WebSocket
-        })
-
-        if (!prewarmedWsProbe.ok) {
-          rememberLog(
-            `Watchdog prewarmed backend WS probe failed (${prewarmedWsProbe.reason}); falling through to owned local serve`
-          )
-
-          return null
-        }
-
-        updateBootProgress({
-          phase: 'backend.ready',
-          message: 'Hermes backend is ready. Finalizing desktop startup',
-          progress: 94,
-          running: true,
-          error: null
-        })
-        rememberLog('Watchdog-managed Hermes backend is ready (HTTP+WS)')
-
-        return {
-          baseUrl: prewarmed.baseUrl,
-          mode: 'local' as const,
-          source: 'watchdog' as const,
-          authMode: 'token' as const,
-          token: prewarmed.token,
-          wsUrl: prewarmedWsUrl,
-          logs: hermesLog.slice(-80),
-          ...getWindowState()
-        }
-      },
       resolveRemote: () => {
         // Classify immediately before each throwing resolve. This callback runs
         // both for an already-saved remote and after first-run remote Apply.
@@ -12405,18 +12352,11 @@ async function startHermes() {
       return setup.connection
     }
 
-    if (setup.kind === 'prewarmed-local') {
-      // A prewarmed local backend already exposes a renderer-facing
-      // connection. Do not attempt to treat it as a spawn descriptor.
-      setWslBridgeProfileState(primaryProfile, true)
-
-      return setup.connection
-    }
-
     // Local WSL backend — paths are bridgeable.
     setWslBridgeProfileState(primaryProfile, true)
 
     const backend = setup.backend
+
     // Route old runtimes (no `serve`) through the legacy `dashboard --no-open`.
     backend.args = getBackendArgsForRuntime(backend)
     const hermesCwd = resolveHermesCwd()
