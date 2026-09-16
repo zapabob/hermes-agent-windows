@@ -10,12 +10,42 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
 
 const defaultEmbeddingStartTimeoutSec = 180
+
+var embeddingCredentialName = regexp.MustCompile(`(?i)(^|_)(API_KEY|ACCESS_KEY|AUTHKEY|AUTH|CREDENTIALS?|PASSWORD|PRIVATE_KEY|SECRET|TOKEN|KEY)(_|$)`)
+
+// embeddingChildEnv is deliberately local to the embedding spawn boundary.
+// Preserve GPU/OS/runtime settings and the server's own inbound authentication,
+// but never pass unrelated provider, developer, or watchdog credentials. This
+// does not change the environment of the parent, Desktop, or managed backend.
+func embeddingChildEnv(base []string) []string {
+	out := make([]string, 0, len(base)) // non-nil: empty must not mean inherit
+	for _, entry := range base {
+		key, _, _ := strings.Cut(entry, "=")
+		upper := strings.ToUpper(key)
+		if upper == "LLAMA_ARG_CACHE_TYPE_V" {
+			// Stock embedding llama-server cannot use the generation turbo cache.
+			continue
+		}
+		switch upper {
+		case "LLAMA_API_KEY", "LLAMA_ARG_API_KEY_FILE", "LLAMA_ARG_SSL_KEY_FILE":
+			// These configure this server's own access control, not a provider.
+			out = append(out, entry)
+			continue
+		}
+		if strings.HasPrefix(upper, "_HERMES_FORCE_") || embeddingCredentialName.MatchString(key) {
+			continue
+		}
+		out = append(out, entry)
+	}
+	return out
+}
 
 // buildEmbeddingCommand accepts only the operator's configured local endpoint.
 // Model download and generic command parsing are deliberately out of scope.
@@ -42,14 +72,7 @@ func buildEmbeddingCommand(cfg Config) (*exec.Cmd, string, error) {
 	args = append(args, extra...)
 	cmd := exec.Command(cfg.EmbeddingServer, args...)
 	cmd.Dir = filepath.Dir(cfg.EmbeddingServer)
-	// The generation stack may export a cache type that this stock embedding
-	// server rejects. Keep that process-level setting out of this child only.
-	for _, value := range os.Environ() {
-		if strings.HasPrefix(strings.ToUpper(value), "LLAMA_ARG_CACHE_TYPE_V=") {
-			continue
-		}
-		cmd.Env = append(cmd.Env, value)
-	}
+	cmd.Env = embeddingChildEnv(os.Environ())
 	return cmd, endpoint, nil
 }
 
