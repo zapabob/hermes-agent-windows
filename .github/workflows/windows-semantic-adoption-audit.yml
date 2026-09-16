@@ -3,12 +3,13 @@ on:
   push:
     branches: [feat/windows-semantic-adoption-20260917]
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: windows-semantic-adoption-audit-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   native-regression:
+    if: github.repository == 'zapabob/hermes-agent-windows' && github.ref == 'refs/heads/feat/windows-semantic-adoption-20260917'
     runs-on: windows-latest
     timeout-minutes: 15
     env:
@@ -18,59 +19,75 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
           python-version: '3.11'
-      - name: Exact-head isolated worktree and real regression
+      - name: Materialize and test without publication credentials
         shell: python
         run: |
-          import ast, os, pathlib, subprocess, sys, xml.etree.ElementTree as ET
-          assert os.name == 'nt', 'Native Windows evidence is required'
+          import os, pathlib, subprocess, sys, xml.etree.ElementTree as ET
+          assert os.name == 'nt'
+          assert 'ADOPTION_PUSH_TOKEN' not in os.environ
           def run(args, cwd=None):
-              p = subprocess.run(args, cwd=cwd, capture_output=True, text=True, encoding='utf-8', errors='replace')
+              p = subprocess.run(args, cwd=cwd, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=240)
               if p.returncode:
-                  raise RuntimeError('Command failed: ' + repr(args[:3]) + '\n' + p.stderr[-2000:])
+                  raise RuntimeError('Command failed: ' + repr(args[:3]) + '\n' + p.stdout[-2000:] + '\n' + p.stderr[-2000:])
               return p.stdout
           root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'adoption repo'
           root.mkdir()
           run(['git','init','--quiet',str(root)])
-          def git(*args):
-              return run(['git','-C',str(root),*args])
-          git('config','core.longpaths','true')
-          git('remote','add','origin','https://github.com/zapabob/hermes-agent-windows.git')
+          run(['git','-C',str(root),'config','core.longpaths','true'])
+          run(['git','-C',str(root),'remote','add','origin','https://github.com/zapabob/hermes-agent-windows.git'])
           head = os.environ['GITHUB_SHA']
-          upstream = '260da4ef6251b29aa830c8c949dbe7c92d58df5f'
-          git('fetch','--quiet','--no-tags','--depth=1','origin',head)
+          run(['git','-C',str(root),'fetch','--quiet','--no-tags','--depth=1','origin',head])
           work = pathlib.Path(os.environ['RUNNER_TEMP']) / 'native worktree 日本語'
-          git('worktree','add','--quiet','--detach',str(work),head)
+          run(['git','-C',str(root),'worktree','add','--quiet','--detach',str(work),head])
           assert run(['git','-C',str(work),'rev-parse','HEAD']).strip() == head
-          print('TEST_HEAD=' + head + '; NATIVE_WORKTREE=' + str(work))
-          git('fetch','--quiet','--no-tags','--depth=1','https://github.com/NousResearch/hermes-agent.git',upstream)
-          def methods(text):
-              tree = ast.parse(text)
-              result = {}
-              def visit(node, prefix=''):
-                  for child in getattr(node, 'body', []):
-                      if isinstance(child, ast.ClassDef):
-                          visit(child, prefix + child.name + '.')
-                      elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                          if child.body and isinstance(child.body[0], ast.Expr) and isinstance(child.body[0].value, ast.Constant) and isinstance(child.body[0].value.value, str):
-                              child.body = child.body[1:]
-                          result[prefix + child.name] = ast.dump(child, include_attributes=False)
-              visit(tree)
-              return result
-          for name in ['agent/prompt_cache_boundary.py','agent/prompt_cache_scope.py','tools/mcp_schema_cache.py','agent/memory_manager.py','plugins/model-providers/router/__init__.py']:
-              d = methods((work / name).read_text(encoding='utf-8'))
-              u = methods(git('show',upstream + ':' + name))
-              changed = [n for n in sorted(set(d)|set(u)) if d.get(n) != u.get(n)]
-              print('AST_CANDIDATES ' + name + ': ' + ', '.join(changed))
-          tests = run(['git','-C',str(work),'ls-files','tests/*plugin*','tests/**/*plugin*','tests/*prompt_cache*','tests/**/*prompt_cache*'])
-          print('RELATED_TEST_PATHS\n' + tests[:6000])
-          deps = [sys.executable,'-m','pip','install','--disable-pip-version-check','-q','pytest==8.3.5','python-dotenv==1.2.2','rich==14.3.3','pyyaml==6.0.3','packaging==26.0']
-          run(deps, cwd=work)
-          xml = pathlib.Path(os.environ['RUNNER_TEMP']) / 'adoption-regression.xml'
-          result = subprocess.run([sys.executable,'-m','pytest','--noconftest','-o','addopts=','tests/test_plugin_doctor_security_adoption.py','-q','--tb=short','--junitxml=' + str(xml)], cwd=work, capture_output=True, text=True, encoding='utf-8', errors='replace')
-          print(result.stdout[-14000:])
-          print(result.stderr[-2000:])
-          if xml.exists():
-              report = ET.parse(xml)
-              print('EVIDENCE cases=' + str(len(report.findall('.//testcase'))) + ' failures=' + str(len(report.findall('.//failure'))) + ' errors=' + str(len(report.findall('.//error'))) + ' skipped=' + str(len(report.findall('.//skipped'))))
-          assert not run(['git','-C',str(work),'diff','--name-only']).strip(), 'Tracked source changed while testing'
-          sys.exit(result.returncode)
+          print('INPUT_HEAD=' + head + '; NATIVE_WORKTREE=' + str(work))
+          print(run([sys.executable,str(work / 'scripts/downstream/_apply_semantic_adoption_20260917.py'),str(work)], cwd=work))
+          run([sys.executable,'-m','pip','install','--disable-pip-version-check','-q','pytest==8.3.5','python-dotenv==1.2.2','rich==14.3.3','pyyaml==6.0.3','packaging==26.0'], cwd=work)
+          xml = pathlib.Path(os.environ['RUNNER_TEMP']) / 'adoption-green.xml'
+          result = subprocess.run([sys.executable,'-m','pytest','--noconftest','-o','addopts=','tests/test_plugin_doctor_security_adoption.py','tests/hermes_cli/test_plugin_dev.py','tests/agent/test_prompt_cache_boundary.py','-q','--tb=short','--junitxml=' + str(xml)], cwd=work, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=240)
+          print(result.stdout[-12000:]); print(result.stderr[-2000:])
+          if not xml.exists():
+              raise SystemExit('Missing JUnit evidence')
+          report = ET.parse(xml)
+          cases = len(report.findall('.//testcase'))
+          failures = len(report.findall('.//failure'))
+          errors = len(report.findall('.//error'))
+          skips = len(report.findall('.//skipped'))
+          print(f'EVIDENCE cases={cases} failures={failures} errors={errors} skipped={skips}')
+          if result.returncode or cases < 12 or failures or errors or skips:
+              raise SystemExit(result.returncode or 1)
+          changed = run(['git','-C',str(work),'diff','--name-only']).splitlines()
+          assert changed == ['hermes_cli/plugin_dev.py'], changed
+          print(run(['git','-C',str(work),'diff','--stat']))
+          print(run(['git','-C',str(work),'diff','--check']))
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as f:
+              f.write('ADOPTION_TESTED_WORKTREE=' + str(work) + '\n')
+      - name: Publish only the tested source file with head guard
+        env:
+          ADOPTION_PUSH_TOKEN: ${{ github.token }}
+        shell: python
+        run: |
+          import base64, os, pathlib, subprocess
+          work = pathlib.Path(os.environ['ADOPTION_TESTED_WORKTREE'])
+          branch = 'refs/heads/feat/windows-semantic-adoption-20260917'
+          def git(*args, env=None):
+              p = subprocess.run(['git','-C',str(work),*args], env=env, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=120)
+              if p.returncode:
+                  raise RuntimeError(p.stderr[-1500:])
+              return p.stdout.strip()
+          remote_head = git('ls-remote','origin',branch).split()[0]
+          assert remote_head == os.environ['GITHUB_SHA'], 'Branch advanced; refusing publication'
+          assert git('diff','--name-only') == 'hermes_cli/plugin_dev.py'
+          git('config','user.name','github-actions[bot]')
+          git('config','user.email','41898282+github-actions[bot]@users.noreply.github.com')
+          git('add','--','hermes_cli/plugin_dev.py')
+          assert git('diff','--cached','--name-only') == 'hermes_cli/plugin_dev.py'
+          git('commit','-m','fix(plugins): scan doctor candidates before runtime registration')
+          env = dict(os.environ)
+          token = env.pop('ADOPTION_PUSH_TOKEN')
+          env['GIT_CONFIG_COUNT'] = '1'
+          env['GIT_CONFIG_KEY_0'] = 'http.https://github.com/.extraheader'
+          auth = base64.b64encode(('x-access-token:' + token).encode()).decode()
+          env['GIT_CONFIG_VALUE_0'] = 'AUTHORIZATION: basic ' + auth
+          git('push','origin','HEAD:' + branch,env=env)
+          print('PUBLISHED_TESTED_COMMIT=' + git('rev-parse','HEAD'))
