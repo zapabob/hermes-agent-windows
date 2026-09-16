@@ -58,11 +58,7 @@ import {
   waitForHermesReady
 } from './backend-health'
 import { createLivenessMatchers } from './backend-liveness-matchers'
-import {
-  type BackendIdentity,
-  createBackendOwnership,
-  createBackendShutdownCoordinator
-} from './backend-ownership'
+import { type BackendIdentity, createBackendOwnership, createBackendShutdownCoordinator } from './backend-ownership'
 import {
   canImportHermesCli,
   execProbeSync,
@@ -3232,11 +3228,7 @@ async function backendCommandForPid(pid) {
   }
 }
 
-const {
-  processIdentityMatches,
-  backendIdentityMatches,
-  backendParentMatches
-} = createLivenessMatchers({
+const { processIdentityMatches, backendIdentityMatches, backendParentMatches } = createLivenessMatchers({
   isWindows: IS_WINDOWS,
   isPidAliveWindows,
   processStartMarker,

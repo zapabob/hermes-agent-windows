@@ -176,7 +176,16 @@ describe('Desktop restart/reconnect lifecycle (Windows)', () => {
           return true
         }
       },
-      { backendCreationCount: { get value() { return creationCount }, set value(v: number) { creationCount = v } } as { value: number } }
+      {
+        backendCreationCount: {
+          get value() {
+            return creationCount
+          },
+          set value(v: number) {
+            creationCount = v
+          }
+        } as { value: number }
+      }
     )
 
     // Simulate the C2 footgun: if restart wrote DESKTOP_STOP, watchdog would
@@ -197,10 +206,13 @@ describe('Desktop restart/reconnect lifecycle (Windows)', () => {
     assert.equal(result.rpcOk, true)
     assert.ok(rpcCalls >= 2)
     assert.ok(descriptorsMatchIdentity(result.backendBefore, result.backendAfter))
-    assert.deepEqual(
-      result.phases.slice(-5),
-      ['STARTING', 'DISCOVER_BACKEND', 'VALIDATE_BACKEND', 'ATTACHING', 'CONNECTED']
-    )
+    assert.deepEqual(result.phases.slice(-5), [
+      'STARTING',
+      'DISCOVER_BACKEND',
+      'VALIDATE_BACKEND',
+      'ATTACHING',
+      'CONNECTED'
+    ])
   })
 
   test('transport loss re-reads descriptor instead of trusting stale cache', async () => {

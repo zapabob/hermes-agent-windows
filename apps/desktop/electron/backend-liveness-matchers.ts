@@ -12,13 +12,9 @@
  * - Live pid-only PID: returns undefined (never authorized for destructive stop).
  */
 
-import { isPidAliveWindows } from './backend-release-gate'
 import { processStartMarker as realProcessStartMarker } from './backend-claim'
-import {
-  backendCommandMatches,
-  type BackendIdentity,
-  type BackendOwnershipEntry
-} from './backend-ownership'
+import { backendCommandMatches, type BackendIdentity, type BackendOwnershipEntry } from './backend-ownership'
+import { isPidAliveWindows } from './backend-release-gate'
 
 export interface LivenessMatcherDeps {
   isWindows?: boolean
