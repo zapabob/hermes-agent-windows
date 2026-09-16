@@ -156,11 +156,28 @@ features:
     upstream_equivalent: official provider catalogue and agent loop
     integration_policy: COMPOSE
   - id: watchdog-managed-desktop-backend
-    status: verified
+    status: retired
+    replacement: windows-desktop-single-owner-backend
     owner_path: scripts/windows/watchdog-go/backend.go
     public_surface: packaged Desktop prewarmed backend manifest
+    removal_reason: >
+      Desktop/Python backend ownership moved to the Electron main-process
+      generation-fenced lifecycle after repeated restart/reconnect failures
+      caused by cross-authority state.
     upstream_touch: true
-    tests: [scripts/windows/watchdog-go/backend_test.go, apps/desktop/electron/watchdog-backend.test.ts]
+    tests: [apps/desktop/electron/single-owner-backend-lifecycle.test.ts]
     windows_required: true
     upstream_equivalent: official Desktop backend ownership and serve lifecycle
-    integration_policy: COMPOSE
+    integration_policy: RETIRED
+  - id: windows-desktop-single-owner-backend
+    status: verified
+    owner_path: apps/desktop/electron
+    public_surface: Desktop local backend lifecycle
+    upstream_touch: true
+    tests:
+      - apps/desktop/electron/single-owner-backend-lifecycle.test.ts
+      - apps/desktop/electron/primary-backend-startup.test.ts
+      - apps/desktop/electron/backend-connection-state.test.ts
+    windows_required: true
+    upstream_equivalent: official Desktop backend ownership and serve lifecycle
+    integration_policy: KEEP_DOWNSTREAM

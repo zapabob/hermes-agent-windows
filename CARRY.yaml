@@ -19,12 +19,31 @@ carry:
     invariants: [explicit new Browser tabs, one stable file-preview zone]
     tests: [apps/desktop/src/store/preview.test.ts, apps/desktop/src/app/chat/preview-tile.test.ts]
     integration_policy: COMPOSE
-  - id: watchdog-backend-prewarm
-    upstream_paths: [apps/desktop/electron/main.ts, apps/desktop/electron/primary-backend-startup.ts]
-    downstream_reason: consume the watchdog-owned backend manifest without creating another backend owner
-    invariants: [Go watchdog is outer restart authority, official backend claim remains authoritative]
-    tests: [apps/desktop/electron/backend-claim.test.ts, apps/desktop/electron/primary-backend-startup.test.ts]
+  - id: windows-desktop-single-owner-backend
+    upstream_paths:
+      - apps/desktop/electron/backend-connection-state.ts
+      - apps/desktop/electron/backend-start-cancellation.ts
+      - apps/desktop/electron/primary-backend-startup.ts
+      - apps/desktop/electron/backend-dial-claim.ts
+    downstream_reason: >
+      Adopt Nous upstream semantics for generation-fenced startup, startup cancellation,
+      stale-attempt rejection, and single in-flight backend dial, while preserving
+      Windows-native invariants: resolved HERMES_HOME lifecycle identity, retained
+      ChildProcess ownership (no taskkill/no PID-only destructive ownership), and
+      auxiliary Go supervisor separation for embedding llama-server only.
+    invariants:
+      - Electron main is sole Desktop/Python backend authority
+      - resolved HERMES_HOME is stable lifecycle identity
+      - Go watchdog owns embedding llama-server only
+      - no taskkill or PID-only destructive ownership
+    tests:
+      - apps/desktop/electron/single-owner-backend-lifecycle.test.ts
+      - apps/desktop/electron/backend-connection-state.test.ts
+      - apps/desktop/electron/primary-backend-cancellation.test.ts
+      - apps/desktop/electron/primary-backend-startup.test.ts
+      - apps/desktop/electron/backend-dial-claim.test.ts
     integration_policy: COMPOSE
+
   - id: windows-watchdog-lifecycle-fence
     upstream_paths: [hermes_cli/update_cmd.py, hermes_cli/uninstall.py, tools/approval.py]
     downstream_reason: suppress the independent Windows watchdog while official update and uninstall owners perform planned process mutation
