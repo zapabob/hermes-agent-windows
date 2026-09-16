@@ -26,6 +26,7 @@ vi.mock('@/hermes', async importOriginal => {
         this.connectionState = 'closed'
       }
       onEvent = vi.fn(() => () => {})
+      onRequest = vi.fn(() => () => {})
       onState = vi.fn(() => () => {})
     }
   }
