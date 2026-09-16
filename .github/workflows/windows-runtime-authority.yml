@@ -52,6 +52,8 @@ jobs:
           git rev-parse HEAD | Set-Content -LiteralPath (Join-Path $evidence 'tested-sha.txt')
           git archive --format=zip --output="$evidence/source.zip" HEAD scripts/windows/Start-HermesGoWatchdog.ps1 scripts/windows/watchdog-go tests/test_go_watchdog_runtime_authority.py tests/test_go_watchdog_launcher_authority.py tests/test_go_watchdog_architecture_contract.py tests/test_go_watchdog_task_registration.py apps/desktop/tsconfig.json apps/desktop/tsconfig.electron.json apps/desktop/tsconfig.e2e.json apps/desktop/package.json .mailmap scripts/downstream .codex/UPSTREAM_SNAPSHOT.json _docs/carry-surface-20260826.json _docs/carry-surface-20260826.md
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git archive --format=zip --output="$evidence/python-source.zip" HEAD hermes_cli tools cron tui_gateway agent tests downstream scripts pyproject.toml hermes_constants.py .github/workflows
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Prove G2 regression fails before the fix
         run: |
           $before = Join-Path $env:RUNNER_TEMP 'runtime-authority-before'
@@ -60,7 +62,7 @@ jobs:
           $xmlPath = Join-Path $env:AUTHORITY_EVIDENCE 'g2-before.xml'
           Push-Location $before
           try {
-            python -m pytest --noconftest -o 'addopts=' tests/test_go_watchdog_runtime_authority.py -k 'denied_query or denied_invisible or denied_stop or wait_timeout' --junitxml=$xmlPath -q 2>&1 | Tee-Object -FilePath (Join-Path $env:AUTHORITY_EVIDENCE 'g2-before.log')
+            python -m pytest --noconftest -o 'addopts=' tests/test_go_watchdog_runtime_authority.py -k 'test_watchdog_process_authority_behavior and (denied_query or denied_invisible or denied_stop or wait_timeout)' --junitxml=$xmlPath -q 2>&1 | Tee-Object -FilePath (Join-Path $env:AUTHORITY_EVIDENCE 'g2-before.log')
             $beforeCode = $LASTEXITCODE
           } finally { Pop-Location }
           if ($beforeCode -ne 1) { throw "Expected assertion failures, got exit $beforeCode" }
