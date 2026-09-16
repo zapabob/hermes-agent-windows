@@ -2,66 +2,72 @@ name: Windows semantic adoption audit
 on:
   push:
     branches: [feat/windows-semantic-adoption-20260917]
-    paths: [.github/workflows/windows-semantic-adoption-audit.yml]
 permissions:
   contents: read
 concurrency:
   group: windows-semantic-adoption-audit-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  inventory:
+  native-regression:
     runs-on: windows-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-        with:
-          fetch-depth: 2
-          persist-credentials: false
-          show-progress: false
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
           python-version: '3.11'
-      - name: Inspect frozen native worktrees
+      - name: Exact-head isolated worktree and real regression
         shell: python
         run: |
-          import os, pathlib, subprocess
+          import ast, os, pathlib, subprocess, sys, xml.etree.ElementTree as ET
+          assert os.name == 'nt', 'Native Windows evidence is required'
+          def run(args, cwd=None):
+              p = subprocess.run(args, cwd=cwd, capture_output=True, text=True, encoding='utf-8', errors='replace')
+              if p.returncode:
+                  raise RuntimeError('Command failed: ' + repr(args[:3]) + '\n' + p.stderr[-2000:])
+              return p.stdout
+          root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'adoption repo'
+          root.mkdir()
+          run(['git','init','--quiet',str(root)])
           def git(*args):
-              result = subprocess.run(['git', *args], capture_output=True, text=True, encoding='utf-8')
-              if result.returncode:
-                  raise RuntimeError(result.stderr[-1500:])
-              return result.stdout
-          git('config', 'core.longpaths', 'true')
-          pins = {'downstream': '4aba35ed84aa8096c7394f0d26538bcdcdcab769',
-                  'upstream': '260da4ef6251b29aa830c8c949dbe7c92d58df5f'}
-          files = {}
-          for label, sha in pins.items():
-              remote = 'origin' if label == 'downstream' else 'https://github.com/NousResearch/hermes-agent.git'
-              git('fetch', '--quiet', '--no-tags', '--depth=1', remote, sha)
-              root = pathlib.Path(os.environ['RUNNER_TEMP']) / ('semantic adoption ' + label)
-              git('worktree', 'add', '--quiet', '--detach', str(root), sha)
-              assert git('-C', str(root), 'rev-parse', 'HEAD').strip() == sha
-              names = git('-C', str(root), 'ls-files', '-z').split('\0')
-              files[label] = {n: root / n for n in names if n.endswith('.py') and n.split('/')[0] in {'agent','hermes_cli','tools','plugins','downstream'}}
-          terms = {'plugins': ('plugin',), 'mcp': ('mcp',),
-                   'memory': ('memory_provider','memory_manager','memory_context','memory_checkpoint'),
-                   'router': ('router','routing','fallback'),
-                   'cache': ('cache','prompt_builder','turn_context')}
-          for area, needles in terms.items():
-              rows = []
-              for name in sorted(set(files['downstream']) | set(files['upstream'])):
-                  if not any(term in name.lower() for term in needles):
-                      continue
-                  d = files['downstream'].get(name); u = files['upstream'].get(name)
-                  db = d.read_bytes() if d and d.is_file() else None
-                  ub = u.read_bytes() if u and u.is_file() else None
-                  if db == ub:
-                      continue
-                  tag = 'UPSTREAM_ONLY' if db is None else 'DOWNSTREAM_ONLY' if ub is None else 'DIFF'
-                  rows.append(tag + ' ' + name)
-              msg = '\n'.join(rows[:65]) + '\nTOTAL=' + str(len(rows)) + '; INVENTORY_NOT_PARITY'
-              msg = msg.replace('%','%25').replace('\r','%0D').replace('\n','%0A')
-              print('::warning title=' + area + ' inventory::' + msg)
-          for label in pins:
-              root = pathlib.Path(os.environ['RUNNER_TEMP']) / ('semantic adoption ' + label)
-              assert not git('-C', str(root), 'status', '--porcelain').strip()
-          print('Native detached worktrees verified; no production mutation.')
+              return run(['git','-C',str(root),*args])
+          git('config','core.longpaths','true')
+          git('remote','add','origin','https://github.com/zapabob/hermes-agent-windows.git')
+          head = os.environ['GITHUB_SHA']
+          upstream = '260da4ef6251b29aa830c8c949dbe7c92d58df5f'
+          git('fetch','--quiet','--no-tags','--depth=1','origin',head)
+          work = pathlib.Path(os.environ['RUNNER_TEMP']) / 'native worktree 日本語'
+          git('worktree','add','--quiet','--detach',str(work),head)
+          assert run(['git','-C',str(work),'rev-parse','HEAD']).strip() == head
+          print('TEST_HEAD=' + head + '; NATIVE_WORKTREE=' + str(work))
+          git('fetch','--quiet','--no-tags','--depth=1','https://github.com/NousResearch/hermes-agent.git',upstream)
+          def methods(text):
+              tree = ast.parse(text)
+              result = {}
+              def visit(node, prefix=''):
+                  for child in getattr(node, 'body', []):
+                      if isinstance(child, ast.ClassDef):
+                          visit(child, prefix + child.name + '.')
+                      elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                          if child.body and isinstance(child.body[0], ast.Expr) and isinstance(child.body[0].value, ast.Constant) and isinstance(child.body[0].value.value, str):
+                              child.body = child.body[1:]
+                          result[prefix + child.name] = ast.dump(child, include_attributes=False)
+              visit(tree)
+              return result
+          for name in ['agent/prompt_cache_boundary.py','agent/prompt_cache_scope.py','tools/mcp_schema_cache.py','agent/memory_manager.py','plugins/model-providers/router/__init__.py']:
+              d = methods((work / name).read_text(encoding='utf-8'))
+              u = methods(git('show',upstream + ':' + name))
+              changed = [n for n in sorted(set(d)|set(u)) if d.get(n) != u.get(n)]
+              print('AST_CANDIDATES ' + name + ': ' + ', '.join(changed))
+          tests = run(['git','-C',str(work),'ls-files','tests/*plugin*','tests/**/*plugin*','tests/*prompt_cache*','tests/**/*prompt_cache*'])
+          print('RELATED_TEST_PATHS\n' + tests[:6000])
+          deps = [sys.executable,'-m','pip','install','--disable-pip-version-check','-q','pytest==8.3.5','python-dotenv==1.2.2','rich==14.3.3','pyyaml==6.0.3','packaging==26.0']
+          run(deps, cwd=work)
+          xml = pathlib.Path(os.environ['RUNNER_TEMP']) / 'adoption-regression.xml'
+          result = subprocess.run([sys.executable,'-m','pytest','--noconftest','-o','addopts=','tests/test_plugin_doctor_security_adoption.py','-q','--tb=short','--junitxml=' + str(xml)], cwd=work, capture_output=True, text=True, encoding='utf-8', errors='replace')
+          print(result.stdout[-14000:])
+          print(result.stderr[-2000:])
+          if xml.exists():
+              report = ET.parse(xml)
+              print('EVIDENCE cases=' + str(len(report.findall('.//testcase'))) + ' failures=' + str(len(report.findall('.//failure'))) + ' errors=' + str(len(report.findall('.//error'))) + ' skipped=' + str(len(report.findall('.//skipped'))))
+          assert not run(['git','-C',str(work),'diff','--name-only']).strip(), 'Tracked source changed while testing'
+          sys.exit(result.returncode)
