@@ -70,6 +70,11 @@ def _hermes_home_from_env() -> Path:
     """
     val = os.environ.get("HERMES_HOME", "").strip()
     if val:
+        # Translate MSYS/WSL drive paths (/c/Users/...) to native Windows (C:\Users\...)
+        from downstream.platform.windows.paths import translate_msys_drive_path
+        translated = translate_msys_drive_path(val)
+        if translated is not None:
+            val = translated
         return Path(val)
     return _get_platform_default_hermes_home()
 
