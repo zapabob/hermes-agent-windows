@@ -137,6 +137,12 @@ namespace HermesWatchdog {
             ref TokenPrivileges previous, uint length, IntPtr unusedPrevious, IntPtr unusedLength);
         private static readonly object PrivilegeGate = new object();
 
+        // Error 87 proves a missing PID only when returned by OpenProcess.
+        // Privilege APIs can return the same number for unrelated failures.
+        private static int UnverifiedAuthorityError(int error) {
+            return error == 0 || error == 87 ? 5 : error;
+        }
+
         // Session 0 recovery may need an already-held administrator privilege.
         // Enable it only around OpenProcess, restore its exact prior state, then
         // let the caller validate creation time and image on the returned handle.
@@ -148,7 +154,7 @@ namespace HermesWatchdog {
             lock (PrivilegeGate) {
                 IntPtr token;
                 if (!OpenProcessToken(GetCurrentProcess(), 0x20 | 0x8, out token)) {
-                    error = Marshal.GetLastWin32Error();
+                    error = UnverifiedAuthorityError(Marshal.GetLastWin32Error());
                     return IntPtr.Zero;
                 }
                 TokenPrivileges previous = new TokenPrivileges();
@@ -156,7 +162,7 @@ namespace HermesWatchdog {
                 try {
                     Luid luid;
                     if (!LookupPrivilegeValue(null, "SeDebugPrivilege", out luid)) {
-                        error = Marshal.GetLastWin32Error();
+                        error = UnverifiedAuthorityError(Marshal.GetLastWin32Error());
                     } else {
                         TokenPrivileges next = new TokenPrivileges {
                             PrivilegeCount = 1, Luid = luid, Attributes = 2
@@ -171,7 +177,7 @@ namespace HermesWatchdog {
                             error = handle == IntPtr.Zero ? Marshal.GetLastWin32Error() : 0;
                         } else {
                             // TRUE plus ERROR_NOT_ALL_ASSIGNED (1300) is not success.
-                            error = adjustError == 0 ? 5 : adjustError;
+                            error = UnverifiedAuthorityError(adjustError);
                         }
                     }
                 } finally {
@@ -182,7 +188,7 @@ namespace HermesWatchdog {
                         if (!restored || restoreError != 0) {
                             if (handle != IntPtr.Zero) { CloseHandle(handle); }
                             handle = IntPtr.Zero;
-                            error = restoreError == 0 ? 5 : restoreError;
+                            error = UnverifiedAuthorityError(restoreError);
                         }
                     }
                     CloseHandle(token);
