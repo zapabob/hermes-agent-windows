@@ -110,9 +110,95 @@ namespace HermesWatchdog {
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool CloseHandle(IntPtr handle);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct Luid { public uint LowPart; public int HighPart; }
+        [StructLayout(LayoutKind.Sequential)]
+        private struct TokenPrivileges {
+            public uint PrivilegeCount;
+            public Luid Luid;
+            public uint Attributes;
+        }
+        [DllImport("kernel32.dll")]
+        private static extern IntPtr GetCurrentProcess();
+        [DllImport("advapi32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool OpenProcessToken(IntPtr process, uint access, out IntPtr token);
+        [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool LookupPrivilegeValue(string system, string name, out Luid luid);
+        [DllImport("advapi32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool AdjustTokenPrivileges(IntPtr token, bool disableAll,
+            ref TokenPrivileges next, uint length, out TokenPrivileges previous, out uint returned);
+        [DllImport("advapi32.dll", EntryPoint = "AdjustTokenPrivileges", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool RestoreTokenPrivileges(IntPtr token, bool disableAll,
+            ref TokenPrivileges previous, uint length, IntPtr unusedPrevious, IntPtr unusedLength);
+        private static readonly object PrivilegeGate = new object();
+
+        // Session 0 recovery may need an already-held administrator privilege.
+        // Enable it only around OpenProcess, restore its exact prior state, then
+        // let the caller validate creation time and image on the returned handle.
+        // A lock file or SessionId never substitutes for this live evidence.
+        public static IntPtr OpenProcessForAuthority(uint access, uint processId, out int error) {
+            IntPtr handle = OpenProcess(access, false, processId);
+            error = handle == IntPtr.Zero ? Marshal.GetLastWin32Error() : 0;
+            if (handle != IntPtr.Zero || error != 5) { return handle; }
+            lock (PrivilegeGate) {
+                IntPtr token;
+                if (!OpenProcessToken(GetCurrentProcess(), 0x20 | 0x8, out token)) {
+                    error = Marshal.GetLastWin32Error();
+                    return IntPtr.Zero;
+                }
+                TokenPrivileges previous = new TokenPrivileges();
+                bool changed = false;
+                try {
+                    Luid luid;
+                    if (!LookupPrivilegeValue(null, "SeDebugPrivilege", out luid)) {
+                        error = Marshal.GetLastWin32Error();
+                    } else {
+                        TokenPrivileges next = new TokenPrivileges {
+                            PrivilegeCount = 1, Luid = luid, Attributes = 2
+                        };
+                        uint returned;
+                        bool adjusted = AdjustTokenPrivileges(token, false, ref next,
+                            (uint)Marshal.SizeOf(typeof(TokenPrivileges)), out previous, out returned);
+                        int adjustError = Marshal.GetLastWin32Error();
+                        changed = adjusted && previous.PrivilegeCount != 0;
+                        if (adjusted && adjustError == 0) {
+                            handle = OpenProcess(access, false, processId);
+                            error = handle == IntPtr.Zero ? Marshal.GetLastWin32Error() : 0;
+                        } else {
+                            // TRUE plus ERROR_NOT_ALL_ASSIGNED (1300) is not success.
+                            error = adjustError == 0 ? 5 : adjustError;
+                        }
+                    }
+                } finally {
+                    if (changed) {
+                        bool restored = RestoreTokenPrivileges(token, false, ref previous,
+                            0, IntPtr.Zero, IntPtr.Zero);
+                        int restoreError = Marshal.GetLastWin32Error();
+                        if (!restored || restoreError != 0) {
+                            if (handle != IntPtr.Zero) { CloseHandle(handle); }
+                            handle = IntPtr.Zero;
+                            error = restoreError == 0 ? 5 : restoreError;
+                        }
+                    }
+                    CloseHandle(token);
+                }
+            }
+            return handle;
+        }
     }
 }
 '@
+}
+
+# Add-Type definitions persist in an interactive PowerShell session. Never fall
+# back to the old PID-only stop policy when an operator reused an old session.
+if (-not ([HermesWatchdog.NativeProcess].GetMethod('OpenProcessForAuthority'))) {
+    throw "Open a fresh elevated PowerShell session to load updated watchdog process authority."
 }
 
 function Get-NormalizedPath {
@@ -135,11 +221,26 @@ function Test-SamePath {
 
 function Get-WindowsProcessIdentity {
     param([int]$ProcessId)
+    $script:WatchdogIdentityProbeError = 0
     if ($ProcessId -le 0) { return $null }
-    $handle = [HermesWatchdog.NativeProcess]::OpenProcess(0x1000, $false, [uint32]$ProcessId)
-    if ($handle -eq [IntPtr]::Zero) { return $null }
+    [int]$nativeError = 0
+    $handle = [HermesWatchdog.NativeProcess]::OpenProcessForAuthority(
+        (0x1000 -bor 0x00100000), [uint32]$ProcessId, [ref]$nativeError
+    )
+    if ($handle -eq [IntPtr]::Zero) {
+        $script:WatchdogIdentityProbeError = $nativeError
+        return $null
+    }
     try {
-        return Get-WindowsProcessIdentityFromHandle -Handle $handle -ProcessId $ProcessId
+        $identity = Get-WindowsProcessIdentityFromHandle -Handle $handle -ProcessId $ProcessId
+        if (-not $identity) {
+            # Only a signalled process handle proves death. Query denial is unknown.
+            $script:WatchdogIdentityProbeError = 5
+            if ([HermesWatchdog.NativeProcess]::WaitForSingleObject($handle, 0) -eq 0) {
+                $script:WatchdogIdentityProbeError = 87
+            }
+        }
+        return $identity
     } finally {
         [void][HermesWatchdog.NativeProcess]::CloseHandle($handle)
     }
@@ -154,6 +255,7 @@ function Get-WindowsProcessIdentityFromHandle {
     if (-not [HermesWatchdog.NativeProcess]::GetProcessTimes(
         $Handle, [ref]$created, [ref]$exited, [ref]$kernel, [ref]$user
     )) { return $null }
+    if ($exited -ne 0) { return $null }
     $path = New-Object System.Text.StringBuilder 32768
     [uint32]$pathLength = $path.Capacity
     if (-not [HermesWatchdog.NativeProcess]::QueryFullProcessImageName(
@@ -181,29 +283,13 @@ function Get-GoWatchdogLockState {
     }
     $identity = Get-WindowsProcessIdentity -ProcessId $pidLock
     if (-not $identity) {
-        # Session 0 S4U owners often deny PROCESS_QUERY_LIMITED_INFORMATION to an
-        # Interactive launcher. If Get-Process still sees the PID and the lock
-        # names our packaged exe + repo, treat it as owned so stop/displace works.
-        $visible = Get-Process -Id $pidLock -ErrorAction SilentlyContinue
-        if (
-            $visible -and
-            $obj.executablePath -and
-            (Test-SamePath ([string]$obj.executablePath) $Exe) -and
-            (Test-SamePath ([string]$obj.repoRoot) $RepoRoot)
-        ) {
-            $created = 0UL
-            try { $created = [uint64]$obj.processCreated } catch { $created = 0UL }
-            return [pscustomobject]@{
-                Status = "owned"
-                Pid = $pidLock
-                ProcessCreated = $created
-                ExecutablePath = Get-NormalizedPath ([string]$obj.executablePath)
-                RepoRoot = Get-NormalizedPath ([string]$obj.repoRoot)
-                SessionId = [int]$visible.SessionId
-                Reason = "lock matched visible process without OpenProcess query"
-            }
+        if ($script:WatchdogIdentityProbeError -eq 87) {
+            return [pscustomobject]@{ Status = "stale"; Pid = $pidLock; Reason = "process is absent or exited" }
         }
-        return [pscustomobject]@{ Status = "stale"; Pid = $pidLock; Reason = "process is absent" }
+        return [pscustomobject]@{
+            Status = "foreign"; Pid = $pidLock
+            Reason = "process identity is unverified (Win32 error $script:WatchdogIdentityProbeError)"
+        }
     }
     if (-not (Test-SamePath ([string]$obj.repoRoot) $RepoRoot)) {
         return [pscustomobject]@{ Status = "foreign"; Pid = $pidLock; Reason = "repository root mismatch" }
@@ -247,82 +333,35 @@ function Stop-GoWatchdog {
     $state = Get-GoWatchdogLockState
     if ($state.Status -eq "owned") {
         $access = 0x1000 -bor 0x0001 -bor 0x00100000
-        $handle = [HermesWatchdog.NativeProcess]::OpenProcess($access, $false, [uint32]$state.Pid)
+        [int]$nativeError = 0
+        $handle = [HermesWatchdog.NativeProcess]::OpenProcessForAuthority(
+            $access, [uint32]$state.Pid, [ref]$nativeError
+        )
         if ($handle -eq [IntPtr]::Zero) {
-            # S4U Session 0 owners often deny TERMINATE (and sometimes image-name
-            # query) even to an elevated Interactive launcher. Re-validate with
-            # QUERY_LIMITED only, then Stop-Process to displace the boot owner.
-            $queryHandle = [HermesWatchdog.NativeProcess]::OpenProcess(0x1000, $false, [uint32]$state.Pid)
-            $queryOk = $false
-            try {
-                if ($queryHandle -ne [IntPtr]::Zero) {
-                    $current = Get-WindowsProcessIdentityFromHandle -Handle $queryHandle -ProcessId $state.Pid
-                    $queryOk = (
-                        $current -and
-                        [uint64]$current.ProcessCreated -eq [uint64]$state.ProcessCreated -and
-                        (
-                            -not $current.ExecutablePath -or
-                            (Test-SamePath $current.ExecutablePath $state.ExecutablePath)
-                        ) -and
-                        (Test-SamePath $state.RepoRoot $RepoRoot)
-                    )
-                }
-            } finally {
-                if ($queryHandle -ne [IntPtr]::Zero) {
-                    [void][HermesWatchdog.NativeProcess]::CloseHandle($queryHandle)
-                }
-            }
-            $alive = $null -ne (Get-Process -Id ([int]$state.Pid) -ErrorAction SilentlyContinue)
-            $sessionId = -1
-            try { $sessionId = [int](Get-Process -Id ([int]$state.Pid) -ErrorAction Stop).SessionId } catch {}
+            Write-Warning "Could not open the validated watchdog process (Win32 error $nativeError); preserving its lock."
+            return $false
+        }
+        try {
+            $current = Get-WindowsProcessIdentityFromHandle -Handle $handle -ProcessId $state.Pid
             if (
-                $alive -and
-                (
-                    $queryOk -or
-                    (
-                        $sessionId -eq 0 -and
-                        (Test-SamePath $state.ExecutablePath $Exe) -and
-                        (Test-SamePath $state.RepoRoot $RepoRoot)
-                    )
-                )
+                -not $current -or
+                [uint64]$current.ProcessCreated -ne [uint64]$state.ProcessCreated -or
+                -not (Test-SamePath $current.ExecutablePath $state.ExecutablePath) -or
+                -not (Test-SamePath $state.RepoRoot $RepoRoot)
             ) {
-                Write-Warning ("OpenProcess terminate denied for pid={0} session={1}; falling back to Stop-Process." -f $state.Pid, $sessionId)
-                try {
-                    Stop-Process -Id ([int]$state.Pid) -Force -ErrorAction Stop
-                    Start-Sleep -Milliseconds 800
-                } catch {
-                    Write-Warning "Stop-Process fallback failed: $($_.Exception.Message); trying taskkill."
-                    $tk = Start-Process -FilePath "$env:SystemRoot\System32\taskkill.exe" -ArgumentList @("/F","/PID","$($state.Pid)") -Wait -PassThru -WindowStyle Hidden
-                    if ($tk.ExitCode -notin 0, 128) {
-                        Write-Warning "taskkill fallback failed (exit $($tk.ExitCode)); preserving its lock."
-                        return $false
-                    }
-                    Start-Sleep -Milliseconds 800
-                }
-            } else {
-                Write-Warning "Could not open the validated watchdog process; preserving its lock."
+                Write-Warning "Watchdog identity changed before stop; preserving its lock."
                 return $false
             }
-        } else {
-            try {
-                $current = Get-WindowsProcessIdentityFromHandle -Handle $handle -ProcessId $state.Pid
-                if (
-                    -not $current -or
-                    [uint64]$current.ProcessCreated -ne [uint64]$state.ProcessCreated -or
-                    -not (Test-SamePath $current.ExecutablePath $state.ExecutablePath) -or
-                    -not (Test-SamePath $state.RepoRoot $RepoRoot)
-                ) {
-                    Write-Warning "Watchdog identity changed before stop; preserving its lock."
-                    return $false
-                }
-                if (-not [HermesWatchdog.NativeProcess]::TerminateProcess($handle, 1)) {
-                    Write-Warning "Exact watchdog process handle could not be terminated; preserving its lock."
-                    return $false
-                }
-                [void][HermesWatchdog.NativeProcess]::WaitForSingleObject($handle, 2000)
-            } finally {
-                [void][HermesWatchdog.NativeProcess]::CloseHandle($handle)
+            if (-not [HermesWatchdog.NativeProcess]::TerminateProcess($handle, 1)) {
+                Write-Warning "Exact watchdog process handle could not be terminated; preserving its lock."
+                return $false
             }
+            if ([HermesWatchdog.NativeProcess]::WaitForSingleObject($handle, 2000) -ne 0) {
+                Write-Warning "Exact watchdog process has not finished stopping; preserving its lock."
+                return $false
+            }
+        } finally {
+            [void][HermesWatchdog.NativeProcess]::CloseHandle($handle)
         }
         $state = Get-GoWatchdogLockState
     }
