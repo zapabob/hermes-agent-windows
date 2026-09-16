@@ -44,51 +44,57 @@ Write-Step "=== Starting TEST 9: Foreign Embedding Occupant ==="
 $testPort = 18089
 $listener = $null
 $foreignOccupantPreserved = $false
+$detectedOccupied = $false
 try {
     $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, $testPort)
     $listener.Start()
-    Write-Step "Simulated foreign occupant listening on port $testPort"
+    Write-Step "Simulated foreign occupant listening on port $testPort (PID=$PID)"
 
-    # Verify Go watchdog / supervisor detects port in use and refuses to kill it
+    # Run a disposable Go watchdog instance configured for this test port
     $watchdogExe = Join-Path $RepoRoot "scripts\windows\watchdog-go\dist\hermes-watchdog.exe"
-    $detectedOccupied = $false
+    $tempWatchdogData = Join-Path ([System.IO.Path]::GetTempPath()) ("hermes-watchdog-test-{0}" -f [System.Guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Force -Path $tempWatchdogData | Out-Null
 
-    # Test netstat / port probe logic to ensure occupant cannot be killed
-    $ownerPid = 0
     try {
-        $conns = Get-NetTCPConnection -LocalPort $testPort -State Listen -ErrorAction Stop
-        if ($conns -and $conns.Count -gt 0) {
-            $ownerPid = [int]$conns[0].OwningProcess
-        }
-    } catch {
-        # Fallback to netstat if Get-NetTCPConnection lacks permissions
-    }
+        if (Test-Path -LiteralPath $watchdogExe) {
+            $dummyExe = (Get-Command powershell.exe).Source
+            Write-Step "Executing disposable hermes-watchdog to probe testPort $testPort..."
+            $p = Start-Process -FilePath $watchdogExe -ArgumentList @(
+                '-once',
+                '-embedding-enabled',
+                '-embedding-endpoint', "http://127.0.0.1:$testPort",
+                '-embedding-server', $dummyExe,
+                '-embedding-model', $dummyExe,
+                '-embedding-args-json', '[\"--embedding\"]',
+                '-data-dir', $tempWatchdogData,
+                '-no-http'
+            ) -Wait -PassThru -NoNewWindow
 
-    if ($ownerPid -le 0) {
-        foreach ($line in (& netstat.exe -ano -p tcp 2>$null)) {
-            if ($line -notmatch 'LISTENING') { continue }
-            if ($line -notmatch (":{0}\s+" -f $testPort)) { continue }
-            $parts = ($line -split '\s+') | Where-Object { $_ }
-            $candidate = 0
-            if ([int]::TryParse($parts[-1], [ref]$candidate) -and $candidate -gt 0) {
-                $ownerPid = $candidate
-                break
+            $stateFile = Join-Path $tempWatchdogData "watchdog.state.json"
+            if (Test-Path -LiteralPath $stateFile) {
+                $stateJson = Get-Content -Raw -LiteralPath $stateFile | ConvertFrom-Json
+                if ($stateJson.result.embedding -eq "port_occupied" -and [int]$stateJson.result.embeddingPid -eq $PID) {
+                    $detectedOccupied = $true
+                    Write-Step ("Disposable supervisor confirmed status=port_occupied on PID={0}" -f $PID)
+                } else {
+                    Write-Warning ("Supervisor reported state: embedding={0}, pid={1}" -f $stateJson.result.embedding, $stateJson.result.embeddingPid)
+                }
             }
+        } else {
+            Write-Warning "Watchdog executable not found: $watchdogExe"
         }
+    } finally {
+        Remove-Item -LiteralPath $tempWatchdogData -Recurse -Force -ErrorAction SilentlyContinue
     }
 
-    if ($ownerPid -gt 0) {
-        $detectedOccupied = $true
-        $occupantPid = $ownerPid
-        Write-Step ("Occupant detected with PID {0}. Verifying security invariant: no kill authority." -f $occupantPid)
-        $foreignOccupantPreserved = ($occupantPid -eq $PID)
-    }
-
+    # Verify foreign listener process ($PID) remains alive
+    $foreignAlive = (Get-Process -Id $PID -ErrorAction SilentlyContinue) -ne $null
     $isolationReport.foreignEmbeddingOccupant = @{
-        passed = ($detectedOccupied -and $foreignOccupantPreserved)
+        passed = ($detectedOccupied -and $foreignAlive)
         port = $testPort
         occupantPid = $PID
-        preserved = $foreignOccupantPreserved
+        supervisorStatus = if ($detectedOccupied) { "port_occupied" } else { "failed_detection" }
+        foreignPidPreserved = $foreignAlive
     }
     Write-Step ("TEST 9 result: passed={0}" -f $isolationReport.foreignEmbeddingOccupant.passed)
 } finally {
@@ -102,40 +108,120 @@ try {
 # TEST 8: Embedding Crash Isolation
 # -----------------------------------------------------------------------------
 Write-Step "=== Starting TEST 8: Embedding Crash Isolation ==="
-# Check if embedding / llama-server is running
-$llamaProcs = @(Get-Process llama-server -ErrorAction SilentlyContinue)
-$desktopMainsBefore = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+$desktopMains = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
     $_.Name -eq "Hermes.exe" -and $_.CommandLine -notmatch '(?i)\s--type='
 })
-$backendProcsBefore = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+$backendProcs = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
     $_.CommandLine -and $_.CommandLine -match "hermes_cli\.main\s+serve"
 })
 
-if ($llamaProcs.Count -gt 0 -and $desktopMainsBefore.Count -gt 0) {
-    $desktopPidBefore = [int]$desktopMainsBefore[0].ProcessId
-    $backendPidBefore = if ($backendProcsBefore.Count -gt 0) { [int]$backendProcsBefore[0].ProcessId } else { 0 }
-    $targetLlama = $llamaProcs[0]
-    Write-Step ("Observed live Desktop PID={0}, Backend PID={1}, Embedding PID={2}" -f $desktopPidBefore, $backendPidBefore, $targetLlama.Id)
+$desktopPidBefore = if ($desktopMains.Count -gt 0) { [int]$desktopMains[0].ProcessId } else { 0 }
+$backendPidBefore = if ($backendProcs.Count -gt 0) { [int]$backendProcs[0].ProcessId } else { 0 }
 
-    # Note: In production, we test the isolation property that killing embedding does NOT take down Desktop.
-    # We verify that Desktop processes are unaffected.
-    $desktopStillAlive = (Get-Process -Id $desktopPidBefore -ErrorAction SilentlyContinue) -ne $null
-    $backendStillAlive = ($backendPidBefore -eq 0) -or ((Get-Process -Id $backendPidBefore -ErrorAction SilentlyContinue) -ne $null)
+# Dynamically discover active embedding port (8082, 8080)
+$embeddingPort = 0
+$embeddingPid = 0
+foreach ($p in @(8082, 8080)) {
+    try {
+        $r = Invoke-WebRequest -Uri "http://127.0.0.1:$p/health" -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop
+        if ($r.StatusCode -eq 200) {
+            $embeddingPort = $p
+            break
+        }
+    } catch {}
+}
 
-    $isolationReport.embeddingCrashIsolation = @{
-        passed = ($desktopStillAlive -and $backendStillAlive)
-        desktopPid = $desktopPidBefore
-        backendPid = $backendPidBefore
-        desktopPreserved = $desktopStillAlive
-        backendPreserved = $backendStillAlive
+if ($embeddingPort -gt 0) {
+    foreach ($line in (& netstat.exe -ano -p tcp 2>$null)) {
+        if ($line -match ("^\s*TCP\s+\S+:{0}\s+\S+\s+LISTENING\s+(\d+)\s*$" -f $embeddingPort)) {
+            $embeddingPid = [int]$matches[1]
+            break
+        }
     }
-    Write-Step ("TEST 8 result: passed={0}" -f $isolationReport.embeddingCrashIsolation.passed)
-} else {
-    Write-Step "Desktop or llama-server not currently running; validating isolation structural invariants."
+}
+
+if ($embeddingPid -gt 0 -and $embeddingPort -gt 0 -and $desktopPidBefore -gt 0) {
+    Write-Step ("Observed live Desktop PID={0}, Backend PID={1}, Embedding PID={2} on port {3}" -f $desktopPidBefore, $backendPidBefore, $embeddingPid, $embeddingPort)
+
+    # 1. Terminate ONLY the supervised embedding process
+    Write-Step ("Terminating supervised embedding process PID={0}..." -f $embeddingPid)
+    Stop-Process -Id $embeddingPid -Force -ErrorAction SilentlyContinue
+
+    # 2. Wait for Go supervisor to detect failure and launch replacement embedding process
+    $deadline = (Get-Date).AddSeconds(30)
+    $replacementPid = 0
+    $healthRecovered = $false
+    while ((Get-Date) -lt $deadline) {
+        foreach ($line in (& netstat.exe -ano -p tcp 2>$null)) {
+            if ($line -match ("^\s*TCP\s+\S+:{0}\s+\S+\s+LISTENING\s+(\d+)\s*$" -f $embeddingPort)) {
+                $candidatePid = [int]$matches[1]
+                if ($candidatePid -gt 0 -and $candidatePid -ne $embeddingPid) {
+                    $replacementPid = $candidatePid
+                    break
+                }
+            }
+        }
+        if ($replacementPid -gt 0) {
+            try {
+                $hr = Invoke-WebRequest -Uri "http://127.0.0.1:$embeddingPort/health" -TimeoutSec 2 -UseBasicParsing -ErrorAction SilentlyContinue
+                if ($hr -and $hr.StatusCode -eq 200) {
+                    $healthRecovered = $true
+                    break
+                }
+            } catch {}
+        }
+        Start-Sleep -Milliseconds 500
+    }
+
+    # 3. Verify Desktop PID unchanged
+    $desktopStillAlive = ((Get-Process -Id $desktopPidBefore -ErrorAction SilentlyContinue) -ne $null)
+
+    # 4. Verify Backend PID unchanged
+    $backendStillAlive = if ($backendPidBefore -gt 0) { ((Get-Process -Id $backendPidBefore -ErrorAction SilentlyContinue) -ne $null) } else { $true }
+
+    # 5. Verify /api/sessions remains 200
+    $apiSessionsOk = $false
+    $bPort = 0
+    if ($backendPidBefore -gt 0) {
+        foreach ($line in (& netstat.exe -ano -p tcp 2>$null)) {
+            if ($line -match '^\s*TCP\s+\S+:(\d+)\s+\S+\s+LISTENING\s+(\d+)\s*$') {
+                if ([int]$matches[2] -eq $backendPidBefore) {
+                    $bPort = [int]$matches[1]
+                    break
+                }
+            }
+        }
+    }
+    if ($bPort -gt 0) {
+        try {
+            $sessResp = Invoke-WebRequest -Uri "http://127.0.0.1:$bPort/" -TimeoutSec 3 -UseBasicParsing -ErrorAction Stop
+            if ($sessResp.Content -match 'window\.__HERMES_SESSION_TOKEN__\s*=\s*"([^"]+)"') {
+                $t = $matches[1]
+                $scheck = Invoke-WebRequest -Uri "http://127.0.0.1:$bPort/api/sessions" -Headers @{ "X-Hermes-Session-Token" = $t } -TimeoutSec 3 -UseBasicParsing -ErrorAction Stop
+                if ($scheck.StatusCode -eq 200) { $apiSessionsOk = $true }
+            }
+        } catch {}
+    } else {
+        $apiSessionsOk = $desktopStillAlive
+    }
+
+    $test8Passed = ($replacementPid -gt 0 -and $healthRecovered -and $desktopStillAlive -and $backendStillAlive -and $apiSessionsOk)
     $isolationReport.embeddingCrashIsolation = @{
-        passed = $true
-        skippedLive = $true
-        reason = "structural invariant verified via authority_test.go"
+        passed = $test8Passed
+        originalEmbeddingPid = $embeddingPid
+        replacementEmbeddingPid = $replacementPid
+        healthRecovered = $healthRecovered
+        desktopPidUnchanged = $desktopStillAlive
+        backendPidUnchanged = $backendStillAlive
+        apiSessionsRecovered = $apiSessionsOk
+    }
+    Write-Step ("TEST 8 result: passed={0} (replacement PID={1})" -f $test8Passed, $replacementPid)
+} else {
+    Write-Step "Live embedding server (port 8080) or Desktop not available for destructive test."
+    $isolationReport.embeddingCrashIsolation = @{
+        passed = $false
+        status = "skipped"
+        reason = "embedding server or desktop not running at start of test"
     }
 }
 
@@ -143,44 +229,80 @@ if ($llamaProcs.Count -gt 0 -and $desktopMainsBefore.Count -gt 0) {
 # TEST 7: Desktop Crash Isolation
 # -----------------------------------------------------------------------------
 Write-Step "=== Starting TEST 7: Desktop Crash Isolation ==="
-if (-not $SkipDestructiveDesktopCrash -and $desktopMainsBefore.Count -gt 0) {
+if (-not $SkipDestructiveDesktopCrash -and $desktopPidBefore -gt 0) {
     Write-Step "Observing embedding PID stability across Desktop lifecycle"
-    $llamaBefore = @(Get-Process llama-server -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Id)
-    
-    # Desktop crash simulation: terminate the Desktop main process only
-    $mainProcId = [int]$desktopMainsBefore[0].ProcessId
-    Write-Step ("Terminating Desktop main process PID={0}..." -f $mainProcId)
-    Stop-Process -Id $mainProcId -Force -ErrorAction SilentlyContinue
+    $llamaPidBefore = 0
+    if ($embeddingPort -gt 0) {
+        foreach ($line in (& netstat.exe -ano -p tcp 2>$null)) {
+            if ($line -match ("^\s*TCP\s+\S+:{0}\s+\S+\s+LISTENING\s+(\d+)\s*$" -f $embeddingPort)) {
+                $llamaPidBefore = [int]$matches[1]
+                break
+            }
+        }
+    }
+
+    # Terminate the Desktop main process only
+    Write-Step ("Terminating Desktop main process PID={0}..." -f $desktopPidBefore)
+    Stop-Process -Id $desktopPidBefore -Force -ErrorAction SilentlyContinue
     Start-Sleep -Seconds 3
 
     # Embedding server must remain unchanged!
-    $llamaAfter = @(Get-Process llama-server -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Id)
-    $embeddingPidPreserved = ($llamaBefore.Count -gt 0 -and $llamaAfter.Count -gt 0 -and $llamaBefore[0] -eq $llamaAfter[0])
+    $llamaPidAfter = 0
+    if ($embeddingPort -gt 0) {
+        foreach ($line in (& netstat.exe -ano -p tcp 2>$null)) {
+            if ($line -match ("^\s*TCP\s+\S+:{0}\s+\S+\s+LISTENING\s+(\d+)\s*$" -f $embeddingPort)) {
+                $llamaPidAfter = [int]$matches[1]
+                break
+            }
+        }
+    }
+    $embeddingHealthAfter = $false
+    if ($embeddingPort -gt 0) {
+        try {
+            $hr = Invoke-WebRequest -Uri "http://127.0.0.1:$embeddingPort/health" -TimeoutSec 3 -UseBasicParsing -ErrorAction Stop
+            if ($hr.StatusCode -eq 200) { $embeddingHealthAfter = $true }
+        } catch {}
+    }
+
+    $embeddingPidPreserved = ($llamaPidBefore -gt 0 -and $llamaPidAfter -eq $llamaPidBefore -and $embeddingHealthAfter)
 
     # Re-launch Desktop via canonical launcher
     Write-Step "Relaunching Desktop via scripts/windows/start-hermes-desktop.ps1"
     $launcher = Join-Path $RepoRoot "scripts\windows\start-hermes-desktop.ps1"
-    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $launcher -HermesRoot $RepoRoot -Cwd $RepoRoot
+    $tempOut = Join-Path $env:TEMP ("hermes-t7-out-{0}.txt" -f [Guid]::NewGuid().ToString("N"))
+    $tempErr = Join-Path $env:TEMP ("hermes-t7-err-{0}.txt" -f [Guid]::NewGuid().ToString("N"))
+    try {
+        $p = Start-Process -FilePath "powershell.exe" `
+            -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$launcher`" -HermesRoot `"$RepoRoot`" -Cwd `"$RepoRoot`"" `
+            -RedirectStandardOutput $tempOut `
+            -RedirectStandardError $tempErr `
+            -PassThru -NoNewWindow
+        $null = $p.WaitForExit(25000)
+    } finally {
+        Remove-Item -LiteralPath $tempOut -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath $tempErr -Force -ErrorAction SilentlyContinue
+    }
     Start-Sleep -Seconds 6
 
     $newDesktopMains = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
         $_.Name -eq "Hermes.exe" -and $_.CommandLine -notmatch '(?i)\s--type='
     })
-    $newDesktopStarted = ($newDesktopMains.Count -gt 0)
+    $newDesktopStarted = ($newDesktopMains.Count -gt 0 -and [int]$newDesktopMains[0].ProcessId -ne $desktopPidBefore)
 
     $isolationReport.desktopCrashIsolation = @{
         passed = ($embeddingPidPreserved -and $newDesktopStarted)
-        originalDesktopPid = $mainProcId
+        originalDesktopPid = $desktopPidBefore
         newDesktopPid = if ($newDesktopStarted) { [int]$newDesktopMains[0].ProcessId } else { 0 }
         embeddingPidPreserved = $embeddingPidPreserved
+        embeddingHealthStayedOk = $embeddingHealthAfter
     }
     Write-Step ("TEST 7 result: passed={0}" -f $isolationReport.desktopCrashIsolation.passed)
 } else {
-    Write-Step "Destructive crash skipped or no live desktop; validating structural isolation invariants."
+    Write-Step "Destructive crash skipped or no live desktop; fail-closed status."
     $isolationReport.desktopCrashIsolation = @{
-        passed = $true
-        skippedLive = $true
-        reason = "Desktop process isolation structural contracts verified"
+        passed = $false
+        status = "skipped"
+        reason = if ($SkipDestructiveDesktopCrash) { "skipped_by_flag" } else { "no_running_desktop" }
     }
 }
 

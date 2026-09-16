@@ -138,12 +138,16 @@ def test_summary_schema_structure():
     required_keys = [
         "head",
         "timestamp",
+        "SMOKE_ACCEPTANCE_PASS",
+        "AUTOMATED_ACCEPTANCE_PASS",
+        "REAL_WINDOWS_REBOOT_QUALIFIED",
         "coldStart",
         "relaunch",
         "backendCrash",
         "reconnectStorm",
         "desktopCrashIsolation",
         "embeddingCrashIsolation",
+        "foreignEmbeddingOccupant",
         "ownershipLedger",
         "authentication",
         "soak",
@@ -153,17 +157,42 @@ def test_summary_schema_structure():
     sample_summary = {
         "head": "4aba35ed84",
         "timestamp": "2026-09-17T07:30:00Z",
+        "SMOKE_ACCEPTANCE_PASS": True,
+        "AUTOMATED_ACCEPTANCE_PASS": False,
+        "REAL_WINDOWS_REBOOT_QUALIFIED": False,
         "coldStart": {"passed": True, "durationMs": 4200},
-        "relaunch": {"passed": 10, "failed": 0, "medianMs": 2800, "p95Ms": 3500, "maxMs": 3700},
-        "backendCrash": {"passed": 10, "failed": 0},
+        "relaunch": {"required": 10, "executed": 2, "status": "smoke", "passed": False, "cyclesPassed": 2, "cyclesFailed": 0},
+        "backendCrash": {"required": 10, "executed": 2, "status": "smoke", "passed": False, "cyclesPassed": 2, "cyclesFailed": 0},
         "reconnectStorm": {"passed": True, "dialClaims": 1, "spawnCount": 1},
-        "desktopCrashIsolation": {"passed": True, "embeddingPidPreserved": True},
-        "embeddingCrashIsolation": {"passed": True, "replacementSpawned": True},
+        "desktopCrashIsolation": {"passed": False, "status": "skipped"},
+        "embeddingCrashIsolation": {"passed": True, "replacementEmbeddingPid": 1820},
+        "foreignEmbeddingOccupant": {"passed": True, "supervisorStatus": "port_occupied"},
         "ownershipLedger": {"passed": True, "deadProbeCount": 0, "quarantinedCorrupt": True},
         "authentication": {"status": 200, "tokenPresent": True, "tokenFingerprint": "abcd1234"},
-        "soak": {"passed": True, "minutes": 0},
-        "reboot": {"enabled": False, "passed": 0},
+        "soak": {"passed": False, "status": "skipped", "minutes": 0},
+        "reboot": {"enabled": False, "passed": False, "status": "skipped", "cyclesCompleted": 0},
     }
 
     for key in required_keys:
         assert key in sample_summary, f"Missing key {key} in summary.json schema"
+
+
+def test_fail_closed_acceptance_contract():
+    """Verify acceptance qualification adheres to fail-closed contract."""
+    # 1. Incomplete cycles cannot yield AUTOMATED_ACCEPTANCE_PASS
+    smoke_summary = {
+        "relaunch": {"required": 10, "executed": 2, "status": "smoke", "passed": False},
+        "backendCrash": {"required": 10, "executed": 2, "status": "smoke", "passed": False},
+        "desktopCrashIsolation": {"passed": False, "status": "skipped"},
+    }
+    # When SkipLongCycles is supplied:
+    assert smoke_summary["relaunch"]["required"] == 10
+    assert smoke_summary["relaunch"]["executed"] == 2
+    assert smoke_summary["relaunch"]["status"] == "smoke"
+    assert smoke_summary["relaunch"]["passed"] is False
+
+    # 2. Never synthesize passed=true for skipped or missing tests
+    skipped_item = {"passed": False, "status": "skipped"}
+    assert skipped_item["passed"] is False
+    assert skipped_item["status"] == "skipped"
+

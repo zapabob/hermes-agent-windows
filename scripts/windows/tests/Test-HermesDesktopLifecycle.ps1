@@ -185,17 +185,71 @@ if ($dirtyFiles.Count -gt 0) {
 $initialLedgerCount = 0
 try {
     $parsedLedger = $ledgerBefore | ConvertFrom-Json
-    if ($parsedLedger -and $parsedLedger.entries) {
+    if ($parsedLedger -and $parsedLedger.backends) {
+        $initialLedgerCount = $parsedLedger.backends.Count
+    } elseif ($parsedLedger -and $parsedLedger.entries) {
         $initialLedgerCount = $parsedLedger.entries.Count
     }
 } catch {}
+
+# 7. Go Watchdog service health
+$watchdogHealthy = $false
+try {
+    $wdResp = Invoke-RestMethod -Uri "http://127.0.0.1:9920/health" -TimeoutSec 3 -ErrorAction Stop
+    if ($wdResp.status -eq "ok") {
+        $watchdogHealthy = $true
+        Write-Step "Preflight check 7: Go Watchdog supervisor is running and healthy (127.0.0.1:9920/health == ok)"
+    }
+} catch {
+    Write-Warning "Go Watchdog supervisor health check failed: $($_.Exception.Message)"
+}
+if (-not $watchdogHealthy) {
+    $preflightFailed = $true; $preflightReasons.Add("Go Watchdog supervisor at 127.0.0.1:9920 is not healthy")
+}
+
+# 8. Embedding server health check
+$embeddingHealthy = $false
+$detectedEmbeddingPort = 0
+foreach ($p in @(8082, 8080)) {
+    try {
+        $embResp = Invoke-RestMethod -Uri "http://127.0.0.1:$p/health" -TimeoutSec 3 -ErrorAction Stop
+        if ($embResp.status -eq "ok" -or $embResp -match "ok") {
+            $embeddingHealthy = $true
+            $detectedEmbeddingPort = $p
+            Write-Step ("Preflight check 8: Embedding server is running and healthy on port {0}" -f $p)
+            break
+        }
+    } catch {}
+}
+if (-not $embeddingHealthy) {
+    $preflightFailed = $true; $preflightReasons.Add("Embedding server (llama-server) is not healthy on port 8082 or 8080")
+}
+
+# 9. Config check for prewarm (ensure prewarm is not active)
+$configPath = Join-Path $HermesHome "config.yaml"
+if (Test-Path -LiteralPath $configPath) {
+    $configContent = Get-Content -Raw -LiteralPath $configPath -ErrorAction SilentlyContinue
+    if ($configContent -match '(?i)prewarm:\s*true') {
+        $preflightFailed = $true; $preflightReasons.Add("Prewarm is explicitly enabled in config.yaml, violates single-owner acceptance invariants")
+    }
+}
+
+# 10. Check desktop/agent logs for abnormal managed serve loops
+$desktopLog = Join-Path $HermesHome "logs\desktop.log"
+if (Test-Path -LiteralPath $desktopLog) {
+    $tailLines = Get-Content -LiteralPath $desktopLog -Tail 100 -ErrorAction SilentlyContinue
+    $managedServeLoops = @($tailLines | Where-Object { $_ -match "starting managed serve" })
+    if ($managedServeLoops.Count -gt 5) {
+        Write-Warning ("Desktop log contains excessive 'starting managed serve' entries: {0}" -f $managedServeLoops.Count)
+    }
+}
 
 if ($preflightFailed) {
     Write-Step "PREFLIGHT FAILED: Exiting without destructive actions." -color "Red"
     foreach ($r in $preflightReasons) { Write-Host ("  - {0}" -f $r) -ForegroundColor Red }
     exit 1
 }
-Write-Step ("Preflight PASSED. Baseline ledger entry count: {0}" -f $initialLedgerCount) -color "Green"
+Write-Step ("Preflight PASSED. Baseline ledger entry count: {0}, Embedding port: {1}" -f $initialLedgerCount, $detectedEmbeddingPort) -color "Green"
 
 # Helper to find current Desktop main PID
 function Get-DesktopMainProcess {
@@ -457,7 +511,9 @@ $relaunchCyclesList = New-Object System.Collections.Generic.List[object]
 $relaunchLatencies = New-Object System.Collections.Generic.List[int]
 $relaunchPassedCount = 0
 
+$requiredCycles = 10
 $actualCycles = if ($SkipLongCycles) { 2 } else { $RelaunchCycles }
+$relaunchStatus = if ($SkipLongCycles) { "smoke" } else { "full" }
 $relaunchTqdmSw = [System.Diagnostics.Stopwatch]::StartNew()
 
 for ($cycle = 1; $cycle -le $actualCycles; $cycle++) {
@@ -467,7 +523,9 @@ for ($cycle = 1; $cycle -le $actualCycles; $cycle++) {
     $entriesBefore = 0
     try {
         if (Test-Path -LiteralPath $OwnershipLedgerPath) {
-            $entriesBefore = ((Get-Content -Raw -LiteralPath $OwnershipLedgerPath | ConvertFrom-Json).entries).Count
+            $ledgerData = Get-Content -Raw -LiteralPath $OwnershipLedgerPath | ConvertFrom-Json
+            if ($ledgerData.backends) { $entriesBefore = $ledgerData.backends.Count }
+            elseif ($ledgerData.entries) { $entriesBefore = $ledgerData.entries.Count }
         }
     } catch {}
 
@@ -515,7 +573,9 @@ for ($cycle = 1; $cycle -le $actualCycles; $cycle++) {
     $entriesAfter = 0
     try {
         if (Test-Path -LiteralPath $OwnershipLedgerPath) {
-            $entriesAfter = ((Get-Content -Raw -LiteralPath $OwnershipLedgerPath | ConvertFrom-Json).entries).Count
+            $ledgerData = Get-Content -Raw -LiteralPath $OwnershipLedgerPath | ConvertFrom-Json
+            if ($ledgerData.backends) { $entriesAfter = $ledgerData.backends.Count }
+            elseif ($ledgerData.entries) { $entriesAfter = $ledgerData.entries.Count }
         }
     } catch {}
 
@@ -556,24 +616,29 @@ if ($relaunchLatencies.Count -gt 0) {
 }
 
 $relaunchResult = @{
-    passed = $relaunchPassedCount
-    failed = ($actualCycles - $relaunchPassedCount)
+    required = $requiredCycles
+    executed = $actualCycles
+    status = $relaunchStatus
+    passed = ($relaunchPassedCount -eq $requiredCycles)
+    cyclesPassed = $relaunchPassedCount
+    cyclesFailed = ($actualCycles - $relaunchPassedCount)
     medianMs = $medianMs
     p95Ms = $p95Ms
     maxMs = $maxMs
 }
-Write-Step ("TEST 2 (Relaunch) completed: {0}/{1} passed (median={2}ms, p95={3}ms, max={4}ms)" -f $relaunchPassedCount, $actualCycles, $medianMs, $p95Ms, $maxMs)
+Write-Step ("TEST 2 (Relaunch) completed: {0}/{1} executed, {2}/{3} passed (median={4}ms, p95={5}ms, max={6}ms, status={7})" -f $actualCycles, $requiredCycles, $relaunchPassedCount, $requiredCycles, $medianMs, $p95Ms, $maxMs, $relaunchStatus)
 
 # =============================================================================
 # TEST 3 — Bulk Stale Ownership Reap
 # =============================================================================
 Write-Step "=== Starting TEST 3: Bulk Stale Ownership Reap ==="
 $ownershipScript = Join-Path $PSScriptRoot "Test-HermesOwnershipLedger.ps1"
-$ownershipResult = @{ passed = $false }
+$ownershipResult = @{ passed = $false; status = "not_run" }
 if (Test-Path -LiteralPath $ownershipScript) {
     $ownershipResult = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $ownershipScript -RepoRoot $RepoRoot -ArtifactsDir $ArtifactsDir
 } else {
     Write-Warning "Ownership ledger test script missing: $ownershipScript"
+    $ownershipResult = @{ passed = $false; status = "skipped"; reason = "script_missing" }
 }
 
 # =============================================================================
@@ -581,7 +646,9 @@ if (Test-Path -LiteralPath $ownershipScript) {
 # =============================================================================
 Write-Step "=== Starting TEST 4: Backend Crash Recovery x $CrashCycles ==="
 $backendCrashPassed = 0
+$requiredCrashCycles = 10
 $actualCrashCycles = if ($SkipLongCycles) { 2 } else { $CrashCycles }
+$crashStatus = if ($SkipLongCycles) { "smoke" } else { "full" }
 $crashTqdmSw = [System.Diagnostics.Stopwatch]::StartNew()
 
 for ($c = 1; $c -le $actualCrashCycles; $c++) {
@@ -597,9 +664,40 @@ for ($c = 1; $c -le $actualCrashCycles; $c++) {
         continue
     }
     $oldBackendPid = [int]$bProc.ProcessId
-    Write-Step ("Crash cycle {0}/{1}: Terminating owned backend PID={2}..." -f $c, $actualCrashCycles, $oldBackendPid)
 
-    # Terminate ONLY the owned child backend
+    # Identity-bound check before termination:
+    # 1. Verify parentage is linked to current Desktop main
+    $parentPid = 0
+    try {
+        $cimProc = Get-CimInstance Win32_Process -Filter "ProcessId = $oldBackendPid" -ErrorAction SilentlyContinue
+        if ($cimProc) { $parentPid = [int]$cimProc.ParentProcessId }
+    } catch {}
+    $isLegitChild = ($parentPid -eq $dPid)
+    if (-not $isLegitChild -and $parentPid -gt 0) {
+        $parentCim = Get-CimInstance Win32_Process -Filter "ProcessId = $parentPid" -ErrorAction SilentlyContinue
+        if ($parentCim -and [int]$parentCim.ParentProcessId -eq $dPid) {
+            $isLegitChild = $true
+        }
+    }
+    if (-not $isLegitChild) {
+        Write-Warning ("Refusing to terminate PID={0}: parentage check failed (ParentPID={1}, DesktopPID={2})" -f $oldBackendPid, $parentPid, $dPid)
+        continue
+    }
+
+    # 2. Verify ledger registration
+    $inLedger = $false
+    try {
+        if (Test-Path -LiteralPath $OwnershipLedgerPath) {
+            $ledgerData = Get-Content -Raw -LiteralPath $OwnershipLedgerPath | ConvertFrom-Json
+            if ($ledgerData.backends) {
+                $matchedEntry = @($ledgerData.backends | Where-Object { [int]$_.pid -eq $oldBackendPid })
+                if ($matchedEntry.Count -gt 0) { $inLedger = $true }
+            }
+        }
+    } catch {}
+    Write-Step ("Identity-bound verified for crash cycle {0}: backend PID={1}, parent PID={2}, inLedger={3}" -f $c, $oldBackendPid, $parentPid, $inLedger)
+
+    # Terminate ONLY the verified owned child backend
     Stop-Process -Id $oldBackendPid -Force -ErrorAction SilentlyContinue
 
     # Wait for desktop to notice and replace backend
@@ -631,21 +729,52 @@ for ($c = 1; $c -le $actualCrashCycles; $c++) {
     Write-TqdmProgress -Activity "TEST 4 (Crash Recovery)" -Current $c -Total $actualCrashCycles -Stopwatch $crashTqdmSw -Status ("Cycle {0}: replacement PID={1}" -f $c, $replacementPid)
 }
 $backendCrashResult = @{
-    passed = $backendCrashPassed
-    failed = ($actualCrashCycles - $backendCrashPassed)
+    required = $requiredCrashCycles
+    executed = $actualCrashCycles
+    status = $crashStatus
+    passed = ($backendCrashPassed -eq $requiredCrashCycles)
+    cyclesPassed = $backendCrashPassed
+    cyclesFailed = ($actualCrashCycles - $backendCrashPassed)
 }
+Write-Step ("TEST 4 (Crash Recovery) completed: {0}/{1} executed, {2}/{3} passed (status={4})" -f $actualCrashCycles, $requiredCrashCycles, $backendCrashPassed, $requiredCrashCycles, $crashStatus)
 
 # =============================================================================
 # TEST 7, 8, 9 — Runtime & Crash Isolation
 # =============================================================================
 Write-Step "=== Starting Runtime Isolation Tests (TEST 7, 8, 9) ==="
 $isolationScript = Join-Path $PSScriptRoot "Test-HermesRuntimeIsolation.ps1"
-$isolationResult = @{}
+$isoResultFile = Join-Path $ArtifactsDir "runtime-isolation-test-result.json"
+if (Test-Path -LiteralPath $isoResultFile) {
+    Remove-Item -LiteralPath $isoResultFile -Force -ErrorAction SilentlyContinue
+}
+
 if (Test-Path -LiteralPath $isolationScript) {
-    $isolationResult = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $isolationScript -RepoRoot $RepoRoot -ArtifactsDir $ArtifactsDir -SkipDestructiveDesktopCrash
+    $isolationArgs = @(
+        "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $isolationScript,
+        "-RepoRoot", $RepoRoot,
+        "-ArtifactsDir", $ArtifactsDir,
+        "-EmbeddingPort", $detectedEmbeddingPort
+    )
+    if ($SkipLongCycles) {
+        $isolationArgs += "-SkipDestructiveDesktopCrash"
+    }
+    Write-Step ("Invoking Test-HermesRuntimeIsolation.ps1 with args: {0}" -f ($isolationArgs -join " "))
+    & powershell.exe @isolationArgs
 } else {
     Write-Warning "Runtime isolation test script missing: $isolationScript"
 }
+
+# Parse isolation result from report file (fail-closed)
+$isoData = $null
+if (Test-Path -LiteralPath $isoResultFile) {
+    try {
+        $isoData = Get-Content -Raw -LiteralPath $isoResultFile | ConvertFrom-Json
+    } catch {}
+}
+
+$desktopCrashIsolationResult = if ($isoData -and $isoData.desktopCrashIsolation) { $isoData.desktopCrashIsolation } else { @{ passed = $false; status = "skipped" } }
+$embeddingCrashIsolationResult = if ($isoData -and $isoData.embeddingCrashIsolation) { $isoData.embeddingCrashIsolation } else { @{ passed = $false; status = "skipped" } }
+$foreignEmbeddingOccupantResult = if ($isoData -and $isoData.foreignEmbeddingOccupant) { $isoData.foreignEmbeddingOccupant } else { @{ passed = $false; status = "skipped" } }
 
 # =============================================================================
 # TEST 5 & 6 — Concurrent Reconnect Storm & Generation Race (Vitest suite)
@@ -669,7 +798,115 @@ $reconnectStormResult = @{
 }
 
 # =============================================================================
-# Summary Compilation & Artifacts
+# TEST 13 — Authentication Measurement (/api/sessions)
+# =============================================================================
+Write-Step "=== Starting TEST 13: Live Authentication Measurement ==="
+$liveMains = Get-DesktopMainProcess
+$liveDpid = if ($liveMains.Count -gt 0) { [int]$liveMains[0].ProcessId } else { 0 }
+$liveBackend = Get-DesktopOwnedBackend $liveDpid
+$livePort = if ($liveBackend -and $liveBackend.Port -gt 0) { [int]$liveBackend.Port } else { 0 }
+if ($livePort -eq 0 -and $liveBackend) {
+    $livePort = Get-ListeningPortForPid ([int]$liveBackend.ProcessId)
+}
+
+$authMeasurement = if ($livePort -gt 0) {
+    Test-AuthenticatedSessionsApi -port $livePort
+} else {
+    @{
+        status = 0
+        tokenPresent = $false
+        tokenLength = 0
+        tokenFingerprint = ""
+        error = "no listening backend port available for authentication test"
+    }
+}
+Write-Step ("Authentication measurement result: status={0}, tokenPresent={1}, fingerprint={2}" -f $authMeasurement.status, $authMeasurement.tokenPresent, $authMeasurement.tokenFingerprint)
+
+# =============================================================================
+# TEST 14 — Soak Measurement
+# =============================================================================
+$soakResult = @{
+    passed = $false
+    status = "skipped"
+    minutes = $SoakMinutes
+}
+if ($SoakMinutes -gt 0 -and $livePort -gt 0) {
+    Write-Step ("=== Starting TEST 14: Soak for {0} minutes ===" -f $SoakMinutes)
+    $soakDeadline = (Get-Date).AddMinutes($SoakMinutes)
+    $soakPassed = $true
+    while ((Get-Date) -lt $soakDeadline) {
+        Start-Sleep -Seconds 30
+        $sc = Test-AuthenticatedSessionsApi -port $livePort
+        if ($sc.status -ne 200) {
+            $soakPassed = $false
+            Write-Warning "Soak check failed during iteration"
+            break
+        }
+    }
+    $soakResult = @{
+        passed = $soakPassed
+        status = if ($soakPassed) { "passed" } else { "failed" }
+        minutes = $SoakMinutes
+    }
+}
+
+# =============================================================================
+# TEST 17 — Reboot Qualification
+# =============================================================================
+$rebootResult = @{
+    enabled = [bool]$EnableRebootAcceptance
+    passed = $false
+    status = "skipped"
+    cyclesCompleted = 0
+}
+if ($EnableRebootAcceptance) {
+    $rebootStateDir = Join-Path $env:LOCALAPPDATA "HermesAcceptance"
+    if (-not (Test-Path -LiteralPath $rebootStateDir)) {
+        New-Item -ItemType Directory -Force -Path $rebootStateDir | Out-Null
+    }
+    $rebootStateFile = Join-Path $rebootStateDir "reboot-state.json"
+
+    $state = $null
+    if (Test-Path -LiteralPath $rebootStateFile) {
+        try { $state = Get-Content -Raw -LiteralPath $rebootStateFile | ConvertFrom-Json } catch {}
+    }
+    if (-not $state) {
+        $state = [PSCustomObject]@{
+            cyclesCompleted = 0
+            requiredCycles = 3
+            history = @()
+            passed = $false
+        }
+    }
+
+    $bootApiOk = ($authMeasurement.status -eq 200)
+    $bootEmbOk = $embeddingHealthy
+    $cycleIndex = $state.cyclesCompleted + 1
+
+    Write-Step ("Reboot Acceptance cycle {0}/3: apiOk={1}, embeddingOk={2}" -f $cycleIndex, $bootApiOk, $bootEmbOk)
+    if ($bootApiOk -and $bootEmbOk) {
+        $state.cyclesCompleted = $cycleIndex
+        $state.history += @{
+            cycle = $cycleIndex
+            timestamp = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+            apiStatus = $authMeasurement.status
+            embeddingHealthy = $bootEmbOk
+        }
+        if ($state.cyclesCompleted -ge 3) {
+            $state.passed = $true
+        }
+        Set-Utf8NoBom $rebootStateFile ($state | ConvertTo-Json -Depth 4)
+    }
+    $rebootResult = @{
+        enabled = $true
+        passed = [bool]$state.passed
+        status = if ($state.passed) { "passed" } else { "in_progress" }
+        cyclesCompleted = [int]$state.cyclesCompleted
+    }
+}
+
+# =============================================================================
+# Summary Compilation & Invariant Evaluation
 # =============================================================================
 Write-Step "Compiling acceptance artifacts and summary.json..."
 
@@ -690,33 +927,63 @@ $watchdogStatus = @{
 }
 Set-Utf8NoBom (Join-Path $ArtifactsDir "watchdog-status.json") ($watchdogStatus | ConvertTo-Json -Depth 3)
 
-$summary = @{
+# Evaluate 3 distinct acceptance invariants:
+$smokeAcceptancePass = (
+    $coldStartResult.passed -eq $true -and
+    $relaunchPassedCount -ge 2 -and
+    $backendCrashPassed -ge 2 -and
+    $reconnectStormResult.passed -eq $true -and
+    $ownershipResult.passed -eq $true -and
+    $foreignEmbeddingOccupantResult.passed -eq $true -and
+    $authMeasurement.status -eq 200 -and
+    $authMeasurement.tokenPresent -eq $true
+)
+
+$automatedAcceptancePass = (
+    (-not $SkipLongCycles) -and
+    $coldStartResult.passed -eq $true -and
+    $relaunchPassedCount -ge $requiredCycles -and
+    $backendCrashPassed -ge $requiredCrashCycles -and
+    $reconnectStormResult.passed -eq $true -and
+    $ownershipResult.passed -eq $true -and
+    $desktopCrashIsolationResult.passed -eq $true -and
+    $embeddingCrashIsolationResult.passed -eq $true -and
+    $foreignEmbeddingOccupantResult.passed -eq $true -and
+    $authMeasurement.status -eq 200 -and
+    $authMeasurement.tokenPresent -eq $true
+)
+
+$realWindowsRebootQualified = (
+    $EnableRebootAcceptance -and
+    $rebootResult.passed -eq $true -and
+    $rebootResult.cyclesCompleted -ge 3
+)
+
+$summary = [ordered]@{
     head = $headSha
     timestamp = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+    SMOKE_ACCEPTANCE_PASS = [bool]$smokeAcceptancePass
+    AUTOMATED_ACCEPTANCE_PASS = [bool]$automatedAcceptancePass
+    REAL_WINDOWS_REBOOT_QUALIFIED = [bool]$realWindowsRebootQualified
     coldStart = $coldStartResult
     relaunch = $relaunchResult
     backendCrash = $backendCrashResult
     reconnectStorm = $reconnectStormResult
-    desktopCrashIsolation = if ($isolationResult.desktopCrashIsolation) { $isolationResult.desktopCrashIsolation } else { @{ passed = $true } }
-    embeddingCrashIsolation = if ($isolationResult.embeddingCrashIsolation) { $isolationResult.embeddingCrashIsolation } else { @{ passed = $true } }
-    ownershipLedger = if ($ownershipResult) { $ownershipResult } else { @{ passed = $true } }
-    authentication = @{
-        status = 200
-        tokenPresent = $true
-        tokenFingerprint = "abcd1234"
-    }
-    soak = @{
-        passed = $true
-        minutes = $SoakMinutes
-    }
-    reboot = @{
-        enabled = [bool]$EnableRebootAcceptance
-        passed = 0
-    }
+    desktopCrashIsolation = $desktopCrashIsolationResult
+    embeddingCrashIsolation = $embeddingCrashIsolationResult
+    foreignEmbeddingOccupant = $foreignEmbeddingOccupantResult
+    ownershipLedger = if ($ownershipResult) { $ownershipResult } else { @{ passed = $false; status = "skipped" } }
+    authentication = $authMeasurement
+    soak = $soakResult
+    reboot = $rebootResult
 }
 
 $summaryPath = Join-Path $ArtifactsDir "summary.json"
 Set-Utf8NoBom $summaryPath ($summary | ConvertTo-Json -Depth 6)
 
 Write-Step ("Acceptance Summary written to: {0}" -f $summaryPath) -color "Green"
+Write-Step ("SMOKE_ACCEPTANCE_PASS:         {0}" -f $smokeAcceptancePass) -color $(if ($smokeAcceptancePass) { "Green" } else { "Red" })
+Write-Step ("AUTOMATED_ACCEPTANCE_PASS:     {0}" -f $automatedAcceptancePass) -color $(if ($automatedAcceptancePass) { "Green" } else { "Red" })
+Write-Step ("REAL_WINDOWS_REBOOT_QUALIFIED: {0}" -f $realWindowsRebootQualified) -color $(if ($realWindowsRebootQualified) { "Green" } else { "Yellow" })
+
 return $summary
