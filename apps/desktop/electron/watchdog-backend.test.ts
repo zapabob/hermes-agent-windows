@@ -118,7 +118,7 @@ describe('resolveWatchdogPrewarmedBackend', () => {
   })
 })
 
-test('production primary startup adopts the watchdog prewarmed backend before spawning', () => {
+test('production primary startup does NOT adopt watchdog prewarmed backend (Electron main is sole owner)', () => {
   const mainSource = fs.readFileSync(new URL('./main.ts', import.meta.url), 'utf8').replace(/\r\n/g, '\n')
   const startupStart = mainSource.indexOf('const setup = await runPrimaryBackendStartup({')
   const startupEnd = mainSource.indexOf('\n    })', startupStart)
@@ -128,9 +128,7 @@ test('production primary startup adopts the watchdog prewarmed backend before sp
 
   const startupOptions = mainSource.slice(startupStart, startupEnd)
 
-  assert.match(mainSource, /import \{ resolveWatchdogPrewarmedBackend \} from '\.\/watchdog-backend'/)
-  assert.match(startupOptions, /resolvePrewarmedLocal:\s*async/)
-  assert.match(startupOptions, /resolveWatchdogPrewarmedBackend\(/)
-  assert.match(startupOptions, /source:\s*'watchdog'/)
-  assert.match(startupOptions, /waitForHermes\(prewarmed\.baseUrl, prewarmed\.token\)/)
+  assert.doesNotMatch(mainSource, /import \{ resolveWatchdogPrewarmedBackend \} from '\.\/watchdog-backend'/)
+  assert.doesNotMatch(startupOptions, /resolvePrewarmedLocal/)
+  assert.doesNotMatch(startupOptions, /resolveWatchdogPrewarmedBackend/)
 })
