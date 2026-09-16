@@ -6,6 +6,7 @@ import importlib.util
 from pathlib import Path
 import sys
 import threading
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -98,7 +99,8 @@ def test_warmers_keep_scheduling_context_and_once_flags_per_home(router_module, 
 
     monkeypatch.setattr(module, "_fetch_catalog_items", fetch)
     monkeypatch.setattr(module, "_save_disk", save)
-    monkeypatch.setattr(module.threading, "Thread", make_thread)
+    # Do not mutate the shared threading module: other suite workers may use it.
+    monkeypatch.setattr(module, "threading", SimpleNamespace(Thread=make_thread))
     a, b = tmp_path / "warmer A 日本語", tmp_path / "warmer B"
     try:
         with profile(a):
