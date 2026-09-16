@@ -192,9 +192,7 @@ function writeDesktopStopFence({
     pid: process.pid,
     processStartTime: null,
     // Ownership key (stable). repoRoot remains informational for operators.
-    ...(desktopLifecycleId
-      ? { desktopLifecycleId, hermesHome: path.resolve(lifecycleHome) }
-      : {}),
+    ...(desktopLifecycleId ? { desktopLifecycleId, hermesHome: path.resolve(lifecycleHome) } : {}),
     ...(resolvedRepo ? { repoRoot: path.resolve(resolvedRepo) } : {})
   }
 

@@ -12,8 +12,7 @@ export interface PrimaryBackendStartupOptions<Backend, RuntimeBackend, Remote, C
 }
 
 export type PrimaryBackendStartupResult<RuntimeBackend, Connection> =
-  | { kind: 'local'; backend: RuntimeBackend }
-  | { kind: 'remote'; connection: Connection }
+  { kind: 'local'; backend: RuntimeBackend } | { kind: 'remote'; connection: Connection }
 
 interface ResolvedPrimaryRemote {
   authMode?: 'oauth' | 'token'

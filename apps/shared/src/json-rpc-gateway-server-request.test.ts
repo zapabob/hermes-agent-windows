@@ -13,11 +13,14 @@ class OpenSocket {
 
   addEventListener(type: string, handler: (ev: { data?: unknown }) => void): void {
     let set = this.listeners.get(type)
+
     if (!set) {
       set = new Set()
       this.listeners.set(type, set)
     }
+
     set.add(handler)
+
     if (type === 'open') {
       queueMicrotask(() => handler({}))
     }
@@ -37,6 +40,7 @@ class OpenSocket {
 
   inject(frame: unknown): void {
     const data = typeof frame === 'string' ? frame : JSON.stringify(frame)
+
     for (const handler of this.listeners.get('message') ?? []) {
       handler({ data })
     }
@@ -47,10 +51,12 @@ describe('JsonRpcGatewayClient server→client requests (NC-0213-D1)', () => {
   it('routes a server request to the first accepting handler and answers -32601 when nobody accepts', async () => {
     const unhandled: string[] = []
     const live = new OpenSocket()
+
     const client = new JsonRpcGatewayClient({
       onUnhandledRequest: req => void unhandled.push(req.method),
       socketFactory: () => live as unknown as WebSocket
     })
+
     await client.connect('ws://127.0.0.1:9')
 
     client.onRequest(req => (req.method === 'clarify' ? void req.respond({ answer: 'yes' }) : false))

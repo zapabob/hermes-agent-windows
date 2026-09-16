@@ -164,6 +164,7 @@ import { adoptServedDashboardToken } from './dashboard-token'
 import { loadOrCreateInstallationId, sshOwnershipId } from './desktop-installation'
 import { formatDesktopLogLine } from './desktop-log-line'
 import { resolveDesktopRemoteRoute } from './desktop-remote-route'
+import { shouldWriteDesktopStopFence } from './desktop-restart-lifecycle'
 import {
   buildPosixCleanupScript,
   buildWindowsCleanupScript,
@@ -398,7 +399,6 @@ import {
 } from './venv-blocker-scan'
 import { fetchMarketplaceThemes, searchMarketplaceThemes } from './vscode-marketplace'
 import { createWakeIndicatorWindowController } from './wake-indicator-window'
-import { shouldWriteDesktopStopFence } from './desktop-restart-lifecycle'
 import {
   clearDesktopStopFence,
   waitForDesktopStopFenceAck,

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
-import { describe, test, vi } from 'vitest'
+
+import { describe, test } from 'vitest'
 
 import { createBackendConnectionState } from './backend-connection-state'
 import { BackendDialClaims } from './backend-dial-claim'
@@ -29,6 +30,7 @@ describe('Single-Owner Desktop Backend Lifecycle (Phase 2 RED Tests)', () => {
       waitForDecision: async () => 'continue-local' as const,
       ensureLocalRuntime: async backend => {
         ensureCalled = true
+
         return ensuredBackend
       }
     })
@@ -49,9 +51,11 @@ describe('Single-Owner Desktop Backend Lifecycle (Phase 2 RED Tests)', () => {
     assert.equal(attemptA.generation, 0)
 
     let resolveA: (val: { baseUrl: string }) => void = () => {}
+
     const promiseA = new Promise<{ baseUrl: string }>(resolve => {
       resolveA = resolve
     })
+
     assert.equal(state.setPromise(attemptA, promiseA), true)
 
     // Desktop restart occurs -> invalidates Generation A, increments generation
@@ -93,6 +97,7 @@ describe('Single-Owner Desktop Backend Lifecycle (Phase 2 RED Tests)', () => {
     const dialFn = async () => {
       dialCount++
       await new Promise(r => setTimeout(r, 20))
+
       return { baseUrl: 'http://127.0.0.1:9000', token: 'tok' }
     }
 
@@ -155,9 +160,11 @@ describe('Single-Owner Desktop Backend Lifecycle (Phase 2 RED Tests)', () => {
     function normalizeHermesHome(raw: string): string {
       let trimmed = raw.trim()
       const msysMatch = trimmed.match(/^\/([a-zA-Z])\/(.*)$/)
+
       if (msysMatch) {
         trimmed = `${msysMatch[1].toUpperCase()}:\\${msysMatch[2].replace(/\//g, '\\')}`
       }
+
       return path.resolve(trimmed).toLowerCase()
     }
 
@@ -172,10 +179,7 @@ describe('Single-Owner Desktop Backend Lifecycle (Phase 2 RED Tests)', () => {
     const controller = new AbortController()
     controller.abort(new Error('Desktop shutdown'))
 
-    await assert.rejects(
-      () => runBackendStartStep(controller.signal, async () => 'should not run'),
-      /Desktop shutdown/
-    )
+    await assert.rejects(() => runBackendStartStep(controller.signal, async () => 'should not run'), /Desktop shutdown/)
   })
 
   // Phase 26: Cross-authority negative tests (Desktop side)
