@@ -54,7 +54,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git archive --format=zip --output="$evidence/python-source.zip" HEAD hermes_cli tools cron tui_gateway agent tests downstream scripts pyproject.toml hermes_constants.py .github/workflows
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Prove G2 regression fails before the fix
+      - name: Prove G2 failures on the immutable pre-fix baseline
         run: |
           $before = Join-Path $env:RUNNER_TEMP 'runtime-authority-before'
           git worktree add --detach $before 5e408e3f69ebe3bf938118570e439c941274a20d
@@ -70,14 +70,33 @@ jobs:
           $cases = @($report.SelectNodes('//testcase'))
           $failures = @($report.SelectNodes('//testcase/failure'))
           if ($cases.Count -ne 8 -or $failures.Count -ne 8 -or $report.SelectNodes('//testcase/error|//testcase/skipped').Count -ne 0) {
-            throw 'Baseline must fail all eight unsafe-authority cases without collection errors or skips'
+            throw 'Baseline must fail all eight selected cases without collection errors or skips'
           }
-          foreach ($failure in $failures) {
-            if ($failure.InnerText -notmatch 'Unverified numeric PID stop was attempted|Unverified/unfinished stop reported success') {
-              throw 'Baseline failed for a reason other than the reproduced authority violation'
+          $authorityFailures = 0
+          $legacySyntaxFailures = 0
+          foreach ($case in $cases) {
+            $text = $case.SelectSingleNode('failure').InnerText
+            if ($case.name -eq 'test_watchdog_process_authority_behavior[denied_query-powershell.exe]') {
+              # The immutable old launcher uses 0UL, unsupported in Windows
+              # PowerShell 5.1. Do not mislabel this as an authority proof.
+              if ($text -notmatch '0UL' -or $text -notmatch 'CommandNotFoundException') {
+                throw 'Legacy Windows PowerShell case failed for an unexpected reason'
+              }
+              $legacySyntaxFailures++
+            } else {
+              if ($text -notmatch 'Unverified numeric PID stop was attempted|Unverified/unfinished stop reported success') {
+                throw 'Baseline failed for a reason other than the reproduced authority violation'
+              }
+              $authorityFailures++
             }
           }
-          Write-Output 'G2 baseline: eight expected behavioral failures verified'
+          if ($authorityFailures -ne 7 -or $legacySyntaxFailures -ne 1) {
+            throw 'Expected seven authority counterexamples and one separately classified legacy syntax failure'
+          }
+          Write-Output 'G2 baseline: seven authority failures; one legacy PowerShell 5.1 syntax failure'
+          # pytest's expected failure is evidence, not the job result. All
+          # classifications above must pass before clearing its native exit.
+          exit 0
       - name: Current native process-authority and lifecycle suites
         if: ${{ !cancelled() && env.AUTHORITY_EVIDENCE != '' }}
         run: |
