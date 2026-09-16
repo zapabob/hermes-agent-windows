@@ -331,13 +331,16 @@ def test_committed_writer_after_staging_is_never_lost(
 
     monkeypatch.setattr(hermes_state, "_run_repair_strategies", staged_strategy)
     report = repair_state_db_schema(db, backup=False)
-    writer.join(20)
+    try:
+        outcome, detail = result.get(timeout=25)
+    except Exception:
+        outcome, detail = "timeout", "timed out waiting for writer queue result"
+    writer.join(10)
     if writer.is_alive():
         writer.terminate()
         writer.join(5)
         pytest.fail("writer process did not finish")
 
-    outcome, detail = result.get(timeout=5)
     assert outcome in {"failed", "committed"}, (outcome, detail)
     assert report["repaired"] is True
 
