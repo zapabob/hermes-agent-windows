@@ -31,7 +31,7 @@ func main() {
 	enableTsnet := flag.Bool("tsnet", false, "Enable Tailscale tsnet listener (also auto when authkey env set)")
 	interval := flag.Int("interval", 20, "Watchdog probe interval seconds")
 	failThreshold := flag.Int("fail-threshold", 2, "Consecutive backend failures before Desktop restart")
-	prewarm := flag.Bool("prewarm-backend", true, "Pre-start and supervise a hermes serve for fast Desktop connect")
+	prewarm := flag.Bool("prewarm-backend", false, "Pre-start and supervise a hermes serve for fast Desktop connect (deprecated: Electron main is sole owner)")
 	backendStartTimeout := flag.Int("backend-start-timeout", 300, "Seconds to wait for managed serve /api/status")
 	backendReadyTimeout := flag.Int("backend-ready-timeout", 180, "Extra seconds waiting for managed serve readiness")
 	managedPort := flag.Int("managed-backend-port", DefaultManagedBackendPort, "Fixed localhost port for watchdog-managed hermes serve")

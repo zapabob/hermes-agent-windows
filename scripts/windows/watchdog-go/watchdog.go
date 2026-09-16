@@ -272,7 +272,10 @@ func (w *Watchdog) RunCycle() cycleResult {
 			w.saveState(res)
 			return res
 		}
-		stopOrphanDesktopBackends(w.logger, w.cfg, skipPID)
+		if w.cfg.PrewarmBackend {
+			stopOrphanDesktopBackends(w.logger, w.cfg, skipPID)
+		}
+
 		if !w.reserveRecovery("desktop_relaunch") {
 			res := withEmbedding(cycleResult{Desktop: "cooldown", Backend: "pending"})
 			w.saveState(res)
@@ -300,50 +303,57 @@ func (w *Watchdog) RunCycle() cycleResult {
 	}
 
 	if backend == nil {
-		w.logger.Infof("Desktop UP but backend DOWN — starting managed serve")
-		if !backendRecoveryAttempted && w.reserveRecovery("backend_start") {
-			backendRecoveryAttempted = true
-			if w.maintenanceSuspended() {
-				res := withEmbedding(cycleResult{Desktop: "maintenance", Backend: "maintenance"})
-				w.saveState(res)
-				return res
-			} else if _, err := w.back.EnsureHealthy(); err != nil {
-				w.logger.Infof("managed backend assist failed: %v", err)
+		if w.cfg.PrewarmBackend {
+			w.logger.Infof("Desktop UP but backend DOWN — starting managed serve")
+			if !backendRecoveryAttempted && w.reserveRecovery("backend_start") {
+				backendRecoveryAttempted = true
+				if w.maintenanceSuspended() {
+					res := withEmbedding(cycleResult{Desktop: "maintenance", Backend: "maintenance"})
+					w.saveState(res)
+					return res
+				} else if _, err := w.back.EnsureHealthy(); err != nil {
+					w.logger.Infof("managed backend assist failed: %v", err)
+				}
+			} else if !backendRecoveryAttempted {
+				w.logger.Infof("managed backend assist deferred by recovery budget")
 			}
-		} else if !backendRecoveryAttempted {
-			w.logger.Infof("managed backend assist deferred by recovery budget")
+			backend = w.findAnyHealthyBackend()
+		} else {
+			w.logger.Infof("Desktop UP, backend observed DOWN — lifecycle managed by Electron main")
 		}
-		backend = w.findAnyHealthyBackend()
 	}
 
 	if backend == nil {
-		w.mu.Lock()
-		w.failCount++
-		fails := w.failCount
-		w.mu.Unlock()
-		w.logger.Infof("Desktop UP but backend still DOWN (fail=%d/%d)", fails, w.cfg.FailThreshold)
-		if fails >= w.cfg.FailThreshold {
-			if !w.reserveRecovery("desktop_restart") {
-				res := withEmbedding(cycleResult{Desktop: "cooldown", Backend: "down"})
-				w.saveState(res)
-				return res
-			}
-			if !restartPackagedDesktop(w.cfg, w.logger, w.back, func() bool { return !w.maintenanceSuspended() }) && w.maintenanceSuspended() {
-				res := withEmbedding(cycleResult{Desktop: "maintenance", Backend: "maintenance"})
-				w.saveState(res)
-				return res
-			}
+		if w.cfg.PrewarmBackend {
 			w.mu.Lock()
-			w.failCount = 0
+			w.failCount++
+			fails := w.failCount
 			w.mu.Unlock()
-			res := withEmbedding(cycleResult{Desktop: "restarted", Backend: "respawning"})
-			w.saveState(res)
-			return res
+			w.logger.Infof("Desktop UP but backend still DOWN (fail=%d/%d)", fails, w.cfg.FailThreshold)
+			if fails >= w.cfg.FailThreshold {
+				if !w.reserveRecovery("desktop_restart") {
+					res := withEmbedding(cycleResult{Desktop: "cooldown", Backend: "down"})
+					w.saveState(res)
+					return res
+				}
+				if !restartPackagedDesktop(w.cfg, w.logger, w.back, func() bool { return !w.maintenanceSuspended() }) && w.maintenanceSuspended() {
+					res := withEmbedding(cycleResult{Desktop: "maintenance", Backend: "maintenance"})
+					w.saveState(res)
+					return res
+				}
+				w.mu.Lock()
+				w.failCount = 0
+				w.mu.Unlock()
+				res := withEmbedding(cycleResult{Desktop: "restarted", Backend: "respawning"})
+				w.saveState(res)
+				return res
+			}
 		}
 		res := withEmbedding(cycleResult{Desktop: "up", Backend: "down"})
 		w.saveState(res)
 		return res
 	}
+
 
 	// Managed serve reminted the session token while Desktop stayed up —
 	// renderer still holds the old Bearer and flaps 401 / CONNECTING.
