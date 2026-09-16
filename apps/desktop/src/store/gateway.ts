@@ -766,9 +766,12 @@ function createSecondary(profile: string, connectionId: null | string = null): S
     g.config?.onEvent({ ...event, profile, ...(connectionId ? { connectionId } : {}) })
     releaseTerminalTurnLease(entry.scope, event)
   })
-  entry.offRequest = gateway.onRequest(request => {
-    g.config?.onServerRequest?.({ ...request, ...(connectionId ? { connectionId } : {}), profile })
-  })
+  entry.offRequest =
+    typeof gateway.onRequest === 'function'
+      ? gateway.onRequest(request => {
+          g.config?.onServerRequest?.({ ...request, ...(connectionId ? { connectionId } : {}), profile })
+        })
+      : () => {}
   entry.offState = gateway.onState(state => {
     reportGatewayState(scope, state)
 

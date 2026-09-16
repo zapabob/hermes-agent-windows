@@ -46,8 +46,24 @@ export async function processStartMarker(
   pid: number,
   isAlive: (pid: number) => boolean = isPidAliveWindows
 ): Promise<string> {
+  if (isAlive !== isPidAliveWindows && !isAlive(pid)) {
+    const error = new Error(`ESRCH: no process found with PID ${pid}`) as NodeJS.ErrnoException
+    error.code = 'ESRCH'
+    throw error
+  }
+
   if (process.platform === 'linux') {
-    const stat = await fs.promises.readFile(`/proc/${pid}/stat`, 'utf8')
+    let stat: string
+    try {
+      stat = await fs.promises.readFile(`/proc/${pid}/stat`, 'utf8')
+    } catch (err: any) {
+      if (err?.code === 'ENOENT') {
+        const error = new Error(`ESRCH: no process found with PID ${pid}`) as NodeJS.ErrnoException
+        error.code = 'ESRCH'
+        throw error
+      }
+      throw err
+    }
 
     const fields = stat
       .slice(stat.lastIndexOf(')') + 1)
