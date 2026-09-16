@@ -107,9 +107,9 @@ export async function waitForBackendRelease(
  * nothing; it only probes existence: EPERM ⇒ exists but inaccessible (still
  * alive), ESRCH ⇒ gone.
  */
-export function isPidAliveWindows(pid: number): boolean {
+export function isPidAliveWindows(pid: number, kill: typeof process.kill = process.kill.bind(process)): boolean {
   try {
-    process.kill(pid, 0)
+    kill(pid, 0)
 
     return true
   } catch (err: any) {

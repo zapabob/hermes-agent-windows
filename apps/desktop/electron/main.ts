@@ -57,8 +57,8 @@ import {
   makeUnsignedOauthError,
   waitForHermesReady
 } from './backend-health'
+import { createLivenessMatchers } from './backend-liveness-matchers'
 import {
-  backendCommandMatches,
   type BackendIdentity,
   createBackendOwnership,
   createBackendShutdownCoordinator
@@ -3232,47 +3232,16 @@ async function backendCommandForPid(pid) {
   }
 }
 
-async function processIdentityMatches(identity) {
-  // Legacy PID-only records are non-authoritative. Preserve them for manual
-  // inspection, but never use them to authorize a signal.
-  if (String(identity.startMarker || '').startsWith('pid-only:')) {
-    return undefined
-  }
-
-  try {
-    return (await processStartMarker(identity.pid)) === identity.startMarker
-  } catch (error) {
-    return error?.code === 'ENOENT' || error?.code === 'ESRCH' ? false : undefined
-  }
-}
-
-async function backendIdentityMatches(identity) {
-  const processMatches = await processIdentityMatches(identity)
-
-  if (processMatches !== true) {
-    return processMatches
-  }
-
-  const command = await backendCommandForPid(identity.pid)
-
-  return command === null ? undefined : backendCommandMatches(command)
-}
-
-// True when the recorded parent Electron is still running (same PID AND start
-// marker); false when it is gone or its PID was reused; undefined when the
-// ownership record predates parent tracking. Undefined deliberately falls back
-// to the pre-parent reap behaviour so legacy orphan cleanup keeps working.
-async function backendParentMatches(entry) {
-  if (!Number.isInteger(entry.parentPid) || typeof entry.parentStartMarker !== 'string' || !entry.parentStartMarker) {
-    return undefined
-  }
-
-  try {
-    return (await processStartMarker(entry.parentPid)) === entry.parentStartMarker
-  } catch (error) {
-    return error?.code === 'ENOENT' || error?.code === 'ESRCH' ? false : undefined
-  }
-}
+const {
+  processIdentityMatches,
+  backendIdentityMatches,
+  backendParentMatches
+} = createLivenessMatchers({
+  isWindows: IS_WINDOWS,
+  isPidAliveWindows,
+  processStartMarker,
+  backendCommandForPid
+})
 
 async function stopOwnedBackend(identity) {
   const matched = await processIdentityMatches(identity)

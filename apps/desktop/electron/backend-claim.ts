@@ -20,6 +20,7 @@
 import { execFile } from 'node:child_process'
 import fs from 'node:fs'
 
+import { isPidAliveWindows } from './backend-release-gate'
 import { electronProcessStartMarker } from './parent-process-identity'
 import { hiddenWindowsChildOptions } from './windows-child-options'
 
@@ -41,7 +42,10 @@ export function execText(command: string, args: string[], { timeout = 3000 } = {
  * Throws when the probe fails — callers decide what a failure means (see
  * `claimDecision` / `probeStartMarker`).
  */
-export async function processStartMarker(pid: number): Promise<string> {
+export async function processStartMarker(
+  pid: number,
+  isAlive: (pid: number) => boolean = isPidAliveWindows
+): Promise<string> {
   if (process.platform === 'linux') {
     const stat = await fs.promises.readFile(`/proc/${pid}/stat`, 'utf8')
 
@@ -59,10 +63,16 @@ export async function processStartMarker(pid: number): Promise<string> {
 
   if (process.platform === 'win32') {
     const electronMarker =
-      pid === process.pid ? electronProcessStartMarker(pid, process.pid, process.getCreationTime?.()) : null
+      pid === process.pid ? electronProcessStartMarker(pid, process.pid, (process as any).getCreationTime?.()) : null
 
     if (electronMarker) {
       return electronMarker
+    }
+
+    if (!isAlive(pid)) {
+      const error = new Error(`ESRCH: no process found with PID ${pid}`) as NodeJS.ErrnoException
+      error.code = 'ESRCH'
+      throw error
     }
 
     const ticks = await execText(
