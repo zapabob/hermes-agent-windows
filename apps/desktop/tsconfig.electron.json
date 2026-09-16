@@ -10,7 +10,6 @@
     "strictPropertyInitialization": false,
     "noUncheckedIndexedAccess": false,
     "exactOptionalPropertyTypes": false,
-    "ignoreDeprecations": "6.0",
     "composite": true,
     "declaration": true,
     "rootDir": "..",
