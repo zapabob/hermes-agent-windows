@@ -36,6 +36,7 @@ jobs:
           run(['git','-C',str(root),'worktree','add','--quiet','--detach',str(work),head])
           assert run(['git','-C',str(work),'rev-parse','HEAD']).strip() == head
           snap = json.loads((work / '.codex/UPSTREAM_SNAPSHOT.json').read_text(encoding='utf-8'))
+          run(['git','-C',str(root),'fetch','--quiet','--no-tags','https://github.com/NousResearch/hermes-agent.git',snap['upstream_head_sha']])
           for sha in (snap['upstream_head_sha'], snap['merge_base_sha']):
               run(['git','-C',str(root),'cat-file','-e',sha + '^{commit}'])
           run([sys.executable,'-m','pip','install','-q','--disable-pip-version-check','pyyaml==6.0.3'])
