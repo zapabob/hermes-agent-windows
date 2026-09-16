@@ -1,15 +1,16 @@
 import assert from 'node:assert/strict'
+
 import { describe, test, vi } from 'vitest'
 
-import {
-  createBackendOwnership,
-  parseBackendOwnership,
-  type BackendIdentity,
-  type BackendOwnershipEntry
-} from './backend-ownership'
-import { createLivenessMatchers } from './backend-liveness-matchers'
-import { isPidAliveWindows } from './backend-release-gate'
 import { processStartMarker } from './backend-claim'
+import { createLivenessMatchers } from './backend-liveness-matchers'
+import {
+  type BackendIdentity,
+  type BackendOwnershipEntry,
+  createBackendOwnership,
+  parseBackendOwnership
+} from './backend-ownership'
+import { isPidAliveWindows } from './backend-release-gate'
 
 function memoryStore(initial = '') {
   let contents = initial
@@ -31,6 +32,7 @@ function memoryStore(initial = '') {
 describe('orphan reap cheap negative liveness gate contract', () => {
   test('1. dead full-identity backend -> processIdentityMatches = false, zero PowerShell marker probes', async () => {
     const markerProbe = vi.fn(async () => 'win:123456789')
+
     const matchers = createLivenessMatchers({
       isWindows: true,
       isPidAliveWindows: () => false,
@@ -51,6 +53,7 @@ describe('orphan reap cheap negative liveness gate contract', () => {
 
   test('2. dead pid-only backend -> processIdentityMatches = false, record removed, zero PowerShell marker probes', async () => {
     const markerProbe = vi.fn(async () => 'win:123456789')
+
     const matchers = createLivenessMatchers({
       isWindows: true,
       isPidAliveWindows: () => false,
@@ -75,6 +78,7 @@ describe('orphan reap cheap negative liveness gate contract', () => {
     )
 
     const stop = vi.fn()
+
     const ownership = createBackendOwnership({
       matchesIdentity: matchers.backendIdentityMatches,
       matchesParent: matchers.backendParentMatches,
@@ -89,6 +93,7 @@ describe('orphan reap cheap negative liveness gate contract', () => {
 
   test('3. live pid-only backend -> undefined, record preserved, never authorized for stop', async () => {
     const markerProbe = vi.fn(async () => 'win:123456789')
+
     const matchers = createLivenessMatchers({
       isWindows: true,
       isPidAliveWindows: () => true,
@@ -110,6 +115,7 @@ describe('orphan reap cheap negative liveness gate contract', () => {
     const store = memoryStore(JSON.stringify({ backends: [entry] }))
 
     const stop = vi.fn()
+
     const ownership = createBackendOwnership({
       matchesIdentity: matchers.backendIdentityMatches,
       matchesParent: matchers.backendParentMatches,
@@ -124,9 +130,10 @@ describe('orphan reap cheap negative liveness gate contract', () => {
 
   test('4. dead recorded parent -> backendParentMatches = false, zero PowerShell parent-marker probes', async () => {
     const markerProbe = vi.fn(async () => 'win:parent999')
+
     const matchers = createLivenessMatchers({
       isWindows: true,
-      isPidAliveWindows: (pid: number) => (pid === 4242), // parent (999) is dead
+      isPidAliveWindows: (pid: number) => pid === 4242, // parent (999) is dead
       processStartMarker: markerProbe
     })
 
@@ -147,6 +154,7 @@ describe('orphan reap cheap negative liveness gate contract', () => {
 
   test('5. live full identity -> still performs full start-marker verification', async () => {
     const markerProbe = vi.fn(async (pid: number) => `win:incarnation-${pid}`)
+
     const matchers = createLivenessMatchers({
       isWindows: true,
       isPidAliveWindows: () => true,
@@ -213,6 +221,7 @@ describe('orphan reap cheap negative liveness gate contract', () => {
 
   test('7. bulk stale ledger (100 dead ownership entries) -> one reap pass removes all dead records, zero PowerShell probes', async () => {
     const markerProbe = vi.fn(async () => 'win:probe')
+
     const matchers = createLivenessMatchers({
       isWindows: true,
       isPidAliveWindows: () => false, // all 100 entries are dead
@@ -297,6 +306,7 @@ describe('orphan reap cheap negative liveness gate contract', () => {
   test('10. processStartMarker cheap dead-PID gate throws ESRCH without shelling out to PowerShell', async () => {
     // When PID is dead, processStartMarker on Windows must throw error with code = 'ESRCH'
     const deadPid = 2 ** 30 + 54321
+
     try {
       await processStartMarker(deadPid, () => false)
       assert.fail('Should have thrown')
