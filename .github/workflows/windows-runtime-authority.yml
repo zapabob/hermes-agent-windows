@@ -1,0 +1,114 @@
+name: Windows runtime authority
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/windows/**'
+      - 'tests/test_go_watchdog*.py'
+      - '.github/workflows/windows-runtime-authority.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/windows/**'
+      - 'tests/test_go_watchdog*.py'
+      - '.github/workflows/windows-runtime-authority.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: runtime-authority-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-authority:
+    name: G1/G2 native regressions and evidence
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version-file: scripts/windows/watchdog-go/go.mod
+          cache-dependency-path: scripts/windows/watchdog-go/go.sum
+      - name: Prepare isolated evidence
+        run: |
+          python -m pip install pytest pyyaml
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $evidence = Join-Path $env:RUNNER_TEMP 'runtime-authority-evidence'
+          New-Item -ItemType Directory -Force -Path $evidence | Out-Null
+          "AUTHORITY_EVIDENCE=$evidence" >> $env:GITHUB_ENV
+          git rev-parse HEAD | Set-Content -LiteralPath (Join-Path $evidence 'tested-sha.txt')
+          git archive --format=zip --output="$evidence/source.zip" HEAD scripts/windows/Start-HermesGoWatchdog.ps1 scripts/windows/watchdog-go tests/test_go_watchdog_runtime_authority.py tests/test_go_watchdog_launcher_authority.py tests/test_go_watchdog_architecture_contract.py tests/test_go_watchdog_task_registration.py apps/desktop/tsconfig.json apps/desktop/tsconfig.electron.json apps/desktop/tsconfig.e2e.json apps/desktop/package.json .mailmap scripts/downstream .codex/UPSTREAM_SNAPSHOT.json _docs/carry-surface-20260826.json _docs/carry-surface-20260826.md
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Prove G2 regression fails before the fix
+        run: |
+          $before = Join-Path $env:RUNNER_TEMP 'runtime-authority-before'
+          git worktree add --detach $before 5e408e3f69ebe3bf938118570e439c941274a20d
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $xmlPath = Join-Path $env:AUTHORITY_EVIDENCE 'g2-before.xml'
+          Push-Location $before
+          try {
+            python -m pytest --noconftest -o 'addopts=' tests/test_go_watchdog_runtime_authority.py -k 'denied_query or denied_invisible or denied_stop or wait_timeout' --junitxml=$xmlPath -q 2>&1 | Tee-Object -FilePath (Join-Path $env:AUTHORITY_EVIDENCE 'g2-before.log')
+            $beforeCode = $LASTEXITCODE
+          } finally { Pop-Location }
+          if ($beforeCode -ne 1) { throw "Expected assertion failures, got exit $beforeCode" }
+          [xml]$report = Get-Content -Raw -LiteralPath $xmlPath
+          $cases = @($report.SelectNodes('//testcase'))
+          $failures = @($report.SelectNodes('//testcase/failure'))
+          if ($cases.Count -ne 8 -or $failures.Count -ne 8 -or $report.SelectNodes('//testcase/error|//testcase/skipped').Count -ne 0) {
+            throw 'Baseline must fail all eight unsafe-authority cases without collection errors or skips'
+          }
+          foreach ($failure in $failures) {
+            if ($failure.InnerText -notmatch 'Unverified numeric PID stop was attempted|Unverified/unfinished stop reported success') {
+              throw 'Baseline failed for a reason other than the reproduced authority violation'
+            }
+          }
+          Write-Output 'G2 baseline: eight expected behavioral failures verified'
+      - name: Current native process-authority and lifecycle suites
+        if: ${{ !cancelled() && env.AUTHORITY_EVIDENCE != '' }}
+        run: |
+          python -m pytest --noconftest -o 'addopts=' tests/test_go_watchdog_runtime_authority.py tests/test_go_watchdog_launcher_authority.py tests/test_go_watchdog_architecture_contract.py tests/test_go_watchdog_task_registration.py --junitxml="$env:AUTHORITY_EVIDENCE/authority-current.xml" -q 2>&1 | Tee-Object -FilePath (Join-Path $env:AUTHORITY_EVIDENCE 'authority-current.log')
+          exit $LASTEXITCODE
+      - name: Full native watchdog Go suite
+        if: ${{ !cancelled() && env.AUTHORITY_EVIDENCE != '' }}
+        working-directory: scripts/windows/watchdog-go
+        run: |
+          go test -count=1 ./... 2>&1 | Tee-Object -FilePath (Join-Path $env:AUTHORITY_EVIDENCE 'go-tests.log')
+          exit $LASTEXITCODE
+      - name: Native watchdog vet
+        if: ${{ !cancelled() && env.AUTHORITY_EVIDENCE != '' }}
+        working-directory: scripts/windows/watchdog-go
+        run: go vet ./...
+      - name: Generate carry-metric evidence without publishing changes
+        if: ${{ !cancelled() && env.AUTHORITY_EVIDENCE != '' }}
+        run: |
+          $snapshot = Get-Content -Raw -LiteralPath .codex/UPSTREAM_SNAPSHOT.json | ConvertFrom-Json
+          $snapshotSha = [string]$snapshot.upstream_head_sha
+          git cat-file -e "$snapshotSha^{commit}" 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            git fetch --no-tags https://github.com/NousResearch/hermes-agent.git $snapshotSha
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          python scripts/downstream/carry_metrics.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Copy-Item _docs/carry-surface-20260826.json,_docs/carry-surface-20260826.md -Destination $env:AUTHORITY_EVIDENCE
+      - name: Upload exact-SHA source and test evidence
+        if: ${{ !cancelled() && env.AUTHORITY_EVIDENCE != '' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: windows-runtime-authority-${{ github.run_id }}
+          path: ${{ env.AUTHORITY_EVIDENCE }}
+          retention-days: 7
+          if-no-files-found: error
