@@ -1,0 +1,34 @@
+name: Watchdog Authority RED Evidence
+
+on:
+  push:
+    branches:
+      - fix/remove-watchdog-backend-authority-20260917
+
+jobs:
+  authority-red:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install minimal test dependencies
+        run: python -m pip install pytest pyyaml
+      - name: Run single-owner authority contract
+        id: contract
+        shell: bash
+        run: |
+          set +e
+          python -m pytest -q tests/downstream/test_windows_contracts.py -k go_watchdog_has_no_desktop_backend_lifecycle_authority > authority-red.txt 2>&1
+          code=$?
+          cat authority-red.txt
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit "$code"
+      - name: Upload RED evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: watchdog-authority-red-evidence
+          path: authority-red.txt
+          if-no-files-found: error
