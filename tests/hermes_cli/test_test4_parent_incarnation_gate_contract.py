@@ -7,6 +7,7 @@ the harness must re-measure and compare that marker both before the injection
 and immediately before the destructive action.
 """
 
+import re
 from pathlib import Path
 
 
@@ -60,3 +61,27 @@ def test_test4_revalidates_backend_and_parent_immediately_before_stop() -> None:
     assert final_parent_index < stop_index
     assert "toctou_guard_triggered" in content
     assert "toctou_parent_guard_triggered" in content
+
+
+def test_test4_final_backend_probe_follows_parent_probe() -> None:
+    """Recheck the destructive target last, without dropping its parent gate."""
+    text = HARNESS.read_text(encoding="utf-8")
+    parent = text.index("$liveParentMarkerFinal = Get-LiveParentStartMarker")
+    backend = text.index("$liveMarkerFinal = Get-LiveStartMarker")
+    stop = text.index("Stop-Process -Id $oldBackendPid")
+    assert parent < backend < stop
+
+
+def test_test4_has_no_log_io_after_final_backend_gate() -> None:
+    """Refusal logs stay inside gates; successful termination adds no log I/O."""
+    text = HARNESS.read_text(encoding="utf-8")
+    gate = re.search(
+        r"\$liveMarkerFinal = Get-LiveStartMarker.*?continue\s*\}\s*",
+        text,
+        re.DOTALL,
+    )
+    assert gate, "could not locate final backend revalidation gate"
+    stop = text.find("Stop-Process -Id $oldBackendPid", gate.end())
+    assert stop > gate.end()
+    between = text[gate.end():stop]
+    assert not re.search(r"(?m)^\s*Write-(?:Step|Warning|TqdmProgress)\b", between)

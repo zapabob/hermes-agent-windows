@@ -814,20 +814,20 @@ for ($c = 1; $c -le $actualCrashCycles; $c++) {
 
     Write-Step ("TEST4 cycle {0}: all 6 identity gates PASSED (PID={1}, nonce={2}, startMarker={3}, parentPid={4}, parentStartMarker={5})" -f $c, $oldBackendPid, $ledgerEntry.nonce, $liveMarkerPre, $dPid, $liveParentMarkerPre)
 
+    # Gate 6: revalidate the parent before the final backend probe below.
+    # Refusal logging exits this cycle; the success path performs no log I/O.
+    $liveParentMarkerFinal = Get-LiveParentStartMarker -TargetPid $dPid
+    if (-not $liveParentMarkerFinal -or $liveParentMarkerFinal -ne $ledgerParentStartMarker) {
+        Write-Warning ("TEST4 cycle {0} REFUSED: pre-termination parentStartMarker revalidation failed (live={1}, ledger={2})" -f $c, $liveParentMarkerFinal, $ledgerParentStartMarker)
+        Write-TqdmProgress -Activity "TEST 4 (Crash Recovery)" -Current $c -Total $actualCrashCycles -Stopwatch $crashTqdmSw -Status ("Cycle {0}: toctou_parent_guard_triggered" -f $c)
+        continue
+    }
+
     # Gate 5 (revalidation immediately before Stop-Process — TOCTOU guard)
     $liveMarkerFinal = Get-LiveStartMarker -TargetPid $oldBackendPid
     if (-not $liveMarkerFinal -or $liveMarkerFinal -ne $ledgerStartMarker) {
         Write-Warning ("TEST4 cycle {0} REFUSED: pre-termination startMarker revalidation failed (live={1}, ledger={2})" -f $c, $liveMarkerFinal, $ledgerStartMarker)
         Write-TqdmProgress -Activity "TEST 4 (Crash Recovery)" -Current $c -Total $actualCrashCycles -Stopwatch $crashTqdmSw -Status ("Cycle {0}: toctou_guard_triggered" -f $c)
-        continue
-    }
-
-    # Gate 6 (revalidation immediately before Stop-Process): repeat the
-    # parent incarnation check so PID reuse cannot cross the destructive boundary.
-    $liveParentMarkerFinal = Get-LiveParentStartMarker -TargetPid $dPid
-    if (-not $liveParentMarkerFinal -or $liveParentMarkerFinal -ne $ledgerParentStartMarker) {
-        Write-Warning ("TEST4 cycle {0} REFUSED: pre-termination parentStartMarker revalidation failed (live={1}, ledger={2})" -f $c, $liveParentMarkerFinal, $ledgerParentStartMarker)
-        Write-TqdmProgress -Activity "TEST 4 (Crash Recovery)" -Current $c -Total $actualCrashCycles -Stopwatch $crashTqdmSw -Status ("Cycle {0}: toctou_parent_guard_triggered" -f $c)
         continue
     }
 
