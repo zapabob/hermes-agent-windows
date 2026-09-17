@@ -9,146 +9,68 @@ import (
 	"testing"
 )
 
-func TestDesktopOwnershipRequiresExactExecutablePath(t *testing.T) {
+func TestDesktopObservationRequiresExactExecutablePath(t *testing.T) {
 	cfg := Config{PackagedExe: filepath.Join(`C:\\Hermes`, "Hermes.exe")}
 	if !isOwnedDesktopExecutable(cfg, filepath.Join(`C:\\Hermes`, "Hermes.exe")) {
-		t.Fatal("configured packaged executable should be owned")
+		t.Fatal("configured packaged executable should be observed")
 	}
 	if isOwnedDesktopExecutable(cfg, filepath.Join(`C:\\OtherApp`, "Hermes.exe")) {
-		t.Fatal("same-basename foreign executable must not be owned")
+		t.Fatal("same-basename foreign executable must not be observed as this Desktop")
 	}
 	if isOwnedDesktopExecutable(cfg, "") {
 		t.Fatal("unknown executable path must fail closed")
 	}
 }
 
-func TestDesktopStopRequiresCreationTimeAndExecutable(t *testing.T) {
-	self, ok := readProcessIdentity(os.Getpid())
-	if !ok {
-		t.Fatal("current process identity unavailable")
-	}
-	wrongCreation := win32Process{
-		ProcessID: uint32(self.PID), CreationTime: self.CreationTime + 1,
-		ExecutablePath: self.ExecutablePath,
-	}
-	if stopProcessTreeIfIdentityMatches(wrongCreation, nil) {
-		t.Fatal("creation-time mismatch must fail closed")
-	}
-	wrongPath := wrongCreation
-	wrongPath.CreationTime = self.CreationTime
-	wrongPath.ExecutablePath = filepath.Join(t.TempDir(), "foreign.exe")
-	if stopProcessTreeIfIdentityMatches(wrongPath, nil) {
-		t.Fatal("executable-path mismatch must fail closed")
-	}
-}
-
-func TestBackendCandidateRequiresConfiguredRoot(t *testing.T) {
+func TestBackendObservationRequiresConfiguredRoot(t *testing.T) {
 	cfg := Config{HermesRoot: `C:\\Hermes`, HermesHome: `C:\\Users\\bob\\.hermes`}
 	owned := win32Process{
-		CommandLine:    `C:\\Hermes\\.venv\\Scripts\\python.exe -m hermes_cli.main serve --port 9119`,
+		CommandLine:    `C:\\Hermes\\.venv\\Scripts\\python.exe -m hermes_cli.main serve --port 0`,
 		ExecutablePath: `C:\\Hermes\\.venv\\Scripts\\python.exe`,
 	}
 	foreign := owned
 	foreign.ExecutablePath = `C:\\OtherRepo\\.venv\\Scripts\\python.exe`
 	if !isOwnedDesktopBackendProcess(cfg, owned) {
-		t.Fatal("backend under the configured root should be observable as a candidate")
+		t.Fatal("backend under the configured root should be observable")
 	}
 	if isOwnedDesktopBackendProcess(cfg, foreign) {
-		t.Fatal("same command line from another checkout must be preserved")
+		t.Fatal("same command line from another checkout must not be classified as this Desktop backend")
 	}
 }
 
-func TestOrphanReaperHasNoDestructiveAuthority(t *testing.T) {
-	dir := t.TempDir()
-	if stopped := stopOrphanDesktopBackends(NewLogger(filepath.Join(dir, "t.log")), Config{}); stopped != 0 {
-		t.Fatalf("manual backend candidates must be preserved, stopped=%d", stopped)
-	}
-	raw, err := os.ReadFile("process_windows.go")
-	if err != nil {
-		t.Fatal(err)
-	}
-	source := string(raw)
-	start := strings.Index(source, "func stopOrphanDesktopBackends")
-	end := strings.Index(source[start+1:], "\nfunc ")
-	body := source[start:]
-	if end >= 0 {
-		body = source[start : start+1+end]
-	}
-	if strings.Contains(body, "stopProcessPID") || strings.Contains(body, "taskkill") {
-		t.Fatal("orphan classification must never become process termination authority")
-	}
-}
-
-func TestDesktopTerminationNeverReentersThroughNumericPID(t *testing.T) {
-	raw, err := os.ReadFile("process_windows.go")
-	if err != nil {
-		t.Fatal(err)
-	}
-	source := string(raw)
-	start := strings.Index(source, "func stopProcessTreeIfIdentityMatches")
-	end := strings.Index(source[start+1:], "\nfunc ")
-	body := source[start:]
-	if end >= 0 {
-		body = source[start : start+1+end]
-	}
-	if strings.Contains(body, "taskkill") || strings.Contains(body, "stopProcessPID") {
-		t.Fatal("validated Desktop identity must not be converted back to a numeric PID kill")
-	}
-	if !strings.Contains(body, "TerminateProcess(handle") ||
-		!strings.Contains(body, "readProcessIdentityFromHandle(handle") {
-		t.Fatal("Desktop stop must validate and terminate through the same kernel handle")
-	}
-}
-
-func TestDestructiveProcessCodeHasNoImageKillOrNetstatFallback(t *testing.T) {
-	raw, err := os.ReadFile("process_windows.go")
-	if err != nil {
-		t.Fatal(err)
-	}
-	source := string(raw)
-	if strings.Contains(source, `taskkill", "/IM"`) {
-		t.Fatal("image-name taskkill can terminate a foreign Hermes.exe")
-	}
-	start := strings.Index(source, "func stopListenersOnPort")
-	if start >= 0 {
-		end := strings.Index(source[start+1:], "\nfunc ")
-		body := source[start:]
-		if end >= 0 {
-			body = source[start : start+1+end]
+func TestWatchdogProductionHasNoDesktopBackendDestructiveAuthority(t *testing.T) {
+	for _, name := range []string{"process_windows.go", "watchdog.go", "main.go", "config.go"} {
+		raw, err := os.ReadFile(name)
+		if err != nil {
+			t.Fatal(err)
 		}
-		if strings.Contains(body, "listeningPIDsOnPort") {
-			t.Fatal("netstat-only listener PIDs must never become kill authority")
+		source := string(raw)
+		for _, forbidden := range []string{
+			"PROCESS_TERMINATE",
+			"windows.TerminateProcess(",
+			"restartPackagedDesktop",
+			"stopOrphanDesktopBackends",
+			"BackendManager",
+			"PrewarmBackend",
+			"HERMES_WATCHDOG_MANAGED",
+		} {
+			if strings.Contains(source, forbidden) {
+				t.Fatalf("%s retains forbidden Desktop backend authority %q", name, forbidden)
+			}
 		}
 	}
-}
-
-func TestWatchdogDefaultDisablesDesktopBackendPrewarm(t *testing.T) {
-	cfg := Config{}
-	if cfg.PrewarmBackend {
-		t.Fatal("PrewarmBackend default must be false for single-owner Desktop backend architecture")
+	if _, err := os.Stat("backend.go"); !os.IsNotExist(err) {
+		t.Fatal("legacy watchdog-owned Desktop backend manager source must be removed")
 	}
 }
 
-func TestEmbeddingSupervisorDoesNotSpawnOrKillDesktopBackend(t *testing.T) {
-	dir := t.TempDir()
-	cfg := Config{
-		HermesRoot:     dir,
-		HermesHome:     dir,
-		DataDir:        dir,
-		PrewarmBackend: false, // single-owner mode
+func TestDesktopLaunchEnvCannotInjectBackendCredentials(t *testing.T) {
+	env := strings.Join(desktopLaunchEnv(Config{HermesRoot: `C:\\Hermes`, HermesHome: `C:\\Users\\bob\\.hermes`}), "\n")
+	if !strings.Contains(env, "HERMES_DESKTOP_REMOTE_URL=") || !strings.Contains(env, "HERMES_DESKTOP_REMOTE_TOKEN=") {
+		t.Fatal("watchdog Desktop launch must explicitly clear inherited remote backend overrides")
 	}
-	logger := NewLogger(filepath.Join(dir, "test.log"))
-	wd := NewWatchdog(cfg, logger)
-
-	// PrewarmBackend must be a no-op
-	wd.PrewarmBackend()
-	if wd.back.currentHealthy() != nil {
-		t.Fatal("embedding supervisor must not prewarm desktop backend")
-	}
-
-	// Desktop backend manifest must not exist
-	if _, err := os.Stat(wd.back.ManifestPath()); !os.IsNotExist(err) {
-		t.Fatal("embedding supervisor must not write desktop-backend.json")
+	if strings.Contains(env, "HERMES_WATCHDOG_MANAGED") {
+		t.Fatal("watchdog-managed backend marker must never reach Desktop")
 	}
 }
 
