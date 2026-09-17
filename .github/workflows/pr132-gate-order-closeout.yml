@@ -29,31 +29,6 @@ jobs:
         with:
           version: '0.9.28'
           enable-cache: false
-      - name: Merge the pinned main without discarding runtime changes
-        shell: python
-        run: |
-          import os, subprocess
-          from pathlib import Path
-          def git(*args, check=True):
-              return subprocess.run(['git', *args], check=check, text=True, encoding='utf-8', capture_output=True)
-          git('config', 'user.name', 'github-actions[bot]')
-          git('config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com')
-          main = os.environ['EXPECTED_MAIN']
-          assert git('rev-parse', 'origin/main').stdout.strip() == main, 'main moved: do not guess the integration base'
-          merged = git('merge', '--no-commit', '--no-ff', main, check=False)
-          print(merged.stdout, merged.stderr)
-          conflicts = set(git('diff', '--name-only', '--diff-filter=U').stdout.splitlines())
-          reports = {'_docs/carry-surface-20260826.json', '_docs/carry-surface-20260826.md'}
-          assert conflicts <= reports, f'Unexpected conflicts: {conflicts - reports}'
-          assert merged.returncode == 0 or (merged.returncode == 1 and conflicts), 'merge failed without report conflicts'
-          if conflicts:
-              git('restore', '--source=' + main, '--staged', '--worktree', '--', *sorted(conflicts))
-          git('commit', '-m', 'Merge pinned main into isolated PR132 verification branch')
-          git('merge-base', '--is-ancestor', os.environ['ORIGINAL_PR_HEAD'], 'HEAD')
-          git('merge-base', '--is-ancestor', main, 'HEAD')
-          evidence = Path(os.environ['RUNNER_TEMP']) / 'pr132-closeout-evidence'
-          evidence.mkdir()
-          (evidence / 'baseline-sha.txt').write_text(git('rev-parse', 'HEAD').stdout, encoding='utf-8')
       - name: Install locked test dependencies
         shell: pwsh
         run: |
@@ -61,151 +36,52 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           uv sync --locked --python 3.11 --extra dev
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: RED then GREEN for final gate ordering and logging
-        shell: python
-        run: |
-          import os, re, subprocess, xml.etree.ElementTree as ET
-          from pathlib import Path
-          root = Path.cwd()
-          evidence = Path(os.environ['RUNNER_TEMP']) / 'pr132-closeout-evidence'
-          python = str(root / '.venv/Scripts/python.exe')
-          harness = root / 'scripts/windows/tests/Test-HermesDesktopLifecycle.ps1'
-          contract = root / 'tests/hermes_cli/test_test4_parent_incarnation_gate_contract.py'
-          expected = 'be5fdb801c11537f9e1acebea492ea89b9735ca3'
-          actual = subprocess.check_output(['git', 'rev-parse', 'HEAD:' + harness.relative_to(root).as_posix()], text=True).strip()
-          assert actual == expected, 'Harness changed: reassess rather than applying a blind patch'
-          text = contract.read_text(encoding='utf-8')
-          assert 'test_test4_final_backend_probe_follows_parent_probe' not in text
-          text = text.replace('from pathlib import Path', 'import re\nfrom pathlib import Path', 1)
-          text += '''
-
-          def test_test4_final_backend_probe_follows_parent_probe() -> None:
-              """Recheck the destructive target last, without dropping its parent gate."""
-              text = HARNESS.read_text(encoding="utf-8")
-              parent = text.index("$liveParentMarkerFinal = Get-LiveParentStartMarker")
-              backend = text.index("$liveMarkerFinal = Get-LiveStartMarker")
-              stop = text.index("Stop-Process -Id $oldBackendPid")
-              assert parent < backend < stop
-
-
-          def test_test4_has_no_log_io_after_final_backend_gate() -> None:
-              """Refusal logs stay inside gates; successful termination adds no log I/O."""
-              text = HARNESS.read_text(encoding="utf-8")
-              gate = re.search(
-                  r"\\$liveMarkerFinal = Get-LiveStartMarker.*?continue\\s*\\}\\s*",
-                  text,
-                  re.DOTALL,
-              )
-              assert gate, "could not locate final backend revalidation gate"
-              stop = text.find("Stop-Process -Id $oldBackendPid", gate.end())
-              assert stop > gate.end()
-              between = text[gate.end():stop]
-              assert not re.search(r"(?m)^\\s*Write-(?:Step|Warning|TqdmProgress)\\b", between)
-          '''
-          contract.write_text(text, encoding='utf-8', newline='\n')
-          def tests(name, paths, expected_failures=0):
-              xml = evidence / (name + '.xml')
-              proc = subprocess.run([python, '-m', 'pytest', '--noconftest', '-o', 'addopts=', '-q', *paths, '--junitxml=' + str(xml)], text=True, encoding='utf-8', capture_output=True)
-              (evidence / (name + '.log')).write_text(proc.stdout + proc.stderr, encoding='utf-8')
-              print(proc.stdout, proc.stderr)
-              suites = list(ET.parse(xml).getroot().iter('testsuite'))
-              failures = sum(int(s.get('failures', '0')) for s in suites)
-              errors = sum(int(s.get('errors', '0')) for s in suites)
-              assert errors == 0 and failures == expected_failures
-              assert proc.returncode == (1 if expected_failures else 0)
-          tests('red', [str(contract)], expected_failures=2)
-          before = harness.read_text(encoding='utf-8')
-          a = before.index('    # Gate 5 (revalidation immediately before Stop-Process')
-          b = before.index('    # Gate 6 (revalidation immediately before Stop-Process', a)
-          c = before.index('    # All gates passed', b)
-          backend, parent = before[a:b], before[b:c]
-          parent = parent.replace('    # Gate 6 (revalidation immediately before Stop-Process): repeat the\n    # parent incarnation check so PID reuse cannot cross the destructive boundary.', '    # Gate 6: revalidate the parent before the final backend probe below.\n    # Refusal logging exits this cycle; the success path performs no log I/O.')
-          harness.write_text(before[:a] + parent + backend + before[c:], encoding='utf-8', newline='\n')
-          paths = [str(contract), *map(str, sorted((root / 'tests/hermes_cli').glob('test_desktop_lifecycle*contract.py')))]
-          (evidence / 'tested-paths.txt').write_text('\n'.join(paths), encoding='utf-8')
-          tests('green', paths)
-          subprocess.run([python, '-m', 'ruff', 'check', str(contract)], check=True)
-      - name: Native PowerShell parse and final gate refusal behavior
+      - name: Replay hash-pinned closeout with current boundary checks
         shell: pwsh
         run: |
-          $ErrorActionPreference = 'Stop'
-          $path = Join-Path $PWD 'scripts/windows/tests/Test-HermesDesktopLifecycle.ps1'
-          $tokens = $null; $parseErrors = $null
-          $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$parseErrors)
-          if ($parseErrors.Count -ne 0) { throw ($parseErrors | Out-String) }
-          $functionAst = $ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Get-LiveParentStartMarker' }, $true)
-          if (-not $functionAst) { throw 'Parent marker function missing' }
-          . ([scriptblock]::Create($functionAst.Extent.Text))
-          $expected = 'winms:' + [DateTimeOffset]::new((Get-Process -Id $PID).StartTime.ToUniversalTime()).ToUnixTimeMilliseconds()
-          if ((Get-LiveParentStartMarker -TargetPid $PID) -ne $expected) { throw 'Live Windows parent marker differs from production time semantics' }
-          $text = Get-Content -LiteralPath $path -Raw
-          $start = $text.IndexOf('$liveParentMarkerFinal = Get-LiveParentStartMarker')
-          $stop = $text.IndexOf('Stop-Process -Id $oldBackendPid', $start)
-          $end = $text.IndexOf("`n", $stop)
-          if ($start -lt 0 -or $stop -lt $start -or $end -lt $stop) { throw 'Could not isolate final gate code' }
-          $fragment = [scriptblock]::Create('foreach ($c in 1) {' + "`n" + $text.Substring($start, $end - $start) + "`n}")
-          $script:events = [System.Collections.Generic.List[string]]::new()
-          function Get-LiveParentStartMarker { param([int]$TargetPid) $script:events.Add('parent'); return $script:parentMarker }
-          function Get-LiveStartMarker { param([int]$TargetPid) $script:events.Add('backend'); return $script:backendMarker }
-          function Write-Warning { param($Message) $script:events.Add('warning') }
-          function Write-TqdmProgress { $script:events.Add('progress') }
-          function Stop-Process { param([int]$Id, [switch]$Force, [string]$ErrorAction) $script:events.Add('stop') }
-          $dPid = 123; $oldBackendPid = 456; $actualCrashCycles = 1
-          $ledgerStartMarker = 'win:10'; $ledgerParentStartMarker = 'winms:20'
-          $crashTqdmSw = [System.Diagnostics.Stopwatch]::StartNew()
-          $cases = @(
-            @{ name='parent_absent'; parent=$null; backend='win:10'; trace='parent,warning,progress' },
-            @{ name='parent_reused'; parent='winms:21'; backend='win:10'; trace='parent,warning,progress' },
-            @{ name='backend_absent'; parent='winms:20'; backend=$null; trace='parent,backend,warning,progress' },
-            @{ name='backend_reused'; parent='winms:20'; backend='win:11'; trace='parent,backend,warning,progress' },
-            @{ name='identities_match'; parent='winms:20'; backend='win:10'; trace='parent,backend,stop' }
-          )
-          $results = foreach ($case in $cases) {
-            $script:events.Clear(); $script:parentMarker = $case.parent; $script:backendMarker = $case.backend
-            . $fragment
-            $trace = $script:events -join ','
-            if ($trace -ne $case.trace) { throw ('Unexpected trace for {0}: {1}' -f $case.name, $trace) }
-            @{ name=$case.name; passed=$true; trace=$trace }
-          }
-          @{ parser_errors=0; live_parent_marker_match=$true; mocked_termination_cases=$results; real_crash_injection=$false } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'pr132-closeout-evidence/native-powershell.json')
-      - name: Commit only the scoped fix and regenerate committed-tree metrics
-        shell: python
-        run: |
-          import hashlib, json, os, subprocess
+          @'
+          import hashlib, os, subprocess, zipfile
           from pathlib import Path
-          def git(*args):
-              return subprocess.check_output(['git', *args], text=True, encoding='utf-8')
-          python = str(Path.cwd() / '.venv/Scripts/python.exe')
-          files = ['scripts/windows/tests/Test-HermesDesktopLifecycle.ps1', 'tests/hermes_cli/test_test4_parent_incarnation_gate_contract.py']
+          import yaml
+          root = Path.cwd()
+          python = str(root / '.venv/Scripts/python.exe')
           workflow = '.github/workflows/pr132-gate-order-closeout.yml'
-          git('add', '--', *files)
-          git('rm', '--', workflow)
-          assert set(git('diff', '--cached', '--name-only').splitlines()) == set(files + [workflow])
-          git('commit', '-m', 'test(windows): revalidate backend last before TEST4 crash injection')
-          upstream = json.loads(Path('.codex/UPSTREAM_SNAPSHOT.json').read_text(encoding='utf-8'))['upstream_head_sha']
-          if subprocess.run(['git', 'cat-file', '-e', upstream + '^{commit}'], capture_output=True).returncode:
-              subprocess.run(['git', 'fetch', '--no-tags', 'https://github.com/NousResearch/hermes-agent.git', upstream], check=True)
-          subprocess.run([python, 'scripts/downstream/carry_metrics.py'], check=True)
-          reports = ['_docs/carry-surface-20260826.json', '_docs/carry-surface-20260826.md']
-          git('add', '--', *reports)
-          if git('diff', '--cached', '--name-only').strip():
-              git('commit', '-m', 'docs(downstream): regenerate PR132 final committed-tree carry metrics')
-          subprocess.run([python, 'scripts/downstream/carry_metrics.py', '--check'], check=True)
-          subprocess.run([python, 'scripts/downstream/validate_policy.py'], check=True)
-          subprocess.run([python, 'scripts/downstream/check_boundaries.py'], check=True)
-          changed = set(git('diff', '--name-only', os.environ['EXPECTED_MAIN'], 'HEAD').splitlines())
-          assert changed == set(files + reports), f'Unexpected final change surface: {changed}'
-          assert not git('status', '--porcelain').strip(), 'Dirty final checkout'
-          git('merge-base', '--is-ancestor', os.environ['ORIGINAL_PR_HEAD'], 'HEAD')
-          git('merge-base', '--is-ancestor', os.environ['EXPECTED_MAIN'], 'HEAD')
+          # Reuse only our own immutable, already-reviewed one-shot source.
+          # This avoids copying/reinterpreting the RED/GREEN or native test steps.
+          source = subprocess.check_output(['git', 'show', 'e2d957ea41534d4deaefdfd6bdc5bd670ae55e2b:' + workflow])
+          assert hashlib.sha1(f'blob {len(source)}\0'.encode() + source).hexdigest() == '7405acae636eda3a94addd51da1f3344b7242e39'
+          steps = yaml.safe_load(source)['jobs']['closeout']['steps']
+          names = [
+              'Merge the pinned main without discarding runtime changes',
+              'RED then GREEN for final gate ordering and logging',
+              'Native PowerShell parse and final gate refusal behavior',
+              'Commit only the scoped fix and regenerate committed-tree metrics',
+          ]
+          for name in names:
+              matches = [step for step in steps if step.get('name') == name]
+              assert len(matches) == 1
+              step = matches[0]
+              code = step['run']
+              if name == names[-1]:
+                  old = "subprocess.run([python, 'scripts/downstream/check_boundaries.py'], check=True)"
+                  assert code.count(old) == 1
+                  # Exact layout contract from the pinned main fork-cicd.yml.
+                  new = "assert not Path('platform').is_dir(), 'Legacy platform directory must not exist'\n"
+                  new += "for boundary in ('downstream/compat/hermes', 'downstream/platform/windows', 'downstream/services'):\n"
+                  new += "    assert Path(boundary).is_dir(), f'Missing compatibility boundary: {boundary}'\n"
+                  new += "subprocess.run([python, '-m', 'pytest', 'tests/downstream/test_ci_contracts.py', '-q'], check=True)"
+                  code = code.replace(old, new)
+              print('Executing:', name, flush=True)
+              command = [python, '-c', code] if step['shell'] == 'python' else ['pwsh', '-NoProfile', '-NonInteractive', '-Command', code]
+              subprocess.run(command, check=True)
           evidence = Path(os.environ['RUNNER_TEMP']) / 'pr132-closeout-evidence'
-          sha = git('rev-parse', 'HEAD').strip()
-          (evidence / 'candidate-sha.txt').write_text(sha + '\n', encoding='utf-8')
-          (evidence / 'final.diff').write_text(git('diff', os.environ['EXPECTED_MAIN'], 'HEAD'), encoding='utf-8')
-          blobs = {f: git('rev-parse', 'HEAD:' + f).strip() for f in files + reports}
-          (evidence / 'candidate.json').write_text(json.dumps({'head_sha': sha, 'main_sha': os.environ['EXPECTED_MAIN'], 'original_pr_head': os.environ['ORIGINAL_PR_HEAD'], 'blobs': blobs}, indent=2), encoding='utf-8')
-          print('Validated candidate:', sha)
-      - name: Publish the candidate only to this isolated helper branch
+          files = ['scripts/windows/tests/Test-HermesDesktopLifecycle.ps1', 'tests/hermes_cli/test_test4_parent_incarnation_gate_contract.py', '_docs/carry-surface-20260826.json', '_docs/carry-surface-20260826.md']
+          with zipfile.ZipFile(evidence / 'candidate-files.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
+              for file in files:
+                  archive.writestr(file, subprocess.check_output(['git', 'show', 'HEAD:' + file]))
+          '@ | .\.venv\Scripts\python.exe -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Publish only to the isolated helper branch
         shell: pwsh
         env:
           CLOSEOUT_TOKEN: ${{ github.token }}
@@ -220,7 +96,7 @@ jobs:
           } finally {
             Remove-Item Env:GIT_CONFIG_COUNT, Env:GIT_CONFIG_KEY_0, Env:GIT_CONFIG_VALUE_0, Env:CLOSEOUT_TOKEN -ErrorAction SilentlyContinue
           }
-      - name: Upload RED GREEN and native PowerShell evidence
+      - name: Upload exact candidate and verification evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
