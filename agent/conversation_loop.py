@@ -3579,9 +3579,10 @@ def run_conversation(
                     _fb_reason = getattr(agent, "_fallback_reason", None)
 
                     _resp_model = getattr(response, "model", None)
+                    _explicit_src = getattr(response, "effective_model_source", None)
                     if _resp_model and isinstance(_resp_model, str) and _resp_model.strip():
                         _eff_model = _resp_model.strip()
-                        _eff_src = "response"
+                        _eff_src = str(_explicit_src or "response").strip()
                         if _wire_model and _eff_model != _wire_model:
                             _norm_w = _wire_model.lower().replace("-", "").replace(".", "").replace("/", "")
                             _norm_r = _eff_model.lower().replace("-", "").replace(".", "").replace("/", "")
@@ -3592,7 +3593,7 @@ def run_conversation(
                                 )
                     else:
                         _eff_model = _wire_model
-                        _eff_src = getattr(response, "effective_model_source", "request") or "request"
+                        _eff_src = str(_explicit_src or "request").strip()
 
                     _route_obs = build_route_observation(
                         requested_provider=_req_prov,

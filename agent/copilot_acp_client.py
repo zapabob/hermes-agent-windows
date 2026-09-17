@@ -520,6 +520,7 @@ class CopilotACPClient:
             choices=[choice],
             usage=usage,
             model=effective_model,
+            effective_model_source="server",
         )
         if stream:
             return _completion_to_stream_chunks(completion)

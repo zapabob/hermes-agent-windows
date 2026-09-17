@@ -114,7 +114,8 @@ class ModelRouteObservation:
             fallback
             if fallback is not None
             else (
-                getattr(agent, "fallback_active", False)
+                getattr(agent, "_fallback_activated", False)
+                or getattr(agent, "fallback_active", False)
                 or getattr(agent, "_fallback_reason", None)
                 or (act_p != req_p and act_p != "")
             )

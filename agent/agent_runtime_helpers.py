@@ -3006,6 +3006,7 @@ def switch_model(
             "model",
             "provider",
             "requested_provider",
+            "requested_model",
             "base_url",
             "api_mode",
             "api_key",
@@ -3048,6 +3049,7 @@ def switch_model(
 
         # ── Swap core runtime fields ──
         agent.model = new_model
+        agent.requested_model = new_model
         agent.provider = new_provider
         agent.requested_provider = new_provider
         # Re-read reasoning_echo from config so the flag reflects the new
@@ -3350,6 +3352,7 @@ def switch_model(
     _cc = agent.context_compressor if hasattr(agent, "context_compressor") and agent.context_compressor else None
     agent._primary_runtime = {
         "model": agent.model,
+        "requested_model": agent.requested_model,
         "provider": agent.provider,
         "requested_provider": agent.requested_provider,
         "base_url": agent.base_url,

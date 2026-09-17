@@ -748,6 +748,7 @@ def _empty_response(model: str) -> SimpleNamespace:
         model=model,
         choices=[choice],
         usage=usage,
+        effective_model_source="request",
     )
 
 
@@ -821,6 +822,7 @@ def translate_gemini_response(resp: Dict[str, Any], model: str) -> SimpleNamespa
         model=model,
         choices=[choice],
         usage=usage,
+        effective_model_source="request",
     )
 
 
@@ -871,6 +873,7 @@ def _make_stream_chunk(
         model=model,
         choices=[choice],
         usage=None,
+        effective_model_source="request",
     )
 
 
