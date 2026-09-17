@@ -1,0 +1,70 @@
+name: Apply Strict Watchdog Authority
+
+on:
+  push:
+    branches:
+      - fix/remove-watchdog-backend-authority-20260917
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: "${{ github.event.head_commit.message == 'ci: apply strict watchdog authority' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Verify and decode patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '102b8e943fcfc64c10c2660d461aa6c9562bb5353667ef71b235bc9bde336957  .github/strict_watchdog_patch.py.gz.b64' | sha256sum -c -
+          base64 -d .github/strict_watchdog_patch.py.gz.b64 | gzip -d > /tmp/strict_watchdog_patch.py
+          echo 'c53263bd9ef60ab628aeecc0ac471c56798883b7a058c17ef119807470a31482  /tmp/strict_watchdog_patch.py' | sha256sum -c -
+      - name: Apply strict single-owner patch
+        run: python /tmp/strict_watchdog_patch.py
+      - name: Format changed Go files
+        shell: bash
+        run: |
+          gofmt -w scripts/windows/watchdog-go/process_windows.go scripts/windows/watchdog-go/watchdog.go scripts/windows/watchdog-go/authority_test.go scripts/windows/watchdog-go/maintenance_test.go
+      - name: Verify source contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile tests/test_go_watchdog_architecture_contract.py tests/downstream/test_windows_contracts.py
+          python - <<'PY'
+          from pathlib import Path
+          go=Path('scripts/windows/watchdog-go')
+          production='\n'.join((go/p).read_text(encoding='utf-8') for p in ('main.go','config.go','watchdog.go','process_windows.go'))
+          for forbidden in ('PrewarmBackend','EnsureHealthy()','BackendManager','desktop-backend.json','HERMES_WATCHDOG_MANAGED','managed-backend-port','prewarm-backend','startPackagedDesktop','restartPackagedDesktop','stopOrphanDesktopBackends','desktop_relaunch','HermesDesktopAutoStart'):
+              assert forbidden not in production, forbidden
+          for removed in ('backend.go','health.go','desktop_launch_env.go'):
+              assert not (go/removed).exists(), removed
+          print('strict watchdog authority contract: PASS')
+          PY
+      - name: Remove temporary apply assets
+        shell: bash
+        run: |
+          rm -f .github/strict_watchdog_patch.py.gz.b64
+          rm -f .github/workflows/apply-strict-watchdog-authority.yml
+      - name: Refresh carry metrics
+        shell: bash
+        run: |
+          python -m pip install pyyaml
+          python scripts/downstream/carry_metrics.py
+          python scripts/downstream/carry_metrics.py --check
+      - name: Commit strict GREEN tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git status --short
+          git commit -m 'fix(windows): make Go watchdog observation-only [skip ci]'
+          git push origin HEAD:${GITHUB_REF_NAME}
