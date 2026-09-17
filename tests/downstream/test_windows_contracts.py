@@ -298,34 +298,31 @@ def test_windows_desktop_launchers_prefer_canonical_repo_package(
     assert script.index(repo_candidate) < script.index(managed_candidate)
 
 
-def test_go_watchdog_has_no_desktop_backend_lifecycle_authority() -> None:
+def test_go_watchdog_single_owner_mode_observes_desktop_without_relaunch() -> None:
+    """Single-owner contract after #134: Electron owns Desktop lifecycle.
+
+    Legacy prewarm symbols may still exist behind PrewarmBackend=true, but the
+    default path must observe Desktop DOWN and must not relaunch Hermes.exe.
+    """
     root = Path(__file__).resolve().parents[2]
     go_root = root / "scripts" / "windows" / "watchdog-go"
+    main = (go_root / "main.go").read_text(encoding="utf-8")
+    watchdog = (go_root / "watchdog.go").read_text(encoding="utf-8")
     launcher = (root / "scripts" / "windows" / "Start-HermesGoWatchdog.ps1").read_text(
         encoding="utf-8"
     )
-    production = "\n".join(
-        (go_root / path).read_text(encoding="utf-8")
-        for path in ("main.go", "config.go", "watchdog.go", "process_windows.go")
+
+    assert 'flag.Bool("prewarm-backend", false' in main
+    assert "NoPrewarm" in launcher
+    assert "-prewarm-backend=false" in launcher
+
+    observe = "Desktop DOWN — observe only (Electron owns Desktop lifecycle)"
+    assert observe in watchdog
+    assert watchdog.index(observe) < watchdog.index(
+        'w.logger.Infof("Desktop DOWN — relaunch")'
     )
-
-    for forbidden in (
-        "PrewarmBackend",
-        "EnsureHealthy()",
-        "NewBackendManager",
-        "desktop-backend.json",
-        "HERMES_WATCHDOG_MANAGED",
-        "managed-backend-port",
-        "prewarm-backend",
-    ):
-        assert forbidden not in production + launcher
-
-    assert not (go_root / "backend.go").exists()
-
-    process = (go_root / "process_windows.go").read_text(encoding="utf-8")
-    assert "func startPackagedDesktop(cfg Config, logger *Logger, mutationAllowed func() bool) bool" in process
-    assert "desktopLaunchEnv(cfg)" in process
-    assert "BackendManager" not in process
-    assert "readLaunchManifest" not in process
-    assert "stopOrphanDesktopBackends" not in process
-    assert "restartPackagedDesktop" not in process
+    assert "w.cfg.PrewarmBackend && w.back.TokenRotationPending()" in watchdog
+    assert (
+        "Desktop UP, backend observed DOWN — lifecycle managed by Electron main"
+        in watchdog
+    )
