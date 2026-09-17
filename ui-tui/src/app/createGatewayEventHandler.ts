@@ -1436,8 +1436,10 @@ export function createGatewayEventHandler(ctx: GatewayEventHandlerContext): (ev:
           // Observability UX: if route divergence (fallback or model drift) occurred,
           // surface prominent notice message; stay quiet on normal / canonicalization turns.
           const route = ev.payload?.route
+
           if (route && (route.fallback || route.is_divergent || route.isDivergent || route.is_drift || route.isDrift)) {
             const summary = route.ux_summary || route.uxSummary
+
             const lines = summary?.lines?.length
               ? summary.lines
               : route.fallback
@@ -1446,10 +1448,8 @@ export function createGatewayEventHandler(ctx: GatewayEventHandlerContext): (ev:
                     `Using: ${route.effective_provider || ''} / ${route.effective_model || ''}`,
                     ...(route.reason ? [`Reason: ${route.reason}`] : [])
                   ]
-                : [
-                    `Requested: ${route.requested_model || ''}`,
-                    `Provider reported: ${route.effective_model || ''}`
-                  ]
+                : [`Requested: ${route.requested_model || ''}`, `Provider reported: ${route.effective_model || ''}`]
+
             const title = summary?.title || (route.fallback ? 'Fallback active' : 'Provider model drift')
             appendMessage({
               role: 'system',
