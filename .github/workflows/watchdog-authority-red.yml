@@ -32,3 +32,16 @@ jobs:
           name: watchdog-authority-red-evidence
           path: authority-red.txt
           if-no-files-found: error
+      - name: Upload authority source snapshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: watchdog-authority-source-snapshot
+          path: |
+            scripts/windows/watchdog-go
+            scripts/windows/Start-HermesGoWatchdog.ps1
+            tests/test_go_watchdog_architecture_contract.py
+            tests/test_go_watchdog_runtime_authority.py
+            tests/test_go_watchdog_launcher_authority.py
+            tests/downstream/test_windows_contracts.py
+          if-no-files-found: error
