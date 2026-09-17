@@ -555,17 +555,15 @@ def atomic_yaml_write(
         raise
 
 
-def atomic_roundtrip_yaml_update(
+def atomic_roundtrip_yaml_update_multi(
     path: Union[str, Path],
-    key_path: str,
-    value: Any,
+    updates: dict[str, Any],
 ) -> None:
-    """Update one dotted YAML key while preserving comments and readable text.
+    """Update multiple dotted YAML keys atomically in a single write pass.
 
-    This is intentionally narrower than :func:`atomic_yaml_write`: it is for
-    user-edited config files where comments, ordering, quoting, and Unicode
-    should survive a single setting mutation.  Writes still use the same temp
-    file + fsync + atomic replace pattern.
+    This is for user-edited config files where comments, ordering, quoting, and Unicode
+    should survive multi-key mutations. All keys in `updates` are applied to the
+    in-memory tree, then dumped to a single temp file and atomically replaced.
     """
     from ruamel.yaml import YAML
     from ruamel.yaml.comments import CommentedMap
@@ -588,15 +586,16 @@ def atomic_roundtrip_yaml_update(
     if not isinstance(config, CommentedMap):
         config = CommentedMap(config)
 
-    current = config
-    keys = key_path.split(".")
-    for key in keys[:-1]:
-        next_value = current.get(key)
-        if not isinstance(next_value, CommentedMap):
-            next_value = CommentedMap()
-            current[key] = next_value
-        current = next_value
-    current[keys[-1]] = value
+    for key_path, value in updates.items():
+        current = config
+        keys = key_path.split(".")
+        for key in keys[:-1]:
+            next_value = current.get(key)
+            if not isinstance(next_value, CommentedMap):
+                next_value = CommentedMap()
+                current[key] = next_value
+            current = next_value
+        current[keys[-1]] = value
 
     original_mode = _preserve_file_mode(path)
     original_owner = _preserve_file_owner(path)
@@ -620,6 +619,15 @@ def atomic_roundtrip_yaml_update(
         except OSError:
             pass
         raise
+
+
+def atomic_roundtrip_yaml_update(
+    path: Union[str, Path],
+    key_path: str,
+    value: Any,
+) -> None:
+    """Update one dotted YAML key while preserving comments and readable text."""
+    atomic_roundtrip_yaml_update_multi(path, {key_path: value})
 
 
 def atomic_roundtrip_yaml_save(

@@ -6043,23 +6043,19 @@ def _restart_slash_worker(sid: str, session: dict):
 
 
 def _persist_model_switch(result) -> None:
-    # Use targeted, atomic key writes (comment/ordering-preserving) instead of
-    # rewriting the whole `model:` block. A full-block rewrite via save_config()
-    # destroys sibling keys the user set under `model:` — `model_slots`,
-    # `model_fallback`, etc. — when switching models from the TUI (#48305).
-    from cli import save_config_value
+    # Use targeted, atomic multi-key write (comment/ordering-preserving) instead of
+    # rewriting the whole `model:` block or multiple non-atomic roundtrips.
+    # Writing all keys in a single atomic pass ensures provider and model are never
+    # partially persisted.
+    from cli import save_config_values
 
-    save_config_value("model.default", result.new_model)
-    save_config_value("model.provider", result.target_provider)
-    if result.base_url:
-        save_config_value("model.base_url", result.base_url)
-    else:
-        # Clear any stale base_url when switching to a provider that doesn't use
-        # one (e.g. custom endpoint -> native provider). Reads coalesce null to
-        # absent (`model_cfg.get("base_url") or ""`), so a null is equivalent to
-        # removal without needing a key-delete. Leaving the old value would
-        # route the new model at the previous custom host (#48305).
-        save_config_value("model.base_url", None)
+    updates = {
+        "model.default": result.new_model,
+        "model.provider": result.target_provider,
+        "model.base_url": result.base_url or None,
+        "model.api_mode": getattr(result, "api_mode", None) or None,
+    }
+    save_config_values(updates)
 
 
 def _snapshot_agent_model_runtime(agent) -> dict:

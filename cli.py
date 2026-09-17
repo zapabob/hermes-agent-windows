@@ -5263,6 +5263,47 @@ def save_config_value(key_path: str, value: any) -> bool:
         return False
 
 
+def save_config_values(updates: dict[str, Any]) -> bool:
+    """Save multiple values to the active config file atomically in one pass.
+
+    All updates in `updates` are applied to the in-memory YAML tree,
+    preserving comments, ordering, quoting, and readable Unicode, then
+    written to a single temp file and atomically replaced with os.replace
+    so that partial writes or skew between dependent keys (e.g. model.default
+    and model.provider) never occur.
+
+    Args:
+        updates: Mapping of dot-separated paths (e.g. "model.default") to values.
+
+    Returns:
+        True if successful, False otherwise
+    """
+    config_path = get_hermes_home() / 'config.yaml'
+
+    try:
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        from utils import atomic_roundtrip_yaml_update_multi
+
+        atomic_roundtrip_yaml_update_multi(config_path, updates)
+
+        try:
+            os.chmod(config_path, 0o600)
+        except (OSError, NotImplementedError):
+            pass
+
+        from hermes_cli.config import (
+            warn_unpinned_cron_jobs_after_model_config_change,
+        )
+
+        for key_path, value in updates.items():
+            warn_unpinned_cron_jobs_after_model_config_change(key_path, value)
+
+        return True
+    except Exception as e:
+        logger.error("Failed to save %s config values to %s: %s", len(updates), config_path, e)
+        return False
+
+
 # ============================================================================
 # HermesCLI Class
 # ============================================================================

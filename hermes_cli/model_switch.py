@@ -730,11 +730,38 @@ def parse_model_flags(raw_args: str) -> tuple[str, str, bool, bool, bool]:
     )
 
 
+def is_fresh_profile(cfg: dict | None = None) -> bool:
+    """Determine if a profile has no configured provider and model default.
+
+    A profile is fresh strictly when both ``model.default`` and
+    ``model.provider`` are unset or empty in the profile config.
+    Ambient credentials / API keys MUST NEVER be consulted here.
+    """
+    if cfg is None:
+        try:
+            from hermes_cli.config import load_config
+
+            cfg = load_config()
+        except Exception:
+            cfg = {}
+    if not isinstance(cfg, dict):
+        return True
+    model_cfg = cfg.get("model")
+    if isinstance(model_cfg, str) and model_cfg.strip():
+        return False
+    if not isinstance(model_cfg, dict):
+        return True
+    has_default = bool(str(model_cfg.get("default") or "").strip())
+    has_provider = bool(str(model_cfg.get("provider") or "").strip())
+    return not has_default and not has_provider
+
+
 def resolve_persist_behavior(
     is_global: bool,
     is_session: bool,
     is_once: bool = False,
     explicit_provider: str = "",
+    profile_has_default: bool | None = None,
 ) -> bool:
     """Decide whether a ``/model`` switch should persist to ``config.yaml``.
 
@@ -743,15 +770,13 @@ def resolve_persist_behavior(
     1. ``--once`` explicitly opts out → ``False`` (next turn only).
     2. ``--session`` explicitly opts out → ``False`` (this session only).
     3. ``--global`` explicitly opts in → ``True``.
-    4. ``--provider`` given without an explicit persist flag → ``False``
-       (session only).  Provider switches are typically exploratory — the
-       user is trying a different backend for this conversation, not
-       reconfiguring the default.  ``--global`` can still force persist.
-    5. Otherwise defer to ``model.persist_switch_by_default`` in
+    4. Fresh profile with no configured model.default and no model.provider
+       initial intentional selection → ``True`` (seeds the profile default).
+    5. ``--provider`` given on an already-configured profile without an explicit
+       persist flag → ``False`` (session only, exploratory switch).
+    6. Otherwise defer to ``model.persist_switch_by_default`` in
        ``config.yaml`` (defaults to ``False``: a plain ``/model <name>``
-       affects only the current session).  Users who want the old
-       persist-by-default behavior can set the key to ``true``; a one-off
-       ``--global`` always persists.
+       affects only the current session).
 
     The config read is defensive: on a fresh install ``model`` may be a
     flat string rather than a dict, in which case the built-in default
@@ -763,8 +788,23 @@ def resolve_persist_behavior(
         return False
     if is_global:
         return True
+
+    # Determine whether profile already has an established default/provider
+    if profile_has_default is None:
+        try:
+            from hermes_cli.config import load_config
+
+            profile_has_default = not is_fresh_profile(load_config())
+        except Exception:
+            profile_has_default = True
+
+    # Fresh profile: first intentional selection seeds the profile default
+    if not profile_has_default:
+        return True
+
     if explicit_provider:
         return False
+
     try:
         from hermes_cli.config import load_config
 
