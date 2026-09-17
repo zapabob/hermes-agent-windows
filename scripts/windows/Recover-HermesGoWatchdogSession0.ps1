@@ -80,14 +80,14 @@ if (Test-Path -LiteralPath $lock) {
     Write-Recover "removed stale lock"
 }
 
-$logonCmd = "`$env:HERMES_HOME='$HermesHome'; & '$go' -HermesRoot '$root' -HermesHome '$HermesHome' -ManagedBackendPort 9119"
+$logonCmd = "`$env:HERMES_HOME='$HermesHome'; & '$go' -HermesRoot '$root' -HermesHome '$HermesHome'"
 $logonAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -Command $logonCmd" -WorkingDirectory $root
 $logonTrigger = New-ScheduledTaskTrigger -AtLogOn -User $user
 $logonTrigger.Delay = "PT20S"
 $logonPrincipal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Highest
 Register-ScheduledTask -TaskName "HermesGoWatchdogLogonAutoStart" -Action $logonAction -Trigger $logonTrigger -Principal $logonPrincipal -Settings $settings -Description "Logon displace Session 0 Go watchdog into the interactive desktop session" -Force | Out-Null
 
-& $go -HermesRoot $root -HermesHome $HermesHome -ManagedBackendPort 9119
+& $go -HermesRoot $root -HermesHome $HermesHome
 Start-Sleep -Seconds 4
 $wd = Get-Process -Name "hermes-watchdog" -ErrorAction SilentlyContinue | Select-Object -First 1
 if (-not $wd) {

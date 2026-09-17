@@ -536,9 +536,9 @@ function Get-GoWatchdogSessionId {
     }
 }
 
-# Boot S4U tasks park hermes-watchdog.exe in Session 0. That owner can kill
-# interactive Hermes.exe but cannot relaunch a visible Desktop, so an
-# Interactive elevated launcher must displace it instead of "already running".
+# Boot S4U tasks park hermes-watchdog.exe in Session 0. The observation-only
+# watchdog must run in the interactive session for operator visibility; an
+# Interactive elevated launcher displaces Session 0 instead of "already running".
 $launcherSessionId = Get-CurrentProcessSessionId
 $existingWatchdogSessionId = Get-GoWatchdogSessionId
 $replaceSession0Owner = (
@@ -566,9 +566,9 @@ if ($ForceRestart -or $Once) {
 }
 Stop-PsDesktopBackendWatchdog
 
-# Recovery budgets survive reboot and can suppress Desktop relaunch. Interactive
-# logon starts with a clean outer-recovery budget so HermesDesktopAutoStart is
-# not undone by a stale circuit from the previous boot flap.
+# Recovery budgets survive reboot and can suppress recovery attempts. Interactive
+# logon starts with a clean outer-recovery budget so scheduled Desktop autostart
+# is not undone by a stale circuit from the previous boot flap.
 if ((Get-CurrentProcessSessionId) -gt 0 -and -not $Stop) {
     $recoveryBudgetPath = Join-Path $DataDir "recovery-budget.json"
     if (Test-Path -LiteralPath $recoveryBudgetPath) {

@@ -1,94 +1,46 @@
-"""Regression coverage for the Windows Go-watchdog task registration port."""
+"""Regression coverage for observation-only Go-watchdog task registration."""
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 GO_START = REPO_ROOT / "scripts" / "windows" / "Start-HermesGoWatchdog.ps1"
-GO_BACKEND = REPO_ROOT / "scripts" / "windows" / "watchdog-go" / "backend.go"
+GO_MAIN = REPO_ROOT / "scripts" / "windows" / "watchdog-go" / "main.go"
 LEGACY_START = (
     REPO_ROOT / "scripts" / "windows" / "Start-HermesDesktopBackendWatchdog.ps1"
 )
 AUTOSTART = REPO_ROOT / "scripts" / "windows" / "restart-hermes-autostart-admin.ps1"
+REPAIR = REPO_ROOT / "scripts" / "windows" / "repair-hermes-autostart.ps1"
 README = REPO_ROOT / "scripts" / "windows" / "watchdog-go" / "README.md"
 
 
-def _go_default_port() -> int:
-    text = GO_BACKEND.read_text(encoding="utf-8")
-    match = re.search(r"const\s+DefaultManagedBackendPort\s*=\s*(\d+)", text)
-    assert match is not None, "the Go watchdog default port declaration is missing"
-    return int(match.group(1))
-
-
-def _single_port(pattern: str, text: str, description: str) -> int:
-    matches = re.findall(pattern, text)
-    assert len(matches) == 1, f"expected one {description}, found {len(matches)}"
-    return int(matches[0])
-
-
-def test_watchdog_task_registration_matches_the_go_default_backend_port() -> None:
-    expected = _go_default_port()
+def test_watchdog_task_registration_omits_managed_backend_port() -> None:
+    """Boot/logon tasks must not pin the removed managed-backend port path."""
     go_start = GO_START.read_text(encoding="utf-8")
+    go_main = GO_MAIN.read_text(encoding="utf-8")
     legacy_start = LEGACY_START.read_text(encoding="utf-8")
     autostart = AUTOSTART.read_text(encoding="utf-8")
+    repair = REPAIR.read_text(encoding="utf-8")
     readme = README.read_text(encoding="utf-8")
 
-    go_default = _single_port(
-        r"\[int\]\$ManagedBackendPort\s*=\s*(\d+)",
-        go_start,
-        "Go PowerShell default",
-    )
-    legacy_default = _single_port(
-        r"\[int\]\$ManagedBackendPort\s*=\s*(\d+)",
-        legacy_start,
-        "legacy PowerShell default",
-    )
-    registered_ports = [
-        int(match)
-        for match in re.findall(r"-ManagedBackendPort\s+(\d+)", autostart)
-    ]
-    assert registered_ports, "scheduled-task port registrations are missing"
-    assert set(registered_ports) == {expected}, (
-        f"scheduled-task ports {registered_ports} must all equal {expected}"
-    )
-    assert len(registered_ports) >= 2, (
-        "boot and logon Go watchdog tasks must both pin the managed port"
-    )
-    documented_default = _single_port(
-        r"\|\s*`-managed-backend-port`\s*\|\s*(\d+)\s*\|",
-        readme,
-        "README default",
-    )
-
-    assert {
-        go_default,
-        legacy_default,
-        documented_default,
-    } == {expected}
-
-
-def test_watchdog_task_registration_still_forwards_explicit_port_overrides() -> None:
-    go_start = GO_START.read_text(encoding="utf-8")
-
-    templates = re.findall(
-        r'if\s*\(\$ManagedBackendPort\s*-gt\s*0\)\s*\{\s*'
-        r'\$\w+\s*\+=\s*"([^"]+)"\s*\}',
-        go_start,
-    )
-    assert len(templates) == 2, (
-        "both detached-launch argument paths must forward the port"
-    )
-
-    expected = _go_default_port()
-    override = expected + 1
-    for port in (expected, override):
-        rendered = [
-            template.replace("$ManagedBackendPort", str(port)) for template in templates
-        ]
-        assert rendered == [f"-managed-backend-port={port}"] * 2
+    assert "$ManagedBackendPort" not in go_start
+    assert "managed-backend-port" not in go_main
+    assert "prewarm-backend" not in go_main
+    assert "-ManagedBackendPort" not in autostart
+    assert "-ManagedBackendPort" not in repair
+    assert "HermesGoWatchdogBootAutoStart" in autostart
+    assert "HermesGoWatchdogLogonAutoStart" in autostart
+    assert "HermesGoWatchdogBootAutoStart" in repair
+    assert "HermesGoWatchdogLogonAutoStart" in repair
+    # Legacy shim may accept the flag for BC but must not forward it.
+    assert "ManagedBackendPort = $ManagedBackendPort" not in legacy_start
+    assert "FailThreshold      = $FailThreshold" not in legacy_start
+    assert "obsolete managed-backend args ignored" in legacy_start
+    assert "desktop-backend.json" in readme
+    assert "生成" in readme or "adopt" in readme.lower() or "採用" in readme
+    assert not (REPO_ROOT / "scripts" / "windows" / "watchdog-go" / "backend.go").exists()
 
 
 def test_watchdog_build_quotes_script_paths_with_spaces() -> None:

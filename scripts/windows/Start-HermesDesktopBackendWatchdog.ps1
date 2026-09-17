@@ -1,17 +1,18 @@
 # Compatibility shim for installations whose scheduled task still references
-# the former PowerShell watchdog. The Go watchdog is the only outer automatic
-# restart authority; this script may bootstrap it, but never probes, kills, or
-# restarts Desktop/backend processes itself.
+# the former PowerShell watchdog. The Go watchdog is observation-only for
+# Desktop/backend and owns embedding supervision only; this script may
+# bootstrap it, but never probes, kills, or restarts Desktop/backend itself.
 
 [CmdletBinding()]
 param(
     [int]$IntervalSec = 20,
-    [int]$FailThreshold = 2,
-    [int]$StartupGraceSec = 45,
-    [int]$ManagedBackendPort = 9119,
     [switch]$Once,
     [string]$HermesRoot = "",
-    [string]$HermesHome = ""
+    [string]$HermesHome = "",
+    # Accepted for backward compatibility with old task registrations; ignored.
+    [int]$FailThreshold = 0,
+    [int]$StartupGraceSec = 0,
+    [int]$ManagedBackendPort = 0
 )
 
 Set-StrictMode -Version Latest
@@ -32,20 +33,22 @@ function Write-WdLog([string]$Message) {
     Write-Host $line
 }
 
+if ($FailThreshold -gt 0 -or $StartupGraceSec -gt 0 -or $ManagedBackendPort -gt 0) {
+    Write-WdLog ("obsolete managed-backend args ignored (FailThreshold={0} StartupGraceSec={1} ManagedBackendPort={2})" -f $FailThreshold, $StartupGraceSec, $ManagedBackendPort)
+}
+
 $GoLauncher = Join-Path $ScriptDir "Start-HermesGoWatchdog.ps1"
 if (-not (Test-Path -LiteralPath $GoLauncher)) {
     throw "Go watchdog launcher is missing: $GoLauncher"
 }
 
 $launcherArgs = @{
-    IntervalSec        = $IntervalSec
-    FailThreshold      = $FailThreshold
-    ManagedBackendPort = $ManagedBackendPort
-    HermesRoot         = $RepoRoot
-    HermesHome         = $HermesHome
-    BuildIfMissing     = $true
+    IntervalSec    = $IntervalSec
+    HermesRoot     = $RepoRoot
+    HermesHome     = $HermesHome
+    BuildIfMissing = $true
 }
 if ($Once) { $launcherArgs.Once = $true }
 
-Write-WdLog "legacy PowerShell watchdog delegated to the sole Go watchdog authority"
+Write-WdLog "legacy PowerShell watchdog delegated to observation-only Go watchdog (embedding supervisor)"
 & $GoLauncher @launcherArgs

@@ -1,12 +1,14 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Restore classic Desktop local boot (owned serve --port 0) when CONNECTING sticks on prewarm.
+  Restore classic Desktop local boot (Electron-owned serve) when CONNECTING sticks.
 
 .DESCRIPTION
-  Stops elevated watchdog (so it cannot republish desktop-backend.json / relaunch
-  elevated ghosts), quarantines the prewarm manifest, and launches Desktop via
-  start-hermes-desktop.ps1 -ForceLocalSpawn (Medium IL when elevated).
+  Identity-bound stop of the observation-only Go watchdog, quarantines any
+  stale desktop-backend.json leftover from the removed prewarm path, and
+  launches Desktop via start-hermes-desktop.ps1 -ForceLocalSpawn.
+  After Desktop is up, restarts the observation-only Go watchdog (embedding
+  supervisor only — it does not republish managed-backend manifests).
 
 .EXAMPLE
   powershell -NoProfile -ExecutionPolicy Bypass -File scripts\windows\Restore-HermesDesktopLocalBoot.ps1
@@ -45,6 +47,7 @@ if ([string]::IsNullOrWhiteSpace($HermesHome)) {
 }
 
 $desktopStart = Join-Path $HermesRoot "scripts\windows\start-hermes-desktop.ps1"
+$goWatchdog = Join-Path $HermesRoot "scripts\windows\Start-HermesGoWatchdog.ps1"
 $dataDir = Join-Path $env:LOCALAPPDATA "HermesWatchdog"
 $manifest = Join-Path $dataDir "desktop-backend.json"
 
@@ -54,8 +57,20 @@ function Write-Restore([string]$Message) {
 
 Write-Restore ("restore local boot root={0}" -f $HermesRoot)
 
-Write-Restore "stopping Hermes + hermes-watchdog"
-Get-Process -Name "Hermes","hermes-watchdog" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+if (Test-Path -LiteralPath $goWatchdog) {
+    Write-Restore "identity-bound stop of observation-only Go watchdog"
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $goWatchdog `
+        -HermesRoot $HermesRoot `
+        -HermesHome $HermesHome `
+        -Stop
+} else {
+    Write-Restore "WARN: Start-HermesGoWatchdog.ps1 missing; skipping watchdog stop"
+}
+
+Write-Restore "stopping visible Hermes Desktop (operator recover)"
+Get-Process -Name "Hermes" -ErrorAction SilentlyContinue | ForEach-Object {
+    Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
+}
 Start-Sleep -Seconds 2
 
 # Clear burned recovery so a later watchdog start is not circuit-open.
@@ -68,10 +83,10 @@ if (Test-Path -LiteralPath $budget) {
 if (Test-Path -LiteralPath $manifest) {
     $bak = "{0}.bak-restorelocal-{1}" -f $manifest, (Get-Date -Format "yyyyMMddHHmmss")
     Move-Item -LiteralPath $manifest -Destination $bak -Force
-    Write-Restore ("quarantined manifest -> {0}" -f $bak)
+    Write-Restore ("quarantined obsolete manifest -> {0}" -f $bak)
 }
 
-Write-Restore "launching Desktop -ForceLocalSpawn"
+Write-Restore "launching Desktop -ForceLocalSpawn (Electron owns backend)"
 & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $desktopStart `
     -HermesRoot $HermesRoot `
     -Cwd $HermesRoot `
@@ -79,6 +94,14 @@ Write-Restore "launching Desktop -ForceLocalSpawn"
     -ForceLocalSpawn
 
 Write-Restore ("desktop launcher exit={0}" -f $LASTEXITCODE)
-Write-Restore "Do NOT restart Go watchdog until CONNECTING clears (watchdog republishes prewarm)."
+
+if (Test-Path -LiteralPath $goWatchdog) {
+    Write-Restore "restarting observation-only Go watchdog (embedding supervisor)"
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $goWatchdog `
+        -HermesRoot $HermesRoot `
+        -HermesHome $HermesHome `
+        -BuildIfMissing
+}
+
 Write-Restore "RESTORE_OK: classic local boot requested"
 exit 0
