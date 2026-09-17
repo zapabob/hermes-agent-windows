@@ -83,13 +83,19 @@ def _writer_after_stage(
     stage/strategy/promotion interval.  A writer is allowed to fail or to
     wait until that interval ends and commit afterwards; what is forbidden is
     a successful commit that promotion silently overwrites.
+
+    Do NOT open ``state.db`` before ``start``: Linux ``foreign_state_db_holders``
+    treats any pre-staging handle as a live holder and the repair preflight
+    (#103339) fail-closes before strategies run. That skip is production-
+    correct for a gateway that already holds the file; this race test must
+    exercise the exclusive-guard / promotion window instead.
     """
+    ready.set()
+    if not start.wait(20):
+        result.put(("not-started", "repair did not reach staging"))
+        return
     conn = sqlite3.connect(db_path, timeout=0.75, isolation_level=None)
     try:
-        ready.set()
-        if not start.wait(20):
-            result.put(("not-started", "repair did not reach staging"))
-            return
         try:
             conn.execute(
                 "INSERT INTO messages (body) VALUES ('committed-after-stage')"
