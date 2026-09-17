@@ -124,7 +124,8 @@ describe('ModelRouteBadge & divergence logic', () => {
       effective_provider: 'nous',
       effective_model: 'model-F',
       fallback: true,
-      reason: 'HTTP 401 Basic dXNlcjpwYXNz and Authorization: token secret12345 github_pat_11AAAAAA00000000000000_1234567890abcdef',
+      reason:
+        'HTTP 401 Basic dXNlcjpwYXNz and Authorization: token secret12345 github_pat_11AAAAAA00000000000000_1234567890abcdef',
       effective_model_source: 'request'
     }
 

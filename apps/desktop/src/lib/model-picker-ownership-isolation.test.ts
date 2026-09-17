@@ -22,11 +22,7 @@ import { resolveModelPickerOwner } from './model-picker-owner'
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeRoute(
-  connectionId: string,
-  profile: string,
-  targetProfile?: string
-): SessionOwnerRoute {
+function makeRoute(connectionId: string, profile: string, targetProfile?: string): SessionOwnerRoute {
   return { connectionId, profile, targetProfile }
 }
 
