@@ -188,3 +188,75 @@ def test_model_route_observation_sanitizes_automatically():
     assert any("sk-[REDACTED]" in line for line in summary["lines"])
     assert not any("\n" in line for line in summary["lines"])
 
+
+def test_sanitize_and_bound_route_reason_expanded_credentials():
+    from agent.model_route_observation import sanitize_and_bound_route_reason
+
+    raw = (
+        "Proxy 407 Basic dXNlcjpwYXNz and Authorization: Digest deadbeef12345678 "
+        "and token github_pat_11AAAAAA00000000000000_1234567890abcdef"
+    )
+    sanitized = sanitize_and_bound_route_reason(raw)
+    assert "Basic [REDACTED]" in sanitized
+    assert "Authorization: [REDACTED]" in sanitized
+    assert "github_pat_[REDACTED]" in sanitized
+    assert "dXNlcjpwYXNz" not in sanitized
+    assert "deadbeef12345678" not in sanitized
+    assert "11AAAAAA00000000000000" not in sanitized
+
+
+def test_copilot_drift_suppression_is_provider_scoped():
+    # Copilot ACP with server-default is not drift
+    copilot_obs = ModelRouteObservation(
+        requested_provider="copilot-acp",
+        requested_model="default",
+        wire_provider="copilot-acp",
+        wire_model="default",
+        effective_provider="copilot-acp",
+        effective_model="claude-3-5-sonnet",
+        fallback=False,
+        effective_model_source="server",
+    )
+    assert not copilot_obs.is_drift()
+    assert not copilot_obs.is_divergent()
+
+    # Non-copilot provider with requested_model="default" or "auto" IS drift if effective differs
+    other_obs = ModelRouteObservation(
+        requested_provider="openai",
+        requested_model="default",
+        wire_provider="openai",
+        wire_model="default",
+        effective_provider="openai",
+        effective_model="gpt-4o",
+        fallback=False,
+        effective_model_source="server",
+    )
+    assert other_obs.is_drift()
+    assert other_obs.is_divergent()
+
+
+def test_negative_drift_provider_scoped_auto():
+    """Negative test: provider in {custom, openai} with requested_model='auto'
+
+    and effective_model='another-model' from server MUST be flagged as model drift.
+    Only copilot/copilot-acp providers are permitted to suppress drift on virtual slugs.
+    """
+    for prov in ("custom", "openai"):
+        obs = ModelRouteObservation(
+            requested_provider=prov,
+            requested_model="auto",
+            wire_provider=prov,
+            wire_model="auto",
+            effective_provider=prov,
+            effective_model="another-model",
+            fallback=False,
+            effective_model_source="server",
+        )
+        assert obs.is_drift() is True
+        assert obs.is_divergent() is True
+        summary = obs.ux_summary()
+        assert summary["divergent"] is True
+        assert summary["type"] == "drift"
+        assert any("Provider reported: another-model" in line for line in summary["lines"])
+
+

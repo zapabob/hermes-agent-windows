@@ -53,9 +53,11 @@ def _prettify_provider(provider: str) -> str:
 import re
 
 _ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
-_AUTH_BEARER_RE = re.compile(r"\bBearer\s+[A-Za-z0-9_\-\.]+", re.IGNORECASE)
+_AUTH_HEADER_RE = re.compile(r"(?i)\bAuthorization\s*:\s*[A-Za-z0-9_-]+\s+[^\s\r\n]+")
+_AUTH_SCHEME_RE = re.compile(r"(?i)\b(Bearer|Basic)\s+[A-Za-z0-9_\-\.=]+")
 _OPENAI_KEY_RE = re.compile(r"\bsk-[a-zA-Z0-9_\-\.]{8,}\b")
 _GITHUB_TOKEN_RE = re.compile(r"\bgh[pousr]_[a-zA-Z0-9]{16,}\b")
+_GITHUB_PAT_RE = re.compile(r"\bgithub_pat_[a-zA-Z0-9_]{20,}\b", re.IGNORECASE)
 _GOOGLE_KEY_RE = re.compile(r"\bAIza[0-9A-Za-z-_]{35}\b")
 _GENERIC_KEY_RE = re.compile(
     r"(?i)\b(api[-_]?key|token|secret|password|authorization)\s*[:=]\s*['\"]?([a-zA-Z0-9_\-\.]{8,})['\"]?"
@@ -79,9 +81,11 @@ def sanitize_and_bound_route_reason(reason: Optional[str], max_len: int = 200) -
     cleaned = _ANSI_ESCAPE_RE.sub("", reason)
 
     # 2. Redact credentials
-    cleaned = _AUTH_BEARER_RE.sub("Bearer [REDACTED]", cleaned)
+    cleaned = _AUTH_HEADER_RE.sub("Authorization: [REDACTED]", cleaned)
+    cleaned = _AUTH_SCHEME_RE.sub(r"\1 [REDACTED]", cleaned)
     cleaned = _OPENAI_KEY_RE.sub("sk-[REDACTED]", cleaned)
     cleaned = _GITHUB_TOKEN_RE.sub("gh*_[REDACTED]", cleaned)
+    cleaned = _GITHUB_PAT_RE.sub("github_pat_[REDACTED]", cleaned)
     cleaned = _GOOGLE_KEY_RE.sub("AIza[REDACTED]", cleaned)
     cleaned = _GENERIC_KEY_RE.sub(r"\1=[REDACTED]", cleaned)
 
@@ -124,6 +128,7 @@ class ModelRouteObservation:
     reason: Optional[str] = None
     effective_model_source: str = "request"  # "request" | "response" | "server"
     session_id: Optional[str] = None
+    turn_seq: Optional[int] = None
 
     def __post_init__(self) -> None:
         self.reason = sanitize_and_bound_route_reason(self.reason)
@@ -132,6 +137,10 @@ class ModelRouteObservation:
     @property
     def sessionId(self) -> Optional[str]:
         return self.session_id
+
+    @property
+    def turnSeq(self) -> Optional[int]:
+        return self.turn_seq
 
     @property
     def requestedProvider(self) -> str:
@@ -189,7 +198,19 @@ class ModelRouteObservation:
         if eff_clean == req_clean or eff_clean == wire_clean:
             return False
 
-        if req_clean in ("copilot-acp", "default", "auto") or wire_clean in ("copilot-acp", "default", "auto"):
+        req_prov = (self.requested_provider or "").strip().lower()
+        wire_prov = (self.wire_provider or "").strip().lower()
+        eff_prov = (self.effective_provider or "").strip().lower()
+        is_copilot = (
+            req_prov in {"copilot", "copilot-acp"}
+            or wire_prov in {"copilot", "copilot-acp"}
+            or eff_prov in {"copilot", "copilot-acp"}
+        )
+
+        if is_copilot and (
+            req_clean in {"copilot-acp", "default", "auto"}
+            or wire_clean in {"copilot-acp", "default", "auto"}
+        ):
             return False
 
         return True
@@ -257,12 +278,14 @@ class ModelRouteObservation:
             "fallback": self.fallback,
             "reason": self.reason,
             "effective_model_source": self.effective_model_source,
+            "turn_seq": self.turn_seq,
             "is_divergent": self.is_divergent(),
             "is_drift": self.is_drift(),
             "quiet_label": self.quiet_label(),
             "ux_summary": self.ux_summary(),
             # CamelCase aliases for JSON consumers
             "sessionId": self.session_id,
+            "turnSeq": self.turn_seq,
             "requestedProvider": self.requested_provider,
             "requestedModel": self.requested_model,
             "wireProvider": self.wire_provider,
@@ -289,6 +312,7 @@ class ModelRouteObservation:
         reason: Optional[str] = None,
         effective_model_source: str = "request",
         session_id: Optional[str] = None,
+        turn_seq: Optional[int] = None,
     ) -> ModelRouteObservation:
         req_p = str(getattr(agent, "requested_provider", "") or getattr(agent, "provider", "")).strip()
         req_m = str(getattr(agent, "requested_model", "") or getattr(agent, "model", "")).strip()
@@ -312,6 +336,7 @@ class ModelRouteObservation:
         )
         r = str(reason or getattr(agent, "_fallback_reason", None) or "").strip() or None
         sess_id = str(session_id or getattr(agent, "session_id", None) or "").strip() or None
+        t_seq = turn_seq if turn_seq is not None else getattr(agent, "_user_turn_count", None)
 
         return cls(
             requested_provider=req_p,
@@ -324,6 +349,7 @@ class ModelRouteObservation:
             reason=r,
             effective_model_source=effective_model_source,
             session_id=sess_id,
+            turn_seq=t_seq,
         )
 
 
@@ -340,6 +366,7 @@ def build_route_observation(
     reason: Optional[str] = None,
     effective_model_source: str = "request",
     session_id: Optional[str] = None,
+    turn_seq: Optional[int] = None,
 ) -> ModelRouteObservation:
     """Build a sanitized ModelRouteObservation from agent or explicit parameters."""
     if agent is not None:
@@ -353,6 +380,7 @@ def build_route_observation(
             reason=reason,
             effective_model_source=effective_model_source,
             session_id=session_id,
+            turn_seq=turn_seq,
         )
 
     req_p = str(requested_provider or "").strip()
@@ -374,4 +402,39 @@ def build_route_observation(
         reason=str(reason).strip() if reason else None,
         effective_model_source=str(effective_model_source or "request").strip(),
         session_id=sess_id,
+        turn_seq=turn_seq,
     )
+
+
+def commit_route_observation(
+    agent: Any,
+    observation: ModelRouteObservation,
+    *,
+    turn_seq: Optional[int] = None,
+) -> bool:
+    """Commit a route observation to the agent's authoritative state with turn fencing.
+
+    Guarantees:
+    1. If turn_seq is provided and a newer turn has already committed an authoritative
+       route (turn_seq < agent._authoritative_route_turn_seq), the commit is REJECTED
+       (returns False), preserving the newer authoritative route.
+    2. If accepted (returns True), stamps agent.last_route_observation,
+       agent._last_route_observation, and advances agent._authoritative_route_turn_seq.
+    """
+    if agent is None:
+        return False
+
+    eff_seq = turn_seq if turn_seq is not None else getattr(observation, "turn_seq", None)
+    if eff_seq is not None:
+        try:
+            eff_seq_int = int(eff_seq)
+            current_seq = int(getattr(agent, "_authoritative_route_turn_seq", 0) or 0)
+            if eff_seq_int < current_seq:
+                return False
+            agent._authoritative_route_turn_seq = eff_seq_int
+        except (ValueError, TypeError):
+            pass
+
+    agent._last_route_observation = observation
+    agent.last_route_observation = observation
+    return True

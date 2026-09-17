@@ -3112,6 +3112,9 @@ def init_agent(
         working_dir=os.getenv("TERMINAL_CWD") or None,
     )
     agent._user_turn_count = 0
+    agent._authoritative_route_turn_seq = 0
+    agent._last_route_observation = None
+    agent.last_route_observation = None
     # Copilot x-initiator flag: first API call of a user turn sends "user" (#3040).
     agent._is_user_initiated_turn = False
 

@@ -3605,9 +3605,10 @@ def run_conversation(
                         fallback=_is_fallback,
                         reason=_fb_reason,
                         effective_model_source=_eff_src,
+                        turn_seq=getattr(agent, "_user_turn_count", None),
                     )
-                    agent._last_route_observation = _route_obs
-                    agent.last_route_observation = _route_obs
+                    from agent.model_route_observation import commit_route_observation
+                    commit_route_observation(agent, _route_obs, turn_seq=getattr(agent, "_user_turn_count", None))
                 except Exception:
                     logger.debug("Failed to record model route observation", exc_info=True)
 

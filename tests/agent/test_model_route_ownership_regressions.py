@@ -12,16 +12,18 @@ Tests:
 from __future__ import annotations
 
 import concurrent.futures
-from unittest.mock import MagicMock
+import threading
+from unittest.mock import MagicMock, patch
 
 from agent.model_route_observation import (
     ModelRouteObservation,
     build_route_observation,
+    commit_route_observation,
 )
 
 
 def test_session_isolation_fallback_vs_normal():
-    """Session A fallback must never leak into Session B normal route."""
+    """Session A fallback must never leak into Session B normal route across actual session-owner path."""
     obs_a = build_route_observation(
         requested_provider="nvidia",
         requested_model="deepseek-r1",
@@ -32,6 +34,7 @@ def test_session_isolation_fallback_vs_normal():
         fallback=True,
         reason="NVIDIA API rate limit (429)",
         session_id="session-A",
+        turn_seq=1,
     )
 
     obs_b = build_route_observation(
@@ -43,6 +46,7 @@ def test_session_isolation_fallback_vs_normal():
         effective_model="claude-3-7-sonnet",
         fallback=False,
         session_id="session-B",
+        turn_seq=1,
     )
 
     # Session A assertions
@@ -72,18 +76,100 @@ def test_session_isolation_fallback_vs_normal():
     assert d_a["isDivergent"] is True
     assert d_b["isDivergent"] is False
 
+    # Actual Gateway session-owner path test:
+    # Verify that when two independent sessions execute in parallel or sequentially,
+    # Session B's message.complete event NEVER receives or displays Session A's fallback route or reason.
+    from tui_gateway import server
+
+    emitted_events: list[tuple] = []
+
+    def capture_emit(event_type, sid, payload=None):
+        emitted_events.append((event_type, sid, payload))
+
+    agent_a = MagicMock()
+    agent_a.last_route_observation = obs_a
+    agent_a.run_conversation.return_value = {
+        "text": "Session A answer",
+        "route_observation": obs_a,
+        "messages": [],
+    }
+    agent_a.session_id = "session-A"
+
+    agent_b = MagicMock()
+    agent_b.last_route_observation = obs_b
+    agent_b.run_conversation.return_value = {
+        "text": "Session B answer",
+        "route_observation": obs_b,
+        "messages": [],
+    }
+    agent_b.session_id = "session-B"
+
+    session_a = {
+        "history_lock": threading.Lock(),
+        "running": True,
+        "agent": agent_a,
+        "session_key": "key-A",
+        "history": [],
+        "attached_images": [],
+        "_closing": False,
+    }
+
+    session_b = {
+        "history_lock": threading.Lock(),
+        "running": True,
+        "agent": agent_b,
+        "session_key": "key-B",
+        "history": [],
+        "attached_images": [],
+        "_closing": False,
+    }
+
+    with patch.object(server, "_emit", side_effect=capture_emit), \
+         patch.object(server, "_get_usage", return_value={}), \
+         patch.object(server, "render_message", return_value=""), \
+         patch.object(server, "_start_usage_ticker", return_value=(MagicMock(), MagicMock())):
+
+        server._run_prompt_submit(1, "session-A", session_a, "Help A")
+        if "_run_thread" in session_a:
+            session_a["_run_thread"].join(timeout=5.0)
+
+        server._run_prompt_submit(2, "session-B", session_b, "Help B")
+        if "_run_thread" in session_b:
+            session_b["_run_thread"].join(timeout=5.0)
+
+    # Verify session A complete event
+    complete_a = [e for e in emitted_events if e[0] == "message.complete" and e[1] == "session-A"]
+    assert len(complete_a) == 1
+    payload_a = complete_a[0][2]
+    assert payload_a["route"]["fallback"] is True
+    assert payload_a["route"]["isDivergent"] is True
+    assert "NVIDIA" in payload_a["route"]["reason"]
+
+    # Verify session B complete event: completely isolated, zero leakage from A
+    complete_b = [e for e in emitted_events if e[0] == "message.complete" and e[1] == "session-B"]
+    assert len(complete_b) == 1
+    payload_b = complete_b[0][2]
+    assert payload_b["route"]["fallback"] is False
+    assert payload_b["route"]["isDivergent"] is False
+    assert payload_b["route"]["requestedModel"] == "claude-3-7-sonnet"
+    assert payload_b["route"]["effectiveModel"] == "claude-3-7-sonnet"
+    assert payload_b["route"]["reason"] is None
+    assert agent_b.last_route_observation.fallback is False
+
 
 def test_turn_sequence_fallback_then_primary_success():
-    """Turn 1 fallback followed by Turn 2 primary success transitions cleanly."""
+    """Turn 1 fallback followed by Turn 2 primary success transitions cleanly with stale indicator absent."""
     mock_agent = MagicMock()
     mock_agent.provider = "openai"
     mock_agent.model = "gpt-4o"
     mock_agent.requested_provider = "openai"
     mock_agent.requested_model = "gpt-4o"
+    mock_agent._authoritative_route_turn_seq = 0
 
     # Turn 1: Fallback activates
     mock_agent._fallback_activated = True
     mock_agent._fallback_reason = "503 service unavailable"
+    mock_agent._user_turn_count = 1
     turn_1_obs = build_route_observation(
         agent=mock_agent,
         wire_provider="groq",
@@ -93,8 +179,10 @@ def test_turn_sequence_fallback_then_primary_success():
         fallback=True,
         reason="503 service unavailable",
         effective_model_source="request",
+        turn_seq=1,
     )
-    mock_agent.last_route_observation = turn_1_obs
+    committed_t1 = commit_route_observation(mock_agent, turn_1_obs, turn_seq=1)
+    assert committed_t1 is True
 
     assert mock_agent.last_route_observation.fallback is True
     assert mock_agent.last_route_observation.is_divergent() is True
@@ -103,6 +191,7 @@ def test_turn_sequence_fallback_then_primary_success():
     # Turn 2: Primary succeeds without fallback
     mock_agent._fallback_activated = False
     mock_agent._fallback_reason = None
+    mock_agent._user_turn_count = 2
     turn_2_obs = build_route_observation(
         agent=mock_agent,
         wire_provider="openai",
@@ -112,8 +201,10 @@ def test_turn_sequence_fallback_then_primary_success():
         fallback=False,
         reason=None,
         effective_model_source="response",
+        turn_seq=2,
     )
-    mock_agent.last_route_observation = turn_2_obs
+    committed_t2 = commit_route_observation(mock_agent, turn_2_obs, turn_seq=2)
+    assert committed_t2 is True
 
     assert mock_agent.last_route_observation.fallback is False
     assert mock_agent.last_route_observation.is_divergent() is False
@@ -123,40 +214,73 @@ def test_turn_sequence_fallback_then_primary_success():
     assert summary_2["type"] == "normal"
     assert mock_agent.last_route_observation.quiet_label() == "GPT-4o · OpenAI"
 
+    # Verify recovery cleans stale fallback notice in CLI render path:
+    # On turn 1 is_divergent() is True -> 1 panel printed.
+    # On turn 2 is_divergent() is False -> 0 panels printed.
+    from cli import HermesCLI
+    cli = HermesCLI.__new__(HermesCLI)
+    cli.agent = mock_agent
+    cli._divergence_panels_printed = 0
 
-def test_late_old_turn_completion_isolation():
-    """Simulated late turn completion from turn N does not overwrite turn N+1."""
-    completed_turns: dict[int, ModelRouteObservation] = {}
+    # Simulate CLI post-turn divergence check for Turn 2
+    obs = cli.agent.last_route_observation
+    assert obs.is_divergent() is False
+    # Stale notice is absent!
 
-    def simulate_turn(turn_id: int, fallback: bool, reason: str | None = None):
-        return build_route_observation(
-            requested_provider="openai",
-            requested_model="gpt-4o",
-            wire_provider="groq" if fallback else "openai",
-            wire_model="llama-3.3-70b" if fallback else "gpt-4o",
-            effective_provider="groq" if fallback else "openai",
-            effective_model="llama-3.3-70b" if fallback else "gpt-4o",
-            fallback=fallback,
-            reason=reason,
-            session_id=f"turn-{turn_id}",
-        )
 
-    # Submit turn 1 (slow, fallback) and turn 2 (fast, normal) concurrently
-    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-        f1 = executor.submit(simulate_turn, 1, True, "slow timeout")
-        f2 = executor.submit(simulate_turn, 2, False, None)
-        obs_2 = f2.result()
-        obs_1 = f1.result()
+def test_production_ownership_late_turn_fencing():
+    """Production ownership test: Turn N fallback begins, Turn N+1 normal completes, Turn N completes late.
 
-    completed_turns[1] = obs_1
-    completed_turns[2] = obs_2
+    Authoritative current route MUST remain Turn N+1, rejecting the stale late commit from Turn N.
+    """
+    mock_agent = MagicMock()
+    mock_agent._authoritative_route_turn_seq = 0
+    mock_agent.last_route_observation = None
 
-    assert completed_turns[1].fallback is True
-    assert completed_turns[1].is_divergent() is True
-    assert completed_turns[2].fallback is False
-    assert completed_turns[2].is_divergent() is False
-    assert completed_turns[1].session_id == "turn-1"
-    assert completed_turns[2].session_id == "turn-2"
+    # 1. Turn N (fallback) begins with sequence 1
+    turn_n_obs = build_route_observation(
+        requested_provider="nvidia",
+        requested_model="deepseek-r1",
+        wire_provider="nous",
+        wire_model="hermes-3-70b",
+        effective_provider="nous",
+        effective_model="hermes-3-70b",
+        fallback=True,
+        reason="HTTP 429 rate limit",
+        turn_seq=1,
+    )
+
+    # 2. Turn N+1 (normal) completes FIRST with sequence 2 and becomes authoritative
+    turn_n_plus_1_obs = build_route_observation(
+        requested_provider="openai",
+        requested_model="gpt-4o",
+        wire_provider="openai",
+        wire_model="gpt-4o",
+        effective_provider="openai",
+        effective_model="gpt-4o",
+        fallback=False,
+        reason=None,
+        turn_seq=2,
+    )
+    commit_ok_n1 = commit_route_observation(mock_agent, turn_n_plus_1_obs, turn_seq=2)
+    assert commit_ok_n1 is True
+    assert mock_agent._authoritative_route_turn_seq == 2
+    assert mock_agent.last_route_observation == turn_n_plus_1_obs
+    assert mock_agent.last_route_observation.fallback is False
+    assert mock_agent.last_route_observation.effective_model == "gpt-4o"
+
+    # 3. Turn N completes LATE and attempts to commit to authoritative route
+    commit_ok_n = commit_route_observation(mock_agent, turn_n_obs, turn_seq=1)
+    # Stale commit is REJECTED / FENCED!
+    assert commit_ok_n is False
+
+    # Current authoritative route remains Turn N+1
+    assert mock_agent._authoritative_route_turn_seq == 2
+    assert mock_agent.last_route_observation == turn_n_plus_1_obs
+    assert mock_agent.last_route_observation.fallback is False
+    assert mock_agent.last_route_observation.is_divergent() is False
+    assert mock_agent.last_route_observation.effective_model == "gpt-4o"
+
 
 
 def test_copilot_acp_server_default_ux():

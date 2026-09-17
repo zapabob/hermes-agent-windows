@@ -25,7 +25,28 @@ export function isModelDrift(route?: ModelRouteInfo | null): boolean {
   const wireClean = (wire.includes('/') ? wire.slice(wire.lastIndexOf('/') + 1) : wire).toLowerCase()
   const effClean = (eff.includes('/') ? eff.slice(eff.lastIndexOf('/') + 1) : eff).toLowerCase()
 
-  return effClean !== reqClean && effClean !== wireClean
+  if (effClean === reqClean || effClean === wireClean) {return false}
+
+  const reqProv = (route.requestedProvider || route.requested_provider || '').trim().toLowerCase()
+  const wireProv = (route.wireProvider || route.wire_provider || '').trim().toLowerCase()
+  const effProv = (route.effectiveProvider || route.effective_provider || '').trim().toLowerCase()
+
+  const isCopilot =
+    reqProv === 'copilot' ||
+    reqProv === 'copilot-acp' ||
+    wireProv === 'copilot' ||
+    wireProv === 'copilot-acp' ||
+    effProv === 'copilot' ||
+    effProv === 'copilot-acp'
+
+  if (isCopilot && (
+    reqClean === 'copilot-acp' || reqClean === 'default' || reqClean === 'auto' ||
+    wireClean === 'copilot-acp' || wireClean === 'default' || wireClean === 'auto'
+  )) {
+    return false
+  }
+
+  return true
 }
 
 export function isRouteDivergent(route?: ModelRouteInfo | null): boolean {
@@ -48,7 +69,6 @@ function prettifyProvider(provider?: string): string {
   const mapping: Record<string, string> = {
     openai: 'OpenAI',
     openrouter: 'OpenRouter',
-    nous: 'Nous',
     anthropic: 'Anthropic',
     google: 'Google',
     gemini: 'Google',
@@ -60,7 +80,7 @@ function prettifyProvider(provider?: string): string {
     ollama: 'Ollama'
   }
 
-  return mapping[p.toLowerCase()] || p.charAt(0).toUpperCase() + p.slice(1)
+  return mapping[p.toLowerCase()] || (p.charAt(0).toUpperCase() + p.slice(1))
 }
 
 interface ModelRouteBadgeProps {
@@ -68,7 +88,10 @@ interface ModelRouteBadgeProps {
   className?: string
 }
 
-export function sanitizeAndBoundRouteReason(reason?: string | null, maxLen = 200): string | null {
+export function sanitizeAndBoundRouteReason(
+  reason?: null | string,
+  maxLen = 200
+): null | string {
   if (!reason) {
     return null
   }
@@ -77,9 +100,11 @@ export function sanitizeAndBoundRouteReason(reason?: string | null, maxLen = 200
 
   // eslint-disable-next-line no-control-regex -- normalize ANSI escape sequences
   cleaned = cleaned.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
-  cleaned = cleaned.replace(/\bBearer\s+[A-Za-z0-9_\-.]+/gi, 'Bearer [REDACTED]')
+  cleaned = cleaned.replace(/\bAuthorization\s*:\s*[A-Za-z0-9_-]+\s+[^\s\r\n]+/gi, 'Authorization: [REDACTED]')
+  cleaned = cleaned.replace(/\b(Bearer|Basic)\s+[A-Za-z0-9_\-.=]+/gi, '$1 [REDACTED]')
   cleaned = cleaned.replace(/\bsk-[a-zA-Z0-9_\-.]{8,}\b/g, 'sk-[REDACTED]')
   cleaned = cleaned.replace(/\bgh[pousr]_[a-zA-Z0-9]{16,}\b/g, 'gh*_[REDACTED]')
+  cleaned = cleaned.replace(/\bgithub_pat_[a-zA-Z0-9_]{20,}\b/gi, 'github_pat_[REDACTED]')
   cleaned = cleaned.replace(/\bAIza[0-9A-Za-z-_]{35}\b/g, 'AIza[REDACTED]')
   cleaned = cleaned.replace(
     /\b(api[-_]?key|token|secret|password|authorization)\s*[:=]\s*['"]?([a-zA-Z0-9_\-.]{8,})['"]?/gi,

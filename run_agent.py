@@ -810,6 +810,9 @@ class AIAgent:
         
         # Turn counter (added after reset_session_state was first written — #2635)
         self._user_turn_count = 0
+        self._authoritative_route_turn_seq = 0
+        self._last_route_observation = None
+        self.last_route_observation = None
 
         # Copilot x-initiator: True for the first API call of a user turn,
         # False for tool-loop follow-ups (#3040).
@@ -923,6 +926,16 @@ class AIAgent:
             api_mode,
             capabilities,
         )
+
+    def commit_route_observation(
+        self,
+        observation: Any,
+        *,
+        turn_seq: int | None = None,
+    ) -> bool:
+        """Forwarder — see ``agent.model_route_observation.commit_route_observation``."""
+        from agent.model_route_observation import commit_route_observation
+        return commit_route_observation(self, observation, turn_seq=turn_seq)
 
     def _safe_print(self, *args, **kwargs):
         """Print that silently handles broken pipes / closed stdout.
