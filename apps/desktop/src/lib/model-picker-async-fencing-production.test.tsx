@@ -21,7 +21,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ModelPickerOverlay } from '@/app/model-picker-overlay'
 import { useModelControls } from '@/app/session/hooks/use-model-controls'
 import { ModelPickerDialog } from '@/components/model-picker'
-import { modelOptionsQueryKey, requestModelOptions } from '@/lib/model-options'
+import { modelOptionsQueryKey } from '@/lib/model-options'
 import { $activeGatewayProfile } from '@/store/profile'
 import {
   $activeSessionId,
@@ -39,6 +39,8 @@ import { deferred } from '@/test/deferred'
 import { stubMenuDomApis, stubResizeObserver } from '@/test/jsdom'
 import type { ModelOptionsResponse } from '@/types/hermes'
 
+const setMockAtom = <T,>(store: unknown, value: T) => (store as { set(next: T): void }).set(value)
+
 // Mocks for useModelControls dependencies
 const sessionTileDelegateMock = vi.hoisted(() => vi.fn())
 const requestGatewayForAgentMock = vi.hoisted(() => vi.fn())
@@ -51,8 +53,12 @@ vi.mock('@/hermes', () => ({
 
 vi.mock('@/store/session-states', async importOriginal => {
   const actual = await importOriginal<typeof SessionStates>()
+  const { atom } = await import('nanostores')
   return {
     ...actual,
+    $focusedRuntimeId: atom<string | null>(null),
+    $focusedSessionState: atom<unknown>(null),
+    $focusedStoredSessionId: atom<string | null>(null),
     sessionTileDelegate: sessionTileDelegateMock
   }
 })
@@ -95,9 +101,6 @@ const catalogA = {
 const catalogB = {
   providers: [{ slug: 'anthropic', models: ['claude-opus-4'], name: 'Anthropic' }]
 }
-const catalogB2 = {
-  providers: [{ slug: 'anthropic', models: ['claude-sonnet-4-5'], name: 'Anthropic' }]
-}
 
 describe('Slice D.1.1: Production-Path Model Picker Async Fencing Qualification', () => {
   beforeEach(() => {
@@ -115,9 +118,9 @@ describe('Slice D.1.1: Production-Path Model Picker Async Fencing Qualification'
     $gatewayState.set('open')
     SessionStates.$sessionStates.set({})
     SessionStates.$sessionTiles.set([])
-    SessionStates.$focusedStoredSessionId.set(null)
-    SessionStates.$focusedRuntimeId.set(null)
-    SessionStates.$focusedSessionState.set(null)
+    setMockAtom(SessionStates.$focusedStoredSessionId, null)
+    setMockAtom(SessionStates.$focusedRuntimeId, null)
+    setMockAtom(SessionStates.$focusedSessionState, null)
   })
 
   afterEach(() => {
@@ -423,9 +426,9 @@ describe('Slice D.1.1: Production-Path Model Picker Async Fencing Qualification'
       ] as never)
 
       // Start focused on Tile A
-      SessionStates.$focusedStoredSessionId.set('stored-a')
-      SessionStates.$focusedRuntimeId.set('session-a')
-      SessionStates.$focusedSessionState.set({ model: 'gpt-4o', provider: 'openai' } as never)
+      setMockAtom(SessionStates.$focusedStoredSessionId, 'stored-a')
+      setMockAtom(SessionStates.$focusedRuntimeId, 'session-a')
+      setMockAtom(SessionStates.$focusedSessionState, { model: 'gpt-4o', provider: 'openai' })
       $gatewayState.set('open')
       $modelPickerOpen.set(true)
 
@@ -447,9 +450,9 @@ describe('Slice D.1.1: Production-Path Model Picker Async Fencing Qualification'
 
       // Focus changes to B
       act(() => {
-        SessionStates.$focusedStoredSessionId.set('stored-b')
-        SessionStates.$focusedRuntimeId.set('session-b')
-        SessionStates.$focusedSessionState.set({ model: 'claude-opus-4', provider: 'anthropic' } as never)
+        setMockAtom(SessionStates.$focusedStoredSessionId, 'stored-b')
+        setMockAtom(SessionStates.$focusedRuntimeId, 'session-b')
+        setMockAtom(SessionStates.$focusedSessionState, { model: 'claude-opus-4', provider: 'anthropic' })
       })
 
       // B request begins
@@ -467,9 +470,6 @@ describe('Slice D.1.1: Production-Path Model Picker Async Fencing Qualification'
       deferredA.resolve(catalogA)
 
       await waitFor(() => {
-        const allQueries = queryClient.getQueryCache().getAll()
-        const keys = allQueries.map(q => ({ key: q.queryKey, data: q.state.data, status: q.state.status }))
-        // Verify that if A cached, it is at A key, and B is at B key
         expect(screen.getByText('Anthropic')).toBeDefined()
         expect(screen.queryByText('OpenAI')).toBeNull()
       })
