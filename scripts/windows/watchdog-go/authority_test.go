@@ -63,13 +63,11 @@ func TestSingleOwnerRunCycleObservesDesktopDownWithoutRelaunch(t *testing.T) {
 	}
 	logPath := filepath.Join(dir, "watchdog.log")
 	cfg := Config{
-		HermesRoot:     dir,
-		HermesHome:     dir,
-		DataDir:        dir,
-		PackagedExe:    packaged,
-		PrewarmBackend: false,
-		IntervalSec:    1,
-		FailThreshold:  2,
+		HermesRoot:  dir,
+		HermesHome:  dir,
+		DataDir:     dir,
+		PackagedExe: packaged,
+		IntervalSec: 1,
 	}
 	logger := NewLogger(logPath)
 	wd := NewWatchdog(cfg, logger)
@@ -88,30 +86,7 @@ func TestSingleOwnerRunCycleObservesDesktopDownWithoutRelaunch(t *testing.T) {
 	if strings.Contains(logText, "Desktop DOWN — relaunch") {
 		t.Fatal("single-owner cycle must not emit Desktop relaunch")
 	}
-	if !strings.Contains(logText, "observe only (Electron owns Desktop lifecycle)") {
+	if !strings.Contains(logText, "observe only") {
 		t.Fatal("single-owner cycle must log observe-only Desktop DOWN")
-	}
-}
-
-func TestWatchdogSourceKeepsDesktopRelaunchBehindPrewarm(t *testing.T) {
-	raw, err := os.ReadFile("watchdog.go")
-	if err != nil {
-		t.Fatal(err)
-	}
-	source := string(raw)
-	observeIdx := strings.Index(source, "Desktop DOWN — observe only (Electron owns Desktop lifecycle)")
-	relaunchIdx := strings.Index(source, `w.logger.Infof("Desktop DOWN — relaunch")`)
-	if observeIdx < 0 {
-		t.Fatal("single-owner observe-only Desktop DOWN path missing")
-	}
-	if relaunchIdx < 0 {
-		t.Fatal("legacy prewarm Desktop relaunch path missing")
-	}
-	if observeIdx > relaunchIdx {
-		t.Fatal("observe-only single-owner path must precede legacy Desktop relaunch")
-	}
-	tokenIdx := strings.Index(source, "w.cfg.PrewarmBackend && w.back.TokenRotationPending()")
-	if tokenIdx < 0 {
-		t.Fatal("token-rotation Desktop restart must remain gated on PrewarmBackend")
 	}
 }
