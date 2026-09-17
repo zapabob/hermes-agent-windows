@@ -1,7 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query'
 import type { MutableRefObject } from 'react'
 
-import type { GatewayEventPayload } from '@/lib/chat-messages'
+import type { GatewayEventPayload, ModelRouteInfo } from '@/lib/chat-messages'
 import type { GatewayScope } from '@/store/gateway'
 import type { RpcEvent } from '@/types/hermes'
 
@@ -20,7 +20,8 @@ export interface GatewayEventDeps {
     text: string,
     responsePreviewed?: boolean,
     failure?: { error: string; partial: boolean },
-    occurredAt?: number
+    occurredAt?: number,
+    route?: ModelRouteInfo
   ) => void
   failAssistantMessage: (sessionId: string, errorMessage: string, occurredAt?: number) => void
   flushQueuedDeltas: (sessionId?: string) => void

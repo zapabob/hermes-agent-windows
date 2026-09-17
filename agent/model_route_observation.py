@@ -11,6 +11,45 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 
+def _prettify_model_id(model_id: str) -> str:
+    """Format model identifier cleanly (e.g. 'claude-3-7-sonnet' -> 'Claude 3 7 Sonnet')."""
+    raw = model_id.split("/")[-1].strip() if "/" in model_id else model_id.strip()
+    if not raw:
+        return ""
+    lower = raw.lower()
+    if lower.startswith("claude-"):
+        parts = raw[7:].replace("-", " ").title()
+        return f"Claude {parts}"
+    if lower.startswith("gpt-"):
+        return f"GPT-{raw[4:]}"
+    if lower.startswith("gemini-"):
+        parts = raw[7:].replace("-", " ").title()
+        return f"Gemini {parts}"
+    return raw
+
+
+def _prettify_provider(provider: str) -> str:
+    """Friendly title for provider."""
+    p = (provider or "").strip()
+    if not p:
+        return ""
+    mapping = {
+        "openai": "OpenAI",
+        "openrouter": "OpenRouter",
+        "nous": "Nous",
+        "anthropic": "Anthropic",
+        "google": "Google",
+        "gemini": "Google",
+        "deepseek": "DeepSeek",
+        "copilot": "Copilot",
+        "copilot-acp": "Copilot ACP",
+        "nvidia": "NVIDIA",
+        "meta": "Meta",
+        "ollama": "Ollama",
+    }
+    return mapping.get(p.lower(), p.title())
+
+
 @dataclass
 class ModelRouteObservation:
     """Internal representation of model routing intent vs reality.
@@ -63,6 +102,87 @@ class ModelRouteObservation:
     def effectiveModelSource(self) -> str:
         return self.effective_model_source
 
+    @property
+    def isDivergent(self) -> bool:
+        return self.is_divergent()
+
+    @property
+    def isDrift(self) -> bool:
+        return self.is_drift()
+
+    def is_drift(self) -> bool:
+        """True when the provider/server reported a different model than requested/wire."""
+        if self.fallback:
+            return False
+        if self.effective_model_source not in ("response", "server"):
+            return False
+
+        req = self.requested_model.strip()
+        wire = self.wire_model.strip()
+        eff = self.effective_model.strip()
+        if not eff or not req:
+            return False
+
+        req_clean = req.split("/")[-1].strip().lower() if "/" in req else req.lower()
+        wire_clean = wire.split("/")[-1].strip().lower() if "/" in wire else wire.lower()
+        eff_clean = eff.split("/")[-1].strip().lower() if "/" in eff else eff.lower()
+
+        if eff_clean == req_clean or eff_clean == wire_clean:
+            return False
+
+        return True
+
+    def is_divergent(self) -> bool:
+        """True if either fallback occurred or provider model drift was observed."""
+        return bool(self.fallback or self.is_drift())
+
+    def quiet_label(self) -> str:
+        """Standard quiet label when no divergence occurred (e.g. 'Claude Sonnet 3.7 · Anthropic')."""
+        eff_m = _prettify_model_id(self.effective_model)
+        eff_p = _prettify_provider(self.effective_provider)
+        if eff_m and eff_p:
+            return f"{eff_m} · {eff_p}"
+        return eff_m or eff_p or "Ready"
+
+    def ux_summary(self) -> dict[str, Any]:
+        """User-facing structured summary of the routing observation."""
+        if self.fallback:
+            req_p = _prettify_provider(self.requested_provider) or self.requested_provider
+            eff_p = _prettify_provider(self.effective_provider) or self.effective_provider
+            lines = [
+                f"Requested: {req_p} / {self.requested_model}",
+                f"Using: {eff_p} / {self.effective_model}",
+            ]
+            if self.reason:
+                lines.append(f"Reason: {self.reason}")
+            return {
+                "type": "fallback",
+                "divergent": True,
+                "title": "Fallback active",
+                "lines": lines,
+                "banner": " | ".join(lines),
+            }
+        elif self.is_drift():
+            lines = [
+                f"Requested: {self.requested_model}",
+                f"Provider reported: {self.effective_model}",
+            ]
+            return {
+                "type": "drift",
+                "divergent": True,
+                "title": "Provider model drift",
+                "lines": lines,
+                "banner": " | ".join(lines),
+            }
+        else:
+            return {
+                "type": "normal",
+                "divergent": False,
+                "title": "Normal route",
+                "lines": [self.quiet_label()],
+                "banner": self.quiet_label(),
+            }
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "session_id": self.session_id,
@@ -75,6 +195,10 @@ class ModelRouteObservation:
             "fallback": self.fallback,
             "reason": self.reason,
             "effective_model_source": self.effective_model_source,
+            "is_divergent": self.is_divergent(),
+            "is_drift": self.is_drift(),
+            "quiet_label": self.quiet_label(),
+            "ux_summary": self.ux_summary(),
             # CamelCase aliases for JSON consumers
             "sessionId": self.session_id,
             "requestedProvider": self.requested_provider,
@@ -84,6 +208,10 @@ class ModelRouteObservation:
             "effectiveProvider": self.effective_provider,
             "effectiveModel": self.effective_model,
             "effectiveModelSource": self.effective_model_source,
+            "isDivergent": self.is_divergent(),
+            "isDrift": self.is_drift(),
+            "quietLabel": self.quiet_label(),
+            "uxSummary": self.ux_summary(),
         }
 
     @classmethod

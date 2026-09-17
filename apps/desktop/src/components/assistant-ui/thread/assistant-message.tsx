@@ -19,11 +19,13 @@ import {
   pickPrimaryPreviewTarget
 } from '@/components/assistant-ui/thread/content'
 import { MESSAGE_PARTS_COMPONENTS } from '@/components/assistant-ui/thread/message-parts'
+import { ModelRouteBadge } from '@/components/assistant-ui/thread/model-route-badge'
 import { ReactionPicker } from '@/components/assistant-ui/thread/message-reactions'
 import { ResponseLoadingIndicator, TurnActivityIndicator } from '@/components/assistant-ui/thread/status'
 import { MessageTimelineTimestamp } from '@/components/assistant-ui/thread/timeline-timestamp'
 import { useMessageReactions, useTapbackDoubleClick } from '@/components/assistant-ui/thread/use-message-reactions'
 import { AGENT_MESSAGE_RE } from '@/components/assistant-ui/thread/user-message'
+import type { ModelRouteInfo } from '@/lib/chat-messages/types'
 import { TooltipIconButton } from '@/components/assistant-ui/tooltip-icon-button'
 import { formatElapsed } from '@/components/chat/activity-timer'
 import { PreviewAttachment } from '@/components/chat/preview-attachment'
@@ -197,6 +199,7 @@ const AssistantMessageBody: FC<AssistantMessageProps & { collapsedNotice?: null 
   // Whole-turn wall-clock seconds (set once at completion — referentially
   // stable across the 30 Hz delta stream, so this adds no per-token renders).
   const turnDurationS = useAuiState(s => s.message.metadata?.custom?.durationS as number | undefined)
+  const turnRoute = useAuiState(s => s.message.metadata?.custom?.route as ModelRouteInfo | undefined)
 
   const getMessageText = useCallback(() => messageContentText(messageRuntime.getState().content), [messageRuntime])
 
@@ -271,6 +274,7 @@ const AssistantMessageBody: FC<AssistantMessageProps & { collapsedNotice?: null 
               getMessageText={getMessageText}
               messageId={messageId}
               onBranchInNewChat={onBranchInNewChat}
+              route={turnRoute}
             />
           )}
           {/* Last thing in the turn — under the action bar, the way Cursor ends a
@@ -614,11 +618,12 @@ const ErrorRecoveryActions: FC = () => {
   )
 }
 
-const AssistantActionBar: FC<MessageActionProps & { durationS?: number }> = ({
+const AssistantActionBar: FC<MessageActionProps & { durationS?: number; route?: ModelRouteInfo }> = ({
   durationS,
   messageId,
   getMessageText,
-  onBranchInNewChat
+  onBranchInNewChat,
+  route
 }) => {
   const { t } = useI18n()
   const copy = t.assistant.thread
@@ -635,16 +640,19 @@ const AssistantActionBar: FC<MessageActionProps & { durationS?: number }> = ({
   )
 
   return (
-    <div className="relative flex w-full shrink-0 items-center justify-end gap-1.5">
-      {durationS !== undefined && (
-        <span
-          className="mr-auto select-none px-0.5 text-[0.6875rem] leading-5 tabular-nums text-muted-foreground"
-          data-slot="aui_turn-duration"
-          title={t.assistant.thread.turnDuration(formatElapsed(durationS))}
-        >
-          ⏱ {formatElapsed(durationS)}
-        </span>
-      )}
+    <div className="relative flex w-full shrink-0 items-center justify-between gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5 min-w-0 mr-auto">
+        {durationS !== undefined && (
+          <span
+            className="select-none px-0.5 text-[0.6875rem] leading-5 tabular-nums text-muted-foreground shrink-0"
+            data-slot="aui_turn-duration"
+            title={t.assistant.thread.turnDuration(formatElapsed(durationS))}
+          >
+            ⏱ {formatElapsed(durationS)}
+          </span>
+        )}
+        {route && <ModelRouteBadge route={route} />}
+      </div>
       <ActionBarPrimitive.Root
         className={
           // NOTE: intentionally NOT `hideWhenRunning`. That prop unmounts the
@@ -762,7 +770,11 @@ const ReadAloudButton: FC<{ getText: () => string; messageId: string }> = ({ get
   )
 }
 
-const AssistantFooter: FC<MessageActionProps & { durationS?: number }> = ({ durationS, ...props }) => {
+const AssistantFooter: FC<MessageActionProps & { durationS?: number; route?: ModelRouteInfo }> = ({
+  durationS,
+  route,
+  ...props
+}) => {
   return (
     <div className="flex min-h-6 flex-col items-end gap-1 pr-(--message-text-indent) pl-(--message-text-indent)">
       <BranchPickerPrimitive.Root
@@ -779,7 +791,7 @@ const AssistantFooter: FC<MessageActionProps & { durationS?: number }> = ({ dura
           <Codicon name="chevron-right" size="0.875rem" />
         </BranchPickerPrimitive.Next>
       </BranchPickerPrimitive.Root>
-      <AssistantActionBar durationS={durationS} {...props} />
+      <AssistantActionBar durationS={durationS} route={route} {...props} />
     </div>
   )
 }

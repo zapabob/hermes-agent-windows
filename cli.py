@@ -9806,6 +9806,12 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
         if title:
             lines.append(f"Title: {title}")
         lines.append(f"Model: {model} ({provider})")
+        _obs = getattr(agent, "last_route_observation", None)
+        if _obs and hasattr(_obs, "is_divergent") and _obs.is_divergent():
+            _obs_summary = _obs.ux_summary()
+            lines.append(f"Route Status: {_obs_summary.get('title', 'Divergent')}")
+            for _subline in _obs_summary.get("lines", []):
+                lines.append(f"  {_subline}")
         if reasoning_label:
             lines.append(f"Reasoning: {reasoning_label}")
         if approval_label:
@@ -17851,6 +17857,29 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                         ))
                     except Exception:
                         pass
+
+                # Observability UX: surface model routing divergence (fallback or model drift)
+                # prominently, while staying completely quiet on normal / canonicalization turns.
+                _route_obs = result.get("route_observation") if isinstance(result, dict) else None
+                if not _route_obs and self.agent is not None:
+                    _route_obs = getattr(self.agent, "last_route_observation", None)
+                if _route_obs and hasattr(_route_obs, "is_divergent") and _route_obs.is_divergent():
+                    _summary = _route_obs.ux_summary()
+                    _title = _summary.get("title", "Route divergence")
+                    _lines = _summary.get("lines", [])
+                    _divergence_text = "\n".join(_lines)
+                    try:
+                        ChatConsole().print(Panel(
+                            _divergence_text,
+                            title=f"[yellow bold]⚠ {_title}[/]",
+                            title_align="left",
+                            border_style="yellow",
+                            box=rich_box.ROUNDED,
+                            padding=(0, 2),
+                            width=self._scrollback_box_width(),
+                        ))
+                    except Exception:
+                        _cprint(f"\n{_YELLOW}⚠ {_title}: {_summary.get('banner', '')}{_RST}")
 
             # #60920: Print interruption marker with history suppressed so it
             # is never recorded in _OUTPUT_HISTORY. The marker was previously

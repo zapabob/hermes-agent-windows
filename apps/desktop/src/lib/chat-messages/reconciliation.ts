@@ -113,6 +113,7 @@ function reconcileLocalAssistantTimeline(nextMessages: ChatMessage[], currentMes
       ...message,
       completedAt: latestBoundary(message.completedAt, local.completedAt, ...parts.map(part => part.completedAt)),
       parts,
+      route: message.route ?? local.route,
       timestamp: earliestBoundary(message.timestamp, local.timestamp, ...parts.map(part => part.timestamp))
     }
   })

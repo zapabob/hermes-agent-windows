@@ -164,7 +164,9 @@ const COMPARED_FIELDS = [
   'completedAt',
   // Turn wall-clock duration — stamps the visible "⏱ 38s" badge, so a change
   // must re-render (set once at completion; stable afterwards).
-  'durationS'
+  'durationS',
+  // Model route observation (fallback / drift / effective model)
+  'route'
 ] as const
 
 const IGNORED_FIELDS = ['attachmentRefs', 'parts', 'rowId'] as const
@@ -276,7 +278,10 @@ export function chatMessagesEquivalent(a: ChatMessage, b: ChatMessage): boolean 
     // Interim gates the action footer, so flipping it must repaint (e.g. a
     // previewed final settling onto a sealed interim bubble restores the bar).
     (a.interim ?? false) !== (b.interim ?? false) ||
-    !chatReactionsEquivalent(a.reactions, b.reactions)
+    !chatReactionsEquivalent(a.reactions, b.reactions) ||
+    (a.route?.effective_model ?? a.route?.effectiveModel ?? null) !==
+      (b.route?.effective_model ?? b.route?.effectiveModel ?? null) ||
+    (a.route?.fallback ?? false) !== (b.route?.fallback ?? false)
   ) {
     return false
   }

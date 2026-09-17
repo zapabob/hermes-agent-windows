@@ -14,6 +14,47 @@ export interface TimelinePartMetadata {
 
 export type ChatMessagePart = Exclude<ThreadMessageLike['content'], string>[number] & TimelinePartMetadata
 
+export interface ModelRouteInfo {
+  session_id?: string | null
+  requested_provider: string
+  requested_model: string
+  wire_provider: string
+  wire_model: string
+  effective_provider: string
+  effective_model: string
+  fallback: boolean
+  reason?: string | null
+  effective_model_source: 'request' | 'response' | 'server' | string
+  is_divergent?: boolean
+  is_drift?: boolean
+  quiet_label?: string
+  ux_summary?: {
+    type: 'fallback' | 'drift' | 'normal'
+    divergent: boolean
+    title: string
+    lines: string[]
+    banner: string
+  }
+  sessionId?: string | null
+  requestedProvider?: string
+  requestedModel?: string
+  wireProvider?: string
+  wireModel?: string
+  effectiveProvider?: string
+  effectiveModel?: string
+  effectiveModelSource?: string
+  isDivergent?: boolean
+  isDrift?: boolean
+  quietLabel?: string
+  uxSummary?: {
+    type: 'fallback' | 'drift' | 'normal'
+    divergent: boolean
+    title: string
+    lines: string[]
+    banner: string
+  }
+}
+
 export type ChatMessage = {
   id: string
   role: SessionMessage['role']
@@ -36,6 +77,8 @@ export type ChatMessage = {
    *  stamped by the desktop when it watched the turn run. Absent for
    *  messages hydrated from history — the backend doesn't persist it. */
   durationS?: number
+  /** Model route observation (requested vs effective, fallback, drift). */
+  route?: ModelRouteInfo
   /** Composer attachment ref strings (`@file:...`, `@image:...`) sent with this user message. */
   attachmentRefs?: string[]
   /** Durable backend `messages.id`. Absent until the row is persisted. */
@@ -175,4 +218,5 @@ export type GatewayEventPayload = {
   // with FailoverReason.billing (shape mirrors @hermes/shared BillingBlock).
   billing?: BillingBlock
   failure_reason?: string
+  route?: ModelRouteInfo
 }

@@ -753,6 +753,37 @@ export type GatewayEvent =
         reasoning?: string
         rendered?: string
         response_previewed?: boolean
+        route?: {
+          fallback?: boolean
+          is_divergent?: boolean
+          is_drift?: boolean
+          isDivergent?: boolean
+          isDrift?: boolean
+          quiet_label?: string
+          quietLabel?: string
+          ux_summary?: {
+            banner?: string
+            divergent?: boolean
+            lines?: string[]
+            title?: string
+            type?: 'fallback' | 'drift' | 'normal'
+          }
+          uxSummary?: {
+            banner?: string
+            divergent?: boolean
+            lines?: string[]
+            title?: string
+            type?: 'fallback' | 'drift' | 'normal'
+          }
+          effective_model?: string
+          effective_provider?: string
+          effective_model_source?: string
+          requested_model?: string
+          requested_provider?: string
+          wire_model?: string
+          wire_provider?: string
+          reason?: string | null
+        }
         text?: string
         usage?: Usage
       }

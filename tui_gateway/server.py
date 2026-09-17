@@ -10141,6 +10141,11 @@ def _emit_terminal_turn_error(
         rendered = ""
     if rendered:
         payload["rendered"] = rendered
+    _route_obs = getattr(agent, "last_route_observation", None) if agent is not None else None
+    if _route_obs and hasattr(_route_obs, "to_dict"):
+        payload["route"] = _route_obs.to_dict()
+    elif isinstance(_route_obs, dict):
+        payload["route"] = _route_obs
     _retire_turn_marker(session)
     _emit("message.complete", sid, payload)
 
@@ -13039,6 +13044,14 @@ def _run_prompt_submit(
                 payload["warning"] = status_note
             if result.get("response_previewed"):
                 payload["response_previewed"] = True
+            # Forward structured ModelRouteObservation for UI observability
+            _route_obs = result.get("route_observation") if isinstance(result, dict) else None
+            if not _route_obs and agent is not None:
+                _route_obs = getattr(agent, "last_route_observation", None)
+            if _route_obs and hasattr(_route_obs, "to_dict"):
+                payload["route"] = _route_obs.to_dict()
+            elif isinstance(_route_obs, dict):
+                payload["route"] = _route_obs
             # Forward the structured billing-wall descriptor (provider,
             # billing_url, is_nous, message) so the TUI/desktop render a
             # billing-specific recovery surface instead of re-parsing text.
