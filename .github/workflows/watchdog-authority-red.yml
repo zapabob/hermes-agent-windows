@@ -23,11 +23,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo 'e22b7a0c39379f583178db897351204c38449c9ee9dba26cf5883d157e85364d  .github/watchdog_fix.b64.00' | sha256sum -c -
-          echo '5f8b166bb08085afebdcfe15ad7e1a0d628183572259949c8daadf8b2d8b1ed3  .github/watchdog_fix.b64.01' | sha256sum -c -
-          echo 'ed6366c3ea1f28f5895ef5409695070d80728403dd54631230f949cac027cbd3  .github/watchdog_fix.b64.02' | sha256sum -c -
-          echo 'd0487464c14b3cb301fa3eadf50423c134d6fb10b967b261379a508e8375ace9  .github/watchdog_fix.b64.03' | sha256sum -c -
-          cat .github/watchdog_fix.b64.0* | base64 -d > /tmp/apply_watchdog_authority_fix.py
+          echo '9419972b89e5a7d345bcf941bcb3d39199703e23ebdc49b46ef8f344b3470ff5  .github/watchdog_fix.gz.b64.00' | sha256sum -c -
+          echo '499c5d4c7abe7cdf0f6c597f741118fb6c1b5c3316af90fca1d2a6840ea6762a  .github/watchdog_fix.gz.b64.01' | sha256sum -c -
+          echo '8953d44afb83ba449ef48445ba618a9a36d99539283855fab0bf2fd104f88fdd  .github/watchdog_fix.gz.b64.02' | sha256sum -c -
+          echo '666aeaacb8beb76bbd0d2c1797621738e7c3d8f079ebc96ca3ad40e362c44fc0  .github/watchdog_fix.gz.b64.03' | sha256sum -c -
+          echo 'c6acc2a2c9a5f6d5014285cba81bbeb3f5a92dd52a45105a85e07918ae7bbb05  .github/watchdog_fix.gz.b64.04' | sha256sum -c -
+          cat .github/watchdog_fix.gz.b64.0* > /tmp/watchdog_fix.py.gz.b64
+          echo '3c763742080357039f6cf5e4a9096f2d055444a09dab5140d3473b4a227a47db  /tmp/watchdog_fix.py.gz.b64' | sha256sum -c -
+          base64 -d /tmp/watchdog_fix.py.gz.b64 | gzip -d > /tmp/apply_watchdog_authority_fix.py
           echo '851a797b7f4cf8e1dfa12e889de7c8810a2a3fbafab8204477bb387e5f92d4a1  /tmp/apply_watchdog_authority_fix.py' | sha256sum -c -
       - name: Apply production GREEN transform
         run: python /tmp/apply_watchdog_authority_fix.py
@@ -61,13 +64,12 @@ jobs:
           old = 'Legacy backend-prewarm compatibility paths remain deprecated and disabled in the supported topology; they are excluded from Tier-1 qualification and do not confer supported runtime authority.'
           new = 'The legacy watchdog-owned backend-prewarm compatibility path has been removed from production code; the watchdog cannot create, claim, replace, restart, or publish credentials for the Desktop Python backend.'
           if old in s:
-              s = s.replace(old, new)
-              p.write_text(s, encoding='utf-8')
+              p.write_text(s.replace(old, new), encoding='utf-8')
           PY
       - name: Remove temporary transformation assets
         shell: bash
         run: |
-          rm -f .github/watchdog_fix.b64.00 .github/watchdog_fix.b64.01 .github/watchdog_fix.b64.02 .github/watchdog_fix.b64.03
+          rm -f .github/watchdog_fix.b64.* .github/watchdog_fix.gz.b64.*
           rm -f .github/workflows/watchdog-authority-red.yml
       - name: Refresh carry metrics
         shell: bash
