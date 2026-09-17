@@ -16,7 +16,7 @@ features:
     owner_path: scripts/windows/watchdog-go
     public_surface: scripts/windows/Start-HermesGoWatchdog.ps1
     upstream_touch: false
-    tests: [scripts/windows/watchdog-go/backend_test.go, scripts/windows/watchdog-go/process_windows_test.go]
+    tests: [scripts/windows/watchdog-go/authority_test.go, scripts/windows/watchdog-go/process_windows_test.go]
     windows_required: true
     upstream_equivalent: none
     integration_policy: KEEP_DOWNSTREAM
@@ -158,12 +158,13 @@ features:
   - id: watchdog-managed-desktop-backend
     status: retired
     replacement: windows-desktop-single-owner-backend
-    owner_path: scripts/windows/watchdog-go/backend.go
+    owner_path: scripts/windows/watchdog-go
     public_surface: packaged Desktop prewarmed backend manifest
     removal_reason: >
       Desktop/Python backend ownership moved to the Electron main-process
       generation-fenced lifecycle after repeated restart/reconnect failures
-      caused by cross-authority state.
+      caused by cross-authority state. The former owner_path backend.go was
+      deleted; the watchdog package directory remains as the retirement tombstone.
     upstream_touch: true
     tests: [apps/desktop/electron/single-owner-backend-lifecycle.test.ts]
     windows_required: true

@@ -80,7 +80,6 @@ func TestRunCycleDoesNotMutateProcessesDuringMaintenance(t *testing.T) {
 		LeaseExpiresAt: time.Now().Add(time.Hour).Format(time.RFC3339),
 	})
 	cfg := Config{
-		PrewarmBackend:  true,
 		PackagedExe:     filepath.Join(dir, "must-not-launch.exe"),
 		StatePath:       filepath.Join(dir, "watchdog.state.json"),
 		MaintenancePath: maintenancePath,
@@ -96,33 +95,7 @@ func TestRunCycleDoesNotMutateProcessesDuringMaintenance(t *testing.T) {
 		state.MaintenanceTimestamp != "2026-09-06T00:00:00Z" {
 		t.Fatalf("watchdog did not acknowledge maintenance owner: %+v", state)
 	}
-	wd.PrewarmBackend()
 	if fileExists(cfg.PackagedExe) {
 		t.Fatal("maintenance cycle launched the packaged desktop")
-	}
-}
-
-func TestDesktopRecoveryRechecksRevocationImmediatelyBeforeMutation(t *testing.T) {
-	dir := t.TempDir()
-	exe := filepath.Join(dir, "Hermes.exe")
-	if err := os.WriteFile(exe, []byte("not executable"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	cfg := Config{PackagedExe: exe, DataDir: dir}
-	logger := NewLogger(filepath.Join(dir, "watchdog.log"))
-	checks := 0
-	revoked := func() bool {
-		checks++
-		return false
-	}
-
-	if startPackagedDesktop(cfg, logger, nil, revoked) {
-		t.Fatal("revoked cold launch must not start Desktop")
-	}
-	if restartPackagedDesktop(cfg, logger, nil, revoked) {
-		t.Fatal("revoked restart must not stop or start Desktop")
-	}
-	if checks != 2 {
-		t.Fatalf("expected one last-moment authority check per path, got %d", checks)
 	}
 }

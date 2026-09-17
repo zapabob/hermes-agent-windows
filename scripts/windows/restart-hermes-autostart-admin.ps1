@@ -199,17 +199,17 @@ try {
 
     Register-HermesBootTask `
         -TaskName "HermesGoWatchdogBootAutoStart" `
-        -Description "Boot auto-start Hermes Desktop/backend watchdog and configured local embedding server" `
-        -PowerShellCommand "$envPrefix& '$GoWatchdogScript' -HermesRoot '$RepoRoot' -HermesHome '$HermesHome' -ManagedBackendPort 9119" `
+        -Description "Boot auto-start observation-only Go watchdog (embedding supervisor)" `
+        -PowerShellCommand "$envPrefix& '$GoWatchdogScript' -HermesRoot '$RepoRoot' -HermesHome '$HermesHome'" `
         -WorkingDirectory $RepoRoot `
         -DelaySeconds 15
 
     # Interactive+Highest logon task displaces the S4U Session 0 boot owner so
-    # Desktop kill/relaunch stays inside the console user's session.
+    # the observation-only watchdog runs in the console user's session.
     Register-HermesLogonTask `
         -TaskName "HermesGoWatchdogLogonAutoStart" `
         -Description "Logon displace Session 0 Go watchdog into the interactive desktop session" `
-        -PowerShellCommand "$envPrefix& '$GoWatchdogScript' -HermesRoot '$RepoRoot' -HermesHome '$HermesHome' -ManagedBackendPort 9119" `
+        -PowerShellCommand "$envPrefix& '$GoWatchdogScript' -HermesRoot '$RepoRoot' -HermesHome '$HermesHome'" `
         -WorkingDirectory $RepoRoot `
         -DelaySeconds 20 `
         -RunLevel Highest

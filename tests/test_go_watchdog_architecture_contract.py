@@ -12,33 +12,37 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def test_watchdog_uses_the_documented_single_startup_and_probe_defaults() -> None:
+def test_watchdog_uses_single_owner_startup_and_probe_defaults() -> None:
     launcher = _read(WINDOWS / "Start-HermesGoWatchdog.ps1")
     main = _read(GO / "main.go")
     autostart = _read(WINDOWS / "repair-hermes-autostart.ps1")
 
     assert '[int]$IntervalSec = 20' in launcher
-    assert '[int]$FailThreshold = 2' in launcher
-    assert '[int]$ManagedBackendPort = 9119' in launcher
     assert '[string]$Listen = "127.0.0.1:9920"' in launcher
+    assert '$FailThreshold' not in launcher
+    assert '$ManagedBackendPort' not in launcher
+    assert '$NoPrewarm' not in launcher
     assert 'flag.Int("interval", 20,' in main
-    assert 'flag.Int("fail-threshold", 2,' in main
+    assert 'fail-threshold' not in main
+    assert 'managed-backend-port' not in main
+    assert 'prewarm-backend' not in main
     assert '"HermesGoWatchdogBootAutoStart"' in autostart
     assert '"HermesGoWatchdogLogonAutoStart"' in autostart
     assert "-WindowStyle Hidden" in autostart
 
 
-def test_watchdog_backend_probe_requires_status_and_session_token() -> None:
+def test_watchdog_backend_probe_is_observation_only() -> None:
     probe = _read(GO / "probe.go")
-    backend = _read(GO / "backend.go")
+    process = _read(GO / "process_windows.go")
 
     assert "/api/status" in probe
-    assert "/api/sessions" in probe
-    assert 'req.Header.Set("Authorization", "Bearer "+tok)' in probe
-    assert 'req.Header.Set("X-Hermes-Session-Token", tok)' in probe
-    assert "const DefaultManagedBackendPort = 9119" in backend
-    assert "BackendHealthy" in _read(GO / "health.go")
-    assert "shouldReplaceOwnedBackend" in _read(GO / "health.go")
+    assert "findHealthyDesktopBackend" in process
+    assert "PROCESS_TERMINATE" not in process
+    assert "TerminateProcess(" not in process
+    assert "restartPackagedDesktop" not in process
+    assert "stopOrphanDesktopBackends" not in process
+    assert not (GO / "backend.go").exists()
+    assert not (GO / "health.go").exists()
 
 
 def test_a2a_sidecars_are_outside_direct_watchdog_management() -> None:
@@ -50,15 +54,17 @@ def test_a2a_sidecars_are_outside_direct_watchdog_management() -> None:
     assert "go-a2a-roundrobin" not in process
 
 
-def test_session0_watchdog_cannot_orphan_desktop() -> None:
-    """S4U boot owners must not kill interactive Hermes.exe without relaunch."""
+def test_session0_watchdog_has_no_desktop_lifecycle_authority() -> None:
     process = _read(GO / "process_windows.go")
+    watchdog = _read(GO / "watchdog.go")
     launcher = _read(WINDOWS / "Start-HermesGoWatchdog.ps1")
 
-    assert "isNonInteractiveSession" in process
-    assert "Session 0: refusing Desktop kill" in process
-    assert "HermesDesktopAutoStart" in process
-    assert "startDesktopInInteractiveSession" in process
+    assert "HermesDesktopAutoStart" not in process
+    assert "startPackagedDesktop" not in process + watchdog
+    assert "restartPackagedDesktop" not in process + watchdog
+    assert "desktop_relaunch" not in watchdog
+    assert "PROCESS_TERMINATE" not in process
+    # Session-0 replacement concerns the watchdog process itself, not Hermes.exe.
     assert "Replacing Session 0 Go watchdog" in launcher
     assert "Get-GoWatchdogSessionId" in launcher
     assert '$state.Status -ne "owned"' in launcher

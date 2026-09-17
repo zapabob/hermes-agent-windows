@@ -1,4 +1,4 @@
-// Hermes Desktop↔backend mutual watchdog (Windows).
+// Hermes Windows workstation recovery watchdog.
 //
 // ISOLATION: standalone operator binary - NOT registered in Hermes plugins,
 // tools, skills, MCP, or cron. Its HTTP surface is strictly read-only.
@@ -30,16 +30,6 @@ func main() {
 	tsnetHost := flag.String("tsnet-hostname", "hermes-watchdog", "Tailscale tsnet hostname")
 	enableTsnet := flag.Bool("tsnet", false, "Enable Tailscale tsnet listener (also auto when authkey env set)")
 	interval := flag.Int("interval", 20, "Watchdog probe interval seconds")
-	failThreshold := flag.Int("fail-threshold", 2, "Consecutive backend failures before Desktop restart")
-	prewarm := flag.Bool("prewarm-backend", false, "Pre-start and supervise a hermes serve for fast Desktop connect (deprecated: Electron main is sole owner)")
-	backendStartTimeout := flag.Int("backend-start-timeout", 300, "Seconds to wait for managed serve /api/status")
-	backendReadyTimeout := flag.Int("backend-ready-timeout", 180, "Extra seconds waiting for managed serve readiness")
-	managedPort := flag.Int("managed-backend-port", DefaultManagedBackendPort, "Fixed localhost port for watchdog-managed hermes serve")
-	softFailThreshold := flag.Int("backend-soft-fail-threshold", 3, "Consecutive soft probe failures before unresponsive candidacy")
-	unresponsiveGrace := flag.Int("backend-unresponsive-grace", 120, "Wall-clock seconds of soft failure before owned-backend restart")
-	statusTimeoutMs := flag.Int("backend-status-timeout-ms", 2000, "HTTP timeout for /api/status probe")
-	authTimeoutMs := flag.Int("backend-auth-timeout-ms", 3000, "HTTP timeout for authenticated /api/sessions probe")
-	authConfirmDelayMs := flag.Int("backend-auth-confirm-delay-ms", 500, "Delay between confirmed unauthorized probes")
 	embeddingEnabled := flag.Bool("embedding-enabled", false, "Supervise the configured local embedding llama-server")
 	embeddingEndpoint := flag.String("embedding-endpoint", "", "Configured local embedding endpoint, for example http://127.0.0.1:8082")
 	embeddingServer := flag.String("embedding-server", "", "Configured llama-server executable for embeddings")
@@ -72,32 +62,22 @@ func main() {
 	}
 
 	cfg := Config{
-		IntervalSec:                 *interval,
-		FailThreshold:               *failThreshold,
-		Once:                        *once,
-		PrewarmBackend:              *prewarm,
-		BackendStartTimeoutSec:      *backendStartTimeout,
-		BackendReadyTimeoutSec:      *backendReadyTimeout,
-		ManagedBackendPort:          *managedPort,
-		BackendSoftFailThreshold:    *softFailThreshold,
-		BackendUnresponsiveGraceSec: *unresponsiveGrace,
-		BackendStatusTimeoutMs:      *statusTimeoutMs,
-		BackendAuthTimeoutMs:        *authTimeoutMs,
-		BackendAuthConfirmDelayMs:   *authConfirmDelayMs,
-		EmbeddingEnabled:            *embeddingEnabled,
-		EmbeddingEndpoint:           *embeddingEndpoint,
-		EmbeddingServer:             *embeddingServer,
-		EmbeddingModel:              *embeddingModel,
-		EmbeddingArgsJSON:           *embeddingArgsJSON,
-		EmbeddingStartTimeoutSec:    *embeddingStartTimeout,
-		ListenAddr:                  strings.TrimSpace(*listen),
-		TsnetHostname:               *tsnetHost,
-		EnableTsnet:                 *enableTsnet,
-		HermesRoot:                  root,
-		HermesHome:                  home,
-		PackagedExe:                 *packagedExe,
-		DataDir:                     *dataDir,
-		TsAuthKey:                   loadTsAuthKey(),
+		IntervalSec:              *interval,
+		Once:                     *once,
+		EmbeddingEnabled:         *embeddingEnabled,
+		EmbeddingEndpoint:        *embeddingEndpoint,
+		EmbeddingServer:          *embeddingServer,
+		EmbeddingModel:           *embeddingModel,
+		EmbeddingArgsJSON:        *embeddingArgsJSON,
+		EmbeddingStartTimeoutSec: *embeddingStartTimeout,
+		ListenAddr:               strings.TrimSpace(*listen),
+		TsnetHostname:            *tsnetHost,
+		EnableTsnet:              *enableTsnet,
+		HermesRoot:               root,
+		HermesHome:               home,
+		PackagedExe:              *packagedExe,
+		DataDir:                  *dataDir,
+		TsAuthKey:                loadTsAuthKey(),
 	}
 	if cfg.PackagedExe == "" {
 		cfg.PackagedExe = defaultPackagedExe(root)
@@ -127,8 +107,6 @@ func main() {
 	wd := NewWatchdog(cfg, logger)
 
 	if *once {
-		// Single-shot: prewarm synchronously so EnsureHealthy finishes before exit.
-		wd.PrewarmBackend()
 		wd.RunCycle()
 		logger.Infof("watchdog once complete")
 		return
@@ -136,8 +114,7 @@ func main() {
 
 	stop := make(chan struct{})
 
-	// Start read-only status plane + probe loop before prewarm so BuildIfMissing/serve
-	// cold-start cannot block HTTP readiness or mutual monitoring for minutes.
+	// Start the read-only status plane before the recovery loop.
 	if !*noHTTP {
 		srv := NewHTTPServer(wd)
 		handler := srv.Handler()
@@ -150,9 +127,6 @@ func main() {
 	}
 
 	go wd.RunLoop(stop)
-	if cfg.PrewarmBackend {
-		go wd.PrewarmBackend()
-	}
 	<-stop
 	logger.Infof("watchdog stop")
 }

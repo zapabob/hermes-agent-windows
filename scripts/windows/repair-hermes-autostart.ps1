@@ -127,8 +127,8 @@ $envPrefix = "`$env:HERMES_HOME='$homeLiteral'; "
 $gatewayEnvPrefix = "$envPrefix`$env:HERMES_STARTUP_DELAY_SECONDS='20'; `$env:HERMES_GATEWAY_WINDOW_STYLE='Hidden'; "
 
 $taskCommands = @{
-    HermesGoWatchdogBootAutoStart = "$envPrefix& '$goLiteral' -HermesRoot '$rootLiteral' -HermesHome '$homeLiteral' -ManagedBackendPort 9119"
-    HermesGoWatchdogLogonAutoStart = "$envPrefix& '$goLiteral' -HermesRoot '$rootLiteral' -HermesHome '$homeLiteral' -ManagedBackendPort 9119"
+    HermesGoWatchdogBootAutoStart = "$envPrefix& '$goLiteral' -HermesRoot '$rootLiteral' -HermesHome '$homeLiteral'"
+    HermesGoWatchdogLogonAutoStart = "$envPrefix& '$goLiteral' -HermesRoot '$rootLiteral' -HermesHome '$homeLiteral'"
     HermesGatewayBootAutoStart = "$gatewayEnvPrefix& '$gatewayLiteral'"
     HermesHypuraHarnessBootAutoStart = "$envPrefix& '$pythonLiteral' -m hermes_cli.main harness start"
     HermesMemoryGraphBootAutoStart = "$envPrefix& '$memoryLiteral'"

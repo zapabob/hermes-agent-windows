@@ -183,7 +183,7 @@ try { & $PythonExe -m hermes_cli.main harness stop 2>$null } catch {}
 Stop-PortListener -Port 8787 -NamePattern "hermes|server\.py" # WebUI
 Stop-PortListener -Port 9120 -NamePattern "hermes_cli.*dashboard|dashboard" # Dashboard
 Stop-PortListener -Port 9920 -NamePattern "hermes-watchdog" # Go Watchdog ops
-Stop-PortListener -Port 9119 -NamePattern "hermes_cli.*serve|hermes.*serve" # Managed backend
+Stop-PortListener -Port 9119 -NamePattern "hermes_cli.*serve|hermes.*serve" # Legacy fixed-port serve (Electron owns dynamic backend)
 Stop-PortListener -Port 9123 -NamePattern "go-a2a-hub" # Go A2A Hub
 Stop-PortListener -Port 9124 -NamePattern "go-a2a-roundrobin" # Go A2A Round-Robin
 Stop-PortListener -Port 8765 -NamePattern "memory-graph|obsidian" # Memory Graph / API

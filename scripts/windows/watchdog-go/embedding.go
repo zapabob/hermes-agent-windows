@@ -23,7 +23,7 @@ var embeddingCredentialName = regexp.MustCompile(`(?i)(^|_)(API_KEY|ACCESS_KEY|A
 // embeddingChildEnv is deliberately local to the embedding spawn boundary.
 // Preserve GPU/OS/runtime settings and the server's own inbound authentication,
 // but never pass unrelated provider, developer, or watchdog credentials. This
-// does not change the environment of the parent, Desktop, or managed backend.
+// does not change the environment of the parent, Desktop, or Electron-owned backend.
 func embeddingChildEnv(base []string) []string {
 	out := make([]string, 0, len(base)) // non-nil: empty must not mean inherit
 	for _, entry := range base {

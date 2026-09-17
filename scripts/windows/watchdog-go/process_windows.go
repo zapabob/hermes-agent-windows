@@ -3,9 +3,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -92,18 +90,18 @@ func isDesktopBackendCommandLine(cl string) bool {
 		!strings.Contains(cl, "Scripts\\hermes.exe") {
 		return false
 	}
-	// Never manage gateway / harness / cron — those are stack services.
+	// Never classify gateway / harness / cron as Desktop backend observations.
 	if strings.Contains(lower, " gateway") || strings.Contains(lower, " harness") || strings.Contains(lower, " cron") {
 		return false
 	}
-	// Explicit ops dashboard / fixed ports are not Desktop-spawned backends.
+	// Explicit ops dashboard / fixed ports are not Desktop backend observations.
 	if strings.Contains(cl, "--port 9120") || strings.Contains(cl, "--port=9120") ||
 		strings.Contains(cl, "--port 8787") || strings.Contains(cl, "--port=8787") {
 		return false
 	}
 	if strings.Contains(cl, " serve") || strings.Contains(cl, "\tserve") {
 		// Prefer Desktop's ephemeral serve (--port 0). Bare "serve" still matches,
-		// but find/reap skip reserved ops ports so dashboard:9120 is never claimed/killed.
+		// while reserved ops ports are excluded from observation.
 		return true
 	}
 	if strings.Contains(cl, "dashboard") && strings.Contains(cl, "--no-open") {
@@ -266,35 +264,6 @@ func appendUniqueInt(list []int, v int) []int {
 	return append(list, v)
 }
 
-// waitManagedPortCleared is deliberately observational. A port number alone is
-// never authority to terminate its owner; an unrelated process may legitimately
-// hold the configured port. Callers may stop an in-memory child they launched,
-// then use this helper to prove the port became free.
-func waitManagedPortCleared(port int, timeout time.Duration, logger *Logger) bool {
-	if port <= 0 {
-		return true
-	}
-	if timeout <= 0 {
-		timeout = 15 * time.Second
-	}
-	deadline := time.Now().Add(timeout)
-	for time.Now().Before(deadline) {
-		if testBackendStatus(port) {
-			time.Sleep(400 * time.Millisecond)
-			continue
-		}
-		if len(listeningPIDsOnPort(port)) == 0 {
-			return true
-		}
-		time.Sleep(400 * time.Millisecond)
-	}
-	cleared := !testBackendStatus(port) && len(listeningPIDsOnPort(port)) == 0
-	if !cleared && logger != nil {
-		logger.Infof("managed port %d still occupied after clear wait (%s)", port, timeout)
-	}
-	return cleared
-}
-
 type backendInfo struct {
 	PID  uint32 `json:"pid"`
 	Port int    `json:"port"`
@@ -325,200 +294,4 @@ func findHealthyDesktopBackend(cfg Config) *backendInfo {
 		}
 	}
 	return nil
-}
-
-func stopProcessTreeIfIdentityMatches(expected win32Process, logger *Logger) bool {
-	// Keep the queried kernel handle through termination. Resolving the numeric
-	// PID again after validation can target a foreign process if the original
-	// exits and Windows reuses the number.
-	handle, err := windows.OpenProcess(
-		windows.PROCESS_QUERY_LIMITED_INFORMATION|windows.PROCESS_TERMINATE|windows.SYNCHRONIZE,
-		false,
-		expected.ProcessID,
-	)
-	if err != nil {
-		if logger != nil {
-			logger.Infof("refusing Desktop stop pid=%d: cannot open exact process handle", expected.ProcessID)
-		}
-		return false
-	}
-	defer windows.CloseHandle(handle)
-
-	identity, ok := readProcessIdentityFromHandle(handle, int(expected.ProcessID))
-	if !ok || identity.CreationTime != expected.CreationTime ||
-		!sameExecutablePath(identity.ExecutablePath, expected.ExecutablePath) {
-		if logger != nil {
-			logger.Infof("refusing Desktop stop pid=%d: process identity changed", expected.ProcessID)
-		}
-		return false
-	}
-	if err := windows.TerminateProcess(handle, 1); err != nil {
-		if logger != nil {
-			logger.Infof("Desktop stop pid=%d failed on exact process handle: %v", expected.ProcessID, err)
-		}
-		return false
-	}
-	_, _ = windows.WaitForSingleObject(handle, 5_000)
-	return true
-}
-
-func stopAllDesktopProcessTrees(logger *Logger, cfg Config) {
-	desktop, err := getDesktopProcesses(cfg)
-	if err != nil {
-		logger.Infof("enumerate Hermes.exe for tree-kill: %v", err)
-	}
-	seen := make(map[uint32]struct{}, len(desktop))
-	for _, p := range desktop {
-		if _, ok := seen[p.ProcessID]; ok {
-			continue
-		}
-		seen[p.ProcessID] = struct{}{}
-		logger.Infof("stopping exact owned Hermes.exe process pid=%d", p.ProcessID)
-		stopProcessTreeIfIdentityMatches(p, logger)
-	}
-}
-
-func stopOrphanDesktopBackends(logger *Logger, cfg Config, skipPIDs ...uint32) int {
-	// Process name, path, command line, and listening port establish only that a
-	// process resembles a Desktop backend. They do not prove that this watchdog
-	// launched it. Preserve every candidate and let the watchdog stop only the
-	// exact child handle held by BackendManager.
-	if logger != nil {
-		logger.Infof("orphan backend reap skipped: no watchdog-owned child identity")
-	}
-	return 0
-}
-
-func readLaunchManifest(cfg Config, bm *BackendManager) *DesktopBackendManifest {
-	if bm != nil {
-		if manifest, err := bm.readManifest(); err == nil && manifest != nil {
-			return manifest
-		}
-	}
-	path := filepath.Join(cfg.DataDir, desktopBackendManifestName)
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return nil
-	}
-	var manifest DesktopBackendManifest
-	if json.Unmarshal(raw, &manifest) != nil {
-		return nil
-	}
-	if manifest.BaseURL == "" || manifest.Token == "" {
-		return nil
-	}
-	return &manifest
-}
-
-// currentProcessSessionID returns the Windows session that hosts this process.
-// Session 0 is the non-interactive services session (S4U boot tasks land here).
-func currentProcessSessionID() (uint32, error) {
-	var sessionID uint32
-	err := windows.ProcessIdToSessionId(uint32(os.Getpid()), &sessionID)
-	return sessionID, err
-}
-
-func isNonInteractiveSession() bool {
-	sessionID, err := currentProcessSessionID()
-	return err == nil && sessionID == 0
-}
-
-const desktopLogonTaskName = "HermesDesktopAutoStart"
-
-// startDesktopInInteractiveSession asks the logon-registered Desktop task to
-// run in the user's interactive session. Direct CreateProcess from Session 0
-// either fails silently or produces a window the console user never sees.
-func startDesktopInInteractiveSession(logger *Logger) bool {
-	cmd := exec.Command("schtasks.exe", "/Run", "/TN", desktopLogonTaskName)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	out, err := cmd.CombinedOutput()
-	trimmed := strings.TrimSpace(string(out))
-	if err != nil {
-		if logger != nil {
-			logger.Infof("Session 0 Desktop relaunch via %s failed: %v (%s)", desktopLogonTaskName, err, trimmed)
-		}
-		return false
-	}
-	if logger != nil {
-		logger.Infof("requested interactive Desktop launch via scheduled task %s", desktopLogonTaskName)
-	}
-	return true
-}
-
-func startPackagedDesktop(cfg Config, logger *Logger, bm *BackendManager, mutationAllowed func() bool) bool {
-	if !fileExists(cfg.PackagedExe) {
-		logger.Infof("Hermes.exe missing at %s", cfg.PackagedExe)
-		return false
-	}
-	if mutationAllowed != nil && !mutationAllowed() {
-		logger.Infof("Desktop launch revoked by maintenance fence")
-		return false
-	}
-	// S4U boot tasks host the watchdog in Session 0. Never CreateProcess a GUI
-	// Desktop there — kill+skip left the console without Hermes.exe and burned
-	// the recovery budget. Prefer the Interactive logon task instead.
-	if isNonInteractiveSession() {
-		logger.Infof("watchdog is running in Session 0 (non-interactive); launching Desktop via %s (Desktop belongs in user session)", desktopLogonTaskName)
-		return startDesktopInInteractiveSession(logger)
-	}
-	work := filepath.Dir(cfg.PackagedExe)
-	cmd := exec.Command(cfg.PackagedExe)
-	cmd.Dir = work
-	manifest := readLaunchManifest(cfg, bm)
-	cmd.Env = append(stripInheritedDesktopRemotes(os.Environ()), desktopLaunchEnv(cfg, manifest)...)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	if err := cmd.Start(); err != nil {
-		logger.Infof("failed to launch Desktop: %v", err)
-		return false
-	}
-	if manifest != nil {
-		logger.Infof("launched %s (prewarmed backend %s)", cfg.PackagedExe, manifest.BaseURL)
-	} else {
-		logger.Infof("launched %s", cfg.PackagedExe)
-	}
-	return true
-}
-
-func restartPackagedDesktop(cfg Config, logger *Logger, bm *BackendManager, mutationAllowed func() bool) bool {
-	if mutationAllowed != nil && !mutationAllowed() {
-		logger.Infof("Desktop restart revoked before stop")
-		return false
-	}
-	// Session 0 can terminate interactive Hermes.exe but cannot put a visible
-	// window back. Refusing the stop avoids "Desktop mysteriously dies".
-	if isNonInteractiveSession() {
-		logger.Infof("Session 0: refusing Desktop kill; recovering managed backend only")
-		if bm != nil {
-			if _, err := bm.EnsureHealthy(); err != nil {
-				logger.Infof("Session 0 backend recovery: %v", err)
-			}
-		}
-		return false
-	}
-	logger.Infof("restarting Desktop (force backend respawn)")
-	stopAllDesktopProcessTrees(logger, cfg)
-	time.Sleep(2 * time.Second)
-	if mutationAllowed != nil && !mutationAllowed() {
-		logger.Infof("Desktop restart revoked after stop")
-		return false
-	}
-	var skipPID uint32
-	if bm != nil {
-		if managed := bm.currentHealthy(); managed != nil {
-			skipPID = managed.PID
-		}
-	}
-	// Desktop is gone — reap leftover ephemeral serves (managed :9119 is skipped).
-	stopOrphanDesktopBackends(logger, cfg, skipPID)
-	time.Sleep(1 * time.Second)
-	if mutationAllowed != nil && !mutationAllowed() {
-		logger.Infof("Desktop restart revoked before backend recovery")
-		return false
-	}
-	if bm != nil {
-		if _, err := bm.EnsureHealthy(); err != nil {
-			logger.Infof("pre-restart managed backend: %v", err)
-		}
-	}
-	return startPackagedDesktop(cfg, logger, bm, mutationAllowed)
 }
