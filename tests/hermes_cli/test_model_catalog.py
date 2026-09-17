@@ -75,18 +75,19 @@ class TestFetchSuccess:
     def test_fetch_and_cache_writes_disk(self, isolated_home):
         from hermes_cli import model_catalog
         manifest = _valid_manifest()
+        expected = model_catalog.detect_and_parse_catalog(manifest).to_dict()
         with patch.object(
-            model_catalog, "_fetch_manifest", return_value=manifest
+            model_catalog, "_fetch_manifest", return_value=expected
         ) as fetch:
             result = model_catalog.get_catalog(force_refresh=True)
 
-        assert result == manifest
+        assert result == expected
         assert fetch.called
 
         cache_file = model_catalog._cache_path()
         assert cache_file.exists()
         with open(cache_file) as fh:
-            assert json.load(fh) == manifest
+            assert json.load(fh) == expected
 
 
 class TestFetchFailure:
@@ -100,7 +101,8 @@ class TestFetchFailure:
         from hermes_cli import model_catalog
         # Prime disk cache with a fresh copy.
         manifest = _valid_manifest()
-        with patch.object(model_catalog, "_fetch_manifest", return_value=manifest):
+        expected = model_catalog.detect_and_parse_catalog(manifest).to_dict()
+        with patch.object(model_catalog, "_fetch_manifest", return_value=expected):
             model_catalog.get_catalog(force_refresh=True)
 
         # Now wipe in-process cache and simulate network failure on refetch.
@@ -108,11 +110,12 @@ class TestFetchFailure:
         with patch.object(model_catalog, "_fetch_manifest", return_value=None):
             result = model_catalog.get_catalog(force_refresh=True)
 
-        assert result == manifest
+        assert result == expected
 
     def test_fetch_failure_falls_back_to_stale_cache(self, isolated_home):
         from hermes_cli import model_catalog
         manifest = _valid_manifest()
+        expected = model_catalog.detect_and_parse_catalog(manifest).to_dict()
         # Write stale cache directly (mtime in the past).
         cache = model_catalog._cache_path()
         cache.parent.mkdir(parents=True, exist_ok=True)
@@ -125,8 +128,8 @@ class TestFetchFailure:
         with patch.object(model_catalog, "_fetch_manifest", return_value=None):
             result = model_catalog.get_catalog()
 
-        # Stale cache is better than nothing.
-        assert result == manifest
+        # Stale cache is normalized on read and better than nothing.
+        assert result == expected
 
 
 class TestFallbackChain:
@@ -177,18 +180,19 @@ class TestFallbackChain:
         a primary URL failure transparently produces a working catalog."""
         from hermes_cli import model_catalog
         manifest = _valid_manifest()
+        expected = model_catalog.detect_and_parse_catalog(manifest).to_dict()
         calls: list[str] = []
 
         def fake_fetch(url, timeout):
             calls.append(url)
             if url == self.PRIMARY:
                 return None
-            return manifest
+            return expected
 
         with patch.object(model_catalog, "_fetch_manifest", side_effect=fake_fetch):
             result = model_catalog.get_catalog(force_refresh=True)
 
-        assert result == manifest
+        assert result == expected
         assert self.FALLBACK in calls
 
 

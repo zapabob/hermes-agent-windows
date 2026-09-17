@@ -81,11 +81,12 @@ def nous_network_deny(allowed_explicit: bool = False) -> Generator[List[str], No
 
         original_socket_connect = socket.socket.connect
 
-        def intercepted_socket_connect(self: Any, address: Any) -> Any:
+        def intercepted_socket_connect(self: Any, *args: Any, **kwargs: Any) -> Any:
+            address = args[0] if args else kwargs.get("address")
             if isinstance(address, tuple) and len(address) > 0:
                 host = str(address[0])
                 check_url_or_host(host)
-            return original_socket_connect(self, address)
+            return original_socket_connect(self, *args, **kwargs)
 
         original_create_connection = socket.create_connection
 

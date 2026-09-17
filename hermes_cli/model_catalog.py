@@ -474,7 +474,12 @@ def _validate_manifest(data: Any) -> bool:
 
 
 def _read_disk_cache() -> tuple[dict[str, Any] | None, float]:
-    """Return ``(data_or_none, mtime)``. mtime is 0 if file is missing."""
+    """Return ``(data_or_none, mtime)``. mtime is 0 if file is missing.
+
+    Always returns a canonicalized NormalizedCatalog dict shape. If the file
+    on disk was in an unnormalized legacy format, automatically migrates the
+    cache on read.
+    """
     path = _cache_path()
     try:
         mtime = path.stat().st_mtime
@@ -485,18 +490,37 @@ def _read_disk_cache() -> tuple[dict[str, Any] | None, float]:
             data = json.load(fh)
     except (OSError, json.JSONDecodeError):
         return (None, 0.0)
-    if not _validate_manifest(data):
+
+    norm = detect_and_parse_catalog(data)
+    if norm is None:
         return (None, 0.0)
-    return (data, mtime)
+
+    canonical_dict = norm.to_dict()
+    # Migration: if disk content differed from canonical form, migrate on read
+    if data != canonical_dict:
+        _write_disk_cache(canonical_dict)
+        try:
+            mtime = path.stat().st_mtime
+        except OSError:
+            pass
+
+    return (canonical_dict, mtime)
 
 
-def _write_disk_cache(data: dict[str, Any]) -> None:
+def _write_disk_cache(data: dict[str, Any] | NormalizedCatalog) -> None:
+    """Write catalog to disk cache atomically in canonical NormalizedCatalog shape."""
+    if isinstance(data, NormalizedCatalog):
+        canonical_dict = data.to_dict()
+    else:
+        norm = detect_and_parse_catalog(data)
+        canonical_dict = norm.to_dict() if norm is not None else data
+
     path = _cache_path()
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         tmp = path.with_suffix(path.suffix + ".tmp")
         with open(tmp, "w", encoding="utf-8") as fh:
-            json.dump(data, fh, indent=2)
+            json.dump(canonical_dict, fh, indent=2)
             fh.write("\n")
         atomic_replace(tmp, path)
     except OSError as exc:
@@ -737,10 +761,11 @@ def seed_cache_from_checkout(project_root: "Path | str") -> bool:
     except (OSError, json.JSONDecodeError) as exc:
         logger.debug("model catalog seed from checkout skipped (%s): %s", src, exc)
         return False
-    if not _validate_manifest(data):
+    norm = detect_and_parse_catalog(data)
+    if norm is None:
         logger.debug("model catalog seed from checkout skipped: invalid manifest at %s", src)
         return False
-    _write_disk_cache(data)
+    _write_disk_cache(norm.to_dict())
     reset_cache()  # drop the in-process copy so the next read picks up the seed
     return True
 

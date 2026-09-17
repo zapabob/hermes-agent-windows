@@ -250,3 +250,91 @@ def test_8_no_request_to_nous_in_any_operation(
         for url in model_catalog.DEFAULT_CATALOG_FALLBACK_URLS:
             assert "nousresearch.com" not in url.lower()
         assert len(intercepted) == 0
+
+
+def test_b2_seed_cache_from_checkout_normalizes_to_canonical(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """B.2: seed_cache_from_checkout must parse + normalize before disk write."""
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_home"))
+    from hermes_cli import model_catalog
+
+    model_catalog.reset_cache()
+
+    # Create mock project root with legacy manifest
+    proj_root = tmp_path / "repo"
+    manifest_dir = proj_root / "website" / "static" / "api"
+    manifest_dir.mkdir(parents=True, exist_ok=True)
+    manifest_file = manifest_dir / "model-catalog.json"
+    manifest_file.write_text(json.dumps(SAMPLE_LEGACY_HERMES_FIXTURE), encoding="utf-8")
+
+    success = model_catalog.seed_cache_from_checkout(proj_root)
+    assert success is True
+
+    # Inspect disk cache directly
+    cache_file = model_catalog._cache_path()
+    assert cache_file.exists()
+    disk_data = json.loads(cache_file.read_text(encoding="utf-8"))
+
+    # Assert disk data is in canonical normalized shape
+    assert "providers" in disk_data
+    openrouter = disk_data["providers"]["openrouter"]
+    assert "models" in openrouter
+    m0 = openrouter["models"][0]
+    # Canonical attributes must be present
+    assert "reasoning" in m0
+    assert "tool_call" in m0
+    assert "modalities" in m0
+    assert "context" in m0
+
+
+def test_b2_legacy_disk_cache_migrated_on_read(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """B.2: Existing raw legacy disk cache must be normalized on read / migration."""
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_home"))
+    from hermes_cli import model_catalog
+
+    model_catalog.reset_cache()
+    cache_file = model_catalog._cache_path()
+    cache_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # Write raw unnormalized legacy manifest directly to disk
+    cache_file.write_text(json.dumps(SAMPLE_LEGACY_HERMES_FIXTURE), encoding="utf-8")
+
+    # Read through _read_disk_cache
+    data, mtime = model_catalog._read_disk_cache()
+    assert data is not None
+
+    # Returned data must have canonical fields
+    m0 = data["providers"]["openrouter"]["models"][0]
+    assert "reasoning" in m0
+    assert "tool_call" in m0
+    assert "modalities" in m0
+
+    # Disk file itself must be migrated to normalized format
+    disk_migrated = json.loads(cache_file.read_text(encoding="utf-8"))
+    assert "reasoning" in disk_migrated["providers"]["openrouter"]["models"][0]
+
+
+def test_b2_consumers_always_receive_canonical_shape(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """B.2: Consumers (get_catalog, etc.) always receive canonical shape regardless of cache source."""
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_home"))
+    from hermes_cli import model_catalog
+
+    model_catalog.reset_cache()
+    # Test from models.dev source
+    norm = model_catalog.parse_models_dev(SAMPLE_MODELS_DEV_FIXTURE)
+    assert norm is not None
+    model_catalog._write_disk_cache(norm.to_dict())
+
+    cat = model_catalog.get_catalog()
+    for pid, pblock in cat.get("providers", {}).items():
+        for m in pblock.get("models", []):
+            assert "id" in m
+            assert "reasoning" in m
+            assert "tool_call" in m
+            assert "modalities" in m
+
