@@ -1,0 +1,110 @@
+name: Windows semantic adoption contracts
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - hermes_cli/plugin_dev.py
+      - tools/plugin_guard.py
+      - plugins/model-providers/router/**
+      - hermes_constants.py
+      - agent/prompt_cache_boundary.py
+      - tests/test_plugin_doctor_security_adoption.py
+      - tests/test_router_profile_scope_adoption.py
+      - tests/hermes_cli/test_plugin_dev.py
+      - tests/agent/test_prompt_cache_boundary.py
+      - .github/workflows/windows-semantic-adoption-audit.yml
+  push:
+    branches: [main, feat/windows-semantic-adoption-20260917]
+    paths:
+      - hermes_cli/plugin_dev.py
+      - tools/plugin_guard.py
+      - plugins/model-providers/router/**
+      - hermes_constants.py
+      - agent/prompt_cache_boundary.py
+      - tests/test_plugin_doctor_security_adoption.py
+      - tests/test_router_profile_scope_adoption.py
+      - tests/hermes_cli/test_plugin_dev.py
+      - tests/agent/test_prompt_cache_boundary.py
+      - .github/workflows/windows-semantic-adoption-audit.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-semantic-contracts-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-contracts:
+    name: Native semantic contracts (Python ${{ matrix.python }})
+    runs-on: windows-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.13']
+    env:
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+      ADOPTION_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+      ADOPTION_REPOSITORY: ${{ github.repository }}
+    steps:
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Verify exact head in an isolated Unicode Windows worktree
+        shell: python
+        run: |
+          import os, pathlib, re, subprocess, sys, xml.etree.ElementTree as ET
+          assert os.name == 'nt', 'This job must provide native Windows evidence'
+          def run(args, cwd=None):
+              p = subprocess.run(args, cwd=cwd, capture_output=True, text=True,
+                                 encoding='utf-8', errors='replace', timeout=240)
+              if p.returncode:
+                  raise RuntimeError(p.stdout[-2000:] + '\n' + p.stderr[-2000:])
+              return p.stdout
+          head = os.environ['ADOPTION_HEAD']
+          repository = os.environ['ADOPTION_REPOSITORY']
+          assert re.fullmatch(r'[a-f0-9]{40}', head)
+          assert re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repository)
+          root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'semantic contract repo'
+          work = pathlib.Path(os.environ['RUNNER_TEMP']) / 'native worktree 日本語'
+          run(['git', 'init', '--quiet', str(root)])
+          run(['git', '-C', str(root), 'config', 'core.longpaths', 'true'])
+          run(['git', '-C', str(root), 'remote', 'add', 'origin',
+               'https://github.com/' + repository + '.git'])
+          run(['git', '-C', str(root), 'fetch', '--quiet', '--no-tags', '--depth=1', 'origin', head])
+          run(['git', '-C', str(root), 'worktree', 'add', '--quiet', '--detach', str(work), head])
+          assert run(['git', '-C', str(work), 'rev-parse', 'HEAD']).strip() == head
+          print('TESTED_HEAD=' + head + '; NATIVE_WORKTREE=' + str(work))
+          run([sys.executable, '-m', 'pip', 'install', '--disable-pip-version-check', '-q',
+               'pytest==8.3.5', 'python-dotenv==1.2.2', 'rich==14.3.3',
+               'pyyaml==6.0.3', 'packaging==26.0'], cwd=work)
+          paths = ['tests/test_plugin_doctor_security_adoption.py',
+                   'tests/test_router_profile_scope_adoption.py',
+                   'tests/hermes_cli/test_plugin_dev.py',
+                   'tests/agent/test_prompt_cache_boundary.py']
+          xml = pathlib.Path(os.environ['RUNNER_TEMP']) / 'semantic-contracts.xml'
+          result = subprocess.run(
+              [sys.executable, '-m', 'pytest', '--noconftest', '-o', 'addopts=', *paths,
+               '-q', '--tb=short', '--junitxml=' + str(xml)], cwd=work, capture_output=True,
+              text=True, encoding='utf-8', errors='replace', timeout=240)
+          print(result.stdout[-14000:]); print(result.stderr[-2000:])
+          if not xml.exists():
+              raise SystemExit('Missing JUnit evidence')
+          report = ET.parse(xml)
+          counts = {tag: len(report.findall('.//' + tag))
+                    for tag in ('testcase', 'failure', 'error', 'skipped')}
+          print('EVIDENCE ' + str(counts))
+          assert not run(['git', '-C', str(work), 'diff', '--name-only']).strip()
+          run(['git', '-C', str(work), 'diff', '--check'])
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as summary:
+              summary.write('## Native semantic contract evidence\n\n')
+              summary.write(f'HEAD: `{head}`\n\nPython: `{sys.version}`\n\n')
+              summary.write(f'JUnit counts: `{counts}`\n\n')
+              summary.write('Scoped regression evidence, not whole-repository or whole-upstream parity.\n')
+          failed = (result.returncode or counts['testcase'] < 38 or
+                    counts['failure'] or counts['error'] or counts['skipped'])
+          sys.exit(1 if failed else 0)

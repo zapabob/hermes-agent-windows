@@ -44,12 +44,15 @@ by a background warmer when cold or stale.
 
 from __future__ import annotations
 
+import contextvars
 import json
 import logging
 import os
+import sys
 import threading
 import time
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Optional
 
 from hermes_cli import __version__ as _HERMES_VERSION
@@ -70,6 +73,27 @@ _efforts_lock = threading.Lock()
 _warm_started = False
 _disk_checked = False
 
+
+# Retain legacy module slots for unscoped callers, but isolate multiplexed
+# profiles using the existing Windows-normalized Hermes Home identity.
+_cache_by_home: dict[str, SimpleNamespace] = {}
+
+
+def _cache_state() -> Any:
+    from hermes_constants import get_hermes_home_override, hermes_home_key
+
+    if get_hermes_home_override() is None:
+        return sys.modules[__name__]
+    key = hermes_home_key()
+    with _efforts_lock:
+        state = _cache_by_home.get(key)
+        if state is None:
+            state = SimpleNamespace(
+                _efforts_cache=None, _warm_started=False, _disk_checked=False
+            )
+            _cache_by_home[key] = state
+        return state
+
 #: Disk-mirror staleness bound. Vocabularies change rarely; a stale verdict
 #: beats no verdict, so a past-TTL mirror is still served while a background
 #: refresh runs (same policy as the OpenRouter caps mirror).
@@ -77,8 +101,23 @@ _DISK_TTL_SECONDS = 24 * 60 * 60
 
 
 def _base_url() -> str:
-    """Allow a base-URL override via ``RAMP_ROUTER_BASE_URL``."""
-    return os.getenv("RAMP_ROUTER_BASE_URL", "").strip().rstrip("/") or ROUTER_DEFAULT_BASE_URL
+    """Resolve the active profile's endpoint before the process fallback."""
+    resolvers = []
+    try:
+        from hermes_cli.config import get_env_value_prefer_dotenv
+
+        resolvers.append(get_env_value_prefer_dotenv)
+    except Exception:
+        pass
+    resolvers.append(os.environ.get)
+    for resolve in resolvers:
+        try:
+            value = str(resolve("RAMP_ROUTER_BASE_URL") or "").strip().rstrip("/")
+        except Exception:
+            value = ""
+        if value:
+            return value
+    return ROUTER_DEFAULT_BASE_URL
 
 
 def _resolve_api_key() -> str:
@@ -218,12 +257,12 @@ def _load_disk() -> tuple[Optional[dict[str, list[str]]], float]:
 
 def _seed_efforts(items: Any) -> Optional[dict[str, list[str]]]:
     """Seed memory + disk caches from a ``/v1/models`` payload."""
-    global _efforts_cache
+    state = _cache_state()
     parsed = _parse_efforts(items)
     if parsed is None:
         return None
     with _efforts_lock:
-        _efforts_cache = parsed
+        state._efforts_cache = parsed
     _save_disk(parsed)
     return parsed
 
@@ -256,37 +295,37 @@ def _fetch_catalog_items(
 
 def _efforts_cache_only() -> Optional[dict[str, list[str]]]:
     """Memory, else the disk mirror. Never HTTP (hot-path safe)."""
-    global _efforts_cache, _disk_checked
+    state = _cache_state()
     with _efforts_lock:
-        cached = _efforts_cache
+        cached = state._efforts_cache
     if cached is not None:
         return cached
-    if _disk_checked:
+    if state._disk_checked:
         return None
-    _disk_checked = True
+    state._disk_checked = True
     parsed, age = _load_disk()
     if parsed is None:
         return None
     with _efforts_lock:
-        if _efforts_cache is None:
-            _efforts_cache = parsed
-        cached = _efforts_cache
+        if state._efforts_cache is None:
+            state._efforts_cache = parsed
+        cached = state._efforts_cache
     if age >= _DISK_TTL_SECONDS:
         _warm_efforts_async()
     return cached
 
 
 def _warm_efforts_async() -> None:
-    """Refresh the efforts cache in the background, at most once per process."""
-    global _warm_started
+    """Refresh the efforts cache in the background, at most once per Hermes home."""
+    state = _cache_state()
     if os.environ.get("PYTEST_CURRENT_TEST"):
         # Match the canonical caps warmer (hermes_cli/models.py): a mid-suite
         # background fetch would make cache state timing-dependent in tests.
         return
     with _efforts_lock:
-        if _warm_started:
+        if state._warm_started:
             return
-        _warm_started = True
+        state._warm_started = True
     if not _resolve_api_key():
         # Without a key the fetch would 401; the first authenticated
         # fetch_models() (picker/setup/doctor) seeds the cache instead.
@@ -299,7 +338,8 @@ def _warm_efforts_async() -> None:
 
     try:
         threading.Thread(
-            target=_refresh, name="router-caps-warm", daemon=True
+            target=contextvars.copy_context().run, args=(_refresh,),
+            name="router-caps-warm", daemon=True
         ).start()
     except Exception as exc:
         logger.debug("router: caps warmer failed to start: %s", exc)
