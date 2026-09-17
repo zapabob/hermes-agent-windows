@@ -13,19 +13,16 @@
 
 import { describe, expect, it, vi } from 'vitest'
 
+import type { SessionOwnerRoute } from '@/store/session-request-router'
+
 import { requestModelOptions } from './model-options'
 import { resolveModelPickerOwner } from './model-picker-owner'
-import type { SessionOwnerRoute } from '@/store/session-request-router'
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeRoute(
-  connectionId: string,
-  profile: string,
-  targetProfile?: string
-): SessionOwnerRoute {
+function makeRoute(connectionId: string, profile: string, targetProfile?: string): SessionOwnerRoute {
   return { connectionId, profile, targetProfile }
 }
 

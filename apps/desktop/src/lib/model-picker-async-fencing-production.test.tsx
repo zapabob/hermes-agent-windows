@@ -54,6 +54,7 @@ vi.mock('@/hermes', () => ({
 vi.mock('@/store/session-states', async importOriginal => {
   const actual = await importOriginal<typeof SessionStates>()
   const { atom } = await import('nanostores')
+
   return {
     ...actual,
     $focusedRuntimeId: atom<string | null>(null),
@@ -98,6 +99,7 @@ vi.mock('@/store/notifications', () => ({
 const catalogA = {
   providers: [{ slug: 'openai', models: ['gpt-4o'], name: 'OpenAI' }]
 }
+
 const catalogB = {
   providers: [{ slug: 'anthropic', models: ['claude-opus-4'], name: 'Anthropic' }]
 }
@@ -143,6 +145,7 @@ describe('Slice D.1.1: Production-Path Model Picker Async Fencing Qualification'
 
       // Tile B initial state
       const tileBState = { model: 'model-b1', provider: 'provider-b' }
+
       const updateSession = vi.fn((sessionId: string, updater: (prev: typeof tileBState) => typeof tileBState) => {
         if (sessionId === 'session-b') {
           const next = updater(tileBState)
@@ -150,6 +153,7 @@ describe('Slice D.1.1: Production-Path Model Picker Async Fencing Qualification'
           tileBState.provider = next.provider
         }
       })
+
       sessionTileDelegateMock.mockReturnValue({ updateSession } as never)
 
       const ackB2 = deferred<{ key: string; value: string; provider: string }>()
@@ -157,12 +161,15 @@ describe('Slice D.1.1: Production-Path Model Picker Async Fencing Qualification'
 
       const requestGateway = vi.fn((_method: string, params?: Record<string, unknown>) => {
         const val = String(params?.value ?? '')
+
         if (val.includes('model-b2')) {
           return ackB2.promise as never
         }
+
         if (val.includes('model-b3')) {
           return ackB3.promise as never
         }
+
         return Promise.resolve({} as never)
       })
 
@@ -204,6 +211,7 @@ describe('Slice D.1.1: Production-Path Model Picker Async Fencing Qualification'
       const cacheB = queryClient.getQueryData<ModelOptionsResponse>(
         modelOptionsQueryKey('profile-b', 'session-b', 'conn-b')
       )
+
       expect(cacheB?.model).toBe('model-b3')
 
       // Then resolve old B2 acknowledgement
@@ -219,6 +227,7 @@ describe('Slice D.1.1: Production-Path Model Picker Async Fencing Qualification'
       const cacheBAfter = queryClient.getQueryData<ModelOptionsResponse>(
         modelOptionsQueryKey('profile-b', 'session-b', 'conn-b')
       )
+
       expect(cacheBAfter?.model).toBe('model-b3')
 
       // Primary tile A unchanged
@@ -304,32 +313,34 @@ describe('Slice D.1.1: Production-Path Model Picker Async Fencing Qualification'
         if (owner === 'none') {
           return <div data-testid="idle">No picker open</div>
         }
+
         if (owner === 'B') {
           return (
             <ModelPickerDialog
-              open={true}
-              onOpenChange={vi.fn()}
-              ownerConnectionId="conn-b"
-              profile="profile-b"
-              sessionId="session-b"
               currentModel="claude-opus-4"
               currentProvider="anthropic"
+              onOpenChange={vi.fn()}
               onSelect={vi.fn()}
+              open={true}
+              ownerConnectionId="conn-b"
+              profile="profile-b"
               request={dispatchB}
+              sessionId="session-b"
             />
           )
         }
+
         return (
           <ModelPickerDialog
-            open={true}
-            onOpenChange={vi.fn()}
-            ownerConnectionId="conn-a"
-            profile="profile-a"
-            sessionId="session-a"
             currentModel="gpt-4o"
             currentProvider="openai"
+            onOpenChange={vi.fn()}
             onSelect={vi.fn()}
+            open={true}
+            ownerConnectionId="conn-a"
+            profile="profile-a"
             request={dispatchA}
+            sessionId="session-a"
           />
         )
       }
@@ -375,12 +386,14 @@ describe('Slice D.1.1: Production-Path Model Picker Async Fencing Qualification'
       const cacheA = queryClient.getQueryData<ModelOptionsResponse>(
         modelOptionsQueryKey('profile-a', 'session-a', 'conn-a')
       )
+
       expect(cacheA?.providers?.[0]?.slug).toBe('openai')
 
       // B result, if cached, exists only under B owner key (never ambient or A key)
       const cacheB = queryClient.getQueryData<ModelOptionsResponse>(
         modelOptionsQueryKey('profile-b', 'session-b', 'conn-b')
       )
+
       if (cacheB) {
         expect(cacheB?.providers?.[0]?.slug).toBe('anthropic')
       }
@@ -406,9 +419,11 @@ describe('Slice D.1.1: Production-Path Model Picker Async Fencing Qualification'
         if (connId === 'conn-a') {
           return deferredA.promise
         }
+
         if (connId === 'conn-b') {
           return deferredB.promise
         }
+
         return Promise.resolve({ providers: [] })
       })
 
@@ -435,9 +450,9 @@ describe('Slice D.1.1: Production-Path Model Picker Async Fencing Qualification'
       render(
         <QueryClientProvider client={queryClient}>
           <ModelPickerOverlay
-            profile="ambient-profile"
-            ownerConnectionId="ambient-conn"
             onSelect={vi.fn()}
+            ownerConnectionId="ambient-conn"
+            profile="ambient-profile"
             requestGateway={vi.fn()}
           />
         </QueryClientProvider>
@@ -445,7 +460,12 @@ describe('Slice D.1.1: Production-Path Model Picker Async Fencing Qualification'
 
       // A request begins
       await waitFor(() =>
-        expect(requestGatewayForAgentMock).toHaveBeenCalledWith('conn-a', 'profile-a', 'model.options', expect.anything())
+        expect(requestGatewayForAgentMock).toHaveBeenCalledWith(
+          'conn-a',
+          'profile-a',
+          'model.options',
+          expect.anything()
+        )
       )
 
       // Focus changes to B
@@ -457,7 +477,12 @@ describe('Slice D.1.1: Production-Path Model Picker Async Fencing Qualification'
 
       // B request begins
       await waitFor(() =>
-        expect(requestGatewayForAgentMock).toHaveBeenCalledWith('conn-b', 'profile-b', 'model.options', expect.anything())
+        expect(requestGatewayForAgentMock).toHaveBeenCalledWith(
+          'conn-b',
+          'profile-b',
+          'model.options',
+          expect.anything()
+        )
       )
 
       // B resolves first
