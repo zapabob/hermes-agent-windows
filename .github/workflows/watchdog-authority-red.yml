@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   apply-green:
-    if: github.event.head_commit.message == 'ci: apply watchdog authority GREEN'
+    if: "${{ github.event.head_commit.message == 'ci: apply watchdog authority GREEN' }}"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
