@@ -657,7 +657,82 @@ if (Test-Path -LiteralPath $ownershipScript) {
 
 # =============================================================================
 # TEST 4 — Backend Crash Recovery x 10
+# Crash injection is REFUSED unless all identity gates pass:
+#   Gate 1. Desktop PID resolved and live.
+#   Gate 2. Backend PID resolved as owned child of that Desktop.
+#   Gate 3. Ledger has EXACTLY ONE entry for the candidate PID.
+#   Gate 4. Ledger entry is complete:
+#             - nonce present and non-empty
+#             - startMarker present, non-empty, NOT "pid-only:" prefix
+#             - parentPid == current Desktop PID
+#             - parentStartMarker present and non-empty
+#   Gate 5. Live startMarker probe matches ledger startMarker
+#            (revalidated immediately before Stop-Process to resist PID-reuse TOCTOU).
+# Any failed gate => cycle recorded as identity_not_verified / passed=false.
 # =============================================================================
+function Get-LiveStartMarker([int]$TargetPid) {
+    # Mirrors production: win:$ticks = Get-Process.StartTime.ToUniversalTime().Ticks
+    try {
+        $p = Get-Process -Id $TargetPid -ErrorAction Stop
+        $ticks = $p.StartTime.ToUniversalTime().Ticks
+        return "win:$ticks"
+    } catch {
+        return $null
+    }
+}
+
+function Invoke-Test4IdentityGates {
+    param(
+        [int]$DesktopPid,
+        [int]$CandidatePid,
+        [string]$LedgerPath
+    )
+    # Returns a hashtable: { passed, refusalReason, ledgerEntry }
+
+    # Gate 3: load ledger, require EXACTLY ONE matching entry
+    if (-not (Test-Path -LiteralPath $LedgerPath)) {
+        return @{ passed = $false; refusalReason = "ledger_file_not_found" }
+    }
+    $ledgerData = $null
+    try { $ledgerData = Get-Content -Raw -LiteralPath $LedgerPath -ErrorAction Stop | ConvertFrom-Json } catch {}
+    if (-not $ledgerData -or -not $ledgerData.backends) {
+        return @{ passed = $false; refusalReason = "ledger_parse_failed" }
+    }
+    $ledgerMatches = @($ledgerData.backends | Where-Object { [int]$_.pid -eq $CandidatePid })
+    if ($ledgerMatches.Count -eq 0) {
+        return @{ passed = $false; refusalReason = "pid_absent_from_ledger" }
+    }
+    if ($ledgerMatches.Count -gt 1) {
+        return @{ passed = $false; refusalReason = "ledger_duplicate_entries:$($ledgerMatches.Count)" }
+    }
+    $entry = $ledgerMatches[0]
+
+    # Gate 4a: nonce present and non-empty
+    if (-not $entry.nonce -or [string]::IsNullOrWhiteSpace([string]$entry.nonce)) {
+        return @{ passed = $false; refusalReason = "nonce_absent" }
+    }
+    # Gate 4b: startMarker present, non-empty, NOT pid-only
+    $sm = [string]$entry.startMarker
+    if ([string]::IsNullOrWhiteSpace($sm)) {
+        return @{ passed = $false; refusalReason = "startMarker_absent" }
+    }
+    if ($sm.StartsWith("pid-only:")) {
+        return @{ passed = $false; refusalReason = "startMarker_is_pid_only" }
+    }
+    # Gate 4c: parentPid matches current Desktop lifecycle
+    $ledgerParentPid = 0
+    try { $ledgerParentPid = [int]$entry.parentPid } catch {}
+    if ($ledgerParentPid -ne $DesktopPid) {
+        return @{ passed = $false; refusalReason = "parentPid_mismatch:ledger=$ledgerParentPid,desktop=$DesktopPid" }
+    }
+    # Gate 4d: parentStartMarker present and non-empty
+    if (-not $entry.parentStartMarker -or [string]::IsNullOrWhiteSpace([string]$entry.parentStartMarker)) {
+        return @{ passed = $false; refusalReason = "parentStartMarker_absent" }
+    }
+
+    return @{ passed = $true; refusalReason = $null; ledgerEntry = $entry }
+}
+
 Write-Step "=== Starting TEST 4: Backend Crash Recovery x $CrashCycles ==="
 $backendCrashPassed = 0
 $requiredCrashCycles = 10
@@ -666,52 +741,58 @@ $crashStatus = if ($SkipLongCycles) { "smoke" } else { "full" }
 $crashTqdmSw = [System.Diagnostics.Stopwatch]::StartNew()
 
 for ($c = 1; $c -le $actualCrashCycles; $c++) {
+    # Gate 1: Desktop PID
     $currentMains = Get-DesktopMainProcess
     if ($currentMains.Count -eq 0) {
-        Write-Warning "No desktop main for crash cycle $c"
+        Write-Warning "TEST4 cycle $c REFUSED: no desktop main process (identity_not_verified)"
+        Write-TqdmProgress -Activity "TEST 4 (Crash Recovery)" -Current $c -Total $actualCrashCycles -Stopwatch $crashTqdmSw -Status ("Cycle {0}: identity_not_verified" -f $c)
         continue
     }
     $dPid = [int]$currentMains[0].ProcessId
+
+    # Gate 2: Backend PID as owned child
     $bProc = Get-DesktopOwnedBackend $dPid
     if (-not $bProc) {
-        Write-Warning "No owned backend for desktop PID $dPid"
+        Write-Warning "TEST4 cycle $c REFUSED: no owned backend for desktop PID $dPid (identity_not_verified)"
+        Write-TqdmProgress -Activity "TEST 4 (Crash Recovery)" -Current $c -Total $actualCrashCycles -Stopwatch $crashTqdmSw -Status ("Cycle {0}: identity_not_verified" -f $c)
         continue
     }
     $oldBackendPid = [int]$bProc.ProcessId
 
-    # Identity-bound check before termination:
-    # 1. Verify parentage is linked to current Desktop main
-    $parentPid = 0
-    try {
-        $cimProc = Get-CimInstance Win32_Process -Filter "ProcessId = $oldBackendPid" -ErrorAction SilentlyContinue
-        if ($cimProc) { $parentPid = [int]$cimProc.ParentProcessId }
-    } catch {}
-    $isLegitChild = ($parentPid -eq $dPid)
-    if (-not $isLegitChild -and $parentPid -gt 0) {
-        $parentCim = Get-CimInstance Win32_Process -Filter "ProcessId = $parentPid" -ErrorAction SilentlyContinue
-        if ($parentCim -and [int]$parentCim.ParentProcessId -eq $dPid) {
-            $isLegitChild = $true
-        }
+    # Gates 3+4: ledger identity check
+    $gateResult = Invoke-Test4IdentityGates -DesktopPid $dPid -CandidatePid $oldBackendPid -LedgerPath $OwnershipLedgerPath
+    if (-not $gateResult.passed) {
+        Write-Warning ("TEST4 cycle {0} REFUSED: {1} (backend PID={2}, desktop PID={3})" -f $c, $gateResult.refusalReason, $oldBackendPid, $dPid)
+        Write-TqdmProgress -Activity "TEST 4 (Crash Recovery)" -Current $c -Total $actualCrashCycles -Stopwatch $crashTqdmSw -Status ("Cycle {0}: {1}" -f $c, $gateResult.refusalReason)
+        continue
     }
-    if (-not $isLegitChild) {
-        Write-Warning ("Refusing to terminate PID={0}: parentage check failed (ParentPID={1}, DesktopPID={2})" -f $oldBackendPid, $parentPid, $dPid)
+    $ledgerEntry = $gateResult.ledgerEntry
+    $ledgerStartMarker = [string]$ledgerEntry.startMarker
+
+    # Gate 5 (first): live startMarker probe against ledger
+    $liveMarkerPre = Get-LiveStartMarker -TargetPid $oldBackendPid
+    if (-not $liveMarkerPre) {
+        Write-Warning ("TEST4 cycle {0} REFUSED: live startMarker probe failed (PID={1} may have died)" -f $c, $oldBackendPid)
+        Write-TqdmProgress -Activity "TEST 4 (Crash Recovery)" -Current $c -Total $actualCrashCycles -Stopwatch $crashTqdmSw -Status ("Cycle {0}: live_marker_probe_failed" -f $c)
+        continue
+    }
+    if ($liveMarkerPre -ne $ledgerStartMarker) {
+        Write-Warning ("TEST4 cycle {0} REFUSED: startMarker mismatch (live={1}, ledger={2})" -f $c, $liveMarkerPre, $ledgerStartMarker)
+        Write-TqdmProgress -Activity "TEST 4 (Crash Recovery)" -Current $c -Total $actualCrashCycles -Stopwatch $crashTqdmSw -Status ("Cycle {0}: startMarker_mismatch" -f $c)
         continue
     }
 
-    # 2. Verify ledger registration
-    $inLedger = $false
-    try {
-        if (Test-Path -LiteralPath $OwnershipLedgerPath) {
-            $ledgerData = Get-Content -Raw -LiteralPath $OwnershipLedgerPath | ConvertFrom-Json
-            if ($ledgerData.backends) {
-                $matchedEntry = @($ledgerData.backends | Where-Object { [int]$_.pid -eq $oldBackendPid })
-                if ($matchedEntry.Count -gt 0) { $inLedger = $true }
-            }
-        }
-    } catch {}
-    Write-Step ("Identity-bound verified for crash cycle {0}: backend PID={1}, parent PID={2}, inLedger={3}" -f $c, $oldBackendPid, $parentPid, $inLedger)
+    Write-Step ("TEST4 cycle {0}: all 5 identity gates PASSED (PID={1}, nonce={2}, startMarker={3}, parentPid={4})" -f $c, $oldBackendPid, $ledgerEntry.nonce, $liveMarkerPre, $dPid)
 
-    # Terminate ONLY the verified owned child backend
+    # Gate 5 (revalidation immediately before Stop-Process — TOCTOU guard)
+    $liveMarkerFinal = Get-LiveStartMarker -TargetPid $oldBackendPid
+    if (-not $liveMarkerFinal -or $liveMarkerFinal -ne $ledgerStartMarker) {
+        Write-Warning ("TEST4 cycle {0} REFUSED: pre-termination startMarker revalidation failed (live={1}, ledger={2})" -f $c, $liveMarkerFinal, $ledgerStartMarker)
+        Write-TqdmProgress -Activity "TEST 4 (Crash Recovery)" -Current $c -Total $actualCrashCycles -Stopwatch $crashTqdmSw -Status ("Cycle {0}: toctou_guard_triggered" -f $c)
+        continue
+    }
+
+    # All gates passed — terminate the specific verified incarnation
     Stop-Process -Id $oldBackendPid -Force -ErrorAction SilentlyContinue
 
     # Wait for desktop to notice and replace backend
@@ -751,6 +832,7 @@ $backendCrashResult = @{
     cyclesFailed = ($actualCrashCycles - $backendCrashPassed)
 }
 Write-Step ("TEST 4 (Crash Recovery) completed: {0}/{1} executed, {2}/{3} passed (status={4})" -f $actualCrashCycles, $requiredCrashCycles, $backendCrashPassed, $requiredCrashCycles, $crashStatus)
+
 
 # =============================================================================
 # TEST 7, 8, 9 — Runtime & Crash Isolation

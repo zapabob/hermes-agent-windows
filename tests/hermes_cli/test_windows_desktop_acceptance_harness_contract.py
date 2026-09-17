@@ -196,3 +196,190 @@ def test_fail_closed_acceptance_contract():
     assert skipped_item["passed"] is False
     assert skipped_item["status"] == "skipped"
 
+
+# =============================================================================
+# TEST 4 Identity Gate RED/GREEN Contract
+# Mirrors Invoke-Test4IdentityGates logic in Python for offline unit testing.
+# These tests assert that the harness correctly refuses crash injection for
+# every partial identity, and only allows it when the full identity matches.
+# =============================================================================
+
+
+def _make_ledger(entries: list[dict]) -> dict:
+    """Construct a minimal backend-ownership.json structure."""
+    return {"backends": entries}
+
+
+def _make_full_entry(
+    pid: int = 9999,
+    desktop_pid: int = 1234,
+    nonce: str = "aabbccdd11223344aabbccdd11223344",
+    start_marker: str = "win:639241234567890000",
+    parent_start_marker: str = "winms:1788000000000",
+) -> dict:
+    """Return a complete, valid ledger entry for the given pids."""
+    return {
+        "pid": pid,
+        "nonce": nonce,
+        "startMarker": start_marker,
+        "parentPid": desktop_pid,
+        "parentStartMarker": parent_start_marker,
+        "profile": "default",
+        "command": "python.exe -m hermes_cli.main serve",
+    }
+
+
+def invoke_identity_gates(
+    desktop_pid: int,
+    candidate_pid: int,
+    ledger: dict,
+    live_start_marker: str | None,
+    ledger_path_exists: bool = True,
+) -> dict:
+    """Python mirror of Invoke-Test4IdentityGates + Get-LiveStartMarker.
+
+    Returns ``{"passed": bool, "refusalReason": str | None}``.
+    """
+    if not ledger_path_exists:
+        return {"passed": False, "refusalReason": "ledger_file_not_found"}
+
+    backends = ledger.get("backends")
+    if not backends:
+        return {"passed": False, "refusalReason": "ledger_parse_failed"}
+
+    matches = [e for e in backends if int(e.get("pid", -1)) == candidate_pid]
+    if len(matches) == 0:
+        return {"passed": False, "refusalReason": "pid_absent_from_ledger"}
+    if len(matches) > 1:
+        return {"passed": False, "refusalReason": f"ledger_duplicate_entries:{len(matches)}"}
+
+    entry = matches[0]
+
+    # Gate 4a: nonce present and non-empty
+    if not entry.get("nonce") or not str(entry["nonce"]).strip():
+        return {"passed": False, "refusalReason": "nonce_absent"}
+
+    # Gate 4b: startMarker present, non-empty, NOT pid-only
+    sm = str(entry.get("startMarker", "")).strip()
+    if not sm:
+        return {"passed": False, "refusalReason": "startMarker_absent"}
+    if sm.startswith("pid-only:"):
+        return {"passed": False, "refusalReason": "startMarker_is_pid_only"}
+
+    # Gate 4c: parentPid matches current Desktop lifecycle
+    try:
+        ledger_parent_pid = int(entry.get("parentPid", -1))
+    except (TypeError, ValueError):
+        ledger_parent_pid = -1
+    if ledger_parent_pid != desktop_pid:
+        return {
+            "passed": False,
+            "refusalReason": f"parentPid_mismatch:ledger={ledger_parent_pid},desktop={desktop_pid}",
+        }
+
+    # Gate 4d: parentStartMarker present and non-empty
+    psm = str(entry.get("parentStartMarker", "")).strip()
+    if not psm:
+        return {"passed": False, "refusalReason": "parentStartMarker_absent"}
+
+    # Gate 5: live startMarker probe matches ledger entry
+    if live_start_marker is None:
+        return {"passed": False, "refusalReason": "live_marker_probe_failed"}
+    if live_start_marker != sm:
+        return {"passed": False, "refusalReason": "startMarker_mismatch"}
+
+    return {"passed": True, "refusalReason": None}
+
+
+class TestTest4IdentityGates:
+    """RED/GREEN contract tests for TEST 4 crash injection identity gates."""
+
+    DESKTOP_PID: int = 5000
+    BACKEND_PID: int = 9999
+    LIVE_MARKER: str = "win:639241234567890000"
+    GOOD_ENTRY: dict = _make_full_entry(
+        pid=9999, desktop_pid=5000, start_marker="win:639241234567890000"
+    )
+
+    def test_red_pid_absent_from_ledger(self) -> None:
+        """RED: PID present but absent from ledger → refuse crash injection."""
+        ledger = _make_ledger([_make_full_entry(pid=1111, desktop_pid=self.DESKTOP_PID)])
+        result = invoke_identity_gates(
+            desktop_pid=self.DESKTOP_PID,
+            candidate_pid=self.BACKEND_PID,
+            ledger=ledger,
+            live_start_marker=self.LIVE_MARKER,
+        )
+        assert result["passed"] is False, "Must refuse when PID is absent from ledger"
+        assert result["refusalReason"] == "pid_absent_from_ledger"
+        logger.info("RED pid_absent_from_ledger: PASS (refusal confirmed)")
+
+    def test_red_startmarker_mismatch(self) -> None:
+        """RED: PID present with mismatched startMarker → refuse crash injection."""
+        entry = _make_full_entry(
+            pid=self.BACKEND_PID,
+            desktop_pid=self.DESKTOP_PID,
+            start_marker="win:000000000000000001",  # ledger value differs from live
+        )
+        ledger = _make_ledger([entry])
+        result = invoke_identity_gates(
+            desktop_pid=self.DESKTOP_PID,
+            candidate_pid=self.BACKEND_PID,
+            ledger=ledger,
+            live_start_marker=self.LIVE_MARKER,  # live probe returns different value
+        )
+        assert result["passed"] is False, "Must refuse when live startMarker mismatches ledger"
+        assert result["refusalReason"] == "startMarker_mismatch"
+        logger.info("RED startMarker_mismatch: PASS (refusal confirmed)")
+
+    def test_red_pid_only_identity(self) -> None:
+        """RED: matching PID but degraded pid-only startMarker → refuse crash injection."""
+        entry = _make_full_entry(
+            pid=self.BACKEND_PID,
+            desktop_pid=self.DESKTOP_PID,
+            start_marker=f"pid-only:{self.BACKEND_PID}",
+        )
+        ledger = _make_ledger([entry])
+        result = invoke_identity_gates(
+            desktop_pid=self.DESKTOP_PID,
+            candidate_pid=self.BACKEND_PID,
+            ledger=ledger,
+            live_start_marker=f"pid-only:{self.BACKEND_PID}",
+        )
+        assert result["passed"] is False, "Must refuse when startMarker is degraded pid-only identity"
+        assert result["refusalReason"] == "startMarker_is_pid_only"
+        logger.info("RED startMarker_is_pid_only: PASS (refusal confirmed)")
+
+    def test_red_wrong_parent_lifecycle(self) -> None:
+        """RED: correct PID/startMarker but parentPid belongs to wrong Desktop → refuse."""
+        wrong_desktop_pid = 7777  # stale — different Desktop generation
+        entry = _make_full_entry(
+            pid=self.BACKEND_PID,
+            desktop_pid=wrong_desktop_pid,
+            start_marker=self.LIVE_MARKER,
+        )
+        ledger = _make_ledger([entry])
+        result = invoke_identity_gates(
+            desktop_pid=self.DESKTOP_PID,  # current harness Desktop PID differs
+            candidate_pid=self.BACKEND_PID,
+            ledger=ledger,
+            live_start_marker=self.LIVE_MARKER,
+        )
+        assert result["passed"] is False, "Must refuse when parentPid does not match current Desktop lifecycle"
+        assert "parentPid_mismatch" in result["refusalReason"]
+        logger.info("RED parentPid_mismatch: PASS (refusal confirmed)")
+
+    def test_green_full_identity_match(self) -> None:
+        """GREEN: complete matching identity across all 5 gates → allow crash injection."""
+        ledger = _make_ledger([self.GOOD_ENTRY])
+        result = invoke_identity_gates(
+            desktop_pid=self.DESKTOP_PID,
+            candidate_pid=self.BACKEND_PID,
+            ledger=ledger,
+            live_start_marker=self.LIVE_MARKER,
+        )
+        assert result["passed"] is True, (
+            f"Must allow when all 5 gates pass; refusalReason={result.get('refusalReason')}"
+        )
+        assert result["refusalReason"] is None
+        logger.info("GREEN full_identity_match: PASS (injection allowed)")
