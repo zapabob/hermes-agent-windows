@@ -169,7 +169,6 @@ def resolve_fallback_chain(config: dict[str, Any] | None) -> list[dict[str, Any]
     if not raw_chain and primary_provider == "nvidia":
         raw_chain = [
             {"provider": "nvidia", "model": "auto"},
-            {"provider": "nous", "model": "auto-free"},
         ]
     else:
         raw_chain = _enrich_nvidia_rotation(

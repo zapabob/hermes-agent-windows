@@ -67,8 +67,8 @@ def test_resolve_fallback_chain_defaults_for_bare_nvidia_primary():
     }
     resolved = resolve_fallback_chain(config)
     assert any(entry["provider"] == "nvidia" for entry in resolved)
-    assert any(entry["provider"] == "nous" for entry in resolved)
-    assert len(resolved) >= 3
+    assert not any(entry["provider"] == "nous" for entry in resolved)
+    assert len(resolved) >= 2
 
 
 def test_dynamic_entry_detectors():

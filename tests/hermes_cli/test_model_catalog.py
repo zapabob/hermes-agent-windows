@@ -137,11 +137,9 @@ class TestFallbackChain:
     releases (opus 4.8, etc.) never reach the picker.
     """
 
-    PRIMARY = "https://hermes-agent.nousresearch.com/docs/api/model-catalog.json"
-    FALLBACK = (
-        "https://raw.githubusercontent.com/NousResearch/hermes-agent"
-        "/main/website/static/api/model-catalog.json"
-    )
+    from hermes_cli import model_catalog as _mc
+    PRIMARY = _mc.DEFAULT_CATALOG_URL
+    FALLBACK = _mc.DEFAULT_CATALOG_FALLBACK_URLS[0]
 
     def test_uses_primary_when_it_succeeds(self, isolated_home):
         from hermes_cli import model_catalog
