@@ -291,6 +291,46 @@ def _check_manifest_v2(report: "DoctorReport", manifest: Any) -> None:
                 )
 
 
+def _check_security_scan(report: DoctorReport, plugin_path: Path) -> bool:
+    """Use the install-time scanner before executing candidate registration.
+
+    Validation never grants installation approval. Caution remains a warning
+    for the reviewer; the installer's explicit-consent policy is unchanged.
+    This static check is not a sandbox for candidate Python code.
+    """
+    try:
+        from tools.plugin_guard import scan_plugin
+
+        result = scan_plugin(plugin_path)
+        verdict = result.verdict
+        if verdict not in ("safe", "caution", "dangerous"):
+            report.error("Plugin security scan returned an unrecognized verdict")
+            return False
+        # Report rule ids and source locations, never raw source snippets or
+        # scanner exception text that might contain credential material.
+        flagged = [
+            finding for finding in getattr(result, "findings", ())
+            if finding.severity in ("critical", "high")
+        ]
+        summary = ", ".join(sorted({
+            f"{finding.pattern_id} ({Path(finding.file).name}:{finding.line})"
+            for finding in flagged
+        })) or "no high-severity findings"
+    except Exception as exc:
+        report.error(f"Plugin security scan failed ({type(exc).__name__})")
+        return False
+
+    if verdict == "dangerous":
+        report.error(f"Plugin security scan blocked registration: {summary}")
+        return False
+    if verdict == "caution":
+        report.warning(
+            f"Plugin security scan caution: {summary}. "
+            "Validation does not grant installation approval."
+        )
+    return True
+
+
 def doctor_plugin(target: str | os.PathLike[str] | None = None) -> DoctorReport:
     """Validate one plugin through Hermes' real scanner and registration path."""
     try:
@@ -301,6 +341,8 @@ def doctor_plugin(target: str | os.PathLike[str] | None = None) -> DoctorReport:
         return report
 
     report = DoctorReport(path)
+    if not _check_security_scan(report, path):
+        return report
     try:
         with _doctor_runtime(path) as host:
             report.manifest = host.manifest

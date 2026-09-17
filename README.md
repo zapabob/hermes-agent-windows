@@ -84,7 +84,7 @@ as a substitute for testing these contracts.
 | Desktop and terminal | Electron UI, profile-aware Python backend, native process and terminal handling in `apps/desktop/`, `tui_gateway/` and `tools/` |
 | CLI and messaging | Shared agent runtime with CLI and platform adapters in `hermes_cli/` and `gateway/` |
 | Local inference | llama.cpp/GGUF launch and hot-swap helpers under `scripts/windows/`; models remain operator configuration |
-| Recovery | External [Go watchdog](scripts/windows/watchdog-go/README.md) with explicit process ownership |
+| Recovery | External [Go watchdog](scripts/windows/watchdog-go/README.md) with read-only status and explicit auxiliary ownership; supported destructive scope is watchdog-owned embedding only |
 | Memory and retrieval | Profile-scoped state, memory-provider extensions and optional embedding services |
 | Optional capabilities | Plug-ins for voice, browser work, research, avatars and Unity/VR workflows |
 
@@ -125,9 +125,18 @@ Inference readiness requires a real model response, not only an open port.
 
 ## 8. Watchdog and recovery architecture
 
-The external Go watchdog supervises its owned backend and optional inference
-services. Desktop, messaging gateway and model servers have distinct lifecycles.
-See the [watchdog guide](scripts/windows/watchdog-go/README.md).
+The Desktop Python backend lifecycle is owned exclusively by Electron main in
+the supported Windows topology. Health observation, a PID, a port, a token or
+a manifest do not confer destructive lifecycle authority on another component.
+
+The external Go watchdog is an auxiliary supervisor with a read-only status
+surface. Its supported destructive scope is limited to an embedding
+`llama-server` instance that it explicitly launched and owns; it is not a
+second Desktop-backend owner. Legacy watchdog backend-prewarm compatibility
+paths are deprecated, disabled in the supported topology and do not qualify as
+Windows Tier-1 evidence. See the
+[watchdog guide](scripts/windows/watchdog-go/README.md) and the
+[Windows platform contract](.codex/WINDOWS_PLATFORM_CONTRACT.md).
 
 ## 9. Memory and semantic retrieval
 

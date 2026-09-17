@@ -1,151 +1,186 @@
 # Hermes Go Watchdog（Windows）
 
-Hermes Desktop（`Hermes.exe`）と Desktop が spawn する `hermes serve` バックエンドを**相互監視**する独立プロセスです。  
-**Hermes Agent の plugin / tool / skill / MCP / cron には一切登録しません。**
+Hermes Agent Windows Workstation Edition の **Windows-native auxiliary supervisor** です。
+Hermes Python/Electron とは別プロセスで動作し、Hermes Agent の plugin / tool /
+skill / MCP / cron には登録しません。
 
-## 隔離（AI から制御不可）
+この文書の正本となる前提は、`.codex/WINDOWS_PLATFORM_CONTRACT.md` と
+`CARRY.yaml` の single-authority contract です。
+
+## Supported authority contract
+
+同一 `HERMES_HOME`・同一 runtime role に対して、destructive lifecycle authority
+を持つ component は一つだけです。
+
+| Runtime role | Supported owner / authority |
+| --- | --- |
+| Desktop Python backend | **Electron main only** |
+| Desktop backend claim / stop / replace / restart | **Electron main only** |
+| Go watchdog process | operator / registered Windows task lifecycle |
+| Watchdog-owned embedding `llama-server` | **Go watchdog only** |
+| Gateway / other headless runtimes | their own canonical launcher/owner |
+
+Go watchdog は Desktop/backend の状態を観測できますが、観測は ownership では
+ありません。PID、port、health response、token、manifest、command line を知ることも
+termination authority を与えません。
+
+**Supported topologyでは、Go watchdog は Desktop Python backend を start / stop /
+kill / replace / reclaim しません。** Desktop backend の lifecycle は Electron main が
+保持した child ownership と identity contract の下で処理します。
+
+### Legacy compatibility path
+
+古い watchdog-managed backend prewarm 実装と関連フラグは互換性のためソースに
+残っている場合がありますが、現在の Windows Tier-1 supported topology では
+**deprecated / disabled / unqualified** です。
+
+- `-prewarm-backend` を有効化しない
+- `desktop-backend.json` を supported ownership manifest として扱わない
+- watchdog-managed `:9119` serve を Desktop backend authority として扱わない
+- legacy prewarm path の成功を release qualification evidence に使わない
+
+これらを再び有効化する変更は、single-authority contract の変更として扱い、
+明示的な設計変更・Windows-native negative tests・qualification が必要です。
+
+## Isolation（AI からの変更不可）
 
 | 項目 | 内容 |
-|------|------|
-| プロセス | Hermes Python/Electron とは別バイナリ |
-| 設定 | `%LOCALAPPDATA%\HermesWatchdog\`（ロック・状態 JSON） |
-| ログ | `%HERMES_HOME%\logs\hermes-go-watchdog.log` |
-| 変更 API | 公開しない（認証付き管理口も存在しない） |
-| 読取 API | `GET /health`, `GET /api/status`, `GET /api/v1/status`（ローカル / tailnet） |
+| --- | --- |
+| Process | Hermes Python/Electron とは別バイナリ |
+| State | `%LOCALAPPDATA%\HermesWatchdog\` |
+| Log | `%HERMES_HOME%\logs\hermes-go-watchdog.log` |
+| Change API | 公開しない |
+| Read API | `GET /health`, `GET /api/status`, `GET /api/v1/status` |
 
-## ビルド
+HTTP surface は read-only です。pause、resume、cycle、stop、restart、force-restart、
+lock deletion、PID 指定 kill などの変更操作を HTTP / MCP / tool / plugin / skill /
+cron へ公開しません。
+
+Launcher は elevated operator PowerShell から起動する運用を前提とし、通常権限の
+Hermes Agent と watchdog process の間に Windows process privilege boundary を置きます。
+
+## Build
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\windows\Build-HermesGoWatchdog.ps1
 ```
 
-成果物: `scripts\windows\watchdog-go\dist\hermes-watchdog.exe`
+Output:
 
-## 起動
+```text
+scripts\windows\watchdog-go\dist\hermes-watchdog.exe
+```
 
-通常のワークステーション起動では、管理者が登録した
-`HermesGoWatchdogBootAutoStart` Scheduled Task がブート時に
-`Start-HermesGoWatchdog.ps1` を非表示 PowerShell で実行します。S4U ブートは
-Session 0 に落ちるため、続けて `HermesGoWatchdogLogonAutoStart`
-（Interactive + Highest）がログオン後に同一 launcher を実行し、Session 0
-所有者を対話セッションへ置換します。手動操作では、管理者 PowerShell から
-同じ launcher を実行します。どちらも最終的に Windows GUI subsystem の
-`hermes-watchdog.exe` を画面なしで起動し、別の Watchdog 起動機構は設けません。
+## Start / stop
 
-Session 0 のまま残った watchdog は Desktop を kill できても再表示できないため、
-Go 本体は Session 0 での Desktop 強制停止を拒否し、不在時は
-`HermesDesktopAutoStart` 経由で対話セッションへ起動を依頼します。
+通常の workstation 起動では登録済み Windows Scheduled Task または operator-only
+launcher から起動します。
 
 ```powershell
-# 環境変数（例）
-$env:HERMES_WATCHDOG_TS_AUTHKEY = "<ts-authkey>"   # 任意: tsnet 有効化
-
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\windows\Start-HermesGoWatchdog.ps1
 ```
 
-launcher は管理者として実行した PowerShell だけを受け付けます。これにより、通常権限の
-Hermes Agent と watchdog プロセスの間に Windows のプロセス権限境界を設けます。
+停止・明示置換も同じ launcher の operator-only path を使用します。
 
-### フラグ（Start スクリプト経由）
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\windows\Start-HermesGoWatchdog.ps1 -Stop
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\windows\Start-HermesGoWatchdog.ps1 -ForceRestart
+```
 
-| フラグ | 既定 | 説明 |
-|--------|------|------|
-| `-IntervalSec` | 20 | 監視周期 |
-| `-FailThreshold` | 2 | **Desktop 層**の連続失敗で Desktop 再起動（`Watchdog.failCount`）。backend soft-fail とは別 |
-| `-Once` | off | 1 周期だけ実行して終了 |
-| `-NoTsnet` | off | tsnet を強制 OFF |
-| `-Listen` | 127.0.0.1:9920 | ローカル HTTP |
+Watchdog 自身の ownership は `%LOCALAPPDATA%\HermesWatchdog\watchdog.lock` の
+PIDだけではなく、live process identity・creation time・executable path・repository
+identity を検証して扱います。
+
+## Read-only status plane
+
+既定 local endpoint:
+
+```text
+127.0.0.1:9920
+```
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/health` | watchdog liveness |
+| GET | `/api/status` | current state |
+| GET | `/api/v1/status` | versioned state |
+
+Tailscale `tsnet` を設定した場合も status plane は read-only のままです。
+認証情報を repository へ commit しないでください。
+
+## Embedding supervision
 
 `plugins.entries.semantic-graph.config.embedding.runtime.enabled: true` の場合、
-Start スクリプトは同じ `config.yaml` から 8082 の llama.cpp 起動情報を読み、Go
-watchdog に渡します。watchdog は `/health` が healthy な既存プロセスを置換せず、
-停止後または自ら起動したプロセスが初期化 timeout を超えた場合だけ stock
-`llama-server` を再起動します。モデル取得、8080 への操作、未知 PID の停止は行いません。
+operator launcher は readonly configuration から local embedding runtime の設定を読み、
+watchdog へ渡せます。
 
-## Backend ヘルス状態機械（24/7 安定化）
-
-owned backend（固定ポート **9119**、Process handle 所有）の応答性と生死を分離する。
-
-| 状態 | 意味 | `stopLocked` |
-|------|------|--------------|
-| `HEALTHY` | `/api/status` + 認証付き `/api/sessions` 成功 | しない |
-| `DEGRADED` | プロセス生存 + soft probe 失敗（timeout / transport / HTTP error）。**nil backend ではない** | しない |
-| `UNRESPONSIVE` | soft-fail が閾値以上 **かつ** wall-clock grace 経過 | **許可**（制御された再起動） |
-| `DEAD` | owned PID が死んでいる | **即許可** |
+Supported destructive authority は **watchdog が明示的に起動・所有した embedding
+`llama-server` だけ**です。
 
 原則:
 
-- **slow ≠ dead** — 単一の probe timeout では kill しない
-- **token 再利用** — soft failure / hang restart ではトークンを回転しない（remint 時のみ Desktop 再起動アーム）
-- **Desktop `failCount`** は Desktop 層のみ。DEGRADED backend で Desktop を再起動しない
+- healthy な既存 embedding endpoint を理由なく置換しない
+- unknown PID を停止しない
+- model file を自動取得しない
+- configured loopback endpoint / executable / model / arguments を使用する
+- initialization timeout と ownership evidence の両方を満たす場合だけ owned child を回復する
+- maintenance fence 中は recovery を行わない
 
-## Tailscale（tsnet）
+代表的な embedding flags:
 
-1. Tailscale 管理画面で **auth key** を発行（推奨: reusable + タグ付き）
-2. 環境変数 `HERMES_WATCHDOG_TS_AUTHKEY` または `TS_AUTHKEY` に設定（**リポジトリにコミットしない**）
-3. 起動すると tailnet 上で `hermes-watchdog` として `:443` で待受
-4. 他ノードから: `curl -k https://hermes-watchdog/health`（MagicDNS / ホスト名）
+```text
+-embedding-enabled
+-embedding-endpoint
+-embedding-server
+-embedding-model
+-embedding-args-json
+-embedding-start-timeout
+```
 
-## HTTP API
+## Maintenance fence
 
-| Method | Path | 認証 | 説明 |
-|--------|------|------|------|
-| GET | `/health` | 不要 | 生存確認 |
-| GET | `/api/status` | 不要 | ウォッチドッグ状態 JSON |
-| GET | `/api/v1/status` | 不要 | バージョン付き状態 JSON |
+Update、planned stop、uninstall などの計画された process mutation は、通常の
+recovery と競合してはいけません。`maintenance.json` の有効な fence が存在する間、
+watchdog は対象となる supported recovery を抑止します。
 
-HTTP は読み取り専用です。pause、resume、cycle、stop、restart、force-restart、
-ロック削除、PID 指定停止を行う API は、HTTP、MCP、tool、plugin、skill、cron の
-いずれにも公開しません。
+Maintenance fence は ownership を移譲する仕組みではありません。Electron-owned
+Desktop backend の destructive authority が watchdog へ移ることはありません。
 
-## 監視ロジック
+## Recovery policy
 
-1. **起動時 prewarm（非同期）** — HTTP / RunLoop 起動後に goroutine で managed `hermes serve --skip-build`（既定 `:9119`）を立ち上げ、`%LOCALAPPDATA%\HermesWatchdog\desktop-backend.json` に URL/token/port を公開。cold start で制御プレーンをブロックしない
-2. `Hermes.exe` 不在 → 管理 backend は reaping しない → Desktop 起動（manifest があれば `HERMES_DESKTOP_REMOTE_*` も注入）
-3. Desktop 生存 + backend 不在 → **Electron 再起動の前に** managed serve を起動/復旧
-4. 連続失敗が `-FailThreshold` 以上 → Desktop の制御された再起動を要求
-5. 復旧操作は `%LOCALAPPDATA%\HermesWatchdog\recovery-budget.json` に予約時点で永続化し、30 秒から最大 5 分の指数バックオフ、10 分間に 3 回の予算、15 分の circuit-break を適用。watchdog 自身が再起動しても予算は失われない
-6. 予約 ops ポート (9120/8787/9920/…) は backend 判定・reap 対象外（従来どおり）
-7. A2A Hub (`:9123`) と A2A Round-Robin (`:9124`) は別系統のバックグラウンドサービスであり、watchdog の直接監視・reap 対象外
+Recovery budget / backoff / circuit-breaker は watchdog 自身と、その supported owned
+runtime に対する再試行嵐を防ぐためのものです。これらの状態は
+`%LOCALAPPDATA%\HermesWatchdog\recovery-budget.json` に保持されます。
 
-### Desktop ショートカット
+Recovery budget が存在すること自体は Desktop Python backend への restart authority を
+意味しません。
 
-パッケージ `Hermes.exe` 直起動は `HERMES_DESKTOP_*` を付けない。Go watchdog が prewarm していれば Desktop は `desktop-backend.json` を読んで **15s 以内** に既存 serve へ接続する（`apps/desktop/electron/watchdog-backend.ts`）。
+## Security / authority invariants
 
-## 追加フラグ（exe / Start スクリプト）
+次の条件を regression として扱います。
 
-| フラグ | 既定 | 説明 |
-|--------|------|------|
-| `-prewarm-backend` | on | serve の prewarm / 常時監督 |
-| `-managed-backend-port` | 9119 | watchdog 管理の固定 serve ポート（9120/8787/9920 とは別） |
-| `-backend-start-timeout` | 300 | managed serve 起動待ち (秒) |
-| `-backend-ready-timeout` | 180 | managed serve readiness 追加待ち (秒) |
-| `-backend-soft-fail-threshold` | 3 | soft probe 連続失敗で UNRESPONSIVE 候補になる回数 |
-| `-backend-unresponsive-grace` | 120 | soft failure 開始からの wall-clock 秒。経過後のみ owned restart |
-| `-backend-status-timeout-ms` | 2000 | `/api/status` probe HTTP timeout |
-| `-backend-auth-timeout-ms` | 3000 | 認証付き `/api/sessions` probe HTTP timeout |
-| `-backend-auth-confirm-delay-ms` | 500 | unauthorized 確定前の確認間隔 |
-| `-embedding-enabled` | off | 設定済み loopback embedding server の監督 |
-| `-embedding-endpoint` | なし | `http://127.0.0.1:8082` のような健康確認先 |
-| `-embedding-server` / `-embedding-model` | なし | 既存 llama-server と GGUF の絶対パス |
-| `-embedding-args-json` | `[]` | `--embedding` を含む固定 llama.cpp 引数配列 |
-| `-embedding-start-timeout` | 180 | watchdog 所有 PID を再起動するまでの初期化待機秒数 |
+1. Go watchdog が Electron-owned Desktop backend を start / stop / kill / replace できる。
+2. PID-only、port-only、command-line-only の情報が destructive authority に昇格する。
+3. health/discovery path が ownership を暗黙に取得する。
+4. maintenance や restart の途中で別 component が同じ runtime role の第二 owner になる。
+5. embedding supervisor が自分の ownership evidence を持たない unknown process を停止する。
 
-## 監視ロジック（旧 PowerShell 版との差分）
+Authority-sensitive changesでは、unit testだけでなく Windows-native process identity、
+restart/recovery、maintenance fence の negative test を残してください。
 
-## 停止
+## Relationship to Desktop
 
-- ユーザーまたは管理者が `Start-HermesGoWatchdog.ps1 -Stop` を直接実行
-- 強制置換は同スクリプトの `-ForceRestart` を operator-only 経路で実行
-- ロック: `%LOCALAPPDATA%\HermesWatchdog\watchdog.lock`
+Desktop と watchdog は別 lifecycle です。Desktopを閉じたこと、watchdogが生きている
+こと、特定portがlistenしていることのいずれも、stack全体の世代・identity・readinessを
+証明しません。
 
-更新、計画停止、uninstall は launcher を Agent から呼ぶ経路では行わず、承認付き
-ライフサイクル管理経路が `maintenance.json` の fence を取得してから実行します。
-watchdog は有効な fence が存在する間、Desktop、backend、embedding を復旧しません。
+Desktop Python backend の正本 lifecycle owner は Electron main です。Watchdog status
+は観測情報として利用できますが、Desktop backend ownership の根拠にはしません。
 
-## スタック再起動との関係
+See also:
 
-通常起動は登録済みの `HermesGoWatchdogBootAutoStart` Scheduled Task が担います。`restart-hermes-stack.ps1 -StartGoWatchdog` は保守時に同じ正規 launcher を明示的に再起動する経路です。
-既存 `dist/hermes-watchdog.exe` があれば rebuild しない。欠落時のみ `BuildIfMissing`（SkipTest・180s タイムアウト）。失敗時はスタック全体を止めず watchdog 起動をスキップ。  
-Hermes Agent から launcher の直接実行と変更操作は到達不可です。状態と PID、直近結果
-だけを読み取れます。
+- `.codex/WINDOWS_PLATFORM_CONTRACT.md`
+- `CARRY.yaml`
+- `docs/windows/RELEASE_POLICY.md`
+- `apps/desktop/electron/backend-claim.ts`
+- `apps/desktop/electron/backend-release-gate.ts`
