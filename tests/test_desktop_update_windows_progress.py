@@ -35,16 +35,21 @@ def _read_progress(url: str, deadline: float) -> dict[str, object]:
     ``urlopen(timeout=5)`` propagating TimeoutError was exactly the Aug 2026
     flake (run 32440286339). Only a listener that stays unresponsive until
     the deadline fails the test.
+
+    Callers must pass a *fresh* probe budget (``time.monotonic() + N``), not a
+    shared outer deadline that may already be exhausted by the previous sample
+    loop — that shape turns one late TimeoutError into an immediate hard fail
+    (main Full CI 35182491638).
     """
     last_exc: Exception | None = None
-    attempted = False
-    while not attempted or time.monotonic() < deadline:
-        attempted = True
+    while True:
         try:
             with urlopen(f"{url}progress", timeout=5) as response:
                 return json.loads(response.read().decode("utf-8"))
         except (TimeoutError, OSError) as exc:  # transient stall — retry
             last_exc = exc
+            if time.monotonic() >= deadline:
+                break
             time.sleep(0.2)
     raise AssertionError(
         f"/progress unresponsive until deadline (last error: {last_exc!r})"
@@ -63,11 +68,12 @@ def test_progress_advances_while_the_orchestrator_blocks(tmp_path: Path) -> None
     # too tight for a slow runner — the second sample slid past the hold,
     # caught the cleared terminal state, and failed '' == 'Testing quiet
     # update' (PR #90358 rerun, Aug 2026). 10s left no headroom once
-    # transient /progress retries entered the budget (publish wait ≤10s +
-    # stability window + retry sleeps), so: 30s, and every sampling deadline
-    # below is derived from the moment the held stage lands, keeping the
-    # whole window comfortably inside the hold.
-    env["HERMES_SELFTEST_HOLD_SECONDS"] = "30"
+    # transient /progress retries entered the budget; 30s still raced a
+    # loaded Full-CI Windows runner when publish wait + per-probe retries
+    # stacked (35182491638). 45s keeps the stability window inside the hold
+    # after a slow publish, and every sampling deadline below is a fresh
+    # probe budget derived from the sample moment — not a shared outer clock.
+    env["HERMES_SELFTEST_HOLD_SECONDS"] = "45"
 
     with output_path.open("wb") as output:
         process = subprocess.Popen(
@@ -107,15 +113,23 @@ def test_progress_advances_while_the_orchestrator_blocks(tmp_path: Path) -> None
         # 'Testing quiet update', PR #90358 first run). Wait for the held
         # stage to actually land, THEN start the stability window.
         held_stage = "Testing quiet update"
-        publish_deadline = time.monotonic() + 10
-        first = _read_progress(shim_url, publish_deadline)
-        while first.get("message") != held_stage and time.monotonic() < publish_deadline:
+        publish_deadline = time.monotonic() + 20
+        first: dict[str, object] | None = None
+        last_sample: dict[str, object] | None = None
+        while time.monotonic() < publish_deadline:
+            # Fresh per-probe budget: sharing publish_deadline with
+            # _read_progress let one late TimeoutError fail the test after
+            # the outer clock was already spent on earlier samples.
+            last_sample = _read_progress(shim_url, time.monotonic() + 8)
+            if last_sample.get("message") == held_stage:
+                first = last_sample
+                break
             time.sleep(0.1)
-            first = _read_progress(shim_url, publish_deadline)
+        assert first is not None, last_sample
         assert first["message"] == held_stage, first
 
         time.sleep(1.5)
-        second = _read_progress(shim_url, time.monotonic() + 10)
+        second = _read_progress(shim_url, time.monotonic() + 12)
 
         # The stage is whatever the orchestrator last published -- it must
         # reach the page verbatim and must not churn on its own.
@@ -127,7 +141,7 @@ def test_progress_advances_while_the_orchestrator_blocks(tmp_path: Path) -> None
         # -- which is what a stalled update looks like to the user.
         assert int(second["elapsed_seconds"]) > int(first["elapsed_seconds"])
 
-        assert process.wait(timeout=60) == 0
+        assert process.wait(timeout=90) == 0
     finally:
         if process.poll() is None:
             process.kill()
