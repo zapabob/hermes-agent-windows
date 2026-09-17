@@ -460,3 +460,328 @@ class TestProfileIsolation:
         res_b = yaml.safe_load(cfg_b.read_text(encoding="utf-8"))
         assert res_b["model"]["default"] == "model-B"
         assert res_b["model"]["provider"] == "prov-B"
+
+
+# ===========================================================================
+# Slice E.1 Qualification Tests
+# ===========================================================================
+
+class _StubCLIForAtomic:
+    """Stub CLI instance for testing production CLI model switch apply paths."""
+    agent = None
+    model = "old-model"
+    provider = "copilot"
+    requested_provider = "copilot"
+    api_key = "sk-old"
+    base_url = "https://api.githubcopilot.com"
+    api_mode = "chat_completions"
+    _explicit_api_key = ""
+    _explicit_base_url = ""
+    conversation_history = []
+    _pending_model_switch_note = ""
+
+    def _confirm_expensive_model_switch(self, result) -> bool:
+        return True
+
+    def _confirm_and_apply_cli_model_switch(
+        self, result, persist_global, one_turn, custom_provs=None
+    ):
+        import cli as cli_mod
+        return cli_mod.HermesCLI._confirm_and_apply_cli_model_switch(
+            self, result, persist_global, one_turn, custom_provs
+        )
+
+    def _snapshot_model_runtime(self):
+        return {
+            "model": self.model,
+            "provider": self.provider,
+            "api_key": self.api_key,
+            "base_url": self.base_url,
+            "api_mode": self.api_mode,
+        }
+
+    def _open_model_picker(self, *a, **k):
+        raise AssertionError("picker should not open when a model name is given")
+
+    @classmethod
+    def _clear_persisted_context_for_model_switch(cls, self, result):
+        pass
+
+    @classmethod
+    def _persist_model_switch_to_session(cls, self, result):
+        pass
+
+
+class TestCliAtomicProfilePersistenceProductionPath:
+    """Slice E.1: Exercise actual CLI apply path for a global model switch."""
+
+    def test_cli_global_switch_calls_save_config_values_once(self, monkeypatch):
+        import cli as cli_mod
+        from hermes_cli.model_switch import ModelSwitchResult
+
+        mock_result = ModelSwitchResult(
+            success=True,
+            new_model="MiniMax-M3",
+            target_provider="custom:minimax",
+            provider_changed=True,
+            api_key="sk-minimax",
+            base_url="https://api.minimax.io/v1",
+            api_mode="chat_completions",
+            warning_message="",
+            provider_label="MiniMax (custom)",
+            resolved_via_alias=False,
+            capabilities=None,
+            model_info=None,
+            is_global=True,
+        )
+
+        monkeypatch.setattr(cli_mod, "_cprint", lambda *a, **k: None)
+        multi_saves = []
+        single_saves = []
+
+        def _intercept_values(updates):
+            multi_saves.append(dict(updates))
+            return True
+
+        def _intercept_single(key, value):
+            single_saves.append((key, value))
+            return True
+
+        monkeypatch.setattr(cli_mod, "save_config_values", _intercept_values)
+        monkeypatch.setattr(cli_mod, "save_config_value", _intercept_single)
+        monkeypatch.setattr("hermes_cli.model_switch.switch_model", lambda **kw: mock_result)
+        monkeypatch.setattr(
+            "hermes_cli.inventory.load_picker_context",
+            lambda: (_ for _ in ()).throw(RuntimeError("no picker context in test")),
+        )
+
+        cli = _StubCLIForAtomic()
+        cli_mod.HermesCLI._handle_model_switch(cli, "/model MiniMax-M3 --global")
+
+        # Assert: exactly one multi-key save containing all four coherent fields
+        assert len(multi_saves) == 1, f"Expected 1 multi-key save, got {len(multi_saves)}"
+        saved = multi_saves[0]
+        assert saved["model.default"] == "MiniMax-M3"
+        assert saved["model.provider"] == "custom:minimax"
+        assert saved["model.base_url"] == "https://api.minimax.io/v1"
+        assert saved["model.api_mode"] == "chat_completions"
+
+        # Assert: no individual save_config_value call for those four keys occurs
+        target_keys = {"model.default", "model.provider", "model.base_url", "model.api_mode"}
+        single_saved_keys = [k for k, _ in single_saves if k in target_keys]
+        assert single_saved_keys == [], f"Unexpected single save_config_value calls: {single_saved_keys}"
+
+
+class TestFreshProfileProductionQualification:
+    """Slice E.1: Real no-scope model-switch surface on a fresh profile."""
+
+    def test_first_selection_seeds_default_and_second_is_session_only(self, fresh_profile_env, monkeypatch):
+        home, config_path = fresh_profile_env
+        import cli as cli_mod
+        from hermes_cli.model_switch import ModelSwitchResult
+
+        monkeypatch.setattr(cli_mod, "_cprint", lambda *a, **k: None)
+        monkeypatch.setattr(
+            "hermes_cli.inventory.load_picker_context",
+            lambda: (_ for _ in ()).throw(RuntimeError("no picker context in test")),
+        )
+
+        def _make_result(model, provider):
+            return ModelSwitchResult(
+                success=True,
+                new_model=model,
+                target_provider=provider,
+                provider_changed=True,
+                api_key="sk-test",
+                base_url="",
+                api_mode="",
+                warning_message="",
+                provider_label=provider,
+                resolved_via_alias=False,
+                capabilities=None,
+                model_info=None,
+                is_global=False,
+            )
+
+        cli = _StubCLIForAtomic()
+
+        # Initial intentional switch without flags
+        monkeypatch.setattr(
+            "hermes_cli.model_switch.switch_model",
+            lambda **kw: _make_result("model-A", "provider-A"),
+        )
+        cli_mod.HermesCLI._handle_model_switch(cli, "/model model-A --provider provider-A")
+
+        # Profile default must now be seeded
+        cfg1 = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+        assert cfg1.get("model", {}).get("default") == "model-A"
+        assert cfg1.get("model", {}).get("provider") == "provider-A"
+
+        # Second ordinary explicit-provider switch without --global
+        monkeypatch.setattr(
+            "hermes_cli.model_switch.switch_model",
+            lambda **kw: _make_result("model-B", "provider-B"),
+        )
+        cli_mod.HermesCLI._handle_model_switch(cli, "/model model-B --provider provider-B")
+
+        # Profile default MUST remain provider-A/model-A (session-only)
+        cfg2 = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+        assert cfg2.get("model", {}).get("default") == "model-A"
+        assert cfg2.get("model", {}).get("provider") == "provider-A"
+
+
+class TestFreshProfileScopePrecedence:
+    """Slice E.1: Explicit scope flags take precedence over fresh profile seeding."""
+
+    def test_fresh_profile_with_session_flag_does_not_seed_default(self, fresh_profile_env, monkeypatch):
+        home, config_path = fresh_profile_env
+        import cli as cli_mod
+        from hermes_cli.model_switch import ModelSwitchResult
+
+        monkeypatch.setattr(cli_mod, "_cprint", lambda *a, **k: None)
+        monkeypatch.setattr(
+            "hermes_cli.inventory.load_picker_context",
+            lambda: (_ for _ in ()).throw(RuntimeError("no picker context in test")),
+        )
+        monkeypatch.setattr(
+            "hermes_cli.model_switch.switch_model",
+            lambda **kw: ModelSwitchResult(
+                success=True,
+                new_model="model-A",
+                target_provider="provider-A",
+                provider_changed=True,
+                api_key="sk-test",
+                base_url="",
+                api_mode="",
+                warning_message="",
+                provider_label="provider-A",
+                resolved_via_alias=False,
+                capabilities=None,
+                model_info=None,
+                is_global=False,
+            ),
+        )
+
+        cli = _StubCLIForAtomic()
+        cli_mod.HermesCLI._handle_model_switch(cli, "/model model-A --provider provider-A --session")
+
+        cfg = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+        assert "default" not in cfg.get("model", {})
+        assert "provider" not in cfg.get("model", {})
+
+    def test_fresh_profile_with_once_flag_does_not_seed_default(self, fresh_profile_env, monkeypatch):
+        home, config_path = fresh_profile_env
+        import cli as cli_mod
+        from hermes_cli.model_switch import ModelSwitchResult
+
+        monkeypatch.setattr(cli_mod, "_cprint", lambda *a, **k: None)
+        monkeypatch.setattr(
+            "hermes_cli.inventory.load_picker_context",
+            lambda: (_ for _ in ()).throw(RuntimeError("no picker context in test")),
+        )
+        monkeypatch.setattr(
+            "hermes_cli.model_switch.switch_model",
+            lambda **kw: ModelSwitchResult(
+                success=True,
+                new_model="model-A",
+                target_provider="provider-A",
+                provider_changed=True,
+                api_key="sk-test",
+                base_url="",
+                api_mode="",
+                warning_message="",
+                provider_label="provider-A",
+                resolved_via_alias=False,
+                capabilities=None,
+                model_info=None,
+                is_global=False,
+            ),
+        )
+
+        cli = _StubCLIForAtomic()
+        cli_mod.HermesCLI._handle_model_switch(cli, "/model model-A --provider provider-A --once")
+
+        cfg = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+        assert "default" not in cfg.get("model", {})
+        assert "provider" not in cfg.get("model", {})
+
+    def test_fresh_profile_with_global_flag_persists(self, fresh_profile_env, monkeypatch):
+        home, config_path = fresh_profile_env
+        import cli as cli_mod
+        from hermes_cli.model_switch import ModelSwitchResult
+
+        monkeypatch.setattr(cli_mod, "_cprint", lambda *a, **k: None)
+        monkeypatch.setattr(
+            "hermes_cli.inventory.load_picker_context",
+            lambda: (_ for _ in ()).throw(RuntimeError("no picker context in test")),
+        )
+        monkeypatch.setattr(
+            "hermes_cli.model_switch.switch_model",
+            lambda **kw: ModelSwitchResult(
+                success=True,
+                new_model="model-A",
+                target_provider="provider-A",
+                provider_changed=True,
+                api_key="sk-test",
+                base_url="",
+                api_mode="",
+                warning_message="",
+                provider_label="provider-A",
+                resolved_via_alias=False,
+                capabilities=None,
+                model_info=None,
+                is_global=True,
+            ),
+        )
+
+        cli = _StubCLIForAtomic()
+        cli_mod.HermesCLI._handle_model_switch(cli, "/model model-A --provider provider-A --global")
+
+        cfg = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+        assert cfg.get("model", {}).get("default") == "model-A"
+        assert cfg.get("model", {}).get("provider") == "provider-A"
+
+
+class TestDesktopPickerNeverSeedsFreshProfile:
+    """Slice E.1: Desktop live-session picker always emits --session, never seeding."""
+
+    def test_desktop_picker_in_live_session_does_not_seed(self, fresh_profile_env):
+        home, config_path = fresh_profile_env
+        from tui_gateway.server import _apply_model_switch
+        from unittest.mock import patch
+        from hermes_cli.model_switch import ModelSwitchResult
+
+        mock_res = ModelSwitchResult(
+            success=True,
+            new_model="model-Desktop",
+            target_provider="anthropic",
+            provider_changed=True,
+            api_key="sk-ant",
+            base_url="",
+            api_mode="",
+            warning_message="",
+            provider_label="Anthropic",
+            resolved_via_alias=False,
+            capabilities=None,
+            model_info=None,
+            is_global=False,
+        )
+
+        session = {"agent": None}
+        with patch("hermes_cli.model_switch.switch_model", return_value=mock_res):
+            res = _apply_model_switch(
+                "sid_123",
+                session,
+                "model-Desktop --provider anthropic --session",
+            )
+
+        assert res["value"] == "model-Desktop"
+        assert res["scope"] == "session"
+
+        # Profile config must remain completely unseeded
+        cfg = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+        assert "default" not in cfg.get("model", {})
+        assert "provider" not in cfg.get("model", {})
+
+        # Session override was pinned
+        assert session["model_override"]["model"] == "model-Desktop"

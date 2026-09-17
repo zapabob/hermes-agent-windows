@@ -78,7 +78,12 @@ def _run_switch(monkeypatch, result, cmd="/model MiniMax-M3 --global"):
     def _fake_save(key, value):
         saved[key] = value
 
+    def _fake_save_values(updates):
+        saved.update(updates)
+        return True
+
     monkeypatch.setattr(cli_mod, "save_config_value", _fake_save)
+    monkeypatch.setattr(cli_mod, "save_config_values", _fake_save_values)
     monkeypatch.setattr("hermes_cli.model_switch.switch_model", lambda **kw: result)
     monkeypatch.setattr(
         "hermes_cli.inventory.load_picker_context",
@@ -107,6 +112,7 @@ def test_session_only_switch_does_not_touch_config(monkeypatch):
     monkeypatch.setattr(cli_mod, "_cprint", lambda *a, **k: None)
     save_calls = []
     monkeypatch.setattr(cli_mod, "save_config_value", lambda *a, **k: save_calls.append(a))
+    monkeypatch.setattr(cli_mod, "save_config_values", lambda *a, **k: save_calls.append(a))
     monkeypatch.setattr("hermes_cli.model_switch.switch_model", lambda **kw: _make_result())
     monkeypatch.setattr(
         "hermes_cli.inventory.load_picker_context",
@@ -132,7 +138,12 @@ def _run_apply(monkeypatch, result, persist_global=True):
     def _fake_save(key, value):
         saved[key] = value
 
+    def _fake_save_values(updates):
+        saved.update(updates)
+        return True
+
     monkeypatch.setattr(cli_mod, "save_config_value", _fake_save)
+    monkeypatch.setattr(cli_mod, "save_config_values", _fake_save_values)
     cli_mod.HermesCLI._apply_model_switch_result(_StubCLI(), result, persist_global)
     return saved
 

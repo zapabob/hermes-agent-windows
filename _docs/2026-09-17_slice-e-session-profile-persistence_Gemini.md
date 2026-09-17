@@ -76,12 +76,26 @@ Slice E establishes explicit, deterministic, and predictable persistence semanti
 
 ---
 
-## 5. Test Verification
+## 6. Slice E.1 Qualification Closure
 
-- `pytest tests/hermes_cli/test_session_profile_persistence.py`: 14/14 passed in 4.86s.
-- `pytest tests/hermes_cli/test_model_switch_persist_default.py`: 4/4 passed.
-- `pytest tests/cli/test_cli_save_config_value.py`: 6/6 passed.
-- `pytest tests/hermes_cli/test_25106_global_switch_persists_base_url_api_mode.py`: 2/2 passed.
-- `pytest tests/tui_gateway/test_make_agent_provider.py`: 3/3 passed.
-- `pytest tests/hermes_cli/test_model_picker_expensive_confirm.py`: 1/1 passed.
-- Vitest (`apps/desktop`): 47/47 passed in 6.28s (`use-model-controls.test.tsx`, `model-picker-ownership-isolation.test.ts`, `model-picker-async-fencing-production.test.tsx`).
+Slice E.1 verified and closed all production-path qualification contracts:
+1. **CLI Atomic Profile Persistence**: Replaced the 4-call `save_config_value` cluster in both `HermesCLI._apply_model_switch_result` and `HermesCLI._handle_model_switch` with a single atomic call to `save_config_values({...})`.
+2. **Atomic Multi-Key Meaning**: Strictly commits `model.default`, `model.provider`, `model.base_url`, and `model.api_mode` together in a single atomic file replacement pass (`os.replace` via `atomic_roundtrip_yaml_update_multi`).
+3. **Explicit Scope Precedence over Fresh Seeding**:
+   - Fresh profile + `--session` -> does NOT seed default (session-only).
+   - Fresh profile + `--once` -> does NOT seed default (transient next-turn).
+   - Fresh profile + `--global` -> seeds/persists default.
+   - Desktop live-session picker always emits `--session` -> strictly session-only, never seeds default.
+
+### Final Receipt
+
+| Receipt Item | Status | Verification Reference |
+|---|---|---|
+| `CLI_ATOMIC_PROFILE_PERSISTENCE` | **PASS** | `TestCliAtomicProfilePersistenceProductionPath` |
+| `FRESH_PROFILE_PRODUCTION_SEED` | **PASS** | `TestFreshProfileProductionQualification` |
+| `SECOND_PICK_SESSION_ONLY` | **PASS** | `TestFreshProfileProductionQualification` |
+| `FRESH_PROFILE_SESSION_SCOPE_NON_PERSIST` | **PASS** | `TestFreshProfileScopePrecedence` |
+| `FRESH_PROFILE_ONCE_SCOPE_NON_PERSIST` | **PASS** | `TestFreshProfileScopePrecedence` |
+| `EXPLICIT_GLOBAL_PROFILE_PERSIST` | **PASS** | `TestFreshProfileScopePrecedence` |
+
+**SLICE E STATUS = CLOSED**
