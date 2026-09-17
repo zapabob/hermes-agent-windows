@@ -182,6 +182,9 @@ class AnthropicTransport(ProviderTransport):
         if _has_signed_thinking and _has_tool_use:
             provider_data["anthropic_content_blocks"] = ordered_blocks
 
+        resp_model = getattr(response, "model", None)
+        model_source = "response" if (resp_model and isinstance(resp_model, str)) else "request"
+
         return NormalizedResponse(
             content="\n".join(text_parts) if text_parts else None,
             tool_calls=tool_calls or None,
@@ -189,6 +192,8 @@ class AnthropicTransport(ProviderTransport):
             reasoning="\n\n".join(reasoning_parts) if reasoning_parts else None,
             usage=None,
             provider_data=provider_data or None,
+            model=resp_model or kwargs.get("model"),
+            effective_model_source=model_source,
         )
 
     def validate_response(self, response: Any) -> bool:

@@ -2804,7 +2804,8 @@ def try_activate_fallback(agent, reason: "FailoverReason | None" = None) -> bool
             agent._config_context_length = None
             agent.model = fb_model
             agent.provider = fb_provider
-            agent.requested_provider = fb_provider
+            # Requested route remains the original intent (RED 14)
+            agent._fallback_reason = str(getattr(reason, "value", None) or reason or "provider_failure")
             agent.base_url = fb_base_url
             agent.api_mode = fb_api_mode
             # Per-provider reasoning_content echo opt-in (see _reasoning_echo_opt_in).

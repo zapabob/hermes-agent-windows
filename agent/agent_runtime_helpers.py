@@ -1742,6 +1742,7 @@ def restore_primary_runtime(agent) -> bool:
         agent.model = rt["model"]
         agent.provider = rt["provider"]
         agent.requested_provider = rt.get("requested_provider", agent.provider)
+        agent.requested_model = rt.get("requested_model", agent.model)
         agent.base_url = rt["base_url"]           # setter updates _base_url_lower
         agent.api_mode = rt["api_mode"]
         if hasattr(agent, "_transport_cache"):

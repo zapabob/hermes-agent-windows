@@ -9,6 +9,7 @@ back into the minimal shape Hermes expects from an OpenAI client.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import queue
 import re
@@ -32,6 +33,7 @@ from tools.environments.local import hermes_subprocess_env
 
 ACP_MARKER_BASE_URL = "acp://copilot"
 _DEFAULT_TIMEOUT_SECONDS = 900.0
+logger = logging.getLogger(__name__)
 
 # Stderr fingerprint of the deprecated `gh copilot` CLI extension
 # (https://github.blog/changelog/2025-09-25-upcoming-deprecation-of-gh-copilot-cli-extension).
@@ -272,6 +274,128 @@ def _ensure_path_within_cwd(path_text: str, cwd: str) -> Path:
     return resolved
 
 
+def _apply_session_model(
+    request_fn: Any = None,
+    *,
+    session_id: str,
+    requested_model: str | None = None,
+    session_res: Optional[dict[str, Any]] = None,
+    init_res: Optional[dict[str, Any]] = None,
+    send_req: Any = None,
+    server_default: Optional[str] = None,
+    available_models: Optional[list[Any]] = None,
+) -> str:
+    """Handle ACP session model selection per Slice F - RED 9 contract."""
+    req_fn = send_req or request_fn
+    session_res = session_res or {}
+    init_res = init_res or {}
+
+    models_obj = (
+        session_res.get("models")
+        or (init_res.get("capabilities") or {}).get("models")
+        or init_res.get("models")
+        or {}
+    )
+    if not isinstance(models_obj, dict):
+        models_obj = {}
+
+    current_model_id = str(
+        models_obj.get("currentModelId")
+        or session_res.get("currentModelId")
+        or server_default
+        or ""
+    ).strip()
+
+    avail_models = list(available_models if available_models is not None else (models_obj.get("availableModels") or []))
+    config_options = session_res.get("configOptions") or []
+    if isinstance(config_options, list):
+        for opt in config_options:
+            if isinstance(opt, dict) and opt.get("category") == "model":
+                for o in opt.get("options", []):
+                    if isinstance(o, dict) and o.get("value"):
+                        avail_models.append(
+                            {"modelId": o.get("value"), "name": o.get("name") or o.get("value")}
+                        )
+
+    server_capabilities = init_res.get("capabilities") or {}
+    session_caps = server_capabilities.get("session") or {}
+    supports_model_switch = bool(
+        avail_models
+        or session_caps.get("setModel")
+        or models_obj.get("canSetModel")
+        or models_obj.get("supportsSetModel")
+        or session_res.get("canSetModel")
+    )
+
+    req_raw = (requested_model or "").strip()
+    req = req_raw
+    if req.lower().startswith("copilot/"):
+        req = req[len("copilot/"):].strip()
+
+    _VIRTUAL_SLUGS = {"", "copilot", "copilot-acp", "default", "auto", "none"}
+    is_virtual = req.lower() in _VIRTUAL_SLUGS
+
+    # RED 9.C: virtual/internal picker slug -> do NOT forward onto wire
+    if is_virtual:
+        return current_model_id or req_raw or "copilot-acp"
+
+    # RED 9.D: ACP server does not support model switching -> preserve server default
+    if not supports_model_switch:
+        logger.info(
+            "ACP server does not advertise model switching capability; preserving server default %r (requested: %r)",
+            current_model_id or "default",
+            requested_model,
+        )
+        return current_model_id or "default"
+
+    # Search available models
+    available_ids: set[str] = set()
+    matched_model_id: str | None = None
+    for m in avail_models:
+        if isinstance(m, dict):
+            mid = str(m.get("modelId") or m.get("id") or m.get("value") or "").strip()
+            mname = str(m.get("name") or "").strip()
+            if mid:
+                available_ids.add(mid)
+            if mid.lower() == req.lower():
+                matched_model_id = mid
+                break
+            elif mname.lower() == req.lower():
+                matched_model_id = mid
+                break
+        elif isinstance(m, str):
+            available_ids.add(m)
+            if m.lower() == req.lower():
+                matched_model_id = m
+                break
+
+    if matched_model_id is not None or (supports_model_switch and not available_ids):
+        target_id = matched_model_id or req
+        if req_fn:
+            try:
+                req_fn("session/set_model", {"sessionId": session_id, "modelId": target_id})
+                return target_id
+            except Exception as exc:
+                logger.warning(
+                    "Failed to set model %r via session/set_model: %s. Preserving server default %r.",
+                    target_id,
+                    exc,
+                    current_model_id or "default",
+                )
+                return current_model_id or "default"
+        return target_id
+
+    # RED 9.B: selected model not supported -> warning, visible degradation, no silent claim
+    logger.warning(
+        "Selected model %r is not supported by ACP server (available models: %s). "
+        "Using server default %r without silent substitution.",
+        requested_model,
+        sorted(available_ids) if available_ids else "(none)",
+        current_model_id or "default",
+    )
+    return current_model_id or "default"
+
+
 class _ACPChatCompletions:
     def __init__(self, client: "CopilotACPClient"):
         self._client = client
@@ -362,10 +486,18 @@ class CopilotACPClient:
             _numeric = [float(v) for v in _candidates if isinstance(v, (int, float))]
             _effective_timeout = max(_numeric) if _numeric else _DEFAULT_TIMEOUT_SECONDS
 
-        response_text, reasoning_text = self._run_prompt(
+        run_res = self._run_prompt(
             prompt_text,
             timeout_seconds=_effective_timeout,
+            model=model,
         )
+        if len(run_res) == 3:
+            response_text, reasoning_text, acp_effective_model = run_res
+        else:
+            response_text, reasoning_text = run_res
+            acp_effective_model = getattr(self, "last_effective_model", None)
+
+        effective_model = acp_effective_model or model or "copilot-acp"
 
         tool_calls, cleaned_text = _extract_tool_calls_from_text(response_text)
 
@@ -387,13 +519,21 @@ class CopilotACPClient:
         completion = SimpleNamespace(
             choices=[choice],
             usage=usage,
-            model=model or "copilot-acp",
+            model=effective_model,
         )
         if stream:
             return _completion_to_stream_chunks(completion)
         return completion
 
-    def _run_prompt(self, prompt_text: str, *, timeout_seconds: float) -> tuple[str, str]:
+    _apply_session_model = staticmethod(_apply_session_model)
+
+    def _run_prompt(
+        self,
+        prompt_text: str,
+        *,
+        timeout_seconds: float,
+        model: str | None = None,
+    ) -> tuple[str, str, str]:
         # Fast-fail when the CLI doesn't support the ACP args we'd pass.
         # Without this guard, a CLI like Claude Code v2.x exits with
         # ``error: unknown option '--acp'`` immediately, then the parent
@@ -532,7 +672,7 @@ class CopilotACPClient:
             raise TimeoutError(f"Timed out waiting for Copilot ACP response to {method}.")
 
         try:
-            _request(
+            init_res = _request(
                 "initialize",
                 {
                     "protocolVersion": 1,
@@ -548,7 +688,7 @@ class CopilotACPClient:
                         "version": "0.0.0",
                     },
                 },
-            )
+            ) or {}
             session = _request(
                 "session/new",
                 {
@@ -559,6 +699,15 @@ class CopilotACPClient:
             session_id = str(session.get("sessionId") or "").strip()
             if not session_id:
                 raise RuntimeError("Copilot ACP did not return a sessionId.")
+
+            effective_model = self._apply_session_model(
+                _request,
+                session_id=session_id,
+                session_res=session,
+                init_res=init_res,
+                requested_model=model,
+            )
+            self.last_effective_model = effective_model
 
             text_parts: list[str] = []
             reasoning_parts: list[str] = []
@@ -576,7 +725,7 @@ class CopilotACPClient:
                 text_parts=text_parts,
                 reasoning_parts=reasoning_parts,
             )
-            return "".join(text_parts), "".join(reasoning_parts)
+            return "".join(text_parts), "".join(reasoning_parts), effective_model
         finally:
             self.close()
 

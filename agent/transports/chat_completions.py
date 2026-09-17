@@ -1048,6 +1048,21 @@ class ChatCompletionsTransport(ProviderTransport):
                 if finish_reason in (None, "stop"):
                     finish_reason = "content_filter"
 
+        resp_model = getattr(response, "model", None)
+        model_source = "request"
+        if resp_model and isinstance(resp_model, str):
+            model_source = "response"
+            wire_model = kwargs.get("wire_model") or kwargs.get("model")
+            if wire_model and resp_model != wire_model:
+                _norm_wire = wire_model.lower().replace("-", "").replace(".", "").replace("/", "")
+                _norm_resp = resp_model.lower().replace("-", "").replace(".", "").replace("/", "")
+                if _norm_wire not in _norm_resp and _norm_resp not in _norm_wire:
+                    import logging
+                    logging.getLogger(__name__).warning(
+                        "Provider response reported unexpected model %r (requested wire model: %r)",
+                        resp_model, wire_model,
+                    )
+
         return NormalizedResponse(
             content=content,
             tool_calls=tool_calls,
@@ -1055,6 +1070,8 @@ class ChatCompletionsTransport(ProviderTransport):
             reasoning=reasoning,
             usage=usage,
             provider_data=provider_data or None,
+            model=resp_model or kwargs.get("model"),
+            effective_model_source=model_source,
         )
 
     def validate_response(self, response: Any) -> bool:

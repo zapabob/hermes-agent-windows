@@ -107,6 +107,8 @@ class NormalizedResponse:
     reasoning: str | None = None
     usage: Usage | None = None
     provider_data: dict[str, Any] | None = field(default=None, repr=False)
+    model: str | None = None
+    effective_model_source: str = "request"
 
     # ── Backward compatibility ──────────────────────────────────
     # The shim _nr_to_assistant_message() mapped these from provider_data.

@@ -27,8 +27,11 @@ import threading
 import time
 import uuid
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 from urllib.parse import parse_qs, urlparse, urlunparse
+
+if TYPE_CHECKING:
+    from agent.rate_limit_tracker import RateLimitState
 
 from agent.context_compressor import ContextCompressor
 from agent.iteration_budget import IterationBudget
@@ -616,6 +619,7 @@ def init_agent(
     checkpoint_max_file_size_mb: int = 10,
     pass_session_id: bool = False,
     requested_provider: str = None,
+    requested_model: str = None,
     capabilities: Optional[Dict[str, bool]] = None,
 ):
     """
@@ -721,6 +725,11 @@ def init_agent(
         requested_provider.strip().lower()
         if isinstance(requested_provider, str) and requested_provider.strip()
         else agent.provider
+    )
+    agent.requested_model = (
+        requested_model.strip()
+        if isinstance(requested_model, str) and requested_model.strip()
+        else agent.model
     )
     agent.capabilities = {
         key: value for key, value in (capabilities or {}).items()
@@ -3258,6 +3267,7 @@ def init_agent(
         "model": agent.model,
         "provider": agent.provider,
         "requested_provider": agent.requested_provider,
+        "requested_model": getattr(agent, "requested_model", agent.model),
         "base_url": agent.base_url,
         "api_mode": agent.api_mode,
         "api_key": getattr(agent, "api_key", ""),
