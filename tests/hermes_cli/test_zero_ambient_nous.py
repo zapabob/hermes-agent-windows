@@ -10,6 +10,7 @@ routes, credential probes, or startup dependencies occur across:
 6. auxiliary task
 7. primary provider failure without fallback
 8. session resume
+9. models.dev new model visibility
 
 Explicit Nous usage (provider="nous" or explicit fallback_providers) remains permitted.
 """
@@ -17,7 +18,9 @@ Explicit Nous usage (provider="nous" or explicit fallback_providers) remains per
 from __future__ import annotations
 
 import contextlib
+import json
 import urllib.request
+from pathlib import Path
 from typing import Any, Generator, List
 from unittest.mock import MagicMock, patch
 
@@ -31,23 +34,90 @@ class NousNetworkAccessViolation(RuntimeError):
 @contextlib.contextmanager
 def nous_network_deny(allowed_explicit: bool = False) -> Generator[List[str], None, None]:
     """Intercept and forbid any outbound HTTP/network requests to Nous domains
-
+    across urllib.request, requests, httpx, and socket connections,
     unless explicitly allowed.
     """
     nous_requests: List[str] = []
+
+    def check_url_or_host(target: str) -> None:
+        low = target.lower()
+        if "nousresearch.com" in low:
+            nous_requests.append(target)
+            if not allowed_explicit:
+                raise NousNetworkAccessViolation(
+                    f"Forbidden ambient outbound Nous request intercepted: {target}"
+                )
+
+    # 1. urllib.request
     original_urlopen = urllib.request.urlopen
 
     def intercepted_urlopen(req: Any, *args: Any, **kwargs: Any) -> Any:
         url = req.full_url if hasattr(req, "full_url") else str(req)
-        if "nousresearch.com" in url.lower():
-            nous_requests.append(url)
-            if not allowed_explicit:
-                raise NousNetworkAccessViolation(
-                    f"Forbidden ambient outbound Nous request intercepted: {url}"
-                )
+        check_url_or_host(url)
         return original_urlopen(req, *args, **kwargs)
 
-    with patch("urllib.request.urlopen", side_effect=intercepted_urlopen):
+    patches = [
+        patch("urllib.request.urlopen", side_effect=intercepted_urlopen),
+    ]
+
+    # 2. requests (if loaded)
+    try:
+        import requests.sessions
+
+        original_requests_send = requests.sessions.Session.send
+
+        def intercepted_requests_send(self: Any, request: Any, *args: Any, **kwargs: Any) -> Any:
+            url = str(getattr(request, "url", ""))
+            check_url_or_host(url)
+            return original_requests_send(self, request, *args, **kwargs)
+
+        patches.append(patch("requests.sessions.Session.send", side_effect=intercepted_requests_send))
+    except ImportError:
+        pass
+
+    # 3. socket
+    try:
+        import socket
+
+        original_socket_connect = socket.socket.connect
+
+        def intercepted_socket_connect(self: Any, address: Any) -> Any:
+            if isinstance(address, tuple) and len(address) > 0:
+                host = str(address[0])
+                check_url_or_host(host)
+            return original_socket_connect(self, address)
+
+        original_create_connection = socket.create_connection
+
+        def intercepted_create_connection(address: Any, *args: Any, **kwargs: Any) -> Any:
+            if isinstance(address, tuple) and len(address) > 0:
+                host = str(address[0])
+                check_url_or_host(host)
+            return original_create_connection(address, *args, **kwargs)
+
+        patches.append(patch("socket.socket.connect", side_effect=intercepted_socket_connect))
+        patches.append(patch("socket.create_connection", side_effect=intercepted_create_connection))
+    except ImportError:
+        pass
+
+    # 4. httpx (if loaded)
+    try:
+        import httpx
+
+        original_httpx_send = httpx.Client.send
+
+        def intercepted_httpx_send(self: Any, request: Any, *args: Any, **kwargs: Any) -> Any:
+            url = str(getattr(request, "url", ""))
+            check_url_or_host(url)
+            return original_httpx_send(self, request, *args, **kwargs)
+
+        patches.append(patch("httpx.Client.send", side_effect=intercepted_httpx_send))
+    except ImportError:
+        pass
+
+    with contextlib.ExitStack() as stack:
+        for p in patches:
+            stack.enter_context(p)
         yield nous_requests
 
 
@@ -63,9 +133,14 @@ def test_startup_zero_ambient_nous(monkeypatch: pytest.MonkeyPatch, tmp_path: An
     monkeypatch.setenv("HERMES_HOME", str(tmp_path))
 
     with nous_network_deny(allowed_explicit=False) as intercepted:
-        from hermes_cli.config import DEFAULT_CONFIG
+        from hermes_cli.config import load_config
         from hermes_cli.explicit_routing import resolve_selection_intent
 
+        # Exercise real startup config loader
+        cfg = load_config()
+        assert isinstance(cfg, dict)
+
+        # Exercise intent & policy resolution on startup
         intent, policy = resolve_selection_intent(
             "openrouter",
             "meta-llama/llama-3-8b",
@@ -85,13 +160,38 @@ def test_model_catalog_zero_ambient_nous(tmp_path: Any, monkeypatch: pytest.Monk
     with nous_network_deny(allowed_explicit=False) as intercepted:
         from hermes_cli import model_catalog
 
+        model_catalog.reset_cache()
+
         # Catalog lookup without network should return cleanly or fallback to offline
         cached = model_catalog.get_default_model_from_cache("openrouter")
-        # Ensure zero outbound calls
         assert len(intercepted) == 0
 
         # In zero-ambient Nous, default catalog URL must NOT target nousresearch.com
         assert "nousresearch.com" not in model_catalog.DEFAULT_CATALOG_URL.lower()
+        for u in model_catalog.DEFAULT_CATALOG_FALLBACK_URLS:
+            assert "nousresearch.com" not in u.lower()
+
+        # Neutral catalog refresh through models.dev mock
+        mock_resp = MagicMock()
+        mock_resp.__enter__.return_value = mock_resp
+        mock_resp.read.return_value = json.dumps({
+            "openrouter": {
+                "id": "openrouter",
+                "name": "OpenRouter",
+                "models": {
+                    "anthropic/claude-sonnet-4-6": {
+                        "id": "anthropic/claude-sonnet-4-6",
+                        "name": "Claude Sonnet 4.6",
+                        "default": True,
+                    }
+                }
+            }
+        }).encode()
+        with patch("urllib.request.urlopen", return_value=mock_resp):
+            cat = model_catalog.get_catalog(force_refresh=True)
+            assert "providers" in cat
+
+        assert len(intercepted) == 0
 
 
 def test_local_llama_provider_zero_ambient_nous(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -143,8 +243,6 @@ def test_nvidia_provider_fallback_zero_ambient_nous() -> None:
     }
 
     resolved = resolve_fallback_chain(config)
-    # CONTRACT: In zero-ambient Nous, if fallback_providers is empty,
-    # it must NOT inject nous auto-free!
     nous_entries = [e for e in resolved if e.get("provider") == "nous"]
     assert len(nous_entries) == 0, f"Implicit Nous fallback detected: {nous_entries}"
 
@@ -153,7 +251,9 @@ def test_auxiliary_task_zero_ambient_nous() -> None:
     """6. Auxiliary task routing must not select or contact Nous when unconfigured."""
     with nous_network_deny(allowed_explicit=False) as intercepted:
         from hermes_cli.explicit_routing import check_fallback_allowed, FallbackPolicy, ModelSelectionIntent
+        from agent.auxiliary_client import _resolve_auto
 
+        # 1. Policy check
         intent = ModelSelectionIntent(
             provider="openai",
             model="gpt-4o",
@@ -169,6 +269,12 @@ def test_auxiliary_task_zero_ambient_nous() -> None:
             effective_model="auto-free",
         )
         assert allowed is False
+
+        # 2. Real auxiliary routing resolution does not contact Nous
+        client, model = _resolve_auto("text")
+        if client is not None:
+            assert "nous" not in str(type(client)).lower()
+
         assert len(intercepted) == 0
 
 
@@ -186,24 +292,61 @@ def test_primary_failure_without_fallback_visible_failure() -> None:
     err = model_unavailable_error(intent, reason="rate_limited")
     assert err["selected_provider"] == "anthropic"
     assert "Selected model unavailable" in err["error"]
-    # Verify it does not silently switch to nous
     assert err.get("fallback_provider") != "nous"
 
 
-def test_session_resume_zero_ambient_nous() -> None:
+def test_session_resume_zero_ambient_nous(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> None:
     """8. Session resume of non-Nous session must not trigger Nous routing."""
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+
     with nous_network_deny(allowed_explicit=False) as intercepted:
+        from hermes_state import SessionDB
         from hermes_cli.explicit_routing import resolve_selection_intent
+
+        db = SessionDB(tmp_path / "sessions.db")
+        sid = db.create_session("Resumed Session", source="cli", model="openrouter/anthropic/claude-3-5-sonnet")
+        sess = db.get_session(sid)
+        assert sess is not None
 
         intent, policy = resolve_selection_intent(
             "openrouter",
             "anthropic/claude-3-5-sonnet",
             profile_id="resumed-profile",
-            session_id="resumed-session",
+            session_id=sid,
             connection_id="resumed-conn",
         )
         assert intent.provider == "openrouter"
         assert len(intercepted) == 0
+
+
+def test_models_dev_new_model_visible(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    """9. Models newly exposed in models.dev become visible to consumers after normalization."""
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    from hermes_cli import model_catalog
+
+    model_catalog.reset_cache()
+    payload = {
+        "anthropic": {
+            "id": "anthropic",
+            "name": "Anthropic",
+            "models": {
+                "claude-opus-4-6": {
+                    "id": "claude-opus-4-6",
+                    "name": "Claude Opus 4.6",
+                    "reasoning": True,
+                    "tool_call": True,
+                }
+            }
+        }
+    }
+    norm = model_catalog.parse_models_dev(payload)
+    assert norm is not None
+    model_catalog._write_disk_cache(norm.to_dict())
+
+    cat = model_catalog.get_catalog()
+    models = cat.get("providers", {}).get("anthropic", {}).get("models", [])
+    mids = [m["id"] for m in models]
+    assert "claude-opus-4-6" in mids
 
 
 def test_explicit_nous_allowed() -> None:

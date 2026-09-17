@@ -50,6 +50,7 @@ import threading
 import time
 import urllib.error
 import urllib.request
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -57,6 +58,297 @@ from hermes_cli import __version__ as _HERMES_VERSION
 from utils import atomic_replace
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Canonical Normalized Catalog Data Models
+# ---------------------------------------------------------------------------
+
+@dataclass
+class NormalizedModel:
+    """Canonical model entry in a normalized catalog."""
+
+    id: str
+    name: str = ""
+    description: str = ""
+    default: bool = False
+    reasoning: bool = False
+    tool_call: bool = False
+    attachment: bool = False
+    modalities: dict[str, list[str]] = field(default_factory=dict)
+    context: int = 0
+    max_output: int = 0
+    release_date: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
+    capabilities: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "default": self.default,
+            "reasoning": self.reasoning,
+            "tool_call": self.tool_call,
+            "attachment": self.attachment,
+            "modalities": self.modalities,
+            "context": self.context,
+            "max_output": self.max_output,
+            "release_date": self.release_date,
+            "metadata": self.metadata,
+            "capabilities": self.capabilities,
+        }
+
+
+@dataclass
+class NormalizedProvider:
+    """Canonical provider entry in a normalized catalog."""
+
+    id: str
+    name: str = ""
+    models: list[NormalizedModel] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "metadata": self.metadata,
+            "models": [m.to_dict() for m in self.models],
+        }
+
+
+@dataclass
+class NormalizedCatalog:
+    """Canonical normalized model catalog."""
+
+    providers: dict[str, NormalizedProvider] = field(default_factory=dict)
+    version: int = 1
+    updated_at: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
+    source_format: str = "models_dev"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "version": self.version,
+            "updated_at": self.updated_at,
+            "metadata": self.metadata,
+            "providers": {k: v.to_dict() for k, v in self.providers.items()},
+        }
+
+
+# ---------------------------------------------------------------------------
+# Source Adapters
+# ---------------------------------------------------------------------------
+
+def parse_models_dev(raw_data: Any) -> NormalizedCatalog | None:
+    """Source adapter for models.dev (https://models.dev/api.json).
+
+    Expects a mapping of provider IDs to provider objects containing model
+    mappings or lists. Fails closed (returns None) on malformed or empty payloads.
+    """
+    if not isinstance(raw_data, dict) or not raw_data:
+        return None
+
+    # If it's a legacy schema mistakenly passed here, don't parse as models.dev
+    if "version" in raw_data and "providers" in raw_data and isinstance(raw_data.get("providers"), dict):
+        return None
+
+    providers: dict[str, NormalizedProvider] = {}
+
+    for pkey, pval in raw_data.items():
+        if not isinstance(pkey, str) or not isinstance(pval, dict):
+            return None
+        pid = str(pval.get("id") or pkey).strip()
+        pname = str(pval.get("name") or pid).strip()
+        models_raw = pval.get("models")
+        if not isinstance(models_raw, (dict, list)):
+            return None
+
+        norm_models: list[NormalizedModel] = []
+        if isinstance(models_raw, dict):
+            model_items = list(models_raw.items())
+        else:
+            model_items = [(m.get("id", ""), m) for m in models_raw if isinstance(m, dict)]
+
+        for mkey, mval in model_items:
+            if not isinstance(mval, dict):
+                return None
+            mid = mval.get("id") or mkey
+            if not isinstance(mid, str) or not mid.strip():
+                return None
+
+            limit = mval.get("limit") if isinstance(mval.get("limit"), dict) else {}
+            ctx = int(limit.get("context") or mval.get("context") or 0)
+            max_out = int(limit.get("output") or mval.get("max_output") or 0)
+
+            mods = mval.get("modalities")
+            if not isinstance(mods, dict):
+                mods = {"input": list(mods)} if isinstance(mods, (list, tuple)) else {}
+
+            norm_models.append(
+                NormalizedModel(
+                    id=mid.strip(),
+                    name=str(mval.get("name") or mid),
+                    description=str(mval.get("description") or ""),
+                    default=bool(mval.get("default", False)),
+                    reasoning=bool(mval.get("reasoning", False)),
+                    tool_call=bool(mval.get("tool_call", False) or mval.get("tools", False)),
+                    attachment=bool(mval.get("attachment", False) or mval.get("vision", False)),
+                    modalities=mods,
+                    context=ctx,
+                    max_output=max_out,
+                    release_date=str(mval.get("release_date") or ""),
+                    metadata=mval.get("metadata") if isinstance(mval.get("metadata"), dict) else {},
+                    capabilities=mval.get("capabilities") if isinstance(mval.get("capabilities"), dict) else {},
+                )
+            )
+
+        if norm_models:
+            providers[pid] = NormalizedProvider(
+                id=pid,
+                name=pname,
+                models=norm_models,
+                metadata=pval.get("metadata") if isinstance(pval.get("metadata"), dict) else {},
+            )
+
+    if not providers:
+        return None
+
+    return NormalizedCatalog(providers=providers, source_format="models_dev")
+
+
+def parse_legacy_hermes_catalog(raw_data: Any) -> NormalizedCatalog | None:
+    """Source adapter for legacy Hermes manifest format (version 1)."""
+    if not isinstance(raw_data, dict) or not raw_data:
+        return None
+
+    version = raw_data.get("version")
+    if not isinstance(version, int) or version > SUPPORTED_SCHEMA_VERSION:
+        return None
+
+    providers_raw = raw_data.get("providers")
+    if not isinstance(providers_raw, dict) or not providers_raw:
+        return None
+
+    providers: dict[str, NormalizedProvider] = {}
+
+    for pid, pval in providers_raw.items():
+        if not isinstance(pid, str) or not isinstance(pval, dict):
+            return None
+        models_raw = pval.get("models")
+        if not isinstance(models_raw, list):
+            return None
+
+        norm_models: list[NormalizedModel] = []
+        for m in models_raw:
+            if not isinstance(m, dict):
+                return None
+            mid = m.get("id")
+            if not isinstance(mid, str) or not mid.strip():
+                return None
+
+            limit = m.get("limit") if isinstance(m.get("limit"), dict) else {}
+            ctx = int(limit.get("context") or m.get("context") or 0)
+            max_out = int(limit.get("output") or m.get("max_output") or 0)
+            mods = m.get("modalities")
+            if not isinstance(mods, dict):
+                mods = {"input": list(mods)} if isinstance(mods, (list, tuple)) else {}
+
+            norm_models.append(
+                NormalizedModel(
+                    id=mid.strip(),
+                    name=str(m.get("name") or mid),
+                    description=str(m.get("description") or ""),
+                    default=bool(m.get("default", False)),
+                    reasoning=bool(m.get("reasoning", False)),
+                    tool_call=bool(m.get("tool_call", False) or m.get("tools", False)),
+                    attachment=bool(m.get("attachment", False) or m.get("vision", False)),
+                    modalities=mods,
+                    context=ctx,
+                    max_output=max_out,
+                    release_date=str(m.get("release_date") or ""),
+                    metadata=m.get("metadata") if isinstance(m.get("metadata"), dict) else {},
+                    capabilities=m.get("capabilities") if isinstance(m.get("capabilities"), dict) else {},
+                )
+            )
+
+        if norm_models:
+            meta = pval.get("metadata") if isinstance(pval.get("metadata"), dict) else {}
+            pname = str(meta.get("display_name") or pid)
+            providers[pid] = NormalizedProvider(id=pid, name=pname, models=norm_models, metadata=meta)
+
+    if not providers:
+        return None
+
+    return NormalizedCatalog(
+        providers=providers,
+        version=int(raw_data.get("version", 1)),
+        updated_at=str(raw_data.get("updated_at", "")),
+        metadata=raw_data.get("metadata") if isinstance(raw_data.get("metadata"), dict) else {},
+        source_format="legacy",
+    )
+
+
+def detect_and_parse_catalog(raw_data: Any) -> NormalizedCatalog | None:
+    """Detect schema type (models.dev or legacy) and return NormalizedCatalog."""
+    if not isinstance(raw_data, dict) or not raw_data:
+        return None
+    if "version" in raw_data and "providers" in raw_data and isinstance(raw_data.get("providers"), dict):
+        return parse_legacy_hermes_catalog(raw_data)
+    return parse_models_dev(raw_data)
+
+
+def get_static_fallback_catalog() -> dict[str, Any]:
+    """In-repo minimal static catalog fallback when both network and cache are unavailable."""
+    return {
+        "version": 1,
+        "updated_at": "static-fallback",
+        "metadata": {"source": "in-repo static fallback"},
+        "providers": {
+            "openrouter": {
+                "id": "openrouter",
+                "name": "OpenRouter",
+                "metadata": {"display_name": "OpenRouter"},
+                "models": [
+                    {
+                        "id": "anthropic/claude-sonnet-4-6",
+                        "name": "Claude Sonnet 4.6",
+                        "description": "curated default",
+                        "default": True,
+                        "tool_call": True,
+                        "reasoning": True,
+                    },
+                    {
+                        "id": "openai/gpt-5",
+                        "name": "GPT-5",
+                        "description": "curated flagship",
+                        "default": False,
+                        "tool_call": True,
+                        "reasoning": True,
+                    },
+                ],
+            },
+            "anthropic": {
+                "id": "anthropic",
+                "name": "Anthropic",
+                "metadata": {"display_name": "Anthropic"},
+                "models": [
+                    {
+                        "id": "claude-sonnet-4-6",
+                        "name": "Claude Sonnet 4.6",
+                        "description": "default",
+                        "default": True,
+                        "tool_call": True,
+                        "reasoning": True,
+                    },
+                ],
+            },
+        },
+    }
+
+
+def _get_static_fallback_catalog() -> dict[str, Any]:
+    return get_static_fallback_catalog()
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -122,7 +414,7 @@ def _cache_path() -> Path:
 
 
 def _fetch_manifest(url: str, timeout: float) -> dict[str, Any] | None:
-    """HTTP GET the manifest URL and return a parsed dict, or None on failure."""
+    """HTTP GET the manifest URL and return a normalized dict, or None on failure."""
     try:
         req = urllib.request.Request(
             url,
@@ -140,11 +432,12 @@ def _fetch_manifest(url: str, timeout: float) -> dict[str, Any] | None:
         logger.info("model catalog fetch errored (%s): %s", url, exc)
         return None
 
-    if not _validate_manifest(data):
+    norm = detect_and_parse_catalog(data)
+    if norm is None:
         logger.info("model catalog at %s failed schema validation", url)
         return None
 
-    return data
+    return norm.to_dict()
 
 
 def _fetch_manifest_with_fallback(
@@ -173,29 +466,11 @@ def _fetch_manifest_with_fallback(
 
 
 def _validate_manifest(data: Any) -> bool:
-    """Return True when ``data`` matches the minimum manifest shape."""
+    """Return True when ``data`` can be parsed into a NormalizedCatalog."""
     if not isinstance(data, dict):
         return False
-    version = data.get("version")
-    if not isinstance(version, int) or version > SUPPORTED_SCHEMA_VERSION:
-        # Future schema version we don't understand — refuse rather than
-        # guess. Older schemas (version < 1) aren't supported either.
-        return False
-    providers = data.get("providers")
-    if not isinstance(providers, dict):
-        return False
-    for pname, pblock in providers.items():
-        if not isinstance(pname, str) or not isinstance(pblock, dict):
-            return False
-        models = pblock.get("models")
-        if not isinstance(models, list):
-            return False
-        for m in models:
-            if not isinstance(m, dict):
-                return False
-            if not isinstance(m.get("id"), str) or not m["id"].strip():
-                return False
-    return True
+    norm = detect_and_parse_catalog(data)
+    return norm is not None
 
 
 def _read_disk_cache() -> tuple[dict[str, Any] | None, float]:
@@ -263,11 +538,13 @@ def _spawn_catalog_swr_refresh(url: str) -> None:
 # ---------------------------------------------------------------------------
 
 
-def get_catalog(*, force_refresh: bool = False) -> dict[str, Any]:
+def get_catalog(*, force_refresh: bool = False, fallback_to_static: bool = False) -> dict[str, Any]:
     """Return the parsed model catalog manifest, or an empty dict on failure.
 
     Callers should treat a missing provider/model as "use the in-repo fallback"
     — never raise from this function so the CLI keeps working offline.
+    If ``fallback_to_static=True``, returns the in-repo static fallback catalog
+    when both network and disk cache are unavailable.
     """
     global _catalog_cache, _catalog_cache_source_mtime
 
@@ -324,6 +601,12 @@ def get_catalog(*, force_refresh: bool = False) -> dict[str, Any]:
         _catalog_cache = disk_data
         _catalog_cache_source_mtime = disk_mtime
         return disk_data
+
+    if fallback_to_static:
+        fallback = _get_static_fallback_catalog()
+        _catalog_cache = fallback
+        _catalog_cache_source_mtime = now
+        return fallback
 
     return {}
 
