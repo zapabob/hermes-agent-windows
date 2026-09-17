@@ -255,9 +255,25 @@ func (w *Watchdog) RunCycle() cycleResult {
 	backend := w.findAnyHealthyBackend()
 
 	if derr != nil || len(desktop) == 0 {
+		// Single-owner mode: Electron main owns Desktop lifecycle. Watchdog may
+		// only supervise embedding — never relaunch Hermes.exe after Desktop dies.
+		if !w.cfg.PrewarmBackend {
+			w.logger.Infof("Desktop DOWN — observe only (Electron owns Desktop lifecycle)")
+			backendStatus := "down"
+			if backend != nil {
+				backendStatus = "up"
+			}
+			res := withEmbedding(cycleResult{Desktop: "down", Backend: backendStatus})
+			if backend != nil {
+				res.BackendPID = backend.PID
+				res.BackendPort = backend.Port
+			}
+			w.saveState(res)
+			return res
+		}
 		// Avoid Hermes.exe proliferation: cold Desktop without an auth-ok
 		// prewarm manifest times out at 90s and dies, then we relaunch forever.
-		if w.cfg.PrewarmBackend && !managedReady {
+		if !managedReady {
 			w.logger.Infof("Desktop DOWN — defer relaunch until managed backend auth-ok")
 			res := withEmbedding(cycleResult{Desktop: "waiting_backend", Backend: "down"})
 			w.saveState(res)
@@ -272,9 +288,7 @@ func (w *Watchdog) RunCycle() cycleResult {
 			w.saveState(res)
 			return res
 		}
-		if w.cfg.PrewarmBackend {
-			stopOrphanDesktopBackends(w.logger, w.cfg, skipPID)
-		}
+		stopOrphanDesktopBackends(w.logger, w.cfg, skipPID)
 
 		if !w.reserveRecovery("desktop_relaunch") {
 			res := withEmbedding(cycleResult{Desktop: "cooldown", Backend: "pending"})
@@ -357,7 +371,9 @@ func (w *Watchdog) RunCycle() cycleResult {
 
 	// Managed serve reminted the session token while Desktop stayed up —
 	// renderer still holds the old Bearer and flaps 401 / CONNECTING.
-	if w.back.TokenRotationPending() {
+	// Token-rotation Desktop restart is prewarm-only; single-owner mode leaves
+	// Electron to reconnect to its own backend generation.
+	if w.cfg.PrewarmBackend && w.back.TokenRotationPending() {
 		if !w.reserveRecovery("desktop_restart") {
 			res := withEmbedding(cycleResult{
 				Desktop:     "cooldown",
