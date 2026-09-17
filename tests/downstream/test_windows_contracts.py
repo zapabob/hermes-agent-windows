@@ -323,8 +323,8 @@ def test_go_watchdog_has_no_desktop_backend_lifecycle_authority() -> None:
     assert not (go_root / "backend.go").exists()
 
     process = (go_root / "process_windows.go").read_text(encoding="utf-8")
-    assert "func startPackagedDesktop(cfg Config, logger *Logger, mutationAllowed func() bool) bool" in process
-    assert "desktopLaunchEnv(cfg)" in process
+    assert "startPackagedDesktop" not in process
+    assert not (go_root / "desktop_launch_env.go").exists()
     assert "BackendManager" not in process
     assert "readLaunchManifest" not in process
     assert "stopOrphanDesktopBackends" not in process

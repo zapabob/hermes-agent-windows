@@ -99,25 +99,3 @@ func TestRunCycleDoesNotMutateProcessesDuringMaintenance(t *testing.T) {
 		t.Fatal("maintenance cycle launched the packaged desktop")
 	}
 }
-
-func TestDesktopRecoveryRechecksRevocationImmediatelyBeforeMutation(t *testing.T) {
-	dir := t.TempDir()
-	exe := filepath.Join(dir, "Hermes.exe")
-	if err := os.WriteFile(exe, []byte("not executable"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	cfg := Config{PackagedExe: exe, DataDir: dir}
-	logger := NewLogger(filepath.Join(dir, "watchdog.log"))
-	checks := 0
-	revoked := func() bool {
-		checks++
-		return false
-	}
-
-	if startPackagedDesktop(cfg, logger, revoked) {
-		t.Fatal("revoked cold launch must not start Desktop")
-	}
-	if checks != 1 {
-		t.Fatalf("expected one last-moment launch authority check, got %d", checks)
-	}
-}

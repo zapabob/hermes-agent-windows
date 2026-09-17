@@ -203,34 +203,14 @@ func (w *Watchdog) RunCycle() cycleResult {
 	}
 
 	if desktopErr != nil || len(desktop) == 0 {
-		if w.maintenanceSuspended() {
-			res := withEmbedding(cycleResult{Desktop: "maintenance", Backend: "maintenance"})
-			w.saveState(res)
-			return res
+		backendStatus := "down"
+		res := withEmbedding(cycleResult{Desktop: "down", Backend: backendStatus})
+		if backend != nil {
+			res.Backend = "up"
+			res.BackendPID = backend.PID
+			res.BackendPort = backend.Port
 		}
-		if !w.reserveRecovery("desktop_relaunch") {
-			res := withEmbedding(cycleResult{Desktop: "cooldown", Backend: "pending"})
-			w.saveState(res)
-			return res
-		}
-		if w.maintenanceSuspended() {
-			res := withEmbedding(cycleResult{Desktop: "maintenance", Backend: "maintenance"})
-			w.saveState(res)
-			return res
-		}
-		w.logger.Infof("Desktop DOWN — relaunch without backend ownership")
-		launched := startPackagedDesktop(w.cfg, w.logger, func() bool { return !w.maintenanceSuspended() })
-		if !launched {
-			if w.maintenanceSuspended() {
-				res := withEmbedding(cycleResult{Desktop: "maintenance", Backend: "maintenance"})
-				w.saveState(res)
-				return res
-			}
-			res := withEmbedding(cycleResult{Desktop: "down", Backend: "pending"})
-			w.saveState(res)
-			return res
-		}
-		res := withEmbedding(cycleResult{Desktop: "relaunched", Backend: "pending"})
+		w.logger.Infof("Desktop DOWN — observe only (Electron/application startup owns Desktop lifecycle)")
 		w.saveState(res)
 		return res
 	}

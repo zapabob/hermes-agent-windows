@@ -54,15 +54,17 @@ def test_a2a_sidecars_are_outside_direct_watchdog_management() -> None:
     assert "go-a2a-roundrobin" not in process
 
 
-def test_session0_watchdog_relaunches_without_desktop_kill_authority() -> None:
+def test_session0_watchdog_has_no_desktop_lifecycle_authority() -> None:
     process = _read(GO / "process_windows.go")
+    watchdog = _read(GO / "watchdog.go")
     launcher = _read(WINDOWS / "Start-HermesGoWatchdog.ps1")
 
-    assert "isNonInteractiveSession" in process
-    assert "HermesDesktopAutoStart" in process
-    assert "startDesktopInInteractiveSession" in process
+    assert "HermesDesktopAutoStart" not in process
+    assert "startPackagedDesktop" not in process + watchdog
+    assert "restartPackagedDesktop" not in process + watchdog
+    assert "desktop_relaunch" not in watchdog
     assert "PROCESS_TERMINATE" not in process
-    assert "restartPackagedDesktop" not in process
+    # Session-0 replacement concerns the watchdog process itself, not Hermes.exe.
     assert "Replacing Session 0 Go watchdog" in launcher
     assert "Get-GoWatchdogSessionId" in launcher
     assert '$state.Status -ne "owned"' in launcher
