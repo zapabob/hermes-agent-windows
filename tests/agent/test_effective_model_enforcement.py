@@ -434,6 +434,80 @@ for line in sys.stdin:
     methods_c = [json.loads(line).get("method") for line in audit_file.read_text(encoding="utf-8").splitlines() if line.strip()]
     assert "session/set_model" not in methods_c
 
+    # Case D: Server without model switching capability -> preserves server default
+    audit_file.unlink()
+    server_code_noswitch = f"""
+import sys, json
+
+audit_path = {repr(str(audit_file))}
+
+def log_msg(obj):
+    with open(audit_path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(obj) + "\\n")
+
+for line in sys.stdin:
+    line = line.strip()
+    if not line:
+        continue
+    try:
+        req = json.loads(line)
+    except Exception:
+        continue
+    
+    log_msg(req)
+    method = req.get("method")
+    rid = req.get("id")
+    
+    if method == "initialize":
+        res = {{"protocolVersion": 1, "capabilities": {{}}}}
+    elif method == "session/new":
+        res = {{
+            "sessionId": "sess-test-acp-noswitch",
+            "models": {{
+                "currentModelId": "server-fixed-default",
+                "availableModels": [],
+            }},
+        }}
+    elif method == "session/prompt":
+        update = {{
+            "jsonrpc": "2.0",
+            "method": "session/update",
+            "params": {{
+                "sessionId": "sess-test-acp-noswitch",
+                "update": {{
+                    "type": "content",
+                    "content": {{"type": "text", "text": "ACP prompt done"}},
+                }},
+            }},
+        }}
+        sys.stdout.write(json.dumps(update) + "\\n")
+        sys.stdout.flush()
+        res = {{"status": "complete"}}
+    else:
+        res = {{}}
+    
+    resp = {{"jsonrpc": "2.0", "id": rid, "result": res}}
+    sys.stdout.write(json.dumps(resp) + "\\n")
+    sys.stdout.flush()
+"""
+    server_noswitch_script = tmp_path / "fake_acp_server_noswitch.py"
+    server_noswitch_script.write_text(server_code_noswitch, encoding="utf-8")
+
+    client_d = CopilotACPClient()
+    client_d._acp_command = sys.executable
+    client_d._acp_args = [str(server_noswitch_script)]
+
+    comp_d = client_d._create_chat_completion(
+        model="model-X",
+        messages=[{"role": "user", "content": "hi"}],
+    )
+    assert comp_d.model == "server-fixed-default"
+    assert comp_d.effective_model_source == "server"
+
+    methods_d = [json.loads(line).get("method") for line in audit_file.read_text(encoding="utf-8").splitlines() if line.strip()]
+    assert "session/set_model" not in methods_d
+    assert "session/prompt" in methods_d
+
 
 # ---------------------------------------------------------------------------
 # 6. SESSION EFFECTIVE MODEL ISOLATION (RED 7)
