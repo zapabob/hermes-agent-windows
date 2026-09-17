@@ -338,3 +338,37 @@ def test_b2_consumers_always_receive_canonical_shape(
             assert "tool_call" in m
             assert "modalities" in m
 
+
+def test_b2_write_disk_cache_fails_closed_on_unparseable_dict(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """B.2 / C.1: _write_disk_cache fails closed and never persists unparseable or non-canonical payload."""
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path / "hermes_home"))
+    from hermes_cli import model_catalog
+
+    cache_file = model_catalog._cache_path()
+    assert not cache_file.exists()
+
+    # 1. Non-dict payload -> refused
+    model_catalog._write_disk_cache(["invalid", "payload"])  # type: ignore
+    assert not cache_file.exists()
+
+    # 2. Unparseable dict (neither models.dev nor valid legacy manifest) -> refused
+    unparseable = {"bogus": "content", "numbers": [1, 2, 3]}
+    model_catalog._write_disk_cache(unparseable)
+    assert not cache_file.exists()
+
+    # 3. Canonical NormalizedCatalog -> written successfully
+    norm = model_catalog.parse_models_dev(SAMPLE_MODELS_DEV_FIXTURE)
+    assert norm is not None
+    model_catalog._write_disk_cache(norm)
+    assert cache_file.exists()
+
+    # 4. Attempting to overwrite existing valid cache with unparseable payload -> refused, existing kept intact
+    cache_mtime_before = cache_file.stat().st_mtime
+    model_catalog._write_disk_cache({"garbage": True})
+    assert cache_file.stat().st_mtime == cache_mtime_before
+    disk_data = json.loads(cache_file.read_text(encoding="utf-8"))
+    assert "providers" in disk_data
+
+

@@ -508,12 +508,21 @@ def _read_disk_cache() -> tuple[dict[str, Any] | None, float]:
 
 
 def _write_disk_cache(data: dict[str, Any] | NormalizedCatalog) -> None:
-    """Write catalog to disk cache atomically in canonical NormalizedCatalog shape."""
+    """Write catalog to disk cache atomically in canonical NormalizedCatalog shape.
+
+    Fails closed: refuses to persist any unparseable or non-canonical payload.
+    """
     if isinstance(data, NormalizedCatalog):
         canonical_dict = data.to_dict()
-    else:
+    elif isinstance(data, dict):
         norm = detect_and_parse_catalog(data)
-        canonical_dict = norm.to_dict() if norm is not None else data
+        if norm is None:
+            logger.warning("refusing to write non-canonical or unparseable catalog payload to disk")
+            return
+        canonical_dict = norm.to_dict()
+    else:
+        logger.warning("refusing to write invalid non-dict payload to disk")
+        return
 
     path = _cache_path()
     try:

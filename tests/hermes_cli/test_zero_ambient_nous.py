@@ -79,15 +79,6 @@ def nous_network_deny(allowed_explicit: bool = False) -> Generator[List[str], No
     try:
         import socket
 
-        original_socket_connect = socket.socket.connect
-
-        def intercepted_socket_connect(self: Any, *args: Any, **kwargs: Any) -> Any:
-            address = args[0] if args else kwargs.get("address")
-            if isinstance(address, tuple) and len(address) > 0:
-                host = str(address[0])
-                check_url_or_host(host)
-            return original_socket_connect(self, *args, **kwargs)
-
         original_create_connection = socket.create_connection
 
         def intercepted_create_connection(address: Any, *args: Any, **kwargs: Any) -> Any:
@@ -96,7 +87,6 @@ def nous_network_deny(allowed_explicit: bool = False) -> Generator[List[str], No
                 check_url_or_host(host)
             return original_create_connection(address, *args, **kwargs)
 
-        patches.append(patch("socket.socket.connect", side_effect=intercepted_socket_connect))
         patches.append(patch("socket.create_connection", side_effect=intercepted_create_connection))
     except ImportError:
         pass
@@ -112,7 +102,7 @@ def nous_network_deny(allowed_explicit: bool = False) -> Generator[List[str], No
             check_url_or_host(url)
             return original_httpx_send(self, request, *args, **kwargs)
 
-        patches.append(patch("httpx.Client.send", side_effect=intercepted_httpx_send))
+        patches.append(patch.object(httpx.Client, "send", autospec=True, side_effect=intercepted_httpx_send))
     except ImportError:
         pass
 

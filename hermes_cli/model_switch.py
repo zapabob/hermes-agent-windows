@@ -4006,6 +4006,9 @@ def list_picker_providers(
     current_model: str = "",
     include_moa: bool = False,
     excluded_providers: list | None = None,
+    *,
+    refresh: bool = False,
+    probe_custom_providers: bool = True,
 ) -> List[dict]:
     """Interactive-picker variant of :func:`list_authenticated_providers`.
 
@@ -4037,6 +4040,8 @@ def list_picker_providers(
         current_model=current_model,
         for_picker=True,
         excluded_providers=excluded_providers,
+        refresh=refresh,
+        probe_custom_providers=probe_custom_providers,
     )
     if include_moa:
         providers = _prepend_moa_picker_provider(providers, current_provider=current_provider)
