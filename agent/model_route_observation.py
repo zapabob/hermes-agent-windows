@@ -50,6 +50,62 @@ def _prettify_provider(provider: str) -> str:
     return mapping.get(p.lower(), p.title())
 
 
+import re
+
+_ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
+_AUTH_BEARER_RE = re.compile(r"\bBearer\s+[A-Za-z0-9_\-\.]+", re.IGNORECASE)
+_OPENAI_KEY_RE = re.compile(r"\bsk-[a-zA-Z0-9_\-\.]{8,}\b")
+_GITHUB_TOKEN_RE = re.compile(r"\bgh[pousr]_[a-zA-Z0-9]{16,}\b")
+_GOOGLE_KEY_RE = re.compile(r"\bAIza[0-9A-Za-z-_]{35}\b")
+_GENERIC_KEY_RE = re.compile(
+    r"(?i)\b(api[-_]?key|token|secret|password|authorization)\s*[:=]\s*['\"]?([a-zA-Z0-9_\-\.]{8,})['\"]?"
+)
+
+
+def sanitize_and_bound_route_reason(reason: Optional[str], max_len: int = 200) -> Optional[str]:
+    """Sanitize and bound route/fallback reason strings.
+
+    Guarantees:
+    1. Fixed maximum length (max_len), truncating with '...' if exceeded.
+    2. Normalization: strip ANSI escapes, control characters, normalize newlines/tabs to single space.
+    3. Redaction: redact Authorization tokens, API keys, and sensitive credential material.
+    """
+    if not reason:
+        return None
+    if not isinstance(reason, str):
+        reason = str(reason)
+
+    # 1. Strip ANSI escape sequences
+    cleaned = _ANSI_ESCAPE_RE.sub("", reason)
+
+    # 2. Redact credentials
+    cleaned = _AUTH_BEARER_RE.sub("Bearer [REDACTED]", cleaned)
+    cleaned = _OPENAI_KEY_RE.sub("sk-[REDACTED]", cleaned)
+    cleaned = _GITHUB_TOKEN_RE.sub("gh*_[REDACTED]", cleaned)
+    cleaned = _GOOGLE_KEY_RE.sub("AIza[REDACTED]", cleaned)
+    cleaned = _GENERIC_KEY_RE.sub(r"\1=[REDACTED]", cleaned)
+
+    # 3. Normalize control characters and whitespace
+    chars = []
+    for ch in cleaned:
+        code = ord(ch)
+        if code < 32 or (127 <= code <= 159):
+            chars.append(" ")
+        else:
+            chars.append(ch)
+    cleaned = "".join(chars)
+    cleaned = " ".join(cleaned.split())
+
+    if not cleaned:
+        return None
+
+    # 4. Enforce fixed maximum length
+    if len(cleaned) > max_len:
+        cleaned = cleaned[: max_len - 3].rstrip() + "..."
+
+    return cleaned
+
+
 @dataclass
 class ModelRouteObservation:
     """Internal representation of model routing intent vs reality.
@@ -68,6 +124,9 @@ class ModelRouteObservation:
     reason: Optional[str] = None
     effective_model_source: str = "request"  # "request" | "response" | "server"
     session_id: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        self.reason = sanitize_and_bound_route_reason(self.reason)
 
     # CamelCase properties for interoperability
     @property
@@ -128,6 +187,9 @@ class ModelRouteObservation:
         eff_clean = eff.split("/")[-1].strip().lower() if "/" in eff else eff.lower()
 
         if eff_clean == req_clean or eff_clean == wire_clean:
+            return False
+
+        if req_clean in ("copilot-acp", "default", "auto") or wire_clean in ("copilot-acp", "default", "auto"):
             return False
 
         return True

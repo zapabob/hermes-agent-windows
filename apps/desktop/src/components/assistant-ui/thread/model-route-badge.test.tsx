@@ -21,6 +21,7 @@ describe('ModelRouteBadge & divergence logic', () => {
       fallback: false,
       effective_model_source: 'request'
     }
+
     expect(isRouteDivergent(route)).toBe(false)
     expect(isModelDrift(route)).toBe(false)
 
@@ -41,6 +42,7 @@ describe('ModelRouteBadge & divergence logic', () => {
       fallback: false,
       effective_model_source: 'response'
     }
+
     expect(isRouteDivergent(route)).toBe(false)
     expect(isModelDrift(route)).toBe(false)
 
@@ -61,6 +63,7 @@ describe('ModelRouteBadge & divergence logic', () => {
       reason: 'rate limit',
       effective_model_source: 'request'
     }
+
     expect(isRouteDivergent(route)).toBe(true)
     expect(isModelDrift(route)).toBe(false)
 
@@ -82,6 +85,7 @@ describe('ModelRouteBadge & divergence logic', () => {
       fallback: false,
       effective_model_source: 'response'
     }
+
     expect(isRouteDivergent(route)).toBe(true)
     expect(isModelDrift(route)).toBe(true)
 
@@ -89,5 +93,25 @@ describe('ModelRouteBadge & divergence logic', () => {
     expect(screen.getByText(/⚠ Model drift:/i)).toBeDefined()
     expect(screen.getByText(/Requested: model-A/i)).toBeDefined()
     expect(screen.getByText(/Provider reported: model-B/i)).toBeDefined()
+  })
+
+  it('sanitizes and bounds fallback reason in badge presentation', () => {
+    const route: ModelRouteInfo = {
+      requested_provider: 'nvidia',
+      requested_model: 'model-N',
+      wire_provider: 'nous',
+      wire_model: 'model-F',
+      effective_provider: 'nous',
+      effective_model: 'model-F',
+      fallback: true,
+      reason: 'Failed with Bearer token_secret_123 and sk-abcdef1234567890\n\tNew line error',
+      effective_model_source: 'request'
+    }
+
+    render(<ModelRouteBadge route={route} />)
+    expect(screen.getByText(/Bearer \[REDACTED\]/i)).toBeDefined()
+    expect(screen.getByText(/sk-\[REDACTED\]/i)).toBeDefined()
+    expect(screen.queryByText(/token_secret_123/i)).toBeNull()
+    expect(screen.queryByText(/abcdef1234567890/i)).toBeNull()
   })
 })

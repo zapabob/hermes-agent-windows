@@ -7,11 +7,21 @@ from unittest.mock import MagicMock, patch
 from agent.model_route_observation import ModelRouteObservation
 
 
-def test_cli_chat_divergence_panel_on_fallback():
+from rich.panel import Panel
+
+
+def test_cli_chat_renders_exactly_one_panel_on_fallback():
     from cli import HermesCLI
 
     cli = HermesCLI(model="model-N")
-    cli.agent = MagicMock()
+    cli.session_id = "test-session"
+    cli._ensure_runtime_credentials = MagicMock(return_value=True)
+
+    def fake_init(*args, **kwargs):
+        cli.agent = mock_agent
+        return True
+
+    cli._init_agent = fake_init
 
     obs = ModelRouteObservation(
         requested_provider="nvidia",
@@ -23,14 +33,97 @@ def test_cli_chat_divergence_panel_on_fallback():
         fallback=True,
         reason="rate limit",
     )
-    cli.agent.last_route_observation = obs
 
-    # Verify that ux_summary provides the expected strings
-    summary = obs.ux_summary()
-    assert summary["type"] == "fallback"
-    assert "Requested: NVIDIA / model-N" in summary["lines"]
-    assert "Using: Nous / model-F" in summary["lines"]
-    assert "Reason: rate limit" in summary["lines"]
+    mock_agent = MagicMock()
+    mock_agent.max_iterations = 500
+    mock_agent.run_conversation.return_value = {
+        "final_response": "Hello from fallback model",
+        "route_observation": obs,
+        "messages": [],
+        "completed": True,
+    }
+    mock_agent.last_route_observation = obs
+    cli.agent = mock_agent
+
+    panels_printed = []
+    fake_console = MagicMock()
+
+    def fake_print(*args, **kwargs):
+        for a in args:
+            if isinstance(a, Panel):
+                panels_printed.append(a)
+
+    fake_console.print.side_effect = fake_print
+
+    with patch("cli.ChatConsole", return_value=fake_console), \
+         patch("cli._cprint", return_value=None):
+        cli.chat("hi")
+
+    divergence_panels = [
+        p for p in panels_printed
+        if "Fallback" in str(p.title) or "drift" in str(p.title) or "⚠" in str(p.title)
+    ]
+    assert len(divergence_panels) == 1
+    panel = divergence_panels[0]
+    assert "Fallback active" in str(panel.title)
+    assert "Requested: NVIDIA / model-N" in str(panel.renderable)
+    assert "Using: Nous / model-F" in str(panel.renderable)
+    assert "Reason: rate limit" in str(panel.renderable)
+
+
+def test_cli_chat_renders_zero_panel_on_normal_route():
+    from cli import HermesCLI
+
+    cli = HermesCLI(model="claude-3-7-sonnet")
+    cli.session_id = "test-session"
+    cli._ensure_runtime_credentials = MagicMock(return_value=True)
+
+    def fake_init(*args, **kwargs):
+        cli.agent = mock_agent
+        return True
+
+    cli._init_agent = fake_init
+
+    obs = ModelRouteObservation(
+        requested_provider="anthropic",
+        requested_model="claude-3-7-sonnet",
+        wire_provider="anthropic",
+        wire_model="claude-3-7-sonnet",
+        effective_provider="anthropic",
+        effective_model="claude-3-7-sonnet",
+        fallback=False,
+    )
+
+    mock_agent = MagicMock()
+    mock_agent.max_iterations = 500
+    mock_agent.run_conversation.return_value = {
+        "final_response": "Hello from Claude",
+        "route_observation": obs,
+        "messages": [],
+        "completed": True,
+    }
+    mock_agent.last_route_observation = obs
+    cli.agent = mock_agent
+
+    panels_printed = []
+    fake_console = MagicMock()
+
+    def fake_print(*args, **kwargs):
+        for a in args:
+            if isinstance(a, Panel):
+                panels_printed.append(a)
+
+    fake_console.print.side_effect = fake_print
+
+    with patch("cli.ChatConsole", return_value=fake_console), \
+         patch("cli._cprint", return_value=None):
+        cli.chat("hi")
+
+    divergence_panels = [
+        p for p in panels_printed
+        if "Fallback" in str(p.title) or "drift" in str(p.title) or "⚠" in str(p.title)
+    ]
+    assert len(divergence_panels) == 0
 
 
 def test_cli_session_status_shows_route_divergence():

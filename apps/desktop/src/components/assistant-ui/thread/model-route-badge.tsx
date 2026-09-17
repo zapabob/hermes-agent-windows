@@ -5,17 +5,21 @@ import { displayModelName } from '@/lib/model-status-label'
 import { cn } from '@/lib/utils'
 
 export function isModelDrift(route?: ModelRouteInfo | null): boolean {
-  if (!route || route.fallback) return false
-  if (route.isDrift !== undefined) return route.isDrift
-  if (route.is_drift !== undefined) return route.is_drift
+  if (!route || route.fallback) {return false}
+
+  if (route.isDrift !== undefined) {return route.isDrift}
+
+  if (route.is_drift !== undefined) {return route.is_drift}
 
   const src = route.effectiveModelSource || route.effective_model_source
-  if (src !== 'response' && src !== 'server') return false
+
+  if (src !== 'response' && src !== 'server') {return false}
 
   const req = (route.requestedModel || route.requested_model || '').trim()
   const wire = (route.wireModel || route.wire_model || '').trim()
   const eff = (route.effectiveModel || route.effective_model || '').trim()
-  if (!eff || !req) return false
+
+  if (!eff || !req) {return false}
 
   const reqClean = (req.includes('/') ? req.slice(req.lastIndexOf('/') + 1) : req).toLowerCase()
   const wireClean = (wire.includes('/') ? wire.slice(wire.lastIndexOf('/') + 1) : wire).toLowerCase()
@@ -25,16 +29,22 @@ export function isModelDrift(route?: ModelRouteInfo | null): boolean {
 }
 
 export function isRouteDivergent(route?: ModelRouteInfo | null): boolean {
-  if (!route) return false
-  if (route.isDivergent !== undefined) return route.isDivergent
-  if (route.is_divergent !== undefined) return route.is_divergent
-  if (route.fallback) return true
+  if (!route) {return false}
+
+  if (route.isDivergent !== undefined) {return route.isDivergent}
+
+  if (route.is_divergent !== undefined) {return route.is_divergent}
+
+  if (route.fallback) {return true}
+
   return isModelDrift(route)
 }
 
 function prettifyProvider(provider?: string): string {
   const p = (provider || '').trim()
-  if (!p) return ''
+
+  if (!p) {return ''}
+
   const mapping: Record<string, string> = {
     openai: 'OpenAI',
     openrouter: 'OpenRouter',
@@ -49,6 +59,7 @@ function prettifyProvider(provider?: string): string {
     meta: 'Meta',
     ollama: 'Ollama'
   }
+
   return mapping[p.toLowerCase()] || p.charAt(0).toUpperCase() + p.slice(1)
 }
 
@@ -57,8 +68,42 @@ interface ModelRouteBadgeProps {
   className?: string
 }
 
+export function sanitizeAndBoundRouteReason(reason?: string | null, maxLen = 200): string | null {
+  if (!reason) {
+    return null
+  }
+
+  let cleaned = String(reason)
+
+  // eslint-disable-next-line no-control-regex -- normalize ANSI escape sequences
+  cleaned = cleaned.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+  cleaned = cleaned.replace(/\bBearer\s+[A-Za-z0-9_\-.]+/gi, 'Bearer [REDACTED]')
+  cleaned = cleaned.replace(/\bsk-[a-zA-Z0-9_\-.]{8,}\b/g, 'sk-[REDACTED]')
+  cleaned = cleaned.replace(/\bgh[pousr]_[a-zA-Z0-9]{16,}\b/g, 'gh*_[REDACTED]')
+  cleaned = cleaned.replace(/\bAIza[0-9A-Za-z-_]{35}\b/g, 'AIza[REDACTED]')
+  cleaned = cleaned.replace(
+    /\b(api[-_]?key|token|secret|password|authorization)\s*[:=]\s*['"]?([a-zA-Z0-9_\-.]{8,})['"]?/gi,
+    '$1=[REDACTED]'
+  )
+  // eslint-disable-next-line no-control-regex -- strip control characters
+  cleaned = cleaned.replace(/[\x00-\x1f\x7f-\x9f]/g, ' ')
+  cleaned = cleaned.replace(/\s+/g, ' ').trim()
+
+  if (!cleaned) {
+    return null
+  }
+
+  if (cleaned.length > maxLen) {
+    return `${cleaned.slice(0, maxLen - 3).trimEnd()}...`
+  }
+
+  return cleaned
+}
+
 export const ModelRouteBadge: FC<ModelRouteBadgeProps> = ({ route, className }) => {
-  if (!route) return null
+  if (!route) {
+    return null
+  }
 
   const isFallback = Boolean(route.fallback)
   const isDrift = isModelDrift(route)
@@ -66,7 +111,7 @@ export const ModelRouteBadge: FC<ModelRouteBadgeProps> = ({ route, className }) 
   const reqProvider = prettifyProvider(route.requestedProvider || route.requested_provider)
   const effModel = route.effectiveModel || route.effective_model || ''
   const effProvider = prettifyProvider(route.effectiveProvider || route.effective_provider)
-  const reason = route.reason
+  const reason = sanitizeAndBoundRouteReason(route.reason)
 
   if (isFallback) {
     return (

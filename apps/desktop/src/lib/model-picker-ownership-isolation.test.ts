@@ -13,9 +13,10 @@
 
 import { describe, expect, it, vi } from 'vitest'
 
+import type { SessionOwnerRoute } from '@/store/session-request-router'
+
 import { requestModelOptions } from './model-options'
 import { resolveModelPickerOwner } from './model-picker-owner'
-import type { SessionOwnerRoute } from '@/store/session-request-router'
 
 // ---------------------------------------------------------------------------
 // Helpers

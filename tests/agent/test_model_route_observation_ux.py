@@ -128,3 +128,63 @@ def test_to_dict_preserves_observability_fields():
     assert d["requestedModel"] == "model-N"
     assert d["effectiveProvider"] == "nous"
     assert d["effectiveModel"] == "model-F"
+
+
+def test_sanitize_and_bound_route_reason_bounding():
+    from agent.model_route_observation import sanitize_and_bound_route_reason
+
+    # Reason exceeding max_len (default 200)
+    long_reason = "rate limit exceeded: " + ("x" * 250)
+    sanitized = sanitize_and_bound_route_reason(long_reason, max_len=200)
+    assert sanitized is not None
+    assert len(sanitized) <= 200
+    assert sanitized.endswith("...")
+    assert sanitized.startswith("rate limit exceeded: xxx")
+
+
+def test_sanitize_and_bound_route_reason_normalization():
+    from agent.model_route_observation import sanitize_and_bound_route_reason
+
+    # Reason with ANSI escapes, newlines, tabs, and multiple spaces
+    raw = "\x1b[31mError:\x1b[0m\n\tprovider failed\r\nwith status   503"
+    sanitized = sanitize_and_bound_route_reason(raw)
+    assert sanitized == "Error: provider failed with status 503"
+
+
+def test_sanitize_and_bound_route_reason_redaction():
+    from agent.model_route_observation import sanitize_and_bound_route_reason
+
+    # Reason containing bearer token, api key, and sensitive credentials
+    raw = "Failed with Bearer eyJhbGciOiJIUzI1Ni... and key sk-1234567890abcdef and token=secret_value_12345"
+    sanitized = sanitize_and_bound_route_reason(raw)
+    assert "Bearer [REDACTED]" in sanitized
+    assert "sk-[REDACTED]" in sanitized
+    assert "token=[REDACTED]" in sanitized
+    assert "secret_value" not in sanitized
+
+
+def test_model_route_observation_sanitizes_automatically():
+    raw_reason = "HTTP 401: Invalid key sk-abcdef1234567890\n\tDetails: unauthorized"
+    obs = ModelRouteObservation(
+        requested_provider="nvidia",
+        requested_model="model-N",
+        wire_provider="nous",
+        wire_model="model-F",
+        effective_provider="nous",
+        effective_model="model-F",
+        fallback=True,
+        reason=raw_reason,
+    )
+    assert "sk-[REDACTED]" in obs.reason
+    assert "\n" not in obs.reason
+    assert "\t" not in obs.reason
+
+    # Check to_dict() and ux_summary()
+    d = obs.to_dict()
+    assert "sk-[REDACTED]" in d["reason"]
+    assert "\n" not in d["reason"]
+
+    summary = obs.ux_summary()
+    assert any("sk-[REDACTED]" in line for line in summary["lines"])
+    assert not any("\n" in line for line in summary["lines"])
+
