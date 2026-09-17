@@ -296,3 +296,36 @@ def test_windows_desktop_launchers_prefer_canonical_repo_package(
     )
 
     assert script.index(repo_candidate) < script.index(managed_candidate)
+
+
+def test_go_watchdog_has_no_desktop_backend_lifecycle_authority() -> None:
+    root = Path(__file__).resolve().parents[2]
+    go_root = root / "scripts" / "windows" / "watchdog-go"
+    launcher = (root / "scripts" / "windows" / "Start-HermesGoWatchdog.ps1").read_text(
+        encoding="utf-8"
+    )
+    production = "\n".join(
+        (go_root / path).read_text(encoding="utf-8")
+        for path in ("main.go", "config.go", "watchdog.go", "process_windows.go")
+    )
+
+    for forbidden in (
+        "PrewarmBackend",
+        "EnsureHealthy()",
+        "NewBackendManager",
+        "desktop-backend.json",
+        "HERMES_WATCHDOG_MANAGED",
+        "managed-backend-port",
+        "prewarm-backend",
+    ):
+        assert forbidden not in production + launcher
+
+    assert not (go_root / "backend.go").exists()
+
+    process = (go_root / "process_windows.go").read_text(encoding="utf-8")
+    assert "func startPackagedDesktop(cfg Config, logger *Logger, mutationAllowed func() bool) bool" in process
+    assert "desktopLaunchEnv(cfg)" in process
+    assert "BackendManager" not in process
+    assert "readLaunchManifest" not in process
+    assert "stopOrphanDesktopBackends" not in process
+    assert "restartPackagedDesktop" not in process
