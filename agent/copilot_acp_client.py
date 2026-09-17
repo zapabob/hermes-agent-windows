@@ -20,7 +20,7 @@ import time
 from collections import deque
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, Optional
 
 from agent.acp_openai_bridge import (
     completion_to_stream_chunks as _completion_to_stream_chunks,
