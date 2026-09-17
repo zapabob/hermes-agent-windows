@@ -70,7 +70,9 @@ def _run_stop(local_app_data: Path) -> subprocess.CompletedProcess[str]:
         text=True,
         encoding="utf-8",
         errors="replace",
-        timeout=15,
+        # Cold Add-Type of NativeProcess on Windows runners can exceed 15s
+        # before Stop-GoWatchdog even classifies a foreign lock.
+        timeout=60,
         check=False,
     )
 
