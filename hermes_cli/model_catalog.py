@@ -46,6 +46,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import threading
 import time
 import urllib.error
@@ -274,7 +275,7 @@ def parse_legacy_hermes_catalog(raw_data: Any) -> NormalizedCatalog | None:
 
         if norm_models:
             meta = pval.get("metadata") if isinstance(pval.get("metadata"), dict) else {}
-            pname = str(meta.get("display_name") or pid)
+            pname = str(pval.get("name") or meta.get("display_name") or pid)
             providers[pid] = NormalizedProvider(id=pid, name=pname, models=norm_models, metadata=meta)
 
     if not providers:
@@ -527,7 +528,7 @@ def _write_disk_cache(data: dict[str, Any] | NormalizedCatalog) -> None:
     path = _cache_path()
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = path.with_suffix(path.suffix + ".tmp")
+        tmp = path.with_suffix(f".{os.getpid()}_{threading.get_ident()}.tmp")
         with open(tmp, "w", encoding="utf-8") as fh:
             json.dump(canonical_dict, fh, indent=2)
             fh.write("\n")
