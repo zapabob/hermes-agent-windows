@@ -1,9 +1,7 @@
-# Start Go-based Hermes Desktop<->backend watchdog (operator-only; NOT agent-reachable).
+# Start the Go-based Hermes Windows recovery watchdog (operator-only; NOT agent-reachable).
 param(
     [int]$IntervalSec = 20,
-    [int]$FailThreshold = 2,
     [switch]$Once,
-    [switch]$NoPrewarm,
     [switch]$NoTsnet,
     [string]$Listen = "127.0.0.1:9920",
     [string]$HermesRoot = "",
@@ -14,10 +12,7 @@ param(
     # Bound go build so restart-hermes-stack never hangs on go mod tidy / network.
     [int]$BuildTimeoutSec = 180,
     # Default skip go test for operator start path (full test via Build-HermesGoWatchdog.ps1).
-    [switch]$RunBuildTests,
-    # Watchdog-managed hermes serve port; 9120/8787/9920 remain reserved ops ports.
-    # Desktop connects via desktop-backend.json / HERMES_DESKTOP_REMOTE_*; default 9119.
-    [int]$ManagedBackendPort = 9119
+    [switch]$RunBuildTests
 )
 
 $ErrorActionPreference = "Stop"
@@ -571,10 +566,9 @@ if ($ForceRestart -or $Once) {
 }
 Stop-PsDesktopBackendWatchdog
 
-# Burned recovery budgets survive reboot and suppress Desktop relaunch
-# ("defer until managed backend auth-ok" / desktop_restart cooldown). Interactive
-# logon must start clean so HermesDesktopAutoStart is not undone by a stale
-# circuit from the previous boot flap.
+# Recovery budgets survive reboot and can suppress Desktop relaunch. Interactive
+# logon starts with a clean outer-recovery budget so HermesDesktopAutoStart is
+# not undone by a stale circuit from the previous boot flap.
 if ((Get-CurrentProcessSessionId) -gt 0 -and -not $Stop) {
     $recoveryBudgetPath = Join-Path $DataDir "recovery-budget.json"
     if (Test-Path -LiteralPath $recoveryBudgetPath) {
@@ -615,14 +609,11 @@ function Quote-WatchdogArgument([string]$Value) {
 $embeddingWatchdogArgs = @(Get-EmbeddingWatchdogArguments -Root $RepoRoot)
 $argList = @(
     "-interval=$IntervalSec",
-    "-fail-threshold=$FailThreshold",
     "-hermes-root", $RepoRoot,
     "-hermes-home", $HermesHome,
     "-listen=$Listen"
 )
 if ($Once) { $argList += "-once" }
-if ($NoPrewarm) { $argList += "-prewarm-backend=false" }
-if ($ManagedBackendPort -gt 0) { $argList += "-managed-backend-port=$ManagedBackendPort" }
 if ($embeddingWatchdogArgs.Count -gt 0) { $argList += $embeddingWatchdogArgs }
 if (-not $NoTsnet -and ($env:HERMES_WATCHDOG_TS_AUTHKEY -or $env:TS_AUTHKEY)) {
     $argList += "-tsnet"
@@ -643,14 +634,11 @@ if (-not $launched) {
     # ShellExecute fallback: quote only values that contain whitespace.
     $shellArgs = @(
         "-interval=$IntervalSec",
-        "-fail-threshold=$FailThreshold",
         (Format-WatchdogArg "-hermes-root" $RepoRoot),
         (Format-WatchdogArg "-hermes-home" $HermesHome),
         "-listen=$Listen"
     )
     if ($Once) { $shellArgs += "-once" }
-    if ($NoPrewarm) { $shellArgs += "-prewarm-backend=false" }
-    if ($ManagedBackendPort -gt 0) { $shellArgs += "-managed-backend-port=$ManagedBackendPort" }
     foreach ($argument in $embeddingWatchdogArgs) {
         $shellArgs += (Quote-WatchdogArgument ([string]$argument))
     }

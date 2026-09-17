@@ -21,38 +21,36 @@ type cycleResult struct {
 }
 
 type WatchdogState struct {
-	UpdatedAt                string      `json:"updatedAt"`
-	WatchdogPID              int         `json:"watchdogPid"`
-	MaintenanceState         string      `json:"maintenanceState"`
-	MaintenanceOwner         string      `json:"maintenanceOwner,omitempty"`
-	MaintenanceNonce         string      `json:"maintenanceNonce,omitempty"`
-	MaintenanceEpoch         int64       `json:"maintenanceEpoch,omitempty"`
-	MaintenanceTimestamp     string      `json:"maintenanceTimestamp,omitempty"`
-	Result                   cycleResult `json:"result"`
-	ConsecutiveBackendFails  int         `json:"consecutiveBackendFails"`
-	BackendHealth            string      `json:"backendHealth,omitempty"`
-	BackendSoftFailures      int         `json:"backendSoftFailures,omitempty"`
-	BackendFirstFailureAt    string      `json:"backendFirstFailureAt,omitempty"`
-	BackendLastHealthyAt     string      `json:"backendLastHealthyAt,omitempty"`
-	BackendLastProbeKind     string      `json:"backendLastProbeKind,omitempty"`
-	BackendLastProbeLatencyMs int64      `json:"backendLastProbeLatencyMs,omitempty"`
-	RecoveryEvents           int         `json:"recoveryEvents"`
-	RecoveryNextAllowedAt    string      `json:"recoveryNextAllowedAt,omitempty"`
-	RecoveryCircuitOpenUntil string      `json:"recoveryCircuitOpenUntil,omitempty"`
-	PackagedExe              string      `json:"packagedExe,omitempty"`
-	ListenAddr               string      `json:"listenAddr,omitempty"`
-	TsnetHostname            string      `json:"tsnetHostname,omitempty"`
-	TsnetEnabled             bool        `json:"tsnetEnabled"`
+	UpdatedAt                 string      `json:"updatedAt"`
+	WatchdogPID               int         `json:"watchdogPid"`
+	MaintenanceState          string      `json:"maintenanceState"`
+	MaintenanceOwner          string      `json:"maintenanceOwner,omitempty"`
+	MaintenanceNonce          string      `json:"maintenanceNonce,omitempty"`
+	MaintenanceEpoch          int64       `json:"maintenanceEpoch,omitempty"`
+	MaintenanceTimestamp      string      `json:"maintenanceTimestamp,omitempty"`
+	Result                    cycleResult `json:"result"`
+	ConsecutiveBackendFails   int         `json:"consecutiveBackendFails"`
+	BackendHealth             string      `json:"backendHealth,omitempty"`
+	BackendSoftFailures       int         `json:"backendSoftFailures,omitempty"`
+	BackendFirstFailureAt     string      `json:"backendFirstFailureAt,omitempty"`
+	BackendLastHealthyAt      string      `json:"backendLastHealthyAt,omitempty"`
+	BackendLastProbeKind      string      `json:"backendLastProbeKind,omitempty"`
+	BackendLastProbeLatencyMs int64       `json:"backendLastProbeLatencyMs,omitempty"`
+	RecoveryEvents            int         `json:"recoveryEvents"`
+	RecoveryNextAllowedAt     string      `json:"recoveryNextAllowedAt,omitempty"`
+	RecoveryCircuitOpenUntil  string      `json:"recoveryCircuitOpenUntil,omitempty"`
+	PackagedExe               string      `json:"packagedExe,omitempty"`
+	ListenAddr                string      `json:"listenAddr,omitempty"`
+	TsnetHostname             string      `json:"tsnetHostname,omitempty"`
+	TsnetEnabled              bool        `json:"tsnetEnabled"`
 }
 
 type Watchdog struct {
 	cfg    Config
 	logger *Logger
-	back   *BackendManager
 
 	cycleMu              sync.Mutex
 	mu                   sync.RWMutex
-	failCount            int
 	maintenanceState     string
 	maintenanceOwner     string
 	maintenanceNonce     string
@@ -81,7 +79,6 @@ func NewWatchdog(cfg Config, logger *Logger) *Watchdog {
 	return &Watchdog{
 		cfg:    cfg,
 		logger: logger,
-		back:   NewBackendManager(cfg, logger),
 		now:    time.Now,
 		lastState: WatchdogState{
 			WatchdogPID:   os.Getpid(),
@@ -90,26 +87,6 @@ func NewWatchdog(cfg Config, logger *Logger) *Watchdog {
 			TsnetHostname: cfg.TsnetHostname,
 			TsnetEnabled:  cfg.EnableTsnet && cfg.TsAuthKey != "",
 		},
-	}
-}
-
-func (w *Watchdog) PrewarmBackend() {
-	w.cycleMu.Lock()
-	defer w.cycleMu.Unlock()
-	if !w.cfg.PrewarmBackend || w.maintenanceSuspended() {
-		return
-	}
-	if w.back.currentHealthy() != nil {
-		return
-	}
-	if !w.reserveRecovery("backend_prewarm") {
-		return
-	}
-	if w.maintenanceSuspended() {
-		return
-	}
-	if _, err := w.back.EnsureHealthy(); err != nil {
-		w.logger.Infof("prewarm backend: %v", err)
 	}
 }
 
@@ -139,16 +116,6 @@ func (w *Watchdog) markHealthy() {
 	w.mu.Unlock()
 }
 
-func (w *Watchdog) findAnyHealthyBackend() *backendInfo {
-	if child := findHealthyDesktopBackend(w.cfg); child != nil {
-		return child
-	}
-	if managed := w.back.currentHealthy(); managed != nil {
-		return managed
-	}
-	return loadManifestBackend(w.cfg)
-}
-
 func (w *Watchdog) State() WatchdogState {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
@@ -170,41 +137,41 @@ func (w *Watchdog) maintenanceSuspended() bool {
 	return active
 }
 
+func observedBackendHealth(result cycleResult) string {
+	switch result.Backend {
+	case "up":
+		return "healthy"
+	case "maintenance":
+		return "maintenance"
+	case "pending":
+		return "pending"
+	default:
+		return "down"
+	}
+}
+
 func (w *Watchdog) saveState(result cycleResult) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	health, softFails, firstFail, lastOK, probeKind, probeLatency := w.back.HealthSnapshot()
-	firstFailStr := ""
-	if !firstFail.IsZero() {
-		firstFailStr = firstFail.Format(time.RFC3339Nano)
-	}
-	lastOKStr := ""
-	if !lastOK.IsZero() {
-		lastOKStr = lastOK.Format(time.RFC3339Nano)
-	}
 	w.lastState = WatchdogState{
-		UpdatedAt:                 time.Now().Format(time.RFC3339Nano),
-		WatchdogPID:               os.Getpid(),
-		MaintenanceState:          w.maintenanceState,
-		MaintenanceOwner:          w.maintenanceOwner,
-		MaintenanceNonce:          w.maintenanceNonce,
-		MaintenanceEpoch:          w.maintenanceEpoch,
-		MaintenanceTimestamp:      w.maintenanceTimestamp,
-		Result:                    result,
-		ConsecutiveBackendFails:   w.failCount,
-		BackendHealth:             string(health),
-		BackendSoftFailures:       softFails,
-		BackendFirstFailureAt:     firstFailStr,
-		BackendLastHealthyAt:      lastOKStr,
-		BackendLastProbeKind:      probeKind,
-		BackendLastProbeLatencyMs: probeLatency.Milliseconds(),
-		RecoveryEvents:            len(w.recovery.Events),
-		RecoveryNextAllowedAt:     w.recovery.NextAllowedAt,
-		RecoveryCircuitOpenUntil:  w.recovery.CircuitOpenUntil,
-		PackagedExe:               w.cfg.PackagedExe,
-		ListenAddr:                w.cfg.ListenAddr,
-		TsnetHostname:             w.cfg.TsnetHostname,
-		TsnetEnabled:              w.cfg.EnableTsnet && w.cfg.TsAuthKey != "",
+		UpdatedAt:                time.Now().Format(time.RFC3339Nano),
+		WatchdogPID:              os.Getpid(),
+		MaintenanceState:         w.maintenanceState,
+		MaintenanceOwner:         w.maintenanceOwner,
+		MaintenanceNonce:         w.maintenanceNonce,
+		MaintenanceEpoch:         w.maintenanceEpoch,
+		MaintenanceTimestamp:     w.maintenanceTimestamp,
+		Result:                   result,
+		ConsecutiveBackendFails:  0,
+		BackendHealth:            observedBackendHealth(result),
+		BackendSoftFailures:      0,
+		RecoveryEvents:           len(w.recovery.Events),
+		RecoveryNextAllowedAt:    w.recovery.NextAllowedAt,
+		RecoveryCircuitOpenUntil: w.recovery.CircuitOpenUntil,
+		PackagedExe:              w.cfg.PackagedExe,
+		ListenAddr:               w.cfg.ListenAddr,
+		TsnetHostname:            w.cfg.TsnetHostname,
+		TsnetEnabled:             w.cfg.EnableTsnet && w.cfg.TsAuthKey != "",
 	}
 	raw, err := json.MarshalIndent(w.lastState, "", "  ")
 	if err != nil {
@@ -221,6 +188,7 @@ func (w *Watchdog) RunCycle() cycleResult {
 		w.saveState(res)
 		return res
 	}
+
 	embeddingStatus, embeddingPID := w.ensureEmbeddingHealthy()
 	withEmbedding := func(res cycleResult) cycleResult {
 		res.Embedding = embeddingStatus
@@ -228,54 +196,18 @@ func (w *Watchdog) RunCycle() cycleResult {
 		return res
 	}
 
-	desktop, derr := getDesktopProcesses(w.cfg)
-	managedReady := !w.cfg.PrewarmBackend
-	backendRecoveryAttempted := false
-	if w.cfg.PrewarmBackend {
-		if w.back.currentUsable() != nil {
-			// Always re-observe so soft-fail hysteresis advances; do not spend
-			// recovery budget on a still-owned degraded backend.
-			if _, err := w.back.EnsureHealthy(); err != nil {
-				w.logger.Infof("ensure managed backend: %v", err)
-			}
-			managedReady = w.back.currentUsable() != nil
-			backendRecoveryAttempted = true
-		} else if !w.reserveRecovery("backend_start") {
-			managedReady = false
-		} else if w.maintenanceSuspended() {
-			managedReady = false
-		} else if _, err := w.back.EnsureHealthy(); err != nil {
-			w.logger.Infof("ensure managed backend: %v", err)
-			managedReady = false
-		} else {
-			managedReady = true
-		}
-		backendRecoveryAttempted = true
+	desktop, desktopErr := getDesktopProcesses(w.cfg)
+	backend := findHealthyDesktopBackend(w.cfg)
+	if desktopErr != nil {
+		w.logger.Infof("Desktop process observation failed: %v", desktopErr)
 	}
-	backend := w.findAnyHealthyBackend()
 
-	if derr != nil || len(desktop) == 0 {
-		// Avoid Hermes.exe proliferation: cold Desktop without an auth-ok
-		// prewarm manifest times out at 90s and dies, then we relaunch forever.
-		if w.cfg.PrewarmBackend && !managedReady {
-			w.logger.Infof("Desktop DOWN — defer relaunch until managed backend auth-ok")
-			res := withEmbedding(cycleResult{Desktop: "waiting_backend", Backend: "down"})
-			w.saveState(res)
-			return res
-		}
-		var skipPID uint32
-		if managed := w.back.currentHealthy(); managed != nil {
-			skipPID = managed.PID
-		}
+	if desktopErr != nil || len(desktop) == 0 {
 		if w.maintenanceSuspended() {
 			res := withEmbedding(cycleResult{Desktop: "maintenance", Backend: "maintenance"})
 			w.saveState(res)
 			return res
 		}
-		if w.cfg.PrewarmBackend {
-			stopOrphanDesktopBackends(w.logger, w.cfg, skipPID)
-		}
-
 		if !w.reserveRecovery("desktop_relaunch") {
 			res := withEmbedding(cycleResult{Desktop: "cooldown", Backend: "pending"})
 			w.saveState(res)
@@ -286,118 +218,34 @@ func (w *Watchdog) RunCycle() cycleResult {
 			w.saveState(res)
 			return res
 		}
-		w.logger.Infof("Desktop DOWN — relaunch")
-		if !startPackagedDesktop(w.cfg, w.logger, w.back, func() bool { return !w.maintenanceSuspended() }) {
+		w.logger.Infof("Desktop DOWN — relaunch without backend ownership")
+		launched := startPackagedDesktop(w.cfg, w.logger, func() bool { return !w.maintenanceSuspended() })
+		if !launched {
 			if w.maintenanceSuspended() {
 				res := withEmbedding(cycleResult{Desktop: "maintenance", Backend: "maintenance"})
 				w.saveState(res)
 				return res
 			}
+			res := withEmbedding(cycleResult{Desktop: "down", Backend: "pending"})
+			w.saveState(res)
+			return res
 		}
-		w.mu.Lock()
-		w.failCount = 0
-		w.mu.Unlock()
 		res := withEmbedding(cycleResult{Desktop: "relaunched", Backend: "pending"})
 		w.saveState(res)
 		return res
 	}
 
+	// A live Desktop is the success criterion for outer recovery. Backend health
+	// is observational only; Electron main owns backend start/restart/teardown.
+	w.markHealthy()
 	if backend == nil {
-		if w.cfg.PrewarmBackend {
-			w.logger.Infof("Desktop UP but backend DOWN — starting managed serve")
-			if !backendRecoveryAttempted && w.reserveRecovery("backend_start") {
-				backendRecoveryAttempted = true
-				if w.maintenanceSuspended() {
-					res := withEmbedding(cycleResult{Desktop: "maintenance", Backend: "maintenance"})
-					w.saveState(res)
-					return res
-				} else if _, err := w.back.EnsureHealthy(); err != nil {
-					w.logger.Infof("managed backend assist failed: %v", err)
-				}
-			} else if !backendRecoveryAttempted {
-				w.logger.Infof("managed backend assist deferred by recovery budget")
-			}
-			backend = w.findAnyHealthyBackend()
-		} else {
-			w.logger.Infof("Desktop UP, backend observed DOWN — lifecycle managed by Electron main")
-		}
-	}
-
-	if backend == nil {
-		if w.cfg.PrewarmBackend {
-			w.mu.Lock()
-			w.failCount++
-			fails := w.failCount
-			w.mu.Unlock()
-			w.logger.Infof("Desktop UP but backend still DOWN (fail=%d/%d)", fails, w.cfg.FailThreshold)
-			if fails >= w.cfg.FailThreshold {
-				if !w.reserveRecovery("desktop_restart") {
-					res := withEmbedding(cycleResult{Desktop: "cooldown", Backend: "down"})
-					w.saveState(res)
-					return res
-				}
-				if !restartPackagedDesktop(w.cfg, w.logger, w.back, func() bool { return !w.maintenanceSuspended() }) && w.maintenanceSuspended() {
-					res := withEmbedding(cycleResult{Desktop: "maintenance", Backend: "maintenance"})
-					w.saveState(res)
-					return res
-				}
-				w.mu.Lock()
-				w.failCount = 0
-				w.mu.Unlock()
-				res := withEmbedding(cycleResult{Desktop: "restarted", Backend: "respawning"})
-				w.saveState(res)
-				return res
-			}
-		}
+		w.logger.Infof("Desktop UP, backend observed DOWN — lifecycle authority remains Electron main")
 		res := withEmbedding(cycleResult{Desktop: "up", Backend: "down"})
 		w.saveState(res)
 		return res
 	}
 
-
-	// Managed serve reminted the session token while Desktop stayed up —
-	// renderer still holds the old Bearer and flaps 401 / CONNECTING.
-	if w.back.TokenRotationPending() {
-		if !w.reserveRecovery("desktop_restart") {
-			res := withEmbedding(cycleResult{
-				Desktop:     "cooldown",
-				Backend:     "up",
-				BackendPID:  backend.PID,
-				BackendPort: backend.Port,
-			})
-			w.saveState(res)
-			return res
-		}
-		if w.maintenanceSuspended() {
-			res := withEmbedding(cycleResult{Desktop: "maintenance", Backend: "maintenance"})
-			w.saveState(res)
-			return res
-		}
-		_ = w.back.ConsumeTokenRotation()
-		w.logger.Infof("session token rotated — restarting Desktop")
-		if !restartPackagedDesktop(w.cfg, w.logger, w.back, func() bool { return !w.maintenanceSuspended() }) && w.maintenanceSuspended() {
-			res := withEmbedding(cycleResult{Desktop: "maintenance", Backend: "maintenance"})
-			w.saveState(res)
-			return res
-		}
-		w.mu.Lock()
-		w.failCount = 0
-		w.mu.Unlock()
-		res := withEmbedding(cycleResult{
-			Desktop:     "restarted",
-			Backend:     "up",
-			BackendPID:  backend.PID,
-			BackendPort: backend.Port,
-		})
-		w.saveState(res)
-		return res
-	}
-
-	w.mu.Lock()
-	w.failCount = 0
-	w.mu.Unlock()
-	w.markHealthy()
-	w.logger.Infof("OK backend=pid:%d port:%d", backend.PID, backend.Port)
+	w.logger.Infof("OK observed Electron-owned backend=pid:%d port:%d", backend.PID, backend.Port)
 	res := withEmbedding(cycleResult{
 		Desktop:     "up",
 		Backend:     "up",
@@ -409,7 +257,7 @@ func (w *Watchdog) RunCycle() cycleResult {
 }
 
 func (w *Watchdog) RunLoop(stop <-chan struct{}) {
-	w.logger.Infof("watchdog loop interval=%ds threshold=%d exe=%s", w.cfg.IntervalSec, w.cfg.FailThreshold, w.cfg.PackagedExe)
+	w.logger.Infof("watchdog loop interval=%ds exe=%s", w.cfg.IntervalSec, w.cfg.PackagedExe)
 	for {
 		w.RunCycle()
 		if w.cfg.Once {

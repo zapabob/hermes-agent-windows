@@ -145,7 +145,7 @@ func probeBackendAuth(port int, token string, timeout time.Duration) ProbeResult
 	return classifyHTTPProbe(nil, resp.StatusCode, latency)
 }
 
-// Legacy bool wrappers — Prefer ProbeResult in EnsureHealthy.
+// Boolean wrappers retained for read-only backend observation probes.
 func testBackendStatus(port int) bool {
 	return probeBackendStatus(port, 2*time.Second).OK()
 }

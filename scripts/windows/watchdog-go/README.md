@@ -28,19 +28,15 @@ termination authority を与えません。
 kill / replace / reclaim しません。** Desktop backend の lifecycle は Electron main が
 保持した child ownership と identity contract の下で処理します。
 
-### Legacy compatibility path
+### Removed legacy backend-owner path
 
-古い watchdog-managed backend prewarm 実装と関連フラグは互換性のためソースに
-残っている場合がありますが、現在の Windows Tier-1 supported topology では
-**deprecated / disabled / unqualified** です。
+旧 Go watchdog の backend prewarm / managed-serve / manifest / token-rotation 経路は、
+現在の production source から削除されています。`-prewarm-backend`、
+`-managed-backend-port` など旧 managed-backend flags は supported input ではなく、
+watchdog は `desktop-backend.json` を生成・採用しません。
 
-- `-prewarm-backend` を有効化しない
-- `desktop-backend.json` を supported ownership manifest として扱わない
-- watchdog-managed `:9119` serve を Desktop backend authority として扱わない
-- legacy prewarm path の成功を release qualification evidence に使わない
-
-これらを再び有効化する変更は、single-authority contract の変更として扱い、
-明示的な設計変更・Windows-native negative tests・qualification が必要です。
+これらの backend ownership 経路を再導入する変更は single-authority contract の変更です。
+明示的な設計変更、Windows-native negative tests、Tier-1 qualification なしに戻してはいけません。
 
 ## Isolation（AI からの変更不可）
 
