@@ -193,7 +193,8 @@ describe('ModelRouteBadge & divergence logic', () => {
       effective_provider: 'nous',
       effective_model: 'hermes-3-70b',
       fallback: true,
-      reason: 'HTTP 429 rate limit'
+      reason: 'HTTP 429 rate limit',
+      effective_model_source: 'request'
     }
 
     const sessionBRoute: ModelRouteInfo = {
@@ -204,7 +205,8 @@ describe('ModelRouteBadge & divergence logic', () => {
       wire_model: 'gpt-4o',
       effective_provider: 'openai',
       effective_model: 'gpt-4o',
-      fallback: false
+      fallback: false,
+      effective_model_source: 'response'
     }
 
     // Render Session B
