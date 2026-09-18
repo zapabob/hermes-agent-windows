@@ -7,7 +7,6 @@ import {
   AUDIO_TRANSCRIBE_MIN_REQUEST_TIMEOUT_MS,
   audioSpeakRequestTimeoutMs,
   audioTranscribeRequestTimeoutMs,
-  chooseWisdomMute,
   deleteProfile,
   deleteSession,
   getAllSessionMessages,
@@ -22,14 +21,11 @@ import {
   getSession,
   getSessionMessages,
   getStatus,
-  getWisdomEntitlement,
-  getWisdomMute,
   LATEST_SESSION_MESSAGES_LIMIT,
   listAllProfileSessions,
   listSessions,
   listSidebarSessions,
   pluginSocket,
-  prepareWisdomMute,
   resetSidebarBatchCapability,
   setApiRequestConnection,
   setApiRequestProfile,
@@ -75,49 +71,6 @@ describe('Hermes REST helpers', () => {
         timeoutMs: 60_000
       })
     )
-  })
-
-  it('pins Wisdom preference reads and native choices to the selected backend and profile', async () => {
-    const scope = { connectionId: 'source-a', profile: 'worker' }
-    const controlId = 'a'.repeat(32)
-    setApiRequestConnection('other-backend')
-    setApiRequestProfile('other-profile')
-
-    await getWisdomMute(scope)
-    await prepareWisdomMute(scope)
-    await chooseWisdomMute(controlId, null, scope)
-
-    expect(api).toHaveBeenCalledTimes(3)
-
-    for (const [request] of api.mock.calls) {
-      expect(request).toEqual(expect.objectContaining(scope))
-    }
-
-    expect(api).toHaveBeenNthCalledWith(1, expect.objectContaining({ path: '/api/wisdom/mute' }))
-    expect(api).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({
-        path: '/api/wisdom/mute/prepare',
-        method: 'POST',
-        body: {}
-      })
-    )
-    expect(api).toHaveBeenNthCalledWith(
-      3,
-      expect.objectContaining({
-        path: '/api/wisdom/mute/choose',
-        method: 'POST',
-        body: { control_id: controlId, duration: null }
-      })
-    )
-  })
-
-  it('reads Wisdom entitlement from the dedicated scoped endpoint', async () => {
-    const scope = { connectionId: 'source-a', profile: 'worker' }
-
-    await getWisdomEntitlement(scope)
-
-    expect(api).toHaveBeenCalledWith(expect.objectContaining({ ...scope, path: '/api/wisdom/entitlement' }))
   })
 
   it('uses a longer timeout for the all-profile session list', async () => {
@@ -236,6 +189,19 @@ describe('Hermes REST helpers', () => {
       })
     )
     expect(api.mock.calls[0][0]).not.toHaveProperty('profile')
+  })
+
+  it('pins the profile list to an explicit (connection, profile) scope', async () => {
+    setApiRequestConnection('remote-a')
+    setApiRequestProfile('iris')
+
+    await getProfiles({ connectionId: 'remote-b', profile: 'scout' })
+    await getProfiles({ connectionId: 'local', profile: 'default' })
+
+    expect(api.mock.calls.map(([request]) => request)).toEqual([
+      expect.objectContaining({ connectionId: 'remote-b', profile: 'scout', path: '/api/profiles' }),
+      expect.objectContaining({ connectionId: 'local', profile: 'default', path: '/api/profiles' })
+    ])
   })
 
   it('preserves ambient and explicit-local ownership for session and profile requests', async () => {
@@ -543,6 +509,8 @@ describe('Hermes REST helpers', () => {
     expect(call.timeoutMs).toBeUndefined()
   })
 
+  // Explicit profile/connection writes (deleting a profile) carry the foreground
+  // dial tag; session reads stay on the ambient default (#111651).
   it('tags cross-profile message reads for Electron routing and backend lookup', async () => {
     api.mockResolvedValue({ messages: [], session_id: 'session-1' })
 
@@ -586,6 +554,7 @@ describe('Hermes REST helpers', () => {
       connectionId: 'source-a',
       method: 'DELETE',
       path: '/api/profiles/backend-worker',
+      priority: 'foreground',
       profile: 'backend-worker'
     })
   })
