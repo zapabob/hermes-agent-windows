@@ -1,0 +1,95 @@
+name: PR 65592 Windows-home TDD
+on:
+  push:
+    branches: [ci/pr-65592-windows-home-20260918]
+permissions:
+  contents: read
+concurrency:
+  group: pr65592-windows-home-validation
+  cancel-in-progress: false
+jobs:
+  tdd:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compose current main and run RED then GREEN
+        run: python .github/pr65592/run_tdd.py
+      - name: Save exact-SHA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr65592-evidence
+          path: ${{ runner.temp }}/pr65592-evidence
+          retention-days: 14
+          if-no-files-found: error
+  windows:
+    needs: tdd
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: pr65592-evidence
+          path: evidence
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test the exact candidate on native Windows
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global core.autocrlf false
+          git init candidate
+          cd candidate
+          git remote add upstream https://github.com/NousResearch/hermes-agent.git
+          git fetch --no-tags --depth=1 upstream 17d1c7671758265562c8522c3e15ee55677ce693 d177b119e9c56c9ddc0b7379ffce52341ec06584
+          git fetch ../evidence/candidate.bundle HEAD:refs/heads/candidate
+          test "$(git rev-parse candidate)" = "$(tr -d '\r\n' < ../evidence/tip.txt)"
+          git checkout --detach candidate
+          python -m pip install -e '.[dev]'
+          python -m pytest tests/tools/test_exec_code_guard_hermes_home.py -q --tb=short --junitxml=../evidence/windows.xml
+          python -c "import xml.etree.ElementTree as E; c=list(E.parse('../evidence/windows.xml').getroot().iter('testcase')); assert len(c)==34 and all(x.find('failure') is None and x.find('error') is None and x.find('skipped') is None for x in c)"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr65592-windows
+          path: evidence/windows.xml
+          retention-days: 14
+          if-no-files-found: warn
+  publish:
+    needs: [tdd, windows]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: pr65592-evidence
+          path: evidence
+      - name: Publish only the validated contribution branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # No proposed code is checked out or executed in this write-enabled job.
+          test "$(gh api repos/NousResearch/hermes-agent/pulls/65592 --jq .head.sha)" = 17d1c7671758265562c8522c3e15ee55677ce693
+          git init --bare publish.git
+          cd publish.git
+          git fetch --no-tags --depth=1 https://github.com/NousResearch/hermes-agent.git 17d1c7671758265562c8522c3e15ee55677ce693 d177b119e9c56c9ddc0b7379ffce52341ec06584
+          git fetch ../evidence/candidate.bundle HEAD:refs/heads/fix/pr-65592-windows-home-20260918
+          tip=$(git rev-parse refs/heads/fix/pr-65592-windows-home-20260918)
+          test "$tip" = "$(tr -d '\r\n' < ../evidence/tip.txt)"
+          test "$(git rev-parse "$tip^")" = "$(tr -d '\r\n' < ../evidence/integration.txt)"
+          test "$(git show -s --format=%P "$tip^")" = '17d1c7671758265562c8522c3e15ee55677ce693 d177b119e9c56c9ddc0b7379ffce52341ec06584'
+          test "$(git diff-tree --no-commit-id --name-only -r "$tip" | sort)" = "$(printf '%s\n' tests/tools/test_exec_code_guard_hermes_home.py tools/exec_code_policy.py | sort)"
+          auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push https://github.com/zapabob/hermes-agent-windows.git refs/heads/fix/pr-65592-windows-home-20260918:refs/heads/fix/pr-65592-windows-home-20260918
+          printf 'Published validated candidate: `%s`\n' "$tip" >> "$GITHUB_STEP_SUMMARY"
