@@ -20,12 +20,12 @@
   "schema_version": 1,
   "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
   "summary": {
-    "all_fork_specific_loc": 2685184,
-    "carry_surface_files": 5089,
-    "cwc": 86195265,
-    "fork_owned_loc": 1137102,
-    "upstream_owned_fork_loc": 1548082,
-    "utr": 0.576527
+    "all_fork_specific_loc": 2690586,
+    "carry_surface_files": 5093,
+    "cwc": 86243809,
+    "fork_owned_loc": 1141894,
+    "upstream_owned_fork_loc": 1548692,
+    "utr": 0.575597
   },
   "top_carry_risks": [
     {
@@ -47,19 +47,19 @@
       "upstream_frequency": 95
     },
     {
-      "added": 21510,
-      "cwc": 3849076,
+      "added": 21576,
+      "cwc": 3859240,
       "deleted": 3484,
-      "patch_size": 24994,
+      "patch_size": 25060,
       "path": "cli.py",
       "semantic_coupling": 2,
       "upstream_frequency": 77
     },
     {
-      "added": 16846,
-      "cwc": 3728256,
+      "added": 16855,
+      "cwc": 3729984,
       "deleted": 2572,
-      "patch_size": 19418,
+      "patch_size": 19427,
       "path": "tui_gateway/server.py",
       "semantic_coupling": 2,
       "upstream_frequency": 96
@@ -101,10 +101,10 @@
       "upstream_frequency": 85
     },
     {
-      "added": 8611,
-      "cwc": 2436015,
-      "deleted": 942,
-      "patch_size": 9553,
+      "added": 8689,
+      "cwc": 2453865,
+      "deleted": 934,
+      "patch_size": 9623,
       "path": "agent/conversation_loop.py",
       "semantic_coupling": 3,
       "upstream_frequency": 85
@@ -119,10 +119,10 @@
       "upstream_frequency": 82
     },
     {
-      "added": 9192,
-      "cwc": 1507084,
-      "deleted": 991,
-      "patch_size": 10183,
+      "added": 9208,
+      "cwc": 1509600,
+      "deleted": 992,
+      "patch_size": 10200,
       "path": "run_agent.py",
       "semantic_coupling": 2,
       "upstream_frequency": 74
@@ -146,10 +146,10 @@
       "upstream_frequency": 64
     },
     {
-      "added": 4816,
-      "cwc": 1109746,
+      "added": 4817,
+      "cwc": 1109892,
       "deleted": 2785,
-      "patch_size": 7601,
+      "patch_size": 7602,
       "path": "agent/chat_completion_helpers.py",
       "semantic_coupling": 2,
       "upstream_frequency": 73
@@ -245,10 +245,10 @@
       "upstream_frequency": 30
     },
     {
-      "added": 4117,
-      "cwc": 691240,
+      "added": 4121,
+      "cwc": 691680,
       "deleted": 2167,
-      "patch_size": 6284,
+      "patch_size": 6288,
       "path": "agent/agent_runtime_helpers.py",
       "semantic_coupling": 2,
       "upstream_frequency": 55
