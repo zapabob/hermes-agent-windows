@@ -407,6 +407,37 @@ def _resume_security_watch_on_startup() -> None:
         _log.exception("Security watcher startup resume failed")
 
 
+def _auto_update_security_definitions_on_startup() -> None:
+    """Run the once-daily Security Center definition auto-update.
+
+    Lifespanからdaemonスレッドで呼ばれる想定。最終ok更新から24h(既定)
+    経過したプロファイルのみClamAV+YARAを更新する。失敗しても起動を
+    壊さず、config security.malware.auto_update_enabled=falseで無効化。
+    """
+    try:
+        from downstream.security.updates import maybe_auto_update_all_profiles
+        from hermes_cli.config import load_config
+
+        try:
+            config = load_config()
+        except Exception:
+            config = {}
+        for result in maybe_auto_update_all_profiles(config):
+            profile = result.get("profile", "unknown")
+            if result.get("skipped") in ("not-due", "no-security-state", "disabled", "locked", "read-only", "resolve-failed"):
+                continue
+            if result.get("ok") is False:
+                _log.warning(
+                    "Security definition auto-update failed for profile %s: %s",
+                    profile,
+                    result.get("error", result),
+                )
+            else:
+                _log.info("Security definition auto-update finished for profile %s", profile)
+    except Exception:
+        _log.exception("Security definition auto-update failed")
+
+
 @asynccontextmanager
 async def _lifespan(app: "FastAPI"):
     app.state.event_channels = {}  # dict[str, set]
@@ -442,6 +473,15 @@ async def _lifespan(app: "FastAPI"):
         target=_resume_security_watch_on_startup,
         daemon=True,
         name="security-watch-resume",
+    ).start()
+
+    # Security Center definitions refresh at most once a day per profile.
+    # Runs in a daemon thread so freshclam never delays the server socket
+    # (Desktop ready-probe times out at 10s, GH-73083).
+    threading.Thread(
+        target=_auto_update_security_definitions_on_startup,
+        daemon=True,
+        name="security-auto-update",
     ).start()
 
     # Import hermes_cli.gateway eagerly *before* the lifespan yield so the

@@ -123,6 +123,8 @@ hermes_cli/web_dist/
 apps/desktop/build/
 apps/desktop/dist/
 scripts/windows/watchdog-go/dist/
+# Local `go build` default output (CI builds hermes-watchdog.exe instead)
+scripts/windows/watchdog-go/watchdog-go.exe
 
 # tsc-emitted artifacts (a stray `tsc -b` compiles into src/, and vite then
 # resolves the stale .js OVER the .tsx — never track these)

@@ -2711,6 +2711,11 @@ DEFAULT_CONFIG = {
             "update_timeout": 300,
             "max_workers": 4,
             "watch_interval": 30,
+            # Security Center定義DBの一日一回自動更新(起動時チェック)。
+            # 起動時に最終ok更新からauto_update_interval_hours経過を判定し、
+            # ClamAV定義 + 同梱YARAルールを更新する。falseで完全無効化。
+            "auto_update_enabled": True,
+            "auto_update_interval_hours": 24,
         },
     },
 

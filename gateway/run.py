@@ -31803,6 +31803,32 @@ async def start_gateway(config: Optional[GatewayConfig] = None, replace: bool = 
     except Exception as _audit_exc:
         logger.debug("Startup security audit failed (non-fatal): %s", _audit_exc)
 
+    # Security Center definitions once-daily auto-update (startup check).
+    # Daemon thread so freshclam (up to 300s) never delays gateway readiness.
+    # Per-profile: this gateway owns its HERMES_HOME, so update only here.
+    try:
+        import threading as _th
+
+        def _gateway_security_auto_update() -> None:
+            try:
+                from downstream.security.store import SecurityStore as _SecStore
+                from downstream.security.updates import maybe_auto_update
+                from hermes_cli.config import load_config as _load_cfg
+
+                try:
+                    _cfg = _load_cfg()
+                except Exception:
+                    _cfg = {}
+                result = maybe_auto_update(_SecStore(), _cfg)
+                if result.get("ok") is False:
+                    logger.warning("Security definition auto-update failed: %s", result.get("error", result))
+            except Exception as _exc:
+                logger.debug("Security definition auto-update failed (non-fatal): %s", _exc)
+
+        _th.Thread(target=_gateway_security_auto_update, daemon=True, name="security-auto-update").start()
+    except Exception as _auto_exc:
+        logger.debug("Security auto-update kick failed (non-fatal): %s", _auto_exc)
+
     # Optional stderr handler — level driven by -v/-q flags on the CLI.
     # verbosity=None (-q/--quiet): no stderr output
     # verbosity=0    (default):    WARNING and above

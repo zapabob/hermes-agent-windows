@@ -1,16 +1,20 @@
 from __future__ import annotations
 
 import json
+import logging
 import math
 import secrets
 import subprocess
 import sys
+import threading
 import time
 from argparse import Namespace
 from pathlib import Path
 from typing import Any, Protocol
 
 import psutil
+
+logger = logging.getLogger(__name__)
 
 from hermes_cli._subprocess_compat import (
     windows_detach_flags,
@@ -306,10 +310,53 @@ def resume_all_profile_watches() -> list[dict[str, Any]]:
     return results
 
 
+def _kick_daily_auto_update_if_due(service: SecurityService) -> None:
+    """CLI利用時の一日一回自動更新を裏スレッドで蹴る(起動時チェック相当)。
+
+    status/scan等の参照系コマンドから呼ばれ、最終ok更新から24h(既定)
+    経過時のみClamAV+YARAを更新する。freshclamは最大300s掛かるため
+    必ずdaemonスレッドで実行し、本体コマンドを絶対に遅延・失敗させない。
+    """
+    try:
+        from .updates import is_auto_update_due
+        from hermes_cli.config import load_config
+
+        try:
+            config = load_config()
+            malware = (config.get("security") or {}).get("malware") or {}
+        except Exception:
+            return
+        if not malware.get("auto_update_enabled", True):
+            return
+        try:
+            interval = float(malware.get("auto_update_interval_hours", 24))
+        except (TypeError, ValueError):
+            interval = 24.0
+        try:
+            if not is_auto_update_due(service.store, interval):
+                return
+        except Exception:
+            return
+
+        def _run() -> None:
+            try:
+                from .updates import maybe_auto_update
+
+                maybe_auto_update(service.store, config)
+            except Exception:
+                logger.debug("security auto-update background run failed", exc_info=True)
+
+        threading.Thread(target=_run, daemon=True, name="security-auto-update").start()
+    except Exception:
+        logger.debug("security auto-update kick failed", exc_info=True)
+
+
 def command(args: Namespace) -> int:
     service = SecurityService()
     subcommand = args.security_command
     machine = bool(getattr(args, "json", False))
+    if subcommand in ("status", "scan", "feeds"):
+        _kick_daily_auto_update_if_due(service)
     try:
         if subcommand == "status":
             result = service.status()
