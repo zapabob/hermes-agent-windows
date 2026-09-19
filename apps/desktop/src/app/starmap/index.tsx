@@ -1,6 +1,7 @@
 import { useStore } from '@nanostores/react'
 import { useEffect, useState } from 'react'
 
+import { CodeGraphVRPane } from '@/components/codegraph-vr-pane'
 import { PageLoader } from '@/components/page-loader'
 import { useI18n } from '@/i18n'
 import { $starmapError, $starmapGraph, $starmapLoading, loadStarmapGraph } from '@/store/starmap'
@@ -21,16 +22,13 @@ export function StarmapView({ onClose }: { onClose: () => void }) {
   const loading = useStore($starmapLoading)
   const error = useStore($starmapError)
 
-  // A pasted share code populates the map with someone else's (or an exported)
-  // graph, overriding the live profile scan. Cleared by "back to my map" and
-  // whenever a fresh profile graph loads in.
   const [imported, setImported] = useState<StarmapGraph | null>(null)
+  const [view, setView] = useState<'memory' | 'codegraph'>('memory')
 
   useEffect(() => {
     void loadStarmapGraph()
   }, [])
 
-  // Drop a stale import when the underlying profile graph changes out from under it.
   useEffect(() => {
     setImported(null)
   }, [graph])
@@ -39,7 +37,31 @@ export function StarmapView({ onClose }: { onClose: () => void }) {
 
   return (
     <Panel closeLabel={t.starmap.close} onClose={onClose}>
-      {error ? (
+      <div aria-label="Visualization" className="mb-3 flex shrink-0 items-center gap-1" role="tablist">
+        <button
+          aria-selected={view === 'memory'}
+          className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground aria-selected:bg-accent aria-selected:text-foreground"
+          onClick={() => setView('memory')}
+          role="tab"
+          type="button"
+        >
+          Memory map
+        </button>
+        <button
+          aria-selected={view === 'codegraph'}
+          className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground aria-selected:bg-accent aria-selected:text-foreground"
+          onClick={() => setView('codegraph')}
+          role="tab"
+          type="button"
+        >
+          CodeGraph VR
+        </button>
+      </div>
+      {view === 'codegraph' ? (
+        <div className="min-h-0 flex-1 overflow-hidden rounded-md border border-border/60">
+          <CodeGraphVRPane />
+        </div>
+      ) : error ? (
         <PanelEmpty description={error} icon="warning" title={t.starmap.loadFailed} />
       ) : !shown && loading ? (
         <PageLoader aria-label={t.starmap.loading} className="min-h-0 flex-1" />
@@ -56,3 +78,5 @@ export function StarmapView({ onClose }: { onClose: () => void }) {
     </Panel>
   )
 }
+
+export default StarmapView
