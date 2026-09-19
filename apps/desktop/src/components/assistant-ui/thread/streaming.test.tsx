@@ -561,9 +561,13 @@ describe('assistant-ui streaming renderer', () => {
 
     // Same row as the (always-mounted) action bar: the footer's height is
     // already reserved while the turn streams, so landing the duration there
-    // adds no height when the turn settles.
+    // adds no height when the turn settles. The duration may sit inside a
+    // left-cluster wrapper (shared with the model-route badge) — the
+    // contract is the shared row, not a shared parent element.
     expect(duration).toBeTruthy()
-    expect(duration?.parentElement).toBe(actions?.parentElement)
+    const row = actions?.parentElement
+    expect(row?.className).toContain('justify-between')
+    expect(row?.contains(duration)).toBe(true)
   })
 
   it('renders assistant provider errors inline', () => {
