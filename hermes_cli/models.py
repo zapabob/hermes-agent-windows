@@ -3777,6 +3777,15 @@ def detect_provider_for_model(
     if _model_in_provider_catalog(name.lower(), _provider_keys(current_provider)):
         return None
 
+    # A custom endpoint is user-configured infrastructure: never auto-switch
+    # away from it based on the shared OpenRouter catalog either — the same
+    # model name may be served there (#48305). Mirrors the static-catalog
+    # guard in detect_static_provider_for_model, and skips the network
+    # lookup entirely for custom users.
+    _current = (current_provider or "").strip().lower()
+    if _current == "custom" or _current.startswith("custom:"):
+        return None
+
     # --- Step 2: check OpenRouter catalog ---
     # First try exact match (handles provider/model format)
     or_slug = _find_openrouter_slug(name)

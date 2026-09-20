@@ -9261,9 +9261,12 @@ def test_config_set_model_global_persists(monkeypatch):
     monkeypatch.setattr("hermes_cli.model_switch.switch_model", _switch_model)
     monkeypatch.setattr(server, "_restart_slash_worker", lambda sid, session: None)
     monkeypatch.setattr(server, "_emit", lambda *args, **kwargs: None)
-    # _persist_model_switch uses targeted save_config_value writes (#48305) so it
-    # preserves sibling model.* keys instead of rewriting the whole block.
-    monkeypatch.setattr("cli.save_config_value", lambda key, value: saved_values.__setitem__(key, value) or True)
+    # _persist_model_switch uses a single atomic save_config_values batch
+    # (Slice E) so provider and model are never partially persisted.
+    def _capture_batch(updates):
+        saved_values.update(updates)
+        return True
+    monkeypatch.setattr("cli.save_config_values", _capture_batch)
 
     resp = server.handle_request({
         "id": "1",

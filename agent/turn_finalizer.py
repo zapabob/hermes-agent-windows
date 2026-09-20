@@ -717,6 +717,7 @@ def finalize_turn(
         "partial": False,  # True only when stopped due to invalid tool calls
         "interrupted": interrupted,
         "response_transformed": _response_transformed,
+        "response_previewed": getattr(agent, "_response_was_previewed", False),
         "pre_transform_response": _pre_transform_response,
         "model": agent.model,
         "provider": agent.provider,
