@@ -2,7 +2,7 @@ import json
 import unittest
 from unittest.mock import MagicMock, patch
 
-from agent.chat_completion_helpers import _poll_local_llama_progress
+from agent.chat_completion_helpers import _poll_local_llama_progress, _LlamaProgressTracker
 
 
 class TestLocalLlamaProgress(unittest.TestCase):
@@ -73,6 +73,23 @@ class TestLocalLlamaProgress(unittest.TestCase):
         mock_urlopen.side_effect = ConnectionRefusedError("Connection refused")
         res = _poll_local_llama_progress("http://127.0.0.1:8080/v1")
         self.assertIsNone(res)
+
+    def test_tracker_lifecycle_non_local(self):
+        agent = MagicMock()
+        tracker = _LlamaProgressTracker(agent, "https://api.openai.com/v1")
+        tracker.start()
+        self.assertIsNone(tracker.thread)
+        tracker.stop()
+
+    def test_tracker_lifecycle_local(self):
+        agent = MagicMock()
+        tracker = _LlamaProgressTracker(agent, "http://127.0.0.1:8080/v1", "test-model")
+        tracker.start()
+        self.assertIsNotNone(tracker.thread)
+        self.assertTrue(tracker.thread.is_alive())
+        tracker.stop()
+        tracker.thread.join(timeout=1.0)
+        self.assertFalse(tracker.thread.is_alive())
 
 
 if __name__ == "__main__":
