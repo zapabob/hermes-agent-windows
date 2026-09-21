@@ -666,8 +666,9 @@ if (Test-Path -LiteralPath $ownershipScript) {
 #             - startMarker present, non-empty, NOT "pid-only:" prefix
 #             - parentPid == current Desktop PID
 #             - parentStartMarker present and non-empty
-#   Gate 5. Live startMarker probe matches ledger startMarker
-#            (revalidated immediately before Stop-Process to resist PID-reuse TOCTOU).
+#   Gate 5. Live backend startMarker matches ledger startMarker.
+#   Gate 6. Live Desktop parentStartMarker matches ledger parentStartMarker.
+#            Both are revalidated immediately before Stop-Process to resist PID-reuse TOCTOU.
 # Any failed gate => cycle recorded as identity_not_verified / passed=false.
 # =============================================================================
 function Get-LiveStartMarker([int]$TargetPid) {
@@ -676,6 +677,20 @@ function Get-LiveStartMarker([int]$TargetPid) {
         $p = Get-Process -Id $TargetPid -ErrorAction Stop
         $ticks = $p.StartTime.ToUniversalTime().Ticks
         return "win:$ticks"
+    } catch {
+        return $null
+    }
+}
+
+function Get-LiveParentStartMarker([int]$TargetPid) {
+    # Mirrors parent-process-identity.ts: Electron parent identity is
+    # winms:<milliseconds since Unix epoch>, not the backend win:<FILETIME ticks> marker.
+    try {
+        $p = Get-Process -Id $TargetPid -ErrorAction Stop
+        $utc = $p.StartTime.ToUniversalTime()
+        $milliseconds = [DateTimeOffset]::new($utc).ToUnixTimeMilliseconds()
+        if ($milliseconds -le 0) { return $null }
+        return "winms:$milliseconds"
     } catch {
         return $null
     }
@@ -768,6 +783,7 @@ for ($c = 1; $c -le $actualCrashCycles; $c++) {
     }
     $ledgerEntry = $gateResult.ledgerEntry
     $ledgerStartMarker = [string]$ledgerEntry.startMarker
+    $ledgerParentStartMarker = [string]$ledgerEntry.parentStartMarker
 
     # Gate 5 (first): live startMarker probe against ledger
     $liveMarkerPre = Get-LiveStartMarker -TargetPid $oldBackendPid
@@ -782,7 +798,21 @@ for ($c = 1; $c -le $actualCrashCycles; $c++) {
         continue
     }
 
-    Write-Step ("TEST4 cycle {0}: all 5 identity gates PASSED (PID={1}, nonce={2}, startMarker={3}, parentPid={4})" -f $c, $oldBackendPid, $ledgerEntry.nonce, $liveMarkerPre, $dPid)
+    # Gate 6 (first): parent Desktop process incarnation must match the
+    # recorded winms marker. Matching numeric parent PID alone is insufficient.
+    $liveParentMarkerPre = Get-LiveParentStartMarker -TargetPid $dPid
+    if (-not $liveParentMarkerPre) {
+        Write-Warning ("TEST4 cycle {0} REFUSED: live parentStartMarker probe failed (Desktop PID={1})" -f $c, $dPid)
+        Write-TqdmProgress -Activity "TEST 4 (Crash Recovery)" -Current $c -Total $actualCrashCycles -Stopwatch $crashTqdmSw -Status ("Cycle {0}: live_parent_marker_probe_failed" -f $c)
+        continue
+    }
+    if ($liveParentMarkerPre -ne $ledgerParentStartMarker) {
+        Write-Warning ("TEST4 cycle {0} REFUSED: parentStartMarker mismatch (live={1}, ledger={2})" -f $c, $liveParentMarkerPre, $ledgerParentStartMarker)
+        Write-TqdmProgress -Activity "TEST 4 (Crash Recovery)" -Current $c -Total $actualCrashCycles -Stopwatch $crashTqdmSw -Status ("Cycle {0}: parentStartMarker_mismatch" -f $c)
+        continue
+    }
+
+    Write-Step ("TEST4 cycle {0}: all 6 identity gates PASSED (PID={1}, nonce={2}, startMarker={3}, parentPid={4}, parentStartMarker={5})" -f $c, $oldBackendPid, $ledgerEntry.nonce, $liveMarkerPre, $dPid, $liveParentMarkerPre)
 
     # Gate 5 (revalidation immediately before Stop-Process — TOCTOU guard)
     $liveMarkerFinal = Get-LiveStartMarker -TargetPid $oldBackendPid
@@ -792,7 +822,16 @@ for ($c = 1; $c -le $actualCrashCycles; $c++) {
         continue
     }
 
-    # All gates passed — terminate the specific verified incarnation
+    # Gate 6 (revalidation immediately before Stop-Process): repeat the
+    # parent incarnation check so PID reuse cannot cross the destructive boundary.
+    $liveParentMarkerFinal = Get-LiveParentStartMarker -TargetPid $dPid
+    if (-not $liveParentMarkerFinal -or $liveParentMarkerFinal -ne $ledgerParentStartMarker) {
+        Write-Warning ("TEST4 cycle {0} REFUSED: pre-termination parentStartMarker revalidation failed (live={1}, ledger={2})" -f $c, $liveParentMarkerFinal, $ledgerParentStartMarker)
+        Write-TqdmProgress -Activity "TEST 4 (Crash Recovery)" -Current $c -Total $actualCrashCycles -Stopwatch $crashTqdmSw -Status ("Cycle {0}: toctou_parent_guard_triggered" -f $c)
+        continue
+    }
+
+    # All gates passed — terminate the specific verified backend incarnation owned by the verified Desktop incarnation
     Stop-Process -Id $oldBackendPid -Force -ErrorAction SilentlyContinue
 
     # Wait for desktop to notice and replace backend
