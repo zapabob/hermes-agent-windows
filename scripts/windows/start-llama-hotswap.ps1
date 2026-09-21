@@ -23,8 +23,9 @@ param(
     [int]$BasePort = 0,
     [string]$Model = "",
     [switch]$VerboseLog,
-    # HF-cache stubs (e.g. NousResearch/Hermes-3-Llama-3.1-8B-GGUF:Q4_K_M) must not
-    # appear as fake /v1/models entries. Opt in only with -AllowAutoload.
+    # Autoload is required for router hot-swap to dynamically load non-startup preset models upon request.
+    # Opt out with -NoAutoload. -AllowAutoload is retained for backward compatibility.
+    [switch]$NoAutoload,
     [switch]$AllowAutoload,
     [switch]$ForceRestart,
     [switch]$WarmSecondary
@@ -484,15 +485,13 @@ if (-not $UsingRuntimePreset) {
         "--spec-ngram-mod-n-max", "64"
     )
 }
-$disableAutoload = -not $AllowAutoload
+$disableAutoload = $NoAutoload
 if ($disableAutoload) {
     if ($helpText -match '--no-models-autoload') {
         $serverArgs += @("--no-models-autoload")
     } else {
-        Write-Warning "llama-server lacks --no-models-autoload; HF cache stubs may still appear in /v1/models"
+        Write-Warning "llama-server lacks --no-models-autoload"
     }
-} else {
-    Write-Warning "models-autoload enabled (-AllowAutoload); HF cache stubs may appear in /v1/models"
 }
 
 # llama-server always registers HF hub cache GGUFs as router presets

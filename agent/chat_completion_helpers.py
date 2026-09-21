@@ -3489,6 +3489,59 @@ def _build_partial_stream_stub(
     )
 
 
+def _poll_local_llama_progress(
+    base_url: str | None,
+    model: str | None = None,
+) -> tuple[int, int, float] | None:
+    """Query a local llama-server endpoint for real-time prompt ingestion progress.
+
+    Polls the ``/slots`` endpoint with a tight timeout (0.5s). If an active slot
+    is processing prompt tokens (Prefill phase), returns:
+        (n_prompt_tokens_processed, n_prompt_tokens, progress_pct)
+    Otherwise returns None. Never raises — safe to call from polling loops.
+    """
+    if not base_url:
+        return None
+    try:
+        import urllib.parse
+        import urllib.request
+
+        parsed = urllib.parse.urlparse(base_url)
+        if not parsed.scheme or not parsed.netloc:
+            return None
+        root_url = f"{parsed.scheme}://{parsed.netloc}"
+        if model:
+            query = urllib.parse.urlencode({"model": model})
+            url = f"{root_url}/slots?{query}"
+        else:
+            url = f"{root_url}/slots"
+
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "hermes-agent"},
+            method="GET",
+        )
+        with urllib.request.urlopen(req, timeout=0.5) as resp:
+            data = json.loads(resp.read().decode("utf-8", errors="ignore"))
+
+        if not isinstance(data, list):
+            return None
+
+        for slot in data:
+            if not isinstance(slot, dict):
+                continue
+            if not slot.get("is_processing"):
+                continue
+            total = int(slot.get("n_prompt_tokens") or 0)
+            processed = int(slot.get("n_prompt_tokens_processed") or 0)
+            if total > 0 and processed > 0:
+                pct = min(100.0, max(0.0, (processed / total) * 100.0))
+                return (processed, total, pct)
+    except Exception:
+        return None
+    return None
+
+
 def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=None):
     """Streaming variant of _interruptible_api_call for real-time token delivery.
 
@@ -5328,8 +5381,30 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
     t.start()
     _last_heartbeat = time.time()
     _HEARTBEAT_INTERVAL = 30.0  # seconds between gateway activity touches
+    _last_local_progress_poll = 0.0
+    _LOCAL_PROGRESS_INTERVAL = 1.5  # seconds between polling local llama prefill progress
     while t.is_alive():
         t.join(timeout=0.3)
+
+        _hb_now = time.time()
+
+        # Real-time local context ingestion (prefill) progress tracking:
+        # If querying a local endpoint (e.g. llama-server) and no stream chunk has
+        # been delivered yet, poll /slots every ~1.5s to show live prompt
+        # ingestion progress (% and tokens) on CLI / TUI / Desktop / Gateway.
+        if (
+            not first_delta_fired["done"]
+            and agent.base_url
+            and is_local_endpoint(agent.base_url)
+            and (_hb_now - _last_local_progress_poll >= _LOCAL_PROGRESS_INTERVAL)
+        ):
+            _last_local_progress_poll = _hb_now
+            _prog = _poll_local_llama_progress(agent.base_url, api_kwargs.get("model"))
+            if _prog:
+                _processed, _total, _pct = _prog
+                agent._emit_wait_notice(
+                    f"🧠 Reading context: {_pct:.1f}% ({_processed:,}/{_total:,} tokens)"
+                )
 
         # Periodic heartbeat: touch the agent's activity tracker so the
         # gateway's inactivity monitor knows we're alive while waiting
@@ -5339,7 +5414,6 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
         # activity on each chunk, but the gap between API call start
         # and first chunk can exceed the gateway timeout — especially
         # when the stale-stream timeout is disabled (local providers).
-        _hb_now = time.time()
         if _hb_now - _last_heartbeat >= _HEARTBEAT_INTERVAL:
             _last_heartbeat = _hb_now
             _waiting_secs = int(_hb_now - last_chunk_time["t"])
