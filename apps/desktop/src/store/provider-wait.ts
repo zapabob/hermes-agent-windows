@@ -40,10 +40,11 @@ export function clearAllProviderWaits(): void {
   $providerWaitSessions.set({})
 }
 
-/** Only the core's explained wait/reconnect frames belong in Desktop's status
- * row. Generic kawaii spinner rewrites remain presentation noise. */
+/** Only the core's explained wait/reconnect frames and real-time local model
+ * progress notices belong in Desktop's status row. Generic kawaii spinner
+ * rewrites remain presentation noise. */
 export function providerWaitText(text: string): string {
   const value = text.trim()
 
-  return /^(?:⏳|⚠|↻)\s*(?:waiting on|no (?:output|response)|model returned)/i.test(value) ? value : ''
+  return /^(?:(?:⏳|⚠|↻)\s*(?:waiting on|no (?:output|response)|model returned)|🧠)/i.test(value) ? value : ''
 }

@@ -26,10 +26,15 @@ describe('provider wait visibility', () => {
     vi.restoreAllMocks()
   })
 
-  it('surfaces explained waits but ignores generic spinner rewrites', () => {
+  it('surfaces explained waits and local inference progress but ignores generic spinner rewrites', () => {
     emit('thinking.delta', { text: '⏳ waiting on local-model — 30s with no output yet' })
     expect($providerWaitSessions.get()).toEqual({
       [SID]: '⏳ waiting on local-model — 30s with no output yet'
+    })
+
+    emit('thinking.delta', { text: '🧠 Reading context: 50.0% (4,096/8,192 tokens) [~540 t/s]' })
+    expect($providerWaitSessions.get()).toEqual({
+      [SID]: '🧠 Reading context: 50.0% (4,096/8,192 tokens) [~540 t/s]'
     })
 
     emit('thinking.delta', { text: '◉_◉ cogitating...' })
