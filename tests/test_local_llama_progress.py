@@ -121,6 +121,28 @@ class TestLocalLlamaProgress(unittest.TestCase):
         self.assertIn("Reading context: 41.0%", notice_args)
         self.assertIn("4,096/10,000", notice_args)
 
+    def test_resolve_effective_base_url(self):
+        from agent.chat_completion_helpers import _resolve_effective_base_url
+
+        # Explicit agent.base_url
+        agent = MagicMock(base_url="http://127.0.0.1:8080/v1")
+        self.assertEqual(_resolve_effective_base_url(agent), "http://127.0.0.1:8080/v1")
+
+        # agent.base_url is None, but in client_kwargs
+        agent_none = MagicMock(base_url=None, _client_kwargs={"base_url": "http://127.0.0.1:8080/v1"})
+        self.assertEqual(_resolve_effective_base_url(agent_none), "http://127.0.0.1:8080/v1")
+
+        # In api_kwargs
+        agent_empty = MagicMock(base_url=None, _client_kwargs=None, provider="openai")
+        self.assertEqual(
+            _resolve_effective_base_url(agent_empty, {"base_url": "http://127.0.0.1:5000/v1"}),
+            "http://127.0.0.1:5000/v1"
+        )
+
+        # Provider fallback
+        agent_llama = MagicMock(base_url=None, _client_kwargs=None, provider="llama-server")
+        self.assertEqual(_resolve_effective_base_url(agent_llama), "http://127.0.0.1:8080/v1")
+
 
 if __name__ == "__main__":
     unittest.main()

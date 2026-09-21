@@ -1659,8 +1659,9 @@ def interruptible_api_call(agent, api_kwargs: dict):
     _call_start = time.time()
     agent._touch_activity("waiting for non-streaming API response")
 
-    _is_local_request = bool(agent.base_url and is_local_endpoint(agent.base_url))
-    _progress_tracker = _LlamaProgressTracker(agent, agent.base_url, api_kwargs.get("model"))
+    _effective_base_url = _resolve_effective_base_url(agent, api_kwargs)
+    _is_local_request = bool(_effective_base_url and is_local_endpoint(_effective_base_url))
+    _progress_tracker = _LlamaProgressTracker(agent, _effective_base_url, api_kwargs.get("model"))
     if _is_local_request:
         _progress_tracker.start()
 
@@ -3587,6 +3588,37 @@ def _poll_local_llama_progress(
     return None
 
 
+def _resolve_effective_base_url(agent: Any, api_kwargs: Optional[dict] = None) -> str:
+    """Resolve the effective base URL for local inference detection and tracking.
+
+    Checks agent.base_url, agent._client_kwargs, api_kwargs, and config.yaml
+    model settings so that local endpoints (llama-server, ollama) are reliably
+    detected even when agent.base_url is left unpopulated on the instance.
+    """
+    if getattr(agent, "base_url", None):
+        return str(agent.base_url)
+    client_kwargs = getattr(agent, "_client_kwargs", None)
+    if isinstance(client_kwargs, dict) and client_kwargs.get("base_url"):
+        return str(client_kwargs.get("base_url"))
+    if isinstance(api_kwargs, dict) and api_kwargs.get("base_url"):
+        return str(api_kwargs.get("base_url"))
+    try:
+        from hermes_cli.config import load_config_readonly
+
+        cfg = load_config_readonly()
+        if isinstance(cfg, dict):
+            model_cfg = cfg.get("model")
+            if isinstance(model_cfg, dict) and model_cfg.get("base_url"):
+                return str(model_cfg.get("base_url"))
+            if cfg.get("base_url"):
+                return str(cfg.get("base_url"))
+    except Exception:
+        pass
+    if getattr(agent, "provider", None) in ("llama-server", "custom", "local", "ollama"):
+        return "http://127.0.0.1:8080/v1"
+    return ""
+
+
 class _LlamaProgressTracker:
     """Asynchronous, ultra-low-overhead real-time progress monitor for local llama-server.
 
@@ -3599,7 +3631,7 @@ class _LlamaProgressTracker:
 
     def __init__(self, agent: Any, base_url: str | None, model: str | None = None) -> None:
         self.agent = agent
-        self.base_url = base_url
+        self.base_url = base_url or _resolve_effective_base_url(agent)
         self.model = model
         self.stop_event = threading.Event()
         self.thread: threading.Thread | None = None
@@ -3721,9 +3753,9 @@ class _LlamaProgressTracker:
                                         if batch_elapsed >= 2
                                         else ""
                                     )
-                                    self.agent._emit_wait_notice(
-                                        f"🧠 Reading context: {pct:.1f}% ({processed:,}/{total:,} tokens){speed_str}{batch_str}"
-                                    )
+                                    notice_msg = f"🧠 Reading context: {pct:.1f}% ({processed:,}/{total:,} tokens){speed_str}{batch_str}"
+                                    logger.info("Local llama progress: %s", notice_msg)
+                                    self.agent._emit_wait_notice(notice_msg)
                             elif decoded > 0 or (total > 0 and processed >= total):
                                 # Generation / thinking phase
                                 if self._gen_start_time <= 0:
@@ -3755,9 +3787,9 @@ class _LlamaProgressTracker:
                                         if self._speed_tps > 0
                                         else ""
                                     )
-                                    self.agent._emit_wait_notice(
-                                        f"🧠 Thinking / Generating: {decoded:,} tokens{speed_str} ({gen_elapsed}s)"
-                                    )
+                                    notice_msg = f"🧠 Thinking / Generating: {decoded:,} tokens{speed_str} ({gen_elapsed}s)"
+                                    logger.info("Local llama progress: %s", notice_msg)
+                                    self.agent._emit_wait_notice(notice_msg)
                             break
                 except Exception:
                     if self.conn:
@@ -4237,7 +4269,8 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
             agent._close_request_openai_client(request_client, reason=reason)
 
     first_delta_fired = {"done": False}
-    _progress_tracker = _LlamaProgressTracker(agent, agent.base_url, api_kwargs.get("model"))
+    _effective_base_url = _resolve_effective_base_url(agent, api_kwargs)
+    _progress_tracker = _LlamaProgressTracker(agent, _effective_base_url, api_kwargs.get("model"))
     deltas_were_sent = {"yes": False}  # Track if any deltas were fired (for fallback)
     provider_tool_in_flight = {"yes": False}
     # Wall-clock timestamp of the last real streaming chunk.  The outer
@@ -5574,7 +5607,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
     # unless the user explicitly set HERMES_STREAM_STALE_TIMEOUT; override the
     # local ceiling with HERMES_LOCAL_STREAM_STALE_TIMEOUT (documented in
     # website/docs/reference/environment-variables.md).
-    if _stream_stale_timeout_base == 180.0 and agent.base_url and is_local_endpoint(agent.base_url):
+    if _stream_stale_timeout_base == 180.0 and _effective_base_url and is_local_endpoint(_effective_base_url):
         # Read config.yaml ``agent.local_stream_stale_timeout`` (default 900),
         # env var ``HERMES_LOCAL_STREAM_STALE_TIMEOUT`` overrides for escape-hatch.
         _local_default = 900.0
@@ -5592,7 +5625,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
         _stream_stale_timeout = env_float("HERMES_LOCAL_STREAM_STALE_TIMEOUT", _local_default)
         logger.debug(
             "Local provider detected (%s) — stale stream timeout set to %.0fs",
-            agent.base_url, _stream_stale_timeout,
+            _effective_base_url, _stream_stale_timeout,
         )
     else:
         # Scale the stale timeout for large contexts: slow models (like Opus)
@@ -5619,7 +5652,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
         if _reasoning_floor is not None:
             _stream_stale_timeout = max(_stream_stale_timeout, _reasoning_floor)
 
-    _is_local_request = bool(agent.base_url and is_local_endpoint(agent.base_url))
+    _is_local_request = bool(_effective_base_url and is_local_endpoint(_effective_base_url))
     if _is_local_request:
         _progress_tracker.start()
 
