@@ -1659,6 +1659,11 @@ def interruptible_api_call(agent, api_kwargs: dict):
     _call_start = time.time()
     agent._touch_activity("waiting for non-streaming API response")
 
+    _is_local_request = bool(agent.base_url and is_local_endpoint(agent.base_url))
+    _progress_tracker = _LlamaProgressTracker(agent, agent.base_url, api_kwargs.get("model"))
+    if _is_local_request:
+        _progress_tracker.start()
+
     t = threading.Thread(target=_context_thread_target(_call), daemon=True)
     t.start()
     _poll_count = 0
@@ -1673,26 +1678,31 @@ def interruptible_api_call(agent, api_kwargs: dict):
         # usually a slow/overloaded provider, but the UI never said so).
         if _poll_count % 100 == 0:  # 100 × 0.3s = 30s
             _elapsed = time.time() - _call_start
-            try:
-                _recovery = _codex_wait_notice_recovery(
-                    stale_timeout=_stale_timeout,
-                    ttfb_enabled=_ttfb_enabled,
-                    ttfb_timeout=_ttfb_timeout,
-                    last_event_ts=getattr(
-                        agent, "_codex_stream_last_event_ts", None
-                    ),
-                    call_start=_call_start,
-                    idle_enabled=_codex_idle_enabled,
-                    idle_timeout=_codex_idle_timeout,
-                    elapsed=_elapsed,
+            if _is_local_request:
+                agent._touch_activity(
+                    f"local inference in progress ({int(_elapsed)}s elapsed)"
                 )
-                agent._emit_wait_notice(
-                    f"⏳ waiting on {api_kwargs.get('model', 'the provider')} — "
-                    f"{int(_elapsed)}s with no response yet (provider may be slow "
-                    f"or overloaded{_recovery})"
-                )
-            except Exception:
-                logger.debug("wait-notice construction failed", exc_info=True)
+            else:
+                try:
+                    _recovery = _codex_wait_notice_recovery(
+                        stale_timeout=_stale_timeout,
+                        ttfb_enabled=_ttfb_enabled,
+                        ttfb_timeout=_ttfb_timeout,
+                        last_event_ts=getattr(
+                            agent, "_codex_stream_last_event_ts", None
+                        ),
+                        call_start=_call_start,
+                        idle_enabled=_codex_idle_enabled,
+                        idle_timeout=_codex_idle_timeout,
+                        elapsed=_elapsed,
+                    )
+                    agent._emit_wait_notice(
+                        f"⏳ waiting on {api_kwargs.get('model', 'the provider')} — "
+                        f"{int(_elapsed)}s with no response yet (provider may be slow "
+                        f"or overloaded{_recovery})"
+                    )
+                except Exception:
+                    logger.debug("wait-notice construction failed", exc_info=True)
 
         _elapsed = time.time() - _call_start
 
@@ -1872,7 +1882,9 @@ def interruptible_api_call(agent, api_kwargs: dict):
             # physical scope and corrupt the LIFO stack. No-op when Relay
             # managed execution is not live.
             _join_worker_for_relay_teardown(t, label="Non-streaming")
+            _progress_tracker.stop()
             raise InterruptedError("Agent interrupted during API call")
+    _progress_tracker.stop()
     if result["error"] is not None:
         raise result["error"]
     # Success — clear the circuit breaker (#58962): the provider proved
@@ -3579,8 +3591,9 @@ class _LlamaProgressTracker:
     """Asynchronous, ultra-low-overhead real-time progress monitor for local llama-server.
 
     Uses a persistent HTTP connection with Keep-Alive to poll /slots at high
-    frequency (0.35s). Emits wait notices only on delta changes to eliminate
-    unnecessary GUI re-rendering while keeping socket latency under ~10ms.
+    frequency (0.35s). Emits wait notices on token delta changes AND continuous
+    per-second heartbeats during long batch prefill or generation computations,
+    ensuring the UI dynamically ticks elapsed seconds instead of freezing.
     Calculates instantaneous tokens/sec ingestion and generation speed.
     """
 
@@ -3596,6 +3609,9 @@ class _LlamaProgressTracker:
         self._last_sample_time = 0.0
         self._last_sample_tokens = 0
         self._speed_tps = 0.0
+        self._batch_start_time = 0.0
+        self._gen_start_time = 0.0
+        self._last_notice_time = 0.0
 
     def start(self) -> None:
         if not self.base_url or not is_local_endpoint(self.base_url):
@@ -3618,7 +3634,7 @@ class _LlamaProgressTracker:
         import http.client
 
         if self.conn is None:
-            self.conn = http.client.HTTPConnection(host, port, timeout=0.4)
+            self.conn = http.client.HTTPConnection(host, port, timeout=1.0)
         return self.conn
 
     def _run(self) -> None:
@@ -3666,7 +3682,9 @@ class _LlamaProgressTracker:
 
                             now = time.time()
                             if total > 0 and processed < total:
-                                if processed != self._last_processed:
+                                # Prefill / context ingestion phase
+                                is_delta = (processed != self._last_processed)
+                                if is_delta:
                                     if (
                                         self._last_sample_time > 0
                                         and now > self._last_sample_time
@@ -3682,17 +3700,37 @@ class _LlamaProgressTracker:
                                         self._last_sample_tokens = processed
 
                                     self._last_processed = processed
+                                    self._batch_start_time = now
+
+                                # Emit notice on delta change OR every ~1.0s to advance live timer
+                                if is_delta or (now - self._last_notice_time >= 1.0):
+                                    self._last_notice_time = now
                                     pct = min(100.0, max(0.0, (processed / total) * 100.0))
+                                    batch_elapsed = (
+                                        int(now - self._batch_start_time)
+                                        if self._batch_start_time > 0
+                                        else 0
+                                    )
                                     speed_str = (
                                         f" [~{int(self._speed_tps)} t/s]"
-                                        if self._speed_tps > 0
+                                        if self._speed_tps > 0 and batch_elapsed < 2
+                                        else ""
+                                    )
+                                    batch_str = (
+                                        f" [processing batch... {batch_elapsed}s]"
+                                        if batch_elapsed >= 2
                                         else ""
                                     )
                                     self.agent._emit_wait_notice(
-                                        f"🧠 Reading context: {pct:.1f}% ({processed:,}/{total:,} tokens){speed_str}"
+                                        f"🧠 Reading context: {pct:.1f}% ({processed:,}/{total:,} tokens){speed_str}{batch_str}"
                                     )
-                            elif decoded > 0:
-                                if decoded != self._last_decoded:
+                            elif decoded > 0 or (total > 0 and processed >= total):
+                                # Generation / thinking phase
+                                if self._gen_start_time <= 0:
+                                    self._gen_start_time = now
+
+                                is_delta = (decoded != self._last_decoded)
+                                if is_delta:
                                     if (
                                         self._last_sample_time > 0
                                         and now > self._last_sample_time
@@ -3708,13 +3746,17 @@ class _LlamaProgressTracker:
                                         self._last_sample_tokens = decoded
 
                                     self._last_decoded = decoded
+
+                                if is_delta or (now - self._last_notice_time >= 1.0):
+                                    self._last_notice_time = now
+                                    gen_elapsed = int(now - self._gen_start_time)
                                     speed_str = (
                                         f" [~{int(self._speed_tps)} t/s]"
                                         if self._speed_tps > 0
                                         else ""
                                     )
                                     self.agent._emit_wait_notice(
-                                        f"🧠 Thinking / Generating: {decoded:,} tokens{speed_str}"
+                                        f"🧠 Thinking / Generating: {decoded:,} tokens{speed_str} ({gen_elapsed}s)"
                                     )
                             break
                 except Exception:
@@ -3733,7 +3775,7 @@ class _LlamaProgressTracker:
                     self.conn.close()
                 except Exception:
                     pass
-                self.conn = None
+            self.conn = None
 
 
 def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=None):

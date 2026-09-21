@@ -81,7 +81,8 @@ class TestLocalLlamaProgress(unittest.TestCase):
         self.assertIsNone(tracker.thread)
         tracker.stop()
 
-    def test_tracker_lifecycle_local(self):
+    @patch("http.client.HTTPConnection")
+    def test_tracker_lifecycle_local(self, mock_http):
         agent = MagicMock()
         tracker = _LlamaProgressTracker(agent, "http://127.0.0.1:8080/v1", "test-model")
         tracker.start()
@@ -90,6 +91,35 @@ class TestLocalLlamaProgress(unittest.TestCase):
         tracker.stop()
         tracker.thread.join(timeout=1.0)
         self.assertFalse(tracker.thread.is_alive())
+
+    def test_tracker_batch_heartbeat_notice(self):
+        agent = MagicMock()
+        tracker = _LlamaProgressTracker(agent, "http://127.0.0.1:8080/v1", "test-model")
+        mock_conn = MagicMock()
+        mock_resp = MagicMock()
+
+        def mock_read():
+            tracker.stop_event.set()
+            return json.dumps([
+                {
+                    "id": 0,
+                    "is_processing": True,
+                    "n_prompt_tokens": 10000,
+                    "n_prompt_tokens_processed": 4096,
+                }
+            ]).encode("utf-8")
+
+        mock_resp.read.side_effect = mock_read
+        mock_conn.getresponse.return_value = mock_resp
+        tracker.conn = mock_conn
+
+        with patch.object(tracker, "_get_connection", return_value=mock_conn):
+            tracker._run()
+
+        agent._emit_wait_notice.assert_called()
+        notice_args = agent._emit_wait_notice.call_args[0][0]
+        self.assertIn("Reading context: 41.0%", notice_args)
+        self.assertIn("4,096/10,000", notice_args)
 
 
 if __name__ == "__main__":
