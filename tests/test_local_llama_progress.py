@@ -11,7 +11,7 @@ class TestLocalLlamaProgress(unittest.TestCase):
         self.assertIsNone(_poll_local_llama_progress(""))
 
     @patch("urllib.request.urlopen")
-    def test_successful_progress_parsing(self, mock_urlopen):
+    def test_successful_reading_progress(self, mock_urlopen):
         mock_resp = MagicMock()
         mock_resp.read.return_value = json.dumps([
             {
@@ -26,10 +26,30 @@ class TestLocalLlamaProgress(unittest.TestCase):
 
         res = _poll_local_llama_progress("http://127.0.0.1:8080/v1", "test-model")
         self.assertIsNotNone(res)
-        processed, total, pct = res
-        self.assertEqual(processed, 5500)
-        self.assertEqual(total, 10000)
-        self.assertAlmostEqual(pct, 55.0)
+        self.assertEqual(res["phase"], "reading")
+        self.assertEqual(res["processed"], 5500)
+        self.assertEqual(res["total"], 10000)
+        self.assertAlmostEqual(res["pct"], 55.0)
+
+    @patch("urllib.request.urlopen")
+    def test_successful_generating_progress(self, mock_urlopen):
+        mock_resp = MagicMock()
+        mock_resp.read.return_value = json.dumps([
+            {
+                "id": 0,
+                "is_processing": True,
+                "n_prompt_tokens": 10000,
+                "n_prompt_tokens_processed": 10000,
+                "next_token": [{"n_decoded": 42}],
+            }
+        ]).encode("utf-8")
+        mock_resp.__enter__.return_value = mock_resp
+        mock_urlopen.return_value = mock_resp
+
+        res = _poll_local_llama_progress("http://127.0.0.1:8080/v1", "test-model")
+        self.assertIsNotNone(res)
+        self.assertEqual(res["phase"], "generating")
+        self.assertEqual(res["decoded"], 42)
 
     @patch("urllib.request.urlopen")
     def test_idle_slot_returns_none(self, mock_urlopen):

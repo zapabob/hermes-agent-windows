@@ -3492,13 +3492,17 @@ def _build_partial_stream_stub(
 def _poll_local_llama_progress(
     base_url: str | None,
     model: str | None = None,
-) -> tuple[int, int, float] | None:
-    """Query a local llama-server endpoint for real-time prompt ingestion progress.
+) -> dict[str, Any] | None:
+    """Query a local llama-server endpoint for real-time prompt ingestion / generation progress.
 
-    Polls the ``/slots`` endpoint with a tight timeout (0.5s). If an active slot
-    is processing prompt tokens (Prefill phase), returns:
-        (n_prompt_tokens_processed, n_prompt_tokens, progress_pct)
-    Otherwise returns None. Never raises — safe to call from polling loops.
+    Polls the ``/slots`` endpoint with a tight timeout (0.5s).
+    Returns a dict with state information:
+      - phase: "reading" | "evaluating" | "generating"
+      - processed: int
+      - total: int
+      - pct: float
+      - decoded: int
+    Or None if not processing. Never raises — safe to call from polling loops.
     """
     if not base_url:
         return None
@@ -3534,9 +3538,38 @@ def _poll_local_llama_progress(
                 continue
             total = int(slot.get("n_prompt_tokens") or 0)
             processed = int(slot.get("n_prompt_tokens_processed") or 0)
-            if total > 0 and processed > 0:
+            next_tokens = slot.get("next_token")
+            decoded = 0
+            if isinstance(next_tokens, list) and next_tokens and isinstance(next_tokens[0], dict):
+                decoded = int(next_tokens[0].get("n_decoded") or 0)
+            elif isinstance(slot.get("n_decoded"), (int, float)):
+                decoded = int(slot.get("n_decoded") or 0)
+
+            if total > 0 and processed < total:
                 pct = min(100.0, max(0.0, (processed / total) * 100.0))
-                return (processed, total, pct)
+                return {
+                    "phase": "reading",
+                    "processed": processed,
+                    "total": total,
+                    "pct": pct,
+                    "decoded": decoded,
+                }
+            elif decoded > 0:
+                return {
+                    "phase": "generating",
+                    "processed": processed,
+                    "total": total,
+                    "pct": 100.0,
+                    "decoded": decoded,
+                }
+            elif total > 0:
+                return {
+                    "phase": "evaluating",
+                    "processed": total,
+                    "total": total,
+                    "pct": 100.0,
+                    "decoded": 0,
+                }
     except Exception:
         return None
     return None
@@ -5387,37 +5420,51 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
         t.join(timeout=0.3)
 
         _hb_now = time.time()
+        _is_local_request = bool(agent.base_url and is_local_endpoint(agent.base_url))
 
-        # Real-time local context ingestion (prefill) progress tracking:
+        # Real-time local context ingestion (prefill) & generation progress tracking:
         # If querying a local endpoint (e.g. llama-server) and no stream chunk has
         # been delivered yet, poll /slots every ~1.5s to show live prompt
         # ingestion progress (% and tokens) on CLI / TUI / Desktop / Gateway.
         if (
             not first_delta_fired["done"]
-            and agent.base_url
-            and is_local_endpoint(agent.base_url)
+            and _is_local_request
             and (_hb_now - _last_local_progress_poll >= _LOCAL_PROGRESS_INTERVAL)
         ):
             _last_local_progress_poll = _hb_now
             _prog = _poll_local_llama_progress(agent.base_url, api_kwargs.get("model"))
             if _prog:
-                _processed, _total, _pct = _prog
-                agent._emit_wait_notice(
-                    f"🧠 Reading context: {_pct:.1f}% ({_processed:,}/{_total:,} tokens)"
-                )
+                _phase = _prog.get("phase")
+                if _phase == "reading":
+                    _pct = _prog["pct"]
+                    _processed = _prog["processed"]
+                    _total = _prog["total"]
+                    agent._emit_wait_notice(
+                        f"🧠 Reading context: {_pct:.1f}% ({_processed:,}/{_total:,} tokens)"
+                    )
+                elif _phase == "generating":
+                    _decoded = _prog["decoded"]
+                    agent._emit_wait_notice(
+                        f"🧠 Thinking / Generating: {_decoded:,} tokens generated..."
+                    )
+                elif _phase == "evaluating":
+                    agent._emit_wait_notice(
+                        f"🧠 Context ingested ({_prog['total']:,} tokens), preparing generation..."
+                    )
 
         # Periodic heartbeat: touch the agent's activity tracker so the
         # gateway's inactivity monitor knows we're alive while waiting
-        # for stream chunks.  Without this, long thinking pauses (e.g.
-        # reasoning models) or slow prefill on local providers (Ollama)
-        # trigger false inactivity timeouts.  The _call thread touches
-        # activity on each chunk, but the gap between API call start
-        # and first chunk can exceed the gateway timeout — especially
-        # when the stale-stream timeout is disabled (local providers).
+        # for stream chunks.
         if _hb_now - _last_heartbeat >= _HEARTBEAT_INTERVAL:
             _last_heartbeat = _hb_now
             _waiting_secs = int(_hb_now - last_chunk_time["t"])
-            if _waiting_secs >= _HEARTBEAT_INTERVAL:
+            # If local real-time progress is active, touch activity but do NOT overwrite
+            # the live reading/generating spinner with generic "waiting on..." notices.
+            if _is_local_request and not first_delta_fired["done"]:
+                agent._touch_activity(
+                    f"local inference in progress ({_waiting_secs}s elapsed)"
+                )
+            elif _waiting_secs >= _HEARTBEAT_INTERVAL:
                 # No chunks for 30s+ — rewrite the live spinner/status line
                 # so CLI/TUI/Desktop users see WHAT the wait is (slow or
                 # overloaded provider / long thinking pause) instead of an
