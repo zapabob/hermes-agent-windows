@@ -14,11 +14,40 @@ jobs:
           version: "0.9.28"
           enable-cache: false
       - run: uv python install 3.13
-      - name: Download only the existing host SDK and regression requirements
-        run: uv run --no-project --python 3.13 --with pip python -m pip download --only-binary=:all: --dest wheels openai==2.24.0 tenacity==9.1.4
+      - name: Download existing host SDK and test requirements
+        run: |
+          uv run --no-project --python 3.13 --with pip python -m pip download --only-binary=:all: --dest wheels openai==2.24.0 tenacity==9.1.4 ruff==0.12.10
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: router-regression-wheels
           path: wheels
+          retention-days: 3
+          if-no-files-found: error
+  ui-dependencies:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: 669039a501e13e9f48f1e995b0836944854eea33
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22.22.0
+      - name: Install locked UI dependencies without package lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Export dependency tree and the supported Node runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp "$(command -v node)" router-node
+          find . -type d -name node_modules -prune -print0 | tar --null -T - -czf router-ui-dependencies.tar.gz
+          tar -czf router-node.tar.gz router-node
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: router-ui-dependencies
+          path: |
+            router-ui-dependencies.tar.gz
+            router-node.tar.gz
           retention-days: 3
           if-no-files-found: error
