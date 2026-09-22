@@ -1,0 +1,41 @@
+name: Implementation Router component qualification
+
+on:
+  push:
+    branches: [feat/implementation-router-20260923]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: implementation-router-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONUTF8: "1"
+
+jobs:
+  component:
+    name: Component contracts (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Fetch the immutable downstream base
+        run: git fetch --no-tags --depth=1 origin 15f60413bd5d5394aeb8e374c52c1010b8052224
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
+        with:
+          version: "0.9.28"
+          enable-cache: false
+      - name: Prepare Python 3.11 without project dependencies
+        run: uv python install 3.11
+      - name: Frozen-base RED, candidate GREEN and mutation detection
+        run: uv run --no-project --python 3.11 python scripts/ci/qualify_implementation_router.py --base-sha 15f60413bd5d5394aeb8e374c52c1010b8052224
