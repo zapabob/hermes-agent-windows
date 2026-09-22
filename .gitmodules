@@ -48,3 +48,6 @@
 [submodule "vendor/heygen-cli"]
 	path = vendor/heygen-cli
 	url = https://github.com/heygen-com/heygen-cli.git
+[submodule "plugins/artemis"]
+	path = plugins/artemis
+	url = https://github.com/zapabob/artemis.git

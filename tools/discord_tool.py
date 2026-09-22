@@ -629,6 +629,106 @@ def _remove_role(token: str, guild_id: str, user_id: str, role_id: str, **_kwarg
 # Action dispatch + metadata
 # ---------------------------------------------------------------------------
 
+
+def _send_discord_voice(
+    token: str, channel_id: str, file_path: str, *, throttle_seconds: float = 1.0, **_kwargs: Any
+) -> str:
+    """Send a voice/audio file to a Discord channel.
+
+    Discord treats voice messages as regular file attachments; we upload the
+    file and set the content to a human-friendly label.
+    """
+    import os
+
+    if not os.path.isfile(file_path):
+        return tool_error(f"File not found: {file_path}")
+    file_size = os.path.getsize(file_path)
+    if file_size > _DISCORD_RESPONSE_BODY_MAX_BYTES:
+        return tool_error(
+            f"Audio file too large: {file_size} bytes (limit {_DISCORD_RESPONSE_BODY_MAX_BYTES})."
+        )
+
+    boundary = f"------------------------{abs(hash(file_path)) % 10**10:010x}"
+    body = bytearray()
+
+    # part 1: JSON payload (empty content + tiny label)
+    payload = json.dumps(
+        {
+            "content": f"🔊 voice message ({os.path.basename(file_path)})",
+            "files": [{"attachment": f"voice.{_guess_audio_ext(file_path)}"}],
+        }
+    ).encode("utf-8")
+    body += b"--" + boundary.encode("utf-8") + b"\r\n"
+    body += b"Content-Disposition: form-data; name=\"payload_json\"\r\n\r\n"
+    body += payload + b"\r\n"
+
+    # part 2: file bytes
+    with open(file_path, "rb") as f:
+        file_bytes = f.read()
+    body += b"--" + boundary.encode("utf-8") + b"\r\n"
+    body += (
+        b"Content-Disposition: form-data; name=\"files[0]\"; "
+        b"filename=\"voice."
+        + _guess_audio_ext(file_path).encode("utf-8")
+        + b"\"\r\n"
+        b"Content-Type: audio/"
+        + _guess_audio_ext(file_path).encode("utf-8")
+        + b"\r\n\r\n"
+    )
+    body += file_bytes + b"\r\n"
+    body += b"--" + boundary.encode("utf-8") + b"--\r\n"
+
+    headers = {
+        "Authorization": f"Bot {token}",
+        "Content-Type": f"multipart/form-data; boundary={boundary}",
+        "User-Agent": "Hermes-Agent (https://github.com/NousResearch/hermes-agent)",
+    }
+    url = f"{DISCORD_API_BASE}/channels/{channel_id}/messages"
+
+    req = urllib.request.Request(url, data=bytes(body), headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            response_body = _read_limited_response_body(resp, _DISCORD_RESPONSE_BODY_MAX_BYTES, label="send-voice response")
+            result = json.loads(response_body.decode("utf-8"))
+            return json.dumps(
+                {
+                    "success": True,
+                    "message_id": result.get("id"),
+                    "channel_id": result.get("channel_id"),
+                }
+            )
+    except urllib.error.HTTPError as e:
+        error_body = ""
+        try:
+            raw_error_body = _read_limited_response_body(e, _DISCORD_ERROR_BODY_MAX_BYTES, label="send-voice error")
+            error_body = raw_error_body.decode("utf-8", errors="replace")
+        except Exception:
+            error_body = str(e)
+        raise DiscordAPIError(e.code, error_body) from e
+
+
+def _guess_audio_ext(path: str) -> str:
+    """Best-effort audio extension from path or magic bytes."""
+    import os
+
+    ext = os.path.splitext(path)[1].lower()
+    if ext in {".mp3", ".ogg", ".wav", ".flac", ".webm"}:
+        return ext[1:]
+    # fallback: try reading magic bytes
+    try:
+        with open(path, "rb") as f:
+            head = f.read(4)
+        if head.startswith(b"\xff\xd8\xff"):
+            return "mp3"
+        if head.startswith(b"OggS"):
+            return "ogg"
+        if head.startswith(b"RIFF") and b"WAVE" in head:
+            return "wav"
+    except Exception:
+        pass
+    return "ogg"
+
+
 _ACTIONS = {
     "list_guilds": _list_guilds,
     "server_info": _server_info,
@@ -645,6 +745,7 @@ _ACTIONS = {
     "create_thread": _create_thread,
     "add_role": _add_role,
     "remove_role": _remove_role,
+    "send_voice": _send_discord_voice,
 }
 
 _CORE_ACTION_NAMES = frozenset({"fetch_messages", "search_members", "create_thread"})
@@ -672,6 +773,7 @@ _ACTION_MANIFEST: List[Tuple[str, str, str]] = [
     ("create_thread", "(channel_id, name)", "create a public thread; optional message_id anchor"),
     ("add_role", "(guild_id, user_id, role_id)", "assign a role"),
     ("remove_role", "(guild_id, user_id, role_id)", "remove a role"),
+    ("send_voice", "(channel_id, file_path)", "send an audio file as a voice message attachment"),
 ]
 
 # Actions that require the GUILD_MEMBERS privileged intent.
@@ -820,6 +922,10 @@ def _build_schema(
         )
 
     properties: Dict[str, Any] = {
+        "file_path": {
+            "type": "string",
+            "description": "Path to the audio file to send as a voice message.",
+        },
         "action": {
             "type": "string",
             "enum": actions,

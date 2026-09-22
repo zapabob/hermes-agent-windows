@@ -692,10 +692,31 @@ TOOLSETS = {
         "includes": []
     },
 
+    "artemis": {
+        "description": "Artemis toolset — Android automation server control and task execution via artemis CLI.",
+        "tools": [
+            "artemis_status",
+            "artemis_start",
+            "artemis_stop",
+            "artemis_run_task",
+        ],
+        "includes": []
+    },
+
     "hermes-qqbot": {
         "description": "QQBot toolset - QQ messaging via Official Bot API v2 (full access)",
         "tools": _HERMES_CORE_TOOLS,
-        "includes": []
+        "includes": [],
+    },
+
+    "voice_push": {
+        "description": (
+            "Voice push toolset - synthesize text to speech and push audio to "
+            "Discord and/or Telegram as voice messages. "
+            "Requires DISCORD_BOT_TOKEN and/or TELEGRAM_BOT_TOKEN."
+        ),
+        "tools": ["voice_push", "discord", "telegram"],
+        "includes": [],
     },
 
     "hermes-wecom": {
