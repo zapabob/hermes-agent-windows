@@ -1,0 +1,24 @@
+name: Router offline regression dependencies
+on:
+  push:
+    branches: [chore/router-source-snapshot-20260923]
+permissions:
+  contents: read
+jobs:
+  wheels:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
+        with:
+          version: "0.9.28"
+          enable-cache: false
+      - run: uv python install 3.13
+      - name: Download only the existing host SDK and regression requirements
+        run: uv run --no-project --python 3.13 --with pip python -m pip download --only-binary=:all: --dest wheels openai==2.24.0 tenacity==9.1.4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: router-regression-wheels
+          path: wheels
+          retention-days: 3
+          if-no-files-found: error
