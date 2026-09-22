@@ -1,20 +1,41 @@
 # Implementation Router — work in progress
 
-This branch is **not a working live-model router and is not ready to merge**.
-It contains a tested, provider-neutral workflow controller and its failure-injection tests. No plugin is registered or enabled, and no model call, credential access, terminal execution or existing Switchyard/MoA configuration is introduced by importing it.
+**Not a released live-model router; not ready to merge.**
+The branch now contains operator-owned, model-neutral stage routes, mandatory
+credential-free host admission, zero-ambient-inheritance environment helpers,
+localised results and agent/integrator documentation. It does not register or
+enable a plugin, launch a native child agent, or add an authentication store.
 
-## Frozen revisions and related work
+Start with [AGENT_PROTOCOL.md](AGENT_PROTOCOL.md). Localised guides:
+[English](i18n/en.md), [日本語](i18n/ja.md), [简体中文](i18n/zh.md),
+[繁體中文](i18n/zh-hant.md), [العربية](i18n/ar.md).
 
-Downstream base: `15f60413bd5d5394aeb8e374c52c1010b8052224`.
-Upstream comparison base: `71a2fe399bbd7a219c71f9d9fca2b313b01f2057`.
+## Source and verification provenance
 
-Upstream #103346 (`victor-kyriazakos`, head `d1f0ce43acd81211c7fbd6c4876d53308c5ce93e`) overlaps with the operator-owned provider/model/reasoning profile requirement. #87179 (`agafox`, head `f1908fd4656f0260b218f189ae59b3d6bba2368d`) is another open design. Neither is treated here as an accepted upstream interface or as superseded. No source from either proposal has been copied, and no co-authorship is claimed. Any later salvage must preserve the actual source authors and distinguish retained work from subsequent changes.
+- Downstream main base: `15f60413bd5d5394aeb8e374c52c1010b8052224`.
+- This extension begins at `9ce101210fccdda0b90111c3aae7b98589708626`.
+- Historical upstream comparison: `71a2fe399bbd7a219c71f9d9fca2b313b01f2057`;
+  this is not a claim to have rebased or ported onto a later upstream main.
+- Previous 29-test/10-mutation native component qualification:
+  https://github.com/zapabob/hermes-agent-windows/actions/runs/35776467212
+  That run does not cover this extension.
 
-The separate contribution here is sequential plan/worker/verification/replan control, not another profile resolver or a replacement for NVIDIA Switchyard, MoA, provider fallback, or the native subagent scheduler.
+Local extension qualification, Python 3.13.5 in an isolated **component fixture
+worktree**, not a full fetched repository: 58 tests collected, 57 passed and
+1 skipped (desktop locale-source parity needs the full checkout). Sixteen
+selected behavioural mutations were detected. The first combined mutation
+invocation exceeded its execution limit and is not success evidence; the
+completed run uses each mutation's relevant test suite after a full green
+component baseline. No raw environment output from inheritance mutants is
+printed. Review added three failing cases for stale credential directories,
+PATH-separator ambiguity and credential fields in disabled configuration;
+all three now pass.
 
-## Component evidence
-
-Local Python 3.13.5: initial 26-test RED, then GREEN. Review added three cases; two exposed premature success/cancellation handling and were corrected. Final local component suite: **29 passed**. Ten selected source mutations are all detected by behavioural failures. The duplicate-key mutation initially survived; an otherwise-valid duplicate-key case closes that test gap.
+The host qualification workflow creates real linked worktrees from the frozen
+main and exact candidate, then runs base RED, candidate GREEN and the mutation
+suite. Read the actual workflow outcome at the candidate SHA before claiming
+native success. Full repository CI, installer coverage, live OAuth, actual
+provider/effort/fallback provenance and end-to-end execution remain separate.
 
 ```sh
 python -m unittest discover -s tests/implementation_router -v
@@ -22,23 +43,37 @@ python scripts/ci/implementation_router_sabotage.py
 python scripts/ci/qualify_implementation_router.py --base-sha 15f60413bd5d5394aeb8e374c52c1010b8052224
 ```
 
-The qualification command requires both commits to exist locally and creates disposable linked worktrees. Its success is component evidence only. Hosted CI results must be read at the exact candidate SHA; merely adding the workflow is not a passing result.
+## Enforced component behaviour
 
-The initial local tests used newly authored component files because this execution container could not resolve github.com to fetch a complete checkout. The authenticated GitHub branch does start from the real frozen downstream commit. Synthetic local fixture, hosted native tests, full repository CI and live runtime evidence are distinct.
+Routing defaults to disabled. Enabled routes contain exactly planner, worker
+and reviewer selections; credentials, auth endpoints, clients and fallback
+fields are rejected, including in disabled prepared configuration. No model
+brand is special-cased. Missing/unsupported routes must fail before inference.
+The kernel requires a trusted native host's run/workspace/route-bound admission
+before work, every stage and verification; absent or revoked admission stops
+execution. Existing HostPort implementations do not gain permission by default.
 
-## Not yet implemented or verified
+The process environment helper constructs a new mapping and uses an empty
+private runtime root, rather than filtering a copy of the parent environment.
+Real child/grandchild tests use synthetic secrets only. The POSIX descriptor
+probe is skipped on Windows: it is not evidence about native Windows handles.
+Environment construction is NOT filesystem, memory, network or keychain
+isolation, and the helper is not installed across existing terminal paths.
 
-- A real Hermes `HostPort` adapter and gated plugin/CLI entrypoint.
-- Stage-specific approved provider/model/reasoning selection and effective fallback provenance.
-- Authorised shared-worktree binding across planner, worker and verifier.
-- Actual host-owned terminal/check receipts and authoritative protected acceptance probes.
-- Host-backed durable workflow state, workspace leases and unknown-admission recovery.
-- Full repository, native Windows integration, live OAuth and existing-plugin coexistence acceptance.
+## Remaining merge holds
 
-At the inspected main revisions, the public subagent launch request supports `model` but not `provider`, `reasoning_effort` or `model_profile`; downstream explicitly rejects per-launch working-directory and timeout overrides. The implementation must not invent these arguments or modify private child objects to appear complete. The live adapter must use a reviewed host interface and preserve existing approval and process ownership.
+A real Hermes native adapter must still provide credential-brokered inference,
+authorised tool/workspace execution, protected deterministic checks, descendant
+containment, durable state, cancellation and effective-route observations.
+Its admission receipt must follow actual preflight, not a setting or a fabricated
+model response. Current native subagent construction must not be used to pass
+credential-bearing AIAgent objects to descendants. The adapter and public
+entrypoint are still absent; this branch therefore cannot perform the requested
+one-prompt implementation workflow yet. Desktop UI and packaged-resource
+installation are also not accepted on the strength of the i18n unit tests.
 
-`HostPort` is a trusted boundary. Python dataclasses are not a cryptographic defence against a malicious adapter or a same-user process that can rewrite the verifier. Production verification requires the host to isolate and protect its acceptance probes. Passing component tests does not establish that isolation.
-
-## Merge and upstream publication gate
-
-Do not create a ready-for-merge claim, merge this branch, or submit a competing upstream resolver on the strength of these tests. Complete live wiring and run all required checks at the final SHA first. The user's main branch and all existing routing integrations remain unchanged by this branch.
+Upstream #103346 and #87179 overlap in profile routing. Neither is treated as
+accepted or superseded. No code has been transplanted; no co-authorship is
+claimed. Preserve actual source credit if a later salvage incorporates code.
+No competing upstream resolver PR or main merge is authorised by component
+GREEN alone. Existing Switchyard, MoA, provider and approval code is unchanged.

@@ -13,6 +13,9 @@ import json
 import re
 from typing import Protocol
 
+from .routes import ModelRoute, RoutingTable
+from .security import CredentialFreeAdmission, validate_admission
+
 _TOKEN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}\Z")
 _DIGEST = re.compile(r"[a-f0-9]{64}\Z")
 
@@ -51,6 +54,7 @@ class StageRequest:
     role: str
     revision: int
     handoff_json: str
+    route: ModelRoute | None = None
 
 
 @dataclass(frozen=True)
@@ -103,6 +107,12 @@ class RunResult:
     revision: int
     events: tuple[AuditEvent, ...]
 
+    def to_dict(self, *, locale: str = "en") -> dict:
+        """Return localised presentation with stable, credential-free codes."""
+        from .i18n import render_result
+
+        return render_result(self, locale)
+
 
 class HostPort(Protocol):
     """Trusted Hermes integration contracts, deliberately not implemented here.
@@ -118,6 +128,16 @@ class HostPort(Protocol):
     No port may expose credentials in requests, results, exceptions, or receipts.
     An adapter that cannot satisfy a contract must refuse the run.
     """
+    def admit(self, binding: RunBinding, routes: RoutingTable) -> CredentialFreeAdmission:
+        """Host-only attestation after real credential/process/route preflight.
+
+        No existing adapter is silently upgraded to this contract. Credentials
+        stay with the host inference broker, never an AIAgent child or its
+        descendants. Unsupported routes/efforts and fallback ambiguity fail
+        before inference. This receipt must never come from model JSON.
+        """
+        ...
+
     def lease(self, binding: RunBinding) -> AbstractContextManager[None]: ...
     def cancellation_requested(self, binding: RunBinding) -> bool: ...
     def checkpoint(self, binding: RunBinding, event: AuditEvent) -> None: ...
@@ -229,7 +249,12 @@ def _verification_failures(request: VerificationRequest, receipts: object) -> tu
 
 class ImplementationRouter:
     """A stateless factory for bounded, single-run workflow executions."""
-    def __init__(self, policy: Policy | None = None) -> None:
+    def __init__(
+        self, policy: Policy | None = None, *, routing: RoutingTable | None = None,
+    ) -> None:
+        self.routing = RoutingTable() if routing is None else routing
+        if type(self.routing) is not RoutingTable:
+            raise ValueError("routing must be a validated RoutingTable")
         self.policy = policy if policy is not None else Policy()
         if type(self.policy) is not Policy:
             raise ValueError("policy must be a validated Policy")
@@ -259,6 +284,13 @@ class ImplementationRouter:
             host.checkpoint(binding, event)
             events.append(event)
 
+        def security_gate() -> None:
+            try:
+                receipt = host.admit(binding, self.routing)
+                validate_admission(receipt, binding.run_id, binding.workspace_id, self.routing)
+            except Exception as exc:
+                raise _Hold("credential_boundary_unavailable") from exc
+
         def stage(role: str, handoff: dict) -> StageResult:
             nonlocal calls
             cancellation_gate()
@@ -268,9 +300,12 @@ class ImplementationRouter:
             if len(encoded.encode("utf-8")) > self.policy.max_handoff_bytes:
                 raise _Hold("handoff_budget_exhausted")
             attempt = f"{binding.run_id}:stage:{calls + 1}"
-            request = StageRequest(binding, attempt, role, revision, encoded)
+            request = StageRequest(
+                binding, attempt, role, revision, encoded, self.routing.for_role(role)
+            )
             record("stage_start", attempt, role, encoded)
             cancellation_gate()
+            security_gate()
             calls += 1
             response = host.stage(request)
             if type(response) is not StageResult or response.attempt_id != attempt:
@@ -284,6 +319,8 @@ class ImplementationRouter:
             return response
 
         try:
+            if not self.routing.enabled:
+                raise _Hold("routing_disabled")
             if type(binding) is not RunBinding or not _text(task):
                 raise _Hold("invalid_run_input")
             if (type(required_checks) is not tuple or not required_checks
@@ -291,6 +328,7 @@ class ImplementationRouter:
                     or len(required_checks) > 64 or len(set(required_checks)) != len(required_checks)):
                 raise _Hold("invalid_required_checks")
             with host.lease(binding):
+                security_gate()
                 cancellation_gate()
                 plan = _plan(stage("planner", {"task": task}).output, self.policy.max_handoff_bytes)
                 reentries = 0
@@ -311,6 +349,7 @@ class ImplementationRouter:
                         )
                         record("verification_start", verify_request.attempt_id)
                         cancellation_gate()
+                        security_gate()
                         failures = _verification_failures(verify_request, host.verify(verify_request))
                         cancellation_gate()
                         record("verification_complete", verify_request.attempt_id)

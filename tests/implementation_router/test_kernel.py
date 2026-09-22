@@ -23,6 +23,15 @@ BLOCKED = {"status": "BLOCKED", "summary": "The plan conflicts with an API", "de
 DIGEST = "a" * 64
 
 
+def make_router(k, policy=None):
+    from downstream.implementation_router.routes import RoutingTable
+    routes = RoutingTable.from_config({"enabled": True, "roles": {
+        role: {"provider": "offline-fixture", "model": role + "-fixture"}
+        for role in ("planner", "worker", "reviewer")
+    }})
+    return k.ImplementationRouter(policy, routing=routes)
+
+
 class Host:
     """Trusted-port test double; never represents a real OAuth or terminal test."""
     def __init__(self, k):
@@ -42,6 +51,11 @@ class Host:
         self.lease_active = False
         self.lease_release_error = False
         self.cancel_on_event = None
+
+    def admit(self, binding, routes):
+        # Test-double receipt only: no actual sandbox or provider is running.
+        from downstream.implementation_router.security import CredentialFreeAdmission
+        return CredentialFreeAdmission(binding.run_id, binding.workspace_id, routes.fingerprint())
 
     @contextlib.contextmanager
     def lease(self, binding):
@@ -104,7 +118,7 @@ class KernelTests(unittest.TestCase):
         self.binding = self.k.RunBinding("run-a", "workspace-a")
 
     def run_router(self, **policy):
-        router = self.k.ImplementationRouter(self.k.Policy(**policy))
+        router = make_router(self.k, self.k.Policy(**policy))
         return router.run(
             task="Implement the requested change", binding=self.binding,
             required_checks=("unit", "lint"), host=self.host,
@@ -247,7 +261,7 @@ class KernelTests(unittest.TestCase):
     def test_missing_or_duplicate_trusted_check_ids_prevent_any_model_call(self):
         for checks in ((), ("unit", "unit"), ("",), ("../escape",)):
             with self.subTest(checks=checks):
-                result = self.k.ImplementationRouter().run(
+                result = make_router(self.k).run(
                     task="change", binding=self.binding, required_checks=checks, host=self.host)
                 self.assert_blocked(result)
                 self.assertEqual(self.host.calls, [])
@@ -315,7 +329,7 @@ class KernelTests(unittest.TestCase):
         self.assertFalse(any(e.kind == "succeeded" for e in result.events))
 
     def test_reused_router_does_not_leak_state_between_runs(self):
-        router = self.k.ImplementationRouter()
+        router = make_router(self.k)
         first = router.run(task="first", binding=self.binding, required_checks=("unit",), host=self.host)
         second_host = Host(self.k)
         second = router.run(task="second", binding=self.k.RunBinding("run-b", "workspace-b"),

@@ -1,0 +1,62 @@
+{
+  "en": {
+    "title": "Stage-based implementation routing",
+    "planner": "Planning",
+    "worker": "Implementation",
+    "reviewer": "Replanning",
+    "SUCCEEDED": "All required host checks passed for this execution.",
+    "BLOCKED": "Execution stopped because a required condition was not satisfied.",
+    "CANCELLED": "Execution was cancelled; no new stage will be started.",
+    "routing_disabled": "Implementation routing is disabled. The operator must configure every stage route.",
+    "credential_boundary_unavailable": "Execution was refused because the host could not establish the credential-free boundary.",
+    "unknown_result": "The result could not be verified. Execution remains blocked."
+  },
+  "ja": {
+    "title": "工程別の実装ルーティング",
+    "planner": "計画",
+    "worker": "実装",
+    "reviewer": "再計画",
+    "SUCCEEDED": "この実行に必要なホスト側検証がすべて成功しました。",
+    "BLOCKED": "必要な条件が満たされていないため、実行を停止しました。",
+    "CANCELLED": "実行はキャンセルされました。新しい工程は開始しません。",
+    "routing_disabled": "実装ルーティングは無効です。操作者がすべての工程の接続先を設定する必要があります。",
+    "credential_boundary_unavailable": "ホストが資格情報を渡さない実行境界を確立できなかったため、実行を拒否しました。",
+    "unknown_result": "結果を検証できませんでした。実行は停止したままです。"
+  },
+  "zh": {
+    "title": "按阶段进行的实现路由",
+    "planner": "规划",
+    "worker": "实现",
+    "reviewer": "重新规划",
+    "SUCCEEDED": "本次执行所需的主机端检查已全部通过。",
+    "BLOCKED": "由于未满足必要条件，执行已停止。",
+    "CANCELLED": "执行已取消，不会启动新的阶段。",
+    "routing_disabled": "实现路由已禁用。操作者必须配置每个阶段的路由。",
+    "credential_boundary_unavailable": "主机无法建立不向子代传递凭据的执行边界，因此拒绝执行。",
+    "unknown_result": "无法验证结果，执行保持阻止状态。"
+  },
+  "zh-hant": {
+    "title": "依階段進行的實作路由",
+    "planner": "規劃",
+    "worker": "實作",
+    "reviewer": "重新規劃",
+    "SUCCEEDED": "本次執行所需的主機端檢查已全部通過。",
+    "BLOCKED": "由於未滿足必要條件，執行已停止。",
+    "CANCELLED": "執行已取消，不會啟動新的階段。",
+    "routing_disabled": "實作路由已停用。操作者必須設定每個階段的路由。",
+    "credential_boundary_unavailable": "主機無法建立不向子代傳遞憑證的執行邊界，因此拒絕執行。",
+    "unknown_result": "無法驗證結果，執行維持封鎖狀態。"
+  },
+  "ar": {
+    "title": "توجيه التنفيذ بحسب المراحل",
+    "planner": "التخطيط",
+    "worker": "التنفيذ",
+    "reviewer": "إعادة التخطيط",
+    "SUCCEEDED": "اجتازت عملية التنفيذ جميع فحوصات المضيف المطلوبة.",
+    "BLOCKED": "توقف التنفيذ لعدم استيفاء شرط مطلوب.",
+    "CANCELLED": "أُلغي التنفيذ ولن تبدأ مرحلة جديدة.",
+    "routing_disabled": "توجيه التنفيذ معطل. يجب على المشغّل ضبط مسار كل مرحلة.",
+    "credential_boundary_unavailable": "رُفض التنفيذ لأن المضيف لم يتمكن من ضمان عدم تمرير بيانات الاعتماد إلى العمليات التابعة.",
+    "unknown_result": "تعذر التحقق من النتيجة. يظل التنفيذ محظوراً."
+  }
+}
