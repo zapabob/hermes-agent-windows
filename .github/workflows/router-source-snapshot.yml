@@ -1,0 +1,45 @@
+name: Frozen router development snapshots
+on:
+  push:
+    branches: [chore/router-source-snapshot-20260923]
+permissions:
+  contents: read
+jobs:
+  snapshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: 669039a501e13e9f48f1e995b0836944854eea33
+          fetch-depth: 1
+          persist-credentials: false
+          path: downstream-source
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          repository: NousResearch/hermes-agent
+          ref: 71a2fe399bbd7a219c71f9d9fca2b313b01f2057
+          fetch-depth: 1
+          persist-credentials: false
+          path: upstream-source
+      - name: Create self-contained shallow Git snapshots without authentication configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p snapshots
+          for name in downstream upstream; do
+            source="$GITHUB_WORKSPACE/$name-source"
+            target="$GITHUB_WORKSPACE/snapshots/$name.git"
+            sha=$(git -C "$source" rev-parse HEAD)
+            git init --bare "$target"
+            git -C "$target" fetch --depth=1 "$source" "$sha:refs/heads/frozen"
+            git -C "$target" symbolic-ref HEAD refs/heads/frozen
+            printf '%s\n' "$sha" > "$GITHUB_WORKSPACE/snapshots/$name.sha"
+          done
+          tar -czf frozen-router-sources.tar.gz snapshots
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: frozen-router-sources
+          path: frozen-router-sources.tar.gz
+          retention-days: 3
+          if-no-files-found: error
