@@ -226,6 +226,7 @@ class HermesObservations:
         verified = bool(terminal and terminal['run_state'] == 'SUCCEEDED'
                         and len(selected) == len(manifest['required_checks'])
                         and {row['check_id'] for row in selected} == set(manifest['required_checks'])
+                        and len({row['revision'] for row in selected}) == 1
                         and all(row['completed'] and not row['timed_out'] and row['approved']
                                 and row['exit_code'] == 0
                                 and row['snapshot_before'] == candidate

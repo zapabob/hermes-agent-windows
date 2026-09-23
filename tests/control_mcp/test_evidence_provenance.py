@@ -75,7 +75,7 @@ def test_native_verify_persists_typed_check_receipt(tmp_path: Path, monkeypatch)
 
 
 @pytest.mark.parametrize('fault', (None, 'exit_one', 'timeout', 'wrong_attempt',
-                                   'missing_check', 'source_mismatch', 'route_mismatch'))
+                                   'missing_check', 'source_mismatch', 'route_mismatch', 'mixed_revision'))
 def test_scoped_observation_reads_bound_native_receipts(tmp_path: Path, control_module, control_context, fault):
     home = tmp_path / 'profile'
     run_id = 'eng-' + 'b' * 32
@@ -112,9 +112,13 @@ def test_scoped_observation_reads_bound_native_receipts(tmp_path: Path, control_
         receipt['source_digest'] = '0' * 64
     elif fault == 'route_mismatch':
         receipt['route_fingerprint'] = '0' * 64
+    elif fault == 'mixed_revision':
+        manifest['required_checks'] = ['unit', 'lint']
     for name, data in [('run-manifest.json', manifest), ('run-result.json', terminal)]:
         (run_dir / name).write_text(json.dumps(data), encoding='utf-8')
     evidence_line = '' if fault == 'missing_check' else json.dumps(receipt) + '\n'
+    if fault == 'mixed_revision':
+        evidence_line += json.dumps({**receipt, 'check_id': 'lint', 'revision': 2}) + '\n'
     (run_dir / 'verification.jsonl').write_text(evidence_line, encoding='utf-8')
     source = control_module('observations').HermesObservations(
         homes={'p1': home}, registered_slots=())
