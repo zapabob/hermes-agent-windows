@@ -130,6 +130,31 @@ async def test_parent_mount_starts_sdk_lifespan_and_preserves_other_routes(
 
 
 @pytest.mark.asyncio
+async def test_late_parent_mount_precedes_existing_spa_catch_all(
+    protocol_host, control_module
+):
+    host, client, _, _ = protocol_host
+    parent = FastAPI()
+
+    @parent.api_route("/{full_path:path}", methods=["GET", "POST", "DELETE"])
+    def spa_fallback(full_path: str):
+        return {"spa": full_path}
+
+    control_module("transport").mount_control_mcp(parent, host)
+    async with control_module("transport").control_mcp_lifespan(parent):
+        async with client(app=parent) as session:
+            result = await session.call_tool(
+                "hermes_get_capabilities", {"profile_id": "p1"}
+            )
+            assert result.structured_content["capabilities"]["read"] is True
+        async with httpx2.AsyncClient(
+            transport=httpx2.ASGITransport(app=parent),
+            base_url="https://hermes.invalid",
+        ) as http_client:
+            assert (await http_client.get("/unrelated")).json() == {"spa": "unrelated"}
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("dashboard_gate", [False, True])
 async def test_parent_dashboard_auth_never_grants_or_blocks_resource_auth(
     protocol_host, control_module, dashboard_gate

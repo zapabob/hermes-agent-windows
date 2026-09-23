@@ -119,6 +119,12 @@ def mount_control_mcp(application, host: ControlMCPHost) -> None:
     application.add_route(path, host.app, methods=["GET", "POST", "DELETE"])
     application.add_route(path + "/", host.app, methods=["GET", "POST", "DELETE"])
     application.add_route(host.app.metadata_path, host.app, methods=["GET"])
+    # The parent SPA catch-all may already be registered. Exact resource
+    # routes must win before it, including when the host opts in at startup.
+    routes = application.router.routes
+    added = routes[-len(paths):]
+    del routes[-len(paths):]
+    routes[:0] = added
     application.state.control_mcp_host = host
 
 
