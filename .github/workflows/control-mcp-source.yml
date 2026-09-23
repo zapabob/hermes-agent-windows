@@ -1,0 +1,66 @@
+name: Control MCP isolated source export
+on:
+  push:
+    branches: [ci/control-mcp-source-20260923]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: 73e6c5f01b961c25ca422db2a9e923fe56d504c2
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: '3.13'
+      - name: Export exact Git objects without credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 73e6c5f01b961c25ca422db2a9e923fe56d504c2
+          mkdir -p "$RUNNER_TEMP/control-export/control.git/refs/heads"
+          cp -a .git/objects "$RUNNER_TEMP/control-export/control.git/"
+          cp .git/shallow "$RUNNER_TEMP/control-export/control.git/shallow"
+          printf '[core]\nrepositoryformatversion = 0\nbare = true\n' > "$RUNNER_TEMP/control-export/control.git/config"
+          printf 'ref: refs/heads/frozen\n' > "$RUNNER_TEMP/control-export/control.git/HEAD"
+          git rev-parse HEAD > "$RUNNER_TEMP/control-export/control.git/refs/heads/frozen"
+          git rev-parse HEAD > "$RUNNER_TEMP/control-export/SOURCE_SHA"
+          git rev-parse 'HEAD^{tree}' > "$RUNNER_TEMP/control-export/SOURCE_TREE"
+          tar -czf "$RUNNER_TEMP/control-source.tar.gz" -C "$RUNNER_TEMP/control-export" .
+      - name: Download test dependencies constrained to this lock
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib, os, pathlib, subprocess, sys, tomllib
+          lock = tomllib.loads(pathlib.Path('uv.lock').read_text())
+          packages = {}
+          for package in lock['package']:
+              packages.setdefault(package['name'], set()).add(package['version'])
+          roots = ('mcp', 'fastapi', 'uvicorn', 'pytest', 'pytest-asyncio', 'pytest-xdist', 'ruff', 'pyjwt', 'cryptography', 'requests', 'rich', 'python-dotenv', 'pyyaml', 'psutil', 'ruamel-yaml', 'openai', 'tenacity', 'fire', 'croniter', 'pathspec', 'markdown', 'prompt-toolkit', 'websockets', 'snowballstemmer', 'python-multipart', 'concurrent-log-handler', 'docker')
+          output = pathlib.Path(os.environ['RUNNER_TEMP']) / 'control-wheels'
+          output.mkdir()
+          constraints = output / 'constraints.txt'
+          constraints.write_text('\n'.join(f'{name}=={next(iter(versions))}' for name, versions in sorted(packages.items()) if len(versions)==1 and name != 'hermes-agent')+'\n')
+          requirements = [f'{name}=={next(iter(packages[name]))}' for name in roots if name in packages and len(packages[name]) == 1]
+          subprocess.run([sys.executable, '-m', 'pip', 'download', '--only-binary=:all:', '--dest', str(output), '-c', str(constraints), *requirements], check=True)
+          approved = {entry['hash'].split(':', 1)[1] for package in lock['package'] for entry in package.get('wheels', [])}
+          for wheel in output.glob('*.whl'):
+              digest = hashlib.sha256(wheel.read_bytes()).hexdigest()
+              if digest not in approved:
+                  raise RuntimeError(f'Wheel not authenticated by uv.lock: {wheel.name}')
+          (output / 'SOURCE_SHA').write_text('73e6c5f01b961c25ca422db2a9e923fe56d504c2\n')
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: control-mcp-source
+          path: ${{ runner.temp }}/control-source.tar.gz
+          retention-days: 1
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: control-mcp-locked-wheels
+          path: ${{ runner.temp }}/control-wheels/
+          retention-days: 1
