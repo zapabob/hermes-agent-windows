@@ -196,3 +196,22 @@ def test_repeated_expired_pending_intent_is_not_reported_as_active(control_modul
     j.reserve(writable(control_context),request(),now=100)
     fresh=writable(control_context,expires_at=600)
     assert j.reserve(fresh,request(),now=210)['state']=='EXPIRED'
+
+
+def test_operation_read_and_replay_require_original_client_and_grant(
+        control_module, control_context, tmp_path):
+    from downstream.control_mcp.contracts import ControlError
+
+    j = journal(control_module, tmp_path)
+    j.initialise()
+    original = writable(control_context)
+    op = j.reserve(original, request(), now=100)['operation_id']
+    for other in (writable(control_context, client_registration='chatgpt'),
+                  writable(control_context, subject='human-2'),
+                  writable(control_context, grant_revision=2)):
+        with pytest.raises(ControlError) as denied:
+            j.get(other, op, profile_id='p1', workspace_id='w1', now=101)
+        assert denied.value.code == 'resource_denied'
+    with pytest.raises(ControlError) as denied:
+        j.reserve(writable(control_context, grant_revision=2), request(), now=101)
+    assert denied.value.code == 'idempotency_conflict'

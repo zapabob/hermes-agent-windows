@@ -130,7 +130,8 @@ class HostControlJournal:
             old=conn.execute('SELECT * FROM control_operations WHERE subject=? AND client_registration=? AND idempotency_key=?',
                              (ctx.subject,ctx.client_registration,request['idempotency_key'])).fetchone()
             if old is not None:
-                if old['intent_digest']!=fingerprint or old['resource']!=ctx.resource:
+                if (old['intent_digest']!=fingerprint or old['resource']!=ctx.resource
+                        or old['grant_revision']!=ctx.grant_revision):
                     raise ControlError('idempotency_conflict')
                 if old['state']=='PENDING_APPROVAL' and old['expires_at']<=now:
                     conn.execute("UPDATE control_operations SET state='EXPIRED',updated_at=? WHERE operation_id=?",(now,old['operation_id']))
@@ -168,7 +169,10 @@ class HostControlJournal:
             row=conn.execute('SELECT * FROM control_operations WHERE operation_id=?',(operation_id,)).fetchone()
             if row is None:
                 return {'state':'ABSENT','reason':'operation_absent'}
-            if row['profile_id']!=profile_id or row['workspace_id']!=workspace_id or row['resource']!=ctx.resource:
+            if (row['profile_id']!=profile_id or row['workspace_id']!=workspace_id
+                    or row['resource']!=ctx.resource or row['subject']!=ctx.subject
+                    or row['client_registration']!=ctx.client_registration
+                    or row['grant_revision']!=ctx.grant_revision):
                 raise ControlError('resource_denied')
             return _public(row)
 
