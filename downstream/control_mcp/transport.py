@@ -14,24 +14,6 @@ from .contracts import ControlError
 from .http_boundary import AuthenticatedControlASGI, current_control_context
 
 
-_START_ARGUMENTS = frozenset({
-    "profile_id", "workspace_id", "idempotency_key",
-    "expected_revision", "source_sha", "task",
-})
-
-
-class StrictControlMCPServer(MCPServer):
-    """Inspect raw write arguments before SDK signature coercion drops extras."""
-
-    async def call_tool(self, name, arguments, context=None):
-        if name == "hermes_start_engineering_run" and (
-                type(arguments) is not dict or set(arguments) != _START_ARGUMENTS):
-            return CallToolResult(
-                content=[TextContent(text="invalid_request")], isError=True,
-            )
-        return await super().call_tool(name, arguments, context)
-
-
 @dataclass(frozen=True)
 class ControlMCPHost:
     app: object
@@ -57,20 +39,9 @@ def _read(service, name: str, args: dict) -> CallToolResult:
     )
 
 
-def _write(service, args: dict) -> CallToolResult:
-    try:
-        result = service.start_engineering_run(current_control_context(), args)
-    except ControlError as exc:
-        return CallToolResult(content=[TextContent(text=exc.code)], isError=True)
-    return CallToolResult(
-        content=[TextContent(text=json.dumps(result, ensure_ascii=False, separators=(',', ':')))],
-        structuredContent=result,
-    )
-
-
 def create_control_mcp(service, *, verifier, allowed_hosts, allowed_origins, clock):
     """Create a bounded resource adapter; the caller owns enablement and mount."""
-    server = StrictControlMCPServer(
+    server = MCPServer(
         name="Hermes Control",
         instructions=(
             "Inspect capabilities and state first. Control writes require a "
@@ -118,23 +89,6 @@ def create_control_mcp(service, *, verifier, allowed_hosts, allowed_origins, clo
                     producer_epoch: str = "") -> CallToolResult:
         return _read(service, "hermes_poll_events", {"profile_id": profile_id,
                      "after_cursor": after_cursor, "producer_epoch": producer_epoch})
-
-    if service.coordinator is not None:
-        mutation = ToolAnnotations(
-            readOnlyHint=False, destructiveHint=True, idempotentHint=False,
-            openWorldHint=False,
-        )
-
-        @server.tool(name="hermes_start_engineering_run", annotations=mutation)
-        def start_engineering_run(profile_id: str, workspace_id: str,
-                                  idempotency_key: str, expected_revision: str,
-                                  source_sha: str, task: str) -> CallToolResult:
-            return _write(service, {
-                "profile_id": profile_id, "workspace_id": workspace_id,
-                "idempotency_key": idempotency_key,
-                "expected_revision": expected_revision,
-                "source_sha": source_sha, "task": task,
-            })
 
     sdk_app = server.streamable_http_app(
         streamable_http_path=urlsplit(verifier.resource).path,

@@ -31,20 +31,8 @@ class HostControlService:
         self.coordinator = coordinator
 
     def start_engineering_run(self, ctx: ControlContext, args: dict) -> dict:
-        if self.coordinator is None or type(args) is not dict:
-            raise ControlError('unsupported_operation')
-        if set(args) != {'profile_id', 'workspace_id', 'idempotency_key',
-                         'expected_revision', 'source_sha', 'task'}:
-            raise ControlError('invalid_request')
-        canonical_json(args)
-        request = {'kind': 'start_engineering_run',
-                   'profile_id': args['profile_id'],
-                   'workspace_id': args['workspace_id'],
-                   'idempotency_key': args['idempotency_key'],
-                   'expected_revision': args['expected_revision'],
-                   'source_sha': args['source_sha'],
-                   'parameters': {'task': args['task']}}
-        return self.coordinator.submit(ctx, request)
+        """Retired entrypoint; old coordinator cannot authorize a general task."""
+        raise ControlError('unsupported_operation')
 
     def read(self, ctx: ControlContext, name: str, args: dict) -> dict:
         try:
@@ -70,16 +58,10 @@ class HostControlService:
             if key in args and not valid_id(args[key]):
                 raise ControlError('invalid_resource_id')
         if name == 'hermes_get_capabilities':
-            start_available = (self.coordinator is not None
-                               and 'hermes:run:start' in ctx.scopes
-                               and any(owner == profile for owner, _ in ctx.workspaces))
             from .journal import SCOPES
             data = {'state': 'AVAILABLE', 'reason': 'read_facade',
-                    'capabilities': {'read': True, 'write': start_available, 'resume': False, 'pause': False,
-                                     'write_operations': {
-                                         kind: kind == 'start_engineering_run' and start_available
-                                         for kind in SCOPES
-                                     },
+                    'capabilities': {'read': True, 'write': False, 'resume': False, 'pause': False,
+                                     'write_operations': {kind: False for kind in SCOPES},
                                      'live_run_observation': False,
                                      'typed_verification_evidence':
                                          getattr(self.source, 'typed_verification_evidence', False) is True}}
