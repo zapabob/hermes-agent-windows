@@ -24,7 +24,7 @@ jobs:
           git --git-dir=export/repository.git cat-file -e 34562508555d84f0740eda7a0af5ec4ff90bbe60^{commit}
           git --git-dir=export/repository.git fsck --full
           tar -czf control-mcp-source.git.tar.gz -C export repository.git
-          git --git-dir=export/repository.git worktree add --detach ../checkout 73e6c5f01b961c25ca422db2a9e923fe56d504c2
+          git --git-dir=export/repository.git worktree add --detach "$PWD/checkout" 73e6c5f01b961c25ca422db2a9e923fe56d504c2
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: control-mcp-frozen-git
