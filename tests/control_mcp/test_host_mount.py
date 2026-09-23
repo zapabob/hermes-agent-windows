@@ -5,7 +5,6 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-from fastapi import FastAPI
 
 
 @pytest.mark.asyncio
@@ -24,7 +23,9 @@ async def test_existing_parent_lifespan_enters_control_manager(monkeypatch):
             finally:
                 events.append("stopped")
 
-    application = FastAPI()
+    application = web_server.app
+    original_app_state = dict(application.state._state)
+    assert getattr(application.state, "control_mcp_host", None) is None
     application.state.control_mcp_host = Host()
     for name in (
         "_eager_reconcile_own_session_db",
@@ -44,6 +45,10 @@ async def test_existing_parent_lifespan_enters_control_manager(monkeypatch):
     monkeypatch.setattr(web_server, "_dashboard_selftest_loop", idle)
     monkeypatch.setattr(web_server, "_auto_archive_ticker_loop", idle)
     monkeypatch.setattr(web_server, "PTY_REGISTRY", SimpleNamespace(close_all=AsyncMock()))
-    async with web_server._lifespan(application):
-        assert events == ["started"]
-    assert events == ["started", "stopped"]
+    try:
+        async with web_server._lifespan(application):
+            assert events == ["started"]
+        assert events == ["started", "stopped"]
+    finally:
+        application.state._state.clear()
+        application.state._state.update(original_app_state)

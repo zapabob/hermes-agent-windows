@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "task_id": "T03",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "dbca4d19cf3c91fb39f7e123eb0829e5118ab088",
+  "index_identity": "C:\\Users\\downl\\Documents\\New project\\hermes-control-mcp-t03-host-20260924",
+  "tool": {
+    "package": "@colbymchenry/codegraph",
+    "version": "1.6.0",
+    "invocation_kind": "CLI"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "canonical_owners": [
+    "downstream/control_mcp/transport.py:mount_control_mcp",
+    "hermes_cli/web_server.py:_lifespan",
+    "hermes_cli/web_server.py:_token_auth_seam",
+    "downstream/control_mcp/observations.py:HermesObservations"
+  ],
+  "impact_paths": [
+    "downstream/control_mcp/transport.py",
+    "hermes_cli/web_server.py",
+    "downstream/control_mcp/observations.py",
+    "downstream/control_mcp/service.py",
+    "downstream/control_mcp/http_boundary.py",
+    "tests/control_mcp/test_host_mount.py",
+    "tests/control_mcp/test_mcp_protocol.py"
+  ],
+  "unresolved_edges": [
+    "The existing mount and lifespan hooks were not exercised together on the actual web_server.app before this task.",
+    "The mounted HTTP resource has no operator-approved issuer, registration grants, configured production resource or actual Desktop client acceptance."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [
+    "tests/control_mcp/test_host_mount.py::test_existing_parent_lifespan_enters_control_manager",
+    "tests/control_mcp/test_mcp_protocol.py::test_parent_mount_starts_sdk_lifespan_and_preserves_other_routes"
+  ],
+  "evidence_refs": [
+    "_docs/2026-09-24_control-mcp-existing-host-e2e_Codex.md"
+  ],
+  "phase": "before",
+  "source_fingerprint": "8bc11f2968db6271d557faf5e6f5ebe5f5eb08da92558632a54a8646940d42fc",
+  "queries": [
+    {
+      "query": "query web_server -p . -j",
+      "result_ref": "hermes_cli/web_server.py:442 (_lifespan), 1092 (_token_auth_seam), 612 (app)"
+    },
+    {
+      "query": "query ControlMCP -p . -j",
+      "result_ref": "downstream/control_mcp/transport.py and producer/service nodes"
+    },
+    {
+      "query": "impact mount_control_mcp -p task -d 2 -j",
+      "result_ref": "downstream/control_mcp/transport.py; tests/control_mcp/test_mcp_protocol.py"
+    },
+    {
+      "query": "impact _lifespan -p task -d 2 -j",
+      "result_ref": "53 nodes / 52 edges, including hermes_cli/web_server.py and existing lifecycle tests"
+    }
+  ]
+}
