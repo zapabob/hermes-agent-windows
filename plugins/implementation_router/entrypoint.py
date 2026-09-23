@@ -72,6 +72,8 @@ def run_workflow(ctx, args):
             task=args['task'], binding=binding, required_checks=tuple(c['id'] for c in workspace['checks']), host=host)
         output = result.to_dict(locale=language)
         output['run_id'] = binding.run_id
+        if result.state == 'BLOCKED' and host.failure_diagnostic is not None:
+            output['diagnostic'] = dict(host.failure_diagnostic)
         if result.state == 'SUCCEEDED' and host.result_dir is not None:
             output['verified_workspace'] = str(host.result_dir)
         return json.dumps(output, ensure_ascii=False)

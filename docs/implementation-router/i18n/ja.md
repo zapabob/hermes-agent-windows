@@ -13,3 +13,5 @@
 <!-- not-os-sandbox -->
 
 [Agent protocol](../AGENT_PROTOCOL.md)
+
+工程ごとの推論量は役割の設定として固定し、Medium／Medium／Highが親の送信リクエストへ届くことを検証します。画面表示だけで有効とは判定しません。停止したrunには秘密情報を含まない固定の診断コードが付く場合があります。leaseとjournalを保持し、診断を根拠に自動再実行しないでください。

@@ -97,6 +97,8 @@ class AuditEvent:
     revision: int
     role: str = ""
     payload_digest: str = ""
+    failure_boundary: str = ""
+    failure_code: str = ""
 
 
 @dataclass(frozen=True)

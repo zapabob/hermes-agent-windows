@@ -750,6 +750,7 @@ class PluginLlm:
         profile: Optional[str] = None,
         purpose: Optional[str] = None,
         task: Optional[str] = None,
+        reasoning_config: Optional[Dict[str, Any]] = None,
         allow_fallback: bool = True,
         expected_route: Optional[tuple[str, str]] = None,
     ) -> PluginLlmCompleteResult:
@@ -788,6 +789,7 @@ class PluginLlm:
             max_tokens=max_tokens,
             timeout=timeout,
             task=eff_task,
+            **({"reasoning_config": dict(reasoning_config)} if reasoning_config is not None else {}),
             allow_fallback=allow_fallback,
             expected_route=expected_route,
         )
@@ -815,6 +817,7 @@ class PluginLlm:
         return result
 
 
+
     def complete_structured(
         self,
         *,
@@ -833,6 +836,7 @@ class PluginLlm:
         profile: Optional[str] = None,
         purpose: Optional[str] = None,
         task: Optional[str] = None,
+        reasoning_config: Optional[Dict[str, Any]] = None,
         allow_fallback: bool = True,
         expected_route: Optional[tuple[str, str]] = None,
     ) -> PluginLlmStructuredResult:
@@ -888,6 +892,7 @@ class PluginLlm:
             timeout=timeout,
             extra_body=extra_body,
             task=eff_task,
+            **({"reasoning_config": dict(reasoning_config)} if reasoning_config is not None else {}),
             allow_fallback=allow_fallback,
             expected_route=expected_route,
         )
@@ -921,6 +926,7 @@ class PluginLlm:
         return result
 
 
+
     # -- public async API ---------------------------------------------------
 
     async def acomplete(
@@ -936,6 +942,7 @@ class PluginLlm:
         profile: Optional[str] = None,
         purpose: Optional[str] = None,
         task: Optional[str] = None,
+        reasoning_config: Optional[Dict[str, Any]] = None,
         allow_fallback: bool = True,
         expected_route: Optional[tuple[str, str]] = None,
     ) -> PluginLlmCompleteResult:
@@ -960,6 +967,7 @@ class PluginLlm:
             max_tokens=max_tokens,
             timeout=timeout,
             task=eff_task,
+            **({"reasoning_config": dict(reasoning_config)} if reasoning_config is not None else {}),
             allow_fallback=allow_fallback,
             expected_route=expected_route,
         )
@@ -987,6 +995,7 @@ class PluginLlm:
         return result
 
 
+
     async def acomplete_structured(
         self,
         *,
@@ -1005,6 +1014,7 @@ class PluginLlm:
         profile: Optional[str] = None,
         purpose: Optional[str] = None,
         task: Optional[str] = None,
+        reasoning_config: Optional[Dict[str, Any]] = None,
         allow_fallback: bool = True,
         expected_route: Optional[tuple[str, str]] = None,
     ) -> PluginLlmStructuredResult:
@@ -1044,6 +1054,7 @@ class PluginLlm:
             timeout=timeout,
             extra_body=extra_body,
             task=eff_task,
+            **({"reasoning_config": dict(reasoning_config)} if reasoning_config is not None else {}),
             allow_fallback=allow_fallback,
             expected_route=expected_route,
         )
@@ -1075,6 +1086,7 @@ class PluginLlm:
             purpose or "", content_type, usage.total_tokens,
         )
         return result
+
 
 
     # -- internals ---------------------------------------------------------
@@ -1113,6 +1125,7 @@ class PluginLlm:
         timeout: Optional[float],
         extra_body: Optional[Dict[str, Any]] = None,
         task: Optional[str] = None,
+        reasoning_config: Optional[Dict[str, Any]] = None,
         allow_fallback: bool = True,
         expected_route: Optional[tuple[str, str]] = None,
     ) -> tuple[str, str, Any]:
@@ -1134,6 +1147,7 @@ class PluginLlm:
                 timeout=timeout,
                 extra_body=extra_body,
                 task=task,
+                **({"reasoning_config": dict(reasoning_config)} if reasoning_config is not None else {}),
                 **({"allow_fallback": False} if not allow_fallback else {}),
                 **({"expected_route": expected_route} if expected_route is not None else {}),
             )
@@ -1152,6 +1166,7 @@ class PluginLlm:
             timeout=timeout,
             extra_body=merged_extra or None,
             route_info=route_info,
+            **({"reasoning_config": dict(reasoning_config)} if reasoning_config is not None else {}),
             **({"allow_fallback": False} if not allow_fallback else {}),
             **({"expected_route": expected_route} if expected_route is not None else {}),
         )
@@ -1162,6 +1177,7 @@ class PluginLlm:
             route_info=route_info,
         )
         return provider, model, response
+
 
 
     async def _invoke_async(
@@ -1176,6 +1192,7 @@ class PluginLlm:
         timeout: Optional[float],
         extra_body: Optional[Dict[str, Any]] = None,
         task: Optional[str] = None,
+        reasoning_config: Optional[Dict[str, Any]] = None,
         allow_fallback: bool = True,
         expected_route: Optional[tuple[str, str]] = None,
     ) -> tuple[str, str, Any]:
@@ -1190,6 +1207,7 @@ class PluginLlm:
                 timeout=timeout,
                 extra_body=extra_body,
                 task=task,
+                **({"reasoning_config": dict(reasoning_config)} if reasoning_config is not None else {}),
                 **({"allow_fallback": False} if not allow_fallback else {}),
                 **({"expected_route": expected_route} if expected_route is not None else {}),
             )
@@ -1208,6 +1226,7 @@ class PluginLlm:
             timeout=timeout,
             extra_body=merged_extra or None,
             route_info=route_info,
+            **({"reasoning_config": dict(reasoning_config)} if reasoning_config is not None else {}),
             **({"allow_fallback": False} if not allow_fallback else {}),
             **({"expected_route": expected_route} if expected_route is not None else {}),
         )
@@ -1218,6 +1237,7 @@ class PluginLlm:
             route_info=route_info,
         )
         return provider, model, response
+
 
 
 

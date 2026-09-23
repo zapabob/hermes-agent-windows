@@ -13,3 +13,5 @@ An empty environment is not an OS sandbox. The local daemon, image, host and ins
 <!-- not-os-sandbox -->
 
 [Agent protocol](../AGENT_PROTOCOL.md)
+
+Stage effort is frozen per role; medium/medium/high is verified at the parent request boundary, not inferred from UI labels. A blocked run may include fixed, credential-free failure diagnostics. Preserve its lease and journal; diagnostics do not authorise replay.
