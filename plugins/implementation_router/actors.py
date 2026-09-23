@@ -3,7 +3,10 @@ from __future__ import annotations
 
 import json
 
+from agent.engineering_diagnostics import diagnostic_boundary
+
 from .configuration import SLOTS
+from hermes_constants import parse_reasoning_effort
 
 _ARGUMENTS = {
     'read_file': {'path', 'offset', 'limit'},
@@ -23,7 +26,7 @@ def _object(pairs):
 
 
 def run_actor(*, llm, route, role: str, handoff: str, dispatch, schemas: dict,
-              cancelled, max_calls: int = 32) -> str:
+              cancelled, max_calls: int = 32, report_failure=None) -> str:
     if role not in SLOTS or type(max_calls) is not int or not 1 <= max_calls <= 128:
         raise ValueError('Invalid actor policy')
     allowed = {'read_file'} if role != 'worker' else set(_ARGUMENTS)
@@ -53,32 +56,37 @@ def run_actor(*, llm, route, role: str, handoff: str, dispatch, schemas: dict,
             raise InterruptedError('Host cancelled the workflow')
         if sum(len(m['content']) for m in messages) > 100_000:
             raise RuntimeError('Actor context budget exhausted')
-        response = llm.complete(
-            messages, task=SLOTS[role], allow_fallback=False,
-            expected_route=(route.provider, route.model), timeout=120,
-            max_tokens=8192, purpose=f'engineering:{role}',
-        )
-        text = response.text
-        if not isinstance(text, str) or len(text.encode('utf-8')) > 65_536:
-            raise ValueError('Invalid actor output')
-        value = json.loads(text, object_pairs_hook=_object,
-                           parse_constant=lambda _: (_ for _ in ()).throw(ValueError('Non-finite actor JSON')))
-        if type(value) is not dict:
-            raise ValueError('Actor output must be an object')
-        if cancelled():
-            raise InterruptedError('Host cancelled the workflow')
-        if value.get('action') == 'finish' and set(value) == {'action', 'result'}:
-            return json.dumps(value['result'], ensure_ascii=False, allow_nan=False)
-        if set(value) != {'action', 'name', 'arguments'} or value['action'] != 'tool':
-            raise ValueError('Invalid actor envelope')
-        name, args = value['name'], value['arguments']
-        if not isinstance(name, str) or name not in allowed:
-            raise ValueError('Tool is unavailable to this stage')
-        if type(args) is not dict or set(args) - _ARGUMENTS[name]:
-            raise ValueError('Tool authority argument is not permitted')
-        output = dispatch(name, args)
-        if not isinstance(output, str):
-            raise ValueError('Native tool returned an invalid result')
+        with diagnostic_boundary("inference", report_failure):
+            response = llm.complete(
+                messages, task=SLOTS[role], allow_fallback=False,
+                expected_route=(route.provider, route.model), timeout=120,
+                max_tokens=8192, purpose=f'engineering:{role}',
+                **({'reasoning_config': parse_reasoning_effort(route.reasoning_effort)}
+                   if getattr(route, 'reasoning_effort', None) is not None else {}),
+            )
+        with diagnostic_boundary("actor_output", report_failure):
+            text = response.text
+            if not isinstance(text, str) or len(text.encode('utf-8')) > 65_536:
+                raise ValueError('Invalid actor output')
+            value = json.loads(text, object_pairs_hook=_object,
+                               parse_constant=lambda _: (_ for _ in ()).throw(ValueError('Non-finite actor JSON')))
+            if type(value) is not dict:
+                raise ValueError('Actor output must be an object')
+            if cancelled():
+                raise InterruptedError('Host cancelled the workflow')
+            if value.get('action') == 'finish' and set(value) == {'action', 'result'}:
+                return json.dumps(value['result'], ensure_ascii=False, allow_nan=False)
+            if set(value) != {'action', 'name', 'arguments'} or value['action'] != 'tool':
+                raise ValueError('Invalid actor envelope')
+            name, args = value['name'], value['arguments']
+            if not isinstance(name, str) or name not in allowed:
+                raise ValueError('Tool is unavailable to this stage')
+            if type(args) is not dict or set(args) - _ARGUMENTS[name]:
+                raise ValueError('Tool authority argument is not permitted')
+        with diagnostic_boundary("tool_dispatch", report_failure):
+            output = dispatch(name, args)
+            if not isinstance(output, str):
+                raise ValueError('Native tool returned an invalid result')
         # Append-only stage history. No CoT, clients, task handles or credentials
         # are copied between stages. Text envelopes also support text-only models.
         messages += [{'role': 'assistant', 'content': text},

@@ -13,3 +13,5 @@
 <!-- not-os-sandbox -->
 
 [Agent protocol](../AGENT_PROTOCOL.md)
+
+每个阶段的推理设置按角色固定，并在父进程的请求边界验证 medium/medium/high，而不是依据界面标签推断。阻止执行的结果可包含不泄露凭据的固定诊断代码。保留 lease 和 journal；诊断不代表获得重放许可。

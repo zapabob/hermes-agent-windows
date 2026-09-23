@@ -13,7 +13,8 @@ import os
 from pathlib import Path
 import shlex
 
-from downstream.implementation_router.kernel import CheckReceipt, StageResult
+from downstream.implementation_router.kernel import AuditEvent, CheckReceipt, StageResult
+from agent.engineering_diagnostics import failure_code
 from downstream.implementation_router.security import CredentialFreeAdmission
 from tools.environments.docker import DockerEnvironment
 from tools.terminal_tool import bind_credential_free_environment
@@ -37,6 +38,7 @@ class NativeEngineeringHost:
         self._failure_logs = {}
         self._guards = {}
         self._source = {}
+        self.failure_diagnostic = None
 
     def _routes_still_selected(self):
         from hermes_cli.config import load_config_readonly
@@ -136,29 +138,53 @@ class NativeEngineeringHost:
     def stage(self, request):
         if request.binding != self.binding or request.route != self.routes.for_role(request.role):
             raise ValueError('Stage is not bound to the selected route')
-        self.last_verified = None
-        from tools.registry import registry
-        # Native schemas and dispatch stay authoritative; no shell or file-tool
-        # reimplementation is supplied to a model. Only these bounded tools exist.
-        from tools import file_tools, terminal_tool  # noqa: F401
-        names = ('read_file',) if request.role != 'worker' else ('read_file', 'write_file', 'patch', 'terminal')
-        schemas = {name: registry.get_schema(name) for name in names}
-        if any(schema is None for schema in schemas.values()):
-            raise RuntimeError('Native engineering tools are not registered')
-        payload = json.loads(request.handoff_json)
-        payload['workspace_files'] = list(self._source)
-        if self._failure_logs:
-            payload['verification_details'] = self._failure_logs
-        text = run_actor(
-            llm=self.ctx.llm, route=request.route, role=request.role,
-            handoff=json.dumps(payload, ensure_ascii=False), dispatch=self._dispatch,
-            schemas=schemas, cancelled=lambda: self.cancellation_requested(self.binding),
-            max_calls=self.max_actor_calls,
-        )
-        self.env.assert_quiescent()
-        files = snapshot(self.env)
-        self._check_guards(files)
-        return StageResult(request.attempt_id, 'SUCCEEDED', True, text, digest(files))
+        reported = False
+        boundary = "stage_setup"
+
+        def report(phase, code):
+            nonlocal reported
+            reported = True
+            # Record only after the durable checkpoint has really succeeded.
+            self.checkpoint(request.binding, AuditEvent(
+                "stage_failed", request.attempt_id, request.revision, request.role,
+                failure_boundary=phase, failure_code=code,
+            ))
+            self.failure_diagnostic = {
+                "stage": request.role, "attempt_id": request.attempt_id,
+                "boundary": phase, "code": code,
+            }
+
+        try:
+            self.last_verified = None
+            from tools.registry import registry
+            # Native schemas and dispatch stay authoritative; no shell or file-tool
+            # reimplementation is supplied to a model. Only these bounded tools exist.
+            from tools import file_tools, terminal_tool  # noqa: F401
+            names = ('read_file',) if request.role != 'worker' else ('read_file', 'write_file', 'patch', 'terminal')
+            schemas = {name: registry.get_schema(name) for name in names}
+            if any(schema is None for schema in schemas.values()):
+                raise RuntimeError('Native engineering tools are not registered')
+            payload = json.loads(request.handoff_json)
+            payload['workspace_files'] = list(self._source)
+            if self._failure_logs:
+                payload['verification_details'] = self._failure_logs
+            boundary = "actor_loop"
+            text = run_actor(
+                llm=self.ctx.llm, route=request.route, role=request.role,
+                handoff=json.dumps(payload, ensure_ascii=False), dispatch=self._dispatch,
+                schemas=schemas, cancelled=lambda: self.cancellation_requested(self.binding),
+                max_calls=self.max_actor_calls, report_failure=report,
+            )
+            boundary = "workspace_snapshot"
+            self.env.assert_quiescent()
+            files = snapshot(self.env)
+            self._check_guards(files)
+            return StageResult(request.attempt_id, 'SUCCEEDED', True, text, digest(files))
+
+        except Exception as error:
+            if not reported:
+                report(boundary, failure_code(error))
+            raise
 
     def verify(self, request):
         from tools.approval import check_all_command_guards

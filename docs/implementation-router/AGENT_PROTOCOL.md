@@ -156,3 +156,53 @@ labels/hints, result messages and concise guides are translated. Arabic uses
 RTL presentation. Protocol names, state and reason codes never change with
 locale. Unknown host text is not echoed as a translated error. English is the
 fallback for an unsupported locale; configuration identifiers are not translated.
+
+## Stage reasoning and safe failure diagnostics
+
+Each engineering auxiliary slot can set `reasoning_effort` independently: for
+example `medium` for `engineering_planner` and `engineering_worker`, and `high`
+for `engineering_reviewer`. Keep using the existing model picker for the provider
+and model; this setting does not introduce a model catalogue or identify the
+model behind a mutable provider alias.
+
+The host freezes the shared parser's canonical effort in each role route and its
+fingerprint. An effort-only configuration change invalidates the next stage
+admission. An already-running stage uses its frozen effort for its bounded
+inference calls. Omitted/blank settings preserve the existing provider-default
+path. Explicit `none` follows the provider adapter's disabled-reasoning contract;
+not every provider supports switching all reasoning off. Unsupported explicit
+values are refused rather than silently ignored. Do not supply conflicting
+`reasoning_effort` and `extra_body.reasoning` values for an engineering slot.
+
+The pre-existing auxiliary path already understood task `reasoning_effort`. The
+repair adds immutable role snapshots and explicit sync/async `PluginLlm`
+forwarding, not a replacement authentication or inference system. Request-boundary
+tests exercise configuration → role → parent facade → shared auxiliary client →
+Codex Responses adapter, including profile A → B → A. Captured outbound effort
+is evidence about the request, not proof of a provider's internal compute budget
+or live-account entitlement.
+
+A failed stage retains the existing fail-closed result and no-replay policy. Its
+`stage_failed` journal event now contains fixed `failure_boundary` and
+`failure_code` fields; a blocked tool result includes the corresponding
+`diagnostic` object only after the checkpoint was durably written. Boundaries
+distinguish inference, actor-output parsing, tool dispatch and workspace snapshot
+checks. Codes classify known exception classes or HTTP statuses; unknown failures
+remain `host_error`. Exception messages, class names, prompts, headers, tokens,
+URLs and stack locals are not included. A diagnostic-write failure still blocks.
+
+These diagnostic codes do not authorise a retry, a different model, local-shell
+fallback or lease removal. Keep the failed run's lease and journal. Diagnose the
+recorded boundary, confirm writer cleanup through the existing operator process,
+then use a new run ID when authorised. The historical planner failure cannot be
+assigned a root cause solely from `host_boundary_error_no_replay`.
+
+Run the focused behavioural mutations with:
+
+```sh
+python scripts/ci/engineering_repair_mutations.py
+```
+
+This script tests selected regressions in a disposable source copy; its detection
+count is not a whole-repository mutation score. Import/syntax failures and
+timeouts do not count as detection.
