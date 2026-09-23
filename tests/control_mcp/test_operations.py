@@ -178,3 +178,14 @@ def test_real_deny_releases_only_unexecuted_reservation(control_module,control_c
         assert j.reserve(ctx,request(idempotency_key='new'),now=112)['state']=='PENDING_APPROVAL'
     finally:
         a.unregister_gateway_notify('deny-test')
+
+
+def test_explicit_unknown_after_effect_keeps_workspace_reserved(control_module,control_context,tmp_path):
+    j=journal(control_module,tmp_path);j.initialise();ctx=writable(control_context)
+    op=j.reserve(ctx,request(),now=100)['operation_id']
+    decide(control_module,j,ctx,op)
+    j.transition(op,expected_state='APPROVED',new_state='RUNNING',now=112)
+    j.transition(op,expected_state='RUNNING',new_state='UNKNOWN',now=113)
+    with pytest.raises(control_module('contracts').ControlError) as caught:
+        j.reserve(ctx,request(idempotency_key='new'),now=114)
+    assert caught.value.code=='workspace_busy'

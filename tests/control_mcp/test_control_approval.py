@@ -117,3 +117,13 @@ def test_unregister_cancels_pending_control_request():
     decision=a.take_control_decision(ticket,now=110)
     assert decision.choice=='deny'
     assert a.consume_control_decision(decision,binding,now=110) is False
+
+
+def test_decision_issued_before_deadline_cannot_be_consumed_later():
+    a=owner();key,binding,ticket,_=begin(a)
+    try:
+        assert a.resolve_control_consent(session_key=key,request_id=ticket.request_id,intent_digest='a'*64,choice='once',now=110)
+        decision=a.take_control_decision(ticket,now=110)
+        assert a.consume_control_decision(decision,binding,now=161) is False
+    finally:
+        a.unregister_gateway_notify(key)
