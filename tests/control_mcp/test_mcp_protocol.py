@@ -169,10 +169,14 @@ async def test_parent_dashboard_auth_never_grants_or_blocks_resource_auth(
 
 @pytest.mark.asyncio
 async def test_real_protocol_start_waits_for_human_and_deduplicates(
-        control_module, tmp_path):
+        control_module, tmp_path, monkeypatch):
     import asyncio
+    from concurrent.futures import ThreadPoolExecutor
+    import json
     import threading
     from downstream.control_mcp.coordinator import HostControlCoordinator
+    from plugins.implementation_router import entrypoint
+    from plugins.implementation_router.control import EngineeringRunOwner
     from tools import approval
 
     auth = control_module('auth')
@@ -205,20 +209,25 @@ async def test_real_protocol_start_waits_for_human_and_deduplicates(
     executed = threading.Event()
     calls = []
 
-    class Owner:
-        def start_approved(self, ctx, operation_id):
-            journal.claim_approved(ctx, operation_id, now=101)
-            calls.append(operation_id)
-            journal.transition(operation_id, expected_state='RUNNING',
-                               new_state='SUCCEEDED', now=102)
-            executed.set()
+    def native_run(_ctx, args, *, run_id, operation_id):
+        calls.append(operation_id)
+        assert args == {'workspace': 'w1', 'task': 'One bounded change'}
+        executed.set()
+        return json.dumps({'state': 'SUCCEEDED', 'run_id': run_id})
+
+    monkeypatch.setattr(entrypoint, 'run_workflow', native_run)
+    native_pool = ThreadPoolExecutor(max_workers=1)
+    owner = EngineeringRunOwner(journal=journal, plugin_ctx=object(),
+        submit=native_pool.submit, validate_intent=lambda request: True,
+        verify_result=lambda *args: True, revalidate_grant=verifier.revalidate,
+        clock=lambda: 101)
 
     def schedule(fn, *args):
         worker = threading.Thread(target=fn, args=args, daemon=True)
         worker.start()
         return worker
 
-    coordinator = HostControlCoordinator(journal=journal, owner=Owner(),
+    coordinator = HostControlCoordinator(journal=journal, owner=owner,
         select_human_session=lambda *_: 'human-mcp', submit_background=schedule,
         revalidate_grant=verifier.revalidate, clock=lambda: 100)
 
@@ -321,3 +330,4 @@ async def test_real_protocol_start_waits_for_human_and_deduplicates(
                         assert len(displayed) == 1
     finally:
         approval.unregister_gateway_notify('human-mcp')
+        native_pool.shutdown(wait=True)
