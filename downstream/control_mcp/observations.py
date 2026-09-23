@@ -77,6 +77,7 @@ def _read_lines(path: Path) -> list[dict] | None:
 
 class HermesObservations:
     workspace_bound_runs = True
+    typed_verification_evidence = True
 
     """Profile-home registry supplied by the existing trusted parent host.
 

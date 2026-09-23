@@ -53,7 +53,9 @@ class HostControlService:
         if name == 'hermes_get_capabilities':
             data = {'state': 'AVAILABLE', 'reason': 'read_facade',
                     'capabilities': {'read': True, 'write': False, 'resume': False, 'pause': False,
-                                     'live_run_observation': False, 'typed_verification_evidence': False}}
+                                     'live_run_observation': False,
+                                     'typed_verification_evidence':
+                                         getattr(self.source, 'typed_verification_evidence', False) is True}}
         elif name == 'hermes_get_runtime_status':
             data = self.source.runtime(profile)
         elif name == 'hermes_get_routes':

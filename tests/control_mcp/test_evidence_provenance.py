@@ -161,3 +161,15 @@ def test_failed_native_result_is_observable_without_becoming_verified(
         homes={'p1': home}, registered_slots=())
     assert source.run('p1', run_id)['run_state'] == 'FAILED'
     assert source.evidence('p1', run_id)['verified'] is False
+
+
+def test_capabilities_report_persisted_evidence_without_claiming_live_owner(
+        tmp_path: Path, control_module, control_context):
+    source = control_module('observations').HermesObservations(
+        homes={'p1': tmp_path}, registered_slots=())
+    service = control_module('service').HostControlService(source=source, clock=lambda: 100)
+    capabilities = service.read(control_context(), 'hermes_get_capabilities',
+                                {'profile_id': 'p1'})['capabilities']
+    assert capabilities['typed_verification_evidence'] is True
+    assert capabilities['live_run_observation'] is False
+    assert capabilities['write'] is False
