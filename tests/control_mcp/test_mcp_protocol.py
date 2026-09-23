@@ -9,6 +9,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
+from fastapi import FastAPI
 
 
 @pytest.fixture
@@ -57,9 +58,9 @@ def protocol_host(control_module):
         return jwt.encode(claims, private, algorithm="RS256", headers={"kid": "key-1", "typ": "at+jwt"})
 
     @asynccontextmanager
-    async def client(client_name="codex"):
+    async def client(client_name="codex", app=None):
         async with httpx2.AsyncClient(
-            transport=httpx2.ASGITransport(app=host.app),
+            transport=httpx2.ASGITransport(app=app or host.app),
             base_url="https://hermes.invalid",
             headers={"Authorization": "Bearer " + token(client_name)},
         ) as http_client:
@@ -102,3 +103,65 @@ async def test_revocation_blocks_the_next_protocol_request(protocol_host):
             grants["codex"] = replace(grants["codex"], enabled=False)
             with pytest.raises(Exception):
                 await session.list_tools()
+
+@pytest.mark.asyncio
+async def test_parent_mount_starts_sdk_lifespan_and_preserves_other_routes(
+    protocol_host, control_module
+):
+    host, client, _, _ = protocol_host
+    transport = control_module("transport")
+    parent = FastAPI()
+
+    @parent.get("/api/existing")
+    def existing():
+        return {"existing": True}
+
+    transport.mount_control_mcp(parent, host)
+    async with transport.control_mcp_lifespan(parent):
+        async with client(app=parent) as session:
+            result = await session.call_tool("hermes_get_capabilities", {"profile_id": "p1"})
+            assert result.structured_content["capabilities"]["read"] is True
+        async with httpx2.AsyncClient(
+            transport=httpx2.ASGITransport(app=parent),
+            base_url="https://hermes.invalid",
+        ) as http_client:
+            assert (await http_client.get("/api/existing")).json() == {"existing": True}
+            assert (await http_client.get("/api/control/mcp")).status_code == 401
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("dashboard_gate", [False, True])
+async def test_parent_dashboard_auth_never_grants_or_blocks_resource_auth(
+    protocol_host, control_module, dashboard_gate
+):
+    from hermes_cli import web_server
+
+    host, client, _, _ = protocol_host
+    parent = FastAPI()
+    parent.state.auth_required = dashboard_gate
+    parent.middleware("http")(web_server.auth_middleware)
+    parent.middleware("http")(web_server._dashboard_auth_gate)
+    parent.middleware("http")(web_server._token_auth_seam)
+    control_module("transport").mount_control_mcp(parent, host)
+
+    @parent.get("/api/unrelated-private")
+    def unrelated():
+        return {"private": True}
+
+    async with control_module("transport").control_mcp_lifespan(parent):
+        async with client(app=parent) as session:
+            result = await session.call_tool("hermes_get_capabilities", {"profile_id": "p1"})
+            assert result.structured_content["capabilities"]["read"] is True
+        async with httpx2.AsyncClient(
+            transport=httpx2.ASGITransport(app=parent),
+            base_url="https://hermes.invalid",
+        ) as http_client:
+            assert (await http_client.get("/api/control/mcp")).status_code == 401
+            assert (await http_client.get(
+                "/api/control/mcp",
+                headers={"X-Hermes-Session-Token": web_server._SESSION_TOKEN},
+            )).status_code == 401
+            assert (await http_client.get(
+                "/.well-known/oauth-protected-resource/api/control/mcp"
+            )).status_code == 200
+            assert (await http_client.get("/api/unrelated-private")).status_code == 401

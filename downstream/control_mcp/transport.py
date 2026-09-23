@@ -104,3 +104,29 @@ def create_control_mcp(service, *, verifier, allowed_hosts, allowed_origins, clo
         allowed_origins=allowed_origins, clock=clock,
     )
     return ControlMCPHost(app=app, server=server)
+
+
+def mount_control_mcp(application, host: ControlMCPHost) -> None:
+    """Register exact HTTP paths on the existing host before its SPA fallback."""
+    if type(host) is not ControlMCPHost:
+        raise ControlError("invalid_host_configuration")
+    path = host.app.path
+    paths = (path, path + "/", host.app.metadata_path)
+    if getattr(application.state, "control_mcp_host", None) is not None:
+        raise ControlError("route_conflict")
+    if any(getattr(route, "path", None) in paths for route in application.routes):
+        raise ControlError("route_conflict")
+    application.add_route(path, host.app, methods=["GET", "POST", "DELETE"])
+    application.add_route(path + "/", host.app, methods=["GET", "POST", "DELETE"])
+    application.add_route(host.app.metadata_path, host.app, methods=["GET"])
+    application.state.control_mcp_host = host
+
+
+@asynccontextmanager
+async def control_mcp_lifespan(application):
+    """Enter the mounted SDK manager from the parent's lifespan exactly once."""
+    host = getattr(application.state, "control_mcp_host", None)
+    if type(host) is not ControlMCPHost:
+        raise ControlError("invalid_host_configuration")
+    async with host.lifespan():
+        yield

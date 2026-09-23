@@ -551,7 +551,13 @@ async def _lifespan(app: "FastAPI"):
     auto_archive_task = asyncio.create_task(_auto_archive_ticker_loop())
 
     try:
-        yield
+        control_host = getattr(app.state, "control_mcp_host", None)
+        if control_host is None:
+            yield
+        else:
+            # Enter the SDK manager in the parent lifespan.
+            async with control_host.lifespan():
+                yield
     finally:
         if cron_stop is not None:
             cron_stop.set()
@@ -1057,6 +1063,8 @@ async def _dashboard_auth_gate(request: Request, call_next):
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     """Require the session token on all /api/ routes except the public list."""
+    if getattr(getattr(request, "state", None), "control_mcp_resource", False):
+        return await call_next(request)
     # A request already authenticated by the token-auth seam (a service caller
     # presenting a bearer token on a registered token route) carries
     # ``token_authenticated`` — never bounce it through the cookie/session gate.
@@ -1090,6 +1098,16 @@ async def _token_auth_seam(request: Request, call_next):
     cookie/session gates skip enforcement. Non-token routes pass straight
     through untouched.
     """
+    # A mounted Control MCP resource owns exactly these HTTP paths. Its inner
+    # ASGI boundary verifies a resource-specific token on every request.
+    control_host = getattr(request.app.state, "control_mcp_host", None)
+    if control_host is not None and request.scope.get("path") in {
+        control_host.app.path,
+        control_host.app.path + "/",
+        control_host.app.metadata_path,
+    }:
+        request.state.control_mcp_resource = True
+        return await call_next(request)
     from hermes_cli.dashboard_auth.token_auth import token_auth_middleware
     return await token_auth_middleware(request, call_next)
 
