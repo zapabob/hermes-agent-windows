@@ -1,0 +1,37 @@
+name: Router dogfood fix source snapshot
+on:
+  push:
+    branches: [ci/router-dogfood-fix-snapshot-20260923]
+    paths: [.github/workflows/router-dogfood-fix-snapshot.yml]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Fetch the two authorised public revisions without credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p sources wheels
+          git init --bare sources/downstream.git
+          git --git-dir=sources/downstream.git fetch --depth=1 https://github.com/zapabob/hermes-agent-windows.git 34562508555d84f0740eda7a0af5ec4ff90bbe60
+          git --git-dir=sources/downstream.git update-ref refs/heads/frozen FETCH_HEAD
+          test "$(git --git-dir=sources/downstream.git rev-parse frozen)" = 34562508555d84f0740eda7a0af5ec4ff90bbe60
+          git init --bare sources/upstream.git
+          git --git-dir=sources/upstream.git fetch --depth=1 https://github.com/happyscienceiscult/hermes-agent-engineering.git 6f20114fd5fff33d937cc99b2e62f51146f28350
+          git --git-dir=sources/upstream.git update-ref refs/heads/frozen FETCH_HEAD
+          test "$(git --git-dir=sources/upstream.git rev-parse frozen)" = 6f20114fd5fff33d937cc99b2e62f51146f28350
+          tar -czf router-fix-sources.tar.gz sources
+          sha256sum router-fix-sources.tar.gz > SHA256SUMS
+      - name: Cache minimal public test dependencies
+        run: python -m pip download --only-binary=:all: --dest wheels openai==2.24.0 tenacity==9.1.4 ruff==0.12.10
+      - uses: actions/upload-artifact@v4
+        with:
+          name: router-fix-sources-and-wheels
+          path: |
+            router-fix-sources.tar.gz
+            SHA256SUMS
+            wheels/
+          retention-days: 3
