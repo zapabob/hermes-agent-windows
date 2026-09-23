@@ -1,0 +1,7 @@
+diff --git a/apps/desktop/src/app/settings/model-settings.test.tsx b/apps/desktop/src/app/settings/model-settings.test.tsx
+index 1b8bb0f..8c5dc6d 100644
+--- a/apps/desktop/src/app/settings/model-settings.test.tsx
++++ b/apps/desktop/src/app/settings/model-settings.test.tsx
+@@ -685 +685 @@ describe('Plugin auxiliary model picker', () => {
+-    expect(screen.getByText('Bounded implementation')).toBeTruthy()
++    expect(screen.getByText('Implement and repair')).toBeTruthy()

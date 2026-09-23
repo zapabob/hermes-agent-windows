@@ -1,0 +1,23 @@
+name: Publish exact engineering candidate
+on:
+  push:
+    branches: [chore/router-publish-20260923]
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: publish-exact-engineering-candidate
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Verify immutable patch and publish without running product code
+        env:
+          PUBLISH_TOKEN: ${{ github.token }}
+        run: python3 .router-publish/publish.py
