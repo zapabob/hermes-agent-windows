@@ -48,7 +48,7 @@ def test_approved_operation_invokes_registered_entrypoint_once(
     with ThreadPoolExecutor(max_workers=1) as pool:
         owner = EngineeringRunOwner(journal=journal, plugin_ctx=plugin_ctx,
                                     submit=pool.submit, validate_intent=lambda request: True,
-                                    verify_result=lambda request, run_id, result: True,
+                                    verify_result=lambda request, operation_id, run_id, result: True,
                                     revalidate_grant=lambda _ctx, *, now: None, clock=lambda: 103)
         handle = owner.start_approved(ctx, operation_id)
         assert handle.future.result(timeout=5)['state'] == 'SUCCEEDED'
@@ -81,7 +81,7 @@ def test_cancel_is_bound_to_run_generation_and_live_thread(
     with ThreadPoolExecutor(max_workers=1) as pool:
         owner = EngineeringRunOwner(journal=journal, plugin_ctx=object(),
                                     submit=pool.submit, validate_intent=lambda request: True,
-                                    verify_result=lambda request, run_id, result: True,
+                                    verify_result=lambda request, operation_id, run_id, result: True,
                                     revalidate_grant=lambda _ctx, *, now: None, clock=lambda: 103)
         handle = owner.start_approved(ctx, operation_id)
         try:
@@ -256,3 +256,60 @@ def test_ambiguous_native_dispatch_never_runs_and_keeps_reservation(
             'expected_revision': 'revision-1', 'source_sha': 'a' * 40,
             'parameters': {'task': 'No accidental replay'}}, now=104)
     assert busy.value.code == 'workspace_busy'
+
+
+def test_owner_accepts_only_its_persisted_native_verification(
+        control_module, control_context, tmp_path, monkeypatch):
+    import sys
+    from plugins.implementation_router import entrypoint
+    from plugins.implementation_router.control import EngineeringRunOwner
+    from plugins.implementation_router.workspace import digest
+
+    journal, ctx, operation_id = _approved(control_module, control_context, tmp_path)
+    home = tmp_path / 'profile'
+    source = control_module('observations').HermesObservations(
+        homes={'p1': home}, registered_slots=())
+
+    def native_run(_ctx, _args, *, run_id, operation_id):
+        run_dir = home / 'plugin-data' / 'implementation_router' / run_id
+        result_dir = run_dir / 'verified-workspace'
+        result_dir.mkdir(parents=True)
+        files = {'source.py': b'print(1)\n'}
+        (result_dir / 'source.py').write_bytes(files['source.py'])
+        candidate = digest(files)
+        attempt = run_id + ':stage:1:verify'
+        manifest = {'schema_version': 1, 'run_id': run_id,
+                    'operation_id': operation_id, 'workspace_id': 'w1',
+                    'source_digest': 'd' * 64, 'route_fingerprint': 'e' * 64,
+                    'required_checks': ['unit']}
+        terminal = {'schema_version': 1, 'run_id': run_id, 'workspace_id': 'w1',
+                    'run_state': 'SUCCEEDED', 'reason': 'all_required_host_checks_passed',
+                    'verified_attempt_id': attempt, 'candidate_digest': candidate}
+        receipt = {'schema_version': 1, 'evidence_type': 'host_verifier_check',
+                   'run_id': run_id, 'workspace_id': 'w1', 'attempt_id': attempt,
+                   'revision': 1, 'check_id': 'unit', 'exit_code': 0,
+                   'completed': True, 'timed_out': False, 'approved': True,
+                   'snapshot_before': candidate, 'snapshot_after': candidate,
+                   'source_digest': 'd' * 64, 'candidate_digest': candidate,
+                   'route_fingerprint': 'e' * 64, 'platform': sys.platform}
+        workspace_receipt = {'run_id': run_id, 'workspace_digest': candidate,
+                             'original_digest': 'd' * 64,
+                             'route_fingerprint': 'e' * 64}
+        for name, value in (('run-manifest.json', manifest),
+                            ('run-result.json', terminal),
+                            ('workspace-receipt.json', workspace_receipt)):
+            (run_dir / name).write_text(json.dumps(value), encoding='utf-8')
+        (run_dir / 'verification.jsonl').write_text(json.dumps(receipt) + '\n', encoding='utf-8')
+        return json.dumps({'state': 'SUCCEEDED', 'run_id': run_id,
+                           'verified_workspace': str(result_dir)})
+
+    monkeypatch.setattr(entrypoint, 'run_workflow', native_run)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        owner = EngineeringRunOwner(journal=journal, plugin_ctx=object(),
+            submit=pool.submit, validate_intent=lambda request: True,
+            verify_result=source.verify_native_result,
+            revalidate_grant=lambda _ctx, *, now: None, clock=lambda: 103)
+        handle = owner.start_approved(ctx, operation_id)
+        assert handle.future.result(timeout=5)['state'] == 'SUCCEEDED'
+    assert journal.get(ctx, operation_id, profile_id='p1', workspace_id='w1',
+                       now=104)['state'] == 'SUCCEEDED'

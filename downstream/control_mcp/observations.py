@@ -193,6 +193,48 @@ class HermesObservations:
                 'verified_attempt_id': terminal.get('verified_attempt_id'),
                 'candidate_digest': terminal.get('candidate_digest')}
 
+    def verify_native_result(self, request: dict, operation_id: str,
+                             run_id: str, result: dict) -> bool:
+        """Trusted owner gate: bind the terminal receipt to this operation and bytes."""
+        if (type(request) is not dict or type(result) is not dict
+                or result.get('state') != 'SUCCEEDED' or result.get('run_id') != run_id
+                or not valid_id(operation_id)):
+            return False
+        try:
+            profile = request['profile_id']
+            workspace = request['workspace_id']
+            run_dir, manifest = self._manifest(profile, run_id)
+            if (manifest is None or manifest.get('operation_id') != operation_id
+                    or manifest['workspace_id'] != workspace):
+                return False
+            observed = self.run(profile, run_id)
+            evidence = self.evidence(profile, run_id)
+            if (observed.get('run_state') != 'SUCCEEDED'
+                    or observed.get('operation_id') != operation_id
+                    or evidence.get('verified') is not True):
+                return False
+            candidate = observed.get('candidate_digest')
+            receipt = _read_record(run_dir / 'workspace-receipt.json')
+            if (receipt is None or receipt.get('run_id') != run_id
+                    or receipt.get('workspace_digest') != candidate
+                    or receipt.get('original_digest') != manifest['source_digest']
+                    or receipt.get('route_fingerprint') != manifest['route_fingerprint']):
+                return False
+            result_dir = run_dir / 'verified-workspace'
+            if result.get('verified_workspace') != str(result_dir) or not _safe_path(result_dir):
+                return False
+            from plugins.implementation_router.workspace import digest, read_sources
+            if not result_dir.is_dir():
+                return False
+            selected = tuple(path.name for path in result_dir.iterdir())
+            if not selected:
+                return False
+            for path in result_dir.iterdir():
+                _safe_path(path)
+            return digest(read_sources(result_dir, selected)) == candidate
+        except (ControlError, OSError, KeyError, TypeError, ValueError):
+            return False
+
     def evidence(self, profile_id: str, run_id: str) -> dict:
         path, manifest = self._manifest(profile_id, run_id)
         if manifest is None:

@@ -114,7 +114,7 @@ class EngineeringRunOwner:
                     state = parsed['state']
                     result = parsed
                     if state == 'SUCCEEDED' and (self._cancelled(run_id, generation)
-                                                 or self.verify_result(request, run_id, parsed) is not True):
+                                                 or self.verify_result(request, operation_id, run_id, parsed) is not True):
                         state = 'UNKNOWN'
                         result = {'state': state, 'run_id': run_id}
         except Exception:

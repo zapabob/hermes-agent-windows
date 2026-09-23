@@ -177,3 +177,65 @@ def test_capabilities_report_persisted_evidence_without_claiming_live_owner(
     assert capabilities['typed_verification_evidence'] is True
     assert capabilities['live_run_observation'] is False
     assert capabilities['write'] is False
+
+@pytest.mark.parametrize('fault', ('valid', 'foreign_operation', 'changed_result', 'nested_junction'))
+def test_native_success_requires_bound_receipts_and_unchanged_result(
+        tmp_path: Path, control_module, fault):
+    home = tmp_path / 'profile'
+    run_id = 'eng-' + 'f' * 32
+    operation_id = 'op-' + 'a' * 32
+    run_dir = home / 'plugin-data' / 'implementation_router' / run_id
+    result_dir = run_dir / 'verified-workspace'
+    result_dir.mkdir(parents=True)
+    files = {'source.py': b'print(1)\n'}
+    (result_dir / 'source.py').write_bytes(files['source.py'])
+    if fault == 'nested_junction':
+        import os
+        import subprocess
+        if os.name != 'nt':
+            pytest.skip('Windows junction scenario')
+        outside = tmp_path / 'outside'
+        outside.mkdir()
+        (outside / 'inside.py').write_bytes(b'outside bytes\n')
+        nested = result_dir / 'nested'
+        nested.mkdir()
+        created = subprocess.run(['cmd', '/c', 'mklink', '/J',
+                                  str(nested / 'alias'), str(outside)],
+                                 capture_output=True, check=False)
+        if created.returncode != 0:
+            pytest.skip('Junction creation unavailable')
+        files['nested/alias/inside.py'] = b'outside bytes\n'
+    candidate = digest(files)
+    source_digest = 'd' * 64
+    route_fingerprint = 'e' * 64
+    attempt = run_id + ':stage:1:verify'
+    manifest = {'schema_version': 1, 'run_id': run_id, 'operation_id': operation_id,
+                'workspace_id': 'w1', 'source_digest': source_digest,
+                'route_fingerprint': route_fingerprint, 'required_checks': ['unit']}
+    terminal = {'schema_version': 1, 'run_id': run_id, 'workspace_id': 'w1',
+                'run_state': 'SUCCEEDED', 'reason': 'all_required_host_checks_passed',
+                'verified_attempt_id': attempt, 'candidate_digest': candidate}
+    receipt = {'schema_version': 1, 'evidence_type': 'host_verifier_check',
+               'run_id': run_id, 'workspace_id': 'w1', 'attempt_id': attempt,
+               'revision': 1, 'check_id': 'unit', 'exit_code': 0,
+               'completed': True, 'timed_out': False, 'approved': True,
+               'snapshot_before': candidate, 'snapshot_after': candidate,
+               'source_digest': source_digest, 'candidate_digest': candidate,
+               'route_fingerprint': route_fingerprint, 'platform': sys.platform}
+    workspace_receipt = {'run_id': run_id, 'workspace_digest': candidate,
+                         'original_digest': source_digest,
+                         'route_fingerprint': route_fingerprint}
+    for name, value in (('run-manifest.json', manifest),
+                        ('run-result.json', terminal),
+                        ('workspace-receipt.json', workspace_receipt)):
+        (run_dir / name).write_text(json.dumps(value), encoding='utf-8')
+    (run_dir / 'verification.jsonl').write_text(json.dumps(receipt) + '\n', encoding='utf-8')
+    if fault == 'changed_result':
+        (result_dir / 'source.py').write_bytes(b'print(2)\n')
+    source = control_module('observations').HermesObservations(
+        homes={'p1': home}, registered_slots=())
+    request = {'profile_id': 'p1', 'workspace_id': 'w1'}
+    observed_operation = operation_id if fault != 'foreign_operation' else 'op-' + 'b' * 32
+    result = {'state': 'SUCCEEDED', 'run_id': run_id,
+              'verified_workspace': str(result_dir)}
+    assert source.verify_native_result(request, observed_operation, run_id, result) is (fault == 'valid')
