@@ -40,6 +40,11 @@ Updated: 2026-09-24 JST. Repository: `zapabob/hermes-agent-windows` only. This l
 - RED for accepted-then-exception executor dispatch exposed a worker/transition race. The worker now waits on an admission event and aborts if scheduling acknowledgement fails. The journal stays UNKNOWN with its workspace reservation, and native execution count remains zero.
 - Verification on the above commit: `python -m pytest tests/control_mcp/test_host_dispatch.py tests/control_mcp/test_engineering_owner.py -q` gave 12 passed; `scripts/run_tests_parallel.py -j 2 tests/control_mcp -q` gave 158 passed, 1 skipped across 12 file-isolated files. Ruff on all six changed Python files passed. These are local component gates, not an operational write or security review.
 
+## 2026-09-24 continuation: operation identity isolation
+
+- Commit `57183fdf016039638e9b2429bda97633cc13ba93` closes an operation-read access gap. A new test first showed that another client with the same workspace grant could read a known operation ID. Journal reads now require the original subject, client registration, resource and grant revision. Identical idempotency keys from a later grant revision conflict instead of silently returning an old operation. `tests/control_mcp/test_operations.py`: 16 passed; file-isolated `tests/control_mcp`: 159 passed, 1 skipped across 12 files. Ruff passed.
+- Current official ChatGPT Help Center documentation says Pro custom MCP access is read/fetch only, while full MCP is for Business and Enterprise/Edu. This is a current product-documentation result, not an observed account/client test. No write action was relabeled as read.
+
 ## Current release gates
 
 Do not advertise C or merge while Tasks 4–8, real client authentication/read/approved-write, full exact-head checks and security review remain open. Live endpoint and client settings require a separate concrete operator approval; Pro feature limitations must be reported as client limitations rather than masked as read results.
