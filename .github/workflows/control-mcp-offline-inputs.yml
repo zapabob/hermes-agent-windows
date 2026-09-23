@@ -1,0 +1,47 @@
+name: Control MCP offline development inputs
+on:
+  push:
+    branches: [build/control-mcp-offline-inputs-20260923]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
+        with:
+          version: '0.9.28'
+          enable-cache: false
+      - name: Capture immutable public repository without credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir export
+          git init --bare export/repository.git
+          git --git-dir=export/repository.git fetch --no-tags --depth=8 https://github.com/zapabob/hermes-agent-windows.git 73e6c5f01b961c25ca422db2a9e923fe56d504c2:refs/heads/frozen-docs
+          test "$(git --git-dir=export/repository.git rev-parse refs/heads/frozen-docs)" = 73e6c5f01b961c25ca422db2a9e923fe56d504c2
+          git --git-dir=export/repository.git cat-file -e 34562508555d84f0740eda7a0af5ec4ff90bbe60^{commit}
+          git --git-dir=export/repository.git fsck --full
+          tar -czf control-mcp-source.git.tar.gz -C export repository.git
+          git --git-dir=export/repository.git worktree add --detach ../checkout 73e6c5f01b961c25ca422db2a9e923fe56d504c2
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: control-mcp-frozen-git
+          path: control-mcp-source.git.tar.gz
+          retention-days: 3
+      - name: Export locked core and development dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv python install 3.13
+          cd checkout
+          uv export --frozen --extra dev --no-hashes --no-emit-project --format requirements-txt > ../locked-dev.txt
+          cd ..
+          uv run --no-project --python 3.13 --with pip python -m pip download --only-binary=:all: -r locked-dev.txt -d wheels
+          tar -czf control-mcp-wheels.tar.gz wheels locked-dev.txt
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: control-mcp-locked-wheels
+          path: control-mcp-wheels.tar.gz
+          retention-days: 3
