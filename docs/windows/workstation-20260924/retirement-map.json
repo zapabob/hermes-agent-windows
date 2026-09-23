@@ -1,0 +1,823 @@
+{
+  "schema_version": 1,
+  "task_id": "T02",
+  "repository": "zapabob/hermes-agent-windows",
+  "base_sha": "dbca4d19cf3c91fb39f7e123eb0829e5118ab088",
+  "task_branch": "codex/t02-retirement-20260924",
+  "decision": "Keep the retired engineering operation out of the new Control MCP. Retain the legacy plugin and tests until general Hermes subagent parity; preserve shared provider, approval, Docker, and environment owners.",
+  "disposition_definitions": {
+    "KEEP": "Preserve this file and its generic or security-critical responsibility.",
+    "RETIRE_ENTRY": "Keep a named entry absent and rejected on the new MCP; this does not authorize deleting source files.",
+    "REPLACE_AFTER_PARITY": "Retire or replace only after listed consumer/test paths have equivalent general Hermes ownership and verified behaviour.",
+    "SHARED_RETAIN": "Keep reusable behaviour now; migrate old-role fixtures or consumers selectively after parity."
+  },
+  "retired_entrypoints": [
+    {
+      "name": "hermes_start_engineering_run",
+      "disposition": "RETIRE_ENTRY",
+      "owner_file": "downstream/control_mcp/transport.py",
+      "current_state": "Not registered; the capability is false and MCP call is rejected.",
+      "gate": "tests/control_mcp/test_mcp_protocol.py::test_retired_engineering_tool_is_absent_even_with_legacy_coordinator"
+    },
+    {
+      "name": "legacy plugin engineering_run and /engineer",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "owner_file": "plugins/implementation_router/__init__.py",
+      "current_state": "Separate opt-in Hermes plugin surface; not the new generic MCP task API.",
+      "gate": "Replace only after tokenless parent-owned Hermes subagent parity and migrated consumers pass."
+    }
+  ],
+  "consumer_test_groups": {
+    "mcp_entry_gate": {
+      "consumers": [
+        "Control MCP tool registration",
+        "HostControlService capability projection and explicit unsupported start operation"
+      ],
+      "tests": [
+        "tests/control_mcp/test_mcp_protocol.py::test_retired_engineering_tool_is_absent_even_with_legacy_coordinator"
+      ],
+      "parity_gate": "Permanent negative contract for the new Control MCP."
+    },
+    "mcp_auth_host": {
+      "consumers": [
+        "Existing host lifespan, resource-only authentication, request context, protocol validation"
+      ],
+      "tests": [
+        "tests/control_mcp/test_auth.py",
+        "tests/control_mcp/test_contracts.py",
+        "tests/control_mcp/test_host_mount.py",
+        "tests/control_mcp/test_http_boundary.py"
+      ],
+      "parity_gate": "Keep the existing host/auth owner; add no parallel auth or approval store."
+    },
+    "legacy_receipts": {
+      "consumers": [
+        "Control MCP observations read plugin-data/implementation_router receipts.",
+        "observations.py imports digest/source helpers from plugins/implementation_router/workspace.py.",
+        "Historical evidence is read-only and does not authorize a new run."
+      ],
+      "tests": [
+        "tests/control_mcp/test_reads.py",
+        "tests/control_mcp/test_projection.py",
+        "tests/control_mcp/test_evidence_provenance.py"
+      ],
+      "parity_gate": "Move receipt digest/source readers to a neutral owner before retiring their current modules."
+    },
+    "legacy_operation": {
+      "consumers": [
+        "Journal/coordinator retain the old start_engineering_run intent.",
+        "Internal host dispatch and engineering owner tests cover the old operation.",
+        "tools/approval.py remains the Hermes human decision authority."
+      ],
+      "tests": [
+        "tests/control_mcp/test_operations.py",
+        "tests/control_mcp/test_host_dispatch.py",
+        "tests/control_mcp/test_engineering_owner.py",
+        "tests/control_mcp/test_control_approval.py"
+      ],
+      "parity_gate": "Replace with bounded general Hermes intents after parent-owned subagent and real host approval parity."
+    },
+    "legacy_router": {
+      "consumers": [
+        "Opt-in plugin registration and /engineer command.",
+        "Fixed actors -> ImplementationRouter -> NativeEngineeringHost workflow.",
+        "Old host consumes downstream kernel/routes/security and shared provider/environment helpers."
+      ],
+      "tests": [
+        "tests/implementation_router/*",
+        "tests/plugins/test_engineering_*.py",
+        "tests/e2e/test_engineering_native_docker.py"
+      ],
+      "parity_gate": "Retire only after existing Hermes delegation, exact-once host approval, targeted cancel/recovery and worker/child/grandchild credential isolation pass on native Windows."
+    },
+    "legacy_ui": {
+      "consumers": [
+        "Profile-scoped auxiliary model picker and Desktop locale catalogues containing generic and fixed-role copy."
+      ],
+      "tests": [
+        "apps/desktop/src/app/settings/model-settings.test.tsx",
+        "apps/desktop/src/i18n/engineering-routing.test.ts",
+        "tests/hermes_cli/test_web_auxiliary_plugin_slots.py"
+      ],
+      "parity_gate": "Migrate fixed-role fixtures/copy selectively; retain generic dynamic slots and locale key parity."
+    },
+    "legacy_docs": {
+      "consumers": [
+        "Old actor setup instructions and localized guides.",
+        "Control MCP retirement and implementation history."
+      ],
+      "tests": [
+        "tests/implementation_router/test_i18n_docs.py",
+        "tests/control_mcp/test_mcp_protocol.py"
+      ],
+      "parity_gate": "Replace old instructions after general subagent and migration docs exist; preserve Git history."
+    },
+    "legacy_ci": {
+      "consumers": [
+        "Router-specific workflows, qualification, sabotage and mutation scripts."
+      ],
+      "tests": [
+        "tests/implementation_router/test_kernel.py",
+        "tests/implementation_router/test_route_admission.py",
+        "tests/implementation_router/test_security_contract.py"
+      ],
+      "parity_gate": "Remove old-only checks only after equivalent general MCP/subagent security gates are required."
+    },
+    "shared_provider": {
+      "consumers": [
+        "Generic Hermes plugins, auxiliary picker, strict provider routing and parent-owned inference."
+      ],
+      "tests": [
+        "tests/agent/test_auxiliary_strict_route.py",
+        "tests/agent/test_auxiliary_client*.py",
+        "tests/agent/test_plugin_llm*.py"
+      ],
+      "parity_gate": "Retain generic provider/profile routing and effort provenance; add no second credential/model store."
+    },
+    "shared_environment": {
+      "consumers": [
+        "Generic native/Docker tools and legacy Router imports.",
+        "CI helper filters environment variables but does not isolate handles, filesystem or network."
+      ],
+      "tests": [
+        "tests/tools/test_bound_credential_free_environment.py",
+        "tests/tools/test_credential_free_docker.py",
+        "tests/scripts/test_router_ci_child_env.py"
+      ],
+      "parity_gate": "Keep generic helpers and Docker behaviour; environment filtering is not OS-level subagent isolation proof."
+    },
+    "legacy_stdio": {
+      "consumers": [
+        "mcp_serve.py remains a separate legacy stdio bridge.",
+        "permissions_respond ACK is not Hermes human approval and is never mounted on new HTTP MCP."
+      ],
+      "tests": [
+        "tests/test_mcp_serve.py"
+      ],
+      "parity_gate": "Keep separate; never reinterpret a bridge ACK as authorization."
+    },
+    "packaging": {
+      "consumers": [
+        "Python package metadata, package-data entries and frozen uv dependency graph."
+      ],
+      "tests": [
+        "tests/test_packaging_metadata.py",
+        "uv lock --check after a future lock edit"
+      ],
+      "parity_gate": "No T02 dependency edits; remove only audited Router-only metadata after parity and review lock diffs."
+    },
+    "central_ci_history": {
+      "consumers": [
+        "Central required checks unrelated to the old Router.",
+        "Historical carry-surface artifact generated from an earlier tree."
+      ],
+      "tests": [
+        "Final required checks at exact integration HEAD"
+      ],
+      "parity_gate": "Keep central CI; regenerate carry-surface artifacts only with the native generator after source changes."
+    }
+  },
+  "files": [
+    {
+      "path": ".github/workflows/ci.yaml",
+      "disposition": "KEEP",
+      "consumer_test_group": "central_ci_history",
+      "notes": "Keep unrelated required jobs and protection checks."
+    },
+    {
+      "path": ".github/workflows/engineering-router.yml",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_ci",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": ".github/workflows/implementation-router-contract.yml",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_ci",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "_docs/carry-surface-20260826.json",
+      "disposition": "KEEP",
+      "consumer_test_group": "central_ci_history",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "_docs/carry-surface-20260826.md",
+      "disposition": "KEEP",
+      "consumer_test_group": "central_ci_history",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "agent/auxiliary_client.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_provider",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "agent/engineering_diagnostics.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_router",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "agent/plugin_llm.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_provider",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "apps/desktop/src/app/settings/model-settings.test.tsx",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "legacy_ui",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "apps/desktop/src/app/settings/model-settings.tsx",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "legacy_ui",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "apps/desktop/src/i18n/ar.ts",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "legacy_ui",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "apps/desktop/src/i18n/en.ts",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "legacy_ui",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "apps/desktop/src/i18n/engineering-routing.test.ts",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_ui",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "apps/desktop/src/i18n/ja.ts",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "legacy_ui",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "apps/desktop/src/i18n/zh-hant.ts",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "legacy_ui",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "apps/desktop/src/i18n/zh.ts",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "legacy_ui",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "apps/desktop/src/types/hermes.ts",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "legacy_ui",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "docs/control-mcp/IMPLEMENTATION_LOG.md",
+      "disposition": "KEEP",
+      "consumer_test_group": "legacy_docs",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "docs/control-mcp/RETIREMENT_SPEC.md",
+      "disposition": "KEEP",
+      "consumer_test_group": "legacy_docs",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "docs/implementation-router/AGENT_PROTOCOL.md",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_docs",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "docs/implementation-router/STATUS.md",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_docs",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "docs/implementation-router/i18n/ar.md",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_docs",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "docs/implementation-router/i18n/en.md",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_docs",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "docs/implementation-router/i18n/ja.md",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_docs",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "docs/implementation-router/i18n/zh-hant.md",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_docs",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "docs/implementation-router/i18n/zh.md",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_docs",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "downstream/control_mcp/__init__.py",
+      "disposition": "KEEP",
+      "consumer_test_group": "mcp_auth_host",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "downstream/control_mcp/auth.py",
+      "disposition": "KEEP",
+      "consumer_test_group": "mcp_auth_host",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "downstream/control_mcp/contracts.py",
+      "disposition": "KEEP",
+      "consumer_test_group": "mcp_auth_host",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "downstream/control_mcp/coordinator.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "legacy_operation",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "downstream/control_mcp/host_context.py",
+      "disposition": "KEEP",
+      "consumer_test_group": "mcp_auth_host",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "downstream/control_mcp/http_boundary.py",
+      "disposition": "KEEP",
+      "consumer_test_group": "mcp_auth_host",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "downstream/control_mcp/journal.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "legacy_operation",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "downstream/control_mcp/observations.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "legacy_receipts",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "downstream/control_mcp/projection.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "legacy_receipts",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "downstream/control_mcp/service.py",
+      "disposition": "KEEP",
+      "consumer_test_group": "mcp_entry_gate",
+      "notes": "Retired start operation remains unsupported and capability false."
+    },
+    {
+      "path": "downstream/control_mcp/transport.py",
+      "disposition": "KEEP",
+      "consumer_test_group": "mcp_entry_gate",
+      "notes": "New Control MCP does not register the retired start tool."
+    },
+    {
+      "path": "downstream/implementation_router/AGENTS.md",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_docs",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "downstream/implementation_router/i18n.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_router",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "downstream/implementation_router/kernel.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_router",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "downstream/implementation_router/locales.json",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_router",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "downstream/implementation_router/routes.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_router",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "downstream/implementation_router/security.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_router",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "hermes_cli/web_server.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "legacy_ui",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "mcp_serve.py",
+      "disposition": "KEEP",
+      "consumer_test_group": "legacy_stdio",
+      "notes": "Separate legacy stdio path; bridge ACK is not host approval."
+    },
+    {
+      "path": "plugins/implementation_router/README.md",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_router",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "plugins/implementation_router/__init__.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_router",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "plugins/implementation_router/actors.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_router",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "plugins/implementation_router/configuration.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_router",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "plugins/implementation_router/control.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_router",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "plugins/implementation_router/entrypoint.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_router",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "plugins/implementation_router/host.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_router",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "plugins/implementation_router/plugin.yaml",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_router",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "plugins/implementation_router/workspace.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "legacy_receipts",
+      "notes": "Current legacy receipt observation code still imports these helpers."
+    },
+    {
+      "path": "pyproject.toml",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "packaging",
+      "notes": "Retain this shared package/dependency manifest. Remove only individually audited Router-only package-data entries after parity; preserve Control MCP runtime dependencies and exact lock pins."
+    },
+    {
+      "path": "scripts/ci/engineering_repair_mutations.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_ci",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "scripts/ci/implementation_router_sabotage.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_ci",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "scripts/ci/isolated_subprocess_env.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_environment",
+      "notes": "Environment filtering is not proof of handle, filesystem, or network isolation."
+    },
+    {
+      "path": "scripts/ci/qualify_implementation_router.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_ci",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/agent/test_auxiliary_client.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_provider",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/agent/test_auxiliary_client_anthropic_custom.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_provider",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/agent/test_auxiliary_client_azure_foundry.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_provider",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/agent/test_auxiliary_client_base_url_host_validation_52608.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_provider",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/agent/test_auxiliary_client_bootstrap_skew.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_provider",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/agent/test_auxiliary_client_proxy_env.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_provider",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/agent/test_auxiliary_client_resolve_dedup.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_provider",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/agent/test_auxiliary_client_ssl_verify.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_provider",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/agent/test_auxiliary_client_xai_oauth_recovery.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_provider",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/agent/test_auxiliary_strict_route.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_provider",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/agent/test_plugin_llm.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_provider",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/agent/test_plugin_llm_reasoning.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_provider",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/agent/test_plugin_llm_task_routing.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_provider",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/control_mcp/conftest.py",
+      "disposition": "KEEP",
+      "consumer_test_group": "mcp_auth_host",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/control_mcp/test_auth.py",
+      "disposition": "KEEP",
+      "consumer_test_group": "mcp_auth_host",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/control_mcp/test_contracts.py",
+      "disposition": "KEEP",
+      "consumer_test_group": "mcp_auth_host",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/control_mcp/test_control_approval.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "legacy_operation",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/control_mcp/test_engineering_owner.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_operation",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/control_mcp/test_evidence_provenance.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_receipts",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/control_mcp/test_host_dispatch.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_operation",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/control_mcp/test_host_mount.py",
+      "disposition": "KEEP",
+      "consumer_test_group": "mcp_auth_host",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/control_mcp/test_http_boundary.py",
+      "disposition": "KEEP",
+      "consumer_test_group": "mcp_auth_host",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/control_mcp/test_mcp_protocol.py",
+      "disposition": "KEEP",
+      "consumer_test_group": "mcp_entry_gate",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/control_mcp/test_operations.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_operation",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/control_mcp/test_projection.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "legacy_receipts",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/control_mcp/test_reads.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "legacy_receipts",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/hermes_cli/test_web_auxiliary_plugin_slots.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "legacy_ui",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/implementation_router/test_i18n_docs.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_docs",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/implementation_router/test_kernel.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_router",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/implementation_router/test_route_admission.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_router",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/implementation_router/test_security_contract.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_router",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/plugins/test_engineering_diagnostics.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_router",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/plugins/test_engineering_reasoning.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_router",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/plugins/test_engineering_workflow.py",
+      "disposition": "REPLACE_AFTER_PARITY",
+      "consumer_test_group": "legacy_router",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/scripts/test_router_ci_child_env.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_environment",
+      "notes": "Keep descendant environment-value coverage; its filename can be neutralized after parity."
+    },
+    {
+      "path": "tests/test_mcp_serve.py",
+      "disposition": "KEEP",
+      "consumer_test_group": "legacy_stdio",
+      "notes": "Separate legacy stdio path; bridge ACK is not host approval."
+    },
+    {
+      "path": "tests/test_packaging_metadata.py",
+      "disposition": "KEEP",
+      "consumer_test_group": "packaging",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/tools/test_bound_credential_free_environment.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_environment",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tests/tools/test_credential_free_docker.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_environment",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tools/approval.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "legacy_operation",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tools/environments/credential_free.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_environment",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tools/environments/docker.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_environment",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tools/environments/docker_isolation.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_environment",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "tools/terminal_tool.py",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "shared_environment",
+      "notes": "No source deletion or client configuration change in T02."
+    },
+    {
+      "path": "uv.lock",
+      "disposition": "SHARED_RETAIN",
+      "consumer_test_group": "packaging",
+      "notes": "Retain this shared package/dependency manifest. Remove only individually audited Router-only package-data entries after parity; preserve Control MCP runtime dependencies and exact lock pins."
+    }
+  ],
+  "existing_no_resurrection_gate": {
+    "test": "tests/control_mcp/test_mcp_protocol.py::test_retired_engineering_tool_is_absent_even_with_legacy_coordinator",
+    "baseline": "Passed on unmodified task base. Real MCP SDK test checks tool absence, false write/start capability with an inert coordinator injected, and rejection of the retired tool call.",
+    "tdd_note": "No duplicate assertion or code edit was made because this behavioral regression already exists and passes on the task base. T02 records inventory/evidence only and claims no new RED/GREEN implementation cycle."
+  },
+  "parity_before_source_retirement": [
+    "Use existing Hermes delegation and parent provider authority; add no second harness or credential store.",
+    "Prove MCP/LLM/Git credentials, credential files, authenticated clients, inherited handles and SSH sockets are absent from worker/child/grandchild on native Windows.",
+    "Use the existing exact-once Hermes approval owner, reject MCP self-approval, and verify targeted cancellation and recovery.",
+    "Read state and verification evidence from real producers; keep prior records as labelled read-only history until their final reader is migrated.",
+    "Preserve the current Docker boundary and fail-closed engineering behaviour without requiring Docker for observation-only MCP reads.",
+    "Migrate fixed-role UI fixtures, localized strings, docs, package data, tests and old-only CI gates without removing unrelated checks."
+  ],
+  "t02_changes": [
+    "Add this file-level disposition/consumer-test inventory.",
+    "No Router source deletion, workflow removal, dependency edit, endpoint activation, or client grant."
+  ]
+}
