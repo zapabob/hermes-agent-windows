@@ -13,3 +13,5 @@
 <!-- not-os-sandbox -->
 
 [Agent protocol](../AGENT_PROTOCOL.md)
+
+各階段的推理設定依角色固定，並在父程序的請求邊界驗證 medium/medium/high，而非依介面標籤推定。封鎖結果可附帶不洩漏憑證的固定診斷碼。請保留 lease 與 journal；診斷不代表取得重新執行的許可。

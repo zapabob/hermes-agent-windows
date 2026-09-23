@@ -159,6 +159,7 @@ def test_owner_calls_real_entrypoint_with_host_issued_identity(
             seen.append(kwargs)
             self.run_dir = tmp_path / 'not-created'
             self.result_dir = None
+            self.failure_diagnostic = None
 
         def close(self):
             pass
