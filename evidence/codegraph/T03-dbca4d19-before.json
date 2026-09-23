@@ -3,7 +3,7 @@
   "task_id": "T03",
   "repository": "zapabob/hermes-agent-windows",
   "source_sha": "dbca4d19cf3c91fb39f7e123eb0829e5118ab088",
-  "index_identity": "C:\\Users\\downl\\Documents\\New project\\hermes-control-mcp-t03-host-20260924",
+  "index_identity": "task-worktree/codex-control-mcp-t03-host-20260924",
   "tool": {
     "package": "@colbymchenry/codegraph",
     "version": "1.6.0",

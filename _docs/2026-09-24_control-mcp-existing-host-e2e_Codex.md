@@ -3,7 +3,7 @@
 Date: 2026-09-24 JST
 Repository: `zapabob/hermes-agent-windows`
 Task branch: `codex/control-mcp-t03-host-20260924`
-Task worktree: `C:/Users/downl/Documents/New project/hermes-control-mcp-t03-host-20260924`
+Task worktree: `task-worktree/codex-control-mcp-t03-host-20260924`
 Exact starting HEAD: `dbca4d19cf3c91fb39f7e123eb0829e5118ab088`
 
 ## Scope and decision
