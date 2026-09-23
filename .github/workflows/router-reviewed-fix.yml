@@ -1,0 +1,20 @@
+name: Publish reviewed engineering fixes
+on:
+  push:
+    branches: [chore/router-publish-20260923]
+    paths: [.github/workflows/router-reviewed-fix.yml]
+permissions:
+  contents: write
+  actions: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - name: Publish reviewed data only; no product code runs with the token
+        env:
+          PUBLISH_TOKEN: ${{ github.token }}
+        run: python3 .router-publish/repair.py
