@@ -1,0 +1,63 @@
+name: Diagnose engineering lock and native acceptance
+on:
+  push:
+    branches: [chore/router-source-snapshot-20260923]
+    paths: [.github/workflows/router-lock-diagnosis.yml]
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: 15558731b670859cf7360f6a692a661a7d9c432f
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
+        with:
+          version: '0.9.28'
+          enable-cache: true
+      - name: Reproduce and record candidate lock regeneration
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir evidence
+          git rev-parse HEAD > evidence/candidate.sha
+          cp uv.lock evidence/before.lock
+          uv lock 2>&1 | tee evidence/lock.log
+          cp uv.lock evidence/after.lock
+          git diff -- uv.lock > evidence/lock.diff
+          uv lock --check
+      - name: Compare the unmodified main lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin 15f60413bd5d5394aeb8e374c52c1010b8052224
+          git worktree add --detach /tmp/router-lock-main 15f60413bd5d5394aeb8e374c52c1010b8052224
+          (cd /tmp/router-lock-main && uv lock && git diff -- uv.lock) > evidence/main-lock.diff 2>&1
+          git worktree remove --force /tmp/router-lock-main
+      - name: Prepare the candidate environment from the regenerated lock
+        run: |
+          uv python install 3.11
+          uv sync --locked --python 3.11 --extra all --extra dev
+      - name: Prepare an immutable container image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull python:3.11.14-slim
+          image=$(docker image inspect python:3.11.14-slim --format '{{.Id}}')
+          test "${image#sha256:}" != "$image"
+          printf 'HERMES_TEST_ENGINEERING_IMAGE=%s\n' "$image" >> "$GITHUB_ENV"
+      - name: Exercise actual native Docker and parent-only inference
+        shell: bash
+        run: |
+          set -o pipefail
+          uv run --no-sync python -m pytest --noconftest -vv tests/e2e/test_engineering_native_docker.py 2>&1 | tee evidence/docker.log
+      - name: Retain diagnosis, not an assertion of final-head qualification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: router-lock-diagnosis
+          path: evidence/
+          retention-days: 3
