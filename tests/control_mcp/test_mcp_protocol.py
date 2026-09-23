@@ -95,6 +95,63 @@ async def test_real_sdk_initialise_list_and_scoped_call(protocol_host):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(('resource', 'authority', 'peer'), [
+    ('http://127.0.0.1:9118/api/control/mcp', '127.0.0.1:9118', '127.0.0.1'),
+    ('http://[::1]:9118/api/control/mcp', '[::1]:9118', '::1'),
+])
+async def test_real_sdk_read_on_explicit_loopback_http_resource(
+    control_module, resource, authority, peer
+):
+    auth = control_module("auth")
+    service_module = control_module("service")
+    transport = control_module("transport")
+    private = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    public = private.public_key().public_bytes(
+        serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+    grant = auth.HostGrant(
+        subject="human-1", client_registration="codex", revision=1,
+        scopes=("hermes:read",), profiles=("p1",), workspaces=(("p1", "w1"),),
+    )
+    verifier = auth.ResourceVerifier(
+        issuer="https://issuer.invalid", resource=resource,
+        public_keys={"key-1": public},
+        grant_lookup=lambda sub, client: grant if (sub, client) == ("human-1", "codex") else None,
+    )
+
+    class Source:
+        def runtime(self, profile):
+            return {"state": "ABSENT", "reason": "test_host"}
+
+        def routes(self, profile):
+            return {"state": "UNKNOWN", "routes": None}
+
+    service = service_module.HostControlService(source=Source(), clock=lambda: 100)
+    host = transport.create_control_mcp(
+        service, verifier=verifier, allowed_hosts=(authority,),
+        allowed_origins=("https://chatgpt.com",), clock=lambda: 100,
+    )
+    token = jwt.encode({
+        "iss": verifier.issuer, "aud": resource, "sub": "human-1",
+        "client_id": "codex", "scope": "hermes:read",
+        "iat": 90, "nbf": 90, "exp": 200, "grant_revision": 1,
+    }, private, algorithm="RS256", headers={"kid": "key-1", "typ": "at+jwt"})
+    async with host.lifespan():
+        async with httpx2.AsyncClient(
+            transport=httpx2.ASGITransport(app=host.app, client=(peer, 50123)),
+            base_url=resource.rsplit('/api/control/mcp', 1)[0],
+            headers={"Authorization": "Bearer " + token},
+        ) as http_client:
+            async with streamable_http_client(resource, http_client=http_client) as streams:
+                async with ClientSession(*streams) as session:
+                    await session.initialize()
+                    result = await session.call_tool(
+                        "hermes_get_runtime_status", {"profile_id": "p1"}
+                    )
+                    assert result.structured_content["state"] == "ABSENT"
+
+
+@pytest.mark.asyncio
 async def test_revocation_blocks_the_next_protocol_request(protocol_host):
     host, client, _, grants = protocol_host
     async with host.lifespan():

@@ -42,10 +42,30 @@ def _https_url(value: object) -> bool:
             and not parsed.password and not parsed.fragment and not parsed.query)
 
 
+def _resource_url(value: object) -> bool:
+    if _https_url(value):
+        return True
+    if type(value) is not str or len(value) > 2048 or any(ord(c) < 33 for c in value):
+        return False
+    try:
+        parsed = urlsplit(value)
+        port = parsed.port
+    except ValueError:
+        return False
+    # Plain HTTP is permitted only for a named, explicit loopback resource.
+    # The ASGI ingress separately verifies the request peer and Host header.
+    return (parsed.scheme == 'http'
+            and parsed.hostname in {'localhost', '127.0.0.1', '::1'}
+            and port is not None and port > 0
+            and parsed.path not in {'', '/'}
+            and not parsed.username and not parsed.password
+            and not parsed.fragment and not parsed.query)
+
+
 class ResourceVerifier:
     def __init__(self, *, issuer: str, resource: str, public_keys: dict[str, bytes],
                  grant_lookup, max_token_lifetime: int = 3600):
-        if (not _https_url(issuer) or not _https_url(resource) or not public_keys
+        if (not _https_url(issuer) or not _resource_url(resource) or not public_keys
                 or type(max_token_lifetime) is not int or not 1 <= max_token_lifetime <= 3600):
             raise ControlError('invalid_host_configuration')
         from cryptography.hazmat.primitives import serialization

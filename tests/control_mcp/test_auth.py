@@ -45,6 +45,48 @@ def test_valid_signed_resource_grant_and_server_scope_intersection(control_modul
     assert 'access_token' not in vars(ctx)
 
 
+@pytest.mark.parametrize('resource', [
+    'http://localhost:9118/api/control/mcp',
+    'http://127.0.0.1:9118/api/control/mcp',
+    'http://[::1]:9118/api/control/mcp',
+])
+def test_explicit_loopback_http_resource_keeps_dedicated_jwt_audience(
+    control_module, keys, resource
+):
+    auth = control_module('auth')
+    _, grant = setup(control_module, keys)
+    verifier = auth.ResourceVerifier(
+        issuer='https://issuer.invalid', resource=resource,
+        public_keys={'key-1': keys[1]},
+        grant_lookup=lambda sub, client: grant if (sub, client) == ('human-1', 'codex') else None,
+    )
+    ctx = verifier.verify(sign(keys, aud=resource), now=100)
+    assert ctx.resource == resource
+    with pytest.raises(control_module('contracts').ControlError):
+        verifier.verify(sign(keys), now=100)
+
+
+@pytest.mark.parametrize('resource', [
+    'http://hermes.invalid/api/control/mcp',
+    'http://localhost.evil.invalid/api/control/mcp',
+    'http://127.0.0.2/api/control/mcp',
+    'http://localhost:0/api/control/mcp',
+    'http://localhost:bad/api/control/mcp',
+    'http://localhost@evil.invalid/api/control/mcp',
+])
+def test_non_loopback_or_ambiguous_http_resource_is_rejected(
+    control_module, keys, resource
+):
+    auth = control_module('auth')
+    _, grant = setup(control_module, keys)
+    with pytest.raises(control_module('contracts').ControlError):
+        auth.ResourceVerifier(
+            issuer='https://issuer.invalid', resource=resource,
+            public_keys={'key-1': keys[1]},
+            grant_lookup=lambda sub, client: grant,
+        )
+
+
 @pytest.mark.parametrize('changes', [
     {'aud':'https://dashboard.invalid'}, {'iss':'https://evil.invalid'}, {'exp':100},
     {'exp':True}, {'exp':'200'}, {'iat':110}, {'nbf':110}, {'client_id':'chatgpt'},

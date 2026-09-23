@@ -12,7 +12,8 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 
 @pytest.fixture
 def http_boundary(control_module):
-    def build():
+    def build(*, resource='https://hermes.invalid/api/control/mcp',
+              allowed_hosts=('hermes.invalid',)):
         auth=control_module('auth')
         transport=control_module('http_boundary')
         private=rsa.generate_private_key(public_exponent=65537,key_size=2048)
@@ -20,7 +21,7 @@ def http_boundary(control_module):
         grants={c:auth.HostGrant(subject='human-1',client_registration=c,revision=1,
                                 scopes=('hermes:read',),profiles=(p,),workspaces=((p,'w1'),))
                 for c,p in [('codex','p1'),('chatgpt','p2')]}
-        verifier=auth.ResourceVerifier(issuer='https://issuer.invalid',resource='https://hermes.invalid/api/control/mcp',
+        verifier=auth.ResourceVerifier(issuer='https://issuer.invalid',resource=resource,
                                       public_keys={'k1':pem},grant_lookup=lambda sub,c:grants.get(c) if sub=='human-1' else None)
         calls=[]
         async def downstream(scope,receive,send):
@@ -33,13 +34,64 @@ def http_boundary(control_module):
             await send({'type':'http.response.start','status':200,'headers':[(b'content-type',b'application/json')]})
             await send({'type':'http.response.body','body':data})
         app=transport.AuthenticatedControlASGI(downstream,verifier=verifier,
-            allowed_hosts=('hermes.invalid',),allowed_origins=('https://chatgpt.com',),clock=lambda:100)
+            allowed_hosts=allowed_hosts,allowed_origins=('https://chatgpt.com',),clock=lambda:100)
         def token(client='codex',**changes):
             claims={'iss':verifier.issuer,'aud':verifier.resource,'sub':'human-1','client_id':client,
                     'scope':'hermes:read','iat':90,'exp':200,'grant_revision':1,**changes}
             return jwt.encode(claims,private,algorithm='RS256',headers={'kid':'k1','typ':'at+jwt'})
         return app,calls,token,grants,transport
     return build
+
+
+@pytest.mark.asyncio
+async def test_loopback_resource_rejects_remote_https_ingress(http_boundary):
+    app, calls, token, _, _ = http_boundary(
+        resource='http://127.0.0.1:9118/api/control/mcp',
+        allowed_hosts=('127.0.0.1:9118', 'hermes.invalid'),
+    )
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app, client=('203.0.113.9', 50123)),
+        base_url='https://hermes.invalid',
+    ) as client:
+        response = await client.get(
+            '/api/control/mcp', headers={'Authorization': 'Bearer ' + token()}
+        )
+    assert response.status_code == 403
+    assert calls == []
+
+
+@pytest.mark.asyncio
+async def test_loopback_resource_rejects_remote_peer_with_matching_http_host(http_boundary):
+    app, calls, token, _, _ = http_boundary(
+        resource='http://127.0.0.1:9118/api/control/mcp',
+        allowed_hosts=('127.0.0.1:9118',),
+    )
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app, client=('203.0.113.9', 50123)),
+        base_url='http://127.0.0.1:9118',
+    ) as client:
+        response = await client.get(
+            '/api/control/mcp', headers={'Authorization': 'Bearer ' + token()}
+        )
+    assert response.status_code == 403
+    assert calls == []
+
+
+@pytest.mark.asyncio
+async def test_ipv6_loopback_resource_accepts_bracketed_host(http_boundary):
+    app, calls, token, _, _ = http_boundary(
+        resource='http://[::1]:9118/api/control/mcp',
+        allowed_hosts=('[::1]:9118',),
+    )
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app, client=('::1', 50123)),
+        base_url='http://[::1]:9118',
+    ) as client:
+        response = await client.get(
+            '/api/control/mcp', headers={'Authorization': 'Bearer ' + token()}
+        )
+    assert response.status_code == 200
+    assert calls == [('GET', 'codex')]
 
 
 @pytest.mark.asyncio

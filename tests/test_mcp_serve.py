@@ -1259,7 +1259,8 @@ class TestEventBridgePollE2E:
         conn.commit()
         conn.close()
         # Touch the DB file to update mtime (WAL mode may not update mtime on small writes)
-        os.utime(db_path, None)
+        changed = db_path.stat().st_mtime_ns + 1_000_000_000
+        os.utime(db_path, ns=(changed, changed))
 
         # Update sessions.json updated_at to trigger re-check
         sessions_data["agent:main:telegram:dm:new"]["updated_at"] = "2026-03-29T15:00:10"
@@ -1415,7 +1416,8 @@ class TestEventBridgePollE2E:
             "id": 1, "role": "user", "content": "hello after baseline",
             "timestamp": "2026-03-29T15:10:00",
         }]
-        os.utime(db_path, None)
+        changed = db_path.stat().st_mtime_ns + 1_000_000_000
+        os.utime(db_path, ns=(changed, changed))
         bridge._poll_once(DB())
 
         events = bridge.poll_events(after_cursor=0)["events"]

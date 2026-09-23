@@ -35,6 +35,8 @@ class AuthenticatedControlASGI:
         self.hosts=frozenset(h.lower() for h in allowed_hosts)
         self.origins=frozenset(allowed_origins)
         url=urlsplit(verifier.resource)
+        self.resource_scheme=url.scheme
+        self.resource_authority=url.netloc.lower()
         self.path=url.path.rstrip('/')
         if not self.path:
             raise ControlError('invalid_host_configuration')
@@ -56,11 +58,13 @@ class AuthenticatedControlASGI:
             return await _json(send,421,{'error':'invalid_host'})
         if b'origin' in headers and origin not in self.origins:
             return await _json(send,403,{'error':'invalid_origin'})
-        if scope.get('scheme')!='https':
+        if self.resource_scheme=='http':
             peer=(scope.get('client') or ('',0))[0]
-            hostname=host.rsplit(':',1)[0] if host.count(':')==1 else host
-            if peer not in ('127.0.0.1','::1') or hostname not in ('localhost','127.0.0.1','[::1]'):
+            if (scope.get('scheme')!='http' or peer not in ('127.0.0.1','::1')
+                    or host!=self.resource_authority):
                 return await _json(send,403,{'error':'tls_required'})
+        elif scope.get('scheme')!='https':
+            return await _json(send,403,{'error':'tls_required'})
         if scope.get('query_string'):
             return await _json(send,400,{'error':'query_not_supported'})
         path=scope.get('path','')
