@@ -26,7 +26,8 @@ jobs:
           tar -czf router-fix-sources.tar.gz sources
           sha256sum router-fix-sources.tar.gz > SHA256SUMS
       - name: Cache minimal public test dependencies
-        run: python -m pip download --only-binary=:all: --dest wheels openai==2.24.0 tenacity==9.1.4 ruff==0.12.10
+        run: |
+          python -m pip download --only-binary=:all: --dest wheels openai==2.24.0 tenacity==9.1.4 ruff==0.12.10
       - uses: actions/upload-artifact@v4
         with:
           name: router-fix-sources-and-wheels
