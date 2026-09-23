@@ -1,0 +1,5 @@
+T04 baseline on source 4577dc92b0dfd4b754c5d0e9ca14b05159d9a960
+Command: uv run --frozen --extra dev python -m pytest tests/control_mcp/test_control_approval.py tests/control_mcp/test_operations.py -q
+Result: 31 passed in 5.53s
+Dependency note: uv installed 22 development packages from uv.lock; no project dependency or lock changes.
+Earlier setup attempt: uv run --frozen python -m pytest ... could not find pytest because the optional dev extra was not selected; this was an environment/setup issue, not a behavioral test result.

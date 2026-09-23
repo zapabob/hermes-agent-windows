@@ -18,7 +18,8 @@ def begin(approval):
     key='control-test-session'
     approval.register_gateway_notify(key, seen.append)
     binding=approval.ControlApprovalBinding(operation_id='op-1',intent_digest='a'*64,
-        subject='human-1',client_registration='codex',profile_id='p1',workspace_id='w1',expires_at=200,
+        subject='human-1',client_registration='codex',resource='https://hermes.invalid/control/mcp',
+        grant_revision=1,profile_id='p1',workspace_id='w1',expires_at=200,
         description='Start engineering in w1 at the approved revision')
     ticket=approval.request_control_consent(binding,session_key=key,timeout_seconds=60,now=100)
     return key,binding,ticket,seen
@@ -67,6 +68,16 @@ def test_legacy_fifo_all_or_request_id_cannot_approve_strict_entry(kwargs):
         a.unregister_gateway_notify(key)
 
 
+def test_legacy_delivery_ack_does_not_decide_strict_control_consent():
+    a=owner();key,binding,ticket,_=begin(a)
+    try:
+        assert a.ack_gateway_approval(key,ticket.request_id) is True
+        assert a.take_control_decision(ticket,now=110) is None
+        assert a.list_gateway_approvals(key)[0]['request_id']==ticket.request_id
+    finally:
+        a.unregister_gateway_notify(key)
+
+
 def test_legacy_entry_still_resolves_when_strict_entry_is_queued_first():
     a=owner();key,binding,ticket,_=begin(a)
     try:
@@ -83,7 +94,8 @@ def test_legacy_entry_still_resolves_when_strict_entry_is_queued_first():
 def test_missing_or_failing_notify_does_not_auto_approve():
     a=owner()
     binding=a.ControlApprovalBinding(operation_id='op-1',intent_digest='a'*64,
-        subject='human-1',client_registration='codex',profile_id='p1',workspace_id='w1',expires_at=200,
+        subject='human-1',client_registration='codex',resource='https://hermes.invalid/control/mcp',
+        grant_revision=1,profile_id='p1',workspace_id='w1',expires_at=200,
         description='Start engineering in w1 at the approved revision')
     with pytest.raises(RuntimeError):
         a.request_control_consent(binding,session_key='unregistered',timeout_seconds=60,now=100)
@@ -97,6 +109,23 @@ def test_missing_or_failing_notify_does_not_auto_approve():
         assert not a.list_gateway_approvals('bad-notify')
     finally:
         a.unregister_gateway_notify('bad-notify')
+
+
+@pytest.mark.parametrize('changes', [
+    {'resource': ''},
+    {'resource': 'https://hermes.invalid/control/mcp invalid'},
+    {'resource': 'https://hermes.invalid/control/mcp\nforged'},
+    {'resource': 'x' * 2049},
+    {'grant_revision': 0},
+    {'grant_revision': True},
+])
+def test_control_binding_rejects_invalid_resource_or_grant_revision(changes):
+    a=owner();key,binding,ticket,_=begin(a)
+    try:
+        with pytest.raises(ValueError,match='invalid_control_approval_binding'):
+            dataclasses.replace(binding,**changes)
+    finally:
+        a.unregister_gateway_notify(key)
 
 
 def test_forged_dataclass_copy_cannot_be_used_as_owner_decision():

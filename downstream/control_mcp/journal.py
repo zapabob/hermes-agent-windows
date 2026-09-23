@@ -192,12 +192,16 @@ class HostControlJournal:
     def _binding(row):
         from tools.approval import ControlApprovalBinding
         request=json.loads(row['request_json'])
-        description=(f"{row['kind']} in {row['workspace_id']}; source {row['source_sha']}; "
+        description=(f"{row['kind']} for resource {row['resource']} "
+                     f"(grant revision {row['grant_revision']}) in {row['workspace_id']}; "
+                     f"source {row['source_sha']}; "
                      f"expected revision {row['expected_revision']}. Task: "
                      +request['parameters']['task'][:2500])
         return ControlApprovalBinding(operation_id=row['operation_id'],intent_digest=row['intent_digest'],
-            subject=row['subject'],client_registration=row['client_registration'],profile_id=row['profile_id'],
-            workspace_id=row['workspace_id'],expires_at=row['expires_at'],description=description)
+            subject=row['subject'],client_registration=row['client_registration'],
+            resource=row['resource'],grant_revision=row['grant_revision'],
+            profile_id=row['profile_id'],workspace_id=row['workspace_id'],
+            expires_at=row['expires_at'],description=description)
 
     def approval_binding(self,ctx,operation_id,*,now):
         with self._connection(readonly=True) as conn:

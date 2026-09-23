@@ -102,6 +102,43 @@ def test_actual_single_use_owner_decision_allows_transition(control_module,contr
     assert j.reserve(ctx,request(),now=114)['state']=='SUCCEEDED'
 
 
+def test_human_approval_ticket_binds_and_discloses_resource_and_grant_revision(
+        control_module, control_context, tmp_path):
+    from tools import approval as a
+
+    j = journal(control_module, tmp_path)
+    j.initialise()
+    ctx = writable(control_context, grant_revision=7)
+    op = j.reserve(ctx, request(), now=100)['operation_id']
+    binding = j.approval_binding(ctx, op, now=110)
+    session = 'human-binding-test'
+    seen = []
+    a.register_gateway_notify(session, seen.append)
+    try:
+        ticket = a.request_control_consent(binding, session_key=session,
+                                           timeout_seconds=60, now=110)
+        payload = seen[0]
+        assert getattr(binding, 'resource', None) == ctx.resource
+        assert getattr(binding, 'grant_revision', None) == ctx.grant_revision
+        assert payload['control']['resource'] == ctx.resource
+        assert payload['control']['grant_revision'] == ctx.grant_revision
+        assert ctx.resource in payload['description']
+        assert f'grant revision {ctx.grant_revision}' in payload['description'].lower()
+        assert a.take_control_decision(ticket, now=111) is None
+        assert a.resolve_control_consent(
+            session_key=session, request_id=ticket.request_id,
+            intent_digest=binding.intent_digest, choice='once', now=111)
+        decision = a.take_control_decision(ticket, now=111)
+        assert a.consume_control_verdict(
+            decision, replace(binding, resource='https://other.invalid/control/mcp'), now=111) is None
+        assert a.consume_control_verdict(
+            decision, replace(binding, grant_revision=8), now=111) is None
+        assert a.consume_control_verdict(decision, binding, now=111) == 'once'
+        assert a.consume_control_verdict(decision, binding, now=111) is None
+    finally:
+        a.unregister_gateway_notify(session)
+
+
 def test_forged_owner_decision_or_cross_client_does_not_approve(control_module,control_context,tmp_path):
     j=journal(control_module,tmp_path);j.initialise();ctx=writable(control_context)
     op=j.reserve(ctx,request(),now=100)['operation_id']
@@ -110,6 +147,9 @@ def test_forged_owner_decision_or_cross_client_does_not_approve(control_module,c
     other=writable(control_context,client_registration='chatgpt')
     with pytest.raises(control_module('contracts').ControlError):
         j.approval_binding(other,op,now=110)
+    other_resource=writable(control_context,resource='https://other.invalid/control/mcp')
+    with pytest.raises(control_module('contracts').ControlError):
+        j.approval_binding(other_resource,op,now=110)
     assert j.get(ctx,op,profile_id='p1',workspace_id='w1',now=110)['state']=='PENDING_APPROVAL'
 
 

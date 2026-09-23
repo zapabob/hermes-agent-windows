@@ -3047,6 +3047,8 @@ class ControlApprovalBinding:
     intent_digest: str
     subject: str
     client_registration: str
+    resource: str
+    grant_revision: int
     profile_id: str
     workspace_id: str
     expires_at: int
@@ -3056,11 +3058,14 @@ class ControlApprovalBinding:
         fields = (self.operation_id, self.subject, self.client_registration,
                   self.profile_id, self.workspace_id)
         if (any(type(v) is not str or not v or len(v) > 128 or any(ord(c) < 32 for c in v) for v in fields)
+                or type(self.resource) is not str or not self.resource
+                or len(self.resource) > 2048 or any(ord(c) < 33 for c in self.resource)
+                or type(self.grant_revision) is not int or self.grant_revision < 1
                 or type(self.intent_digest) is not str
                 or not re.fullmatch(r"[a-f0-9]{64}", self.intent_digest)
                 or type(self.expires_at) is not int or self.expires_at < 0
                 or type(self.description) is not str or not self.description.strip()
-                or len(self.description) > 4096):
+                or len(self.description) > 6144):
             raise ValueError("invalid_control_approval_binding")
 
 
@@ -3083,6 +3088,8 @@ class _ControlApprovalEntry(_ApprovalEntry):
             "control": {"operation_id": binding.operation_id,
                         "intent_digest": binding.intent_digest,
                         "client_registration": binding.client_registration,
+                        "resource": binding.resource,
+                        "grant_revision": binding.grant_revision,
                         "profile_id": binding.profile_id,
                         "workspace_id": binding.workspace_id,
                         "expires_at": deadline},
