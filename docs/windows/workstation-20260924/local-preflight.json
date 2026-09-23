@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "campaign_id": "windows-workstation-20260924",
+  "captured_at_utc": "2026-09-23T21:22:29.7351889Z",
+  "captured_at_jst": "2026-09-24T06:22:29.7351889+09:00",
+  "repository_identity": {
+    "canonical": "zapabob/hermes-agent-windows",
+    "origin": "https://github.com/zapabob/hermes-agent-windows.git",
+    "upstream": "https://github.com/NousResearch/hermes-agent.git",
+    "remote_main_sha": "e6070028c9d0d75634ad7661c33fa937b682474a",
+    "recorded_remote_main_is_frozen_sha": true,
+    "home_component_redacted_in_this_committed_record": true
+  },
+  "recovered_integration_worktree": {
+    "path": "C:/Users/<redacted>/Documents/New project/hermes-control-mcp-recovered-20260923",
+    "branch": "feat/hermes-control-mcp-c-20260923-recovered",
+    "head_at_capture": "dbca4d19cf3c91fb39f7e123eb0829e5118ab088",
+    "merge_base_with_recorded_remote_main": "e6070028c9d0d75634ad7661c33fa937b682474a",
+    "status_at_capture": "CLEAN",
+    "status_capture_utc": "2026-09-23T21:22:29.7351889Z",
+    "prior_pre_T03_commit_observation": {
+      "head": "27685609cd356cf0d786b2eac65207bcf9cd5a98",
+      "status_capture_utc": "2026-09-23T20:58:53.4212809Z",
+      "modified_paths": [
+        "downstream/control_mcp/auth.py",
+        "downstream/control_mcp/http_boundary.py",
+        "tests/control_mcp/test_auth.py",
+        "tests/control_mcp/test_http_boundary.py",
+        "tests/control_mcp/test_mcp_protocol.py",
+        "tests/test_mcp_serve.py"
+      ],
+      "untracked_paths": [
+        "evidence/codegraph/T03-2768560-after.json",
+        "evidence/codegraph/T03-2768560-before.json"
+      ],
+      "diffs_read_or_copied": false
+    },
+    "current_t03_commit_is_not_the_frozen_t01_inventory_source": true
+  },
+  "t01_inventory_source_worktree": {
+    "path": "C:/Users/<redacted>/Documents/New project/hermes-control-mcp-t01-20260924",
+    "branch": "codex/workstation-t01-20260924",
+    "head": "ebe05b1a397cf3855b36f84c60841abc9f2d7ce2",
+    "merge_base_with_recorded_remote_main": "e6070028c9d0d75634ad7661c33fa937b682474a",
+    "commits_ahead_of_recorded_remote_main": 39,
+    "shallow": false,
+    "created_from_exact_frozen_head": true,
+    "source_was_clean_at_creation": true,
+    "inventory_generator_bound_to_exact_head": true
+  },
+  "instruction_files": [
+    {
+      "path": "C:/Users/<redacted>/AGENTS.md",
+      "sha256": "5c0c50ade0d6f20e783a71c96c804a1f1ebf24252ddc657bc60e52a5ddf9683a",
+      "status": "read"
+    },
+    {
+      "path": "C:/Users/<redacted>/.codex/AGENTS.md",
+      "sha256": "76c52071ad911f22e8849962cf9fd101066bdb16ed4bba8341b016245fa6d68e",
+      "status": "read"
+    },
+    {
+      "path": "C:/Users/<redacted>/_docs/prompts/CLAUDE-FABLE-5.md",
+      "sha256": "54e80937772be0ac111d00681502b27fdf831803a2aa6f6d8df9424bdfc77073",
+      "status": "read"
+    },
+    {
+      "path": "C:/Users/<redacted>/_docs/sop/SOP-Common-MILSPECLLMOps-Engineering-Standard.md",
+      "sha256": "9db1f13c0ec4085898800a7c8e67f5f3a45d4cb84057f39e4f3d987bb381bc1d",
+      "status": "read"
+    },
+    {
+      "path": "C:/Users/<redacted>/_docs/sop/SOP-Implementation-Start-Gate.md",
+      "sha256": "ac9675e7df8502ccc148eae9164bf5c998739e58c18deaff32941c418896e09c",
+      "status": "read"
+    },
+    {
+      "path": "C:/Users/<redacted>/_docs/sop/SOP-Skill-Selection.md",
+      "sha256": "bbd22dc975baa350bf1447c50356f3d859e22ee2325bb5879c6056262c388d09",
+      "status": "read"
+    },
+    {
+      "path": "C:/Users/<redacted>/_docs/sop/SOP-Security.md",
+      "sha256": "cdb5467fedc188a9b7a4d7352b85178965a065b4d7ce15c83f66b48fc6519b5c",
+      "status": "read"
+    },
+    {
+      "path": "C:/Users/<redacted>/_docs/sop/SOP-Python.md",
+      "sha256": "134d699daece6f427456ef8390a98867944967436decd4eb6bb88b62016a593a",
+      "status": "read"
+    },
+    {
+      "path": "C:/Users/<redacted>/_docs/sop/SOP-Index.md",
+      "sha256": "f3f1c87ed83aa413512999565c60a46c0661c97dcc1cbf843df9a43ab05a43ca",
+      "status": "read"
+    },
+    {
+      "path": "C:/Users/<redacted>/.codex/skills/milspec-codex-standard/SKILL.md",
+      "sha256": "45aceaea89f4956509705214837f4711e20f9f6483e6a5e52dc3e8bdd7f66067",
+      "status": "read"
+    },
+    {
+      "path": "C:/Users/<redacted>/.codex/skills/documentation-and-adrs/SKILL.md",
+      "sha256": "50001fd5e467c137c114a98149448f9b5c98e4bc1c5732f4e3e767d3d0f04127",
+      "status": "read"
+    },
+    {
+      "path": "<worktree>/AGENTS.md",
+      "sha256": "26de736ab5bd0dfab39a19ce155f57f6ca876c65579d265971a55380a4c5328c",
+      "status": "read"
+    },
+    {
+      "path": "<worktree>/.codex/SOP.md",
+      "sha256": "1197f9d369e916369035686a27c8af01cefaab137ce68dc2f0a191d40c5c7bb0",
+      "status": "read"
+    },
+    {
+      "path": "<worktree>/.codex/UPSTREAM_POLICY.md",
+      "sha256": "4c04a1152385f6d42cc8f5ae08b035d1d2261f2530c897260b1ab37a76b16895",
+      "status": "read"
+    }
+  ],
+  "missing_scoped_instruction_files": [
+    "C:/Users/<redacted>/Documents/New project/hermes-control-mcp-recovered-20260923/.codex/AGENTS.md",
+    "C:/Users/<redacted>/Documents/New project/hermes-control-mcp-recovered-20260923/docs/AGENTS.md",
+    "C:/Users/<redacted>/Documents/New project/hermes-control-mcp-recovered-20260923/docs/windows/AGENTS.md",
+    "C:/Users/<redacted>/Documents/New project/hermes-control-mcp-recovered-20260923/docs/windows/workstation-20260924/AGENTS.md"
+  ],
+  "toolchain": {
+    "git": "git version 2.55.0.windows.5",
+    "uv": "uv 0.11.29 (901092ee1 2026-07-15 x86_64-pc-windows-msvc)",
+    "locked_project_python": "Python 3.11.11",
+    "test_python": "Python 3.11.11 via uv run --frozen --no-sync",
+    "py_launcher_python": "Python 3.12.10 (used only for small local record-generation checks)",
+    "node": "v26.9.0",
+    "npm": "12.0.2",
+    "new_dependencies_installed": false
+  },
+  "codegraph": {
+    "approved_cli_version": "1.6.0",
+    "approved_cli_path": "C:/Users/<redacted>/Documents/New project/hermes-agent/.tools/codegraph-cli/node_modules/.bin/codegraph.cmd",
+    "integrator_reported_status_at_clean_ebe": "current; 8900 indexed files",
+    "queried_by_this_t00_t01_task": false,
+    "index_built_by_this_task": false,
+    "docs_metadata_scope_requires_product_symbol_trace": false,
+    "global_1_5_0_not_used": true,
+    "requirement": "Parent owns CodeGraph sync and post-product-change receipts; no graph absence is inferred here."
+  },
+  "input_hashes": {
+    "archive_zip_sha256": "7870af3fa739d541c19b0374f4ac6496e0b561ebf85848f21b5be9a0ad95b738",
+    "archive_manifest_sha256": "efb6ff38d0ecdc1dc0ca107c574644af5194ca1936bbe27e737d1a8de98f29ca",
+    "plan_01_sha256": "81bfcb219c698b5090afebbd7a394594aa42136f81b03598a6aca098587a5df8",
+    "frozen_inputs_sha256": "d1e81bdf800483d8f685af1b2b46e05df75b8b85de4bdf6f905e8e1a8871d4ed",
+    "adoption_seeds_sha256": "4dc821606d1e4aca02d57025eb147654d630c413fa07b38f541a43d3b824160d",
+    "UPSTREAM_ADOPTION.yaml": "b7706ba476ab55558df9acdb8cd1c2d6136d79fe89f6788841e0df6afac5a174",
+    "FEATURES.yaml": "b440b1d880ea3a997d513f9a1034b06bf232f0dfc87098d0586aec51daf5c3c5",
+    "CARRY.yaml": "91a9a1f94e9e5f7e273778a3797df37f31f1f1044b92a463e5b717b83f18b27e",
+    "downstream/distribution.json": "e021b22b7f89ebc8798ff2ad0d6c9ef1c5bd5e0de6f2043ee6dba562f117a175"
+  },
+  "verification": {
+    "synthetic_inventory_tests": {
+      "command": "uv run --frozen --no-sync python -m unittest docs/windows/workstation-20260924/tests/test_inventory_commits.py -v",
+      "result": "11 passed",
+      "platform": "Windows",
+      "scope": "Temporary synthetic Git repositories; stdlib-only helper tests."
+    },
+    "real_frozen_inventory": {
+      "command": "uv run --frozen --no-sync python docs/windows/workstation-20260924/tools/inventory_commits.py --repo . --historical b51c055a12220f8c7c18660e8599365012e19532 --release-base 345cd2b057a452236de401d3534b8502a7465e8d --release d337b736aa1e8ebecfab043842d13e4a2d2f48a3 --ceiling b936546561888a54d5bf9cd7eae9629a824eb4f7 --integration-head ebe05b1a397cf3855b36f84c60841abc9f2d7ce2 --legacy-ledger UPSTREAM_ADOPTION.yaml --output docs/windows/workstation-20260924/inventory",
+      "result": "exit 0; output generated at pinned task worktree HEAD"
+    },
+    "integrator_reported_product_suite": {
+      "commit": "27685609cd356cf0d786b2eac65207bcf9cd5a98",
+      "command": "uv run --frozen python -m pytest tests/control_mcp tests/test_mcp_serve.py -q",
+      "result": "256 passed, 1 skipped; 25.24 s",
+      "provenance": "Integrator report only; not run by this inventory task or at this task worktree HEAD."
+    },
+    "historical_event_timestamp_regression_reproduction": "NOT RUN by this bounded inventory task; T00 predecessor/base comparison remains an integrator closeout item.",
+    "package_manifest_validation": {
+      "entries": 28,
+      "mismatches": 0,
+      "archive_sha256": "7870af3fa739d541c19b0374f4ac6496e0b561ebf85848f21b5be9a0ad95b738"
+    }
+  },
+  "restrictions_and_preservation": {
+    "no_reset_clean_stash_or_rebase_of_recovered_worktree": true,
+    "no_git_fetch_checkout_commit_or_push_by_inventory_helper": true,
+    "no_moving_upstream_ref_used": true,
+    "no_product_source_modified_by_this_task": true,
+    "historical_snapshot_b51_preserved": true,
+    "allow_upstream_sync": false,
+    "raw_diffs_or_secrets_in_record": false
+  }
+}
