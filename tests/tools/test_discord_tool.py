@@ -363,8 +363,10 @@ class TestToolsetInclusion:
 
     def test_discord_tools_not_in_other_toolsets(self):
         from toolsets import TOOLSETS
+        # voice_push intentionally composes both delivery channels.
+        assert set(TOOLSETS["voice_push"]["tools"]) == {"voice_push", "discord", "telegram"}
         for name, ts in TOOLSETS.items():
-            if name in {"hermes-discord", "hermes-gateway", "discord", "discord_admin"}:
+            if name in {"hermes-discord", "hermes-gateway", "discord", "discord_admin", "voice_push"}:
                 continue
             tools = ts.get("tools", [])
             assert "discord" not in tools or name == "discord", (

@@ -898,6 +898,17 @@ class DockerEnvironment(BaseEnvironment):
         """Keep explicit docker_forward_env values out of shared snapshots."""
         return tuple(self._forward_env)
 
+    @classmethod
+    def credential_free(cls, *, image: str, task_id: str, timeout: int = 60):
+        """Create an isolated, no-mount/no-network execution target for host-brokered work.
+
+        Unlike normal operator shells this path never borrows skill credentials,
+        proxy tokens, host directories or ambient process configuration.
+        """
+        from tools.environments.docker_isolation import CredentialFreeDockerEnvironment
+
+        return CredentialFreeDockerEnvironment(image=image, task_id=task_id, timeout=timeout)
+
     def __init__(
         self,
         image: str,

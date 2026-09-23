@@ -1380,6 +1380,9 @@ export const zh: Translations = {
       fallbackEmpty: '未配置备用模型 — 默认模型失败时才会使用备用模型。',
       notInCatalog: '不在该提供方的模型列表中 — 调用可能回退到备用模型。',
       tasks: {
+        engineering_planner: { label: '工程规划模型', hint: '制定实施计划' },
+        engineering_worker: { label: '工程实施模型', hint: '编写和修复代码' },
+        engineering_reviewer: { label: '工程复审模型', hint: '验证失败后重新规划' },
         vision: { label: '视觉', hint: '图片分析' },
         compression: { label: '压缩', hint: '上下文压缩' },
         skills_hub: { label: '技能中心', hint: '技能搜索' },

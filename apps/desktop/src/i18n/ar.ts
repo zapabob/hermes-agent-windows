@@ -924,6 +924,9 @@ export const ar = defineLocale({
       autoUseMain: 'تلقائي · استخدام النموذج الرئيسي',
       providerDefault: '(افتراضي المزوّد)',
       tasks: {
+        engineering_planner: { label: 'مخطط التنفيذ', hint: 'وضع خطة التنفيذ' },
+        engineering_worker: { label: 'منفذ العمل', hint: 'تنفيذ الشيفرة وإصلاحها' },
+        engineering_reviewer: { label: 'مراجع الخطة', hint: 'إعادة التخطيط بعد فشل التحقق' },
         vision: {
           label: 'الرؤية',
           hint: 'تحليل الصور'

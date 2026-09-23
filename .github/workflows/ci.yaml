@@ -84,6 +84,12 @@ jobs:
     if: needs.detect.outputs.python == 'true'
     uses: ./.github/workflows/tests-os.yml
 
+  engineering-router:
+    name: Native engineering workflow
+    needs: detect
+    if: needs.detect.outputs.python == 'true' || needs.detect.outputs.frontend == 'true'
+    uses: ./.github/workflows/engineering-router.yml
+
   lint:
     name: Python lints
     needs: detect
@@ -228,6 +234,7 @@ jobs:
       - detect
       - tests
       - tests-os
+      - engineering-router
       - lint
       - js-tests
       - installer-tests

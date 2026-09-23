@@ -466,8 +466,8 @@ gateway = ["assets/**/*"]
 # Bundled plugin discovery reads these manifests at runtime. Keep them in
 # sealed wheels with the plugin Python modules; without this declaration the
 # wheel contains adapters but discovery finds zero bundled plugins.
-plugins = ["**/plugin.yaml", "**/plugin.yml"]
-downstream = ["distribution.json", "security/*.json", "security/rules/*.yar"]
+plugins = ["**/plugin.yaml", "**/plugin.yml", "implementation_router/*.md"]
+downstream = ["distribution.json", "security/*.json", "security/rules/*.yar", "implementation_router/locales.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
