@@ -165,3 +165,159 @@ async def test_parent_dashboard_auth_never_grants_or_blocks_resource_auth(
                 "/.well-known/oauth-protected-resource/api/control/mcp"
             )).status_code == 200
             assert (await http_client.get("/api/unrelated-private")).status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_real_protocol_start_waits_for_human_and_deduplicates(
+        control_module, tmp_path):
+    import asyncio
+    import threading
+    from downstream.control_mcp.coordinator import HostControlCoordinator
+    from tools import approval
+
+    auth = control_module('auth')
+    service_module = control_module('service')
+    transport = control_module('transport')
+    journal = control_module('journal').HostControlJournal(tmp_path / 'control.db')
+    journal.initialise()
+    private = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    public = private.public_key().public_bytes(
+        serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)
+    grants = {
+        'codex': auth.HostGrant(subject='human-1', client_registration='codex',
+            revision=1, scopes=('hermes:read', 'hermes:run:start'),
+            profiles=('p1',), workspaces=(('p1', 'w1'),)),
+        'chatgpt': auth.HostGrant(subject='human-1', client_registration='chatgpt',
+            revision=1, scopes=('hermes:read',),
+            profiles=('p1',), workspaces=(('p1', 'w1'),)),
+    }
+    verifier = auth.ResourceVerifier(issuer='https://issuer.invalid',
+        resource='https://hermes.invalid/api/control/mcp',
+        public_keys={'key-1': public},
+        grant_lookup=lambda subject, client: grants.get(client) if subject ==
+                     'human-1' else None)
+    issued = jwt.encode({
+        'iss': verifier.issuer, 'aud': verifier.resource, 'sub': 'human-1',
+        'client_id': 'codex', 'scope': 'hermes:read hermes:run:start',
+        'iat': 90, 'nbf': 90, 'exp': 200, 'grant_revision': 1,
+    }, private, algorithm='RS256', headers={'kid': 'key-1', 'typ': 'at+jwt'})
+    displayed = []
+    executed = threading.Event()
+    calls = []
+
+    class Owner:
+        def start_approved(self, ctx, operation_id):
+            journal.claim_approved(ctx, operation_id, now=101)
+            calls.append(operation_id)
+            journal.transition(operation_id, expected_state='RUNNING',
+                               new_state='SUCCEEDED', now=102)
+            executed.set()
+
+    def schedule(fn, *args):
+        worker = threading.Thread(target=fn, args=args, daemon=True)
+        worker.start()
+        return worker
+
+    coordinator = HostControlCoordinator(journal=journal, owner=Owner(),
+        select_human_session=lambda *_: 'human-mcp', submit_background=schedule,
+        revalidate_grant=verifier.revalidate, clock=lambda: 100)
+
+    class Source:
+        def runtime(self, profile):
+            return {'state': 'UNKNOWN'}
+        def routes(self, profile):
+            return {'state': 'UNKNOWN', 'routes': []}
+
+    service = service_module.HostControlService(source=Source(), journal=journal,
+        coordinator=coordinator, clock=lambda: 100)
+    host = transport.create_control_mcp(service, verifier=verifier,
+        allowed_hosts=('hermes.invalid',),
+        allowed_origins=('https://chatgpt.com',), clock=lambda: 100)
+    args = {'profile_id': 'p1', 'workspace_id': 'w1',
+            'idempotency_key': 'sdk-write-1', 'expected_revision': 'revision-1',
+            'source_sha': 'a' * 40, 'task': 'One bounded change'}
+    approval.register_gateway_notify('human-mcp', displayed.append)
+    try:
+        async with host.lifespan():
+            async with httpx2.AsyncClient(transport=httpx2.ASGITransport(app=host.app),
+                    base_url='https://hermes.invalid',
+                    headers={'Authorization': 'Bearer ' + issued}) as http_client:
+                async with streamable_http_client(
+                        'https://hermes.invalid/api/control/mcp',
+                        http_client=http_client) as streams:
+                    async with ClientSession(*streams) as session:
+                        await session.initialize()
+                        tools = {item.name for item in (await session.list_tools()).tools}
+                        assert 'hermes_start_engineering_run' in tools
+                        capabilities = await session.call_tool(
+                            'hermes_get_capabilities', {'profile_id': 'p1'})
+                        assert capabilities.structured_content['capabilities']['write'] is True
+                        operations = capabilities.structured_content['capabilities']['write_operations']
+                        assert operations['start_engineering_run'] is True
+                        assert operations['patch_routes'] is False
+                        assert operations['merge_pull_request'] is False
+                        forged = await session.call_tool('hermes_start_engineering_run',
+                            {**args, 'approved': True})
+                        assert forged.is_error is True
+                        assert displayed == [] and calls == []
+                        first = await session.call_tool('hermes_start_engineering_run', args)
+                        operation = first.structured_content
+                        assert operation['state'] == 'PENDING_APPROVAL'
+                        assert calls == [] and len(displayed) == 1
+                        grants['chatgpt'] = replace(grants['chatgpt'],
+                            scopes=('hermes:read', 'hermes:run:start'))
+                        competing_token = jwt.encode({
+                            'iss': verifier.issuer, 'aud': verifier.resource,
+                            'sub': 'human-1', 'client_id': 'chatgpt',
+                            'scope': 'hermes:read hermes:run:start',
+                            'iat': 90, 'nbf': 90, 'exp': 200, 'grant_revision': 1,
+                        }, private, algorithm='RS256',
+                            headers={'kid': 'key-1', 'typ': 'at+jwt'})
+                        async with httpx2.AsyncClient(
+                                transport=httpx2.ASGITransport(app=host.app),
+                                base_url='https://hermes.invalid',
+                                headers={'Authorization': 'Bearer ' + competing_token}) as competing_http:
+                            async with streamable_http_client(
+                                    'https://hermes.invalid/api/control/mcp',
+                                    http_client=competing_http) as competing_streams:
+                                async with ClientSession(*competing_streams) as competing:
+                                    await competing.initialize()
+                                    busy = await competing.call_tool(
+                                        'hermes_start_engineering_run',
+                                        {**args, 'idempotency_key': 'chatgpt-write-1'})
+                                    assert busy.is_error is True
+                                    assert 'workspace_busy' in str(busy.content)
+                                    assert len(displayed) == 1 and calls == []
+                        assert approval.resolve_control_consent(
+                            session_key='human-mcp',
+                            request_id=displayed[0]['request_id'],
+                            intent_digest=operation['intent_digest'],
+                            choice='once', now=100)
+                        assert await asyncio.to_thread(executed.wait, 5)
+                        again = await session.call_tool('hermes_start_engineering_run', args)
+                        assert again.structured_content['operation_id'] == operation['operation_id']
+                        assert calls == [operation['operation_id']]
+            read_only = jwt.encode({
+                'iss': verifier.issuer, 'aud': verifier.resource, 'sub': 'human-1',
+                'client_id': 'chatgpt', 'scope': 'hermes:read', 'iat': 90,
+                'nbf': 90, 'exp': 200, 'grant_revision': 1,
+            }, private, algorithm='RS256', headers={'kid': 'key-1', 'typ': 'at+jwt'})
+            async with httpx2.AsyncClient(transport=httpx2.ASGITransport(app=host.app),
+                    base_url='https://hermes.invalid',
+                    headers={'Authorization': 'Bearer ' + read_only}) as http_client:
+                async with streamable_http_client(
+                        'https://hermes.invalid/api/control/mcp',
+                        http_client=http_client) as streams:
+                    async with ClientSession(*streams) as session:
+                        await session.initialize()
+                        capabilities = await session.call_tool(
+                            'hermes_get_capabilities', {'profile_id': 'p1'})
+                        assert capabilities.structured_content['capabilities']['write'] is False
+                        assert capabilities.structured_content['capabilities']['write_operations']['start_engineering_run'] is False
+                        denied = await session.call_tool('hermes_start_engineering_run',
+                            {**args, 'idempotency_key': 'read-only-client'})
+                        assert denied.is_error is True
+                        assert 'insufficient_scope' in str(denied.content)
+                        assert len(displayed) == 1
+    finally:
+        approval.unregister_gateway_notify('human-mcp')
