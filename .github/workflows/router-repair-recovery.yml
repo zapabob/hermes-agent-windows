@@ -1,0 +1,32 @@
+name: Recover router repair payload
+on:
+  push:
+    branches: [ci/router-dogfood-fix-snapshot-20260923]
+    paths: [.github/workflows/router-repair-recovery.yml]
+permissions:
+  contents: read
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Recover the previously saved public repair bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir recovered
+          curl --fail --location --retry 2 https://raw.githubusercontent.com/zapabob/hermes-agent-windows/635bfc4bb853b1d8802c94bc58f83cf6a9121a2c/.router-repair/downstream.json -o recovered/downstream.json
+          test "$(git hash-object recovered/downstream.json)" = abb5209e25295ec36fbba9d79a11763f20d14653
+          python - <<'PY'
+          import base64,hashlib,json,lzma,pathlib
+          p=pathlib.Path('recovered'); d=json.loads((p/'downstream.json').read_text())
+          patch=lzma.decompress(base64.b64decode(d['patch_xz_base64'],validate=True))
+          assert hashlib.sha256(patch).hexdigest()==d['patch_sha256']
+          (p/'downstream.patch').write_bytes(patch)
+          print('Verified patch:',d['base'],d['head'],d['tree'])
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: recovered-router-repair
+          path: recovered/
+          retention-days: 3
