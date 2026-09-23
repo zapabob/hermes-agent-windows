@@ -53,6 +53,10 @@ Updated: 2026-09-24 JST. Repository: `zapabob/hermes-agent-windows` only. This l
 
 - Task 4 evidence review commit `a7ccf29e7d6991c21d1c541a42a27141db5142f9`: two successful-looking native check rows for the same attempt but different revisions were incorrectly projected as verified. The new behavioural case was RED, then the reader required one shared revision; `tests/control_mcp/test_evidence_provenance.py` finished 11 passed, Ruff passed. This is receipt consistency, not a claim that provenance alone authorises application.
 
+## 2026-09-24 affected-regression gate
+
+- On feature HEAD `387808de415637580b3d3a4a280d19da07d7a57c`, the file-isolated runner covered the handoff's affected command set: `tests/control_mcp`, `tests/tools/test_approval.py`, `tests/tools/test_approval_interrupt.py`, `tests/tools/test_mcp_elicitation.py`, `tests/hermes_cli/test_dashboard_token_auth.py`, `tests/hermes_cli/test_config.py`, `tests/hermes_cli/test_config_env_expansion.py`, `tests/hermes_cli/test_managed_scope_config.py`, `tests/hermes_cli/test_read_raw_config_readonly.py`, `tests/test_mcp_serve.py`, `tests/implementation_router`. Command: `python scripts/run_tests_parallel.py -j 2 [these paths] -q`. Result: 25 files, 575 passed, 0 failed, 3 skipped, 66.2 seconds. This runner uses subprocess isolation; it does not substitute for the ordinary full suite or CI.
+
 ## Current release gates
 
 Do not advertise C or merge while Tasks 4–8, real client authentication/read/approved-write, full exact-head checks and security review remain open. Live endpoint and client settings require a separate concrete operator approval; Pro feature limitations must be reported as client limitations rather than masked as read results.
