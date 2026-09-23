@@ -1,0 +1,59 @@
+name: Publish verified router repair branch
+on:
+  push:
+    branches: [ci/router-dogfood-fix-snapshot-20260923]
+    paths: [.github/workflows/router-repair-publish.yml]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: 34562508555d84f0740eda7a0af5ec4ff90bbe60
+          persist-credentials: false
+      - name: Reconstruct only the previously verified source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 https://raw.githubusercontent.com/zapabob/hermes-agent-windows/635bfc4bb853b1d8802c94bc58f83cf6a9121a2c/.router-repair/downstream.json -o "$RUNNER_TEMP/repair.json"
+          test "$(git hash-object "$RUNNER_TEMP/repair.json")" = abb5209e25295ec36fbba9d79a11763f20d14653
+          python - <<'PY'
+          import base64,hashlib,json,lzma,os,pathlib,subprocess
+          p=pathlib.Path(os.environ['RUNNER_TEMP']); d=json.loads((p/'repair.json').read_text())
+          assert d['base']=='34562508555d84f0740eda7a0af5ec4ff90bbe60'
+          assert d['tree']=='efba4b45bd9c899ab88b740097da0000fc8e4f5f'
+          assert d['head']=='643d9519652f5dcdf7635c61cf1e4f1f0ed69486'
+          patch=lzma.decompress(base64.b64decode(d['patch_xz_base64'],validate=True))
+          assert hashlib.sha256(patch).hexdigest()==d['patch_sha256']
+          subprocess.run(['git','apply','--check','--unidiff-zero','-'],input=patch,check=True)
+          subprocess.run(['git','apply','--index','--unidiff-zero','-'],input=patch,check=True)
+          assert subprocess.check_output(['git','write-tree'],text=True).strip()==d['tree']
+          raw=base64.b64decode(d['commit_base64'],validate=True)
+          head=subprocess.check_output(['git','hash-object','-w','-t','commit','--stdin'],input=raw).decode().strip()
+          assert head==d['head']
+          subprocess.run(['git','update-ref','refs/heads/repair-candidate',head],check=True)
+          print('Restored exact tested candidate',head)
+          PY
+      - name: Fast-forward the dedicated repair branch, never main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ref=refs/heads/fix/engineering-effort-diagnostics-20260923
+          current=$(git ls-remote origin "$ref" | cut -f1)
+          if [ "$current" = 643d9519652f5dcdf7635c61cf1e4f1f0ed69486 ]; then exit 0; fi
+          test "$current" = 34562508555d84f0740eda7a0af5ec4ff90bbe60
+          git -c credential.helper='!gh auth git-credential' push origin "repair-candidate:$ref"
+      - name: Export the pinned optional regression dependencies
+        run: |
+          mkdir -p "$RUNNER_TEMP/regression-wheels"
+          python -m pip download --only-binary=:all: --no-deps --dest "$RUNNER_TEMP/regression-wheels" anthropic==0.87.0 docstring-parser==0.16
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: router-optional-regression-wheels
+          path: ${{ runner.temp }}/regression-wheels/
+          retention-days: 3
