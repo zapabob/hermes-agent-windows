@@ -70,6 +70,8 @@ def run_workflow(ctx, args):
                                      data_dir=plugin_data_dir('implementation_router'), binding=binding)
         result = ImplementationRouter(Policy(), routing=routes).run(
             task=args['task'], binding=binding, required_checks=tuple(c['id'] for c in workspace['checks']), host=host)
+        if host.run_dir.is_dir():
+            host.record_result(result)
         output = result.to_dict(locale=language)
         output['run_id'] = binding.run_id
         if result.state == 'SUCCEEDED' and host.result_dir is not None:

@@ -59,9 +59,22 @@ class HostControlService:
         elif name == 'hermes_get_routes':
             data = self.source.routes(profile)
         elif name in ('hermes_get_run', 'hermes_get_evidence'):
-            # A supplied workspace_id is not proof that a run belongs to it.
-            # Wait for the producer's authorised owner mapping (Task 4).
-            data = {'state': 'UNSUPPORTED', 'reason': 'workspace_bound_producer_unwired'}
+            if getattr(self.source, 'workspace_bound_runs', False) is not True:
+                data = {'state': 'UNSUPPORTED', 'reason': 'workspace_bound_producer_unwired'}
+            else:
+                # Resolve only the producer's owner manifest before detailed
+                # evidence, so another workspace cannot probe its receipts.
+                owner = self.source.workspace_for_run(profile, args['run_id'])
+                if owner is None:
+                    data = {'state': 'UNSUPPORTED', 'reason': 'workspace_bound_producer_unwired'}
+                elif owner != args['workspace_id']:
+                    raise ControlError('resource_denied')
+                else:
+                    reader = self.source.run if name == 'hermes_get_run' else self.source.evidence
+                    observed = reader(profile, args['run_id'])
+                    if observed.get('workspace_id') != owner:
+                        raise ControlError('observation_unavailable')
+                    data = observed
         elif name == 'hermes_get_operation' and self.journal is not None:
             data = self.journal.get(ctx, args['operation_id'], profile_id=profile,
                                     workspace_id=args['workspace_id'], now=now)

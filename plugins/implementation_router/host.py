@@ -12,8 +12,9 @@ import json
 import os
 from pathlib import Path
 import shlex
+import sys
 
-from downstream.implementation_router.kernel import CheckReceipt, StageResult
+from downstream.implementation_router.kernel import CheckReceipt, RunResult, StageResult
 from downstream.implementation_router.security import CredentialFreeAdmission
 from tools.environments.docker import DockerEnvironment
 from tools.terminal_tool import bind_credential_free_environment
@@ -34,6 +35,7 @@ class NativeEngineeringHost:
         self.result_dir = None
         self.run_dir = data_dir / binding.run_id
         self._journal = None
+        self._evidence = None
         self._failure_logs = {}
         self._guards = {}
         self._source = {}
@@ -87,7 +89,9 @@ class NativeEngineeringHost:
         try:
             self.run_dir.mkdir(mode=0o700)
             self._journal = (self.run_dir / 'events.jsonl').open('x', encoding='utf-8')
+            self._evidence = (self.run_dir / 'verification.jsonl').open('x', encoding='utf-8')
             self._source = read_sources(source_root, tuple(self.workspace['source_paths']))
+            self.record_manifest()
             self.env = DockerEnvironment.credential_free(
                 image=self.workspace['image'], task_id=binding.run_id, timeout=60)
             with bind_credential_free_environment(binding.run_id, self.env):
@@ -122,6 +126,57 @@ class NativeEngineeringHost:
         if self._journal is not None:
             self._journal.close()
             self._journal = None
+        if self._evidence is not None:
+            self._evidence.close()
+            self._evidence = None
+
+    def _write_receipt(self, name, payload):
+        with (self.run_dir / name).open('x', encoding='utf-8') as stream:
+            stream.write(json.dumps(payload, sort_keys=True, separators=(',', ':')) + '\n')
+            stream.flush()
+            os.fsync(stream.fileno())
+
+    def record_manifest(self):
+        """Publish the producer's owner mapping before any Docker effect."""
+        self._write_receipt('run-manifest.json', {
+            'schema_version': 1, 'run_id': self.binding.run_id,
+            'workspace_id': self.binding.workspace_id,
+            'source_digest': digest(self._source),
+            'route_fingerprint': self.routes.fingerprint(),
+            'required_checks': [row['id'] for row in self.workspace['checks']],
+        })
+
+    def record_result(self, result):
+        """A terminal receipt is committed only after the native router returns."""
+        if type(result) is not RunResult:
+            raise ValueError('Invalid native run result')
+        succeeded = result.state == 'SUCCEEDED'
+        if succeeded and (self.last_verified is None or self.result_dir is None
+                          or not result.events or result.events[-1].kind != 'succeeded'):
+            raise RuntimeError('Missing verified native result')
+        self._write_receipt('run-result.json', {
+            'schema_version': 1, 'run_id': self.binding.run_id,
+            'workspace_id': self.binding.workspace_id, 'run_state': result.state,
+            'reason': result.reason,
+            'verified_attempt_id': result.events[-1].attempt_id if succeeded else None,
+            'candidate_digest': self.last_verified if succeeded else None,
+        })
+
+    def _record_check_evidence(self, receipt, candidate_digest):
+        """Persist the native verifier's result before it can count as success."""
+        if self._evidence is None:
+            raise RuntimeError('No durable verifier evidence is available')
+        record = {
+            'schema_version': 1, 'evidence_type': 'host_verifier_check',
+            **asdict(receipt),
+            'source_digest': digest(self._source),
+            'candidate_digest': candidate_digest,
+            'route_fingerprint': self.routes.fingerprint(),
+            'platform': sys.platform,
+        }
+        self._evidence.write(json.dumps(record, sort_keys=True, separators=(',', ':')) + '\n')
+        self._evidence.flush()
+        os.fsync(self._evidence.fileno())
 
     def _check_guards(self, files):
         if any(files.get(name) != content for name, content in self._guards.items()):
@@ -192,6 +247,7 @@ class NativeEngineeringHost:
             receipt = CheckReceipt(
                 check_id, request.attempt_id, self.binding.run_id, self.binding.workspace_id,
                 request.revision, code, True, code == 124, True, digest(before), digest(after))
+            self._record_check_evidence(receipt, request.workspace_digest)
             receipts.append(receipt)
             if code != 0:
                 self._failure_logs[check_id] = str(result.get('output', ''))[-8000:]
