@@ -224,6 +224,19 @@ class HostControlJournal:
             conn.execute('DELETE FROM control_reservations WHERE operation_id=?', (operation_id,))
             return True
 
+    def block_unexecuted(self, operation_id, *, now):
+        """Trusted host closes a revoked intent only before native execution."""
+        with self._transaction() as conn:
+            row = conn.execute('SELECT state FROM control_operations WHERE operation_id=?',
+                               (operation_id,)).fetchone()
+            if row is None or row['state'] not in ('PENDING_APPROVAL', 'APPROVED'):
+                return False
+            conn.execute("UPDATE control_operations SET state='BLOCKED',updated_at=? WHERE operation_id=?",
+                         (now, operation_id))
+            conn.execute('DELETE FROM control_reservations WHERE operation_id=?',
+                         (operation_id,))
+            return True
+
     def mark_admission_unknown(self, operation_id, *, now):
         """Keep the reservation when host background-dispatch outcome is unsure."""
         with self._transaction() as conn:

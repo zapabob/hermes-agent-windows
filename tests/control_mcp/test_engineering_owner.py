@@ -49,7 +49,7 @@ def test_approved_operation_invokes_registered_entrypoint_once(
         owner = EngineeringRunOwner(journal=journal, plugin_ctx=plugin_ctx,
                                     submit=pool.submit, validate_intent=lambda request: True,
                                     verify_result=lambda request, run_id, result: True,
-                                    clock=lambda: 103)
+                                    revalidate_grant=lambda _ctx, *, now: None, clock=lambda: 103)
         handle = owner.start_approved(ctx, operation_id)
         assert handle.future.result(timeout=5)['state'] == 'SUCCEEDED'
         assert calls == [(plugin_ctx, {'workspace': 'w1', 'task': 'Implement a bounded test'},
@@ -82,7 +82,7 @@ def test_cancel_is_bound_to_run_generation_and_live_thread(
         owner = EngineeringRunOwner(journal=journal, plugin_ctx=object(),
                                     submit=pool.submit, validate_intent=lambda request: True,
                                     verify_result=lambda request, run_id, result: True,
-                                    clock=lambda: 103)
+                                    revalidate_grant=lambda _ctx, *, now: None, clock=lambda: 103)
         handle = owner.start_approved(ctx, operation_id)
         try:
             assert entered.wait(5)
@@ -105,7 +105,7 @@ def test_preflight_rejection_has_no_native_effect(control_module, control_contex
     with ThreadPoolExecutor(max_workers=1) as pool:
         owner = EngineeringRunOwner(journal=journal, plugin_ctx=object(),
             submit=pool.submit, validate_intent=lambda request: False,
-            verify_result=lambda *args: True, clock=lambda: 103)
+            verify_result=lambda *args: True, revalidate_grant=lambda _ctx, *, now: None, clock=lambda: 103)
         handle = owner.start_approved(ctx, operation_id)
         assert handle.future.result(timeout=5)['state'] == 'BLOCKED'
     assert calls == []
@@ -125,7 +125,7 @@ def test_success_without_native_evidence_stays_unknown(
     with ThreadPoolExecutor(max_workers=1) as pool:
         owner = EngineeringRunOwner(journal=journal, plugin_ctx=object(),
             submit=pool.submit, validate_intent=lambda request: True,
-            verify_result=lambda *args: False, clock=lambda: 103)
+            verify_result=lambda *args: False, revalidate_grant=lambda _ctx, *, now: None, clock=lambda: 103)
         handle = owner.start_approved(ctx, operation_id)
         assert handle.future.result(timeout=5)['state'] == 'UNKNOWN'
     assert journal.get(ctx, operation_id, profile_id='p1', workspace_id='w1',
@@ -182,10 +182,77 @@ def test_owner_calls_real_entrypoint_with_host_issued_identity(
     with ThreadPoolExecutor(max_workers=1) as pool:
         owner = EngineeringRunOwner(journal=journal, plugin_ctx=plugin_ctx,
             submit=pool.submit, validate_intent=lambda request: True,
-            verify_result=lambda *args: False, clock=lambda: 103)
+            verify_result=lambda *args: False, revalidate_grant=lambda _ctx, *, now: None, clock=lambda: 103)
         handle = owner.start_approved(ctx, operation_id)
         assert handle.future.result(timeout=5)['state'] == 'BLOCKED'
     assert len(seen) == 1
     assert seen[0]['binding'].run_id == handle.run_id
     assert seen[0]['operation_id'] == operation_id
     assert seen[0]['ctx'] is plugin_ctx
+
+
+def test_revoked_grant_before_native_worker_has_no_effect(
+        control_module, control_context, tmp_path, monkeypatch):
+    from downstream.control_mcp.contracts import ControlError
+    from plugins.implementation_router import entrypoint
+    from plugins.implementation_router.control import EngineeringRunOwner
+
+    journal, ctx, operation_id = _approved(control_module, control_context, tmp_path)
+    calls = []
+    monkeypatch.setattr(entrypoint, 'run_workflow',
+                        lambda *args, **kwargs: calls.append(True))
+    gate = threading.Event()
+    revoked = threading.Event()
+
+    def revalidate(_ctx, *, now):
+        if revoked.is_set():
+            raise ControlError('revoked_grant')
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        def deferred(fn, *args):
+            return pool.submit(lambda: (gate.wait(5), fn(*args))[1])
+        owner = EngineeringRunOwner(journal=journal, plugin_ctx=object(),
+            submit=deferred, validate_intent=lambda request: True,
+            verify_result=lambda *args: True, revalidate_grant=revalidate,
+            clock=lambda: 103)
+        handle = owner.start_approved(ctx, operation_id)
+        revoked.set()
+        gate.set()
+        assert handle.future.result(timeout=5)['state'] == 'BLOCKED'
+    assert calls == []
+    assert journal.get(ctx, operation_id, profile_id='p1', workspace_id='w1',
+                       now=104)['state'] == 'BLOCKED'
+
+
+def test_ambiguous_native_dispatch_never_runs_and_keeps_reservation(
+        control_module, control_context, tmp_path, monkeypatch):
+    from downstream.control_mcp.contracts import ControlError
+    from plugins.implementation_router import entrypoint
+    from plugins.implementation_router.control import EngineeringRunOwner
+
+    journal, ctx, operation_id = _approved(control_module, control_context, tmp_path)
+    native_calls = []
+    monkeypatch.setattr(entrypoint, 'run_workflow',
+                        lambda *args, **kwargs: native_calls.append(True))
+    scheduled = []
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        def ambiguous(fn, *args):
+            scheduled.append(pool.submit(fn, *args))
+            raise RuntimeError('accepted but no acknowledgement')
+        owner = EngineeringRunOwner(journal=journal, plugin_ctx=object(),
+            submit=ambiguous, validate_intent=lambda request: True,
+            verify_result=lambda *args: True,
+            revalidate_grant=lambda _ctx, *, now: None, clock=lambda: 103)
+        with pytest.raises(ControlError) as caught:
+            owner.start_approved(ctx, operation_id)
+        assert caught.value.code == 'host_executor_unavailable'
+        assert scheduled[0].result(timeout=5)['state'] == 'UNKNOWN'
+    assert native_calls == []
+    assert journal.get(ctx, operation_id, profile_id='p1', workspace_id='w1',
+                       now=104)['state'] == 'UNKNOWN'
+    with pytest.raises(ControlError) as busy:
+        journal.reserve(ctx, {'kind': 'start_engineering_run', 'profile_id': 'p1',
+            'workspace_id': 'w1', 'idempotency_key': 'another',
+            'expected_revision': 'revision-1', 'source_sha': 'a' * 40,
+            'parameters': {'task': 'No accidental replay'}}, now=104)
+    assert busy.value.code == 'workspace_busy'
