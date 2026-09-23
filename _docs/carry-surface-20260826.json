@@ -20,12 +20,12 @@
   "schema_version": 1,
   "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
   "summary": {
-    "all_fork_specific_loc": 2691881,
-    "carry_surface_files": 5095,
-    "cwc": 86316765,
-    "fork_owned_loc": 1142679,
-    "upstream_owned_fork_loc": 1549202,
-    "utr": 0.575509
+    "all_fork_specific_loc": 2696634,
+    "carry_surface_files": 5096,
+    "cwc": 86353481,
+    "fork_owned_loc": 1146972,
+    "upstream_owned_fork_loc": 1549662,
+    "utr": 0.574665
   },
   "top_carry_risks": [
     {
@@ -38,10 +38,10 @@
       "upstream_frequency": 158
     },
     {
-      "added": 20198,
-      "cwc": 6106410,
+      "added": 20225,
+      "cwc": 6114105,
       "deleted": 1228,
-      "patch_size": 21426,
+      "patch_size": 21453,
       "path": "hermes_cli/web_server.py",
       "semantic_coupling": 3,
       "upstream_frequency": 95
@@ -83,10 +83,10 @@
       "upstream_frequency": 73
     },
     {
-      "added": 8487,
-      "cwc": 3417600,
-      "deleted": 4313,
-      "patch_size": 12800,
+      "added": 8557,
+      "cwc": 3436557,
+      "deleted": 4314,
+      "patch_size": 12871,
       "path": "agent/auxiliary_client.py",
       "semantic_coupling": 3,
       "upstream_frequency": 89
