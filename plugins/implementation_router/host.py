@@ -10,6 +10,7 @@ from dataclasses import asdict
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shlex
 import sys
@@ -26,7 +27,11 @@ from .workspace import digest, import_sources, read_sources, snapshot, write_res
 
 class NativeEngineeringHost:
     def __init__(self, *, ctx, routes, workspace: dict, data_dir: Path, binding,
-                 max_actor_calls: int = 32):
+                 max_actor_calls: int = 32, operation_id: str | None = None):
+        if operation_id is not None and (type(operation_id) is not str
+                                          or not re.fullmatch(r'op-[a-f0-9]{32}', operation_id)):
+            raise ValueError('Invalid host operation identity')
+        self.operation_id = operation_id
         self.ctx, self.routes, self.workspace = ctx, routes, workspace
         self.data_dir, self.binding = data_dir, binding
         self.max_actor_calls = max_actor_calls
@@ -140,6 +145,7 @@ class NativeEngineeringHost:
         """Publish the producer's owner mapping before any Docker effect."""
         self._write_receipt('run-manifest.json', {
             'schema_version': 1, 'run_id': self.binding.run_id,
+            'operation_id': self.operation_id,
             'workspace_id': self.binding.workspace_id,
             'source_digest': digest(self._source),
             'route_fingerprint': self.routes.fingerprint(),

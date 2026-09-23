@@ -44,7 +44,7 @@ def _workspace(value):
     return value
 
 
-def run_workflow(ctx, args):
+def run_workflow(ctx, args, *, run_id=None, operation_id=None):
     language = 'en'
     host = None
     try:
@@ -65,9 +65,16 @@ def run_workflow(ctx, args):
         from plugins.plugin_storage import plugin_data_dir
         from .host import NativeEngineeringHost
 
-        binding = RunBinding('eng-' + uuid.uuid4().hex, args['workspace'])
+        if run_id is not None and (type(run_id) is not str or not re.fullmatch(r'eng-[a-f0-9]{32}', run_id)):
+            raise ValueError('Invalid host run identity')
+        if operation_id is not None and (type(operation_id) is not str
+                                          or not re.fullmatch(r'op-[a-f0-9]{32}', operation_id)
+                                          or run_id is None):
+            raise ValueError('Invalid host operation identity')
+        binding = RunBinding(run_id or 'eng-' + uuid.uuid4().hex, args['workspace'])
         host = NativeEngineeringHost(ctx=ctx, routes=routes, workspace=workspace,
-                                     data_dir=plugin_data_dir('implementation_router'), binding=binding)
+                                     data_dir=plugin_data_dir('implementation_router'), binding=binding,
+                                     operation_id=operation_id)
         result = ImplementationRouter(Policy(), routing=routes).run(
             task=args['task'], binding=binding, required_checks=tuple(c['id'] for c in workspace['checks']), host=host)
         if host.run_dir.is_dir():

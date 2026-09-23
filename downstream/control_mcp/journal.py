@@ -210,6 +210,25 @@ class HostControlJournal:
                 conn.execute('DELETE FROM control_reservations WHERE operation_id=?',(operation_id,))
             return _public(conn.execute('SELECT * FROM control_operations WHERE operation_id=?',(operation_id,)).fetchone())
 
+    def claim_approved(self, ctx, operation_id, *, now):
+        """Atomically consume one approved intent for the trusted run owner."""
+        with self._transaction() as conn:
+            row = conn.execute('SELECT * FROM control_operations WHERE operation_id=?',
+                               (operation_id,)).fetchone()
+            if row is None:
+                raise ControlError('resource_denied')
+            require_access(ctx, scope=SCOPES[row['kind']], profile_id=row['profile_id'],
+                           workspace_id=row['workspace_id'], now=now)
+            if (row['subject'] != ctx.subject or row['client_registration'] != ctx.client_registration
+                    or row['resource'] != ctx.resource or row['grant_revision'] != ctx.grant_revision):
+                raise ControlError('resource_denied')
+            if (row['kind'] != 'start_engineering_run' or row['state'] != 'APPROVED'
+                    or row['expires_at'] <= now):
+                raise ControlError('operation_conflict')
+            conn.execute("UPDATE control_operations SET state='RUNNING',updated_at=? WHERE operation_id=?",
+                         (now, operation_id))
+            return json.loads(row['request_json'])
+
     def transition(self,operation_id,*,expected_state,new_state,now):
         """Trusted host execution only; not an exported tool or arbitrary setter."""
         if new_state not in _EDGES.get(expected_state,set()):

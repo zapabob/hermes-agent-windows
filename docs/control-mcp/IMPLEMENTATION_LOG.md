@@ -33,4 +33,3 @@ Updated: 2026-09-24 JST. Repository: `zapabob/hermes-agent-windows` only. This l
 ## Current release gates
 
 Do not advertise C or merge while Tasks 4–8, real client authentication/read/approved-write, full exact-head checks and security review remain open. Live endpoint and client settings require a separate concrete operator approval; Pro feature limitations must be reported as client limitations rather than masked as read results.
-

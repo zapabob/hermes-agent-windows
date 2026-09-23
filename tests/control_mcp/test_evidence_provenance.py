@@ -30,7 +30,7 @@ def test_native_verify_persists_typed_check_receipt(tmp_path: Path, monkeypatch)
     instance = native_host.NativeEngineeringHost(
         ctx=None, routes=routes,
         workspace={'checks': [{'id': 'unit', 'argv': ['/usr/bin/true']}]},
-        data_dir=tmp_path, binding=binding,
+        data_dir=tmp_path, binding=binding, operation_id='op-' + 'c' * 32,
     )
     instance.run_dir.mkdir()
     instance._source = files
@@ -60,6 +60,7 @@ def test_native_verify_persists_typed_check_receipt(tmp_path: Path, monkeypatch)
     manifest = json.loads((instance.run_dir / 'run-manifest.json').read_text(encoding='utf-8'))
     terminal = json.loads((instance.run_dir / 'run-result.json').read_text(encoding='utf-8'))
     assert manifest['workspace_id'] == 'w1' and manifest['required_checks'] == ['unit']
+    assert manifest['operation_id'] == 'op-' + 'c' * 32
     assert terminal['verified_attempt_id'] == attempt and terminal['candidate_digest'] == candidate
     assert rows == [{
         'schema_version': 1, 'evidence_type': 'host_verifier_check',
