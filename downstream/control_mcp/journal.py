@@ -124,7 +124,7 @@ class HostControlJournal:
         finally:
             conn.close()
 
-    def reserve(self,ctx,request,*,now):
+    def reserve(self,ctx,request,*,now,with_created=False):
         fingerprint=_validate_request(ctx,request,now)
         with self._transaction() as conn:
             old=conn.execute('SELECT * FROM control_operations WHERE subject=? AND client_registration=? AND idempotency_key=?',
@@ -136,7 +136,8 @@ class HostControlJournal:
                     conn.execute("UPDATE control_operations SET state='EXPIRED',updated_at=? WHERE operation_id=?",(now,old['operation_id']))
                     conn.execute('DELETE FROM control_reservations WHERE operation_id=?',(old['operation_id'],))
                     old=conn.execute('SELECT * FROM control_operations WHERE operation_id=?',(old['operation_id'],)).fetchone()
-                return _public(old)
+                public = _public(old)
+                return (public, False) if with_created else public
             # Only provably unexecuted expired intents are released here.
             expired=conn.execute("SELECT operation_id FROM control_operations WHERE state='PENDING_APPROVAL' AND expires_at<=?",(now,)).fetchall()
             for row in expired:
@@ -154,7 +155,8 @@ class HostControlJournal:
                           request['source_sha'],deadline,'PENDING_APPROVAL',now))
             conn.execute('INSERT INTO control_reservations VALUES (?,?,?)',
                          (request['profile_id'],request['workspace_id'],op))
-            return _public(conn.execute('SELECT * FROM control_operations WHERE operation_id=?',(op,)).fetchone())
+            public = _public(conn.execute('SELECT * FROM control_operations WHERE operation_id=?',(op,)).fetchone())
+            return (public, True) if with_created else public
 
     def get(self,ctx,operation_id,*,profile_id,workspace_id,now):
         require_access(ctx,scope='hermes:read',profile_id=profile_id,workspace_id=workspace_id,now=now)
@@ -209,6 +211,38 @@ class HostControlJournal:
             if state == 'DENIED':
                 conn.execute('DELETE FROM control_reservations WHERE operation_id=?',(operation_id,))
             return _public(conn.execute('SELECT * FROM control_operations WHERE operation_id=?',(operation_id,)).fetchone())
+
+    def expire_pending(self, operation_id, *, now):
+        """Close a timed-out human window without touching any running effect."""
+        with self._transaction() as conn:
+            row = conn.execute('SELECT state FROM control_operations WHERE operation_id=?',
+                               (operation_id,)).fetchone()
+            if row is None or row['state'] != 'PENDING_APPROVAL':
+                return False
+            conn.execute("UPDATE control_operations SET state='EXPIRED',updated_at=? WHERE operation_id=?",
+                         (now, operation_id))
+            conn.execute('DELETE FROM control_reservations WHERE operation_id=?', (operation_id,))
+            return True
+
+    def mark_admission_unknown(self, operation_id, *, now):
+        """Keep the reservation when host background-dispatch outcome is unsure."""
+        with self._transaction() as conn:
+            row = conn.execute('SELECT state FROM control_operations WHERE operation_id=?',
+                               (operation_id,)).fetchone()
+            if row is None or row['state'] != 'PENDING_APPROVAL':
+                raise ControlError('operation_conflict')
+            conn.execute("UPDATE control_operations SET state='UNKNOWN',updated_at=? WHERE operation_id=?",
+                         (now, operation_id))
+
+    def withdraw_unpresented(self, ctx, operation_id, *, now):
+        """Release only a newly admitted intent that never reached a human UI."""
+        with self._transaction() as conn:
+            row = self._owned(conn, ctx, operation_id, now)
+            conn.execute("UPDATE control_operations SET state='BLOCKED',updated_at=? WHERE operation_id=?",
+                         (now, operation_id))
+            conn.execute('DELETE FROM control_reservations WHERE operation_id=?', (operation_id,))
+            return _public(conn.execute('SELECT * FROM control_operations WHERE operation_id=?',
+                                        (operation_id,)).fetchone())
 
     def claim_approved(self, ctx, operation_id, *, now):
         """Atomically consume one approved intent for the trusted run owner."""

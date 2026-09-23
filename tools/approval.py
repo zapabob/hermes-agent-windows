@@ -3138,6 +3138,24 @@ def request_control_consent(binding: ControlApprovalBinding, *, session_key: str
     return ControlApprovalTicket(entry.data["request_id"], session_key, entry)
 
 
+def cancel_control_consent(ticket: ControlApprovalTicket) -> bool:
+    """Trusted host abort of an unpresented/undispatched control ticket.
+
+    This creates no approvable decision and is never a model or MCP tool.
+    """
+    if type(ticket) is not ControlApprovalTicket:
+        return False
+    with _lock:
+        queue = _gateway_queues.get(ticket.session_key, [])
+        if ticket._entry not in queue:
+            return False
+        queue.remove(ticket._entry)
+        if not queue:
+            _gateway_queues.pop(ticket.session_key, None)
+        ticket._entry.event.set()
+        return True
+
+
 def resolve_control_consent(*, session_key: str, request_id: str, intent_digest: str,
                             choice: str, now: float | None = None) -> bool:
     """Trusted human surface ONLY; never export as an MCP/model tool.
