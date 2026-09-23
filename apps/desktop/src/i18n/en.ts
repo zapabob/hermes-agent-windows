@@ -1190,6 +1190,9 @@ export const en: Translations = {
       fallbackEmpty: 'No fallback models — the default model is used unless it fails.',
       notInCatalog: "isn't in this provider's model list — calls may fall back to a backup.",
       tasks: {
+        engineering_planner: { label: 'Engineering planner', hint: 'Plan the implementation' },
+        engineering_worker: { label: 'Engineering worker', hint: 'Implement and repair' },
+        engineering_reviewer: { label: 'Engineering reviewer', hint: 'Replan after verified failures' },
         vision: { label: 'Vision', hint: 'Image analysis' },
         compression: { label: 'Compression', hint: 'Context compaction' },
         skills_hub: { label: 'Skills hub', hint: 'Skill search' },

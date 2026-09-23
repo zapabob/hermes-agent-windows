@@ -1277,6 +1277,9 @@ export interface BackendUpdateCheckResponse {
 }
 
 export interface AuxiliaryTaskAssignment {
+  display_name?: string
+  description?: string
+  plugin?: string
   base_url: string
   model: string
   provider: string

@@ -34,6 +34,8 @@ Usage:
 """
 
 import importlib.util
+from contextlib import contextmanager
+from contextvars import ContextVar
 import json
 import logging
 import os
@@ -1302,6 +1304,62 @@ def clear_session_cwd(session_key: str) -> None:
         _session_cwd.pop(session_key, None)
 
 
+
+_CREDENTIAL_FREE_BINDING: ContextVar[tuple[str, Any] | None] = ContextVar(
+    "hermes_credential_free_binding", default=None
+)
+
+
+@contextmanager
+def bind_credential_free_environment(task_id: str, environment):
+    """Bind one measured native sandbox to existing file and terminal tools.
+
+    No process-global configuration is changed. A lost environment cannot be
+    lazily recreated, and the binding always destroys its single writer.
+    """
+    from tools.environments.docker_isolation import CredentialFreeDockerEnvironment
+
+    if not isinstance(environment, CredentialFreeDockerEnvironment):
+        raise TypeError("A native credential-free environment is required")
+    if not isinstance(task_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", task_id):
+        raise ValueError("Invalid isolated task identity")
+    if _CREDENTIAL_FREE_BINDING.get() is not None:
+        raise RuntimeError("Nested isolated environment bindings are not permitted")
+    environment.assert_credential_free()
+    with _env_lock:
+        if task_id in _active_environments or task_id in _task_env_overrides:
+            raise RuntimeError("Isolated task identity is already owned")
+        _active_environments[task_id] = environment
+        _task_env_overrides[task_id] = {"env_type": "docker", "cwd": "/workspace"}
+    token = _CREDENTIAL_FREE_BINDING.set((task_id, environment))
+    try:
+        yield environment
+    finally:
+        try:
+            environment.cleanup()
+        finally:
+            from tools.file_tools import clear_file_ops_cache
+
+            with _env_lock:
+                _active_environments.pop(task_id, None)
+                _task_env_overrides.pop(task_id, None)
+                _last_activity.pop(task_id, None)
+            clear_file_ops_cache(task_id)
+            clear_session_cwd(task_id)
+            _CREDENTIAL_FREE_BINDING.reset(token)
+
+
+def _credential_free_config(environment) -> dict:
+    return {
+        "env_type": "docker", "cwd": "/workspace", "host_cwd": None,
+        "timeout": environment.timeout, "lifetime_seconds": 86_400,
+        "docker_image": environment._image, "docker_network": False,
+        "docker_mount_cwd_to_workspace": False, "docker_volumes": [],
+        "docker_forward_env": [], "docker_env": {}, "docker_extra_args": [],
+        "docker_persist_across_processes": False, "container_persistent": False,
+    }
+
+
 def register_task_env_overrides(task_id: str, overrides: Dict[str, Any]):
     """
     Register environment overrides for a specific task/rollout.
@@ -1505,6 +1563,11 @@ def _resolve_container_task_id(task_id: Optional[str]) -> str:
     ``delegate_task`` children keep sharing the parent's container via the
     alias registry (``register_container_alias``).
     """
+    binding = _CREDENTIAL_FREE_BINDING.get()
+    if binding is not None:
+        if task_id != binding[0]:
+            raise RuntimeError("Credential-free task identity does not match its host binding")
+        return task_id
     if task_id and _has_isolation_overrides(task_id):
         return task_id
     if task_id and _session_isolation_enabled():
@@ -1799,6 +1862,9 @@ def _ensure_terminal_env_bridged() -> None:
 
 def _get_env_config() -> Dict[str, Any]:
     """Get terminal environment configuration from environment variables."""
+    binding = _CREDENTIAL_FREE_BINDING.get()
+    if binding is not None:
+        return _credential_free_config(binding[1])
     # Default image with Python and Node.js for maximum compatibility
     default_image = "nikolaik/python-nodejs:python3.11-nodejs20"
     _ensure_terminal_env_bridged()
@@ -2012,6 +2078,8 @@ def _create_environment(env_type: str, image: str, cwd: str, timeout: int,
     Returns:
         Environment instance with execute() method
     """
+    if _CREDENTIAL_FREE_BINDING.get() is not None:
+        raise RuntimeError("A credential-free environment cannot be recreated")
     cc = container_config or {}
     cpu = cc.get("container_cpu", 1)
     memory = cc.get("container_memory", 5120)
@@ -2965,6 +3033,11 @@ def terminal_tool(
                 ensure_ascii=False,
             )
 
+        if _CREDENTIAL_FREE_BINDING.get() is not None:
+            _resolve_container_task_id(task_id)
+            if background or force or _host_local or pty:
+                return tool_error("Isolated execution forbids background, host, force and PTY overrides")
+
         # Get configuration
         config = _get_env_config()
         env_type = "local" if _host_local else config["env_type"]
@@ -3684,7 +3757,7 @@ def terminal_tool(
                 }, ensure_ascii=False)
         else:
             # Run foreground command with retry logic
-            max_retries = 3
+            max_retries = 0 if _CREDENTIAL_FREE_BINDING.get() is not None else 3
             retry_count = 0
             result = None
             command_cwd = None

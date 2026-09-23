@@ -4,6 +4,12 @@ on:
   push:
     branches: [feat/implementation-router-20260923]
   workflow_dispatch:
+  pull_request:
+    paths:
+      - "downstream/implementation_router/**"
+      - "tools/environments/credential_free.py"
+      - "tests/implementation_router/**"
+      - "scripts/ci/*implementation_router*"
 
 permissions:
   contents: read

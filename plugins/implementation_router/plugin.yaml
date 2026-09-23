@@ -1,0 +1,6 @@
+name: implementation_router
+version: 0.1.0
+description: Sequential engineering with native model selection, parent-owned inference and credential-free execution.
+author: zapabob
+kind: standalone
+platforms: [linux, macos, windows]

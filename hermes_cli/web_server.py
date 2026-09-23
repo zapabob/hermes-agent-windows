@@ -7329,6 +7329,29 @@ def get_recommended_default_model(provider: str = ""):
         return {"provider": slug, "model": "", "free_tier": None}
 
 
+def _auxiliary_picker_slots() -> dict[str, dict[str, str]]:
+    """Snapshot native auxiliary registrations inside the caller's profile scope.
+
+    Only display metadata crosses the dashboard boundary. Registration defaults
+    can contain authentication material and must never be returned here.
+    """
+    from hermes_cli.plugins import get_plugin_auxiliary_tasks
+
+    slots = {key: {} for key in _AUX_TASK_SLOTS}
+    for entry in get_plugin_auxiliary_tasks():
+        key = entry.get("key")
+        if (not isinstance(key, str) or not key or len(key) > 128
+                or not all(char.isalnum() or char == "_" for char in key)
+                or key in slots):
+            continue
+        slots[key] = {
+            field: value[:512]
+            for field in ("display_name", "description", "plugin")
+            if isinstance(value := entry.get(field), str)
+        }
+    return slots
+
+
 @app.get("/api/model/auxiliary")
 def get_auxiliary_models(profile: Optional[str] = None):
     """Return current auxiliary task assignments.
@@ -7349,17 +7372,19 @@ def get_auxiliary_models(profile: Optional[str] = None):
     try:
         with _profile_scope(profile):
             cfg = load_config()
+            slots = _auxiliary_picker_slots()
         aux_cfg = cfg.get("auxiliary", {})
         if not isinstance(aux_cfg, dict):
             aux_cfg = {}
 
         tasks = []
-        for slot in _AUX_TASK_SLOTS:
+        for slot in slots:
             slot_cfg = (
                 aux_cfg.get(slot, {}) if isinstance(aux_cfg.get(slot), dict) else {}
             )
             tasks.append({
                 "task": slot,
+                **slots[slot],
                 "provider": str(slot_cfg.get("provider", "auto") or "auto"),
                 "model": str(slot_cfg.get("model", "") or ""),
                 "base_url": str(slot_cfg.get("base_url", "") or ""),
@@ -7524,6 +7549,7 @@ async def set_model_assignment(body: ModelAssignment, profile: Optional[str] = N
         target_profile = body.profile or profile
         with _profile_scope(target_profile):
             cfg = load_config()
+            slots = _auxiliary_picker_slots()
 
         if scope == "main":
             if not provider or not model:
@@ -7607,7 +7633,7 @@ async def set_model_assignment(body: ModelAssignment, profile: Optional[str] = N
             stale_aux: list[dict] = []
             aux_cfg = cfg.get("auxiliary", {})
             if isinstance(aux_cfg, dict):
-                for slot in _AUX_TASK_SLOTS:
+                for slot in slots:
                     slot_cfg = aux_cfg.get(slot)
                     if not isinstance(slot_cfg, dict):
                         continue
@@ -7656,7 +7682,7 @@ async def set_model_assignment(body: ModelAssignment, profile: Optional[str] = N
 
         if task == "__reset__":
             # Reset every slot to provider="auto", model="" — keeps other fields intact.
-            for slot in _AUX_TASK_SLOTS:
+            for slot in slots:
                 slot_cfg = aux.get(slot)
                 if not isinstance(slot_cfg, dict):
                     slot_cfg = {}
@@ -7673,9 +7699,9 @@ async def set_model_assignment(body: ModelAssignment, profile: Optional[str] = N
                 status_code=400, detail="provider required for auxiliary"
             )
 
-        targets = [task] if task else list(_AUX_TASK_SLOTS)
+        targets = [task] if task else list(slots)
         for slot in targets:
-            if slot not in _AUX_TASK_SLOTS:
+            if slot not in slots:
                 raise HTTPException(
                     status_code=400, detail=f"unknown auxiliary task: {slot}"
                 )
@@ -7713,6 +7739,7 @@ def _apply_model_assignment_sync(
     HTTPException for validation errors — the async wrapper re-raises them.
     """
     cfg = load_config()
+    slots = _auxiliary_picker_slots()
 
     if scope == "main":
         if not provider or not model:
@@ -7794,7 +7821,7 @@ def _apply_model_assignment_sync(
         stale_aux: list[dict] = []
         aux_cfg = cfg.get("auxiliary", {})
         if isinstance(aux_cfg, dict):
-            for slot in _AUX_TASK_SLOTS:
+            for slot in slots:
                 slot_cfg = aux_cfg.get(slot)
                 if not isinstance(slot_cfg, dict):
                     continue
@@ -7842,7 +7869,7 @@ def _apply_model_assignment_sync(
 
     if task == "__reset__":
         # Reset every slot to provider="auto", model="" — keeps other fields intact.
-        for slot in _AUX_TASK_SLOTS:
+        for slot in slots:
             slot_cfg = aux.get(slot)
             if not isinstance(slot_cfg, dict):
                 slot_cfg = {}
@@ -7858,9 +7885,9 @@ def _apply_model_assignment_sync(
     if not provider:
         raise HTTPException(status_code=400, detail="provider required for auxiliary")
 
-    targets = [task] if task else list(_AUX_TASK_SLOTS)
+    targets = [task] if task else list(slots)
     for slot in targets:
-        if slot not in _AUX_TASK_SLOTS:
+        if slot not in slots:
             raise HTTPException(status_code=400, detail=f"unknown auxiliary task: {slot}")
         slot_cfg = aux.get(slot)
         if not isinstance(slot_cfg, dict):

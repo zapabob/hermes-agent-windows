@@ -1,31 +1,15 @@
-# Stage-based implementation routing
+# Sequential engineering in Hermes
 
-[Agent protocol](../AGENT_PROTOCOL.md) · [Status](../STATUS.md)
+This is a sequence of planning, implementation and host verification—not MoA or provider fallback.
+Enable the `implementation_router` plugin, then select `engineering_planner`, `engineering_worker` and `engineering_reviewer` in the existing auxiliary model picker. Any model supported by its configured provider may be selected; an unavailable choice stops execution.
+Configure approved non-secret `source_paths`, immutable `protected_paths`, a locally prepared image digest and deterministic `checks` in the plugin settings. Invoke `/engineer {"workspace":"sample","task":"Implement the required change"}`.
+Credentials and inference clients stay in the parent Hermes host. Child processes run in a fresh measured Docker environment with no host credential mounts, ambient environment or network. A Linux Docker engine is required, including on Windows hosts. No ordinary local-shell fallback is permitted.
+A successful result returns a verified workspace copy, not an automatically edited original checkout or merged PR. The exact-head CI and native acceptance record determines qualification; fixture tests do not establish live-account access.
+An empty environment is not an OS sandbox. The local daemon, image, host and installed trusted plugins remain the trust base. Review source inputs for embedded secrets. Inspect a surviving lease before manual recovery; do not replay uncertain work.
 
 <!-- routing-not-moa -->
-The parent Hermes harness assigns an operator-approved model to planning,
-implementation and replanning in sequence. This is not MoA or provider fallback.
-Any host-supported provider/model may be configured; unavailable selections
-stop execution rather than silently switching to another model.
-
 <!-- credentials-host-only -->
-Authentication stays with the parent harness. Children and grandchildren must
-not receive API keys, OAuth tokens, credential-bearing clients, headers or
-auth-store paths. The host validates a bound admission before every stage and
-verification. A missing or revoked boundary blocks execution.
-
+<!-- native-adapter-requirements -->
 <!-- not-os-sandbox -->
-The environment helper does not inherit the parent's environment and redirects
-credential discovery to private empty paths. This is not an OS sandbox:
-same-user file access, memory, keychains, network identities and handle
-inheritance still require real host containment and native verification.
 
-<!-- native-adapter-unavailable -->
-This branch is not yet a live execution feature: the native adapter, entrypoint,
-protected verification and full integration acceptance are incomplete. Do not
-create a security receipt merely to make execution pass. Configuration alone
-does not enable a plugin. Component GREEN is not whole-harness GREEN.
-
-`planner`, `worker`, `reviewer`, `SUCCEEDED`, `BLOCKED` and `CANCELLED` are fixed
-protocol identifiers. Presentation supports English, Japanese, Simplified and
-Traditional Chinese, and Arabic (RTL); unknown locales use English.
+[Agent protocol](../AGENT_PROTOCOL.md)

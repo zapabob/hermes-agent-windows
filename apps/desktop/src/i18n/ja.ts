@@ -1094,6 +1094,9 @@ export const ja = defineLocale({
       autoUseMain: '自動 · メインモデルを使用',
       providerDefault: '(プロバイダーのデフォルト)',
       tasks: {
+        engineering_planner: { label: '実装工程：計画', hint: '実装方針を計画する' },
+        engineering_worker: { label: '実装工程：実装', hint: 'コードを実装・修正する' },
+        engineering_reviewer: { label: '実装工程：再計画', hint: '検証失敗後に方針を見直す' },
         vision: { label: 'ビジョン', hint: '画像分析' },
         compression: { label: '圧縮', hint: 'コンテキストの圧縮' },
         skills_hub: { label: 'スキルハブ', hint: 'スキル検索' },

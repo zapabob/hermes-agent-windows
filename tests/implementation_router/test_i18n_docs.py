@@ -57,7 +57,7 @@ class I18nDocsTests(unittest.TestCase):
             self.assertTrue(guide.is_file(), str(guide))
             text = guide.read_text(encoding="utf-8")
             for marker in ("<!-- routing-not-moa -->", "<!-- credentials-host-only -->",
-                           "<!-- native-adapter-unavailable -->", "<!-- not-os-sandbox -->"):
+                           "<!-- native-adapter-requirements -->", "<!-- not-os-sandbox -->"):
                 self.assertIn(marker, text, locale)
             self.assertIn("AGENT_PROTOCOL.md", text)
 

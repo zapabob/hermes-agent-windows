@@ -8,7 +8,7 @@ import re
 from typing import Mapping
 
 ROLES = ("planner", "worker", "reviewer")
-_PROVIDER = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}\Z")
+_PROVIDER = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}\Z")
 _MODEL = re.compile(r"[^\s\x00-\x1f\x7f]{1,256}\Z")
 _EFFORT = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}\Z")
 
@@ -22,7 +22,7 @@ class ModelRoute:
     def __post_init__(self) -> None:
         if (not isinstance(self.provider, str) or not _PROVIDER.fullmatch(self.provider)
                 or not isinstance(self.model, str) or not _MODEL.fullmatch(self.model)
-                or "://" in self.model or "@" in self.model or "?" in self.model):
+                or "://" in self.model):
             raise ValueError("invalid_route_identifier")
         if self.reasoning_effort is not None and (
             not isinstance(self.reasoning_effort, str)

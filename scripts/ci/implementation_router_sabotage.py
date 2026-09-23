@@ -24,7 +24,7 @@ MUTATIONS = {
     "allow_duplicate_json_keys": (KERNEL, 'raise _Hold("duplicate_json_key")', "pass  # mutation"),
     "bypass_security_admission": (KERNEL, "validate_admission(receipt, binding.run_id, binding.workspace_id, self.routing)", "pass  # mutation"),
     "skip_stage_revalidation": (KERNEL, "            security_gate()\n            calls += 1", "            calls += 1"),
-    "inherit_ambient_credentials": (COMPONENT / "security.py", "    env = {", "    env = {**os.environ,"),
+    "inherit_ambient_credentials": (Path("tools/environments/credential_free.py"), "    env = {", "    env = {**os.environ,"),
     "ignore_route_binding": (COMPONENT / "security.py", "or receipt.route_fingerprint != routes.fingerprint()", "or False"),
     "truthy_string_enable": (COMPONENT / "routes.py", "if type(enabled) is not bool:", "if False:"),
     "english_only_results": (COMPONENT / "i18n.py", "language = normalise_locale(locale)", 'language = "en"'),
@@ -53,9 +53,12 @@ def main() -> int:
             for path in (COMPONENT, Path("tests/implementation_router"), Path("docs/implementation-router")):
                 shutil.copytree(ROOT / path, root / path,
                                 ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+            native_env = Path("tools/environments/credential_free.py")
+            (root / native_env).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / native_env, root / native_env)
             (root / module).write_text(original.replace(before, after, 1), encoding="utf-8")
             pattern = "test_kernel.py"
-            if module.name in {"security.py", "routes.py"}:
+            if module.name in {"security.py", "routes.py", "credential_free.py"}:
                 pattern = "test_security_contract.py"
             elif module.name == "i18n.py":
                 pattern = "test_i18n_docs.py"

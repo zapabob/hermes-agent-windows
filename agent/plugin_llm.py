@@ -750,6 +750,8 @@ class PluginLlm:
         profile: Optional[str] = None,
         purpose: Optional[str] = None,
         task: Optional[str] = None,
+        allow_fallback: bool = True,
+        expected_route: Optional[tuple[str, str]] = None,
     ) -> PluginLlmCompleteResult:
         """Run a host-owned chat completion against the user's active model.
 
@@ -766,6 +768,8 @@ class PluginLlm:
         registered itself resolves through ``auxiliary.<task>`` config,
         and a foreign/unknown key is rejected (see :func:`_check_task`).
         """
+        if type(allow_fallback) is not bool:
+            raise ValueError("allow_fallback must be a boolean")
         policy = self._policy_loader(self._plugin_id)
         eff_task = _check_task(policy, plugin_id=self._plugin_id, requested_task=task)
         eff_provider, eff_model, eff_agent, eff_profile = _check_overrides(
@@ -784,6 +788,8 @@ class PluginLlm:
             max_tokens=max_tokens,
             timeout=timeout,
             task=eff_task,
+            allow_fallback=allow_fallback,
+            expected_route=expected_route,
         )
         text = _extract_text(response)
         usage = _extract_usage(response)
@@ -808,6 +814,7 @@ class PluginLlm:
         )
         return result
 
+
     def complete_structured(
         self,
         *,
@@ -826,6 +833,8 @@ class PluginLlm:
         profile: Optional[str] = None,
         purpose: Optional[str] = None,
         task: Optional[str] = None,
+        allow_fallback: bool = True,
+        expected_route: Optional[tuple[str, str]] = None,
     ) -> PluginLlmStructuredResult:
         """Run a bounded host-owned structured completion.
 
@@ -847,6 +856,8 @@ class PluginLlm:
         if not input:
             raise ValueError("complete_structured requires at least one input block")
 
+        if type(allow_fallback) is not bool:
+            raise ValueError("allow_fallback must be a boolean")
         policy = self._policy_loader(self._plugin_id)
         eff_task = _check_task(policy, plugin_id=self._plugin_id, requested_task=task)
         eff_provider, eff_model, eff_agent, eff_profile = _check_overrides(
@@ -877,6 +888,8 @@ class PluginLlm:
             timeout=timeout,
             extra_body=extra_body,
             task=eff_task,
+            allow_fallback=allow_fallback,
+            expected_route=expected_route,
         )
         text = _extract_text(response)
         usage = _extract_usage(response)
@@ -907,6 +920,7 @@ class PluginLlm:
         )
         return result
 
+
     # -- public async API ---------------------------------------------------
 
     async def acomplete(
@@ -922,8 +936,12 @@ class PluginLlm:
         profile: Optional[str] = None,
         purpose: Optional[str] = None,
         task: Optional[str] = None,
+        allow_fallback: bool = True,
+        expected_route: Optional[tuple[str, str]] = None,
     ) -> PluginLlmCompleteResult:
         """Async sibling of :meth:`complete`."""
+        if type(allow_fallback) is not bool:
+            raise ValueError("allow_fallback must be a boolean")
         policy = self._policy_loader(self._plugin_id)
         eff_task = _check_task(policy, plugin_id=self._plugin_id, requested_task=task)
         eff_provider, eff_model, eff_agent, eff_profile = _check_overrides(
@@ -942,6 +960,8 @@ class PluginLlm:
             max_tokens=max_tokens,
             timeout=timeout,
             task=eff_task,
+            allow_fallback=allow_fallback,
+            expected_route=expected_route,
         )
         text = _extract_text(response)
         usage = _extract_usage(response)
@@ -966,6 +986,7 @@ class PluginLlm:
         )
         return result
 
+
     async def acomplete_structured(
         self,
         *,
@@ -984,6 +1005,8 @@ class PluginLlm:
         profile: Optional[str] = None,
         purpose: Optional[str] = None,
         task: Optional[str] = None,
+        allow_fallback: bool = True,
+        expected_route: Optional[tuple[str, str]] = None,
     ) -> PluginLlmStructuredResult:
         """Async sibling of :meth:`complete_structured`."""
         if not instructions or not instructions.strip():
@@ -991,6 +1014,8 @@ class PluginLlm:
         if not input:
             raise ValueError("acomplete_structured requires at least one input block")
 
+        if type(allow_fallback) is not bool:
+            raise ValueError("allow_fallback must be a boolean")
         policy = self._policy_loader(self._plugin_id)
         eff_task = _check_task(policy, plugin_id=self._plugin_id, requested_task=task)
         eff_provider, eff_model, eff_agent, eff_profile = _check_overrides(
@@ -1019,6 +1044,8 @@ class PluginLlm:
             timeout=timeout,
             extra_body=extra_body,
             task=eff_task,
+            allow_fallback=allow_fallback,
+            expected_route=expected_route,
         )
         text = _extract_text(response)
         usage = _extract_usage(response)
@@ -1048,6 +1075,7 @@ class PluginLlm:
             purpose or "", content_type, usage.total_tokens,
         )
         return result
+
 
     # -- internals ---------------------------------------------------------
 
@@ -1085,6 +1113,8 @@ class PluginLlm:
         timeout: Optional[float],
         extra_body: Optional[Dict[str, Any]] = None,
         task: Optional[str] = None,
+        allow_fallback: bool = True,
+        expected_route: Optional[tuple[str, str]] = None,
     ) -> tuple[str, str, Any]:
         """Invoke the host's ``call_llm``. Lazy-imports
         ``agent.auxiliary_client`` to avoid circular deps at plugin
@@ -1104,6 +1134,8 @@ class PluginLlm:
                 timeout=timeout,
                 extra_body=extra_body,
                 task=task,
+                **({"allow_fallback": False} if not allow_fallback else {}),
+                **({"expected_route": expected_route} if expected_route is not None else {}),
             )
         from agent.auxiliary_client import call_llm
         merged_extra = dict(extra_body or {})
@@ -1120,6 +1152,8 @@ class PluginLlm:
             timeout=timeout,
             extra_body=merged_extra or None,
             route_info=route_info,
+            **({"allow_fallback": False} if not allow_fallback else {}),
+            **({"expected_route": expected_route} if expected_route is not None else {}),
         )
         provider, model = _resolve_attribution(
             provider_override=provider_override,
@@ -1128,6 +1162,7 @@ class PluginLlm:
             route_info=route_info,
         )
         return provider, model, response
+
 
     async def _invoke_async(
         self,
@@ -1141,6 +1176,8 @@ class PluginLlm:
         timeout: Optional[float],
         extra_body: Optional[Dict[str, Any]] = None,
         task: Optional[str] = None,
+        allow_fallback: bool = True,
+        expected_route: Optional[tuple[str, str]] = None,
     ) -> tuple[str, str, Any]:
         if self._async_caller is not None:
             return await self._async_caller(
@@ -1153,6 +1190,8 @@ class PluginLlm:
                 timeout=timeout,
                 extra_body=extra_body,
                 task=task,
+                **({"allow_fallback": False} if not allow_fallback else {}),
+                **({"expected_route": expected_route} if expected_route is not None else {}),
             )
         from agent.auxiliary_client import async_call_llm
         merged_extra = dict(extra_body or {})
@@ -1169,6 +1208,8 @@ class PluginLlm:
             timeout=timeout,
             extra_body=merged_extra or None,
             route_info=route_info,
+            **({"allow_fallback": False} if not allow_fallback else {}),
+            **({"expected_route": expected_route} if expected_route is not None else {}),
         )
         provider, model = _resolve_attribution(
             provider_override=provider_override,
@@ -1177,6 +1218,7 @@ class PluginLlm:
             route_info=route_info,
         )
         return provider, model, response
+
 
 
 # ---------------------------------------------------------------------------

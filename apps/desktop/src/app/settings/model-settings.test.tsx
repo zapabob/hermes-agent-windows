@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -17,6 +17,7 @@ const getGlobalModelOptions = vi.fn()
 const getAuxiliaryModels = vi.fn()
 const getMoaModels = vi.fn()
 const setModelAssignment = vi.fn()
+const modelAssignmentProfile = vi.fn()
 const getRecommendedDefaultModel = vi.fn()
 const saveMoaModels = vi.fn()
 const setEnvVar = vi.fn()
@@ -34,7 +35,10 @@ vi.mock('@/hermes', () => ({
   getApiRequestProfile: () => 'default',
   getMoaModels: (profile?: null | string) => getMoaModels(profile),
   profileScopeKey: (scope?: null | string) => (scope ?? '').trim() || 'default',
-  setModelAssignment: (body: unknown) => setModelAssignment(body),
+  setModelAssignment: (body: unknown, profile?: string) => {
+    modelAssignmentProfile(profile)
+    return setModelAssignment(body)
+  },
   getRecommendedDefaultModel: (slug: string) => getRecommendedDefaultModel(slug),
   saveMoaModels: (body: unknown) => saveMoaModels(body),
   setEnvVar: (key: string, value: string) => setEnvVar(key, value),
@@ -659,5 +663,50 @@ describe('ModelSettings code-skew 503', () => {
 
     await waitFor(() => expect(recycleBackend).toHaveBeenCalledWith(undefined))
     await waitFor(() => expect(getGlobalModelOptions.mock.calls.length).toBeGreaterThan(1))
+  })
+})
+
+
+describe('Plugin auxiliary model picker', () => {
+  it('renders registered stage slots and uses the existing provider/model choices', async () => {
+    getGlobalModelOptions.mockResolvedValueOnce({
+      providers: [
+        { name: 'Nous', slug: 'nous', models: ['hermes-4'], authenticated: true },
+        { name: 'Private endpoint', slug: 'custom:lab', models: ['org/worker-model'], authenticated: true }
+      ]
+    })
+    getAuxiliaryModels.mockResolvedValueOnce({
+      main: { provider: 'nous', model: 'hermes-4' },
+      tasks: [{ task: 'engineering_worker', provider: 'auto', model: '', base_url: '',
+        display_name: 'Engineering worker', description: 'Bounded implementation', plugin: 'engineering' }]
+    })
+    await renderModelSettings('research')
+    expect(await screen.findByText('Engineering worker')).toBeTruthy()
+    expect(screen.getByText('Implement and repair')).toBeTruthy()
+    const row = document.getElementById('aux-task-engineering_worker')!
+    fireEvent.click(within(row).getByRole('button', { name: 'Change' }))
+    fireEvent.click(within(row).getAllByRole('combobox')[0])
+    fireEvent.click(await screen.findByRole('option', { name: 'Private endpoint' }))
+    fireEvent.click(within(row).getAllByRole('combobox')[1])
+    fireEvent.click(await screen.findByRole('option', { name: 'org/worker-model' }))
+    fireEvent.click(within(row).getByRole('button', { name: 'Apply' }))
+    await waitFor(() => expect(setModelAssignment).toHaveBeenCalledWith(
+      expect.objectContaining({ scope: 'auxiliary', task: 'engineering_worker',
+        provider: 'custom:lab', model: 'org/worker-model' })
+    ))
+    expect(modelAssignmentProfile).toHaveBeenLastCalledWith('research')
+  })
+
+  it('deduplicates a registered builtin and removes plugin rows after profile change', async () => {
+    getAuxiliaryModels.mockResolvedValueOnce({
+      main: { provider: 'nous', model: 'hermes-4' },
+      tasks: [{ task: 'vision', provider: 'auto', model: '', base_url: '' },
+        { task: 'engineering_worker', provider: 'auto', model: '', base_url: '', display_name: 'Engineering worker' }]
+    })
+    await renderModelSettings()
+    expect(await screen.findByText('Engineering worker')).toBeTruthy()
+    expect(document.querySelectorAll('#aux-task-vision')).toHaveLength(1)
+    await act(async () => { profileSwitchHandler?.() })
+    await waitFor(() => expect(screen.queryByText('Engineering worker')).toBeNull())
   })
 })

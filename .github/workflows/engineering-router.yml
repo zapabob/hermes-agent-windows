@@ -1,0 +1,63 @@
+name: Native engineering workflow acceptance
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
+        with:
+          version: '0.9.28'
+          enable-cache: true
+      - run: uv python install 3.11
+      - run: uv sync --locked --python 3.11 --extra all --extra dev
+      - name: Native picker, strict inference and execution boundary
+        run: >-
+          uv run --no-sync python -m pytest --noconftest -q
+          tests/agent/test_auxiliary_strict_route.py
+          tests/hermes_cli/test_web_auxiliary_plugin_slots.py
+          tests/plugins/test_engineering_workflow.py
+          tests/tools/test_credential_free_docker.py
+          tests/tools/test_bound_credential_free_environment.py
+      - name: Workflow contracts and deliberate mutations
+        run: |
+          uv run --no-sync python -m unittest discover -s tests/implementation_router -q
+          uv run --no-sync python scripts/ci/implementation_router_sabotage.py
+  native-docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
+        with:
+          version: '0.9.28'
+          enable-cache: true
+      - run: uv python install 3.11
+      - run: uv sync --locked --python 3.11 --extra all --extra dev
+      - name: Prepare the image once and bind all tests to its immutable ID
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull python:3.11.14-slim
+          image=$(docker image inspect python:3.11.14-slim --format '{{.Id}}')
+          test "${image#sha256:}" != "$image"
+          printf 'HERMES_TEST_ENGINEERING_IMAGE=%s\n' "$image" >> "$GITHUB_ENV"
+          printf 'Native engineering image: `%s`\n' "$image" >> "$GITHUB_STEP_SUMMARY"
+      - name: Real native execution, parent-only HTTP inference and sabotage controls
+        run: uv run --no-sync python -m pytest --noconftest -v tests/e2e/test_engineering_native_docker.py

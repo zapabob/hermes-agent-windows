@@ -1021,6 +1021,9 @@ export const zhHant = defineLocale({
       autoUseMain: '自動 · 使用主要模型',
       providerDefault: '(提供方預設)',
       tasks: {
+        engineering_planner: { label: '工程規劃模型', hint: '制定實作計畫' },
+        engineering_worker: { label: '工程實作模型', hint: '撰寫及修復程式碼' },
+        engineering_reviewer: { label: '工程複審模型', hint: '驗證失敗後重新規劃' },
         vision: { label: '視覺', hint: '圖片分析' },
         compression: { label: '壓縮', hint: '上下文壓縮' },
         skills_hub: { label: '技能中心', hint: '技能搜尋' },

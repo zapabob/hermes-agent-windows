@@ -101,11 +101,13 @@ function isProviderReady(p?: ModelOptionProvider): boolean {
   return !!p && (p.authenticated !== false || (p.models?.length ?? 0) > 0)
 }
 
-// Mirrors `_AUX_TASK_SLOTS` in hermes_cli/web_server.py. Friendly labels and
-// hints make the assignments readable; raw task keys (vision, mcp, …) are
-// opaque to most users.
+// Preserve the familiar builtin order while admitting profile-scoped plugin
+// tasks supplied by the native auxiliary registry. Provider/model choices
+// continue to come from the existing shared model picker.
 interface AuxTaskMeta {
   key: string
+  label?: string
+  hint?: string
 }
 
 const AUX_TASKS: readonly AuxTaskMeta[] = [
@@ -201,6 +203,17 @@ export function ModelSettings({ onMainModelChanged, scopeProfile }: ModelSetting
   const [selectedProvider, setSelectedProvider] = useState('')
   const [selectedModel, setSelectedModel] = useState('')
   const [auxiliary, setAuxiliary] = useState<AuxiliaryModelsResponse | null>(null)
+  const auxiliaryTasks = useMemo<AuxTaskMeta[]>(() => {
+    const tasks = new Map(AUX_TASKS.map(meta => [meta.key, meta]))
+
+    for (const entry of auxiliary?.tasks ?? []) {
+      if (!tasks.has(entry.task)) {
+        tasks.set(entry.task, { key: entry.task, label: entry.display_name, hint: entry.description })
+      }
+    }
+
+    return [...tasks.values()]
+  }, [auxiliary])
   const [moa, setMoa] = useState<MoaConfigResponse | null>(null)
   const [selectedMoaPreset, setSelectedMoaPreset] = useState('')
   const [newMoaPresetName, setNewMoaPresetName] = useState('')
@@ -224,7 +237,7 @@ export function ModelSettings({ onMainModelChanged, scopeProfile }: ModelSetting
   useDeepLinkHighlight({
     elementId: task => `aux-task-${task}`,
     param: 'aux',
-    ready: task => AUX_TASKS.some(meta => meta.key === task)
+    ready: task => auxiliaryTasks.some(meta => meta.key === task)
   })
 
   // Every profile-scoped async here captures this and bails before writing back,
@@ -498,7 +511,10 @@ export function ModelSettings({ onMainModelChanged, scopeProfile }: ModelSetting
     [m.loadFailed, scopeProfile, setCaughtError]
   )
 
-  const auxiliaryTaskLabel = useCallback((key: string) => m.tasks[key]?.label ?? key, [m.tasks])
+  const auxiliaryTaskLabel = useCallback(
+    (key: string) => m.tasks[key]?.label ?? auxiliaryTasks.find(meta => meta.key === key)?.label ?? key,
+    [m.tasks, auxiliaryTasks]
+  )
 
   // Persistent mismatch: any aux slot pinned to a provider different from the
   // current main, regardless of whether the user just switched. Catches the
@@ -994,8 +1010,8 @@ export function ModelSettings({ onMainModelChanged, scopeProfile }: ModelSetting
           </div>
         )}
         <div className="grid gap-1">
-          {AUX_TASKS.map(meta => {
-            const copy = m.tasks[meta.key] ?? { label: meta.key, hint: meta.key }
+          {auxiliaryTasks.map(meta => {
+            const copy = m.tasks[meta.key] ?? { label: meta.label ?? meta.key, hint: meta.hint ?? meta.key }
             const current = auxiliary?.tasks.find(entry => entry.task === meta.key)
             const isAuto = !current || !current.provider || current.provider === 'auto'
             const isEditing = editingAuxTask === meta.key
