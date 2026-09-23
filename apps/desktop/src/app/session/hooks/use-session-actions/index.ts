@@ -34,6 +34,7 @@ import {
   requestGatewayForAgent,
   retainGatewayForAgent
 } from '@/store/gateway'
+import { gatewayScope, type GatewayScope } from '@/store/gateway'
 import { $gatewaySwitching } from '@/store/gateway-switch'
 import { $pinnedSessionIds } from '@/store/layout'
 import { clearNotifications, notify, notifyError } from '@/store/notifications'
@@ -57,7 +58,7 @@ import {
   tombstoneSessions,
   untombstoneSessions
 } from '@/store/projects'
-import { setApprovalRequest } from '@/store/prompts'
+import { controlApprovalFromPayload, setApprovalRequest } from '@/store/prompts'
 import { clearStoredTranscriptReadOnly, markStoredTranscriptReadOnly } from '@/store/read-only-transcript'
 import {
   $activeSessionStoredIdRotation,
@@ -285,7 +286,7 @@ interface FreshSessionDraftOptions {
   workspaceTarget?: NewChatWorkspaceTarget
 }
 
-function restorePendingApproval(response: SessionResumeResponse, sessionId: string): boolean {
+function restorePendingApproval(response: SessionResumeResponse, sessionId: string, scope: GatewayScope): boolean {
   const pending = response.pending_approval
 
   if (!pending) {
@@ -296,9 +297,11 @@ function restorePendingApproval(response: SessionResumeResponse, sessionId: stri
     allowPermanent: pending.allow_permanent !== false,
     choices: pending.choices,
     command: pending.command ?? '',
+    control: controlApprovalFromPayload(pending.control),
     description: pending.description ?? 'dangerous command',
     requestId: typeof pending.request_id === 'string' ? pending.request_id : undefined,
     sessionId,
+    scope,
     smartDenied: pending.smart_denied === true
   })
 
@@ -975,6 +978,12 @@ export function useSessionActions({
             }
           : sessionProfile
 
+      const approvalScope = typeof sessionRestScope === 'string'
+        ? gatewayScope(null, sessionRestScope)
+        : sessionRestScope
+          ? gatewayScope(sessionRestScope.connectionId, sessionRestScope.profile)
+          : gatewayScope(null, sessionProfile)
+
       // Re-check after the profile-resolve / gateway-swap awaits above: the
       // cache may have changed, and takeWarmCache re-validates belongs-to and
       // purges a cross-wired mapping before we trust the fast-path.
@@ -1121,7 +1130,7 @@ export function useSessionActions({
               sessionStateByRuntimeIdRef.current.delete(cachedRuntimeId)
               dropSessionState(cachedRuntimeId)
             } else {
-              const pendingApproval = restorePendingApproval(activated, cachedRuntimeId)
+              const pendingApproval = restorePendingApproval(activated, cachedRuntimeId, approvalScope)
 
               const pendingClarifyState = restorePendingClarifyFromSnapshot(
                 activated,
@@ -1660,7 +1669,7 @@ export function useSessionActions({
         // a previous no-owner open left behind (#94724: the backfill stamped
         // the row, or a topology change made the owner resolvable again).
         clearStoredTranscriptReadOnly(storedSessionId)
-        const pendingApproval = restorePendingApproval(resumed, resumed.session_id)
+        const pendingApproval = restorePendingApproval(resumed, resumed.session_id, approvalScope)
         const pendingClarifyState = restorePendingClarifyFromSnapshot(resumed, resumed.session_id, resumeStartedAt)
         const pendingClarify = pendingClarifyState.request
 

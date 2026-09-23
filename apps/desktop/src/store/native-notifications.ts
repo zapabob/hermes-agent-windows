@@ -5,7 +5,7 @@ import { persistString, storedString } from '@/lib/storage'
 
 import { gatewayForScope } from './gateway'
 import { withinNativeNotifyBaseline } from './notify-baseline'
-import { approvalRequestForSession, clearApprovalRequest } from './prompts'
+import { approvalRequestForSession, approvalResponseForRequest, clearApprovalRequest } from './prompts'
 import { $activeSessionId } from './session'
 import { requestForOwnedSession, storedSessionIdForRuntimeId } from './session-states'
 
@@ -383,23 +383,30 @@ export async function respondToApprovalAction(
     return
   }
 
+  const target = approvalResponseForRequest(request, choice)
+
+  if (!target) {
+    return
+  }
+
   try {
     // Route through the session's OWNER (tile route → known profile); the
     // ambient socket follows foreground focus and, for a background approval
     // raised by a cross-profile session, points at a backend that never held
     // the approval (#91684 client half). Ambient only when no owner is known.
-    await requestForOwnedSession(
+    const result = await requestForOwnedSession<{ resolved?: boolean }>(
       sessionId,
       // Bound (not wrapped) so the ambient fallback keeps the exact 2-arg
       // call shape gateway.request callers assert on.
       gateway.request.bind(gateway) as typeof gateway.request,
-      'approval.respond',
-      {
-        choice,
-        request_id: request.requestId,
-        session_id: sessionId ?? undefined
-      }
+      target.method,
+      target.params
     )
+
+    if (target.strict && result?.resolved !== true) {
+      return
+    }
+
     clearApprovalRequest(sessionId, request.requestId)
   } catch {
     // Leave the prompt parked so the user can still resolve it in-app.

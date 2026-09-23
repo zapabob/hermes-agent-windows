@@ -12,7 +12,7 @@ import {
 import { gatewayForScope } from '@/store/gateway'
 import { setMcpSetupRequest } from '@/store/mcp-setup'
 import { dispatchNativeNotification } from '@/store/native-notifications'
-import { receiveApprovalRequest, setSecretRequest, setSudoRequest } from '@/store/prompts'
+import { controlApprovalFromPayload, receiveApprovalRequest, setSecretRequest, setSudoRequest } from '@/store/prompts'
 import { requestScrollToBottom } from '@/store/thread-scroll'
 
 import type { GatewayEventContext } from './types'
@@ -250,6 +250,7 @@ export function handleInputRequestEvent(ctx: GatewayEventContext): boolean {
         ? payload.choices.filter(choice => typeof choice === 'string')
         : undefined,
       command,
+      control: controlApprovalFromPayload(payload?.control),
       description,
       requestId,
       sessionId: sessionId ?? null,

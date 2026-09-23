@@ -1325,3 +1325,47 @@ def test_unregister_live_transport_stops_delivery(capture):
     assert a.frames == []
     # No live transports left → fell back to stdio.
     assert json.loads(buf.getvalue())["params"]["type"] == "skin.changed"
+
+
+def test_control_approval_payload_has_only_once_and_deny(server):
+    data = {
+        "request_id": "req-control", "command": "Hermes control operation op-1",
+        "description": "Start an approved run",
+        "control": {"intent_digest": "a" * 64, "operation_id": "op-1"},
+        "allowed_choices": ["once", "deny"],
+    }
+    payload = server._approval_request_payload(data)
+    assert payload["choices"] == ["once", "deny"]
+    assert payload["control"]["intent_digest"] == "a" * 64
+
+
+def test_control_approval_rpc_uses_strict_owner(server, monkeypatch):
+    from tools import approval
+
+    server._sessions["ui-control"] = {"session_key": "human-control", "history": []}
+    calls = []
+    monkeypatch.setattr(
+        approval, "resolve_control_consent",
+        lambda **kwargs: calls.append(kwargs) or True,
+    )
+    response = server.handle_request({
+        "id": "control-1", "method": "control_approval.respond",
+        "params": {
+            "session_id": "ui-control", "request_id": "req-control",
+            "intent_digest": "a" * 64, "choice": "once",
+        },
+    })
+    assert response["result"] == {"resolved": True}
+    assert calls == [{
+        "session_key": "human-control", "request_id": "req-control",
+        "intent_digest": "a" * 64, "choice": "once",
+    }]
+    legacy = server.handle_request({
+        "id": "control-2", "method": "control_approval.respond",
+        "params": {
+            "session_id": "ui-control", "request_id": "req-control",
+            "intent_digest": "a" * 64, "choice": "always",
+        },
+    })
+    assert legacy["error"]["code"] == 4006
+    assert len(calls) == 1

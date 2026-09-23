@@ -78,9 +78,48 @@ export interface ApprovalRequest extends KeyedPrompt {
   allowPermanent?: boolean
   choices?: string[]
   command: string
+  control?: { intentDigest: string; operationId: string }
   description: string
   requestId?: string
   smartDenied?: boolean
+}
+
+export function controlApprovalFromPayload(value: unknown): ApprovalRequest['control'] {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return undefined
+  }
+
+  const raw = value as Record<string, unknown>
+
+  return {
+    intentDigest: typeof raw.intent_digest === 'string' ? raw.intent_digest : '',
+    operationId: typeof raw.operation_id === 'string' ? raw.operation_id : ''
+  }
+}
+
+/** The ordinary and strict queues have separate owner RPCs. */
+export function approvalResponseForRequest(
+  request: ApprovalRequest, choice: string
+): { method: string; params: Record<string, unknown>; strict: boolean } | null {
+  if (!request.control) {
+    return {
+      method: 'approval.respond', strict: false,
+      params: { choice, request_id: request.requestId, session_id: request.sessionId ?? undefined }
+    }
+  }
+
+  if (
+    !request.sessionId || !request.requestId || !/^[a-f0-9]{64}$/.test(request.control.intentDigest) ||
+    (choice !== 'once' && choice !== 'deny')
+  ) {
+    return null
+  }
+
+  return {
+    method: 'control_approval.respond', strict: true,
+    params: { choice, request_id: request.requestId,
+      session_id: request.sessionId, intent_digest: request.control.intentDigest }
+  }
 }
 
 interface ApprovalGateway {
@@ -91,6 +130,7 @@ interface PendingApprovalPayload {
   allow_permanent?: boolean
   choices?: unknown
   command?: unknown
+  control?: unknown
   description?: unknown
   request_id?: unknown
   smart_denied?: boolean
@@ -158,6 +198,7 @@ export async function replayPendingApproval(
     allowPermanent: pending.allow_permanent !== false,
     choices: Array.isArray(pending.choices) ? pending.choices.filter(choice => typeof choice === 'string') : undefined,
     command: typeof pending.command === 'string' ? pending.command : '',
+    control: controlApprovalFromPayload(pending.control),
     description: typeof pending.description === 'string' ? pending.description : 'dangerous command',
     requestId: pending.request_id,
     sessionId,

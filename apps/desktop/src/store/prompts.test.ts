@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { clearClarifyRequest, setClarifyRequest } from './clarify'
+import { gatewayScope } from './gateway'
 import {
   $activeSessionAwaitingInput,
   $approvalRequest,
@@ -99,6 +100,18 @@ describe('approval prompt store', () => {
 
     expect($approvalRequest.get()?.requestId).toBe('r1')
     expect(calls).toEqual([['approval.received', { request_id: 'r1', session_id: 's1' }]])
+  })
+
+  it('replays the immutable control binding after reconnect', async () => {
+    const gateway = { request: async (method: string) => method === 'approval.pending' ? {
+      approvals: [{ command: 'Hermes control operation op-1', description: 'Start run',
+        request_id: 'req-control', control: { operation_id: 'op-1', intent_digest: 'a'.repeat(64) } }]
+    } : { acknowledged: true } }
+
+    const scope = gatewayScope('connection-a', 'profile-a')
+    await replayPendingApproval(gateway, 's1', scope)
+    expect($approvalRequest.get()?.control).toEqual({ operationId: 'op-1', intentDigest: 'a'.repeat(64) })
+    expect($approvalRequest.get()?.scope).toEqual(scope)
   })
 
   it('replays and acknowledges the oldest unresolved approval after reconnect', async () => {

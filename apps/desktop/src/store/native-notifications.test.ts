@@ -355,6 +355,23 @@ describe('respondToApprovalAction', () => {
     expect($approvalRequest.get()).toBeNull()
   })
 
+  it('sends a native control decision only through the strict owner RPC', async () => {
+    setActiveSessionId('bg')
+    setApprovalRequest({
+      command: 'Hermes control operation op-1', description: 'Start approved run',
+      requestId: 'req-control', control: { operationId: 'op-1', intentDigest: 'a'.repeat(64) },
+      scope: gatewayScope('connection-a', 'source-profile'), sessionId: 'bg'
+    })
+    await respondToApprovalAction('bg', 'approve', {
+      connectionId: 'connection-a', profile: 'source-profile', requestId: 'req-control'
+    })
+    expect(request).toHaveBeenCalledWith('control_approval.respond', {
+      choice: 'once', session_id: 'bg', request_id: 'req-control', intent_digest: 'a'.repeat(64)
+    })
+    expect(request).not.toHaveBeenCalledWith('approval.respond', expect.anything())
+    expect($approvalRequest.get()).toBeNull()
+  })
+
   it('rejects via approval.respond {choice: "deny"}', async () => {
     setApprovalRequest({
       command: 'rm -rf /',

@@ -22,6 +22,7 @@ import { gatewayForScope } from '@/store/gateway'
 import { notifyError } from '@/store/notifications'
 import {
   type ApprovalRequest,
+  approvalResponseForRequest,
   clearApprovalRequest,
   registerApprovalInlineAnchor,
   replayPendingApproval,
@@ -120,8 +121,8 @@ const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline'
   // false when the backend won't honor a permanent allow (tirith warning) → hide "Always allow".
   const allowPermanent = request.allowPermanent !== false
   const choices = request.choices ?? (request.smartDenied ? ['once', 'deny'] : undefined)
-  const allowSession = choices ? choices.includes('session') : true
-  const allowAlways = choices ? choices.includes('always') : allowPermanent
+  const allowSession = !request.control && (choices ? choices.includes('session') : true)
+  const allowAlways = !request.control && (choices ? choices.includes('always') : allowPermanent)
   const hasMoreOptions = allowSession || allowAlways
   const hasCommand = request.command.trim().length > 0
 
@@ -142,6 +143,12 @@ const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline'
         return
       }
 
+      const target = approvalResponseForRequest(request, choice)
+
+      if (!target) {
+        return
+      }
+
       setSubmitting(choice)
 
       try {
@@ -149,18 +156,21 @@ const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline'
         // ambient only when no owner is known. The ambient socket follows
         // foreground focus, and for a cross-profile session it points at a
         // backend that never held this approval (#91684 client half).
-        await requestForOwnedSession<{ resolved?: boolean }>(
+        const result = await requestForOwnedSession<{ resolved?: boolean }>(
           request.sessionId,
           // Bound (not wrapped) so the ambient fallback keeps the exact
           // 2-arg call shape gateway.request callers assert on.
           gateway.request.bind(gateway) as typeof gateway.request,
-          'approval.respond',
-          {
-            choice,
-            request_id: request.requestId,
-            session_id: request.sessionId ?? undefined
-          }
+          target.method,
+          target.params
         )
+
+        if (target.strict && result?.resolved !== true) {
+          setSubmitting(null)
+
+          return
+        }
+
         triggerHaptic(choice === 'deny' ? 'cancel' : 'submit')
         clearApprovalRequest(request.sessionId, request.requestId)
         void replayPendingApproval(gateway, request.sessionId, request.scope).catch(() => undefined)
@@ -169,7 +179,7 @@ const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline'
         setSubmitting(null)
       }
     },
-    [busy, copy.gatewayDisconnected, copy.sendFailed, request.requestId, request.scope, request.sessionId]
+    [busy, copy.gatewayDisconnected, copy.sendFailed, request]
   )
 
   // ⌘/Ctrl+Enter → Run, Esc → Reject.

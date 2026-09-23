@@ -19,6 +19,10 @@ const CMD_PREVIEW_LINES = 10
 type ApprovalChoice = 'always' | 'deny' | 'once' | 'session'
 
 export function approvalOptions(req: ApprovalReq): readonly ApprovalChoice[] {
+  if (req.control) {
+    return APPROVAL_OPTS_SMART_DENY
+  }
+
   if (req.choices) {
     return req.choices.filter((choice): choice is ApprovalChoice => APPROVAL_OPTS.includes(choice as ApprovalChoice))
   }

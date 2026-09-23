@@ -1770,6 +1770,37 @@ def _(rid, params: dict) -> dict:
         return _err(rid, 5004, str(e))
 
 
+
+
+@method("control_approval.respond")
+def _(rid, params: dict) -> dict:
+    """Trusted local UI decision for a single digest-bound control intent."""
+    required = {"session_id", "request_id", "intent_digest", "choice"}
+    if type(params) is not dict or set(params) != required:
+        return _err(rid, 4006, "invalid control approval")
+    request_id = params["request_id"]
+    digest = params["intent_digest"]
+    if (
+        type(request_id) is not str or not request_id
+        or type(digest) is not str or len(digest) != 64
+        or any(char not in "0123456789abcdef" for char in digest)
+        or params["choice"] not in ("once", "deny")
+    ):
+        return _err(rid, 4006, "invalid control approval")
+    session, err = _sess(params, rid)
+    if err:
+        return err
+    try:
+        from tools.approval import resolve_control_consent
+
+        resolved = resolve_control_consent(
+            session_key=session["session_key"], request_id=request_id,
+            intent_digest=digest, choice=params["choice"],
+        )
+        return _ok(rid, {"resolved": resolved})
+    except Exception:
+        return _err(rid, 5004, "control approval unavailable")
+
 def register(server) -> None:
     """Bind this module's handlers onto ``server``'s globals and registry."""
     _registry.install(server)

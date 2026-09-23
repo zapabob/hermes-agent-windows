@@ -174,6 +174,39 @@ describe('PendingToolApproval', () => {
     expect(screen.queryByRole('button', { name: /More approval options/ })).toBeNull()
   })
 
+  it('uses a digest-bound owner RPC for a one-time control approval', async () => {
+    const gatewayRequest = mockGateway()
+    $activeSessionId.set('sess-1')
+    setApprovalRequest({
+      command: 'Hermes control operation op-1', description: 'Start approved run',
+      requestId: 'req-control', control: { operationId: 'op-1', intentDigest: 'a'.repeat(64) },
+      choices: ['once', 'session', 'always', 'deny'], scope: gatewayScope(null, 'default'), sessionId: 'sess-1'
+    })
+    render(<PendingApprovalFallback />)
+    expect(screen.queryByRole('button', { name: /More approval options/ })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /Run/ }))
+    await waitFor(() => expect(gatewayRequest).toHaveBeenCalledWith('control_approval.respond', {
+      choice: 'once', session_id: 'sess-1', request_id: 'req-control', intent_digest: 'a'.repeat(64)
+    }))
+    expect(gatewayRequest).not.toHaveBeenCalledWith('approval.respond', expect.anything())
+    await waitFor(() => expect($approvalRequest.get()).toBeNull())
+  })
+
+  it('keeps an unresolved control prompt visible', async () => {
+    const gatewayRequest = mockGateway()
+    gatewayRequest.mockResolvedValue({ resolved: false })
+    $activeSessionId.set('sess-1')
+    setApprovalRequest({
+      command: 'Hermes control operation op-1', description: 'Start approved run',
+      requestId: 'req-control', control: { operationId: 'op-1', intentDigest: 'a'.repeat(64) },
+      scope: gatewayScope(null, 'default'), sessionId: 'sess-1'
+    })
+    render(<PendingApprovalFallback />)
+    fireEvent.click(screen.getByRole('button', { name: /Run/ }))
+    await waitFor(() => expect(gatewayRequest).toHaveBeenCalled())
+    expect($approvalRequest.get()?.requestId).toBe('req-control')
+  })
+
   it('renders a floating fallback when no pending tool row is mounted', () => {
     setRequest('rm /tmp/hermes_approval_test.txt')
     const { container } = render(<PendingApprovalFallback />)

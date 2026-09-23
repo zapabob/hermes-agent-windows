@@ -1221,6 +1221,20 @@ describe('createGatewayEventHandler', () => {
     expect(getOverlayState().approval).toMatchObject({ choices: ['once', 'deny'], smartDenied: true })
   })
 
+  it('preserves the strict control binding on a human approval prompt', () => {
+    const onEvent = createGatewayEventHandler(buildCtx([]))
+    onEvent({
+      payload: {
+        choices: ['once', 'deny'], command: 'Hermes control operation op-1',
+        description: 'Start run', request_id: 'req-1',
+        control: { operation_id: 'op-1', intent_digest: 'a'.repeat(64) }
+      }, type: 'approval.request'
+    })
+    expect(getOverlayState().approval).toMatchObject({
+      requestId: 'req-1', control: { operationId: 'op-1', intentDigest: 'a'.repeat(64) }
+    })
+  })
+
   it('still surfaces terminal turn failures as errors', () => {
     const appended: Msg[] = []
     const onEvent = createGatewayEventHandler(buildCtx(appended))
