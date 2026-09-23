@@ -79,7 +79,7 @@ class NativeEngineeringHost:
         # A surviving lease after interruption blocks replay. It is deliberately
         # not expired on a timer; the operator must inspect any uncertain run.
         descriptor = os.open(lease_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        with os.fdopen(descriptor, 'w') as lease:
+        with os.fdopen(descriptor, 'w', encoding='utf-8') as lease:
             lease.write(binding.run_id)
             lease.flush()
             os.fsync(lease.fileno())

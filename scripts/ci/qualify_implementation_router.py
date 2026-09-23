@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def command(args: list[str], cwd: Path, *, check: bool = True) -> subprocess.CompletedProcess[str]:
-    result = subprocess.run(args, cwd=cwd, capture_output=True, text=True, timeout=180)
+    result = subprocess.run(args, cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180)
     if check and result.returncode:
         raise RuntimeError(f"{args[0]} failed ({result.returncode}): {result.stderr[-3000:]}")
     return result
