@@ -189,3 +189,10 @@ def test_explicit_unknown_after_effect_keeps_workspace_reserved(control_module,c
     with pytest.raises(control_module('contracts').ControlError) as caught:
         j.reserve(ctx,request(idempotency_key='new'),now=114)
     assert caught.value.code=='workspace_busy'
+
+
+def test_repeated_expired_pending_intent_is_not_reported_as_active(control_module,control_context,tmp_path):
+    j=journal(control_module,tmp_path);j.initialise()
+    j.reserve(writable(control_context),request(),now=100)
+    fresh=writable(control_context,expires_at=600)
+    assert j.reserve(fresh,request(),now=210)['state']=='EXPIRED'

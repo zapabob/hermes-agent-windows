@@ -132,6 +132,10 @@ class HostControlJournal:
             if old is not None:
                 if old['intent_digest']!=fingerprint or old['resource']!=ctx.resource:
                     raise ControlError('idempotency_conflict')
+                if old['state']=='PENDING_APPROVAL' and old['expires_at']<=now:
+                    conn.execute("UPDATE control_operations SET state='EXPIRED',updated_at=? WHERE operation_id=?",(now,old['operation_id']))
+                    conn.execute('DELETE FROM control_reservations WHERE operation_id=?',(old['operation_id'],))
+                    old=conn.execute('SELECT * FROM control_operations WHERE operation_id=?',(old['operation_id'],)).fetchone()
                 return _public(old)
             # Only provably unexecuted expired intents are released here.
             expired=conn.execute("SELECT operation_id FROM control_operations WHERE state='PENDING_APPROVAL' AND expires_at<=?",(now,)).fetchall()

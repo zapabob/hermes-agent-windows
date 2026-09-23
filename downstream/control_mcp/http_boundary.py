@@ -54,7 +54,7 @@ class AuthenticatedControlASGI:
         origin=headers.get(b'origin',b'').decode('latin-1')
         if host not in self.hosts:
             return await _json(send,421,{'error':'invalid_host'})
-        if origin and origin not in self.origins:
+        if b'origin' in headers and origin not in self.origins:
             return await _json(send,403,{'error':'invalid_origin'})
         if scope.get('scheme')!='https':
             peer=(scope.get('client') or ('',0))[0]

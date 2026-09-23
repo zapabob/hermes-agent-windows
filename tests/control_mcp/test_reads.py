@@ -160,3 +160,23 @@ def test_event_gap_is_explicit_without_owner_feed(control_module, control_contex
     assert result['state'] == 'UNSUPPORTED'
     assert result['gap'] is True
     assert result['events'] == []
+
+
+def test_unexpected_owner_error_never_exposes_private_details(control_module,control_context):
+    class Broken:
+        def routes(self,profile_id):
+            raise RuntimeError('SYNTHETIC-TOKEN /private/vault')
+    service=control_module('service').HostControlService(source=Broken(),clock=lambda:100)
+    with pytest.raises(control_module('contracts').ControlError) as caught:
+        service.read(control_context(),'hermes_get_routes',{'profile_id':'p1'})
+    assert caught.value.code=='observation_unavailable'
+    assert 'SYNTHETIC' not in str(caught.value)
+
+
+def test_unbound_run_lookup_does_not_probe_another_workspace(control_module,control_context):
+    class NoOwner:
+        def run(self,*args):
+            raise AssertionError('No workspace-bound producer has been registered')
+    service=control_module('service').HostControlService(source=NoOwner(),clock=lambda:100)
+    result=service.read(control_context(),'hermes_get_run',{'profile_id':'p1','workspace_id':'w1','run_id':'eng-'+'a'*32})
+    assert result['state']=='UNSUPPORTED'

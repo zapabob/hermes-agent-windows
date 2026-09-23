@@ -28,6 +28,14 @@ class HostControlService:
         self.journal = journal
 
     def read(self, ctx: ControlContext, name: str, args: dict) -> dict:
+        try:
+            return self._read(ctx, name, args)
+        except ControlError:
+            raise
+        except Exception:
+            raise ControlError('observation_unavailable') from None
+
+    def _read(self, ctx: ControlContext, name: str, args: dict) -> dict:
         if name not in _READS or type(args) is not dict:
             raise ControlError('invalid_request')
         canonical_json(args)
@@ -50,10 +58,10 @@ class HostControlService:
             data = self.source.runtime(profile)
         elif name == 'hermes_get_routes':
             data = self.source.routes(profile)
-        elif name == 'hermes_get_run':
-            data = self.source.run(profile, args['run_id'])
-        elif name == 'hermes_get_evidence':
-            data = self.source.evidence(profile, args['run_id'])
+        elif name in ('hermes_get_run', 'hermes_get_evidence'):
+            # A supplied workspace_id is not proof that a run belongs to it.
+            # Wait for the producer's authorised owner mapping (Task 4).
+            data = {'state': 'UNSUPPORTED', 'reason': 'workspace_bound_producer_unwired'}
         elif name == 'hermes_get_operation' and self.journal is not None:
             data = self.journal.get(ctx, args['operation_id'], profile_id=profile,
                                     workspace_id=args['workspace_id'], now=now)

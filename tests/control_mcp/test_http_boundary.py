@@ -139,3 +139,12 @@ async def test_valid_but_oversized_json_is_413(http_boundary):
         r=await client.post('/api/control/mcp',json={'payload':'x'*33000},headers={'Authorization':'Bearer '+token()})
         assert r.status_code==413
         assert not calls
+
+
+@pytest.mark.asyncio
+async def test_present_but_empty_origin_is_not_native_origin_absence(http_boundary):
+    app,calls,token,_,_=http_boundary()
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app),base_url='https://hermes.invalid') as client:
+        r=await client.get('/api/control/mcp',headers={'Authorization':'Bearer '+token(),'Origin':''})
+        assert r.status_code==403
+        assert not calls
