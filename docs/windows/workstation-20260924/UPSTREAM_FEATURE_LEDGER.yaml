@@ -1,0 +1,53 @@
+# Workstation 2026-09-24: partial, evidence-bounded feature inventory.
+version: 1
+campaign: workstation-20260924
+repository: zapabob/hermes-agent-windows
+source_ids:
+  downstream_start: 76a194dbe6420863b7b72c14d173645b7464b083
+  downstream_main_observed: e6070028c9d0d75634ad7661c33fa937b682474a
+  upstream_release: d337b736aa1e8ebecfab043842d13e4a2d2f48a3
+  upstream_ceiling: b936546561888a54d5bf9cd7eae9629a824eb4f7
+  historical_snapshot_unchanged: b51c055a12220f8c7c18660e8599365012e19532
+inventory_status: PARTIAL_PENDING_HISTORY_AND_R1
+adoption_seeds_are_proofs: false
+features:
+  generic_control_mcp_read:
+    task: T03
+    canonical_owner: downstream/control_mcp/transport.py
+    codegraph_symbols: [ControlMCPHost, create_control_mcp, mount_control_mcp]
+    impact: [downstream/control_mcp/transport.py, hermes_cli/web_server.py, tests/control_mcp/test_host_mount.py, tests/control_mcp/test_mcp_protocol.py]
+    conflict_risk: high
+    verdict: EXISTING_READ_ONLY_COMPONENT_NOT_YET_LIVE_CLIENT_VERIFIED
+    source_ids: [76a194dbe6420863b7b72c14d173645b7464b083, b936546561888a54d5bf9cd7eae9629a824eb4f7]
+    evidence_refs: ['CodeGraph D mount_control_mcp/create_control_mcp/ControlMCPHost query and impact', 'CodeGraph U: ControlMCPHost no static result', docs/control-mcp/RETIREMENT_SPEC.md]
+    unresolved: [dynamic ASGI registration, resource auth, two-client read proof]
+  keyless_delegation:
+    task: T05
+    canonical_owner: tools/delegate_tool.py
+    codegraph_symbols: [_build_child_agent, delegate_task]
+    impact: [tools/delegate_tool.py, agent/subagent_lifecycle.py, tests/tools/test_delegate.py, tests/tools/test_delegate_fallback_matrix.py]
+    conflict_risk: critical
+    verdict: NOT_IMPLEMENTED_ON_NEW_PARENT_OWNED_PATH
+    source_ids: [76a194dbe6420863b7b72c14d173645b7464b083, b936546561888a54d5bf9cd7eae9629a824eb4f7]
+    evidence_refs: ['CodeGraph D _build_child_agent callers/callees/impact', 'CodeGraph U _build_child_agent query', docs/control-mcp/IMPLEMENTATION_LOG.md]
+    unresolved: [auth-store resolution, inference-port design, containment and cancellation]
+  native_restricted_execution:
+    task: T06
+    canonical_owner: PENDING_GRAPH_TRACE
+    codegraph_symbols: []
+    impact: []
+    conflict_risk: critical
+    verdict: BLOCKED_PENDING_NATIVE_DENIAL_QUALIFICATION
+    source_ids: [76a194dbe6420863b7b72c14d173645b7464b083]
+    evidence_refs: [docs/control-mcp/RETIREMENT_SPEC.md]
+    unresolved: [Python Node Git positive probes, host-secret workspace parent-process network denial probes]
+  selective_upstream_adoption:
+    task: T01_T17_T18_T24
+    canonical_owner: PENDING_PER_FAMILY
+    codegraph_symbols: []
+    impact: []
+    conflict_risk: high
+    verdict: NOT_YET_ENUMERATED_OR_REVIEWED
+    source_ids: [d337b736aa1e8ebecfab043842d13e4a2d2f48a3, b936546561888a54d5bf9cd7eae9629a824eb4f7]
+    evidence_refs: [docs/windows/UPSTREAM_FEATURE_LEDGER.yaml]
+    unresolved: [complete Git history, separate R1 graph, per-family equivalent behavior tests]
