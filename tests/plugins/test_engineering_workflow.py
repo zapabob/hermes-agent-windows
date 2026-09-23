@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import importlib
 import json
+import os
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -88,7 +89,7 @@ def test_actor_budget_is_finite_and_explicit_finish_keeps_structured_plan():
                          cancelled=lambda:False, max_calls=2)
 
 
-def test_source_paths_reject_secrets_symlinks_and_traversal(tmp_path):
+def test_source_paths_reject_secrets_and_traversal(tmp_path):
     workspace = module('workspace')
     (tmp_path/'hello.py').write_text('print(1)')
     (tmp_path/'.env').write_text('SECRET=synthetic')
@@ -96,7 +97,17 @@ def test_source_paths_reject_secrets_symlinks_and_traversal(tmp_path):
     for name in ('.env', '../outside', str(tmp_path/'hello.py')):
         with pytest.raises(ValueError):
             workspace.read_sources(tmp_path, (name,))
-    (tmp_path/'alias').symlink_to(tmp_path/'hello.py')
+
+
+def test_source_paths_reject_symlinks(tmp_path):
+    workspace = module('workspace')
+    (tmp_path/'hello.py').write_text('print(1)')
+    try:
+        (tmp_path/'alias').symlink_to(tmp_path/'hello.py')
+    except OSError as exc:
+        if os.name == 'nt' and exc.winerror == 1314:
+            pytest.skip('Creating symlinks requires Windows privileges')
+        raise
     with pytest.raises(ValueError):
         workspace.read_sources(tmp_path, ('alias',))
 

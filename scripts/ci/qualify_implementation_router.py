@@ -12,11 +12,17 @@ import subprocess
 import sys
 import tempfile
 
+from isolated_subprocess_env import isolated_subprocess_env
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
 def command(args: list[str], cwd: Path, *, check: bool = True) -> subprocess.CompletedProcess[str]:
-    result = subprocess.run(args, cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180)
+    with isolated_subprocess_env() as env:
+        result = subprocess.run(
+            args, cwd=cwd, env=env, close_fds=True, stdin=subprocess.DEVNULL,
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180,
+        )
     if check and result.returncode:
         raise RuntimeError(f"{args[0]} failed ({result.returncode}): {result.stderr[-3000:]}")
     return result

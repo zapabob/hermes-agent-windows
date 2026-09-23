@@ -8,6 +8,8 @@ import subprocess
 import sys
 import tempfile
 
+from isolated_subprocess_env import isolated_subprocess_env
+
 ROOT = Path(__file__).resolve().parents[2]
 COMPONENT = Path("downstream/implementation_router")
 KERNEL = COMPONENT / "kernel.py"
@@ -32,10 +34,12 @@ MUTATIONS = {
 
 
 def execute(root: Path, pattern: str = "test*.py") -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [sys.executable, "-m", "unittest", "discover", "-s", "tests/implementation_router", "-p", pattern, "-q"],
-        cwd=root, capture_output=True, text=True, timeout=45,
-    )
+    with isolated_subprocess_env() as env:
+        return subprocess.run(
+            [sys.executable, "-m", "unittest", "discover", "-s", "tests/implementation_router", "-p", pattern, "-q"],
+            cwd=root, env=env, close_fds=True, stdin=subprocess.DEVNULL,
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=45,
+        )
 
 
 def main() -> int:
