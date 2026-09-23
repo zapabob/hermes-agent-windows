@@ -1781,15 +1781,18 @@ def _(rid, params: dict) -> dict:
     request_id = params["request_id"]
     digest = params["intent_digest"]
     if (
-        type(request_id) is not str or not request_id
+        type(params["session_id"]) is not str or not params["session_id"]
+        or type(request_id) is not str or not request_id
         or type(digest) is not str or len(digest) != 64
         or any(char not in "0123456789abcdef" for char in digest)
         or params["choice"] not in ("once", "deny")
     ):
         return _err(rid, 4006, "invalid control approval")
-    session, err = _sess(params, rid)
-    if err:
-        return err
+    # A public session id is a lookup hint; the bound transport is the
+    # local human surface that owns this exact live runtime generation.
+    transport, session = _current_session_steer_authority(params["session_id"])
+    if transport is None or session is None:
+        return _err(rid, 4003, "control approval surface mismatch")
     try:
         from tools.approval import resolve_control_consent
 

@@ -139,3 +139,25 @@ def test_scoped_observation_reads_bound_native_receipts(tmp_path: Path, control_
         service.read(control_context(workspaces=(('p1', 'w2'),)), 'hermes_get_evidence', {
             'profile_id': 'p1', 'workspace_id': 'w2', 'run_id': run_id})
     assert denied.value.code == 'resource_denied'
+
+
+def test_failed_native_result_is_observable_without_becoming_verified(
+        tmp_path: Path, control_module):
+    run_id = 'eng-' + 'd' * 32
+    home = tmp_path / 'profile'
+    run_dir = home / 'plugin-data' / 'implementation_router' / run_id
+    run_dir.mkdir(parents=True)
+    (run_dir / 'run-manifest.json').write_text(json.dumps({
+        'schema_version': 1, 'run_id': run_id, 'workspace_id': 'w1',
+        'operation_id': 'op-' + 'e' * 32,
+        'source_digest': 'a' * 64, 'route_fingerprint': 'b' * 64,
+        'required_checks': ['unit']}), encoding='utf-8')
+    (run_dir / 'run-result.json').write_text(json.dumps({
+        'schema_version': 1, 'run_id': run_id, 'workspace_id': 'w1',
+        'run_state': 'FAILED', 'reason': 'required_check_failed',
+        'verified_attempt_id': None, 'candidate_digest': None}), encoding='utf-8')
+    (run_dir / 'verification.jsonl').write_text('', encoding='utf-8')
+    source = control_module('observations').HermesObservations(
+        homes={'p1': home}, registered_slots=())
+    assert source.run('p1', run_id)['run_state'] == 'FAILED'
+    assert source.evidence('p1', run_id)['verified'] is False

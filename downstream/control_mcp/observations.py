@@ -142,6 +142,8 @@ class HermesObservations:
         checks = manifest.get('required_checks')
         if (manifest.get('schema_version') != 1 or manifest.get('run_id') != run_id
                 or not valid_id(manifest.get('workspace_id'))
+                or (manifest.get('operation_id') is not None and not re.fullmatch(
+                    r'op-[a-f0-9]{32}', str(manifest['operation_id'])))
                 or not self._digest(manifest.get('source_digest'))
                 or not self._digest(manifest.get('route_fingerprint'))
                 or type(checks) is not list or not 1 <= len(checks) <= 16
@@ -163,7 +165,7 @@ class HermesObservations:
         if (terminal.get('schema_version') != 1
                 or terminal.get('run_id') != manifest['run_id']
                 or terminal.get('workspace_id') != manifest['workspace_id']
-                or terminal.get('run_state') not in ('SUCCEEDED', 'BLOCKED', 'CANCELLED')
+                or terminal.get('run_state') not in ('SUCCEEDED', 'FAILED', 'BLOCKED', 'CANCELLED')
                 or type(terminal.get('reason')) is not str or len(terminal['reason']) > 128):
             raise ControlError('observation_unavailable')
         if terminal['run_state'] == 'SUCCEEDED' and (
@@ -179,6 +181,7 @@ class HermesObservations:
                     'reason': 'live_owner_not_observed' if path.is_dir() else 'run_absent'}
         terminal = self._terminal(path, manifest)
         common = {'run_id': run_id, 'workspace_id': manifest['workspace_id'],
+                  'operation_id': manifest.get('operation_id'),
                   'source_digest': manifest['source_digest'],
                   'route_fingerprint': manifest['route_fingerprint'],
                   'required_checks': manifest['required_checks']}

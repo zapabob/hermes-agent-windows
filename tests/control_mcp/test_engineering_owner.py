@@ -136,3 +136,55 @@ def test_success_without_native_evidence_stays_unknown(
             'expected_revision': 'revision-1', 'source_sha': 'a' * 40,
             'parameters': {'task': 'Do not replay'}}, now=104)
     assert caught.value.code == 'workspace_busy'
+
+
+def test_owner_calls_real_entrypoint_with_host_issued_identity(
+        control_module, control_context, tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    from downstream.implementation_router.kernel import RunResult
+    from plugins.implementation_router import entrypoint
+    from plugins.implementation_router.control import EngineeringRunOwner
+
+    journal, ctx, operation_id = _approved(control_module, control_context, tmp_path)
+    routes = {f'engineering_{role}': {'provider': 'custom:fixture', 'model': role}
+              for role in ('planner', 'worker', 'reviewer')}
+    monkeypatch.setattr('hermes_cli.config.load_config_readonly',
+                        lambda: {'auxiliary': routes})
+    monkeypatch.setattr('plugins.plugin_storage.plugin_data_dir',
+                        lambda name: tmp_path / 'plugin-data')
+    seen = []
+
+    class FakeNativeHost:
+        def __init__(self, **kwargs):
+            seen.append(kwargs)
+            self.run_dir = tmp_path / 'not-created'
+            self.result_dir = None
+
+        def close(self):
+            pass
+
+    class FakeRouter:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def run(self, **kwargs):
+            assert kwargs['host'] is not None
+            return RunResult('BLOCKED', 'credential_boundary_unavailable', 0, 1, ())
+
+    monkeypatch.setattr('plugins.implementation_router.host.NativeEngineeringHost', FakeNativeHost)
+    monkeypatch.setattr(entrypoint, 'ImplementationRouter', FakeRouter)
+    policy = {'path': str(tmp_path), 'image': 'sha256:' + 'a' * 64,
+              'source_paths': ['source.py'], 'protected_paths': ['source.py'],
+              'checks': [{'id': 'unit', 'argv': ['/usr/bin/true']}]}
+    plugin_ctx = SimpleNamespace(get_config=lambda key, default=None:
+        True if key == 'enabled' else {'w1': policy} if key == 'workspaces' else default)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        owner = EngineeringRunOwner(journal=journal, plugin_ctx=plugin_ctx,
+            submit=pool.submit, validate_intent=lambda request: True,
+            verify_result=lambda *args: False, clock=lambda: 103)
+        handle = owner.start_approved(ctx, operation_id)
+        assert handle.future.result(timeout=5)['state'] == 'BLOCKED'
+    assert len(seen) == 1
+    assert seen[0]['binding'].run_id == handle.run_id
+    assert seen[0]['operation_id'] == operation_id
+    assert seen[0]['ctx'] is plugin_ctx
