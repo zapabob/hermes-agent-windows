@@ -438,8 +438,37 @@ def _auto_update_security_definitions_on_startup() -> None:
         _log.exception("Security definition auto-update failed")
 
 
+def _prepare_control_mcp_host(app: "FastAPI"):
+    """Mount Control MCP only when the trusted bootstrap explicitly opts in."""
+    startup_config = getattr(app.state, "control_mcp_startup_config", None)
+    control_host = getattr(app.state, "control_mcp_host", None)
+    if startup_config is None:
+        return control_host
+
+    from downstream.control_mcp.contracts import ControlError
+
+    # Lifespan restarts reuse only a host created from this exact immutable
+    # startup config. Any independently supplied host/config combination is a
+    # conflict, so startup cannot replace an existing host by accident.
+    if control_host is not None:
+        if getattr(app.state, "_control_mcp_startup_config", None) is startup_config:
+            return control_host
+        raise ControlError("route_conflict")
+
+    from downstream.control_mcp.startup import build_control_mcp_host
+    from downstream.control_mcp.transport import mount_control_mcp
+
+    host = build_control_mcp_host(startup_config)
+    mount_control_mcp(app, host)
+    app.state._control_mcp_startup_config = startup_config
+    return host
+
+
 @asynccontextmanager
 async def _lifespan(app: "FastAPI"):
+    # Validate and mount before spawning any unrelated startup work. Invalid
+    # opt-in config fails closed without leaving a host or routes behind.
+    control_host = _prepare_control_mcp_host(app)
     app.state.event_channels = {}  # dict[str, set]
     app.state.event_lock = asyncio.Lock()
     app.state.pty_active_session_files = {}  # dict[str, Path]
@@ -551,7 +580,6 @@ async def _lifespan(app: "FastAPI"):
     auto_archive_task = asyncio.create_task(_auto_archive_ticker_loop())
 
     try:
-        control_host = getattr(app.state, "control_mcp_host", None)
         if control_host is None:
             yield
         else:
