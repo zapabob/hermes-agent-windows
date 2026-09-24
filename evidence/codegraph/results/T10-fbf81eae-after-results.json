@@ -1,0 +1,452 @@
+{
+  "phase": "after",
+  "source_sha": "fbf81eae67954eca93b3e033f02f55e4ed889bf1",
+  "source_fingerprint": "c19d89f3c9306c7a462f8d79b24700608ab1df31d3507cede0ec6d434eed132d",
+  "index_identity": "H:\\hermes-control-mcp-t10-admission-20260924\\.codegraph",
+  "status": {
+    "initialized": true,
+    "version": "1.6.0",
+    "projectPath": "H:\\hermes-control-mcp-t10-admission-20260924",
+    "indexPath": "H:\\hermes-control-mcp-t10-admission-20260924\\.codegraph",
+    "lastIndexed": "2026-09-24T08:40:50.809Z",
+    "fileCount": 8918,
+    "nodeCount": 191125,
+    "edgeCount": 612054,
+    "dbSizeBytes": 640327680,
+    "walSizeBytes": 0,
+    "backend": "node-sqlite",
+    "journalMode": "wal",
+    "nodesByKind": {
+      "class": 13020,
+      "component": 64,
+      "constant": 5744,
+      "enum": 8,
+      "enum_member": 25,
+      "field": 10,
+      "file": 8584,
+      "function": 60444,
+      "import": 42005,
+      "interface": 2174,
+      "method": 41919,
+      "namespace": 1,
+      "property": 1470,
+      "route": 397,
+      "struct": 33,
+      "type_alias": 883,
+      "variable": 14344
+    },
+    "languages": [
+      "c",
+      "cpp",
+      "csharp",
+      "go",
+      "javascript",
+      "liquid",
+      "nix",
+      "php",
+      "python",
+      "rust",
+      "tsx",
+      "typescript",
+      "yaml"
+    ],
+    "pendingChanges": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "worktreeMismatch": null,
+    "index": {
+      "builtWithVersion": "1.6.0",
+      "builtWithExtractionVersion": 25,
+      "currentExtractionVersion": 25,
+      "reindexRecommended": false,
+      "state": "complete",
+      "pendingRefs": 0
+    }
+  },
+  "queries": {
+    "callers_admit_resources": {
+      "symbol": "admit_resources",
+      "callers": [
+        {
+          "name": "reserve",
+          "kind": "method",
+          "filePath": "downstream/delegation/resources.py",
+          "startLine": 642
+        },
+        {
+          "name": "test_stale_gpu_denies_local_compute_but_not_remote_read",
+          "kind": "function",
+          "filePath": "tests/downstream/test_resource_admission.py",
+          "startLine": 140
+        },
+        {
+          "name": "test_missing_host_telemetry_fails_closed_for_local_compute",
+          "kind": "function",
+          "filePath": "tests/downstream/test_resource_admission.py",
+          "startLine": 168
+        },
+        {
+          "name": "test_pressure_hysteresis_requires_resume_threshold_before_reopening",
+          "kind": "function",
+          "filePath": "tests/downstream/test_resource_admission.py",
+          "startLine": 501
+        },
+        {
+          "name": "test_commit_headroom_is_enforced_even_when_ram_is_available",
+          "kind": "function",
+          "filePath": "tests/downstream/test_resource_admission.py",
+          "startLine": 530
+        },
+        {
+          "name": "test_ram_hysteresis_stays_latched_until_headroom_clears_resume_margin",
+          "kind": "function",
+          "filePath": "tests/downstream/test_resource_admission.py",
+          "startLine": 550
+        },
+        {
+          "name": "test_unavailable_local_residency_is_not_coerced_to_zero_or_admitted",
+          "kind": "function",
+          "filePath": "tests/downstream/test_resource_admission.py",
+          "startLine": 650
+        },
+        {
+          "name": "test_resource_admission.py",
+          "kind": "file",
+          "filePath": "tests/downstream/test_resource_admission.py",
+          "startLine": 1
+        }
+      ]
+    },
+    "callers_eligible_routes": {
+      "symbol": "eligible_routes",
+      "callers": [
+        {
+          "name": "test_snapshot_max_age_applies_to_entitlement_evidence",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 239
+        },
+        {
+          "name": "test_subscription_route_requires_current_exact_entitlement_to_be_eligible",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 411
+        },
+        {
+          "name": "test_eligible_routes_require_current_scope_price_and_tool_support",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 456
+        },
+        {
+          "name": "test_all_free_routes_exhausted_by_missing_tool_support_has_no_paid_fallback",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 501
+        },
+        {
+          "name": "reserve",
+          "kind": "method",
+          "filePath": "downstream/delegation/admission.py",
+          "startLine": 261
+        },
+        {
+          "name": "admission.py",
+          "kind": "file",
+          "filePath": "downstream/delegation/admission.py",
+          "startLine": 1
+        }
+      ]
+    },
+    "callers_build_free_route_snapshot": {
+      "symbol": "build_free_route_snapshot",
+      "callers": [
+        {
+          "name": "_refresh",
+          "kind": "method",
+          "filePath": "downstream/delegation/free_routes.py",
+          "startLine": 706
+        }
+      ]
+    },
+    "callers_SubagentLifecycleService": {
+      "symbol": "SubagentLifecycleService",
+      "callers": [
+        {
+          "name": "test_subagent_lifecycle.py",
+          "kind": "file",
+          "filePath": "tests/agent/test_subagent_lifecycle.py",
+          "startLine": 1
+        },
+        {
+          "name": "subagent_lifecycle",
+          "kind": "method",
+          "filePath": "hermes_cli/plugins.py",
+          "startLine": 1678
+        },
+        {
+          "name": "lifecycle",
+          "kind": "function",
+          "filePath": "tests/agent/test_subagent_lifecycle.py",
+          "startLine": 43
+        },
+        {
+          "name": "test_cancel_is_cooperative_and_forged_handle_is_unknown",
+          "kind": "function",
+          "filePath": "tests/agent/test_subagent_lifecycle.py",
+          "startLine": 76
+        },
+        {
+          "name": "test_public_lifecycle_runs_host_aggregation",
+          "kind": "function",
+          "filePath": "tests/agent/test_subagent_lifecycle.py",
+          "startLine": 108
+        },
+        {
+          "name": "test_sequential_tool_interrupt_hides_lifecycle_cancel_detail",
+          "kind": "function",
+          "filePath": "tests/run_agent/test_sequential_tool_timeout.py",
+          "startLine": 218
+        }
+      ]
+    },
+    "callers_ResourceReservationBook_reserve": {
+      "symbol": "ResourceReservationBook.reserve",
+      "callers": [
+        {
+          "name": "test_competing_reservations_are_atomic_and_cannot_overbook_ram",
+          "kind": "function",
+          "filePath": "tests/downstream/test_resource_admission.py",
+          "startLine": 181
+        },
+        {
+          "name": "test_suspended_child_reservation_remains_charged_until_explicit_release",
+          "kind": "function",
+          "filePath": "tests/downstream/test_resource_admission.py",
+          "startLine": 205
+        },
+        {
+          "name": "test_embedding_allocation_is_reserved_after_admission",
+          "kind": "function",
+          "filePath": "tests/downstream/test_resource_admission.py",
+          "startLine": 237
+        },
+        {
+          "name": "test_reflected_running_claim_is_not_subtracted_again_from_free_counters",
+          "kind": "function",
+          "filePath": "tests/downstream/test_resource_admission.py",
+          "startLine": 274
+        },
+        {
+          "name": "test_suspended_started_claim_uses_fresh_observation_and_is_not_released",
+          "kind": "function",
+          "filePath": "tests/downstream/test_resource_admission.py",
+          "startLine": 345
+        },
+        {
+          "name": "test_unknown_writer_outcome_blocks_relaunch_and_keeps_resource_reservation",
+          "kind": "function",
+          "filePath": "tests/delegation/test_nested_budget.py",
+          "startLine": 251
+        },
+        {
+          "name": "test_competing_resource_reservations_are_atomic_through_one_admission_owner",
+          "kind": "function",
+          "filePath": "tests/delegation/test_round_robin.py",
+          "startLine": 217
+        }
+      ]
+    },
+    "callers_DelegationAdmission_reserve": {
+      "symbol": "DelegationAdmission.reserve",
+      "callers": [
+        {
+          "name": "_start",
+          "kind": "function",
+          "filePath": "tests/delegation/test_nested_budget.py",
+          "startLine": 146
+        }
+      ]
+    },
+    "callees_DelegationAdmission_reserve": {
+      "symbol": "DelegationAdmission.reserve",
+      "callees": [
+        {
+          "name": "_finite_clock",
+          "kind": "method",
+          "filePath": "downstream/delegation/admission.py",
+          "startLine": 660
+        },
+        {
+          "name": "_validate_parent_locked",
+          "kind": "method",
+          "filePath": "downstream/delegation/admission.py",
+          "startLine": 551
+        },
+        {
+          "name": "eligible_routes",
+          "kind": "function",
+          "filePath": "downstream/delegation/free_routes.py",
+          "startLine": 597
+        },
+        {
+          "name": "_exclude_cooled_routes_locked",
+          "kind": "method",
+          "filePath": "downstream/delegation/admission.py",
+          "startLine": 605
+        },
+        {
+          "name": "_capacity_rejection_locked",
+          "kind": "method",
+          "filePath": "downstream/delegation/admission.py",
+          "startLine": 574
+        },
+        {
+          "name": "wait",
+          "kind": "method",
+          "filePath": "downstream/platform/windows/delegated_execution.py",
+          "startLine": 80
+        },
+        {
+          "name": "_select_route_locked",
+          "kind": "method",
+          "filePath": "downstream/delegation/admission.py",
+          "startLine": 626
+        },
+        {
+          "name": "release",
+          "kind": "method",
+          "filePath": "downstream/delegation/resources.py",
+          "startLine": 698
+        },
+        {
+          "name": "add",
+          "kind": "method",
+          "filePath": "optional-skills/security/oss-forensics/scripts/evidence-store.py",
+          "startLine": 90
+        },
+        {
+          "name": "pop",
+          "kind": "method",
+          "filePath": "hermes_cli/prompt_stash.py",
+          "startLine": 153
+        },
+        {
+          "name": "max",
+          "kind": "method",
+          "filePath": "tests/tools/test_wake_word.py",
+          "startLine": 446
+        },
+        {
+          "name": "AdmissionRejection",
+          "kind": "class",
+          "filePath": "downstream/delegation/admission.py",
+          "startLine": 194
+        },
+        {
+          "name": "AdmissionGrant",
+          "kind": "class",
+          "filePath": "downstream/delegation/admission.py",
+          "startLine": 170
+        },
+        {
+          "name": "_GrantRecord",
+          "kind": "class",
+          "filePath": "downstream/delegation/admission.py",
+          "startLine": 211
+        },
+        {
+          "name": "_HARD_DEADLINE_SECONDS",
+          "kind": "variable",
+          "filePath": "downstream/delegation/admission.py",
+          "startLine": 42
+        },
+        {
+          "name": "_IDLE_DEADLINE_SECONDS",
+          "kind": "variable",
+          "filePath": "downstream/delegation/admission.py",
+          "startLine": 43
+        },
+        {
+          "name": "_SOFT_DEADLINE_SECONDS",
+          "kind": "variable",
+          "filePath": "downstream/delegation/admission.py",
+          "startLine": 41
+        },
+        {
+          "name": "_READ_ONLY_TOOL_NAMES",
+          "kind": "variable",
+          "filePath": "downstream/delegation/admission.py",
+          "startLine": 44
+        },
+        {
+          "name": "_MAX_QUEUE_WAIT_SECONDS",
+          "kind": "variable",
+          "filePath": "downstream/delegation/admission.py",
+          "startLine": 35
+        },
+        {
+          "name": "_MAX_WAITERS",
+          "kind": "variable",
+          "filePath": "downstream/delegation/admission.py",
+          "startLine": 34
+        }
+      ]
+    },
+    "impact_DelegationAdmission_reserve_depth2": {
+      "symbol": "DelegationAdmission.reserve",
+      "depth": 2,
+      "nodeCount": 6,
+      "edgeCount": 6,
+      "affected": [
+        {
+          "name": "reserve",
+          "kind": "method",
+          "filePath": "downstream/delegation/admission.py",
+          "startLine": 261
+        },
+        {
+          "name": "_start",
+          "kind": "function",
+          "filePath": "tests/delegation/test_nested_budget.py",
+          "startLine": 146
+        },
+        {
+          "name": "test_two_top_level_and_one_read_only_grandchild_share_tree_and_host_caps",
+          "kind": "function",
+          "filePath": "tests/delegation/test_nested_budget.py",
+          "startLine": 153
+        },
+        {
+          "name": "test_nested_child_cannot_expand_parent_tool_scope_or_change_lineage",
+          "kind": "function",
+          "filePath": "tests/delegation/test_nested_budget.py",
+          "startLine": 192
+        },
+        {
+          "name": "test_nested_child_cannot_change_provider_scope",
+          "kind": "function",
+          "filePath": "tests/delegation/test_nested_budget.py",
+          "startLine": 219
+        },
+        {
+          "name": "test_depth_two_rejects_mutating_tools_even_when_parent_has_them",
+          "kind": "function",
+          "filePath": "tests/delegation/test_nested_budget.py",
+          "startLine": 238
+        }
+      ]
+    },
+    "affected_T10_files": {
+      "changedFiles": [
+        "downstream/delegation/admission.py",
+        "tests/delegation/test_round_robin.py",
+        "tests/delegation/test_nested_budget.py"
+      ],
+      "affectedTests": [],
+      "totalDependentsTraversed": 2
+    }
+  }
+}

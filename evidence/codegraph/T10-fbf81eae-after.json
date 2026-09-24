@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "task_id": "T10",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "fbf81eae67954eca93b3e033f02f55e4ed889bf1",
+  "source_fingerprint": "c19d89f3c9306c7a462f8d79b24700608ab1df31d3507cede0ec6d434eed132d",
+  "index_identity": "H:\\hermes-control-mcp-t10-admission-20260924\\.codegraph",
+  "tool": {
+    "version": "1.6.0",
+    "invocation_kind": "CLI",
+    "package": "@colbymchenry/codegraph",
+    "node_version": "22.23.2"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "queries": [
+    {
+      "result_ref": "evidence/codegraph/results/T10-fbf81eae-after-results.json#/queries/callers_admit_resources",
+      "query": "callers admit_resources --json"
+    },
+    {
+      "result_ref": "evidence/codegraph/results/T10-fbf81eae-after-results.json#/queries/callers_eligible_routes",
+      "query": "callers eligible_routes --json"
+    },
+    {
+      "result_ref": "evidence/codegraph/results/T10-fbf81eae-after-results.json#/queries/callers_build_free_route_snapshot",
+      "query": "callers build_free_route_snapshot --json"
+    },
+    {
+      "result_ref": "evidence/codegraph/results/T10-fbf81eae-after-results.json#/queries/callers_SubagentLifecycleService",
+      "query": "callers SubagentLifecycleService --json"
+    },
+    {
+      "result_ref": "evidence/codegraph/results/T10-fbf81eae-after-results.json#/queries/callers_ResourceReservationBook_reserve",
+      "query": "callers ResourceReservationBook.reserve --json"
+    },
+    {
+      "result_ref": "evidence/codegraph/results/T10-fbf81eae-after-results.json#/queries/callers_DelegationAdmission_reserve",
+      "query": "callers DelegationAdmission.reserve --json"
+    },
+    {
+      "result_ref": "evidence/codegraph/results/T10-fbf81eae-after-results.json#/queries/callees_DelegationAdmission_reserve",
+      "query": "callees DelegationAdmission.reserve --json"
+    },
+    {
+      "result_ref": "evidence/codegraph/results/T10-fbf81eae-after-results.json#/queries/impact_DelegationAdmission_reserve_depth2",
+      "query": "impact DelegationAdmission.reserve --depth 2 --json"
+    },
+    {
+      "result_ref": "evidence/codegraph/results/T10-fbf81eae-after-results.json#/queries/affected_T10_files",
+      "query": "affected downstream/delegation/admission.py tests/delegation/test_round_robin.py tests/delegation/test_nested_budget.py --json"
+    },
+    {
+      "result_ref": "evidence/codegraph/results/T10-fbf81eae-after-results.json#/status",
+      "query": "status --json"
+    }
+  ],
+  "canonical_owners": [
+    "downstream.delegation.admission.DelegationAdmission.reserve",
+    "downstream.delegation.free_routes.eligible_routes",
+    "downstream.delegation.resources.ResourceReservationBook.reserve"
+  ],
+  "impact_paths": [
+    "Admission.reserve calls the T09 eligibility authority and T08 resource reservation authority under the T10 owner lock.",
+    "Caller query finds only T10 test helper _start; no existing production lifecycle caller is present.",
+    "T10 remains inactive until T05 lineage, T06 isolation, T08 resource producer, T09 catalogue producer, and a host lifecycle owner are wired and qualified."
+  ]
+}

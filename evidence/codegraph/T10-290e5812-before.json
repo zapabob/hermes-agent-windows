@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "task_id": "T10",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "290e5812c6fa0a28306de6b67ce0d5a629284213",
+  "source_fingerprint": "76a4575a2097115dc839ce1a03b0f726fe95b68eaea3b3869ba3111bbfce9b93",
+  "index_identity": "H:\\hermes-control-mcp-t10-admission-20260924\\.codegraph",
+  "tool": {
+    "version": "1.6.0",
+    "invocation_kind": "CLI",
+    "package": "@colbymchenry/codegraph"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "queries": [
+    {
+      "result_ref": "evidence/codegraph/results/T10-290e5812-before-results.json#/queries/callers_admit_resources",
+      "query": "callers admit_resources --json"
+    },
+    {
+      "result_ref": "evidence/codegraph/results/T10-290e5812-before-results.json#/queries/callers_eligible_routes",
+      "query": "callers eligible_routes --json"
+    },
+    {
+      "result_ref": "evidence/codegraph/results/T10-290e5812-before-results.json#/queries/callers_build_free_route_snapshot",
+      "query": "callers build_free_route_snapshot --json"
+    },
+    {
+      "result_ref": "evidence/codegraph/results/T10-290e5812-before-results.json#/queries/callers_SubagentLifecycleService",
+      "query": "callers SubagentLifecycleService --json"
+    }
+  ],
+  "canonical_owners": [
+    "downstream.delegation.resources.ResourceReservationBook.reserve",
+    "downstream.delegation.free_routes.eligible_routes",
+    "downstream.delegation.free_routes.FreeRouteCatalogueOwner.refresh_if_due",
+    "agent.subagent_lifecycle.SubagentLifecycleService.launch"
+  ],
+  "impact_paths": [
+    "Admission module and T10 tests are absent at the frozen base.",
+    "T10 will compose existing T08 ResourceReservationBook and T09 eligible_routes under a new host-owned in-memory owner.",
+    "The only production lifecycle constructor is hermes_cli/plugins.py; execution remains with SubagentLifecycleService and no T10 lifecycle wiring is included."
+  ],
+  "unresolved_edges": [
+    "T08/T09 admission producers are not connected to a production child-launch path; direct source checks confirm the gap.",
+    "CodeGraph impact query for ResourceReservationBook includes a name-based edge to inference_port.complete; direct source search shows no ResourceReservationBook call there, so that edge is treated as a false positive."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [],
+  "evidence_refs": [
+    "evidence/codegraph/results/T10-290e5812-before-results.json"
+  ],
+  "counterpart_evidence_refs": [],
+  "phase": "before"
+}
