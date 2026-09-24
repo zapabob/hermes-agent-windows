@@ -43,7 +43,7 @@ T20-liveの入口は、T04 human-once operation承認、T06有用な資格情報
 | --- | --- | --- | --- |
 | LM00 | F00 / RV01 | B/R0/R1/Uとlegacy-only objectの完全性、欠落時 `HISTORY_INCOMPLETE` | Integrator inventory owner。現helperへbind |
 | LM01 | F00 / RV02 | HEAD/dirty fingerprint移動で古いfamily receiptを拒否 | Integrator ledger owner。現HEAD再取得 |
-| LM02 | F00 / RV03 | inventory SQLite接続を成功/例外で閉じtemp dirを残さない | 現HEADは修正済み、11件GREEN。実node/mutantだけ不足分を確認 |
+| LM02 | F00 / RV03 | inventory SQLite接続を成功/例外で閉じtemp dirを残さない | 実装同等性を確認。test commit `17e684bb281bc5c9e38d136209ee3f41ec3a2ed4` の2ケースと `closing` 除去mutantで検証済み |
 | LM03 | F01 / RV04 | principal/client/profile/resource/args/source/policy/epoch/nonce束縛と偽承認否定 | AUTH。既存 `tools/approval.py` とjournalの境界をtrace |
 | LM04 | F01 / RV05 | 二client競合でもoperationのonce consumeは一回 | AUTH→Integrator journal共有接続。LM03後 |
 | LM05 | F01 / RV06 | scratch executeとdestination applyの承認を分離 | AUTH契約後、apply ownerはIntegrator。T12と合流 |
@@ -106,6 +106,7 @@ F00の最初のread-only収集（統合SHA `fab4a999d1097949b287595636d7d4bc8098
 
 各packetのdispatch直前にこのカードのSHA/statusを再観測し、`LUNA_MAX_PACKET_DAG.json` の `after` は製品変更の前提、`closure_gates` は完了資格として扱う。進行中のT09/T16をF00が完了するまで差し戻す意味ではない。両者の既存実装は凍結済み入力に基づいて継続し、統合時にF00の再確認へ照合する。
 
+2026-09-25 LM02 follow-up: main test commit `17e684bb281bc5c9e38d136209ee3f41ec3a2ed4` adds exact RV03 nodes `test_generate_closes_sqlite_and_removes_temp_dirs_on_success` and `test_generate_closes_sqlite_and_removes_temp_dirs_on_exception`. On that exact test commit, the focused nodes passed 2/2 and the full test file passed 15/15; pinned Ruff 0.15.10 and `git diff --check` passed. An in-memory `inventory.closing -> contextlib.nullcontext` mutant failed both cases at the closed-connection assertion. Independent review approved blob `18eaca82f5092a126bb4dd416fbb9bc48eed37ca`. Node 26.9.0 is rejected by the CodeGraph guard requiring Node 22, so CodeGraph was not run and no unsafe override was used. The mutant left two locked SQLite scratch directories at `C:\Users\downl\AppData\Local\Temp\workstation-inventory-db-fzws1t5e` and `C:\Users\downl\AppData\Local\Temp\workstation-inventory-db-gmoefmwv`; both were verified present and retained without cleanup. LM01 receipt/fingerprint owner assignment and RV02’s valid-format nonexistent integration SHA case remain open.
 ## 4. 母集団のsemantic reviewとpost-Uの扱い
 
 T01の三固定窓は報告値2,777 / 5,173 / 993、unique commits 8,943、historical ledger 5,105、metadata rows 14,048、seed 34（P0 16）、critical historical current receipt欠落1,671である。これらは実装数でもparity率でもない。F00でSHA集合の重複、merge/resolution、legacy-only blob、seed対全row mappingを再計算する。T17-RのLuna Max packetは一つのsemantic familyと一つの現D ownerに限り、source family最終状態、Windows適用可能性、existing-equivalence、code/test/mutant、著者、残るrowをcardへ記録する。未監査P0を `DEFER` で帳消しにしない。`NOT_APPLICABLE` は現在の到達不能性と再訪条件を必要とする。
