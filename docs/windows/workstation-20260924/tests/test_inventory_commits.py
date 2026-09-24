@@ -228,5 +228,41 @@ class TestFrozenInventory(unittest.TestCase):
         self.assertEqual(sentinel.read_text(encoding="utf-8"), "preserve")
 
 
+class TestFrozenCampaignInventory(unittest.TestCase):
+    def test_successful_legacy_inventory_preserves_frozen_source_digest(self) -> None:
+        campaign_dir = Path(__file__).resolve().parents[1]
+        repo = campaign_dir.parents[2]
+        freeze = json.loads((campaign_dir / "freeze.json").read_text(encoding="utf-8"))
+        inventory_config = freeze["inventory"]
+        expected_digest = inventory_config["legacy_source_sha256"]
+        legacy_path = repo / inventory_config["legacy_source_path"]
+        self.assertEqual(inventory.file_sha256(legacy_path), expected_digest)
+
+        upstream = freeze["upstream"]
+        integration_head = inventory.git(repo, "rev-parse", "--verify", "HEAD^{commit}")
+        with tempfile.TemporaryDirectory(prefix="f00-legacy-digest-") as temp_dir:
+            result = inventory.generate(
+                repo,
+                upstream["historical_snapshot_sha"],
+                upstream["v0213_release_sha"],
+                upstream["v0214_release_sha"],
+                upstream["campaign_ceiling_sha"],
+                integration_head,
+                Path(temp_dir) / "inventory",
+                legacy_path,
+            )
+            ledger_path = Path(temp_dir) / "inventory" / "historical_ledger_reaudit.jsonl"
+            ledger_rows = [
+                json.loads(line)
+                for line in ledger_path.read_text(encoding="utf-8").splitlines()
+            ]
+
+        self.assertEqual(result["legacy_source_sha256"], expected_digest)
+        self.assertEqual(result["legacy_rows"], inventory_config["legacy_row_count"])
+        self.assertEqual(len(ledger_rows), result["legacy_rows"])
+        self.assertTrue(ledger_rows)
+        self.assertTrue(all(row.get("source_sha256") == expected_digest for row in ledger_rows))
+
+
 if __name__ == "__main__":
     unittest.main()
