@@ -139,6 +139,37 @@ class TestFrozenInventory(unittest.TestCase):
             self.generate(legacy=ledger)
         self.assertFalse(self.output.exists())
 
+    def test_successful_legacy_walk_missing_sha_refuses_output(self) -> None:
+        base_branch = self.run_git("branch", "--show-current").strip()
+        self.run_git("checkout", "-q", "-b", "legacy-only")
+        (self.repo / "legacy.txt").write_text("legacy", encoding="utf-8")
+        self.run_git("add", "legacy.txt")
+        self.run_git("commit", "-q", "-m", "legacy-only")
+        legacy_sha = self.run_git("rev-parse", "HEAD").strip()
+        self.run_git("checkout", "-q", base_branch)
+        self.assertNotIn(legacy_sha, self.refs)
+
+        ledger = self.root / "legacy.yaml"
+        ledger.write_text(
+            f"commit_count: 1\ncommits:\n  - sha: {legacy_sha}\n    decision: ADOPT\n",
+            encoding="utf-8",
+        )
+        original_run = inventory.subprocess.run
+        omitted_legacy_walks: list[list[str]] = []
+
+        def omit_legacy_sha(command: list[str], **kwargs: object) -> subprocess.CompletedProcess:
+            if "rev-list" in command and "--no-walk=unsorted" in command:
+                omitted_legacy_walks.append(command)
+                return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+            return original_run(command, **kwargs)
+
+        with patch.object(inventory.subprocess, "run", side_effect=omit_legacy_sha):
+            with self.assertRaisesRegex(inventory.InventoryError, "HISTORY_INCOMPLETE"):
+                self.generate(legacy=ledger)
+
+        self.assertEqual(len(omitted_legacy_walks), 1)
+        self.assertFalse(self.output.exists())
+
     def test_non_ancestor_frozen_order_refuses_inventory(self) -> None:
         with self.assertRaisesRegex(inventory.InventoryError, "HISTORY_NONLINEAR_OR_INCOMPLETE"):
             self.generate(refs=[self.refs[1], self.refs[0], self.refs[2], self.refs[3]])
