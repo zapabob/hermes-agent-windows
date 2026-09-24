@@ -537,19 +537,21 @@ class RequestLease:
     def _cancel_unlocked(self, reason: str) -> Callable[[str], Any] | None:
         if self._released or (self._caller_finished and not self._active_workers):
             return None
+        if self._cancelled.is_set():
+            return None
         self._cancel_reason = reason
-        if not self._cancelled.is_set():
-            self.cancel_generation += 1
-            self._cancelled.set()
+        self.cancel_generation += 1
+        self._cancelled.set()
         return self._abort_callback
 
     def note_cancelled(self, reason: str) -> None:
-        """Record an external abort without invoking the transport callback again."""
+        """Record the first external abort without invoking transport again."""
         safe_reason = reason if reason in _CANCEL_REASONS else "interrupt"
         with self._budget._lock:
-            if not self._cancelled.is_set():
-                self.cancel_generation += 1
-                self._cancelled.set()
+            if self._cancelled.is_set():
+                return
+            self.cancel_generation += 1
+            self._cancelled.set()
             self._cancel_reason = safe_reason
 
     def _status_unlocked(self, now: float) -> dict[str, Any]:

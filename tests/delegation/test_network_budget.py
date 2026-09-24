@@ -9,6 +9,7 @@ import pytest
 from downstream.delegation.network_budget import (
     RequestBudget,
     RequestBudgetError,
+    RequestCancelled,
     RequestDeadlineExceeded,
     RequestTimeouts,
 )
@@ -104,6 +105,38 @@ def test_total_deadline_timer_aborts_transport_and_reports_timeout() -> None:
 
     lease.finish(outcome="timeout")
     assert budget.status()["active"] == 0
+
+
+def test_first_cancel_reason_is_preserved_and_abort_callback_runs_once() -> None:
+    budget = RequestBudget()
+    lease = budget.reserve("cancel-reason-account", "inference")
+    reasons = []
+    lease.set_abort_callback(reasons.append)
+
+    assert budget.cancel(lease.request_id, reason="user_cancel") is True
+    assert budget.cancel(lease.request_id, reason="deadline") is True
+
+    assert reasons == ["user_cancel"]
+    assert lease.cancel_reason == "user_cancel"
+    with pytest.raises(RequestCancelled):
+        lease.check_active()
+    lease.finish(outcome="cancelled")
+
+
+def test_external_cancel_reason_wins_over_later_budget_deadline() -> None:
+    budget = RequestBudget()
+    lease = budget.reserve("external-cancel-account", "inference")
+    reasons = []
+    lease.set_abort_callback(reasons.append)
+
+    lease.note_cancelled("interrupt")
+    assert budget.cancel(lease.request_id, reason="deadline") is True
+
+    assert lease.cancel_reason == "interrupt"
+    assert reasons == []
+    with pytest.raises(RequestCancelled):
+        lease.check_active()
+    lease.finish(outcome="cancelled")
 
 
 def test_abort_callback_registered_after_deadline_runs_immediately() -> None:
