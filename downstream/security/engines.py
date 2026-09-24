@@ -14,7 +14,7 @@ from typing import Any, Iterable
 from hermes_constants import get_hermes_home
 
 from .bounded_process import BoundedProcessOutputError, run_bounded
-from .bounded_walk import ReparsePathError, absolute_path_without_reparse
+from .bounded_walk import ReparsePathError, absolute_path_without_reparse, stable_file_time_ns
 from .clamav_definitions import (
     DefinitionInventory,
     DefinitionInventoryError,
@@ -223,7 +223,7 @@ class YaraEngine:
             int(metadata.st_ino),
             int(metadata.st_size),
             int(metadata.st_mtime_ns),
-            int(metadata.st_ctime_ns),
+            stable_file_time_ns(metadata),
         )
 
     @staticmethod

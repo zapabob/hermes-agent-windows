@@ -27,6 +27,7 @@ from .bounded_walk import (
     ReparsePathError,
     absolute_path_without_reparse,
     iter_regular_files,
+    stable_file_time_ns,
 )
 from .engines import ClamAVEngine, HashReputationEngine, StaticHeuristicsEngine, YaraEngine, engine_versions, versions_cache_key
 from .models import EngineHealth, EngineState, ExecutionDecision, Finding, ScanResult, Verdict
@@ -282,7 +283,7 @@ def _stat_identity(metadata: os.stat_result) -> FileIdentity:
         int(metadata.st_ino),
         int(metadata.st_size),
         int(metadata.st_mtime_ns),
-        int(metadata.st_ctime_ns),
+        stable_file_time_ns(metadata),
     )
 
 

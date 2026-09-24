@@ -6,7 +6,7 @@ import stat
 from dataclasses import dataclass
 from pathlib import Path
 
-from .bounded_walk import ReparsePathError, absolute_path_without_reparse
+from .bounded_walk import ReparsePathError, absolute_path_without_reparse, stable_file_time_ns
 
 
 MAX_DEFINITION_DIRECTORY_ENTRIES = 512
@@ -64,7 +64,7 @@ def _identity(metadata: os.stat_result) -> tuple[int, int, int, int, int]:
         int(metadata.st_ino),
         int(metadata.st_size),
         int(metadata.st_mtime_ns),
-        int(metadata.st_ctime_ns),
+        stable_file_time_ns(metadata),
     )
 
 

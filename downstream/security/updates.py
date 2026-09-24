@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from .bounded_process import BoundedProcessOutputError, run_bounded
+from .bounded_walk import stable_file_time_ns
 from .clamav_definitions import (
     DefinitionInventoryError,
     MAX_DEFINITION_DIRECTORY_ENTRIES,
@@ -434,7 +435,7 @@ def _file_identity(metadata: os.stat_result) -> tuple[int, int, int, int, int]:
         int(metadata.st_ino),
         int(metadata.st_size),
         int(metadata.st_mtime_ns),
-        int(metadata.st_ctime_ns),
+        stable_file_time_ns(metadata),
     )
 
 

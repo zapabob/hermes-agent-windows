@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import stat
 import subprocess
 import sys
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from types import SimpleNamespace
@@ -19,7 +21,7 @@ from downstream.security import clamav_definitions as security_clamav_definition
 from downstream.security import service as security_service_module
 from downstream.security import updates as security_updates
 from downstream.security import watch_state, watcher as security_watcher
-from downstream.security.bounded_walk import ReparsePathError
+from downstream.security.bounded_walk import ReparsePathError, stable_file_time_ns
 from downstream.security.bounded_process import (
     BoundedProcessOutputError,
     BoundedProcessResult,
@@ -1657,3 +1659,178 @@ def test_active_snapshot_budget_is_process_global_and_reserved_before_hashing(
     assert first_result.verdict == Verdict.CLEAN
     with second_service.store.connection() as connection:
         assert connection.execute("SELECT COUNT(*) FROM scan_results").fetchone()[0] == 0
+
+
+_TOUCHED_MTIME_NS = 1_600_000_000_000_000_000
+
+
+def _write_touched(path: Path, data: bytes) -> Path:
+    path.write_bytes(data)
+    # NTFS stamps files from the coarse system clock; wait past its tick so the
+    # utime below moves the metadata change time strictly after creation time,
+    # which is the state left behind by sync_bundled_yara_rules.
+    time.sleep(0.05)
+    os.utime(path, ns=(_TOUCHED_MTIME_NS, _TOUCHED_MTIME_NS))
+    return path
+
+
+def test_stable_file_time_prefers_birthtime_only_for_windows_data() -> None:
+    with_birth = SimpleNamespace(st_ctime_ns=200, st_birthtime_ns=100)
+    without_birth = SimpleNamespace(st_ctime_ns=200)
+
+    assert stable_file_time_ns(with_birth, windows=True) == 100
+    assert stable_file_time_ns(with_birth, windows=False) == 200
+    assert stable_file_time_ns(without_birth, windows=True) == 200
+    assert stable_file_time_ns(without_birth, windows=False) == 200
+
+
+def test_hash_stable_file_accepts_unchanged_touched_file(tmp_path: Path) -> None:
+    data = b"inert unchanged fixture"
+    target = _write_touched(tmp_path / "touched.txt", data)
+
+    sha256, size, identity = security_service_module.hash_stable_file(target)
+
+    assert sha256 == hashlib.sha256(data).hexdigest()
+    assert size == len(data)
+    assert identity == security_service_module._stat_identity(target.stat(follow_symlinks=False))
+
+
+def test_scan_snapshot_accepts_unchanged_touched_file(tmp_path: Path) -> None:
+    target = _write_touched(tmp_path / "touched.txt", b"inert unchanged fixture")
+
+    result = _service(tmp_path).scan_file(target, quarantine=False, use_cache=False)
+
+    assert result.error is None
+    assert result.verdict == Verdict.CLEAN
+
+
+def test_clamav_definition_inventory_accepts_unchanged_touched_file(tmp_path: Path) -> None:
+    database = tmp_path / "clamav-db"
+    database.mkdir()
+    _write_touched(database / "custom.hdb", b"0" * 32 + b":4:inert\n")
+
+    inventory = security_clamav_definitions.inventory_clamav_definitions(database)
+
+    assert [item.name for item in inventory.files] == ["custom.hdb"]
+
+
+def test_yara_rule_inventory_accepts_unchanged_touched_file(tmp_path: Path) -> None:
+    rules = tmp_path / "yara"
+    rules.mkdir()
+    _write_touched(rules / "inert.yar", b"rule inert { condition: false }\n")
+
+    sources, error, revision = security_engines.YaraEngine(rules)._read_inventory()
+
+    assert error is None
+    assert set(sources) == {"inert"}
+    assert revision
+
+
+def test_bundled_yara_sync_reads_unchanged_touched_files(tmp_path: Path) -> None:
+    data = b"rule inert { condition: false }\n"
+    bundled = tmp_path / "bundled"
+    bundled.mkdir()
+    _write_touched(bundled / "inert.yar", data)
+    existing = _write_touched(tmp_path / "existing.yar", data)
+
+    files, version, error = security_updates._inventory_bundled_yara_rules(bundled)
+
+    assert error is None
+    assert [item[1] for item in files] == [data]
+    assert version != "bundled"
+    assert security_updates._read_existing_yara_rule(existing) == data
+
+
+def test_hash_policy_rejects_replaced_file_with_identical_size_and_mtime(tmp_path: Path) -> None:
+    target = _write_touched(tmp_path / "target.bin", b"original-bytes")
+    _sha256, size, identity = security_service_module.hash_stable_file(target)
+    replacement = _write_touched(tmp_path / "replacement.bin", b"replaced-bytes")
+    os.replace(replacement, target)
+
+    with pytest.raises(RuntimeError, match="file changed during scan"):
+        security_service_module._hash_with_policy(
+            target,
+            max_bytes=1024,
+            expected_size=size,
+            expected_identity=identity,
+        )
+
+
+def test_hash_policy_rejects_same_path_content_mutation(tmp_path: Path) -> None:
+    target = _write_touched(tmp_path / "target.bin", b"original-bytes")
+    _sha256, size, identity = security_service_module.hash_stable_file(target)
+    target.write_bytes(b"mutated--bytes")
+
+    with pytest.raises(RuntimeError, match="file changed during scan"):
+        security_service_module._hash_with_policy(
+            target,
+            max_bytes=1024,
+            expected_size=size,
+            expected_identity=identity,
+        )
+
+
+def test_hash_stable_file_rejects_mutation_after_handle_read(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    target = _write_touched(tmp_path / "target.bin", b"original-bytes")
+    original_check = security_service_module._assert_path_has_no_reparse_components
+    calls = 0
+
+    def mutate_after_read(path: Path) -> None:
+        nonlocal calls
+        calls += 1
+        if calls == 4:
+            target.write_bytes(b"mutated--bytes")
+        original_check(path)
+
+    monkeypatch.setattr(security_service_module, "_assert_path_has_no_reparse_components", mutate_after_read)
+
+    with pytest.raises(RuntimeError, match="file changed during scan"):
+        security_service_module.hash_stable_file(target)
+    assert calls == 4
+
+
+def test_scan_snapshot_rejects_bytes_that_differ_from_the_source_digest(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    target = _write_touched(tmp_path / "target.bin", b"original-bytes")
+    service = _service(tmp_path)
+    engine = Mock(wraps=CleanEngine())
+    engine.name = "clamav"
+    service.engines = (engine,)
+    original_write = security_service_module._write_snapshot_chunk
+
+    def write_corrupted(handle: object, chunk: bytes) -> None:
+        original_write(handle, bytes(byte ^ 0xFF for byte in chunk))
+
+    monkeypatch.setattr(security_service_module, "_write_snapshot_chunk", write_corrupted)
+
+    result = service.scan_file(target, quarantine=False, use_cache=False)
+
+    assert result.verdict == Verdict.SCAN_ERROR
+    assert result.error == "scan_snapshot_unavailable"
+    engine.scan.assert_not_called()
+
+
+@pytest.mark.windows_only
+def test_native_junction_components_are_rejected_before_hashing(tmp_path: Path) -> None:
+    winapi = pytest.importorskip("_winapi")
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    _write_touched(outside / "fixture.txt", b"inert target")
+    junction = tmp_path / "junction"
+    try:
+        winapi.CreateJunction(str(outside), str(junction))
+    except OSError as exc:
+        pytest.skip(f"BLOCKED_NATIVE_PATH: junction creation denied: {type(exc).__name__}")
+    through_junction = junction / "fixture.txt"
+
+    with pytest.raises(RuntimeError):
+        security_service_module.hash_stable_file(through_junction)
+    result = _service(tmp_path).scan_file(through_junction, quarantine=False, use_cache=False)
+
+    assert result.verdict == Verdict.SCAN_ERROR
+    assert result.error == "reparse_point_rejected"

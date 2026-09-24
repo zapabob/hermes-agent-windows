@@ -19,6 +19,18 @@ class ReparsePathError(ValueError):
     """A requested path crosses a symlink or other reparse point."""
 
 
+def stable_file_time_ns(metadata: os.stat_result, *, windows: bool = os.name == "nt") -> int:
+    """Return the file timestamp that path stat and handle stat report identically."""
+    # st_ctime is deprecated on Windows since Python 3.12 (os.stat_result docs):
+    # path stat reports creation time while fstat reports metadata change time,
+    # so only st_birthtime_ns is comparable across the two calls.
+    if windows:
+        birth = getattr(metadata, "st_birthtime_ns", None)
+        if birth is not None:
+            return int(birth)
+    return int(metadata.st_ctime_ns)
+
+
 def absolute_path_without_reparse(candidate: Path | str) -> Path:
     """Return a lexical absolute path after checking every existing component without following it."""
     path = Path(candidate).expanduser()
