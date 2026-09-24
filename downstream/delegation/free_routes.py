@@ -293,7 +293,10 @@ def _free_route_current(timestamp: datetime | None, now: datetime, max_age: time
 
 
 def _matching_free_quota(
-    row: Mapping[str, Any], entitlement: Mapping[str, Any] | None, now: datetime
+    row: Mapping[str, Any],
+    entitlement: Mapping[str, Any] | None,
+    now: datetime,
+    max_age: timedelta,
 ) -> tuple[datetime | None, datetime | None] | None:
     if not isinstance(entitlement, Mapping) or entitlement.get("kind") != "free_quota":
         return None
@@ -312,7 +315,7 @@ def _matching_free_quota(
         return None
     observed_at = _free_route_utc(entitlement.get("observed_at"))
     expires_at = _free_route_utc(entitlement.get("expires_at"))
-    if not _free_route_current(observed_at, now, _FREE_ROUTE_EVIDENCE_MAX_AGE):
+    if not _free_route_current(observed_at, now, max_age):
         return None
     if expires_at is None or expires_at <= now:
         return None
@@ -320,7 +323,10 @@ def _matching_free_quota(
 
 
 def _matching_subscription_entitlement(
-    row: Mapping[str, Any], entitlement: Mapping[str, Any] | None, now: datetime
+    row: Mapping[str, Any],
+    entitlement: Mapping[str, Any] | None,
+    now: datetime,
+    max_age: timedelta,
 ) -> tuple[datetime, datetime] | None:
     if (
         not isinstance(entitlement, Mapping)
@@ -344,7 +350,7 @@ def _matching_subscription_entitlement(
     if (
         observed_at is None
         or expires_at is None
-        or not _free_route_current(observed_at, now, _FREE_ROUTE_EVIDENCE_MAX_AGE)
+        or not _free_route_current(observed_at, now, max_age)
         or expires_at <= now
     ):
         return None
@@ -378,13 +384,13 @@ def classify_cost(
 
     billing_mode = str(row.get("billing_mode") or "").strip().lower()
     if billing_mode in {"subscription", "subscription_included"}:
-        if _matching_subscription_entitlement(row, entitlement, as_of) is not None:
+        if _matching_subscription_entitlement(row, entitlement, as_of, max_age) is not None:
             return "SUBSCRIPTION_INCLUDED"
         return "UNKNOWN"
     if billing_mode in {"local", "local_configured"} and row.get("configured") is True:
         return "LOCAL_CONFIGURED"
 
-    quota = _matching_free_quota(row, entitlement, as_of)
+    quota = _matching_free_quota(row, entitlement, as_of, max_age)
     if quota is not None:
         return "VERIFIED_FREE_QUOTA"
 
@@ -464,6 +470,7 @@ def build_free_route_snapshot(
     account_scope: str,
     now: datetime | None = None,
     entitlements: Mapping[str, Mapping[str, Any]] | None = None,
+    max_age: timedelta = _FREE_ROUTE_EVIDENCE_MAX_AGE,
 ) -> FreeRouteSnapshot:
     """Build a validated immutable replacement from already approved data.
 
@@ -475,6 +482,9 @@ def build_free_route_snapshot(
         raise ValueError("provider_scope must be a non-empty opaque scope")
     if not isinstance(account_scope, str) or not account_scope.strip():
         raise ValueError("account_scope must be a non-empty opaque scope")
+    if not isinstance(max_age, timedelta) or max_age < timedelta(0):
+        raise ValueError("max_age must be a non-negative timedelta")
+    max_age = min(max_age, _FREE_ROUTE_EVIDENCE_MAX_AGE)
     as_of = _free_route_utc(now) if now is not None else _UTC_NOW()
     if as_of is None:
         raise ValueError("now must be a timezone-aware datetime")
@@ -521,12 +531,14 @@ def build_free_route_snapshot(
         if not isinstance(entitlement, Mapping) and entitlements is not None:
             entitlement = entitlements.get(model_id)
         entitlement_match = (
-            _matching_free_quota(row, entitlement, as_of)
+            _matching_free_quota(row, entitlement, as_of, max_age)
             if isinstance(entitlement, Mapping)
             else None
         )
         if entitlement_match is None and isinstance(entitlement, Mapping):
-            entitlement_match = _matching_subscription_entitlement(row, entitlement, as_of)
+            entitlement_match = _matching_subscription_entitlement(
+                row, entitlement, as_of, max_age
+            )
         prices, source, source_url, version, price_fetched_at = _free_route_price_fields(row)
 
         raw_tools = row.get("supported_tools")
@@ -554,7 +566,7 @@ def build_free_route_snapshot(
                 provider_scope=provider_scope,
                 account_scope=account_scope,
                 model_id=model_id,
-                cost_class=classify_cost(row, entitlement, now=as_of),
+                cost_class=classify_cost(row, entitlement, now=as_of, max_age=max_age),
                 price_source=source,
                 price_source_url=source_url,
                 price_version=version,

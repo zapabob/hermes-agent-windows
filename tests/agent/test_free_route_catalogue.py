@@ -214,6 +214,76 @@ def test_free_quota_requires_exact_provider_account_model_and_current_grant():
     )
 
 
+@pytest.mark.parametrize("entitlement_kind", ["free_quota", "subscription_included"])
+def test_classify_cost_max_age_applies_to_entitlement_evidence(entitlement_kind):
+    classify_cost = _api("classify_cost")
+    if entitlement_kind == "free_quota":
+        row = _route_row("vendor/quota-model")
+        entitlement = _free_quota(observed_at=NOW - timedelta(hours=2))
+    else:
+        row = _route_row(pricing=None, billing_mode="subscription_included")
+        entitlement = _subscription_entitlement(observed_at=NOW - timedelta(hours=2))
+
+    assert (
+        classify_cost(
+            row,
+            entitlement,
+            now=NOW,
+            max_age=timedelta(hours=1),
+        )
+        == "UNKNOWN"
+    )
+
+
+@pytest.mark.parametrize("entitlement_kind", ["free_quota", "subscription_included"])
+def test_snapshot_max_age_applies_to_entitlement_evidence(entitlement_kind):
+    build_snapshot = _api("build_free_route_snapshot")
+    eligible_routes = _api("eligible_routes")
+    policy_type = getattr(free_routes, "FreeRoutePolicy", None)
+    assert policy_type is not None
+
+    if entitlement_kind == "free_quota":
+        model_id = "vendor/quota-model"
+        row = _route_row(model_id, pricing=None, supported_tools=["text"])
+        entitlement = _free_quota(
+            model_id=model_id,
+            observed_at=NOW - timedelta(hours=2),
+        )
+    else:
+        model_id = "vendor/free-model"
+        row = _route_row(
+            model_id,
+            pricing=None,
+            billing_mode="subscription_included",
+            supported_tools=["text"],
+        )
+        entitlement = _subscription_entitlement(
+            model_id=model_id,
+            observed_at=NOW - timedelta(hours=2),
+        )
+
+    snapshot = build_snapshot(
+        [row],
+        provider_scope=PROVIDER_SCOPE,
+        account_scope=ACCOUNT_SCOPE,
+        now=NOW,
+        entitlements={model_id: entitlement},
+        max_age=timedelta(hours=1),
+    )
+    route = snapshot.routes[0]
+    policy = policy_type(
+        provider_scope=PROVIDER_SCOPE,
+        account_scope=ACCOUNT_SCOPE,
+        required_tools=frozenset({"text"}),
+        allow_subscription_included=True,
+    )
+
+    assert route.cost_class == "UNKNOWN"
+    assert route.entitlement_observed_at is None
+    assert route.entitlement_expires_at is None
+    assert eligible_routes(snapshot, policy, now=NOW) == ()
+
+
 def test_snapshot_is_immutable_scoped_and_revisioned_from_evidence():
     build_snapshot = _api("build_free_route_snapshot")
     row = _route_row(pricing=_price(), supported_tools=["text", "vision"])

@@ -1,0 +1,47 @@
+{
+  "symbol": "classify_cost",
+  "callers": [
+    {
+      "name": "build_free_route_snapshot",
+      "kind": "function",
+      "filePath": "downstream/delegation/free_routes.py",
+      "startLine": 466
+    },
+    {
+      "name": "test_unknown_price_stays_unknown_and_free_suffix_is_not_evidence",
+      "kind": "function",
+      "filePath": "tests/agent/test_free_route_catalogue.py",
+      "startLine": 99
+    },
+    {
+      "name": "test_classifies_stale_zero_price_as_unknown_and_subscription_separately",
+      "kind": "function",
+      "filePath": "tests/agent/test_free_route_catalogue.py",
+      "startLine": 106
+    },
+    {
+      "name": "test_missing_model_and_extended_age_override_cannot_promote_stale_price",
+      "kind": "function",
+      "filePath": "tests/agent/test_free_route_catalogue.py",
+      "startLine": 136
+    },
+    {
+      "name": "test_zero_and_paid_costs_require_complete_provenance_and_all_billable_components",
+      "kind": "function",
+      "filePath": "tests/agent/test_free_route_catalogue.py",
+      "startLine": 148
+    },
+    {
+      "name": "test_free_quota_requires_exact_provider_account_model_and_current_grant",
+      "kind": "function",
+      "filePath": "tests/agent/test_free_route_catalogue.py",
+      "startLine": 194
+    },
+    {
+      "name": "test_classify_cost_max_age_applies_to_entitlement_evidence",
+      "kind": "function",
+      "filePath": "tests/agent/test_free_route_catalogue.py",
+      "startLine": 218
+    }
+  ]
+}
