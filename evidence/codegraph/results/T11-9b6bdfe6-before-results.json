@@ -1,0 +1,129 @@
+{
+  "phase": "before",
+  "task_id": "T11",
+  "source_sha": "9b6bdfe6b94093e5c72466522bce14faa1037a41",
+  "source_fingerprint": "27fffc21f71c028f39f631b53387cf9bca188346eab1808e0b692132e8a230b2",
+  "source_fingerprint_method": "SHA-256 of git ls-tree -r -z HEAD byte stream; committed tracked tree only",
+  "index_identity": "H:\\hermes-worktrees\\t11-before-9b6bdfe6-20260924\\.codegraph",
+  "captured_at_utc": "2026-09-24T10:59:16.123Z",
+  "status": {
+    "initialized": true,
+    "version": "1.6.0",
+    "project_path": "H:\\hermes-worktrees\\t11-before-9b6bdfe6-20260924",
+    "index_path": "H:\\hermes-worktrees\\t11-before-9b6bdfe6-20260924\\.codegraph",
+    "last_indexed_utc": "2026-09-24T10:53:14.149Z",
+    "file_count": 8919,
+    "node_count": 191245,
+    "edge_count": 612432,
+    "database_size_bytes": 636977152,
+    "pending_changes": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "worktree_mismatch": null,
+    "built_with_version": "1.6.0",
+    "built_with_extraction_version": 25,
+    "current_extraction_version": 25,
+    "reindex_recommended": false,
+    "state": "complete",
+    "pending_refs": 0
+  },
+  "queries": {
+    "parent_inference_port_complete": {
+      "query": "query --json ParentInferencePort.complete",
+      "matches": [
+        {
+          "name": "complete",
+          "qualified_name": "ParentInferencePort::complete",
+          "kind": "method",
+          "file": "downstream/delegation/inference_port.py",
+          "start_line": 482,
+          "end_line": 589
+        }
+      ]
+    },
+    "interruptible_api_call": {
+      "query": "query --json interruptible_api_call",
+      "matches": [
+        {
+          "name": "interruptible_api_call",
+          "qualified_name": "interruptible_api_call",
+          "kind": "function",
+          "file": "agent/chat_completion_helpers.py",
+          "start_line": 1394,
+          "end_line": 1895
+        },
+        {
+          "name": "_interruptible_api_call",
+          "qualified_name": "AIAgent::_interruptible_api_call",
+          "kind": "method",
+          "file": "run_agent.py",
+          "start_line": 6783,
+          "end_line": 6786
+        },
+        {
+          "name": "_call",
+          "qualified_name": "interruptible_api_call::_call",
+          "kind": "function",
+          "file": "agent/chat_completion_helpers.py",
+          "start_line": 1494,
+          "end_line": 1535
+        },
+        {
+          "name": "_set_request_client",
+          "qualified_name": "interruptible_api_call::_set_request_client",
+          "kind": "function",
+          "file": "agent/chat_completion_helpers.py",
+          "start_line": 1438,
+          "end_line": 1446
+        },
+        {
+          "name": "_close_request_client_once",
+          "qualified_name": "interruptible_api_call::_close_request_client_once",
+          "kind": "function",
+          "file": "agent/chat_completion_helpers.py",
+          "start_line": 1448,
+          "end_line": 1492
+        },
+        {
+          "name": "__all__",
+          "qualified_name": "__all__",
+          "kind": "variable",
+          "file": "agent/chat_completion_helpers.py",
+          "start_line": 5927,
+          "end_line": 5935
+        },
+        {
+          "name": "agent.chat_completion_helpers",
+          "qualified_name": "agent.chat_completion_helpers",
+          "kind": "import",
+          "file": "tests/agent/test_cron_inline_api_call_62151.py",
+          "start_line": 23,
+          "end_line": 28
+        },
+        {
+          "name": "TestAnthropicInterruptHandler",
+          "qualified_name": "TestAnthropicInterruptHandler",
+          "kind": "class",
+          "file": "tests/run_agent/test_run_agent.py",
+          "start_line": 6552,
+          "end_line": 6609
+        }
+      ]
+    },
+    "parent_inference_port_complete_impact": {
+      "query": "impact --json --depth 2 ParentInferencePort.complete",
+      "node_count": 1,
+      "edge_count": 0,
+      "affected": [
+        {
+          "name": "complete",
+          "kind": "method",
+          "file": "downstream/delegation/inference_port.py",
+          "line": 482
+        }
+      ]
+    }
+  }
+}

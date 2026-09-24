@@ -1,0 +1,109 @@
+{
+  "phase": "after",
+  "task_id": "T11",
+  "source_sha": "cdfd15080399bce52bb349ac8884aa4c9941ed96",
+  "source_fingerprint": "58bc1848556ed4d01df831c4d185b2527cd8223e34424314daf66dc1714c1014",
+  "source_fingerprint_method": "SHA-256 of git ls-tree -r -z HEAD byte stream; committed tracked tree only",
+  "index_identity": "H:\\hermes-control-mcp-t11-network-budget-20260924\\.codegraph",
+  "captured_at_utc": "2026-09-24T11:20:26Z",
+  "sync": {
+    "command": "sync .",
+    "version": "1.6.0",
+    "summary": "Synced 7 changed files: added 3, modified 4; 749 nodes."
+  },
+  "status": {
+    "initialized": true,
+    "version": "1.6.0",
+    "project_path": "H:\\hermes-control-mcp-t11-network-budget-20260924",
+    "index_path": "H:\\hermes-control-mcp-t11-network-budget-20260924\\.codegraph",
+    "last_indexed_utc": "2026-09-24T11:18:29.348Z",
+    "file_count": 8922,
+    "node_count": 191365,
+    "edge_count": 612943,
+    "database_size_bytes": 650022912,
+    "wal_size_bytes": 0,
+    "pending_changes": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "worktree_mismatch": null,
+    "built_with_version": "1.6.0",
+    "built_with_extraction_version": 25,
+    "current_extraction_version": 25,
+    "reindex_recommended": false,
+    "state": "complete",
+    "pending_refs": 0
+  },
+  "queries": {
+    "request_budget_reserve": {
+      "query": "query --json RequestBudget.reserve",
+      "matches": [
+        {
+          "name": "reserve",
+          "qualified_name": "RequestBudget::reserve",
+          "kind": "method",
+          "file": "downstream/delegation/network_budget.py",
+          "start_line": 153,
+          "end_line": 227,
+          "signature": "(self, account_scope: str, operation: Operation = \"inference\") -> RequestLease"
+        }
+      ]
+    },
+    "interruptible_api_call": {
+      "query": "query --json interruptible_api_call",
+      "matches": [
+        {
+          "name": "interruptible_api_call",
+          "qualified_name": "interruptible_api_call",
+          "kind": "function",
+          "file": "agent/chat_completion_helpers.py",
+          "start_line": 1454,
+          "end_line": 2004
+        },
+        {
+          "name": "_interruptible_api_call",
+          "qualified_name": "AIAgent::_interruptible_api_call",
+          "kind": "method",
+          "file": "run_agent.py",
+          "start_line": 6825,
+          "end_line": 6828
+        },
+        {
+          "name": "_call",
+          "qualified_name": "interruptible_api_call::_call",
+          "kind": "function",
+          "file": "agent/chat_completion_helpers.py",
+          "start_line": 1563,
+          "end_line": 1610
+        }
+      ]
+    },
+    "parent_inference_port_complete_impact": {
+      "query": "impact --json --depth 2 ParentInferencePort.complete",
+      "node_count": 16,
+      "edge_count": 15,
+      "affected": [
+        {
+          "name": "complete",
+          "kind": "method",
+          "file": "downstream/delegation/inference_port.py",
+          "line": 550
+        },
+        {
+          "name": "_perform_api_call",
+          "kind": "function",
+          "file": "agent/conversation_loop.py",
+          "line": 3458
+        },
+        {
+          "name": "run_conversation",
+          "kind": "function",
+          "file": "agent/conversation_loop.py",
+          "line": 1959
+        }
+      ],
+      "omitted_after_first_three": 13
+    }
+  }
+}

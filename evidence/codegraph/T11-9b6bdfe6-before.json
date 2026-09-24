@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "task_id": "T11",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "9b6bdfe6b94093e5c72466522bce14faa1037a41",
+  "source_fingerprint": "27fffc21f71c028f39f631b53387cf9bca188346eab1808e0b692132e8a230b2",
+  "index_identity": "H:\\hermes-worktrees\\t11-before-9b6bdfe6-20260924\\.codegraph",
+  "tool": {
+    "version": "1.6.0",
+    "invocation_kind": "CLI",
+    "package": "@colbymchenry/codegraph"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "queries": [
+    {
+      "result_ref": "evidence/codegraph/results/T11-9b6bdfe6-before-results.json#/queries/parent_inference_port_complete",
+      "query": "query --json ParentInferencePort.complete"
+    },
+    {
+      "result_ref": "evidence/codegraph/results/T11-9b6bdfe6-before-results.json#/queries/interruptible_api_call",
+      "query": "query --json interruptible_api_call"
+    },
+    {
+      "result_ref": "evidence/codegraph/results/T11-9b6bdfe6-before-results.json#/queries/parent_inference_port_complete_impact",
+      "query": "impact --json --depth 2 ParentInferencePort.complete"
+    }
+  ],
+  "canonical_owners": [
+    "downstream.delegation.inference_port.ParentInferencePort.complete",
+    "agent.chat_completion_helpers.interruptible_api_call",
+    "agent.chat_completion_helpers.direct_api_call",
+    "run_agent.AIAgent._interruptible_api_call"
+  ],
+  "impact_paths": [
+    "CodeGraph impact returned only the ParentInferencePort.complete declaration (nodeCount=1, edgeCount=0).",
+    "The interruptible_api_call search located its helper and the AIAgent wrapper; symbol search is not a caller trace."
+  ],
+  "unresolved_edges": [
+    "Dynamic dispatch from the conversation loop into AIAgent._interruptible_api_call and parent-only inference ownership requires direct source inspection.",
+    "No cross-process request-budget ownership is represented by this baseline graph."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [],
+  "evidence_refs": [
+    "evidence/codegraph/results/T11-9b6bdfe6-before-results.json"
+  ],
+  "phase": "before"
+}
