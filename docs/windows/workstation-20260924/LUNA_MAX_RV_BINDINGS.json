@@ -1,0 +1,673 @@
+{
+  "schema_version": 1,
+  "status": "PROPOSED_BINDINGS_NOT_EXECUTION_EVIDENCE",
+  "source_zip_sha256": "ff520100492d56bf1db7f37a06f66a2fe98ef83d291c1bbaa0114a6bba4a5795",
+  "source_member": "ACCEPTANCE_SUPPLEMENT.json",
+  "rule": "proposed_nodeid must be collected on actual HEAD; setup/action/expected/mutant are review input and require implementation-specific binding",
+  "cases": [
+    {
+      "id": "RV01",
+      "family": "F00",
+      "packet_ids": [
+        "LM00"
+      ],
+      "proposed_nodeid": "tests/test_inventory_commits.py::test_review_rejects_missing_legacy_object",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "固定4SHAは存在するがlegacy-only SHAを欠くoffline fixture。",
+      "action": "inventory completeness gateを評価。",
+      "expected": "METADATA_ONLY/HISTORY_INCOMPLETE。complete code-reviewableを出さない。",
+      "required_mutant": "legacy-only object存在検査を除去。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV02",
+      "family": "F00",
+      "packet_ids": [
+        "LM01"
+      ],
+      "proposed_nodeid": "tests/test_inventory_commits.py::test_review_detects_head_and_dirty_source_movement",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "HEAD h、source digest dのreceiptを作り、tracked sourceまたは適用test configを変更。",
+      "action": "receipt再使用とedit lease取得を試す。",
+      "expected": "STALE_SOURCE。無関係な既存pytest tempの内容は削除・stageしない。",
+      "required_mutant": "dirty fingerprint照合を除去。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV03",
+      "family": "F00",
+      "packet_ids": [
+        "LM02"
+      ],
+      "proposed_nodeid": "tests/test_inventory_commits.py::test_review_closes_sqlite_before_temporary_directory_exit",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "close追跡connection factoryと、成功・legacy parser例外の2経路。",
+      "action": "helper終了直前にconnection状態を検査しnative Windowsでもtemp cleanupを行う。",
+      "expected": "全経路で明示close完了。ResourceWarningなし。元repo refs/index不変。",
+      "required_mutant": "明示close/closingを除去。",
+      "windows_native_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV04",
+      "family": "F01",
+      "packet_ids": [
+        "LM03"
+      ],
+      "proposed_nodeid": "tests/control_mcp/test_review_approval_binding.py::test_denies_forged_consent_and_foreign_resource",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "実host approval authority、client A/B、resource R/R2、profile P/P2、synthetic inputs。",
+      "action": "approved=trueと別client/resource/profile tokenを送る。",
+      "expected": "データprojection/side effectともゼロ。UI文面だけで承認されない。",
+      "required_mutant": "clientまたはresource bindingを無効化。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV05",
+      "family": "F01",
+      "packet_ids": [
+        "LM04"
+      ],
+      "proposed_nodeid": "tests/control_mcp/test_review_approval_binding.py::test_consumes_once_under_two_client_race",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "承認済みop1と同workspaceを狙うop2。双方をbarrierで同時dispatch。",
+      "action": "同じopは同client再送、BはAのreceiptをreplay。",
+      "expected": "effect=1。正当な同client再送は保存済み結果かin-progress。Bのreplayはdeny。競合op2は勝手に実行しない。",
+      "required_mutant": "consumeのcompare-and-swapをread-then-writeへ変更。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV06",
+      "family": "F01",
+      "packet_ids": [
+        "LM05"
+      ],
+      "proposed_nodeid": "tests/control_mcp/test_review_approval_binding.py::test_requires_distinct_apply_approval",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "scratch実行のhuman承認だけがある。",
+      "action": "source/destination HEADを指定してapplyを要求。",
+      "expected": "apply effect=0。別の真正なapply承認後、指定digestのみ1回apply。",
+      "required_mutant": "execute承認をapplyへ流用。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV07",
+      "family": "F02",
+      "packet_ids": [
+        "LM06"
+      ],
+      "proposed_nodeid": "tests/delegation/test_review_parent_port.py::test_child_and_auxiliary_paths_cannot_resolve_secrets",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "synthetic provider key、OAuth token、auth-store pathをhostだけに置く。credential resolverにtripwire。",
+      "action": "子・孫・圧縮・要約・memory helperをparent inference port経由で動かす。",
+      "expected": "親の許可callは成功。child resolver/client構築回数0。serialization/env/log/artifact中canary露出0。",
+      "required_mutant": "auxiliary経路だけ直接provider client構築を戻す。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV08",
+      "family": "F02",
+      "packet_ids": [
+        "LM07"
+      ],
+      "proposed_nodeid": "tests/delegation/test_review_parent_port.py::test_keeps_profile_and_cancel_context_across_threads",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "A/Bを同時async+thread callbackで走らせ、Aのみcancel、A→B→Aを切り替える。",
+      "action": "結果・token refresh・model callを完了させる。",
+      "expected": "profile/route/budget/epoch混線0。Aの遅着結果で再開しない。B継続。",
+      "required_mutant": "thread context/profile epochのcopy/checkを除去。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV09",
+      "family": "F03",
+      "packet_ids": [
+        "LM08"
+      ],
+      "proposed_nodeid": "tests/delegation/test_review_response_boundary.py::test_dispatches_only_complete_unique_calls",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "実adapter harnessにcommentary/final、分割JSON、複数tool ID、terminal eventを投入。",
+      "action": "完結・重複・途中EOF・不一致IDをそれぞれ実dispatcherへ渡す。",
+      "expected": "完全に承認されたtoolのみ各1回実行。未完/異なるID/取消後はeffect=0。finalをcommentaryと混合しない。",
+      "required_mutant": "terminal completenessまたはtool-ID dedupを除去。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV10",
+      "family": "F03",
+      "packet_ids": [
+        "LM09"
+      ],
+      "proposed_nodeid": "tests/delegation/test_review_response_boundary.py::test_never_replays_effect_after_response_loss",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "tool effect完了直後にprovider/transport応答を失わせる。",
+      "action": "reconnect/retryを行う。",
+      "expected": "UNKNOWN/reconcileまたは同一保存結果。新tool実行なし。configured/wire effortは別記録。",
+      "required_mutant": "response lossを通常retry可に分類。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV11",
+      "family": "F04",
+      "packet_ids": [
+        "LM10"
+      ],
+      "proposed_nodeid": "tests/windows/test_review_native_boundary.py::test_performs_useful_edit_and_detects_real_failure",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "一度だけ承認された制限profile、read-only runtime/check files、synthetic scratch。",
+      "action": "workerで許可ファイルを編集しhost指定checkを制限境界内で実行。次に壊れたfixtureを同checkで実行。",
+      "expected": "前者は期待artifact/hash＋check success、後者は実assertion failure。denyだけを有用性証拠にしない。",
+      "required_mutant": "check exitまたはartifact hash確認を無視。",
+      "windows_native_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV12",
+      "family": "F04",
+      "packet_ids": [
+        "LM11"
+      ],
+      "proposed_nodeid": "tests/windows/test_review_native_boundary.py::test_denies_host_authority_paths_and_handles",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "synthetic HOME/vault/DPAPI canary、host parent process、allowlist外IPC/network、common gitdirを準備。",
+      "action": "子と孫からread/write/open-handle/connectを個別に試す。",
+      "expected": "全保護資源deny。許可runtime readとscratch writeは成功。環境フィルタのみで合格しない。",
+      "required_mutant": "普通の同一user shellにfallback。",
+      "windows_native_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV13",
+      "family": "F04",
+      "packet_ids": [
+        "LM12"
+      ],
+      "proposed_nodeid": "tests/windows/test_review_native_boundary.py::test_rejects_path_alias_and_toctou_escape",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "scratch境界にjunction/symlink/hardlink/ADS/UNC/device/drive-relativeパス、検証後swapのbarrier fixture。",
+      "action": "検証とopen/applyの間でtargetを切替。",
+      "expected": "保護資源へのread/write0。final handleのresource identityを確認。制御された正常パスは成功。",
+      "required_mutant": "string prefixチェックだけに戻す。",
+      "windows_native_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV14",
+      "family": "F04",
+      "packet_ids": [
+        "LM13"
+      ],
+      "proposed_nodeid": "tests/windows/test_review_native_boundary.py::test_cancels_owned_tree_without_releasing_live_slots",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "stdoutを満たすworker、孫、別ownerのcanary process、PID開始時刻不一致fixture。",
+      "action": "cancel/timeout/parent lossを順に与える。",
+      "expected": "ackとquiescenceを区別。owned treeのみ停止、他者無傷。残存child/socketがあればslotは保持しUNKNOWN。",
+      "required_mutant": "ack時にslot releaseまたはPIDだけでkill。",
+      "windows_native_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV15",
+      "family": "F05",
+      "packet_ids": [
+        "LM15"
+      ],
+      "proposed_nodeid": "tests/windows/test_review_desktop_authority.py::test_maintains_one_backend_for_canonical_home",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "同一Homeを異なるcase/junction aliasから二つのDesktop起動要求、別Homeも用意。",
+      "action": "cold start、crash/relaunch、generation driftを競合させる。",
+      "expected": "同一canonical Homeにbackend一つ。別Homeのprocessは停止しない。GoはDesktop backendを起動/停止しない。",
+      "required_mutant": "rendezvous identityを文字列pathだけにする。",
+      "windows_native_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV16",
+      "family": "F05",
+      "packet_ids": [
+        "LM16"
+      ],
+      "proposed_nodeid": "tests/windows/test_review_desktop_authority.py::test_recovers_locked_update_without_mixed_generation",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "旧binaryをlockし更新artifactをstage。hash不一致とswitch中断をfault inject。",
+      "action": "既存update ownerから承認済み更新を実行。",
+      "expected": "旧動作か検証済み新動作のどちらか。混在READY禁止。user data/設定を保持。generation一致後にのみ健康。",
+      "required_mutant": "lock例外をsuccess扱い、またはhash検証を除去。",
+      "windows_native_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV17",
+      "family": "F06",
+      "packet_ids": [
+        "LM17"
+      ],
+      "proposed_nodeid": "tests/windows/test_review_state_wal.py::test_preserves_commits_under_readers_writers_and_checkpoint",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "native local FSの一時DB、reader×2/writer/checkpointer、既存schemaとprofile A/B。",
+      "action": "commit直前/直後でworker停止、busyとcheckpoint競合、再openとmigration再実行。",
+      "expected": "committed行不欠損・uncommitted行不可視、integrity_check=ok、profile混線0、bounded busy。本番DB未使用。",
+      "required_mutant": "transaction/reader scope guardを除去。",
+      "windows_native_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV18",
+      "family": "F06",
+      "packet_ids": [
+        "LM18"
+      ],
+      "proposed_nodeid": "tests/windows/test_review_state_wal.py::test_records_actual_sqlite_provenance_and_read_purity",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "実配布Pythonと他のDB consumersのruntime version/source-idを採取。DBなし・DBありのread projection。",
+      "action": "status/readを行い、別接続writeの可視性を確認。",
+      "expected": "DBなしで作成なし。readはmigration/checkpointを誘発しない。live WALをimmutable扱いしない。既知fix/backport確認を記録。",
+      "required_mutant": "missing DBを自動create、またはlive readerにimmutable=1を強制。",
+      "windows_native_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV19",
+      "family": "F07",
+      "packet_ids": [
+        "LM19"
+      ],
+      "proposed_nodeid": "tests/control_mcp/test_review_plugin_discovery.py::test_does_not_import_untrusted_plugin_on_scan",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "未承認pluginのimport/hookにcanary effect、A/B profile、schema v1/v2。",
+      "action": "scan/list/enable/revoke/reconnectを実owner経由で行う。",
+      "expected": "scanだけのeffect0。approved exact artifactのみactivation。revoke後停止。schema変更は再review前に権限増加なし。",
+      "required_mutant": "discovery時にplugin importを先行。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV20",
+      "family": "F07",
+      "packet_ids": [
+        "LM20"
+      ],
+      "proposed_nodeid": "tests/control_mcp/test_review_plugin_discovery.py::test_keeps_discovery_lifecycle_single_and_scoped",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "実MCP SDK/session manager、二client、connect/disconnect競合とhost寿命。",
+      "action": "再接続とprofile切替を繰り返す。",
+      "expected": "duplicate registry/task/clientなし。既存host一つ。AにB tools/dataなし。retired actor aliasは非公開・実行不能。",
+      "required_mutant": "registryをprofile非依存globalへ変更。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV21",
+      "family": "F08",
+      "packet_ids": [
+        "LM21"
+      ],
+      "proposed_nodeid": "tests/security/test_review_security_evidence.py::test_malicious_outweighs_error_without_faking_enforcement",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "engine A=malicious、B=error、quarantine fail、policy revision変更。",
+      "action": "scan→decision→enforce→statusを実行。",
+      "expected": "detection=MALICIOUS、execution=BLOCK。engine error/quarantine failureは別状態。clean/成功へ上書きしない。",
+      "required_mutant": "最終engineのerrorでmaliciousを置き換える。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV22",
+      "family": "F08",
+      "packet_ids": [
+        "LM22"
+      ],
+      "proposed_nodeid": "tests/security/test_review_security_evidence.py::test_read_does_not_unlock_vault_refresh_or_start_scan",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "vault decrypt、定義更新、scan spawn、DB createにtripwire。",
+      "action": "MCP/UIのread/statusだけを実行。",
+      "expected": "tripwire全0。health unknownはunknown、権限獲得やprocess起動はしない。",
+      "required_mutant": "status pathからscan/vault初期化を呼ぶ。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV23",
+      "family": "F08",
+      "packet_ids": [
+        "LM23"
+      ],
+      "proposed_nodeid": "tests/security/test_review_security_evidence.py::test_qualifies_engine_on_benign_and_eicar_separately",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "承認されたsynthetic benign/EICAR fixtures。installed engine/definitions hashesを固定。",
+      "action": "両fixtureを同じreal scannerからscanし結果を保存。",
+      "expected": "benign clean、EICAR detected、exit2はENGINE_ERROR。失敗中のengineをqualifiedと表示しない。",
+      "required_mutant": "nonzeroをcleanに正規化。",
+      "windows_native_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV24",
+      "family": "F08",
+      "packet_ids": [
+        "LM24"
+      ],
+      "proposed_nodeid": "tests/security/test_review_security_evidence.py::test_bounds_scan_and_fences_definition_revision",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "大量pathのlazy fixture、queue cap16/workers2、scan中definition切替とcancel。",
+      "action": "scanを進めてcancelし旧結果を現revisionへ適用。",
+      "expected": "pending<=16、memory/output bounded。旧definition結果は区別・必要ならrescan。子process停止までtracked。",
+      "required_mutant": "全fileをfuture化、またはdefinition hashをreceiptから除去。",
+      "windows_native_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV25",
+      "family": "F09",
+      "packet_ids": [
+        "LM25"
+      ],
+      "proposed_nodeid": "tests/delegation/test_review_catalogue_budget.py::test_distinguishes_free_unknown_and_subscription",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "実catalogue response schemaのfixtureで0/null/negative/NaN/paid/subscription/expired/changed-tool rows。",
+      "action": "classification→admission→dispatchの経路を通す。",
+      "expected": "すべての必要charge dimensionが有効zeroと確認された許可candidateのみfree。unknown/expired/unsupported/paidへfallback0。",
+      "required_mutant": "missing priceを0でdefault。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV26",
+      "family": "F09",
+      "packet_ids": [
+        "LM26"
+      ],
+      "proposed_nodeid": "tests/delegation/test_review_catalogue_budget.py::test_coalesces_refresh_and_rechecks_before_dispatch",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "12h/manual/wakeの同時イベント、stale cache、price revision変更を投入。",
+      "action": "refresh競合→queue wait→dispatch。",
+      "expected": "refresh一つ、last-goodはdisplay専用。dispatchでeligibility再確認。不確かな費用を発生させない。",
+      "required_mutant": "dispatch直前price revisionチェックを除去。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV27",
+      "family": "F10",
+      "packet_ids": [
+        "LM27"
+      ],
+      "proposed_nodeid": "tests/delegation/test_review_network_authority.py::test_never_forwards_auth_across_origin_redirect",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "synthetic bearer/header/cookieを持つA、B捕捉server、scheme/port変更redirect。",
+      "action": "catalogue/provider/definition download経路からredirect/retry。",
+      "expected": "Bへのsecret受信0。許可された明示再解決以外は拒否。TLS downgrade拒否。ログのcanary0。",
+      "required_mutant": "元Authorizationをredirectにコピー。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV28",
+      "family": "F10",
+      "packet_ids": [
+        "LM28a",
+        "LM28b"
+      ],
+      "proposed_nodeid": "tests/delegation/test_review_network_authority.py::test_keeps_cancel_responsive_during_stalls",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "slow valid stream、無進捗socket、DNS stall、retry-after、4xx/5xx、cancel concurrent。",
+      "action": "status/cancelとdeadlineを実時間上限内で測定。",
+      "expected": "進捗とheartbeatを区別、bounded retry/bytes/time。暫定status p95<=500ms、ack<=1s、制御fixture quiescence<=5s。未達を隠さない。",
+      "required_mutant": "無進捗でdeadline延長、future timeoutだけでslot release。",
+      "windows_native_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV29",
+      "family": "F11",
+      "packet_ids": [
+        "LM29"
+      ],
+      "proposed_nodeid": "tests/delegation/test_review_tree_admission.py::test_enforces_atomic_treewide_capacity",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "全体slot3、remote2、resident4、depth2、queue16の初期fixture、telemetry stale/commit pressure。",
+      "action": "同時admission、親二つから孫要求、cancel中の再admission。",
+      "expected": "上限超え0、孫write/depth3拒否、deadlockなし、未quiescent資源を残量に戻さない。実PC予算は別測定。",
+      "required_mutant": "per-child countersへ分割して全体counterを除去。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV30",
+      "family": "F11",
+      "packet_ids": [
+        "LM30"
+      ],
+      "proposed_nodeid": "tests/delegation/test_review_tree_admission.py::test_does_not_evade_account_limits_or_use_paid_fallback",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "同account別alias二つ、429/cooldown、free pool空。",
+      "action": "round-robinとauxiliary/inference fallbackを要求。",
+      "expected": "account単位cooldown共有。paid/Pro/別key quota回避なし。local modelは明示許可済みのみ。",
+      "required_mutant": "aliasごとにcooldownを独立化。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV31",
+      "family": "F12",
+      "packet_ids": [
+        "LM31"
+      ],
+      "proposed_nodeid": "tests/control_mcp/test_review_native_provenance.py::test_rejects_worker_forged_green_and_changed_checks",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "workerは偽green.json、偽stdout、sitecustomize/conftest/git-hook canary、check-set置換を提出。",
+      "action": "trusted producerとevaluatorを実境界経由で呼ぶ。",
+      "expected": "worker文面は証拠にならない。hostの権限でproject codeを実行しない。host指定checkとsource hashだけに束縛されたreceipt。",
+      "required_mutant": "worker stdoutのpassedを直接receiptへ採用。",
+      "windows_native_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV32",
+      "family": "F12",
+      "packet_ids": [
+        "LM32"
+      ],
+      "proposed_nodeid": "tests/control_mcp/test_review_native_provenance.py::test_fences_apply_against_source_destination_and_epoch",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "正当receipt作成後にsource/destination/check-set/policy/owner epochを一つずつ変更。",
+      "action": "各variantでapproved applyを試す。",
+      "expected": "変化したvariantはeffect0。無変更＋別apply承認のみ指定結果一回。",
+      "required_mutant": "sourceまたはdestination HEAD比較を除去。",
+      "windows_native_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV33",
+      "family": "F12",
+      "packet_ids": [
+        "LM33"
+      ],
+      "proposed_nodeid": "tests/control_mcp/test_review_native_provenance.py::test_reconciles_crash_at_each_effect_boundary",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "journal durable前、effect前、effect後、result保存後、response送信前にcrash inject。",
+      "action": "host restart後同opを再送。",
+      "expected": "durable factsをreconcile。UNKNOWNで自動再実行なし。確定済みは同結果、effect count<=1。",
+      "required_mutant": "UNKNOWNをretry-readyへ遷移。",
+      "windows_native_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV34",
+      "family": "F13",
+      "packet_ids": [
+        "LM34"
+      ],
+      "proposed_nodeid": "tests/delegation/test_review_handoff_authority.py::test_stop_and_new_epoch_override_old_capsule",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "旧capsuleがcontinue、最新exact stateがSTOP/new owner epoch。memory retrievalは高類似。",
+      "action": "host restartとcapsule resume。",
+      "expected": "新run/lease/approval作成0。current exact stateが勝つ。summaryを権限へ昇格しない。",
+      "required_mutant": "summaryのcontinueをexact STOPより優先。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV35",
+      "family": "F13",
+      "packet_ids": [
+        "LM35"
+      ],
+      "proposed_nodeid": "tests/delegation/test_review_handoff_authority.py::test_preserves_exact_state_when_graph_down_or_capsule_full",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "16KiB capsule cap、graph/embedding down、A/B memory、superseded entries、repeated outbox retry。",
+      "action": "圧縮・resume・検索・同期を行う。",
+      "expected": "critical stateはexact refsで保持か明示失敗。cross-profile除外はranking前。bounded outbox、重複promotion0、必要権限は忘却しない。",
+      "required_mutant": "critical fieldsをsummary truncationへ含める。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV36",
+      "family": "F14",
+      "packet_ids": [
+        "LM36a",
+        "LM36b"
+      ],
+      "proposed_nodeid": "tests/cli/test_review_workstation_contracts.py::test_keeps_structured_stdout_and_cache_stable_skills",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "日本語/英語locale、JSON CLI output、trusted skill hash、同一new-session入力。",
+      "action": "CLI success/error、skill auto-load、取消しと再開を行う。",
+      "expected": "stdoutはschema-valid JSONのみ、logはstderr。session内二重loadなし。無関係catalogue/time変化でprompt prefix/cache key不変。",
+      "required_mutant": "logをstdoutへ出す、または毎turn skill再load。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV37",
+      "family": "F14",
+      "packet_ids": [
+        "LM37a",
+        "LM37b"
+      ],
+      "proposed_nodeid": "tests/tools/test_review_search_and_delivery.py::test_scopes_temporal_search_and_background_delivery",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "UTC記録、JST境界のfrom inclusive/to exclusive、A/B profile、取消epoch結果と正常結果。",
+      "action": "temporal searchの通常/OR fallback、reconnect重複配送。",
+      "expected": "境界の期待集合一致、fallbackでもAのみ。正常結果は安定IDで重複表示なし、取消結果はrun復活を起こさない。",
+      "required_mutant": "OR fallbackからprofile/time述語を除去。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV38",
+      "family": "F15",
+      "packet_ids": [
+        "LM38"
+      ],
+      "proposed_nodeid": "tests/control_mcp/test_review_authoritative_projection.py::test_ignores_stale_ui_events_and_preserves_unknown_health",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "snapshot seq10、遅延seq9完了、partial roster、engine unqualified、backend generation変更。",
+      "action": "Desktop storeへ順逆順配信。",
+      "expected": "ghost/resurrection/cross-profile stateなし。partialを全削除扱いせず、unknownをhealthyにしない。",
+      "required_mutant": "sequence/epoch照合を除去。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV39",
+      "family": "F15",
+      "packet_ids": [
+        "LM39"
+      ],
+      "proposed_nodeid": "tests/control_mcp/test_review_live_client_gate.py::test_uses_two_actual_scoped_clients_and_human_consent",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "インストール済みCodexと意図したChatGPT surfaceのversion/mode/transport/entitlementを記録。別client identities、同一host。",
+      "action": "実通常chatからread、human-once operation、競合/replay/cancel、必要なら別apply承認を行う。",
+      "expected": "実clientとhostのoperation/approval/receipt IDs対応。SDK二つやCLI二つで代用しない。非対応surfaceはBLOCKED_CLIENT_CAPABILITY。",
+      "required_mutant": "SDK passをLIVE_CLIENT_TESTEDと扱う。",
+      "windows_native_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV40",
+      "family": "F16",
+      "packet_ids": [
+        "LM40a",
+        "LM40b"
+      ],
+      "proposed_nodeid": "tests/windows/test_review_downstream_preservation.py::test_preserves_generation_embedding_and_plugin_contracts",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "既存baseline receipts、local llama/GGUF/hot-swap/embedding、voice/VRChat/Unity/AITuber、Switchyard/MoA/fallback registry。",
+      "action": "変更familyが触れたcall pathsのregression、approved stubまたはlocal fixture。",
+      "expected": "既存契約不退行。Go所有権拡大なし。platform分類でshared security hunkを落とさない。未試験featureをverifiedへしない。",
+      "required_mutant": "旧actor退役を理由に共有provider/plugin registrationを削除。",
+      "windows_native_required": true,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV41",
+      "family": "F17",
+      "packet_ids": [
+        "LM41"
+      ],
+      "proposed_nodeid": "tests/control_mcp/test_review_release_evidence.py::test_rejects_empty_stale_or_untrusted_ci",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "required checks manifest、missing/zero/pending/skipped/inaccessible rules、変更feature/base SHA。",
+      "action": "merge gateを評価。",
+      "expected": "非空のtrusted required contextsがexact candidateで成功し承認済みreviewと一致した場合のみmerge可。",
+      "required_mutant": "empty check集合をall-successにする。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV42",
+      "family": "F17",
+      "packet_ids": [
+        "LM42"
+      ],
+      "proposed_nodeid": "tests/control_mcp/test_review_release_evidence.py::test_keeps_metadata_and_parity_denominators_separate",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "14,048 reported rowsのfixtureとseed34、historical receipt missing1671、family mappings。",
+      "action": "seedだけclosedの状態でrelease summary作成。",
+      "expected": "all-row mapping/critical triage/mandatory P0 proof欠落を検出。0%も100%も捏造しない。",
+      "required_mutant": "seed denominatorをuniverse denominatorに置換。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV43",
+      "family": "F17",
+      "packet_ids": [
+        "LM43"
+      ],
+      "proposed_nodeid": "tests/control_mcp/test_review_release_evidence.py::test_separates_feature_main_and_deployed_identity",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "feature HEAD H、merge SHA M、旧installed binary、postmerge failureのfixture。",
+      "action": "readiness報告を作る。",
+      "expected": "feature tested/main CI/deployed別状態。旧binaryでdeployed successにしない。runtime再起動を自動実施しない。",
+      "required_mutant": "feature greenをdeploy greenへコピー。",
+      "windows_native_required": false,
+      "execution_status": "NOT_RUN"
+    },
+    {
+      "id": "RV44",
+      "family": "F04",
+      "packet_ids": [
+        "LM14"
+      ],
+      "proposed_nodeid": "tests/windows/test_review_process_owner_selection.py::test_stops_turn_not_container_and_keeps_older_jobs",
+      "selector_status": "PROPOSED_NOT_COLLECTED",
+      "setup": "同container keyを共有するA/B、新しいA job、Aのbaseline以前のjob、notify_on_completeを持つ本物の制限process。",
+      "action": "既存real terminal dispatchとstop/inactivity ownerからAを中断。",
+      "expected": "新A job停止。Bと旧A jobは生存。取消出力がAを復活させない。linger/listは正しいowner、container livenessはcontainer keyの意味を維持。",
+      "required_mutant": "cleanup比較をowner_task_idからtask_idへ戻す。",
+      "windows_native_required": true,
+      "execution_status": "NOT_RUN"
+    }
+  ]
+}
