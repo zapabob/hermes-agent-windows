@@ -35,20 +35,20 @@ features:
   keyless_delegation:
     task: T05
     canonical_owner: tools/delegate_tool.py
-    codegraph_symbols: [_build_child_agent, delegate_task]
-    impact: [tools/delegate_tool.py, agent/subagent_lifecycle.py, tests/tools/test_delegate.py, tests/tools/test_delegate_fallback_matrix.py]
+    codegraph_symbols: [_build_child_agent, delegate_task, ParentInferencePort, admit_parent_owned_inference]
+    impact: [tools/delegate_tool.py, agent/subagent_lifecycle.py, downstream/delegation/inference_port.py, tests/tools/test_parent_owned_delegation.py]
     conflict_risk: critical
-    verdict: NOT_IMPLEMENTED_ON_NEW_PARENT_OWNED_PATH
-    source_ids: [76a194dbe6420863b7b72c14d173645b7464b083, b936546561888a54d5bf9cd7eae9629a824eb4f7]
-    evidence_refs: ['CodeGraph D _build_child_agent callers/callees/impact', 'CodeGraph U _build_child_agent query', docs/control-mcp/IMPLEMENTATION_LOG.md]
-    unresolved: [auth-store resolution, inference-port design, containment and cancellation]
+    verdict: INACTIVE_PARENT_PORT_SEAM_SYNTHETIC_TESTS_GREEN_GATE_OPEN
+    source_ids: [87fe0a86a0, 093dc426d2, bb0cbffad6]
+    evidence_refs: [evidence/codegraph/T05-parent-inference-evidence.md, '_docs/2026-09-24_parent-inference-review_Codex.md']
+    unresolved: [production admission caller, controlled per-tool policy including inherited MCP, qualified T06 native isolation, live provider and real protocol, Codex Responses semantics, post-change CodeGraph receipt]
   native_restricted_execution:
     task: T06
     canonical_owner: PENDING_GRAPH_TRACE
     codegraph_symbols: []
     impact: []
     conflict_risk: critical
-    verdict: BLOCKED_PENDING_NATIVE_DENIAL_QUALIFICATION
+    verdict: APPCONTAINER_CANDIDATE_READ_ONLY_NO_NATIVE_PROOF
     source_ids: [76a194dbe6420863b7b72c14d173645b7464b083]
     evidence_refs: [docs/control-mcp/RETIREMENT_SPEC.md]
     unresolved: [Python Node Git positive probes, host-secret workspace parent-process network denial probes]
