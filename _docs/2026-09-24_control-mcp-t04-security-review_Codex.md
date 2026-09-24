@@ -68,3 +68,9 @@ Locally ran, read-only:
 - `blockers`:
   1. Preserve and display the exact resource and grant revision as dedicated, non-truncated fields on the Desktop strict-control approval surface before Run is actionable.
   2. Add a UI-path regression from `approval.request` payload through Desktop storage/rendering and `control_approval.respond`, covering a long valid resource, a non-default grant revision, and rejection of stale/mismatched response state.
+
+## Follow-up review at the Desktop fix
+
+An independent read-only review of `78c0e980d20ffda71a1205f6614be9a4e27f1109` against its predecessor found both blocking Desktop paths closed. The event parser retains the resource and grant revision; the approval card presents both before Run, with the resource scrollable instead of truncated. A stale request object and an incomplete strict binding cannot issue an approval RPC. Strict OS notifications omit Approve, and their action handler rejects an approve action even if the platform delivers one. The reviewer reported `WATCH / APPROVE` with no blocking finding. This updates the earlier BLOCK decision for that reviewed diff; it does not certify an actual rendered Electron window or a live client approval.
+
+The reviewer identified one low-severity follow-up: two public Desktop payload type declarations still omit resource and grant revision. A separate narrow type correction is pending. On the integrated commit `d40e052476`, the four affected Desktop Vitest files were re-run: 74 passed in 67.09 seconds. The build and lint recorded in the worker receipt were run before the commit, so exact-final-HEAD and live-client gates remain open.
