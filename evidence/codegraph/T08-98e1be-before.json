@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "task_id": "T08",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "98e1be6e94bab5cc0d70d4a827f826e3a6a020b2",
+  "source_fingerprint": "25d889176bc3581d983cecae810287f98bd965e6f79f98101d4564162692087c",
+  "index_identity": "H:\\hermes-control-mcp-t08-resources-20260924\\.codegraph @ 98e1be6e94bab5cc0d70d4a827f826e3a6a020b2",
+  "tool": {
+    "version": "1.6.0",
+    "package": "@colbymchenry/codegraph",
+    "invocation_kind": "CLI"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "queries": [
+    {
+      "result_ref": "evidence/codegraph/T08-98e1be-before-results.md#query-results-1",
+      "query": "explore --max-files 8 resource monitoring owner for system RAM, commit headroom, CPU, GPU UUID and free VRAM, local inference and embedding residency"
+    },
+    {
+      "result_ref": "evidence/codegraph/T08-98e1be-before-results.md#query-results-2",
+      "query": "impact -p . -d 2 -j _get_rss_mb"
+    },
+    {
+      "result_ref": "evidence/codegraph/T08-98e1be-before-results.md#query-results-3",
+      "query": "impact -p . -d 2 -j visible_cuda_devices"
+    },
+    {
+      "result_ref": "evidence/codegraph/T08-98e1be-before-results.md#query-results-4",
+      "query": "explore --max-files 8 delegate_task subagent lifecycle child wait cancellation resource owner"
+    }
+  ],
+  "canonical_owners": [
+    "gateway.memory_monitor._get_rss_mb/log_memory_usage: current-process RSS log only",
+    "downstream.platform.windows.gpu.visible_cuda_devices: CUDA environment parser; no production caller in impact",
+    "tools.delegate_tool.delegate_task: current delegation entrypoint and child lifecycle caller",
+    "agent.subagent_lifecycle.SubagentLifecycleService: existing launch/status/wait/cancel registry and executor owner"
+  ],
+  "impact_paths": [
+    "gateway/memory_monitor.py: _get_rss_mb -> log_memory_usage -> periodic logging/start/stop",
+    "downstream/platform/windows/gpu.py -> tests/downstream/test_windows_contracts.py; no runtime caller shown",
+    "tools/delegate_tool.py::delegate_task -> child lifecycle -> agent/subagent_lifecycle.py service registry/executor/status/wait/cancel"
+  ],
+  "unresolved_edges": [
+    "Broad resource lexical exploration yielded false positives; system resource/status owner needs direct inspection.",
+    "No graph evidence ties GPU device enumeration to runtime memory telemetry or local-model/embedding residency.",
+    "Suspended-child memory and cross-client host reservation require behavioral checks; graph edges alone do not establish current resident usage.",
+    "T08 admission is not wired into production delegation; T10 composition and T06 native qualification remain dependent gates."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [
+    "tests/delegation/test_resource_admission.py: planned behavior suite; not run in before phase",
+    "Direct source review of memory/GPU/local-model/status owners: pending"
+  ],
+  "evidence_refs": [
+    "evidence/codegraph/T08-98e1be-before-results.md"
+  ],
+  "phase": "before"
+}
