@@ -91,6 +91,7 @@ class ScanResult:
     cached: bool = False
     quarantine_id: str | None = None
     error: str | None = None
+    file_identity: tuple[int, int, int, int, int] | None = field(default=None, repr=False, compare=False)
 
     @property
     def file_verdict(self) -> FileVerdict:
@@ -131,6 +132,8 @@ class ScanResult:
     def execution_decision(self) -> ExecutionDecision:
         if self.file_verdict == FileVerdict.MALICIOUS:
             return ExecutionDecision.ALLOW if self.action == "allowlisted" else ExecutionDecision.BLOCK
+        if self.action == "blocked_pending_review":
+            return ExecutionDecision.REVIEW
         if self.action == "allow":
             return ExecutionDecision.ALLOW
         if self.file_verdict == FileVerdict.SUSPICIOUS:
@@ -139,13 +142,24 @@ class ScanResult:
 
     def to_dict(self) -> dict[str, Any]:
         projection = asdict(self)
+        projection.pop("file_identity", None)
+        if len(self.path) > 256:
+            projection["path"] = self.path[:255] + "…"
         projection["findings"] = [item.to_public_dict() for item in self.findings]
         projection["engine_versions"] = {
             str(name)[:80]: str(version)[:160]
             for name, version in list(self.engine_versions.items())[:16]
         }
         if self.error is not None:
-            if self.action == "quarantine_failed":
+            if self.error in {
+                "candidate_unresolved",
+                "candidate_parse_failed",
+                "candidate_limit_exceeded",
+                "candidate_reference_too_long",
+                "file_changed_during_scan",
+            }:
+                projection["error"] = self.error
+            elif self.action == "quarantine_failed":
                 projection["error"] = "quarantine_failed"
             elif self.verdict == Verdict.SCAN_ERROR:
                 projection["error"] = "scanner_error"

@@ -54,13 +54,14 @@ def evaluate(findings: list[Finding], allowed: bool) -> PolicyDecision:
             errors[0].name if errors else None,
         )
     if score >= 20:
+        review_required = bool(errors) or (authoritative_unavailable and not authoritative_available)
         return PolicyDecision(
             FileVerdict.SUSPICIOUS,
             engine_health,
-            ExecutionDecision.WARN,
+            ExecutionDecision.REVIEW if review_required else ExecutionDecision.WARN,
             Verdict.SUSPICIOUS,
             score,
-            "warn",
+            "blocked_pending_review" if review_required else "warn",
             errors[0].name if errors else None,
         )
     if authoritative_unavailable and not authoritative_available:

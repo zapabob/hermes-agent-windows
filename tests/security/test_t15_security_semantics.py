@@ -4,6 +4,7 @@ import asyncio
 import hashlib
 import importlib
 import json
+import os
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
@@ -24,6 +25,27 @@ class YaraDetectionEngine:
         return "inert-test-rules-1"
 
     def scan(self, _path: Path, _sha256: str) -> list[Finding]:
+        return [Finding(self.name, "synthetic-test-detection", 80)]
+
+
+class YaraSuspicionEngine:
+    name = "yara"
+
+    def version(self) -> str:
+        return "inert-test-rules-1"
+
+    def scan(self, _path: Path, _sha256: str) -> list[Finding]:
+        return [Finding(self.name, "synthetic-test-suspicion", 40)]
+
+
+class MutatingYaraEngine:
+    name = "yara"
+
+    def version(self) -> str:
+        return "inert-mutation-fixture-1"
+
+    def scan(self, path: Path, _sha256: str) -> list[Finding]:
+        path.write_bytes(b"changed inert fixture")
         return [Finding(self.name, "synthetic-test-detection", 80)]
 
 
@@ -80,11 +102,12 @@ class UnavailableEngine:
     ("engines", "expected_kind"),
     [
         ((YaraDetectionEngine(), ClamAVErrorEngine()), "malicious"),
+        ((YaraSuspicionEngine(), ClamAVErrorEngine()), "suspicious"),
         ((UnavailableEngine("clamav"), UnavailableEngine("yara")), "unverified"),
     ],
-    ids=("malicious-with-engine-error", "no-authoritative-scanner"),
+    ids=("malicious-with-engine-error", "suspicious-with-engine-error", "no-authoritative-scanner"),
 )
-def test_terminal_tool_blocks_malicious_and_unverified_candidates(
+def test_terminal_tool_blocks_candidates_requiring_review(
     monkeypatch,
     tmp_path: Path,
     engines: tuple[object, ...],
@@ -170,6 +193,27 @@ def test_yara_detection_and_clamav_error_have_independent_dimensions(tmp_path: P
     assert any(item["name"] == "synthetic-test-detection" for item in projection["findings"])
     assert all(item["details"] == {} for item in projection["findings"] if item["state"] != "available")
     assert "private path detail" not in json.dumps(projection)
+    assert result.file_identity is not None
+    assert "file_identity" not in projection
+
+
+def test_suspicion_with_scanner_error_requires_review(tmp_path: Path) -> None:
+    target = tmp_path / "inert-suspicion-fixture.bin"
+    target.write_bytes(b"inert scanner fixture")
+    service = SecurityService(
+        SecurityStore(tmp_path / "security"),
+        {"security": {"malware": {"auto_quarantine": False}}},
+    )
+    service.engines = (YaraSuspicionEngine(), ClamAVErrorEngine())
+
+    result = service.scan_file(target, quarantine=False)
+    projection = result.to_dict()
+
+    assert result.verdict.value == "SUSPICIOUS"
+    assert projection["file_verdict"] == "SUSPICIOUS"
+    assert projection["engine_health"] == "DEGRADED"
+    assert projection["execution_decision"] == "REVIEW"
+    assert result.action == "blocked_pending_review"
 
 
 def test_clean_finding_with_scanner_error_is_not_projected_as_clean(tmp_path: Path) -> None:
@@ -189,6 +233,32 @@ def test_clean_finding_with_scanner_error_is_not_projected_as_clean(tmp_path: Pa
     assert projection["engine_health"] == "DEGRADED"
     assert projection["execution_decision"] == "REVIEW"
     assert not any(item["score"] >= 80 for item in projection["findings"])
+
+
+def test_file_changed_during_scan_is_not_cached_or_recorded(tmp_path: Path) -> None:
+    target = tmp_path / "inert-mutating-fixture.bin"
+    target.write_bytes(b"original inert fixture")
+    store = SecurityStore(tmp_path / "security")
+    service = SecurityService(
+        store,
+        {"security": {"malware": {"auto_quarantine": True}}},
+    )
+    service.engines = (MutatingYaraEngine(),)
+
+    result = service.scan_file(target, quarantine=False)
+
+    assert result.action == "blocked_pending_review"
+    assert result.execution_decision.value == "REVIEW"
+    assert result.file_verdict.value == "UNKNOWN"
+    assert result.score == 0
+    assert result.findings == ()
+    assert result.error == "file_changed_during_scan"
+    assert result.sha256 == ""
+    assert result.to_dict()["error"] == "file_changed_during_scan"
+    with store.connection() as connection:
+        assert connection.execute("SELECT COUNT(*) FROM scan_results").fetchone()[0] == 0
+    assert not (store.root / "quarantine").exists()
+    assert not (store.root / "vault-key.dpapi").exists()
 
 
 def test_quarantine_failure_retains_malicious_block_decision(
@@ -214,6 +284,263 @@ def test_quarantine_failure_retains_malicious_block_decision(
     assert result.action == "quarantine_failed"
     assert projection["error"] == "quarantine_failed"
     assert "private path detail" not in json.dumps(projection)
+
+
+@pytest.mark.parametrize("mutation", ["change", "replace", "remove"])
+def test_terminal_revalidates_candidate_before_execution(
+    monkeypatch,
+    tmp_path: Path,
+    mutation: str,
+) -> None:
+    target = tmp_path / "inert-preflight-fixture.ps1"
+    original = b"Write-Output 'inert fixture'\n"
+    target.write_bytes(original)
+    service = SecurityService(
+        SecurityStore(tmp_path / "security"),
+        {"security": {"malware": {"auto_quarantine": False}}},
+    )
+    service.engines = (CleanEngine(),)
+
+    execution_gate = importlib.import_module("downstream.security.execution_gate")
+    monkeypatch.setattr(
+        execution_gate,
+        "load_config",
+        lambda: {"security": {"malware": {"enabled": True, "execution_gate": True}}},
+    )
+    monkeypatch.setattr(execution_gate, "SecurityService", lambda **_kwargs: service)
+
+    terminal = importlib.import_module("tools.terminal_tool")
+    monkeypatch.setattr(
+        terminal,
+        "_get_env_config",
+        lambda: {
+            "env_type": "local",
+            "cwd": str(tmp_path),
+            "timeout": 10,
+            "docker_image": "",
+            "singularity_image": "",
+            "modal_image": "",
+            "daytona_image": "",
+        },
+    )
+    monkeypatch.setattr(terminal, "resolve_task_overrides", lambda _task_id: {})
+    monkeypatch.setattr(terminal, "get_session_cwd", lambda _task_id: None)
+    monkeypatch.setattr(terminal, "_resolve_task_host_cwd", lambda _config, _task_id: None)
+    monkeypatch.setattr(terminal, "_start_cleanup_thread", lambda: None)
+    monkeypatch.setattr(terminal, "_active_environments", {})
+    executed = Mock(return_value={"output": "ran"})
+
+    def create_environment(**_kwargs):
+        if mutation == "change":
+            target.write_bytes(b"changed inert fixture")
+        elif mutation == "replace":
+            replacement = tmp_path / "replacement.ps1"
+            replacement.write_bytes(original)
+            os.replace(replacement, target)
+        else:
+            target.unlink()
+        return SimpleNamespace(execute=executed)
+
+    monkeypatch.setattr(terminal, "_create_environment", Mock(side_effect=create_environment))
+
+    response = terminal.terminal_tool(f'pwsh -File "{target}"', workdir=str(tmp_path))
+
+    assert executed.call_count == 0
+    assert "Security Center" in json.loads(response)["error"]
+
+
+def test_terminal_security_preflight_uses_explicit_workdir(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    default_cwd = tmp_path / "default-cwd"
+    workdir = tmp_path / "explicit-workdir"
+    default_cwd.mkdir()
+    workdir.mkdir()
+    target = workdir / "inert-workdir-fixture.ps1"
+    target.write_text("Write-Output 'inert fixture'\n", encoding="utf-8")
+    service = SecurityService(
+        SecurityStore(tmp_path / "security"),
+        {"security": {"malware": {"auto_quarantine": False}}},
+    )
+    service.engines = (YaraDetectionEngine(),)
+
+    execution_gate = importlib.import_module("downstream.security.execution_gate")
+    monkeypatch.setattr(
+        execution_gate,
+        "load_config",
+        lambda: {"security": {"malware": {"enabled": True, "execution_gate": True}}},
+    )
+    monkeypatch.setattr(execution_gate, "SecurityService", lambda **_kwargs: service)
+
+    terminal = importlib.import_module("tools.terminal_tool")
+    monkeypatch.setattr(
+        terminal,
+        "_get_env_config",
+        lambda: {
+            "env_type": "local",
+            "cwd": str(default_cwd),
+            "timeout": 10,
+            "docker_image": "",
+            "singularity_image": "",
+            "modal_image": "",
+            "daytona_image": "",
+        },
+    )
+    monkeypatch.setattr(terminal, "resolve_task_overrides", lambda _task_id: {})
+    monkeypatch.setattr(terminal, "get_session_cwd", lambda _task_id: None)
+    monkeypatch.setattr(terminal, "_resolve_task_host_cwd", lambda _config, _task_id: None)
+    monkeypatch.setattr(terminal, "_start_cleanup_thread", lambda: None)
+    executor = Mock(return_value=SimpleNamespace(execute=Mock(return_value={"output": "ran"})))
+    monkeypatch.setattr(terminal, "_create_environment", executor)
+
+    response = terminal.terminal_tool(f'pwsh -File "{target.name}"', workdir=str(workdir))
+
+    executor.assert_not_called()
+    assert "Security Center blocked a malicious execution candidate" in json.loads(response)["error"]
+
+
+@pytest.mark.parametrize("include_resolved_candidate", [False, True])
+def test_terminal_blocks_unresolved_script_candidates(
+    monkeypatch,
+    tmp_path: Path,
+    include_resolved_candidate: bool,
+) -> None:
+    unresolved = tmp_path / "missing-inert-fixture.ps1"
+    resolved = tmp_path / "clean-inert-fixture.ps1"
+    resolved.write_text("Write-Output 'inert fixture'\n", encoding="utf-8")
+    service = SecurityService(
+        SecurityStore(tmp_path / "security"),
+        {"security": {"malware": {"auto_quarantine": False}}},
+    )
+    service.engines = (CleanEngine(),)
+
+    execution_gate = importlib.import_module("downstream.security.execution_gate")
+    monkeypatch.setattr(
+        execution_gate,
+        "load_config",
+        lambda: {"security": {"malware": {"enabled": True, "execution_gate": True}}},
+    )
+    monkeypatch.setattr(execution_gate, "SecurityService", lambda **_kwargs: service)
+
+    terminal = importlib.import_module("tools.terminal_tool")
+    monkeypatch.setattr(
+        terminal,
+        "_get_env_config",
+        lambda: {
+            "env_type": "local",
+            "cwd": str(tmp_path),
+            "timeout": 10,
+            "docker_image": "",
+            "singularity_image": "",
+            "modal_image": "",
+            "daytona_image": "",
+        },
+    )
+    monkeypatch.setattr(terminal, "resolve_task_overrides", lambda _task_id: {})
+    monkeypatch.setattr(terminal, "get_session_cwd", lambda _task_id: None)
+    monkeypatch.setattr(terminal, "_resolve_task_host_cwd", lambda _config, _task_id: None)
+    monkeypatch.setattr(terminal, "_start_cleanup_thread", lambda: None)
+    executor = Mock(return_value=SimpleNamespace(execute=Mock(return_value={"output": "ran"})))
+    monkeypatch.setattr(terminal, "_create_environment", executor)
+    candidates = [f'"{resolved}"'] if include_resolved_candidate else []
+    candidates.append(f'"{unresolved}"')
+    command = "pwsh -File " + " ".join(candidates)
+
+    response = terminal.terminal_tool(command, workdir=str(tmp_path))
+
+    executor.assert_not_called()
+    assert "Security Center" in json.loads(response)["error"]
+
+
+def test_execution_gate_fails_closed_on_parse_and_path_errors(monkeypatch, tmp_path: Path) -> None:
+    execution_gate = importlib.import_module("downstream.security.execution_gate")
+    monkeypatch.setattr(
+        execution_gate,
+        "load_config",
+        lambda: {"security": {"malware": {"enabled": True, "execution_gate": True}}},
+    )
+
+    def invalid_parse(_command: str) -> list[str]:
+        raise ValueError("invalid command")
+
+    monkeypatch.setattr(execution_gate, "split_command_line", invalid_parse)
+    parse_failure = execution_gate.preflight_command("pwsh -File script.ps1", str(tmp_path))
+    assert parse_failure["allowed"] is False
+    assert parse_failure["blocked"][0]["error"] == "candidate_parse_failed"
+    assert not execution_gate.revalidate_command("pwsh -File script.ps1", str(tmp_path), {})
+
+    monkeypatch.undo()
+    monkeypatch.setattr(
+        execution_gate,
+        "load_config",
+        lambda: {"security": {"malware": {"enabled": True, "execution_gate": True}}},
+    )
+    nul_path = execution_gate.preflight_command('pwsh -File "invalid\x00.ps1"', str(tmp_path))
+    assert nul_path["allowed"] is False
+    assert nul_path["blocked"][0]["error"] == "candidate_unresolved"
+
+
+@pytest.mark.parametrize(
+    ("command", "reason"),
+    [
+        (
+            "pwsh -File " + " ".join(f"missing-{index}.ps1" for index in range(40)),
+            "candidate_limit_exceeded",
+        ),
+        ('pwsh -File "' + ("a" * 3000) + '.ps1"', "candidate_reference_too_long"),
+        (
+            "pwsh -File missing-first.ps1 -File missing-second.ps1",
+            "candidate_unresolved",
+        ),
+    ],
+)
+def test_execution_gate_bounds_candidate_refusals(
+    monkeypatch,
+    tmp_path: Path,
+    command: str,
+    reason: str,
+) -> None:
+    execution_gate = importlib.import_module("downstream.security.execution_gate")
+    monkeypatch.setattr(
+        execution_gate,
+        "load_config",
+        lambda: {"security": {"malware": {"enabled": True, "execution_gate": True}}},
+    )
+
+    result = execution_gate.preflight_command(command, str(tmp_path))
+    serialized = json.dumps(result)
+
+    assert result["allowed"] is False
+    assert len(result["blocked"]) == 1
+    assert result["blocked"][0]["error"] == reason
+    assert result["blocked"][0]["path"] == "execution candidate unavailable"
+    assert len(result["blocked"][0]["path"]) <= 256
+    assert "missing-first.ps1" not in serialized
+    assert ("a" * 300) not in serialized
+
+
+def test_public_scan_path_is_bounded() -> None:
+    result = ScanResult(
+        "C:/sensitive/" + ("x" * 3000) + ".ps1",
+        "a" * 64,
+        4,
+        Verdict.CLEAN,
+        0,
+        "allow",
+        (),
+        {},
+    )
+
+    assert len(result.to_dict()["path"]) <= 256
+
+
+def test_execution_gate_resolves_attached_script_switch_values(tmp_path: Path) -> None:
+    script = tmp_path / "inert-attached-fixture.ps1"
+    script.write_text("Write-Output 'inert fixture'\n", encoding="utf-8")
+    execution_gate = importlib.import_module("downstream.security.execution_gate")
+
+    assert execution_gate._candidates(f"pwsh -File={script.name}", tmp_path) == [script]
 
 
 def test_cached_result_uses_current_allowlist_policy(tmp_path: Path) -> None:
