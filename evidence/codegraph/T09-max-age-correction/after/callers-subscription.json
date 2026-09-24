@@ -1,0 +1,17 @@
+{
+  "symbol": "_matching_subscription_entitlement",
+  "callers": [
+    {
+      "name": "classify_cost",
+      "kind": "function",
+      "filePath": "downstream/delegation/free_routes.py",
+      "startLine": 360
+    },
+    {
+      "name": "build_free_route_snapshot",
+      "kind": "function",
+      "filePath": "downstream/delegation/free_routes.py",
+      "startLine": 466
+    }
+  ]
+}

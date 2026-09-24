@@ -525,6 +525,7 @@ class AIAgent:
         requested_provider: str = None,
         requested_model: str = None,
         capabilities: Dict[str, bool] | None = None,
+        inference_port=None,
     ):
         """Forwarder — see ``agent.agent_init.init_agent``."""
         if tool_delay is not None:
@@ -543,6 +544,7 @@ class AIAgent:
             requested_provider=requested_provider,
             requested_model=requested_model,
             capabilities=capabilities,
+            inference_port=inference_port,
             api_mode=api_mode,
             acp_command=acp_command,
             acp_args=acp_args,
@@ -3435,6 +3437,10 @@ class AIAgent:
             self._interrupt_requested = True
             self._interrupt_message = message
             self._tool_interrupt_reason = tool_interrupt_reason
+            if getattr(self, "_inference_port", None) is not None:
+                self._inference_cancel_generation = (
+                    getattr(self, "_inference_cancel_generation", 0) + 1
+                )
             if hard_cancel:
                 _hard_event = getattr(
                     self, "_hard_interrupt_requested", None
@@ -5591,6 +5597,30 @@ class AIAgent:
             return primary_client
         with self._openai_client_lock():
             request_kwargs = dict(self._client_kwargs)
+        from downstream.delegation.network_budget import current_request_lease
+
+        request_lease = current_request_lease()
+        if request_lease is not None:
+            import httpx
+
+            configured_timeout = request_kwargs.get("timeout", 600.0)
+            base_timeout = httpx.Timeout(configured_timeout)
+
+            def _cap_timeout(value: object, maximum: float) -> float:
+                if isinstance(value, (int, float)) and not isinstance(value, bool):
+                    return min(float(value), maximum)
+                return maximum
+
+            connect_cap = request_lease.connect_timeout_seconds
+            request_kwargs["timeout"] = httpx.Timeout(
+                connect=_cap_timeout(base_timeout.connect, connect_cap),
+                read=_cap_timeout(
+                    base_timeout.read,
+                    request_lease.read_idle_timeout_seconds,
+                ),
+                write=_cap_timeout(base_timeout.write, connect_cap),
+                pool=_cap_timeout(base_timeout.pool, connect_cap),
+            )
         # Per-request OpenAI-wire clients (used by both the non-streaming
         # chat-completions path and the streaming chat-completions path
         # in `_interruptible_api_call`) should not run the SDK's built-in
@@ -5765,11 +5795,29 @@ class AIAgent:
         if getattr(self, "provider", None) == "bedrock":
             region = getattr(self, "_bedrock_region", "us-east-1") or "us-east-1"
             return ("bedrock", region)
+        provider_id = getattr(self, "provider", "")
+        model_id = getattr(self, "model", None)
+        request_timeout = get_provider_request_timeout(provider_id, model_id)
+        from downstream.delegation.network_budget import current_request_lease
+
+        request_lease = current_request_lease()
+        if request_lease is not None:
+            if (
+                isinstance(request_timeout, bool)
+                or not isinstance(request_timeout, (int, float))
+                or request_timeout <= 0
+            ):
+                request_timeout = request_lease.read_idle_timeout_seconds
+            else:
+                request_timeout = min(
+                    float(request_timeout),
+                    request_lease.read_idle_timeout_seconds,
+                )
         return (
             "direct",
             self._anthropic_api_key,
             getattr(self, "_anthropic_base_url", None),
-            get_provider_request_timeout(self.provider, self.model),
+            request_timeout,
             bool(getattr(self, "_oauth_1m_beta_disabled", False)),
         )
 
@@ -5834,7 +5882,7 @@ class AIAgent:
             client = build_anthropic_client(
                 self._anthropic_api_key,
                 getattr(self, "_anthropic_base_url", None),
-                timeout=get_provider_request_timeout(self.provider, self.model),
+                timeout=key[3],
                 drop_context_1m_beta=key[4],
             )
         logger.debug(
@@ -5978,6 +6026,8 @@ class AIAgent:
         return run_codex_create_stream_fallback(self, api_kwargs, client)
 
     def _try_refresh_codex_client_credentials(self, *, force: bool = True) -> bool:
+        if getattr(self, "_inference_port", None) is not None:
+            return False
         if self.api_mode != "codex_responses" or self.provider not in {"openai-codex", "xai-oauth"}:
             return False
 
@@ -6071,6 +6121,8 @@ class AIAgent:
         *,
         force: bool = True,
     ) -> bool:
+        if getattr(self, "_inference_port", None) is not None:
+            return False
         if self.provider != "nous":
             return False
         # Portal serves anthropic/* on the native Messages route, so a session
@@ -6142,6 +6194,8 @@ class AIAgent:
         with no registry entry, so they are matched through the runtime
         provider's config lookup instead.
         """
+        if getattr(self, "_inference_port", None) is not None:
+            return False
         if self.api_mode != "chat_completions":
             return False
         if getattr(self, "_fallback_activated", False):
@@ -6312,6 +6366,8 @@ class AIAgent:
         new token into the client kwargs, and rebuilds the primary OpenAI
         client. Returns True when a usable token+base_url were obtained.
         """
+        if getattr(self, "_inference_port", None) is not None:
+            return False
         if self.api_mode != "chat_completions" or self.provider != "vertex":
             return False
 
@@ -6354,6 +6410,8 @@ class AIAgent:
         then mint a new one) so the retry carries a valid IDE token. Mirrors the
         400 stale-credential recovery; the caller enforces the single-shot guard.
         """
+        if getattr(self, "_inference_port", None) is not None:
+            return False
         if not self._is_copilot_provider():
             return False
 
@@ -6468,6 +6526,8 @@ class AIAgent:
         return True
 
     def _try_refresh_anthropic_client_credentials(self) -> bool:
+        if getattr(self, "_inference_port", None) is not None:
+            return False
         if self.api_mode != "anthropic_messages" or not hasattr(self, "_anthropic_api_key"):
             return False
         # Only refresh credentials for the native Anthropic provider.
@@ -6703,6 +6763,8 @@ class AIAgent:
         billing_unverified: bool = False,
     ) -> tuple[bool, bool]:
         """Forwarder — see ``agent.agent_runtime_helpers.recover_with_credential_pool``."""
+        if getattr(self, "_inference_port", None) is not None:
+            return False, has_retried_429
         from agent.agent_runtime_helpers import recover_with_credential_pool
         return recover_with_credential_pool(self, status_code=status_code, has_retried_429=has_retried_429, classified_reason=classified_reason, error_context=error_context, billing_unverified=billing_unverified)
 
@@ -8915,6 +8977,7 @@ class AIAgent:
             start_task_run,
         )
         from agent.subagent_lifecycle import bind_subagent_parent
+        from downstream.delegation.inference_port import bind_inference_port
         effective_task_id = task_id or str(uuid.uuid4())
         session_id = str(getattr(self, "session_id", None) or "")
         task_context = {
@@ -9394,7 +9457,11 @@ class AIAgent:
             # replaces the value with the live runtime after fallback restoration.
             # Keep the scope local instead of storing ContextVar tokens on the agent,
             # which may be observed from another thread.
-            with bind_subagent_parent(self), scoped_runtime_main({}):
+            with (
+                bind_subagent_parent(self),
+                scoped_runtime_main({}),
+                bind_inference_port(getattr(self, "_inference_port", None)),
+            ):
                 try:
                     if durable_turn_lease_thread is not None:
                         with durable_turn_lease_activity_lock:

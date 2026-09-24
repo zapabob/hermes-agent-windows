@@ -1,0 +1,229 @@
+**ApprovalBar** (function)
+
+**Location:** apps/desktop/src/components/assistant-ui/tool/approval.tsx:108
+**Signature:** `({ request, surface })`
+
+```tsx
+108	const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline' }> = ({ request, surface }) => {
+109	  const { t } = useI18n()
+110	  const copy = t.assistant.approval
+111	  const [submitting, setSubmitting] = useState<ApprovalChoice | null>(null)
+112	  // "Always allow" persists the pattern to ~/.hermes/config.yaml permanently, so
+113	  // it goes through a confirm step rather than firing straight from the menu.
+114	  const [confirmAlways, setConfirmAlways] = useState(false)
+115	  // The pending tool row only shows a single truncated line of the command, and
+116	  // a pending row can't be expanded (no result yet), so the full command was
+117	  // previously only reachable via the "Always allow" modal. Let the user reveal
+118	  // it inline instead — "expand, Run" (2 clicks) rather than the modal dance.
+119	  const [showCommand, setShowCommand] = useState(false)
+120	  const busy = submitting !== null
+121	  // false when the backend won't honor a permanent allow (tirith warning) → hide "Always allow".
+122	  const allowPermanent = request.allowPermanent !== false
+123	  const choices = request.choices ?? (request.smartDenied ? ['once', 'deny'] : undefined)
+124	  const allowSession = !request.control && (choices ? choices.includes('session') : true)
+125	  const allowAlways = !request.control && (choices ? choices.includes('always') : allowPermanent)
+126	  const hasMoreOptions = allowSession || allowAlways
+127	  const hasCommand = request.command.trim().length > 0
+128	
+129	  const respond = useCallback(
+130	    async (choice: ApprovalChoice) => {
+131	      // Another bar (or the keyboard path) may have already resolved this
+132	      // approval; the map is the single source of truth, so bail if this
+133	      // session's request is gone.
+134	      if (busy || !sessionApprovalRequest(request.sessionId).get()) {
+135	        return
+136	      }
+137	
+138	      const gateway = request.scope ? gatewayForScope(request.scope) : null
+139	
+140	      if (!gateway) {
+141	        notifyError(new Error(copy.gatewayDisconnected), copy.sendFailed)
+142	
+143	        return
+144	      }
+145	
+146	      const target = approvalResponseForRequest(request, choice)
+147	
+148	      if (!target) {
+149	        return
+150	      }
+151	
+152	      setSubmitting(choice)
+153	
+154	      try {
+155	        // Route through the session's OWNER (tile route → known profile);
+156	        // ambient only when no owner is known. The ambient socket follows
+157	        // foreground focus, and for a cross-profile session it points at a
+158	        // backend that never held this approval (#91684 client half).
+159	        const result = await requestForOwnedSession<{ resolved?: boolean }>(
+160	          request.sessionId,
+161	          // Bound (not wrapped) so the ambient fallback keeps the exact
+162	          // 2-arg call shape gateway.request callers assert on.
+163	          gateway.request.bind(gateway) as typeof gateway.request,
+164	          target.method,
+165	          target.params
+166	        )
+167	
+168	        if (target.strict && result?.resolved !== true) {
+169	          setSubmitting(null)
+170	
+171	          return
+172	        }
+173	
+174	        triggerHaptic(choice === 'deny' ? 'cancel' : 'submit')
+175	        clearApprovalRequest(request.sessionId, request.requestId)
+176	        void replayPendingApproval(gateway, request.sessionId, request.scope).catch(() => undefined)
+177	      } catch (error) {
+178	        notifyError(error, copy.sendFailed)
+179	        setSubmitting(null)
+180	      }
+181	    },
+182	    [busy, copy.gatewayDisconnected, copy.sendFailed, request]
+183	  )
+184	
+185	  // ⌘/Ctrl+Enter → Run, Esc → Reject.
+186	  // While the confirm dialog is open it owns the keyboard (Esc closes it), so
+187	  // the strip-level shortcuts stand down to avoid denying the whole approval.
+188	  useEffect(() => {
+189	    if (confirmAlways) {
+190	      return
+191	    }
+192	
+193	    const onKeyDown = (event: KeyboardEvent) => {
+194	      if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+195	        event.preventDefault()
+196	        void respond('once')
+197	      } else if (event.key === 'Escape') {
+198	        event.preventDefault()
+199	        void respond('deny')
+200	      }
+201	    }
+202	
+203	    window.addEventListener('keydown', onKeyDown, true)
+204	
+205	    return () => window.removeEventListener('keydown', onKeyDown, true)
+206	  }, [confirmAlways, respond])
+207	
+208	  return (
+209	    <div
+210	      className={cn(surface === 'inline' ? 'mt-1 ps-5' : 'mt-2')}
+211	      data-slot={surface === 'inline' ? 'tool-approval-inline' : 'tool-approval-actions'}
+212	    >
+213	      <div className="flex items-center gap-2.5">
+214	        <div className="inline-flex h-6 items-stretch overflow-hidden rounded-md border border-primary/25 bg-primary/10 text-primary">
+215	          <Button
+216	            className="h-full gap-1 rounded-none px-2 text-xs font-medium text-primary hover:bg-primary/15 hover:text-primary"
+217	            disabled={busy}
+218	            onClick={() => void respond('once')}
+219	            size="xs"
+220	            variant="ghost"
+221	          >
+222	            {submitting === 'once' ? <Loader2 className="size-3 animate-spin" /> : copy.run}
+223	            {submitting !== 'once' && <span className="text-[0.625rem] text-primary/60">{isMac ? '⌘⏎' : 'Ctrl⏎'}</span>}
+224	          </Button>
+225	          {hasMoreOptions && <span aria-hidden className="w-px self-stretch bg-primary/20" />}
+226	          {hasMoreOptions && (
+227	            <DropdownMenu>
+228	              <DropdownMenuTrigger asChild>
+229	                <Button
+230	                  aria-label={copy.moreOptions}
+231	                  className="h-full w-5 rounded-none px-0 text-primary hover:bg-primary/15 hover:text-primary"
+232	                  disabled={busy}
+233	                  size="xs"
+234	                  variant="ghost"
+235	                >
+236	                  <ChevronDown className="size-3" />
+237	                </Button>
+238	              </DropdownMenuTrigger>
+239	              <DropdownMenuContent align="start" className="min-w-44">
+240	                {allowSession && (
+241	                  <DropdownMenuItem onSelect={() => void respond('session')}>{copy.allowSession}</DropdownMenuItem>
+242	                )}
+243	                {allowAlways && (
+244	                  <DropdownMenuItem
+245	                    onSelect={() => {
+246	                      // Defer one tick so the menu fully unmounts before the dialog
+247	                      // mounts — otherwise Radix's focus-return races the dialog and
+248	                      // dismisses it via onInteractOutside.
+249	                      setTimeout(() => setConfirmAlways(true), 0)
+250	                    }}
+251	                  >
+252	                    {copy.alwaysAllowMenu}
+253	                  </DropdownMenuItem>
+254	                )}
+255	                <DropdownMenuItem onSelect={() => void respond('deny')} variant="destructive">
+256	                  {copy.reject}
+257	                </DropdownMenuItem>
+258	              </DropdownMenuContent>
+259	            </DropdownMenu>
+260	          )}
+261	        </div>
+262	
+263	        <Button
+264	          className="h-6 gap-1.5 rounded-md px-1.5 text-xs font-normal text-(--ui-text-tertiary) hover:text-foreground"
+265	          disabled={busy}
+266	          onClick={() => void respond('deny')}
+267	          size="xs"
+268	          variant="ghost"
+269	        >
+270	          {submitting === 'deny' ? <Loader2 className="size-3 animate-spin" /> : copy.reject}
+271	          {submitting !== 'deny' && <span className="text-[0.625rem] opacity-55">Esc</span>}
+272	        </Button>
+273	
+274	        {hasCommand && (
+275	          <Button
+276	            aria-expanded={showCommand}
+277	            className="h-6 gap-1 rounded-md px-1.5 text-xs font-normal text-(--ui-text-tertiary) hover:text-foreground"
+278	            onClick={() => setShowCommand(value => !value)}
+279	            size="xs"
+280	            variant="ghost"
+281	          >
+282	            {copy.command}
+283	            <ChevronDown className={cn('size-3 transition-transform', showCommand && 'rotate-180')} />
+284	          </Button>
+285	        )}
+286	      </div>
+287	
+288	      {showCommand && hasCommand && (
+289	        <pre className="mt-1.5 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-md border border-(--ui-stroke-tertiary) bg-(--ui-chat-surface-background) px-2.5 py-1.5 font-mono text-xs leading-snug text-foreground">
+290	          {request.command.trim()}
+291	        </pre>
+292	      )}
+293	
+294	      <Dialog onOpenChange={setConfirmAlways} open={confirmAlways}>
+295	        <DialogContent className="max-w-md">
+296	          <DialogHeader>
+297	            <DialogTitle>{copy.alwaysTitle}</DialogTitle>
+298	            <DialogDescription>{copy.alwaysDescription(request.description)}</DialogDescription>
+299	          </DialogHeader>
+300	
+301	          {request.command.trim() && (
+302	            <pre className="max-h-32 overflow-auto whitespace-pre-wrap break-words rounded-md border border-(--ui-stroke-tertiary) bg-(--ui-chat-surface-background) px-2.5 py-1.5 font-mono text-xs leading-snug text-foreground">
+303	              {request.command.trim()}
+304	            </pre>
+305	          )}
+306	
+307	          <DialogFooter>
+308	            <Button onClick={() => setConfirmAlways(false)} size="sm" variant="ghost">
+309	              {t.common.cancel}
+310	            </Button>
+311	            <Button
+312	              onClick={() => {
+313	                setConfirmAlways(false)
+314	                void respond('always')
+315	              }}
+316	              size="sm"
+317	              variant="destructive"
+318	            >
+319	              {copy.alwaysAllow}
+320	            </Button>
+321	          </DialogFooter>
+322	        </DialogContent>
+323	      </Dialog>
+324	    </div>
+325	  )
+326	}
+```
+**Trail — codegraph_node any of these to follow it (no Read needed)**
+**Calls →** useI18n (apps/desktop/src/i18n/context.tsx:194), trim (apps/desktop/src/app/starmap/share-code.ts:18), sessionApprovalRequest (apps/desktop/src/store/prompts.ts:212), gatewayForScope (apps/desktop/src/store/gateway.ts:355), notifyError (apps/desktop/src/app/session/hooks/use-model-controls.test.tsx:25), approvalResponseForRequest (apps/desktop/src/store/prompts.ts:101), triggerHaptic (apps/desktop/src/lib/haptics.ts:103), clearApprovalRequest (apps/desktop/src/store/prompts.ts:159), replayPendingApproval (apps/desktop/src/store/prompts.ts:175), removeEventListener (apps/desktop/src/app/gateway/hooks/use-gateway-boot.test.tsx:123), cn (apps/desktop/src/lib/utils.ts:4), Button (apps/bootstrap-installer/src/components/button.tsx:61) [dynamic: renders <Button>], +11 more
+**Called by ←** InlineApprovalBar (apps/desktop/src/components/assistant-ui/tool/approval.tsx:68) [dynamic: renders <ApprovalBar>], PendingApprovalFallback (apps/desktop/src/components/assistant-ui/tool/approval.tsx:74) [dynamic: renders <ApprovalBar>]

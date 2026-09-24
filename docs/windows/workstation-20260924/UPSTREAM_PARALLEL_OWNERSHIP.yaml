@@ -1,0 +1,52 @@
+# Workstation 2026-09-24: observed ownership only, not a completed adoption audit.
+version: 1
+campaign: workstation-20260924
+repository: zapabob/hermes-agent-windows
+source_ids:
+  downstream_start: 76a194dbe6420863b7b72c14d173645b7464b083
+  downstream_receipt: be39eb2c4d918415fe36be177fcb3f06a098d71a
+  downstream_main_observed: e6070028c9d0d75634ad7661c33fa937b682474a
+  upstream_release: d337b736aa1e8ebecfab043842d13e4a2d2f48a3
+  upstream_ceiling: b936546561888a54d5bf9cd7eae9629a824eb4f7
+  historical_snapshot_unchanged: b51c055a12220f8c7c18660e8599365012e19532
+codegraph:
+  cli: '@colbymchenry/codegraph@1.6.0'
+  downstream_root: 'C:/Users/downl/Documents/New project/hermes-control-mcp-recovered-20260923'
+  upstream_ceiling_root: 'H:/hermes-upstream-ceiling-b9365465'
+  status: current_after_full_index
+  index_files_committed: false
+  evidence_boundary: 'Static navigation only; dynamic registrations and runtime security need direct tests.'
+authorities:
+  control_mcp_transport:
+    canonical_owner: downstream/control_mcp/transport.py
+    owner_paths:
+      - downstream/control_mcp/transport.py
+      - downstream/control_mcp/http_boundary.py
+      - hermes_cli/web_server.py
+    writer: integrator
+    parallel_edit: false
+    conflict_risk: high
+    codegraph_symbols: [ControlMCPHost, create_control_mcp, mount_control_mcp]
+    impact:
+      ControlMCPHost: [downstream/control_mcp/transport.py, hermes_cli/web_server.py, tests/control_mcp/test_host_mount.py, tests/control_mcp/test_mcp_protocol.py]
+      mount_control_mcp: [downstream/control_mcp/transport.py, tests/control_mcp/test_mcp_protocol.py]
+      create_control_mcp: [downstream/control_mcp/transport.py, tests/control_mcp/test_mcp_protocol.py]
+    verdict: EXISTING_UNMOUNTED_READ_ONLY_CANDIDATE
+    evidence_refs: [docs/control-mcp/IMPLEMENTATION_LOG.md, 'CodeGraph D query/callers/callees/impact on 2026-09-24']
+    unresolved_dynamic_edges: [ASGI mount and lifespan wiring, resource auth and event dispatch across transports]
+  delegation_and_inference:
+    canonical_owner: tools/delegate_tool.py
+    owner_paths: [tools/delegate_tool.py, agent/subagent_lifecycle.py, run_agent.py]
+    writer: integrator
+    parallel_edit: false
+    conflict_risk: critical
+    codegraph_symbols: [_build_child_agent, delegate_task, AIAgent]
+    impact:
+      _build_child_agent: [tools/delegate_tool.py, agent/subagent_lifecycle.py, tests/tools/test_delegate.py, tests/tools/test_delegate_fallback_matrix.py, tests/tools/test_delegate_kanban_isolation.py]
+    verdict: CREDENTIAL_BEARING_EXISTING_PATH_NOT_MCP_WRITE_AUTHORITY
+    evidence_refs: [docs/control-mcp/RETIREMENT_SPEC.md, 'CodeGraph D callers/callees/impact on 2026-09-24']
+    unresolved_dynamic_edges: [config/auth-store rediscovery, credential pool inheritance, child and grandchild launch, cancellation cleanup]
+stop_rules:
+  - 'One writer owns any intersecting auth, profile, session, gateway, registry or agent execution seam.'
+  - 'No MCP execution writes until a separate parent-owned inference path and qualified Windows process boundary pass denial tests.'
+  - 'Upstream release-specific ownership remains pending a distinct R1 index and full history enumeration.'

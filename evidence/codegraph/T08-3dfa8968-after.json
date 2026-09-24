@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "task_id": "T08",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "3dfa896847760763cfa79af04f360f433c2a2198",
+  "source_fingerprint": "12425dc8023e3b1f010f2c2a097d793ef708ce4f23ede7effd8f39ba36518640",
+  "index_identity": "H:\\hermes-control-mcp-t08-resources-20260924\\.codegraph @ 3dfa896847760763cfa79af04f360f433c2a2198",
+  "tool": {
+    "version": "1.6.0",
+    "package": "@colbymchenry/codegraph",
+    "invocation_kind": "pinned npx CLI",
+    "version_command": "npx --yes @colbymchenry/codegraph@1.6.0 --version",
+    "version_output": "1.6.0"
+  },
+  "sync": {
+    "command": "npx --yes @colbymchenry/codegraph@1.6.0 sync .",
+    "exit_code": 0,
+    "summary": "Synced 2 changed files; modified 2 files and 95 nodes"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "last_indexed_utc": "2026-09-24T05:13:43.217Z",
+  "index": {
+    "files": 8908,
+    "nodes": 190728,
+    "edges": 610466,
+    "db_size_bytes": 643559424,
+    "pending_changes": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "pending_refs": 0,
+    "extraction_version": 25,
+    "worktree_mismatch": null,
+    "state": "complete"
+  },
+  "queries": [
+    {
+      "result_ref": "evidence/codegraph/T08-3dfa8968-after-results.md#gpu-probe-impact",
+      "query": "impact -p . -d 2 -j query_nvidia_gpu_telemetry"
+    },
+    {
+      "result_ref": "evidence/codegraph/T08-3dfa8968-after-results.md#reservation-impact",
+      "query": "impact -p . -d 2 -j ResourceReservationBook"
+    },
+    {
+      "result_ref": "evidence/codegraph/T08-3dfa8968-after-results.md#collector-query",
+      "query": "query ResourceSnapshotCollector"
+    },
+    {
+      "result_ref": "evidence/codegraph/T08-3dfa8968-after-results.md#direct-reference-check",
+      "query": "rg -n \"ResourceSnapshotCollector|ResourceReservationBook|admit_resources|query_nvidia_gpu_telemetry\" downstream tests"
+    }
+  ],
+  "canonical_owners": [
+    "downstream.delegation.resources.ResourceSnapshotCollector: passive proposed host telemetry",
+    "downstream.delegation.resources.ResourceReservationBook: atomic in-process reservations",
+    "downstream.delegation.resources.admit_resources: pure admission decision",
+    "downstream.platform.windows.gpu.query_nvidia_gpu_telemetry: bounded read-only NVIDIA telemetry"
+  ],
+  "impact_paths": [
+    "query_nvidia_gpu_telemetry -> ResourceSnapshotCollector and focused probe tests; no runtime consumer",
+    "ResourceReservationBook -> its methods and focused admission tests; inference_port.complete edge is a name-based false positive verified by direct rg"
+  ],
+  "unresolved_edges": [
+    "T10 must bind authenticated host-owned process identity and fresh per-reservation RAM, commit, CPU, and GPU measurements before production admission.",
+    "The broad proposed API remains inactive and may need reduction when the T10 lifecycle owner contract is implemented.",
+    "Real NVIDIA telemetry, Windows commit readings, hardware idle/workload capacity, and policy thresholds remain unverified."
+  ],
+  "coverage_disposition": "STATIC_IMPACT_COMPLETE_RUNTIME_OWNER_PENDING",
+  "tests": [
+    "tests/downstream/test_resource_admission.py tests/downstream/test_windows_contracts.py: 56 passed",
+    "Ruff passed on changed T08 files",
+    "ty passed on downstream/platform/windows/gpu.py and downstream/delegation/resources.py",
+    "git diff --check passed before evidence-only follow-up"
+  ],
+  "evidence_refs": [
+    "evidence/t08-resource-admission.md",
+    "evidence/codegraph/T08-3dfa8968-after-results.md"
+  ],
+  "phase": "after"
+}

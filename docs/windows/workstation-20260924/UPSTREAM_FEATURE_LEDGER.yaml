@@ -1,0 +1,64 @@
+# Workstation 2026-09-24: partial, evidence-bounded feature inventory.
+# This is a progress ledger, not a claim that the campaign gates are complete.
+version: 1
+campaign: workstation-20260924
+repository: zapabob/hermes-agent-windows
+source_ids:
+  downstream_start: 76a194dbe6420863b7b72c14d173645b7464b083
+  downstream_main_observed: e6070028c9d0d75634ad7661c33fa937b682474a
+  upstream_release: d337b736aa1e8ebecfab043842d13e4a2d2f48a3
+  upstream_ceiling: b936546561888a54d5bf9cd7eae9629a824eb4f7
+  historical_snapshot_unchanged: b51c055a12220f8c7c18660e8599365012e19532
+inventory_status: PARTIAL_PENDING_HISTORY_AND_R1
+adoption_seeds_are_proofs: false
+features:
+  generic_control_mcp_read:
+    task: T03
+    canonical_owner: downstream/control_mcp/transport.py
+    codegraph_symbols: [ControlMCPHost, create_control_mcp, mount_control_mcp]
+    impact: [downstream/control_mcp/transport.py, hermes_cli/web_server.py, tests/control_mcp/test_host_mount.py, tests/control_mcp/test_mcp_protocol.py]
+    conflict_risk: high
+    verdict: REAL_HOST_SYNTHETIC_CLIENT_VERIFIED_LIVE_DESKTOP_UNVERIFIED
+    source_ids: [76a194dbe6420863b7b72c14d173645b7464b083, b936546561888a54d5bf9cd7eae9629a824eb4f7]
+    evidence_refs: ['CodeGraph D mount_control_mcp/create_control_mcp/ControlMCPHost query and impact', 'CodeGraph U: ControlMCPHost no static result', 'eceec95223 actual host/SDK fixture', 'dbca4d19cf loopback auth negatives', docs/control-mcp/RETIREMENT_SPEC.md]
+    unresolved: [real Codex Desktop client auth/read, real ChatGPT Desktop client auth/read, hosted ChatGPT Web reachability, operator endpoint configuration]
+  strict_control_approval:
+    task: T04
+    canonical_owner: tools/approval.py
+    codegraph_symbols: [ControlApprovalBinding, request_control_consent, consume_control_verdict]
+    impact: [tools/approval.py, downstream/control_mcp/journal.py, tui_gateway/methods_prompt.py, apps/desktop/src/store/prompts.ts, apps/desktop/src/components/assistant-ui/tool/approval.tsx]
+    conflict_risk: critical
+    verdict: BACKEND_AND_DESKTOP_STATIC_REVIEW_PASSED_LIVE_UNVERIFIED
+    source_ids: [20565df10d51573f327b36790f3eea5f1755db58, d40e052476, 9ef2897370]
+    evidence_refs: ['_docs/2026-09-24_control-mcp-approval-binding_Codex.md', '_docs/T04-desktop-strict-approval-closeout-20260924.md', '_docs/2026-09-24_control-mcp-t04-security-review_Codex.md']
+    unresolved: [rendered Electron layout, actual OS notification action, real host human approval, live client write, exact-final-HEAD checks]
+  keyless_delegation:
+    task: T05
+    canonical_owner: tools/delegate_tool.py
+    codegraph_symbols: [_build_child_agent, delegate_task, ParentInferencePort, admit_parent_owned_inference]
+    impact: [tools/delegate_tool.py, agent/subagent_lifecycle.py, downstream/delegation/inference_port.py, tests/tools/test_parent_owned_delegation.py]
+    conflict_risk: critical
+    verdict: INACTIVE_PARENT_PORT_SEAM_SYNTHETIC_TESTS_GREEN_GATE_OPEN
+    source_ids: [87fe0a86a0, 093dc426d2, bb0cbffad6]
+    evidence_refs: [evidence/codegraph/T05-parent-inference-evidence.md, '_docs/2026-09-24_parent-inference-review_Codex.md']
+    unresolved: [production admission caller, controlled per-tool policy including inherited MCP, qualified T06 native isolation, live provider and real protocol, Codex Responses semantics, post-change CodeGraph receipt]
+  native_restricted_execution:
+    task: T06
+    canonical_owner: PENDING_GRAPH_TRACE
+    codegraph_symbols: []
+    impact: []
+    conflict_risk: critical
+    verdict: APPCONTAINER_CANDIDATE_READ_ONLY_NO_NATIVE_PROOF
+    source_ids: [76a194dbe6420863b7b72c14d173645b7464b083]
+    evidence_refs: [docs/control-mcp/RETIREMENT_SPEC.md]
+    unresolved: [Python Node Git positive probes, host-secret workspace parent-process network denial probes]
+  selective_upstream_adoption:
+    task: T01_T17_T18_T24
+    canonical_owner: PENDING_PER_FAMILY
+    codegraph_symbols: []
+    impact: []
+    conflict_risk: high
+    verdict: METADATA_ENUMERATED_SEMANTIC_REVIEW_PENDING
+    source_ids: [d337b736aa1e8ebecfab043842d13e4a2d2f48a3, b936546561888a54d5bf9cd7eae9629a824eb4f7]
+    evidence_refs: ['5663c45abe fixed-range metadata inventory', '4e1e02c70d metadata field correction', docs/windows/workstation-20260924/local-preflight.md]
+    unresolved: [all unreviewed semantic families, separate R1 graph, per-family equivalent behavior tests, security-critical adoption decisions]

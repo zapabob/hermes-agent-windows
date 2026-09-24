@@ -10,6 +10,7 @@ This module is the single source of truth for the dangerous command system:
 
 import contextlib
 import contextvars
+from dataclasses import dataclass, field
 import fnmatch
 import functools
 import hashlib
@@ -3013,16 +3014,19 @@ def resolve_gateway_approval(session_key: str, choice: str,
         queue = _gateway_queues.get(session_key)
         if not queue:
             return 0
+        # Strict control entries require a digest-bound human decision through
+        # resolve_control_consent(). Legacy FIFO/all/request-id paths must not
+        # remove or signal them, even if they happen to be first in the queue.
+        eligible = [entry for entry in queue if not isinstance(entry, _ControlApprovalEntry)]
         if request_id:
-            targets = [entry for entry in queue if entry.data.get("request_id") == request_id]
-            if not targets:
-                return 0
-            queue[:] = [entry for entry in queue if entry not in targets]
+            targets = [entry for entry in eligible if entry.data.get("request_id") == request_id]
         elif resolve_all:
-            targets = list(queue)
-            queue.clear()
+            targets = eligible
         else:
-            targets = [queue.pop(0)]
+            targets = eligible[:1]
+        if not targets:
+            return 0
+        queue[:] = [entry for entry in queue if entry not in targets]
         if not queue:
             _gateway_queues.pop(session_key, None)
 
@@ -3032,6 +3036,208 @@ def resolve_gateway_approval(session_key: str, choice: str,
             entry.reason = reason
         entry.event.set()
     return len(targets)
+
+
+# Strict control approvals remain in this module's existing authority/queue.
+# None of the functions below is a model-callable approval endpoint. A trusted
+# host human UI must authenticate and bind its session before calling resolve.
+@dataclass(frozen=True)
+class ControlApprovalBinding:
+    operation_id: str
+    intent_digest: str
+    subject: str
+    client_registration: str
+    resource: str
+    grant_revision: int
+    profile_id: str
+    workspace_id: str
+    expires_at: int
+    description: str
+
+    def __post_init__(self):
+        fields = (self.operation_id, self.subject, self.client_registration,
+                  self.profile_id, self.workspace_id)
+        if (any(type(v) is not str or not v or len(v) > 128 or any(ord(c) < 32 for c in v) for v in fields)
+                or type(self.resource) is not str or not self.resource
+                or len(self.resource) > 2048 or any(ord(c) < 33 for c in self.resource)
+                or type(self.grant_revision) is not int or self.grant_revision < 1
+                or type(self.intent_digest) is not str
+                or not re.fullmatch(r"[a-f0-9]{64}", self.intent_digest)
+                or type(self.expires_at) is not int or self.expires_at < 0
+                or type(self.description) is not str or not self.description.strip()
+                or len(self.description) > 6144):
+            raise ValueError("invalid_control_approval_binding")
+
+
+@dataclass(frozen=True)
+class ControlDecision:
+    request_id: str
+    binding: ControlApprovalBinding
+    choice: str
+    deadline: float
+
+
+class _ControlApprovalEntry(_ApprovalEntry):
+    __slots__ = ("binding", "deadline", "decision")
+
+    def __init__(self, binding, deadline):
+        super().__init__({
+            "command": "Hermes control operation " + binding.operation_id,
+            "description": binding.description,
+            "pattern_key": "control_once", "pattern_keys": ["control_once"],
+            "control": {"operation_id": binding.operation_id,
+                        "intent_digest": binding.intent_digest,
+                        "client_registration": binding.client_registration,
+                        "resource": binding.resource,
+                        "grant_revision": binding.grant_revision,
+                        "profile_id": binding.profile_id,
+                        "workspace_id": binding.workspace_id,
+                        "expires_at": deadline},
+            "allowed_choices": ["once", "deny"],
+        })
+        self.binding, self.deadline, self.decision = binding, deadline, None
+
+
+@dataclass(frozen=True)
+class ControlApprovalTicket:
+    request_id: str
+    session_key: str
+    _entry: _ControlApprovalEntry = field(repr=False, compare=False)
+
+
+_control_decisions: dict[str, ControlDecision] = {}
+
+
+def request_control_consent(binding: ControlApprovalBinding, *, session_key: str,
+                            timeout_seconds: int = 120, now: float | None = None) -> ControlApprovalTicket:
+    """Enqueue once-only intent without blocking or executing its operation.
+
+    The real host callback presents the immutable request. No smart, session,
+    permanent or YOLO policy is consulted. Missing presentation fails closed.
+    """
+    stamp = time.time() if now is None else now
+    if (type(binding) is not ControlApprovalBinding or type(timeout_seconds) is not int
+            or not 1 <= timeout_seconds <= 600 or stamp >= binding.expires_at):
+        raise ValueError("invalid_control_approval")
+    entry = _ControlApprovalEntry(binding, min(binding.expires_at, stamp + timeout_seconds))
+    with _lock:
+        cb = _gateway_notify_cbs.get(session_key)
+        if cb is None:
+            raise RuntimeError("control_human_surface_unavailable")
+        # Bound pending and issued state; expired decisions confer no authority.
+        for key, decision in tuple(_control_decisions.items()):
+            if decision.deadline <= stamp:
+                _control_decisions.pop(key, None)
+        if sum(len(q) for q in _gateway_queues.values()) + len(_control_decisions) >= 1024:
+            raise RuntimeError("control_approval_capacity")
+        _gateway_queues.setdefault(session_key, []).append(entry)
+    try:
+        cb(dict(entry.data))
+    except Exception:
+        with _lock:
+            queue = _gateway_queues.get(session_key, [])
+            if entry in queue:
+                queue.remove(entry)
+            if not queue:
+                _gateway_queues.pop(session_key, None)
+        entry.event.set()
+        raise RuntimeError("control_human_surface_unavailable") from None
+    return ControlApprovalTicket(entry.data["request_id"], session_key, entry)
+
+
+def cancel_control_consent(ticket: ControlApprovalTicket) -> bool:
+    """Trusted host abort of an unpresented/undispatched control ticket.
+
+    This creates no approvable decision and is never a model or MCP tool.
+    """
+    if type(ticket) is not ControlApprovalTicket:
+        return False
+    with _lock:
+        queue = _gateway_queues.get(ticket.session_key, [])
+        if ticket._entry not in queue:
+            return False
+        queue.remove(ticket._entry)
+        if not queue:
+            _gateway_queues.pop(ticket.session_key, None)
+        ticket._entry.event.set()
+        return True
+
+
+def resolve_control_consent(*, session_key: str, request_id: str, intent_digest: str,
+                            choice: str, now: float | None = None) -> bool:
+    """Trusted human surface ONLY; never export as an MCP/model tool.
+
+    Caller authentication is the host UI's responsibility. This owner matches
+    exact request/intent and permits only a one-use decision. A confirmation
+    string from a model, remote MCP token or legacy event is not that surface.
+    """
+    stamp = time.time() if now is None else now
+    if choice not in ("once", "deny"):
+        return False
+    with _lock:
+        queue = _gateway_queues.get(session_key, [])
+        for entry in queue:
+            if not isinstance(entry, _ControlApprovalEntry) or entry.data["request_id"] != request_id:
+                continue
+            if entry.deadline <= stamp or entry.binding.intent_digest != intent_digest:
+                return False
+            entry.decision = ControlDecision(request_id, entry.binding, choice, entry.deadline)
+            _control_decisions[request_id] = entry.decision
+            queue.remove(entry)
+            if not queue:
+                _gateway_queues.pop(session_key, None)
+            entry.result = choice
+            entry.event.set()
+            return True
+    return False
+
+
+def take_control_decision(ticket: ControlApprovalTicket, *, now: float | None = None) -> ControlDecision | None:
+    """Host execution reads its ticket; no event/HTTP acknowledgement is success."""
+    stamp = time.time() if now is None else now
+    if type(ticket) is not ControlApprovalTicket:
+        return None
+    entry = ticket._entry
+    with _lock:
+        if entry.decision is not None:
+            return entry.decision
+        if stamp >= entry.deadline or entry.event.is_set():
+            queue = _gateway_queues.get(ticket.session_key, [])
+            if entry in queue:
+                queue.remove(entry)
+            if not queue:
+                _gateway_queues.pop(ticket.session_key, None)
+            entry.decision = ControlDecision(ticket.request_id, entry.binding, "deny", entry.deadline)
+            _control_decisions[ticket.request_id] = entry.decision
+            return entry.decision
+    return None
+
+
+def consume_control_verdict(decision: ControlDecision, binding: ControlApprovalBinding,
+                            *, now: float | None = None) -> str | None:
+    """Consume a genuine, unexpired owner decision; None means no authority.
+
+    Identity is a same-process authority check, not an OS/cryptographic sandbox.
+    No serialised or copied decision is accepted. A denial is not approval but
+    does authorise releasing this still-unexecuted reservation.
+    """
+    stamp = time.time() if now is None else now
+    if type(decision) is not ControlDecision or type(binding) is not ControlApprovalBinding:
+        return None
+    with _lock:
+        actual = _control_decisions.get(decision.request_id)
+        if actual is not decision or decision.binding != binding:
+            return None
+        _control_decisions.pop(decision.request_id)
+        if stamp >= min(decision.deadline, binding.expires_at):
+            return None
+        return decision.choice if decision.choice in ("once", "deny") else None
+
+
+def consume_control_decision(decision: ControlDecision, binding: ControlApprovalBinding,
+                             *, now: float | None = None) -> bool:
+    """Boolean convenience for callers that only execute an approved intent."""
+    return consume_control_verdict(decision, binding, now=now) == "once"
 
 
 def list_gateway_approvals(session_key: str) -> list[dict]:

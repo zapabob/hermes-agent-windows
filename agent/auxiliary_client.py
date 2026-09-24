@@ -10077,6 +10077,15 @@ def _call_llm_impl(
     # another.
     if type(allow_fallback) is not bool:
         raise ValueError("allow_fallback must be a boolean")
+    try:
+        from downstream.delegation.inference_port import active_inference_port
+
+        if active_inference_port() is not None:
+            raise RuntimeError(
+                "Auxiliary model calls are disabled during parent-owned delegation."
+            )
+    except ImportError:
+        pass
     main_runtime = _normalize_main_runtime(main_runtime)
     resolved_provider, resolved_model, resolved_base_url, resolved_api_key, resolved_api_mode = _resolve_task_provider_model(
         task, provider, model, base_url, api_key,

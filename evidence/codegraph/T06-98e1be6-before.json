@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "task_id": "T06",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "98e1be6e94bab5cc0d70d4a827f826e3a6a020b2",
+  "source_fingerprint": "b6c9a9f53717acd4e26c2a31da4eeea0b6ef74226debafce6aa56bc8d425ab05",
+  "index_identity": "H:\\hermes-control-mcp-t06-native-20260924\\.codegraph",
+  "tool": {
+    "package": "@colbymchenry/codegraph",
+    "version": "1.6.0",
+    "invocation_kind": "CLI"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "queries": [
+    {
+      "query": "explore LocalEnvironment ProcessRegistry owned Windows process creation cleanup",
+      "result_ref": "evidence/codegraph/T06-98e1be6-source-map.md#local-execution-owner-and-impact"
+    },
+    {
+      "query": "impact LocalEnvironment",
+      "result_ref": "evidence/codegraph/T06-98e1be6-source-map.md#local-execution-owner-and-impact"
+    },
+    {
+      "query": "query ProcessRegistry",
+      "result_ref": "evidence/codegraph/T06-98e1be6-source-map.md#local-execution-owner-and-impact"
+    }
+  ],
+  "canonical_owners": [
+    "tools.environments.local.LocalEnvironment",
+    "tools.process_registry.ProcessRegistry"
+  ],
+  "impact_paths": [
+    "tools/environments/local.py",
+    "tools/process_registry.py",
+    "tests/tools/test_windows_native_support.py",
+    "tests/tools/test_local_env_windows_msys.py",
+    "tests/tools/test_local_interrupt_cleanup.py",
+    "tests/tools/test_env_passthrough.py",
+    "tests/tools/test_local_env_blocklist.py",
+    "tests/tools/test_local_background_child_hang.py"
+  ],
+  "unresolved_edges": [
+    "Terminal dispatch to foreground LocalEnvironment and background ProcessRegistry launch/cancel/cleanup was not established by this bounded graph query.",
+    "The broad explore query matched unrelated watchdog-go symbols; exact local execution ownership requires direct source inspection.",
+    "Windows AppContainer/lowbox access checks, token restrictions, ACLs, network denial, process handles, descendants, reparse paths, ADS, Job Objects, and breakaway are runtime OS behavior, not CodeGraph evidence.",
+    "Existing Git Bash/MSYS compatibility and Docker fail-closed behavior require regression checks."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [
+    "tests/windows/test_delegated_execution_boundary.py",
+    "tests/tools/test_delegated_native_tools.py",
+    "affected LocalEnvironment and ProcessRegistry regression suites"
+  ],
+  "evidence_refs": [
+    "evidence/codegraph/T06-98e1be6-source-map.md",
+    "master-plan ZIP SHA-256 7870af3fa739d541c19b0374f4ac6496e0b561ebf85848f21b5be9a0ad95b738",
+    "CodeGraph 1.6.0 CLI init/status/explore/impact/query outputs observed in task execution"
+  ],
+  "phase": "before"
+}

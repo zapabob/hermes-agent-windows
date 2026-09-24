@@ -1,0 +1,210 @@
+{
+  "phase": "before",
+  "source_sha": "290e5812c6fa0a28306de6b67ce0d5a629284213",
+  "source_fingerprint": "76a4575a2097115dc839ce1a03b0f726fe95b68eaea3b3869ba3111bbfce9b93",
+  "index_identity": "H:\\hermes-control-mcp-t10-admission-20260924\\.codegraph",
+  "status": {
+    "initialized": true,
+    "version": "1.6.0",
+    "projectPath": "H:\\hermes-control-mcp-t10-admission-20260924",
+    "indexPath": "H:\\hermes-control-mcp-t10-admission-20260924\\.codegraph",
+    "lastIndexed": "2026-09-24T07:56:15.764Z",
+    "fileCount": 8915,
+    "nodeCount": 191014,
+    "edgeCount": 611616,
+    "dbSizeBytes": 635977728,
+    "walSizeBytes": 0,
+    "backend": "node-sqlite",
+    "journalMode": "wal",
+    "nodesByKind": {
+      "class": 13013,
+      "component": 64,
+      "constant": 5744,
+      "enum": 8,
+      "enum_member": 25,
+      "field": 10,
+      "file": 8581,
+      "function": 60415,
+      "import": 41980,
+      "interface": 2174,
+      "method": 41896,
+      "namespace": 1,
+      "property": 1470,
+      "route": 397,
+      "struct": 33,
+      "type_alias": 883,
+      "variable": 14320
+    },
+    "languages": [
+      "c",
+      "cpp",
+      "csharp",
+      "go",
+      "javascript",
+      "liquid",
+      "nix",
+      "php",
+      "python",
+      "rust",
+      "tsx",
+      "typescript",
+      "yaml"
+    ],
+    "pendingChanges": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "worktreeMismatch": null,
+    "index": {
+      "builtWithVersion": "1.6.0",
+      "builtWithExtractionVersion": 25,
+      "currentExtractionVersion": 25,
+      "reindexRecommended": false,
+      "state": "complete",
+      "pendingRefs": 0
+    }
+  },
+  "queries": {
+    "callers_admit_resources": {
+      "symbol": "admit_resources",
+      "callers": [
+        {
+          "name": "reserve",
+          "kind": "method",
+          "filePath": "downstream/delegation/resources.py",
+          "startLine": 642
+        },
+        {
+          "name": "test_stale_gpu_denies_local_compute_but_not_remote_read",
+          "kind": "function",
+          "filePath": "tests/downstream/test_resource_admission.py",
+          "startLine": 140
+        },
+        {
+          "name": "test_missing_host_telemetry_fails_closed_for_local_compute",
+          "kind": "function",
+          "filePath": "tests/downstream/test_resource_admission.py",
+          "startLine": 168
+        },
+        {
+          "name": "test_pressure_hysteresis_requires_resume_threshold_before_reopening",
+          "kind": "function",
+          "filePath": "tests/downstream/test_resource_admission.py",
+          "startLine": 501
+        },
+        {
+          "name": "test_commit_headroom_is_enforced_even_when_ram_is_available",
+          "kind": "function",
+          "filePath": "tests/downstream/test_resource_admission.py",
+          "startLine": 530
+        },
+        {
+          "name": "test_ram_hysteresis_stays_latched_until_headroom_clears_resume_margin",
+          "kind": "function",
+          "filePath": "tests/downstream/test_resource_admission.py",
+          "startLine": 550
+        },
+        {
+          "name": "test_unavailable_local_residency_is_not_coerced_to_zero_or_admitted",
+          "kind": "function",
+          "filePath": "tests/downstream/test_resource_admission.py",
+          "startLine": 650
+        },
+        {
+          "name": "test_resource_admission.py",
+          "kind": "file",
+          "filePath": "tests/downstream/test_resource_admission.py",
+          "startLine": 1
+        }
+      ]
+    },
+    "callers_eligible_routes": {
+      "symbol": "eligible_routes",
+      "callers": [
+        {
+          "name": "test_snapshot_max_age_applies_to_entitlement_evidence",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 239
+        },
+        {
+          "name": "test_subscription_route_requires_current_exact_entitlement_to_be_eligible",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 411
+        },
+        {
+          "name": "test_eligible_routes_require_current_scope_price_and_tool_support",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 456
+        },
+        {
+          "name": "test_all_free_routes_exhausted_by_missing_tool_support_has_no_paid_fallback",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 501
+        }
+      ]
+    },
+    "callers_build_free_route_snapshot": {
+      "symbol": "build_free_route_snapshot",
+      "callers": [
+        {
+          "name": "_refresh",
+          "kind": "method",
+          "filePath": "downstream/delegation/free_routes.py",
+          "startLine": 706
+        }
+      ]
+    },
+    "callers_SubagentLifecycleService": {
+      "symbol": "SubagentLifecycleService",
+      "callers": [
+        {
+          "name": "test_subagent_lifecycle.py",
+          "kind": "file",
+          "filePath": "tests/agent/test_subagent_lifecycle.py",
+          "startLine": 1
+        },
+        {
+          "name": "subagent_lifecycle",
+          "kind": "method",
+          "filePath": "hermes_cli/plugins.py",
+          "startLine": 1678
+        },
+        {
+          "name": "lifecycle",
+          "kind": "function",
+          "filePath": "tests/agent/test_subagent_lifecycle.py",
+          "startLine": 43
+        },
+        {
+          "name": "test_cancel_is_cooperative_and_forged_handle_is_unknown",
+          "kind": "function",
+          "filePath": "tests/agent/test_subagent_lifecycle.py",
+          "startLine": 76
+        },
+        {
+          "name": "test_public_lifecycle_runs_host_aggregation",
+          "kind": "function",
+          "filePath": "tests/agent/test_subagent_lifecycle.py",
+          "startLine": 108
+        },
+        {
+          "name": "test_sequential_tool_interrupt_hides_lifecycle_cancel_detail",
+          "kind": "function",
+          "filePath": "tests/run_agent/test_sequential_tool_timeout.py",
+          "startLine": 218
+        }
+      ]
+    }
+  },
+  "direct_source_checks": [
+    "downstream/delegation/admission.py absent at frozen base; tests/delegation/test_round_robin.py and test_nested_budget.py absent.",
+    "ResourceReservationBook is defined in downstream/delegation/resources.py and called only by its tests; no production admission owner composes it.",
+    "eligible_routes is called only by catalogue tests at frozen base; build_free_route_snapshot is called only by FreeRouteCatalogueOwner._refresh.",
+    "SubagentLifecycleService is constructed by hermes_cli/plugins.py and owns existing execution scheduling; T10 changes must not add a second scheduler or wire admission into it."
+  ]
+}

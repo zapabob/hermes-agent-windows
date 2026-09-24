@@ -2973,6 +2973,14 @@ def _resolve_command_cwd(
     return recorded or default_cwd
 
 
+def _security_gate_is_current(command: str, cwd: str, gate: Any) -> bool:
+    if not getattr(gate, "enforced", False):
+        return True
+    from downstream.security.execution_gate import revalidate_command
+
+    return revalidate_command(command, cwd, gate.candidate_snapshot)
+
+
 def terminal_tool(
     command: str,
     background: bool = False,
@@ -3100,14 +3108,32 @@ def terminal_tool(
                     cwd, env_type, remapped,
                 )
             cwd = remapped
+        from tools.approval import get_current_session_key
+
+        session_key = get_current_session_key(default="") or (task_id or "")
+        security_gate = None
         if env_type == "local":
             from downstream.security.execution_gate import preflight_command
 
-            gate = preflight_command(command, cwd)
+            preflight_cwd = _resolve_command_cwd(
+                workdir=workdir,
+                default_cwd=cwd,
+                session_key=session_key,
+                env_type=env_type,
+            )
+            gate = preflight_command(command, preflight_cwd)
+            security_gate = gate
             if not gate["allowed"]:
                 blocked = gate["blocked"][0]
+                candidate_state = blocked.get("file_verdict", blocked.get("verdict"))
+                if candidate_state == "MALICIOUS":
+                    candidate_kind = "malicious"
+                elif candidate_state == "SUSPICIOUS":
+                    candidate_kind = "suspicious"
+                else:
+                    candidate_kind = "unverified"
                 return tool_error(
-                    "Security Center blocked a malicious execution candidate: "
+                    f"Security Center blocked a {candidate_kind} execution candidate: "
                     f"{blocked['path']} ({blocked['verdict']}, score {blocked['score']})."
                 )
             if gate["warnings"]:
@@ -3249,14 +3275,6 @@ def terminal_tool(
                     )
 
         assert env is not None  # all creation failure paths return above
-
-        # The session key that drives cwd records: get_current_session_key()'s
-        # contextvar doesn't cross tool-worker threads, so fall back to the raw
-        # task_id (which IS the session_key for the top-level agent) — a
-        # stable, thread-safe anchor.
-        from tools.approval import get_current_session_key
-
-        session_key = get_current_session_key(default="") or (task_id or "")
 
         # Hard-block: gateway lifecycle commands (systemctl/launchctl/hermes
         # restart|stop|uninstall targeting hermes-gateway) must never run inside the
@@ -3500,6 +3518,10 @@ def terminal_tool(
                 session_key=session_key,
                 env_type=env_type,
             )
+            if not _security_gate_is_current(command, effective_cwd, security_gate):
+                return tool_error(
+                    "Security Center refused execution because a candidate changed after preflight."
+                )
             try:
                 if env_type == "local":
                     proc_session = process_registry.spawn_local(
@@ -3790,6 +3812,10 @@ def terminal_tool(
                         # reads, RPC reads) intentionally stay unbounded.
                         "bounded_capture": True,
                     }
+                    if not _security_gate_is_current(command, command_cwd, security_gate):
+                        return tool_error(
+                            "Security Center refused execution because a candidate changed after preflight."
+                        )
                     result = env.execute(command, **execute_kwargs)
                 except Exception as e:
                     error_str = str(e).lower()

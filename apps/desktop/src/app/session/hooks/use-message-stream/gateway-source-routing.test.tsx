@@ -1,11 +1,13 @@
 import { act, cleanup, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import type { GatewayEventPayload } from '@/lib/chat-messages/types'
 import { $clarifyRequests, clearClarifyRequest } from '@/store/clarify'
 import { $gateway, gatewayScope, setPrimaryGateway } from '@/store/gateway'
 import { $mcpSetupRequests } from '@/store/mcp-setup'
+import * as nativeNotifications from '@/store/native-notifications'
 import { clearAllPrompts, sessionApprovalRequest, sessionSecretRequest, sessionSudoRequest } from '@/store/prompts'
-import type { RpcEvent } from '@/types/hermes'
+import type { RpcEvent, SessionResumeResponse } from '@/types/hermes'
 
 import { type MessageStreamHarness, renderMessageStream } from './test-harness'
 
@@ -103,6 +105,44 @@ describe('gateway privileged reply source routing', () => {
         session_id: SID
       })
     )
+    expect(activeRequest).not.toHaveBeenCalled()
+  })
+
+  it('retains the full strict control binding from the source approval event', async () => {
+    const resource = `https://mcp.example.test/operations/${'source-bound-resource/'.repeat(24)}run`
+
+    const control = {
+      operation_id: 'op-source',
+      intent_digest: 'b'.repeat(64),
+      resource,
+      grant_revision: 11
+    } satisfies NonNullable<GatewayEventPayload['control']>
+
+    const replayedApproval = { control } satisfies NonNullable<SessionResumeResponse['pending_approval']>
+    const dispatchNotification = vi.spyOn(nativeNotifications, 'dispatchNativeNotification')
+
+    sourceEvent('approval.request', {
+      command: 'Hermes control operation op-source',
+      control,
+      description: 'Start approved run',
+      request_id: 'approval-control-source',
+      choices: ['once', 'deny']
+    })
+
+    await waitFor(() =>
+      expect(sessionApprovalRequest(SID).get()?.control).toEqual({
+        operationId: 'op-source',
+        intentDigest: 'b'.repeat(64),
+        resource,
+        grantRevision: 11
+      })
+    )
+    expect(replayedApproval.control).toEqual(control)
+    await waitFor(() => expect(sourceRequest).toHaveBeenCalledWith('approval.received', {
+      request_id: 'approval-control-source', session_id: SID
+    }))
+    const approvalNotification = dispatchNotification.mock.calls.find(([input]) => input.kind === 'approval')?.[0]
+    expect(approvalNotification?.actions?.map(action => action.id)).toEqual(['reject'])
     expect(activeRequest).not.toHaveBeenCalled()
   })
 

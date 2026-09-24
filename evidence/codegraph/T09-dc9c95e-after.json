@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "task_id": "T09",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "dc9c95e62cd5af0adea7e660776499be9b03addd",
+  "source_fingerprint": "4e68b9b95e5c93fe8adff3d4853469c55246aa48c3de183bfd96552bec683e52",
+  "index_identity": "H:\\hermes-control-mcp-t09-catalogue-20260924\\.codegraph",
+  "tool": {
+    "package": "@colbymchenry/codegraph",
+    "version": "1.6.0",
+    "invocation_kind": "CLI"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "queries": [
+    {
+      "query": "callers _free_route_revision_payload -p <T09-worktree> -j",
+      "result_ref": "evidence/codegraph/results/T09-dc9c95e-after-results.json#/queries/callers_free_route_revision_payload"
+    },
+    {
+      "query": "callers _matching_subscription_entitlement -p <T09-worktree> -j",
+      "result_ref": "evidence/codegraph/results/T09-dc9c95e-after-results.json#/queries/callers_matching_subscription_entitlement"
+    },
+    {
+      "query": "impact build_free_route_snapshot -d 2 -p <T09-worktree> -j",
+      "result_ref": "evidence/codegraph/results/T09-dc9c95e-after-results.json#/queries/impact_build_free_route_snapshot_depth2"
+    },
+    {
+      "query": "callers FreeRouteCatalogueOwner.refresh_if_due -p <T09-worktree> -j",
+      "result_ref": "evidence/codegraph/results/T09-dc9c95e-after-results.json#/queries/callers_refresh_if_due"
+    },
+    {
+      "query": "affected downstream/delegation/free_routes.py tests/agent/test_free_route_catalogue.py -p <T09-worktree> -j",
+      "result_ref": "evidence/codegraph/results/T09-dc9c95e-after-results.json#/queries/affected_free_routes"
+    }
+  ],
+  "canonical_owners": [
+    "downstream.delegation.free_routes._free_route_revision_payload",
+    "downstream.delegation.free_routes._matching_subscription_entitlement",
+    "downstream.delegation.free_routes.classify_cost",
+    "downstream.delegation.free_routes.build_free_route_snapshot",
+    "downstream.delegation.free_routes.eligible_routes"
+  ],
+  "impact_paths": [
+    "FreeRoute price Decimal values and price/catalogue/entitlement timestamps -> stable revision payload -> SHA-256 revision",
+    "billing mode plus exact-scope, current, active, included, unexpired account/model entitlement -> SUBSCRIPTION_INCLUDED classification -> explicit policy eligibility",
+    "CodeGraph direct callers connect the new subscription validator to classify_cost and build_free_route_snapshot; affected query still misses tests, which were run directly"
+  ],
+  "unresolved_edges": [
+    "No production lifecycle caller invokes refresh_if_due; T09 12-hour refresh remains inactive until an approved host owner wires it.",
+    "The affected-tests query returns no files despite direct test callers; direct selected test execution covers this static-analysis gap.",
+    "The host-approved provider fetch adapter and persistent offline snapshot remain outside this correction; cold restart is UNKNOWN until explicit refresh."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [
+    "tests/agent/test_free_route_catalogue.py: 20 passed",
+    "tests/agent/test_usage_pricing.py: 46 passed",
+    "tests/hermes_cli/test_model_catalog.py: 19 passed",
+    "tests/hermes_cli/test_model_catalog_adapter.py: 12 passed",
+    "Ruff 0.15.10 passed; ty 0.0.21 passed; git diff --check passed."
+  ],
+  "evidence_refs": [
+    "evidence/codegraph/results/T09-dc9c95e-after-results.json",
+    "evidence/codegraph/T09-dc9c95e-before.json",
+    "_docs/2026-09-24_T09_free-route-catalogue_codex.md"
+  ],
+  "counterpart_evidence_refs": [
+    "evidence/codegraph/T09-dc9c95e-before.json",
+    "evidence/codegraph/results/T09-dc9c95e-before-results.json"
+  ],
+  "phase": "after"
+}

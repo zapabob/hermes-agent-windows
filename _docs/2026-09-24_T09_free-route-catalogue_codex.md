@@ -1,0 +1,43 @@
+# T09 free-route catalogue classification
+
+## Snapshot and scope
+
+Implemented in isolated worktree `H:\hermes-control-mcp-t09-catalogue-20260924`, branch `codex/t09-catalogue-h-20260924`, from frozen predecessor `96c16a6a745a0fcdfa52305bcc687fc0c98860ea`. The implementation adds `downstream/delegation/free_routes.py` and its focused tests. Existing `agent/usage_pricing.py` remains the owner of `PricingEntry` and `CostSource`; no provider catalogue, price store, or credential store was added.
+
+The T09 result is partial. It provides an explicit classification/eligibility API and a single-flight, 12-hour-due refresh owner with an in-memory last-good snapshot. No host lifecycle calls the refresh API. Snapshots are not persisted, so a cold restart has no last-good value and returns UNKNOWN until a caller explicitly refreshes. There is no approved provider adapter or live provider request in this change.
+
+## Change
+
+`classify_cost` returns UNKNOWN for missing, stale, unscoped, or unproven pricing evidence; FREE only for an exact current scoped record with zero billable rates; and SUBSCRIPTION for separately represented subscription access. It reuses the established `PricingEntry` and `CostSource` types, checks context-tiered billable rates, requires provenance/freshness, and does not infer free access from model-name suffixes. Route snapshots carry immutable revision, provider/model scope, provenance, tool support, and observation age. Eligibility requires an exact scope, fresh current evidence, requested tool support, and explicit opt-in for subscription routes. UNKNOWN, paid, local, unavailable, and stale entries do not become free routes, and no paid fallback is selected.
+
+`FreeRouteCatalogueOwner` is the only owner of the in-memory projection. Reads are cache-only and do not create files or perform network access. Explicit due/manual refresh is single-flight; ETag 304 leaves the embedded evidence timestamps unchanged; failed fetches retain last good state; HTTP 429 honors a capped Retry-After (maximum seven days), with bounded fallback backoff. Concurrent waiters are capped at 30 seconds. Fetch exception details are omitted from logs. The adapter contract requires a timeout no longer than 30 seconds and bounded response bytes/parsing, but this patch supplies no adapter to enforce those limits.
+
+## TDD and verification
+
+The behavioral RED against predecessor `96c16a6a745a0fcdfa52305bcc687fc0c98860ea` was `AssertionError: T09 pricing authority must expose classify_cost` with `getattr(agent.usage_pricing, 'classify_cost', None) == None`; this was an assertion failure, not an import failure. The implementation then placed the route-only API in `downstream/delegation/free_routes.py`, reusing existing pricing/entitlement authority rather than expanding `agent/usage_pricing.py`.
+
+The final affected regression run used the repository test runner with pytest temporary files under this H: worktree. Result: 95 passed, 0 failed across `tests/agent/test_free_route_catalogue.py` (18), `tests/agent/test_usage_pricing.py` (46), `tests/hermes_cli/test_model_catalog.py` (19), and `tests/hermes_cli/test_model_catalog_adapter.py` (12). Ruff 0.15.10 and ty 0.0.21 passed. T09 focused assertions cover unknown versus free/subscription, pricing scope/provenance/age, tiered prices, tool support, no paid fallback, 12-hour single-flight refresh, 304 evidence age, extreme/invalid 429 Retry-After, bounded waits, safe logs, last-good behavior, and cold-start cache-only UNKNOWN.
+
+CodeGraph used Node 22.23.2 and pinned `@colbymchenry/codegraph` 1.6.0. The detached before index is bound to the clean base SHA and selected-file fingerprint in `evidence/codegraph/T09-96c16a6-before.json`; after queries and clean status are recorded in the corresponding after receipt. The before get_catalog depth-2 impact traversed 19 nodes / 18 edges. After callers identify the focused tests, but no production caller of `FreeRouteCatalogueOwner.refresh_if_due`; the affected-tests query returned no tests, so direct test execution remains the check for that graph gap. The all-tests affected query was overbroad (7,105 dependencies) and was not used to expand the test scope.
+
+Selected source fingerprint is SHA-256 over UTF-8 lines sorted by repository-relative path, each line `<path>=<file SHA-256>`, followed by LF. Before includes `agent/usage_pricing.py`, `hermes_cli/model_catalog.py`, and the three selected pricing/catalogue tests. After includes those same files plus `downstream/delegation/free_routes.py` and `tests/agent/test_free_route_catalogue.py`. The after receipt binds the tested dirty source to predecessor SHA plus that content fingerprint. The commit SHA is recorded in the closeout message; receipts are not amended after commit, per the campaign protocol.
+
+## Remaining acceptance gaps
+
+The host's 12-hour lifecycle invocation remains unwired; there is no persistent offline snapshot and a cold process starts UNKNOWN; no provider fetch adapter enforces the documented timeout/response limits; and no live provider or paid-route probe was performed. These gaps mean this is not full T09 acceptance. The explicit API must be wired by the lifecycle owner before the 12-hour refresh becomes active. No configuration/endpoint changes, credential storage, network loop, automatic fallback, MCP host wiring, or live paid probes were added.
+
+## Evidence
+
+Before and after CodeGraph receipts: `evidence/codegraph/T09-96c16a6-before.json` and `evidence/codegraph/T09-96c16a6-after.json`. Sanitized query/status outputs: `evidence/codegraph/results/T09-96c16a6-before-results.json` and `evidence/codegraph/results/T09-96c16a6-after-results.json`. Local `.codegraph` indexes and test temporary files remain untracked/ignored.
+
+## Review correction: revision evidence and subscription eligibility
+
+The independent review of predecessor commit `dc9c95e62cd5af0adea7e660776499be9b03addd` found two behavioral gaps. The revision hash omitted evidence timestamps and numeric prices, so materially different evidence could keep the same revision. A subscription billing label also produced `SUBSCRIPTION_INCLUDED` without a validated entitlement.
+
+The correction adds canonical price values and the price-fetch, catalogue-observation, entitlement-observation, and expiration timestamps to the revision payload. Decimal values are normalized from their exact sign/digit/exponent tuple so current decimal context precision cannot collapse distinct high-precision values; mathematically equivalent trailing-zero forms retain the same revision. Subscription classification now requires a host-supplied entitlement with exact provider/account/model scope, `kind=subscription_included`, `included=True`, `active=True`, a current observation, and a future expiration. Eligibility rechecks entitlement observation age and expiration at use time.
+
+The correction RED was 17 passed and 3 failed: no-entitlement subscription classified as included, a `0.01` to `0.02` price update retained its prior revision, and a subscription route was returned as eligible without entitlement. GREEN was 20 focused tests and 97 affected tests across the four selected files, with Ruff 0.15.10, ty 0.0.21, and `git diff --check` passing. The new revision test also checks exact high-precision distinction and canonical equivalence for trailing-zero forms.
+
+The correction before receipt is `evidence/codegraph/T09-dc9c95e-before.json`. It reuses the prior after-query output at the identical T09 source/test fingerprint because the predecessor commit itself did not change those indexed files; this binding is made explicit in its results file. The pinned Node 22.23.2 / CodeGraph 1.6.0 correction after-sync modified two files (97 nodes). Final status is 8,909 files, 190,729 nodes, 610,693 edges, pending 0/0/0, pending refs 0, complete, and no worktree mismatch. The after queries show one caller for the revision payload, two callers for the subscription validator, five test-only refresh callers, and zero results from the static affected-tests query. The direct tests passed; the graph gap remains documented. Correction after evidence is `evidence/codegraph/T09-dc9c95e-after.json` with query results at `evidence/codegraph/results/T09-dc9c95e-after-results.json`.
+
+The correction source fingerprint is SHA-256 over sorted repository-relative path and per-file SHA-256 lines, UTF-8 with LF terminators. It is `4e68b9b95e5c93fe8adff3d4853469c55246aa48c3de183bfd96552bec683e52` for the tested correction tree, bound to predecessor SHA `dc9c95e62cd5af0adea7e660776499be9b03addd`. The correction commit SHA is included in the closeout message; receipts are not amended after commit.

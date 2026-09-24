@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "task_id": "T02",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "dbca4d19cf3c91fb39f7e123eb0829e5118ab088",
+  "source_fingerprint": "bf079bb3269d5d594824fb768982a4b17b4677601bda69cd29d65835bcf29711",
+  "index_identity": "isolated T02 worktree .codegraph at dbca4d19cf3c91fb39f7e123eb0829e5118ab088",
+  "tool": {
+    "package": "@colbymchenry/codegraph",
+    "version": "1.6.0",
+    "invocation_kind": "CLI"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "queries": [
+    {
+      "query": "query -l 60 --json implementation_router",
+      "result_ref": "evidence/codegraph/T02-dbca4d19-before-summary.md#q1"
+    },
+    {
+      "query": "query -l 30 --json hermes_start_engineering_run",
+      "result_ref": "evidence/codegraph/T02-dbca4d19-before-summary.md#q2"
+    },
+    {
+      "query": "impact -d 4 --json ImplementationRouter",
+      "result_ref": "evidence/codegraph/T02-dbca4d19-before-summary.md#q3"
+    },
+    {
+      "query": "impact -d 4 --json NativeEngineeringHost",
+      "result_ref": "evidence/codegraph/T02-dbca4d19-before-summary.md#q4"
+    },
+    {
+      "query": "query -l 25 --json plugin_llm",
+      "result_ref": "evidence/codegraph/T02-dbca4d19-before-summary.md#q5"
+    },
+    {
+      "query": "query -l 25 --json auxiliary_client",
+      "result_ref": "evidence/codegraph/T02-dbca4d19-before-summary.md#q6"
+    },
+    {
+      "query": "query -l 25 --json credential_free",
+      "result_ref": "evidence/codegraph/T02-dbca4d19-before-summary.md#q7"
+    }
+  ],
+  "canonical_owners": [
+    "downstream/control_mcp/transport.py: MCP tool registration",
+    "downstream/control_mcp/service.py: capability projection and retired-operation denial",
+    "plugins/implementation_router/__init__.py: legacy plugin registration",
+    "plugins/implementation_router/entrypoint.py: legacy workflow",
+    "plugins/implementation_router/host.py: legacy execution/evidence host",
+    "agent/plugin_llm.py and agent/auxiliary_client.py: shared provider/inference helpers",
+    "tools/environments/credential_free.py and tools/terminal_tool.py: shared environment helpers"
+  ],
+  "impact_paths": [
+    "ImplementationRouter -> plugin registration/control -> legacy workflow -> native host -> verification/evidence",
+    "ImplementationRouter -> legacy router tests, diagnostics tests, native Docker E2E, MCP legacy evidence tests",
+    "NativeEngineeringHost -> plugin workflow/control -> diagnostics, reasoning, E2E, and evidence tests",
+    "credential_free.py -> docker_isolation.py, legacy router security, and credential-free environment tests"
+  ],
+  "unresolved_edges": [
+    "Dynamic Hermes plugin auto-discovery is not proven by static CodeGraph; old plugin registration remains intentionally outside the new MCP tool list until replacement parity.",
+    "Real Codex Desktop and ChatGPT client authentication/read/write behaviour is not part of this no-resurrection baseline."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [
+    "uv run --frozen --extra dev python -m pytest tests/control_mcp/test_mcp_protocol.py::test_retired_engineering_tool_is_absent_even_with_legacy_coordinator -q — 1 passed on the unmodified T02 base"
+  ],
+  "evidence_refs": [
+    "evidence/codegraph/T02-dbca4d19-before-summary.md",
+    "docs/control-mcp/RETIREMENT_SPEC.md",
+    "tests/control_mcp/test_mcp_protocol.py::test_retired_engineering_tool_is_absent_even_with_legacy_coordinator"
+  ],
+  "phase": "before"
+}

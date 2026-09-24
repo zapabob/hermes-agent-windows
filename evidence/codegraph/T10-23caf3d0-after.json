@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "task_id": "T10",
+  "repository": "zapabob/hermes-agent-windows",
+  "base_sha": "290e5812c6fa0a28306de6b67ce0d5a629284213",
+  "product_sha": "3a78f02e766bb8ab33ccb8eb1e226142b9303678",
+  "head_sha": "23caf3d0a98d1922b3ee4ef25e537e5561826e1d",
+  "index_identity": "H:\\hermes-control-mcp-t10-admission-20260924\\.codegraph",
+  "tool": {
+    "version": "1.6.0",
+    "package": "@colbymchenry/codegraph",
+    "node_version": "22.23.2",
+    "backend": "node-sqlite",
+    "journal_mode": "wal"
+  },
+  "invocations": {
+    "sync": "codegraph sync .",
+    "status": "codegraph status --json .",
+    "query": "codegraph query test_unknown_tree_state_is_shared_by_book_owners --json",
+    "temp_root": "H:\\",
+    "npm_config_cache": "H:\\t15-npm-cache"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "last_indexed": "2026-09-24T09:17:29.929Z",
+  "file_count": 8918,
+  "node_count": 191138,
+  "edge_count": 612124,
+  "db_size_bytes": 641200128,
+  "wal_size_bytes": 0,
+  "pending_changes": {
+    "added": 0,
+    "modified": 0,
+    "removed": 0
+  },
+  "worktree_mismatch": null,
+  "index": {
+    "built_with_version": "1.6.0",
+    "built_with_extraction_version": 25,
+    "current_extraction_version": 25,
+    "reindex_recommended": false,
+    "state": "complete",
+    "pending_refs": 0
+  },
+  "query_result_ref": "evidence/codegraph/results/T10-23caf3d0-after-results.json"
+}

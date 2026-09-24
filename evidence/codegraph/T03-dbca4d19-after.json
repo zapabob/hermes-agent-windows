@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "task_id": "T03",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "dbca4d19cf3c91fb39f7e123eb0829e5118ab088",
+  "index_identity": "task-worktree/codex-control-mcp-t03-host-20260924",
+  "tool": {
+    "package": "@colbymchenry/codegraph",
+    "version": "1.6.0",
+    "invocation_kind": "CLI"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "canonical_owners": [
+    "downstream/control_mcp/transport.py:mount_control_mcp",
+    "hermes_cli/web_server.py:_lifespan",
+    "hermes_cli/web_server.py:_token_auth_seam",
+    "downstream/control_mcp/observations.py:HermesObservations"
+  ],
+  "impact_paths": [
+    "downstream/control_mcp/transport.py",
+    "hermes_cli/web_server.py",
+    "downstream/control_mcp/observations.py",
+    "downstream/control_mcp/service.py",
+    "downstream/control_mcp/http_boundary.py",
+    "tests/control_mcp/test_host_mount.py",
+    "tests/control_mcp/test_mcp_protocol.py",
+    "tests/e2e/test_control_mcp_host.py"
+  ],
+  "unresolved_edges": [
+    "CodeGraph does not resolve the E2E test's importlib module loading or app.router.lifespan_context dispatch; the real SDK E2E supplies direct runtime evidence.",
+    "The production host remains opt-in and has no operator-approved issuer/grants/startup configuration; actual ChatGPT/Codex Desktop authentication remains unverified.",
+    "No real account approval or write operation is exercised by this read-only host task."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [
+    "tests/control_mcp/test_host_mount.py::test_existing_parent_lifespan_enters_control_manager",
+    "tests/e2e/test_control_mcp_host.py::test_real_hermes_parent_serves_two_scoped_clients_without_read_side_effects"
+  ],
+  "evidence_refs": [
+    "_docs/2026-09-24_control-mcp-existing-host-e2e_Codex.md"
+  ],
+  "phase": "after",
+  "source_fingerprint": "396c3d2b805352184b958f6c8567b73f2c5cf04accca137a68d4b903b6d2a41e",
+  "queries": [
+    {
+      "query": "sync .; status .",
+      "result_ref": "2 changed files (1 added, 1 modified); 8,901 files, 190,415 nodes, 609,338 edges; up to date"
+    },
+    {
+      "query": "query mount_control_mcp -p . -j",
+      "result_ref": "downstream/control_mcp/transport.py:109"
+    },
+    {
+      "query": "impact mount_control_mcp -p task -d 2 -j",
+      "result_ref": "3 nodes / 2 edges; existing static callers in tests/control_mcp/test_mcp_protocol.py; dynamic E2E not resolved"
+    },
+    {
+      "query": "query _lifespan -p . -j",
+      "result_ref": "hermes_cli/web_server.py:442; transport ControlMCPHost/control_mcp_lifespan"
+    },
+    {
+      "query": "impact _lifespan -p task -d 2 -j",
+      "result_ref": "53 nodes / 52 edges; includes tests/control_mcp/test_host_mount.py"
+    },
+    {
+      "query": "query _token_auth_seam -p . -j",
+      "result_ref": "hermes_cli/web_server.py:1092"
+    }
+  ]
+}

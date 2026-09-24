@@ -1,0 +1,46 @@
+# T05 parent-owned inference evidence
+
+## Scope
+
+This slice adds a host-admitted keyless child-construction seam, a child-scoped parent inference port, and dispatch from the normal Hermes conversation loop. The ordinary delegation route keeps its existing credential-inheritance and provider-client behavior when no inference port is admitted. Controlled child and grandchild construction does not store a direct reference to the credential-bearing parent.
+
+## RED and GREEN
+
+The pre-fix behavioral RED was observed in `test_host_admitted_child_constructor_receives_port_without_credentials`: the admitted child constructor received the synthetic parent API key. The original transient pytest output was not retained. The current regression asserts that the key and credential pool are absent, the inference port is present, the child graph has no parent/client/key reference, and the pool resolver is not called.
+
+GREEN in this worktree:
+
+- `.\.venv\Scripts\python.exe -m pytest tests/tools/test_parent_owned_delegation.py -q --tb=short` — 9 passed in 13.12s. This covers controlled constructor/init tripwires, child and grandchild graph checks, chat-completions and Anthropic Messages tool-loop round trips, A→B→A and concurrent profile isolation, cancellation/late-response refusal, and auxiliary-inference refusal before secret resolution.
+- Earlier compatibility run: `tests/tools/test_delegate.py tests/agent/test_subagent_lifecycle.py -q --tb=short` — 74 passed in 33.05s.
+- `git diff --check` — passed.
+- Manual static review found parent-key reads and child-pool resolution guarded by `inference_port is None`; controlled construction passes no key, endpoint, or pool; controlled initialization skips provider client/token resolution, pool synchronization, and fallback-chain loading; request proxy blocks credential/client attributes. The child graph regression walks stored attributes only and does not inspect function code.
+
+An ad hoc AST credential-path script stopped at an assertion that did not match the source shape. It made no changes and is not counted as a passing check.
+
+## Concurrent same-child request race addendum
+
+Independent review identified a race when two `complete()` calls for one child both observed an empty `_active_request_abort` slot before either installed its callback. The deterministic regression forces both callers to snapshot that empty slot and holds the synthetic transport open. Before the fix, `test_same_child_concurrent_requests_cannot_overlap_abort_ownership` failed because the second transport entered while the first was still active (`1 failed in 4.61s`).
+
+The fix adds a nonblocking in-flight lock to each child-bound port. It is acquired after request validation and before budget consumption, then held through abort callback installation, transport dispatch, and cleanup. A concurrent same-child request now fails closed before it can spend budget or replace the active abort callback. The focused test verifies exactly one transport entry, one rejected request, one budget unit consumed, and an empty abort slot after cleanup.
+
+The deterministic race probe now allows up to 2 seconds for both abort-slot reads and observes overlap for 2.5 seconds, reducing the chance that a slow worker schedule skips the intended interleaving.
+
+GREEN after the race fix: `.\.venv\Scripts\python.exe -m pytest tests/tools/test_parent_owned_delegation.py -q --tb=short` — 10 passed in 12.54s. The isolated race test also passed (`1 passed in 4.80s`).
+
+## Existing abort callback budget follow-up
+
+A second review found that a preexisting callable abort slot was refused only after incrementing the child call budget. `test_preexisting_abort_callback_refusal_does_not_consume_child_budget` reproduced this (`1 failed in 4.43s`: `_calls_used` was 1). The callback check now runs under the in-flight lock before the budget increment; the regression also asserts that transport is not called and the original callback remains installed.
+
+Post-fix targeted run: `.\.venv\Scripts\python.exe -m pytest tests/tools/test_parent_owned_delegation.py::test_preexisting_abort_callback_refusal_does_not_consume_child_budget tests/tools/test_parent_owned_delegation.py::test_same_child_concurrent_requests_cannot_overlap_abort_ownership -q --tb=short` — 2 passed in 6.65s. The full T05 focus suite was not rerun after this narrow budget-ordering change; its latest complete run was 10 passed before this follow-up.
+
+Controlled toolsets remain unchanged in this slice. The current inheritance path can include terminal/process, file mutation, browser, code execution, and parent MCP tools; its built-in deny set is limited to `delegate_task`, `clarify`, `memory`, `send_message`, `cronjob`, and `kanban` (with orchestrators able to regain delegation). Production admission therefore remains gated on an explicit controlled-tool policy and T06 isolation review.
+
+## CodeGraph source evidence
+
+`T05-9b275d-before.json` and `T05-9b275d-source-map.md` record the exact pre-change source snapshot `9b275d0818e21d2c5c4db0ba998f2833a42013ab`, CodeGraph CLI 1.6.0, and a verified-current v25 extraction with 8,903 files, 190,479 nodes, and 609,557 edges. The impact query reported 85 nodes and `NEEDS_DIRECT_CHECKS`.
+
+No post-change CodeGraph index/receipt was generated. A full index pass was deferred under the bounded-disk instruction; the latest confirmed C: free space was approximately 0.75 GiB. The source-map receipt therefore describes the baseline, not the committed tree.
+
+## Remaining verification boundaries
+
+The two normal-loop round trips use synthetic provider responses at `interruptible_api_call`; no live provider request, native SDK client, or credential-refresh flow was exercised. The focused response-family tests cover chat-completions and Anthropic Messages; the Codex Responses wire path remains unverified. `admit_parent_owned_inference()` is exercised as a trusted host boundary in tests, but no production API/lifecycle call site is wired in this slice. This change does not expose MCP write operations and does not provide T06 or OS-level isolation.

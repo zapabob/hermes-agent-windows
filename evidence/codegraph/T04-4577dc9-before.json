@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "task_id": "T04",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "4577dc92b0dfd4b754c5d0e9ca14b05159d9a960",
+  "source_fingerprint": "dcfff8c963ce15a7607d0fcc59fdadc10cb75c0e39e9caa2ecac603679bdd490",
+  "index_identity": "local task index: zapabob/hermes-agent-windows@codex/t04-approval-20260924 :: .codegraph/codegraph.db",
+  "tool": {
+    "package": "@colbymchenry/codegraph",
+    "version": "1.6.0",
+    "invocation_kind": "CLI"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "queries": [
+    {
+      "query": "node --file tools/approval.py --symbols-only",
+      "result_ref": "evidence/codegraph/T04-pre-approval-symbols.txt"
+    },
+    {
+      "query": "node ControlApprovalBinding.__post_init__",
+      "result_ref": "evidence/codegraph/T04-pre-binding-node.txt"
+    },
+    {
+      "query": "impact consume_control_verdict --depth 2",
+      "result_ref": "evidence/codegraph/T04-pre-consume-impact.txt"
+    }
+  ],
+  "canonical_owners": [
+    "tools/approval.py:ControlApprovalBinding",
+    "tools/approval.py:_ControlApprovalEntry",
+    "tools/approval.py:resolve_control_consent",
+    "tools/approval.py:consume_control_verdict",
+    "downstream/control_mcp/journal.py:HostControlJournal._owned/_binding/approve",
+    "tui_gateway/methods_prompt.py:control_approval.respond",
+    "tui_gateway/server.py:_approval_request_payload/_emit_approval_request"
+  ],
+  "impact_paths": [
+    "HostControlJournal._owned -> _binding -> approve -> consume_control_verdict",
+    "coordinator._await_decision -> request_control_consent -> local approval queue",
+    "_ControlApprovalEntry.data -> gateway notification -> approval.request -> desktop controlApprovalFromPayload",
+    "tests/control_mcp/test_control_approval.py and tests/control_mcp/test_operations.py"
+  ],
+  "unresolved_edges": [
+    "Desktop controlApprovalFromPayload retains only operationId and intentDigest; resource/grant revision must be rendered through the description field; actual rendered UI was not launched.",
+    "No live Codex or ChatGPT client authentication/configuration, remote transport, or approved write was exercised."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [
+    "uv run --frozen --extra dev python -m pytest tests/control_mcp/test_control_approval.py tests/control_mcp/test_operations.py -q: 31 passed (baseline)"
+  ],
+  "evidence_refs": [
+    "evidence/codegraph/T04-pre-approval-symbols.txt",
+    "evidence/codegraph/T04-pre-binding-node.txt",
+    "evidence/codegraph/T04-pre-consume-impact.txt",
+    "evidence/codegraph/T04-pre-checks.txt"
+  ],
+  "phase": "before"
+}

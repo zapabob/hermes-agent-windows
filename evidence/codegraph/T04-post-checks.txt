@@ -1,0 +1,5 @@
+CodeGraph sync: Synced 4 changed files (335 nodes), completed 7.5s; status reports index up to date.
+Python syntax/import coverage: pytest loaded changed modules through tests/control_mcp and focused TUI approval tests.
+Ruff: All checks passed.
+Git diff --check: passed.
+CodeGraph receipts: validated with jsonschema against CODEGRAPH_RECEIPT.schema.json from hermes-workstation-master-plan-20260924-codegraph.zip.

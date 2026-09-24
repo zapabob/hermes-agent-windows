@@ -1,0 +1,26 @@
+
+Impact of changing "approvalResponseForRequest" — 11 affected symbols:
+
+apps/desktop/src/store/prompts.ts
+  function    approvalResponseForRequest:101
+
+apps/desktop/src/components/assistant-ui/tool/approval.tsx
+  function    ApprovalBar:108
+  function    InlineApprovalBar:68
+  function    PendingApprovalFallback:74
+  file        approval.tsx:1
+
+apps/desktop/src/store/native-notifications.ts
+  function    respondToApprovalAction:357
+  file        native-notifications.ts:1
+
+apps/desktop/src/app/contrib/hooks/use-desktop-integrations.ts
+  function    useDesktopIntegrations:61
+  file        use-desktop-integrations.ts:1
+
+apps/desktop/src/store/native-notifications.test.ts
+  file        native-notifications.test.ts:1
+
+apps/desktop/src/store/prompts.test.ts
+  file        prompts.test.ts:1
+

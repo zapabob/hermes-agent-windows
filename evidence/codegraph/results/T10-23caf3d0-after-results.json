@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "head_sha": "23caf3d0a98d1922b3ee4ef25e537e5561826e1d",
+  "queries": {
+    "unknown_tree_regression": {
+      "query": "test_unknown_tree_state_is_shared_by_book_owners --json",
+      "results": [
+        {
+          "node": {
+            "id": "function:2cc16848f519085ab97e32d121e1c676",
+            "kind": "function",
+            "name": "test_unknown_tree_state_is_shared_by_book_owners",
+            "qualifiedName": "test_unknown_tree_state_is_shared_by_book_owners",
+            "filePath": "tests/delegation/test_nested_budget.py",
+            "language": "python",
+            "startLine": 359,
+            "endLine": 373,
+            "startColumn": 0,
+            "endColumn": 49,
+            "signature": "()",
+            "visibility": null,
+            "isExported": false,
+            "isAsync": false,
+            "isStatic": false,
+            "isAbstract": false,
+            "updatedAt": 1790241449911
+          },
+          "score": 129.39736910224764
+        }
+      ]
+    }
+  }
+}

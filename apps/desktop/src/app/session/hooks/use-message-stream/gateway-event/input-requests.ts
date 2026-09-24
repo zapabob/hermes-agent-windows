@@ -12,7 +12,7 @@ import {
 import { gatewayForScope } from '@/store/gateway'
 import { setMcpSetupRequest } from '@/store/mcp-setup'
 import { dispatchNativeNotification } from '@/store/native-notifications'
-import { receiveApprovalRequest, setSecretRequest, setSudoRequest } from '@/store/prompts'
+import { controlApprovalFromPayload, receiveApprovalRequest, setSecretRequest, setSudoRequest } from '@/store/prompts'
 import { requestScrollToBottom } from '@/store/thread-scroll'
 
 import type { GatewayEventContext } from './types'
@@ -238,6 +238,7 @@ export function handleInputRequestEvent(ctx: GatewayEventContext): boolean {
     const command = typeof payload?.command === 'string' ? payload.command : ''
     const description = typeof payload?.description === 'string' ? payload.description : 'dangerous command'
     const requestId = typeof payload?.request_id === 'string' ? payload.request_id : undefined
+    const control = controlApprovalFromPayload(payload?.control)
 
     if (!sourceScope) {
       return true
@@ -250,6 +251,7 @@ export function handleInputRequestEvent(ctx: GatewayEventContext): boolean {
         ? payload.choices.filter(choice => typeof choice === 'string')
         : undefined,
       command,
+      control,
       description,
       requestId,
       sessionId: sessionId ?? null,
@@ -263,7 +265,7 @@ export function handleInputRequestEvent(ctx: GatewayEventContext): boolean {
 
     dispatchNativeNotification({
       actions: [
-        { id: 'approve', text: translateNow('notifications.native.approveAction') },
+        ...(!control ? [{ id: 'approve', text: translateNow('notifications.native.approveAction') }] : []),
         { id: 'reject', text: translateNow('notifications.native.rejectAction') }
       ],
       body: command || description,

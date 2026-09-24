@@ -1,0 +1,20 @@
+**receiveApprovalRequest** (function)
+
+**Location:** apps/desktop/src/store/prompts.ts:164
+**Signature:** `(gateway: ApprovalGateway | null, request: ApprovalRequest): Promise<void>`
+
+```typescript
+164	export async function receiveApprovalRequest(gateway: ApprovalGateway | null, request: ApprovalRequest): Promise<void> {
+165	  setApprovalRequest(request)
+166	
+167	  if (gateway && request.requestId && request.sessionId) {
+168	    await gateway.request('approval.received', {
+169	      request_id: request.requestId,
+170	      session_id: request.sessionId
+171	    })
+172	  }
+173	}
+```
+**Trail — codegraph_node any of these to follow it (no Read needed)**
+**Calls →** setApprovalRequest (apps/desktop/src/store/prompts.ts:158), request (apps/shared/src/json-rpc-gateway.ts:502), ApprovalGateway (apps/desktop/src/store/prompts.ts:125), ApprovalRequest (apps/desktop/src/store/prompts.ts:76)
+**Called by ←** handleInputRequestEvent (apps/desktop/src/app/session/hooks/use-message-stream/gateway-event/input-requests.ts:23), replayPendingApproval (apps/desktop/src/store/prompts.ts:175), prompts.test.ts (apps/desktop/src/store/prompts.test.ts:1), input-requests.ts (apps/desktop/src/app/session/hooks/use-message-stream/gateway-event/input-requests.ts:1)

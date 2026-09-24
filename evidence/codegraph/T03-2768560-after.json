@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "task_id": "T03",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "27685609cd356cf0d786b2eac65207bcf9cd5a98",
+  "index_identity": "worktree/feat-hermes-control-mcp-c-20260923-recovered",
+  "tool": {
+    "package": "@colbymchenry/codegraph",
+    "version": "1.6.0",
+    "invocation_kind": "CLI"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "canonical_owners": [
+    "downstream/control_mcp/auth.py:ResourceVerifier",
+    "downstream/control_mcp/http_boundary.py:AuthenticatedControlASGI",
+    "mcp_serve.py:EventBridge._poll_once"
+  ],
+  "impact_paths": [
+    "downstream/control_mcp/auth.py",
+    "tests/control_mcp/test_auth.py",
+    "tests/control_mcp/test_http_boundary.py",
+    "tests/control_mcp/test_mcp_protocol.py",
+    "tests/test_mcp_serve.py",
+    "downstream/control_mcp/http_boundary.py",
+    "mcp_serve.py"
+  ],
+  "unresolved_edges": [
+    "Operator-approved issuer/grants and product-host construction remain absent.",
+    "CodeGraph did not model the ASGI peer/Host boundary; SDK and boundary tests cover it directly."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [
+    "tests/control_mcp/test_auth.py",
+    "tests/control_mcp/test_http_boundary.py",
+    "tests/control_mcp/test_mcp_protocol.py",
+    "tests/test_mcp_serve.py::TestEventBridgePollE2E"
+  ],
+  "evidence_refs": [
+    "_docs/2026-09-24_control-mcp-loopback-resource_Codex.md"
+  ],
+  "phase": "after",
+  "source_fingerprint": "9cec7c4ff26514205d4b2bf27bfb4a743a56e0fdcfc918a9c12062ac08bef6fc",
+  "queries": [
+    {
+      "query": "sync . and status .",
+      "result_ref": "3 files then 1 file synced; index up to date"
+    },
+    {
+      "query": "impact _resource_url -p . -j",
+      "result_ref": "downstream/control_mcp/auth.py:ResourceVerifier.__init__"
+    },
+    {
+      "query": "impact _poll_once -p . -j",
+      "result_ref": "tests/test_mcp_serve.py:1387"
+    },
+    {
+      "query": "query and impact AuthenticatedControlASGI -p . -j; sync .; status",
+      "result_ref": "HTTP boundary, transport.create_control_mcp and protocol test; 3 changed files synced; index up to date"
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+{
+  "phase": "after",
+  "source_sha": "dc9c95e62cd5af0adea7e660776499be9b03addd",
+  "source_fingerprint": "4e68b9b95e5c93fe8adff3d4853469c55246aa48c3de183bfd96552bec683e52",
+  "index_identity": "H:\\hermes-control-mcp-t09-catalogue-20260924\\.codegraph",
+  "status": {
+    "initialized": true,
+    "version": "1.6.0",
+    "lastIndexed": "2026-09-24T07:21:58.265Z",
+    "fileCount": 8909,
+    "nodeCount": 190729,
+    "edgeCount": 610693,
+    "pendingChanges": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "worktreeMismatch": null,
+    "index": {
+      "builtWithVersion": "1.6.0",
+      "builtWithExtractionVersion": 25,
+      "currentExtractionVersion": 25,
+      "reindexRecommended": false,
+      "state": "complete",
+      "pendingRefs": 0
+    }
+  },
+  "queries": {
+    "callers_free_route_revision_payload": {
+      "symbol": "_free_route_revision_payload",
+      "callers": [
+        {
+          "name": "_free_route_revision",
+          "kind": "function",
+          "filePath": "downstream/delegation/free_routes.py",
+          "startLine": 446
+        }
+      ]
+    },
+    "callers_matching_subscription_entitlement": {
+      "symbol": "_matching_subscription_entitlement",
+      "callers": [
+        {
+          "name": "classify_cost",
+          "kind": "function",
+          "filePath": "downstream/delegation/free_routes.py",
+          "startLine": 354
+        },
+        {
+          "name": "build_free_route_snapshot",
+          "kind": "function",
+          "filePath": "downstream/delegation/free_routes.py",
+          "startLine": 460
+        }
+      ]
+    },
+    "impact_build_free_route_snapshot_depth2": {
+      "symbol": "build_free_route_snapshot",
+      "depth": 2,
+      "nodeCount": 4,
+      "edgeCount": 3,
+      "affected": [
+        {
+          "name": "build_free_route_snapshot",
+          "kind": "function",
+          "filePath": "downstream/delegation/free_routes.py",
+          "startLine": 460
+        },
+        {
+          "name": "_refresh",
+          "kind": "method",
+          "filePath": "downstream/delegation/free_routes.py",
+          "startLine": 694
+        },
+        {
+          "name": "refresh_if_due",
+          "kind": "method",
+          "filePath": "downstream/delegation/free_routes.py",
+          "startLine": 686
+        },
+        {
+          "name": "manual_refresh",
+          "kind": "method",
+          "filePath": "downstream/delegation/free_routes.py",
+          "startLine": 690
+        }
+      ]
+    },
+    "callers_refresh_if_due": {
+      "symbol": "FreeRouteCatalogueOwner.refresh_if_due",
+      "callers": [
+        {
+          "name": "test_refresh_is_single_flight_and_uses_twelve_hour_window",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 463
+        },
+        {
+          "name": "test_etag_not_modified_retains_last_good_snapshot_and_429_honors_retry_after",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 516
+        },
+        {
+          "name": "test_retry_after_is_bounded_and_refresh_owner_recovers",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 585
+        },
+        {
+          "name": "test_fetch_exception_text_is_not_written_to_logs",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 664
+        },
+        {
+          "name": "test_cold_owner_read_is_cache_only_until_explicit_refresh",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 693
+        }
+      ]
+    },
+    "affected_free_routes": {
+      "changedFiles": [
+        "downstream/delegation/free_routes.py",
+        "tests/agent/test_free_route_catalogue.py"
+      ],
+      "affectedTests": [],
+      "totalDependentsTraversed": 1
+    }
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "campaign_id": "windows-workstation-20260924",
+  "frozen_at_jst": "2026-09-24T02:58:43+09:00",
+  "freeze_recorded_at_utc": "2026-09-23T21:21:53Z",
+  "timestamp_semantics": "Campaign anchor is the attached-plan clock; record timestamps describe observations, not Git author dates or an atomic remote snapshot.",
+  "downstream": {
+    "repository": "zapabob/hermes-agent-windows",
+    "remote_main_sha": "e6070028c9d0d75634ad7661c33fa937b682474a",
+    "product_version_observed": "0.21.3",
+    "integration_branch": "feat/hermes-control-mcp-c-20260923-recovered",
+    "integration_local_head": "ebe05b1a397cf3855b36f84c60841abc9f2d7ce2",
+    "integration_local_head_role": "T01 frozen source snapshot; isolated task branch created from exact HEAD before the later T03 commit.",
+    "integration_source_worktree_path": "C:/Users/<redacted>/Documents/New project/hermes-control-mcp-t01-20260924",
+    "current_recovered_head_at_preflight": "dbca4d19cf3c91fb39f7e123eb0829e5118ab088",
+    "current_recovered_head_record": "docs/windows/workstation-20260924/local-preflight.json",
+    "remote_branch_ref_observation": "Earlier GET returned 404; this does not establish local branch absence.",
+    "preserve_existing_worktree": true
+  },
+  "upstream": {
+    "repository": "NousResearch/hermes-agent",
+    "historical_snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
+    "v0213_release_sha": "345cd2b057a452236de401d3534b8502a7465e8d",
+    "v0214_tag": "v2026.9.21",
+    "v0214_tag_object_sha": "dd2c35f4f6d14c518a46d8ceb5311f57851a1ee2",
+    "v0214_release_sha": "d337b736aa1e8ebecfab043842d13e4a2d2f48a3",
+    "campaign_ceiling_sha": "b936546561888a54d5bf9cd7eae9629a824eb4f7",
+    "ceiling_kind": "Observed main snapshot, distinct from the v0.21.4 release.",
+    "objects_present_as_commits": true,
+    "ancestry_edges_verified": 3,
+    "v0214_tag_peels_to_release_sha": true,
+    "repository_is_shallow": false
+  },
+  "archive_input": {
+    "filename": "hermes-workstation-master-plan-20260924-codegraph.zip",
+    "sha256": "7870af3fa739d541c19b0374f4ac6496e0b561ebf85848f21b5be9a0ad95b738",
+    "manifest_entries_verified": 28,
+    "manifest_mismatches": 0,
+    "plan_01_sha256": "81bfcb219c698b5090afebbd7a394594aa42136f81b03598a6aca098587a5df8",
+    "frozen_inputs_sha256": "d1e81bdf800483d8f685af1b2b46e05df75b8b85de4bdf6f905e8e1a8871d4ed",
+    "adoption_seeds_sha256": "4dc821606d1e4aca02d57025eb147654d630c413fa07b38f541a43d3b824160d",
+    "manifest_sha256": "efb6ff38d0ecdc1dc0ca107c574644af5194ca1936bbe27e737d1a8de98f29ca"
+  },
+  "scope_rules": {
+    "allow_upstream_sync": false,
+    "whole_upstream_merge": false,
+    "rewrite_historical_snapshot": false,
+    "moving_upstream_ref_as_input": false,
+    "semantic_adoption_claim_from_metadata": false,
+    "no_test_receipt_or_codegraph_receipt_fabrication": true
+  },
+  "inventory": {
+    "generator": "docs/windows/workstation-20260924/tools/inventory_commits.py",
+    "generator_source_head": "ebe05b1a397cf3855b36f84c60841abc9f2d7ce2",
+    "status": "METADATA_ENUMERATED_NOT_REVIEWED",
+    "metadata_complete": true,
+    "semantic_review_complete": false,
+    "range_counts": {
+      "historical_to_v0213": 2777,
+      "v0213_to_v0214": 5173,
+      "v0214_to_ceiling": 993
+    },
+    "range_unique_commit_count": 8943,
+    "legacy_source_path": "UPSTREAM_ADOPTION.yaml",
+    "legacy_source_sha256": "b7706ba476ab55558df9acdb8cd1c2d6136d79fe89f6788841e0df6afac5a174",
+    "legacy_row_count": 5105,
+    "legacy_decision_counts": {
+      "ADOPT": 1536,
+      "COMPOSE": 3568,
+      "DEFER_PLATFORM": 1
+    },
+    "legacy_category_counts": {
+      "BUGFIX_RELEVANT": 1237,
+      "CREDENTIAL_BOUNDARY": 891,
+      "DATA_INTEGRITY": 1207,
+      "DESKTOP_API_CHANGE": 159,
+      "DOCS_ONLY": 58,
+      "FEATURE_NEW_RELEVANT": 53,
+      "FEATURE_OVERLAP": 3569,
+      "GATEWAY_API_CHANGE": 1121,
+      "MODEL_PROVIDER_CHANGE": 980,
+      "PLATFORM_IRRELEVANT": 1,
+      "PLUGIN_API_CHANGE": 1018,
+      "PUBLIC_API_CHANGE": 896,
+      "SECURITY_CRITICAL": 1142,
+      "TEST_INFRA": 180,
+      "WINDOWS_RELEVANT": 580
+    },
+    "legacy_category_coverage": "COMPLETE",
+    "critical_category_definition": [
+      "SECURITY_CRITICAL",
+      "DATA_INTEGRITY"
+    ],
+    "critical_legacy_rows_unreviewed": 1671,
+    "critical_legacy_unique_shas_unreviewed": 1671,
+    "unique_metadata_rows": 14048,
+    "metadata_rows_unreviewed": 14048,
+    "legacy_receipts_verified": 0,
+    "adoption_seed_count": 34,
+    "adoption_seed_rows_unreviewed": 34,
+    "p0_adoption_seed_rows_unreviewed": 16,
+    "codegraph_queries_by_this_inventory_task": 0
+  },
+  "codegraph": {
+    "package": "@colbymchenry/codegraph",
+    "approved_version": "1.6.0",
+    "approved_executable": "C:/Users/<redacted>/Documents/New project/hermes-agent/.tools/codegraph-cli/node_modules/.bin/codegraph.cmd",
+    "index_status_provenance": "Integrator-reported current at the clean ebe source snapshot; not re-queried by docs-only inventory task.",
+    "query_required_for_this_metadata_inventory": false,
+    "follow_up": "Parent handles current index sync and task-specific before/after receipts for product changes; R1 remains a separate index requirement."
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "task_id": "T07",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "98e1be6e94bab5cc0d70d4a827f826e3a6a020b2",
+  "source_fingerprint": "ed8fd5df40d6b08c017ae189af71e621c82c3c6b6de9d8ec8190e98693b7550f",
+  "index_identity": "H:\\hermes-control-mcp-t07-semantics-20260924\\.codegraph",
+  "tool": {
+    "package": "@colbymchenry/codegraph",
+    "version": "1.6.0",
+    "invocation_kind": "CLI"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "queries": [
+    {
+      "query": "explore: ParentInferencePort complete NormalizedTurn caller child request loop (max-files 12)",
+      "result_ref": "evidence/codegraph/T07-98e1be-source-map.md#queries-and-observed-results"
+    },
+    {
+      "query": "explore: Codex Responses event stream terminal status commentary output item function call conversation normalizer (max-files 12)",
+      "result_ref": "evidence/codegraph/T07-98e1be-source-map.md#queries-and-observed-results"
+    },
+    {
+      "query": "impact: ParentInferencePort.complete --depth 2",
+      "result_ref": "evidence/codegraph/T07-98e1be-source-map.md#queries-and-observed-results"
+    }
+  ],
+  "canonical_owners": [
+    "downstream.delegation.inference_port.NormalizedTurn",
+    "downstream.delegation.inference_port.ParentInferencePort.complete",
+    "agent.conversation_loop._perform_api_call",
+    "agent.codex_runtime._consume_codex_event_stream",
+    "agent.codex_responses_adapter._normalize_codex_response",
+    "agent.transports.chat_completions",
+    "agent.transports.codex",
+    "agent.transports.anthropic",
+    "tests.tools.test_parent_owned_delegation",
+    "tests.agent.test_codex_responses_settle_pending_tool_calls"
+  ],
+  "impact_paths": [
+    "agent.conversation_loop._perform_api_call -> dynamic parent inference port import -> ParentInferencePort.complete -> ordinary provider response normalization",
+    "agent.codex_runtime._consume_codex_event_stream -> Codex Responses terminal event and tool-call assembly -> agent.codex_responses_adapter._normalize_codex_response",
+    "ParentInferencePort.complete -> tests.tools.test_parent_owned_delegation"
+  ],
+  "unresolved_edges": [
+    "Static graph did not resolve the dynamic import and result-consumption edge from _perform_api_call through ParentInferencePort.complete.",
+    "Codex Responses explore output exceeded the captured output budget, so graph evidence for its terminal and tool-call paths is incomplete.",
+    "impact on ParentInferencePort.complete under-reported transitive callers; verify runtime call flow through direct source review and focused tests."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [
+    "tests/tools/test_parent_owned_delegation.py",
+    "tests/agent/test_codex_responses_settle_pending_tool_calls.py",
+    "tests/agent/test_delegation_response_semantics.py",
+    "affected tests under tests/agent for provider response normalization"
+  ],
+  "evidence_refs": [
+    "evidence/codegraph/T07-98e1be-source-map.md",
+    "CodeGraph 1.6.0 status JSON at isolated H worktree: complete, zero pending changes, no worktree mismatch",
+    "CodeGraph files filters for output/logs and _docs: no indexed files",
+    "Pinned CodeGraph CLI @colbymchenry/codegraph 1.6.0"
+  ],
+  "phase": "before"
+}

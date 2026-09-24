@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "task_id": "T03",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "ebe05b1a397cf3855b36f84c60841abc9f2d7ce2",
+  "index_identity": "worktree/feat-hermes-control-mcp-c-20260923-recovered",
+  "tool": {
+    "package": "@colbymchenry/codegraph",
+    "version": "1.6.0",
+    "invocation_kind": "CLI"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "canonical_owners": [
+    "downstream/control_mcp/transport.py:mount_control_mcp"
+  ],
+  "impact_paths": [
+    "downstream/control_mcp/transport.py",
+    "tests/control_mcp/test_mcp_protocol.py"
+  ],
+  "unresolved_edges": [
+    "Real product host has no configured resource issuer/grants or startup construction; live clients remain unverified."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [
+    "tests/control_mcp/test_mcp_protocol.py::test_late_parent_mount_precedes_existing_spa_catch_all"
+  ],
+  "evidence_refs": [
+    "_docs/2026-09-24_control-mcp-route-priority_Codex.md"
+  ],
+  "phase": "before",
+  "source_fingerprint": "55b12a500059d13566bf6f7661e411e4a0fd97a3754abf07c5ef108f8ef1f15f",
+  "queries": [
+    {
+      "query": "query mount_control_mcp -p . -j",
+      "result_ref": "downstream/control_mcp/transport.py:109"
+    },
+    {
+      "query": "node mount_control_mcp -p .",
+      "result_ref": "downstream/control_mcp/transport.py:109"
+    },
+    {
+      "query": "impact mount_control_mcp -p . -j",
+      "result_ref": "tests/control_mcp/test_mcp_protocol.py:134"
+    }
+  ]
+}

@@ -2828,7 +2828,10 @@ def _approval_request_payload(data: dict | None) -> dict:
     """Build the client-safe representation of a pending approval."""
     payload = dict(data or {})
     if "choices" not in payload:
-        if payload.get("smart_denied"):
+        if isinstance(payload.get("control"), dict):
+            # Control intents cannot offer persistent or session-wide approval.
+            payload["choices"] = ["once", "deny"]
+        elif payload.get("smart_denied"):
             payload["choices"] = ["once", "deny"]
         else:
             choices = ["once"]

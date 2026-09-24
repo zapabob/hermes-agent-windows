@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { approvalResponseRequest } from '../app/controlApproval.js'
 import { approvalAction, approvalOptions } from '../components/prompts.js'
 
 describe('approvalAction — pure key dispatch for ApprovalPrompt', () => {
@@ -81,5 +82,32 @@ describe('approvalAction — pure key dispatch for ApprovalPrompt', () => {
         description: 'blocked'
       })
     ).toEqual(['once', 'deny'])
+  })
+})
+
+
+describe('control approval response', () => {
+  const control = { operationId: 'op-1', intentDigest: 'a'.repeat(64) }
+  const req = { command: 'Hermes control operation op-1', description: 'Start run', requestId: 'req-1', control }
+
+  it('binds once and deny to the dedicated owner RPC', () => {
+    expect(approvalResponseRequest(req, 'human-session', 'once')).toEqual({
+      method: 'control_approval.respond', strict: true,
+      params: { choice: 'once', session_id: 'human-session', request_id: 'req-1', intent_digest: 'a'.repeat(64) }
+    })
+    expect(approvalResponseRequest(req, 'human-session', 'deny')?.method).toBe('control_approval.respond')
+  })
+
+  it('never sends persistent choices or incomplete bindings', () => {
+    expect(approvalOptions({ ...req, choices: ['once', 'session', 'always', 'deny'] })).toEqual(['once', 'deny'])
+    expect(approvalResponseRequest(req, 'human-session', 'always')).toBeNull()
+    expect(approvalResponseRequest({ ...req, requestId: undefined }, 'human-session', 'once')).toBeNull()
+    expect(approvalResponseRequest({ ...req, control: { ...control, intentDigest: 'bad' } }, 'human-session', 'once')).toBeNull()
+  })
+
+  it('keeps ordinary approvals on their existing RPC', () => {
+    expect(approvalResponseRequest({ command: 'echo hi', description: 'ordinary' }, 's1', 'session')).toEqual({
+      method: 'approval.respond', strict: false, params: { choice: 'session', session_id: 's1' }
+    })
   })
 })

@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "task_id": "T08",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "1e1b9515f6ee8feedf3a6b754cc5cce22110709e",
+  "source_fingerprint": "eef217745ea20f2ab13600b97eab5320545b707feb57dc9a1b688e3558f91e2c",
+  "index_identity": "H:\\hermes-control-mcp-t08-resources-20260924\\.codegraph @ 1e1b9515f6ee8feedf3a6b754cc5cce22110709e",
+  "tool": {
+    "version": "1.6.0",
+    "package": "@colbymchenry/codegraph",
+    "invocation_kind": "CLI"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "index": {
+    "files": 8908,
+    "nodes": 190696,
+    "edges": 610392,
+    "db_size_bytes": 639811584,
+    "pending_changes": 0,
+    "pending_refs": 0,
+    "extraction_version": 25,
+    "worktree_mismatch": null
+  },
+  "queries": [
+    {
+      "result_ref": "evidence/codegraph/T08-1e1b9515-after-results.md#query-results",
+      "query": "impact -p . -d 2 -j ResourceReservationBook"
+    },
+    {
+      "result_ref": "evidence/codegraph/T08-1e1b9515-after-results.md#query-results",
+      "query": "impact -p . -d 2 -j query_nvidia_gpu_telemetry"
+    },
+    {
+      "result_ref": "evidence/codegraph/T08-1e1b9515-after-results.md#query-results",
+      "query": "query ResourceSnapshotCollector"
+    },
+    {
+      "result_ref": "evidence/codegraph/T08-1e1b9515-after-results.md#query-results",
+      "query": "rg ResourceReservationBook ResourceReflection admit_resources downstream tests"
+    }
+  ],
+  "canonical_owners": [
+    "downstream.delegation.resources.ResourceSnapshotCollector: passive proposed host telemetry",
+    "downstream.delegation.resources.ResourceReservationBook: atomic in-process reservations",
+    "downstream.delegation.resources.admit_resources: pure admission decision",
+    "downstream.platform.windows.gpu.query_nvidia_gpu_telemetry: bounded read-only NVIDIA telemetry"
+  ],
+  "impact_paths": [
+    "ResourceReservationBook -> its methods and tests; no production delegation caller",
+    "query_nvidia_gpu_telemetry -> ResourceSnapshotCollector and tests; no runtime producer caller"
+  ],
+  "unresolved_edges": [
+    "T10 must provide per-reservation fresh observed RAM, commit, CPU, and GPU usage before production admission.",
+    "Real Windows commit API and nvidia-smi telemetry were not probed in this pass.",
+    "Policy defaults are proposals and have not been calibrated with idle or workload measurements.",
+    "Suspended-child tests use synthetic reflected values; host lifecycle refresh and release behavior remains an integration requirement."
+  ],
+  "coverage_disposition": "DIRECT_SOURCE_CHECKS_COMPLETE_RUNTIME_OWNER_PENDING",
+  "tests": [
+    "tests/downstream/test_resource_admission.py: 19 tests, all passed",
+    "tests/downstream/test_windows_contracts.py: existing CUDA visibility contracts included in the 53-test focused run",
+    "ruff and ty checks passed for T08 implementation paths"
+  ],
+  "evidence_refs": [
+    "evidence/codegraph/T08-1e1b9515-after-results.md"
+  ],
+  "phase": "after"
+}

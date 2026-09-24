@@ -932,6 +932,8 @@ def _print_billing_or_entitlement_guidance(
 
 def _try_refresh_nous_paid_entitlement_credentials(agent) -> bool:
     """Refresh Nous runtime credentials after a fresh paid-entitlement check."""
+    if getattr(agent, "_inference_port", None) is not None:
+        return False
     try:
         from hermes_cli.nous_account import get_nous_portal_account_info
 
@@ -3454,13 +3456,29 @@ def run_conversation(
                         _use_streaming = False
 
                 def _perform_api_call(next_api_kwargs):
-                    if agent.api_mode == "codex_responses":
+                    inference_port = getattr(agent, "_inference_port", None)
+                    if agent.api_mode == "codex_responses" and inference_port is None:
                         next_api_kwargs = agent._get_transport().preflight_kwargs(
                             next_api_kwargs,
                             allow_stream=False,
                             is_github_responses=agent._is_copilot_url(),
                             sanitize_harmony_tokens=agent._is_codex_backend(),
                         )
+                    if inference_port is not None:
+                        from downstream.delegation.inference_port import InferenceTurn
+
+                        turn = InferenceTurn(
+                            api_kwargs=next_api_kwargs,
+                            requester=agent,
+                            original_api_kwargs=_original_api_kwargs,
+                        )
+                        return inference_port.complete(
+                            turn,
+                            route_binding=inference_port.route_binding,
+                            cancel_generation=getattr(
+                                agent, "_inference_cancel_generation", 0
+                            ),
+                        ).response
                     if _use_streaming:
                         return agent._interruptible_streaming_api_call(
                             next_api_kwargs, on_first_delta=_stop_spinner

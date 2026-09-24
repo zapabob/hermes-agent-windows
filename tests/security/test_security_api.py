@@ -137,6 +137,25 @@ def test_security_gets_do_not_materialize_named_profile_state(
     assert not (requested_home / "security").exists()
 
 
+def test_security_status_does_not_create_vault_for_existing_profile_state(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    from downstream.security.store import SecurityStore
+
+    requested_home = tmp_path / "profiles" / "research"
+    requested_home.mkdir(parents=True)
+    root = requested_home / "security"
+    SecurityStore(root)
+    monkeypatch.setattr(web_server, "_resolve_profile_dir", lambda _name: requested_home)
+
+    status = asyncio.run(web_server.security_status(profile="research"))
+
+    assert status["summary"]["files_scanned"] == 0
+    assert not (root / "quarantine").exists()
+    assert not (root / "vault-key.dpapi").exists()
+
+
 def test_security_status_rejects_invalid_profile_before_service_creation(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

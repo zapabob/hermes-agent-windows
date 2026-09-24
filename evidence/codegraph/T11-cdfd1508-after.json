@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "task_id": "T11",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "cdfd15080399bce52bb349ac8884aa4c9941ed96",
+  "source_fingerprint": "58bc1848556ed4d01df831c4d185b2527cd8223e34424314daf66dc1714c1014",
+  "index_identity": "H:\\hermes-control-mcp-t11-network-budget-20260924\\.codegraph",
+  "tool": {
+    "version": "1.6.0",
+    "invocation_kind": "CLI",
+    "package": "@colbymchenry/codegraph"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "queries": [
+    {
+      "result_ref": "evidence/codegraph/results/T11-cdfd1508-after-results.json#/queries/request_budget_reserve",
+      "query": "query --json RequestBudget.reserve"
+    },
+    {
+      "result_ref": "evidence/codegraph/results/T11-cdfd1508-after-results.json#/queries/interruptible_api_call",
+      "query": "query --json interruptible_api_call"
+    },
+    {
+      "result_ref": "evidence/codegraph/results/T11-cdfd1508-after-results.json#/queries/parent_inference_port_complete_impact",
+      "query": "impact --json --depth 2 ParentInferencePort.complete"
+    }
+  ],
+  "canonical_owners": [
+    "downstream.delegation.network_budget.RequestBudget.reserve",
+    "downstream.delegation.inference_port.ParentInferencePort.complete",
+    "agent.chat_completion_helpers.interruptible_api_call",
+    "agent.chat_completion_helpers.direct_api_call",
+    "run_agent.AIAgent._interruptible_api_call"
+  ],
+  "impact_paths": [
+    "ParentInferencePort.complete impact returned 16 nodes and 15 edges, including agent.conversation_loop._perform_api_call and run_conversation.",
+    "RequestBudget.reserve resolves to downstream/delegation/network_budget.py lines 153-227."
+  ],
+  "unresolved_edges": [
+    "No current production host caller supplies both RequestBudget and trusted account_scope to ParentInferencePort.for_parent; budgeted admission remains opt-in and host wiring is inactive.",
+    "The budget and per-account cooldown are process-local. Separate OS processes do not share global or account limits.",
+    "Provider-specific real-host transport abort, TLS/redirect behavior, DNS behavior, and cross-process lifecycle were not qualified by this local test run."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [],
+  "evidence_refs": [
+    "evidence/codegraph/results/T11-cdfd1508-after-results.json",
+    "evidence/codegraph/T11-9b6bdfe6-before.json"
+  ],
+  "phase": "after"
+}

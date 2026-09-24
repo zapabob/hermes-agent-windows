@@ -1,0 +1,23 @@
+{
+  "task": "T07",
+  "source_worktree": "H:\\hermes-control-mcp-t07-semantics-20260924",
+  "source_head": "8d7996d80d3894ef939596a45664438e903f50c0",
+  "command": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\.tools\\codegraph-cli\\node_modules\\.bin\\codegraph.cmd sync",
+  "cli_version_verified": "1.6.0",
+  "sync_exit_code": 0,
+  "sync_changed_files": 31,
+  "status": {
+    "version": "1.6.0",
+    "builtWithVersion": "1.6.0",
+    "state": "complete",
+    "fileCount": 8907,
+    "nodeCount": 190632,
+    "edgeCount": 610006,
+    "pendingChanges": {"added": 0, "modified": 0, "removed": 0},
+    "pendingRefs": 0,
+    "reindexRecommended": false,
+    "worktreeMismatch": null,
+    "walSizeBytes": 0
+  },
+  "qualification": "Corrected-source after-index only; no live provider or client was tested."
+}

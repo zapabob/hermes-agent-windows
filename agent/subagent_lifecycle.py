@@ -167,6 +167,9 @@ _SECRET = secrets.token_bytes(32)
 _ACTIVE_PARENT_AGENT: contextvars.ContextVar[Any] = contextvars.ContextVar(
     "hermes_subagent_lifecycle_parent", default=None
 )
+_PARENT_OWNED_INFERENCE_ADMISSION: contextvars.ContextVar[bool] = contextvars.ContextVar(
+    "hermes_parent_owned_inference_admission", default=False
+)
 
 
 @contextmanager
@@ -182,6 +185,26 @@ def bind_subagent_parent(parent_agent: Any):
 def get_active_subagent_parent() -> Any:
     """Return the parent bound to this execution context, if any."""
     return _ACTIVE_PARENT_AGENT.get()
+
+
+@contextmanager
+def admit_parent_owned_inference():
+    """Mark a trusted host admission boundary for keyless delegation.
+
+    This is intentionally not inferred from a plugin request field. A host
+    operation binds it only after its own admission/approval checks have
+    succeeded; ordinary plugin lifecycle calls retain their existing behavior.
+    """
+    token = _PARENT_OWNED_INFERENCE_ADMISSION.set(True)
+    try:
+        yield
+    finally:
+        _PARENT_OWNED_INFERENCE_ADMISSION.reset(token)
+
+
+def parent_owned_inference_admitted() -> bool:
+    """Return whether the current host call admitted the keyless path."""
+    return _PARENT_OWNED_INFERENCE_ADMISSION.get()
 
 
 class SubagentLifecycleService:

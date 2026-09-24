@@ -1,0 +1,23 @@
+**_binding** (method)
+
+**Location:** downstream/control_mcp/journal.py:192
+**Signature:** `(row)`
+
+```python
+192	    def _binding(row):
+193	        from tools.approval import ControlApprovalBinding
+194	        request=json.loads(row['request_json'])
+195	        description=(f"{row['kind']} for resource {row['resource']} "
+196	                     f"(grant revision {row['grant_revision']}) in {row['workspace_id']}; "
+197	                     f"source {row['source_sha']}; "
+198	                     f"expected revision {row['expected_revision']}. Task: "
+199	                     +request['parameters']['task'][:2500])
+200	        return ControlApprovalBinding(operation_id=row['operation_id'],intent_digest=row['intent_digest'],
+201	            subject=row['subject'],client_registration=row['client_registration'],
+202	            resource=row['resource'],grant_revision=row['grant_revision'],
+203	            profile_id=row['profile_id'],workspace_id=row['workspace_id'],
+204	            expires_at=row['expires_at'],description=description)
+```
+**Trail — codegraph_node any of these to follow it (no Read needed)**
+**Calls →** ControlApprovalBinding (tools/approval.py:3045)
+**Called by ←** approval_binding (downstream/control_mcp/journal.py:206), approve (downstream/control_mcp/journal.py:210)

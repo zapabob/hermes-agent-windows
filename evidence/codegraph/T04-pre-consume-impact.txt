@@ -1,0 +1,22 @@
+
+Impact of changing "consume_control_verdict" — 8 affected symbols:
+
+tools/approval.py
+  function    consume_control_verdict:3209
+  function    consume_control_decision:3230
+
+downstream/control_mcp/journal.py
+  method      approve:206
+
+apps/desktop/src/components/assistant-ui/mcp-setup-tool.tsx
+  function    McpSetupPending:164
+
+downstream/control_mcp/coordinator.py
+  method      _await_decision:62
+
+tests/control_mcp/test_engineering_owner.py
+  function    _approved:9
+
+tests/control_mcp/test_operations.py
+  function    decide:76
+  function    test_real_deny_releases_only_unexecuted_reservation:166

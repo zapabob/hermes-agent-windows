@@ -1,0 +1,33 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_ test_human_approval_ticket_binds_and_discloses_resource_and_grant_revision __
+
+control_module = <function control_module.<locals>.load at 0x000001B3CBE22CA0>
+control_context = <function control_context.<locals>.make at 0x000001B3CBE22D40>
+tmp_path = <local pytest temp path redacted>
+
+    def test_human_approval_ticket_binds_and_discloses_resource_and_grant_revision(
+            control_module, control_context, tmp_path):
+        from tools import approval as a
+
+        j = journal(control_module, tmp_path)
+        j.initialise()
+        ctx = writable(control_context, grant_revision=7)
+        op = j.reserve(ctx, request(), now=100)['operation_id']
+        binding = j.approval_binding(ctx, op, now=110)
+        session = 'human-binding-test'
+        seen = []
+        a.register_gateway_notify(session, seen.append)
+        try:
+            ticket = a.request_control_consent(binding, session_key=session,
+                                               timeout_seconds=60, now=110)
+            payload = seen[0]
+>           assert getattr(binding, 'resource', None) == ctx.resource
+E           AssertionError: assert None == 'https://hermes.invalid/control/mcp'
+E            +  where None = getattr(ControlApprovalBinding(operation_id='op-42251c3a94cd46d8a242e4e2300f6cee', intent_digest='b7ebe51c346743eb5b3167d03484...ng_run in w1; source aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa; expected revision revision-1. Task: Add a bounded test'), 'resource', None)
+E            +  and   'https://hermes.invalid/control/mcp' = ControlContext(subject='human-1', client_registration='codex', issuer='https://issuer.invalid', resource='https://herm...t_revision=7, expires_at=200, scopes=('hermes:read', 'hermes:run:start'), profiles=('p1',), workspaces=(('p1', 'w1'),)).resource
+
+tests\control_mcp\test_operations.py:121: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/control_mcp/test_operations.py::test_human_approval_ticket_binds_and_discloses_resource_and_grant_revision
+1 failed in 1.96s

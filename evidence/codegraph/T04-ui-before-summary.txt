@@ -1,0 +1,13 @@
+T04 Desktop strict approval baseline
+
+Repository: zapabob/hermes-agent-windows
+Source snapshot: HEAD 0f2ad66b1f25e221088666c3ce4ed0a6e915bec1, before the Desktop approval slice.
+CodeGraph: @colbymchenry/codegraph 1.6.0 CLI; local task index for codex/t04-approval-20260924.
+
+Queries run: node controlApprovalFromPayload; node handleInputRequestEvent; node receiveApprovalRequest; impact approvalResponseForRequest --depth 2; node ApprovalBar.
+
+The baseline graph located the gateway event handler, typed prompt store and response owner, ApprovalBar call sites, and the response impact into native notifications. It did not retain the resource URI or grant revision in the Desktop binding, and the stale rendered Run path was not bound to the active request object.
+
+Behavioral RED on the unchanged source recorded five UI/store failures and one approval.request event failure. The regression tests exercised resource/revision retention, reconnect replay, owner-routed responses, stale request rejection, visible review fields, and strict notification action handling.
+
+This is a reviewed symbol/behavior summary. Raw CodeGraph source output and test logs remain local and are not included in the commit.

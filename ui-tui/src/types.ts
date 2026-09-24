@@ -94,7 +94,9 @@ export interface ApprovalReq {
   allowPermanent?: boolean
   choices?: string[]
   command: string
+  control?: { intentDigest: string; operationId: string }
   description: string
+  requestId?: string
   smartDenied?: boolean
 }
 

@@ -344,6 +344,10 @@ async def gated_auth_middleware(
     No-op pass-through in loopback mode so the legacy auth_middleware can
     handle those binds via ``_SESSION_TOKEN``.
     """
+    # The mounted Control MCP ASGI boundary owns only its exact resource paths.
+    if getattr(getattr(request, "state", None), "control_mcp_resource", False):
+        return await call_next(request)
+
     if not getattr(request.app.state, "auth_required", False):
         return await call_next(request)
 

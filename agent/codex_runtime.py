@@ -1130,6 +1130,7 @@ def _consume_codex_event_stream(
     terminal_status: str = "completed"
     terminal_usage: Any = None
     terminal_response_id: str = None
+    terminal_model: str | None = None
     terminal_incomplete_details: Any = None
     terminal_error: Any = None
     saw_terminal = False
@@ -1344,6 +1345,11 @@ def _consume_codex_event_stream(
                 if rid is None and isinstance(resp_obj, dict):
                     rid = resp_obj.get("id")
                 terminal_response_id = rid
+                reported = getattr(resp_obj, "model", None)
+                if reported is None and isinstance(resp_obj, dict):
+                    reported = resp_obj.get("model")
+                if isinstance(reported, str) and reported.strip():
+                    terminal_model = reported.strip()
                 rstatus = getattr(resp_obj, "status", None)
                 if rstatus is None and isinstance(resp_obj, dict):
                     rstatus = resp_obj.get("status")
@@ -1453,6 +1459,9 @@ def _consume_codex_event_stream(
         status=terminal_status,
         id=terminal_response_id,
         model=model,
+        provider_reported_model=terminal_model,
+        terminal_observed=saw_terminal,
+        completion_observed=saw_response_completed,
         incomplete_details=terminal_incomplete_details,
         error=terminal_error,
     )
@@ -1620,6 +1629,16 @@ def run_codex_stream(agent, api_kwargs: dict, client: Any = None, on_first_delta
         # TTFB watchdog and activity touch — runs once per SSE event.
         agent._codex_stream_last_event_ts = time.time()
         agent._touch_activity("receiving stream response")
+        try:
+            from downstream.delegation.network_budget import current_request_lease
+
+            lease = current_request_lease()
+            if lease is not None:
+                lease.mark_progress()
+        except Exception:
+            # Lease accounting is supplementary to the existing stream
+            # lifecycle; it must not disrupt event delivery.
+            pass
 
     for attempt in range(max_stream_retries + 1):
         if agent._interrupt_requested:

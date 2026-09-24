@@ -1,0 +1,167 @@
+**tools/approval.py** — 238 symbols, used by 79 files: acp_adapter/server.py, downstream/control_mcp/coordinator.py, tests/acp/test_permissions.py, tests/cli/test_cli_yolo_resume_persistence.py, tests/cli/test_cli_yolo_toggle.py, tests/gateway/test_session_boundary_security_state.py, tests/gateway/test_yolo_command.py, tests/hermes_cli/test_approvals_suggest.py, +71 more
+
+**Symbols**
+- `logger` (variable) = logging.getLogger(__name__) — :34
+- `_YOLO_MODE_FROZEN` (variable) = is_truthy_value(os.getenv("HERMES_YOLO_MODE", "")) — :39
+- `_approval_session_key` (variable) = contextvars.ContextVar( "approval_session_key", default="", ) — :45
+- `_approval_turn_id` (variable) = contextvars.ContextVar( "approval_turn_id", default="", ) — :49
+- `_approval_tool_call_id` (variable) = contextvars.ContextVar( "approval_tool_call_id", default="", ) — :53
+- `_approval_session_id` (variable) = contextvars.ContextVar( "approval_session_id", default="", ) — :63
+- `_hermes_interactive_ctx` (variable) = contextvars.ContextVar( "hermes_interactive", default=None, ) — :77
+- `set_hermes_interactive_context` (function) (interactive: bool) -> contextvars.Token — :83
+- `reset_hermes_interactive_context` (function) (token: contextvars.Token) -> None — :93
+- `_is_interactive_cli` (function) () -> bool — :98
+- `_fire_approval_hook` (function) (hook_name: str, **kwargs) -> None — :110
+- `_prepare_smart_approval_observer` (function) ( *, command: str, description: str, pattern_key: str, pattern_keys: list[str], session_key: str, ) -> dict | None — :143
+- `_observe_smart_approval_verdict` (function) (payload: dict | None, verdict: str) -> None — :178
+- `set_current_session_key` (function) (session_key: str) -> contextvars.Token[str] — :191
+- `reset_current_session_key` (function) (token: contextvars.Token[str]) -> None — :196
+- `set_current_observability_context` (function) ( *, turn_id: str = "", tool_call_id: str = "", session_id: str = "", ) -> tuple[ contextvars.Token[str], contextvars.Token[str], contextvars.Token[str] ] — :201
+- `reset_current_observability_context` (function) ( tokens: tuple[ contextvars.Token[str], contextvars.Token[str], contextvars.Token[str] ], ) -> None — :217
+- `get_current_session_key` (function) (default: str = "default") -> str — :229
+- `_get_session_platform` (function) () -> str — :244
+- `_is_cron_approval_context` (function) () -> bool — :254
+- `_UNATTENDED_APPROVAL_PLATFORMS` (variable) = frozenset({ "webhook", "msgraph_webhook", "api_server", }) — :277
+- `_is_unattended_platform_approval_context` (function) () -> bool — :284
+- `_is_single_query_approval_context` (function) () -> bool — :296
+- `_is_gateway_approval_context` (function) () -> bool — :321
+- `_resolve_cli_approval_callback` (function) (approval_callback=None) — :351
+- `_should_fall_through_to_cli_approval` (function) ( *, is_cli: bool, approval_callback, notify_cb, ) -> bool — :366
+- `_SSH_SENSITIVE_PATH` (variable) = r'(?:~|\$home|\$\{home\})/\.ssh(?:/|$)' — :390
+- `_HERMES_ENV_PATH` (variable) = ( r'(?:~\/\.hermes/|' r'(?:\$home|\$\{home\})/\.hermes/|' r'(?:\$hermes_home|\$\{hermes_... — :391
+- `_HERMES_CONFIG_PATH` (variable) = ( r'(?:~\/\.hermes/|' r'(?:\$home|\$\{home\})/\.hermes/|' r'(?:\$hermes_home|\$\{hermes_... — :405
+- `_PROJECT_ENV_PATH` (variable) = r'(?:(?:/|\.{1,2}/)?(?:[^\s/"\'`]+/)*\.env(?:\.[^/\s"\'`]+)*)' — :411
+- `_PROJECT_CONFIG_PATH` (variable) = r'(?:(?:/|\.{1,2}/)?(?:[^\s/"\'`]+/)*config\.yaml)' — :412
+- `_SHELL_RC_FILES` (variable) = ( r'(?:~|\$home|\$\{home\})/\.' r'(?:bashrc|zshrc|profile|bash_profile|zprofile)\b' ) — :413
+- `_CREDENTIAL_FILES` (variable) = ( r'(?:~|\$home|\$\{home\})/\.' r'(?:netrc|pgpass|npmrc|pypirc)\b' ) — :417
+- `_MACOS_PRIVATE_SYSTEM_PATH` (variable) = r'/private/(?:etc|var|tmp|home)/' — :425
+- `_SYSTEM_CONFIG_PATH` (variable) = ( rf'(?:/etc/|{_MACOS_PRIVATE_SYSTEM_PATH})' ) — :429
+- `_SENSITIVE_WRITE_TARGET` (variable) = ( rf'(?:{_SYSTEM_CONFIG_PATH}|/dev/sd|' rf'{_SSH_SENSITIVE_PATH}|' rf'{_HERMES_ENV_PATH}... — :432
+- `_USER_SENSITIVE_WRITE_TARGET` (variable) = ( rf'(?:{_SSH_SENSITIVE_PATH}|' rf'{_SHELL_RC_FILES}|' rf'{_CREDENTIAL_FILES})' ) — :440
+- `_PROJECT_SENSITIVE_WRITE_TARGET` (variable) = rf'(?:{_PROJECT_ENV_PATH}|{_PROJECT_CONFIG_PATH})' — :445
+- `_COMMAND_TAIL` (variable) = r'(?:\s*(?:&&|\|\||;).*)?$' — :450
+- `_WRITE_TARGET_BOUNDARY` (variable) = r'(?=[\s;&|<>"\']|$)' — :466
+- `_CMDPOS` (variable) = ( # Real ;/&/| separators are converted to newlines by the quote-aware # _mark_command_start... — :500
+- `_hardline_rm_path` (function) (path_alt: str, tail: str = r'(?:\s|$|[)`;|&])') -> str — :527
+- `_HARDLINE_SYSTEM_DIRS` (variable) = ( r'/home|/home/\*|/root|/root/\*|/etc|/etc/\*|/usr|/usr/\*|' r'/var|/var/\*|/bin|/bin/\*|/s... — :532
+- `_RM_FLAG_PREFIX` (variable) = _CMDPOS + r'rm\s+(-[^\s]*\s+)*' — :550
+- `_WATCHDOG_OPERATOR_SCRIPT` (variable) = ( r'(?:start-hermesgowatchdog|invoke-hermesgowatchdoglifecycle|' r'restart-hermes-stack|(?:s... — :552
+- `HARDLINE_PATTERNS` (variable) = [ # The Go watchdog is an independent recovery authority. Hermes may inspect # its read-only... — :559
+- `_RE_FLAGS` (variable) = re.IGNORECASE | re.DOTALL — :677
+- `_QUOTE_MASKED_HARDLINE_DESCRIPTIONS` (variable) = frozenset({ "redirect to raw block device", "fork bomb", }) — :686
+- `HARDLINE_PATTERNS_COMPILED` (variable) = [ ( re.compile(pattern, _RE_FLAGS), description, description in _QUOTE_M... — :691
+- `_SHELL_CARRIER_NAMES` (variable) = frozenset({ "eval", "sh", "bash", "zsh", "ksh", "dash", "source", ".", }) — :704
+- `_contains_shell_carrier` (function) (command: str) -> bool — :709
+- `_mask_quoted_prose` (function) (command: str) -> str — :720
+- `_SUDO_STDIN_RE` (variable) = re.compile( r'(?:^|[;&|`\n]|&&|\|\||\$\()\s*sudo\s+-S\b', re.IGNORECASE) — :795
+- `_check_sudo_stdin_guard` (function) (command: str) -> tuple — :800
+- `detect_hardline_command` (function) (command: str) -> tuple — :819
+- `_match_user_deny_rule` (function) (command: str) -> str | None — :859
+- `_user_deny_block_result` (function) (pattern: str) -> dict — :891
+- `_save_blocked_payload` (function) (command: str) -> Optional[str] — :906
+- `_hardline_block_result` (function) (description: str, command: str = "") -> dict — :951
+- `_sudo_stdin_block_result` (function) (description: str) -> dict — :992
+- `DANGEROUS_PATTERNS` (variable) = [ (r'\brm\s+(-[^\s]*\s+)*/', "delete in root path"), (r'\brm\s+-[^\s]*r', "recursive delete"... — :1010
+- `DANGEROUS_PATTERNS_COMPILED` (variable) = [ (re.compile(pattern, _RE_FLAGS), description) for pattern, description in DANGEROUS_PATTER... — :1340
+- `_legacy_pattern_key` (function) (pattern: str) -> str — :1346
+- `_PATTERN_KEY_ALIASES` (variable) = {} — :1351
+- `_legacy_key` (variable) = _legacy_pattern_key(_pattern) — :1353
+- `_canonical_key` (variable) = _description — :1354
+- `_REMOVED_PATTERN_KEY_ALIASES` (variable) = { "script execution via -e/-c flag": "(python[23]?|perl|ruby|node)\\s+-[ec]\\s+", "script ex... — :1359
+- `_approval_key_aliases` (function) (pattern_key: str) -> set[str] — :1372
+- `_normalize_command_for_detection` (function) (command: str) -> str — :1386
+- `_PATH_TOKEN_STOP` (variable) = r"""\s'"`;|&<>()""" — :1449
+- `_PATH_TAIL` (variable) = r"(?P<tail>(?:[/\\][^/\\" + _PATH_TOKEN_STOP + r"]*)+)" — :1451
+- `_home_prefix_fold_regex` (function) (path: str) — :1455
+- `_fold_home_prefixes` (function) (command: str, paths, replacement: str) -> str — :1486
+- `_rewrite_resolved_user_home` (function) (command: str) -> str — :1508
+- `_rewrite_resolved_hermes_home` (function) (command: str) -> str — :1534
+- `_PARAM_REPLACEMENT_RE` (variable) = re.compile(r"\$\{[^}/\s]+/[^}/]*/(?P<replacement>[^}]*)\}") — :1558
+- `_PARAM_DEFAULT_RE` (variable) = re.compile(r"\$\{[^}:}\s]+:-(?P<default>[^}]*)\}") — :1559
+- `_SIMPLE_SHELL_LITERAL_RE` (variable) = re.compile(r"^[A-Za-z0-9_./:@%+=,-]+$") — :1560
+- `_ENV_ASSIGNMENT_RE` (variable) = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=.*") — :1561
+- `_COMMAND_WRAPPER_WORDS` (variable) = { "sudo", "env", "exec", "nohup", "setsid", "time", "command", "builtin", "nice", "timeout",... — :1562
+- `_SUDO_OPTIONS_WITH_ARG` (variable) = { "-c", "--close-from", "-g", "--group", "-h", "--host", "-p", "--prompt", "-u",... — :1566
+- `_COMMAND_WRAPPER_OPTIONS_WITH_ARG` (variable) = { "chroot": {"--groups", "--userspec"}, "sudo": _SUDO_OPTIONS_WITH_ARG, "env": {"-C", "-... — :1573
+- `_COMMAND_WRAPPER_NON_EXECUTING_OPTIONS` (variable) = { "command": {"-v", "-V"}, "chrt": {"-p", "--pid"}, "ionice": {"-p", "--pid", "--pgid", ... — :1584
+- `_COMMAND_WRAPPER_POSITIONAL_ARGS` (variable) = {"chroot": 1, "chrt": 1, "taskset": 1, "timeout": 1} — :1590
+- `_SHELL_COMMAND_TRANSITIONS` (variable) = {"if", "then", "else", "elif", "do", "while", "until", "!"} — :1591
+- `_SHELL_REDIRECTION_RE` (variable) = re.compile(r"(?:[0-9]+)?(?:>>|<<|<>|>&|<&|>\||[<>])") — :1592
+- `_INTERPRETER_EXEC_FLAGS` (variable) = { "python": {"-c"}, "node": {"-e", "--eval", "-p", "--print"}, "perl": {"-e", "--eval"},... — :1594
+- `_INTERPRETER_WITH_ARG` (variable) = { "python": {"-W", "-X", "--check-hash-based-pycs"}, "node": {"-C", "--conditions", "--cpu-p... — :1602
+- `_READ_TOOL_EXEC_FLAGS` (variable) = { "sort": {"--compress-program"}, "rg": {"--pre", "--hostname-bin"}, "ag": {"--pager"}, ... — :1610
+- `_READ_TOOL_LONG_OPTIONS_WITH_ARG` (variable) = { "rg": { "--after-context", "--before-context", "--color", "--colors", "--conte... — :1619
+- `_READ_TOOL_SHORT_OPTIONS_WITH_ARG` (variable) = { "rg": frozenset("efEmjgdtTABCMr"), "sort": frozenset("koStT"), "man": frozenset("CRLmM... — :1648
+- `_SHELL_PUNCTUATION` (variable) = {";", "&", "&&", "|", "||", "(", ")", "{", "}"} — :1654
+- `_MAX_DETECTION_COMMAND_CHARS` (variable) = 128_000 — :1655
+- `_MAX_SEPARATOR_FREE_COMMAND_CHARS` (variable) = 4_096 — :1656
+- `_MAX_DETECTION_SEGMENTS` (variable) = 25_000 — :1657
+- `_PARSER_LIMIT_DESCRIPTION` (variable) = "command parser limit exceeded" — :1658
+- `_MALFORMED_EXEC_DESCRIPTION` (variable) = "command parser limit or malformed executable payload" — :1659
+- `_command_parser_limit_exceeded` (function) (command: str) -> bool — :1663
+- `_shell_tokens_with_spans` (function) (segment: str, start: int) — :1689
+- `_GREP_OPTIONS_WITH_ARG` (variable) = { "--after-context", "--before-context", "--binary-files", "--context", "--directories", "--... — :1742
+- `_GREP_SHORT_OPTIONS_WITH_ARG` (variable) = {"A", "B", "C", "D", "d", "e", "f", "m"} — :1748
+- `_quoted_grep_pattern_spans` (function) (command: str) -> tuple[list[tuple[int, int]], bool] — :1751
+- `_grep_safe_detection_variant` (function) (command: str) -> tuple[str, bool] — :1839
+- `_interpreter_family` (function) (executable: str) -> str | None — :1852
+- `_shell_segment_tokens` (function) (segment: str, start: int) -> list[str] | None — :1869
+- `_iter_top_level_shell_segments` (function) (command: str) — :1884
+- `_split_option` (function) (token: str) -> tuple[str, str | None] — :1913
+- `_interpreter_exec_flag` (function) (family: str, args: list[str]) -> str | None — :1920
+- `_BASH_OPTIONS_WITH_ARG` (variable) = {"-O", "+O", "-o", "+o", "--init-file", "--rcfile"} — :1961
+- `_BASH_SHORT_OPTION_LETTERS` (variable) = frozenset("ilrsDcabefhkmnptuvxBCEHPTOo") — :1962
+- `_bash_exec_payload` (function) (args: list[str]) -> tuple[bool, str | None] — :1965
+- `_read_tool_exec_flag` (function) (tool: str, args: list[str]) -> tuple[str, str] | None — :2001
+- `_execution_flag_findings` (function) (command: str) — :2042
+- `_skip_shell_whitespace` (function) (command: str, pos: int) -> int — :2079
+- `_scan_dollar_paren_end` (function) (command: str, start: int) -> int | None — :2085
+- `_scan_backtick_end` (function) (command: str, start: int) -> int | None — :2121
+- `_is_shell_comment_start` (function) (command: str, index: int) -> bool — :2133
+- `_scan_shell` (function) (text: str, start: int = 0, end: int | None = None, *, subst: str = "", brace: bool = False, stop_unterminated: bool = False, naive_backtick: bool = False, comments: bool = False) — :2138
+- `_read_shell_word` (function) (command: str, pos: int) -> tuple[int, int, str] — :2176
+- `_strip_optional_shell_quotes` (function) (word: str) -> str — :2186
+- `_is_simple_shell_literal` (function) (value: str) -> bool — :2192
+- `_literal_command_substitution_output` (function) (script: str) -> str | None — :2196
+- `_replace_simple_command_substitutions` (function) (word: str) -> str — :2226
+- `_replace_simple_shell_expansions` (function) (word: str) -> str — :2251
+- `_strip_shell_word_syntax` (function) (word: str) -> str — :2257
+- `_deobfuscate_shell_word_for_detection` (function) (word: str) -> str — :2288
+- `_iter_shell_command_starts` (function) (command: str) — :2305
+- `scan` (function) (start: int, end: int) -> None — :2308
+- `_mark_command_starts` (function) (command: str) -> str — :2337
+- `_mask_quoted_newlines` (function) (command: str) -> str — :2365
+- `_iter_shell_command_word_spans` (function) (command: str) — :2413
+- `_shell_command_segment` (function) (command: str, start: int) -> str — :2455
+- `_shell_segment_tokens` (function) (segment: str, start: int) -> list[str] | None — :2465
+- `_env_split_payload` (function) (tokens: list[str]) -> str | None — :2475
+- `_deny_command_variants` (function) (command: str) — :2489
+- `_command_detection_variants` (function) (command: str) — :2533
+- `_is_verification_artifact_cleanup` (function) (command: str) -> bool — :2609
+- `_GATEWAY_LIFECYCLE_SPLICE_DESCRIPTION` (variable) = ( "stop/restart hermes gateway via shell-spliced verb (kills running agents)" ) — :2640
+- `_is_shell_token_spliced_gateway_lifecycle` (function) (command: str) -> bool — :2645
+- `detect_dangerous_command` (function) (command: str) -> tuple — :2672
+- `_lock` (variable) = threading.Lock() — :2705
+- `_pending` (variable) = {} — :2706
+- `_session_approved` (variable) = {} — :2707
+- `_session_yolo` (variable) = set() — :2708
+- `_permanent_approved` (variable) = set() — :2709
+- `_HumanWaitState` (class) — :2729
+- `__init__` (method) (self) -> None — :2732
+- `_human_wait_lock` (variable) = threading.Lock() — :2738
+- `_human_wait_states` (variable) = {} — :2739
+- `_HUMAN_WAIT_MAX_SESSIONS` (variable) = 256 — :2740
+- `HUMAN_WAIT_MARGIN_S` (variable) = 60.0 — :2745
+- `human_wait_ceiling` (function) () -> float — :2748
+- `_clamped_window_seconds` (function) (started: float, now: float, ceiling: float) -> float — :2767
+- `_human_wait_state` (function) (session_key: str) -> _HumanWaitState — :2777
+- `human_wait_window` (function) (session_key: str | None = None) — :2800
+- `human_wait_seconds` (function) (session_key: str | None = None) -> float — :2838
+- `_denial_tally` (variable) = {} — :2878
+- `_DENIAL_TALLY_MAX_SESSIONS` (variable) = 256 — :2881
+- `_get_denial_breaker_threshold` (function) () -> int — :2884
+- `_record_denial` (function) (session_key: str) -> int — :2896
+- `_reset_denials` (function) (session_key: str) -> None — :2910
+- `_denial_breaker_addendum` (function) (session_key: str) -> str — :2916
+
+... (output truncated)

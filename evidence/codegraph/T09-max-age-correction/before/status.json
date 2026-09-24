@@ -1,0 +1,20 @@
+{
+  "sourceSha": "1d72882bf01ef35fa89a53c32a60861764b039d1",
+  "initialized": true,
+  "version": "1.6.0",
+  "projectPath": "H:\\hermes-control-mcp-t09-catalogue-20260924",
+  "lastIndexed": "2026-09-24T07:21:58.265Z",
+  "fileCount": 8909,
+  "nodeCount": 190729,
+  "edgeCount": 610693,
+  "pendingChanges": { "added": 0, "modified": 2, "removed": 0 },
+  "worktreeMismatch": null,
+  "index": {
+    "builtWithVersion": "1.6.0",
+    "builtWithExtractionVersion": 25,
+    "currentExtractionVersion": 25,
+    "reindexRecommended": false,
+    "state": "complete",
+    "pendingRefs": 0
+  }
+}

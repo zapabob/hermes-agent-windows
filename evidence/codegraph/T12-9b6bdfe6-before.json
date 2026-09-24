@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "task_id": "T12",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "9b6bdfe6b94093e5c72466522bce14faa1037a41",
+  "source_fingerprint": "95e49fe582fa5323fcd528324da340d8228706de898e4ec7ed8af3a2071aa587",
+  "index_identity": "H:\\hermes-worktrees\\t12-evidence-20260924\\.codegraph at 2026-09-24T09:31:29.210Z",
+  "tool": {
+    "package": "@colbymchenry/codegraph",
+    "version": "1.6.0",
+    "invocation_kind": "CLI"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "queries": [
+    {
+      "query": "query verify_native_result -p . -l 5",
+      "result_ref": "downstream/control_mcp/observations.py:196"
+    },
+    {
+      "query": "impact verify_native_result -p . -d 2",
+      "result_ref": "downstream/control_mcp/observations.py:196; tests/control_mcp/test_evidence_provenance.py:182"
+    },
+    {
+      "query": "impact HermesObservations.evidence -p . -d 2",
+      "result_ref": "downstream/control_mcp/observations.py:238; tests/control_mcp/test_evidence_provenance.py; tests/control_mcp/test_reads.py"
+    }
+  ],
+  "canonical_owners": [
+    "downstream/control_mcp/observations.py: legacy read-only evidence projection",
+    "downstream/control_mcp/journal.py: durable control operation and reservation authority",
+    "downstream/delegation/evidence.py: proposed host-only native receipt consistency check"
+  ],
+  "impact_paths": [
+    "downstream/control_mcp/observations.py",
+    "tests/control_mcp/test_evidence_provenance.py",
+    "tests/control_mcp/test_reads.py"
+  ],
+  "unresolved_edges": [
+    "Native Windows T06 runner is not yet qualified or connected to this receipt evaluator.",
+    "A durable apply_verified writer and separate approval are not connected.",
+    "The static graph does not establish dynamic MCP dispatch or filesystem reparse safety."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [
+    "tests/delegation/test_native_receipts.py",
+    "tests/control_mcp/test_evidence_provenance.py"
+  ],
+  "evidence_refs": [
+    "_docs/2026-09-24_t12_native_receipt_root.md"
+  ],
+  "phase": "before"
+}
