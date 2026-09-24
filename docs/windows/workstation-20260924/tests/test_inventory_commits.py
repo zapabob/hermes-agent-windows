@@ -125,6 +125,32 @@ class TestFrozenInventory(unittest.TestCase):
             self.generate(integration_head=self.refs[2])
         self.assertFalse(self.output.exists())
 
+    def test_unborn_repository_head_refuses_inventory(self) -> None:
+        unborn_repo = self.root / "unborn-repo"
+        unborn_repo.mkdir()
+        subprocess.run(
+            ["git", "-C", str(unborn_repo), "init", "--quiet"],
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=10,
+        )
+        output = self.root / "unborn-inventory"
+
+        with self.assertRaisesRegex(inventory.InventoryError, "INTEGRATION_HEAD_UNKNOWN"):
+            inventory.generate(
+                unborn_repo,
+                self.refs[0],
+                self.refs[1],
+                self.refs[2],
+                self.refs[3],
+                self.refs[3],
+                output,
+            )
+
+        self.assertFalse(output.exists())
+
     def test_missing_frozen_object_refuses_complete_inventory(self) -> None:
         absent = "0" * 40
         with self.assertRaisesRegex(inventory.InventoryError, "HISTORY_INCOMPLETE: missing frozen commit"):
