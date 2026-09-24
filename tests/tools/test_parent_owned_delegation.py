@@ -179,6 +179,122 @@ def _synthetic_turn(child, content):
     )
 
 
+class _ConcurrentAbortProbeChild(_WeakrefableChild):
+    """Force concurrent callers to snapshot an empty abort slot together."""
+
+    def __init__(self, abort_readers):
+        self._abort_readers = abort_readers
+        self._abort_callback = None
+
+    def __getattribute__(self, name):
+        if name == "_active_request_abort":
+            callback = object.__getattribute__(self, "_abort_callback")
+            if callback is None:
+                from threading import BrokenBarrierError
+
+                try:
+                    object.__getattribute__(self, "_abort_readers").wait(
+                        timeout=0.5
+                    )
+                except BrokenBarrierError:
+                    pass
+            return callback
+        return object.__getattribute__(self, name)
+
+    def __setattr__(self, name, value):
+        if name == "_active_request_abort":
+            object.__setattr__(self, "_abort_callback", value)
+        else:
+            object.__setattr__(self, name, value)
+
+
+def test_same_child_concurrent_requests_cannot_overlap_abort_ownership(monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier, Event, Lock
+    from types import SimpleNamespace
+
+    from downstream.delegation.inference_port import InferencePortError
+
+    parent = _make_mock_parent()
+    port = ParentInferencePort.for_parent(parent)
+    child = _ConcurrentAbortProbeChild(Barrier(2))
+    child.provider = parent.provider
+    child.model = parent.model
+    child.api_mode = parent.api_mode
+    child.reasoning_config = None
+    child.valid_tool_names = set()
+    child._inference_cancel_generation = 0
+    child._interrupt_requested = False
+    child.platform = "subagent"
+    child.session_id = "concurrent-controlled-child"
+    child.quiet_mode = True
+    port.bind_child(
+        child,
+        max_calls=4,
+        max_tokens=4096,
+        allowed_tool_names=set(),
+        reasoning_config=None,
+    )
+
+    launch = Barrier(3)
+    release_transport = Event()
+    first_transport_entered = Event()
+    second_transport_entered = Event()
+    state_lock = Lock()
+    active_calls = 0
+    max_active_calls = 0
+    transport_calls = 0
+
+    def blocked_transport(_requester, _request):
+        nonlocal active_calls, max_active_calls, transport_calls
+        with state_lock:
+            transport_calls += 1
+            active_calls += 1
+            max_active_calls = max(max_active_calls, active_calls)
+            if transport_calls == 1:
+                first_transport_entered.set()
+            elif transport_calls == 2:
+                second_transport_entered.set()
+        release_transport.wait(timeout=3)
+        with state_lock:
+            active_calls -= 1
+        return SimpleNamespace(choices=[])
+
+    monkeypatch.setattr(
+        "agent.chat_completion_helpers.interruptible_api_call", blocked_transport
+    )
+
+    def request(label):
+        launch.wait(timeout=2)
+        try:
+            port.complete(
+                _synthetic_turn(child, label),
+                route_binding=port.route_binding,
+                cancel_generation=0,
+            )
+            return None
+        except InferencePortError as exc:
+            return exc
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [
+            executor.submit(request, "same-child-first"),
+            executor.submit(request, "same-child-second"),
+        ]
+        launch.wait(timeout=2)
+        overlapping_transport_observed = second_transport_entered.wait(timeout=0.75)
+        release_transport.set()
+        outcomes = [future.result(timeout=3) for future in futures]
+
+    assert first_transport_entered.is_set()
+    assert not overlapping_transport_observed
+    assert max_active_calls == 1
+    assert sum(isinstance(outcome, InferencePortError) for outcome in outcomes) == 1
+    assert sum(outcome is None for outcome in outcomes) == 1
+    assert port._calls_used == 1
+    assert child._abort_callback is None
+
+
 def test_controlled_request_profile_binding_restores_caller_and_reuses_parent_profile(
     monkeypatch, tmp_path
 ):

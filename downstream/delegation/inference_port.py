@@ -359,6 +359,7 @@ class ParentInferencePort:
         self._binding: InferenceRouteBinding | None = None
         self._calls_used = 0
         self._calls_lock = threading.Lock()
+        self._request_lock = threading.Lock()
         self._requester_ref: Any | None = None
 
     @classmethod
@@ -481,41 +482,49 @@ class ParentInferencePort:
 
         request = dict(turn.api_kwargs)
         self._validate_request(request, turn.original_api_kwargs, binding)
-        with self._calls_lock:
-            if self._calls_used >= binding.max_calls:
-                raise InferencePortError("Child inference call budget is exhausted.")
+        if not self._request_lock.acquire(blocking=False):
+            raise InferencePortError("Child already has an active inference request.")
+        try:
+            with self._calls_lock:
+                if self._calls_used >= binding.max_calls:
+                    raise InferencePortError("Child inference call budget is exhausted.")
             self._calls_used += 1
 
-        request_id = secrets.token_urlsafe(24)
-        request_agent = _ParentRequestAgent(self._owner_token, requester, request_id)
-        previous_abort = getattr(requester, "_active_request_abort", None)
-        if callable(previous_abort):
-            raise InferencePortError("Child already has an active inference request.")
-        setattr(requester, "_active_request_abort", request_agent.request_abort)
-        from hermes_constants import reset_hermes_home_override, set_hermes_home_override
+            request_id = secrets.token_urlsafe(24)
+            request_agent = _ParentRequestAgent(self._owner_token, requester, request_id)
+            from hermes_constants import reset_hermes_home_override, set_hermes_home_override
 
-        profile_token = set_hermes_home_override(self._profile_home)
-        try:
-            bound_profile_id = hashlib.sha256(
-                hermes_home_key(get_hermes_home()).encode("utf-8")
-            ).hexdigest()
-            if bound_profile_id != binding.profile_id:
-                raise InferencePortError("Parent profile binding could not be restored.")
-            from agent.chat_completion_helpers import interruptible_api_call
+            previous_abort = getattr(requester, "_active_request_abort", None)
+            if callable(previous_abort):
+                raise InferencePortError("Child already has an active inference request.")
+            setattr(requester, "_active_request_abort", request_agent.request_abort)
 
-            response = interruptible_api_call(request_agent, request)
-            if (
-                getattr(requester, "_inference_cancel_generation", 0)
-                != cancel_generation
-                or bool(getattr(requester, "_interrupt_requested", False))
-            ):
-                raise InterruptedError("Controlled inference request was cancelled.")
-            return NormalizedTurn(response=response)
+            profile_token = None
+            try:
+                profile_token = set_hermes_home_override(self._profile_home)
+                bound_profile_id = hashlib.sha256(
+                    hermes_home_key(get_hermes_home()).encode("utf-8")
+                ).hexdigest()
+                if bound_profile_id != binding.profile_id:
+                    raise InferencePortError("Parent profile binding could not be restored.")
+                from agent.chat_completion_helpers import interruptible_api_call
+
+                response = interruptible_api_call(request_agent, request)
+                if (
+                    getattr(requester, "_inference_cancel_generation", 0)
+                    != cancel_generation
+                    or bool(getattr(requester, "_interrupt_requested", False))
+                ):
+                    raise InterruptedError("Controlled inference request was cancelled.")
+                return NormalizedTurn(response=response)
+            finally:
+                request_agent._active_request_abort = None
+                setattr(requester, "_active_request_abort", previous_abort)
+                _set_request_abort(request_id, None)
+                if profile_token is not None:
+                    reset_hermes_home_override(profile_token)
         finally:
-            request_agent._active_request_abort = None
-            setattr(requester, "_active_request_abort", previous_abort)
-            _set_request_abort(request_id, None)
-            reset_hermes_home_override(profile_token)
+            self._request_lock.release()
 
     @staticmethod
     def _validate_request(

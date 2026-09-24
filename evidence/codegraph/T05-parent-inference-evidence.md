@@ -10,12 +10,22 @@ The pre-fix behavioral RED was observed in `test_host_admitted_child_constructor
 
 GREEN in this worktree:
 
-- `\.venv\Scripts\python.exe -m pytest tests/tools/test_parent_owned_delegation.py -q --tb=short` — 9 passed in 13.12s. This covers controlled constructor/init tripwires, child and grandchild graph checks, chat-completions and Anthropic Messages tool-loop round trips, A→B→A and concurrent profile isolation, cancellation/late-response refusal, and auxiliary-inference refusal before secret resolution.
+- `.\.venv\Scripts\python.exe -m pytest tests/tools/test_parent_owned_delegation.py -q --tb=short` — 9 passed in 13.12s. This covers controlled constructor/init tripwires, child and grandchild graph checks, chat-completions and Anthropic Messages tool-loop round trips, A→B→A and concurrent profile isolation, cancellation/late-response refusal, and auxiliary-inference refusal before secret resolution.
 - Earlier compatibility run: `tests/tools/test_delegate.py tests/agent/test_subagent_lifecycle.py -q --tb=short` — 74 passed in 33.05s.
 - `git diff --check` — passed.
 - Manual static review found parent-key reads and child-pool resolution guarded by `inference_port is None`; controlled construction passes no key, endpoint, or pool; controlled initialization skips provider client/token resolution, pool synchronization, and fallback-chain loading; request proxy blocks credential/client attributes. The child graph regression walks stored attributes only and does not inspect function code.
 
 An ad hoc AST credential-path script stopped at an assertion that did not match the source shape. It made no changes and is not counted as a passing check.
+
+## Concurrent same-child request race addendum
+
+Independent review identified a race when two `complete()` calls for one child both observed an empty `_active_request_abort` slot before either installed its callback. The deterministic regression forces both callers to snapshot that empty slot and holds the synthetic transport open. Before the fix, `test_same_child_concurrent_requests_cannot_overlap_abort_ownership` failed because the second transport entered while the first was still active (`1 failed in 4.61s`).
+
+The fix adds a nonblocking in-flight lock to each child-bound port. It is acquired after request validation and before budget consumption, then held through abort callback installation, transport dispatch, and cleanup. A concurrent same-child request now fails closed before it can spend budget or replace the active abort callback. The focused test verifies exactly one transport entry, one rejected request, one budget unit consumed, and an empty abort slot after cleanup.
+
+GREEN after the race fix: `.\.venv\Scripts\python.exe -m pytest tests/tools/test_parent_owned_delegation.py -q --tb=short` — 10 passed in 12.54s. The isolated race test also passed (`1 passed in 4.80s`).
+
+Controlled toolsets remain unchanged in this slice. The current inheritance path can include terminal/process, file mutation, browser, code execution, and parent MCP tools; its built-in deny set is limited to `delegate_task`, `clarify`, `memory`, `send_message`, `cronjob`, and `kanban` (with orchestrators able to regain delegation). Production admission therefore remains gated on an explicit controlled-tool policy and T06 isolation review.
 
 ## CodeGraph source evidence
 
