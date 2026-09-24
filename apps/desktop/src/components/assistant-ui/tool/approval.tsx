@@ -24,6 +24,7 @@ import {
   type ApprovalRequest,
   approvalResponseForRequest,
   clearApprovalRequest,
+  hasValidControlApprovalBinding,
   registerApprovalInlineAnchor,
   replayPendingApproval,
   sessionApprovalInlineVisible,
@@ -125,13 +126,16 @@ const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline'
   const allowAlways = !request.control && (choices ? choices.includes('always') : allowPermanent)
   const hasMoreOptions = allowSession || allowAlways
   const hasCommand = request.command.trim().length > 0
+  const validControlBinding = !request.control || hasValidControlApprovalBinding(request.control)
 
   const respond = useCallback(
     async (choice: ApprovalChoice) => {
       // Another bar (or the keyboard path) may have already resolved this
       // approval; the map is the single source of truth, so bail if this
       // session's request is gone.
-      if (busy || !sessionApprovalRequest(request.sessionId).get()) {
+      const activeRequest = sessionApprovalRequest(request.sessionId).get()
+
+      if (busy || activeRequest !== request) {
         return
       }
 
@@ -143,7 +147,7 @@ const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline'
         return
       }
 
-      const target = approvalResponseForRequest(request, choice)
+      const target = approvalResponseForRequest(request, choice, activeRequest)
 
       if (!target) {
         return
@@ -210,11 +214,33 @@ const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline'
       className={cn(surface === 'inline' ? 'mt-1 ps-5' : 'mt-2')}
       data-slot={surface === 'inline' ? 'tool-approval-inline' : 'tool-approval-actions'}
     >
+      {request.control && (
+        <dl className="mb-2 min-w-0 space-y-1.5 text-xs">
+          {validControlBinding ? (
+            <>
+              <div className="flex items-baseline gap-2">
+                <dt className="shrink-0 text-(--ui-text-tertiary)">{copy.grantRevision}</dt>
+                <dd className="font-mono text-foreground">{request.control.grantRevision}</dd>
+              </div>
+              <div className="min-w-0 space-y-0.5">
+                <dt className="text-(--ui-text-tertiary)">{copy.resource}</dt>
+                <dd>
+                  <code className="block max-h-32 overflow-auto whitespace-pre-wrap break-all font-mono text-(--ui-text-secondary)" dir="ltr">
+                    {request.control.resource}
+                  </code>
+                </dd>
+              </div>
+            </>
+          ) : (
+            <dd className="text-destructive" role="alert">{copy.incompleteControlApproval}</dd>
+          )}
+        </dl>
+      )}
       <div className="flex items-center gap-2.5">
         <div className="inline-flex h-6 items-stretch overflow-hidden rounded-md border border-primary/25 bg-primary/10 text-primary">
           <Button
             className="h-full gap-1 rounded-none px-2 text-xs font-medium text-primary hover:bg-primary/15 hover:text-primary"
-            disabled={busy}
+            disabled={busy || !validControlBinding}
             onClick={() => void respond('once')}
             size="xs"
             variant="ghost"

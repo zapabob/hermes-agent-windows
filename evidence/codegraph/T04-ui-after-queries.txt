@@ -1,0 +1,13 @@
+T04 Desktop strict approval after-change CodeGraph summary
+
+Repository: zapabob/hermes-agent-windows
+Indexed source snapshot: HEAD 0f2ad66b1f25e221088666c3ce4ed0a6e915bec1 plus the 14-file Desktop source/test diff, fingerprint 0b7567ca0ea996f88699b613017c56dc5492bc914adf441195c829078b91656f.
+CodeGraph: @colbymchenry/codegraph 1.6.0 CLI; local task index for codex/t04-approval-20260924. Sync completed with 14 changed files and 196 nodes; subsequent status reported no pending changes.
+
+Queries run: explore strict approval flow; impact approvalResponseForRequest --depth 2; node respondToApprovalAction; node handleInputRequestEvent; node ApprovalBar.
+
+The impact query reached ApprovalBar, its inline/floating wrappers, prompts tests, native-notification response handling, and its tests. Targeted nodes confirmed the gateway input-request handler's native notification path, the per-session ApprovalBar owner response path, and the strict notification guard before dispatch. The broad explore returned generic unrelated parse matches, so the receipt relies on the targeted symbol and impact results plus the direct regression tests.
+
+The graph is static evidence. Electron visual layout, OS notification delivery/action registration, live client authentication/transport, and a real approved operation remain direct manual/runtime checks.
+
+This file records query scope and reviewed outcomes only; raw source-bearing CodeGraph output is not committed.

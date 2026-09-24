@@ -352,8 +352,9 @@ export function dispatchPluginNativeNotification(pluginId: string, input: Plugin
   }
 }
 
-// Resolve a pending approval from a notification button, mirroring the in-app
-// Run/Reject bar. Keyed by session id — a background approval has no local guard.
+// Resolve a pending ordinary approval from a notification button. Strict
+// control approvals require in-app review of their resource and grant revision;
+// only their safe deny choice may be handled from the OS notification.
 export async function respondToApprovalAction(
   sessionId: null | string,
   actionId: string,
@@ -371,6 +372,10 @@ export async function respondToApprovalAction(
     return
   }
 
+  if (request.control && choice === 'once') {
+    return
+  }
+
   const sourceConnectionId = source.connectionId?.trim() || null
 
   if (sourceConnectionId !== request.scope.connectionId || source.profile !== request.scope.profile) {
@@ -383,7 +388,7 @@ export async function respondToApprovalAction(
     return
   }
 
-  const target = approvalResponseForRequest(request, choice)
+  const target = approvalResponseForRequest(request, choice, approvalRequestForSession(sessionId))
 
   if (!target) {
     return

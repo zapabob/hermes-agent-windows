@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "task_id": "T04",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "0f2ad66b1f25e221088666c3ce4ed0a6e915bec1",
+  "source_fingerprint": "0b7567ca0ea996f88699b613017c56dc5492bc914adf441195c829078b91656f",
+  "index_identity": "local task index: zapabob/hermes-agent-windows@codex/t04-approval-20260924 :: .codegraph/codegraph.db",
+  "tool": {
+    "package": "@colbymchenry/codegraph",
+    "version": "1.6.0",
+    "invocation_kind": "CLI"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "queries": [
+    {
+      "query": "explore Trace strict control approval from gateway approval.request through Desktop parsing and prompt store to ApprovalBar and native notification actions",
+      "result_ref": "evidence/codegraph/T04-ui-after-queries.txt"
+    },
+    {
+      "query": "impact approvalResponseForRequest --depth 2",
+      "result_ref": "evidence/codegraph/T04-ui-after-queries.txt"
+    },
+    {
+      "query": "node respondToApprovalAction",
+      "result_ref": "evidence/codegraph/T04-ui-after-queries.txt"
+    },
+    {
+      "query": "node handleInputRequestEvent",
+      "result_ref": "evidence/codegraph/T04-ui-after-queries.txt"
+    },
+    {
+      "query": "node ApprovalBar",
+      "result_ref": "evidence/codegraph/T04-ui-after-queries.txt"
+    }
+  ],
+  "canonical_owners": [
+    "apps/desktop/src/store/prompts.ts:controlApprovalFromPayload/receiveApprovalRequest/approvalResponseForRequest",
+    "apps/desktop/src/app/session/hooks/use-message-stream/gateway-event/input-requests.ts:handleInputRequestEvent",
+    "apps/desktop/src/components/assistant-ui/tool/approval.tsx:ApprovalBar/InlineApprovalBar/PendingApprovalFallback",
+    "apps/desktop/src/store/native-notifications.ts:respondToApprovalAction",
+    "apps/desktop/src/store/prompts.test.ts",
+    "apps/desktop/src/components/assistant-ui/tool/approval.test.tsx",
+    "apps/desktop/src/store/native-notifications.test.ts",
+    "apps/desktop/src/app/session/hooks/use-message-stream/gateway-source-routing.test.tsx"
+  ],
+  "impact_paths": [
+    "approval.request and approval.pending replay -> handleInputRequestEvent/controlApprovalFromPayload -> receiveApprovalRequest -> per-session approval store",
+    "per-session approval store -> ApprovalBar -> approvalResponseForRequest -> owner-routed control_approval.respond with request_id and intent_digest",
+    "approval.request -> dispatchNativeNotification omits strict approve action -> respondToApprovalAction rejects strict once and retains deny routing"
+  ],
+  "unresolved_edges": [
+    "Static analysis does not prove Electron layout, native OS notification delivery, or action registration on each supported platform.",
+    "Live client authentication, remote transport, and a real approved operation were not exercised."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [
+    "pnpm exec vitest run src/app/session/hooks/use-message-stream/gateway-source-routing.test.tsx src/components/assistant-ui/tool/approval.test.tsx src/store/prompts.test.ts src/store/native-notifications.test.ts: 4 files, 74 tests passed.",
+    "pnpm run typecheck: passed.",
+    "pnpm run lint: passed with 0 errors and 136 repository warnings.",
+    "pnpm run build: passed; the dirty-worktree build stamp points to predecessor 0f2ad66 and is not release evidence."
+  ],
+  "evidence_refs": [
+    "evidence/codegraph/T04-ui-after-queries.txt",
+    "evidence/codegraph/T04-ui-before-summary.txt",
+    "_docs/T04-desktop-strict-approval-closeout-20260924.md"
+  ],
+  "counterpart_evidence_refs": [
+    "evidence/codegraph/T04-0f2ad66-ui-before.json"
+  ],
+  "phase": "after"
+}

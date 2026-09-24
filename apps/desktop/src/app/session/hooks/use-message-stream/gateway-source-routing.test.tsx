@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { $clarifyRequests, clearClarifyRequest } from '@/store/clarify'
 import { $gateway, gatewayScope, setPrimaryGateway } from '@/store/gateway'
 import { $mcpSetupRequests } from '@/store/mcp-setup'
+import * as nativeNotifications from '@/store/native-notifications'
 import { clearAllPrompts, sessionApprovalRequest, sessionSecretRequest, sessionSudoRequest } from '@/store/prompts'
 import type { RpcEvent } from '@/types/hermes'
 
@@ -103,6 +104,39 @@ describe('gateway privileged reply source routing', () => {
         session_id: SID
       })
     )
+    expect(activeRequest).not.toHaveBeenCalled()
+  })
+
+  it('retains the full strict control binding from the source approval event', async () => {
+    const resource = `https://mcp.example.test/operations/${'source-bound-resource/'.repeat(24)}run`
+    const dispatchNotification = vi.spyOn(nativeNotifications, 'dispatchNativeNotification')
+
+    sourceEvent('approval.request', {
+      command: 'Hermes control operation op-source',
+      control: {
+        operation_id: 'op-source',
+        intent_digest: 'b'.repeat(64),
+        resource,
+        grant_revision: 11
+      },
+      description: 'Start approved run',
+      request_id: 'approval-control-source',
+      choices: ['once', 'deny']
+    })
+
+    await waitFor(() =>
+      expect(sessionApprovalRequest(SID).get()?.control).toEqual({
+        operationId: 'op-source',
+        intentDigest: 'b'.repeat(64),
+        resource,
+        grantRevision: 11
+      })
+    )
+    await waitFor(() => expect(sourceRequest).toHaveBeenCalledWith('approval.received', {
+      request_id: 'approval-control-source', session_id: SID
+    }))
+    const approvalNotification = dispatchNotification.mock.calls.find(([input]) => input.kind === 'approval')?.[0]
+    expect(approvalNotification?.actions?.map(action => action.id)).toEqual(['reject'])
     expect(activeRequest).not.toHaveBeenCalled()
   })
 

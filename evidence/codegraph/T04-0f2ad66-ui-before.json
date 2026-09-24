@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "task_id": "T04",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "0f2ad66b1f25e221088666c3ce4ed0a6e915bec1",
+  "source_fingerprint": "72d9502c06185cecac37ca513ff6f956314203b81f51e2433a16e92919ed1d2a",
+  "index_identity": "local task index: zapabob/hermes-agent-windows@codex/t04-approval-20260924 :: .codegraph/codegraph.db",
+  "tool": {
+    "package": "@colbymchenry/codegraph",
+    "version": "1.6.0",
+    "invocation_kind": "CLI"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "queries": [
+    {
+      "query": "node controlApprovalFromPayload",
+      "result_ref": "evidence/codegraph/T04-ui-before-summary.txt"
+    },
+    {
+      "query": "node handleInputRequestEvent",
+      "result_ref": "evidence/codegraph/T04-ui-before-summary.txt"
+    },
+    {
+      "query": "node receiveApprovalRequest",
+      "result_ref": "evidence/codegraph/T04-ui-before-summary.txt"
+    },
+    {
+      "query": "impact approvalResponseForRequest --depth 2",
+      "result_ref": "evidence/codegraph/T04-ui-before-summary.txt"
+    },
+    {
+      "query": "node ApprovalBar",
+      "result_ref": "evidence/codegraph/T04-ui-before-summary.txt"
+    }
+  ],
+  "canonical_owners": [
+    "apps/desktop/src/store/prompts.ts:controlApprovalFromPayload/approvalResponseForRequest",
+    "apps/desktop/src/app/session/hooks/use-message-stream/gateway-event/input-requests.ts:handleInputRequestEvent",
+    "apps/desktop/src/components/assistant-ui/tool/approval.tsx:ApprovalBar/PendingApprovalFallback",
+    "apps/desktop/src/app/session/hooks/use-message-stream/gateway-source-routing.test.tsx",
+    "apps/desktop/src/store/prompts.test.ts",
+    "apps/desktop/src/components/assistant-ui/tool/approval.test.tsx"
+  ],
+  "impact_paths": [
+    "approval.request -> handleInputRequestEvent -> controlApprovalFromPayload -> receiveApprovalRequest -> per-session approval store",
+    "per-session approval store -> ApprovalBar -> approvalResponseForRequest -> owner-routed strict control_approval.respond",
+    "approval.pending reconnect replay -> controlApprovalFromPayload -> same per-session approval store"
+  ],
+  "unresolved_edges": [
+    "The exact fields are not yet retained or rendered by Desktop, and stale rendered Run handlers are not bound to the current per-session approval object.",
+    "Real Electron rendering/layout and manual approval were not launched; jsdom behavior is the intended focused test boundary.",
+    "No live Codex or ChatGPT client authentication/configuration, remote transport, or approved write was exercised."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [
+    "pnpm install --frozen-lockfile --filter ./apps/desktop...: lockfile current; 1,146 locked packages linked from store; no downloads; no tracked manifest or lockfile changes.",
+    "Focused Desktop Vitest RED on unchanged product: 5 failed, 29 passed (store and approval component tests).",
+    "Actual useMessageStream approval.request RED: 1 failed, 4 skipped; resource and grant revision 11 are absent from stored control metadata."
+  ],
+  "evidence_refs": [
+    "evidence/codegraph/T04-ui-before-summary.txt"
+  ],
+  "counterpart_evidence_refs": [
+    "evidence/codegraph/T04-4577dc9-after.json"
+  ],
+  "phase": "before"
+}

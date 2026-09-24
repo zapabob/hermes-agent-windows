@@ -78,29 +78,64 @@ export interface ApprovalRequest extends KeyedPrompt {
   allowPermanent?: boolean
   choices?: string[]
   command: string
-  control?: { intentDigest: string; operationId: string }
+  control?: ControlApprovalBinding
   description: string
   requestId?: string
   smartDenied?: boolean
 }
 
+export interface ControlApprovalBinding {
+  grantRevision: number
+  intentDigest: string
+  operationId: string
+  resource: string
+}
+
+const INVALID_CONTROL_APPROVAL: ControlApprovalBinding = Object.freeze({
+  grantRevision: 0,
+  intentDigest: '',
+  operationId: '',
+  resource: ''
+})
+
 export function controlApprovalFromPayload(value: unknown): ApprovalRequest['control'] {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+  if (value === undefined) {
     return undefined
   }
 
-  const raw = value as Record<string, unknown>
-
-  return {
-    intentDigest: typeof raw.intent_digest === 'string' ? raw.intent_digest : '',
-    operationId: typeof raw.operation_id === 'string' ? raw.operation_id : ''
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return INVALID_CONTROL_APPROVAL
   }
+
+  const raw = value as Record<string, unknown>
+  const grantRevision = raw.grant_revision
+
+  return Object.freeze({
+    grantRevision: typeof grantRevision === 'number' && Number.isSafeInteger(grantRevision) && grantRevision >= 1
+      ? grantRevision
+      : 0,
+    intentDigest: typeof raw.intent_digest === 'string' ? raw.intent_digest : '',
+    operationId: typeof raw.operation_id === 'string' ? raw.operation_id : '',
+    resource: typeof raw.resource === 'string' ? raw.resource : ''
+  })
+}
+
+export function hasValidControlApprovalBinding(
+  control: ControlApprovalBinding | undefined
+): control is ControlApprovalBinding {
+  return !!control && typeof control.operationId === 'string' && !!control.operationId.trim() &&
+    /^[a-f0-9]{64}$/.test(control.intentDigest) && typeof control.resource === 'string' &&
+    !!control.resource.trim() && Number.isSafeInteger(control.grantRevision) && control.grantRevision >= 1
 }
 
 /** The ordinary and strict queues have separate owner RPCs. */
 export function approvalResponseForRequest(
-  request: ApprovalRequest, choice: string
+  request: ApprovalRequest, choice: string, activeRequest: ApprovalRequest | null
 ): { method: string; params: Record<string, unknown>; strict: boolean } | null {
+  if (activeRequest !== request) {
+    return null
+  }
+
   if (!request.control) {
     return {
       method: 'approval.respond', strict: false,
@@ -108,10 +143,9 @@ export function approvalResponseForRequest(
     }
   }
 
-  if (
-    !request.sessionId || !request.requestId || !/^[a-f0-9]{64}$/.test(request.control.intentDigest) ||
-    (choice !== 'once' && choice !== 'deny')
-  ) {
+  if (!request.sessionId || !request.requestId || !/^[a-f0-9]{64}$/.test(request.control.intentDigest) ||
+    (choice !== 'once' && choice !== 'deny') ||
+    (choice === 'once' && !hasValidControlApprovalBinding(request.control))) {
     return null
   }
 
