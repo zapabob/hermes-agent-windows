@@ -2,9 +2,9 @@
   "schema_version": 1,
   "task_id": "T09",
   "repository": "zapabob/hermes-agent-windows",
-  "source_sha": "4f0b04c8d0ad54d69b586122340de7f371040d76",
-  "source_fingerprint": "8ac03caa507e89362063dabb77079fd806c71fb8b0880ac44c67b96c24ed1ef4",
-  "index_identity": "isolated H drive T09 worktree .codegraph synced to product commit 4f0b04c8d0ad54d69b586122340de7f371040d76",
+  "source_sha": "ed5b82e655ef1b9d74ae616fea24d4bf5e47a7a9",
+  "source_fingerprint": "6e6ab68fd76d49a87f49f7506d9068d27648514b89bd720bc4d70037a1dd0dab",
+  "index_identity": "isolated H drive T09 worktree .codegraph synced to correction product commit ed5b82e655ef1b9d74ae616fea24d4bf5e47a7a9",
   "tool": {
     "package": "@colbymchenry/codegraph",
     "version": "1.6.0",
@@ -17,11 +17,11 @@
       "result_ref": "_docs/2026-09-24_t09_catalogue_refresh_t09_refresh.md#after-q1"
     },
     {
-      "query": "impact FreeRouteCatalogueOwner --depth 2 --json",
+      "query": "impact _BoundedDNSResolver --depth 2 --json",
       "result_ref": "_docs/2026-09-24_t09_catalogue_refresh_t09_refresh.md#after-q2"
     },
     {
-      "query": "impact FreeRouteCatalogueOwner.refresh_if_due --depth 2 --json",
+      "query": "impact FreeRouteCatalogueOwner._refresh --depth 2 --json",
       "result_ref": "_docs/2026-09-24_t09_catalogue_refresh_t09_refresh.md#after-q3"
     },
     {
@@ -49,7 +49,7 @@
     "tests/agent/test_free_route_catalogue.py: fetch bounds, persistence, opt-in, trigger, and single-flight regressions"
   ],
   "impact_paths": [
-    "OpenRouterFreeRouteAdapter -> FreeRouteCatalogueOwner -> profile-scoped last-good snapshot",
+    "OpenRouterFreeRouteAdapter -> bounded DNS resolver and resolved HTTPS connection -> FreeRouteCatalogueOwner -> profile-scoped last-good snapshot",
     "start_free_route_catalogue_refresh_host -> Desktop _lifespan and refresh-host tests",
     "GatewayRunner.start/stop -> lifecycle helpers, verified by the focused actual-runner lifecycle test; CodeGraph cannot represent this path because gateway/run.py has zero indexed symbols",
     "eligible_routes remains a pure cache/snapshot decision surface and has no production routing caller in this slice"
@@ -57,7 +57,9 @@
   "unresolved_edges": [
     "CodeGraph 1.6.0 reports gateway/run.py as 0 symbols, so its GatewayRunner trigger cannot be shown in graph impact; direct source and focused lifecycle tests establish the call path.",
     "The shared T11 network request budget is process-local; profile-local OS file locking coalesces refreshes for the same cache path across processes, but global public quota accounting across distinct processes is not established.",
-    "A DNS getaddrinfo stall can occur before HTTPSConnection has a socket for the lease abort callback to close; active socket connect/header/body waits are bounded, but resolver stalls are not proven to obey the total deadline.",
+    "The single resolver worker has a bounded caller wait and prevents per-refresh DNS thread growth, but a permanently stalled OS getaddrinfo call can occupy that worker and its accounted T11 lease until the OS call returns; later DNS requests fail closed while it is occupied.",
+    "The active host rechecks provider opt-in immediately before each scheduled fetch; cached reads remain available when approval is disabled.",
+    "A 304 renews pricing/observation timestamps only when a previously sent ETag matches; it does not renew entitlement evidence, and an unsolicited 304 does not extend freshness.",
     "No Windows power-event callback is wired; startup checks immediately and a five-minute due-check tick observes the persisted twelve-hour deadline after the host resumes.",
     "OpenRouter metadata refresh is disabled unless model_catalog.providers.openrouter.free_route_catalogue_enabled is explicitly true; no operational config was changed.",
     "The 4 MiB response cap and 1,000-row cap fail closed and preserve last-good state if provider data outgrows them; automatic pagination is not implemented.",
@@ -65,8 +67,9 @@
   ],
   "coverage_disposition": "NEEDS_DIRECT_CHECKS",
   "tests": [
-    "Predecessor RED: test_openrouter_adapter_uses_catalogue_budget_and_bounded_conditional_fetch failed on exact ffc8c74612 because OpenRouterFreeRouteAdapter was absent.",
-    "Product GREEN: tests/agent/test_free_route_catalogue.py — 40 passed using the Windows project Python 3.11 environment.",
+    "Initial predecessor RED: test_openrouter_adapter_uses_catalogue_budget_and_bounded_conditional_fetch failed on exact ffc8c74612 because OpenRouterFreeRouteAdapter was absent.",
+    "Review-correction RED at product 4f0b04c8: ETag 304 freshness, dynamic provider opt-in recheck, and bounded DNS resolver tests each failed for the reviewed defects.",
+    "Corrected product GREEN: tests/agent/test_free_route_catalogue.py — 44 passed using the Windows project Python 3.11 environment.",
     "Ruff 0.15.10 passed for all five product/test files; py_compile and git diff --check passed.",
     "ty 0.0.21 passed for hermes_cli/model_catalog.py and tests/agent/test_free_route_catalogue.py; free_routes.py reports only the unresolved downstream.delegation.network_budget import because T11 is a separate, not-yet-integrated worktree.",
     "ty on hermes_cli/web_server.py and gateway/run.py reports the same existing diagnostic counts as exact predecessor ffc8c74612 (23 and 112 respectively); no T09-line diagnostic was added."
