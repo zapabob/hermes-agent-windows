@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "task_id": "T12",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "9b6bdfe6b94093e5c72466522bce14faa1037a41",
+  "source_fingerprint": "2cdd7269bac40ec637c5d6342b11f74a0bb9de1be2191a1660107f395ceb9fb2",
+  "index_identity": "H:\\hermes-worktrees\\t12-evidence-20260924\\.codegraph at 2026-09-24T10:19:53.496Z",
+  "tool": {
+    "package": "@colbymchenry/codegraph",
+    "version": "1.6.0",
+    "invocation_kind": "CLI"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "queries": [
+    {
+      "query": "query evaluate_native_receipt -p . -l 5",
+      "result_ref": "downstream/delegation/evidence.py:65; import in tests/delegation/test_native_receipts.py:7"
+    },
+    {
+      "query": "impact evaluate_native_receipt -p . -d 2",
+      "result_ref": "9 affected symbols: evaluator, seven focused test functions, and test file; no production caller"
+    }
+  ],
+  "canonical_owners": [
+    "downstream/delegation/evidence.py: host-only receipt consistency evaluator",
+    "downstream/control_mcp/observations.py: separate legacy read-only evidence projection",
+    "downstream/control_mcp/journal.py: durable operation and reservation authority remains unwired"
+  ],
+  "impact_paths": [
+    "downstream/delegation/evidence.py",
+    "tests/delegation/test_native_receipts.py"
+  ],
+  "unresolved_edges": [
+    "No trusted native Windows producer calls evaluate_native_receipt.",
+    "No durable fenced writer or separately approved verified apply consumes a receipt.",
+    "T06 real native isolation and useful positive execution remain unverified."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [
+    "tests/delegation/test_native_receipts.py: 24 passed",
+    "tests/control_mcp/test_evidence_provenance.py: combined 39 passed",
+    "tests/control_mcp/test_reads.py: combined 62 passed, 1 skipped"
+  ],
+  "evidence_refs": [
+    "_docs/2026-09-24_t12_native_receipt_root.md",
+    "evidence/codegraph/T12-9b6bdfe6-before.json"
+  ],
+  "phase": "after"
+}
