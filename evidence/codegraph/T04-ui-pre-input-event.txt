@@ -1,0 +1,326 @@
+**handleInputRequestEvent** (function)
+
+**Location:** apps/desktop/src/app/session/hooks/use-message-stream/gateway-event/input-requests.ts:23
+**Signature:** `(ctx: GatewayEventContext): boolean`
+
+```typescript
+23	export function handleInputRequestEvent(ctx: GatewayEventContext): boolean {
+24	  const { deps, event, payload, sessionId, occurredAt, sourceScope } = ctx
+25	  const { activeSessionIdRef, sessionInterrupted, updateSessionState, upsertToolCall } = deps
+26	
+27	  if (event.type === 'clarify.request') {
+28	    // Surface the clarify tool's overlay. The Python side is blocked on
+29	    // `clarify.respond`, so without this handler the agent would hang
+30	    // forever (see tools/clarify_tool.py + tui_gateway/server.py:_block).
+31	    //
+32	    // Store the request for whichever session raised it — even a background
+33	    // one. clarify.request is a one-shot event; if we dropped it for an
+34	    // unfocused session, that session would block on `clarify.respond`
+35	    // indefinitely and re-focusing it could never recover (the event is
+36	    // gone). Parking it per-session lets the user answer once they switch
+37	    // over; the inline ClarifyTool reads the active session's entry.
+38	    if (sessionId && sessionInterrupted(sessionId)) {
+39	      return true
+40	    }
+41	
+42	    const requestId = typeof payload?.request_id === 'string' ? payload.request_id : ''
+43	    const question = typeof payload?.question === 'string' ? payload.question : ''
+44	    const rawChoices = payload?.choices
+45	    const choices = normalizeChoices(rawChoices)
+46	    const multiSelect = payload?.multi_select === true
+47	    // Batch (multi-question) clarify: `questions` replaces question/choices
+48	    // on the wire. `answers` rides along only on reconnect replay, carrying
+49	    // the per-question locks the server already accepted.
+50	    const questions = normalizeQuestions(payload?.questions)
+51	
+52	    const lockedAnswers =
+53	      typeof payload?.answers === 'object' && payload?.answers !== null
+54	        ? Object.fromEntries(
+55	            Object.entries(payload.answers as Record<string, unknown>).filter(
+56	              (entry): entry is [string, string] => typeof entry[1] === 'string'
+57	            )
+58	          )
+59	        : undefined
+60	
+61	    if (requestId && questions.length > 0 && sourceScope) {
+62	      const request = {
+63	        choices: null,
+64	        lockedAnswers,
+65	        multiSelect: false,
+66	        question: '',
+67	        questions,
+68	        receivedAt: Date.now() / 1000,
+69	        requestId,
+70	        sessionId: sessionId ?? null,
+71	        scope: sourceScope
+72	      }
+73	
+74	      setClarifyRequest(request)
+75	
+76	      if (sessionId) {
+77	        // A resumed/hydrated transcript may already contain this provider's
+78	        // clarify call while carrying no live streamId. Re-arm that exact row
+79	        // instead of letting the generic stream mutator append a second card.
+80	        updateSessionState(sessionId, state => {
+81	          const projection = restorePendingClarifyToolCall(
+82	            state.messages,
+83	            pendingClarifyToolPayload(request),
+84	            occurredAt
+85	          )
+86	
+87	          return {
+88	            ...state,
+89	            messages: projection.messages,
+90	            streamId: projection.streamId,
+91	            sawAssistantPayload: true,
+92	            awaitingResponse: false,
+93	            needsInput: true
+94	          }
+95	        })
+96	
+97	        if (sessionId === activeSessionIdRef.current) {
+98	          requestScrollToBottom()
+99	        }
+100	      }
+101	
+102	      dispatchNativeNotification({
+103	        body: questions.map(q => q.question).join(' · '),
+104	        kind: 'input',
+105	        sessionId,
+106	        title: translateNow('notifications.native.inputTitle')
+107	      })
+108	    } else if (requestId && question && sourceScope) {
+109	      if (rawChoices != null && choices.length === 0) {
+110	        warnDroppedChoices('gateway', question, rawChoices)
+111	      }
+112	
+113	      const request = {
+114	        requestId,
+115	        question,
+116	        choices: choices.length > 0 ? choices : null,
+117	        multiSelect,
+118	        receivedAt: Date.now() / 1000,
+119	        sessionId: sessionId ?? null,
+120	        scope: sourceScope
+121	      }
+122	
+123	      setClarifyRequest(request)
+124	
+125	      if (sessionId) {
+126	        // Same provider-shape-aware repair as the batch path above. This keeps
+127	        // the original hydrated row and provider tool id, while still seeding
+128	        // a row when tool.start was genuinely missed.
+129	        updateSessionState(sessionId, state => {
+130	          const projection = restorePendingClarifyToolCall(
+131	            state.messages,
+132	            pendingClarifyToolPayload(request),
+133	            occurredAt
+134	          )
+135	
+136	          return {
+137	            ...state,
+138	            messages: projection.messages,
+139	            streamId: projection.streamId,
+140	            sawAssistantPayload: true,
+141	            awaitingResponse: false,
+142	            needsInput: true
+143	          }
+144	        })
+145	
+146	        if (sessionId === activeSessionIdRef.current) {
+147	          requestScrollToBottom()
+148	        }
+149	      }
+150	
+151	      dispatchNativeNotification({
+152	        body: question,
+153	        kind: 'input',
+154	        sessionId,
+155	        title: translateNow('notifications.native.inputTitle')
+156	      })
+157	    }
+158	
+159	    return true
+160	  }
+161	
+162	  if (event.type === 'clarify.expire') {
+163	    if (!sessionId) {
+164	      return true
+165	    }
+166	
+167	    const requestId = typeof payload?.request_id === 'string' ? payload.request_id : ''
+168	    const request = $clarifyRequests.get()[sessionId]
+169	
+170	    // Expiry is request-correlated: a delayed event from an older prompt must
+171	    // not erase a newer clarify raised by the same session.
+172	    if (!requestId || !request || request.requestId !== requestId) {
+173	      return true
+174	    }
+175	
+176	    clearClarifyRequest(requestId, sessionId)
+177	    updateSessionState(sessionId, state => {
+178	      const projection = settlePendingClarifyToolCall(
+179	        state.messages,
+180	        pendingClarifyToolPayload(request),
+181	        state.busy,
+182	        occurredAt
+183	      )
+184	
+185	      return {
+186	        ...state,
+187	        messages: projection.messages,
+188	        needsInput: false,
+189	        streamId: state.busy ? (projection.streamId ?? state.streamId) : null
+190	      }
+191	    })
+192	
+193	    return true
+194	  }
+195	
+196	  if (event.type === 'mcp.setup.request') {
+197	    // setup_mcp tool (desktop GUI): the agent proposed an MCP server and
+198	    // the Python side is blocked on mcp.setup.respond. Park the request
+199	    // per-session (like clarify) and upsert a stable pending tool row so
+200	    // the inline consent card has somewhere to render even when the
+201	    // tool.start event was missed (stream reconnect / hydration race).
+202	    const requestId = typeof payload?.request_id === 'string' ? payload.request_id : ''
+203	    const server = typeof payload?.server === 'string' ? payload.server : ''
+204	    const rawAction = typeof payload?.action === 'string' ? payload.action : 'install'
+205	    const action = rawAction === 'enable' || rawAction === 'authorize' ? rawAction : 'install'
+206	    const reason = typeof payload?.reason === 'string' ? payload.reason : ''
+207	
+208	    if (requestId && server && sourceScope) {
+209	      setMcpSetupRequest({ action, reason, requestId, server, sessionId: sessionId ?? null, scope: sourceScope })
+210	
+211	      if (sessionId) {
+212	        upsertToolCall(
+213	          sessionId,
+214	          { args: { action, reason, server }, name: 'setup_mcp', tool_id: requestId },
+215	          'running'
+216	        )
+217	        updateSessionState(sessionId, state => ({ ...state, needsInput: true }))
+218	      }
+219	
+220	      dispatchNativeNotification({
+221	        body: reason || server,
+222	        kind: 'input',
+223	        sessionId,
+224	        title: translateNow('notifications.native.inputTitle')
+225	      })
+226	    }
+227	
+228	    return true
+229	  }
+230	
+231	  if (event.type === 'approval.request') {
+232	    // Dangerous-command / execute_code approval. The Python side is blocked
+233	    // in _await_gateway_decision() until approval.respond lands; without
+234	    // this the agent stalls until its 5-min timeout and the tool is BLOCKED.
+235	    // Park it per-session (like clarify) so a *background* profile's turn can
+236	    // raise it and wait — the sidebar flags "needs input" and the inline bar
+237	    // surfaces once the user focuses that chat.
+238	    const command = typeof payload?.command === 'string' ? payload.command : ''
+239	    const description = typeof payload?.description === 'string' ? payload.description : 'dangerous command'
+240	    const requestId = typeof payload?.request_id === 'string' ? payload.request_id : undefined
+241	
+242	    if (!sourceScope) {
+243	      return true
+244	    }
+245	
+246	    void receiveApprovalRequest(gatewayForScope(sourceScope), {
+247	      // false only when a tirith warning forbids it; backend omits the field otherwise.
+248	      allowPermanent: payload?.allow_permanent !== false,
+249	      choices: Array.isArray(payload?.choices)
+250	        ? payload.choices.filter(choice => typeof choice === 'string')
+251	        : undefined,
+252	      command,
+253	      control: controlApprovalFromPayload(payload?.control),
+254	      description,
+255	      requestId,
+256	      sessionId: sessionId ?? null,
+257	      scope: sourceScope,
+258	      smartDenied: payload?.smart_denied === true
+259	    }).catch(() => undefined)
+260	
+261	    if (sessionId) {
+262	      updateSessionState(sessionId, state => ({ ...state, needsInput: true }))
+263	    }
+264	
+265	    dispatchNativeNotification({
+266	      actions: [
+267	        { id: 'approve', text: translateNow('notifications.native.approveAction') },
+268	        { id: 'reject', text: translateNow('notifications.native.rejectAction') }
+269	      ],
+270	      body: command || description,
+271	      connectionId: sourceScope.connectionId ?? undefined,
+272	      kind: 'approval',
+273	      profile: sourceScope.profile,
+274	      requestId,
+275	      sessionId,
+276	      title: translateNow('notifications.native.approvalTitle')
+277	    })
+278	
+279	    return true
+280	  }
+281	
+282	  if (event.type === 'sudo.request') {
+283	    // Sudo password capture (tools/terminal_tool.py). Blocked on
+284	    // sudo.respond {request_id, password}.
+285	    const requestId = typeof payload?.request_id === 'string' ? payload.request_id : ''
+286	
+287	    if (requestId && sourceScope) {
+288	      setSudoRequest({ requestId, sessionId: sessionId ?? null, scope: sourceScope })
+289	
+290	      if (sessionId) {
+291	        updateSessionState(sessionId, state => ({ ...state, needsInput: true }))
+292	      }
+293	
+294	      dispatchNativeNotification({
+295	        body: translateNow('notifications.native.inputBody'),
+296	        kind: 'input',
+297	        sessionId,
+298	        title: translateNow('notifications.native.inputTitle')
+299	      })
+300	    }
+301	
+302	    return true
+303	  }
+304	
+305	  if (event.type === 'secret.request') {
+306	    // Skill credential capture (tools/skills_tool.py). Blocked on
+307	    // secret.respond {request_id, value}.
+308	    const requestId = typeof payload?.request_id === 'string' ? payload.request_id : ''
+309	
+310	    if (requestId && sourceScope) {
+311	      const envVar = typeof payload?.env_var === 'string' ? payload.env_var : ''
+312	      const promptText = typeof payload?.prompt === 'string' ? payload.prompt : ''
+313	
+314	      setSecretRequest({
+315	        requestId,
+316	        envVar,
+317	        prompt: promptText,
+318	        sessionId: sessionId ?? null,
+319	        scope: sourceScope
+320	      })
+321	
+322	      if (sessionId) {
+323	        updateSessionState(sessionId, state => ({ ...state, needsInput: true }))
+324	      }
+325	
+326	      dispatchNativeNotification({
+327	        body: promptText || envVar || translateNow('notifications.native.inputBody'),
+328	        kind: 'input',
+329	        sessionId,
+330	        title: translateNow('notifications.native.inputTitle')
+331	      })
+332	    }
+333	
+334	    return true
+335	  }
+336	
+337	  return false
+338	}
+```
+**Trail — codegraph_node any of these to follow it (no Read needed)**
+**Calls →** normalizeChoices (apps/desktop/src/store/clarify.ts:47), normalizeQuestions (apps/desktop/src/store/clarify.ts:79), setClarifyRequest (apps/desktop/src/store/clarify.ts:134), updateSessionState (apps/desktop/src/app/session/hooks/use-message-stream/delta-flush.test.tsx:25), restorePendingClarifyToolCall (apps/desktop/src/lib/chat-messages/tool-parts.ts:498), pendingClarifyToolPayload (apps/desktop/src/app/session/hooks/use-session-actions/restore-pending-clarify.ts:88), requestScrollToBottom (apps/desktop/src/store/thread-scroll.ts:42), dispatchNativeNotification (apps/desktop/src/store/native-notifications.ts:195), translateNow (apps/desktop/src/i18n/runtime.ts:64), warnDroppedChoices (apps/desktop/src/store/clarify.ts:62), clearClarifyRequest (apps/desktop/src/store/clarify.ts:138), settlePendingClarifyToolCall (apps/desktop/src/lib/chat-messages/tool-parts.ts:411), +7 more
+**Called by ←** index.ts (apps/desktop/src/app/session/hooks/use-message-stream/gateway-event/index.ts:1)

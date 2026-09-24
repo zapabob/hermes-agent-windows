@@ -1,0 +1,20 @@
+T04 Desktop approval-field extension RED evidence
+
+Baseline product commit: 0f2ad66b1f25e221088666c3ce4ed0a6e915bec1
+Tests were added before changing the Desktop implementation.
+
+Locked dependency setup:
+pnpm install --frozen-lockfile --filter ./apps/desktop...
+Result: lockfile was current; 1,146 locked packages were linked from the local store with no downloads. pnpm reported ignored lifecycle scripts for electron-winstaller, electron, esbuild, get-windows, node-pty, and unicode-animations. No package manifest or lockfile change was made.
+
+Focused RED command:
+pnpm --filter ./apps/desktop exec vitest run --project ui src/store/prompts.test.ts src/components/assistant-ui/tool/approval.test.tsx
+Result: exit 1; 5 failed, 29 passed. Failures establish that the source payload parser/store/reconnect replay drop resource and grant revision, malformed grant revision still yields a strict executable response, the long-resource approval card has no complete dedicated resource/revision fields, and a stale Run handler sends control_approval.respond after the stored resource/revision changes.
+
+Actual event-path RED command:
+pnpm --filter ./apps/desktop exec vitest run --project ui src/app/session/hooks/use-message-stream/gateway-source-routing.test.tsx -t "retains the full strict control binding"
+Result: exit 1; 1 failed, 4 skipped. The real approval.request event routed through useMessageStream and stored the operation id/digest but lost the resource and grant revision 11.
+
+These failures are behavioral regressions on the current Desktop path. They do not establish live client authorization or a real rendered-app approval interaction.
+
+CodeGraph 1.6.0 task-local index was incrementally synced after the test changes. Status reported 8,903 files, 190,482 nodes, 609,600 edges, and no pending changes. This was an incremental sync, not a full build.

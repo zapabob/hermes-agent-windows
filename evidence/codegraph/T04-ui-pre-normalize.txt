@@ -1,0 +1,22 @@
+**controlApprovalFromPayload** (function)
+
+**Location:** apps/desktop/src/store/prompts.ts:87
+**Signature:** `(value: unknown): ApprovalRequest['control']`
+
+```typescript
+87	export function controlApprovalFromPayload(value: unknown): ApprovalRequest['control'] {
+88	  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+89	    return undefined
+90	  }
+91	
+92	  const raw = value as Record<string, unknown>
+93	
+94	  return {
+95	    intentDigest: typeof raw.intent_digest === 'string' ? raw.intent_digest : '',
+96	    operationId: typeof raw.operation_id === 'string' ? raw.operation_id : ''
+97	  }
+98	}
+```
+**Trail — codegraph_node any of these to follow it (no Read needed)**
+**Calls →** ApprovalRequest (apps/desktop/src/store/prompts.ts:76)
+**Called by ←** handleInputRequestEvent (apps/desktop/src/app/session/hooks/use-message-stream/gateway-event/input-requests.ts:23), restorePendingApproval (apps/desktop/src/app/session/hooks/use-session-actions/index.ts:289), replayPendingApproval (apps/desktop/src/store/prompts.ts:175), approval.test.tsx (apps/desktop/src/components/assistant-ui/tool/approval.test.tsx:1), prompts.test.ts (apps/desktop/src/store/prompts.test.ts:1), input-requests.ts (apps/desktop/src/app/session/hooks/use-message-stream/gateway-event/input-requests.ts:1), index.ts (apps/desktop/src/app/session/hooks/use-session-actions/index.ts:1)
