@@ -29,9 +29,9 @@ features:
     impact: [tools/approval.py, downstream/control_mcp/journal.py, tui_gateway/methods_prompt.py, apps/desktop/src/store/prompts.ts, apps/desktop/src/components/assistant-ui/tool/approval.tsx]
     conflict_risk: critical
     verdict: BACKEND_AND_DESKTOP_STATIC_REVIEW_PASSED_LIVE_UNVERIFIED
-    source_ids: [20565df10d51573f327b36790f3eea5f1755db58, d40e052476]
+    source_ids: [20565df10d51573f327b36790f3eea5f1755db58, d40e052476, 9ef2897370]
     evidence_refs: ['_docs/2026-09-24_control-mcp-approval-binding_Codex.md', '_docs/T04-desktop-strict-approval-closeout-20260924.md', '_docs/2026-09-24_control-mcp-t04-security-review_Codex.md']
-    unresolved: [two public Desktop payload type declarations, rendered Electron layout, actual OS notification action, real host human approval, live client write]
+    unresolved: [rendered Electron layout, actual OS notification action, real host human approval, live client write, exact-final-HEAD checks]
   keyless_delegation:
     task: T05
     canonical_owner: tools/delegate_tool.py
