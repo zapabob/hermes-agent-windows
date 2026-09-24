@@ -621,6 +621,7 @@ def init_agent(
     requested_provider: str = None,
     requested_model: str = None,
     capabilities: Optional[Dict[str, bool]] = None,
+    inference_port=None,
 ):
     """
     Initialize the AI Agent.
@@ -735,7 +736,19 @@ def init_agent(
         key: value for key, value in (capabilities or {}).items()
         if isinstance(key, str) and isinstance(value, bool)
     }
-    agent._credential_pool = credential_pool
+    if inference_port is not None:
+        from downstream.delegation.inference_port import InferencePort
+
+        if not isinstance(inference_port, InferencePort):
+            raise TypeError("inference_port must implement the controlled inference protocol")
+        if api_key not in (None, "") or base_url not in (None, "") or credential_pool is not None:
+            raise ValueError(
+                "Controlled inference agents cannot receive credentials, endpoints, or credential pools."
+            )
+    agent._inference_port = inference_port
+    agent._inference_cancel_generation = 0
+    agent._active_request_abort = None
+    agent._credential_pool = None if inference_port is not None else credential_pool
     agent.acp_command = acp_command or command
     agent.acp_args = list(acp_args or args or [])
     if api_mode in {
@@ -810,7 +823,7 @@ def init_agent(
     # was constructed with provider=None and an anthropic.com URL.
     # Regression from #63048 which placed this check before the
     # URL-based auto-detection block above (fixed #63425).
-    if credential_pool is not None:
+    if credential_pool is not None and inference_port is None:
         try:
             from agent.credential_pool import credential_pool_matches_provider
 
@@ -883,7 +896,8 @@ def init_agent(
     # each message leaks one OS thread and the process eventually exhausts
     # the system thread limit (RuntimeError: can't start new thread).
     if (
-        agent.provider == "openrouter" or agent._is_openrouter_url()
+        inference_port is None
+        and (agent.provider == "openrouter" or agent._is_openrouter_url())
     ) and not _ra()._openrouter_prewarm_done.is_set():
         _ra()._openrouter_prewarm_done.set()
         threading.Thread(
@@ -1192,7 +1206,18 @@ def init_agent(
     # Claude uses its own timeout path and is not covered here.
     _provider_timeout = get_provider_request_timeout(agent.provider, agent.model)
 
-    if agent.api_mode == "anthropic_messages":
+    if inference_port is not None:
+        # The child prepares normal Hermes requests but owns no provider
+        # client, key, endpoint, or credential resolver. Dispatch is through
+        # the injected parent-owned inference capability.
+        agent.api_key = None
+        agent._anthropic_api_key = None
+        agent._anthropic_base_url = None
+        agent._anthropic_client = None
+        agent.client = None
+        agent._client_kwargs = {}
+        agent._is_anthropic_oauth = False
+    elif agent.api_mode == "anthropic_messages":
         from agent.anthropic_adapter import (
             build_anthropic_client,
             resolve_anthropic_token,
@@ -1639,19 +1664,23 @@ def init_agent(
     # OAuth refreshes can replace the runtime token before a failed request is
     # recovered, so the mutable API-key value alone cannot reliably attribute
     # the failure to its source entry.
-    from agent.agent_runtime_helpers import sync_credential_pool_entry_id
-    sync_credential_pool_entry_id(agent)
+    if inference_port is None:
+        from agent.agent_runtime_helpers import sync_credential_pool_entry_id
+        sync_credential_pool_entry_id(agent)
     
     # Provider fallback chain — ordered list of backup providers tried
     # when the primary is exhausted (rate-limit, overload, connection
     # failure).  Supports both legacy single-dict ``fallback_model`` and
     # new list ``fallback_providers`` format.
-    try:
-        from hermes_cli.fallback_chain import normalize_fallback_entries
-
-        agent._fallback_chain = normalize_fallback_entries(fallback_model)
-    except Exception:
+    if inference_port is not None:
         agent._fallback_chain = []
+    else:
+        try:
+            from hermes_cli.fallback_chain import normalize_fallback_entries
+
+            agent._fallback_chain = normalize_fallback_entries(fallback_model)
+        except Exception:
+            agent._fallback_chain = []
     agent._fallback_index = 0
     agent._fallback_activated = getattr(agent, "_fallback_activated", False)
     # Legacy attribute kept for backward compat (tests, external callers)

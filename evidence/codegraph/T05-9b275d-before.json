@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "task_id": "T05",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "9b275d0818e21d2c5c4db0ba998f2833a42013ab",
+  "source_fingerprint": "ee0ee5136ac721bec5909911c52e61b49ab4717f59a15a198fe476a7cfbec091",
+  "index_identity": "C:\\Users\\downl\\Documents\\New project\\hermes-control-mcp-t05-parent-inference-20260924\\.codegraph",
+  "tool": {
+    "package": "@colbymchenry/codegraph",
+    "version": "1.6.0",
+    "invocation_kind": "CLI"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "queries": [
+    {
+      "query": "explore: delegate_task _build_child_agent child lifecycle AIAgent credential resolver cancellation (max-files 14)",
+      "result_ref": "evidence/codegraph/T05-9b275d-source-map.md#delegation-construction-and-cancellation"
+    },
+    {
+      "query": "explore: AIAgent __init__ API client credential resolver api_key None call_llm normal completion transport (max-files 8)",
+      "result_ref": "evidence/codegraph/T05-9b275d-source-map.md#initialization-and-inference"
+    },
+    {
+      "query": "impact: _build_child_agent --depth 3 --json",
+      "result_ref": "evidence/codegraph/T05-9b275d-source-map.md#impact-and-unresolved-edges"
+    }
+  ],
+  "canonical_owners": [
+    "tools.delegate_tool._build_child_agent",
+    "agent.subagent_lifecycle.SubagentLifecycleService",
+    "run_agent.AIAgent",
+    "agent.agent_init.init_agent",
+    "agent.conversation_loop.run_conversation",
+    "agent.chat_completion_helpers.interruptible_api_call",
+    "agent.auxiliary_client.call_llm"
+  ],
+  "impact_paths": [
+    "tools.delegate_tool.delegate_task -> _build_child_preserving_parent_tools -> _build_child_agent -> run_agent.AIAgent -> agent.agent_init.init_agent",
+    "agent.subagent_lifecycle.SubagentLifecycleService.launch -> _build_child_preserving_parent_tools -> _build_child_agent",
+    "agent.conversation_loop.run_conversation -> _perform_api_call -> agent.chat_completion_helpers.interruptible_api_call -> request-local provider client",
+    "run_agent.AIAgent.interrupt -> child interrupt / request abort; auxiliary_client.call_llm is an alternate inference path"
+  ],
+  "unresolved_edges": [
+    "Dynamic auth-store and profile resolver calls during AIAgent initialization",
+    "Auxiliary inference reachable from compression and optional memory code",
+    "Child cancellation to only its own parent-owned in-flight request client",
+    "HERMES_HOME ContextVar propagation across lifecycle and delegate worker threads",
+    "Nested delegation inheriting only an explicitly admitted inference port"
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [
+    "tests/agent/test_subagent_inference_port.py",
+    "tests/tools/test_parent_owned_delegation.py",
+    "tests/agent/test_subagent_lifecycle.py",
+    "tests/tools/test_delegate.py",
+    "focused auxiliary-client regression"
+  ],
+  "evidence_refs": [
+    "evidence/codegraph/T05-9b275d-source-map.md",
+    "plans/02-parent-auth-native-execution.md (master-plan ZIP, source snapshot 2026-09-24)",
+    "DESIGN.md (master-plan ZIP, parent-owned inference section)",
+    "CodeGraph 1.6.0 status at isolated worktree: complete, zero pending changes, no mismatch"
+  ],
+  "phase": "before"
+}

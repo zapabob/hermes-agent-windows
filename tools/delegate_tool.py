@@ -1672,6 +1672,36 @@ def _build_child_agent(
     """
     from run_agent import AIAgent
     import uuid as _uuid
+    from agent.subagent_lifecycle import parent_owned_inference_admitted
+    from downstream.delegation.inference_port import (
+        InferencePortError,
+        ParentInferencePort,
+    )
+
+    inherited_inference_port = getattr(parent_agent, "_inference_port", None)
+    inference_port = None
+    if isinstance(inherited_inference_port, ParentInferencePort):
+        inference_port = inherited_inference_port.fork_for_child()
+    elif parent_owned_inference_admitted():
+        inference_port = ParentInferencePort.for_parent(parent_agent)
+
+    if inference_port is not None:
+        parent_provider = str(getattr(parent_agent, "provider", "") or "").strip().lower()
+        parent_model = str(getattr(parent_agent, "model", "") or "").strip()
+        parent_mode = str(getattr(parent_agent, "api_mode", "") or "").strip()
+        if (
+            (model is not None and str(model).strip() != parent_model)
+            or (override_provider is not None and str(override_provider).strip().lower() != parent_provider)
+            or override_base_url is not None
+            or override_api_key is not None
+            or (override_api_mode is not None and override_api_mode != parent_mode)
+            or override_request_overrides
+            or override_acp_command is not None
+            or override_acp_args is not None
+        ):
+            raise InferencePortError(
+                "Controlled delegation cannot override the admitted parent route."
+            )
 
     # ── Role resolution ─────────────────────────────────────────────────
     # Depth-derived, not caller-declared: a child may delegate iff the
@@ -1770,10 +1800,13 @@ def _build_child_agent(
         max_spawn_depth=max_spawn,
         child_depth=child_depth,
     )
-    # Extract parent's API key so subagents inherit auth (e.g. Nous Portal).
-    parent_api_key = getattr(parent_agent, "api_key", None)
-    if (not parent_api_key) and hasattr(parent_agent, "_client_kwargs"):
-        parent_api_key = parent_agent._client_kwargs.get("api_key")
+    # Ordinary delegation retains its established credential inheritance.
+    # An admitted controlled child receives only a parent-owned inference port.
+    parent_api_key = None
+    if inference_port is None:
+        parent_api_key = getattr(parent_agent, "api_key", None)
+        if (not parent_api_key) and hasattr(parent_agent, "_client_kwargs"):
+            parent_api_key = parent_agent._client_kwargs.get("api_key")
 
     # Resolve the child's effective model early so it can ride on every event.
     effective_model_for_cb = model or getattr(parent_agent, "model", None)
@@ -1843,6 +1876,14 @@ def _build_child_agent(
         effective_api_mode = None  # force re-derivation from provider's defaults
     else:
         effective_api_mode = getattr(parent_agent, "api_mode", None)
+    if inference_port is not None:
+        # The child stores no endpoint or credential. The port pins the actual
+        # parent route and dispatches through the parent's request transport.
+        effective_model = parent_model
+        effective_provider = parent_provider
+        effective_base_url = ""
+        effective_api_key = None
+        effective_api_mode = parent_mode
     # Defensive: validate trusted delegation.command exists on PATH before
     # honoring it. An explicitly pinned transport that cannot run must fail
     # the spawn loudly (#80450) — silently falling back to the default
@@ -1858,11 +1899,15 @@ def _build_child_agent(
                 f"found on PATH. Install it or remove delegation.command from "
                 f"config.yaml."
             )
-    effective_acp_command = override_acp_command or getattr(
-        parent_agent, "acp_command", None
+    effective_acp_command = (
+        None
+        if inference_port is not None
+        else override_acp_command or getattr(parent_agent, "acp_command", None)
     )
     effective_acp_args = list(
-        override_acp_args
+        []
+        if inference_port is not None
+        else override_acp_args
         if override_acp_args is not None
         else (getattr(parent_agent, "acp_args", []) or [])
     )
@@ -1918,10 +1963,14 @@ def _build_child_agent(
     # model never borrows the parent's chain; an explicitly declared child chain still remains available.
     is_pinned = bool(override_provider or override_base_url or model)
     fallback_cfg = delegation_cfg if routing_cfg is None else routing_cfg
-    parent_fallback = _resolve_child_fallback_chain(
-        parent_agent,
-        fallback_cfg,
-        pinned=is_pinned,
+    parent_fallback = (
+        None
+        if inference_port is not None
+        else _resolve_child_fallback_chain(
+            parent_agent,
+            fallback_cfg,
+            pinned=is_pinned,
+        )
     )
 
     # Inherit the parent's OpenRouter provider-preference filters by default
@@ -1958,6 +2007,8 @@ def _build_child_agent(
         if override_max_tokens is not None
         else getattr(parent_agent, "max_tokens", None)
     )
+    if inference_port is not None:
+        child_max_tokens = child_max_tokens or 8192
     child_optional_kwargs: Dict[str, Any] = {}
     if isinstance(child_max_tokens, int):
         child_optional_kwargs["max_tokens"] = child_max_tokens
@@ -2012,6 +2063,7 @@ def _build_child_agent(
                 reasoning_config=child_reasoning,
                 prefill_messages=getattr(parent_agent, "prefill_messages", None),
                 fallback_model=parent_fallback,
+                inference_port=inference_port,
                 enabled_toolsets=child_toolsets,
                 disabled_toolsets=child_disabled_toolsets,
                 quiet_mode=True,
@@ -2031,7 +2083,9 @@ def _build_child_agent(
                 provider_require_parameters=child_provider_require_parameters,
                 provider_data_collection=child_provider_data_collection,
                 request_overrides=(
-                    dict(override_request_overrides or {})
+                    {}
+                    if inference_port is not None
+                    else dict(override_request_overrides or {})
                     if override_provider
                     else dict(getattr(parent_agent, "request_overrides", {}) or {})
                 ),
@@ -2074,12 +2128,18 @@ def _build_child_agent(
     # stop): a parent may only control agents whose weakref chain reaches it.
     # Weakref so a finished parent can be collected while a detached child
     # record briefly lingers in the registry.
-    try:
-        child._delegate_parent_ref = weakref.ref(parent_agent)
-    except TypeError:
-        # Test doubles (MagicMock et al.) may not be weakref-able; control
-        # actions then simply don't resolve ownership for this child.
+    if inference_port is not None:
+        # The direct weakref would make the credential-bearing parent
+        # reachable from the child. Parent cancellation still uses the
+        # parent's _active_children registry.
         child._delegate_parent_ref = None
+    else:
+        try:
+            child._delegate_parent_ref = weakref.ref(parent_agent)
+        except TypeError:
+            # Test doubles (MagicMock et al.) may not be weakref-able; control
+            # actions then simply don't resolve ownership for this child.
+            child._delegate_parent_ref = None
     # Stable sidebar marker: delegate subagent sessions must stay out of
     # session pickers even when a parent delete orphans them (parent_session_id
     # → NULL). Mirrors /branch's ``_branched_from`` pattern — see
@@ -2090,11 +2150,23 @@ def _build_child_agent(
 
     # Share a credential pool with the child when possible so subagents can
     # rotate credentials on rate limits instead of getting pinned to one key.
-    child_pool = _resolve_child_credential_pool(
-        effective_provider, parent_agent, effective_base_url
+    child_pool = (
+        None
+        if inference_port is not None
+        else _resolve_child_credential_pool(
+            effective_provider, parent_agent, effective_base_url
+        )
     )
     if child_pool is not None:
         child._credential_pool = child_pool
+    if inference_port is not None:
+        inference_port.bind_child(
+            child,
+            max_calls=max_iterations + 1,
+            max_tokens=child_max_tokens,
+            allowed_tool_names=getattr(child, "valid_tool_names", set()),
+            reasoning_config=getattr(child, "reasoning_config", None),
+        )
 
     # Register child for interrupt propagation
     if hasattr(parent_agent, "_active_children"):
