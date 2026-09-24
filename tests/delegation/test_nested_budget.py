@@ -338,7 +338,7 @@ def test_capacity_wait_has_a_deadline_and_is_counted_while_waiting():
     assert owner.waiting_count == 0
 
 
-def test_admission_caps_and_unknown_tree_state_are_shared_by_book_owners():
+def test_top_level_cap_is_shared_by_book_owners():
     clock = _Clock()
     book = ResourceReservationBook()
     first_owner = _owner(clock, book)
@@ -355,6 +355,17 @@ def test_admission_caps_and_unknown_tree_state_are_shared_by_book_owners():
     assert len(first_owner.active_grants()) == 2
     assert first_owner.active_grants() == second_owner.active_grants()
 
+
+def test_unknown_tree_state_is_shared_by_book_owners():
+    clock = _Clock()
+    book = ResourceReservationBook()
+    first_owner = _owner(clock, book)
+    second_owner = _owner(clock, book)
+    first = first_owner.reserve(_intent("unknown-one", clock, tree="tree-a"))
+    second = second_owner.reserve(_intent("unknown-two", clock, tree="tree-b"))
+
+    assert isinstance(first, AdmissionGrant)
+    assert isinstance(second, AdmissionGrant)
     assert first_owner.record_writer_outcome(first.grant_id, "unknown")
     retry = second_owner.reserve(_intent("shared-retry", clock, tree="tree-a"))
 
