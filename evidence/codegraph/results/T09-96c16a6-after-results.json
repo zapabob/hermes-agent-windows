@@ -1,0 +1,170 @@
+{
+  "phase": "after",
+  "source_sha": "96c16a6a745a0fcdfa52305bcc687fc0c98860ea",
+  "source_fingerprint": "19d48f12e06eca12292f10a294c407e3cba9a7d8465bef66366c5505c7bec07d",
+  "index_identity": "H:\\hermes-control-mcp-t09-catalogue-20260924\\.codegraph",
+  "status": {
+    "initialized": true,
+    "version": "1.6.0",
+    "lastIndexed": "2026-09-24T06:48:38.863Z",
+    "fileCount": 8909,
+    "nodeCount": 190723,
+    "edgeCount": 610636,
+    "pendingChanges": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "worktreeMismatch": null,
+    "index": {
+      "builtWithVersion": "1.6.0",
+      "builtWithExtractionVersion": 25,
+      "currentExtractionVersion": 25,
+      "reindexRecommended": false,
+      "state": "complete",
+      "pendingRefs": 0
+    }
+  },
+  "queries": {
+    "callers_classify_cost": {
+      "symbol": "classify_cost",
+      "callers": [
+        {
+          "name": "build_free_route_snapshot",
+          "kind": "function",
+          "filePath": "downstream/delegation/free_routes.py",
+          "startLine": 404
+        },
+        {
+          "name": "test_unknown_price_stays_unknown_and_free_suffix_is_not_evidence",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 84
+        },
+        {
+          "name": "test_classifies_stale_zero_price_as_unknown_and_subscription_separately",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 91
+        },
+        {
+          "name": "test_missing_model_and_extended_age_override_cannot_promote_stale_price",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 103
+        },
+        {
+          "name": "test_zero_and_paid_costs_require_complete_provenance_and_all_billable_components",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 115
+        },
+        {
+          "name": "test_free_quota_requires_exact_provider_account_model_and_current_grant",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 161
+        }
+      ]
+    },
+    "callers_refresh_if_due": {
+      "symbol": "FreeRouteCatalogueOwner.refresh_if_due",
+      "callers": [
+        {
+          "name": "test_refresh_is_single_flight_and_uses_twelve_hour_window",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 286
+        },
+        {
+          "name": "test_etag_not_modified_retains_last_good_snapshot_and_429_honors_retry_after",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 339
+        },
+        {
+          "name": "test_retry_after_is_bounded_and_refresh_owner_recovers",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 408
+        },
+        {
+          "name": "test_fetch_exception_text_is_not_written_to_logs",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 487
+        },
+        {
+          "name": "test_cold_owner_read_is_cache_only_until_explicit_refresh",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 516
+        }
+      ]
+    },
+    "impact_classify_cost_depth2": {
+      "symbol": "classify_cost",
+      "depth": 2,
+      "nodeCount": 8,
+      "edgeCount": 7,
+      "affected": [
+        {
+          "name": "classify_cost",
+          "kind": "function",
+          "filePath": "downstream/delegation/free_routes.py",
+          "startLine": 321
+        },
+        {
+          "name": "build_free_route_snapshot",
+          "kind": "function",
+          "filePath": "downstream/delegation/free_routes.py",
+          "startLine": 404
+        },
+        {
+          "name": "_refresh",
+          "kind": "method",
+          "filePath": "downstream/delegation/free_routes.py",
+          "startLine": 633
+        },
+        {
+          "name": "test_unknown_price_stays_unknown_and_free_suffix_is_not_evidence",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 84
+        },
+        {
+          "name": "test_classifies_stale_zero_price_as_unknown_and_subscription_separately",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 91
+        },
+        {
+          "name": "test_missing_model_and_extended_age_override_cannot_promote_stale_price",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 103
+        },
+        {
+          "name": "test_zero_and_paid_costs_require_complete_provenance_and_all_billable_components",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 115
+        },
+        {
+          "name": "test_free_quota_requires_exact_provider_account_model_and_current_grant",
+          "kind": "function",
+          "filePath": "tests/agent/test_free_route_catalogue.py",
+          "startLine": 161
+        }
+      ]
+    },
+    "affected_free_routes": {
+      "changedFiles": [
+        "downstream/delegation/free_routes.py",
+        "tests/agent/test_free_route_catalogue.py"
+      ],
+      "affectedTests": [],
+      "totalDependentsTraversed": 1
+    }
+  }
+}

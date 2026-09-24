@@ -1,0 +1,310 @@
+{
+  "phase": "before",
+  "source_sha": "96c16a6a745a0fcdfa52305bcc687fc0c98860ea",
+  "source_fingerprint": "bb92f18aa51ccae2254af7cc28c319221871ad039de3c29c2bd213590530c80b",
+  "index_identity": "H:\\hermes-control-mcp-t09-before-96c16a6-20260924\\.codegraph",
+  "status": {
+    "initialized": true,
+    "version": "1.6.0",
+    "lastIndexed": "2026-09-24T06:57:39.166Z",
+    "fileCount": 8907,
+    "nodeCount": 190632,
+    "edgeCount": 610291,
+    "pendingChanges": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "worktreeMismatch": null,
+    "index": {
+      "builtWithVersion": "1.6.0",
+      "builtWithExtractionVersion": 25,
+      "currentExtractionVersion": 25,
+      "reindexRecommended": false,
+      "state": "complete",
+      "pendingRefs": 0
+    }
+  },
+  "queries": {
+    "callers_get_catalog": {
+      "symbol": "get_catalog",
+      "callers": [
+        {
+          "name": "_get_provider_block",
+          "kind": "function",
+          "filePath": "hermes_cli/model_catalog.py",
+          "startLine": 665
+        },
+        {
+          "name": "test_three_layer_authority_hierarchy",
+          "kind": "method",
+          "filePath": "tests/hermes_cli/test_live_provider_catalog.py",
+          "startLine": 216
+        },
+        {
+          "name": "test_real_nous_routing_boundaries",
+          "kind": "method",
+          "filePath": "tests/hermes_cli/test_live_provider_catalog.py",
+          "startLine": 330
+        },
+        {
+          "name": "worker",
+          "kind": "function",
+          "filePath": "tests/hermes_cli/test_live_provider_catalog.py",
+          "startLine": 477
+        },
+        {
+          "name": "test_timeout_bounded_behavior_stalled_live_provider",
+          "kind": "method",
+          "filePath": "tests/hermes_cli/test_live_provider_catalog.py",
+          "startLine": 515
+        },
+        {
+          "name": "test_fetch_and_cache_writes_disk",
+          "kind": "method",
+          "filePath": "tests/hermes_cli/test_model_catalog.py",
+          "startLine": 75
+        },
+        {
+          "name": "test_network_failure_returns_empty_when_no_cache",
+          "kind": "method",
+          "filePath": "tests/hermes_cli/test_model_catalog.py",
+          "startLine": 94
+        },
+        {
+          "name": "test_network_failure_falls_back_to_disk_cache",
+          "kind": "method",
+          "filePath": "tests/hermes_cli/test_model_catalog.py",
+          "startLine": 100
+        },
+        {
+          "name": "test_fetch_failure_falls_back_to_stale_cache",
+          "kind": "method",
+          "filePath": "tests/hermes_cli/test_model_catalog.py",
+          "startLine": 115
+        },
+        {
+          "name": "test_get_catalog_uses_fallback_chain",
+          "kind": "method",
+          "filePath": "tests/hermes_cli/test_model_catalog.py",
+          "startLine": 178
+        },
+        {
+          "name": "test_6_models_dev_unavailable_stale_disk_cache_usable",
+          "kind": "function",
+          "filePath": "tests/hermes_cli/test_model_catalog_adapter.py",
+          "startLine": 188
+        },
+        {
+          "name": "test_7_no_cache_static_fallback_usable",
+          "kind": "function",
+          "filePath": "tests/hermes_cli/test_model_catalog_adapter.py",
+          "startLine": 210
+        },
+        {
+          "name": "test_b2_consumers_always_receive_canonical_shape",
+          "kind": "function",
+          "filePath": "tests/hermes_cli/test_model_catalog_adapter.py",
+          "startLine": 320
+        },
+        {
+          "name": "test_model_catalog_zero_ambient_nous",
+          "kind": "function",
+          "filePath": "tests/hermes_cli/test_zero_ambient_nous.py",
+          "startLine": 147
+        },
+        {
+          "name": "test_models_dev_new_model_visible",
+          "kind": "function",
+          "filePath": "tests/hermes_cli/test_zero_ambient_nous.py",
+          "startLine": 313
+        }
+      ]
+    },
+    "callees_get_catalog": {
+      "symbol": "get_catalog",
+      "callees": [
+        {
+          "name": "_load_catalog_config",
+          "kind": "function",
+          "filePath": "hermes_cli/model_catalog.py",
+          "startLine": 386
+        },
+        {
+          "name": "max",
+          "kind": "method",
+          "filePath": "tests/tools/test_wake_word.py",
+          "startLine": 446
+        },
+        {
+          "name": "_read_disk_cache",
+          "kind": "function",
+          "filePath": "hermes_cli/model_catalog.py",
+          "startLine": 477
+        },
+        {
+          "name": "_spawn_catalog_swr_refresh",
+          "kind": "function",
+          "filePath": "hermes_cli/model_catalog.py",
+          "startLine": 547
+        },
+        {
+          "name": "_fetch_manifest_with_fallback",
+          "kind": "function",
+          "filePath": "hermes_cli/model_catalog.py",
+          "startLine": 444
+        },
+        {
+          "name": "_write_disk_cache",
+          "kind": "function",
+          "filePath": "hermes_cli/model_catalog.py",
+          "startLine": 511
+        },
+        {
+          "name": "_get_static_fallback_catalog",
+          "kind": "function",
+          "filePath": "hermes_cli/model_catalog.py",
+          "startLine": 351
+        },
+        {
+          "name": "DEFAULT_FETCH_TIMEOUT",
+          "kind": "variable",
+          "filePath": "hermes_cli/model_catalog.py",
+          "startLine": 369
+        }
+      ]
+    },
+    "impact_get_catalog_depth2": {
+      "symbol": "get_catalog",
+      "depth": 2,
+      "nodeCount": 19,
+      "edgeCount": 18,
+      "affected": [
+        {
+          "name": "get_catalog",
+          "kind": "function",
+          "filePath": "hermes_cli/model_catalog.py",
+          "startLine": 575
+        },
+        {
+          "name": "_get_provider_block",
+          "kind": "function",
+          "filePath": "hermes_cli/model_catalog.py",
+          "startLine": 665
+        },
+        {
+          "name": "get_curated_openrouter_models",
+          "kind": "function",
+          "filePath": "hermes_cli/model_catalog.py",
+          "startLine": 680
+        },
+        {
+          "name": "get_curated_nous_models",
+          "kind": "function",
+          "filePath": "hermes_cli/model_catalog.py",
+          "startLine": 699
+        },
+        {
+          "name": "test_three_layer_authority_hierarchy",
+          "kind": "method",
+          "filePath": "tests/hermes_cli/test_live_provider_catalog.py",
+          "startLine": 216
+        },
+        {
+          "name": "test_real_nous_routing_boundaries",
+          "kind": "method",
+          "filePath": "tests/hermes_cli/test_live_provider_catalog.py",
+          "startLine": 330
+        },
+        {
+          "name": "worker",
+          "kind": "function",
+          "filePath": "tests/hermes_cli/test_live_provider_catalog.py",
+          "startLine": 477
+        },
+        {
+          "name": "test_real_concurrency_single_flight",
+          "kind": "method",
+          "filePath": "tests/hermes_cli/test_live_provider_catalog.py",
+          "startLine": 411
+        },
+        {
+          "name": "test_timeout_bounded_behavior_stalled_live_provider",
+          "kind": "method",
+          "filePath": "tests/hermes_cli/test_live_provider_catalog.py",
+          "startLine": 515
+        },
+        {
+          "name": "test_fetch_and_cache_writes_disk",
+          "kind": "method",
+          "filePath": "tests/hermes_cli/test_model_catalog.py",
+          "startLine": 75
+        },
+        {
+          "name": "test_network_failure_returns_empty_when_no_cache",
+          "kind": "method",
+          "filePath": "tests/hermes_cli/test_model_catalog.py",
+          "startLine": 94
+        },
+        {
+          "name": "test_network_failure_falls_back_to_disk_cache",
+          "kind": "method",
+          "filePath": "tests/hermes_cli/test_model_catalog.py",
+          "startLine": 100
+        },
+        {
+          "name": "test_fetch_failure_falls_back_to_stale_cache",
+          "kind": "method",
+          "filePath": "tests/hermes_cli/test_model_catalog.py",
+          "startLine": 115
+        },
+        {
+          "name": "test_get_catalog_uses_fallback_chain",
+          "kind": "method",
+          "filePath": "tests/hermes_cli/test_model_catalog.py",
+          "startLine": 178
+        },
+        {
+          "name": "test_6_models_dev_unavailable_stale_disk_cache_usable",
+          "kind": "function",
+          "filePath": "tests/hermes_cli/test_model_catalog_adapter.py",
+          "startLine": 188
+        },
+        {
+          "name": "test_7_no_cache_static_fallback_usable",
+          "kind": "function",
+          "filePath": "tests/hermes_cli/test_model_catalog_adapter.py",
+          "startLine": 210
+        },
+        {
+          "name": "test_b2_consumers_always_receive_canonical_shape",
+          "kind": "function",
+          "filePath": "tests/hermes_cli/test_model_catalog_adapter.py",
+          "startLine": 320
+        },
+        {
+          "name": "test_model_catalog_zero_ambient_nous",
+          "kind": "function",
+          "filePath": "tests/hermes_cli/test_zero_ambient_nous.py",
+          "startLine": 147
+        },
+        {
+          "name": "test_models_dev_new_model_visible",
+          "kind": "function",
+          "filePath": "tests/hermes_cli/test_zero_ambient_nous.py",
+          "startLine": 313
+        }
+      ]
+    },
+    "affected_model_catalog_selected_tests": {
+      "changedFiles": [
+        "hermes_cli/model_catalog.py"
+      ],
+      "affectedTests": [
+        "tests/hermes_cli/test_model_catalog.py",
+        "tests/hermes_cli/test_model_catalog_adapter.py"
+      ],
+      "totalDependentsTraversed": 7084
+    }
+  }
+}

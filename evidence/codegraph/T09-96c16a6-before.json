@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "task_id": "T09",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "96c16a6a745a0fcdfa52305bcc687fc0c98860ea",
+  "source_fingerprint": "bb92f18aa51ccae2254af7cc28c319221871ad039de3c29c2bd213590530c80b",
+  "index_identity": "H:\\hermes-control-mcp-t09-before-96c16a6-20260924\\.codegraph",
+  "tool": {
+    "package": "@colbymchenry/codegraph",
+    "version": "1.6.0",
+    "invocation_kind": "CLI"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "queries": [
+    {
+      "query": "callers get_catalog -p <baseline-worktree> -j",
+      "result_ref": "evidence/codegraph/results/T09-96c16a6-before-results.json#/queries/callers_get_catalog"
+    },
+    {
+      "query": "callees get_catalog -p <baseline-worktree> -j",
+      "result_ref": "evidence/codegraph/results/T09-96c16a6-before-results.json#/queries/callees_get_catalog"
+    },
+    {
+      "query": "impact get_catalog -d 2 -p <baseline-worktree> -j",
+      "result_ref": "evidence/codegraph/results/T09-96c16a6-before-results.json#/queries/impact_get_catalog_depth2"
+    },
+    {
+      "query": "affected hermes_cli/model_catalog.py -f tests/hermes_cli/test_model_catalog*.py -p <baseline-worktree> -j",
+      "result_ref": "evidence/codegraph/results/T09-96c16a6-before-results.json#/queries/affected_model_catalog_selected_tests"
+    }
+  ],
+  "canonical_owners": [
+    "agent.usage_pricing.PricingEntry",
+    "agent.usage_pricing.CostSource",
+    "hermes_cli.model_catalog.get_catalog",
+    "hermes_cli.model_catalog._read_disk_cache",
+    "hermes_cli.model_catalog._fetch_manifest_with_fallback",
+    "hermes_cli.model_catalog._write_disk_cache"
+  ],
+  "impact_paths": [
+    "provider manifest -> hermes_cli.model_catalog.get_catalog -> model catalogue cache / static fallback",
+    "agent.usage_pricing PricingEntry/CostSource -> existing price display and usage-pricing tests",
+    "get_catalog depth-2 impact -> model catalogue provider projection and focused catalogue/adapter tests"
+  ],
+  "unresolved_edges": [
+    "The baseline graph has no free-route eligibility or host-owned refresh API; the provider manifest to pricing/entitlement interpretation boundary requires direct source inspection and tests.",
+    "CodeGraph resolves get_catalog callers/callees by symbol name and includes one unrelated max call under callees; dynamic and ambiguous edges are not proof of runtime ownership."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [
+    "Baseline inventory query identified tests/hermes_cli/test_model_catalog.py and tests/hermes_cli/test_model_catalog_adapter.py as selected affected tests.",
+    "Baseline pricing regression owner: tests/agent/test_usage_pricing.py."
+  ],
+  "evidence_refs": [
+    "evidence/codegraph/results/T09-96c16a6-before-results.json",
+    "_docs/2026-09-24_T09_free-route-catalogue_codex.md"
+  ],
+  "phase": "before"
+}
