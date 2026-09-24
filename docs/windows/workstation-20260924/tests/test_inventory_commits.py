@@ -219,6 +219,71 @@ class TestFrozenInventory(unittest.TestCase):
         self.assertEqual(len(row["parents"]), 2)
         self.assertIn(feature, row["parents"])
 
+    def _assert_generate_releases_resources(self, *, fail_after_staged_file: bool) -> None:
+        scratch_dirs: list[Path] = []
+        stage_dirs: list[Path] = []
+        connections: list[inventory.sqlite3.Connection] = []
+        real_temporary_directory = inventory.tempfile.TemporaryDirectory
+        real_mkdtemp = inventory.tempfile.mkdtemp
+        real_connect = inventory.sqlite3.connect
+        real_jsonl = inventory._jsonl
+        jsonl_writes = 0
+
+        def track_temporary_directory(*args, **kwargs):
+            temporary_directory = real_temporary_directory(*args, **kwargs)
+            scratch_dirs.append(Path(temporary_directory.name))
+            return temporary_directory
+
+        def track_mkdtemp(*args, **kwargs):
+            path = real_mkdtemp(*args, **kwargs)
+            if kwargs.get("prefix") == ".workstation-inventory-":
+                stage_dirs.append(Path(path))
+            return path
+
+        def track_connect(*args, **kwargs):
+            connection = real_connect(*args, **kwargs)
+            connections.append(connection)
+            return connection
+
+        def write_then_maybe_fail(path, rows):
+            nonlocal jsonl_writes
+            count = real_jsonl(path, rows)
+            jsonl_writes += 1
+            if fail_after_staged_file and jsonl_writes == 1:
+                raise RuntimeError("synthetic inventory write failure")
+            return count
+
+        with (
+            patch.object(inventory.tempfile, "TemporaryDirectory", side_effect=track_temporary_directory),
+            patch.object(inventory.tempfile, "mkdtemp", side_effect=track_mkdtemp),
+            patch.object(inventory.sqlite3, "connect", side_effect=track_connect),
+            patch.object(inventory, "_jsonl", side_effect=write_then_maybe_fail),
+        ):
+            if fail_after_staged_file:
+                with self.assertRaisesRegex(RuntimeError, "synthetic inventory write failure"):
+                    self.generate()
+            else:
+                self.generate()
+
+        self.assertEqual(len(connections), 1)
+        with self.assertRaisesRegex(inventory.sqlite3.ProgrammingError, "closed"):
+            connections[0].execute("SELECT 1")
+
+        self.assertEqual(len(scratch_dirs), 1)
+        self.assertFalse(scratch_dirs[0].exists())
+        self.assertEqual(len(stage_dirs), 1)
+        self.assertFalse(stage_dirs[0].exists())
+        if fail_after_staged_file:
+            self.assertFalse(self.output.exists())
+        else:
+            self.assertTrue((self.output / "metadata_universe.jsonl").is_file())
+
+    def test_generate_closes_sqlite_and_removes_temp_dirs_on_success(self) -> None:
+        self._assert_generate_releases_resources(fail_after_staged_file=False)
+
+    def test_generate_closes_sqlite_and_removes_temp_dirs_on_exception(self) -> None:
+        self._assert_generate_releases_resources(fail_after_staged_file=True)
+
     def test_nonempty_output_is_preserved(self) -> None:
         self.output.mkdir()
         sentinel = self.output / "keep.txt"
