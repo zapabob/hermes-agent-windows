@@ -12863,6 +12863,30 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         except Exception:
             logger.debug("Failed to start gateway loop heartbeat", exc_info=True)
 
+    def _start_free_route_catalogue_refresh_host(self) -> None:
+        """Acquire this gateway's reference to the profile catalogue host."""
+        if getattr(self, "_free_route_catalogue_host", None) is not None:
+            return
+        try:
+            from downstream.delegation.free_routes import start_free_route_catalogue_refresh_host
+
+            self._free_route_catalogue_host = start_free_route_catalogue_refresh_host()
+        except Exception:
+            logger.debug("free-route catalogue refresh host did not start")
+
+    def _stop_free_route_catalogue_refresh_host(self) -> None:
+        """Release this gateway's reference during bounded shutdown."""
+        host = getattr(self, "_free_route_catalogue_host", None)
+        if host is None:
+            return
+        self._free_route_catalogue_host = None
+        try:
+            from downstream.delegation.free_routes import stop_free_route_catalogue_refresh_host
+
+            stop_free_route_catalogue_refresh_host(host)
+        except Exception:
+            logger.debug("free-route catalogue refresh host did not stop")
+
     async def start(self) -> bool:
         """
         Start the gateway and all configured platform adapters.
@@ -13638,6 +13662,11 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         self._running = True
         self._install_plugin_message_injector()
         self._update_runtime_status("running")
+
+        # The gateway shares the profile-owned last-good catalogue with the
+        # Desktop serve host. Startup only schedules the due check; interactive
+        # catalogue reads remain local and never wait for this worker.
+        self._start_free_route_catalogue_refresh_host()
 
         self._start_loop_heartbeat_task()
 
@@ -15164,6 +15193,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         service_restart: bool = False,
     ) -> None:
         """Stop the gateway and disconnect all adapters."""
+        self._stop_free_route_catalogue_refresh_host()
         # getattr-guard: shutdown-path tests build bare runners via
         # object.__new__ that lack the liveness-guard machinery.
         _stop_guards = getattr(self, "_stop_loop_liveness_guards", None)

@@ -579,6 +579,17 @@ async def _lifespan(app: "FastAPI"):
     # sweeping stale sessions on schedule, independent of list requests.
     auto_archive_task = asyncio.create_task(_auto_archive_ticker_loop())
 
+    # Free-route metadata refresh is host-owned and cache-only for readers.
+    # Its worker checks the persisted twelve-hour deadline at startup and on
+    # wake; it never delays the Desktop readiness probe.
+    free_route_catalogue_host = None
+    try:
+        from downstream.delegation.free_routes import start_free_route_catalogue_refresh_host
+
+        free_route_catalogue_host = start_free_route_catalogue_refresh_host()
+    except Exception:
+        _log.debug("free-route catalogue refresh host did not start")
+
     try:
         if control_host is None:
             yield
@@ -587,6 +598,12 @@ async def _lifespan(app: "FastAPI"):
             async with control_host.lifespan():
                 yield
     finally:
+        try:
+            from downstream.delegation.free_routes import stop_free_route_catalogue_refresh_host
+
+            stop_free_route_catalogue_refresh_host(free_route_catalogue_host)
+        except Exception:
+            _log.debug("free-route catalogue refresh host did not stop")
         if cron_stop is not None:
             cron_stop.set()
         pty_reaper_task.cancel()

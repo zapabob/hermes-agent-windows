@@ -403,10 +403,87 @@ def _load_catalog_config() -> dict[str, Any]:
     }
 
 
+def openrouter_free_route_refresh_enabled() -> bool:
+    """Return true only for an explicit OpenRouter metadata-refresh opt-in.
+
+    The general model picker catalogue is enabled by default, so it is not an
+    adequate approval signal for a new background provider request. A profile
+    must set ``model_catalog.providers.openrouter.free_route_catalogue_enabled``
+    to the boolean ``true`` before a host may refresh this public metadata.
+    """
+    config = _load_catalog_config()
+    providers = config.get("providers")
+    provider = providers.get("openrouter") if isinstance(providers, dict) else None
+    return (
+        config.get("enabled") is True
+        and isinstance(provider, dict)
+        and provider.get("free_route_catalogue_enabled") is True
+    )
+
+
 def _cache_path() -> Path:
     """Return the disk cache path. Import lazily so tests can monkeypatch home."""
     from hermes_constants import get_hermes_home
     return get_hermes_home() / "cache" / "model_catalog.json"
+
+
+def free_route_cache_path() -> Path:
+    """Return the profile-scoped last-good free-route catalogue cache path.
+
+    The route projection is derived from the provider's canonical model
+    catalogue, but its price evidence has a different twelve-hour freshness
+    contract and must not be folded into the curated manifest or refreshed on
+    that manifest's four-hour picker cadence.
+    """
+    from hermes_constants import get_hermes_home
+    return get_hermes_home() / "cache" / "model_catalog_free_routes.json"
+
+
+def get_cached_curated_openrouter_model_ids() -> frozenset[str]:
+    """Return the approved OpenRouter ids without starting a catalogue fetch.
+
+    The free-route refresher is a host lifecycle task and must not turn a
+    pricing read into a second request to the four-hour curated-manifest
+    service. It uses the in-process/disk manifest when present and Hermes'
+    existing static picker list otherwise. A disabled model catalogue yields
+    no ids, which keeps the provider fetch disabled as well.
+    """
+    if not _load_catalog_config()["enabled"]:
+        return frozenset()
+
+    # Always resolve against the active profile's path. `_catalog_cache` is a
+    # process-global picker cache and may have been populated while another
+    # profile was active in the same Desktop/Gateway process.
+    catalog, _mtime = _read_disk_cache()
+    if isinstance(catalog, dict):
+        providers = catalog.get("providers")
+        block = providers.get("openrouter") if isinstance(providers, dict) else None
+        if isinstance(block, dict):
+            models = block.get("models")
+            if isinstance(models, list):
+                ids = {
+                    entry.get("id", "").strip()
+                    for entry in models
+                    if isinstance(entry, dict)
+                    and isinstance(entry.get("id"), str)
+                    and entry["id"].strip()
+                    and len(entry["id"].strip()) <= 512
+                }
+                if ids:
+                    return frozenset(ids)
+
+    # This is the same compiled-in fallback used by the existing picker. The
+    # import is intentionally local to avoid a module-level cycle.
+    try:
+        from hermes_cli.models import OPENROUTER_MODELS
+
+        return frozenset(
+            model_id
+            for model_id, _description in OPENROUTER_MODELS
+            if isinstance(model_id, str) and model_id.strip() == model_id and len(model_id) <= 512
+        )
+    except Exception:
+        return frozenset()
 
 
 # ---------------------------------------------------------------------------
