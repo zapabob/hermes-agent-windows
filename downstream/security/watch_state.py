@@ -6,6 +6,7 @@ import math
 import os
 import re
 import secrets
+import stat
 import sys
 import tempfile
 import time
@@ -15,10 +16,13 @@ from typing import Any, Iterator
 
 import psutil
 
+from .bounded_walk import ReparsePathError, absolute_path_without_reparse
+
 
 _STATE_VERSION = 1
 _WATCHER_MODULE = "downstream.security.watcher"
 _NONCE_RE = re.compile(r"^[0-9a-f]{32}$")
+MAX_WATCH_STATE_BYTES = 64 * 1024
 
 
 def _canonical_path(path: Path | str) -> str:
@@ -47,11 +51,47 @@ def _state_path(root: Path) -> Path:
 
 
 def _read_persisted(root: Path) -> tuple[dict[str, Any], str | None]:
-    path = _state_path(root)
-    if not path.exists():
-        return _default_state(), None
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
+        root = absolute_path_without_reparse(root)
+        path = root / "watch-state.json"
+        before = path.stat(follow_symlinks=False)
+    except FileNotFoundError:
+        return _default_state(), None
+    except (OSError, ReparsePathError):
+        return _default_state(), "invalid state file"
+    reparse_flag = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+    if (
+        stat.S_ISLNK(before.st_mode)
+        or (reparse_flag and getattr(before, "st_file_attributes", 0) & reparse_flag)
+        or not stat.S_ISREG(before.st_mode)
+        or before.st_size < 0
+        or before.st_size > MAX_WATCH_STATE_BYTES
+    ):
+        return _default_state(), "invalid state file"
+    try:
+        with path.open("rb") as handle:
+            opened = os.fstat(handle.fileno())
+            before_identity = (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns)
+            opened_identity = (opened.st_dev, opened.st_ino, opened.st_size, opened.st_mtime_ns)
+            if (
+                not stat.S_ISREG(opened.st_mode)
+                or opened_identity != before_identity
+                or opened.st_size > MAX_WATCH_STATE_BYTES
+            ):
+                return _default_state(), "invalid state file"
+            raw = handle.read(MAX_WATCH_STATE_BYTES + 1)
+            after_handle = os.fstat(handle.fileno())
+        after_path = path.stat(follow_symlinks=False)
+        after_identity = (after_path.st_dev, after_path.st_ino, after_path.st_size, after_path.st_mtime_ns)
+        if (
+            len(raw) != before.st_size
+            or len(raw) > MAX_WATCH_STATE_BYTES
+            or (after_handle.st_dev, after_handle.st_ino, after_handle.st_size, after_handle.st_mtime_ns)
+            != before_identity
+            or after_identity != before_identity
+        ):
+            return _default_state(), "invalid state file"
+        value = json.loads(raw.decode("utf-8"))
     except (OSError, UnicodeError, ValueError):
         return _default_state(), "invalid state file"
     if not isinstance(value, dict) or not isinstance(value.get("enabled"), bool):

@@ -1,15 +1,27 @@
 from __future__ import annotations
 
 import logging
+import hashlib
 import os
 import shutil
 import subprocess
+import stat
 import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .bounded_process import BoundedProcessOutputError, run_bounded
+from .clamav_definitions import (
+    DefinitionInventoryError,
+    MAX_DEFINITION_DIRECTORY_ENTRIES,
+    MAX_DEFINITION_FILE_BYTES,
+    MAX_DEFINITION_FILES,
+    MAX_DEFINITION_TOTAL_BYTES,
+    inventory_clamav_definitions,
+)
+from .engines import MAX_YARA_DIRECTORY_ENTRIES, MAX_YARA_RULE_BYTES, MAX_YARA_RULE_FILES, MAX_YARA_TOTAL_BYTES
 from .models import EngineState
 from .store import SecurityStore
 
@@ -24,28 +36,54 @@ AUTO_UPDATE_LOCK_NAME = ".auto-update.lock"
 
 #:ロックを stale とみなす秒数(前回実行がクラッシュしても次回起動で回復)。
 AUTO_UPDATE_LOCK_STALE_SECONDS = 3600.0
+MAX_UPDATE_TIMEOUT_SECONDS = 900
+MAX_UPDATE_OUTPUT_BYTES = 16 * 1024
+MAX_SIGTOOL_OUTPUT_BYTES = 8 * 1024
+MAX_BUNDLED_YARA_ENTRIES = MAX_YARA_DIRECTORY_ENTRIES
+MAX_BUNDLED_YARA_FILES = MAX_YARA_RULE_FILES
+MAX_BUNDLED_YARA_FILE_BYTES = MAX_YARA_RULE_BYTES
+MAX_BUNDLED_YARA_TOTAL_BYTES = MAX_YARA_TOTAL_BYTES
+DEFINITION_INVENTORY_ERRORS = {
+    "unknown": "definition_version_unavailable",
+    "inventory-limit": "definition_inventory_limit",
+    "file-limit": "definition_file_limit",
+    "invalid-file": "definition_file_invalid",
+}
 
 
 class DefinitionUpdater:
     def __init__(self, store: SecurityStore, timeout: int = 300) -> None:
         self.store = store
-        self.timeout = max(30, timeout)
+        self.timeout = max(30, min(int(timeout), MAX_UPDATE_TIMEOUT_SECONDS))
         self.root = store.root / "feeds" / "clamav"
         self.root.mkdir(parents=True, exist_ok=True)
 
     def _validate(self, candidate: Path) -> tuple[bool, str]:
-        databases = sorted(candidate.glob("*.cvd")) + sorted(candidate.glob("*.cld"))
-        if not databases or any(path.stat().st_size < 512 for path in databases):
+        try:
+            inventory = inventory_clamav_definitions(
+                candidate,
+                max_entries=MAX_DEFINITION_DIRECTORY_ENTRIES,
+                max_files=MAX_DEFINITION_FILES,
+                max_file_bytes=MAX_DEFINITION_FILE_BYTES,
+                max_total_bytes=MAX_DEFINITION_TOTAL_BYTES,
+            )
+        except DefinitionInventoryError as exc:
+            return False, _definition_inventory_validation_error(exc.reason)
+        databases = inventory.archives
+        if not databases or any(item.size < 512 for item in databases):
             return False, "freshclam produced no valid CVD/CLD database"
         sigtool = shutil.which("sigtool")
         if sigtool:
             for database in databases:
-                result = subprocess.run(
-                    [sigtool, "--info", str(database)], capture_output=True, text=True,
-                    encoding="utf-8", errors="replace", timeout=30, check=False,
-                    stdin=subprocess.DEVNULL,
-                )
-                if result.returncode != 0:
+                try:
+                    result = run_bounded(
+                        [sigtool, "--info", str(database.path)],
+                        timeout=30,
+                        max_output_bytes_per_stream=MAX_SIGTOOL_OUTPUT_BYTES,
+                    )
+                except (OSError, subprocess.SubprocessError, BoundedProcessOutputError):
+                    return False, f"sigtool could not validate {database.name}"
+                if result.returncode != 0 or result.output_truncated:
                     return False, f"sigtool rejected {database.name}"
         return True, f"{len(databases)} databases validated"
 
@@ -78,19 +116,28 @@ class DefinitionUpdater:
         staging = self.root / f".staging-{uuid.uuid4().hex}"
         staging.mkdir()
         try:
-            result = subprocess.run(
-                [freshclam, f"--datadir={staging}"], capture_output=True, text=True,
-                encoding="utf-8", errors="replace", timeout=self.timeout, check=False,
-                stdin=subprocess.DEVNULL,
+            result = run_bounded(
+                [freshclam, f"--datadir={staging}"],
+                timeout=self.timeout,
+                max_output_bytes_per_stream=MAX_UPDATE_OUTPUT_BYTES,
             )
         except subprocess.TimeoutExpired:
             shutil.rmtree(staging, ignore_errors=True)
             self.store.upsert_feed("clamav", EngineState.SCAN_TIMEOUT.value, "error", {"error": "freshclam timeout"})
             return {"ok": False, "state": EngineState.SCAN_TIMEOUT.value, "error": "freshclam timeout"}
-        output = "\n".join((result.stdout, result.stderr)).strip()[-2000:]
-        if result.returncode != 0:
+        except (OSError, subprocess.SubprocessError, BoundedProcessOutputError) as exc:
             shutil.rmtree(staging, ignore_errors=True)
-            self.store.upsert_feed("clamav", "update_failed", "error", {"exit_code": result.returncode, "output": output})
+            self.store.upsert_feed("clamav", "update_failed", "error", {"error": type(exc).__name__})
+            return {"ok": False, "state": "update_failed", "error": "freshclam execution failed"}
+        output = "\n".join((result.stdout, result.stderr)).strip()[-2000:]
+        if result.output_truncated or result.returncode != 0:
+            shutil.rmtree(staging, ignore_errors=True)
+            self.store.upsert_feed(
+                "clamav",
+                "update_failed",
+                "error",
+                {"exit_code": result.returncode, "output": output, "output_truncated": result.output_truncated},
+            )
             return {"ok": False, "state": "update_failed", "error": output, "exit_code": result.returncode}
         valid, validation = self._validate(staging)
         if not valid:
@@ -104,9 +151,65 @@ class DefinitionUpdater:
             self.store.upsert_feed("clamav", "activation_failed", "error", {"error": str(exc)})
             return {"ok": False, "state": "activation_failed", "error": str(exc)}
         current = self.root / "current"
-        version = str(max((path.stat().st_mtime_ns for path in current.iterdir()), default=0))
+        version = self._definition_version(current)
+        if version in DEFINITION_INVENTORY_ERRORS:
+            error = DEFINITION_INVENTORY_ERRORS[version]
+            details = {
+                "activated": True,
+                "validation": validation,
+                "verification": "incomplete",
+                "error": error,
+            }
+            self.store.upsert_feed("clamav", "activation_unverified", "error", details)
+            return {
+                "ok": False,
+                "state": "activation_unverified",
+                "activated": True,
+                "version": "unknown",
+                "error": error,
+            }
         self.store.upsert_feed("clamav", version, "ok", {"validation": validation})
         return {"ok": True, "state": "ok", "version": version, "validation": validation}
+
+    @staticmethod
+    def _definition_version(current: Path) -> str:
+        try:
+            inventory = inventory_clamav_definitions(
+                current,
+                max_entries=MAX_DEFINITION_DIRECTORY_ENTRIES,
+                max_files=MAX_DEFINITION_FILES,
+                max_file_bytes=MAX_DEFINITION_FILE_BYTES,
+                max_total_bytes=MAX_DEFINITION_TOTAL_BYTES,
+            )
+        except DefinitionInventoryError as exc:
+            return _definition_inventory_version_error(exc.reason)
+        return inventory.revision if inventory.archives else "unknown"
+
+
+def _definition_inventory_version_error(reason: str) -> str:
+    if reason == "definition_entry_limit":
+        return "inventory-limit"
+    if reason == "definition_file_limit":
+        return "file-limit"
+    if reason in {"unsupported_definition_entry", "invalid_definition_file", "definition_reparse_point"}:
+        return "invalid-file"
+    if reason in {"definition_file_size_limit", "definition_total_size_limit"}:
+        return "file-limit"
+    return "unknown"
+
+
+def _definition_inventory_validation_error(reason: str) -> str:
+    if reason == "definition_entry_limit":
+        return "definition inventory limit exceeded"
+    if reason == "definition_file_limit":
+        return "too many definition files"
+    if reason == "definition_file_size_limit":
+        return "definition file size limit exceeded"
+    if reason == "definition_total_size_limit":
+        return "definition total size limit exceeded"
+    if reason in {"unsupported_definition_entry", "invalid_definition_file", "definition_reparse_point"}:
+        return "invalid definition file"
+    return "definition directory unavailable"
 
 
 def _parse_updated_at(value: object) -> float | None:
@@ -226,22 +329,30 @@ def sync_bundled_yara_rules(store: SecurityStore) -> dict[str, Any]:
     例外を投げず結果dictを返す。
     """
     try:
+        bundled = Path(__file__).parent / "rules"
+        try:
+            rule_files, version, validation_error = _inventory_bundled_yara_rules(bundled)
+        except OSError:
+            return {"ok": False, "error": "bundled rule directory unavailable", "synced_files": 0}
+        if validation_error is not None:
+            return {"ok": False, "error": validation_error, "synced_files": 0}
         yara_dir = store.root / "feeds" / "yara"
         yara_dir.mkdir(parents=True, exist_ok=True)
-        bundled = Path(__file__).parent / "rules"
         copied = 0
-        newest_ns = 0
-        for source in sorted(bundled.glob("*.yar")):
+        for source, source_bytes, source_mtime_ns in rule_files:
+            destination = yara_dir / source.name
             try:
-                destination = yara_dir / source.name
-                source_stat = source.stat()
-                newest_ns = max(newest_ns, source_stat.st_mtime_ns)
-                if not destination.exists() or destination.stat().st_mtime_ns < source_stat.st_mtime_ns:
-                    shutil.copy2(source, destination)
-                    copied += 1
+                current = _read_existing_yara_rule(destination)
+                if current == source_bytes:
+                    continue
+                temporary = yara_dir / f".{source.name}.{uuid.uuid4().hex}.tmp"
+                temporary.write_bytes(source_bytes)
+                os.utime(temporary, ns=(source_mtime_ns, source_mtime_ns))
+                os.replace(temporary, destination)
+                copied += 1
             except OSError:
                 logger.debug("auto-update: yara sync failed for %s", source.name, exc_info=True)
-        version = str(newest_ns) if newest_ns else "bundled"
+                return {"ok": False, "error": "bundled rule sync failed", "synced_files": copied}
         try:
             store.upsert_feed("yara", version, "ok", {"synced_files": copied})
         except Exception:
@@ -251,6 +362,113 @@ def sync_bundled_yara_rules(store: SecurityStore) -> dict[str, Any]:
     except Exception as exc:
         logger.debug("auto-update: yara sync failed", exc_info=True)
         return {"ok": False, "error": str(exc)}
+
+
+def _inventory_bundled_yara_rules(
+    bundled: Path,
+) -> tuple[list[tuple[Path, bytes, int]], str, str | None]:
+    files: list[tuple[Path, bytes, int]] = []
+    total_bytes = 0
+    version_digest = hashlib.sha256()
+    try:
+        entries = os.scandir(bundled)
+    except FileNotFoundError:
+        return files, "bundled", None
+    with entries:
+        for index, entry in enumerate(entries):
+            if index >= MAX_BUNDLED_YARA_ENTRIES:
+                return [], "", "bundled rule inventory limit exceeded"
+            path = Path(entry.path)
+            if path.suffix.casefold() not in {".yar", ".yara"}:
+                continue
+            if len(files) >= MAX_BUNDLED_YARA_FILES:
+                return [], "", "too many bundled rule files"
+            try:
+                metadata = path.stat(follow_symlinks=False)
+            except OSError:
+                return [], "", "bundled rule file unavailable"
+            reparse_flag = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+            if (
+                stat.S_ISLNK(metadata.st_mode)
+                or (reparse_flag and getattr(metadata, "st_file_attributes", 0) & reparse_flag)
+                or not stat.S_ISREG(metadata.st_mode)
+            ):
+                return [], "", "invalid bundled rule file"
+            if metadata.st_size < 0 or metadata.st_size > MAX_BUNDLED_YARA_FILE_BYTES:
+                return [], "", "bundled rule size limit exceeded"
+            total_bytes += int(metadata.st_size)
+            if total_bytes > MAX_BUNDLED_YARA_TOTAL_BYTES:
+                return [], "", "bundled rule total size limit exceeded"
+            try:
+                with path.open("rb") as handle:
+                    opened = os.fstat(handle.fileno())
+                    if _file_identity(opened) != _file_identity(metadata):
+                        return [], "", "bundled rule changed during inventory"
+                    content = handle.read(MAX_BUNDLED_YARA_FILE_BYTES + 1)
+                    after_handle = os.fstat(handle.fileno())
+                after_path = path.stat(follow_symlinks=False)
+            except OSError:
+                return [], "", "bundled rule file unavailable"
+            if (
+                len(content) != metadata.st_size
+                or len(content) > MAX_BUNDLED_YARA_FILE_BYTES
+                or _file_identity(after_handle) != _file_identity(metadata)
+                or _file_identity(after_path) != _file_identity(metadata)
+            ):
+                return [], "", "bundled rule changed during inventory"
+            try:
+                content.decode("utf-8")
+            except UnicodeDecodeError:
+                return [], "", "bundled rule is not UTF-8"
+            files.append((path, content, int(metadata.st_mtime_ns)))
+            version_digest.update(path.name.casefold().encode("utf-8"))
+            version_digest.update(b"\0")
+            version_digest.update(hashlib.sha256(content).digest())
+    version = version_digest.hexdigest() if files else "bundled"
+    return sorted(files, key=lambda item: item[0].name.casefold()), version, None
+
+
+def _file_identity(metadata: os.stat_result) -> tuple[int, int, int, int, int]:
+    return (
+        int(metadata.st_dev),
+        int(metadata.st_ino),
+        int(metadata.st_size),
+        int(metadata.st_mtime_ns),
+        int(metadata.st_ctime_ns),
+    )
+
+
+def _read_existing_yara_rule(path: Path) -> bytes | None:
+    try:
+        before = path.stat(follow_symlinks=False)
+    except OSError:
+        return None
+    reparse_flag = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+    if (
+        stat.S_ISLNK(before.st_mode)
+        or (reparse_flag and getattr(before, "st_file_attributes", 0) & reparse_flag)
+        or not stat.S_ISREG(before.st_mode)
+        or before.st_size > MAX_BUNDLED_YARA_FILE_BYTES
+    ):
+        return None
+    try:
+        with path.open("rb") as handle:
+            opened = os.fstat(handle.fileno())
+            if _file_identity(opened) != _file_identity(before):
+                return None
+            content = handle.read(MAX_BUNDLED_YARA_FILE_BYTES + 1)
+            after_handle = os.fstat(handle.fileno())
+        after_path = path.stat(follow_symlinks=False)
+    except OSError:
+        return None
+    if (
+        len(content) != before.st_size
+        or len(content) > MAX_BUNDLED_YARA_FILE_BYTES
+        or _file_identity(after_handle) != _file_identity(before)
+        or _file_identity(after_path) != _file_identity(before)
+    ):
+        return None
+    return content
 
 
 def maybe_auto_update(

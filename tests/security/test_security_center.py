@@ -17,7 +17,14 @@ from unittest.mock import Mock, call, patch
 import pytest
 from cryptography.exceptions import InvalidTag
 
-from downstream.security.engines import ClamAVEngine, HashReputationEngine, StaticHeuristicsEngine, YaraEngine
+from downstream.security.engines import (
+    ClamAVEngine,
+    DefinitionInventoryError,
+    HashReputationEngine,
+    StaticHeuristicsEngine,
+    YaraEngine,
+    inventory_clamav_definitions,
+)
 from downstream.security.cli import _watch_disable, _watch_enable, resume_watch_if_enabled
 from downstream.security import cli as security_cli
 from downstream.security import watch_state, watcher as security_watcher
@@ -269,7 +276,12 @@ def test_directory_scan_skips_reparse_points(tmp_path: Path) -> None:
     service = service_for(tmp_path, CleanEngine())
     with patch("downstream.security.service.is_reparse_point", side_effect=lambda path: path == skipped):
         results = service.scan_paths([root], quarantine=False)
-    assert [Path(result.path).name for result in results] == ["clean.txt"]
+    clean = next(result for result in results if Path(result.path).name == "clean.txt")
+    incomplete = next(result for result in results if Path(result.path).name == "root")
+    assert clean.verdict == Verdict.CLEAN
+    assert incomplete.verdict == Verdict.SCAN_ERROR
+    assert incomplete.error == "directory_scan_incomplete"
+    assert incomplete.action == "blocked_pending_review"
 
 
 def test_locked_or_unreadable_file_is_scan_error(tmp_path: Path) -> None:
@@ -542,22 +554,28 @@ def test_definition_update_retains_current_on_validation_failure(tmp_path: Path)
     assert (current / "daily.cvd").read_bytes() == b"old" * 300
 
 
-def test_clamd_failure_falls_back_to_clamscan_with_managed_database(tmp_path: Path) -> None:
+def test_clamscan_uses_managed_database_and_bounded_process(tmp_path: Path) -> None:
     target = tmp_path / "fixture.bin"
     target.write_bytes(b"fixture")
     database = tmp_path / "database"
     database.mkdir()
-    commands = {"clamdscan": "C:/ClamAV/clamdscan.exe", "clamscan": "C:/ClamAV/clamscan.exe"}
-    runs = [
-        SimpleNamespace(returncode=2, stdout="", stderr="could not connect to clamd"),
-        SimpleNamespace(returncode=1, stdout=f"{target}: Hermes.Test FOUND", stderr=""),
-    ]
+    (database / "main.cvd").write_bytes(b"managed database fixture")
+    commands = {"clamscan": "C:/ClamAV/clamscan.exe"}
+    bounded_run = Mock(
+        return_value=SimpleNamespace(
+            returncode=1,
+            stdout=f"{target}: Hermes.Test FOUND",
+            stderr="",
+            output_truncated=False,
+        )
+    )
     with patch("downstream.security.engines.shutil.which", side_effect=lambda name: commands.get(name)), patch(
-        "downstream.security.engines.subprocess.run", side_effect=runs
-    ) as run:
+        "downstream.security.engines.run_bounded", bounded_run
+    ):
         findings = ClamAVEngine(database_dir=database).scan(target, hashlib.sha256(target.read_bytes()).hexdigest())
     assert findings[0].score == 90
-    assert run.call_args_list[1].args[0][:2] == [commands["clamscan"], f"--database={database}"]
+    assert bounded_run.call_count == 1
+    assert bounded_run.call_args.args[0][:2] == [commands["clamscan"], f"--database={database}"]
 
 
 def test_explicit_clamav_database_never_falls_back_to_environment(
@@ -632,18 +650,30 @@ def test_vault_key_acl_is_limited_to_owner_and_system(tmp_path: Path) -> None:
 
 @pytest.mark.windows_only
 def test_real_clamav_detects_eicar_when_required(tmp_path: Path) -> None:
-    command = shutil.which("clamdscan") or shutil.which("clamscan")
+    command = shutil.which("clamscan")
+    database_value = os.environ.get("CLAMAV_DATABASE_DIR")
     if not command and os.environ.get("HERMES_REQUIRE_CLAMAV") == "1":
-        pytest.fail("HERMES_REQUIRE_CLAMAV=1 but ClamAV is unavailable")
+        pytest.fail("HERMES_REQUIRE_CLAMAV=1 but clamscan is unavailable")
     if not command:
-        pytest.skip("ClamAV is not installed on this workstation")
+        pytest.skip("clamscan is not installed on this workstation")
+    if not database_value:
+        if os.environ.get("HERMES_REQUIRE_CLAMAV") == "1":
+            pytest.fail("HERMES_REQUIRE_CLAMAV=1 but no managed ClamAV database is configured")
+        pytest.skip("managed ClamAV definitions are not configured")
+    database = Path(database_value)
+    try:
+        inventory_clamav_definitions(database)
+    except DefinitionInventoryError as exc:
+        if os.environ.get("HERMES_REQUIRE_CLAMAV") == "1":
+            pytest.fail(f"managed ClamAV database is not valid: {exc.reason}")
+        pytest.skip("managed ClamAV definitions are not valid")
     target = tmp_path / "eicar.com"
     target.write_bytes(EICAR)
-    findings = ClamAVEngine(timeout=60).scan(target, hashlib.sha256(EICAR).hexdigest())
+    findings = ClamAVEngine(timeout=60, database_dir=database).scan(target, hashlib.sha256(EICAR).hexdigest())
     assert any(finding.score == 90 for finding in findings)
     clean = tmp_path / "clean.txt"
     clean.write_text("Hermes harmless negative control", encoding="utf-8")
-    clean_findings = ClamAVEngine(timeout=60).scan(clean, hashlib.sha256(clean.read_bytes()).hexdigest())
+    clean_findings = ClamAVEngine(timeout=60, database_dir=database).scan(clean, hashlib.sha256(clean.read_bytes()).hexdigest())
     assert all(finding.score == 0 for finding in clean_findings)
 
 

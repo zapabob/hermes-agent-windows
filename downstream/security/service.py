@@ -10,22 +10,49 @@ import sys
 import threading
 import uuid
 from contextlib import contextmanager
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Iterable, Iterator
 
 from hermes_cli.config import load_config
 
+from .bounded_walk import (
+    DirectoryWalkReport,
+    MAX_SCAN_FILES,
+    MAX_SCAN_ROOTS,
+    MAX_WALK_DEPTH,
+    MAX_WALK_DIRECTORIES,
+    MAX_WALK_ENTRIES,
+    ReparsePathError,
+    absolute_path_without_reparse,
+    iter_regular_files,
+)
 from .engines import ClamAVEngine, HashReputationEngine, StaticHeuristicsEngine, YaraEngine, engine_versions, versions_cache_key
-from .models import ExecutionDecision, Finding, ScanResult, Verdict
+from .models import EngineHealth, EngineState, ExecutionDecision, Finding, ScanResult, Verdict
 from .policy import evaluate
+from .snapshot_budget import reserve_snapshot_bytes
 from .store import SecurityStore
 from .updates import DefinitionUpdater
 from .vault import QuarantineVault
 
 
 FileIdentity = tuple[int, int, int, int, int]
+MAX_SCAN_TARGET_BYTES = 1024 * 1024 * 1024
+MAX_ACTIVE_SCAN_BYTES = 2 * 1024 * 1024 * 1024
+MAX_SCAN_FUTURES_MULTIPLIER = 2
+MAX_SCAN_WORKERS = 8
+_FAILED_ENGINE_VERSION_STATES = frozenset(
+    {
+        EngineState.SCAN_TIMEOUT.value,
+        EngineState.DATABASE_STALE.value,
+        EngineState.DATABASE_ERROR.value,
+        EngineState.ENGINE_ERROR.value,
+    }
+)
+_NONCACHEABLE_ENGINE_VERSION_STATES = _FAILED_ENGINE_VERSION_STATES | {
+    EngineState.SCANNER_UNAVAILABLE.value,
+}
 
 
 class _FileChangedDuringScan(RuntimeError):
@@ -34,6 +61,13 @@ class _FileChangedDuringScan(RuntimeError):
 
 class _ScanSnapshotUnavailable(RuntimeError):
     pass
+
+
+class _ScanTargetTooLarge(ValueError):
+    pass
+
+
+_HASH_POLICY = threading.local()
 
 
 @dataclass(frozen=True)
@@ -135,10 +169,32 @@ def _close_snapshot_handle(handle: object | None) -> None:
 
 
 @contextmanager
-def _create_scan_snapshot(path: Path, root: Path) -> Iterator[_ScanSnapshot]:
+def _create_scan_snapshot(
+    path: Path,
+    root: Path,
+    *,
+    max_bytes: int = MAX_SCAN_TARGET_BYTES,
+    expected_size: int | None = None,
+    expected_identity: FileIdentity | None = None,
+) -> Iterator[_ScanSnapshot]:
     try:
+        _assert_path_has_no_reparse_components(path)
+        before = path.stat(follow_symlinks=False)
+        source_size = int(before.st_size)
+        source_identity = _stat_identity(before)
+        if source_size < 0 or source_size > max_bytes:
+            raise _ScanTargetTooLarge("scan_target_too_large")
+        if expected_size is not None and source_size != expected_size:
+            raise _FileChangedDuringScan
+        if expected_identity is not None and source_identity != expected_identity:
+            raise _FileChangedDuringScan
+        if is_reparse_point(path) or not stat.S_ISREG(before.st_mode):
+            raise _FileChangedDuringScan
         directory = _create_private_snapshot_directory(root)
+        _assert_path_has_no_reparse_components(directory)
     except Exception as exc:
+        if isinstance(exc, (_FileChangedDuringScan, _ScanTargetTooLarge)):
+            raise
         raise _ScanSnapshotUnavailable from exc
 
     snapshot_path = directory / path.name
@@ -146,34 +202,46 @@ def _create_scan_snapshot(path: Path, root: Path) -> Iterator[_ScanSnapshot]:
     try:
         try:
             handle = _create_scan_snapshot_handle(snapshot_path)
+            _assert_path_has_no_reparse_components(snapshot_path)
             digest = hashlib.sha256()
-            size = 0
-            before = path.stat()
+            _assert_path_has_no_reparse_components(path)
             with path.open("rb") as source:
+                _assert_path_has_no_reparse_components(path)
                 opened = os.fstat(source.fileno())
-                for chunk in iter(lambda: source.read(1024 * 1024), b""):
+                if _stat_identity(opened) != source_identity:
+                    raise _FileChangedDuringScan
+                remaining = source_size
+                while remaining:
+                    chunk = source.read(min(1024 * 1024, remaining))
+                    if not chunk:
+                        raise _FileChangedDuringScan
                     digest.update(chunk)
-                    size += len(chunk)
+                    remaining -= len(chunk)
                     _write_snapshot_chunk(handle, chunk)
                 read_after = os.fstat(source.fileno())
-            after = path.stat()
+            _assert_path_has_no_reparse_components(path)
+            after = path.stat(follow_symlinks=False)
             identities = {
                 _stat_identity(item)
                 for item in (before, opened, read_after, after)
             }
-            if len(identities) != 1:
+            if len(identities) != 1 or (expected_identity is not None and _stat_identity(after) != expected_identity):
                 raise _FileChangedDuringScan
             _flush_snapshot(handle)
             if sys.platform != "win32":
                 os.chmod(snapshot_path, 0o400)
             sha256 = digest.hexdigest()
-            snapshot_sha256, snapshot_size, snapshot_identity = hash_stable_file(snapshot_path)
-            if (snapshot_sha256, snapshot_size) != (sha256, size):
+            snapshot_sha256, snapshot_size, snapshot_identity = _hash_with_policy(
+                snapshot_path,
+                max_bytes=max_bytes,
+                expected_size=source_size,
+            )
+            if (snapshot_sha256, snapshot_size) != (sha256, source_size):
                 raise _ScanSnapshotUnavailable
             snapshot = _ScanSnapshot(
                 snapshot_path,
                 sha256,
-                size,
+                source_size,
                 _stat_identity(after),
                 snapshot_identity,
             )
@@ -185,7 +253,11 @@ def _create_scan_snapshot(path: Path, root: Path) -> Iterator[_ScanSnapshot]:
         yield snapshot
 
         try:
-            snapshot_after = hash_stable_file(snapshot_path)
+            snapshot_after = _hash_with_policy(
+                snapshot_path,
+                max_bytes=max_bytes,
+                expected_size=snapshot.size,
+            )
         except (OSError, RuntimeError, ValueError) as exc:
             raise _ScanSnapshotUnavailable from exc
         if snapshot_after != (snapshot.sha256, snapshot.size, snapshot.snapshot_identity):
@@ -214,19 +286,91 @@ def _stat_identity(metadata: os.stat_result) -> FileIdentity:
     )
 
 
+def _assert_path_has_no_reparse_components(path: Path) -> None:
+    try:
+        checked = absolute_path_without_reparse(path)
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise _FileChangedDuringScan from exc
+    if os.path.normcase(str(checked)) != os.path.normcase(str(path)):
+        raise _FileChangedDuringScan
+
+
+def _engine_version_findings(versions: dict[str, str]) -> tuple[list[Finding], set[str]]:
+    findings: list[Finding] = []
+    unavailable_engines: set[str] = set()
+    version_states = _NONCACHEABLE_ENGINE_VERSION_STATES
+    states_by_value = {state.value: state for state in EngineState}
+    for name, version in versions.items():
+        if version not in version_states:
+            continue
+        state = states_by_value.get(version, EngineState.ENGINE_ERROR)
+        unavailable_engines.add(name)
+        findings.append(
+            Finding(
+                name,
+                "engine_version_unavailable",
+                0,
+                state,
+                {"reported_state": version},
+            )
+        )
+    return findings, unavailable_engines
+
+
 def hash_stable_file(path: Path) -> tuple[str, int, FileIdentity]:
-    before = path.stat()
+    policy = getattr(_HASH_POLICY, "current", None)
+    max_bytes, expected_size, expected_identity = policy if policy is not None else (None, None, None)
+    _assert_path_has_no_reparse_components(path)
+    before = path.stat(follow_symlinks=False)
+    size = int(before.st_size)
+    if max_bytes is not None and (size < 0 or size > max_bytes):
+        raise _ScanTargetTooLarge("scan_target_too_large")
+    if expected_size is not None and size != expected_size:
+        raise RuntimeError("file changed during scan")
+    before_identity = _stat_identity(before)
+    if expected_identity is not None and before_identity != expected_identity:
+        raise RuntimeError("file changed during scan")
+    if is_reparse_point(path) or not stat.S_ISREG(before.st_mode):
+        raise RuntimeError("file changed during scan")
     digest = hashlib.sha256()
+    _assert_path_has_no_reparse_components(path)
     with path.open("rb") as handle:
+        _assert_path_has_no_reparse_components(path)
         opened = os.fstat(handle.fileno())
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+        if _stat_identity(opened) != before_identity:
+            raise RuntimeError("file changed during scan")
+        remaining = size
+        while remaining:
+            chunk = handle.read(min(1024 * 1024, remaining))
+            if not chunk:
+                raise RuntimeError("file changed during scan")
             digest.update(chunk)
+            remaining -= len(chunk)
         read_after = os.fstat(handle.fileno())
-    after = path.stat()
+    _assert_path_has_no_reparse_components(path)
+    after = path.stat(follow_symlinks=False)
     identities = {_stat_identity(item) for item in (before, opened, read_after, after)}
-    if len(identities) != 1:
+    if len(identities) != 1 or (expected_identity is not None and _stat_identity(after) != expected_identity):
         raise RuntimeError("file changed during scan")
     return digest.hexdigest(), int(after.st_size), _stat_identity(after)
+
+
+def _hash_with_policy(
+    path: Path,
+    *,
+    max_bytes: int,
+    expected_size: int | None = None,
+    expected_identity: FileIdentity | None = None,
+) -> tuple[str, int, FileIdentity]:
+    previous = getattr(_HASH_POLICY, "current", None)
+    _HASH_POLICY.current = (max_bytes, expected_size, expected_identity)
+    try:
+        return hash_stable_file(path)
+    finally:
+        if previous is None:
+            del _HASH_POLICY.current
+        else:
+            _HASH_POLICY.current = previous
 
 
 def is_reparse_point(path: Path) -> bool:
@@ -251,13 +395,6 @@ class SecurityService:
         self.config = dict((root_config.get("security") or {}).get("malware") or {})
         timeout = int(self.config.get("scanner_timeout", 30))
         yara_rules = self.store.root / "feeds" / "yara"
-        if not self.read_only:
-            yara_rules.mkdir(parents=True, exist_ok=True)
-            bundled_rules = Path(__file__).parent / "rules"
-            for bundled in bundled_rules.glob("*.yar"):
-                destination = yara_rules / bundled.name
-                if not destination.exists():
-                    shutil.copy2(bundled, destination)
         self.engines = (
             HashReputationEngine(self.store),
             ClamAVEngine(timeout, self.store.root / "feeds" / "clamav" / "current"),
@@ -266,6 +403,7 @@ class SecurityService:
         )
         self._vault: QuarantineVault | None = None
         self._vault_lock = threading.Lock()
+        self._scan_identity = threading.local()
 
     @property
     def vault(self) -> QuarantineVault:
@@ -293,7 +431,26 @@ class SecurityService:
         }
 
     def _hash_stable(self, path: Path) -> tuple[str, int, FileIdentity]:
-        return hash_stable_file(path)
+        expected_identity = getattr(self._scan_identity, "identity", None)
+        return _hash_with_policy(
+            path,
+            max_bytes=MAX_SCAN_TARGET_BYTES,
+            expected_identity=expected_identity,
+        )
+
+    @staticmethod
+    def _boundary_failure(path: Path, error: str, size: int = 0) -> ScanResult:
+        return ScanResult(
+            str(path),
+            "",
+            max(0, size),
+            Verdict.SCAN_ERROR,
+            0,
+            "blocked_pending_review",
+            (),
+            {},
+            error=error,
+        )
 
     @staticmethod
     def _changed_file_result(
@@ -330,53 +487,112 @@ class SecurityService:
         )
 
     def scan_file(self, candidate: Path | str, quarantine: bool = True, use_cache: bool = True) -> ScanResult:
-        path = Path(candidate).resolve(strict=True)
-        if not path.is_file():
-            raise ValueError("scan target must be a regular file")
+        try:
+            path = absolute_path_without_reparse(candidate)
+        except ReparsePathError:
+            return self._boundary_failure(Path(candidate), "reparse_point_rejected")
+        except (OSError, RuntimeError, ValueError):
+            return self._boundary_failure(Path(candidate), "candidate_unresolved")
+        try:
+            metadata = path.stat(follow_symlinks=False)
+        except OSError:
+            return self._boundary_failure(path, "candidate_unavailable")
+        if is_reparse_point(path):
+            return self._boundary_failure(path, "reparse_point_rejected")
+        if not stat.S_ISREG(metadata.st_mode):
+            return self._boundary_failure(path, "scan_target_not_file")
+        size_hint = int(metadata.st_size)
+        if size_hint < 0 or size_hint > MAX_SCAN_TARGET_BYTES:
+            return self._boundary_failure(path, "scan_target_too_large", size_hint)
+        identity_hint = _stat_identity(metadata)
+        reservation = reserve_snapshot_bytes(size_hint, MAX_ACTIVE_SCAN_BYTES)
+        if reservation is None:
+            return self._boundary_failure(path, "scan_budget_exceeded", size_hint)
+        previous_identity = getattr(self._scan_identity, "identity", None)
+        self._scan_identity.identity = identity_hint
+        try:
+            with reservation:
+                return self._scan_file_reserved(
+                    path,
+                    quarantine=quarantine,
+                    use_cache=use_cache,
+                    size_hint=size_hint,
+                    identity_hint=identity_hint,
+                )
+        finally:
+            if previous_identity is None:
+                del self._scan_identity.identity
+            else:
+                self._scan_identity.identity = previous_identity
+
+    def _scan_file_reserved(
+        self,
+        path: Path,
+        *,
+        quarantine: bool,
+        use_cache: bool,
+        size_hint: int,
+        identity_hint: FileIdentity,
+    ) -> ScanResult:
         try:
             sha256, size, identity = self._hash_stable(path)
+        except _ScanTargetTooLarge:
+            return self._boundary_failure(path, "scan_target_too_large", size_hint)
         except (OSError, RuntimeError) as exc:
             error = "file_changed_during_scan" if isinstance(exc, RuntimeError) else str(exc)
-            return ScanResult(str(path), "", 0, Verdict.SCAN_ERROR, 0, "blocked_pending_review", (), self.versions(), error=error)
+            return replace(self._boundary_failure(path, error, size_hint), engine_versions=self.versions())
+        if size != size_hint or identity != identity_hint:
+            return replace(self._boundary_failure(path, "file_changed_during_scan", size_hint), engine_versions=self.versions())
         snapshot = (sha256, size, identity)
         versions = self.versions()
         cache_key = versions_cache_key(versions)
-        if use_cache:
+        if use_cache and not _engine_version_findings(versions)[1]:
             cached = self.store.cache_get(sha256, cache_key)
-            if cached is not None:
-                decision = evaluate(list(cached.findings), self.store.is_allowed(sha256, str(path)))
+            if cached is not None and cached.engine_health == EngineHealth.HEALTHY:
                 try:
                     after_cache_read = self._hash_stable(path)
-                except (OSError, RuntimeError):
+                except (OSError, RuntimeError, ValueError):
                     return self._changed_file_result(path, versions)
                 if after_cache_read != snapshot or cached.sha256 != sha256:
                     return self._changed_file_result(path, versions)
-                cached = replace(
-                    cached,
-                    path=str(path),
-                    verdict=decision.verdict,
-                    score=decision.score,
-                    action=decision.action,
-                    error=decision.error,
-                    quarantine_id=None,
-                    file_identity=identity,
-                )
-                if (
-                    decision.execution_decision == ExecutionDecision.BLOCK
-                    and decision.action == "quarantine"
-                    and quarantine
-                    and bool(self.config.get("auto_quarantine", True))
-                ):
-                    try:
-                        item_id = self.vault.quarantine(path, cached)
-                        cached = replace(cached, action="quarantined", quarantine_id=item_id)
-                    except Exception:
-                        cached = replace(cached, action="quarantine_failed", error="quarantine failed")
-                self.store.record_scan(cached, cache_key)
-                return cached
-        findings: list[Finding] = []
+                verified_versions = self.versions()
+                if verified_versions == versions and not _engine_version_findings(verified_versions)[1]:
+                    decision = evaluate(list(cached.findings), self.store.is_allowed(sha256, str(path)))
+                    cached = replace(
+                        cached,
+                        path=str(path),
+                        verdict=decision.verdict,
+                        score=decision.score,
+                        action=decision.action,
+                        error=decision.error,
+                        engine_versions=verified_versions,
+                        quarantine_id=None,
+                        file_identity=identity,
+                    )
+                    if (
+                        decision.execution_decision == ExecutionDecision.BLOCK
+                        and decision.action == "quarantine"
+                        and quarantine
+                        and bool(self.config.get("auto_quarantine", True))
+                    ):
+                        try:
+                            item_id = self.vault.quarantine(path, cached)
+                            cached = replace(cached, action="quarantined", quarantine_id=item_id)
+                        except Exception:
+                            cached = replace(cached, action="quarantine_failed", error="quarantine failed")
+                    self.store.record_scan(cached, cache_key)
+                    return cached
+                versions = verified_versions
+                cache_key = versions_cache_key(versions)
+        findings, unavailable_engines = _engine_version_findings(versions)
         try:
-            with _create_scan_snapshot(path, self.store.root) as scan_snapshot:
+            with _create_scan_snapshot(
+                path,
+                self.store.root,
+                max_bytes=MAX_SCAN_TARGET_BYTES,
+                expected_size=size_hint,
+                expected_identity=identity_hint,
+            ) as scan_snapshot:
                 if (
                     scan_snapshot.sha256,
                     scan_snapshot.size,
@@ -384,6 +600,8 @@ class SecurityService:
                 ) != snapshot:
                     raise _FileChangedDuringScan
                 for engine in self.engines:
+                    if engine.name in unavailable_engines:
+                        continue
                     if isinstance(engine, StaticHeuristicsEngine):
                         findings.extend(
                             engine.scan(
@@ -402,6 +620,8 @@ class SecurityService:
                     raise _FileChangedDuringScan
         except _FileChangedDuringScan:
             return self._changed_file_result(path, versions)
+        except _ScanTargetTooLarge:
+            return self._boundary_failure(path, "scan_target_too_large", size_hint)
         except _ScanSnapshotUnavailable:
             return self._snapshot_unavailable_result(path, versions)
         allowed = self.store.is_allowed(sha256, str(path))
@@ -429,37 +649,134 @@ class SecurityService:
                 result = replace(result, action="quarantined", quarantine_id=item_id)
             except Exception:
                 result = replace(result, action="quarantine_failed", error="quarantine failed")
-        self.store.record_scan(result, cache_key)
+        if decision.engine_health == EngineHealth.HEALTHY:
+            self.store.record_scan(result, cache_key)
+        else:
+            self.store.event(
+                "detection",
+                result.path,
+                result.verdict.value,
+                result.action,
+                {
+                    "sha256": result.sha256,
+                    "score": result.score,
+                    "findings": [
+                        {"source": item.source, "name": item.name, "state": item.state.value}
+                        for item in result.findings
+                    ],
+                },
+            )
         return result
 
     def scan_paths(self, paths: Iterable[Path | str], workers: int | None = None, quarantine: bool = True) -> list[ScanResult]:
         files: list[Path] = []
         requested_paths: list[str] = []
+        incomplete_paths: list[Path] = []
+        inventory = DirectoryWalkReport()
+        root_count = 0
         for item in paths:
-            path = Path(item).resolve(strict=True)
-            requested_paths.append(str(path))
-            if path.is_file():
-                files.append(path)
+            if root_count >= MAX_SCAN_ROOTS:
+                inventory.mark("root_limit")
+                incomplete_paths.append(Path(item))
+                break
+            root_count += 1
+            try:
+                path = absolute_path_without_reparse(item)
+            except ReparsePathError:
+                requested_paths.append(str(item))
+                inventory.mark("root_reparse_point")
+                incomplete_paths.append(Path(item))
                 continue
-            for root, dirnames, names in os.walk(path, followlinks=False):
-                dirnames[:] = [name for name in dirnames if not is_reparse_point(Path(root) / name)]
-                files.extend(Path(root) / name for name in names if not is_reparse_point(Path(root) / name))
+            except OSError:
+                requested_paths.append(str(item))
+                inventory.mark("root_stat_error", error=True)
+                incomplete_paths.append(Path(item))
+                continue
+            requested_paths.append(str(path))
+            try:
+                metadata = path.stat(follow_symlinks=False)
+            except OSError:
+                inventory.mark("root_stat_error", error=True)
+                incomplete_paths.append(path)
+                continue
+            if is_reparse_point(path):
+                inventory.mark("root_reparse_point")
+                incomplete_paths.append(path)
+            elif stat.S_ISREG(metadata.st_mode):
+                if len(files) >= MAX_SCAN_FILES:
+                    inventory.mark("file_limit")
+                    incomplete_paths.append(path)
+                else:
+                    files.append(path)
+                    inventory.files += 1
+                continue
+            elif not stat.S_ISDIR(metadata.st_mode):
+                continue
+            if len(files) >= MAX_SCAN_FILES:
+                inventory.mark("file_limit")
+                incomplete_paths.append(path)
+                continue
+            root_inventory = DirectoryWalkReport()
+            remaining = MAX_SCAN_FILES - len(files)
+            discovered = iter_regular_files(
+                path,
+                root_inventory,
+                max_files=remaining,
+                max_entries=max(0, MAX_WALK_ENTRIES - inventory.entries),
+                max_directories=max(0, MAX_WALK_DIRECTORIES - inventory.directories),
+                max_depth=MAX_WALK_DEPTH,
+                is_reparse=is_reparse_point,
+            )
+            files.extend(discovered)
+            inventory.entries += root_inventory.entries
+            inventory.files += root_inventory.files
+            inventory.directories += root_inventory.directories
+            inventory.errors += root_inventory.errors
+            for reason in root_inventory.reasons:
+                inventory.mark(reason)
+            if not root_inventory.complete:
+                incomplete_paths.append(path)
         self.store.event(
             "scan_requested",
             f"{len(requested_paths)} path(s)",
             None,
             "requested",
-            {"paths": requested_paths, "files_discovered": len(files), "quarantine": quarantine},
+            {
+                "paths": requested_paths,
+                "files_discovered": len(files),
+                "quarantine": quarantine,
+                "inventory_complete": inventory.complete,
+                "inventory_reason": inventory.truncated_reason,
+            },
         )
-        maximum = max(1, min(int(workers or self.config.get("max_workers", 4)), 8))
+        maximum = max(1, min(int(workers or self.config.get("max_workers", 4)), MAX_SCAN_WORKERS))
         results: list[ScanResult] = []
         with ThreadPoolExecutor(max_workers=maximum, thread_name_prefix="hermes-security") as pool:
-            futures = {pool.submit(self.scan_file, path, quarantine): path for path in files}
-            for future in as_completed(futures):
+            file_iterator = iter(files)
+            futures = {}
+            max_pending = max(1, maximum * MAX_SCAN_FUTURES_MULTIPLIER)
+            while len(futures) < max_pending:
                 try:
-                    results.append(future.result())
-                except Exception as exc:
-                    results.append(ScanResult(str(futures[future]), "", 0, Verdict.SCAN_ERROR, 0, "blocked_pending_review", (), self.versions(), error=str(exc)))
+                    path = next(file_iterator)
+                except StopIteration:
+                    break
+                futures[pool.submit(self.scan_file, path, quarantine)] = path
+            while futures:
+                completed, _pending = wait(tuple(futures), return_when=FIRST_COMPLETED)
+                for future in completed:
+                    path = futures.pop(future)
+                    try:
+                        results.append(future.result())
+                    except Exception as exc:
+                        results.append(ScanResult(str(path), "", 0, Verdict.SCAN_ERROR, 0, "blocked_pending_review", (), self.versions(), error=str(exc)))
+                try:
+                    while len(futures) < max_pending:
+                        path = next(file_iterator)
+                        futures[pool.submit(self.scan_file, path, quarantine)] = path
+                except StopIteration:
+                    pass
+        for path in incomplete_paths:
+            results.append(self._boundary_failure(path, "directory_scan_incomplete"))
         counts = {verdict.value: 0 for verdict in Verdict}
         for result in results:
             counts[result.verdict.value] += 1
