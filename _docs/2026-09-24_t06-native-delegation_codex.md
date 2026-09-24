@@ -78,3 +78,7 @@ The command above was not run. There is no interrupted-run cleanup command. A `c
 ## Remaining T06 work
 
 This preparation does not complete T06. After the separate approval and successful native probes, implement lifecycle ownership and integrate the same fail-closed adapter into foreground `LocalEnvironment` and background `ProcessRegistry`, then verify useful operations and every denial against the real Windows boundary. If the AppContainer APIs or current Windows policy cannot produce both useful operations and the required denials without persistent changes, stop and report the concrete blocker.
+
+## Integrator receipt, 2026-09-24
+
+The preparatory product and correction commits were cherry-picked onto `feat/hermes-control-mcp-c-20260923-recovered` as `1c193e0a2f` and `b9fe899c2c`. The independent reviewer cleared the corrected preparation after the forgeable cleanup marker and mutable `SystemRoot` concerns were fixed. At the integrated source tree, `uv run --offline pytest tests/windows/test_delegated_execution_boundary.py -q --basetemp .t06-pytest-integrator-safe-20260924-01` passed with 6 passed and 5 profile-gated skips. A first run using an H: basetemp against the C: integrator correctly failed the test fixture's same-volume check; it is not counted as a product failure or a passed test. The C: pytest output is untracked and retained. The separate real-profile experiment remains unapproved and unrun. The integrated launcher is not yet connected to foreground or background execution.
