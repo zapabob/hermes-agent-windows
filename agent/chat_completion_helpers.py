@@ -1190,6 +1190,11 @@ def direct_api_call(agent, api_kwargs: dict):
     outer retry loop reconnects with backoff / credential rotation /
     provider fallback.
     """
+    from downstream.delegation.network_budget import current_request_lease
+
+    network_lease = current_request_lease()
+    if network_lease is not None:
+        network_lease.check_active()
     _check_stale_giveup(agent)
     agent._touch_activity("waiting for non-streaming API response")
     # Request-lifecycle state, every transition under ``request_client_lock``
@@ -1218,15 +1223,16 @@ def direct_api_call(agent, api_kwargs: dict):
         with request_client_lock:
             if request_state["done"]:
                 return False
-            if reason == "stale_call_kill" and request_state["cancelled"]:
+            is_timeout = reason in {"stale_call_kill", "deadline"}
+            if is_timeout and request_state["cancelled"]:
                 return False
-            if reason != "stale_call_kill":
+            if not is_timeout:
                 # A user interrupt/redirect that wins this lock owns the
                 # request outcome. Do not let a later timer misclassify the
                 # cancelled call as provider staleness and advance the
                 # cross-turn circuit breaker.
                 request_state["cancelled"] = True
-            newly_stale = reason == "stale_call_kill" and not request_state["stale"]
+            newly_stale = is_timeout and not request_state["stale"]
             if newly_stale:
                 request_state["stale"] = True
                 # Advance the breaker before releasing the lock: the inline
@@ -1287,6 +1293,8 @@ def direct_api_call(agent, api_kwargs: dict):
         while not activity_hb_stop.wait(_DIRECT_API_ACTIVITY_HEARTBEAT_SECONDS):
             try:
                 agent._touch_activity("waiting for non-streaming API response")
+                if network_lease is not None:
+                    network_lease.heartbeat()
             except Exception:
                 pass
 
@@ -1301,12 +1309,54 @@ def direct_api_call(agent, api_kwargs: dict):
     # stalls from the stall monitor.
     call_start = time.time()
     stale_timeout = _resolve_direct_stale_timeout(agent, api_kwargs)
-    # Do not override an explicit per-call timeout (provider config /
-    # transport already set one). Otherwise pin read=stale_timeout so a
-    # no-op stranger-thread abort cannot leave the keepalive client's
-    # read=None socket hanging until TCP dies (#85252).
+    if network_lease is not None:
+        stale_timeout = min(
+            stale_timeout,
+            network_lease.remaining_seconds,
+        )
+    # Without a lease, keep the established inline timeout behavior. A
+    # budgeted call must also cap explicit SDK timeouts while retaining
+    # separate connect, read-idle, and total bounds: the watchdog below is
+    # the absolute request bound, while the socket read timeout handles an
+    # idle connection that has not made progress.
     hard_timeout = _inline_nonstream_hard_timeout(stale_timeout)
-    if hard_timeout is not None and "timeout" not in api_kwargs:
+    if network_lease is not None:
+        import httpx
+
+        network_lease.check_active()
+        configured_timeout = api_kwargs.get("timeout", stale_timeout)
+        base_timeout = (
+            configured_timeout
+            if isinstance(configured_timeout, httpx.Timeout)
+            else httpx.Timeout(configured_timeout)
+        )
+        remaining = network_lease.remaining_seconds
+
+        def _cap_timeout(value: object, maximum: float) -> float:
+            if isinstance(value, (int, float)) and not isinstance(value, bool):
+                return min(float(value), maximum)
+            return maximum
+
+        api_kwargs = dict(api_kwargs)
+        api_kwargs["timeout"] = httpx.Timeout(
+            connect=_cap_timeout(
+                base_timeout.connect,
+                min(network_lease.connect_timeout_seconds, remaining),
+            ),
+            read=_cap_timeout(
+                base_timeout.read,
+                min(network_lease.read_idle_timeout_seconds, remaining),
+            ),
+            write=_cap_timeout(
+                base_timeout.write,
+                min(network_lease.connect_timeout_seconds, remaining),
+            ),
+            pool=_cap_timeout(
+                base_timeout.pool,
+                min(network_lease.connect_timeout_seconds, remaining),
+            ),
+        )
+    elif hard_timeout is not None and "timeout" not in api_kwargs:
         api_kwargs = dict(api_kwargs)
         api_kwargs["timeout"] = hard_timeout
     activity_hb.start()
@@ -1341,7 +1391,15 @@ def direct_api_call(agent, api_kwargs: dict):
         response = _dispatch_nonstreaming_api_request(
             agent, api_kwargs, make_client=_make_client
         )
+        if network_lease is not None:
+            network_lease.check_active()
     except Exception:
+        if network_lease is not None and network_lease.cancelled:
+            if network_lease.cancel_reason == "deadline":
+                raise TimeoutError(
+                    "Delegated provider request exceeded its total deadline."
+                ) from None
+            raise InterruptedError("Delegated provider request was cancelled.") from None
         if getattr(agent, "_interrupt_requested", False):
             raise InterruptedError("Agent interrupted during API call") from None
         with request_client_lock:
@@ -1369,6 +1427,8 @@ def direct_api_call(agent, api_kwargs: dict):
         # bump; the poisoned client is discarded by the finally).
         with request_client_lock:
             request_state["done"] = True
+        if network_lease is not None:
+            network_lease.mark_progress()
         _reset_stale_streak(agent)
         succeeded = True
         return response
@@ -1405,11 +1465,20 @@ def interruptible_api_call(agent, api_kwargs: dict):
     the main retry loop can try again with backoff / credential rotation /
     provider fallback.
     """
+    from downstream.delegation.network_budget import (
+        RequestCancelled,
+        RequestDeadlineExceeded,
+        current_request_lease,
+    )
+
+    network_lease = current_request_lease()
     # Cron and other non-interactive, nested-pool contexts must not spawn the
     # interrupt worker — it wedges before the socket opens on the 2nd+ call
     # (#62151). Run inline instead. See should_use_direct_api_call.
     if should_use_direct_api_call(agent):
         return direct_api_call(agent, api_kwargs)
+    if network_lease is not None:
+        network_lease.check_active()
 
     result = {"response": None, "error": None}
 
@@ -1515,7 +1584,9 @@ def interruptible_api_call(agent, api_kwargs: dict):
             # handler, the transport error is the expected consequence of our
             # own force-close, NOT a network bug. Swallow it instead of
             # surfacing — the main thread raises InterruptedError. (#6600)
-            if _request_cancelled["value"]:
+            if _request_cancelled["value"] or (
+                network_lease is not None and network_lease.cancelled
+            ):
                 logger.debug(
                     "Non-streaming worker caught %s after request cancellation — "
                     "exiting without surfacing a network error.",
@@ -1533,6 +1604,10 @@ def interruptible_api_call(agent, api_kwargs: dict):
                 if result["response"] is not None
                 else "request_error_cleanup"
             )
+            if network_lease is not None:
+                if result["response"] is not None:
+                    network_lease.mark_progress()
+                network_lease.worker_finished()
 
     # ── Stale-call timeout (mirrors streaming stale detector) ────────
     # Non-streaming calls return nothing until the full response is
@@ -1541,6 +1616,9 @@ def interruptible_api_call(agent, api_kwargs: dict):
     # detector kills the connection early so the main retry loop can
     # apply richer recovery (credential rotation, provider fallback).
     _stale_timeout = agent._compute_non_stream_stale_timeout(api_kwargs)
+    if network_lease is not None:
+        network_lease.check_active()
+        _stale_timeout = min(_stale_timeout, network_lease.remaining_seconds)
 
     # ── Codex Responses stream watchdogs ────────────────────────────────
     # The chatgpt.com/backend-api/codex endpoint has an intermittent failure
@@ -1666,11 +1744,40 @@ def interruptible_api_call(agent, api_kwargs: dict):
         _progress_tracker.start()
 
     t = threading.Thread(target=_context_thread_target(_call), daemon=True)
-    t.start()
+    if network_lease is not None:
+        network_lease.worker_started()
+    try:
+        t.start()
+    except Exception:
+        if network_lease is not None:
+            network_lease.worker_finished()
+        raise
     _poll_count = 0
     while t.is_alive():
         t.join(timeout=0.3)
         _poll_count += 1
+        if network_lease is not None and result["response"] is None:
+            try:
+                network_lease.check_active()
+            except RequestCancelled:
+                _request_cancelled["value"] = True
+                try:
+                    _close_request_client_once("interrupt_abort")
+                except Exception:
+                    pass
+                _join_worker_for_relay_teardown(t, label="Non-streaming")
+                _progress_tracker.stop()
+                raise
+            except RequestDeadlineExceeded as exc:
+                try:
+                    _close_request_client_once("stale_call_kill")
+                except Exception:
+                    pass
+                t.join(timeout=2.0)
+                _progress_tracker.stop()
+                raise TimeoutError(
+                    f"Delegated provider request exceeded {exc.code}."
+                ) from None
 
         # Every ~30s: touch activity for the gateway inactivity monitor AND
         # rewrite the live spinner/status line so CLI/TUI/Desktop users see
@@ -1679,6 +1786,8 @@ def interruptible_api_call(agent, api_kwargs: dict):
         # usually a slow/overloaded provider, but the UI never said so).
         if _poll_count % 100 == 0:  # 100 × 0.3s = 30s
             _elapsed = time.time() - _call_start
+            if network_lease is not None:
+                network_lease.heartbeat()
             if _is_local_request:
                 agent._touch_activity(
                     f"local inference in progress ({int(_elapsed)}s elapsed)"

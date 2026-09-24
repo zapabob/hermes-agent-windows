@@ -1629,6 +1629,16 @@ def run_codex_stream(agent, api_kwargs: dict, client: Any = None, on_first_delta
         # TTFB watchdog and activity touch — runs once per SSE event.
         agent._codex_stream_last_event_ts = time.time()
         agent._touch_activity("receiving stream response")
+        try:
+            from downstream.delegation.network_budget import current_request_lease
+
+            lease = current_request_lease()
+            if lease is not None:
+                lease.mark_progress()
+        except Exception:
+            # Lease accounting is supplementary to the existing stream
+            # lifecycle; it must not disrupt event delivery.
+            pass
 
     for attempt in range(max_stream_retries + 1):
         if agent._interrupt_requested:

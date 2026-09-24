@@ -5597,6 +5597,30 @@ class AIAgent:
             return primary_client
         with self._openai_client_lock():
             request_kwargs = dict(self._client_kwargs)
+        from downstream.delegation.network_budget import current_request_lease
+
+        request_lease = current_request_lease()
+        if request_lease is not None:
+            import httpx
+
+            configured_timeout = request_kwargs.get("timeout", 600.0)
+            base_timeout = httpx.Timeout(configured_timeout)
+
+            def _cap_timeout(value: object, maximum: float) -> float:
+                if isinstance(value, (int, float)) and not isinstance(value, bool):
+                    return min(float(value), maximum)
+                return maximum
+
+            connect_cap = request_lease.connect_timeout_seconds
+            request_kwargs["timeout"] = httpx.Timeout(
+                connect=_cap_timeout(base_timeout.connect, connect_cap),
+                read=_cap_timeout(
+                    base_timeout.read,
+                    request_lease.read_idle_timeout_seconds,
+                ),
+                write=_cap_timeout(base_timeout.write, connect_cap),
+                pool=_cap_timeout(base_timeout.pool, connect_cap),
+            )
         # Per-request OpenAI-wire clients (used by both the non-streaming
         # chat-completions path and the streaming chat-completions path
         # in `_interruptible_api_call`) should not run the SDK's built-in
@@ -5771,11 +5795,29 @@ class AIAgent:
         if getattr(self, "provider", None) == "bedrock":
             region = getattr(self, "_bedrock_region", "us-east-1") or "us-east-1"
             return ("bedrock", region)
+        provider_id = getattr(self, "provider", "")
+        model_id = getattr(self, "model", None)
+        request_timeout = get_provider_request_timeout(provider_id, model_id)
+        from downstream.delegation.network_budget import current_request_lease
+
+        request_lease = current_request_lease()
+        if request_lease is not None:
+            if (
+                isinstance(request_timeout, bool)
+                or not isinstance(request_timeout, (int, float))
+                or request_timeout <= 0
+            ):
+                request_timeout = request_lease.read_idle_timeout_seconds
+            else:
+                request_timeout = min(
+                    float(request_timeout),
+                    request_lease.read_idle_timeout_seconds,
+                )
         return (
             "direct",
             self._anthropic_api_key,
             getattr(self, "_anthropic_base_url", None),
-            get_provider_request_timeout(self.provider, self.model),
+            request_timeout,
             bool(getattr(self, "_oauth_1m_beta_disabled", False)),
         )
 
@@ -5840,7 +5882,7 @@ class AIAgent:
             client = build_anthropic_client(
                 self._anthropic_api_key,
                 getattr(self, "_anthropic_base_url", None),
-                timeout=get_provider_request_timeout(self.provider, self.model),
+                timeout=key[3],
                 drop_context_1m_beta=key[4],
             )
         logger.debug(

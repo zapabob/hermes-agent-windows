@@ -14,9 +14,16 @@ import json
 import secrets
 import threading
 import weakref
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass, field
 from typing import Any, Iterator, Mapping, Protocol, runtime_checkable
+
+from downstream.delegation.network_budget import (
+    RequestBudget,
+    RequestBudgetError,
+    RequestLease,
+    bind_request_lease,
+)
 
 
 @dataclass(frozen=True)
@@ -113,6 +120,10 @@ class InferencePortError(RuntimeError):
             "UNREQUESTED_TOOL",
             "INCOMPLETE_TOOL_ARGUMENTS",
             "EMPTY_TURN",
+            "NETWORK_CAPACITY_FULL",
+            "NETWORK_ACCOUNT_CAPACITY_FULL",
+            "NETWORK_ACCOUNT_COOLDOWN",
+            "NETWORK_REQUEST_OUTCOME_UNKNOWN",
         }
     )
 
@@ -132,6 +143,7 @@ class InferencePortError(RuntimeError):
 
 _PARENT_OWNER_LOCK = threading.RLock()
 _PARENT_OWNER_REFS: dict[str, Any] = {}
+_PARENT_NETWORK_BINDINGS: dict[str, tuple[RequestBudget, str]] = {}
 _ACTIVE_REQUEST_ABORTS: dict[str, Any] = {}
 
 
@@ -143,6 +155,7 @@ def _register_parent_owner(parent: Any) -> str:
         with _PARENT_OWNER_LOCK:
             if _PARENT_OWNER_REFS.get(key) is ref:
                 _PARENT_OWNER_REFS.pop(key, None)
+                _PARENT_NETWORK_BINDINGS.pop(key, None)
 
     try:
         parent_ref = weakref.ref(parent, discard)
@@ -162,6 +175,11 @@ def _resolve_parent_owner(token: str) -> Any:
     if parent is None:
         raise InferencePortError("Parent inference owner has expired.")
     return parent
+
+
+def _parent_network_binding(token: str) -> tuple[RequestBudget, str] | None:
+    with _PARENT_OWNER_LOCK:
+        return _PARENT_NETWORK_BINDINGS.get(token)
 
 
 def _set_request_abort(request_id: str, abort: Any) -> None:
@@ -247,16 +265,27 @@ class _ParentRequestAgent:
         "_owner_token",
         "_requester",
         "_cancel_requested",
+        "_cancel_generation",
         "_abort_lock",
+        "_request_lease",
 
         "_request_id",
     )
 
-    def __init__(self, owner_token: str, requester: Any, request_id: str) -> None:
+    def __init__(
+        self,
+        owner_token: str,
+        requester: Any,
+        request_id: str,
+        request_lease: RequestLease | None = None,
+        cancel_generation: int = 0,
+    ) -> None:
         object.__setattr__(self, "_owner_token", owner_token)
         object.__setattr__(self, "_requester", requester)
         object.__setattr__(self, "_cancel_requested", threading.Event())
+        object.__setattr__(self, "_cancel_generation", cancel_generation)
         object.__setattr__(self, "_abort_lock", threading.Lock())
+        object.__setattr__(self, "_request_lease", request_lease)
 
         object.__setattr__(self, "_request_id", request_id)
 
@@ -264,6 +293,9 @@ class _ParentRequestAgent:
         """Abort only the request whose requester installed this callback."""
         event = object.__getattribute__(self, "_cancel_requested")
         event.set()
+        lease = object.__getattribute__(self, "_request_lease")
+        if lease is not None:
+            lease.note_cancelled(reason)
         _request_abort(object.__getattribute__(self, "_request_id"), reason)
 
     def __getattr__(self, name: str) -> Any:
@@ -277,18 +309,25 @@ class _ParentRequestAgent:
             "credential_pool",
         }:
             raise AttributeError(name)
-        parent = _resolve_parent_owner(
-            object.__getattribute__(self, "_owner_token")
-        )
         requester = object.__getattribute__(self, "_requester")
         if name == "_interrupt_requested":
-            return bool(getattr(requester, "_interrupt_requested", False))
+            # The boolean may be cleared at a turn boundary while an older
+            # provider worker is still unwinding. The monotonic generation
+            # fences that request even after the transient flag is reset.
+            return bool(
+                getattr(requester, "_interrupt_requested", False)
+                or getattr(requester, "_inference_cancel_generation", 0)
+                != object.__getattribute__(self, "_cancel_generation")
+            )
         if name == "_active_request_abort":
             with object.__getattribute__(self, "_abort_lock"):
                 abort = _ACTIVE_REQUEST_ABORTS.get(
                     object.__getattribute__(self, "_request_id")
                 )
             return self.request_abort if callable(abort) else None
+        parent = _resolve_parent_owner(
+            object.__getattribute__(self, "_owner_token")
+        )
         if name in _PARENT_TRANSPORT_METHODS:
             return getattr(parent, name)
         if name in {"platform", "session_id", "log_prefix", "quiet_mode"}:
@@ -354,6 +393,7 @@ class ParentInferencePort:
         _owner_token: str | None = None,
         _profile_home: str | None = None,
         _base_binding: tuple[str, str, str, str, str] | None = None,
+        _network_binding: tuple[RequestBudget, str] | None = None,
     ) -> None:
         if _owner_token is None:
             if parent is None:
@@ -376,6 +416,18 @@ class ParentInferencePort:
                 api_mode,
                 _route_fingerprint(owner),
             )
+            if _network_binding is not None:
+                if (
+                    not isinstance(_network_binding, tuple)
+                    or len(_network_binding) != 2
+                    or not isinstance(_network_binding[0], RequestBudget)
+                    or not isinstance(_network_binding[1], str)
+                    or not _network_binding[1].strip()
+                    or len(_network_binding[1]) > 256
+                ):
+                    raise InferencePortError("Parent network request binding is invalid.")
+                with _PARENT_OWNER_LOCK:
+                    _PARENT_NETWORK_BINDINGS[owner_token] = _network_binding
         else:
             owner = _resolve_parent_owner(_owner_token)
             home = _profile_home
@@ -419,9 +471,24 @@ class ParentInferencePort:
         self._requester_ref: Any | None = None
 
     @classmethod
-    def for_parent(cls, parent: Any) -> "ParentInferencePort":
-        """Create the root capability while the admitted profile is active."""
-        return cls(parent)
+    def for_parent(
+        cls,
+        parent: Any,
+        *,
+        network_budget: RequestBudget | None = None,
+        account_scope: str | None = None,
+    ) -> "ParentInferencePort":
+        """Create a root capability; budgeting requires a trusted scope."""
+        if (network_budget is None) != (account_scope is None):
+            raise InferencePortError(
+                "A network budget requires an explicit host account scope."
+            )
+        network_binding = (
+            (network_budget, account_scope)
+            if network_budget is not None and account_scope is not None
+            else None
+        )
+        return cls(parent, _network_binding=network_binding)
 
     def fork_for_child(self) -> "ParentInferencePort":
         """Create a fresh child budget on the same parent-owned route."""
@@ -430,6 +497,7 @@ class ParentInferencePort:
             _owner_token=self._owner_token,
             _profile_home=self._profile_home,
             _base_binding=self._base_binding,
+            _network_binding=_parent_network_binding(self._owner_token),
         )
 
     def bind_child(
@@ -542,49 +610,97 @@ class ParentInferencePort:
             raise InferencePortError("Child already has an active inference request.")
         try:
             request_id = secrets.token_urlsafe(24)
-            request_agent = _ParentRequestAgent(self._owner_token, requester, request_id)
+            network_binding = _parent_network_binding(self._owner_token)
+            lease: RequestLease | None = None
+            if network_binding is not None:
+                budget, account_scope = network_binding
+                try:
+                    lease = budget.reserve(account_scope, "inference")
+                except RequestBudgetError as exc:
+                    codes = {
+                        "capacity_full": "NETWORK_CAPACITY_FULL",
+                        "account_capacity_full": "NETWORK_ACCOUNT_CAPACITY_FULL",
+                        "account_cooldown": "NETWORK_ACCOUNT_COOLDOWN",
+                        "request_outcome_unknown": "NETWORK_REQUEST_OUTCOME_UNKNOWN",
+                    }
+                    raise InferencePortError(
+                        "Parent network request budget refused the request.",
+                        failure_code=codes.get(exc.code, "INFERENCE_PORT_ERROR"),
+                    ) from None
+            request_agent = _ParentRequestAgent(
+                self._owner_token,
+                requester,
+                request_id,
+                lease,
+                cancel_generation,
+            )
             from hermes_constants import reset_hermes_home_override, set_hermes_home_override
 
             previous_abort = getattr(requester, "_active_request_abort", None)
             if callable(previous_abort):
+                if lease is not None:
+                    lease.finish(outcome="error")
                 raise InferencePortError("Child already has an active inference request.")
 
-            with self._calls_lock:
-                if self._calls_used >= binding.max_calls:
-                    raise InferencePortError("Child inference call budget is exhausted.")
-                self._calls_used += 1
-
-            setattr(requester, "_active_request_abort", request_agent.request_abort)
-
-            profile_token = None
             try:
-                profile_token = set_hermes_home_override(self._profile_home)
-                bound_profile_id = hashlib.sha256(
-                    hermes_home_key(get_hermes_home()).encode("utf-8")
-                ).hexdigest()
-                if bound_profile_id != binding.profile_id:
-                    raise InferencePortError("Parent profile binding could not be restored.")
-                from agent.chat_completion_helpers import interruptible_api_call
+                if lease is not None:
+                    lease.set_abort_callback(request_agent.request_abort)
+                with lease if lease is not None else nullcontext():
+                    with self._calls_lock:
+                        if self._calls_used >= binding.max_calls:
+                            raise InferencePortError(
+                                "Child inference call budget is exhausted."
+                            )
+                        self._calls_used += 1
 
-                response = interruptible_api_call(request_agent, request)
-                if (
-                    getattr(requester, "_inference_cancel_generation", 0)
-                    != cancel_generation
-                    or bool(getattr(requester, "_interrupt_requested", False))
-                ):
-                    raise InterruptedError("Controlled inference request was cancelled.")
-                return _normalize_parent_turn(
-                    response,
-                    api_mode=binding.api_mode,
-                    request=request,
-                    requester=requester,
-                )
+                    setattr(requester, "_active_request_abort", request_agent.request_abort)
+                    profile_token = None
+                    try:
+                        profile_token = set_hermes_home_override(self._profile_home)
+                        bound_profile_id = hashlib.sha256(
+                            hermes_home_key(get_hermes_home()).encode("utf-8")
+                        ).hexdigest()
+                        if bound_profile_id != binding.profile_id:
+                            raise InferencePortError(
+                                "Parent profile binding could not be restored."
+                            )
+                        from agent.chat_completion_helpers import interruptible_api_call
+
+                        if lease is not None:
+                            with bind_request_lease(lease):
+                                response = interruptible_api_call(request_agent, request)
+                        else:
+                            response = interruptible_api_call(request_agent, request)
+                        if lease is not None:
+                            lease.check_active()
+                        if (
+                            getattr(requester, "_inference_cancel_generation", 0)
+                            != cancel_generation
+                            or bool(getattr(requester, "_interrupt_requested", False))
+                        ):
+                            raise InterruptedError(
+                                "Controlled inference request was cancelled."
+                            )
+                        return _normalize_parent_turn(
+                            response,
+                            api_mode=binding.api_mode,
+                            request=request,
+                            requester=requester,
+                        )
+                    finally:
+                        if lease is None or lease.active_workers == 0:
+                            request_agent._active_request_abort = None
+                            _set_request_abort(request_id, None)
+                        else:
+                            lease.add_release_callback(
+                                lambda: _set_request_abort(request_id, None)
+                            )
+                        setattr(requester, "_active_request_abort", previous_abort)
+                        if profile_token is not None:
+                            reset_hermes_home_override(profile_token)
             finally:
-                request_agent._active_request_abort = None
-                setattr(requester, "_active_request_abort", previous_abort)
-                _set_request_abort(request_id, None)
-                if profile_token is not None:
-                    reset_hermes_home_override(profile_token)
+                if lease is not None:
+                    lease.finish(outcome="error")
         finally:
             self._request_lock.release()
 
