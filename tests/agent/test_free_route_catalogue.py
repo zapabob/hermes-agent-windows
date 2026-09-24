@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 import logging
 from threading import Event
+from typing import Any, Mapping
 
 import pytest
 
@@ -51,7 +52,7 @@ def _price(
 def _route_row(
     model_id: str = "vendor/free-model",
     *,
-    pricing: PricingEntry | None = None,
+    pricing: PricingEntry | Mapping[str, Any] | None = None,
     billing_mode: str = "provider_models_api",
     supported_tools: list[str] | None = None,
     observed_at: datetime = NOW,
@@ -81,6 +82,20 @@ def _free_quota(*, model_id: str = "vendor/quota-model", **overrides) -> dict:
     }
 
 
+def _subscription_entitlement(*, model_id: str = "vendor/free-model", **overrides) -> dict:
+    return {
+        "kind": "subscription_included",
+        "provider_scope": PROVIDER_SCOPE,
+        "account_scope": ACCOUNT_SCOPE,
+        "model_ids": [model_id],
+        "included": True,
+        "active": True,
+        "observed_at": NOW,
+        "expires_at": NOW + timedelta(hours=4),
+        **overrides,
+    }
+
+
 def test_unknown_price_stays_unknown_and_free_suffix_is_not_evidence():
     classify_cost = _api("classify_cost")
 
@@ -95,9 +110,27 @@ def test_classifies_stale_zero_price_as_unknown_and_subscription_separately():
         pricing=_price(fetched_at=NOW - timedelta(hours=12, seconds=1))
     )
     subscription = _route_row(pricing=None, billing_mode="subscription_included")
+    entitlement = _subscription_entitlement()
 
     assert classify_cost(stale, now=NOW) == "UNKNOWN"
-    assert classify_cost(subscription, now=NOW) == "SUBSCRIPTION_INCLUDED"
+    assert classify_cost(subscription, now=NOW) == "UNKNOWN"
+    assert classify_cost(subscription, entitlement, now=NOW) == "SUBSCRIPTION_INCLUDED"
+    assert (
+        classify_cost(
+            subscription,
+            _subscription_entitlement(account_scope="different-account"),
+            now=NOW,
+        )
+        == "UNKNOWN"
+    )
+    assert (
+        classify_cost(
+            subscription,
+            _subscription_entitlement(expires_at=NOW - timedelta(seconds=1)),
+            now=NOW,
+        )
+        == "UNKNOWN"
+    )
 
 
 def test_missing_model_and_extended_age_override_cannot_promote_stale_price():
@@ -204,6 +237,150 @@ def test_snapshot_is_immutable_scoped_and_revisioned_from_evidence():
     assert snapshot.routes[0].supported_tools == frozenset({"text", "vision"})
     with pytest.raises(FrozenInstanceError):
         snapshot.revision = "changed"
+
+
+def test_snapshot_revision_changes_when_price_and_freshness_evidence_changes():
+    build_snapshot = _api("build_free_route_snapshot")
+    base = build_snapshot(
+        [_route_row(pricing=_price(input_cost="0.01"))],
+        provider_scope=PROVIDER_SCOPE,
+        account_scope=ACCOUNT_SCOPE,
+        now=NOW,
+    )
+
+    changed_price = build_snapshot(
+        [_route_row(pricing=_price(input_cost="0.02"))],
+        provider_scope=PROVIDER_SCOPE,
+        account_scope=ACCOUNT_SCOPE,
+        now=NOW,
+    )
+    changed_price_age = build_snapshot(
+        [
+            _route_row(
+                pricing=_price(input_cost="0.01", fetched_at=NOW - timedelta(minutes=30))
+            )
+        ],
+        provider_scope=PROVIDER_SCOPE,
+        account_scope=ACCOUNT_SCOPE,
+        now=NOW,
+    )
+    changed_catalogue_age = build_snapshot(
+        [
+            _route_row(
+                pricing=_price(input_cost="0.01"),
+                observed_at=NOW - timedelta(minutes=30),
+            )
+        ],
+        provider_scope=PROVIDER_SCOPE,
+        account_scope=ACCOUNT_SCOPE,
+        now=NOW,
+    )
+    high_precision_price = build_snapshot(
+        [
+            _route_row(
+                pricing=_price(input_cost="0.12345678901234567890123456789")
+            )
+        ],
+        provider_scope=PROVIDER_SCOPE,
+        account_scope=ACCOUNT_SCOPE,
+        now=NOW,
+    )
+    equivalent_high_precision_price = build_snapshot(
+        [
+            _route_row(
+                pricing=_price(input_cost="0.123456789012345678901234567890")
+            )
+        ],
+        provider_scope=PROVIDER_SCOPE,
+        account_scope=ACCOUNT_SCOPE,
+        now=NOW,
+    )
+    different_high_precision_price = build_snapshot(
+        [
+            _route_row(
+                pricing=_price(input_cost="0.12345678901234567890123456788")
+            )
+        ],
+        provider_scope=PROVIDER_SCOPE,
+        account_scope=ACCOUNT_SCOPE,
+        now=NOW,
+    )
+
+    assert changed_price.routes[0].cost_class == base.routes[0].cost_class == "PAID"
+    assert changed_price.revision != base.revision
+    assert changed_price_age.revision != base.revision
+    assert changed_catalogue_age.revision != base.revision
+    assert high_precision_price.revision == equivalent_high_precision_price.revision
+    assert high_precision_price.revision != different_high_precision_price.revision
+
+    entitlement = _free_quota()
+    quota_row = _route_row("vendor/quota-model")
+    quota_base = build_snapshot(
+        [quota_row],
+        provider_scope=PROVIDER_SCOPE,
+        account_scope=ACCOUNT_SCOPE,
+        now=NOW,
+        entitlements={"vendor/quota-model": entitlement},
+    )
+    changed_entitlement_time = build_snapshot(
+        [quota_row],
+        provider_scope=PROVIDER_SCOPE,
+        account_scope=ACCOUNT_SCOPE,
+        now=NOW,
+        entitlements={
+            "vendor/quota-model": {
+                **entitlement,
+                "observed_at": NOW - timedelta(minutes=30),
+            }
+        },
+    )
+    assert quota_base.routes[0].cost_class == "VERIFIED_FREE_QUOTA"
+    assert changed_entitlement_time.revision != quota_base.revision
+
+
+def test_subscription_route_requires_current_exact_entitlement_to_be_eligible():
+    build_snapshot = _api("build_free_route_snapshot")
+    eligible_routes = _api("eligible_routes")
+    policy_type = getattr(free_routes, "FreeRoutePolicy", None)
+    assert policy_type is not None
+    row = _route_row(pricing=None, billing_mode="subscription_included")
+    policy = policy_type(
+        provider_scope=PROVIDER_SCOPE,
+        account_scope=ACCOUNT_SCOPE,
+        required_tools=frozenset({"text"}),
+        allow_subscription_included=True,
+    )
+
+    missing = build_snapshot(
+        [{**row, "supported_tools": ["text"]}],
+        provider_scope=PROVIDER_SCOPE,
+        account_scope=ACCOUNT_SCOPE,
+        now=NOW,
+    )
+    included = build_snapshot(
+        [{**row, "supported_tools": ["text"]}],
+        provider_scope=PROVIDER_SCOPE,
+        account_scope=ACCOUNT_SCOPE,
+        now=NOW,
+        entitlements={"vendor/free-model": _subscription_entitlement()},
+    )
+    expired = build_snapshot(
+        [{**row, "supported_tools": ["text"]}],
+        provider_scope=PROVIDER_SCOPE,
+        account_scope=ACCOUNT_SCOPE,
+        now=NOW,
+        entitlements={
+            "vendor/free-model": _subscription_entitlement(
+                expires_at=NOW - timedelta(seconds=1)
+            )
+        },
+    )
+
+    assert eligible_routes(missing, policy, now=NOW) == ()
+    assert [route.model_id for route in eligible_routes(included, policy, now=NOW)] == [
+        "vendor/free-model"
+    ]
+    assert eligible_routes(expired, policy, now=NOW) == ()
 
 
 def test_eligible_routes_require_current_scope_price_and_tool_support():

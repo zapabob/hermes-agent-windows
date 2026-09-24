@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "task_id": "T09",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "dc9c95e62cd5af0adea7e660776499be9b03addd",
+  "source_fingerprint": "19d48f12e06eca12292f10a294c407e3cba9a7d8465bef66366c5505c7bec07d",
+  "index_identity": "H:\\hermes-control-mcp-t09-catalogue-20260924\\.codegraph",
+  "tool": {
+    "package": "@colbymchenry/codegraph",
+    "version": "1.6.0",
+    "invocation_kind": "CLI"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "queries": [
+    {
+      "query": "callers classify_cost -p <T09-worktree> -j",
+      "result_ref": "evidence/codegraph/results/T09-dc9c95e-before-results.json#/queries/callers_classify_cost"
+    },
+    {
+      "query": "callers FreeRouteCatalogueOwner.refresh_if_due -p <T09-worktree> -j",
+      "result_ref": "evidence/codegraph/results/T09-dc9c95e-before-results.json#/queries/callers_refresh_if_due"
+    },
+    {
+      "query": "impact classify_cost -d 2 -p <T09-worktree> -j",
+      "result_ref": "evidence/codegraph/results/T09-dc9c95e-before-results.json#/queries/impact_classify_cost_depth2"
+    },
+    {
+      "query": "affected downstream/delegation/free_routes.py tests/agent/test_free_route_catalogue.py -p <T09-worktree> -j",
+      "result_ref": "evidence/codegraph/results/T09-dc9c95e-before-results.json#/queries/affected_free_routes"
+    }
+  ],
+  "canonical_owners": [
+    "downstream.delegation.free_routes.classify_cost",
+    "downstream.delegation.free_routes.build_free_route_snapshot",
+    "downstream.delegation.free_routes._free_route_revision_payload",
+    "downstream.delegation.free_routes.eligible_routes",
+    "downstream.delegation.free_routes.FreeRouteCatalogueOwner"
+  ],
+  "impact_paths": [
+    "price and entitlement evidence -> classify_cost -> immutable route projection -> exact-scope eligibility",
+    "snapshot route fields -> _free_route_revision_payload -> _free_route_revision -> externally visible revision hash",
+    "CodeGraph callers identify no production refresh_if_due caller; the only references are focused tests"
+  ],
+  "unresolved_edges": [
+    "Revision payload omits source observation times and numeric price values, so distinct evidence can share a revision.",
+    "billing_mode=subscription_included alone yields subscription classification and can pass opt-in eligibility without a validated account/model entitlement."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [
+    "Before correction, adding three behavioral regressions yielded 17 passed and 3 failed: the unverified subscription classification, changed numeric price with unchanged revision, and eligibility without subscription entitlement.",
+    "The prior committed T09 baseline had 95 focused and affected tests passing before those review regressions were added."
+  ],
+  "evidence_refs": [
+    "evidence/codegraph/results/T09-dc9c95e-before-results.json",
+    "evidence/codegraph/T09-96c16a6-after.json",
+    "evidence/codegraph/results/T09-96c16a6-after-results.json",
+    "_docs/2026-09-24_T09_free-route-catalogue_codex.md"
+  ],
+  "phase": "before"
+}

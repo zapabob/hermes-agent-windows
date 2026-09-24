@@ -63,6 +63,7 @@ class FreeRoute:
     price_source: CostSource | None
     price_source_url: str | None
     price_version: str | None
+    price_values: tuple[Decimal, ...] | None
     price_fetched_at: datetime | None
     supported_tools: frozenset[str] | None
     entitlement_expires_at: datetime | None
@@ -318,6 +319,38 @@ def _matching_free_quota(
     return observed_at, expires_at
 
 
+def _matching_subscription_entitlement(
+    row: Mapping[str, Any], entitlement: Mapping[str, Any] | None, now: datetime
+) -> tuple[datetime, datetime] | None:
+    if (
+        not isinstance(entitlement, Mapping)
+        or entitlement.get("kind") != "subscription_included"
+        or entitlement.get("provider_scope") != row.get("provider_scope")
+        or entitlement.get("account_scope") != row.get("account_scope")
+        or entitlement.get("included") is not True
+        or entitlement.get("active") is not True
+    ):
+        return None
+    model_ids = entitlement.get("model_ids")
+    model_id = row.get("model_id")
+    if (
+        not isinstance(model_ids, (list, tuple, set, frozenset))
+        or not isinstance(model_id, str)
+        or model_id not in model_ids
+    ):
+        return None
+    observed_at = _free_route_utc(entitlement.get("observed_at"))
+    expires_at = _free_route_utc(entitlement.get("expires_at"))
+    if (
+        observed_at is None
+        or expires_at is None
+        or not _free_route_current(observed_at, now, _FREE_ROUTE_EVIDENCE_MAX_AGE)
+        or expires_at <= now
+    ):
+        return None
+    return observed_at, expires_at
+
+
 def classify_cost(
     row: Mapping[str, Any],
     entitlement: Mapping[str, Any] | None = None,
@@ -345,7 +378,9 @@ def classify_cost(
 
     billing_mode = str(row.get("billing_mode") or "").strip().lower()
     if billing_mode in {"subscription", "subscription_included"}:
-        return "SUBSCRIPTION_INCLUDED"
+        if _matching_subscription_entitlement(row, entitlement, as_of) is not None:
+            return "SUBSCRIPTION_INCLUDED"
+        return "UNKNOWN"
     if billing_mode in {"local", "local_configured"} and row.get("configured") is True:
         return "LOCAL_CONFIGURED"
 
@@ -372,6 +407,19 @@ def _free_route_revision_payload(route: FreeRoute) -> dict[str, Any]:
     def stamp(value: datetime | None) -> str | None:
         return value.isoformat() if value is not None else None
 
+    def decimal_text(value: Decimal) -> str:
+        if value.is_zero():
+            return "0"
+        sign, raw_digits, exponent = value.as_tuple()
+        if not isinstance(exponent, int):
+            return str(value)
+        digits = list(raw_digits)
+        while digits and digits[-1] == 0:
+            digits.pop()
+            exponent += 1
+        coefficient = "".join(str(digit) for digit in digits)
+        return f"{'-' if sign else ''}{coefficient}" + (f"e{exponent}" if exponent else "")
+
     return {
         "provider": route.provider,
         "provider_scope": route.provider_scope,
@@ -381,8 +429,16 @@ def _free_route_revision_payload(route: FreeRoute) -> dict[str, Any]:
         "price_source": route.price_source,
         "price_source_url": route.price_source_url,
         "price_version": route.price_version,
+        "price_values": (
+            [decimal_text(value) for value in route.price_values]
+            if route.price_values is not None
+            else None
+        ),
+        "price_fetched_at": stamp(route.price_fetched_at),
         "supported_tools": sorted(route.supported_tools) if route.supported_tools is not None else None,
         "entitlement_expires_at": stamp(route.entitlement_expires_at),
+        "entitlement_observed_at": stamp(route.entitlement_observed_at),
+        "observed_at": stamp(route.observed_at),
         "availability": route.availability,
     }
 
@@ -469,8 +525,9 @@ def build_free_route_snapshot(
             if isinstance(entitlement, Mapping)
             else None
         )
+        if entitlement_match is None and isinstance(entitlement, Mapping):
+            entitlement_match = _matching_subscription_entitlement(row, entitlement, as_of)
         prices, source, source_url, version, price_fetched_at = _free_route_price_fields(row)
-        del prices
 
         raw_tools = row.get("supported_tools")
         if isinstance(raw_tools, (list, tuple, set, frozenset)) and len(raw_tools) <= 128 and all(
@@ -501,6 +558,7 @@ def build_free_route_snapshot(
                 price_source=source,
                 price_source_url=source_url,
                 price_version=version,
+                price_values=prices,
                 price_fetched_at=price_fetched_at,
                 supported_tools=supported_tools,
                 entitlement_expires_at=entitlement_match[1] if entitlement_match else None,
@@ -571,7 +629,10 @@ def eligible_routes(
             if route.entitlement_expires_at is None or route.entitlement_expires_at <= as_of:
                 continue
         elif route.cost_class == "SUBSCRIPTION_INCLUDED" and policy.allow_subscription_included:
-            pass
+            if not _free_route_current(route.entitlement_observed_at, as_of, max_age):
+                continue
+            if route.entitlement_expires_at is None or route.entitlement_expires_at <= as_of:
+                continue
         else:
             continue
         eligible.append(route)
