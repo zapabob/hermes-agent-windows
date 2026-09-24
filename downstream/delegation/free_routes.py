@@ -1788,14 +1788,15 @@ def start_free_route_catalogue_refresh_host() -> FreeRouteCatalogueHostLease | N
         )
         from hermes_constants import get_hermes_home
 
-        if not openrouter_free_route_refresh_enabled():
+        profile_home = get_hermes_home().resolve()
+        if not openrouter_free_route_refresh_enabled(profile_home):
             return None
         allowed_model_ids = get_cached_curated_openrouter_model_ids()
         if not allowed_model_ids:
             return None
         cache_path = free_route_cache_path()
         cache_key = cache_path.resolve()
-        profile_key = os.path.normcase(str(get_hermes_home().resolve()))
+        profile_key = os.path.normcase(str(profile_home))
         account_scope = "profile:" + hashlib.sha256(profile_key.encode("utf-8")).hexdigest()[:24]
         with _refresh_hosts_lock:
             registration = _refresh_hosts.get(cache_key)
@@ -1809,7 +1810,7 @@ def start_free_route_catalogue_refresh_host() -> FreeRouteCatalogueHostLease | N
                     provider_scope="openrouter:public",
                     account_scope=account_scope,
                     cache_path=cache_path,
-                    fetch_enabled=openrouter_free_route_refresh_enabled,
+                    fetch_enabled=lambda: openrouter_free_route_refresh_enabled(profile_home),
                 )
                 host = FreeRouteCatalogueRefreshHost(owner)
                 registration = _FreeRouteCatalogueHostRegistration(host=host, owners=set())

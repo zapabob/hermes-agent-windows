@@ -403,15 +403,26 @@ def _load_catalog_config() -> dict[str, Any]:
     }
 
 
-def openrouter_free_route_refresh_enabled() -> bool:
+def openrouter_free_route_refresh_enabled(hermes_home: Path | None = None) -> bool:
     """Return true only for an explicit OpenRouter metadata-refresh opt-in.
 
     The general model picker catalogue is enabled by default, so it is not an
     adequate approval signal for a new background provider request. A profile
     must set ``model_catalog.providers.openrouter.free_route_catalogue_enabled``
-    to the boolean ``true`` before a host may refresh this public metadata.
+    to the boolean ``true`` before a host may refresh this public metadata. A
+    host supplies its captured profile home so later checks do not follow an
+    unrelated active profile in the same process.
     """
-    config = _load_catalog_config()
+    if hermes_home is None:
+        config = _load_catalog_config()
+    else:
+        from hermes_constants import reset_hermes_home_override, set_hermes_home_override
+
+        home_token = set_hermes_home_override(hermes_home)
+        try:
+            config = _load_catalog_config()
+        finally:
+            reset_hermes_home_override(home_token)
     providers = config.get("providers")
     provider = providers.get("openrouter") if isinstance(providers, dict) else None
     return (

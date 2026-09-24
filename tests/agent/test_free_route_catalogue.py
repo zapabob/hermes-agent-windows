@@ -1883,6 +1883,70 @@ def test_serve_and_gateway_startups_share_one_host_per_profile(tmp_path, monkeyp
     stop_host(second_profile_lease)
 
 
+def test_profile_refresh_rechecks_opt_in_in_its_home_after_profile_switch(tmp_path, monkeypatch):
+    from hermes_cli import model_catalog
+
+    profile_a = tmp_path / "profile-a"
+    profile_b = tmp_path / "profile-b"
+
+    def write_config(home: Path, *, enabled: bool) -> None:
+        home.mkdir(parents=True, exist_ok=True)
+        (home / "config.yaml").write_text(
+            "model_catalog:\n"
+            "  enabled: true\n"
+            "  providers:\n"
+            "    openrouter:\n"
+            f"      free_route_catalogue_enabled: {'true' if enabled else 'false'}\n",
+            encoding="utf-8",
+        )
+
+    write_config(profile_a, enabled=True)
+    write_config(profile_b, enabled=True)
+    monkeypatch.setenv("HERMES_HOME", str(profile_a))
+    monkeypatch.setattr(
+        model_catalog,
+        "get_cached_curated_openrouter_model_ids",
+        lambda: frozenset({"vendor/approved"}),
+    )
+
+    fetch_calls: list[str] = []
+
+    class Adapter:
+        def __init__(self, *, account_scope, allowed_model_ids):
+            self.account_scope = account_scope
+            self.allowed_model_ids = allowed_model_ids
+
+        def __call__(self, _etag):
+            fetch_calls.append(self.account_scope)
+            return free_routes.FreeRouteFetchResult(status_code=503)
+
+    class NoopHost:
+        def __init__(self, owner):
+            self.owner = owner
+
+        def start(self):
+            pass
+
+        def request_stop(self):
+            pass
+
+        def stop(self):
+            pass
+
+    monkeypatch.setattr(free_routes, "OpenRouterFreeRouteAdapter", Adapter)
+    monkeypatch.setattr(free_routes, "FreeRouteCatalogueRefreshHost", NoopHost)
+    lease = _api("start_free_route_catalogue_refresh_host")()
+    assert lease is not None
+
+    try:
+        write_config(profile_a, enabled=False)
+        monkeypatch.setenv("HERMES_HOME", str(profile_b))
+        lease.host.owner.refresh_if_due()
+        assert fetch_calls == [], "profile B approval must not authorize profile A refresh"
+    finally:
+        _api("stop_free_route_catalogue_refresh_host")(lease)
+
+
 def test_refresh_host_restarts_after_stop_during_bounded_fetch():
     entered_fetch = Event()
     release_fetch = Event()
