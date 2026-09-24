@@ -13,6 +13,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from downstream.security.engines import StaticHeuristicsEngine
 from downstream.security.models import EngineState, Finding, ScanResult, Verdict
 from downstream.security.service import SecurityService
 from downstream.security.store import SecurityStore
@@ -41,12 +42,65 @@ class YaraSuspicionEngine:
 class MutatingYaraEngine:
     name = "yara"
 
+    def __init__(self, original_path: Path) -> None:
+        self.original_path = original_path
+
     def version(self) -> str:
         return "inert-mutation-fixture-1"
 
-    def scan(self, path: Path, _sha256: str) -> list[Finding]:
-        path.write_bytes(b"changed inert fixture")
+    def scan(self, _snapshot_path: Path, _sha256: str) -> list[Finding]:
+        self.original_path.write_bytes(b"changed inert fixture")
         return [Finding(self.name, "synthetic-test-detection", 80)]
+
+
+class SwapRestoreYaraEngine:
+    name = "yara"
+
+    def __init__(self, original_path: Path, original_bytes: bytes) -> None:
+        self.original_path = original_path
+        self.original_bytes = original_bytes
+        self.clean_bytes = b"SAFE-DATA-123456"
+        self.scanned_bytes = b""
+        self.snapshot_path: Path | None = None
+        self.snapshot_write_blocked = False
+        self.snapshot_acl_sids: set[str] = set()
+        self.snapshot_directory_acl_sids: set[str] = set()
+
+    def version(self) -> str:
+        return "inert-swap-restore-fixture-1"
+
+    def scan(self, path: Path, _sha256: str) -> list[Finding]:
+        self.snapshot_path = path
+        metadata = self.original_path.stat()
+        self.original_path.write_bytes(self.clean_bytes)
+        os.utime(self.original_path, ns=(metadata.st_atime_ns, metadata.st_mtime_ns))
+        self.scanned_bytes = path.read_bytes()
+        self.original_path.write_bytes(self.original_bytes)
+        os.utime(self.original_path, ns=(metadata.st_atime_ns, metadata.st_mtime_ns))
+
+        if path != self.original_path:
+            try:
+                path.write_bytes(b"REPLACED-SNAPSHOT")
+            except OSError:
+                self.snapshot_write_blocked = True
+            if os.name == "nt":
+                win32security = importlib.import_module("win32security")
+                for item_path, target_sids in (
+                    (path, self.snapshot_acl_sids),
+                    (path.parent, self.snapshot_directory_acl_sids),
+                ):
+                    descriptor = win32security.GetFileSecurity(
+                        str(item_path), win32security.DACL_SECURITY_INFORMATION
+                    )
+                    acl = descriptor.GetSecurityDescriptorDacl()
+                    target_sids.update(
+                        win32security.ConvertSidToStringSid(acl.GetAce(index)[2])
+                        for index in range(acl.GetAceCount())
+                    )
+
+        if self.scanned_bytes == self.original_bytes:
+            return [Finding(self.name, "synthetic-test-detection", 80)]
+        return [Finding(self.name, "no_detection", 0)]
 
 
 class ClamAVErrorEngine:
@@ -243,7 +297,7 @@ def test_file_changed_during_scan_is_not_cached_or_recorded(tmp_path: Path) -> N
         store,
         {"security": {"malware": {"auto_quarantine": True}}},
     )
-    service.engines = (MutatingYaraEngine(),)
+    service.engines = (MutatingYaraEngine(target),)
 
     result = service.scan_file(target, quarantine=False)
 
@@ -259,6 +313,61 @@ def test_file_changed_during_scan_is_not_cached_or_recorded(tmp_path: Path) -> N
         assert connection.execute("SELECT COUNT(*) FROM scan_results").fetchone()[0] == 0
     assert not (store.root / "quarantine").exists()
     assert not (store.root / "vault-key.dpapi").exists()
+
+
+@pytest.mark.windows_only
+def test_scanners_read_snapshot_bytes_when_original_is_swapped_and_restored(tmp_path: Path) -> None:
+    target = tmp_path / "inert-swap-restore-fixture.bin"
+    original_bytes = b"EVIL-DATA-123456"
+    target.write_bytes(original_bytes)
+    store = SecurityStore(tmp_path / "security")
+    service = SecurityService(
+        store,
+        {"security": {"malware": {"auto_quarantine": False}}},
+    )
+    engine = SwapRestoreYaraEngine(target, original_bytes)
+    service.engines = (engine,)
+
+    result = service.scan_file(target, quarantine=False, use_cache=False)
+
+    assert result.execution_decision.value == "BLOCK"
+    assert result.verdict.value == "MALICIOUS"
+    assert engine.scanned_bytes == original_bytes
+    assert target.read_bytes() == original_bytes
+    assert engine.snapshot_path is not None
+    assert engine.snapshot_path != target
+    assert engine.snapshot_write_blocked is True
+    assert engine.snapshot_acl_sids
+    assert engine.snapshot_directory_acl_sids
+    descriptor = importlib.import_module("win32security")
+    owner_name = importlib.import_module("win32api").GetUserNameEx(2)
+    owner_sid, _, _ = descriptor.LookupAccountName(None, owner_name)
+    system_sid = descriptor.CreateWellKnownSid(descriptor.WinLocalSystemSid, None)
+    assert engine.snapshot_acl_sids == {
+        descriptor.ConvertSidToStringSid(owner_sid),
+        descriptor.ConvertSidToStringSid(system_sid),
+    }
+    assert engine.snapshot_directory_acl_sids == engine.snapshot_acl_sids
+    assert not engine.snapshot_path.exists()
+
+
+def test_snapshot_scan_preserves_original_path_heuristics(tmp_path: Path) -> None:
+    download = tmp_path / "Downloads"
+    download.mkdir()
+    target = download / "inert-heuristic-fixture.ps1"
+    target.write_text("Write-Output 'inert fixture'\n", encoding="utf-8")
+    service = SecurityService(
+        SecurityStore(tmp_path / "security"),
+        {"security": {"malware": {"auto_quarantine": False}}},
+    )
+    service.engines = (StaticHeuristicsEngine(),)
+
+    result = service.scan_file(target, quarantine=False, use_cache=False)
+
+    assert any(
+        finding.name == "executable_in_transient_location"
+        for finding in result.findings
+    )
 
 
 def test_quarantine_failure_retains_malicious_block_decision(
@@ -533,6 +642,25 @@ def test_public_scan_path_is_bounded() -> None:
     )
 
     assert len(result.to_dict()["path"]) <= 256
+
+
+def test_public_scan_projection_bounds_findings_and_reports_truncation() -> None:
+    result = ScanResult(
+        "inert-many-findings.bin",
+        "a" * 64,
+        4,
+        Verdict.SUSPICIOUS,
+        40,
+        "warn",
+        tuple(Finding("yara", f"synthetic-finding-{index}", 1) for index in range(100)),
+        {},
+    )
+
+    projection = result.to_dict()
+
+    assert len(projection["findings"]) == 64
+    assert projection["finding_count"] == 100
+    assert projection["findings_truncated"] is True
 
 
 def test_execution_gate_resolves_attached_script_switch_values(tmp_path: Path) -> None:

@@ -167,14 +167,21 @@ class StaticHeuristicsEngine:
     def version(self) -> str:
         return "heuristics-1"
 
-    def scan(self, path: Path, _sha256: str) -> list[Finding]:
-        suffixes = [item.lower() for item in path.suffixes]
+    def scan(
+        self,
+        path: Path,
+        _sha256: str,
+        *,
+        original_path: Path | None = None,
+    ) -> list[Finding]:
+        heuristic_path = original_path or path
+        suffixes = [item.lower() for item in heuristic_path.suffixes]
         findings: list[Finding] = []
         if len(suffixes) >= 2 and suffixes[-2] in self.document_suffixes and suffixes[-1] in self.executable_suffixes:
             findings.append(Finding(self.name, "executable_double_extension", 20))
         if suffixes and suffixes[-1] in self.macro_suffixes:
             findings.append(Finding(self.name, "macro_enabled_document", 20))
-        path_parts = {part.lower() for part in path.parts}
+        path_parts = {part.lower() for part in heuristic_path.parts}
         if suffixes and suffixes[-1] in self.executable_suffixes and ({"temp", "tmp", "downloads"} & path_parts):
             findings.append(Finding(self.name, "executable_in_transient_location", 20))
         try:

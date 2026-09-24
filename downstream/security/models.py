@@ -5,6 +5,9 @@ from enum import StrEnum
 from typing import Any
 
 
+_MAX_PUBLIC_FINDINGS = 64
+
+
 class Verdict(StrEnum):
     CLEAN = "CLEAN"
     UNKNOWN = "UNKNOWN"
@@ -141,14 +144,23 @@ class ScanResult:
         return ExecutionDecision.REVIEW
 
     def to_dict(self) -> dict[str, Any]:
-        projection = asdict(self)
-        projection.pop("file_identity", None)
-        if len(self.path) > 256:
-            projection["path"] = self.path[:255] + "…"
-        projection["findings"] = [item.to_public_dict() for item in self.findings]
-        projection["engine_versions"] = {
-            str(name)[:80]: str(version)[:160]
-            for name, version in list(self.engine_versions.items())[:16]
+        projection: dict[str, Any] = {
+            "path": self.path[:255] + "…" if len(self.path) > 256 else self.path,
+            "sha256": self.sha256,
+            "size": self.size,
+            "verdict": self.verdict,
+            "score": self.score,
+            "action": self.action,
+            "findings": [item.to_public_dict() for item in self.findings[:_MAX_PUBLIC_FINDINGS]],
+            "finding_count": len(self.findings),
+            "findings_truncated": len(self.findings) > _MAX_PUBLIC_FINDINGS,
+            "engine_versions": {
+                str(name)[:80]: str(version)[:160]
+                for name, version in list(self.engine_versions.items())[:16]
+            },
+            "cached": self.cached,
+            "quarantine_id": self.quarantine_id,
+            "error": self.error,
         }
         if self.error is not None:
             if self.error in {
@@ -157,6 +169,7 @@ class ScanResult:
                 "candidate_limit_exceeded",
                 "candidate_reference_too_long",
                 "file_changed_during_scan",
+                "scan_snapshot_unavailable",
             }:
                 projection["error"] = self.error
             elif self.action == "quarantine_failed":
