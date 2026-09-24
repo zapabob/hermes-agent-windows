@@ -179,6 +179,20 @@ def _synthetic_turn(child, content):
     )
 
 
+def _completed_chat_response():
+    from types import SimpleNamespace
+
+    return SimpleNamespace(
+        model="reported-model",
+        choices=[
+            SimpleNamespace(
+                finish_reason="stop",
+                message=SimpleNamespace(content="done", refusal=None, tool_calls=[]),
+            )
+        ],
+    )
+
+
 class _ConcurrentAbortProbeChild(_WeakrefableChild):
     """Force concurrent callers to snapshot an empty abort slot together."""
 
@@ -258,7 +272,7 @@ def test_same_child_concurrent_requests_cannot_overlap_abort_ownership(monkeypat
         release_transport.wait(timeout=3)
         with state_lock:
             active_calls -= 1
-        return SimpleNamespace(choices=[])
+        return _completed_chat_response()
 
     monkeypatch.setattr(
         "agent.chat_completion_helpers.interruptible_api_call", blocked_transport
@@ -346,7 +360,7 @@ def test_controlled_request_profile_binding_restores_caller_and_reuses_parent_pr
 
     def capture_profile(_requester, request):
         seen_profiles.append(get_hermes_home())
-        return object()
+        return _completed_chat_response()
 
     monkeypatch.setattr(
         "agent.chat_completion_helpers.interruptible_api_call", capture_profile
@@ -407,7 +421,7 @@ def test_controlled_profile_requests_are_context_isolated_concurrently(
         label = request["messages"][0]["content"]
         rendezvous.wait(timeout=5)
         seen_profiles[label] = get_hermes_home()
-        return object()
+        return _completed_chat_response()
 
     monkeypatch.setattr(
         "agent.chat_completion_helpers.interruptible_api_call", capture_profile

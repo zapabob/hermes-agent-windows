@@ -46,14 +46,36 @@ class InferenceTurn:
 
 
 @dataclass(frozen=True)
+class ToolCallIdentity:
+    """Safe identity and completeness summary for one executable call."""
+
+    call_id: str
+    name: str
+    complete: bool
+
+
+@dataclass(frozen=True)
 class NormalizedTurn:
     """A provider response returned to Hermes' existing response normalizers.
 
     T05 deliberately keeps the established adapter/transport conversion in
-    the normal agent loop. This wrapper carries no request credentials.
+    the normal agent loop. This wrapper carries no request credentials or
+    provider-private reasoning state; its metadata is a safe summary used to
+    refuse ambiguous turns before they can reach tool dispatch.
     """
 
     response: Any = field(repr=False, compare=False)
+    terminal_status: str = "unknown"
+    final_text: str | None = None
+    commentary_count: int = 0
+    tool_calls: tuple[ToolCallIdentity, ...] = ()
+    configured_model: str | None = None
+    requested_model: str | None = None
+    reported_model: str | None = None
+    configured_effort: str | None = None
+    wire_effort: str | None = None
+    reported_effort: str | None = None
+    failure_code: str | None = None
 
 
 @runtime_checkable
@@ -72,6 +94,39 @@ class InferencePort(Protocol):
 
 class InferencePortError(RuntimeError):
     """A controlled inference request could not honor its host binding."""
+
+    _SAFE_CODES = frozenset(
+        {
+            "INFERENCE_PORT_ERROR",
+            "INVALID_RESPONSE",
+            "MISSING_TERMINAL_STATUS",
+            "UNKNOWN_TERMINAL_STATUS",
+            "PROVIDER_INCOMPLETE",
+            "PROVIDER_FAILED",
+            "PROVIDER_REFUSAL_WITH_TOOL_CALL",
+            "TOOL_CALL_STATUS_MISMATCH",
+            "MISSING_TOOL_CALLS",
+            "INCOMPLETE_TOOL_CALL",
+            "DUPLICATE_TOOL_CALL_ID",
+            "INVALID_TOOL_CALL",
+            "UNREQUESTED_TOOL",
+            "INCOMPLETE_TOOL_ARGUMENTS",
+            "EMPTY_TURN",
+        }
+    )
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        failure_code: str = "INFERENCE_PORT_ERROR",
+    ) -> None:
+        super().__init__(message)
+        self.failure_code = (
+            failure_code
+            if isinstance(failure_code, str) and failure_code in self._SAFE_CODES
+            else "INFERENCE_PORT_ERROR"
+        )
 
 
 _PARENT_OWNER_LOCK = threading.RLock()
@@ -517,7 +572,12 @@ class ParentInferencePort:
                     or bool(getattr(requester, "_interrupt_requested", False))
                 ):
                     raise InterruptedError("Controlled inference request was cancelled.")
-                return NormalizedTurn(response=response)
+                return _normalize_parent_turn(
+                    response,
+                    api_mode=binding.api_mode,
+                    request=request,
+                    requester=requester,
+                )
             finally:
                 request_agent._active_request_abort = None
                 setattr(requester, "_active_request_abort", previous_abort)
@@ -600,3 +660,502 @@ def _request_tool_names(request: Mapping[str, Any]) -> set[str]:
             raise InferencePortError("Inference tool schema is unsupported.")
         result.add(name)
     return result
+
+
+_MISSING = object()
+
+
+def _response_field(value: Any, name: str, default: Any = None) -> Any:
+    if isinstance(value, Mapping):
+        return value.get(name, default)
+    try:
+        return getattr(value, name, default)
+    except Exception:
+        return default
+
+
+def _safe_string(value: Any) -> str | None:
+    return value.strip() if isinstance(value, str) and value.strip() else None
+
+
+def _output_text(value: Any) -> str | None:
+    return value if isinstance(value, str) and value.strip() else None
+
+
+def _request_tool_schemas(request: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
+    tools = request.get("tools")
+    if tools is None:
+        tools = request.get("functions")
+    if tools is None:
+        return {}
+    if not isinstance(tools, list):
+        raise InferencePortError("Inference tool schema is malformed.")
+
+    schemas: dict[str, Mapping[str, Any]] = {}
+    for item in tools:
+        if not isinstance(item, Mapping):
+            raise InferencePortError("Inference tool schema is malformed.")
+        function = item.get("function")
+        function = function if isinstance(function, Mapping) else item
+        name = function.get("name")
+        if not isinstance(name, str) or not name:
+            raise InferencePortError("Inference tool schema is unsupported.")
+        parameters = function.get("parameters")
+        if not isinstance(parameters, Mapping):
+            parameters = function.get("input_schema")
+        schemas[name] = parameters if isinstance(parameters, Mapping) else {}
+    return schemas
+
+
+def _configured_effort(requester: Any) -> str | None:
+    configured = getattr(requester, "reasoning_config", None)
+    if _response_field(configured, "enabled") is False:
+        return None
+    return _safe_string(_response_field(configured, "effort"))
+
+
+def _wire_effort(request: Mapping[str, Any]) -> str | None:
+    candidates = [
+        _response_field(request.get("reasoning"), "effort"),
+        request.get("reasoning_effort"),
+        _response_field(request.get("output_config"), "effort"),
+        _response_field(_response_field(request.get("extra_body"), "reasoning"), "effort"),
+        _response_field(request.get("extra_body"), "reasoning_effort"),
+    ]
+    return next((value for candidate in candidates if (value := _safe_string(candidate))), None)
+
+
+def _reported_effort(response: Any) -> str | None:
+    candidates = [
+        _response_field(response, "reasoning_effort"),
+        _response_field(_response_field(response, "output_config"), "effort"),
+    ]
+    return next((value for candidate in candidates if (value := _safe_string(candidate))), None)
+
+
+def _strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate JSON property")
+        result[key] = value
+    return result
+
+
+def _reject_nonfinite(value: str) -> None:
+    raise ValueError("non-finite JSON number")
+
+
+def _validated_arguments(
+    raw_arguments: Any,
+    *,
+    schema: Mapping[str, Any],
+    allow_mapping: bool,
+) -> None:
+    if allow_mapping and isinstance(raw_arguments, Mapping):
+        arguments = raw_arguments
+    else:
+        if not isinstance(raw_arguments, str):
+            raise InferencePortError(
+                "Controlled provider tool arguments are incomplete.",
+                failure_code="INCOMPLETE_TOOL_ARGUMENTS",
+            )
+        if not raw_arguments.strip():
+            required = schema.get("required", [])
+            if isinstance(required, list) and required:
+                raise InferencePortError(
+                    "Controlled provider tool arguments are incomplete.",
+                    failure_code="INCOMPLETE_TOOL_ARGUMENTS",
+                )
+            raw_arguments = "{}"
+        try:
+            arguments = json.loads(
+                raw_arguments,
+                object_pairs_hook=_strict_object,
+                parse_constant=_reject_nonfinite,
+            )
+        except (TypeError, ValueError, RecursionError):
+            raise InferencePortError(
+                "Controlled provider tool arguments are incomplete.",
+                failure_code="INCOMPLETE_TOOL_ARGUMENTS",
+            ) from None
+
+    if not isinstance(arguments, Mapping):
+        raise InferencePortError(
+            "Controlled provider tool arguments are incomplete.",
+            failure_code="INCOMPLETE_TOOL_ARGUMENTS",
+        )
+    required = schema.get("required", [])
+    if isinstance(required, list) and any(key not in arguments for key in required):
+        raise InferencePortError(
+            "Controlled provider tool arguments are incomplete.",
+            failure_code="INCOMPLETE_TOOL_ARGUMENTS",
+        )
+
+
+def _normalize_tool_calls(
+    raw_calls: Any,
+    *,
+    api_mode: str,
+    schemas: Mapping[str, Mapping[str, Any]],
+) -> tuple[ToolCallIdentity, ...]:
+    if raw_calls is None:
+        return ()
+    if not isinstance(raw_calls, (list, tuple)):
+        raise InferencePortError(
+            "Controlled provider tool calls are malformed.",
+            failure_code="INVALID_TOOL_CALL",
+        )
+
+    normalized: list[ToolCallIdentity] = []
+    seen_ids: set[str] = set()
+    for raw_call in raw_calls:
+        call_type = _response_field(raw_call, "type")
+        if api_mode == "chat_completions":
+            call_id = _safe_string(_response_field(raw_call, "id"))
+            function = _response_field(raw_call, "function")
+            name = _safe_string(_response_field(function, "name"))
+            arguments = _response_field(function, "arguments", _MISSING)
+            allow_mapping = False
+        elif api_mode == "anthropic_messages":
+            call_id = _safe_string(_response_field(raw_call, "id"))
+            name = _safe_string(_response_field(raw_call, "name"))
+            arguments = _response_field(raw_call, "input", _MISSING)
+            allow_mapping = True
+        else:
+            call_id = _safe_string(_response_field(raw_call, "call_id"))
+            name = _safe_string(_response_field(raw_call, "name"))
+            if call_type == "custom_tool_call":
+                arguments = _response_field(raw_call, "input", _MISSING)
+            else:
+                arguments = _response_field(raw_call, "arguments", _MISSING)
+            allow_mapping = False
+            item_status = _safe_string(_response_field(raw_call, "status"))
+            if item_status != "completed":
+                code = (
+                    "INCOMPLETE_TOOL_CALL"
+                    if item_status in {"queued", "in_progress", "incomplete", None}
+                    else "UNKNOWN_TERMINAL_STATUS"
+                )
+                raise InferencePortError(
+                    "Controlled provider tool call did not complete.",
+                    failure_code=code,
+                )
+
+        if call_id is None or name is None:
+            raise InferencePortError(
+                "Controlled provider tool identity is incomplete.",
+                failure_code="INVALID_TOOL_CALL",
+            )
+        if call_id in seen_ids:
+            raise InferencePortError(
+                "Controlled provider returned a duplicate tool-call identity.",
+                failure_code="DUPLICATE_TOOL_CALL_ID",
+            )
+        seen_ids.add(call_id)
+        schema = schemas.get(name)
+        if schema is None:
+            raise InferencePortError(
+                "Controlled provider returned a tool that was not requested.",
+                failure_code="UNREQUESTED_TOOL",
+            )
+        _validated_arguments(
+            arguments,
+            schema=schema,
+            allow_mapping=allow_mapping,
+        )
+        normalized.append(ToolCallIdentity(call_id=call_id, name=name, complete=True))
+
+    return tuple(normalized)
+
+
+def _normalize_chat_turn(
+    response: Any,
+    *,
+    schemas: Mapping[str, Mapping[str, Any]],
+) -> tuple[str, str | None, int, tuple[ToolCallIdentity, ...]]:
+    choices = _response_field(response, "choices")
+    if not isinstance(choices, (list, tuple)) or not choices:
+        raise InferencePortError(
+            "Controlled provider returned no completion choice.",
+            failure_code="INVALID_RESPONSE",
+        )
+    choice = choices[0]
+    message = _response_field(choice, "message")
+    raw_status = _safe_string(_response_field(choice, "finish_reason"))
+    raw_calls = _response_field(message, "tool_calls")
+    has_calls = bool(raw_calls)
+
+    if raw_status == "length":
+        raise InferencePortError(
+            "Controlled provider completion was incomplete.",
+            failure_code="PROVIDER_INCOMPLETE",
+        )
+    if raw_status == "content_filter":
+        status = "refused"
+    elif raw_status in {"stop", "tool_calls"}:
+        status = "completed"
+    elif raw_status is None:
+        raise InferencePortError(
+            "Controlled provider omitted its terminal status.",
+            failure_code="MISSING_TERMINAL_STATUS",
+        )
+    else:
+        raise InferencePortError(
+            "Controlled provider returned an unknown terminal status.",
+            failure_code="UNKNOWN_TERMINAL_STATUS",
+        )
+
+    if has_calls and status == "refused":
+        raise InferencePortError(
+            "Provider refusal cannot authorize a tool call.",
+            failure_code="PROVIDER_REFUSAL_WITH_TOOL_CALL",
+        )
+    if has_calls and raw_status != "tool_calls":
+        raise InferencePortError(
+            "Controlled provider tool calls do not match the terminal status.",
+            failure_code="TOOL_CALL_STATUS_MISMATCH",
+        )
+    if raw_status == "tool_calls" and not has_calls:
+        raise InferencePortError(
+            "Controlled provider announced tool calls but returned none.",
+            failure_code="MISSING_TOOL_CALLS",
+        )
+
+    tool_calls = _normalize_tool_calls(
+        raw_calls,
+        api_mode="chat_completions",
+        schemas=schemas,
+    )
+    text = _output_text(_response_field(message, "content"))
+    if text is None:
+        text = _output_text(_response_field(message, "refusal"))
+    return status, text, 0, tool_calls
+
+
+def _normalize_anthropic_turn(
+    response: Any,
+    *,
+    schemas: Mapping[str, Mapping[str, Any]],
+) -> tuple[str, str | None, int, tuple[ToolCallIdentity, ...]]:
+    raw_status = _safe_string(_response_field(response, "stop_reason"))
+    if raw_status in {"end_turn", "stop_sequence", "tool_use"}:
+        status = "completed"
+    elif raw_status == "refusal":
+        status = "refused"
+    elif raw_status == "max_tokens":
+        raise InferencePortError(
+            "Controlled provider completion was incomplete.",
+            failure_code="PROVIDER_INCOMPLETE",
+        )
+    elif raw_status is None:
+        raise InferencePortError(
+            "Controlled provider omitted its terminal status.",
+            failure_code="MISSING_TERMINAL_STATUS",
+        )
+    else:
+        raise InferencePortError(
+            "Controlled provider returned an unknown terminal status.",
+            failure_code="UNKNOWN_TERMINAL_STATUS",
+        )
+
+    content = _response_field(response, "content")
+    if not isinstance(content, (list, tuple)):
+        raise InferencePortError(
+            "Controlled provider returned malformed content.",
+            failure_code="INVALID_RESPONSE",
+        )
+    raw_calls = [block for block in content if _response_field(block, "type") == "tool_use"]
+    if raw_calls and raw_status != "tool_use":
+        raise InferencePortError(
+            "Controlled provider tool calls do not match the terminal status.",
+            failure_code="TOOL_CALL_STATUS_MISMATCH",
+        )
+    if raw_status == "tool_use" and not raw_calls:
+        raise InferencePortError(
+            "Controlled provider announced tool use but returned none.",
+            failure_code="MISSING_TOOL_CALLS",
+        )
+    if raw_calls and status == "refused":
+        raise InferencePortError(
+            "Provider refusal cannot authorize a tool call.",
+            failure_code="PROVIDER_REFUSAL_WITH_TOOL_CALL",
+        )
+    tool_calls = _normalize_tool_calls(
+        raw_calls,
+        api_mode="anthropic_messages",
+        schemas=schemas,
+    )
+    text = "\n".join(
+        value
+        for block in content
+        if _response_field(block, "type") == "text"
+        if (value := _output_text(_response_field(block, "text")))
+    ) or None
+    return status, text, 0, tool_calls
+
+
+def _text_from_responses_message(item: Any) -> str:
+    content = _response_field(item, "content")
+    if not isinstance(content, (list, tuple)):
+        return ""
+    parts = []
+    for part in content:
+        if _response_field(part, "type") != "output_text":
+            continue
+        text = _output_text(_response_field(part, "text"))
+        if text:
+            parts.append(text)
+    return "".join(parts)
+
+
+def _normalize_codex_turn(
+    response: Any,
+    *,
+    schemas: Mapping[str, Mapping[str, Any]],
+) -> tuple[str, str | None, int, tuple[ToolCallIdentity, ...]]:
+    raw_status = _safe_string(_response_field(response, "status"))
+    output = _response_field(response, "output", [])
+    if output is None:
+        output = []
+    if not isinstance(output, (list, tuple)):
+        raise InferencePortError(
+            "Controlled provider returned malformed output items.",
+            failure_code="INVALID_RESPONSE",
+        )
+    incomplete_details = _response_field(response, "incomplete_details")
+    incomplete_reason = _safe_string(_response_field(incomplete_details, "reason"))
+    if raw_status == "incomplete" and incomplete_reason == "content_filter":
+        status = "refused"
+    elif raw_status == "completed":
+        status = "completed"
+    elif raw_status == "incomplete":
+        raise InferencePortError(
+            "Controlled provider completion was incomplete.",
+            failure_code="PROVIDER_INCOMPLETE",
+        )
+    elif raw_status == "failed":
+        raise InferencePortError(
+            "Controlled provider reported a failed completion.",
+            failure_code="PROVIDER_FAILED",
+        )
+    elif raw_status is None:
+        raise InferencePortError(
+            "Controlled provider omitted its terminal status.",
+            failure_code="MISSING_TERMINAL_STATUS",
+        )
+    else:
+        raise InferencePortError(
+            "Controlled provider returned an unknown terminal status.",
+            failure_code="UNKNOWN_TERMINAL_STATUS",
+        )
+
+    raw_calls = []
+    final_parts: list[str] = []
+    commentary_count = 0
+    saw_nonfinal_phase = False
+    for item in output:
+        item_type = _response_field(item, "type")
+        if item_type in {"function_call", "custom_tool_call"}:
+            raw_calls.append(item)
+            continue
+        if item_type != "message":
+            continue
+        item_status = _safe_string(_response_field(item, "status"))
+        if item_status in {"queued", "in_progress", "incomplete"}:
+            raise InferencePortError(
+                "Controlled provider returned an incomplete message item.",
+                failure_code="PROVIDER_INCOMPLETE",
+            )
+        if item_status and item_status != "completed":
+            raise InferencePortError(
+                "Controlled provider returned an unknown output-item status.",
+                failure_code="UNKNOWN_TERMINAL_STATUS",
+            )
+        phase = (_safe_string(_response_field(item, "phase")) or "").lower()
+        if phase == "commentary":
+            commentary_count += 1
+            saw_nonfinal_phase = True
+            continue
+        if phase == "analysis":
+            saw_nonfinal_phase = True
+            continue
+        if phase not in {"", "final", "final_answer"}:
+            saw_nonfinal_phase = True
+            continue
+        text = _text_from_responses_message(item)
+        if text:
+            final_parts.append(text)
+
+    if raw_calls and status == "refused":
+        raise InferencePortError(
+            "Provider refusal cannot authorize a tool call.",
+            failure_code="PROVIDER_REFUSAL_WITH_TOOL_CALL",
+        )
+    tool_calls = _normalize_tool_calls(
+        raw_calls,
+        api_mode="codex_responses",
+        schemas=schemas,
+    )
+    joined_final_text = "\n".join(final_parts)
+    final_text = joined_final_text if joined_final_text.strip() else None
+    if final_text is None and not saw_nonfinal_phase:
+        final_text = _output_text(_response_field(response, "output_text"))
+    if status == "completed" and final_text is None and not tool_calls:
+        raise InferencePortError(
+            "Controlled provider returned an empty completion.",
+            failure_code="EMPTY_TURN",
+        )
+    return status, final_text, commentary_count, tool_calls
+
+
+def _normalize_parent_turn(
+    response: Any,
+    *,
+    api_mode: str,
+    request: Mapping[str, Any],
+    requester: Any,
+) -> NormalizedTurn:
+    if response is None:
+        raise InferencePortError(
+            "Controlled provider returned no response.",
+            failure_code="INVALID_RESPONSE",
+        )
+    schemas = _request_tool_schemas(request)
+    if api_mode == "chat_completions":
+        status, text, commentary_count, tool_calls = _normalize_chat_turn(
+            response,
+            schemas=schemas,
+        )
+    elif api_mode == "anthropic_messages":
+        status, text, commentary_count, tool_calls = _normalize_anthropic_turn(
+            response,
+            schemas=schemas,
+        )
+    elif api_mode == "codex_responses":
+        status, text, commentary_count, tool_calls = _normalize_codex_turn(
+            response,
+            schemas=schemas,
+        )
+    else:
+        raise InferencePortError(
+            "Controlled provider response mode is unsupported.",
+            failure_code="INVALID_RESPONSE",
+        )
+
+    configured_model = _safe_string(getattr(requester, "requested_model", None))
+    if configured_model is None:
+        configured_model = _safe_string(getattr(requester, "model", None))
+    return NormalizedTurn(
+        response=response,
+        terminal_status=status,
+        final_text=text,
+        commentary_count=commentary_count,
+        tool_calls=tool_calls,
+        configured_model=configured_model,
+        requested_model=_safe_string(request.get("model")),
+        reported_model=_safe_string(_response_field(response, "model")),
+        configured_effort=_configured_effort(requester),
+        wire_effort=_wire_effort(request),
+        reported_effort=_reported_effort(response),
+    )
