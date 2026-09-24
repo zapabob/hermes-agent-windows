@@ -3,9 +3,14 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-from subprocess import CompletedProcess, DEVNULL, TimeoutExpired
+from io import BytesIO
+import subprocess
+import sys
+from subprocess import DEVNULL, PIPE, TimeoutExpired
 from threading import Barrier
+from time import sleep
 from types import SimpleNamespace
+from typing import Literal, Protocol
 
 from downstream.platform.windows.gpu import (
     NvidiaGpuProbeResult,
@@ -27,6 +32,59 @@ from downstream.delegation.resources import (
 
 GiB = 1024**3
 MiB = 1024**2
+
+
+class _ReadableGpuStream(Protocol):
+    def read(self, size: int) -> bytes: ...
+
+    def close(self) -> None: ...
+
+
+class _FakeGpuProcess:
+    def __init__(
+        self,
+        output: bytes | _ReadableGpuStream,
+        *,
+        stays_running: bool = False,
+    ) -> None:
+        self.stdout: _ReadableGpuStream = (
+            BytesIO(output) if isinstance(output, bytes) else output
+        )
+        self.stays_running = stays_running
+        self.terminated = False
+        self.returncode: int | None = None
+
+    def wait(self, timeout: float | None = None) -> int:
+        if self.terminated:
+            self.returncode = -15
+            return -15
+        if self.stays_running:
+            sleep(min(timeout or 0.001, 0.01))
+            raise TimeoutExpired("nvidia-smi", timeout)
+        self.returncode = 0
+        return 0
+
+    def terminate(self) -> None:
+        self.terminated = True
+
+    def kill(self) -> None:
+        self.terminated = True
+
+
+class _FloodingGpuStream:
+    def __init__(self) -> None:
+        self.bytes_read = 0
+        self.requested_sizes: list[int] = []
+
+    def read(self, size: int) -> bytes:
+        self.requested_sizes.append(size)
+        secret = b"PRIVATE_GPU_OUTPUT"
+        output = (secret * (size // len(secret) + 1))[:size]
+        self.bytes_read += len(output)
+        return output
+
+    def close(self) -> None:
+        return None
 
 
 def snapshot(
@@ -61,7 +119,7 @@ def snapshot(
 
 def local_request(
     *,
-    workload: str = "inference",
+    workload: Literal["read", "inference", "embedding"] = "inference",
     ram: int = 1 * GiB,
     commit: int = 1 * GiB,
     cpu: float = 10.0,
@@ -70,7 +128,7 @@ def local_request(
 ) -> ResourceRequest:
     return ResourceRequest(
         route="local",
-        workload=workload,  # type: ignore[arg-type]
+        workload=workload,
         ram_bytes=ram,
         commit_bytes=commit,
         cpu_percent=cpu,
@@ -680,23 +738,22 @@ def test_nvidia_probe_aggregates_only_supplied_local_pids_and_bounds_timeout(
 ) -> None:
     monkeypatch.setenv("HERMES_TEST_SECRET", "must-not-reach-child")
     monkeypatch.setenv("PATH", "parent-only-secret-path")
-    calls: list[tuple[list[str], dict[str, object]]] = []
-    outputs = iter(
-        (
-            "GPU-test-001, 8192\n",
-            "GPU-test-001, 5151, 1024\nGPU-test-001, 7171, 4096\nGPU-test-001, 121, 512\n",
-        )
-    )
+    calls: list[tuple[list[str], dict[str, object], _FakeGpuProcess]] = []
+    outputs = iter((
+        b"GPU-test-001, 8192\n",
+        b"GPU-test-001, 5151, 1024\nGPU-test-001, 7171, 4096\nGPU-test-001, 121, 512\n",
+    ))
 
-    def runner(command: list[str], **kwargs: object) -> CompletedProcess[str]:
-        calls.append((command, kwargs))
-        return CompletedProcess(command, 0, stdout=next(outputs), stderr="sensitive stderr")
+    def process_factory(command: list[str], **kwargs: object) -> _FakeGpuProcess:
+        process = _FakeGpuProcess(next(outputs))
+        calls.append((command, kwargs, process))
+        return process
 
     result = query_nvidia_gpu_telemetry(
         local_process_ids=(5151, 121),
         timeout_seconds=900.0,
         executable_lookup=lambda _name: "nvidia-smi",
-        runner=runner,
+        process_factory=process_factory,
         monotonic_clock=lambda: 50.0,
     )
 
@@ -705,8 +762,9 @@ def test_nvidia_probe_aggregates_only_supplied_local_pids_and_bounds_timeout(
     assert result.devices[0].free_vram_bytes == 8192 * MiB
     assert result.devices[0].local_resident_bytes == 1536 * MiB
     assert len(calls) == 2
-    assert all(kwargs["timeout"] == 2.0 for _command, kwargs in calls)
-    assert all(kwargs["stdin"] is DEVNULL for _command, kwargs in calls)
+    assert all(kwargs["stdin"] is DEVNULL for _command, kwargs, _process in calls)
+    assert all(kwargs["stdout"] is PIPE for _command, kwargs, _process in calls)
+    assert all(kwargs["stderr"] is DEVNULL for _command, kwargs, _process in calls)
     assert calls[0][0] == [
         "nvidia-smi",
         "--query-gpu=uuid,memory.free",
@@ -717,7 +775,7 @@ def test_nvidia_probe_aggregates_only_supplied_local_pids_and_bounds_timeout(
         "--query-compute-apps=gpu_uuid,pid,used_memory",
         "--format=csv,noheader,nounits",
     ]
-    for _command, kwargs in calls:
+    for _command, kwargs, _process in calls:
         child_env = kwargs["env"]
         assert isinstance(child_env, dict)
         assert set(child_env).issubset({"PATH", "SystemRoot", "WINDIR"})
@@ -727,20 +785,86 @@ def test_nvidia_probe_aggregates_only_supplied_local_pids_and_bounds_timeout(
     assert "sensitive stderr" not in repr(result)
 
 
-def test_nvidia_probe_timeout_returns_only_a_sanitized_error_code() -> None:
-    seen_timeout: list[float] = []
+def test_nvidia_probe_stops_streaming_at_output_cap_and_sanitizes_flood() -> None:
+    stream = _FloodingGpuStream()
+    process = _FakeGpuProcess(stream, stays_running=True)
+    process_calls: list[tuple[list[str], dict[str, object]]] = []
 
-    def runner(command: list[str], **kwargs: object) -> CompletedProcess[str]:
-        seen_timeout.append(float(kwargs["timeout"]))
-        raise TimeoutExpired(command, kwargs["timeout"], stderr="private details")
+    def process_factory(command: list[str], **kwargs: object) -> _FakeGpuProcess:
+        process_calls.append((command, kwargs))
+        return process
 
     result = query_nvidia_gpu_telemetry(
         executable_lookup=lambda _name: "nvidia-smi",
-        runner=runner,
+        process_factory=process_factory,
+    )
+
+    assert result.devices is None
+    assert result.error == "gpu_probe_output_invalid"
+    assert stream.bytes_read == 16 * 1024 + 1
+    assert max(stream.requested_sizes) <= 16 * 1024 + 1
+    assert process.terminated
+    assert process_calls[0][1]["stdout"] is PIPE
+    assert process_calls[0][1]["stderr"] is DEVNULL
+    assert "capture_output" not in process_calls[0][1]
+    assert "PRIVATE_GPU_OUTPUT" not in repr(result)
+
+
+def test_nvidia_probe_accepts_output_exactly_at_byte_limit() -> None:
+    row = b"GPU-test-001, 8192\n"
+    output = row + b"\n" * (16 * 1024 - len(row))
+    process = _FakeGpuProcess(output)
+
+    result = query_nvidia_gpu_telemetry(
+        executable_lookup=lambda _name: "nvidia-smi",
+        process_factory=lambda _command, **_kwargs: process,
+    )
+
+    assert result.error is None
+    assert result.devices is not None
+    assert len(result.devices) == 1
+    assert result.devices[0].free_vram_bytes == 8192 * MiB
+
+
+def test_nvidia_probe_terminates_real_flooding_child_without_leaking_output() -> None:
+    script = (
+        "import sys\n"
+        "payload = b'PRIVATE_GPU_OUTPUT' * 1024\n"
+        "while True:\n"
+        "    sys.stdout.buffer.write(payload)\n"
+        "    sys.stdout.buffer.flush()\n"
+    )
+    children: list[subprocess.Popen[bytes]] = []
+
+    def process_factory(
+        _command: list[str], **kwargs: object
+    ) -> subprocess.Popen[bytes]:
+        child = subprocess.Popen([sys.executable, "-c", script], **kwargs)
+        children.append(child)
+        return child
+
+    result = query_nvidia_gpu_telemetry(
+        executable_lookup=lambda _name: "nvidia-smi",
+        process_factory=process_factory,
+    )
+
+    assert result.devices is None
+    assert result.error == "gpu_probe_output_invalid"
+    assert len(children) == 1
+    assert children[0].poll() is not None
+    assert "PRIVATE_GPU_OUTPUT" not in repr(result)
+
+
+def test_nvidia_probe_timeout_terminates_process_and_returns_sanitized_error() -> None:
+    process = _FakeGpuProcess(b"PRIVATE_GPU_OUTPUT", stays_running=True)
+
+    result = query_nvidia_gpu_telemetry(
+        executable_lookup=lambda _name: "nvidia-smi",
+        process_factory=lambda _command, **_kwargs: process,
         timeout_seconds=0.001,
     )
 
     assert result.devices is None
     assert result.error == "gpu_probe_timeout"
-    assert seen_timeout == [0.1]
-    assert "private details" not in repr(result)
+    assert process.terminated
+    assert "PRIVATE_GPU_OUTPUT" not in repr(result)

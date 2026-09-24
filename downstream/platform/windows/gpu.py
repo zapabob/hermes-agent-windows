@@ -8,17 +8,55 @@ import os
 import re
 import shutil
 import subprocess
+import threading
 import time
 from dataclasses import dataclass
 from io import StringIO
-from typing import Callable, Sequence
+from typing import Callable, IO, Protocol, Sequence
 
 
 _MAX_GPU_COUNT = 16
-_MAX_OUTPUT_CHARS = 16 * 1024
+_MAX_OUTPUT_BYTES = 16 * 1024
 _MAX_LOCAL_PIDS = 4096
 _MAX_TIMEOUT_SECONDS = 2.0
+_PROCESS_POLL_SECONDS = 0.05
+_PROCESS_STOP_GRACE_SECONDS = 0.1
+_OUTPUT_READ_CHUNK_BYTES = 4096
 _UUID_RE = re.compile(r"(?:GPU|MIG)-[A-Za-z0-9_-]{1,92}\Z")
+
+
+class _ByteProcess(Protocol):
+    stdout: IO[bytes] | None
+    returncode: int | None
+
+    def wait(self, timeout: float | None = None) -> int: ...
+
+    def terminate(self) -> None: ...
+
+    def kill(self) -> None: ...
+
+
+def _stop_process(process: _ByteProcess) -> None:
+    """Stop and reap the bounded telemetry child, escalating if needed."""
+    try:
+        process.terminate()
+    except (OSError, ValueError):
+        pass
+    try:
+        process.wait(timeout=_PROCESS_STOP_GRACE_SECONDS)
+        return
+    except subprocess.TimeoutExpired:
+        pass
+    except (OSError, ValueError):
+        return
+    try:
+        process.kill()
+    except (OSError, ValueError):
+        pass
+    try:
+        process.wait(timeout=_PROCESS_STOP_GRACE_SECONDS)
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        pass
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,7 +104,7 @@ def _run_nvidia_smi(
     executable: str,
     args: Sequence[str],
     *,
-    runner: Callable[..., subprocess.CompletedProcess[str]],
+    process_factory: Callable[..., _ByteProcess] | None,
     timeout: float,
 ) -> tuple[str | None, str | None]:
     environment: dict[str, str] = {}
@@ -81,28 +119,98 @@ def _run_nvidia_smi(
         path_parts.extend(("/usr/bin", "/bin"))
     environment["PATH"] = os.pathsep.join(part for part in path_parts if part)
     try:
-        result = runner(
-            [executable, *args],
-            stdin=subprocess.DEVNULL,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=timeout,
-            check=False,
-            env=environment,
-        )
-    except subprocess.TimeoutExpired:
-        return None, "gpu_probe_timeout"
+        command = [executable, *args]
+        if process_factory is None:
+            process: _ByteProcess = subprocess.Popen(
+                command,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                env=environment,
+                text=False,
+            )
+        else:
+            process = process_factory(
+                command,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                env=environment,
+            )
     except (OSError, ValueError, TypeError):
         return None, "gpu_probe_failed"
 
-    output = result.stdout
-    if not isinstance(output, str) or len(output) > _MAX_OUTPUT_CHARS:
-        return None, "gpu_probe_output_invalid"
-    if result.returncode != 0:
+    stdout = process.stdout
+    if stdout is None:
+        _stop_process(process)
         return None, "gpu_probe_failed"
-    return output, None
+
+    captured = bytearray()
+    output_overflow = threading.Event()
+    output_read_failed = threading.Event()
+
+    def read_bounded_stdout() -> None:
+        try:
+            while len(captured) <= _MAX_OUTPUT_BYTES:
+                remaining = _MAX_OUTPUT_BYTES + 1 - len(captured)
+                chunk = stdout.read(min(_OUTPUT_READ_CHUNK_BYTES, remaining))
+                if not chunk:
+                    return
+                captured.extend(chunk)
+                if len(captured) > _MAX_OUTPUT_BYTES:
+                    output_overflow.set()
+                    return
+        except (OSError, ValueError):
+            output_read_failed.set()
+
+    reader = threading.Thread(target=read_bounded_stdout, daemon=True)
+    reader.start()
+
+    def join_reader() -> None:
+        reader.join(timeout=_PROCESS_STOP_GRACE_SECONDS)
+        if not reader.is_alive():
+            try:
+                stdout.close()
+            except (OSError, ValueError):
+                pass
+
+    deadline = time.monotonic() + timeout
+    while True:
+        if output_overflow.is_set():
+            _stop_process(process)
+            join_reader()
+            return None, "gpu_probe_output_invalid"
+        if output_read_failed.is_set():
+            _stop_process(process)
+            join_reader()
+            return None, "gpu_probe_failed"
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            _stop_process(process)
+            join_reader()
+            return None, "gpu_probe_timeout"
+        try:
+            return_code = process.wait(timeout=min(_PROCESS_POLL_SECONDS, remaining))
+            break
+        except subprocess.TimeoutExpired:
+            continue
+        except (OSError, ValueError, TypeError):
+            _stop_process(process)
+            join_reader()
+            return None, "gpu_probe_failed"
+
+    join_reader()
+    if reader.is_alive():
+        _stop_process(process)
+        return None, "gpu_probe_failed"
+    if output_overflow.is_set():
+        return None, "gpu_probe_output_invalid"
+    if output_read_failed.is_set() or return_code != 0:
+        return None, "gpu_probe_failed"
+    try:
+        return captured.decode("utf-8", errors="replace"), None
+    except (UnicodeDecodeError, ValueError):
+        return None, "gpu_probe_failed"
 
 
 def _parse_mib(value: str) -> int | None:
@@ -184,7 +292,7 @@ def query_nvidia_gpu_telemetry(
     *,
     timeout_seconds: float = 1.0,
     executable_lookup: Callable[[str], str | None] = shutil.which,
-    runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
+    process_factory: Callable[..., _ByteProcess] | None = None,
     monotonic_clock: Callable[[], float] = time.monotonic,
 ) -> NvidiaGpuProbeResult:
     """Read GPU free VRAM and optional known-local process residency.
@@ -208,7 +316,7 @@ def query_nvidia_gpu_telemetry(
             "--query-gpu=uuid,memory.free",
             "--format=csv,noheader,nounits",
         ),
-        runner=runner,
+        process_factory=process_factory,
         timeout=timeout,
     )
     if error:
@@ -238,7 +346,7 @@ def query_nvidia_gpu_telemetry(
                     "--query-compute-apps=gpu_uuid,pid,used_memory",
                     "--format=csv,noheader,nounits",
                 ),
-                runner=runner,
+                process_factory=process_factory,
                 timeout=timeout,
             )
             if process_error or process_output is None:
