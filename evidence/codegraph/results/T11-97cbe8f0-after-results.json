@@ -1,0 +1,98 @@
+{
+  "phase": "after",
+  "task_id": "T11",
+  "source_sha": "97cbe8f00416c9cc2e0abeb31148e403b51515a1",
+  "source_fingerprint": "d090968fa8b3b95503bb22f214c474694907637ebc0e973facd0004bca0cd986",
+  "source_fingerprint_method": "SHA-256 of git ls-tree -r -z HEAD byte stream; committed tracked tree only",
+  "index_identity": "H:\\hermes-control-mcp-t11-network-budget-20260924\\.codegraph",
+  "captured_at_utc": "2026-09-24T11:42:09Z",
+  "sync": {
+    "command": "sync .",
+    "version": "1.6.0",
+    "summary": "Synced 2 modified files; 92 nodes."
+  },
+  "status": {
+    "initialized": true,
+    "version": "1.6.0",
+    "project_path": "H:\\hermes-control-mcp-t11-network-budget-20260924",
+    "index_path": "H:\\hermes-control-mcp-t11-network-budget-20260924\\.codegraph",
+    "last_indexed_utc": "2026-09-24T11:41:40.518Z",
+    "file_count": 8922,
+    "node_count": 191367,
+    "edge_count": 612964,
+    "database_size_bytes": 650121216,
+    "wal_size_bytes": 0,
+    "pending_changes": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "worktree_mismatch": null,
+    "built_with_version": "1.6.0",
+    "built_with_extraction_version": 25,
+    "current_extraction_version": 25,
+    "reindex_recommended": false,
+    "state": "complete",
+    "pending_refs": 0
+  },
+  "queries": {
+    "cancel_implementation": {
+      "query": "query --json RequestLease._cancel_unlocked",
+      "matches": [
+        {
+          "name": "_cancel_unlocked",
+          "qualified_name": "RequestLease::_cancel_unlocked",
+          "kind": "method",
+          "file": "downstream/delegation/network_budget.py",
+          "start_line": 537,
+          "end_line": 545,
+          "signature": "(self, reason: str) -> Callable[[str], Any] | None"
+        }
+      ]
+    },
+    "cancel_implementation_impact": {
+      "query": "impact --json --depth 2 RequestLease._cancel_unlocked",
+      "node_count": 10,
+      "edge_count": 9,
+      "affected": [
+        {
+          "name": "_cancel_unlocked",
+          "kind": "method",
+          "file": "downstream/delegation/network_budget.py",
+          "line": 537
+        },
+        {
+          "name": "cancel",
+          "kind": "method",
+          "file": "downstream/delegation/network_budget.py",
+          "line": 236
+        },
+        {
+          "name": "_expire_deadline",
+          "kind": "method",
+          "file": "downstream/delegation/network_budget.py",
+          "line": 380
+        },
+        {
+          "name": "check_active",
+          "kind": "method",
+          "file": "downstream/delegation/network_budget.py",
+          "line": 432
+        },
+        {
+          "name": "test_first_cancel_reason_is_preserved_and_abort_callback_runs_once",
+          "kind": "function",
+          "file": "tests/delegation/test_network_budget.py",
+          "line": 110
+        },
+        {
+          "name": "test_external_cancel_reason_wins_over_later_budget_deadline",
+          "kind": "function",
+          "file": "tests/delegation/test_network_budget.py",
+          "line": 126
+        }
+      ],
+      "omitted_after_six": 4
+    }
+  }
+}

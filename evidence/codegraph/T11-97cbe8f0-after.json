@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "task_id": "T11",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "97cbe8f00416c9cc2e0abeb31148e403b51515a1",
+  "source_fingerprint": "d090968fa8b3b95503bb22f214c474694907637ebc0e973facd0004bca0cd986",
+  "index_identity": "H:\\hermes-control-mcp-t11-network-budget-20260924\\.codegraph",
+  "tool": {
+    "version": "1.6.0",
+    "invocation_kind": "CLI",
+    "package": "@colbymchenry/codegraph"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "queries": [
+    {
+      "result_ref": "evidence/codegraph/results/T11-97cbe8f0-after-results.json#/queries/cancel_implementation",
+      "query": "query --json RequestLease._cancel_unlocked"
+    },
+    {
+      "result_ref": "evidence/codegraph/results/T11-97cbe8f0-after-results.json#/queries/cancel_implementation_impact",
+      "query": "impact --json --depth 2 RequestLease._cancel_unlocked"
+    }
+  ],
+  "canonical_owners": [
+    "downstream.delegation.network_budget.RequestLease._cancel_unlocked",
+    "downstream.delegation.network_budget.RequestLease.note_cancelled",
+    "downstream.delegation.network_budget.RequestBudget.cancel"
+  ],
+  "impact_paths": [
+    "RequestLease._cancel_unlocked impact returned 10 nodes and 9 edges, including RequestBudget.cancel, the deadline timer path, check_active, and both cancellation regressions."
+  ],
+  "unresolved_edges": [
+    "The process-local budget and inactive production host wiring limitations recorded in the product receipt remain unchanged."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [],
+  "evidence_refs": [
+    "evidence/codegraph/results/T11-97cbe8f0-after-results.json",
+    "evidence/codegraph/T11-cdfd1508-after.json"
+  ],
+  "phase": "after"
+}
