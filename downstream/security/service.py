@@ -6,6 +6,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import replace
 from pathlib import Path
@@ -14,8 +15,8 @@ from typing import Iterable
 from hermes_cli.config import load_config
 
 from .engines import ClamAVEngine, HashReputationEngine, StaticHeuristicsEngine, YaraEngine, engine_versions, versions_cache_key
-from .models import EngineState, Finding, ScanResult, Verdict
-from .policy import decide
+from .models import ExecutionDecision, Finding, ScanResult, Verdict
+from .policy import evaluate
 from .store import SecurityStore
 from .updates import DefinitionUpdater
 from .vault import QuarantineVault
@@ -56,7 +57,16 @@ class SecurityService:
             YaraEngine(yara_rules, timeout=timeout),
             StaticHeuristicsEngine(),
         )
-        self.vault = QuarantineVault(self.store, read_only=self.read_only)
+        self._vault: QuarantineVault | None = None
+        self._vault_lock = threading.Lock()
+
+    @property
+    def vault(self) -> QuarantineVault:
+        if self._vault is None:
+            with self._vault_lock:
+                if self._vault is None:
+                    self._vault = QuarantineVault(self.store, read_only=self.read_only)
+        return self._vault
 
     def versions(self) -> dict[str, str]:
         return engine_versions(self.engines)
@@ -101,27 +111,56 @@ class SecurityService:
         if use_cache:
             cached = self.store.cache_get(sha256, cache_key)
             if cached is not None:
-                cached = replace(cached, path=str(path))
-                if cached.verdict == Verdict.MALICIOUS and not self.store.is_allowed(sha256, str(path)) and quarantine:
+                decision = evaluate(list(cached.findings), self.store.is_allowed(sha256, str(path)))
+                cached = replace(
+                    cached,
+                    path=str(path),
+                    verdict=decision.verdict,
+                    score=decision.score,
+                    action=decision.action,
+                    error=decision.error,
+                    quarantine_id=None,
+                )
+                if (
+                    decision.execution_decision == ExecutionDecision.BLOCK
+                    and decision.action == "quarantine"
+                    and quarantine
+                    and bool(self.config.get("auto_quarantine", True))
+                ):
                     try:
                         item_id = self.vault.quarantine(path, cached)
                         cached = replace(cached, action="quarantined", quarantine_id=item_id)
-                    except Exception as exc:
-                        cached = replace(cached, verdict=Verdict.SCAN_ERROR, action="quarantine_failed", error=str(exc))
+                    except Exception:
+                        cached = replace(cached, action="quarantine_failed", error="quarantine failed")
                 self.store.record_scan(cached, cache_key)
                 return cached
         findings: list[Finding] = []
         for engine in self.engines:
             findings.extend(engine.scan(path, sha256))
         allowed = self.store.is_allowed(sha256, str(path))
-        verdict, score, action, error = decide(findings, allowed)
-        result = ScanResult(str(path), sha256, size, verdict, score, action, tuple(findings), versions, error=error)
-        if quarantine and action == "quarantine" and bool(self.config.get("auto_quarantine", True)):
+        decision = evaluate(findings, allowed)
+        result = ScanResult(
+            str(path),
+            sha256,
+            size,
+            decision.verdict,
+            decision.score,
+            decision.action,
+            tuple(findings),
+            versions,
+            error=decision.error,
+        )
+        if (
+            quarantine
+            and decision.execution_decision == ExecutionDecision.BLOCK
+            and decision.action == "quarantine"
+            and bool(self.config.get("auto_quarantine", True))
+        ):
             try:
                 item_id = self.vault.quarantine(path, result)
                 result = replace(result, action="quarantined", quarantine_id=item_id)
-            except Exception as exc:
-                result = ScanResult(str(path), sha256, size, Verdict.SCAN_ERROR, score, "quarantine_failed", tuple(findings), versions, error=str(exc))
+            except Exception:
+                result = replace(result, action="quarantine_failed", error="quarantine failed")
         self.store.record_scan(result, cache_key)
         return result
 

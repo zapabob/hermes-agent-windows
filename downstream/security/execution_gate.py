@@ -6,7 +6,7 @@ from typing import Any
 from hermes_cli._subprocess_compat import split_command_line
 from hermes_cli.config import load_config
 
-from .models import Verdict
+from .models import ExecutionDecision
 from .service import SecurityService
 
 
@@ -53,8 +53,12 @@ def preflight_command(command: str, cwd: str) -> dict[str, Any]:
         return {"allowed": True, "blocked": [], "warnings": [], "results": []}
     service = SecurityService(config=config)
     results = [service.scan_file(path) for path in candidates]
-    blocked = [result for result in results if result.verdict == Verdict.MALICIOUS and result.action != "allowlisted"]
-    warnings = [result for result in results if result.verdict in {Verdict.SCAN_ERROR, Verdict.SUSPICIOUS, Verdict.UNKNOWN}]
+    blocked = [
+        result
+        for result in results
+        if result.execution_decision in {ExecutionDecision.BLOCK, ExecutionDecision.REVIEW}
+    ]
+    warnings = [result for result in results if result.execution_decision == ExecutionDecision.WARN]
     return {
         "allowed": not blocked,
         "blocked": [result.to_dict() for result in blocked],

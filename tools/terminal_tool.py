@@ -3106,8 +3106,10 @@ def terminal_tool(
             gate = preflight_command(command, cwd)
             if not gate["allowed"]:
                 blocked = gate["blocked"][0]
+                candidate_state = blocked.get("file_verdict", blocked.get("verdict"))
+                candidate_kind = "malicious" if candidate_state == "MALICIOUS" else "unverified"
                 return tool_error(
-                    "Security Center blocked a malicious execution candidate: "
+                    f"Security Center blocked a {candidate_kind} execution candidate: "
                     f"{blocked['path']} ({blocked['verdict']}, score {blocked['score']})."
                 )
             if gate["warnings"]:
