@@ -150,7 +150,12 @@ export type GatewayEventPayload = {
   reason?: string
   // approval.request (dangerous command / execute_code) — session-keyed
   command?: string
-  control?: { intent_digest?: string; operation_id?: string }
+  control?: {
+    grant_revision?: number
+    intent_digest?: string
+    operation_id?: string
+    resource?: string
+  }
   description?: string
   // False when a tirith content-security warning forbids a permanent allow.
   allow_permanent?: boolean

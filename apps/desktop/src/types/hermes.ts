@@ -661,7 +661,12 @@ export interface SessionResumeResponse {
     allow_permanent?: boolean
     choices?: string[]
     command?: string
-    control?: { intent_digest?: string; operation_id?: string }
+    control?: {
+      grant_revision?: number
+      intent_digest?: string
+      operation_id?: string
+      resource?: string
+    }
     description?: string
     request_id?: string
     smart_denied?: boolean
