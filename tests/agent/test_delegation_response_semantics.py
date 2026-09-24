@@ -117,7 +117,10 @@ def _final_chat_response():
     )
 
 
-def _response_events(*, status="completed", tool_calls=(), commentary="working", final="done"):
+def _response_events(
+    *, status="completed", tool_calls=(), commentary="working", final="done",
+    include_terminal=True, unknown_phase=False,
+):
     events = []
     output_index = 0
     if commentary is not None:
@@ -187,6 +190,24 @@ def _response_events(*, status="completed", tool_calls=(), commentary="working",
                 ),
             )
         )
+        output_index += 1
+    if unknown_phase:
+        events.append(
+            _field(
+                type="response.output_item.done",
+                output_index=output_index,
+                item=_field(
+                    type="message",
+                    id="msg-unknown-phase",
+                    role="assistant",
+                    phase="provider_private_phase",
+                    status="completed",
+                    content=[_field(type="output_text", text="untrusted extra text")],
+                ),
+            )
+        )
+    if not include_terminal:
+        return events
     terminal_type = {
         "completed": "response.completed",
         "incomplete": "response.incomplete",
@@ -240,7 +261,7 @@ def test_normalized_turn_preserves_terminal_text_commentary_and_provenance(monke
     tool_schema = _tool_schema()
     response = _consume_codex_event_stream(
         _response_events(commentary="working", final="done"),
-        model="reported-model",
+        model="selected-model",
     )
     response.reasoning_effort = "low"
     monkeypatch.setattr(
@@ -264,6 +285,74 @@ def test_normalized_turn_preserves_terminal_text_commentary_and_provenance(monke
     assert turn.wire_effort == "medium"
     assert turn.reported_effort == "low"
     assert turn.failure_code is None
+
+
+def test_codex_request_model_is_not_fabricated_as_provider_report(monkeypatch):
+    parent = _RecordedParent(api_mode="codex_responses", model="selected-model")
+    child = _ChildOwner(parent)
+    port = _bind_parent_port(parent, child)
+    events = _response_events(commentary=None, final="done")
+    del events[-1].response.model
+    response = _consume_codex_event_stream(events, model="selected-model")
+    assert response.model == "selected-model"
+    monkeypatch.setattr(
+        "agent.chat_completion_helpers.interruptible_api_call",
+        lambda _request_agent, _request: response,
+    )
+
+    turn = port.complete(
+        _request_turn(child, _tool_schema()),
+        route_binding=port.route_binding,
+        cancel_generation=0,
+    )
+
+    assert turn.requested_model == "selected-model"
+    assert turn.reported_model is None
+
+
+def test_unknown_codex_message_phase_cannot_join_valid_final(monkeypatch):
+    parent = _RecordedParent(api_mode="codex_responses", model="selected-model")
+    child = _ChildOwner(parent)
+    port = _bind_parent_port(parent, child)
+    response = _consume_codex_event_stream(
+        _response_events(commentary=None, final="done", unknown_phase=True),
+        model="selected-model",
+    )
+    monkeypatch.setattr(
+        "agent.chat_completion_helpers.interruptible_api_call",
+        lambda _request_agent, _request: response,
+    )
+
+    with pytest.raises(InferencePortError) as caught:
+        port.complete(
+            _request_turn(child, _tool_schema()),
+            route_binding=port.route_binding,
+            cancel_generation=0,
+        )
+
+    assert caught.value.failure_code == "UNKNOWN_MESSAGE_PHASE", str(caught.value)
+
+
+def test_incomplete_terminal_cannot_claim_completed_status(monkeypatch):
+    parent = _RecordedParent(api_mode="codex_responses", model="selected-model")
+    child = _ChildOwner(parent)
+    port = _bind_parent_port(parent, child)
+    events = _response_events(commentary=None, final="done")
+    events[-1].type = "response.incomplete"
+    response = _consume_codex_event_stream(events, model="selected-model")
+    monkeypatch.setattr(
+        "agent.chat_completion_helpers.interruptible_api_call",
+        lambda _request_agent, _request: response,
+    )
+
+    with pytest.raises(InferencePortError) as caught:
+        port.complete(
+            _request_turn(child, _tool_schema()),
+            route_binding=port.route_binding,
+            cancel_generation=0,
+        )
+
+    assert caught.value.failure_code == "MISSING_TERMINAL_STATUS"
 
 
 @pytest.mark.parametrize(
@@ -536,4 +625,60 @@ def test_recorded_responses_sse_refuses_invalid_calls_before_tool_dispatch(
         # bounded retry path; it must never reach the tool dispatcher.
         pass
 
+    assert dispatched == []
+
+
+@pytest.mark.parametrize(
+    ("include_terminal", "unknown_phase"),
+    [(False, False), (True, True)],
+    ids=["missing-terminal-with-tool", "unknown-phase-with-tool"],
+)
+def test_recorded_responses_sse_refuses_unverified_output_before_dispatch(
+    monkeypatch, include_terminal, unknown_phase
+):
+    model = "selected-responses-unverified"
+    parent = _RecordedParent(
+        api_mode="codex_responses",
+        model=model,
+        streams=[
+            _response_events(
+                tool_calls=(("call-1", "controlled_test_tool", '{"value":"ok"}'),),
+                commentary=None,
+                final="done" if unknown_phase else None,
+                include_terminal=include_terminal,
+                unknown_phase=unknown_phase,
+            ),
+            _response_events(commentary=None, final="done"),
+        ],
+    )
+    port = ParentInferencePort.for_parent(parent)
+    child = AIAgent(
+        base_url="", api_key=None, provider=parent.provider,
+        api_mode=parent.api_mode, model=model, inference_port=port,
+        credential_pool=None, enabled_toolsets=[], max_iterations=3,
+        quiet_mode=True, skip_context_files=True, skip_memory=True,
+    )
+    schema = _tool_schema()
+    child.tools = [schema]
+    child.valid_tool_names = {"controlled_test_tool"}
+    port.bind_child(
+        child, max_calls=4, max_tokens=child.max_tokens,
+        allowed_tool_names=child.valid_tool_names,
+        reasoning_config=child.reasoning_config,
+    )
+    monkeypatch.setattr("run_agent.get_tool_definitions", lambda *_a, **_k: [schema])
+    dispatched = []
+    monkeypatch.setattr(
+        "run_agent.handle_function_call",
+        lambda name, arguments, *_a, **_k: (
+            dispatched.append((name, arguments)) or json.dumps({"ok": True})
+        ),
+    )
+    try:
+        child.run_conversation(
+            "run the controlled test tool", conversation_history=[],
+            task_id="response-semantics-unverified",
+        )
+    except InferencePortError:
+        pass
     assert dispatched == []

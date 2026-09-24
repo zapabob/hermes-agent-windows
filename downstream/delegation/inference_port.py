@@ -101,6 +101,7 @@ class InferencePortError(RuntimeError):
             "INVALID_RESPONSE",
             "MISSING_TERMINAL_STATUS",
             "UNKNOWN_TERMINAL_STATUS",
+            "UNKNOWN_MESSAGE_PHASE",
             "PROVIDER_INCOMPLETE",
             "PROVIDER_FAILED",
             "PROVIDER_REFUSAL_WITH_TOOL_CALL",
@@ -1014,6 +1015,11 @@ def _normalize_codex_turn(
     *,
     schemas: Mapping[str, Mapping[str, Any]],
 ) -> tuple[str, str | None, int, tuple[ToolCallIdentity, ...]]:
+    if _response_field(response, "terminal_observed") is not True:
+        raise InferencePortError(
+            "Controlled provider did not emit a terminal response.",
+            failure_code="MISSING_TERMINAL_STATUS",
+        )
     raw_status = _safe_string(_response_field(response, "status"))
     output = _response_field(response, "output", [])
     if output is None:
@@ -1028,6 +1034,11 @@ def _normalize_codex_turn(
     if raw_status == "incomplete" and incomplete_reason == "content_filter":
         status = "refused"
     elif raw_status == "completed":
+        if _response_field(response, "completion_observed") is not True:
+            raise InferencePortError(
+                "Controlled provider did not confirm completion.",
+                failure_code="MISSING_TERMINAL_STATUS",
+            )
         status = "completed"
     elif raw_status == "incomplete":
         raise InferencePortError(
@@ -1081,8 +1092,10 @@ def _normalize_codex_turn(
             saw_nonfinal_phase = True
             continue
         if phase not in {"", "final", "final_answer"}:
-            saw_nonfinal_phase = True
-            continue
+            raise InferencePortError(
+                "Controlled provider returned an unknown message phase.",
+                failure_code="UNKNOWN_MESSAGE_PHASE",
+            )
         text = _text_from_responses_message(item)
         if text:
             final_parts.append(text)
@@ -1154,7 +1167,12 @@ def _normalize_parent_turn(
         tool_calls=tool_calls,
         configured_model=configured_model,
         requested_model=_safe_string(request.get("model")),
-        reported_model=_safe_string(_response_field(response, "model")),
+        reported_model=_safe_string(
+            _response_field(
+                response,
+                "provider_reported_model" if api_mode == "codex_responses" else "model",
+            )
+        ),
         configured_effort=_configured_effort(requester),
         wire_effort=_wire_effort(request),
         reported_effort=_reported_effort(response),
