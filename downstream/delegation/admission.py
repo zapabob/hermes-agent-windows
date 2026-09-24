@@ -11,6 +11,7 @@ from __future__ import annotations
 import math
 import threading
 import time
+import weakref
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from secrets import token_urlsafe
@@ -214,6 +215,49 @@ class _GrantRecord:
     state: Literal["pending", "running", "unknown"] = "pending"
 
 
+@dataclass(slots=True)
+class _AdmissionState:
+    """Shared host admission ledger for owners using the same resource book."""
+
+    monotonic_clock: Callable[[], float]
+    utc_clock: Callable[[], datetime]
+    condition: threading.Condition
+    grants: dict[str, _GrantRecord]
+    seen_request_ids: set[tuple[str, str, str]]
+    blocked_trees: set[tuple[str, str, str]]
+    last_route: dict[tuple[str, str, str], tuple[str, str]]
+    cooldowns: dict[tuple[str, str, str], datetime]
+    waiters: int = 0
+
+
+_ADMISSION_STATES_LOCK = threading.Lock()
+_ADMISSION_STATES: weakref.WeakKeyDictionary[
+    ResourceReservationBook, _AdmissionState
+] = weakref.WeakKeyDictionary()
+
+
+def _admission_state_for(
+    resource_book: ResourceReservationBook,
+    monotonic_clock: Callable[[], float],
+    utc_clock: Callable[[], datetime],
+) -> _AdmissionState:
+    with _ADMISSION_STATES_LOCK:
+        state = _ADMISSION_STATES.get(resource_book)
+        if state is None:
+            state = _AdmissionState(
+                monotonic_clock=monotonic_clock,
+                utc_clock=utc_clock,
+                condition=threading.Condition(threading.RLock()),
+                grants={},
+                seen_request_ids=set(),
+                blocked_trees=set(),
+                last_route={},
+                cooldowns={},
+            )
+            _ADMISSION_STATES[resource_book] = state
+        return state
+
+
 class DelegationAdmission:
     """Serialize host reservations without taking over child execution.
 
@@ -237,21 +281,22 @@ class DelegationAdmission:
         if not callable(monotonic_clock) or not callable(utc_clock):
             raise TypeError("clocks must be callable")
         self._resource_book = resource_book
-        self._monotonic_clock = monotonic_clock
-        self._utc_clock = utc_clock
-        self._condition = threading.Condition(threading.RLock())
-        self._grants: dict[str, _GrantRecord] = {}
-        self._seen_request_ids: set[tuple[str, str, str]] = set()
-        self._blocked_trees: set[tuple[str, str, str]] = set()
-        self._last_route: dict[tuple[str, str, str], tuple[str, str]] = {}
-        self._cooldowns: dict[tuple[str, str, str], datetime] = {}
-        self._waiters = 0
+        state = _admission_state_for(resource_book, monotonic_clock, utc_clock)
+        self._monotonic_clock = state.monotonic_clock
+        self._utc_clock = state.utc_clock
+        self._condition = state.condition
+        self._grants = state.grants
+        self._seen_request_ids = state.seen_request_ids
+        self._blocked_trees = state.blocked_trees
+        self._last_route = state.last_route
+        self._cooldowns = state.cooldowns
+        self._state = state
 
     @property
     def waiting_count(self) -> int:
         """Return bounded in-memory waiter count for host status and tests."""
         with self._condition:
-            return self._waiters
+            return self._state.waiters
 
     def active_grants(self) -> tuple[AdmissionGrant, ...]:
         """Return immutable summaries of pending, running, and uncertain grants."""
@@ -335,9 +380,9 @@ class DelegationAdmission:
                         if intent.queue_timeout_seconds <= 0:
                             return capacity
                         if not started_waiting:
-                            if self._waiters >= _MAX_WAITERS:
+                            if self._state.waiters >= _MAX_WAITERS:
                                 return AdmissionRejection("waiting_queue_full")
-                            self._waiters += 1
+                            self._state.waiters += 1
                             started_waiting = True
                         remaining = queue_deadline - self._monotonic_clock()
                         if remaining <= 0:
@@ -360,40 +405,44 @@ class DelegationAdmission:
                         return AdmissionRejection("resource_reservation_missing")
 
                     resource_reservation_id = reservation.reservation_id
-                    grant_id = token_urlsafe(24)
-                    created = self._monotonic_clock()
-                    if not self._finite_clock(created):
-                        if resource_reservation_id is not None:
-                            self._resource_book.release(resource_reservation_id)
-                        return AdmissionRejection("invalid_clock")
-                    grant = AdmissionGrant(
-                        grant_id=grant_id,
-                        request_id=intent.request_id,
-                        profile_scope=intent.profile_scope,
-                        account_scope=intent.account_scope,
-                        provider_scope=selected.provider_scope,
-                        tree_id=intent.tree_id,
-                        parent_grant_id=intent.parent_grant_id,
-                        depth=depth,
-                        provider=selected.provider,
-                        model_id=selected.model_id,
-                        route_revision=intent.route_snapshot.revision,
-                        cost_class=selected.cost_class,
-                        tool_scope=intent.tool_scope,
-                        read_only=intent.tool_scope.issubset(_READ_ONLY_TOOL_NAMES),
-                        created_at_monotonic=created,
-                        soft_deadline_monotonic=created + _SOFT_DEADLINE_SECONDS,
-                        idle_deadline_monotonic=created + _IDLE_DEADLINE_SECONDS,
-                        hard_deadline_monotonic=created + _HARD_DEADLINE_SECONDS,
-                    )
+                    grant_id: str | None = None
                     try:
+                        grant_id = token_urlsafe(24)
+                        created = self._monotonic_clock()
+                        if not self._finite_clock(created):
+                            if resource_reservation_id is not None:
+                                self._resource_book.release(resource_reservation_id)
+                                resource_reservation_id = None
+                            return AdmissionRejection("invalid_clock")
+                        grant = AdmissionGrant(
+                            grant_id=grant_id,
+                            request_id=intent.request_id,
+                            profile_scope=intent.profile_scope,
+                            account_scope=intent.account_scope,
+                            provider_scope=selected.provider_scope,
+                            tree_id=intent.tree_id,
+                            parent_grant_id=intent.parent_grant_id,
+                            depth=depth,
+                            provider=selected.provider,
+                            model_id=selected.model_id,
+                            route_revision=intent.route_snapshot.revision,
+                            cost_class=selected.cost_class,
+                            tool_scope=intent.tool_scope,
+                            read_only=intent.tool_scope.issubset(_READ_ONLY_TOOL_NAMES),
+                            created_at_monotonic=created,
+                            soft_deadline_monotonic=created + _SOFT_DEADLINE_SECONDS,
+                            idle_deadline_monotonic=created + _IDLE_DEADLINE_SECONDS,
+                            hard_deadline_monotonic=created + _HARD_DEADLINE_SECONDS,
+                        )
                         self._grants[grant_id] = _GrantRecord(
                             grant=grant,
                             resource_reservation_id=resource_reservation_id,
                         )
                         self._seen_request_ids.add(request_key)
                     except Exception:
-                        self._grants.pop(grant_id, None)
+                        if grant_id is not None:
+                            self._grants.pop(grant_id, None)
+                        self._seen_request_ids.discard(request_key)
                         if resource_reservation_id is not None:
                             self._resource_book.release(resource_reservation_id)
                         raise
@@ -409,7 +458,7 @@ class DelegationAdmission:
         finally:
             if started_waiting:
                 with self._condition:
-                    self._waiters = max(0, self._waiters - 1)
+                    self._state.waiters = max(0, self._state.waiters - 1)
                     self._condition.notify_all()
 
     def record_writer_outcome(

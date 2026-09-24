@@ -4,6 +4,9 @@ from decimal import Decimal
 from threading import Event
 from time import monotonic, sleep
 
+import pytest
+
+from downstream.delegation import admission as admission_module
 from downstream.delegation.admission import (
     AdmissionGrant,
     AdmissionIntent,
@@ -333,3 +336,107 @@ def test_capacity_wait_has_a_deadline_and_is_counted_while_waiting():
     assert isinstance(result, AdmissionRejection)
     assert result.code == "queue_deadline"
     assert owner.waiting_count == 0
+
+
+def test_admission_caps_and_unknown_tree_state_are_shared_by_book_owners():
+    clock = _Clock()
+    book = ResourceReservationBook()
+    first_owner = _owner(clock, book)
+    second_owner = _owner(clock, book)
+
+    first = first_owner.reserve(_intent("shared-one", clock, tree="tree-a"))
+    second = second_owner.reserve(_intent("shared-two", clock, tree="tree-b"))
+    third = second_owner.reserve(_intent("shared-three", clock, tree="tree-c"))
+
+    assert isinstance(first, AdmissionGrant)
+    assert isinstance(second, AdmissionGrant)
+    assert isinstance(third, AdmissionRejection)
+    assert third.code == "top_level_capacity"
+    assert len(first_owner.active_grants()) == 2
+    assert first_owner.active_grants() == second_owner.active_grants()
+
+    assert first_owner.record_writer_outcome(first.grant_id, "unknown")
+    retry = second_owner.reserve(_intent("shared-retry", clock, tree="tree-a"))
+
+    assert isinstance(retry, AdmissionRejection)
+    assert retry.code == "writer_outcome_unknown"
+
+
+def test_grandchild_cap_is_shared_by_admission_owners():
+    clock = _Clock()
+    book = ResourceReservationBook()
+    first_owner = _owner(clock, book)
+    second_owner = _owner(clock, book)
+    first_parent = _start(first_owner, _intent("shared-parent-one", clock, tree="tree-a"))
+    second_parent = _start(second_owner, _intent("shared-parent-two", clock, tree="tree-b"))
+
+    first_child = first_owner.reserve(
+        _intent(
+            "shared-grandchild-one",
+            clock,
+            tree="tree-a",
+            parent_grant_id=first_parent.grant_id,
+            tools=frozenset({"read_file"}),
+        )
+    )
+    second_child = second_owner.reserve(
+        _intent(
+            "shared-grandchild-two",
+            clock,
+            tree="tree-b",
+            parent_grant_id=second_parent.grant_id,
+            tools=frozenset({"web_search"}),
+        )
+    )
+
+    assert isinstance(first_child, AdmissionGrant)
+    assert isinstance(second_child, AdmissionRejection)
+    assert second_child.code in {"nested_capacity", "execution_capacity"}
+    assert len(first_owner.active_grants()) == 3
+    assert first_owner.active_grants() == second_owner.active_grants()
+
+
+@pytest.mark.parametrize("failure_point", ["grant_id", "created_clock"])
+def test_grant_creation_exception_releases_resource_reservation(
+    failure_point: str, monkeypatch: pytest.MonkeyPatch
+):
+    clock = _Clock()
+    book = ResourceReservationBook()
+    request = ResourceRequest(
+        route="remote", workload="inference", ram_bytes=GiB, commit_bytes=GiB
+    )
+    observed = _resource_snapshot(100.0, ram=8 * GiB, commit=8 * GiB, cpu=20.0)
+    intent = _intent(
+        f"rollback-{failure_point}",
+        clock,
+        resource_request=request,
+        observed=observed,
+    )
+
+    if failure_point == "grant_id":
+        def fail_grant_id(_size: int) -> str:
+            raise RuntimeError("synthetic grant id failure")
+
+        monkeypatch.setattr(admission_module, "token_urlsafe", fail_grant_id)
+        owner = _owner(clock, book)
+    else:
+        calls = 0
+
+        def fail_creation_clock() -> float:
+            nonlocal calls
+            calls += 1
+            if calls == 3:
+                raise RuntimeError("synthetic creation clock failure")
+            return 100.0
+
+        owner = DelegationAdmission(
+            book,
+            monotonic_clock=fail_creation_clock,
+            utc_clock=clock.utc,
+        )
+
+    with pytest.raises(RuntimeError):
+        owner.reserve(intent)
+
+    assert owner.active_grants() == ()
+    assert book.reserved_claims(now_monotonic=100.0) == ResourceClaims()
