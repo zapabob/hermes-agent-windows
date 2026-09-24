@@ -58,6 +58,91 @@ def test_process_launch_requires_a_bound_delegated_profile(
         launch_restricted([r"C:\synthetic\python.exe"], profile)
 
 
+def test_removed_profile_cleanup_switch_is_rejected_during_collection(tmp_path: Path) -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    node_id = f"{Path(__file__).resolve()}::test_process_launch_requires_a_bound_delegated_profile"
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            node_id,
+            "--cleanup-t06-ephemeral-appcontainer-profile",
+            "--t06-appcontainer-recovery-marker",
+            str(tmp_path / "caller-controlled-marker.json"),
+            "--t06-confirm-appcontainer-profile",
+            EPHEMERAL_PROFILE_NAME,
+            "--collect-only",
+            "-q",
+            "--basetemp",
+            str(tmp_path / "nested-pytest"),
+        ],
+        cwd=repo_root,
+        text=True,
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+    output = f"{completed.stdout}\n{completed.stderr}".casefold()
+    assert completed.returncode != 0 and "unrecognized arguments" in output, (
+        "caller-controlled recovery switches must be rejected before pytest can collect or run them; "
+        f"returncode={completed.returncode}, output={output}"
+    )
+
+
+@pytest.mark.windows_only
+def test_acl_helper_ignores_mutable_systemroot(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    owned_root = tmp_path / "pytest-owned"
+    owned_root.mkdir()
+    attacker_root = tmp_path / "attacker-controlled"
+    fake_system = attacker_root / "System32"
+    fake_system.mkdir(parents=True)
+    fake_icacls = fake_system / "icacls.exe"
+    fake_icacls.write_text("synthetic executable path", encoding="utf-8")
+    monkeypatch.setenv("SystemRoot", str(attacker_root))
+    invoked = []
+
+    def capture_run(argv, **kwargs):
+        invoked.append(argv)
+        return subprocess.CompletedProcess(argv, 0, "", "")
+
+    monkeypatch.setattr(subprocess, "run", capture_run)
+    _grant_test_access(owned_root, "S-1-15-2-12345", "M", tmp_path)
+    _revoke_test_access(owned_root, "S-1-15-2-12345", tmp_path)
+
+    assert len(invoked) == 2
+    for argv in invoked:
+        executable = Path(argv[0]).resolve(strict=True)
+        assert executable.name.casefold() == "icacls.exe"
+        assert not executable.is_relative_to(attacker_root.resolve())
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    get_system_directory = kernel32.GetSystemDirectoryW
+    get_system_directory.argtypes = [ctypes.POINTER(ctypes.c_wchar), ctypes.c_uint32]
+    get_system_directory.restype = ctypes.c_uint32
+    system_directory = ctypes.create_unicode_buffer(32768)
+    length = get_system_directory(system_directory, len(system_directory))
+    assert 0 < length < len(system_directory)
+    assert Path(invoked[0][0]).resolve(strict=True) == (
+        Path(system_directory.value) / "icacls.exe"
+    ).resolve(strict=True)
+    assert invoked[1][1:] == [
+        str(owned_root.resolve()),
+        "/remove:g",
+        "*S-1-15-2-12345",
+        "/T",
+        "/C",
+        "/Q",
+    ]
+    outside_target = tmp_path.parent / "external-acl-target"
+    outside_target.mkdir()
+    with pytest.raises(AssertionError, match="outside pytest tmp_path"):
+        _revoke_test_access(outside_target, "S-1-15-2-12345", tmp_path)
+    assert len(invoked) == 2
+
+
 @pytest.mark.windows_only
 @pytest.mark.parametrize(
     ("path", "reason"),
@@ -154,6 +239,7 @@ def native_python_profile(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, reque
         advapi.FreeSid.argtypes = [ctypes.c_void_p]
         advapi.FreeSid.restype = ctypes.c_void_p
         advapi.FreeSid(sid_ptr)
+    request.addfinalizer(lambda: _revoke_test_access(test_root, sid, test_root))
     _grant_test_access(workspace, sid, "M", test_root)
     _grant_test_access(python_root, sid, "RX", test_root)
     if getattr(request, "param", None):
@@ -182,37 +268,6 @@ def ephemeral_appcontainer_profile(pytestconfig: pytest.Config):
     delete_profile.argtypes = [ctypes.c_wchar_p]
     delete_profile.restype = ctypes.c_long
 
-    if pytestconfig.getoption("--cleanup-t06-ephemeral-appcontainer-profile"):
-        assert pytestconfig.getoption("--t06-confirm-appcontainer-profile") == EPHEMERAL_PROFILE_NAME, (
-            "cleanup requires exact confirmation of the fixed T06 profile name"
-        )
-        marker_path = _recovery_marker_path(pytestconfig)
-        assert marker_path.is_file(), f"recovery marker not found: {marker_path}"
-        marker = json.loads(marker_path.read_text(encoding="utf-8"))
-        assert marker.get("state") in {"created", "cleanup-failed"}, (
-            "recovery marker does not prove this test invocation created the profile"
-        )
-        assert marker.get("profile_name") == EPHEMERAL_PROFILE_NAME
-        assert marker.get("user_sid") == _current_user_sid(), (
-            "profile belongs to a different Windows user"
-        )
-        derived_sid = _derive_test_sid(EPHEMERAL_PROFILE_NAME)
-        try:
-            assert marker.get("appcontainer_sid") == _sid_to_text(derived_sid)
-        finally:
-            _free_sid(derived_sid)
-        result = delete_profile(EPHEMERAL_PROFILE_NAME)
-        if result != 0:
-            time.sleep(0.25)
-            result = delete_profile(EPHEMERAL_PROFILE_NAME)
-        assert result == 0, (
-            f"DeleteAppContainerProfile cleanup failed: 0x{result & 0xffffffff:08x}; "
-            "profile state is undetermined, retain the marker and request manual review"
-        )
-        marker["state"] = "deleted"
-        marker["delete_hresult"] = f"0x{result & 0xffffffff:08x}"
-        marker_path.write_text(json.dumps(marker, indent=2) + "\n", encoding="utf-8")
-        pytest.skip("interrupted-run cleanup completed; no process probe requested")
     if not pytestconfig.getoption("--allow-t06-ephemeral-appcontainer-profile"):
         pytest.skip(
             "requires explicit approval: creates per-user AppContainer profile storage outside pytest basetemp"
@@ -285,7 +340,7 @@ def ephemeral_appcontainer_profile(pytestconfig: pytest.Config):
             raise
         assert result == 0, (
             f"ephemeral AppContainer profile cleanup failed: 0x{result & 0xffffffff:08x}; "
-            "retain the recovery marker and rerun the explicitly approved cleanup gate"
+            "retain the diagnostic marker and request manual state review; no recovery cleanup switch exists"
         )
 
 
@@ -304,12 +359,7 @@ def _recovery_marker_path(pytestconfig: pytest.Config) -> Path:
     assert resolved_base.is_relative_to(repo_root), (
         f"T06 basetemp must remain inside the isolated H worktree: {resolved_base}"
     )
-    configured_marker = pytestconfig.getoption("--t06-appcontainer-recovery-marker")
-    marker_path = (
-        Path(configured_marker).absolute()
-        if configured_marker
-        else base_path.with_name(base_path.name + ".t06-appcontainer-recovery.json")
-    )
+    marker_path = base_path.with_name(base_path.name + ".t06-appcontainer-recovery.json")
     resolved_marker = marker_path.parent.resolve() / marker_path.name
     assert resolved_marker.drive.casefold() == repo_root.drive.casefold(), (
         "T06 recovery marker must remain on the isolated worktree volume"
@@ -422,7 +472,7 @@ def _grant_test_access(path: Path, sid: str, rights: str, pytest_tmp_root: Path)
     assert target.is_relative_to(root), (
         f"refusing to grant AppContainer ACL outside pytest tmp_path: {target}"
     )
-    icacls = Path(os.environ["SystemRoot"]) / "System32" / "icacls.exe"
+    icacls = _trusted_icacls_executable()
     result = subprocess.run(
         [str(icacls), str(target), "/grant", f"*{sid}:(OI)(CI){rights}", "/T", "/C", "/Q"],
         text=True,
@@ -430,6 +480,55 @@ def _grant_test_access(path: Path, sid: str, rights: str, pytest_tmp_root: Path)
         check=False,
     )
     assert result.returncode == 0, f"temporary test ACL grant failed: {result.stderr or result.stdout}"
+
+
+def _revoke_test_access(path: Path, sid: str, pytest_tmp_root: Path) -> None:
+    target = path.resolve()
+    root = pytest_tmp_root.resolve()
+    assert target.is_relative_to(root), (
+        f"refusing to revoke AppContainer ACL outside pytest tmp_path: {target}"
+    )
+    icacls = _trusted_icacls_executable()
+    result = subprocess.run(
+        [str(icacls), str(target), "/remove:g", f"*{sid}", "/T", "/C", "/Q"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, f"temporary test ACL revocation failed: {result.stderr or result.stdout}"
+
+
+def _trusted_icacls_executable() -> Path:
+    if os.name != "nt":
+        raise OSError("native T06 ACL operations require Windows")
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    get_system_directory = kernel32.GetSystemDirectoryW
+    get_system_directory.argtypes = [ctypes.POINTER(ctypes.c_wchar), ctypes.c_uint32]
+    get_system_directory.restype = ctypes.c_uint32
+    system_directory_buffer = ctypes.create_unicode_buffer(32768)
+    length = get_system_directory(system_directory_buffer, len(system_directory_buffer))
+    if length == 0:
+        raise ctypes.WinError(ctypes.get_last_error())
+    if length >= len(system_directory_buffer):
+        raise OSError("GetSystemDirectoryW returned an oversized system directory")
+
+    system_directory = Path(system_directory_buffer.value)
+    if not system_directory.is_absolute() or system_directory.drive.startswith("\\\\"):
+        raise OSError("GetSystemDirectoryW did not return an absolute local Windows system directory")
+    try:
+        resolved_directory = system_directory.resolve(strict=True)
+        executable = (system_directory / "icacls.exe").resolve(strict=True)
+    except OSError as exc:
+        raise OSError("cannot resolve icacls.exe from the Windows system directory") from exc
+    if (
+        not resolved_directory.is_dir()
+        or executable.parent != resolved_directory
+        or executable.name.casefold() != "icacls.exe"
+        or not executable.is_file()
+    ):
+        raise OSError("Windows system icacls.exe failed path and regular-file validation")
+    return executable
 
 
 @pytest.mark.windows_only

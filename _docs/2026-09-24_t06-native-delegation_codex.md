@@ -12,7 +12,7 @@ With a derived AppContainer SID that had no registered profile, the Windows `Cre
 
 ## Gated profile experiment
 
-The fixed profile name is `HermesDelegated-T06Pytest-20260924`. The harness requires both `--allow-t06-ephemeral-appcontainer-profile` and the exact matching `--t06-confirm-appcontainer-profile` value before it calls the profile API. The test's `--basetemp` must be an absolute path inside this isolated worktree, on the same volume as the checkout. ACL helpers independently assert every grant target remains under pytest's `tmp_path`.
+The fixed profile name is `HermesDelegated-T06Pytest-20260924`. The harness requires both `--allow-t06-ephemeral-appcontainer-profile` and the exact matching `--t06-confirm-appcontainer-profile` value before it calls the profile API. The test's `--basetemp` must be an absolute path inside this isolated worktree, on the same volume as the checkout. ACL helpers independently assert every grant and revocation target remains under pytest's `tmp_path`.
 
 The sequence is:
 
@@ -20,7 +20,7 @@ The sequence is:
 2. Call `CreateAppContainerProfile` for the current user with no capabilities. The harness refuses an existing profile and never treats an already-existing profile as test-owned.
 3. Call `GetAppContainerFolderPath` for the created SID and store the returned local-app-data path in the marker.
 4. Run each contained process with no capabilities and with temporary test ACLs limited to pytest-owned H-drive directories. Close process and job handles, then call `DeleteAppContainerProfile`. Retry once after a short delay if the API reports failure; retain a `cleanup-failed` marker if the result remains unsuccessful.
-5. If a test run is interrupted after the marker reaches `created`, use the cleanup gate with the exact profile name, the prior marker path, and a fresh `--basetemp`. Cleanup checks the recorded user SID and derives and matches the AppContainer SID before deletion. A `creating` marker is deliberately insufficient for automatic deletion because interruption could have occurred either side of the profile API; that narrow case requires manual state review and a separate explicit decision.
+5. If a test run is interrupted after profile creation, the recovery marker is diagnostic only and never authorizes deletion. The harness exposes no interrupted-run cleanup switch and does not accept a caller-selected marker path. Its in-process finalizer is the only automatic delete path. If that finalizer cannot delete the profile, a later removal requires manual inspection of the current user's profile state and a separate explicit approval before calling the Windows API.
 
 Microsoft documents the profile as current-user and per-app, with per-user folders and registry storage. Its local app-data path is obtained dynamically with `GetAppContainerFolderPath`; the documented shape is `%LOCALAPPDATA%\Packages\<profile-name>\AC`, with AppContainer `TEMP` and `TMP` under that profile's `Temp` directory. The registry storage location is OS-managed and is not inferred as a literal path. The harness records the API result rather than assuming the current machine's resolved path. The deletion API requires profile file handles to be closed first and says a failed deletion can leave state undetermined, which is why the harness retries once and retains its marker on failure.
 
@@ -28,11 +28,11 @@ References: [CreateAppContainerProfile](https://learn.microsoft.com/en-us/window
 
 ## Temporary test ACL scope
 
-For each profile-gated test, ACL changes apply only to paths rooted under that test's pytest `tmp_path` in the H-drive worktree. The copied Python runtime gets AppContainer read/execute access; the copied Node.js and Git trees get read/execute access; the synthetic workspace and its private temp directory get modify access. The fixture checks containment before invoking `icacls`. No `icacls` call targets the source installations, user profile, repository outside pytest `tmp_path`, or any other machine path.
+For each profile-gated test, ACL changes apply only to paths rooted under that test's pytest `tmp_path` in the H-drive worktree. The copied Python runtime gets AppContainer read/execute access; the copied Node.js and Git trees get read/execute access; the synthetic workspace and its private temp directory get modify access. The fixture checks containment before invoking `icacls`. It registers a teardown that removes the AppContainer SID's grants recursively from that same pytest `tmp_path`; revocation failure fails the test. Process termination can prevent fixture teardown, leaving ACL entries only in that H-drive pytest directory. No test helper deletes temporary directories. No `icacls` call targets the source installations, user profile, repository outside pytest `tmp_path`, or any other machine path.
 
 ## Probe matrix
 
-The harness contains six profile-gated behavior probes plus four safe profile-free test cases:
+The harness contains six profile-gated behavior probes plus six safe profile-free test cases:
 
 | Probe | Expected evidence | Run state |
 | --- | --- | --- |
@@ -45,15 +45,17 @@ The harness contains six profile-gated behavior probes plus four safe profile-fr
 | Unregistered AppContainer | Missing profile launch fails closed with `WinError 2` | Passed |
 | Unbound host profile | Launch is denied before OS process creation | Passed |
 | ADS and UNC paths | Host policy refuses alternate data stream and remote/device paths before open | Passed |
+| Recovery CLI switches | Forged caller marker and cleanup switches are rejected during collection | Passed |
+| ACL utility and cleanup | `icacls.exe` resolves under Win32's system directory; ACL revoke stays inside pytest `tmp_path` | Passed |
 
 The network test uses only `127.0.0.1`, a temporary HTTP sink, and a synthetic UDP DNS-shaped payload. It does not contact an external resolver or network endpoint.
 
 ## Verification receipts and limits
 
-- `uv run --offline python -m py_compile` succeeded for the boundary module and Windows test files.
-- Four profile-free focused cases passed with an H-drive `--basetemp`.
-- The positive Python test was run with the default gate and skipped before profile creation.
-- `pytest --collect-only` listed nine cases without executing profile-gated probes.
+- New regression tests failed against the vulnerable preparatory version: the forged-marker cleanup switches were accepted, and a synthetic `SystemRoot` selected a fake `icacls.exe`.
+- `uv run --offline python -m py_compile` succeeded for the boundary module and Windows test files after the fix.
+- Six profile-free focused cases passed with an H-drive `--basetemp`; the positive Python test was skipped before profile creation.
+- `pytest --collect-only` listed eleven cases without executing profile-gated probes.
 - Ruff is not installed in the locked environment; its attempted invocation exited before analyzing files.
 - The Node, Git, outside-secret, parent-handle, and loopback assertions remain unverified until the separately approved profile experiment.
 - Foreground `LocalEnvironment` and background `ProcessRegistry` are not yet wired to this adapter. Same-user fallback is intentionally absent. Existing Docker isolation was not changed.
@@ -71,18 +73,7 @@ uv run --offline pytest tests/windows/test_delegated_execution_boundary.py -q `
   --t06-confirm-appcontainer-profile 'HermesDelegated-T06Pytest-20260924'
 ```
 
-The command above was not run. If a run is interrupted after the recovery marker reaches `created`, first use a separate fresh temp target; replace the marker argument with the exact sidecar emitted by the creation command:
-
-```powershell
-$env:UV_CACHE_DIR = 'H:\hermes-control-mcp-t06-native-20260924\.uv-cache'
-uv run --offline pytest 'tests/windows/test_delegated_execution_boundary.py::test_delegated_python_runs_inside_the_native_boundary[HermesDelegated-T06Pytest-20260924]' -q `
-  --basetemp 'H:\hermes-control-mcp-t06-native-20260924\.t06-cleanup-only-20260924-01' `
-  --cleanup-t06-ephemeral-appcontainer-profile `
-  --t06-confirm-appcontainer-profile 'HermesDelegated-T06Pytest-20260924' `
-  --t06-appcontainer-recovery-marker 'H:\hermes-control-mcp-t06-native-20260924\.t06-profile-run-20260924-01.t06-appcontainer-recovery.json'
-```
-
-The cleanup command was not run. It is only safe when the marker reports `created` or `cleanup-failed` and its user and AppContainer SIDs match the current user and fixed name. Neither command changes endpoint configuration, network firewall rules, user accounts, source-tool ACLs, or persistent ACLs.
+The command above was not run. There is no interrupted-run cleanup command. A `created` or `cleanup-failed` marker is diagnostic evidence only and must never be treated as authorization to delete the profile. If profile deletion fails, inspect the current user's actual Windows profile state and any open handles manually; a later `DeleteAppContainerProfile` call requires a separate explicit approval. The reserved experiment changes no endpoint configuration, firewall rules, user accounts, source-tool ACLs, or persistent ACLs.
 
 ## Remaining T06 work
 

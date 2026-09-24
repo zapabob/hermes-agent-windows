@@ -20,20 +20,3 @@ def pytest_addoption(parser):
         default="",
         help="exact fixed profile name required by the gated T06 profile experiment",
     )
-    group.addoption(
-        "--t06-appcontainer-recovery-marker",
-        action="store",
-        default=None,
-        help=(
-            "H-worktree sidecar marker path; set it to the prior run's marker for interruption cleanup"
-        ),
-    )
-    group.addoption(
-        "--cleanup-t06-ephemeral-appcontainer-profile",
-        action="store_true",
-        default=False,
-        help=(
-            "delete the T06 pytest AppContainer profile only when its H-drive recovery marker "
-            "proves this test invocation created it and the exact profile name is confirmed"
-        ),
-    )
