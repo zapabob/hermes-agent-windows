@@ -1,0 +1,61 @@
+{
+  "captured_utc": "2026-09-24T18:22:03.096995+00:00",
+  "source_head": "df14ba8c135a905c76010efa4327427ccd7dcebf",
+  "source_branch": "main",
+  "worktree_head": "df14ba8c135a905c76010efa4327427ccd7dcebf",
+  "worktree_branch": "feat/cursor-workstation-continue-20260925",
+  "reported_head_parent_of_actual": true,
+  "b1d48_ancestor": true,
+  "merge_122e4_ancestor": true,
+  "origin": "https://github.com/zapabob/hermes-agent-windows.git",
+  "source_dirty": [
+    "M docs/control-mcp/IMPLEMENTATION_LOG.md",
+    " M docs/windows/workstation-20260924/LUNA_MAX_EXECUTION_PLAN.md",
+    "?? SOPs/SOP-AIOps.md",
+    "?? SOPs/SOP-Application-Development.md",
+    "?? SOPs/SOP-C.md",
+    "?? SOPs/SOP-CPP.md",
+    "?? SOPs/SOP-CSharp.md",
+    "?? SOPs/SOP-Common-MILSPECLLMOps-Engineering-Standard.md",
+    "?? SOPs/SOP-DeepResearch.md",
+    "?? SOPs/SOP-Frontend-Design.md",
+    "?? SOPs/SOP-Go.md",
+    "?? SOPs/SOP-Implementation-Start-Gate.md",
+    "?? SOPs/SOP-Index.md",
+    "?? SOPs/SOP-Internet-Connectivity.md",
+    "?? SOPs/SOP-LLMOps.md",
+    "?? SOPs/SOP-MLOps.md",
+    "?? SOPs/SOP-Python.md",
+    "?? SOPs/SOP-Rust.md",
+    "?? SOPs/SOP-Security.md",
+    "?? SOPs/SOP-Skill-Selection.md",
+    "?? SOPs/SOP-TypeScript.md",
+    "?? SOPs/SOP-WebApp-Development.md"
+  ],
+  "source_dirty_fingerprint": "aa72f06612182cfb4d89f40825e0cb4464c5f6ee8e9dd277f27339c3f7220786",
+  "worktree_status": [],
+  "lm01_hashes": {
+    "docs/windows/workstation-20260924/tests/test_family_receipts.py": {
+      "source": "de813a32a595ece3c1e2445ff462be9aac72301ab89266b39b0ffebd1165dc67",
+      "worktree": "de813a32a595ece3c1e2445ff462be9aac72301ab89266b39b0ffebd1165dc67"
+    },
+    "docs/windows/workstation-20260924/tools/family_receipts.py": {
+      "source": "3171547163d595cf640c246bca9e77898aba1566b4d8ab238afea74450db5f65",
+      "worktree": "3171547163d595cf640c246bca9e77898aba1566b4d8ab238afea74450db5f65"
+    }
+  },
+  "lm01_hash_equal": true,
+  "preserved_present": {
+    "C:\\Users\\downl\\AppData\\Local\\Temp\\workstation-inventory-db-fzws1t5e": true,
+    "C:\\Users\\downl\\AppData\\Local\\Temp\\workstation-inventory-db-gmoefmwv": true,
+    "C:\\Users\\downl\\Documents\\New project\\hermes-control-mcp-recovered-20260923\\.t06-pytest-integrator-safe-20260924-01": true
+  },
+  "frozen_objects": {
+    "B": "commit",
+    "R0": "commit",
+    "R1": "commit",
+    "U": "commit"
+  },
+  "worktree_has_venv": false,
+  "source_has_venv": true
+}

@@ -4,7 +4,7 @@ import importlib.util
 import os
 from pathlib import Path
 import subprocess
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 
 import pytest
 
@@ -43,6 +43,10 @@ def git(repo: Path, *args: str) -> str:
     )
     assert result.returncode == 0, result.stderr
     return result.stdout.strip()
+
+
+def status_of(repo: Path, path: str) -> str:
+    return git(repo, "status", "--porcelain=v1", "--", path)
 
 
 def make_repo(tmp_path: Path) -> Path:
@@ -128,6 +132,57 @@ def test_receipt_reuse_rejects_staged_index_movement(tmp_path: Path) -> None:
 
     assert result["valid"] is False
     assert result["code"] == "SOURCE_FINGERPRINT_MISMATCH"
+
+
+def test_receipt_reuse_rejects_worktree_movement_with_unchanged_status(tmp_path: Path) -> None:
+    module = subject()
+    repo = make_repo(tmp_path)
+    source = repo / "src" / "input.py"
+    source.write_bytes(b"value = 2\n")
+    old_binding, receipt = capture_receipt(repo, module)
+    old_status = status_of(repo, "src/input.py")
+
+    source.write_bytes(b"value = 3\n")
+    current_binding = module.capture_source_binding(repo, SCOPE)
+    assert status_of(repo, "src/input.py") == old_status
+    assert current_binding["head"] == old_binding["head"]
+    result = validate(module, receipt, SCOPE, current_binding)
+
+    assert result["valid"] is False
+    assert result["code"] == "SOURCE_FINGERPRINT_MISMATCH"
+
+
+def test_receipt_reuse_rejects_index_movement_with_unchanged_status(tmp_path: Path) -> None:
+    module = subject()
+    repo = make_repo(tmp_path)
+    source = repo / "src" / "input.py"
+    original_bytes = source.read_bytes()
+    source.write_bytes(b"value = 2\n")
+    git(repo, "add", "src/input.py")
+    source.write_bytes(original_bytes)
+    old_binding, receipt = capture_receipt(repo, module)
+    old_status = status_of(repo, "src/input.py")
+
+    source.write_bytes(b"value = 3\n")
+    git(repo, "add", "src/input.py")
+    source.write_bytes(original_bytes)
+    current_binding = module.capture_source_binding(repo, SCOPE)
+    assert status_of(repo, "src/input.py") == old_status
+    assert source.read_bytes() == original_bytes
+    result = validate(module, receipt, SCOPE, current_binding)
+
+    assert result["valid"] is False
+    assert result["code"] == "SOURCE_FINGERPRINT_MISMATCH"
+
+
+def test_stable_time_prefers_birthtime_only_for_windows_data() -> None:
+    module = subject()
+    with_birth = SimpleNamespace(st_ctime_ns=200, st_birthtime_ns=100)
+    without_birth = SimpleNamespace(st_ctime_ns=200)
+
+    assert module._stable_time_ns(with_birth, windows=True) == 100
+    assert module._stable_time_ns(without_birth, windows=True) == 200
+    assert module._stable_time_ns(with_birth, windows=False) == 200
 
 
 def test_receipt_validation_preserves_unrelated_ignored_temp(
