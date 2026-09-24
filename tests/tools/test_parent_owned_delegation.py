@@ -194,7 +194,7 @@ class _ConcurrentAbortProbeChild(_WeakrefableChild):
 
                 try:
                     object.__getattribute__(self, "_abort_readers").wait(
-                        timeout=0.5
+                        timeout=2.0
                     )
                 except BrokenBarrierError:
                     pass
@@ -282,7 +282,7 @@ def test_same_child_concurrent_requests_cannot_overlap_abort_ownership(monkeypat
             executor.submit(request, "same-child-second"),
         ]
         launch.wait(timeout=2)
-        overlapping_transport_observed = second_transport_entered.wait(timeout=0.75)
+        overlapping_transport_observed = second_transport_entered.wait(timeout=2.5)
         release_transport.set()
         outcomes = [future.result(timeout=3) for future in futures]
 
@@ -293,6 +293,34 @@ def test_same_child_concurrent_requests_cannot_overlap_abort_ownership(monkeypat
     assert sum(outcome is None for outcome in outcomes) == 1
     assert port._calls_used == 1
     assert child._abort_callback is None
+
+
+def test_preexisting_abort_callback_refusal_does_not_consume_child_budget(monkeypatch):
+    from downstream.delegation.inference_port import InferencePortError
+
+    parent = _make_mock_parent()
+    port = ParentInferencePort.for_parent(parent)
+    child = _synthetic_controlled_pair(parent, port)
+
+    def existing_abort(_reason):
+        return None
+
+    child._active_request_abort = existing_abort
+
+    monkeypatch.setattr(
+        "agent.chat_completion_helpers.interruptible_api_call",
+        lambda *_args, **_kwargs: pytest.fail("refused request reached transport"),
+    )
+
+    with pytest.raises(InferencePortError, match="active inference request"):
+        port.complete(
+            _synthetic_turn(child, "must not consume budget"),
+            route_binding=port.route_binding,
+            cancel_generation=0,
+        )
+
+    assert port._calls_used == 0
+    assert child._active_request_abort is existing_abort
 
 
 def test_controlled_request_profile_binding_restores_caller_and_reuses_parent_profile(

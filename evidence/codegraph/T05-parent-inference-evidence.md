@@ -23,7 +23,15 @@ Independent review identified a race when two `complete()` calls for one child b
 
 The fix adds a nonblocking in-flight lock to each child-bound port. It is acquired after request validation and before budget consumption, then held through abort callback installation, transport dispatch, and cleanup. A concurrent same-child request now fails closed before it can spend budget or replace the active abort callback. The focused test verifies exactly one transport entry, one rejected request, one budget unit consumed, and an empty abort slot after cleanup.
 
+The deterministic race probe now allows up to 2 seconds for both abort-slot reads and observes overlap for 2.5 seconds, reducing the chance that a slow worker schedule skips the intended interleaving.
+
 GREEN after the race fix: `.\.venv\Scripts\python.exe -m pytest tests/tools/test_parent_owned_delegation.py -q --tb=short` — 10 passed in 12.54s. The isolated race test also passed (`1 passed in 4.80s`).
+
+## Existing abort callback budget follow-up
+
+A second review found that a preexisting callable abort slot was refused only after incrementing the child call budget. `test_preexisting_abort_callback_refusal_does_not_consume_child_budget` reproduced this (`1 failed in 4.43s`: `_calls_used` was 1). The callback check now runs under the in-flight lock before the budget increment; the regression also asserts that transport is not called and the original callback remains installed.
+
+Post-fix targeted run: `.\.venv\Scripts\python.exe -m pytest tests/tools/test_parent_owned_delegation.py::test_preexisting_abort_callback_refusal_does_not_consume_child_budget tests/tools/test_parent_owned_delegation.py::test_same_child_concurrent_requests_cannot_overlap_abort_ownership -q --tb=short` — 2 passed in 6.65s. The full T05 focus suite was not rerun after this narrow budget-ordering change; its latest complete run was 10 passed before this follow-up.
 
 Controlled toolsets remain unchanged in this slice. The current inheritance path can include terminal/process, file mutation, browser, code execution, and parent MCP tools; its built-in deny set is limited to `delegate_task`, `clarify`, `memory`, `send_message`, `cronjob`, and `kanban` (with orchestrators able to regain delegation). Production admission therefore remains gated on an explicit controlled-tool policy and T06 isolation review.
 

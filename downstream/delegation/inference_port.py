@@ -485,11 +485,6 @@ class ParentInferencePort:
         if not self._request_lock.acquire(blocking=False):
             raise InferencePortError("Child already has an active inference request.")
         try:
-            with self._calls_lock:
-                if self._calls_used >= binding.max_calls:
-                    raise InferencePortError("Child inference call budget is exhausted.")
-            self._calls_used += 1
-
             request_id = secrets.token_urlsafe(24)
             request_agent = _ParentRequestAgent(self._owner_token, requester, request_id)
             from hermes_constants import reset_hermes_home_override, set_hermes_home_override
@@ -497,6 +492,12 @@ class ParentInferencePort:
             previous_abort = getattr(requester, "_active_request_abort", None)
             if callable(previous_abort):
                 raise InferencePortError("Child already has an active inference request.")
+
+            with self._calls_lock:
+                if self._calls_used >= binding.max_calls:
+                    raise InferencePortError("Child inference call budget is exhausted.")
+                self._calls_used += 1
+
             setattr(requester, "_active_request_abort", request_agent.request_abort)
 
             profile_token = None
