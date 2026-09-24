@@ -32,3 +32,7 @@ Pinned `@colbymchenry/codegraph@1.6.0` sync completed on the H: worktree after i
 ## Limits
 
 The recovered tree contains no production owner for operator public keys or grant lookup. This change adds no grant store, provider credential flow, YAML or environment setting, listener, or default enablement. A trusted application bootstrap must still supply the issuer, resource, public keys, allowed hosts/origins, service, and live grant lookup before any host is mounted. Tests use temporary profiles and test keys; they do not establish production client admission, deployed reachability, or acceptance by Codex or ChatGPT. The host continues to expose the existing read-only surface only.
+
+## Integrator receipt, 2026-09-24
+
+Independent read-only review of H-worktree commit `cfde4e5e6b3aea88c22a3887e8b5169722a93fbf` returned CLEAR/APPROVE with no code findings and independently reran the relevant SDK suite: 196 passed, 1 skipped. The commit was cherry-picked as `995e453e81` onto the recovered integrator. At that integrated source, `uv run --offline --no-sync python -m pytest tests/control_mcp tests/e2e/test_control_mcp_host.py -q --basetemp H:\hermes-control-mcp-integrated-t03-20260924-01` passed with 196 passed, 1 skipped. This is a default-disabled construction seam; no real operator grant source, endpoint enablement, or desktop client was tested. The unrelated untracked T06 pytest output in the integrator was preserved.
