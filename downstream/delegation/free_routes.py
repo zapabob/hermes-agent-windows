@@ -13,7 +13,7 @@ import ssl
 import threading
 import time
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from email.utils import parsedate_to_datetime
@@ -240,6 +240,212 @@ def _abort_connection(connection: Any) -> None:
         pass
 
 
+class _DNSResolutionRequest:
+    def __init__(
+        self,
+        hostname: str,
+        port: int,
+        worker_finished: Callable[[], Any] | None,
+    ) -> None:
+        self.hostname = hostname
+        self.port = port
+        self.worker_finished = worker_finished
+        self.completed = threading.Event()
+        self.addresses: list[tuple[Any, ...]] = []
+        self.error: Exception | None = None
+
+
+class _BoundedDNSResolver:
+    """Use one daemon resolver thread and reject work while DNS is stalled.
+
+    Python's system resolver cannot be interrupted portably. A single shared
+    worker bounds the stuck-thread cost to one per process; callers still
+    return at their request deadline, releasing the profile refresh lock.
+    While that worker remains blocked, later requests fail closed instead of
+    creating another resolver thread.
+    """
+
+    def __init__(self) -> None:
+        self._condition = threading.Condition()
+        self._pending: _DNSResolutionRequest | None = None
+        self._active = False
+        self._thread: threading.Thread | None = None
+
+    def resolve(
+        self,
+        hostname: str,
+        port: int,
+        timeout: float,
+        *,
+        lease: Any | None = None,
+    ) -> list[tuple[Any, ...]]:
+        if not hostname or isinstance(port, bool) or not isinstance(port, int):
+            raise ValueError("catalogue DNS target is invalid")
+        if not math.isfinite(timeout) or timeout <= 0 or timeout > 30.0:
+            raise TimeoutError("catalogue DNS deadline is invalid")
+        worker_started = getattr(lease, "worker_started", None)
+        worker_finished = getattr(lease, "worker_finished", None)
+        if lease is not None and (not callable(worker_started) or not callable(worker_finished)):
+            raise TypeError("catalogue request lease cannot account for bounded DNS work")
+        request = _DNSResolutionRequest(
+            hostname,
+            port,
+            worker_finished if callable(worker_finished) else None,
+        )
+        with self._condition:
+            if self._active:
+                raise TimeoutError("catalogue DNS resolver is busy")
+            if callable(worker_started):
+                worker_started()
+            self._active = True
+            self._pending = request
+            if self._thread is None or not self._thread.is_alive():
+                self._thread = threading.Thread(
+                    target=self._run,
+                    daemon=True,
+                    name="free-route-catalogue-dns",
+                )
+                try:
+                    self._thread.start()
+                except Exception:
+                    self._thread = None
+                    self._pending = None
+                    self._active = False
+                    if request.worker_finished is not None:
+                        request.worker_finished()
+                        request.worker_finished = None
+                    raise
+            self._condition.notify_all()
+
+        if not request.completed.wait(timeout=timeout):
+            raise TimeoutError("catalogue DNS resolution exceeded its deadline")
+        if request.error is not None:
+            raise OSError("catalogue DNS resolution failed") from request.error
+        if not request.addresses:
+            raise OSError("catalogue DNS returned no addresses")
+        return request.addresses
+
+    def wait_for_idle(self, *, timeout: float) -> bool:
+        """Wait for an active system lookup to finish; used by bounded tests."""
+        deadline = time.monotonic() + max(0.0, timeout)
+        with self._condition:
+            while self._active:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    return False
+                self._condition.wait(timeout=remaining)
+            return True
+
+    def _run(self) -> None:
+        while True:
+            with self._condition:
+                while self._pending is None:
+                    self._condition.wait()
+                request = self._pending
+                self._pending = None
+            try:
+                request.addresses = socket.getaddrinfo(
+                    request.hostname,
+                    request.port,
+                    type=socket.SOCK_STREAM,
+                )
+            except Exception as exc:
+                request.error = exc
+            finally:
+                try:
+                    if request.worker_finished is not None:
+                        request.worker_finished()
+                except Exception as exc:
+                    if request.error is None:
+                        request.error = RuntimeError("catalogue DNS lease completion failed")
+                finally:
+                    request.completed.set()
+                    with self._condition:
+                        self._active = False
+                        self._condition.notify_all()
+
+
+_OPENROUTER_DNS_RESOLVER = _BoundedDNSResolver()
+
+
+class _ResolvedHTTPSConnection(http.client.HTTPSConnection):
+    """HTTPS connection using the bounded resolver and interruptible sockets."""
+
+    def connect(self) -> None:
+        if getattr(self, "_tunnel_host", None) is not None:
+            raise OSError("catalogue transport does not support tunnels")
+        timeout = self.timeout
+        if not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or timeout <= 0:
+            raise TimeoutError("catalogue connect deadline is invalid")
+        lease = getattr(self, "request_lease", None)
+        if lease is not None:
+            lease.check_active()
+            try:
+                timeout = min(float(timeout), float(lease.remaining_seconds))
+            except (AttributeError, TypeError, ValueError, OverflowError) as exc:
+                raise TimeoutError("catalogue request lease deadline is unavailable") from exc
+            if not math.isfinite(timeout) or timeout <= 0:
+                lease.check_active()
+                raise TimeoutError("catalogue request lease deadline expired")
+        deadline = time.monotonic() + timeout
+        addresses = _OPENROUTER_DNS_RESOLVER.resolve(
+            self.host,
+            self.port,
+            max(0.0, deadline - time.monotonic()),
+            lease=lease,
+        )
+        last_error: OSError | None = None
+        for family, socktype, proto, _canonname, sockaddr in addresses:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("catalogue connect deadline expired")
+            raw_socket = socket.socket(family, socktype, proto)
+            self.sock = raw_socket
+            try:
+                raw_socket.settimeout(remaining)
+                source_address = getattr(self, "source_address", None)
+                if source_address:
+                    raw_socket.bind(source_address)
+                raw_socket.connect(sockaddr)
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise TimeoutError("catalogue connect deadline expired")
+                raw_socket.settimeout(remaining)
+                context = getattr(self, "_context", None)
+                if context is None:
+                    raise OSError("catalogue TLS context is unavailable")
+                tls_socket = context.wrap_socket(
+                    raw_socket,
+                    server_hostname=self.host,
+                    do_handshake_on_connect=False,
+                )
+                self.sock = tls_socket
+                tls_socket.settimeout(remaining)
+                tls_socket.do_handshake()
+                if time.monotonic() >= deadline:
+                    raise TimeoutError("catalogue TLS handshake exceeded its deadline")
+                return
+            except OSError as exc:
+                last_error = exc
+                current_socket = self.sock
+                self.sock = None
+                try:
+                    if current_socket is not None:
+                        current_socket.close()
+                except OSError:
+                    pass
+                if current_socket is not raw_socket:
+                    try:
+                        raw_socket.close()
+                    except OSError:
+                        pass
+                if time.monotonic() >= deadline:
+                    raise TimeoutError("catalogue connect deadline expired") from exc
+        if last_error is not None:
+            raise last_error
+        raise OSError("catalogue DNS returned no usable addresses")
+
+
 class OpenRouterFreeRouteAdapter:
     """Bounded, unauthenticated adapter for the approved OpenRouter catalogue.
 
@@ -274,10 +480,10 @@ class OpenRouterFreeRouteAdapter:
 
     @staticmethod
     def _open(*, timeout: float):
-        # A direct HTTPSConnection keeps the approved origin fixed and exposes
-        # its socket before response headers are read, allowing the budget
-        # lease's deadline callback to interrupt a slow header stream.
-        return http.client.HTTPSConnection(
+        # Keep the approved origin fixed. The bounded resolver prevents a
+        # blocked getaddrinfo from retaining this refresh's profile file lock;
+        # connected sockets remain abortable by the shared lease timer.
+        return _ResolvedHTTPSConnection(
             "openrouter.ai",
             timeout=timeout,
             context=ssl.create_default_context(),
@@ -318,12 +524,15 @@ class OpenRouterFreeRouteAdapter:
                 if validated_etag:
                     headers["If-None-Match"] = validated_etag
                 connection = self._connection_factory(timeout=timeout)
+                if isinstance(connection, _ResolvedHTTPSConnection):
+                    connection.request_lease = lease
                 set_abort_callback = getattr(lease, "set_abort_callback", None)
                 if not callable(set_abort_callback):
                     connection.close()
                     raise TypeError("catalogue request lease cannot abort a blocked transport")
                 set_abort_callback(lambda _reason: _abort_connection(connection))
                 try:
+                    check_active()
                     _run_with_lease_deadline(lease, connection.connect)
                     check_active()
                     _set_connection_read_timeout(connection, _lease_read_timeout(lease))
@@ -1149,6 +1358,7 @@ class FreeRouteCatalogueOwner:
         account_scope: str,
         clock: Callable[[], datetime] = _UTC_NOW,
         cache_path: Path | str | None = None,
+        fetch_enabled: Callable[[], bool] | None = None,
     ) -> None:
         if not callable(fetch):
             raise TypeError("fetch must be callable")
@@ -1161,6 +1371,9 @@ class FreeRouteCatalogueOwner:
         self.account_scope = account_scope
         self._clock = clock
         self._cache_path = Path(cache_path) if cache_path is not None else None
+        if fetch_enabled is not None and not callable(fetch_enabled):
+            raise TypeError("fetch_enabled must be callable when provided")
+        self._fetch_enabled = fetch_enabled
         self._refresh_interval = _FREE_ROUTE_REFRESH_INTERVAL
         self._manual_debounce = _FREE_ROUTE_MANUAL_DEBOUNCE
         self._condition = threading.Condition()
@@ -1211,6 +1424,15 @@ class FreeRouteCatalogueOwner:
                 with self._condition:
                     if self._refresh_is_suppressed(started_at, manual=manual):
                         return self._snapshot
+                if self._fetch_enabled is not None:
+                    try:
+                        if self._fetch_enabled() is not True:
+                            return self.get_snapshot()
+                    except Exception:
+                        # Approval changes or unreadable profile config must
+                        # close the fetch path without disrupting readers.
+                        return self.get_snapshot()
+                with self._condition:
                     if manual:
                         self._last_manual_refresh_at = started_at
                     etag = self._etag
@@ -1224,7 +1446,7 @@ class FreeRouteCatalogueOwner:
 
                 completed_at = _free_route_utc(self._clock()) or started_at
                 with self._condition:
-                    self._apply_fetch_result(result, completed_at)
+                    self._apply_fetch_result(result, completed_at, requested_etag=etag)
                     self._persist_state()
                     return self._snapshot
         except Exception:
@@ -1253,7 +1475,13 @@ class FreeRouteCatalogueOwner:
             and now - self._last_successful_refresh_at < self._refresh_interval
         )
 
-    def _apply_fetch_result(self, result: Any, completed_at: datetime) -> None:
+    def _apply_fetch_result(
+        self,
+        result: Any,
+        completed_at: datetime,
+        *,
+        requested_etag: str | None,
+    ) -> None:
         if isinstance(result, FreeRouteFetchResult) and result.status_code == 200:
             try:
                 raw_rows = tuple(dict(row) for row in result.rows)
@@ -1274,11 +1502,31 @@ class FreeRouteCatalogueOwner:
             else:
                 self._retry_after_at = completed_at + _FREE_ROUTE_RETRY_BACKOFF
         elif isinstance(result, FreeRouteFetchResult) and result.status_code == 304:
-            # A catalogue 304 does not refresh embedded price or grant evidence.
-            if self._snapshot is not None:
-                self._etag = _free_route_etag(result.etag) or self._etag
-                self._last_successful_refresh_at = completed_at
-                self._retry_after_at = None
+            # Revalidate only provider metadata timestamps. This does not
+            # extend embedded account quota/subscription evidence.
+            if (
+                self._snapshot is not None
+                and _free_route_etag(requested_etag) is not None
+                and requested_etag == self._etag
+            ):
+                refreshed_rows = self._refresh_provider_metadata_timestamps(completed_at)
+                try:
+                    refreshed_snapshot = build_free_route_snapshot(
+                        refreshed_rows,
+                        provider_scope=self.provider_scope,
+                        account_scope=self.account_scope,
+                        now=completed_at,
+                    )
+                except (TypeError, ValueError):
+                    refreshed_snapshot = None
+                if refreshed_snapshot is not None and refreshed_snapshot.routes:
+                    self._snapshot = refreshed_snapshot
+                    self._raw_rows = refreshed_rows
+                    self._etag = _free_route_etag(result.etag) or self._etag
+                    self._last_successful_refresh_at = completed_at
+                    self._retry_after_at = None
+                else:
+                    self._retry_after_at = completed_at + _FREE_ROUTE_RETRY_BACKOFF
             else:
                 self._retry_after_at = completed_at + _FREE_ROUTE_RETRY_BACKOFF
         elif isinstance(result, FreeRouteFetchResult) and result.status_code == 429:
@@ -1302,6 +1550,25 @@ class FreeRouteCatalogueOwner:
             self._retry_after_at = completed_at + delay
         else:
             self._retry_after_at = completed_at + _FREE_ROUTE_RETRY_BACKOFF
+
+    def _refresh_provider_metadata_timestamps(
+        self, completed_at: datetime
+    ) -> tuple[Mapping[str, Any], ...]:
+        stamp = completed_at.isoformat()
+        refreshed: list[Mapping[str, Any]] = []
+        for source_row in self._raw_rows:
+            row = dict(source_row)
+            if row.get("billing_mode") == "provider_models_api":
+                row["observed_at"] = stamp
+                pricing = row.get("pricing")
+                if isinstance(pricing, Mapping) and pricing.get("source") == "provider_models_api":
+                    updated_pricing = dict(pricing)
+                    updated_pricing["fetched_at"] = stamp
+                    row["pricing"] = updated_pricing
+                elif isinstance(pricing, PricingEntry) and pricing.source == "provider_models_api":
+                    row["pricing"] = replace(pricing, fetched_at=completed_at)
+            refreshed.append(row)
+        return tuple(refreshed)
 
     def _load_persisted_state(self) -> None:
         path = self._cache_path
@@ -1542,6 +1809,7 @@ def start_free_route_catalogue_refresh_host() -> FreeRouteCatalogueHostLease | N
                     provider_scope="openrouter:public",
                     account_scope=account_scope,
                     cache_path=cache_path,
+                    fetch_enabled=openrouter_free_route_refresh_enabled,
                 )
                 host = FreeRouteCatalogueRefreshHost(owner)
                 registration = _FreeRouteCatalogueHostRegistration(host=host, owners=set())

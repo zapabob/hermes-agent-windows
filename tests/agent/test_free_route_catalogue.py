@@ -12,6 +12,7 @@ import logging
 import http.client
 from pathlib import Path
 import socket
+import ssl
 import subprocess
 import sys
 import threading
@@ -635,9 +636,11 @@ def test_etag_not_modified_retains_last_good_snapshot_and_429_honors_retry_after
     first = owner.refresh_if_due()
     current[0] += timedelta(hours=12)
     not_modified = owner.refresh_if_due()
-    assert not_modified is first
-    assert not_modified.revision == first.revision
-    assert not_modified.routes[0].price_fetched_at == NOW
+    assert not_modified is not None
+    assert not_modified is not first
+    assert not_modified.revision != first.revision
+    assert not_modified.routes[0].price_fetched_at == current[0]
+    assert not_modified.routes[0].observed_at == current[0]
 
     current[0] += timedelta(hours=12)
     after_429 = owner.refresh_if_due()
@@ -650,6 +653,259 @@ def test_etag_not_modified_retains_last_good_snapshot_and_429_honors_retry_after
     assert calls == [None, "etag-1", "etag-1", "etag-1"]
     assert refreshed is not first
     assert refreshed.routes[0].model_id == "vendor/refreshed"
+
+
+def test_unsolicited_304_does_not_extend_catalogue_freshness():
+    current = [NOW]
+    responses = [
+        free_routes.FreeRouteFetchResult(
+            status_code=200,
+            rows=(_route_row(pricing=_price(), supported_tools=["text"]),),
+        ),
+        free_routes.FreeRouteFetchResult(status_code=304),
+    ]
+    owner = free_routes.FreeRouteCatalogueOwner(
+        lambda _etag: responses.pop(0),
+        provider_scope=PROVIDER_SCOPE,
+        account_scope=ACCOUNT_SCOPE,
+        clock=lambda: current[0],
+    )
+    original = owner.refresh_if_due()
+    current[0] += timedelta(hours=12)
+    result = owner.refresh_if_due()
+
+    assert original is not None
+    assert result is original
+    assert result.routes[0].price_fetched_at == NOW
+    assert result.routes[0].observed_at == NOW
+
+
+def test_refresh_host_rechecks_provider_opt_in_before_each_due_fetch():
+    current = [NOW]
+    enabled = [True]
+    fetch_calls: list[datetime] = []
+    disabled_check = Event()
+
+    def enabled_now():
+        if not enabled[0]:
+            disabled_check.set()
+        return enabled[0]
+
+    def fetch(_etag):
+        fetch_calls.append(current[0])
+        return free_routes.FreeRouteFetchResult(
+            status_code=200,
+            rows=(
+                _route_row(
+                    pricing=_price(fetched_at=current[0]),
+                    supported_tools=["text"],
+                    observed_at=current[0],
+                ),
+            ),
+            etag="approval-test",
+        )
+
+    owner = free_routes.FreeRouteCatalogueOwner(
+        fetch,
+        provider_scope=PROVIDER_SCOPE,
+        account_scope=ACCOUNT_SCOPE,
+        clock=lambda: current[0],
+        fetch_enabled=enabled_now,
+    )
+    assert owner.refresh_if_due() is not None
+    assert fetch_calls == [NOW]
+
+    host = free_routes.FreeRouteCatalogueRefreshHost(
+        owner,
+        check_interval=timedelta(milliseconds=10),
+    )
+    enabled[0] = False
+    current[0] += timedelta(hours=12)
+    try:
+        host.start()
+        assert disabled_check.wait(1), "scheduled host tick did not recheck provider opt-in"
+        assert fetch_calls == [NOW]
+    finally:
+        host.stop()
+
+
+def test_dns_stall_has_one_bounded_resolver_and_releases_profile_file_lock(tmp_path, monkeypatch):
+    resolver_type = _api("_BoundedDNSResolver")
+    resolver = resolver_type()
+    monkeypatch.setattr(free_routes, "_OPENROUTER_DNS_RESOLVER", resolver)
+    entered_dns = Event()
+    release_dns = Event()
+    dns_calls: list[tuple[Any, ...]] = []
+
+    def blocked_getaddrinfo(*args, **kwargs):
+        dns_calls.append(args)
+        entered_dns.set()
+        release_dns.wait(3)
+        return []
+
+    monkeypatch.setattr(free_routes.socket, "getaddrinfo", blocked_getaddrinfo)
+
+    class Lease:
+        connect_timeout_seconds = 1.0
+        read_idle_timeout_seconds = 1.0
+        total_timeout_seconds = 1.0
+
+        def __init__(self):
+            self.deadline = time.monotonic() + self.total_timeout_seconds
+            self.active_workers = 0
+
+        @property
+        def remaining_seconds(self):
+            return self.deadline - time.monotonic()
+
+        def set_abort_callback(self, callback):
+            self.abort = callback
+
+        def check_active(self):
+            if self.remaining_seconds <= 0:
+                raise TimeoutError("request deadline expired")
+
+        def mark_progress(self):
+            return None
+
+        def worker_started(self):
+            self.active_workers += 1
+
+        def worker_finished(self):
+            self.active_workers -= 1
+
+        def record_retry_after(self, _seconds):
+            return None
+
+    class Budget:
+        def __init__(self):
+            self.leases = []
+
+        def reserve(self, _scope, _operation="catalogue"):
+            lease = Lease()
+            self.leases.append(lease)
+            return nullcontext(lease)
+
+    budget = Budget()
+    adapter = free_routes.OpenRouterFreeRouteAdapter(
+        account_scope=ACCOUNT_SCOPE,
+        allowed_model_ids={"vendor/dns-timeout"},
+        budget=budget,
+    )
+    cache_path = tmp_path / "cache" / "free-routes.json"
+    stalled_owner = free_routes.FreeRouteCatalogueOwner(
+        adapter,
+        provider_scope=PROVIDER_SCOPE,
+        account_scope=ACCOUNT_SCOPE,
+        clock=lambda: NOW,
+        cache_path=cache_path,
+    )
+    started = time.monotonic()
+    assert stalled_owner.refresh_if_due() is None
+    assert entered_dns.wait(1)
+    assert time.monotonic() - started < 2
+
+    try:
+        def recovered_fetch(_etag):
+            return free_routes.FreeRouteFetchResult(
+                status_code=200,
+                rows=(_route_row(pricing=_price(), supported_tools=["text"]),),
+            )
+
+        recovery_now = NOW + timedelta(seconds=61)
+        recovered_owner = free_routes.FreeRouteCatalogueOwner(
+            recovered_fetch,
+            provider_scope=PROVIDER_SCOPE,
+            account_scope=ACCOUNT_SCOPE,
+            clock=lambda: recovery_now,
+            cache_path=cache_path,
+        )
+        recovered = recovered_owner.refresh_if_due()
+        assert recovered is not None, "stalled DNS must not retain the profile cache lock"
+        assert budget.leases[0].active_workers == 1, "lease accounting must outlive the timed-out caller"
+
+        with pytest.raises(TimeoutError, match="resolver is busy"):
+            resolver.resolve("openrouter.ai", 443, timeout=0.5)
+        resolver_threads = [
+            thread
+            for thread in threading.enumerate()
+            if thread.name == "free-route-catalogue-dns"
+        ]
+        assert len(resolver_threads) == 1, "DNS stalls must not accumulate one worker per refresh"
+        assert len(dns_calls) == 1, "a stalled resolver must reject concurrent DNS work"
+    finally:
+        release_dns.set()
+        assert resolver.wait_for_idle(timeout=1)
+    assert budget.leases[0].active_workers == 0
+
+
+def test_resolved_https_connection_preserves_openrouter_tls_hostname(monkeypatch):
+    seen = {}
+
+    class Resolver:
+        def resolve(self, hostname, port, timeout, *, lease=None):
+            seen["resolve"] = (hostname, port, timeout, lease)
+            return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("192.0.2.10", port))]
+
+    class RawSocket:
+        def __init__(self):
+            self.connected = None
+            self.timeout = None
+
+        def settimeout(self, timeout):
+            self.timeout = timeout
+
+        def connect(self, address):
+            self.connected = address
+
+        def bind(self, _address):
+            raise AssertionError("no source address was configured")
+
+        def close(self):
+            return None
+
+    class TLSSocket:
+        def __init__(self):
+            self.timeout = None
+            self.handshakes = 0
+
+        def settimeout(self, timeout):
+            self.timeout = timeout
+
+        def do_handshake(self):
+            self.handshakes += 1
+
+        def close(self):
+            return None
+
+    class Context:
+        check_hostname = True
+        verify_mode = ssl.CERT_REQUIRED
+
+        def wrap_socket(self, raw_socket, *, server_hostname, do_handshake_on_connect):
+            assert do_handshake_on_connect is False
+            seen["server_hostname"] = server_hostname
+            seen["raw_socket"] = raw_socket
+            return tls_socket
+
+    raw_socket = RawSocket()
+    tls_socket = TLSSocket()
+    monkeypatch.setattr(free_routes, "_OPENROUTER_DNS_RESOLVER", Resolver())
+    monkeypatch.setattr(free_routes.socket, "socket", lambda *_args: raw_socket)
+    connection = free_routes._ResolvedHTTPSConnection(
+        "openrouter.ai",
+        timeout=2.0,
+        context=cast(ssl.SSLContext, Context()),
+    )
+
+    connection.connect()
+
+    assert seen["resolve"][:3] == ("openrouter.ai", 443, pytest.approx(2.0))
+    assert seen["server_hostname"] == "openrouter.ai"
+    assert seen["raw_socket"] is raw_socket
+    assert raw_socket.connected == ("192.0.2.10", 443)
+    assert connection.sock is tls_socket
+    assert tls_socket.handshakes == 1
 
 
 @pytest.mark.parametrize(
