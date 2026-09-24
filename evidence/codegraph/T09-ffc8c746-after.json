@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "task_id": "T09",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "4f0b04c8d0ad54d69b586122340de7f371040d76",
+  "source_fingerprint": "8ac03caa507e89362063dabb77079fd806c71fb8b0880ac44c67b96c24ed1ef4",
+  "index_identity": "isolated H drive T09 worktree .codegraph synced to product commit 4f0b04c8d0ad54d69b586122340de7f371040d76",
+  "tool": {
+    "package": "@colbymchenry/codegraph",
+    "version": "1.6.0",
+    "invocation_kind": "CLI"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "queries": [
+    {
+      "query": "node --file downstream/delegation/free_routes.py --symbols-only",
+      "result_ref": "_docs/2026-09-24_t09_catalogue_refresh_t09_refresh.md#after-q1"
+    },
+    {
+      "query": "impact FreeRouteCatalogueOwner --depth 2 --json",
+      "result_ref": "_docs/2026-09-24_t09_catalogue_refresh_t09_refresh.md#after-q2"
+    },
+    {
+      "query": "impact FreeRouteCatalogueOwner.refresh_if_due --depth 2 --json",
+      "result_ref": "_docs/2026-09-24_t09_catalogue_refresh_t09_refresh.md#after-q3"
+    },
+    {
+      "query": "impact eligible_routes --depth 2 --json",
+      "result_ref": "_docs/2026-09-24_t09_catalogue_refresh_t09_refresh.md#after-q4"
+    },
+    {
+      "query": "impact start_free_route_catalogue_refresh_host --depth 2 --json",
+      "result_ref": "_docs/2026-09-24_t09_catalogue_refresh_t09_refresh.md#after-q5"
+    },
+    {
+      "query": "impact OpenRouterFreeRouteAdapter --depth 2 --json",
+      "result_ref": "_docs/2026-09-24_t09_catalogue_refresh_t09_refresh.md#after-q6"
+    },
+    {
+      "query": "node --file gateway/run.py --offset 12860 --limit 45",
+      "result_ref": "_docs/2026-09-24_t09_catalogue_refresh_t09_refresh.md#after-q7"
+    }
+  ],
+  "canonical_owners": [
+    "downstream/delegation/free_routes.py: canonical eligibility authority, bounded OpenRouter adapter, profile last-good cache, refresh state machine, and host lifecycle",
+    "hermes_cli/model_catalog.py: cache-only allow-list from the existing picker catalogue and provider-scoped explicit opt-in",
+    "hermes_cli/web_server.py:_lifespan: Desktop serve lifecycle trigger",
+    "gateway/run.py:GatewayRunner.start/stop: Gateway lifecycle trigger",
+    "tests/agent/test_free_route_catalogue.py: fetch bounds, persistence, opt-in, trigger, and single-flight regressions"
+  ],
+  "impact_paths": [
+    "OpenRouterFreeRouteAdapter -> FreeRouteCatalogueOwner -> profile-scoped last-good snapshot",
+    "start_free_route_catalogue_refresh_host -> Desktop _lifespan and refresh-host tests",
+    "GatewayRunner.start/stop -> lifecycle helpers, verified by the focused actual-runner lifecycle test; CodeGraph cannot represent this path because gateway/run.py has zero indexed symbols",
+    "eligible_routes remains a pure cache/snapshot decision surface and has no production routing caller in this slice"
+  ],
+  "unresolved_edges": [
+    "CodeGraph 1.6.0 reports gateway/run.py as 0 symbols, so its GatewayRunner trigger cannot be shown in graph impact; direct source and focused lifecycle tests establish the call path.",
+    "The shared T11 network request budget is process-local; profile-local OS file locking coalesces refreshes for the same cache path across processes, but global public quota accounting across distinct processes is not established.",
+    "A DNS getaddrinfo stall can occur before HTTPSConnection has a socket for the lease abort callback to close; active socket connect/header/body waits are bounded, but resolver stalls are not proven to obey the total deadline.",
+    "No Windows power-event callback is wired; startup checks immediately and a five-minute due-check tick observes the persisted twelve-hour deadline after the host resumes.",
+    "OpenRouter metadata refresh is disabled unless model_catalog.providers.openrouter.free_route_catalogue_enabled is explicitly true; no operational config was changed.",
+    "The 4 MiB response cap and 1,000-row cap fail closed and preserve last-good state if provider data outgrows them; automatic pagination is not implemented.",
+    "Controlled public GETs returned no ETag, so ETag/304 behavior is covered by deterministic adapter tests rather than the live probe."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [
+    "Predecessor RED: test_openrouter_adapter_uses_catalogue_budget_and_bounded_conditional_fetch failed on exact ffc8c74612 because OpenRouterFreeRouteAdapter was absent.",
+    "Product GREEN: tests/agent/test_free_route_catalogue.py — 40 passed using the Windows project Python 3.11 environment.",
+    "Ruff 0.15.10 passed for all five product/test files; py_compile and git diff --check passed.",
+    "ty 0.0.21 passed for hermes_cli/model_catalog.py and tests/agent/test_free_route_catalogue.py; free_routes.py reports only the unresolved downstream.delegation.network_budget import because T11 is a separate, not-yet-integrated worktree.",
+    "ty on hermes_cli/web_server.py and gateway/run.py reports the same existing diagnostic counts as exact predecessor ffc8c74612 (23 and 112 respectively); no T09-line diagnostic was added."
+  ],
+  "evidence_refs": [
+    "_docs/2026-09-24_t09_catalogue_refresh_t09_refresh.md",
+    "tests/agent/test_free_route_catalogue.py",
+    "downstream/delegation/free_routes.py",
+    "hermes_cli/model_catalog.py",
+    "hermes_cli/web_server.py",
+    "gateway/run.py"
+  ],
+  "phase": "after"
+}

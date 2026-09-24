@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "task_id": "T09",
+  "repository": "zapabob/hermes-agent-windows",
+  "source_sha": "ffc8c74612e7ae279d02ec824f8a850686862756",
+  "source_fingerprint": "62da0ccecb76e233a86dbaa985da22ec8a6b7294926f732dbfb59f14eb2e7ef1",
+  "index_identity": "isolated H drive T09 predecessor worktree .codegraph at ffc8c74612e7ae279d02ec824f8a850686862756",
+  "tool": {
+    "package": "@colbymchenry/codegraph",
+    "version": "1.6.0",
+    "invocation_kind": "CLI"
+  },
+  "freshness": "VERIFIED_CURRENT",
+  "queries": [
+    {
+      "query": "node --file downstream/delegation/free_routes.py --symbols-only",
+      "result_ref": "_docs/2026-09-24_t09_catalogue_refresh_t09_refresh.md#before-q1"
+    },
+    {
+      "query": "impact FreeRouteCatalogueOwner --depth 2 --json",
+      "result_ref": "_docs/2026-09-24_t09_catalogue_refresh_t09_refresh.md#before-q2"
+    },
+    {
+      "query": "impact FreeRouteCatalogueOwner.refresh_if_due --depth 2 --json",
+      "result_ref": "_docs/2026-09-24_t09_catalogue_refresh_t09_refresh.md#before-q3"
+    },
+    {
+      "query": "impact eligible_routes --depth 2 --json",
+      "result_ref": "_docs/2026-09-24_t09_catalogue_refresh_t09_refresh.md#before-q4"
+    }
+  ],
+  "canonical_owners": [
+    "downstream/delegation/free_routes.py: existing classification, snapshot validation, eligibility, and cache owner",
+    "tests/agent/test_free_route_catalogue.py: focused static owner and eligibility coverage"
+  ],
+  "impact_paths": [
+    "FreeRouteCatalogueOwner -> refresh state machine and focused tests",
+    "eligible_routes -> focused eligibility tests",
+    "free_routes.py has no production caller at this predecessor"
+  ],
+  "unresolved_edges": [
+    "The predecessor contains no approved OpenRouter fetch adapter or production refresh-host lifecycle caller."
+  ],
+  "coverage_disposition": "NEEDS_DIRECT_CHECKS",
+  "tests": [
+    "The task-specific adapter regression was run against this exact predecessor and failed because OpenRouterFreeRouteAdapter did not exist; see the RED/GREEN record in the evidence document."
+  ],
+  "evidence_refs": [
+    "_docs/2026-09-24_t09_catalogue_refresh_t09_refresh.md"
+  ],
+  "phase": "before"
+}
