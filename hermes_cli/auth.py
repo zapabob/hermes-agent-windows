@@ -44,6 +44,7 @@ import webbrowser
 # TYPE_CHECKING import gives static checkers the real module.
 import importlib as _importlib
 from typing import TYPE_CHECKING
+from agent.redact import redact_base_url
 
 if TYPE_CHECKING:
     import httpx
@@ -945,7 +946,7 @@ def _probe_single_zai_endpoint(
                 timeout=timeout,
             )
             if resp.status_code == 200:
-                logger.debug("Z.AI endpoint probe: %s (%s) model=%s OK", ep_id, base_url, model)
+                logger.debug("Z.AI endpoint probe: %s (%s) model=%s OK", ep_id, redact_base_url(base_url), model)
                 return {
                     "id": ep_id,
                     "base_url": base_url,
@@ -1034,7 +1035,7 @@ def _resolve_zai_base_url(api_key: str, default_url: str, env_override: str) -> 
     if isinstance(cached, dict) and cached.get("base_url"):
         key_hash = cached.get("key_hash", "")
         if key_hash == hashlib.sha256(api_key.encode()).hexdigest()[:16]:
-            logger.debug("Z.AI: using cached endpoint %s", cached["base_url"])
+            logger.debug("Z.AI: using cached endpoint %s", redact_base_url(cached["base_url"]))
             return cached["base_url"]
 
     # Probe — may take up to ~8s per endpoint.
@@ -1065,7 +1066,7 @@ def _resolve_zai_base_url(api_key: str, default_url: str, env_override: str) -> 
                 _save_auth_store(auth_store)
         except Exception as exc:
             logger.warning("Z.AI: could not persist detected endpoint (%s); will re-probe next start", exc)
-        logger.info("Z.AI: auto-detected endpoint %s (%s)", detected["label"], detected["base_url"])
+        logger.info("Z.AI: auto-detected endpoint %s (%s)", detected["label"], redact_base_url(detected["base_url"]))
         return detected["base_url"]
 
     logger.debug("Z.AI: probe failed, falling back to default %s", default_url)
@@ -6426,7 +6427,7 @@ def resolve_nous_access_token(
             if parsed_portal_url.hostname and parsed_portal_url.hostname not in _NOUS_PORTAL_ALLOWED_HOSTS:
                 logger.warning(
                     "auth: ignoring invalid portal_base_url %r (host %r not in allowlist), using default",
-                    portal_base_url, parsed_portal_url.hostname,
+                    redact_base_url(portal_base_url), parsed_portal_url.hostname,
                 )
                 portal_base_url = DEFAULT_NOUS_PORTAL_URL
 

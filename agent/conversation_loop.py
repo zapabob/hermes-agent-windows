@@ -66,6 +66,7 @@ from agent.message_sanitization import (
     _strip_images_from_messages,
     _strip_non_ascii,
 )
+from agent.redact import redact_base_url
 # Must mirror _STALE_TOOL_CALL_MARKER_RE in hermes_state.py — kept local
 # to avoid importing hermes_state at module load time (its module-level
 # DEFAULT_DB_PATH = get_hermes_home() / "state.db" breaks tests that
@@ -650,7 +651,7 @@ def _ollama_context_limit_error(agent: Any, request_tokens: int) -> Optional[str
         "session=%s",
         model,
         provider,
-        base_url,
+        redact_base_url(base_url),
         runtime_ctx,
         MINIMUM_CONTEXT_LENGTH,
         request_tokens,

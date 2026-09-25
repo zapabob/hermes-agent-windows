@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 from urllib.parse import urlparse
 
 import yaml
+from agent.redact import redact_base_url
 
 if TYPE_CHECKING:  # pragma: no cover — runtime import is lazy (see below)
     import requests
@@ -404,7 +405,7 @@ def _warn_context_length_fallback(model: str, base_url: str) -> None:
         "Could not determine context length for model %r (base_url=%s) "
         "— falling back to %s tokens. Set model.context_length in "
         "config.yaml to override.",
-        model, base_url or "default", f"{DEFAULT_FALLBACK_CONTEXT:,}",
+        model, redact_base_url(base_url) or "default", f"{DEFAULT_FALLBACK_CONTEXT:,}",
     )
 
 # Minimum context length required to run Hermes Agent.  Models with fewer
@@ -918,13 +919,13 @@ def _reconcile_local_cached_context_length(
             logger.info(
                 "Live local probe for %s@%s reports %s (< minimum %s); "
                 "invalidating stale cache — agent init should reject",
-                model, base_url, f"{live_ctx:,}", f"{MINIMUM_CONTEXT_LENGTH:,}",
+                model, redact_base_url(base_url), f"{live_ctx:,}", f"{MINIMUM_CONTEXT_LENGTH:,}",
             )
             _invalidate_cached_context_length(model, base_url)
             return live_ctx
         logger.info(
             "Reconciling stale local cache entry %s@%s: %s -> %s (live probe)",
-            model, base_url, f"{cached:,}", f"{live_ctx:,}",
+            model, redact_base_url(base_url), f"{cached:,}", f"{live_ctx:,}",
         )
         _invalidate_cached_context_length(model, base_url)
         _maybe_cache_local_context_length(model, base_url, live_ctx)
@@ -1600,7 +1601,7 @@ def save_context_length(model: str, base_url: str, length: int) -> None:
     if length <= 0:
         logger.warning(
             "Refusing to cache non-positive context length %s -> %s tokens",
-            f"{model}@{base_url}", length,
+            f"{model}@{redact_base_url(base_url)}", length,
         )
         return
     key = _context_cache_key(model, base_url)
@@ -3101,7 +3102,7 @@ def get_model_context_length(
             if cached <= 0:
                 logger.warning(
                     "Dropping non-positive cache entry %s@%s -> %s; re-resolving",
-                    model, base_url, cached,
+                    model, redact_base_url(base_url), cached,
                 )
                 _invalidate_cached_context_length(model, base_url)
             # Invalidate stale 32k cache entries for model families known to
@@ -3110,7 +3111,7 @@ def get_model_context_length(
                 logger.info(
                     "Dropping stale cached context entry %s@%s -> %s (known 32K underreport); "
                     "re-resolving via hardcoded defaults",
-                    model, base_url, f"{cached:,}",
+                    model, redact_base_url(base_url), f"{cached:,}",
                 )
                 _invalidate_cached_context_length(model, base_url)
             # Invalidate pre-catalog leftovers: models whose catalog entry was
@@ -3122,7 +3123,7 @@ def get_model_context_length(
                 logger.info(
                     "Dropping stale pre-catalog cache entry %s@%s -> %s; "
                     "re-resolving via hardcoded defaults",
-                    model, base_url, f"{cached:,}",
+                    model, redact_base_url(base_url), f"{cached:,}",
                 )
                 _invalidate_cached_context_length(model, base_url)
             # Nous Portal: the portal /v1/models endpoint is authoritative.
@@ -3136,7 +3137,7 @@ def get_model_context_length(
             elif _infer_provider_from_url(base_url) == "nous":
                 logger.debug(
                     "Bypassing persistent cache for %s@%s (Nous portal authoritative)",
-                    model, base_url,
+                    model, redact_base_url(base_url),
                 )
                 # Fall through; step 5b reconciles and overwrites if portal responds.
             # Invalidate stale Bedrock entries seeded before the Claude 4.6+
@@ -3154,7 +3155,7 @@ def get_model_context_length(
                             "Dropping stale Bedrock cache entry %s@%s -> %s; "
                             "using static Bedrock table value %s",
                             model,
-                            base_url,
+                            redact_base_url(base_url),
                             f"{cached:,}",
                             f"{bedrock_ctx:,}",
                         )
@@ -3260,7 +3261,7 @@ def get_model_context_length(
                 "Could not detect context length for model %r at %s — "
                 "defaulting to %s tokens (probe-down). Set model.context_length "
                 "in config.yaml to override.",
-                model, base_url, f"{DEFAULT_FALLBACK_CONTEXT:,}",
+                model, redact_base_url(base_url), f"{DEFAULT_FALLBACK_CONTEXT:,}",
             )
             # 3b. Before falling back to the hard 256K default, consult the
             # hardcoded catalog as a last resort.  A proxied/custom Anthropic
