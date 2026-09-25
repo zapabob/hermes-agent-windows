@@ -208,6 +208,14 @@ NeMo Relay is no longer a bundled Hermes plugin. Do not run `hermes plugins enab
 
 To opt into Relay middleware or exporters, create a standard Relay `plugins.toml`, then set `HERMES_NEMO_RELAY_PLUGINS_TOML` to that file before starting Hermes. The policy is process-wide for every profile hosted by that Hermes process. See the [NeMo Relay observability configuration](https://docs.nvidia.com/nemo/relay/configure-plugins/observability/about) for ATOF, ATIF, and OpenTelemetry options.
 
+Relay injects W3C trace-context headers (`traceparent`) into managed LLM requests. Hermes removes `traceparent`, `tracestate`, and `baggage` before the request reaches the provider, so trace identity stays on your machine. To forward them (for example, to a self-hosted gateway that joins traces), opt in explicitly:
+
+```yaml
+telemetry:
+  relay:
+    propagate_trace_headers: true
+```
+
 The old `HERMES_NEMO_RELAY_ATOF_*` and `HERMES_NEMO_RELAY_ATIF_*` settings no longer activate exporters. `hermes doctor` reports these stale settings when no replacement `plugins.toml` is selected.
 
 #### Session-span segmentation (continuous sessions)
