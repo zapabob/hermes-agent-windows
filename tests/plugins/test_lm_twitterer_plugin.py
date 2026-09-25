@@ -707,7 +707,13 @@ def test_dry_run_post_is_written_to_ebbinghaus_memory_db(tmp_path):
     core = plugin.core
     db_path = tmp_path / "ebbinghaus_memory.db"
     create_ebbinghaus_db(db_path)
-    cfg = make_settings(core, tmp_path, memory_bridge_enabled=True, memory_db=db_path)
+    cfg = make_settings(
+        core,
+        tmp_path,
+        memory_bridge_enabled=True,
+        memory_db=db_path,
+        memory_writeback_enabled=True,
+    )
 
     class FakeLLM:
         def complete(self, messages, **kwargs):

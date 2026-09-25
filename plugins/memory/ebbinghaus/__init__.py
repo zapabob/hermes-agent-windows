@@ -22,6 +22,7 @@ from agent.memory_provider import MemoryProvider
 from tools.registry import tool_error
 
 from .policies import EbbinghausPolicies, PolicyConfigError
+from .schema_identity import open_shared_store
 from .store import CapacityError, EbbinghausMemoryStore, forgetting_retention
 
 logger = logging.getLogger(__name__)
@@ -251,6 +252,28 @@ def _load_plugin_config() -> dict:
         return {}
 
 
+STORE_BACKENDS = ("builtin", "hakua")
+
+
+def _load_hakua_store_backend() -> tuple[Any, Any, type[Exception]]:
+    """Return hakua-memory's store class, policies class and capacity error.
+
+    hakua-memory is an optional extra; ``tools.lazy_deps`` installs it on
+    first use (or raises ``FeatureUnavailable`` when installs are disabled).
+    """
+    try:
+        from tools.lazy_deps import ensure as _lazy_ensure
+
+        _lazy_ensure("memory.hakua", prompt=False)
+    except ImportError:
+        pass
+    from hakua_memory.ebbinghaus.policies import EbbinghausPolicies as HakuaPolicies
+    from hakua_memory.ebbinghaus.store import CapacityError as HakuaCapacityError
+    from hakua_memory.ebbinghaus.store import EbbinghausMemoryStore as HakuaMemoryStore
+
+    return HakuaMemoryStore, HakuaPolicies, HakuaCapacityError
+
+
 def _as_bool(value: Any) -> bool:
     if isinstance(value, bool):
         return value
@@ -297,15 +320,23 @@ class EbbinghausMemoryProvider(MemoryProvider):
             logger.error("Invalid Ebbinghaus plugin config: %s", exc)
             raise
         self._store: EbbinghausMemoryStore | None = None
+        self._store_backend = "builtin"
+        self._capacity_errors: tuple[type[Exception], ...] = (CapacityError,)
         self._bridge: Any = None
         self._session_id = ""
         self._max_prefetch = int(self._policies.max_prefetch)
         self._min_prefetch_score = float(self._policies.min_prefetch_score)
         self._auto_encode_turns = bool(self._policies.auto_encode_turns)
+        self._cron_context = False
 
     @property
     def name(self) -> str:
         return "ebbinghaus"
+
+    @property
+    def store_backend(self) -> str:
+        """Store implementation in use: ``builtin`` or ``hakua``."""
+        return self._store_backend
 
     def is_available(self) -> bool:
         return True
@@ -319,6 +350,9 @@ class EbbinghausMemoryProvider(MemoryProvider):
             {"key": "max_prefetch", "description": "Maximum memories injected before a turn", "default": "5"},
             {"key": "min_prefetch_score", "description": "Minimum score for automatic prefetch", "default": "0.18"},
             {"key": "auto_encode_turns", "description": "Auto-store preference-like user turns", "default": "false", "choices": ["true", "false"]},
+            {"key": "store_backend", "description": "Store implementation (hakua uses the optional hakua-memory package and falls back to builtin)", "default": "builtin", "choices": list(STORE_BACKENDS)},
+            {"key": "judge_enabled", "description": "Allow `hermes ebbinghaus judge --run` to send memories to the configured model for contradiction/goal review", "default": "false", "choices": ["true", "false"]},
+            {"key": "judge_max_calls", "description": "Maximum model calls per judge run", "default": "20"},
         ]
 
     def save_config(self, values: Dict[str, Any], hermes_home: str) -> None:
@@ -347,10 +381,7 @@ class EbbinghausMemoryProvider(MemoryProvider):
         db_path = str(self._config.get("db_path") or default_db)
         db_path = db_path.replace("$HERMES_HOME", str(hermes_home))
         db_path = db_path.replace("${HERMES_HOME}", str(hermes_home))
-        self._store = EbbinghausMemoryStore(
-            db_path,
-            policies=self._policies,
-        )
+        self._store = self._open_store(db_path)
         try:
             from plugins.semantic_graph.config import load_config
             from plugins.semantic_graph.store import SemanticGraphStore
@@ -372,6 +403,44 @@ class EbbinghausMemoryProvider(MemoryProvider):
                 type(exc).__name__,
             )
         self._session_id = session_id
+        # Cron prompts are job instructions, not user turns; auto-encoding them
+        # stores the same instruction text as "user" memories on every edit.
+        self._cron_context = (
+            kwargs.get("platform") == "cron"
+            or kwargs.get("agent_context") in {"cron", "flush"}
+        )
+
+    def _open_store(self, db_path: str) -> Any:
+        backend = str(self._config.get("store_backend") or "builtin").strip().lower()
+        if backend == "hakua":
+            try:
+                store_cls, policies_cls, capacity_error = _load_hakua_store_backend()
+                store = open_shared_store(
+                    db_path,
+                    store_cls=store_cls,
+                    store_kwargs={"policies": policies_cls.from_plugin_config(self._config)},
+                    canonical_kwargs={"policies": self._policies},
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Ebbinghaus hakua-memory backend unavailable (%s: %s); "
+                    "using builtin store",
+                    type(exc).__name__,
+                    exc,
+                )
+            else:
+                logger.info("Ebbinghaus memory store backend: hakua-memory")
+                self._store_backend = "hakua"
+                self._capacity_errors = (CapacityError, capacity_error)
+                return store
+        elif backend != "builtin":
+            logger.warning(
+                "Unknown plugins.ebbinghaus.store_backend %r; using builtin store",
+                backend,
+            )
+        self._store_backend = "builtin"
+        self._capacity_errors = (CapacityError,)
+        return EbbinghausMemoryStore(db_path, policies=self._policies)
 
     def _bridge_remember(self, result: dict[str, Any]) -> None:
         if self._bridge is None:
@@ -481,7 +550,7 @@ class EbbinghausMemoryProvider(MemoryProvider):
         return body
 
     def sync_turn(self, user_content: str, assistant_content: str, *, session_id: str = "") -> None:
-        if not self._auto_encode_turns or not self._store:
+        if not self._auto_encode_turns or not self._store or self._cron_context:
             return
         for content, salience in _extract_candidate_memories(user_content):
             try:
@@ -497,7 +566,7 @@ class EbbinghausMemoryProvider(MemoryProvider):
                 logger.debug("Ebbinghaus sync_turn encode failed: %s", exc)
 
     def on_session_end(self, messages: List[Dict[str, Any]]) -> None:
-        if not self._auto_encode_turns or not self._store:
+        if not self._auto_encode_turns or not self._store or self._cron_context:
             return
         for msg in messages:
             if msg.get("role") != "user":
@@ -818,8 +887,8 @@ class EbbinghausMemoryProvider(MemoryProvider):
                     "dream mode must be preview, apply, or association_preview"
                 )
             return tool_error(f"Unknown action: {action}")
-        except CapacityError as exc:
-            payload = {"error": str(exc), **(exc.details or {})}
+        except self._capacity_errors as exc:
+            payload = {"error": str(exc), **(getattr(exc, "details", None) or {})}
             return json.dumps(payload, ensure_ascii=False)
         except KeyError as exc:
             return tool_error(f"Missing required argument: {exc}")
