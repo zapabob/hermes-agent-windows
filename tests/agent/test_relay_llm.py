@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextvars
 import json
+import re
 import threading
 from types import SimpleNamespace
 
@@ -355,9 +356,13 @@ def test_stream_uses_rewritten_request_and_post_intercept_chunks(relay_turn):
         relay.intercepts.deregister_llm_request("hermes-test-request")
 
     assert captured_requests[0]["temperature"] == 0.25
-    assert captured_requests[0]["extra_headers"] == {
-        "authorization": "Bearer provider-token"
-    }
+    # Relay 0.8+ adds a runtime-owned W3C traceparent to managed LLM requests.
+    headers = dict(captured_requests[0]["extra_headers"])
+    traceparent = headers.pop("traceparent", None)
+    assert headers == {"authorization": "Bearer provider-token"}
+    assert traceparent is None or re.fullmatch(
+        r"00-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}", traceparent
+    )
     assert chunks[0].choices[0].delta.content == "HELLO"
     assert stream.output_modified is True
     assert turn.logical_llm_calls == {}
