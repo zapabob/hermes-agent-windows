@@ -1535,8 +1535,9 @@ _CATEGORY_MERGE: Dict[str, str] = {
     # field — fold it into the agent tab rather than spawning a one-field
     # orphan category.
     "computer_use": "agent",
-    # `telemetry.shared_metrics.enabled` is the only schema-surfaced telemetry
-    # field — fold it into security alongside the other privacy-posture toggles.
+    # Telemetry fields (`telemetry.shared_metrics.*`,
+    # `telemetry.relay.propagate_trace_headers`) are privacy-posture toggles —
+    # fold them into security.
     "telemetry": "security",
     # `plugins.hook_callback_timeout` is the only schema-surfaced plugins field
     # (`enabled`/`disabled` are list allow-lists omitted from DEFAULT_CONFIG) —

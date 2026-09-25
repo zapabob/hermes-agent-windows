@@ -7,6 +7,7 @@ import contextvars
 import inspect
 import json
 import logging
+import threading
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from types import SimpleNamespace
@@ -23,6 +24,33 @@ _PROVIDER_MESSAGE_EXTENSION_KEYS = frozenset(
 _RELAY_INTERNAL_PROVIDER_HEADERS = frozenset(
     {"x-dynamo-parent-session-id", "x-dynamo-session-id"}
 )
+_TRACE_CONTEXT_HEADERS = frozenset({"traceparent", "tracestate", "baggage"})
+_PROPAGATE_TRACE_HEADERS: bool | None = None
+_PROPAGATE_TRACE_HEADERS_LOCK = threading.Lock()
+
+
+def _propagate_trace_headers() -> bool:
+    """Whether Relay trace-context headers may reach the provider (opt-in)."""
+    global _PROPAGATE_TRACE_HEADERS
+    if _PROPAGATE_TRACE_HEADERS is None:
+        with _PROPAGATE_TRACE_HEADERS_LOCK:
+            if _PROPAGATE_TRACE_HEADERS is None:
+                enabled = False
+                try:
+                    from hermes_cli.config import load_config_readonly
+
+                    telemetry = load_config_readonly().get("telemetry") or {}
+                    relay_settings = telemetry.get("relay") or {}
+                    enabled = relay_settings.get("propagate_trace_headers") is True
+                except Exception:  # noqa: BLE001 - unreadable config keeps the private default
+                    logger.debug("Relay trace-header policy unreadable", exc_info=True)
+                _PROPAGATE_TRACE_HEADERS = enabled
+    return _PROPAGATE_TRACE_HEADERS
+
+
+def _reset_trace_header_policy_for_tests() -> None:
+    global _PROPAGATE_TRACE_HEADERS
+    _PROPAGATE_TRACE_HEADERS = None
 @dataclass(frozen=True, slots=True)
 class _RelayProtocol:
     operation: str
@@ -1114,10 +1142,13 @@ def _provider_request(
         )
     headers = getattr(request, "headers", None)
     if isinstance(headers, dict):
+        withheld = _RELAY_INTERNAL_PROVIDER_HEADERS
+        if not _propagate_trace_headers():
+            withheld = withheld | _TRACE_CONTEXT_HEADERS
         headers = {
             key: value
             for key, value in headers.items()
-            if str(key).lower() not in _RELAY_INTERNAL_PROVIDER_HEADERS
+            if str(key).lower() not in withheld
         }
     if headers:
         final["extra_headers"] = {
