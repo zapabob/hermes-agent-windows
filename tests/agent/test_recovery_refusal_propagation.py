@@ -144,6 +144,33 @@ def test_recovery_refusal_preserved_in_reconnect_marker():
     assert isinstance(sc.result["error"], LLMStreamMiddlewareRefusal)
 
 
+def test_partial_stream_warning_refusal_is_not_converted_to_stub():
+    agent = _FakeAgent()
+    agent._warning_presentation_enabled = lambda: True
+    agent._fire_delta_raises = LLMStreamMiddlewareRefusal
+    sc = _make_streaming_call(agent)
+    sc.result["partial_tool_names"] = ["some_tool"]
+    sc.result["error"] = ConnectionError("stream dropped")
+
+    with pytest.raises(LLMStreamMiddlewareRefusal):
+        sc._partial_stream_stub()
+
+    assert isinstance(sc.result["error"], LLMStreamMiddlewareRefusal)
+
+
+def test_partial_stream_warning_display_error_remains_best_effort():
+    agent = _FakeAgent()
+    agent._warning_presentation_enabled = lambda: True
+    agent._fire_delta_raises = RuntimeError
+    sc = _make_streaming_call(agent)
+    sc.result["partial_tool_names"] = ["some_tool"]
+    sc.result["error"] = ConnectionError("stream dropped")
+
+    stub = sc._partial_stream_stub()
+
+    assert stub.choices[0].message.content.endswith("Ask me to retry if you want to continue.")
+
+
 # ── Positive controls ─────────────────────────────────────────────
 
 def test_ordinary_transport_error_still_retries():

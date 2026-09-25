@@ -419,6 +419,41 @@ ctx.register_middleware("llm_stream_text", suppress, failure_mode="closed")
     assert run_llm_stream_text_middleware("visible", kind="text") == ""
 
 
+def test_malformed_sync_result_is_passthrough_when_open(tmp_path, monkeypatch):
+    manager = _load_plugin(
+        tmp_path,
+        monkeypatch,
+        "malformed-open",
+        """
+def transform(**kwargs):
+    return {"txt": "unsafe"}
+
+ctx.register_middleware("llm_stream_text", transform, failure_mode="open")
+""",
+    )
+    _use_manager(monkeypatch, manager)
+
+    assert run_llm_stream_text_middleware("visible", kind="text") == "visible"
+
+
+def test_malformed_sync_result_refuses_when_closed(tmp_path, monkeypatch):
+    manager = _load_plugin(
+        tmp_path,
+        monkeypatch,
+        "malformed-closed",
+        """
+def transform(**kwargs):
+    return {"text": None}
+
+ctx.register_middleware("llm_stream_text", transform, failure_mode="closed")
+""",
+    )
+    _use_manager(monkeypatch, manager)
+
+    with pytest.raises(LLMStreamMiddlewareRefusal, match="must return None or a dict"):
+        run_llm_stream_text_middleware("secret", kind="text")
+
+
 def test_stream_refusal_classification_is_non_retryable_and_non_fallback():
     refusal = LLMStreamMiddlewareRefusal(ConnectionError("policy refused"))
     classified = classify_api_error(refusal, provider="openrouter", model="test/model")

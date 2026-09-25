@@ -226,8 +226,20 @@ def run_llm_stream_text_middleware(
                 raise LLMStreamMiddlewareRefusal(exc, callback_name=callback_name) from exc
             continue
 
-        if isinstance(result, dict) and isinstance(result.get("text"), str):
-            current = result["text"]
+        if result is None:
+            # ``None`` is the intentional synchronous no-change result.
+            continue
+        if not isinstance(result, dict) or not isinstance(result.get("text"), str):
+            exc = TypeError(
+                "llm_stream_text middleware must return None or a dict with a string 'text' field"
+            )
+            manager._report_hook_failure(
+                LLM_STREAM_TEXT_MIDDLEWARE, callback, call_kwargs, exc, surface="Middleware"
+            )
+            if failure_mode == "closed":
+                raise LLMStreamMiddlewareRefusal(exc, callback_name=callback_name) from exc
+            continue
+        current = result["text"]
     return current
 
 

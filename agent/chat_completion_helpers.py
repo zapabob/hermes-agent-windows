@@ -3694,6 +3694,8 @@ class _StreamingCall(StreamingWaitMonitor):
         empty stub and only sends the nudge (placeholder text leaked into the stitched
         response). A text-only death with 0 visible chars never gets here: the error
         handler reclassifies it as undelivered (#112419)."""
+        from hermes_cli.middleware import LLMStreamMiddlewareRefusal
+
         error = self.result["error"]
         _partial_text = (getattr(self.agent, "_current_streamed_assistant_text", "") or "").strip() or None
         _partial_names = list(self.result.get("partial_tool_names") or [])
@@ -3706,7 +3708,15 @@ class _StreamingCall(StreamingWaitMonitor):
                      f"Ask me to retry if you want to continue.")
             _partial_text = (_partial_text or "") + _warn  # model/result bookkeeping, never gated
             if self.agent._warning_presentation_enabled():
-                self._quiet(self.agent._fire_stream_delta, _warn)  # visible immediately
+                try:
+                    self.agent._fire_stream_delta(_warn)  # visible immediately
+                except LLMStreamMiddlewareRefusal as _ref:
+                    self.result["error"] = _ref
+                    raise
+                except Exception:
+                    # Ordinary display failures remain best-effort; the warning is
+                    # still included in the bookkeeping below.
+                    logger.debug("Partial-stream warning display failed", exc_info=True)
             logger.warning(
                 "Partial stream dropped tool call(s) %s after %s chars of text; surfaced warning to user: %s",
                 _partial_names, len(_partial_text or ""), error)
