@@ -1148,7 +1148,13 @@ def _spawn_side_agent(
     extra = extra or {}
 
     def run():
-        session_tokens = _set_session_context(task_id, cwd=(cwd or _session_cwd(session)))
+        # Bind the requesting UI session explicitly; detached workers must never borrow
+        # whichever session most recently installed the process-global prompt callback.
+        session_tokens = _set_session_context(
+            task_id,
+            cwd=(cwd or _session_cwd(session)),
+            ui_session_id=parent,
+        )
         # Bug #50233: ephemeral agent threads don't inherit the session's ContextVar scopes (set on the
         # session-create thread), so a side turn under a non-default profile ran against the wrong home.
         # Bind the profile's home + secrets + terminal policy for the whole body, exactly as a prompt turn
@@ -1178,9 +1184,13 @@ def _side_agent_args(rid, params, prefix):
     session, err = _sess(params, rid)
     if err:
         return None, None, None, None, err
-    text, parent = params.get("text", ""), params.get("session_id", "")
+    text, parent = params.get("text", ""), str(params.get("session_id", "") or "")
     if not text:
         return None, None, None, None, _err(rid, 4012, "text required")
+    # Detached workers require an explicit UI owner. Never infer ownership from
+    # the process-global callback's last wired session.
+    if not parent:
+        return None, None, None, None, _err(rid, 4014, "session_id required for background work")
     return session, text, parent, f"{prefix}_{uuid.uuid4().hex[:6]}", None
 
 

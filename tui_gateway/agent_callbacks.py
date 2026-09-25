@@ -8,6 +8,7 @@ import json
 
 import contextlib
 import threading
+import time
 
 from .method_ctx import bind_module
 
@@ -202,12 +203,16 @@ def _wire_callbacks(sid: str):
 
     def secret_cb(env_var, prompt, metadata=None):
         pl = {"prompt": prompt, "env_var": env_var, **({"metadata": metadata} if metadata else {})}
-        # One process-global callback: the last _wire_callbacks(sid) would otherwise
-        # own every prompt. Route to the turn bound by _set_session_context; the
-        # closure sid is only the fallback when that context is absent.
+        # One process-global callback: the last _wire_callbacks(sid) is never an
+        # ownership signal. Only an explicitly bound turn owner may receive a
+        # prompt; detached work without one fails closed.
         from gateway.session_context import get_session_env
 
-        target_sid = get_session_env("HERMES_UI_SESSION_ID") or sid
+        target_sid = get_session_env("HERMES_UI_SESSION_ID")
+        if not target_sid:
+            logger.warning("Refusing secret capture without a bound UI session owner")
+            return {"success": False, "stored_as": env_var, "validated": False,
+                    "skipped": True, "message": "no authorized UI session owner"}
         val = _ask("secret", target_sid, pl)
         if not val:
             return {"success": True, "stored_as": env_var, "validated": False, "skipped": True, "message": "skipped"}

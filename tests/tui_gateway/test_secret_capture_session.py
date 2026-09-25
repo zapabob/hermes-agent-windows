@@ -84,8 +84,8 @@ def test_secret_prompt_goes_to_active_turn_not_last_wired_session(monkeypatch):
     assert server_requests.open_requests("session-B") == []
 
 
-def test_secret_prompt_falls_back_to_wired_sid_without_turn_context(monkeypatch):
-    """With no turn context bound, the prompt still reaches the session that wired it."""
+def test_secret_prompt_refuses_without_turn_owner(monkeypatch):
+    """A process-global callback must not infer ownership from its wired closure."""
     from gateway.session_context import get_session_env, reset_session_vars
 
     server, server_requests, skills_tool = _gateway(monkeypatch)
@@ -101,7 +101,7 @@ def test_secret_prompt_falls_back_to_wired_sid_without_turn_context(monkeypatch)
     finally:
         server_requests.reset_for_tests()
 
-    assert [frame["method"] for frame in frames] == ["secret"]
-    assert frames[0]["params"]["session_id"] == "only-session"
-    assert stored == [("DEMO_TOKEN", "wired-secret")]
-    assert result["setup_skipped"] is False
+    assert frames == []
+    assert stored == []
+    assert result == {"missing_names": ["DEMO_TOKEN"], "setup_skipped": True,
+                      "gateway_setup_hint": None}
