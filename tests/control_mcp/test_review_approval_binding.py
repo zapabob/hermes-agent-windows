@@ -552,7 +552,7 @@ def test_b8_every_authority_field_reaches_the_projection(column, value):
 
 def test_b8_a_kind_without_a_contract_has_no_projection():
     with pytest.raises(ControlError) as denied:
-        journal_mod.approval_presentation(_row(kind='apply_verified_result'))
+        journal_mod.approval_presentation(_row(kind='merge_pull_request'))
     assert denied.value.code == 'unsupported_operation'
 
 

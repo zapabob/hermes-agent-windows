@@ -21,7 +21,8 @@ import uuid
 from hermes_cli.config import load_config_readonly
 from plugins.implementation_router.configuration import picker_routes
 
-from .contracts import ControlError, canonical_intent_digest, canonical_json, require_access, valid_id
+from .contracts import (ControlError, VerifiedResultReceipt, canonical_intent_digest,
+                        canonical_json, require_access, valid_id)
 
 if os.name == 'nt':
     import msvcrt
@@ -36,10 +37,15 @@ SCOPES = {
     'apply_verified_result': 'hermes:workspace:apply',
     'create_pull_request': 'hermes:repo:pr',
     'merge_pull_request': 'hermes:repo:merge',
+    'deploy': 'hermes:deploy',
 }
-# This slice implements admission for engineering start only. Other schemas
-# are not invented until their existing owner adapters are integrated.
-_ADMISSION_KINDS = frozenset({'start_engineering_run'})
+# Each stage is its own operation with its own scope, row and human decision.
+# An earlier stage that succeeded is evidence for the next one, never authority.
+EFFECT_STAGES = ('start_engineering_run', 'reverify', 'apply_verified_result',
+                 'create_pull_request', 'merge_pull_request', 'deploy')
+# Kinds with an integrated effect owner. PR, merge and deploy schemas are not
+# invented until their owners exist, so no approval for them can be issued.
+_ADMISSION_KINDS = frozenset({'start_engineering_run', 'apply_verified_result'})
 _TERMINAL = frozenset({'SUCCEEDED','FAILED','DENIED','EXPIRED','CONFLICT','BLOCKED'})
 # APPROVED -> RUNNING exists only inside claim_approved, after binding and fence checks.
 _EDGES = {'APPROVED': {'CONFLICT','BLOCKED'},
@@ -75,6 +81,11 @@ _KIND_CONTRACTS = {
         effect_summary=('Run one bounded engineering task in an isolated scratch workspace; '
                         'nothing is applied to the destination by this operation.'),
         route_sensitive=True, effect_route_class='code_producing_delegate'),
+    'apply_verified_result': KindContract(
+        schema_version=1, policy_version=1, tool_contract='apply_verified_result@1',
+        effect_summary=('Apply one host-verified scratch result to the destination ref by '
+                        'compare-and-swap from the shown revision; nothing is pushed, and no '
+                        'pull request, merge or deployment is performed by this operation.')),
 }
 
 
@@ -83,6 +94,7 @@ _KIND_CONTRACTS = {
 # reads them (settings, then the legacy config subtree), in the active profile.
 _POLICY_CONFIG_KEYS = {
     'start_engineering_run': ('implementation_router', ('enabled', 'workspaces')),
+    'apply_verified_result': ('implementation_router', ('enabled', 'workspaces')),
 }
 
 
@@ -181,17 +193,58 @@ def approval_presentation(row):
     if contract is None:
         raise ControlError('unsupported_operation')
     request = json.loads(row['request_json'])
-    return {'operation_id': row['operation_id'], 'kind': row['kind'],
+    presentation = {'operation_id': row['operation_id'], 'kind': row['kind'],
             'effect_summary': contract.effect_summary,
             'subject': row['subject'], 'client_registration': row['client_registration'],
             'resource': row['resource'], 'grant_revision': row['grant_revision'],
             'profile_id': row['profile_id'], 'workspace_id': row['workspace_id'],
             'expected_revision': row['expected_revision'], 'source_sha': row['source_sha'],
-            'task': request['parameters']['task'],
             'policy_revision': row['policy_revision'], 'tool_revision': row['tool_revision'],
             'route_effect_class': row['route_effect_class'],
             'route_revision': row['route_revision'], 'provider_revision': row['provider_revision'],
             'owner_epoch': row['owner_epoch'], 'expires_at': row['expires_at']}
+    # Every parameter the kind binds is shown verbatim, under its own name;
+    # a parameter may never shadow an authority field.
+    parameters = request['parameters']
+    if presentation.keys() & parameters.keys():
+        raise ControlError('argument_mismatch')
+    presentation.update(parameters)
+    return presentation
+
+
+_HEX40 = re.compile(r'[a-f0-9]{40}\Z')
+_HEX64 = re.compile(r'[a-f0-9]{64}\Z')
+_DESTINATION_REF = re.compile(r'refs/heads/[A-Za-z0-9][A-Za-z0-9._/-]{0,199}\Z')
+
+
+def _task_parameters(request):
+    params = request['parameters']
+    return (valid_id(request['expected_revision']) and type(params) is dict
+            and set(params) == {'task'} and type(params['task']) is str
+            and bool(params['task'].strip()) and len(params['task']) <= 16000)
+
+
+def _apply_parameters(request):
+    # expected_revision is the destination head the human approves applying onto.
+    params = request['parameters']
+    if type(params) is not dict or set(params) != {'source_operation_id', 'source_run_id',
+                                                   'candidate_digest', 'verification_digest',
+                                                   'destination_ref'}:
+        return False
+    ref = params['destination_ref']
+    return (type(request['expected_revision']) is str and bool(_HEX40.fullmatch(request['expected_revision']))
+            and type(params['source_operation_id']) is str
+            and bool(re.fullmatch(r'op-[a-f0-9]{32}', params['source_operation_id']))
+            and type(params['source_run_id']) is str
+            and bool(re.fullmatch(r'eng-[a-f0-9]{32}', params['source_run_id']))
+            and all(type(params[k]) is str and bool(_HEX64.fullmatch(params[k]))
+                    for k in ('candidate_digest', 'verification_digest'))
+            and type(ref) is str and bool(_DESTINATION_REF.fullmatch(ref))
+            and '..' not in ref and '//' not in ref and not ref.endswith(('/', '.', '.lock')))
+
+
+_PARAMETER_RULES = {'start_engineering_run': _task_parameters,
+                    'apply_verified_result': _apply_parameters}
 
 
 def _validate_request(ctx, request, now):
@@ -204,15 +257,46 @@ def _validate_request(ctx, request, now):
         raise ControlError('unsupported_operation')
     require_access(ctx,scope=SCOPES[kind],profile_id=request['profile_id'],
                    workspace_id=request['workspace_id'],now=now)
-    if not valid_id(request['idempotency_key']) or not valid_id(request['expected_revision']):
+    if not valid_id(request['idempotency_key']):
         raise ControlError('invalid_request')
-    if type(request['source_sha']) is not str or not re.fullmatch('[a-f0-9]{40}',request['source_sha']):
+    if type(request['source_sha']) is not str or not _HEX40.fullmatch(request['source_sha']):
         raise ControlError('invalid_request')
-    params = request['parameters']
-    if (type(params) is not dict or set(params) != {'task'} or type(params['task']) is not str
-            or not params['task'].strip() or len(params['task']) > 16000):
+    if not _PARAMETER_RULES[kind](request):
         raise ControlError('invalid_request')
     return canonical_intent_digest(request)
+
+
+def _check_source_result(conn, request):
+    """An apply names the recorded outcome of one succeeded execute in its workspace."""
+    if request['kind'] != 'apply_verified_result':
+        return
+    params = request['parameters']
+    source = conn.execute('SELECT * FROM control_operations WHERE operation_id=?',
+                          (params['source_operation_id'],)).fetchone()
+    try:
+        recorded = json.loads(source['result_json']) if source and source['result_json'] else {}
+    except ValueError:
+        recorded = {}
+    if (source is None or source['kind'] != 'start_engineering_run' or source['state'] != 'SUCCEEDED'
+            or source['profile_id'] != request['profile_id']
+            or source['workspace_id'] != request['workspace_id']
+            or source['source_sha'] != request['source_sha']
+            or recorded.get('run_id') != params['source_run_id']):
+        raise ControlError('source_result_mismatch')
+
+
+def _check_receipt(receipt, params):
+    """Evidence gate only: a matching receipt still needs the approval it matches."""
+    if receipt is None:
+        raise ControlError('reverify_required')
+    if type(receipt) is not VerifiedResultReceipt:
+        raise ControlError('untrusted_receipt')
+    if (receipt.source_operation_id != params['source_operation_id']
+            or receipt.run_id != params['source_run_id']):
+        raise ControlError('source_result_mismatch')
+    if (receipt.verified is not True or receipt.candidate_digest != params['candidate_digest']
+            or receipt.verification_digest != params['verification_digest']):
+        raise ControlError('reverify_required')
 
 
 def _public(row):
@@ -449,6 +533,7 @@ class HostControlJournal:
             for row in expired:
                 conn.execute("UPDATE control_operations SET state='EXPIRED',updated_at=? WHERE operation_id=?",(now,row[0]))
                 conn.execute('DELETE FROM control_reservations WHERE operation_id=?',(row[0],))
+            _check_source_result(conn,request)
             if conn.execute('SELECT 1 FROM control_reservations WHERE profile_id=? AND workspace_id=?',
                             (request['profile_id'],request['workspace_id'])).fetchone():
                 raise ControlError('workspace_busy')
@@ -509,16 +594,22 @@ class HostControlJournal:
         from tools.approval import ControlApprovalBinding
         presentation=approval_presentation(row)
         presentation_json=canonical_json(presentation,limit=_PRESENTATION_LIMIT).decode('utf-8')
-        task=presentation['task']
-        preview=task[:_PREVIEW_CHARS]
-        if len(task)>_PREVIEW_CHARS:
-            # Display bound only; authority is the full presentation and its digest.
-            preview+=f' ... [truncated preview of {len(task)} chars; the full task is in the approval presentation]'
         description=(f"{row['kind']} for resource {row['resource']} "
                      f"(grant revision {row['grant_revision']}) in {row['workspace_id']}; "
                      f"source {row['source_sha']}; "
-                     f"expected revision {row['expected_revision']}. Task: "
-                     +preview)
+                     f"expected revision {row['expected_revision']}. ")
+        if row['kind']=='apply_verified_result':
+            description+=(f"Apply candidate {presentation['candidate_digest']} of run "
+                          f"{presentation['source_run_id']} (operation {presentation['source_operation_id']}, "
+                          f"verification {presentation['verification_digest']}) onto "
+                          f"{presentation['destination_ref']}.")
+        else:
+            task=presentation['task']
+            preview=task[:_PREVIEW_CHARS]
+            if len(task)>_PREVIEW_CHARS:
+                # Display bound only; authority is the full presentation and its digest.
+                preview+=f' ... [truncated preview of {len(task)} chars; the full task is in the approval presentation]'
+            description+='Task: '+preview
         return ControlApprovalBinding(operation_id=row['operation_id'],intent_digest=row['intent_digest'],
             subject=row['subject'],client_registration=row['client_registration'],
             resource=row['resource'],grant_revision=row['grant_revision'],
@@ -623,10 +714,26 @@ class HostControlJournal:
                                         (operation_id,)).fetchone())
 
     def claim_approved(self, ctx, operation_id, *, now):
-        """The only APPROVED -> RUNNING path: principal, arguments, state, fence, then RUNNING.
+        """Claim an approved scratch execute; see claim_effect."""
+        return self.claim_effect(ctx, operation_id, kind='start_engineering_run', now=now)
+
+    def claim_apply(self, ctx, operation_id, *, receipt_for, now):
+        """Claim an approved apply once its trusted receipt matches the approved result.
+
+        receipt_for(profile_id, workspace_id, source_operation_id, run_id) is the
+        host verifier; it is consulted only for an approved apply row. It runs
+        inside the journal write transaction, so it must be a fast read that
+        never writes to this journal; any failure means reverification.
+        """
+        return self.claim_effect(ctx, operation_id, kind='apply_verified_result', now=now,
+                                 receipt_for=receipt_for)
+
+    def claim_effect(self, ctx, operation_id, *, kind, now, receipt_for=None):
+        """The only APPROVED -> RUNNING path: principal, arguments, kind, state, fence, then RUNNING.
 
         Binding checks precede state so a replay of a consumed approval is
-        classified by who and what it names before it learns the outcome.
+        classified by who and what it names before it learns the outcome. An
+        approval authorises exactly the kind it was issued for.
         """
         with self._transaction() as conn:
             self._require_epoch(conn)
@@ -646,10 +753,23 @@ class HostControlJournal:
                 matches = False
             if not matches:
                 raise ControlError('argument_mismatch')
-            if (row['kind'] != 'start_engineering_run' or row['state'] != 'APPROVED'
-                    or row['expires_at'] <= now):
+            if row['kind'] != kind:
+                raise ControlError('operation_kind_mismatch')
+            if kind not in _ADMISSION_KINDS:
+                raise ControlError('unsupported_operation')
+            if row['state'] == 'PENDING_APPROVAL' and kind == 'apply_verified_result':
+                raise ControlError('deny_no_apply_approval')
+            if row['state'] != 'APPROVED' or row['expires_at'] <= now:
                 raise ControlError('operation_conflict')
             self._check_authority(row, epoch_column='approved_epoch')
+            if kind == 'apply_verified_result':
+                params = request['parameters']
+                try:
+                    receipt = receipt_for(row['profile_id'], row['workspace_id'],
+                                          params['source_operation_id'], params['source_run_id'])
+                except Exception:
+                    raise ControlError('reverify_required') from None
+                _check_receipt(receipt, params)
             claimed = conn.execute("UPDATE control_operations SET state='RUNNING',updated_at=? "
                                    "WHERE operation_id=? AND state='APPROVED'", (now, operation_id))
             if claimed.rowcount != 1:

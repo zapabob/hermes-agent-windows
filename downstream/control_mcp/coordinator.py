@@ -25,9 +25,14 @@ def _record(write, operation_id, **kwargs):
 
 class HostControlCoordinator:
     def __init__(self, *, journal, owner, select_human_session,
-                 submit_background, revalidate_grant, clock=time.time):
+                 submit_background, revalidate_grant, clock=time.time, apply_owner=None):
         self.journal = journal
         self.owner = owner
+        # An approved operation reaches only the owner of its own kind; an
+        # apply with no configured owner is blocked, never run by another owner.
+        self._owners = {'start_engineering_run': owner}
+        if apply_owner is not None:
+            self._owners['apply_verified_result'] = apply_owner
         self.select_human_session = select_human_session
         self.submit_background = submit_background
         self.revalidate_grant = revalidate_grant
@@ -93,7 +98,10 @@ class HostControlCoordinator:
             operation = self.journal.approve(ctx, operation_id, decision,
                                              now=self.clock())
             if operation['state'] == 'APPROVED':
-                self.owner.start_approved(ctx, operation_id)
+                owner = self._owners.get(operation['kind'])
+                if owner is None:
+                    raise ControlError('operation_kind_mismatch')
+                owner.start_approved(ctx, operation_id)
         except ControlError:
             # Revoked/expired grants, stale authority or a conflicting state never execute.
             _record(self.journal.block_unexecuted, operation_id, now=self.clock())
