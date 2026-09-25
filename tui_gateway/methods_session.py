@@ -883,15 +883,11 @@ def _(rid, params: dict) -> dict:
         source = _resolve_session_source(str(params.get("source") or "").strip() or None)
         lease = None  # claimed lazily on the first turn (_ensure_active_session_slot)
         _enable_gateway_prompts()
-        home_token = (
-            set_hermes_home_override(str(profile_home)) if profile_home is not None else None
-        )
-        secret_token = (
-            set_secret_scope(build_profile_secret_scope(Path(str(profile_home))))
-            if profile_home is not None
-            else None
-        )
+        home_token = secret_token = None
         try:
+            if profile_home is not None:
+                home_token = set_hermes_home_override(str(profile_home))
+                secret_token = set_secret_scope(build_profile_secret_scope(Path(str(profile_home))))
             db.reopen_session(target)
             # One lineage SELECT feeds both projections (see the interactive resume
             # above): the model-fed copy is alternation-repaired for LIVE REPLAY, the
@@ -958,17 +954,13 @@ def _(rid, params: dict) -> dict:
                     lease.release()
                 return _reuse_live_response(*live)
             try:
-                init_home_token = (
-                    set_hermes_home_override(str(profile_home))
-                    if profile_home is not None
-                    else None
-                )
-                init_secret_token = (
-                    set_secret_scope(build_profile_secret_scope(Path(str(profile_home))))
-                    if profile_home is not None
-                    else None
-                )
+                init_home_token = init_secret_token = None
                 try:
+                    if profile_home is not None:
+                        init_home_token = set_hermes_home_override(str(profile_home))
+                        init_secret_token = set_secret_scope(
+                            build_profile_secret_scope(Path(str(profile_home)))
+                        )
                     _init_session(
                         sid,
                         target,
@@ -3251,20 +3243,16 @@ def _(rid, params: dict) -> dict:
             # _init_session raising, both leave here without that transfer.
             branch_db = SessionDB(db_path=Path(parent_home) / "state.db")
             branch_owns_db = True
-        home_token = (
-            set_hermes_home_override(parent_home) if parent_home else None
-        )
-        # The home override alone only moves config/skills/memory; credentials
-        # resolve through get_secret(), which without a scope falls through to
-        # process os.environ — the LAUNCH profile's .env. Install the parent's
-        # secret scope for the build, exactly as session.create/resume do
-        # (#67605), so the branched agent authenticates as its own profile.
-        secret_token = (
-            set_secret_scope(build_profile_secret_scope(Path(parent_home)))
-            if parent_home
-            else None
-        )
+        home_token = secret_token = None
         try:
+            if parent_home:
+                home_token = set_hermes_home_override(parent_home)
+                # The home override alone only moves config/skills/memory; credentials
+                # resolve through get_secret(), which without a scope falls through to
+                # process os.environ — the LAUNCH profile's .env. Install the parent's
+                # secret scope for the build, exactly as session.create/resume do
+                # (#67605), so the branched agent authenticates as its own profile.
+                secret_token = set_secret_scope(build_profile_secret_scope(Path(parent_home)))
             tokens = _set_session_context(new_key)
             try:
                 agent = _make_agent(

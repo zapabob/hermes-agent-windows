@@ -381,6 +381,16 @@ def test_azure_anthropic_probe_drops_api_key_and_bearer_on_redirect():
     assert "api-key" not in headers
 
 
+@pytest.fixture(autouse=True)
+def _reset_https_context_cache():
+    """Keep the CA-context memo from carrying a previous test's env into the next one."""
+    import hermes_cli.urllib_security as urllib_security
+
+    urllib_security._HTTPS_CONTEXT_CACHE = None
+    yield
+    urllib_security._HTTPS_CONTEXT_CACHE = None
+
+
 def _clear_ca_bundle_env(monkeypatch) -> None:
     for name in (
         "HERMES_CA_BUNDLE",

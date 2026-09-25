@@ -2313,14 +2313,19 @@ def _profile_runtime_scope(profile_home: "Path"):
     )
     from hermes_cli.env_loader import hydrate_profile_secret_sources
 
-    home_token = set_hermes_home_override(str(profile_home))
-    hydrate_profile_secret_sources(Path(profile_home))
-    secret_token = set_secret_scope(build_profile_secret_scope(Path(profile_home)))
+    # Bound inside the try: a raise in scope setup (corrupt or removed profile
+    # home) must not leave the foreign override bound to the caller's context.
+    home_token = secret_token = None
     try:
+        home_token = set_hermes_home_override(str(profile_home))
+        hydrate_profile_secret_sources(Path(profile_home))
+        secret_token = set_secret_scope(build_profile_secret_scope(Path(profile_home)))
         yield
     finally:
-        reset_secret_scope(secret_token)
-        reset_hermes_home_override(home_token)
+        if secret_token is not None:
+            reset_secret_scope(secret_token)
+        if home_token is not None:
+            reset_hermes_home_override(home_token)
 
 
 def load_gateway_config_for_runner() -> "GatewayConfig":

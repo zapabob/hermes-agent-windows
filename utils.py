@@ -38,6 +38,18 @@ def env_var_enabled(name: str, default: str = "") -> bool:
     return is_truthy_value(os.getenv(name, default), default=False)
 
 
+def file_signature(st: os.stat_result) -> "tuple[int, int, int, int]":
+    """Change-detection key for a stat result: ``(st_mtime_ns, st_size, st_ino, st_ctime_ns)``.
+
+    mtime + size alone miss a replacement that preserves both (``cp -p``, a
+    restore that pins the timestamp). The inode changes on an atomic replace
+    and POSIX ctime cannot be backdated. On Windows ``st_ctime_ns`` is the
+    creation time and an in-place rewrite keeps the file ID, so the key
+    degrades to mtime + size there rather than misfiring.
+    """
+    return (st.st_mtime_ns, st.st_size, st.st_ino, st.st_ctime_ns)
+
+
 def _preserve_file_mode(path: Path) -> "int | None":
     """Capture the permission bits of *path* if it exists, else ``None``."""
     try:
