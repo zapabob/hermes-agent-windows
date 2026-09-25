@@ -704,7 +704,7 @@ class TestSkillDirectoryHeader:
         # The supporting-files block must emit both the relative form (so the
         # agent can call skill_view on it) and the absolute form (so it can
         # run the script directly via terminal).
-        assert "scripts/run.js" in msg
+        assert str(Path("scripts") / "run.js") in msg
         assert str(skill_dir / "scripts" / "run.js") in msg
         assert f"node {skill_dir}/scripts/foo.js" in msg
 
@@ -770,13 +770,18 @@ class TestInlineShellExpansion:
             skill_dir = _make_skill(
                 tmp_path,
                 "dyn-cwd",
-                body="Here: !`pwd`",
+                body="Here: !`cat cwd-marker.txt`",
+            )
+            # bash on Windows prints MSYS-style paths from `pwd`, so prove the
+            # CWD by resolving a relative path instead of comparing path text.
+            (skill_dir / "cwd-marker.txt").write_text(
+                "inside-skill-dir", encoding="utf-8"
             )
             scan_skill_commands()
             msg = build_skill_invocation_message("/dyn-cwd")
 
         assert msg is not None
-        assert f"Here: {skill_dir}" in msg
+        assert "Here: inside-skill-dir" in msg
 
     def test_inline_shell_timeout_does_not_break_message(self, tmp_path):
         with (
