@@ -350,6 +350,8 @@ class EbbinghausMemoryProvider(MemoryProvider):
             {"key": "min_prefetch_score", "description": "Minimum score for automatic prefetch", "default": "0.18"},
             {"key": "auto_encode_turns", "description": "Auto-store preference-like user turns", "default": "false", "choices": ["true", "false"]},
             {"key": "store_backend", "description": "Store implementation (hakua uses the optional hakua-memory package and falls back to builtin)", "default": "builtin", "choices": list(STORE_BACKENDS)},
+            {"key": "judge_enabled", "description": "Allow `hermes ebbinghaus judge --run` to send memories to the configured model for contradiction/goal review", "default": "false", "choices": ["true", "false"]},
+            {"key": "judge_max_calls", "description": "Maximum model calls per judge run", "default": "20"},
         ]
 
     def save_config(self, values: Dict[str, Any], hermes_home: str) -> None:
