@@ -9,11 +9,16 @@ straight into the user's terminal mid-response.
 Every Hermes serialization helper that dumps arbitrary SDK models must pass
 ``warnings=False`` (with a TypeError fallback for duck-typed models). These
 tests pin that contract for all four helpers.
+
+Newer SDK releases no longer trip the warning with the streaming fixture, so
+the suppression contract is pinned with a deliberately mistyped pydantic
+model that always warns; the SDK fixture still checks the payload shape.
 """
 
 import warnings
 
 import pytest
+from pydantic import BaseModel
 
 anthropic = pytest.importorskip("anthropic")
 
@@ -62,20 +67,51 @@ def _pydantic_warnings(recorded):
     return [w for w in recorded if "Pydantic serializer warnings" in str(w.message)]
 
 
-def test_stop_event_dump_actually_warns_without_suppression():
-    """Precondition: the fixture really trips the SDK/pydantic warning.
+class _Inner(BaseModel):
+    x: int
 
-    If a future SDK/pydantic release stops warning here, the other tests
-    pass vacuously — this test tells us the guard can be simplified.
-    """
-    stop_event, _ = _accumulated_stop_event()
+
+class _Outer(BaseModel):
+    inner: _Inner
+
+
+def _mistyped_model():
+    """A model whose field holds a value of the wrong type, as SDK snapshots can."""
+    return _Outer.model_construct(inner="not-a-model")
+
+
+def _helpers():
+    from agent.anthropic_adapter import _to_plain_data
+    from agent.relay_llm import _jsonable as relay_llm_jsonable
+    from agent.relay_tools import _jsonable as relay_tools_jsonable
+    from run_agent import AIAgent
+
+    return {
+        "relay_llm": relay_llm_jsonable,
+        "relay_tools": relay_tools_jsonable,
+        "anthropic_adapter": _to_plain_data,
+        "hook_jsonable": AIAgent._hook_jsonable,
+    }
+
+
+def test_mistyped_model_dump_warns_without_suppression():
+    """Precondition: the synthetic fixture really trips the pydantic warning."""
     with warnings.catch_warnings(record=True) as recorded:
         warnings.simplefilter("always")
-        stop_event.model_dump()
-    assert _pydantic_warnings(recorded), (
-        "fixture no longer reproduces the pydantic serializer warning; "
-        "the warnings=False guards may be removable"
-    )
+        _mistyped_model().model_dump()
+    assert _pydantic_warnings(recorded)
+
+
+@pytest.mark.parametrize(
+    "helper_name", ["relay_llm", "relay_tools", "anthropic_adapter", "hook_jsonable"]
+)
+def test_helpers_suppress_serializer_warnings(helper_name):
+    helper = _helpers()[helper_name]
+    with warnings.catch_warnings(record=True) as recorded:
+        warnings.simplefilter("always")
+        payload = helper(_mistyped_model())
+    assert not _pydantic_warnings(recorded)
+    assert payload == {"inner": "not-a-model"}
 
 
 def test_relay_llm_jsonable_no_warning_leak():
