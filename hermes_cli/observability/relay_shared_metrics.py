@@ -931,12 +931,16 @@ class _Runtime:
                 (monotonic_ns() - tool_call.started_ns) // 1_000_000,
             ),
         )
+        # Relay 0.8 requires ToolExecutionResult for manual tool ends; 0.7
+        # accepted raw JSON and has no such type.
+        result_type = getattr(self.relay, "ToolExecutionResult", None)
+        result = fields if result_type is None else result_type(fields)
         try:
             self._run_in_task(
                 task,
                 self.relay.tools.call_end,
                 tool_call.handle,
-                fields,
+                result,
                 metadata=self._event_metadata(),
             )
         except Exception:
