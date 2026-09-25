@@ -2979,6 +2979,24 @@ def _stash_ref(git_exe: str, target: Path) -> str:
     return probe.stdout.strip() if probe.returncode == 0 else ""
 
 
+def _reapply_stash(git_exe: str, target: Path, stash_sha: str) -> bool:
+    """``stash apply`` the autostash commit *stash_sha*; drop it on a clean apply. False when it
+    applied with errors or left unmerged paths (the stash entry is kept in that case).
+
+    Git is addressed by the stash's commit sha, never a ``stash@{N}`` selector: on native Windows
+    the MSYS runtime re-parses git.exe's argv and strips the braces, so ``stash@{0}`` reaches git
+    as ``stash@0`` and both the apply and the drop fail (#87542)."""
+    restore = _run_plugin_git(git_exe, target, "stash", "apply", stash_sha)
+    unmerged = _run_plugin_git(git_exe, target, "diff", "--name-only", "--diff-filter=U")
+    if restore.returncode != 0 or unmerged.stdout.strip():
+        return False
+    # `stash drop` only takes a selector; a bare `drop` targets the newest entry, so drop
+    # positionally only while the newest entry is still our autostash.
+    if _stash_ref(git_exe, target) == stash_sha:
+        _run_plugin_git(git_exe, target, "stash", "drop")
+    return True
+
+
 def _git_pull_plugin_dir(target: Path) -> tuple[bool, str]:
     """``git pull --ff-only`` a plugin checkout, autostashing local edits.
 
@@ -3003,7 +3021,7 @@ def _git_pull_plugin_dir(target: Path) -> tuple[bool, str]:
         status = _run_plugin_git(git_exe, target, "status", "--porcelain")
         dirty = status.returncode == 0 and bool(status.stdout.strip())
 
-        stash_created = False
+        stash_sha = ""
         pre_stash = ""
         if dirty:
             pre_stash = _stash_ref(git_exe, target)
@@ -3013,8 +3031,9 @@ def _git_pull_plugin_dir(target: Path) -> tuple[bool, str]:
                 "-m", "hermes-plugin-update-autostash",
             )
             post_stash = _stash_ref(git_exe, target)
-            stash_created = bool(post_stash) and post_stash != pre_stash
-            if not stash_created:
+            if post_stash and post_stash != pre_stash:
+                stash_sha = post_stash
+            else:
                 # Nothing was saved — do not risk the pull clobbering edits.
                 err = _safe_git_error(push)
                 return False, (
@@ -3032,11 +3051,9 @@ def _git_pull_plugin_dir(target: Path) -> tuple[bool, str]:
 
         if result.returncode != 0:
             err = _safe_git_error(result)
-            if stash_created:
+            if stash_sha:
                 # Put the user's edits back before reporting the failure.
-                restore = _run_plugin_git(git_exe, target, "stash", "apply", "stash@{0}")
-                if restore.returncode == 0:
-                    _run_plugin_git(git_exe, target, "stash", "drop", "stash@{0}")
+                if _reapply_stash(git_exe, target, stash_sha):
                     note = "Local changes were restored."
                 else:
                     note = (
@@ -3047,17 +3064,10 @@ def _git_pull_plugin_dir(target: Path) -> tuple[bool, str]:
             return False, err or "git pull failed."
 
         pulled = result.stdout.strip()
-        if not stash_created:
+        if not stash_sha:
             return True, pulled
 
-        restore = _run_plugin_git(git_exe, target, "stash", "apply", "stash@{0}")
-        unmerged = _run_plugin_git(
-            git_exe, target, "diff", "--name-only", "--diff-filter=U"
-        )
-        has_conflicts = bool(unmerged.stdout.strip())
-
-        if restore.returncode == 0 and not has_conflicts:
-            _run_plugin_git(git_exe, target, "stash", "drop", "stash@{0}")
+        if _reapply_stash(git_exe, target, stash_sha):
             return True, pulled + "\nLocal changes were re-applied on top of the update."
 
         # Conflicted re-apply: leave the plugin importable on the updated
@@ -3066,7 +3076,7 @@ def _git_pull_plugin_dir(target: Path) -> tuple[bool, str]:
         return True, pulled + (
             "\n⚠ Local changes in this plugin conflicted with the update and "
             "were NOT re-applied. They are preserved in git stash — inspect "
-            "with `git stash show -p stash@{0}` and re-apply with "
+            "with `git stash show -p` and re-apply with "
             f"`git stash pop` inside {target}."
         )
     except FileNotFoundError:

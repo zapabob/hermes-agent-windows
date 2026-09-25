@@ -435,3 +435,41 @@ def test_update_autostash_survives_undeletable_untracked_dir(tmp_path):
         assert (pkg / "hermes-agent.rb").read_text() == "formula\n"
     finally:
         os.chmod(pkg, 0o755)
+
+
+def test_stash_selector_is_a_bare_index_never_a_brace_selector(tmp_path):
+    """The updater drops its autostash through a selector read back from ``git stash list``; on
+    native Windows MSYS strips the braces from ``stash@{N}`` in git.exe's argv, so the selector
+    must be the bare index git accepts everywhere (#87542)."""
+    import subprocess
+
+    from hermes_cli.update_cmd import _resolve_stash_selector
+
+    def git(*args):
+        return subprocess.run(["git", *args], cwd=tmp_path, capture_output=True, text=True, check=True)
+
+    git("init", "-q", "-b", "main")
+    git("config", "user.email", "t@example.com")
+    git("config", "user.name", "t")
+    (tmp_path / "f.txt").write_text("v1\n", encoding="utf-8")
+    git("add", "-A")
+    git("commit", "-qm", "init")
+    (tmp_path / "f.txt").write_text("older\n", encoding="utf-8")
+    git("stash", "push", "-q", "-m", "older")
+    target_sha = git("rev-parse", "refs/stash").stdout.strip()
+    (tmp_path / "f.txt").write_text("newer\n", encoding="utf-8")
+    git("stash", "push", "-q", "-m", "newer")
+
+    selector = _resolve_stash_selector(["git"], tmp_path, target_sha)
+
+    assert selector == "1"
+    git("stash", "drop", selector)
+    assert target_sha not in git("stash", "list", "--format=%H").stdout
+
+
+def test_stash_cleanup_guidance_never_prints_a_brace_selector(capsys):
+    from hermes_cli.update_cmd import _print_stash_cleanup_guidance
+
+    _print_stash_cleanup_guidance("abc123")
+
+    assert "{" not in capsys.readouterr().out

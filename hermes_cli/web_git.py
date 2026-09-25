@@ -1069,12 +1069,14 @@ def stash_create(cwd: str, message: str | None, include_untracked: bool) -> dict
 def stash_apply(cwd: str, index: int) -> dict:
     # Conflicts raise so the renderer can offer a path forward instead of
     # pretending the apply landed.
-    _git_ok(cwd, ["stash", "apply", f"stash@{{{_assert_stash_index(index)}}}"])
+    _git_ok(cwd, ["stash", "apply", str(_assert_stash_index(index))])
     return {"ok": True}
 
 
 def stash_drop(cwd: str, index: int) -> dict:
-    _git_ok(cwd, ["stash", "drop", f"stash@{{{_assert_stash_index(index)}}}"])
+    # Bare index, never ``stash@{N}``: on native Windows the MSYS runtime strips the braces
+    # from git.exe's argv, so the selector would reach git as ``stash@N`` (#87542).
+    _git_ok(cwd, ["stash", "drop", str(_assert_stash_index(index))])
     return {"ok": True}
 
 

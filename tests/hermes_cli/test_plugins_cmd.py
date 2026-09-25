@@ -205,6 +205,9 @@ class TestGitPullPluginDirAutostash:
         git(origin, "init", "-q", "-b", "main")
         git(origin, "config", "user.email", "t@t")
         git(origin, "config", "user.name", "t")
+        # Pin line-ending handling: a host-global core.autocrlf=true (Git for Windows default)
+        # renormalises the whole file on stash/apply and turns disjoint edits into a conflict.
+        git(origin, "config", "core.autocrlf", "false")
         pad = "\n".join(f"# pad {i}" for i in range(12))
         (origin / "plugin.py").write_text(
             f"VALUE = 1\n{pad}\nOTHER = 'a'\n", encoding="utf-8"
@@ -213,7 +216,7 @@ class TestGitPullPluginDirAutostash:
         git(origin, "commit", "-qm", "init")
 
         checkout = tmp_path / "checkout"
-        git(tmp_path, "clone", "-q", str(origin), str(checkout))
+        git(tmp_path, "clone", "-q", "-c", "core.autocrlf=false", str(origin), str(checkout))
         git(checkout, "config", "user.email", "t@t")
         git(checkout, "config", "user.name", "t")
         return origin, checkout, git
@@ -271,6 +274,61 @@ class TestGitPullPluginDirAutostash:
         assert "hermes-plugin-update-autostash" in stash_list
         stash_diff = git(checkout, "stash", "show", "-p", "stash@{0}")
         assert "VALUE = 99" in stash_diff
+
+    def test_autostash_addresses_git_by_sha_never_brace_selector(self, tmp_path, monkeypatch):
+        """Native Windows: MSYS strips the braces from ``stash@{0}`` in git.exe's argv, so the
+        apply and the drop must target the autostash by its commit sha / positionally (#87542)."""
+        import hermes_cli.plugins_cmd as pc
+
+        if not pc._resolve_git_executable():
+            pytest.skip("git not available")
+        origin, checkout, git = self._make_repos(tmp_path)
+        self._set_line(origin, "VALUE", "VALUE = 2")
+        git(origin, "commit", "-qam", "bump value")
+        self._set_line(checkout, "OTHER", "OTHER = 'local'")
+
+        argv_log: list[tuple[str, ...]] = []
+        real_run = pc._run_plugin_git
+
+        def recording_run(git_exe, target, *args, **kwargs):
+            argv_log.append(args)
+            return real_run(git_exe, target, *args, **kwargs)
+
+        monkeypatch.setattr(pc, "_run_plugin_git", recording_run)
+        ok, msg = pc._git_pull_plugin_dir(checkout)
+
+        assert ok is True and "re-applied" in msg
+        assert git(checkout, "stash", "list").strip() == ""
+        assert not any("{" in arg or "}" in arg for args in argv_log for arg in args), argv_log
+        applied = [args for args in argv_log if args[:2] == ("stash", "apply")]
+        assert len(applied) == 1 and len(applied[0][2]) == 40, applied  # by commit sha
+
+    def test_autostash_drop_spares_a_foreign_newer_stash(self, tmp_path, monkeypatch):
+        """The bare positional drop only fires while refs/stash is still the autostash: a stash
+        pushed in between (another tool, the user) must survive the clean re-apply."""
+        import hermes_cli.plugins_cmd as pc
+
+        if not pc._resolve_git_executable():
+            pytest.skip("git not available")
+        origin, checkout, git = self._make_repos(tmp_path)
+        self._set_line(origin, "VALUE", "VALUE = 2")
+        git(origin, "commit", "-qam", "bump value")
+        self._set_line(checkout, "OTHER", "OTHER = 'local'")
+
+        real_run = pc._run_plugin_git
+
+        def run_with_interloper(git_exe, target, *args, **kwargs):
+            result = real_run(git_exe, target, *args, **kwargs)
+            if args[:1] == ("pull",):
+                (target / "foreign.txt").write_text("foreign\n", encoding="utf-8")
+                real_run(git_exe, target, "stash", "push", "-u", "-m", "foreign-stash")
+            return result
+
+        monkeypatch.setattr(pc, "_run_plugin_git", run_with_interloper)
+        ok, _msg = pc._git_pull_plugin_dir(checkout)
+
+        assert ok is True
+        assert "foreign-stash" in git(checkout, "stash", "list")
 
     def test_untracked_local_file_survives_update(self, tmp_path):
         import hermes_cli.plugins_cmd as pc
