@@ -18,7 +18,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar, Token
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterator, Protocol, Sequence
+from typing import Iterator, Mapping, Protocol, Sequence
 from ctypes import wintypes
 
 
@@ -91,7 +91,7 @@ _ACTIVE_PROFILE: ContextVar[NativeExecutionProfile | None] = ContextVar(
 )
 
 _RESERVED_ENVIRONMENT = frozenset(
-    {"PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "TEMP", "TMP", "COMSPEC"}
+    {"PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "TEMP", "TMP", "COMSPEC", "LOCALAPPDATA"}
 )
 
 
@@ -572,9 +572,19 @@ def _create_appcontainer_process(
             advapi32.FreeSid(sid)
 
 
-def _build_child_environment(profile: NativeExecutionProfile) -> dict[str, str]:
-    system_root = os.environ.get("SystemRoot", r"C:\Windows")
+def _build_child_environment(
+    profile: NativeExecutionProfile,
+    host_environ: Mapping[str, str] = os.environ,
+) -> dict[str, str]:
+    system_root = host_environ.get("SystemRoot", r"C:\Windows")
+    # CreateProcessW resolves the AppContainer profile folder from LOCALAPPDATA in the
+    # supplied block and fails with a bare ERROR_ENVVAR_NOT_FOUND (203) without it.
+    # Windows rewrites the value to the package folder before the child starts.
+    local_appdata = host_environ.get("LOCALAPPDATA")
+    if not local_appdata:
+        raise NativeExecutionUnavailable("LOCALAPPDATA is required to launch an AppContainer process")
     child_env = {
+        "LOCALAPPDATA": local_appdata,
         "SYSTEMROOT": system_root,
         "WINDIR": system_root,
         "PATH": os.pathsep.join(str(root) for root in profile.toolchain_roots),

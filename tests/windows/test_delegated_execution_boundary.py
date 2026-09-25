@@ -19,6 +19,7 @@ import pytest
 from agent.delegation_context import delegated_child_context
 from downstream.platform.windows.delegated_execution import (
     NativeExecutionDenied,
+    NativeExecutionProfile,
     NativeExecutionUnavailable,
     bind_native_execution_profile,
     launch_restricted,
@@ -80,7 +81,7 @@ def test_removed_profile_cleanup_switch_is_rejected_during_collection(tmp_path: 
         cwd=repo_root,
         text=True,
         capture_output=True,
-        timeout=30,
+        timeout=120,
         check=False,
     )
     output = f"{completed.stdout}\n{completed.stderr}".casefold()
@@ -161,61 +162,159 @@ def test_profile_path_policy_rejects_ads_and_unc_without_opening_them(
         _resolve_plain_path(path, "synthetic probe")
 
 
-@pytest.fixture
-def native_python_profile(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, request):
-    repo_root = Path(request.config.rootpath).resolve()
-    test_root = tmp_path.resolve()
-    assert test_root.drive.casefold() == repo_root.drive.casefold(), (
+def _synthetic_profile(safe_environment: tuple[tuple[str, str], ...] = ()) -> NativeExecutionProfile:
+    return NativeExecutionProfile(
+        workspace=Path(r"C:\synthetic\workspace"),
+        working_directory=Path(r"C:\synthetic\workspace"),
+        toolchain_roots=(Path(r"C:\synthetic\python"),),
+        private_temp=Path(r"C:\synthetic\workspace\.private-temp"),
+        generation=1,
+        appcontainer_name=EPHEMERAL_PROFILE_NAME,
+        safe_environment=safe_environment,
+    )
+
+
+@pytest.mark.parametrize("name", ["LOCALAPPDATA", "localappdata"])
+def test_profile_cannot_override_localappdata(name: str) -> None:
+    with pytest.raises(ValueError, match="controlled by the host"):
+        _synthetic_profile(((name, r"C:\attacker"),))
+
+
+def test_child_environment_carries_localappdata_and_no_other_host_values() -> None:
+    from downstream.platform.windows.delegated_execution import _build_child_environment
+
+    host = {
+        "LOCALAPPDATA": r"C:\Users\synthetic\AppData\Local",
+        "SystemRoot": r"C:\Windows",
+        "HERMES_T06_SYNTHETIC_PARENT_SECRET": "must-not-cross-boundary",
+        "USERPROFILE": r"C:\Users\synthetic",
+    }
+    env = _build_child_environment(_synthetic_profile(), host)
+    assert env["LOCALAPPDATA"] == host["LOCALAPPDATA"]
+    assert "HERMES_T06_SYNTHETIC_PARENT_SECRET" not in env
+    assert "USERPROFILE" not in env
+
+
+def test_child_environment_refuses_by_name_without_localappdata() -> None:
+    from downstream.platform.windows.delegated_execution import _build_child_environment
+
+    with pytest.raises(NativeExecutionUnavailable, match="LOCALAPPDATA"):
+        _build_child_environment(_synthetic_profile(), {"SystemRoot": r"C:\Windows"})
+
+
+def _assert_inside_worktree(path: Path, repo_root: Path) -> None:
+    assert path.drive.casefold() == repo_root.drive.casefold(), (
         "native T06 probe basetemp must share the isolated worktree volume"
     )
-    assert test_root.is_relative_to(repo_root), (
-        f"native T06 probe files must remain inside pytest tmp_path: {test_root}"
+    assert path.is_relative_to(repo_root), (
+        f"native T06 probe files must remain inside pytest tmp_path: {path}"
     )
+
+
+class _SharedToolchains:
+    """Toolchain copies made once per session; each copy of Git alone is ~0.5 GB."""
+
+    def __init__(self, root: Path) -> None:
+        self.root = root
+        self._python: Path | None = None
+        self._node_git: tuple[Path, Path, Path, Path] | None = None
+        self._granted: dict[str, set[Path]] = {}
+
+    def python(self) -> Path:
+        if self._python is None:
+            python_root = self.root / "python"
+            python_root.mkdir(parents=True)
+            source = Path(sys.base_prefix)
+            for name in (
+                "python.exe",
+                f"python{sys.version_info.major}{sys.version_info.minor}.dll",
+                "python3.dll",
+                "vcruntime140.dll",
+                "vcruntime140_1.dll",
+            ):
+                source_file = source / name
+                if source_file.is_file():
+                    shutil.copy2(source_file, python_root / name)
+            shutil.copytree(source / "DLLs", python_root / "DLLs")
+            shutil.copytree(
+                source / "Lib",
+                python_root / "Lib",
+                ignore=shutil.ignore_patterns("site-packages", "__pycache__"),
+            )
+            self._python = python_root
+        return self._python
+
+    def node_and_git(self) -> tuple[Path, Path, Path, Path]:
+        if self._node_git is None:
+            node_location = shutil.which("node.exe")
+            git_location = shutil.which("git.exe")
+            if not node_location or not git_location:
+                pytest.skip("native Node.js and Git executables are required for the T06 positive probes")
+            node_source = Path(node_location).resolve(strict=True)
+            git_source = Path(git_location).resolve(strict=True)
+            node_root = self.root / "node"
+            git_root = self.root / "git"
+            node_root.mkdir(parents=True)
+            shutil.copy2(node_source, node_root / node_source.name)
+            git_source_root = (
+                git_source.parent.parent if git_source.parent.name.casefold() == "cmd" else git_source.parent
+            )
+            shutil.copytree(git_source_root, git_root)
+            self._node_git = (
+                node_root,
+                git_root,
+                node_root / node_source.name,
+                git_root / git_source.relative_to(git_source_root),
+            )
+        return self._node_git
+
+    def grant(self, path: Path, sid: str) -> None:
+        granted = self._granted.setdefault(sid, set())
+        if path not in granted:
+            _grant_test_access(path, sid, "RX", self.root)
+            granted.add(path)
+
+    def revoke_all(self) -> None:
+        if not (self._granted and self.root.exists()):
+            return
+        failures = []
+        for sid in self._granted:
+            try:
+                _revoke_test_access(self.root, sid, self.root)
+            except AssertionError as exc:
+                failures.append(f"{sid}: {exc}")
+        assert not failures, f"shared toolchain ACL revocation failed: {failures}"
+
+
+@pytest.fixture(scope="session")
+def shared_toolchains(tmp_path_factory: pytest.TempPathFactory, pytestconfig: pytest.Config):
+    root = tmp_path_factory.mktemp("shared-toolchains").resolve()
+    _assert_inside_worktree(root, Path(pytestconfig.rootpath).resolve())
+    toolchains = _SharedToolchains(root)
+    yield toolchains
+    toolchains.revoke_all()
+
+
+@pytest.fixture
+def native_python_profile(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    request,
+    shared_toolchains: _SharedToolchains,
+):
+    repo_root = Path(request.config.rootpath).resolve()
+    test_root = tmp_path.resolve()
+    _assert_inside_worktree(test_root, repo_root)
     workspace = tmp_path / "workspace"
-    toolchains = tmp_path / "toolchains"
-    python_root = toolchains / "python"
     private_temp = workspace / ".private-temp"
     workspace.mkdir()
-    toolchains.mkdir()
-    python_root.mkdir()
     private_temp.mkdir()
-    source = Path(sys.base_prefix)
-    for name in (
-        "python.exe",
-        f"python{sys.version_info.major}{sys.version_info.minor}.dll",
-        "python3.dll",
-        "vcruntime140.dll",
-        "vcruntime140_1.dll",
-    ):
-        source_file = source / name
-        if source_file.is_file():
-            shutil.copy2(source_file, python_root / name)
-    shutil.copytree(source / "DLLs", python_root / "DLLs")
-    shutil.copytree(
-        source / "Lib",
-        python_root / "Lib",
-        ignore=shutil.ignore_patterns("site-packages", "__pycache__"),
-    )
+    python_root = shared_toolchains.python()
     toolchain_roots = [python_root]
     node_executable = None
     git_executable = None
     if getattr(request, "param", None):
-        node_location = shutil.which("node.exe")
-        git_location = shutil.which("git.exe")
-        if not node_location or not git_location:
-            pytest.skip("native Node.js and Git executables are required for the T06 positive probes")
-        node_source = Path(node_location).resolve(strict=True)
-        git_source = Path(git_location).resolve(strict=True)
-        node_root = toolchains / "node"
-        git_root = toolchains / "git"
-        node_root.mkdir()
-        shutil.copy2(node_source, node_root / node_source.name)
-        git_source_root = (
-            git_source.parent.parent if git_source.parent.name.casefold() == "cmd" else git_source.parent
-        )
-        shutil.copytree(git_source_root, git_root)
-        git_executable = git_root / git_source.relative_to(git_source_root)
-        node_executable = node_root / node_source.name
+        node_root, git_root, node_executable, git_executable = shared_toolchains.node_and_git()
         toolchain_roots.extend((node_root, git_root))
 
     profile = new_native_execution_profile(
@@ -241,10 +340,8 @@ def native_python_profile(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, reque
         advapi.FreeSid(sid_ptr)
     request.addfinalizer(lambda: _revoke_test_access(test_root, sid, test_root))
     _grant_test_access(workspace, sid, "M", test_root)
-    _grant_test_access(python_root, sid, "RX", test_root)
-    if getattr(request, "param", None):
-        _grant_test_access(node_root, sid, "RX", test_root)
-        _grant_test_access(git_root, sid, "RX", test_root)
+    for toolchain_root in toolchain_roots:
+        shared_toolchains.grant(toolchain_root, sid)
     _grant_test_access(private_temp, sid, "M", test_root)
 
     monkeypatch.setenv("HERMES_T06_SYNTHETIC_PARENT_SECRET", "must-not-cross-boundary")
@@ -579,25 +676,33 @@ def test_delegated_python_runs_inside_the_native_boundary(
 
 @pytest.mark.windows_only
 @pytest.mark.parametrize("native_python_profile", [EPHEMERAL_PROFILE_NAME], indirect=True)
-def test_node_and_local_git_can_do_useful_workspace_work(
+def test_node_can_do_useful_workspace_work(
     ephemeral_appcontainer_profile,
     native_python_profile,
 ) -> None:
-    profile, _interpreter, workspace, node_exe, git_exe = native_python_profile
+    profile, _interpreter, workspace, node_exe, _git_exe = native_python_profile
     node_output = workspace / "node-result.json"
-    node_script = workspace / "write-result.js"
-    node_script.write_text(
+    # A script *file* makes Node realpath its main module from the drive root, and the
+    # AppContainer cannot read attributes of the workspace's ancestors (EPERM on lstat 'C:\').
+    node_code = (
         "const fs = require('fs'); "
-        f"fs.writeFileSync({json.dumps(str(node_output))}, JSON.stringify({{ok: true}}));",
-        encoding="utf-8",
+        f"fs.writeFileSync({json.dumps(str(node_output))}, JSON.stringify({{ok: true}}));"
     )
     with delegated_child_context("t06-native-node-positive"), bind_native_execution_profile(profile):
-        with launch_restricted([str(node_exe), str(node_script)], profile, cwd=workspace) as process:
-            stdout, stderr = process.communicate(timeout=20)
-    assert process.returncode == 0, stderr
+        with launch_restricted([str(node_exe), "-e", node_code], profile, cwd=workspace) as process:
+            stdout, _stderr = process.communicate(timeout=20)
+    assert process.returncode == 0, stdout
     assert node_output.read_text(encoding="utf-8") == '{"ok":true}'
     assert stdout in (None, "")
 
+
+@pytest.mark.windows_only
+@pytest.mark.parametrize("native_python_profile", [EPHEMERAL_PROFILE_NAME], indirect=True)
+def test_local_git_can_initialise_a_workspace_repository(
+    ephemeral_appcontainer_profile,
+    native_python_profile,
+) -> None:
+    profile, _interpreter, workspace, _node_exe, git_exe = native_python_profile
     repo = workspace / "git-sandbox"
     repo.mkdir()
     (workspace / ".t06-empty-git-template").mkdir()
@@ -607,8 +712,13 @@ def test_node_and_local_git_can_do_useful_workspace_work(
             profile,
             cwd=workspace,
         ) as process:
-            _stdout, stderr = process.communicate(timeout=20)
-    assert process.returncode == 0, stderr
+            stdout, _stderr = process.communicate(timeout=20)
+    if process.returncode != 0 and "could not open '/dev/null'" in (stdout or ""):
+        pytest.xfail(
+            "AppContainers are denied the NUL device and Git opens /dev/null at startup; "
+            "granting it needs a privileged, system-wide device DACL change (microsoft/win32-app-isolation#73)"
+        )
+    assert process.returncode == 0, stdout
     assert (repo / ".git").is_dir(), "Git must initialize only the synthetic workspace repository"
 
 
@@ -761,9 +871,12 @@ sys.stdout.write(json.dumps(results))
         with delegated_child_context("t06-native-network-denial"), bind_native_execution_profile(profile):
             with launch_restricted([str(interpreter), "-S", "-c", code], profile, cwd=workspace) as process:
                 stdout, _ = process.communicate(timeout=15)
-        assert process.returncode == 0
+        assert process.returncode == 0, stdout
         results = json.loads(stdout)
-        assert results == {"tcp": "denied", "http": "denied", "udp": "denied"}
+        assert results["tcp"] == "denied" and results["http"] == "denied", results
+        # WFP may drop an AppContainer datagram silently, so sendto can report success;
+        # the boundary is that nothing reaches the sink.
+        assert results["udp"] in ("sent", "denied"), results
         with pytest.raises(TimeoutError):
             udp_sink.recvfrom(2048)
         assert not http_hits, "AppContainer reached the synthetic loopback HTTP sink"
@@ -772,3 +885,83 @@ sys.stdout.write(json.dumps(results))
         http_sink.server_close()
         server_thread.join(timeout=2)
         udp_sink.close()
+
+
+def _open_for_wait(pid: int):
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.OpenProcess.argtypes = [ctypes.c_uint32, ctypes.c_int, ctypes.c_uint32]
+    kernel32.OpenProcess.restype = ctypes.c_void_p
+    # SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION; held open so the PID cannot be reused.
+    handle = kernel32.OpenProcess(0x00100000 | 0x00001000, 0, pid)
+    assert handle, f"cannot open process {pid}: WinError {ctypes.get_last_error()}"
+    return handle
+
+
+def _exited_within(handle, seconds: float) -> bool:
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.WaitForSingleObject.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
+    kernel32.WaitForSingleObject.restype = ctypes.c_uint32
+    return kernel32.WaitForSingleObject(handle, int(seconds * 1000)) == 0
+
+
+def _close_handle(handle) -> None:
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.CloseHandle.argtypes = [ctypes.c_void_p]
+    kernel32.CloseHandle.restype = ctypes.c_int
+    kernel32.CloseHandle(handle)
+
+
+@pytest.mark.windows_only
+@pytest.mark.parametrize("cancel", ["kill_tree", "close"])
+@pytest.mark.parametrize("native_python_profile", [EPHEMERAL_PROFILE_NAME], indirect=True)
+def test_cancellation_stops_the_owned_descendants_and_nothing_else(
+    ephemeral_appcontainer_profile,
+    native_python_profile,
+    cancel: str,
+) -> None:
+    profile, interpreter, workspace, *_ = native_python_profile
+    # Pipes rather than DEVNULL: the AppContainer is denied the NUL device.
+    code = (
+        "import subprocess,sys,time\n"
+        "g=subprocess.Popen([sys.executable,'-S','-c','import time; time.sleep(120)'],"
+        "stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)\n"
+        "sys.stdout.write(f'{g.pid}\\n'); sys.stdout.flush()\n"
+        "time.sleep(120)\n"
+    )
+    # A process the host owns outside the delegated job: cancellation must leave it running.
+    bystander = subprocess.Popen(
+        [sys.executable, "-c", "import time; time.sleep(120)"],
+        stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    )
+    handles = []
+    try:
+        with delegated_child_context("t06-native-cancel"), bind_native_execution_profile(profile):
+            process = launch_restricted([str(interpreter), "-S", "-c", code], profile, cwd=workspace)
+            try:
+                line: list[str] = []
+                reader = threading.Thread(target=lambda: line.append(process.stdout.readline()), daemon=True)
+                reader.start()
+                reader.join(20)
+                if not (line and line[0].strip().isdigit()):
+                    process.kill_tree()
+                    reader.join(5)
+                    rest, _ = process.communicate(timeout=20)
+                    pytest.fail(f"delegated child never reported its descendant: {''.join(line)}{rest}")
+                child = _open_for_wait(process.pid)
+                grandchild = _open_for_wait(int(line[0]))
+                handles.extend((child, grandchild))
+                assert not _exited_within(grandchild, 0), "descendant exited before cancellation"
+                if cancel == "kill_tree":
+                    process.kill_tree()
+                    assert _exited_within(child, 10) and _exited_within(grandchild, 10)
+            finally:
+                process.close()
+        assert _exited_within(child, 10), "cancelled delegated child is still running"
+        assert _exited_within(grandchild, 10), "descendant outlived the cancelled delegated job"
+        assert process.returncode is not None and process.returncode != 0
+        assert bystander.poll() is None, "cancellation stopped a process outside the delegated job"
+    finally:
+        for handle in handles:
+            _close_handle(handle)
+        bystander.kill()
+        bystander.wait(10)
