@@ -163,6 +163,7 @@ def aux_probe_mode():
         _aux_probe_state.active = prev
 
 from agent.credential_pool import load_pool
+from agent.redact import redact_base_url
 from agent.model_metadata import (
     MINIMUM_CONTEXT_LENGTH,
     get_model_context_length,
@@ -2612,7 +2613,7 @@ def _maybe_wrap_anthropic(
         logger.warning(
             "Endpoint %s speaks Anthropic Messages but the anthropic SDK is "
             "not installed — falling back to OpenAI-wire (will likely 404).",
-            base_url,
+            redact_base_url(base_url),
         )
         return client_obj
 
@@ -2622,7 +2623,7 @@ def _maybe_wrap_anthropic(
         logger.warning(
             "Failed to build Anthropic client for %s (%s) — falling back to "
             "OpenAI-wire client.",
-            base_url,
+            redact_base_url(base_url),
             exc,
         )
         return client_obj
@@ -2631,7 +2632,7 @@ def _maybe_wrap_anthropic(
         "Auxiliary transport: wrapping client in AnthropicAuxiliaryClient "
         "(model=%s, base_url=%s, api_mode=%s)",
         model,
-        base_url[:60] if base_url else "",
+        redact_base_url(base_url)[:60] if base_url else "",
         api_mode or "auto-detected",
     )
     return AnthropicAuxiliaryClient(
@@ -4203,7 +4204,7 @@ def _try_anthropic(explicit_api_key: str = None) -> Tuple[Optional[Any], Optiona
         # Availability probe — token + SDK adapter import resolved; skip
         # real client construction.
         return _AuxProbeClientStub(api_key="", base_url=base_url), model
-    logger.debug("Auxiliary client: Anthropic native (%s) at %s (oauth=%s)", model, base_url, is_oauth)
+    logger.debug("Auxiliary client: Anthropic native (%s) at %s (oauth=%s)", model, redact_base_url(base_url), is_oauth)
     try:
         real_client = build_anthropic_client(token, base_url)
     except ImportError:
@@ -6314,7 +6315,7 @@ def _resolve_auto_route(
                 "Auxiliary clients may route to the wrong endpoint. "
                 "Run: hermes model to reconfigure, or remove "
                 "OPENAI_BASE_URL from ~/.hermes/.env",
-                _env_base,
+                redact_base_url(_env_base),
                 _cfg_provider,
             )
             _stale_base_url_warned = True
@@ -6789,7 +6790,7 @@ def resolve_provider_client(
                 "(api_mode=%s, model=%s, base_url=%s)",
                 api_mode or "auto-detected",
                 final_model_str,
-                base_url_str[:60] if base_url_str else "",
+                redact_base_url(base_url_str)[:60] if base_url_str else "",
             )
             return CodexAuxiliaryClient(client_obj, final_model_str)
         # Anthropic-wire endpoints: rewrap plain OpenAI clients so

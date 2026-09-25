@@ -20,6 +20,7 @@ import time
 from contextvars import ContextVar
 from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Set
+from agent.redact import redact_base_url
 
 logger = logging.getLogger(__name__)
 
@@ -4498,7 +4499,7 @@ class TelegramAdapter(BasePlatformAdapter):
                 )
                 logger.info(
                     "[%s] Using custom Telegram base_url: %s",
-                    self.name, custom_base_url,
+                    self.name, redact_base_url(custom_base_url),
                 )
             # In local-mode telegram-bot-api, file_path is an absolute path on the
             # server's filesystem rather than a relative HTTP path. PTB needs

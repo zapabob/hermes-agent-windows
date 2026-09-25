@@ -48,6 +48,7 @@ from agent.reasoning_summaries import separate_glued_reasoning_blocks
 from agent.stream_single_writer import claim_stream_writer, stream_writer_is_current
 from tools.terminal_tool import is_persistent_env
 from utils import base_url_host_matches, base_url_hostname, env_float, env_int
+from agent.redact import redact_base_url
 
 logger = logging.getLogger(__name__)
 _OPENROUTER_PROVIDER_SORT_VALUES = {"throughput", "latency", "price"}
@@ -2678,7 +2679,7 @@ def try_activate_fallback(agent, reason: "FailoverReason | None" = None) -> bool
             logger.warning(
                 "Fallback skip: chain entry %s/%s resolves to the same backend "
                 "as the current one (%s)",
-                fb_provider, fb_model, current_ident.base_url or current_ident.provider,
+                fb_provider, fb_model, redact_base_url(current_ident.base_url) or current_ident.provider,
             )
             continue
 
@@ -4411,7 +4412,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
                 _stream_read_timeout = _base_timeout
                 logger.debug(
                     "Local provider detected (%s) — stream read timeout raised to %.0fs",
-                    agent.base_url,
+                    redact_base_url(agent.base_url),
                     _stream_read_timeout,
                 )
             elif (
@@ -5625,7 +5626,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
         _stream_stale_timeout = env_float("HERMES_LOCAL_STREAM_STALE_TIMEOUT", _local_default)
         logger.debug(
             "Local provider detected (%s) — stale stream timeout set to %.0fs",
-            _effective_base_url, _stream_stale_timeout,
+            redact_base_url(_effective_base_url), _stream_stale_timeout,
         )
     else:
         # Scale the stale timeout for large contexts: slow models (like Opus)

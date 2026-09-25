@@ -7,6 +7,7 @@ import os
 import ssl
 from pathlib import Path
 from typing import Any, Optional
+from agent.redact import redact_base_url
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,7 @@ def resolve_httpx_verify(
             "TLS certificate verification DISABLED (ssl_verify: false) for %s — "
             "this is intended for local development only and is unsafe on any "
             "network you do not fully control.",
-            base_url or "a custom provider endpoint",
+            redact_base_url(base_url) or "a custom provider endpoint",
         )
         return False
 

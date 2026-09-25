@@ -17,6 +17,7 @@ from __future__ import annotations
 import logging
 import time
 from typing import Any, Dict, List, Optional
+from agent.redact import redact_base_url
 
 logger = logging.getLogger(__name__)
 
@@ -195,7 +196,7 @@ def log_stream_retry(
             getattr(agent, "_subagent_id", None) or "-",
             getattr(agent, "_delegate_depth", 0),
             agent.provider or "-",
-            agent.base_url or "-",
+            redact_base_url(agent.base_url) or "-",
             type(error).__name__,
             _summary,
             _chain,

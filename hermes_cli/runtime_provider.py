@@ -7,6 +7,7 @@ import os
 import re
 from urllib.parse import urlparse
 from typing import Any, Dict, Optional
+from agent.redact import redact_base_url
 
 logger = logging.getLogger(__name__)
 
@@ -203,7 +204,7 @@ def _resolve_plain_custom_api_mode(model_cfg: Dict[str, Any], base_url: str) -> 
     if configured_mode == "codex_responses" and detected_mode != "codex_responses":
         logger.info(
             "Ignoring persisted custom api_mode=codex_responses for non-OpenAI endpoint %s",
-            base_url or "(unknown)",
+            redact_base_url(base_url) or "(unknown)",
         )
         configured_mode = None
 
@@ -323,7 +324,7 @@ def _auto_detect_local_model(base_url: str) -> str:
     except Exception as exc:
         # Log instead of silently swallowing — aids debugging when
         # local model auto-detection fails unexpectedly.
-        logger.debug("Auto-detect model from %s failed: %s", base_url, exc)
+        logger.debug("Auto-detect model from %s failed: %s", redact_base_url(base_url), exc)
     return ""
 
 

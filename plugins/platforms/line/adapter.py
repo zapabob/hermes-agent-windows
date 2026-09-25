@@ -82,6 +82,7 @@ from urllib.parse import quote as _urlquote
 
 from agent.secret_scope import UnscopedSecretError as _UnscopedSecretError
 from agent.secret_scope import get_secret as _scoped_get_secret
+from agent.redact import redact_base_url
 
 
 def _get_scoped_secret(name, default=None):
@@ -904,7 +905,7 @@ class LineAdapter(BasePlatformAdapter):
             self.webhook_host or "* (all interfaces, IPv4+IPv6)",
             self.webhook_port,
             self.webhook_path,
-            f" (public: {self.public_base_url})" if self.public_base_url else "",
+            f" (public: {redact_base_url(self.public_base_url)})" if self.public_base_url else "",
         )
         return True
 

@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Optional
 
 from hermes_cli._subprocess_compat import IS_WINDOWS, windows_hide_flags
+from agent.redact import redact_base_url
 
 logger = logging.getLogger(__name__)
 
@@ -653,7 +654,7 @@ def exchange_copilot_token(raw_token: str, *, timeout: float = 10.0) -> tuple[st
     logger.debug(
         "Copilot token exchanged, expires_at=%s, base_url=%s",
         expires_at,
-        base_url,
+        redact_base_url(base_url),
     )
     return api_token, expires_at, base_url
 

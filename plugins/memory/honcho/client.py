@@ -27,6 +27,7 @@ from hermes_constants import get_hermes_home
 from hermes_cli.profiles import _get_default_hermes_home
 from plugins.plugin_utils import SingletonSlot
 from typing import Any, TYPE_CHECKING
+from agent.redact import redact_base_url
 
 if TYPE_CHECKING:
     from honcho import Honcho
@@ -1308,7 +1309,7 @@ def get_honcho_client(config: HonchoClientConfig | None = None) -> Honcho:
             resolved_timeout = _DEFAULT_HTTP_TIMEOUT
 
         if resolved_base_url:
-            logger.info("Initializing Honcho client (base_url: %s, workspace: %s)", resolved_base_url, config.workspace_id)
+            logger.info("Initializing Honcho client (base_url: %s, workspace: %s)", redact_base_url(resolved_base_url), config.workspace_id)
         else:
             # No base_url resolved, so the SDK falls back to its own
             # ENVIRONMENTS map (honcho.client: local -> http://localhost:8000,

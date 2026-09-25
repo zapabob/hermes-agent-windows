@@ -32,6 +32,7 @@ from gateway.platforms.base import (
 
 from agent.secret_scope import UnscopedSecretError as _UnscopedSecretError
 from agent.secret_scope import get_secret as _scoped_get_secret
+from agent.redact import redact_base_url
 
 
 def _get_scoped_secret(name, default=None):
@@ -333,7 +334,7 @@ class MattermostAdapter(BasePlatformAdapter):
             "Mattermost: authenticated as @%s (%s) on %s",
             self._bot_username,
             self._bot_user_id,
-            self._base_url,
+            redact_base_url(self._base_url),
         )
 
         # Start WebSocket in background.

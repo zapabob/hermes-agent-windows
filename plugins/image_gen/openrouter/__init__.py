@@ -79,6 +79,7 @@ from agent.image_gen_provider import (
     save_url_image,
     success_response,
 )
+from agent.redact import redact_base_url
 
 logger = logging.getLogger(__name__)
 
@@ -486,7 +487,7 @@ def _fetch_image_api_catalog(base_url: str, api_key: str) -> frozenset:
             if isinstance(model_id, str) and model_id.strip():
                 ids.add(model_id.strip())
     except Exception as exc:  # noqa: BLE001 - probe must never break generation
-        logger.debug("image API catalog probe failed for %s: %s", base_url, exc)
+        logger.debug("image API catalog probe failed for %s: %s", redact_base_url(base_url), exc)
 
     resolved = frozenset(ids)
     _CATALOG_CACHE[base_url] = (time.monotonic(), resolved)

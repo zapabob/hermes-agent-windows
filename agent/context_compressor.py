@@ -47,6 +47,7 @@ from agent.redact import redact_sensitive_text
 from agent.turn_context import drop_stale_api_content
 from agent.tool_guardrails import identical_result_reference_call_id
 from tools.todo_tool import TODO_INJECTION_HEADER
+from agent.redact import redact_base_url
 
 logger = logging.getLogger(__name__)
 
@@ -2391,7 +2392,7 @@ class ContextCompressor(ContextEngine):
             self.model, self._resolved_context_length, self.threshold_tokens,
             self.threshold_percent * 100, self.summary_target_ratio * 100,
             self.tail_token_budget,
-            self.provider or "none", self.base_url or "none",
+            self.provider or "none", redact_base_url(self.base_url) or "none",
         )
     def _resolve_context_length(self) -> int:
         """Resolve and cache the model's context length on first access."""
@@ -5406,7 +5407,7 @@ This compaction should PRIORITISE preserving all information related to the focu
                     self.provider or "auto",
                     self.summary_model or "(main)",
                     self.model,
-                    self.base_url or "default",
+                    redact_base_url(self.base_url) or "default",
                     e,
                 )
             if (

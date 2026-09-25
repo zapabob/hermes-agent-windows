@@ -43,6 +43,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
+from agent.redact import redact_base_url
 
 try:
     import aiohttp
@@ -2292,7 +2293,7 @@ class QQAdapter(BasePlatformAdapter):
                 "[%s] STT API call failed (model=%s, base=%s): %s",
                 self._log_tag,
                 model,
-                base_url[:50],
+                redact_base_url(base_url)[:50],
                 exc,
             )
             return None

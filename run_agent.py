@@ -37,6 +37,7 @@ import copy
 import hashlib
 import json
 import logging
+from agent.redact import redact_base_url
 logger = logging.getLogger(__name__)
 import os
 import re
@@ -6298,7 +6299,7 @@ class AIAgent:
         logger.info(
             "Applied updated .env credentials for %s: endpoint %s",
             self.provider,
-            self.base_url,
+            redact_base_url(self.base_url),
         )
         return True
 
