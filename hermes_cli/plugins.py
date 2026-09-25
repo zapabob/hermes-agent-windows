@@ -3683,7 +3683,7 @@ class PluginContext:
     def register_skill(
         self,
         name: str,
-        path: Path,
+        path: Union[str, Path],
         description: str = "",
         frontmatter: Optional[Mapping[str, Any]] = None,
     ) -> PluginRegistration:
@@ -3711,6 +3711,10 @@ class PluginContext:
             raise ValueError(
                 f"Invalid skill name '{name}'. Must match [a-zA-Z0-9_-]+."
             )
+        # Plugin register() helpers commonly pass the SKILL.md location as str
+        # (PluginManifest.path is stored as str); the registry and find_plugin_skill()
+        # promise a Path downstream.
+        path = Path(path)
         if not path.exists():
             raise FileNotFoundError(f"SKILL.md not found at {path}")
 
@@ -6720,8 +6724,12 @@ def _get_pre_tool_call_directive_details(
     - ``rule_key`` is optional and only honored for ``approve`` directives. It
       lets plugins choose the allowlist grain for `[a]lways` approvals.
 
-    The first valid directive wins. Invalid or irrelevant hook return values
-    are silently ignored so existing observer-only hooks are unaffected.
+    Precedence is ``block`` > ``approve`` > none, not registration order: any
+    plugin's valid veto wins over an earlier plugin's request for human
+    confirmation (under ``approvals.mode: off`` an approve means no prompt, so
+    a shadowed veto would be lost). Among approves the first valid one wins.
+    Invalid or irrelevant hook return values are silently ignored so existing
+    observer-only hooks are unaffected.
     """
     allowed = getattr(_thread_tool_whitelist, "allowed", None)
     if allowed is not None and tool_name not in allowed:
@@ -6745,8 +6753,8 @@ def _get_pre_tool_call_directive_details(
         middleware_trace=list(middleware_trace or []),
     )
 
-    block_msg: Optional[str] = None
     modified_args: Optional[Dict[str, Any]] = None
+    first_approve: Optional[Tuple[Optional[str], Optional[str]]] = None
 
     for result in hook_results:
         if not isinstance(result, dict):
@@ -6772,15 +6780,20 @@ def _get_pre_tool_call_directive_details(
         # an approve directive can carry an optional reason.
         if action == "block" and not message:
             continue
-        rule_key = result.get("rule_key") if action == "approve" else None
-        rule_key = rule_key.strip() if isinstance(rule_key, str) else None
-        if not rule_key:
-            rule_key = None
+        if action == "block":
+            return _PreToolCallDirective(
+                action="block", message=message, modified_args=modified_args,
+            )
+        if first_approve is None:
+            rule_key = result.get("rule_key")
+            rule_key = rule_key.strip() if isinstance(rule_key, str) else None
+            first_approve = (message, rule_key or None)
+
+    if first_approve is not None:
         return _PreToolCallDirective(
-            action=action, message=message, rule_key=rule_key,
+            action="approve", message=first_approve[0], rule_key=first_approve[1],
             modified_args=modified_args,
         )
-
     return _PreToolCallDirective(modified_args=modified_args)
 
 

@@ -8,6 +8,7 @@ Covers:
 
 import json
 import logging
+from pathlib import Path
 
 import pytest
 
@@ -138,6 +139,23 @@ class TestPluginContextRegisterSkill:
     def test_rejects_missing_file(self, ctx, tmp_path):
         with pytest.raises(FileNotFoundError):
             ctx.register_skill("foo", tmp_path / "nonexistent.md")
+
+    def test_accepts_str_path(self, ctx, tmp_path):
+        # Plugin register() helpers commonly pass the SKILL.md location as str
+        # (PluginManifest.path is stored as str); the registry keeps its Path contract.
+        skill_md = tmp_path / "skills" / "my-skill" / "SKILL.md"
+        skill_md.parent.mkdir(parents=True)
+        skill_md.write_text("---\nname: my-skill\n---\nContent.\n", encoding="utf-8")
+
+        ctx.register_skill("my-skill", str(skill_md), "A test skill")
+
+        found = ctx._manager.find_plugin_skill("testplugin:my-skill")
+        assert found == skill_md
+        assert isinstance(found, Path)
+
+    def test_missing_str_path_raises_filenotfound(self, ctx, tmp_path):
+        with pytest.raises(FileNotFoundError):
+            ctx.register_skill("foo", str(tmp_path / "nonexistent.md"))
 
     def test_duplicate_qualified_name_is_rejected(self, ctx, tmp_path):
         ctx.manifest.portable = True

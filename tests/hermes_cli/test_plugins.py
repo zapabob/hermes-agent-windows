@@ -1314,6 +1314,50 @@ class TestPreToolCallDirective:
         )
         assert get_pre_tool_call_directive("write_file", {}) == ("approve", None)
 
+    def test_later_block_outranks_earlier_approve(self, monkeypatch):
+        """A security plugin's veto must not be shadowed by an earlier plugin's approve:
+        under approvals.mode off an approve means no prompt, so the veto would be lost."""
+        from hermes_cli.plugins import _get_pre_tool_call_directive_details
+        monkeypatch.setattr(
+            "hermes_cli.plugins.invoke_hook",
+            lambda hook_name, **kwargs: [
+                {"action": "modify", "args": {"path": "/safe"}},
+                {"action": "approve", "message": "earlier plugin approves", "rule_key": "k"},
+                {"action": "block", "message": "later security plugin blocks"},
+            ],
+        )
+        details = _get_pre_tool_call_directive_details("write_file", {"path": "/unsafe"})
+        assert (details.action, details.message, details.rule_key) == (
+            "block", "later security plugin blocks", None)
+        assert details.modified_args == {"path": "/safe"}
+
+    def test_first_approve_wins_among_approves_and_keeps_later_modify(self, monkeypatch):
+        from hermes_cli.plugins import _get_pre_tool_call_directive_details
+        monkeypatch.setattr(
+            "hermes_cli.plugins.invoke_hook",
+            lambda hook_name, **kwargs: [
+                {"action": "block"},
+                {"action": "approve", "message": "first", "rule_key": " write_file:ssh "},
+                {"action": "modify", "args": {"content": "fixed"}},
+                {"action": "approve", "message": "second", "rule_key": "write_file:other"},
+            ],
+        )
+        details = _get_pre_tool_call_directive_details("write_file", {"path": "/p"})
+        assert (details.action, details.message, details.rule_key) == (
+            "approve", "first", "write_file:ssh")
+        assert details.modified_args == {"path": "/p", "content": "fixed"}
+
+    def test_later_block_outranks_earlier_approve_at_public_surface(self, monkeypatch):
+        from hermes_cli.plugins import get_pre_tool_call_directive
+        monkeypatch.setattr(
+            "hermes_cli.plugins.invoke_hook",
+            lambda hook_name, **kwargs: [
+                {"action": "approve"},
+                {"action": "block", "message": "vetoed"},
+            ],
+        )
+        assert get_pre_tool_call_directive("terminal", {}) == ("block", "vetoed")
+
 
 class TestResolvePreToolBlock:
     """Tests for the single dispatch-site chokepoint that resolves a
