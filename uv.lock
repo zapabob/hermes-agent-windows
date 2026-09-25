@@ -1575,6 +1575,18 @@ wheels = [
 ]
 
 [[package]]
+name = "hakua-memory"
+version = "0.3.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/13/6e/571c67b0f49b2b3a3bf0820180f535c746ccb3468fea1a19d0124fffaa05/hakua_memory-0.3.5.tar.gz", hash = "sha256:49e633fea73a85fad78558f7221c0d0dc1dbde32624e0cbfd744e9004603e782", size = 151713, upload-time = "2026-09-11T05:53:06.171Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/35/87/852b1a947d99489132baa003558c0080d2e777b8eafbd394de91ab237f8f/hakua_memory-0.3.5-py3-none-any.whl", hash = "sha256:ee71ee4283de93d6c1356b130b8c58422f8233ba876cdd6efcc36a6d1e4cf5cb", size = 151388, upload-time = "2026-09-11T05:53:05.095Z" },
+]
+
+[[package]]
 name = "hermes-agent"
 version = "0.21.3"
 source = { editable = "." }
@@ -1694,6 +1706,9 @@ google = [
     { name = "google-auth-oauthlib" },
     { name = "httplib2" },
     { name = "pyasn1" },
+]
+hakua-memory = [
+    { name = "hakua-memory" },
 ]
 hindsight = [
     { name = "hindsight-client" },
@@ -1864,6 +1879,7 @@ requires-dist = [
     { name = "google-auth", marker = "extra == 'vertex'", specifier = "==2.58.0" },
     { name = "google-auth-httplib2", marker = "extra == 'google'", specifier = "==0.3.1" },
     { name = "google-auth-oauthlib", marker = "extra == 'google'", specifier = "==1.3.1" },
+    { name = "hakua-memory", marker = "extra == 'hakua-memory'", specifier = "==0.3.5" },
     { name = "hermes-agent", extras = ["acp"], marker = "extra == 'all'" },
     { name = "hermes-agent", extras = ["acp"], marker = "extra == 'termux'" },
     { name = "hermes-agent", extras = ["cron"], marker = "extra == 'all'" },
@@ -1965,7 +1981,7 @@ requires-dist = [
     { name = "yara-python", marker = "extra == 'security'", specifier = "==4.5.4" },
     { name = "youtube-transcript-api", marker = "extra == 'youtube'", specifier = "==1.2.4" },
 ]
-provides-extras = ["anthropic", "exa", "firecrawl", "parallel-web", "fal", "edge-tts", "modal", "daytona", "vercel", "hindsight", "dev", "messaging", "voice-push", "cron", "slack", "matrix", "wecom", "tts-premium", "voice", "wake", "honcho", "supermemory", "mem0", "vision", "pty", "security", "mcp", "nemo-relay", "homeassistant", "sms", "teams", "computer-use", "acp", "mistral", "otlp", "bedrock", "vertex", "azure-identity", "termux", "termux-all", "dingtalk", "feishu", "google", "youtube", "web", "all"]
+provides-extras = ["anthropic", "exa", "firecrawl", "parallel-web", "fal", "edge-tts", "modal", "daytona", "vercel", "hindsight", "dev", "messaging", "voice-push", "cron", "slack", "matrix", "wecom", "tts-premium", "voice", "wake", "honcho", "supermemory", "mem0", "hakua-memory", "vision", "pty", "security", "mcp", "nemo-relay", "homeassistant", "sms", "teams", "computer-use", "acp", "mistral", "otlp", "bedrock", "vertex", "azure-identity", "termux", "termux-all", "dingtalk", "feishu", "google", "youtube", "web", "all"]
 
 [[package]]
 name = "hf-xet"
