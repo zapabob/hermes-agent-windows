@@ -29,6 +29,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 from urllib.parse import parse_qs, urlparse, urlunparse
+from agent.redact import redact_base_url
 
 if TYPE_CHECKING:
     from agent.rate_limit_tracker import RateLimitState
@@ -2744,9 +2745,9 @@ def init_agent(
                 "(configured default is %s at %s)",
                 _config_context_length,
                 agent.model,
-                _active_base_url or agent.provider,
+                redact_base_url(_active_base_url) or agent.provider,
                 _configured_default_model,
-                _configured_base_url or _model_cfg.get("provider"),
+                redact_base_url(_configured_base_url) or _model_cfg.get("provider"),
             )
             _config_context_length = None
 

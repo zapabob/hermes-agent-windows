@@ -46,6 +46,7 @@ from tools.xai_http import (
     hermes_xai_user_agent,
     resolve_xai_http_credentials,
 )
+from agent.redact import redact_base_url
 
 logger = logging.getLogger(__name__)
 
@@ -305,7 +306,7 @@ class XAIWebSearchProvider(WebSearchProvider):
 
         logger.info(
             "xAI web search via %s: '%s' (limit=%d, model=%s)",
-            base_url, query, limit, model,
+            redact_base_url(base_url), query, limit, model,
         )
 
         # Two-attempt loop: if the first call returns 401 and our creds came
@@ -511,7 +512,7 @@ class XAIWebSearchProvider(WebSearchProvider):
                 "include": ["no_inline_citations"],
             }
 
-            logger.info("xAI web extract via %s: %s (model=%s)", base_url, url, model)
+            logger.info("xAI web extract via %s: %s (model=%s)", redact_base_url(base_url), url, model)
             resp = None
             for attempt in range(2):
                 try:

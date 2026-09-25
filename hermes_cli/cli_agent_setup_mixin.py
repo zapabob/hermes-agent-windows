@@ -19,6 +19,7 @@ import sys
 from rich.markup import escape as _escape
 
 from utils import base_url_host_matches
+from agent.redact import redact_base_url
 
 
 class CLIAgentSetupMixin:
@@ -114,7 +115,7 @@ class CLIAgentSetupMixin:
                 logger.debug(
                     "No API key for custom endpoint %s (source=%s), "
                     "using placeholder — local servers typically ignore auth",
-                    base_url, _source,
+                    redact_base_url(base_url), _source,
                 )
             else:
                 _prov = (resolved_provider or self.requested_provider or "").strip()

@@ -32,6 +32,9 @@ def execute(
     raw_result: dict[str, Any] = {}
     callback_error: BaseException | None = None
     callback_context = contextvars.copy_context()
+    # Relay 0.8 requires callbacks to return ToolExecutionResult and returns
+    # one from execute; 0.7 exchanged raw JSON and has no such type.
+    result_type = getattr(runtime.relay, "ToolExecutionResult", None)
 
     def invoke(next_args: Any) -> Any:
         nonlocal callback_error, observed_args
@@ -52,7 +55,9 @@ def execute(
             raise
         raw_result["value"] = result
         raw_result["json"] = _jsonable(result)
-        return raw_result["json"]
+        if result_type is None:
+            return raw_result["json"]
+        return result_type(raw_result["json"])
 
     try:
         managed = _run_awaitable(
@@ -85,6 +90,8 @@ def execute(
             return raw_result["value"], observed_args
         raise
 
+    if result_type is not None and isinstance(managed, result_type):
+        managed = managed.result
     if "value" in raw_result and _json_equal(managed, raw_result["json"]):
         return raw_result["value"], observed_args
     if isinstance(managed, str):

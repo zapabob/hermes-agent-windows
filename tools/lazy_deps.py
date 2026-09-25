@@ -98,14 +98,14 @@ LAZY_DEPS: dict[str, tuple[str, ...]] = {
     # ─── Inference providers ───────────────────────────────────────────────
     # Native Anthropic SDK — needed when provider=anthropic (not via
     # OpenRouter / aggregators which use the openai SDK).
-    "provider.anthropic": ("anthropic==0.87.0",),  # CVE-2026-34450, CVE-2026-34452
+    "provider.anthropic": ("anthropic==0.125.0",),  # CVE-2026-34450, CVE-2026-34452
     # AWS Bedrock provider
     "provider.bedrock": ("boto3==1.42.89",),
     # Google Vertex AI provider — OAuth2 token minting for the Gemini
     # OpenAI-compatible endpoint. Only loaded when provider=vertex is selected;
     # google-auth is NOT in [all] so plain installs don't carry it.
     "provider.vertex": (
-        "google-auth==2.55.1",
+        "google-auth==2.58.0",
         "pyasn1==0.6.4",
     ),
     # Microsoft Foundry — Entra ID auth (managed identity, workload identity,
@@ -261,7 +261,7 @@ LAZY_DEPS: dict[str, tuple[str, ...]] = {
     # ─── Skills ────────────────────────────────────────────────────────────
     "skill.google_workspace": (
         "google-api-python-client==2.194.0",
-        "google-auth==2.55.1",
+        "google-auth==2.58.0",
         "google-auth-oauthlib==1.3.1",
         "google-auth-httplib2==0.3.1",
         # Transitive via google-api-python-client/google-auth-httplib2; keep explicit
@@ -296,7 +296,7 @@ LAZY_DEPS: dict[str, tuple[str, ...]] = {
     # NOTE: lazy-only for now — no pyproject `doc-extract` extra until the
     # package clears the uv exclude-newer 14-day quarantine (first release
     # 2026-08-04); add the mirrored extra then.
-    "tool.doc_extract": ("firecrawl-anydoc==0.1.6",),
+    "tool.doc_extract": ("firecrawl-anydoc==0.2.4",),
     # Computer Use (cua-driver) — the MCP client SDK used to spawn and talk
     # to the cua-driver process over stdio. Matches the `mcp` / `computer-use`
     # extras in pyproject.toml. The one-liner installer pulls this in via
@@ -311,10 +311,10 @@ LAZY_DEPS: dict[str, tuple[str, ...]] = {
     # ai_scientist_deps).  ``google-generativeai`` is end-of-life and caps
     # protobuf below the security-fixed runtime pin, so never reintroduce it
     # through the lazy installer.  2.12.1 is the newest release compatible
-    # with the project's exact google-auth==2.55.1 pin.
+    # with the project's exact google-auth==2.58.0 pin.
     "tool.ai_scientist": (
         "backoff==2.2.1",
-        "anthropic==0.87.0",
+        "anthropic==0.125.0",
         "google-genai==2.12.1",
     ),
     # HF Agent Trace Viewer upload (hermes trace upload / /upload-trace).

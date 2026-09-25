@@ -137,6 +137,7 @@ _PREFIX_PATTERNS = [
     r"glwt-[A-Za-z0-9_\-]{10,}",        # GitLab workspace token
     r"GR1348941[A-Za-z0-9_\-]{10,}",    # GitLab legacy runner registration token
     r"pk-lf-[A-Za-z0-9\-]{8,}",         # Langfuse public key (sk-lf- already covered by sk- pattern)
+    r"nvapi-[A-Za-z0-9_-]{10,}",        # NVIDIA API Catalog / NIM API key
 ]
 
 # ENV assignment patterns: KEY=value where KEY contains a secret-like name.
@@ -717,6 +718,34 @@ def redact_cdp_url(value: object) -> str:
     text = _redact_url_query_params(text)
     text = _redact_url_userinfo(text)
     return text
+
+
+_NON_URL_SECRET_RE = re.compile(r"[A-Za-z0-9_\-+=~]{16,}")
+
+
+def redact_base_url(value: object) -> str:
+    """Mask credentials in a provider/endpoint base URL before it is logged.
+
+    A base URL never legitimately carries a credential, so unlike the global
+    log formatter this always redacts (regardless of
+    ``security.redact_secrets``), drops URL userinfo entirely, masks
+    credential-named query parameters, and replaces known-prefix tokens with a
+    sentinel that keeps none of the secret body. A value that is not
+    URL-shaped and looks like a bare token (e.g. an API key pasted into
+    ``OPENAI_BASE_URL``) is replaced wholesale.
+    """
+    if value is None:
+        return ""
+    text = str(value)
+    if not text:
+        return text
+    stripped = text.strip()
+    if "://" not in stripped and _NON_URL_SECRET_RE.fullmatch(stripped):
+        return f"<redacted non-URL value, {len(stripped)} chars>"
+    text = _STRICT_URL_USERINFO_RE.sub(lambda m: f"{m.group(1)}***@", text)
+    return redact_sensitive_text(
+        text, force=True, file_read=True, redact_url_credentials=True
+    )
 
 
 def _redact_http_request_target_query_params(text: str) -> str:

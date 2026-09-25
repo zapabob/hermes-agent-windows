@@ -3526,6 +3526,13 @@ DEFAULT_CONFIG = {
             # is refused unless the host is localhost.
             "endpoint": "https://telemetry.nousresearch.com/v1/telemetry",
         },
+        # NeMo Relay 0.8+ injects W3C trace-context headers (``traceparent``)
+        # into managed LLM requests. Hermes removes them before the provider
+        # call so trace identity never reaches a provider unless this is
+        # enabled. Process-wide, like the selected Relay plugins.toml.
+        "relay": {
+            "propagate_trace_headers": False,
+        },
     },
 
     # ``hermes doctor`` behaviour.

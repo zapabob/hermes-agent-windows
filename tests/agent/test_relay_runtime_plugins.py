@@ -1049,24 +1049,8 @@ mode = "overwrite"
     assert not (atof_dir / "events.jsonl").exists()
 
 
-def test_real_binding_layers_project_config_after_explicit_opt_in(
-    tmp_path,
-    monkeypatch,
-):
-    relay = pytest.importorskip("nemo_relay")
-    if getattr(relay, "_native", None) is None:
-        pytest.skip("NeMo Relay native binding is unavailable on this platform")
-
-    project_root = tmp_path / "project"
-    working_directory = project_root / "workspace"
-    config_directory = project_root / ".nemo-relay"
-    selected_directory = tmp_path / "selected-config"
-    atof_dir = tmp_path / "atof"
-    working_directory.mkdir(parents=True)
-    config_directory.mkdir()
-    selected_directory.mkdir()
-    (config_directory / "plugins.toml").write_text(
-        f"""
+def _atof_plugins_toml(output_directory):
+    return f"""
 version = 1
 
 [[components]]
@@ -1081,33 +1065,55 @@ enabled = true
 
 [[components.config.atof.sinks]]
 type = "file"
-output_directory = "{atof_dir.as_posix()}"
+output_directory = "{output_directory.as_posix()}"
 filename = "events.jsonl"
 mode = "overwrite"
-""".strip(),
-        encoding="utf-8",
-    )
-    selected_config = selected_directory / "plugins.toml"
-    selected_config.write_text("version = 1", encoding="utf-8")
-    xdg_config_home = tmp_path / "xdg"
-    xdg_config_home.mkdir()
+""".strip()
+
+
+def test_real_binding_opt_in_applies_explicit_and_user_config_but_not_repository_config(
+    tmp_path,
+    monkeypatch,
+):
+    relay = pytest.importorskip("nemo_relay")
+    if getattr(relay, "_native", None) is None:
+        pytest.skip("NeMo Relay native binding is unavailable on this platform")
+
+    project_root = tmp_path / "project"
+    working_directory = project_root / "workspace"
+    repository_config = project_root / ".nemo-relay" / "plugins.toml"
+    user_config = tmp_path / "xdg" / "nemo-relay" / "plugins.toml"
+    explicit_config = tmp_path / "selected-config" / "plugins.toml"
+    repository_atof = tmp_path / "repository-atof"
+    user_atof = tmp_path / "user-atof"
+    explicit_atof = tmp_path / "explicit-atof"
+    working_directory.mkdir(parents=True)
+    for config, output in (
+        (repository_config, repository_atof),
+        (user_config, user_atof),
+        (explicit_config, explicit_atof),
+    ):
+        config.parent.mkdir(parents=True)
+        config.write_text(_atof_plugins_toml(output), encoding="utf-8")
     monkeypatch.chdir(working_directory)
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg_config_home))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
     monkeypatch.setenv(
         relay_runtime.RELAY_PLUGINS_CONFIG_ENV,
-        str(selected_config),
+        str(explicit_config),
     )
     relay.plugin.clear()
 
     host = relay_runtime.RelayRuntime(relay=relay, profile_key="profile")
     try:
         assert host.managed_execution_enabled()
-        host.ensure_session({"session_id": "native-layered-plugins"})
+        host.ensure_session({"session_id": "native-opted-in-plugins"})
     finally:
         host.shutdown()
         relay_runtime._reset_for_tests()
 
-    assert (atof_dir / "events.jsonl").is_file()
+    assert (explicit_atof / "events.jsonl").is_file()
+    assert (user_atof / "events.jsonl").is_file()
+    assert not (repository_atof / "events.jsonl").exists()
 
 
 def test_real_binding_keeps_two_profile_trajectories_separate_in_shared_exporters(

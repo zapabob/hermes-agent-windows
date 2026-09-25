@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextvars
 import json
+import re
 import threading
 from types import SimpleNamespace
 
@@ -13,12 +14,14 @@ import pytest
 pytest.importorskip("nemo_relay")
 
 from agent import relay_llm, relay_runtime
+from hermes_constants import get_hermes_home
 
 
 @pytest.fixture()
 def relay_turn(tmp_path, monkeypatch):
     monkeypatch.setenv("HERMES_HOME", str(tmp_path / "profile"))
     relay_runtime._reset_for_tests()
+    relay_llm._reset_trace_header_policy_for_tests()
     lease = relay_runtime.SESSION_COORDINATOR.acquire_conversation(
         profile_key=relay_runtime.current_profile_key(),
         session_id="session-1",
@@ -37,6 +40,68 @@ def relay_turn(tmp_path, monkeypatch):
         relay_runtime.SESSION_COORDINATOR.end_turn(turn, outcome="success")
         relay_runtime.SESSION_COORDINATOR.release_conversation(lease)
         relay_runtime._reset_for_tests()
+        relay_llm._reset_trace_header_policy_for_tests()
+
+
+_TRACEPARENT = re.compile(r"00-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}")
+
+
+def _execute_capturing_provider_request(extra_headers):
+    captured = []
+
+    def provider(request):
+        captured.append(request)
+        return {
+            "model": "test-model",
+            "choices": [
+                {
+                    "message": {"role": "assistant", "content": "ok"},
+                    "finish_reason": "stop",
+                }
+            ],
+        }
+
+    relay_llm.execute(
+        {"model": "test-model", "messages": [], "extra_headers": extra_headers},
+        provider,
+        session_id="session-1",
+        name="test-provider",
+        model_name="test-model",
+        metadata={"api_mode": "custom", "api_request_id": "request-1"},
+    )
+    assert len(captured) == 1
+    return captured[0]
+
+
+def test_trace_context_headers_do_not_reach_provider_by_default(relay_turn):
+    request = _execute_capturing_provider_request(
+        {"Authorization": "Bearer byok-key", "X-Api-Key": "oauth-token"}
+    )
+
+    headers = request.get("extra_headers") or {}
+    assert {key.lower() for key in headers}.isdisjoint(
+        {"traceparent", "tracestate", "baggage"}
+    )
+    assert headers["Authorization"] == "Bearer byok-key"
+    assert headers["X-Api-Key"] == "oauth-token"
+
+
+def test_trace_context_headers_reach_provider_after_config_opt_in(relay_turn):
+    config_path = get_hermes_home() / "config.yaml"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    config_path.write_text(
+        "telemetry:\n  relay:\n    propagate_trace_headers: true\n",
+        encoding="utf-8",
+    )
+    relay_llm._reset_trace_header_policy_for_tests()
+
+    request = _execute_capturing_provider_request(
+        {"Authorization": "Bearer byok-key"}
+    )
+
+    headers = request["extra_headers"]
+    assert _TRACEPARENT.fullmatch(headers["traceparent"])
+    assert headers["Authorization"] == "Bearer byok-key"
 
 
 @pytest.mark.parametrize(

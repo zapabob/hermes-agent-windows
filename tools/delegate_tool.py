@@ -22,6 +22,7 @@ import contextvars
 import json
 import logging
 import re
+from agent.redact import redact_base_url
 
 logger = logging.getLogger(__name__)
 import os
@@ -4485,7 +4486,7 @@ def _resolve_child_credential_pool(
         except Exception as exc:
             logger.debug(
                 "Could not resolve custom credential pool for child endpoint '%s': %s",
-                effective_base_url,
+                redact_base_url(effective_base_url),
                 exc,
             )
         return None

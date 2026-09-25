@@ -253,7 +253,7 @@ class TestIsSatisfiedVersionAware:
                     "pyasn1": "0.6.3",
                 },
                 (
-                    "google-auth==2.55.1",
+                    "google-auth==2.58.0",
                     "httplib2==0.32.0",
                     "pyasn1==0.6.4",
                 ),
@@ -261,7 +261,7 @@ class TestIsSatisfiedVersionAware:
             (
                 "provider.vertex",
                 {
-                    "google-auth": "2.55.1",
+                    "google-auth": "2.58.0",
                     "pyasn1": "0.6.3",
                 },
                 ("pyasn1==0.6.4",),
