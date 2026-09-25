@@ -27,7 +27,7 @@ C:\Users\downl\Documents\New project\hermes-agent-upstream-sync-20260820
 主チェックアウトで既存のユーザー所有・未追跡ファイルは、内容を確認しても削除、移動、stage、commitしない。
 
 ~~~text
-mini_llm_planner.py
+notes/archives/prototypes/mini_llm_planner.py (moved from the repository root on 2026-09-26)
 results/ 以下の7件のJSON
 .omo/evidence/ 以下の監査証跡
 ~~~
