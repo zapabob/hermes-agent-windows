@@ -72,6 +72,10 @@ def open_host(db):
     return journal
 
 
+def GRANT_OK(_ctx, *, now):
+    """A live grant: the claim's in-transaction revalidation passes."""
+
+
 def ui_digest(payload):
     """What a UI computes over the presentation it actually rendered."""
     presentation = payload['control']['presentation']
@@ -183,7 +187,7 @@ for step in json.loads(sys.argv[4]):
     if step['until'] in ('APPROVED', 'RUNNING'):
         helpers.approve(journal, ctx, op)
     if step['until'] == 'RUNNING':
-        journal.claim_approved(ctx, op, now=112)
+        journal.claim_approved(ctx, op, now=112, revalidate_grant=helpers.GRANT_OK)
     out[step['workspace']] = op
 Path(sys.argv[3]).write_text(json.dumps(out), encoding='utf-8')
 os._exit(0)
@@ -288,7 +292,7 @@ def test_b2b_closed_host_handle_has_no_write_authority(db):
     operation_id = reserve_approved(journal, ctx)
     journal.close()
     with pytest.raises(ControlError) as denied:
-        journal.claim_approved(ctx, operation_id, now=112)
+        journal.claim_approved(ctx, operation_id, now=112, revalidate_grant=GRANT_OK)
     assert denied.value.code in {'owner_epoch_required', 'stale_owner_epoch'}
 
 
@@ -627,7 +631,7 @@ def test_i_claim_generic_transition_cannot_start_an_approved_operation(db):
     with pytest.raises(ControlError):
         journal.transition(operation_id, expected_state='APPROVED', new_state='RUNNING', now=112)
     assert state_of(db, operation_id) == 'APPROVED'
-    assert journal.claim_approved(ctx, operation_id, now=112) == make_request()
+    assert journal.claim_approved(ctx, operation_id, now=112, revalidate_grant=GRANT_OK) == make_request()
     assert state_of(db, operation_id) == 'RUNNING'
     journal.transition(operation_id, expected_state='RUNNING', new_state='SUCCEEDED', now=113)
     assert state_of(db, operation_id) == 'SUCCEEDED'
@@ -639,7 +643,7 @@ def test_i_claim_non_start_edges_stay_available(db):
     blocked = reserve_approved(journal, ctx, 'w1')
     journal.transition(blocked, expected_state='APPROVED', new_state='BLOCKED', now=112)
     unknown = reserve_approved(journal, ctx, 'w2')
-    journal.claim_approved(ctx, unknown, now=112)
+    journal.claim_approved(ctx, unknown, now=112, revalidate_grant=GRANT_OK)
     journal.transition(unknown, expected_state='RUNNING', new_state='UNKNOWN', now=113)
     assert (state_of(db, blocked), state_of(db, unknown)) == ('BLOCKED', 'UNKNOWN')
 

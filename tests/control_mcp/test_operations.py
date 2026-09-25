@@ -24,6 +24,10 @@ def writable(control_context, **changes):
     return control_context(scopes=('hermes:read','hermes:run:start'), **changes)
 
 
+def grant_ok(_ctx, *, now):
+    return None
+
+
 def test_journal_read_does_not_create_storage(control_module,control_context,tmp_path):
     j=journal(control_module,tmp_path)
     out=j.get(control_context(),'op-'+'a'*32,profile_id='p1',workspace_id='w1',now=100)
@@ -104,7 +108,7 @@ def test_actual_single_use_owner_decision_allows_transition(control_module,contr
     j=journal(control_module,tmp_path);j.initialise();ctx=writable(control_context)
     op=j.reserve(ctx,request(),now=100)['operation_id']
     assert decide(control_module,j,ctx,op)['state']=='APPROVED'
-    j.claim_approved(ctx,op,now=112)
+    j.claim_approved(ctx,op,now=112,revalidate_grant=grant_ok)
     assert j.get(ctx,op,profile_id='p1',workspace_id='w1',now=112)['state']=='RUNNING'
     j.transition(op,expected_state='RUNNING',new_state='SUCCEEDED',now=113)
     with pytest.raises(control_module('contracts').ControlError):
@@ -178,7 +182,7 @@ def test_restart_marks_inflight_unknown_and_never_releases_writer(control_module
     j=journal(control_module,tmp_path);j.initialise();ctx=writable(control_context)
     op=j.reserve(ctx,request(),now=100)['operation_id']
     decide(control_module,j,ctx,op)
-    j.claim_approved(ctx,op,now=112)
+    j.claim_approved(ctx,op,now=112,revalidate_grant=grant_ok)
     j.close()
     restarted=journal(control_module,tmp_path)
     restarted.initialise(now=113)
@@ -246,7 +250,7 @@ def test_explicit_unknown_after_effect_keeps_workspace_reserved(control_module,c
     j=journal(control_module,tmp_path);j.initialise();ctx=writable(control_context)
     op=j.reserve(ctx,request(),now=100)['operation_id']
     decide(control_module,j,ctx,op)
-    j.claim_approved(ctx,op,now=112)
+    j.claim_approved(ctx,op,now=112,revalidate_grant=grant_ok)
     j.transition(op,expected_state='RUNNING',new_state='UNKNOWN',now=113)
     with pytest.raises(control_module('contracts').ControlError) as caught:
         j.reserve(ctx,request(idempotency_key='new'),now=114)

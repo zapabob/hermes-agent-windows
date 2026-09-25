@@ -26,6 +26,7 @@ from downstream.control_mcp.service import HostControlService
 from plugins.implementation_router import entrypoint
 from tests.control_mcp import test_review_approval_binding as lm03
 from tests.control_mcp.test_review_approval_binding import (  # noqa: F401 - fixtures
+    GRANT_OK,
     REPO_ROOT,
     TASK,
     _SESSIONS,
@@ -161,11 +162,13 @@ def test_r3_client_retry_after_lost_response_gets_the_known_result(db, effects):
     assert len(calls) == 1
 
 
-@pytest.mark.parametrize('version', [1, 2])
+@pytest.mark.parametrize('version', [1, 2, 3])
 def test_an_older_journal_upgrades_in_place_and_its_rows_carry_no_invented_result(db, version):
     db.parent.mkdir(parents=True)
     with closing(sqlite3.connect(db)) as conn:
-        statements = journal_mod._V1_STATEMENTS + (journal_mod._V2_STATEMENTS if version >= 2 else ())
+        statements = (journal_mod._V1_STATEMENTS
+                      + (journal_mod._V2_STATEMENTS if version >= 2 else ())
+                      + (journal_mod._V3_STATEMENTS if version >= 3 else ()))
         for statement in statements:
             conn.execute(statement)
         conn.execute(f'PRAGMA user_version={version}')
@@ -176,13 +179,21 @@ def test_an_older_journal_upgrades_in_place_and_its_rows_carry_no_invented_resul
     with closing(sqlite3.connect(db)) as conn:
         assert conn.execute('PRAGMA user_version').fetchone()[0] == journal_mod._SCHEMA_VERSION
     assert 'result' not in journal.get(ctx, operation_id, profile_id='p1', workspace_id='w1', now=101)
+    with closing(sqlite3.connect(db)) as conn:
+        conn.execute('INSERT INTO control_effect_evidence(operation_id,recorder_epoch,recorded_at,evidence_json) '
+                     "VALUES (?,'e',101,'{}')", (operation_id,))
+        conn.commit()
+        for statement in ("UPDATE control_effect_evidence SET evidence_json='[]'",
+                          'DELETE FROM control_effect_evidence'):
+            with pytest.raises(sqlite3.DatabaseError, match='append_only'):
+                conn.execute(statement)
 
 
 def test_the_recorded_result_keeps_identity_and_codes_but_never_host_paths_or_diagnostics(db):
     journal = open_host(db)
     ctx = make_ctx()
     operation_id = reserve_approved(journal, ctx)
-    journal.claim_approved(ctx, operation_id, now=112)
+    journal.claim_approved(ctx, operation_id, now=112, revalidate_grant=GRANT_OK)
     journal.transition(operation_id, expected_state='RUNNING', new_state='SUCCEEDED', now=113, result={
         'state': 'SUCCEEDED', 'run_id': 'eng-1', 'reason_code': 'verified', 'stage_calls': 3,
         'revision': 2, 'message': 'x' * 70_000, 'locale': 'en',
@@ -229,7 +240,7 @@ journal = helpers.open_host(Path(sys.argv[2]))
 ctx = helpers.make_ctx()
 op = journal.reserve(ctx, helpers.make_request(), now=100)['operation_id']
 helpers.approve(journal, ctx, op)
-journal.claim_approved(ctx, op, now=112)
+journal.claim_approved(ctx, op, now=112, revalidate_grant=helpers.GRANT_OK)
 with open(sys.argv[3], 'a', encoding='utf-8') as effect:
     effect.write(op + '\n')
 os._exit(0)

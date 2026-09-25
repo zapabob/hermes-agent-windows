@@ -22,6 +22,7 @@ from downstream.control_mcp.contracts import (ControlError, VerifiedResultReceip
 from downstream.control_mcp.coordinator import HostControlCoordinator
 from plugins.implementation_router.apply import VerifiedApplyOwner
 from tests.control_mcp.test_review_approval_binding import (  # noqa: F401 - fixtures
+    GRANT_OK,
     SOURCE,
     _SESSIONS,
     _release_human_sessions,
@@ -217,7 +218,7 @@ def test_a2_valid_receipt_does_not_mint_apply_approval(db, chain):
     assert receipt.verified is True
     apply_op = journal.reserve(ctx, apply_request(source, run_id), now=120)['operation_id']
 
-    assert claim_code(lambda: journal.claim_apply(ctx, apply_op, receipt_for=lambda *_a: receipt,
+    assert claim_code(lambda: journal.claim_apply(ctx, apply_op, revalidate_grant=GRANT_OK, receipt_for=lambda *_a: receipt,
                                                   now=112)) == 'deny_no_apply_approval'
     assert claim_code(lambda: journal.approve(ctx, apply_op, receipt, now=112)) == 'approval_required'
     assert claim_code(lambda: apply_owner(journal).start_approved(ctx, apply_op)) == 'deny_no_apply_approval'
@@ -379,9 +380,9 @@ def test_a7_missing_or_untrusted_receipt_never_applies(db, chain):
     apply_op, source, run_id = approved_apply(journal, ctx, chain)
     receipt = receipts.by_run[(source, run_id)]
     forged = {field: getattr(receipt, field) for field in receipt.__dataclass_fields__}
-    assert claim_code(lambda: journal.claim_apply(ctx, apply_op, receipt_for=lambda *_a: None,
+    assert claim_code(lambda: journal.claim_apply(ctx, apply_op, revalidate_grant=GRANT_OK, receipt_for=lambda *_a: None,
                                                   now=112)) == 'reverify_required'
-    assert claim_code(lambda: journal.claim_apply(ctx, apply_op, receipt_for=lambda *_a: forged,
+    assert claim_code(lambda: journal.claim_apply(ctx, apply_op, revalidate_grant=GRANT_OK, receipt_for=lambda *_a: forged,
                                                   now=112)) == 'untrusted_receipt'
     assert state_of(db, apply_op) == 'APPROVED'
     assert destination.applied == []
@@ -396,9 +397,10 @@ def test_a7_a_failing_or_absent_verifier_means_reverification(db, chain):
     def broken(*_args):
         raise RuntimeError('verifier unavailable')
 
-    assert claim_code(lambda: journal.claim_apply(ctx, apply_op, receipt_for=broken,
+    assert claim_code(lambda: journal.claim_apply(ctx, apply_op, revalidate_grant=GRANT_OK, receipt_for=broken,
                                                   now=112)) == 'reverify_required'
-    assert claim_code(lambda: journal.claim_effect(ctx, apply_op, kind=APPLY, now=112)) \
+    assert claim_code(lambda: journal.claim_effect(ctx, apply_op, kind=APPLY, now=112,
+                                                      revalidate_grant=GRANT_OK)) \
         == 'reverify_required'
     assert state_of(db, apply_op) == 'APPROVED'
     assert destination.applied == []
@@ -429,11 +431,13 @@ def test_a8_local_apply_neither_pushes_nor_opens_a_pull_request(db, chain):
     applied, _source, _run_id = approved_apply(journal, ctx, chain)
     assert apply_owner(journal).start_approved(ctx, applied)['state'] == 'SUCCEEDED'
     assert ('push',) not in destination.calls
-    assert claim_code(lambda: journal.claim_effect(ctx, applied, kind='create_pull_request', now=113)) \
+    assert claim_code(lambda: journal.claim_effect(ctx, applied, kind='create_pull_request', now=113,
+                                                      revalidate_grant=GRANT_OK)) \
         == 'operation_kind_mismatch'
 
     pending, _s, _r = approved_apply(journal, ctx, chain, workspace='w2')
-    assert claim_code(lambda: journal.claim_effect(ctx, pending, kind='create_pull_request', now=113)) \
+    assert claim_code(lambda: journal.claim_effect(ctx, pending, kind='create_pull_request', now=113,
+                                                      revalidate_grant=GRANT_OK)) \
         == 'operation_kind_mismatch'
     assert state_of(db, pending) == 'APPROVED'
     pr_request = {**make_request('w3'), 'kind': 'create_pull_request'}
@@ -450,7 +454,8 @@ def test_a9_a10_approval_of_one_stage_never_claims_the_next(db, chain, approved_
     ctx = ctx_with('hermes:repo:pr', 'hermes:repo:merge', 'hermes:deploy')
     operation_id, _source, _run_id = approved_apply(journal, ctx, chain)
     retag(db, operation_id, approved_kind)
-    assert claim_code(lambda: journal.claim_effect(ctx, operation_id, kind=requested_kind, now=113)) \
+    assert claim_code(lambda: journal.claim_effect(ctx, operation_id, kind=requested_kind, now=113,
+                                                      revalidate_grant=GRANT_OK)) \
         == 'operation_kind_mismatch'
     assert state_of(db, operation_id) == 'APPROVED'
 
@@ -461,7 +466,8 @@ def test_a9_a10_a_stage_without_an_integrated_owner_is_never_claimed(db, chain, 
     ctx = ctx_with('hermes:repo:pr', 'hermes:repo:merge', 'hermes:deploy')
     operation_id, _source, _run_id = approved_apply(journal, ctx, chain)
     retag(db, operation_id, kind)
-    assert claim_code(lambda: journal.claim_effect(ctx, operation_id, kind=kind, now=113)) \
+    assert claim_code(lambda: journal.claim_effect(ctx, operation_id, kind=kind, now=113,
+                                                      revalidate_grant=GRANT_OK)) \
         == 'unsupported_operation'
     assert state_of(db, operation_id) == 'APPROVED'
 

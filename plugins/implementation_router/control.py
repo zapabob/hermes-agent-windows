@@ -52,11 +52,12 @@ class EngineeringRunOwner:
 
     def start_approved(self, ctx, operation_id: str) -> RunHandle:
         try:
-            self.revalidate_grant(ctx, now=self.clock())
-        except Exception:
-            _record(self.journal.block_unexecuted, operation_id, now=self.clock())
-            raise ControlError('revoked_grant') from None
-        request = self.journal.claim_approved(ctx, operation_id, now=self.clock())
+            request = self.journal.claim_approved(ctx, operation_id, now=self.clock(),
+                                                  revalidate_grant=self.revalidate_grant)
+        except ControlError as exc:
+            if exc.code == 'revoked_grant':
+                _record(self.journal.block_unexecuted, operation_id, now=self.clock())
+            raise
         run_id = 'eng-' + uuid.uuid4().hex
         generation = uuid.uuid4().hex
         # The request is an immutable journal copy. The owner validates the

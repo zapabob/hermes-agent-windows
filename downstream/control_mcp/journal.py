@@ -11,6 +11,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -50,7 +51,7 @@ _TERMINAL = frozenset({'SUCCEEDED','FAILED','DENIED','EXPIRED','CONFLICT','BLOCK
 # APPROVED -> RUNNING exists only inside claim_approved, after binding and fence checks.
 _EDGES = {'APPROVED': {'CONFLICT','BLOCKED'},
           'RUNNING': {'SUCCEEDED','FAILED','BLOCKED','UNKNOWN'}}
-_SCHEMA_VERSION = 3
+_SCHEMA_VERSION = 4
 # Outcomes a retry may be answered with; UNKNOWN never carries a result.
 _RESULT_STATES = frozenset({'SUCCEEDED', 'FAILED', 'BLOCKED'})
 _RESULT_CODE = re.compile(r'[a-z][a-z0-9_]{0,79}\Z')
@@ -299,6 +300,27 @@ def _check_receipt(receipt, params):
         raise ControlError('reverify_required')
 
 
+def _is_str(pattern):
+    return lambda value: type(value) is str and pattern.match(value) is not None
+
+
+_EFFECT_EVIDENCE_FIELDS = {
+    'outcome': lambda value: value == 'destination_written',
+    'destination_ref': _is_str(_DESTINATION_REF),
+    'previous_revision': _is_str(_HEX40),
+    # Same object format as previous_revision, which must equal the approved expected_revision.
+    'new_revision': _is_str(_HEX40),
+    'candidate_digest': _is_str(_HEX64),
+}
+
+
+def _valid_effect_evidence(evidence):
+    if (type(evidence) is not dict or set(evidence) != set(_EFFECT_EVIDENCE_FIELDS)
+            or not all(valid(evidence[key]) for key, valid in _EFFECT_EVIDENCE_FIELDS.items())):
+        raise ControlError('invalid_effect_evidence')
+    return evidence
+
+
 def _public(row):
     public = {key:row[key] for key in ('operation_id','profile_id','workspace_id','kind','state',
                                        'intent_digest','expected_revision','source_sha','expires_at')}
@@ -366,6 +388,19 @@ _V2_STATEMENTS = tuple(
 )
 # The recorded outcome is the only replay cache: it commits with the terminal state.
 _V3_STATEMENTS = ('ALTER TABLE control_operations ADD COLUMN result_json TEXT',)
+# A landed destination effect is witnessed even by an owner that has since been
+# displaced; the witness is append-only and confers no authority.
+_V4_STATEMENTS = (
+    '''CREATE TABLE control_effect_evidence (
+        sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+        operation_id TEXT NOT NULL REFERENCES control_operations(operation_id),
+        recorder_epoch TEXT NOT NULL, recorded_at REAL NOT NULL,
+        evidence_json TEXT NOT NULL)''',
+    '''CREATE TRIGGER control_effect_evidence_no_update BEFORE UPDATE ON control_effect_evidence
+        BEGIN SELECT RAISE(ABORT, 'append_only'); END''',
+    '''CREATE TRIGGER control_effect_evidence_no_delete BEFORE DELETE ON control_effect_evidence
+        BEGIN SELECT RAISE(ABORT, 'append_only'); END''',
+)
 
 
 class HostControlJournal:
@@ -450,11 +485,12 @@ class HostControlJournal:
                 conn.execute('BEGIN IMMEDIATE')
                 try:
                     version=conn.execute('PRAGMA user_version').fetchone()[0]
-                    if version not in (0,1,2,_SCHEMA_VERSION):
+                    if version not in (0,1,2,3,_SCHEMA_VERSION):
                         raise ControlError('unsupported_journal_version')
                     for statement in ((_V1_STATEMENTS if version<1 else ())
                                       +(_V2_STATEMENTS if version<2 else ())
-                                      +(_V3_STATEMENTS if version<3 else ())):
+                                      +(_V3_STATEMENTS if version<3 else ())
+                                      +(_V4_STATEMENTS if version<4 else ())):
                         conn.execute(statement)
                     conn.execute(f'PRAGMA user_version={_SCHEMA_VERSION}')
                     conn.execute("UPDATE control_owner_epochs SET closed_at=?,close_reason='restart' WHERE closed_at IS NULL",(stamp,))
@@ -713,11 +749,12 @@ class HostControlJournal:
             return _public(conn.execute('SELECT * FROM control_operations WHERE operation_id=?',
                                         (operation_id,)).fetchone())
 
-    def claim_approved(self, ctx, operation_id, *, now):
+    def claim_approved(self, ctx, operation_id, *, revalidate_grant, now):
         """Claim an approved scratch execute; see claim_effect."""
-        return self.claim_effect(ctx, operation_id, kind='start_engineering_run', now=now)
+        return self.claim_effect(ctx, operation_id, kind='start_engineering_run', now=now,
+                                 revalidate_grant=revalidate_grant)
 
-    def claim_apply(self, ctx, operation_id, *, receipt_for, now):
+    def claim_apply(self, ctx, operation_id, *, revalidate_grant, receipt_for, now):
         """Claim an approved apply once its trusted receipt matches the approved result.
 
         receipt_for(profile_id, workspace_id, source_operation_id, run_id) is the
@@ -726,14 +763,18 @@ class HostControlJournal:
         never writes to this journal; any failure means reverification.
         """
         return self.claim_effect(ctx, operation_id, kind='apply_verified_result', now=now,
-                                 receipt_for=receipt_for)
+                                 revalidate_grant=revalidate_grant, receipt_for=receipt_for)
 
-    def claim_effect(self, ctx, operation_id, *, kind, now, receipt_for=None):
-        """The only APPROVED -> RUNNING path: principal, arguments, kind, state, fence, then RUNNING.
+    def claim_effect(self, ctx, operation_id, *, kind, now, revalidate_grant, receipt_for=None):
+        """The only APPROVED -> RUNNING path: principal, arguments, kind, state, fence, grant, then RUNNING.
 
         Binding checks precede state so a replay of a consumed approval is
         classified by who and what it names before it learns the outcome. An
         approval authorises exactly the kind it was issued for.
+
+        revalidate_grant(ctx, now=...) rechecks the live grant inside this write
+        transaction, so no revocation can fall between the check and RUNNING;
+        it must read the grant store only and never write to this journal.
         """
         with self._transaction() as conn:
             self._require_epoch(conn)
@@ -762,6 +803,10 @@ class HostControlJournal:
             if row['state'] != 'APPROVED' or row['expires_at'] <= now:
                 raise ControlError('operation_conflict')
             self._check_authority(row, epoch_column='approved_epoch')
+            try:
+                revalidate_grant(ctx, now=now)
+            except Exception:
+                raise ControlError('revoked_grant') from None
             if kind == 'apply_verified_result':
                 params = request['parameters']
                 try:
@@ -800,3 +845,45 @@ class HostControlJournal:
                          (new_state,now,stored,operation_id))
             if new_state in _TERMINAL:
                 conn.execute('DELETE FROM control_reservations WHERE operation_id=?',(operation_id,))
+
+    def append_effect_evidence(self, operation_id, *, now, evidence):
+        """Witness a destination write that has already landed; never authority.
+
+        Deliberately not epoch-gated: if another handle closes this handle's
+        epoch while the destination write is in flight, the witness still
+        lands, so reconciliation's UNKNOWN is never the only record of a
+        landed effect. A closed handle cannot witness. The witness must match
+        the approved apply intent exactly; it changes no state and no
+        reservation.
+        """
+        if self._epoch_id is None:
+            raise ControlError('owner_epoch_required')
+        if type(now) not in (int, float) or not math.isfinite(now):
+            raise ControlError('invalid_effect_evidence')
+        stored = canonical_json(_valid_effect_evidence(evidence)).decode('utf-8')
+        with self._transaction() as conn:
+            row = conn.execute('SELECT kind,state,request_json FROM control_operations WHERE operation_id=?',
+                               (operation_id,)).fetchone()
+            if row is None:
+                raise ControlError('operation_conflict')
+            if row['kind'] != 'apply_verified_result' or row['state'] not in ('RUNNING', 'UNKNOWN'):
+                raise ControlError('operation_conflict')
+            request = json.loads(row['request_json'])
+            params = request['parameters']
+            if (evidence['destination_ref'] != params['destination_ref']
+                    or evidence['previous_revision'] != request['expected_revision']
+                    or evidence['candidate_digest'] != params['candidate_digest']):
+                raise ControlError('invalid_effect_evidence')
+            conn.execute('INSERT INTO control_effect_evidence(operation_id,recorder_epoch,recorded_at,evidence_json) '
+                         'VALUES (?,?,?,?)', (operation_id, self._epoch_id, now, stored))
+
+    def effect_evidence(self, operation_id):
+        """Trusted host forensics: every witness for an operation, oldest first.
+
+        A retried witness appends again; readers take the first row.
+        """
+        with self._connection(readonly=True) as conn:
+            return [{'recorder_epoch': row['recorder_epoch'], 'recorded_at': row['recorded_at'],
+                     'evidence': json.loads(row['evidence_json'])}
+                    for row in conn.execute('SELECT * FROM control_effect_evidence WHERE operation_id=? '
+                                            'ORDER BY sequence', (operation_id,))]

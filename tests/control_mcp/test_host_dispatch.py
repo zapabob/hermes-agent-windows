@@ -37,7 +37,8 @@ def test_dispatcher_requires_bound_human_decision_once(
             assert get_hermes_home() == profile_home
             assert sensitive_context.get() is None
             calls.append(operation_id)
-            journal.claim_approved(actual_ctx, operation_id, now=104)
+            journal.claim_approved(actual_ctx, operation_id, now=104,
+                                   revalidate_grant=lambda _ctx, *, now: None)
             journal.transition(operation_id, expected_state='RUNNING',
                                new_state='SUCCEEDED', now=105)
             executed.set()
