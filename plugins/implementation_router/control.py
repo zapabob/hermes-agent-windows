@@ -141,7 +141,8 @@ class EngineeringRunOwner:
                     set_interrupt(False, tid)
                     del self._active[run_id]
             _record(self.journal.transition, operation_id, expected_state='RUNNING',
-                    new_state=state, now=self.clock())
+                    new_state=state, now=self.clock(),
+                    result=result if state != 'UNKNOWN' else None)
         return result
 
     def _cancelled(self, run_id, generation):

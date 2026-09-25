@@ -44,7 +44,10 @@ _TERMINAL = frozenset({'SUCCEEDED','FAILED','DENIED','EXPIRED','CONFLICT','BLOCK
 # APPROVED -> RUNNING exists only inside claim_approved, after binding and fence checks.
 _EDGES = {'APPROVED': {'CONFLICT','BLOCKED'},
           'RUNNING': {'SUCCEEDED','FAILED','BLOCKED','UNKNOWN'}}
-_SCHEMA_VERSION = 2
+_SCHEMA_VERSION = 3
+# Outcomes a retry may be answered with; UNKNOWN never carries a result.
+_RESULT_STATES = frozenset({'SUCCEEDED', 'FAILED', 'BLOCKED'})
+_RESULT_CODE = re.compile(r'[a-z][a-z0-9_]{0,79}\Z')
 _APPROVAL_CHOICES = ('once', 'deny')
 _APPROVAL_TIMEOUT_BOUNDS = (1, 600)
 _PREVIEW_CHARS = 2500
@@ -213,8 +216,37 @@ def _validate_request(ctx, request, now):
 
 
 def _public(row):
-    return {key:row[key] for key in ('operation_id','profile_id','workspace_id','kind','state',
-                                     'intent_digest','expected_revision','source_sha','expires_at')}
+    public = {key:row[key] for key in ('operation_id','profile_id','workspace_id','kind','state',
+                                       'intent_digest','expected_revision','source_sha','expires_at')}
+    if 'result_json' in row.keys() and row['result_json'] is not None:
+        public['result'] = json.loads(row['result_json'])
+    return public
+
+
+def _count(value):
+    return type(value) is int and 0 <= value <= 2**31
+
+
+_RESULT_FIELDS = {
+    'run_id': valid_id,
+    'reason_code': lambda value: type(value) is str and _RESULT_CODE.fullmatch(value) is not None,
+    'stage_calls': _count,
+    'revision': _count,
+}
+
+
+def _result_json(state, result):
+    """The durable answer to a retry: identity and stable codes only.
+
+    Readable by any hermes:read principal, so host paths and diagnostics are
+    never stored; an invalid field is dropped rather than blocking the state.
+    """
+    kept = {'state': state}
+    if type(result) is dict:
+        for key, valid in _RESULT_FIELDS.items():
+            if key in result and (key == 'run_id' or result.get('state') == state) and valid(result[key]):
+                kept[key] = result[key]
+    return canonical_json(kept).decode('utf-8')
 
 
 _V1_STATEMENTS = (
@@ -248,6 +280,8 @@ _V2_STATEMENTS = tuple(
     '''CREATE UNIQUE INDEX control_one_open_epoch
         ON control_owner_epochs((closed_at IS NULL)) WHERE closed_at IS NULL''',
 )
+# The recorded outcome is the only replay cache: it commits with the terminal state.
+_V3_STATEMENTS = ('ALTER TABLE control_operations ADD COLUMN result_json TEXT',)
 
 
 class HostControlJournal:
@@ -332,10 +366,11 @@ class HostControlJournal:
                 conn.execute('BEGIN IMMEDIATE')
                 try:
                     version=conn.execute('PRAGMA user_version').fetchone()[0]
-                    if version not in (0,1,_SCHEMA_VERSION):
+                    if version not in (0,1,2,_SCHEMA_VERSION):
                         raise ControlError('unsupported_journal_version')
                     for statement in ((_V1_STATEMENTS if version<1 else ())
-                                      +(_V2_STATEMENTS if version<2 else ())):
+                                      +(_V2_STATEMENTS if version<2 else ())
+                                      +(_V3_STATEMENTS if version<3 else ())):
                         conn.execute(statement)
                     conn.execute(f'PRAGMA user_version={_SCHEMA_VERSION}')
                     conn.execute("UPDATE control_owner_epochs SET closed_at=?,close_reason='restart' WHERE closed_at IS NULL",(stamp,))
@@ -498,9 +533,28 @@ class HostControlJournal:
         with self._connection(readonly=True) as conn:
             return self._binding(self._owned(conn,ctx,operation_id,now))
 
+    def _repeated_denial(self,conn,ctx,operation_id,decision,now):
+        """A duplicated deny for this exact operation answers DENIED without a transition."""
+        from tools.approval import ControlDecision
+        self._require_epoch(conn)
+        row=conn.execute('SELECT * FROM control_operations WHERE operation_id=?',(operation_id,)).fetchone()
+        if (row is None or row['state']!='DENIED' or type(decision) is not ControlDecision
+                or decision.choice!='deny' or decision.binding.operation_id!=operation_id):
+            return None
+        require_access(ctx,scope=SCOPES[row['kind']],profile_id=row['profile_id'],workspace_id=row['workspace_id'],now=now)
+        if (row['subject']!=ctx.subject or row['client_registration']!=ctx.client_registration
+                or row['resource']!=ctx.resource or row['grant_revision']!=ctx.grant_revision):
+            raise ControlError('resource_denied')
+        if decision.binding!=self._binding(row):
+            raise ControlError('approval_required')
+        return _public(row)
+
     def approve(self,ctx,operation_id,decision,*,now):
         from tools.approval import consume_control_verdict
         with self._transaction() as conn:
+            repeated=self._repeated_denial(conn,ctx,operation_id,decision,now)
+            if repeated is not None:
+                return repeated
             row=self._owned(conn,ctx,operation_id,now)
             verdict = consume_control_verdict(decision,self._binding(row),now=now)
             if verdict is None:
@@ -569,7 +623,11 @@ class HostControlJournal:
                                         (operation_id,)).fetchone())
 
     def claim_approved(self, ctx, operation_id, *, now):
-        """The only APPROVED -> RUNNING path: principal, state, fence, arguments, then RUNNING."""
+        """The only APPROVED -> RUNNING path: principal, arguments, state, fence, then RUNNING.
+
+        Binding checks precede state so a replay of a consumed approval is
+        classified by who and what it names before it learns the outcome.
+        """
         with self._transaction() as conn:
             self._require_epoch(conn)
             row = conn.execute('SELECT * FROM control_operations WHERE operation_id=?',
@@ -581,10 +639,6 @@ class HostControlJournal:
             if (row['subject'] != ctx.subject or row['client_registration'] != ctx.client_registration
                     or row['resource'] != ctx.resource or row['grant_revision'] != ctx.grant_revision):
                 raise ControlError('resource_denied')
-            if (row['kind'] != 'start_engineering_run' or row['state'] != 'APPROVED'
-                    or row['expires_at'] <= now):
-                raise ControlError('operation_conflict')
-            self._check_authority(row, epoch_column='approved_epoch')
             try:
                 request = json.loads(row['request_json'])
                 matches = canonical_intent_digest(request) == row['intent_digest']
@@ -592,18 +646,28 @@ class HostControlJournal:
                 matches = False
             if not matches:
                 raise ControlError('argument_mismatch')
-            conn.execute("UPDATE control_operations SET state='RUNNING',updated_at=? WHERE operation_id=?",
-                         (now, operation_id))
+            if (row['kind'] != 'start_engineering_run' or row['state'] != 'APPROVED'
+                    or row['expires_at'] <= now):
+                raise ControlError('operation_conflict')
+            self._check_authority(row, epoch_column='approved_epoch')
+            claimed = conn.execute("UPDATE control_operations SET state='RUNNING',updated_at=? "
+                                   "WHERE operation_id=? AND state='APPROVED'", (now, operation_id))
+            if claimed.rowcount != 1:
+                raise ControlError('operation_conflict')
             return request
 
-    def transition(self,operation_id,*,expected_state,new_state,now):
+    def transition(self,operation_id,*,expected_state,new_state,now,result=None):
         """Trusted host outcome recording only; not an exported tool or arbitrary setter.
 
         Checks the owner epoch but not authority revisions: an outcome of an
-        already-claimed effect must be recordable after a policy change.
+        already-claimed effect must be recordable after a policy change. Only a
+        known outcome of a claimed run stores a result, atomically with its
+        state; a recorded result is never replaced.
         """
         if new_state not in _EDGES.get(expected_state,set()):
             raise ControlError('invalid_transition')
+        known=result is not None and expected_state=='RUNNING' and new_state in _RESULT_STATES
+        stored=_result_json(new_state,result) if known else None
         with self._transaction() as conn:
             self._require_epoch(conn)
             row=conn.execute('SELECT * FROM control_operations WHERE operation_id=?',(operation_id,)).fetchone()
@@ -611,6 +675,8 @@ class HostControlJournal:
                 raise ControlError('operation_conflict')
             if expected_state=='APPROVED' and now>=row['expires_at']:
                 raise ControlError('expired_approval')
-            conn.execute('UPDATE control_operations SET state=?,updated_at=? WHERE operation_id=?',(new_state,now,operation_id))
+            conn.execute('UPDATE control_operations SET state=?,updated_at=?,result_json=COALESCE(result_json,?) '
+                         'WHERE operation_id=?',
+                         (new_state,now,stored,operation_id))
             if new_state in _TERMINAL:
                 conn.execute('DELETE FROM control_reservations WHERE operation_id=?',(operation_id,))
