@@ -226,20 +226,81 @@ class TestBatchRunnerCallableHandling:
         )
         assert worker_api_key_str == "sk-static"
 
-    def test_batch_runner_source_uses_the_correct_predicate(self):
-        """Pin the predicate string in batch_runner so refactors that
-        change it are caught here. Reading the source rather than
-        importing avoids spinning up the full BatchRunner."""
-        from pathlib import Path
+    def test_run_hands_workers_a_picklable_config_without_the_callable(
+        self, monkeypatch, tmp_path
+    ):
+        """Drive the real ``BatchRunner.run`` up to the pool dispatch and
+        inspect the worker config it hands to ``multiprocessing.Pool``."""
+        import pickle
 
-        src = (
-            Path(__file__).resolve().parent.parent.parent / "batch_runner.py"
-        ).read_text()
-        assert "callable(self.api_key) and not isinstance(self.api_key, str)" in src, (
-            "BatchRunner.api_key callable check changed — update test or "
-            "verify the new predicate still routes Entra token providers "
-            "to the worker-rebuild path."
+        import batch_runner
+
+        dispatched = []
+
+        class _StopAfterDispatch(Exception):
+            pass
+
+        class _CapturingPool:
+            def __init__(self, processes=None):
+                pass
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+            def imap_unordered(self, func, tasks):
+                dispatched.extend(tasks)
+                raise _StopAfterDispatch
+
+            def terminate(self):
+                pass
+
+            def join(self):
+                pass
+
+        monkeypatch.setattr(batch_runner, "Pool", _CapturingPool)
+
+        invoked = {"count": 0}
+
+        def provider():
+            invoked["count"] += 1
+            return "jwt"
+
+        runner = batch_runner.BatchRunner.__new__(batch_runner.BatchRunner)
+        runner.__dict__.update(
+            api_key=provider,
+            run_name="callable-key-run",
+            batches=[[(0, {"prompt": "hello"})]],
+            output_dir=tmp_path,
+            num_workers=1,
+            distribution="default",
+            model="gpt-4o",
+            max_iterations=1,
+            base_url="https://r.openai.azure.com/openai/v1",
+            verbose=False,
+            ephemeral_system_prompt=None,
+            log_prefix_chars=100,
+            providers_allowed=None,
+            providers_ignored=None,
+            providers_order=None,
+            provider_sort=None,
+            openrouter_min_coding_score=None,
+            max_tokens=None,
+            reasoning_config=None,
+            prefill_messages=None,
         )
+        monkeypatch.setattr(runner, "_load_checkpoint", lambda: {})
+
+        with pytest.raises(_StopAfterDispatch):
+            runner.run(resume=False)
+
+        assert len(dispatched) == 1
+        worker_config = dispatched[0][-1]
+        assert worker_config["api_key"] is None
+        pickle.dumps(dispatched[0])
+        assert invoked["count"] == 0
 
 
 # ---------------------------------------------------------------------------
@@ -256,24 +317,61 @@ class TestCliEnsureRuntimeCredentialsCallable:
     sites — gated by ``not isinstance(api_key, str)`` rather than the
     cleaner ``callable(...)`` check used elsewhere.
 
-    We verify the source pattern (rather than spinning up a real
-    ``HermesCLI`` instance) — the predicate change is the load-bearing
-    fix and is invariant under the surrounding orchestration code."""
+    The mixin method runs for real against a minimal host object; only
+    provider resolution is stubbed."""
 
-    def test_callable_predicate_present_in_cli_runtime_validation(self):
-        from pathlib import Path
-        # ``_ensure_runtime_credentials`` was extracted from cli.py into the
-        # ``CLIAgentSetupMixin`` (god-file decomposition Phase 4). Read the
-        # module the method actually lives in now.
-        src = (Path(__file__).resolve().parent.parent.parent
-               / "hermes_cli" / "cli_agent_setup_mixin.py").read_text()
-        # The fix introduces ``_is_callable_provider`` which gates the
-        # string-only check so callable token providers survive.
-        assert "_is_callable_provider = callable(api_key)" in src, (
-            "_ensure_runtime_credentials must preserve a callable "
-            "api_key (Entra ID bearer provider). Without the guard, the "
-            "callable is stringified to 'no-key-required' and Azure 401s."
+    def test_callable_api_key_survives_runtime_credential_resolution(
+        self, monkeypatch
+    ):
+        import hermes_cli.runtime_provider as runtime_provider
+        from hermes_cli.cli_agent_setup_mixin import CLIAgentSetupMixin
+
+        invoked = {"count": 0}
+
+        def provider():
+            invoked["count"] += 1
+            return "jwt"
+
+        base_url = "https://r.openai.azure.com/openai/v1"
+        monkeypatch.setattr(
+            runtime_provider,
+            "resolve_runtime_provider",
+            lambda **_kwargs: {
+                "provider": "azure-foundry",
+                "api_mode": "chat_completions",
+                "base_url": base_url,
+                "api_key": provider,
+                "model": "gpt-4o",
+                "source": "config",
+            },
         )
+
+        class _Host(CLIAgentSetupMixin):
+            def _normalize_model_for_provider(self, _provider):
+                return False
+
+        host = _Host()
+        host.__dict__.update(
+            requested_provider="azure-foundry",
+            _explicit_api_key=None,
+            _explicit_base_url=None,
+            _fallback_model=[],
+            api_mode="chat_completions",
+            api_key=None,
+            base_url=None,
+            provider=None,
+            acp_command=None,
+            acp_args=[],
+            model="gpt-4o",
+            agent=None,
+        )
+
+        assert host._ensure_runtime_credentials() is True
+        # Without the callable guard the provider is replaced with the
+        # "no-key-required" placeholder and Azure answers 401.
+        assert host.api_key is provider
+        assert host.base_url == base_url
+        assert invoked["count"] == 0
 
 
 class TestInlinedDisplayMasks:
@@ -285,47 +383,92 @@ class TestInlinedDisplayMasks:
     that would have forced one mask shape across sites with legitimately
     different display needs (banner vs diagnostic vs UI vs preview)."""
 
-    def test_run_agent_banner_uses_is_token_provider_guard(self):
-        """The masked-banner sites live in ``agent/agent_init.py``
-        (the ``__init__`` body was extracted into ``init_agent`` after
-        this feature was first written). Both the OpenAI and Anthropic
-        client init paths must guard their banner prints with
-        ``is_token_provider`` so a callable Entra ID provider doesn't
-        crash ``len(api_key)``."""
-        from pathlib import Path
+    @staticmethod
+    def _build_agent(api_key, **overrides):
+        from unittest.mock import patch
 
-        src = (
-            Path(__file__).resolve().parent.parent.parent / "agent" / "agent_init.py"
-        ).read_text()
-        assert src.count("is_token_provider(") >= 2, (
-            "agent/agent_init.py must guard BOTH masked-banner paths "
-            "(chat_completions and anthropic_messages) with "
-            "is_token_provider()."
+        from run_agent import AIAgent
+
+        kwargs = dict(
+            api_key=api_key,
+            base_url="https://r.openai.azure.com/openai/v1",
+            provider="azure-foundry",
+            model="gpt-4o",
+            quiet_mode=False,
+            skip_context_files=True,
+            skip_memory=True,
         )
-        assert src.count('"🔑 Using credentials: Microsoft Entra ID"') >= 2, (
-            "agent/agent_init.py banner blocks should print a static "
-            "'Microsoft Entra ID' label for callable api_keys — no "
-            "placeholder plumbing, no describe-mask fallback."
+        kwargs.update(overrides)
+        with (
+            patch("run_agent.get_tool_definitions", return_value=[]),
+            patch("run_agent.check_toolset_requirements", return_value={}),
+            patch("run_agent.OpenAI"),
+            patch("agent.anthropic_adapter.build_anthropic_client"),
+        ):
+            return AIAgent(**kwargs)
+
+    def test_chat_completions_banner_labels_callable_as_entra(self, capsys):
+        """The OpenAI-wire init banner in ``agent/agent_init.py`` must
+        label a callable key instead of slicing or measuring it."""
+
+        def provider():
+            return "jwt"
+
+        self._build_agent(provider, api_mode="chat_completions")
+
+        out = capsys.readouterr().out
+        assert "🔑 Using credentials: Microsoft Entra ID" in out
+        assert "<function" not in out
+
+    def test_anthropic_banner_labels_callable_as_entra(self, capsys):
+        """The anthropic_messages init banner must use the same label."""
+
+        def provider():
+            return "jwt"
+
+        self._build_agent(
+            provider,
+            api_mode="anthropic_messages",
+            base_url="https://r.services.ai.azure.com/anthropic",
+            model="claude-sonnet-4-5",
         )
 
-    def test_cli_show_config_handles_callable(self):
+        out = capsys.readouterr().out
+        assert "(Anthropic native)" in out
+        assert "🔑 Using credentials: Microsoft Entra ID" in out
+        assert "<function" not in out
+
+    def test_cli_show_config_handles_callable(self, capsys):
         """``cli.HermesCLI.show_config`` previously did
         ``self.api_key[-4:]`` / ``len(self.api_key)`` which crashes on
-        callable Entra ID providers. The inlined version uses
-        ``is_token_provider`` and prints the same static label as the
-        run_agent banners."""
-        from pathlib import Path
-        src = (Path(__file__).resolve().parent.parent.parent
-               / "cli.py").read_text()
-        assert "is_token_provider(display_key)" in src, (
-            "cli.HermesCLI.show_config must guard the displayed key via "
-            "is_token_provider so callable Entra ID providers don't "
-            "crash /config."
+        callable Entra ID providers. It must print the same static label
+        as the agent banners and never invoke the callable."""
+        from datetime import datetime
+        from types import SimpleNamespace
+
+        from cli import HermesCLI
+
+        invoked = {"count": 0}
+
+        def provider():
+            invoked["count"] += 1
+            return "jwt"
+
+        host = SimpleNamespace(
+            api_key=provider,
+            agent=None,
+            model="gpt-4o",
+            base_url="https://r.openai.azure.com/openai/v1",
+            max_turns=10,
+            enabled_toolsets=None,
+            verbose=False,
+            session_start=datetime(2026, 1, 1),
         )
-        assert '"Microsoft Entra ID"' in src, (
-            "cli.HermesCLI.show_config must print the static "
-            "'Microsoft Entra ID' label (matching run_agent banners) "
-            "instead of attempting to slice the callable."
-        )
+        HermesCLI.show_config(host)
+
+        out = capsys.readouterr().out
+        assert "API Key:   Microsoft Entra ID" in out
+        assert "<function" not in out
+        assert invoked["count"] == 0
 
 

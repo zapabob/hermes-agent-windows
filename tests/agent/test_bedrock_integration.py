@@ -268,7 +268,7 @@ class TestPackaging:
         import tomllib
         from pathlib import Path
 
-        content = (Path(__file__).parent.parent.parent / "pyproject.toml").read_text()
+        content = (Path(__file__).parent.parent.parent / "pyproject.toml").read_text(encoding="utf-8")
         return tomllib.loads(content)["project"]["optional-dependencies"]
 
     def test_bedrock_extra_exists(self):
