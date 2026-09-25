@@ -1,11 +1,20 @@
 """Host admission waits for the existing human approval owner before execution."""
 from concurrent.futures import ThreadPoolExecutor
 from contextvars import ContextVar
+import hashlib
+import json
 import threading
 
 
+def rendered_digest(payload):
+    # What a human UI computes over the presentation it rendered.
+    return hashlib.sha256(json.dumps(payload['control']['presentation'], ensure_ascii=False, sort_keys=True,
+                                     separators=(',', ':')).encode('utf-8')).hexdigest()
+
+
 def test_dispatcher_requires_bound_human_decision_once(
-        control_module, control_context, tmp_path):
+        control_module, control_context, tmp_path, host_config):
+    from tests.control_mcp.conftest import engineering_config
     from downstream.control_mcp.coordinator import HostControlCoordinator
     from tools import approval
     from hermes_constants import (get_hermes_home, set_hermes_home_override,
@@ -35,6 +44,7 @@ def test_dispatcher_requires_bound_human_decision_once(
 
     approval.register_gateway_notify('human-dispatch', displayed.append)
     profile_token = set_hermes_home_override(profile_home)
+    host_config(engineering_config())  # the reserving profile's own picker selection
     secret_token = sensitive_context.set('secret')
     try:
         with ThreadPoolExecutor(max_workers=2) as pool:
@@ -50,7 +60,8 @@ def test_dispatcher_requires_bound_human_decision_once(
             assert not executed.is_set()
             assert approval.resolve_control_consent(
                 session_key='human-dispatch', request_id=displayed[0]['request_id'],
-                intent_digest=first['intent_digest'], choice='once', now=103)
+                intent_digest=first['intent_digest'], choice='once', now=103,
+                presentation_digest=rendered_digest(displayed[0]))
             assert executed.wait(5)
         assert calls == [first['operation_id']]
     finally:
@@ -191,7 +202,8 @@ def test_revoked_grant_after_human_once_never_dispatches(
             revoked.set()
             assert approval.resolve_control_consent(
                 session_key='human-revoked', request_id=displayed[0]['request_id'],
-                intent_digest=operation['intent_digest'], choice='once', now=103)
+                intent_digest=operation['intent_digest'], choice='once', now=103,
+                presentation_digest=rendered_digest(displayed[0]))
             futures[0].result(timeout=5)
         assert executed == []
         assert journal.get(ctx, operation['operation_id'], profile_id='p1',

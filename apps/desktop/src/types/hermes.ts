@@ -665,6 +665,7 @@ export interface SessionResumeResponse {
       grant_revision?: number
       intent_digest?: string
       operation_id?: string
+      presentation?: Record<string, unknown>
       resource?: string
     }
     description?: string

@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 import fnmatch
 import functools
 import hashlib
+import json
 import logging
 import os
 import posixpath
@@ -3041,6 +3042,9 @@ def resolve_gateway_approval(session_key: str, choice: str,
 # Strict control approvals remain in this module's existing authority/queue.
 # None of the functions below is a model-callable approval endpoint. A trusted
 # host human UI must authenticate and bind its session before calling resolve.
+_MISSING_FIELD = object()
+
+
 @dataclass(frozen=True)
 class ControlApprovalBinding:
     operation_id: str
@@ -3053,19 +3057,49 @@ class ControlApprovalBinding:
     workspace_id: str
     expires_at: int
     description: str
+    owner_epoch: str
+    policy_revision: str
+    tool_revision: str
+    route_revision: str
+    provider_revision: str
+    presentation_json: str
+    presentation_digest: str
 
     def __post_init__(self):
         fields = (self.operation_id, self.subject, self.client_registration,
-                  self.profile_id, self.workspace_id)
+                  self.profile_id, self.workspace_id, self.tool_revision)
+        optional = (self.route_revision, self.provider_revision)
         if (any(type(v) is not str or not v or len(v) > 128 or any(ord(c) < 32 for c in v) for v in fields)
+                or any(type(v) is not str or len(v) > 128 or any(ord(c) < 32 for c in v) for v in optional)
                 or type(self.resource) is not str or not self.resource
                 or len(self.resource) > 2048 or any(ord(c) < 33 for c in self.resource)
                 or type(self.grant_revision) is not int or self.grant_revision < 1
-                or type(self.intent_digest) is not str
-                or not re.fullmatch(r"[a-f0-9]{64}", self.intent_digest)
+                or any(type(v) is not str or not re.fullmatch(r"[a-f0-9]{64}", v)
+                       for v in (self.intent_digest, self.policy_revision, self.presentation_digest))
+                or type(self.owner_epoch) is not str or not re.fullmatch(r"[a-f0-9]{32}", self.owner_epoch)
                 or type(self.expires_at) is not int or self.expires_at < 0
                 or type(self.description) is not str or not self.description.strip()
-                or len(self.description) > 6144):
+                or len(self.description) > 6144
+                or type(self.presentation_json) is not str or len(self.presentation_json) > 65536
+                or hashlib.sha256(self.presentation_json.encode("utf-8")).hexdigest()
+                != self.presentation_digest):
+            raise ValueError("invalid_control_approval_binding")
+        try:
+            presentation = json.loads(self.presentation_json)
+        except ValueError:
+            raise ValueError("invalid_control_approval_binding") from None
+        if type(presentation) is not dict:
+            raise ValueError("invalid_control_approval_binding")
+        canonical = json.dumps(presentation, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        bound = {"operation_id": self.operation_id, "subject": self.subject,
+                 "client_registration": self.client_registration, "resource": self.resource,
+                 "grant_revision": self.grant_revision, "profile_id": self.profile_id,
+                 "workspace_id": self.workspace_id, "owner_epoch": self.owner_epoch,
+                 "policy_revision": self.policy_revision, "tool_revision": self.tool_revision,
+                 "route_revision": self.route_revision, "provider_revision": self.provider_revision}
+        # The human approves exactly the fields this binding carries.
+        if canonical != self.presentation_json or any(
+                presentation.get(key, _MISSING_FIELD) != value for key, value in bound.items()):
             raise ValueError("invalid_control_approval_binding")
 
 
@@ -3092,7 +3126,11 @@ class _ControlApprovalEntry(_ApprovalEntry):
                         "grant_revision": binding.grant_revision,
                         "profile_id": binding.profile_id,
                         "workspace_id": binding.workspace_id,
-                        "expires_at": deadline},
+                        "expires_at": deadline,
+                        # The UI renders this projection and returns a digest it
+                        # computed over what it rendered. The host digest is
+                        # withheld so it cannot simply be echoed back.
+                        "presentation": json.loads(binding.presentation_json)},
             "allowed_choices": ["once", "deny"],
         })
         self.binding, self.deadline, self.decision = binding, deadline, None
@@ -3164,12 +3202,15 @@ def cancel_control_consent(ticket: ControlApprovalTicket) -> bool:
 
 
 def resolve_control_consent(*, session_key: str, request_id: str, intent_digest: str,
-                            choice: str, now: float | None = None) -> bool:
+                            choice: str, now: float | None = None,
+                            presentation_digest: str | None = None) -> bool:
     """Trusted human surface ONLY; never export as an MCP/model tool.
 
     Caller authentication is the host UI's responsibility. This owner matches
     exact request/intent and permits only a one-use decision. A confirmation
     string from a model, remote MCP token or legacy event is not that surface.
+    Approval additionally requires the digest the UI computed over the
+    presentation it rendered; a denial never needs it.
     """
     stamp = time.time() if now is None else now
     if choice not in ("once", "deny"):
@@ -3180,6 +3221,8 @@ def resolve_control_consent(*, session_key: str, request_id: str, intent_digest:
             if not isinstance(entry, _ControlApprovalEntry) or entry.data["request_id"] != request_id:
                 continue
             if entry.deadline <= stamp or entry.binding.intent_digest != intent_digest:
+                return False
+            if choice == "once" and presentation_digest != entry.binding.presentation_digest:
                 return False
             entry.decision = ControlDecision(request_id, entry.binding, choice, entry.deadline)
             _control_decisions[request_id] = entry.decision

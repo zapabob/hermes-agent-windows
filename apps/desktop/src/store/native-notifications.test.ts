@@ -360,7 +360,7 @@ describe('respondToApprovalAction', () => {
     setApprovalRequest({
       command: 'Hermes control operation op-1', description: 'Start approved run',
       requestId: 'req-control', control: {
-        operationId: 'op-1', intentDigest: 'a'.repeat(64),
+        operationId: 'op-1', intentDigest: 'a'.repeat(64), presentation: null,
         resource: 'https://mcp.example.test/operations/run', grantRevision: 7
       },
       scope: gatewayScope('connection-a', 'source-profile'), sessionId: 'bg'
@@ -378,7 +378,7 @@ describe('respondToApprovalAction', () => {
     setApprovalRequest({
       command: 'Hermes control operation op-1', description: 'Start approved run',
       requestId: 'req-control', control: {
-        operationId: 'op-1', intentDigest: 'a'.repeat(64),
+        operationId: 'op-1', intentDigest: 'a'.repeat(64), presentation: null,
         resource: 'https://mcp.example.test/operations/run', grantRevision: 7
       },
       scope: gatewayScope('connection-a', 'source-profile'), sessionId: 'bg'
@@ -399,7 +399,7 @@ describe('respondToApprovalAction', () => {
     setApprovalRequest({
       command: 'Hermes control operation op-current', description: 'Current operation',
       requestId: 'req-current', control: {
-        operationId: 'op-current', intentDigest: 'c'.repeat(64),
+        operationId: 'op-current', intentDigest: 'c'.repeat(64), presentation: null,
         resource: 'https://mcp.example.test/operations/current', grantRevision: 8
       },
       scope: gatewayScope('connection-a', 'source-profile'), sessionId: 'bg'

@@ -9,6 +9,7 @@ from types import MappingProxyType
 
 from .auth import HostGrant, ResourceVerifier
 from .contracts import ControlError
+from .journal import HostControlJournal
 from .service import HostControlService
 from .transport import ControlMCPHost, create_control_mcp
 
@@ -39,6 +40,8 @@ class ControlMCPStartupConfig:
             or not callable(self.clock)
             or type(self.allowed_hosts) is not tuple
             or type(self.allowed_origins) is not tuple
+            or (self.service.journal is not None
+                and type(self.service.journal) is not HostControlJournal)
         ):
             raise ControlError("invalid_host_configuration")
         if not isinstance(self.public_keys, Mapping):
@@ -61,10 +64,16 @@ def build_control_mcp_host(config: ControlMCPStartupConfig) -> ControlMCPHost:
         grant_lookup=config.grant_lookup,
         max_token_lifetime=config.max_token_lifetime,
     )
-    return create_control_mcp(
+    host = create_control_mcp(
         config.service,
         verifier=verifier,
         allowed_hosts=config.allowed_hosts,
         allowed_origins=config.allowed_origins,
         clock=config.clock,
     )
+    # The only owner-epoch opener: invalid configuration above fails before the
+    # owner lock is taken, and reconciliation of an earlier owner's operations
+    # happens here, before any request can reach the journal.
+    if config.service.journal is not None:
+        config.service.journal.initialise(now=config.clock())
+    return host

@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useI18n } from '@/i18n'
+import { renderedPresentationDigest } from '@/lib/control-presentation'
 import { triggerHaptic } from '@/lib/haptics'
 import { AlertCircle, ChevronDown, Loader2 } from '@/lib/icons'
 import { cn } from '@/lib/utils'
@@ -104,6 +105,9 @@ export const PendingApprovalFallback: FC = () => {
   )
 }
 
+const presentationText = (value: unknown): string =>
+  typeof value === 'string' ? value : value === null || value === undefined ? '—' : JSON.stringify(value)
+
 const isMac = typeof navigator !== 'undefined' && /Mac|iP(hone|ad|od)/.test(navigator.platform)
 
 const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline' }> = ({ request, surface }) => {
@@ -127,6 +131,30 @@ const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline'
   const hasMoreOptions = allowSession || allowAlways
   const hasCommand = request.command.trim().length > 0
   const validControlBinding = !request.control || hasValidControlApprovalBinding(request.control)
+  const presentation = request.control?.presentation ?? null
+  const [renderedDigest, setRenderedDigest] = useState<string | null>(null)
+
+  useEffect(() => {
+    let current = true
+    setRenderedDigest(null)
+
+    if (presentation) {
+      void renderedPresentationDigest(presentation)
+        .catch(() => null)
+        .then(digest => {
+          if (current) {
+            setRenderedDigest(digest)
+          }
+        })
+    }
+
+    return () => {
+      current = false
+    }
+  }, [presentation])
+
+  // The host withholds its digest; it compares this one against the projection it bound.
+  const presentationMatches = !request.control || renderedDigest !== null
 
   const respond = useCallback(
     async (choice: ApprovalChoice) => {
@@ -147,7 +175,7 @@ const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline'
         return
       }
 
-      const target = approvalResponseForRequest(request, choice, activeRequest)
+      const target = approvalResponseForRequest(request, choice, activeRequest, renderedDigest)
 
       if (!target) {
         return
@@ -183,7 +211,7 @@ const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline'
         setSubmitting(null)
       }
     },
-    [busy, copy.gatewayDisconnected, copy.sendFailed, request]
+    [busy, copy.gatewayDisconnected, copy.sendFailed, renderedDigest, request]
   )
 
   // ⌘/Ctrl+Enter → Run, Esc → Reject.
@@ -230,6 +258,31 @@ const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline'
                   </code>
                 </dd>
               </div>
+              {presentation && (
+                <div
+                  className="max-h-64 min-w-0 space-y-1 overflow-auto rounded-md border border-(--ui-stroke-tertiary) px-2 py-1.5"
+                  data-slot="control-presentation"
+                >
+                  {Object.keys(presentation).sort().map(key => (
+                    <div className="min-w-0" key={key}>
+                      <dt className="font-mono text-(--ui-text-tertiary)">{key}</dt>
+                      <dd>
+                        <code className="block whitespace-pre-wrap break-all font-mono text-(--ui-text-secondary)" dir="ltr">
+                          {presentationText(presentation[key])}
+                        </code>
+                      </dd>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="min-w-0 space-y-0.5">
+                <dt className="font-mono text-(--ui-text-tertiary)">presentation_digest</dt>
+                <dd>
+                  <code className="block break-all font-mono text-(--ui-text-secondary)" dir="ltr">
+                    {renderedDigest ?? '—'}
+                  </code>
+                </dd>
+              </div>
             </>
           ) : (
             <dd className="text-destructive" role="alert">{copy.incompleteControlApproval}</dd>
@@ -240,7 +293,7 @@ const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline'
         <div className="inline-flex h-6 items-stretch overflow-hidden rounded-md border border-primary/25 bg-primary/10 text-primary">
           <Button
             className="h-full gap-1 rounded-none px-2 text-xs font-medium text-primary hover:bg-primary/15 hover:text-primary"
-            disabled={busy || !validControlBinding}
+            disabled={busy || !validControlBinding || !presentationMatches}
             onClick={() => void respond('once')}
             size="xs"
             variant="ghost"

@@ -133,6 +133,7 @@ describe('gateway privileged reply source routing', () => {
       expect(sessionApprovalRequest(SID).get()?.control).toEqual({
         operationId: 'op-source',
         intentDigest: 'b'.repeat(64),
+        presentation: null,
         resource,
         grantRevision: 11
       })

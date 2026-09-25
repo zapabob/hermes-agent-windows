@@ -36,6 +36,9 @@ import { isWakeUserDisabled } from './wakeState.js'
 
 const NO_PROVIDER_RE = /\bNo (?:LLM|inference) provider configured\b/i
 
+const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === 'object' && !Array.isArray(value)
+
 type VoiceSubmitMode = 'direct' | 'draft'
 
 const normalizeVoiceSubmitMode = (value: unknown): VoiceSubmitMode =>
@@ -1257,7 +1260,8 @@ export function createGatewayEventHandler(ctx: GatewayEventHandlerContext): (ev:
             command: String(ev.payload.command ?? ''),
             control: ev.payload.control ? {
               intentDigest: String(ev.payload.control.intent_digest ?? ''),
-              operationId: String(ev.payload.control.operation_id ?? '')
+              operationId: String(ev.payload.control.operation_id ?? ''),
+              presentation: isPlainRecord(ev.payload.control.presentation) ? ev.payload.control.presentation : null
             } : undefined,
             description,
             requestId: ev.payload.request_id,

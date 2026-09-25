@@ -1,6 +1,8 @@
 """Real SQLite transactions plus the existing strict approval owner."""
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
+import hashlib
+import json
 import sqlite3
 
 import pytest
@@ -73,15 +75,23 @@ def test_same_intent_from_parallel_requests_reserved_once(control_module,control
     assert len({r['operation_id'] for r in results})==1
 
 
+def rendered_digest(payload):
+    # What a human UI computes over the presentation it rendered.
+    return hashlib.sha256(json.dumps(payload['control']['presentation'],ensure_ascii=False,sort_keys=True,
+                                     separators=(',',':')).encode('utf-8')).hexdigest()
+
+
 def decide(control_module,j,ctx,op,**changes):
     from tools import approval as a
     binding=j.approval_binding(ctx,op,now=110)
     session='journal-human-test'
-    a.register_gateway_notify(session,lambda data:None)
+    seen=[]
+    a.register_gateway_notify(session,seen.append)
     ticket=a.request_control_consent(binding,session_key=session,timeout_seconds=60,now=110)
     try:
         a.resolve_control_consent(session_key=session,request_id=ticket.request_id,
-                                  intent_digest=binding.intent_digest,choice='once',now=111)
+                                  intent_digest=binding.intent_digest,choice='once',now=111,
+                                  presentation_digest=rendered_digest(seen[0]))
         decision=a.take_control_decision(ticket,now=111)
         if changes:
             decision=replace(decision,**changes)
@@ -94,12 +104,20 @@ def test_actual_single_use_owner_decision_allows_transition(control_module,contr
     j=journal(control_module,tmp_path);j.initialise();ctx=writable(control_context)
     op=j.reserve(ctx,request(),now=100)['operation_id']
     assert decide(control_module,j,ctx,op)['state']=='APPROVED'
-    j.transition(op,expected_state='APPROVED',new_state='RUNNING',now=112)
+    j.claim_approved(ctx,op,now=112)
     assert j.get(ctx,op,profile_id='p1',workspace_id='w1',now=112)['state']=='RUNNING'
     j.transition(op,expected_state='RUNNING',new_state='SUCCEEDED',now=113)
     with pytest.raises(control_module('contracts').ControlError):
         j.transition(op,expected_state='APPROVED',new_state='RUNNING',now=114)
     assert j.reserve(ctx,request(),now=114)['state']=='SUCCEEDED'
+
+
+def rebind(binding, **changes):
+    """A self-consistent binding for another principal: the projection moves with it."""
+    presentation = {**json.loads(binding.presentation_json), **changes}
+    rendered = json.dumps(presentation, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
+    return replace(binding, **changes, presentation_json=rendered,
+                   presentation_digest=hashlib.sha256(rendered.encode('utf-8')).hexdigest())
 
 
 def test_human_approval_ticket_binds_and_discloses_resource_and_grant_revision(
@@ -127,12 +145,15 @@ def test_human_approval_ticket_binds_and_discloses_resource_and_grant_revision(
         assert a.take_control_decision(ticket, now=111) is None
         assert a.resolve_control_consent(
             session_key=session, request_id=ticket.request_id,
-            intent_digest=binding.intent_digest, choice='once', now=111)
+            intent_digest=binding.intent_digest, choice='once', now=111,
+            presentation_digest=rendered_digest(payload))
         decision = a.take_control_decision(ticket, now=111)
+        with pytest.raises(ValueError):
+            replace(binding, resource='https://other.invalid/control/mcp')
         assert a.consume_control_verdict(
-            decision, replace(binding, resource='https://other.invalid/control/mcp'), now=111) is None
+            decision, rebind(binding, resource='https://other.invalid/control/mcp'), now=111) is None
         assert a.consume_control_verdict(
-            decision, replace(binding, grant_revision=8), now=111) is None
+            decision, rebind(binding, grant_revision=8), now=111) is None
         assert a.consume_control_verdict(decision, binding, now=111) == 'once'
         assert a.consume_control_verdict(decision, binding, now=111) is None
     finally:
@@ -157,9 +178,10 @@ def test_restart_marks_inflight_unknown_and_never_releases_writer(control_module
     j=journal(control_module,tmp_path);j.initialise();ctx=writable(control_context)
     op=j.reserve(ctx,request(),now=100)['operation_id']
     decide(control_module,j,ctx,op)
-    j.transition(op,expected_state='APPROVED',new_state='RUNNING',now=112)
+    j.claim_approved(ctx,op,now=112)
+    j.close()
     restarted=journal(control_module,tmp_path)
-    restarted.recover_after_restart(now=113)
+    restarted.initialise(now=113)
     result=restarted.get(ctx,op,profile_id='p1',workspace_id='w1',now=114)
     assert result['state']=='UNKNOWN'
     with pytest.raises(control_module('contracts').ControlError) as caught:
@@ -224,7 +246,7 @@ def test_explicit_unknown_after_effect_keeps_workspace_reserved(control_module,c
     j=journal(control_module,tmp_path);j.initialise();ctx=writable(control_context)
     op=j.reserve(ctx,request(),now=100)['operation_id']
     decide(control_module,j,ctx,op)
-    j.transition(op,expected_state='APPROVED',new_state='RUNNING',now=112)
+    j.claim_approved(ctx,op,now=112)
     j.transition(op,expected_state='RUNNING',new_state='UNKNOWN',now=113)
     with pytest.raises(control_module('contracts').ControlError) as caught:
         j.reserve(ctx,request(idempotency_key='new'),now=114)

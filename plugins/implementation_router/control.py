@@ -8,6 +8,7 @@ from __future__ import annotations
 from concurrent.futures import Future
 from dataclasses import dataclass
 import json
+import logging
 import threading
 import time
 import uuid
@@ -16,6 +17,17 @@ from downstream.control_mcp.contracts import ControlError
 from downstream.control_mcp.host_context import run_with_profile_home
 from hermes_constants import get_hermes_home
 from tools.interrupt import set_interrupt
+
+logger = logging.getLogger(__name__)
+
+
+def _record(write, operation_id, **kwargs):
+    try:
+        write(operation_id, **kwargs)
+    except ControlError as exc:
+        # A displaced owner has no journal write authority; the live owner's
+        # startup reconciliation records this operation.
+        logger.warning('control operation %s not recorded: %s', operation_id, exc.code)
 
 
 @dataclass(frozen=True)
@@ -42,7 +54,7 @@ class EngineeringRunOwner:
         try:
             self.revalidate_grant(ctx, now=self.clock())
         except Exception:
-            self.journal.block_unexecuted(operation_id, now=self.clock())
+            _record(self.journal.block_unexecuted, operation_id, now=self.clock())
             raise ControlError('revoked_grant') from None
         request = self.journal.claim_approved(ctx, operation_id, now=self.clock())
         run_id = 'eng-' + uuid.uuid4().hex
@@ -65,8 +77,8 @@ class EngineeringRunOwner:
             armed.set()
             with self._lock:
                 self._active.pop(run_id, None)
-            self.journal.transition(operation_id, expected_state='RUNNING',
-                                    new_state='UNKNOWN', now=self.clock())
+            _record(self.journal.transition, operation_id, expected_state='RUNNING',
+                    new_state='UNKNOWN', now=self.clock())
             raise ControlError('host_executor_unavailable') from None
         armed.set()
         return RunHandle(run_id, generation, future)
@@ -128,8 +140,8 @@ class EngineeringRunOwner:
                 if active is not None and active['generation'] == generation:
                     set_interrupt(False, tid)
                     del self._active[run_id]
-            self.journal.transition(operation_id, expected_state='RUNNING',
-                                    new_state=state, now=self.clock())
+            _record(self.journal.transition, operation_id, expected_state='RUNNING',
+                    new_state=state, now=self.clock())
         return result
 
     def _cancelled(self, run_id, generation):

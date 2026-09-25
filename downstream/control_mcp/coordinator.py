@@ -1,6 +1,7 @@
 """Trusted host admission: a request cannot become execution without human consent."""
 from __future__ import annotations
 
+import logging
 import threading
 import time
 
@@ -9,6 +10,17 @@ from downstream.control_mcp.host_context import run_with_profile_home
 from hermes_constants import get_hermes_home
 from tools.approval import (cancel_control_consent, request_control_consent,
                             take_control_decision)
+
+logger = logging.getLogger(__name__)
+
+
+def _record(write, operation_id, **kwargs):
+    try:
+        write(operation_id, **kwargs)
+    except ControlError as exc:
+        # A displaced owner has no journal write authority; the live owner's
+        # startup reconciliation records this operation.
+        logger.warning('control operation %s not recorded: %s', operation_id, exc.code)
 
 
 class HostControlCoordinator:
@@ -68,14 +80,14 @@ class HostControlCoordinator:
         current = self.clock()
         decision = take_control_decision(ticket, now=current)
         if current >= ticket._entry.deadline:
-            self.journal.expire_pending(operation_id, now=current)
+            _record(self.journal.expire_pending, operation_id, now=current)
             return
         if decision is None:
             return
         try:
             self.revalidate_grant(ctx, now=self.clock())
         except Exception:
-            self.journal.block_unexecuted(operation_id, now=self.clock())
+            _record(self.journal.block_unexecuted, operation_id, now=self.clock())
             return
         try:
             operation = self.journal.approve(ctx, operation_id, decision,
@@ -83,6 +95,6 @@ class HostControlCoordinator:
             if operation['state'] == 'APPROVED':
                 self.owner.start_approved(ctx, operation_id)
         except ControlError:
-            # Revoked/expired grants or a conflicting state never execute.
-            self.journal.block_unexecuted(operation_id, now=self.clock())
+            # Revoked/expired grants, stale authority or a conflicting state never execute.
+            _record(self.journal.block_unexecuted, operation_id, now=self.clock())
             return
