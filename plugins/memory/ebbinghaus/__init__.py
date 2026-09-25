@@ -327,7 +327,6 @@ class EbbinghausMemoryProvider(MemoryProvider):
         self._max_prefetch = int(self._policies.max_prefetch)
         self._min_prefetch_score = float(self._policies.min_prefetch_score)
         self._auto_encode_turns = bool(self._policies.auto_encode_turns)
-        self._cron_context = False
 
     @property
     def name(self) -> str:
@@ -351,8 +350,6 @@ class EbbinghausMemoryProvider(MemoryProvider):
             {"key": "min_prefetch_score", "description": "Minimum score for automatic prefetch", "default": "0.18"},
             {"key": "auto_encode_turns", "description": "Auto-store preference-like user turns", "default": "false", "choices": ["true", "false"]},
             {"key": "store_backend", "description": "Store implementation (hakua uses the optional hakua-memory package and falls back to builtin)", "default": "builtin", "choices": list(STORE_BACKENDS)},
-            {"key": "judge_enabled", "description": "Allow `hermes ebbinghaus judge --run` to send memories to the configured model for contradiction/goal review", "default": "false", "choices": ["true", "false"]},
-            {"key": "judge_max_calls", "description": "Maximum model calls per judge run", "default": "20"},
         ]
 
     def save_config(self, values: Dict[str, Any], hermes_home: str) -> None:
@@ -403,12 +400,6 @@ class EbbinghausMemoryProvider(MemoryProvider):
                 type(exc).__name__,
             )
         self._session_id = session_id
-        # Cron prompts are job instructions, not user turns; auto-encoding them
-        # stores the same instruction text as "user" memories on every edit.
-        self._cron_context = (
-            kwargs.get("platform") == "cron"
-            or kwargs.get("agent_context") in {"cron", "flush"}
-        )
 
     def _open_store(self, db_path: str) -> Any:
         backend = str(self._config.get("store_backend") or "builtin").strip().lower()
@@ -550,7 +541,7 @@ class EbbinghausMemoryProvider(MemoryProvider):
         return body
 
     def sync_turn(self, user_content: str, assistant_content: str, *, session_id: str = "") -> None:
-        if not self._auto_encode_turns or not self._store or self._cron_context:
+        if not self._auto_encode_turns or not self._store:
             return
         for content, salience in _extract_candidate_memories(user_content):
             try:
@@ -566,7 +557,7 @@ class EbbinghausMemoryProvider(MemoryProvider):
                 logger.debug("Ebbinghaus sync_turn encode failed: %s", exc)
 
     def on_session_end(self, messages: List[Dict[str, Any]]) -> None:
-        if not self._auto_encode_turns or not self._store or self._cron_context:
+        if not self._auto_encode_turns or not self._store:
             return
         for msg in messages:
             if msg.get("role") != "user":
