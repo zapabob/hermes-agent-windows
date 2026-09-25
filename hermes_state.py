@@ -31,7 +31,7 @@ import threading
 import time
 import weakref
 from collections import deque
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from pathlib import Path
 
 from agent.memory_manager import sanitize_context
@@ -368,6 +368,13 @@ DEFAULT_DB_PATH = Path(get_hermes_home()) / "state.db"
 # probing again. Long enough that a genuinely unreadable file isn't retried per
 # query; short enough that transient fd pressure doesn't strand the read pool.
 _READ_OPEN_RETRY_SECONDS = 60.0
+
+# SQLite busy handler budget for reads. Under DELETE (rollback-journal) mode a
+# reader needs a SHARED lock, which every commit from another process blocks
+# across its journal+db fsyncs. The writer connection's 1 s timeout exists for
+# writes (they retry at application level) and starves readers into
+# "database is locked" under a busy gateway.
+_READ_BUSY_TIMEOUT_S = 5.0
 
 # Hard ceiling on read-only connections ALIVE at once per SessionDB — pooled
 # idle ones and checked-out ones together.
@@ -4696,7 +4703,7 @@ class SessionDB(SessionSearchMixin, SessionSchemaMixin, SessionPortabilityMixin)
                     tracking_path=self.db_path,
                     uri=True,
                     check_same_thread=False,
-                    timeout=1.0,
+                    timeout=_READ_BUSY_TIMEOUT_S,
                     isolation_level=None,
                 )
                 self._conn.row_factory = sqlite3.Row
@@ -4945,7 +4952,7 @@ class SessionDB(SessionSearchMixin, SessionSchemaMixin, SessionPortabilityMixin)
                 # their fds. Exclusive ownership is enforced by the pool
                 # checkout/return, not by sqlite3. Matches the writer opens.
                 check_same_thread=False,
-                timeout=5.0,
+                timeout=_READ_BUSY_TIMEOUT_S,
                 isolation_level=None,
             )
             conn.row_factory = sqlite3.Row
@@ -5086,7 +5093,19 @@ class SessionDB(SessionSearchMixin, SessionSchemaMixin, SessionPortabilityMixin)
                     self._close_read_conn(conn)
             return
         with self._lock:
-            yield self._conn
+            conn = self._conn
+            if self._wal_active or self.read_only or conn is None:
+                yield conn
+                return
+            # DELETE-mode writer connection: wait out a sibling's commit like a
+            # pooled reader would, then restore the short write timeout.
+            previous_ms = conn.execute("PRAGMA busy_timeout").fetchone()[0]
+            conn.execute(f"PRAGMA busy_timeout={int(_READ_BUSY_TIMEOUT_S * 1000)}")
+            try:
+                yield conn
+            finally:
+                with suppress(sqlite3.Error):
+                    conn.execute(f"PRAGMA busy_timeout={int(previous_ms)}")
 
     # ── Core write helper ──
 

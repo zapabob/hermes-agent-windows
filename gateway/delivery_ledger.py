@@ -51,7 +51,7 @@ import time
 from contextlib import contextmanager
 from typing import Any, Dict, Iterator, List, Optional
 
-from hermes_constants import get_hermes_home
+from hermes_constants import get_process_hermes_home
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,11 @@ _RUNTIME_RETRYABLE_ERRORS = frozenset({"send_path_degraded"})
 
 
 def _db_path():
-    return get_hermes_home() / "state.db"
+    # Launch home, not get_hermes_home(): a multiplexed gateway records a served
+    # profile's replies under that profile's home override, but the boot sweep
+    # reads from the launch context, so both must open the one shared store
+    # (adapter_profile tells the bots apart).
+    return get_process_hermes_home() / "state.db"
 
 
 def _connect() -> sqlite3.Connection:
