@@ -46,7 +46,7 @@ def test_stale_google_transitives_are_reported_missing(setup_module, monkeypatch
     monkeypatch.setattr(setup_module, "_distribution_version", fake_version)
 
     assert setup_module._missing_required_packages() == [
-        "google-auth==2.55.1",
+        "google-auth==2.58.0",
         "httplib2==0.32.0",
         "pyasn1==0.6.4",
     ]
@@ -56,7 +56,7 @@ def test_installer_repairs_stale_transitives(setup_module, monkeypatch):
     states = iter(
         [
             [
-                "google-auth==2.55.1",
+                "google-auth==2.58.0",
                 "httplib2==0.32.0",
                 "pyasn1==0.6.4",
             ],
@@ -83,7 +83,7 @@ def test_installer_repairs_stale_transitives(setup_module, monkeypatch):
             "pip",
             "install",
             "--quiet",
-            "google-auth==2.55.1",
+            "google-auth==2.58.0",
             "httplib2==0.32.0",
             "pyasn1==0.6.4",
         ]
