@@ -13,6 +13,7 @@ import shutil  # noqa: F401  (tests patch update_cmd.shutil.*; split modules res
 import subprocess
 import sys
 import time as _time
+from urllib.parse import urlsplit
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -188,42 +189,60 @@ def _is_anonymous_auth_rejection(stderr: str) -> bool:
     return "could not read Username" in stderr or "terminal prompts disabled" in stderr
 
 
-def _fetch_with_http1_fallback(git_cmd, fetch_args):
-    """One bounded fetch with a one-shot HTTP/1.1 retry (#95777, #101584).
+def _http11_retry_args(git_cmd, fetch_args):
+    """Return a URL-scoped HTTP/1.1 override for the fetch remote.
 
-    Two failure signatures are HTTP/2-specific degradations of GitHub's
-    anonymous protocol-v2 channel and get exactly one retry over HTTP/1.1:
-
-    * a dead-stall — the transport received zero bytes until the per-attempt
-      bound expired (``_git_run`` reports it as returncode 124);
-    * a fast 401 — GitHub answered the anonymous upload-pack POST with 401
-      and git exited immediately with the no-prompt signature
-      (``_is_anonymous_auth_rejection``).
-
-    Every other failure is returned as-is so ``_classify_fetch_failure``
-    keeps diagnosing it untouched.
+    A generic ``-c http.version=HTTP/1.1`` loses to a matching URL-scoped
+    setting in Git's precedence rules. Resolve the named remote before the
+    retry and scope the override to its scheme/host so an existing
+    ``http.<url>.version`` cannot force HTTP/2 back on.
     """
+    args = list(fetch_args)
+    remote = next((arg for arg in args if arg in {"origin", "upstream"}), None)
+    if not remote:
+        return ["-c", "http.version=HTTP/1.1"]
+    remote_url = _git_run(git_cmd, ["config", "--get", f"remote.{remote}.url"], network=False)
+    url = (remote_url.stdout or "").strip() if remote_url.returncode == 0 else ""
+    parsed = urlsplit(url)
+    if parsed.scheme and parsed.hostname:
+        scoped = f"http.{parsed.scheme}://{parsed.hostname}.version=HTTP/1.1"
+        return ["-c", scoped]
+    return ["-c", "http.version=HTTP/1.1"]
+
+
+def _fetch_with_http1_fallback(git_cmd, fetch_args):
+    """One bounded fetch with a one-shot URL-scoped HTTP/1.1 retry."""
     result = _git_run(git_cmd, ["fetch"] + list(fetch_args), network=True)
     if result.returncode == 0:
         return result
+    first_stderr = result.stderr or ""
     stalled = result.returncode == 124
-    if not stalled and not _is_anonymous_auth_rejection(result.stderr):
+    if not stalled and not _is_anonymous_auth_rejection(first_stderr):
         return result
 
     if stalled:
         print("  ⚠ fetch stalled; retrying over HTTP/1.1")
     else:
         print("  ⚠ GitHub rejected the anonymous fetch; retrying over HTTP/1.1")
-    retry = _git_run(git_cmd, ["-c", "http.version=HTTP/1.1", "fetch"] + list(fetch_args), network=True)
+    retry = _git_run(git_cmd, _http11_retry_args(git_cmd, fetch_args) + ["fetch"] + list(fetch_args), network=True)
     if retry.returncode == 124:
-        # Both transports dead-stalled within the bound: name it for the user
-        # instead of the per-attempt line (which would read "git -c timed out").
-        retry = subprocess.CompletedProcess(
-            retry.args, 124, stdout=retry.stdout,
-            stderr=(
-                "git fetch timed out twice — once over HTTP/2 and once over HTTP/1.1 —"
-                " after a bounded wait each. A proxy, VPN, or middlebox is likely"
-                " breaking the connection to the remote."))
+        if stalled:
+            retry = subprocess.CompletedProcess(
+                getattr(retry, "args", ["git", "fetch"]), 124, stdout=retry.stdout,
+                stderr=(
+                    "git fetch timed out twice — once over HTTP/2 and once over HTTP/1.1 —"
+                    " after a bounded wait each. A proxy, VPN, or middlebox is likely"
+                    " breaking the connection to the remote."))
+        else:
+            # Preserve the first failure: an anonymous 401 followed by a timeout
+            # is not a double timeout and needs both pieces of evidence.
+            first_line = first_stderr.strip().splitlines()[0] if first_stderr.strip() else "anonymous authentication rejection"
+            retry = subprocess.CompletedProcess(
+                getattr(retry, "args", ["git", "fetch"]), 124, stdout=retry.stdout,
+                stderr=(
+                    "git fetch retry timed out over HTTP/1.1 after first failure "
+                    f"(anonymous authentication rejection): {first_line}. A proxy, VPN, "
+                    "or middlebox may be breaking the connection to the remote."))
     return retry
 
 

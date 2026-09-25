@@ -331,8 +331,12 @@ _FETCH_FAILURE_RULES = (
      "✗ GitHub appears to be having an outage — try again in a few minutes (https://www.githubstatus.com)."),
     (lambda s: "Could not resolve host" in s or "unable to access" in s,
      "✗ Network error — cannot reach the remote repository."),
-    # Signature synthesized by update_cmd._fetch_with_http1_fallback when both the HTTP/2
-    # attempt and its HTTP/1.1 retry dead-stalled within the bounded wait.
+    # Signatures synthesized by update_cmd._fetch_with_http1_fallback. Mixed
+    # failures must retain the first auth rejection instead of being mislabeled
+    # as a pure timeout or pure authentication failure.
+    (lambda s: "first failure (anonymous authentication rejection)" in s,
+     "✗ GitHub first rejected the anonymous fetch, then the HTTP/1.1 retry timed out."
+     " Both failures are shown below; a proxy, VPN, or middlebox may be breaking the connection."),
     (lambda s: "timed out twice" in s,
      "✗ The remote never answered — the fetch stalled on both HTTP/2 and HTTP/1.1 within the"
      " bounded wait. A proxy, VPN, or middlebox is likely breaking the connection."),

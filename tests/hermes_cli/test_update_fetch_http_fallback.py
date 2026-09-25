@@ -22,11 +22,11 @@ def _ok(returncode=0, stderr="", stdout=""):
 
 
 def _is_fetch(argv):
-    return len(argv) > 1 and argv[1] == "fetch"
+    return len(argv) > 1 and (argv[1] == "fetch" or (len(argv) > 3 and argv[3] == "fetch"))
 
 
 def _is_http11_fetch(argv):
-    return len(argv) > 3 and argv[1:3] == ["-c", "http.version=HTTP/1.1"]
+    return len(argv) > 3 and argv[1] == "-c" and argv[2].endswith("version=HTTP/1.1") and argv[3] == "fetch"
 
 
 def _patch_check_github(monkeypatch, tmp_path):
@@ -47,6 +47,8 @@ def _git_mock(fetch_behavior):
     def mock_run(argv, **kwargs):
         if _is_http11_fetch(argv) or _is_fetch(argv):
             return fetch_behavior(argv)
+        if argv[1:3] == ["config", "--get"]:
+            return _ok(stdout="https://github.com/NousResearch/hermes-agent.git")
         if argv[1:3] == ["rev-parse", "--is-shallow-repository"]:
             return _ok(stdout="false")
         if argv[1:2] == ["remote"]:
@@ -158,6 +160,48 @@ def test_check_path_fast_401_after_retry_names_both_transports(monkeypatch, caps
     out = capsys.readouterr().out
     assert "Both HTTP/2 and HTTP/1.1 were just tried" in out
     assert "http.https://github.com.version HTTP/1.1" in out
+
+
+def test_fetch_helper_uses_url_scoped_http11_override(monkeypatch):
+    """A URL-scoped HTTP/2 setting must be overridden explicitly."""
+    calls = []
+
+    def fake_git_run(git_cmd, args, **kwargs):
+        calls.append(list(args))
+        if args[:3] == ["config", "--get", "remote.origin.url"]:
+            return _ok(stdout="https://github.com/NousResearch/hermes-agent.git")
+        if args[:1] == ["fetch"]:
+            return _ok(returncode=128, stderr="terminal prompts disabled")
+        return _ok(returncode=124, stderr="timed out")
+
+    monkeypatch.setattr(uc, "_git_run", fake_git_run)
+    result = uc._fetch_with_http1_fallback(["git"], ["origin", "main"])
+
+    assert result.returncode == 124
+    assert calls[1][:3] == ["config", "--get", "remote.origin.url"]
+    assert calls[2][:4] == ["-c", "http.https://github.com.version=HTTP/1.1", "fetch", "origin"]
+
+
+def test_fetch_helper_preserves_auth_rejection_before_retry_timeout(monkeypatch):
+    """A fast 401 followed by timeout retains the first failure evidence."""
+    fast_401 = "fatal: could not read Username for 'https://github.com': terminal prompts disabled"
+    calls = []
+
+    def fake_git_run(git_cmd, args, **kwargs):
+        calls.append(list(args))
+        if args[:2] == ["config", "--get"]:
+            return _ok(stdout="https://github.com/NousResearch/hermes-agent.git")
+        if args[:1] == ["fetch"]:
+            return _ok(returncode=128, stderr=fast_401)
+        return _ok(returncode=124, stderr="retry timed out")
+
+    monkeypatch.setattr(uc, "_git_run", fake_git_run)
+    result = uc._fetch_with_http1_fallback(["git"], ["origin", "main"])
+
+    assert result.returncode == 124
+    assert "first failure (anonymous authentication rejection)" in result.stderr
+    assert "could not read Username" in result.stderr
+    assert "timed out twice" not in result.stderr
 
 
 def test_fetch_helper_returns_other_failures_untouched():
