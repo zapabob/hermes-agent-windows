@@ -203,6 +203,7 @@ export function ModelSettings({ onMainModelChanged, scopeProfile }: ModelSetting
   const [selectedProvider, setSelectedProvider] = useState('')
   const [selectedModel, setSelectedModel] = useState('')
   const [auxiliary, setAuxiliary] = useState<AuxiliaryModelsResponse | null>(null)
+
   const auxiliaryTasks = useMemo<AuxTaskMeta[]>(() => {
     const tasks = new Map(AUX_TASKS.map(meta => [meta.key, meta]))
 
@@ -214,6 +215,7 @@ export function ModelSettings({ onMainModelChanged, scopeProfile }: ModelSetting
 
     return [...tasks.values()]
   }, [auxiliary])
+
   const [moa, setMoa] = useState<MoaConfigResponse | null>(null)
   const [selectedMoaPreset, setSelectedMoaPreset] = useState('')
   const [newMoaPresetName, setNewMoaPresetName] = useState('')
