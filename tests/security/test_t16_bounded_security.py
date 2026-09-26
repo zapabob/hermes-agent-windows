@@ -1385,6 +1385,188 @@ def test_version_error_does_not_suppress_positive_independent_findings_or_quaran
         assert connection.execute("SELECT COUNT(*) FROM scan_results").fetchone()[0] == 0
 
 
+@pytest.mark.windows_only
+def test_quarantine_never_deletes_a_same_size_rewrite_with_restored_mtime(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    original = b"inert-original-bytes"
+    replacement = b"inert-replaced-bytes"
+    assert len(original) == len(replacement)
+    target = tmp_path / "inert-quarantine-race.bin"
+    target.write_bytes(original)
+    service = SecurityService(
+        SecurityStore(tmp_path / "security"),
+        {"security": {"malware": {"auto_quarantine": True}}},
+    )
+
+    class DetectionEngine:
+        name = "yara"
+
+        def version(self) -> str:
+            return "inert-race-fixture-1"
+
+        def scan(self, _path: Path, _sha256: str) -> list[Finding]:
+            return [Finding(self.name, "synthetic-inert-detection", 90)]
+
+    service.engines = (DetectionEngine(),)
+    vault = service.vault
+    original_encrypt = vault._encrypt
+    rewrite_succeeded = False
+
+    def rewrite_after_encrypt(
+        source: Path, destination: Path, sha256: str,
+        *, source_handle: object | None = None, expected_size: int | None = None,
+    ) -> None:
+        nonlocal rewrite_succeeded
+        original_encrypt(source, destination, sha256, source_handle=source_handle, expected_size=expected_size)
+        before = source.stat()
+        try:
+            source.write_bytes(replacement)
+            os.utime(source, ns=(before.st_atime_ns, before.st_mtime_ns))
+            rewrite_succeeded = True
+        except OSError:
+            pass
+
+    monkeypatch.setattr(vault, "_encrypt", rewrite_after_encrypt)
+    result = service.scan_file(target, use_cache=False)
+
+    assert result.verdict == Verdict.MALICIOUS
+    assert result.to_dict()["execution_decision"] == "BLOCK"
+    if rewrite_succeeded:
+        assert target.read_bytes() == replacement
+        assert result.action == "quarantine_failed"
+    else:
+        assert result.action == "quarantined"
+        assert not target.exists()
+        item = vault.inspect(str(result.quarantine_id))
+        assert vault._decrypt(vault.root / str(item["blob_name"]), str(item["sha256"])) == original
+
+
+@pytest.mark.windows_only
+def test_quarantine_rejects_a_replaced_file_even_when_its_digest_matches(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    target = tmp_path / "inert-replaced-target.bin"
+    data = b"identical inert bytes"
+    target.write_bytes(data)
+    original_inode = target.stat().st_ino
+    service = SecurityService(
+        SecurityStore(tmp_path / "security"),
+        {"security": {"malware": {"auto_quarantine": True}}},
+    )
+
+    class DetectionEngine:
+        name = "yara"
+
+        def version(self) -> str:
+            return "inert-replacement-fixture-1"
+
+        def scan(self, _path: Path, _sha256: str) -> list[Finding]:
+            return [Finding(self.name, "synthetic-inert-detection", 90)]
+
+    service.engines = (DetectionEngine(),)
+    vault = service.vault
+    original_quarantine = vault.quarantine
+
+    def replace_before_quarantine(path: Path, result: ScanResult) -> str:
+        before = path.stat()
+        replacement = tmp_path / "replacement.bin"
+        replacement.write_bytes(data)
+        os.utime(replacement, ns=(before.st_atime_ns, before.st_mtime_ns))
+        os.replace(replacement, path)
+        return original_quarantine(path, result)
+
+    monkeypatch.setattr(vault, "quarantine", replace_before_quarantine)
+    result = service.scan_file(target, use_cache=False)
+
+    assert result.verdict == Verdict.MALICIOUS
+    assert result.action == "quarantine_failed"
+    assert result.to_dict()["execution_decision"] == "BLOCK"
+    assert target.read_bytes() == data
+    assert target.stat().st_ino != original_inode
+    with service.store.connection() as connection:
+        assert connection.execute("SELECT COUNT(*) FROM quarantine_items").fetchone()[0] == 0
+
+
+@pytest.mark.windows_only
+def test_native_ads_quarantine_keeps_base_stream_and_records_exact_bytes(tmp_path: Path) -> None:
+    base = tmp_path / "inert-ads-base.bin"
+    base_bytes = b"ordinary inert base"
+    stream_bytes = b"distinct inert detected stream"
+    base.write_bytes(base_bytes)
+    stream = Path(f"{base}:detected")
+    try:
+        stream.write_bytes(stream_bytes)
+    except OSError as exc:
+        pytest.skip(f"BLOCKED_NATIVE_PATH: ADS creation denied: {type(exc).__name__}")
+    service = SecurityService(
+        SecurityStore(tmp_path / "security"),
+        {"security": {"malware": {"auto_quarantine": True}}},
+    )
+
+    class DetectionEngine:
+        name = "yara"
+
+        def version(self) -> str:
+            return "inert-ads-fixture-1"
+
+        def scan(self, _path: Path, _sha256: str) -> list[Finding]:
+            return [Finding(self.name, "synthetic-inert-detection", 90)]
+
+    service.engines = (DetectionEngine(),)
+    result = service.scan_file(stream, use_cache=False)
+
+    assert result.action == "quarantined"
+    assert base.read_bytes() == base_bytes
+    assert not stream.exists()
+    item = service.vault.inspect(str(result.quarantine_id))
+    assert item["original_path"] == str(stream)
+    assert service.vault._decrypt(service.vault.root / str(item["blob_name"]), str(item["sha256"])) == stream_bytes
+
+
+@pytest.mark.windows_only
+def test_quarantine_disposition_failure_keeps_source_without_a_vault_record(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    import win32file
+
+    target = tmp_path / "inert-disposition-failure.bin"
+    data = b"inert disposition failure"
+    target.write_bytes(data)
+    service = SecurityService(
+        SecurityStore(tmp_path / "security"),
+        {"security": {"malware": {"auto_quarantine": True}}},
+    )
+
+    class DetectionEngine:
+        name = "yara"
+
+        def version(self) -> str:
+            return "inert-disposition-fixture-1"
+
+        def scan(self, _path: Path, _sha256: str) -> list[Finding]:
+            return [Finding(self.name, "synthetic-inert-detection", 90)]
+
+    service.engines = (DetectionEngine(),)
+
+    def deny_disposition(*_args: object) -> None:
+        raise PermissionError("synthetic disposition refusal")
+
+    monkeypatch.setattr(win32file, "SetFileInformationByHandle", deny_disposition)
+    result = service.scan_file(target, use_cache=False)
+
+    assert result.verdict == Verdict.MALICIOUS
+    assert result.action == "quarantine_failed"
+    assert result.to_dict()["execution_decision"] == "BLOCK"
+    assert target.read_bytes() == data
+    with service.store.connection() as connection:
+        assert connection.execute("SELECT COUNT(*) FROM quarantine_items").fetchone()[0] == 0
+    assert list(service.vault.root.glob("*.blob")) == []
+
+
 def test_cached_result_is_rejected_when_engine_version_degrades_before_return(
     tmp_path: Path,
 ) -> None:

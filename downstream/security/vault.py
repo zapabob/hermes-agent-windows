@@ -7,16 +7,50 @@ import os
 import sys
 import tempfile
 import uuid
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Iterator
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
+from .bounded_walk import stable_file_time_ns
 from .models import ScanResult, Verdict
 from .store import SecurityStore, utc_now
 
 
 _MAGIC = b"HERMESQ1"
+
+
+@contextmanager
+def _held_quarantine_source(
+    source: Path, expected_size: int
+) -> Iterator[tuple[object | None, tuple[int, int, int] | None]]:
+    if sys.platform != "win32":
+        yield None, None
+        return
+
+    win32con = importlib.import_module("win32con")
+    win32file = importlib.import_module("win32file")
+    # Hold DELETE access without sharing writes or deletes until the verified handle is disposed.
+    handle = win32file.CreateFile(
+        str(source),
+        win32con.GENERIC_READ | win32con.DELETE,
+        win32con.FILE_SHARE_READ,
+        None,
+        win32con.OPEN_EXISTING,
+        win32file.FILE_FLAG_OPEN_REPARSE_POINT,
+        None,
+    )
+    try:
+        info = win32file.GetFileInformationByHandle(handle)
+        if info[0] & (win32con.FILE_ATTRIBUTE_REPARSE_POINT | win32con.FILE_ATTRIBUTE_DIRECTORY):
+            raise ValueError("quarantine source is not a regular file")
+        identity = (info[4], (info[8] << 32) | info[9], (info[5] << 32) | info[6])
+        if expected_size < 0 or identity[2] != expected_size:
+            raise RuntimeError("file changed during quarantine")
+        yield handle, identity
+    finally:
+        handle.Close()
 
 
 def _restrict_windows_acl(path: Path, directory: bool = False) -> None:
@@ -78,11 +112,24 @@ class QuarantineVault:
             _restrict_windows_acl(self.root, directory=True)
             self.key = VaultKey(store.root).load_or_create()
 
-    def _encrypt(self, source: Path, destination: Path, sha256: str) -> None:
+    def _encrypt(
+        self, source: Path, destination: Path, sha256: str,
+        *, source_handle: object | None = None, expected_size: int | None = None,
+    ) -> None:
         if self.key is None:
             raise RuntimeError("quarantine vault is read-only")
         nonce = os.urandom(12)
-        ciphertext = AESGCM(self.key).encrypt(nonce, source.read_bytes(), sha256.encode("ascii"))
+        if source_handle is None:
+            plaintext = source.read_bytes()
+        else:
+            if expected_size is None:
+                raise ValueError("expected size is required for a held source")
+            win32file = importlib.import_module("win32file")
+            status, plaintext = win32file.ReadFile(source_handle, expected_size)
+            trailing_status, trailing = win32file.ReadFile(source_handle, 1)
+            if status or trailing_status or len(plaintext) != expected_size or trailing:
+                raise RuntimeError("file changed during quarantine")
+        ciphertext = AESGCM(self.key).encrypt(nonce, plaintext, sha256.encode("ascii"))
         destination.write_bytes(_MAGIC + nonce + ciphertext)
         _restrict_windows_acl(destination)
 
@@ -100,43 +147,77 @@ class QuarantineVault:
         blob_name = f"{item_id}.blob"
         staging = self.root / f".{item_id}.staging"
         destination = self.root / blob_name
-        before = source.stat()
-        self._encrypt(source, staging, result.sha256)
-        plaintext = self._decrypt(staging, result.sha256)
-        if hashlib.sha256(plaintext).hexdigest() != result.sha256:
-            staging.unlink(missing_ok=True)
-            raise ValueError("quarantine verification failed")
-        after = source.stat()
-        identity_before = (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns)
-        identity_after = (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns)
-        if identity_before != identity_after or after.st_size != result.size:
-            staging.unlink(missing_ok=True)
-            raise RuntimeError("file changed during quarantine")
-        os.replace(staging, destination)
-        findings = json.dumps([item.to_dict() for item in result.findings], ensure_ascii=False, sort_keys=True)
-        versions = json.dumps(result.engine_versions, ensure_ascii=False, sort_keys=True)
-        with self.store.connection() as con:
-            con.execute(
-                "INSERT INTO quarantine_items(id,blob_name,original_path,original_filename,sha256,size,verdict,"
-                "findings_json,engine_versions_json,original_atime_ns,original_mtime_ns,original_ctime_ns,created_at) "
-                "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                (
-                    item_id,
-                    blob_name,
-                    str(source),
-                    source.name,
-                    result.sha256,
-                    result.size,
-                    result.verdict.value,
-                    findings,
-                    versions,
-                    before.st_atime_ns,
+        published = False
+        recorded = False
+        deletion_marked = False
+        try:
+            with _held_quarantine_source(source, result.size) as (handle, handle_identity):
+                before = source.stat()
+                if handle_identity is not None and (
+                    before.st_dev & 0xFFFFFFFF,
+                    before.st_ino,
+                    before.st_size,
+                ) != handle_identity:
+                    raise RuntimeError("file changed during quarantine")
+                if result.file_identity is not None and (
+                    before.st_dev,
+                    before.st_ino,
+                    before.st_size,
                     before.st_mtime_ns,
-                    before.st_ctime_ns,
-                    utc_now(),
-                ),
-            )
-        source.unlink()
+                    stable_file_time_ns(before),
+                ) != result.file_identity:
+                    raise RuntimeError("file changed during quarantine")
+                self._encrypt(source, staging, result.sha256, source_handle=handle, expected_size=result.size)
+                plaintext = self._decrypt(staging, result.sha256)
+                if hashlib.sha256(plaintext).hexdigest() != result.sha256:
+                    raise ValueError("quarantine verification failed")
+                after = source.stat()
+                identity_before = (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns)
+                identity_after = (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns)
+                if identity_before != identity_after or after.st_size != result.size:
+                    raise RuntimeError("file changed during quarantine")
+                os.replace(staging, destination)
+                published = True
+                findings = json.dumps([item.to_dict() for item in result.findings], ensure_ascii=False, sort_keys=True)
+                versions = json.dumps(result.engine_versions, ensure_ascii=False, sort_keys=True)
+                with self.store.connection() as con:
+                    con.execute(
+                        "INSERT INTO quarantine_items(id,blob_name,original_path,original_filename,sha256,size,verdict,"
+                        "findings_json,engine_versions_json,original_atime_ns,original_mtime_ns,original_ctime_ns,created_at) "
+                        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        (
+                            item_id,
+                            blob_name,
+                            str(source),
+                            source.name,
+                            result.sha256,
+                            result.size,
+                            result.verdict.value,
+                            findings,
+                            versions,
+                            before.st_atime_ns,
+                            before.st_mtime_ns,
+                            before.st_ctime_ns,
+                            utc_now(),
+                        ),
+                    )
+                recorded = True
+                if handle is None:
+                    source.unlink()
+                else:
+                    win32file = importlib.import_module("win32file")
+                    win32file.SetFileInformationByHandle(handle, win32file.FileDispositionInfo, True)
+                deletion_marked = True
+        except Exception:
+            if not deletion_marked:
+                if recorded:
+                    with self.store.connection() as con:
+                        con.execute("DELETE FROM quarantine_items WHERE id=?", (item_id,))
+                if published:
+                    destination.unlink(missing_ok=True)
+            raise
+        finally:
+            staging.unlink(missing_ok=True)
         self.store.event("quarantine", item_id, result.verdict.value, "quarantined", {"sha256": result.sha256, "original_path": str(source)})
         return item_id
 
