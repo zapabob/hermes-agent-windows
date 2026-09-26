@@ -358,15 +358,23 @@ describe('respondToApprovalAction', () => {
   it('does not approve a strict control request from an OS notification', async () => {
     setActiveSessionId('bg')
     setApprovalRequest({
-      command: 'Hermes control operation op-1', description: 'Start approved run',
-      requestId: 'req-control', control: {
-        operationId: 'op-1', intentDigest: 'a'.repeat(64), presentation: null,
-        resource: 'https://mcp.example.test/operations/run', grantRevision: 7
+      command: 'Hermes control operation op-1',
+      description: 'Start approved run',
+      requestId: 'req-control',
+      control: {
+        operationId: 'op-1',
+        intentDigest: 'a'.repeat(64),
+        presentation: null,
+        resource: 'https://mcp.example.test/operations/run',
+        grantRevision: 7
       },
-      scope: gatewayScope('connection-a', 'source-profile'), sessionId: 'bg'
+      scope: gatewayScope('connection-a', 'source-profile'),
+      sessionId: 'bg'
     })
     await respondToApprovalAction('bg', 'approve', {
-      connectionId: 'connection-a', profile: 'source-profile', requestId: 'req-control'
+      connectionId: 'connection-a',
+      profile: 'source-profile',
+      requestId: 'req-control'
     })
     expect(request).not.toHaveBeenCalled()
     expect(request).not.toHaveBeenCalledWith('approval.respond', expect.anything())
@@ -376,19 +384,30 @@ describe('respondToApprovalAction', () => {
   it('allows a strict control request to be denied from an OS notification', async () => {
     setActiveSessionId('bg')
     setApprovalRequest({
-      command: 'Hermes control operation op-1', description: 'Start approved run',
-      requestId: 'req-control', control: {
-        operationId: 'op-1', intentDigest: 'a'.repeat(64), presentation: null,
-        resource: 'https://mcp.example.test/operations/run', grantRevision: 7
+      command: 'Hermes control operation op-1',
+      description: 'Start approved run',
+      requestId: 'req-control',
+      control: {
+        operationId: 'op-1',
+        intentDigest: 'a'.repeat(64),
+        presentation: null,
+        resource: 'https://mcp.example.test/operations/run',
+        grantRevision: 7
       },
-      scope: gatewayScope('connection-a', 'source-profile'), sessionId: 'bg'
+      scope: gatewayScope('connection-a', 'source-profile'),
+      sessionId: 'bg'
     })
     await respondToApprovalAction('bg', 'reject', {
-      connectionId: 'connection-a', profile: 'source-profile', requestId: 'req-control'
+      connectionId: 'connection-a',
+      profile: 'source-profile',
+      requestId: 'req-control'
     })
 
     expect(request).toHaveBeenCalledWith('control_approval.respond', {
-      choice: 'deny', session_id: 'bg', request_id: 'req-control', intent_digest: 'a'.repeat(64)
+      choice: 'deny',
+      session_id: 'bg',
+      request_id: 'req-control',
+      intent_digest: 'a'.repeat(64)
     })
     expect(request).not.toHaveBeenCalledWith('approval.respond', expect.anything())
     expect($approvalRequest.get()).toBeNull()
@@ -397,16 +416,24 @@ describe('respondToApprovalAction', () => {
   it('ignores a stale strict control deny notification when the request id changed', async () => {
     setActiveSessionId('bg')
     setApprovalRequest({
-      command: 'Hermes control operation op-current', description: 'Current operation',
-      requestId: 'req-current', control: {
-        operationId: 'op-current', intentDigest: 'c'.repeat(64), presentation: null,
-        resource: 'https://mcp.example.test/operations/current', grantRevision: 8
+      command: 'Hermes control operation op-current',
+      description: 'Current operation',
+      requestId: 'req-current',
+      control: {
+        operationId: 'op-current',
+        intentDigest: 'c'.repeat(64),
+        presentation: null,
+        resource: 'https://mcp.example.test/operations/current',
+        grantRevision: 8
       },
-      scope: gatewayScope('connection-a', 'source-profile'), sessionId: 'bg'
+      scope: gatewayScope('connection-a', 'source-profile'),
+      sessionId: 'bg'
     })
 
     await respondToApprovalAction('bg', 'reject', {
-      connectionId: 'connection-a', profile: 'source-profile', requestId: 'req-stale'
+      connectionId: 'connection-a',
+      profile: 'source-profile',
+      requestId: 'req-stale'
     })
 
     expect(request).not.toHaveBeenCalled()

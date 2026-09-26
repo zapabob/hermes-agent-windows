@@ -73,10 +73,13 @@ export function controlPresentationLines(control: NonNullable<ApprovalReq['contr
 
   const digest = renderedControlDigest(control)
 
-  lines.push(digest ? `presentation_digest: ${digest}` : 'presentation_digest: — (approval unavailable in this terminal)')
+  lines.push(
+    digest ? `presentation_digest: ${digest}` : 'presentation_digest: — (approval unavailable in this terminal)'
+  )
 
   return lines
 }
+
 type ApprovalKey = {
   downArrow?: boolean
   escape?: boolean

@@ -4,12 +4,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import type { HermesGateway } from '@/hermes'
 import { renderedPresentationDigest } from '@/lib/control-presentation'
 import { $gateway, gatewayScope, setPrimaryGateway } from '@/store/gateway'
-import {
-  $approvalRequest,
-  clearAllPrompts,
-  controlApprovalFromPayload,
-  setApprovalRequest
-} from '@/store/prompts'
+import { $approvalRequest, clearAllPrompts, controlApprovalFromPayload, setApprovalRequest } from '@/store/prompts'
 import { $activeSessionId } from '@/store/session'
 
 import { PendingApprovalFallback, PendingToolApproval } from './approval'
@@ -56,7 +51,11 @@ async function boundControl(resource: string, extra: Record<string, unknown> = {
   const presentation = { operation_id: 'op-1', resource, grant_revision: 7, task: 'Start approved run', ...extra }
 
   return controlApprovalFromPayload({
-    operation_id: 'op-1', intent_digest: 'a'.repeat(64), resource, grant_revision: 7, presentation
+    operation_id: 'op-1',
+    intent_digest: 'a'.repeat(64),
+    resource,
+    grant_revision: 7,
+    presentation
   })
 }
 
@@ -196,9 +195,13 @@ describe('PendingToolApproval', () => {
     const control = await boundControl(resource)
 
     setApprovalRequest({
-      command: 'Hermes control operation op-1', description: 'Start approved run', control,
+      command: 'Hermes control operation op-1',
+      description: 'Start approved run',
+      control,
       requestId: 'req-control',
-      choices: ['once', 'session', 'always', 'deny'], scope: gatewayScope(null, 'default'), sessionId: 'sess-1'
+      choices: ['once', 'session', 'always', 'deny'],
+      scope: gatewayScope(null, 'default'),
+      sessionId: 'sess-1'
     })
     render(<PendingApprovalFallback />)
     expect(screen.queryByRole('button', { name: /More approval options/ })).toBeNull()
@@ -213,10 +216,15 @@ describe('PendingToolApproval', () => {
     await waitFor(() => expect((runButton as HTMLButtonElement).disabled).toBe(false))
     fireEvent.click(runButton)
     const rendered = await renderedPresentationDigest(control!.presentation!)
-    await waitFor(() => expect(gatewayRequest).toHaveBeenCalledWith('control_approval.respond', {
-      choice: 'once', session_id: 'sess-1', request_id: 'req-control', intent_digest: 'a'.repeat(64),
-      presentation_digest: rendered
-    }))
+    await waitFor(() =>
+      expect(gatewayRequest).toHaveBeenCalledWith('control_approval.respond', {
+        choice: 'once',
+        session_id: 'sess-1',
+        request_id: 'req-control',
+        intent_digest: 'a'.repeat(64),
+        presentation_digest: rendered
+      })
+    )
     expect(gatewayRequest).not.toHaveBeenCalledWith('approval.respond', expect.anything())
     await waitFor(() => expect($approvalRequest.get()).toBeNull())
   })
@@ -229,8 +237,12 @@ describe('PendingToolApproval', () => {
     const control = await boundControl('https://mcp.example.test/operations/run', { task, ratio: 1.5 })
 
     setApprovalRequest({
-      command: 'Hermes control operation op-1', description: 'Start approved run', control,
-      requestId: 'req-control', scope: gatewayScope(null, 'default'), sessionId: 'sess-1'
+      command: 'Hermes control operation op-1',
+      description: 'Start approved run',
+      control,
+      requestId: 'req-control',
+      scope: gatewayScope(null, 'default'),
+      sessionId: 'sess-1'
     })
     const { container } = render(<PendingApprovalFallback />)
 
@@ -254,9 +266,12 @@ describe('PendingToolApproval', () => {
     const control = await boundControl('https://mcp.example.test/operations/run')
 
     setApprovalRequest({
-      command: 'Hermes control operation op-1', description: 'Start approved run',
-      requestId: 'req-control', control,
-      scope: gatewayScope(null, 'default'), sessionId: 'sess-1'
+      command: 'Hermes control operation op-1',
+      description: 'Start approved run',
+      requestId: 'req-control',
+      control,
+      scope: gatewayScope(null, 'default'),
+      sessionId: 'sess-1'
     })
     render(<PendingApprovalFallback />)
     const runButton = screen.getByRole('button', { name: /Run/ }) as HTMLButtonElement
@@ -271,13 +286,19 @@ describe('PendingToolApproval', () => {
     $activeSessionId.set('sess-1')
 
     const control = controlApprovalFromPayload({
-      operation_id: 'op-1', intent_digest: 'a'.repeat(64),
-      resource: 'https://mcp.example.test/operations/approved', grant_revision: 7
+      operation_id: 'op-1',
+      intent_digest: 'a'.repeat(64),
+      resource: 'https://mcp.example.test/operations/approved',
+      grant_revision: 7
     })
 
     const original = {
-      command: 'Hermes control operation op-1', description: 'Start approved run', control,
-      requestId: 'req-control', scope: gatewayScope(null, 'default'), sessionId: 'sess-1'
+      command: 'Hermes control operation op-1',
+      description: 'Start approved run',
+      control,
+      requestId: 'req-control',
+      scope: gatewayScope(null, 'default'),
+      sessionId: 'sess-1'
     }
 
     setApprovalRequest(original)

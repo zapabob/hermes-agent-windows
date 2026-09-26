@@ -3058,7 +3058,8 @@ export const ja = defineLocale({
       command: 'コマンド',
       resource: 'MCP リソース',
       grantRevision: '権限付与リビジョン',
-      incompleteControlApproval: '制御承認の情報が不足しているため実行できません。拒否して、新しい承認を要求してください。',
+      incompleteControlApproval:
+        '制御承認の情報が不足しているため実行できません。拒否して、新しい承認を要求してください。',
       moreOptions: 'その他の承認オプション',
       allowSession: 'このセッションで許可',
       alwaysAllowMenu: '常に許可…',
