@@ -28,6 +28,11 @@ def relative_path(value: str) -> str:
 
 
 def read_sources(root: Path, selected: tuple[str, ...]) -> dict[str, bytes]:
+    root = Path(root)
+    for ancestor in (root, *root.parents):
+        info = ancestor.lstat()
+        if stat.S_ISLNK(info.st_mode) or getattr(info, 'st_file_attributes', 0) & 0x400:
+            raise ValueError('Source reparse path is not admitted')
     root = root.resolve(strict=True)
     if not root.is_dir() or type(selected) is not tuple or not selected:
         raise ValueError('Explicit non-secret source paths are required')
@@ -40,8 +45,8 @@ def read_sources(root: Path, selected: tuple[str, ...]) -> dict[str, bytes]:
         if any(part in _SKIP for part in PurePosixPath(relative).parts):
             return
         info = path.lstat()
-        if stat.S_ISLNK(info.st_mode):
-            raise ValueError('Source symlinks are not admitted')
+        if stat.S_ISLNK(info.st_mode) or getattr(info, 'st_file_attributes', 0) & 0x400:
+            raise ValueError('Source links and reparse points are not admitted')
         if stat.S_ISDIR(info.st_mode):
             for child in sorted(path.iterdir()):
                 # An explicitly selected credential path is rejected above;
@@ -76,8 +81,9 @@ def read_sources(root: Path, selected: tuple[str, ...]) -> dict[str, bytes]:
         for ancestor in (path, *path.parents):
             if ancestor == root:
                 break
-            if ancestor.is_symlink():
-                raise ValueError('Source symlinks are not admitted')
+            info = ancestor.lstat()
+            if stat.S_ISLNK(info.st_mode) or getattr(info, 'st_file_attributes', 0) & 0x400:
+                raise ValueError('Source links and reparse points are not admitted')
         visit(path)
     if not files:
         raise ValueError('No source files selected')

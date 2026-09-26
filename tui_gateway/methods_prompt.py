@@ -1770,6 +1770,52 @@ def _(rid, params: dict) -> dict:
         return _err(rid, 5004, str(e))
 
 
+
+
+@method("control_approval.respond")
+def _(rid, params: dict) -> dict:
+    """Trusted local UI decision for a single digest-bound control intent."""
+    required = {"session_id", "request_id", "intent_digest", "choice"}
+    # presentation_digest is the UI's own digest of the presentation it
+    # rendered; the approval owner requires it for "once", never for "deny".
+    if type(params) is not dict or set(params) - {"presentation_digest"} != required:
+        return _err(rid, 4006, "invalid control approval")
+    request_id = params["request_id"]
+    digest = params["intent_digest"]
+    presentation_digest = params.get("presentation_digest")
+
+    def _hex64(value) -> bool:
+        return (type(value) is str and len(value) == 64
+                and all(char in "0123456789abcdef" for char in value))
+
+    if (
+        type(params["session_id"]) is not str or not params["session_id"]
+        or type(request_id) is not str or not request_id
+        or not _hex64(digest)
+        or params["choice"] not in ("once", "deny")
+        or (params["choice"] == "once" and "presentation_digest" in params
+            and not _hex64(presentation_digest))
+    ):
+        return _err(rid, 4006, "invalid control approval")
+    if params["choice"] == "deny":
+        presentation_digest = None
+    # A public session id is a lookup hint; the bound transport is the
+    # local human surface that owns this exact live runtime generation.
+    transport, session = _current_session_steer_authority(params["session_id"])
+    if transport is None or session is None:
+        return _err(rid, 4003, "control approval surface mismatch")
+    try:
+        from tools.approval import resolve_control_consent
+
+        resolved = resolve_control_consent(
+            session_key=session["session_key"], request_id=request_id,
+            intent_digest=digest, choice=params["choice"],
+            presentation_digest=presentation_digest,
+        )
+        return _ok(rid, {"resolved": resolved})
+    except Exception:
+        return _err(rid, 5004, "control approval unavailable")
+
 def register(server) -> None:
     """Bind this module's handlers onto ``server``'s globals and registry."""
     _registry.install(server)
