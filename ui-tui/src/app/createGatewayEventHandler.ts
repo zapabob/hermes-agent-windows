@@ -1258,11 +1258,13 @@ export function createGatewayEventHandler(ctx: GatewayEventHandlerContext): (ev:
             allowPermanent,
             choices: ev.payload.choices,
             command: String(ev.payload.command ?? ''),
-            control: ev.payload.control ? {
-              intentDigest: String(ev.payload.control.intent_digest ?? ''),
-              operationId: String(ev.payload.control.operation_id ?? ''),
-              presentation: isPlainRecord(ev.payload.control.presentation) ? ev.payload.control.presentation : null
-            } : undefined,
+            control: ev.payload.control
+              ? {
+                  intentDigest: String(ev.payload.control.intent_digest ?? ''),
+                  operationId: String(ev.payload.control.operation_id ?? ''),
+                  presentation: isPlainRecord(ev.payload.control.presentation) ? ev.payload.control.presentation : null
+                }
+              : undefined,
             description,
             requestId: ev.payload.request_id,
             smartDenied: ev.payload.smart_denied === true

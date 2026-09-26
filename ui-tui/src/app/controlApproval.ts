@@ -45,7 +45,9 @@ export function renderedControlDigest(control: ControlBinding): null | string {
 
 /** A control decision is addressed to the live human session and exact intent. */
 export function approvalResponseRequest(
-  request: ApprovalReq, sessionId: string | null, choice: string
+  request: ApprovalReq,
+  sessionId: string | null,
+  choice: string
 ): { method: string; params: Record<string, unknown>; strict: boolean } | null {
   if (!request.control) {
     return { method: 'approval.respond', params: { choice, session_id: sessionId }, strict: false }
@@ -55,7 +57,9 @@ export function approvalResponseRequest(
   const digest = choice === 'once' ? renderedControlDigest(request.control) : null
 
   if (
-    !sessionId || !request.requestId || !isHex64(intentDigest) ||
+    !sessionId ||
+    !request.requestId ||
+    !isHex64(intentDigest) ||
     (choice !== 'once' && choice !== 'deny') ||
     (choice === 'once' && !isHex64(digest))
   ) {
@@ -63,9 +67,13 @@ export function approvalResponseRequest(
   }
 
   return {
-    method: 'control_approval.respond', strict: true,
+    method: 'control_approval.respond',
+    strict: true,
     params: {
-      choice, session_id: sessionId, request_id: request.requestId, intent_digest: intentDigest,
+      choice,
+      session_id: sessionId,
+      request_id: request.requestId,
+      intent_digest: intentDigest,
       ...(choice === 'once' ? { presentation_digest: digest } : {})
     }
   }

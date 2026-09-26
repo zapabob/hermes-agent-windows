@@ -139,9 +139,12 @@ describe('gateway privileged reply source routing', () => {
       })
     )
     expect(replayedApproval.control).toEqual(control)
-    await waitFor(() => expect(sourceRequest).toHaveBeenCalledWith('approval.received', {
-      request_id: 'approval-control-source', session_id: SID
-    }))
+    await waitFor(() =>
+      expect(sourceRequest).toHaveBeenCalledWith('approval.received', {
+        request_id: 'approval-control-source',
+        session_id: SID
+      })
+    )
     const approvalNotification = dispatchNotification.mock.calls.find(([input]) => input.kind === 'approval')?.[0]
     expect(approvalNotification?.actions?.map(action => action.id)).toEqual(['reject'])
     expect(activeRequest).not.toHaveBeenCalled()

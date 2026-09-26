@@ -253,7 +253,10 @@ const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline'
               <div className="min-w-0 space-y-0.5">
                 <dt className="text-(--ui-text-tertiary)">{copy.resource}</dt>
                 <dd>
-                  <code className="block max-h-32 overflow-auto whitespace-pre-wrap break-all font-mono text-(--ui-text-secondary)" dir="ltr">
+                  <code
+                    className="block max-h-32 overflow-auto whitespace-pre-wrap break-all font-mono text-(--ui-text-secondary)"
+                    dir="ltr"
+                  >
                     {request.control.resource}
                   </code>
                 </dd>
@@ -263,16 +266,21 @@ const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline'
                   className="max-h-64 min-w-0 space-y-1 overflow-auto rounded-md border border-(--ui-stroke-tertiary) px-2 py-1.5"
                   data-slot="control-presentation"
                 >
-                  {Object.keys(presentation).sort().map(key => (
-                    <div className="min-w-0" key={key}>
-                      <dt className="font-mono text-(--ui-text-tertiary)">{key}</dt>
-                      <dd>
-                        <code className="block whitespace-pre-wrap break-all font-mono text-(--ui-text-secondary)" dir="ltr">
-                          {presentationText(presentation[key])}
-                        </code>
-                      </dd>
-                    </div>
-                  ))}
+                  {Object.keys(presentation)
+                    .sort()
+                    .map(key => (
+                      <div className="min-w-0" key={key}>
+                        <dt className="font-mono text-(--ui-text-tertiary)">{key}</dt>
+                        <dd>
+                          <code
+                            className="block whitespace-pre-wrap break-all font-mono text-(--ui-text-secondary)"
+                            dir="ltr"
+                          >
+                            {presentationText(presentation[key])}
+                          </code>
+                        </dd>
+                      </div>
+                    ))}
                 </div>
               )}
               <div className="min-w-0 space-y-0.5">
@@ -285,7 +293,9 @@ const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline'
               </div>
             </>
           ) : (
-            <dd className="text-destructive" role="alert">{copy.incompleteControlApproval}</dd>
+            <dd className="text-destructive" role="alert">
+              {copy.incompleteControlApproval}
+            </dd>
           )}
         </dl>
       )}
