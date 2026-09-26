@@ -1390,6 +1390,10 @@ def test_quarantine_never_deletes_a_same_size_rewrite_with_restored_mtime(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
+    import pywintypes
+    import win32con
+    import win32file
+
     original = b"inert-original-bytes"
     replacement = b"inert-replaced-bytes"
     assert len(original) == len(replacement)
@@ -1422,11 +1426,24 @@ def test_quarantine_never_deletes_a_same_size_rewrite_with_restored_mtime(
         original_encrypt(source, destination, sha256, source_handle=source_handle, expected_size=expected_size)
         before = source.stat()
         try:
-            source.write_bytes(replacement)
+            writer = win32file.CreateFile(
+                str(source),
+                win32con.GENERIC_WRITE,
+                win32con.FILE_SHARE_READ | win32con.FILE_SHARE_WRITE | win32con.FILE_SHARE_DELETE,
+                None,
+                win32con.OPEN_EXISTING,
+                0,
+                None,
+            )
+        except pywintypes.error as exc:
+            assert exc.args[0] == 32
+        else:
+            try:
+                win32file.WriteFile(writer, replacement)
+            finally:
+                writer.Close()
             os.utime(source, ns=(before.st_atime_ns, before.st_mtime_ns))
             rewrite_succeeded = True
-        except OSError:
-            pass
 
     monkeypatch.setattr(vault, "_encrypt", rewrite_after_encrypt)
     result = service.scan_file(target, use_cache=False)
