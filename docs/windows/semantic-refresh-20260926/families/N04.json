@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "status": "PARTIAL_NATIVE_AND_DURABILITY_REVIEW",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N04",
+  "upstream_commits": [],
+  "upstream_merge_parents": [],
+  "salvage_fixup_revert_lineage": [],
+  "final_upstream_sha": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+  "final_observable_contract": "Scan the exact source bytes, reject a changed path or reparse target, and quarantine only the scanned Windows file object. A normal file must remain scannable. This is a downstream preservation contract; full U1 commit mapping remains open.",
+  "downstream_predecessor": {
+    "commit": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "source": [
+      "downstream/security/service.py:78-115 (blob 6d61026b090c6153d4e0b84e3e636db68d60cc70)",
+      "downstream/security/vault.py:98-139 (D0 uses source.unlink after blob and DB write)"
+    ]
+  },
+  "downstream_owner": "SecurityService scan snapshot and QuarantineVault side effects",
+  "downstream_call_path": [
+    "SecurityService.scan_file -> _scan_file_reserved -> private snapshot -> engine.scan(snapshot)",
+    "SecurityService._scan_file_reserved:649 -> QuarantineVault.quarantine",
+    "QuarantineVault._held_quarantine_source:25-55 -> _encrypt:115-137 -> quarantine:145-222"
+  ],
+  "already_local_commits": [
+    "966b7bd73356baf6600f7e42ca5c9bc7d5ef2b2d",
+    "e310ad317f2b4a7ec651207c62f1101ad8e48372",
+    "d7fc97317b0e46741ac0e012fa414ce326321dc9"
+  ],
+  "decision": "REUSE_LOCAL_T16_SNAPSHOT_AND_ADD_VERIFIED_WINDOWS_VAULT_HANDLE_FENCE; KEEP_FAMILY_PARTIAL",
+  "red_or_equivalence_receipts": [
+    "D0 path-stat-only hash and path-opening scanner source requires semantic comparison with the local T16 snapshot, not a claim that local T16 was missing.",
+    "On the pre-fix integration source, an inert same-size rewrite after encryption with restored mtime was deleted although the encrypted blob held the original bytes. The actual SecurityService caller test failed because the replacement path no longer existed.",
+    "Disposition failure injection initially left one quarantine_items row after SecurityService reported quarantine_failed."
+  ],
+  "implementation_commits": [
+    "836cb99237f2cf22b83c2434740194dbe85eccdf",
+    "7dcbfded769a3686008f1d39cb1afb0531434329",
+    "c68fb7f617ecd4fd7d726a03cc316e39a7f8ad15"
+  ],
+  "changed_paths": [
+    "downstream/security/vault.py",
+    "tests/security/test_t16_bounded_security.py"
+  ],
+  "green_receipts": [
+    "At c68fb7f617ecd4fd7d726a03cc316e39a7f8ad15, Windows Python 3.11 affected security center, API, T15, and T16 suites: 142 passed, 5 skipped.",
+    "At the same HEAD, Windows Python 3.12 four focused quarantine tests: 4 passed, 68 deselected.",
+    "The actual caller checks a same-size rewrite, equal-digest replacement with changed inode, ADS isolation, and disposition-refusal rollback. The writer attempt asserts Win32 sharing violation code 32."
+  ],
+  "mutation_receipts": [
+    "Final-source runtime mutant removing _held_quarantine_source was killed: the inert replacement was deleted and the expected source read failed.",
+    "Final-source runtime mutant dropping result.file_identity was killed: an equal-digest replacement was incorrectly marked quarantined."
+  ],
+  "codegraph_after": {
+    "version": "1.6.0",
+    "commit": "c68fb7f617ecd4fd7d726a03cc316e39a7f8ad15",
+    "tree": "c6a694600d04bee8ddef43b7111aa167b84e0e10",
+    "head_external_receipt": "N04-race-pending/receipt.json",
+    "receipt_sha256": "c681007c364f6cd469e535ae5272d0250c5742b3234cbe5e8aae0dabc9645138",
+    "indexed_files": 8950,
+    "freshness": "UP_TO_DATE; four target source/test hashes match committed and indexed bytes"
+  },
+  "independent_review": "Cicero read-only source review found no concrete wrong-target delete path in the ordinary Windows caller. It identified a DB-commit/disposition crash window, unproved blob power-loss durability, ambiguous post-disposition reporting, and unverified ADS restore. The reviewer did not execute tests. These are retained as separate unresolved contracts.",
+  "native_and_campaign_gaps": [
+    "Native leaf and ancestor symlink creation was denied on this host; do not claim N04-A2 complete.",
+    "ADS stream enumeration during directory walking is not proved by the direct ADS test.",
+    "Memory-mapped writer behavior and other filesystem drivers were not qualified by the sharing test.",
+    "Quarantine crash consistency and power-loss durability are N26; ADS restoration is N27.",
+    "The full U1 semantic commit ledger has not been mapped to this family."
+  ],
+  "revisit_trigger": "Complete native symlink evidence where permitted, map relevant U1 ledger rows, and close N26/N27 before treating quarantine as a durable release contract."
+}

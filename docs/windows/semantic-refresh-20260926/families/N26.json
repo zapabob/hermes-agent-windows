@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "status": "DISCOVERED_UNRESOLVED",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N26",
+  "priority": "P1",
+  "origin": "Independent N04 source review and the repository's quarantine-before-delete invariant; this contract was not one of the original 25 seed families.",
+  "final_observable_contract": "A crash or storage failure at each quarantine transition must never report a completed quarantine without a recoverable blob and known source disposition. Unknown outcomes stay pending for reconciliation; source deletion requires durable blob evidence.",
+  "source_span": [
+    "downstream/security/vault.py:179-210 publishes the blob, commits quarantine_items with the default quarantined state, then marks deletion",
+    "downstream/security/vault.py:126-137 writes and rereads the blob without a durability flush",
+    "downstream/security/store.py:38-57 commits the SQLite transaction"
+  ],
+  "counterexample": "Termination after the quarantine_items commit but before SetFileInformationByHandle leaves the source present and the row marked quarantined. Immediate blob readback does not prove survival after power loss.",
+  "required_evidence": [
+    "RED fault injection at every intent/blob/DB/disposition/finalization boundary",
+    "A persisted pending outcome and an idempotent reconciliation policy that does not silently delete a replacement path",
+    "Storage durability verification on the supported Windows filesystem, with honest UNKNOWN when the platform cannot prove it",
+    "Native recovery and actual-caller tests, mutation evidence, fresh CodeGraph binding, and independent review"
+  ],
+  "publication_gate": "Do not describe N04 quarantine as crash-safe or power-loss durable while this family is open."
+}

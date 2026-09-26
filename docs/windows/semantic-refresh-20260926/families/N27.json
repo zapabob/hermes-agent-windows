@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "status": "DISCOVERED_NEEDS_NATIVE_RED",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N27",
+  "priority": "P2",
+  "origin": "Independent N04 review of the existing Windows alternate-data-stream restore path; this contract was not one of the original 25 seed families.",
+  "final_observable_contract": "After an explicitly authorized quarantine of an NTFS alternate data stream, restore its verified bytes to the intended stream without replacing or altering the base file, and record the real outcome.",
+  "source_span": [
+    "downstream/security/vault.py:236-265 decrypts a blob and writes a separate temporary file",
+    "downstream/security/vault.py:256 attempts os.replace(temp_path, target) even when target is base:stream"
+  ],
+  "required_evidence": [
+    "Run native inert ADS quarantine followed by explicitly authorized restore; distinguish filesystem denial from product failure",
+    "Preserve the base file and verify restored stream bytes and metadata",
+    "Inject target collision and write failure without losing the blob, then run affected tests, mutation, CodeGraph, and independent review"
+  ],
+  "publication_gate": "Do not claim native ADS restore from an ADS scan or quarantine pass."
+}
