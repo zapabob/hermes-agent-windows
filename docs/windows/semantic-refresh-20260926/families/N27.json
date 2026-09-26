@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "DISCOVERED_NEEDS_NATIVE_RED",
+  "status": "NATIVE_RED_CONFIRMED_UNRESOLVED",
   "campaign_id": "windows-semantic-refresh-20260926",
   "family_id": "N27",
   "priority": "P2",
@@ -10,6 +10,7 @@
     "downstream/security/vault.py:236-265 decrypts a blob and writes a separate temporary file",
     "downstream/security/vault.py:256 attempts os.replace(temp_path, target) even when target is base:stream"
   ],
+  "red_receipt": "At N04 product HEAD c68fb7f617ecd4fd7d726a03cc316e39a7f8ad15, a temporary Windows pytest using inert ADS bytes first returned quarantined, then QuarantineVault.restore to the original base:detected stream raised WinError 123 at vault.py:256 os.replace. Full traceback is retained outside the repository as N04-race-pending/n27-ads-restore-pytest-red.txt. The failed experimental test was removed from the working tree; no fix or GREEN is claimed.",
   "required_evidence": [
     "Run native inert ADS quarantine followed by explicitly authorized restore; distinguish filesystem denial from product failure",
     "Preserve the base file and verify restored stream bytes and metadata",
