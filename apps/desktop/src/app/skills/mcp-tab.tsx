@@ -37,7 +37,7 @@ import { estimateServerTokens, serverUsageCount } from '@/lib/mcp-cost'
 import { completeMcpDesktopOAuth } from '@/lib/mcp-dashboard-oauth'
 import { type McpImportEntry, parseMcpImport } from '@/lib/mcp-import'
 import { NEEDS_AUTH_RE, PROBE_TTL_MS, probeCache, probeKey, serverFingerprint } from '@/lib/mcp-probe-cache'
-import { getServers, isServerShape, type McpServers, normalizeEntry } from '@/lib/mcp-servers'
+import { getServers, isServerShape, type McpServers, normalizeEntry, serverEnabled } from '@/lib/mcp-servers'
 import { countEnabledTools, isToolEnabled, toggleToolInServer } from '@/lib/mcp-tool-filter'
 import { cn } from '@/lib/utils'
 import { notify, notifyError } from '@/store/notifications'
@@ -81,10 +81,6 @@ function parseServersDoc(raw: string): McpServers {
 
   return Object.fromEntries(Object.entries(map).map(([name, entry]) => [name, normalizeEntry(entry)]))
 }
-
-// The runtime gate is `enabled: false` — the same flag `hermes mcp` and the
-// agent's MCP loader read.
-const serverEnabled = (server: Record<string, unknown>) => server.enabled !== false
 
 // Shared cache for the Nous-approved catalog — feeds both description enrichment
 // and the Catalog install view; invalidated after an install.

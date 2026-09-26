@@ -15,6 +15,7 @@
 import { getHermesConfigRecord, type McpTestResult, testMcpServer } from '@/hermes'
 import { translateNow } from '@/i18n'
 import { classifyProbe, freshProbe, probeCache, probeKey } from '@/lib/mcp-probe-cache'
+import { serverEnabled } from '@/lib/mcp-servers'
 import { persistStringRecord, storedStringRecord } from '@/lib/storage'
 import { dismissNotification, notify } from '@/store/notifications'
 import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'
@@ -114,7 +115,7 @@ export function recordMcpHealthResult(profileKey: string, name: string, status: 
 }
 
 const isUrlServer = (server: Record<string, unknown>): boolean =>
-  typeof server.url === 'string' && server.enabled !== false
+  typeof server.url === 'string' && serverEnabled(server)
 
 async function sweep(): Promise<void> {
   const epoch = sweepEpoch

@@ -13949,6 +13949,8 @@ def _redact_mcp_env(env: Dict[str, Any]) -> Dict[str, str]:
 
 
 def _mcp_server_summary(name: str, cfg: Dict[str, Any]) -> Dict[str, Any]:
+    from tools.mcp_tool import mcp_server_enabled
+
     transport = "http" if cfg.get("url") else ("stdio" if cfg.get("command") else "unknown")
     auth = cfg.get("auth")
     headers = cfg.get("headers") or {}
@@ -13964,7 +13966,7 @@ def _mcp_server_summary(name: str, cfg: Dict[str, Any]) -> Dict[str, Any]:
         "args": list(cfg.get("args") or []),
         "env": _redact_mcp_env(cfg.get("env") or {}),
         "auth": auth,
-        "enabled": cfg.get("enabled", True) is not False,
+        "enabled": mcp_server_enabled(cfg),
         # Tool selection: list of enabled tool names, or None = all.
         "tools": cfg.get("tools"),
     }
@@ -14063,9 +14065,10 @@ def _run_dashboard_mcp_oauth(flow, cfg: dict) -> None:
         from tools.mcp_oauth import HermesTokenStorage, force_interactive_oauth
         from tools.mcp_oauth_manager import get_manager
 
-        home_token = set_hermes_home_override(flow.hermes_home)
-        secret_token = set_secret_scope(build_profile_secret_scope(Path(flow.hermes_home)))
+        home_token = secret_token = None
         try:
+            home_token = set_hermes_home_override(flow.hermes_home)
+            secret_token = set_secret_scope(build_profile_secret_scope(Path(flow.hermes_home)))
             transaction = _mcp_oauth_transaction(flow)
             with transaction, force_interactive_oauth(), dashboard_oauth_flow(flow):
                 manager = get_manager()
@@ -14103,8 +14106,10 @@ def _run_dashboard_mcp_oauth(flow, cfg: dict) -> None:
                     )
                     raise
         finally:
-            reset_secret_scope(secret_token)
-            reset_hermes_home_override(home_token)
+            if secret_token is not None:
+                reset_secret_scope(secret_token)
+            if home_token is not None:
+                reset_hermes_home_override(home_token)
     except Exception as exc:
         msg = str(exc)
         # Providers that gate RFC 7591 registration to pre-approved clients
