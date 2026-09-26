@@ -17,6 +17,7 @@ import { computePrecisionWheelStep, initPrecisionWheel } from '../lib/precisionW
 import { computeWheelStep, initWheelAccelForHost } from '../lib/wheelAccel.js'
 import { closeWidget, dispatchWidgetInput } from '../sdk/host.js'
 
+import { approvalResponseRequest } from './controlApproval.js'
 import { getInputSelection } from './inputSelectionStore.js'
 import {
   type GatewayRpc,
@@ -214,9 +215,20 @@ export function useInputHandlers(ctx: InputHandlerContext): InputHandlerResult {
     }
 
     if (overlay.approval) {
-      return gateway
-        .rpc<ApprovalRespondResponse>('approval.respond', { choice: 'deny', session_id: getUiState().sid })
-        .then(r => r && (patchOverlayState({ approval: null }), patchTurnState({ outcome: 'denied' })))
+      const target = approvalResponseRequest(overlay.approval, getUiState().sid, 'deny')
+
+      if (!target) {
+        return
+      }
+
+      return gateway.rpc<ApprovalRespondResponse>(target.method, target.params).then(r => {
+        if (!r || (target.strict && r.resolved !== true)) {
+          return
+        }
+
+        patchOverlayState({ approval: null })
+        patchTurnState({ outcome: 'denied' })
+      })
     }
 
     if (overlay.sudo || overlay.secret) {

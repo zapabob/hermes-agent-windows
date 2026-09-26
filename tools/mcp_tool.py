@@ -6986,14 +6986,26 @@ def _normalize_mcp_input_schema(schema: dict | None) -> dict:
 
         return collapse_const_unions(node)
 
-    def _repair_object_shape(node):
-        """Recursively repair object-shaped nodes: fill type, prune required."""
+    def _repair_object_shape(node, *, _object_root=False):
+        """Recursively repair object-shaped nodes: fill type, prune required.
+
+        A nested dict carrying ``required`` but no ``properties`` and no
+        ``type`` is a constraint fragment (``allOf``/``oneOf``/``anyOf``/``if``
+        branch), not an object declaration. Repairing it prunes every name out
+        of ``required`` and collapses sibling branches into identical
+        always-true schemas, so an enclosing ``oneOf`` can never match. Only
+        the root, which providers receive as the argument object, is repaired
+        unconditionally.
+        """
         if isinstance(node, list):
             return [_repair_object_shape(item) for item in node]
         if not isinstance(node, dict):
             return node
 
         repaired = {k: _repair_object_shape(v) for k, v in node.items()}
+
+        if not (_object_root or "properties" in repaired or "type" in node):
+            return repaired
 
         # Coerce missing / null type when the shape is clearly an object
         # (has properties or required but no type).
@@ -7027,7 +7039,7 @@ def _normalize_mcp_input_schema(schema: dict | None) -> dict:
     normalized = _rewrite_local_refs(schema)
     normalized = _strip_nullable_union(normalized)
     normalized = _collapse_const_unions(normalized)
-    normalized = _repair_object_shape(normalized)
+    normalized = _repair_object_shape(normalized, _object_root=True)
 
     # Ensure top-level is a well-formed object schema
     if not isinstance(normalized, dict):
@@ -7202,11 +7214,11 @@ def matches_name_filter(tool_name: str, patterns: set[str]) -> bool:
 
 
 def _parse_boolish(value: Any, default: bool = True) -> bool:
-    """Parse a bool-like config value with safe fallback."""
+    """Parse a bool-like config value with safe fallback (YAML ``0``/``1`` are numbers, not words)."""
     if value is None:
         return default
-    if isinstance(value, bool):
-        return value
+    if isinstance(value, (bool, int, float)):
+        return bool(value)
     if isinstance(value, str):
         lowered = value.strip().lower()
         if lowered in {"true", "1", "yes", "on"}:
@@ -7215,6 +7227,13 @@ def _parse_boolish(value: Any, default: bool = True) -> bool:
             return False
     logger.warning("MCP config expected a boolean-ish value, got %r; using default=%s", value, default)
     return default
+
+
+def mcp_server_enabled(cfg: dict) -> bool:
+    """Whether ``mcp_servers.<name>`` is on. The ONE reader of the ``enabled`` key: the MCP client,
+    the toolset resolver, the catalog, the picker and every list/status surface call it, so a value
+    can never be on for one surface and off for another. Absent, ``null`` or unparseable = on."""
+    return _parse_boolish(cfg.get("enabled", True), default=True)
 
 
 def _get_lifecycle_seconds(config: dict, key: str) -> Optional[float]:
@@ -7860,7 +7879,7 @@ def _select_new_servers(servers: Dict[str, dict]) -> Dict[str, dict]:
             if keys[k] not in _servers
             and keys[k] not in _server_connecting
             and keys[k] not in _lazy_server_configs
-            and _parse_boolish(v.get("enabled", True), default=True)
+            and mcp_server_enabled(v)
             and not _connect_cooldown_active(k)
         }
 
@@ -7881,7 +7900,7 @@ def register_connected_into_current_scope(servers: dict) -> int:
     adopted_trust: List[tuple] = []
     with _lock:
         for name, config in servers.items():
-            if not _parse_boolish(config.get("enabled", True), default=True):
+            if not mcp_server_enabled(config):
                 continue
             own = _server_key(name, scope, current=False)
             if own in _servers:
@@ -7954,7 +7973,7 @@ def register_mcp_servers(servers: Dict[str, dict]) -> List[str]:
             # Servers already lazily registered from the schema cache are
             # not re-registered; they connect on first tool use (#56832).
             and keys[k] not in _lazy_server_configs
-            and _parse_boolish(v.get("enabled", True), default=True)
+            and mcp_server_enabled(v)
             # Skip a server still serving its post-failure backoff. Without
             # this, a server that fails to connect (and is therefore never
             # recorded in ``_servers``) would be re-spawned on every worker
@@ -8201,7 +8220,7 @@ def discover_mcp_tools() -> List[str]:
                     )
                     not in _servers
                     and key not in _server_connecting
-                    and _parse_boolish(cfg.get("enabled", True), default=True)
+                    and mcp_server_enabled(cfg)
                 )
             ]
 
@@ -8289,7 +8308,7 @@ def get_mcp_status() -> List[dict]:
 
     for name, cfg in configured.items():
         transport = cfg.get("transport", "http") if "url" in cfg else "stdio"
-        enabled = _parse_boolish(cfg.get("enabled", True), default=True)
+        enabled = mcp_server_enabled(cfg)
         # Prefer this scope's resolved connection over a sibling's same name.
         with _lock:
             resolved = _resolve_server_key(name, current_scope, current=False)
@@ -8372,7 +8391,7 @@ def probe_mcp_server_tools() -> Dict[str, List[tuple]]:
 
     enabled = {
         k: v for k, v in servers_config.items()
-        if _parse_boolish(v.get("enabled", True), default=True)
+        if mcp_server_enabled(v)
     }
     if not enabled:
         return {}

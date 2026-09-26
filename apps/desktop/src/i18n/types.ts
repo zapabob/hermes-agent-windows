@@ -2996,6 +2996,9 @@ export interface Translations {
       sendFailed: string
       run: string
       command: string
+      resource: string
+      grantRevision: string
+      incompleteControlApproval: string
       moreOptions: string
       allowSession: string
       alwaysAllowMenu: string

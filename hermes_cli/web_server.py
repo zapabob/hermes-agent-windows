@@ -438,8 +438,37 @@ def _auto_update_security_definitions_on_startup() -> None:
         _log.exception("Security definition auto-update failed")
 
 
+def _prepare_control_mcp_host(app: "FastAPI"):
+    """Mount Control MCP only when the trusted bootstrap explicitly opts in."""
+    startup_config = getattr(app.state, "control_mcp_startup_config", None)
+    control_host = getattr(app.state, "control_mcp_host", None)
+    if startup_config is None:
+        return control_host
+
+    from downstream.control_mcp.contracts import ControlError
+
+    # Lifespan restarts reuse only a host created from this exact immutable
+    # startup config. Any independently supplied host/config combination is a
+    # conflict, so startup cannot replace an existing host by accident.
+    if control_host is not None:
+        if getattr(app.state, "_control_mcp_startup_config", None) is startup_config:
+            return control_host
+        raise ControlError("route_conflict")
+
+    from downstream.control_mcp.startup import build_control_mcp_host
+    from downstream.control_mcp.transport import mount_control_mcp
+
+    host = build_control_mcp_host(startup_config)
+    mount_control_mcp(app, host)
+    app.state._control_mcp_startup_config = startup_config
+    return host
+
+
 @asynccontextmanager
 async def _lifespan(app: "FastAPI"):
+    # Validate and mount before spawning any unrelated startup work. Invalid
+    # opt-in config fails closed without leaving a host or routes behind.
+    control_host = _prepare_control_mcp_host(app)
     app.state.event_channels = {}  # dict[str, set]
     app.state.event_lock = asyncio.Lock()
     app.state.pty_active_session_files = {}  # dict[str, Path]
@@ -551,7 +580,12 @@ async def _lifespan(app: "FastAPI"):
     auto_archive_task = asyncio.create_task(_auto_archive_ticker_loop())
 
     try:
-        yield
+        if control_host is None:
+            yield
+        else:
+            # Enter the SDK manager in the parent lifespan.
+            async with control_host.lifespan():
+                yield
     finally:
         if cron_stop is not None:
             cron_stop.set()
@@ -1057,6 +1091,8 @@ async def _dashboard_auth_gate(request: Request, call_next):
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     """Require the session token on all /api/ routes except the public list."""
+    if getattr(getattr(request, "state", None), "control_mcp_resource", False):
+        return await call_next(request)
     # A request already authenticated by the token-auth seam (a service caller
     # presenting a bearer token on a registered token route) carries
     # ``token_authenticated`` — never bounce it through the cookie/session gate.
@@ -1090,6 +1126,16 @@ async def _token_auth_seam(request: Request, call_next):
     cookie/session gates skip enforcement. Non-token routes pass straight
     through untouched.
     """
+    # A mounted Control MCP resource owns exactly these HTTP paths. Its inner
+    # ASGI boundary verifies a resource-specific token on every request.
+    control_host = getattr(request.app.state, "control_mcp_host", None)
+    if control_host is not None and request.scope.get("path") in {
+        control_host.app.path,
+        control_host.app.path + "/",
+        control_host.app.metadata_path,
+    }:
+        request.state.control_mcp_resource = True
+        return await call_next(request)
     from hermes_cli.dashboard_auth.token_auth import token_auth_middleware
     return await token_auth_middleware(request, call_next)
 
@@ -13903,6 +13949,8 @@ def _redact_mcp_env(env: Dict[str, Any]) -> Dict[str, str]:
 
 
 def _mcp_server_summary(name: str, cfg: Dict[str, Any]) -> Dict[str, Any]:
+    from tools.mcp_tool import mcp_server_enabled
+
     transport = "http" if cfg.get("url") else ("stdio" if cfg.get("command") else "unknown")
     auth = cfg.get("auth")
     headers = cfg.get("headers") or {}
@@ -13918,7 +13966,7 @@ def _mcp_server_summary(name: str, cfg: Dict[str, Any]) -> Dict[str, Any]:
         "args": list(cfg.get("args") or []),
         "env": _redact_mcp_env(cfg.get("env") or {}),
         "auth": auth,
-        "enabled": cfg.get("enabled", True) is not False,
+        "enabled": mcp_server_enabled(cfg),
         # Tool selection: list of enabled tool names, or None = all.
         "tools": cfg.get("tools"),
     }
@@ -14017,9 +14065,10 @@ def _run_dashboard_mcp_oauth(flow, cfg: dict) -> None:
         from tools.mcp_oauth import HermesTokenStorage, force_interactive_oauth
         from tools.mcp_oauth_manager import get_manager
 
-        home_token = set_hermes_home_override(flow.hermes_home)
-        secret_token = set_secret_scope(build_profile_secret_scope(Path(flow.hermes_home)))
+        home_token = secret_token = None
         try:
+            home_token = set_hermes_home_override(flow.hermes_home)
+            secret_token = set_secret_scope(build_profile_secret_scope(Path(flow.hermes_home)))
             transaction = _mcp_oauth_transaction(flow)
             with transaction, force_interactive_oauth(), dashboard_oauth_flow(flow):
                 manager = get_manager()
@@ -14057,8 +14106,10 @@ def _run_dashboard_mcp_oauth(flow, cfg: dict) -> None:
                     )
                     raise
         finally:
-            reset_secret_scope(secret_token)
-            reset_hermes_home_override(home_token)
+            if secret_token is not None:
+                reset_secret_scope(secret_token)
+            if home_token is not None:
+                reset_hermes_home_override(home_token)
     except Exception as exc:
         msg = str(exc)
         # Providers that gate RFC 7591 registration to pre-approved clients

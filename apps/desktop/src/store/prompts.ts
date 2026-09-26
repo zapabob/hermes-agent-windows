@@ -1,5 +1,7 @@
 import { atom, computed, type ReadableAtom } from 'nanostores'
 
+import { isHex64 } from '@/lib/control-presentation'
+
 import { $clarifyRequest, $clarifyRequests } from './clarify'
 import type { GatewayScope } from './gateway'
 import { $activeSessionId } from './session'
@@ -78,9 +80,95 @@ export interface ApprovalRequest extends KeyedPrompt {
   allowPermanent?: boolean
   choices?: string[]
   command: string
+  control?: ControlApprovalBinding
   description: string
   requestId?: string
   smartDenied?: boolean
+}
+
+export interface ControlApprovalBinding {
+  grantRevision: number
+  intentDigest: string
+  operationId: string
+  // The host's authority projection; the UI digests what it rendered and sends that for "once".
+  presentation: Readonly<Record<string, unknown>> | null
+  resource: string
+}
+
+const INVALID_CONTROL_APPROVAL: ControlApprovalBinding = Object.freeze({
+  grantRevision: 0,
+  intentDigest: '',
+  operationId: '',
+  presentation: null,
+  resource: ''
+})
+
+const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === 'object' && !Array.isArray(value)
+
+export function controlApprovalFromPayload(value: unknown): ApprovalRequest['control'] {
+  if (value === undefined) {
+    return undefined
+  }
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return INVALID_CONTROL_APPROVAL
+  }
+
+  const raw = value as Record<string, unknown>
+  const grantRevision = raw.grant_revision
+
+  return Object.freeze({
+    grantRevision: typeof grantRevision === 'number' && Number.isSafeInteger(grantRevision) && grantRevision >= 1
+      ? grantRevision
+      : 0,
+    intentDigest: typeof raw.intent_digest === 'string' ? raw.intent_digest : '',
+    operationId: typeof raw.operation_id === 'string' ? raw.operation_id : '',
+    presentation: isPlainRecord(raw.presentation) ? Object.freeze({ ...raw.presentation }) : null,
+    resource: typeof raw.resource === 'string' ? raw.resource : ''
+  })
+}
+
+export function hasValidControlApprovalBinding(
+  control: ControlApprovalBinding | undefined
+): control is ControlApprovalBinding {
+  return !!control && typeof control.operationId === 'string' && !!control.operationId.trim() &&
+    /^[a-f0-9]{64}$/.test(control.intentDigest) && typeof control.resource === 'string' &&
+    !!control.resource.trim() && Number.isSafeInteger(control.grantRevision) && control.grantRevision >= 1 &&
+    !!control.presentation &&
+    control.presentation.operation_id === control.operationId &&
+    control.presentation.resource === control.resource &&
+    control.presentation.grant_revision === control.grantRevision
+}
+
+/** The ordinary and strict queues have separate owner RPCs. */
+export function approvalResponseForRequest(
+  request: ApprovalRequest, choice: string, activeRequest: ApprovalRequest | null, renderedDigest?: string | null
+): { method: string; params: Record<string, unknown>; strict: boolean } | null {
+  if (activeRequest !== request) {
+    return null
+  }
+
+  if (!request.control) {
+    return {
+      method: 'approval.respond', strict: false,
+      params: { choice, request_id: request.requestId, session_id: request.sessionId ?? undefined }
+    }
+  }
+
+  if (!request.sessionId || !request.requestId || !/^[a-f0-9]{64}$/.test(request.control.intentDigest) ||
+    (choice !== 'once' && choice !== 'deny') ||
+    (choice === 'once' && (!hasValidControlApprovalBinding(request.control) ||
+      !isHex64(renderedDigest)))) {
+    return null
+  }
+
+  return {
+    method: 'control_approval.respond', strict: true,
+    params: { choice, request_id: request.requestId,
+      session_id: request.sessionId, intent_digest: request.control.intentDigest,
+      ...(choice === 'once' ? { presentation_digest: renderedDigest } : {}) }
+  }
 }
 
 interface ApprovalGateway {
@@ -91,6 +179,7 @@ interface PendingApprovalPayload {
   allow_permanent?: boolean
   choices?: unknown
   command?: unknown
+  control?: unknown
   description?: unknown
   request_id?: unknown
   smart_denied?: boolean
@@ -158,6 +247,7 @@ export async function replayPendingApproval(
     allowPermanent: pending.allow_permanent !== false,
     choices: Array.isArray(pending.choices) ? pending.choices.filter(choice => typeof choice === 'string') : undefined,
     command: typeof pending.command === 'string' ? pending.command : '',
+    control: controlApprovalFromPayload(pending.control),
     description: typeof pending.description === 'string' ? pending.description : 'dangerous command',
     requestId: pending.request_id,
     sessionId,

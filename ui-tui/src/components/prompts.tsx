@@ -1,6 +1,12 @@
 import { Box, Text, useInput, wrapAnsi } from '@hermes/ink'
 import { useEffect, useState } from 'react'
 
+import {
+  PRESENTATION_VALUE_LINES,
+  presentationValueFits,
+  presentationValueText,
+  renderedControlDigest
+} from '../app/controlApproval.js'
 import { isMac } from '../lib/platform.js'
 import { clarifyBatchRevisitState } from '../lib/text.js'
 import type { Theme } from '../theme.js'
@@ -18,7 +24,13 @@ const CMD_PREVIEW_LINES = 10
 
 type ApprovalChoice = 'always' | 'deny' | 'once' | 'session'
 
+const APPROVAL_OPTS_DENY_ONLY = ['deny'] as const
+
 export function approvalOptions(req: ApprovalReq): readonly ApprovalChoice[] {
+  if (req.control) {
+    return renderedControlDigest(req.control) ? APPROVAL_OPTS_SMART_DENY : APPROVAL_OPTS_DENY_ONLY
+  }
+
   if (req.choices) {
     return req.choices.filter((choice): choice is ApprovalChoice => APPROVAL_OPTS.includes(choice as ApprovalChoice))
   }
@@ -30,6 +42,41 @@ export function approvalOptions(req: ApprovalReq): readonly ApprovalChoice[] {
   return req.allowPermanent === false ? APPROVAL_OPTS_NO_ALWAYS : APPROVAL_OPTS
 }
 
+/**
+ * Every authority field of a control approval, each value in full when it fits
+ * the prompt, followed by the digest this prompt computed over what it shows.
+ * A value too long to show in full is cut and leaves only "deny" available.
+ */
+export function controlPresentationLines(control: NonNullable<ApprovalReq['control']>, width: number): string[] {
+  const presentation = control.presentation
+
+  if (!presentation || presentation.operation_id !== control.operationId) {
+    return ['control approval is incomplete or altered; deny it and request a fresh approval']
+  }
+
+  const lines: string[] = []
+
+  for (const key of Object.keys(presentation).sort()) {
+    const value = presentation[key]
+
+    const wrapped = `${key}: ${presentationValueText(value)}`
+      .split('\n')
+      .flatMap(line => wrapAnsi(line, width, { hard: true, trim: false }).split('\n'))
+
+    if (presentationValueFits(value)) {
+      lines.push(...wrapped)
+    } else {
+      lines.push(...wrapped.slice(0, PRESENTATION_VALUE_LINES))
+      lines.push(`  … ${key} is too long to review here; only deny is offered. Approve it from the desktop app.`)
+    }
+  }
+
+  const digest = renderedControlDigest(control)
+
+  lines.push(digest ? `presentation_digest: ${digest}` : 'presentation_digest: — (approval unavailable in this terminal)')
+
+  return lines
+}
 type ApprovalKey = {
   downArrow?: boolean
   escape?: boolean
@@ -126,6 +173,16 @@ export function ApprovalPrompt({ cols = 80, onChoice, req, t }: ApprovalPromptPr
           </Text>
         ) : null}
       </Box>
+
+      {req.control ? (
+        <Box flexDirection="column" paddingLeft={1}>
+          {controlPresentationLines(req.control, innerWidth).map((line, i) => (
+            <Text color={t.color.muted} key={i} wrap="truncate-end">
+              {line || ' '}
+            </Text>
+          ))}
+        </Box>
+      ) : null}
 
       <Text />
 

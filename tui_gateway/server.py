@@ -2828,7 +2828,10 @@ def _approval_request_payload(data: dict | None) -> dict:
     """Build the client-safe representation of a pending approval."""
     payload = dict(data or {})
     if "choices" not in payload:
-        if payload.get("smart_denied"):
+        if isinstance(payload.get("control"), dict):
+            # Control intents cannot offer persistent or session-wide approval.
+            payload["choices"] = ["once", "deny"]
+        elif payload.get("smart_denied"):
             payload["choices"] = ["once", "deny"]
         else:
             choices = ["once"]
@@ -5909,7 +5912,7 @@ def _load_enabled_toolsets(platform: str | None = None) -> list[str] | None:
         mcp_disabled: set[str] = set()
         try:
             from hermes_cli.config import read_raw_config
-            from hermes_cli.tools_config import _parse_enabled_flag
+            from tools.mcp_tool import mcp_server_enabled
 
             raw_cfg = read_raw_config()
             mcp_servers = (
@@ -5920,7 +5923,7 @@ def _load_enabled_toolsets(platform: str | None = None) -> list[str] | None:
             for name, server_cfg in mcp_servers.items():
                 if not isinstance(server_cfg, dict):
                     continue
-                if _parse_enabled_flag(server_cfg.get("enabled", True), default=True):
+                if mcp_server_enabled(server_cfg):
                     mcp_names.add(str(name))
                 else:
                     mcp_disabled.add(str(name))

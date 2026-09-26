@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useI18n } from '@/i18n'
+import { renderedPresentationDigest } from '@/lib/control-presentation'
 import { triggerHaptic } from '@/lib/haptics'
 import { AlertCircle, ChevronDown, Loader2 } from '@/lib/icons'
 import { cn } from '@/lib/utils'
@@ -22,7 +23,9 @@ import { gatewayForScope } from '@/store/gateway'
 import { notifyError } from '@/store/notifications'
 import {
   type ApprovalRequest,
+  approvalResponseForRequest,
   clearApprovalRequest,
+  hasValidControlApprovalBinding,
   registerApprovalInlineAnchor,
   replayPendingApproval,
   sessionApprovalInlineVisible,
@@ -102,6 +105,9 @@ export const PendingApprovalFallback: FC = () => {
   )
 }
 
+const presentationText = (value: unknown): string =>
+  typeof value === 'string' ? value : value === null || value === undefined ? '—' : JSON.stringify(value)
+
 const isMac = typeof navigator !== 'undefined' && /Mac|iP(hone|ad|od)/.test(navigator.platform)
 
 const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline' }> = ({ request, surface }) => {
@@ -120,17 +126,44 @@ const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline'
   // false when the backend won't honor a permanent allow (tirith warning) → hide "Always allow".
   const allowPermanent = request.allowPermanent !== false
   const choices = request.choices ?? (request.smartDenied ? ['once', 'deny'] : undefined)
-  const allowSession = choices ? choices.includes('session') : true
-  const allowAlways = choices ? choices.includes('always') : allowPermanent
+  const allowSession = !request.control && (choices ? choices.includes('session') : true)
+  const allowAlways = !request.control && (choices ? choices.includes('always') : allowPermanent)
   const hasMoreOptions = allowSession || allowAlways
   const hasCommand = request.command.trim().length > 0
+  const validControlBinding = !request.control || hasValidControlApprovalBinding(request.control)
+  const presentation = request.control?.presentation ?? null
+  const [renderedDigest, setRenderedDigest] = useState<string | null>(null)
+
+  useEffect(() => {
+    let current = true
+    setRenderedDigest(null)
+
+    if (presentation) {
+      void renderedPresentationDigest(presentation)
+        .catch(() => null)
+        .then(digest => {
+          if (current) {
+            setRenderedDigest(digest)
+          }
+        })
+    }
+
+    return () => {
+      current = false
+    }
+  }, [presentation])
+
+  // The host withholds its digest; it compares this one against the projection it bound.
+  const presentationMatches = !request.control || renderedDigest !== null
 
   const respond = useCallback(
     async (choice: ApprovalChoice) => {
       // Another bar (or the keyboard path) may have already resolved this
       // approval; the map is the single source of truth, so bail if this
       // session's request is gone.
-      if (busy || !sessionApprovalRequest(request.sessionId).get()) {
+      const activeRequest = sessionApprovalRequest(request.sessionId).get()
+
+      if (busy || activeRequest !== request) {
         return
       }
 
@@ -142,6 +175,12 @@ const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline'
         return
       }
 
+      const target = approvalResponseForRequest(request, choice, activeRequest, renderedDigest)
+
+      if (!target) {
+        return
+      }
+
       setSubmitting(choice)
 
       try {
@@ -149,18 +188,21 @@ const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline'
         // ambient only when no owner is known. The ambient socket follows
         // foreground focus, and for a cross-profile session it points at a
         // backend that never held this approval (#91684 client half).
-        await requestForOwnedSession<{ resolved?: boolean }>(
+        const result = await requestForOwnedSession<{ resolved?: boolean }>(
           request.sessionId,
           // Bound (not wrapped) so the ambient fallback keeps the exact
           // 2-arg call shape gateway.request callers assert on.
           gateway.request.bind(gateway) as typeof gateway.request,
-          'approval.respond',
-          {
-            choice,
-            request_id: request.requestId,
-            session_id: request.sessionId ?? undefined
-          }
+          target.method,
+          target.params
         )
+
+        if (target.strict && result?.resolved !== true) {
+          setSubmitting(null)
+
+          return
+        }
+
         triggerHaptic(choice === 'deny' ? 'cancel' : 'submit')
         clearApprovalRequest(request.sessionId, request.requestId)
         void replayPendingApproval(gateway, request.sessionId, request.scope).catch(() => undefined)
@@ -169,7 +211,7 @@ const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline'
         setSubmitting(null)
       }
     },
-    [busy, copy.gatewayDisconnected, copy.sendFailed, request.requestId, request.scope, request.sessionId]
+    [busy, copy.gatewayDisconnected, copy.sendFailed, renderedDigest, request]
   )
 
   // ⌘/Ctrl+Enter → Run, Esc → Reject.
@@ -200,11 +242,58 @@ const ApprovalBar: FC<{ request: ApprovalRequest; surface: 'floating' | 'inline'
       className={cn(surface === 'inline' ? 'mt-1 ps-5' : 'mt-2')}
       data-slot={surface === 'inline' ? 'tool-approval-inline' : 'tool-approval-actions'}
     >
+      {request.control && (
+        <dl className="mb-2 min-w-0 space-y-1.5 text-xs">
+          {validControlBinding ? (
+            <>
+              <div className="flex items-baseline gap-2">
+                <dt className="shrink-0 text-(--ui-text-tertiary)">{copy.grantRevision}</dt>
+                <dd className="font-mono text-foreground">{request.control.grantRevision}</dd>
+              </div>
+              <div className="min-w-0 space-y-0.5">
+                <dt className="text-(--ui-text-tertiary)">{copy.resource}</dt>
+                <dd>
+                  <code className="block max-h-32 overflow-auto whitespace-pre-wrap break-all font-mono text-(--ui-text-secondary)" dir="ltr">
+                    {request.control.resource}
+                  </code>
+                </dd>
+              </div>
+              {presentation && (
+                <div
+                  className="max-h-64 min-w-0 space-y-1 overflow-auto rounded-md border border-(--ui-stroke-tertiary) px-2 py-1.5"
+                  data-slot="control-presentation"
+                >
+                  {Object.keys(presentation).sort().map(key => (
+                    <div className="min-w-0" key={key}>
+                      <dt className="font-mono text-(--ui-text-tertiary)">{key}</dt>
+                      <dd>
+                        <code className="block whitespace-pre-wrap break-all font-mono text-(--ui-text-secondary)" dir="ltr">
+                          {presentationText(presentation[key])}
+                        </code>
+                      </dd>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="min-w-0 space-y-0.5">
+                <dt className="font-mono text-(--ui-text-tertiary)">presentation_digest</dt>
+                <dd>
+                  <code className="block break-all font-mono text-(--ui-text-secondary)" dir="ltr">
+                    {renderedDigest ?? '—'}
+                  </code>
+                </dd>
+              </div>
+            </>
+          ) : (
+            <dd className="text-destructive" role="alert">{copy.incompleteControlApproval}</dd>
+          )}
+        </dl>
+      )}
       <div className="flex items-center gap-2.5">
         <div className="inline-flex h-6 items-stretch overflow-hidden rounded-md border border-primary/25 bg-primary/10 text-primary">
           <Button
             className="h-full gap-1 rounded-none px-2 text-xs font-medium text-primary hover:bg-primary/15 hover:text-primary"
-            disabled={busy}
+            disabled={busy || !validControlBinding || !presentationMatches}
             onClick={() => void respond('once')}
             size="xs"
             variant="ghost"

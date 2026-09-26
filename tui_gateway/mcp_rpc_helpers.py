@@ -50,6 +50,7 @@ def summarize_server(name: str, cfg: dict) -> Dict[str, Any]:
     one already authenticated.
     """
     from hermes_cli.mcp_config import _oauth_tokens_present
+    from tools.mcp_tool import mcp_server_enabled
 
     cfg = cfg if isinstance(cfg, dict) else {}
     transport = "http" if cfg.get("url") else ("stdio" if cfg.get("command") else "unknown")
@@ -69,6 +70,6 @@ def summarize_server(name: str, cfg: dict) -> Dict[str, Any]:
         "env": sorted(str(k) for k in (cfg.get("env") or {})),
         "auth": auth,
         "oauth_tokens_present": tokens_present,
-        "enabled": cfg.get("enabled", True) is not False,
+        "enabled": mcp_server_enabled(cfg),
         "tools": cfg.get("tools"),
     }

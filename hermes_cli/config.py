@@ -3351,6 +3351,45 @@ def resolve_ephemeral_system_prompt_from_config(cfg: Optional[Dict[str, Any]]) -
     return resolve_ephemeral_system_prompt(cfg)
 
 
+def peek_effective_config(config_path: Path) -> Optional[Dict[str, Any]]:
+    """Observe an existing effective cache entry without loading or repairing it.
+
+    The host supplies the already-authorised profile's config path. This does
+    not create a home, parse YAML, expand secrets, hydrate a provider or migrate
+    configuration. A cold or stale cache is unknown (None), not empty/default
+    configuration. Returned data is host-internal and still requires projection
+    before disclosure; it may contain credentials.
+    """
+    from hermes_cli import managed_scope
+
+    with _CONFIG_LOCK:
+        cached = _LOAD_CONFIG_CACHE.get(str(config_path))
+        if cached is None:
+            return None
+        try:
+            st = config_path.stat()
+            user_sig = (st.st_mtime_ns, st.st_size)
+        except FileNotFoundError:
+            user_sig = (0, 0)
+        except OSError:
+            return None
+        managed_dir = managed_scope.get_managed_dir()
+        managed_path = managed_dir / "config.yaml" if managed_dir else None
+        try:
+            mst = managed_path.stat() if managed_path else None
+            managed_sig = (mst.st_mtime_ns, mst.st_size) if mst else (0, 0)
+        except FileNotFoundError:
+            managed_sig = (0, 0)
+        except OSError:
+            return None
+        if cached[:4] != (*user_sig, *managed_sig):
+            return None
+        env_snapshot = cached[5] if len(cached) > 5 else {}
+        if any(os.environ.get(k) != v for k, v in env_snapshot.items()):
+            return None
+        return copy.deepcopy(cached[4])
+
+
 def read_raw_config() -> Dict[str, Any]:
     """Read ~/.hermes/config.yaml as-is, without merging defaults or migrating.
 
