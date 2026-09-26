@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "status": "PARTIAL_PUBLIC_RETIREMENT",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N02",
+  "upstream_commits": [],
+  "upstream_merge_parents": [],
+  "salvage_fixup_revert_lineage": [],
+  "final_upstream_sha": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+  "final_observable_contract": "Retire the fork-only fixed planner/worker/reviewer model and effort workflow as a public product entrypoint while preserving the normal model picker, provider effort, delegation, MoA and shared approval/Git owners. No direct upstream U1 commit is claimed for this fork retirement.",
+  "downstream_predecessor": {
+    "commit": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "source": "plugins/implementation_router/__init__.py:5-35",
+    "blob": "014a5617b06ce9dc9337176dd2b3eb33b2e4d490",
+    "feature_2622_has_same_blob": true
+  },
+  "downstream_owner": "PluginManager/PluginContext public registration; EngineeringRunOwner remains a separate internal legacy authority",
+  "downstream_call_path": [
+    "hermes_cli/plugins.py:_load_plugin_scoped -> plugins/implementation_router/__init__.py:register -> PluginContext.register_command",
+    "Before change: register -> register_auxiliary_task x3 and register_tool engineering_run; /engineer -> entrypoint.run_workflow",
+    "After change: /engineer -> BLOCKED diagnostic; no stage slot or engineering_run tool registration",
+    "Control MCP transport read tools -> HostControlService.read -> scoped journal.get when mounted; no public start or STOP tool",
+    "EngineeringRunOwner.start_approved -> entrypoint.run_workflow and EngineeringRunOwner.cancel remain internal and are not constructed by the current public host"
+  ],
+  "already_local_commits": [
+    "d5b2c5ea619c6a78663aae1eb4574ad58c06d0c8"
+  ],
+  "windows_constraints": [
+    "Do not replace normal picker/effort or delegation with fixed stage routing",
+    "Do not remove the shared owner merely because EngineeringRunOwner carries a legacy name",
+    "Do not expose Control MCP production write or require Docker for normal Hermes sessions"
+  ],
+  "decision": "REMOVE_PUBLIC_STAGE_REGISTRATION_AND_KEEP_BLOCKED_COMPATIBILITY_DIAGNOSTIC; INTERNAL_OWNER_REVIEW_OPEN",
+  "rationale": "D0 and the local feature both register the fixed-stage router. Removing those registrations closes the current public plugin path. The direct legacy entrypoint and owner remain in source for old operation authority and receipt review, without a current host construction path. The 2026-09-24 retirement specification was annotated to explain the temporary blocked /engineer compatibility response and retained internal owner.",
+  "public_compatibility_delta": "When enabled, /engineer previously accepted a JSON request and could start the fixed-stage workflow; it now returns BLOCKED with migration and scoped legacy-operation guidance. engineering_run and three stage-specific picker slots disappear. This intentional compatibility change still needs a version decision before publication.",
+  "acceptance_status": {
+    "N02-A1": "PARTIAL: blocked diagnostic, scoped operation metadata read conditions, no public start or STOP, and internal generation-bound cancel are evidenced. Public STOP and any live legacy operation migration are not proved.",
+    "N02-A2": "FOCUSED_GREEN: normal picker, effort, parent-owned delegation and MoA preservation tests passed on the current Windows candidate; full final-head CI remains open."
+  },
+  "red_or_equivalence_receipts": [
+    "Pre-edit actual D0 and feature plugin register source: enabled registration created engineering_planner/worker/reviewer and engineering_run; an assertion that no stage slots register failed before the change.",
+    "A diagnostic regression expecting legacy_operation read/STOP status failed with KeyError before its implementation."
+  ],
+  "green_receipts": [
+    "Real PluginManager._load_plugin with a scoped project manifest exposes only /engineer; public command and auxiliary-task listings contain no stage slots; scoped registry has no engineering_run. Two focused tests passed.",
+    "Current N02 affected pytest set with repository fixtures: 67 passed, 3 skipped; covers public plugin loader, normal picker and auxiliary routes, Control MCP transport, and credential-free Docker unit guards. Both native Docker E2E cases skipped without a prepared image. An earlier --noconftest invocation including Control MCP produced fixture setup errors and is not a product failure or pass receipt.",
+    "Historical component suite: 58 unittest cases, 1 skipped, no failures.",
+    "Normal picker/effort/delegation/MoA affected set: 74 passed on isolated Windows Python 3.11.11.",
+    "The CI display names describe the retired public entrypoint and Docker guard boundary. The obsolete native workflow success E2E was removed, while protected-path, process lifetime, and parent-to-child/grandchild credential isolation checks remain for the generic Docker backend. The current repo ruleset has no required_status_checks rule; exact-head CI remains open."
+  ],
+  "native_receipts": [
+    "Windows Python 3.11.11 synthetic and scoped plugin/MCP tests passed. Both native Docker E2E tests skipped because HERMES_TEST_ENGINEERING_IMAGE was not provided; the restored child/grandchild isolation test has not run on a real container here. No Docker or production runtime qualification is claimed."
+  ],
+  "mutation_receipts": [
+    "Current-tree runtime mutant resurrecting engineering_planner registration was killed by test_retired_plugin_registers_only_a_diagnostic_even_when_enabled (assert_not_called failed); unmutated two-test baseline passed.",
+    "Historical internal component mutation gate baseline passed and detected 16 of 16 deliberate mutations. This protects retained legacy internals; it does not prove the retired public path alone."
+  ],
+  "codegraph_before": {
+    "version": "1.6.0",
+    "source": "D0 raw Git blob-audited index",
+    "plugin_register_node_sha256": "233ac69abd13ec4ff991cff06f132c4543d7c7887c12639128636f1db62707eb"
+  },
+  "codegraph_after": {
+    "version": "1.6.0",
+    "source": "product commit b56b5adda21cf5d03f3d69ceb720234c3a685ecc (tree a17967a63ebb4162aa26bf775d4744c6f689be96); N02-after-commit-b56/receipt.json binds the final CodeGraph index to seven committed source, test, and CI workflow files",
+    "receipt_sha256": "a8495294905601a04e45dff0fa08331c6806703be15aceefc1882cc015c5a52e",
+    "plugin_register_sha256": "0de8a49e9002679da1e0c369f253dacb63f4f5f7c4fe4747f4a6660f9c2219fe",
+    "index_file_count": 8950,
+    "status": "UP_TO_DATE_COMMITTED_CONTENT_MATCH"
+  },
+  "attribution": [
+    "The old router was present in both D0 and feature. The feature-only internal owner history remains attributed to its original commits. No upstream U1 code was copied in this unit."
+  ],
+  "independent_review": {
+    "initial": "Read-only review found the retained internal owner/old E2E mismatch, unqualified journal read wording, historical docs contradiction, and insufficient public-loader testing. The loader test, read conditions, docs, and CI E2E were corrected; internal owner remains a reviewed residual risk.",
+    "current_diff": "Galileo read-only re-review of the final N02 product/test diff found no additional actionable source finding after the Docker child/grandchild test covered both execute_clean and execute. git diff --check passed. The reviewer did not run Docker, tests, exact-head CI, or verify this final receipt. Public STOP and live legacy-operation reconciliation remain unproved; N02-A1 stays PARTIAL."
+  },
+  "implementation_commits": ["b56b5adda21cf5d03f3d69ceb720234c3a685ecc"],
+  "implementation_scope": {
+    "product_commit": "b56b5adda21cf5d03f3d69ceb720234c3a685ecc",
+    "product_tree": "a17967a63ebb4162aa26bf775d4744c6f689be96",
+    "explicit_paths": [
+      ".github/workflows/ci.yaml",
+      ".github/workflows/engineering-router.yml",
+      "docs/control-mcp/RETIREMENT_SPEC.md",
+      "docs/implementation-router/AGENT_PROTOCOL.md",
+      "docs/implementation-router/STATUS.md",
+      "docs/implementation-router/i18n/ar.md",
+      "docs/implementation-router/i18n/en.md",
+      "docs/implementation-router/i18n/ja.md",
+      "docs/implementation-router/i18n/zh-hant.md",
+      "docs/implementation-router/i18n/zh.md",
+      "plugins/implementation_router/README.md",
+      "plugins/implementation_router/__init__.py",
+      "plugins/implementation_router/plugin.yaml",
+      "tests/control_mcp/test_mcp_protocol.py",
+      "tests/e2e/test_engineering_native_docker.py",
+      "tests/plugins/test_engineering_workflow.py"
+    ]
+  },
+  "revisit_trigger": "Prove handling for any already approved live legacy operation and its safe STOP/reconciliation before marking A1 complete; re-review the final diff, run exact-head CI/native Docker when available, and finish the campaign-wide U1 mapping. Control MCP production writes stay disabled."
+}
