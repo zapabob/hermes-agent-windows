@@ -1834,3 +1834,75 @@ def test_native_junction_components_are_rejected_before_hashing(tmp_path: Path) 
 
     assert result.verdict == Verdict.SCAN_ERROR
     assert result.error == "reparse_point_rejected"
+
+
+@pytest.mark.windows_only
+def test_native_ads_scan_uses_the_exact_stream_bytes(tmp_path: Path) -> None:
+    base = tmp_path / "inert-base.bin"
+    base_bytes = b"ordinary benign fixture"
+    stream_bytes = b"distinct benign alternate stream"
+    base.write_bytes(base_bytes)
+    stream = Path(f"{base}:n04")
+    try:
+        stream.write_bytes(stream_bytes)
+    except OSError as exc:
+        pytest.skip(f"BLOCKED_NATIVE_PATH: ADS creation denied: {type(exc).__name__}")
+
+    class ObservingEngine(CleanEngine):
+        def __init__(self) -> None:
+            self.scanned: list[tuple[Path, bytes, str, int]] = []
+
+        def scan(self, path: Path, sha256: str) -> list[Finding]:
+            self.scanned.append((path, path.read_bytes(), sha256, path.stat().st_ino))
+            return super().scan(path, sha256)
+
+    service = _service(tmp_path)
+    engine = ObservingEngine()
+    service.engines = (engine,)
+    base_result = service.scan_file(base, quarantine=False, use_cache=False)
+    stream_result = service.scan_file(stream, quarantine=False, use_cache=False)
+
+    assert (base_result.verdict, stream_result.verdict) == (Verdict.CLEAN, Verdict.CLEAN)
+    assert (base_result.error, stream_result.error) == (None, None)
+    assert [(data, digest) for _path, data, digest, _ino in engine.scanned] == [
+        (base_bytes, hashlib.sha256(base_bytes).hexdigest()),
+        (stream_bytes, hashlib.sha256(stream_bytes).hexdigest()),
+    ]
+    assert base_result.sha256 == engine.scanned[0][2]
+    assert stream_result.sha256 == engine.scanned[1][2]
+    for scanned_path, _data, _digest, scanned_inode in engine.scanned:
+        assert scanned_path not in {base, stream}
+        assert scanned_inode != base.stat().st_ino
+
+
+@pytest.mark.windows_only
+def test_native_case_alias_scans_the_same_ordinary_file(tmp_path: Path) -> None:
+    target = tmp_path / "inert-case.bin"
+    data = b"ordinary benign case alias"
+    target.write_bytes(data)
+    alias = target.with_name(target.name.upper())
+    if not alias.exists():
+        pytest.skip("BLOCKED_NATIVE_PATH: filesystem does not resolve case alias")
+
+    class ObservingEngine(CleanEngine):
+        def __init__(self) -> None:
+            self.scanned: list[tuple[Path, bytes, str, int]] = []
+
+        def scan(self, path: Path, sha256: str) -> list[Finding]:
+            self.scanned.append((path, path.read_bytes(), sha256, path.stat().st_ino))
+            return super().scan(path, sha256)
+
+    service = _service(tmp_path)
+    engine = ObservingEngine()
+    service.engines = (engine,)
+    result = service.scan_file(alias, quarantine=False, use_cache=False)
+
+    assert result.verdict == Verdict.CLEAN
+    assert result.error is None
+    assert result.sha256 == hashlib.sha256(data).hexdigest()
+    assert len(engine.scanned) == 1
+    scanned_path, scanned_bytes, scanned_sha256, scanned_inode = engine.scanned[0]
+    assert scanned_bytes == data
+    assert scanned_sha256 == result.sha256
+    assert scanned_path != alias
+    assert scanned_inode != target.stat().st_ino
