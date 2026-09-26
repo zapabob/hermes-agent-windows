@@ -6,9 +6,11 @@
 3. Verified downstream features are preserved until replacement parity is
    demonstrated by code and tests.
 4. Windows 11 native remains Tier 1 independently of upstream priorities.
-5. The external Go watchdog at `scripts/windows/watchdog-go` is the only outer
-   automatic restart authority. Other services may report health or request a
-   restart but may not form recovery loops.
+5. Runtime restart authority is scoped by role. On the supported Windows
+   Desktop topology, Electron owns the Desktop Python backend lifecycle; the
+   external Go watchdog at `scripts/windows/watchdog-go` may destructively
+   manage only an embedding `llama-server` instance it launched and owns.
+   Observation alone grants neither component authority over the other role.
 6. Hermes core retains the sole session, approval, profile, gateway ownership,
    model-catalogue, and tool-registry authorities.
 7. Prompt-cache prefixes, message-role alternation, profile isolation, and

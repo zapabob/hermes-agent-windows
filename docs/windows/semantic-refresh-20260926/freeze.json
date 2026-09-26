@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "authorization": "User request in Codex chat on 2026-09-26 JST; implementation within this frozen scope, with publication and production actions reserved separately",
+  "repository": "zapabob/hermes-agent-windows",
+  "input_archive_sha256": "264630324b05b79be43a6a1c6972f788ca0b04299774fd1b0c5f686f9f67d6",
+  "frozen_inputs_sha256": "0b8783459ca4ac2f932e66a13067f0048b382aa159a5730ffbf83ddda28f147b",
+  "downstream": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "D0_tree": "76f6c3b1121a03245945638d8d72b32c59df236f",
+    "observed_feature_head_at_start": "2622ea42ce3ad044bac4c4e8b9812ba21f7ae65a",
+    "observed_feature_tree_at_start": "78454ff02d55e2ef917a32485022ac4b5975ccf3"
+  },
+  "upstream": {
+    "B": "b51c055a12220f8c7c18660e8599365012e19532",
+    "R0": "345cd2b057a452236de401d3534b8502a7465e8d",
+    "R1": "d337b736aa1e8ebecfab043842d13e4a2d2f48a3",
+    "U0_previous_campaign_ceiling": "b936546561888a54d5bf9cd7eae9629a824eb4f7",
+    "R2": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
+    "U1": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+    "U1_tree": "3020f84098b4b1dcd02cb3ea6c9a2fc53021b135"
+  },
+  "scope_rules": {
+    "preserve_previous_campaign_freeze": true,
+    "resolve_moving_remote_as_input": false,
+    "upstream_merge_rebase_cherry_pick": false,
+    "direct_main_or_force_push": false,
+    "production_restart_or_publish": false,
+    "metadata_enumeration_is_semantic_review": false,
+    "control_mcp_production_write_enabled": false
+  }
+}

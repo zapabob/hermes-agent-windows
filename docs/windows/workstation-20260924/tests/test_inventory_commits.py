@@ -83,6 +83,8 @@ class TestFrozenInventory(unittest.TestCase):
         self.assertEqual(len(self.jsonl("metadata_universe.jsonl")), 3)
         self.assertTrue(all(row["semantic_review_status"] == "UNREVIEWED"
                             for row in self.jsonl("metadata_universe.jsonl")))
+        self.assertTrue(all(row["tree_oid"] == self.run_git("rev-parse", f"{row['sha']}^{{tree}}").strip()
+                            for row in self.jsonl("metadata_universe.jsonl")))
         self.assertEqual(before_status, self.run_git("status", "--porcelain"))
         self.assertEqual(before_head, self.run_git("rev-parse", "HEAD"))
 
@@ -104,6 +106,7 @@ class TestFrozenInventory(unittest.TestCase):
         self.assertEqual(result["range_unique_commit_count"], 3)
         self.assertEqual(result["unique_metadata_rows"], 4)
         self.assertEqual(overlap["source_windows"], ["historical_to_v0213"])
+        self.assertEqual(overlap["tree_oid"], self.run_git("rev-parse", f"{self.refs[1]}^{{tree}}").strip())
         self.assertEqual(overlap["prior_decisions"], ["ADOPT"])
         self.assertEqual(overlap["prior_categories"], ["SECURITY_CRITICAL"])
         self.assertTrue(overlap["critical_review_required"])
@@ -114,6 +117,7 @@ class TestFrozenInventory(unittest.TestCase):
         self.assertEqual(overlap["test_receipts"], [])
         self.assertEqual(len(self.jsonl("historical_ledger_reaudit.jsonl")), 3)
         ledger_rows = self.jsonl("historical_ledger_reaudit.jsonl")
+        self.assertTrue(all(row["tree_oid"] for row in ledger_rows))
         self.assertTrue(all(row["decision_status"] == "UNVERIFIED_NO_RECEIPT_RECORDED"
                             for row in ledger_rows))
         self.assertTrue(all(row["critical_review_required"] for row in ledger_rows[1:]))
@@ -317,6 +321,52 @@ class TestFrozenInventory(unittest.TestCase):
         with self.assertRaisesRegex(inventory.InventoryError, "OUTPUT_NOT_EMPTY"):
             self.generate()
         self.assertEqual(sentinel.read_text(encoding="utf-8"), "preserve")
+
+    def test_new_campaign_adds_two_nonoverlapping_windows_without_changing_old_names(self) -> None:
+        later = []
+        for index in range(4, 6):
+            (self.repo / "fixture.txt").write_text(str(index), encoding="utf-8")
+            self.run_git("add", "fixture.txt")
+            self.run_git("commit", "-q", "-m", f"fixture {index}")
+            later.append(self.run_git("rev-parse", "HEAD").strip())
+
+        result = inventory.generate(
+            self.repo, *self.refs, later[-1], self.output,
+            release_r2=later[0], ceiling_u1=later[1], history_repo=self.repo,
+        )
+
+        self.assertEqual(result["range_unique_commit_count"], 5)
+        self.assertEqual(result["window_counts"], {
+            "historical_to_v0213": 1,
+            "v0213_to_v0214": 1,
+            "v0214_to_ceiling": 1,
+            "legacy_ceiling_to_v0215": 1,
+            "v0215_to_u1": 1,
+        })
+        self.assertEqual(self.jsonl("legacy_ceiling_to_v0215.jsonl")[0]["sha"], later[0])
+        self.assertEqual(self.jsonl("v0215_to_u1.jsonl")[0]["sha"], later[1])
+        self.assertEqual(self.jsonl("v0215_to_u1.jsonl")[0]["tree_oid"],
+                         self.run_git("rev-parse", f"{later[1]}^{{tree}}").strip())
+        self.assertEqual(result["frozen_commits"]["ceiling"], self.refs[3])
+        self.assertEqual(result["frozen_commits"]["ceiling_u1"], later[1])
+
+    def test_new_campaign_refuses_partial_new_ceiling(self) -> None:
+        with self.assertRaisesRegex(inventory.InventoryError, "INCOMPLETE_NEW_CAMPAIGN"):
+            inventory.generate(
+                self.repo, *self.refs, self.refs[3], self.output,
+                release_r2=self.refs[3],
+            )
+        self.assertFalse(self.output.exists())
+
+    def test_full_history_repository_can_back_a_shallow_integration_checkout(self) -> None:
+        shallow = self.root / "shallow-integration"
+        subprocess.check_call(["git", "clone", "--depth=1", "--quiet", self.repo.as_uri(), str(shallow)])
+        result = inventory.generate(
+            shallow, *self.refs, self.refs[3], self.output,
+            history_repo=self.repo,
+        )
+        self.assertEqual(result["range_unique_commit_count"], 3)
+        self.assertEqual(result["integration_local_head"], self.refs[3])
 
 
 class TestFrozenCampaignInventory(unittest.TestCase):

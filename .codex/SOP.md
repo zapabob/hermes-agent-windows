@@ -8,13 +8,24 @@ reset, cleaned, stashed, or incorporated implicitly.
 
 ## Frozen input
 
-The only permitted upstream input for this campaign is
-`b51c055a12220f8c7c18660e8599365012e19532`. The semantic three-way BASE is
-the previous frozen snapshot
-`5a8e8a6b87487c0e0785cd9eb561cc6a96c64f5e`. Run
-`scripts/upstream/snapshot_sync.py --upstream-sha <sha> --downstream-ref <ref>
---base-sha <previous-upstream-sha> --report-only` before semantic integration.
-The helper must not resolve a moving branch.
+The original campaign retains upstream input
+`b51c055a12220f8c7c18660e8599365012e19532` and previous frozen BASE
+`5a8e8a6b87487c0e0785cd9eb561cc6a96c64f5e`. Its input is unchanged.
+Run `scripts/upstream/snapshot_sync.py --upstream-sha <sha>
+--downstream-ref <ref> --base-sha <previous-upstream-sha> --report-only` when
+that campaign's semantic three-way review calls for it. The helper must not
+resolve a moving branch.
+
+Select later campaigns by an explicit campaign ID and its own frozen record:
+`windows-workstation-20260924` uses
+`docs/windows/workstation-20260924/freeze.json`; the user-authorized
+`windows-semantic-refresh-20260926` uses
+`docs/windows/semantic-refresh-20260926/freeze.json`. The latter records D0,
+the historical B/R0/R1/U0 inputs, and the new R2/U1 window. It does not amend
+the earlier ceiling or authorize an upstream merge. Without an explicit
+campaign ID, do not substitute any later upstream commit for the original
+input. Every integration receipt must name the selected campaign and exact
+commit IDs before semantic work begins.
 
 ## Integration procedure
 
