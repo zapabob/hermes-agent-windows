@@ -1,9 +1,15 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import type { HermesGateway } from '@/hermes'
+import { renderedPresentationDigest } from '@/lib/control-presentation'
 import { $gateway, gatewayScope, setPrimaryGateway } from '@/store/gateway'
-import { $approvalRequest, clearAllPrompts, setApprovalRequest } from '@/store/prompts'
+import {
+  $approvalRequest,
+  clearAllPrompts,
+  controlApprovalFromPayload,
+  setApprovalRequest
+} from '@/store/prompts'
 import { $activeSessionId } from '@/store/session'
 
 import { PendingApprovalFallback, PendingToolApproval } from './approval'
@@ -43,6 +49,14 @@ function setRequest(
     scope: gatewayScope(null, 'default'),
     sessionId: 'sess-1',
     ...extra
+  })
+}
+
+async function boundControl(resource: string, extra: Record<string, unknown> = {}) {
+  const presentation = { operation_id: 'op-1', resource, grant_revision: 7, task: 'Start approved run', ...extra }
+
+  return controlApprovalFromPayload({
+    operation_id: 'op-1', intent_digest: 'a'.repeat(64), resource, grant_revision: 7, presentation
   })
 }
 
@@ -172,6 +186,118 @@ describe('PendingToolApproval', () => {
     expect(screen.getByRole('button', { name: /Run/ })).toBeTruthy()
     expect(screen.getByRole('button', { name: /Reject/ })).toBeTruthy()
     expect(screen.queryByRole('button', { name: /More approval options/ })).toBeNull()
+  })
+
+  it('uses a digest-bound owner RPC for a one-time control approval', async () => {
+    const gatewayRequest = mockGateway()
+    $activeSessionId.set('sess-1')
+    const resource = `https://mcp.example.test/operations/${'consented-resource/'.repeat(32)}run`
+
+    const control = await boundControl(resource)
+
+    setApprovalRequest({
+      command: 'Hermes control operation op-1', description: 'Start approved run', control,
+      requestId: 'req-control',
+      choices: ['once', 'session', 'always', 'deny'], scope: gatewayScope(null, 'default'), sessionId: 'sess-1'
+    })
+    render(<PendingApprovalFallback />)
+    expect(screen.queryByRole('button', { name: /More approval options/ })).toBeNull()
+
+    const [resourceNode] = screen.getAllByText(resource, { exact: true })
+    const [revisionNode] = screen.getAllByText('7', { exact: true })
+    const runButton = screen.getByRole('button', { name: /Run/ })
+    expect(resourceNode!.className).not.toMatch(/truncate|line-clamp/)
+    expect(revisionNode!.compareDocumentPosition(resourceNode!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(resourceNode!.compareDocumentPosition(runButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+
+    await waitFor(() => expect((runButton as HTMLButtonElement).disabled).toBe(false))
+    fireEvent.click(runButton)
+    const rendered = await renderedPresentationDigest(control!.presentation!)
+    await waitFor(() => expect(gatewayRequest).toHaveBeenCalledWith('control_approval.respond', {
+      choice: 'once', session_id: 'sess-1', request_id: 'req-control', intent_digest: 'a'.repeat(64),
+      presentation_digest: rendered
+    }))
+    expect(gatewayRequest).not.toHaveBeenCalledWith('approval.respond', expect.anything())
+    await waitFor(() => expect($approvalRequest.get()).toBeNull())
+  })
+
+  it('renders the full authority projection and refuses Run when it cannot digest what it rendered', async () => {
+    const gatewayRequest = mockGateway()
+    $activeSessionId.set('sess-1')
+    const task = `${'long task prefix '.repeat(400)}TAIL-MARKER`
+    // A non-integer number has no canonical form, so no digest can vouch for this rendering.
+    const control = await boundControl('https://mcp.example.test/operations/run', { task, ratio: 1.5 })
+
+    setApprovalRequest({
+      command: 'Hermes control operation op-1', description: 'Start approved run', control,
+      requestId: 'req-control', scope: gatewayScope(null, 'default'), sessionId: 'sess-1'
+    })
+    const { container } = render(<PendingApprovalFallback />)
+
+    const projection = container.querySelector('[data-slot="control-presentation"]') as HTMLElement
+    expect(within(projection).getByText(task, { exact: true })).toBeTruthy()
+
+    const runButton = screen.getByRole('button', { name: /Run/ }) as HTMLButtonElement
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 20))
+    })
+    expect(runButton.disabled).toBe(true)
+    fireEvent.keyDown(window, { key: 'Enter', ctrlKey: true })
+    expect(gatewayRequest).not.toHaveBeenCalled()
+  })
+
+  it('keeps an unresolved control prompt visible', async () => {
+    const gatewayRequest = mockGateway()
+    gatewayRequest.mockResolvedValue({ resolved: false })
+    $activeSessionId.set('sess-1')
+
+    const control = await boundControl('https://mcp.example.test/operations/run')
+
+    setApprovalRequest({
+      command: 'Hermes control operation op-1', description: 'Start approved run',
+      requestId: 'req-control', control,
+      scope: gatewayScope(null, 'default'), sessionId: 'sess-1'
+    })
+    render(<PendingApprovalFallback />)
+    const runButton = screen.getByRole('button', { name: /Run/ }) as HTMLButtonElement
+    await waitFor(() => expect(runButton.disabled).toBe(false))
+    fireEvent.click(runButton)
+    await waitFor(() => expect(gatewayRequest).toHaveBeenCalled())
+    expect($approvalRequest.get()?.requestId).toBe('req-control')
+  })
+
+  it('denies a stale Run event when the active strict binding has changed', () => {
+    const gatewayRequest = mockGateway()
+    $activeSessionId.set('sess-1')
+
+    const control = controlApprovalFromPayload({
+      operation_id: 'op-1', intent_digest: 'a'.repeat(64),
+      resource: 'https://mcp.example.test/operations/approved', grant_revision: 7
+    })
+
+    const original = {
+      command: 'Hermes control operation op-1', description: 'Start approved run', control,
+      requestId: 'req-control', scope: gatewayScope(null, 'default'), sessionId: 'sess-1'
+    }
+
+    setApprovalRequest(original)
+    render(<PendingApprovalFallback />)
+    const staleRun = screen.getByRole('button', { name: /Run/ })
+
+    act(() => {
+      setApprovalRequest({
+        ...original,
+        control: { ...control!, resource: 'https://mcp.example.test/operations/replaced', grantRevision: 8 }
+      })
+      fireEvent.click(staleRun)
+    })
+
+    expect(gatewayRequest).not.toHaveBeenCalled()
+    expect($approvalRequest.get()?.control).toEqual({
+      ...control,
+      resource: 'https://mcp.example.test/operations/replaced',
+      grantRevision: 8
+    })
   })
 
   it('renders a floating fallback when no pending tool row is mounted', () => {

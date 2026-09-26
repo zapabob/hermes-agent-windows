@@ -1,15 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
+import { renderedPresentationDigest } from '@/lib/control-presentation'
+
 import { clearClarifyRequest, setClarifyRequest } from './clarify'
+import { gatewayScope } from './gateway'
 import {
   $activeSessionAwaitingInput,
   $approvalRequest,
   $secretRequest,
   $sudoRequest,
+  approvalResponseForRequest,
   clearAllPrompts,
   clearApprovalRequest,
   clearSecretRequest,
   clearSudoRequest,
+  controlApprovalFromPayload,
   receiveApprovalRequest,
   replayPendingApproval,
   setApprovalRequest,
@@ -99,6 +104,128 @@ describe('approval prompt store', () => {
 
     expect($approvalRequest.get()?.requestId).toBe('r1')
     expect(calls).toEqual([['approval.received', { request_id: 'r1', session_id: 's1' }]])
+  })
+
+  it('carries resource and grant revision from a strict gateway event into the session store', async () => {
+    const resource = `https://mcp.example.test/operations/${'review-scope/'.repeat(24)}run`
+
+    const control = controlApprovalFromPayload({
+      operation_id: 'op-1',
+      intent_digest: 'a'.repeat(64),
+      resource,
+      grant_revision: 7
+    })
+
+    const gateway = { request: async () => ({ acknowledged: true }) }
+    await receiveApprovalRequest(gateway, {
+      command: 'Hermes control operation op-1',
+      control,
+      description: 'Start run',
+      requestId: 'req-control',
+      sessionId: 's1'
+    })
+
+    expect($approvalRequest.get()?.control).toEqual({
+      operationId: 'op-1',
+      intentDigest: 'a'.repeat(64),
+      presentation: null,
+      resource,
+      grantRevision: 7
+    })
+  })
+
+  it('answers "once" only with the digest of the rendered presentation', async () => {
+    const presentation = { operation_id: 'op-1', resource: 'https://mcp.example.test/operations/run',
+      grant_revision: 7, task: 'x'.repeat(5000) }
+
+    const digest = (await renderedPresentationDigest(presentation))!
+
+    const control = controlApprovalFromPayload({
+      operation_id: 'op-1', intent_digest: 'a'.repeat(64), resource: presentation.resource,
+      grant_revision: 7, presentation, presentation_digest: 'f'.repeat(64)
+    })
+
+    const request = { command: 'Hermes control operation op-1', control, description: 'Start run',
+      requestId: 'req-control', sessionId: 's1' }
+
+    expect(approvalResponseForRequest(request, 'once', request)).toBeNull()
+    expect(approvalResponseForRequest(request, 'once', request, 'F'.repeat(64))).toBeNull()
+    expect(control).not.toHaveProperty('presentationDigest')
+    expect(approvalResponseForRequest(request, 'once', request, digest)?.params).toEqual({
+      choice: 'once', request_id: 'req-control', session_id: 's1',
+      intent_digest: 'a'.repeat(64), presentation_digest: digest
+    })
+    expect(approvalResponseForRequest(request, 'deny', request)?.params).toEqual({
+      choice: 'deny', request_id: 'req-control', session_id: 's1', intent_digest: 'a'.repeat(64)
+    })
+
+    const mismatched = { ...request, control: { ...control!, presentation: { ...presentation, grant_revision: 8 } } }
+
+    expect(approvalResponseForRequest(mismatched, 'once', mismatched, digest)).toBeNull()
+  })
+
+  it('refuses a malformed strict binding instead of returning an ordinary or strict approval response', () => {
+    const control = controlApprovalFromPayload({
+      operation_id: 'op-1',
+      intent_digest: 'a'.repeat(64),
+      resource: 'https://mcp.example.test/operations/run',
+      grant_revision: '7'
+    })
+
+    const request = {
+      command: 'Hermes control operation op-1',
+      control,
+      description: 'Start run',
+      requestId: 'req-control',
+      sessionId: 's1'
+    }
+
+    expect(control).toBeDefined()
+    expect(approvalResponseForRequest(request, 'once', request)).toBeNull()
+  })
+
+  it('does not build a response for a request that is no longer current in the session', () => {
+    const control = controlApprovalFromPayload({
+      operation_id: 'op-1',
+      intent_digest: 'a'.repeat(64),
+      resource: 'https://mcp.example.test/operations/approved',
+      grant_revision: 7
+    })
+
+    const staleRequest = {
+      command: 'Hermes control operation op-1',
+      control,
+      description: 'Start run',
+      requestId: 'req-control',
+      sessionId: 's1'
+    }
+
+    const currentRequest = {
+      ...staleRequest,
+      control: { ...control!, resource: 'https://mcp.example.test/operations/replaced', grantRevision: 8 }
+    }
+
+    setApprovalRequest(currentRequest)
+
+    expect(approvalResponseForRequest(staleRequest, 'once', $approvalRequest.get())).toBeNull()
+  })
+
+  it('replays the immutable control binding after reconnect', async () => {
+    const gateway = { request: async (method: string) => method === 'approval.pending' ? {
+      approvals: [{ command: 'Hermes control operation op-1', description: 'Start run',
+        request_id: 'req-control', control: {
+          operation_id: 'op-1', intent_digest: 'a'.repeat(64),
+          resource: 'https://mcp.example.test/operations/run', grant_revision: 7
+        } }]
+    } : { acknowledged: true } }
+
+    const scope = gatewayScope('connection-a', 'profile-a')
+    await replayPendingApproval(gateway, 's1', scope)
+    expect($approvalRequest.get()?.control).toEqual({
+      operationId: 'op-1', intentDigest: 'a'.repeat(64), presentation: null,
+      resource: 'https://mcp.example.test/operations/run', grantRevision: 7
+    })
+    expect($approvalRequest.get()?.scope).toEqual(scope)
   })
 
   it('replays and acknowledges the oldest unresolved approval after reconnect', async () => {

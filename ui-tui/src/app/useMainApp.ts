@@ -46,6 +46,7 @@ import { estimatedMsgHeight, messageHeightKey } from '../lib/virtualHeights.js'
 import { onUserWidgets } from '../sdk/userWidgets.js'
 import type { Msg, PanelSection, SlashCatalog } from '../types.js'
 
+import { approvalResponseRequest } from './controlApproval.js'
 import { createGatewayEventHandler } from './createGatewayEventHandler.js'
 import { createSlashHandler } from './createSlashHandler.js'
 import { planGatewayRecovery } from './gatewayRecovery.js'
@@ -998,13 +999,24 @@ export function useMainApp(gw: GatewayClient) {
   )
 
   const answerApproval = useCallback(
-    (choice: string) =>
-      respondWith('approval.respond', { choice, session_id: ui.sid }, () => {
+    (choice: string) => {
+      const target = overlay.approval && approvalResponseRequest(overlay.approval, ui.sid, choice)
+
+      if (!target) {
+        return Promise.resolve()
+      }
+
+      return rpc<{ resolved?: boolean }>(target.method, target.params).then(result => {
+        if (!result || (target.strict && result.resolved !== true)) {
+          return
+        }
+
         patchOverlayState({ approval: null })
         patchTurnState({ outcome: choice === 'deny' ? 'denied' : `approved (${choice})` })
         patchUiState({ status: 'running…' })
-      }),
-    [respondWith, ui.sid]
+      })
+    },
+    [overlay.approval, rpc, ui.sid]
   )
 
   const answerSudo = useCallback(
