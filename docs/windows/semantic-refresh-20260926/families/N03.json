@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "status": "UNREVIEWED_FULL_CAMPAIGN",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N03",
+  "upstream_commits": [],
+  "upstream_merge_parents": [],
+  "salvage_fixup_revert_lineage": [],
+  "final_upstream_sha": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+  "final_observable_contract": "For a recognized literal execution candidate on the local terminal backend, with security.malware.enabled and execution_gate enabled and no explicit allowlist registration, an authoritative malicious finding plus another engine error must not authorize terminal execution. This is a downstream preservation contract, not a completed U1 commit mapping.",
+  "downstream_predecessor": {
+    "commit": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "source": [
+      "downstream/security/policy.py:21-26 (blob d7bfa2f56720ea6d2151bf4278485248c8977253)",
+      "downstream/security/execution_gate.py:46-63 (blob 2ef521b8352205cc8f87407e0c8afa684d6b3ab5)",
+      "tools/terminal_tool.py:3103-3117 (blob 85f3841f2e2702719d2ad5bfa4c6b28f3f33eda8)"
+    ]
+  },
+  "downstream_owner": "SecurityService decision and terminal execution gate",
+  "downstream_call_path": [
+    "tools/terminal_tool.py:terminal_tool",
+    "downstream/security/execution_gate.py:preflight_command",
+    "downstream/security/service.py:SecurityService.scan_file",
+    "downstream/security/policy.py:evaluate"
+  ],
+  "already_local_commits": [
+    "8ba5d93b584c3694d5c60f9b1579c59faf04a82f",
+    "92581fda178e5faeb47b1f4cdaddbad59a940c75"
+  ],
+  "windows_constraints": [
+    "No live malware download or Defender disablement",
+    "Synthetic findings and a mocked terminal executor are not native scanner or OS containment proof",
+    "The terminal gate scans recognized literal references with known suffixes; indirect execution forms and candidates outside this parser are not covered by this claim",
+    "The terminal caller invokes this gate only for the local backend, and both malware and execution_gate settings must be enabled",
+    "Explicit hash or path allowlisting can permit execution despite an engine error; a path registration may also apply after file content changes"
+  ],
+  "decision": "REUSE_EXISTING_LOCAL_T15_FIX_FOR_CANDIDATE; NATIVE_AND_FULL_UPSTREAM_REVIEW_OPEN",
+  "rationale": "D0 checks scanner errors before the malicious score, producing SCAN_ERROR, and its gate blocks only MALICIOUS. The local feature separates file verdict, engine health and execution decision, then blocks BLOCK and REVIEW. Reimplementing this already present fix would risk regression.",
+  "public_compatibility_delta": "When the local terminal security gate is enabled, D0 could allow a recognized malicious candidate when another engine failed. The local feature blocks that candidate without an explicit allowlist registration, while retaining the allowlist route and a clean-authoritative success case.",
+  "red_or_equivalence_receipts": [
+    "Actual D0 decide plus preflight_command with inert synthetic findings: malicious score 100 + ENGINE_ERROR returned SCAN_ERROR, blocked_pending_review, gate allowed=true. The assertion requiring a blocked effect failed; no OS command was executed."
+  ],
+  "green_receipts": [
+    "Local feature 2622ea42ce3ad044bac4c4e8b9812ba21f7ae65a: tests/security/test_t15_security_semantics.py, 27 passed on isolated Windows Python 3.11.11.",
+    "Actual terminal_tool caller in test_t15_security_semantics.py:164-211 uses a mocked executor and asserts it was not called for malicious plus engine error, suspicious plus error, and unavailable authoritative scanner.",
+    "Current N02 affected run also included tests/security/test_security_center.py::test_clean_file_is_clean_with_available_authoritative_scanner; 43 passed, 1 skipped across the combined set."
+  ],
+  "native_receipts": [],
+  "mutation_receipts": [
+    "Runtime error-first verdict mutant was killed by test_yara_detection_and_clamav_error_have_independent_dimensions; no product source file was edited.",
+    "Runtime force-gate-allowed mutant was killed by test_terminal_tool_blocks_candidates_requiring_review[malicious-with-engine-error]; mocked terminal executor was called under the mutant."
+  ],
+  "codegraph_before": {
+    "version": "1.6.0",
+    "source": "D0 raw Git blob audited index",
+    "query_decide_sha256": "93df49ea46f4cd3cc658f6b49cfa24d123d725208c3f0a7302195a66fd2d55a9",
+    "explore_n03_sha256": "28831d1377d31c18c2cc1864dba1d6ebee45a08e4b11a68ad0e1207c06d96542",
+    "impact_preflight_sha256": "3c71747d5c1be13357dcaf46a9b7695cfe8278a3e0ac26635139b479b228e11d"
+  },
+  "codegraph_after": {
+    "version": "1.6.0",
+    "source": "feature-2622 clean integration candidate; no N03 product edits after indexing",
+    "query_decide_sha256": "1bf122ee29a5cd94c8330a6f519ad30e6357bf18c6aff6dfedf3172aed68d817",
+    "explore_n03_sha256": "60fadccb96b1904d15e48551c37d9fed7623e5e20825b47c1d4c2557293d217c",
+    "impact_preflight_sha256": "97b9af1176c86df4a8b5e8f738f6d821d90626f595c09f2b86a1a3752b8e59a7"
+  },
+  "integration_source_binding": {
+    "feature_head": "2622ea42ce3ad044bac4c4e8b9812ba21f7ae65a",
+    "checked_integration_head": "7aadadd1f9505d9fa28883cf5c8888299faf7b3e",
+    "unchanged_paths": [
+      "downstream/security/policy.py",
+      "downstream/security/execution_gate.py",
+      "downstream/security/service.py",
+      "tools/terminal_tool.py",
+      "tests/security/test_t15_security_semantics.py"
+    ],
+    "check": "git diff --name-only feature_head -- unchanged_paths returned no paths"
+  },
+  "attribution": ["Existing fork T15/T16 authorship remains in Git history; no upstream source was transplanted in this family unit."],
+  "independent_review": "Cicero read-only review confirmed the D0 blobs, T15 ancestry, current source/caller and the local reuse decision. It identified the explicit allowlist exception, candidate-parser scope, and local-backend/enabled-gate conditions; all are now recorded. The reviewer did not independently rerun tests or mutations, and full U1 mapping remains open.",
+  "implementation_commits": [],
+  "revisit_trigger": "Carry D0-only source semantically, complete positive and negative native scanner checks, review U1 security commits, and decide how indirect or otherwise unrecognized execution forms and path-wide allowlist changes are handled before claiming comprehensive terminal protection."
+}
