@@ -543,6 +543,9 @@ async def test_retired_engineering_tool_is_absent_even_with_legacy_coordinator(
     service = control_module('service').HostControlService(
         source=Source(), journal=journal, coordinator=coordinator,
         clock=lambda: 100)
+    with pytest.raises(control_module('contracts').ControlError) as rejected_direct:
+        service.start_engineering_run(None, {})
+    assert rejected_direct.value.code == 'unsupported_operation'
     host = control_module('transport').create_control_mcp(
         service, verifier=old_host.app.verifier,
         allowed_hosts=('hermes.invalid',),
@@ -551,6 +554,8 @@ async def test_retired_engineering_tool_is_absent_even_with_legacy_coordinator(
         async with client(app=host.app) as session:
             names = {item.name for item in (await session.list_tools()).tools}
             assert 'hermes_start_engineering_run' not in names
+            assert 'hermes_cancel_engineering_run' not in names
+            assert 'hermes_stop_engineering_run' not in names
             capabilities = await session.call_tool(
                 'hermes_get_capabilities', {'profile_id': 'p1'})
             assert capabilities.structured_content['capabilities']['write'] is False

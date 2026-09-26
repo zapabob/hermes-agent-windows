@@ -1,5 +1,10 @@
 # Native engineering workflow — qualification record
 
+> Historical qualification snapshot. The fixed-stage public workflow is
+> retired in the 2026-09-26 campaign; this record does not describe the current
+> `/engineer` diagnostic or qualify a new run. See
+> `../control-mcp/RETIREMENT_SPEC.md`.
+
 The feature branch now contains a native plugin entrypoint, existing-picker
 integration, strict parent-owned inference, measured credential-free Docker
 execution and deterministic verification. It is not merely the original kernel

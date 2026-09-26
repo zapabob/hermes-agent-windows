@@ -1,35 +1,33 @@
-"""Sequential engineering inside Hermes; native picker and parent-owned inference."""
+"""Retired engineering workflow compatibility command."""
 from __future__ import annotations
+
+import json
 
 
 def register(ctx):
-    from .configuration import ROLES, SLOTS
+    def slash(_raw):
+        return json.dumps({
+            'state': 'BLOCKED',
+            'reason_code': 'legacy_engineering_router_retired',
+            'migration': 'Use a normal Hermes session and its standard delegation tools.',
+            'legacy_operation': {
+                'read_tool': 'hermes_get_operation',
+                'read_scope': (
+                    'Available only with a mounted Control MCP journal and the same '
+                    'profile, workspace, client registration, grant revision, '
+                    'subject, and resource.'
+                ),
+                'stop_status': 'NO_PUBLIC_STOP',
+                'guidance': (
+                    'Inspect the scoped legacy operation. This command cannot stop it. '
+                    'Do not replay UNKNOWN; retain its reservation until an operator '
+                    'reconciles the owner and journal.'
+                ),
+            },
+        }, ensure_ascii=False)
 
-    for role in ROLES:
-        ctx.register_auxiliary_task(
-            key=SLOTS[role], display_name=f'Engineering {role}',
-            description=f'Sequential implementation workflow: {role}',
-            defaults={'provider':'auto', 'model':'', 'timeout':120},
-        )
-
-    def run(args, **kwargs):
-        from .entrypoint import run_workflow
-        return run_workflow(ctx, args)
-
-    def slash(raw):
-        import json
-        return run(json.loads(raw))
-
-    ctx.register_command('engineer', handler=slash,
-                         description='Run a credential-free sequential engineering workflow',
-                         args_hint='{"workspace":"configured-name","task":"..."}')
-    ctx.register_tool(
-        name='engineering_run', toolset='engineering',
-        schema={'name':'engineering_run','description':(
-            'Plan, implement and verify in an isolated workspace. Uses operator-selected native models. '
-            'Returns a verified copy; never edits the original checkout or publishes a PR.'),
-            'parameters':{'type':'object','properties':{
-                'workspace':{'type':'string'}, 'task':{'type':'string'}},
-                'required':['workspace','task'],'additionalProperties':False}},
-        handler=run, check_fn=lambda: ctx.get_config('enabled', False) is True,
+    ctx.register_command(
+        'engineer', handler=slash,
+        description='Explain why the former engineering workflow is retired',
+        args_hint='',
     )

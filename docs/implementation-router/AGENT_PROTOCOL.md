@@ -1,5 +1,10 @@
 # Native sequential engineering: agent and operator contract
 
+> Historical design record. The fixed-stage router is retired for new runs.
+> `/engineer` now returns a blocked migration diagnostic; the execution
+> instructions below describe the former implementation and are not current
+> operator steps. See `../control-mcp/RETIREMENT_SPEC.md`.
+
 The native adapter and opt-in entrypoint are implemented on this branch. Check
 `STATUS.md` and the exact PR-head checks for qualification; code presence does
 not constitute a release, a live-account test, or a successful deployment.

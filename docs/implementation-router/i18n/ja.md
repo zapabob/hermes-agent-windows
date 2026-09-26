@@ -1,5 +1,8 @@
 # Hermesの工程別実装
 
+> 旧工程別ワークフローの履歴資料です。現在の `/engineer` は終了案内を返し、
+> 以下の実行手順は適用されません。
+
 計画・実装・ホスト側検証を順番に進める機能です。MoAやプロバイダーのフォールバックではありません。
 `implementation_router`プラグインを有効にし、既存の補助モデルピッカーで `engineering_planner`・`engineering_worker`・`engineering_reviewer`を選択します。既存プロバイダーが対応する任意のモデルを使用でき、利用不可なら停止します。
 プラグイン設定で、秘密情報を含まない `source_paths`、変更禁止の受入試験 `protected_paths`、事前準備したイメージのダイジェスト、固定した検証コマンド `checks`を指定します。実行例は `/engineer {"workspace":"sample","task":"必要な変更をTDDで実装する"}` です。

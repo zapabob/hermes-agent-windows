@@ -1,5 +1,8 @@
 # Sequential engineering in Hermes
 
+> Historical guide. The fixed-stage workflow is retired. `/engineer` now
+> returns a blocked diagnostic; the execution steps below are obsolete.
+
 This is a sequence of planning, implementation and host verification—not MoA or provider fallback.
 Enable the `implementation_router` plugin, then select `engineering_planner`, `engineering_worker` and `engineering_reviewer` in the existing auxiliary model picker. Any model supported by its configured provider may be selected; an unavailable choice stops execution.
 Configure approved non-secret `source_paths`, immutable `protected_paths`, a locally prepared image digest and deterministic `checks` in the plugin settings. Invoke `/engineer {"workspace":"sample","task":"Implement the required change"}`.

@@ -85,7 +85,7 @@ jobs:
     uses: ./.github/workflows/tests-os.yml
 
   engineering-router:
-    name: Native engineering workflow
+    name: Retired engineering entrypoint and Docker boundary
     needs: detect
     if: needs.detect.outputs.python == 'true' || needs.detect.outputs.frontend == 'true'
     uses: ./.github/workflows/engineering-router.yml

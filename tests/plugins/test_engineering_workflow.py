@@ -4,6 +4,7 @@ from __future__ import annotations
 import importlib
 import json
 import os
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -17,17 +18,50 @@ def module(name):
         pytest.fail(f'native engineering integration is missing: {exc.name}')
 
 
-def test_register_reuses_native_picker_and_does_not_activate_provider_clients():
+def test_retired_plugin_registers_only_a_diagnostic_even_when_enabled(monkeypatch):
     plugin = module('__init__')
     ctx = Mock()
-    ctx.get_config.return_value = False
+    ctx.get_config.return_value = True
+    entrypoint = module('entrypoint')
+    retired_run = Mock(side_effect=AssertionError('retired workflow was invoked'))
+    monkeypatch.setattr(entrypoint, 'run_workflow', retired_run)
+
     plugin.register(ctx)
-    assert [call.kwargs['key'] for call in ctx.register_auxiliary_task.call_args_list] == [
-        'engineering_planner', 'engineering_worker', 'engineering_reviewer']
+    ctx.register_auxiliary_task.assert_not_called()
+    ctx.register_tool.assert_not_called()
     assert ctx.register_command.call_args.args[0] == 'engineer'
-    assert ctx.register_tool.call_args.kwargs['name'] == 'engineering_run'
+    handler = ctx.register_command.call_args.kwargs['handler']
+    result = json.loads(handler('{"workspace":"sample","task":"execute"}'))
+    assert result['state'] == 'BLOCKED'
+    assert result['reason_code'] == 'legacy_engineering_router_retired'
+    assert 'migration' in result
+    assert result['legacy_operation']['read_tool'] == 'hermes_get_operation'
+    assert result['legacy_operation']['stop_status'] == 'NO_PUBLIC_STOP'
+    retired_run.assert_not_called()
     assert not ctx.llm.complete.called
     assert not ctx.subagent_lifecycle.launch.called
+
+
+def test_retired_plugin_loader_exposes_no_stage_tool_or_picker_slot(tmp_path, monkeypatch):
+    from hermes_cli import plugins as plugin_api
+    from hermes_cli.plugins import PluginManager, PluginManifest
+    from tools.registry import registry
+
+    plugin_path = Path(__file__).resolve().parents[2] / 'plugins' / 'implementation_router'
+    manager = PluginManager(scope_key=str(tmp_path))
+    manifest = PluginManifest(name='implementation_router', source='project', path=str(plugin_path))
+    try:
+        manager._load_plugin(manifest)
+        monkeypatch.setattr(plugin_api, '_ensure_plugins_discovered', lambda: manager)
+
+        assert manager._plugins['implementation_router'].enabled is True
+        assert set(plugin_api.get_plugin_commands()) == {'engineer'}
+        assert plugin_api.get_plugin_auxiliary_tasks() == []
+        assert registry.get_entry('engineering_run', scope=manager.scope_key) is None
+        assert json.loads(plugin_api.get_plugin_commands()['engineer']['handler']('invalid JSON'))[
+            'reason_code'] == 'legacy_engineering_router_retired'
+    finally:
+        manager.unload()
 
 
 def test_routes_come_from_existing_picker_including_custom_provider():

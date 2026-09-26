@@ -1,5 +1,8 @@
 # Hermes 分阶段工程实现
 
+> 这是旧分阶段工作流的历史指南。当前 `/engineer` 只返回停用说明；
+> 下列运行步骤已不适用。
+
 本功能依次执行规划、实现和主机验证，不是 MoA，也不是提供商故障回退。
 启用 `implementation_router` 插件，然后在现有辅助模型选择器中配置 `engineering_planner`、`engineering_worker` 和 `engineering_reviewer`。可以选择已配置提供商支持的任意模型；不可用时停止，不暗中更换模型。
 在插件设置中指定不含秘密的 `source_paths`、受保护验收测试 `protected_paths`、预先准备的镜像摘要及固定验证命令 `checks`。调用 `/engineer {"workspace":"sample","task":"按TDD实现所需修改"}`。

@@ -1,6 +1,15 @@
 # Hermes MCP and legacy engineering router retirement specification
 
 Status: implementation contract, 2026-09-24 JST. Scope: `zapabob/hermes-agent-windows` only.
+
+2026-09-26 campaign note: The old `/engineer` command is retained temporarily
+as a blocked migration diagnostic for existing installations. It registers no
+`engineering_run` tool or fixed-stage auxiliary slots. This compatibility
+response narrows the earlier instruction to remove the command outright; it
+does not authorize a run or a Control MCP write. Historical internal owner
+code remains while legacy operation and STOP handling are reviewed. The old
+workflow guides are historical records, not current operator instructions.
+
 Base: `origin/main` `e6070028c9d0d75634ad7661c33fa937b682474a` (#143 and #144 merged).
 Continuation branch before this specification: `aa145e3ae9d02134741b310f2fdd8aa244c15927`.
 
@@ -34,7 +43,7 @@ Codex local reachability and hosted ChatGPT reachability are separate. Do not ch
 | `tests/tools/test_bound_credential_free_environment.py`, `tests/tools/test_credential_free_docker.py`, `tests/tools/test_discord_tool.py` | KEEP | Retain generic isolation and compatibility tests. |
 | `agent/engineering_diagnostics.py` | RETIRE | Only old actor/host imports use it. A future generic diagnostic needs a separate owner and tests. |
 | `downstream/implementation_router/AGENTS.md`, `kernel.py`, `routes.py`, `security.py`, `i18n.py`, `locales.json` | RETIRE | Remove fixed-stage protocol after all imports are cut; preserve history in Git. |
-| `plugins/implementation_router/__init__.py`, `plugin.yaml`, `README.md`, `actors.py`, `configuration.py`, `entrypoint.py`, `host.py`, `control.py` | RETIRE | Remove old `/engineer` and `engineering_run` registration and native workflow; do not silently map their arguments to a new task. |
+| `plugins/implementation_router/__init__.py`, `plugin.yaml`, `README.md`, `actors.py`, `configuration.py`, `entrypoint.py`, `host.py` | MIGRATE / RETIRE | Public `/engineer` is a blocked diagnostic in this campaign; `engineering_run` and fixed-stage slot registration are removed. Review remaining historical implementation files before deletion; never map old arguments to a new task silently. |
 | `plugins/implementation_router/workspace.py` | MIGRATE | Move bounded path/digest and safe export checks needed by legacy receipts or future apply to a neutral owner before deleting this module. |
 | `docs/implementation-router/AGENT_PROTOCOL.md`, `STATUS.md`, `i18n/en.md`, `ja.md`, `zh.md`, `zh-hant.md`, `ar.md` | RETIRE | Replace with this retirement record and current general MCP documentation. |
 | `.github/workflows/engineering-router.yml`, `.github/workflows/implementation-router-contract.yml` | RETIRE | Remove old-only workflows after a general MCP CI gate covers their security-relevant contracts. |
@@ -47,7 +56,7 @@ Codex local reachability and hosted ChatGPT reachability are separate. Do not ch
 | `downstream/control_mcp/auth.py`, `contracts.py`, `http_boundary.py`, `transport.py`, `host_context.py` | KEEP | Retain resource-only auth, strict protocol, profile-bound context and parent lifespan; rename public instructions for general Hermes. |
 | `downstream/control_mcp/journal.py`, `coordinator.py`, `service.py` | MIGRATE | Replace old start kind with bounded general-task intents; preserve idempotency, revocation and Hermes human decision rules. |
 | `downstream/control_mcp/observations.py`, `projection.py` | MIGRATE / LEGACY READ | Add real general session/run/status projections. Isolate old engineering receipt reader as read-only legacy data, with no new producer claim. |
-| `plugins/implementation_router/control.py` | RETIRE | Its `EngineeringRunOwner` is old workflow authority; do not reuse as a generic task owner. |
+| `plugins/implementation_router/control.py` | KEEP / AUTHORITY REVIEW | `EngineeringRunOwner` still owns internal claim, execution transition and generation-bound cancellation for legacy operations. There is no public Control MCP start or STOP route. Preserve its current code and receipts while reviewing its actual callers and shared authority; deletion is outside this N02 registration change. Do not reuse it as a generic task owner without a separate authority design. |
 | `tests/control_mcp/*` | MIGRATE | Keep auth, protocol, journal and approval negatives; replace old owner/evidence expectations with general host and subagent evidence. |
 | `docs/control-mcp/IMPLEMENTATION_LOG.md` | KEEP | Record old and new SHAs, RED/GREEN and changed acceptance criteria without rewriting history. |
 | `mcp_serve.py`, `tests/test_mcp_serve.py` | KEEP AS LEGACY | Keep stdio messaging compatibility; do not equate `permissions_respond` ACK with human consent or mount it on HTTP. Its Windows same-tick mtime test currently fails and is a separate quality gate. |
