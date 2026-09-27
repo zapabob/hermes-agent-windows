@@ -2375,13 +2375,11 @@ class ShellFileOperations(FileOperations):
             return PatchResult(error=denied)
 
         # Read current content
-        read_cmd = f"cat {self._escape_shell_arg(path)} 2>/dev/null"
-        read_result = self._exec(read_cmd)
-        
-        if read_result.exit_code != 0:
+        source_bytes, _ = self._read_exact_bytes(path)
+        if source_bytes is None:
             return PatchResult(error=f"Failed to read file: {path}")
-        
-        content = read_result.stdout
+
+        content = source_bytes.decode("utf-8", "surrogateescape")
         # Preserve raw content (including BOM) for write_file's pre_content
         # so write_file can detect/restore BOM correctly.
         raw_content = content
@@ -2450,9 +2448,8 @@ class ShellFileOperations(FileOperations):
         # failures (backend FS oddities, race with another task, truncated
         # pipe, etc.) that would otherwise return success-with-diff while the
         # file is unchanged on disk.
-        verify_cmd = f"cat {self._escape_shell_arg(path)} 2>/dev/null"
-        verify_result = self._exec(verify_cmd)
-        if verify_result.exit_code != 0:
+        verify_bytes, _ = self._read_exact_bytes(path)
+        if verify_bytes is None:
             return PatchResult(error=f"Post-write verification failed: could not re-read {path}")
         # Normalize line endings before comparing.  On Windows, Python's
         # default text-mode ``open()`` translates ``\n`` → ``\r\n`` on
@@ -2465,7 +2462,7 @@ class ShellFileOperations(FileOperations):
         # marker on disk but ``new_content`` is the BOM-less string we
         # matched against, so the comparison must drop it to stay
         # apples-to-apples.
-        _verify_bomless, _ = _strip_bom(verify_result.stdout)
+        _verify_bomless, _ = _strip_bom(verify_bytes.decode("utf-8", "surrogateescape"))
         _verify_stdout_normalized = _verify_bomless.replace("\r\n", "\n").replace("\r", "\n")
         _new_content_normalized = new_content.replace("\r\n", "\n").replace("\r", "\n")
         if _verify_stdout_normalized != _new_content_normalized:

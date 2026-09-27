@@ -15,6 +15,7 @@ from tools.file_operations import (
     SearchResult,
     SearchMatch,
     LintResult,
+    ExecuteResult,
     ShellFileOperations,
     MAX_LINE_LENGTH,
     normalize_read_pagination,
@@ -503,19 +504,12 @@ class TestPatchReplacePostWriteVerification:
     surfaced as an error instead of being reported as a successful patch.
     """
 
-    def test_patch_replace_fails_when_file_not_persisted(self, mock_env):
+    def test_patch_replace_fails_when_file_not_persisted(self, mock_env, monkeypatch):
         """write_file reports success but the re-read returns old content:
         patch_replace must return an error, not success-with-diff."""
         file_contents = {"/tmp/test/a.py": "hello world\n"}
 
         def side_effect(command, **kwargs):
-            # cat reads the file — both the initial read and the verify read
-            if command.startswith("cat "):
-                # Extract path from cat command (strip quotes)
-                for path in file_contents:
-                    if path in command:
-                        return {"output": file_contents[path], "returncode": 0}
-                return {"output": "", "returncode": 1}
             # mkdir for parent dir
             if command.startswith("mkdir "):
                 return {"output": "", "returncode": 0}
@@ -531,6 +525,8 @@ class TestPatchReplacePostWriteVerification:
 
         mock_env.execute.side_effect = side_effect
         ops = ShellFileOperations(mock_env)
+        monkeypatch.setattr(ops, "_read_exact_bytes",
+                            lambda path: (file_contents[path].encode(), None))
         result = ops.patch_replace("/tmp/test/a.py", "hello", "hi")
         assert result.error is not None, (
             "Silent persistence failure must surface as error, got: "
@@ -540,21 +536,21 @@ class TestPatchReplacePostWriteVerification:
         assert "did not persist" in result.error.lower()
 
 
-    def test_patch_replace_fails_when_verify_read_errors(self, mock_env):
+    def test_patch_replace_fails_when_verify_read_errors(self, mock_env, monkeypatch):
         """If the verify-read step itself fails (exit code != 0), return an error."""
-        call_count = {"cat": 0}
+        call_count = {"read": 0}
         state = {"content": "hello world\n"}
+
+        def exact_read(_path):
+            call_count["read"] += 1
+            if call_count["read"] == 1:
+                return state["content"].encode(), None
+            return None, ExecuteResult(exit_code=1)
 
         def side_effect(command, stdin_data=None, **kwargs):
             if stdin_data is not None:  # write (atomic temp-file + mv script)
                 state["content"] = stdin_data
                 return {"output": "", "returncode": 0}
-            if command.startswith("cat "):  # read
-                call_count["cat"] += 1
-                # First read (initial fetch) succeeds; second read (verify) fails
-                if call_count["cat"] == 1:
-                    return {"output": state["content"], "returncode": 0}
-                return {"output": "", "returncode": 1}
             if command.startswith("mkdir "):
                 return {"output": "", "returncode": 0}
             if command.startswith("if [ -f ") or command.startswith("wc -c"):
@@ -563,6 +559,7 @@ class TestPatchReplacePostWriteVerification:
 
         mock_env.execute.side_effect = side_effect
         ops = ShellFileOperations(mock_env)
+        monkeypatch.setattr(ops, "_read_exact_bytes", exact_read)
         result = ops.patch_replace("/tmp/test/a.py", "hello", "hi")
         assert result.error is not None
         assert "could not re-read" in result.error.lower()
