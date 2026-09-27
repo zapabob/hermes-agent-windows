@@ -1021,6 +1021,33 @@ def _prefer_windows_exe(command: str, *, is_windows: bool | None = None) -> str:
     return command
 
 
+def _which_with_config_pathext(command: str, path: str, pathext: str) -> str | None:
+    """Search the child PATH under its PATHEXT without changing the parent env."""
+    if not path:
+        return None
+    extensions = [ext for ext in pathext.split(";") if ext]
+    if not extensions:
+        return None
+    names = (
+        [command]
+        if any(command.lower().endswith(ext.lower()) for ext in extensions)
+        else [command + ext for ext in extensions]
+    )
+    directories = path.split(os.pathsep)
+    if sys.platform == "win32":
+        import _winapi
+
+        if _winapi.NeedCurrentDirectoryForExePath(command):
+            directories.insert(0, os.curdir)
+    for raw_directory in directories:
+        directory = raw_directory or os.curdir
+        for name in names:
+            candidate = os.path.join(directory, name)
+            if os.path.isfile(candidate) and os.access(candidate, os.F_OK | os.X_OK):
+                return candidate
+    return None
+
+
 def _resolve_stdio_command(command: str, env: dict) -> tuple[str, dict]:
     """Resolve a stdio MCP command against the exact subprocess environment.
 
@@ -1038,23 +1065,15 @@ def _resolve_stdio_command(command: str, env: dict) -> tuple[str, dict]:
             # shutil.which(..., path=...) resolves extensions from the PARENT
             # process PATHEXT, not the MCP subprocess env — so a config that
             # supplies both PATH and PATHEXT can fail to resolve a command
-            # its own env can find (#56536). Retry with the config's PATHEXT
-            # (any key casing: PATHEXT / Pathext / pathext) applied.
+            # its own env can find (#56536). Search with the child PATHEXT
+            # without publishing it to other threads in this process.
             cfg_pathext = next(
                 (v for k, v in resolved_env.items()
                  if k.upper() == "PATHEXT" and isinstance(v, str) and v.strip()),
                 None,
             )
             if cfg_pathext and cfg_pathext != os.environ.get("PATHEXT"):
-                _saved = os.environ.get("PATHEXT")
-                try:
-                    os.environ["PATHEXT"] = cfg_pathext
-                    which_hit = shutil.which(resolved_command, path=path_arg)
-                finally:
-                    if _saved is None:
-                        os.environ.pop("PATHEXT", None)
-                    else:
-                        os.environ["PATHEXT"] = _saved
+                which_hit = _which_with_config_pathext(resolved_command, path_arg, cfg_pathext)
         if which_hit:
             resolved_command = which_hit
         elif resolved_command in {"npx", "npm", "node"}:
