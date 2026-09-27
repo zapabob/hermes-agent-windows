@@ -5863,6 +5863,25 @@ def _with_session_surface_toolsets(
     return sorted((set(selection) | _gui_surface_toolsets(platform)) - excluded)
 
 
+def _load_disabled_toolsets(
+    platform: str | None = None, config: dict | None = None
+) -> list[str] | None:
+    """Resolve agent exclusions, keeping Desktop's client control surface."""
+    from agent.skill_utils import parse_config_string_list
+
+    source = config if config is not None else _load_cfg()
+    agent_cfg = source.get("agent") if isinstance(source, dict) else None
+    if not isinstance(agent_cfg, dict):
+        return None
+    disabled = list(dict.fromkeys(
+        name.strip() for name in parse_config_string_list(agent_cfg.get("disabled_toolsets"))
+        if name.strip()
+    ))
+    if _resolve_agent_platform(platform) == "desktop":
+        disabled = [name for name in disabled if name != "desktop_ui"]
+    return disabled or None
+
+
 def _load_enabled_toolsets(platform: str | None = None) -> list[str] | None:
     session_platform = platform or _resolve_session_platform()
     explicit = [
@@ -8289,6 +8308,9 @@ def _background_agent_kwargs(agent, task_id: str) -> dict:
         # their toolsets against that same platform rather than the gateway
         # process's, so they never carry GUI schema they cannot use.
         or _load_enabled_toolsets("tui"),
+        # Detached work inherits this parent's policy snapshot. An explicit
+        # empty list must not pick up the gateway launch profile's config.
+        "disabled_toolsets": getattr(agent, "disabled_toolsets", None),
         "quiet_mode": True,
         "verbose_logging": False,
         "ephemeral_system_prompt": getattr(agent, "ephemeral_system_prompt", None)
@@ -8798,6 +8820,9 @@ def _make_agent(
             else _load_service_tier()
         ),
         enabled_toolsets=_load_enabled_toolsets(_resolve_agent_platform(platform_override)),
+        disabled_toolsets=_load_disabled_toolsets(
+            _resolve_agent_platform(platform_override), cfg
+        ),
         # OpenRouter provider-routing prefs (config.yaml `provider_routing`).
         # Mirrors the messaging gateway + CLI so the desktop/TUI honors the same
         # routing instead of letting OpenRouter pick providers at random.

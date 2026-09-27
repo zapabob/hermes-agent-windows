@@ -145,22 +145,30 @@ def _(rid, params: dict) -> dict:
             if not session:
                 return
             agent = session["agent"]
-            try:
-                from tools.mcp_tool import refresh_agent_mcp_tools
+            from hermes_constants import reset_hermes_home_override, set_hermes_home_override
 
-                # Explicit reload: re-resolve enabled toolsets so a server the
-                # user just enabled in config this session is picked up.
-                refresh_agent_mcp_tools(
-                    agent,
-                    enabled_override=_load_enabled_toolsets(),
-                    quiet_mode=True,
-                )
-            except Exception as _exc:
-                logger.warning(
-                    "Failed to refresh cached agent tools after /reload-mcp: %s",
-                    _exc,
-                )
-            _emit("session.info", params.get("session_id", ""), _session_info(agent, session))
+            profile_home = session.get("profile_home")
+            home_token = set_hermes_home_override(profile_home) if profile_home else None
+            try:
+                try:
+                    from tools.mcp_tool import refresh_agent_mcp_tools
+
+                    # Resolve both toolset lists under this session's profile.
+                    refresh_agent_mcp_tools(
+                        agent,
+                        enabled_override=_load_enabled_toolsets(getattr(agent, "platform", None)),
+                        disabled_override=_load_disabled_toolsets(getattr(agent, "platform", None)) or [],
+                        quiet_mode=True,
+                    )
+                except Exception as _exc:
+                    logger.warning(
+                        "Failed to refresh cached agent tools after /reload-mcp: %s",
+                        _exc,
+                    )
+                _emit("session.info", params.get("session_id", ""), _session_info(agent, session))
+            finally:
+                if home_token is not None:
+                    reset_hermes_home_override(home_token)
 
         global _mcp_reload_gen, _mcp_reload_loaded_rev
 
@@ -1538,9 +1546,15 @@ def _(rid, params: dict) -> dict:
             if session
             else _load_enabled_toolsets()
         )
+        disabled = (
+            getattr(session["agent"], "disabled_toolsets", None)
+            if session
+            else _load_disabled_toolsets()
+        )
         # Pre-assembly list: /tools is a discovery surface and must show
         # tools deferred behind the tool_search bridge (same as the CLI).
-        tools = get_tool_definitions(enabled_toolsets=enabled, quiet_mode=True,
+        tools = get_tool_definitions(enabled_toolsets=enabled, disabled_toolsets=disabled,
+                                     quiet_mode=True,
                                      skip_tool_search_assembly=True)
         sections = {}
 
