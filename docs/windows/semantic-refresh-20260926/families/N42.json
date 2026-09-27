@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "status": "EQUIVALENT_FINAL_U1_NO_PRODUCT_EDIT_APPROVAL_WORDS_ONLY",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N42",
+  "priority": "P1",
+  "repository": "zapabob/hermes-agent-windows",
+  "upstream_source": {
+    "intermediate_commit": "bd258480d3cf6a63a12650661f00d4f355568394",
+    "intermediate_ledger_row": "docs/windows/semantic-refresh-20260926/inventory/v0215_to_u1.jsonl:1697",
+    "historical_extraction_commit": "d4cec15b47e7524a0765f0296f8178978ef1c06c",
+    "historical_ledger_row": "docs/windows/semantic-refresh-20260926/inventory/historical_ledger_reaudit.jsonl:916",
+    "mapping": "Only the approval shell-word syntax subchange is reviewed. bd258's temporary _IS_WINDOWS branch is absent at frozen U1; the final helper lives in approval_detection.py after the historical extraction and scan unification. Neither full multi-file commit is classified by this card."
+  },
+  "frozen": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "local_feature_observed": "2622ea42ce3ad044bac4c4e8b9812ba21f7ae65a",
+    "R2": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
+    "U1": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+    "old_U0_unchanged": "b936546561888a54d5bf9cd7eae9629a824eb4f7"
+  },
+  "source_blobs": {
+    "D0_tools/approval.py": "82104a0b49d7ccabc40b4a6c3f59bdbd49467745",
+    "local_feature_and_integration_tools/approval.py": "cca4a7318ee3147ed63f1eba2b25cd6a79ecea06",
+    "U1_tools/approval_detection.py": "aa05e27567f95e148b2e247886e8ecdf4dbedfdd"
+  },
+  "source_span": [
+    "D0 tools/approval.py:2256-2284 and integration :2258-2286 strip shell quotes and escapes; integration _deobfuscate_shell_word_for_detection at :2289 calls it, then detection at :2673 consumes command variants. The same helper also reaches the self-repo guard.",
+    "Frozen U1 tools/approval_detection.py:997-1043 uses _scan_shell and :1114-1118 strips its quote/escape tokens; :1121 deobfuscates command words and :1516 runs dangerous-command detection.",
+    "bd258 tools/approval.py temporarily skipped backslash escape stripping on sys.platform == win32; U1 has no _IS_WINDOWS branch in this helper. Git blame attributes the final scan-backed body to 02d2d52efee8, after the d4cec extraction."
+  ],
+  "equivalence_receipt": "Read-only native Python calls on D0, U1 and exact integration HEAD returned identical values for four shell words and three approval detections: Windows executable path, escaped and quote-spliced rm names, a backslash-spliced root delete, Windows SSH-key delete, and a benign Windows path argument. No production RED against frozen U1 was found. The temporary bd258 conditional differs from U1 and was not copied.",
+  "product_commit": null,
+  "changed_paths": [
+    "docs/windows/semantic-refresh-20260926/families/N42.json",
+    "_docs/2026-09-28_N42_approval_shell_words_Codex.md"
+  ],
+  "green_evidence": [
+    "Native current-head tests/tools/test_approval.py plus tests/tools/test_shell_bypass_denylist.py: 150 passed, one symlink-privilege skip on Windows.",
+    "No mutation was applied: this is an equivalence and interim-retirement decision with no product edit. The D0/U1/integration runtime comparison is the relevant observable proof.",
+    "Independent read-only Code Reviewer returned CLEAR after checking D0/U1/integration source and blob identity, intermediate-versus-final semantics, ledger scope and the private receipt SHA-256. The reviewer did not run runtime probes, tests or CodeGraph queries and did not edit files."
+  ],
+  "codegraph_receipt": {
+    "local_name": "N42-20260928/receipt.json",
+    "sha256": "d378d6db6cde18c0f2d74cb13a1ac8ac0bfd34d1f0426a429d21c98c653074eb",
+    "version": "1.6.0",
+    "binding": "Separate D0 8,881-file, U1 12,468-file and integration 8,964-file indexes had zero pending changes and refs. Query, explore, impact and owner/caller queries resolved the actual source and Git blobs. No sync was needed."
+  },
+  "open_gaps": [
+    "The rest of bd258's 222-file change and the historical d4cec multi-module extraction remain semantically unmapped; this card must not make either ledger row complete.",
+    "Other U1 ledger rows and the 17,065-commit metadata universe remain open.",
+    "N07-A1 host grant-revocation writer is unimplemented by user confirmation; destination durability and T06/T12 remain P0 open, so Control MCP production write stays DISABLED.",
+    "A zero-byte untracked $tmp remains in the isolated worktree after automatic approval review blocked its removal without a detailed reason."
+  ]
+}
