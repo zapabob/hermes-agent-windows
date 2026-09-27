@@ -70,7 +70,8 @@ class VerifiedApplyOwner:
                     state, reason = 'BLOCKED', 'destination_changed'
                 else:
                     state, reason = 'SUCCEEDED', 'applied'
-                    self._witness(operation_id, ref, expected, new_revision, candidate)
+                    if not self._witness(operation_id, ref, expected, new_revision, candidate):
+                        state, reason = 'UNKNOWN', None
         except Exception:
             # The destination write may have landed: keep the reservation for reconcile.
             state, reason = 'UNKNOWN', None
@@ -86,7 +87,7 @@ class VerifiedApplyOwner:
 
     def _witness(self, operation_id, ref, expected, new_revision, candidate):
         # Before the outcome transition, which a displaced owner cannot record.
-        # A witness failure must not relabel a landed write as unknown.
+        # Without a durable witness, keep the landed write reserved for reconciliation.
         try:
             self.journal.append_effect_evidence(operation_id, now=self.clock(), evidence={
                 'outcome': 'destination_written', 'destination_ref': ref,
@@ -95,3 +96,5 @@ class VerifiedApplyOwner:
         except Exception as exc:
             logger.warning('destination write for %s not witnessed: %s', operation_id,
                            getattr(exc, 'code', type(exc).__name__))
+            return False
+        return True

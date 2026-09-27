@@ -333,22 +333,34 @@ def test_w_a_witness_time_must_be_a_finite_number(db, chain, now):
     assert evidence_rows(db) == 0
 
 
-def test_w_a_witness_failure_never_relabels_a_landed_write(db, chain, caplog, monkeypatch):
-    _calls, _execute_owner, apply_owner, destination, _receipts = chain
+@pytest.mark.parametrize('failure_type', [ControlError, sqlite3.OperationalError])
+def test_w_a_witness_failure_never_reports_success_or_releases_reservation(
+        db, chain, caplog, monkeypatch, failure_type):
+    _calls, _execute_owner, apply_owner, destination, receipts = chain
     journal = open_host(db)
     ctx = ctx_with()
     apply_op, _source, _run_id = approved_apply(journal, ctx, chain)
 
     def journal_busy(*_args, **_kwargs):
-        raise ControlError('journal_unavailable')
+        raise failure_type('journal_unavailable')
 
     monkeypatch.setattr(journal, 'append_effect_evidence', journal_busy)
     with caplog.at_level(logging.WARNING):
-        result = apply_owner(journal).start_approved(ctx, apply_op)
-    assert result == {'state': 'SUCCEEDED', 'reason_code': 'applied'}
-    assert state_of(db, apply_op) == 'SUCCEEDED'
+        assert claim_code(lambda: apply_owner(journal).start_approved(ctx, apply_op)) \
+            == 'apply_outcome_unknown'
+    assert state_of(db, apply_op) == 'UNKNOWN'
+    assert reservations_of(db, apply_op) == 1
+    assert journal.effect_evidence(apply_op) == []
     assert destination.applied == [(REF, HEAD_A, CANDIDATE)]
-    assert f'destination write for {apply_op} not witnessed: journal_unavailable' in caplog.text
+    assert claim_code(lambda: journal.claim_apply(ctx, apply_op, revalidate_grant=GRANT_OK,
+                                                   receipt_for=receipts, now=113)) == 'operation_conflict'
+    assert f'destination write for {apply_op} not witnessed:' in caplog.text
+    journal.close()
+    successor = open_host(db)
+    assert state_of(db, apply_op) == 'UNKNOWN'
+    assert reservations_of(db, apply_op) == 1
+    assert successor.effect_evidence(apply_op) == []
+    assert destination.applied == [(REF, HEAD_A, CANDIDATE)]
 
 
 def test_w_a_closed_journal_handle_cannot_witness(db, chain):
