@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "status": "PARTIAL_DPAPI_NATIVE_AND_LEDGER_REVIEW",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N05",
+  "priority": "P0",
+  "upstream_commits": [],
+  "upstream_merge_parents": [],
+  "salvage_fixup_revert_lineage": [],
+  "final_upstream_sha": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+  "final_observable_contract": "Bound scanner submissions and cancellation; bind ClamAV and YARA findings to the scanned definition generation; prevent failed or stale scans from resurrecting a clean cache; preserve a confirmed positive alongside a scanner error; re-evaluate path-dependent heuristics for the actual source path. Full U1 semantic mapping remains open.",
+  "downstream_predecessor": {
+    "commit": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "source": [
+      "downstream/security/engines.py (D0 blob 0e59d6aa607f83625d10ff1f2b0e361aa7944424)",
+      "downstream/security/service.py (D0 blob 6d61026b090c6153d4e0b84e3e636db68d60cc70)",
+      "downstream/security/store.py (D0 blob 645ba90324a0067493b13ac3fd07205fc1aa7442)"
+    ]
+  },
+  "downstream_owner": "SecurityService scan queue and cache use; ClamAVEngine and YaraEngine scanner generation; SecurityStore cache epoch and migration",
+  "downstream_call_path": [
+    "SecurityService.scan_paths -> bounded futures -> SecurityService.scan_file",
+    "SecurityService._scan_file_reserved:550-705 -> immutable snapshot -> ClamAVEngine.scan or YaraEngine.scan -> policy.evaluate",
+    "SecurityService._scan_file_reserved:550-705 -> SecurityStore.cache_get_with_generation, refresh_cached_scan, record_scan_if_epoch, invalidate_cached_scan",
+    "StaticHeuristicsEngine.scan:496-520 reads the original suffix and location; cached findings are reused only for that original path"
+  ],
+  "already_local_predecessor": "20e4fbc40c9dd4003a7f58c49a1a547565480df2 preserves earlier LM01-LM05, T15, T16 and N04 work; this N05 change does not reclassify them as missing",
+  "acceptance": {
+    "N05-A1": "LOCAL_BEHAVIOR_PROVED_WITH_MOCKED_FAILURES_AND_NATIVE_POSITIVE_NEGATIVE; U1_MAPPING_OPEN",
+    "N05-A2": "BOUNDED_QUEUE_AND_CANCELLATION_TESTED; NATIVE_CANCEL_AND_DPAPI_QUARANTINE_OPEN"
+  },
+  "red_or_equivalence_receipts": [
+    "Before final8 fixes, four actual-caller counterexamples failed: filename limit marker hid a ClamAV positive, truncated diagnostics hid a complete FOUND line, and identical bytes at two heuristic-sensitive paths reused the wrong cached findings in both scan orders (N05-after-pending/review-findings-red-final8.txt).",
+    "Before final9 parser correction, two direct ClamAV output tests failed: a colon-space filename made the limit marker a score-90 detection and polluted a legitimate signature name (N05-after-pending/parser-red-final9.txt).",
+    "D0 and local feature blobs were compared before choosing the integration branch; existing T15/T16 repairs were retained."
+  ],
+  "implementation_commits": [
+    "77331f05da1d9ca9c088ae2fd5864a75f651eb01"
+  ],
+  "changed_paths": [
+    "downstream/security/engines.py",
+    "downstream/security/service.py",
+    "downstream/security/store.py",
+    "tests/security/test_t16_bounded_security.py"
+  ],
+  "focused_and_native_receipts": [
+    "At the exact product commit, Windows Python 3.12 focused ClamAV/parser/path-cache tests: 11 passed, 90 deselected (N05-after-pending/tests-postcommit-focused-final9.txt).",
+    "Actual ClamAV 1.5.4 with an inert local HDB signature through SecurityService: positive MALICIOUS/BLOCK, negative CLEAN/ALLOW, without quarantine (N05-after-pending/native-clamav-synthetic-final8.txt).",
+    "Native yara-python 4.5.4 inert positive and negative passed before the final ClamAV-only parser correction (N05-after-pending/native-yara-synthetic-final7.txt)."
+  ],
+  "affected_receipts_not_green": [
+    "Windows Python 3.11 affected suites at the product bytes: 182 passed, 5 skipped, 9 failed at Windows DPAPI CryptProtectData access denied (N05-after-pending/tests-py311-final9.txt).",
+    "Windows Python 3.12 T16: 93 passed, 4 skipped, 4 failed at the same DPAPI boundary (N05-after-pending/tests-py312-t16-final9.txt).",
+    "A separate inert direct DPAPI call also returned access denied in this session; no OS setup or credential change was made."
+  ],
+  "mutation_receipts": [
+    "A runtime mutant omitting queued-future cancellation was killed by two interrupted-scan tests (N05-after-pending/mutant-no-cancel.txt).",
+    "A runtime mutant bypassing the cache epoch guard was killed because an older CLEAN result was resurrected (N05-after-pending/mutant-no-epoch-guard-final6.txt).",
+    "A runtime mutant discarding positives after a definition change was killed by YARA and ClamAV actual-caller tests (N05-after-pending/mutant-drop-positive-on-def-change-final7.txt)."
+  ],
+  "codegraph_after": {
+    "version": "1.6.0",
+    "commit": "77331f05da1d9ca9c088ae2fd5864a75f651eb01",
+    "tree": "9ddd4bf78d439b1846553b9ad9a69993246cf3f0",
+    "external_receipt": "N05-after-pending/receipt-final9.json",
+    "receipt_sha256": "7f5630dd48ceaa667119e1c405422ca071c639caea049a6bf94c26219cfc29ac",
+    "indexed_files": 8950,
+    "freshness": "UP_TO_DATE; zero pending changes and refs; four target source/test SHA-256 values match current, committed and indexed bytes",
+    "graph_limit": "ClamAVEngine.scan impact under-resolves SecurityService's dynamic scanner dispatch; direct caller tests cover it"
+  },
+  "independent_review": "Sagan performed read-only source reviews. It found three initial concrete counterexamples and one subsequent colon-space parser counterexample; each was reproduced and corrected. Its final read-only check found no concrete remaining issue. The reviewer did not run tests or qualify native DPAPI.",
+  "native_and_campaign_gaps": [
+    "Current Windows session cannot protect the vault key with DPAPI; the affected quarantine tests and native encrypted quarantine remain unqualified. OS setup requires separate approval.",
+    "Native ClamAV positive/negative did not exercise definition replacement, scanner cancellation or quarantine; those transitions are covered by mocked tests only.",
+    "Selected native symlink tests skipped because this host cannot create symlinks.",
+    "The 17,065-commit metadata inventory is not a full semantic U1 ledger mapping; additional families and P0 gates remain open.",
+    "Control MCP production write stays DISABLED until T06 and T12 authority and durability gates are met."
+  ],
+  "revisit_trigger": "Repeat the affected native quarantine tests when DPAPI access is available under an approved environment, finish U1 commit-to-family mapping and native cancellation/definition-change qualification, then independently review the same final source before release."
+}
