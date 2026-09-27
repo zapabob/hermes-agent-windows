@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "status": "PARTIAL_N36_V4A_SOURCE_BYTE_FENCE_LOCAL_GREEN_OTHER_PATCH_PATHS_OPEN",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N36",
+  "priority": "P0",
+  "origin": "R2-to-U1 inventory rows v0215_to_u1.jsonl:1870, :850, :1144 and :660 identify the byte-exact read, stdout fence, binary-sample fence and file-size verification lineage. This card maps only ShellFileOperations.read_file_raw as a V4A source; the other semantic changes in those commits remain unreviewed.",
+  "upstream_source_commits": [
+    "ce7839b98c31f3b9af96d3d95f033dfa56303eb3",
+    "5bcb236457ce6a0b6d1c53757f690383dd9e789a",
+    "7c686fe7a7d4a0c386e140efd23f58c3d14f4bf8",
+    "48a4a360a09550fa4fb397c2a709123ed7e50702"
+  ],
+  "downstream_source": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "local_feature_observed": "2622ea42ce3ad044bac4c4e8b9812ba21f7ae65a",
+    "R2": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
+    "U1": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+    "old_U0_unchanged": "b936546561888a54d5bf9cd7eae9629a824eb4f7",
+    "file_operations_blobs": {
+      "D0_and_local_feature": "a23e9afa056f3c09e8775b673ba3142428a0ec11",
+      "U1": "56437d62dcbeff17cdfa7ff41cc099a65de4cd43",
+      "product": "64d6af768c8cf3f0fac59bb10dcd8ff1c2a8beb5"
+    }
+  },
+  "final_observable_contract": "V4A must read an existing regular source through a framed byte transport, verify decoded length against the file's byte count, and refuse an unframed, failed or inconsistent read before writing. Backend stdout outside the frame must not become source content; literal terminal-marker bytes in the file must remain content. base64 command-not-found may use a verified od fallback.",
+  "source_span": [
+    "D0 tools/file_operations.py:1859-1903 and the integration predecessor :1864-1910 read V4A source with cat and then stripped apparent terminal fences from the returned text; tools/patch_parser.py:253, :294, :613 and :653 call read_file_raw before V4A writes, and tools/file_operations.py:2502 dispatches patch_v4a.",
+    "Current tools/file_operations.py:1103-1153 frames base64 or od output, separates byte-count and exit status, and refuses unverifiable replies; :1917-1964 decodes the verified bytes without cleaning file-owned marker text.",
+    "U1 tools/file_operations.py:1198-1222 contains the final upstream raw-read behavior, while its byte-exact/fence/size lineage is identified by the four inventory rows above. This product commit is a fork adaptation rather than an upstream transplant."
+  ],
+  "red_receipt": "At parent e0fecd50795c2699700b279609d9ce6e1016159d, three native Windows Git Bash tests failed: outer TERM noise became source text; in-band decodable noise led an actual V4A update to change the temporary source from anchor to TERM plus replacement; and a literal file-owned fence line vanished. The test backend's stdin_data forwarding was corrected before the accepted RED rerun.",
+  "product_commit": "a689ed4a18619ee8e5aa9365f4da1afbd55e4fbd",
+  "product_tree": "bec200da8ca763a3fe96c480f8d0e5c30ba216ac",
+  "changed_paths": [
+    "tools/file_operations.py",
+    "tests/tools/test_n36_exact_patch_source.py",
+    "tests/tools/test_file_operations.py",
+    "tests/tools/test_read_shell_line_clamp.py"
+  ],
+  "green_evidence": [
+    "Four native Windows Python 3.12/Git Bash cases passed after implementation, including verified od fallback when a Bash base64 function returns 127.",
+    "The affected seven-file Windows selection passed 181 tests, skipped 12 existing POSIX-only cases and deselected ten Windows-incompatible permission/symlink/search cases. That run preceded only a docstring correction and one added fallback test; no behavioral production edit followed.",
+    "At the exact product HEAD, six focused tests passed, including the two legacy expectations updated for the verified-byte contract.",
+    "Four controlled mutants were killed: removed size check, broken frame, restored file-owned marker stripping, and disabled od fallback. The source was restored byte-identically; independent read-only Code Reviewer returned CLEAR twice and did not run tests, graph, mutations or commit.",
+    "All four changed paths match actual file bytes, the exact product Git commit and the integration CodeGraph index; frozen D0/U1 source matches their Git blobs and separate indexes."
+  ],
+  "codegraph_receipt": {
+    "local_name": "N36-20260927/receipt.json",
+    "sha256": "ad832a14869214af76a24b405dc13d9265e9c3cff3a572fbca3f991e2a395097",
+    "version": "1.6.0",
+    "binding": "D0 8,881-file, U1 12,468-file and integration 8,959-file indexes are separate, complete and report zero pending changes and refs. Query, explore, impact, owner/caller map, Git/index/source hashes and mutation logs are in the private local receipt."
+  },
+  "open_gaps": [
+    "The byte-count check is not an atomic source snapshot: a same-size concurrent change between encoded read and wc can evade it, and there is no read-to-write compare-and-swap fence.",
+    "patch_replace, its post-write verification, binary-admission sampling and public read_file_bytes use separate transport paths and remain outside this product change.",
+    "Non-Git-Bash remote backends and native POSIX runtime were not executed; Windows symlink privilege and POSIX permission cases remain unqualified by the affected selection.",
+    "Other semantics of the cited upstream commits and the full 17,065-commit universe remain unmapped; neither whole-commit parity nor campaign completion is claimed.",
+    "N07-A1 grant-revocation host writer is absent, destination outcome durability and T06/T12 remain P0 open, and Control MCP production write stays DISABLED.",
+    "No PR, push, release, production restart or Control MCP production write was performed."
+  ]
+}
