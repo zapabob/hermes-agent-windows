@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "status": "PARTIAL_N35_COMPOSITE_DISABLED_PROPAGATION_LOCAL_GREEN_RUNTIME_OPEN",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N35",
+  "priority": "P1",
+  "origin": "R2-to-U1 inventory row v0215_to_u1.jsonl:1107 identifies 788d82fc9759de268c63fc2c6446718acd04ff8c. This family maps only disabled-toolset propagation through Desktop/TUI construction, detached background work, MCP reload and tools.show. It does not map the rest of that upstream commit.",
+  "upstream_source_commits": [
+    "788d82fc9759de268c63fc2c6446718acd04ff8c"
+  ],
+  "related_family": "N34 covers the separate client-surface fold-in contract from upstream 903a57c540917cedd30c7d971938f1af7bdf60e2.",
+  "downstream_source": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "local_feature_observed": "2622ea42ce3ad044bac4c4e8b9812ba21f7ae65a",
+    "R2": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
+    "U1": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+    "old_U0_unchanged": "b936546561888a54d5bf9cd7eae9629a824eb4f7",
+    "tui_gateway_server_blobs": {
+      "D0": "c08fd9bd2eff3b06f64afaab6567dff69221fcbc",
+      "local_feature": "6e82d82d3867acae006bed0eeabe1529baf5ff40",
+      "U1": "26f133a60b0ca041bde9ff30fb683641d6a12ed4"
+    },
+    "methods_tools_blobs": {
+      "D0_and_local_feature": "970bdb654faa5d83d37862395c24846a090d5095",
+      "U1": "6995494d30de871f6bb62b702784eb444123c8be"
+    }
+  },
+  "final_observable_contract": "Configured disabled toolsets remain excluded when a composite toolset is selected. Desktop/TUI agent construction, detached work, explicit MCP reload and tools.show carry the same exclusion policy; Desktop keeps desktop_ui as its client control surface. A reload of a target profile resolves its own config, and clearing exclusions passes an explicit empty override.",
+  "source_span": [
+    "Before N35, tui_gateway/server.py:5885 and :8656-8820 resolved enabled names for agent construction but did not pass disabled_toolsets; :8293 built detached agent kwargs without the parent exclusions. model_tools.py:458-500 subtracts disabled names even from composites when both lists are supplied.",
+    "tui_gateway/server.py:5866-5884 now resolves the effective disabled names; :8310-8313 preserves the parent's snapshot for detached work; :8822-8825 passes exclusions to AIAgent.",
+    "Before N35, tui_gateway/methods_tools.py:84-165 refreshed enabled names only, and :1530-1556 omitted disabled names from tools.show. The reload path now binds session profile_home for both resolutions and refresh, passes an explicit [] when exclusions are cleared, and resets the binding in finally; tools.show passes the session or effective config exclusions."
+  ],
+  "red_receipt": "At parent 09f4f9e5d9090a625386e79813ad5d75b5f9ffae, six new native caller tests failed before product edits. Follow-up RED cases separately exposed a target-profile reload adopting the launch profile's selection, a cleared exclusion becoming None instead of [], and a detached agent with an explicit empty parent snapshot adopting launch-profile exclusions.",
+  "product_commit": "724e974fc088e4bf270ce57f5f3e5ccd27856d7d",
+  "product_tree": "da46c9ee4bef0cd0464a44e37e99d000ebf04a02",
+  "changed_paths": [
+    "tui_gateway/server.py",
+    "tui_gateway/methods_tools.py",
+    "tests/tui_gateway/test_disabled_toolsets_propagation.py",
+    "tests/tui_gateway/test_gui_surface_toolsets.py"
+  ],
+  "green_evidence": [
+    "At the exact product HEAD, native Windows Python 3.12 passed 37 affected tests across five files. Before the final test-only adjustment, the resolver regression selection passed 11 with 605 deselected; its source was unchanged thereafter.",
+    "Seven controlled mutants were killed: agent constructor, detached propagation, explicit-empty detached snapshot, MCP reload, clear-exclusion override, tools.show, and target-profile binding. Each source file was restored byte-identically before commit.",
+    "Independent read-only Code Reviewer first reported a HIGH cross-profile reload defect. After repair, it re-reviewed the final source and returned CLEAR; it did not execute tests, graph work, mutations or commit.",
+    "All four changed paths match actual source, exact product Git commit and the integration CodeGraph index. D0/U1 comparison paths match their frozen Git blobs and separate indexes."
+  ],
+  "codegraph_receipt": {
+    "local_name": "N35-20260927/receipt.json",
+    "sha256": "1a514fba586f5f375a294be3a7918f5ec909e105f5cbff89918d8a81421848a4",
+    "version": "1.6.0",
+    "binding": "Separate frozen D0 8,881-file, frozen U1 12,468-file and integration 8,958-file indexes are complete with zero pending changes and refs. Source-bound status, sync, query, explore, impact and owner-map evidence is in the private local receipt."
+  },
+  "open_gaps": [
+    "No live Desktop/TUI model session or real BrowserOS-versus-built-in-browser selection was executed; native caller tests use local inert stubs.",
+    "Other changes in upstream 788d82 and the 17,065-commit inventory remain semantically unmapped; neither whole-commit parity nor campaign coverage is claimed.",
+    "The user confirmed the N07-A1 grant-revocation host writer has not been implemented. Grant/claim linearization, destination outcome durability and T06/T12 remain P0 open, so Control MCP production write stays DISABLED.",
+    "No PR, push, release, production restart or Control MCP production write was performed."
+  ]
+}
