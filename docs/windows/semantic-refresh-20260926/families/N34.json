@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "status": "PARTIAL_N34_SURFACE_EXCLUSION_COMPOSITE_AND_RUNTIME_OPEN",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N34",
+  "priority": "P1",
+  "origin": "R2-to-U1 inventory row v0215_to_u1.jsonl:1318 identifies 903a57c540917cedd30c7d971938f1af7bdf60e2. This family maps only the disabled-toolset client-surface fold-in contract. Related row :1107 identifies 788d82fc9759de268c63fc2c6446718acd04ff8c, whose composite-toolset propagation remains separately unreviewed.",
+  "upstream_source_commits": [
+    "903a57c540917cedd30c7d971938f1af7bdf60e2"
+  ],
+  "related_upstream_unmapped": [
+    "788d82fc9759de268c63fc2c6446718acd04ff8c"
+  ],
+  "downstream_source": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "local_feature_observed": "2622ea42ce3ad044bac4c4e8b9812ba21f7ae65a",
+    "common_ancestor_with_U1": "1fe0f2f3ac9748ce799272eb93bee2937b5ab802",
+    "tui_gateway_server_blobs": {
+      "D0": "c08fd9bd2eff3b06f64afaab6567dff69221fcbc",
+      "local_feature": "6e82d82d3867acae006bed0eeabe1529baf5ff40",
+      "common_ancestor": "beff50c2564ad1b81e2901ae17fb62233c1b3416",
+      "U1": "26f133a60b0ca041bde9ff30fb683641d6a12ed4"
+    }
+  },
+  "final_observable_contract": "On Desktop and TUI, agent.disabled_toolsets excludes project from the client-surface fold-in on both focus and configured paths. Exclusions also apply to a focus selection; desktop_ui remains available to Desktop as its client-control capability. Existing explicit HERMES_TUI_TOOLSETS operator-pin behavior is retained.",
+  "source_span": [
+    "Before N34, tui_gateway/server.py:5824-5842 defined the client-only project/desktop_ui surface; :5845-5871 folded it into focus selection without consulting agent.disabled_toolsets; :5977-5988 folded it into the configured result after hermes_cli/tools_config.py:2929-2943 subtracted exclusions",
+    "tui_gateway/server.py:5845-5863 now parses the effective disabled list and applies it to selection plus surface while exempting desktop_ui; :5892 and :6009 call the helper for focus/configured paths",
+    "tui_gateway/server.py:8800 passes the resolved list to AIAgent; tests/tui_gateway/test_gui_surface_toolsets.py:88-127 exercises four paths plus selection-wide exclusion and Desktop control",
+    "The explicit env-pin branch of _load_enabled_toolsets remains untouched; its regression test is tests/tui_gateway/test_gui_surface_toolsets.py:158"
+  ],
+  "red_receipt": "At parent b82ab1967b92d3788e691d09b4881cea2111dd8f, native Windows Python 3.12 ran the new Desktop/TUI by focus/configured matrix: all four new cases failed because project remained in the result, while ten prior control tests passed.",
+  "product_commit": "f33ef0e9e2b16bde111c260857226bce8b7033f8",
+  "product_tree": "9be5999f22b9dc9ffaff2e1279ea65451978f5ed",
+  "green_evidence": [
+    "The two affected native Windows Python 3.12 test files passed 631/631 before commit; precommit staged bytes match the product commit exactly",
+    "At the exact product HEAD, 26 targeted tests passed with 605 other tests deselected",
+    "Four deliberate mutants were killed: ignored global exclusion, lost desktop_ui exception, skipped focus-path filtering, and skipped configured-path filtering; source bytes were restored and matched product commit",
+    "Independent read-only reviewer returned CLEAR on the final diff; it did not run tests, CodeGraph, mutations or commit",
+    "Both changed paths matched actual file, exact Git commit and indexed SHA-256; Git committed only those two explicit paths"
+  ],
+  "codegraph_receipt": {
+    "local_name": "N34-20260927/receipt.json",
+    "sha256": "003cb612eb7638498d57c9b02d8ffa43ed055d25579c108a4435c68256d3a613",
+    "version": "1.6.0",
+    "binding": "Separate D0 8,881-file, U1 12,468-file and integration 8,957-file indexes, all with zero pending changes and refs. Query, explore, impact and owner-map outputs and source hashes are in the private local receipt."
+  },
+  "open_gaps": [
+    "No live Desktop/TUI renderer or model tool-schema session was executed; native resolver tests do not prove full runtime behavior",
+    "Related upstream 788d82 composite-toolset disabled propagation and explicit operator-pin policy require separate semantic audit; no whole-commit parity is claimed",
+    "Other changes in 903a57 and the 17,065-commit inventory remain semantically unmapped",
+    "N07-A1 grant revocation host writer is not implemented; destination outcome durability remains P0 open, and Control MCP production write stays DISABLED",
+    "No PR, push, release, production restart or Control MCP production write is implied"
+  ]
+}
