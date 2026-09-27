@@ -1156,6 +1156,7 @@ Environment state persists: activate a virtualenv or export variables once per s
 
 Foreground (default): returns INSTANTLY when the command finishes, even with a high timeout — set timeout generously for long builds.
 Background: set background=true (returns a session_id); add notify=true for bounded tasks, leave silent only for servers/daemons that never exit. After starting a server, verify readiness with a health check in a separate call (no blind sleep loops); manage with process(action="poll"/"wait").
+Persist: on the local backend only, background=true with persist_on_release=true keeps a user-requested job alive across agent cleanup. An explicit process kill or /stop still stops it; gateway shutdown also stops it.
 Working directory: use 'workdir' for per-command cwd; when a command changes the session cwd (cd, pushd), trust the result's "cwd" field instead of prefixing every command with 'cd'.
 PTY: pty=true + background=true for interactive CLIs (they hang without a terminal); drive them with process(action="write"/"submit"). Local backend only.
 """
@@ -2993,6 +2994,7 @@ def terminal_tool(
     notify_on_complete: bool = False,
     watch_patterns: Optional[List[str]] = None,
     _host_local: bool = False,
+    persist_on_release: bool = False,
 ) -> str:
     """
     Execute a command in the configured terminal environment.
@@ -3008,6 +3010,7 @@ def terminal_tool(
         pty: If True, use pseudo-terminal for interactive CLI tools (local backend only)
         notify_on_complete: If True and background=True, you'll be notified exactly once when the process exits. The right choice for almost every long task. MUTUALLY EXCLUSIVE with watch_patterns.
         watch_patterns: List of strings to watch for in background output. HARD rate limit: 1 notification per 15s per process. After 3 strike windows in a row — or after a small lifetime cap of delivered matches, however cleanly spaced — watch_patterns is disabled and the session is auto-promoted to notify_on_complete. Use ONLY for rare, one-shot mid-process signals on long-lived processes (server readiness, migration-done markers). NEVER use in loops/batch jobs — error patterns there will hit the strike limit and get disabled. MUTUALLY EXCLUSIVE with notify_on_complete — set one, not both.
+        persist_on_release: Local background jobs only; explicitly retain across agent lifecycle cleanup. Default false.
 
     Returns:
         str: JSON string with output, exit_code, and error fields
@@ -3041,6 +3044,11 @@ def terminal_tool(
                 ensure_ascii=False,
             )
 
+        if type(persist_on_release) is not bool:
+            return tool_error("persist_on_release must be a boolean")
+        if persist_on_release and not background:
+            return tool_error("persist_on_release requires background=true")
+
         if _CREDENTIAL_FREE_BINDING.get() is not None:
             _resolve_container_task_id(task_id)
             if background or force or _host_local or pty:
@@ -3049,6 +3057,8 @@ def terminal_tool(
         # Get configuration
         config = _get_env_config()
         env_type = "local" if _host_local else config["env_type"]
+        if persist_on_release and env_type != "local":
+            return tool_error("persist_on_release requires the local terminal backend")
 
         # Use task_id for environment isolation. By default all subagent
         # task_ids collapse back to "default" so the top-level agent and
@@ -3531,6 +3541,7 @@ def terminal_tool(
                         session_key=session_key,
                         env_vars=env.env if hasattr(env, "env") else None,
                         use_pty=effective_pty,
+                        persist_on_release=persist_on_release,
                     )
                 else:
                     proc_session = process_registry.spawn_via_env(
@@ -3548,6 +3559,8 @@ def terminal_tool(
                     "exit_code": 0,
                     "error": None,
                 }
+                if persist_on_release:
+                    result_data["persist_on_release"] = True
                 # Background spawns detached and returns exit_code 0 immediately;
                 # it never inline-polls is_interrupted(), so the stale-bit kill
                 # cannot occur here and this note never co-occurs with rc=130.
@@ -4377,6 +4390,11 @@ TERMINAL_SCHEMA = {
                 "description": "Run in the background, returning a session_id. Pair with notify=true for anything with a defined end (tests, builds, deploys) — without it the process runs silently. Only servers/watchers/daemons that never exit should stay silent. Short commands: prefer foreground with a generous timeout.",
                 "default": False
             },
+            "persist_on_release": {
+                "type": "boolean",
+                "description": "With background=true on the local backend, keep a user-requested job alive across agent cleanup. Explicit process kill, /stop, and gateway shutdown still stop it. Default false.",
+                "default": False,
+            },
             "timeout": {
                 "type": "integer",
                 "description": f"Max seconds to wait (default: 180, foreground max: {FOREGROUND_MAX_TIMEOUT}). Returns INSTANTLY when command finishes — set high for long tasks, you won't wait unnecessarily. Foreground timeout above {FOREGROUND_MAX_TIMEOUT}s is rejected; use background=true for longer commands.",
@@ -4425,6 +4443,9 @@ def _handle_terminal(args, **kw):
     notify = args.get("notify")
     notify_on_complete = args.get("notify_on_complete", False)
     watch_patterns = args.get("watch_patterns")
+    persist_on_release = args.get("persist_on_release", False)
+    if type(persist_on_release) is not bool:
+        return tool_error("persist_on_release must be a boolean")
     # Background-only modifiers on a foreground call were silently ignored;
     # fail with the corrected call instead (poka-yoke, no schema cost).
     if not args.get("background", False):
@@ -4441,6 +4462,8 @@ def _handle_terminal(args, **kw):
                 "tracked background process). Retry as terminal(command=..., "
                 "background=true, pty=true)."
             )
+        if persist_on_release:
+            return tool_error("persist_on_release requires background=true")
     if notify is not None:
         if isinstance(notify, bool):
             notify_on_complete = notify
@@ -4463,6 +4486,7 @@ def _handle_terminal(args, **kw):
         pty=args.get("pty", False),
         notify_on_complete=notify_on_complete,
         watch_patterns=watch_patterns,
+        persist_on_release=persist_on_release,
     )
 
 

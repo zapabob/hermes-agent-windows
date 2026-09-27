@@ -406,6 +406,7 @@ class ProcessSession:
     pid_scope: str = "host"                     # "host" for local/PTY PIDs, "sandbox" for env-local PIDs
     systemd_unit: str = ""                      # transient scope unit name when spawned under systemd-run (#70716)
     handoff_note: str = ""                      # why a subagent handed this process to its parent (rides the notice)
+    persist_on_release: bool = False            # explicit local-background lifecycle exception
     # Watcher/notification metadata (persisted for crash recovery)
     watcher_platform: str = ""
     watcher_chat_id: str = ""
@@ -1050,6 +1051,7 @@ class ProcessRegistry:
         env_vars: dict = None,
         use_pty: bool = False,
         owner_task_id: str = "",
+        persist_on_release: bool = False,
     ) -> ProcessSession:
         """
         Spawn a background process locally.
@@ -1078,6 +1080,7 @@ class ProcessRegistry:
             session_key=session_key,
             cwd=_resolve_safe_cwd(cwd or os.getcwd()),
             started_at=time.time(),
+            persist_on_release=persist_on_release,
         )
 
         pty_scope_attempted = False
@@ -2628,6 +2631,8 @@ class ProcessRegistry:
                 entry["watch_hit"] = s._watch_hits > 0
             if s.notify_on_complete:
                 entry["notify_on_complete"] = True
+            if s.persist_on_release:
+                entry["persist_on_release"] = True
             if s.exited:
                 entry["exit_code"] = s.exit_code
             if s.detached:
@@ -2776,13 +2781,15 @@ class ProcessRegistry:
         source: str = "kill_all",
         consume_output: bool = False,
     ) -> int:
-        """Kill all running processes, optionally filtered by task_id. Returns count killed."""
+        """Kill running processes, excluding persisted jobs only for lifecycle sweeps."""
+        lifecycle = source in {"kill_all", "gateway_turn_timeout", "agent_close"}
         with self._lock:
             targets = [
                 s for s in self._running.values()
                 if (task_id is None or s.task_id == task_id)
                 and s.id not in exclude_ids
                 and not s.exited
+                and not (lifecycle and s.persist_on_release)
             ]
 
         killed = 0
@@ -2876,6 +2883,7 @@ class ProcessRegistry:
                             "parent_session_id": s.parent_session_id,
                             "notify_on_complete": s.notify_on_complete,
                             "watch_patterns": s.watch_patterns,
+                            "persist_on_release": s.persist_on_release,
                         })
                 if extra_entries:
                     tracked_ids = {item.get("session_id") for item in entries}
@@ -2973,6 +2981,7 @@ class ProcessRegistry:
                 parent_session_id=entry.get("parent_session_id", ""),
                 notify_on_complete=entry.get("notify_on_complete", False),
                 watch_patterns=entry.get("watch_patterns", []),
+                persist_on_release=entry.get("persist_on_release", False) is True,
             )
             with self._lock:
                 self._running[session.id] = session

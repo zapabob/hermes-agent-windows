@@ -16070,7 +16070,7 @@ def _mirror_slash_side_effects(sid: str, session: dict, command: str) -> str:
         elif name == "stop":
             from tools.process_registry import process_registry
 
-            process_registry.kill_all()
+            process_registry.kill_all(source="slash.stop")
     except Exception as e:
         if name == "compress" and agent:
             from agent.conversation_compression import (

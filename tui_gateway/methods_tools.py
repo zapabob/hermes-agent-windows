@@ -41,7 +41,7 @@ def _(rid, params: dict) -> dict:
     try:
         from tools.process_registry import process_registry
 
-        return _ok(rid, {"killed": process_registry.kill_all()})
+        return _ok(rid, {"killed": process_registry.kill_all(source="process.stop")})
     except Exception as e:
         return _err(rid, 5010, str(e))
 

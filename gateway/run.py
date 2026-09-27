@@ -15232,7 +15232,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 """
                 try:
                     from tools.process_registry import process_registry
-                    _killed = process_registry.kill_all()
+                    _killed = process_registry.kill_all(source="gateway_shutdown")
                     if _killed:
                         logger.info(
                             "Shutdown (%s): killed %d tool subprocess(es)",

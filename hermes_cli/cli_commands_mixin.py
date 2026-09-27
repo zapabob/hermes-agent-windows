@@ -526,7 +526,7 @@ class CLICommandsMixin:
 
         if running:
             print(f"  Stopping {len(running)} background process(es)...")
-            killed = process_registry.kill_all()
+            killed = process_registry.kill_all(source="cli.stop")
             print(f"  ✅ Stopped {killed} process(es).")
         if n_async and interrupt_all is not None:
             stopped = interrupt_all(reason="/stop")
