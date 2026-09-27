@@ -24,10 +24,15 @@
   ],
   "already_local_predecessor": "LM03 19-mutant and LM05 17-mutant results remain reused; this change does not reclassify those earlier proofs as undone. Pre-change owner blobs match the preserved feature branch.",
   "acceptance": {
-    "N07-A1": "OPEN: host grant_lookup and revocation are not synchronized with the journal claim or final effect",
+    "N07-A1": "OPEN: the user confirms the host grant-revocation writer has not yet been implemented; grant lookup and revocation cannot be shown to linearize with the journal claim or final effect",
     "N07-A2_false_success": "PASS_LOCAL: journal terminal record failure produces UNKNOWN or apply_outcome_unknown, keeps reservation and never reclaims the same operation",
     "N07-A2_witness_failure": "PASS_LOCAL: after a landed destination CAS, append-only witness failure now yields UNKNOWN and apply_outcome_unknown, retains the reservation, and rejects a second claim, including across journal restart",
     "N07-A2_append_only_evidence": "OPEN: a failed witness leaves no append-only destination outcome evidence; a write that lands then raises without acknowledgement remains ambiguous, and an uncertain post-effect kernel exception may be classified BLOCKED"
+  },
+  "host_writer_status": {
+    "evidence": "Direct user clarification on 2026-09-27: the host implementation that writes grant revocations has not yet been implemented.",
+    "scope": "Grant-revocation host writer only; this clarification does not reclassify the existing injected grant_lookup callback or the separate destination writer.",
+    "decision": "Keep N07-A1 P0 open and Control MCP production write DISABLED. A real writer and atomic grant/claim/effect contract require a separate implementation and proof before T12."
   },
   "red_or_equivalence_receipts": [
     "The production apply owner returned SUCCEEDED after a landed CAS when journal.transition raised ControlError; the new actual-owner test failed before the fix.",
@@ -77,7 +82,7 @@
   },
   "independent_review": "Read-only independent reviews found no new blocking defect in either narrow false-success correction. The witness-correction review traced UNKNOWN through coordinator cleanup and reservation retention; it did not execute tests, CodeGraph or native writers. N07-A1 and durable destination evidence remain outside approval.",
   "native_and_campaign_gaps": [
-    "Grant revocation and journal claim are not a single linearization contract; N07-A1 remains P0 open.",
+    "The grant-revocation host writer is not implemented per direct user clarification, and grant revocation and journal claim are not a single linearization contract; N07-A1 remains P0 open.",
     "The actual destination writer and complete durable witness failure path are not qualified; a failed append leaves no append-only witness, so T12 is blocked.",
     "The implementation router kernel can return BLOCKED after an accepted side effect; the Control MCP reservation may then be released.",
     "The 17,065-commit metadata inventory remains unmapped to complete U1 semantic family coverage.",
