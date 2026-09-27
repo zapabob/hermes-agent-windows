@@ -25,10 +25,13 @@ class DestinationPort(Protocol):
 def _record(write, operation_id, **kwargs):
     try:
         write(operation_id, **kwargs)
-    except ControlError as exc:
+    except Exception as exc:
         # A displaced owner has no journal write authority; the live owner's
         # startup reconciliation records this operation.
-        logger.warning('control operation %s not recorded: %s', operation_id, exc.code)
+        logger.warning('control operation %s not recorded: %s', operation_id,
+                       getattr(exc, 'code', type(exc).__name__))
+        return False
+    return True
 
 
 class VerifiedApplyOwner:
@@ -73,8 +76,10 @@ class VerifiedApplyOwner:
             state, reason = 'UNKNOWN', None
         finally:
             result = None if reason is None else {'state': state, 'reason_code': reason}
-            _record(self.journal.transition, operation_id, expected_state='RUNNING',
-                    new_state=state, now=self.clock(), result=result)
+            recorded = _record(self.journal.transition, operation_id, expected_state='RUNNING',
+                               new_state=state, now=self.clock(), result=result)
+        if not recorded:
+            raise ControlError('apply_outcome_unknown')
         if state != 'SUCCEEDED':
             raise ControlError(reason or 'apply_outcome_unknown')
         return result

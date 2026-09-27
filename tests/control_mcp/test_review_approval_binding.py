@@ -740,6 +740,37 @@ def test_s82_revision_change_during_the_run_still_records_the_outcome(db, effect
     assert state_of(db, operation_id) == 'SUCCEEDED'
 
 
+@pytest.mark.parametrize('failure_type', [ControlError, sqlite3.OperationalError])
+def test_s82_failed_run_outcome_record_cannot_return_success(db, effects, monkeypatch,
+                                                              failure_type):
+    calls, _hooks, owner = effects
+    journal = open_host(db)
+    ctx = make_ctx()
+    operation_id = reserve_approved(journal, ctx)
+
+    def unavailable(*_args, **_kwargs):
+        raise failure_type('journal_unavailable')
+
+    monkeypatch.setattr(journal, 'transition', unavailable)
+    result = owner(journal).start_approved(ctx, operation_id).future.result(timeout=30)
+    assert result['state'] == 'UNKNOWN'
+    assert len(calls) == 1
+    assert state_of(db, operation_id) == 'RUNNING'
+    with sqlite3.connect(db) as conn:
+        assert conn.execute('SELECT count(*) FROM control_reservations WHERE operation_id=?',
+                            (operation_id,)).fetchone()[0] == 1
+    journal.close()
+    successor = open_host(db)
+    assert state_of(db, operation_id) == 'UNKNOWN'
+    with pytest.raises(ControlError) as busy:
+        successor.reserve(ctx, make_request(key='after-failed-record'), now=113)
+    assert busy.value.code == 'workspace_busy'
+    with pytest.raises(ControlError) as denied:
+        successor.claim_approved(ctx, operation_id, revalidate_grant=GRANT_OK, now=113)
+    assert denied.value.code == 'operation_conflict'
+    assert len(calls) == 1
+
+
 # --- route / provider revision -----------------------------------------------------------------
 
 def test_b9_picker_model_change_keeps_the_approval_but_losing_the_route_does_not(db, effects, host_config):

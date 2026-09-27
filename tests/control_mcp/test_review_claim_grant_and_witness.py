@@ -182,7 +182,8 @@ def test_w_a_write_landing_after_the_owner_was_displaced_is_still_witnessed(db, 
 
     destination.compare_and_swap = swap_then_lose_the_journal
     with caplog.at_level(logging.WARNING):
-        apply_owner(journal).start_approved(ctx, apply_op)
+        assert claim_code(lambda: apply_owner(journal).start_approved(ctx, apply_op)) \
+            == 'apply_outcome_unknown'
     assert destination.applied == [(REF, HEAD_A, CANDIDATE)]
     assert f'control operation {apply_op} not recorded: stale_owner_epoch' in caplog.text
     witness = [{'recorder_epoch': recorder, 'recorded_at': 112, 'evidence': {
@@ -196,6 +197,38 @@ def test_w_a_write_landing_after_the_owner_was_displaced_is_still_witnessed(db, 
     assert state_of(db, apply_op) == 'UNKNOWN'
     assert reservations_of(db, apply_op) == 1
     assert successor.effect_evidence(apply_op) == witness
+
+
+@pytest.mark.parametrize('failure_type', [ControlError, sqlite3.OperationalError])
+def test_w_failed_outcome_record_never_reports_success_or_replays_the_effect(
+        db, chain, monkeypatch, failure_type):
+    _calls, _execute_owner, apply_owner, destination, receipts = chain
+    journal = open_host(db)
+    ctx = ctx_with()
+    apply_op, _source, _run_id = approved_apply(journal, ctx, chain)
+
+    def unavailable(*_args, **_kwargs):
+        raise failure_type('journal_unavailable')
+
+    monkeypatch.setattr(journal, 'transition', unavailable)
+    assert claim_code(lambda: apply_owner(journal).start_approved(ctx, apply_op)) == 'apply_outcome_unknown'
+    assert destination.applied == [(REF, HEAD_A, CANDIDATE)]
+    assert state_of(db, apply_op) == 'RUNNING'
+    assert reservations_of(db, apply_op) == 1
+    witness = journal.effect_evidence(apply_op)
+    assert len(witness) == 1
+    assert witness[0]['evidence'] == landed_evidence()
+    assert claim_code(lambda: journal.claim_apply(ctx, apply_op, revalidate_grant=GRANT_OK,
+                                                   receipt_for=receipts, now=113)) == 'operation_conflict'
+    journal.close()
+
+    successor = open_host(db)
+    assert state_of(db, apply_op) == 'UNKNOWN'
+    assert reservations_of(db, apply_op) == 1
+    assert successor.effect_evidence(apply_op) == witness
+    assert claim_code(lambda: successor.claim_apply(ctx, apply_op, revalidate_grant=GRANT_OK,
+                                                     receipt_for=receipts, now=114)) == 'operation_conflict'
+    assert destination.applied == [(REF, HEAD_A, CANDIDATE)]
 
 
 @pytest.mark.parametrize('outcome', ['applied', 'destination_changed', 'unclassified'])

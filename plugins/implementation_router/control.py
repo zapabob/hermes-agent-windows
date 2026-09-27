@@ -24,10 +24,13 @@ logger = logging.getLogger(__name__)
 def _record(write, operation_id, **kwargs):
     try:
         write(operation_id, **kwargs)
-    except ControlError as exc:
+    except Exception as exc:
         # A displaced owner has no journal write authority; the live owner's
         # startup reconciliation records this operation.
-        logger.warning('control operation %s not recorded: %s', operation_id, exc.code)
+        logger.warning('control operation %s not recorded: %s', operation_id,
+                       getattr(exc, 'code', type(exc).__name__))
+        return False
+    return True
 
 
 @dataclass(frozen=True)
@@ -141,9 +144,11 @@ class EngineeringRunOwner:
                 if active is not None and active['generation'] == generation:
                     set_interrupt(False, tid)
                     del self._active[run_id]
-            _record(self.journal.transition, operation_id, expected_state='RUNNING',
-                    new_state=state, now=self.clock(),
-                    result=result if state != 'UNKNOWN' else None)
+            recorded = _record(self.journal.transition, operation_id, expected_state='RUNNING',
+                               new_state=state, now=self.clock(),
+                               result=result if state != 'UNKNOWN' else None)
+        if not recorded:
+            return {'state': 'UNKNOWN', 'run_id': run_id}
         return result
 
     def _cancelled(self, run_id, generation):
