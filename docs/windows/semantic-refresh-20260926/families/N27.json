@@ -1,20 +1,44 @@
 {
   "schema_version": 1,
-  "status": "NATIVE_RED_CONFIRMED_UNRESOLVED",
+  "status": "PARTIAL_ADS_RESTORE_FAIL_CLOSED_DURABILITY_RECONCILIATION_DPAPI_OPEN",
   "campaign_id": "windows-semantic-refresh-20260926",
   "family_id": "N27",
   "priority": "P2",
   "origin": "Independent N04 review of the existing Windows alternate-data-stream restore path; this contract was not one of the original 25 seed families.",
   "final_observable_contract": "After an explicitly authorized quarantine of an NTFS alternate data stream, restore its verified bytes to the intended stream without replacing or altering the base file, and record the real outcome.",
   "source_span": [
-    "downstream/security/vault.py:236-265 decrypts a blob and writes a separate temporary file",
-    "downstream/security/vault.py:256 attempts os.replace(temp_path, target) even when target is base:stream"
+    "Before N27, downstream/security/vault.py:247-275 decrypted a blob into a temporary file and attempted os.replace(temp_path, base:stream), raising WinError 123 on Windows",
+    "downstream/security/vault.py:81-142 validates the ADS target and creates, flushes, reads back, or removes the named stream with Windows APIs without replacing the base file",
+    "downstream/security/vault.py:312-398 claims a pending restore outcome with its exact target, records success, and rejects pending restore/delete",
+    "downstream/security/store.py:84-112 migrates restore_target; 321-349 counts pending outcomes separately",
+    "apps/desktop/src/app/security/index.tsx displays the pending outcome and blocks its item actions"
   ],
-  "red_receipt": "At N04 product HEAD c68fb7f617ecd4fd7d726a03cc316e39a7f8ad15, a temporary Windows pytest using inert ADS bytes first returned quarantined, then QuarantineVault.restore to the original base:detected stream raised WinError 123 at vault.py:256 os.replace. Full traceback is retained outside the repository as N04-race-pending/n27-ads-restore-pytest-red.txt. The failed experimental test was removed from the working tree; no fix or GREEN is claimed.",
+  "red_receipt": "At N04 product HEAD c68fb7f617ecd4fd7d726a03cc316e39a7f8ad15, a temporary Windows pytest using inert ADS bytes first returned quarantined, then QuarantineVault.restore to the original base:detected stream raised WinError 123 at vault.py:256 os.replace. Full traceback is retained outside the repository as N04-race-pending/n27-ads-restore-pytest-red.txt. At the current source before this correction, tests/security/test_n27_ads_restore.py reproduced two native WinError 123 restore failures; the existing-stream collision case passed.",
   "required_evidence": [
     "Run native inert ADS quarantine followed by explicitly authorized restore; distinguish filesystem denial from product failure",
     "Preserve the base file and verify restored stream bytes and metadata",
     "Inject target collision and write failure without losing the blob, then run affected tests, mutation, CodeGraph, and independent review"
   ],
-  "publication_gate": "Do not claim native ADS restore from an ADS scan or quarantine pass."
+  "publication_gate": "N27 has native ADS restore evidence with an injected inert key, but remains partial: do not claim power-loss durability, automatic pending-outcome reconciliation, host DPAPI production-key qualification, or complete U1 coverage.",
+  "product_commit": "7ce34b908a4dd67dc5cbf9f7b558a408002583b3",
+  "product_tree": "f6ae2c1a2e91f04a78a57383bcbec1b687070c0f",
+  "green_evidence": [
+    "Nine native Windows Python 3.12 ADS and actual-caller tests passed with injected inert key; 18 selected affected security tests passed under the same key substitution",
+    "Seven selected Desktop UI tests and targeted ESLint passed; full typecheck remains non-green with 122 pre-existing normalized error locations",
+    "CREATE_NEW-to-CREATE_ALWAYS, skipped partial cleanup, and swallowed pending claim mutants were each killed; source bytes were restored",
+    "Read-only independent Code Reviewer cleared the final product change, without claiming test or CodeGraph execution"
+  ],
+  "codegraph_receipt": {
+    "path": "H:\\hermes-worktrees\\semantic-refresh-20260926\\source-bindings\\receipts\\codegraph\\N27-20260927\\receipt.json",
+    "sha256": "af13e9ebd0b0679de2812387d9c535d086ae80b1e8e22a986b30beb07acefce7",
+    "version": "1.6.0",
+    "binding": "Separate frozen D0, U1, and committed integration indexes; 11 product/test paths actual=committed=indexed; integration pending changes and refs 0"
+  },
+  "open_gaps": [
+    "No proved power-loss durability for ADS bytes or the SQLite transition; blob and row crash consistency remains open",
+    "No idempotent reconciliation for pending_restore_outcome; do not infer outcome from pathname existence alone",
+    "Host DPAPI production-key path denied access; injected-key native tests do not qualify that path",
+    "Full Desktop typecheck and unpatched broad selection are not green on this host",
+    "Additional upstream families and the 17,065-commit metadata ledger remain unmapped to complete U1 semantic coverage"
+  ]
 }
