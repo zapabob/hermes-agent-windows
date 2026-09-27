@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "status": "MAPPED_N52_WINDOWS_WATCHER_IDENTITY_NATIVE_GREEN_PARTIAL_UPSTREAM_COMMIT",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N52",
+  "priority": "P1",
+  "repository": "zapabob/hermes-agent-windows",
+  "upstream_source": [
+    {
+      "commit": "fae9e5677a3ef339ec582e967ee19cac13bf68af",
+      "ledger_row": "docs/windows/semantic-refresh-20260926/inventory/v0215_to_u1.jsonl:2308",
+      "mapping": "The Windows restart watcher's future child argv must not identify the watcher as a live Gateway or holder. This maps one observable contract from the upstream commit; its relaunch wait budget is a separate unmapped family."
+    }
+  ],
+  "frozen": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "local_feature_observed": "2622ea42ce3ad044bac4c4e8b9812ba21f7ae65a",
+    "R2": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
+    "U1": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+    "old_U0_unchanged": "b936546561888a54d5bf9cd7eae9629a824eb4f7"
+  },
+  "source_blobs": {
+    "D0_gateway/status.py": "2c2ab1444599179ebe1223cf3121164cc8594138",
+    "local_feature_gateway/status.py": "2c2ab1444599179ebe1223cf3121164cc8594138",
+    "integration_parent_gateway/status.py": "2c2ab1444599179ebe1223cf3121164cc8594138",
+    "U1_gateway/status.py": "a8e14bd995fe0a1e691c7a516d56c8fbb54a32d6",
+    "D0_hermes_cli/gateway.py": "8ce14b83f4b25dc86e5b716253c8b59c82f69a53",
+    "local_feature_hermes_cli/gateway.py": "8ce14b83f4b25dc86e5b716253c8b59c82f69a53",
+    "U1_hermes_cli/gateway.py": "a210a213de2b6faaee7a9fe20dba9190778d141a",
+    "local_feature_hermes_cli/update_cmd.py": "33f26bbc27a69ce46f3102204b10c1b0e6cd30f4",
+    "U1_hermes_cli/update_cmd_windows.py": "ef90b519a7d5a677f73add8ed48712e1bb259110",
+    "product_gateway/status.py": "cddfc3778db19b7d62317aa53a8e3d51efd76201",
+    "product_hermes_cli/gateway.py": "df163654b8bac7fd42f7a25bab8e8e0603c3602e",
+    "product_hermes_cli/update_cmd.py": "147ce397a1342d3ce84fdafd138e636170f435da",
+    "product_tests/hermes_cli/test_gateway_restart_watcher_identity_windows.py": "53e9746e077fd8fed865dea97c5e212c2ce19506"
+  },
+  "source_span": [
+    "Upstream gateway/status.py:586 and 591 rejects inline Python source before recognizing a trailing gateway command; upstream hermes_cli/update_cmd_windows.py:230/254 applies the same distinction to holder identity. Its hermes_cli/gateway.py:1044 emits the restart watcher.",
+    "D0, observed local feature and integration parent gateway/status.py blob 2c2ab... read joined argv and lacked the inline-source guard. The fork's actual watcher caller is hermes_cli/gateway.py:_spawn_gateway_restart_watcher:1281, whose python -c source carries old PID and a future python -m hermes_cli.main gateway run command.",
+    "Product gateway/status.py:_read_process_cmdline:429 preserves Windows psutil argv boundaries; command_line_runs_inline_source:534 and _gateway_command_subcommand:539 reject the watcher's future argv. hermes_cli/gateway.py:_capture_gateway_argv:1191 and hermes_cli/update_cmd.py:_classify_concurrent_instance:3529 and _hermes_holder_subcommand:5345 use the same identity boundary. The Desktop owner caller remains _looks_like_desktop_control_plane:5946; no second lifecycle owner is introduced."
+  ],
+  "observable_contract": "A directly launched Python -c restart watcher with a future gateway run argv is not classified as a live Gateway or updater holder. The eventual python -m hermes_cli.main gateway run process still is. A separate Python -c test stand-in with a future serve/dashboard tail is not a Desktop lifecycle owner, while an actual supervised serve process remains one. Windows psutil argv and raw Win32_Process command lines with spaces and a standalone hyphen in the interpreter path preserve process identity; ordinary hermes -c remains a CLI option.",
+  "red_receipt": {
+    "local_name": "N52-red.log",
+    "sha256": "09f346ed3c0af7f5e57fbd9341d0cfaae555c397fb524ab06a8ef68dfd7c7926",
+    "binding": "The earliest saved RED failed eight and passed one against the unchanged integration parent. Later saved RED runs separately reproduced complex interpreter paths and legacy python -c live-fixture assumptions, including a separate serve-shaped Desktop stand-in. The actual gateway run watcher was not a Desktop owner. These are sequential runs, not one immutable combined baseline."
+  },
+  "product_commit": "ad6fb9c1f9185027ff3ec66f8feba5bb18135585",
+  "product_tree": "026b826a7bb6fab86dd9079f9b9513d3b1ba6192",
+  "changed_product_paths": [
+    "gateway/status.py",
+    "hermes_cli/gateway.py",
+    "hermes_cli/update_cmd.py",
+    "tests/hermes_cli/fixtures/gateway_identity_sleeper.py",
+    "tests/hermes_cli/test_desktop_lifecycle_windows_live.py",
+    "tests/hermes_cli/test_gateway_restart_watcher_identity_windows.py",
+    "tests/hermes_cli/test_stderr_timestamp.py",
+    "tests/hermes_cli/test_venv_holder_windows_live.py"
+  ],
+  "execution_receipts": {
+    "native": {
+      "local_name": "N52-20260928/execution-final.json",
+      "sha256": "915679ff2cc8bd2023d83e562c43803354b3e8b0670f486bb3f23199f36f8628"
+    },
+    "mutation": {
+      "local_name": "N52-20260928/mutation-final.json",
+      "sha256": "f16cd5ffab11c189c865a92854bcbdfdd62ba66cbeb9c17aad6b671e962689ed"
+    }
+  },
+  "green_evidence": [
+    "After mutation restoration, the final affected test invocation reported 166 passed, 35 platform skips, two explicit unrelated macOS-mock deselections and exit 0. Native live-process cases use an inert script-file stand-in rather than python -c. The earlier unfiltered affected run had two macOS-mock failures on Windows at an unchanged os.getuid caller; those exact failures remain in the private log. Post-commit Ruff and exact product-commit diff check exited 0; their saved output hashes are in execution-final.json.",
+    "Three controlled mutants each failed the relevant focused tests: gateway identity one, holder identity one, and Windows psutil argv serialization two. The pre-mutation manifest recorded all eight source SHA-256s; every source was restored to those bytes and disk Git blobs matched the product commit. The receipts hash saved test logs, but do not independently bind each pytest invocation to its exact source and test bytes.",
+    "Independent read-only Kepler and Code Reviewer each reported CLEAR for the bounded P0/P1 process-identity contract after their earlier review findings were repaired. They did not execute tests or CodeGraph."
+  ],
+  "codegraph_receipts": {
+    "final": {
+      "local_name": "N52-20260928/codegraph-final.json",
+      "sha256": "15ceec84fc200b6d176f2297fd3fa77a44dde72fef3d8b90d518a501fec21045",
+      "binding": "Approved CodeGraph 1.6.0 bound immutable D0/U1 snapshots and the exact integration worktree to separate indexes with 8,881/12,468/8,973 files. D0/U1 query/explore/impact and integration status/sync/query/explore/impact were saved. Post-commit integration status was complete with zero pending changes and refs. The explore result contained an unrelated Yoga symbol, so Git source/caller spans established ownership."
+    },
+    "post_commit": {
+      "local_name": "N52-20260928/postcommit-final.json",
+      "sha256": "3b4cb89c2bea0ed2d9e5868105eef5724b130a384091c7349aeb0af5fc807a8d",
+      "binding": "All eight disk Git blobs equaled exact product HEAD ad6fb9c1f9185027ff3ec66f8feba5bb18135585, and the integration graph had zero pending changes and refs."
+    }
+  },
+  "open_gaps": [
+    "The same upstream commit also changes the Windows post-relaunch wait budget; that separate observable contract has not been mapped or implemented by N52. Upstream's test-only gateway spawn-intent guard has no same-path counterpart in this fork, whose tests/conftest.py guard does not use gateway identity for subprocess admission; no equivalence for arbitrary test harnesses is claimed.",
+    "The inline-source classifier covers the direct Python watcher topology and known Python option forms, not arbitrary cmd.exe or shell wrappers. No live production Gateway, Desktop, packaged runtime or update was started or restarted.",
+    "Only this bounded upstream contract is mapped. The remaining ledger rows, U1 commits and native release/parity gates are incomplete; inventory semantic_review_complete remains false.",
+    "N07-A1 grant-revocation host writer is not implemented per the user's reply. Destination outcome durability, T06 and T12 remain unqualified; Control MCP production write remains DISABLED.",
+    "Original main and feature WIP were untouched. Isolated worktree untracked $tmp remains after automatic approval review rejected removal without a detailed reason. No PR, push, release or production restart occurred."
+  ]
+}
