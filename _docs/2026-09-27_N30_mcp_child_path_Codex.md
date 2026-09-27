@@ -1,0 +1,23 @@
+# N30 partial: MCP stdio resolution respects the child PATH boundary
+
+Repository: zapabob/hermes-agent-windows. Product commit `590e9efe325479e9ad65369fe4f7c72fde789275`, tree `356ed5831d3ebd232643f5a675059667db2f374e`. Frozen D0 is `60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b`, U1 is `678a4762b887f3eabe5cad11254b2ab1ae859485`, R2 is `f97608f178d1ffeca59860195ab7da295f7c8e5f`, and old U0 remains `b936546561888a54d5bf9cd7eae9629a824eb4f7`. The upstream source commit `80c2696422a1e42551f9ab257dadc0a2bdaa529d` is the historical inventory row `docs/windows/semantic-refresh-20260926/inventory/v0213_to_v0214.jsonl:2644`; it is an ancestor of R2 and U1, yet its child-PATH behavior was absent in the fork. This newly found family is beyond the 25 seeds. That source commit also covers separate PATHEXT concurrency behavior, which is not closed by N30.
+
+## Source, caller, and RED
+
+The monolithic downstream resolver at `tools/mcp_tool.py:1024-1107` passed `path=None` to `shutil.which` whenever the child environment omitted `PATH`. Python then searched the parent process PATH. A resolved parent-only executable was passed through `_prepend_path`, adding its directory to the child environment. The Windows configured-PATHEXT retry at `:1036-1056` repeated the same parent lookup with a temporary process-global PATHEXT replacement. The real caller, `MCPServerTask._run_stdio` at `:3223-3298`, builds the child environment, invokes the resolver, and forwards the result to `StdioServerParameters`.
+
+At product parent `2b0ea75ac11bc51fe74738455d5216470c6c76cc`, an initial fixture assertion needed normalization for Windows `.EXE` spelling. The corrected RED had two parent-only executable failures and an explicitly empty child-PATH control pass. A first independent read-only review then found that a differing configured PATHEXT still reached a second `which(path=None)`. Two additional direct and actual-caller cases reproduced that bypass before its guard was added.
+
+## Minimal change and observed result
+
+The first `shutil.which` call now runs only when the child supplies a PATH key. The Windows configured-PATHEXT retry has the same presence condition, so it cannot turn a missing child PATH into a parent PATH search. `PATH=""` is present and still keeps the existing explicit-empty semantics. Known launcher fallback remains an intentional separate resolution path; Node and N29 uv/uvx candidates were not changed.
+
+The selected native Windows Python 3.12 MCP tests passed 130 cases across five affected files, with three POSIX-only skips. The actual-caller test intercepts `StdioServerParameters` and checks its command/environment without starting an MCP child. A controlled mutation of the primary guard failed two tests; a second mutation of the PATHEXT retry guard failed the two new reviewer cases. The final source bytes were restored to SHA-256 `E8B704D531345DCFF7DB608B1539614D878293556AD3F9143FC3336E491EC46F`. The first independent Code Reviewer verdict was BLOCK for the genuine retry bypass. After its RED, fix, and affected tests, the second read-only review returned CLEAR. The reviewer did not run tests, CodeGraph, or commit.
+
+Approved CodeGraph 1.6.0 bound separate frozen D0, U1 and committed integration indexes with 8,881, 12,468 and 8,954 files. The integration index was synced after both guards and had zero pending changes and refs; the two changed product/test paths matched actual, committed and indexed SHA-256. Query, explore, impact, owner map and tool hashes are in `H:\hermes-worktrees\semantic-refresh-20260926\source-bindings\receipts\codegraph\N30-20260927\receipt.json`, SHA-256 `e7c32a39c99c290fa2272c74f02b7c5ed4a042716579bc5d0f1f3d53868d89b4`. CodeGraph freshness establishes source binding, not runtime or full upstream parity.
+
+## Remaining gates and reversal
+
+N30 remains PARTIAL. A real SDK child was not launched, and this shared resolver change was not executed natively on POSIX. The existing configured-PATHEXT retry still temporarily mutates process-global `os.environ` when child PATH is present, creating a separate concurrency family. The 17,065-commit metadata inventory remains semantically incomplete and required P0 work including N07-A1 is open. T06/T12 Control MCP production write stays DISABLED.
+
+Original main and local feature WIP remain untouched. No reset, stash, clean, delete, rename, upstream merge/rebase/cherry-pick, PR, push, production restart, or Control MCP production write occurred. Reversal would review and revert the N30 product commit in the isolated branch, rerun focused/affected tests, and refresh the integration CodeGraph index; no reversal was performed.
