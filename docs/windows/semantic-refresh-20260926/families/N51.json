@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "status": "MAPPED_N51_DIRECT_RUNTIME_PROTECTION_NATIVE_GREEN",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N51",
+  "priority": "P1",
+  "repository": "zapabob/hermes-agent-windows",
+  "upstream_source": [
+    {
+      "commit": "541e4dc0ba6d50e3e4554611c3e6b2c0865187c4",
+      "ledger_row": "docs/windows/semantic-refresh-20260926/inventory/v0215_to_u1.jsonl:772",
+      "mapping": "The upstream direct-command active-runtime delete floor and file-write classifier were mapped to the fork's existing approval, terminal, file-tool and CLI bang callers. The upstream module explicitly excludes xargs and command-substitution paths; this card does not claim arbitrary shell interpretation or any other U1 commit."
+    }
+  ],
+  "frozen": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "local_feature_observed": "2622ea42ce3ad044bac4c4e8b9812ba21f7ae65a",
+    "R2": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
+    "U1": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+    "old_U0_unchanged": "b936546561888a54d5bf9cd7eae9629a824eb4f7"
+  },
+  "source_blobs": {
+    "D0_agent/runtime_self_protection.py": "ABSENT",
+    "local_feature_agent/runtime_self_protection.py": "ABSENT",
+    "integration_parent_agent/runtime_self_protection.py": "ABSENT",
+    "D0_agent/file_safety.py": "d868733efcfb4f58149361d691f6a9bca099cbda",
+    "local_feature_agent/file_safety.py": "d868733efcfb4f58149361d691f6a9bca099cbda",
+    "integration_parent_agent/file_safety.py": "d868733efcfb4f58149361d691f6a9bca099cbda",
+    "U1_agent/runtime_self_protection.py": "fb521131acc4e71e594be11c9ef96a8ba3f5ecf0",
+    "product_agent/runtime_self_protection.py": "64e4d5189b17e2c5249fe5bf505a8f1ec3be4724",
+    "product_agent/file_safety.py": "f57c4397aab1d770a53565865c63b3757b7012cf",
+    "product_tools/approval.py": "d78bc85aeaaa1f8bb6f0796263c2ca1aa9d046b0",
+    "product_tools/terminal_tool.py": "64273031616f5fa017fafc62383168e0a6e46b79",
+    "product_tools/file_operations.py": "95cb08a22e708e83d9718e975431c4808f3ca39d",
+    "product_hermes_cli/bang_shell.py": "68d455499c38936df50d960c75ffbabfcfd8db4c",
+    "product_cli.py": "8fa8bdb7d11c70feeabc86599e6a9ce9c1068a2f",
+    "product_tests/agent/test_runtime_self_protection_windows.py": "ea716abd5dfe92b2fa7ada093fb4c486dfebffc7",
+    "product_tests/cli/test_bang_shell_mode.py": "ec37f1313c3b3025887cf407fc801cee3a06940f"
+  },
+  "source_span": [
+    "U1 agent/runtime_self_protection.py:is_protected_path:154 and command_deletes_runtime:225 introduce the active interpreter/venv/base/uv direct-delete contract; tools/approval.py:_floor_block:1052-1066 and agent/file_safety.py:_classify_write_denial:249-263 call it.",
+    "D0 and observed local feature lack this module. Integration parent file_safety.py blob d868733... and approval.py blob cca4a... had no active-runtime floor; the fork's terminal_tool force=True path and bang-shell caller needed their own actual execution-cwd integration.",
+    "Product agent/runtime_self_protection.py:is_protected_path:115, _delete_operand_hit:259, command_deletes_runtime:307; tools/approval.py:4484/5129, terminal_tool.py:3457, file_operations.py:is_protected_path call:234 and agent/file_safety.py:is_protected_path call:175 enforce the floor. cli.py:check_bang_approval:12519 and run_bang_command:12527 use the effective cwd; hermes_cli/bang_shell.py:124-181 rechecks before execution."
+  ],
+  "observable_contract": "A local direct rm/rmdir/rd/del/Remove-Item/find-delete or uv python uninstall targeting the running Python interpreter, its current venv, base interpreter or managed uv install is blocked before execution, including force/yolo/off paths and recognized Windows/Bash/PowerShell spellings. File delete/move/write/patch cannot modify those active paths. An unrelated venv remains manageable; approval and execution classify relative paths from the same effective cwd.",
+  "red_receipt": {
+    "local_name": "N51-20260928/red-final.json",
+    "sha256": "54813eaa49b8d3e261cf74fd59cfa5e3e5bc64c08abfd81c3bd9531832660764",
+    "binding": "Earliest saved red.log failed 5 and passed 1 against the unchanged integration parent; expanded red2.log failed 7 and passed 1. Later saved RED revisions separately reproduced bash/sh wrapper, PowerShell block/depth/env assignment, mixed-quote/brace glob and stale-bang-cwd counterexamples before each repair. The manifest hashes sequential log bytes; it does not bind every run to exact source and test bytes or form one combined baseline."
+  },
+  "product_commit": "798a3c9762cba79157e4e109ca261ce47f2a2640",
+  "product_tree": "f4487aec9bfc28b986d8b5bd7ca10799181219c1",
+  "changed_product_paths": [
+    "agent/file_safety.py",
+    "agent/runtime_self_protection.py",
+    "cli.py",
+    "hermes_cli/bang_shell.py",
+    "tests/agent/test_runtime_self_protection_windows.py",
+    "tests/cli/test_bang_shell_mode.py",
+    "tools/approval.py",
+    "tools/file_operations.py",
+    "tools/terminal_tool.py"
+  ],
+  "execution_receipts": {
+    "native": {
+      "local_name": "N51-20260928/execution-final.json",
+      "sha256": "88875df40e99e7b3ba694e13cb25c4474d395708908dcc722a85930437f23332"
+    },
+    "mutation": {
+      "local_name": "N51-20260928/mutation-final.json",
+      "sha256": "5755fd64a14a1d2834f7bd5bceb3350ee17c2b69e823b0cadd9978c3125a43c0"
+    }
+  },
+  "green_evidence": [
+    "Final native focused and bang cases passed 80 with four known POSIX-only bang cases deselected. The affected approval/terminal suite passed 389; file-write safety passed 62 with two Windows mode/symlink limitations deselected, and file-cwd resolution passed nine with two symlink privilege cases deselected. Full unfiltered failures and exact reasons are retained in the private logs. Ruff and exact commit diff check passed.",
+    "Six controlled mutants failed the relevant tests in the recorded session. The final three targeted glob expansion, nested parse depth and bang cwd selection; in-session pre/post file hashes matched after restoration, and the final disk blobs equal the product commit. The mutation receipt hashes saved logs and records the restored final file hashes, but does not independently record pre-mutation hashes or bind test-time bytes. The earlier three mutations covered an earlier N51 source revision.",
+    "Independent read-only Kepler and Code Reviewer each reported CLEAR for the bounded direct-command P0/P1 contract after earlier BLOCK reports were repaired. Reviewers did not run tests or CodeGraph. One nonblocking WATCH remains: deeply nested benign text containing a deletion keyword can be overblocked by the fail-closed depth heuristic."
+  ],
+  "codegraph_receipts": {
+    "after_product_and_post_commit": {
+      "local_name": "N51-20260928/codegraph-final.json",
+      "sha256": "907e142c8f43e9b3a182477e1eef26738613654e6207a326f22c63734da4361d",
+      "binding": "Approved CodeGraph 1.6.0 bound immutable D0/U1 snapshots and the exact product worktree to separate indexes with 8,881/12,468/8,971 files, zero pending changes and refs. Fresh integration status/query/explore/impact were saved after final product bytes. Explore included an unrelated Yoga symbol; exact Git source/caller spans determined ownership."
+    },
+    "post_commit": {
+      "local_name": "N51-20260928/postcommit-final.json",
+      "sha256": "973d11de8d05305342ac94434323004ca2bc5f50746b953ea07344480bcf3f59",
+      "binding": "All nine disk Git blobs equaled exact product HEAD 798a3c9762cba79157e4e109ca261ce47f2a2640, and the integration graph had zero pending changes/refs."
+    }
+  },
+  "open_gaps": [
+    "The upstream direct-command parser explicitly excludes xargs, command substitution and executed Python code; N51 does not prove protection from arbitrary shell interpretation. Deep benign nested text may be overblocked and remains a usability WATCH. No live shell execution against a real runtime, Desktop, Gateway or packaged Python was performed.",
+    "Only upstream 541e4dc... direct-runtime behavior is mapped. The historical ledger, remaining U1 commits and native release/parity gates are still incomplete; inventory semantic_review_complete remains false.",
+    "N07-A1 grant-revocation host writer is not implemented per the user's reply. Destination outcome durability, T06 and T12 remain unqualified; Control MCP production write remains DISABLED.",
+    "Original main and feature WIP were untouched. Isolated worktree untracked $tmp remains after automatic approval review rejected removal without a detailed reason. No PR, push, release or production restart occurred."
+  ]
+}
