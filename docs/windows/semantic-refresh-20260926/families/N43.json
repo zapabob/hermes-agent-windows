@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "status": "MAPPED_N43_WINDOWS_UGIT_GIT_CANDIDATE_NATIVE_GREEN",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N43",
+  "priority": "P1",
+  "repository": "zapabob/hermes-agent-windows",
+  "upstream_source": {
+    "commit": "a5e95fb27edcb02726618d06d6f80a2ceae261b3",
+    "ledger_row": "docs/windows/semantic-refresh-20260926/inventory/v0215_to_u1.jsonl:1506",
+    "mapping": "MAPPED: the observable Windows Git candidate resolution added by this three-file commit. The upstream helper's separate ugitGitBinaries export is internal to its module and tests; the integration keeps its behavior inside the existing windowsGitCandidates resolver. This does not classify other U1 rows or prove a live Desktop update."
+  },
+  "frozen": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "local_feature_observed": "2622ea42ce3ad044bac4c4e8b9812ba21f7ae65a",
+    "R2": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
+    "U1": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+    "old_U0_unchanged": "b936546561888a54d5bf9cd7eae9629a824eb4f7"
+  },
+  "source_blobs": {
+    "D0_apps/desktop/electron/main.ts": "ba2752ed74d52cf43c8738843d5c10008637f882",
+    "U1_apps/desktop/electron/main.ts": "2c2bb542b07aa51fc85e4eb8290e12db53d6ea7b",
+    "U1_apps/desktop/electron/git-binary-candidates.ts": "b782362173538c0759cdc20d50517d4936a3e2e0",
+    "product_apps/desktop/electron/main.ts": "5d0608bcc8a6c760533afc34df2e3ea450684679",
+    "product_apps/desktop/electron/git-binary-candidates.ts": "f13c4c4b490a93ff88db11320dec8199f0a30f53",
+    "product_apps/desktop/electron/git-binary-candidates.test.ts": "34551991964f2ea8b0acdee4002991d007a1e645"
+  },
+  "final_observable_contract": "On Windows, when a GUI-launched Desktop process lacks UGit's Git on PATH, resolveGitBinary finds an existing versioned UGit/app-*/resources/app/git/cmd/git.exe. Hermes PortableGit remains first; UGit versions are numeric newest-first; system Git and PATH remain fallbacks. Missing, unreadable or incomplete UGit installs do not stop candidate resolution. Non-Windows resolution is unchanged.",
+  "source_span": [
+    "D0 and pre-change integration apps/desktop/electron/main.ts:2672-2708 had only fixed candidates and PATH. Integration main.ts:2680-2705 now calls windowsGitCandidates at :2693 and retains the existing fileExists/PATH/bare-git selection; runGit at :2857 and checkUpdates at :2955 are the actual callers.",
+    "U1 apps/desktop/electron/main.ts:3043-3079 uses its candidate helper; U1 git-binary-candidates.ts:28-77 enumerates app-* and preserves order. Integration git-binary-candidates.ts:15-49 supplies the same candidate contract without a separate public UGit helper."
+  ],
+  "red_receipt": "At parent 1b62cb2178d8f6f5ec61a06aa0a4ee1548153626, the new native Vitest contract failed before collecting tests because ./git-binary-candidates did not exist. The actual main.ts fixed list also had no UGit app-* candidate; the source/caller gap was confirmed separately.",
+  "product_commit": "12d7dee651ebff5059ab8a9ea272c12fcc6d03d2",
+  "product_tree": "00101c20430b96fc33d8bd42bbea9daf2cf9ad77",
+  "changed_paths": [
+    "apps/desktop/electron/main.ts",
+    "apps/desktop/electron/git-binary-candidates.ts",
+    "apps/desktop/electron/git-binary-candidates.test.ts"
+  ],
+  "green_evidence": [
+    "Focused native Vitest: four tests passed in two files. Ten affected Electron files passed 117 tests on Windows. TypeScript electron typecheck and ESLint for the three product/test files passed; git diff --check passed.",
+    "A controlled mutation removing app-* enumeration failed two of three contract tests; the product helper was restored to byte-identical SHA-256 CA0E1E5C1E70920B222ADCFC9187A8C9336CD4FA31015032F423D434E69305C8 before final formatting.",
+    "Independent read-only Code Reviewer returned CLEAR on the uncommitted three-file diff, comparing U1 candidate order, actual caller and fallback, path/version cases and the existing executable trust boundary. It did not run tests, mutations, CodeGraph or commit."
+  ],
+  "codegraph_receipts": {
+    "after_product": {
+      "local_name": "N43-20260928/receipt.json",
+      "sha256": "1a652add722b6b75ada309787c815cae57fdf478da5ac7bf7e03c8eb67be5d8f",
+      "binding": "CodeGraph 1.6.0: D0 8,881 files, U1 12,468, integration after sync 8,966; all pending changes/refs zero. Resolver and helper query/explore/impact plus Git and disk source hashes and caller/owner queries are retained privately."
+    },
+    "post_commit": {
+      "local_name": "N43-20260928/postcommit.json",
+      "sha256": "bedcc717993686415e5c411590189b00158ede6e75193e2e692b4f7ed3b84fee",
+      "binding": "At exact product HEAD, all three changed files match HEAD blobs and the integration graph remains fresh with zero pending changes and refs."
+    }
+  },
+  "open_gaps": [
+    "A real installed UGit binary, a packaged Desktop boot and live update check were not exercised. The resolver's existing exists-before-spawn behavior does not retry a different candidate when the selected executable is present but unlaunchable; N43 does not claim that separate concern is solved.",
+    "The remaining U1 ledger rows and the 17,065-commit metadata universe are not closed by this family.",
+    "N07-A1 host grant-revocation writer is unimplemented; destination durability and T06/T12 remain P0 open. Control MCP production write stays DISABLED.",
+    "A zero-byte untracked $tmp remains in the isolated worktree because automatic approval review blocked removal without a detailed reason.",
+    "No PR, push, release or production restart occurred."
+  ]
+}
