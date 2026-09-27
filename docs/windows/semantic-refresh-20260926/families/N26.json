@@ -1,22 +1,50 @@
 {
   "schema_version": 1,
-  "status": "DISCOVERED_UNRESOLVED",
+  "status": "PARTIAL_PENDING_DISPOSITION_FAIL_CLOSED_DURABILITY_RECONCILIATION_DPAPI_OPEN",
   "campaign_id": "windows-semantic-refresh-20260926",
   "family_id": "N26",
   "priority": "P1",
   "origin": "Independent N04 source review and the repository's quarantine-before-delete invariant; this contract was not one of the original 25 seed families.",
   "final_observable_contract": "A crash or storage failure at each quarantine transition must never report a completed quarantine without a recoverable blob and known source disposition. Unknown outcomes stay pending for reconciliation; source deletion requires durable blob evidence.",
   "source_span": [
-    "downstream/security/vault.py:179-210 publishes the blob, commits quarantine_items with the default quarantined state, then marks deletion",
-    "downstream/security/vault.py:126-137 writes and rereads the blob without a durability flush",
-    "downstream/security/store.py:38-57 commits the SQLite transaction"
+    "downstream/security/vault.py:145-225 stages and publishes the encrypted blob, inserts a pending row, attempts held-source disposition, then marks quarantined only after handle close",
+    "downstream/security/vault.py:247-288 rejects restore and delete while source disposition is pending",
+    "downstream/security/store.py:320-349 counts completed and pending rows separately",
+    "hermes_cli/web_server.py:14904-14920 maps pending delete to HTTP 409",
+    "apps/desktop/src/app/security/index.tsx:48-50,369-379,460-493 displays pending separately and disables pending-item actions",
+    "downstream/security/vault.py:126-137 and downstream/security/store.py:38-57 still need power-loss durability and crash consistency proof"
   ],
-  "counterexample": "Termination after the quarantine_items commit but before SetFileInformationByHandle leaves the source present and the row marked quarantined. Immediate blob readback does not prove survival after power loss.",
+  "counterexample": "Before the product commit, termination after the quarantine_items commit but before SetFileInformationByHandle left the source present and the row marked quarantined. The pending-state correction does not prove blob survival after power loss.",
   "required_evidence": [
     "RED fault injection at every intent/blob/DB/disposition/finalization boundary",
     "A persisted pending outcome and an idempotent reconciliation policy that does not silently delete a replacement path",
     "Storage durability verification on the supported Windows filesystem, with honest UNKNOWN when the platform cannot prove it",
     "Native recovery and actual-caller tests, mutation evidence, fresh CodeGraph binding, and independent review"
   ],
-  "publication_gate": "Do not describe N04 quarantine as crash-safe or power-loss durable while this family is open."
+  "publication_gate": "N26 remains partial: do not claim crash-safe or power-loss-durable quarantine, and do not describe pending rows as completed quarantine.",
+  "product_commit": "69caad2f1958e5e51a1fa1513d47a3916e8e0bdb",
+  "product_tree": "82699786158b05199a77b6b741081d591536381b",
+  "red_evidence": [
+    "Original vault source failed native disposition-refused and accepted-then-raised cases: early row was completed and uncertain outcomes discarded blob/row evidence",
+    "After vault correction, actual API and Desktop tests failed on delete HTTP 500 and pending UI actions/counts before the corresponding minimal fixes"
+  ],
+  "green_evidence": [
+    "Windows Python 3.12 focused native/actual-caller/API tests: 6 passed; the native tests used an injected inert key because host DPAPI denied access",
+    "Desktop pending-state test and selected view tests: 6 passed; targeted ESLint passed",
+    "Discard-after-attempt and early-completion mutants each killed two native tests; source restored byte-identically",
+    "Read-only independent Code Reviewer found no new blocking defect after API/UI corrections"
+  ],
+  "codegraph_receipt": {
+    "path": "H:\\hermes-worktrees\\semantic-refresh-20260926\\source-bindings\\receipts\\codegraph\\N26-20260927\\receipt.json",
+    "sha256": "a4acc3ee141ae1fe4905f371c85f7eef6af346a4df76a174333db55de2ec388b",
+    "version": "1.6.0",
+    "binding": "separate frozen D0, U1, and committed D integration indexes; 14 product/test paths actual=committed=indexed; integration pending changes 0"
+  },
+  "open_gaps": [
+    "No idempotent pending-source reconciliation; do not infer deletion from an absent or replaced pathname",
+    "Blob publication and SQLite state transitions lack proved Windows power-loss durability and cross-resource crash consistency",
+    "Host DPAPI production-key path denied access; injected-key native tests do not qualify that path",
+    "Full Desktop typecheck failed in reused dependency junction; broader affected test selection has one host-DPAPI failure",
+    "Additional upstream families and the 17,065-commit metadata ledger remain unmapped to complete U1 semantic coverage"
+  ]
 }
