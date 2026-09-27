@@ -1,0 +1,23 @@
+# N37 partial: verified replace-mode source and postwrite reads
+
+Repository: `zapabob/hermes-agent-windows`. Product commit `54c5973ec2bfdb782fbd4c67206f1c08e925ba28`, tree `f7fb6be0a8ac0e5ba6456be45c6d23d26c0166c6`. Frozen D0 is `60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b`, U1 is `678a4762b887f3eabe5cad11254b2ab1ae859485`, R2 is `f97608f178d1ffeca59860195ab7da295f7c8e5f`, and old U0 remains `b936546561888a54d5bf9cd7eae9629a824eb4f7`. The R2-to-U1 inventory rows `v0215_to_u1.jsonl:1870`, `:850`, `:1144` and `:660` identify the relevant exact-read and output-fence lineage. N37 maps the replace-mode read contract only, not all semantics of those upstream commits.
+
+## Source, caller and RED
+
+D0 and the observed local feature share `tools/file_operations.py` blob `a23e9afa056f3c09e8775b673ba3142428a0ec11`; U1 uses `56437d62dcbeff17cdfa7ff41cc099a65de4cd43`. D0 at `tools/file_operations.py:2314-2324` and `:2388-2393` read `cat` output as the candidate source and postwrite evidence. The replace-mode caller is `tools/file_tools.py:2533-2546`. U1's `ShellFileOperations.patch_replace` at `tools/file_operations.py:1551-1567` reads exact bytes before matching.
+
+At parent `edf2bcc170c4038009b6450ec7a4a9fd58c9ebed`, three new native Git Bash cases failed. Boundary-external `TERM` noise entered patch source or verification and produced false failure; decodable in-band noise made an actual wrong write to a temporary source. The test backend initially used Windows text-mode stdin conversion, so it was corrected to send encoded bytes before accepting the three-case RED rerun. The changed product method at `tools/file_operations.py:2377-2383` and `:2451-2465` now reuses N36's framed `_read_exact_bytes` for both reads. The returned bytes are decoded with `surrogateescape`, preserving untouched invalid UTF-8 bytes; existing BOM and line-ending behavior remains.
+
+## Validation and source binding
+
+Five N37 native tests pass on Windows Python 3.12 with a real Git Bash child: outer noise is excluded, in-band source noise refuses before write, verification noise is handled or refused according to its location, and untouched BOM, CRLF and undecodable bytes survive replacement. Two existing mocked postwrite tests were updated to return bytes at the `_read_exact_bytes` boundary; all seven passed again at the exact product HEAD. The affected eight-file Windows selection passed 163, skipped 12 existing POSIX-only tests and deselected ten Windows permission, symlink and search cases. A separate CodeGraph-impact selection passed 126, skipped one Linux-only case and had three unrelated failures: two Windows symlink-privilege cases and an unchanged skill-bundle hash mismatch. The initial broad eleven-file run passed 192, skipped 12 and failed 21 Windows environment/path/permission cases; it is not a full-suite pass.
+
+Three controlled mutations were each detected: substituting unframed source, skipping postwrite reread, and decoding source with replacement characters. The source was restored byte-identically. Independent read-only Code Reviewer returned CLEAR and did not run the tests, CodeGraph, mutation or commit.
+
+Approved CodeGraph 1.6.0 kept separate frozen D0 and U1 indexes of 8,881 and 12,468 files, and a post-change integration index of 8,960 files. All reported zero pending changes and refs. Query, explore, valid symbol-name impact and owner/caller results, plus actual/Git/index hashes for all three changed paths, are in the private local `N37-20260927/receipt.json`, SHA-256 `7e99fec6ca20a06a5a30c2ef9fbaf74fc79b4feeaf96ec0dd656fbed4124ff71`. The committed family card contains no private machine root or raw graph dump.
+
+## Remaining gates and reversal
+
+N37 is PARTIAL. The framed byte-count read is not an atomic snapshot or read-to-write compare-and-swap, and a failed postwrite verification can report error after the write landed. Binary-admission sampling, public `read_file_bytes`, non-Git-Bash remote backends and native POSIX runtime remain open. Other upstream semantics and the 17,065-commit metadata universe remain unmapped. The user confirmed the N07-A1 host grant-revocation writer has not been implemented; destination outcome durability and T06/T12 remain P0 open, and Control MCP production write stays DISABLED.
+
+Original main and local-feature WIP were not modified. No reset, stash, clean, upstream merge/rebase/cherry-pick, PR, push, production restart or Control MCP production write occurred. Reversal would review and revert only the isolated product commit, rerun affected tests and refresh the integration CodeGraph index; no reversal was performed.

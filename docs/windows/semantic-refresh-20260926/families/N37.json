@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "status": "PARTIAL_N37_REPLACE_EXACT_READS_LOCAL_GREEN_OTHER_FILE_PATHS_OPEN",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N37",
+  "priority": "P0",
+  "origin": "R2-to-U1 inventory rows v0215_to_u1.jsonl:1870, :850, :1144 and :660 identify the byte-exact read and transport-fence lineage. N37 maps only the replace-mode initial source and postwrite verification reads; it does not claim whole-commit semantic parity.",
+  "upstream_source_commits": [
+    "ce7839b98c31f3b9af96d3d95f033dfa56303eb3",
+    "5bcb236457ce6a0b6d1c53757f690383dd9e789a",
+    "7c686fe7a7d4a0c386e140efd23f58c3d14f4bf8",
+    "48a4a360a09550fa4fb397c2a709123ed7e50702"
+  ],
+  "downstream_source": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "local_feature_observed": "2622ea42ce3ad044bac4c4e8b9812ba21f7ae65a",
+    "R2": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
+    "U1": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+    "old_U0_unchanged": "b936546561888a54d5bf9cd7eae9629a824eb4f7",
+    "file_operations_blobs": {
+      "D0_and_local_feature": "a23e9afa056f3c09e8775b673ba3142428a0ec11",
+      "U1": "56437d62dcbeff17cdfa7ff41cc099a65de4cd43",
+      "product": "481f045836f9ab33d8b816dd77747496a9bcd295"
+    }
+  },
+  "final_observable_contract": "Replace-mode patching must derive candidate content from verified file bytes and refuse a malformed, failed or byte-count-inconsistent source before writing. Verification must reread verified bytes after writing, exclude transport noise outside the frame, and report failure when the read cannot be verified. Untouched BOM, CRLF and undecodable bytes must survive the edit.",
+  "source_span": [
+    "D0 tools/file_operations.py:2314-2324 and :2388-2393 used cat output for the candidate source and postwrite verification; the observed local feature has the same file blob.",
+    "U1 tools/file_operations.py:1551-1567 reads exact bytes for patch_replace. N37 adapts that behavior to the fork's N36 _read_exact_bytes helper rather than transplanting upstream structure.",
+    "Integration tools/file_tools.py:2533-2546 calls ShellFileOperations.patch_replace for mode=replace after resolving the target; current tools/file_operations.py:2377-2383 and :2451-2465 contain the changed read boundaries."
+  ],
+  "red_receipt": "At parent edf2bcc170c4038009b6450ec7a4a9fd58c9ebed, 3/3 native Git Bash tests failed. Decodable in-band TERM noise caused an actual wrong write to the temporary source; outer noise made landed writes fail postwrite comparison, including verify-only noise. The test transport was corrected to forward stdin as exact bytes before accepting RED.",
+  "product_commit": "54c5973ec2bfdb782fbd4c67206f1c08e925ba28",
+  "product_tree": "f7fb6be0a8ac0e5ba6456be45c6d23d26c0166c6",
+  "changed_paths": [
+    "tools/file_operations.py",
+    "tests/tools/test_n37_exact_patch_replace.py",
+    "tests/tools/test_file_operations.py"
+  ],
+  "green_evidence": [
+    "At exact product HEAD, five new Windows Python 3.12/Git Bash tests and two adapted postwrite tests passed.",
+    "The affected eight-file Windows selection passed 163 tests, skipped 12 existing POSIX-only cases and deselected ten Windows-incompatible permission, symlink and search cases. A separate CodeGraph-impact selection passed 126, skipped one Linux-only case and failed three unrelated cases: two Windows symlink privilege cases and an unchanged skill-bundle hash check.",
+    "The initial unfiltered eleven-file run had 192 passes, 12 POSIX skips and 21 Windows environment/path/permission failures; it is not a full-suite pass.",
+    "Three controlled mutants were killed: unframed initial source, omitted postwrite reread and lossy source decoding. Source bytes were restored byte-identically.",
+    "Independent read-only Code Reviewer returned CLEAR; it did not run tests, CodeGraph, mutations or commit.",
+    "All three changed paths match actual bytes, the exact product Git commit and the integration CodeGraph index; frozen D0 and U1 source matches their Git blobs and separate indexes."
+  ],
+  "codegraph_receipt": {
+    "local_name": "N37-20260927/receipt.json",
+    "sha256": "7e99fec6ca20a06a5a30c2ef9fbaf74fc79b4feeaf96ec0dd656fbed4124ff71",
+    "version": "1.6.0",
+    "binding": "D0 8,881-file, U1 12,468-file and integration 8,960-file indexes are separate and report zero pending changes and refs after sync. Query, explore, valid symbol-name impact, owner/caller map, Git/index/source hashes and mutation logs are held in the private local receipt."
+  },
+  "open_gaps": [
+    "N36's byte-count transport is not an atomic snapshot: a same-size concurrent change and read-to-write race remain possible.",
+    "A failed postwrite read can report error after a write has landed; N37 does not roll back that write.",
+    "Binary-admission sampling, public read_file_bytes, non-Git-Bash remote backends and native POSIX runtime remain outside this family.",
+    "Other semantics of the cited upstream commits and the full 17,065-commit metadata universe remain unmapped; neither whole-commit parity nor campaign completion is claimed.",
+    "N07-A1 host grant-revocation writer is not implemented, destination outcome durability and T06/T12 remain P0 open, and Control MCP production write stays DISABLED.",
+    "No PR, push, release, production restart or production Control MCP write was performed."
+  ]
+}
