@@ -29,6 +29,7 @@ import base64
 import binascii
 import os
 import re
+import secrets
 import sys
 import difflib
 import hashlib
@@ -1099,6 +1100,58 @@ class ShellFileOperations(FileOperations):
         except (binascii.Error, ValueError):
             return None
 
+    def _fenced_exact_segment(self, command: str, path: str):
+        """Return command output and the file's own byte count, excluding transport noise."""
+        marker = f"__HERMES_EXACT_{secrets.token_hex(12)}__"
+        arg = self._escape_shell_arg(path)
+        result = self._exec(
+            f"echo {marker}; {command}; __hermes_read_rc=$?; "
+            f"echo {marker}; wc -c < {arg}; echo {marker}; echo $__hermes_read_rc"
+        )
+        segments = (result.stdout or "").split(marker)
+        if len(segments) != 4:
+            return None, None, None, result
+        status = _strip_terminal_fence_leaks(segments[3]).split()
+        size = _strip_terminal_fence_leaks(segments[2]).split()
+        try:
+            read_rc = int(status[0]) if status else None
+            byte_count = int(size[0]) if len(size) == 1 and size[0].isdigit() else None
+        except ValueError:
+            read_rc, byte_count = None, None
+        return segments[1], byte_count, read_rc, result
+
+    def _read_exact_bytes(self, path: str) -> tuple[Optional[bytes], Optional[ExecuteResult]]:
+        """Read an editable source byte-exactly, or refuse an unverifiable reply."""
+        arg = self._escape_shell_arg(path)
+        garbled = ExecuteResult(
+            stdout=f"{path}: backend returned an unverifiable byte-exact read",
+            exit_code=1,
+        )
+        for command, encoding in ((f"base64 < {arg}", "base64"),
+                                  (f"od -An -v -tx1 < {arg}", "hex")):
+            payload, byte_count, read_rc, result = self._fenced_exact_segment(command, path)
+            if payload is None or read_rc is None:
+                return None, result if result.exit_code != 0 else garbled
+            if read_rc == 127 and encoding == "base64":
+                continue
+            if read_rc != 0:
+                return None, ExecuteResult(
+                    stdout=f"{path}: byte-exact read failed (exit {read_rc})",
+                    exit_code=read_rc,
+                )
+            if byte_count is None:
+                return None, garbled
+            try:
+                compact = "".join(payload.split())
+                data = (base64.b64decode(compact, validate=True)
+                        if encoding == "base64" else bytes.fromhex(compact))
+            except (ValueError, binascii.Error):
+                return None, garbled
+            if len(data) != byte_count:
+                return None, garbled
+            return data, None
+        return None, garbled
+
     @staticmethod
     def _is_likely_binary_bytes(sample: bytes) -> bool:
         """Byte-layer binary detection (the boundary for the #80308 class).
@@ -1865,7 +1918,8 @@ class ShellFileOperations(FileOperations):
         """Read the complete file content as a plain string.
 
         No pagination, no line-number prefixes, no per-line truncation.
-        Uses cat so the full file is returned regardless of size.
+        Decodes a framed byte-exact read so patch source cannot absorb
+        terminal output outside the frame or a decodable in-frame addition.
         """
         path = self._expand_path(path)
         stat_result = self._exec(self._size_probe_cmd(path))
@@ -1895,15 +1949,15 @@ class ShellFileOperations(FileOperations):
                 is_binary=True, file_size=file_size,
                 error=describe_binary_file(sample_bytes, file_size),
             )
-        cat_result = self._exec(f"cat {self._escape_shell_arg(path)}")
-        if cat_result.exit_code != 0:
-            return ReadResult(error=f"Failed to read file: {cat_result.stdout}")
+        data, failed = self._read_exact_bytes(path)
+        if data is None:
+            return ReadResult(error=f"Failed to read file: {failed.stdout}")
         # Strip a leading UTF-8 BOM so patch's fuzzy matcher operates on
         # clean content (a phantom U+FEFF before line 1 would defeat an
         # exact first-line match). write_file restores the BOM on the way
         # back out — it re-probes the on-disk file, which still has the
         # marker — so the round-trip preserves it.
-        raw_content, _ = _strip_bom(_strip_terminal_fence_leaks(cat_result.stdout))
+        raw_content, _ = _strip_bom(data.decode("utf-8", "surrogateescape"))
         return ReadResult(
             content=raw_content,
             file_size=file_size,

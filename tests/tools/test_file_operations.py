@@ -376,7 +376,7 @@ class TestShellFileOpsHelpers:
         assert "\x07" not in result.content
         assert "1|print('ok')" in result.content
 
-    def test_read_file_raw_strips_leaked_terminal_fence_markers(self, mock_env):
+    def test_read_file_raw_refuses_unframed_terminal_fence_leaks(self, mock_env):
         leaked = (
             "__HERMES_FENCE_a9f7b3__\x07'\n"
             "alpha\n"
@@ -396,8 +396,8 @@ class TestShellFileOpsHelpers:
         ops = ShellFileOperations(mock_env)
         result = ops.read_file_raw("/tmp/test/a.txt")
 
-        assert result.error is None
-        assert result.content == "alpha\n"
+        assert result.error and "unverifiable byte-exact read" in result.error
+        assert result.content == ""
 
 
 class TestSearchPathValidation:

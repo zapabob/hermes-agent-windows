@@ -123,4 +123,4 @@ def test_read_file_raw_not_clamped(tmp_path, ops):
     p.write_text(long_line + "\n")
     result = ops.read_file_raw(str(p))
     assert result.error is None
-    assert result.content == long_line + "\n"
+    assert result.content == p.read_bytes().decode("utf-8")
