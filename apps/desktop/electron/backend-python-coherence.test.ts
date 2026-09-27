@@ -2,7 +2,9 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { runInNewContext } from 'node:vm'
 
+import { ScriptTarget, transpileModule } from 'typescript'
 import { test } from 'vitest'
 
 // ── Regression guard: backend interpreter / site-packages coherence ─────────
@@ -37,6 +39,101 @@ function extractFunction(source: string, name: string): string {
 
   return next === -1 ? rest : rest.slice(0, next + 1)
 }
+
+function runSourcePythonFinder(root: string, isWindows: boolean, files: string[], override = '') {
+  let systemLookupCalls = 0
+  const fileSet = new Set(files)
+
+  const finder = runInNewContext(
+    `${extractFunction(mainTsSource, 'findPythonForRoot')}\nfindPythonForRoot`,
+    {
+      IS_WINDOWS: isWindows,
+      fileExists: (candidate: string) => fileSet.has(candidate),
+      findSystemPython: () => {
+        systemLookupCalls += 1
+
+        return isWindows ? 'C:\\Python312\\python.exe' : '/usr/bin/python3'
+      },
+      path: isWindows ? path.win32 : path.posix,
+      process: { env: { HERMES_DESKTOP_PYTHON: override } }
+    }
+  ) as (sourceRoot: string) => string | null
+
+  return { python: finder(root), systemLookupCalls }
+}
+
+test('a source checkout with no own venv does not select PATH Python', () => {
+  for (const [root, isWindows] of [['C:\\checkout', true], ['/checkout', false]] as const) {
+    const resolved = runSourcePythonFinder(root, isWindows, [])
+    assert.equal(resolved.python, null)
+    assert.equal(resolved.systemLookupCalls, 0)
+  }
+})
+
+test('source interpreter selection keeps explicit override and .venv preference', () => {
+  const root = 'C:\\checkout'
+  const dotVenv = path.win32.join(root, '.venv', 'Scripts', 'python.exe')
+  const plainVenv = path.win32.join(root, 'venv', 'Scripts', 'python.exe')
+  const override = 'C:\\custom\\python.exe'
+
+  assert.deepEqual(runSourcePythonFinder(root, true, [plainVenv, dotVenv]), {
+    python: dotVenv,
+    systemLookupCalls: 0
+  })
+  assert.deepEqual(runSourcePythonFinder(root, true, [plainVenv, dotVenv, override], override), {
+    python: override,
+    systemLookupCalls: 0
+  })
+})
+
+function runSourceBackend(root: string, files: string[], override: string) {
+  const source = ['findPythonForRoot', 'getVenvPython', 'venvRootForPython', 'createPythonBackend']
+    .map(name => extractFunction(mainTsSource, name))
+    .join('\n')
+
+  const compiled = transpileModule(source, { compilerOptions: { target: ScriptTarget.ES2022 } }).outputText
+  const fileSet = new Set(files)
+
+  const create = runInNewContext(`${compiled}\ncreatePythonBackend`, {
+    HERMES_HOME: 'C:\\home',
+    IS_WINDOWS: true,
+    buildDesktopBackendEnv: (options: { pythonPathEntries: string[]; venvRoot: null | string }) => options,
+    fileExists: (candidate: string) => fileSet.has(candidate),
+    findSystemPython: () => 'C:\\Python312\\python.exe',
+    getVenvSitePackagesEntries: (venvRoot: null | string) =>
+      venvRoot ? [path.win32.join(venvRoot, 'Lib', 'site-packages')] : [],
+    path: path.win32,
+    process: { env: { HERMES_DESKTOP_PYTHON: override } }
+  }) as (sourceRoot: string, label: string, args: string[]) => null | {
+    command: string
+    env: { pythonPathEntries: string[]; venvRoot: null | string }
+  }
+
+  return create(root, 'source', ['serve'])
+}
+
+test('an explicit external Python remains the backend command even when the checkout has a venv', () => {
+  const root = 'C:\\checkout'
+  const override = 'C:\\custom\\python.exe'
+  const sourceVenv = path.win32.join(root, 'venv', 'Scripts', 'python.exe')
+  const backend = runSourceBackend(root, [override, sourceVenv], override)
+
+  assert.equal(backend?.command, override)
+  assert.equal(backend?.env.venvRoot, null)
+  assert.equal(backend?.env.pythonPathEntries.length, 1)
+  assert.equal(backend?.env.pythonPathEntries[0], root)
+})
+
+test('a selected checkout venv still owns its backend command and Python path', () => {
+  const root = 'C:\\checkout'
+  const dotVenvRoot = path.win32.join(root, '.venv')
+  const dotVenv = path.win32.join(dotVenvRoot, 'Scripts', 'python.exe')
+  const backend = runSourceBackend(root, [dotVenv], '')
+
+  assert.equal(backend?.command, dotVenv)
+  assert.equal(backend?.env.venvRoot, dotVenvRoot)
+  assert.equal(backend?.env.pythonPathEntries.length, 2)
+})
 
 test('findPythonForRoot preference order includes .venv before venv (context for the coherence tests)', () => {
   const fn = extractFunction(mainTsSource, 'findPythonForRoot')

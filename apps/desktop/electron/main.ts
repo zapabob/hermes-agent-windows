@@ -2434,7 +2434,9 @@ function findPythonForRoot(root) {
     }
   }
 
-  return findSystemPython()
+  // A source checkout without its own runtime must yield to the backend ladder.
+  // PATH Python can import this tree while missing the checkout's dependencies.
+  return null
 }
 
 function findSystemPython() {
@@ -4527,11 +4529,11 @@ function createPythonBackend(root, label, backendArgs, options: any = {}) {
   // The venv whose interpreter we selected is the venv whose site-packages
   // belong on PYTHONPATH — findPythonForRoot may have picked `.venv` over
   // `venv`, and mixing the two crashes the backend on its first native
-  // import (see venvRootForPython). Fall back to root/venv only for a
-  // system python, where the historical layout is the best guess.
-  const venvRoot = venvRootForPython(python, root) ?? path.join(root, 'venv')
-  const venvPython = getVenvPython(venvRoot)
-  const command = IS_WINDOWS && fileExists(venvPython) ? venvPython : python
+  // import (see venvRootForPython). An explicit interpreter outside this
+  // checkout owns its own packages; never replace it with root/venv's Python.
+  const venvRoot = venvRootForPython(python, root)
+  const venvPython = venvRoot ? getVenvPython(venvRoot) : null
+  const command = IS_WINDOWS && venvPython && fileExists(venvPython) ? venvPython : python
 
   return {
     kind: 'python',
