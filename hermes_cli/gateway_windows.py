@@ -984,6 +984,32 @@ def _spawn_detached(script_path: Path | None = None) -> int:
     return proc.pid
 
 
+def _stdin_is_interactive(*, isatty: bool, console_mode_ok: bool | None) -> bool:
+    """Require a real Windows console, not merely a character device such as NUL."""
+    return isatty and console_mode_ok is not False
+
+
+def _stdin_console_mode_ok() -> bool | None:
+    if sys.platform != "win32":
+        return None
+    kernel32 = ctypes.windll.kernel32
+    handle = kernel32.GetStdHandle(-10)  # STD_INPUT_HANDLE
+    return bool(kernel32.GetConsoleMode(handle, ctypes.byref(ctypes.c_ulong())))
+
+
+def _stdout_isatty() -> bool:
+    """Only show the login question when its output is visible on a terminal."""
+    return sys.stdout is not None and sys.stdout.isatty()
+
+
+def _can_ask_visible_question() -> bool:
+    from hermes_cli.setup import is_interactive_stdin, is_noninteractive
+
+    return not is_noninteractive() and _stdout_isatty() and _stdin_is_interactive(
+        isatty=is_interactive_stdin(), console_mode_ok=_stdin_console_mode_ok()
+    )
+
+
 def _install_choice_from_env(name: str) -> bool | None:
     raw = os.environ.get(name)
     if raw is None:
@@ -1076,7 +1102,7 @@ def install(
                 _report_gateway_start(f"direct spawn (PID {pid})")
         else:
             print("ℹ Gateway not started and no auto-start service installed.")
-            print("  Run later with: hermes gateway start")
+            print("  Run in the foreground later with: hermes gateway run")
         return
 
     task_name = get_task_name()
@@ -1091,7 +1117,7 @@ def install(
 
         print("↻ Scheduled Task install may need administrator approval on this Windows account.")
         print("  UAC is Windows' admin approval prompt; it is needed to create/update the Scheduled Task.")
-        if prompt_yes_no("  Open the UAC prompt now?", False):
+        if _can_ask_visible_question() and prompt_yes_no("  Open the UAC prompt now?", False):
             if _launch_elevated_install(force=force, start_now=start_now, start_on_login=start_on_login):
                 print("✓ Launched elevated Hermes gateway install prompt.")
                 if start_now:
@@ -1132,7 +1158,7 @@ def install(
 
         print(f"↻ Scheduled Task install needs administrator approval ({detail.splitlines()[0]})")
         print("  UAC is Windows' admin approval prompt; it is needed to create/update the Scheduled Task.")
-        if prompt_yes_no("  Open the UAC prompt now?", False):
+        if _can_ask_visible_question() and prompt_yes_no("  Open the UAC prompt now?", False):
             if _launch_elevated_install(force=force, start_now=start_now, start_on_login=start_on_login):
                 print("✓ Launched elevated Hermes gateway install prompt.")
                 if start_now:
@@ -1497,19 +1523,20 @@ def start() -> None:
     startup_installed = is_startup_entry_installed()
 
     if not task_installed and not startup_installed:
-        from hermes_cli.setup import prompt_yes_no
+        start_on_login = _install_choice_from_env("HERMES_GATEWAY_INSTALL_START_ON_LOGIN")
+        if start_on_login is None:
+            from hermes_cli.setup import prompt_yes_no
 
-        print("✗ Gateway service is not installed")
-        if not prompt_yes_no("  Install it now so the gateway starts on login?", True):
-            print("  Run: hermes gateway install")
+            print("✗ Gateway service is not installed")
+            if not _can_ask_visible_question():
+                start_on_login = False
+            else:
+                start_on_login = prompt_yes_no("  Install it now so the gateway starts on login?", True)
+        if start_on_login:
+            # install() owns both persistence and immediate launch, including UAC hand-off.
+            install(force=False, start_now=True, start_on_login=True)
             return
-        install(force=False)
-        task_installed = is_task_registered()
-        startup_installed = is_startup_entry_installed()
-        if not task_installed and not startup_installed:
-            print("⚠ Gateway install did not complete in this process.")
-            print("  If a UAC prompt opened, approve it, then run: hermes gateway start")
-            return
+        print("ℹ Login auto-start not installed; add it later with: hermes gateway install")
 
     # Manual starts use the same console-less direct spawn path as restart()
     # and install --start-now. Scheduled Task / Startup entries are only login

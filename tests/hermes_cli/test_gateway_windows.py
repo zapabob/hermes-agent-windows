@@ -340,6 +340,164 @@ def test_gateway_vbs_script_is_console_less(monkeypatch):
     assert content.endswith("\r\n")
 
 
+def _arrange_uninstalled_start(monkeypatch):
+    """Observe gateway start decisions without touching a process or login item."""
+    installs, spawns = [], []
+    monkeypatch.delenv("HERMES_GATEWAY_INSTALL_START_ON_LOGIN", raising=False)
+    monkeypatch.delenv("HERMES_NONINTERACTIVE", raising=False)
+    monkeypatch.setattr(gateway_windows, "_assert_windows", lambda: None)
+    monkeypatch.setattr(gateway_windows, "_gateway_pids", lambda: [])
+    monkeypatch.setattr(gateway_windows, "is_task_registered", lambda: False)
+    monkeypatch.setattr(gateway_windows, "is_startup_entry_installed", lambda: False)
+    monkeypatch.setattr(gateway_windows, "install", lambda **kwargs: installs.append(kwargs))
+    monkeypatch.setattr(gateway_windows, "_spawn_detached", lambda: spawns.append(1) or 4242)
+    monkeypatch.setattr(gateway_windows, "_report_gateway_start", lambda via: None)
+    monkeypatch.setattr(gateway_windows, "_stdout_isatty", lambda: True, raising=False)
+    monkeypatch.setattr(gateway_windows, "_stdin_console_mode_ok", lambda: True, raising=False)
+    monkeypatch.setattr(setup, "is_noninteractive", lambda: False)
+    monkeypatch.setattr(setup, "is_interactive_stdin", lambda: True)
+    return installs, spawns
+
+
+@pytest.mark.parametrize(
+    ("stdin_tty", "console_ok", "stdout_tty", "noninteractive"),
+    [
+        (False, True, True, False),
+        (True, False, True, False),
+        (True, True, False, False),
+        (True, True, True, True),
+    ],
+    ids=["redirected-stdin", "nul-stdin", "captured-stdout", "noninteractive-flag"],
+)
+def test_start_without_visible_answer_never_installs_login_item(
+    monkeypatch, capsys, stdin_tty, console_ok, stdout_tty, noninteractive,
+):
+    installs, spawns = _arrange_uninstalled_start(monkeypatch)
+    monkeypatch.setattr(setup, "is_interactive_stdin", lambda: stdin_tty)
+    monkeypatch.setattr(setup, "is_noninteractive", lambda: noninteractive)
+    monkeypatch.setattr(gateway_windows, "_stdin_console_mode_ok", lambda: console_ok, raising=False)
+    monkeypatch.setattr(gateway_windows, "_stdout_isatty", lambda: stdout_tty, raising=False)
+    monkeypatch.setattr(
+        setup, "prompt_yes_no", lambda *args, **kwargs: pytest.fail("invisible login prompt"),
+    )
+
+    gateway_windows.start()
+
+    assert installs == [] and spawns == [1]
+    assert "hermes gateway install" in capsys.readouterr().out
+
+
+def test_windows_stdin_requires_both_tty_and_console():
+    assert gateway_windows._stdin_is_interactive(isatty=True, console_mode_ok=False) is False
+    assert gateway_windows._stdin_is_interactive(isatty=False, console_mode_ok=True) is False
+    assert gateway_windows._stdin_is_interactive(isatty=True, console_mode_ok=True) is True
+    assert gateway_windows._stdin_is_interactive(isatty=True, console_mode_ok=None) is True
+
+
+@pytest.mark.parametrize("consent", [False, True], ids=["decline", "approve"])
+def test_start_with_visible_console_honors_login_choice_once(monkeypatch, consent):
+    installs, spawns = _arrange_uninstalled_start(monkeypatch)
+    monkeypatch.setattr(setup, "prompt_yes_no", lambda *args, **kwargs: consent)
+
+    gateway_windows.start()
+
+    if consent:
+        assert installs == [{"force": False, "start_now": True, "start_on_login": True}]
+        assert spawns == []
+    else:
+        assert installs == [] and spawns == [1]
+
+
+@pytest.mark.parametrize("explicit", ["0", "1"], ids=["opt-out", "opt-in"])
+def test_start_uses_explicit_login_choice_without_prompt(monkeypatch, explicit):
+    installs, spawns = _arrange_uninstalled_start(monkeypatch)
+    monkeypatch.setenv("HERMES_GATEWAY_INSTALL_START_ON_LOGIN", explicit)
+    monkeypatch.setattr(
+        setup, "prompt_yes_no", lambda *args, **kwargs: pytest.fail("explicit choice must skip prompt"),
+    )
+
+    gateway_windows.start()
+
+    if explicit == "1":
+        assert installs == [{"force": False, "start_now": True, "start_on_login": True}]
+        assert spawns == []
+    else:
+        assert installs == [] and spawns == [1]
+
+
+def test_install_without_login_or_immediate_start_points_to_foreground_run(monkeypatch, capsys):
+    monkeypatch.setattr(gateway_windows, "_assert_windows", lambda: None)
+    monkeypatch.setattr(gateway_windows, "_prompt_install_choices", lambda *args: (False, False))
+
+    gateway_windows.install()
+
+    assert "hermes gateway run" in capsys.readouterr().out
+
+
+def test_explicit_login_with_captured_stdout_does_not_ask_invisible_uac(monkeypatch, tmp_path):
+    original_install = gateway_windows.install
+    installs, spawns = _arrange_uninstalled_start(monkeypatch)
+    monkeypatch.setattr(gateway_windows, "install", original_install)
+    monkeypatch.setenv("HERMES_GATEWAY_INSTALL_START_ON_LOGIN", "1")
+    monkeypatch.setattr(gateway_windows, "_stdout_isatty", lambda: False)
+    monkeypatch.setattr(gateway_windows, "_is_running_as_admin", lambda: False)
+    monkeypatch.setattr(gateway_windows, "get_task_name", lambda: "N47_Test_Task")
+    monkeypatch.setattr(gateway_windows, "_write_task_script", lambda: tmp_path / "gateway.cmd")
+    fallbacks = []
+    monkeypatch.setattr(
+        gateway_windows, "_install_startup_fallback",
+        lambda script, start_now, detail: fallbacks.append((script, start_now, detail)),
+    )
+    monkeypatch.setattr(
+        setup, "prompt_yes_no", lambda *args, **kwargs: pytest.fail("invisible UAC prompt"),
+    )
+    monkeypatch.setattr(
+        gateway_windows, "_launch_elevated_install",
+        lambda **kwargs: pytest.fail("invisible UAC launch"),
+    )
+
+    gateway_windows.start()
+
+    assert installs == [] and spawns == []
+    assert len(fallbacks) == 1 and fallbacks[0][1] is True
+
+
+def test_failed_elevated_handoff_with_captured_stdout_skips_uac_question(
+    monkeypatch, tmp_path,
+):
+    monkeypatch.setattr(gateway_windows, "_assert_windows", lambda: None)
+    monkeypatch.setattr(gateway_windows, "_stdout_isatty", lambda: False)
+    monkeypatch.setattr(gateway_windows, "_stdin_console_mode_ok", lambda: True)
+    monkeypatch.setattr(gateway_windows, "_is_running_as_admin", lambda: False)
+    monkeypatch.setattr(gateway_windows, "get_task_name", lambda: "N47_Test_Task")
+    monkeypatch.setattr(gateway_windows, "_write_task_script", lambda: tmp_path / "gateway.cmd")
+    monkeypatch.setattr(
+        gateway_windows, "_install_scheduled_task", lambda *args: (False, "Access is denied."),
+    )
+    monkeypatch.setattr(gateway_windows, "_should_fall_back", lambda *args: True)
+    fallback_entries = []
+    monkeypatch.setattr(
+        gateway_windows, "_install_startup_entry",
+        lambda script: fallback_entries.append(script) or tmp_path / "startup.lnk",
+    )
+    monkeypatch.setattr(gateway_windows, "_print_next_steps", lambda: None)
+    monkeypatch.setattr(gateway, "find_gateway_pids", lambda: [])
+    monkeypatch.setattr(gateway, "_profile_arg", lambda: "")
+    monkeypatch.setattr(setup, "is_noninteractive", lambda: False)
+    monkeypatch.setattr(setup, "is_interactive_stdin", lambda: True)
+    monkeypatch.setattr(
+        setup, "prompt_yes_no", lambda *args, **kwargs: pytest.fail("invisible UAC prompt"),
+    )
+    monkeypatch.setattr(
+        gateway_windows, "_launch_elevated_install",
+        lambda **kwargs: pytest.fail("invisible UAC launch"),
+    )
+
+    gateway_windows.install(start_now=False, start_on_login=True, elevated_handoff=True)
+
+    assert fallback_entries == [tmp_path / "gateway.cmd"]
+
+
 
 
 
@@ -362,8 +520,6 @@ def test_gateway_vbs_script_is_console_less(monkeypatch):
 # the gateway's marker-watcher thread to drain + exit cleanly, then escalates
 # to taskkill if drain times out.
 # ---------------------------------------------------------------------------
-
-
 
 
 
