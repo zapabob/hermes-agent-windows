@@ -769,6 +769,125 @@ class TestImportEdgeCases:
             backup_mod.run_import(Namespace(zipfile=str(zip_path), force=True))
 
 
+class TestImportCorruptPreflight:
+    @staticmethod
+    def _damage_stored_member(zip_path: Path, name: str) -> None:
+        with zipfile.ZipFile(zip_path) as zf:
+            info = zf.getinfo(name)
+        offset = info.header_offset + 30 + len(info.filename) + len(info.extra)
+        data = bytearray(zip_path.read_bytes())
+        data[offset] ^= 0x01
+        zip_path.write_bytes(data)
+
+    def test_damaged_restored_member_refused_before_any_home_change(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        home = tmp_path / ".hermes"
+        home.mkdir()
+        config = home / "config.yaml"
+        config.write_text("model: live\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(home))
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+        archive = tmp_path / "damaged.zip"
+        with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_STORED) as zf:
+            zf.writestr("config.yaml", "model: imported\n")
+            zf.writestr("skills/bad.txt", "payload to fail CRC\n")
+        self._damage_stored_member(archive, "skills/bad.txt")
+        assert zipfile.is_zipfile(archive)
+
+        from hermes_cli.backup import run_import
+        from hermes_cli.main import cmd_import
+
+        args = Namespace(zipfile=str(archive), force=True)
+        try:
+            result = run_import(args)
+        except zipfile.BadZipFile as exc:
+            result = exc
+        assert config.read_text(encoding="utf-8") == "model: live\n"
+        assert result == 1
+        assert cmd_import(args) == 1
+        assert "backup archive is damaged" in capsys.readouterr().out
+
+    @pytest.mark.parametrize("skipped_name", ["gateway.pid", "hermes_state.db-wal"])
+    def test_damaged_skipped_runtime_member_does_not_block_import(
+        self, tmp_path, monkeypatch, skipped_name
+    ):
+        home = tmp_path / ".hermes"
+        home.mkdir()
+        config = home / "config.yaml"
+        config.write_text("model: live\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(home))
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+        archive = tmp_path / "skipped.zip"
+        with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_STORED) as zf:
+            zf.writestr("config.yaml", "model: imported\n")
+            zf.writestr(skipped_name, "a foreign process\n")
+        self._damage_stored_member(archive, skipped_name)
+
+        from hermes_cli.backup import run_import
+
+        assert run_import(Namespace(zipfile=str(archive), force=True)) is None
+        assert config.read_text(encoding="utf-8") == "model: imported\n"
+        assert not (home / skipped_name).exists()
+
+    def test_member_read_failure_after_preflight_reports_incomplete(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        home = tmp_path / ".hermes"
+        home.mkdir()
+        monkeypatch.setenv("HERMES_HOME", str(home))
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+        archive = tmp_path / "rotating.zip"
+        with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_STORED) as zf:
+            zf.writestr("config.yaml", "model: imported\n")
+            zf.writestr("skills/rotating.txt", "portable data\n")
+
+        real_open = zipfile.ZipFile.open
+        opens = 0
+
+        def media_rot(self, name, *args, **kwargs):
+            nonlocal opens
+            filename = name.filename if isinstance(name, zipfile.ZipInfo) else name
+            if filename == "skills/rotating.txt":
+                opens += 1
+                if opens == 2:
+                    raise EOFError("media changed after integrity check")
+            return real_open(self, name, *args, **kwargs)
+
+        monkeypatch.setattr(zipfile.ZipFile, "open", media_rot)
+
+        from hermes_cli.backup import run_import
+
+        assert run_import(Namespace(zipfile=str(archive), force=True)) == 1
+        assert opens == 2
+        assert "Import incomplete" in capsys.readouterr().out
+
+    def test_prefixed_external_member_is_not_a_skipped_runtime_file(
+        self, tmp_path, monkeypatch
+    ):
+        home = tmp_path / ".hermes"
+        home.mkdir()
+        config = home / "config.yaml"
+        config.write_text("model: live\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(home))
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+        archive = tmp_path / "wrapped.zip"
+        bad_member = ".hermes/_external/vendor/gateway.pid"
+        with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_STORED) as zf:
+            zf.writestr(".hermes/config.yaml", "model: imported\n")
+            zf.writestr(bad_member, "corrupt external data\n")
+        self._damage_stored_member(archive, bad_member)
+
+        from hermes_cli.backup import run_import
+
+        assert run_import(Namespace(zipfile=str(archive), force=True)) == 1
+        assert config.read_text(encoding="utf-8") == "model: live\n"
+
+
 class _ExplodingMember:
     """Zip member whose stream dies mid-restore (ENOSPC / corrupt member).
 

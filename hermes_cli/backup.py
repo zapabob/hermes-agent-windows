@@ -19,6 +19,7 @@ import tempfile
 import threading
 import time
 import zipfile
+import zlib
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -155,6 +156,19 @@ _IMPORT_SKIP_NAMES = {
     "gateway.lock",
     "processes.json",
 }
+
+_SQLITE_SIDECAR_SUFFIXES = (".db-wal", ".db-shm", ".db-journal")
+
+try:
+    import lzma
+except ImportError:  # pragma: no cover - builds without liblzma
+    _LZMA_READ_ERRORS: tuple[type[BaseException], ...] = ()
+else:
+    _LZMA_READ_ERRORS = (lzma.LZMAError,)
+
+_ZIP_MEMBER_READ_ERRORS: tuple[type[BaseException], ...] = (
+    OSError, zipfile.BadZipFile, zlib.error, EOFError, *_LZMA_READ_ERRORS,
+)
 
 # zipfile.open() drops Unix mode bits on extract; restore tightens these to 0600.
 # vault.key / vault.json.enc: the local credential vault (agent/vault_store.py)
@@ -1067,6 +1081,31 @@ def _validate_import_members(zf: zipfile.ZipFile) -> tuple[bool, str]:
     return True, ""
 
 
+def _import_skipped(rel: str) -> bool:
+    """Match the runtime and SQLite sidecars the restore deliberately skips."""
+    if not rel:
+        return True
+    path = Path(rel)
+    if path.is_absolute() or ".." in path.parts:
+        return False  # Preserve the restore's path-traversal diagnostic.
+    return path.name in _IMPORT_SKIP_NAMES or rel.endswith(_SQLITE_SIDECAR_SUFFIXES)
+
+
+def _find_corrupt_import_members(
+    zf: zipfile.ZipFile, members: List[zipfile.ZipInfo]
+) -> List[str]:
+    """Stream every restorable member through EOF so zipfile checks its CRC."""
+    corrupt: List[str] = []
+    for member in members:
+        try:
+            with zf.open(member) as src:
+                while src.read(_IMPORT_COPY_CHUNK_BYTES):
+                    pass
+        except _ZIP_MEMBER_READ_ERRORS as exc:
+            corrupt.append(f"{member.filename}: {exc}")
+    return corrupt
+
+
 def _copy_zip_member(
     zf: zipfile.ZipFile,
     member: zipfile.ZipInfo,
@@ -1246,8 +1285,8 @@ def _extract_member_atomically(
         raise
 
 
-def run_import(args) -> None:
-    """Restore a Hermes backup from a zip file."""
+def run_import(args) -> Optional[int]:
+    """Restore a Hermes backup; return 1 when damaged or incomplete."""
     zip_path = Path(args.zipfile).expanduser().resolve()
 
     if not zip_path.is_file():
@@ -1310,6 +1349,26 @@ def run_import(args) -> None:
                 print("Aborted.")
                 return
 
+        # Refuse a rotten ZIP before publishing the first replacement file.
+        # Runtime and foreign SQLite sidecars are skipped by the restore too.
+        restorable = [
+            info for info in members
+            if (rel := _normalized_import_member_name(info.filename, prefix)).startswith(_EXTERNAL_PREFIX)
+            or not _import_skipped(rel)
+        ]
+        print("\nChecking archive integrity ...")
+        corrupt = _find_corrupt_import_members(zf, restorable)
+        if corrupt:
+            print(
+                f"Error: backup archive is damaged ({len(corrupt)} member(s) fail to "
+                "decompress or fail their CRC); nothing was restored:"
+            )
+            for item in corrupt[:10]:
+                print(f"  {item}")
+            if len(corrupt) > 10:
+                print(f"  ... and {len(corrupt) - 10} more")
+            return 1
+
         # Extract
         print(f"\nImporting {file_count} files ...")
         hermes_root.mkdir(parents=True, exist_ok=True)
@@ -1361,7 +1420,7 @@ def run_import(args) -> None:
                             pass
                     restored += 1
                     restored_external += 1
-                except (PermissionError, OSError) as exc:
+                except _ZIP_MEMBER_READ_ERRORS as exc:
                     errors.append(f"  {member}: {exc}")
                 if restored % 500 == 0:
                     print(f"  {restored}/{file_count} files ...")
@@ -1376,7 +1435,7 @@ def run_import(args) -> None:
             # reconciler on the target and disconnects hosted instances from the
             # Nous portal. Matched by basename so both the root profile and
             # named profiles (profiles/<name>/gateway_state.json) are covered.
-            if Path(rel).name in _IMPORT_SKIP_NAMES:
+            if _import_skipped(rel):
                 skipped_runtime.append(rel)
                 continue
 
@@ -1395,7 +1454,7 @@ def run_import(args) -> None:
                 if target.name in _SECRET_FILE_NAMES:
                     os.chmod(target, 0o600)
                 restored += 1
-            except (PermissionError, OSError) as exc:
+            except _ZIP_MEMBER_READ_ERRORS as exc:
                 errors.append(f"  {rel}: {exc}")
 
             if restored % 500 == 0:
@@ -1500,6 +1559,9 @@ def run_import(args) -> None:
             print("\nStart the gateway to activate cron jobs and messaging:")
             print("  hermes gateway install")
 
+        if errors:
+            print(f"Import incomplete: {len(errors)} file(s) were not restored (see Warnings above).")
+            return 1
         print("Done. Your Hermes configuration has been restored.")
 
 

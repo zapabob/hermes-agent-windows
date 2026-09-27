@@ -6014,7 +6014,7 @@ def cmd_import(args):
     """Restore a Hermes backup from a zip file."""
     from hermes_cli.backup import run_import
 
-    run_import(args)
+    return run_import(args)
 
 
 def _print_version_info(*, check_updates: bool = True) -> None:
