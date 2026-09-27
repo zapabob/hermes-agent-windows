@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "status": "PARTIAL_LOCAL_PERSIST_ON_RELEASE_CLI_E2E_AND_NONLOCAL_OPEN",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N28",
+  "priority": "P2",
+  "origin": "A newly mapped upstream v0.21.5-to-U1 inventory row at v0215_to_u1.jsonl:2157, commit ec5c9c738acc0b3ed5770c25497ec335cbfe8d33; beyond the original 25 seed families.",
+  "upstream_commit": "ec5c9c738acc0b3ed5770c25497ec335cbfe8d33",
+  "final_observable_contract": "An explicitly requested Windows local background terminal process survives agent lifecycle cleanup and turn timeout, remains listed and checkpointed, and is still stopped by an explicit operator stop or Gateway shutdown. Default background processes retain ordinary cleanup behavior.",
+  "source_span": [
+    "Before N28, tools/terminal_tool.py had no persist_on_release argument in its registered schema/handler/local spawn path and tools/process_registry.py had no persistence flag or lifecycle filter",
+    "tools/terminal_tool.py:3044-3061 rejects non-boolean, foreground and non-local requests; :3536-3563 passes the flag only to local spawn and reports it in the response; :4393-4489 exposes it through the registered terminal tool",
+    "tools/process_registry.py:406-409,1045-1083 owns the session flag and local spawn; :2628-2635 lists it; :2776-2804 skips it only for lifecycle kill sources; :2876-2886 and :2973-2984 checkpoint and recover it",
+    "run_agent.py:4834-4839 uses the default lifecycle kill source; gateway/run.py:3388-3392 uses gateway_turn_timeout; gateway/run.py:15235 uses explicit gateway_shutdown",
+    "hermes_cli/cli_commands_mixin.py:529 and tui_gateway/methods_tools.py:44 plus tui_gateway/server.py:16073 use explicit stop sources"
+  ],
+  "red_receipt": "At product parent fb312383e97038655f16497cdc15236aa319a25a, the first four N28 focused tests all failed: the registered handler ignored the option, ProcessSession rejected the flag, and spawn_local rejected the argument. The later six-case selection passed after the minimal local implementation. The parent also contained the Security Center gate that blocks the unrelated full CLI process-result test on this host.",
+  "required_evidence": [
+    "Native Windows child must remain running across lifecycle kill_all, then exit after explicit stop",
+    "Registered terminal caller must forward the flag; foreground, wrong type, and non-local requests must fail before spawn",
+    "Checkpoint/recovery and list view must preserve the flag; Gateway shutdown must still kill",
+    "Run affected tests, controlled mutation, fresh CodeGraph binding and independent read-only review"
+  ],
+  "publication_gate": "N28 is a partial Windows-local semantic adaptation. Do not claim non-local upstream backend parity, complete CLI-to-child E2E on this host, reboot recovery, or full U1 coverage.",
+  "product_commit": "4acaca7703491d9aecc88823bddab1b2092a511f",
+  "product_tree": "921a71a378debe45f499dd78a19fda27156b3d68",
+  "green_evidence": [
+    "Six focused native Windows Python 3.12 N28 tests passed, including registered caller, real child lifecycle and explicit stop, source filtering, and checkpoint flag recovery with mocked PID identity",
+    "42 terminal tests passed; 78 process registry and notification/result tests passed with 34 skips; 21 Gateway shutdown and abandoned-turn tests passed",
+    "Removing the lifecycle skip made the relevant test fail with two kills instead of one; exact source SHA-256 was restored",
+    "Read-only independent Code Reviewer cleared the restored product diff and did not claim to run tests or CodeGraph"
+  ],
+  "codegraph_receipt": {
+    "path": "H:\\hermes-worktrees\\semantic-refresh-20260926\\source-bindings\\receipts\\codegraph\\N28-20260927\\receipt.json",
+    "sha256": "5cc997365bd216314e6974a3a0e4f08fcfb9f5c0b14a0912e740b19c0d61495d",
+    "version": "1.6.0",
+    "binding": "D0 8,881 files, U1 12,468 files, committed integration 8,953 files in separate indexes; eight changed product/test paths actual=committed=indexed; all pending changes and refs zero"
+  },
+  "open_gaps": [
+    "The existing real CLI process-result test reaches Security Center SCAN_ERROR for this host's Python executable before N28 behavior and fails without a session_id; the execution gate was not disabled or changed",
+    "Non-local backend persistence from the upstream commit is not implemented in this Windows-local family",
+    "Recovery test mocks PID/start-time identity; real cross-process recovery and reboot survival were not verified",
+    "The 17,065-commit metadata inventory remains short of complete semantic family mapping and required P0 gates remain open",
+    "T06/T12 Control MCP production write remains DISABLED"
+  ]
+}
