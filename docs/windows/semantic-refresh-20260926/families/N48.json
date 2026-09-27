@@ -37,7 +37,7 @@
     "Integration model-catalog-menu.tsx:429-475 owns row labels; model-menu-panel.tsx:193-267 and plugins/kanban/model-override.tsx:71-140 are actual composer and Kanban callers of the shared catalog."
   ],
   "observable_contract": "A model's displayed name is its own truncating span. Active reasoning effort and fast mode render beside it as distinct non-shrinking bordered badges, so High cannot look like part of a different model name. Reasoning-unsupported models have no effort badge. Model selection, stored effort, submenu, MoA and delegation behavior remain under their existing owners.",
-  "red_receipt": "At parent a9e8396aec81895f6df0d08cddf2b5ba6e1c8e56, the added native badge contract failed 1 of 5 focused tests: High had only tertiary text styling, with no independent border or sibling name. The reasoning-unsupported control passed already.",
+  "red_receipt": "The initial native test run before implementation failed one of five focused tests. After product commit, red.json replayed the committed test against the exact parent a9e8396aec81895f6df0d08cddf2b5ba6e1c8e56 component blob and durably recorded one failure and four passes: High had only tertiary text styling, with no independent border or sibling name. Source bytes were restored after the replay.",
   "product_commit": "8e481720fe4b0ba51c662fcf78bba0988dd21a41",
   "product_tree": "066965babf86992f0d93c3f1071265f4c6562786",
   "changed_product_paths": [
@@ -46,10 +46,10 @@
   ],
   "green_evidence": [
     "Three affected native Vitest files passed 36 tests after final test and product changes. ESLint on the two changed files and git diff --check passed. No app launch or backend action occurred.",
-    "The first DOM shape made four existing model-menu-panel text queries ambiguous; a div wrapper around the leaf name span and setting badges restored all four without changing those tests. This maps upstream follow-up f8dddd... by equivalent behavior.",
+    "During implementation, a span wrapper made existing model-menu-panel text queries ambiguous; that intermediate failure output was observed in the session but was not saved in this receipt packet. The final div wrapper leaves those tests unchanged, and the saved final affected run passes all 36 tests. This maps upstream follow-up f8dddd... by equivalent final behavior.",
     "Two controlled mutants were killed: removing the badge border and bypassing the reasoning capability gate. The first mutation exposed an overly broad substring assertion; it was strengthened to check the exact border class, then both mutants failed as expected and the source SHA-256 was restored.",
-    "The full Desktop TypeScript typecheck was attempted with both root and Desktop-local tsc; both failed with many cross-checkout duplicate React type identities (including Ref incompatibilities). This is an unresolved environment-wide gate, not a claimed GREEN. No dependency or configuration change was made.",
-    "Independent read-only Code Reviewer returned CLEAR on the final two-file diff and inspected the saved receipts; the reviewer did not run tests, mutation, typecheck or CodeGraph."
+    "During N48, root and Desktop-local full TypeScript typecheck attempts returned nonzero with widespread React Ref type incompatibility diagnostics in terminal output. Those outputs were not archived in this receipt packet, so the diagnosis is a session report rather than independently packet-verified evidence. The full typecheck is not claimed GREEN; no dependency or configuration change was made.",
+    "An independent read-only Code Reviewer reported CLEAR on the final two-file diff in the task conversation and inspected the saved receipts. There is no standalone review artifact in this packet; the reviewer did not run tests, mutation, typecheck or CodeGraph."
   ],
   "execution_receipts": {
     "red": {
@@ -80,11 +80,11 @@
     "post_commit": {
       "local_name": "N48-20260928/postcommit.json",
       "sha256": "0abcbe3daeb231c39f25bfbea58f442824f3203984351ce60eebe264111eb00c",
-      "binding": "At exact product HEAD, both disk blobs equal their committed blobs and the integration graph remains fresh."
+      "binding": "At exact product HEAD 8e481720fe4b0ba51c662fcf78bba0988dd21a41, both disk blobs equaled their committed blobs and the integration graph was fresh at capture time."
     }
   },
   "open_gaps": [
-    "A native rendered Electron build or visual inspection was not performed. The broad TypeScript gate remains red because the current checkout resolves duplicate React type identities; no release readiness is inferred from N48.",
+    "A native rendered Electron build or visual inspection was not performed. The full TypeScript gate was not proven green; its reported React type failure has no archived diagnostic log in this packet. No release readiness is inferred from N48.",
     "Only these two upstream rows are mapped by this family. Other historical and U1 ledger rows remain subject to semantic review; inventory completeness and 25 seed families do not prove full coverage.",
     "N07-A1 grant-revocation host writer is not implemented per the user's reply. Destination outcome durability, T06 and T12 remain unqualified, and Control MCP production write stays DISABLED.",
     "The isolated-worktree zero-byte untracked $tmp remains after automatic approval review blocked removal without a detailed reason. Original main and feature WIP were untouched; no PR, push, release or production restart occurred."
