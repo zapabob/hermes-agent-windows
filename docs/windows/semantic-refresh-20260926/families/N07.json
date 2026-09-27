@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "status": "PARTIAL_A2_FALSE_SUCCESS_FIXED_A1_AND_DURABLE_EVIDENCE_OPEN",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N07",
+  "priority": "P0",
+  "upstream_commits": [],
+  "upstream_merge_parents": [],
+  "salvage_fixup_revert_lineage": [],
+  "final_upstream_sha": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+  "final_observable_contract": "Before T12, a grant revocation must be linearized with claims and effect boundaries. A landed destination effect whose terminal journal record fails must never return false success or gain a second effect; an identity-bound append-only outcome witness must survive for reconciliation. This card records only the narrow false-success correction.",
+  "downstream_predecessor": {
+    "commit": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "source": [
+      "D0 has no plugins/implementation_router/apply.py, plugins/implementation_router/control.py or downstream/control_mcp/journal.py paths",
+      "U1 has no corresponding paths; the three files in the integration predecessor match feat/cursor-workstation-continue-20260925 by Git blob OID"
+    ]
+  },
+  "downstream_owner": "HostControlJournal owns the claim, terminal outcome and reservation; VerifiedApplyOwner owns destination CAS and witness; EngineeringRunOwner owns scratch execution and its returned result",
+  "downstream_call_path": [
+    "HostControlCoordinator -> EngineeringRunOwner.start_approved -> HostControlJournal.claim_approved -> EngineeringRunOwner._execute -> journal.transition",
+    "HostControlCoordinator -> VerifiedApplyOwner.start_approved -> journal.claim_apply -> DestinationPort.compare_and_swap -> journal.append_effect_evidence -> journal.transition",
+    "On restart, HostControlJournal._reconcile_previous_epochs moves RUNNING to UNKNOWN without releasing its reservation"
+  ],
+  "already_local_predecessor": "LM03 19-mutant and LM05 17-mutant results remain reused; this change does not reclassify those earlier proofs as undone. Pre-change owner blobs match the preserved feature branch.",
+  "acceptance": {
+    "N07-A1": "OPEN: host grant_lookup and revocation are not synchronized with the journal claim or final effect",
+    "N07-A2_false_success": "PASS_LOCAL: journal terminal record failure produces UNKNOWN or apply_outcome_unknown, keeps reservation and never reclaims the same operation",
+    "N07-A2_append_only_evidence": "PARTIAL: a landed apply with transition failure retains its journal witness, but witness-write failure may still leave a terminal SUCCEEDED row without an append-only witness; an uncertain post-effect kernel exception may be classified BLOCKED"
+  },
+  "red_or_equivalence_receipts": [
+    "The production apply owner returned SUCCEEDED after a landed CAS when journal.transition raised ControlError; the new actual-owner test failed before the fix.",
+    "The production engineering owner returned SUCCEEDED from its future after journal.transition raised ControlError; the new actual-owner test failed before the fix.",
+    "Independent read-only N07-A1 investigation found that the grant lookup can commit revocation in a separate store between successful lookup and journal RUNNING commit."
+  ],
+  "implementation_commits": ["01c28864f87582ab81fa3c6bd9fca7495a8c03ca"],
+  "changed_paths": [
+    "plugins/implementation_router/apply.py",
+    "plugins/implementation_router/control.py",
+    "tests/control_mcp/test_review_claim_grant_and_witness.py",
+    "tests/control_mcp/test_review_approval_binding.py"
+  ],
+  "focused_and_native_receipts": [
+    "Windows Python 3.12 affected Control MCP suites: 166 passed across six files at the committed product bytes.",
+    "Windows Python 3.11 focused tests: 5 passed and 82 deselected before the final test-only reservation assertion; no separate post-assertion Python 3.11 claim.",
+    "Tests use the production owner APIs and native SQLite journal/restart behavior with an inert counted destination; no production destination writer was bound or run."
+  ],
+  "mutation_receipts": [
+    "Changing both _record failure branches to return True killed all four ControlError and sqlite3.OperationalError variants; the mutation was reverted before the 166-test final run and commit."
+  ],
+  "codegraph_after": {
+    "version": "1.6.0",
+    "commit": "01c28864f87582ab81fa3c6bd9fca7495a8c03ca",
+    "tree": "f2844024d67bcd77419ca16fb1d1148e5327487a",
+    "external_receipt": "N07-A2-20260927/receipt.json",
+    "receipt_sha256": "3a87d6e7f864fde0c1bfa9713cb6f8f50303ae6d30f1eb7b5d907e274365d163",
+    "indexed_files": 8950,
+    "freshness": "UP_TO_DATE; zero pending changes or refs; four target source/test SHA-256 values match actual, committed and indexed bytes",
+    "graph_limit": "Impact results do not resolve the injected owner/caller path; actual owner tests supplement the graph"
+  },
+  "independent_review": "A read-only reviewer found no concrete defect in the narrow false-success fix after the reservation assertion. It found two separate existing P1 gaps in kernel outcome classification and append-only witness coverage. The reviewer did not run tests or native writers.",
+  "native_and_campaign_gaps": [
+    "Grant revocation and journal claim are not a single linearization contract; N07-A1 remains P0 open.",
+    "The actual destination writer and complete durable witness failure path are not qualified; T12 is blocked.",
+    "The implementation router kernel can return BLOCKED after an accepted side effect; the Control MCP reservation may then be released.",
+    "The 17,065-commit metadata inventory remains unmapped to complete U1 semantic family coverage.",
+    "Control MCP production write remains DISABLED; no public PR, production restart or runtime write was performed."
+  ],
+  "revisit_trigger": "Prove and implement grant/claim/effect revocation linearization, repair post-effect ambiguity and witness failure durability with actual trusted host and destination writer evidence, then independently review final source before T12."
+}

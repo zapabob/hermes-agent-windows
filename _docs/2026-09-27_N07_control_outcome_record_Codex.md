@@ -1,0 +1,21 @@
+# N07 partial: failed outcome record cannot report success
+
+Repository: `zapabob/hermes-agent-windows`. Product commit `01c28864f87582ab81fa3c6bd9fca7495a8c03ca`, tree `f2844024d67bcd77419ca16fb1d1148e5327487a`. The original checkout and preserved feature worktree were not reset, cleaned, stashed, renamed or edited. The fixed campaign ceiling remains U1 `678a4762b887f3eabe5cad11254b2ab1ae859485`; U0 is unchanged. This is one narrow, partial N07-A2 contract, not T12 approval or full upstream coverage.
+
+## Actual source and counterexample
+
+`plugins/implementation_router/apply.py` claims one approved apply, calls the injected destination compare-and-swap, appends an identity-bound witness and records the terminal journal outcome. `plugins/implementation_router/control.py` claims one approved engineering run, calls the registered native workflow and records its result. The pre-change `_record` helpers swallowed `ControlError`; both owners could return `SUCCEEDED` even though `HostControlJournal.transition` had not durably committed the outcome. The D0 and U1 trees lack these local paths. Before this change, both owner source blobs were identical to the preserved feature branch, so LM03–LM05 were reused.
+
+The new actual-owner tests failed before the fix: a landed apply returned success despite an injected `journal_unavailable`, and an engineering future returned success despite the same failure. The patch makes `_record` report whether the terminal write completed. Apply raises `apply_outcome_unknown` and engineering returns `UNKNOWN` on record failure. SQLite operational errors follow the same fail-closed result. A landed apply's existing witness stays append-only, and restart changes its still-running row to UNKNOWN while holding the reservation. A test additionally rejects a new operation in that workspace after restart.
+
+## Verification and source binding
+
+At the final product bytes, Windows Python 3.12 passed 166 tests across the Control MCP approval, claim, apply, owner and operation files. Windows Python 3.11 passed five focused tests before a test-only reservation assertion was added; it was not repeated after that assertion. A mutation that returned `True` from `_record` on failure made all four new parametrized failure cases fail, then was removed before the final run. The independent read-only reviewer found no concrete issue in this narrow fix after checking the reservation assertion; the reviewer did not run tests.
+
+Approved local CodeGraph 1.6.0 reported 8,950 indexed integration files and zero pending changes or refs after sync and after the product commit. Query, explore and impact were rerun. D0 and U1 indexes were separately up to date and had no `VerifiedApplyOwner` symbol. CodeGraph impact does not resolve the injected owner/caller chain, so the production-owner tests supply that part of the call path. External local receipt `N07-A2-20260927/receipt.json` has SHA-256 `3a87d6e7f864fde0c1bfa9713cb6f8f50303ae6d30f1eb7b5d907e274365d163` and binds the product commit/tree to tool hashes, index digest, graph outputs and all four source/test bytes.
+
+## Open authority and durability gates
+
+N07-A1 is unresolved: the journal SQLite write lock does not serialize a separate host-provided grant store's revocation. A successful grant lookup can be followed by revocation before `RUNNING` commits or before the destination effect. The independent investigator verified this from the startup, auth, journal and owner source. A further independent review found that the implementation router kernel may classify an exception after an accepted effect as `BLOCKED`, and an apply witness append failure can still be followed by a durable `SUCCEEDED` without an append-only witness. These are separate P1 counterexamples to investigate, not covered by the narrow fix.
+
+No actual production destination writer was invoked. T06/T12 and the full commit-to-family ledger remain open. Control MCP production write stays DISABLED. To reverse only this partial implementation in the isolated branch, review and revert product commit `01c28864f87582ab81fa3c6bd9fca7495a8c03ca`, then rerun affected tests and rebuild the integration CodeGraph against that exact tree. No reversal was performed here.
