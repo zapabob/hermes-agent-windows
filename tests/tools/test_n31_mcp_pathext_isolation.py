@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
+import tools.mcp_tool as _mcp_mod
 from tools.mcp_tool import MCPServerTask, _resolve_stdio_command
 
 
@@ -22,37 +23,26 @@ def test_stdio_configured_pathext_is_not_visible_to_another_thread(tmp_path, mon
     child_env = {"PATH": str(child_bin), "Pathext": ".CMD"}
     entered_retry = threading.Event()
     release_retry = threading.Event()
-    finished = threading.Event()
     outcome = {}
-    original_which = shutil.which
-    calls = 0
+    original_lookup = _mcp_mod._which_with_config_pathext
 
-    def guarded_which(command, path=None):
-        nonlocal calls
-        calls += 1
-        if calls == 1:
-            return None  # Parent PATHEXT cannot locate this .cmd launcher.
+    def guarded_lookup(command, path, pathext):
         entered_retry.set()
         if not release_retry.wait(timeout=5):
             raise TimeoutError("PATHEXT lookup was not released")
-        return original_which(command, path=path)
+        return original_lookup(command, path, pathext)
 
     def resolve():
         try:
             outcome["resolved"] = _resolve_stdio_command("n31_server", child_env)
         except BaseException as exc:
             outcome["error"] = exc
-        finally:
-            finished.set()
 
-    with patch("tools.mcp_tool.shutil.which", side_effect=guarded_which):
+    with patch("tools.mcp_tool._which_with_config_pathext", side_effect=guarded_lookup):
         worker = threading.Thread(target=resolve, daemon=True)
         worker.start()
         try:
-            for _ in range(100):
-                if entered_retry.wait(timeout=0.01) or finished.is_set():
-                    break
-            assert entered_retry.is_set() or finished.is_set(), "resolver did not reach a result"
+            assert entered_retry.wait(timeout=5), "resolver did not use the configured PATHEXT"
             assert os.environ["PATHEXT"] == ".EXE"
         finally:
             release_retry.set()

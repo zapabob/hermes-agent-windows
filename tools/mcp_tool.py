@@ -761,7 +761,20 @@ def _build_safe_env(user_env: Optional[dict]) -> dict:
         ):
             env[key] = value
     if user_env:
-        env.update(user_env)
+        if sys.platform == "win32":
+            # Windows treats environment names case-insensitively. Remove an
+            # inherited spelling before applying a configured override; keep
+            # PATH/PATHEXT canonical for the stdio command resolver.
+            for key, value in user_env.items():
+                if isinstance(key, str):
+                    for inherited in tuple(env):
+                        if inherited.upper() == key.upper():
+                            del env[inherited]
+                    if key.upper() in {"PATH", "PATHEXT"}:
+                        key = key.upper()
+                env[key] = value
+        else:
+            env.update(user_env)
     return env
 
 
@@ -1048,7 +1061,9 @@ def _which_with_config_pathext(command: str, path: str, pathext: str) -> str | N
     return None
 
 
-def _resolve_stdio_command(command: str, env: dict) -> tuple[str, dict]:
+def _resolve_stdio_command(
+    command: str, env: dict, *, explicit_pathext: bool = False,
+) -> tuple[str, dict]:
     """Resolve a stdio MCP command against the exact subprocess environment.
 
     This locates known bare launchers even when MCP subprocesses run under a
@@ -1056,24 +1071,27 @@ def _resolve_stdio_command(command: str, env: dict) -> tuple[str, dict]:
     """
     resolved_command = os.path.expanduser(str(command).strip())
     resolved_env = dict(env or {})
+    selected_with_config_pathext = False
 
     if os.sep not in resolved_command:
         path_arg = resolved_env["PATH"] if "PATH" in resolved_env else None
-        which_hit = shutil.which(resolved_command, path=path_arg) if path_arg is not None else None
-        if (path_arg is not None and which_hit is None
-                and sys.platform == "win32" and resolved_env):
-            # shutil.which(..., path=...) resolves extensions from the PARENT
-            # process PATHEXT, not the MCP subprocess env — so a config that
-            # supplies both PATH and PATHEXT can fail to resolve a command
-            # its own env can find (#56536). Search with the child PATHEXT
-            # without publishing it to other threads in this process.
+        cfg_pathext = None
+        if path_arg is not None and sys.platform == "win32":
             cfg_pathext = next(
                 (v for k, v in resolved_env.items()
                  if k.upper() == "PATHEXT" and isinstance(v, str) and v.strip()),
                 None,
             )
-            if cfg_pathext and cfg_pathext != os.environ.get("PATHEXT"):
-                which_hit = _which_with_config_pathext(resolved_command, path_arg, cfg_pathext)
+        # A different child value also matters for direct callers; the stdio
+        # caller supplies the explicit-config bit for equal-valued overrides.
+        use_config_pathext = bool(
+            cfg_pathext and (explicit_pathext or cfg_pathext != os.environ.get("PATHEXT"))
+        )
+        if use_config_pathext:
+            which_hit = _which_with_config_pathext(resolved_command, path_arg, cfg_pathext)
+            selected_with_config_pathext = bool(which_hit)
+        else:
+            which_hit = shutil.which(resolved_command, path=path_arg) if path_arg is not None else None
         if which_hit:
             resolved_command = which_hit
         elif resolved_command in {"npx", "npm", "node"}:
@@ -1117,7 +1135,10 @@ def _resolve_stdio_command(command: str, env: dict) -> tuple[str, dict]:
                     resolved_command = candidate
                     break
 
-    resolved_command = _prefer_windows_exe(resolved_command)
+    # An explicit child extension choice outranks the Desktop's usual shim
+    # preference. Other paths retain the fork's console-flash avoidance.
+    if not selected_with_config_pathext:
+        resolved_command = _prefer_windows_exe(resolved_command)
 
     command_dir = os.path.dirname(resolved_command)
     if command_dir:
@@ -3266,7 +3287,12 @@ class MCPServerTask:
             )
 
         safe_env = _build_safe_env(user_env)
-        command, safe_env = _resolve_stdio_command(command, safe_env)
+        explicit_pathext = isinstance(user_env, dict) and any(
+            isinstance(key, str) and key.upper() == "PATHEXT" for key in user_env
+        )
+        command, safe_env = _resolve_stdio_command(
+            command, safe_env, explicit_pathext=explicit_pathext,
+        )
 
         # Check package against OSV malware database before spawning.
         # Run off the event loop (the urllib HTTPS call is blocking) and bound
