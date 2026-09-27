@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "status": "MAPPED_N50_CRON_ALL_PROFILE_LIST_NATIVE_GREEN",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N50",
+  "priority": "P1",
+  "repository": "zapabob/hermes-agent-windows",
+  "upstream_source": [
+    {
+      "commit": "f84db42a32b28a00a2ef1e11e5471a27d22cc37f",
+      "ledger_row": "docs/windows/semantic-refresh-20260926/inventory/v0215_to_u1.jsonl:2283",
+      "mapping": "The cross-profile cron listing observable contract is mapped into the fork's existing web_server.py owner. U1 moved that owner to web_routers/cron.py; no second fork owner was added. This maps this commit's listing behavior, not other U1 commits or full campaign coverage."
+    }
+  ],
+  "frozen": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "local_feature_observed": "2622ea42ce3ad044bac4c4e8b9812ba21f7ae65a",
+    "R2": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
+    "U1": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+    "old_U0_unchanged": "b936546561888a54d5bf9cd7eae9629a824eb4f7"
+  },
+  "source_blobs": {
+    "D0_hermes_cli/web_server.py": "a5b403702a84f7cc87c5f1448987fb5218a19352",
+    "local_feature_hermes_cli/web_server.py": "315d1ba3e2b8c42d7e8eaf260b998b4abe9c0c9d",
+    "U1_hermes_cli/web_routers/cron.py": "9f5e0cf3d2203a7e067c3d34775b58c87d8afb04",
+    "integration_parent_hermes_cli/web_server.py": "a2e8dab0448bebe1eb994d836aa86aede54a82e4",
+    "integration_parent_tests/hermes_cli/test_web_server_cron_profiles.py": "adc3ddafcd3098adcd7d757ba35459f4cb51992a",
+    "product_hermes_cli/web_server.py": "404dbe176551ff584cacc3590d996a1a5b68343d",
+    "product_tests/hermes_cli/test_web_server_cron_profiles.py": "9548db423983e107c72a8aeccdeb3104d4309f95"
+  },
+  "source_span": [
+    "D0 web_server.py:_list_cron_jobs_sync starts at 13297; observed local feature owner starts at 13360; integration parent owner starts at 13361. Each aggregated profile list by extending jobs and returned duplicates unchanged.",
+    "U1 web_routers/cron.py:_list_cron_jobs_sync starts at 105; upstream f84db42... deduplicated by real id with default-profile priority and left normalized id='unknown' records separate.",
+    "Integration web_routers/cron.py:list_cron_jobs:64-65 calls the existing web_server.py:_list_cron_jobs_sync:13361-13393 through the dashboard I/O boundary. That owner now aggregates only for profile='all'. _call_cron_for_profile:13250 onward and _annotate_cron_job:13241-13247 supply actual profile-owned persisted records and the derived default flag; the selected-profile path still returns its single profile list."
+  ],
+  "observable_contract": "GET /api/cron/jobs with profile=all returns one record for a real id copied across profiles, choosing the default profile's copy independently of profile enumeration order; distinct real ids remain, and separate legacy records normalized to id='unknown' remain separate. An explicitly selected profile remains unaggregated.",
+  "red_receipt": {
+    "local_name": "N50-20260928/red.json",
+    "sha256": "2331ccf0dd7514e79954c44945f88f261d55cc781b0df60a7e6e1ad2a7104928",
+    "binding": "Against unchanged integration owner blob a2e8dab..., actual persisted jobs.json and profile calls failed the shared-id case in both enumeration orders: 2 failed, 2 passed. Unique ids and idless legacy records already passed."
+  },
+  "product_commit": "9d0916ed01580c5132b06175c4e91179032095fd",
+  "product_tree": "6e9359d4ebbf9a10d3ccd123f58bcafec4d60f1f",
+  "changed_product_paths": [
+    "hermes_cli/web_server.py",
+    "tests/hermes_cli/test_web_server_cron_profiles.py"
+  ],
+  "green_evidence": [
+    "Four new parameterized focused cases passed after the edit. In fresh subprocesses per file, native test_web_server_cron_profiles.py passed 35, test_cron_profile_isolation.py passed 2, and test_cron_manage_profile_scope.py passed 2. Ruff and git diff --check passed.",
+    "Three controlled mutants failed their relevant native tests: return duplicate jobs, retain first copy irrespective of default priority, and collapse the normalized unknown sentinel. The source SHA-256 matched before and after mutation restoration.",
+    "Independent read-only Code Reviewer reported CLEAR on the two-file diff and saved receipts. This is a conversation report without a standalone review artifact; the reviewer did not execute tests or CodeGraph."
+  ],
+  "execution_receipts": {
+    "native": {
+      "local_name": "N50-20260928/execution.json",
+      "sha256": "304e812f8bcfdfd9193ae2437141419744fc0605d1c011125821410700dced75"
+    },
+    "mutation": {
+      "local_name": "N50-20260928/mutation.json",
+      "sha256": "27ae05082fbd5bd980f79c2b407ad42122c835bc98c90c56d3e39cbc4547ffae"
+    }
+  },
+  "codegraph_receipts": {
+    "before_product": {
+      "local_name": "N50-20260928/pre.json",
+      "sha256": "61740b77028dac1b85c99eac1091cc6bd344caa1c3f0a884670c7988bd1ce299",
+      "binding": "At integration HEAD 418d453d9841824568028e07f4dc5ce6db0aa0e5, after test RED but before product edit, D0/U1/integration had separate indexes, 8,881/12,468/8,969 files and pending changes/refs zero. Query/explore/impact located existing owners."
+    },
+    "after_product": {
+      "local_name": "N50-20260928/receipt.json",
+      "sha256": "8bc1be15e1fa0981fae83a6296a18a04706065b5dbfc8d80562bd5b56b93d29b",
+      "binding": "At integration parent HEAD 418d453d9841824568028e07f4dc5ce6db0aa0e5 with product diff, D0/U1/integration had separate indexes, 8,881/12,468/8,969 files and pending changes/refs zero. Query/explore/impact ran for each owner."
+    },
+    "post_commit": {
+      "local_name": "N50-20260928/postcommit.json",
+      "sha256": "726f112686b0620096b4defcfa65b80ffdd821e5a2b7c385edacb84bfa9bed11",
+      "binding": "At exact product HEAD 9d0916ed01580c5132b06175c4e91179032095fd, both disk blobs equaled committed blobs and the integration graph was fresh at capture time."
+    }
+  },
+  "open_gaps": [
+    "The tests exercise the real storage-backed dashboard aggregator and selected-profile call, but no live Desktop UI, HTTP service, or scheduler concurrency run was performed. This family does not prove release readiness.",
+    "Only this upstream commit's cron listing behavior was mapped. The historical ledger and remaining U1 commits still require separate family classification; inventory semantic_review_complete remains false.",
+    "N07-A1 grant-revocation host writer is not implemented per the user's reply. Destination outcome durability, T06 and T12 remain unqualified, and Control MCP production write stays DISABLED.",
+    "Original main and feature WIP were untouched. Isolated worktree untracked $tmp remains after automatic approval review rejected removal without a detailed reason. No PR, push, release or production restart occurred."
+  ]
+}
