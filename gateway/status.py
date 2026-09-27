@@ -427,7 +427,7 @@ def get_process_start_time(pid: int) -> Optional[int]:
 
 
 def _read_process_cmdline(pid: int) -> Optional[str]:
-    """Return the process command line as a space-separated string.
+    """Return the process command line, retaining Windows argv boundaries.
 
     On Linux, reads /proc/<pid>/cmdline directly.  On macOS and other
     platforms without /proc, falls back to ``ps -p <pid> -o command=``.
@@ -461,11 +461,79 @@ def _read_process_cmdline(pid: int) -> Optional[str]:
         proc = psutil.Process(pid)
         cmdline_parts = proc.cmdline()
         if cmdline_parts:
-            return " ".join(cmdline_parts)
+            return subprocess.list2cmdline(cmdline_parts)
     except Exception:
         pass
 
     return None
+
+
+_PYTHON_SHORT_OPTIONS_WITH_OPERANDS = frozenset({"Q", "W", "X"})
+_PYTHON_LONG_OPTIONS_WITH_OPERANDS = frozenset(
+    {"--check-hash-based-pycs", "--jit"}
+)
+_PYTHON_EXECUTABLE_RE = re.compile(
+    r"(?:pythonw?(?:\d+(?:\.\d+)?)?|py|pypy3?)(?:\.exe)?$", re.IGNORECASE
+)
+
+
+def _inline_python_source_flag_index(tokens: list[str]) -> int | None:
+    """Find Python's inline ``-c`` before its source and later program arguments.
+
+    The updater's restart watcher carries a future ``gateway run`` argv after
+    its inline program. A joined Windows psutil argv may also split an unquoted
+    interpreter path with spaces; locate that executable before parsing flags.
+    Keep option case: ``-X`` takes a value while ``-q`` does not.
+    """
+    if not tokens:
+        return None
+
+    def is_python_executable(token: str) -> bool:
+        basename = token.strip("\"'").replace("\\", "/").rsplit("/", 1)[-1]
+        return bool(_PYTHON_EXECUTABLE_RE.fullmatch(basename))
+
+    index = 1 if is_python_executable(tokens[0]) else None
+    if index is None and re.match(r"^[A-Za-z]:[/\\]", tokens[0]):
+        # Win32_Process may expose an unquoted executable path. Its spaces,
+        # including a standalone hyphen, are not Python option boundaries.
+        # Stop at the first non-Python executable rather than searching its
+        # later arguments for a misleading Python process.
+        for candidate, part in enumerate(tokens):
+            if is_python_executable(part):
+                index = candidate + 1
+                break
+            if part.lower().endswith((".exe", ".com", ".bat", ".cmd", ".py")):
+                return None
+    if index is None:
+        return None
+
+    while index < len(tokens):
+        token = tokens[index]
+        if token == "--":
+            return None
+        if token in _PYTHON_LONG_OPTIONS_WITH_OPERANDS:
+            index += 2
+            continue
+        if token.startswith("--"):
+            index += 1
+            continue
+        if not token.startswith("-") or token == "-":
+            return None
+        cluster = token[1:]
+        for position, letter in enumerate(cluster):
+            if letter == "c":
+                return index
+            if letter in _PYTHON_SHORT_OPTIONS_WITH_OPERANDS:
+                index += 1 if cluster[position + 1:] else 2
+                break
+        else:
+            index += 1
+    return None
+
+
+def command_line_runs_inline_source(tokens: list[str]) -> bool:
+    """Whether this process runs inline Python source, not its argv tail."""
+    return _inline_python_source_flag_index(tokens) is not None
 
 
 def _gateway_command_subcommand(command: str | None) -> str | None:
@@ -496,8 +564,13 @@ def _gateway_command_subcommand(command: str | None) -> str | None:
     except ValueError:
         raw_tokens = command.split()
     # Strip surrounding quotes, normalize slashes + case per token.
-    tokens = [t.strip("\"'").replace("\\", "/").lower() for t in raw_tokens]
+    cased_tokens = [t.strip("\"'").replace("\\", "/") for t in raw_tokens]
+    tokens = [t.lower() for t in cased_tokens]
     if not tokens:
+        return None
+
+    # The restart watcher's trailing gateway argv belongs to its future child.
+    if command_line_runs_inline_source(cased_tokens):
         return None
 
     # Gateway-dedicated entrypoints carry no subcommand to inspect.

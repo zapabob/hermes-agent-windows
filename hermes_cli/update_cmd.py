@@ -3559,7 +3559,7 @@ def _classify_concurrent_instance(pid: int) -> str:
 
     from hermes_cli._scan_venv_blockers import _is_pausable_gateway  # noqa: PLC0415
 
-    cmdline = " ".join(cmdline_list or [])
+    cmdline = subprocess.list2cmdline(cmdline_list or [])
     if _is_pausable_gateway(cmdline):
         return "gateway"
     return "non-gateway"
@@ -5047,7 +5047,7 @@ def _detect_venv_python_processes(
             # this CLI's own venv python chain) stays excluded — an updater
             # must never nominate its own interactive ancestry as blockers.
             try:
-                anc_cmdline = " ".join(anc.cmdline() or [])
+                anc_cmdline = subprocess.list2cmdline(anc.cmdline() or [])
             except Exception:
                 anc_cmdline = ""
             if _is_gw is not None and anc_cmdline and _is_gw(anc_cmdline):
@@ -5091,7 +5091,7 @@ def _detect_venv_python_processes(
             continue
 
         try:
-            cmdline_raw = " ".join(proc.cmdline() or [])
+            cmdline_raw = subprocess.list2cmdline(proc.cmdline() or [])
         except Exception:
             cmdline_raw = ""
         cmdline_low = cmdline_raw.lower()
@@ -5373,6 +5373,13 @@ def _hermes_holder_subcommand(cmdline: str) -> str | None:
     if entry_idx is None:
         return None
 
+    from gateway.status import command_line_runs_inline_source
+
+    if command_line_runs_inline_source(
+        [token.strip('"').replace("\\", "/") for token in tokens]
+    ):
+        return None
+
     value_flags = _holder_value_flags()
     i = entry_idx + 1
     while i < len(tokens):
@@ -5476,7 +5483,7 @@ def _venv_launcher_ancestors(pids: list[int]) -> list[int]:
     try:
         for anc in psutil.Process().parents():
             try:
-                anc_cmdline = " ".join(anc.cmdline() or [])
+                anc_cmdline = subprocess.list2cmdline(anc.cmdline() or [])
             except Exception:
                 anc_cmdline = ""
             if _is_gw is not None and anc_cmdline and _is_gw(anc_cmdline):
@@ -5542,7 +5549,7 @@ def _leftover_pausable_gateway_pids(
         argv = cmdline
         if psutil is not None:
             try:
-                argv = " ".join(psutil.Process(int(pid)).cmdline()) or cmdline
+                argv = subprocess.list2cmdline(psutil.Process(int(pid)).cmdline()) or cmdline
             except Exception:
                 pass
         if not _is_pausable_gateway(argv):
@@ -5713,7 +5720,7 @@ def _orphaned_desktop_backend_pids(
     for pid, _name, cmdline in matches:
         argv = cmdline
         try:
-            argv = " ".join(psutil.Process(int(pid)).cmdline()) or cmdline
+            argv = subprocess.list2cmdline(psutil.Process(int(pid)).cmdline()) or cmdline
         except psutil.NoSuchProcess:
             # Holder exited between scan and classification — nothing to
             # reap, nothing blocking. Skip it.
@@ -5874,7 +5881,7 @@ def _handoff_reapable_backend_pids(
     for pid, _name, cmdline in matches:
         argv = cmdline
         try:
-            argv = " ".join(psutil.Process(int(pid)).cmdline()) or cmdline
+            argv = subprocess.list2cmdline(psutil.Process(int(pid)).cmdline()) or cmdline
         except psutil.NoSuchProcess:
             # Exited between scan and classification — nothing to reap.
             continue

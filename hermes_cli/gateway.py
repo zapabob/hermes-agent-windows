@@ -1220,7 +1220,7 @@ def _capture_gateway_argv(pid: int) -> list[str] | None:
     try:
         from gateway.status import looks_like_gateway_command_line
 
-        if not looks_like_gateway_command_line(" ".join(argv)):
+        if not looks_like_gateway_command_line(subprocess.list2cmdline(argv)):
             return None
     except Exception:
         pass

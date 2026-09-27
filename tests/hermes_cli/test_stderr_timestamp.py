@@ -92,7 +92,11 @@ def test_main_injects_flag_into_stale_gateway_child(tmp_path, monkeypatch):
         f"Path({str(marker_path)!r}).write_text("
         "'\\n'.join(sys.argv[1:]), encoding='utf-8')\n"
     )
-    stale = [sys.executable, "-c", code, "-m", "hermes_cli.main", "gateway", "run", "--replace"]
+    # The stand-in must not use Python -c: arguments after inline source are
+    # data for that process, not the identity of a gateway child.
+    child_script = tmp_path / "gateway_child.py"
+    child_script.write_text(code, encoding="utf-8")
+    stale = [sys.executable, str(child_script), "-m", "hermes_cli.main", "gateway", "run", "--replace"]
 
     rc = stderr_timestamp.main(
         ["--error-log", str(log_path), "--", *stale]
