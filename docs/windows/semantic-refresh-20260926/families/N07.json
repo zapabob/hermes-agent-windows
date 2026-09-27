@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "PARTIAL_A2_FALSE_SUCCESS_FIXED_A1_AND_DURABLE_EVIDENCE_OPEN",
+  "status": "PARTIAL_A2_TERMINAL_AND_WITNESS_FALSE_SUCCESS_FIXED_A1_AND_DURABLE_EVIDENCE_OPEN",
   "campaign_id": "windows-semantic-refresh-20260926",
   "family_id": "N07",
   "priority": "P0",
@@ -8,7 +8,7 @@
   "upstream_merge_parents": [],
   "salvage_fixup_revert_lineage": [],
   "final_upstream_sha": "678a4762b887f3eabe5cad11254b2ab1ae859485",
-  "final_observable_contract": "Before T12, a grant revocation must be linearized with claims and effect boundaries. A landed destination effect whose terminal journal record fails must never return false success or gain a second effect; an identity-bound append-only outcome witness must survive for reconciliation. This card records only the narrow false-success correction.",
+  "final_observable_contract": "Before T12, a grant revocation must be linearized with claims and effect boundaries. A landed destination effect whose terminal journal record or append-only witness fails must never return false success or gain a second effect; identity-bound destination outcome evidence must survive for reconciliation. This card records two narrow false-success corrections, not durable evidence completion.",
   "downstream_predecessor": {
     "commit": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
     "source": [
@@ -26,14 +26,19 @@
   "acceptance": {
     "N07-A1": "OPEN: host grant_lookup and revocation are not synchronized with the journal claim or final effect",
     "N07-A2_false_success": "PASS_LOCAL: journal terminal record failure produces UNKNOWN or apply_outcome_unknown, keeps reservation and never reclaims the same operation",
-    "N07-A2_append_only_evidence": "PARTIAL: a landed apply with transition failure retains its journal witness, but witness-write failure may still leave a terminal SUCCEEDED row without an append-only witness; an uncertain post-effect kernel exception may be classified BLOCKED"
+    "N07-A2_witness_failure": "PASS_LOCAL: after a landed destination CAS, append-only witness failure now yields UNKNOWN and apply_outcome_unknown, retains the reservation, and rejects a second claim, including across journal restart",
+    "N07-A2_append_only_evidence": "OPEN: a failed witness leaves no append-only destination outcome evidence; a write that lands then raises without acknowledgement remains ambiguous, and an uncertain post-effect kernel exception may be classified BLOCKED"
   },
   "red_or_equivalence_receipts": [
     "The production apply owner returned SUCCEEDED after a landed CAS when journal.transition raised ControlError; the new actual-owner test failed before the fix.",
     "The production engineering owner returned SUCCEEDED from its future after journal.transition raised ControlError; the new actual-owner test failed before the fix.",
-    "Independent read-only N07-A1 investigation found that the grant lookup can commit revocation in a separate store between successful lookup and journal RUNNING commit."
+    "Independent read-only N07-A1 investigation found that the grant lookup can commit revocation in a separate store between successful lookup and journal RUNNING commit.",
+    "Before the witness correction, the actual VerifiedApplyOwner returned SUCCEEDED after a landed destination CAS when append_effect_evidence raised ControlError or sqlite3.OperationalError; both parametrized cases failed RED."
   ],
-  "implementation_commits": ["01c28864f87582ab81fa3c6bd9fca7495a8c03ca"],
+  "implementation_commits": [
+    "01c28864f87582ab81fa3c6bd9fca7495a8c03ca",
+    "5c2cea7d2dd8a14f440ab687e1880424a2e6a80e"
+  ],
   "changed_paths": [
     "plugins/implementation_router/apply.py",
     "plugins/implementation_router/control.py",
@@ -41,12 +46,14 @@
     "tests/control_mcp/test_review_approval_binding.py"
   ],
   "focused_and_native_receipts": [
-    "Windows Python 3.12 affected Control MCP suites: 166 passed across six files at the committed product bytes.",
+    "Windows Python 3.12 affected Control MCP suites: 166 passed across six files at the first product commit and 167 passed across six files at the witness-correction product commit.",
     "Windows Python 3.11 focused tests: 5 passed and 82 deselected before the final test-only reservation assertion; no separate post-assertion Python 3.11 claim.",
-    "Tests use the production owner APIs and native SQLite journal/restart behavior with an inert counted destination; no production destination writer was bound or run."
+    "Tests use the production owner APIs and native SQLite journal/restart behavior with an inert counted destination; no production destination writer was bound or run.",
+    "The two witness-failure cases passed again after byte-identical restoration of the controlled mutant; Python 3.11 was unavailable in the current session."
   ],
   "mutation_receipts": [
-    "Changing both _record failure branches to return True killed all four ControlError and sqlite3.OperationalError variants; the mutation was reverted before the 166-test final run and commit."
+    "Changing both _record failure branches to return True killed all four ControlError and sqlite3.OperationalError variants; the mutation was reverted before the 166-test first product run and commit.",
+    "Forcing _witness to return True on append failure killed both ControlError and sqlite3.OperationalError regression cases; the source SHA-256 was restored before the 167-test final run and witness-correction commit."
   ],
   "codegraph_after": {
     "version": "1.6.0",
@@ -58,10 +65,20 @@
     "freshness": "UP_TO_DATE; zero pending changes or refs; four target source/test SHA-256 values match actual, committed and indexed bytes",
     "graph_limit": "Impact results do not resolve the injected owner/caller path; actual owner tests supplement the graph"
   },
-  "independent_review": "A read-only reviewer found no concrete defect in the narrow false-success fix after the reservation assertion. It found two separate existing P1 gaps in kernel outcome classification and append-only witness coverage. The reviewer did not run tests or native writers.",
+  "codegraph_after_witness_correction": {
+    "version": "1.6.0",
+    "commit": "5c2cea7d2dd8a14f440ab687e1880424a2e6a80e",
+    "tree": "f88023b448ccf4910cb0beb9647365c354117450",
+    "external_receipt": "N07-A2-witness-20260927/receipt.json",
+    "receipt_sha256": "8ca7acb1626026a4e24a45dd3cb3f09627d017e07df6c10841e2b70f336042c4",
+    "indexed_files": 8950,
+    "freshness": "UP_TO_DATE; zero pending changes or refs; two target source/test SHA-256 values match actual, committed and indexed bytes",
+    "graph_limit": "The graph identifies static owner/witness/journal symbols but cannot prove injected caller behavior or destination durability; actual-owner tests and separate native writer evidence remain necessary"
+  },
+  "independent_review": "Read-only independent reviews found no new blocking defect in either narrow false-success correction. The witness-correction review traced UNKNOWN through coordinator cleanup and reservation retention; it did not execute tests, CodeGraph or native writers. N07-A1 and durable destination evidence remain outside approval.",
   "native_and_campaign_gaps": [
     "Grant revocation and journal claim are not a single linearization contract; N07-A1 remains P0 open.",
-    "The actual destination writer and complete durable witness failure path are not qualified; T12 is blocked.",
+    "The actual destination writer and complete durable witness failure path are not qualified; a failed append leaves no append-only witness, so T12 is blocked.",
     "The implementation router kernel can return BLOCKED after an accepted side effect; the Control MCP reservation may then be released.",
     "The 17,065-commit metadata inventory remains unmapped to complete U1 semantic family coverage.",
     "Control MCP production write remains DISABLED; no public PR, production restart or runtime write was performed."
