@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "PARTIAL_N40_SHELL_ARGUMENT_ROLES_LOCAL_GREEN_UPSTREAM_MAPPING_OPEN",
+  "status": "N40_UPSTREAM_948C_TRANSPORT_CONTRACT_MAPPED_LOCAL_GREEN_CAMPAIGN_OPEN",
   "campaign_id": "windows-semantic-refresh-20260926",
   "family_id": "N40",
   "priority": "P1",
@@ -8,7 +8,7 @@
   "upstream_source": {
     "commit": "948c9dbfc0b0e87b1ef4b2b0396750372f75afe6",
     "ledger_row": "docs/windows/semantic-refresh-20260926/inventory/v0215_to_u1.jsonl:1355",
-    "mapping": "PARTIAL: path versus non-path shell argument behavior is mapped; the full upstream commit and remaining U1 ledger are not claimed."
+    "mapping": "The exact commit's non-path local-Windows guard and local/serialized shell transport byte contract are semantically mapped. Other upstream commits and real Docker/SSH behavior are not claimed."
   },
   "frozen": {
     "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
@@ -31,15 +31,20 @@
   "red_receipt": "At parent a2e4b963e6644034bd00f57a5cdd8837a965ee38, four local/serialized tests failed because _escape_shell_arg lacked the non-path role and public regex alpha\\.beta matched zero lines instead of one. Two more UTF-16 rescue cases failed after the first helper change because embedded Python backslash escapes were still path-translated.",
   "product_commit": "1efe1bfe1abc5c5f0bfc7b8f949f1cc77523ff65",
   "product_tree": "675b2f2428f9540386c4db80eef77a36f34f0192",
+  "transport_test_commit": "13800dab3d283a18650aecb36c4305b52e211418",
+  "transport_test_tree": "a2ea12ee982c761c10d668bcc53aac6b72845b7c",
   "changed_paths": [
     "tools/file_operations.py",
     "tests/tools/test_n40_shell_argument_roles.py"
   ],
   "green_evidence": [
     "At exact product HEAD, six new native Git Bash cases passed across local argv and serialized-script transports. The test-specific UTF-16 command substitutes the actual interpreter because this PC's python3 WindowsApps alias is inert.",
+    "At exact transport-test HEAD, six N40 cases passed again. The byte transport test now covers empty text, whitespace, quote and shell metacharacters, newline, one/two/three/four/eight consecutive backslashes and backslash before a quote on both transports, matching every input class in upstream 948c9dbf's added test.",
     "The filtered affected Windows selection passed 110, skipped 12 POSIX-only cases and deselected 19 Windows-incompatible cases. An unfiltered run passed 113, skipped 12 and failed six existing TestUtf16Read cases because the PC's python3/python WindowsApps aliases are inert; ten cases were deselected, including two previously observed TestAutoMultiline Windows failures.",
     "Three controlled mutants were killed: treating non-path text as a path, translating the public search regex, and translating the UTF-16 Python program. The source was restored byte-identically.",
+    "A fourth controlled mutant removed the local-Windows condition; the serialized test killed it and product source SHA-256 was restored byte-identically.",
     "Independent read-only Code Reviewer first BLOCKED omitted Python-program callers, then returned CLEAR after the callers and native regression were fixed. The reviewer did not execute tests, CodeGraph, mutations or commit.",
+    "A subsequent independent read-only review inspected upstream 948c9dbf's full patch and test and the current helper/callers/test diff; it returned CLEAR for that exact commit's transport-contract semantic parity. It did not run tests, CodeGraph, mutation or commit.",
     "Actual source, exact product Git blobs and separate D0, U1 and integration CodeGraph hashes match."
   ],
   "codegraph_receipt": {
@@ -48,8 +53,14 @@
     "version": "1.6.0",
     "binding": "Separate D0 8,881-file, U1 12,468-file and post-change integration 8,963-file indexes have zero pending changes and refs; status, sync, query, explore, valid symbol-name impact and owner/caller maps are in the private local receipt."
   },
+  "transport_parity_receipt": {
+    "local_name": "N40-A2-20260927/receipt.json",
+    "sha256": "8080da675f1db63d4898187ddbd7f8ff5f50b308f75ee3e70afd0c6caeefde8c",
+    "version": "1.6.0",
+    "binding": "Separate D0 8,881-file, U1 12,468-file and exact test-commit integration 8,963-file indexes; zero pending changes and refs, with actual/Git/index hashes for the changed test and source."
+  },
   "open_gaps": [
-    "Only part of upstream 948c9dbf is mapped. Other upstream semantics and the 17,065-commit metadata universe remain unmapped.",
+    "The exact 948c9dbf transport contract is mapped. Other upstream commits and the 17,065-commit metadata universe remain semantically incomplete.",
     "Real Docker/SSH and native POSIX host behavior remain unverified. The serialized backend is a local shell test double.",
     "The six existing UTF-16 failures from inert WindowsApps Python aliases remain open; no OS setup or install was performed.",
     "N07-A1 host grant-revocation writer is not implemented; destination outcome durability and T06/T12 remain P0 open. Control MCP production write stays DISABLED.",
