@@ -999,7 +999,7 @@ See [Checkpoints and `/rollback`](../user-guide/checkpoints-and-rollback.md) for
 hermes import <zipfile> [options]
 ```
 
-Restore a previously created Hermes backup into your Hermes home directory. All files in the archive overwrite existing files in your Hermes home; `--force` only skips the confirmation prompt that fires when the target already has a Hermes installation.
+Restore a previously created Hermes backup into your Hermes home directory. Restorable files in the archive overwrite existing files in your Hermes home; `--force` only skips the confirmation prompt that fires when the target already has a Hermes installation.
 
 | Option | Description |
 |--------|-------------|
@@ -1008,6 +1008,8 @@ Restore a previously created Hermes backup into your Hermes home directory. All 
 :::warning
 Stop the gateway before importing to avoid conflicts with running processes.
 :::
+
+Before changing your home, import reads each restorable archive member and checks its CRC. A damaged member stops the import with exit status `1` and leaves the home unchanged. A file that becomes unreadable after this check produces an incomplete-import warning and exit status `1`; files already restored in that case remain in place. Machine-specific runtime files and archived SQLite sidecars are not restored.
 
 ### Examples
 ```bash

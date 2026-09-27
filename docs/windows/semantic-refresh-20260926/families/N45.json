@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "status": "MAPPED_N45_DAMAGED_ARCHIVE_PREFLIGHT_NATIVE_GREEN",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N45",
+  "priority": "P1",
+  "repository": "zapabob/hermes-agent-windows",
+  "upstream_source": [
+    {
+      "commit": "b24b7b725ce8b63a5543b316db6f74f72656ad27",
+      "ledger_row": "docs/windows/semantic-refresh-20260926/inventory/v0215_to_u1.jsonl:1606",
+      "mapping": "MAPPED: reject a damaged restorable archive before writing any home member, and return a nonzero outcome on an incomplete restore. The upstream CLI reference delta is represented in the integration website reference."
+    },
+    {
+      "commit": "d3c4c86daaa28327cd80bdbc1f295c69cd64c135",
+      "ledger_row": "docs/windows/semantic-refresh-20260926/inventory/v0215_to_u1.jsonl:1914",
+      "mapping": "MAPPED: catch member read errors consistently and preflight only what restore can write, excluding runtime files and archived SQLite sidecars."
+    }
+  ],
+  "frozen": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "local_feature_observed": "2622ea42ce3ad044bac4c4e8b9812ba21f7ae65a",
+    "R2": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
+    "U1": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+    "old_U0_unchanged": "b936546561888a54d5bf9cd7eae9629a824eb4f7"
+  },
+  "source_blobs": {
+    "D0_hermes_cli/backup.py": "cabb5c369f475f44c0a582ff99050fd0fd2ec711",
+    "U1_hermes_cli/backup.py": "0808f9ff2b6f2afd5357b1ac50143fa05cd36637",
+    "product_hermes_cli/backup.py": "4e2342bd938292d85c59a65477040345bdf8da0e",
+    "product_hermes_cli/main.py": "7b91994cdb7c7673b30187df4b5bbd9e478fcb38",
+    "product_tests/hermes_cli/test_backup.py": "ae0de58e0f256ce8e3b6b00c2d14f36afbd6cab8"
+  },
+  "final_observable_contract": "After confirmation but before the first restore write, hermes import streams each restorable ZIP member to EOF and checks its integrity. A damaged member refuses the entire import, preserves the current home, and returns 1 through the CLI. Deliberately skipped runtime files and foreign SQLite sidecars do not block a usable archive, while external provider members are not misclassified by their basename. A member read failure after preflight is reported as an incomplete import and returns 1.",
+  "source_span": [
+    "D0 and prechange integration hermes_cli/backup.py:1267-1313 validated ZIP structure, count, size and ratio but started replacing members without reading every stream; backup.py:1355 and :1394 atomically replaced each target only after its own stream. hermes_cli/main.py:6013-6017 discarded run_import's return value.",
+    "U1 final hermes_cli/backup.py:638-657 streamed members, and :740-747 refused damaged restorable archives before writes; its skip rule excludes runtime and SQLite sidecar members. The integration retains its existing atomic extraction and limits.",
+    "Integration hermes_cli/backup.py:1084-1112 defines shared skip and bounded stream verification; :1352-1373 checks before mkdir or extraction; :1423 and :1457 catch read errors after preflight; :1562 returns nonzero for an incomplete restore. main.py:6013-6017 propagates this to the CLI dispatcher."
+  ],
+  "red_receipts": [
+    "Before the product change, an intact central-directory ZIP with config.yaml followed by a damaged stored member replaced the live config before BadZipFile. The native regression failed on the observed imported config value. A damaged SQLite WAL was also read and raised BadZipFile, while a damaged gateway.pid was already skipped.",
+    "A simulated media EOF on the second read of an otherwise valid member returned success and printed Done before the product change. A wrapped external member with runtime-like basename exposed a preflight classification gap during implementation; the follow-up RED reached the old external-provider branch instead of refusing before a write."
+  ],
+  "product_commit": "6dc16d1b269f708e2a6f96b397290ac9cb295557",
+  "product_tree": "3437511f9ede9bfae469065c830552772884995c",
+  "changed_product_paths": [
+    "hermes_cli/backup.py",
+    "hermes_cli/main.py",
+    "tests/hermes_cli/test_backup.py"
+  ],
+  "documentation_path": "website/docs/reference/cli-commands.md",
+  "green_evidence": [
+    "Windows Python 3.12 focused: five native tests passed on synthetic ZIPs and an isolated temporary HERMES_HOME; no real home or gateway was used. Four affected backup test files passed 72 tests, nine Windows/POSIX skips, with two unrelated pre-existing cases explicitly deselected. Ruff and git diff --check passed.",
+    "Unfiltered affected run had one existing test error: TestSafeCopyDb.test_aborts_when_source_remains_busy_past_deadline globally monkeypatches time.monotonic with a finite iterator and exhausted it during pytest teardown. One existing Windows-only failure: test_quick_snapshot_is_published_with_manifest expects ten bytes after text-mode newline expansion made eleven. Neither source span was changed by N45.",
+    "Three controlled source mutations disabling preflight, sidecar skip and post-preflight EOF catch failed their respective tests. Product backup.py returned byte-identically to SHA-256 e0b8430376fa211abdb19473e9bd4740f18c38438f43d54194f15702bb40363d before final focused and affected runs.",
+    "Independent read-only Code Reviewer returned CLEAR on the three-file product diff, upstream semantics, actual CLI caller, skip boundary and source/receipt hashes. It did not run tests, mutation or CodeGraph."
+  ],
+  "codegraph_receipts": {
+    "after_product": {
+      "local_name": "N45-20260928/receipt.json",
+      "sha256": "01234b7ee7ca79c8ef8cffc50043bfcdd1dac27a8ef7f23a733a901ec938ac42",
+      "binding": "CodeGraph 1.6.0: D0 8,881 files, U1 12,468, integration after sync 8,968; zero pending changes and refs. Query/explore/impact identify backup.run_import, integrity helper and CLI caller with exact frozen/integration disk blobs. run_import name impact includes other homonyms, so direct caller reads remain authoritative."
+    },
+    "post_commit": {
+      "local_name": "N45-20260928/postcommit.json",
+      "sha256": "c225217ab49903e88871c2c133bc4cca63f6e7a6a1ee2e606eee11182ee06796",
+      "binding": "At exact product HEAD all three disk blobs equal committed blobs and integration graph is fresh with zero pending changes and refs."
+    }
+  },
+  "open_gaps": [
+    "A separate pre-existing external-provider restore defect remains: _collect_memory_provider_external_paths is defined without include_missing but its caller passes include_missing=True, and the function body references that unbound name. N45 does not claim normal external-provider restore; give it a separate family.",
+    "A real damaged customer backup and failing physical media were not exercised. The second-read failure was injected into the actual import owner; it can leave earlier files restored, which is reported as incomplete rather than rollback.",
+    "The historical 17,065-commit metadata inventory and remaining U1 rows are not closed by N45.",
+    "N07-A1 host grant-revocation writer, destination outcome durability and T06/T12 remain P0 open. Control MCP production write stays DISABLED.",
+    "The isolated worktree retains a zero-byte untracked $tmp after automatic approval review blocked removal without a detailed reason. No PR, push, release or production restart occurred."
+  ]
+}
