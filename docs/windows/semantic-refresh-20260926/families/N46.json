@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "status": "MAPPED_N46_LOCAL_FORK_EXTERNAL_PROVIDER_PATHS_NATIVE_GREEN",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N46",
+  "priority": "P1",
+  "repository": "zapabob/hermes-agent-windows",
+  "upstream_source": {
+    "commit_mapping": [],
+    "classification": "LOCAL_FORK_REGRESSION: no upstream ledger row is claimed. D0 and the observed local feature share the broken backup.py blob. U1 has a different external restore authorization contract, so its implementation is not substituted for the fork's provider-declared allowlist."
+  },
+  "frozen": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "local_feature_observed": "2622ea42ce3ad044bac4c4e8b9812ba21f7ae65a",
+    "R2": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
+    "U1": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+    "old_U0_unchanged": "b936546561888a54d5bf9cd7eae9629a824eb4f7"
+  },
+  "source_blobs": {
+    "D0_hermes_cli/backup.py": "cabb5c369f475f44c0a582ff99050fd0fd2ec711",
+    "local_feature_hermes_cli/backup.py": "cabb5c369f475f44c0a582ff99050fd0fd2ec711",
+    "U1_hermes_cli/backup.py": "0808f9ff2b6f2afd5357b1ac50143fa05cd36637",
+    "product_hermes_cli/backup.py": "cbeea1a052ead3c2f7b2b4018a54c9cdb8340c68",
+    "product_tests/hermes_cli/test_backup.py": "e0ce874ebb21f9e2f9cfb555ef1271f630a2d23c"
+  },
+  "final_observable_contract": "Backup enumerates only existing paths declared by the active memory provider. Import may accept a provider-declared external root that does not yet exist at the destination, but still confines the archive member to the user's home and that declared root. A valid provider external member restores to its home-relative path, not HERMES_HOME/_external.",
+  "source_span": [
+    "D0 backup.py helper starts at :262 and refers to an unbound include_missing name; observed local feature has the identical blob. Integration before N46 has the same helper at :276, called with no argument by run_backup at :891 and with include_missing=True by run_import at :1396. Both actual paths failed for an active provider.",
+    "U1 final helper at backup.py:228 lists existing provider paths and U1's import handles external members under home without the integration's provider-declared allowlist. This difference is recorded, not copied over the fork security boundary.",
+    "Integration backup.py:276 now defines keyword-only include_missing=False. Backup retains the existing-only default; import passes True and still checks home confinement and _is_allowed_external_target before extraction."
+  ],
+  "red_receipt": "At parent c08fd3f33c6725825e81d03c4d66f5ac036653dd, two native tests failed through actual run_backup and run_import callers: the backup raised NameError at backup.py:318, while valid external import raised TypeError at :1396. The provider and home were isolated in test fixtures.",
+  "product_commit": "4633a060896cdda2d37a7ae817d3596f6ef4d720",
+  "product_tree": "8e65a4133b91bc3cb6ef3a5b0c83505d96743d40",
+  "changed_product_paths": [
+    "hermes_cli/backup.py",
+    "tests/hermes_cli/test_backup.py"
+  ],
+  "green_evidence": [
+    "Windows Python 3.12: both focused native backup/import tests passed in an isolated temporary home. Four affected backup/CLI test files passed 68 tests, nine platform or environment skips, and two previously identified unrelated failing cases explicitly deselected. Ruff and git diff --check passed.",
+    "Two controlled source mutations were killed: changing the backup default to include nonexistent paths failed the existing-only assertion; always discarding nonexistent paths caused the actual import caller to reject a declared missing destination. The original source was restored and focused tests passed afterward.",
+    "Independent read-only Code Reviewer returned CLEAR after tracing the real callers and the preserved provider-declared external allowlist. The reviewer did not run tests, mutations, CodeGraph, or commit."
+  ],
+  "execution_receipt": {
+    "local_name": "N46-20260928/execution.json",
+    "sha256": "c3c853f794e502f8adc70c1b7aaad368c8a27a42c0ead67ccb9bfa85f38442cf",
+    "binding": "Private receipt records a renewed parent-signature RED, both killed mutations, focused and affected GREEN, Ruff and diff checks, their individual log hashes, and final exact product HEAD/source/test blob equality."
+  },
+  "codegraph_receipts": {
+    "after_product": {
+      "local_name": "N46-20260928/receipt.json",
+      "sha256": "7a1056e695b5b8eeaa44d417427358ad5628726f80a8ee8613e94ce058d38976",
+      "binding": "CodeGraph 1.6.0: D0 8,881 files, U1 12,468, integration after sync 8,968; zero pending changes and refs. Query/explore/impact bind the helper and backup/import owners to distinct exact frozen and integration disk blobs."
+    },
+    "post_commit": {
+      "local_name": "N46-20260928/postcommit.json",
+      "sha256": "1b44fa79b148970f8de465dbea5b7f2577b31aefbdd2a71a4c00a66e80a88e60",
+      "binding": "At the exact product HEAD both disk blobs equal the committed blobs and the integration graph remains fresh."
+    }
+  },
+  "open_gaps": [
+    "The new tests use an inert provider and temporary home; a live provider, customer backup, and physical media were not exercised.",
+    "This local-fork fix does not map an upstream commit or complete the remaining U1 semantic ledger rows. The historical 17,065-commit metadata inventory is still not a semantic coverage proof.",
+    "N07-A1 host grant-revocation writer and destination outcome durability are still absent; T06/T12 remain open, and Control MCP production write stays DISABLED.",
+    "An isolated-worktree zero-byte untracked $tmp remains after automatic approval review blocked removal without a detailed reason. Original main and feature WIP were untouched; no PR, push, release or production restart occurred."
+  ]
+}
