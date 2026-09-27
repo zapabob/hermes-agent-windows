@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "status": "PARTIAL_WINDOWS_GUI_PATH_REAL_MCP_LAUNCH_AND_OTHER_OS_OPEN",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N29",
+  "priority": "P2",
+  "origin": "Two newly mapped v0.21.5-to-U1 ledger rows: v0215_to_u1.jsonl:576 commit 40347fd40d732bfad9b403cc224b2054becd22d5 and :964 ceiling commit 678a4762b887f3eabe5cad11254b2ab1ae859485; beyond the original 25 seed families.",
+  "upstream_commits": [
+    "40347fd40d732bfad9b403cc224b2054becd22d5",
+    "678a4762b887f3eabe5cad11254b2ab1ae859485"
+  ],
+  "final_observable_contract": "On Windows, an MCP stdio server configured with bare uv or uvx resolves an executable in the active Hermes profile bin, then the current user's .local/bin, when the child PATH lacks the launcher. A child PATH hit retains precedence, the selected directory enters the child PATH, and unrelated commands keep their existing behavior.",
+  "source_span": [
+    "Before N29, tools/mcp_tool.py:1024-1091 handled bare Node launchers but had no uv/uvx known-directory fallback; tools/mcp_tool.py:3223-3292 calls this resolver before SDK stdio spawn",
+    "U1 tools/mcp_tool_config.py:202-226 owns the split resolver and hermes_platform/resolver/known_dirs.py:28-36 owns uv_tool_dirs; D0 and the integration source have neither split module",
+    "tools/mcp_tool.py:1084-1106 selects Windows uv/uvx only after child PATH miss, probes profile and user directories, then prepends the chosen directory to child PATH",
+    "tests/tools/test_mcp_tool_issue_948.py:95-215 covers launcher and actual caller behavior"
+  ],
+  "red_receipt": "At product parent 72adca67c3398a2b277cd3359f9975f6357be06a, three selected Windows tests failed: bare uv and uvx stayed unresolved, including the MCPServerTask stdio caller. The child-PATH-hit and unknown-command control test passed.",
+  "required_evidence": [
+    "Native Windows profile-bin and user-bin fallback for both uv and uvx, including .cmd shim",
+    "Active profile override must win over process-global HERMES_HOME",
+    "Configured child PATH hit and unrelated command behavior must be preserved",
+    "Actual MCPServerTask caller must pass resolved command and PATH to SDK parameters; affected tests, mutation, fresh CodeGraph and independent review"
+  ],
+  "publication_gate": "N29 is a partial Windows semantic adaptation. Mocked SDK parameters do not qualify a real child launch, Desktop GUI integration, other OS locations, or complete U1 coverage.",
+  "product_commit": "107ffaf8a423184f9ee782b6f72555f6d896998f",
+  "product_tree": "d8f3f986ea9c335971ec6430f2b97cddd0e383f4",
+  "green_evidence": [
+    "Five added native Windows test cases passed, including both uv and uvx, profile override, path precedence and SDK parameter capture",
+    "Four selected affected MCP test files passed 125 tests with three POSIX-only skips on Windows Python 3.12",
+    "Disabling the Windows fallback made the same three behavioral tests fail; source SHA-256 was restored to 5A6428CD4004A0045BDC157B0E26037A5273E334FF636BC3422B81C0FBBD1039",
+    "Read-only independent Code Reviewer cleared the restored diff and did not claim to run tests or CodeGraph"
+  ],
+  "codegraph_receipt": {
+    "path": "H:\\hermes-worktrees\\semantic-refresh-20260926\\source-bindings\\receipts\\codegraph\\N29-20260927\\receipt.json",
+    "sha256": "bf690aaec1e8591c339f9fc17cf4d6d3cd9f8d9cead27855753f9b6242bb5108",
+    "version": "1.6.0",
+    "binding": "Separate frozen D0 8,881-file, U1 12,468-file and committed integration 8,953-file indexes; both product/test paths actual=committed=indexed; pending changes and refs zero"
+  },
+  "open_gaps": [
+    "A real uv or uvx child was not launched; the MCP SDK spawn parameters were captured with a mock and no production runtime was started",
+    "Only Windows profile/user locations were adapted; upstream POSIX known-directory behavior and split hermes_platform architecture are outside this family",
+    "The parent-PATH leakage and PATHEXT concurrency concerns in the existing resolver remain separate candidates",
+    "The 17,065-commit metadata inventory is not a completed semantic mapping and required P0 families remain open",
+    "T06/T12 Control MCP production write remains DISABLED"
+  ]
+}
