@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import stat
+import threading
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -92,14 +93,19 @@ class ClamAVEngine:
         if not self.command:
             return EngineState.SCANNER_UNAVAILABLE.value
         try:
+            database_inventory = self._definition_inventory()
+        except DefinitionInventoryError:
+            return EngineState.ENGINE_ERROR.value
+        return self._version_for_inventory(database_inventory)
+
+    def _version_for_inventory(self, database_inventory: DefinitionInventory) -> str:
+        try:
             executable = Path(self.command).stat(follow_symlinks=False)
         except OSError:
             return EngineState.ENGINE_ERROR.value
         if not stat.S_ISREG(executable.st_mode) or self._metadata_is_reparse(executable):
             return EngineState.ENGINE_ERROR.value
-        database_identity = self._database_identity()
-        if database_identity.startswith("database-"):
-            return EngineState.ENGINE_ERROR.value
+        database_identity = f"{os.path.normcase(str(database_inventory.root))}:{database_inventory.revision}"
         identity = "\0".join(
             (
                 os.path.normcase(os.path.abspath(self.command)),
@@ -132,14 +138,7 @@ class ClamAVEngine:
             max_total_bytes=MAX_CLAMAV_DATABASE_TOTAL_BYTES,
         )
 
-    def _database_identity(self) -> str:
-        try:
-            inventory = self._definition_inventory()
-        except DefinitionInventoryError as exc:
-            return f"database-{exc.reason}"
-        return f"{os.path.normcase(str(inventory.root))}:{inventory.revision}"
-
-    def scan(self, path: Path, _sha256: str) -> list[Finding]:
+    def scan(self, path: Path, _sha256: str, *, expected_version: str | None = None) -> list[Finding]:
         if not self.command:
             return [Finding(self.name, "ClamAV unavailable", 0, EngineState.SCANNER_UNAVAILABLE)]
         try:
@@ -161,6 +160,8 @@ class ClamAVEngine:
                     {"reason": reason_map.get(exc.reason, "database-invalid-entry")},
                 )
             ]
+        if expected_version is not None and self._version_for_inventory(database_inventory) != expected_version:
+            return [Finding(self.name, "ClamAV version changed during scan setup", 0, EngineState.ENGINE_ERROR)]
         arguments = [
             self.command,
             f"--database={database_inventory.root}",
@@ -184,22 +185,47 @@ class ClamAVEngine:
             return [Finding(self.name, "ClamAV output incomplete", 0, EngineState.ENGINE_ERROR, {"reason": exc.reason})]
         except (OSError, subprocess.SubprocessError) as exc:
             return [Finding(self.name, "ClamAV error", 0, EngineState.ENGINE_ERROR, {"error": type(exc).__name__})]
+        output = "\n".join(part for part in (result.stdout, result.stderr) if part)
+        scanner_prefix = f"{path}: "
+        reported_names: list[str] = []
+        for line in output.splitlines():
+            if line.startswith(scanner_prefix):
+                report = line[len(scanner_prefix):]
+            else:
+                _, separator, report = line.rpartition(": ")
+                if not separator:
+                    continue
+            match = re.fullmatch(r"(.+?)[ \t]+FOUND[ \t]*", report)
+            if match:
+                reported_names.append(match.group(1))
+        limit_exceeded = "Heuristics.Limits.Exceeded" in reported_names or (
+            not reported_names and "Heuristics.Limits.Exceeded" in output
+        )
+        detections: list[Finding] = []
+        if result.returncode == 1:
+            first_detection = next(
+                (name for name in reported_names if name != "Heuristics.Limits.Exceeded"), None
+            )
+            if first_detection is not None:
+                detections.append(Finding(self.name, first_detection[:160], 90))
+            elif not reported_names and not result.output_truncated and not limit_exceeded:
+                detections.append(Finding(self.name, "ClamAV detection", 90))
         if result.output_truncated:
-            return [Finding(self.name, "ClamAV output incomplete", 0, EngineState.ENGINE_ERROR)]
+            return [*detections, Finding(self.name, "ClamAV output incomplete", 0, EngineState.ENGINE_ERROR)]
         try:
             current_inventory = self._definition_inventory()
         except DefinitionInventoryError:
-            return [Finding(self.name, "ClamAV definitions changed during scan", 0, EngineState.ENGINE_ERROR)]
+            return [*detections, Finding(self.name, "ClamAV definitions changed during scan", 0, EngineState.ENGINE_ERROR)]
         if current_inventory != database_inventory:
-            return [Finding(self.name, "ClamAV definitions changed during scan", 0, EngineState.ENGINE_ERROR)]
-        output = "\n".join(part for part in (result.stdout, result.stderr) if part)
-        if "Heuristics.Limits.Exceeded" in output:
-            return [Finding(self.name, "ClamAV scan limit exceeded", 0, EngineState.ENGINE_ERROR)]
+            return [*detections, Finding(self.name, "ClamAV definitions changed during scan", 0, EngineState.ENGINE_ERROR)]
+        if expected_version is not None and self._version_for_inventory(current_inventory) != expected_version:
+            return [*detections, Finding(self.name, "ClamAV version changed during scan", 0, EngineState.ENGINE_ERROR)]
+        if limit_exceeded:
+            return [*detections, Finding(self.name, "ClamAV scan limit exceeded", 0, EngineState.ENGINE_ERROR)]
         if result.returncode == 0:
             return [Finding(self.name, "no_detection", 0)]
         if result.returncode == 1:
-            match = re.search(r":\s*(.+?)\s+FOUND\s*$", output, re.MULTILINE)
-            return [Finding(self.name, match.group(1)[:160] if match else "ClamAV detection", 90)]
+            return detections
         return [Finding(self.name, "ClamAV scan error", 0, EngineState.ENGINE_ERROR, {"exit_code": result.returncode})]
 
 
@@ -215,6 +241,8 @@ class YaraEngine:
         self._inventory_error: str | None = None
         self._inventory_revision: str | None = None
         self._compiled_revision: str | None = None
+        self._scan_error_revision: str | None = None
+        self._state_lock = threading.RLock()
 
     @staticmethod
     def _identity(metadata: os.stat_result) -> tuple[int, int, int, int, int]:
@@ -318,14 +346,14 @@ class YaraEngine:
         return sources, None, revision.hexdigest() if sources else None
 
     def _compile(self, sources: dict[str, str], revision: str) -> None:
-        self._compile_errors = []
-        self._compiled = None
-        self._compiled_revision = None
+        errors: list[str] = []
+        compiled = None
         try:
             yara = importlib.import_module("yara")
         except Exception as exc:
-            self._compile_errors.append(type(exc).__name__)
+            self._compile_errors = [type(exc).__name__]
             self._compiled = None
+            self._compiled_revision = None
             return
         valid_sources: dict[str, str] = {}
         for name, source in sources.items():
@@ -333,36 +361,58 @@ class YaraEngine:
                 yara.compile(source=source)
                 valid_sources[name] = source
             except Exception as exc:
-                self._compile_errors.append(f"{name}: {type(exc).__name__}")
-        if not valid_sources:
-            self._compiled = None
-            return
-        try:
-            self._compiled = yara.compile(sources=valid_sources)
-            self._compiled_revision = revision
-        except Exception as exc:
-            self._compile_errors.append(type(exc).__name__)
-            self._compiled = None
-            self._compiled_revision = None
+                errors.append(f"{name}: {type(exc).__name__}")
+        if valid_sources:
+            try:
+                compiled = yara.compile(sources=valid_sources)
+            except Exception as exc:
+                errors.append(type(exc).__name__)
+        self._compile_errors = errors
+        self._compiled = compiled
+        self._compiled_revision = revision if compiled is not None else None
 
     def version(self) -> str:
-        sources, error, revision = self._read_inventory()
-        self._inventory_error = error
-        self._inventory_revision = revision
-        if error is not None:
-            self._compiled = None
-            self._compiled_revision = None
-            return EngineState.ENGINE_ERROR.value
-        if not sources or importlib.util.find_spec("yara") is None:
-            self._compiled = None
-            self._compiled_revision = None
-            return EngineState.SCANNER_UNAVAILABLE.value
-        if self._compiled is not None and self._compiled_revision != revision:
-            self._compiled = None
-            self._compiled_revision = None
-        return f"rules-{len(sources)}-{revision}"
+        with self._state_lock:
+            sources, error, revision = self._read_inventory()
+            self._inventory_error = error
+            self._inventory_revision = revision
+            if error is not None:
+                self._compiled = None
+                self._compiled_revision = None
+                return EngineState.ENGINE_ERROR.value
+            if not sources or importlib.util.find_spec("yara") is None:
+                self._compiled = None
+                self._compiled_revision = None
+                return EngineState.SCANNER_UNAVAILABLE.value
+            if self._compiled is not None and self._compiled_revision != revision:
+                self._compiled = None
+                self._compiled_revision = None
+            return f"rules-{len(sources)}-{revision}"
 
-    def scan(self, path: Path, _sha256: str) -> list[Finding]:
+    def ensure_cache_ready(self) -> bool:
+        with self._state_lock:
+            sources, error, revision = self._read_inventory()
+            if error is not None or not sources or revision != self._inventory_revision:
+                return False
+            if self._compiled is None or self._compiled_revision != revision:
+                self._compile(sources, revision)
+            return self.cache_ready()
+
+    def cache_ready(self) -> bool:
+        # A manifest hash alone does not prove that a fresh engine can compile its rules.
+        with self._state_lock:
+            return (
+                self._compiled is not None
+                and self._compiled_revision == self._inventory_revision
+                and not self._compile_errors
+                and self._scan_error_revision != self._inventory_revision
+            )
+
+    def scan(self, path: Path, _sha256: str, *, expected_version: str | None = None) -> list[Finding]:
+        with self._state_lock:
+            return self._scan_locked(path, _sha256, expected_version=expected_version)
+
+    def _scan_locked(self, path: Path, _sha256: str, *, expected_version: str | None = None) -> list[Finding]:
         sources, error, revision = self._read_inventory()
         if error is not None:
             self._compiled = None
@@ -372,9 +422,13 @@ class YaraEngine:
             self._compiled = None
             self._compiled_revision = None
             return [Finding(self.name, "YARA unavailable", 0, EngineState.SCANNER_UNAVAILABLE)]
+        if expected_version is not None and f"rules-{len(sources)}-{revision}" != expected_version:
+            self._scan_error_revision = self._inventory_revision
+            return [Finding(self.name, "YARA rules changed during scan setup", 0, EngineState.ENGINE_ERROR)]
         if self._inventory_revision is not None and self._inventory_revision != revision:
             self._compiled = None
             self._compiled_revision = None
+            self._scan_error_revision = self._inventory_revision
             return [Finding(self.name, "YARA rules changed during scan setup", 0, EngineState.ENGINE_ERROR)]
         if self._compiled is None or self._compiled_revision != revision:
             if importlib.util.find_spec("yara") is None:
@@ -389,6 +443,7 @@ class YaraEngine:
         try:
             matches = self._compiled.match(str(path), timeout=self.timeout)
         except Exception as exc:
+            self._scan_error_revision = revision
             return [Finding(self.name, "YARA scan error", 0, EngineState.ENGINE_ERROR, {"error": type(exc).__name__})]
         findings: list[Finding] = []
         overflow = len(matches) > MAX_YARA_MATCHES
@@ -397,8 +452,6 @@ class YaraEngine:
             tier = str(meta.get("hermes_tier", "core")).lower()
             score = 60 if tier == "extended" else 80
             findings.append(Finding(self.name, str(match.rule), score, details={"tier": tier, "tags": list(match.tags)}))
-        if not findings:
-            findings.append(Finding(self.name, "no_detection", 0))
         if overflow:
             findings.append(
                 Finding(
@@ -419,6 +472,15 @@ class YaraEngine:
                     {"compile_errors": self._compile_errors[:5]},
                 )
             )
+        if expected_version is not None:
+            current_sources, current_error, current_revision = self._read_inventory()
+            if current_error is not None or f"rules-{len(current_sources)}-{current_revision}" != expected_version:
+                self._scan_error_revision = revision
+                findings.append(Finding(self.name, "YARA rules changed during scan", 0, EngineState.ENGINE_ERROR))
+                return findings
+        self._scan_error_revision = None
+        if not matches:
+            findings.insert(0, Finding(self.name, "no_detection", 0))
         return findings
 
 

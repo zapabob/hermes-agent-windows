@@ -3,12 +3,14 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import sqlite3
 import stat
 import subprocess
 import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -28,7 +30,7 @@ from downstream.security.bounded_process import (
     run_bounded,
 )
 from downstream.security.engines import ClamAVEngine, versions_cache_key
-from downstream.security.models import EngineState, Finding, ScanResult, Verdict
+from downstream.security.models import EngineState, ExecutionDecision, Finding, ScanResult, Verdict
 from downstream.security.service import SecurityService
 from downstream.security.store import SecurityStore
 from downstream.security.watcher import reconcile_once
@@ -199,6 +201,31 @@ def test_status_does_not_spawn_scanners_compile_rules_or_copy_bundled_rules(
     subprocess_popen.assert_not_called()
 
 
+def test_status_with_rules_does_not_compile_yara(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "security"
+    rules = root / "feeds" / "yara"
+    rules.mkdir(parents=True)
+    (rules / "sample.yar").write_text("rule Sample { condition: false }", encoding="utf-8")
+    monkeypatch.setattr(security_engines.importlib.util, "find_spec", lambda _name: SimpleNamespace())
+    import_module = security_engines.importlib.import_module
+    yara_import = Mock(side_effect=AssertionError("status compiled YARA rules"))
+    monkeypatch.setattr(
+        security_engines.importlib,
+        "import_module",
+        lambda name: yara_import(name) if name == "yara" else import_module(name),
+    )
+    service = SecurityService(
+        SecurityStore(root),
+        {"security": {"malware": {"auto_quarantine": False}}},
+    )
+
+    assert service.status()["engines"]["yara"].startswith("rules-1-")
+    yara_import.assert_not_called()
+
+
 def test_scan_paths_keeps_only_a_bounded_number_of_futures_in_flight(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -256,6 +283,88 @@ def test_scan_paths_keeps_only_a_bounded_number_of_futures_in_flight(
     assert not worker.is_alive()
     assert not errors
     assert largest == 8
+
+
+@pytest.mark.parametrize("interrupt_at", ("submit", "wait"))
+def test_scan_paths_interrupt_cancels_queued_scans_and_waits_for_running_workers(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    interrupt_at: str,
+) -> None:
+    files = [tmp_path / f"inert-{index}.bin" for index in range(6)]
+    for path in files:
+        path.write_bytes(b"inert fixture")
+    service = _service(tmp_path)
+    started: list[Path] = []
+    finished: list[Path] = []
+    workers: list[threading.Thread] = []
+    submitted = []
+    lock = threading.Lock()
+    two_started = threading.Event()
+    entered_wait = threading.Event()
+    release = threading.Event()
+    original_submit = ThreadPoolExecutor.submit
+
+    def tracked_submit(executor, *args, **kwargs):
+        future = original_submit(executor, *args, **kwargs)
+        submitted.append(future)
+        if interrupt_at == "submit" and len(submitted) == 4:
+            assert two_started.wait(5)
+            entered_wait.set()
+            raise KeyboardInterrupt
+        return future
+
+    def held_scan(path: Path, _quarantine: bool = True) -> ScanResult:
+        with lock:
+            started.append(path)
+            workers.append(threading.current_thread())
+            if len(started) == 2:
+                two_started.set()
+        assert release.wait(10)
+        with lock:
+            finished.append(path)
+        return ScanResult(str(path), "", 0, Verdict.CLEAN, 0, "allow", (), {})
+
+    def interrupted_wait(_futures, *, return_when):
+        assert interrupt_at == "wait"
+        assert return_when == security_service_module.FIRST_COMPLETED
+        assert two_started.wait(5)
+        entered_wait.set()
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(security_service_module.ThreadPoolExecutor, "submit", tracked_submit)
+    monkeypatch.setattr(security_service_module, "wait", interrupted_wait)
+    monkeypatch.setattr(service, "scan_file", held_scan)
+    errors: list[BaseException] = []
+
+    def run_scan() -> None:
+        try:
+            service.scan_paths(files, workers=2, quarantine=False)
+        except BaseException as exc:
+            errors.append(exc)
+
+    controller = threading.Thread(target=run_scan)
+    controller.start()
+    cancelled = False
+    try:
+        assert entered_wait.wait(5)
+        deadline = time.monotonic() + 2
+        while time.monotonic() < deadline:
+            if len(submitted) == 4 and all(future.cancelled() for future in submitted[2:]):
+                cancelled = True
+                break
+            time.sleep(0.01)
+        assert controller.is_alive()
+    finally:
+        release.set()
+        controller.join(10)
+
+    assert not controller.is_alive()
+    assert len(submitted) == 4
+    assert cancelled
+    assert len(started) == len(finished) == 2
+    assert all(not worker.is_alive() for worker in workers)
+    assert len(errors) == 1 and isinstance(errors[0], KeyboardInterrupt)
 
 
 def test_scan_paths_marks_file_inventory_truncation_for_review(
@@ -475,6 +584,331 @@ def test_yara_compile_failure_remains_a_typed_engine_error(
     compile_rule.assert_called_once()
 
 
+def test_yara_same_stem_rules_are_rejected_without_compiling(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    rules = tmp_path / "rules"
+    rules.mkdir()
+    (rules / "sample.yar").write_text("rule First { condition: true }", encoding="utf-8")
+    (rules / "sample.yara").write_text("rule Second { condition: true }", encoding="utf-8")
+    target = tmp_path / "inert-target.bin"
+    target.write_bytes(b"inert target")
+    compile_rule = Mock(side_effect=AssertionError("colliding rules were compiled"))
+    monkeypatch.setattr(security_engines.importlib, "import_module", lambda _name: SimpleNamespace(compile=compile_rule))
+
+    engine = security_engines.YaraEngine(rules)
+    assert engine.version() == EngineState.ENGINE_ERROR.value
+    findings = engine.scan(target, "inert-sha256")
+
+    assert len(findings) == 1
+    assert findings[0].state == EngineState.ENGINE_ERROR
+    assert findings[0].details["reason"] == "rule_name_collision"
+    compile_rule.assert_not_called()
+
+
+def test_yara_valid_detection_survives_a_broken_rule_with_typed_error(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    rules = tmp_path / "rules"
+    rules.mkdir()
+    (rules / "good.yar").write_text("rule Good { condition: true }", encoding="utf-8")
+    (rules / "broken.yar").write_text("rule Broken { condition: false }", encoding="utf-8")
+    target = tmp_path / "inert-target.bin"
+    target.write_bytes(b"inert target")
+
+    class CompiledRules:
+        def match(self, *_args, **_kwargs):
+            return [SimpleNamespace(rule="Good", meta={}, tags=[])]
+
+    class FakeYara:
+        def compile(self, *, source=None, sources=None):
+            if source is not None and "Broken" in source:
+                raise ValueError("synthetic broken rule")
+            return CompiledRules() if sources is not None else object()
+
+    monkeypatch.setattr(security_engines.importlib.util, "find_spec", lambda _name: SimpleNamespace())
+    monkeypatch.setattr(security_engines.importlib, "import_module", lambda _name: FakeYara())
+    engine = security_engines.YaraEngine(rules)
+    version = engine.version()
+    findings = engine.scan(target, "inert-sha256")
+
+    assert version.startswith("rules-2-")
+    assert any(finding.name == "Good" and finding.score == 80 for finding in findings)
+    assert any(
+        finding.state == EngineState.ENGINE_ERROR
+        and finding.name == "YARA rule compilation incomplete"
+        and any("broken" in error for error in finding.details["compile_errors"])
+        for finding in findings
+    )
+
+
+def test_yara_positive_match_survives_rule_change_after_match(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    rules = tmp_path / "rules"
+    rules.mkdir()
+    rule = rules / "sample.yar"
+    rule.write_text("rule Original { condition: true }", encoding="utf-8")
+    target = tmp_path / "inert-target.bin"
+    target.write_bytes(b"inert target")
+
+    class CompiledRules:
+        def match(self, *_args, **_kwargs):
+            rule.write_text("rule Revised { condition: false }", encoding="utf-8")
+            return [SimpleNamespace(rule="Original", meta={}, tags=[])]
+
+    class FakeYara:
+        def compile(self, *, source=None, sources=None):
+            return CompiledRules() if sources is not None else object()
+
+    import_module = security_engines.importlib.import_module
+    monkeypatch.setattr(security_engines.importlib.util, "find_spec", lambda _name: SimpleNamespace())
+    monkeypatch.setattr(
+        security_engines.importlib,
+        "import_module",
+        lambda name: FakeYara() if name == "yara" else import_module(name),
+    )
+    service = _service(tmp_path)
+    service.config["auto_quarantine"] = True
+    service._vault = Mock()
+    service._vault.quarantine.return_value = "synthetic-quarantine-id"
+    engine = security_engines.YaraEngine(rules)
+    service.engines = (engine,)
+    old_version = engine.version()
+
+    result = service.scan_file(target, use_cache=False)
+
+    assert result.verdict == Verdict.MALICIOUS, result.findings
+    assert result.execution_decision == ExecutionDecision.BLOCK
+    assert result.action == "quarantined"
+    assert any(finding.name == "Original" and finding.score == 80 for finding in result.findings)
+    assert any(finding.state == EngineState.ENGINE_ERROR for finding in result.findings)
+    assert service.store.cache_get(result.sha256, versions_cache_key({"yara": old_version})) is None
+    service._vault.quarantine.assert_called_once()
+
+
+def test_yara_negative_match_changed_rules_remains_an_engine_error(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    rules = tmp_path / "rules"
+    rules.mkdir()
+    rule = rules / "sample.yar"
+    rule.write_text("rule Original { condition: false }", encoding="utf-8")
+    target = tmp_path / "inert-target.bin"
+    target.write_bytes(b"inert target")
+
+    class CompiledRules:
+        def match(self, *_args, **_kwargs):
+            rule.write_text("rule Revised { condition: false }", encoding="utf-8")
+            return []
+
+    class FakeYara:
+        def compile(self, *, source=None, sources=None):
+            return CompiledRules() if sources is not None else object()
+
+    import_module = security_engines.importlib.import_module
+    monkeypatch.setattr(security_engines.importlib.util, "find_spec", lambda _name: SimpleNamespace())
+    monkeypatch.setattr(
+        security_engines.importlib,
+        "import_module",
+        lambda name: FakeYara() if name == "yara" else import_module(name),
+    )
+    engine = security_engines.YaraEngine(rules)
+    old_version = engine.version()
+
+    findings = engine.scan(target, "inert-sha256", expected_version=old_version)
+
+    assert len(findings) == 1
+    assert findings[0].name == "YARA rules changed during scan"
+    assert findings[0].state == EngineState.ENGINE_ERROR
+
+
+def test_yara_compile_failure_cannot_reuse_clean_cache_for_same_rule_revision(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    rules = tmp_path / "rules"
+    rules.mkdir()
+    (rules / "sample.yar").write_text("rule Sample { condition: false }", encoding="utf-8")
+    target = tmp_path / "inert-target.bin"
+    target.write_bytes(b"inert target")
+
+    class CompiledRules:
+        def match(self, *_args, **_kwargs):
+            return []
+
+    class FakeYara:
+        fail_compile = False
+
+        def compile(self, *, source=None, sources=None):
+            if self.fail_compile:
+                raise ValueError("synthetic compiler failure")
+            return CompiledRules()
+
+    fake_yara = FakeYara()
+    import_module = security_engines.importlib.import_module
+    monkeypatch.setattr(security_engines.importlib.util, "find_spec", lambda _name: SimpleNamespace())
+    monkeypatch.setattr(
+        security_engines.importlib,
+        "import_module",
+        lambda name: fake_yara if name == "yara" else import_module(name),
+    )
+    service = _service(tmp_path)
+    first_engine = security_engines.YaraEngine(rules)
+    service.engines = (first_engine,)
+    first = service.scan_file(target, quarantine=False)
+    assert first.verdict == Verdict.CLEAN
+    assert first.engine_health.value == "HEALTHY"
+    assert service.scan_file(target, quarantine=False).cached
+    service.engines = (security_engines.YaraEngine(rules),)
+    assert service.scan_file(target, quarantine=False).cached
+
+    fake_yara.fail_compile = True
+    service.engines = (security_engines.YaraEngine(rules),)
+    second = service.scan_file(target, quarantine=False)
+
+    assert second.verdict != Verdict.CLEAN
+    assert any(finding.state == EngineState.ENGINE_ERROR for finding in second.findings)
+
+
+def test_yara_match_failure_disables_prior_clean_cache_until_rescan_succeeds(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    rules = tmp_path / "rules"
+    rules.mkdir()
+    (rules / "sample.yar").write_text("rule Sample { condition: false }", encoding="utf-8")
+    target = tmp_path / "inert-target.bin"
+    target.write_bytes(b"inert target")
+    failure = SimpleNamespace(enabled=False)
+
+    class CompiledRules:
+        def match(self, *_args, **_kwargs):
+            if failure.enabled:
+                raise RuntimeError("synthetic matching failure")
+            return []
+
+    class FakeYara:
+        def compile(self, *, source=None, sources=None):
+            return CompiledRules()
+
+    import_module = security_engines.importlib.import_module
+    monkeypatch.setattr(security_engines.importlib.util, "find_spec", lambda _name: SimpleNamespace())
+    monkeypatch.setattr(
+        security_engines.importlib,
+        "import_module",
+        lambda name: FakeYara() if name == "yara" else import_module(name),
+    )
+    service = _service(tmp_path)
+    service.engines = (security_engines.YaraEngine(rules),)
+    assert service.scan_file(target, quarantine=False).verdict == Verdict.CLEAN
+    assert service.scan_file(target, quarantine=False).cached
+
+    failure.enabled = True
+    failed = service.scan_file(target, quarantine=False, use_cache=False)
+    retried = service.scan_file(target, quarantine=False)
+    assert failed.verdict == retried.verdict == Verdict.SCAN_ERROR
+    assert not retried.cached
+
+    failure.enabled = False
+    recovered = service.scan_file(target, quarantine=False)
+    assert recovered.verdict == Verdict.CLEAN
+    assert not recovered.cached
+    assert service.scan_file(target, quarantine=False).cached
+
+
+def test_yara_error_for_one_file_cannot_be_cleared_by_another_files_success(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    rules = tmp_path / "rules"
+    rules.mkdir()
+    (rules / "sample.yar").write_text("rule Sample { condition: false }", encoding="utf-8")
+    target_a = tmp_path / "target-a.bin"
+    target_b = tmp_path / "target-b.bin"
+    target_a.write_bytes(b"inert target A")
+    target_b.write_bytes(b"inert target B")
+    fail_a = SimpleNamespace(enabled=False)
+
+    class CompiledRules:
+        def match(self, path, *_args, **_kwargs):
+            if fail_a.enabled and Path(path).read_bytes() == b"inert target A":
+                raise RuntimeError("synthetic A-only matching failure")
+            return []
+
+    class FakeYara:
+        def compile(self, *, source=None, sources=None):
+            return CompiledRules()
+
+    import_module = security_engines.importlib.import_module
+    monkeypatch.setattr(security_engines.importlib.util, "find_spec", lambda _name: SimpleNamespace())
+    monkeypatch.setattr(
+        security_engines.importlib,
+        "import_module",
+        lambda name: FakeYara() if name == "yara" else import_module(name),
+    )
+    service = _service(tmp_path)
+    service.engines = (security_engines.YaraEngine(rules),)
+    assert service.scan_file(target_a, quarantine=False).verdict == Verdict.CLEAN
+    assert service.scan_file(target_a, quarantine=False).cached
+
+    fail_a.enabled = True
+    assert service.scan_file(target_a, quarantine=False, use_cache=False).verdict == Verdict.SCAN_ERROR
+    assert service.scan_file(target_b, quarantine=False).verdict == Verdict.CLEAN
+    retried_a = service.scan_file(target_a, quarantine=False)
+
+    assert retried_a.verdict == Verdict.SCAN_ERROR
+    assert not retried_a.cached
+
+
+def test_yara_cache_readiness_is_rechecked_before_cached_result_is_used(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    rules = tmp_path / "rules"
+    rules.mkdir()
+    (rules / "sample.yar").write_text("rule Sample { condition: false }", encoding="utf-8")
+    target = tmp_path / "inert-target.bin"
+    target.write_bytes(b"inert target")
+
+    class FakeYara:
+        def compile(self, *, source=None, sources=None):
+            return SimpleNamespace(match=lambda *_args, **_kwargs: [])
+
+    import_module = security_engines.importlib.import_module
+    monkeypatch.setattr(security_engines.importlib.util, "find_spec", lambda _name: SimpleNamespace())
+    monkeypatch.setattr(
+        security_engines.importlib,
+        "import_module",
+        lambda name: FakeYara() if name == "yara" else import_module(name),
+    )
+    service = _service(tmp_path)
+    engine = security_engines.YaraEngine(rules)
+    service.engines = (engine,)
+    assert service.scan_file(target, quarantine=False).verdict == Verdict.CLEAN
+    original_hash = service._hash_stable
+    hash_calls = 0
+
+    def mark_engine_failed_after_cache_read(path: Path):
+        nonlocal hash_calls
+        result = original_hash(path)
+        hash_calls += 1
+        if hash_calls == 2:
+            engine._scan_error_revision = engine._inventory_revision
+        return result
+
+    monkeypatch.setattr(service, "_hash_stable", mark_engine_failed_after_cache_read)
+    result = service.scan_file(target, quarantine=False)
+
+    assert hash_calls >= 2
+    assert result.verdict == Verdict.CLEAN
+    assert not result.cached
+
+
 def test_clamav_status_marks_incomplete_database_inventory_as_engine_error(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -577,8 +1011,7 @@ def test_clamav_inventory_failure_cannot_reuse_or_write_clean_cache(
     assert any(finding.state == EngineState.ENGINE_ERROR for finding in result.findings)
     run.assert_not_called()
     cached = service.store.cache_get(sha256, versions_cache_key(service.versions()))
-    assert cached is not None
-    assert cached.verdict == Verdict.CLEAN
+    assert cached is None
 
 
 def test_engine_error_version_cannot_replay_or_record_a_clean_scan(
@@ -620,8 +1053,7 @@ def test_engine_error_version_cannot_replay_or_record_a_clean_scan(
     assert result.cached is False
     assert any(finding.state == EngineState.ENGINE_ERROR for finding in result.findings)
     cached = service.store.cache_get(sha256, versions_cache_key(failed_versions))
-    assert cached is not None
-    assert cached.verdict == Verdict.CLEAN
+    assert cached is None
 
 
 def test_clamav_missing_managed_database_never_scans_with_default_database(
@@ -691,6 +1123,549 @@ def test_clamav_rejects_definitions_changed_during_scan(
     assert findings[0].state == EngineState.ENGINE_ERROR
     assert findings[0].name == "ClamAV definitions changed during scan"
     run.assert_called_once()
+
+
+def test_clamav_positive_match_survives_definition_change_after_scan(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    binary = tmp_path / "clamscan.exe"
+    binary.write_bytes(b"inert scanner identity fixture")
+    database = _managed_clamav_database(tmp_path)
+    definition = database / "main.cvd"
+    target = tmp_path / "inert-target.bin"
+    target.write_bytes(b"inert target")
+    monkeypatch.setattr(
+        security_engines.shutil,
+        "which",
+        lambda name: str(binary) if name == "clamscan" else None,
+    )
+
+    def scan_and_replace_definition(*_args, **_kwargs):
+        definition.write_bytes(b"revised inert definition metadata")
+        return BoundedProcessResult(
+            returncode=1,
+            stdout=f"{target}: Synthetic.Rule FOUND\n",
+            stderr="",
+            output_truncated=False,
+        )
+
+    monkeypatch.setattr(security_engines, "run_bounded", scan_and_replace_definition)
+    service = _service(tmp_path)
+    service.config["auto_quarantine"] = True
+    service._vault = Mock()
+    service._vault.quarantine.return_value = "synthetic-quarantine-id"
+    engine = ClamAVEngine(database_dir=database)
+    service.engines = (engine,)
+    old_version = engine.version()
+
+    result = service.scan_file(target, use_cache=False)
+
+    assert result.verdict == Verdict.MALICIOUS
+    assert result.execution_decision == ExecutionDecision.BLOCK
+    assert result.action == "quarantined"
+    assert any(finding.name == "Synthetic.Rule" and finding.score == 90 for finding in result.findings), result.findings
+    assert any(finding.state == EngineState.ENGINE_ERROR for finding in result.findings)
+    assert service.store.cache_get(result.sha256, versions_cache_key({"clamav": old_version})) is None
+    service._vault.quarantine.assert_called_once()
+
+
+def test_clamav_limit_marker_in_filename_does_not_hide_a_positive_match(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    binary = tmp_path / "clamscan.exe"
+    binary.write_bytes(b"inert scanner identity fixture")
+    database = _managed_clamav_database(tmp_path)
+    target = tmp_path / "Heuristics.Limits.Exceeded.inert"
+    target.write_bytes(b"inert target")
+    monkeypatch.setattr(
+        security_engines.shutil, "which", lambda name: str(binary) if name == "clamscan" else None
+    )
+
+    def scan_and_change_definitions(arguments, **_kwargs):
+        (database / "main.cvd").write_bytes(b"revised inert definition metadata")
+        return BoundedProcessResult(
+            returncode=1,
+            stdout=f"{arguments[-1]}: Synthetic.Rule FOUND\n",
+            stderr="",
+            output_truncated=False,
+        )
+
+    monkeypatch.setattr(security_engines, "run_bounded", scan_and_change_definitions)
+    service = _service(tmp_path)
+    service.config["auto_quarantine"] = True
+    service._vault = Mock()
+    service._vault.quarantine.return_value = "synthetic-quarantine-id"
+    service.engines = (ClamAVEngine(database_dir=database),)
+
+    result = service.scan_file(target, use_cache=False)
+
+    assert result.verdict == Verdict.MALICIOUS, result.findings
+    assert result.execution_decision == ExecutionDecision.BLOCK
+    assert result.action == "quarantined"
+    assert any(item.name == "Synthetic.Rule" and item.score == 90 for item in result.findings)
+    assert any(item.state == EngineState.ENGINE_ERROR for item in result.findings)
+    service._vault.quarantine.assert_called_once()
+
+
+def test_clamav_complete_positive_line_survives_truncated_diagnostics(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    binary = tmp_path / "clamscan.exe"
+    binary.write_bytes(b"inert scanner identity fixture")
+    database = _managed_clamav_database(tmp_path)
+    target = tmp_path / "inert-target.bin"
+    target.write_bytes(b"inert target")
+    monkeypatch.setattr(security_engines.shutil, "which", lambda name: str(binary) if name == "clamscan" else None)
+    monkeypatch.setattr(
+        security_engines,
+        "run_bounded",
+        lambda arguments, **_kwargs: BoundedProcessResult(
+            returncode=1,
+            stdout=f"{arguments[-1]}: Synthetic.Rule FOUND\n",
+            stderr="diagnostic " * 2048,
+            output_truncated=True,
+        ),
+    )
+    service = _service(tmp_path)
+    service.config["auto_quarantine"] = True
+    service._vault = Mock()
+    service._vault.quarantine.return_value = "synthetic-quarantine-id"
+    service.engines = (ClamAVEngine(database_dir=database),)
+
+    result = service.scan_file(target, use_cache=False)
+
+    assert result.verdict == Verdict.MALICIOUS, result.findings
+    assert result.execution_decision == ExecutionDecision.BLOCK
+    assert result.action == "quarantined"
+    assert any(item.name == "Synthetic.Rule" and item.score == 90 for item in result.findings)
+    assert any(
+        item.name == "ClamAV output incomplete" and item.state == EngineState.ENGINE_ERROR
+        for item in result.findings
+    )
+    service._vault.quarantine.assert_called_once()
+
+
+@pytest.mark.parametrize("change_definition", [False, True])
+def test_clamav_limit_marker_is_not_promoted_to_positive_on_definition_change(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    change_definition: bool,
+) -> None:
+    binary = tmp_path / "clamscan.exe"
+    binary.write_bytes(b"inert scanner identity fixture")
+    database = _managed_clamav_database(tmp_path)
+    target = tmp_path / "inert-target.bin"
+    target.write_bytes(b"inert target")
+    monkeypatch.setattr(
+        security_engines.shutil,
+        "which",
+        lambda name: str(binary) if name == "clamscan" else None,
+    )
+
+    def scan_with_limit(*_args, **_kwargs):
+        if change_definition:
+            (database / "main.cvd").write_bytes(b"revised inert definition metadata")
+        return BoundedProcessResult(
+            returncode=1,
+            stdout=f"{target}: Heuristics.Limits.Exceeded FOUND\n",
+            stderr="",
+            output_truncated=False,
+        )
+
+    monkeypatch.setattr(security_engines, "run_bounded", scan_with_limit)
+    engine = ClamAVEngine(database_dir=database)
+    old_version = engine.version()
+
+    findings = engine.scan(target, "inert-sha256", expected_version=old_version)
+
+    assert len(findings) == 1
+    assert findings[0].state == EngineState.ENGINE_ERROR
+    assert findings[0].score == 0
+
+
+def test_clamav_scan_cannot_cache_new_definitions_under_old_version(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    binary = tmp_path / "clamscan.exe"
+    binary.write_bytes(b"inert scanner identity fixture")
+    database = _managed_clamav_database(tmp_path)
+    definition = database / "main.cvd"
+    target = tmp_path / "inert-target.bin"
+    target.write_bytes(b"inert target")
+    monkeypatch.setattr(
+        security_engines.shutil,
+        "which",
+        lambda name: str(binary) if name == "clamscan" else None,
+    )
+    monkeypatch.setattr(
+        security_engines,
+        "run_bounded",
+        lambda *_args, **_kwargs: BoundedProcessResult(
+            returncode=0, stdout="", stderr="", output_truncated=False
+        ),
+    )
+    service = _service(tmp_path)
+    engine = ClamAVEngine(database_dir=database)
+    service.engines = (engine,)
+    old_version = engine.version()
+    assert old_version.startswith("binary-id-")
+    original_scan = engine.scan
+
+    def changed_before_scan(*args, **kwargs):
+        definition.write_bytes(b"different inert definition metadata")
+        return original_scan(*args, **kwargs)
+
+    monkeypatch.setattr(engine, "scan", changed_before_scan)
+    result = service.scan_file(target, quarantine=False, use_cache=False)
+
+    assert result.verdict == Verdict.SCAN_ERROR
+    assert any(finding.state == EngineState.ENGINE_ERROR for finding in result.findings)
+    assert service.store.cache_get(result.sha256, versions_cache_key({"clamav": old_version})) is None
+
+
+def test_clamav_runtime_error_invalidates_prior_clean_cache(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    binary = tmp_path / "clamscan.exe"
+    binary.write_bytes(b"inert scanner identity fixture")
+    database = _managed_clamav_database(tmp_path)
+    target = tmp_path / "inert-target.bin"
+    target.write_bytes(b"inert target")
+    monkeypatch.setattr(
+        security_engines.shutil,
+        "which",
+        lambda name: str(binary) if name == "clamscan" else None,
+    )
+    failure = SimpleNamespace(enabled=False)
+
+    def run_scanner(*_args, **_kwargs):
+        if failure.enabled:
+            raise subprocess.TimeoutExpired(cmd="inert-clamscan", timeout=1)
+        return BoundedProcessResult(returncode=0, stdout="", stderr="", output_truncated=False)
+
+    monkeypatch.setattr(security_engines, "run_bounded", run_scanner)
+    service = _service(tmp_path)
+    service.engines = (ClamAVEngine(database_dir=database),)
+    assert service.scan_file(target, quarantine=False).verdict == Verdict.CLEAN
+    assert service.scan_file(target, quarantine=False).cached
+
+    failure.enabled = True
+    assert service.scan_file(target, quarantine=False, use_cache=False).verdict == Verdict.SCAN_ERROR
+    summary = service.store.status_summary()
+    assert summary["files_scanned"] == 1
+    assert summary["last_scan"] is not None
+    retried = service.scan_file(target, quarantine=False)
+
+    assert retried.verdict == Verdict.SCAN_ERROR
+    assert not retried.cached
+    failure.enabled = False
+    recovered = service.scan_file(target, quarantine=False)
+    assert recovered.verdict == Verdict.CLEAN
+    assert not recovered.cached
+    assert service.scan_file(target, quarantine=False).cached
+
+
+def test_concurrent_error_cannot_resurrect_a_cached_clean_result(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    binary = tmp_path / "clamscan.exe"
+    binary.write_bytes(b"inert scanner identity fixture")
+    database = _managed_clamav_database(tmp_path)
+    target = tmp_path / "inert-target.bin"
+    target.write_bytes(b"inert target")
+    monkeypatch.setattr(
+        security_engines.shutil,
+        "which",
+        lambda name: str(binary) if name == "clamscan" else None,
+    )
+    failure = SimpleNamespace(enabled=False)
+
+    def run_scanner(*_args, **_kwargs):
+        if failure.enabled:
+            raise subprocess.TimeoutExpired(cmd="inert-clamscan", timeout=1)
+        return BoundedProcessResult(returncode=0, stdout="", stderr="", output_truncated=False)
+
+    monkeypatch.setattr(security_engines, "run_bounded", run_scanner)
+    service = _service(tmp_path)
+    engine = ClamAVEngine(database_dir=database)
+    service.engines = (engine,)
+    assert service.scan_file(target, quarantine=False).verdict == Verdict.CLEAN
+    old_key = versions_cache_key(service.versions())
+    original_hash = service._hash_stable
+    cache_read = threading.Event()
+    release = threading.Event()
+    controller_result: list[ScanResult] = []
+    controller_errors: list[BaseException] = []
+    controller_calls = 0
+
+    def pause_after_cached_read(path: Path):
+        nonlocal controller_calls
+        result = original_hash(path)
+        if threading.current_thread() is controller:
+            controller_calls += 1
+            if controller_calls == 2:
+                cache_read.set()
+                assert release.wait(10)
+        return result
+
+    monkeypatch.setattr(service, "_hash_stable", pause_after_cached_read)
+
+    def read_cache() -> None:
+        try:
+            controller_result.append(service.scan_file(target, quarantine=False))
+        except BaseException as exc:
+            controller_errors.append(exc)
+
+    controller = threading.Thread(target=read_cache)
+    controller.start()
+    try:
+        assert cache_read.wait(5)
+        failure.enabled = True
+        assert service.scan_file(target, quarantine=False, use_cache=False).verdict == Verdict.SCAN_ERROR
+    finally:
+        release.set()
+        controller.join(10)
+
+    assert not controller.is_alive()
+    assert not controller_errors
+    assert len(controller_result) == 1
+    assert controller_result[0].verdict == Verdict.SCAN_ERROR
+    assert not controller_result[0].cached
+    assert service.store.cache_get(controller_result[0].sha256, old_key) is None
+
+
+def test_concurrent_failed_scan_prevents_older_success_from_creating_cache(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    binary = tmp_path / "clamscan.exe"
+    binary.write_bytes(b"inert scanner identity fixture")
+    database = _managed_clamav_database(tmp_path)
+    target = tmp_path / "inert-target.bin"
+    target.write_bytes(b"inert target")
+    monkeypatch.setattr(
+        security_engines.shutil,
+        "which",
+        lambda name: str(binary) if name == "clamscan" else None,
+    )
+    failure = SimpleNamespace(enabled=False)
+
+    def run_scanner(*_args, **_kwargs):
+        if failure.enabled:
+            raise subprocess.TimeoutExpired(cmd="inert-clamscan", timeout=1)
+        return BoundedProcessResult(returncode=0, stdout="", stderr="", output_truncated=False)
+
+    monkeypatch.setattr(security_engines, "run_bounded", run_scanner)
+    service = _service(tmp_path)
+    engine = ClamAVEngine(database_dir=database)
+    service.engines = (engine,)
+    old_key = versions_cache_key(service.versions())
+    scan_finished = threading.Event()
+    release = threading.Event()
+    original_scan = engine.scan
+    controller_result: list[ScanResult] = []
+    controller_errors: list[BaseException] = []
+
+    def pause_successful_scan(*args, **kwargs):
+        findings = original_scan(*args, **kwargs)
+        if threading.current_thread() is controller:
+            scan_finished.set()
+            assert release.wait(10)
+        return findings
+
+    monkeypatch.setattr(engine, "scan", pause_successful_scan)
+
+    def scan_before_error() -> None:
+        try:
+            controller_result.append(service.scan_file(target, quarantine=False, use_cache=False))
+        except BaseException as exc:
+            controller_errors.append(exc)
+
+    controller = threading.Thread(target=scan_before_error)
+    controller.start()
+    try:
+        assert scan_finished.wait(5)
+        failure.enabled = True
+        assert service.scan_file(target, quarantine=False, use_cache=False).verdict == Verdict.SCAN_ERROR
+    finally:
+        release.set()
+        controller.join(10)
+
+    assert not controller.is_alive()
+    assert not controller_errors
+    assert len(controller_result) == 1
+    assert controller_result[0].verdict == Verdict.SCAN_ERROR
+    assert controller_result[0].action == "blocked_pending_review"
+    assert controller_result[0].execution_decision == ExecutionDecision.REVIEW
+    assert service.store.cache_get(controller_result[0].sha256, old_key) is None
+
+
+def test_epoch_conflict_preserves_positive_detection_and_blocks_execution(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    class PositiveEngine:
+        name = "yara"
+
+        def version(self) -> str:
+            return "inert-rules-one"
+
+        def scan(self, _path: Path, _sha256: str) -> list[Finding]:
+            return [Finding(self.name, "inert-positive", 80)]
+
+    target = tmp_path / "inert-target.bin"
+    target.write_bytes(b"inert positive fixture")
+    service = _service(tmp_path)
+    service.engines = (PositiveEngine(),)
+    monkeypatch.setattr(service.store, "record_scan_if_epoch", lambda *_args: False)
+
+    result = service.scan_file(target, quarantine=False, use_cache=False)
+
+    assert result.verdict == Verdict.MALICIOUS
+    assert result.execution_decision == ExecutionDecision.BLOCK
+    assert any(finding.name == "inert-positive" for finding in result.findings)
+    assert any(finding.name == "scan_generation_changed" for finding in result.findings)
+
+
+def test_cache_invalidation_preserves_other_hashes_and_engine_generations(tmp_path: Path) -> None:
+    store = SecurityStore(tmp_path / "security")
+    first_hash = hashlib.sha256(b"inert first bytes").hexdigest()
+    second_hash = hashlib.sha256(b"inert second bytes").hexdigest()
+    first_key = versions_cache_key({"clamav": "generation-one"})
+    second_key = versions_cache_key({"clamav": "generation-two"})
+
+    def record(sha256: str, version: str) -> None:
+        result = ScanResult(
+            path=str(tmp_path / "inert.bin"),
+            sha256=sha256,
+            size=16,
+            verdict=Verdict.CLEAN,
+            score=0,
+            action="allow",
+            findings=(Finding("clamav", "no_detection", 0),),
+            engine_versions={"clamav": version},
+        )
+        store.record_scan(result, versions_cache_key(result.engine_versions))
+
+    record(first_hash, "generation-one")
+    record(first_hash, "generation-two")
+    record(second_hash, "generation-one")
+    stale_generation = store.cache_get_with_generation(first_hash, first_key)[1]
+
+    store.invalidate_cached_scan(first_hash, first_key)
+
+    assert store.cache_get(first_hash, first_key) is None
+    assert store.cache_get(first_hash, second_key) is not None
+    assert store.cache_get(second_hash, first_key) is not None
+    record(first_hash, "generation-one")
+    assert not store.refresh_cached_scan(first_hash, first_key, stale_generation, str(tmp_path / "inert.bin"))
+
+
+def test_existing_scan_cache_migrates_as_ineligible_until_rescanned(tmp_path: Path) -> None:
+    root = tmp_path / "security"
+    root.mkdir()
+    sha256 = hashlib.sha256(b"inert old cache").hexdigest()
+    key = versions_cache_key({"clamav": "old-generation"})
+    with sqlite3.connect(root / "security.db") as connection:
+        connection.execute(
+            "CREATE TABLE scan_results (id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT NOT NULL, "
+            "sha256 TEXT NOT NULL, size INTEGER NOT NULL, verdict TEXT NOT NULL, score INTEGER NOT NULL, "
+            "action TEXT NOT NULL, findings_json TEXT NOT NULL, versions_json TEXT NOT NULL, "
+            "cache_key TEXT NOT NULL, scanned_at TEXT NOT NULL, error TEXT, UNIQUE(sha256, cache_key))"
+        )
+        connection.execute(
+            "INSERT INTO scan_results (path,sha256,size,verdict,score,action,findings_json,"
+            "versions_json,cache_key,scanned_at,error) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                str(tmp_path / "inert.bin"), sha256, 15, Verdict.CLEAN.value, 0, "allow",
+                json.dumps([Finding("clamav", "no_detection", 0).to_dict()]),
+                json.dumps({"clamav": "old-generation"}), key, "2026-09-26T00:00:00+00:00", None,
+            ),
+        )
+
+    store = SecurityStore(root)
+    assert store.cache_get(sha256, key) is None
+    assert store.status_summary()["files_scanned"] == 1
+    with store.connection() as connection:
+        row = connection.execute(
+            "SELECT cache_valid, cache_generation FROM scan_results WHERE sha256=? AND cache_key=?",
+            (sha256, key),
+        ).fetchone()
+    assert tuple(row) == (0, 0)
+    verified = ScanResult(
+        path=str(tmp_path / "inert.bin"), sha256=sha256, size=15,
+        verdict=Verdict.CLEAN, score=0, action="allow",
+        findings=(Finding("clamav", "no_detection", 0),),
+        engine_versions={"clamav": "old-generation"},
+    )
+    assert store.record_scan_if_epoch(verified, key, store.cache_epoch(sha256, key))
+    assert store.cache_get(sha256, key) is not None
+
+
+def test_concurrent_legacy_cache_migrations_recheck_columns_under_writer_lock(tmp_path: Path) -> None:
+    root = tmp_path / "security"
+    store = SecurityStore(root)
+    legacy_sha = hashlib.sha256(b"inert old cache").hexdigest()
+    legacy_key = versions_cache_key({"clamav": "old-generation"})
+    with store.connection() as connection:
+        connection.execute("DROP TABLE scan_results")
+        connection.execute(
+            "CREATE TABLE scan_results (id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT NOT NULL, "
+            "sha256 TEXT NOT NULL, size INTEGER NOT NULL, verdict TEXT NOT NULL, score INTEGER NOT NULL, "
+            "action TEXT NOT NULL, findings_json TEXT NOT NULL, versions_json TEXT NOT NULL, "
+            "cache_key TEXT NOT NULL, scanned_at TEXT NOT NULL, error TEXT, UNIQUE(sha256, cache_key))"
+        )
+        connection.execute(
+            "INSERT INTO scan_results (path,sha256,size,verdict,score,action,findings_json,"
+            "versions_json,cache_key,scanned_at,error) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                str(tmp_path / "inert.bin"), legacy_sha, 15, Verdict.CLEAN.value, 0, "allow",
+                json.dumps([Finding("clamav", "no_detection", 0).to_dict()]),
+                json.dumps({"clamav": "old-generation"}), legacy_key, "2026-09-26T00:00:00+00:00", None,
+            ),
+        )
+
+    old_column_reads = threading.Barrier(2)
+
+    class RacingStore(SecurityStore):
+        @contextmanager
+        def connection(self):
+            with super().connection() as connection:
+                class RacingConnection:
+                    def execute(self, statement, parameters=()):
+                        cursor = connection.execute(statement, parameters)
+                        if statement == "PRAGMA table_info(scan_results)":
+                            columns = cursor.fetchall()
+                            try:
+                                old_column_reads.wait(timeout=0.5)
+                            except threading.BrokenBarrierError:
+                                pass
+                            return columns
+                        return cursor
+
+                    def __getattr__(self, name):
+                        return getattr(connection, name)
+
+                yield RacingConnection()
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        first = executor.submit(RacingStore, root)
+        second = executor.submit(RacingStore, root)
+        first.result(timeout=10)
+        second.result(timeout=10)
+
+    read_only = SecurityStore(root, read_only=True)
+    with read_only.connection() as connection:
+        columns = {row[1] for row in connection.execute("PRAGMA table_info(scan_results)")}
+    assert {"cache_valid", "cache_generation"} <= columns
+    assert read_only.cache_get(legacy_sha, legacy_key) is None
+    assert read_only.status_summary()["files_scanned"] == 1
 
 
 def test_clamav_cache_identity_distinguishes_managed_database_paths(
@@ -923,6 +1898,112 @@ def test_clamav_does_not_treat_truncated_exit_zero_as_clean(
     assert len(findings) == 1
     assert findings[0].state == EngineState.ENGINE_ERROR
     assert findings[0].name == "ClamAV output incomplete"
+
+
+def test_clamav_truncated_limit_marker_is_not_a_positive_match(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    binary = tmp_path / "clamscan.exe"
+    binary.write_bytes(b"inert scanner identity fixture")
+    database = _managed_clamav_database(tmp_path)
+    target = tmp_path / "inert-target.bin"
+    target.write_bytes(b"inert target")
+    monkeypatch.setattr(security_engines.shutil, "which", lambda name: str(binary) if name == "clamscan" else None)
+    monkeypatch.setattr(
+        security_engines,
+        "run_bounded",
+        lambda *_args, **_kwargs: BoundedProcessResult(
+            returncode=1,
+            stdout=f"{target}: Heuristics.Limits.Exceeded FOUND\n",
+            stderr="diagnostic " * 2048,
+            output_truncated=True,
+        ),
+    )
+
+    findings = ClamAVEngine(database_dir=database).scan(target, "inert-sha256")
+
+    assert len(findings) == 1
+    assert findings[0].state == EngineState.ENGINE_ERROR
+    assert findings[0].score == 0
+
+
+@pytest.mark.parametrize(
+    ("reported_name", "expected_name", "expected_state", "expected_score"),
+    [
+        ("Heuristics.Limits.Exceeded", "ClamAV scan limit exceeded", EngineState.ENGINE_ERROR, 0),
+        ("Synthetic: Rule", "Synthetic: Rule", EngineState.AVAILABLE, 90),
+    ],
+)
+def test_clamav_output_parser_does_not_include_colon_space_in_target_name(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    reported_name: str,
+    expected_name: str,
+    expected_state: EngineState,
+    expected_score: int,
+) -> None:
+    binary = tmp_path / "clamscan.exe"
+    binary.write_bytes(b"inert scanner identity fixture")
+    database = _managed_clamav_database(tmp_path)
+    # The path is only passed to the mocked scanner; no Windows file with a colon is created.
+    target = tmp_path / "sample: note.bin"
+    monkeypatch.setattr(security_engines.shutil, "which", lambda name: str(binary) if name == "clamscan" else None)
+    monkeypatch.setattr(
+        security_engines,
+        "run_bounded",
+        lambda *_args, **_kwargs: BoundedProcessResult(
+            returncode=1,
+            stdout=f"{target}: {reported_name} FOUND\n",
+            stderr="",
+            output_truncated=False,
+        ),
+    )
+
+    findings = ClamAVEngine(database_dir=database).scan(target, "inert-sha256")
+
+    assert len(findings) == 1
+    assert findings[0].name == expected_name
+    assert findings[0].state == expected_state
+    assert findings[0].score == expected_score
+
+
+@pytest.mark.parametrize("suspicious_first", [False, True])
+def test_static_heuristic_cache_rechecks_same_bytes_at_a_different_path(
+    tmp_path: Path,
+    suspicious_first: bool,
+) -> None:
+    ordinary = tmp_path / "ordinary" / "inert.txt"
+    suspicious = tmp_path / "Downloads" / "inert.ps1"
+    ordinary.parent.mkdir()
+    suspicious.parent.mkdir()
+    ordinary.write_bytes(b"inert identical content")
+    suspicious.write_bytes(ordinary.read_bytes())
+    service = _service(tmp_path)
+    service.engines = (CleanEngine(), security_engines.StaticHeuristicsEngine())
+    first_path, second_path = (suspicious, ordinary) if suspicious_first else (ordinary, suspicious)
+
+    first = service.scan_file(first_path, quarantine=False)
+    second = service.scan_file(second_path, quarantine=False)
+    repeated = service.scan_file(second_path, quarantine=False)
+
+    assert first.cached is False
+    assert second.cached is False
+    assert repeated.cached is True
+    assert first.verdict == (Verdict.SUSPICIOUS if suspicious_first else Verdict.CLEAN)
+    assert second.verdict == (Verdict.CLEAN if suspicious_first else Verdict.SUSPICIOUS)
+    assert any(
+        item.name == "executable_in_transient_location"
+        for item in (first.findings if suspicious_first else second.findings)
+    )
+    assert all(
+        item.name != "executable_in_transient_location"
+        for item in (second.findings if suspicious_first else first.findings)
+    )
+
+    content_only = _service(tmp_path / "content-only")
+    assert content_only.scan_file(first_path, quarantine=False).cached is False
+    assert content_only.scan_file(second_path, quarantine=False).cached is True
 
 
 def test_yara_match_overflow_is_marked_as_an_incomplete_scan(

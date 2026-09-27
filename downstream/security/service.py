@@ -547,9 +547,22 @@ class SecurityService:
         snapshot = (sha256, size, identity)
         versions = self.versions()
         cache_key = versions_cache_key(versions)
-        if use_cache and not _engine_version_findings(versions)[1]:
-            cached = self.store.cache_get(sha256, cache_key)
-            if cached is not None and cached.engine_health == EngineHealth.HEALTHY:
+        cache_epoch = self.store.cache_epoch(sha256, cache_key)
+        if (
+            use_cache
+            and not _engine_version_findings(versions)[1]
+            and all(not isinstance(engine, YaraEngine) or engine.ensure_cache_ready() for engine in self.engines)
+        ):
+            cached_entry = self.store.cache_get_with_generation(sha256, cache_key)
+            if (
+                cached_entry is not None
+                and cached_entry[0].engine_health == EngineHealth.HEALTHY
+                and (
+                    cached_entry[0].path == str(path)
+                    or not any(isinstance(engine, StaticHeuristicsEngine) for engine in self.engines)
+                )
+            ):
+                cached, cache_generation = cached_entry
                 try:
                     after_cache_read = self._hash_stable(path)
                 except (OSError, RuntimeError, ValueError):
@@ -557,7 +570,12 @@ class SecurityService:
                 if after_cache_read != snapshot or cached.sha256 != sha256:
                     return self._changed_file_result(path, versions)
                 verified_versions = self.versions()
-                if verified_versions == versions and not _engine_version_findings(verified_versions)[1]:
+                if (
+                    verified_versions == versions
+                    and not _engine_version_findings(verified_versions)[1]
+                    and all(not isinstance(engine, YaraEngine) or engine.cache_ready() for engine in self.engines)
+                    and self.store.refresh_cached_scan(sha256, cache_key, cache_generation, str(path))
+                ):
                     decision = evaluate(list(cached.findings), self.store.is_allowed(sha256, str(path)))
                     cached = replace(
                         cached,
@@ -581,10 +599,11 @@ class SecurityService:
                             cached = replace(cached, action="quarantined", quarantine_id=item_id)
                         except Exception:
                             cached = replace(cached, action="quarantine_failed", error="quarantine failed")
-                    self.store.record_scan(cached, cache_key)
+                    self.store.record_detection_event(cached)
                     return cached
                 versions = verified_versions
                 cache_key = versions_cache_key(versions)
+                cache_epoch = self.store.cache_epoch(sha256, cache_key)
         findings, unavailable_engines = _engine_version_findings(versions)
         try:
             with _create_scan_snapshot(
@@ -609,6 +628,14 @@ class SecurityService:
                                 scan_snapshot.path,
                                 sha256,
                                 original_path=path,
+                            )
+                        )
+                    elif isinstance(engine, (ClamAVEngine, YaraEngine)):
+                        findings.extend(
+                            engine.scan(
+                                scan_snapshot.path,
+                                sha256,
+                                expected_version=versions[engine.name],
                             )
                         )
                     else:
@@ -651,8 +678,23 @@ class SecurityService:
             except Exception:
                 result = replace(result, action="quarantine_failed", error="quarantine failed")
         if decision.engine_health == EngineHealth.HEALTHY:
-            self.store.record_scan(result, cache_key)
+            if not self.store.record_scan_if_epoch(result, cache_key, cache_epoch):
+                guarded_findings = (
+                    Finding("security_cache", "scan_generation_changed", 0, EngineState.ENGINE_ERROR),
+                    *result.findings,
+                )
+                guarded_decision = evaluate(list(guarded_findings), allowed)
+                result = replace(
+                    result,
+                    findings=guarded_findings,
+                    verdict=guarded_decision.verdict,
+                    score=guarded_decision.score,
+                    action=result.action if result.quarantine_id else guarded_decision.action,
+                    error=result.error or guarded_decision.error,
+                )
+                self.store.record_detection_event(result)
         else:
+            self.store.invalidate_cached_scan(sha256, cache_key)
             self.store.event(
                 "detection",
                 result.path,
@@ -756,26 +798,31 @@ class SecurityService:
             file_iterator = iter(files)
             futures = {}
             max_pending = max(1, maximum * MAX_SCAN_FUTURES_MULTIPLIER)
-            while len(futures) < max_pending:
-                try:
-                    path = next(file_iterator)
-                except StopIteration:
-                    break
-                futures[pool.submit(self.scan_file, path, quarantine)] = path
-            while futures:
-                completed, _pending = wait(tuple(futures), return_when=FIRST_COMPLETED)
-                for future in completed:
-                    path = futures.pop(future)
+            try:
+                while len(futures) < max_pending:
                     try:
-                        results.append(future.result())
-                    except Exception as exc:
-                        results.append(ScanResult(str(path), "", 0, Verdict.SCAN_ERROR, 0, "blocked_pending_review", (), self.versions(), error=str(exc)))
-                try:
-                    while len(futures) < max_pending:
                         path = next(file_iterator)
-                        futures[pool.submit(self.scan_file, path, quarantine)] = path
-                except StopIteration:
-                    pass
+                    except StopIteration:
+                        break
+                    futures[pool.submit(self.scan_file, path, quarantine)] = path
+                while futures:
+                    completed, _pending = wait(tuple(futures), return_when=FIRST_COMPLETED)
+                    for future in completed:
+                        path = futures.pop(future)
+                        try:
+                            results.append(future.result())
+                        except Exception as exc:
+                            results.append(ScanResult(str(path), "", 0, Verdict.SCAN_ERROR, 0, "blocked_pending_review", (), self.versions(), error=str(exc)))
+                    try:
+                        while len(futures) < max_pending:
+                            path = next(file_iterator)
+                            futures[pool.submit(self.scan_file, path, quarantine)] = path
+                    except StopIteration:
+                        pass
+            except BaseException:
+                # The context manager still waits for active workers; queued scans must not start after interruption.
+                pool.shutdown(wait=False, cancel_futures=True)
+                raise
         for path in incomplete_paths:
             results.append(self._boundary_failure(path, "directory_scan_incomplete"))
         counts = {verdict.value: 0 for verdict in Verdict}

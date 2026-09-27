@@ -61,7 +61,8 @@ class SecurityStore:
             "CREATE TABLE IF NOT EXISTS feed_state (name TEXT PRIMARY KEY, version TEXT NOT NULL, updated_at TEXT NOT NULL, status TEXT NOT NULL, details_json TEXT NOT NULL DEFAULT '{}');",
             "CREATE TABLE IF NOT EXISTS malware_hashes (sha256 TEXT PRIMARY KEY CHECK(length(sha256)=64), label TEXT NOT NULL, source TEXT NOT NULL, malware_family TEXT, confidence INTEGER NOT NULL DEFAULT 100, first_seen TEXT, last_seen TEXT, feed_version TEXT NOT NULL, updated_at TEXT NOT NULL);",
             "CREATE TABLE IF NOT EXISTS iocs (kind TEXT NOT NULL, value TEXT NOT NULL, label TEXT NOT NULL, source TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY(kind, value));",
-            "CREATE TABLE IF NOT EXISTS scan_results (id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT NOT NULL, sha256 TEXT NOT NULL, size INTEGER NOT NULL, verdict TEXT NOT NULL, score INTEGER NOT NULL, action TEXT NOT NULL, findings_json TEXT NOT NULL, versions_json TEXT NOT NULL, cache_key TEXT NOT NULL, scanned_at TEXT NOT NULL, error TEXT, UNIQUE(sha256, cache_key));",
+            "CREATE TABLE IF NOT EXISTS scan_results (id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT NOT NULL, sha256 TEXT NOT NULL, size INTEGER NOT NULL, verdict TEXT NOT NULL, score INTEGER NOT NULL, action TEXT NOT NULL, findings_json TEXT NOT NULL, versions_json TEXT NOT NULL, cache_key TEXT NOT NULL, scanned_at TEXT NOT NULL, error TEXT, cache_valid INTEGER NOT NULL DEFAULT 1, cache_generation INTEGER NOT NULL DEFAULT 0, UNIQUE(sha256, cache_key));",
+            "CREATE TABLE IF NOT EXISTS scan_cache_epochs (sha256 TEXT NOT NULL, cache_key TEXT NOT NULL, epoch INTEGER NOT NULL, PRIMARY KEY(sha256, cache_key));",
             "CREATE TABLE IF NOT EXISTS quarantine_items (id TEXT PRIMARY KEY, blob_name TEXT NOT NULL UNIQUE, original_path TEXT NOT NULL, original_filename TEXT NOT NULL, sha256 TEXT NOT NULL, size INTEGER NOT NULL, verdict TEXT NOT NULL, findings_json TEXT NOT NULL, engine_versions_json TEXT NOT NULL DEFAULT '{}', original_atime_ns INTEGER, original_mtime_ns INTEGER, original_ctime_ns INTEGER, restore_state TEXT NOT NULL DEFAULT 'quarantined', created_at TEXT NOT NULL, restored_at TEXT, deleted_at TEXT);",
             "CREATE TABLE IF NOT EXISTS allowlist (kind TEXT NOT NULL, value TEXT NOT NULL, reason TEXT NOT NULL, created_by TEXT NOT NULL DEFAULT 'local_user', created_at TEXT NOT NULL, expires_at TEXT, PRIMARY KEY(kind, value));",
             "CREATE TABLE IF NOT EXISTS detection_events (id INTEGER PRIMARY KEY AUTOINCREMENT, event_type TEXT NOT NULL, subject TEXT NOT NULL, verdict TEXT, action TEXT NOT NULL, details_json TEXT NOT NULL, created_at TEXT NOT NULL);",
@@ -70,12 +71,18 @@ class SecurityStore:
         ))
         with self._lock, self.connection() as con:
             con.executescript(schema)
+            # Lock before reading columns so another process cannot migrate from the same stale schema.
+            con.execute("BEGIN IMMEDIATE")
             migrations = {
                 "malware_hashes": (
                     ("malware_family", "TEXT"),
                     ("confidence", "INTEGER NOT NULL DEFAULT 100"),
                     ("first_seen", "TEXT"),
                     ("last_seen", "TEXT"),
+                ),
+                "scan_results": (
+                    ("cache_valid", "INTEGER NOT NULL DEFAULT 0"),
+                    ("cache_generation", "INTEGER NOT NULL DEFAULT 0"),
                 ),
                 "quarantine_items": (
                     ("original_filename", "TEXT NOT NULL DEFAULT ''"),
@@ -150,11 +157,15 @@ class SecurityStore:
         return row is not None
 
     def cache_get(self, sha256: str, cache_key: str) -> ScanResult | None:
+        entry = self.cache_get_with_generation(sha256, cache_key)
+        return entry[0] if entry is not None else None
+
+    def cache_get_with_generation(self, sha256: str, cache_key: str) -> tuple[ScanResult, int] | None:
         if not self.available:
             return None
         with self.connection() as con:
             row = con.execute(
-                "SELECT * FROM scan_results WHERE sha256=? AND cache_key=? ORDER BY id DESC LIMIT 1",
+                "SELECT * FROM scan_results WHERE sha256=? AND cache_key=? AND cache_valid=1 ORDER BY id DESC LIMIT 1",
                 (sha256, cache_key),
             ).fetchone()
         if row is None:
@@ -167,27 +178,86 @@ class SecurityStore:
             )
             for item in json.loads(row["findings_json"])
         )
-        return ScanResult(
+        result = ScanResult(
             path=row["path"], sha256=row["sha256"], size=row["size"],
             verdict=Verdict(row["verdict"]), score=row["score"], action=row["action"],
             findings=findings, engine_versions=json.loads(row["versions_json"]),
             cached=True, error=row["error"],
         )
+        return result, int(row["cache_generation"])
+
+    def invalidate_cached_scan(self, sha256: str, cache_key: str) -> None:
+        self._require_writable()
+        with self._lock, self.connection() as con:
+            con.execute("BEGIN IMMEDIATE")
+            con.execute(
+                "INSERT INTO scan_cache_epochs (sha256,cache_key,epoch) VALUES(?,?,1) "
+                "ON CONFLICT(sha256,cache_key) DO UPDATE SET epoch=scan_cache_epochs.epoch+1",
+                (sha256, cache_key),
+            )
+            con.execute(
+                "UPDATE scan_results SET cache_valid=0, cache_generation=cache_generation+1 "
+                "WHERE sha256=? AND cache_key=?",
+                (sha256, cache_key),
+            )
+
+    def cache_epoch(self, sha256: str, cache_key: str) -> int:
+        if not self.available:
+            return 0
+        with self.connection() as con:
+            row = con.execute(
+                "SELECT epoch FROM scan_cache_epochs WHERE sha256=? AND cache_key=?",
+                (sha256, cache_key),
+            ).fetchone()
+        return int(row["epoch"]) if row is not None else 0
+
+    def refresh_cached_scan(self, sha256: str, cache_key: str, generation: int, path: str) -> bool:
+        self._require_writable()
+        with self._lock, self.connection() as con:
+            updated = con.execute(
+                "UPDATE scan_results SET path=?, scanned_at=? "
+                "WHERE sha256=? AND cache_key=? AND cache_valid=1 AND cache_generation=?",
+                (path, utc_now(), sha256, cache_key, generation),
+            )
+            return updated.rowcount == 1
 
     def record_scan(self, result: ScanResult, cache_key: str) -> None:
         self._require_writable()
+        with self._lock, self.connection() as con:
+            self._write_scan_row(con, result, cache_key)
+        self.record_detection_event(result)
+
+    def record_scan_if_epoch(self, result: ScanResult, cache_key: str, expected_epoch: int) -> bool:
+        self._require_writable()
+        with self._lock, self.connection() as con:
+            con.execute("BEGIN IMMEDIATE")
+            row = con.execute(
+                "SELECT epoch FROM scan_cache_epochs WHERE sha256=? AND cache_key=?",
+                (result.sha256, cache_key),
+            ).fetchone()
+            current_epoch = int(row["epoch"]) if row is not None else 0
+            if current_epoch != expected_epoch:
+                return False
+            self._write_scan_row(con, result, cache_key)
+        self.record_detection_event(result)
+        return True
+
+    @staticmethod
+    def _write_scan_row(con: sqlite3.Connection, result: ScanResult, cache_key: str) -> None:
         findings = json.dumps([item.to_dict() for item in result.findings], ensure_ascii=False, sort_keys=True)
         versions = json.dumps(result.engine_versions, ensure_ascii=False, sort_keys=True)
-        with self._lock, self.connection() as con:
-            con.execute(
-                "INSERT INTO scan_results (path,sha256,size,verdict,score,action,findings_json,versions_json,cache_key,scanned_at,error) "
-                "VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(sha256,cache_key) DO UPDATE SET "
-                "path=excluded.path,size=excluded.size,verdict=excluded.verdict,score=excluded.score,"
-                "action=excluded.action,findings_json=excluded.findings_json,versions_json=excluded.versions_json,"
-                "scanned_at=excluded.scanned_at,error=excluded.error",
-                (result.path, result.sha256, result.size, result.verdict.value, result.score,
-                 result.action, findings, versions, cache_key, utc_now(), result.error),
-            )
+        con.execute(
+            "INSERT INTO scan_results (path,sha256,size,verdict,score,action,findings_json,versions_json,cache_key,scanned_at,error,cache_valid,cache_generation) "
+            "VALUES(?,?,?,?,?,?,?,?,?,?,?,1,1) ON CONFLICT(sha256,cache_key) DO UPDATE SET "
+            "path=excluded.path,size=excluded.size,verdict=excluded.verdict,score=excluded.score,"
+            "action=excluded.action,findings_json=excluded.findings_json,versions_json=excluded.versions_json,"
+            "scanned_at=excluded.scanned_at,error=excluded.error,cache_valid=1,"
+            "cache_generation=scan_results.cache_generation+1",
+            (result.path, result.sha256, result.size, result.verdict.value, result.score,
+             result.action, findings, versions, cache_key, utc_now(), result.error),
+        )
+
+    def record_detection_event(self, result: ScanResult) -> None:
         if result.verdict in {Verdict.SUSPICIOUS, Verdict.MALICIOUS, Verdict.SCAN_ERROR}:
             self.event(
                 "detection",
