@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "status": "PARTIAL_WINDOWS_PATHEXT_ISOLATION_REAL_SDK_AND_FIRST_HIT_PRECEDENCE_OPEN",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N31",
+  "priority": "P1",
+  "origin": "Upstream historical ledger row v0213_to_v0214.jsonl:2644 commit 80c2696422a1e42551f9ab257dadc0a2bdaa529d introduced the no-process-global-PATHEXT contract; row :3250 commit 9eca7f388f71755293343dddd6ec4d9111d68fc4 is its formatter-only follow-up. N30 covered the same source commit's missing-child-PATH boundary; N31 covers the distinct concurrent PATHEXT contract.",
+  "upstream_commits": [
+    "80c2696422a1e42551f9ab257dadc0a2bdaa529d",
+    "9eca7f388f71755293343dddd6ec4d9111d68fc4"
+  ],
+  "final_observable_contract": "A Windows MCP stdio server's configured PATHEXT must resolve its child executable without ever publishing that value into the Gateway process-wide environment. Child extension order must be honored; an explicitly empty child PATH must not search cwd; Windows NoDefaultCurrentDirectoryInExePath policy must suppress implicit cwd search.",
+  "source_span": [
+    "Before N31, tools/mcp_tool.py:1036-1057 temporarily wrote os.environ['PATHEXT'] around shutil.which; another thread could see the child profile's value",
+    "U1 tools/mcp_tool_config.py:136-162 has a pure configured-PATHEXT extension walk; D0 and the integration source had no split config module",
+    "tools/mcp_tool.py:1024-1051 now owns the pure child PATH/PATHEXT search with native Windows cwd policy; :1061-1077 calls it only after a child PATH-present first lookup miss",
+    "MCPServerTask._run_stdio at tools/mcp_tool.py:3268-3313 forwards resolver output to SDK parameters; tests/tools/test_n31_mcp_pathext_isolation.py checks concurrency, ordering, cwd boundaries, and caller"
+  ],
+  "red_receipt": "On product parent 13a8077deed19e91d58d5c34bb2d62ce0b4b360d, a synchronized second thread read .CMD instead of the parent .EXE while old shutil.which was held inside the temporary global PATHEXT swap. The first pure helper then failed two new native Windows Python 3.12 RED cases: PATH='' incorrectly searched cwd, and NoDefaultCurrentDirectoryInExePath=1 did not suppress cwd.",
+  "required_evidence": [
+    "Synchronize a concurrent reader inside the configured-PATHEXT retry and keep process-global PATHEXT unchanged",
+    "Preserve child PATHEXT extension order and actual MCPServerTask-to-SDK command/environment",
+    "Match native Windows Python 3.12 empty-PATH and current-directory policy behavior",
+    "Run affected native tests, mutation of global swap and both cwd guards, fresh CodeGraph binding, and independent rereview"
+  ],
+  "publication_gate": "N31 is a partial Windows semantic adaptation. A real MCP child launch, other Windows Python runtimes, and first-hit precedence when parent PATHEXT already finds a different executable are not qualified.",
+  "product_commit": "6c83b01c3af96b571caa0767380b93be7974fc30",
+  "product_tree": "8fb35a2d0dd9ec7ca4e61d7c2c1430accc1500c9",
+  "green_evidence": [
+    "Six affected MCP files passed 136 Windows Python 3.12 tests with three POSIX-only skips",
+    "Old global-swap mutation failed the concurrent reader test; empty-PATH and cwd-policy mutants each failed their specific native test",
+    "Final source bytes were restored to SHA-256 EE2516876D092CD523F8EB38A0406946EEE7573223554A221A3BA5C6E58CE291",
+    "Read-only reviewer initially cleared the concurrency change with an incorrect empty-PATH assumption; after native RED and correction, rereview cleared the restored final diff. Reviewer did not run tests or CodeGraph"
+  ],
+  "codegraph_receipt": {
+    "path": "H:\\hermes-worktrees\\semantic-refresh-20260926\\source-bindings\\receipts\\codegraph\\N31-20260927\\receipt.json",
+    "sha256": "8e7bcedf5d4a818d6a22882ed54ce8ff67c74b4d4d0de08fefc1bd34073ff85b",
+    "version": "1.6.0",
+    "binding": "Separate frozen D0 8,881-file, U1 12,468-file and committed integration 8,955-file indexes; both product/test paths actual=committed=indexed; pending changes and refs zero"
+  },
+  "open_gaps": [
+    "The actual MCP SDK spawn was intercepted at StdioServerParameters; no real MCP child or Desktop runtime was launched",
+    "Only Windows Python 3.12 native lookup semantics were tested; other Windows runtimes remain unqualified",
+    "When the first shutil.which under parent PATHEXT finds a different executable before configured-PATHEXT fallback, precedence remains unreviewed",
+    "The 17,065-commit metadata inventory is not a completed semantic mapping and required P0 families remain open",
+    "T06/T12 Control MCP production write remains DISABLED"
+  ]
+}
