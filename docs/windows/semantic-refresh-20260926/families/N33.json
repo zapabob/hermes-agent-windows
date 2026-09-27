@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "status": "PARTIAL_N33_OCCUPIED_DESTINATION_OS_SYMLINK_AND_ATOMIC_RACE_OPEN",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N33",
+  "priority": "P0",
+  "origin": "R2-to-U1 inventory rows v0215_to_u1.jsonl:2120, :832 and :1368 identify e8701f5e74a1ff7941ea8bf61b897485e3e56c39, 59e3769560c8e1579ab70c67458f04d4a3785284 and 9556b73e7ff7e7103dc2be4356b50cbc07836a0b. This family maps only typed absence, Add/Move occupancy and dangling-symlink classification. Other changes in those commits remain unreviewed.",
+  "upstream_source_commits": [
+    "e8701f5e74a1ff7941ea8bf61b897485e3e56c39",
+    "59e3769560c8e1579ab70c67458f04d4a3785284",
+    "9556b73e7ff7e7103dc2be4356b50cbc07836a0b"
+  ],
+  "downstream_source": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "local_feature_observed": "2622ea42ce3ad044bac4c4e8b9812ba21f7ae65a",
+    "common_ancestor_with_U1": "1fe0f2f3ac9748ce799272eb93bee2937b5ab802",
+    "same_D0_and_feature_blobs": {
+      "tools/file_operations.py": "a23e9afa056f3c09e8775b673ba3142428a0ec11",
+      "tools/patch_parser.py": "a95859d5e40476291caa250fde576eaf2d81785a"
+    },
+    "U1_blobs": {
+      "tools/file_operations.py": "56437d62dcbeff17cdfa7ff41cc099a65de4cd43",
+      "tools/patch_parser.py": "8e6ce92ed7b68d3ca32c57b346a4a1087af0c8bf"
+    }
+  },
+  "final_observable_contract": "A V4A Add target or Move destination is available only after the file backend explicitly confirms that its directory entry is absent. A dangling symlink, unreadable entry, failed transport, or untyped legacy error refuses the entire patch before an earlier operation writes. Add and Move recheck immediately before their effects; a normal symlink to a regular file still reads normally.",
+  "source_span": [
+    "Before N33, tools/file_operations.py:1423-1445 used -f then -e and exited nonzero for a dangling symlink; read_file_raw at :1859-1903 reported it missing",
+    "Before N33, tools/patch_parser.py:275-399 treated any Move-destination read error as available and made no Add-destination check; _apply_add/_apply_move wrote without a destination recheck",
+    "tools/file_tools.py:2413 patch_tool is the public entrypoint into ShellFileOperations.patch_v4a and tools.patch_parser.apply_v4a_operations",
+    "tools/file_operations.py:1425-1456 now has separate missing/non-regular sentinels and :1864-1928 makes not_found typed only for a successful absent-entry probe",
+    "tools/patch_parser.py:250-305 now owns explicit destination classification; :263-429 validates the whole patch; :574-640 rechecks Add/Move immediately before the effect",
+    "tests/tools/test_n33_fileops_occupied_destination.py tests reader, validation, apply-time and multi-operation contracts"
+  ],
+  "red_receipt": "At parent 484e5c8545a7c9259adb40e7880daf609d047ca5, native Windows Python 3.12 ran the new backend-response and V4A-caller tests: 7 failed and 2 passed. Three readers reported a modelled dangling symlink as missing, and Add/Move wrote through both a non-regular-entry error and a backend failure. Native symlink creation was unavailable on this PC (WinError 1314), so the dangling-link response was modelled rather than claimed as an OS E2E.",
+  "product_commit": "e8f89b0fdeff9757fb4c052f1e4d266ae22eef37",
+  "product_tree": "914b4ddd5d58953deedddd512d0685f1b489e37b",
+  "green_evidence": [
+    "At the exact product HEAD, ten affected test files passed 223 Windows Python 3.12 tests with PYTHONUTF8=1; eight known POSIX-shell or symlink-privilege cases were explicitly deselected",
+    "A first broader run without PYTHONUTF8 had 164 pass and one unrelated existing test fail while Path.read_text used CP932 on a UTF-8 source; the same set passed 165/165 in UTF-8 mode",
+    "Five deliberate mutants each failed its targeted N33 test: lost -L, any error means free, skipped Add validation, skipped Add apply recheck, and skipped Move apply recheck",
+    "Mutation-tested tools/file_operations.py differs from the committed source only in one corrected docstring; tools/patch_parser.py is byte-identical; source_binding.py verified the reconstruction",
+    "Independent read-only reviewer twice returned CLEAR; its LOW outdated-docstring finding was corrected before commit, and it did not run tests, CodeGraph, mutations or the commit",
+    "All five changed paths matched actual file, exact Git commit and indexed SHA-256; Git committed only these explicit paths"
+  ],
+  "codegraph_receipt": {
+    "local_name": "N33-20260927/receipt.json",
+    "sha256": "68e1dae32027e23734903555cbb09ae9ccd79c83ef65dde9c3c44a75cd9d0a7c",
+    "version": "1.6.0",
+    "binding": "Separate D0 8,881-file, U1 12,468-file and product integration 8,957-file indexes; all pending changes and refs zero. CodeGraph query/explore/impact owner map and source hashes are in the local receipt."
+  },
+  "open_gaps": [
+    "Native Windows dangling symlink E2E remains unavailable under current privilege; backend-response tests do not prove the OS shell branch end-to-end",
+    "A concurrent actor can create a destination after the final check; backend write_file/mv lacks an atomic no-clobber primitive, so this family is not a complete race fence",
+    "Remote terminal backends and third-party FileOperations adapters were not executed; older adapters lacking typed not_found now fail closed",
+    "Other changes in the three cited upstream commits and the full 17,065-commit inventory remain semantically unmapped",
+    "N07-A1 grant revocation/claim linearization and destination outcome durability remain P0 open; T06/T12 Control MCP production write stays DISABLED",
+    "No PR, push, release, production restart or Control MCP production write is implied"
+  ]
+}
