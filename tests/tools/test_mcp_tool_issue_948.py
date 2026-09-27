@@ -4,6 +4,8 @@ import sys
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 
 from tools.mcp_tool import (
     MCPServerTask,
@@ -88,6 +90,83 @@ def test_prefer_windows_exe_swaps_cmd_shim_when_sibling_exists(tmp_path):
     assert _prefer_windows_exe(str(exe), is_windows=True) == str(exe)
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows GUI PATH contract")
+@pytest.mark.parametrize("launcher", ["uv", "uvx"])
+def test_windows_stdio_uv_launcher_uses_profile_bin_before_user_bin(tmp_path, monkeypatch, launcher):
+    managed_home = tmp_path / "profile"
+    managed_bin = managed_home / "bin"
+    managed_bin.mkdir(parents=True)
+    user_home = tmp_path / "user"
+    user_bin = user_home / ".local" / "bin"
+    user_bin.mkdir(parents=True)
+    managed_exe = managed_bin / f"{launcher}.exe"
+    user_exe = user_bin / f"{launcher}.exe"
+    managed_exe.write_bytes(b"MZ")
+    user_exe.write_bytes(b"MZ")
+    monkeypatch.setenv("HERMES_HOME", str(managed_home))
+    monkeypatch.setenv("USERPROFILE", str(user_home))
+    child_path = r"C:\Windows\System32"
+
+    with patch("tools.mcp_tool.shutil.which", return_value=None):
+        command, env = _resolve_stdio_command(launcher, {"PATH": child_path})
+        assert command == str(managed_exe)
+        assert env["PATH"].split(os.pathsep) == [str(managed_bin), child_path]
+
+        managed_exe.unlink()
+        command, env = _resolve_stdio_command(launcher, {"PATH": child_path})
+        assert command == str(user_exe)
+        assert env["PATH"].split(os.pathsep) == [str(user_bin), child_path]
+
+        user_exe.unlink()
+        user_shim = user_bin / f"{launcher}.cmd"
+        user_shim.write_text("@echo off\r\n", encoding="utf-8")
+        command, env = _resolve_stdio_command(launcher, {"PATH": child_path})
+        assert command == str(user_shim)
+        assert env["PATH"].split(os.pathsep) == [str(user_bin), child_path]
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows GUI PATH contract")
+def test_windows_stdio_uvx_uses_active_profile_override(tmp_path, monkeypatch):
+    from hermes_constants import reset_hermes_home_override, set_hermes_home_override
+
+    process_home = tmp_path / "process-home"
+    active_home = tmp_path / "active-profile"
+    for home in (process_home, active_home):
+        bin_dir = home / "bin"
+        bin_dir.mkdir(parents=True)
+        (bin_dir / "uvx.exe").write_bytes(b"MZ")
+    monkeypatch.setenv("HERMES_HOME", str(process_home))
+    token = set_hermes_home_override(active_home)
+    try:
+        with patch("tools.mcp_tool.shutil.which", return_value=None):
+            command, env = _resolve_stdio_command("uvx", {"PATH": r"C:\Windows\System32"})
+    finally:
+        reset_hermes_home_override(token)
+
+    assert command == str(active_home / "bin" / "uvx.exe")
+    assert env["PATH"].split(os.pathsep)[0] == str(active_home / "bin")
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows GUI PATH contract")
+def test_windows_stdio_uv_launcher_preserves_child_path_hit_and_unknown_command(tmp_path, monkeypatch):
+    managed_home = tmp_path / "profile"
+    managed_bin = managed_home / "bin"
+    managed_bin.mkdir(parents=True)
+    (managed_bin / "uvx.exe").write_bytes(b"MZ")
+    monkeypatch.setenv("HERMES_HOME", str(managed_home))
+    child_path = r"C:\Selected\bin"
+    selected = child_path + r"\uvx.exe"
+
+    with patch("tools.mcp_tool.shutil.which", return_value=selected):
+        assert _resolve_stdio_command("uvx", {"PATH": child_path}) == (
+            selected, {"PATH": child_path}
+        )
+    with patch("tools.mcp_tool.shutil.which", return_value=None):
+        assert _resolve_stdio_command("other-launcher", {"PATH": child_path}) == (
+            "other-launcher", {"PATH": child_path}
+        )
+
+
 # ---------------------------------------------------------------------------
 # #29184: OSV malware preflight must not block the asyncio event loop, and a
 # stalled check must time out fail-open rather than freezing MCP startup.
@@ -105,6 +184,35 @@ def _stdio_mocks():
     mock_session_cm.__aenter__ = AsyncMock(return_value=mock_session)
     mock_session_cm.__aexit__ = AsyncMock(return_value=False)
     return mock_stdio_cm, mock_session_cm
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows GUI PATH contract")
+def test_windows_stdio_caller_passes_resolved_uvx_and_path_to_sdk(tmp_path, monkeypatch):
+    managed_home = tmp_path / "profile"
+    managed_bin = managed_home / "bin"
+    managed_bin.mkdir(parents=True)
+    managed_exe = managed_bin / "uvx.exe"
+    managed_exe.write_bytes(b"MZ")
+    monkeypatch.setenv("HERMES_HOME", str(managed_home))
+    mock_stdio_cm, mock_session_cm = _stdio_mocks()
+    child_path = r"C:\Windows\System32"
+
+    async def exercise():
+        with patch("tools.mcp_tool.shutil.which", return_value=None), \
+             patch("tools.osv_check.check_package_for_malware", return_value=None), \
+             patch("tools.mcp_tool.StdioServerParameters") as params, \
+             patch("tools.mcp_tool.stdio_client", return_value=mock_stdio_cm), \
+             patch("tools.mcp_tool.ClientSession", return_value=mock_session_cm):
+            server = MCPServerTask("uvx-server")
+            await server.start({"command": "uvx", "args": ["example"], "env": {"PATH": child_path}})
+            try:
+                kwargs = params.call_args.kwargs
+                assert kwargs["command"] == str(managed_exe)
+                assert kwargs["env"]["PATH"].split(os.pathsep) == [str(managed_bin), child_path]
+            finally:
+                await server.shutdown()
+
+    asyncio.run(exercise())
 
 
 def test_run_stdio_malware_check_does_not_block_event_loop():

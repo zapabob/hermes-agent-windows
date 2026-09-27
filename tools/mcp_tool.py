@@ -1024,8 +1024,8 @@ def _prefer_windows_exe(command: str, *, is_windows: bool | None = None) -> str:
 def _resolve_stdio_command(command: str, env: dict) -> tuple[str, dict]:
     """Resolve a stdio MCP command against the exact subprocess environment.
 
-    This primarily exists to make bare ``npx``/``npm``/``node`` commands work
-    reliably even when MCP subprocesses run under a filtered PATH.
+    This locates known bare launchers even when MCP subprocesses run under a
+    filtered PATH.
     """
     resolved_command = os.path.expanduser(str(command).strip())
     resolved_env = dict(env or {})
@@ -1077,6 +1077,21 @@ def _resolve_stdio_command(command: str, env: dict) -> tuple[str, dict]:
                 # re-execs /usr/bin/env node which needs the same directory.
                 os.path.join(os.sep, "usr", "local", "bin", resolved_command),
             ]
+            for candidate in candidates:
+                if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+                    resolved_command = candidate
+                    break
+        elif sys.platform == "win32" and resolved_command in {"uv", "uvx"}:
+            from hermes_constants import get_hermes_home
+
+            directories = (
+                os.path.join(get_hermes_home(), "bin"),
+                os.path.join(os.path.expanduser("~"), ".local", "bin"),
+            )
+            candidates = (
+                os.path.join(directory, resolved_command + suffix)
+                for directory in directories for suffix in (".exe", ".cmd", ".bat")
+            )
             for candidate in candidates:
                 if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
                     resolved_command = candidate
