@@ -2064,3 +2064,61 @@ class TestMemoryProviderExternalPaths:
             assert (restored.stat().st_mode & 0o777) == 0o600
         # External state did NOT leak into HERMES_HOME.
         assert not (hermes_home / "_external").exists()
+
+
+class TestDeclaredExternalProviderPaths:
+    @staticmethod
+    def _activate_provider(monkeypatch, *declared: Path) -> None:
+        import plugins.memory as memory_mod
+
+        class Provider:
+            def backup_paths(self):
+                return list(declared)
+
+        monkeypatch.setattr(memory_mod, "_get_active_memory_provider", lambda: "inert-test")
+        monkeypatch.setattr(memory_mod, "load_memory_provider", lambda name: Provider())
+
+    def test_backup_uses_existing_declared_paths_only(self, tmp_path, monkeypatch):
+        home = tmp_path / ".hermes"
+        home.mkdir()
+        (home / "config.yaml").write_text("model: {}\n", encoding="utf-8")
+        external = tmp_path / ".honcho"
+        external.mkdir()
+        (external / "config.json").write_text('{"portable":true}', encoding="utf-8")
+        missing = tmp_path / ".future"
+        self._activate_provider(monkeypatch, external, missing)
+        monkeypatch.setenv("HERMES_HOME", str(home))
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+        import hermes_cli.backup as backup_mod
+
+        assert backup_mod._collect_memory_provider_external_paths() == [external]
+        assert backup_mod._collect_memory_provider_external_paths(
+            include_missing=True,
+        ) == [external, missing]
+        archive = tmp_path / "backup.zip"
+        backup_mod.run_backup(Namespace(output=str(archive)))
+
+        with zipfile.ZipFile(archive) as zf:
+            names = set(zf.namelist())
+        assert "_external/.honcho/config.json" in names
+        assert not any(name.startswith("_external/.future/") for name in names)
+
+    def test_import_accepts_missing_declared_destination(self, tmp_path, monkeypatch):
+        home = tmp_path / ".hermes"
+        home.mkdir()
+        external = tmp_path / ".honcho"
+        self._activate_provider(monkeypatch, external)
+        monkeypatch.setenv("HERMES_HOME", str(home))
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+        archive = tmp_path / "backup.zip"
+        with zipfile.ZipFile(archive, "w") as zf:
+            zf.writestr("config.yaml", "model: {}\n")
+            zf.writestr("_external/.honcho/config.json", '{"portable":true}')
+
+        from hermes_cli.backup import run_import
+
+        assert run_import(Namespace(zipfile=str(archive), force=True)) is None
+        assert (external / "config.json").read_text(encoding="utf-8") == '{"portable":true}'
+        assert not (home / "_external").exists()

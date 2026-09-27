@@ -273,7 +273,7 @@ def _atomic_output_path(final_path: Path):
         raise
 
 
-def _collect_memory_provider_external_paths() -> List[Path]:
+def _collect_memory_provider_external_paths(*, include_missing: bool = False) -> List[Path]:
     """Return existing absolute paths the active memory provider stores
     outside HERMES_HOME, resolved from config only (no network, no init).
 
