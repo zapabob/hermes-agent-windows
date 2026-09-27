@@ -1025,15 +1025,16 @@ def _resolve_stdio_command(command: str, env: dict) -> tuple[str, dict]:
     """Resolve a stdio MCP command against the exact subprocess environment.
 
     This locates known bare launchers even when MCP subprocesses run under a
-    filtered PATH.
+    filtered PATH. A missing child PATH must not search the parent's PATH.
     """
     resolved_command = os.path.expanduser(str(command).strip())
     resolved_env = dict(env or {})
 
     if os.sep not in resolved_command:
         path_arg = resolved_env["PATH"] if "PATH" in resolved_env else None
-        which_hit = shutil.which(resolved_command, path=path_arg)
-        if which_hit is None and sys.platform == "win32" and resolved_env:
+        which_hit = shutil.which(resolved_command, path=path_arg) if path_arg is not None else None
+        if (path_arg is not None and which_hit is None
+                and sys.platform == "win32" and resolved_env):
             # shutil.which(..., path=...) resolves extensions from the PARENT
             # process PATHEXT, not the MCP subprocess env — so a config that
             # supplies both PATH and PATHEXT can fail to resolve a command
