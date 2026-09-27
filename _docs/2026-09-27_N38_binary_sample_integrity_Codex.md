@@ -1,0 +1,21 @@
+# N38 partial: fenced binary-admission sample integrity
+
+Repository: `zapabob/hermes-agent-windows`. Product commit `2a15742ec5427e77e25b7d33c6c370c0dfa54e8a`, tree `b15e8493e5a294820be27084e99eb4e078c20af8`. Frozen D0 is `60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b`, U1 is `678a4762b887f3eabe5cad11254b2ab1ae859485`, R2 is `f97608f178d1ffeca59860195ab7da295f7c8e5f`; old U0 remains `b936546561888a54d5bf9cd7eae9629a824eb4f7`. The R2-to-U1 full-history ledger rows `v0215_to_u1.jsonl:850`, `:1144` and `:660` identify the byte-exact/fenced-sample lineage. This record covers one observable contract, not entire upstream commits.
+
+## Source, caller and RED
+
+D0 and the observed local feature share `tools/file_operations.py` blob `a23e9afa056f3c09e8775b673ba3142428a0ec11`; U1 uses `56437d62dcbeff17cdfa7ff41cc099a65de4cd43`. D0 `_sample_file_bytes` at `tools/file_operations.py:1069` read unframed `head -c`/base64 output. Its admission callers `read_file` and `read_file_raw` could act on terminal noise. U1's `_sample_file_bytes` at `tools/file_operations.py:286-302` fences the sample. N38 reuses the fork's N36 `_fenced_exact_segment`, validates decoded sample length against the framed file byte count and raises `_SampleIntegrityError` for an unverifiable reply. Both callers return an error before their legacy text-sample fallback; a structurally valid framed status 127 preserves the missing-base64 path.
+
+At parent `ab54970a8e16a3fc17d51dc5963a69f1f8184de9`, two Windows Python 3.12 tests using a real Git Bash child failed after the fixture was corrected to inject decodable base64 outside and inside the frame. Outer noise made text appear binary; in-band noise was accepted as file bytes. The first independent review found a HIGH caller bypass: a returned `None` on an integrity failure let both readers fall back to unframed text. Two more native RED cases demonstrated that a sparse-NUL binary was then admitted as text. The typed error and both caller catches closed that path. This stricter caller behavior exceeds the U1 fallback and is recorded as fork hardening.
+
+## Validation and source binding
+
+The exact product HEAD passed 23 focused tests, including six native N38 cases and existing byte-layer coverage. The affected six-file Windows selection passed 83, skipped 12 pre-existing POSIX-only tests and deselected eight Windows permission/symlink/search cases. A separate three-file impact selection passed 77. Five controlled mutations each failed their relevant test: ignoring sample size, returning unframed output, ignoring read status and restoring the unsafe fallback independently in each caller. The changed source was restored byte-identically. The reviewer returned CLEAR twice after the fix and test adaptations; the reviewer did not execute the tests, CodeGraph, mutation or commit.
+
+Approved CodeGraph 1.6.0 bound separate frozen D0 and U1 indexes of 8,881 and 12,468 files, and a post-change integration index of 8,961 files. All reported zero pending changes and refs. Status, sync, query, explore, valid symbol-name impact, owner/caller results and actual/Git/index hashes for the five changed paths are in private local `N38-20260927/receipt.json`, SHA-256 `bfef5e5777f98867f6e8fe8a4067995717f8885b824d1ac20d0503bb3932cb68`. The committed family card does not contain the private machine root or graph dump.
+
+## Remaining gates and reversal
+
+N38 is PARTIAL. A backend-specific non-capability status 127 might still use the old fallback. Sample, byte count and later read are not an atomic snapshot; public `read_file_bytes`, other remote backends and native POSIX runtime remain unverified. Other upstream semantics and the 17,065-commit metadata universe remain unmapped. The user confirmed the N07-A1 host grant-revocation writer is not implemented; destination outcome durability and T06/T12 remain P0 open, and Control MCP production write stays DISABLED.
+
+Original main and local-feature WIP were not modified. No reset, stash, clean, upstream merge/rebase/cherry-pick, PR, push, production restart or Control MCP production write occurred. A reversal would review and revert only the isolated product commit, rerun affected tests and refresh the integration CodeGraph index; no reversal was performed.
