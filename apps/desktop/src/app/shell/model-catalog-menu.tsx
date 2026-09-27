@@ -427,12 +427,10 @@ export function ModelCatalogMenu({
                       effFast
                     )
 
-                    const meta = [
+                    const metaTags = [
                       fastControl.kind !== 'none' && fastControl.on ? copy.fast : null,
                       (caps?.reasoning ?? true) ? reasoningEffortLabel(effEffort || defaultEffort) : null
-                    ]
-                      .filter(Boolean)
-                      .join(' ')
+                    ].filter((chip): chip is string => Boolean(chip))
 
                     // Clicking the row commits the model and closes; the edit
                     // submenu (reasoning/fast) is reached by HOVER, so you can
@@ -457,10 +455,19 @@ export function ModelCatalogMenu({
                           }}
                           {...kbRowProps(`${group.provider.slug}:${family.id}`)}
                         >
-                          <span className="min-w-0 flex-1 truncate">
-                            <HighlightMatches query={search} text={name} />
-                            {meta ? <span className="text-(--ui-text-tertiary)"> {meta}</span> : null}
-                          </span>
+                          <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                            <span className="min-w-0 truncate">
+                              <HighlightMatches query={search} text={name} />
+                            </span>
+                            {metaTags.map((chip, index) => (
+                              <span
+                                className="shrink-0 rounded-sm border border-(--ui-stroke-secondary) bg-(--chrome-action-hover) px-1 py-px text-[0.625rem] font-medium uppercase leading-none tracking-wide text-(--ui-text-tertiary)"
+                                key={`${chip}:${index}`}
+                              >
+                                {chip}
+                              </span>
+                            ))}
+                          </div>
                           {isCurrent ? (
                             <Codicon className="ml-auto text-foreground" name="check" size="0.75rem" />
                           ) : null}

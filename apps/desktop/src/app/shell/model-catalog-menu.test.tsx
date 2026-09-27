@@ -42,12 +42,12 @@ afterEach(() => {
 
 // A minimal controller — these tests are about the CATALOG's own behaviour
 // (what it lists, what it offers), not about what any host does with a pick.
-function renderMenu() {
+function renderMenu(current: Partial<ModelMenuController['current']> = {}) {
   const select = vi.fn()
 
   const controller: ModelMenuController = {
     applyPreset: vi.fn(),
-    current: { effort: '', fast: false, model: '', provider: '' },
+    current: { effort: '', fast: false, model: '', provider: '', ...current },
     presetFor: () => ({}),
     select,
     setOptions: vi.fn()
@@ -104,5 +104,36 @@ describe('the catalog owns model curation', () => {
     fireEvent.click(screen.getByText('Edit Models…'))
 
     expect($modelVisibilityOpen.get()).toBe(true)
+  })
+})
+
+describe('model row settings', () => {
+  it('shows reasoning effort as a separate badge beside the truncating model name', async () => {
+    renderMenu({ effort: 'high', model: 'gemini-2.5-flash', provider: 'google' })
+
+    const badge = await screen.findByText('High')
+    const name = badge.previousElementSibling
+
+    expect(badge.classList.contains('border')).toBe(true)
+    expect(badge.classList.contains('rounded-sm')).toBe(true)
+    expect(name?.className).toContain('truncate')
+    expect(name?.textContent?.toLowerCase()).toContain('gemini 2.5 flash')
+    expect(name?.contains(badge)).toBe(false)
+  })
+
+  it('omits the effort badge for a model without reasoning support', async () => {
+    getGlobalModelOptions.mockResolvedValue({
+      providers: [{
+        capabilities: { 'gemini-2.5-flash': { fast: false, reasoning: false } },
+        models: ['gemini-2.5-flash'],
+        name: 'Google',
+        slug: 'google'
+      }]
+    })
+
+    renderMenu({ effort: 'high', model: 'gemini-2.5-flash', provider: 'google' })
+    await screen.findByText(/Gemini 2\.5 Flash/i)
+
+    expect(screen.queryByText('High')).toBeNull()
   })
 })
