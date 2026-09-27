@@ -1,0 +1,23 @@
+# N39 partial: verified bytes for document extraction
+
+Repository: `zapabob/hermes-agent-windows`. Product commit `f089620091121e450111e232c40b894874f98472`, tree `0150240c3b3336d77eddbb606f1712ee9fb123c5`. Frozen D0 is `60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b`, U1 is `678a4762b887f3eabe5cad11254b2ab1ae859485`, R2 is `f97608f178d1ffeca59860195ab7da295f7c8e5f`; old U0 remains `b936546561888a54d5bf9cd7eae9629a824eb4f7`. D0 and U1 both retain an unframed `read_file_bytes`; N39 is additional fork hardening and does not credit an upstream ledger row or complete any cited upstream commit.
+
+## Source, caller and RED
+
+D0 and the observed local feature share `tools/file_operations.py` blob `a23e9afa056f3c09e8775b673ba3142428a0ec11`; U1 uses `56437d62dcbeff17cdfa7ff41cc099a65de4cd43`. Their shell-backed `read_file_bytes` at D0 `tools/file_operations.py:1905` and U1 `:1224` returned valid-looking base64 from unframed terminal output. The production caller at `tools/file_tools.py:1770-1782` transfers these bytes to document extraction after a `MAX_DOCUMENT_BYTES` check and requires a payload. The abstract `FileOperations` default remains an unsupported-read error.
+
+At parent `db9d72417dfaf138f1647018fcf5e2b9e048f842`, four real Git Bash tests failed. Decodable outer noise was accepted as additional document bytes; decodable inner noise was accepted as well. A file that grew from three to four bytes between the probe and read passed `max_bytes=3` and reported the stale three-byte size. With `base64` unavailable, the public method failed despite the existing verified hex fallback. Product `tools/file_operations.py:2009-2022` now uses N36's `_read_exact_bytes`, returns a fresh base64 encoding of those verified bytes, checks the cap against the actual read and reports `len(data)`. A fifth test checks that a shrinking file reports its actual transferred size.
+
+## Validation and source binding
+
+The exact product HEAD passed the affected six-file Windows selection: 196 passed, three optional `firecrawl-anydoc` tests skipped and eight Windows search, permission and symlink cases deselected. Five N39 tests ran through a real Git Bash child. Six additional CodeGraph-affected files passed 56 tests. The earlier unfiltered affected run had 195 passes, three skips and eight Windows environment failures before the shrink case was added. A broader eight-file impact run had 88 passes, five skips and 11 Windows-incompatible `/dev`, `/proc`, FIFO and Unix-socket failures. Those failures are retained as evidence, not counted as a full-suite pass.
+
+Three controlled mutations failed their relevant tests: reverting to an unframed public read, removing the actual-read cap, and returning the old probe size after shrink. Source bytes were restored exactly. Independent read-only Code Reviewer returned CLEAR and maintained CLEAR after the shrink test; the reviewer did not execute tests, CodeGraph, mutations or commit.
+
+Approved CodeGraph 1.6.0 bound separate D0 and U1 indexes of 8,881 and 12,468 files and a post-change integration index of 8,962 files. All reported zero pending changes and refs. Status, sync, query, explore, valid symbol-name impact, owner/caller results and actual/Git/index hashes for the changed paths and caller are in private local `N39-20260927/receipt.json`, SHA-256 `4c4e28c589f7e4ad28a26ce820680ba87b3b866262b8670df539f70279a54c44`. The committed family card contains no private machine root or graph dump.
+
+## Remaining gates and reversal
+
+N39 is PARTIAL. `max_bytes` is checked again only after a full verified read, so a file that grows unexpectedly large can consume transport and memory before rejection. The separate size probe, read and byte count are not an atomic snapshot, and non-Git-Bash remote backends and native POSIX runtime remain unverified. No upstream ledger row is credited. Other upstream semantics and the 17,065-commit metadata universe remain unmapped. The user confirmed the N07-A1 host grant-revocation writer is not implemented; destination outcome durability and T06/T12 remain P0 open, and Control MCP production write stays DISABLED.
+
+Original main and local-feature WIP were not modified. A test-created zero-byte untracked `$tmp` remains in this isolated worktree: automatic approval review rejected its removal with `blocked by policy` and provided no more detail. No reset, stash, clean, upstream merge/rebase/cherry-pick, PR, push, production restart or Control MCP production write occurred. A reversal would review and revert only the isolated product commit, rerun affected tests and refresh the integration CodeGraph index; no reversal was performed.
