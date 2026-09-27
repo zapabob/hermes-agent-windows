@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "status": "MAPPED_N47_WINDOWS_GATEWAY_VISIBLE_PROMPTS_NATIVE_GREEN",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N47",
+  "priority": "P1",
+  "repository": "zapabob/hermes-agent-windows",
+  "upstream_source": [
+    {
+      "commit": "ff6b9f722d440eaf2498d23c0a347fce09171f38",
+      "ledger_row": "docs/windows/semantic-refresh-20260926/inventory/v0213_to_v0214.jsonl:5160",
+      "mapping": "MAPPED: noninteractive start does not silently install login persistence, a declined login option still starts once, explicit consent hands the immediate launch to install(), and the no-login/no-start hint points to foreground run. The Windows guide now describes these outcomes."
+    },
+    {
+      "commit": "be0a21445236588baf4bec96758c1588a25fd192",
+      "ledger_row": "docs/windows/semantic-refresh-20260926/inventory/v0213_to_v0214.jsonl:3895",
+      "mapping": "MAPPED: Windows stdin requires both isatty and successful GetConsoleMode; NUL-like input cannot receive a login question. The actual Win32 handle behavior was not exercised by these stubbed tests."
+    },
+    {
+      "commit": "af3299a22caaf4a59afa4aed014cf77ace34467b",
+      "ledger_row": "docs/windows/semantic-refresh-20260926/inventory/v0215_to_u1.jsonl:1578",
+      "mapping": "MAPPED: captured stdout suppresses the otherwise invisible Windows login question. The fork's current Desktop update path differs from the reported upstream handoff, so the precise Desktop deadlock is not claimed reproduced."
+    }
+  ],
+  "frozen": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "local_feature_observed": "2622ea42ce3ad044bac4c4e8b9812ba21f7ae65a",
+    "R2": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
+    "U1": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+    "old_U0_unchanged": "b936546561888a54d5bf9cd7eae9629a824eb4f7"
+  },
+  "source_blobs": {
+    "D0_hermes_cli/gateway_windows.py": "59a1d285421c1e2cf51e0d6b522c9ada6b65e7a8",
+    "local_feature_hermes_cli/gateway_windows.py": "59a1d285421c1e2cf51e0d6b522c9ada6b65e7a8",
+    "U1_hermes_cli/gateway_windows.py": "83f607a3762914c63e42b043a1def10eca4365fc",
+    "product_hermes_cli/gateway_windows.py": "94b7a1e70f5f796a31be7ea4e8b5efaacef039cc",
+    "product_tests/hermes_cli/test_gateway_windows.py": "50dfe9ad03a3a84503ead009b0022c074fbb3a64",
+    "documentation_website/docs/user-guide/windows-native.md": "83d7271c17ee6205f1b5ce146834083cf9a3f6b5"
+  },
+  "final_observable_contract": "An unregistered Windows gateway start asks about login persistence only when a human can see stdout and answer on a real stdin console, unless an existing explicit login choice is supplied. Redirected stdin, Windows NUL, captured stdout and HERMES_NONINTERACTIVE skip the login install and start once. A visible No also starts once; a visible Yes or explicit env Yes delegates one immediate launch to install(). Both UAC question sites require the same visible-answer condition, falling back without waiting for an unseen answer. No-login/no-start installation points to foreground gateway run.",
+  "source_span": [
+    "D0 and observed local feature share gateway_windows.py blob 59a1d285...; start():1488-1518 asked with default Yes without checking visibility, returned without starting on No, and could spawn after install. setup.py:349-385 defaults noninteractive and EOF prompt answers.",
+    "U1 gateway_windows.py:755-775 defines stdin console and stdout visibility helpers; start():1588-1624 uses those checks with explicit env intent. U1 ff6b9f... and be0a... supply the prerequisite semantics before af3299... captured-stdout handling.",
+    "Integration gateway_windows.py:987-1011 owns stdin console, stdout and shared visible-question checks; :1094-1098 has the no-login hint; :1115 and :1156 gate both UAC questions; start():1514-1545 owns login intent and single launch. gateway.py:8632-8664 dispatches Windows gateway start to this owner."
+  ],
+  "red_receipts": [
+    "At parent 659ee557bc442fd04cd628591c7d473cb5db67fa, ten new native cases failed: redirected stdin, NUL-like stdin, captured stdout, noninteractive flag, missing helper, visible Yes/No, explicit opt-in/opt-out, and the no-login hint. The old start called the default-Yes prompt regardless of visibility.",
+    "After first implementation, independent review found explicit env Yes plus captured stdout could still wait at a second UAC prompt inside install(). Two further actual start-to-install and failed-elevated-handoff cases failed at those two prompt sites before the shared guard was applied."
+  ],
+  "product_commit": "a9407b2759729dfb1476c33daab8b19f0b6f722e",
+  "product_tree": "da3d8a29bb9d47987e54537a236d95514e5724e6",
+  "changed_product_paths": [
+    "hermes_cli/gateway_windows.py",
+    "tests/hermes_cli/test_gateway_windows.py"
+  ],
+  "documentation_path": "website/docs/user-guide/windows-native.md",
+  "green_evidence": [
+    "Windows Python 3.12 final focused: 12 passed. Four affected gateway test files: 33 passed, one POSIX-only file skipped because pwd is unavailable. All start, install, elevation and process operations in the new tests were stubbed; no real gateway or OS login item was changed. Ruff and diff check passed.",
+    "Five controlled source mutations were killed: omit stdout check, ignore console mode, spawn again after install, and bypass each of the two UAC visibility guards. Source SHA-256 matched before and after mutation; focused tests passed after restoration.",
+    "Independent read-only Code Reviewer first BLOCKED on the UAC path, then returned CLEAR after the shared guard and two actual install-boundary tests. The reviewer inspected source and saved receipts but did not run tests, mutation, CodeGraph or commit."
+  ],
+  "execution_receipts": {
+    "native": {
+      "local_name": "N47-20260928/execution.json",
+      "sha256": "8c23b40ccba1a096dae95585a5f35725003c4a36a37f4f4a2ecd0415d5d228ec",
+      "binding": "Private receipt hashes both RED runs, final focused and affected GREEN, Ruff, diff check and all five mutant logs at the exact product/test disk blobs."
+    },
+    "mutation": {
+      "local_name": "N47-20260928/mutation.json",
+      "sha256": "98f9c55413898ab8251e551c6d2e9b5d9ffbdc07b4768c160456bce3bbf83987"
+    }
+  },
+  "codegraph_receipts": {
+    "before_product": {
+      "local_name": "N47-20260928/pre.json",
+      "sha256": "e996334cbff9e15fa05a950396eb27b2ca56cc4b14a5b629b7cf7be0f1aeed45"
+    },
+    "after_product": {
+      "local_name": "N47-20260928/receipt.json",
+      "sha256": "b0baf6a1ae4aa0809eaa390b24aad294e7bf6acdab5dba9b01c0f912820eabb5",
+      "binding": "CodeGraph 1.6.0: D0 8,881 files, U1 12,468, integration after sync 8,968; zero pending changes and refs. Query/explore/impact bind gateway_windows.start and choice helper to distinct frozen/integration blobs. The generic start impact includes homonyms; direct gateway.py caller read is authoritative."
+    },
+    "post_commit": {
+      "local_name": "N47-20260928/postcommit.json",
+      "sha256": "dcce87acf94b95b2bbb038e6a4844951f6b14d2cf320a2fc10abc38e585a4d6d",
+      "binding": "At exact product HEAD both disk blobs equal committed blobs and the integration index remains fresh."
+    }
+  },
+  "open_gaps": [
+    "The native tests simulate GetConsoleMode and stdout terminal state rather than changing a live Windows standard handle. They do not prove a real Desktop update handoff, gateway restart or Scheduled Task installation.",
+    "Direct hermes gateway install without explicit start-now/login choices still has its preexisting initial questions in _prompt_install_choices; N47's visibility guard applies to gateway start's login question and both subsequent UAC questions. Assess the direct-install prompt path as a separate family.",
+    "The upstream Desktop-side NUL stdin change a3456765ed3032ac0b52387e9920958ae8155136 is a separate ledger row; N47 does not claim it mapped or installed.",
+    "Remaining U1 and historical rows are not semantically covered merely by this three-commit family. N07-A1 grant-revocation host writer and destination outcome durability are still open; T06/T12 remain unqualified, Control MCP production write stays DISABLED.",
+    "The isolated-worktree zero-byte untracked $tmp remains after automatic approval review blocked removal without a detailed reason. Original main and feature WIP were untouched; no PR, push, release or production restart occurred."
+  ]
+}

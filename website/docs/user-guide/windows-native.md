@@ -227,13 +227,15 @@ Flags used when spawning: `DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP | CREATE_
 
 ```powershell
 hermes gateway status      # Merged view: schtasks + Startup folder + running PID
-hermes gateway start       # Starts the scheduled task now
+hermes gateway start       # Starts the gateway detached; asks about login auto-start only on a visible console
 hermes gateway stop        # Graceful SIGTERM equivalent (TerminateProcess via psutil)
 hermes gateway restart
 hermes gateway uninstall   # Removes schtasks entry, Startup shortcut, pid file
 ```
 
 `hermes gateway status` is idempotent — call it a thousand times in a row and it will never accidentally kill the gateway. (Pre-PR #21561 it silently did, via `os.kill(pid, 0)` colliding with `CTRL_C_EVENT` at the C level — see "process management internals" below if you care about the story.)
+
+An unregistered gateway starts once without adding login auto-start when stdin is redirected, points at Windows NUL, `HERMES_NONINTERACTIVE=1` is set, or stdout is captured. On a visible console, a Yes answer may install login auto-start; No still starts the gateway once. `HERMES_GATEWAY_INSTALL_START_ON_LOGIN=1` explicitly requests the install, while `0` skips the question. If a UAC question cannot be shown on a visible console, installation uses the existing Startup-folder fallback without waiting for an unseen answer. Use `hermes gateway install` when you want to configure login auto-start directly.
 
 ### Why not a Windows Service?
 
