@@ -181,6 +181,7 @@ import {
   tuiResumeArgs
 } from './external-terminal'
 import { type FaviconIo, resolveFavicon } from './favicon'
+import { createFileReveal } from './file-reveal'
 import { findGitBash as _findGitBash } from './find-git-bash'
 import {
   installFindShortcut,
@@ -1676,6 +1677,12 @@ function loadWindowUrl(win, url, label) {
   win.loadURL(url).catch(error => rememberLog(`${label} failed to load: ${describeCrashReason(error)}`))
 }
 
+const revealLocalFile = createFileReveal({
+  now: () => Date.now(),
+  reveal: localPath => shell.showItemInFolder(localPath),
+  log: message => rememberLog(message)
+})
+
 function openExternalUrl(rawUrl) {
   const raw = String(rawUrl || '').trim()
 
@@ -1693,9 +1700,8 @@ function openExternalUrl(rawUrl) {
 
   // `file://` URLs come from the artifacts panel (the renderer can't open
   // them itself because Chromium blocks file:// navigation from the app
-  // origin). Hand them to `shell.openPath`, which dispatches to the OS
-  // file association. If the OS can't open it (`error` is a non-empty
-  // string), fall back to revealing the file in the system file manager.
+  // origin). Reveal them in the file manager. An OS association can route an
+  // archive back into Chromium and start another download on Windows.
   if (parsed.protocol === 'file:') {
     let localPath
 
@@ -1705,22 +1711,7 @@ function openExternalUrl(rawUrl) {
       return false
     }
 
-    void shell
-      .openPath(localPath)
-      .then(error => {
-        if (!error) {
-          return
-        }
-
-        rememberLog(`[file] openPath failed: ${error}; revealing in folder instead`)
-
-        try {
-          shell.showItemInFolder(localPath)
-        } catch (revealError) {
-          rememberLog(`[file] showItemInFolder failed: ${revealError.message}`)
-        }
-      })
-      .catch(error => rememberLog(`[file] openPath rejected: ${error.message}`))
+    revealLocalFile(localPath)
 
     return true
   }
