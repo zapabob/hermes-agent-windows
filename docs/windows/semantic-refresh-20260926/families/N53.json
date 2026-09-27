@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "status": "MAPPED_N53_WINDOWS_RELAUNCH_IDENTITY_BUDGET_NATIVE_GREEN_PARTIAL_UPSTREAM_COMMIT",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N53",
+  "priority": "P1",
+  "repository": "zapabob/hermes-agent-windows",
+  "upstream_source": [
+    {
+      "commit": "fae9e5677a3ef339ec582e967ee19cac13bf68af",
+      "ledger_row": "docs/windows/semantic-refresh-20260926/inventory/v0215_to_u1.jsonl:2308",
+      "mapping": "Bound the post-relaunch fleet verification to the Windows restart watcher's wait and old process incarnation. N52 separately maps the same commit's process-classification contract; the remaining upstream changes are not claimed."
+    }
+  ],
+  "historical_context": [
+    "docs/windows/semantic-refresh-20260926/inventory/historical_ledger_reaudit.jsonl:106",
+    "docs/windows/semantic-refresh-20260926/inventory/historical_ledger_reaudit.jsonl:134"
+  ],
+  "frozen": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "local_feature_observed": "2622ea42ce3ad044bac4c4e8b9812ba21f7ae65a",
+    "R2": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
+    "U1": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+    "old_U0_unchanged": "b936546561888a54d5bf9cd7eae9629a824eb4f7"
+  },
+  "source_blobs": {
+    "D0_hermes_cli/gateway.py": "8ce14b83f4b25dc86e5b716253c8b59c82f69a53",
+    "local_feature_hermes_cli/gateway.py": "8ce14b83f4b25dc86e5b716253c8b59c82f69a53",
+    "U1_hermes_cli/gateway.py": "a210a213de2b6faaee7a9fe20dba9190778d141a",
+    "local_feature_hermes_cli/update_cmd.py": "33f26bbc27a69ce46f3102204b10c1b0e6cd30f4",
+    "U1_hermes_cli/update_cmd_windows.py": "ef90b519a7d5a677f73add8ed48712e1bb259110",
+    "product_gateway/status.py": "d406f6b30602b3484d7248fb407120bf4221df37",
+    "product_hermes_cli/gateway.py": "5e7ef36a67a701b1a4877c56b14388b620b80a74",
+    "product_hermes_cli/update_cmd.py": "04ea35f6e7aef315afa6e4408ee89f759dfcf1b8"
+  },
+  "source_span": [
+    "Fork hermes_cli/gateway.py:_spawn_gateway_restart_watcher:1307 waits up to 120 seconds before launching a future gateway; the fork update_cmd.py:_cmd_update_impl:10409 had a 30-second fleet poll. Upstream fae9e567 changes that observable budget in update_cmd_windows.py, which does not exist in the fork.",
+    "Product update_cmd.py:6289-6417 captures mapped old (pid, create_time); 7331-7402 passes it to successful detached watchers. gateway/status.py:_pid_identity_is_live:1087 distinguishes PID reuse and treats unreadable identity as pending. gateway.py:1307-1443 uses it in the generated watcher and refuses a second spawn at timeout while the old incarnation lives.",
+    "Product update_cmd.py:9982-10081 maps verified generic manual profiles, isolates per-profile strict read errors, keeps unreadable scanned PIDs on the existing stop/manual-restart path, and marks identity failure incomplete. Recovery at 10252 cannot erase that failure. The fleet poll at 10668 rejects a snapshot collected while the old incarnation exits."
+  ],
+  "observable_contract": "A mapped Windows Gateway relaunch is verified only after the original (pid, create_time) is no longer live and a fresh fleet snapshot is read. Its bounded wait covers the detached watcher's 120-second deadline plus 30 seconds. PID reuse, an unreadable old identity, timeout with the old process alive, and strict profile discovery failure cannot be treated as a successful replacement. Verified sibling profiles retain restart eligibility.",
+  "red_receipts": [
+    "N53-red.log: three focused failures before the wait-budget product change",
+    "N53-review-red.log: two identity and stale-snapshot failures",
+    "N53-generic-red.log: generic manual caller did not accept old_create_time",
+    "N53-strict-red.log: unreadable identity lacked a Windows fallback",
+    "N53-isolation-red.log: two per-profile isolation failures"
+  ],
+  "product_commit": "724beb34742f71b5327b61f63b3874f1591a235b",
+  "product_tree": "e8049758948e4376cf5cd63ade26e8c664dfa60a",
+  "changed_product_paths": [
+    "gateway/status.py",
+    "hermes_cli/gateway.py",
+    "hermes_cli/update_cmd.py",
+    "tests/hermes_cli/test_update_concurrent_quarantine.py",
+    "tests/hermes_cli/test_windows_relaunch_verify_budget.py"
+  ],
+  "execution_receipts": {
+    "native": {
+      "local_name": "N53-20260928/execution-final.json",
+      "sha256": "48973c6511aa29c70687795938b140682ecd90b1b7c55082ac602dc052931fc5",
+      "binding": "After four controlled mutations were restored, six safe Windows Python test modules reported 79 passed, exit 0; Ruff and a whitespace check exited 0. A separate committed-diff whitespace check passed after the product commit. Generated watcher source executed only with subprocess.Popen mocked. Earlier broad test run was aborted and is not a green receipt."
+    },
+    "mutation": {
+      "local_name": "N53-20260928/mutation-final.json",
+      "sha256": "fac99144e0eaf3615c55e572093fcf29e9c1c26685bfe7a702b75d912b5b6dc2"
+    },
+    "aborted_unsafe_test": {
+      "local_name": "N53-20260928/aborted-unsafe-test.json",
+      "sha256": "b0c2fe4c278d1237ac58cd0a48153336d687232a45d69f6e9612dafdd627c0d5"
+    }
+  },
+  "codegraph_receipts": {
+    "final": {
+      "local_name": "N53-20260928/codegraph-final.json",
+      "sha256": "0016fd64e87652bc429e5123749f15a3ac7b9a1bdec1c65a4c17bb2774fa2ab0",
+      "binding": "Approved CodeGraph 1.6.0 used separate D0/U1/integration indexes with 8881/12468/8974 files. The integration index was synced after mutation restoration; status was complete with zero pending changes and refs. Fresh query/explore/impact were saved."
+    },
+    "post_commit": {
+      "local_name": "N53-20260928/postcommit-final.json",
+      "sha256": "4b4856de3abdbab002a72fd14c06026215f8b7de83316017bbb267d881a7c915",
+      "binding": "All five disk Git blobs matched product HEAD and CodeGraph remained complete with zero pending changes and refs."
+    }
+  },
+  "independent_review": "Kepler and Code Reviewer each reported read-only CLEAR for the bounded P0/P1 N53 contract after earlier findings were fixed and mutation was restored. Neither executed tests or actual processes.",
+  "open_gaps": [
+    "Token-only/unmapped watcher replacements are not observed by this mapped-profile fleet proof. Old PID disappearance alone is not a destination replacement receipt; handle as a separate family.",
+    "The broader test run unexpectedly started a test-owned Gateway child and npm ci; it was stopped. Ignored node_modules directories in the isolated worktree were touched and were neither restored nor certified. The run is excluded from success evidence.",
+    "This bounded family does not prove full U1 semantic coverage, live fleet health, packaged Desktop behavior, or release readiness; inventory semantic_review_complete remains false.",
+    "N07-A1 grant-revocation host writer is not implemented per the user's reply. Destination outcome durability, T06 and T12 remain unqualified; Control MCP production write remains DISABLED.",
+    "Original main and feature WIP were untouched. Untracked $tmp remains after automatic approval review rejected removal without a detailed reason. Reviewer-written untracked .omo/evidence/N53-code-review.md was not staged. No PR, push, release or production restart occurred."
+  ]
+}
