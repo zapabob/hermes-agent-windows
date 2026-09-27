@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "status": "PARTIAL_CONFIGURED_PATHEXT_PRECEDENCE_REAL_SDK_OPEN",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N32",
+  "priority": "P1",
+  "origin": "Discovered while qualifying N31. U1's split MCP resolver inherited parent-first PATHEXT lookup from historical ledger commit c1f8af1e86bdced8ede9a6c09e0fffd2dfe100bb (historical_ledger_reaudit.jsonl:922) and a later configured-PATHEXT helper from faceb453374043da2a38ed3c4981dd8190fdceac (:1077). The downstream-only .exe shim preference came from 854abafca4bbeae162aad5b4a0ab40a8fe015628. N32 resolves their collision in the actual Windows integration; it is not a claim that U1 already fixed this behavior.",
+  "upstream_source_commits": [
+    "c1f8af1e86bdced8ede9a6c09e0fffd2dfe100bb",
+    "faceb453374043da2a38ed3c4981dd8190fdceac"
+  ],
+  "downstream_preference_commit": "854abafca4bbeae162aad5b4a0ab40a8fe015628",
+  "final_observable_contract": "For a bare Windows MCP stdio command, a child PATH hit chosen under an explicitly configured PATHEXT wins over an executable found using the parent PATHEXT and is not replaced by a sibling .exe. Windows case-insensitive config keys override inherited environment keys and PATH/PATHEXT have one canonical spelling in the child environment. With no explicit override, the fork's usual .exe preference remains.",
+  "source_span": [
+    "Before N32, tools/mcp_tool.py:1061-1077 searched with parent PATHEXT first and only tried the child extension list on a miss; :1120 then unconditionally replaced a selected .cmd with a sibling .exe",
+    "tools/mcp_tool.py:735-778 now merges Windows child environment keys case-insensitively and canonicalizes PATH/PATHEXT",
+    "tools/mcp_tool.py:1064-1147 now selects an explicit child extension hit before parent lookup and exempts that selected path from the fork's .exe shim preference",
+    "MCPServerTask._run_stdio at tools/mcp_tool.py:3264-3339 passes explicit-config presence and forwards the selected command/environment to StdioServerParameters",
+    "tests/tools/test_n32_mcp_pathext_precedence.py:25-148 and updated N31 concurrency test verify the native Windows resolver and caller boundary"
+  ],
+  "red_receipt": "On product parent 7f962e576df514745582dcb6af9ebf55921df543, side-by-side n32_server.exe and n32_server.cmd under the child PATH with parent PATHEXT=.EXE and child PATHEXT=.CMD caused two N32 tests to fail: both direct resolution and the actual stdio caller selected .exe. The default .exe-preference control passed. The independent review found a second caller defect: config env using Pathext or path/pathext preserved duplicate case-insensitive keys or left PATH unresolved. Two new native caller cases failed before correction. No real MCP server was launched for RED.",
+  "required_evidence": [
+    "Keep explicit child PATHEXT authoritative when .exe and .cmd are side-by-side, including when the configured value equals the parent value",
+    "Keep the existing .exe GUI preference when no child PATHEXT override was explicitly configured",
+    "Verify actual _run_stdio parameter handoff and case-insensitive Windows environment overlay",
+    "Run affected native tests and deliberate mutations, refresh separate D0/U1/integration CodeGraph indexes, obtain read-only independent rereview, and bind exact product commit blobs"
+  ],
+  "product_commit": "1ab492f98a2370fce914445f91f18e01c3be2645",
+  "product_tree": "a5258834917a03042e29d6b29af320042679aa08",
+  "green_evidence": [
+    "At the exact product commit, seven affected MCP test files passed 134 native Windows Python 3.12 tests; the MCP SDK parameters were captured without starting a child",
+    "Five final deliberate mutants each failed its selected N32 test: parent-first lookup, sibling .exe upgrade, lost explicit-config flag, lost case-insensitive overlay, and lost PATH/PATHEXT canonicalization",
+    "An intermediate duplicate-removal mutant survived before a general inherited-safe-key test was added; its final version then failed that test",
+    "The product source was restored after mutations to SHA-256 4AE0BB214C08DEB33B703E32E409528FAE2F73C41CC4636A297C6905A038766A",
+    "Read-only independent review first BLOCKED mixed-case config handling and then CLEARED the corrected diff; the reviewer did not run tests, CodeGraph or commit"
+  ],
+  "codegraph_receipt": {
+    "local_name": "N32-20260927/receipt.json",
+    "sha256": "d58e4fe34f2aa282fe05d074539cfb9068d608e5f74a39be9c97d3385df397fc",
+    "version": "1.6.0",
+    "binding": "Separate frozen D0 8,881-file, U1 12,468-file and committed integration 8,956-file indexes; all three N32 product/test paths actual=committed=indexed, pending changes and refs zero"
+  },
+  "open_gaps": [
+    "A real MCP SDK child and Desktop GUI runtime were not launched; StdioServerParameters was intercepted",
+    "This contract covers a child PATH hit. An explicit PATHEXT miss followed by known-launcher fallback remains a separate candidate",
+    "The 17,065-commit metadata inventory is not complete semantic mapping and required P0 N07-A1 remains open",
+    "T06/T12 Control MCP production write remains DISABLED; no PR, push, release or production restart is implied"
+  ]
+}
