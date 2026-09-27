@@ -1300,7 +1300,7 @@ class ShellFileOperations(FileOperations):
             return _windows_drive_path_for_bash(path)
         return path
     
-    def _escape_shell_arg(self, arg: str) -> str:
+    def _escape_shell_arg(self, arg: str, *, translate_path: bool = True) -> str:
         """Escape a string for safe use in shell commands.
 
         On Windows native drive paths (``C:\\Users\\x`` / ``C:/Users/x``)
@@ -1309,11 +1309,15 @@ class ShellFileOperations(FileOperations):
         backslashes and MSYS otherwise mangles drive paths into the
         ``Directory \\drivers\\etc does not exist`` failure class. Reuses
         the env-layer translator so shell file ops and the terminal ``cd``
-        agree on the path form. No-op off Windows and for plain POSIX paths.
+        agree on the path form. Non-path values, such as regex patterns, must
+        keep their backslashes through both local argv and serialized scripts.
         """
-        from tools.environments.local import _bash_safe_path
+        from tools.environments.local import _IS_WINDOWS, _bash_safe_path
 
-        arg = _bash_safe_path(arg)
+        if translate_path:
+            arg = _bash_safe_path(arg)
+        elif _IS_WINDOWS and getattr(self.env, "is_local", False):
+            arg = arg.replace("\\", "\\\\")
         # Use single quotes and escape any single quotes in the string
         return "'" + arg.replace("'", "'\"'\"'") + "'"
 
@@ -1595,9 +1599,9 @@ class ShellFileOperations(FileOperations):
             "    print('HERMES_UTF16:NO'); sys.exit(0)\n"
         )
 
-        result = self._exec(f"python3 -c {self._escape_shell_arg(snippet)}")
+        result = self._exec(f"python3 -c {self._escape_shell_arg(snippet, translate_path=False)}")
         if result.exit_code != 0 and "python3" in (result.stdout or ""):
-            result = self._exec(f"python -c {self._escape_shell_arg(snippet)}")
+            result = self._exec(f"python -c {self._escape_shell_arg(snippet, translate_path=False)}")
 
         stdout = _strip_terminal_fence_leaks(result.stdout or "")
         marker = stdout.find("HERMES_UTF16:OK")
@@ -2071,12 +2075,12 @@ class ShellFileOperations(FileOperations):
             "    print(str(exc), file=sys.stderr); sys.exit(1)\n"
         )
 
-        result = self._exec(f"python3 -c {self._escape_shell_arg(snippet)}")
+        result = self._exec(f"python3 -c {self._escape_shell_arg(snippet, translate_path=False)}")
 
         # Fall back to ``python`` (Windows / older systems where there's no
         # ``python3`` symlink but a ``python`` binary is on PATH).
         if result.exit_code != 0 and "python3" in (result.stdout or ""):
-            result = self._exec(f"python -c {self._escape_shell_arg(snippet)}")
+            result = self._exec(f"python -c {self._escape_shell_arg(snippet, translate_path=False)}")
 
         if result.exit_code != 0:
             return WriteResult(error=f"Failed to delete {path}: {(result.stdout or '').strip() or 'unknown error'}")
@@ -3126,10 +3130,10 @@ class ShellFileOperations(FileOperations):
             extra = len(per_file) - cap
             return shown + (f" (+{extra} more)" if extra > 0 else "")
 
-        glob_expr = f" --glob {self._escape_shell_arg(file_glob)}" if file_glob else ""
+        glob_expr = f" --glob {self._escape_shell_arg(file_glob, translate_path=False)}" if file_glob else ""
         probe = self._exec(
             f"rg -i --count-matches{glob_expr} "
-            f"{self._escape_shell_arg(pattern)} {self._escape_native_tool_arg(path)} "
+            f"{self._escape_shell_arg(pattern, translate_path=False)} {self._escape_native_tool_arg(path)} "
             f"2>/dev/null | head -50",
             timeout=30,
         )
@@ -3146,7 +3150,7 @@ class ShellFileOperations(FileOperations):
         # missing from results).
         hidden = self._exec(
             f"rg --hidden --no-ignore --count-matches{glob_expr} "
-            f"{self._escape_shell_arg(pattern)} {self._escape_native_tool_arg(path)} "
+            f"{self._escape_shell_arg(pattern, translate_path=False)} {self._escape_native_tool_arg(path)} "
             f"2>/dev/null | head -50",
             timeout=30,
         )
@@ -3160,7 +3164,7 @@ class ShellFileOperations(FileOperations):
         if re.search(r"[.\[\](){}?*+^$\\|]", pattern):
             fixed = self._exec(
                 f"rg -F --count-matches{glob_expr} "
-                f"{self._escape_shell_arg(pattern)} {self._escape_native_tool_arg(path)} "
+                f"{self._escape_shell_arg(pattern, translate_path=False)} {self._escape_native_tool_arg(path)} "
                 f"2>/dev/null | head -50",
                 timeout=30,
             )
@@ -3226,7 +3230,7 @@ class ShellFileOperations(FileOperations):
             )
             prune_expr = f" \\( {prune_terms} \\) -prune -o"
 
-        cmd = f"find {self._escape_shell_arg(path)}{prune_expr}{hidden_filter_expr} -type f -name {self._escape_shell_arg(search_pattern)} " \
+        cmd = f"find {self._escape_shell_arg(path)}{prune_expr}{hidden_filter_expr} -type f -name {self._escape_shell_arg(search_pattern, translate_path=False)} " \
               f"-printf '%T@ %p\\n' 2>/dev/null | sort -rn{pagination_expr}"
 
         result = self._exec(cmd, timeout=60)
@@ -3234,7 +3238,7 @@ class ShellFileOperations(FileOperations):
 
         if not stdout.strip() and not limit_reason:
             # Try without -printf (BSD find compatibility -- macOS)
-            cmd_simple = f"find {self._escape_shell_arg(path)}{prune_expr}{hidden_filter_expr} -type f -name {self._escape_shell_arg(search_pattern)} " \
+            cmd_simple = f"find {self._escape_shell_arg(path)}{prune_expr}{hidden_filter_expr} -type f -name {self._escape_shell_arg(search_pattern, translate_path=False)} " \
                         f"2>/dev/null | sort -rn{pagination_expr}"
             result = self._exec(cmd_simple, timeout=60)
             stdout, limit_reason = _search_stdout_and_limit(result)
@@ -3290,13 +3294,13 @@ class ShellFileOperations(FileOperations):
 
         fetch_limit = limit + offset
         exclusion_globs = " ".join(
-            f"--glob {self._escape_shell_arg(f'!{item}/**')}"
+            f"--glob {self._escape_shell_arg(f'!{item}/**', translate_path=False)}"
             for item in self._macos_search_exclusions(path)
         )
         exclusion_args = f" {exclusion_globs}" if exclusion_globs else ""
         # Try mtime-sorted first (rg 13+); fall back to unsorted if not supported.
         cmd_sorted = (
-            f"rg --files --sortr=modified -g {self._escape_shell_arg(glob_pattern)}"
+            f"rg --files --sortr=modified -g {self._escape_shell_arg(glob_pattern, translate_path=False)}"
             f"{exclusion_args} "
             f"{self._escape_native_tool_arg(path)} 2>/dev/null "
             f"| head -n {fetch_limit}"
@@ -3308,7 +3312,7 @@ class ShellFileOperations(FileOperations):
         if not all_files and not limit_reason:
             # --sortr may have failed on older rg; retry without it.
             cmd_plain = (
-                f"rg --files -g {self._escape_shell_arg(glob_pattern)}"
+            f"rg --files -g {self._escape_shell_arg(glob_pattern, translate_path=False)}"
                 f"{exclusion_args} "
                 f"{self._escape_native_tool_arg(path)} 2>/dev/null "
                 f"| head -n {fetch_limit}"
@@ -3384,11 +3388,11 @@ class ShellFileOperations(FileOperations):
         
         # Exclude macOS TCC-protected descendants during broad searches.
         for item in self._macos_search_exclusions(path):
-            cmd_parts.extend(["--glob", self._escape_shell_arg(f"!{item}/**")])
+            cmd_parts.extend(["--glob", self._escape_shell_arg(f"!{item}/**", translate_path=False)])
 
         # Add file glob filter (must be quoted to prevent shell expansion)
         if file_glob:
-            cmd_parts.extend(["--glob", self._escape_shell_arg(file_glob)])
+            cmd_parts.extend(["--glob", self._escape_shell_arg(file_glob, translate_path=False)])
         
         # Output mode handling
         if output_mode == "files_only":
@@ -3397,7 +3401,7 @@ class ShellFileOperations(FileOperations):
             cmd_parts.append("-c")  # Count per file
         
         # Add pattern and path
-        cmd_parts.append(self._escape_shell_arg(pattern))
+        cmd_parts.append(self._escape_shell_arg(pattern, translate_path=False))
         # rg is a native Windows binary when installed via winget/cargo/choco:
         # it needs the C:/... path form, not the MSYS /c/... form (which
         # nothing converts back — Hermes sets MSYS_NO_PATHCONV for its bash).
@@ -3544,7 +3548,7 @@ class ShellFileOperations(FileOperations):
         
         # Add file pattern filter (must be quoted to prevent shell expansion)
         if file_glob:
-            cmd_parts.extend(["--include", self._escape_shell_arg(file_glob)])
+            cmd_parts.extend(["--include", self._escape_shell_arg(file_glob, translate_path=False)])
         
         # Output mode handling
         if output_mode == "files_only":
@@ -3557,7 +3561,7 @@ class ShellFileOperations(FileOperations):
         # ``.*`` to exclude the entire search. Anchor relative paths at the
         # shell's live cwd; quoting $PWD separately keeps user paths escaped
         # while working across local, container, and remote backends.
-        cmd_parts.append(self._escape_shell_arg(pattern))
+        cmd_parts.append(self._escape_shell_arg(pattern, translate_path=False))
         is_absolute = path.startswith(("/", "\\\\")) or bool(
             re.match(r"^[A-Za-z]:[\\/]", path)
         )
@@ -3606,7 +3610,7 @@ class ShellFileOperations(FileOperations):
             grep_parts.append("-l")
         elif output_mode == "count":
             grep_parts.append("-c")
-        grep_parts.append(self._escape_shell_arg(pattern))
+        grep_parts.append(self._escape_shell_arg(pattern, translate_path=False))
 
         prune_terms = " -o ".join(
             f"-path {self._escape_shell_arg(item)}" for item in protected_paths
@@ -3618,7 +3622,7 @@ class ShellFileOperations(FileOperations):
             "-type f",
         ]
         if file_glob:
-            find_parts.extend(["-name", self._escape_shell_arg(file_glob)])
+            find_parts.extend(["-name", self._escape_shell_arg(file_glob, translate_path=False)])
         find_parts.extend(["-exec", *grep_parts, "{}", "+"])
         fetch_limit = limit + offset + (200 if context > 0 else 0)
         cmd = (
