@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "status": "MAPPED_N48_DESKTOP_EFFORT_BADGE_NATIVE_GREEN",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N48",
+  "priority": "P1",
+  "repository": "zapabob/hermes-agent-windows",
+  "upstream_source": [
+    {
+      "commit": "29aa6dcca04bed3576f5023588005c775687a03f",
+      "ledger_row": "docs/windows/semantic-refresh-20260926/inventory/v0215_to_u1.jsonl:380",
+      "mapping": "MAPPED: model name and fast/reasoning settings render as separate siblings; the name alone truncates and each setting has a bordered badge. Existing picker and effort actions remain unchanged."
+    },
+    {
+      "commit": "f8dddd71510f72eabe1732506dac53a78fdee3fd",
+      "ledger_row": "docs/windows/semantic-refresh-20260926/inventory/v0215_to_u1.jsonl:2292",
+      "mapping": "EQUIVALENT TEST OUTCOME: upstream changed model-menu-panel text queries to ignore a new wrapper span. The integration uses a div wrapper, so the existing leaf-span queries remain unambiguous and all affected tests pass without that test rewrite."
+    }
+  ],
+  "frozen": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "local_feature_observed": "2622ea42ce3ad044bac4c4e8b9812ba21f7ae65a",
+    "R2": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
+    "U1": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+    "old_U0_unchanged": "b936546561888a54d5bf9cd7eae9629a824eb4f7"
+  },
+  "source_blobs": {
+    "D0_apps/desktop/src/app/shell/model-catalog-menu.tsx": "83deb56e7733ba1bbc50aac2fa3cfb9d58fd8d09",
+    "local_feature_apps/desktop/src/app/shell/model-catalog-menu.tsx": "83deb56e7733ba1bbc50aac2fa3cfb9d58fd8d09",
+    "U1_apps/desktop/src/app/shell/model-catalog-menu.tsx": "03189bee8db66af788a2d1ffc39c06363fde5730",
+    "product_apps/desktop/src/app/shell/model-catalog-menu.tsx": "c66697a0f69def1a0ebc5161fa543cf524bc2a1b",
+    "product_apps/desktop/src/app/shell/model-catalog-menu.test.tsx": "570b1591f56868a4b0fd2f50e10b0e824dc33dcb"
+  },
+  "source_span": [
+    "D0, observed local feature and pre-N48 integration use model-catalog-menu.tsx:429-463: meta joins fast and reasoning effort into text appended inside the truncating name span.",
+    "U1 model-catalog-menu.tsx:575-627 separates row metadata as bordered sibling chips; the frozen U1 includes additional variant and effort-pending semantics that are not silently copied into this older fork.",
+    "Integration model-catalog-menu.tsx:429-475 owns row labels; model-menu-panel.tsx:193-267 and plugins/kanban/model-override.tsx:71-140 are actual composer and Kanban callers of the shared catalog."
+  ],
+  "observable_contract": "A model's displayed name is its own truncating span. Active reasoning effort and fast mode render beside it as distinct non-shrinking bordered badges, so High cannot look like part of a different model name. Reasoning-unsupported models have no effort badge. Model selection, stored effort, submenu, MoA and delegation behavior remain under their existing owners.",
+  "red_receipt": "At parent a9e8396aec81895f6df0d08cddf2b5ba6e1c8e56, the added native badge contract failed 1 of 5 focused tests: High had only tertiary text styling, with no independent border or sibling name. The reasoning-unsupported control passed already.",
+  "product_commit": "8e481720fe4b0ba51c662fcf78bba0988dd21a41",
+  "product_tree": "066965babf86992f0d93c3f1071265f4c6562786",
+  "changed_product_paths": [
+    "apps/desktop/src/app/shell/model-catalog-menu.tsx",
+    "apps/desktop/src/app/shell/model-catalog-menu.test.tsx"
+  ],
+  "green_evidence": [
+    "Three affected native Vitest files passed 36 tests after final test and product changes. ESLint on the two changed files and git diff --check passed. No app launch or backend action occurred.",
+    "The first DOM shape made four existing model-menu-panel text queries ambiguous; a div wrapper around the leaf name span and setting badges restored all four without changing those tests. This maps upstream follow-up f8dddd... by equivalent behavior.",
+    "Two controlled mutants were killed: removing the badge border and bypassing the reasoning capability gate. The first mutation exposed an overly broad substring assertion; it was strengthened to check the exact border class, then both mutants failed as expected and the source SHA-256 was restored.",
+    "The full Desktop TypeScript typecheck was attempted with both root and Desktop-local tsc; both failed with many cross-checkout duplicate React type identities (including Ref incompatibilities). This is an unresolved environment-wide gate, not a claimed GREEN. No dependency or configuration change was made.",
+    "Independent read-only Code Reviewer returned CLEAR on the final two-file diff and inspected the saved receipts; the reviewer did not run tests, mutation, typecheck or CodeGraph."
+  ],
+  "execution_receipts": {
+    "red": {
+      "local_name": "N48-20260928/red.json",
+      "sha256": "c65fc231055884ab91ef04b7fd4a9645fe03460f8aa87f6e0282bfc396794cc2",
+      "binding": "Exact parent component blob and committed test blob replay: one failed and four passed; the product source was restored byte-identically."
+    },
+    "native": {
+      "local_name": "N48-20260928/execution.json",
+      "sha256": "aee2a3ef65148de797ca083772706d8845d1739f1d0918ee35fd21631f5d3507",
+      "binding": "Private receipt hashes final 36-test affected run, ESLint, diff check and both product/test source bytes at product parent."
+    },
+    "mutation": {
+      "local_name": "N48-20260928/mutation.json",
+      "sha256": "0012fa6846a0733afdb43cacff0753b16349665ed7d4ad6e2c32f84a99717453"
+    }
+  },
+  "codegraph_receipts": {
+    "before_product": {
+      "local_name": "N48-20260928/pre.json",
+      "sha256": "59fb6f4b6bf9a0b30dd70b9920b722f668031da1e911775625d62e48f06bc0a0"
+    },
+    "after_product": {
+      "local_name": "N48-20260928/receipt.json",
+      "sha256": "c3fd234c7151da7b44e9bdd21c8d37cd936c74273b3141c0ad1cb886862212d9",
+      "binding": "CodeGraph 1.6.0: D0 8,881 files, U1 12,468, integration 8,968, separate indexes with zero pending changes or refs. Query/explore/impact bind the shared ModelCatalogMenu owner to exact source blobs; direct caller reads distinguish composer and Kanban."
+    },
+    "post_commit": {
+      "local_name": "N48-20260928/postcommit.json",
+      "sha256": "0abcbe3daeb231c39f25bfbea58f442824f3203984351ce60eebe264111eb00c",
+      "binding": "At exact product HEAD, both disk blobs equal their committed blobs and the integration graph remains fresh."
+    }
+  },
+  "open_gaps": [
+    "A native rendered Electron build or visual inspection was not performed. The broad TypeScript gate remains red because the current checkout resolves duplicate React type identities; no release readiness is inferred from N48.",
+    "Only these two upstream rows are mapped by this family. Other historical and U1 ledger rows remain subject to semantic review; inventory completeness and 25 seed families do not prove full coverage.",
+    "N07-A1 grant-revocation host writer is not implemented per the user's reply. Destination outcome durability, T06 and T12 remain unqualified, and Control MCP production write stays DISABLED.",
+    "The isolated-worktree zero-byte untracked $tmp remains after automatic approval review blocked removal without a detailed reason. Original main and feature WIP were untouched; no PR, push, release or production restart occurred."
+  ]
+}
