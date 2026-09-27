@@ -13372,7 +13372,25 @@ def _list_cron_jobs_sync(profile: str = "all"):
             jobs.extend(_call_cron_for_profile(name, "list_jobs", True))
         except Exception:
             _log.exception("Failed to list cron jobs for profile %s", name)
-    return jobs
+
+    # A job copied between profiles keeps its id. Prefer the default profile
+    # regardless of enumeration order, but retain id-less legacy records:
+    # cron.jobs normalizes their absent ids to the shared "unknown" sentinel.
+    by_id: Dict[str, Dict[str, Any]] = {}
+    unkeyed: List[Dict[str, Any]] = []
+    for job in jobs:
+        if not isinstance(job, dict):
+            continue
+        job_id = job.get("id") or job.get("job_id")
+        if not job_id or job_id == "unknown":
+            unkeyed.append(job)
+            continue
+        existing = by_id.get(job_id)
+        if existing is None or (
+            job.get("is_default_profile") and not existing.get("is_default_profile")
+        ):
+            by_id[job_id] = job
+    return list(by_id.values()) + unkeyed
 
 
 async def _run_cron_dashboard_io(func, *args, **kwargs):

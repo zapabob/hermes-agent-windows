@@ -1187,3 +1187,71 @@ async def test_create_cron_job_without_profile_defaults_when_unscoped(
 
     assert job["profile"] == "default"
     assert (isolated_profiles["default"] / "cron" / "jobs.json").exists()
+
+
+def _write_profile_jobs(home, jobs):
+    """Persist actual cron records for dashboard aggregation tests."""
+    (home / "cron" / "jobs.json").write_text(
+        json.dumps({"jobs": jobs}), encoding="utf-8"
+    )
+
+
+@pytest.mark.parametrize("order", [("default", "worker_alpha"), ("worker_alpha", "default")])
+def test_cron_all_profiles_prefers_default_copy_of_shared_id(
+    isolated_profiles, monkeypatch, order
+):
+    from hermes_cli import web_server
+
+    for name in ("default", "worker_alpha"):
+        _write_profile_jobs(isolated_profiles[name], [{
+            "id": "shared-job",
+            "name": "shared",
+            "prompt": f"{name} copy",
+            "enabled": True,
+            "schedule": {"kind": "interval", "minutes": 60},
+        }])
+
+    monkeypatch.setattr(
+        web_server, "_cron_profile_dicts", lambda: [{"name": name} for name in order]
+    )
+    result = web_server._list_cron_jobs_sync("all")
+
+    assert [(job["id"], job["prompt"], job["is_default_profile"]) for job in result] == [
+        ("shared-job", "default copy", True)
+    ]
+    assert [job["prompt"] for job in web_server._list_cron_jobs_sync("worker_alpha")] == [
+        "worker_alpha copy"
+    ]
+
+
+def test_cron_all_profiles_keeps_distinct_ids(isolated_profiles):
+    from hermes_cli import web_server
+
+    for name in ("default", "worker_alpha"):
+        _write_profile_jobs(isolated_profiles[name], [{
+            "id": f"{name}-job",
+            "name": name,
+            "prompt": name,
+            "enabled": True,
+            "schedule": {"kind": "interval", "minutes": 60},
+        }])
+
+    result = web_server._list_cron_jobs_sync("all")
+    assert {job["id"] for job in result} == {"default-job", "worker_alpha-job"}
+
+
+def test_cron_all_profiles_preserves_distinct_idless_legacy_records(isolated_profiles):
+    from hermes_cli import web_server
+
+    for name in ("default", "worker_alpha"):
+        _write_profile_jobs(isolated_profiles[name], [{
+            "name": f"legacy-{name}",
+            "prompt": f"{name} legacy",
+            "enabled": True,
+            "schedule": {"kind": "interval", "minutes": 60},
+        }])
+
+    result = web_server._list_cron_jobs_sync("all")
+    assert len(result) == 2
+    assert {job["id"] for job in result} == {"unknown"}
+    assert {job["prompt"] for job in result} == {"default legacy", "worker_alpha legacy"}
