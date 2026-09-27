@@ -50,7 +50,12 @@ def shell_ops(request, tmp_path, monkeypatch):
 
 def test_non_path_backslashes_survive_real_shell_transport(shell_ops):
     ops, _ = shell_ops
-    for value in (r"alpha\.beta", r"a\\b", r"a\\\'b", "line\nbreak"):
+    values = (
+        "", "two words", "quote'and\"quote", "$() ` : ;", "line\nbreak",
+        *("a" + "\\" * length + ".b" for length in (1, 2, 3, 4, 8)),
+        "a\\'b",
+    )
+    for value in values:
         quoted = ops._escape_shell_arg(value, translate_path=False)
         result = ops._exec(f"printf '%s' {quoted} | od -An -v -tx1")
         assert result.exit_code == 0, result.stdout
