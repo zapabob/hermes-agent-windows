@@ -354,6 +354,7 @@ import {
   SESSION_WINDOW_MIN_WIDTH
 } from './session-windows'
 import { ensureLoginShellPath } from './shell-path'
+import { createSourcePythonBackend } from './source-python'
 import { createBootstrapCoordinator, sshConfigFingerprint } from './ssh-bootstrap-coordinator'
 import { collectSshConfigHosts, parseSshGOutput } from './ssh-config'
 import { createSshProbeConnection, pickLocalPort, redactSecrets, SshConnection } from './ssh-connection'
@@ -2415,30 +2416,6 @@ function isHermesSourceRoot(root) {
   return directoryExists(root) && fileExists(path.join(root, 'hermes_cli', 'main.py'))
 }
 
-function findPythonForRoot(root) {
-  const override = process.env.HERMES_DESKTOP_PYTHON
-
-  if (override && fileExists(override)) {
-    return override
-  }
-
-  const relativePaths = IS_WINDOWS
-    ? [path.join('.venv', 'Scripts', 'python.exe'), path.join('venv', 'Scripts', 'python.exe')]
-    : [path.join('.venv', 'bin', 'python'), path.join('venv', 'bin', 'python')]
-
-  for (const relativePath of relativePaths) {
-    const candidate = path.join(root, relativePath)
-
-    if (fileExists(candidate)) {
-      return candidate
-    }
-  }
-
-  // A source checkout without its own runtime must yield to the backend ladder.
-  // PATH Python can import this tree while missing the checkout's dependencies.
-  return null
-}
-
 function findSystemPython() {
   if (!IS_WINDOWS) {
     // POSIX systems: PATH lookup is safe.
@@ -2604,35 +2581,6 @@ function findGitBash() {
 
 function getVenvPython(venvRoot) {
   return path.join(venvRoot, IS_WINDOWS ? path.join('Scripts', 'python.exe') : path.join('bin', 'python'))
-}
-
-// Map a selected interpreter back to the venv that OWNS it (the directory
-// above bin/ or Scripts/), but only when that venv lives inside `root`.
-// Returns null for system pythons — they own no site-packages we should mount.
-//
-// This exists because findPythonForRoot() probes `.venv` before `venv`, and a
-// checkout can legitimately have BOTH (dev tooling venv + the CLI install
-// venv, possibly on different Python versions). The interpreter and the
-// site-packages placed on PYTHONPATH must come from the SAME venv: pairing a
-// .venv 3.12 python with venv/lib/python3.11/site-packages makes the backend
-// die on its first native import (pydantic_core) before the gateway binds —
-// the renderer then reports "Gateway offline" on every profile.
-function venvRootForPython(python: string, root: string) {
-  const parent = path.dirname(python)
-  const binName = path.basename(parent).toLowerCase()
-
-  if (binName !== 'bin' && binName !== 'scripts') {
-    return null
-  }
-
-  const candidate = path.dirname(parent)
-  const relative = path.relative(root, candidate)
-
-  if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
-    return null
-  }
-
-  return candidate
 }
 
 // Windows console-window flashes are governed by the *parent's* console, not by
@@ -4520,35 +4468,15 @@ function writeDefaultProjectDir(dir) {
 }
 
 function createPythonBackend(root, label, backendArgs, options: any = {}) {
-  const python = findPythonForRoot(root)
-
-  if (!python) {
-    return null
-  }
-
-  // The venv whose interpreter we selected is the venv whose site-packages
-  // belong on PYTHONPATH — findPythonForRoot may have picked `.venv` over
-  // `venv`, and mixing the two crashes the backend on its first native
-  // import (see venvRootForPython). An explicit interpreter outside this
-  // checkout owns its own packages; never replace it with root/venv's Python.
-  const venvRoot = venvRootForPython(python, root)
-  const venvPython = venvRoot ? getVenvPython(venvRoot) : null
-  const command = IS_WINDOWS && venvPython && fileExists(venvPython) ? venvPython : python
-
-  return {
-    kind: 'python',
-    label,
-    command,
-    args: ['-m', 'hermes_cli.main', ...backendArgs],
-    env: buildDesktopBackendEnv({
-      hermesHome: HERMES_HOME,
-      pythonPathEntries: [root, ...getVenvSitePackagesEntries(venvRoot)],
-      venvRoot
-    }),
-    root,
-    bootstrap: Boolean(options.bootstrap),
-    shell: false
-  }
+  return createSourcePythonBackend(root, label, backendArgs, {
+    hermesHome: HERMES_HOME,
+    isWindows: IS_WINDOWS,
+    override: process.env.HERMES_DESKTOP_PYTHON,
+    pathModule: path,
+    fileExists,
+    getVenvSitePackagesEntries,
+    buildEnv: buildDesktopBackendEnv
+  }, options)
 }
 
 // createActiveBackend — build a backend pointing at ACTIVE_HERMES_ROOT, the
