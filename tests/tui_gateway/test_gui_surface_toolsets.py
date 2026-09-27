@@ -83,6 +83,49 @@ class TestSurfaceResolution:
 
 
 class TestResolverPlumbing:
+    @pytest.mark.parametrize("platform", ["tui", "desktop"])
+    @pytest.mark.parametrize("focus", [False, True])
+    def test_disabled_project_is_not_readded_by_surface_fold_in(
+        self, no_desktop_env, platform, focus
+    ):
+        import agent.coding_context as cc
+        import hermes_cli.config as config_mod
+
+        config = {
+            "agent": {"disabled_toolsets": '["project"]'},
+            "platform_toolsets": {"cli": ["memory"]},
+        }
+        no_desktop_env.setattr(server, "_load_cfg", lambda: config)
+        no_desktop_env.setattr(config_mod, "load_config", lambda: config)
+        no_desktop_env.setattr(
+            cc, "coding_selection", lambda **_: ["coding"] if focus else None
+        )
+
+        result = server._load_enabled_toolsets(platform)
+
+        assert result is not None
+        assert "project" not in result
+        assert ("desktop_ui" in result) is (platform == "desktop")
+        assert ("coding" in result) is focus
+
+    def test_focus_selection_obeys_global_exclusions_but_keeps_desktop_control(
+        self, no_desktop_env
+    ):
+        import agent.coding_context as cc
+
+        no_desktop_env.setattr(
+            server,
+            "_load_cfg",
+            lambda: {
+                "agent": {"disabled_toolsets": ["project", "coding", "desktop_ui"]}
+            },
+        )
+        no_desktop_env.setattr(
+            cc, "coding_selection", lambda **_: ["coding", "memory", "project"]
+        )
+
+        assert server._load_enabled_toolsets("desktop") == ["desktop_ui", "memory"]
+
     def test_posture_path_folds_in_the_session_surface(self, no_desktop_env):
         """Focus-mode returns early — the surface toolsets must survive it."""
         import agent.coding_context as cc

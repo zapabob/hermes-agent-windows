@@ -5842,6 +5842,27 @@ def _gui_surface_toolsets(platform: str) -> set[str]:
     return surfaces
 
 
+def _with_session_surface_toolsets(
+    selection: list[str] | set[str], platform: str, config: dict | None = None
+) -> list[str]:
+    """Add client tools without undoing the configured toolset exclusions."""
+    from agent.skill_utils import parse_config_string_list
+
+    source = config if config is not None else _load_cfg()
+    agent_cfg = source.get("agent") if isinstance(source, dict) else None
+    if not isinstance(agent_cfg, dict):
+        agent_cfg = {}
+    disabled = {
+        name.strip()
+        for name in parse_config_string_list(agent_cfg.get("disabled_toolsets"))
+        if name.strip()
+    }
+    # desktop_ui belongs to the client control surface, even when a model
+    # toolset with that name is listed in the global exclusions.
+    excluded = disabled - {"desktop_ui"}
+    return sorted((set(selection) | _gui_surface_toolsets(platform)) - excluded)
+
+
 def _load_enabled_toolsets(platform: str | None = None) -> list[str] | None:
     session_platform = platform or _resolve_session_platform()
     explicit = [
@@ -5868,7 +5889,7 @@ def _load_enabled_toolsets(platform: str | None = None) -> list[str] | None:
                 # coding posture returns before the fallback path that normally
                 # adds them — without this the desktop loses its pane/project
                 # tools exactly when sitting in a repo (see below).
-                return sorted({*selection, *_gui_surface_toolsets(session_platform)})
+                return _with_session_surface_toolsets(selection, session_platform)
         except Exception:
             pass
 
@@ -5985,7 +6006,7 @@ def _load_enabled_toolsets(platform: str | None = None) -> list[str] | None:
         # surface them. This resolver runs ONLY in the desktop/TUI gateway, so
         # folding them in here is the gate that exposes them on exactly the
         # surface that can answer them.
-        return sorted(enabled | _gui_surface_toolsets(session_platform))
+        return _with_session_surface_toolsets(enabled, session_platform, cfg)
     except Exception:
         if fallback_notice is not None:
             print(
