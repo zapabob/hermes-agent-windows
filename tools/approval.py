@@ -4449,7 +4449,8 @@ def _should_skip_container_guards(env_type: str, has_host_access: bool = False) 
 
 def check_dangerous_command(command: str, env_type: str,
                             approval_callback=None,
-                            has_host_access: bool = False) -> dict:
+                            has_host_access: bool = False,
+                            *, cwd: str | None = None) -> dict:
     """Check if a command is dangerous and handle approval.
 
     This is the main entry point called by terminal_tool before executing
@@ -4477,6 +4478,12 @@ def check_dangerous_command(command: str, env_type: str,
     if is_hardline:
         logger.warning("Hardline block: %s (command: %s)", hardline_desc, command[:200])
         return _hardline_block_result(hardline_desc, command)
+
+    from agent.runtime_self_protection import command_deletes_runtime
+
+    runtime_target = command_deletes_runtime(command, cwd=cwd)
+    if runtime_target:
+        return _hardline_block_result(f"deletion of {runtime_target}", command)
 
     # User-defined deny rules (approvals.deny in config.yaml): like the
     # hardline floor, these fire BEFORE the yolo bypass — a deny rule is the
@@ -5090,7 +5097,8 @@ def _await_gateway_decision(session_key: str, notify_cb, approval_data: dict,
 
 def check_all_command_guards(command: str, env_type: str,
                              approval_callback=None,
-                             has_host_access: bool = False) -> dict:
+                             has_host_access: bool = False,
+                             *, cwd: str | None = None) -> dict:
     """Run all pre-exec security checks and return a single approval decision.
 
     Gathers findings from tirith and dangerous-command detection, then
@@ -5115,6 +5123,12 @@ def check_all_command_guards(command: str, env_type: str,
     if is_hardline:
         logger.warning("Hardline block: %s (command: %s)", hardline_desc, command[:200])
         return _hardline_block_result(hardline_desc, command)
+
+    from agent.runtime_self_protection import command_deletes_runtime
+
+    runtime_target = command_deletes_runtime(command, cwd=cwd)
+    if runtime_target:
+        return _hardline_block_result(f"deletion of {runtime_target}", command)
 
     # == Sudo stdin guard ==
     # Like the hardline floor above, this is unconditional: there is never a

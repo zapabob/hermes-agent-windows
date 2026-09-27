@@ -170,6 +170,11 @@ def _classify_write_denial(path: str) -> Optional[str]:
     home = os.path.realpath(os.path.expanduser("~"))
     resolved = os.path.realpath(os.path.expanduser(str(path)))
 
+    from agent.runtime_self_protection import is_protected_path
+
+    if is_protected_path(path):
+        return "credential"
+
     # Approval-gated paths (e.g. ~/.ssh/config) are NOT hard-denied here:
     # they are allowed at this layer so the interactive file tools can run
     # their approval prompt, and only blocked for non-interactive callers

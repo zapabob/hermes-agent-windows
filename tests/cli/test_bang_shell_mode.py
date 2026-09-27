@@ -121,6 +121,20 @@ class TestBangExecution:
         assert code == 0
         assert "ok" in lines
 
+    def test_strict_cwd_disappearance_does_not_launch_shell(self, tmp_path):
+        from hermes_cli.bang_shell import run_bang_command
+
+        output = []
+        missing = str(tmp_path / "gone")
+        with patch("hermes_cli.bang_shell.subprocess.Popen") as launch:
+            code = run_bang_command(
+                "echo should-not-run", cwd=missing, strict_cwd=True,
+                writer=output.append,
+            )
+        assert code == 127
+        assert "no longer available" in output[0]
+        launch.assert_not_called()
+
 
 # ── CLI handler: approval gate, usage hint, exit codes ─────────────────────
 
@@ -188,6 +202,29 @@ class TestBangHandlerDispatch:
 
 class TestBangApprovalGate:
     """A user-typed command still goes through the terminal tool's gate."""
+
+    def test_runtime_floor_and_execution_use_the_same_cwd(self, tmp_path):
+        cli = _make_cli()
+        gate = MagicMock(return_value={"approved": True, "message": None})
+        with patch("hermes_cli.bang_shell.resolve_bang_cwd", return_value=str(tmp_path)), \
+             patch("hermes_cli.bang_shell.check_bang_approval", gate), \
+             patch("hermes_cli.bang_shell.run_bang_command", return_value=0) as runner:
+            assert cli.handle_bang_shell("!echo cwd") is True
+
+        gate.assert_called_once_with("echo cwd", cwd=str(tmp_path))
+        assert runner.call_args.kwargs["cwd"] == str(tmp_path)
+
+    def test_missing_cwd_is_resolved_before_guard_and_execution(self, tmp_path):
+        cli = _make_cli()
+        missing_cwd = str(tmp_path / "gone")
+        gate = MagicMock(return_value={"approved": True, "message": None})
+        with patch("hermes_cli.bang_shell.resolve_bang_cwd", return_value=missing_cwd), \
+             patch("hermes_cli.bang_shell.check_bang_approval", gate), \
+             patch("hermes_cli.bang_shell.run_bang_command", return_value=0) as runner:
+            assert cli.handle_bang_shell("!echo cwd") is True
+
+        gate.assert_called_once_with("echo cwd", cwd=None)
+        assert runner.call_args.kwargs["cwd"] is None
 
     def test_approval_gate_is_invoked_for_a_dangerous_command(self):
         cli = _make_cli()
@@ -308,6 +345,3 @@ class TestBangLeavesHistoryByteIdentical:
         assert json.dumps(cli.conversation_history, sort_keys=True) == before
         roles = [m["role"] for m in cli.conversation_history]
         assert roles == ["system", "user", "assistant", "user", "assistant", "tool"]
-
-
-

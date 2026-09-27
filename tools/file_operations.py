@@ -226,13 +226,25 @@ def _is_write_denied(path: str) -> bool:
     return native_path != path and _shared_is_write_denied(native_path)
 
 
-def _write_denied_error(path: str, verb: str | None = None) -> str | None:
+def _write_denied_error(path: str, verb: str | None = None,
+                        cwd: str | None = None) -> str | None:
+    if cwd:
+        from agent.runtime_self_protection import is_protected_path
+
+        runtime_target = is_protected_path(path, cwd=cwd)
+        if runtime_target:
+            return f"{verb or 'Write'} denied: path targets {runtime_target}."
     native_path = _windows_bash_path_to_drive(path)
     for candidate in (path, native_path):
-        denied = get_write_denied_error(candidate, verb=verb)
+        resolved_candidate = (
+            os.path.join(cwd, candidate)
+            if cwd and not os.path.isabs(candidate)
+            else candidate
+        )
+        denied = get_write_denied_error(resolved_candidate, verb=verb)
         if denied:
             return denied
-        if _shared_is_write_denied(candidate):
+        if _shared_is_write_denied(resolved_candidate):
             return f"{verb or 'Write'} denied: path is protected"
     return None
 
@@ -2059,7 +2071,9 @@ class ShellFileOperations(FileOperations):
 
     def _python_delete(self, path: str, recursive: bool) -> WriteResult:
         path = self._expand_path(path)
-        denied = _write_denied_error(path, verb="Delete")
+        denied = _write_denied_error(
+            path, verb="Delete", cwd=getattr(self.env, "cwd", None) or self.cwd,
+        )
         if denied:
             return WriteResult(error=denied)
 
@@ -2106,7 +2120,9 @@ class ShellFileOperations(FileOperations):
         src = self._expand_path(src)
         dst = self._expand_path(dst)
         for p in (src, dst):
-            denied = _write_denied_error(p, verb="Move")
+            denied = _write_denied_error(
+                p, verb="Move", cwd=getattr(self.env, "cwd", None) or self.cwd,
+            )
             if denied:
                 return WriteResult(error=denied)
         result = self._exec(
@@ -2165,7 +2181,9 @@ class ShellFileOperations(FileOperations):
         path = self._expand_path(path)
 
         # Block writes to sensitive paths
-        denied = _write_denied_error(path, verb="Write")
+        denied = _write_denied_error(
+            path, verb="Write", cwd=getattr(self.env, "cwd", None) or self.cwd,
+        )
         if denied:
             return WriteResult(error=denied)
 
@@ -2411,7 +2429,9 @@ class ShellFileOperations(FileOperations):
         path = self._expand_path(path)
 
         # Block writes to sensitive paths
-        denied = _write_denied_error(path, verb="Write")
+        denied = _write_denied_error(
+            path, verb="Write", cwd=getattr(self.env, "cwd", None) or self.cwd,
+        )
         if denied:
             return PatchResult(error=denied)
 

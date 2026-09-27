@@ -12493,6 +12493,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
             USAGE_HINT,
             bang_shell_enabled,
             check_bang_approval,
+            effective_bang_cwd,
             is_bang_command,
             parse_bang_command,
             resolve_bang_cwd,
@@ -12514,7 +12515,8 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
             self._console_print(f"[dim]{USAGE_HINT}[/]")
             return True
 
-        approval = check_bang_approval(command)
+        cwd = effective_bang_cwd(resolve_bang_cwd(getattr(self, "session_id", None)))
+        approval = check_bang_approval(command, cwd=cwd)
         if not approval.get("approved"):
             message = approval.get("message") or (
                 f"Command denied: {approval.get('description', 'flagged as dangerous')}"
@@ -12522,11 +12524,11 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
             self._console_print(f"[bold red]{_escape(str(message))}[/]")
             return True
 
-        cwd = resolve_bang_cwd(getattr(self, "session_id", None))
         exit_code = run_bang_command(
             command,
             cwd=cwd,
             writer=lambda line: self._console_print(_rich_text_from_ansi(line)),
+            strict_cwd=True,
         )
         if exit_code:
             self._console_print(f"[dim]! exited {exit_code}[/]")

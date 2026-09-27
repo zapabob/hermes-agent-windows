@@ -101,7 +101,13 @@ def resolve_bang_cwd(session_key: Optional[str] = None) -> Optional[str]:
     return None
 
 
-def check_bang_approval(command: str) -> dict:
+def effective_bang_cwd(cwd: Optional[str]) -> Optional[str]:
+    """Choose the same cwd for approval and execution, including fallback."""
+    expanded = os.path.expanduser(cwd) if cwd else None
+    return expanded if expanded and os.path.isdir(expanded) else None
+
+
+def check_bang_approval(command: str, *, cwd: Optional[str] = None) -> dict:
     """Run *command* through the terminal tool's approval gate.
 
     Reuses ``tools.terminal_tool._check_all_guards`` — the exact function
@@ -115,6 +121,14 @@ def check_bang_approval(command: str) -> dict:
     Falls back to *approved* only when the gate itself cannot be imported,
     which would mean a broken install rather than a policy decision.
     """
+    from agent.runtime_self_protection import command_deletes_runtime
+
+    runtime_target = command_deletes_runtime(command, cwd=cwd)
+    if runtime_target:
+        from tools.approval import _hardline_block_result
+
+        return _hardline_block_result(f"deletion of {runtime_target}", command)
+
     try:
         from tools.terminal_tool import _check_all_guards
     except Exception:
@@ -122,7 +136,7 @@ def check_bang_approval(command: str) -> dict:
 
     # env_type mirrors the terminal tool: bang commands always run locally in
     # the CLI process, never inside a remote/sandbox backend.
-    return _check_all_guards(command, "local", has_host_access=False)
+    return _check_all_guards(command, "local", has_host_access=False, cwd=cwd)
 
 
 def _bang_env() -> dict:
@@ -147,6 +161,7 @@ def run_bang_command(
     cwd: Optional[str] = None,
     timeout: int = DEFAULT_TIMEOUT,
     writer=None,
+    strict_cwd: bool = False,
 ) -> int:
     """Execute *command* and stream its output, returning the exit code.
 
@@ -157,9 +172,10 @@ def run_bang_command(
     """
     emit = writer or (lambda line: print(line, end="" if line.endswith("\n") else "\n"))
 
-    run_cwd = cwd if (cwd and os.path.isdir(os.path.expanduser(cwd))) else None
-    if run_cwd:
-        run_cwd = os.path.expanduser(run_cwd)
+    run_cwd = effective_bang_cwd(cwd)
+    if strict_cwd and cwd and run_cwd is None:
+        emit("!: working directory is no longer available")
+        return 127
 
     try:
         from hermes_cli._subprocess_compat import windows_hide_flags
@@ -209,4 +225,3 @@ def run_bang_command(
             pass
 
     return int(proc.returncode or 0)
-

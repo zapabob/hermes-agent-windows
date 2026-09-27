@@ -384,11 +384,12 @@ def _docker_has_host_access(config: Dict[str, Any]) -> bool:
 
 
 def _check_all_guards(command: str, env_type: str,
-                      has_host_access: bool = False) -> dict:
+                      has_host_access: bool = False,
+                      *, cwd: str | None = None) -> dict:
     """Delegate to consolidated guard (tirith + dangerous cmd) with CLI callback."""
     return _check_all_guards_impl(command, env_type,
                                   approval_callback=_get_approval_callback(),
-                                  has_host_access=has_host_access)
+                                  has_host_access=has_host_access, cwd=cwd)
 
 
 # Allowlist: characters that can legitimately appear in directory paths.
@@ -3449,6 +3450,19 @@ def terminal_tool(
                     "status": "blocked",
                 }, ensure_ascii=False)
 
+            # force=True skips the approval entry point below. Keep the
+            # runtime self-delete floor at the actual local execution boundary.
+            from agent.runtime_self_protection import command_deletes_runtime
+
+            runtime_target = command_deletes_runtime(command, cwd=guard_cwd)
+            if runtime_target:
+                return json.dumps({
+                    "output": "",
+                    "exit_code": 1,
+                    "error": f"Blocked deletion of {runtime_target}.",
+                    "status": "blocked",
+                }, ensure_ascii=False)
+
         # Pre-exec security checks (tirith + dangerous command detection)
         # Skip check if force=True (user has confirmed they want to run it)
         approval_note = None
@@ -3461,6 +3475,7 @@ def terminal_tool(
             approval = _check_all_guards(
                 command, env_type,
                 has_host_access=_docker_has_host_access(config),
+                cwd=guard_cwd if env_type == "local" else None,
             )
             if not approval["approved"]:
                 # Check if this is an approval_required (gateway ask mode)
