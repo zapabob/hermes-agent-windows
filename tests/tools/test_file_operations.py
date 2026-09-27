@@ -326,9 +326,10 @@ class TestShellFileOpsHelpers:
         assert commands[0] == (
             "if [ -f '/c/Users/alice/notes.txt' ]; "
             "then wc -c < '/c/Users/alice/notes.txt' 2>/dev/null; "
-            "elif [ -e '/c/Users/alice/notes.txt' ]; "
+            "elif [ -e '/c/Users/alice/notes.txt' ] || "
+            "[ -L '/c/Users/alice/notes.txt' ]; "
             "then echo __hermes_not_regular__; "
-            "else exit 1; fi"
+            "else echo __hermes_missing__; fi"
         )
         assert commands[1] == "head -c 1000 '/c/Users/alice/notes.txt' 2>/dev/null | base64"
         assert commands[2] == "sed -n '1,2000p' '/c/Users/alice/notes.txt' | cut -b1-8001"

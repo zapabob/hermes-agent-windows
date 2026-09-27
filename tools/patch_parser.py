@@ -247,6 +247,19 @@ def _count_occurrences(text: str, pattern: str) -> int:
     return count
 
 
+def _destination_issue(file_ops: Any, path: str) -> Optional[str]:
+    """A destination is free only after a read confirms its entry is absent."""
+    try:
+        result = file_ops.read_file_raw(path)
+    except Exception as exc:
+        return f"could not confirm destination is free: {exc}"
+    if not result.error:
+        return "destination already exists"
+    if getattr(result, "not_found", False) is True:
+        return None
+    return f"could not confirm destination is free: {result.error}"
+
+
 def _validate_operations(
     operations: List[PatchOperation],
     file_ops: Any,
@@ -282,6 +295,13 @@ def _validate_operations(
         if r.error:
             return None, r.error
         return r.content, None
+
+    def _pending_destination_issue(path: str) -> Optional[str]:
+        if path in pending_content:
+            return "destination already exists"
+        if path in removed_paths:
+            return None
+        return _destination_issue(file_ops, path)
 
     for op in operations:
         if op.operation != OperationType.UPDATE:
@@ -378,20 +398,27 @@ def _validate_operations(
             src_content, src_err = _read(op.file_path)
             if src_err:
                 errors.append(f"{op.file_path}: source file not found for move")
-            dst_content, dst_err = _read(op.new_path)
-            if not dst_err:
-                errors.append(
-                    f"{op.new_path}: destination already exists — move would overwrite"
-                )
+            dst_issue = _pending_destination_issue(op.new_path)
+            if dst_issue:
+                errors.append(f"{op.new_path}: {dst_issue}")
             # Reflect the move in the overlay so a subsequent UPDATE of the
             # destination validates against the moved content, and the source
             # reads as gone. Only when the move itself validated cleanly.
-            if not src_err and dst_err:
+            if not src_err and not dst_issue:
                 pending_content[op.new_path] = src_content if src_content is not None else ""
                 pending_content.pop(op.file_path, None)
                 removed_paths.add(op.file_path)
 
-        # ADD: parent directory creation handled by write_file; no pre-check needed.
+        elif op.operation == OperationType.ADD:
+            issue = _pending_destination_issue(op.file_path)
+            if issue:
+                errors.append(f"{op.file_path}: {issue}")
+            else:
+                pending_content[op.file_path] = "\n".join(
+                    line.content for hunk in op.hunks for line in hunk.lines
+                    if line.prefix == "+"
+                )
+                removed_paths.discard(op.file_path)
 
     if not errors and real_change_count == 0:
         errors.append("Patch contains no changes (only context lines were provided)")
@@ -555,6 +582,10 @@ def _apply_add(op: PatchOperation, file_ops: Any) -> Tuple[bool, str, Optional[s
     can propagate lint to ``PatchResult.lint`` without a redundant
     ``_check_lint`` re-read — write_file already ran the check internally.
     """
+    issue = _destination_issue(file_ops, op.file_path)
+    if issue:
+        return False, issue, None, None
+
     # Extract content from hunks (all + lines)
     content_lines = []
     for hunk in op.hunks:
@@ -598,6 +629,9 @@ def _apply_delete(op: PatchOperation, file_ops: Any) -> Tuple[bool, str]:
 
 def _apply_move(op: PatchOperation, file_ops: Any) -> Tuple[bool, str]:
     """Apply a move file operation."""
+    issue = _destination_issue(file_ops, op.new_path)
+    if issue:
+        return False, issue
     result = file_ops.move_file(op.file_path, op.new_path)
     if result.error:
         return False, result.error

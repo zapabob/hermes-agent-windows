@@ -254,6 +254,7 @@ class ReadResult:
     mime_type: Optional[str] = None
     dimensions: Optional[str] = None  # For images: "WIDTHxHEIGHT"
     error: Optional[str] = None
+    not_found: Optional[bool] = None  # Only a confirmed absent entry sets True.
     similar_files: List[str] = field(default_factory=list)
     
     def to_dict(self) -> dict:
@@ -897,6 +898,7 @@ DEFAULT_SEARCH_LIMIT = 50
 # Echoed by the size probe when the path exists but is not a regular file.
 # `wc -c` prints only digits, so this can never collide with a real size.
 NOT_REGULAR_SENTINEL = "__hermes_not_regular__"
+MISSING_SENTINEL = "__hermes_missing__"
 
 
 def _coerce_int(value: Any, default: int) -> int:
@@ -1433,15 +1435,15 @@ class ShellFileOperations(FileOperations):
 
         ``[ -f ]`` is a stat, not an open — it answers exactly the question
         the size probe needs (regular file, symlinks followed) without
-        touching the contents. Non-regular paths that exist report the
-        sentinel so callers can say so instead of claiming the file is
-        missing; a genuinely absent path still exits non-zero.
+        touching the contents. Non-regular entries, including dangling
+        symlinks, report one sentinel; a confirmed absent entry reports
+        another on a successful probe. A probe failure is never absence.
         """
         arg = self._escape_shell_arg(path)
         return (
             f"if [ -f {arg} ]; then wc -c < {arg} 2>/dev/null; "
-            f"elif [ -e {arg} ]; then echo {NOT_REGULAR_SENTINEL}; "
-            f"else exit 1; fi"
+            f"elif [ -e {arg} ] || [ -L {arg} ]; then echo {NOT_REGULAR_SENTINEL}; "
+            f"else echo {MISSING_SENTINEL}; fi"
         )
 
     @staticmethod
@@ -1449,7 +1451,7 @@ class ShellFileOperations(FileOperations):
         """Error for a path that exists but would block if read."""
         return ReadResult(
             error=(
-                f"Cannot read '{path}': not a regular file (directory, FIFO, "
+                f"Cannot read '{path}': not a regular file (directory, dangling symlink, FIFO, "
                 "socket, or device). Reading it could block indefinitely."
             )
         )
@@ -1580,7 +1582,8 @@ class ShellFileOperations(FileOperations):
         # Check if file exists and get size (POSIX, works on Linux + macOS)
         stat_result = self._exec(self._size_probe_cmd(path))
 
-        if stat_result.exit_code != 0:
+        stat_output = _strip_terminal_fence_leaks(stat_result.stdout).strip()
+        if stat_result.exit_code == 0 and stat_output == MISSING_SENTINEL:
             # File not found. Before failing, try unicode-equivalent
             # spellings — NFC/NFD, narrow no-break space, curly quotes
             # render identically in a terminal, so the model retyping a
@@ -1600,13 +1603,14 @@ class ShellFileOperations(FileOperations):
             # No equivalent spelling — suggest similar files
             return self._suggest_similar_files(path)
 
-        stat_output = _strip_terminal_fence_leaks(stat_result.stdout)
-        if stat_output.strip() == NOT_REGULAR_SENTINEL:
+        if stat_result.exit_code != 0:
+            return ReadResult(error=f"Failed to inspect file: {path}")
+        if stat_output == NOT_REGULAR_SENTINEL:
             return self._not_regular_error(path)
         try:
-            file_size = int(stat_output.strip())
+            file_size = int(stat_output)
         except ValueError:
-            file_size = 0
+            return ReadResult(error=f"Could not determine file size: {path}")
         
         # Check if file is too large
         if file_size > MAX_FILE_SIZE:
@@ -1853,6 +1857,7 @@ class ShellFileOperations(FileOperations):
 
         return ReadResult(
             error=f"File not found: {path}",
+            not_found=True,
             similar_files=similar
         )
     
@@ -1864,15 +1869,17 @@ class ShellFileOperations(FileOperations):
         """
         path = self._expand_path(path)
         stat_result = self._exec(self._size_probe_cmd(path))
-        if stat_result.exit_code != 0:
+        stat_output = _strip_terminal_fence_leaks(stat_result.stdout).strip()
+        if stat_result.exit_code == 0 and stat_output == MISSING_SENTINEL:
             return self._suggest_similar_files(path)
-        stat_output = _strip_terminal_fence_leaks(stat_result.stdout)
-        if stat_output.strip() == NOT_REGULAR_SENTINEL:
+        if stat_result.exit_code != 0:
+            return ReadResult(error=f"Failed to inspect file: {path}")
+        if stat_output == NOT_REGULAR_SENTINEL:
             return self._not_regular_error(path)
         try:
-            file_size = int(stat_output.strip())
+            file_size = int(stat_output)
         except ValueError:
-            file_size = 0
+            return ReadResult(error=f"Could not determine file size: {path}")
         if self._is_image(path):
             return ReadResult(is_image=True, is_binary=True, file_size=file_size)
         sample_bytes = self._sample_file_bytes(path)
@@ -1906,13 +1913,15 @@ class ShellFileOperations(FileOperations):
         """Read binary-safe bytes from any shell-backed environment."""
         path = self._expand_path(path)
         stat_result = self._exec(self._size_probe_cmd(path))
+        stat_output = _strip_terminal_fence_leaks(stat_result.stdout).strip()
+        if stat_result.exit_code == 0 and stat_output == MISSING_SENTINEL:
+            return ReadResult(error=f"File not found: {path}", not_found=True)
         if stat_result.exit_code != 0:
-            return ReadResult(error=f"File not found: {path}")
-        stat_output = _strip_terminal_fence_leaks(stat_result.stdout)
-        if stat_output.strip() == NOT_REGULAR_SENTINEL:
+            return ReadResult(error=f"Failed to inspect file: {path}")
+        if stat_output == NOT_REGULAR_SENTINEL:
             return self._not_regular_error(path)
         try:
-            file_size = int(stat_output.strip())
+            file_size = int(stat_output)
         except ValueError:
             return ReadResult(error=f"Could not determine file size: {path}")
         if max_bytes is not None and file_size > max_bytes:
