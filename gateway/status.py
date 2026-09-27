@@ -615,6 +615,109 @@ def _gateway_command_subcommand(command: str | None) -> str | None:
     return None
 
 
+def gateway_spawn_intent_subcommand(
+    command: str | list[str] | tuple[str, ...] | None,
+) -> str | None:
+    """Return a gateway command this argv would launch, including an inline watcher.
+
+    Process identity deliberately ignores everything after ``python -c``.
+    A test spawn guard has a different question: a restart watcher receives
+    the future gateway argv after its inline source and old PID. Reuse the
+    canonical matcher on each suffix rather than treating text in the source
+    literal as a command.
+    """
+    if not command:
+        return None
+    # A subprocess argv sequence already has authoritative element boundaries.
+    # Re-tokenizing its joined text would split a multiword -c source literal
+    # and mistake words inside that source for a future gateway argv.
+    structured_argv = isinstance(command, (list, tuple))
+    argv_tokens = [str(token) for token in command] if structured_argv else None
+    command_text = " ".join(argv_tokens) if argv_tokens is not None else command
+    while True:
+        if argv_tokens is not None:
+            raw_tokens = argv_tokens
+        else:
+            try:
+                raw_tokens = shlex.split(command_text, posix=False)
+            except ValueError:
+                raw_tokens = command_text.split()
+        cased_tokens = [t.strip("\"'").replace("\\", "/") for t in raw_tokens]
+        if not cased_tokens:
+            return None
+        first_name = cased_tokens[0].rsplit("/", 1)[-1].lower()
+        shell_option = None
+        for index, token in enumerate(cased_tokens[1:], start=1):
+            lower = token.lower()
+            if first_name in {"sh", "bash", "zsh", "dash", "sh.exe", "bash.exe"}:
+                is_command_option = bool(re.fullmatch(r"-[A-Za-z]*c[A-Za-z]*", token))
+            elif first_name in {"powershell", "powershell.exe", "pwsh", "pwsh.exe"}:
+                is_command_option = lower in {"-command", "-c"}
+            elif first_name in {"cmd", "cmd.exe"}:
+                is_command_option = lower in {"/c", "/k"}
+            else:
+                break
+            if is_command_option:
+                shell_option = index
+                break
+        if shell_option is None:
+            break
+        if shell_option + 1 >= len(raw_tokens):
+            return None
+        first_payload = raw_tokens[shell_option + 1]
+        if len(first_payload) >= 2 and first_payload[0] == first_payload[-1] \
+                and first_payload[0] in {"'", '"'}:
+            payload = first_payload[1:-1]
+        else:
+            payload = " ".join(raw_tokens[shell_option + 1:])
+        payload = payload.strip()
+        if payload.startswith("& "):
+            payload = payload[2:].lstrip()
+        if not payload or len(payload) >= len(command_text):
+            return None
+        command_text = payload
+        argv_tokens = None
+        structured_argv = False
+
+    # An arbitrary shell payload can itself execute wrappers such as ``exec``
+    # or ``timeout``. If its tokens describe a Gateway lifecycle command,
+    # this test-only guard treats the ambiguous case as spawn intent.
+    flag_index = _inline_python_source_flag_index(cased_tokens)
+    if flag_index is None:
+        # A Python script receives all later words as its own argv. In
+        # particular, stderr_timestamp tests run a harmless script with a
+        # gateway-shaped tail; that tail is not a process the script starts.
+        before_gateway = []
+        for token in cased_tokens:
+            if token.lower() == "gateway":
+                break
+            before_gateway.append(token.lower())
+        for index, token in enumerate(before_gateway):
+            if token.endswith(".py") and not token.endswith(
+                ("/gateway/run.py", "/hermes_cli/main.py")
+            ):
+                return None
+            if token == "-m" and index + 1 < len(before_gateway):
+                if before_gateway[index + 1] != "hermes_cli.main":
+                    return None
+        direct_command = (
+            subprocess.list2cmdline(raw_tokens)
+            if structured_argv else command_text
+        )
+        return _gateway_command_subcommand(direct_command)
+    # Skip -c and its source literal. The watcher places its old PID before
+    # the future argv, so that argv does not start at a fixed suffix index.
+    for index in range(flag_index + 2, len(raw_tokens)):
+        suffix = raw_tokens[index:]
+        nested_command = (
+            subprocess.list2cmdline(suffix) if structured_argv else " ".join(suffix)
+        )
+        nested = _gateway_command_subcommand(nested_command)
+        if nested is not None:
+            return nested
+    return None
+
+
 def looks_like_gateway_command_line(command: str | None) -> bool:
     """Return True only for a real ``gateway run`` process command line."""
     return _gateway_command_subcommand(command) == "run"

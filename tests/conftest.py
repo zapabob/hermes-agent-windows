@@ -1501,8 +1501,20 @@ def _live_system_guard(request, monkeypatch):
                     return True
         return False
 
-    def _check_subprocess_cmd(name, cmd):
-        if _is_blocked_systemctl(cmd):
+    def _check_subprocess_cmd(name, cmd, *, shell=False, executable=None):
+        checked_cmd = cmd
+        if executable is not None and not shell:
+            # subprocess can replace argv[0] at launch. Inspect the actual
+            # executable so a harmless-looking argv name cannot hide Hermes.
+            if isinstance(cmd, (list, tuple)):
+                argv = list(cmd)
+            else:
+                try:
+                    argv = _shlex.split(_cmd_to_string(cmd), posix=False)
+                except ValueError:
+                    argv = _cmd_to_string(cmd).split()
+            checked_cmd = [str(executable), *(str(token) for token in argv[1:])]
+        if _is_blocked_systemctl(checked_cmd):
             raise RuntimeError(
                 f"tests/conftest.py live-system guard: blocked "
                 f"subprocess.{name}({cmd!r}) — would mutate the "
@@ -1510,7 +1522,7 @@ def _live_system_guard(request, monkeypatch):
                 "subprocess.run / _run_systemctl in the test, or "
                 "mark with @pytest.mark.live_system_guard_bypass."
             )
-        if _is_process_killer(cmd):
+        if _is_process_killer(checked_cmd):
             raise RuntimeError(
                 f"tests/conftest.py live-system guard: blocked "
                 f"subprocess.{name}({cmd!r}) — process-killer command "
@@ -1518,6 +1530,44 @@ def _live_system_guard(request, monkeypatch):
                 "Mark with @pytest.mark.live_system_guard_bypass if "
                 "intentional."
             )
+        # A detached restart watcher is ``python -c <source> <old_pid>
+        # <future gateway argv>``. It is not a live gateway process, but
+        # starting it during a test can launch one later. Keep process
+        # identity and spawn intent separate; container commands do not
+        # launch a gateway on the host.
+        cmd_str = _cmd_to_string(checked_cmd)
+        if isinstance(checked_cmd, (list, tuple)) and checked_cmd:
+            first = str(checked_cmd[0])
+        else:
+            try:
+                first = _shlex.split(cmd_str, posix=False)[0]
+            except (ValueError, IndexError):
+                first = ""
+        first_name = first.strip("\"'").replace("\\", "/").rsplit("/", 1)[-1].lower()
+        direct_container_argv = (
+            not shell
+            and isinstance(checked_cmd, (list, tuple))
+            and first_name in {"docker", "docker.exe", "podman", "podman.exe"}
+        )
+        direct_display_argv = (
+            not shell
+            and isinstance(checked_cmd, (list, tuple))
+            and first_name in {"echo", "echo.exe", "printf", "printf.exe"}
+        )
+        if not (direct_container_argv or direct_display_argv):
+            from gateway.status import gateway_spawn_intent_subcommand
+
+            # Preserve element boundaries for direct argv; shell=True may
+            # reinterpret them, so inspect its joined command conservatively.
+            spawn_cmd = (
+                checked_cmd if isinstance(checked_cmd, (list, tuple)) and not shell
+                else cmd_str
+            )
+            if gateway_spawn_intent_subcommand(spawn_cmd) in {"run", "start", "restart"}:
+                raise RuntimeError(
+                    f"tests/conftest.py live-system guard: blocked subprocess.{name} "
+                    "that could launch a host Gateway. Mock the spawn seam."
+                )
         # Block any subprocess that would run `hermes update` (or the
         # equivalent `python -m hermes_cli.main update`).  These commands
         # run `git fetch origin + git pull` against the REAL checkout,
@@ -1528,7 +1578,6 @@ def _live_system_guard(request, monkeypatch):
         # tree (PPid=1) and nearly impossible to trace without explicit
         # inotify/SHA watchdogs.  Any test that legitimately needs to exercise
         # the update-spawn path must mock subprocess.Popen explicitly.
-        cmd_str = _cmd_to_string(cmd)
         low = cmd_str.lower()
         if "update" in low and (
             # hermes update / hermes update --gateway / setsid bash -c ... hermes update
@@ -1554,9 +1603,19 @@ def _live_system_guard(request, monkeypatch):
                 "flow against a dedicated throwaway repo)."
             )
 
+    def _popen_option(args, kwargs, name, positional_index):
+        if name in kwargs:
+            return kwargs[name]
+        return args[positional_index] if len(args) > positional_index else None
+
     def _wrap_subprocess(name, real):
         def _guarded(cmd, *args, **kwargs):
-            _check_subprocess_cmd(name, cmd)
+            _check_subprocess_cmd(
+                name, cmd,
+                shell=bool(_popen_option(args, kwargs, "shell", 7))
+                or name in {"getoutput", "getstatusoutput"},
+                executable=_popen_option(args, kwargs, "executable", 1),
+            )
             return real(cmd, *args, **kwargs)
         _guarded.__name__ = f"_guarded_{name}"
         # Make the wrapper subscriptable like the wrapped callable when
@@ -1574,7 +1633,11 @@ def _live_system_guard(request, monkeypatch):
 
         class _GuardedPopen(real):  # type: ignore[misc, valid-type]
             def __init__(self, cmd, *args, **kwargs):
-                _check_subprocess_cmd("Popen", cmd)
+                _check_subprocess_cmd(
+                    "Popen", cmd,
+                    shell=bool(_popen_option(args, kwargs, "shell", 7)),
+                    executable=_popen_option(args, kwargs, "executable", 1),
+                )
                 super().__init__(cmd, *args, **kwargs)
 
         _GuardedPopen.__name__ = "Popen"
@@ -1614,11 +1677,11 @@ def _live_system_guard(request, monkeypatch):
     real_os_popen = _os.popen
 
     def _guarded_os_system(command):
-        _check_subprocess_cmd("os.system", command)
+        _check_subprocess_cmd("os.system", command, shell=True)
         return real_os_system(command)
 
     def _guarded_os_popen(cmd, *args, **kwargs):
-        _check_subprocess_cmd("os.popen", cmd)
+        _check_subprocess_cmd("os.popen", cmd, shell=True)
         return real_os_popen(cmd, *args, **kwargs)
 
     monkeypatch.setattr(_os, "system", _guarded_os_system)
@@ -1646,12 +1709,13 @@ def _live_system_guard(request, monkeypatch):
 
         async def _guarded_async_exec(program, *args, **kwargs):
             _check_subprocess_cmd(
-                "asyncio.create_subprocess_exec", [program, *args]
+                "asyncio.create_subprocess_exec", [program, *args],
+                executable=kwargs.get("executable"),
             )
             return await real_async_exec(program, *args, **kwargs)
 
         async def _guarded_async_shell(cmd, *args, **kwargs):
-            _check_subprocess_cmd("asyncio.create_subprocess_shell", cmd)
+            _check_subprocess_cmd("asyncio.create_subprocess_shell", cmd, shell=True)
             return await real_async_shell(cmd, *args, **kwargs)
 
         monkeypatch.setattr(_asyncio, "create_subprocess_exec", _guarded_async_exec)
