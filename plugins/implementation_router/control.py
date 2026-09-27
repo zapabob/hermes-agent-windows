@@ -129,7 +129,14 @@ class EngineeringRunOwner:
                         and parsed.get('state') in ('SUCCEEDED', 'FAILED', 'BLOCKED')):
                     state = parsed['state']
                     result = parsed
-                    if state == 'SUCCEEDED' and (self._cancelled(run_id, generation)
+                    if state == 'BLOCKED' and (
+                            parsed.get('reason_code') == 'host_boundary_error_no_replay'
+                            or type(parsed.get('stage_calls')) is int and parsed['stage_calls'] > 0):
+                        # A native stage may have crossed its scratch effect boundary.
+                        # Keep the journal reservation until that run is reconciled.
+                        state = 'UNKNOWN'
+                        result = {'state': state, 'run_id': run_id}
+                    elif state == 'SUCCEEDED' and (self._cancelled(run_id, generation)
                                                  or self.verify_result(request, operation_id, run_id, parsed) is not True):
                         state = 'UNKNOWN'
                         result = {'state': state, 'run_id': run_id}

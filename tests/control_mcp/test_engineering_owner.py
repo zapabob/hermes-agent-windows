@@ -189,10 +189,99 @@ def test_owner_calls_real_entrypoint_with_host_issued_identity(
             verify_result=lambda *args: False, revalidate_grant=lambda _ctx, *, now: None, clock=lambda: 103)
         handle = owner.start_approved(ctx, operation_id)
         assert handle.future.result(timeout=5)['state'] == 'BLOCKED'
+    assert journal.get(ctx, operation_id, profile_id='p1', workspace_id='w1',
+                       now=104)['state'] == 'BLOCKED'
     assert len(seen) == 1
     assert seen[0]['binding'].run_id == handle.run_id
     assert seen[0]['operation_id'] == operation_id
     assert seen[0]['ctx'] is plugin_ctx
+
+
+@pytest.mark.parametrize('native_outcome', (
+    'unbound_exception', 'kernel_exception_before_stage',
+    'kernel_exception_after_stage', 'blocked_after_stage', 'real_kernel_stage_exception'))
+def test_uncertain_native_outcome_keeps_control_reservation(
+        control_module, control_context, tmp_path, monkeypatch, native_outcome):
+    from contextlib import nullcontext
+    from types import SimpleNamespace
+    from downstream.implementation_router.kernel import RunResult
+    from downstream.implementation_router.security import CredentialFreeAdmission
+    from plugins.implementation_router import entrypoint
+    from plugins.implementation_router.control import EngineeringRunOwner
+
+    journal, ctx, operation_id = _approved(control_module, control_context, tmp_path)
+    routes = {f'engineering_{role}': {'provider': 'custom:fixture', 'model': role}
+              for role in ('planner', 'worker', 'reviewer')}
+    monkeypatch.setattr('hermes_cli.config.load_config_readonly',
+                        lambda: {'auxiliary': routes})
+    monkeypatch.setattr('plugins.plugin_storage.plugin_data_dir',
+                        lambda name: tmp_path / 'plugin-data')
+    native_calls = []
+
+    class FakeNativeHost:
+        def __init__(self, **kwargs):
+            self.run_dir = tmp_path / 'not-created'
+            self.result_dir = None
+            self.failure_diagnostic = None
+
+        def close(self):
+            pass
+
+        def lease(self, _binding):
+            return nullcontext()
+
+        def admit(self, binding, routes):
+            return CredentialFreeAdmission(binding.run_id, binding.workspace_id,
+                                           routes.fingerprint())
+
+        def cancellation_requested(self, _binding):
+            return False
+
+        def checkpoint(self, _binding, _event):
+            pass
+
+        def stage(self, _request):
+            native_calls.append(self)
+            raise OSError('accepted native stage lost its response')
+
+    class FailingRouter:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def run(self, **kwargs):
+            native_calls.append(kwargs['host'])
+            if native_outcome == 'unbound_exception':
+                # The native boundary may already have changed the scratch workspace.
+                raise OSError('post-effect transport failure')
+            reason = ('host_boundary_error_no_replay' if native_outcome.startswith('kernel_exception_')
+                      else 'planner_reentry_budget_exhausted')
+            calls = 0 if native_outcome == 'kernel_exception_before_stage' else 1
+            return RunResult('BLOCKED', reason, calls, 1, ())
+
+    monkeypatch.setattr('plugins.implementation_router.host.NativeEngineeringHost', FakeNativeHost)
+    if native_outcome != 'real_kernel_stage_exception':
+        monkeypatch.setattr(entrypoint, 'ImplementationRouter', FailingRouter)
+    policy = {'path': str(tmp_path), 'image': 'sha256:' + 'a' * 64,
+              'source_paths': ['source.py'], 'protected_paths': ['source.py'],
+              'checks': [{'id': 'unit', 'argv': ['/usr/bin/true']}]}
+    plugin_ctx = SimpleNamespace(get_config=lambda key, default=None:
+        True if key == 'enabled' else {'w1': policy} if key == 'workspaces' else default)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        owner = EngineeringRunOwner(journal=journal, plugin_ctx=plugin_ctx,
+            submit=pool.submit, validate_intent=lambda request: True,
+            verify_result=lambda *args: False, revalidate_grant=lambda _ctx, *, now: None,
+            clock=lambda: 103)
+        handle = owner.start_approved(ctx, operation_id)
+        assert handle.future.result(timeout=5)['state'] == 'UNKNOWN'
+    assert len(native_calls) == 1
+    assert journal.get(ctx, operation_id, profile_id='p1', workspace_id='w1',
+                       now=104)['state'] == 'UNKNOWN'
+    with pytest.raises(control_module('contracts').ControlError) as busy:
+        journal.reserve(ctx, {'kind': 'start_engineering_run', 'profile_id': 'p1',
+            'workspace_id': 'w1', 'idempotency_key': 'after-uncertain',
+            'expected_revision': 'revision-1', 'source_sha': 'a' * 40,
+            'parameters': {'task': 'Do not replay uncertain effect'}}, now=104)
+    assert busy.value.code == 'workspace_busy'
 
 
 def test_revoked_grant_before_native_worker_has_no_effect(
