@@ -5,6 +5,9 @@ Covers:
 - ``_check_lint()`` robustness against file paths containing curly braces
 """
 
+import base64
+import re
+
 import pytest
 from unittest.mock import MagicMock, patch
 
@@ -205,6 +208,11 @@ class TestPaginationBounds:
 
         def fake_exec(command, *args, **kwargs):
             commands.append(command)
+            if "head -c " in command and "| base64" in command:
+                marker = re.search(r"echo (__HERMES_EXACT_[a-f0-9]+__)", command).group(1)
+                encoded = base64.b64encode(b"line1\nline2\n").decode()
+                return MagicMock(exit_code=0,
+                                 stdout=f"{marker}\n{encoded}\n{marker}\n12\n{marker}\n0\n")
             if command.startswith("if [ -f ") or command.startswith("wc -c"):
                 return MagicMock(exit_code=0, stdout="12")
             if command.startswith("head -c"):

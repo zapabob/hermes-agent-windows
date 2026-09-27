@@ -16,6 +16,7 @@ from tools.file_operations import (
     SearchMatch,
     LintResult,
     ExecuteResult,
+    _SampleIntegrityError,
     ShellFileOperations,
     MAX_LINE_LENGTH,
     normalize_read_pagination,
@@ -308,9 +309,12 @@ class TestShellFileOpsHelpers:
             # cannot block the read; it still reports a plain byte count.
             if command.startswith("if [ -f ") or command.startswith("wc -c"):
                 return {"output": "5\n", "returncode": 0}
-            if command.startswith("head -c") and "| base64" in command:
+            if "head -c " in command and "| base64" in command:
                 import base64 as b64
-                return {"output": b64.b64encode(b"hello").decode(), "returncode": 0}
+                marker = re.search(r"echo (__HERMES_EXACT_[a-f0-9]+__)", command).group(1)
+                encoded = b64.b64encode(b"hello").decode()
+                return {"output": f"{marker}\n{encoded}\n{marker}\n5\n{marker}\n0\n",
+                        "returncode": 0}
             if command.startswith("head -c"):
                 return {"output": "hello", "returncode": 0}
             if command.startswith("sed -n"):
@@ -332,7 +336,8 @@ class TestShellFileOpsHelpers:
             "then echo __hermes_not_regular__; "
             "else echo __hermes_missing__; fi"
         )
-        assert commands[1] == "head -c 1000 '/c/Users/alice/notes.txt' 2>/dev/null | base64"
+        assert "head -c 1000 '/c/Users/alice/notes.txt' 2>/dev/null | base64" in commands[1]
+        assert "wc -c < '/c/Users/alice/notes.txt'" in commands[1]
         assert commands[2] == "sed -n '1,2000p' '/c/Users/alice/notes.txt' | cut -b1-8001"
         assert commands[3] == "wc -l < '/c/Users/alice/notes.txt'"
 
@@ -359,6 +364,12 @@ class TestShellFileOpsHelpers:
         def side_effect(command, **kwargs):
             if command.startswith("if [ -f ") or command.startswith("wc -c"):
                 return {"output": "12\n", "returncode": 0}
+            if "head -c " in command and "| base64" in command:
+                import base64 as b64
+                marker = re.search(r"echo (__HERMES_EXACT_[a-f0-9]+__)", command).group(1)
+                encoded = b64.b64encode(b"print('ok')\n").decode()
+                return {"output": f"{marker}\n{encoded}\n{marker}\n12\n{marker}\n0\n",
+                        "returncode": 0}
             if command.startswith("head -c"):
                 return {"output": "print('ok')\n", "returncode": 0}
             if command.startswith("sed -n"):
@@ -387,9 +398,15 @@ class TestShellFileOpsHelpers:
         def side_effect(command, **kwargs):
             if command.startswith("if [ -f ") or command.startswith("wc -c"):
                 return {"output": "6\n", "returncode": 0}
+            if "head -c " in command and "| base64" in command:
+                import base64 as b64
+                marker = re.search(r"echo (__HERMES_EXACT_[a-f0-9]+__)", command).group(1)
+                encoded = b64.b64encode(b"alpha\n").decode()
+                return {"output": f"{marker}\n{encoded}\n{marker}\n6\n{marker}\n0\n",
+                        "returncode": 0}
             if command.startswith("head -c"):
                 return {"output": "alpha\n", "returncode": 0}
-            if command.startswith("cat "):
+            if "base64 <" in command:
                 return {"output": leaked, "returncode": 0}
             return {"output": "", "returncode": 0}
 
@@ -748,25 +765,39 @@ class TestByteLayerBinaryDetection:
 
     # --- transport: _sample_file_bytes ------------------------------------
 
+    @staticmethod
+    def _framed_sample(command, encoded, file_size, read_rc=0):
+        marker = re.search(r"echo (__HERMES_EXACT_[a-f0-9]+__)", command).group(1)
+        return {"output": f"{marker}\n{encoded}\n{marker}\n{file_size}\n{marker}\n{read_rc}\n",
+                "returncode": 0}
+
     def test_sample_decodes_base64_transport(self, mock_env):
         import base64 as b64
         payload = ("汉字" * 400).encode("utf-8")[:1000]
-        mock_env.execute.return_value = {
-            "output": b64.b64encode(payload).decode() + "\n",
-            "returncode": 0,
-        }
+        mock_env.execute.side_effect = lambda command, **_: self._framed_sample(
+            command, b64.b64encode(payload).decode(), len(payload))
         ops = ShellFileOperations(mock_env)
         assert ops._sample_file_bytes("/tmp/x.txt") == payload
 
-    def test_sample_falls_back_on_non_base64_output(self, mock_env):
-        mock_env.execute.return_value = {"output": "not base64 at all!!", "returncode": 0}
+    def test_sample_refuses_non_base64_output(self, mock_env):
+        mock_env.execute.side_effect = lambda command, **_: self._framed_sample(
+            command, "not base64 at all!!", 10)
+        ops = ShellFileOperations(mock_env)
+        with pytest.raises(_SampleIntegrityError):
+            ops._sample_file_bytes("/tmp/x.txt")
+
+    def test_sample_falls_back_when_base64_is_unavailable(self, mock_env):
+        mock_env.execute.side_effect = lambda command, **_: self._framed_sample(
+            command, "YW5jaG9yCg==", 7, read_rc=127)
         ops = ShellFileOperations(mock_env)
         assert ops._sample_file_bytes("/tmp/x.txt") is None
 
-    def test_sample_falls_back_on_nonzero_exit(self, mock_env):
-        mock_env.execute.return_value = {"output": "", "returncode": 127}
+    def test_sample_refuses_non_capability_failure(self, mock_env):
+        mock_env.execute.side_effect = lambda command, **_: self._framed_sample(
+            command, "YW5jaG9yCg==", 7, read_rc=1)
         ops = ShellFileOperations(mock_env)
-        assert ops._sample_file_bytes("/tmp/x.txt") is None
+        with pytest.raises(_SampleIntegrityError):
+            ops._sample_file_bytes("/tmp/x.txt")
 
     # --- integration: read_file over the mocked terminal ------------------
 
@@ -776,8 +807,9 @@ class TestByteLayerBinaryDetection:
         def side_effect(command, **kwargs):
             if command.startswith("if [ -f ") or command.startswith("wc -c"):
                 return {"output": f"{len(cjk_bytes)}\n", "returncode": 0}
-            if command.startswith("head -c") and "| base64" in command:
-                return {"output": b64.b64encode(cjk_bytes[:1000]).decode(), "returncode": 0}
+            if "head -c " in command and "| base64" in command:
+                return self._framed_sample(
+                    command, b64.b64encode(cjk_bytes[:1000]).decode(), len(cjk_bytes))
             if command.startswith("sed -n"):
                 return {"output": cjk_bytes.decode("utf-8", errors="replace"), "returncode": 0}
             if command.startswith("wc -l"):

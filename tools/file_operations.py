@@ -438,6 +438,10 @@ class ExecuteResult:
     exit_code: int = 0
 
 
+class _SampleIntegrityError(RuntimeError):
+    """The binary-admission sample could not be verified as file bytes."""
+
+
 _SEARCH_TIMEOUT_MARKER_RE = re.compile(r"\n?\[Command timed out after \d+s\]\s*$")
 
 
@@ -1080,25 +1084,35 @@ class ShellFileOperations(FileOperations):
         survive the transport, so binary detection can happen at the byte
         layer where it is well-defined (#80308 and friends).
 
-        Returns the sample bytes, or ``None`` when the transport could not
-        produce clean base64 (exotic shells without ``base64``); callers fall
-        back to the legacy text-sample heuristic in that case.
+        Returns only a framed sample whose decoded length matches the file's
+        bounded byte count. ``None`` means base64 is unavailable and the caller
+        may use its legacy text-sample fallback. Other unverifiable replies
+        raise so callers cannot admit binary content through that fallback.
         """
-        result = self._exec(
-            f"head -c {length} {self._escape_shell_arg(path)} 2>/dev/null | base64"
+        payload, byte_count, read_rc, _ = self._fenced_exact_segment(
+            f"head -c {length} {self._escape_shell_arg(path)} 2>/dev/null | base64",
+            path,
         )
-        if result.exit_code != 0:
+        if payload is None or read_rc is None or byte_count is None:
+            raise _SampleIntegrityError(path)
+        if read_rc == 127:
             return None
-        encoded = _strip_terminal_fence_leaks(result.stdout)
-        encoded = "".join(encoded.split())
+        if read_rc != 0:
+            raise _SampleIntegrityError(path)
+        encoded = "".join(payload.split())
         if not encoded:
-            return b""
+            if min(length, byte_count) == 0:
+                return b""
+            raise _SampleIntegrityError(path)
         if not re.fullmatch(r"[A-Za-z0-9+/]+={0,2}", encoded):
-            return None
+            raise _SampleIntegrityError(path)
         try:
-            return base64.b64decode(encoded, validate=True)
+            sample = base64.b64decode(encoded, validate=True)
         except (binascii.Error, ValueError):
-            return None
+            raise _SampleIntegrityError(path) from None
+        if len(sample) != min(length, byte_count):
+            raise _SampleIntegrityError(path)
+        return sample
 
     def _fenced_exact_segment(self, command: str, path: str):
         """Return command output and the file's own byte count, excluding transport noise."""
@@ -1684,7 +1698,11 @@ class ShellFileOperations(FileOperations):
         
         # Read a sample to check for binary content — at the byte layer when
         # the transport allows, falling back to the legacy text heuristic.
-        sample_bytes = self._sample_file_bytes(path)
+        try:
+            sample_bytes = self._sample_file_bytes(path)
+        except _SampleIntegrityError:
+            return ReadResult(file_size=file_size,
+                              error=f"Failed to verify binary sample for: {path}")
         if sample_bytes is not None:
             ext_binary = os.path.splitext(path)[1].lower() in BINARY_EXTENSIONS
             is_binary = ext_binary or self._is_likely_binary_bytes(sample_bytes)
@@ -1936,7 +1954,11 @@ class ShellFileOperations(FileOperations):
             return ReadResult(error=f"Could not determine file size: {path}")
         if self._is_image(path):
             return ReadResult(is_image=True, is_binary=True, file_size=file_size)
-        sample_bytes = self._sample_file_bytes(path)
+        try:
+            sample_bytes = self._sample_file_bytes(path)
+        except _SampleIntegrityError:
+            return ReadResult(file_size=file_size,
+                              error=f"Failed to verify binary sample for: {path}")
         if sample_bytes is not None:
             ext_binary = os.path.splitext(path)[1].lower() in BINARY_EXTENSIONS
             is_binary = ext_binary or self._is_likely_binary_bytes(sample_bytes)

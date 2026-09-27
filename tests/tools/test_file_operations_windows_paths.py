@@ -1,8 +1,18 @@
 """Regression tests for Windows paths passed through Git Bash file ops."""
 
+import base64
+import re
+
 import pytest
 
 from tools.file_operations import ShellFileOperations
+
+
+def _framed_notes_sample(command):
+    marker = re.search(r"echo (__HERMES_EXACT_[a-f0-9]+__)", command).group(1)
+    encoded = base64.b64encode(b"hello\nworld\n").decode()
+    return {"output": f"{marker}\n{encoded}\n{marker}\n12\n{marker}\n0\n",
+            "returncode": 0}
 
 
 class _FakeGitBashEnv:
@@ -18,6 +28,8 @@ class _FakeGitBashEnv:
             return {"output": "", "returncode": 1}
         if "/c/Users/alice/project/notes.txt" not in command:
             return {"output": "", "returncode": 1}
+        if "head -c " in command and "| base64" in command:
+            return _framed_notes_sample(command)
         if "wc -c" in command:
             return {"output": "12\n", "returncode": 0}
         if command.startswith("head -c"):
@@ -59,6 +71,8 @@ class _FakeGitBashEnvWithLegacyStyle:
             return {"output": "", "returncode": 1}
         if "/c/Users/alice/project/notes.txt" not in command:
             return {"output": "", "returncode": 1}
+        if "head -c " in command and "| base64" in command:
+            return _framed_notes_sample(command)
         if "wc -c" in command:
             return {"output": "12\n", "returncode": 0}
         if command.startswith("head -c"):
