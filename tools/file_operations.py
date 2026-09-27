@@ -1539,6 +1539,20 @@ class ShellFileOperations(FileOperations):
     _UTF16_MAX_BYTES = 10 * 1024 * 1024
     _UTF16_SAMPLE_BYTES = 512
 
+    def _python_interpreter_cmd(self) -> str:
+        """Use this host's interpreter locally; remote backends resolve their own."""
+        if self._lsp_local_only():
+            return self._escape_shell_arg(sys.executable)
+        return "python3"
+
+    def _exec_python_snippet(self, snippet: str, py: str = None) -> ExecuteResult:
+        """Transfer Python source as ASCII through the shell quoting layers."""
+        encoded = base64.b64encode(snippet.encode("utf-8")).decode("ascii")
+        interpreter = self._python_interpreter_cmd() if py is None else py
+        return self._exec(
+            f'{interpreter} -c "import base64; exec(base64.b64decode(\'{encoded}\').decode(\'utf-8\'))"'
+        )
+
     def _try_read_utf16(self, path: str, offset: int, limit: int,
                         file_size: int) -> "Optional[ReadResult]":
         """Attempt to read ``path`` as UTF-16 text, transcoded to UTF-8.
@@ -1599,9 +1613,9 @@ class ShellFileOperations(FileOperations):
             "    print('HERMES_UTF16:NO'); sys.exit(0)\n"
         )
 
-        result = self._exec(f"python3 -c {self._escape_shell_arg(snippet, translate_path=False)}")
+        result = self._exec_python_snippet(snippet)
         if result.exit_code != 0 and "python3" in (result.stdout or ""):
-            result = self._exec(f"python -c {self._escape_shell_arg(snippet, translate_path=False)}")
+            result = self._exec_python_snippet(snippet, py="python")
 
         stdout = _strip_terminal_fence_leaks(result.stdout or "")
         marker = stdout.find("HERMES_UTF16:OK")
@@ -2075,12 +2089,12 @@ class ShellFileOperations(FileOperations):
             "    print(str(exc), file=sys.stderr); sys.exit(1)\n"
         )
 
-        result = self._exec(f"python3 -c {self._escape_shell_arg(snippet, translate_path=False)}")
+        result = self._exec_python_snippet(snippet)
 
-        # Fall back to ``python`` (Windows / older systems where there's no
+        # Fall back to ``python`` (remote backends / older systems where there's no
         # ``python3`` symlink but a ``python`` binary is on PATH).
         if result.exit_code != 0 and "python3" in (result.stdout or ""):
-            result = self._exec(f"python -c {self._escape_shell_arg(snippet, translate_path=False)}")
+            result = self._exec_python_snippet(snippet, py="python")
 
         if result.exit_code != 0:
             return WriteResult(error=f"Failed to delete {path}: {(result.stdout or '').strip() or 'unknown error'}")
