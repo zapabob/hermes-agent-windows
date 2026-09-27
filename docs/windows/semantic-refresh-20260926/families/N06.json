@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "status": "PARTIAL_READ_ONLY_AND_FAIL_CLOSED_PROVED_WAL_SIDECARS_OPEN",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N06",
+  "priority": "P1",
+  "upstream_commits": [],
+  "upstream_merge_parents": [],
+  "salvage_fixup_revert_lineage": [],
+  "final_upstream_sha": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+  "final_observable_contract": "Security status and observation commands must not initialize a profile, start scanners or updates, or present missing or corrupted state as a healthy zero result. Explicit scan and other authorized actions keep their existing write path. SQLite WAL sidecar purity is still unproved.",
+  "downstream_predecessor": {
+    "commit": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "source": [
+      "D0 downstream/security/cli.py blob 018cff84ff1945483ff69f629840408441ed667d",
+      "D0 downstream/security/service.py blob 6d61026b090c6153d4e0b84e3e636db68d60cc70",
+      "D0 downstream/security/store.py blob 645ba90324a0067493b13ac3fd07205fc1aa7442",
+      "U1 has no downstream/security or Desktop SecurityView paths; U1 config.py and web_server.py exist independently"
+    ]
+  },
+  "downstream_owner": "SecurityStore and shared quarantine decoder own bounded read integrity; SecurityService owns aggregate KNOWN/UNKNOWN state; CLI and FastAPI own observation routing and error classification; Desktop SecurityView owns presentation",
+  "downstream_call_path": [
+    "hermes security status -> downstream.security.cli.command:355 -> SecurityService(read_only=True):386 -> load_config_observational:3676 -> SecurityService.status:424 -> SecurityStore.status_summary/status_rows:350",
+    "FastAPI security_status:14787 and security_quarantine_list:14845 -> _call_security_for_profile(read_only=True) -> SecurityService/SecurityStore",
+    "SecurityStore.status_rows and QuarantineVault.inspect:224 -> decode_quarantine_findings:20 -> typed sqlite3.DatabaseError on damaged evidence -> UNKNOWN or HTTP 503",
+    "Desktop getSecurityStatus -> SecurityView:97 -> UNKNOWN labels and generic error banner"
+  ],
+  "already_local_predecessor": "The integration parent 000228f70c8760f33ed5401dc4f81519286c9fa8 retains earlier LM01-LM05, T15/T16, N04, N05 and N07 work; N06 does not reclassify those receipts as undone. D0 and local feature source were compared before integration; the N05 service/store changes make those parent blobs differ from the older feature head.",
+  "acceptance": {
+    "N06-A1": "PASS_LOCAL: uninitialized-home CLI/API status and observation reads do not create HERMES_HOME or kick the updater; missing state is UNKNOWN in Desktop; corrupt SQLite/evidence is typed and fail-closed",
+    "N06-A2": "PARTIAL: repeated existing-home reads preserve app-level files and DB bytes, and explicit scan still writes; Windows SQLite -wal/-shm sidecar purity is strict xfail"
+  },
+  "red_or_equivalence_receipts": [
+    "Initial actual-caller tests showed uninitialized CLI/API status creating HERMES_HOME and existing status creating app-level state before the observational loader and routing fix.",
+    "Five CLI/API corrupt-SQLite observation cases escaped as sqlite3.DatabaseError before typed classification.",
+    "Two quarantine detail cases exposed malformed findings JSON; four aggregate status/list cases falsely reported KNOWN or a normal list before returned-row validation.",
+    "Twelve non-UTF-8 and valid-JSON SQLite BLOB cases escaped or reported success; twelve scalar/malformed-element JSON cases reported success before the shared evidence decoder enforced canonical shape."
+  ],
+  "implementation_commits": ["cab98865a777e023a8b6862606796f955c9ae1c8"],
+  "changed_paths": [
+    "apps/desktop/src/api/security.ts",
+    "apps/desktop/src/app/security/index.test.tsx",
+    "apps/desktop/src/app/security/index.tsx",
+    "apps/desktop/src/i18n/en.ts",
+    "apps/desktop/src/i18n/ja.ts",
+    "apps/desktop/src/i18n/types.ts",
+    "downstream/security/cli.py",
+    "downstream/security/service.py",
+    "downstream/security/store.py",
+    "downstream/security/vault.py",
+    "hermes_cli/config.py",
+    "hermes_cli/web_server.py",
+    "tests/security/test_security_api.py",
+    "tests/security/test_security_center.py"
+  ],
+  "focused_and_native_receipts": [
+    "At final product bytes, Windows Python 3.12 affected status/observation selection across security center/API/T15/T16/auto-update: 58 passed, 179 deselected, 1 strict xfailed WAL-sidecar test.",
+    "Config/read-guard/managed-scope suites: 121 passed. Desktop SecurityView UI tests: 5 passed. Targeted ESLint and git diff --check passed.",
+    "A synthetic canonical quarantine row remained readable through status, list and detail after the decoder change. Explicit scan still used a writable service and the existing update kick.",
+    "A wider center/API run before the final evidence decoder had 4 existing Windows DPAPI access-denied failures, 58 passed, 1 skipped and 1 strict xfailed; it was not promoted to a final green claim."
+  ],
+  "mutation_receipts": [
+    "Replacing the observational config loader with mutating load_config killed the uninitialized-home API invariance test; the mutant was restored.",
+    "Making all CLI services read-only killed the explicit-scan writable-path test; the mutant was restored."
+  ],
+  "codegraph_after": {
+    "version": "1.6.0",
+    "commit": "cab98865a777e023a8b6862606796f955c9ae1c8",
+    "tree": "46ca81552919dec511eefa62e3ba310eae6234ea",
+    "external_receipt": "N06-20260927/receipt.json",
+    "receipt_sha256": "cfaf2ccb4342f60e60e96866252fa4de17b92d0cd39665b965b4fe752ff9b59d",
+    "indexed_files": 8950,
+    "freshness": "UP_TO_DATE before and after the product commit; zero pending changes or refs; all 14 product/test paths match actual, committed and indexed bytes",
+    "source_bindings": "Separate D0 and U1 indexes report 8,881 and 12,468 files, version 1.6.0, zero pending changes/refs and no worktree mismatch",
+    "graph_limit": "Query, explore and impact establish indexed symbols and direct callers, not full U1 semantic coverage or a substitute for actual caller tests"
+  },
+  "independent_review": "A read-only Code Reviewer first found missing corrupt-store error classification, then aggregate malformed-JSON false success and BLOB bypasses. Each was reproduced and fixed. Its final static review approved the current N06 diff with no new blocker; it did not run tests or CodeGraph.",
+  "native_and_campaign_gaps": [
+    "N06-A2 SQLite read-only WAL/shm sidecar purity remains strict xfail. Immutable=1 was not used against a potentially live writer.",
+    "This PC's DPAPI CryptProtectData returns access denied in existing quarantine tests; encrypted native quarantine remains unqualified without separately approved OS setup.",
+    "Desktop TypeScript typecheck is not green under the reused node_modules junction because duplicate React types were reported; focused UI tests and ESLint are separate evidence.",
+    "The 17,065-commit metadata inventory remains unmapped to complete U1 semantic family coverage.",
+    "Control MCP production write remains DISABLED; no production restart, public PR or push was performed."
+  ],
+  "revisit_trigger": "Resolve SQLite WAL sidecar no-write semantics with concurrent-writer correctness and a passing native whole-home snapshot contract, then repeat affected suites and independent review; keep unrelated DPAPI and full-ledger gates separate."
+}
