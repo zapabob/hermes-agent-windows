@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "status": "PARTIAL_N49_SOURCE_BACKEND_UNIT_GREEN",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N49",
+  "priority": "P1",
+  "repository": "zapabob/hermes-agent-windows",
+  "upstream_source": [
+    {
+      "commit": "268e1055e8067f25ddc66fe318874e32e7419995",
+      "ledger_row": "docs/windows/semantic-refresh-20260926/inventory/v0215_to_u1.jsonl:349",
+      "mapping": "PARTIAL: the existing fork Desktop source-backend caller now refuses PATH Python for a source root with no own venv, while explicit external Python and checkout venv choices remain coherent. The U1 checkout-source update probe and StateDbPreflight typed caller contracts are not mapped by this older fork call path."
+    }
+  ],
+  "frozen": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "local_feature_observed": "2622ea42ce3ad044bac4c4e8b9812ba21f7ae65a",
+    "R2": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
+    "U1": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+    "old_U0_unchanged": "b936546561888a54d5bf9cd7eae9629a824eb4f7"
+  },
+  "source_blobs": {
+    "D0_apps/desktop/electron/main.ts": "ba2752ed74d52cf43c8738843d5c10008637f882",
+    "local_feature_apps/desktop/electron/main.ts": "ba2752ed74d52cf43c8738843d5c10008637f882",
+    "U1_apps/desktop/electron/main.ts": "2c2bb542b07aa51fc85e4eb8290e12db53d6ea7b",
+    "integration_parent_apps/desktop/electron/main.ts": "3effc4ba05ff8b32cf616dc2824159766bd788c4",
+    "initial_product_apps/desktop/electron/main.ts": "f6b54f044a507b31b45905ac89345f950a3f68c4",
+    "initial_product_apps/desktop/electron/backend-python-coherence.test.ts": "fd2fad654b5bb65fc1dde7ca38acac401451d505",
+    "product_apps/desktop/electron/main.ts": "86f451ecc808945d23f4db78f8597299daf2a6c2",
+    "product_apps/desktop/electron/source-python.ts": "82524014d3f719d906ad79a1b7564fd89c547871",
+    "product_apps/desktop/electron/backend-python-coherence.test.ts": "f0f87fc3f0e23d051d8788c770ff70926bef8949"
+  },
+  "source_span": [
+    "D0/local feature main.ts:2426-2446 used findSystemPython() after no source venv; createPythonBackend():4532-4562 and resolver:4588-4611 could accept the resulting source descriptor. The integration parent used main.ts:2418-2438, createPythonBackend():4520-4550 and resolver:4576-4599 for the same behavior.",
+    "U1 268e1055... extracts the source choice into source-python.ts:40-57 and makes findPythonForRoot return the source-specific result. Its updater/StateDb typed consumers differ from this fork's current source layout.",
+    "The initial N49 product main.ts finder:2418-2440 and createPythonBackend():4522-4552 closed the two observed branches. The corrective source-python.ts:createSourcePythonBackend():21-95 now owns the source descriptor, called by main.ts:createPythonBackend():4470-4480; main.ts:createActiveBackend():4486 onward separately owns bootstrap system Python. The resolver's actual runtime path was inspected but not executed in the unit tests."
+  ],
+  "observable_contract": "For a Desktop source checkout, only an existing explicit interpreter override or that checkout's .venv/venv Python can create a source backend. A source root lacking them returns null so the existing backend ladder can continue. An external explicit override stays the final command and never inherits an unrelated checkout venv's site-packages; a selected checkout venv retains its matching command and packages. System Python remains available to the separately owned active/bootstrap path.",
+  "red_receipts": [
+    "The initial six-case test failure against parent 1b237e3c171831d59a78ccc6595cc3d2fd1ed86b was observed in the session without an archived first-run log: a venv-less Windows source selected C:\\Python312\\python.exe from PATH. Saved red.json is a later replay that temporarily restored the exact parent main.ts blob against the then-current test; it recorded one failure and five passes and restored source bytes afterward.",
+    "Independent review found a second final-descriptor gap: with C:\\custom\\python.exe explicitly selected and a checkout venv present, createPythonBackend replaced the final command with checkout\\venv\\Scripts\\python.exe. The then-current extracted-function test was RED 1 of 8 before repair. The final external-override-replaced mutation log replays this failing state; the initial tool output was observed in the session. The later source-module test first failed to import because the helper did not yet exist; that import failure alone is not counted as a behavior RED."
+  ],
+  "initial_product_commit": "44963a7a6f7e70865f4f66888f5288ca2e6910c2",
+  "product_commit": "2851da04cb2a690eeb5836e682fb084d6f248697",
+  "product_tree": "3862c1aefd531be41c8856d0b35e1b2c857076f3",
+  "changed_product_paths": [
+    "apps/desktop/electron/main.ts",
+    "apps/desktop/electron/source-python.ts",
+    "apps/desktop/electron/backend-python-coherence.test.ts"
+  ],
+  "green_evidence": [
+    "The initial product passed 71 affected Electron Vitest cases in seven files. After repo-rule review, a small production source-python.ts function replaced the source-text execution test: the current seven affected files passed 69 cases, Electron TypeScript typecheck, changed-file ESLint with --max-warnings=0, and diff check. Tests call the production helper with stubbed filesystem and environment dependencies; they do not run the full resolveHermesBackend runtime path or launch a live backend.",
+    "The initial three source mutations failed their focused tests. After extraction, four more helper mutations failed their focused tests: restore PATH fallback, ignore explicit override, replace external override command, and mount a sibling venv. The helper SHA-256 matched before and after each controlled mutation series.",
+    "An independent read-only Code Reviewer first reported BLOCK on external override replacement, then CLEAR on the initial two-file product diff. The documentation audit separately reported BLOCK on wrong source lines, RED provenance and source-reading tests. After correction, the independent Code Reviewer reported CLEAR on the final three-file product diff and private receipts. These are conversation reports without a standalone review artifact; neither reviewer executed checks."
+  ],
+  "execution_receipts": {
+    "red": {
+      "local_name": "N49-20260928/red.json",
+      "sha256": "34303f16773ca60c45dc59798ef4f89b48efa8cb7d8eb7ab2cc29a7d705e12e6"
+    },
+    "native": {
+      "local_name": "N49-20260928/execution.json",
+      "sha256": "61b698fba8064612db86453471b2eaad3896e45225e055d043b5c2fe5e393ecb",
+      "binding": "Private receipt hashes the initial product's 71-test affected run, Electron typecheck, warning-free ESLint, diff check and then-current source/test bytes. It is not the final product check."
+    },
+    "mutation": {
+      "local_name": "N49-20260928/mutation.json",
+      "sha256": "1069b06bd446cc6250d45ba5c2124eb0575197eee7599f1e818fc0615911ecb1"
+    },
+    "correction_native": {
+      "local_name": "N49-20260928/correction-execution.json",
+      "sha256": "641e843caba898e27b391463ea0b2fd73cb7a54ee7f58d2d9aee3e581e6bec88",
+      "binding": "Final product source bytes with 69 affected Electron cases in seven files, Electron typecheck, warning-free ESLint and diff check."
+    },
+    "correction_mutation": {
+      "local_name": "N49-20260928/mutation-correction.json",
+      "sha256": "1c99ea61f473ca16c54d1c8d6c44041bb4bbd30c1f5b444acbd3d71cd5a8fc3c"
+    }
+  },
+  "codegraph_receipts": {
+    "before_product": {
+      "local_name": "N49-20260928/pre.json",
+      "sha256": "1597d1f5f869b78e39fab96480fd9564a0ce668f2380e8688a1cfdc76c2e8fb6",
+      "binding": "CodeGraph 1.6.0 before N49 product at integration HEAD 1b237e3c171831d59a78ccc6595cc3d2fd1ed86b."
+    },
+    "after_product": {
+      "local_name": "N49-20260928/receipt.json",
+      "sha256": "51450d0e21dc33d619ca85de0c2e34d631d70ab1e333e96d9fdc6d6dcdd04261",
+      "binding": "After the N48 evidence-only docs correction at HEAD ae53d245b93a174e1a883699bdb85814b9fc9c6c, CodeGraph bound D0/U1/integration separate indexes to 8,881/12,468/8,968 files with zero pending changes and refs. Query/explore/impact used findPythonForRoot; direct source read identified createPythonBackend and resolver callers."
+    },
+    "post_commit": {
+      "local_name": "N49-20260928/postcommit.json",
+      "sha256": "5ef250f232f3d99799e3f21f0e052214ecc85005458af1d5df1d05f7e94d33a7",
+      "binding": "At exact product HEAD 44963a7a6f7e70865f4f66888f5288ca2e6910c2, both disk blobs equaled committed blobs and the integration graph was fresh at capture time."
+    },
+    "after_correction": {
+      "local_name": "N49-20260928/correction-codegraph.json",
+      "sha256": "df0bed7088bfbfe1a431ad6eee5c36efc1cc9abf429365f1be752eee57a5e8c8",
+      "binding": "After the source-module correction, CodeGraph 1.6.0 bound D0/U1/integration separate indexes to 8,881/12,468/8,969 files with zero pending changes and refs. The frozen owners remained in main.ts; integration owner moved to source-python.ts. Query/explore/impact covered each owner and main.ts caller import."
+    },
+    "post_correction_commit": {
+      "local_name": "N49-20260928/postcommit-correction.json",
+      "sha256": "032a96aae60ba2dab22b3c73079defbc778ab2e6ebe7781989156f2eab211d16",
+      "binding": "At exact corrective product HEAD 2851da04cb2a690eeb5836e682fb084d6f248697, all three disk blobs equaled committed blobs and the integration graph was fresh at capture time."
+    }
+  },
+  "open_gaps": [
+    "The current fork has a different update/state-db source caller architecture from U1. N49 does not claim complete parity for U1 readSourceUpdate and StateDbPreflight paths; inspect those as separate semantic families if relevant to this fork.",
+    "The initial test read main.ts source text, conflicting with root AGENTS.md's test rule. The corrective test imports and executes the production helper directly with stubbed filesystem and environment dependencies. The resolver wrapper and packaged Electron launch, installation, update, and live Python dependency resolution are not exercised by these tests.",
+    "The full renderer/desktop TypeScript gate from N48 remains unproven; passing the Electron TypeScript project does not convert it to a release gate. Remaining historical and U1 ledger rows are not covered by this single partial family.",
+    "N07-A1 grant-revocation host writer is not implemented per the user's reply. Destination outcome durability, T06 and T12 remain unqualified, and Control MCP production write stays DISABLED.",
+    "Original main and feature WIP were untouched. Isolated worktree untracked $tmp remains after automatic approval review rejected removal without a detailed reason. No PR, push, release or production restart occurred."
+  ]
+}
