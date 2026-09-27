@@ -45,6 +45,10 @@ function toneForVerdict(verdict: null | string): string {
   return 'text-(--ui-text-secondary)'
 }
 
+function canChangeQuarantineItem(item: QuarantineItem): boolean {
+  return item.restore_state === undefined || item.restore_state === 'quarantined'
+}
+
 function formatBytes(value: number): string {
   if (value < 1024) {
     return `${value} B`
@@ -366,6 +370,12 @@ export function SecurityView({
                 </dd>
               </div>
               <div>
+                <dt className="text-(--ui-text-tertiary)">{s.pendingDisposition}</dt>
+                <dd className="mt-1 text-lg font-medium text-amber-600 dark:text-amber-300">
+                  {observationUnknown ? s.unknown : (status.summary.quarantine_pending_count ?? 0)}
+                </dd>
+              </div>
+              <div>
                 <dt className="text-(--ui-text-tertiary)">{s.lastScan}</dt>
                 <dd className="mt-1 text-(--ui-text-primary)">
                   {observationUnknown ? s.unknown : status.summary.last_scan ? formatTime(status.summary.last_scan) : s.notYet}
@@ -450,6 +460,11 @@ export function SecurityView({
                           <td className="py-2 pr-4 whitespace-nowrap">{formatTime(item.created_at)}</td>
                           <td className="max-w-xl truncate py-2 pr-4 font-mono text-[11px]" title={item.original_path}>
                             {item.original_path}
+                            {!canChangeQuarantineItem(item) && (
+                              <span className="mt-1 block text-amber-600 dark:text-amber-300">
+                                {item.restore_state === 'pending_source_disposition' ? s.pendingDisposition : s.unknown}
+                              </span>
+                            )}
                           </td>
                           <td className={cn('py-2 pr-4 font-mono text-[11px]', toneForVerdict(item.verdict))}>
                             {item.verdict}
@@ -464,7 +479,7 @@ export function SecurityView({
                           <td className="py-2">
                             <div className="flex gap-3">
                               <Button
-                                disabled={busy !== null}
+                                disabled={busy !== null || !canChangeQuarantineItem(item)}
                                 onClick={() => void restore(item)}
                                 size="inline"
                                 variant="text"
@@ -472,7 +487,7 @@ export function SecurityView({
                                 {s.restore}
                               </Button>
                               <Button
-                                disabled={busy !== null}
+                                disabled={busy !== null || !canChangeQuarantineItem(item)}
                                 onClick={() => void remove(item)}
                                 size="inline"
                                 variant="text"

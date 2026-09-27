@@ -1929,6 +1929,7 @@ export interface Translations {
     filesScanned: string
     detections: string
     quarantineCount: string
+    pendingDisposition: string
     lastScan: string
     lastSignatureUpdate: string
     notYet: string

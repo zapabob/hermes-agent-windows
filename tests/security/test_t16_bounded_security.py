@@ -33,6 +33,7 @@ from downstream.security.engines import ClamAVEngine, versions_cache_key
 from downstream.security.models import EngineState, ExecutionDecision, Finding, ScanResult, Verdict
 from downstream.security.service import SecurityService
 from downstream.security.store import SecurityStore
+from downstream.security.vault import VaultKey
 from downstream.security.watcher import reconcile_once
 
 
@@ -2625,7 +2626,7 @@ def test_native_ads_quarantine_keeps_base_stream_and_records_exact_bytes(tmp_pat
 
 
 @pytest.mark.windows_only
-def test_quarantine_disposition_failure_keeps_source_without_a_vault_record(
+def test_quarantine_disposition_failure_keeps_source_and_pending_vault_record(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
@@ -2634,6 +2635,7 @@ def test_quarantine_disposition_failure_keeps_source_without_a_vault_record(
     target = tmp_path / "inert-disposition-failure.bin"
     data = b"inert disposition failure"
     target.write_bytes(data)
+    monkeypatch.setattr(VaultKey, "load_or_create", lambda _self: b"\x07" * 32)
     service = SecurityService(
         SecurityStore(tmp_path / "security"),
         {"security": {"malware": {"auto_quarantine": True}}},
@@ -2661,8 +2663,12 @@ def test_quarantine_disposition_failure_keeps_source_without_a_vault_record(
     assert result.to_dict()["execution_decision"] == "BLOCK"
     assert target.read_bytes() == data
     with service.store.connection() as connection:
-        assert connection.execute("SELECT COUNT(*) FROM quarantine_items").fetchone()[0] == 0
-    assert list(service.vault.root.glob("*.blob")) == []
+        row = connection.execute("SELECT id,restore_state FROM quarantine_items").fetchone()
+    assert row is not None and row["restore_state"] == "pending_source_disposition"
+    item = service.vault.inspect(row["id"])
+    assert item["blob_present"] is True
+    assert service.vault._decrypt(service.vault.root / item["blob_name"],
+                                  hashlib.sha256(data).hexdigest()) == data
 
 
 def test_cached_result_is_rejected_when_engine_version_degrades_before_return(

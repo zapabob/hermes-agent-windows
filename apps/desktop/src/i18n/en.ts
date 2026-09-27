@@ -2264,6 +2264,7 @@ export const en: Translations = {
     filesScanned: 'Files scanned',
     detections: 'Detections',
     quarantineCount: 'In quarantine',
+    pendingDisposition: 'Pending source disposition',
     lastScan: 'Last scan',
     lastSignatureUpdate: 'Last signature update',
     notYet: 'Not yet recorded',

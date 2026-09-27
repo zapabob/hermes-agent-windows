@@ -1950,6 +1950,7 @@ export const ja = defineLocale({
     filesScanned: '検査済みファイル',
     detections: '検出',
     quarantineCount: '隔離中',
+    pendingDisposition: '元ファイルの処理結果を確認中',
     lastScan: '最終検査',
     lastSignatureUpdate: '最終定義更新',
     notYet: '記録なし',

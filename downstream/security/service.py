@@ -446,6 +446,7 @@ class SecurityService:
                 "engines": {},
                 "summary": {
                     "files_scanned": 0, "detections": 0, "quarantine_count": 0,
+                    "quarantine_pending_count": 0,
                     "last_scan": None, "last_signature_update": None,
                 },
                 "feeds": [],

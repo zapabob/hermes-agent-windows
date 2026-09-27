@@ -149,7 +149,7 @@ class QuarantineVault:
         destination = self.root / blob_name
         published = False
         recorded = False
-        deletion_marked = False
+        disposition_attempted = False
         try:
             with _held_quarantine_source(source, result.size) as (handle, handle_identity):
                 before = source.stat()
@@ -183,8 +183,8 @@ class QuarantineVault:
                 with self.store.connection() as con:
                     con.execute(
                         "INSERT INTO quarantine_items(id,blob_name,original_path,original_filename,sha256,size,verdict,"
-                        "findings_json,engine_versions_json,original_atime_ns,original_mtime_ns,original_ctime_ns,created_at) "
-                        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        "findings_json,engine_versions_json,original_atime_ns,original_mtime_ns,original_ctime_ns,"
+                        "restore_state,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                         (
                             item_id,
                             blob_name,
@@ -198,18 +198,29 @@ class QuarantineVault:
                             before.st_atime_ns,
                             before.st_mtime_ns,
                             before.st_ctime_ns,
+                            "pending_source_disposition",
                             utc_now(),
                         ),
                     )
                 recorded = True
+                # The API may delete the held source and then lose its acknowledgement.
+                # From this point onward the blob and pending row are recovery evidence.
+                disposition_attempted = True
                 if handle is None:
                     source.unlink()
                 else:
                     win32file = importlib.import_module("win32file")
                     win32file.SetFileInformationByHandle(handle, win32file.FileDispositionInfo, True)
-                deletion_marked = True
+            # The Windows disposition takes effect when the held handle closes.
+            with self.store.connection() as con:
+                changed = con.execute(
+                    "UPDATE quarantine_items SET restore_state='quarantined' "
+                    "WHERE id=? AND restore_state='pending_source_disposition'", (item_id,)
+                )
+                if changed.rowcount != 1:
+                    raise RuntimeError("quarantine outcome record missing")
         except Exception:
-            if not deletion_marked:
+            if not disposition_attempted:
                 if recorded:
                     with self.store.connection() as con:
                         con.execute("DELETE FROM quarantine_items WHERE id=?", (item_id,))
@@ -235,6 +246,8 @@ class QuarantineVault:
 
     def restore(self, item_id: str, scan: Callable[[Path], ScanResult], destination: Path | None = None, force: bool = False) -> Path:
         item = self.inspect(item_id)
+        if item["restore_state"] == "pending_source_disposition":
+            raise ValueError("quarantine source disposition pending")
         if item["deleted_at"]:
             raise ValueError("quarantine item was deleted")
         target = destination or Path(str(item["original_path"]))
@@ -270,6 +283,8 @@ class QuarantineVault:
 
     def delete(self, item_id: str) -> None:
         item = self.inspect(item_id)
+        if item["restore_state"] == "pending_source_disposition":
+            raise ValueError("quarantine source disposition pending")
         blob = self.root / str(item["blob_name"])
         blob.unlink(missing_ok=True)
         with self.store.connection() as con:

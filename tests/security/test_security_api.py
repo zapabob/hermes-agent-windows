@@ -326,3 +326,17 @@ def test_security_quarantine_delete_uses_requested_profile(
 
     assert observed == [(requested_home, "item-7")]
     assert result == {"ok": True, "id": "item-7", "deleted": True}
+
+
+def test_pending_quarantine_delete_returns_conflict(monkeypatch: pytest.MonkeyPatch) -> None:
+    class PendingVault:
+        def delete(self, _item_id: str) -> None:
+            raise ValueError("quarantine source disposition pending")
+
+    monkeypatch.setattr(web_server, "_call_security_for_profile",
+                        lambda _profile, callback: callback(SimpleNamespace(vault=PendingVault())))
+
+    with pytest.raises(web_server.HTTPException) as caught:
+        asyncio.run(web_server.security_quarantine_delete("item-pending", confirmed=True))
+
+    assert caught.value.status_code == 409

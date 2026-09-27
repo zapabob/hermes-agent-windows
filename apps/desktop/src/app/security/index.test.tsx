@@ -117,4 +117,33 @@ describe('SecurityView', () => {
     expect(screen.getByText('12')).toBeTruthy()
     expect(screen.getByText('Active feed status')).toBeTruthy()
   })
+
+  it('shows an uncertain source disposition separately and prevents restore or delete', async () => {
+    getSecurityStatus.mockResolvedValue({
+      ...status,
+      quarantine: [{
+        blob_name: 'inert.blob',
+        created_at: '2026-09-27T00:00:00Z',
+        deleted_at: null,
+        engine_versions_json: '{}',
+        findings_json: '[]',
+        id: 'inert-pending',
+        original_filename: 'inert.bin',
+        original_path: 'C:\\inert.bin',
+        restore_state: 'pending_source_disposition',
+        restored_at: null,
+        sha256: 'a'.repeat(64),
+        size: 12,
+        verdict: 'MALICIOUS'
+      }],
+      summary: { ...status.summary, quarantine_count: 0, quarantine_pending_count: 1 }
+    })
+
+    render(<SecurityView />)
+
+    expect((await screen.findAllByText('Pending source disposition')).length).toBeGreaterThan(0)
+    expect(screen.getByText('1')).toBeTruthy()
+    expect((screen.getByRole('button', { name: 'Restore' }) as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: 'Delete' }) as HTMLButtonElement).disabled).toBe(true)
+  })
 })

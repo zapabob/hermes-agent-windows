@@ -43,6 +43,7 @@ export interface QuarantineItem {
   engine_versions_json: string
   original_filename: string
   original_path: string
+  restore_state?: string
   restored_at: null | string
   sha256: string
   size: number
@@ -63,6 +64,7 @@ export interface SecuritySummary {
   last_scan: null | string
   last_signature_update: null | string
   quarantine_count: number
+  quarantine_pending_count?: number
 }
 
 export interface SecurityStatus {

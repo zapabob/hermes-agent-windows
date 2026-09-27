@@ -323,6 +323,7 @@ class SecurityStore:
                 "files_scanned": 0,
                 "detections": 0,
                 "quarantine_count": 0,
+                "quarantine_pending_count": 0,
                 "last_scan": None,
                 "last_signature_update": None,
             }
@@ -334,7 +335,9 @@ class SecurityStore:
                 "SELECT COUNT(*) AS count FROM scan_results WHERE verdict IN ('MALICIOUS','SUSPICIOUS')"
             ).fetchone()
             quarantine = con.execute(
-                "SELECT COUNT(*) AS count FROM quarantine_items WHERE restored_at IS NULL AND deleted_at IS NULL"
+                "SELECT COUNT(CASE WHEN restore_state='quarantined' THEN 1 END) AS count, "
+                "COUNT(CASE WHEN restore_state='pending_source_disposition' THEN 1 END) AS pending "
+                "FROM quarantine_items WHERE restored_at IS NULL AND deleted_at IS NULL"
             ).fetchone()
             update = con.execute(
                 "SELECT MAX(updated_at) AS last_signature_update FROM feed_state WHERE status='ok'"
@@ -343,6 +346,7 @@ class SecurityStore:
             "files_scanned": int(scans["files_scanned"] or 0),
             "detections": int(detections["count"] or 0),
             "quarantine_count": int(quarantine["count"] or 0),
+            "quarantine_pending_count": int(quarantine["pending"] or 0),
             "last_scan": scans["last_scan"],
             "last_signature_update": update["last_signature_update"],
         }
