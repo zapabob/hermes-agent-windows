@@ -835,7 +835,7 @@ def test_existing_security_database_is_migrated_in_place(tmp_path: Path) -> None
         quarantine_columns = {row[1] for row in con.execute("PRAGMA table_info(quarantine_items)")}
         allowlist_columns = {row[1] for row in con.execute("PRAGMA table_info(allowlist)")}
     assert {"malware_family", "confidence", "first_seen", "last_seen"} <= hash_columns
-    assert {"original_filename", "engine_versions_json", "restore_state"} <= quarantine_columns
+    assert {"original_filename", "engine_versions_json", "restore_state", "restore_target"} <= quarantine_columns
     assert {"created_by", "expires_at"} <= allowlist_columns
 
 

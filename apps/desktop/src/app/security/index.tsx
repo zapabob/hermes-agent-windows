@@ -370,7 +370,7 @@ export function SecurityView({
                 </dd>
               </div>
               <div>
-                <dt className="text-(--ui-text-tertiary)">{s.pendingDisposition}</dt>
+                <dt className="text-(--ui-text-tertiary)">{s.pendingOutcomes}</dt>
                 <dd className="mt-1 text-lg font-medium text-amber-600 dark:text-amber-300">
                   {observationUnknown ? s.unknown : (status.summary.quarantine_pending_count ?? 0)}
                 </dd>
@@ -462,7 +462,16 @@ export function SecurityView({
                             {item.original_path}
                             {!canChangeQuarantineItem(item) && (
                               <span className="mt-1 block text-amber-600 dark:text-amber-300">
-                                {item.restore_state === 'pending_source_disposition' ? s.pendingDisposition : s.unknown}
+                                {item.restore_state === 'pending_source_disposition'
+                                  ? s.pendingDisposition
+                                  : item.restore_state === 'pending_restore_outcome'
+                                    ? s.pendingRestore
+                                    : s.unknown}
+                              </span>
+                            )}
+                            {item.restore_state === 'pending_restore_outcome' && item.restore_target && (
+                              <span className="mt-1 block font-mono text-[11px] text-(--ui-text-secondary)" title={item.restore_target}>
+                                {item.restore_target}
                               </span>
                             )}
                           </td>

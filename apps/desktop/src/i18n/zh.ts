@@ -2442,6 +2442,8 @@ export const zh: Translations = {
     detections: '检测数',
     quarantineCount: '隔离中',
     pendingDisposition: '源文件处理结果待确认',
+    pendingRestore: '恢复结果待确认',
+    pendingOutcomes: '待确认的结果',
     lastScan: '上次扫描',
     lastSignatureUpdate: '上次定义更新',
     notYet: '尚无记录',

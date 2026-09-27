@@ -1930,6 +1930,8 @@ export interface Translations {
     detections: string
     quarantineCount: string
     pendingDisposition: string
+    pendingRestore: string
+    pendingOutcomes: string
     lastScan: string
     lastSignatureUpdate: string
     notYet: string

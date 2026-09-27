@@ -78,6 +78,71 @@ def _restrict_windows_acl(path: Path, directory: bool = False) -> None:
     win32security.SetFileSecurity(str(path), flags, descriptor)
 
 
+def _windows_ads_base(target: Path) -> Path | None:
+    if sys.platform != "win32" or ":" not in target.name:
+        return None
+    parts = target.name.split(":")
+    if (
+        len(parts) not in (2, 3)
+        or not parts[0]
+        or not parts[1]
+        or (len(parts) == 3 and parts[2].upper() != "$DATA")
+    ):
+        raise ValueError("unsupported alternate data stream destination")
+    return target.with_name(parts[0])
+
+
+class _ADSRestoreRolledBack(OSError):
+    """The newly created stream was disposed after a failed write."""
+
+
+def _restore_new_windows_ads(target: Path, base: Path, plaintext: bytes) -> None:
+    pywintypes = importlib.import_module("pywintypes")
+    win32con = importlib.import_module("win32con")
+    win32file = importlib.import_module("win32file")
+    base_handle = win32file.CreateFile(
+        str(base), win32con.GENERIC_READ, win32con.FILE_SHARE_READ, None,
+        win32con.OPEN_EXISTING, win32file.FILE_FLAG_OPEN_REPARSE_POINT, None,
+    )
+    try:
+        attributes = win32file.GetFileInformationByHandle(base_handle)[0]
+        if attributes & (win32con.FILE_ATTRIBUTE_REPARSE_POINT | win32con.FILE_ATTRIBUTE_DIRECTORY):
+            raise ValueError("alternate data stream base is not a regular file")
+        try:
+            stream_handle = win32file.CreateFile(
+                str(target), win32con.GENERIC_READ | win32con.GENERIC_WRITE | win32con.DELETE,
+                0, None, win32con.CREATE_NEW, win32file.FILE_FLAG_OPEN_REPARSE_POINT, None,
+            )
+        except (OSError, pywintypes.error) as exc:
+            winerror = getattr(exc, "winerror", None)
+            if winerror is None and exc.args:
+                winerror = exc.args[0]
+            if winerror in (80, 183):
+                raise FileExistsError(str(target)) from exc
+            raise
+        try:
+            status, written = win32file.WriteFile(stream_handle, plaintext)
+            if status != 0 or written != len(plaintext):
+                raise OSError("incomplete alternate data stream restore write")
+            win32file.FlushFileBuffers(stream_handle)
+            win32file.SetFilePointer(stream_handle, 0, win32file.FILE_BEGIN)
+            status, observed = win32file.ReadFile(stream_handle, len(plaintext) + 1)
+            if status != 0 or observed != plaintext:
+                raise OSError("alternate data stream restore readback mismatch")
+        except Exception as write_exc:
+            try:
+                win32file.SetFileInformationByHandle(
+                    stream_handle, win32file.FileDispositionInfo, True,
+                )
+            except Exception as cleanup_exc:
+                raise RuntimeError("alternate data stream restore outcome unknown") from cleanup_exc
+            raise _ADSRestoreRolledBack(str(write_exc)) from write_exc
+        finally:
+            stream_handle.Close()
+    finally:
+        base_handle.Close()
+
+
 class VaultKey:
     def __init__(self, root: Path) -> None:
         self.path = root / "vault-key.dpapi"
@@ -246,13 +311,14 @@ class QuarantineVault:
 
     def restore(self, item_id: str, scan: Callable[[Path], ScanResult], destination: Path | None = None, force: bool = False) -> Path:
         item = self.inspect(item_id)
-        if item["restore_state"] == "pending_source_disposition":
-            raise ValueError("quarantine source disposition pending")
+        if item["restore_state"] in ("pending_source_disposition", "pending_restore_outcome"):
+            raise ValueError("quarantine outcome pending")
         if item["deleted_at"]:
             raise ValueError("quarantine item was deleted")
         target = destination or Path(str(item["original_path"]))
         if target.exists():
             raise FileExistsError(str(target))
+        ads_base = _windows_ads_base(target)
         plaintext = self._decrypt(self.root / str(item["blob_name"]), str(item["sha256"]))
         if hashlib.sha256(plaintext).hexdigest() != item["sha256"]:
             raise ValueError("quarantine blob hash mismatch")
@@ -266,28 +332,65 @@ class QuarantineVault:
             current = scan(temp_path)
             if current.verdict == Verdict.MALICIOUS and not force:
                 raise PermissionError("current signatures still classify this item as malicious")
-            os.replace(temp_path, target)
-            atime_ns = item.get("original_atime_ns")
-            mtime_ns = item.get("original_mtime_ns")
-            if isinstance(atime_ns, int) and isinstance(mtime_ns, int):
-                os.utime(target, ns=(atime_ns, mtime_ns))
+            if ads_base is None:
+                os.replace(temp_path, target)
+                atime_ns = item.get("original_atime_ns")
+                mtime_ns = item.get("original_mtime_ns")
+                if isinstance(atime_ns, int) and isinstance(mtime_ns, int):
+                    os.utime(target, ns=(atime_ns, mtime_ns))
+            else:
+                with self.store.connection() as con:
+                    claimed = con.execute(
+                        "UPDATE quarantine_items SET restore_state='pending_restore_outcome',restore_target=? "
+                        "WHERE id=? AND restore_state='quarantined' AND restored_at IS NULL "
+                        "AND deleted_at IS NULL", (str(target), item_id),
+                    )
+                    if claimed.rowcount != 1:
+                        raise ValueError("quarantine item is not available for restore")
+                try:
+                    _restore_new_windows_ads(target, ads_base, plaintext)
+                except (_ADSRestoreRolledBack, FileExistsError, ValueError):
+                    with self.store.connection() as con:
+                        con.execute(
+                            "UPDATE quarantine_items SET restore_state='quarantined',restore_target=NULL "
+                            "WHERE id=? AND restore_state='pending_restore_outcome'", (item_id,),
+                        )
+                    raise
         finally:
             temp_path.unlink(missing_ok=True)
         with self.store.connection() as con:
-            con.execute(
-                "UPDATE quarantine_items SET restored_at=?,restore_state='restored' WHERE id=?",
-                (utc_now(), item_id),
-            )
+            if ads_base is None:
+                con.execute(
+                    "UPDATE quarantine_items SET restored_at=?,restore_state='restored' WHERE id=?",
+                    (utc_now(), item_id),
+                )
+            else:
+                recorded = con.execute(
+                    "UPDATE quarantine_items SET restored_at=?,restore_state='restored' "
+                    "WHERE id=? AND restore_state='pending_restore_outcome'",
+                    (utc_now(), item_id),
+                )
+                if recorded.rowcount != 1:
+                    raise RuntimeError("alternate data stream restore outcome record missing")
         self.store.event("restore", item_id, current.verdict.value, "restored", {"destination": str(target), "forced": force})
         return target
 
     def delete(self, item_id: str) -> None:
-        item = self.inspect(item_id)
-        if item["restore_state"] == "pending_source_disposition":
-            raise ValueError("quarantine source disposition pending")
-        blob = self.root / str(item["blob_name"])
-        blob.unlink(missing_ok=True)
+        if self.read_only:
+            raise RuntimeError("quarantine vault is read-only")
         with self.store.connection() as con:
+            con.execute("BEGIN IMMEDIATE")
+            item = con.execute(
+                "SELECT blob_name,verdict,sha256,restore_state,findings_json "
+                "FROM quarantine_items WHERE id=?",
+                (item_id,),
+            ).fetchone()
+            if item is None:
+                raise KeyError(item_id)
+            if item["restore_state"] in ("pending_source_disposition", "pending_restore_outcome"):
+                raise ValueError("quarantine outcome pending")
+            decode_quarantine_findings(item["findings_json"])
+            (self.root / str(item["blob_name"])).unlink(missing_ok=True)
             con.execute(
                 "UPDATE quarantine_items SET deleted_at=?,restore_state='deleted' WHERE id=?",
                 (utc_now(), item_id),

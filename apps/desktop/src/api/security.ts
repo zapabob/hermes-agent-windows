@@ -44,6 +44,7 @@ export interface QuarantineItem {
   original_filename: string
   original_path: string
   restore_state?: string
+  restore_target?: string | null
   restored_at: null | string
   sha256: string
   size: number

@@ -146,4 +146,34 @@ describe('SecurityView', () => {
     expect((screen.getByRole('button', { name: 'Restore' }) as HTMLButtonElement).disabled).toBe(true)
     expect((screen.getByRole('button', { name: 'Delete' }) as HTMLButtonElement).disabled).toBe(true)
   })
+
+  it('shows an uncertain ADS restore outcome and prevents item actions', async () => {
+    getSecurityStatus.mockResolvedValue({
+      ...status,
+      quarantine: [{
+        blob_name: 'inert.blob',
+        created_at: '2026-09-27T00:00:00Z',
+        deleted_at: null,
+        engine_versions_json: '{}',
+        findings_json: '[]',
+        id: 'inert-restore-pending',
+        original_filename: 'inert.bin:detected',
+        original_path: 'C:\\inert.bin:detected',
+        restore_target: 'C:\\intended.bin:recovered',
+        restore_state: 'pending_restore_outcome',
+        restored_at: null,
+        sha256: 'b'.repeat(64),
+        size: 12,
+        verdict: 'MALICIOUS'
+      }],
+      summary: { ...status.summary, quarantine_count: 0, quarantine_pending_count: 1 }
+    })
+
+    render(<SecurityView />)
+
+    expect((await screen.findAllByText('Pending restore outcome')).length).toBeGreaterThan(0)
+    expect(screen.getByText('C:\\intended.bin:recovered')).toBeTruthy()
+    expect((screen.getByRole('button', { name: 'Restore' }) as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: 'Delete' }) as HTMLButtonElement).disabled).toBe(true)
+  })
 })

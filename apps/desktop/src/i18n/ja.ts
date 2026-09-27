@@ -1951,6 +1951,8 @@ export const ja = defineLocale({
     detections: '検出',
     quarantineCount: '隔離中',
     pendingDisposition: '元ファイルの処理結果を確認中',
+    pendingRestore: '復元結果を確認中',
+    pendingOutcomes: '結果確認中',
     lastScan: '最終検査',
     lastSignatureUpdate: '最終定義更新',
     notYet: '記録なし',

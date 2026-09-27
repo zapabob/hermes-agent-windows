@@ -81,7 +81,7 @@ class SecurityStore:
             "CREATE TABLE IF NOT EXISTS iocs (kind TEXT NOT NULL, value TEXT NOT NULL, label TEXT NOT NULL, source TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY(kind, value));",
             "CREATE TABLE IF NOT EXISTS scan_results (id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT NOT NULL, sha256 TEXT NOT NULL, size INTEGER NOT NULL, verdict TEXT NOT NULL, score INTEGER NOT NULL, action TEXT NOT NULL, findings_json TEXT NOT NULL, versions_json TEXT NOT NULL, cache_key TEXT NOT NULL, scanned_at TEXT NOT NULL, error TEXT, cache_valid INTEGER NOT NULL DEFAULT 1, cache_generation INTEGER NOT NULL DEFAULT 0, UNIQUE(sha256, cache_key));",
             "CREATE TABLE IF NOT EXISTS scan_cache_epochs (sha256 TEXT NOT NULL, cache_key TEXT NOT NULL, epoch INTEGER NOT NULL, PRIMARY KEY(sha256, cache_key));",
-            "CREATE TABLE IF NOT EXISTS quarantine_items (id TEXT PRIMARY KEY, blob_name TEXT NOT NULL UNIQUE, original_path TEXT NOT NULL, original_filename TEXT NOT NULL, sha256 TEXT NOT NULL, size INTEGER NOT NULL, verdict TEXT NOT NULL, findings_json TEXT NOT NULL, engine_versions_json TEXT NOT NULL DEFAULT '{}', original_atime_ns INTEGER, original_mtime_ns INTEGER, original_ctime_ns INTEGER, restore_state TEXT NOT NULL DEFAULT 'quarantined', created_at TEXT NOT NULL, restored_at TEXT, deleted_at TEXT);",
+            "CREATE TABLE IF NOT EXISTS quarantine_items (id TEXT PRIMARY KEY, blob_name TEXT NOT NULL UNIQUE, original_path TEXT NOT NULL, original_filename TEXT NOT NULL, sha256 TEXT NOT NULL, size INTEGER NOT NULL, verdict TEXT NOT NULL, findings_json TEXT NOT NULL, engine_versions_json TEXT NOT NULL DEFAULT '{}', original_atime_ns INTEGER, original_mtime_ns INTEGER, original_ctime_ns INTEGER, restore_state TEXT NOT NULL DEFAULT 'quarantined', restore_target TEXT, created_at TEXT NOT NULL, restored_at TEXT, deleted_at TEXT);",
             "CREATE TABLE IF NOT EXISTS allowlist (kind TEXT NOT NULL, value TEXT NOT NULL, reason TEXT NOT NULL, created_by TEXT NOT NULL DEFAULT 'local_user', created_at TEXT NOT NULL, expires_at TEXT, PRIMARY KEY(kind, value));",
             "CREATE TABLE IF NOT EXISTS detection_events (id INTEGER PRIMARY KEY AUTOINCREMENT, event_type TEXT NOT NULL, subject TEXT NOT NULL, verdict TEXT, action TEXT NOT NULL, details_json TEXT NOT NULL, created_at TEXT NOT NULL);",
             "CREATE INDEX IF NOT EXISTS idx_scan_results_time ON scan_results(scanned_at DESC);",
@@ -109,6 +109,7 @@ class SecurityStore:
                     ("original_mtime_ns", "INTEGER"),
                     ("original_ctime_ns", "INTEGER"),
                     ("restore_state", "TEXT NOT NULL DEFAULT 'quarantined'"),
+                    ("restore_target", "TEXT"),
                 ),
                 "allowlist": (
                     ("created_by", "TEXT NOT NULL DEFAULT 'local_user'"),
@@ -336,7 +337,8 @@ class SecurityStore:
             ).fetchone()
             quarantine = con.execute(
                 "SELECT COUNT(CASE WHEN restore_state='quarantined' THEN 1 END) AS count, "
-                "COUNT(CASE WHEN restore_state='pending_source_disposition' THEN 1 END) AS pending "
+                "COUNT(CASE WHEN restore_state IN "
+                "('pending_source_disposition','pending_restore_outcome') THEN 1 END) AS pending "
                 "FROM quarantine_items WHERE restored_at IS NULL AND deleted_at IS NULL"
             ).fetchone()
             update = con.execute(
