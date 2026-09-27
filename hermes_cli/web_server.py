@@ -36,6 +36,7 @@ import re
 import secrets
 import shlex
 import shutil
+import sqlite3
 import stat
 import subprocess
 import sys
@@ -14842,12 +14843,15 @@ async def security_watch(body: SecurityWatchRequest, profile: Optional[str] = No
 
 @app.get("/api/security/quarantine")
 async def security_quarantine_list(profile: Optional[str] = None):
-    items = await asyncio.to_thread(
-        _call_security_for_profile,
-        profile,
-        lambda service: service.store.status_rows("quarantine_items", 200),
-        read_only=True,
-    )
+    try:
+        items = await asyncio.to_thread(
+            _call_security_for_profile,
+            profile,
+            lambda service: service.store.status_rows("quarantine_items", 200),
+            read_only=True,
+        )
+    except (sqlite3.Error, OSError, json.JSONDecodeError) as exc:
+        raise HTTPException(status_code=503, detail="security_store_unreadable") from exc
     return {"items": items}
 
 
@@ -14862,6 +14866,8 @@ async def security_quarantine_inspect(item_id: str, profile: Optional[str] = Non
         )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="Quarantine item not found") from exc
+    except (sqlite3.Error, OSError, json.JSONDecodeError) as exc:
+        raise HTTPException(status_code=503, detail="security_store_unreadable") from exc
 
 
 @app.post("/api/security/quarantine/{item_id}/restore")

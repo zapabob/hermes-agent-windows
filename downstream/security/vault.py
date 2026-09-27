@@ -15,7 +15,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from .bounded_walk import stable_file_time_ns
 from .models import ScanResult, Verdict
-from .store import SecurityStore, utc_now
+from .store import SecurityStore, decode_quarantine_findings, utc_now
 
 
 _MAGIC = b"HERMESQ1"
@@ -229,7 +229,7 @@ class QuarantineVault:
         if row is None:
             raise KeyError(item_id)
         item = dict(row)
-        item["findings"] = json.loads(item.pop("findings_json"))
+        item["findings"] = decode_quarantine_findings(item.pop("findings_json"))
         item["blob_present"] = (self.root / str(item["blob_name"])).is_file()
         return item
 

@@ -3673,6 +3673,11 @@ def load_config_readonly() -> Dict[str, Any]:
     return _load_config_impl(want_deepcopy=False)
 
 
+def load_config_observational() -> Dict[str, Any]:
+    """Read effective config without initializing or changing HERMES_HOME."""
+    return _load_config_impl(want_deepcopy=True, ensure_home=False)
+
+
 def write_platform_config_field(
     platform_key: str,
     field_key: str,
@@ -3845,9 +3850,10 @@ def apply_terminal_config_to_env(
     return target
 
 
-def _load_config_impl(*, want_deepcopy: bool) -> Dict[str, Any]:
+def _load_config_impl(*, want_deepcopy: bool, ensure_home: bool = True) -> Dict[str, Any]:
     with _CONFIG_LOCK:
-        ensure_hermes_home()
+        if ensure_home:
+            ensure_hermes_home()
         config_path = get_config_path()
         path_key = str(config_path)
 

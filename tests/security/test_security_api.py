@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import sqlite3
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -135,6 +136,126 @@ def test_security_gets_do_not_materialize_named_profile_state(
     assert status["summary"]["files_scanned"] == 0
     assert quarantine == {"items": []}
     assert not (requested_home / "security").exists()
+
+
+def test_security_gets_leave_uninitialized_current_home_absent(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    home = tmp_path / "uninitialized"
+    monkeypatch.setenv("HERMES_HOME", str(home))
+
+    status = asyncio.run(web_server.security_status())
+    quarantine = asyncio.run(web_server.security_quarantine_list())
+
+    assert quarantine == {"items": []}
+    assert not home.exists()
+    assert status["state"] == "UNKNOWN"
+
+
+def test_security_status_reports_unknown_for_corrupt_existing_store(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    home = tmp_path / "existing"
+    root = home / "security"
+    root.mkdir(parents=True)
+    (root / "security.db").write_bytes(b"invalid sqlite state")
+    before = sorted(str(path.relative_to(home)) for path in home.rglob("*"))
+    monkeypatch.setenv("HERMES_HOME", str(home))
+
+    status = asyncio.run(web_server.security_status())
+
+    assert status["state"] == "UNKNOWN"
+    assert status["error"] == "security_store_unreadable"
+    assert sorted(str(path.relative_to(home)) for path in home.rglob("*")) == before
+
+
+@pytest.mark.parametrize("endpoint", ["list", "inspect"])
+def test_security_quarantine_reads_fail_closed_for_corrupt_store(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    endpoint: str,
+) -> None:
+    home = tmp_path / "existing"
+    root = home / "security"
+    root.mkdir(parents=True)
+    (root / "security.db").write_bytes(b"invalid sqlite state")
+    monkeypatch.setenv("HERMES_HOME", str(home))
+
+    with pytest.raises(web_server.HTTPException) as caught:
+        if endpoint == "list":
+            asyncio.run(web_server.security_quarantine_list())
+        else:
+            asyncio.run(web_server.security_quarantine_inspect("inert-item"))
+
+    assert caught.value.status_code == 503
+    assert caught.value.detail == "security_store_unreadable"
+
+
+@pytest.mark.parametrize("endpoint", ["status", "list", "inspect"])
+@pytest.mark.parametrize("findings", ["invalid-json", sqlite3.Binary(b"\xff"), sqlite3.Binary(b"[]"), "42", "[{}]"])
+def test_security_observations_reject_invalid_findings_json(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    endpoint: str,
+    findings: str | bytes,
+) -> None:
+    from downstream.security.store import SecurityStore
+
+    home = tmp_path / "existing"
+    writer = SecurityStore(home / "security")
+    with writer.connection() as con:
+        con.execute(
+            "INSERT INTO quarantine_items "
+            "(id,blob_name,original_path,original_filename,sha256,size,verdict,findings_json,created_at) "
+            "VALUES (?,?,?,?,?,?,?,?,?)",
+            ("inert-item", "inert-blob", "inert.txt", "inert.txt", "0" * 64, 0,
+             "MALICIOUS", findings, "2026-09-27T00:00:00Z"),
+        )
+    monkeypatch.setenv("HERMES_HOME", str(home))
+
+    if endpoint == "status":
+        observed = asyncio.run(web_server.security_status())
+        assert observed["state"] == "UNKNOWN"
+        assert observed["error"] == "security_store_unreadable"
+    else:
+        with pytest.raises(web_server.HTTPException) as caught:
+            if endpoint == "list":
+                asyncio.run(web_server.security_quarantine_list())
+            else:
+                asyncio.run(web_server.security_quarantine_inspect("inert-item"))
+        assert caught.value.status_code == 503
+        assert caught.value.detail == "security_store_unreadable"
+
+
+def test_security_observations_keep_valid_quarantine_findings(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    from downstream.security.store import SecurityStore
+
+    home = tmp_path / "existing"
+    writer = SecurityStore(home / "security")
+    findings = '[{"source":"inert","name":"synthetic"}]'
+    with writer.connection() as con:
+        con.execute(
+            "INSERT INTO quarantine_items "
+            "(id,blob_name,original_path,original_filename,sha256,size,verdict,findings_json,created_at) "
+            "VALUES (?,?,?,?,?,?,?,?,?)",
+            ("inert-item", "inert-blob", "inert.txt", "inert.txt", "0" * 64, 0,
+             "MALICIOUS", findings, "2026-09-27T00:00:00Z"),
+        )
+    monkeypatch.setenv("HERMES_HOME", str(home))
+
+    status = asyncio.run(web_server.security_status())
+    items = asyncio.run(web_server.security_quarantine_list())
+    inspected = asyncio.run(web_server.security_quarantine_inspect("inert-item"))
+
+    assert status["state"] == "KNOWN"
+    assert status["quarantine"][0]["findings_json"] == findings
+    assert items["items"][0]["findings_json"] == findings
+    assert inspected["findings"] == [{"source": "inert", "name": "synthetic"}]
 
 
 def test_security_status_does_not_create_vault_for_existing_profile_state(

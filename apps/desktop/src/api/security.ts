@@ -69,9 +69,11 @@ export interface SecurityStatus {
   auto_quarantine: boolean
   enabled: boolean
   engines: Record<string, string>
+  error?: string
   feeds: SecurityFeed[]
   quarantine: QuarantineItem[]
   recent_events: SecurityEvent[]
+  state: 'KNOWN' | 'UNKNOWN'
   summary: SecuritySummary
   vault_key_protection: string
   watch: { enabled: boolean; error?: string; pid: null | number; running: boolean }

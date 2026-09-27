@@ -1939,6 +1939,7 @@ export const ja = defineLocale({
     refresh: 'セキュリティ状態を更新',
     enabled: '有効',
     needsAttention: '確認が必要',
+    unknown: '不明',
     protectionStatus: '保護状態',
     watcher: 'ユーザー空間監視',
     automaticQuarantine: '高信頼度の自動隔離',

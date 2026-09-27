@@ -2253,6 +2253,7 @@ export const en: Translations = {
     refresh: 'Refresh security status',
     enabled: 'Enabled',
     needsAttention: 'Needs attention',
+    unknown: 'Unknown',
     protectionStatus: 'Protection status',
     watcher: 'User-space monitoring',
     automaticQuarantine: 'High-confidence auto-quarantine',

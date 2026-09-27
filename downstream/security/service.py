@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import hashlib
 import importlib
+import json
 import os
 import shutil
+import sqlite3
 import stat
 import subprocess
 import sys
@@ -15,7 +17,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Iterable, Iterator
 
-from hermes_cli.config import load_config
+from hermes_cli.config import load_config, load_config_observational
 
 from .bounded_walk import (
     DirectoryWalkReport,
@@ -392,7 +394,9 @@ class SecurityService:
     ) -> None:
         self.store = store or SecurityStore(read_only=read_only)
         self.read_only = read_only or self.store.read_only
-        root_config = config if config is not None else load_config()
+        root_config = config if config is not None else (
+            load_config_observational() if self.read_only else load_config()
+        )
         self.config = dict((root_config.get("security") or {}).get("malware") or {})
         timeout = int(self.config.get("scanner_timeout", 30))
         yara_rules = self.store.root / "feeds" / "yara"
@@ -418,18 +422,37 @@ class SecurityService:
         return engine_versions(self.engines)
 
     def status(self) -> dict[str, object]:
-        versions = self.versions()
-        return {
+        base = {
             "enabled": bool(self.config.get("enabled", True)),
             "auto_quarantine": bool(self.config.get("auto_quarantine", True)),
             "vault_key_protection": "windows_dpapi" if sys.platform == "win32" else "filesystem_permissions",
-            "summary": self.store.status_summary(),
-            "engines": versions,
-            "feeds": self.store.status_rows("feed_state"),
-            "watch": self.watch_status(),
-            "recent_events": self.store.status_rows("detection_events", 25),
-            "quarantine": self.store.status_rows("quarantine_items", 25),
         }
+        try:
+            return {
+                **base,
+                "state": "KNOWN" if self.store.available else "UNKNOWN",
+                "engines": self.versions(),
+                "summary": self.store.status_summary(),
+                "feeds": self.store.status_rows("feed_state"),
+                "watch": self.watch_status(),
+                "recent_events": self.store.status_rows("detection_events", 25),
+                "quarantine": self.store.status_rows("quarantine_items", 25),
+            }
+        except (sqlite3.Error, OSError, json.JSONDecodeError):
+            return {
+                **base,
+                "state": "UNKNOWN",
+                "error": "security_store_unreadable",
+                "engines": {},
+                "summary": {
+                    "files_scanned": 0, "detections": 0, "quarantine_count": 0,
+                    "last_scan": None, "last_signature_update": None,
+                },
+                "feeds": [],
+                "watch": {"enabled": False, "pid": None, "running": False},
+                "recent_events": [],
+                "quarantine": [],
+            }
 
     def _hash_stable(self, path: Path) -> tuple[str, int, FileIdentity]:
         expected_identity = getattr(self._scan_identity, "identity", None)

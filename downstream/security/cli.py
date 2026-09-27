@@ -4,6 +4,7 @@ import json
 import logging
 import math
 import secrets
+import sqlite3
 import subprocess
 import sys
 import threading
@@ -352,12 +353,17 @@ def _kick_daily_auto_update_if_due(service: SecurityService) -> None:
 
 
 def command(args: Namespace) -> int:
-    service = SecurityService()
     subcommand = args.security_command
+    read_only = (
+        subcommand in ("status", "feeds")
+        or (subcommand == "watch" and args.watch_command == "status")
+        or (subcommand == "quarantine" and args.quarantine_command in ("list", "inspect"))
+    )
     machine = bool(getattr(args, "json", False))
-    if subcommand in ("status", "scan", "feeds"):
-        _kick_daily_auto_update_if_due(service)
     try:
+        service = SecurityService(read_only=read_only)
+        if subcommand == "scan":
+            _kick_daily_auto_update_if_due(service)
         if subcommand == "status":
             result = service.status()
         elif subcommand == "scan":
@@ -383,10 +389,18 @@ def command(args: Namespace) -> int:
                 result = {"ok": True, "id": args.item_id, "deleted": True}
         else:
             raise ValueError(f"unknown security subcommand: {subcommand}")
-    except (FileNotFoundError, KeyError, PermissionError, RuntimeError, TimeoutError, ValueError) as exc:
+    except (sqlite3.Error, OSError, json.JSONDecodeError) as exc:
+        if read_only:
+            _emit({"ok": False, "state": "UNKNOWN", "error": "security_store_unreadable"}, machine)
+        else:
+            _emit({"ok": False, "error": str(exc)}, machine)
+        return 2
+    except (KeyError, RuntimeError, TimeoutError, ValueError) as exc:
         _emit({"ok": False, "error": str(exc)}, machine)
         return 2
     _emit(result, machine)
-    if isinstance(result, dict) and result.get("ok") is False:
+    if isinstance(result, dict) and (
+        result.get("ok") is False or (subcommand == "status" and result.get("error"))
+    ):
         return 1
     return 0

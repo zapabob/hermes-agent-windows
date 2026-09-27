@@ -35,6 +35,7 @@ const status: SecurityStatus = {
   feeds: [],
   quarantine: [],
   recent_events: [],
+  state: 'KNOWN',
   summary: {
     detections: 0,
     files_scanned: 0,
@@ -57,6 +58,20 @@ afterEach(() => {
 })
 
 describe('SecurityView', () => {
+  it('shows unknown when a profile has no security state', async () => {
+    getSecurityStatus.mockResolvedValue({ ...status, state: 'UNKNOWN' })
+    render(<SecurityView />)
+    expect((await screen.findAllByText('Unknown')).length).toBeGreaterThan(0)
+    expect(screen.queryByText('0')).toBeNull()
+  })
+
+  it('shows an unreadable store as unknown with an error banner', async () => {
+    getSecurityStatus.mockResolvedValue({ ...status, state: 'UNKNOWN', error: 'security_store_unreadable' })
+    render(<SecurityView />)
+    expect((await screen.findAllByText('Unknown')).length).toBeGreaterThan(0)
+    expect(screen.getByText('Security status failed to load')).toBeTruthy()
+  })
+
   it('shows unavailable scanners as attention required instead of protected', async () => {
     render(<SecurityView />)
     expect(await screen.findByRole('heading', { level: 1, name: 'Security Center' })).toBeTruthy()

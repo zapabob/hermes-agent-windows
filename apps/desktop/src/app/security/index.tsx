@@ -215,7 +215,8 @@ export function SecurityView({
     ([name, version]) => ['clamav', 'yara'].includes(name) && toneForEngine(version) === 'good'
   )
 
-  const protectionReady = Boolean(status?.enabled && scannerReady)
+  const observationUnknown = status?.state !== 'KNOWN'
+  const protectionReady = Boolean(!observationUnknown && status?.enabled && scannerReady)
 
   if (!status && !error) {
     return <PageLoader label={s.refresh} />
@@ -235,6 +236,7 @@ export function SecurityView({
       </header>
 
       {error && <ErrorBanner className="mt-5">{error}</ErrorBanner>}
+      {status?.error && <ErrorBanner className="mt-5">{s.failedLoad}</ErrorBanner>}
 
       {status && (
         <>
@@ -246,20 +248,22 @@ export function SecurityView({
                   <dt className="text-(--ui-text-secondary)">{s.title}</dt>
                   <dd className="flex items-center gap-2">
                     <StatusDot tone={protectionReady ? 'good' : 'warn'} />
-                    {protectionReady ? s.enabled : s.needsAttention}
+                    {observationUnknown ? s.unknown : protectionReady ? s.enabled : s.needsAttention}
                   </dd>
                 </div>
                 <div className="flex items-center justify-between gap-4">
                   <dt className="text-(--ui-text-secondary)">{s.watcher}</dt>
-                  <dd>{status.watch.running ? s.enabled : s.needsAttention}</dd>
+                  <dd>{observationUnknown ? s.unknown : status.watch.running ? s.enabled : s.needsAttention}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-4">
                   <dt className="text-(--ui-text-secondary)">{s.automaticQuarantine}</dt>
-                  <dd>{status.auto_quarantine ? s.enabled : s.needsAttention}</dd>
+                  <dd>{observationUnknown ? s.unknown : status.auto_quarantine ? s.enabled : s.needsAttention}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-4">
                   <dt className="text-(--ui-text-secondary)">{s.vaultProtection}</dt>
-                  <dd className="min-w-0 break-all text-right font-mono text-[11px]">{status.vault_key_protection}</dd>
+                  <dd className="min-w-0 break-all text-right font-mono text-[11px]">
+                    {observationUnknown ? s.unknown : status.vault_key_protection}
+                  </dd>
                 </div>
               </dl>
               <Button
@@ -290,7 +294,7 @@ export function SecurityView({
               </dl>
               <h3 className="mt-5 text-xs font-semibold text-(--ui-text-primary)">{s.activeFeeds}</h3>
               {status.feeds.length === 0 ? (
-                <p className="mt-2 text-xs text-(--ui-text-tertiary)">{s.notYet}</p>
+                <p className="mt-2 text-xs text-(--ui-text-tertiary)">{observationUnknown ? s.unknown : s.notYet}</p>
               ) : (
                 <dl className="mt-2 grid gap-2 text-xs">
                   {status.feeds.map(feed => (
@@ -345,26 +349,36 @@ export function SecurityView({
             <dl className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(min(100%,9rem),1fr))] gap-x-6 gap-y-4 text-xs">
               <div>
                 <dt className="text-(--ui-text-tertiary)">{s.filesScanned}</dt>
-                <dd className="mt-1 text-lg font-medium text-(--ui-text-primary)">{status.summary.files_scanned}</dd>
+                <dd className="mt-1 text-lg font-medium text-(--ui-text-primary)">
+                  {observationUnknown ? s.unknown : status.summary.files_scanned}
+                </dd>
               </div>
               <div>
                 <dt className="text-(--ui-text-tertiary)">{s.detections}</dt>
-                <dd className="mt-1 text-lg font-medium text-(--ui-text-primary)">{status.summary.detections}</dd>
+                <dd className="mt-1 text-lg font-medium text-(--ui-text-primary)">
+                  {observationUnknown ? s.unknown : status.summary.detections}
+                </dd>
               </div>
               <div>
                 <dt className="text-(--ui-text-tertiary)">{s.quarantineCount}</dt>
-                <dd className="mt-1 text-lg font-medium text-(--ui-text-primary)">{status.summary.quarantine_count}</dd>
+                <dd className="mt-1 text-lg font-medium text-(--ui-text-primary)">
+                  {observationUnknown ? s.unknown : status.summary.quarantine_count}
+                </dd>
               </div>
               <div>
                 <dt className="text-(--ui-text-tertiary)">{s.lastScan}</dt>
                 <dd className="mt-1 text-(--ui-text-primary)">
-                  {status.summary.last_scan ? formatTime(status.summary.last_scan) : s.notYet}
+                  {observationUnknown ? s.unknown : status.summary.last_scan ? formatTime(status.summary.last_scan) : s.notYet}
                 </dd>
               </div>
               <div>
                 <dt className="text-(--ui-text-tertiary)">{s.lastSignatureUpdate}</dt>
                 <dd className="mt-1 text-(--ui-text-primary)">
-                  {status.summary.last_signature_update ? formatTime(status.summary.last_signature_update) : s.notYet}
+                  {observationUnknown
+                    ? s.unknown
+                    : status.summary.last_signature_update
+                      ? formatTime(status.summary.last_signature_update)
+                      : s.notYet}
                 </dd>
               </div>
             </dl>
@@ -373,7 +387,7 @@ export function SecurityView({
           <section className="border-b border-(--ui-stroke-secondary) py-6">
             <h2 className="text-sm font-semibold text-(--ui-text-primary)">{s.recentEvents}</h2>
             {status.recent_events.length === 0 ? (
-              <p className="mt-4 text-xs text-(--ui-text-tertiary)">{s.noEvents}</p>
+              <p className="mt-4 text-xs text-(--ui-text-tertiary)">{observationUnknown ? s.unknown : s.noEvents}</p>
             ) : (
               <div className="mt-4 overflow-x-auto">
                 <table className="w-full min-w-3xl border-collapse text-left text-xs">
@@ -414,7 +428,7 @@ export function SecurityView({
           <section className="py-6">
             <h2 className="text-sm font-semibold text-(--ui-text-primary)">{s.encryptedQuarantine}</h2>
             {status.quarantine.filter(item => !item.deleted_at && !item.restored_at).length === 0 ? (
-              <p className="mt-4 text-xs text-(--ui-text-tertiary)">{s.noQuarantine}</p>
+              <p className="mt-4 text-xs text-(--ui-text-tertiary)">{observationUnknown ? s.unknown : s.noQuarantine}</p>
             ) : (
               <div className="mt-4 overflow-x-auto">
                 <table className="w-full min-w-4xl border-collapse text-left text-xs">

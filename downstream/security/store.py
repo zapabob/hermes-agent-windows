@@ -17,6 +17,24 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def decode_quarantine_findings(value: object) -> object:
+    """Reject damaged evidence before exposing a quarantine observation."""
+    if not isinstance(value, str):
+        raise sqlite3.DatabaseError("invalid quarantine findings")
+    try:
+        findings = json.loads(value)
+    except json.JSONDecodeError as exc:
+        raise sqlite3.DatabaseError("invalid quarantine findings") from exc
+    if not isinstance(findings, list) or any(
+        not isinstance(item, dict)
+        or not isinstance(item.get("source"), str)
+        or not isinstance(item.get("name"), str)
+        for item in findings
+    ):
+        raise sqlite3.DatabaseError("invalid quarantine findings")
+    return findings
+
+
 class SecurityStore:
     def __init__(self, root: Path | None = None, *, read_only: bool = False) -> None:
         self.root = root or (get_hermes_home() / "security")
@@ -338,4 +356,8 @@ class SecurityStore:
         order = "created_at" if table != "feed_state" else "updated_at"
         with self.connection() as con:
             rows = con.execute(f"SELECT * FROM {table} ORDER BY {order} DESC LIMIT ?", (limit,)).fetchall()
-        return [dict(row) for row in rows]
+        result = [dict(row) for row in rows]
+        if table == "quarantine_items":
+            for item in result:
+                decode_quarantine_findings(item["findings_json"])
+        return result

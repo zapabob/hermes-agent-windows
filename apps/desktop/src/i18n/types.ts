@@ -1918,6 +1918,7 @@ export interface Translations {
     refresh: string
     enabled: string
     needsAttention: string
+    unknown: string
     protectionStatus: string
     watcher: string
     automaticQuarantine: string

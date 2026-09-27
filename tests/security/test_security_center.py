@@ -8,6 +8,7 @@ import shutil
 import sqlite3
 import sys
 import zipfile
+from argparse import Namespace
 from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
@@ -122,6 +123,217 @@ def test_read_only_service_does_not_create_security_state(tmp_path: Path) -> Non
 
     assert service.status()["summary"]["files_scanned"] == 0
     assert not root.exists()
+
+
+def test_cli_status_observes_uninitialized_home_without_writes_or_update(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    home = tmp_path / "uninitialized"
+    updater = Mock()
+    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setattr(security_cli, "_kick_daily_auto_update_if_due", updater)
+
+    assert security_cli.command(Namespace(security_command="status", json=True)) == 0
+    observed = json.loads(capsys.readouterr().out)
+
+    assert not home.exists()
+    updater.assert_not_called()
+    assert observed["state"] == "UNKNOWN"
+
+
+@pytest.mark.parametrize("subcommand", ["feeds", "watch", "quarantine"])
+def test_cli_observation_commands_leave_uninitialized_home_absent(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    subcommand: str,
+) -> None:
+    home = tmp_path / "uninitialized"
+    updater = Mock()
+    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setattr(security_cli, "_kick_daily_auto_update_if_due", updater)
+    args = Namespace(
+        security_command=subcommand, json=True,
+        watch_command="status", quarantine_command="list",
+    )
+
+    assert security_cli.command(args) == 0
+    assert not home.exists()
+    updater.assert_not_called()
+
+
+def test_read_only_status_repeated_before_explicit_scan(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    home = tmp_path / "existing"
+    home.mkdir()
+    (home / "config.yaml").write_text(
+        "security:\n  malware:\n    auto_quarantine: false\n", encoding="utf-8"
+    )
+    monkeypatch.setenv("HERMES_HOME", str(home))
+    writer = SecurityStore(home / "security")
+    writer.upsert_feed("hash_reputation", "2026.09.01", "ok", {})
+    before_db = hashlib.sha256(writer.path.read_bytes()).digest()
+    before_app = sorted(
+        str(path.relative_to(home)) for path in home.rglob("*")
+        if not path.name.endswith(("-wal", "-shm"))
+    )
+
+    for _ in range(2):
+        observed = SecurityService(read_only=True).status()
+        assert observed["feeds"][0]["version"] == "2026.09.01"
+        assert observed["auto_quarantine"] is False
+    assert sorted(
+        str(path.relative_to(home)) for path in home.rglob("*")
+        if not path.name.endswith(("-wal", "-shm"))
+    ) == before_app
+    assert hashlib.sha256(writer.path.read_bytes()).digest() == before_db
+    assert observed["state"] == "KNOWN"
+
+    target = tmp_path / "clean.txt"
+    target.write_text("harmless", encoding="utf-8")
+    active = SecurityService(writer, {"security": {"malware": {}}})
+    active.engines = (CleanEngine(), StaticHeuristicsEngine())
+    assert active.scan_file(target, quarantine=False, use_cache=False).verdict == Verdict.CLEAN
+
+
+def test_read_only_status_reports_unknown_on_store_access_denied(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    home = tmp_path / "existing"
+    monkeypatch.setenv("HERMES_HOME", str(home))
+    SecurityStore(home / "security")
+    monkeypatch.setattr(SecurityStore, "feed_versions", Mock(side_effect=PermissionError("private path")))
+
+    observed = SecurityService(read_only=True).status()
+
+    assert observed["state"] == "UNKNOWN"
+    assert observed["error"] == "security_store_unreadable"
+    assert "private path" not in json.dumps(observed)
+
+
+def test_cli_status_corrupt_store_returns_unknown_and_nonzero(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    home = tmp_path / "existing"
+    root = home / "security"
+    root.mkdir(parents=True)
+    (root / "security.db").write_bytes(b"invalid sqlite state")
+    monkeypatch.setenv("HERMES_HOME", str(home))
+
+    assert security_cli.command(Namespace(security_command="status", json=True)) == 1
+    observed = json.loads(capsys.readouterr().out)
+    assert observed["state"] == "UNKNOWN"
+    assert observed["error"] == "security_store_unreadable"
+
+
+@pytest.mark.parametrize(
+    "subcommand,quarantine_command",
+    [("feeds", "list"), ("quarantine", "list"), ("quarantine", "inspect")],
+)
+def test_cli_observation_corrupt_store_returns_structured_error(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    subcommand: str,
+    quarantine_command: str,
+) -> None:
+    home = tmp_path / "existing"
+    root = home / "security"
+    root.mkdir(parents=True)
+    (root / "security.db").write_bytes(b"invalid sqlite state")
+    monkeypatch.setenv("HERMES_HOME", str(home))
+    args = Namespace(
+        security_command=subcommand, quarantine_command=quarantine_command,
+        item_id="inert-item", json=True,
+    )
+
+    assert security_cli.command(args) == 2
+    observed = json.loads(capsys.readouterr().out)
+    assert observed == {"ok": False, "state": "UNKNOWN", "error": "security_store_unreadable"}
+
+
+@pytest.mark.parametrize("observation", ["status", "list", "inspect"])
+@pytest.mark.parametrize("findings", ["invalid-json", b"\xff", b"[]", "42", "[{}]"])
+def test_cli_observations_reject_invalid_findings_json(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    observation: str,
+    findings: str | bytes,
+) -> None:
+    home = tmp_path / "existing"
+    writer = SecurityStore(home / "security")
+    with writer.connection() as con:
+        con.execute(
+            "INSERT INTO quarantine_items "
+            "(id,blob_name,original_path,original_filename,sha256,size,verdict,findings_json,created_at) "
+            "VALUES (?,?,?,?,?,?,?,?,?)",
+            ("inert-item", "inert-blob", "inert.txt", "inert.txt", "0" * 64, 0,
+             "MALICIOUS", findings, "2026-09-27T00:00:00Z"),
+        )
+    monkeypatch.setenv("HERMES_HOME", str(home))
+
+    args = Namespace(
+        security_command="status" if observation == "status" else "quarantine",
+        quarantine_command=observation, item_id="inert-item", json=True,
+    )
+    assert security_cli.command(args) == (1 if observation == "status" else 2)
+    observed = json.loads(capsys.readouterr().out)
+    assert observed["state"] == "UNKNOWN"
+    assert observed["error"] == "security_store_unreadable"
+
+
+@pytest.mark.windows_only
+@pytest.mark.xfail(strict=True, reason="N06-A2: SQLite WAL read-only may create -wal/-shm sidecars")
+def test_read_only_status_does_not_create_sqlite_sidecars(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    home = tmp_path / "existing"
+    monkeypatch.setenv("HERMES_HOME", str(home))
+    writer = SecurityStore(home / "security")
+    writer.upsert_feed("hash_reputation", "2026.09.01", "ok", {})
+    before = sorted(str(path.relative_to(home)) for path in home.rglob("*"))
+
+    SecurityService(read_only=True).status()
+
+    assert sorted(str(path.relative_to(home)) for path in home.rglob("*")) == before
+
+
+def test_cli_explicit_scan_still_uses_writable_service(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    home = tmp_path / "home"
+    target = tmp_path / "clean.txt"
+    target.write_text("harmless", encoding="utf-8")
+    updater = Mock()
+    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setattr(security_cli, "_kick_daily_auto_update_if_due", updater)
+
+    class CleanService(SecurityService):
+        def __init__(self, *, read_only: bool = False) -> None:
+            super().__init__(read_only=read_only)
+            self.engines = (CleanEngine(), StaticHeuristicsEngine())
+
+    monkeypatch.setattr(security_cli, "SecurityService", CleanService)
+    args = Namespace(
+        security_command="scan", json=True, quick=False, full=False,
+        path=str(target), no_quarantine=True,
+    )
+
+    assert security_cli.command(args) == 0
+    observed = json.loads(capsys.readouterr().out)
+    assert observed[0]["verdict"] == "CLEAN"
+    assert (home / "security" / "security.db").is_file()
+    updater.assert_called_once()
 
 
 def test_read_only_store_reads_existing_state_without_writing(tmp_path: Path) -> None:
