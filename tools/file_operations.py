@@ -2006,17 +2006,18 @@ class ShellFileOperations(FileOperations):
                 error=f"File is too large ({file_size:,} bytes, limit is {max_bytes:,})",
             )
 
-        encoded = self._exec(f"base64 < {self._escape_shell_arg(path)}")
-        if encoded.exit_code != 0:
-            return ReadResult(error=f"Failed to read binary file: {encoded.stdout}")
-        compact = "".join(_strip_terminal_fence_leaks(encoded.stdout).split())
-        try:
-            base64.b64decode(compact, validate=True)
-        except (ValueError, base64.binascii.Error):
-            return ReadResult(error=f"Backend returned invalid binary data for: {path}")
+        data, failed = self._read_exact_bytes(path)
+        if data is None:
+            return ReadResult(error=f"Failed to read binary file: {failed.stdout}")
+        actual_size = len(data)
+        if max_bytes is not None and actual_size > max_bytes:
+            return ReadResult(
+                file_size=actual_size,
+                error=f"File is too large ({actual_size:,} bytes, limit is {max_bytes:,})",
+            )
         return ReadResult(
-            base64_content=compact,
-            file_size=file_size,
+            base64_content=base64.b64encode(data).decode("ascii"),
+            file_size=actual_size,
             is_binary=True,
         )
 
