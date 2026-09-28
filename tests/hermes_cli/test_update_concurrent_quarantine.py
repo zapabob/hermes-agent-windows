@@ -201,7 +201,9 @@ def test_pause_windows_gateways_for_update_stops_profile_and_unmapped_pids(
 
     profile_home = tmp_path / "profiles" / "work"
     profile_home.mkdir(parents=True)
-    profile_proc = SimpleNamespace(profile="work", path=profile_home, pid=101)
+    profile_proc = SimpleNamespace(
+        profile="work", path=profile_home, pid=101, create_time=99.0
+    )
 
     monkeypatch.setattr(gateway_mod, "find_gateway_pids", lambda **_k: [101, 202])
     monkeypatch.setattr(
@@ -240,6 +242,7 @@ def test_pause_windows_gateways_for_update_stops_profile_and_unmapped_pids(
     assert token == {
         "resume_needed": True,
         "profiles": {"work": 101},
+        "profile_old_identities": {"work": (101, 99.0)},
         "unmapped_pids": [202],
         "unmapped": [
             {
@@ -379,6 +382,7 @@ def test_pause_and_resume_windows_gateway_service(
     assert token == {
         "resume_needed": True,
         "profiles": {},
+        "profile_old_identities": {},
         "unmapped_pids": [],
         "unmapped": [],
         "services": ["HermesGateway"],
@@ -1084,6 +1088,5 @@ def test_stop_service_refuses_pid_reuse_before_sc_stop(monkeypatch):
         )
 
     assert calls == []
-
 
 
