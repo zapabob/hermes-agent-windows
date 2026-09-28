@@ -27,6 +27,7 @@ import * as path from 'node:path'
 
 import { _electron, type ElectronApplication, type Page } from '@playwright/test'
 
+import { stripInheritedDesktopOverrides } from './app-env'
 import { resolveElectronBinary } from './electron-binary'
 import { type MockServerOptions, startMockServer } from './mock-server'
 import { installErrorBannerGuard } from './test'
@@ -222,10 +223,11 @@ function writeEmptyConfig(hermesHome: string): void {
  *    (we want the dev checkout at REPO_ROOT)
  *  - HERMES_DESKTOP_HERMES_ROOT → REPO_ROOT (dev checkout resolution)
  *  - HERMES_DESKTOP_APP_NAME → unique-ish per test (avoids single-instance lock)
+ *  - every other inherited HERMES_DESKTOP_* is dropped (see app-env.ts)
  *  - XDG_RUNTIME_DIR → ensure Electron has a writable runtime dir on Linux
  */
 export function buildAppEnv(sandbox: Sandbox, extra: Record<string, string> = {}): Record<string, string> {
-  const clean = stripCredentials(process.env)
+  const clean = stripInheritedDesktopOverrides(stripCredentials(process.env))
 
   // XDG_RUNTIME_DIR is needed for Electron on Linux when running in a
   // headless/CI context — without it the zygote may fail to initialize.
