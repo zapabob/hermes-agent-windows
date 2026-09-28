@@ -55,6 +55,50 @@
       "green": "uv run --frozen --extra dev (CPython 3.11.11): the bounded eight-module N53 set passed 125/125 in 143.79s. Ruff 0.15.10 (uvx --offline) passed on all four Python paths. git diff --check passed.",
       "mutation": "Five controlled in-place mutants, each restored immediately; all killed by the three N53 modules: M1 drop the missing-watched-profile gate (test_sibling_row_cannot_hide_a_missing_armed_mapped_profile), M2 swallow a force-stop failure of a still-live incarnation, M3 skip the launcher discovery incarnation check (test_venv_launcher_identity_rejects_parent_pid_reuse), M4 skip the unmapped attempt journal, M5 narrow BaseException rollback to Exception (test_keyboard_interrupt_after_socket_pause_recovers_before_reraising). update_cmd.py returned to f32ac816f5d6147c2138b75d1050c68f96965e2839560c857937d9bafca0d18f after every restore.",
       "codegraph": "Approved CodeGraph 1.6.0 at the primary checkout's .tools/codegraph-cli (package-lock integrity sha512-nCN40MqmYxF7gH1QTKqlxJ1d2mzwhw3fzSdGV2wjnQKsymjM3JZnH/5rpGqhBkcUEom0qWq0WjDRvOZh2t8mFA==, npm-shim.js SHA-256 80419260f06862d7a422d13ef69e3b24c7a21dbef4309bce41db02ad642b1877), launched with Node v22.23.2 and CODEGRAPH_NO_DOWNLOAD=1; no install, no Node 26 override. Status: 8,923 files, 191,274 nodes, 613,121 edges, pending 0/0/0, worktreeMismatch null, state complete, pendingRefs 0, built with 1.6.0 extraction 25. Query bound _pause_windows_gateways_for_update to update_cmd.py:6219 and _venv_launcher_ancestor_identities to 5429; callers are _cmd_update_impl plus three Windows lifecycle tests; impact reported 47 affected symbols. No sync was needed because no source changed."
+    },
+    "additive_2026-09-29_phase2_pr158": {
+      "recorded_at": "2026-09-29T08:06:00+09:00",
+      "scope": "Phase 2 reconciliation of N53 onto the current public N52 head. Earlier entries stay bound to their own parents and are not rebased by this entry.",
+      "parent": {
+        "pull_request": "zapabob/hermes-agent-windows#158",
+        "branch": "codex/n52-gateway-identity-20260928",
+        "commit": "86d3149599a2be48a1a66903ba7e3e3a12c819ef",
+        "tree": "93710f7680cfec66999c5227a08c6d22377ad417",
+        "main_base": "cc686ab1d31d6ee5ca07243765c5a07e3b9af1af"
+      },
+      "composition": "The pause-recovery commit alone did not apply to the PR158 parent: it conflicted in update_cmd.py and the quarantine test, and the relaunch-budget test did not exist there, because it depends on the two earlier N53 relaunch commits. The three N53 product commits were therefore composed in order on the PR158 parent (7696e599 as 544dd1e5, b448ffc8 as be3051a4, a952e52d as b5885d4f), and all three applied without conflict. Before composition, the N52 product paths at 86d31495 and at the local N52 integration end 56f94e9c were byte-identical; only the N52 card and carry metrics differed.",
+      "product_commits": [
+        "544dd1e58bb4b7ae8e64d192ec4e46ec27d59461",
+        "be3051a48475ad8ebdf15010ea832b1fe6eb612a",
+        "b5885d4f7734d14fc53a8bf4407eb139a49e8d8c"
+      ],
+      "product_tree": "04600265ce1822db1931211ebb824e64f7e41af7",
+      "source_equivalence": "Every non-documentation path at b5885d4f equals the earlier candidate 04fac33f. The only remaining tree differences are the N52 card and carry metrics, where the PR158 versions are kept, and the N53 documentation added afterwards.",
+      "sha256": {
+        "hermes_cli/update_cmd.py": "f32ac816f5d6147c2138b75d1050c68f96965e2839560c857937d9bafca0d18f",
+        "tests/hermes_cli/test_update_concurrent_quarantine.py": "88e2af92c41b828fdc1fd454c5f05de2a7e8e6188ca9a856489ad6f76c6b7f90",
+        "tests/hermes_cli/test_windows_relaunch_verify_budget.py": "abbf9090b73d70aa64c4bfee9ae379e56821c5fb8665f0edf76e649e73681f29",
+        "tests/hermes_cli/test_update_pause_recovery.py": "ba22af34ed9bdbef5e1dbe13d58e7caef5db0c298725a0510dc00054a01e1030",
+        "gateway/status.py": "fa382acc38b82fb3f04d5ea916442830a084d37ec70f718832c23bff98c91cda",
+        "hermes_cli/gateway.py": "c6b2eca3c00a2159d2c11d9a80628fe5246ecbcc88603d220b804aa84393a11b",
+        "tests/hermes_cli/test_update_fleet_check_fail_closed.py": "2d74484319c92be890349937c769456b653feed28b2deb40451047538dd64299",
+        "tests/hermes_cli/test_update_fleet_probe_resume_token.py": "73c7c8826f1e63a84efdadf08436775cbc25ef78920550d848a543393d83d7d0"
+      },
+      "source_blobs": {
+        "gateway/status.py": "d406f6b30602b3484d7248fb407120bf4221df37",
+        "hermes_cli/gateway.py": "5e7ef36a67a701b1a4877c56b14388b620b80a74",
+        "hermes_cli/update_cmd.py": "dfaad3077227e7af97a0188aa112e77581508ef4",
+        "tests/hermes_cli/test_update_concurrent_quarantine.py": "c2f8c105292409d0729683b3674296bef9dcef95",
+        "tests/hermes_cli/test_windows_relaunch_verify_budget.py": "2cf51646e8f63adebcf4d7e9375521c3511948f9",
+        "tests/hermes_cli/test_update_pause_recovery.py": "e4796197295afd0cac69d9737704d23b2ec87463",
+        "tests/hermes_cli/test_update_fleet_check_fail_closed.py": "1a131c3622fe1a1c21fc7fcf4f79e5a7df256101",
+        "tests/hermes_cli/test_update_fleet_probe_resume_token.py": "d905e081c4de53a0d4dab418d24b7306407453a4"
+      },
+      "green": "CPython 3.11.11 through uv 0.11.29 with the frozen lock and the dev extra. The eight-module N53 set (pause recovery, concurrent quarantine, relaunch budget, fleet check fail-closed, fleet probe resume token, cold-start Desktop lifecycle, restart-watcher identity, orphan backend reap) passed 125/125. The N52 set (restart-watcher identity, handoff backend reap, orphan backend reap, venv holder live, stderr timestamp, Desktop lifecycle live) passed 62/62. Ruff 0.15.10 check passed on all eight changed Python paths, the pause-recovery test passed the Ruff format check, and git diff --check against the PR158 parent passed.",
+      "mutation": "Five fresh controlled mutants, each restored with a hash check; all were killed by the eight-module set: P1 skip the SCM service rollback, P2 omit the ordinary gateway rollback, P3 replay untouched unmapped siblings, P4 drop rollback failures from the raised detail, P5 ignore PID reuse in gateway.status._pid_identity_is_live. After the restores the eight-module set passed 125/125 again, with update_cmd.py at f32ac816... and gateway/status.py at fa382acc....",
+      "codegraph": "Approved CodeGraph 1.6.0 (same read-only package and Node v22.23.2 with CODEGRAPH_NO_DOWNLOAD=1; no install, no Node 26). The new worktree was seeded with a copy of the N53 integration index; sync reported already up to date. Status: 8,923 files, 191,274 nodes, 613,121 edges, pending 0/0/0, worktreeMismatch null, state complete, pendingRefs 0, built with 1.6.0 extraction 25. Query bound _pause_windows_gateways_for_update to update_cmd.py:6219 and _venv_launcher_ancestor_identities to 5429. Impact at depth 4 reached 47 nodes and 46 edges; callers include _cmd_update_impl, cmd_update and the Windows lifecycle tests. Explore ran. Affected listed 1,020 paths and is not counted as executed coverage.",
+      "independent_review": "No new review was run on this composition. Because the source bytes are identical to the candidate the Cursor/Claude review covered, that CLEAR_WITH_NOTES result still applies to the same bytes, but it is not a review of this parent. The GPT-6-pro final review stays PENDING and is to be run by the user against this branch.",
+      "gpt6pro_second_review_status": "PENDING_UNAVAILABLE_MODEL"
     }
   },
   "open_gaps": [
