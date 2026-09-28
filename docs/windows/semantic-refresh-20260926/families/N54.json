@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "status": "MAPPED_N54_TEST_GUARD_NATIVE_GREEN_PARTIAL_UPSTREAM_COMMIT",
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N54",
+  "priority": "P1",
+  "repository": "zapabob/hermes-agent-windows",
+  "upstream_source": [
+    {
+      "commit": "fae9e5677a3ef339ec582e967ee19cac13bf68af",
+      "ledger_row": "docs/windows/semantic-refresh-20260926/inventory/v0215_to_u1.jsonl:2308",
+      "mapping": "The test-only live-system guard must block the detached watcher's future Gateway launch while process identity ignores its future argv. N52 and N53 map separate contracts from this commit; this record does not classify the whole ledger row."
+    }
+  ],
+  "frozen": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "local_feature_observed": "2622ea42ce3ad044bac4c4e8b9812ba21f7ae65a",
+    "R2": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
+    "U1": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+    "old_U0_unchanged": "b936546561888a54d5bf9cd7eae9629a824eb4f7"
+  },
+  "source_blobs": {
+    "D0_gateway/status.py": "2c2ab1444599179ebe1223cf3121164cc8594138",
+    "local_feature_gateway/status.py": "2c2ab1444599179ebe1223cf3121164cc8594138",
+    "U1_gateway/status.py": "a8e14bd995fe0a1e691c7a516d56c8fbb54a32d6",
+    "D0_tests/conftest.py": "7bf2e77d71371abed87cbf7dfdd05e1e69e57e31",
+    "local_feature_tests/conftest.py": "7bf2e77d71371abed87cbf7dfdd05e1e69e57e31",
+    "U1_tests/_fixtures/live_system_guard.py": "7375f11cfe00dae069f3152486cc25aaf61c77f5",
+    "product_gateway/status.py": "6c7410503f0adcc068697ca1ed2457caab11fa68",
+    "product_tests/conftest.py": "715c259b1257df874320e6f674d49ed75c377bb9",
+    "product_tests/gateway/test_gateway_spawn_intent_guard.py": "69da90a4f8eef961375aa244e11efd2c64044a1e"
+  },
+  "source_span": [
+    "Upstream gateway/status.py:651 defines gateway_spawn_intent_subcommand; tests/_fixtures/live_system_guard.py:337-344 is its test admission caller. D0 and the observed local feature lack that separate fixture and helper.",
+    "The fork's actual watcher is hermes_cli/gateway.py:_spawn_gateway_restart_watcher:1307, with structured watcher_argv at line 1446. The fork's admission caller is tests/conftest.py:_check_subprocess_cmd:1504, not the upstream fixture path.",
+    "Product gateway/status.py:618-718 preserves structured argv and skips inline source before inspecting future child suffixes. Product tests/conftest.py:1504-1640 checks direct and shell spawns, including effective executable and positional Popen options, before process launch."
+  ],
+  "observable_contract": "A Python -c watcher with an old PID and future canonical Gateway run/start/restart argv is refused by the test guard before launch. The same source text without a future argv, read-only Gateway status, and direct non-spawning display/container argv remain allowed. Shell payloads and executable overrides cannot borrow the direct-argv exemptions. The N52 live-process identity matcher remains separate.",
+  "red_receipts": [
+    "N54-red.log, N54-shell-review-red.log, N54-wrapper-red.log, N54-container-red.log, N54-display-red.log, N54-source-boundary-red.log, N54-executable-override-red.log, N54-positional-executable-red.log; all sequential private logs with hashes in execution-final.json"
+  ],
+  "product_commit": "cd206ace032747a6ef507947434dd46b68842d04",
+  "product_tree": "6aa87ea0c69d74c05d7214c8d6717e2784e6c670",
+  "changed_product_paths": [
+    "gateway/status.py",
+    "tests/conftest.py",
+    "tests/gateway/test_gateway_spawn_intent_guard.py"
+  ],
+  "execution_receipts": {
+    "native": {
+      "local_name": "N54-20260928/execution-final.json",
+      "sha256": "3578c4f47799f93db4de0fb0d7c2222238b67f94e5020e1a806ccd5955efd83f",
+      "binding": "Seven selected safe Windows Python modules reported 107 passed after mutation restoration; Ruff and committed-diff check exited 0. No real Gateway launch was required."
+    },
+    "mutation": {
+      "local_name": "N54-20260928/mutation-final.json",
+      "sha256": "c7115572f3496f756be705c48ea07c47ae7cde718c149511a492fca401ebe783",
+      "binding": "Six isolated mutants failed focused safe tests, were restored, and the final affected suite passed on the committed bytes."
+    }
+  },
+  "codegraph_receipts": {
+    "final": {
+      "local_name": "N54-20260928/codegraph-final.json",
+      "sha256": "8e219718951e122fcee43120e80d099cba0ad70cf806b6e4e2ddfdb9298dbad0",
+      "binding": "Approved 1.6.0 with separate D0/U1/integration indexes of 8881/12468/8975 files. Final integration status, query, explore and impact were saved after sync; status complete with no pending changes or refs. D0 query absent and U1 query present."
+    },
+    "post_commit": {
+      "local_name": "N54-20260928/postcommit-final.json",
+      "sha256": "24e9d938cf235e1eb6225f58632c91e426ed742a8a1ce74910f06c83b6545859",
+      "binding": "All three disk Git blobs matched exact product HEAD and CodeGraph stayed complete with zero pending changes and refs."
+    }
+  },
+  "independent_review": "Kepler and Code Reviewer each reported read-only CLEAR for the bounded P0/P1 contract after concrete earlier findings were repaired. Neither ran tests, CodeGraph, the watcher, or an updater in the final review.",
+  "open_gaps": [
+    "Arbitrary shell grammar, encoded PowerShell commands, Python source-internal secondary spawns, full upstream commit mapping, full U1 parity and release gates remain unproved. The metadata ledger row remains UNREVIEWED.",
+    "The earlier N53 broad test that unexpectedly launched a test-owned Gateway and npm ci was not rerun or counted. N54 tests used inert inline source or nonexistent executables; no production Gateway was started.",
+    "Inventory semantic_review_complete and codegraph_parity_complete remain false. N07-A1 grant-revocation host writer is not implemented per the user's reply; destination outcome durability, T06 and T12 remain unqualified and Control MCP production write stays DISABLED.",
+    "Original main and feature WIP were untouched. Untracked $tmp remains after automatic approval review rejected removal without a detailed reason; unrelated graph and reviewer artifacts were not staged. No PR, push, release or production restart occurred."
+  ]
+}
