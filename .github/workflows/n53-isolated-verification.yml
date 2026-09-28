@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           ref: ${{ github.sha }}
-          fetch-depth: 8
+          fetch-depth: 32
 
       - name: Check immutable upstream parent and source blob
         shell: bash
@@ -49,7 +49,10 @@ jobs:
 
       - name: Native imports TDD regression and targeted mutation gates
         shell: bash
-        run: python .n53-verification/verify.py
+        run: |
+          set -euo pipefail
+          python .n53-verification/verification_v2.py
+          python .n53-verification/verify.py
 
       - name: Preserve verification evidence even on failure
         if: always()
@@ -76,6 +79,6 @@ jobs:
           git -C "$worktree" add -- hermes_cli/update_cmd_windows.py tests/hermes_cli/test_windows_update_pause_transaction.py
           git -C "$worktree" diff --cached --check
           test "$(git -C "$worktree" diff --cached --name-only | wc -l | tr -d ' ')" = 2
-          git -C "$worktree" -c user.name=zapabob -c user.email=130830376+zapabob@users.noreply.github.com commit -m "fix(update): retain Windows pause recovery from the first side effect" -m "Preserve the existing socket, SCM and resume owners; prepare launchers and process incarnations before pause. Retain uncertain attempts and both failures when recovery fails. Native-host unit/regression and selected live-process evidence: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID. No installed Gateway update or full-suite claim."
+          git -C "$worktree" -c user.name=zapabob -c user.email=130830376+zapabob@users.noreply.github.com commit -m "fix(update): retain Windows pause recovery from the first side effect" -m "Preserve existing socket, SCM and resume owners. Distinguish pre-stop SCM refusals from uncertain attempts; retain process incarnations and unknown liveness. Native-host contracts, selected regressions/live-process tests and targeted mutations: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID. No installed Gateway update or full-suite claim."
           git -C "$worktree" push origin "HEAD:refs/heads/$target"
           git -C "$worktree" rev-parse HEAD
