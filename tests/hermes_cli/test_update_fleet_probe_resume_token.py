@@ -1,5 +1,4 @@
-"""Regression for #93406 (residual) — the Windows pause/resume token is NOT a
-fleet runtime and must not be counted by ``_fleet_probe_expected_runtimes``.
+"""Regression for #93406 (residual) — pause bookkeeping is not a fleet row.
 
 The first #93406 guard counted the ``_windows_gateway_resume`` token
 (``profiles`` / ``unmapped`` entries) as an "expected fleet rows" signal. But
@@ -17,12 +16,11 @@ waits out its polling window (~14 min wall clock on an end-user report with
 the retry loop), prints "Fleet version check returned no rows", and ``hermes
 update`` exits 1 — for an update that succeeded.
 
-The invariant this file pins: ``_fleet_probe_expected_runtimes`` may only
-return True for signals that correspond to rows ``collect_fleet_versions()``
-is actually capable of returning (restart-phase bookkeeping, the pre-restart
-PID snapshot, the pre-update plan inventory). A genuinely live pre-update
-Windows gateway is already covered by ``pre_restart_pids`` and the plan
-inventory — the token adds no row-capable information on top.
+The initial token's ``profiles`` / ``unmapped`` / ``services`` are not fleet
+rows. A post-resume ``watcher_old_identities`` entry is different: it is
+recorded only after a mapped watcher with strict old-process identity was
+successfully armed. That replacement attempt requires verification even if
+the earlier PID snapshot and plan missed the gateway.
 
 Counterfactual: every test in ``TestResumeTokenIsNotARuntime`` FAILS on the
 pre-fix ``_fleet_probe_expected_runtimes`` (which returns True for a
@@ -111,3 +109,17 @@ class TestRowCapableSignalsStillCount:
 
     def test_unreadable_pre_state_still_expects_rows(self):
         assert _fleet_probe_expected_runtimes(None, None, None, [], set()) is True
+
+
+def test_armed_mapped_watcher_requires_verification_when_inventory_missed_it():
+    # The post-resume list records a successfully armed, strictly identified
+    # profile watcher. Unlike the initial pause token, it is an actual
+    # replacement attempt and must not bypass the fleet probe if earlier
+    # inventory and the pre-restart PID snapshot both missed the runtime.
+    token = {
+        "resume_needed": False,
+        "profiles": {},
+        "unmapped": [],
+        "watcher_old_identities": [(4321, 99.0)],
+    }
+    assert _fleet_probe_expected_runtimes(_plan([]), [], token, [], set()) is True

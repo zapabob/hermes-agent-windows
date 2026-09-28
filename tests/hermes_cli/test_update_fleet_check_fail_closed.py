@@ -12,10 +12,10 @@ which never fires on Windows: ``_pause_windows_gateways_for_update`` /
 hoists the "should the probe have produced rows?" decision into
 ``_fleet_probe_expected_runtimes`` and keys it on the ROW-CAPABLE pre-update
 liveness signals: restart-phase bookkeeping, the pre-restart PID snapshot,
-and the pre-update plan inventory.  The Windows pause/resume token is
-deliberately NOT a signal — it is bookkeeping, not a runtime inventory, and
-its entries have no corresponding ``collect_fleet_versions()`` rows (see
-``test_update_fleet_probe_resume_token.py``).  The same condition gates the
+and the pre-update plan inventory. Initial Windows pause/resume bookkeeping
+is not a row-capable signal; a successfully armed mapped watcher recorded
+after resume is a narrower exception (see
+``test_update_fleet_probe_resume_token.py``). The same condition gates the
 2.0s settle sleep.
 """
 

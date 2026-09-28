@@ -10443,10 +10443,10 @@ def _cmd_update_impl(args, gateway_mode: bool):
             elif not _fleet_snapshot and _fleet_rows_expected:
                 # Fleet probe returned zero rows even though at least one
                 # gateway runtime was (or may have been) live pre-update —
-                # POSIX restart bookkeeping, the pre-restart PID snapshot, or
-                # the pre-update plan inventory count as that signal. The
-                # Windows resume token is excluded because its entries cannot
-                # all produce fleet rows. Every failure path inside
+            # POSIX restart bookkeeping, the pre-restart PID snapshot, the
+            # pre-update plan inventory, or a successfully armed mapped
+            # Windows watcher count as that signal. Initial Windows pause
+            # bookkeeping alone does not. Every failure path inside
                 # collect_fleet_versions() is swallowed via logger.debug(),
                 # so an empty list is indistinguishable from a healthy fleet
                 # in the current output.  Treat it as verification failure
@@ -10710,26 +10710,21 @@ def _fleet_probe_expected_runtimes(
       ``_restart_phase_failure_is_incomplete``, #78574).
     * the pre-update plan inventoried ≥1 runtime.
 
-    ``windows_resume_token`` is deliberately EXCLUDED (#93406 residual). The
-    pause/resume token is bookkeeping for ``_pause_windows_gateways_for_update``
-    / ``_resume_windows_gateways_after_update`` — it is not a runtime
-    inventory, and its entries do not correspond to rows
-    ``collect_fleet_versions()`` is capable of returning:
+    The pause/resume token's ``profiles``, ``unmapped`` and ``services``
+    entries are bookkeeping, not a runtime inventory (#93406 residual), and
+    do not by themselves correspond to rows the probe can return:
 
     * ``unmapped`` entries (Scheduled-Task gateways) never publish
       ``gateway_state.json`` rows at all, and
     * a paused profile gateway is resumed as a DETACHED relaunch that may not
       republish its identity within the probe window.
 
-    Counting the token therefore made ``_fleet_rows_expected`` True on every
-    Windows update that had paused a gateway, the probe's polling window ran
-    out with zero rows on a perfectly healthy update, and verification
-    reported "no rows … verification incomplete" and exited 1 after a long
-    silent wait. Expected-runtimes must key only on signals that map to rows
-    the probe can actually see; a genuinely live pre-update Windows gateway
-    is already covered by ``pre_restart_pids`` and the plan inventory. The
-    parameter stays in the signature so the call site keeps passing the token
-    (cheap, explicit, and the docstring is where the exclusion is explained).
+    Counting those entries made healthy Windows updates wait out the probe
+    window and report false failures. ``watcher_old_identities`` is narrower:
+    resume writes it only after successfully arming a mapped profile watcher
+    with a strict old (pid, create_time). That is an actual replacement
+    attempt, so the updater must observe a fresh fleet row or report
+    verification incomplete even if the earlier inventory missed it.
 
     The same condition gates the 2.0s settle sleep: a freshly restarted
     gateway needs the settle window to rewrite ``gateway_state.json``.
@@ -10738,7 +10733,8 @@ def _fleet_probe_expected_runtimes(
     snapshot — including rows in ``unknown`` state — is still judged solely by
     ``print_fleet_version_matrix``.
     """
-    del windows_resume_token  # excluded on purpose — see docstring (#93406)
+    if (windows_resume_token or {}).get("watcher_old_identities"):
+        return True
     if restarted_services or killed_pids:
         return True
     if pre_restart_pids is None or pre_restart_pids:
