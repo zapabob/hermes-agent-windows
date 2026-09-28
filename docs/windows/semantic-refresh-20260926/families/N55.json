@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N55",
+  "status": "PRODUCT_VALIDATED_BOUNDARY_ONLY",
+  "repository": "zapabob/hermes-agent-windows",
+  "frozen": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "R2": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
+    "U1": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+    "historical_U0": "b936546561888a54d5bf9cd7eae9629a824eb4f7",
+    "observed_remote_main": "eb966ce2cfc1098b46befe9cd8db52be82729f51"
+  },
+  "product_commit": "a549832d3de9ace10fa56e12a2187371739d9dc7",
+  "validated_local_product_commit": "242a35623ce26d9d013bf1cbcec990cbaa3eddb5",
+  "product_tree": "4a7c1951b293cbb2c2e62f08ce1b01d2d9bfbc31",
+  "source": [
+    "apps/desktop/src/app/contrib/hooks/use-desktop-integrations.ts:224-1011",
+    "apps/desktop/src/app/contrib/wiring.tsx:171"
+  ],
+  "observable_contract": "Remembered delegate child sessions restore through their user-facing parent while ordinary branch sessions, profile and connection ownership, stale async responses and transient lookup failures retain their correct behavior.",
+  "validation": {
+    "affected_ui": "79 passed in 2 test files on the integrated final bytes",
+    "typecheck": "passed",
+    "prettier": "passed",
+    "eslint_max_warnings_0": "passed",
+    "mutation": "Two final-source targeted mutants failed their regression assertions; seven additional earlier-candidate mutants are historical evidence only.",
+    "codegraph": "Approved version 1.6.0; integration index complete, pending changes 0, pending refs 0 after sync; query, explore, impact and affected run.",
+    "independent_review": "Laplace and Boole read-only CLEAR on final SHA-256 values; reviewers did not run tests."
+  },
+  "source_sha256": {
+    "hook": "8F198A21ABE1FABF1B154DF6349C1427168A89AA49CB4E2AA108EBF861F7FBE2",
+    "test": "50B33090B8A3B97ADD0737AA4FD0844607F86710FC4BB625BFE9497FC470E87F",
+    "wiring": "BB86585ADA11463D1A11B413732B433CF79AC8350C75A5DBD6F369691CFABDEA"
+  },
+  "open_gaps": [
+    "The N55 record does not map every in-scope upstream ledger row or certify U1 parity.",
+    "Packaged Electron and live runtime verification were not performed.",
+    "N07-A1 grant-revocation host writer, T06, T12 and Control MCP production-write gates remain incomplete; production write is DISABLED."
+  ]
+}
