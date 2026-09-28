@@ -255,6 +255,58 @@ def test_up_row_cannot_end_fleet_probe_while_same_old_process_is_alive():
     assert pending is False
 
 
+def test_sibling_row_cannot_hide_a_missing_armed_mapped_profile():
+    now = [0.0]
+    token = {
+        "watcher_old_identities": [(14980, 99.0)],
+        "profile_old_identities": {"alpha": (14980, 99.0)},
+        "relaunched_profiles": ["alpha"],
+    }
+
+    snapshot, incomplete = update_cmd._poll_fleet_versions_with_relaunch_budget(
+        pre_restart_pids=[],
+        windows_resume_token=token,
+        collect_fleet_versions=lambda **_kw: [
+            {"state": "current", "profile": "bravo", "pid": 20202}
+        ],
+        monotonic=lambda: now[0],
+        sleep=lambda seconds: now.__setitem__(0, now[0] + seconds),
+        identity_is_live=lambda _pid, _started: False,
+    )
+    assert snapshot == [{"state": "current", "profile": "bravo", "pid": 20202}]
+    assert now[0] >= 30.0
+    assert incomplete is True
+
+
+def test_armed_mapped_profile_is_accepted_after_its_row_appears():
+    now = [0.0]
+    attempts = [0]
+    token = {
+        "watcher_old_identities": [(14980, 99.0)],
+        "profile_old_identities": {"alpha": (14980, 99.0)},
+        "relaunched_profiles": ["alpha"],
+    }
+
+    def collect_fleet_versions(**_kwargs):
+        attempts[0] += 1
+        rows = [{"state": "current", "profile": "bravo", "pid": 20202}]
+        if attempts[0] >= 2:
+            rows.append({"state": "current", "profile": "alpha", "pid": 30303})
+        return rows
+
+    snapshot, incomplete = update_cmd._poll_fleet_versions_with_relaunch_budget(
+        pre_restart_pids=[],
+        windows_resume_token=token,
+        collect_fleet_versions=collect_fleet_versions,
+        monotonic=lambda: now[0],
+        sleep=lambda seconds: now.__setitem__(0, now[0] + seconds),
+        identity_is_live=lambda _pid, _started: False,
+    )
+    assert attempts[0] == 2
+    assert {row["profile"] for row in snapshot} == {"alpha", "bravo"}
+    assert incomplete is False
+
+
 def test_same_pid_new_start_time_does_not_widen_the_wait():
     token = {"watcher_old_identities": [(14980, 99.0)]}
     current_start_time = 100.0
