@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N53",
+  "status": "MAPPED_WINDOWS_RELAUNCH_INCARNATION_INTEGRATION_REVIEWED",
+  "repository": "zapabob/hermes-agent-windows",
+  "frozen": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "R2": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
+    "U1": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+    "historical_U0": "b936546561888a54d5bf9cd7eae9629a824eb4f7"
+  },
+  "upstream_source": {
+    "commit": "fae9e5677a3ef339ec582e967ee19cac13bf68af",
+    "ledger_row": "docs/windows/semantic-refresh-20260926/inventory/v0215_to_u1.jsonl:2308",
+    "scope": "Windows post-relaunch wait and old process incarnation only; N52 maps process classification and N54 maps test-only spawn admission."
+  },
+  "integration": {
+    "parent_tree": "a198049b060a08172f80889f6ac04562435dc462",
+    "product_commits": [
+      "7696e5996c7e003783da575736300234d81274a1",
+      "b448ffc85cc366137e95b7e09af3a1652b922016"
+    ],
+    "product_tree": "170cfccec4ac1f37eb921500b58cc154e5448e01",
+    "source_blobs": {
+      "gateway/status.py": "d406f6b30602b3484d7248fb407120bf4221df37",
+      "hermes_cli/gateway.py": "5e7ef36a67a701b1a4877c56b14388b620b80a74",
+      "hermes_cli/update_cmd.py": "3dc90f76ed2843170b51c0c2695b9e21825e0d30",
+      "tests/hermes_cli/test_update_concurrent_quarantine.py": "98d0d1ef216144546c712d0c70e8242596b2699c",
+      "tests/hermes_cli/test_windows_relaunch_verify_budget.py": "c1180be76a52a0d666d18640fd7a12c6d0021b10",
+      "tests/hermes_cli/test_update_fleet_check_fail_closed.py": "1a131c3622fe1a1c21fc7fcf4f79e5a7df256101",
+      "tests/hermes_cli/test_update_fleet_probe_resume_token.py": "d905e081c4de53a0d4dab418d24b7306407453a4"
+    }
+  },
+  "contract": "A mapped Windows Gateway relaunch is verified only after its original (pid, create_time) incarnation is no longer live and a fresh fleet snapshot is read. The bounded wait covers the detached watcher's 120-second deadline plus 30 seconds while that incarnation is pending. PID reuse, unreadable identity, a stale row, and strict discovery failure cannot authorize a replacement claim. Verified siblings retain restart eligibility.",
+  "source_and_caller": [
+    "hermes_cli/gateway.py:_spawn_gateway_restart_watcher waits for the old incarnation and declines a second launch if it remains live at the deadline.",
+    "hermes_cli/update_cmd.py:_pause_windows_gateways_for_update captures strict identities, _resume_windows_gateways_after_update passes them to mapped watchers, and _poll_fleet_versions_with_relaunch_budget retries if the old incarnation exits during collection.",
+    "gateway/status.py:_pid_identity_is_live distinguishes PID reuse and treats unreadable identity as pending; generic manual profile and command-line fallback callers propagate this identity."
+  ],
+  "evidence": {
+    "red": "The prior isolated N53 work recorded sequential RED for wait budget, stale snapshot, generic caller, unreadable identity, and per-profile isolation. The stacked independent review found that a successfully armed mapped watcher could bypass fleet verification when earlier inventory and PID snapshot were empty. A new regression test failed against that actual source: _fleet_probe_expected_runtimes returned False despite watcher_old_identities.",
+    "green": "On the initial stacked product, five safe Windows-focused modules passed 89/89 and Gateway status/holder caller tests separately passed 98/98 with 18 dependency deprecation warnings. After the P2 correction, seven focused modules passed 109/109; the downstream Windows fleet-kind contract separately passed 3/3. Ruff on the corrected paths and staged diff check passed. No real Gateway was launched by these selected tests.",
+    "mutation": "Four controlled mutants were killed on the prior local N53 candidate 724beb34742f71b5327b61f63b3874f1591a235b; their results are historical because this integration contains N52 reaper work. The observed pre-correction fleet gate was an additional live counterexample killed by the new test.",
+    "codegraph": "Approved CodeGraph 1.6.0 synced the five initial changed files, then three post-review changes, in the actual integration index. Final post-edit status reported 8,922 files and no pending changes. Query found _fleet_probe_expected_runtimes at update_cmd.py:10689; impact reached _cmd_update_impl and relevant regression tests. Explore and affected ran; broad unrelated results were discounted in favor of actual source/caller inspection.",
+    "independent_review": "Boole independently reviewed the final stacked source and regression test, verified their SHA256 bindings, and reported CLEAR for the corrected fleet gate and caller. Laplace's separate review is still pending; prior Kepler and Code Reviewer CLEAR applied to the previous local candidate only."
+  },
+  "open_gaps": [
+    "Token-only or unmapped watcher replacements do not have destination outcome durability evidence. This bounded result does not prove whole U1 parity, live fleet health, or release readiness.",
+    "N07-A1 host grant-revocation writer, T06, and T12 remain incomplete; Control MCP production write remains DISABLED.",
+    "Original main and historical feature WIP were preserved."
+  ]
+}
