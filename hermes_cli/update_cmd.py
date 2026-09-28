@@ -6270,6 +6270,7 @@ def _pause_windows_gateways_for_update() -> dict | None:
         return None
 
     profiles: dict[str, int] = {}
+    profile_old_identities: dict[str, tuple[int, float]] = {}
     mapped_pids = []
     socket_acks: list[dict] = []
     for pid in running_pids:
@@ -6279,6 +6280,12 @@ def _pause_windows_gateways_for_update() -> dict | None:
         if proc is None:
             continue
         profiles[str(proc.profile)] = int(pid)
+        old_create_time = float(getattr(proc, "create_time", 0.0) or 0.0)
+        if old_create_time > 0:
+            profile_old_identities[str(proc.profile)] = (
+                int(pid),
+                old_create_time,
+            )
         mapped_pids.append(int(pid))
         _write_update_planned_stop_marker(Path(proc.path), int(pid))
         # Socket-first pause (#92091 step 2): ask the gateway to drain and
@@ -6391,6 +6398,7 @@ def _pause_windows_gateways_for_update() -> dict | None:
     token = {
         "resume_needed": True,
         "profiles": profiles,
+        "profile_old_identities": profile_old_identities,
         "unmapped_pids": unmapped_pids,
         "unmapped": unmapped,
     }
@@ -7304,11 +7312,28 @@ def _resume_windows_gateways_after_update_impl(token: dict | None) -> None:
         ) from exc
 
     relaunched = []
+    watcher_old_identities: list[tuple[int, float]] = []
     failed_profiles = {}
     for profile, old_pid in sorted(profiles.items()):
         try:
-            if launch_detached_profile_gateway_restart(str(profile), int(old_pid)):
+            old_identity = (token.get("profile_old_identities") or {}).get(profile)
+            has_old_identity = bool(
+                old_identity
+                and int(old_identity[0]) == int(old_pid)
+                and float(old_identity[1]) > 0
+            )
+            if has_old_identity:
+                launched = launch_detached_profile_gateway_restart(
+                    str(profile), int(old_pid), float(old_identity[1])
+                )
+            else:
+                launched = launch_detached_profile_gateway_restart(str(profile), int(old_pid))
+            if launched:
                 relaunched.append(str(profile))
+                if has_old_identity:
+                    watcher_old_identities.append(
+                        (int(old_pid), float(old_identity[1]))
+                    )
             else:
                 failed_profiles[str(profile)] = int(old_pid)
         except Exception as exc:
@@ -7358,6 +7383,7 @@ def _resume_windows_gateways_after_update_impl(token: dict | None) -> None:
 
     token["profiles"] = failed_profiles
     token["unmapped"] = failed_unmapped
+    token["watcher_old_identities"] = sorted(set(watcher_old_identities))
     if failed_profiles or failed_unmapped:
         raise RuntimeError("Could not restart every paused Windows gateway")
     token["resume_needed"] = False
@@ -9355,6 +9381,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
             _write_gateway_update_exit_code(update_complete)
 
         gateway_fleet_restart_incomplete = False
+        manual_identity_incomplete = False
         gateway_restart_phase_errors: list[str] = []
         # Snapshot of gateways running before we touch anything. Stays empty
         # until we successfully import the probe and are about to stop/drain —
@@ -9935,11 +9962,15 @@ def _cmd_update_impl(args, gateway_mode: bool):
             manual_pids = find_gateway_pids(
                 exclude_pids=service_pids, all_profiles=True
             )
-            profile_processes = {
-                proc.pid: proc
-                for proc in find_profile_gateway_processes(exclude_pids=service_pids)
-                if proc.pid in manual_pids
-            }
+            windows_manual_identity = _m()._is_windows()
+            profile_processes, manual_identity_incomplete = _find_manual_profile_gateways_for_restart(
+                service_pids=service_pids,
+                manual_pids=manual_pids,
+                find_profile_gateway_processes=find_profile_gateway_processes,
+                windows=windows_manual_identity,
+            )
+            if manual_identity_incomplete:
+                gateway_fleet_restart_incomplete = True
             # Profile gateways we could not arm a relaunch for.  These must
             # NOT be left running: their modules are the pre-update ones and
             # every lazy import from here on mixes versions against the new
@@ -9949,9 +9980,14 @@ def _cmd_update_impl(args, gateway_mode: bool):
             # contract already used for gateways with no profile mapping.
             unrestartable_pids = set()
             for pid, proc in profile_processes.items():
-                restart_mode = _prepare_profile_gateway_update_restart(
-                    proc.profile, pid
-                )
+                if windows_manual_identity and proc.create_time <= 0:
+                    restart_mode = None
+                else:
+                    restart_mode = _prepare_profile_gateway_update_restart(
+                        proc.profile,
+                        pid,
+                        old_create_time=proc.create_time if proc.create_time > 0 else None,
+                    )
                 if restart_mode is None:
                     # Previously a bare ``continue``: the gateway was neither
                     # relaunched nor stopped nor mentioned, so it kept serving
@@ -10194,8 +10230,10 @@ def _cmd_update_impl(args, gateway_mode: bool):
             if _recovery_complete:
                 # The fresh child is the recovery terminal result. Leave the
                 # final fleet-version matrix below as the authoritative
-                # read-back before the update is declared successful.
-                gateway_fleet_restart_incomplete = False
+                # read-back before the update is declared successful. A
+                # separate manual identity failure is not covered by the
+                # pre-update plan's supervised recovery candidates.
+                gateway_fleet_restart_incomplete = manual_identity_incomplete
             elif _restart_phase_failure_is_incomplete(
                 _surviving, _pre_restart_gateway_pids
             ):
@@ -10378,33 +10416,28 @@ def _cmd_update_impl(args, gateway_mode: bool):
             # the gateway the first attempt just started.  Poll a bounded
             # window for the resumed gateway to publish its identity instead.
             _fleet_snapshot = []
+            _watcher_still_waiting = False
             if _fleet_rows_expected:
-                _fleet_deadline = _time.monotonic() + 30.0
-                while True:
-                    _time.sleep(2.0)
-                    # Pass the pre-restart PID snapshot so a gateway the
-                    # restart phase stopped WITHOUT a verified replacement
-                    # shows as a DOWN row (exit 1) instead of silently
-                    # producing no row at all.
-                    _fleet_snapshot = collect_fleet_versions(
-                        pre_restart_pids=_pre_restart_gateway_pids
+                _fleet_snapshot, _watcher_still_waiting = (
+                    _poll_fleet_versions_with_relaunch_budget(
+                        pre_restart_pids=_pre_restart_gateway_pids,
+                        windows_resume_token=_windows_gateway_resume,
+                        collect_fleet_versions=collect_fleet_versions,
+                        monotonic=_time.monotonic,
+                        sleep=_time.sleep,
+                        identity_is_live=_old_gateway_process_identity_is_live,
                     )
-                    # A "down" row here is the stale pre-restart record of a
-                    # gateway whose detached replacement is still booting —
-                    # not a confirmed failure.  Keep polling until every
-                    # resumed gateway has published (no "down" rows remain)
-                    # or the deadline passes, so a slow second gateway can't
-                    # be misread as down and re-trigger the retry loop.
-                    if _fleet_snapshot and not any(
-                        row.get("state") == "down" for row in _fleet_snapshot
-                    ):
-                        break
-                    if _time.monotonic() >= _fleet_deadline:
-                        break
+                )
             else:
                 _fleet_snapshot = collect_fleet_versions(
                     pre_restart_pids=_pre_restart_gateway_pids
                 )
+            if _watcher_still_waiting:
+                print(
+                    "\n⚠ Windows gateway restart watcher still waits for its original"
+                    " process — verification incomplete."
+                )
+                gateway_fleet_restart_incomplete = True
             if print_fleet_version_matrix(_fleet_snapshot):
                 gateway_fleet_restart_incomplete = True
             elif not _fleet_snapshot and _fleet_rows_expected:
@@ -10523,6 +10556,46 @@ def _cmd_update_impl(args, gateway_mode: bool):
 
 # --- Hoisted from the body of _cmd_update_impl (self-contained, no closure state) ---
 
+def _find_manual_profile_gateways_for_restart(
+    *, service_pids, manual_pids, find_profile_gateway_processes, windows
+) -> tuple[dict, bool]:
+    """Use verified Windows identities; keep scanned PIDs on the stop path if unreadable."""
+    strict_errors: list[str] = []
+    try:
+        find_kwargs = {"exclude_pids": service_pids, "strict": windows}
+        if windows:
+            find_kwargs["strict_errors"] = strict_errors
+        processes = find_profile_gateway_processes(**find_kwargs)
+    except Exception as exc:
+        if not windows:
+            raise
+        logger.warning("Could not verify manual Gateway profile identity: %s", exc)
+        if manual_pids:
+            print(
+                "  ⚠ Could not verify manual Gateway profile identities; "
+                "scanned processes require a manual restart after stopping"
+            )
+        else:
+            print("  ⚠ Manual Gateway identity could not be verified; update incomplete")
+        return {}, True
+    if strict_errors:
+        logger.warning(
+            "Could not verify manual Gateway profile identities: %s",
+            ", ".join(strict_errors),
+        )
+        if manual_pids:
+            print(
+                "  ⚠ Some manual Gateway profile identities were unreadable; "
+                "those scanned processes require a manual restart after stopping"
+            )
+        else:
+            print("  ⚠ Manual Gateway identity could not be verified; update incomplete")
+    return (
+        {proc.pid: proc for proc in processes if proc.pid in manual_pids},
+        bool(strict_errors),
+    )
+
+
 def _restart_phase_failure_is_incomplete(surviving, pre_restart_pids) -> bool:
     """Whether an escaped gateway-restart-phase exception must fail the update.
 
@@ -10547,6 +10620,70 @@ def _restart_phase_failure_is_incomplete(surviving, pre_restart_pids) -> bool:
         return True
     # surviving == []: safe only if we know nothing was running beforehand.
     return pre_restart_pids is None or bool(pre_restart_pids)
+
+
+def _old_gateway_process_identity_is_live(pid: int, started: float) -> bool:
+    """Keep an unreadable old process pending; a reused PID is a new identity."""
+    from gateway.status import _pid_identity_is_live
+
+    return _pid_identity_is_live(pid, started)
+
+
+def _pending_windows_watcher_identities(token: dict | None, identity_is_live) -> bool:
+    for pid, started in (token or {}).get("watcher_old_identities") or ():
+        try:
+            if identity_is_live(int(pid), float(started)):
+                return True
+        except Exception:
+            return True
+    return False
+
+
+def _windows_relaunch_verify_timeout_s(token: dict | None, identity_is_live) -> float:
+    """Cover the wait of a mapped gateway watcher only while its old process lives."""
+    base_timeout_s = 30.0
+    if not _pending_windows_watcher_identities(token, identity_is_live):
+        return base_timeout_s
+    from hermes_cli.gateway import GATEWAY_RESTART_WATCHER_TIMEOUT_S
+
+    return float(GATEWAY_RESTART_WATCHER_TIMEOUT_S) + base_timeout_s
+
+
+def _poll_fleet_versions_with_relaunch_budget(
+    *,
+    pre_restart_pids,
+    windows_resume_token,
+    collect_fleet_versions,
+    monotonic,
+    sleep,
+    identity_is_live,
+) -> tuple[list, bool]:
+    """Do not accept an old live gateway row as a detached replacement."""
+    deadline = monotonic() + _windows_relaunch_verify_timeout_s(
+        windows_resume_token, identity_is_live
+    )
+    snapshot: list = []
+    while True:
+        sleep(2.0)
+        pending_before_snapshot = _pending_windows_watcher_identities(
+            windows_resume_token, identity_is_live
+        )
+        snapshot = collect_fleet_versions(pre_restart_pids=pre_restart_pids)
+        pending = _pending_windows_watcher_identities(
+            windows_resume_token, identity_is_live
+        )
+        if pending_before_snapshot and not pending:
+            # The row may describe the old process that exited while the
+            # collector ran. Give the detached replacement a fresh probe.
+            continue
+        if (
+            snapshot
+            and not any(row.get("state") == "down" for row in snapshot)
+            and not pending
+        ):
+            return snapshot, False
+        if monotonic() >= deadline:
+            return snapshot, pending
 
 
 def _fleet_probe_expected_runtimes(
