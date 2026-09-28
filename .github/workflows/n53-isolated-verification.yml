@@ -19,15 +19,17 @@ jobs:
     permissions:
       contents: write
     env:
-      HERMES_HOME: ${{ runner.temp }}/n53-isolated-home
-      HERMES_RUNTIME_DIR: ${{ runner.temp }}/n53-isolated-runtime
       PYTHONUTF8: '1'
     steps:
+      - name: Select disposable runner-local home
+        shell: bash
+        run: echo "HERMES_HOME=$RUNNER_TEMP/n53-isolated-home" >> "$GITHUB_ENV"
+
       - name: Checkout isolated verification branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           ref: ${{ github.sha }}
-          fetch-depth: 0
+          fetch-depth: 8
 
       - name: Check immutable upstream parent and source blob
         shell: bash
