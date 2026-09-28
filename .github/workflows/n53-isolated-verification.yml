@@ -49,10 +49,7 @@ jobs:
 
       - name: Native imports TDD regression and targeted mutation gates
         shell: bash
-        run: |
-          set -euo pipefail
-          python .n53-verification/verification_v2.py
-          python .n53-verification/verify.py
+        run: python .n53-verification/verification_entrypoint.py
 
       - name: Preserve verification evidence even on failure
         if: always()
@@ -79,6 +76,6 @@ jobs:
           git -C "$worktree" add -- hermes_cli/update_cmd_windows.py tests/hermes_cli/test_windows_update_pause_transaction.py
           git -C "$worktree" diff --cached --check
           test "$(git -C "$worktree" diff --cached --name-only | wc -l | tr -d ' ')" = 2
-          git -C "$worktree" -c user.name=zapabob -c user.email=130830376+zapabob@users.noreply.github.com commit -m "fix(update): retain Windows pause recovery from the first side effect" -m "Preserve existing socket, SCM and resume owners. Distinguish pre-stop SCM refusals from uncertain attempts; retain process incarnations and unknown liveness. Native-host contracts, selected regressions/live-process tests and targeted mutations: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID. No installed Gateway update or full-suite claim."
+          git -C "$worktree" -c user.name=zapabob -c user.email=130830376+zapabob@users.noreply.github.com commit -m "fix(update): retain Windows pause recovery from the first side effect" -m "Preserve existing socket, SCM and resume owners. Distinguish pre-stop SCM refusals from uncertain attempts; retain process incarnations and unknown liveness. Native-host contracts, baseline-relative selected regression/live-process tests and targeted mutations: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID. See PREEXISTING_FAILURES.json; this is not a full-suite or production update claim."
           git -C "$worktree" push origin "HEAD:refs/heads/$target"
           git -C "$worktree" rev-parse HEAD
