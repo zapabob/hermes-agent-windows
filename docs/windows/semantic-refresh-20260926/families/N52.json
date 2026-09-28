@@ -16,9 +16,25 @@
     "scope": "Watcher process identity only; the relaunch wait budget is mapped separately by N53."
   },
   "integration": {
+    "parent_commit": "e0096d01abc6d5befc2782e940ee29cb253df6c9",
     "parent_tree": "74acf208a4a9b80c300bad418f6da461e421f789",
-    "product_commit": "baecdd9ce966a4dc3d5ac404a671251d5576c87b",
+    "product_commit": "fb71fa020fd5dbfa6e3572bd1ab0729f0a730a62",
     "product_tree": "f1ab57bdbbb10e317633bbf838dbffa596360159",
+    "historical_local_product_commit": {
+      "commit": "baecdd9ce966a4dc3d5ac404a671251d5576c87b",
+      "tree": "f1ab57bdbbb10e317633bbf838dbffa596360159",
+      "note": "Local-only commit on which the evidence below was first gathered. Its tree is identical to the public product_commit fb71fa0, so the tracked sources are byte-identical; it is kept for provenance only and is not a publication reference."
+    },
+    "publication": {
+      "pull_request": "zapabob/hermes-agent-windows#158",
+      "branch": "codex/n52-gateway-identity-20260928",
+      "base": "main",
+      "base_commit": "cc686ab1d31d6ee5ca07243765c5a07e3b9af1af",
+      "base_note": "cc686ab is the merge of #157 (N55) into main; its tree 74acf208 equals parent_tree, so the product diff against main is unchanged.",
+      "verified_head_commit": "b59e1b73713c50da5408862fded81c64655cdb83",
+      "verified_head_tree": "a198049b060a08172f80889f6ac04562435dc462",
+      "verified_head_note": "Merge of main into the branch; tree identical to the previous head 10bc0eb. source_blobs were recomputed with git rev-parse <commit>:<path> at both fb71fa0 and this head and match."
+    },
     "source_blobs": {
       "gateway/status.py": "cddfc3778db19b7d62317aa53a8e3d51efd76201",
       "hermes_cli/gateway.py": "df163654b8bac7fd42f7a25bab8e8e0603c3602e",
