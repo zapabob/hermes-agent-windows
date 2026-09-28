@@ -106,7 +106,8 @@ The commits are listed from the PR158 parent upwards:
 - `544dd1e5`, `be3051a4`, `b5885d4f`: N53 product, composed.
 - `8a56934a`, `0752426d`: N53 docs, composed.
 - `d1ea8d7b`: `families/N53.json` additive Phase 2 entry, plus `CURSOR_IMPLEMENTATION_PLAN_20260929.md` (byte-identical to the untracked copy in the old worktree, SHA-256 `4c740724…`).
-- A final commit contains the regenerated `_docs/carry-surface-20260826.json` and `.md`, plus this log (force-added).
+- `6686b93b`: the regenerated `_docs/carry-surface-20260826.json` and `.md`, plus this log (force-added).
+- A follow-up commit makes the plan pass `git diff --check`. Its header lines 3–6 used Markdown two-space hard breaks, and these are replaced with backslash hard breaks, which render the same. No other byte of the plan changed. After this, the committed plan is no longer byte-identical to the old worktree's copy; the difference is only those four line endings. This log is updated in the same commit.
 
 Commands used: `git worktree add`, `git cherry-pick` (N53 family commits only), `git restore`/`git rm` on the four conflicted paths in the new worktree only, `git cherry-pick --quit`, `git add <explicit paths>`, `git add -f` for the log, `git commit`, `git push -u origin` (no force), `gh pr create --draft`, `gh run list/watch`, `uv sync/run`, `uvx --offline ruff@0.15.10`, the CodeGraph shim, and `Get-FileHash`. No `git add .`, clean, stash, reset --hard, force push, main push, or merge was performed. Frozen SHAs were not moved. Control MCP production write stays DISABLED. The model picker, provider and OAuth settings, and Defender were not changed.
 

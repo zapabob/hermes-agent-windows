@@ -1,9 +1,9 @@
 # Cursor implementation handoff — Windows semantic refresh 2026-09-26
 
-Date: 2026-09-29 JST  
-Repository: `zapabob/hermes-agent-windows`  
-Campaign: `windows-semantic-refresh-20260926`  
-Tracking issue: Linear `B0B-7`  
+Date: 2026-09-29 JST\
+Repository: `zapabob/hermes-agent-windows`\
+Campaign: `windows-semantic-refresh-20260926`\
+Tracking issue: Linear `B0B-7`\
 Audience: Cursor / next implementation agent
 
 This document is the continuation plan for the Windows semantic-refresh campaign from the first campaign instruction through the latest observed local and remote state. It is an implementation handoff, not a claim that all upstream behavior is already integrated, that all runtime gates are satisfied, or that Control MCP production writes are authorized.
