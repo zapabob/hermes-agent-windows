@@ -6,6 +6,7 @@ Every run uses the repository's canonical test runner. Invalid mutants never cou
 import ast
 import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -15,6 +16,9 @@ ROOT = Path.cwd()
 OUT = ROOT / 'n53-evidence'
 SOURCE_PATH = ROOT / 'hermes_cli/update_cmd_windows.py'
 TEST = 'tests/hermes_cli/test_windows_update_pause_transaction.py'
+# CreateProcess searches System32 before PATH for an unqualified executable.
+# Never launch System32/bash.exe: it is the WSL shim, not native Git Bash.
+BASH = Path(os.environ['ProgramFiles']) / 'Git' / 'bin' / 'bash.exe'
 REGRESSION = [
     'tests/hermes_cli/test_gateway.py',
     'tests/hermes_cli/test_gateway_windows.py',
@@ -43,7 +47,7 @@ RESULTS = []
 
 def run(label, target, expected_failure=False, exact_count=None):
     xml = f'n53-evidence/{label}.xml'
-    command = ['bash', 'scripts/run_tests.sh', target, '-q', f'--junitxml={xml}']
+    command = [str(BASH), 'scripts/run_tests.sh', target, '-q', f'--junitxml={xml}']
     proc = subprocess.run(command, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                           text=True, encoding='utf-8', errors='replace', timeout=900)
     (OUT / f'{label}.log').write_text(proc.stdout, encoding='utf-8')
@@ -87,6 +91,8 @@ def mutate(source, symbol, before, after):
 
 def main():
     OUT.mkdir(exist_ok=True)
+    if not BASH.is_file():
+        raise RuntimeError(f'Native Git for Windows Bash not found: {BASH}')
     baseline = SOURCE_PATH.read_bytes()
     (OUT / 'baseline_update_cmd_windows.py').write_bytes(baseline)
     candidate = None
