@@ -31,6 +31,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+SLEEPER_SCRIPT = Path(__file__).with_name("fixtures") / "gateway_identity_sleeper.py"
 
 
 @pytest.fixture()
@@ -39,7 +40,7 @@ def sleeper():
 
     def _spawn(*tail: str) -> subprocess.Popen:
         p = subprocess.Popen(
-            [sys.executable, "-c", "import time; time.sleep(120)", *tail],
+            [sys.executable, str(SLEEPER_SCRIPT), *tail],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
@@ -113,7 +114,7 @@ def test_holder_scan_fallback_respects_token_classifier(sleeper, monkeypatch, tm
     (tmp_path / ".hermes").mkdir()
     _write_ledger([])  # force the fallback rung
 
-    # Real process whose argv carries genuine serve shape, visible to psutil.
+    # The script-file stand-in carries a serve-shaped argv, visible to psutil.
     serve_like = sleeper("-m", "hermes_cli.main", "serve")
     # Lookalike from the #90778 class — must NOT confer ownership.
     kanban_like = sleeper("-m", "hermes_cli.main", "kanban", "--preserve-cache")
@@ -124,7 +125,7 @@ def test_holder_scan_fallback_respects_token_classifier(sleeper, monkeypatch, tm
         out = []
         for p in (serve_like, kanban_like):
             proc = psutil.Process(p.pid)
-            out.append((p.pid, proc.name(), " ".join(proc.cmdline())))
+            out.append((p.pid, proc.name(), subprocess.list2cmdline(proc.cmdline())))
         return out
 
     monkeypatch.setattr(

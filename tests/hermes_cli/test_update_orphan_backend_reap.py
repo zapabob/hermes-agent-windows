@@ -112,6 +112,18 @@ def test_non_backend_holder_keeps_refusal():
         assert cli_main._orphaned_desktop_backend_pids(holders) is None
 
 
+def test_orphan_gateway_restart_watcher_with_serve_profile_keeps_refusal():
+    watcher_argv = [
+        "python.exe", "-c", "pass", "123", "python.exe", "-m",
+        "hermes_cli.main", "--profile", "serve", "gateway", "run",
+    ]
+    watcher = _proc(300, watcher_argv, ppid=999)
+    fake = _fake_psutil({300: watcher})
+    with patch.dict(sys.modules, {"psutil": fake}):
+        holders = _holders(pid=300, cmdline=" ".join(watcher_argv))
+        assert cli_main._orphaned_desktop_backend_pids(holders) is None
+
+
 def test_mixed_holders_keep_refusal():
     # One orphan backend + one operator REPL → the whole set is refused.
     backend = _proc(200, _SERVE_ARGV, ppid=999)
