@@ -1,7 +1,8 @@
-"""Run pinned-source contracts, selected regressions and targeted mutations.
+"""Native Windows TDD, targeted mutations and baseline-relative regression.
 
-Only disposable CI processes/homes are used. No real installed Gateway is updated.
-Every run uses the repository's canonical test runner. Invalid mutants never count.
+Pre-existing baseline failures are preserved, never renamed a full-suite pass.
+A candidate may not add failures, skip more tests, or change the collected set.
+Only disposable process fixtures are used; no installed Gateway is updated.
 """
 import ast
 import hashlib
@@ -16,8 +17,6 @@ ROOT = Path.cwd()
 OUT = ROOT / 'n53-evidence'
 SOURCE_PATH = ROOT / 'hermes_cli/update_cmd_windows.py'
 TEST = 'tests/hermes_cli/test_windows_update_pause_transaction.py'
-# CreateProcess searches System32 before PATH for an unqualified executable.
-# Never launch System32/bash.exe: it is the WSL shim, not native Git Bash.
 BASH = Path(os.environ['ProgramFiles']) / 'Git' / 'bin' / 'bash.exe'
 REGRESSION = [
     'tests/hermes_cli/test_gateway.py',
@@ -45,36 +44,43 @@ MUTANTS = [
 RESULTS = []
 
 
-def run(label, target, expected_failure=False, exact_count=None):
-    xml = f'n53-evidence/{label}.xml'
-    command = [str(BASH), 'scripts/run_tests.sh', target, '-q', f'--junitxml={xml}']
+def run(label, target, expected_failure=False, exact_count=None, record_baseline=False):
+    xml_path = OUT / f'{label}.xml'
+    xml_path.unlink(missing_ok=True)
+    command = [str(BASH), 'scripts/run_tests.sh', target, '-q', f'--junitxml=n53-evidence/{label}.xml']
     proc = subprocess.run(command, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                           text=True, encoding='utf-8', errors='replace', timeout=900)
     (OUT / f'{label}.log').write_text(proc.stdout, encoding='utf-8')
     print(proc.stdout, flush=True)
-    xml_path = ROOT / xml
     if not xml_path.is_file():
         raise RuntimeError(f'{label}: no JUnit result; not test evidence (exit {proc.returncode})')
-    tree = ET.parse(xml_path)
-    cases = tree.findall('.//testcase')
-    failures = tree.findall('.//testcase/failure')
-    errors = tree.findall('.//testcase/error')
-    skipped = tree.findall('.//testcase/skipped')
+    cases = ET.parse(xml_path).findall('.//testcase')
+    failures = [case.find('failure') for case in cases if case.find('failure') is not None]
+    errors = [case for case in cases if case.find('error') is not None]
+    identity = lambda c: f"{c.get('classname')}::{c.get('name')}"
+    failed_ids = sorted(identity(c) for c in cases if c.find('failure') is not None)
+    skipped_ids = sorted(identity(c) for c in cases if c.find('skipped') is not None)
     result = {'label': label, 'command': command, 'exit_code': proc.returncode,
-              'tests': len(cases), 'failures': len(failures), 'errors': len(errors), 'skipped': len(skipped)}
+              'tests': len(cases), 'failures': len(failures), 'errors': len(errors), 'skipped': len(skipped_ids),
+              'failed_ids': failed_ids, 'skipped_ids': skipped_ids,
+              'collected_ids': sorted(identity(c) for c in cases)}
     RESULTS.append(result)
-    if errors or len(cases) <= len(skipped):
-        raise RuntimeError(f'{label}: errors or no executed tests: {result}')
-    if exact_count is not None and (len(cases) != exact_count or skipped):
-        raise RuntimeError(f'{label}: unexpected test count or skips: {result}')
+    if errors or len(cases) <= len(skipped_ids):
+        raise RuntimeError(f'{label}: collection errors or no executed tests')
+    if exact_count is not None and (len(cases) != exact_count or skipped_ids):
+        raise RuntimeError(f'{label}: unexpected test count or skips')
     if expected_failure:
         if proc.returncode != 1 or not failures:
-            raise RuntimeError(f'{label}: not the required RED result: {result}')
+            raise RuntimeError(f'{label}: not the required RED result')
         if not all('AssertionError' in (f.text or '') or 'Failed: DID NOT RAISE' in (f.text or '') for f in failures):
             raise RuntimeError(f'{label}: failure was not the designated behavioral assertion')
+    elif record_baseline:
+        if proc.returncode not in (0, 1) or (proc.returncode == 1 and not failures):
+            raise RuntimeError(f'{label}: infrastructure failure is not a comparable baseline')
     elif proc.returncode != 0 or failures:
-        raise RuntimeError(f'{label}: regression/positive control failed: {result}')
-    print(json.dumps(result), flush=True)
+        raise RuntimeError(f'{label}: positive control failed')
+    print(json.dumps({k:v for k,v in result.items() if not k.endswith('_ids')}), flush=True)
+    return result
 
 
 def mutate(source, symbol, before, after):
@@ -96,37 +102,56 @@ def main():
     baseline = SOURCE_PATH.read_bytes()
     (OUT / 'baseline_update_cmd_windows.py').write_bytes(baseline)
     candidate = None
+    baseline_results = []
+    comparisons = []
     try:
         run('red', TEST, expected_failure=True, exact_count=17)
-        for i, target in enumerate(REGRESSION):
-            run(f'baseline-regression-{i}', target)
         subprocess.run([sys.executable, '.n53-verification/apply_candidate.py'], check=True)
         candidate = SOURCE_PATH.read_bytes()
         (OUT / 'candidate_update_cmd_windows.py').write_bytes(candidate)
         run('green', TEST, exact_count=17)
-        for i, target in enumerate(REGRESSION):
-            run(f'green-regression-{i}', target)
-        for i, target in enumerate(LIVE):
-            run(f'live-{i}', target)
         for name, symbol, before, after, test in MUTANTS:
             try:
                 SOURCE_PATH.write_bytes(mutate(candidate.decode('utf-8'), symbol, before, after).encode('utf-8'))
                 run(f'mutant-{name}', f'{TEST}::{test}', expected_failure=True, exact_count=1)
             finally:
                 SOURCE_PATH.write_bytes(candidate)
+        run('post-mutation-green', TEST, exact_count=17)
+        SOURCE_PATH.write_bytes(baseline)
+        for i, target in enumerate(REGRESSION):
+            baseline_results.append(run(f'baseline-regression-{i}', target, record_baseline=True))
+        SOURCE_PATH.write_bytes(candidate)
+        for i, target in enumerate(REGRESSION):
+            before = baseline_results[i]
+            after = run(f'candidate-regression-{i}', target, record_baseline=True)
+            same_collection = before['collected_ids'] == after['collected_ids']
+            new_failures = sorted(set(after['failed_ids']) - set(before['failed_ids']))
+            new_skips = sorted(set(after['skipped_ids']) - set(before['skipped_ids']))
+            comparison = {'file': target, 'same_collection': same_collection,
+                          'baseline_failures': before['failed_ids'], 'candidate_failures': after['failed_ids'],
+                          'new_failures': new_failures, 'new_skips': new_skips}
+            comparisons.append(comparison)
+            if not same_collection or new_failures or new_skips:
+                raise RuntimeError(f'New regression or coverage loss: {comparison}')
+        for i, target in enumerate(LIVE):
+            run(f'live-{i}', target)
         run('final-green', TEST, exact_count=17)
         subprocess.run(['git', 'diff', '--check'], check=True)
         (OUT / 'VERIFIED').write_text(hashlib.sha256(candidate).hexdigest() + '\n', encoding='ascii')
+        if any(r['failed_ids'] for r in baseline_results):
+            (OUT / 'PREEXISTING_FAILURES.json').write_text(json.dumps(comparisons, indent=2) + '\n', encoding='utf-8')
     finally:
         if candidate is not None:
             SOURCE_PATH.write_bytes(candidate)
-        receipt = {'scope': 'real Windows/Python imports; fake OS effects in contracts; separately selected live-process tests',
+        receipt = {'scope': 'Native Windows imports; fake OS effects in contracts; baseline-relative selected regression, NOT a full-suite pass',
                    'baseline_blob': 'd1f602f41c41e9e752a3af3067e79cf6c6f7f6e6',
                    'candidate_sha256': hashlib.sha256(candidate).hexdigest() if candidate else None,
-                   'results': RESULTS}
+                   'regression_comparisons': comparisons, 'results': RESULTS}
         (OUT / 'results.json').write_text(json.dumps(receipt, indent=2) + '\n', encoding='utf-8')
         diff = subprocess.run(['git', 'diff', '--', 'hermes_cli/update_cmd_windows.py'], capture_output=True, text=True, encoding='utf-8')
         (OUT / 'candidate.patch').write_text(diff.stdout, encoding='utf-8')
+        for path in REGRESSION:
+            (OUT / Path(path).name).write_bytes((ROOT / path).read_bytes())
 
 
 if __name__ == '__main__':
