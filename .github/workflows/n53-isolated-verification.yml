@@ -66,16 +66,17 @@ jobs:
         run: |
           set -euo pipefail
           test -f n53-evidence/VERIFIED
-          python -c "from pathlib import Path; import hashlib; p=Path('hermes_cli/update_cmd_windows.py'); assert hashlib.sha256(p.read_bytes()).hexdigest()==Path('n53-evidence/VERIFIED').read_text().strip()"
+          python -c "from pathlib import Path; import hashlib,json; r=json.loads(Path('n53-evidence/publish-files.json').read_text()); assert len(r)==4; assert all(hashlib.sha256(Path(p).read_bytes()).hexdigest()==h for p,h in r.items()); assert r['hermes_cli/update_cmd_windows.py']==Path('n53-evidence/VERIFIED').read_text().strip()"
           target=fix/windows-pause-transaction-20260928
           test -z "$(git ls-remote --heads origin "refs/heads/$target")"
           worktree="$RUNNER_TEMP/n53-verified-candidate"
           git worktree add --detach "$worktree" 35272ce28b29bae90e9ecceff9def17ae791c012
-          cp hermes_cli/update_cmd_windows.py "$worktree/hermes_cli/update_cmd_windows.py"
-          cp tests/hermes_cli/test_windows_update_pause_transaction.py "$worktree/tests/hermes_cli/test_windows_update_pause_transaction.py"
-          git -C "$worktree" add -- hermes_cli/update_cmd_windows.py tests/hermes_cli/test_windows_update_pause_transaction.py
+          for path in hermes_cli/update_cmd_windows.py tests/hermes_cli/test_windows_update_pause_transaction.py tests/hermes_cli/test_update_concurrent_quarantine.py tests/hermes_cli/test_windows_gateway_cold_start_desktop_lifecycle.py; do
+            cp "$path" "$worktree/$path"
+            git -C "$worktree" add -- "$path"
+          done
           git -C "$worktree" diff --cached --check
-          test "$(git -C "$worktree" diff --cached --name-only | wc -l | tr -d ' ')" = 2
-          git -C "$worktree" -c user.name=zapabob -c user.email=130830376+zapabob@users.noreply.github.com commit -m "fix(update): retain Windows pause recovery from the first side effect" -m "Preserve existing socket, SCM and resume owners. Distinguish pre-stop SCM refusals from uncertain attempts; retain process incarnations and unknown liveness. Native-host contracts, baseline-relative selected regression/live-process tests and targeted mutations: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID. See PREEXISTING_FAILURES.json; this is not a full-suite or production update claim."
+          test "$(git -C "$worktree" diff --cached --name-only | wc -l | tr -d ' ')" = 4
+          git -C "$worktree" -c user.name=zapabob -c user.email=130830376+zapabob@users.noreply.github.com commit -m "fix(update): retain Windows pause recovery from the first side effect" -m "Preserve existing socket, SCM and resume owners. Distinguish pre-stop SCM refusals from uncertain attempts; retain process incarnations and unknown liveness. Native contracts, baseline-relative selected regression/live-process tests and targeted mutations: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID. See PREEXISTING_FAILURES.json; this is not a full-suite or production update claim."
           git -C "$worktree" push origin "HEAD:refs/heads/$target"
           git -C "$worktree" rev-parse HEAD
