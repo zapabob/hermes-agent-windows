@@ -4,12 +4,12 @@ Frozen upstream: b51c055a12220f8c7c18660e8599365012e19532
 
 | Metric | Value |
 | --- | ---: |
-| All fork-specific LOC | 2713250 |
-| Upstream-owned fork LOC | 1554598 |
-| Fork-owned LOC | 1158652 |
-| UTR | 0.572965 |
-| Carry Surface | 5106 files |
-| CWC | 86428201 |
+| All fork-specific LOC | 2713584 |
+| Upstream-owned fork LOC | 1554742 |
+| Fork-owned LOC | 1158842 |
+| UTR | 0.572948 |
+| Carry Surface | 5108 files |
+| CWC | 86432845 |
 
 LOC is added plus deleted lines relative to the frozen upstream tree.
 The `_docs/` tree (including these reports) is excluded to avoid
@@ -29,7 +29,7 @@ and 1 for tests, docs, workflows, and generated documentation.
 | hermes_state.py | 112 | 16238 | 2 | 3637312 |
 | hermes_cli/main.py | 73 | 15990 | 3 | 3501810 |
 | agent/auxiliary_client.py | 89 | 12876 | 3 | 3437892 |
-| hermes_cli/update_cmd.py | 85 | 11474 | 3 | 2925870 |
+| hermes_cli/update_cmd.py | 85 | 11471 | 3 | 2925105 |
 | agent/conversation_loop.py | 85 | 9624 | 3 | 2454120 |
 | agent/context_compressor.py | 82 | 9924 | 2 | 1627536 |
 | run_agent.py | 74 | 10201 | 2 | 1509748 |
@@ -40,7 +40,7 @@ and 1 for tests, docs, workflows, and generated documentation.
 | hermes_cli/models.py | 67 | 7722 | 2 | 1034748 |
 | gateway/slash_commands.py | 71 | 7095 | 2 | 1007490 |
 | hermes_cli/auth.py | 46 | 10823 | 2 | 995716 |
-| hermes_cli/gateway.py | 57 | 8320 | 2 | 948480 |
+| hermes_cli/gateway.py | 57 | 8322 | 2 | 948708 |
 | gateway/platforms/base.py | 36 | 8381 | 3 | 905148 |
 | tools/mcp_tool.py | 46 | 9369 | 2 | 861948 |
 | hermes_cli/kanban_db.py | 30 | 13923 | 2 | 835380 |
