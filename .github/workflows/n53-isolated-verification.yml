@@ -1,0 +1,79 @@
+name: N53 isolated upstream verification
+
+on:
+  push:
+    branches: [ci/n53-upstream-verification-20260928]
+    paths:
+      - .github/workflows/n53-isolated-verification.yml
+      - .n53-verification/**
+      - tests/hermes_cli/test_windows_update_pause_transaction.py
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: github.repository == 'zapabob/hermes-agent-windows'
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    env:
+      HERMES_HOME: ${{ runner.temp }}/n53-isolated-home
+      HERMES_RUNTIME_DIR: ${{ runner.temp }}/n53-isolated-runtime
+      PYTHONUTF8: '1'
+    steps:
+      - name: Checkout isolated verification branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Check immutable upstream parent and source blob
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 35272ce28b29bae90e9ecceff9def17ae791c012 HEAD
+          test "$(git hash-object hermes_cli/update_cmd_windows.py)" = d1f602f41c41e9e752a3af3067e79cf6c6f7f6e6
+          mkdir -p n53-evidence
+          git rev-parse HEAD > n53-evidence/verification-head.txt
+
+      - name: Set up pinned Python and independent test environment
+        uses: ./.github/actions/setup-pm
+        with:
+          extras: '["messaging"]'
+          test-environment: 'true'
+          prune-python-cache: true
+
+      - name: Native imports TDD regression and targeted mutation gates
+        shell: bash
+        run: python .n53-verification/verify.py
+
+      - name: Preserve verification evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: n53-windows-evidence-${{ github.sha }}
+          path: n53-evidence/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publish only the verified minimal candidate branch
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f n53-evidence/VERIFIED
+          python -c "from pathlib import Path; import hashlib; p=Path('hermes_cli/update_cmd_windows.py'); assert hashlib.sha256(p.read_bytes()).hexdigest()==Path('n53-evidence/VERIFIED').read_text().strip()"
+          target=fix/windows-pause-transaction-20260928
+          test -z "$(git ls-remote --heads origin "refs/heads/$target")"
+          worktree="$RUNNER_TEMP/n53-verified-candidate"
+          git worktree add --detach "$worktree" 35272ce28b29bae90e9ecceff9def17ae791c012
+          cp hermes_cli/update_cmd_windows.py "$worktree/hermes_cli/update_cmd_windows.py"
+          cp tests/hermes_cli/test_windows_update_pause_transaction.py "$worktree/tests/hermes_cli/test_windows_update_pause_transaction.py"
+          git -C "$worktree" add -- hermes_cli/update_cmd_windows.py tests/hermes_cli/test_windows_update_pause_transaction.py
+          git -C "$worktree" diff --cached --check
+          test "$(git -C "$worktree" diff --cached --name-only | wc -l | tr -d ' ')" = 2
+          git -C "$worktree" -c user.name=zapabob -c user.email=130830376+zapabob@users.noreply.github.com commit -m "fix(update): retain Windows pause recovery from the first side effect" -m "Preserve the existing socket, SCM and resume owners; prepare launchers and process incarnations before pause. Retain uncertain attempts and both failures when recovery fails. Native-host unit/regression and selected live-process evidence: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID. No installed Gateway update or full-suite claim."
+          git -C "$worktree" push origin "HEAD:refs/heads/$target"
+          git -C "$worktree" rev-parse HEAD
