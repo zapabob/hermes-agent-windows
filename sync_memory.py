@@ -1,35 +1,22 @@
-"""Compatibility import for the standalone memory synchronizer.
+import sqlite3
+import os
 
-The root module is retained for callers that used the pre-move import path.
-``run_sync`` is a small forwarding wrapper instead of a direct alias so the
-historical ``sync_memory._export_obsidian`` monkeypatch seam continues to
-control the implementation module during tests and integrations.
-"""
+db_path = os.path.expanduser('~/.hermes/ebbinghaus_memory.db')
+conn = sqlite3.connect(db_path)
+cur = conn.cursor()
 
-from scripts.standalone import sync_memory as _impl
+# Check table schema
+cur.execute('PRAGMA table_info(memories)')
+print('Table info:', cur.fetchall())
 
-_latest_started_at = _impl._latest_started_at
-_watermark_for_sources = _impl._watermark_for_sources
-load_index = _impl.load_index
-main = _impl.main
-save_index = _impl.save_index
-_export_obsidian = _impl._export_obsidian
+# Count total rows
+cur.execute('SELECT count(*) FROM memories')
+print('Total rows:', cur.fetchone())
 
+# Sample rows
+cur.execute('SELECT * FROM memories LIMIT 5')
+print('Sample rows:')
+for r in cur.fetchall():
+    print(r)
 
-def run_sync(*args, **kwargs):
-    _impl._export_obsidian = _export_obsidian
-    return _impl.run_sync(*args, **kwargs)
-
-__all__ = [
-    "_latest_started_at",
-    "_export_obsidian",
-    "_watermark_for_sources",
-    "load_index",
-    "main",
-    "run_sync",
-    "save_index",
-]
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+conn.close()

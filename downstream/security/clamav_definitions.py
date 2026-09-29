@@ -28,7 +28,13 @@ CLAMAV_DEFINITION_SUFFIXES = frozenset(
     }
 )
 CLAMAV_ARCHIVE_SUFFIXES = frozenset({".cvd", ".cld"})
+# freshclam stores detached CDN signatures for each database it downloads
+# (``<db>-<version>.cvd.sign``). They are updater bookkeeping, not detection
+# definitions, so they must be skipped rather than rejected as an unsupported
+# entry — otherwise every managed database directory looks malformed and the
+# ClamAV engine degrades to ``engine_error``.
 _UPDATER_STATE_NAMES = frozenset({"freshclam.dat"})
+_UPDATER_SIGNATURE_SUFFIXES = frozenset({".sign"})
 
 
 class DefinitionInventoryError(ValueError):
@@ -161,6 +167,8 @@ def inventory_clamav_definitions(
                 if entry.name.casefold() in _UPDATER_STATE_NAMES:
                     continue
                 suffix = path.suffix.casefold()
+                if suffix in _UPDATER_SIGNATURE_SUFFIXES:
+                    continue
                 if suffix not in CLAMAV_DEFINITION_SUFFIXES:
                     raise DefinitionInventoryError("unsupported_definition_entry")
                 if len(candidates) >= file_limit:

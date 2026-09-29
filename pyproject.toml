@@ -2,7 +2,7 @@
 
 [project]
 name = "hermes-agent"
-version = "0.21.3"
+version = "0.21.5"
 description = "The self-improving AI agent — creates skills from experience, improves them during use, and runs anywhere"
 readme = "README.md"
 # Upper bound is load-bearing, not cosmetic. uv resolves the project's
@@ -234,6 +234,11 @@ honcho = ["honcho-ai==2.2.0"]
 # can't break fresh installs.
 supermemory = ["supermemory==3.50.0"]
 mem0 = ["mem0ai==2.0.10"]
+# Optional store backend for the local Ebbinghaus memory plugin
+# (plugins.ebbinghaus.store_backend: hakua), lazy-installed via
+# tools/lazy_deps.py ("memory.hakua"). Same pin-sync and [all]-exclusion rules
+# as the cloud memory providers above.
+hakua-memory = ["hakua-memory==0.3.5"]
 # Image resize recovery for the vision tools. Pillow is now a CORE dependency
 # (see the main `dependencies` list above) since the byte/pixel shrink paths are on
 # the default vision-embed path and the mid-session lazy install deadlocked the

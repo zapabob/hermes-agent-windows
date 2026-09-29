@@ -9,6 +9,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from . import oauth_auth
+
 
 LOCAL_DEV_PROFILE = "local-dev"
 REMOTE_PROFILE = "remote"
@@ -277,7 +279,11 @@ import_hermes()
 
 
 def tool_meta(extra: dict[str, Any] | None = None) -> dict[str, Any]:
-    meta = dict(NOAUTH_META)
+    oauth_config = oauth_auth.config_from_env()
+    if oauth_config is not None:
+        meta = {"securitySchemes": [{"type": "oauth2", "scopes": [oauth_config.scope]}]}
+    else:
+        meta = dict(NOAUTH_META)
     if extra:
         meta.update(extra)
     return meta
@@ -444,7 +450,26 @@ def build_server(
 
     server = MCPServer("hermes-gpt")
     register_tools(server)
+    setattr(server, "_hermes_oauth_state", oauth_state_from_env())
     return server
+
+
+def hermes_data_root() -> Path:
+    if callable(get_hermes_home):
+        return Path(get_hermes_home())
+    configured_home = os.environ.get("HERMES_HOME")
+    return Path(configured_home).expanduser() if configured_home else Path.home() / ".hermes"
+
+
+def oauth_state_from_env() -> oauth_auth.OAuthState | None:
+    config = oauth_auth.config_from_env()
+    if config is None:
+        return None
+    state = oauth_auth.OAuthState(config)
+    root = hermes_data_root()
+    state.restore_tokens(root)
+    oauth_auth.set_persist_hook(lambda current, _kind: current.persist_tokens(root))
+    return state
 
 
 def register_tools(server: FastMCP) -> None:
@@ -508,11 +533,21 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit("Choose only one of --http or --sse.")
     unsafe_remote_noauth = args.unsafe_remote_ack and env_enabled(UNSAFE_REMOTE_ENV)
     network_transport = bool(args.http or args.sse)
+    if bool(args.cert) != bool(args.key):
+        raise SystemExit("TLS requires both --cert and --key.")
+    oauth_state = oauth_state_from_env() if args.profile == REMOTE_PROFILE else None
     if args.profile == REMOTE_PROFILE and not unsafe_remote_noauth:
-        raise SystemExit(
-            "Remote profile requires real authentication, which is not implemented yet. "
-            f"For temporary experiments only, pass {UNSAFE_REMOTE_ACK} and set {UNSAFE_REMOTE_ENV}=1."
-        )
+        if not args.http:
+            raise SystemExit("Authenticated remote profile requires Streamable HTTP (--http).")
+        if oauth_state is None:
+            raise SystemExit(
+                "Remote profile requires OAuth. Configure HERMES_GPT_OAUTH_ENABLE=1 and the "
+                "HERMES_GPT_OAUTH_* settings; unauthenticated exposure is refused."
+            )
+        if not oauth_state.config.issuer.startswith("https://"):
+            raise SystemExit("Remote OAuth requires an HTTPS issuer URL.")
+        if not is_loopback_host(args.host) and not args.cert:
+            raise SystemExit("Non-loopback remote binds require --cert and --key TLS.")
     if network_transport and args.profile == LOCAL_DEV_PROFILE and not is_loopback_host(args.host):
         if not unsafe_remote_noauth:
             raise SystemExit(
@@ -546,6 +581,10 @@ def main(argv: list[str] | None = None) -> int:
                 stateless_http=True,
                 json_response=True,
             )
+            if getattr(server, "_hermes_oauth_state", None) is not None:
+                from .oauth_asgi import build_oauth_http_app
+
+                app = build_oauth_http_app(app, server._hermes_oauth_state)
         else:
             app = server.sse_app(
                 host=args.host,

@@ -10,8 +10,8 @@ def register(ctx) -> None:
         setup_fn=register_cli,
         handler_fn=hermes_gpt_command,
         description=(
-            "Expose selected local Hermes Agent capabilities through a "
-            "local-dev MCP server with write, memory-write, terminal, and "
-            "session-search features gated by environment variables."
+            "Expose selected Hermes Agent capabilities through a local MCP "
+            "sidecar; remote Streamable HTTP requires OAuth 2.1/PKCE and HTTPS, "
+            "while write, memory-write, terminal, and session-search remain gated."
         ),
     )

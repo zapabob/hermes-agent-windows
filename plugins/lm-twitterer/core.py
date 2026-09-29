@@ -211,6 +211,9 @@ class Settings:
     memory_bridge_enabled: bool = True
     memory_db: Path | None = None
     memory_recall_limit: int = 5
+    # Posts already live in activity.jsonl; copying each one into the recall
+    # store crowds out first-hand memories, so write-back is opt-in.
+    memory_writeback_enabled: bool = False
 
 
 def bind_llm_factory(factory: Callable[[], Any]) -> None:
@@ -292,7 +295,33 @@ def settings() -> Settings:
             _env("LM_TWITTERER_MEMORY_DB", str(home / "ebbinghaus_memory.db"))
         ).expanduser(),
         memory_recall_limit=_int_env("LM_TWITTERER_MEMORY_RECALL_LIMIT", 5, minimum=0, maximum=20),
+        memory_writeback_enabled=_config_bool(_plugin_entry().get("memory_writeback"), False),
     )
+
+
+def _plugin_entry() -> dict[str, Any]:
+    """Return ``plugins.entries.lm-twitterer`` from config.yaml ({} when absent)."""
+    try:
+        from hermes_cli.config import load_config_readonly
+
+        config = load_config_readonly() or {}
+    except Exception:
+        return {}
+    plugins = config.get("plugins") if isinstance(config, dict) else None
+    entries = plugins.get("entries") if isinstance(plugins, dict) else None
+    entry = entries.get("lm-twitterer") if isinstance(entries, dict) else None
+    return entry if isinstance(entry, dict) else {}
+
+
+def _config_bool(value: Any, default: bool) -> bool:
+    if isinstance(value, bool):
+        return value
+    raw = str(value if value is not None else "").strip().lower()
+    if raw in {"1", "true", "yes", "y", "on"}:
+        return True
+    if raw in {"0", "false", "no", "n", "off"}:
+        return False
+    return default
 
 
 def _active_model_config() -> dict[str, str]:
@@ -639,6 +668,8 @@ def _with_memory_context(topic: str, cfg: Settings) -> str:
 
 
 def _remember_generated_post(text: str, cfg: Settings, *, dry_run: bool, topic: str) -> None:
+    if not cfg.memory_writeback_enabled:
+        return
     db_path = _memory_db_path(cfg)
     if db_path is None or not db_path.exists() or not text.strip():
         return
@@ -1876,6 +1907,7 @@ def status() -> dict[str, Any]:
         "memory_db": str(cfg.memory_db) if cfg.memory_db else "",
         "memory_db_exists": bool(cfg.memory_db and cfg.memory_db.exists()),
         "memory_recall_limit": cfg.memory_recall_limit,
+        "memory_writeback_enabled": cfg.memory_writeback_enabled,
     }
 
 

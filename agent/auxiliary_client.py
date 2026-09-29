@@ -1240,23 +1240,6 @@ _NOUS_MODEL = "google/gemini-3.6-flash"
 _NOUS_DEFAULT_BASE_URL = "https://inference-api.nousresearch.com/v1"
 _ANTHROPIC_DEFAULT_BASE_URL = "https://api.anthropic.com"
 _AUTH_JSON_PATH = get_hermes_home() / "auth.json"
-_AUTH_JSON_PATH_AT_IMPORT = _AUTH_JSON_PATH
-
-
-def _auth_json_path():
-    """Active profile's ``auth.json`` at call time (a patched ``_AUTH_JSON_PATH`` still wins).
-
-    The import-time constant is the LAUNCH profile's; under multiplexing a
-    secondary's auxiliary calls would otherwise authenticate to Nous with the
-    default profile's token.
-    """
-    from hermes_cli.auth import _auth_file_path
-
-    return (
-        _AUTH_JSON_PATH
-        if _AUTH_JSON_PATH != _AUTH_JSON_PATH_AT_IMPORT
-        else _auth_file_path()
-    )
 
 # Codex OAuth endpoint used when a caller explicitly requests
 # provider="openai-codex".  There is deliberately no hardcoded default
@@ -1564,7 +1547,7 @@ def _nous_min_key_ttl_seconds() -> int:
 
 
 def _scoped_key_env(name: str) -> str:
-    """Read a provider API key (or its paired base-URL) env var through the profile secret scope.
+    """Read a provider API key env var through the profile secret scope.
 
     Auxiliary-client resolution runs both inside agent turns (secret scope
     installed — its verdict is authoritative under multiplex, so a scoped
@@ -2666,10 +2649,9 @@ def _read_nous_auth() -> Optional[dict]:
         }
 
     try:
-        auth_path = _auth_json_path()
-        if not auth_path.is_file():
+        if not _AUTH_JSON_PATH.is_file():
             return None
-        data = json.loads(auth_path.read_text(encoding="utf-8-sig"))
+        data = json.loads(_AUTH_JSON_PATH.read_text(encoding="utf-8-sig"))
         if data.get("active_provider") != "nous":
             return None
         provider = data.get("providers", {}).get("nous", {})
@@ -2704,7 +2686,7 @@ def _nous_api_key(provider: dict) -> str:
 
 def _nous_base_url() -> str:
     """Resolve the Nous inference base URL from env or default."""
-    return _scoped_key_env("NOUS_INFERENCE_BASE_URL") or _NOUS_DEFAULT_BASE_URL
+    return os.getenv("NOUS_INFERENCE_BASE_URL", _NOUS_DEFAULT_BASE_URL)
 
 
 def _resolve_nous_pool_runtime_api(*, force_refresh: bool = False) -> Optional[tuple[str, str]]:
@@ -2817,8 +2799,8 @@ def _resolve_xai_oauth_for_aux() -> Optional[Tuple[str, str]]:
                     or ""
                 ).strip()
                 base_url = _xai_validate_inference_base_url(
-                    _scoped_key_env("HERMES_XAI_BASE_URL").rstrip("/")
-                    or _scoped_key_env("XAI_BASE_URL").rstrip("/")
+                    os.getenv("HERMES_XAI_BASE_URL", "").strip().rstrip("/")
+                    or os.getenv("XAI_BASE_URL", "").strip().rstrip("/")
                     or str(getattr(entry, "runtime_base_url", None) or "")
                     .strip()
                     .rstrip("/")
@@ -3797,9 +3779,7 @@ def _resolve_custom_runtime() -> Tuple[Optional[str], Optional[str], Optional[st
         runtime = None
 
     if not isinstance(runtime, dict):
-        # Base URL is per-profile like the key one line below (a scoped key
-        # must not hit the default's proxy).
-        openai_base = _scoped_key_env("OPENAI_BASE_URL").rstrip("/")
+        openai_base = os.getenv("OPENAI_BASE_URL", "").strip().rstrip("/")
         openai_key = _scoped_key_env("OPENAI_API_KEY")
         if not openai_base:
             return None, None, None
@@ -6301,7 +6281,7 @@ def _resolve_auto_route(
     #    scenario where a user switches providers via `hermes model` but the
     #    old OPENAI_BASE_URL lingers in ~/.hermes/.env. ──
     if not _stale_base_url_warned:
-        _env_base = _scoped_key_env("OPENAI_BASE_URL")
+        _env_base = os.getenv("OPENAI_BASE_URL", "").strip()
         _cfg_provider = runtime_provider or _read_main_provider()
         if (
             _env_base
@@ -8609,7 +8589,7 @@ def _expand_direct_api_alias(
     return (
         "custom",
         existing_base
-        or _scoped_key_env("OPENAI_BASE_URL").rstrip("/")
+        or os.getenv("OPENAI_BASE_URL", "").strip().rstrip("/")
         or target_base,
     )
 
@@ -8644,7 +8624,6 @@ def _resolve_task_provider_model(
     model: str = None,
     base_url: Optional[str] = None,
     api_key: Optional[str] = None,
-    *, expected_route: Optional[Tuple[str, str]] = None,
 ) -> Tuple[str, Optional[str], Optional[str], Optional[str], Optional[str]]:
     """Determine provider + model for a call.
 
@@ -8659,8 +8638,6 @@ def _resolve_task_provider_model(
     auth, transport, and request-shaping behavior still apply. api_mode is one
     of "chat_completions", "codex_responses", or None (auto-detect).
     """
-    if expected_route is not None and not task:
-        raise ValueError("expected_route requires an auxiliary task")
     cfg_provider = None
     cfg_model = None
     cfg_base_url = None
@@ -8669,15 +8646,6 @@ def _resolve_task_provider_model(
 
     if task:
         task_config = _get_auxiliary_task_config(task)
-        if expected_route is not None:
-            if (type(expected_route) is not tuple or len(expected_route) != 2
-                    or not all(isinstance(x, str) and x.strip() for x in expected_route)
-                    or provider is not None or model is not None or base_url is not None or api_key is not None):
-                raise ValueError("expected_route requires a task and no routing overrides")
-            selected = (str(task_config.get("provider", "")).strip(),
-                        str(task_config.get("model", "")).strip())
-            if selected != expected_route:
-                raise RuntimeError("Selected auxiliary route changed before inference")
         cfg_provider = str(task_config.get("provider", "")).strip() or None
         cfg_model = str(task_config.get("model", "")).strip() or None
         cfg_base_url = str(task_config.get("base_url", "")).strip() or None
@@ -9952,12 +9920,8 @@ def call_llm(
     stream: bool = False,
     stream_options: dict = None,
     route_info: Optional[Dict[str, str]] = None,
-    allow_fallback: bool = True,
-    expected_route: Optional[Tuple[str, str]] = None,
 ) -> Any:
     """Run an auxiliary LLM request, applying the configured task limit."""
-    if type(allow_fallback) is not bool:
-        raise ValueError("allow_fallback must be a boolean")
     semaphore = _acquire_sync_aux_semaphore(task)
     if semaphore is not None:
         semaphore.acquire()
@@ -9981,8 +9945,6 @@ def call_llm(
             stream=stream,
             stream_options=stream_options,
             route_info=route_info,
-            allow_fallback=allow_fallback,
-            expected_route=expected_route,
         )
         if stream and semaphore is not None:
             stream_semaphore = semaphore
@@ -9992,7 +9954,6 @@ def call_llm(
     finally:
         if semaphore is not None:
             semaphore.release()
-
 
 
 def _release_sync_semaphore_after_stream(
@@ -10030,8 +9991,6 @@ def _call_llm_impl(
     stream: bool = False,
     stream_options: dict = None,
     route_info: Optional[Dict[str, str]] = None,
-    allow_fallback: bool = True,
-    expected_route: Optional[Tuple[str, str]] = None,
 ) -> Any:
     """Centralized synchronous LLM call.
 
@@ -10075,31 +10034,13 @@ def _call_llm_impl(
     # and fallbacks. Reading ambient state independently in each phase lets a
     # concurrent /model switch produce a key for one runtime and a client for
     # another.
-    if type(allow_fallback) is not bool:
-        raise ValueError("allow_fallback must be a boolean")
-    try:
-        from downstream.delegation.inference_port import active_inference_port
-
-        if active_inference_port() is not None:
-            raise RuntimeError(
-                "Auxiliary model calls are disabled during parent-owned delegation."
-            )
-    except ImportError:
-        pass
     main_runtime = _normalize_main_runtime(main_runtime)
     resolved_provider, resolved_model, resolved_base_url, resolved_api_key, resolved_api_mode = _resolve_task_provider_model(
-        task, provider, model, base_url, api_key,
-        **({"expected_route": expected_route} if expected_route is not None else {}))
+        task, provider, model, base_url, api_key)
     if api_mode:
         resolved_api_mode = api_mode
-    if not allow_fallback and (not resolved_model or resolved_provider in {None, "", "auto"}):
-        raise RuntimeError("Strict auxiliary routing requires an explicit provider and model")
     effective_extra_body = _get_task_extra_body(task)
     effective_extra_body.update(extra_body or {})
-    if not allow_fallback and set(effective_extra_body) & {
-        "model", "provider", "base_url", "api_key", "headers", "authorization", "messages", "tools"
-    }:
-        raise ValueError("Strict routing forbids authority fields in extra_body")
     effective_provider = resolved_provider
 
     if task == "vision":
@@ -10111,7 +10052,7 @@ def _call_llm_impl(
             async_mode=False,
             main_runtime=main_runtime,
         )
-        if allow_fallback and client is None and resolved_provider != "auto" and not resolved_base_url:
+        if client is None and resolved_provider != "auto" and not resolved_base_url:
             logger.warning(
                 "Vision provider %s unavailable, falling back to auto vision backends",
                 resolved_provider,
@@ -10123,8 +10064,6 @@ def _call_llm_impl(
                 main_runtime=main_runtime,
             )
         if client is None:
-            if not allow_fallback:
-                raise RuntimeError("Strict auxiliary route is unavailable; no alternate route was attempted")
             raise RuntimeError(
                 f"No LLM provider configured for task={task} provider={resolved_provider}. "
                 f"Run: hermes setup"
@@ -10144,8 +10083,6 @@ def _call_llm_impl(
             client, resolved_provider,
         )
         if client is None:
-            if not allow_fallback:
-                raise RuntimeError("Strict auxiliary route is unavailable; no alternate route was attempted")
             # When the user explicitly chose a non-OpenRouter provider but no
             # credentials were found, honor the task fallback_chain before
             # raising.  Missing raw env keys are recoverable for auxiliary
@@ -10181,8 +10118,6 @@ def _call_llm_impl(
                     client, "auto",
                 )
         if client is None:
-            if not allow_fallback:
-                raise RuntimeError("Strict auxiliary route is unavailable; no alternate route was attempted")
             raise RuntimeError(
                 f"No LLM provider configured for task={task} provider={resolved_provider}. "
                 f"Run: hermes setup"
@@ -10343,10 +10278,6 @@ def _call_llm_impl(
             # Retries exhausted — fall through to first_err fallback handling.
             raise _last_transient
     except Exception as first_err:
-        if not allow_fallback:
-            # Pinned workflow roles are not a request for automatic promotion.
-            # Keep the legacy provider/model recovery chain below opt-in here.
-            raise
         if "temperature" in kwargs and _is_unsupported_temperature_error(first_err):
             retry_kwargs = dict(kwargs)
             retry_kwargs.pop("temperature", None)
@@ -10841,7 +10772,6 @@ def _call_llm_impl(
         raise
 
 
-
 def extract_content_or_reasoning(response) -> str:
     """Extract content from an LLM response, falling back to reasoning fields.
 
@@ -10917,12 +10847,8 @@ async def async_call_llm(
     extra_body: dict = None,
     reasoning_config: Optional[dict] = None,
     route_info: Optional[Dict[str, str]] = None,
-    allow_fallback: bool = True,
-    expected_route: Optional[Tuple[str, str]] = None,
 ) -> Any:
     """Run an asynchronous auxiliary LLM request under the configured limit."""
-    if type(allow_fallback) is not bool:
-        raise ValueError("allow_fallback must be a boolean")
     semaphore = _acquire_async_aux_semaphore(task)
     if semaphore is not None:
         await semaphore.acquire()
@@ -10942,13 +10868,10 @@ async def async_call_llm(
             extra_body=extra_body,
             reasoning_config=reasoning_config,
             route_info=route_info,
-            allow_fallback=allow_fallback,
-            expected_route=expected_route,
         )
     finally:
         if semaphore is not None:
             semaphore.release()
-
 
 
 async def _async_call_llm_impl(
@@ -10967,8 +10890,6 @@ async def _async_call_llm_impl(
     extra_body: dict = None,
     reasoning_config: Optional[dict] = None,
     route_info: Optional[Dict[str, str]] = None,
-    allow_fallback: bool = True,
-    expected_route: Optional[Tuple[str, str]] = None,
 ) -> Any:
     """Centralized asynchronous LLM call.
 
@@ -10976,20 +10897,11 @@ async def _async_call_llm_impl(
     """
     # Keep every async phase on the same runtime identity, even if another
     # session switches models while this task is awaiting network I/O.
-    if type(allow_fallback) is not bool:
-        raise ValueError("allow_fallback must be a boolean")
     main_runtime = _normalize_main_runtime(main_runtime)
     resolved_provider, resolved_model, resolved_base_url, resolved_api_key, resolved_api_mode = _resolve_task_provider_model(
-        task, provider, model, base_url, api_key,
-        **({"expected_route": expected_route} if expected_route is not None else {}))
-    if not allow_fallback and (not resolved_model or resolved_provider in {None, "", "auto"}):
-        raise RuntimeError("Strict auxiliary routing requires an explicit provider and model")
+        task, provider, model, base_url, api_key)
     effective_extra_body = _get_task_extra_body(task)
     effective_extra_body.update(extra_body or {})
-    if not allow_fallback and set(effective_extra_body) & {
-        "model", "provider", "base_url", "api_key", "headers", "authorization", "messages", "tools"
-    }:
-        raise ValueError("Strict routing forbids authority fields in extra_body")
     effective_provider = resolved_provider
 
     if task == "vision":
@@ -11001,7 +10913,7 @@ async def _async_call_llm_impl(
             async_mode=True,
             main_runtime=main_runtime,
         )
-        if allow_fallback and client is None and resolved_provider != "auto" and not resolved_base_url:
+        if client is None and resolved_provider != "auto" and not resolved_base_url:
             logger.warning(
                 "Vision provider %s unavailable, falling back to auto vision backends",
                 resolved_provider,
@@ -11013,8 +10925,6 @@ async def _async_call_llm_impl(
                 main_runtime=main_runtime,
             )
         if client is None:
-            if not allow_fallback:
-                raise RuntimeError("Strict auxiliary route is unavailable; no alternate route was attempted")
             raise RuntimeError(
                 f"No LLM provider configured for task={task} provider={resolved_provider}. "
                 f"Run: hermes setup"
@@ -11035,8 +10945,6 @@ async def _async_call_llm_impl(
             client, resolved_provider,
         )
         if client is None:
-            if not allow_fallback:
-                raise RuntimeError("Strict auxiliary route is unavailable; no alternate route was attempted")
             _explicit = (resolved_provider or "").strip().lower()
             if _explicit and _explicit not in {"auto", "openrouter", "custom"}:
                 fb_client, fb_model, fb_label = _try_configured_fallback_for_unavailable_client(
@@ -11067,8 +10975,6 @@ async def _async_call_llm_impl(
                     client, "auto",
                 )
         if client is None:
-            if not allow_fallback:
-                raise RuntimeError("Strict auxiliary route is unavailable; no alternate route was attempted")
             raise RuntimeError(
                 f"No LLM provider configured for task={task} provider={resolved_provider}. "
                 f"Run: hermes setup"
@@ -11152,10 +11058,6 @@ async def _async_call_llm_impl(
                 ),
                 task)
     except Exception as first_err:
-        if not allow_fallback:
-            # Pinned workflow roles are not a request for automatic promotion.
-            # Keep the legacy provider/model recovery chain below opt-in here.
-            raise
         if "temperature" in kwargs and _is_unsupported_temperature_error(first_err):
             retry_kwargs = dict(kwargs)
             retry_kwargs.pop("temperature", None)

@@ -12,7 +12,14 @@ from types import SimpleNamespace
 import pytest
 
 from plugins.hermes_gpt import register, server
+from plugins.hermes_gpt import oauth_auth
+from plugins.hermes_gpt.oauth_asgi import build_oauth_http_app
 from plugins.hermes_gpt.cli import hermes_gpt_command
+from starlette.applications import Starlette
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+from starlette.routing import Route
+from starlette.testclient import TestClient
 
 
 GATE_ENVS = [
@@ -21,6 +28,11 @@ GATE_ENVS = [
     server.ENABLE_SESSION_SEARCH_ENV,
     server.ENABLE_TERMINAL_ENV,
     server.UNSAFE_REMOTE_ENV,
+    oauth_auth.OAUTH_ENABLE_ENV,
+    oauth_auth.OAUTH_ISSUER_ENV,
+    oauth_auth.OAUTH_CLIENT_ID_ENV,
+    oauth_auth.OAUTH_CLIENT_SECRET_ENV,
+    oauth_auth.OAUTH_REDIRECT_URI_ENV,
 ]
 
 
@@ -163,8 +175,151 @@ def test_remote_profile_requires_explicit_unsafe_ack(monkeypatch):
     clear_gate_envs(monkeypatch)
     monkeypatch.setattr(sys, "argv", ["server.py", "--http", "--profile", "remote"])
 
-    with pytest.raises(SystemExit, match="Remote profile requires real authentication"):
+    with pytest.raises(SystemExit, match="Remote profile requires OAuth"):
         server.main()
+
+
+def test_oauth_config_advertises_oauth_security_scheme(monkeypatch):
+    clear_gate_envs(monkeypatch)
+    monkeypatch.setenv(oauth_auth.OAUTH_ENABLE_ENV, "1")
+    monkeypatch.setenv(oauth_auth.OAUTH_ISSUER_ENV, "https://mcp.example.test")
+    monkeypatch.setenv(oauth_auth.OAUTH_CLIENT_ID_ENV, "chatgpt-client")
+    monkeypatch.setenv(
+        oauth_auth.OAUTH_CLIENT_SECRET_ENV,
+        "test-client-secret-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    )
+    monkeypatch.setenv(
+        oauth_auth.OAUTH_REDIRECT_URI_ENV,
+        "https://chatgpt.com/connector/oauth/callback",
+    )
+
+    built = server.build_server()
+
+    assert all(
+        tool.meta == {"securitySchemes": [{"type": "oauth2", "scopes": ["hermes"]}]}
+        for tool in tools_by_name(built).values()
+    )
+
+
+def test_oauth_asgi_protects_mcp_and_serves_discovery():
+    state = oauth_auth.OAuthState(
+        oauth_auth.OAuthConfig(
+            issuer="https://mcp.example.test",
+            client_id="chatgpt-client",
+            client_secret="test-client-secret-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+            redirect_uris=("https://chatgpt.com/connector/oauth/callback",),
+            scope="hermes",
+        )
+    )
+
+    async def mcp_endpoint(_request: Request):
+        return JSONResponse({"ok": True})
+
+    app = build_oauth_http_app(
+        Starlette(routes=[Route("/mcp", mcp_endpoint, methods=["GET"])]),
+        state,
+    )
+
+    with TestClient(app) as client:
+        discovery = client.get("/.well-known/oauth-protected-resource")
+        denied = client.get("/mcp")
+
+    assert discovery.status_code == 200
+    assert discovery.json()["authorization_servers"] == ["https://mcp.example.test"]
+    assert denied.status_code == 401
+    assert "resource_metadata" in denied.headers["www-authenticate"]
+
+
+def test_oauth_wraps_the_real_mcp_streamable_http_app(monkeypatch, tmp_path):
+    import base64
+    import hashlib
+    import secrets
+    import urllib.parse
+
+    clear_gate_envs(monkeypatch)
+    monkeypatch.setenv(oauth_auth.OAUTH_ENABLE_ENV, "1")
+    monkeypatch.setenv(oauth_auth.OAUTH_ISSUER_ENV, "https://mcp.example.test")
+    monkeypatch.setenv(oauth_auth.OAUTH_CLIENT_ID_ENV, "chatgpt-client")
+    monkeypatch.setenv(
+        oauth_auth.OAUTH_CLIENT_SECRET_ENV,
+        "test-client-secret-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    )
+    monkeypatch.setenv(
+        oauth_auth.OAUTH_REDIRECT_URI_ENV,
+        "https://chatgpt.com/connector/oauth/callback",
+    )
+    monkeypatch.setattr(server, "hermes_data_root", lambda: tmp_path)
+    built = server.build_server(host="127.0.0.1", port=7777, http=True)
+    raw_app = built.streamable_http_app(
+        host="127.0.0.1",
+        streamable_http_path="/mcp",
+        stateless_http=True,
+        json_response=True,
+    )
+    app = build_oauth_http_app(raw_app, built._hermes_oauth_state)
+
+    with TestClient(app) as client:
+        metadata = client.get("/.well-known/oauth-authorization-server")
+        unauthorized = client.post("/mcp", json={"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
+        verifier = secrets.token_urlsafe(48)
+        challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode("ascii")).digest()).rstrip(b"=").decode("ascii")
+        authorization = client.get(
+            "/oauth/authorize",
+            params={
+                "response_type": "code",
+                "client_id": "chatgpt-client",
+                "redirect_uri": "https://chatgpt.com/connector/oauth/callback",
+                "scope": "hermes openid offline_access",
+                "resource": "https://mcp.example.test/mcp",
+                "code_challenge": challenge,
+                "code_challenge_method": "S256",
+                "state": "test-state",
+            },
+            follow_redirects=False,
+        )
+        auth_query = urllib.parse.parse_qs(urllib.parse.urlparse(authorization.headers["location"]).query)
+        token_response = client.post(
+            "/oauth/token",
+            data={
+                "grant_type": "authorization_code",
+                "client_id": "chatgpt-client",
+                "client_secret": "test-client-secret-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+                "code": auth_query["code"][0],
+                "redirect_uri": "https://chatgpt.com/connector/oauth/callback",
+                "code_verifier": verifier,
+            },
+        )
+        authenticated = client.post(
+            "/mcp",
+            json={"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
+            headers={"Authorization": f"Bearer {token_response.json()['access_token']}"},
+        )
+    access_token = token_response.json()["access_token"]
+
+    restarted = server.build_server(host="127.0.0.1", port=7777, http=True)
+    restarted_raw_app = restarted.streamable_http_app(
+        host="127.0.0.1",
+        streamable_http_path="/mcp",
+        stateless_http=True,
+        json_response=True,
+    )
+    restarted_app = build_oauth_http_app(restarted_raw_app, restarted._hermes_oauth_state)
+    with TestClient(restarted_app) as client:
+        restored = client.post(
+            "/mcp",
+            json={"jsonrpc": "2.0", "id": 3, "method": "tools/list"},
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+    assert metadata.status_code == 200
+    assert metadata.json()["authorization_endpoint"] == "https://mcp.example.test/oauth/authorize"
+    assert unauthorized.status_code == 401
+    assert "resource_metadata" in unauthorized.headers["www-authenticate"]
+    assert authorization.status_code == 302
+    assert auth_query["state"] == ["test-state"]
+    assert token_response.status_code == 200
+    assert authenticated.status_code != 401
+    assert restored.status_code != 401
 
 
 def test_local_dev_http_rejects_non_loopback_without_unsafe_ack(monkeypatch):

@@ -35,6 +35,14 @@ packetを渡す前にIntegratorは、実HEAD、`git status --porcelain=v1 -uall`
 
 T20-liveの入口は、T04 human-once operation承認、T06有用な資格情報遮断、T07 terminal response、T09実catalogue、T10 active admission、T11 network契約、T12 trusted receipt chain、T19 authoritative UI、関連T17 P0とT15/T16 security gate、独立security reviewが同じ統合sourceで成立することを要する。MCP resourceのread権限とwrite権限、server capabilityと実client entitlementは別に判定する。ChatGPT/Codexの実clientがwrite非対応なら `BLOCKED_CLIENT_CAPABILITY` とし、read成功で書込みを代替しない。endpoint、tunnel、AppContainer profile作成、稼働runtimeの再起動、配備は具体的対象への別承認を守る。
 
+### F01 / LM03 owner trace — 2026-09-25 read-only result
+
+既存 `tools/approval.py` のcontrol decisionは、operation・intent digest・subject・client registration・resource・MCP grant revision・profile/workspace・expiry・descriptionを結び、trusted local TUI resolverがonce/denyだけを発行する。消費側は同一のin-process decision object、binding一致、一回消費を要求する。legacy FIFO/request-id/allとdelivery ACKはstrict decisionを承認できない。このobject identityはin-process safeguardであり、署名やprocess isolationではない。TUI RPCはlive session/transport ownerを確認するが、同一transportのsession generation再利用をテストしていない。
+
+現在の `grant_revision` はMCP HostGrant policyだけを表し、Engineering Routerの実route/provider policy revisionではない。`expected_revision` とcaller source SHAはrequest digestに入るだけで、現source・routeとの一致は証明しない。`EngineeringRunOwner.validate_intent` は注入可能な境界だが、非testのCoordinator/Owner構築箇所は見つからず、MCP startup/serviceはread-onlyのままである。read `producer_epoch` は承認owner epochに流用しない。restart時の `PENDING_APPROVAL` はRAM上のticketが失われてもpendingに残り、idempotent replayが新しい人間promptを出さないため、実行はfail-closedでもoperationが期限まで滞留し得る。
+
+次のLM03実装へ進む前に、IntegratorはMCP grant revisionと独立した実route/provider policy revision、同意前からnative dispatch完了まで不変なapproval owner epoch、restart・revocation・idempotent replay時のpending ticket invalidation/re-prompt規則を定義する。人間の承認画面はprofile/workspace、subject/client、resource、完全なtask/args、source identity/digest、実route/provider/check-set、policy/owner revision、期限を表示し、長文を切り詰める場合は隠れたsuffixを承認可能にせず完全確認へ導く。secretそのものは表示・永続化せず、承認対象へ渡さない。once消費後かつnative effect直前に、実sourceと実route policyをtrusted host ownerが再検証し、変更・失効・epoch更新ならdispatchしない。MCP control readsとwrite=falseは実client/native gates完了まで維持する。これらを横断するLM03の共有owner/journal/UI接続はIntegrator所有とし、独立workerに分割編集させない。
+
 ## 3. Luna Max実装packet台帳
 
 次表の一行を最大一件のLuna Max assignmentとする。RVは改訂ZIPの `ACCEPTANCE_SUPPLEMENT.json` にある正確なsetup/action/expected/required_mutantへ対応する。表のテストpathは提案であって現HEADの存在証明ではない。開始時に実node IDへbindする。既存同等なら製品変更を省き、mutantを含む同等性receiptだけを提出する。各行の「入口」が満たされないときはread-only調査までとし、実装や公開を進めない。
@@ -42,9 +50,9 @@ T20-liveの入口は、T04 human-once operation承認、T06有用な資格情報
 | packet | F / RV | 単一契約・成果 | 入口・owner |
 | --- | --- | --- | --- |
 | LM00 | F00 / RV01 | B/R0/R1/Uとlegacy-only objectの完全性、欠落時 `HISTORY_INCOMPLETE` | Integrator inventory owner。現helperへbind |
-| LM01 | F00 / RV02 | HEADとfixed source scopeの変化でfreshness receiptを拒否 | Integrator ledger ownerがfreshness bindingだけを作成・検証。familyの意味判断・署名・write authorityは持たない |
+| LM01 | F00 / RV02 | HEADとfixed source scopeの変化でfreshness receiptを拒否 | 実装・独立review済み。Integrator ledger ownerだけが現在repoから直前captureしたbindingを渡して検証する。原子的reparse耐性・編集lease・familyの意味判断・署名・write authorityは含めない |
 | LM02 | F00 / RV03 | inventory SQLite接続を成功/例外で閉じtemp dirを残さない | 実装同等性を確認。test commit `17e684bb281bc5c9e38d136209ee3f41ec3a2ed4` の2ケースと `closing` 除去mutantで検証済み |
-| LM03 | F01 / RV04 | principal/client/profile/resource/args/source/policy/epoch/nonce束縛と偽承認否定 | AUTH。既存 `tools/approval.py` とjournalの境界をtrace |
+| LM03 | F01 / RV04 | principal/client/profile/resource/args/source/policy/epoch/nonce束縛と偽承認否定 | AUTH。read-only owner trace完了。Integratorがgrant revisionと別の実route/provider policy revision、承認owner epoch、restart/replay semanticsを先に定義し、実UI表示とnative dispatch直前のtrusted再検証まで接続する |
 | LM04 | F01 / RV05 | 二client競合でもoperationのonce consumeは一回 | AUTH→Integrator journal共有接続。LM03後 |
 | LM05 | F01 / RV06 | scratch executeとdestination applyの承認を分離 | AUTH契約後、apply ownerはIntegrator。T12と合流 |
 | LM06 | F02 / RV07 | 子・補助推論・圧縮でsecret resolver/client/tokenを渡さない | PROVIDER。既存T05を再利用、共有delegate変更はIntegrator |

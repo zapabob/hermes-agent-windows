@@ -202,6 +202,11 @@ LAZY_DEPS: dict[str, tuple[str, ...]] = {
     # instance and the provider silently reports itself unavailable.
     "memory.supermemory": ("supermemory==3.50.0",),
     "memory.mem0": ("mem0ai==2.0.10",),
+    # Optional store backend for the local Ebbinghaus plugin
+    # (plugins.ebbinghaus.store_backend: hakua). Only bump to a release whose
+    # Ebbinghaus schema is identical to the builtin store's; otherwise the
+    # plugin's schema guard refuses it and silently stays on builtin.
+    "memory.hakua": ("hakua-memory==0.3.5",),
 
     # ─── Messaging platforms (lazy-installable on demand) ──────────────────
     "platform.telegram": ("python-telegram-bot[webhooks]==22.8",),

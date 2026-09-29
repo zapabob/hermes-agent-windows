@@ -24,7 +24,7 @@ import re
 import ssl
 import sys
 import time
-from typing import Any, Dict, List, Optional, overload
+from typing import Any, Dict, List, Optional
 
 from agent.codex_responses_adapter import _summarize_user_message_for_log
 from agent.conversation_compression import (
@@ -126,24 +126,6 @@ RUN_BUDGET_WRAPUP_NOTICE = (
     "now. Produce the required final deliverable (answer/JSON/summary) from "
     "the state you already have, completing only mandatory writes."
 )
-
-
-def emit_provider_retry_wait_notice(
-    agent: Any,
-    wait_time: float,
-    retry_count: int,
-    max_retries: int,
-) -> None:
-    """Name a provider backoff on the live status line (SR-007a).
-
-    Buffered retry status only replays when every attempt fails; during the
-    wait itself Desktop/CLI otherwise show an anonymous spinner. The wait
-    notice is transient (rewritten by the next frame, cleared on recovery).
-    """
-    agent._emit_wait_notice(
-        f"⏳ waiting on provider — retrying in {wait_time:.0f}s "
-        f"(attempt {retry_count}/{max_retries})"
-    )
 
 
 def _midturn_request_pressure_tokens(
@@ -932,8 +914,6 @@ def _print_billing_or_entitlement_guidance(
 
 def _try_refresh_nous_paid_entitlement_credentials(agent) -> bool:
     """Refresh Nous runtime credentials after a fresh paid-entitlement check."""
-    if getattr(agent, "_inference_port", None) is not None:
-        return False
     try:
         from hermes_cli.nous_account import get_nous_portal_account_info
 
@@ -1553,15 +1533,12 @@ def _compression_deferred_result(
     agent,
     messages: List[Dict],
     api_call_count: int,
-    *,
-    reason: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Build the soft turn result for a lock-contended or transiently-blocked compression defer.
+    """Build the soft turn result for a lock-contended compression defer.
 
     Another path (a sibling turn, a background review fork, a manual
-    ``/compress``) holds this session's compression lock, or a transient guard
-    delayed it, so every compression pass this turn no-oped and the request still
-    does not fit.
+    ``/compress``) holds this session's compression lock, so every
+    compression pass this turn no-oped and the request still does not fit.
     This is a TEMPORARY condition — the lock winner is actively shrinking
     the same session — so the turn must end as a soft defer
     (``compression_deferred``), never as ``compression_exhausted``: the
@@ -1573,34 +1550,22 @@ def _compression_deferred_result(
     branch) and retry-next-message semantics apply.
     """
     holder = getattr(agent, "_compression_skipped_due_to_lock", None)
-    if reason == "transient_block":
-        logger.info(
-            "turn deferred: compression blocked transiently "
-            "(session=%s) — not counting as compression exhaustion",
-            agent.session_id or "none",
-        )
-        _final = (
-            "Context compression is temporarily delayed for this session. "
-            "Please retry in a moment — your next message will be processed "
-            "once the cooldown expires."
-        )
-    else:
-        logger.info(
-            "turn deferred: compression lock held by another path "
-            "(session=%s holder=%s) — not counting as compression exhaustion",
-            agent.session_id or "none",
-            holder if isinstance(holder, str) else "unconfirmed",
-        )
-        _final = (
-            "Context compression is already running for this session. "
-            "Please retry in a moment — your next message will be processed "
-            "once the concurrent compression finishes."
-        )
+    logger.info(
+        "turn deferred: compression lock held by another path "
+        "(session=%s holder=%s) — not counting as compression exhaustion",
+        agent.session_id or "none",
+        holder if isinstance(holder, str) else "unconfirmed",
+    )
     try:
         agent._flush_status_buffer()
     except Exception:
         pass
-    res = {
+    _final = (
+        "Context compression is already running for this session. "
+        "Please retry in a moment — your next message will be processed "
+        "once the concurrent compression finishes."
+    )
+    return {
         "final_response": _final,
         "messages": messages,
         "completed": False,
@@ -1611,9 +1576,6 @@ def _compression_deferred_result(
         "compression_deferred": True,
         "session_id": agent.session_id,
     }
-    if reason:
-        res["compression_deferred_reason"] = reason
-    return res
 
 
 def _rewrite_system_content_blocks(system_message: dict, effective: str) -> bool:
@@ -1710,28 +1672,6 @@ def _peel_moa_guidance(
     from agent.moa_loop import peel_reference_guidance
 
     return peel_reference_guidance(messages, guidance)
-
-
-@overload
-def _redecorate_prompt_cache_for_provider(
-    agent,
-    api_messages: List[Dict[str, Any]],
-    *,
-    system_message=None,
-    moa_prepared: Optional[Dict[str, Any]] = None,
-    tools_for_api: None = None,
-) -> tuple[List[Dict[str, Any]], Optional[Dict[str, Any]]]: ...
-
-
-@overload
-def _redecorate_prompt_cache_for_provider(
-    agent,
-    api_messages: List[Dict[str, Any]],
-    *,
-    system_message=None,
-    moa_prepared: Optional[Dict[str, Any]] = None,
-    tools_for_api: List[Dict[str, Any]],
-) -> tuple[List[Dict[str, Any]], Optional[Dict[str, Any]], List[Dict[str, Any]]]: ...
 
 
 def _redecorate_prompt_cache_for_provider(
@@ -3230,17 +3170,15 @@ def run_conversation(
                 # fallback refreshes the policy flags, but the decorated list
                 # still carries the primary's breakpoints (or none). Strip and
                 # re-render for the current provider before building kwargs.
-                _redec = _redecorate_prompt_cache_for_provider(
-                    agent,
-                    api_messages,
-                    system_message=system_message,
-                    moa_prepared=_moa_prepared_request,
-                    tools_for_api=tools_for_api,
+                api_messages, _moa_prepared_request, tools_for_api = (
+                    _redecorate_prompt_cache_for_provider(
+                        agent,
+                        api_messages,
+                        system_message=system_message,
+                        moa_prepared=_moa_prepared_request,
+                        tools_for_api=tools_for_api,
+                    )
                 )
-                if len(_redec) == 3:
-                    api_messages, _moa_prepared_request, tools_for_api = _redec  # type: ignore[misc]
-                else:
-                    api_messages, _moa_prepared_request = _redec  # type: ignore[misc]
                 if tools_for_api == agent.tools:
                     api_kwargs = agent._build_api_kwargs(api_messages)
                 else:
@@ -3456,29 +3394,13 @@ def run_conversation(
                         _use_streaming = False
 
                 def _perform_api_call(next_api_kwargs):
-                    inference_port = getattr(agent, "_inference_port", None)
-                    if agent.api_mode == "codex_responses" and inference_port is None:
+                    if agent.api_mode == "codex_responses":
                         next_api_kwargs = agent._get_transport().preflight_kwargs(
                             next_api_kwargs,
                             allow_stream=False,
                             is_github_responses=agent._is_copilot_url(),
                             sanitize_harmony_tokens=agent._is_codex_backend(),
                         )
-                    if inference_port is not None:
-                        from downstream.delegation.inference_port import InferenceTurn
-
-                        turn = InferenceTurn(
-                            api_kwargs=next_api_kwargs,
-                            requester=agent,
-                            original_api_kwargs=_original_api_kwargs,
-                        )
-                        return inference_port.complete(
-                            turn,
-                            route_binding=inference_port.route_binding,
-                            cancel_generation=getattr(
-                                agent, "_inference_cancel_generation", 0
-                            ),
-                        ).response
                     if _use_streaming:
                         return agent._interruptible_streaming_api_call(
                             next_api_kwargs, on_first_delta=_stop_spinner
@@ -3585,50 +3507,6 @@ def run_conversation(
                     logging.debug(
                         f"API Response received - Model: {resp_model}, Usage: {response.usage if hasattr(response, 'usage') else 'N/A'}"
                     )
-
-                try:
-                    from agent.model_route_observation import build_route_observation
-
-                    _wire_model = str(api_kwargs.get("model") or getattr(agent, "model", "") or "")
-                    _wire_prov = str(getattr(agent, "provider", "") or "")
-                    _req_prov = str(getattr(agent, "requested_provider", "") or _wire_prov)
-                    _req_model = str(getattr(agent, "requested_model", "") or _wire_model)
-                    _is_fallback = bool(getattr(agent, "_fallback_activated", False))
-                    _fb_reason = getattr(agent, "_fallback_reason", None)
-
-                    _resp_model = getattr(response, "model", None)
-                    _explicit_src = getattr(response, "effective_model_source", None)
-                    if _resp_model and isinstance(_resp_model, str) and _resp_model.strip():
-                        _eff_model = _resp_model.strip()
-                        _eff_src = str(_explicit_src or "response").strip()
-                        if _wire_model and _eff_model != _wire_model:
-                            _norm_w = _wire_model.lower().replace("-", "").replace(".", "").replace("/", "")
-                            _norm_r = _eff_model.lower().replace("-", "").replace(".", "").replace("/", "")
-                            if _norm_w not in _norm_r and _norm_r not in _norm_w:
-                                logger.warning(
-                                    "Provider response reported unexpected model %r (requested wire model: %r)",
-                                    _eff_model, _wire_model,
-                                )
-                    else:
-                        _eff_model = _wire_model
-                        _eff_src = str(_explicit_src or "request").strip()
-
-                    _route_obs = build_route_observation(
-                        requested_provider=_req_prov,
-                        requested_model=_req_model,
-                        wire_provider=_wire_prov,
-                        wire_model=_wire_model,
-                        effective_provider=_wire_prov,
-                        effective_model=_eff_model,
-                        fallback=_is_fallback,
-                        reason=_fb_reason,
-                        effective_model_source=_eff_src,
-                        turn_seq=getattr(agent, "_user_turn_count", None),
-                    )
-                    from agent.model_route_observation import commit_route_observation
-                    commit_route_observation(agent, _route_obs, turn_seq=getattr(agent, "_user_turn_count", None))
-                except Exception:
-                    logger.debug("Failed to record model route observation", exc_info=True)
 
                 # Validate response shape before proceeding
                 response_invalid = False
@@ -3896,9 +3774,6 @@ def run_conversation(
                     # Backoff before retry — jittered exponential: 5s base, 120s cap
                     wait_time = jittered_backoff(retry_count, base_delay=5.0, max_delay=120.0)
                     agent._buffer_vprint(f"⏳ Retrying in {wait_time:.1f}s ({_failure_hint})...")
-                    emit_provider_retry_wait_notice(
-                        agent, wait_time, retry_count, max_retries
-                    )
                     logger.warning("Invalid API response (retry %d/%d): %s | Provider: %s", retry_count, max_retries, ', '.join(error_details), provider_name)
                     
                     # Sleep in small increments to stay responsive to interrupts
@@ -7273,12 +7148,6 @@ def run_conversation(
                     agent._buffer_status(
                         f"⏳ Retrying in {wait_time:.1f}s (attempt {retry_count}/{max_retries})..."
                     )
-                # Buffered status only replays if every retry fails; name the
-                # wait on the live line so a 60s 5xx backoff is not an anonymous
-                # spinner after tool/auth activity (SR-007a / upstream #108292).
-                emit_provider_retry_wait_notice(
-                    agent, wait_time, retry_count, max_retries
-                )
                 logger.warning(
                     "Retrying API call in %ss (attempt %s/%s) %s policy=%s error=%s",
                     wait_time,

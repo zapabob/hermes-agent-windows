@@ -183,7 +183,7 @@ MAX_BOUNDED_PROCESS_TREE_NODES = 256
 
 def _posix_process_group_exists(process_id: int) -> bool:
     try:
-        os.killpg(process_id, 0)
+        os.killpg(process_id, 0)  # windows-footgun: ok
     except ProcessLookupError:
         return False
     except PermissionError:
@@ -377,7 +377,7 @@ def _terminate_process_tree(process: subprocess.Popen[bytes], job_handle: object
     """Best-effort termination scoped to this subprocess and its descendants."""
     if os.name != "nt":
         try:
-            os.killpg(process.pid, signal.SIGKILL)
+            os.killpg(process.pid, getattr(signal, "SIGKILL", signal.SIGTERM))  # windows-footgun: ok
         except (OSError, ProcessLookupError):
             pass
         return
