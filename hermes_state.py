@@ -1986,10 +1986,11 @@ class SessionDB:
             json.dumps(self._redact_for_storage(codex_message_items))
             if codex_message_items else None
         )
-        tool_calls_json = (
-            json.dumps(self._redact_for_storage(tool_calls))
-            if tool_calls else None
-        )
+        # Keep the canonical tool-call payload intact: replay feeds these
+        # arguments back to the model and irreversible masking makes resumed
+        # credential-dependent calls unusable. Secrets in tool arguments are
+        # redacted at the conversation boundary before this persistence path.
+        tool_calls_json = json.dumps(tool_calls) if tool_calls else None
         # Multimodal content (list of parts) must be JSON-encoded: sqlite3
         # cannot bind list/dict parameters directly.
         stored_content = self._encode_content(self._redact_for_storage(content))
@@ -2088,10 +2089,7 @@ class SessionDB:
                     json.dumps(self._redact_for_storage(codex_message_items))
                     if codex_message_items else None
                 )
-                tool_calls_json = (
-                    json.dumps(self._redact_for_storage(tool_calls))
-                    if tool_calls else None
-                )
+                tool_calls_json = json.dumps(tool_calls) if tool_calls else None
                 stored_content = self._encode_content(
                     self._redact_for_storage(msg.get("content"))
                 )

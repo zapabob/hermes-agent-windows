@@ -517,7 +517,9 @@ class TestMessageStorage:
         assert openai_key not in raw
         assert google_api_key not in raw
         assert reasoning_secret not in raw
-        assert tool_secret not in raw
+        # Canonical tool calls must remain replayable; redaction happens at
+        # the conversation boundary, not by mutating the SQLite replay.
+        assert tool_secret in row["tool_calls"]
         assert "***" in raw or "..." in raw
 
     def test_replace_messages_redacts_structured_content_before_sqlite_storage(self, db):
