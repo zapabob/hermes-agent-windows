@@ -19,7 +19,7 @@ Hermes Agent 的非官方 Windows 原生下游版本，提供 Electron 桌面端
 
 [![Windows Workstation Tier-1 CI](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml/badge.svg)](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml)
 
-**当前源码版本：0.21.3。** 记录的 upstream release 同为 0.21.3（`v2026.9.14`）。
+**当前源码版本：0.21.5。** 记录的 upstream release 同为 0.21.5（`v2026.9.24`）。
 本 fork 保持 `version_source: downstream` 与固定的 upstream snapshot
 `b51c055a12220f8c7c18660e8599365012e19532`。源码版本或 main 分支的 push 并不代表已经
 发布 stable installer。支持的 channel 为 `stable` 与 `preview`。
@@ -286,7 +286,7 @@ tag 发布前执行 clean install、启动与 upgrade E2E。只从
 [下游 Releases](https://github.com/zapabob/hermes-agent-windows/releases)
 获取已发布产物，并核对 `SHA256SUMS.txt`。除非 `release-manifest.json` 另有记录，
 当前 candidate 按 unsigned 处理。完整步骤以 [Windows 安装指南](docs/windows/INSTALL.md)
-为准；其中的旧版本示例并不能证明 0.21.3 已发布。
+为准；其中的旧版本示例并不能证明 0.21.5 已发布。
 
 官方 upstream installer 面向 upstream 产品；本发行版请使用本下游仓库或其已发布的
 release asset。

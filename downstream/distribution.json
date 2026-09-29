@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "hermes-agent-windows",
   "display_name": "Hermes Agent Windows Workstation Edition",
-  "version": "0.21.3",
+  "version": "0.21.5",
   "version_source": "downstream",
   "repository": {
     "slug": "zapabob/hermes-agent-windows",
@@ -14,8 +14,8 @@
   },
   "upstream": {
     "slug": "NousResearch/hermes-agent",
-    "version": "0.21.3",
-    "release_commit_sha": "345cd2b057a452236de401d3534b8502a7465e8d",
+    "version": "0.21.5",
+    "release_commit_sha": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
     "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532"
   },
   "platform": {

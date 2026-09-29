@@ -20,7 +20,7 @@ Electron デスクトップ、CLI、メッセージング gateway と、任意�
 
 [![Windows Workstation Tier-1 CI](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml/badge.svg)](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml)
 
-**現在のソース版: 0.21.3。** 記録済みの upstream release も 0.21.3（`v2026.9.14`）です。
+**現在のソース版: 0.21.5。** 記録済みの upstream release も 0.21.5（`v2026.9.24`）です。
 この fork は `version_source: downstream` と固定 upstream snapshot
 `b51c055a12220f8c7c18660e8599365012e19532` を維持します。ソース版の更新や main への
 push は、stable installer の公開を意味しません。対応 channel は `stable` と `preview` です。
@@ -311,7 +311,7 @@ stable tag で公開する前に clean install、起動、upgrade E2E を実行�
 [ダウンストリーム Releases](https://github.com/zapabob/hermes-agent-windows/releases)
 からのみ取得し、`SHA256SUMS.txt` を確認してください。現在の candidate は
 `release-manifest.json` に別の記録がない限り unsigned です。手順の正本は
-[Windows 導入ガイド](docs/windows/INSTALL.md) です。そこにある旧版の例は 0.21.3 の
+[Windows 導入ガイド](docs/windows/INSTALL.md) です。そこにある旧版の例は 0.21.5 の
 release の証拠ではありません。
 
 公式 upstream の installer は upstream 製品を対象とします。この配布物には、この

@@ -22,8 +22,8 @@ developed by Nous Research. Both the upstream attribution and the
 
 [![Windows Workstation Tier-1 CI](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml/badge.svg)](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml)
 
-**Current source version: 0.21.3.** The recorded upstream release is also
-0.21.3 (`v2026.9.14`); this fork keeps `version_source: downstream` and the
+**Current source version: 0.21.5.** The recorded upstream release is also
+0.21.5 (`v2026.9.24`); this fork keeps `version_source: downstream` and the
 frozen upstream snapshot `b51c055a12220f8c7c18660e8599365012e19532`. A source
 version or a main-branch push does not establish that a stable installer has
 been published. Supported channels are `stable` and `preview`.
@@ -64,7 +64,7 @@ and check it against `SHA256SUMS.txt`. The full procedure is in the
 <details open>
 <summary><strong>日本語</strong></summary>
 
-Windows向け独立派生版のソースは0.21.3です。上の5コマンドで導入でき、詳しくは
+Windows向け独立派生版のソースは0.21.5です。上の5コマンドで導入でき、詳しくは
 [日本語版README](README.ja.md) と第11節をご覧ください。安定版の公開、署名、
 クリーン環境での検証は、それぞれ別に確認する必要があります。
 
@@ -72,7 +72,7 @@ Windows向け独立派生版のソースは0.21.3です。上の5コマンドで
 <details>
 <summary><strong>简体中文</strong></summary>
 
-这是独立维护的 Windows 衍生版本，当前源码版本为0.21.3。可用上面的五条命令安装，
+这是独立维护的 Windows 衍生版本，当前源码版本为0.21.5。可用上面的五条命令安装，
 详见[简体中文 README](README.zh-CN.md)与第11节；源码构建不代表已发布经过完整验证的稳定安装包。
 
 </details>
@@ -351,7 +351,7 @@ stable tag. Obtain published artefacts only from the
 and verify `SHA256SUMS.txt`. Current candidates are unsigned unless
 `release-manifest.json` records otherwise. The
 [installation guide](docs/windows/INSTALL.md) is the canonical procedure; older
-version examples in it are not evidence of a 0.21.3 release.
+version examples in it are not evidence of a 0.21.5 release.
 
 The official upstream installer targets the upstream product; use this
 downstream repository or its published release assets for this distribution.
