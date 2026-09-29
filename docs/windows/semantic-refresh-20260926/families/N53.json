@@ -99,11 +99,30 @@
       "codegraph": "Approved CodeGraph 1.6.0 (same read-only package and Node v22.23.2 with CODEGRAPH_NO_DOWNLOAD=1; no install, no Node 26). The new worktree was seeded with a copy of the N53 integration index; sync reported already up to date. Status: 8,923 files, 191,274 nodes, 613,121 edges, pending 0/0/0, worktreeMismatch null, state complete, pendingRefs 0, built with 1.6.0 extraction 25. Query bound _pause_windows_gateways_for_update to update_cmd.py:6219 and _venv_launcher_ancestor_identities to 5429. Impact at depth 4 reached 47 nodes and 46 edges; callers include _cmd_update_impl, cmd_update and the Windows lifecycle tests. Explore ran. Affected listed 1,020 paths and is not counted as executed coverage.",
       "independent_review": "No new review was run on this composition. Because the source bytes are identical to the candidate the Cursor/Claude review covered, that CLEAR_WITH_NOTES result still applies to the same bytes, but it is not a review of this parent. The GPT-6-pro final review stays PENDING and is to be run by the user against this branch.",
       "gpt6pro_second_review_status": "PENDING_UNAVAILABLE_MODEL"
+    },
+    "additive_2026-09-29_pr160_review_remediation": {
+      "recorded_at": "2026-09-29T12:37:24+09:00",
+      "scope": "PR #160 F1-F4 review remediation committed on the PR158/N53 lineage before direct main publication.",
+      "product_commit": "05f0218a8d0edb1450e7344816d90a65291a3c9e",
+      "sha256": {
+        "gateway/status.py": "4d1cd34cfe78c0321cca340d58484aa6d43b6e22b9ef74738d3fae2c2fa9887b",
+        "hermes_cli/update_cmd.py": "889d7ce9db5402522e33ec05ef28c638abc12e993bdb8beaf2f1211095c545b6",
+        "tests/hermes_cli/test_update_concurrent_quarantine.py": "159a27f2646ec0d7bf67c1a7a1a0f76edade0e0bea7feb9b896e0feb1da26183",
+        "tests/hermes_cli/test_update_pause_recovery.py": "8a5473a8d952ccd9764bdd73d17a29923d5270928d939d5a1120ffc8b43902b7",
+        "tests/hermes_cli/test_update_review_boundary_regressions.py": "aeefc0239a19e99dffdce953943f5112d4b63a618330bf059964cf78f52b4460",
+        "tests/hermes_cli/test_windows_relaunch_verify_budget.py": "36462c442f2ee2ce8e071941ce8442797d08a29644f9a9d21022912657267847"
+      },
+      "green": "Final scoped Windows update/recovery run passed 246/246 tests across 20 files with zero failures. Ruff 0.15.10 and git diff --check passed. The wider test_cmd_update.py run timed out earlier at the npm execution boundary and is not counted as green evidence.",
+      "mutation": "Five fresh in-memory review mutants were killed: worker revalidation removal, PID-only Windows sweep, Windows wedged-stop bypass, native liveness fail-open, and rollback-handoff suppression. Source hashes were unchanged by the mutation run.",
+      "review_result": "F1-F4 remediation is locally verified. The requested independent read-only reviewer did not complete because its stream disconnected, so independent approval remains unavailable.",
+      "codegraph": "No new CodeGraph binding was produced after this remediation; a prior attempt in this session was blocked by the tool safety-status check. Earlier N53 CodeGraph evidence remains historical to its bound source.",
+      "publication": "Prepared for direct fast-forward publication to origin/main in this task; origin/main was cc686ab1d31d6ee5ca07243765c5a07e3b9af1af before publication."
     }
   },
   "open_gaps": [
     "Token-only or unmapped watcher replacements do not have destination outcome durability evidence. This bounded result does not prove whole U1 parity, live fleet health, or release readiness.",
     "N07-A1 host grant-revocation writer, T06, and T12 remain incomplete; Control MCP production write remains DISABLED.",
-    "Original main and historical feature WIP were preserved."
+    "Original main and historical feature WIP were preserved.",
+    "Independent read-only review and a new CodeGraph binding were not completed for remediation commit 05f0218a8d0; scoped tests and mutation evidence are local verification only."
   ]
 }

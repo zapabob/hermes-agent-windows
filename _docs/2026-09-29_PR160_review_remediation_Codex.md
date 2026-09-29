@@ -2,7 +2,7 @@
 
 ## Scope and delivery state
 
-The local candidate addresses the supplied F1–F4 review of PR #160. It remains uncommitted in the existing `n53-review-fix` worktree. No commit, push, merge, PR comment, or PR state change was performed. Local verification is not a new reviewed Git head or release approval.
+The local candidate addresses the supplied F1–F4 review of PR #160. The remediation source and regression tests were committed as `05f0218a8d0edb1450e7344816d90a65291a3c9e` on `cursor/n53-on-pr158-20260929`. At the time this evidence update is prepared, direct publication to `origin/main` is the requested next action. Local verification is not an independent review or release approval.
 
 The inspected HEAD is `eb4cea919502caf0e1c21d4ab3366b1e1610eeb7`, on `cursor/n53-on-pr158-20260929`. The requested parent/base is `86d3149599a2be48a1a66903ba7e3e3a12c819ef`, on `codex/n52-gateway-identity-20260928`.
 
@@ -103,7 +103,7 @@ CodeGraph execution was attempted and rejected with: `This tool call was blocked
 
 The requested independent read-only reviewer ended with: `stream disconnected before completion: ChatGPT did not confirm that the prompt was sent. Check the ChatGPT tab before continuing.` No independent review verdict was received. The old review's approval state must not be upgraded on this basis.
 
-No new-head cloud CI, main integration, production fleet health, live SCM recovery, release readiness, or whole-U1 parity is claimed. The original main checkout and its unrelated changes were preserved. The new test file is untracked; this log and temporary evidence may be ignored by existing repository exclusions, so a plain tracked-file diff is not the entire deliverable.
+No new-head cloud CI, main integration, production fleet health, live SCM recovery, release readiness, or whole-U1 parity is claimed. The original main checkout and its unrelated changes were preserved. The new regression test and this implementation log are included in remediation commit `05f0218a8d0`. Temporary evidence under `tmp/` remains local and untracked.
 
 For rollback, preserve the incoming five-file dirty state. Do not restore these paths wholesale to HEAD: doing so would also remove repairs that predated this session. Reverse only the supplemental hunks after reviewing their ownership. No rollback, cleanup, broad drive scan, or production restart was performed.
 
