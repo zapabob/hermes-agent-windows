@@ -716,14 +716,13 @@ def _enabled_mcp_servers(config: Optional[dict[str, Any]]) -> list[str]:
     """
     try:
         from hermes_cli.config import read_raw_config
-        from hermes_cli.tools_config import _parse_enabled_flag
+        from tools.mcp_tool import mcp_server_enabled
 
         servers = read_raw_config().get("mcp_servers") or {}
         return [
             str(name)
             for name, cfg in servers.items()
-            if isinstance(cfg, dict)
-            and _parse_enabled_flag(cfg.get("enabled", True), default=True)
+            if isinstance(cfg, dict) and mcp_server_enabled(cfg)
         ]
     except Exception:
         return []

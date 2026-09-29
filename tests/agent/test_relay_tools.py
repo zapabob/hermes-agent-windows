@@ -78,7 +78,7 @@ def test_request_rewrite_reaches_authorized_callback_once(relay_turn):
 
     async def wrap_execution(_name, args, next_call):
         result = await next_call(args)
-        return relay.ToolExecutionInterceptOutcome({**result, "wrapped": True})
+        return relay.ToolExecutionInterceptOutcome({**result.result, "wrapped": True})
 
     relay.intercepts.register_tool_request(
         "hermes-test-tool-request", 1, False, rewrite_request

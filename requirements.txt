@@ -70,9 +70,9 @@ markupsafe==3.0.3
     # via jinja2
 mdurl==0.1.2
     # via markdown-it-py
-nemo-relay==0.7.2
+nemo-relay==0.8.4
     # via hermes-agent (pyproject.toml)
-openai==2.24.0
+openai==2.54.0
     # via hermes-agent (pyproject.toml)
 packaging==26.0
     # via hermes-agent (pyproject.toml)

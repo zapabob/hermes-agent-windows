@@ -189,9 +189,10 @@ def _worker(session_id: str, hermes_home: str, server_name: str, cfg: dict, reco
         from tools.mcp_oauth import force_interactive_oauth
         from tools.mcp_oauth_manager import get_manager
 
-        home_token = set_hermes_home_override(hermes_home)
-        secret_token = set_secret_scope(build_profile_secret_scope(Path(hermes_home)))
+        home_token = secret_token = None
         try:
+            home_token = set_hermes_home_override(hermes_home)
+            secret_token = set_secret_scope(build_profile_secret_scope(Path(hermes_home)))
             with force_interactive_oauth(), dashboard_oauth_flow(flow):
                 from tools.mcp_oauth import HermesTokenStorage
 
@@ -224,8 +225,10 @@ def _worker(session_id: str, hermes_home: str, server_name: str, cfg: dict, reco
                     manager.restore_entry(server_name, previous_entry, hermes_home=hermes_home)
                     raise
         finally:
-            reset_secret_scope(secret_token)
-            reset_hermes_home_override(home_token)
+            if secret_token is not None:
+                reset_secret_scope(secret_token)
+            if home_token is not None:
+                reset_hermes_home_override(home_token)
     except Exception as exc:
         msg = str(exc)
         try:

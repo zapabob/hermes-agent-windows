@@ -836,6 +836,7 @@ export function ContribWiring({ children }: { children: ReactNode }) {
   const previewTarget = useStore($previewTarget)
 
   useDesktopIntegrations({
+    activeConnectionId,
     activeProfile: normalizeProfileKey(activeGatewayProfile),
     chatOpen,
     hasPreview: Boolean(previewTarget),

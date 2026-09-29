@@ -2544,8 +2544,8 @@ def enabled_mcp_server_names(config: dict) -> Set[str]:
 
     Shared by the gateway/CLI platform resolver (``_get_platform_tools``) and
     the cron per-job toolset resolver (``cron.scheduler``) so every path agrees
-    on MCP membership. A server is enabled unless its config sets an explicitly
-    falsey ``enabled`` (per ``_parse_enabled_flag``: false/0/no/off) — a missing
+    on MCP membership. ``enabled`` is read by ``mcp_server_enabled``, the same
+    reader the MCP client uses: false, zero and the off words are off; a missing
     flag or an unrecognized value is treated as enabled.
 
     Portable Agent Plugins contribute MCP servers in-memory rather than via
@@ -2555,12 +2555,13 @@ def enabled_mcp_server_names(config: dict) -> Set[str]:
     a portable server registers with the MCP runtime but its tools never reach
     the model's schema.
     """
+    from tools.mcp_tool import mcp_server_enabled
+
     mcp_servers = (config or {}).get("mcp_servers") or {}
     names = {
         str(name)
         for name, server_cfg in mcp_servers.items()
-        if isinstance(server_cfg, dict)
-        and _parse_enabled_flag(server_cfg.get("enabled", True), default=True)
+        if isinstance(server_cfg, dict) and mcp_server_enabled(server_cfg)
     }
     try:
         from hermes_cli.plugins import (
@@ -5993,10 +5994,12 @@ def _configure_mcp_tools_interactive(config: dict):
         _print_info("No MCP servers configured.")
         return
 
+    from tools.mcp_tool import mcp_server_enabled
+
     # Count enabled servers
     enabled_names = [
         k for k, v in mcp_servers.items()
-        if v.get("enabled", True) not in {False, "false", "0", "no", "off"}
+        if isinstance(v, dict) and mcp_server_enabled(v)
     ]
     if not enabled_names:
         _print_info("All MCP servers are disabled.")

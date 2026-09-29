@@ -123,7 +123,7 @@ def test_report_md_splits_consolidated_and_pruned_sections(curator_env):
         },
     )
 
-    payload = json.loads((run_dir / "run.json").read_text())
+    payload = json.loads((run_dir / "run.json").read_text(encoding="utf-8"))
     # Both lists exist and are disjoint
     consolidated_names = {e["name"] for e in payload["consolidated"]}
     assert consolidated_names == {"absorbed-skill"}
@@ -138,7 +138,7 @@ def test_report_md_splits_consolidated_and_pruned_sections(curator_env):
     assert payload["counts"]["consolidated_this_run"] == 1
     assert payload["counts"]["pruned_this_run"] == 1
 
-    md = (run_dir / "REPORT.md").read_text()
+    md = (run_dir / "REPORT.md").read_text(encoding="utf-8")
     # Two separate sections, not a single "Skills archived" lump
     assert "Consolidated into umbrella skills" in md
     assert "Pruned — archived for staleness" in md
@@ -259,7 +259,7 @@ def test_reconcile_model_block_visible_in_full_report(curator_env):
         },
     )
 
-    payload = _json.loads((run_dir / "run.json").read_text())
+    payload = _json.loads((run_dir / "run.json").read_text(encoding="utf-8"))
     cons = payload["consolidated"][0]
     assert cons["name"] == "anthropic-api"
     assert cons["into"] == "llm-providers"
@@ -270,7 +270,7 @@ def test_reconcile_model_block_visible_in_full_report(curator_env):
     assert pruned["name"] == "stale-thing"
     assert pruned["reason"] == "pre-curator junk, no overlap with anything"
 
-    md = (run_dir / "REPORT.md").read_text()
+    md = (run_dir / "REPORT.md").read_text(encoding="utf-8")
     assert "duplicate content, now a subsection" in md
     assert "pre-curator junk" in md
 

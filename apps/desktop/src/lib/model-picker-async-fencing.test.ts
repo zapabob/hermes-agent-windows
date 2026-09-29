@@ -30,9 +30,7 @@ import { modelOptionsQueryKey, requestModelOptions } from './model-options'
 // ---------------------------------------------------------------------------
 
 function makeDispatch(response: unknown, delayMs = 0) {
-  return vi.fn().mockImplementation(
-    () => new Promise(resolve => setTimeout(() => resolve(response), delayMs))
-  )
+  return vi.fn().mockImplementation(() => new Promise(resolve => setTimeout(() => resolve(response), delayMs)))
 }
 
 const catalogA = { providers: [{ slug: 'openai', models: ['gpt-4o'], name: 'OpenAI' }] }
@@ -194,17 +192,16 @@ describe('STALE_SWITCH_ACK_FENCED (RED 3) — ALREADY_EQUIVALENT', () => {
     // This is a pure bookkeeping unit test — no React, no async needed.
     const epochByTarget = new Map<string, number>()
 
-    const makeTarget = (connId: string, profile: string, sessionId: string) =>
-      `${connId}\0${profile}\0${sessionId}`
+    const makeTarget = (connId: string, profile: string, sessionId: string) => `${connId}\0${profile}\0${sessionId}`
 
     const selectModel = (target: string) => {
       const epoch = (epochByTarget.get(target) ?? 0) + 1
       epochByTarget.set(target, epoch)
+
       return epoch
     }
 
-    const selectionIsCurrent = (target: string, epoch: number) =>
-      epochByTarget.get(target) === epoch
+    const selectionIsCurrent = (target: string, epoch: number) => epochByTarget.get(target) === epoch
 
     const targetB = makeTarget('conn-b', 'profile-b', 'session-b')
     const targetA = makeTarget('conn-a', 'profile-a', 'session-a')
@@ -229,11 +226,14 @@ describe('STALE_SWITCH_ACK_FENCED (RED 3) — ALREADY_EQUIVALENT', () => {
   it('epoch map is per-target: cross-tile contamination is impossible', () => {
     const epochByTarget = new Map<string, number>()
     const makeTarget = (c: string, p: string, s: string) => `${c}\0${p}\0${s}`
+
     const select = (t: string) => {
       const e = (epochByTarget.get(t) ?? 0) + 1
       epochByTarget.set(t, e)
+
       return e
     }
+
     const isCurrent = (t: string, e: number) => epochByTarget.get(t) === e
 
     const tA = makeTarget('conn-a', 'pa', 'sa')
@@ -252,11 +252,14 @@ describe('STALE_SWITCH_ACK_FENCED (RED 3) — ALREADY_EQUIVALENT', () => {
     // refreshCurrentModel(force=true) calls selectionEpochByTargetRef.current.clear()
     // Replicate that invariant.
     const epochByTarget = new Map<string, number>()
+
     const select = (t: string) => {
       const e = (epochByTarget.get(t) ?? 0) + 1
       epochByTarget.set(t, e)
+
       return e
     }
+
     const isCurrent = (t: string, e: number) => epochByTarget.get(t) === e
 
     const t = 'conn-a\0profile-a\0session-a'

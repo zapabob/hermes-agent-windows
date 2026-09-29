@@ -37,6 +37,7 @@ from hermes_cli.mcp_catalog import (
     uninstall_entry,
 )
 from hermes_cli.config import load_config, save_config
+from tools.mcp_tool import mcp_server_enabled
 
 
 # ─── Status badges ────────────────────────────────────────────────────────────
@@ -92,9 +93,7 @@ def _build_rows() -> List[_Row]:
     for name, cfg in sorted(installed_servers().items()):
         if name in catalog_names:
             continue
-        enabled = cfg.get("enabled", True)
-        if isinstance(enabled, str):
-            enabled = enabled.lower() in {"true", "1", "yes"}
+        enabled = mcp_server_enabled(cfg)
         status = _STATUS_CUSTOM_ENABLED if enabled else _STATUS_CUSTOM_DISABLED
         # Use the transport URL/command as the "description" for custom rows
         desc = cfg.get("url") or cfg.get("command") or "(no transport)"

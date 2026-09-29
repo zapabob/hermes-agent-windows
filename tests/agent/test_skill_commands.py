@@ -35,7 +35,7 @@ description: Description for {name}.
 
 {body}
 """
-    (skill_dir / "SKILL.md").write_text(content)
+    (skill_dir / "SKILL.md").write_text(content, encoding="utf-8")
     return skill_dir
 
 
@@ -223,10 +223,10 @@ class TestScanSkillCommands:
         profile_b.mkdir()
         _make_skill(external_a, "a-only")
         _make_skill(external_b, "b-only")
-        (profile_a / "config.yaml").write_text(
+        (profile_a / "config.yaml"encoding="utf-8").write_text(
             f"skills:\n  external_dirs:\n    - {external_a}\n"
         )
-        (profile_b / "config.yaml").write_text(
+        (profile_b / "config.yaml"encoding="utf-8").write_text(
             f"skills:\n  external_dirs:\n    - {external_b}\n"
         )
 
@@ -316,12 +316,12 @@ class TestScanSkillCommands:
             # underscore-named skill first; that one must win the slash command.
             first = tmp_path / "a-first"
             first.mkdir()
-            (first / "SKILL.md").write_text(
+            (first / "SKILL.md"encoding="utf-8").write_text(
                 "---\nname: git_helper\ndescription: First skill.\n---\n\nBody.\n"
             )
             second = tmp_path / "z-second"
             second.mkdir()
-            (second / "SKILL.md").write_text(
+            (second / "SKILL.md"encoding="utf-8").write_text(
                 "---\nname: git-helper\ndescription: Second skill.\n---\n\nBody.\n"
             )
             result = scan_skill_commands()
@@ -337,12 +337,12 @@ class TestScanSkillCommands:
         with patch("tools.skills_tool.SKILLS_DIR", tmp_path):
             first = tmp_path / "a-first"
             first.mkdir()
-            (first / "SKILL.md").write_text(
+            (first / "SKILL.md"encoding="utf-8").write_text(
                 "---\nname: my-skill\ndescription: First.\n---\n\nBody.\n"
             )
             second = tmp_path / "z-second"
             second.mkdir()
-            (second / "SKILL.md").write_text(
+            (second / "SKILL.md"encoding="utf-8").write_text(
                 "---\nname: my_skill\ndescription: Second.\n---\n\nBody.\n"
             )
             with caplog.at_level(_logging.WARNING, logger="agent.skill_commands"):
@@ -669,7 +669,7 @@ class TestBuildSkillInvocationMessage:
             skill_dir = _make_skill(tmp_path, "test-skill")
             references = skill_dir / "references"
             references.mkdir()
-            (references / "api.md").write_text("reference")
+            (references / "api.md").write_text("reference", encoding="utf-8")
             scan_skill_commands()
             msg = build_skill_invocation_message("/test-skill", "do stuff")
 
@@ -696,7 +696,7 @@ class TestSkillDirectoryHeader:
         with patch("tools.skills_tool.SKILLS_DIR", tmp_path):
             skill_dir = _make_skill(tmp_path, "scripted-skill")
             (skill_dir / "scripts").mkdir()
-            (skill_dir / "scripts" / "run.js").write_text("console.log('hi')")
+            (skill_dir / "scripts" / "run.js").write_text("console.log('hi')", encoding="utf-8")
             scan_skill_commands()
             msg = build_skill_invocation_message("/scripted-skill")
 
@@ -704,7 +704,7 @@ class TestSkillDirectoryHeader:
         # The supporting-files block must emit both the relative form (so the
         # agent can call skill_view on it) and the absolute form (so it can
         # run the script directly via terminal).
-        assert "scripts/run.js" in msg
+        assert str(Path("scripts") / "run.js") in msg
         assert str(skill_dir / "scripts" / "run.js") in msg
         assert f"node {skill_dir}/scripts/foo.js" in msg
 
@@ -770,13 +770,18 @@ class TestInlineShellExpansion:
             skill_dir = _make_skill(
                 tmp_path,
                 "dyn-cwd",
-                body="Here: !`pwd`",
+                body="Here: !`cat cwd-marker.txt`",
+            )
+            # bash on Windows prints MSYS-style paths from `pwd`, so prove the
+            # CWD by resolving a relative path instead of comparing path text.
+            (skill_dir / "cwd-marker.txt"encoding="utf-8").write_text(
+                "inside-skill-dir", encoding="utf-8"
             )
             scan_skill_commands()
             msg = build_skill_invocation_message("/dyn-cwd")
 
         assert msg is not None
-        assert f"Here: {skill_dir}" in msg
+        assert "Here: inside-skill-dir" in msg
 
     def test_inline_shell_timeout_does_not_break_message(self, tmp_path):
         with (

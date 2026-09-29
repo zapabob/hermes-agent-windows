@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import { closeActiveTab } from '@/app/chat/close-tab'
 import { commandFocusedPreview } from '@/app/chat/right-rail/preview-nav'
 import { openSession } from '@/app/open-session'
+import { getApiRequestConnection, getSession } from '@/hermes'
 import { resolveDeepLinkAction } from '@/lib/deeplink-routes'
 import { hostPathLabel } from '@/lib/external-link'
 import { pathFromHermesDeepLink, resolveHermesOpenPath } from '@/lib/hermes-open-target'
@@ -23,6 +24,7 @@ import {
   getRememberedRoute,
   getRememberedSessionId,
   sessionBelongsToProfile,
+  sessionMatchesStoredId,
   setRememberedRoute,
   setRememberedSessionId
 } from '@/store/session'
@@ -35,9 +37,170 @@ import type { SessionInfo } from '@/types/hermes'
 import { requestComposerFocus, requestComposerInsert } from '../../chat/composer/focus'
 import { appViewForPath, isOverlayView, NEW_CHAT_ROUTE, routeSessionId, sessionRoute } from '../../routes'
 
-type RememberedSession = Pick<SessionInfo, '_lineage_root_id' | 'id' | 'profile'>
+type RememberedSession = Pick<
+  SessionInfo,
+  '_lineage_root_id' | 'connection_id' | 'id' | 'parent_session_id' | 'profile' | 'source'
+>
+type RememberedAncestor = { id: string; rows: RememberedSession[] }
+
+function rememberedRowHasOwner(row: RememberedSession, profile: string, connectionId: string): boolean {
+  const rowConnection = (row.connection_id ?? '').trim()
+
+  return (
+    ((row.profile ?? '').trim() || 'default') === (profile.trim() || 'default') &&
+    (rowConnection ? rowConnection === connectionId : connectionId === 'local')
+  )
+}
+
+function isSessionNotFoundError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false
+  }
+
+  const statusCode = (error as Error & { statusCode?: unknown }).statusCode
+
+  // Electron's API bridge may preserve the structured field or only the HTTP
+  // status prefix in the serialized Error message.
+  return statusCode === 404 || /^404(?::|\s|$)/.test(error.message)
+}
+
+async function fetchRememberedRow(id: string, profile: string, connectionId: string): Promise<RememberedSession> {
+  let row: RememberedSession
+
+  try {
+    row = await getSession(id, { connectionId, profile })
+  } catch (error) {
+    if (error instanceof Error && isSessionNotFoundError(error)) {
+      const missingSessionError = Object.assign(new Error(error.message), {
+        sessionId: id,
+        statusCode: (error as Error & { statusCode?: unknown }).statusCode
+      })
+
+      throw missingSessionError
+    }
+
+    throw error
+  }
+
+  // The explicit request pins the owner even when the backend row lacks a
+  // Desktop registry tag. A conflicting returned tag still fails validation.
+  return {
+    ...row,
+    connection_id: row.connection_id?.trim() || connectionId,
+    profile: row.profile?.trim() || profile
+  }
+}
+
+function rememberedCandidateUnchanged(
+  start: RememberedSession,
+  rows: readonly RememberedSession[],
+  profile: string,
+  connectionId: string
+): boolean {
+  const matchingRows = rows.filter(row => sessionMatchesStoredId(row, start.id))
+
+  const foreignProfileRow = matchingRows.some(
+    row => ((row.profile ?? '').trim() || 'default') !== (profile.trim() || 'default')
+  )
+
+  const currentRows = matchingRows.filter(row => rememberedRowHasOwner(row, profile, connectionId))
+
+  return (
+    !foreignProfileRow &&
+    (currentRows.length === 0 ||
+      currentRows.every(
+        current =>
+          current.source === start.source &&
+          current.parent_session_id === start.parent_session_id &&
+          current._lineage_root_id === start._lineage_root_id
+      ))
+  )
+}
+
+function rememberedAncestryUnchanged(
+  ancestry: RememberedAncestor,
+  rows: readonly RememberedSession[],
+  profile: string,
+  connectionId: string
+): boolean {
+  return ancestry.rows.every(row => rememberedCandidateUnchanged(row, rows, profile, connectionId))
+}
+
+function ownedRememberedRow(
+  rows: readonly RememberedSession[],
+  id: string,
+  profile: string,
+  connectionId: string
+): RememberedSession | undefined {
+  return rows.find(row => sessionMatchesStoredId(row, id) && rememberedRowHasOwner(row, profile, connectionId))
+}
+
+function hasRememberedRowInForeignOwner(
+  rows: readonly RememberedSession[],
+  id: string,
+  profile: string,
+  connectionId: string,
+  previousConnectionId: null | string
+): boolean {
+  const expectedProfile = profile.trim() || 'default'
+  const expectedConnection = connectionId.trim() || 'local'
+  const previousConnection = previousConnectionId?.trim() || null
+
+  return rows.some(row => {
+    if (!sessionMatchesStoredId(row, id)) {
+      return false
+    }
+
+    const rowProfile = (row.profile ?? '').trim() || 'default'
+
+    if (rowProfile !== expectedProfile) {
+      return true
+    }
+
+    const rowConnection = (row.connection_id ?? '').trim() || 'local'
+
+    return rowConnection !== expectedConnection && (previousConnection === null || rowConnection !== previousConnection)
+  })
+}
+
+async function userFacingAncestorId(
+  start: RememberedSession,
+  rows: readonly RememberedSession[],
+  profile: string,
+  connectionId: string,
+  visitedRows?: RememberedSession[]
+): Promise<null | RememberedAncestor> {
+  const seen = new Set<string>()
+  const ancestry: RememberedSession[] = []
+  let row = start
+
+  while (true) {
+    if (seen.has(row.id) || !rememberedRowHasOwner(row, profile, connectionId)) {
+      return null
+    }
+
+    seen.add(row.id)
+    ancestry.push(row)
+    visitedRows?.push(row)
+
+    if (row.source !== 'subagent') {
+      return { id: row._lineage_root_id ?? row.id, rows: ancestry }
+    }
+
+    const parentId = row.parent_session_id
+
+    if (!parentId) {
+      return null
+    }
+
+    row =
+      ownedRememberedRow(rows, parentId, profile, connectionId) ??
+      (await fetchRememberedRow(parentId, profile, connectionId))
+  }
+}
 
 interface DesktopIntegrationsParams {
+  activeConnectionId?: null | string
   activeProfile: string
   chatOpen: boolean
   hasPreview: boolean
@@ -59,6 +222,7 @@ interface DesktopIntegrationsParams {
  * "talks to the desktop shell" surface reads as one unit.
  */
 export function useDesktopIntegrations({
+  activeConnectionId = getApiRequestConnection(),
   activeProfile,
   locationPathname,
   navigate,
@@ -69,6 +233,8 @@ export function useDesktopIntegrations({
   runtimeIdByStoredSessionId,
   sessions
 }: DesktopIntegrationsParams): void {
+  const connectionId = activeConnectionId ?? 'local'
+
   // Update polling — populates $desktopVersion/$updateStatus, which feed the
   // statusbar version pill and the update toasts. Also honors the main
   // process's "open updates" menu request.
@@ -94,6 +260,63 @@ export function useDesktopIntegrations({
   }, [])
 
   const restoredRef = useRef(false)
+  const previousConnectionIdRef = useRef<null | string>(null)
+
+  const restoreContextRef = useRef({
+    activeConnectionId: connectionId,
+    activeProfile,
+    locationPathname,
+    profileReady,
+    routedSessionId,
+    sessions
+  })
+
+  const restoreEpochRef = useRef(0)
+  const pendingRestoreEpochRef = useRef<null | number>(null)
+  const [restoreRetryToken, setRestoreRetryToken] = useState(0)
+
+  // A by-id response can settle after a route commit but before passive effects.
+  // Publish the committed view first so an old restore cannot reclaim focus.
+  useLayoutEffect(() => {
+    const prior = restoreContextRef.current
+
+    if (
+      prior.activeConnectionId !== connectionId ||
+      prior.activeProfile !== activeProfile ||
+      prior.locationPathname !== locationPathname ||
+      prior.profileReady !== profileReady ||
+      prior.routedSessionId !== routedSessionId
+    ) {
+      restoreEpochRef.current += 1
+    }
+
+    if (prior.activeConnectionId !== connectionId) {
+      previousConnectionIdRef.current = prior.activeConnectionId
+      restoredRef.current = false
+      pendingRestoreEpochRef.current = null
+    }
+
+    restoreContextRef.current = {
+      activeConnectionId: connectionId,
+      activeProfile,
+      locationPathname,
+      profileReady,
+      routedSessionId,
+      sessions
+    }
+  })
+
+  useLayoutEffect(
+    () => () => {
+      restoreEpochRef.current += 1
+
+      if (pendingRestoreEpochRef.current !== null) {
+        restoredRef.current = false
+        pendingRestoreEpochRef.current = null
+      }
+    },
+    []
+  )
 
   // Wait until boot has adopted the primary profile, then restore that profile's
   // navigation exactly once. The same effect owns subsequent writes so the
@@ -112,6 +335,18 @@ export function useDesktopIntegrations({
         const route = getRememberedRoute(activeProfile)
         const routeSession = route ? routeSessionId(route) : null
         const last = getRememberedSessionId(activeProfile)
+        const rowFor = (id: string) => ownedRememberedRow(sessions, id, activeProfile, connectionId)
+        const routeRow = routeSession ? rowFor(routeSession) : undefined
+
+        const forgetMissingSession = (id: string) => {
+          if (getRememberedSessionId(activeProfile) === id) {
+            setRememberedSessionId(null, activeProfile)
+          }
+
+          if (routeSessionId(getRememberedRoute(activeProfile) ?? '') === id) {
+            setRememberedRoute(null, activeProfile)
+          }
+        }
 
         const restorableNonSessionRoute =
           !!route && route !== NEW_CHAT_ROUTE && !routeSession && !isOverlayView(appViewForPath(route))
@@ -126,11 +361,336 @@ export function useDesktopIntegrations({
 
         restoredRef.current = true
 
+        const restoreRememberedCandidate = (
+          candidate: Promise<RememberedSession> | RememberedSession,
+          onNotFound?: () => void
+        ) => {
+          const epoch = restoreEpochRef.current
+          let retryRestoreOnNextRefresh = false
+          let retryWithFreshState = false
+          let resolvedCandidate: null | RememberedSession = null
+          const visitedRows: RememberedSession[] = []
+          pendingRestoreEpochRef.current = epoch
+
+          const restoreStillCurrent = () => {
+            const context = restoreContextRef.current
+
+            return (
+              restoreEpochRef.current === epoch &&
+              context.activeConnectionId === connectionId &&
+              context.activeProfile === activeProfile &&
+              context.locationPathname === NEW_CHAT_ROUTE &&
+              context.profileReady &&
+              !context.routedSessionId &&
+              (getApiRequestConnection() ?? 'local') === connectionId &&
+              getRememberedSessionId(activeProfile) === last &&
+              getRememberedRoute(activeProfile) === route
+            )
+          }
+
+          void Promise.resolve(candidate)
+            .then(async row => {
+              resolvedCandidate = row
+
+              return {
+                row,
+                ancestor:
+                  row.source === 'subagent'
+                    ? await userFacingAncestorId(row, sessions, activeProfile, connectionId, visitedRows)
+                    : rememberedRowHasOwner(row, activeProfile, connectionId)
+                      ? { id: row._lineage_root_id ?? row.id, rows: [row] }
+                      : null
+              }
+            })
+            .then(async ({ row, ancestor }) => {
+              const ancestryMatchesCurrentList = () => {
+                const currentRows = restoreContextRef.current.sessions
+
+                return (
+                  rememberedCandidateUnchanged(row, currentRows, activeProfile, connectionId) &&
+                  (!ancestor || rememberedAncestryUnchanged(ancestor, currentRows, activeProfile, connectionId))
+                )
+              }
+
+              if (!restoreStillCurrent()) {
+                return
+              }
+
+              if (!ancestryMatchesCurrentList()) {
+                retryRestoreOnNextRefresh = true
+                retryWithFreshState = true
+
+                return
+              }
+
+              // A paged-out delegate can change parent while its old parent's
+              // lookup succeeds. Recheck the delegate edges before committing
+              // the destination; the list alone cannot prove them unchanged.
+              for (const visited of ancestor?.rows ?? []) {
+                if (
+                  visited.source !== 'subagent' ||
+                  ownedRememberedRow(restoreContextRef.current.sessions, visited.id, activeProfile, connectionId)
+                ) {
+                  continue
+                }
+
+                let fresh: RememberedSession
+                const rowsBeforeRecheck = restoreContextRef.current.sessions
+
+                try {
+                  fresh = await fetchRememberedRow(visited.id, activeProfile, connectionId)
+                } catch (error) {
+                  if (!restoreStillCurrent()) {
+                    return
+                  }
+
+                  if (restoreContextRef.current.sessions !== rowsBeforeRecheck || !ancestryMatchesCurrentList()) {
+                    retryRestoreOnNextRefresh = true
+                    retryWithFreshState = true
+
+                    return
+                  }
+
+                  if (onNotFound && isSessionNotFoundError(error)) {
+                    onNotFound()
+                    retryWithFreshState = true
+                  }
+
+                  retryRestoreOnNextRefresh = true
+
+                  return
+                }
+
+                if (!restoreStillCurrent()) {
+                  return
+                }
+
+                if (restoreContextRef.current.sessions !== rowsBeforeRecheck || !ancestryMatchesCurrentList()) {
+                  retryRestoreOnNextRefresh = true
+                  retryWithFreshState = true
+
+                  return
+                }
+
+                if (!rememberedRowHasOwner(fresh, activeProfile, connectionId)) {
+                  onNotFound?.()
+                  retryRestoreOnNextRefresh = true
+                  retryWithFreshState = true
+
+                  return
+                }
+
+                if (
+                  fresh.source !== visited.source ||
+                  fresh.parent_session_id !== visited.parent_session_id ||
+                  fresh._lineage_root_id !== visited._lineage_root_id
+                ) {
+                  retryRestoreOnNextRefresh = true
+                  retryWithFreshState = true
+
+                  return
+                }
+              }
+
+              if (!restoreStillCurrent()) {
+                return
+              }
+
+              if (!ancestryMatchesCurrentList()) {
+                retryRestoreOnNextRefresh = true
+                retryWithFreshState = true
+
+                return
+              }
+
+              if (!ancestor) {
+                if (last === row.id) {
+                  setRememberedSessionId(null, activeProfile)
+                }
+
+                if (routeSessionId(getRememberedRoute(activeProfile) ?? '') === row.id) {
+                  setRememberedRoute(null, activeProfile)
+                }
+
+                if (last && last !== row.id) {
+                  retryRestoreOnNextRefresh = true
+                  retryWithFreshState = true
+                }
+
+                return
+              }
+
+              setRememberedSessionId(ancestor.id, activeProfile)
+              setRememberedRoute(sessionRoute(ancestor.id), activeProfile)
+              navigate(sessionRoute(ancestor.id), { replace: true })
+            })
+            .catch(async error => {
+              if (!restoreStillCurrent()) {
+                return
+              }
+
+              if (onNotFound && isSessionNotFoundError(error)) {
+                const context = restoreContextRef.current
+                const missingSessionId = (error as Error & { sessionId?: unknown }).sessionId
+
+                const candidateChanged =
+                  resolvedCandidate !== null &&
+                  !rememberedCandidateUnchanged(resolvedCandidate, context.sessions, activeProfile, connectionId)
+
+                const ancestryChanged = visitedRows.some(
+                  row => !rememberedCandidateUnchanged(row, context.sessions, activeProfile, connectionId)
+                )
+
+                const missingSessionAppeared =
+                  typeof missingSessionId === 'string' &&
+                  !!ownedRememberedRow(context.sessions, missingSessionId, activeProfile, connectionId)
+
+                if (candidateChanged || ancestryChanged || missingSessionAppeared) {
+                  retryRestoreOnNextRefresh = true
+                  retryWithFreshState = true
+
+                  return
+                }
+
+                // The list can omit a delegate that was fetched by id. A 404
+                // for its old parent is not proof that the delegate is gone.
+                // Recheck only the ancestry rows absent from the current list.
+                for (const row of visitedRows) {
+                  if (ownedRememberedRow(context.sessions, row.id, activeProfile, connectionId)) {
+                    continue
+                  }
+
+                  let fresh: RememberedSession
+
+                  try {
+                    fresh = await fetchRememberedRow(row.id, activeProfile, connectionId)
+                  } catch (recheckError) {
+                    if (!restoreStillCurrent()) {
+                      return
+                    }
+
+                    if (!isSessionNotFoundError(recheckError)) {
+                      const latestRows = restoreContextRef.current.sessions
+                      retryWithFreshState =
+                        latestRows !== context.sessions ||
+                        visitedRows.some(
+                          visited => !rememberedCandidateUnchanged(visited, latestRows, activeProfile, connectionId)
+                        ) ||
+                        (typeof missingSessionId === 'string' &&
+                          !!ownedRememberedRow(latestRows, missingSessionId, activeProfile, connectionId))
+                      retryRestoreOnNextRefresh = true
+
+                      return
+                    }
+
+                    break
+                  }
+
+                  if (!restoreStillCurrent()) {
+                    return
+                  }
+
+                  if (!rememberedRowHasOwner(fresh, activeProfile, connectionId)) {
+                    break
+                  }
+
+                  if (
+                    fresh.source !== row.source ||
+                    fresh.parent_session_id !== row.parent_session_id ||
+                    fresh._lineage_root_id !== row._lineage_root_id
+                  ) {
+                    retryRestoreOnNextRefresh = true
+                    retryWithFreshState = true
+
+                    return
+                  }
+                }
+
+                if (!restoreStillCurrent()) {
+                  return
+                }
+
+                const latestRows = restoreContextRef.current.sessions
+
+                if (
+                  latestRows !== context.sessions ||
+                  visitedRows.some(
+                    row => !rememberedCandidateUnchanged(row, latestRows, activeProfile, connectionId)
+                  ) ||
+                  (typeof missingSessionId === 'string' &&
+                    !!ownedRememberedRow(latestRows, missingSessionId, activeProfile, connectionId))
+                ) {
+                  retryRestoreOnNextRefresh = true
+                  retryWithFreshState = true
+
+                  return
+                }
+
+                onNotFound()
+                retryRestoreOnNextRefresh = true
+                retryWithFreshState = true
+
+                return
+              }
+
+              const currentRows = restoreContextRef.current.sessions
+              // A refreshed page may have arrived while this lookup was pending,
+              // even when the delegate itself is still outside that page.
+              retryWithFreshState =
+                currentRows !== sessions ||
+                (resolvedCandidate !== null &&
+                  !rememberedCandidateUnchanged(resolvedCandidate, currentRows, activeProfile, connectionId)) ||
+                visitedRows.some(row => !rememberedCandidateUnchanged(row, currentRows, activeProfile, connectionId))
+              retryRestoreOnNextRefresh = true
+            })
+            .finally(() => {
+              if (retryRestoreOnNextRefresh && restoreEpochRef.current === epoch) {
+                restoredRef.current = false
+                pendingRestoreEpochRef.current = epoch
+
+                if (retryWithFreshState) {
+                  setRestoreRetryToken(token => token + 1)
+                }
+              } else if (pendingRestoreEpochRef.current === epoch) {
+                pendingRestoreEpochRef.current = null
+              }
+            })
+        }
+
+        if (routeSession && routeRow?.source === 'subagent') {
+          restoreRememberedCandidate(routeRow, () => forgetMissingSession(routeSession))
+
+          return
+        }
+
+        // The current list may be only one page. Resolve an unlisted route
+        // through the captured profile and connection before declaring it stale.
+        if (
+          routeSession &&
+          !routeRow &&
+          !hasRememberedRowInForeignOwner(
+            sessions,
+            routeSession,
+            activeProfile,
+            connectionId,
+            previousConnectionIdRef.current
+          )
+        ) {
+          restoreRememberedCandidate(fetchRememberedRow(routeSession, activeProfile, connectionId), () =>
+            forgetMissingSession(routeSession)
+          )
+
+          return
+        }
+
         if (
           route &&
           route !== NEW_CHAT_ROUTE &&
           !isOverlayView(appViewForPath(route)) &&
-          (!routeSession || sessionBelongsToProfile(sessions, routeSession, activeProfile))
+          (!routeSession ||
+            (!!routeRow &&
+              routeRow.source !== 'subagent' &&
+              sessionBelongsToProfile(sessions, routeSession, activeProfile)))
         ) {
           navigate(route, { replace: true })
 
@@ -143,14 +703,32 @@ export function useDesktopIntegrations({
           setRememberedRoute(null, activeProfile)
         }
 
-        if (last && sessionBelongsToProfile(sessions, last, activeProfile)) {
-          navigate(sessionRoute(last), { replace: true })
+        if (last) {
+          const listed = rowFor(last)
+
+          if (listed) {
+            if (listed.source === 'subagent') {
+              restoreRememberedCandidate(listed, () => forgetMissingSession(last))
+            } else {
+              navigate(sessionRoute(last), { replace: true })
+            }
+
+            return
+          }
+
+          if (
+            hasRememberedRowInForeignOwner(sessions, last, activeProfile, connectionId, previousConnectionIdRef.current)
+          ) {
+            setRememberedSessionId(null, activeProfile)
+
+            return
+          }
+
+          restoreRememberedCandidate(fetchRememberedRow(last, activeProfile, connectionId), () =>
+            forgetMissingSession(last)
+          )
 
           return
-        }
-
-        if (last) {
-          setRememberedSessionId(null, activeProfile)
         }
       } else {
         restoredRef.current = true
@@ -162,12 +740,61 @@ export function useDesktopIntegrations({
     // Session-shaped routes require an explicit matching owner; unresolved and
     // wrong-profile rows must not replace known-safe navigation.
     if (routedSessionId && sessionBelongsToProfile(sessions, routedSessionId, activeProfile)) {
-      setRememberedSessionId(routedSessionId, activeProfile)
-      setRememberedRoute(locationPathname, activeProfile)
+      const row = ownedRememberedRow(sessions, routedSessionId, activeProfile, connectionId)
+
+      if (row?.source === 'subagent') {
+        const epoch = restoreEpochRef.current
+
+        void userFacingAncestorId(row, sessions, activeProfile, connectionId)
+          .then(ancestor => {
+            const context = restoreContextRef.current
+
+            if (
+              restoreEpochRef.current !== epoch ||
+              context.activeProfile !== activeProfile ||
+              context.locationPathname !== locationPathname ||
+              context.routedSessionId !== routedSessionId ||
+              (getApiRequestConnection() ?? 'local') !== connectionId ||
+              !rememberedCandidateUnchanged(row, context.sessions, activeProfile, connectionId) ||
+              (ancestor && !rememberedAncestryUnchanged(ancestor, context.sessions, activeProfile, connectionId))
+            ) {
+              return
+            }
+
+            if (ancestor) {
+              setRememberedSessionId(ancestor.id, activeProfile)
+              setRememberedRoute(sessionRoute(ancestor.id), activeProfile)
+            } else {
+              if (getRememberedSessionId(activeProfile) === routedSessionId) {
+                setRememberedSessionId(null, activeProfile)
+              }
+
+              if (routeSessionId(getRememberedRoute(activeProfile) ?? '') === routedSessionId) {
+                setRememberedRoute(null, activeProfile)
+              }
+            }
+          })
+          .catch(() => undefined)
+      } else if (row) {
+        const safeId = row._lineage_root_id ?? routedSessionId
+        setRememberedSessionId(safeId, activeProfile)
+        setRememberedRoute(safeId === routedSessionId ? locationPathname : sessionRoute(safeId), activeProfile)
+      }
     } else if (!routedSessionId && !isOverlayView(appViewForPath(locationPathname))) {
-      setRememberedRoute(locationPathname, activeProfile)
+      if (pendingRestoreEpochRef.current !== restoreEpochRef.current) {
+        setRememberedRoute(locationPathname, activeProfile)
+      }
     }
-  }, [activeProfile, locationPathname, navigate, profileReady, routedSessionId, sessions])
+  }, [
+    activeProfile,
+    connectionId,
+    locationPathname,
+    navigate,
+    profileReady,
+    restoreRetryToken,
+    routedSessionId,
+    sessions
+  ])
 
   useEffect(() => {
     if (!profileReady || !resumeExhaustedSessionId) {

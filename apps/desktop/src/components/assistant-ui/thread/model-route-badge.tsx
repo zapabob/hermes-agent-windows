@@ -5,27 +5,39 @@ import { displayModelName } from '@/lib/model-status-label'
 import { cn } from '@/lib/utils'
 
 export function isModelDrift(route?: ModelRouteInfo | null): boolean {
-  if (!route || route.fallback) {return false}
+  if (!route || route.fallback) {
+    return false
+  }
 
-  if (route.isDrift !== undefined) {return route.isDrift}
+  if (route.isDrift !== undefined) {
+    return route.isDrift
+  }
 
-  if (route.is_drift !== undefined) {return route.is_drift}
+  if (route.is_drift !== undefined) {
+    return route.is_drift
+  }
 
   const src = route.effectiveModelSource || route.effective_model_source
 
-  if (src !== 'response' && src !== 'server') {return false}
+  if (src !== 'response' && src !== 'server') {
+    return false
+  }
 
   const req = (route.requestedModel || route.requested_model || '').trim()
   const wire = (route.wireModel || route.wire_model || '').trim()
   const eff = (route.effectiveModel || route.effective_model || '').trim()
 
-  if (!eff || !req) {return false}
+  if (!eff || !req) {
+    return false
+  }
 
   const reqClean = (req.includes('/') ? req.slice(req.lastIndexOf('/') + 1) : req).toLowerCase()
   const wireClean = (wire.includes('/') ? wire.slice(wire.lastIndexOf('/') + 1) : wire).toLowerCase()
   const effClean = (eff.includes('/') ? eff.slice(eff.lastIndexOf('/') + 1) : eff).toLowerCase()
 
-  if (effClean === reqClean || effClean === wireClean) {return false}
+  if (effClean === reqClean || effClean === wireClean) {
+    return false
+  }
 
   const reqProv = (route.requestedProvider || route.requested_provider || '').trim().toLowerCase()
   const wireProv = (route.wireProvider || route.wire_provider || '').trim().toLowerCase()
@@ -39,10 +51,15 @@ export function isModelDrift(route?: ModelRouteInfo | null): boolean {
     effProv === 'copilot' ||
     effProv === 'copilot-acp'
 
-  if (isCopilot && (
-    reqClean === 'copilot-acp' || reqClean === 'default' || reqClean === 'auto' ||
-    wireClean === 'copilot-acp' || wireClean === 'default' || wireClean === 'auto'
-  )) {
+  if (
+    isCopilot &&
+    (reqClean === 'copilot-acp' ||
+      reqClean === 'default' ||
+      reqClean === 'auto' ||
+      wireClean === 'copilot-acp' ||
+      wireClean === 'default' ||
+      wireClean === 'auto')
+  ) {
     return false
   }
 
@@ -50,13 +67,21 @@ export function isModelDrift(route?: ModelRouteInfo | null): boolean {
 }
 
 export function isRouteDivergent(route?: ModelRouteInfo | null): boolean {
-  if (!route) {return false}
+  if (!route) {
+    return false
+  }
 
-  if (route.isDivergent !== undefined) {return route.isDivergent}
+  if (route.isDivergent !== undefined) {
+    return route.isDivergent
+  }
 
-  if (route.is_divergent !== undefined) {return route.is_divergent}
+  if (route.is_divergent !== undefined) {
+    return route.is_divergent
+  }
 
-  if (route.fallback) {return true}
+  if (route.fallback) {
+    return true
+  }
 
   return isModelDrift(route)
 }
@@ -64,7 +89,9 @@ export function isRouteDivergent(route?: ModelRouteInfo | null): boolean {
 function prettifyProvider(provider?: string): string {
   const p = (provider || '').trim()
 
-  if (!p) {return ''}
+  if (!p) {
+    return ''
+  }
 
   const mapping: Record<string, string> = {
     openai: 'OpenAI',
@@ -80,7 +107,7 @@ function prettifyProvider(provider?: string): string {
     ollama: 'Ollama'
   }
 
-  return mapping[p.toLowerCase()] || (p.charAt(0).toUpperCase() + p.slice(1))
+  return mapping[p.toLowerCase()] || p.charAt(0).toUpperCase() + p.slice(1)
 }
 
 interface ModelRouteBadgeProps {
@@ -88,10 +115,7 @@ interface ModelRouteBadgeProps {
   className?: string
 }
 
-export function sanitizeAndBoundRouteReason(
-  reason?: null | string,
-  maxLen = 200
-): null | string {
+export function sanitizeAndBoundRouteReason(reason?: null | string, maxLen = 200): null | string {
   if (!reason) {
     return null
   }

@@ -1331,12 +1331,14 @@ def test_control_approval_payload_has_only_once_and_deny(server):
     data = {
         "request_id": "req-control", "command": "Hermes control operation op-1",
         "description": "Start an approved run",
-        "control": {"intent_digest": "a" * 64, "operation_id": "op-1"},
+        "control": {"intent_digest": "a" * 64, "operation_id": "op-1",
+                    "presentation": {"task": "t" * 5000, "workspace_id": "w1"}},
         "allowed_choices": ["once", "deny"],
     }
     payload = server._approval_request_payload(data)
     assert payload["choices"] == ["once", "deny"]
     assert payload["control"]["intent_digest"] == "a" * 64
+    assert payload["control"]["presentation"] == data["control"]["presentation"]
 
 
 def test_control_approval_rpc_uses_strict_owner(server, monkeypatch):
@@ -1356,14 +1358,32 @@ def test_control_approval_rpc_uses_strict_owner(server, monkeypatch):
         "id": "control-1", "method": "control_approval.respond",
         "params": {
             "session_id": "ui-control", "request_id": "req-control",
-            "intent_digest": "a" * 64, "choice": "once",
+            "intent_digest": "a" * 64, "choice": "once", "presentation_digest": "b" * 64,
         },
     }, transport=owner_transport)
     assert response["result"] == {"resolved": True}
     assert calls == [{
         "session_key": "human-control", "request_id": "req-control",
-        "intent_digest": "a" * 64, "choice": "once",
+        "intent_digest": "a" * 64, "choice": "once", "presentation_digest": "b" * 64,
     }]
+    malformed = server.dispatch({
+        "id": "control-1b", "method": "control_approval.respond",
+        "params": {
+            "session_id": "ui-control", "request_id": "req-control",
+            "intent_digest": "a" * 64, "choice": "once", "presentation_digest": "B" * 64,
+        },
+    }, transport=owner_transport)
+    assert malformed["error"]["code"] == 4006
+    assert len(calls) == 1
+    denied = server.dispatch({
+        "id": "control-1c", "method": "control_approval.respond",
+        "params": {
+            "session_id": "ui-control", "request_id": "req-control",
+            "intent_digest": "a" * 64, "choice": "deny", "presentation_digest": "B" * 64,
+        },
+    }, transport=owner_transport)
+    assert denied["result"] == {"resolved": True}
+    assert calls[-1]["choice"] == "deny" and calls[-1]["presentation_digest"] is None
     legacy = server.dispatch({
         "id": "control-2", "method": "control_approval.respond",
         "params": {
@@ -1372,7 +1392,7 @@ def test_control_approval_rpc_uses_strict_owner(server, monkeypatch):
         },
     }, transport=owner_transport)
     assert legacy["error"]["code"] == 4006
-    assert len(calls) == 1
+    assert len(calls) == 2
 
     foreign = server.dispatch({
         "id": "control-3", "method": "control_approval.respond",
@@ -1382,4 +1402,4 @@ def test_control_approval_rpc_uses_strict_owner(server, monkeypatch):
         },
     }, transport=other_transport)
     assert foreign["error"]["code"] == 4003
-    assert len(calls) == 1
+    assert len(calls) == 2

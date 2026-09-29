@@ -79,6 +79,7 @@ EXCLUDED_DIRS = {
     "site-packages",
     "website/build",
     "optional-skills",  # external skills
+    "vendor",  # external submodules
 }
 
 # File globs we never scan (beyond the dirs above).

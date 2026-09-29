@@ -89,6 +89,7 @@ clutter the root live under [`../../notes/`](../../notes/):
 | `notes/archives/mcp-research-data/` | UE bench / discovery JSON (relocated from root) |
 | `notes/archives/net-home-probe-results/` | Network probe baselines |
 | `notes/archives/artifacts/` | Measurement artifacts |
+| `notes/archives/prototypes/` | Stand-alone toy scripts with no callers (e.g. `mini_llm_planner.py`) |
 
 See [`AGENTS.md`](AGENTS.md) for agent handling rules. Root policy summary:
 [`../../AGENTS.md`](../../AGENTS.md) §§16–17.

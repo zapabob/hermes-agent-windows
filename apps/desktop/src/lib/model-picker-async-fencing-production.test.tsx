@@ -460,7 +460,12 @@ describe('Slice D.1.1: Production-Path Model Picker Async Fencing Qualification'
 
       // A request begins
       await waitFor(() =>
-        expect(requestGatewayForAgentMock).toHaveBeenCalledWith('conn-a', 'profile-a', 'model.options', expect.anything())
+        expect(requestGatewayForAgentMock).toHaveBeenCalledWith(
+          'conn-a',
+          'profile-a',
+          'model.options',
+          expect.anything()
+        )
       )
 
       // Focus changes to B
@@ -472,7 +477,12 @@ describe('Slice D.1.1: Production-Path Model Picker Async Fencing Qualification'
 
       // B request begins
       await waitFor(() =>
-        expect(requestGatewayForAgentMock).toHaveBeenCalledWith('conn-b', 'profile-b', 'model.options', expect.anything())
+        expect(requestGatewayForAgentMock).toHaveBeenCalledWith(
+          'conn-b',
+          'profile-b',
+          'model.options',
+          expect.anything()
+        )
       )
 
       // B resolves first

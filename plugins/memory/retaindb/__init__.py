@@ -37,6 +37,7 @@ from agent.memory_provider import MemoryProvider
 from agent.secret_scope import get_secret
 from agent.file_safety import raise_if_read_blocked
 from tools.registry import tool_error
+from agent.redact import redact_base_url
 
 logger = logging.getLogger(__name__)
 
@@ -607,7 +608,7 @@ class RetainDBMemoryProvider(MemoryProvider):
                 logger.warning(
                     "RETAINDB_BASE_URL '%s' targets an always-blocked address; "
                     "resetting to the default endpoint.",
-                    base_url,
+                    redact_base_url(base_url),
                 )
                 base_url = _DEFAULT_BASE_URL
         except Exception as exc:

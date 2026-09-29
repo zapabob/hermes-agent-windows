@@ -47,6 +47,7 @@ from hermes_cli.config import (
 )
 from hermes_cli.cli_output import prompt as _prompt_input
 from tools.environments.local import hermes_subprocess_env
+from tools.mcp_tool import mcp_server_enabled
 
 _MANIFEST_VERSION = 1
 
@@ -450,10 +451,7 @@ def is_enabled(name: str) -> bool:
     cfg = servers.get(name)
     if not cfg:
         return False
-    enabled = cfg.get("enabled", True)
-    if isinstance(enabled, str):
-        return enabled.lower() in {"true", "1", "yes"}
-    return bool(enabled)
+    return mcp_server_enabled(cfg)
 
 
 # ─── Install ─────────────────────────────────────────────────────────────────

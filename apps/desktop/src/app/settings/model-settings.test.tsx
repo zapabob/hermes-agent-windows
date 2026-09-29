@@ -37,6 +37,7 @@ vi.mock('@/hermes', () => ({
   profileScopeKey: (scope?: null | string) => (scope ?? '').trim() || 'default',
   setModelAssignment: (body: unknown, profile?: string) => {
     modelAssignmentProfile(profile)
+
     return setModelAssignment(body)
   },
   getRecommendedDefaultModel: (slug: string) => getRecommendedDefaultModel(slug),
@@ -666,7 +667,6 @@ describe('ModelSettings code-skew 503', () => {
   })
 })
 
-
 describe('Plugin auxiliary model picker', () => {
   it('renders registered stage slots and uses the existing provider/model choices', async () => {
     getGlobalModelOptions.mockResolvedValueOnce({
@@ -677,8 +677,17 @@ describe('Plugin auxiliary model picker', () => {
     })
     getAuxiliaryModels.mockResolvedValueOnce({
       main: { provider: 'nous', model: 'hermes-4' },
-      tasks: [{ task: 'engineering_worker', provider: 'auto', model: '', base_url: '',
-        display_name: 'Engineering worker', description: 'Bounded implementation', plugin: 'engineering' }]
+      tasks: [
+        {
+          task: 'engineering_worker',
+          provider: 'auto',
+          model: '',
+          base_url: '',
+          display_name: 'Engineering worker',
+          description: 'Bounded implementation',
+          plugin: 'engineering'
+        }
+      ]
     })
     await renderModelSettings('research')
     expect(await screen.findByText('Engineering worker')).toBeTruthy()
@@ -690,23 +699,33 @@ describe('Plugin auxiliary model picker', () => {
     fireEvent.click(within(row).getAllByRole('combobox')[1])
     fireEvent.click(await screen.findByRole('option', { name: 'org/worker-model' }))
     fireEvent.click(within(row).getByRole('button', { name: 'Apply' }))
-    await waitFor(() => expect(setModelAssignment).toHaveBeenCalledWith(
-      expect.objectContaining({ scope: 'auxiliary', task: 'engineering_worker',
-        provider: 'custom:lab', model: 'org/worker-model' })
-    ))
+    await waitFor(() =>
+      expect(setModelAssignment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          scope: 'auxiliary',
+          task: 'engineering_worker',
+          provider: 'custom:lab',
+          model: 'org/worker-model'
+        })
+      )
+    )
     expect(modelAssignmentProfile).toHaveBeenLastCalledWith('research')
   })
 
   it('deduplicates a registered builtin and removes plugin rows after profile change', async () => {
     getAuxiliaryModels.mockResolvedValueOnce({
       main: { provider: 'nous', model: 'hermes-4' },
-      tasks: [{ task: 'vision', provider: 'auto', model: '', base_url: '' },
-        { task: 'engineering_worker', provider: 'auto', model: '', base_url: '', display_name: 'Engineering worker' }]
+      tasks: [
+        { task: 'vision', provider: 'auto', model: '', base_url: '' },
+        { task: 'engineering_worker', provider: 'auto', model: '', base_url: '', display_name: 'Engineering worker' }
+      ]
     })
     await renderModelSettings()
     expect(await screen.findByText('Engineering worker')).toBeTruthy()
     expect(document.querySelectorAll('#aux-task-vision')).toHaveLength(1)
-    await act(async () => { profileSwitchHandler?.() })
+    await act(async () => {
+      profileSwitchHandler?.()
+    })
     await waitFor(() => expect(screen.queryByText('Engineering worker')).toBeNull())
   })
 })

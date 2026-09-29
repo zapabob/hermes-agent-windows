@@ -1,5 +1,6 @@
 """The approved journal operation reaches the registered native entrypoint once."""
 from concurrent.futures import ThreadPoolExecutor
+import hashlib
 import json
 import threading
 
@@ -17,13 +18,16 @@ def _approved(control_module, control_context, tmp_path):
                'source_sha': 'a' * 40, 'parameters': {'task': 'Implement a bounded test'}}
     operation = journal.reserve(ctx, request, now=100)
     binding = journal.approval_binding(ctx, operation['operation_id'], now=101)
-    approval.register_gateway_notify('human-owner', lambda _: None)
+    seen = []
+    approval.register_gateway_notify('human-owner', seen.append)
     try:
         ticket = approval.request_control_consent(binding, session_key='human-owner',
                                                   timeout_seconds=60, now=101)
         assert approval.resolve_control_consent(session_key='human-owner',
             request_id=ticket.request_id, intent_digest=binding.intent_digest,
-            choice='once', now=102)
+            choice='once', now=102, presentation_digest=hashlib.sha256(json.dumps(
+                seen[0]['control']['presentation'], ensure_ascii=False, sort_keys=True,
+                separators=(',', ':')).encode('utf-8')).hexdigest())
         decision = approval.take_control_decision(ticket, now=102)
         journal.approve(ctx, operation['operation_id'], decision, now=102)
     finally:

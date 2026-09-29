@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import copy
 
+import pytest
+
 from tools.schema_sanitizer import (
     sanitize_tool_schemas,
     strip_pattern_and_format,
@@ -517,3 +519,81 @@ def test_collapse_is_deterministic():
     first = collapse_const_unions(copy.deepcopy(schema))
     second = collapse_const_unions(copy.deepcopy(schema))
     assert first == second == {"type": "string", "enum": ["b", "a"]}
+
+
+def test_normalize_mcp_input_schema_preserves_required_only_constraint_fragments():
+    """``allOf``/``oneOf`` branches carrying only ``required`` must survive intact.
+
+    Object-repairing ``{"required": ["chain"]}`` adds ``properties: {}`` and then
+    prunes ``chain``, collapsing sibling branches into identical always-true
+    schemas; the enclosing ``oneOf`` can then never match exactly once.
+    """
+    from tools.mcp_tool import _normalize_mcp_input_schema
+
+    schema = {
+        "type": "object",
+        "properties": {
+            "chain": {"type": "string"},
+            "chainId": {"type": "integer"},
+            "limit": {"type": "integer"},
+        },
+        "allOf": [{"oneOf": [{"required": ["chain"]}, {"required": ["chainId"]}]}],
+    }
+    out = _normalize_mcp_input_schema(schema)
+
+    assert out["allOf"] == [{"oneOf": [{"required": ["chain"]}, {"required": ["chainId"]}]}]
+
+    validators = pytest.importorskip("jsonschema.validators")
+
+    def valid(args):
+        return validators.Draft202012Validator(out).is_valid(args)
+
+    assert valid({"chain": "ethereum", "limit": 3})
+    assert valid({"chainId": 1})
+    assert not valid({})
+    assert not valid({"chain": "ethereum", "chainId": 1})
+
+
+def test_normalize_mcp_input_schema_preserves_if_then_fragments():
+    from tools.mcp_tool import _normalize_mcp_input_schema
+
+    out = _normalize_mcp_input_schema({
+        "type": "object",
+        "properties": {"mode": {"type": "string"}, "id": {"type": "integer"}},
+        "if": {"required": ["mode"]},
+        "then": {"required": ["id"]},
+    })
+    assert out["if"] == {"required": ["mode"]}
+    assert out["then"] == {"required": ["id"]}
+
+
+def test_normalize_mcp_input_schema_still_repairs_root_dangling_required():
+    """Only nested fragments are exempt: the root is the provider's argument object."""
+    from tools.mcp_tool import _normalize_mcp_input_schema
+
+    out = _normalize_mcp_input_schema({
+        "type": "object",
+        "properties": {"a": {"type": "string"}},
+        "required": ["a", "ghost"],
+    })
+    assert out["required"] == ["a"]
+
+    bare = _normalize_mcp_input_schema({"type": "object", "required": ["a"]})
+    assert bare["type"] == "object"
+    assert bare["properties"] == {}
+    assert "a" not in bare.get("required", [])
+
+    untyped_root = _normalize_mcp_input_schema({"required": ["a"]})
+    assert untyped_root["type"] == "object"
+    assert untyped_root["properties"] == {}
+
+
+def test_normalize_mcp_input_schema_still_repairs_nested_object_literals():
+    from tools.mcp_tool import _normalize_mcp_input_schema
+
+    out = _normalize_mcp_input_schema({
+        "type": "object",
+        "properties": {"opts": {"properties": {"x": {"type": "string"}}}},
+    })
+    assert out["properties"]["opts"]["type"] == "object"
+    assert out["properties"]["opts"]["properties"] == {"x": {"type": "string"}}

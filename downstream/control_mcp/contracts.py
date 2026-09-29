@@ -62,6 +62,21 @@ class ControlContext:
             raise ControlError("invalid_context")
 
 
+@dataclass(frozen=True)
+class VerifiedResultReceipt:
+    """Host verification of one scratch result: evidence for an apply, never authority.
+
+    Only the trusted host verifier constructs it; it carries no approval, and an
+    apply still needs its own human decision bound to these same digests.
+    """
+
+    source_operation_id: str
+    run_id: str
+    candidate_digest: str
+    verification_digest: str
+    verified: bool
+
+
 def require_access(ctx: ControlContext, *, scope: str, profile_id: str,
                    workspace_id: str | None = None, now: float) -> None:
     if type(ctx) is not ControlContext:

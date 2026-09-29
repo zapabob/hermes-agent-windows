@@ -21,6 +21,18 @@ export function normalizeEntry(entry: Record<string, unknown>): Record<string, u
   return entry
 }
 
+// `String()` folds the value first: false → 'false', 0 / 0.0 / -0 → '0'; everything
+// else (true, other numbers, null, absent, junk) lands outside this set and reads on.
+const OFF_WORDS = new Set(['false', '0', 'no', 'off'])
+
+/** Whether a server entry is on. Mirrors the backend's one reader
+ *  (`tools/mcp_tool.py::mcp_server_enabled`): false/0 and the off words
+ *  (any case, trimmed) are off; absent, `null`, `""` and junk are on.
+ *  `mcp-enabled-cases.json` pins both sides to the same table, so the MCP page
+ *  never shows a server on that the runtime skips. */
+export const serverEnabled = (entry: Record<string, unknown>) =>
+  !OFF_WORDS.has(String(entry.enabled).trim().toLowerCase())
+
 /** The `mcp_servers` map out of a config record, or `{}` when absent/malformed. */
 export function getServers(config: { mcp_servers?: unknown } | null): McpServers {
   const raw = config?.mcp_servers

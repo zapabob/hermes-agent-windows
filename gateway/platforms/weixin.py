@@ -30,6 +30,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import quote, urlparse
+from agent.redact import redact_base_url
 
 logger = logging.getLogger(__name__)
 
@@ -1327,7 +1328,7 @@ class WeixinAdapter(BasePlatformAdapter):
         self._poll_task = asyncio.create_task(self._poll_loop(), name="weixin-poll")
         self._mark_connected()
         _LIVE_ADAPTERS[self._token] = self
-        logger.info("[%s] Connected account=%s base=%s", self.name, _safe_id(self._account_id), self._base_url)
+        logger.info("[%s] Connected account=%s base=%s", self.name, _safe_id(self._account_id), redact_base_url(self._base_url))
         if self._group_policy != "disabled":
             logger.warning(
                 "[%s] WEIXIN_GROUP_POLICY=%s is set, but QR-login connects an iLink bot "

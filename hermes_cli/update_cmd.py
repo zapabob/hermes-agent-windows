@@ -29,6 +29,7 @@ import logging
 import os
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
 import time as _time
@@ -3553,7 +3554,7 @@ def _classify_concurrent_instance(pid: int) -> str:
 
     from hermes_cli._scan_venv_blockers import _is_pausable_gateway  # noqa: PLC0415
 
-    cmdline = " ".join(cmdline_list or [])
+    cmdline = subprocess.list2cmdline(cmdline_list or [])
     if _is_pausable_gateway(cmdline):
         return "gateway"
     return "non-gateway"
@@ -5041,7 +5042,7 @@ def _detect_venv_python_processes(
             # this CLI's own venv python chain) stays excluded — an updater
             # must never nominate its own interactive ancestry as blockers.
             try:
-                anc_cmdline = " ".join(anc.cmdline() or [])
+                anc_cmdline = subprocess.list2cmdline(anc.cmdline() or [])
             except Exception:
                 anc_cmdline = ""
             if _is_gw is not None and anc_cmdline and _is_gw(anc_cmdline):
@@ -5085,7 +5086,7 @@ def _detect_venv_python_processes(
             continue
 
         try:
-            cmdline_raw = " ".join(proc.cmdline() or [])
+            cmdline_raw = subprocess.list2cmdline(proc.cmdline() or [])
         except Exception:
             cmdline_raw = ""
         cmdline_low = cmdline_raw.lower()
@@ -5367,6 +5368,13 @@ def _hermes_holder_subcommand(cmdline: str) -> str | None:
     if entry_idx is None:
         return None
 
+    from gateway.status import command_line_runs_inline_source
+
+    if command_line_runs_inline_source(
+        [token.strip('"').replace("\\", "/") for token in tokens]
+    ):
+        return None
+
     value_flags = _holder_value_flags()
     i = entry_idx + 1
     while i < len(tokens):
@@ -5419,8 +5427,14 @@ def _format_venv_python_holders_message(matches: list[tuple[int, str, str]]) -> 
     lines.append("  (or use `hermes update --force-venv` to proceed anyway at your own risk)")
     return "\n".join(lines)
 
-def _venv_launcher_ancestors(pids: list[int]) -> list[int]:
-    """Return venv-interpreter ancestors of *pids* that hold the install open.
+def _venv_launcher_ancestor_identities(
+    workers: list[tuple[int, int]],
+) -> list[tuple[int, int]]:
+    """Return stable ``(pid, start_guard)`` identities for venv launchers.
+
+    ``workers`` are the mapped gateway incarnations as ``(pid, start_guard)``
+    pairs, where ``start_guard`` is the centisecond value
+    ``gateway.status.get_process_start_time`` reports.
 
     On Windows a gateway started through the venv shim is a **two-process
     chain**: ``venv\\Scripts\\python.exe`` (the launcher, which keeps native
@@ -5438,12 +5452,19 @@ def _venv_launcher_ancestors(pids: list[int]) -> list[int]:
     reported holder is a gateway the updater believes it already stopped).
 
     Walking one hop up from each mapped gateway PID and keeping ancestors
-    that live under the project venv closes the gap. Only the venv-side
-    parent is returned — unrelated ancestors (the Scheduled Task's
-    ``cmd.exe``, an operator's shell) are ignored so we never widen the
-    blast radius beyond the gateway's own launcher. Never raises.
+    that live under the project venv closes the gap. The launcher's process
+    identity is captured while that parent relationship is being inspected
+    and re-read through a fresh ``Process`` object before it is returned.
+    This prevents a reused launcher PID from acquiring a new process's start
+    time later in the pause flow and being killed under that unrelated
+    identity. The worker is re-checked against its captured guard before and
+    after its parent relationship is read: a worker PID recycled by an
+    unrelated child of another venv python would otherwise nominate that
+    process's parent. A worker that changed or cannot be inspected nominates
+    nothing. Unrelated ancestors (the Scheduled Task's ``cmd.exe``, an
+    operator's shell) are ignored. Never raises.
     """
-    if not _m()._is_windows() or not pids:
+    if not _m()._is_windows() or not workers:
         return []
     try:
         import psutil
@@ -5470,7 +5491,7 @@ def _venv_launcher_ancestors(pids: list[int]) -> list[int]:
     try:
         for anc in psutil.Process().parents():
             try:
-                anc_cmdline = " ".join(anc.cmdline() or [])
+                anc_cmdline = subprocess.list2cmdline(anc.cmdline() or [])
             except Exception:
                 anc_cmdline = ""
             if _is_gw is not None and anc_cmdline and _is_gw(anc_cmdline):
@@ -5479,24 +5500,69 @@ def _venv_launcher_ancestors(pids: list[int]) -> list[int]:
     except Exception:
         pass
 
-    found: list[int] = []
-    for pid in pids:
+    def _worker_is_original(pid: int, guard: int) -> bool:
+        # A fresh Process object each time: psutil caches create_time on an
+        # instance, which would hide a recycle behind the first read.
         try:
-            parent = psutil.Process(int(pid)).parent()
+            started = float(psutil.Process(pid).create_time())
+        except Exception:
+            return False
+        return guard > 0 and int(round(started * 100)) == guard
+
+    worker_pids = {int(pid) for pid, _guard in workers}
+    found: list[tuple[int, int]] = []
+    found_pids: set[int] = set()
+    for pid, guard in workers:
+        pid, guard = int(pid), int(guard)
+        if not _worker_is_original(pid, guard):
+            continue
+        try:
+            parent = psutil.Process(pid).parent()
         except Exception:
             continue
         if parent is None:
             continue
         ppid = int(parent.pid)
-        if ppid in skip or ppid in found or ppid in set(pids):
+        if ppid in skip or ppid in found_pids or ppid in worker_pids:
             continue
         try:
+            started_before = float(parent.create_time())
             exe = (parent.exe() or "").lower()
+            started_after = float(psutil.Process(ppid).create_time())
         except Exception:
             continue
+        if abs(started_after - started_before) > 0.001:
+            continue
+        if not _worker_is_original(pid, guard):
+            continue
         if exe.startswith(venv_prefix):
-            found.append(ppid)
+            found.append((ppid, int(round(started_before * 100))))
+            found_pids.add(ppid)
     return found
+
+
+def _venv_launcher_ancestors(pids: list[int]) -> list[int]:
+    """Backward-compatible PID-only view of stable venv launcher identities.
+
+    Not a termination authority: the worker identity is read here rather than
+    carried from discovery, so callers that stop processes must use
+    ``_venv_launcher_ancestor_identities`` with their captured guards.
+    """
+    if not _m()._is_windows() or not pids:
+        return []
+    try:
+        import psutil
+    except Exception:
+        return []
+
+    workers = []
+    for pid in pids:
+        try:
+            started = float(psutil.Process(int(pid)).create_time())
+        except Exception:
+            continue
+        workers.append((int(pid), int(round(started * 100))))
+    return [pid for pid, _started in _venv_launcher_ancestor_identities(workers)]
 
 
 def _leftover_pausable_gateway_pids(
@@ -5536,7 +5602,7 @@ def _leftover_pausable_gateway_pids(
         argv = cmdline
         if psutil is not None:
             try:
-                argv = " ".join(psutil.Process(int(pid)).cmdline()) or cmdline
+                argv = subprocess.list2cmdline(psutil.Process(int(pid)).cmdline()) or cmdline
             except Exception:
                 pass
         if not _is_pausable_gateway(argv):
@@ -5696,18 +5762,13 @@ def _orphaned_desktop_backend_pids(
     except Exception:
         return None
 
-    def _is_backend(argv_low: str) -> bool:
-        return "hermes_cli.main" in argv_low and (
-            " serve" in argv_low or " dashboard" in argv_low
-        )
-
     # Pass 1: find orphaned backend ROOTS among the holders.
     roots: list[tuple[int, int]] = []
     remaining: list[tuple[int, str]] = []  # (pid, argv_low) still to justify
     for pid, _name, cmdline in matches:
         argv = cmdline
         try:
-            argv = " ".join(psutil.Process(int(pid)).cmdline()) or cmdline
+            argv = subprocess.list2cmdline(psutil.Process(int(pid)).cmdline()) or cmdline
         except psutil.NoSuchProcess:
             # Holder exited between scan and classification — nothing to
             # reap, nothing blocking. Skip it.
@@ -5715,7 +5776,7 @@ def _orphaned_desktop_backend_pids(
         except Exception:
             pass
         low = argv.lower()
-        if not _is_backend(low):
+        if not _looks_like_desktop_control_plane(argv):
             remaining.append((int(pid), low))
             continue
         try:
@@ -5859,22 +5920,17 @@ def _handoff_reapable_backend_pids(
     except Exception:
         return None
 
-    def _is_backend(argv_low: str) -> bool:
-        return "hermes_cli.main" in argv_low and (
-            " serve" in argv_low or " dashboard" in argv_low
-        )
-
     roots: list[int] = []
     for pid, _name, cmdline in matches:
         argv = cmdline
         try:
-            argv = " ".join(psutil.Process(int(pid)).cmdline()) or cmdline
+            argv = subprocess.list2cmdline(psutil.Process(int(pid)).cmdline()) or cmdline
         except psutil.NoSuchProcess:
             # Exited between scan and classification — nothing to reap.
             continue
         except Exception:
             pass
-        if not _is_backend(argv.lower()):
+        if not _looks_like_desktop_control_plane(argv):
             # A non-backend holder during a hand-off is unexpected; refuse the
             # whole set rather than reap something we cannot justify.
             return None
@@ -6169,6 +6225,42 @@ def _restore_windows_gateway_service(name: str, *, timeout: float = 60.0) -> Non
     )
 
 
+def _capture_mapped_gateway_owner_argv(pid: int, expected_started: float, capture_argv):
+    """Bind the restart-owner argv to the mapped process incarnation."""
+    if pid <= 1 or expected_started <= 0:
+        return None
+    try:
+        import psutil
+
+        started_before = float(psutil.Process(pid).create_time())
+        if abs(started_before - expected_started) > 0.001:
+            return None
+        argv = capture_argv(pid)
+        # Use a fresh Process object: the first object may cache create_time
+        # while cmdline() has already switched to a reused PID.
+        started_after = float(psutil.Process(pid).create_time())
+        if abs(started_after - expected_started) > 0.001:
+            return None
+        return list(argv) if argv else None
+    except Exception:
+        return None
+
+
+def _capture_unmapped_gateway_argv_with_identity(pid, capture_argv, get_start_time):
+    """Snapshot an unmapped gateway argv and its Windows kill guard together."""
+    try:
+        started_before = get_start_time(pid)
+        if not started_before:
+            return None
+        argv = capture_argv(pid)
+        started_after = get_start_time(pid)
+        if not argv or started_after != started_before:
+            return None
+        return list(argv), int(started_before)
+    except Exception:
+        return None
+
+
 def _pause_windows_gateways_for_update() -> dict | None:
     """Stop running Windows gateways before mutating the checkout or venv.
 
@@ -6181,7 +6273,7 @@ def _pause_windows_gateways_for_update() -> dict | None:
         return None
 
     try:
-        from gateway.status import terminate_pid
+        from gateway.status import get_process_start_time, terminate_pid
         from hermes_cli.gateway import (
             _capture_gateway_argv,
             _get_restart_drain_timeout,
@@ -6212,6 +6304,33 @@ def _pause_windows_gateways_for_update() -> dict | None:
         ) from exc
 
     service_gateway_pids = {int(service.gateway_pid) for service in service_gateways}
+    service_owned_start_times: dict[int, int] = {}
+
+    def _record_service_owned_identity(pid: int, started: float) -> None:
+        if pid <= 1 or started <= 0:
+            raise RuntimeError("SCM-owned Windows gateway identity is incomplete")
+        guard = int(round(float(started) * 100))
+        existing = service_owned_start_times.get(int(pid))
+        if existing is not None and existing != guard:
+            raise RuntimeError(
+                f"SCM-owned Windows gateway PID {pid} has conflicting identities"
+            )
+        service_owned_start_times[int(pid)] = guard
+
+    for service in service_gateways:
+        _record_service_owned_identity(
+            int(service.service_pid), float(service.service_create_time)
+        )
+        _record_service_owned_identity(
+            int(service.gateway_pid), float(service.gateway_create_time)
+        )
+        for descendant_pid, descendant_started in tuple(
+            getattr(service, "descendant_identities", ())
+        ):
+            _record_service_owned_identity(
+                int(descendant_pid), float(descendant_started)
+            )
+    service_owned_pids = set(service_owned_start_times)
     try:
         running_pids = list(
             dict.fromkeys(
@@ -6272,139 +6391,214 @@ def _pause_windows_gateways_for_update() -> dict | None:
             )
         return None
 
+    # Resolve each non-SCM gateway's restart owner and process identity before
+    # writing a stop marker. An external manager may restart on exit during
+    # the code swap, so an update cannot safely pause its child here.
+    unmapped: list[dict] = []
+    force_stop_start_times: dict[int, int] = {}
+    for pid in running_pids:
+        if pid in service_owned_pids:
+            continue
+        if pid in profile_processes:
+            expected_started = float(
+                getattr(profile_processes[pid], "create_time", 0.0) or 0.0
+            )
+            argv = _capture_mapped_gateway_owner_argv(
+                int(pid), expected_started, _capture_gateway_argv
+            )
+            # terminate_pid's Windows guard uses centiseconds, while strict
+            # profile discovery stores psutil's epoch seconds.
+            start_guard = int(round(expected_started * 100))
+            if not argv or get_process_start_time(int(pid)) != start_guard:
+                raise RuntimeError(
+                    f"Could not verify Windows gateway restart ownership for PID {pid}"
+                )
+        else:
+            captured = _capture_unmapped_gateway_argv_with_identity(
+                int(pid), _capture_gateway_argv, get_process_start_time
+            )
+            if not captured:
+                raise RuntimeError(
+                    f"Could not verify Windows gateway restart ownership for PID {pid}"
+                )
+            argv, start_guard = captured
+            unmapped.append({"pid": int(pid), "argv": argv})
+        if "--external-supervisor" in argv:
+            raise RuntimeError(
+                "Cannot update a Windows gateway owned by an external supervisor "
+                "outside SCM; stop that supervisor before updating"
+            )
+        force_stop_start_times[int(pid)] = start_guard
+
     profiles: dict[str, int] = {}
+    profile_old_identities: dict[str, tuple[int, float]] = {}
     mapped_pids = []
     socket_acks: list[dict] = []
-    for pid in running_pids:
-        if pid in service_gateway_pids:
-            continue
-        proc = profile_processes.get(pid)
-        if proc is None:
-            continue
-        profiles[str(proc.profile)] = int(pid)
-        mapped_pids.append(int(pid))
-        _write_update_planned_stop_marker(Path(proc.path), int(pid))
-        # Socket-first pause (#92091 step 2): ask the gateway to drain and
-        # exit itself instead of relying on the marker poll + force-kill
-        # ladder. A positive ACK means the gateway is running its own
-        # graceful restart path (same drain as SIGUSR1/service restarts) and
-        # will release its venv handles on the way out. No answer (older
-        # gateway, no socket) → the marker watcher / force-kill fallback
-        # below behaves exactly as before this verb existed.
-        try:
-            from gateway.control_socket import pause_gateway_for_update
-
-            ack = pause_gateway_for_update(Path(proc.path))
-            if ack and (ack.get("pausing") or ack.get("already_stopping")):
-                socket_acks.append(ack)
-        except Exception as exc:
-            logger.debug(
-                "Socket pause unavailable for gateway %s: %s", pid, exc
-            )
-
-    # Resolve each mapped worker's venv-side launcher BEFORE draining: the
-    # drain stops tracking a PID exactly when it dies, so a gracefully
-    # drained worker is gone by the time the wait returns — and a dead pid's
-    # parent cannot be recovered (psutil raises NoSuchProcess). The snapshot
-    # is stopped after the drain alongside the survivors.
-    #
-    # Why launchers matter: the drain targets the PID that wrote the PID
-    # file (the uv-side worker). On Windows that worker's parent is usually
-    # the venv-side ``python.exe`` launcher, which keeps venv ``.pyd`` files
-    # mapped and is what ``_detect_venv_python_processes()`` reports
-    # downstream. Left alive, it trips the venv-holder guard and aborts the
-    # update even though the gateway itself is stopped.
-    launcher_pids = _m()._venv_launcher_ancestors(mapped_pids)
-
-    print("→ Stopping Windows gateway process(es) before updating Hermes...")
-    try:
-        drain_timeout = max(float(_get_restart_drain_timeout()), 1.0)
-    except Exception:
-        drain_timeout = 10.0
-    if socket_acks:
-        # A socket-paused gateway drains its ACTIVE TURN before exiting; give
-        # it the budget it declared (plus teardown grace) rather than only
-        # the local default, so a mid-turn gateway isn't force-killed at the
-        # end of a too-short wait — the exact outcome the verb exists to
-        # prevent.
-        try:
-            declared = max(
-                float(a.get("drain_timeout") or 0.0) for a in socket_acks
-            )
-            drain_timeout = max(drain_timeout, declared + 10.0)
-        except Exception:
-            pass
-        print(
-            f"  → {len(socket_acks)} gateway(s) ACKed socket pause; "
-            f"waiting up to {int(drain_timeout)}s for graceful exit"
-        )
-    survivors = _m()._wait_for_windows_update_gateway_exit(
-        mapped_pids,
-        timeout=drain_timeout,
+    launcher_identities = _venv_launcher_ancestor_identities(
+        [
+            (int(pid), force_stop_start_times[int(pid)])
+            for pid in running_pids
+            if pid in profile_processes and pid not in service_owned_pids
+        ]
     )
-    unmapped_pids = [
-        pid
-        for pid in running_pids
-        if pid not in profile_processes and pid not in service_gateway_pids
+    launcher_identities = [
+        (pid, started)
+        for pid, started in launcher_identities
+        if pid not in service_owned_pids
     ]
-
-    # Snapshot each unmapped gateway's command line *before* we force-kill it,
-    # so ``_resume_windows_gateways_after_update`` can respawn it by replaying
-    # its own argv. Unmapped gateways are ones with no profile→PID-file mapping
-    # — e.g. a Windows Scheduled Task running ``pythonw.exe -m hermes_cli.main
-    # gateway run``. Without this snapshot they were force-killed and never
-    # restarted (the "Restart manually after update" dead-end from #50090).
-    unmapped: list[dict] = []
-    for pid in unmapped_pids:
-        argv = None
-        try:
-            argv = _capture_gateway_argv(int(pid))
-        except Exception as exc:
-            logger.debug("Could not capture argv for unmapped gateway %s: %s", pid, exc)
-        unmapped.append({"pid": int(pid), "argv": argv})
-
-    # Stop drain survivors, unmapped gateways, and the pre-drain launcher
-    # snapshot. ``terminate_pid(force=True)`` is a tree kill, so a launcher
-    # that outlived its worker takes any stragglers with it; a launcher that
-    # already exited with its drained worker raises ProcessLookupError below
-    # and is skipped.
-    force_killed = []
-    for pid in sorted(set(survivors).union(unmapped_pids).union(launcher_pids)):
-        try:
-            terminate_pid(int(pid), force=True)
-            force_killed.append(int(pid))
-        except (ProcessLookupError, PermissionError, OSError):
-            pass
-
-    if profiles:
-        print(f"  ✓ Paused gateway profile(s): {', '.join(sorted(profiles))}")
-    if force_killed:
-        print(f"  → Force-stopped {len(force_killed)} gateway process(es)")
-
-    if unmapped_pids:
-        respawnable = sum(1 for u in unmapped if u.get("argv"))
-        print(
-            f"  → Stopped {len(unmapped_pids)} gateway process(es) without profile mapping"
-        )
-        if respawnable < len(unmapped_pids):
-            # Some had no recoverable command line (psutil missing, access
-            # denied, already gone): those still need a manual restart.
-            print("    Restart manually after update: hermes gateway run")
-
+    launcher_pids = [pid for pid, _started in launcher_identities]
+    for pid, start_guard in launcher_identities:
+        if get_process_start_time(int(pid)) != int(start_guard):
+            raise RuntimeError(
+                f"Could not verify Windows gateway launcher identity for PID {pid}"
+            )
+        force_stop_start_times[int(pid)] = int(start_guard)
+    # The caller cannot register recovery until this function returns. Keep a
+    # journal of attempted stops before the first marker/socket side effect,
+    # and recover locally if any later ordinary or SCM pause step fails.
     token = {
         "resume_needed": True,
         "profiles": profiles,
-        "unmapped_pids": unmapped_pids,
-        "unmapped": unmapped,
+        "profile_old_identities": profile_old_identities,
+        "unmapped_pids": [],
+        "unmapped": [],
     }
-
-    # Stop SCM-supervised gateways only after every fallible preparation step
-    # for ordinary gateways is complete. From this point to return, any error
-    # restores both the attempted services and the already-paused ordinary
-    # gateways before aborting the update.
+    unmapped_by_pid = {entry["pid"]: entry for entry in unmapped}
     paused_services = []
     current_service_name = None
     try:
+        for pid in running_pids:
+            if pid in service_owned_pids:
+                continue
+            proc = profile_processes.get(pid)
+            if proc is None:
+                continue
+            profiles[str(proc.profile)] = int(pid)
+            old_create_time = float(getattr(proc, "create_time", 0.0) or 0.0)
+            if old_create_time > 0:
+                profile_old_identities[str(proc.profile)] = (
+                    int(pid),
+                    old_create_time,
+                )
+            mapped_pids.append(int(pid))
+            _write_update_planned_stop_marker(Path(proc.path), int(pid))
+            # Socket-first pause (#92091 step 2): ask the gateway to drain and
+            # exit itself instead of relying on the marker poll + force-kill
+            # ladder. A positive ACK means the gateway is running its own
+            # graceful restart path (same drain as SIGUSR1/service restarts) and
+            # will release its venv handles on the way out. No answer (older
+            # gateway, no socket) → the marker watcher / force-kill fallback
+            # below behaves exactly as before this verb existed.
+            try:
+                from gateway.control_socket import pause_gateway_for_update
+
+                ack = pause_gateway_for_update(Path(proc.path))
+                if ack and (ack.get("pausing") or ack.get("already_stopping")):
+                    socket_acks.append(ack)
+            except Exception as exc:
+                logger.debug(
+                    "Socket pause unavailable for gateway %s: %s", pid, exc
+                )
+
+        # The launchers and their start-time guards were captured before draining:
+        # a gracefully drained worker is gone by the time the wait returns, and
+        # its parent cannot be recovered from a dead PID. Stop these launchers
+        # after the drain alongside the survivors.
+        #
+        # Why launchers matter: the drain targets the PID that wrote the PID
+        # file (the uv-side worker). On Windows that worker's parent is usually
+        # the venv-side ``python.exe`` launcher, which keeps venv ``.pyd`` files
+        # mapped and is what ``_detect_venv_python_processes()`` reports
+        # downstream. Left alive, it trips the venv-holder guard and aborts the
+        # update even though the gateway itself is stopped.
+        print("→ Stopping Windows gateway process(es) before updating Hermes...")
+        try:
+            drain_timeout = max(float(_get_restart_drain_timeout()), 1.0)
+        except Exception:
+            drain_timeout = 10.0
+        if socket_acks:
+            # A socket-paused gateway drains its ACTIVE TURN before exiting; give
+            # it the budget it declared (plus teardown grace) rather than only
+            # the local default, so a mid-turn gateway isn't force-killed at the
+            # end of a too-short wait — the exact outcome the verb exists to
+            # prevent.
+            try:
+                declared = max(
+                    float(a.get("drain_timeout") or 0.0) for a in socket_acks
+                )
+                drain_timeout = max(drain_timeout, declared + 10.0)
+            except Exception:
+                pass
+            print(
+                f"  → {len(socket_acks)} gateway(s) ACKed socket pause; "
+                f"waiting up to {int(drain_timeout)}s for graceful exit"
+            )
+        survivors = _m()._wait_for_windows_update_gateway_exit(
+            mapped_pids,
+            timeout=drain_timeout,
+        )
+        unmapped_pids = [
+            pid
+            for pid in running_pids
+            if pid not in profile_processes and pid not in service_owned_pids
+        ]
+
+        # Each unmapped gateway's command line was captured before the first
+        # mapped gateway was asked to drain, so the resume path can respawn it by replaying
+        # its own argv. Unmapped gateways are ones with no profile→PID-file mapping
+        # — e.g. a Windows Scheduled Task running ``pythonw.exe -m hermes_cli.main
+        # gateway run``. Without this snapshot they were force-killed and never
+        # restarted (the "Restart manually after update" dead-end from #50090).
+        # Stop drain survivors, unmapped gateways, and the pre-drain launcher
+        # snapshot. ``terminate_pid(force=True)`` is a tree kill, so a launcher
+        # that outlived its worker takes any stragglers with it; a launcher that
+        # already exited with its drained worker raises ProcessLookupError below
+        # and is skipped.
+        force_killed = []
+        for pid in sorted(set(survivors).union(unmapped_pids).union(launcher_pids)):
+            if pid in unmapped_by_pid:
+                # A failed kill can still have side effects. Journal the attempt,
+                # but never schedule recovery for an as-yet-untouched sibling.
+                token["unmapped_pids"].append(int(pid))
+                token["unmapped"].append(unmapped_by_pid[pid])
+            try:
+                terminate_pid(
+                    int(pid), force=True,
+                    expected_start_time=force_stop_start_times[int(pid)],
+                )
+                force_killed.append(int(pid))
+            except (ProcessLookupError, PermissionError, OSError) as exc:
+                current_start = get_process_start_time(int(pid))
+                if current_start == force_stop_start_times[int(pid)]:
+                    raise RuntimeError(
+                        f"Could not stop Windows gateway process PID {pid} before update"
+                    ) from exc
+                if current_start is None:
+                    import psutil
+
+                    if psutil.pid_exists(int(pid)):
+                        raise RuntimeError(
+                            f"Could not verify Windows gateway process PID {pid} stopped"
+                        ) from exc
+
+        if profiles:
+            print(f"  ✓ Paused gateway profile(s): {', '.join(sorted(profiles))}")
+        if force_killed:
+            print(f"  → Force-stopped {len(force_killed)} gateway process(es)")
+
+        if unmapped_pids:
+            respawnable = sum(1 for u in unmapped if u.get("argv"))
+            print(
+                f"  → Stopped {len(unmapped_pids)} gateway process(es) without profile mapping"
+            )
+            if respawnable < len(unmapped_pids):
+                # Some had no recoverable command line (psutil missing, access
+                # denied, already gone): those still need a manual restart.
+                print("    Restart manually after update: hermes gateway run")
+
+        token["unmapped_pids"] = unmapped_pids
+        token["unmapped"] = unmapped
+        # SCM owns its own process tree; ordinary recovery is already covered.
         for service in service_gateways:
             current_service_name = str(service.name)
             _stop_windows_gateway_service(
@@ -6437,7 +6631,7 @@ def _pause_windows_gateways_for_update() -> dict | None:
                 + ", ".join(paused_services)
             )
         return token
-    except Exception as exc:
+    except BaseException as exc:
         restore_names = []
         if current_service_name:
             restore_names.append(current_service_name)
@@ -6448,13 +6642,45 @@ def _pause_windows_gateways_for_update() -> dict | None:
                 _restore_windows_gateway_service(service_name)
             except Exception as restore_exc:
                 rollback_failures.append(f"{service_name}: {restore_exc}")
-        if profiles or unmapped:
+        if profiles or token["unmapped"]:
+            handed_off_unmapped = [
+                int(entry["pid"]) for entry in token["unmapped"] if entry.get("argv")
+            ]
             try:
                 _resume_windows_gateways_after_update(token)
             except Exception as restore_exc:
                 rollback_failures.append(f"ordinary gateways: {restore_exc}")
-        failed_service = current_service_name or "unknown"
-        detail = f"Could not stop Windows gateway service {failed_service}: {exc}"
+            # A later restart failure does not erase watchers already armed
+            # for siblings. Retain and report their unobserved outcomes too.
+            failed_unmapped = {
+                int(entry["pid"]) for entry in token.get("unmapped") or ()
+            }
+            unverified = _unverified_windows_rollback_handoff(
+                token,
+                [pid for pid in handed_off_unmapped if pid not in failed_unmapped],
+                _old_gateway_process_identity_is_live,
+            )
+            if unverified:
+                token["rollback_recovery_pending"] = True
+                token["rollback_recovery_detail"] = unverified
+                rollback_failures.append(f"ordinary gateways: {unverified}")
+                logger.warning("Windows gateway rollback %s", unverified)
+                try:
+                    from hermes_cli.update_receipt import record_step
+
+                    record_step("windows_gateway_pause_rollback", False, unverified)
+                except Exception as receipt_exc:
+                    logger.warning(
+                        "Could not record pending rollback recovery: %s", receipt_exc
+                    )
+        if not isinstance(exc, Exception):
+            if rollback_failures and hasattr(exc, "add_note"):
+                exc.add_note("rollback failures: " + "; ".join(rollback_failures))
+            raise
+        if current_service_name:
+            detail = f"Could not stop Windows gateway service {current_service_name}: {exc}"
+        else:
+            detail = f"Could not pause Windows gateways for update: {exc}"
         if rollback_failures:
             detail += "; rollback failures: " + "; ".join(rollback_failures)
         raise RuntimeError(detail) from exc
@@ -7307,11 +7533,28 @@ def _resume_windows_gateways_after_update_impl(token: dict | None) -> None:
         ) from exc
 
     relaunched = []
+    watcher_old_identities: list[tuple[int, float]] = []
     failed_profiles = {}
     for profile, old_pid in sorted(profiles.items()):
         try:
-            if launch_detached_profile_gateway_restart(str(profile), int(old_pid)):
+            old_identity = (token.get("profile_old_identities") or {}).get(profile)
+            has_old_identity = bool(
+                old_identity
+                and int(old_identity[0]) == int(old_pid)
+                and float(old_identity[1]) > 0
+            )
+            if has_old_identity:
+                launched = launch_detached_profile_gateway_restart(
+                    str(profile), int(old_pid), float(old_identity[1])
+                )
+            else:
+                launched = launch_detached_profile_gateway_restart(str(profile), int(old_pid))
+            if launched:
                 relaunched.append(str(profile))
+                if has_old_identity:
+                    watcher_old_identities.append(
+                        (int(old_pid), float(old_identity[1]))
+                    )
             else:
                 failed_profiles[str(profile)] = int(old_pid)
         except Exception as exc:
@@ -7361,6 +7604,7 @@ def _resume_windows_gateways_after_update_impl(token: dict | None) -> None:
 
     token["profiles"] = failed_profiles
     token["unmapped"] = failed_unmapped
+    token["watcher_old_identities"] = sorted(set(watcher_old_identities))
     if failed_profiles or failed_unmapped:
         raise RuntimeError("Could not restart every paused Windows gateway")
     token["resume_needed"] = False
@@ -9358,6 +9602,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
             _write_gateway_update_exit_code(update_complete)
 
         gateway_fleet_restart_incomplete = False
+        manual_restart_incomplete = False
         gateway_restart_phase_errors: list[str] = []
         # Snapshot of gateways running before we touch anything. Stays empty
         # until we successfully import the probe and are about to stop/drain —
@@ -9938,11 +10183,30 @@ def _cmd_update_impl(args, gateway_mode: bool):
             manual_pids = find_gateway_pids(
                 exclude_pids=service_pids, all_profiles=True
             )
-            profile_processes = {
-                proc.pid: proc
-                for proc in find_profile_gateway_processes(exclude_pids=service_pids)
-                if proc.pid in manual_pids
-            }
+            windows_manual_identity = _m()._is_windows()
+            profile_processes, manual_restart_incomplete = _find_manual_profile_gateways_for_restart(
+                service_pids=service_pids,
+                manual_pids=manual_pids,
+                find_profile_gateway_processes=find_profile_gateway_processes,
+                windows=windows_manual_identity,
+            )
+            if manual_restart_incomplete:
+                gateway_fleet_restart_incomplete = True
+            manual_stop_guards: dict[int, int] = {}
+            if windows_manual_identity:
+                from gateway.status import get_process_start_time
+                from hermes_cli.gateway import _capture_gateway_argv
+
+                manual_stop_guards = _capture_windows_manual_stop_guards(
+                    manual_pids=manual_pids,
+                    profile_processes=profile_processes,
+                    identity_incomplete=manual_restart_incomplete,
+                    capture_unmapped_identity=lambda _pid: (
+                        _capture_unmapped_gateway_argv_with_identity(
+                            _pid, _capture_gateway_argv, get_process_start_time
+                        )
+                    ),
+                )
             # Profile gateways we could not arm a relaunch for.  These must
             # NOT be left running: their modules are the pre-update ones and
             # every lazy import from here on mixes versions against the new
@@ -9952,9 +10216,14 @@ def _cmd_update_impl(args, gateway_mode: bool):
             # contract already used for gateways with no profile mapping.
             unrestartable_pids = set()
             for pid, proc in profile_processes.items():
-                restart_mode = _prepare_profile_gateway_update_restart(
-                    proc.profile, pid
-                )
+                if windows_manual_identity and proc.create_time <= 0:
+                    restart_mode = None
+                else:
+                    restart_mode = _prepare_profile_gateway_update_restart(
+                        proc.profile,
+                        pid,
+                        old_create_time=proc.create_time if proc.create_time > 0 else None,
+                    )
                 if restart_mode is None:
                     # Previously a bare ``continue``: the gateway was neither
                     # relaunched nor stopped nor mentioned, so it kept serving
@@ -9979,36 +10248,21 @@ def _cmd_update_impl(args, gateway_mode: bool):
                     f"  → {proc.profile}: draining gateway PID {pid} "
                     f"(up to {int(_drain_budget)}s)..."
                 )
-                from hermes_cli.gateway import (
-                    GATEWAY_LOOP_WEDGED,
-                    _escalate_wedged_gateway,
-                    probe_gateway_loop_liveness,
-                )
-
-                if probe_gateway_loop_liveness(pid) == GATEWAY_LOOP_WEDGED:
-                    # Loop-liveness probe: this gateway's event loop is
-                    # provably dead (#81642) — SIGUSR1/SIGTERM shutdown can
-                    # never run, so the drain wait would burn the full budget
-                    # and stall the update. Bounded stop instead (SIGTERM
-                    # grace → SIGKILL, ~10s). A busy-but-alive gateway keeps
-                    # a fresh heartbeat and never takes this branch, so live
-                    # drains (incl. the #86684 cron floor) are unaffected.
-                    print(
-                        f"  ⚠ {proc.profile}: gateway event loop is "
-                        "unresponsive — skipping drain, forcing a bounded stop..."
-                    )
-                    _escalate_wedged_gateway(pid)
-                    drained = True
-                else:
-                    drained = _graceful_restart_via_sigusr1(
+                if not _stop_manual_gateway_for_update(
+                    pid,
+                    windows=windows_manual_identity,
+                    stop_guards=manual_stop_guards,
+                    drain_timeout=_drain_budget,
+                ):
+                    manual_restart_incomplete = True
+                    gateway_fleet_restart_incomplete = True
+                    logger.warning(
+                        "%s: gateway PID %s could not be safely stopped; "
+                        "restart remains unverified and requires manual recovery",
+                        proc.profile,
                         pid,
-                        drain_timeout=_drain_budget,
                     )
-                if not drained:
-                    try:
-                        os.kill(pid, _signal.SIGTERM)
-                    except (ProcessLookupError, PermissionError):
-                        pass
+                    continue
                 # Wait for the old process to fully exit before the watcher
                 # spawns the new gateway.  Telegram holds the previous
                 # getUpdates long-poll session open on its servers for up to
@@ -10030,14 +10284,28 @@ def _cmd_update_impl(args, gateway_mode: bool):
                 else:
                     relaunched_profiles.append(proc.profile)
 
-            for pid in manual_pids:
-                if pid in profile_processes and pid not in unrestartable_pids:
-                    continue
-                try:
-                    os.kill(pid, _signal.SIGTERM)
-                    killed_pids.add(pid)
-                except (ProcessLookupError, PermissionError):
-                    pass
+            swept_pids, manual_unverified_pids = _sweep_manual_gateway_pids(
+                manual_pids=manual_pids,
+                profile_processes=profile_processes,
+                unrestartable_pids=unrestartable_pids,
+                windows=windows_manual_identity,
+                stop_guards=manual_stop_guards,
+                kill=os.kill,
+                terminate=_terminate_guarded_pid,
+            )
+            killed_pids.update(swept_pids)
+            if manual_unverified_pids:
+                manual_restart_incomplete = True
+                gateway_fleet_restart_incomplete = True
+                print(
+                    "  ⚠ Left gateway PID(s) "
+                    + ", ".join(str(pid) for pid in manual_unverified_pids)
+                    + " unresolved: their identity or termination could not be verified."
+                )
+                print(
+                    "    Manual recovery required: stop them, then run "
+                    "hermes gateway run"
+                )
 
             if restarted_services or killed_pids:
                 print()
@@ -10084,7 +10352,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                     externally_supervised_profiles=externally_supervised_profiles,
                     killed_pids=sorted(killed_pids),
                     failed_units=failed_or_stale_units,
-                    incomplete=bool(failed_or_stale_units),
+                    incomplete=gateway_fleet_restart_incomplete,
                 )
             except Exception:
                 pass
@@ -10126,7 +10394,14 @@ def _cmd_update_impl(args, gateway_mode: bool):
                             # SIGKILL on POSIX — _signal.SIGKILL doesn't
                             # exist on Windows so the old raw os.kill call
                             # used to crash the entire update path.
-                            _terminate_pid(pid, force=True)
+                            if windows_manual_identity:
+                                if not _stop_windows_manual_gateway(
+                                    pid, manual_stop_guards, _terminate_guarded_pid
+                                ):
+                                    manual_restart_incomplete = True
+                                    gateway_fleet_restart_incomplete = True
+                            else:
+                                _terminate_pid(pid, force=True)
                         except (ProcessLookupError, PermissionError, OSError):
                             pass
                     # Give the OS a beat to reap the processes so the
@@ -10197,8 +10472,10 @@ def _cmd_update_impl(args, gateway_mode: bool):
             if _recovery_complete:
                 # The fresh child is the recovery terminal result. Leave the
                 # final fleet-version matrix below as the authoritative
-                # read-back before the update is declared successful.
-                gateway_fleet_restart_incomplete = False
+                # read-back before the update is declared successful. A
+                # separate manual identity or stop failure is not covered
+                # by the pre-update plan's supervised recovery candidates.
+                gateway_fleet_restart_incomplete = manual_restart_incomplete
             elif _restart_phase_failure_is_incomplete(
                 _surviving, _pre_restart_gateway_pids
             ):
@@ -10381,42 +10658,38 @@ def _cmd_update_impl(args, gateway_mode: bool):
             # the gateway the first attempt just started.  Poll a bounded
             # window for the resumed gateway to publish its identity instead.
             _fleet_snapshot = []
+            _mapped_replacement_unverified = False
             if _fleet_rows_expected:
-                _fleet_deadline = _time.monotonic() + 30.0
-                while True:
-                    _time.sleep(2.0)
-                    # Pass the pre-restart PID snapshot so a gateway the
-                    # restart phase stopped WITHOUT a verified replacement
-                    # shows as a DOWN row (exit 1) instead of silently
-                    # producing no row at all.
-                    _fleet_snapshot = collect_fleet_versions(
-                        pre_restart_pids=_pre_restart_gateway_pids
+                _fleet_snapshot, _mapped_replacement_unverified = (
+                    _poll_fleet_versions_with_relaunch_budget(
+                        pre_restart_pids=_pre_restart_gateway_pids,
+                        windows_resume_token=_windows_gateway_resume,
+                        collect_fleet_versions=collect_fleet_versions,
+                        monotonic=_time.monotonic,
+                        sleep=_time.sleep,
+                        identity_is_live=_old_gateway_process_identity_is_live,
                     )
-                    # A "down" row here is the stale pre-restart record of a
-                    # gateway whose detached replacement is still booting —
-                    # not a confirmed failure.  Keep polling until every
-                    # resumed gateway has published (no "down" rows remain)
-                    # or the deadline passes, so a slow second gateway can't
-                    # be misread as down and re-trigger the retry loop.
-                    if _fleet_snapshot and not any(
-                        row.get("state") == "down" for row in _fleet_snapshot
-                    ):
-                        break
-                    if _time.monotonic() >= _fleet_deadline:
-                        break
+                )
             else:
                 _fleet_snapshot = collect_fleet_versions(
                     pre_restart_pids=_pre_restart_gateway_pids
                 )
+            if _mapped_replacement_unverified:
+                print(
+                    "\n⚠ A mapped Windows gateway restart was not verified:"
+                    " its old process is still live or its replacement row"
+                    " is missing."
+                )
+                gateway_fleet_restart_incomplete = True
             if print_fleet_version_matrix(_fleet_snapshot):
                 gateway_fleet_restart_incomplete = True
             elif not _fleet_snapshot and _fleet_rows_expected:
                 # Fleet probe returned zero rows even though at least one
                 # gateway runtime was (or may have been) live pre-update —
-                # POSIX restart bookkeeping, the pre-restart PID snapshot, or
-                # the pre-update plan inventory count as that signal. The
-                # Windows resume token is excluded because its entries cannot
-                # all produce fleet rows. Every failure path inside
+            # POSIX restart bookkeeping, the pre-restart PID snapshot, the
+            # pre-update plan inventory, or a successfully armed mapped
+            # Windows watcher count as that signal. Initial Windows pause
+            # bookkeeping alone does not. Every failure path inside
                 # collect_fleet_versions() is swallowed via logger.debug(),
                 # so an empty list is indistinguishable from a healthy fleet
                 # in the current output.  Treat it as verification failure
@@ -10526,6 +10799,175 @@ def _cmd_update_impl(args, gateway_mode: bool):
 
 # --- Hoisted from the body of _cmd_update_impl (self-contained, no closure state) ---
 
+def _find_manual_profile_gateways_for_restart(
+    *, service_pids, manual_pids, find_profile_gateway_processes, windows
+) -> tuple[dict, bool]:
+    """Use verified Windows identities; an unreadable identity marks the restart incomplete.
+
+    Windows candidates without a verified incarnation are never stopped by the
+    manual sweep (see ``_capture_windows_manual_stop_guards``).
+    """
+    strict_errors: list[str] = []
+    try:
+        find_kwargs = {"exclude_pids": service_pids, "strict": windows}
+        if windows:
+            find_kwargs["strict_errors"] = strict_errors
+        processes = find_profile_gateway_processes(**find_kwargs)
+    except Exception as exc:
+        if not windows:
+            raise
+        logger.warning("Could not verify manual Gateway profile identity: %s", exc)
+        if manual_pids:
+            print(
+                "  ⚠ Could not verify manual Gateway profile identities; "
+                "unverified processes are left running and need a manual restart"
+            )
+        else:
+            print("  ⚠ Manual Gateway identity could not be verified; update incomplete")
+        return {}, True
+    if strict_errors:
+        logger.warning(
+            "Could not verify manual Gateway profile identities: %s",
+            ", ".join(strict_errors),
+        )
+        if manual_pids:
+            print(
+                "  ⚠ Some manual Gateway profile identities were unreadable; "
+                "those processes are left running and need a manual restart"
+            )
+        else:
+            print("  ⚠ Manual Gateway identity could not be verified; update incomplete")
+    return (
+        {proc.pid: proc for proc in processes if proc.pid in manual_pids},
+        bool(strict_errors),
+    )
+
+
+def _capture_windows_manual_stop_guards(
+    *, manual_pids, profile_processes, identity_incomplete, capture_unmapped_identity
+) -> dict[int, int]:
+    """Bind each Windows manual-restart candidate to the incarnation discovery saw.
+
+    Profile gateways keep the creation time strict discovery captured. An
+    unmapped PID is bound (argv verified as a gateway before and after the
+    start-time read) straight after the scan, and only when strict discovery
+    completed: after a strict failure an unmapped PID may be an unreadable
+    profile gateway, so it gets no guard and is never stopped.
+    """
+    guards: dict[int, int] = {}
+    for pid in manual_pids:
+        proc = profile_processes.get(pid)
+        if proc is not None:
+            started = float(getattr(proc, "create_time", 0.0) or 0.0)
+            if started > 0:
+                guards[int(pid)] = int(round(started * 100))
+            continue
+        if identity_incomplete:
+            continue
+        captured = capture_unmapped_identity(int(pid))
+        if captured and int(captured[1]) > 0:
+            guards[int(pid)] = int(captured[1])
+    return guards
+
+
+def _terminate_guarded_pid(pid: int, *, force: bool, expected_start_time: int) -> None:
+    from gateway.status import terminate_pid
+
+    terminate_pid(pid, force=force, expected_start_time=expected_start_time)
+
+
+def _stop_windows_manual_gateway(pid: int, stop_guards: dict[int, int], terminate) -> bool:
+    """Stop one Windows gateway only under its captured start guard."""
+    guard = stop_guards.get(int(pid))
+    if guard is None or guard <= 0:
+        return False
+    try:
+        terminate(int(pid), force=True, expected_start_time=int(guard))
+    except OSError as exc:
+        logger.debug("Refused or failed to stop gateway PID %s: %s", pid, exc)
+        return False
+    return True
+
+
+def _stop_manual_gateway_for_update(
+    pid: int,
+    *,
+    windows: bool,
+    stop_guards: dict[int, int],
+    drain_timeout: float,
+) -> bool:
+    """Request a stop without replacing the identity established by discovery.
+
+    The POSIX wedged-loop helper starts with a PID-only SIGTERM and captures
+    its own later fingerprint. Windows updates must not enter that path:
+    every stop, including a wedged gateway, uses the original start guard.
+    True records an accepted stop request; fleet verification still owns
+    proof of exit and replacement health.
+    """
+    if windows:
+        return _stop_windows_manual_gateway(pid, stop_guards, _terminate_guarded_pid)
+
+    from hermes_cli.gateway import (
+        GATEWAY_LOOP_WEDGED,
+        _escalate_wedged_gateway,
+        _graceful_restart_via_sigusr1,
+        probe_gateway_loop_liveness,
+    )
+
+    if probe_gateway_loop_liveness(pid) == GATEWAY_LOOP_WEDGED:
+        logger.warning(
+            "Gateway PID %s has an unresponsive event loop; requesting a bounded stop",
+            pid,
+        )
+        return _escalate_wedged_gateway(pid)
+    if _graceful_restart_via_sigusr1(pid, drain_timeout=drain_timeout):
+        return True
+    try:
+        os.kill(pid, signal.SIGTERM)
+    except ProcessLookupError:
+        return True
+    except PermissionError:
+        return False
+    return True
+
+
+def _sweep_manual_gateway_pids(
+    *,
+    manual_pids,
+    profile_processes,
+    unrestartable_pids,
+    windows,
+    stop_guards,
+    kill,
+    terminate,
+) -> tuple[set[int], list[int]]:
+    """Stop manual gateways that no relaunch covers.
+
+    Returns ``(stopped, unverified)``. On Windows a candidate without a
+    captured incarnation is left running and reported instead: a PID-only
+    signal could land on whatever process reused the number.
+    """
+    stopped: set[int] = set()
+    unverified: list[int] = []
+    for pid in manual_pids:
+        if pid in profile_processes and pid not in unrestartable_pids:
+            continue
+        if windows:
+            if int(pid) not in stop_guards:
+                unverified.append(int(pid))
+            elif _stop_windows_manual_gateway(pid, stop_guards, terminate):
+                stopped.add(pid)
+            else:
+                unverified.append(int(pid))
+            continue
+        try:
+            kill(pid, signal.SIGTERM)
+            stopped.add(pid)
+        except (ProcessLookupError, PermissionError):
+            pass
+    return stopped, unverified
+
+
 def _restart_phase_failure_is_incomplete(surviving, pre_restart_pids) -> bool:
     """Whether an escaped gateway-restart-phase exception must fail the update.
 
@@ -10552,6 +10994,126 @@ def _restart_phase_failure_is_incomplete(surviving, pre_restart_pids) -> bool:
     return pre_restart_pids is None or bool(pre_restart_pids)
 
 
+def _old_gateway_process_identity_is_live(pid: int, started: float) -> bool:
+    """Keep an unreadable old process pending; a reused PID is a new identity."""
+    from gateway.status import _pid_identity_is_live
+
+    return _pid_identity_is_live(pid, started)
+
+
+def _unverified_windows_rollback_handoff(
+    token: dict, handed_off_unmapped: list[int], identity_is_live
+) -> str | None:
+    """Describe pause-rollback relaunches whose outcome nobody will observe.
+
+    A rollback hands paused gateways to detached restart watchers and then
+    re-raises; no fleet read-back follows. A successfully spawned watcher is
+    therefore not a completed recovery: it declines to relaunch if the old
+    incarnation outlives its deadline (a drain may run longer), and its own
+    output is discarded. Report every such handoff, flagging old incarnations
+    that are still live, so the failure stays visible to the operator.
+    """
+    profiles = sorted(str(p) for p in token.get("relaunched_profiles") or ())
+    if not profiles and not handed_off_unmapped:
+        return None
+    still_live = []
+    for pid, started in token.get("watcher_old_identities") or ():
+        try:
+            live = identity_is_live(int(pid), float(started))
+        except Exception:
+            live = True
+        if live:
+            still_live.append(int(pid))
+    targets = []
+    if profiles:
+        targets.append("profile(s) " + ", ".join(profiles))
+    if handed_off_unmapped:
+        targets.append(
+            "unmapped PID(s) " + ", ".join(str(pid) for pid in handed_off_unmapped)
+        )
+    detail = (
+        "recovery unverified: restart watcher(s) for "
+        + "; ".join(targets)
+        + " were started but their outcome is not observed"
+    )
+    if still_live:
+        detail += (
+            "; old gateway PID(s) "
+            + ", ".join(str(pid) for pid in sorted(still_live))
+            + " still running, and a watcher will not relaunch if its old "
+            "process outlives the watcher deadline"
+        )
+    return detail + "; if a gateway does not return, run: hermes gateway run"
+
+
+def _pending_windows_watcher_identities(token: dict | None, identity_is_live) -> bool:
+    for pid, started in (token or {}).get("watcher_old_identities") or ():
+        try:
+            if identity_is_live(int(pid), float(started)):
+                return True
+        except Exception:
+            return True
+    return False
+
+
+def _windows_relaunch_verify_timeout_s(token: dict | None, identity_is_live) -> float:
+    """Cover the wait of a mapped gateway watcher only while its old process lives."""
+    base_timeout_s = 30.0
+    if not _pending_windows_watcher_identities(token, identity_is_live):
+        return base_timeout_s
+    from hermes_cli.gateway import GATEWAY_RESTART_WATCHER_TIMEOUT_S
+
+    return float(GATEWAY_RESTART_WATCHER_TIMEOUT_S) + base_timeout_s
+
+
+def _poll_fleet_versions_with_relaunch_budget(
+    *,
+    pre_restart_pids,
+    windows_resume_token,
+    collect_fleet_versions,
+    monotonic,
+    sleep,
+    identity_is_live,
+) -> tuple[list, bool]:
+    """Verify each mapped relaunch per profile."""
+    deadline = monotonic() + _windows_relaunch_verify_timeout_s(
+        windows_resume_token, identity_is_live
+    )
+    token = windows_resume_token or {}
+    watched_profiles = set(token.get("relaunched_profiles") or ()) & set(
+        (token.get("profile_old_identities") or {}).keys()
+    )
+    snapshot: list = []
+    while True:
+        sleep(2.0)
+        pending_before_snapshot = _pending_windows_watcher_identities(
+            windows_resume_token, identity_is_live
+        )
+        snapshot = collect_fleet_versions(pre_restart_pids=pre_restart_pids)
+        pending = _pending_windows_watcher_identities(
+            windows_resume_token, identity_is_live
+        )
+        if pending_before_snapshot and not pending:
+            # The row may describe the old process that exited while the
+            # collector ran. Give the detached replacement a fresh probe.
+            continue
+        observed_profiles = {
+            str(row.get("profile"))
+            for row in snapshot
+            if row.get("state") != "down" and row.get("profile") is not None
+        }
+        missing_watched_profiles = watched_profiles - observed_profiles
+        if (
+            snapshot
+            and not any(row.get("state") == "down" for row in snapshot)
+            and not pending
+            and not missing_watched_profiles
+        ):
+            return snapshot, False
+        if monotonic() >= deadline:
+            return snapshot, pending or bool(missing_watched_profiles)
+
+
 def _fleet_probe_expected_runtimes(
     pre_update_plan,
     pre_restart_pids,
@@ -10576,35 +11138,31 @@ def _fleet_probe_expected_runtimes(
       ``_restart_phase_failure_is_incomplete``, #78574).
     * the pre-update plan inventoried ≥1 runtime.
 
-    ``windows_resume_token`` is deliberately EXCLUDED (#93406 residual). The
-    pause/resume token is bookkeeping for ``_pause_windows_gateways_for_update``
-    / ``_resume_windows_gateways_after_update`` — it is not a runtime
-    inventory, and its entries do not correspond to rows
-    ``collect_fleet_versions()`` is capable of returning:
+    The pause/resume token's ``profiles``, ``unmapped`` and ``services``
+    entries are bookkeeping, not a runtime inventory (#93406 residual), and
+    do not by themselves correspond to rows the probe can return:
 
     * ``unmapped`` entries (Scheduled-Task gateways) never publish
       ``gateway_state.json`` rows at all, and
     * a paused profile gateway is resumed as a DETACHED relaunch that may not
       republish its identity within the probe window.
 
-    Counting the token therefore made ``_fleet_rows_expected`` True on every
-    Windows update that had paused a gateway, the probe's polling window ran
-    out with zero rows on a perfectly healthy update, and verification
-    reported "no rows … verification incomplete" and exited 1 after a long
-    silent wait. Expected-runtimes must key only on signals that map to rows
-    the probe can actually see; a genuinely live pre-update Windows gateway
-    is already covered by ``pre_restart_pids`` and the plan inventory. The
-    parameter stays in the signature so the call site keeps passing the token
-    (cheap, explicit, and the docstring is where the exclusion is explained).
+    Counting those entries made healthy Windows updates wait out the probe
+    window and report false failures. ``watcher_old_identities`` is narrower:
+    resume writes it only after successfully arming a mapped profile watcher
+    with a strict old (pid, create_time). That is an actual replacement
+    attempt, so the updater must observe a fresh fleet row or report
+    verification incomplete even if the earlier inventory missed it.
 
     The same condition gates the 2.0s settle sleep: a freshly restarted
     gateway needs the settle window to rewrite ``gateway_state.json``.
 
-    Note this keys ONLY on zero-rows-despite-expected-runtimes.  A non-empty
-    snapshot — including rows in ``unknown`` state — is still judged solely by
-    ``print_fleet_version_matrix``.
+    This helper decides whether a zero-row result is incomplete. The caller's
+    bounded poll additionally requires a row for every armed mapped watcher;
+    a healthy sibling row cannot stand in for a missing replacement.
     """
-    del windows_resume_token  # excluded on purpose — see docstring (#93406)
+    if (windows_resume_token or {}).get("watcher_old_identities"):
+        return True
     if restarted_services or killed_pids:
         return True
     if pre_restart_pids is None or pre_restart_pids:

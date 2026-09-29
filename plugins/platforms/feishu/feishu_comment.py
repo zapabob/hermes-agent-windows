@@ -26,6 +26,7 @@ import asyncio
 import json
 import logging
 from typing import Any, Dict, List, Optional, Tuple
+from agent.redact import redact_base_url
 
 logger = logging.getLogger(__name__)
 
@@ -1063,7 +1064,7 @@ def _run_comment_agent(prompt: str, client: Any, session_key: str = "") -> str:
     try:
         model, runtime_kwargs = _resolve_model_and_runtime()
         logger.info("[Feishu-Comment] _run_comment_agent: model=%s provider=%s base_url=%s",
-                    model, runtime_kwargs.get("provider"), (runtime_kwargs.get("base_url") or "")[:50])
+                    model, runtime_kwargs.get("provider"), (redact_base_url(runtime_kwargs.get("base_url")) or "")[:50])
 
         # Load session history for cross-card memory
         history = _load_session_history(session_key) if session_key else []

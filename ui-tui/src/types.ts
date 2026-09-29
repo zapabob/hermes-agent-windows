@@ -94,7 +94,12 @@ export interface ApprovalReq {
   allowPermanent?: boolean
   choices?: string[]
   command: string
-  control?: { intentDigest: string; operationId: string }
+  control?: {
+    intentDigest: string
+    operationId: string
+    // The host's authority projection; the prompt digests what it shows for "once".
+    presentation: null | Record<string, unknown>
+  }
   description: string
   requestId?: string
   smartDenied?: boolean

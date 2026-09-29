@@ -4,6 +4,7 @@ import * as path from 'node:path'
 
 import {
   buildAppEnv,
+  closeDesktop,
   createSandbox,
   launchDesktop,
   type MockBackendFixture,
@@ -94,7 +95,7 @@ test.beforeAll(async () => {
     mockUrl: mock.url,
     sandbox,
     cleanup: async () => {
-      await app.close().catch(() => undefined)
+      await closeDesktop(app)
       await mock.close()
       sandbox.cleanup()
     },

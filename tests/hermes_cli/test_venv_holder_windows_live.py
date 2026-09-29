@@ -35,17 +35,18 @@ pytestmark = pytest.mark.skipif(
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+SLEEPER_SCRIPT = Path(__file__).with_name("fixtures") / "gateway_identity_sleeper.py"
 
 
 def _spawn(args: list[str], cwd: Path | None = None) -> subprocess.Popen:
     """Spawn a real sleeper process whose argv carries the given tail.
 
-    ``python -c "sleep" <tail...>`` — the tail is inert data to the child
-    but fully visible to psutil cmdline scans, which is what the detection
-    code classifies on.
+    The script file keeps the test process out of Python's inline ``-c``
+    mode. Its trailing arguments are inert stand-ins for Hermes argv in the
+    process-table classifier; no Gateway service is started.
     """
     proc = subprocess.Popen(
-        [sys.executable, "-c", "import time; time.sleep(300)", *args],
+        [sys.executable, str(SLEEPER_SCRIPT), *args],
         cwd=str(cwd or PROJECT_ROOT),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -85,13 +86,10 @@ class TestDetection:
         finally:
             _kill(proc)
 
-    def test_foreign_python_not_detected(self):
+    def test_foreign_python_not_detected(self, tmp_path):
         """A python process with no Hermes argv and cwd OUTSIDE the install
         must not be reported as a holder."""
-        import tempfile
-
-        outside = Path(tempfile.mkdtemp())
-        proc = _spawn(["totally", "unrelated"], cwd=outside)
+        proc = _spawn(["totally", "unrelated"], cwd=tmp_path)
         try:
             pids = [pid for pid, _, _ in _detect()]
             assert proc.pid not in pids
@@ -204,8 +202,14 @@ class TestAncestorExclusion:
             "# The venv shim makes every spawn a launcher/worker CHAIN, so the\n"
             "# gateway is an ANCESTOR, not necessarily the direct parent —\n"
             "# find it the same way the pause machinery would: by argv.\n"
-            "gw = [int(a.pid) for a in psutil.Process().parents()\n"
-            "      if looks_like_gateway_command_line(' '.join(a.cmdline() or []))]\n"
+            "gw = []\n"
+            "for ancestor in psutil.Process().parents():\n"
+            "    try:\n"
+            "        argv = ancestor.cmdline() or []\n"
+            "    except (psutil.AccessDenied, psutil.NoSuchProcess):\n"
+            "        continue\n"
+            "    if looks_like_gateway_command_line(' '.join(argv)):\n"
+            "        gw.append(int(ancestor.pid))\n"
             "matches = _detect_venv_python_processes()\n"
             "print(json.dumps({'gateway_ancestors': gw,"
             " 'pids': [p for p, _, _ in matches]}))\n",
@@ -218,13 +222,14 @@ class TestAncestorExclusion:
             " print(r.stdout.strip());"
             " sys.stderr.write(r.stderr[-500:])"
         )
-        # The parent's argv carries `gateway run` so it IS a gateway to any
-        # cmdline classifier; it runs the child synchronously.
+        # A script-file stand-in carries the gateway argv without the inline
+        # ``-c`` boundary, and runs the child synchronously.
+        parent_file = tmp_path / "gateway_parent.py"
+        parent_file.write_text(parent_oneliner, encoding="utf-8")
         result = subprocess.run(
             [
                 sys.executable,
-                "-c",
-                parent_oneliner,
+                str(parent_file),
                 "-m",
                 "hermes_cli.main",
                 "gateway",

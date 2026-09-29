@@ -1,6 +1,7 @@
 """Trusted host admission: a request cannot become execution without human consent."""
 from __future__ import annotations
 
+import logging
 import threading
 import time
 
@@ -10,12 +11,28 @@ from hermes_constants import get_hermes_home
 from tools.approval import (cancel_control_consent, request_control_consent,
                             take_control_decision)
 
+logger = logging.getLogger(__name__)
+
+
+def _record(write, operation_id, **kwargs):
+    try:
+        write(operation_id, **kwargs)
+    except ControlError as exc:
+        # A displaced owner has no journal write authority; the live owner's
+        # startup reconciliation records this operation.
+        logger.warning('control operation %s not recorded: %s', operation_id, exc.code)
+
 
 class HostControlCoordinator:
     def __init__(self, *, journal, owner, select_human_session,
-                 submit_background, revalidate_grant, clock=time.time):
+                 submit_background, revalidate_grant, clock=time.time, apply_owner=None):
         self.journal = journal
         self.owner = owner
+        # An approved operation reaches only the owner of its own kind; an
+        # apply with no configured owner is blocked, never run by another owner.
+        self._owners = {'start_engineering_run': owner}
+        if apply_owner is not None:
+            self._owners['apply_verified_result'] = apply_owner
         self.select_human_session = select_human_session
         self.submit_background = submit_background
         self.revalidate_grant = revalidate_grant
@@ -68,21 +85,24 @@ class HostControlCoordinator:
         current = self.clock()
         decision = take_control_decision(ticket, now=current)
         if current >= ticket._entry.deadline:
-            self.journal.expire_pending(operation_id, now=current)
+            _record(self.journal.expire_pending, operation_id, now=current)
             return
         if decision is None:
             return
         try:
             self.revalidate_grant(ctx, now=self.clock())
         except Exception:
-            self.journal.block_unexecuted(operation_id, now=self.clock())
+            _record(self.journal.block_unexecuted, operation_id, now=self.clock())
             return
         try:
             operation = self.journal.approve(ctx, operation_id, decision,
                                              now=self.clock())
             if operation['state'] == 'APPROVED':
-                self.owner.start_approved(ctx, operation_id)
+                owner = self._owners.get(operation['kind'])
+                if owner is None:
+                    raise ControlError('operation_kind_mismatch')
+                owner.start_approved(ctx, operation_id)
         except ControlError:
-            # Revoked/expired grants or a conflicting state never execute.
-            self.journal.block_unexecuted(operation_id, now=self.clock())
+            # Revoked/expired grants, stale authority or a conflicting state never execute.
+            _record(self.journal.block_unexecuted, operation_id, now=self.clock())
             return

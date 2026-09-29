@@ -1,7 +1,43 @@
 """Test-only module loader: a missing feature is a behavioural RED, not collection error."""
 import importlib
+import itertools
+import os
 
 import pytest
+import yaml
+
+from hermes_constants import get_hermes_home
+
+ENGINEERING_ROLES = ("planner", "worker", "reviewer")
+_TICKS = itertools.count(1)
+
+
+def engineering_config(*, model="model-a", roles=ENGINEERING_ROLES, settings=None):
+    """A profile config with the native engineering picker slots selected."""
+    config = {"auxiliary": {f"engineering_{role}": {"provider": "provider-a", "model": model}
+                            for role in roles}}
+    if settings is not None:
+        config["plugins"] = {"entries": {"implementation_router": {"settings": settings}}}
+    return config
+
+
+@pytest.fixture
+def host_config():
+    """Write the isolated profile's config.yaml, as an operator edit would."""
+    def write(config):
+        path = get_hermes_home() / "config.yaml"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(yaml.safe_dump(config, sort_keys=True), encoding="utf-8")
+        # The config cache keys on (mtime_ns, size); a same-tick rewrite must still be seen.
+        stamp = path.stat().st_mtime_ns + next(_TICKS) * 1_000_000_000
+        os.utime(path, ns=(stamp, stamp))
+        return path
+    return write
+
+
+@pytest.fixture(autouse=True)
+def _engineering_routes_selected(host_config):
+    host_config(engineering_config())
 
 
 @pytest.fixture

@@ -33,13 +33,19 @@ export function CodeGraphVRPane({
       try {
         const response = await fetch(`http://127.0.0.1:${port}/healthz`, { signal: controller.signal })
 
-        if (!cancelled) {setHealthy(response.ok)}
+        if (!cancelled) {
+          setHealthy(response.ok)
+        }
       } catch {
-        if (!cancelled) {setHealthy(false)}
+        if (!cancelled) {
+          setHealthy(false)
+        }
       } finally {
         window.clearTimeout(timeout)
 
-        if (!cancelled) {setChecking(false)}
+        if (!cancelled) {
+          setChecking(false)
+        }
       }
     }
 
@@ -52,7 +58,9 @@ export function CodeGraphVRPane({
     }
   }, [enabled, port])
 
-  if (!enabled) {return null}
+  if (!enabled) {
+    return null
+  }
 
   if (checking || !healthy) {
     return (

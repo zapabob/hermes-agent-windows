@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N52",
+  "status": "MAPPED_WINDOWS_WATCHER_IDENTITY_INTEGRATION_REVIEWED",
+  "repository": "zapabob/hermes-agent-windows",
+  "frozen": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "R2": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
+    "U1": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+    "historical_U0": "b936546561888a54d5bf9cd7eae9629a824eb4f7"
+  },
+  "upstream_source": {
+    "commit": "fae9e5677a3ef339ec582e967ee19cac13bf68af",
+    "ledger_row": "docs/windows/semantic-refresh-20260926/inventory/v0215_to_u1.jsonl:2308",
+    "scope": "Watcher process identity only; the relaunch wait budget is mapped separately by N53."
+  },
+  "integration": {
+    "parent_commit": "e0096d01abc6d5befc2782e940ee29cb253df6c9",
+    "parent_tree": "74acf208a4a9b80c300bad418f6da461e421f789",
+    "product_commit": "fb71fa020fd5dbfa6e3572bd1ab0729f0a730a62",
+    "product_tree": "f1ab57bdbbb10e317633bbf838dbffa596360159",
+    "historical_local_product_commit": {
+      "commit": "baecdd9ce966a4dc3d5ac404a671251d5576c87b",
+      "tree": "f1ab57bdbbb10e317633bbf838dbffa596360159",
+      "note": "Local-only commit on which the evidence below was first gathered. Its tree is identical to the public product_commit fb71fa0, so the tracked sources are byte-identical; it is kept for provenance only and is not a publication reference."
+    },
+    "publication": {
+      "pull_request": "zapabob/hermes-agent-windows#158",
+      "branch": "codex/n52-gateway-identity-20260928",
+      "base": "main",
+      "base_commit": "cc686ab1d31d6ee5ca07243765c5a07e3b9af1af",
+      "base_note": "cc686ab is the merge of #157 (N55) into main; its tree 74acf208 equals parent_tree, so the product diff against main is unchanged.",
+      "verified_head_commit": "b59e1b73713c50da5408862fded81c64655cdb83",
+      "verified_head_tree": "a198049b060a08172f80889f6ac04562435dc462",
+      "verified_head_note": "Merge of main into the branch; tree identical to the previous head 10bc0eb. source_blobs were recomputed with git rev-parse <commit>:<path> at both fb71fa0 and this head and match."
+    },
+    "source_blobs": {
+      "gateway/status.py": "cddfc3778db19b7d62317aa53a8e3d51efd76201",
+      "hermes_cli/gateway.py": "df163654b8bac7fd42f7a25bab8e8e0603c3602e",
+      "hermes_cli/update_cmd.py": "61bc459bf070179224d4db98a1a3ea88f5d4180f"
+    },
+    "changed_paths": [
+      "gateway/status.py",
+      "hermes_cli/gateway.py",
+      "hermes_cli/update_cmd.py",
+      "tests/hermes_cli/fixtures/gateway_identity_sleeper.py",
+      "tests/hermes_cli/test_desktop_lifecycle_windows_live.py",
+      "tests/hermes_cli/test_gateway_restart_watcher_identity_windows.py",
+      "tests/hermes_cli/test_stderr_timestamp.py",
+      "tests/hermes_cli/test_update_handoff_backend_reap.py",
+      "tests/hermes_cli/test_update_orphan_backend_reap.py",
+      "tests/hermes_cli/test_venv_holder_windows_live.py"
+    ]
+  },
+  "contract": "Direct Python -c restart watcher is not a live Gateway, updater Gateway holder, or Desktop backend even when its future Gateway argv contains a valid profile named serve. The eventual gateway run and real serve/dashboard backends retain their identities. Windows argv boundaries are preserved.",
+  "source_and_caller": [
+    "hermes_cli/gateway.py:_spawn_gateway_restart_watcher creates the Python -c watcher with the future hermes_cli.main gateway run argv.",
+    "gateway/status.py:command_line_runs_inline_source and _gateway_command_subcommand reject a future command embedded in a running inline Python source process.",
+    "hermes_cli/update_cmd.py:_hermes_holder_subcommand and _classify_concurrent_instance use that identity boundary; _orphaned_desktop_backend_pids and _handoff_reapable_backend_pids call the shared _looks_like_desktop_control_plane parser instead of substring matching."
+  ],
+  "evidence": {
+    "red": "The prior N52 receipt has eight failures/one pass before the original fix. On the stacked integration candidate, two new mocked regression tests failed against the substring reapers: handoff returned [300] and orphan returned [(300, 10000)] for a watcher whose future argv had --profile serve.",
+    "green": "After the two reapers used the shared Desktop classifier, the focused reaper/Desktop suite passed 32/32. The final selected Windows-native and caller suite passed 197/197 with 17 dependency deprecation warnings. Ruff for all ten product paths and git diff --cached --check passed.",
+    "mutation": "The old substring classifier was the observed failing implementation for both new regression tests. Three earlier controlled N52 mutants were killed on the prior local candidate ad6fb9c1f9185027ff3ec66f8feba5bb18135585; those results are historical because this integration product has an additional reaper correction.",
+    "codegraph": "Approved CodeGraph 1.6.0 was bound to the actual integration worktree. After final source edit, sync parsed three changed files; status reported 8,921 files and no pending changes. Query located _looks_like_desktop_control_plane at update_cmd.py:5930; impact reached both reapers and _cmd_update_impl. Explore and affected were run; the broad explore result included unrelated symbols, so direct source/caller inspection established ownership.",
+    "independent_review": "Laplace and Boole each independently inspected the final reaper correction read-only and reported CLEAR for P0-P2. Their review did not execute tests. Earlier N52 independent review applied to the prior candidate only."
+  },
+  "open_gaps": [
+    "No real production Gateway, packaged Desktop, or update was started. This card does not prove whole U1 semantic parity or native release readiness.",
+    "N07-A1 host grant-revocation writer, T06 and T12 remain incomplete; Control MCP production write remains DISABLED.",
+    "Original dirty main and historical feature WIP were preserved."
+  ]
+}

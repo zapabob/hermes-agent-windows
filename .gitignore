@@ -302,3 +302,54 @@ native/fts5_cjk/*.so
 
 # Local operator / recovery probe receipts (never source).
 /artifacts/
+
+# Classified scratch folders (see fork/local-workspace/README.md). Only each
+# folder's policy README.md / AGENTS.md is tracked; everything else is local.
+# The generic `logs/` rule above would swallow output/logs/ wholesale, so
+# re-include the directory before narrowing it again.
+!/output/logs/
+/output/logs/*
+!/output/logs/README.md
+!/output/logs/AGENTS.md
+/output/media/*
+!/output/media/README.md
+!/output/media/AGENTS.md
+/output/reports/*
+!/output/reports/README.md
+!/output/reports/AGENTS.md
+
+# Root-level scrape dumps, probe scripts and stray redirect targets that
+# belong under output/ or tmp/probes/ instead of the repository surface.
+/hachioji*.html
+/hino*.html
+/h_*.html
+/a.json
+/h.json
+/alerts.json
+/quake.json
+/tsunami.json
+/sync_report_*.json
+/sync_report_*.md
+/_disc*.py
+/_list_jobs.py
+/_quake_proc.py
+/_sync_probe.py
+/check_db.py
+/parse_disaster.py
+/parse_prs.py
+/process_jma.py
+/report_check.py
+/social_sync_run.py
+/sync_check.py
+/sync_once.py
+/tmp_social_sync_run.py
+/temp_vrchat_permission.py
+/quake_ts_analyze.js
+/tsunami_report.js
+/jsonl
+/.c
+/.hermes_tmp/
+/.venv312/
+/%SystemDrive%/
+/SOPs/
+/sillytavern_py/

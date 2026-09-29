@@ -36,6 +36,9 @@ import { isWakeUserDisabled } from './wakeState.js'
 
 const NO_PROVIDER_RE = /\bNo (?:LLM|inference) provider configured\b/i
 
+const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === 'object' && !Array.isArray(value)
+
 type VoiceSubmitMode = 'direct' | 'draft'
 
 const normalizeVoiceSubmitMode = (value: unknown): VoiceSubmitMode =>
@@ -1255,10 +1258,13 @@ export function createGatewayEventHandler(ctx: GatewayEventHandlerContext): (ev:
             allowPermanent,
             choices: ev.payload.choices,
             command: String(ev.payload.command ?? ''),
-            control: ev.payload.control ? {
-              intentDigest: String(ev.payload.control.intent_digest ?? ''),
-              operationId: String(ev.payload.control.operation_id ?? '')
-            } : undefined,
+            control: ev.payload.control
+              ? {
+                  intentDigest: String(ev.payload.control.intent_digest ?? ''),
+                  operationId: String(ev.payload.control.operation_id ?? ''),
+                  presentation: isPlainRecord(ev.payload.control.presentation) ? ev.payload.control.presentation : null
+                }
+              : undefined,
             description,
             requestId: ev.payload.request_id,
             smartDenied: ev.payload.smart_denied === true
@@ -1441,8 +1447,10 @@ export function createGatewayEventHandler(ctx: GatewayEventHandlerContext): (ev:
           // Observability UX: if route divergence (fallback or model drift) occurred,
           // surface prominent notice message; stay quiet on normal / canonicalization turns.
           const route = ev.payload?.route
+
           if (route && (route.fallback || route.is_divergent || route.isDivergent || route.is_drift || route.isDrift)) {
             const summary = route.ux_summary || route.uxSummary
+
             const lines = summary?.lines?.length
               ? summary.lines
               : route.fallback
@@ -1451,10 +1459,8 @@ export function createGatewayEventHandler(ctx: GatewayEventHandlerContext): (ev:
                     `Using: ${route.effective_provider || ''} / ${route.effective_model || ''}`,
                     ...(route.reason ? [`Reason: ${route.reason}`] : [])
                   ]
-                : [
-                    `Requested: ${route.requested_model || ''}`,
-                    `Provider reported: ${route.effective_model || ''}`
-                  ]
+                : [`Requested: ${route.requested_model || ''}`, `Provider reported: ${route.effective_model || ''}`]
+
             const title = summary?.title || (route.fallback ? 'Fallback active' : 'Provider model drift')
             appendMessage({
               role: 'system',

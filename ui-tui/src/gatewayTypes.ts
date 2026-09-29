@@ -723,7 +723,11 @@ export type GatewayEvent =
         allow_permanent?: boolean
         choices?: string[]
         command: string
-        control?: { intent_digest?: string; operation_id?: string }
+        control?: {
+          intent_digest?: string
+          operation_id?: string
+          presentation?: Record<string, unknown>
+        }
         description: string
         request_id?: string
         smart_denied?: boolean
