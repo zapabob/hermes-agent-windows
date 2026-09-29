@@ -20,12 +20,12 @@
   "schema_version": 1,
   "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
   "summary": {
-    "all_fork_specific_loc": 2713626,
-    "carry_surface_files": 5106,
-    "cwc": 86428819,
-    "fork_owned_loc": 1158925,
-    "upstream_owned_fork_loc": 1554701,
-    "utr": 0.572924
+    "all_fork_specific_loc": 2717201,
+    "carry_surface_files": 5108,
+    "cwc": 86589031,
+    "fork_owned_loc": 1161273,
+    "upstream_owned_fork_loc": 1555928,
+    "utr": 0.572622
   },
   "top_carry_risks": [
     {
@@ -92,10 +92,10 @@
       "upstream_frequency": 89
     },
     {
-      "added": 10423,
-      "cwc": 2925870,
-      "deleted": 1051,
-      "patch_size": 11474,
+      "added": 10979,
+      "cwc": 3067140,
+      "deleted": 1049,
+      "patch_size": 12028,
       "path": "hermes_cli/update_cmd.py",
       "semantic_coupling": 3,
       "upstream_frequency": 85
@@ -191,10 +191,10 @@
       "upstream_frequency": 46
     },
     {
-      "added": 5597,
-      "cwc": 948480,
-      "deleted": 2723,
-      "patch_size": 8320,
+      "added": 5647,
+      "cwc": 955092,
+      "deleted": 2731,
+      "patch_size": 8378,
       "path": "hermes_cli/gateway.py",
       "semantic_coupling": 2,
       "upstream_frequency": 57
