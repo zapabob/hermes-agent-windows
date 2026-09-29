@@ -19,12 +19,17 @@ Hermes Agent 的非官方 Windows 原生下游版本，提供 Electron 桌面端
 
 [![Windows Workstation Tier-1 CI](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml/badge.svg)](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml)
 
-**当前源码版本：0.21.5。** 记录的 upstream release 同为 0.21.5（`v2026.9.24`）。
-本 fork 保持 `version_source: downstream` 与固定的 upstream snapshot
-`b51c055a12220f8c7c18660e8599365012e19532`。源码版本或 main 分支的 push 并不代表已经
-发布 stable installer。支持的 channel 为 `stable` 与 `preview`。
+**当前源码版本：0.21.5。** 产品元数据与 upstream stable R2
+`f97608f178d1ffeca59860195ab7da295f7c8e5f`（`v2026.9.24`）保持一致。
+本 fork 继续使用 `version_source: downstream`，并保留历史 provenance snapshot
+`b51c055a12220f8c7c18660e8599365012e19532`。
 
-如果这个 Windows 原生版本对你有帮助，欢迎为仓库点 Star，让更多 Windows 用户发现它。
+版本号 0.21.5 并不表示已经对之后所有 upstream commit 完成语义等价审查。当前
+semantic-refresh campaign 固定到 ceiling
+`678a4762b887f3eabe5cad11254b2ab1ae859485`，按 family 分别核对 source、test、mutation、
+CodeGraph 与 review 证据。当前交接计划见
+[docs/windows/semantic-refresh-20260926/CURSOR_IMPLEMENTATION_PLAN_20260929.md](docs/windows/semantic-refresh-20260926/CURSOR_IMPLEMENTATION_PLAN_20260929.md)。
+支持的 channel 为 `stable` 与 `preview`；main 分支的 push 本身不是 stable installer 已发布的证据。
 
 ## 30 秒看懂安装
 
@@ -56,76 +61,53 @@ uv run hermes desktop
 
 ## 这个 fork 增加了什么
 
-- **自带密钥（BYOK），OAuth 优先。** 运行时不依赖任何必需的托管服务。可通过 OAuth
-  登录订阅（OpenAI Codex/ChatGPT、xAI Grok、Qwen、MiniMax、Nous Portal 等），为随附的
-  42 个模型 provider 使用自己的 API key，或连接本地 llama.cpp server。Nous Portal 只是
-  可选 provider 之一，并非必需。
-- Python、Electron、Go、upstream API 兼容、regression 与 security lock 的 Windows Tier-1 CI
-- 覆盖非管理员账户与含空格 path 的 installer、portable 与 upgrade E2E
-- 固定 upstream snapshot `b51c055a12220f8c7c18660e8599365012e19532`，不使用移动基线
-- 通过官方 provider/memory seam 接入的本地 llama.cpp/GGUF 推理与 embedding lifecycle
-- 由 Electron main 独占的 Desktop Python backend，以及权限仅限于其自行启动的
-  embedding server 的外部 Go watchdog
-- 复用现有 model picker、父级推理与无凭据 Docker 执行的顺序式工程 workflow
-  （`implementation_router`）
-- consumer NVIDIA workstation 实机证据与无 GPU 的 hosted CI 分开记录
+- **把 Windows 作为一级运行目标。** 对 path、process identity、PowerShell、NTFS、
+  Electron IPC、update/relaunch、installer/portable 与 Go watchdog 进行原生 Windows 验证。
+- **Desktop backend 只有一个破坏性 lifecycle owner。** Electron main 负责 Desktop backend；
+  Go watchdog 负责辅助 status/recovery，并且只有对它自己启动和拥有的 embedding
+  `llama-server` 才具有破坏性管理权限。
+- **保留正常的 Hermes provider/model picker。** OAuth、API key、custom/local endpoint 与
+  llama.cpp/GGUF 都走同一 provider architecture；fallback、普通 delegation、MoA 与
+  reasoning effort 仍是相互独立的功能。
+- **Semantic Graph 与 Ebbinghaus。** 可在官方 memory seam 上组合 graph storage、embedding、
+  hybrid retrieval 与独立 cognitive-memory provider。
+- **保持 Desktop 的 profile/session 契约。** Bot Mode 的 canonical forever-chat 通过
+  `(profile, "Bot Chat")` 解析，不持久化 canonical session-id pointer。
+- **长时间运行的 Gateway 与 automation。** messaging、cron、skills、MCP、delegation、
+  kanban 共用同一 core/session/profile model。
+- **VRChat/Unity、voice/TTS、AITuber、OSINT/Shinka 等保留在 edge integration。**
+  它们通过 plug-in/skill/provider seam 扩展，而不是分叉 core。
+- **Security Center。** 提供确定性的 scan、evidence、update state 与 encrypted quarantine，
+  mutation 必须经过明确确认。
+- **以证据方式吸收 upstream。** 使用 exact SHA 与 observable contract，整体 merge/rebase 或
+  版本号本身都不作为 compatibility 证明。
 
 ## 插件与Git子模块
 
-Hermes通过 `plugin.yaml`、`__init__.py` 和 `register(ctx)` 发现标准目录插件。
-下面按用途列出53个随附的标准根插件；`lmcache` 以具有独立注册路径的旧式manifest
-提供。运行 `uv run hermes plugins` 可查看当前profile实际启用的插件。
+按 profile 查看实际启用的插件：
 
-| 领域 | 随附根插件 |
-| --- | --- |
-| Agent与运维 | `ai-employee-org`, `ai-partner-os`, `airi`, `aituber-onair`, `aituber-kit`, `book-to-skill`, `desktop-dashboard`, `disk-cleanup`, `freebuff`, `freellmapi`, `google-colab`, `google_meet`, `hermes-antigravity`, `hermes-gpt`, `hermes-bot-mode`, `implementation_router`, `line-ai-bot`, `lm-twitterer`, `memory-llm-wiki`, `notebooklm`, `oh-my-hermes`, `openclaw-vendor`, `openmanus`, `plugin-doctor`, `research-desk`, `scrapling-feeds`, `teams_pipeline`, `warashibe-reselling` |
-| 媒体、语音与XR | `akari-video`, `buzz`, `fish-audio-tts`, `hakua-tts-bridge`, `heygen`, `hyperframes`, `irodori-tts`, `questframe-fh6vr`, `sillytavern`, `spotify`, `unity-cli`, `unity-vrchat-bridge`, `unsloth-studio`, `voicebox`, `voicevox-tts`, `vrchat-autonomy` |
-| 知识、安全与OSINT | `osint-agent`, `security-guidance`, `semantic-graph`, `shinka-osint`, `sitdeck-osint`, `surfsense`, `tookie-osint`, `world-intel-osint`, `worldmonitor-osint` |
-| 旧式manifest | `lmcache` |
+```powershell
+uv run hermes plugins
+```
 
-保留的[集成清单](docs/windows/INTEGRATIONS.md)在其记录时点列出了154个插件manifest；
-此后新增了 `hermes-antigravity` 与 `implementation_router`，因此当前代码树共有156个。
-专用provider系列由各自的发现器处理，因此只有已配置的能力会进入session。数量描述的是
-代码树内容，而非运行时启用状态或资格认定。
+仓库包含 workstation root plug-in，以及 `plugins/model-providers/`、`plugins/memory/`、
+`plugins/platforms/`、`plugins/web/` 等专用 family。数量会随代码树变化，因此 README 不再把
+固定计数当作契约。代表性的能力包括 `hermes-bot-mode`、`desktop-dashboard`、
+`semantic-graph`、`implementation_router`、`vrchat-autonomy`、`unity-vrchat-bridge`、
+`shinka-osint`、`openai-codex` 与 `qwen-oauth`。
 
-| 发现系列 | 随附provider与adapter |
-| --- | --- |
-| Browser (3) | `browser_use`, `browserbase`, `firecrawl` |
-| Cron (1) | `chronos` |
-| Dashboard认证 (4) | `basic`, `drain`, `nous`, `self_hosted` |
-| 图像生成 (7) | `deepinfra`, `fal`, `krea`, `openai`, `openai-codex`, `openrouter`, `xai` |
-| Memory (9) | `byterover`, `ebbinghaus`, `hindsight`, `holographic`, `honcho`, `mem0`, `openviking`, `retaindb`, `supermemory` |
-| 模型provider (42) | `actual`, `ai-gateway`, `alibaba`, `alibaba-coding-plan`, `anthropic`, `arcee`, `azure-foundry`, `bedrock`, `commandcode`, `copilot`, `copilot-acp`, `custom`, `deepinfra`, `deepseek`, `fireworks`, `freebuff`, `freellmapi`, `gemini`, `gmi`, `huggingface`, `hypura`, `kilocode`, `kimi-coding`, `meta-ai`, `minimax`, `nebius-token-factory`, `nous`, `novita`, `nvidia`, `ollama-cloud`, `openai-codex`, `opencode-free`, `opencode-zen`, `openrouter`, `qwen-oauth`, `router`, `stepfun`, `upstage`, `vertex`, `xai`, `xiaomi`, `zai` |
-| Observability (1) | `langfuse` |
-| 消息平台 (22) | `a2a`, `buzz`, `dingtalk`, `discord`, `email`, `feishu`, `google_chat`, `homeassistant`, `irc`, `line`, `matrix`, `mattermost`, `ntfy`, `photon`, `raft`, `simplex`, `slack`, `sms`, `teams`, `telegram`, `wecom`, `whatsapp` |
-| 视频生成 (3) | `deepinfra`, `fal`, `xai` |
-| Web搜索与提取 (11) | `brave_free`, `cloakbrowser`, `ddgs`, `exa`, `firecrawl`, `keenable`, `parallel`, `scrapling`, `searxng`, `tavily`, `xai` |
+`implementation_router` 是 **opt-in** 的隔离顺序式 engineering workflow。它使用现有
+auxiliary picker 与 parent-owned inference，不替代普通 model picker、delegation、MoA 或
+fallback；也不会自动把验证后的 workspace 应用到 source checkout，或自行发布 PR。
 
-`gateway/platforms/` 下的内置 adapter 另外提供 Signal、BlueBubbles（iMessage）、
-Weixin、Yuanbao、WhatsApp Business Cloud API、通用 webhook 以及 OpenAI 兼容 API server。
+Git submodule 只用于可选 integration；需要相应外部 runtime 时再初始化：
 
-Git子模块用于可选集成。仅在需要全部功能时运行
-`git submodule update --init --recursive`。
+```powershell
+git submodule update --init --recursive
+```
 
-| 路径 | 仓库 | 用途 |
-| --- | --- | --- |
-| `plugins/hermes-bot-mode/desktop` | [Hermes-Bot-Mode](https://github.com/zapabob/Hermes-Bot-Mode.git) | Desktop bot roster UI |
-| `plugins/artemis` | [artemis](https://github.com/zapabob/artemis.git) | 基于自然语言指令的 Android 自动化 |
-| `vendor/openclaw-mirror/AI-Scientist` | [AI-Scientist](https://github.com/zapabob/AI-Scientist.git) | 科研agent集成 |
-| `vendor/openclaw-mirror/ATLAS` | [ATLAS](https://github.com/zapabob/ATLAS.git) | Research agent集成 |
-| `vendor/openclaw-mirror/ShinkaEvolve` | [ShinkaEvolve](https://github.com/zapabob/ShinkaEvolve.git) | 进化workflow集成 |
-| `vendor/neuro-sdk` | [neuro-sdk](https://github.com/zapabob/neuro-sdk.git) | Neuro集成SDK |
-| `vendor/openmanus` | [OpenManus](https://github.com/zapabob/OpenManus.git) | OpenManus runtime |
-| `vendor/SillyTavern` | [SillyTavern](https://github.com/zapabob/SillyTavern.git) | 本地角色聊天前端 |
-| `vendor/shinka-osint` | [ShinkaEvolve-OSINT](https://github.com/zapabob/ShinkaEvolve-OSINT.git) | OSINT分析runtime（私有仓库，初始化需要访问权限） |
-| `vendor/buzz` | [buzz](https://github.com/zapabob/buzz.git) | 语音转写runtime |
-| `vendor/officecli` | [OfficeCLI](https://github.com/zapabob/OfficeCLI.git) | Office文档CLI |
-| `vendor/akari-video` | [akari-video](https://github.com/zapabob/akari-video.git) | AI视频编辑器 |
-| `vendor/cloakbrowser` | [cloakbrowser](https://github.com/zapabob/cloakbrowser.git) | Browser automation runtime |
-| `vendor/airi` | [airi](https://github.com/zapabob/airi.git) | Avatar与companion runtime |
-| `vendor/oh-my-hermes` | [oh-my-hermes](https://github.com/zapabob/oh-my-hermes.git) | Hermes workflow扩展 |
-| `vendor/OpenMausBot` | [OpenMausBot](https://github.com/zapabob/OpenMausBot.git) | Desktop automation bot |
-| `vendor/heygen-cli` | [heygen-cli](https://github.com/heygen-com/heygen-cli.git) | HeyGen CLI client |
+更广泛的清单见 [docs/windows/INTEGRATIONS.md](docs/windows/INTEGRATIONS.md)。该文档是 snapshot；
+当前 runtime inventory 应以 `uv run hermes plugins` 为准。
 
 ## 1. 产品定位
 
@@ -170,7 +152,8 @@ Node 工具以及 CI 结果的阅读。
   （第 9 节）。
 - **工程 workflow。** `implementation_router` plugin 通过现有 auxiliary model picker
   依次运行 planner、worker、确定性验证与 reviewer 阶段，入口为 `engineering_run` 或
-  `/engineer`。
+  `/engineer`。它是 opt-in 的隔离 workflow，不替代普通 model picker、delegation、MoA、
+  fallback，也不会自动 apply 或 publish。
 - **集成。** 本地秘书、VRChat/Unity、本地语音、AITuber、OSINT/Shinka、Desktop 的
   Git/review pane，以及隔离的 Antigravity CLI bridge（`hermes-antigravity`）。
 - **凭据卫生。** credential lease 始终绑定所选 entry；空的 credential pool 无法以继承的
@@ -198,7 +181,9 @@ gateway、model catalogue 或 tool registry 建立并行的权威来源。
 | AITuber | AITuber OnAir 与 AITuber Kit plugin | `tests/plugins/test_aituber_onair_plugin.py` |
 | OSINT/Shinka | Shinka、SitDeck、WorldMonitor 与 OSINT plugin surface | `tests/plugins/test_shinka_osint_plugin.py` |
 | Desktop | 通过官方 Desktop IPC 与 pane contract 扩展 Git/review | `apps/desktop/electron/git-review-ops.test.ts` |
+| Bot Mode | 通过 `(profile, "Bot Chat")` 解析 canonical forever-chat | `apps/desktop/src/plugins/hermes-bots/tests/canonical-chat-registry.test.mjs` |
 | Security | security guidance 与强化的 approval/execution boundary | `tests/plugins/test_security_guidance_plugin.py` |
+| Control MCP | auth/journal/coordinator contract；production write 保持 DISABLED | `docs/control-mcp/IMPLEMENTATION_LOG.md` |
 
 每项功能的所有者、公开 surface、upstream 重叠范围、Windows 要求、测试和集成策略，
 均记录在 `FEATURES.yaml` 中。原先由 watchdog 管理的 Desktop backend 在其中标记为
@@ -311,22 +296,24 @@ profile-scoped Hermes secret store 中，或按照 Hermes 文档保存到 `.env`
 
 ## 12. 更新与 upstream 集成策略
 
-upstream 是集成输入，而不是下游产品的权威来源。每次 campaign 都会在
-`.codex/UPSTREAM_SNAPSHOT.json` 中固定准确 SHA，在 `UPSTREAM_ADOPTION.yaml` 中分类
-commit，并在 `CARRY.yaml` 中记录直接保留的修改。`scripts/upstream/snapshot_sync.py`
-只接受显式 SHA，绝不会解析持续变化的 latest branch。保留的 release-provenance snapshot 为
-`b51c055a12220f8c7c18660e8599365012e19532`。
+upstream 是集成输入，不把持续变化的 source tree 直接作为下游正本。semantic-refresh
+campaign 以 exact SHA、inventory、source/caller mapping、focused regression、必要的 mutation、
+CodeGraph 与独立 review 按 family 闭合。
 
-优先采用官方 public API。security 与 data integrity 修复会和更强、且经过验证的下游特性
-组合。不能仅因 upstream 增加了名称相似的功能就移除下游功能；替换必须提供 parity 证据。
-请勿用整体的 upstream merge、rebase 或 cherry-pick 代替契约审查。
+| 输入 | SHA | 含义 |
+| --- | --- | --- |
+| R2 | `f97608f178d1ffeca59860195ab7da295f7c8e5f` | upstream 0.21.5 / `v2026.9.24` stable release |
+| U1 | `678a4762b887f3eabe5cad11254b2ab1ae859485` | 当前 campaign 的固定 newer-upstream ceiling |
+| historical snapshot | `b51c055a12220f8c7c18660e8599365012e19532` | 保留的 provenance anchor |
 
-更新正在运行的工作站前，请保存未 commit 的工作与各个 profile，记录当前 commit，并保留
-已部署 Desktop 的回滚副本。Desktop control backend、消息 gateway、llama server、
-embedding server 与 Go watchdog 各有独立的 lifecycle；关闭一个窗口并不代表它们全部已
-重启。重启后请检查应用窗口、backend 响应与实际模型就绪状态。参见
-[本地运行时配置](docs/local-secretary-runtime.md)、
-[release policy](docs/windows/RELEASE_POLICY.md) 与 [AGENTS.md](AGENTS.md)。
+当前 `main` 已包含多个经过映射的 Windows/runtime 修复，包括 process identity、
+relaunch/recovery 与 Desktop E2E isolation。但在所有 in-scope ledger row 都有证据映射或明确
+disposition 之前，整个 campaign 仍不算完成。0.21.5 是 product version，不是 semantic parity
+的捷径。
+
+更新流程保持 `plan → snapshot → apply → restart-per-kind → verify → report`。Desktop、gateway、
+generation llama、embedding 与 Go watchdog 各自具有独立 lifecycle，需要分别验证 owner 与
+readiness。
 
 ## 13. 架构
 
@@ -339,6 +326,10 @@ slash command registry、cron 调度、多 profile kanban board、subagent 委�
 Mixture of Agents（`hermes moa`）、MCP client 与 server（`hermes mcp`）、ACP 以及 profile。
 core 继续保持为狭窄的公共边界：capability 由 plugin 与 skill 承载，state path 由
 profile-aware 的官方 path helper 管理，prompt cache 与 message role invariant 始终是强制要求。
+
+Bot Mode 同样遵循 session/profile 契约。一个 bot 的 canonical chat 由该 profile 下 exact title
+`Bot Chat` 的 registry identity 每次重新解析，不持久化 canonical session-id pointer；side-chat
+继续作为独立 session 存在。
 
 ## 14. 安全
 
@@ -356,6 +347,11 @@ security gate 会检查锁定的 Python graph、Python advisory、production npm
 Go module integrity、OSV result、supply-chain policy，以及本仓库的 security regression
 test。green 的 local unit test 不能代替 exact-head CI 或 live runtime evidence。请阅读
 [SECURITY.md](SECURITY.md)；未解决的 private contract 仍未获资格认定。
+
+Control MCP 已有 auth、strict claim、journal、coordinator 与 evidence contract，但
+**production write 仍为 DISABLED**。当前 campaign 中 N07-A1、T06、T12 尚未闭合；real host
+grant-revocation writer、grant/claim/effect linearization、trusted producer、独立 apply approval
+与 actual writer fence 的证据仍不完整。test 或看似成功的 receipt 不能授权开启该 write path。
 
 ## 15. Upstream 项目
 

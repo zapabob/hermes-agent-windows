@@ -41,6 +41,7 @@ def test_readme_uses_required_section_order() -> None:
 
 
 def test_readme_exposes_verified_windows_install_surfaces() -> None:
+    normalized = " ".join(README.split())
     assert "git clone https://github.com/zapabob/hermes-agent-windows.git" in README
     assert "https://github.com/zapabob/hermes-agent-windows/releases" in README
     assert "installer" in README.lower()
@@ -48,13 +49,15 @@ def test_readme_exposes_verified_windows_install_surfaces() -> None:
     assert "0.21.5" in README
     assert "docs/windows/INSTALL.md" in README
     assert "curl -fsSL https://raw.githubusercontent.com/NousResearch" not in README
-    assert "official upstream installer" in README.lower()
+    assert "The official upstream installer targets the upstream distribution" in normalized
     assert "<details open>" in README
     assert "<summary><strong>日本語</strong>" in README
     assert "<summary><strong>简体中文</strong>" in README
     assert "## Plug-ins and Git submodules" in README
-    assert "154 plug-in manifests" in README
-    assert "Model providers (42)" in README
+    assert "uv run hermes plugins" in README
+    assert "docs/windows/INTEGRATIONS.md" in README
+    assert "plugins/model-providers/" in README
+    assert "production write remains DISABLED" in normalized
 
 
 def test_readme_preserves_upstream_identity() -> None:
@@ -70,9 +73,9 @@ def test_translated_readmes_keep_distribution_metadata_in_parity() -> None:
         "README.zh-CN.md": "## 30 秒看懂安装",
     }
     localized_inventory = {
-        "README.md": ("## Plug-ins and Git submodules", "154 plug-in manifests", "Model providers (42)"),
-        "README.ja.md": ("## プラグインとGitサブモジュール", "154件のプラグインmanifest", "Model provider (42)"),
-        "README.zh-CN.md": ("## 插件与Git子模块", "154个插件manifest", "模型provider (42)"),
+        "README.md": "## Plug-ins and Git submodules",
+        "README.ja.md": "## プラグインとGitサブモジュール",
+        "README.zh-CN.md": "## 插件与Git子模块",
     }
     for name, quick_start_heading in localized_quick_start.items():
         content = (ROOT / name).read_text(encoding="utf-8")
@@ -92,11 +95,16 @@ def test_translated_readmes_keep_distribution_metadata_in_parity() -> None:
             "uv run hermes setup",
             "uv run hermes chat",
             "uv run hermes desktop",
+            "uv run hermes plugins",
+            "docs/windows/INTEGRATIONS.md",
+            "plugins/model-providers/",
+            "implementation_router",
+            "678a4762b887f3eabe5cad11254b2ab1ae859485",
+            "N07-A1",
+            "T06",
+            "T12",
         ):
             assert value in content, f"{name}: {value}"
         assert quick_start_heading in content
         assert "TL;DR" in content
-        inventory_heading, manifest_count, provider_count = localized_inventory[name]
-        assert inventory_heading in content
-        assert manifest_count in content
-        assert provider_count in content
+        assert localized_inventory[name] in content

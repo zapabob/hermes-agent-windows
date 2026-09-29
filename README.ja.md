@@ -20,13 +20,19 @@ Electron デスクトップ、CLI、メッセージング gateway と、任意�
 
 [![Windows Workstation Tier-1 CI](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml/badge.svg)](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml)
 
-**現在のソース版: 0.21.5。** 記録済みの upstream release も 0.21.5（`v2026.9.24`）です。
-この fork は `version_source: downstream` と固定 upstream snapshot
-`b51c055a12220f8c7c18660e8599365012e19532` を維持します。ソース版の更新や main への
-push は、stable installer の公開を意味しません。対応 channel は `stable` と `preview` です。
+**現在のソース版: 0.21.5。** 製品メタデータは upstream stable R2
+`f97608f178d1ffeca59860195ab7da295f7c8e5f`（`v2026.9.24`）に合わせています。
+この fork は `version_source: downstream` を維持し、歴史的な provenance snapshot
+`b51c055a12220f8c7c18660e8599365012e19532` も保持します。
 
-この Windows ネイティブ版が役に立ったら、リポジトリに Star をいただけると、
-他の Windows ユーザーにも見つけてもらいやすくなります。
+0.21.5 という版番号は、それより後の upstream commit まで意味論的同等性を一括で宣言する
+ものではありません。現在の semantic-refresh campaign は固定 ceiling
+`678a4762b887f3eabe5cad11254b2ab1ae859485` までを family ごとに照合しており、未完の
+family は source、test、mutation、CodeGraph、review の証拠が閉じるまで未完のままです。
+現在の引き継ぎ計画は
+[docs/windows/semantic-refresh-20260926/CURSOR_IMPLEMENTATION_PLAN_20260929.md](docs/windows/semantic-refresh-20260926/CURSOR_IMPLEMENTATION_PLAN_20260929.md)
+を参照してください。対応 channel は `stable` と `preview` で、main への push は stable
+installer の公開証拠ではありません。
 
 ## 30秒でわかる導入
 
@@ -58,80 +64,56 @@ installer または portable ZIP を使う場合は、
 
 ## この fork が追加するもの
 
-- **BYOK（自分のキー持ち込み）と OAuth 優先。** 実行時に必須のホスト型サービスは
-  ありません。OAuth によるサブスクリプションのサインイン（OpenAI Codex/ChatGPT、
-  xAI Grok、Qwen、MiniMax、Nous Portal など）、同梱42 model provider への自前 API key、
-  またはローカル llama.cpp server のいずれでも動作します。Nous Portal は任意の
-  provider の1つであり、必須ではありません。
-- Python、Electron、Go、upstream API 互換、regression、security lock の Windows Tier-1 CI
-- 非管理者アカウントや空白入り path を含む installer、portable、upgrade E2E
-- 移動しない固定 upstream snapshot `b51c055a12220f8c7c18660e8599365012e19532`
-- 公式 provider/memory seam 上のローカル llama.cpp/GGUF 推論と embedding lifecycle
-- Electron main が単独で所有する Desktop Python backend と、自ら起動した embedding
-  server だけに権限を限定した外部 Go watchdog
-- 既存の model picker、親所有の推論、credential を持たない Docker 実行を再利用する
-  逐次型エンジニアリング workflow（`implementation_router`）
-- GPU のない hosted CI と分離した consumer NVIDIA workstation の実機証拠
+- **Windows を第一級の実行対象として扱います。** path、process identity、PowerShell、
+  NTFS、Electron IPC、update/relaunch、installer/portable、Go watchdog を Windows native
+  の契約として検証します。
+- **Desktop backend の破壊的 lifecycle owner は Electron main だけです。** Go watchdog は
+  status/recovery の補助であり、自ら起動して所有する embedding `llama-server` にだけ
+  破壊的権限を持ちます。
+- **通常の Hermes provider/model picker を維持します。** OAuth、API key、custom/local
+  endpoint、llama.cpp/GGUF を同じ provider architecture から選択でき、fallback、通常の
+  delegation、MoA、reasoning effort は互いに独立した機能です。
+- **Semantic Graph と Ebbinghaus。** graph storage、embedding、hybrid retrieval と、別の
+  cognitive-memory provider を公式 memory seam 上で組み合わせられます。
+- **Desktop の profile/session 契約を維持します。** Bot Mode の canonical forever-chat は
+  `(profile, "Bot Chat")` で解決し、canonical session-id pointer を永続化しません。
+- **長時間稼働の Gateway と automation。** messaging、cron、skills、MCP、delegation、
+  kanban は同じ core/session/profile model を共有します。
+- **VRChat/Unity、voice/TTS、AITuber、OSINT/Shinka などは edge の任意 integration です。**
+  core を用途別に分岐させず、plug-in/skill/provider seam に置きます。
+- **Security Center。** 決定論的な scan、evidence、update state、encrypted quarantine を
+  提供し、mutation は明示確認を要求します。
+- **upstream 採用は証拠ベースです。** exact SHA と observable contract で照合し、一括
+  merge/rebase や版番号だけを compatibility の証拠にはしません。
 
 ## プラグインとGitサブモジュール
 
-Hermesの標準ディレクトリプラグインは、`plugin.yaml`、`__init__.py`、
-`register(ctx)` から検出されます。バンドル済みの標準ルートプラグイン53件を下に
-分類しました。`lmcache` は独自の登録経路を持つ旧形式manifestとして同梱されています。
-有効状態は `uv run hermes plugins` でprofileごとに確認できます。
+実際に有効なプラグインは、profile ごとに次で確認します。
 
-| 分野 | バンドル済みルートプラグイン |
-| --- | --- |
-| Agent・運用 | `ai-employee-org`, `ai-partner-os`, `airi`, `aituber-onair`, `aituber-kit`, `book-to-skill`, `desktop-dashboard`, `disk-cleanup`, `freebuff`, `freellmapi`, `google-colab`, `google_meet`, `hermes-antigravity`, `hermes-gpt`, `hermes-bot-mode`, `implementation_router`, `line-ai-bot`, `lm-twitterer`, `memory-llm-wiki`, `notebooklm`, `oh-my-hermes`, `openclaw-vendor`, `openmanus`, `plugin-doctor`, `research-desk`, `scrapling-feeds`, `teams_pipeline`, `warashibe-reselling` |
-| Media・音声・XR | `akari-video`, `buzz`, `fish-audio-tts`, `hakua-tts-bridge`, `heygen`, `hyperframes`, `irodori-tts`, `questframe-fh6vr`, `sillytavern`, `spotify`, `unity-cli`, `unity-vrchat-bridge`, `unsloth-studio`, `voicebox`, `voicevox-tts`, `vrchat-autonomy` |
-| Knowledge・security・OSINT | `osint-agent`, `security-guidance`, `semantic-graph`, `shinka-osint`, `sitdeck-osint`, `surfsense`, `tookie-osint`, `world-intel-osint`, `worldmonitor-osint` |
-| 旧形式manifest | `lmcache` |
+```powershell
+uv run hermes plugins
+```
 
-保持している [統合インベントリ](docs/windows/INTEGRATIONS.md) は、記録時点の
-154件のプラグインmanifestを記載しています。その後 `hermes-antigravity` と
-`implementation_router` が追加されたため、現在のツリーには156件あります。専門的な
-provider群は個別に検出され、設定した機能だけがsessionへ入る構造です。件数はツリーの
-内容を示すもので、実行時の有効化や認定を示すものではありません。
+repository には workstation 向け root plug-in に加えて、`plugins/model-providers/`、
+`plugins/memory/`、`plugins/platforms/`、`plugins/web/` などの専門 family があります。
+件数は継続的に変わるため、README は固定件数を契約として扱いません。代表例は
+`hermes-bot-mode`、`desktop-dashboard`、`semantic-graph`、`implementation_router`、
+`vrchat-autonomy`、`unity-vrchat-bridge`、`shinka-osint`、`openai-codex`、`qwen-oauth`
+などです。
 
-| 検出ファミリー | 同梱provider・adapter |
-| --- | --- |
-| Browser (3) | `browser_use`, `browserbase`, `firecrawl` |
-| Cron (1) | `chronos` |
-| Dashboard認証 (4) | `basic`, `drain`, `nous`, `self_hosted` |
-| Image生成 (7) | `deepinfra`, `fal`, `krea`, `openai`, `openai-codex`, `openrouter`, `xai` |
-| Memory (9) | `byterover`, `ebbinghaus`, `hindsight`, `holographic`, `honcho`, `mem0`, `openviking`, `retaindb`, `supermemory` |
-| Model provider (42) | `actual`, `ai-gateway`, `alibaba`, `alibaba-coding-plan`, `anthropic`, `arcee`, `azure-foundry`, `bedrock`, `commandcode`, `copilot`, `copilot-acp`, `custom`, `deepinfra`, `deepseek`, `fireworks`, `freebuff`, `freellmapi`, `gemini`, `gmi`, `huggingface`, `hypura`, `kilocode`, `kimi-coding`, `meta-ai`, `minimax`, `nebius-token-factory`, `nous`, `novita`, `nvidia`, `ollama-cloud`, `openai-codex`, `opencode-free`, `opencode-zen`, `openrouter`, `qwen-oauth`, `router`, `stepfun`, `upstage`, `vertex`, `xai`, `xiaomi`, `zai` |
-| Observability (1) | `langfuse` |
-| Messaging platform (22) | `a2a`, `buzz`, `dingtalk`, `discord`, `email`, `feishu`, `google_chat`, `homeassistant`, `irc`, `line`, `matrix`, `mattermost`, `ntfy`, `photon`, `raft`, `simplex`, `slack`, `sms`, `teams`, `telegram`, `wecom`, `whatsapp` |
-| Video生成 (3) | `deepinfra`, `fal`, `xai` |
-| Web検索・抽出 (11) | `brave_free`, `cloakbrowser`, `ddgs`, `exa`, `firecrawl`, `keenable`, `parallel`, `scrapling`, `searxng`, `tavily`, `xai` |
+`implementation_router` は **opt-in** の隔離型逐次 engineering workflow です。既存の
+auxiliary picker と parent-owned inference を使い、通常の model picker、delegation、MoA、
+fallback を置き換えません。検証済み workspace を source checkout に自動適用せず、PR を
+自動公開もしません。
 
-`gateway/platforms/` 配下の組み込み adapter は、Signal、BlueBubbles（iMessage）、
-Weixin、Yuanbao、WhatsApp Business Cloud API、汎用 webhook、OpenAI 互換 API server
-を追加します。
+Git submodule は任意 integration のため、必要な外部 runtime がある場合だけ初期化します。
 
-Gitサブモジュールは任意の連携機能です。すべて必要な場合だけ、
-`git submodule update --init --recursive` を実行してください。
+```powershell
+git submodule update --init --recursive
+```
 
-| Path | Repository | 用途 |
-| --- | --- | --- |
-| `plugins/hermes-bot-mode/desktop` | [Hermes-Bot-Mode](https://github.com/zapabob/Hermes-Bot-Mode.git) | Desktop bot roster UI |
-| `plugins/artemis` | [artemis](https://github.com/zapabob/artemis.git) | 自然言語指示による Android 自動化 |
-| `vendor/openclaw-mirror/AI-Scientist` | [AI-Scientist](https://github.com/zapabob/AI-Scientist.git) | 科学agent連携 |
-| `vendor/openclaw-mirror/ATLAS` | [ATLAS](https://github.com/zapabob/ATLAS.git) | Research agent連携 |
-| `vendor/openclaw-mirror/ShinkaEvolve` | [ShinkaEvolve](https://github.com/zapabob/ShinkaEvolve.git) | 進化workflow連携 |
-| `vendor/neuro-sdk` | [neuro-sdk](https://github.com/zapabob/neuro-sdk.git) | Neuro連携SDK |
-| `vendor/openmanus` | [OpenManus](https://github.com/zapabob/OpenManus.git) | OpenManus runtime |
-| `vendor/SillyTavern` | [SillyTavern](https://github.com/zapabob/SillyTavern.git) | Local character chat frontend |
-| `vendor/shinka-osint` | [ShinkaEvolve-OSINT](https://github.com/zapabob/ShinkaEvolve-OSINT.git) | OSINT分析runtime（private repository。初期化にはアクセス権が必要） |
-| `vendor/buzz` | [buzz](https://github.com/zapabob/buzz.git) | 音声文字起こしruntime |
-| `vendor/officecli` | [OfficeCLI](https://github.com/zapabob/OfficeCLI.git) | Office文書CLI |
-| `vendor/akari-video` | [akari-video](https://github.com/zapabob/akari-video.git) | AI video editor |
-| `vendor/cloakbrowser` | [cloakbrowser](https://github.com/zapabob/cloakbrowser.git) | Browser automation runtime |
-| `vendor/airi` | [airi](https://github.com/zapabob/airi.git) | Avatar・companion runtime |
-| `vendor/oh-my-hermes` | [oh-my-hermes](https://github.com/zapabob/oh-my-hermes.git) | Hermes workflow拡張 |
-| `vendor/OpenMausBot` | [OpenMausBot](https://github.com/zapabob/OpenMausBot.git) | Desktop automation bot |
-| `vendor/heygen-cli` | [heygen-cli](https://github.com/heygen-com/heygen-cli.git) | HeyGen CLI client |
+より広い inventory は [docs/windows/INTEGRATIONS.md](docs/windows/INTEGRATIONS.md) にあります。
+これは snapshot であり、現在の runtime inventory には `uv run hermes plugins` を使ってください。
 
 ## 1. 製品の位置づけ
 
@@ -184,7 +166,9 @@ Windows AI ワークステーションを運用し、ローカル推論、長時
   provider（第9節）。
 - **エンジニアリング workflow。** `implementation_router` plugin は、既存の auxiliary
   model picker を通じて planner、worker、決定論的検証、reviewer の各段階を実行します。
-  入口は `engineering_run` または `/engineer` です。
+  入口は `engineering_run` または `/engineer` です。これは opt-in の隔離 workflow で、
+  通常の model picker、delegation、MoA、fallback を置き換えず、自動 apply/publication も
+  行いません。
 - **連携機能。** ローカル秘書、VRChat/Unity、ローカル音声、AITuber、OSINT/Shinka、
   Desktop の Git/review pane、分離された Antigravity CLI bridge（`hermes-antigravity`）。
 - **Credential の衛生管理。** credential lease は選択した entry に束縛され、空の
@@ -213,7 +197,9 @@ profile、gateway、model catalogue、tool registry について、並行する�
 | AITuber | AITuber OnAir と AITuber Kit plugin | `tests/plugins/test_aituber_onair_plugin.py` |
 | OSINT/Shinka | Shinka、SitDeck、WorldMonitor、OSINT plugin surface | `tests/plugins/test_shinka_osint_plugin.py` |
 | Desktop | 公式 Desktop IPC と pane contract を用いた Git/review extension | `apps/desktop/electron/git-review-ops.test.ts` |
+| Bot Mode | `(profile, "Bot Chat")` で解決する canonical forever-chat | `apps/desktop/src/plugins/hermes-bots/tests/canonical-chat-registry.test.mjs` |
 | Security | security guidance と強化された approval/execution boundary | `tests/plugins/test_security_guidance_plugin.py` |
+| Control MCP | auth/journal/coordinator contract。production write は DISABLED | `docs/control-mcp/IMPLEMENTATION_LOG.md` |
 
 機能ごとの所有者、公開 surface、upstream との重複、Windows 要件、テスト、統合方針は
 すべて `FEATURES.yaml` に記録しています。旧来の watchdog 管理 Desktop backend は
@@ -338,25 +324,24 @@ API key と token は profile ごとの Hermes secret store、または Hermes �
 
 ## 12. 更新と upstream 統合の方針
 
-upstream は統合対象であり、ダウンストリーム製品の正本ではありません。各 campaign では
-`.codex/UPSTREAM_SNAPSHOT.json` に正確な SHA を固定し、commit を
-`UPSTREAM_ADOPTION.yaml` で分類し、直接保持する変更を `CARRY.yaml` に記録します。
-`scripts/upstream/snapshot_sync.py` は明示的な SHA を受け取り、変動する最新 branch を
-解決しません。保持している release-provenance snapshot は
-`b51c055a12220f8c7c18660e8599365012e19532` です。
+upstream は統合入力であり、移動する source tree をそのまま取り込む運用にはしません。
+semantic-refresh campaign は exact SHA、inventory、source/caller mapping、focused regression、
+必要な mutation、CodeGraph、独立 review で family ごとに閉じます。
 
-公式の public API を優先します。security と data integrity の修正は、検証済みのより
-強いダウンストリーム特性と組み合わせます。upstream に似た名前の機能が加わったという
-理由だけでダウンストリーム機能を削除せず、置き換えには parity の証拠を要求します。
-upstream の一括 merge、rebase、cherry-pick を契約レビューの代わりにしないでください。
+| 入力 | SHA | 意味 |
+| --- | --- | --- |
+| R2 | `f97608f178d1ffeca59860195ab7da295f7c8e5f` | upstream 0.21.5 / `v2026.9.24` stable release |
+| U1 | `678a4762b887f3eabe5cad11254b2ab1ae859485` | 現 campaign の固定 newer-upstream ceiling |
+| historical snapshot | `b51c055a12220f8c7c18660e8599365012e19532` | 保持する provenance anchor |
 
-稼働中のワークステーションを更新する前に、未 commit の作業と各 profile を保存し、現在の
-commit を記録し、配備済み Desktop のロールバック用コピーを残してください。Desktop の
-control backend、メッセージング gateway、llama server、embedding server、Go watchdog は
-それぞれ別の lifecycle を持ち、1つのウィンドウを閉じても全部が再起動したことにはなりません。
-再起動後は、アプリケーションのウィンドウ、backend の応答、実際のモデル準備状況を確認して
-ください。[ローカルランタイム設定](docs/local-secretary-runtime.md)、
-[release policy](docs/windows/RELEASE_POLICY.md)、[AGENTS.md](AGENTS.md) を参照してください。
+current `main` には Windows process identity、relaunch/recovery、Desktop E2E isolation など、
+campaign で写像済みの変更が複数入っています。ただし、in-scope ledger row がすべて証拠付きで
+写像または明示 disposition されるまで campaign 全体は完了扱いにしません。0.21.5 は product
+version であり、semantic parity の近道ではありません。
+
+更新処理は `plan → snapshot → apply → restart-per-kind → verify → report` の段階を持ちます。
+Desktop、gateway、generation llama、embedding、Go watchdog は別 lifecycle なので、それぞれの
+owner と readiness を個別に確認します。
 
 ## 13. アーキテクチャ
 
@@ -371,6 +356,10 @@ long-lived service contract を定義し、`features` は product ledger を検�
 MCP client/server（`hermes mcp`）、ACP、profile があります。core は狭い共通境界のままで、
 plugin と skill が capability を保持し、profile-aware な公式 path helper が state path を
 所有し、prompt cache と message role の invariant は必須です。
+
+Bot Mode も同じ session/profile 契約に従います。1 bot の canonical chat は、その profile の
+exact title `Bot Chat` という registry identity で毎回解決します。canonical identity として
+session-id pointer を永続化せず、side-chat は別 session のまま保持します。
 
 ## 14. セキュリティ
 
@@ -391,6 +380,12 @@ Go module integrity、OSV result、supply-chain policy、この repository の s
 regression test を検査します。green の local unit test は、exact-head CI や live
 runtime evidence の代わりにはなりません。[SECURITY.md](SECURITY.md) を読んでください。
 未解決の private contract は認定されていません。
+
+Control MCP には auth、strict claim、journal、coordinator、evidence contract がありますが、
+**production write は DISABLED のままです。** 現 campaign では N07-A1、T06、T12 が未完で、
+real host grant-revocation writer、grant/claim/effect linearization、trusted producer、別 apply
+approval、actual writer fence の証拠がすべて閉じていません。test や receipt だけでこの write
+path を有効化することはできません。
 
 ## 15. Upstream プロジェクト
 
