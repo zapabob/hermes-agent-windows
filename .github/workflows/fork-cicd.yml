@@ -41,6 +41,8 @@ jobs:
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
           git cat-file -e "$snapshotSha^{commit}"
+      - name: Pin carry calculation to main candidate
+        run: git checkout --detach c24f38bedc0c014d46ad5428667d5f5f1f02af76
       - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
         with:
           version: ${{ env.UV_VERSION }}
