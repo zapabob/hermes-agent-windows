@@ -190,18 +190,29 @@ def test_quarantine_reports_a_lock_it_cannot_break(_winp, tmp_path, capsys, monk
 
 
 @patch.object(cli_main, "_is_windows", return_value=True)
+@pytest.mark.parametrize("kill_refused", [False, True])
 def test_pause_windows_gateways_for_update_stops_profile_and_unmapped_pids(
     _winp,
     monkeypatch,
     tmp_path,
     capsys,
+    kill_refused,
 ):
     import gateway.status as status_mod
     import hermes_cli.gateway as gateway_mod
+    import hermes_cli.update_cmd as update_cmd
+
+    monkeypatch.setattr(
+        update_cmd,
+        "_capture_mapped_gateway_owner_argv",
+        lambda pid, _started, capture: capture(pid),
+    )
 
     profile_home = tmp_path / "profiles" / "work"
     profile_home.mkdir(parents=True)
-    profile_proc = SimpleNamespace(profile="work", path=profile_home, pid=101)
+    profile_proc = SimpleNamespace(
+        profile="work", path=profile_home, pid=101, create_time=99.0
+    )
 
     monkeypatch.setattr(gateway_mod, "find_gateway_pids", lambda **_k: [101, 202])
     monkeypatch.setattr(
@@ -224,22 +235,43 @@ def test_pause_windows_gateways_for_update_stops_profile_and_unmapped_pids(
         gateway_mod,
         "_capture_gateway_argv",
         lambda pid: ["pythonw.exe", "-m", "hermes_cli.main", "gateway", "run"]
-        if pid == 202
+        if pid in {101, 202}
         else None,
     )
 
     terminated = []
+    def fake_terminate(pid, force=False, **kwargs):
+        terminated.append((pid, force, kwargs.get("expected_start_time")))
+        if kill_refused:
+            raise OSError("simulated taskkill refusal")
+
+    monkeypatch.setattr(status_mod, "terminate_pid", fake_terminate)
     monkeypatch.setattr(
         status_mod,
-        "terminate_pid",
-        lambda pid, force=False, **kwargs: terminated.append((pid, force)),
+        "get_process_start_time",
+        lambda pid: {101: 9900, 202: 20200}.get(pid),
     )
+
+    if kill_refused:
+        recovery_tokens = []
+        monkeypatch.setattr(
+            update_cmd, "_resume_windows_gateways_after_update",
+            lambda token: recovery_tokens.append(token),
+        )
+        with pytest.raises(RuntimeError, match="Could not stop Windows gateway process"):
+            cli_main._pause_windows_gateways_for_update()
+        assert terminated == [(202, True, 20200)]
+        assert len(recovery_tokens) == 1
+        assert recovery_tokens[0]["profiles"] == {"work": 101}
+        assert recovery_tokens[0]["unmapped_pids"] == [202]
+        return
 
     token = cli_main._pause_windows_gateways_for_update()
 
     assert token == {
         "resume_needed": True,
         "profiles": {"work": 101},
+        "profile_old_identities": {"work": (101, 99.0)},
         "unmapped_pids": [202],
         "unmapped": [
             {
@@ -249,7 +281,7 @@ def test_pause_windows_gateways_for_update_stops_profile_and_unmapped_pids(
         ],
     }
     assert waited_for == [101]
-    assert terminated == [(202, True)]
+    assert terminated == [(202, True, 20200)]
 
     marker = json.loads(
         (profile_home / ".gateway-planned-stop.json").read_text(encoding="utf-8")
@@ -266,6 +298,167 @@ def test_pause_windows_gateways_for_update_stops_profile_and_unmapped_pids(
 
 
 @patch.object(cli_main, "_is_windows", return_value=True)
+def test_external_supervisor_profile_refuses_before_any_pause_marker(
+    _winp, monkeypatch, tmp_path
+):
+    import gateway.status as status_mod
+    import hermes_cli.gateway as gateway_mod
+    import hermes_cli.update_cmd as update_cmd
+
+    monkeypatch.setattr(
+        update_cmd,
+        "_capture_mapped_gateway_owner_argv",
+        lambda pid, _started, capture: capture(pid),
+    )
+
+    profile_home = tmp_path / "profiles" / "work"
+    profile_home.mkdir(parents=True)
+    proc = SimpleNamespace(profile="work", path=profile_home, pid=101, create_time=99.0)
+    monkeypatch.setattr(gateway_mod, "find_gateway_pids", lambda **_kw: [101])
+    monkeypatch.setattr(gateway_mod, "find_windows_gateway_services", lambda **_kw: [])
+    monkeypatch.setattr(
+        gateway_mod, "find_profile_gateway_processes", lambda **_kw: [proc]
+    )
+    monkeypatch.setattr(
+        gateway_mod,
+        "_capture_gateway_argv",
+        lambda _pid: [
+            "pythonw.exe", "-m", "hermes_cli.main", "gateway", "run",
+            "--external-supervisor",
+        ],
+    )
+    monkeypatch.setattr(gateway_mod, "_get_restart_drain_timeout", lambda: 0.1)
+    monkeypatch.setattr(status_mod, "get_process_start_time", lambda _pid: 9900)
+    monkeypatch.setattr(cli_main, "_wait_for_windows_update_gateway_exit", lambda *_a, **_kw: set())
+    monkeypatch.setattr(cli_main, "_venv_launcher_ancestors", lambda *_a: [])
+    monkeypatch.setattr(cli_main, "_refresh_windows_gateway_launchers", lambda: None)
+    monkeypatch.setattr(status_mod, "terminate_pid", lambda *_a, **_kw: None)
+    monkeypatch.setattr(
+        gateway_mod,
+        "launch_detached_profile_gateway_restart",
+        lambda *_a: pytest.fail("external owner must not gain a watcher"),
+    )
+    monkeypatch.setattr(
+        gateway_mod,
+        "launch_detached_gateway_restart_by_cmdline",
+        lambda *_a: pytest.fail("external owner must not gain argv replay"),
+    )
+
+    with pytest.raises(RuntimeError, match="external supervisor"):
+        cli_main._pause_windows_gateways_for_update()
+    assert not (profile_home / ".gateway-planned-stop.json").exists()
+
+
+@patch.object(cli_main, "_is_windows", return_value=True)
+def test_unmapped_external_supervisor_refuses_before_mapped_pause(
+    _winp, monkeypatch, tmp_path
+):
+    import gateway.status as status_mod
+    import hermes_cli.gateway as gateway_mod
+    import hermes_cli.update_cmd as update_cmd
+
+    profile_home = tmp_path / "profiles" / "work"
+    profile_home.mkdir(parents=True)
+    proc = SimpleNamespace(profile="work", path=profile_home, pid=101, create_time=99.0)
+    monkeypatch.setattr(gateway_mod, "find_gateway_pids", lambda **_kw: [101, 202])
+    monkeypatch.setattr(gateway_mod, "find_windows_gateway_services", lambda **_kw: [])
+    monkeypatch.setattr(
+        gateway_mod, "find_profile_gateway_processes", lambda **_kw: [proc]
+    )
+    monkeypatch.setattr(
+        update_cmd,
+        "_capture_mapped_gateway_owner_argv",
+        lambda pid, _started, capture: capture(pid),
+    )
+    monkeypatch.setattr(
+        gateway_mod,
+        "_capture_gateway_argv",
+        lambda pid: [
+            "pythonw.exe", "-m", "hermes_cli.main", "gateway", "run",
+            *((["--external-supervisor"]) if pid == 202 else []),
+        ],
+    )
+    monkeypatch.setattr(
+        status_mod,
+        "get_process_start_time",
+        lambda pid: {101: 9900, 202: 20200}.get(pid),
+    )
+    monkeypatch.setattr(cli_main, "_wait_for_windows_update_gateway_exit", lambda *_a, **_kw: set())
+    monkeypatch.setattr(cli_main, "_venv_launcher_ancestors", lambda *_a: [])
+    monkeypatch.setattr(status_mod, "terminate_pid", lambda *_a, **_kw: None)
+
+    with pytest.raises(RuntimeError, match="external supervisor"):
+        cli_main._pause_windows_gateways_for_update()
+    assert not (profile_home / ".gateway-planned-stop.json").exists()
+
+
+@patch.object(cli_main, "_is_windows", return_value=True)
+def test_unknown_mapped_owner_refuses_update_before_pause(_winp, monkeypatch, tmp_path):
+    import psutil
+    import hermes_cli.gateway as gateway_mod
+
+    profile_home = tmp_path / "profiles" / "work"
+    profile_home.mkdir(parents=True)
+    proc = SimpleNamespace(profile="work", path=profile_home, pid=101, create_time=99.0)
+    monkeypatch.setattr(gateway_mod, "find_gateway_pids", lambda **_kw: [101])
+    monkeypatch.setattr(gateway_mod, "find_windows_gateway_services", lambda **_kw: [])
+    monkeypatch.setattr(
+        gateway_mod, "find_profile_gateway_processes", lambda **_kw: [proc]
+    )
+    monkeypatch.setattr(gateway_mod, "_capture_gateway_argv", lambda _pid: None)
+    monkeypatch.setattr(
+        psutil,
+        "Process",
+        lambda _pid: SimpleNamespace(create_time=lambda: 99.0),
+    )
+
+    with pytest.raises(RuntimeError, match="ownership"):
+        cli_main._pause_windows_gateways_for_update()
+    assert not (profile_home / ".gateway-planned-stop.json").exists()
+
+
+def test_mapped_owner_argv_rejects_pid_reuse_during_capture(monkeypatch):
+    import psutil
+    import hermes_cli.update_cmd as update_cmd
+
+    observed_starts = iter([99.0, 100.0])
+    monkeypatch.setattr(
+        psutil,
+        "Process",
+        lambda _pid: SimpleNamespace(create_time=lambda: next(observed_starts)),
+    )
+    argv = ["pythonw.exe", "-m", "hermes_cli.main", "gateway", "run"]
+    assert update_cmd._capture_mapped_gateway_owner_argv(
+        101, 99.0, lambda _pid: argv
+    ) is None
+
+
+def test_mapped_owner_argv_accepts_stable_incarnation(monkeypatch):
+    import psutil
+    import hermes_cli.update_cmd as update_cmd
+
+    monkeypatch.setattr(
+        psutil,
+        "Process",
+        lambda _pid: SimpleNamespace(create_time=lambda: 99.0),
+    )
+    argv = ["pythonw.exe", "-m", "hermes_cli.main", "gateway", "run"]
+    assert update_cmd._capture_mapped_gateway_owner_argv(
+        101, 99.0, lambda _pid: argv
+    ) == argv
+
+
+def test_unmapped_owner_argv_rejects_pid_reuse_during_capture():
+    import hermes_cli.update_cmd as update_cmd
+
+    observed_starts = iter([20200, 20300])
+    argv = ["pythonw.exe", "-m", "hermes_cli.main", "gateway", "run"]
+    assert update_cmd._capture_unmapped_gateway_argv_with_identity(
+        202, lambda _pid: argv, lambda _pid: next(observed_starts)
+    ) is None
+
+
+@patch.object(cli_main, "_is_windows", return_value=True)
 def test_socket_pause_honors_gateway_declared_drain_budget(
     _winp,
     monkeypatch,
@@ -274,10 +467,19 @@ def test_socket_pause_honors_gateway_declared_drain_budget(
     import gateway.control_socket as control_socket
     import gateway.status as status_mod
     import hermes_cli.gateway as gateway_mod
+    import hermes_cli.update_cmd as update_cmd
+
+    monkeypatch.setattr(
+        update_cmd,
+        "_capture_mapped_gateway_owner_argv",
+        lambda pid, _started, capture: capture(pid),
+    )
 
     profile_home = tmp_path / "profiles" / "work"
     profile_home.mkdir(parents=True)
-    profile_proc = SimpleNamespace(profile="work", path=profile_home, pid=101)
+    profile_proc = SimpleNamespace(
+        profile="work", path=profile_home, pid=101, create_time=99.0
+    )
 
     monkeypatch.setattr(gateway_mod, "find_gateway_pids", lambda **_k: [101])
     monkeypatch.setattr(
@@ -288,7 +490,13 @@ def test_socket_pause_honors_gateway_declared_drain_budget(
         "find_profile_gateway_processes",
         lambda **_k: [profile_proc],
     )
+    monkeypatch.setattr(
+        gateway_mod,
+        "_capture_gateway_argv",
+        lambda _pid: ["pythonw.exe", "-m", "hermes_cli.main", "gateway", "run"],
+    )
     monkeypatch.setattr(gateway_mod, "_get_restart_drain_timeout", lambda: 5.0)
+    monkeypatch.setattr(status_mod, "get_process_start_time", lambda _pid: 9900)
     monkeypatch.setattr(
         control_socket,
         "pause_gateway_for_update",
@@ -379,6 +587,7 @@ def test_pause_and_resume_windows_gateway_service(
     assert token == {
         "resume_needed": True,
         "profiles": {},
+        "profile_old_identities": {},
         "unmapped_pids": [],
         "unmapped": [],
         "services": ["HermesGateway"],
@@ -648,6 +857,11 @@ def _fake_psutil_tree(tree, venv_exe, worker_exe, dead=None):
             # Parents of workers are the launchers under test.
             return venv_exe if self.pid % 2 == 0 else worker_exe
 
+        def create_time(self):
+            # The production launcher walk binds PID reuse protection at
+            # discovery time. Keep the fake identity stable and deterministic.
+            return float(self.pid)
+
     mod = types.SimpleNamespace(Process=FakeProc)
     return mod
 
@@ -679,6 +893,116 @@ def test_venv_launcher_ancestors_ignores_non_venv_parents(_winp, monkeypatch):
 
 
 @patch.object(cli_main, "_is_windows", return_value=True)
+def test_venv_launcher_identity_rejects_parent_pid_reuse(_winp, monkeypatch):
+    """A launcher PID reused during discovery is not returned as a stop identity."""
+    import hermes_cli.update_cmd as update_cmd
+
+    venv_exe = str(cli_main.PROJECT_ROOT / "venv" / "Scripts" / "python.exe")
+    calls = {100: 0}
+
+    class FakeProc:
+        def __init__(self, pid=None):
+            self.pid = 999 if pid is None else int(pid)
+
+        def parents(self):
+            return []
+
+        def parent(self):
+            return FakeProc(100) if self.pid == 200 else None
+
+        def cmdline(self):
+            return []
+
+        def exe(self):
+            return venv_exe if self.pid == 100 else ""
+
+        def create_time(self):
+            if self.pid != 100:
+                return float(self.pid)
+            calls[100] += 1
+            return 100.0 if calls[100] == 1 else 101.0
+
+    monkeypatch.setitem(sys.modules, "psutil", types.SimpleNamespace(Process=FakeProc))
+
+    assert update_cmd._venv_launcher_ancestor_identities([(200, 20000)]) == []
+
+
+def _recycled_worker_psutil(venv_exe, worker_start_times):
+    """psutil stand-in: worker 81001's parent is a stable venv launcher 82002.
+
+    ``worker_start_times`` yields the worker's create_time on successive reads,
+    so a PID recycle can be placed at any point of the launcher walk.
+    """
+
+    class FakeProc:
+        def __init__(self, pid=None):
+            self.pid = 999 if pid is None else int(pid)
+
+        def parents(self):
+            return []
+
+        def cmdline(self):
+            return []
+
+        def parent(self):
+            return FakeProc(82002) if self.pid == 81001 else None
+
+        def exe(self):
+            return venv_exe if self.pid == 82002 else ""
+
+        def create_time(self):
+            if self.pid == 81001:
+                return next(worker_start_times)
+            return 500.0 if self.pid == 82002 else float(self.pid)
+
+    return types.SimpleNamespace(Process=FakeProc)
+
+
+@pytest.mark.parametrize(
+    "worker_start_times",
+    [
+        # Recycled before discovery: the replacement's parent is stable.
+        [777.0, 777.0, 777.0],
+        # Recycled after the pre-check, before the parent relationship is read.
+        [11.0, 777.0, 777.0],
+    ],
+    ids=["recycled-before-walk", "recycled-during-walk"],
+)
+@patch.object(cli_main, "_is_windows", return_value=True)
+def test_venv_launcher_identity_rejects_worker_pid_reuse(
+    _winp, monkeypatch, worker_start_times
+):
+    """A recycled worker PID must not nominate the replacement's launcher."""
+    import hermes_cli.update_cmd as update_cmd
+
+    venv_exe = str(cli_main.PROJECT_ROOT / "venv" / "Scripts" / "python.exe")
+    monkeypatch.setitem(
+        sys.modules,
+        "psutil",
+        _recycled_worker_psutil(venv_exe, iter(worker_start_times)),
+    )
+
+    assert update_cmd._venv_launcher_ancestor_identities([(81001, 1100)]) == []
+
+
+@patch.object(cli_main, "_is_windows", return_value=True)
+def test_venv_launcher_identity_keeps_launcher_of_unchanged_worker(_winp, monkeypatch):
+    """Control: the same walk nominates the launcher while the worker is original."""
+    import hermes_cli.update_cmd as update_cmd
+
+    venv_exe = str(cli_main.PROJECT_ROOT / "venv" / "Scripts" / "python.exe")
+    monkeypatch.setitem(
+        sys.modules,
+        "psutil",
+        _recycled_worker_psutil(venv_exe, iter([11.0, 11.0, 11.0])),
+    )
+
+    assert update_cmd._venv_launcher_ancestor_identities([(81001, 1100)]) == [
+        (82002, 50000)
+    ]
+
+
+@patch.object(cli_main, "_is_windows", return_value=True)
 def test_venv_launcher_ancestors_is_empty_without_pids(_winp):
     """No mapped gateways means nothing to walk up from."""
     assert cli_main._venv_launcher_ancestors([]) == []
@@ -699,6 +1023,13 @@ def test_pause_kill_set_covers_venv_guard_abort_set(
     """
     import hermes_cli.gateway as gateway_mod
     import gateway.status as status_mod
+    import hermes_cli.update_cmd as update_cmd
+
+    monkeypatch.setattr(
+        update_cmd,
+        "_capture_mapped_gateway_owner_argv",
+        lambda pid, _started, capture: capture(pid),
+    )
 
     venv_exe = str(cli_main.PROJECT_ROOT / "venv" / "Scripts" / "python.exe")
     worker_exe = r"C:\Users\x\AppData\Roaming\uv\python\cpython-3.11\python.exe"
@@ -707,8 +1038,13 @@ def test_pause_kill_set_covers_venv_guard_abort_set(
     profile_home.mkdir(parents=True)
     # The PID file records the WORKER (even-numbered parent 400 is its launcher).
     worker_pid, launcher_pid = 500, 400
+    # Discovery's creation time agrees with the psutil stand-in (float(pid)),
+    # which the launcher walk re-reads to confirm the worker incarnation.
     profile_proc = SimpleNamespace(
-        profile="default", path=profile_home, pid=worker_pid
+        profile="default",
+        path=profile_home,
+        pid=worker_pid,
+        create_time=float(worker_pid),
     )
 
     monkeypatch.setattr(gateway_mod, "find_gateway_pids", lambda **_k: [worker_pid])
@@ -717,6 +1053,11 @@ def test_pause_kill_set_covers_venv_guard_abort_set(
     )
     monkeypatch.setattr(
         gateway_mod, "find_profile_gateway_processes", lambda **_k: [profile_proc]
+    )
+    monkeypatch.setattr(
+        gateway_mod,
+        "_capture_gateway_argv",
+        lambda _pid: ["pythonw.exe", "-m", "hermes_cli.main", "gateway", "run"],
     )
     monkeypatch.setattr(gateway_mod, "_get_restart_drain_timeout", lambda: 0.1)
     # Graceful drain succeeds: the worker exits, leaving zero survivors — and
@@ -740,6 +1081,11 @@ def test_pause_kill_set_covers_venv_guard_abort_set(
         {worker_pid: launcher_pid}, venv_exe, worker_exe, dead=drained_dead
     )
     monkeypatch.setitem(sys.modules, "psutil", fake)
+    monkeypatch.setattr(
+        status_mod,
+        "get_process_start_time",
+            lambda pid: {worker_pid: 50000, launcher_pid: 40000}.get(pid),
+    )
 
     terminated = []
     monkeypatch.setattr(
@@ -1084,6 +1430,3 @@ def test_stop_service_refuses_pid_reuse_before_sc_stop(monkeypatch):
         )
 
     assert calls == []
-
-
-

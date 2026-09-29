@@ -97,6 +97,18 @@ def test_dashboard_backend_reaped():
         assert cli_main._handoff_reapable_backend_pids(holders) == [200]
 
 
+def test_gateway_restart_watcher_with_serve_profile_is_not_backend():
+    watcher_argv = [
+        "python.exe", "-c", "pass", "123", "python.exe", "-m",
+        "hermes_cli.main", "--profile", "serve", "gateway", "run",
+    ]
+    watcher = _proc(300, watcher_argv)
+    fake = _fake_psutil({300: watcher})
+    with patch.dict(sys.modules, {"psutil": fake}):
+        holders = [_holder(300, " ".join(watcher_argv))]
+        assert cli_main._handoff_reapable_backend_pids(holders) is None
+
+
 def test_non_backend_holder_disqualifies_whole_set():
     # An operator REPL / stray script during a hand-off is unexpected — refuse
     # the whole set rather than reap something we can't justify.
