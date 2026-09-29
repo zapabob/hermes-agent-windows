@@ -50,7 +50,14 @@ jobs:
       - name: Validate policy, feature, carry, and snapshot ledgers
         run: uv run --no-sync python scripts/downstream/validate_policy.py
       - name: Validate carry-surface metrics
-        run: uv run --no-sync python scripts/downstream/carry_metrics.py --check
+        run: |
+          uv run --no-sync python scripts/downstream/carry_metrics.py
+          Write-Output '=== CARRY_JSON_BEGIN ==='
+          Get-Content -Raw -LiteralPath _docs/carry-surface-20260826.json
+          Write-Output '=== CARRY_JSON_END ==='
+          Write-Output '=== CARRY_MD_BEGIN ==='
+          Get-Content -Raw -LiteralPath _docs/carry-surface-20260826.md
+          Write-Output '=== CARRY_MD_END ==='
       - name: Validate required CI structure
         run: uv run --no-sync python -m pytest tests/downstream/test_ci_contracts.py -q
       - name: Enforce compatibility boundary layout
