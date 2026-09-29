@@ -3449,7 +3449,8 @@ export const en: Translations = {
       command: 'Command',
       resource: 'MCP resource',
       grantRevision: 'Grant revision',
-      incompleteControlApproval: 'This control approval is incomplete and cannot run. Reject it and request a fresh approval.',
+      incompleteControlApproval:
+        'This control approval is incomplete and cannot run. Reject it and request a fresh approval.',
       moreOptions: 'More approval options',
       allowSession: 'Allow this session',
       alwaysAllowMenu: 'Always allow…',

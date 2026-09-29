@@ -1,10 +1,5 @@
 export type PresentationValue =
-  | boolean
-  | null
-  | number
-  | string
-  | PresentationValue[]
-  | { [key: string]: PresentationValue }
+  boolean | null | number | string | PresentationValue[] | { [key: string]: PresentationValue }
 
 const HEX64 = /^[a-f0-9]{64}$/
 
