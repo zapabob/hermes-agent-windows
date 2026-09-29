@@ -235,7 +235,7 @@ export async function launchDesktop(
 
 /** Bound teardown to the exact Electron tree launched by this fixture.
  * Windows can leave app.close() waiting while a backend turn is finalising. */
-async function closeDesktop(app: ElectronApplication): Promise<void> {
+export async function closeDesktop(app: ElectronApplication): Promise<void> {
   const child = app.process()
   const closePromise = app.close().then(
     () => true,
