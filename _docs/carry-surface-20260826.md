@@ -4,12 +4,12 @@ Frozen upstream: b51c055a12220f8c7c18660e8599365012e19532
 
 | Metric | Value |
 | --- | ---: |
-| All fork-specific LOC | 2761304 |
-| Upstream-owned fork LOC | 1551162 |
-| Fork-owned LOC | 1210142 |
-| UTR | 0.561750 |
-| Carry Surface | 5099 files |
-| CWC | 86462712 |
+| All fork-specific LOC | 2774680 |
+| Upstream-owned fork LOC | 1556368 |
+| Fork-owned LOC | 1218312 |
+| UTR | 0.560918 |
+| Carry Surface | 5110 files |
+| CWC | 86593647 |
 
 LOC is added plus deleted lines relative to the frozen upstream tree.
 The `_docs/` tree (including these reports) is excluded to avoid
@@ -23,29 +23,29 @@ and 1 for tests, docs, workflows, and generated documentation.
 | Path | Frequency | Patch | Coupling | CWC |
 | --- | ---: | ---: | ---: | ---: |
 | gateway/run.py | 158 | 32765 | 2 | 10353740 |
-| hermes_cli/web_server.py | 95 | 21520 | 3 | 6133200 |
+| hermes_cli/web_server.py | 95 | 21526 | 3 | 6134910 |
 | cli.py | 77 | 25060 | 2 | 3859240 |
 | tui_gateway/server.py | 96 | 19430 | 2 | 3730560 |
 | hermes_state.py | 112 | 16238 | 2 | 3637312 |
 | hermes_cli/main.py | 73 | 15990 | 3 | 3501810 |
-| agent/auxiliary_client.py | 89 | 12872 | 3 | 3436824 |
-| hermes_cli/update_cmd.py | 85 | 11474 | 3 | 2925870 |
-| agent/conversation_loop.py | 85 | 9641 | 3 | 2458455 |
-| agent/context_compressor.py | 82 | 9921 | 2 | 1627044 |
-| run_agent.py | 74 | 10265 | 2 | 1519220 |
+| agent/auxiliary_client.py | 89 | 12775 | 3 | 3410925 |
+| hermes_cli/update_cmd.py | 85 | 12028 | 3 | 3067140 |
+| agent/conversation_loop.py | 85 | 9527 | 3 | 2429385 |
+| agent/context_compressor.py | 82 | 9924 | 2 | 1627536 |
+| run_agent.py | 74 | 10266 | 2 | 1519368 |
 | agent/conversation_compression.py | 95 | 6964 | 2 | 1323160 |
-| hermes_cli/config_defaults.py | 64 | 6618 | 3 | 1270656 |
-| agent/chat_completion_helpers.py | 73 | 8051 | 2 | 1175446 |
+| hermes_cli/config_defaults.py | 64 | 6625 | 3 | 1272000 |
+| agent/chat_completion_helpers.py | 73 | 8052 | 2 | 1175592 |
 | cron/scheduler.py | 56 | 9812 | 2 | 1098944 |
 | hermes_cli/models.py | 67 | 7722 | 2 | 1034748 |
 | gateway/slash_commands.py | 71 | 7095 | 2 | 1007490 |
-| hermes_cli/auth.py | 46 | 10822 | 2 | 995624 |
-| hermes_cli/gateway.py | 57 | 8320 | 2 | 948480 |
+| hermes_cli/auth.py | 46 | 10823 | 2 | 995716 |
+| hermes_cli/gateway.py | 57 | 8378 | 2 | 955092 |
 | gateway/platforms/base.py | 36 | 8381 | 3 | 905148 |
-| tools/mcp_tool.py | 46 | 9350 | 2 | 860200 |
+| tools/mcp_tool.py | 46 | 9369 | 2 | 861948 |
 | hermes_cli/kanban_db.py | 30 | 13923 | 2 | 835380 |
 | hermes_cli/config.py | 54 | 6828 | 2 | 737424 |
-| plugins/platforms/telegram/adapter.py | 30 | 11674 | 2 | 700440 |
+| plugins/platforms/telegram/adapter.py | 30 | 11675 | 2 | 700500 |
 | agent/agent_runtime_helpers.py | 55 | 6288 | 2 | 691680 |
 
 This is a coupling report, not a target to improve by relocating code
