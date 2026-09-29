@@ -50,7 +50,7 @@ generated carry-surface reports. They were regenerated from the combined tree
 with `scripts/downstream/carry_metrics.py`; product and E2E source files had no
 merge conflict.
 
-## Verification before this record
+## Verification
 
 On the combined N53 + PR #159 tree at `e7cabb157854c23c01df87aee9883d13020c3d26`:
 
@@ -63,6 +63,33 @@ On the combined N53 + PR #159 tree at `e7cabb157854c23c01df87aee9883d13020c3d26`
 - GitHub exact-head CI had no recorded failures when this document was written.
   The full Python test job was still running, so this record does not claim the
   complete CI gate was closed at that observation point.
+
+The first fresh-build run exposed a separate deterministic teardown defect in
+`worktree-branch-status.spec.ts`: all functional assertions completed, but its
+custom cleanup waited directly on `app.close()` until Playwright's 90-second
+`afterAll` timeout. A single-test rerun reproduced the same teardown timeout.
+The shared fixture already contained bounded Windows-aware `closeDesktop()`
+logic, so the smallest repair exported that helper and reused it from this
+spec instead of duplicating shutdown code.
+
+The teardown repair is commit
+`4725db74d2e4abdcb671ed200e008f00ff707277`. After that commit:
+
+- `npm run build` completed successfully and wrote
+  `apps/desktop/build/install-stamp.json` for
+  `4725db74d2e4abdcb671ed200e008f00ff707277`.
+- `npm exec -- playwright test e2e/worktree-branch-status.spec.ts --reporter=list`
+  completed with 4 tests passed and exit code 0 from that fresh build.
+- The passing scenarios include worktree creation through Ctrl+Shift+B,
+  composer git-status branch refresh, dialog uniqueness with a second
+  composer, and screenshot-producing worktree-dialog coverage.
+- `npm run typecheck` passed after the teardown repair.
+- Carry metrics were regenerated after the harness change and
+  `scripts/downstream/carry_metrics.py --check` reported current metrics.
+
+The implementation record itself and carry reports are documentation-only
+follow-up content. GitHub CI must still pass on the final pushed head before
+PR #159 is made ready and merged.
 
 Earlier Desktop E2E results produced with inherited `HERMES_DESKTOP_*` leakage
 remain unsuitable as evidence for workspace isolation. Fresh E2E evidence must
