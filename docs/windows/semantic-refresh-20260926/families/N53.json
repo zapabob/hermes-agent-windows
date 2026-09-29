@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "campaign_id": "windows-semantic-refresh-20260926",
+  "family_id": "N53",
+  "status": "MAPPED_WINDOWS_RELAUNCH_INCARNATION_PAUSE_RECOVERY_REVIEW_PENDING",
+  "repository": "zapabob/hermes-agent-windows",
+  "frozen": {
+    "D0": "60deb5c75351a19b1a6fa1d778d7d0c2ff627e5b",
+    "R2": "f97608f178d1ffeca59860195ab7da295f7c8e5f",
+    "U1": "678a4762b887f3eabe5cad11254b2ab1ae859485",
+    "historical_U0": "b936546561888a54d5bf9cd7eae9629a824eb4f7"
+  },
+  "upstream_source": {
+    "commit": "fae9e5677a3ef339ec582e967ee19cac13bf68af",
+    "ledger_row": "docs/windows/semantic-refresh-20260926/inventory/v0215_to_u1.jsonl:2308",
+    "scope": "Windows post-relaunch wait and old process incarnation only; N52 maps process classification and N54 maps test-only spawn admission."
+  },
+  "integration": {
+    "parent_tree": "a198049b060a08172f80889f6ac04562435dc462",
+    "product_commits": [
+      "7696e5996c7e003783da575736300234d81274a1",
+      "b448ffc85cc366137e95b7e09af3a1652b922016"
+    ],
+    "product_tree": "170cfccec4ac1f37eb921500b58cc154e5448e01",
+    "source_blobs": {
+      "gateway/status.py": "d406f6b30602b3484d7248fb407120bf4221df37",
+      "hermes_cli/gateway.py": "5e7ef36a67a701b1a4877c56b14388b620b80a74",
+      "hermes_cli/update_cmd.py": "3dc90f76ed2843170b51c0c2695b9e21825e0d30",
+      "tests/hermes_cli/test_update_concurrent_quarantine.py": "98d0d1ef216144546c712d0c70e8242596b2699c",
+      "tests/hermes_cli/test_windows_relaunch_verify_budget.py": "c1180be76a52a0d666d18640fd7a12c6d0021b10",
+      "tests/hermes_cli/test_update_fleet_check_fail_closed.py": "1a131c3622fe1a1c21fc7fcf4f79e5a7df256101",
+      "tests/hermes_cli/test_update_fleet_probe_resume_token.py": "d905e081c4de53a0d4dab418d24b7306407453a4"
+    }
+  },
+  "contract": "A mapped Windows Gateway relaunch is verified only after its original (pid, create_time) incarnation is no longer live and a fresh fleet snapshot is read. The bounded wait covers the detached watcher's 120-second deadline plus 30 seconds while that incarnation is pending. PID reuse, unreadable identity, a stale row, and strict discovery failure cannot authorize a replacement claim. Verified siblings retain restart eligibility. Before _pause_windows_gateways_for_update can return its recovery token, any late drain, force-stop, or SCM stop failure must recover already-paused ordinary gateways; only actually-attempted unmapped stops may be replayed, SCM-owned launcher trees remain outside the ordinary force-stop set, and rollback failures remain visible.",
+  "source_and_caller": [
+    "hermes_cli/gateway.py:_spawn_gateway_restart_watcher waits for the old incarnation and declines a second launch if it remains live at the deadline.",
+    "hermes_cli/update_cmd.py:_pause_windows_gateways_for_update captures strict identities, excludes SCM-owned gateway launchers from ordinary stop ownership, journals ordinary recovery before pause side effects, and recovers that journal on late pause failure; _resume_windows_gateways_after_update passes old identities to mapped watchers, and _poll_fleet_versions_with_relaunch_budget retries if the old incarnation exits during collection.",
+    "gateway/status.py:_pid_identity_is_live distinguishes PID reuse and treats unreadable identity as pending; generic manual profile and command-line fallback callers propagate this identity."
+  ],
+  "evidence": {
+    "red": "The prior isolated N53 work recorded RED for wait budget, stale snapshot, generic caller, unreadable identity, and per-profile isolation. The stacked fleet-gate review found a missing-watched-profile bypass. Initial pause recovery added four RED cases. The subsequent GPT-6-pro review found three more counterexamples, reproduced as 3 failed / 4 passed before correction: an SCM descendant returned by the generic scan gained ordinary ownership, a reused launcher PID could acquire the replacement process start time, and KeyboardInterrupt during the pre-return drain window bypassed local rollback.",
+    "green": "On the corrected 2026-09-29 candidate, test_update_pause_recovery.py passed 7/7 and test_update_concurrent_quarantine.py passed 38/38. The final bounded N53/update/lifecycle set of eight modules passed 125/125. A separate CodeGraph-affected recovery set covering interrupted recovery, restart recovery, wedged Gateway behavior, Windows restart reconciliation, launcher refresh, fleet pending, and fleet timeout passed 64/64. Pinned Ruff 0.15.10 check passed on all four changed Python paths, the new pause-recovery test passed Ruff format check, and git diff --check passed. A broader test_cmd_update.py-inclusive run was not completed and is not counted as GREEN evidence.",
+    "mutation": "Historical mutation receipts remain historical. Six fresh controlled mutants were killed on the final 2026-09-29 source: remove SCM descendant exclusion, skip launcher incarnation revalidation, narrow BaseException rollback to Exception, omit ordinary rollback, replay untouched unmapped siblings, and swallow ordinary recovery failure. Each mutation was restored immediately; update_cmd.py returned to SHA256 f32ac816f5d6147c2138b75d1050c68f96965e2839560c857937d9bafca0d18f and the bounded suite reran 125/125 GREEN.",
+    "codegraph": "Approved CodeGraph 1.6.0 ran through Node 24.19.0 with CODEGRAPH_NO_DOWNLOAD=1 and synced the actual integration index after the review fixes. Final source-binding status reported 8,923 files, 191,274 nodes, 613,121 edges, pendingChanges 0/0/0, worktreeMismatch null, state complete, and pendingRefs 0. Query bound _pause_windows_gateways_for_update to update_cmd.py:6219-6614 and _venv_launcher_ancestor_identities to 5429-5515; callers include _cmd_update_impl and three Windows lifecycle tests. Impact depth 4 reached 47 nodes/46 edges. Filtered affected enumerated update/fleet/restart/interrupted-recovery tests and is not treated as executed-test coverage.",
+    "independent_review": "The first GPT-6-pro review returned REQUEST CHANGES with two P1 findings and one P2 finding; all three were reproduced, fixed, and regression-tested. A second GPT-6-pro review is bound to final SHA256 f32ac816f5d6147c2138b75d1050c68f96965e2839560c857937d9bafca0d18f for hermes_cli/update_cmd.py, 88e2af92c41b828fdc1fd454c5f05de2a7e8e6188ca9a856489ad6f76c6b7f90 for test_update_concurrent_quarantine.py, abbf9090b73d70aa64c4bfee9ae379e56821c5fb8665f0edf76e649e73681f29 for test_windows_relaunch_verify_budget.py, and ba22af34ed9bdbef5e1dbe13d58e7caef5db0c298725a0510dc00054a01e1030 for test_update_pause_recovery.py; final result is pending.",
+    "gpt6pro_second_review_status": "PENDING_UNAVAILABLE_MODEL",
+    "additive_2026-09-29_cursor": {
+      "recorded_at": "2026-09-29T07:00:32+09:00",
+      "reviewer": "Cursor agent (Claude) independent read-only review. This is NOT the pending second GPT-6-pro review and does not fill that slot; the handoff plan requires recovering that specific review and grants no substitute.",
+      "review_receipt_search": "No second GPT-6-pro result bound to the four final hashes was found in _docs, Cursor agent transcripts, or ~/.codex/sessions. The two Codex review launches on 2026-09-28 (18:51Z and 18:56Z UTC) both ended with stream-disconnect errors and last_agent_message null. The Linear B0B-7 comments were not readable because the connected Linear integration authenticates to a different workspace.",
+      "source_binding": "HEAD 0a20e2a6ab4f10b3c43fdc498ae41b66f8e230e2, tree 87b7005ce564aa347c909d954a798bb8ec48de72, plus working-tree candidate. The current SHA-256 of all four Python paths equals the values in independent_review: update_cmd.py f32ac816..., test_update_concurrent_quarantine.py 88e2af92..., test_windows_relaunch_verify_budget.py abbf9090..., test_update_pause_recovery.py ba22af34....",
+      "review_scope": "Read the full update_cmd.py diff against HEAD and the recovery tests. Checked SCM descendant ownership separation, launcher PID reuse and revalidation, BaseException rollback, ordinary rollback of already-paused gateways, non-replay of untouched unmapped siblings, rollback-failure visibility, the unit consistency of centisecond start guards with gateway.status.get_process_start_time, and the missing-watched-profile fleet gate.",
+      "review_result": "CLEAR_WITH_NOTES: no P0, P1 or P2 finding, and no product edit made. P3 notes: (1) mapped/unmapped gateways whose argv or start time cannot be re-read, and launchers that exit between discovery and revalidation, now abort the update (fail-closed; intentional, but can refuse an update spuriously); (2) the 'Restart manually after update' branch is unreachable now that every unmapped entry needs verified argv; (3) SCM descendants spawned between service discovery and the gateway scan would be classified as unmapped ordinary gateways (narrow TOCTOU window; not addressed).",
+      "green": "uv run --frozen --extra dev (CPython 3.11.11): the bounded eight-module N53 set passed 125/125 in 143.79s. Ruff 0.15.10 (uvx --offline) passed on all four Python paths. git diff --check passed.",
+      "mutation": "Five controlled in-place mutants, each restored immediately; all killed by the three N53 modules: M1 drop the missing-watched-profile gate (test_sibling_row_cannot_hide_a_missing_armed_mapped_profile), M2 swallow a force-stop failure of a still-live incarnation, M3 skip the launcher discovery incarnation check (test_venv_launcher_identity_rejects_parent_pid_reuse), M4 skip the unmapped attempt journal, M5 narrow BaseException rollback to Exception (test_keyboard_interrupt_after_socket_pause_recovers_before_reraising). update_cmd.py returned to f32ac816f5d6147c2138b75d1050c68f96965e2839560c857937d9bafca0d18f after every restore.",
+      "codegraph": "Approved CodeGraph 1.6.0 at the primary checkout's .tools/codegraph-cli (package-lock integrity sha512-nCN40MqmYxF7gH1QTKqlxJ1d2mzwhw3fzSdGV2wjnQKsymjM3JZnH/5rpGqhBkcUEom0qWq0WjDRvOZh2t8mFA==, npm-shim.js SHA-256 80419260f06862d7a422d13ef69e3b24c7a21dbef4309bce41db02ad642b1877), launched with Node v22.23.2 and CODEGRAPH_NO_DOWNLOAD=1; no install, no Node 26 override. Status: 8,923 files, 191,274 nodes, 613,121 edges, pending 0/0/0, worktreeMismatch null, state complete, pendingRefs 0, built with 1.6.0 extraction 25. Query bound _pause_windows_gateways_for_update to update_cmd.py:6219 and _venv_launcher_ancestor_identities to 5429; callers are _cmd_update_impl plus three Windows lifecycle tests; impact reported 47 affected symbols. No sync was needed because no source changed."
+    },
+    "additive_2026-09-29_phase2_pr158": {
+      "recorded_at": "2026-09-29T08:06:00+09:00",
+      "scope": "Phase 2 reconciliation of N53 onto the current public N52 head. Earlier entries stay bound to their own parents and are not rebased by this entry.",
+      "parent": {
+        "pull_request": "zapabob/hermes-agent-windows#158",
+        "branch": "codex/n52-gateway-identity-20260928",
+        "commit": "86d3149599a2be48a1a66903ba7e3e3a12c819ef",
+        "tree": "93710f7680cfec66999c5227a08c6d22377ad417",
+        "main_base": "cc686ab1d31d6ee5ca07243765c5a07e3b9af1af"
+      },
+      "composition": "The pause-recovery commit alone did not apply to the PR158 parent: it conflicted in update_cmd.py and the quarantine test, and the relaunch-budget test did not exist there, because it depends on the two earlier N53 relaunch commits. The three N53 product commits were therefore composed in order on the PR158 parent (7696e599 as 544dd1e5, b448ffc8 as be3051a4, a952e52d as b5885d4f), and all three applied without conflict. Before composition, the N52 product paths at 86d31495 and at the local N52 integration end 56f94e9c were byte-identical; only the N52 card and carry metrics differed.",
+      "product_commits": [
+        "544dd1e58bb4b7ae8e64d192ec4e46ec27d59461",
+        "be3051a48475ad8ebdf15010ea832b1fe6eb612a",
+        "b5885d4f7734d14fc53a8bf4407eb139a49e8d8c"
+      ],
+      "product_tree": "04600265ce1822db1931211ebb824e64f7e41af7",
+      "source_equivalence": "Every non-documentation path at b5885d4f equals the earlier candidate 04fac33f. The only remaining tree differences are the N52 card and carry metrics, where the PR158 versions are kept, and the N53 documentation added afterwards.",
+      "sha256": {
+        "hermes_cli/update_cmd.py": "f32ac816f5d6147c2138b75d1050c68f96965e2839560c857937d9bafca0d18f",
+        "tests/hermes_cli/test_update_concurrent_quarantine.py": "88e2af92c41b828fdc1fd454c5f05de2a7e8e6188ca9a856489ad6f76c6b7f90",
+        "tests/hermes_cli/test_windows_relaunch_verify_budget.py": "abbf9090b73d70aa64c4bfee9ae379e56821c5fb8665f0edf76e649e73681f29",
+        "tests/hermes_cli/test_update_pause_recovery.py": "ba22af34ed9bdbef5e1dbe13d58e7caef5db0c298725a0510dc00054a01e1030",
+        "gateway/status.py": "fa382acc38b82fb3f04d5ea916442830a084d37ec70f718832c23bff98c91cda",
+        "hermes_cli/gateway.py": "c6b2eca3c00a2159d2c11d9a80628fe5246ecbcc88603d220b804aa84393a11b",
+        "tests/hermes_cli/test_update_fleet_check_fail_closed.py": "2d74484319c92be890349937c769456b653feed28b2deb40451047538dd64299",
+        "tests/hermes_cli/test_update_fleet_probe_resume_token.py": "73c7c8826f1e63a84efdadf08436775cbc25ef78920550d848a543393d83d7d0"
+      },
+      "source_blobs": {
+        "gateway/status.py": "d406f6b30602b3484d7248fb407120bf4221df37",
+        "hermes_cli/gateway.py": "5e7ef36a67a701b1a4877c56b14388b620b80a74",
+        "hermes_cli/update_cmd.py": "dfaad3077227e7af97a0188aa112e77581508ef4",
+        "tests/hermes_cli/test_update_concurrent_quarantine.py": "c2f8c105292409d0729683b3674296bef9dcef95",
+        "tests/hermes_cli/test_windows_relaunch_verify_budget.py": "2cf51646e8f63adebcf4d7e9375521c3511948f9",
+        "tests/hermes_cli/test_update_pause_recovery.py": "e4796197295afd0cac69d9737704d23b2ec87463",
+        "tests/hermes_cli/test_update_fleet_check_fail_closed.py": "1a131c3622fe1a1c21fc7fcf4f79e5a7df256101",
+        "tests/hermes_cli/test_update_fleet_probe_resume_token.py": "d905e081c4de53a0d4dab418d24b7306407453a4"
+      },
+      "green": "CPython 3.11.11 through uv 0.11.29 with the frozen lock and the dev extra. The eight-module N53 set (pause recovery, concurrent quarantine, relaunch budget, fleet check fail-closed, fleet probe resume token, cold-start Desktop lifecycle, restart-watcher identity, orphan backend reap) passed 125/125. The N52 set (restart-watcher identity, handoff backend reap, orphan backend reap, venv holder live, stderr timestamp, Desktop lifecycle live) passed 62/62. Ruff 0.15.10 check passed on all eight changed Python paths, the pause-recovery test passed the Ruff format check, and git diff --check against the PR158 parent passed.",
+      "mutation": "Five fresh controlled mutants, each restored with a hash check; all were killed by the eight-module set: P1 skip the SCM service rollback, P2 omit the ordinary gateway rollback, P3 replay untouched unmapped siblings, P4 drop rollback failures from the raised detail, P5 ignore PID reuse in gateway.status._pid_identity_is_live. After the restores the eight-module set passed 125/125 again, with update_cmd.py at f32ac816... and gateway/status.py at fa382acc....",
+      "codegraph": "Approved CodeGraph 1.6.0 (same read-only package and Node v22.23.2 with CODEGRAPH_NO_DOWNLOAD=1; no install, no Node 26). The new worktree was seeded with a copy of the N53 integration index; sync reported already up to date. Status: 8,923 files, 191,274 nodes, 613,121 edges, pending 0/0/0, worktreeMismatch null, state complete, pendingRefs 0, built with 1.6.0 extraction 25. Query bound _pause_windows_gateways_for_update to update_cmd.py:6219 and _venv_launcher_ancestor_identities to 5429. Impact at depth 4 reached 47 nodes and 46 edges; callers include _cmd_update_impl, cmd_update and the Windows lifecycle tests. Explore ran. Affected listed 1,020 paths and is not counted as executed coverage.",
+      "independent_review": "No new review was run on this composition. Because the source bytes are identical to the candidate the Cursor/Claude review covered, that CLEAR_WITH_NOTES result still applies to the same bytes, but it is not a review of this parent. The GPT-6-pro final review stays PENDING and is to be run by the user against this branch.",
+      "gpt6pro_second_review_status": "PENDING_UNAVAILABLE_MODEL"
+    }
+  },
+  "open_gaps": [
+    "Token-only or unmapped watcher replacements do not have destination outcome durability evidence. This bounded result does not prove whole U1 parity, live fleet health, or release readiness.",
+    "N07-A1 host grant-revocation writer, T06, and T12 remain incomplete; Control MCP production write remains DISABLED.",
+    "Original main and historical feature WIP were preserved."
+  ]
+}

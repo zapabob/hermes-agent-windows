@@ -1084,6 +1084,26 @@ def _pid_exists(pid: int) -> bool:
 
 
 
+def _pid_identity_is_live(pid: int, create_time: float) -> bool:
+    """Check one process incarnation without signalling it on Windows."""
+    try:
+        import psutil
+    except ImportError:
+        # Without a creation timestamp reader, a live PID stays pending.
+        return _pid_exists(pid)
+    try:
+        process = psutil.Process(int(pid))
+        status = getattr(process, "status", None)
+        if callable(status) and status() == psutil.STATUS_ZOMBIE:
+            return False
+        return process.is_running() and abs(process.create_time() - create_time) < 0.001
+    except (psutil.NoSuchProcess, psutil.ZombieProcess):
+        return False
+    except Exception:
+        # Access-denied or unreadable identity must not authorize a relaunch.
+        return True
+
+
 def _release_file_lock(handle) -> None:
     try:
         if _IS_WINDOWS:
