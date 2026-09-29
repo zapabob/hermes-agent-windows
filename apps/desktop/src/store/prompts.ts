@@ -119,9 +119,10 @@ export function controlApprovalFromPayload(value: unknown): ApprovalRequest['con
   const grantRevision = raw.grant_revision
 
   return Object.freeze({
-    grantRevision: typeof grantRevision === 'number' && Number.isSafeInteger(grantRevision) && grantRevision >= 1
-      ? grantRevision
-      : 0,
+    grantRevision:
+      typeof grantRevision === 'number' && Number.isSafeInteger(grantRevision) && grantRevision >= 1
+        ? grantRevision
+        : 0,
     intentDigest: typeof raw.intent_digest === 'string' ? raw.intent_digest : '',
     operationId: typeof raw.operation_id === 'string' ? raw.operation_id : '',
     presentation: isPlainRecord(raw.presentation) ? Object.freeze({ ...raw.presentation }) : null,
@@ -132,18 +133,28 @@ export function controlApprovalFromPayload(value: unknown): ApprovalRequest['con
 export function hasValidControlApprovalBinding(
   control: ControlApprovalBinding | undefined
 ): control is ControlApprovalBinding {
-  return !!control && typeof control.operationId === 'string' && !!control.operationId.trim() &&
-    /^[a-f0-9]{64}$/.test(control.intentDigest) && typeof control.resource === 'string' &&
-    !!control.resource.trim() && Number.isSafeInteger(control.grantRevision) && control.grantRevision >= 1 &&
+  return (
+    !!control &&
+    typeof control.operationId === 'string' &&
+    !!control.operationId.trim() &&
+    /^[a-f0-9]{64}$/.test(control.intentDigest) &&
+    typeof control.resource === 'string' &&
+    !!control.resource.trim() &&
+    Number.isSafeInteger(control.grantRevision) &&
+    control.grantRevision >= 1 &&
     !!control.presentation &&
     control.presentation.operation_id === control.operationId &&
     control.presentation.resource === control.resource &&
     control.presentation.grant_revision === control.grantRevision
+  )
 }
 
 /** The ordinary and strict queues have separate owner RPCs. */
 export function approvalResponseForRequest(
-  request: ApprovalRequest, choice: string, activeRequest: ApprovalRequest | null, renderedDigest?: string | null
+  request: ApprovalRequest,
+  choice: string,
+  activeRequest: ApprovalRequest | null,
+  renderedDigest?: string | null
 ): { method: string; params: Record<string, unknown>; strict: boolean } | null {
   if (activeRequest !== request) {
     return null
@@ -151,23 +162,32 @@ export function approvalResponseForRequest(
 
   if (!request.control) {
     return {
-      method: 'approval.respond', strict: false,
+      method: 'approval.respond',
+      strict: false,
       params: { choice, request_id: request.requestId, session_id: request.sessionId ?? undefined }
     }
   }
 
-  if (!request.sessionId || !request.requestId || !/^[a-f0-9]{64}$/.test(request.control.intentDigest) ||
+  if (
+    !request.sessionId ||
+    !request.requestId ||
+    !/^[a-f0-9]{64}$/.test(request.control.intentDigest) ||
     (choice !== 'once' && choice !== 'deny') ||
-    (choice === 'once' && (!hasValidControlApprovalBinding(request.control) ||
-      !isHex64(renderedDigest)))) {
+    (choice === 'once' && (!hasValidControlApprovalBinding(request.control) || !isHex64(renderedDigest)))
+  ) {
     return null
   }
 
   return {
-    method: 'control_approval.respond', strict: true,
-    params: { choice, request_id: request.requestId,
-      session_id: request.sessionId, intent_digest: request.control.intentDigest,
-      ...(choice === 'once' ? { presentation_digest: renderedDigest } : {}) }
+    method: 'control_approval.respond',
+    strict: true,
+    params: {
+      choice,
+      request_id: request.requestId,
+      session_id: request.sessionId,
+      intent_digest: request.control.intentDigest,
+      ...(choice === 'once' ? { presentation_digest: renderedDigest } : {})
+    }
   }
 }
 

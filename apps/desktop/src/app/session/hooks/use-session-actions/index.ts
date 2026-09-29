@@ -978,11 +978,12 @@ export function useSessionActions({
             }
           : sessionProfile
 
-      const approvalScope = typeof sessionRestScope === 'string'
-        ? gatewayScope(null, sessionRestScope)
-        : sessionRestScope
-          ? gatewayScope(sessionRestScope.connectionId, sessionRestScope.profile)
-          : gatewayScope(null, sessionProfile)
+      const approvalScope =
+        typeof sessionRestScope === 'string'
+          ? gatewayScope(null, sessionRestScope)
+          : sessionRestScope
+            ? gatewayScope(sessionRestScope.connectionId, sessionRestScope.profile)
+            : gatewayScope(null, sessionProfile)
 
       // Re-check after the profile-resolve / gateway-swap awaits above: the
       // cache may have changed, and takeWarmCache re-validates belongs-to and
