@@ -37,13 +37,8 @@ contract-by-contract through frozen ceiling
 `678a4762b887f3eabe5cad11254b2ab1ae859485`; open families remain open until
 their source, tests, mutation evidence, CodeGraph binding and review are closed.
 See [the current handoff plan](docs/windows/semantic-refresh-20260926/CURSOR_IMPLEMENTATION_PLAN_20260929.md).
-
-日本語: Windows向けの独立派生版です。今回のソース版は **0.21.5**（上流記録も 0.21.5）です。
-下のPowerShell手順から導入できます。既存環境の更新前には作業差分と各プロファイルを保存してください。
-旧版の詳説は [日本語](README.ja.md)・[简体中文](README.zh-CN.md) にあります。
-今回の版番号と検証状況は、このREADMEを参照してください。
-If this Windows-native downstream is useful to you, consider starring the repository — it helps other Windows users discover the project.
-このWindowsネイティブ版が役に立ったら、Starで応援していただけると、他のWindowsユーザーにも見つけてもらいやすくなります.
+Supported release channels are `stable` and `preview`. A source commit or
+main-branch push is not evidence that a stable installer has been published.
 
 ## Setup in 30 seconds
 
@@ -51,19 +46,48 @@ If this Windows-native downstream is useful to you, consider starring the reposi
 > provider, then start CLI chat. Optional plug-ins and local models can be added
 > later.
 
-<<<<<<< HEAD
+Windows 11 x64, PowerShell, Git, `uv` and Python 3.11–3.13 are the native
+baseline. Node.js is only required when building Desktop from source.
+
+```powershell
+git clone https://github.com/zapabob/hermes-agent-windows.git
+Set-Location hermes-agent-windows
+uv sync --locked --all-extras
+uv run hermes setup
+uv run hermes chat
+```
+
+Start the packaged Desktop flow from the same checkout with:
+
+```powershell
+uv run hermes desktop
+```
+
+For an installer or portable ZIP, first confirm that the matching asset exists on
+the [downstream Releases page](https://github.com/zapabob/hermes-agent-windows/releases)
+and verify `SHA256SUMS.txt`. The canonical Windows procedure is
+[docs/windows/INSTALL.md](docs/windows/INSTALL.md).
+
 <details open>
 <summary><strong>日本語</strong></summary>
 
-Windows向け独立派生版のソースは0.21.5です。導入手順は第11節をご覧ください。
-安定版の公開、署名、クリーン環境の検証は、それぞれ別に確認する必要があります。
+Windows向け独立派生版の現在のソース版は **0.21.5** です。CLI、Electron Desktop、
+複数profile、Gateway、OAuth/API key/local llama.cpp、Semantic Graph/Ebbinghaus、
+Windows固有のruntime管理を同じHermes coreの上で扱います。0.21.5という版番号は
+進行中の上流semantic refresh全件の完了宣言ではありません。詳しくは
+[日本語版README](README.ja.md) と
+[Windows導入ガイド](docs/windows/INSTALL.md) を参照してください。
 
 </details>
 <details>
 <summary><strong>简体中文</strong></summary>
 
-这是独立维护的 Windows 衍生版本，当前源码版本为0.21.5。
-请参阅第11节安装步骤；源码构建不代表已发布经过完整验证的稳定安装包。
+当前 Windows 下游源码版本为 **0.21.5**。CLI、Electron Desktop、多 profile、
+Gateway、OAuth/API key/local llama.cpp、Semantic Graph/Ebbinghaus 与 Windows
+runtime 管理共用同一 Hermes core。版本号 0.21.5 并不表示正在进行的上游
+semantic refresh 已全部完成。参见
+[简体中文 README](README.zh-CN.md) 与
+[Windows 安装指南](docs/windows/INSTALL.md)。
 
 </details>
 

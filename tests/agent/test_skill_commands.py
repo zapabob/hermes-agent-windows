@@ -223,11 +223,13 @@ class TestScanSkillCommands:
         profile_b.mkdir()
         _make_skill(external_a, "a-only")
         _make_skill(external_b, "b-only")
-        (profile_a / "config.yaml"encoding="utf-8").write_text(
-            f"skills:\n  external_dirs:\n    - {external_a}\n"
+        (profile_a / "config.yaml").write_text(
+            f"skills:\n  external_dirs:\n    - {external_a}\n",
+            encoding="utf-8",
         )
-        (profile_b / "config.yaml"encoding="utf-8").write_text(
-            f"skills:\n  external_dirs:\n    - {external_b}\n"
+        (profile_b / "config.yaml").write_text(
+            f"skills:\n  external_dirs:\n    - {external_b}\n",
+            encoding="utf-8",
         )
 
         with (
@@ -316,13 +318,15 @@ class TestScanSkillCommands:
             # underscore-named skill first; that one must win the slash command.
             first = tmp_path / "a-first"
             first.mkdir()
-            (first / "SKILL.md"encoding="utf-8").write_text(
-                "---\nname: git_helper\ndescription: First skill.\n---\n\nBody.\n"
+            (first / "SKILL.md").write_text(
+                "---\nname: git_helper\ndescription: First skill.\n---\n\nBody.\n",
+                encoding="utf-8",
             )
             second = tmp_path / "z-second"
             second.mkdir()
-            (second / "SKILL.md"encoding="utf-8").write_text(
-                "---\nname: git-helper\ndescription: Second skill.\n---\n\nBody.\n"
+            (second / "SKILL.md").write_text(
+                "---\nname: git-helper\ndescription: Second skill.\n---\n\nBody.\n",
+                encoding="utf-8",
             )
             result = scan_skill_commands()
         assert "/git-helper" in result
@@ -337,13 +341,15 @@ class TestScanSkillCommands:
         with patch("tools.skills_tool.SKILLS_DIR", tmp_path):
             first = tmp_path / "a-first"
             first.mkdir()
-            (first / "SKILL.md"encoding="utf-8").write_text(
-                "---\nname: my-skill\ndescription: First.\n---\n\nBody.\n"
+            (first / "SKILL.md").write_text(
+                "---\nname: my-skill\ndescription: First.\n---\n\nBody.\n",
+                encoding="utf-8",
             )
             second = tmp_path / "z-second"
             second.mkdir()
-            (second / "SKILL.md"encoding="utf-8").write_text(
-                "---\nname: my_skill\ndescription: Second.\n---\n\nBody.\n"
+            (second / "SKILL.md").write_text(
+                "---\nname: my_skill\ndescription: Second.\n---\n\nBody.\n",
+                encoding="utf-8",
             )
             with caplog.at_level(_logging.WARNING, logger="agent.skill_commands"):
                 scan_skill_commands()
@@ -774,7 +780,7 @@ class TestInlineShellExpansion:
             )
             # bash on Windows prints MSYS-style paths from `pwd`, so prove the
             # CWD by resolving a relative path instead of comparing path text.
-            (skill_dir / "cwd-marker.txt"encoding="utf-8").write_text(
+            (skill_dir / "cwd-marker.txt").write_text(
                 "inside-skill-dir", encoding="utf-8"
             )
             scan_skill_commands()
