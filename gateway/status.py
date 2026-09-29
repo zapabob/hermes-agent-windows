@@ -1084,13 +1084,80 @@ def _pid_exists(pid: int) -> bool:
 
 
 
+_WINDOWS_PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+_WINDOWS_SYNCHRONIZE = 0x100000
+_WINDOWS_WAIT_OBJECT_0 = 0x00000000
+_WINDOWS_ERROR_INVALID_PARAMETER = 87
+
+
+def _windows_pid_liveness_strict(pid: int, kernel32: Any) -> bool:
+    """Native Windows liveness that reports exit only when it is confirmed.
+
+    ``_pid_exists`` treats unknown ``OpenProcess`` errors and ``WAIT_FAILED``
+    as "gone", which is acceptable for best-effort existence checks but not
+    for deciding that an incarnation has exited. Here only
+    ``ERROR_INVALID_PARAMETER`` (no such process) and ``WAIT_OBJECT_0``
+    (signalled on exit) count as exited; every other answer stays pending.
+    """
+    handle = kernel32.OpenProcess(
+        _WINDOWS_PROCESS_QUERY_LIMITED_INFORMATION | _WINDOWS_SYNCHRONIZE,
+        False,
+        int(pid),
+    )
+    if not handle:
+        return kernel32.GetLastError() != _WINDOWS_ERROR_INVALID_PARAMETER
+    try:
+        return kernel32.WaitForSingleObject(handle, 0) != _WINDOWS_WAIT_OBJECT_0
+    finally:
+        kernel32.CloseHandle(handle)
+
+
+def _load_windows_kernel32() -> Any:
+    import ctypes
+    from ctypes import wintypes
+
+    kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
+    # HANDLE is pointer-sized. Without argtypes ctypes converts Python ints
+    # to C int, which can truncate the handle or fail before it is closed.
+    kernel32.OpenProcess.argtypes = (wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
+    kernel32.OpenProcess.restype = wintypes.HANDLE
+    kernel32.WaitForSingleObject.argtypes = (wintypes.HANDLE, wintypes.DWORD)
+    kernel32.WaitForSingleObject.restype = wintypes.DWORD
+    kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
+    kernel32.CloseHandle.restype = wintypes.BOOL
+    kernel32.GetLastError.argtypes = ()
+    kernel32.GetLastError.restype = wintypes.DWORD
+    return kernel32
+
+
+def _pid_liveness_strict(pid: int) -> bool:
+    """Return False only when the PID's exit is confirmed; unknown stays True."""
+    if _IS_WINDOWS:
+        try:
+            return _windows_pid_liveness_strict(pid, _load_windows_kernel32())
+        except Exception:
+            return True
+    try:
+        os.kill(int(pid), 0)  # windows-footgun: ok — POSIX-only branch
+    except ProcessLookupError:
+        return False
+    except OSError:
+        return True
+    try:
+        stat_fields = Path(f"/proc/{int(pid)}/stat").read_text(encoding="utf-8").split()
+    except OSError:
+        return True
+    return not (len(stat_fields) > 2 and stat_fields[2] == "Z")
+
+
 def _pid_identity_is_live(pid: int, create_time: float) -> bool:
     """Check one process incarnation without signalling it on Windows."""
     try:
         import psutil
     except ImportError:
-        # Without a creation timestamp reader, a live PID stays pending.
-        return _pid_exists(pid)
+        # Without a creation timestamp reader the incarnation stays pending
+        # unless the PID's exit is confirmed.
+        return _pid_liveness_strict(pid)
     try:
         process = psutil.Process(int(pid))
         status = getattr(process, "status", None)

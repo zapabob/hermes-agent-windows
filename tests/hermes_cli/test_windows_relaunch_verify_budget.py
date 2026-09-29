@@ -433,3 +433,201 @@ def test_old_process_still_alive_at_deadline_is_not_verified():
     assert snapshot[0]["pid"] == 14980
     assert now[0] >= 150.0
     assert pending is True
+
+
+def _manual_sweep(pids, profiles, incomplete, *, capture=None, windows=True):
+    signals, terminations, captures = [], [], []
+
+    def capture_identity(pid):
+        captures.append(pid)
+        return capture(pid) if capture else None
+
+    guards = (
+        update_cmd._capture_windows_manual_stop_guards(
+            manual_pids=pids,
+            profile_processes=profiles,
+            identity_incomplete=incomplete,
+            capture_unmapped_identity=capture_identity,
+        )
+        if windows
+        else {}
+    )
+    stopped, unverified = update_cmd._sweep_manual_gateway_pids(
+        manual_pids=pids,
+        profile_processes=profiles,
+        unrestartable_pids=set(profiles),
+        windows=windows,
+        stop_guards=guards,
+        kill=lambda *args: signals.append(args),
+        terminate=lambda *args, **kwargs: terminations.append((args, kwargs)),
+    )
+    return SimpleNamespace(
+        guards=guards,
+        stopped=stopped,
+        unverified=unverified,
+        signals=signals,
+        terminations=terminations,
+        captures=captures,
+    )
+
+
+def test_strict_discovery_failure_never_signals_a_scanned_windows_candidate(capsys):
+    """Strict failure after the scan: the reused PID gets no signal at all."""
+
+    def find_profiles(**_kwargs):
+        raise RuntimeError("gateway creation time is unavailable")
+
+    profiles, incomplete = update_cmd._find_manual_profile_gateways_for_restart(
+        service_pids=set(),
+        manual_pids=[81001],
+        find_profile_gateway_processes=find_profiles,
+        windows=True,
+    )
+    # PID 81001 now belongs to an unrelated process that still "captures".
+    result = _manual_sweep(
+        [81001], profiles, incomplete, capture=lambda _pid: (["python"], 50000)
+    )
+
+    assert incomplete is True
+    assert result.guards == {}
+    assert result.captures == []
+    assert result.signals == []
+    assert result.terminations == []
+    assert result.stopped == set()
+    assert result.unverified == [81001]
+    assert "manual restart" in capsys.readouterr().out
+
+
+def test_partial_strict_failure_keeps_unmapped_windows_candidates_untouched():
+    good = SimpleNamespace(pid=202, profile="good", create_time=99.0)
+
+    result = _manual_sweep([202, 303], {202: good}, True)
+
+    assert result.captures == []
+    assert result.signals == []
+    assert result.terminations == [((202,), {"force": True, "expected_start_time": 9900})]
+    assert result.unverified == [303]
+
+
+def test_established_windows_candidates_stop_under_their_captured_guard():
+    """Discovery-time identities travel to the kill; nothing is re-read at kill time."""
+    mapped = SimpleNamespace(pid=202, profile="work", create_time=99.0)
+
+    result = _manual_sweep(
+        [202, 303], {202: mapped}, False, capture=lambda pid: (["python"], 30300)
+    )
+
+    assert result.captures == [303]
+    assert result.signals == []
+    assert result.terminations == [
+        ((202,), {"force": True, "expected_start_time": 9900}),
+        ((303,), {"force": True, "expected_start_time": 30300}),
+    ]
+    assert result.stopped == {202, 303}
+    assert result.unverified == []
+
+
+def test_unreadable_windows_creation_time_is_never_stopped():
+    unreadable = SimpleNamespace(pid=202, profile="work", create_time=0.0)
+
+    result = _manual_sweep([202], {202: unreadable}, False)
+
+    assert result.terminations == []
+    assert result.signals == []
+    assert result.unverified == [202]
+
+
+def test_posix_manual_sweep_keeps_sigterm_path():
+    result = _manual_sweep([303], {}, False, windows=False)
+
+    assert result.terminations == []
+    assert result.signals == [(303, update_cmd.signal.SIGTERM)]
+    assert result.stopped == {303}
+
+
+class _FakeKernel32:
+    def __init__(self, *, handle=1, last_error=0, wait_result=0x102):
+        self.handle = handle
+        self.last_error = last_error
+        self.wait_result = wait_result
+        self.closed = []
+
+    def OpenProcess(self, _access, _inherit, _pid):
+        return self.handle
+
+    def GetLastError(self):
+        return self.last_error
+
+    def WaitForSingleObject(self, _handle, _timeout):
+        return self.wait_result
+
+    def CloseHandle(self, handle):
+        self.closed.append(handle)
+
+
+_ERROR_ACCESS_DENIED = 5
+_ERROR_INVALID_PARAMETER = 87
+_ERROR_UNKNOWN = 1450
+_WAIT_OBJECT_0 = 0x0
+_WAIT_TIMEOUT = 0x102
+_WAIT_FAILED = 0xFFFFFFFF
+
+
+@pytest.mark.parametrize(
+    ("kernel32", "live"),
+    [
+        (_FakeKernel32(handle=0, last_error=_ERROR_UNKNOWN), True),
+        (_FakeKernel32(handle=0, last_error=_ERROR_ACCESS_DENIED), True),
+        (_FakeKernel32(handle=0, last_error=_ERROR_INVALID_PARAMETER), False),
+        (_FakeKernel32(wait_result=_WAIT_FAILED), True),
+        (_FakeKernel32(wait_result=_WAIT_TIMEOUT), True),
+        (_FakeKernel32(wait_result=_WAIT_OBJECT_0), False),
+    ],
+    ids=[
+        "unknown-open-error",
+        "access-denied",
+        "no-such-process",
+        "wait-failed",
+        "still-running",
+        "exited",
+    ],
+)
+def test_native_strict_liveness_reports_exit_only_when_confirmed(kernel32, live):
+    assert gateway_status._windows_pid_liveness_strict(14980, kernel32) is live
+    if kernel32.handle:
+        assert kernel32.closed == [kernel32.handle]
+
+
+@pytest.mark.windows_only
+@pytest.mark.parametrize(
+    "kernel32",
+    [
+        _FakeKernel32(handle=0, last_error=_ERROR_UNKNOWN),
+        _FakeKernel32(wait_result=_WAIT_FAILED),
+    ],
+    ids=["unknown-open-error", "wait-failed"],
+)
+def test_identity_probe_without_psutil_keeps_the_old_incarnation_pending(
+    monkeypatch, kernel32
+):
+    """Neither probe failure may authorise a replacement launch."""
+    monkeypatch.setitem(sys.modules, "psutil", None)
+    monkeypatch.setattr(gateway_status, "_load_windows_kernel32", lambda: kernel32)
+
+    assert gateway_status._pid_identity_is_live(14980, 99.0) is True
+    assert update_cmd._pending_windows_watcher_identities(
+        {"watcher_old_identities": [(14980, 99.0)]},
+        update_cmd._old_gateway_process_identity_is_live,
+    ) is True
+
+
+@pytest.mark.windows_only
+def test_identity_probe_without_psutil_accepts_confirmed_exit(monkeypatch):
+    monkeypatch.setitem(sys.modules, "psutil", None)
+    monkeypatch.setattr(
+        gateway_status,
+        "_load_windows_kernel32",
+        lambda: _FakeKernel32(handle=0, last_error=_ERROR_INVALID_PARAMETER),
+    )
+
+    assert gateway_status._pid_identity_is_live(14980, 99.0) is False

@@ -924,7 +924,82 @@ def test_venv_launcher_identity_rejects_parent_pid_reuse(_winp, monkeypatch):
 
     monkeypatch.setitem(sys.modules, "psutil", types.SimpleNamespace(Process=FakeProc))
 
-    assert update_cmd._venv_launcher_ancestor_identities([200]) == []
+    assert update_cmd._venv_launcher_ancestor_identities([(200, 20000)]) == []
+
+
+def _recycled_worker_psutil(venv_exe, worker_start_times):
+    """psutil stand-in: worker 81001's parent is a stable venv launcher 82002.
+
+    ``worker_start_times`` yields the worker's create_time on successive reads,
+    so a PID recycle can be placed at any point of the launcher walk.
+    """
+
+    class FakeProc:
+        def __init__(self, pid=None):
+            self.pid = 999 if pid is None else int(pid)
+
+        def parents(self):
+            return []
+
+        def cmdline(self):
+            return []
+
+        def parent(self):
+            return FakeProc(82002) if self.pid == 81001 else None
+
+        def exe(self):
+            return venv_exe if self.pid == 82002 else ""
+
+        def create_time(self):
+            if self.pid == 81001:
+                return next(worker_start_times)
+            return 500.0 if self.pid == 82002 else float(self.pid)
+
+    return types.SimpleNamespace(Process=FakeProc)
+
+
+@pytest.mark.parametrize(
+    "worker_start_times",
+    [
+        # Recycled before discovery: the replacement's parent is stable.
+        [777.0, 777.0, 777.0],
+        # Recycled after the pre-check, before the parent relationship is read.
+        [11.0, 777.0, 777.0],
+    ],
+    ids=["recycled-before-walk", "recycled-during-walk"],
+)
+@patch.object(cli_main, "_is_windows", return_value=True)
+def test_venv_launcher_identity_rejects_worker_pid_reuse(
+    _winp, monkeypatch, worker_start_times
+):
+    """A recycled worker PID must not nominate the replacement's launcher."""
+    import hermes_cli.update_cmd as update_cmd
+
+    venv_exe = str(cli_main.PROJECT_ROOT / "venv" / "Scripts" / "python.exe")
+    monkeypatch.setitem(
+        sys.modules,
+        "psutil",
+        _recycled_worker_psutil(venv_exe, iter(worker_start_times)),
+    )
+
+    assert update_cmd._venv_launcher_ancestor_identities([(81001, 1100)]) == []
+
+
+@patch.object(cli_main, "_is_windows", return_value=True)
+def test_venv_launcher_identity_keeps_launcher_of_unchanged_worker(_winp, monkeypatch):
+    """Control: the same walk nominates the launcher while the worker is original."""
+    import hermes_cli.update_cmd as update_cmd
+
+    venv_exe = str(cli_main.PROJECT_ROOT / "venv" / "Scripts" / "python.exe")
+    monkeypatch.setitem(
+        sys.modules,
+        "psutil",
+        _recycled_worker_psutil(venv_exe, iter([11.0, 11.0, 11.0])),
+    )
+
+    assert update_cmd._venv_launcher_ancestor_identities([(81001, 1100)]) == [
+        (82002, 50000)
+    ]
 
 
 @patch.object(cli_main, "_is_windows", return_value=True)
@@ -963,8 +1038,13 @@ def test_pause_kill_set_covers_venv_guard_abort_set(
     profile_home.mkdir(parents=True)
     # The PID file records the WORKER (even-numbered parent 400 is its launcher).
     worker_pid, launcher_pid = 500, 400
+    # Discovery's creation time agrees with the psutil stand-in (float(pid)),
+    # which the launcher walk re-reads to confirm the worker incarnation.
     profile_proc = SimpleNamespace(
-        profile="default", path=profile_home, pid=worker_pid, create_time=99.0
+        profile="default",
+        path=profile_home,
+        pid=worker_pid,
+        create_time=float(worker_pid),
     )
 
     monkeypatch.setattr(gateway_mod, "find_gateway_pids", lambda **_k: [worker_pid])
@@ -1004,7 +1084,7 @@ def test_pause_kill_set_covers_venv_guard_abort_set(
     monkeypatch.setattr(
         status_mod,
         "get_process_start_time",
-        lambda pid: {worker_pid: 9900, launcher_pid: 40000}.get(pid),
+            lambda pid: {worker_pid: 50000, launcher_pid: 40000}.get(pid),
     )
 
     terminated = []

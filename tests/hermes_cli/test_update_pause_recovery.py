@@ -7,7 +7,12 @@ from types import SimpleNamespace
 
 import pytest
 
+import hermes_cli.gateway as _gateway_mod
+import hermes_cli.update_cmd as _update_cmd
 from hermes_cli import main as cli_main
+
+_REAL_LAUNCHER_IDENTITIES = _update_cmd._venv_launcher_ancestor_identities
+_REAL_PROFILE_RESTART = _gateway_mod.launch_detached_profile_gateway_restart
 
 
 @pytest.fixture
@@ -76,10 +81,10 @@ def pause_fleet(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> SimpleNamesp
     monkeypatch.setattr(
         update_cmd,
         "_venv_launcher_ancestor_identities",
-        lambda pids: [
+        lambda workers: [
             (parent, int(round(starts[parent] * 100)))
             for worker, parent in ((101, 11), (202, 22))
-            if worker in pids
+            if (worker, int(round(starts[worker] * 100))) in workers
         ],
     )
     monkeypatch.setattr(cli_main, "_refresh_windows_gateway_launchers", lambda: None)
@@ -299,3 +304,191 @@ def test_keyboard_interrupt_after_socket_pause_recovers_before_reraising(
 
     assert pause_fleet.restarted == [("work", 101, 99.0)]
     assert pause_fleet.paused == set()
+
+
+def test_recycled_worker_pid_never_puts_a_foreign_launcher_on_the_stop_set(
+    pause_fleet: SimpleNamespace,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A mapped worker PID recycled after preflight must not nominate its new parent."""
+    import gateway.status as status_mod
+    import psutil
+
+    monkeypatch.setattr(
+        _update_cmd, "_venv_launcher_ancestor_identities", _REAL_LAUNCHER_IDENTITIES
+    )
+    venv_exe = str(cli_main.PROJECT_ROOT / "venv" / "Scripts" / "python.exe")
+    worker_reads = {"count": 0}
+
+    class FakeProc:
+        def __init__(self, pid=None):
+            self.pid = 999 if pid is None else int(pid)
+
+        def parents(self):
+            return []
+
+        def cmdline(self):
+            return []
+
+        def parent(self):
+            # After the recycle, PID 101 is a child of another venv python.
+            return FakeProc(82) if self.pid == 101 else None
+
+        def exe(self):
+            return venv_exe if self.pid == 82 else ""
+
+        def create_time(self):
+            if self.pid == 101:
+                worker_reads["count"] += 1
+                # The owner-argv capture reads the original twice; the PID is
+                # reused before the launcher walk starts.
+                return 99.0 if worker_reads["count"] <= 2 else 777.0
+            return {82: 500.0}.get(self.pid, float(self.pid))
+
+    monkeypatch.setattr(psutil, "Process", FakeProc)
+    starts = {101: 99.0, 82: 500.0, 303: 303.0, 404: 404.0}
+    monkeypatch.setattr(
+        status_mod,
+        "get_process_start_time",
+        lambda pid: int(round(starts[pid] * 100)),
+    )
+
+    token = cli_main._pause_windows_gateways_for_update()
+
+    assert worker_reads["count"] > 2
+    assert 82 not in pause_fleet.stopped
+    assert pause_fleet.stopped == [303, 404]
+    assert token["profiles"] == {"work": 101}
+
+
+def test_interrupt_rollback_watcher_timeout_is_reported_not_counted_as_recovered(
+    pause_fleet: SimpleNamespace,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Watcher creation alone must not count as a completed pause rollback.
+
+    The paused gateway keeps draining for 180 s after Ctrl+C. The detached
+    watcher gives up at its 120 s deadline without spawning a duplicate, so
+    the rollback must surface the gateway as needing recovery.
+    """
+    import sys
+    import time
+
+    import gateway.status as status_mod
+    import hermes_cli.gateway_windows as gateway_windows
+
+    clock = {"now": 0.0}
+    spawned: list[list[str]] = []
+    monkeypatch.setattr(
+        _gateway_mod, "launch_detached_profile_gateway_restart", _REAL_PROFILE_RESTART
+    )
+    monkeypatch.setattr(
+        gateway_windows, "windowless_gateway_restart_spec", lambda argv: (argv, "", {})
+    )
+    monkeypatch.setattr(
+        _gateway_mod.subprocess,
+        "Popen",
+        lambda argv, **_kw: spawned.append(list(argv)),
+    )
+    monkeypatch.setattr(
+        status_mod,
+        "_pid_identity_is_live",
+        lambda pid, started: (pid, started) == (101, 99.0) and clock["now"] < 180.0,
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_wait_for_windows_update_gateway_exit",
+        lambda *_a, **_kw: (_ for _ in ()).throw(KeyboardInterrupt()),
+    )
+
+    with pytest.raises(KeyboardInterrupt) as error:
+        cli_main._pause_windows_gateways_for_update()
+
+    notes = " ".join(getattr(error.value, "__notes__", ()))
+    assert "recovery unverified" in notes
+    assert "work" in notes
+    assert "old gateway PID(s) 101 still running" in notes
+    assert len(spawned) == 1
+
+    # Run the detached watcher on a virtual clock: it must refuse at 120 s
+    # while the old incarnation is still draining, and never spawn.
+    watcher_argv = spawned[0]
+    with monkeypatch.context() as watcher_patch:
+        watcher_patch.setattr(time, "monotonic", lambda: clock["now"])
+        watcher_patch.setattr(
+            time,
+            "sleep",
+            lambda seconds: clock.__setitem__("now", clock["now"] + seconds),
+        )
+        watcher_patch.setattr(sys, "argv", ["-c", *watcher_argv[3:]])
+        with pytest.raises(SystemExit) as watcher_exit:
+            exec(compile(watcher_argv[2], "<gateway-restart-watcher>", "exec"), {})
+    assert watcher_exit.value.code == 1
+    assert 120.0 <= clock["now"] < 180.0
+    assert len(spawned) == 1
+
+
+def test_drain_failure_rollback_reports_unverified_watcher_handoff(
+    pause_fleet: SimpleNamespace,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An ordinary pause failure carries the unverified recovery in its detail."""
+    import gateway.status as status_mod
+
+    pause_fleet.fail_drain = True
+    monkeypatch.setattr(
+        status_mod,
+        "_pid_identity_is_live",
+        lambda pid, started: (pid, started) == (101, 99.0),
+    )
+
+    with pytest.raises(RuntimeError) as error:
+        cli_main._pause_windows_gateways_for_update()
+
+    message = str(error.value)
+    assert "synthetic drain failure" in message
+    assert "rollback failures: ordinary gateways: recovery unverified" in message
+    assert pause_fleet.restarted == [("work", 101, 99.0)]
+
+
+@pytest.mark.parametrize("partial_failure", [False, True])
+def test_abort_retains_unobserved_recovery_even_after_a_partial_restart_failure(
+    pause_fleet: SimpleNamespace,
+    monkeypatch: pytest.MonkeyPatch,
+    partial_failure: bool,
+) -> None:
+    """An exception cannot discard the pending result of an already armed watcher."""
+    captured: list[dict] = []
+    receipts: list[tuple] = []
+    pause_fleet.fail_drain = True
+
+    def resume(token: dict) -> None:
+        captured.append(token)
+        token["relaunched_profiles"] = ["work"]
+        token["watcher_old_identities"] = [(101, 99.0)]
+        token["profiles"] = {}
+        token["resume_needed"] = False
+        if partial_failure:
+            raise RuntimeError("another restart failed after arming work")
+
+    monkeypatch.setattr(_update_cmd, "_resume_windows_gateways_after_update", resume)
+    monkeypatch.setattr(
+        _update_cmd, "_old_gateway_process_identity_is_live", lambda *_args: True
+    )
+    monkeypatch.setattr(
+        "hermes_cli.update_receipt.record_step",
+        lambda *args, **_kwargs: receipts.append(args),
+    )
+
+    with pytest.raises(RuntimeError) as error:
+        cli_main._pause_windows_gateways_for_update()
+
+    assert "recovery unverified" in str(error.value)
+    assert captured[0]["rollback_recovery_pending"] is True
+    assert "work" in captured[0]["rollback_recovery_detail"]
+    assert any(
+        step[0] == "windows_gateway_pause_rollback" and step[1] is False
+        for step in receipts
+    )
+    if partial_failure:
+        assert "another restart failed" in str(error.value)
