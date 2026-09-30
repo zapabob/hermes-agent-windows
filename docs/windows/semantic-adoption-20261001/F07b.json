@@ -1,0 +1,191 @@
+{
+  "id": "F07b",
+  "parent_family": "F07",
+  "status": "PARTIAL_WITH_BLOCKED_GATE",
+  "starting_commit": "f390a82c552fd2a657dfdf7dfd3a24a6ea484d53",
+  "scope": "Public CLI plan entry through scripted provider to ordinary agent/tool loop and actual UTF-8 write/config denial.",
+  "product_changes": 0,
+  "native": {
+    "pass": 2,
+    "fail": 0,
+    "skip": 0,
+    "denied_network_attempts": [
+      13,
+      11
+    ]
+  },
+  "post_restore": {
+    "pass": 2,
+    "fail": 0,
+    "skip": 0
+  },
+  "mutation": {
+    "source_sha256": "4c09d9951c983c1061de46f8c4b488c4e7a2190a5c669b727d80fb677e8cb9b5",
+    "test_sha256": "c6e7118353b21a19cdd3c044bdcb043ceb9cd4e3dfe17f03a1a9355203b976f0",
+    "mutants": [
+      {
+        "id": "lost-write-effect",
+        "mutant_sha256": "d0dc4fc948577e9343b9225cc20fed185f6551932e11b978fd5acb0e564aaa23",
+        "runner": {
+          "argv": [
+            "C:/Program Files/Git/bin/bash.exe",
+            "scripts/run_tests.sh",
+            "tests/cli/test_plan_saved_file_native.py",
+            "-k",
+            "not protected-config",
+            "-j",
+            "2",
+            "--file-timeout",
+            "180"
+          ],
+          "cwd": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+          "environment_keys": [
+            "COMSPEC",
+            "HERMES_HOME",
+            "HERMES_PYTHON",
+            "HOME",
+            "PATH",
+            "PATHEXT",
+            "PYTHONIOENCODING",
+            "PYTHONUTF8",
+            "SystemRoot",
+            "TEMP",
+            "TMP",
+            "USERPROFILE",
+            "WINDIR"
+          ],
+          "exit": 1,
+          "source_sha256": {
+            "cli.py": "c701b5d99eb195f083f92aa90a3702fcb2cffe5156dc482a822d4044cd1d1e29",
+            "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+            "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+            "tests/cli/test_plan_saved_file_native.py": "c6e7118353b21a19cdd3c044bdcb043ceb9cd4e3dfe17f03a1a9355203b976f0"
+          },
+          "log_sha256": "31dab304cc22573bf06eddde69fd6d1521e8c5d5ac41d5618ab68eef0bfd43bf"
+        },
+        "killed": true
+      },
+      {
+        "id": "lost-config-denial",
+        "mutant_sha256": "12b429c5f6ef89af3f86c6700e40f2a4c8b3773e606f3162af1389dff7b216d8",
+        "runner": {
+          "argv": [
+            "C:/Program Files/Git/bin/bash.exe",
+            "scripts/run_tests.sh",
+            "tests/cli/test_plan_saved_file_native.py",
+            "-k",
+            "protected-config",
+            "-j",
+            "2",
+            "--file-timeout",
+            "180"
+          ],
+          "cwd": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+          "environment_keys": [
+            "COMSPEC",
+            "HERMES_HOME",
+            "HERMES_PYTHON",
+            "HOME",
+            "PATH",
+            "PATHEXT",
+            "PYTHONIOENCODING",
+            "PYTHONUTF8",
+            "SystemRoot",
+            "TEMP",
+            "TMP",
+            "USERPROFILE",
+            "WINDIR"
+          ],
+          "exit": 1,
+          "source_sha256": {
+            "cli.py": "c701b5d99eb195f083f92aa90a3702fcb2cffe5156dc482a822d4044cd1d1e29",
+            "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+            "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+            "tests/cli/test_plan_saved_file_native.py": "c6e7118353b21a19cdd3c044bdcb043ceb9cd4e3dfe17f03a1a9355203b976f0"
+          },
+          "log_sha256": "098f32b2f72e0798029c85ed233d8b10696032f12635c82766e5cab9a189d04e"
+        },
+        "killed": true
+      }
+    ],
+    "restored_sha256": "4c09d9951c983c1061de46f8c4b488c4e7a2190a5c669b727d80fb677e8cb9b5"
+  },
+  "regression": {
+    "error": "WinError 1314",
+    "gate": "BLOCKED_NATIVE_SYMLINK_PRIVILEGE",
+    "rerun_by_reviewer": false,
+    "failure": "TestProtectedInstructionFiles.test_symlink_to_protected_file_is_gated",
+    "run": "F07b-policy-regression-001",
+    "skipped": 0,
+    "exit": 1,
+    "passed": 42,
+    "failure_before_policy_assertion": true,
+    "failed": 1
+  },
+  "graph": {
+    "run": "F07b-final-bind-003",
+    "state": "complete",
+    "accepted_outputs": 24,
+    "scope": "F07b owners at recorded observation; no later whole-index freshness claim",
+    "tool_version": "1.6.0",
+    "selected_owners": 7,
+    "pendingChanges": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "extraction_version": 25,
+    "output_hashes_verified": 24,
+    "index_mutated_by_reviewer": false,
+    "pendingRefs": 0,
+    "source_hashes_verified": 5,
+    "sync": "campaign-restored-sync-004"
+  },
+  "source_sha256": {
+    "cli.py": "c701b5d99eb195f083f92aa90a3702fcb2cffe5156dc482a822d4044cd1d1e29",
+    "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+    "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+    "run_agent.py": "891f83eabfbe514d3f6bee2e67fd59b34f0c7d5b4cabf4ce255c25308b61a5f3",
+    "agent/conversation_loop.py": "75cf47ee792a7feb5a7276b85f8235d109ca59e81c6f0e0f3f1a56bc4e23e992",
+    "agent/tool_executor.py": "0c85b2bb44e18d422169e4a38f81437e10af38161235c986ee22a99de144dd94",
+    "model_tools.py": "b24d49678cde1e2f12e0fbe5ed84ad34e0170a36376ebde1e952640222cfb0de",
+    "tools/file_tools.py": "4c09d9951c983c1061de46f8c4b488c4e7a2190a5c669b727d80fb677e8cb9b5",
+    "tools/file_operations.py": "f137f0604838b804212173963b1162869fc502c3166999701077cffd15d67c0e",
+    "tests/cli/test_plan_saved_file_native.py": "c6e7118353b21a19cdd3c044bdcb043ceb9cd4e3dfe17f03a1a9355203b976f0",
+    "docs/windows/semantic-adoption-20261001/F07b-mini-plan.md": "2c2f104f6bc3d040f1944d6b0417afdfd06f06277250ef6963f4925e03e406c9",
+    "tests/tools/test_file_tools.py": "c4412c392c2d3de7caeb447dc0ce45318efc6c349bd7d8b48edf835f4288a3d8",
+    "tests/tools/test_file_write_safety.py": "36d812206e0717aba6d0e84d74bfe003aa5110390faa9edc71191768f981aff1",
+    "scripts/run_tests.sh": "fdc4d97c77027ba77813dac950254e0e8f37ad16895f12e8ebd9154ff8bf7f4c",
+    "scripts/run_tests_parallel.py": "545511ab00d011618538fd2cd72e6bc1c113d10e001e4b2a5d493f48f257143a",
+    "AGENTS.md": "26de736ab5bd0dfab39a19ce155f57f6ca876c65579d265971a55380a4c5328c"
+  },
+  "independent_review": {
+    "agent": "01a0f497-b48d-7af2-b5b7-1274e7ec46e1",
+    "requested_model": "gpt-6.1-sol",
+    "requested_effort": "high",
+    "dispatch_accepted": true,
+    "runtime_identity_independently_exposed": false,
+    "verdict": "APPROVE_PROOF_ONLY_LOCAL_COMMIT"
+  },
+  "evidence": {
+    "F07b-logging-native-003.json": "cb8fb5c07fe8fea68709b6939ea16c78d261e51d7ae0599552c1b75565dad11d",
+    "F07b-logging-native-003.junit.xml": "53265fd17e0f7208ed4d45fbb83346feb836a15b59c9dff23193c433f035be72",
+    "F07b-logging-restored-004.json": "986b7eabae9063aed031d23c43c1e0b11ea0d52070a392ce7d3921439b476867",
+    "F07b-mutation-002.json": "12f369a2f070d8320a909afb22506b84b625a920fa709649860cad9b3ef688c9",
+    "F07b-policy-regression-001.json": "0c6b0a15bd8a22848f18c828e3a849ee500f7739e05f4cce2f7565471fba36c8",
+    "F07b-final-bind-003/receipt.json": "9498eb583ce51e3b6d5f58fca34f05f77b30412ab71f85464d465ef16896263f",
+    "F07b-review-002/receipt.json": "51fe5a48b7f77fc67d3d263044604eba728fc8fa7f293b9e7f295e00a9bc82c4",
+    "F07b-review-002/review.md": "db3ece7525ee14acd55fb58033390bd69140a51208a7b009e4efc985518f1038"
+  },
+  "limitations": [
+    "WinError1314 native symlink regression failed before policy assertion",
+    "Approval-state preservation unverified",
+    "Scripted provider; no model quality or plan sandbox proof",
+    "Manual queue consumption; no full CLI/TUI/GUI lifecycle",
+    "Denied attempts are not zero egress attempts"
+  ],
+  "full_F07": false,
+  "full_U_TARGET_parity": false,
+  "published": false,
+  "production_runtime_used": false
+}
