@@ -13335,6 +13335,8 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                     ChatConsole().print(
                         f"[bold red]Failed to load skill for {base_cmd}[/]"
                     )
+            elif canonical == "plan":
+                self._handle_plan_command(cmd_original)
             else:
                 # Prefix matching: if input uniquely identifies one command, execute it.
                 # Matches against both built-in COMMANDS and installed skill commands so

@@ -1,0 +1,298 @@
+{
+  "id": "F07a",
+  "parent_family": "F07",
+  "status": "LOCAL_SLICE_VERIFIED",
+  "starting_commit": "33cea4e790b3419f55bba850e0d1e11bf8742677",
+  "scope": "CLI /plan invokes the existing shared builder/handler after existing quick/plugin/bundle/skill resolution, preserving case and Unicode.",
+  "source_sha256": {
+    "cli.py": "c701b5d99eb195f083f92aa90a3702fcb2cffe5156dc482a822d4044cd1d1e29",
+    "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+    "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+    "tests/cli/test_plan_public_dispatch.py": "52f688873c4f8cd6a45345fc2b5a8d7f0a4c376b3cf14a52fb82edd0887eb97e",
+    "tests/agent/test_plan_prompt.py": "9cd9392dc527d4835892f9af4621733c06b0832a87a7052a02bf6ae3c6e12b9a",
+    "tests/hermes_cli/test_commands.py": "67ff9ba59c692cff092cfc7f7326f88dee563c2086f5916f515d630084a3580e",
+    "tests/hermes_cli/test_commands_execute.py": "d0f1d18834f39469cf767a9ee7e5fe8e99c21186bef588b3df5379ceddc6ebfd",
+    "tests/cli/test_quick_commands.py": "b356f1e0121846416bb83cc9228831b330bca9e24a11fa171edd98d793fa3b82"
+  },
+  "red": {
+    "initial_fail": 7,
+    "initial_pass": 2,
+    "override_fail": 2,
+    "override_pass": 9,
+    "collection_errors": 0
+  },
+  "green": {
+    "files": 5,
+    "pass": 87,
+    "fail": 0,
+    "skip": 0,
+    "receipt": {
+      "argv": [
+        "C:/Program Files/Git/bin/bash.exe",
+        "scripts/run_tests.sh",
+        "tests/cli/test_plan_public_dispatch.py",
+        "tests/agent/test_plan_prompt.py",
+        "tests/hermes_cli/test_commands.py",
+        "tests/hermes_cli/test_commands_execute.py",
+        "tests/cli/test_quick_commands.py",
+        "-j",
+        "2",
+        "--file-timeout",
+        "180"
+      ],
+      "cwd": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+      "environment_keys": [
+        "COMSPEC",
+        "HERMES_HOME",
+        "HERMES_PYTHON",
+        "HOME",
+        "PATH",
+        "PATHEXT",
+        "PYTHONIOENCODING",
+        "PYTHONUTF8",
+        "SystemRoot",
+        "TEMP",
+        "TMP",
+        "USERPROFILE",
+        "WINDIR"
+      ],
+      "exit": 0,
+      "source_sha256": {
+        "cli.py": "c701b5d99eb195f083f92aa90a3702fcb2cffe5156dc482a822d4044cd1d1e29",
+        "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+        "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+        "tests/cli/test_plan_public_dispatch.py": "52f688873c4f8cd6a45345fc2b5a8d7f0a4c376b3cf14a52fb82edd0887eb97e",
+        "tests/agent/test_plan_prompt.py": "9cd9392dc527d4835892f9af4621733c06b0832a87a7052a02bf6ae3c6e12b9a",
+        "tests/hermes_cli/test_commands.py": "67ff9ba59c692cff092cfc7f7326f88dee563c2086f5916f515d630084a3580e",
+        "tests/hermes_cli/test_commands_execute.py": "d0f1d18834f39469cf767a9ee7e5fe8e99c21186bef588b3df5379ceddc6ebfd",
+        "tests/cli/test_quick_commands.py": "b356f1e0121846416bb83cc9228831b330bca9e24a11fa171edd98d793fa3b82"
+      },
+      "log_sha256": "b1cb234783e549934e4364e0b29eed9e3d34c375e3bac3208c688742f4a59639"
+    }
+  },
+  "post_restore": {
+    "pass": 11,
+    "fail": 0,
+    "skip": 0,
+    "receipt": {
+      "argv": [
+        "C:/Program Files/Git/bin/bash.exe",
+        "scripts/run_tests.sh",
+        "tests/cli/test_plan_public_dispatch.py",
+        "-j",
+        "2",
+        "--file-timeout",
+        "180"
+      ],
+      "cwd": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+      "environment_keys": [
+        "COMSPEC",
+        "HERMES_HOME",
+        "HERMES_PYTHON",
+        "HOME",
+        "PATH",
+        "PATHEXT",
+        "PYTHONIOENCODING",
+        "PYTHONUTF8",
+        "SystemRoot",
+        "TEMP",
+        "TMP",
+        "USERPROFILE",
+        "WINDIR"
+      ],
+      "exit": 0,
+      "source_sha256": {
+        "cli.py": "c701b5d99eb195f083f92aa90a3702fcb2cffe5156dc482a822d4044cd1d1e29",
+        "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+        "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+        "tests/cli/test_plan_public_dispatch.py": "52f688873c4f8cd6a45345fc2b5a8d7f0a4c376b3cf14a52fb82edd0887eb97e"
+      },
+      "log_sha256": "5908bda6a593c32672f9889da8078495cc8f65943ff80bdbfceb9284000bca07"
+    }
+  },
+  "native": {
+    "platform": "win32",
+    "python": "3.11.11",
+    "subprocess_cases": 1,
+    "boundary": "HermesCLI.process_command to actual shared prompt in queue; no CLI constructor/interactive UI or model turn"
+  },
+  "mutations": [
+    {
+      "id": "disconnected",
+      "mutant_sha256": "a10107a8ddf77f5cd841a73233d22c55fc2d762389e56afa05f3421f04a10e45",
+      "runner": {
+        "argv": [
+          "C:/Program Files/Git/bin/bash.exe",
+          "scripts/run_tests.sh",
+          "tests/cli/test_plan_public_dispatch.py",
+          "-j",
+          "2",
+          "--file-timeout",
+          "180"
+        ],
+        "cwd": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+        "environment_keys": [
+          "COMSPEC",
+          "HERMES_HOME",
+          "HERMES_PYTHON",
+          "HOME",
+          "PATH",
+          "PATHEXT",
+          "PYTHONIOENCODING",
+          "PYTHONUTF8",
+          "SystemRoot",
+          "TEMP",
+          "TMP",
+          "USERPROFILE",
+          "WINDIR"
+        ],
+        "exit": 1,
+        "source_sha256": {
+          "cli.py": "a10107a8ddf77f5cd841a73233d22c55fc2d762389e56afa05f3421f04a10e45",
+          "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+          "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+          "tests/cli/test_plan_public_dispatch.py": "52f688873c4f8cd6a45345fc2b5a8d7f0a4c376b3cf14a52fb82edd0887eb97e"
+        },
+        "log_sha256": "0af966110314e157d1a60d4e523eb28ca937a61180b18551bb5cd329e6bafeb5"
+      },
+      "killed": true
+    },
+    {
+      "id": "case-lost",
+      "mutant_sha256": "8a21186ba7708e8c0c40c5a3b82de4cd0a4bbd94f30a59897e53de7a8137acf9",
+      "runner": {
+        "argv": [
+          "C:/Program Files/Git/bin/bash.exe",
+          "scripts/run_tests.sh",
+          "tests/cli/test_plan_public_dispatch.py",
+          "-j",
+          "2",
+          "--file-timeout",
+          "180"
+        ],
+        "cwd": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+        "environment_keys": [
+          "COMSPEC",
+          "HERMES_HOME",
+          "HERMES_PYTHON",
+          "HOME",
+          "PATH",
+          "PATHEXT",
+          "PYTHONIOENCODING",
+          "PYTHONUTF8",
+          "SystemRoot",
+          "TEMP",
+          "TMP",
+          "USERPROFILE",
+          "WINDIR"
+        ],
+        "exit": 1,
+        "source_sha256": {
+          "cli.py": "8a21186ba7708e8c0c40c5a3b82de4cd0a4bbd94f30a59897e53de7a8137acf9",
+          "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+          "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+          "tests/cli/test_plan_public_dispatch.py": "52f688873c4f8cd6a45345fc2b5a8d7f0a4c376b3cf14a52fb82edd0887eb97e"
+        },
+        "log_sha256": "a896fb78b7c43e16572a8320272899e6d596eb564853e2760a685873521e3d5e"
+      },
+      "killed": true
+    },
+    {
+      "id": "lost-custom-priority",
+      "base_sha256": "c701b5d99eb195f083f92aa90a3702fcb2cffe5156dc482a822d4044cd1d1e29",
+      "mutant_sha256": "31253a18d8927589e5c575202045eeb4ee403199f19fd891c385c5281e8fce6b",
+      "runner": {
+        "argv": [
+          "C:/Program Files/Git/bin/bash.exe",
+          "scripts/run_tests.sh",
+          "tests/cli/test_plan_public_dispatch.py",
+          "-j",
+          "2",
+          "--file-timeout",
+          "180"
+        ],
+        "cwd": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+        "environment_keys": [
+          "COMSPEC",
+          "HERMES_HOME",
+          "HERMES_PYTHON",
+          "HOME",
+          "PATH",
+          "PATHEXT",
+          "PYTHONIOENCODING",
+          "PYTHONUTF8",
+          "SystemRoot",
+          "TEMP",
+          "TMP",
+          "USERPROFILE",
+          "WINDIR"
+        ],
+        "exit": 1,
+        "source_sha256": {
+          "cli.py": "31253a18d8927589e5c575202045eeb4ee403199f19fd891c385c5281e8fce6b",
+          "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+          "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+          "tests/cli/test_plan_public_dispatch.py": "52f688873c4f8cd6a45345fc2b5a8d7f0a4c376b3cf14a52fb82edd0887eb97e"
+        },
+        "log_sha256": "45e682651d9bf482140ee8caecb0a49a313cf215bc4a21ef82235ec4a007c459"
+      },
+      "killed": true,
+      "restored_sha256": "c701b5d99eb195f083f92aa90a3702fcb2cffe5156dc482a822d4044cd1d1e29"
+    }
+  ],
+  "restored_sha256": "c701b5d99eb195f083f92aa90a3702fcb2cffe5156dc482a822d4044cd1d1e29",
+  "graph": {
+    "version": "1.6.0",
+    "named_owners": 4,
+    "outputs": 15,
+    "source_hash_mismatches": 0,
+    "context_count": 4,
+    "Gateway_cap_exclusion_remains": true
+  },
+  "review": {
+    "agent": "01a0f47b-2864-7022-8d86-2dcdbcc22d73",
+    "name": "Rawls",
+    "accepted_model": "gpt-6.1-sol",
+    "effort": "high",
+    "verdict": "APPROVED",
+    "scope": "F07a public CLI dispatch to existing queued prompt only",
+    "source_sha256": {
+      "cli.py": "c701b5d99eb195f083f92aa90a3702fcb2cffe5156dc482a822d4044cd1d1e29",
+      "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+      "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+      "tests/cli/test_plan_public_dispatch.py": "52f688873c4f8cd6a45345fc2b5a8d7f0a4c376b3cf14a52fb82edd0887eb97e"
+    },
+    "mini_plan_sha256": "e183e2f6bddd5ada5649f01c04562a43317d87c00a927a7d223ac90137a3f9ff",
+    "P1_P2_findings": [],
+    "independent_test_execution": false,
+    "reviewed_actual_receipts_and_graph": true,
+    "full_F07": false
+  },
+  "intentional_difference": "U_TARGET CLI resolves builtins before custom commands; downstream demonstrated quick/plugin plan overrides retain priority. The F07 audit broad CLI precedence statement is rejected and corrected by source and mini-plan.",
+  "reused_owners": [
+    "hermes_cli/cli_commands_mixin.py::_handle_plan_command",
+    "agent/plan_prompt.py::build_plan_prompt"
+  ],
+  "remaining": [
+    "TUI public acceptance",
+    "scripted test-owned agent turn to UTF-8 saved plan",
+    "messaging BLOCKED_CODEGRAPH",
+    "normal policy negative acceptance; no plan-specific sandbox exists"
+  ],
+  "evidence": {
+    "F07-red-001.json": "742dd9c47c9b780a7f753db3480a7e424b9f6352a74a072b3081aa8b83c5feb7",
+    "F07-override-red-001.json": "6f2dd99403eb9f8f85b24ae2bb0518bf0b5eb813bd00e139ae610f1c00756ea5",
+    "F07-green-002.json": "fac157d006780440c5893e64ad3009ec2c4ca41f9704e174d8607a292d131e92",
+    "F07-restored-002.json": "19abe69e7708051329422737be2d787687c09591c272a465d410e408dacf6693",
+    "F07-mutation-002.json": "9d873937fb5da47ce0b149644767beb51710ad19fc48b6bff43a2cc4f1c9e839",
+    "F07-priority-mutation-002.json": "10c2f412554fba5529103af127b83e26273535eb76f1694f66a09b915cdc4e6a",
+    "F07-before-001/receipt.json": "0cb68143eab1fda52bddd5a070442d8e46ef991de3fa3cf39dad8a3dc30622fe",
+    "F07-after-final-001/receipt.json": "a2f2ca3f5f57ad556792054063018b9b84c43a05a3fad7eb9f20079197394246",
+    "graph-bindings-F07-final-001.json": "6c97126fe426a1899c229c5edb1bda68004d38862a355b8e34e865cb3c65ae15",
+    "F07-independent-review-approved.json": "4d8f95a3071514d3eb08d6a58b498a57d93c242a4356899c09a6ca304e975f76"
+  },
+  "full_F07": false,
+  "full_U_TARGET_parity": false,
+  "production_runtime_used": false,
+  "published": false
+}

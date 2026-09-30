@@ -62,11 +62,12 @@
     },
     {
       "id": "F04a",
-      "status": "LOCAL_SLICE_VERIFIED"
+      "status": "LOCAL_SLICE_VERIFIED",
+      "commit": "33cea4e790b3419f55bba850e0d1e11bf8742677"
     },
     {
       "id": "F07a",
-      "status": "SOURCE_AUDIT_ONLY; native RED pending"
+      "status": "LOCAL_SLICE_VERIFIED"
     }
   ]
 }
