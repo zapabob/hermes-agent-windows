@@ -1,3 +1,5 @@
+import { peekCachedSlashCompletion } from './slash-completion-cache'
+
 export interface CommandsCatalogSection {
   name: string
   pairs: [string, string][]
@@ -9,6 +11,7 @@ export interface CommandsCatalogLike {
   skill_count?: number
   skills?: SkillCatalogMap
   warning?: string
+  commands?: Record<string, { argument_mode?: DesktopSlashArgumentMode | null }>
 }
 
 /**
@@ -542,7 +545,16 @@ export function desktopSlashDescription(command: string, fallback = ''): string 
 }
 
 export function desktopSlashCommandArgumentMode(command: string): DesktopSlashArgumentMode | null {
-  return resolveDesktopCommand(command)?.argumentMode ?? null
+  const local = resolveDesktopCommand(command)
+
+  if (local && (local.argumentMode !== undefined || local.surface.kind !== 'exec')) {
+    return local.argumentMode ?? null
+  }
+
+  const catalog = peekCachedSlashCompletion<CommandsCatalogLike>('catalog')
+  const mode = catalog?.commands?.[normalizeCommand(command)]?.argument_mode
+
+  return mode === 'text' || mode === 'options' || mode === 'mixed' ? mode : null
 }
 
 export function desktopSkinSlashCompletions(

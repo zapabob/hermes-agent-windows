@@ -149,10 +149,23 @@ class CommandDef:
     # gateway can import commands.py without prompt_toolkit and without
     # pulling in executor dependencies.
     execute: str | None = None
+    # Composer metadata only; never changes command dispatch or availability.
+    argument_mode: str | None = None
 
     def describe(self) -> str:
         """Translate the display description; retain its English source."""
         return _localized(f"slash.{self.name}.description", self.description)
+
+
+def infer_argument_mode(cmd: CommandDef) -> str | None:
+    """Describe editable arguments without changing surface execution policy."""
+    if cmd.argument_mode in {"options", "text", "mixed"}:
+        return cmd.argument_mode
+    hint = (cmd.args_hint or "").strip()
+    if cmd.subcommands:
+        prose_hints = ("<prompt>", "[text", "instructions", "[interval]", "<what")
+        return "mixed" if any(token in hint.lower() for token in prose_hints) else "options"
+    return "text" if hint else None
 
 
 # Valid values for CommandDef.busy_policy (see field docs above).

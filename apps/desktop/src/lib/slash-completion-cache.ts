@@ -34,7 +34,7 @@ export function cachedSlashCompletion<T>(key: string, fetcher: () => Promise<T>)
 export function hasCachedSlashCompletion(key: string): boolean {
   const state = queryClient.getQueryState([SLASH_COMPLETIONS_KEY, key])
 
-  return state?.data !== undefined && Date.now() - state.dataUpdatedAt < SLASH_COMPLETIONS_TTL_MS
+  return state?.data !== undefined && !state.isInvalidated && Date.now() - state.dataUpdatedAt < SLASH_COMPLETIONS_TTL_MS
 }
 
 /**
@@ -87,6 +87,9 @@ export const $slashCompletionsEpoch = atom(0)
  * the backend without waiting out the TTL.
  */
 export function invalidateSlashCompletions(): void {
+  // Cancellation settles synchronously in QueryClient. A response from the
+  // old profile must not repopulate this cache after the invalidation.
+  void queryClient.cancelQueries({ queryKey: [SLASH_COMPLETIONS_KEY] }, { revert: false })
   void queryClient.invalidateQueries({ queryKey: [SLASH_COMPLETIONS_KEY] })
   $slashCompletionsEpoch.set($slashCompletionsEpoch.get() + 1)
 }

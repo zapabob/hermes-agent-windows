@@ -73,13 +73,14 @@ export function useLiveCompletionAdapter(options: {
 
   // eslint-disable-next-line no-restricted-syntax -- legitimate non-atom ref write (see eslint rule comment)
   useEffect(() => {
-    // Invalidate by forgetting which query the held items answer, so the next
-    // search() re-fetches. The items themselves stay until the new answer
-    // lands — an open popover must not blink empty on a background refresh.
-    // On mount this is already the state, so the first run is a no-op.
+    // An epoch revokes both held rows and outstanding callbacks. Keeping old
+    // rows selectable while a profile's replacement loads crosses its scope.
+    cancelTimer()
+    tokenRef.current += 1
     pendingQueryRef.current = null
-    setState(current => (current.query === EMPTY_QUERY ? current : { ...current, query: EMPTY_QUERY }))
-  }, [epoch])
+    setLoading(false)
+    setState({ query: EMPTY_QUERY, items: [] })
+  }, [cancelTimer, epoch])
 
   const scheduleFetch = useCallback(
     (query: string) => {

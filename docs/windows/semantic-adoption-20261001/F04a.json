@@ -1,0 +1,373 @@
+{
+  "id": "F04a",
+  "parent_family": "F04",
+  "status": "LOCAL_SLICE_VERIFIED",
+  "starting_commit": "db5ee25f9cefe60c54190c7e1f36c1e2c5ededd4",
+  "source_sha256": {
+    "hermes_cli/commands.py": "31ba7ef6cbfc9a4c11b7c00d52d10022a8c4473fc657625f123a49244c56e25d",
+    "tui_gateway/methods_tools.py": "ac8463aa527d4186e891ea8dffa7369a6f96c8eb502a47dd7a5135ebf22ac6ea",
+    "apps/desktop/src/lib/desktop-slash-commands.ts": "5518292e0c03309a7559dd82d7cbf28413532e898498fdf32bc694c6d389093a",
+    "apps/desktop/src/lib/slash-completion-cache.ts": "9a5f6ac30a2c4336da7ba71c0bab2e11f46e2ed434578d013c425be965f7029b",
+    "apps/desktop/src/app/chat/composer/hooks/use-slash-completions.ts": "7464aebc2fe39c9dae1a53c985cd9ae8d1b1af0f2f6d43a04cb1e4f9508d95f5",
+    "apps/desktop/src/app/chat/composer/hooks/use-live-completion-adapter.ts": "09c7769385c1b44d7afa083420fa17cb338b475be91ca29a7d8fc8eb4b517cf4"
+  },
+  "scope": "Static CommandDef argument metadata through commands.catalog to existing Desktop completion/composer; explicit local owners retain priority.",
+  "python": {
+    "green_pass": 73,
+    "restored_pass": 13,
+    "overlap": 7,
+    "distinct_pass": 79,
+    "fail": 0,
+    "skip": 0,
+    "argv": [
+      "bash",
+      "scripts/run_tests.sh",
+      "tests/tui_gateway/test_commands_catalog_metadata.py",
+      "tests/hermes_cli/test_commands.py",
+      "tests/hermes_cli/test_slash_localization.py",
+      "-j",
+      "2",
+      "--file-timeout",
+      "180"
+    ],
+    "restored_argv": [
+      "bash",
+      "scripts/run_tests.sh",
+      "tests/tui_gateway/test_commands_catalog_metadata.py",
+      "tests/test_tui_gateway_server.py",
+      "-k",
+      "commands_catalog",
+      "-j",
+      "2",
+      "--file-timeout",
+      "180"
+    ]
+  },
+  "ui": {
+    "final_pass": 68,
+    "affected_pass": 15,
+    "distinct_pass": 83,
+    "fail": 0,
+    "skip": 0,
+    "commands": [
+      [
+        "C:/Users/downl/AppData/Local/nvm/v22.23.2/node.exe",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\node_modules\\vitest\\vitest.mjs",
+        "run",
+        "--project",
+        "ui",
+        "src/lib/slash-catalog-metadata.test.ts",
+        "src/app/chat/composer/hooks/use-slash-completions.test.tsx",
+        "src/app/chat/composer/hooks/use-live-completion-adapter.test.ts",
+        "src/lib/desktop-slash-commands.test.ts",
+        "src/app/chat/composer/hooks/use-composer-trigger.test.ts",
+        "src/app/chat/composer/slash-refs.test.ts"
+      ],
+      [
+        "C:/Users/downl/AppData/Local/nvm/v22.23.2/node.exe",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\node_modules\\vitest\\vitest.mjs",
+        "run",
+        "--project",
+        "ui",
+        "src/app/chat/composer/hooks/use-at-completions.test.ts",
+        "src/app/chat/composer/hooks/use-at-completions-contrib.test.tsx",
+        "src/app/chat/composer/at-folder-navigation.test.tsx",
+        "src/app/chat/composer/slash-nav-dom-repro.test.tsx"
+      ]
+    ],
+    "existing_act_warnings": true
+  },
+  "native": {
+    "platform": "win32",
+    "node": "v22.23.2",
+    "browser": "151.0.7922.34",
+    "cases": [
+      "cold typed public completion prepares metadata before accepted row selection",
+      "/rollback: typed prose stays editable",
+      "/undo: typed prose stays editable",
+      "/fixture-text: typed prose stays editable",
+      "/fixture-mixed: typed prose stays editable",
+      "options: finite directive commits",
+      "text: picked command keeps editable text",
+      "null: bare command commits",
+      "local model/session picker priority",
+      "invalidated metadata unavailable"
+    ],
+    "failures": [],
+    "sources": {
+      "hermes_cli/commands.py": "31ba7ef6cbfc9a4c11b7c00d52d10022a8c4473fc657625f123a49244c56e25d",
+      "tui_gateway/methods_tools.py": "ac8463aa527d4186e891ea8dffa7369a6f96c8eb502a47dd7a5135ebf22ac6ea",
+      "apps/desktop/src/lib/desktop-slash-commands.ts": "5518292e0c03309a7559dd82d7cbf28413532e898498fdf32bc694c6d389093a",
+      "apps/desktop/src/lib/slash-completion-cache.ts": "9a5f6ac30a2c4336da7ba71c0bab2e11f46e2ed434578d013c425be965f7029b",
+      "apps/desktop/src/app/chat/composer/hooks/use-composer-trigger.ts": "a6b816a4b2e081b795240dc51c6bb42acdec3b598930d5d61c4a62a00c4dde20",
+      "apps/desktop/src/app/chat/composer/hooks/use-slash-completions.ts": "7464aebc2fe39c9dae1a53c985cd9ae8d1b1af0f2f6d43a04cb1e4f9508d95f5",
+      "apps/desktop/src/app/chat/composer/hooks/use-live-completion-adapter.ts": "09c7769385c1b44d7afa083420fa17cb338b475be91ca29a7d8fc8eb4b517cf4"
+    },
+    "scope": "real dispatch fixture to real React hook and Chromium DOM; discovery doubles; no Electron, auth or destructive effect"
+  },
+  "mutation": {
+    "mutants": [
+      {
+        "id": "wire",
+        "source": "tui_gateway/methods_tools.py",
+        "base_sha256": "ac8463aa527d4186e891ea8dffa7369a6f96c8eb502a47dd7a5135ebf22ac6ea",
+        "mutant_sha256": "9d84d01e0b2a46134f0cd5fa8e3f4ac0d85567b15eb6481533155b82ec29d6fc",
+        "command": [
+          "C:/Program Files/Git/bin/bash.exe",
+          "scripts/run_tests.sh",
+          "tests/tui_gateway/test_commands_catalog_metadata.py",
+          "-j",
+          "2",
+          "--file-timeout",
+          "180"
+        ],
+        "exit": 1,
+        "log_sha256": "7cf656630df8d905539482505e0d50b02e533edbbf6d61d14bfd0aeca199e4c9",
+        "killed": true
+      },
+      {
+        "id": "metadata",
+        "source": "apps/desktop/src/lib/desktop-slash-commands.ts",
+        "base_sha256": "5518292e0c03309a7559dd82d7cbf28413532e898498fdf32bc694c6d389093a",
+        "mutant_sha256": "f7768174075b66f017761c05b955d7e2802f55f0e13feb69a5dcd63963704fb8",
+        "command": [
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\run-f04-ui-tests.py",
+          "mutant-metadata",
+          "src/lib/slash-catalog-metadata.test.ts",
+          "src/app/chat/composer/hooks/use-slash-completions.test.tsx",
+          "src/app/chat/composer/hooks/use-live-completion-adapter.test.ts"
+        ],
+        "exit": 1,
+        "log_sha256": "20f4c9017b9a919782b851d7dad03a148ab278a14ee54ac61416dc31a1b3d76e",
+        "killed": true
+      },
+      {
+        "id": "local-priority",
+        "source": "apps/desktop/src/lib/desktop-slash-commands.ts",
+        "base_sha256": "5518292e0c03309a7559dd82d7cbf28413532e898498fdf32bc694c6d389093a",
+        "mutant_sha256": "b7efcee50fce5408174f1d4b363bfde0ba6586c90b5e4302cedb7deb1b387d62",
+        "command": [
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\run-f04-ui-tests.py",
+          "mutant-local-priority",
+          "src/lib/slash-catalog-metadata.test.ts",
+          "src/app/chat/composer/hooks/use-slash-completions.test.tsx",
+          "src/app/chat/composer/hooks/use-live-completion-adapter.test.ts"
+        ],
+        "exit": 1,
+        "log_sha256": "477c58d7840de3a9dee94270a3b42fc6fb1f9d32724d02b6ae22e713496600d2",
+        "killed": true
+      },
+      {
+        "id": "invalidated-read",
+        "source": "apps/desktop/src/lib/slash-completion-cache.ts",
+        "base_sha256": "9a5f6ac30a2c4336da7ba71c0bab2e11f46e2ed434578d013c425be965f7029b",
+        "mutant_sha256": "83d9aa2251e3209c8bb592497b1698d275197a059f41885e6a8eecee6a2f31a8",
+        "command": [
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\run-f04-ui-tests.py",
+          "mutant-invalidated-read",
+          "src/lib/slash-catalog-metadata.test.ts",
+          "src/app/chat/composer/hooks/use-slash-completions.test.tsx",
+          "src/app/chat/composer/hooks/use-live-completion-adapter.test.ts"
+        ],
+        "exit": 1,
+        "log_sha256": "ada3c0ff349169cc457e014a70e5c1d277a9291cf6f38bf07379fb3c3669a034",
+        "killed": true
+      },
+      {
+        "id": "revert",
+        "source": "apps/desktop/src/lib/slash-completion-cache.ts",
+        "base_sha256": "9a5f6ac30a2c4336da7ba71c0bab2e11f46e2ed434578d013c425be965f7029b",
+        "mutant_sha256": "7154168a1e89801b422265af139e7006144c0551683c76d9f6f582be480c5d13",
+        "command": [
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\run-f04-ui-tests.py",
+          "mutant-revert",
+          "src/lib/slash-catalog-metadata.test.ts",
+          "src/app/chat/composer/hooks/use-slash-completions.test.tsx",
+          "src/app/chat/composer/hooks/use-live-completion-adapter.test.ts"
+        ],
+        "exit": 1,
+        "log_sha256": "419f2252d614706968ad340c761d8a6d2ff6e92ab8382fa8de70194c256288d8",
+        "killed": true
+      },
+      {
+        "id": "cold-catalog",
+        "source": "apps/desktop/src/app/chat/composer/hooks/use-slash-completions.ts",
+        "base_sha256": "7464aebc2fe39c9dae1a53c985cd9ae8d1b1af0f2f6d43a04cb1e4f9508d95f5",
+        "mutant_sha256": "236c3a8e9edbb6e40f8e42f08284e85c5e43e61dbd369fe8f209d485a352a6b1",
+        "command": [
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\run-f04-ui-tests.py",
+          "mutant-cold-catalog",
+          "src/lib/slash-catalog-metadata.test.ts",
+          "src/app/chat/composer/hooks/use-slash-completions.test.tsx",
+          "src/app/chat/composer/hooks/use-live-completion-adapter.test.ts"
+        ],
+        "exit": 1,
+        "log_sha256": "5df8ec54573d8f2a1026bcc36ae48bd0bf1cec6b5ad6457fd73848b11e97241d",
+        "killed": true
+      },
+      {
+        "id": "adapter-epoch",
+        "source": "apps/desktop/src/app/chat/composer/hooks/use-live-completion-adapter.ts",
+        "base_sha256": "09c7769385c1b44d7afa083420fa17cb338b475be91ca29a7d8fc8eb4b517cf4",
+        "mutant_sha256": "47962824050de873af87dcb11c3ac4e237655b562f311a3624865ef642636800",
+        "command": [
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\run-f04-ui-tests.py",
+          "mutant-adapter-epoch",
+          "src/lib/slash-catalog-metadata.test.ts",
+          "src/app/chat/composer/hooks/use-slash-completions.test.tsx",
+          "src/app/chat/composer/hooks/use-live-completion-adapter.test.ts"
+        ],
+        "exit": 1,
+        "log_sha256": "a0a1f8f49188b6d5614d6a048f1f091971745c9a6d7ea1aab16488021cb0e0ae",
+        "killed": true
+      }
+    ],
+    "exact_byte_restoration": true
+  },
+  "gates": {
+    "head": "db5ee25f9cefe60c54190c7e1f36c1e2c5ededd4",
+    "sources": {
+      "src/lib/desktop-slash-commands.ts": "5518292e0c03309a7559dd82d7cbf28413532e898498fdf32bc694c6d389093a",
+      "src/lib/slash-completion-cache.ts": "9a5f6ac30a2c4336da7ba71c0bab2e11f46e2ed434578d013c425be965f7029b",
+      "src/app/chat/composer/hooks/use-slash-completions.ts": "7464aebc2fe39c9dae1a53c985cd9ae8d1b1af0f2f6d43a04cb1e4f9508d95f5",
+      "src/app/chat/composer/hooks/use-live-completion-adapter.ts": "09c7769385c1b44d7afa083420fa17cb338b475be91ca29a7d8fc8eb4b517cf4",
+      "src/lib/slash-catalog-metadata.test.ts": "37c2ce6c8a8c74aee4c3de06d5ae6a18063347a2997e8b27831969ad37dc2642",
+      "src/app/chat/composer/hooks/use-slash-completions.test.tsx": "9b44b014ecea1c3889642989ca707c042bdb60629966b90d673cdc327af1d90c",
+      "src/app/chat/composer/hooks/use-live-completion-adapter.test.ts": "8b96fbda972182dc08920713ac01353ee15fc47c60c6e6128266ee5b41e1c5d7",
+      "test-fixtures/semantic-catalog/renderer.tsx": "d617572dd26cf3daf6ef1cd4397bf35b28b08a9cc97f210e88fb9f88a357d5e0"
+    },
+    "gates": [
+      {
+        "name": "lint",
+        "argv": [
+          "C:/Users/downl/AppData/Local/nvm/v22.23.2/node.exe",
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\node_modules\\eslint\\bin\\eslint.js",
+          "src/lib/desktop-slash-commands.ts",
+          "src/lib/slash-completion-cache.ts",
+          "src/app/chat/composer/hooks/use-slash-completions.ts",
+          "src/app/chat/composer/hooks/use-live-completion-adapter.ts",
+          "src/lib/slash-catalog-metadata.test.ts",
+          "src/app/chat/composer/hooks/use-slash-completions.test.tsx",
+          "src/app/chat/composer/hooks/use-live-completion-adapter.test.ts",
+          "test-fixtures/semantic-catalog/renderer.tsx"
+        ],
+        "exit": 0,
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "types-0",
+        "argv": [
+          "C:/Users/downl/AppData/Local/nvm/v22.23.2/node.exe",
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\node_modules\\typescript\\bin\\tsc",
+          "-p",
+          "tsconfig.typecheck.json",
+          "--noEmit"
+        ],
+        "exit": 0,
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "types-1",
+        "argv": [
+          "C:/Users/downl/AppData/Local/nvm/v22.23.2/node.exe",
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\node_modules\\typescript\\bin\\tsc",
+          "-p",
+          "tsconfig.electron.json",
+          "--noEmit"
+        ],
+        "exit": 0,
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "types-2",
+        "argv": [
+          "C:/Users/downl/AppData/Local/nvm/v22.23.2/node.exe",
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\node_modules\\typescript\\bin\\tsc",
+          "-p",
+          "tsconfig.e2e.json",
+          "--noEmit"
+        ],
+        "exit": 0,
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "types-3",
+        "argv": [
+          "C:/Users/downl/AppData/Local/nvm/v22.23.2/node.exe",
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\node_modules\\typescript\\bin\\tsc",
+          "-p",
+          "test-fixtures/semantic-catalog/tsconfig.json",
+          "--noEmit"
+        ],
+        "exit": 0,
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  },
+  "graph": {
+    "version": "1.6.0",
+    "named_owners": 8,
+    "outputs": 27,
+    "indexed_catalog_handler_sdk": 4,
+    "catalog_handler_static_radius": 1,
+    "catalog_handler_affected_tests": 0,
+    "hash_mismatches": 0,
+    "dynamic_edges_inferred": false,
+    "Gateway_cap_exclusion_remains": true
+  },
+  "review": {
+    "agent": "01a0f44b-72e9-7e32-8ddb-ca6016db6521",
+    "name": "Aquinas",
+    "accepted_model": "gpt-6.1-sol",
+    "effort": "high",
+    "verdict": "APPROVED",
+    "scope": "F04a static registry metadata and existing Desktop composer only",
+    "source_sha256": {
+      "hermes_cli/commands.py": "31ba7ef6cbfc9a4c11b7c00d52d10022a8c4473fc657625f123a49244c56e25d",
+      "tui_gateway/methods_tools.py": "ac8463aa527d4186e891ea8dffa7369a6f96c8eb502a47dd7a5135ebf22ac6ea",
+      "apps/desktop/src/lib/desktop-slash-commands.ts": "5518292e0c03309a7559dd82d7cbf28413532e898498fdf32bc694c6d389093a",
+      "apps/desktop/src/lib/slash-completion-cache.ts": "9a5f6ac30a2c4336da7ba71c0bab2e11f46e2ed434578d013c425be965f7029b",
+      "apps/desktop/src/app/chat/composer/hooks/use-slash-completions.ts": "7464aebc2fe39c9dae1a53c985cd9ae8d1b1af0f2f6d43a04cb1e4f9508d95f5",
+      "apps/desktop/src/app/chat/composer/hooks/use-live-completion-adapter.ts": "09c7769385c1b44d7afa083420fa17cb338b475be91ca29a7d8fc8eb4b517cf4"
+    },
+    "previous_P2": [
+      "cold typed searches skipped catalog",
+      "warm refetch cancellation/adapter epoch admitted obsolete results"
+    ],
+    "resolved": true,
+    "independent_test_execution": false,
+    "reviewed_evidence": true,
+    "UI_distinct_pass": 83,
+    "full_F04": false
+  },
+  "evidence": {
+    "F04-python-green-001.log": "aebdf3cdd9a1f871832c972e337ad2067137e0702049224286a1f870ac33fab8",
+    "F04-python-restored-green-001.log": "9cf355ff1d3fe732d637406db31dd4e5c358dbf3828c18a413da4611d9668931",
+    "F04-ui-final-001.log": "a3009e29ed779255b7946917cb0f76ee443383801db67b6e941fda2794e49e57",
+    "F04-ui-final-001.json": "698d38b2d45187a0fd15a73e1333873583ec8f57720e2e601d865b6e869c7d79",
+    "F04-ui-affected-001.log": "9d8c4611fa88bab3a1775baa9d15e357fa3b83cac62759a781fc9c24d68ca0f6",
+    "F04-ui-affected-001.json": "8b51ae9638e70a1b090e36c82b54677784b1a41fe0ae83ce992a51948513986a",
+    "F04-native-final-001/receipt.json": "a09cc4c139a8a002af51db79171347ab59c5598d8aa59c82a7962b9619048596",
+    "F04-mutation-001.json": "d6c2da8a0107a591f1c91c15f4b64fc18efdbf1232b8bc762d5fa70f1e4702df",
+    "F04-final-002-gates.json": "c11251743e40e7095c61eb148d03d9d58545d168f1e3e02e320d179c26133f97",
+    "F04-after-final-001/receipt.json": "2db1ec2186ace2875e9a11a21eb319bbae56a2f20f281384b79457a9e9e109d9",
+    "graph-bindings-F04-final-001.json": "461d761e4d6fbadf16393f5a1f01eaa8607f486e7479852b090a61939f8169c2",
+    "F04-independent-review-approved.json": "095343db2870ac9143111c8f15537bab7a70028ec4157851fc4f7866ac8d86f9"
+  },
+  "full_F04": false,
+  "full_U_TARGET_parity": false,
+  "remaining": [
+    "dynamic/plugin argument registration",
+    "session/profile/workspace discovery",
+    "availability axes",
+    "Electron startup/auth and complete command effect"
+  ],
+  "production_runtime_used": false,
+  "published": false
+}

@@ -183,9 +183,14 @@ export function useSlashCompletions(options: {
           return { items, query }
         }
 
-        const result = await cachedSlashCompletion(`slash:${text.toLowerCase()}`, () =>
-          gateway.request<{ items?: CompletionEntry[]; replace_from?: number }>('complete.slash', { text })
-        )
+        // Fast typing can cancel the bare-slash debounce. Prepare metadata
+        // alongside the typed answer before its rows can be accepted.
+        const [result] = await Promise.all([
+          cachedSlashCompletion(`slash:${text.toLowerCase()}`, () =>
+            gateway.request<{ items?: CompletionEntry[]; replace_from?: number }>('complete.slash', { text })
+          ),
+          cachedSlashCompletion('catalog', () => gateway.request<CommandsCatalogLike>('commands.catalog')).catch(() => undefined)
+        ])
 
         // Arg-completion items (replace_from > 1) carry just the arg stub —
         // e.g. complete.slash returns `{text: "alice"}` for `/personality alic`
@@ -291,7 +296,7 @@ export function useSlashCompletions(options: {
         return true
       }
 
-      return hasCachedSlashCompletion(query ? `slash:${text.toLowerCase()}` : 'catalog')
+      return hasCachedSlashCompletion(query ? `slash:${text.toLowerCase()}` : 'catalog') && hasCachedSlashCompletion('catalog')
     },
     [skinThemes]
   )

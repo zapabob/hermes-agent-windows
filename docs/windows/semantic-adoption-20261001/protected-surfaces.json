@@ -1,0 +1,166 @@
+{
+  "campaign": "windows-semantic-adoption-20261001",
+  "frozen_base": "a553729853b9648bf8ca9e5c3c7e54365d7f5c62",
+  "complete": false,
+  "scope": "Source-bound initial protected-owner map; no new security implementation or claim of full native coverage",
+  "source_sha256": {
+    "downstream/security/service.py": "f8781f7fbc898d618451c2d8f9ec991546ea964185871d5be853e11b653ea5ad",
+    "downstream/security/store.py": "f6257364fde8943d57bcec698b4654aa9231ca406b3b6cdaa6c66aa4e27feda7",
+    "downstream/security/execution_gate.py": "3799f7d136a250deba792d04864cf00bc24c58e32707a6f62d45f03a1ac85d08",
+    "tools/approval.py": "63fd9c3ca2327d98413b30a6cf8c6d8a68377ba190339b7019362f4ead701b8b",
+    "tools/write_approval.py": "4a98656eebf1f4d5ff57bd67237bb9d540172676fd1301a4a21d8822b1fd23b4",
+    "agent/file_safety.py": "0b9b15c53d02e396f041bac16e7de1bc7df38fad0b0238822fa620327c1908ea",
+    "hermes_cli/approval_mode.py": "b31d987a8763cf83401bded79f45fb2855d1bab2c3772b8d134f211dbe451470",
+    "hermes_cli/process_identity.py": "207646b3d1efbb020afcc0a5dc95613394468767ca5ee21fab08307803f12195"
+  },
+  "codegraph_receipt_sha256": "7490804be645358363c26e5370263ea907d5aa962c3a24ef4de55f1a1610c4ee",
+  "graph_owners": [
+    {
+      "name": "SecurityService",
+      "path": "downstream/security/service.py",
+      "node_id": "class:dd3d75bfc60d68cf651a7b9372ab30db",
+      "merged_symbol_results": true,
+      "node_count": 397
+    },
+    {
+      "name": "SecurityStore",
+      "path": "downstream/security/store.py",
+      "node_id": "class:c161163330b636b539436265e376cca0",
+      "merged_symbol_results": true,
+      "node_count": 136
+    },
+    {
+      "name": "preflight_command",
+      "path": "downstream/security/execution_gate.py",
+      "node_id": "function:d1ff9495e83a94e46a61918897a4da23",
+      "merged_symbol_results": true,
+      "node_count": 64
+    },
+    {
+      "name": "detect_dangerous_command",
+      "path": "tools/approval.py",
+      "node_id": "function:233808c0c3d7b56754ad8f949ea55c0e",
+      "merged_symbol_results": true,
+      "node_count": 239
+    },
+    {
+      "name": "evaluate_gate",
+      "path": "tools/write_approval.py",
+      "node_id": "function:abdc66c1390254f10c01e86bf76d70a2",
+      "merged_symbol_results": true,
+      "node_count": 1
+    },
+    {
+      "name": "get_read_block_error",
+      "path": "agent/file_safety.py",
+      "node_id": "function:a99fbf1095398bba06939e5f06f26a43",
+      "merged_symbol_results": true,
+      "node_count": 153
+    },
+    {
+      "name": "run_approval_mode_command",
+      "path": "hermes_cli/approval_mode.py",
+      "node_id": "function:782b57f8c1724d85be94d032bc63e4c2",
+      "merged_symbol_results": true,
+      "node_count": 5
+    },
+    {
+      "name": "build_spawn_tag",
+      "path": "hermes_cli/process_identity.py",
+      "node_id": "function:cd97797e064dbd90925fdadacd114e23",
+      "merged_symbol_results": true,
+      "node_count": 2
+    }
+  ],
+  "contracts": [
+    {
+      "owner": "downstream/security/service.py:SecurityService",
+      "reuse": "Stable identity/content snapshots, scan state and existing quarantine path",
+      "companions": [
+        "downstream/security/policy.py",
+        "downstream/security/models.py",
+        "downstream/security/vault.py"
+      ],
+      "entry": "tools/terminal_tool.py imports preflight_command and revalidate_command",
+      "test": "tests/security/test_security_center.py",
+      "native_gap": "real ClamAV engine/definitions skipped"
+    },
+    {
+      "owner": "downstream/security/store.py:SecurityStore",
+      "reuse": "Existing scanner cache/audit/storage owner",
+      "test": "tests/security/test_security_center.py"
+    },
+    {
+      "owner": "tools/approval.py:detect_dangerous_command",
+      "reuse": "Existing Windows destructive-command classification",
+      "test": "tests/tools/test_approval_windows.py"
+    },
+    {
+      "owner": "tools/write_approval.py:evaluate_gate",
+      "reuse": "Existing memory/skill write approval and pending store",
+      "test_status": "mapped source; dedicated gate tests not executed in this initial baseline"
+    },
+    {
+      "owner": "agent/file_safety.py:get_read_block_error",
+      "reuse": "Existing credential/protected-file read policy",
+      "entry": "tools/file_tools.py resolves targets then calls get_read_block_error",
+      "test": "tests/agent/test_file_safety_credentials.py"
+    },
+    {
+      "owner": "hermes_cli/approval_mode.py:run_approval_mode_command",
+      "reuse": "Canonical profile config owner and managed/write guard; no prompt rebuild",
+      "test": "tests/tools/test_approval_mode_parity.py",
+      "policy_comparison": "No blanket stronger-than-upstream claim; /yolo acceptance remains separate"
+    },
+    {
+      "owner": "hermes_cli/process_identity.py:build_spawn_tag",
+      "reuse": "PID/create_time identity and existing spawn ledger",
+      "test": "tests/hermes_cli/test_process_identity.py",
+      "proof_boundary": "Unit tests use fake psutil, not production process termination"
+    }
+  ],
+  "companion_sha256": {
+    "downstream/security/policy.py": "1cd10bd7da784000b07833c67ffce8724aa49fb81a78d9f5784782186fe10783",
+    "downstream/security/models.py": "a51e14b3567f7143d694be9830367896f43518338ab4e290f82678efdb9404d7",
+    "downstream/security/vault.py": "ec86706454a03b23b2b0cfa90d50dca8172b830fec51d65c40d28185d1d992b4",
+    "tools/terminal_tool.py": "3c9f526b1789ff7ba09bedcdefc03d170ff39946a3c1da8d276f25421d4f7c27",
+    "tools/file_tools.py": "4c09d9951c983c1061de46f8c4b488c4e7a2190a5c669b727d80fb677e8cb9b5",
+    "tools/environments/docker_isolation.py": "a3adf66c3e8f76294bc6d8bed4f8cb8682e7974abed2571ee810a27bca7af49d",
+    "hermes_cli/update_cmd.py": "889d7ce9db5402522e33ec05ef28c638abc12e993bdb8beaf2f1211095c545b6",
+    "hermes_cli/session_recovery.py": "eb8d22c771a329e9b2713ea59972d1e83be09d70a2a0558476b00e4ed25ea8f7"
+  },
+  "baseline": {
+    "initial": {
+      "passed": 121,
+      "failed": 1,
+      "skipped": 1,
+      "log_sha256": "24a4b7a1fc15c22e0f837abefddebf1a2e2e3906e326cdd263b16460b0db36b3",
+      "failure": "bundled YARA EICAR test: existing optional security extra absent from initial dev-only environment"
+    },
+    "scanner_recheck": {
+      "passed": 35,
+      "skipped": 1,
+      "log_sha256": "5992ed149f2609fca7860f25309be3283e17ad15967ed8a60a0684984b8ed94a",
+      "resolution": "Frozen existing yara-python 4.5.4 supplied to test-only environment; scanner product unchanged"
+    },
+    "identity_recovery_approval": {
+      "passed": 41,
+      "failed": 0,
+      "skipped": 0,
+      "log_sha256": "1fa29362ed167b477931e0085cf2507cb93364345f49f6d1ef263bd4df8cbc0c",
+      "command": "bash scripts/run_tests.sh tests/hermes_cli/test_process_identity.py tests/hermes_cli/test_update_pause_recovery.py tests/tools/test_approval_mode_parity.py -j 2 --file-timeout 180",
+      "proof_boundary": "Native Windows Python executes tests; lifecycle interactions are mocked, no live fleet recovery claim"
+    }
+  },
+  "blocked_public_owner": {
+    "file": "gateway/run.py",
+    "reason": "CodeGraph 1MiB size limit; never substitute AST/grep for graph acceptance"
+  },
+  "outstanding": [
+    "provider and memory boundaries",
+    "full recovery/storage mapping",
+    "native protected-owner E2E",
+    "all advisory deltas",
+    "Gateway coverage"
+  ]
+}

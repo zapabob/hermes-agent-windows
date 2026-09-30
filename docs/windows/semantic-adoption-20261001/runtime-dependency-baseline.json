@@ -1,0 +1,1027 @@
+{
+  "campaign": "windows-semantic-adoption-20261001",
+  "complete": false,
+  "contexts": {
+    "D_BASE": {
+      "head": "a553729853b9648bf8ca9e5c3c7e54365d7f5c62",
+      "manifest_sha256": "c604efd08ceee56ad487f5c950d5c7c6dd859a3078419113ae95a467f003c530",
+      "lock_sha256": "6b5eadfb4345f8674a9af65545fe299e7ef314648a1e9b5c7f7622751316337e",
+      "required_dependencies": [
+        "openai==2.54.0",
+        "certifi==2026.5.20",
+        "python-dotenv==1.2.2",
+        "fire==0.7.1",
+        "httpx[socks]==0.28.1",
+        "rich==14.3.3",
+        "tenacity==9.1.4",
+        "pyyaml==6.0.3",
+        "ruamel.yaml==0.18.17",
+        "requests>=2.34,<3",
+        "jinja2==3.1.6",
+        "firecrawl-anydoc==0.2.4",
+        "pydantic==2.13.4",
+        "prompt_toolkit==3.0.52",
+        "croniter==6.0.0",
+        "snowballstemmer==3.1.1",
+        "packaging==26.0",
+        "Markdown==3.10.2",
+        "PyJWT[crypto]==2.15.1",
+        "urllib3>=2.7.0,<3",
+        "oauthlib==4.0.0",
+        "cryptography==50.0.0",
+        "tzdata==2025.3; sys_platform == 'win32'",
+        "psutil==7.2.2",
+        "websockets==15.0.1",
+        "pathspec==1.1.1",
+        "fastapi>=0.104.0,<1",
+        "uvicorn[standard]>=0.31.0,<1",
+        "python-multipart>=0.0.9,<1",
+        "ptyprocess>=0.7.0,<1; sys_platform != 'win32'",
+        "pywinpty>=2.0.0,<3; sys_platform == 'win32'",
+        "pywin32>=306,<312; sys_platform == 'win32'",
+        "Pillow==12.3.0",
+        "pillow-heif>=1.4.0,<2",
+        "concurrent-log-handler==0.9.29; sys_platform == 'win32'",
+        "nemo-relay>=0.8.3,<0.9; (sys_platform == 'darwin' and platform_machine == 'arm64') or (sys_platform == 'linux' and platform_machine == 'x86_64' and 'android' not in platform_release) or (sys_platform == 'linux' and platform_machine == 'aarch64' and 'android' not in platform_release) or (sys_platform == 'win32' and platform_machine == 'AMD64') or (sys_platform == 'win32' and platform_machine == 'ARM64')"
+      ],
+      "optional_dependencies": {
+        "anthropic": [
+          "anthropic==0.125.0"
+        ],
+        "exa": [
+          "exa-py==2.10.2"
+        ],
+        "firecrawl": [
+          "firecrawl-py==4.17.0"
+        ],
+        "parallel-web": [
+          "parallel-web==0.4.2"
+        ],
+        "fal": [
+          "fal-client==0.13.1"
+        ],
+        "edge-tts": [
+          "edge-tts==7.2.7"
+        ],
+        "modal": [
+          "modal==1.3.4"
+        ],
+        "daytona": [
+          "daytona==0.155.0"
+        ],
+        "vercel": [
+          "vercel==0.7.2"
+        ],
+        "hindsight": [
+          "hindsight-client==0.6.1"
+        ],
+        "dev": [
+          "debugpy==1.8.20",
+          "pytest==9.1.1",
+          "pytest-asyncio==1.3.0",
+          "mcp==2.0.0",
+          "httpx2==2.12.0",
+          "starlette==1.3.1",
+          "ty==0.0.21",
+          "ruff==0.15.10",
+          "setuptools==83.0.0"
+        ],
+        "messaging": [
+          "python-telegram-bot[webhooks]==22.8",
+          "discord.py[voice]==2.7.1",
+          "aiohttp==3.14.3",
+          "brotlicffi==1.2.0.1",
+          "slack-bolt==1.30.0",
+          "slack-sdk==3.43.0",
+          "qrcode==7.4.2"
+        ],
+        "voice-push": [],
+        "cron": [],
+        "slack": [
+          "slack-bolt==1.30.0",
+          "slack-sdk==3.43.0",
+          "aiohttp==3.14.3"
+        ],
+        "matrix": [
+          "mautrix[encryption]==0.21.1",
+          "aiosqlite==0.22.1",
+          "asyncpg==0.31.0",
+          "aiohttp-socks==0.11.0",
+          "aiohttp==3.14.3"
+        ],
+        "wecom": [
+          "defusedxml==0.7.1"
+        ],
+        "tts-premium": [
+          "elevenlabs==1.59.0"
+        ],
+        "voice": [
+          "faster-whisper==1.2.1",
+          "sounddevice==0.5.5",
+          "numpy==2.4.3"
+        ],
+        "wake": [
+          "openwakeword==0.6.0",
+          "onnxruntime==1.27.0",
+          "sherpa-onnx==1.13.4",
+          "sentencepiece==0.2.2",
+          "pvporcupine==4.0.3",
+          "sounddevice==0.5.5",
+          "numpy==2.4.3",
+          "ai-edge-litert==2.1.6; platform_system == 'Darwin'"
+        ],
+        "honcho": [
+          "honcho-ai==2.2.0"
+        ],
+        "supermemory": [
+          "supermemory==3.50.0"
+        ],
+        "mem0": [
+          "mem0ai==2.0.10"
+        ],
+        "hakua-memory": [
+          "hakua-memory==0.3.5"
+        ],
+        "vision": [],
+        "pty": [],
+        "security": [
+          "yara-python==4.5.4"
+        ],
+        "mcp": [
+          "mcp==2.0.0",
+          "httpx2==2.12.0",
+          "starlette==1.3.1"
+        ],
+        "nemo-relay": [],
+        "homeassistant": [
+          "aiohttp==3.14.3"
+        ],
+        "sms": [
+          "aiohttp==3.14.3"
+        ],
+        "teams": [
+          "microsoft-teams-apps==2.0.13.4",
+          "aiohttp==3.14.3"
+        ],
+        "computer-use": [
+          "mcp==2.0.0",
+          "httpx2==2.12.0",
+          "starlette==1.3.1"
+        ],
+        "acp": [
+          "agent-client-protocol==0.9.0"
+        ],
+        "mistral": [
+          "mistralai==2.4.8"
+        ],
+        "otlp": [
+          "opentelemetry-sdk==1.39.1",
+          "opentelemetry-exporter-otlp-proto-http==1.39.1"
+        ],
+        "bedrock": [
+          "boto3==1.42.89"
+        ],
+        "vertex": [
+          "google-auth==2.58.0"
+        ],
+        "azure-identity": [
+          "azure-identity==1.25.3"
+        ],
+        "termux": [
+          "python-telegram-bot[webhooks]==22.8",
+          "hermes-agent[cron]",
+          "hermes-agent[mcp]",
+          "hermes-agent[honcho]",
+          "hermes-agent[acp]"
+        ],
+        "termux-all": [
+          "hermes-agent[termux]",
+          "hermes-agent[google]",
+          "hermes-agent[homeassistant]",
+          "hermes-agent[sms]",
+          "hermes-agent[web]",
+          "hermes-agent[pty]"
+        ],
+        "dingtalk": [
+          "dingtalk-stream==0.24.3",
+          "alibabacloud-dingtalk==2.2.42",
+          "qrcode==7.4.2"
+        ],
+        "feishu": [
+          "lark-oapi==1.6.8",
+          "qrcode==7.4.2"
+        ],
+        "google": [
+          "google-api-python-client==2.194.0",
+          "google-auth==2.58.0",
+          "google-auth-oauthlib==1.3.1",
+          "google-auth-httplib2==0.3.1",
+          "httplib2==0.32.0",
+          "pyasn1==0.6.4"
+        ],
+        "youtube": [
+          "youtube-transcript-api==1.2.4"
+        ],
+        "web": [
+          "fastapi==0.133.1",
+          "uvicorn[standard]==0.41.0",
+          "starlette==1.3.1",
+          "python-multipart==0.0.32"
+        ],
+        "all": [
+          "hermes-agent[cron]",
+          "hermes-agent[pty]",
+          "hermes-agent[mcp]",
+          "hermes-agent[homeassistant]",
+          "hermes-agent[sms]",
+          "hermes-agent[acp]",
+          "hermes-agent[google]",
+          "hermes-agent[web]",
+          "hermes-agent[security]",
+          "hermes-agent[youtube]"
+        ]
+      },
+      "python_files_ast_parsed": 5699,
+      "parse_errors": 0,
+      "candidate_imports": 151,
+      "candidate_receipt_sha256": "9c037c1af1680dc5a22ebcf9b45641aaf282723fdecce12de2c27f9b85af68a7"
+    },
+    "R_AFTER": {
+      "head": "d3630f853239e8c41ce7201e09fbdf39bcbc5431",
+      "manifest_sha256": "153c8c9f550a89448f699e37384e78663462b8784e85242dd5ad4e35dbb5e093",
+      "lock_sha256": "7190a0f99c055ebff1d420b27b84e4e1bc3240c64a3982a33182de5ef8ee54b0",
+      "required_dependencies": [
+        "openai==2.24.0",
+        "certifi==2026.5.20",
+        "python-dotenv==1.2.2",
+        "fire==0.7.1",
+        "httpx[socks]==0.28.1",
+        "rich==14.3.3",
+        "tenacity==9.1.4",
+        "pyyaml==6.0.3",
+        "ruamel.yaml==0.18.17",
+        "requests==2.33.0",
+        "jinja2==3.1.6",
+        "firecrawl-anydoc==0.2.4",
+        "pydantic==2.13.4",
+        "prompt_toolkit==3.0.52",
+        "croniter==6.0.0",
+        "snowballstemmer==3.1.1",
+        "packaging==26.0",
+        "Markdown==3.10.2",
+        "PyJWT[crypto]==2.13.0",
+        "urllib3>=2.7.0,<3",
+        "cryptography==50.0.0",
+        "tzdata==2025.3; sys_platform == 'win32'",
+        "psutil==7.2.2",
+        "websockets==15.0.1",
+        "pathspec==1.1.1",
+        "fastapi>=0.104.0,<1",
+        "uvicorn[standard]>=0.31.0,<1",
+        "python-multipart>=0.0.9,<1",
+        "ptyprocess>=0.7.0,<1; sys_platform != 'win32'",
+        "pywinpty>=2.0.0,<3; sys_platform == 'win32'",
+        "pywin32>=306,<312; sys_platform == 'win32'",
+        "Pillow==12.3.0",
+        "concurrent-log-handler==0.9.29; sys_platform == 'win32'",
+        "nemo-relay>=0.8.3,<0.9; (sys_platform == 'darwin' and platform_machine == 'arm64') or (sys_platform == 'linux' and platform_machine == 'x86_64' and 'android' not in platform_release) or (sys_platform == 'linux' and platform_machine == 'aarch64' and 'android' not in platform_release) or (sys_platform == 'win32' and platform_machine == 'AMD64') or (sys_platform == 'win32' and platform_machine == 'ARM64')"
+      ],
+      "optional_dependencies": {
+        "anthropic": [
+          "anthropic==0.87.0"
+        ],
+        "exa": [
+          "exa-py==2.10.2"
+        ],
+        "firecrawl": [
+          "firecrawl-py==4.17.0"
+        ],
+        "parallel-web": [
+          "parallel-web==0.4.2"
+        ],
+        "fal": [
+          "fal-client==0.13.1"
+        ],
+        "edge-tts": [
+          "edge-tts==7.2.7"
+        ],
+        "modal": [
+          "modal==1.3.4"
+        ],
+        "daytona": [
+          "daytona==0.155.0"
+        ],
+        "vercel": [
+          "vercel==0.7.2"
+        ],
+        "hindsight": [
+          "hindsight-client==0.6.1"
+        ],
+        "dev": [
+          "debugpy==1.8.20",
+          "pytest==9.1.1",
+          "pytest-asyncio==1.3.0",
+          "mcp==2.0.0",
+          "httpx2==2.7.0",
+          "starlette==1.3.1",
+          "ty==0.0.21",
+          "ruff==0.15.10",
+          "setuptools==83.0.0"
+        ],
+        "messaging": [
+          "python-telegram-bot[webhooks]==22.8",
+          "discord.py[voice]==2.7.1",
+          "aiohttp==3.14.3",
+          "brotlicffi==1.2.0.1",
+          "slack-bolt==1.30.0",
+          "slack-sdk==3.43.0",
+          "qrcode==7.4.2"
+        ],
+        "cron": [],
+        "slack": [
+          "slack-bolt==1.30.0",
+          "slack-sdk==3.43.0",
+          "aiohttp==3.14.3"
+        ],
+        "matrix": [
+          "mautrix[encryption]==0.21.1",
+          "aiosqlite==0.22.1",
+          "asyncpg==0.31.0",
+          "aiohttp-socks==0.11.0",
+          "aiohttp==3.14.3"
+        ],
+        "wecom": [
+          "defusedxml==0.7.1"
+        ],
+        "tts-premium": [
+          "elevenlabs==1.59.0"
+        ],
+        "voice": [
+          "faster-whisper==1.2.1",
+          "sounddevice==0.5.5",
+          "numpy==2.4.3"
+        ],
+        "wake": [
+          "openwakeword==0.6.0",
+          "onnxruntime==1.27.0",
+          "sherpa-onnx==1.13.4",
+          "sentencepiece==0.2.2",
+          "pvporcupine==4.0.3",
+          "sounddevice==0.5.5",
+          "numpy==2.4.3",
+          "ai-edge-litert==2.1.6; platform_system == 'Darwin'"
+        ],
+        "honcho": [
+          "honcho-ai==2.2.0"
+        ],
+        "supermemory": [
+          "supermemory==3.50.0"
+        ],
+        "mem0": [
+          "mem0ai==2.0.10"
+        ],
+        "vision": [],
+        "pty": [],
+        "mcp": [
+          "mcp==2.0.0",
+          "httpx2==2.7.0",
+          "starlette==1.3.1"
+        ],
+        "nemo-relay": [],
+        "homeassistant": [
+          "aiohttp==3.14.3"
+        ],
+        "sms": [
+          "aiohttp==3.14.3"
+        ],
+        "teams": [
+          "microsoft-teams-apps==2.0.13.4",
+          "aiohttp==3.14.3"
+        ],
+        "computer-use": [
+          "mcp==2.0.0",
+          "httpx2==2.7.0",
+          "starlette==1.3.1"
+        ],
+        "acp": [
+          "agent-client-protocol==0.9.0"
+        ],
+        "mistral": [
+          "mistralai==2.4.8"
+        ],
+        "otlp": [
+          "opentelemetry-sdk==1.39.1",
+          "opentelemetry-exporter-otlp-proto-http==1.39.1"
+        ],
+        "bedrock": [
+          "boto3==1.42.89"
+        ],
+        "vertex": [
+          "google-auth==2.55.1"
+        ],
+        "azure-identity": [
+          "azure-identity==1.25.3"
+        ],
+        "termux": [
+          "python-telegram-bot[webhooks]==22.8",
+          "hermes-agent[cron]",
+          "hermes-agent[mcp]",
+          "hermes-agent[honcho]",
+          "hermes-agent[acp]"
+        ],
+        "termux-all": [
+          "hermes-agent[termux]",
+          "hermes-agent[google]",
+          "hermes-agent[homeassistant]",
+          "hermes-agent[sms]",
+          "hermes-agent[web]",
+          "hermes-agent[pty]"
+        ],
+        "dingtalk": [
+          "dingtalk-stream==0.24.3",
+          "alibabacloud-dingtalk==2.2.42",
+          "qrcode==7.4.2"
+        ],
+        "feishu": [
+          "lark-oapi==1.6.8",
+          "qrcode==7.4.2"
+        ],
+        "google": [
+          "google-api-python-client==2.194.0",
+          "google-auth==2.55.1",
+          "google-auth-oauthlib==1.3.1",
+          "google-auth-httplib2==0.3.1",
+          "httplib2==0.32.0",
+          "pyasn1==0.6.4"
+        ],
+        "youtube": [
+          "youtube-transcript-api==1.2.4"
+        ],
+        "web": [
+          "fastapi==0.133.1",
+          "uvicorn[standard]==0.41.0",
+          "starlette==1.3.1",
+          "python-multipart==0.0.32"
+        ],
+        "all": [
+          "hermes-agent[cron]",
+          "hermes-agent[pty]",
+          "hermes-agent[mcp]",
+          "hermes-agent[homeassistant]",
+          "hermes-agent[sms]",
+          "hermes-agent[acp]",
+          "hermes-agent[google]",
+          "hermes-agent[web]",
+          "hermes-agent[youtube]"
+        ]
+      },
+      "python_files_ast_parsed": 5545,
+      "parse_errors": 0,
+      "candidate_imports": 164,
+      "candidate_receipt_sha256": "667f5fb1c7086e8c416bbecd6a3f1125e9f795d6dfddd64c0618bde24bf4e6e8"
+    },
+    "U_TARGET": {
+      "head": "1a269fcd3b61971bd05e841f80154279dd0a7e65",
+      "manifest_sha256": "856ddfe32a7ccbfc5ba4e2b73c43864aa673dcab794b717cc08f1354292fe9df",
+      "lock_sha256": "1031e29694734bb543173ec74769bee7f04ee24fdc07cb2577a9d328176a70cf",
+      "required_dependencies": [
+        "openai==2.24.0; python_version >= '3.14'",
+        "certifi==2026.5.20; python_version >= '3.14'",
+        "truststore==0.10.4; python_version >= '3.14'",
+        "python-dotenv==1.2.2; python_version >= '3.14'",
+        "fire==0.7.1; python_version >= '3.14'",
+        "httpx[socks]==0.28.1; python_version >= '3.14'",
+        "rich==14.3.3; python_version >= '3.14'",
+        "tenacity==9.1.4; python_version >= '3.14'",
+        "tomli-w==1.2.0; python_version >= '3.14'",
+        "ruamel.yaml==0.18.16; python_version >= '3.14'",
+        "requests==2.33.0; python_version >= '3.14'",
+        "jinja2==3.1.6; python_version >= '3.14'",
+        "firecrawl-anydoc==0.2.4; python_version >= '3.14'",
+        "pydantic==2.13.4; python_version >= '3.14'",
+        "prompt_toolkit==3.0.52; python_version >= '3.14'",
+        "croniter==6.0.0; python_version >= '3.14'",
+        "snowballstemmer==3.1.1; python_version >= '3.14'",
+        "packaging==26.0; python_version >= '3.14'",
+        "Markdown==3.10.2; python_version >= '3.14'",
+        "PyJWT[crypto]==2.13.0; python_version >= '3.14'",
+        "urllib3>=2.7.0,<3; python_version >= '3.14'",
+        "cryptography==50.0.1; python_version >= '3.14'",
+        "tzdata==2025.3; sys_platform == 'win32' and python_version >= '3.14'",
+        "psutil==7.2.2; sys_platform != 'android' and python_version >= '3.14'",
+        "psutil @ git+https://github.com/giampaolo/psutil.git@380bd2b59c67b0e1b04bbf3a90b11744f4f96644 ; sys_platform == 'android' and python_version >= '3.14'",
+        "websockets==15.0.1; python_version >= '3.14'",
+        "browser-harness==0.1.13; python_version >= '3.14'",
+        "pathspec==1.1.1; python_version >= '3.14'",
+        "fastapi>=0.104.0,<1; python_version >= '3.14'",
+        "uvicorn>=0.31.0,<1; python_version >= '3.14'",
+        "httptools>=0.6.3,<0.9; python_version >= '3.14'",
+        "watchfiles>=0.20,<2; python_version >= '3.14'",
+        "python-multipart>=0.0.9,<1; python_version >= '3.14'",
+        "ptyprocess>=0.7.0,<1; sys_platform != 'win32' and python_version >= '3.14'",
+        "pywinpty>=3.0.5,<4; sys_platform == 'win32' and python_version >= '3.14'",
+        "pywin32>=306,<312; sys_platform == 'win32' and python_version >= '3.14'",
+        "winrt-windows-applicationmodel>=3.2.1,<4; sys_platform == 'win32' and python_version >= '3.14'",
+        "winrt-windows-foundation>=3.2.1,<4; sys_platform == 'win32' and python_version >= '3.14'",
+        "winrt-windows-foundation-collections>=3.2.1,<4; sys_platform == 'win32' and python_version >= '3.14'",
+        "winrt-windows-services-store>=3.2.1,<4; sys_platform == 'win32' and python_version >= '3.14'",
+        "Pillow==12.3.0; python_version >= '3.14'",
+        "pillow-heif>=1.4.0,<2; python_version >= '3.14'",
+        "resvg-py==0.4.0; python_version >= '3.14'",
+        "concurrent-log-handler==0.9.29; sys_platform == 'win32' and python_version >= '3.14'",
+        "nemo-relay>=0.9,<0.10; ((sys_platform == 'darwin' and platform_machine == 'arm64') or (sys_platform == 'linux' and platform_machine == 'x86_64' and 'android' not in platform_release) or (sys_platform == 'linux' and platform_machine == 'aarch64' and 'android' not in platform_release) or (sys_platform == 'win32' and platform_machine == 'AMD64') or (sys_platform == 'win32' and platform_machine == 'ARM64')) and python_version >= '3.14'"
+      ],
+      "optional_dependencies": {
+        "uvloop": [
+          "uvloop>=0.15.1,<0.24; sys_platform != 'win32' and sys_platform != 'cygwin' and sys_platform != 'android' and platform_python_implementation != 'PyPy'"
+        ],
+        "anthropic": [
+          "anthropic==0.87.0"
+        ],
+        "exa": [
+          "exa-py==2.10.2"
+        ],
+        "firecrawl": [
+          "firecrawl-py==4.17.0"
+        ],
+        "parallel-web": [
+          "parallel-web==0.4.2"
+        ],
+        "ddgs": [
+          "ddgs==9.16.0"
+        ],
+        "fal": [
+          "fal-client==0.13.1"
+        ],
+        "edge-tts": [
+          "edge-tts==7.2.7"
+        ],
+        "neutts": [
+          "neutts[all]==1.4.1; python_version < '3.14'"
+        ],
+        "kittentts": [
+          "kittentts @ https://github.com/KittenML/KittenTTS/releases/download/0.8.1/kittentts-0.8.1-py3-none-any.whl ; (platform_machine != 'ARM64' or sys_platform != 'win32') and (platform_machine != 'x86_64' or sys_platform != 'darwin')",
+          "misaki[en] @ git+https://github.com/NousResearch/misaki.git@f03fd2be7346952a83d3d4845c217fc7667f322d ; (platform_machine != 'ARM64' or sys_platform != 'win32') and (platform_machine != 'x86_64' or sys_platform != 'darwin')",
+          "soundfile==0.14.0; (platform_machine != 'ARM64' or sys_platform != 'win32') and (platform_machine != 'x86_64' or sys_platform != 'darwin')"
+        ],
+        "piper": [
+          "piper-tts==1.8.0; (platform_machine != 'ARM64' or sys_platform != 'win32') and (platform_machine != 'x86_64' or sys_platform != 'darwin')"
+        ],
+        "modal": [
+          "modal==1.5.5"
+        ],
+        "daytona": [
+          "daytona==0.155.0"
+        ],
+        "vercel": [
+          "vercel==0.7.2"
+        ],
+        "google-meet": [
+          "playwright==1.62.0",
+          "websockets==15.0.1"
+        ],
+        "messaging": [
+          "python-telegram-bot[webhooks]==22.8",
+          "discord.py[voice]==2.7.1",
+          "aiohttp==3.14.3",
+          "brotlicffi==1.2.0.2",
+          "slack-bolt==1.30.0",
+          "slack-sdk==3.44.1",
+          "qrcode==7.4.2"
+        ],
+        "cron": [],
+        "slack": [
+          "slack-bolt==1.30.0",
+          "slack-sdk==3.44.1",
+          "aiohttp==3.14.3"
+        ],
+        "matrix": [
+          "mautrix[encryption]==0.21.1; sys_platform == 'linux'",
+          "aiosqlite==0.22.1; sys_platform == 'linux'",
+          "asyncpg==0.31.0; sys_platform == 'linux'",
+          "aiohttp-socks==0.11.0; sys_platform == 'linux'",
+          "aiohttp==3.14.3; sys_platform == 'linux'"
+        ],
+        "wecom": [
+          "defusedxml==0.7.1"
+        ],
+        "tts-premium": [
+          "elevenlabs==1.59.0"
+        ],
+        "voice": [
+          "faster-whisper==1.2.1; (platform_machine != 'ARM64' or sys_platform != 'win32') and (platform_machine != 'x86_64' or platform_system != 'Darwin')",
+          "sounddevice==0.5.5",
+          "numpy==2.4.3"
+        ],
+        "wake": [
+          "pyopen-wakeword==1.1.0; (platform_machine != 'ARM64' or sys_platform != 'win32') and (platform_machine != 'x86_64' or sys_platform != 'darwin')",
+          "sherpa-onnx==1.13.8",
+          "sherpa-onnx-core==1.13.8",
+          "sentencepiece==0.2.2",
+          "pypinyin==0.55.0",
+          "pvporcupine==4.0.3",
+          "sounddevice==0.5.5",
+          "numpy==2.4.3"
+        ],
+        "honcho": [
+          "honcho-ai==2.2.0"
+        ],
+        "telegram": [
+          "python-telegram-bot[webhooks]==22.8"
+        ],
+        "discord": [
+          "discord.py[voice]==2.7.1"
+        ],
+        "stt-whisper": [
+          "faster-whisper==1.2.1; (platform_machine != 'ARM64' or sys_platform != 'win32') and (platform_machine != 'x86_64' or platform_system != 'Darwin')"
+        ],
+        "audio-io": [
+          "sounddevice==0.5.5",
+          "numpy==2.4.3"
+        ],
+        "silk": [
+          "pilk==0.2.4"
+        ],
+        "wake-openwakeword": [
+          "pyopen-wakeword==1.1.0; (platform_machine != 'ARM64' or sys_platform != 'win32') and (platform_machine != 'x86_64' or sys_platform != 'darwin')"
+        ],
+        "wake-sherpa": [
+          "sherpa-onnx==1.13.8",
+          "sherpa-onnx-core==1.13.8",
+          "sentencepiece==0.2.2",
+          "pypinyin==0.55.0"
+        ],
+        "wake-porcupine": [
+          "pvporcupine==4.0.3"
+        ],
+        "google-chat": [
+          "google-cloud-pubsub==2.39.2; platform_machine != 'ARM64' or sys_platform != 'win32'"
+        ],
+        "doc-extract": [
+          "firecrawl-anydoc==0.2.4"
+        ],
+        "trace-upload": [
+          "huggingface-hub==1.24.0"
+        ],
+        "supermemory": [
+          "supermemory==3.50.0"
+        ],
+        "mem0": [
+          "mem0ai==2.0.10; platform_machine != 'ARM64' or sys_platform != 'win32'"
+        ],
+        "vision": [],
+        "pty": [],
+        "mcp": [
+          "mcp==2.0.0",
+          "httpx2==2.7.0",
+          "starlette==1.3.1"
+        ],
+        "nemo-relay": [],
+        "homeassistant": [
+          "aiohttp==3.14.3"
+        ],
+        "sms": [
+          "aiohttp==3.14.3"
+        ],
+        "teams": [
+          "microsoft-teams-apps==2.0.13.4",
+          "aiohttp==3.14.3"
+        ],
+        "computer-use": [
+          "mcp==2.0.0",
+          "httpx2==2.7.0",
+          "starlette==1.3.1"
+        ],
+        "acp": [
+          "agent-client-protocol==0.9.0"
+        ],
+        "mistral": [
+          "mistralai==2.4.8"
+        ],
+        "otlp": [
+          "opentelemetry-sdk==1.39.1",
+          "opentelemetry-exporter-otlp-proto-http==1.39.1"
+        ],
+        "langfuse": [
+          "langfuse==4.15.2"
+        ],
+        "bedrock": [
+          "boto3==1.42.89"
+        ],
+        "vertex": [
+          "google-auth==2.55.1"
+        ],
+        "azure-identity": [
+          "azure-identity==1.25.3"
+        ],
+        "termux": [
+          "python-telegram-bot[webhooks]==22.8",
+          "hermes-agent[cron]",
+          "hermes-agent[mcp]",
+          "hermes-agent[honcho]",
+          "hermes-agent[acp]"
+        ],
+        "termux-all": [
+          "hermes-agent[termux]",
+          "hermes-agent[google]",
+          "hermes-agent[homeassistant]",
+          "hermes-agent[sms]",
+          "hermes-agent[web]",
+          "hermes-agent[pty]"
+        ],
+        "dingtalk": [
+          "dingtalk-stream==0.24.3",
+          "alibabacloud-dingtalk==2.2.42",
+          "qrcode==7.4.2"
+        ],
+        "feishu": [
+          "lark-oapi==1.6.8",
+          "qrcode==7.4.2"
+        ],
+        "google": [
+          "google-api-python-client==2.194.0",
+          "google-auth==2.55.1",
+          "google-auth-oauthlib==1.3.1",
+          "google-auth-httplib2==0.3.1",
+          "httplib2==0.32.0",
+          "pyasn1==0.6.4"
+        ],
+        "youtube": [
+          "youtube-transcript-api==1.2.4"
+        ],
+        "web": [
+          "fastapi==0.133.1",
+          "uvicorn==0.41.0",
+          "starlette==1.3.1",
+          "python-multipart==0.0.32"
+        ],
+        "all": [
+          "hermes-agent[cron]",
+          "hermes-agent[pty]",
+          "hermes-agent[mcp]",
+          "hermes-agent[uvloop]",
+          "hermes-agent[homeassistant]",
+          "hermes-agent[sms]",
+          "hermes-agent[acp]",
+          "hermes-agent[google]",
+          "hermes-agent[web]",
+          "hermes-agent[youtube]"
+        ]
+      },
+      "python_files_ast_parsed": 8007,
+      "parse_errors": 0,
+      "candidate_imports": 1804,
+      "candidate_receipt_sha256": "5130bb10f0e883853b311110dc3b298bf34581dc2d427f9a70d6e72212ed0a24"
+    },
+    "integration": {
+      "head": "db5ee25f9cefe60c54190c7e1f36c1e2c5ededd4",
+      "manifest_sha256": "c604efd08ceee56ad487f5c950d5c7c6dd859a3078419113ae95a467f003c530",
+      "lock_sha256": "6b5eadfb4345f8674a9af65545fe299e7ef314648a1e9b5c7f7622751316337e",
+      "required_dependencies": [
+        "openai==2.54.0",
+        "certifi==2026.5.20",
+        "python-dotenv==1.2.2",
+        "fire==0.7.1",
+        "httpx[socks]==0.28.1",
+        "rich==14.3.3",
+        "tenacity==9.1.4",
+        "pyyaml==6.0.3",
+        "ruamel.yaml==0.18.17",
+        "requests>=2.34,<3",
+        "jinja2==3.1.6",
+        "firecrawl-anydoc==0.2.4",
+        "pydantic==2.13.4",
+        "prompt_toolkit==3.0.52",
+        "croniter==6.0.0",
+        "snowballstemmer==3.1.1",
+        "packaging==26.0",
+        "Markdown==3.10.2",
+        "PyJWT[crypto]==2.15.1",
+        "urllib3>=2.7.0,<3",
+        "oauthlib==4.0.0",
+        "cryptography==50.0.0",
+        "tzdata==2025.3; sys_platform == 'win32'",
+        "psutil==7.2.2",
+        "websockets==15.0.1",
+        "pathspec==1.1.1",
+        "fastapi>=0.104.0,<1",
+        "uvicorn[standard]>=0.31.0,<1",
+        "python-multipart>=0.0.9,<1",
+        "ptyprocess>=0.7.0,<1; sys_platform != 'win32'",
+        "pywinpty>=2.0.0,<3; sys_platform == 'win32'",
+        "pywin32>=306,<312; sys_platform == 'win32'",
+        "Pillow==12.3.0",
+        "pillow-heif>=1.4.0,<2",
+        "concurrent-log-handler==0.9.29; sys_platform == 'win32'",
+        "nemo-relay>=0.8.3,<0.9; (sys_platform == 'darwin' and platform_machine == 'arm64') or (sys_platform == 'linux' and platform_machine == 'x86_64' and 'android' not in platform_release) or (sys_platform == 'linux' and platform_machine == 'aarch64' and 'android' not in platform_release) or (sys_platform == 'win32' and platform_machine == 'AMD64') or (sys_platform == 'win32' and platform_machine == 'ARM64')"
+      ],
+      "optional_dependencies": {
+        "anthropic": [
+          "anthropic==0.125.0"
+        ],
+        "exa": [
+          "exa-py==2.10.2"
+        ],
+        "firecrawl": [
+          "firecrawl-py==4.17.0"
+        ],
+        "parallel-web": [
+          "parallel-web==0.4.2"
+        ],
+        "fal": [
+          "fal-client==0.13.1"
+        ],
+        "edge-tts": [
+          "edge-tts==7.2.7"
+        ],
+        "modal": [
+          "modal==1.3.4"
+        ],
+        "daytona": [
+          "daytona==0.155.0"
+        ],
+        "vercel": [
+          "vercel==0.7.2"
+        ],
+        "hindsight": [
+          "hindsight-client==0.6.1"
+        ],
+        "dev": [
+          "debugpy==1.8.20",
+          "pytest==9.1.1",
+          "pytest-asyncio==1.3.0",
+          "mcp==2.0.0",
+          "httpx2==2.12.0",
+          "starlette==1.3.1",
+          "ty==0.0.21",
+          "ruff==0.15.10",
+          "setuptools==83.0.0"
+        ],
+        "messaging": [
+          "python-telegram-bot[webhooks]==22.8",
+          "discord.py[voice]==2.7.1",
+          "aiohttp==3.14.3",
+          "brotlicffi==1.2.0.1",
+          "slack-bolt==1.30.0",
+          "slack-sdk==3.43.0",
+          "qrcode==7.4.2"
+        ],
+        "voice-push": [],
+        "cron": [],
+        "slack": [
+          "slack-bolt==1.30.0",
+          "slack-sdk==3.43.0",
+          "aiohttp==3.14.3"
+        ],
+        "matrix": [
+          "mautrix[encryption]==0.21.1",
+          "aiosqlite==0.22.1",
+          "asyncpg==0.31.0",
+          "aiohttp-socks==0.11.0",
+          "aiohttp==3.14.3"
+        ],
+        "wecom": [
+          "defusedxml==0.7.1"
+        ],
+        "tts-premium": [
+          "elevenlabs==1.59.0"
+        ],
+        "voice": [
+          "faster-whisper==1.2.1",
+          "sounddevice==0.5.5",
+          "numpy==2.4.3"
+        ],
+        "wake": [
+          "openwakeword==0.6.0",
+          "onnxruntime==1.27.0",
+          "sherpa-onnx==1.13.4",
+          "sentencepiece==0.2.2",
+          "pvporcupine==4.0.3",
+          "sounddevice==0.5.5",
+          "numpy==2.4.3",
+          "ai-edge-litert==2.1.6; platform_system == 'Darwin'"
+        ],
+        "honcho": [
+          "honcho-ai==2.2.0"
+        ],
+        "supermemory": [
+          "supermemory==3.50.0"
+        ],
+        "mem0": [
+          "mem0ai==2.0.10"
+        ],
+        "hakua-memory": [
+          "hakua-memory==0.3.5"
+        ],
+        "vision": [],
+        "pty": [],
+        "security": [
+          "yara-python==4.5.4"
+        ],
+        "mcp": [
+          "mcp==2.0.0",
+          "httpx2==2.12.0",
+          "starlette==1.3.1"
+        ],
+        "nemo-relay": [],
+        "homeassistant": [
+          "aiohttp==3.14.3"
+        ],
+        "sms": [
+          "aiohttp==3.14.3"
+        ],
+        "teams": [
+          "microsoft-teams-apps==2.0.13.4",
+          "aiohttp==3.14.3"
+        ],
+        "computer-use": [
+          "mcp==2.0.0",
+          "httpx2==2.12.0",
+          "starlette==1.3.1"
+        ],
+        "acp": [
+          "agent-client-protocol==0.9.0"
+        ],
+        "mistral": [
+          "mistralai==2.4.8"
+        ],
+        "otlp": [
+          "opentelemetry-sdk==1.39.1",
+          "opentelemetry-exporter-otlp-proto-http==1.39.1"
+        ],
+        "bedrock": [
+          "boto3==1.42.89"
+        ],
+        "vertex": [
+          "google-auth==2.58.0"
+        ],
+        "azure-identity": [
+          "azure-identity==1.25.3"
+        ],
+        "termux": [
+          "python-telegram-bot[webhooks]==22.8",
+          "hermes-agent[cron]",
+          "hermes-agent[mcp]",
+          "hermes-agent[honcho]",
+          "hermes-agent[acp]"
+        ],
+        "termux-all": [
+          "hermes-agent[termux]",
+          "hermes-agent[google]",
+          "hermes-agent[homeassistant]",
+          "hermes-agent[sms]",
+          "hermes-agent[web]",
+          "hermes-agent[pty]"
+        ],
+        "dingtalk": [
+          "dingtalk-stream==0.24.3",
+          "alibabacloud-dingtalk==2.2.42",
+          "qrcode==7.4.2"
+        ],
+        "feishu": [
+          "lark-oapi==1.6.8",
+          "qrcode==7.4.2"
+        ],
+        "google": [
+          "google-api-python-client==2.194.0",
+          "google-auth==2.58.0",
+          "google-auth-oauthlib==1.3.1",
+          "google-auth-httplib2==0.3.1",
+          "httplib2==0.32.0",
+          "pyasn1==0.6.4"
+        ],
+        "youtube": [
+          "youtube-transcript-api==1.2.4"
+        ],
+        "web": [
+          "fastapi==0.133.1",
+          "uvicorn[standard]==0.41.0",
+          "starlette==1.3.1",
+          "python-multipart==0.0.32"
+        ],
+        "all": [
+          "hermes-agent[cron]",
+          "hermes-agent[pty]",
+          "hermes-agent[mcp]",
+          "hermes-agent[homeassistant]",
+          "hermes-agent[sms]",
+          "hermes-agent[acp]",
+          "hermes-agent[google]",
+          "hermes-agent[web]",
+          "hermes-agent[security]",
+          "hermes-agent[youtube]"
+        ]
+      },
+      "python_files_ast_parsed": 5700,
+      "parse_errors": 0,
+      "candidate_imports": 151,
+      "candidate_receipt_sha256": "9c037c1af1680dc5a22ebcf9b45641aaf282723fdecce12de2c27f9b85af68a7"
+    }
+  },
+  "process_axis": null,
+  "network_axis": null,
+  "offline_native_startup_axis": null,
+  "optional_provider_vs_required_core_classification": "UNREVIEWED",
+  "runtime_independence_proven": false,
+  "method": "AST/tomllib metadata reads only; no reference-tree runtime import; candidates are not graph proof"
+}

@@ -3,6 +3,7 @@ import { act, cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { HermesGateway } from '@/hermes'
+import { desktopSlashCommandArgumentMode } from '@/lib/desktop-slash-commands'
 import { queryClient } from '@/lib/query-client'
 import { invalidateSlashCompletions } from '@/lib/slash-completion-cache'
 
@@ -77,6 +78,19 @@ afterEach(() => {
 })
 
 describe('useSlashCompletions', () => {
+  it('prepares registry metadata for a cold typed search without a bare-slash fetch', async () => {
+    const request = vi.fn().mockImplementation((method: string) => Promise.resolve(
+      method === 'commands.catalog'
+        ? { ...CATALOG, commands: { '/rollback': { argument_mode: 'text' } } }
+        : { items: [{ text: '/rollback', display: '/rollback', meta: 'Restore' }] }
+    ))
+
+    const api = harness({ request } as unknown as HermesGateway)
+    expect(commandsOf(await completions(api, 'roll'))).toContain('/rollback')
+    expect(request).toHaveBeenCalledWith('commands.catalog')
+    expect(desktopSlashCommandArgumentMode('/rollback')).toBe('text')
+  })
+
   it('serves the bare-slash catalog from cache instead of re-requesting it', async () => {
     const request = vi.fn().mockResolvedValue(CATALOG)
     const api = harness({ request } as unknown as HermesGateway)

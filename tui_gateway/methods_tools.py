@@ -260,6 +260,7 @@ def _(rid, params: dict) -> dict:
             COMMAND_REGISTRY,
             SUBCOMMANDS,
             _build_description,
+            infer_argument_mode,
         )
 
         all_pairs: list[list[str]] = []
@@ -267,8 +268,12 @@ def _(rid, params: dict) -> dict:
         categories: list[dict] = []
         cat_map: dict[str, list[list[str]]] = {}
         cat_order: list[str] = []
+        command_meta: dict[str, dict[str, str | None]] = {}
 
         for cmd in COMMAND_REGISTRY:
+            # Metadata survives palette filtering; it does not grant execution.
+            for key in (cmd.name, *cmd.aliases):
+                command_meta[f"/{key}"] = {"argument_mode": infer_argument_mode(cmd)}
             if cmd.name in _TUI_HIDDEN or cmd.gateway_only:
                 continue
 
@@ -358,6 +363,7 @@ def _(rid, params: dict) -> dict:
                 "pairs": all_pairs,
                 "sub": sub,
                 "canon": canon,
+                "commands": command_meta,
                 "categories": categories,
                 "skills": skills,
                 "skill_count": skill_count,

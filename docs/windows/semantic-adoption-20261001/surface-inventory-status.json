@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "campaign": "windows-semantic-adoption-20261001",
+  "complete": false,
+  "method": "Tracked source AST/YAML metadata only; no loader/runtime execution; not a substitute for CodeGraph",
+  "codegraph_complement": "F04 named owner traces and exact indexed-node/AST binding are separate source-bound evidence",
+  "contexts": {
+    "D_BASE": {
+      "head": "a553729853b9648bf8ca9e5c3c7e54365d7f5c62",
+      "row_count": 617,
+      "kinds": {
+        "plugin_registration_candidate": 223,
+        "rpc_registration_candidate": 187,
+        "skill_candidate": 207
+      },
+      "parse_errors": [],
+      "receipt_sha256": "fe8161cea3470c5660123c6a01eca946d46b73f57c617a675f8d8ba21c3c0282",
+      "runtime_discovery_executed": false,
+      "all_public_surfaces_claim": false
+    },
+    "R_AFTER": {
+      "head": "d3630f853239e8c41ce7201e09fbdf39bcbc5431",
+      "row_count": 378,
+      "kinds": {
+        "rpc_registration_candidate": 119,
+        "skill_candidate": 195,
+        "plugin_registration_candidate": 64
+      },
+      "parse_errors": [],
+      "receipt_sha256": "f036023bab3f974ab56bc7f8af58e39778f8b87766ca82305e31c4afabfd9611",
+      "runtime_discovery_executed": false,
+      "all_public_surfaces_claim": false
+    },
+    "U_TARGET": {
+      "head": "1a269fcd3b61971bd05e841f80154279dd0a7e65",
+      "row_count": 700,
+      "kinds": {
+        "plugin_registration_candidate": 66,
+        "rpc_registration_candidate": 424,
+        "skill_candidate": 210
+      },
+      "parse_errors": [],
+      "receipt_sha256": "0c68899aabecd522d8f95ab3ed9f9143da7f1c75e99ee3183751fda9301628d9",
+      "runtime_discovery_executed": false,
+      "all_public_surfaces_claim": false
+    },
+    "integration": {
+      "head": "db5ee25f9cefe60c54190c7e1f36c1e2c5ededd4",
+      "row_count": 617,
+      "kinds": {
+        "plugin_registration_candidate": 223,
+        "rpc_registration_candidate": 187,
+        "skill_candidate": 207
+      },
+      "parse_errors": [],
+      "receipt_sha256": "91532ad1c231c3d207fe6fe38cb0cf14f371f4a29ca9770a1d22888ba8d51296",
+      "runtime_discovery_executed": false,
+      "all_public_surfaces_claim": false
+    }
+  },
+  "behavioral_dispositions_complete": 0,
+  "dynamic_resolution_and_effect_acceptance_complete": false
+}

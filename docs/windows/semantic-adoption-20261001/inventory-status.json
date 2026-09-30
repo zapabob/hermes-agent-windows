@@ -29,9 +29,11 @@
       "F03"
     ],
     "partial_families": [
-      "F05"
+      "F04",
+      "F05",
+      "F07"
     ],
-    "other_seed_families_not_behaviorally_reviewed": 46,
+    "other_seed_families_not_behaviorally_reviewed": 44,
     "not_a_complete_contract_denominator": true
   },
   "blocker": {
@@ -51,5 +53,20 @@
     "acceptance_status": "LOCAL_SLICE_VERIFIED"
   },
   "forbidden_actions_executed": false,
-  "production_runtime_acceptance_claim": false
+  "production_runtime_acceptance_claim": false,
+  "partial_slices": [
+    {
+      "id": "F05a",
+      "status": "LOCAL_SLICE_VERIFIED",
+      "commit": "db5ee25f9cefe60c54190c7e1f36c1e2c5ededd4"
+    },
+    {
+      "id": "F04a",
+      "status": "LOCAL_SLICE_VERIFIED"
+    },
+    {
+      "id": "F07a",
+      "status": "SOURCE_AUDIT_ONLY; native RED pending"
+    }
+  ]
 }
