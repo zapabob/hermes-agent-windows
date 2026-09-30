@@ -455,3 +455,23 @@ Future messages in this room will use that transcript until `/reset` or another 
     session_db_unavailable_prefix: "Oturum veritabanı kullanılamıyor"
     session_not_found:           "Oturum veritabanında bulunamadı."
     warn_passthrough:            "⚠️ {error}"
+
+slash:
+  category:
+    session: Oturum
+    configuration: Yapılandırma
+    info: Bilgi
+    tools_skills: Araçlar ve Skill'ler
+    plugins: Eklentiler
+    exit: Çıkış
+    context: Bağlam
+    background_automation: Arka Plan ve Otomasyon
+  shared:
+    usage_suffix: '{description} (kullanım: /{name} {args_hint})'
+    alias_for: '{description} (/{name} için takma ad)'
+  new:
+    description: Yeni bir oturum başlat (yeni oturum kimliği + geçmiş)
+  status:
+    description: Oturum, model, token ve bağlam bilgilerini göster
+  steer:
+    description: Sonraki araç çağrısından sonra kesintisiz bir mesaj ekle

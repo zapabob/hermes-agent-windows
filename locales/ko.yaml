@@ -455,3 +455,23 @@ Future messages in this room will use that transcript until `/reset` or another 
     session_db_unavailable_prefix: "세션 데이터베이스를 사용할 수 없습니다"
     session_not_found:           "데이터베이스에서 세션을 찾을 수 없습니다."
     warn_passthrough:            "⚠️ {error}"
+
+slash:
+  category:
+    session: 세션
+    configuration: 설정
+    info: 정보
+    tools_skills: 도구 및 스킬
+    plugins: 플러그인
+    exit: 종료
+    context: 컨텍스트
+    background_automation: 백그라운드 및 자동화
+  shared:
+    usage_suffix: '{description} (사용법: /{name} {args_hint})'
+    alias_for: '{description} (/{name}의 별칭)'
+  new:
+    description: 새 세션 시작 (새 세션 ID + 기록)
+  status:
+    description: 세션, 모델, 토큰, 컨텍스트 정보 표시
+  steer:
+    description: 중단 없이 다음 도구 호출 뒤에 메시지 삽입

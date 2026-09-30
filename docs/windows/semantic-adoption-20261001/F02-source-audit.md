@@ -1,0 +1,13 @@
+# F02 read-only source audit
+
+Acceptance: BLOCKED_CODEGRAPH. Semantic status: UNVERIFIED. Product changes and tests executed for F02: zero. Source inspection is not behavioral equivalence.
+
+The Sol6.1 medium sidecar used real CodeGraph 1.6.0 status/query/explore/impact/affected in separate D_BASE and U_TARGET indexes. Both ended complete, pending zero and no worktree mismatch. The Gateway public caller in downstream gateway/run.py is nevertheless size-excluded and must be bound before implementation or acceptance. Dynamic handler tables and async wrappers require runtime proof; same-name cross-class graph edges observed in this audit were rejected.
+
+Downstream Gateway owner: gateway/slash_commands.py, GatewaySlashCommandsMixin::_handle_branch_command, method:e71287d6426f462c372851451a563292, source SHA-256 ab3fa525939f12d69d7cfb81b3acfbcc8252e0266727d94a08d5b9fcfd006c84. Upstream owner: gateway/slash_commands_session.py, method:ecb7559314934157d78c987eb18d74c0, SHA-256 ba8bf127da15160ebffdb5a31a71bea44a54d877fefa814c1e210848452bc8c3. Upstream argument helper: gateway/slash_commands_branch_thread.py, parse_branch_args, function:03476a9ea8494a3048fb119f9fb60fcc, SHA-256 df3925c9ed78db0794c974a9a4c164c7f6a611b2391f986b12d374af6911f735.
+
+Source-confirmed candidates: U parses a leading --here separately from title; D treats all arguments as title. U normally creates sibling threads for Discord/Telegram/Slack/Matrix and keeps the parent chat on its parent session; D always switches in place. U preserves parent system_prompt; D's observed child creation does not supply it. Existing history batch API, reasoning/api_content sidecars and memory hook are reuse owners. CLI U creates the child before ending the parent and refuses branch mid-turn; D's observed handler ends the parent first and lacks the same local running-agent refusal. These require executable RED before adopting any change.
+
+Three downstream adapters already expose create_handoff_thread; Matrix needs separate analysis. Thread creation before DB persistence can leave external effects after a DB failure, and tracking failures need explicit recovery tests. Do not transplant upstream storage mixins, rewrite N55, or assume upstream's partial-failure behavior is safe because it exists upstream.
+
+After the graph gate: fix a mini-plan against existing Gateway/CLI and SessionStore/SessionDB APIs; test parent retention, --here no-thread-call, four platform key shapes, prompt/history inheritance, child creation failure, partial copy/tracking/switch failures, profile isolation and recovery. Source tests in U cover fake Discord/SQLite only; they do not establish native transport for all four platforms. No parity or test success is claimed.

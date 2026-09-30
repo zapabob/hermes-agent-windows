@@ -452,3 +452,23 @@ gateway:
     session_db_unavailable_prefix: "Base de datos de sesiones no disponible"
     session_not_found:           "Sesión no encontrada en la base de datos."
     warn_passthrough:            "⚠️ {error}"
+
+slash:
+  category:
+    session: Sesión
+    configuration: Configuración
+    info: Información
+    tools_skills: Herramientas y skills
+    plugins: Plugins
+    exit: Salir
+    context: Contexto
+    background_automation: Segundo plano y automatización
+  shared:
+    usage_suffix: '{description} (uso: /{name} {args_hint})'
+    alias_for: '{description} (alias de /{name})'
+  new:
+    description: Iniciar una nueva sesión (nuevo ID de sesión + historial)
+  status:
+    description: Mostrar información de sesión, modelo, tokens y contexto
+  steer:
+    description: Inyectar un mensaje tras la próxima llamada a herramienta sin interrumpir

@@ -22,6 +22,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from utils import is_truthy_value
 from hermes_constants import INDICATOR_STYLES
+from agent.i18n import t
 
 # mtime-keyed memo of the /personality completion source. load_cli_config()
 # does a full YAML parse + deep merge of the built-in defaults on every call,
@@ -64,6 +65,27 @@ def _personalities_from_cli_config() -> Dict[str, Any]:
     return personalities
 
 logger = logging.getLogger(__name__)
+
+
+def _localized(key: str, default: str, **values: Any) -> str:
+    """Render through the existing catalog, retaining registry fallbacks."""
+    translated = t(key, **values)
+    if translated == key:
+        return default.format(**values) if values else default
+    return translated
+
+
+_CATEGORY_SLUGS = {
+    "Session": "session", "Configuration": "configuration", "Info": "info",
+    "Tools & Skills": "tools_skills", "Plugins": "plugins", "Exit": "exit",
+    "Context": "context", "Background & Automation": "background_automation",
+}
+
+
+def category_label(category: str) -> str:
+    """Translate display labels without changing category identifiers."""
+    slug = _CATEGORY_SLUGS.get(category)
+    return _localized(f"slash.category.{slug}", category) if slug else category
 
 # prompt_toolkit is an optional CLI dependency — only needed for
 # SlashCommandCompleter and SlashCommandAutoSuggest.  Gateway and test
@@ -127,6 +149,10 @@ class CommandDef:
     # gateway can import commands.py without prompt_toolkit and without
     # pulling in executor dependencies.
     execute: str | None = None
+
+    def describe(self) -> str:
+        """Translate the display description; retain its English source."""
+        return _localized(f"slash.{self.name}.description", self.description)
 
 
 # Valid values for CommandDef.busy_policy (see field docs above).
@@ -435,6 +461,43 @@ def _build_description(cmd: CommandDef) -> str:
     return cmd.description
 
 
+def _display_description(name: str, original: str) -> str:
+    """Translate unchanged defaults; retain consumer-provided display text."""
+    cmd = resolve_command(name)
+    if cmd is None:
+        return original
+    is_alias = name.lstrip("/") != cmd.name
+    expected = (f"{cmd.description} (alias for /{cmd.name})" if is_alias
+                else _build_description(cmd))
+    if original != expected:
+        return original
+    description = cmd.describe()
+    if is_alias:
+        return _localized(
+            "slash.shared.alias_for", "{description} (alias for /{name})",
+            description=description, name=cmd.name,
+        )
+    if cmd.args_hint:
+        return _localized(
+            "slash.shared.usage_suffix", "{description} (usage: /{name} {args_hint})",
+            description=description, name=cmd.name, args_hint=cmd.args_hint,
+        )
+    return description
+
+
+def build_commands_by_category() -> dict[str, dict[str, str]]:
+    """Localize current help tables without losing their mutable overrides."""
+    return {category: {name: _display_description(name, description)
+                       for name, description in entries.items()}
+            for category, entries in COMMANDS_BY_CATEGORY.items()}
+
+
+def build_commands() -> dict[str, str]:
+    """Return fresh localized metadata for CLI completion."""
+    return {name: _display_description(name, description)
+            for name, description in COMMANDS.items()}
+
+
 # Backwards-compatible flat dict: "/command" -> description
 COMMANDS: dict[str, str] = {}
 for _cmd in COMMAND_REGISTRY:
@@ -640,7 +703,7 @@ def gateway_help_lines() -> list[str]:
                 continue
             alias_parts.append(f"`/{a}`")
         alias_note = f" (alias: {', '.join(alias_parts)})" if alias_parts else ""
-        lines.append(f"`/{cmd.name}{args}` -- {cmd.description}{alias_note}")
+        lines.append(f"`/{cmd.name}{args}` -- {cmd.describe()}{alias_note}")
     return lines
 
 
@@ -2245,7 +2308,7 @@ class SlashCommandCompleter(Completer):
 
         word = text[1:]
 
-        for cmd, desc in COMMANDS.items():
+        for cmd, desc in build_commands().items():
             if not self._command_allowed(cmd):
                 continue
             cmd_name = cmd[1:]

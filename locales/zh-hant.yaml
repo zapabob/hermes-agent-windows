@@ -455,3 +455,23 @@ Future messages in this room will use that transcript until `/reset` or another 
     session_db_unavailable_prefix: "工作階段資料庫無法使用"
     session_not_found:           "資料庫中找不到此工作階段。"
     warn_passthrough:            "⚠️ {error}"
+
+slash:
+  category:
+    session: 工作階段
+    configuration: 設定
+    info: 資訊
+    tools_skills: 工具與技能
+    plugins: 外掛
+    exit: 離開
+    context: 上下文
+    background_automation: 背景與自動化
+  shared:
+    usage_suffix: '{description}（用法：/{name} {args_hint}）'
+    alias_for: '{description}（/{name} 的別名）'
+  new:
+    description: 開始新的工作階段（新的工作階段 ID 與歷史）
+  status:
+    description: 顯示工作階段、模型、token 與上下文資訊
+  steer:
+    description: 在下一次工具呼叫後插入訊息，不中斷執行

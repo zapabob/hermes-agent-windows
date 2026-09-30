@@ -455,3 +455,23 @@ Future messages in this room will use that transcript until `/reset` or another 
     session_db_unavailable_prefix: "Base de données de sessions indisponible"
     session_not_found:           "Session introuvable dans la base de données."
     warn_passthrough:            "⚠️ {error}"
+
+slash:
+  category:
+    session: Session
+    configuration: Configuration
+    info: Infos
+    tools_skills: Outils et skills
+    plugins: Plugins
+    exit: Quitter
+    context: Contexte
+    background_automation: Arrière-plan et automatisation
+  shared:
+    usage_suffix: '{description} (usage : /{name} {args_hint})'
+    alias_for: '{description} (alias de /{name})'
+  new:
+    description: Démarrer une nouvelle session (nouvel ID de session + historique)
+  status:
+    description: Afficher les infos de session, modèle, tokens et contexte
+  steer:
+    description: Injecter un message après le prochain appel d'outil sans interrompre

@@ -457,3 +457,23 @@ gateway:
     session_db_unavailable_prefix: "قاعدة بيانات الجلسات غير متاحة"
     session_not_found:           "لم يُعثر على الجلسة في قاعدة البيانات."
     warn_passthrough:            "⚠️ {error}"
+
+slash:
+  category:
+    session: الجلسة
+    configuration: الإعدادات
+    info: معلومات
+    tools_skills: الأدوات والمهارات
+    plugins: الإضافات
+    exit: خروج
+    context: السياق
+    background_automation: الخلفية والأتمتة
+  shared:
+    usage_suffix: '{description} (الاستخدام: /{name} {args_hint})'
+    alias_for: '{description} (اسم بديل لـ /{name})'
+  new:
+    description: بدء جلسة جديدة (معرّف جلسة وسجل جديدان)
+  status:
+    description: عرض معلومات الجلسة والنموذج والرموز والسياق
+  steer:
+    description: إدراج رسالة بعد استدعاء الأداة التالي دون مقاطعة

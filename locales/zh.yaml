@@ -455,3 +455,23 @@ Future messages in this room will use that transcript until `/reset` or another 
     session_db_unavailable_prefix: "会话数据库不可用"
     session_not_found:           "数据库中未找到该会话。"
     warn_passthrough:            "⚠️ {error}"
+
+slash:
+  category:
+    session: 会话
+    configuration: 配置
+    info: 信息
+    tools_skills: 工具与技能
+    plugins: 插件
+    exit: 退出
+    context: 上下文
+    background_automation: 后台与自动化
+  shared:
+    usage_suffix: '{description}（用法：/{name} {args_hint}）'
+    alias_for: '{description}（/{name} 的别名）'
+  new:
+    description: 开始新会话（全新的会话 ID 与历史）
+  status:
+    description: 显示会话、模型、token 与上下文信息
+  steer:
+    description: 在下一次工具调用后插入一条消息，不打断执行

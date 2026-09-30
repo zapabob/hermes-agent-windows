@@ -9845,7 +9845,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
         skill list collapsed to one line; /help skills lists all skill
         commands; /help <query> filters commands by substring.
         """
-        from hermes_cli.commands import COMMANDS_BY_CATEGORY, HELP_SESSION_SUBGROUPS
+        from hermes_cli.commands import build_commands_by_category, category_label, HELP_SESSION_SUBGROUPS
 
         arg = (arg or "").strip()
         skill_commands = _ensure_skill_commands()
@@ -9890,7 +9890,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
             )
             return True
 
-        for category, commands in COMMANDS_BY_CATEGORY.items():
+        for category, commands in build_commands_by_category().items():
             if category == "Session":
                 # Split the oversized Session category into readable sub-groups
                 # (Session / Context / Background & Automation) in the renderer.
@@ -9912,7 +9912,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                         if query and query not in cmd.lower() and query not in desc.lower():
                             continue
                         if not printed_header:
-                            _cprint(f"\n  {_BOLD}── {_sub} ──{_RST}")
+                            _cprint(f"\n  {_BOLD}── {category_label(_sub)} ──{_RST}")
                             printed_header = True
                         _emit(cmd, desc)
                 continue
@@ -9924,7 +9924,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                 if query and query not in cmd.lower() and query not in desc.lower():
                     continue
                 if not printed_header:
-                    _cprint(f"\n  {_BOLD}── {category} ──{_RST}")
+                    _cprint(f"\n  {_BOLD}── {category_label(category)} ──{_RST}")
                     printed_header = True
                 _emit(cmd, desc)
 

@@ -455,3 +455,23 @@ Future messages in this room will use that transcript until `/reset` or another 
     session_db_unavailable_prefix: "セッションデータベースが利用できません"
     session_not_found:           "データベースにセッションが見つかりません。"
     warn_passthrough:            "⚠️ {error}"
+
+slash:
+  category:
+    session: セッション
+    configuration: 設定
+    info: 情報
+    tools_skills: ツールとスキル
+    plugins: プラグイン
+    exit: 終了
+    context: コンテキスト
+    background_automation: バックグラウンドと自動化
+  shared:
+    usage_suffix: '{description}（使い方: /{name} {args_hint}）'
+    alias_for: '{description}（/{name} のエイリアス）'
+  new:
+    description: 新しいセッションを開始（新しいセッション ID と履歴）
+  status:
+    description: セッション、モデル、トークン、コンテキストの情報を表示
+  steer:
+    description: 中断せずに次のツール呼び出しの後にメッセージを挿入

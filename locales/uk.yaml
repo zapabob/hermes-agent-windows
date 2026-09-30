@@ -455,3 +455,23 @@ Future messages in this room will use that transcript until `/reset` or another 
     session_db_unavailable_prefix: "База даних сеансів недоступна"
     session_not_found:           "Сеанс не знайдено в базі даних."
     warn_passthrough:            "⚠️ {error}"
+
+slash:
+  category:
+    session: Сеанс
+    configuration: Конфігурація
+    info: Інформація
+    tools_skills: Інструменти й навички
+    plugins: Плагіни
+    exit: Вихід
+    context: Контекст
+    background_automation: Фон і автоматизація
+  shared:
+    usage_suffix: '{description} (використання: /{name} {args_hint})'
+    alias_for: '{description} (псевдонім для /{name})'
+  new:
+    description: Почати новий сеанс (новий ID сеансу та історія)
+  status:
+    description: Показати відомості про сеанс, модель, токени та контекст
+  steer:
+    description: Вставити повідомлення після наступного виклику інструмента без переривання

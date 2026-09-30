@@ -455,3 +455,23 @@ Future messages in this room will use that transcript until `/reset` or another 
     session_db_unavailable_prefix: "Sessie-databasis is nie beskikbaar"
     session_not_found:           "Sessie nie in databasis gevind nie."
     warn_passthrough:            "⚠️ {error}"
+
+slash:
+  category:
+    session: Sessie
+    configuration: Konfigurasie
+    info: Inligting
+    tools_skills: Gereedskap & Vaardighede
+    plugins: Plugins
+    exit: Verlaat
+    context: Konteks
+    background_automation: Agtergrond & Outomatisering
+  shared:
+    usage_suffix: '{description} (gebruik: /{name} {args_hint})'
+    alias_for: '{description} (alias vir /{name})'
+  new:
+    description: Begin 'n nuwe sessie (vars sessie-ID + geskiedenis)
+  status:
+    description: Wys sessie-, model-, token- en konteksinligting
+  steer:
+    description: Voeg 'n boodskap ná die volgende gereedskapsoproep in sonder om te onderbreek

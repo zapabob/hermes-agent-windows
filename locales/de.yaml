@@ -455,3 +455,23 @@ Future messages in this room will use that transcript until `/reset` or another 
     session_db_unavailable_prefix: "Session-Datenbank nicht verfügbar"
     session_not_found:           "Session nicht in der Datenbank gefunden."
     warn_passthrough:            "⚠️ {error}"
+
+slash:
+  category:
+    session: Sitzung
+    configuration: Konfiguration
+    info: Info
+    tools_skills: Tools & Skills
+    plugins: Plugins
+    exit: Beenden
+    context: Kontext
+    background_automation: Hintergrund & Automatisierung
+  shared:
+    usage_suffix: '{description} (Verwendung: /{name} {args_hint})'
+    alias_for: '{description} (Alias für /{name})'
+  new:
+    description: Neue Sitzung starten (neue Sitzungs-ID + Verlauf)
+  status:
+    description: Infos zu Sitzung, Modell, Tokens und Kontext anzeigen
+  steer:
+    description: Eine Nachricht nach dem nächsten Tool-Aufruf einfügen, ohne zu unterbrechen

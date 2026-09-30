@@ -1,0 +1,390 @@
+{
+  "id": "F05a",
+  "parent_family": "F05",
+  "status": "LOCAL_SLICE_VERIFIED",
+  "scope": "CLI help and completion display; shared gateway help text only; three source-equivalent descriptions and category/usage/alias templates",
+  "frozen_inputs": {
+    "R_BEFORE": "63279301bcbdc185c1b07b98a9312eb0c862f26d",
+    "R_AFTER": "d3630f853239e8c41ce7201e09fbdf39bcbc5431",
+    "U_TARGET": "1a269fcd3b61971bd05e841f80154279dd0a7e65",
+    "D_BASE": "a553729853b9648bf8ca9e5c3c7e54365d7f5c62"
+  },
+  "source_sha256": {
+    "cli.py": "cf9aca145aa74a49f3df971e79986ee486cee2068e052dfacd88ced132a27ec3",
+    "hermes_cli/commands.py": "004b3b4b2bbae7b8a0ffbb4914a5b11b735a9f24b2cf605afaf89f76333c7cf2",
+    "tests/hermes_cli/test_slash_localization.py": "577fb40791062ddbd6319f3b016e897255d8cea3d1a0e54eb59c1945389be83c",
+    "locales/af.yaml": "b0423bfe2578f5e8e22f91c4ef2a2079d507a620c5c31e2827fa527b252f6ff8",
+    "locales/ar.yaml": "b7758e3527b2be280016593f9d94ead3472c0159d69fe8502f7be3cdfa37441a",
+    "locales/de.yaml": "97d158902809debe5724c50be5d7d2e335686dccbd241679c1de6043228263a8",
+    "locales/en.yaml": "4548f5a0a430c9c39992022b1e7f3b0eaca4e1841ba10af69b0095dfe911852f",
+    "locales/es.yaml": "2d8e192f725c10ffcaa72acd43b1b447cb0032c74b2d1e89eb1d7647e2d217d4",
+    "locales/fr.yaml": "a1160d61eeeb06cbccc739014a281b03a52051622c2e9ccd16e42ba25a05f764",
+    "locales/ga.yaml": "d6f7c896b9502c99a0538d5378238421f587a9a4badd4da7a55cbdf973aa80a9",
+    "locales/hu.yaml": "7c2075dec4c120eea89618434ab4a1a4d24887600eb1157061095ccf44452d71",
+    "locales/it.yaml": "bec9895b300fc4a2df8dbe14d9beace5581ce830938bb8d48301fe3ba185fcb3",
+    "locales/ja.yaml": "ffea6f95f1d49b785b46828ac254bbd3d514e8290ec808f09c829c1c7afb94c6",
+    "locales/ko.yaml": "01192bddaf506fc8ca68abd969d12cf74eaf241c7f677e7020d50b4ca5da244b",
+    "locales/pt.yaml": "147a39ddcb8e3bdb0defbed19b8088f23abf221baad2d52f205df8186d131be6",
+    "locales/ru.yaml": "24ef6205c501b76801cd5db4fa6619717a1320eb8515a91def2f89d0066bf351",
+    "locales/tr.yaml": "261e09679d6b72f09b3b2e2492a1b4346a970ed619cfb17457a922833e1f0e87",
+    "locales/uk.yaml": "fd47495f3a639db866e4eaeffe202fd8c6e03bb31df6a57cb73a007a5cbc8847",
+    "locales/zh-hant.yaml": "2ebb4c830adca5a076db2f50d1e06ba2461d8451afc54f4aabcee568d9ff9fb7",
+    "locales/zh.yaml": "c923d7f65fe7365d08a02131483a9385d873753ec9aca42a2d541d89c4582ace"
+  },
+  "catalog_adoption": {
+    "source_head": "1a269fcd3b61971bd05e841f80154279dd0a7e65",
+    "selected": [
+      "new",
+      "status",
+      "steer"
+    ],
+    "files": [
+      {
+        "path": "locales/af.yaml",
+        "before_sha256": "2c508a5aa3a56b7bf3a705a1b56c6266a61874df9de4c5e4d0fe49874a566195",
+        "after_sha256": "b0423bfe2578f5e8e22f91c4ef2a2079d507a620c5c31e2827fa527b252f6ff8",
+        "upstream_path": "locales/af.yaml",
+        "upstream_sha256": "ad81825300efb79b3b01b4556641b60f9c53c13ce34fec1ddd353373a90503e4"
+      },
+      {
+        "path": "locales/ar.yaml",
+        "before_sha256": "c7c421aa8576f2b0e239eab9038e1dc5f2c36c7645cf61a61a22c317cbbe1487",
+        "after_sha256": "b7758e3527b2be280016593f9d94ead3472c0159d69fe8502f7be3cdfa37441a",
+        "upstream_path": "locales/ar.yaml",
+        "upstream_sha256": "a2780a3223d8d6dd4d8ada5d446bacc672dc66cc3cc2be50ebac02413f32287e"
+      },
+      {
+        "path": "locales/de.yaml",
+        "before_sha256": "ba1ba84ab6cb5305ea33df55d946b3b3ab27b7e102d2257dd288eb7d26c43945",
+        "after_sha256": "97d158902809debe5724c50be5d7d2e335686dccbd241679c1de6043228263a8",
+        "upstream_path": "locales/de.yaml",
+        "upstream_sha256": "48d3bf80caac46217f15b5ef413d0447656a58f670fa41fa6a56d4f6701c8ec6"
+      },
+      {
+        "path": "locales/en.yaml",
+        "before_sha256": "bcf4b2dcff2e9ff5f9253bff0f794ea253a18b09aaa78d48dbb9d4471d2a180c",
+        "after_sha256": "4548f5a0a430c9c39992022b1e7f3b0eaca4e1841ba10af69b0095dfe911852f",
+        "upstream_path": "locales/en.yaml",
+        "upstream_sha256": "40eb513d678134b33b3aa30af816522a460e4fe17fb4dfa85ae72124741e940e"
+      },
+      {
+        "path": "locales/es.yaml",
+        "before_sha256": "79586a9767e2a3fb828733e4e62f966bb267cb5843f59e326c24fdbfd988e602",
+        "after_sha256": "2d8e192f725c10ffcaa72acd43b1b447cb0032c74b2d1e89eb1d7647e2d217d4",
+        "upstream_path": "locales/es.yaml",
+        "upstream_sha256": "cf540ad6d6b299177efa9430f4ab90e0393ee90b0130cabb0c6e166d342cd589"
+      },
+      {
+        "path": "locales/fr.yaml",
+        "before_sha256": "a9319ada6a98b8e0a15da3c697a38940cdc4d044a9c17bc0261eb301f99d3c89",
+        "after_sha256": "a1160d61eeeb06cbccc739014a281b03a52051622c2e9ccd16e42ba25a05f764",
+        "upstream_path": "locales/fr.yaml",
+        "upstream_sha256": "901bf1bed6b694bb8091baeb035fe41f64e8e4c95df8a4a86aa99b127c4f6ee0"
+      },
+      {
+        "path": "locales/ga.yaml",
+        "before_sha256": "f45629085fd514814c52fa89efd802c6203b9cbf11137250e81376a2cefa18f2",
+        "after_sha256": "d6f7c896b9502c99a0538d5378238421f587a9a4badd4da7a55cbdf973aa80a9",
+        "upstream_path": "locales/ga.yaml",
+        "upstream_sha256": "714500d0c1ed3a49b7beb3460d90831bc882cc58ec465729b8cd0cea4f9a2fb2"
+      },
+      {
+        "path": "locales/hu.yaml",
+        "before_sha256": "4dc8bac29970a06da3d808d3da5b59c82e90df6e8b32b9428b6846ec1a3841e1",
+        "after_sha256": "7c2075dec4c120eea89618434ab4a1a4d24887600eb1157061095ccf44452d71",
+        "upstream_path": "locales/hu.yaml",
+        "upstream_sha256": "fc2c4002cf2bcf9fd42aedc14e495bb4f0e92061e25ffd26bbc774d32bbf7587"
+      },
+      {
+        "path": "locales/it.yaml",
+        "before_sha256": "4f941ad4a6ebe3d034d09b45edf632857cef6e7443cab2c613b17a6fd7d8b744",
+        "after_sha256": "bec9895b300fc4a2df8dbe14d9beace5581ce830938bb8d48301fe3ba185fcb3",
+        "upstream_path": "locales/it.yaml",
+        "upstream_sha256": "ae42213c047d0cdce2c545abf0404a0ab2799a98377b7261544fc57ec3c3071d"
+      },
+      {
+        "path": "locales/ja.yaml",
+        "before_sha256": "75b5eac17d94df5e7629dc705a891f1a27ad72eda235032c26eac23924c80ce0",
+        "after_sha256": "ffea6f95f1d49b785b46828ac254bbd3d514e8290ec808f09c829c1c7afb94c6",
+        "upstream_path": "locales/ja.yaml",
+        "upstream_sha256": "efa7d459fe64d7b3cda7fc816f7847f1bc6561dd2fd9e98b0a81daa0f6c83b5a"
+      },
+      {
+        "path": "locales/ko.yaml",
+        "before_sha256": "0f8f58ce461c84e6cf930caf239fe37f95ea334b12e4b4e5844f5224ede8681d",
+        "after_sha256": "01192bddaf506fc8ca68abd969d12cf74eaf241c7f677e7020d50b4ca5da244b",
+        "upstream_path": "locales/ko.yaml",
+        "upstream_sha256": "98a5cdfa6fe9f95934a9240e28906348117eb86eb657ace82fe2f7b6f381a50c"
+      },
+      {
+        "path": "locales/pt.yaml",
+        "before_sha256": "36f4f640b5f7ced6044d32e432d5027ac583aaec7f682f0e66eeaf73785177aa",
+        "after_sha256": "147a39ddcb8e3bdb0defbed19b8088f23abf221baad2d52f205df8186d131be6",
+        "upstream_path": "locales/pt.yaml",
+        "upstream_sha256": "7b6e1a86784d4084b53cfa9afd5510fe1a912e53e44b749e33b8f32941b7397e"
+      },
+      {
+        "path": "locales/ru.yaml",
+        "before_sha256": "f76fb0721b592da036126bb995a47c356bb998d00af1e86d56895c839caababf",
+        "after_sha256": "24ef6205c501b76801cd5db4fa6619717a1320eb8515a91def2f89d0066bf351",
+        "upstream_path": "locales/ru.yaml",
+        "upstream_sha256": "8a241bd46ba37c764c24c0f98a14b2095259f1acfa954d66209c28458d2b72d2"
+      },
+      {
+        "path": "locales/tr.yaml",
+        "before_sha256": "78564a4b46ed7e8559b51758ef0640a6746071b970691b0e0de287ed8d2545ff",
+        "after_sha256": "261e09679d6b72f09b3b2e2492a1b4346a970ed619cfb17457a922833e1f0e87",
+        "upstream_path": "locales/tr.yaml",
+        "upstream_sha256": "0fe50370c416d49a00f3b3ceed46183fc50b21d152c5c95b1e6aaa812375340d"
+      },
+      {
+        "path": "locales/uk.yaml",
+        "before_sha256": "5de74ff1e4b7456b15e107c829910cf9efe6461b736950e5ced49ef2678d8f4f",
+        "after_sha256": "fd47495f3a639db866e4eaeffe202fd8c6e03bb31df6a57cb73a007a5cbc8847",
+        "upstream_path": "locales/uk.yaml",
+        "upstream_sha256": "9fae8a77c25572fd24693a467370d14a4d8c79413c7f2832fdee4e0f1781c1e3"
+      },
+      {
+        "path": "locales/zh-hant.yaml",
+        "before_sha256": "5ba27bc8eb0ca641412025465f2cfb97fdb8bdc37b335689febd86373d920dbd",
+        "after_sha256": "2ebb4c830adca5a076db2f50d1e06ba2461d8451afc54f4aabcee568d9ff9fb7",
+        "upstream_path": "locales/zh-hant.yaml",
+        "upstream_sha256": "129f1b0eb8d0fe0af418aab93ae7f225913d68ba5883bb2daf34d7d73506a05f"
+      },
+      {
+        "path": "locales/zh.yaml",
+        "before_sha256": "71ddc2d994b65d8280f4488dbcb888cafdb48dcfcff85e6db101b96b97d7736f",
+        "after_sha256": "c923d7f65fe7365d08a02131483a9385d873753ec9aca42a2d541d89c4582ace",
+        "upstream_path": "locales/zh.yaml",
+        "upstream_sha256": "2289d72aedac59ef542d41c07b87f7bb800bc29fac492d6e6ebb3e8e1efc3594"
+      }
+    ]
+  },
+  "test_commands": {
+    "canonical_prefix": "bash scripts/run_tests.sh",
+    "environment": "dedicated HERMES_PYTHON and test-owned home/temp; frozen dev+security extras",
+    "initial_red": {
+      "file": "tests/hermes_cli/test_slash_localization.py",
+      "failed": 5,
+      "collection_errors": 0
+    },
+    "final_regression": {
+      "files": [
+        "tests/hermes_cli/test_slash_localization.py",
+        "tests/hermes_cli/test_commands.py",
+        "tests/agent/test_i18n.py",
+        "tests/cli/test_cli_copy_command.py",
+        "tests/cli/test_cli_prefix_matching.py"
+      ],
+      "arguments": "-j 2 --file-timeout 180",
+      "exit": 0,
+      "passed": 118,
+      "failed": 0,
+      "skipped": 0
+    },
+    "post_restore": {
+      "file": "tests/hermes_cli/test_slash_localization.py",
+      "arguments": "-j 1 --file-timeout 180",
+      "exit": 0,
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "logs_sha256": {
+    "F05-red-001.log": "71461b01c65338dcbfea6d8c417d868923f729b3cc239c60ca2d14469adcdffc",
+    "F05-green-005.log": "c81197bfd31034b6a1eb64a73012399736b500baf8255df8f3f71c996c297070",
+    "F05-restored-green-001.log": "3c20c977e41a9297d26df32bbb6863a98a480ec19e423c73cae77aeed5b88b45",
+    "F05-green-004.log": "5992ed149f2609fca7860f25309be3283e17ad15967ed8a60a0684984b8ed94a"
+  },
+  "native_scope": "public process_command(/help) in Windows child Python; environment Japanese, unknown-language fallback, config Japanese; no full startup/model/Gateway ingress claim",
+  "mutations": {
+    "source_sha256": "004b3b4b2bbae7b8a0ffbb4914a5b11b735a9f24b2cf605afaf89f76333c7cf2",
+    "test_sha256": "577fb40791062ddbd6319f3b016e897255d8cea3d1a0e54eb59c1945389be83c",
+    "mutants": [
+      {
+        "name": "description",
+        "command": [
+          "C:/Program Files/Git/bin/bash.exe",
+          "scripts/run_tests.sh",
+          "tests/hermes_cli/test_slash_localization.py",
+          "-j",
+          "1",
+          "--file-timeout",
+          "180"
+        ],
+        "exit": 1,
+        "caught": true,
+        "expected_test": "test_help_builder_switches_language_without_reimport",
+        "log_sha256": "d60c4654c8f6984e1937f9ad19f316d224045122bf1bd489c183e4df5f245101"
+      },
+      {
+        "name": "fallback",
+        "command": [
+          "C:/Program Files/Git/bin/bash.exe",
+          "scripts/run_tests.sh",
+          "tests/hermes_cli/test_slash_localization.py",
+          "-j",
+          "1",
+          "--file-timeout",
+          "180"
+        ],
+        "exit": 1,
+        "caught": true,
+        "expected_test": "test_missing_translation_retains_description_and_hint",
+        "log_sha256": "dd0c22c14c0530fd517d3ee0d68ee9ba0f10c9a6754855aa545f613ef358475e"
+      },
+      {
+        "name": "literal-braces",
+        "command": [
+          "C:/Program Files/Git/bin/bash.exe",
+          "scripts/run_tests.sh",
+          "tests/hermes_cli/test_slash_localization.py",
+          "-j",
+          "1",
+          "--file-timeout",
+          "180"
+        ],
+        "exit": 1,
+        "caught": true,
+        "expected_test": "test_description_fallback_preserves_literal_braces",
+        "log_sha256": "714517a3ad609fcbbee9a22efb89e79c658735417481b1717a6d385fefa77216"
+      },
+      {
+        "name": "mutable-override",
+        "command": [
+          "C:/Program Files/Git/bin/bash.exe",
+          "scripts/run_tests.sh",
+          "tests/hermes_cli/test_slash_localization.py",
+          "-j",
+          "1",
+          "--file-timeout",
+          "180"
+        ],
+        "exit": 1,
+        "caught": true,
+        "expected_test": "test_mutable_completion_table_preserves_overrides_additions_and_deletions",
+        "log_sha256": "fd5ae77e6ba38bd450a38d6282439b2c7ffb08264dce27f2a4e2ea00e0378000"
+      }
+    ],
+    "restored_sha256": "004b3b4b2bbae7b8a0ffbb4914a5b11b735a9f24b2cf605afaf89f76333c7cf2"
+  },
+  "codegraph": {
+    "receipt_sha256": "7a46d8f2dc474a03d0ee3583c998a994324ff4ecb304e53ae5020e3559761d6f",
+    "index_state": {
+      "builtWithVersion": "1.6.0",
+      "builtWithExtractionVersion": 25,
+      "currentExtractionVersion": 25,
+      "reindexRecommended": false,
+      "state": "complete",
+      "pendingRefs": 0
+    },
+    "pending_changes": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "exclusion_policy_sha256": "f0750c1580c90e6cfeb9144ae2696c5d52bfe1818a1870d9ee8ddb716e6b27a2",
+    "source_audit_sha256": "916ebb8526e50d87cb90c8bf28b86a9161cc202713f4bc5c0401761b17f7a66f",
+    "mismatches": 0,
+    "excluded_owners": [
+      "gateway/run.py",
+      "UPSTREAM_ADOPTION.yaml"
+    ],
+    "trace_receipt": "F05-after-005/receipt.json",
+    "impact_owners": [
+      {
+        "name": "show_help",
+        "path": "cli.py",
+        "node_id": "method:1d6583ebc1382353238271ee13caa7cb",
+        "merged_symbol_results": true,
+        "node_count": 58
+      },
+      {
+        "name": "_display_description",
+        "path": "hermes_cli/commands.py",
+        "node_id": "function:f52a4247b8e384bd375109d602006586",
+        "merged_symbol_results": true,
+        "node_count": 7
+      },
+      {
+        "name": "describe",
+        "path": "hermes_cli/commands.py",
+        "node_id": "method:5804d616ace0a31e5a304d95a3a46afc",
+        "merged_symbol_results": true,
+        "node_count": 906
+      },
+      {
+        "name": "get_completions",
+        "path": "hermes_cli/commands.py",
+        "node_id": "method:b017be04ffe4b28a8508773412cb06b6",
+        "merged_symbol_results": true,
+        "node_count": 18
+      },
+      {
+        "name": "gateway_help_lines",
+        "path": "hermes_cli/commands.py",
+        "node_id": "function:3fac6d424111fe36650437aa6d19fad7",
+        "merged_symbol_results": true,
+        "node_count": 13
+      },
+      {
+        "name": "build_commands_by_category",
+        "path": "hermes_cli/commands.py",
+        "node_id": "function:9484a2eb4b6b8a7632473067bcf87667",
+        "merged_symbol_results": true,
+        "node_count": 5
+      },
+      {
+        "name": "test_public_help_native_subprocess",
+        "path": "tests/hermes_cli/test_slash_localization.py",
+        "node_id": "function:4ca0f15bb07bd323df24d90f4400be0d",
+        "merged_symbol_results": true,
+        "node_count": 1
+      }
+    ],
+    "reference_traces": {
+      "F05-downstream-005/receipt.json": "9788e906572b0cfd306f7cfb8c192145357b1e672874b6919f15e64ccde1a3d4",
+      "F05-upstream-003/receipt.json": "6f9e500212ca7d2fbbd62ad4af735b6cf7da907322cce461411f263bf39e2528"
+    },
+    "impact_scope": "CLI merges same-name symbols; exact owner inclusion verified, unrelated name matches are not behavioral proof",
+    "rejected_traces": [
+      "F05-after-001",
+      "F05-after-002 impact outputs",
+      "F05-after-003",
+      "F05-after-004"
+    ]
+  },
+  "independent_review": {
+    "agent_model_id": "gpt-6.1-sol",
+    "effort": "high",
+    "initial_p2_findings": 2,
+    "source_findings_unresolved": 0,
+    "final_evidence_review": "APPROVED_BOUNDED_F05a",
+    "evidence_p2_findings": 1,
+    "evidence_findings_unresolved": 0,
+    "receipt_sha256": "f04b9f54e39e15354e811cb49e32fcad174076ff4531d780c27ce41819705ba8",
+    "reviewer_reran_tests": false
+  },
+  "protected_baseline": {
+    "initial_passed": 121,
+    "initial_failed": 1,
+    "initial_skipped": 1,
+    "yara_resolution": "existing locked yara-python 4.5.4 provisioned in dedicated environment only",
+    "security_center_recheck_passed": 35,
+    "security_center_recheck_skipped": 1,
+    "real_clamav_proof": false
+  },
+  "remaining": {
+    "full_F05_acceptance": false,
+    "full_U_TARGET_parity": false,
+    "runtime_independence_proof": false,
+    "history_rows_unreviewed": 18820,
+    "complete_seed_families": 0
+  },
+  "publication": {
+    "local_commit_allowed": true,
+    "main_merge_or_push_allowed": false,
+    "release_or_deploy_allowed": false
+  }
+}

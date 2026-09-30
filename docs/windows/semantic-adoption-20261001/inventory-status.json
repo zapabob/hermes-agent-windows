@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "campaign": "windows-semantic-adoption-20261001",
+  "downstream_base": "a553729853b9648bf8ca9e5c3c7e54365d7f5c62",
+  "upstream_target": "1a269fcd3b61971bd05e841f80154279dd0a7e65",
+  "complete": false,
+  "history": {
+    "extracted": 18820,
+    "refactor_window": 4272,
+    "post_refactor_window": 14548,
+    "behavioral_dispositions_complete": 0,
+    "unreviewed": 18820
+  },
+  "static_registry": {
+    "R_BEFORE": 101,
+    "R_AFTER": 101,
+    "U_TARGET": 102,
+    "D_BASE": 102,
+    "extraction_errors": 0,
+    "behavior_equivalence_claim": false
+  },
+  "dynamic_plugin_skill_rpc_inventory_complete": false,
+  "seed_inventory": {
+    "total": 50,
+    "complete_families": 0,
+    "blocked_families": [
+      "F01",
+      "F02",
+      "F03"
+    ],
+    "partial_families": [
+      "F05"
+    ],
+    "other_seed_families_not_behaviorally_reviewed": 46,
+    "not_a_complete_contract_denominator": true
+  },
+  "blocker": {
+    "code": "BLOCKED_CODEGRAPH",
+    "file": "gateway/run.py",
+    "bytes": 1576015,
+    "codegraph_max_bytes": 1048576,
+    "indexed_nodes": 0,
+    "tool": "1.6.0",
+    "source_sha256": "056b8581cead2c172ef02e79e8527a7be5455e8d351cc66143f46f38044439f8"
+  },
+  "partial_slice": {
+    "id": "F05a",
+    "scope": "CLI slash help/completion and shared help formatting, 13 balanced locale keys",
+    "full_F05_parity": false,
+    "full_U_TARGET_parity": false,
+    "acceptance_status": "LOCAL_SLICE_VERIFIED"
+  },
+  "forbidden_actions_executed": false,
+  "production_runtime_acceptance_claim": false
+}
