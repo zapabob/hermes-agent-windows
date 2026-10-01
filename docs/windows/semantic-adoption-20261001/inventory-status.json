@@ -119,7 +119,13 @@
     },
     {
       "id": "F08a",
-      "status": "PARTIAL_WITH_UNPROVED_SURFACES"
+      "status": "PARTIAL_WITH_UNPROVED_SURFACES",
+      "commit": "d559416061d23105555b112097fd52e7a293d07b"
+    },
+    {
+      "id": "F08c",
+      "status": "PARTIAL_WITH_UNPROVED_SURFACES",
+      "kind": "independent security prerequisite"
     }
   ],
   "proof_only_slices": [

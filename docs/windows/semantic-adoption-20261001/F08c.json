@@ -1,0 +1,233 @@
+{
+  "id": "F08c",
+  "parent_family": "F08",
+  "status": "PARTIAL_WITH_UNPROVED_SURFACES",
+  "starting_commit": "d559416061d23105555b112097fd52e7a293d07b",
+  "scope": "Existing tool restriction owner follows copied execution contexts; immutable ContextVar replaces threading.local without policy/approval/router changes.",
+  "source_sha256": {
+    "hermes_cli/plugins.py": "255ed19b0a16108aeaa2509a7556827723185b877dc78582f9d24162d238c218",
+    "tests/tools/test_review_whitelist_thread_native.py": "96a1bdbf574dfeb73aeb2a6c8336488940502af4359231a1af1a887312a11ae3",
+    "tests/hermes_cli/test_plugins.py": "87097ce7546f824699ebcdd3653358bc42519e0bd90997b9c10f854a539fe686",
+    "docs/windows/semantic-adoption-20261001/F08-mini-plan.md": "5bbe854b44080f30c57707da91211897603fde8de5a690eabe8a48fcf24b4d15",
+    "tools/thread_context.py": "378175cb766f52da8826c742f0c5b45653866075b951ff93d1af1fcfb6451aa9",
+    "agent/tool_executor.py": "11b247f9620b5e44d4d9c98d672ef708690d2635a8e0d348cfbe6481059c136f",
+    "agent/relay_tools.py": "35d4ae43b7aba7aa9bd9974233d9f076a7ff92abe115e1c256cf6d6820b20e11",
+    "agent/relay_runtime.py": "1c42862013ad7328161e87f3a9d6041c5d3c69394c7e0ec3e130c27d115977da",
+    "tools/code_kernel.py": "e526a891246f10b0498916eeb344ba25aa04cc08ae3c2fa3a8b95ba300fd514b",
+    "agent/side_question.py": "5bb39cb280051eb761a4ca6d66697942c2cbbabd5201abdbe56ccd69596b7fe7",
+    "hermes_cli/observability/relay_shared_metrics.py": "817f505f664ec0d1ba06fb4c9fd6e7dd90f79490aa95ba3506c2df1cf989f6a6",
+    "hermes_cli/lifecycle.py": "e820ed8114d7062d53223113cc053c737d4ced6b624ce1fbe88f79ad8b2a26bd",
+    "agent/background_review.py": "dbccacd0849588d1e88bd44e8e3d98fff95c97a6d1442952487b8ddda15124d7",
+    "tools/file_tools.py": "4c09d9951c983c1061de46f8c4b488c4e7a2190a5c669b727d80fb677e8cb9b5",
+    "tools/approval.py": "63fd9c3ca2327d98413b30a6cf8c6d8a68377ba190339b7019362f4ead701b8b",
+    "tools/skill_manager_tool.py": "98a378a60a144ac9ecf05e3d0c550389f34eec37a56c8550a5dcadda8c28202e",
+    "tools/skill_provenance.py": "aab95e676e8013b1c5def7e66f48a15bdd19a5c8257f27cb530ef30e571110a1",
+    "run_agent.py": "61df6f728ce93c13a745a2d1251a9592c74fa5d9ad74e60b069a061da5f13eda",
+    "cli.py": "211f457aed84f18c39c5a5918a2015c1b0862c2d681493062cd4de84a84b6cd4",
+    "model_tools.py": "b24d49678cde1e2f12e0fbe5ed84ad34e0170a36376ebde1e952640222cfb0de",
+    "hermes_state.py": "7234f882e8b01658d5b98fbc6d0c2bf7f5c2aeccc15ebbff264087047028a7a4"
+  },
+  "source_bound_evidence_snapshot_sha256": "cb8179d93515911066dee132e1389f66d95e35408d3d413c444b3a4702e52446",
+  "red": {
+    "pass": 2,
+    "behavioral_fail": 20,
+    "skip": 0,
+    "fixture_API_fail": 0,
+    "collection_error": 0,
+    "test_sha256": "96a1bdbf574dfeb73aeb2a6c8336488940502af4359231a1af1a887312a11ae3"
+  },
+  "native_acceptance": {
+    "pass": 22,
+    "fail": 0,
+    "skip": 0,
+    "real_threads_reused_executors_copied_contexts": true,
+    "bounded_coroutine_frames": true,
+    "actual_asyncio_task_or_Relay_overlay": false,
+    "owned_threads_joined": true,
+    "network_attempts": 0
+  },
+  "provider_proof": {
+    "pass": 5,
+    "fail": 0,
+    "skip": 0,
+    "test_source_sha256": "b072abb211dc39e3f6880702ab56f7f4156eb9f7b44c2839d5cf502c8653cd6f",
+    "uncommitted_followup_B_test": true,
+    "runner": {
+      "argv": [
+        "C:/Program Files/Git/bin/bash.exe",
+        "scripts/run_tests.sh",
+        "tests/agent/test_refine_provider_native.py",
+        "-k",
+        "not read_file_then_patch and not search_is_admitted",
+        "-q",
+        "-rs",
+        "-j",
+        "2",
+        "--file-timeout",
+        "180"
+      ],
+      "cwd": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+      "environment_keys": [
+        "COMSPEC",
+        "HERMES_HOME",
+        "HERMES_PYTHON",
+        "HOME",
+        "PATH",
+        "PATHEXT",
+        "PYTHONIOENCODING",
+        "PYTHONUTF8",
+        "SystemRoot",
+        "TEMP",
+        "TMP",
+        "USERPROFILE",
+        "WINDIR"
+      ],
+      "exit": 0,
+      "source_sha256": {
+        "cli.py": "211f457aed84f18c39c5a5918a2015c1b0862c2d681493062cd4de84a84b6cd4",
+        "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+        "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+        "tests/agent/test_refine_provider_native.py": "b072abb211dc39e3f6880702ab56f7f4156eb9f7b44c2839d5cf502c8653cd6f"
+      },
+      "log_sha256": "91c10adcc70829a4a175d9ec45b5e564244b89ad1d0ce7ef26fc6eb80e92096d"
+    },
+    "exclusions": [
+      "read_file_then_patch",
+      "search_is_admitted"
+    ],
+    "actual_public_dispatch_child_conversation_executor_registry_effects": true,
+    "scripted_provider_transport": true,
+    "live_provider": false,
+    "parent_prefix_schema_transcript_preserved": true
+  },
+  "final_native_regression": {
+    "files": 10,
+    "pass": 228,
+    "fail": 0,
+    "skip": 0,
+    "runner": {
+      "argv": [
+        "C:/Program Files/Git/bin/bash.exe",
+        "scripts/run_tests.sh",
+        "tests/tools/test_review_whitelist_thread_native.py",
+        "tests/hermes_cli/test_plugins.py",
+        "tests/tools/test_execute_code_approval_cluster.py",
+        "tests/run_agent/test_tool_executor_contextvar_propagation.py",
+        "tests/run_agent/test_background_review_toolset_restriction.py",
+        "tests/agent/test_side_question.py",
+        "tests/run_agent/test_background_review_cache_parity.py",
+        "tests/run_agent/test_background_review.py",
+        "tests/hermes_cli/test_stream_json_native.py",
+        "tests/agent/test_skills_auto_load_native.py",
+        "-q",
+        "-rs",
+        "-j",
+        "2",
+        "--file-timeout",
+        "180"
+      ],
+      "cwd": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+      "environment_keys": [
+        "COMSPEC",
+        "HERMES_HOME",
+        "HERMES_PYTHON",
+        "HOME",
+        "PATH",
+        "PATHEXT",
+        "PYTHONIOENCODING",
+        "PYTHONUTF8",
+        "SystemRoot",
+        "TEMP",
+        "TMP",
+        "USERPROFILE",
+        "WINDIR"
+      ],
+      "exit": 0,
+      "source_sha256": {
+        "cli.py": "211f457aed84f18c39c5a5918a2015c1b0862c2d681493062cd4de84a84b6cd4",
+        "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+        "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+        "tests/tools/test_review_whitelist_thread_native.py": "96a1bdbf574dfeb73aeb2a6c8336488940502af4359231a1af1a887312a11ae3",
+        "tests/hermes_cli/test_plugins.py": "87097ce7546f824699ebcdd3653358bc42519e0bd90997b9c10f854a539fe686",
+        "tests/tools/test_execute_code_approval_cluster.py": "d2c865dc7cd26c227cad138965cc789edb8967b264daaf8632c042a79d12f1eb",
+        "tests/run_agent/test_tool_executor_contextvar_propagation.py": "30301f26e2ff38321ddd553bf9cd665969c24015f4c874e92e2d4d04d09d4d9b",
+        "tests/run_agent/test_background_review_toolset_restriction.py": "acb3917b2e9d93c976c282697ae2c8307d428a76bc4278509e04afe2ac1edeb9",
+        "tests/agent/test_side_question.py": "b4eb935b14a206b8df9d43cc44283b3dd2d17a5304f071831f3d0f88fa2699dd",
+        "tests/run_agent/test_background_review_cache_parity.py": "5f4a02276eb4f5bf1bcf8333eb7d738263deb9089ff61b17daf229ef1a244a5f",
+        "tests/run_agent/test_background_review.py": "fc872c7f2a567f5678c0aa136bde82dbce77c826976d89e578c0f2bfb08712b6",
+        "tests/hermes_cli/test_stream_json_native.py": "21bd446b870728ae518685a5a89ae1e1801da52b3ab1d1ce84c7e31f7ea66f83",
+        "tests/agent/test_skills_auto_load_native.py": "963f14678ebe66ec1e542f383c7db5eaf20b6b96835c68461c5158d482286653"
+      },
+      "log_sha256": "4d123046f1d5dd1949e1cd72baf4de2f34dff758e30cd4f54b1444cd365225b2"
+    },
+    "no_retry": true,
+    "counts_not_additive": true
+  },
+  "test_fixture_correction": {
+    "original_sha256": "8bfc8193beb04e4f8785b70d17f0ee67de48aafc83bc504bec45f4ddaa1359e1",
+    "final_sha256": "87097ce7546f824699ebcdd3653358bc42519e0bd90997b9c10f854a539fe686",
+    "changes": "Real observer and test-owned manager discovery before installing hung hook; same deadline/block/suppression assertions, extra callback-count checks.",
+    "rejected_runs": [
+      "restored-green-002:227pass1fail",
+      "timer-focused-003:first failure then flaky retry",
+      "timer-baseline-004:prepatch failure",
+      "timer-fixture-green-005:warm-only failed"
+    ],
+    "cold_start_latency_fixed": false,
+    "inverse_exact_receipts": [
+      "F08c-timer-fixture-freeze-005.json",
+      "F08c-timer-fixture-freeze-006.json"
+    ]
+  },
+  "mutation": {
+    "detected_code_mutations": 6,
+    "receipt_sha256": "a2f898bb46a7051b2606561edccac0756fd4fa405167679ccf97b88d8c6ac50d",
+    "exact_bytes_restored": true,
+    "provider_two_effect_repeat_same_fault": true,
+    "provider_receipt_sha256": "6115c1e3f8802f37cfcf7e79264e8ad0820db229cc93e23f92efab429e6d9fdf"
+  },
+  "codegraph": {
+    "tool": "1.6.0",
+    "extraction": 25,
+    "D_R_U_owners_each": 3,
+    "D_R_U_outputs_each": 12,
+    "integration_owners": 15,
+    "integration_outputs": 48,
+    "receipt_sha256": "868b2df9bb3e94058dfffda0f5e0d1fc831dea95fb2603115fbb06414c87ae57",
+    "four_root_source_mismatches": 0,
+    "audit_sha256": "15116198ff51a9a8046bd0e4151d83e6cabf3f940260cc85680af0ebda222788"
+  },
+  "independent_investigation_sha256": "51201ccbbc67affc18408250b863972b6251388f233eb2d03b103217c7bfedd5",
+  "independent_review": {
+    "verdict": "APPROVE",
+    "requested_model_id": "gpt-6.1-sol",
+    "requested_reasoning_effort": "high",
+    "actual_model_id": "unexposed",
+    "actual_reasoning_effort": "unexposed",
+    "receipt_sha256": "dbd2406f039f57013280c715c9d5cc25457778846fe4ed7680475fd292e44461",
+    "review_sha256": "01caf9366995c2d213d96077028fe1821bf3e63784a12fe14e4c0c6d5c62477d",
+    "same_cycle_preread_location_constraint_resolved": true
+  },
+  "remaining": [
+    "F08b FEATURE read_file/search_files/save",
+    "actual Relay-overlay/asyncio-task/kernel authorization E2E",
+    "ordinary pre-tool-hook exception behavior",
+    "cold-start latency",
+    "live provider/cloud CI",
+    "messaging Gateway BLOCKED_CODEGRAPH",
+    "full F08/U_TARGET parity"
+  ],
+  "full_F08": false,
+  "full_U_TARGET_parity": false,
+  "runtime_independence_verified": false,
+  "production_runtime_used": false,
+  "published": false,
+  "canonical_prompt_recheck": {
+    "path": "C:\\Users\\downl\\_docs\\prompts\\CLAUDE-FABLE-5.md",
+    "sha256": "54e80937772be0ac111d00681502b27fdf831803a2aa6f6d8df9424bdfc77073",
+    "lines": 1590,
+    "parent_full_read_chunks": "1-400,401-800,801-1200,1201-1590 before local commit",
+    "stronger_scope_and_actual_environment_preserved": true,
+    "old_1254_line_summary_not_current": true
+  }
+}

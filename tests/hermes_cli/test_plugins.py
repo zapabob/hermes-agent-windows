@@ -1170,13 +1170,20 @@ class TestForceReloadSymmetry:
             "hermes_cli.plugins._resolve_hook_callback_timeout", lambda: 0.1
         )
 
+        # Measure policy timeout after real first-party bootstrap, as an
+        # ordinary admitted turn does; do not trigger the policy hook early.
+        from hermes_cli.observability import observe_lifecycle
+        observe_lifecycle("pre_tool_call", tool_name="web_search", args={"query": "warmup"})
         hold = threading.Event()
+        calls = []
 
         def hung_policy(**_kwargs):
+            calls.append("timed")
             hold.wait(timeout=10.0)
             return None
 
         mgr = PluginManager()
+        mgr.discover_and_load()
         mgr._hooks["pre_tool_call"] = [hung_policy]
 
         import hermes_cli.plugins as plugins_mod
@@ -1189,10 +1196,12 @@ class TestForceReloadSymmetry:
 
         assert msg == _PRE_TOOL_CALL_TIMEOUT_BLOCK_MESSAGE
         assert elapsed < 1.0
+        assert calls == ["timed"]
 
         # Still-running / suppression window must also fail closed.
         msg2 = resolve_pre_tool_block("web_search", {"query": "y"})
         assert msg2 == _PRE_TOOL_CALL_TIMEOUT_BLOCK_MESSAGE
+        assert calls == ["timed"]
         hold.set()
 
     def test_pre_tool_call_timeout_does_not_reach_tool_handler(self, monkeypatch):

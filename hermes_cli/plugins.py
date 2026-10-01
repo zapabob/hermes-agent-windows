@@ -6664,7 +6664,11 @@ def fire_pre_command_hook(
         logger.debug("pre_command hook dispatch failed (non-fatal): %s", exc)
 
 
-_thread_tool_whitelist = threading.local()
+# One restriction owner follows existing copied tool/Relay/cell contexts.
+# Immutable state prevents a caller's later set mutation from widening a fork.
+_thread_tool_whitelist: contextvars.ContextVar[
+    Optional[Tuple[frozenset[str], str]]
+] = contextvars.ContextVar("thread_tool_whitelist", default=None)
 
 
 @dataclass(frozen=True)
@@ -6679,12 +6683,12 @@ def set_thread_tool_whitelist(
     allowed: Optional[Set[str]],
     deny_msg_fmt: str = "Tool '{tool_name}' denied: not in this thread's tool whitelist",
 ) -> None:
-    _thread_tool_whitelist.allowed = allowed
-    _thread_tool_whitelist.fmt = deny_msg_fmt
+    state = (frozenset(allowed), deny_msg_fmt) if allowed is not None else None
+    _thread_tool_whitelist.set(state)
 
 
 def clear_thread_tool_whitelist() -> None:
-    _thread_tool_whitelist.allowed = None
+    _thread_tool_whitelist.set(None)
 
 
 def _get_pre_tool_call_directive_details(
@@ -6723,9 +6727,9 @@ def _get_pre_tool_call_directive_details(
     The first valid directive wins. Invalid or irrelevant hook return values
     are silently ignored so existing observer-only hooks are unaffected.
     """
-    allowed = getattr(_thread_tool_whitelist, "allowed", None)
-    if allowed is not None and tool_name not in allowed:
-        fmt = getattr(_thread_tool_whitelist, "fmt", "Tool '{tool_name}' denied")
+    restriction = _thread_tool_whitelist.get()
+    if restriction is not None and tool_name not in restriction[0]:
+        _, fmt = restriction
         return _PreToolCallDirective(
             action="block",
             message=fmt.format(tool_name=tool_name),
