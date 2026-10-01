@@ -8,6 +8,7 @@ Add, remove, or reorder entries here — both `hermes setup` and
 from __future__ import annotations
 
 import copy
+import contextvars
 import json
 import http.client
 import logging
@@ -4648,10 +4649,16 @@ def _spawn_swr_refresh(cache_key: str, refresh_fn=None) -> None:
     ``PROVIDER_REGISTRY`` slug and refreshed via :func:`provider_model_ids`
     (the original behavior).
     """
+    from hermes_constants import get_hermes_home_override, hermes_home_key
+
+    inflight_key = (
+        cache_key if get_hermes_home_override() is None
+        else (hermes_home_key(), cache_key)
+    )
     with _swr_refresh_lock:
-        if cache_key in _swr_refresh_inflight:
+        if inflight_key in _swr_refresh_inflight:
             return
-        _swr_refresh_inflight.add(cache_key)
+        _swr_refresh_inflight.add(inflight_key)
 
     def _default_refresh():
         live = provider_model_ids(cache_key, force_refresh=True)
@@ -4679,17 +4686,19 @@ def _spawn_swr_refresh(cache_key: str, refresh_fn=None) -> None:
         try:
             entry = (refresh_fn or _default_refresh)()
             if entry:
-                cache = _load_provider_models_cache()
-                cache[cache_key] = entry
-                _save_provider_models_cache(cache)
+                with _cache_write_lock:
+                    cache = _load_provider_models_cache()
+                    cache[cache_key] = entry
+                    _save_provider_models_cache(cache)
         except Exception:
             logger.debug("SWR refresh failed for %s", cache_key, exc_info=True)
         finally:
             with _swr_refresh_lock:
-                _swr_refresh_inflight.discard(cache_key)
+                _swr_refresh_inflight.discard(inflight_key)
 
+    ctx = contextvars.copy_context()
     threading.Thread(
-        target=_refresh, daemon=True, name=f"model-cache-swr-{cache_key}"
+        target=lambda: ctx.run(_refresh), daemon=True, name=f"model-cache-swr-{cache_key}"
     ).start()
 
 

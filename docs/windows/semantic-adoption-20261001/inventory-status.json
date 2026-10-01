@@ -133,6 +133,12 @@
       "status": "PARTIAL_WITH_BLOCKED_GATE",
       "commit": null,
       "review": "APPROVE_BOUNDED_SLICE"
+    },
+    {
+      "id": "Picker-P01P02",
+      "status": "LOCAL_SLICE_VERIFIED",
+      "commit": null,
+      "full_picker_complete": false
     }
   ],
   "proof_only_slices": [
@@ -221,7 +227,7 @@
       }
     },
     "model_picker": {
-      "status": "SOURCE_COMPARED_INDEPENDENT_SLICES_IN_PROGRESS",
+      "status": "PARTIAL_WITH_BLOCKED_GATE",
       "complete": false,
       "surfaces": [
         "Desktop",
@@ -234,10 +240,14 @@
         "failure recovery",
         "model and effort selection preservation"
       ],
-      "interval_policy": "latest direct user instruction: fixed upstream purpose-specific lifetimes; models.dev4h/provider1h/nativeOllama300s preserved; no12h timer or mandatory upstream runtime"
+      "interval_policy": "fixed upstream purpose-specific lifetimes; metadata4h/provider1h/successful-stale7d/nativeOllama300s; fallback60 adoption pending; no consolidated12h timer or mandatory upstream runtime",
+      "recorded_slices": [
+        "Picker-P01P02"
+      ],
+      "blocked_http_evidence": "Picker-loopback-approval-block-001.json"
     },
     "full_family_completion_count": 0,
-    "recorded_local_commit_count": 13,
+    "recorded_local_commit_count": 14,
     "not_required_now": {
       "other_seed_candidates_unreviewed": 39,
       "historical_inventory_retained": true

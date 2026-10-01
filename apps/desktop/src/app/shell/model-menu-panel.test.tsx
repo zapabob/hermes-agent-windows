@@ -420,7 +420,7 @@ describe('ModelMenuPanel provider collapse', () => {
     expect($collapsedProviders.get()).toContain('deepseek')
   })
 
-  it('switches the session model when Refresh Models drops the current pick', async () => {
+  it('preserves the session model when Refresh Models drops the current hint', async () => {
     $currentProvider.set('zhipu')
     $currentModel.set('glm-4.5-air')
     getGlobalModelOptions
@@ -441,13 +441,10 @@ describe('ModelMenuPanel provider collapse', () => {
 
     fireEvent.click(await content.findByText('Refresh Models'))
 
-    await vi.waitFor(() => {
-      expect(onSelectModel).toHaveBeenCalledWith({
-        model: 'deepseek-v4-pro',
-        provider: 'deepseek',
-        sessionId: 'runtime-1'
-      })
-    })
+    await vi.waitFor(() => expect(getGlobalModelOptions).toHaveBeenCalledTimes(2))
+    expect(onSelectModel).not.toHaveBeenCalled()
+    expect($currentModel.get()).toBe('glm-4.5-air')
+    expect($currentProvider.get()).toBe('zhipu')
   })
 
   it('does not switch when Refresh Models still lists the current pick', async () => {
@@ -467,7 +464,7 @@ describe('ModelMenuPanel provider collapse', () => {
   })
 })
 
-describe('ModelMenuPanel refresh reconcile × guarded-switch confirm handshake', () => {
+describe('ModelMenuPanel explicit selection after refresh × guarded-switch confirm handshake', () => {
   // #95446 fix (reconcile after Refresh Models) composes with the
   // confirm-handshake guard: when the reconcile target is itself a GUARDED
   // model (contributor tier / expensive), the switch must surface the confirm
@@ -492,7 +489,7 @@ describe('ModelMenuPanel refresh reconcile × guarded-switch confirm handshake',
     )
   }
 
-  it('reconcile-triggered switch to a guarded model surfaces confirm, not a silent retry', async () => {
+  it('explicit selection of a refreshed guarded model surfaces confirm, not a silent retry', async () => {
     $activeSessionId.set('runtime-1')
     $currentProvider.set('zhipu')
     $currentModel.set('glm-4.5-air')
@@ -537,6 +534,10 @@ describe('ModelMenuPanel refresh reconcile × guarded-switch confirm handshake',
 
     await content.findByText(/Glm 4\.5 Air/i)
     fireEvent.click(await content.findByText('Refresh Models'))
+
+    await vi.waitFor(() => expect(getGlobalModelOptions).toHaveBeenCalledTimes(2))
+    expect(requestGateway.mock.calls.filter(([method]) => method === 'config.set')).toHaveLength(0)
+    fireEvent.click(await content.findByText(/Muse Spark/i))
 
     // The reconcile fired exactly ONE switch attempt and it came back
     // confirm_required → the confirm toast is up, nothing retried silently.
