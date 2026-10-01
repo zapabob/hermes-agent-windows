@@ -10510,11 +10510,14 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                 logger.debug("/new model reset to config default failed", exc_info=True)
         _sync_process_session_id(self.session_id)
 
+        self._auto_load_skills_result = None
         if self.agent:
             self.agent.session_id = self.session_id
             self.agent.session_start = self.session_start
             self.agent.reasoning_config = self.reasoning_config
             self.agent.reset_session_state()
+            self.agent._auto_load_skills_result = None
+            self.agent._auto_load_skills_resolved = False
             if hasattr(self.agent, "_last_flushed_db_idx"):
                 self.agent._last_flushed_db_idx = 0
             if hasattr(self.agent, "_todo_store"):

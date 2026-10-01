@@ -1,0 +1,109 @@
+{
+  "id": "F12b",
+  "family": "F12",
+  "status": "ACCEPTED_REQUIRED_NEW_SESSION_SLICE",
+  "scope": "Same ordinary agent reloads configured skills at genuine public /new boundary; same-conversation prompt, resume/branch reset owners unchanged.",
+  "implementation": "Three assignments in existing CLI.new_session; reuse existing admission/loader/system prompt and CLI startup handoff owners.",
+  "source_sha256_raw": {
+    "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+    "agent/skill_commands.py": "d6d5ef6b8f9f9c84cef6d99ee151f6dbb45f1553794f13f4b9fd31c897acdaae",
+    "agent/system_prompt.py": "5855b79eb9419a6e6babd4121683b01e65be71fc6d1056170880f89e6d142d0f",
+    "cli.py": "d08e83fef5fa8493802f4e9c89b90644275cafb6a7782d2f4cb07af10dbaab89",
+    "docs/windows/semantic-adoption-20261001/F12b-mini-plan.md": "0eb1e6ff4df7d25c34c4742a3a6c5f4b1ac2a36f0e5433c5205e1007683bf5e0",
+    "hermes_cli/cli_agent_setup_mixin.py": "6eddc745b0a654e8ccec4d968e056ca7ebdb2612a46b0b0f8ed7b0e37db84d6b",
+    "hermes_cli/cli_commands_mixin.py": "bcc92dbf2ef559dead051f29e298c4eed38ea2f389b6723b5b08597edd86ce10",
+    "run_agent.py": "b433326bfb74e9606313bfe0da0c2818e3e165a31dbc792bb6974998e4ad7d8a",
+    "tests/agent/test_skills_auto_load_boundaries_native.py": "e28ccd67a610a555fee9cba1f3af231abb6f79844893161b6128cbd34e873d0c",
+    "tests/agent/test_skills_auto_load_native.py": "963f14678ebe66ec1e542f383c7db5eaf20b6b96835c68461c5158d482286653",
+    "tests/agent/test_skills_auto_load_new_session_native.py": "6b1d4c98e61a0d2862bfaae904f8d8c0c989294c1c85ddf810d5e082867c5684",
+    "tests/agent/test_system_prompt.py": "14165d57740605934c7ec33be123c73434472a940ff2ff51af68fa20b162f8e4",
+    "tests/agent/test_system_prompt_restore.py": "c7543d0bf67c366a45db7a0a005e3eb00e2e6ca912f1c0b5145d597c38f1f421",
+    "tests/cli/test_cli_new_session.py": "2551c34bf8059f0567abd528efac8d7234d4a0ebd159d4e455edc0fe73b97f24",
+    "tests/cli/test_cli_preloaded_skills.py": "aa9ad52cb53d7107d17da07a1162802d7e34217d2c433ffba9977097730c6ae9"
+  },
+  "evidence_sha256_raw": {
+    "F12b-F05-F11-final-SDK-003.json": "a139603025ac27fc7cb3213d3d448a66621a788add81c2ee32c598f873c5648b",
+    "F12b-mutant-stale-agent-resolution-001.json": "7a4138d0370c36479a4d4457ad7c05794b619938a5ff2cfc4e7ca289d97cf3a4",
+    "F12b-mutant-stale-agent-resolution-001.log": "770f6651291b9059b55b4c210cf815e1d5b9a20d1b56e768ec93392c29a3f5bd",
+    "F12b-mutant-stale-cli-handoff-001.json": "23b3fc5e2d5ed79c15ef87fc4e3f5bcfe2fac7e636404f9a958a1f4f6c46f8a1",
+    "F12b-mutant-stale-cli-handoff-001.log": "3d0f7c52dfe38860ca9791bacd367c7442ce40f5efca715c9de1837b5fb82225",
+    "F12b-mutations-final-001/receipt.json": "0faca76eb522910fabc02ebb65ed91eaefc14df16d7e5ff075238d260063c87d",
+    "F12b-native-green-003.json": "1252d599fe756ab7910c6a1113bfd4f4830b60b87439ad6dd10f413788185dfc",
+    "F12b-native-green-003.log": "144b50e40d1e396e64640fef7cd0c7478ab31282471e23bae2046f6b535eb51d",
+    "F12b-native-red-002.json": "b620ed3d5acd088e9d8b36203723b5f9aec9175c92eeaa449c3d46ad8a06e9f5",
+    "F12b-native-red-002.log": "95b2dea775a49dc8dfacf4cc41ede464e10e9d9db5b5340852f37c90967b13b3",
+    "F12b-native-restored-004.json": "b168e660e30b6f05db4fa80465a416674e15dc07354a868181e2b58370e9b818",
+    "F12b-native-restored-004.log": "d8a4aecfe87000db18a04712ba0eafc08b2fa0efea4c424ab8c64d2545107993",
+    "F12b-preedit-SDK-001.json": "1640dac0a817ff6025941814eec911dc12351599a6080a14992cbc464e335d2b",
+    "Required-parent-final-CLI-003/_auto_load_parts_agent_system_prompt.py-explore.log": "482b532efba53b12478467548d2ac87b2f768c7250d0e5088e657ec80796290f",
+    "Required-parent-final-CLI-003/_auto_load_parts_agent_system_prompt.py-explore.log.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Required-parent-final-CLI-003/_auto_load_parts_agent_system_prompt.py-impact.json": "d4605b45eee65f2b02b9330a6f1448160abafda557c35ce4406e871bc3644dc4",
+    "Required-parent-final-CLI-003/_auto_load_parts_agent_system_prompt.py-impact.json.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Required-parent-final-CLI-003/_auto_load_parts_agent_system_prompt.py-query.json": "f146139562e56d7b1bceb9421636fb6abf3700680a9f85ec3570893378cde149",
+    "Required-parent-final-CLI-003/_auto_load_parts_agent_system_prompt.py-query.json.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Required-parent-final-CLI-003/affected-python.json": "a9f514b73dc368d54c7086bdab8d79a299eb6f571006833b704eba2bb06afd31",
+    "Required-parent-final-CLI-003/affected-python.json.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Required-parent-final-CLI-003/affected.json": "ddcabc8faefc964fcfb55b57bc0701737093553aeff589254b490363d33ba341",
+    "Required-parent-final-CLI-003/affected.json.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Required-parent-final-CLI-003/receipt.json": "b9dae752dbe9001b104f509e151776bdcbd2b2141f8398bc25bf07bfbbd1d6d4",
+    "Required-parent-final-CLI-003/status.json": "140a6bf3fe12c312368daa11063c1fd033b2de43c6bb55ed192a4c64d760412c",
+    "Required-parent-final-CLI-003/status.json.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "F12b-independent-001/receipt.json": "c90b894d8ac3a743d1f512b7dafc7b6a76aaedb5d970e07d9e28c8562ad5ca6d",
+    "F12b-independent-001/review.md": "28a7227520f66710a6635ee1d63b62e728b47c15b9578660d0ad447433465727",
+    "F12b-independent-001/source-manifest.json": "f58995271c34d0a6b4a473194c70ce375f88fefa6cb8cb211218bfede51066e9",
+    "F12b-independent-001/evidence-manifest.json": "f992015df8b3ace8d4cd154516418c38a87b3c857c21d2f57bce3c55b9eb0f76",
+    "F12b-independent-001/verification.json": "c79042d6c2694f68bb62066ae855679b122dbbbbd6b98898ea80fb1033868e50"
+  },
+  "current_runner_receipts": [
+    "F12b-native-green-003.json",
+    "F12b-native-restored-004.json"
+  ],
+  "native_regression": {
+    "green_selected_files": 6,
+    "green_pass": 114,
+    "fail": 0,
+    "skip": 0,
+    "restored_selected_files": 2,
+    "restored_pass": 10,
+    "counts_overlap": true,
+    "file_selection_checked": true
+  },
+  "red": {
+    "accepted": "F12b-native-red-002",
+    "failed_behavioral_cases": 4,
+    "rejected": "RED001 test changed during execution; not admissible source-bound RED"
+  },
+  "mutation": {
+    "detected": 2,
+    "restored_exact_bytes": true,
+    "receipt": "F12b-mutations-final-001/receipt.json",
+    "separate_agent_assignments_not_individually_mutated": true
+  },
+  "codegraph": {
+    "sdk": "F12b-F05-F11-final-SDK-003.json",
+    "cli": "Required-parent-final-CLI-003/receipt.json",
+    "tool": "1.6.0/extraction25",
+    "fixed_reference_binding": "F12a unchanged D_BASE/R_AFTER/U_TARGET owner evidence retained; current integration rebound"
+  },
+  "independent_review": {
+    "receipt": "F12b-independent-001/receipt.json",
+    "verdict": "APPROVE_BOUNDED_PROOF",
+    "requested_model": "Sol6.1",
+    "requested_effort": "high",
+    "actual_model": null,
+    "actual_effort": null
+  },
+  "remaining_axes": {
+    "native_symlink": "BLOCKED_NATIVE_SYMLINK_PRIVILEGE retained separately from this three-assignment acceptance",
+    "live_provider_or_Gateway": "UNPROVED; not a claim of this test-owned native proof"
+  },
+  "explicit_paths": [
+    "cli.py",
+    "tests/agent/test_skills_auto_load_new_session_native.py",
+    "docs/windows/semantic-adoption-20261001/F12b-mini-plan.md"
+  ],
+  "commit_message": "Reload configured skills at the genuine new conversation boundary",
+  "parent_head": "f056f0b816ecb6fc833742f40c9389e56231165e",
+  "whole_U_TARGET_parity": false,
+  "whole_tree_GREEN": false
+}
