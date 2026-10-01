@@ -1,0 +1,55 @@
+{
+  "record_kind": "main publication integration preflight",
+  "integration_source_head": "8f82b966ee2652e80fd4fdcb9996f8acf9dfcfce",
+  "integration_source_tree": "48f944ea75d06a15562e364dd5c863557ba665b1",
+  "user_authorization": "Explicit later request to commit and push main while retaining files; supersedes prior conditional publication decision only.",
+  "fixed_inputs_unchanged": {
+    "D_BASE": "a553729853b9648bf8ca9e5c3c7e54365d7f5c62",
+    "U_TARGET": "1a269fcd3b61971bd05e841f80154279dd0a7e65",
+    "R_BEFORE": "63279301bcbdc185c1b07b98a9312eb0c862f26d",
+    "R_AFTER": "d3630f853239e8c41ce7201e09fbdf39bcbc5431"
+  },
+  "accepted_campaign_head": "9078f81970da76fabb1e0368e0d1dc6a7d6fc0ce",
+  "preserved_primary_main_commit": "da5074ad65a4bb74991e7c6c10207e00eaa3cc7a",
+  "runtime_difference_from_accepted_campaign": [
+    "scripts/ebbinghaus_stats_cron.py"
+  ],
+  "script_sha256_raw": "6b43b85fd02cc92ed9b7e1326d54c052da2d824d278f2696380d66a21510debe",
+  "script_matches_existing_primary_commit": true,
+  "accepted_source_manifest_continuity": true,
+  "canonical_tests": {
+    "receipt": "Main-publication-current-119-001.json",
+    "sha256_raw": "63a8a77af130c754f4e791dd87323807a2cfad532f0252a46d3bef12c038c488",
+    "pass": 119,
+    "fail": 0,
+    "skip": 0,
+    "retry": 0,
+    "selected_and_discovered_files": 3,
+    "whole_suite": false
+  },
+  "codegraph": {
+    "sync": "Main-publication-sync-001.json",
+    "exact_node_SDK": "Main-publication-SDK-001.json",
+    "generic_main_CLI_failed_attempts": [
+      "Main-publication-graph-001",
+      "Main-publication-graph-002"
+    ],
+    "generic_name_failure_not_parity": true
+  },
+  "retained_limits": {
+    "whole_U_TARGET_parity": false,
+    "whole_family_parity": false,
+    "0_25_compatibility": false,
+    "production_stability": false,
+    "all_paths_runtime_dependency_zero": false
+  },
+  "remaining_inventory": {
+    "other_seed_families_unreviewed": 39,
+    "history_behavioral_dispositions_unreviewed": 18820,
+    "dynamic_plugin_skill_RPC_complete": false
+  },
+  "native_blocked_axes_preserved": true,
+  "source_bound_independent_review": "Main-publication-independent-001/receipt.json",
+  "remote_push_outcome": "Recorded separately after actual push; not yet executed at this record creation",
+  "production_restart_deploy_release_executed": false
+}
