@@ -131,7 +131,7 @@
     {
       "id": "F08b",
       "status": "PARTIAL_WITH_BLOCKED_GATE",
-      "commit": null,
+      "commit": "99c1abfb3f74aa46ac3b207f165cd0611675df9b",
       "review": "APPROVE_BOUNDED_SLICE"
     },
     {
@@ -167,7 +167,67 @@
     {
       "id": "F08e",
       "status": "LOCAL_SLICE_VERIFIED",
-      "commit": null,
+      "commit": "f056f0b816ecb6fc833742f40c9389e56231165e",
+      "full_family_complete": false
+    },
+    {
+      "id": "F04c",
+      "status": "ACCEPTED_BOUNDED_SLICE",
+      "commit": "3a1591084266c13f4939187e1b693e18e97adec6",
+      "full_family_complete": false
+    },
+    {
+      "id": "F05b",
+      "status": "ACCEPTED_BOUNDED_SLICE",
+      "commit": "1dbd5590177753758ed1d8cf3aef3d9437bb2793",
+      "full_family_complete": false
+    },
+    {
+      "id": "F07b",
+      "status": "ACCEPTED_BOUNDED_SLICE",
+      "commit": "98b78701d19303c02dd75356ed06b1e4427863e0",
+      "full_family_complete": false
+    },
+    {
+      "id": "F07c",
+      "status": "ACCEPTED_BOUNDED_SLICE",
+      "commit": "34210313c86a720c1bdd2c8bbac3ca265a9588f0",
+      "full_family_complete": false
+    },
+    {
+      "id": "S03b",
+      "status": "ACCEPTED_BOUNDED_SLICE",
+      "commit": "2a4124bb0ae000aac547dd4531703fa9e75a9359",
+      "full_family_complete": false
+    },
+    {
+      "id": "S03c",
+      "status": "ACCEPTED_BOUNDED_SLICE",
+      "commit": "13fc2588f03abc346dab4a76da972081340adb9e",
+      "full_family_complete": false
+    },
+    {
+      "id": "F10d",
+      "status": "ACCEPTED_BOUNDED_SLICE",
+      "commit": "925d114ae53418b159677beb7123b3b9d08fb8da",
+      "full_family_complete": false
+    },
+    {
+      "id": "F12b",
+      "status": "ACCEPTED_BOUNDED_SLICE",
+      "commit": "93f8c73e18018042f6d8d59c7226f9ad18dc16da",
+      "full_family_complete": false
+    },
+    {
+      "id": "F11b",
+      "status": "ACCEPTED_BOUNDED_SLICE",
+      "commit": "359ce504faaa1afa3fc724d767f4cad769b74662",
+      "full_family_complete": false
+    },
+    {
+      "id": "Picker-P05",
+      "status": "ACCEPTED_BOUNDED_SLICE",
+      "commit": "970a830fdb9168b7d4b2dad78ff04deef25bed81",
       "full_family_complete": false
     }
   ],
@@ -183,92 +243,194 @@
     "frozen_inputs_unchanged": true,
     "families": {
       "F04": {
-        "status": "PARTIAL",
-        "complete": false,
+        "status": "ACCEPTED_REQUIRED_SCOPE",
+        "required_plan_scope_accepted": true,
+        "all_native_axes_passed": true,
+        "native_axes_scope": "Only the explicit bounded proof scope in the latest acceptance JSON, not every family/surface/native runtime condition",
+        "complete": true,
+        "completion_scope": "Current approved plan bounded contract, not seed family parity",
+        "full_family_parity_complete": false,
         "recorded_slices": [
-          "F04a"
-        ]
+          "F04a",
+          "F04b",
+          "F04c"
+        ],
+        "latest_acceptance": "F04c.json",
+        "commits": {
+          "F04a": "33cea4e790b3419f55bba850e0d1e11bf8742677",
+          "F04b": "4dea37991861f6dc16040f6a5f9f015acb4749db",
+          "F04c": "3a1591084266c13f4939187e1b693e18e97adec6"
+        },
+        "native_scope": "Real production composer in Windows Chromium with synthetic DOM composition/key events and owned RPC effect leaf; physical IME/Electron/live Gateway not demonstrated."
       },
       "F05": {
-        "status": "PARTIAL",
-        "complete": false,
+        "status": "ACCEPTED_REQUIRED_SCOPE",
+        "required_plan_scope_accepted": true,
+        "all_native_axes_passed": true,
+        "native_axes_scope": "Only the explicit bounded proof scope in the latest acceptance JSON, not every family/surface/native runtime condition",
+        "complete": true,
+        "completion_scope": "Current approved plan bounded contract, not seed family parity",
+        "full_family_parity_complete": false,
         "recorded_slices": [
-          "F05a"
-        ]
+          "F05a",
+          "F05b"
+        ],
+        "latest_acceptance": "F05b.json",
+        "commits": {
+          "F05a": "db5ee25f9cefe60c54190c7e1f36c1e2c5ededd4",
+          "F05b": "1dbd5590177753758ed1d8cf3aef3d9437bb2793"
+        }
       },
       "F07": {
-        "status": "PARTIAL",
-        "complete": false,
+        "status": "ACCEPTED_REQUIRED_SCOPE",
+        "required_plan_scope_accepted": true,
+        "all_native_axes_passed": true,
+        "native_axes_scope": "Only the explicit bounded proof scope in the latest acceptance JSON, not every family/surface/native runtime condition",
+        "complete": true,
+        "completion_scope": "Current approved plan bounded contract, not seed family parity",
+        "full_family_parity_complete": false,
         "recorded_slices": [
           "F07a",
-          "F07b"
-        ]
+          "F07b",
+          "F07c"
+        ],
+        "latest_acceptance": "F07c.json",
+        "commits": {
+          "F07a": "f390a82c552fd2a657dfdf7dfd3a24a6ea484d53",
+          "F07b": "98b78701d19303c02dd75356ed06b1e4427863e0",
+          "F07c": "34210313c86a720c1bdd2c8bbac3ca265a9588f0"
+        }
       },
       "S03": {
-        "status": "PARTIAL",
+        "status": "ACCEPTED_REQUIRED_SCOPE_WITH_BLOCKED_AXES",
+        "required_plan_scope_accepted": true,
+        "all_native_axes_passed": false,
+        "native_axes_scope": "Only the explicit bounded proof scope in the latest acceptance JSON, not every family/surface/native runtime condition",
         "complete": false,
+        "completion_scope": "Current approved plan bounded contract, not seed family parity",
+        "full_family_parity_complete": false,
         "recorded_slices": [
-          "S03a"
-        ]
+          "S03a",
+          "S03b",
+          "S03c"
+        ],
+        "latest_acceptance": "S03b.json",
+        "commits": {
+          "S03a": "85ccd797b34e206e336c59cdbec09161be76e2c2",
+          "S03b": "2a4124bb0ae000aac547dd4531703fa9e75a9359",
+          "S03c": "13fc2588f03abc346dab4a76da972081340adb9e"
+        },
+        "blocked_axes": [
+          {
+            "code": "BLOCKED_NATIVE_SYMLINK_PRIVILEGE",
+            "evidence": "S03b-final-regression-004.json",
+            "skip": 1,
+            "reason": "WinError1314"
+          },
+          {
+            "code": "BLOCKED_EXECUTION_CYBER_REVIEW",
+            "evidence": "S03-undici-cyber-review-block-001.json",
+            "retry": false
+          },
+          {
+            "code": "BLOCKED_HTTP_FIXTURE_APPROVAL",
+            "evidence": "Picker-loopback-approval-block-001.json",
+            "scope": "New native HTTP fixture required for wire-level acceptance; not retried"
+          }
+        ],
+        "electron_disposition": {
+          "proof": "S03c.json",
+          "advisory": "GHSA-9qh4-3jw8-366w",
+          "status": "NOT_ACTIONABLE_BOUNDED_STATIC_CALLERS",
+          "native_effective_settings": "UNPERFORMED_NOT_NEWLY_BLOCKED"
+        },
+        "other_dependency_candidates": "Retained coordinate/caller triage; no blanket vulnerability-free or all Go/JS dependency completion claim."
       },
       "F10": {
-        "status": "PARTIAL",
-        "complete": false,
+        "status": "ACCEPTED_REQUIRED_SCOPE",
+        "required_plan_scope_accepted": true,
+        "all_native_axes_passed": true,
+        "native_axes_scope": "Only the explicit bounded proof scope in the latest acceptance JSON, not every family/surface/native runtime condition",
+        "complete": true,
+        "completion_scope": "Current approved plan bounded contract, not seed family parity",
+        "full_family_parity_complete": false,
         "recorded_slices": [
-          "F10b",
           "F10a",
-          "F10c"
-        ]
+          "F10b",
+          "F10c",
+          "F10d"
+        ],
+        "latest_acceptance": "F10d.json",
+        "commits": {
+          "F10a": "6816251347d216d14eecd52833ec1e43312932a1",
+          "F10b": "8b2b2c3d3c758bdeaf7fa769d18ad1b0a8b25957",
+          "F10c": "a396ec15c5f3905972d1d75865cebda29ffcdf43",
+          "F10d": "925d114ae53418b159677beb7123b3b9d08fb8da"
+        }
       },
       "F12": {
-        "status": "PARTIAL",
-        "complete": false,
+        "status": "ACCEPTED_REQUIRED_SCOPE",
+        "required_plan_scope_accepted": true,
+        "all_native_axes_passed": true,
+        "native_axes_scope": "Only the explicit bounded proof scope in the latest acceptance JSON, not every family/surface/native runtime condition",
+        "complete": true,
+        "completion_scope": "Current approved plan bounded contract, not seed family parity",
+        "full_family_parity_complete": false,
         "recorded_slices": [
-          "F12a"
-        ]
+          "F12a",
+          "F12b"
+        ],
+        "latest_acceptance": "F12b.json",
+        "commits": {
+          "F12a": "424e45f9a49e55fc1039dd075ac7c86f6117b09b",
+          "F12b": "93f8c73e18018042f6d8d59c7226f9ad18dc16da"
+        }
       },
       "F11": {
-        "status": "PARTIAL",
-        "complete": false,
+        "status": "ACCEPTED_REQUIRED_SCOPE",
+        "required_plan_scope_accepted": true,
+        "all_native_axes_passed": true,
+        "native_axes_scope": "Only the explicit bounded proof scope in the latest acceptance JSON, not every family/surface/native runtime condition",
+        "complete": true,
+        "completion_scope": "Current approved plan bounded contract, not seed family parity",
+        "full_family_parity_complete": false,
         "recorded_slices": [
-          "F11a"
-        ]
+          "F11a",
+          "F11b"
+        ],
+        "latest_acceptance": "F11b.json",
+        "commits": {
+          "F11a": "01b6fc86c0e20ae824656dc1ed7e3d87def9b288",
+          "F11b": "359ce504faaa1afa3fc724d767f4cad769b74662"
+        }
       },
       "F08": {
-        "status": "PARTIAL_WITH_BLOCKED_GATE",
-        "complete": false,
+        "status": "ACCEPTED_REQUIRED_SCOPE",
+        "required_plan_scope_accepted": true,
+        "all_native_axes_passed": true,
+        "native_axes_scope": "Only the explicit bounded proof scope in the latest acceptance JSON, not every family/surface/native runtime condition",
+        "complete": true,
+        "completion_scope": "Current approved plan bounded contract, not seed family parity",
+        "full_family_parity_complete": false,
         "recorded_slices": [
           "F08a",
-          "F08c",
           "F08b",
+          "F08c",
           "F08d",
           "F08e"
         ],
-        "current_blocker": {
-          "code": "BLOCKED_ACCEPTANCE_F08",
-          "resolved_finding": "F08b-001",
-          "review": "APPROVE_BOUNDED_SLICE",
-          "native_symlink": "WinError1314 before product dispatch",
-          "actual_executor_timeout_and_segmented_delivery_E2E": "PROVEN_BOUNDED_EXISTING_OWNER; successful payload prepared before timeout, not I/O started after revocation",
-          "broad_regression": {
-            "fail": 16,
-            "skip": 13,
-            "classification": "retained from prior source-bound candidate/parent comparison"
-          },
-          "remaining_command_contracts": [
-            "kernel/Relay and full memory-consent native conditions remain individually unproved; command/runtime bounded contracts accepted"
-          ]
-        },
-        "latest_command_regression": {
-          "passed": 458,
-          "failed": 0,
-          "skipped": 0,
-          "full_F08_complete": false
+        "latest_acceptance": "F08e.json",
+        "commits": {
+          "F08a": "d559416061d23105555b112097fd52e7a293d07b",
+          "F08b": "99c1abfb3f74aa46ac3b207f165cd0611675df9b",
+          "F08c": "5aa697a8d09f76d61efd70d5d0eec36ad6ac053b",
+          "F08d": "3b6027c0ddc7b4e600ddfa9503b10598cfec64cc",
+          "F08e": "f056f0b816ecb6fc833742f40c9389e56231165e"
         }
       }
     },
     "model_picker": {
-      "status": "PARTIAL_WITH_BLOCKED_GATE",
+      "status": "ACCEPTED_REQUIRED_PURPOSE_POLICY_WITH_BLOCKED_HTTP_AXIS",
       "complete": false,
       "surfaces": [
         "Desktop",
@@ -285,16 +447,25 @@
       "recorded_slices": [
         "Picker-P01P02",
         "Picker-P03",
-        "Picker-P04"
+        "Picker-P04",
+        "Picker-P05"
       ],
       "blocked_http_evidence": "Picker-loopback-approval-block-001.json",
       "remaining": [
-        "P05 purpose-specific background freshness and account identity",
-        "native HTTP blocked by prior approval review"
-      ]
+        "Native wire HTTP latency/bytes/recovery acceptance blocked by previous fixture rejection; controlled public RPC and disk/ETag evidence accepted"
+      ],
+      "purpose_policy_accepted": true,
+      "commits": {
+        "Picker-P01P02": "e66562b6236b1758a5bf8764a7f184ad5a672137",
+        "Picker-P03": "998ace4af0bbfe47cb85bec43da594bf3980007e",
+        "Picker-P04": "2a17813d0c2f551700ea5dbd1d28955e2f7b17f6",
+        "Picker-P05": "970a830fdb9168b7d4b2dad78ff04deef25bed81"
+      },
+      "all_native_axes_passed": false,
+      "latest_acceptance": "Picker-P05.json"
     },
     "full_family_completion_count": 0,
-    "recorded_local_commit_count": 19,
+    "recorded_local_commit_count": 28,
     "not_required_now": {
       "other_seed_candidates_unreviewed": 39,
       "historical_inventory_retained": true
@@ -309,6 +480,13 @@
       "source_continuity": true,
       "evidence": "Required-integration-001.json",
       "full_family_proof": false
-    }
+    },
+    "accepted_required_family_scope_count": 8,
+    "required_family_scopes_without_blocked_native_axes": 7,
+    "acceptance_policy": "Current plan bounded contracts accepted or individually blocked; this does not certify entire seed family parity. Unperformed optional axes remain unperformed.",
+    "all_requested_native_conditions_passed": false,
+    "latest_source_head": "970a830fdb9168b7d4b2dad78ff04deef25bed81",
+    "latest_source_tree": "df70bedaef136dbf3d78eae2a5baccb24fd2dcfa",
+    "source_commands_review_record": "Required-closeout.json"
   }
 }

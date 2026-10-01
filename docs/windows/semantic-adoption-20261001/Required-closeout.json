@@ -1,0 +1,1218 @@
+{
+  "source_head": "970a830fdb9168b7d4b2dad78ff04deef25bed81",
+  "source_tree": "df70bedaef136dbf3d78eae2a5baccb24fd2dcfa",
+  "fixed_inputs": {
+    "D_BASE": "a553729853b9648bf8ca9e5c3c7e54365d7f5c62",
+    "U_TARGET": "1a269fcd3b61971bd05e841f80154279dd0a7e65",
+    "R_BEFORE": "63279301bcbdc185c1b07b98a9312eb0c862f26d",
+    "R_AFTER": "d3630f853239e8c41ce7201e09fbdf39bcbc5431"
+  },
+  "required_family_disposition": {
+    "F04": {
+      "status": "ACCEPTED_REQUIRED_SCOPE",
+      "required_plan_scope_accepted": true,
+      "all_native_axes_passed": true,
+      "native_axes_scope": "Only the explicit bounded proof scope in the latest acceptance JSON, not every family/surface/native runtime condition",
+      "complete": true,
+      "completion_scope": "Current approved plan bounded contract, not seed family parity",
+      "full_family_parity_complete": false,
+      "recorded_slices": [
+        "F04a",
+        "F04b",
+        "F04c"
+      ],
+      "latest_acceptance": "F04c.json",
+      "commits": {
+        "F04a": "33cea4e790b3419f55bba850e0d1e11bf8742677",
+        "F04b": "4dea37991861f6dc16040f6a5f9f015acb4749db",
+        "F04c": "3a1591084266c13f4939187e1b693e18e97adec6"
+      },
+      "native_scope": "Real production composer in Windows Chromium with synthetic DOM composition/key events and owned RPC effect leaf; physical IME/Electron/live Gateway not demonstrated."
+    },
+    "F05": {
+      "status": "ACCEPTED_REQUIRED_SCOPE",
+      "required_plan_scope_accepted": true,
+      "all_native_axes_passed": true,
+      "native_axes_scope": "Only the explicit bounded proof scope in the latest acceptance JSON, not every family/surface/native runtime condition",
+      "complete": true,
+      "completion_scope": "Current approved plan bounded contract, not seed family parity",
+      "full_family_parity_complete": false,
+      "recorded_slices": [
+        "F05a",
+        "F05b"
+      ],
+      "latest_acceptance": "F05b.json",
+      "commits": {
+        "F05a": "db5ee25f9cefe60c54190c7e1f36c1e2c5ededd4",
+        "F05b": "1dbd5590177753758ed1d8cf3aef3d9437bb2793"
+      }
+    },
+    "F07": {
+      "status": "ACCEPTED_REQUIRED_SCOPE",
+      "required_plan_scope_accepted": true,
+      "all_native_axes_passed": true,
+      "native_axes_scope": "Only the explicit bounded proof scope in the latest acceptance JSON, not every family/surface/native runtime condition",
+      "complete": true,
+      "completion_scope": "Current approved plan bounded contract, not seed family parity",
+      "full_family_parity_complete": false,
+      "recorded_slices": [
+        "F07a",
+        "F07b",
+        "F07c"
+      ],
+      "latest_acceptance": "F07c.json",
+      "commits": {
+        "F07a": "f390a82c552fd2a657dfdf7dfd3a24a6ea484d53",
+        "F07b": "98b78701d19303c02dd75356ed06b1e4427863e0",
+        "F07c": "34210313c86a720c1bdd2c8bbac3ca265a9588f0"
+      }
+    },
+    "S03": {
+      "status": "ACCEPTED_REQUIRED_SCOPE_WITH_BLOCKED_AXES",
+      "required_plan_scope_accepted": true,
+      "all_native_axes_passed": false,
+      "native_axes_scope": "Only the explicit bounded proof scope in the latest acceptance JSON, not every family/surface/native runtime condition",
+      "complete": false,
+      "completion_scope": "Current approved plan bounded contract, not seed family parity",
+      "full_family_parity_complete": false,
+      "recorded_slices": [
+        "S03a",
+        "S03b",
+        "S03c"
+      ],
+      "latest_acceptance": "S03b.json",
+      "commits": {
+        "S03a": "85ccd797b34e206e336c59cdbec09161be76e2c2",
+        "S03b": "2a4124bb0ae000aac547dd4531703fa9e75a9359",
+        "S03c": "13fc2588f03abc346dab4a76da972081340adb9e"
+      },
+      "blocked_axes": [
+        {
+          "code": "BLOCKED_NATIVE_SYMLINK_PRIVILEGE",
+          "evidence": "S03b-final-regression-004.json",
+          "skip": 1,
+          "reason": "WinError1314"
+        },
+        {
+          "code": "BLOCKED_EXECUTION_CYBER_REVIEW",
+          "evidence": "S03-undici-cyber-review-block-001.json",
+          "retry": false
+        },
+        {
+          "code": "BLOCKED_HTTP_FIXTURE_APPROVAL",
+          "evidence": "Picker-loopback-approval-block-001.json",
+          "scope": "New native HTTP fixture required for wire-level acceptance; not retried"
+        }
+      ],
+      "electron_disposition": {
+        "proof": "S03c.json",
+        "advisory": "GHSA-9qh4-3jw8-366w",
+        "status": "NOT_ACTIONABLE_BOUNDED_STATIC_CALLERS",
+        "native_effective_settings": "UNPERFORMED_NOT_NEWLY_BLOCKED"
+      },
+      "other_dependency_candidates": "Retained coordinate/caller triage; no blanket vulnerability-free or all Go/JS dependency completion claim."
+    },
+    "F10": {
+      "status": "ACCEPTED_REQUIRED_SCOPE",
+      "required_plan_scope_accepted": true,
+      "all_native_axes_passed": true,
+      "native_axes_scope": "Only the explicit bounded proof scope in the latest acceptance JSON, not every family/surface/native runtime condition",
+      "complete": true,
+      "completion_scope": "Current approved plan bounded contract, not seed family parity",
+      "full_family_parity_complete": false,
+      "recorded_slices": [
+        "F10a",
+        "F10b",
+        "F10c",
+        "F10d"
+      ],
+      "latest_acceptance": "F10d.json",
+      "commits": {
+        "F10a": "6816251347d216d14eecd52833ec1e43312932a1",
+        "F10b": "8b2b2c3d3c758bdeaf7fa769d18ad1b0a8b25957",
+        "F10c": "a396ec15c5f3905972d1d75865cebda29ffcdf43",
+        "F10d": "925d114ae53418b159677beb7123b3b9d08fb8da"
+      }
+    },
+    "F12": {
+      "status": "ACCEPTED_REQUIRED_SCOPE",
+      "required_plan_scope_accepted": true,
+      "all_native_axes_passed": true,
+      "native_axes_scope": "Only the explicit bounded proof scope in the latest acceptance JSON, not every family/surface/native runtime condition",
+      "complete": true,
+      "completion_scope": "Current approved plan bounded contract, not seed family parity",
+      "full_family_parity_complete": false,
+      "recorded_slices": [
+        "F12a",
+        "F12b"
+      ],
+      "latest_acceptance": "F12b.json",
+      "commits": {
+        "F12a": "424e45f9a49e55fc1039dd075ac7c86f6117b09b",
+        "F12b": "93f8c73e18018042f6d8d59c7226f9ad18dc16da"
+      }
+    },
+    "F11": {
+      "status": "ACCEPTED_REQUIRED_SCOPE",
+      "required_plan_scope_accepted": true,
+      "all_native_axes_passed": true,
+      "native_axes_scope": "Only the explicit bounded proof scope in the latest acceptance JSON, not every family/surface/native runtime condition",
+      "complete": true,
+      "completion_scope": "Current approved plan bounded contract, not seed family parity",
+      "full_family_parity_complete": false,
+      "recorded_slices": [
+        "F11a",
+        "F11b"
+      ],
+      "latest_acceptance": "F11b.json",
+      "commits": {
+        "F11a": "01b6fc86c0e20ae824656dc1ed7e3d87def9b288",
+        "F11b": "359ce504faaa1afa3fc724d767f4cad769b74662"
+      }
+    },
+    "F08": {
+      "status": "ACCEPTED_REQUIRED_SCOPE",
+      "required_plan_scope_accepted": true,
+      "all_native_axes_passed": true,
+      "native_axes_scope": "Only the explicit bounded proof scope in the latest acceptance JSON, not every family/surface/native runtime condition",
+      "complete": true,
+      "completion_scope": "Current approved plan bounded contract, not seed family parity",
+      "full_family_parity_complete": false,
+      "recorded_slices": [
+        "F08a",
+        "F08b",
+        "F08c",
+        "F08d",
+        "F08e"
+      ],
+      "latest_acceptance": "F08e.json",
+      "commits": {
+        "F08a": "d559416061d23105555b112097fd52e7a293d07b",
+        "F08b": "99c1abfb3f74aa46ac3b207f165cd0611675df9b",
+        "F08c": "5aa697a8d09f76d61efd70d5d0eec36ad6ac053b",
+        "F08d": "3b6027c0ddc7b4e600ddfa9503b10598cfec64cc",
+        "F08e": "f056f0b816ecb6fc833742f40c9389e56231165e"
+      }
+    }
+  },
+  "picker_disposition": {
+    "status": "ACCEPTED_REQUIRED_PURPOSE_POLICY_WITH_BLOCKED_HTTP_AXIS",
+    "complete": false,
+    "surfaces": [
+      "Desktop",
+      "backend"
+    ],
+    "acceptance_axes": [
+      "catalogue freshness",
+      "interactive response",
+      "communication volume",
+      "failure recovery",
+      "model and effort selection preservation"
+    ],
+    "interval_policy": "fixed source purpose-specific: metadata4h/provider1h/successful-stale7d/nativeOllama300s/failure30s/fallback60s; optional Nous artifact20min remains distinct and no mandatory runtime; no consolidated4h/12h timer",
+    "recorded_slices": [
+      "Picker-P01P02",
+      "Picker-P03",
+      "Picker-P04",
+      "Picker-P05"
+    ],
+    "blocked_http_evidence": "Picker-loopback-approval-block-001.json",
+    "remaining": [
+      "Native wire HTTP latency/bytes/recovery acceptance blocked by previous fixture rejection; controlled public RPC and disk/ETag evidence accepted"
+    ],
+    "purpose_policy_accepted": true,
+    "commits": {
+      "Picker-P01P02": "e66562b6236b1758a5bf8764a7f184ad5a672137",
+      "Picker-P03": "998ace4af0bbfe47cb85bec43da594bf3980007e",
+      "Picker-P04": "2a17813d0c2f551700ea5dbd1d28955e2f7b17f6",
+      "Picker-P05": "970a830fdb9168b7d4b2dad78ff04deef25bed81"
+    },
+    "all_native_axes_passed": false,
+    "latest_acceptance": "Picker-P05.json"
+  },
+  "accepted_commits": {
+    "F04a": "33cea4e790b3419f55bba850e0d1e11bf8742677",
+    "F04b": "4dea37991861f6dc16040f6a5f9f015acb4749db",
+    "F04c": "3a1591084266c13f4939187e1b693e18e97adec6",
+    "F05a": "db5ee25f9cefe60c54190c7e1f36c1e2c5ededd4",
+    "F05b": "1dbd5590177753758ed1d8cf3aef3d9437bb2793",
+    "F07a": "f390a82c552fd2a657dfdf7dfd3a24a6ea484d53",
+    "F07b": "98b78701d19303c02dd75356ed06b1e4427863e0",
+    "F07c": "34210313c86a720c1bdd2c8bbac3ca265a9588f0",
+    "S03a": "85ccd797b34e206e336c59cdbec09161be76e2c2",
+    "S03b": "2a4124bb0ae000aac547dd4531703fa9e75a9359",
+    "S03c": "13fc2588f03abc346dab4a76da972081340adb9e",
+    "F10a": "6816251347d216d14eecd52833ec1e43312932a1",
+    "F10b": "8b2b2c3d3c758bdeaf7fa769d18ad1b0a8b25957",
+    "F10c": "a396ec15c5f3905972d1d75865cebda29ffcdf43",
+    "F10d": "925d114ae53418b159677beb7123b3b9d08fb8da",
+    "F12a": "424e45f9a49e55fc1039dd075ac7c86f6117b09b",
+    "F12b": "93f8c73e18018042f6d8d59c7226f9ad18dc16da",
+    "F11a": "01b6fc86c0e20ae824656dc1ed7e3d87def9b288",
+    "F11b": "359ce504faaa1afa3fc724d767f4cad769b74662",
+    "F08a": "d559416061d23105555b112097fd52e7a293d07b",
+    "F08b": "99c1abfb3f74aa46ac3b207f165cd0611675df9b",
+    "F08c": "5aa697a8d09f76d61efd70d5d0eec36ad6ac053b",
+    "F08d": "3b6027c0ddc7b4e600ddfa9503b10598cfec64cc",
+    "F08e": "f056f0b816ecb6fc833742f40c9389e56231165e",
+    "Picker-P01P02": "e66562b6236b1758a5bf8764a7f184ad5a672137",
+    "Picker-P03": "998ace4af0bbfe47cb85bec43da594bf3980007e",
+    "Picker-P04": "2a17813d0c2f551700ea5dbd1d28955e2f7b17f6",
+    "Picker-P05": "970a830fdb9168b7d4b2dad78ff04deef25bed81"
+  },
+  "accepted_source_maps": {
+    "F04": {
+      "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\intake\\hermes_windows_semantic_adoption_20261001\\CODEGRAPH_PROTOCOL.md": "1db7e6d4da5911c629c646b0a81d4ccf1b41e44f1491cbd869f9c3798fc5edb0",
+      "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\docs\\windows\\semantic-adoption-20261001\\F04c-mini-plan.md": "852ad5681a09b455949108a74ba0002a83ff3b580e2baf19f404ee165ab5b14b",
+      "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\apps\\desktop\\src\\app\\chat\\composer\\index.tsx": "6f023c5876fb702a0ab9a4c8b8299f00b58d01d25bab0f84d1b03a8cce259212",
+      "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\apps\\desktop\\src\\app\\chat\\composer\\hooks\\use-composer-draft.ts": "c2fc54c728db957782ab3524703f8096d9f0baf9bfb36fb728e3a407440af94d",
+      "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\apps\\desktop\\src\\app\\chat\\composer\\hooks\\use-composer-submit.ts": "a2f14aa50bc2c88dca2833b2ab6b1020dfac9d2a1cde0b651764834d73c76bfd",
+      "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\apps\\desktop\\src\\app\\session\\hooks\\use-prompt-actions\\slash.ts": "f42465c4b95705d08ac36c911d65b56807a7fcbb89b9d3ec7eef59920ff454f7",
+      "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\apps\\desktop\\src\\app\\chat\\composer\\rich-editor.ts": "c9856f14343901638a228e9829f71a8a39190e94e68d3c0b33b624f5a4928fa8",
+      "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\apps\\desktop\\src\\app\\chat\\composer\\hooks\\use-slash-completions.ts": "572eb25ff322386e5fd1d494e7a215b77d0b46dd6c18c854cc6893847e623f4d",
+      "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\apps\\desktop\\src\\app\\chat\\composer\\hooks\\use-composer-trigger.ts": "a6b816a4b2e081b795240dc51c6bb42acdec3b598930d5d61c4a62a00c4dde20",
+      "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\apps\\desktop\\src\\app\\chat\\composer\\f04c-actual-ime.test.tsx": "c2d69ebff41ff16c39e438fe68835e152035b387695e778649f8882ee193a051",
+      "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\apps\\desktop\\test-fixtures\\f04c-composer\\fixture.tsx": "e4f7da15a143ba31c2e2b511eb7590da2a76a6c74755d6e08a0b36dd98b33177",
+      "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\apps\\desktop\\test-fixtures\\f04c-composer\\renderer.tsx": "bbeb16bd50bf60ac5b944be5c51ebcbe36344d5f5046344b4a920f0ba298867d",
+      "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\apps\\desktop\\test-fixtures\\f04c-composer\\run.mjs": "e7a9eee9897ebe12fc9ccbef6a4fda2e454344bfa360f9072cb5e393e094bb91",
+      "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\apps\\desktop\\test-fixtures\\f04c-composer\\tsconfig.json": "007a0504127562611953c25a1e87cb197864b4b6692ccafba429b479e2eeb663",
+      "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\apps\\desktop\\src\\app\\chat\\composer\\enter-stale-ime-flag.test.tsx": "6365a8409e3a79dd2a6c7e080578ef0bc8e77807430422d45c74500981cbf6c8",
+      "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\apps\\desktop\\src\\app\\chat\\composer\\ime-composition-dom-repro.test.tsx": "439e283e0e2f3f3a5fa31f8591c40ea93e371c194b0261e9b4ae0fb84da4047c",
+      "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\apps\\desktop\\src\\lib\\f04-availability-dispatch.test.tsx": "8b2766bcb5ccd7cf69308d863582f23d1ba3e8546a4d59c6113abbbb8aa33111",
+      "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\apps\\desktop\\AGENTS.md": "4300a2e1e636a71bcec9d4211010f749ab78719f8b9ee8544c74f1f000be8ced"
+    },
+    "F05": {
+      "cli.py": "d08e83fef5fa8493802f4e9c89b90644275cafb6a7782d2f4cb07af10dbaab89",
+      "hermes_cli/commands.py": "7271650112ce491082a232cbd34be7fd833e47c5a8089cce1cf138d603a45ca4",
+      "agent/i18n.py": "9cea04b61315ee60d219b8b9b6745f43f1dc79120327c20822542c58114acca1",
+      "tests/hermes_cli/test_slash_localization.py": "577fb40791062ddbd6319f3b016e897255d8cea3d1a0e54eb59c1945389be83c",
+      "docs/windows/semantic-adoption-20261001/F05-help-mini-plan.md": "aaf2f004c91e0392c34a911d48d552b49f2f6569a2ef2e05926d56d9dadeaa34",
+      "locales/af.yaml": "b0423bfe2578f5e8e22f91c4ef2a2079d507a620c5c31e2827fa527b252f6ff8",
+      "locales/ar.yaml": "b7758e3527b2be280016593f9d94ead3472c0159d69fe8502f7be3cdfa37441a",
+      "locales/de.yaml": "97d158902809debe5724c50be5d7d2e335686dccbd241679c1de6043228263a8",
+      "locales/en.yaml": "4548f5a0a430c9c39992022b1e7f3b0eaca4e1841ba10af69b0095dfe911852f",
+      "locales/es.yaml": "2d8e192f725c10ffcaa72acd43b1b447cb0032c74b2d1e89eb1d7647e2d217d4",
+      "locales/fr.yaml": "a1160d61eeeb06cbccc739014a281b03a52051622c2e9ccd16e42ba25a05f764",
+      "locales/ga.yaml": "d6f7c896b9502c99a0538d5378238421f587a9a4badd4da7a55cbdf973aa80a9",
+      "locales/hu.yaml": "7c2075dec4c120eea89618434ab4a1a4d24887600eb1157061095ccf44452d71",
+      "locales/it.yaml": "bec9895b300fc4a2df8dbe14d9beace5581ce830938bb8d48301fe3ba185fcb3",
+      "locales/ja.yaml": "ffea6f95f1d49b785b46828ac254bbd3d514e8290ec808f09c829c1c7afb94c6",
+      "locales/ko.yaml": "01192bddaf506fc8ca68abd969d12cf74eaf241c7f677e7020d50b4ca5da244b",
+      "locales/pt.yaml": "147a39ddcb8e3bdb0defbed19b8088f23abf221baad2d52f205df8186d131be6",
+      "locales/ru.yaml": "24ef6205c501b76801cd5db4fa6619717a1320eb8515a91def2f89d0066bf351",
+      "locales/tr.yaml": "261e09679d6b72f09b3b2e2492a1b4346a970ed619cfb17457a922833e1f0e87",
+      "locales/uk.yaml": "fd47495f3a639db866e4eaeffe202fd8c6e03bb31df6a57cb73a007a5cbc8847",
+      "locales/zh-hant.yaml": "2ebb4c830adca5a076db2f50d1e06ba2461d8451afc54f4aabcee568d9ff9fb7",
+      "locales/zh.yaml": "c923d7f65fe7365d08a02131483a9385d873753ec9aca42a2d541d89c4582ace",
+      "hermes_cli/cli_commands_mixin.py": "bcc92dbf2ef559dead051f29e298c4eed38ea2f389b6723b5b08597edd86ce10",
+      "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+      "tests/hermes_cli/test_commands.py": "67ff9ba59c692cff092cfc7f7326f88dee563c2086f5916f515d630084a3580e",
+      "tests/agent/test_i18n.py": "833598a12998b514ab876a76b123c1e33f51ab626f8f9d9ce2b529186996ac77",
+      "tests/cli/test_cli_copy_command.py": "66121b25f698e28fffc6bec97bcba89cbf3143e100386cb9517b5e95d5c888fa",
+      "tests/cli/test_cli_prefix_matching.py": "eae5a7f7da5a847c81aab07097ad4a0f06f434fc4ea86f68b1cde0bb32e04c67",
+      "tests/cli/test_cli_new_session.py": "2551c34bf8059f0567abd528efac8d7234d4a0ebd159d4e455edc0fe73b97f24"
+    },
+    "F07": {
+      "agent/agent_runtime_helpers.py": "2083684731262cadd728efa6769a94163335013eba2b270aebb02ea7ac2aac36",
+      "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+      "agent/tool_executor.py": "2e61675e01d89b5cb6aae1a35eef4ae7b357293dccc18bc1dccf136e07f768e8",
+      "cli.py": "d08e83fef5fa8493802f4e9c89b90644275cafb6a7782d2f4cb07af10dbaab89",
+      "docs/windows/semantic-adoption-20261001/F07c-mini-plan.md": "82f08319847a61e2bb5965306e319acded2544ed04abfe36baabbed0fb3e07e3",
+      "docs/windows/semantic-adoption-20261001/F10d-mini-plan.md": "2d9d99682b434213aba7b5d9f4c0e47ba069a247ac5fc88eaf8debb92808e858",
+      "hermes_cli/cli_commands_mixin.py": "bcc92dbf2ef559dead051f29e298c4eed38ea2f389b6723b5b08597edd86ce10",
+      "hermes_cli/commands.py": "7271650112ce491082a232cbd34be7fd833e47c5a8089cce1cf138d603a45ca4",
+      "hermes_cli/profiles.py": "e813f2a0d20ab67cf3d4c98b08fdbb5d1e042c40e4d7b83292324ac878ae3702",
+      "hermes_state.py": "7234f882e8b01658d5b98fbc6d0c2bf7f5c2aeccc15ebbff264087047028a7a4",
+      "run_agent.py": "b433326bfb74e9606313bfe0da0c2818e3e165a31dbc792bb6974998e4ad7d8a",
+      "scripts/run_tests.sh": "fdc4d97c77027ba77813dac950254e0e8f37ad16895f12e8ebd9154ff8bf7f4c",
+      "scripts/run_tests_parallel.py": "545511ab00d011618538fd2cd72e6bc1c113d10e001e4b2a5d493f48f257143a",
+      "tests/agent/test_plan_prompt.py": "9cd9392dc527d4835892f9af4621733c06b0832a87a7052a02bf6ae3c6e12b9a",
+      "tests/cli/test_plan_public_dispatch.py": "52f688873c4f8cd6a45345fc2b5a8d7f0a4c376b3cf14a52fb82edd0887eb97e",
+      "tests/cli/test_plan_saved_file_native.py": "97dacf0de3bc1eff6e7367d14aee01a5d1ed318e4c2c711a60eb34f9453745d7",
+      "tests/conftest.py": "9780ba549bf6fb746ff08fc3ea793b9593fa636c13ee7f61537052082d7020b8",
+      "tests/hermes_state/test_search_exclusions_native.py": "ae908335f87d1ce38ef07d51ead457049a87373db8ed16dc242c8a4d4d2f3723",
+      "tests/hermes_state/test_search_or_recall_native.py": "23158181b832974115ba100d4045121ceb671ef6a7aa84489b0340b8f57ef7b3",
+      "tests/hermes_state/test_search_profiles_native.py": "31754b9ee6cbb8b91ffe8ab57dd2248c4731d017e49f514c992f9ca71b465378",
+      "tests/hermes_state/test_search_temporal_native.py": "0dcd5a0b540590e19eb2e2987572038288712d2a704d11bc8ef1985d8a1e79f6",
+      "tests/tools/test_session_recall_visibility.py": "7718ba9006065ba8ca9a75196a512270edd596fd81c5b92f7a26126cbfa3ee46",
+      "tests/tools/test_session_search.py": "a3c48a737b8ce5742d9a4167c49afeaf3e308772ded4eab44d27c63baf7b8ce8",
+      "tools/approval.py": "63fd9c3ca2327d98413b30a6cf8c6d8a68377ba190339b7019362f4ead701b8b",
+      "tools/registry.py": "f95d011cae75f0426dd77cb1e25df6bebb61a067d795312df297cb877dd616f5",
+      "tools/session_search_tool.py": "03b538a2984b29bc1d0f6842d0f79d09492263b373d6346e10e0f0efe9532887"
+    },
+    "S03": {
+      "uv.lock": "185eda6c770f017237283701a49b03463a1d0980fba1c22db655e7daa285c344",
+      "pyproject.toml": "43a16a1bc21d672a35c2551f6c52cf3b9a98dc6d4f683543aa31a19ca324cd78",
+      "gateway/platforms/telegram.py": "d32417ac9cd8fae0bad75681b718e5165c90d317f7de0e5ac9900cf6931bfb53",
+      "plugins/platforms/telegram/adapter.py": "df6ac0672cb2701aa8ce932d13e7bb2271df098417ef635e754985a9eadc94d5",
+      "tests/hermes_cli/test_tornado_dependency_native.py": "244cc0579291b12140f81987c66ba1f2808e9397ec36f86d86fa192043f0f014",
+      "docs/windows/semantic-adoption-20261001/S03b-mini-plan.md": "0ddf5e495b09584be7e4b734e7d8b11f1e34b1e4e17a8aa12acde3df0213aaf9",
+      "tests/conftest.py": "9780ba549bf6fb746ff08fc3ea793b9593fa636c13ee7f61537052082d7020b8",
+      "scripts/run_tests_parallel.py": "545511ab00d011618538fd2cd72e6bc1c113d10e001e4b2a5d493f48f257143a",
+      "tests/hermes_cli/test_verify_core_dependencies.py": "175077ab814ab99e95605c71894e688351e6983c329e5b97428b3454f49315b7",
+      "tests/gateway/test_telegram_webhook_secret.py": "698027796128a7c99208046ee44f5ab132ba7e5fe747c1dbd30b26e50700a1b7",
+      "tests/tools/test_tts_streaming.py": "60134573af5fade8c41cf2f352f759101a3fe85d1d1c45b06897ba02437b8ab7",
+      "tests/tools/test_urllib3_streaming_security.py": "18b197283cb083884bb4c7b57f05fc1e54ac383c46922ccd11168f29275ea30d",
+      "tests/ci/test_lockfile_diff.py": "0bdab9fb5c89ac622a32ccbbf90e8bd43db25ee675dc88fb06fc153b9290e2a2",
+      "tools/tts_tool.py": "89454e053cfe19a17b0363f7d95f43c1e2d05efc9d29df79948e92c8fc29aafc",
+      "tools/tts_streaming.py": "da927aa0ae2e42765749f7a8af0716cac2d74069662f3e53d0c89841dc8479ce"
+    },
+    "F10": {
+      "agent/agent_runtime_helpers.py": "2083684731262cadd728efa6769a94163335013eba2b270aebb02ea7ac2aac36",
+      "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+      "agent/tool_executor.py": "2e61675e01d89b5cb6aae1a35eef4ae7b357293dccc18bc1dccf136e07f768e8",
+      "cli.py": "d08e83fef5fa8493802f4e9c89b90644275cafb6a7782d2f4cb07af10dbaab89",
+      "docs/windows/semantic-adoption-20261001/F07c-mini-plan.md": "82f08319847a61e2bb5965306e319acded2544ed04abfe36baabbed0fb3e07e3",
+      "docs/windows/semantic-adoption-20261001/F10d-mini-plan.md": "2d9d99682b434213aba7b5d9f4c0e47ba069a247ac5fc88eaf8debb92808e858",
+      "hermes_cli/cli_commands_mixin.py": "bcc92dbf2ef559dead051f29e298c4eed38ea2f389b6723b5b08597edd86ce10",
+      "hermes_cli/commands.py": "7271650112ce491082a232cbd34be7fd833e47c5a8089cce1cf138d603a45ca4",
+      "hermes_cli/profiles.py": "e813f2a0d20ab67cf3d4c98b08fdbb5d1e042c40e4d7b83292324ac878ae3702",
+      "hermes_state.py": "7234f882e8b01658d5b98fbc6d0c2bf7f5c2aeccc15ebbff264087047028a7a4",
+      "run_agent.py": "b433326bfb74e9606313bfe0da0c2818e3e165a31dbc792bb6974998e4ad7d8a",
+      "scripts/run_tests.sh": "fdc4d97c77027ba77813dac950254e0e8f37ad16895f12e8ebd9154ff8bf7f4c",
+      "scripts/run_tests_parallel.py": "545511ab00d011618538fd2cd72e6bc1c113d10e001e4b2a5d493f48f257143a",
+      "tests/agent/test_plan_prompt.py": "9cd9392dc527d4835892f9af4621733c06b0832a87a7052a02bf6ae3c6e12b9a",
+      "tests/cli/test_plan_public_dispatch.py": "52f688873c4f8cd6a45345fc2b5a8d7f0a4c376b3cf14a52fb82edd0887eb97e",
+      "tests/cli/test_plan_saved_file_native.py": "97dacf0de3bc1eff6e7367d14aee01a5d1ed318e4c2c711a60eb34f9453745d7",
+      "tests/conftest.py": "9780ba549bf6fb746ff08fc3ea793b9593fa636c13ee7f61537052082d7020b8",
+      "tests/hermes_state/test_search_exclusions_native.py": "ae908335f87d1ce38ef07d51ead457049a87373db8ed16dc242c8a4d4d2f3723",
+      "tests/hermes_state/test_search_or_recall_native.py": "23158181b832974115ba100d4045121ceb671ef6a7aa84489b0340b8f57ef7b3",
+      "tests/hermes_state/test_search_profiles_native.py": "31754b9ee6cbb8b91ffe8ab57dd2248c4731d017e49f514c992f9ca71b465378",
+      "tests/hermes_state/test_search_temporal_native.py": "0dcd5a0b540590e19eb2e2987572038288712d2a704d11bc8ef1985d8a1e79f6",
+      "tests/tools/test_session_recall_visibility.py": "7718ba9006065ba8ca9a75196a512270edd596fd81c5b92f7a26126cbfa3ee46",
+      "tests/tools/test_session_search.py": "a3c48a737b8ce5742d9a4167c49afeaf3e308772ded4eab44d27c63baf7b8ce8",
+      "tools/approval.py": "63fd9c3ca2327d98413b30a6cf8c6d8a68377ba190339b7019362f4ead701b8b",
+      "tools/registry.py": "f95d011cae75f0426dd77cb1e25df6bebb61a067d795312df297cb877dd616f5",
+      "tools/session_search_tool.py": "03b538a2984b29bc1d0f6842d0f79d09492263b373d6346e10e0f0efe9532887"
+    },
+    "F12": {
+      "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+      "agent/skill_commands.py": "d6d5ef6b8f9f9c84cef6d99ee151f6dbb45f1553794f13f4b9fd31c897acdaae",
+      "agent/system_prompt.py": "5855b79eb9419a6e6babd4121683b01e65be71fc6d1056170880f89e6d142d0f",
+      "cli.py": "d08e83fef5fa8493802f4e9c89b90644275cafb6a7782d2f4cb07af10dbaab89",
+      "docs/windows/semantic-adoption-20261001/F12b-mini-plan.md": "0eb1e6ff4df7d25c34c4742a3a6c5f4b1ac2a36f0e5433c5205e1007683bf5e0",
+      "hermes_cli/cli_agent_setup_mixin.py": "6eddc745b0a654e8ccec4d968e056ca7ebdb2612a46b0b0f8ed7b0e37db84d6b",
+      "hermes_cli/cli_commands_mixin.py": "bcc92dbf2ef559dead051f29e298c4eed38ea2f389b6723b5b08597edd86ce10",
+      "run_agent.py": "b433326bfb74e9606313bfe0da0c2818e3e165a31dbc792bb6974998e4ad7d8a",
+      "tests/agent/test_skills_auto_load_boundaries_native.py": "e28ccd67a610a555fee9cba1f3af231abb6f79844893161b6128cbd34e873d0c",
+      "tests/agent/test_skills_auto_load_native.py": "963f14678ebe66ec1e542f383c7db5eaf20b6b96835c68461c5158d482286653",
+      "tests/agent/test_skills_auto_load_new_session_native.py": "6b1d4c98e61a0d2862bfaae904f8d8c0c989294c1c85ddf810d5e082867c5684",
+      "tests/agent/test_system_prompt.py": "14165d57740605934c7ec33be123c73434472a940ff2ff51af68fa20b162f8e4",
+      "tests/agent/test_system_prompt_restore.py": "c7543d0bf67c366a45db7a0a005e3eb00e2e6ca912f1c0b5145d597c38f1f421",
+      "tests/cli/test_cli_new_session.py": "2551c34bf8059f0567abd528efac8d7234d4a0ebd159d4e455edc0fe73b97f24",
+      "tests/cli/test_cli_preloaded_skills.py": "aa9ad52cb53d7107d17da07a1162802d7e34217d2c433ffba9977097730c6ae9"
+    },
+    "F11": {
+      "cli.py": "d08e83fef5fa8493802f4e9c89b90644275cafb6a7782d2f4cb07af10dbaab89",
+      "hermes_cli/main.py": "7ee97c970fe5e05c461edddcfcb4153512fdc22e4b9db7252c3cca2e5998a302",
+      "hermes_cli/_parser.py": "82df8f4c89264b09729bb8c03327000061678eccad4e7fc0950d353a62fd7080",
+      "hermes_cli/stream_json.py": "312e191eb1d9101f7ae21b9f81ccc8e62e6fd89aaefc6e35476b903e79050ac3",
+      "run_agent.py": "b433326bfb74e9606313bfe0da0c2818e3e165a31dbc792bb6974998e4ad7d8a",
+      "hermes_cli/cli_commands_mixin.py": "bcc92dbf2ef559dead051f29e298c4eed38ea2f389b6723b5b08597edd86ce10",
+      "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+      "tests/hermes_cli/test_stream_json_signal_native.py": "8aa78358429cd76d68694fdbc1ccf60cb028b460a6420cf2d6009554823204b1",
+      "tests/hermes_cli/test_stream_json_native.py": "21bd446b870728ae518685a5a89ae1e1801da52b3ab1d1ce84c7e31f7ea66f83",
+      "tests/hermes_cli/test_stream_json_boundaries_native.py": "860c9bcf7efe7aacb8694ca27c999cd1d91a1642f63409e7e0bbabc59727ee58",
+      "tests/hermes_cli/test_stream_json_startup_native.py": "e5d3bf87113e19b3f0813ba63ec665f95061dda0e86e9b9bf019608b0041ba2a",
+      "tests/conftest.py": "9780ba549bf6fb746ff08fc3ea793b9593fa636c13ee7f61537052082d7020b8",
+      "scripts/run_tests.sh": "fdc4d97c77027ba77813dac950254e0e8f37ad16895f12e8ebd9154ff8bf7f4c",
+      "scripts/run_tests_parallel.py": "545511ab00d011618538fd2cd72e6bc1c113d10e001e4b2a5d493f48f257143a",
+      "docs/windows/semantic-adoption-20261001/F11b-mini-plan.md": "054a052dfb836afe66966210555785778fefc7e2a475e685d30ef3dd79755ef8",
+      "agent/interrupt_compat.py": "f10ecfe97b6be6d150c3e41d5d377a9ca845e74d454240f2d6506f753dc23441"
+    },
+    "F08": {
+      "cli.py": "5a1097c595e492e261ee52e27b50737eea3e6753adacdd58e66bfd1c3ff8faff",
+      "run_agent.py": "b433326bfb74e9606313bfe0da0c2818e3e165a31dbc792bb6974998e4ad7d8a",
+      "hermes_cli/cli_commands_mixin.py": "bcc92dbf2ef559dead051f29e298c4eed38ea2f389b6723b5b08597edd86ce10",
+      "hermes_cli/cli_agent_setup_mixin.py": "6eddc745b0a654e8ccec4d968e056ca7ebdb2612a46b0b0f8ed7b0e37db84d6b",
+      "tests/cli/test_f08_command_runtime_native.py": "a5af0d130083ae06be5d19afd798fc211a4269b194f22a452cfbe06a62e2e525",
+      "tests/agent/test_refine_snapshot_native.py": "f390546995dc819bdd14aa5b370f5471764a92408111a22f20660bbd44e17331",
+      "docs/windows/semantic-adoption-20261001/F08e-mini-plan.md": "807bc4eefaa0c22258ac161f55b337ec37bbd6c23828a81e80c3d57aa2d2fd80",
+      "agent/background_review.py": "ef7185709988d2c6fc96500f61e76ed8b2e6e0cd74bceb7d48c1154090ec21d9",
+      "agent/agent_init.py": "f9a90e599fc35db7996d8fb310ee023f790716c9fdfe3d1ba7461494b875a6c9",
+      "agent/agent_runtime_helpers.py": "2083684731262cadd728efa6769a94163335013eba2b270aebb02ea7ac2aac36",
+      "agent/tool_executor.py": "2e61675e01d89b5cb6aae1a35eef4ae7b357293dccc18bc1dccf136e07f768e8",
+      "agent/conversation_loop.py": "75cf47ee792a7feb5a7276b85f8235d109ca59e81c6f0e0f3f1a56bc4e23e992",
+      "agent/moa_loop.py": "74143ce0460dd453d1a34881ff685b456ac4fbc157f6d575de17d4dddab592f4",
+      "agent/auxiliary_client.py": "a28acafc0917a81ad4537f5390d5d2360bc5ed4ae820b1332d4b78f782bdd48b",
+      "hermes_cli/runtime_provider.py": "a00dd4f0a5cdeeb874a8c360117840a6d4389a409f6976589eec9eb2f9696dbe",
+      "hermes_cli/commands.py": "7271650112ce491082a232cbd34be7fd833e47c5a8089cce1cf138d603a45ca4",
+      "hermes_cli/plugins.py": "255ed19b0a16108aeaa2509a7556827723185b877dc78582f9d24162d238c218",
+      "tools/approval.py": "63fd9c3ca2327d98413b30a6cf8c6d8a68377ba190339b7019362f4ead701b8b",
+      "tools/delegate_tool.py": "3b9feae18dd3ef9e65183a40b4a3feae19fc1cd89288c628e5cb3d06934f2966",
+      "tools/thread_context.py": "378175cb766f52da8826c742f0c5b45653866075b951ff93d1af1fcfb6451aa9",
+      "tools/skill_manager_tool.py": "2c3530e3b0a34856309412dc0e0909ea205db50bb95f35cabb41e47aca3d82ca",
+      "tools/skill_provenance.py": "aab95e676e8013b1c5def7e66f48a15bdd19a5c8257f27cb530ef30e571110a1",
+      "tools/write_approval.py": "4a98656eebf1f4d5ff57bd67237bb9d540172676fd1301a4a21d8822b1fd23b4",
+      "tools/memory_tool.py": "7829c5ad36ee69aed03cd7c70b47a49c192f6832ecf0e0990c895e4d0e65747f",
+      "tools/file_tools.py": "9216f03edc43c9b08526d294801141e2b4c92de7adfbad71582bceb207002ba4",
+      "tests/agent/test_refine_read_save_native.py": "0cf585dbda31750c69b170f16900826090f927e5a471f17aeec74dfe46fec7e3",
+      "tests/agent/test_refine_read_marks_native.py": "25569de74d2b3e774cbcb3d66f23dc53a7adc887f578d93b9395685c98c925a4",
+      "tests/agent/test_refine_provider_native.py": "b072abb211dc39e3f6880702ab56f7f4156eb9f7b44c2839d5cf502c8653cd6f",
+      "tests/tools/test_file_staleness.py": "d580e67413015376f2b7a88b85364b770e3b1359bcd43ec023b7867022646cfb",
+      "tests/tools/test_file_tools_container_config.py": "85026b685789813cdd66d8ab73040dfe5990b678db07a9f9e63f0e73523311e6",
+      "tests/agent/test_file_safety.py": "82a554d9b04ab16f681b8c6ecb7b3d690060e9095eaf2d1e0d512925ee568e3d",
+      "tests/agent/test_file_safety_cross_profile.py": "8f063db1268e9d6f644b59c1af36f934a2d9517e935a2641935095f8ade8d733",
+      "tests/agent/test_redact.py": "9692dc86b2423869ef829f900761d5b274c89cd25bd71a5d63c1192259524da5",
+      "tests/run_agent/test_background_review.py": "fc872c7f2a567f5678c0aa136bde82dbce77c826976d89e578c0f2bfb08712b6",
+      "tests/run_agent/test_background_review_cache_parity.py": "5f4a02276eb4f5bf1bcf8333eb7d738263deb9089ff61b17daf229ef1a244a5f",
+      "tests/run_agent/test_background_review_toolset_restriction.py": "acb3917b2e9d93c976c282697ae2c8307d428a76bc4278509e04afe2ac1edeb9",
+      "tests/tools/test_review_whitelist_thread_native.py": "96a1bdbf574dfeb73aeb2a6c8336488940502af4359231a1af1a887312a11ae3",
+      "tests/tools/test_execute_code_approval_cluster.py": "d2c865dc7cd26c227cad138965cc789edb8967b264daaf8632c042a79d12f1eb",
+      "tests/tools/test_skill_provenance.py": "4ee298dad328099aef3d31b8efbbf88c646982c445aaf833394a105eab07f116",
+      "tests/tools/test_skill_view_path_check.py": "daf548c724d951203c09f3a91c5f7c4b51f9080d40017db127c741b03783ac62",
+      "tests/tools/test_skills_guard_agent_config.py": "920d3530d0e0427b55cbc4f94b81c7a7959628b5c62be0fd1540275efbaedc9c",
+      "tests/hermes_cli/test_plugins.py": "87097ce7546f824699ebcdd3653358bc42519e0bd90997b9c10f854a539fe686",
+      "tests/run_agent/test_tool_executor_contextvar_propagation.py": "30301f26e2ff38321ddd553bf9cd665969c24015f4c874e92e2d4d04d09d4d9b",
+      "tests/agent/test_refine_delivery_native.py": "9745d506250d99ce8c47973a9c2aca9a2f65412271a1a7f4e1d86e159a33060f",
+      "tests/tools/test_budget_config.py": "a91ceb6b5b0274fdb3215eb42075e0730ebfb54eb6945c053ab81b40ab39804e",
+      "tests/tools/test_tool_result_storage.py": "f85f2781b992885a35d71fd3f053c64e36fe08564cb63ed080daa5ea57cbf9d6",
+      "tests/agent/test_tool_executor_checkpoint_paths.py": "f2117cfe60aa68f9024b23086bab80eb97c964b7f1f1d16de8d1bf7790a920e7",
+      "tests/cli/test_moa_command.py": "aa277248c2ccec59e905d5149145f6ebe8bd80ea99e411c1ce316de14631cde1",
+      "tests/hermes_cli/test_cli_model_once.py": "1e578e9738b0d1bb32316bcf23c38f885e7868d73cd75321d7eb066306d46cf8",
+      "tests/run_agent/test_background_review_cost_controls.py": "8ca61219d31312c863e91c33e768f6f168f9149dd22a282018da2697cfcb7d34"
+    },
+    "Picker": {
+      "hermes_cli/models.py": "dc9fc814470c65e19f7120843e1714f318905e35d996cfb07b5d1e284aa8f49f",
+      "agent/models_dev.py": "ff39081a7e1067899aa431268c2cbb7d944462badad5739d97d0c2b60eadc05d",
+      "hermes_cli/model_catalog.py": "c55ab873d491b41ba0fd04967d64c3bc0882b8ed3b49c1af239a0897292e6567",
+      "tests/agent/test_models_dev.py": "7728c52e25bcacb516c554d24b67bc63a8e77195819dcbc05fbb8b9f80f589ad",
+      "tests/conftest.py": "9780ba549bf6fb746ff08fc3ea793b9593fa636c13ee7f61537052082d7020b8",
+      "tests/tui_gateway/test_model_picker_p05_native.py": "9485a391286874419e1d18927bc9329b9ec2137370dca66e993aa36cc79d8373",
+      "utils.py": "477e5d73ed714ab2b28ce3b5ccb611f9a6791976602fe7f37c164f8e17781cbb",
+      "tests/tui_gateway/test_model_picker_cold_native.py": "259a8f0548782cf584b632f201c96b65d4d7bd80e0101499206c269a71cf4016",
+      "hermes_cli/model_switch.py": "e76e6f3482f4dce4533df77bef67423b85cb50fd347154880396999f7001eeb2",
+      "hermes_cli/inventory.py": "d36456e900097db72194fa1e74dc2934732916649f333c77d3fc892f1339a6ed",
+      "hermes_cli/nous_account.py": "5e9b1a20dff345a9b0021e8908a4c8a4bbf93112cc09553d6ca84f89004b2e34",
+      "hermes_cli/auth.py": "1aacac94bce7ef8b1ea020a8a3479e6c1fecc4954ff96a293f3cc6904c236df7",
+      "hermes_constants.py": "70e75092fd443e586b4a344e8043f8020c84de7e2c7684c9c3a2880778d1a0aa",
+      "hermes_cli/config.py": "d679ca0b84f2e184b84f8557bf92bbeea55a021f7fc2e18f269264e1310c30b5",
+      "tui_gateway/server.py": "05fba295146d0fb454f91fad1674d9acf9c490632acaa2a348d3eca655241cd5",
+      "tui_gateway/methods_complete.py": "55b75b8fedff3a84610110249226f6de33b1a319c7da6498f6a8c0f7311c0366",
+      "providers/base.py": "65c735f999f60011c475db33ce23012de6ac5cf40d8bb255f0021867ebbb23fe",
+      "hermes_cli/urllib_security.py": "dbeb3be6d995dcc2668cf60f268aa83ca9f76c0bffa31e1355174d3b0b3cee70",
+      "docs/windows/semantic-adoption-20261001/Model-picker-P05-mini-plan.md": "c9fb778c530175e3e606e5a92e5c1b7b60fceef11f5753c23eff1dd41d3edb13"
+    }
+  },
+  "current_source_sha256_raw": {
+    "docs/windows/semantic-adoption-20261001/F04c-mini-plan.md": "852ad5681a09b455949108a74ba0002a83ff3b580e2baf19f404ee165ab5b14b",
+    "apps/desktop/src/app/chat/composer/index.tsx": "6f023c5876fb702a0ab9a4c8b8299f00b58d01d25bab0f84d1b03a8cce259212",
+    "apps/desktop/src/app/chat/composer/hooks/use-composer-draft.ts": "c2fc54c728db957782ab3524703f8096d9f0baf9bfb36fb728e3a407440af94d",
+    "apps/desktop/src/app/chat/composer/hooks/use-composer-submit.ts": "a2f14aa50bc2c88dca2833b2ab6b1020dfac9d2a1cde0b651764834d73c76bfd",
+    "apps/desktop/src/app/session/hooks/use-prompt-actions/slash.ts": "f42465c4b95705d08ac36c911d65b56807a7fcbb89b9d3ec7eef59920ff454f7",
+    "apps/desktop/src/app/chat/composer/rich-editor.ts": "c9856f14343901638a228e9829f71a8a39190e94e68d3c0b33b624f5a4928fa8",
+    "apps/desktop/src/app/chat/composer/hooks/use-slash-completions.ts": "572eb25ff322386e5fd1d494e7a215b77d0b46dd6c18c854cc6893847e623f4d",
+    "apps/desktop/src/app/chat/composer/hooks/use-composer-trigger.ts": "a6b816a4b2e081b795240dc51c6bb42acdec3b598930d5d61c4a62a00c4dde20",
+    "apps/desktop/src/app/chat/composer/f04c-actual-ime.test.tsx": "c2d69ebff41ff16c39e438fe68835e152035b387695e778649f8882ee193a051",
+    "apps/desktop/test-fixtures/f04c-composer/fixture.tsx": "e4f7da15a143ba31c2e2b511eb7590da2a76a6c74755d6e08a0b36dd98b33177",
+    "apps/desktop/test-fixtures/f04c-composer/renderer.tsx": "bbeb16bd50bf60ac5b944be5c51ebcbe36344d5f5046344b4a920f0ba298867d",
+    "apps/desktop/test-fixtures/f04c-composer/run.mjs": "e7a9eee9897ebe12fc9ccbef6a4fda2e454344bfa360f9072cb5e393e094bb91",
+    "apps/desktop/test-fixtures/f04c-composer/tsconfig.json": "007a0504127562611953c25a1e87cb197864b4b6692ccafba429b479e2eeb663",
+    "apps/desktop/src/app/chat/composer/enter-stale-ime-flag.test.tsx": "6365a8409e3a79dd2a6c7e080578ef0bc8e77807430422d45c74500981cbf6c8",
+    "apps/desktop/src/app/chat/composer/ime-composition-dom-repro.test.tsx": "439e283e0e2f3f3a5fa31f8591c40ea93e371c194b0261e9b4ae0fb84da4047c",
+    "apps/desktop/src/lib/f04-availability-dispatch.test.tsx": "8b2766bcb5ccd7cf69308d863582f23d1ba3e8546a4d59c6113abbbb8aa33111",
+    "apps/desktop/AGENTS.md": "4300a2e1e636a71bcec9d4211010f749ab78719f8b9ee8544c74f1f000be8ced",
+    "cli.py": "d08e83fef5fa8493802f4e9c89b90644275cafb6a7782d2f4cb07af10dbaab89",
+    "hermes_cli/commands.py": "7271650112ce491082a232cbd34be7fd833e47c5a8089cce1cf138d603a45ca4",
+    "agent/i18n.py": "9cea04b61315ee60d219b8b9b6745f43f1dc79120327c20822542c58114acca1",
+    "tests/hermes_cli/test_slash_localization.py": "577fb40791062ddbd6319f3b016e897255d8cea3d1a0e54eb59c1945389be83c",
+    "docs/windows/semantic-adoption-20261001/F05-help-mini-plan.md": "aaf2f004c91e0392c34a911d48d552b49f2f6569a2ef2e05926d56d9dadeaa34",
+    "locales/af.yaml": "b0423bfe2578f5e8e22f91c4ef2a2079d507a620c5c31e2827fa527b252f6ff8",
+    "locales/ar.yaml": "b7758e3527b2be280016593f9d94ead3472c0159d69fe8502f7be3cdfa37441a",
+    "locales/de.yaml": "97d158902809debe5724c50be5d7d2e335686dccbd241679c1de6043228263a8",
+    "locales/en.yaml": "4548f5a0a430c9c39992022b1e7f3b0eaca4e1841ba10af69b0095dfe911852f",
+    "locales/es.yaml": "2d8e192f725c10ffcaa72acd43b1b447cb0032c74b2d1e89eb1d7647e2d217d4",
+    "locales/fr.yaml": "a1160d61eeeb06cbccc739014a281b03a52051622c2e9ccd16e42ba25a05f764",
+    "locales/ga.yaml": "d6f7c896b9502c99a0538d5378238421f587a9a4badd4da7a55cbdf973aa80a9",
+    "locales/hu.yaml": "7c2075dec4c120eea89618434ab4a1a4d24887600eb1157061095ccf44452d71",
+    "locales/it.yaml": "bec9895b300fc4a2df8dbe14d9beace5581ce830938bb8d48301fe3ba185fcb3",
+    "locales/ja.yaml": "ffea6f95f1d49b785b46828ac254bbd3d514e8290ec808f09c829c1c7afb94c6",
+    "locales/ko.yaml": "01192bddaf506fc8ca68abd969d12cf74eaf241c7f677e7020d50b4ca5da244b",
+    "locales/pt.yaml": "147a39ddcb8e3bdb0defbed19b8088f23abf221baad2d52f205df8186d131be6",
+    "locales/ru.yaml": "24ef6205c501b76801cd5db4fa6619717a1320eb8515a91def2f89d0066bf351",
+    "locales/tr.yaml": "261e09679d6b72f09b3b2e2492a1b4346a970ed619cfb17457a922833e1f0e87",
+    "locales/uk.yaml": "fd47495f3a639db866e4eaeffe202fd8c6e03bb31df6a57cb73a007a5cbc8847",
+    "locales/zh-hant.yaml": "2ebb4c830adca5a076db2f50d1e06ba2461d8451afc54f4aabcee568d9ff9fb7",
+    "locales/zh.yaml": "c923d7f65fe7365d08a02131483a9385d873753ec9aca42a2d541d89c4582ace",
+    "hermes_cli/cli_commands_mixin.py": "bcc92dbf2ef559dead051f29e298c4eed38ea2f389b6723b5b08597edd86ce10",
+    "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+    "tests/hermes_cli/test_commands.py": "67ff9ba59c692cff092cfc7f7326f88dee563c2086f5916f515d630084a3580e",
+    "tests/agent/test_i18n.py": "833598a12998b514ab876a76b123c1e33f51ab626f8f9d9ce2b529186996ac77",
+    "tests/cli/test_cli_copy_command.py": "66121b25f698e28fffc6bec97bcba89cbf3143e100386cb9517b5e95d5c888fa",
+    "tests/cli/test_cli_prefix_matching.py": "eae5a7f7da5a847c81aab07097ad4a0f06f434fc4ea86f68b1cde0bb32e04c67",
+    "tests/cli/test_cli_new_session.py": "2551c34bf8059f0567abd528efac8d7234d4a0ebd159d4e455edc0fe73b97f24",
+    "agent/agent_runtime_helpers.py": "2083684731262cadd728efa6769a94163335013eba2b270aebb02ea7ac2aac36",
+    "agent/tool_executor.py": "2e61675e01d89b5cb6aae1a35eef4ae7b357293dccc18bc1dccf136e07f768e8",
+    "docs/windows/semantic-adoption-20261001/F07c-mini-plan.md": "82f08319847a61e2bb5965306e319acded2544ed04abfe36baabbed0fb3e07e3",
+    "docs/windows/semantic-adoption-20261001/F10d-mini-plan.md": "2d9d99682b434213aba7b5d9f4c0e47ba069a247ac5fc88eaf8debb92808e858",
+    "hermes_cli/profiles.py": "e813f2a0d20ab67cf3d4c98b08fdbb5d1e042c40e4d7b83292324ac878ae3702",
+    "hermes_state.py": "7234f882e8b01658d5b98fbc6d0c2bf7f5c2aeccc15ebbff264087047028a7a4",
+    "run_agent.py": "b433326bfb74e9606313bfe0da0c2818e3e165a31dbc792bb6974998e4ad7d8a",
+    "scripts/run_tests.sh": "fdc4d97c77027ba77813dac950254e0e8f37ad16895f12e8ebd9154ff8bf7f4c",
+    "scripts/run_tests_parallel.py": "545511ab00d011618538fd2cd72e6bc1c113d10e001e4b2a5d493f48f257143a",
+    "tests/agent/test_plan_prompt.py": "9cd9392dc527d4835892f9af4621733c06b0832a87a7052a02bf6ae3c6e12b9a",
+    "tests/cli/test_plan_public_dispatch.py": "52f688873c4f8cd6a45345fc2b5a8d7f0a4c376b3cf14a52fb82edd0887eb97e",
+    "tests/cli/test_plan_saved_file_native.py": "97dacf0de3bc1eff6e7367d14aee01a5d1ed318e4c2c711a60eb34f9453745d7",
+    "tests/conftest.py": "9780ba549bf6fb746ff08fc3ea793b9593fa636c13ee7f61537052082d7020b8",
+    "tests/hermes_state/test_search_exclusions_native.py": "ae908335f87d1ce38ef07d51ead457049a87373db8ed16dc242c8a4d4d2f3723",
+    "tests/hermes_state/test_search_or_recall_native.py": "23158181b832974115ba100d4045121ceb671ef6a7aa84489b0340b8f57ef7b3",
+    "tests/hermes_state/test_search_profiles_native.py": "31754b9ee6cbb8b91ffe8ab57dd2248c4731d017e49f514c992f9ca71b465378",
+    "tests/hermes_state/test_search_temporal_native.py": "0dcd5a0b540590e19eb2e2987572038288712d2a704d11bc8ef1985d8a1e79f6",
+    "tests/tools/test_session_recall_visibility.py": "7718ba9006065ba8ca9a75196a512270edd596fd81c5b92f7a26126cbfa3ee46",
+    "tests/tools/test_session_search.py": "a3c48a737b8ce5742d9a4167c49afeaf3e308772ded4eab44d27c63baf7b8ce8",
+    "tools/approval.py": "63fd9c3ca2327d98413b30a6cf8c6d8a68377ba190339b7019362f4ead701b8b",
+    "tools/registry.py": "f95d011cae75f0426dd77cb1e25df6bebb61a067d795312df297cb877dd616f5",
+    "tools/session_search_tool.py": "03b538a2984b29bc1d0f6842d0f79d09492263b373d6346e10e0f0efe9532887",
+    "uv.lock": "185eda6c770f017237283701a49b03463a1d0980fba1c22db655e7daa285c344",
+    "pyproject.toml": "43a16a1bc21d672a35c2551f6c52cf3b9a98dc6d4f683543aa31a19ca324cd78",
+    "gateway/platforms/telegram.py": "d32417ac9cd8fae0bad75681b718e5165c90d317f7de0e5ac9900cf6931bfb53",
+    "plugins/platforms/telegram/adapter.py": "df6ac0672cb2701aa8ce932d13e7bb2271df098417ef635e754985a9eadc94d5",
+    "tests/hermes_cli/test_tornado_dependency_native.py": "244cc0579291b12140f81987c66ba1f2808e9397ec36f86d86fa192043f0f014",
+    "docs/windows/semantic-adoption-20261001/S03b-mini-plan.md": "0ddf5e495b09584be7e4b734e7d8b11f1e34b1e4e17a8aa12acde3df0213aaf9",
+    "tests/hermes_cli/test_verify_core_dependencies.py": "175077ab814ab99e95605c71894e688351e6983c329e5b97428b3454f49315b7",
+    "tests/gateway/test_telegram_webhook_secret.py": "698027796128a7c99208046ee44f5ab132ba7e5fe747c1dbd30b26e50700a1b7",
+    "tests/tools/test_tts_streaming.py": "60134573af5fade8c41cf2f352f759101a3fe85d1d1c45b06897ba02437b8ab7",
+    "tests/tools/test_urllib3_streaming_security.py": "18b197283cb083884bb4c7b57f05fc1e54ac383c46922ccd11168f29275ea30d",
+    "tests/ci/test_lockfile_diff.py": "0bdab9fb5c89ac622a32ccbbf90e8bd43db25ee675dc88fb06fc153b9290e2a2",
+    "tools/tts_tool.py": "89454e053cfe19a17b0363f7d95f43c1e2d05efc9d29df79948e92c8fc29aafc",
+    "tools/tts_streaming.py": "da927aa0ae2e42765749f7a8af0716cac2d74069662f3e53d0c89841dc8479ce",
+    "agent/skill_commands.py": "d6d5ef6b8f9f9c84cef6d99ee151f6dbb45f1553794f13f4b9fd31c897acdaae",
+    "agent/system_prompt.py": "5855b79eb9419a6e6babd4121683b01e65be71fc6d1056170880f89e6d142d0f",
+    "docs/windows/semantic-adoption-20261001/F12b-mini-plan.md": "0eb1e6ff4df7d25c34c4742a3a6c5f4b1ac2a36f0e5433c5205e1007683bf5e0",
+    "hermes_cli/cli_agent_setup_mixin.py": "6eddc745b0a654e8ccec4d968e056ca7ebdb2612a46b0b0f8ed7b0e37db84d6b",
+    "tests/agent/test_skills_auto_load_boundaries_native.py": "e28ccd67a610a555fee9cba1f3af231abb6f79844893161b6128cbd34e873d0c",
+    "tests/agent/test_skills_auto_load_native.py": "963f14678ebe66ec1e542f383c7db5eaf20b6b96835c68461c5158d482286653",
+    "tests/agent/test_skills_auto_load_new_session_native.py": "6b1d4c98e61a0d2862bfaae904f8d8c0c989294c1c85ddf810d5e082867c5684",
+    "tests/agent/test_system_prompt.py": "14165d57740605934c7ec33be123c73434472a940ff2ff51af68fa20b162f8e4",
+    "tests/agent/test_system_prompt_restore.py": "c7543d0bf67c366a45db7a0a005e3eb00e2e6ca912f1c0b5145d597c38f1f421",
+    "tests/cli/test_cli_preloaded_skills.py": "aa9ad52cb53d7107d17da07a1162802d7e34217d2c433ffba9977097730c6ae9",
+    "hermes_cli/main.py": "7ee97c970fe5e05c461edddcfcb4153512fdc22e4b9db7252c3cca2e5998a302",
+    "hermes_cli/_parser.py": "82df8f4c89264b09729bb8c03327000061678eccad4e7fc0950d353a62fd7080",
+    "hermes_cli/stream_json.py": "312e191eb1d9101f7ae21b9f81ccc8e62e6fd89aaefc6e35476b903e79050ac3",
+    "tests/hermes_cli/test_stream_json_signal_native.py": "8aa78358429cd76d68694fdbc1ccf60cb028b460a6420cf2d6009554823204b1",
+    "tests/hermes_cli/test_stream_json_native.py": "21bd446b870728ae518685a5a89ae1e1801da52b3ab1d1ce84c7e31f7ea66f83",
+    "tests/hermes_cli/test_stream_json_boundaries_native.py": "860c9bcf7efe7aacb8694ca27c999cd1d91a1642f63409e7e0bbabc59727ee58",
+    "tests/hermes_cli/test_stream_json_startup_native.py": "e5d3bf87113e19b3f0813ba63ec665f95061dda0e86e9b9bf019608b0041ba2a",
+    "docs/windows/semantic-adoption-20261001/F11b-mini-plan.md": "054a052dfb836afe66966210555785778fefc7e2a475e685d30ef3dd79755ef8",
+    "agent/interrupt_compat.py": "f10ecfe97b6be6d150c3e41d5d377a9ca845e74d454240f2d6506f753dc23441",
+    "tests/cli/test_f08_command_runtime_native.py": "a5af0d130083ae06be5d19afd798fc211a4269b194f22a452cfbe06a62e2e525",
+    "tests/agent/test_refine_snapshot_native.py": "f390546995dc819bdd14aa5b370f5471764a92408111a22f20660bbd44e17331",
+    "docs/windows/semantic-adoption-20261001/F08e-mini-plan.md": "807bc4eefaa0c22258ac161f55b337ec37bbd6c23828a81e80c3d57aa2d2fd80",
+    "agent/background_review.py": "ef7185709988d2c6fc96500f61e76ed8b2e6e0cd74bceb7d48c1154090ec21d9",
+    "agent/agent_init.py": "f9a90e599fc35db7996d8fb310ee023f790716c9fdfe3d1ba7461494b875a6c9",
+    "agent/conversation_loop.py": "75cf47ee792a7feb5a7276b85f8235d109ca59e81c6f0e0f3f1a56bc4e23e992",
+    "agent/moa_loop.py": "74143ce0460dd453d1a34881ff685b456ac4fbc157f6d575de17d4dddab592f4",
+    "agent/auxiliary_client.py": "a28acafc0917a81ad4537f5390d5d2360bc5ed4ae820b1332d4b78f782bdd48b",
+    "hermes_cli/runtime_provider.py": "a00dd4f0a5cdeeb874a8c360117840a6d4389a409f6976589eec9eb2f9696dbe",
+    "hermes_cli/plugins.py": "255ed19b0a16108aeaa2509a7556827723185b877dc78582f9d24162d238c218",
+    "tools/delegate_tool.py": "3b9feae18dd3ef9e65183a40b4a3feae19fc1cd89288c628e5cb3d06934f2966",
+    "tools/thread_context.py": "378175cb766f52da8826c742f0c5b45653866075b951ff93d1af1fcfb6451aa9",
+    "tools/skill_manager_tool.py": "2c3530e3b0a34856309412dc0e0909ea205db50bb95f35cabb41e47aca3d82ca",
+    "tools/skill_provenance.py": "aab95e676e8013b1c5def7e66f48a15bdd19a5c8257f27cb530ef30e571110a1",
+    "tools/write_approval.py": "4a98656eebf1f4d5ff57bd67237bb9d540172676fd1301a4a21d8822b1fd23b4",
+    "tools/memory_tool.py": "7829c5ad36ee69aed03cd7c70b47a49c192f6832ecf0e0990c895e4d0e65747f",
+    "tools/file_tools.py": "9216f03edc43c9b08526d294801141e2b4c92de7adfbad71582bceb207002ba4",
+    "tests/agent/test_refine_read_save_native.py": "0cf585dbda31750c69b170f16900826090f927e5a471f17aeec74dfe46fec7e3",
+    "tests/agent/test_refine_read_marks_native.py": "25569de74d2b3e774cbcb3d66f23dc53a7adc887f578d93b9395685c98c925a4",
+    "tests/agent/test_refine_provider_native.py": "b072abb211dc39e3f6880702ab56f7f4156eb9f7b44c2839d5cf502c8653cd6f",
+    "tests/tools/test_file_staleness.py": "d580e67413015376f2b7a88b85364b770e3b1359bcd43ec023b7867022646cfb",
+    "tests/tools/test_file_tools_container_config.py": "85026b685789813cdd66d8ab73040dfe5990b678db07a9f9e63f0e73523311e6",
+    "tests/agent/test_file_safety.py": "82a554d9b04ab16f681b8c6ecb7b3d690060e9095eaf2d1e0d512925ee568e3d",
+    "tests/agent/test_file_safety_cross_profile.py": "8f063db1268e9d6f644b59c1af36f934a2d9517e935a2641935095f8ade8d733",
+    "tests/agent/test_redact.py": "9692dc86b2423869ef829f900761d5b274c89cd25bd71a5d63c1192259524da5",
+    "tests/run_agent/test_background_review.py": "fc872c7f2a567f5678c0aa136bde82dbce77c826976d89e578c0f2bfb08712b6",
+    "tests/run_agent/test_background_review_cache_parity.py": "5f4a02276eb4f5bf1bcf8333eb7d738263deb9089ff61b17daf229ef1a244a5f",
+    "tests/run_agent/test_background_review_toolset_restriction.py": "acb3917b2e9d93c976c282697ae2c8307d428a76bc4278509e04afe2ac1edeb9",
+    "tests/tools/test_review_whitelist_thread_native.py": "96a1bdbf574dfeb73aeb2a6c8336488940502af4359231a1af1a887312a11ae3",
+    "tests/tools/test_execute_code_approval_cluster.py": "d2c865dc7cd26c227cad138965cc789edb8967b264daaf8632c042a79d12f1eb",
+    "tests/tools/test_skill_provenance.py": "4ee298dad328099aef3d31b8efbbf88c646982c445aaf833394a105eab07f116",
+    "tests/tools/test_skill_view_path_check.py": "daf548c724d951203c09f3a91c5f7c4b51f9080d40017db127c741b03783ac62",
+    "tests/tools/test_skills_guard_agent_config.py": "920d3530d0e0427b55cbc4f94b81c7a7959628b5c62be0fd1540275efbaedc9c",
+    "tests/hermes_cli/test_plugins.py": "87097ce7546f824699ebcdd3653358bc42519e0bd90997b9c10f854a539fe686",
+    "tests/run_agent/test_tool_executor_contextvar_propagation.py": "30301f26e2ff38321ddd553bf9cd665969c24015f4c874e92e2d4d04d09d4d9b",
+    "tests/agent/test_refine_delivery_native.py": "9745d506250d99ce8c47973a9c2aca9a2f65412271a1a7f4e1d86e159a33060f",
+    "tests/tools/test_budget_config.py": "a91ceb6b5b0274fdb3215eb42075e0730ebfb54eb6945c053ab81b40ab39804e",
+    "tests/tools/test_tool_result_storage.py": "f85f2781b992885a35d71fd3f053c64e36fe08564cb63ed080daa5ea57cbf9d6",
+    "tests/agent/test_tool_executor_checkpoint_paths.py": "f2117cfe60aa68f9024b23086bab80eb97c964b7f1f1d16de8d1bf7790a920e7",
+    "tests/cli/test_moa_command.py": "aa277248c2ccec59e905d5149145f6ebe8bd80ea99e411c1ce316de14631cde1",
+    "tests/hermes_cli/test_cli_model_once.py": "1e578e9738b0d1bb32316bcf23c38f885e7868d73cd75321d7eb066306d46cf8",
+    "tests/run_agent/test_background_review_cost_controls.py": "8ca61219d31312c863e91c33e768f6f168f9149dd22a282018da2697cfcb7d34",
+    "hermes_cli/models.py": "dc9fc814470c65e19f7120843e1714f318905e35d996cfb07b5d1e284aa8f49f",
+    "agent/models_dev.py": "ff39081a7e1067899aa431268c2cbb7d944462badad5739d97d0c2b60eadc05d",
+    "hermes_cli/model_catalog.py": "c55ab873d491b41ba0fd04967d64c3bc0882b8ed3b49c1af239a0897292e6567",
+    "tests/agent/test_models_dev.py": "7728c52e25bcacb516c554d24b67bc63a8e77195819dcbc05fbb8b9f80f589ad",
+    "tests/tui_gateway/test_model_picker_p05_native.py": "9485a391286874419e1d18927bc9329b9ec2137370dca66e993aa36cc79d8373",
+    "utils.py": "477e5d73ed714ab2b28ce3b5ccb611f9a6791976602fe7f37c164f8e17781cbb",
+    "tests/tui_gateway/test_model_picker_cold_native.py": "259a8f0548782cf584b632f201c96b65d4d7bd80e0101499206c269a71cf4016",
+    "hermes_cli/model_switch.py": "e76e6f3482f4dce4533df77bef67423b85cb50fd347154880396999f7001eeb2",
+    "hermes_cli/inventory.py": "d36456e900097db72194fa1e74dc2934732916649f333c77d3fc892f1339a6ed",
+    "hermes_cli/nous_account.py": "5e9b1a20dff345a9b0021e8908a4c8a4bbf93112cc09553d6ca84f89004b2e34",
+    "hermes_cli/auth.py": "1aacac94bce7ef8b1ea020a8a3479e6c1fecc4954ff96a293f3cc6904c236df7",
+    "hermes_constants.py": "70e75092fd443e586b4a344e8043f8020c84de7e2c7684c9c3a2880778d1a0aa",
+    "hermes_cli/config.py": "d679ca0b84f2e184b84f8557bf92bbeea55a021f7fc2e18f269264e1310c30b5",
+    "tui_gateway/server.py": "05fba295146d0fb454f91fad1674d9acf9c490632acaa2a348d3eca655241cd5",
+    "tui_gateway/methods_complete.py": "55b75b8fedff3a84610110249226f6de33b1a319c7da6498f6a8c0f7311c0366",
+    "providers/base.py": "65c735f999f60011c475db33ce23012de6ac5cf40d8bb255f0021867ebbb23fe",
+    "hermes_cli/urllib_security.py": "dbeb3be6d995dcc2668cf60f268aa83ca9f76c0bffa31e1355174d3b0b3cee70",
+    "docs/windows/semantic-adoption-20261001/Model-picker-P05-mini-plan.md": "c9fb778c530175e3e606e5a92e5c1b7b60fceef11f5753c23eff1dd41d3edb13"
+  },
+  "historical_map_note": "Source maps are exact at each acceptance. Current manifest is separate; later CLI new_session-only changes are independently reviewed by F12b/F11b source continuity and AST owner comparison. F08e tested and independently normalized owned maps remain original in F08e.json. No old whole-file hash is relabeled current.",
+  "executed_commands": {
+    "F05-F11-final-native-006.json": [
+      "C:/Program Files/Git/bin/bash.exe",
+      "scripts/run_tests.sh",
+      "tests/hermes_cli/test_slash_localization.py",
+      "tests/hermes_cli/test_commands.py",
+      "tests/agent/test_i18n.py",
+      "tests/cli/test_cli_copy_command.py",
+      "tests/cli/test_cli_prefix_matching.py",
+      "tests/cli/test_cli_new_session.py",
+      "--file-retries=0",
+      "-j",
+      "2",
+      "--file-timeout",
+      "180"
+    ],
+    "F05-current-restored-011.json": [
+      "C:/Program Files/Git/bin/bash.exe",
+      "scripts/run_tests.sh",
+      "tests/hermes_cli/test_slash_localization.py",
+      "--file-retries=0",
+      "-j",
+      "2",
+      "--file-timeout",
+      "180"
+    ],
+    "Required-native-stable-008.json": [
+      "C:/Program Files/Git/bin/bash.exe",
+      "scripts/run_tests.sh",
+      "tests/hermes_cli/test_stream_json_signal_native.py",
+      "tests/hermes_cli/test_stream_json_native.py",
+      "tests/hermes_cli/test_stream_json_boundaries_native.py",
+      "tests/hermes_cli/test_stream_json_startup_native.py",
+      "tests/cli/test_plan_saved_file_native.py",
+      "tests/hermes_state/test_search_profiles_native.py",
+      "--file-retries=0",
+      "--file-timeout",
+      "360",
+      "-j",
+      "2"
+    ],
+    "F08e-F12b-current-regression-009.json": [
+      "C:/Program Files/Git/bin/bash.exe",
+      "scripts/run_tests.sh",
+      "tests/cli/test_f08_command_runtime_native.py",
+      "tests/agent/test_refine_snapshot_native.py",
+      "--file-retries=0",
+      "--file-timeout",
+      "360",
+      "-j",
+      "2"
+    ],
+    "S03b-final-regression-004.json": [
+      "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+      "scripts/run_tests_parallel.py",
+      "tests/hermes_cli/test_tornado_dependency_native.py",
+      "tests/hermes_cli/test_verify_core_dependencies.py",
+      "tests/gateway/test_telegram_webhook_secret.py",
+      "tests/tools/test_tts_streaming.py",
+      "tests/tools/test_urllib3_streaming_security.py",
+      "tests/ci/test_lockfile_diff.py",
+      "-j",
+      "2",
+      "--file-retries",
+      "0",
+      "--file-timeout",
+      "180"
+    ],
+    "Picker-P05-final-standard119-001/receipt.json": [
+      "C:/Program Files/Git/bin/bash.exe",
+      "scripts/run_tests.sh",
+      "tests/agent/test_models_dev.py",
+      "tests/tui_gateway/test_model_picker_p05_native.py",
+      "tests/tui_gateway/test_model_picker_cold_native.py",
+      "--file-retries=0",
+      "-j",
+      "2",
+      "--file-timeout",
+      "180"
+    ],
+    "Picker-P05-final-regression-no-binding-001/receipt.json": [
+      [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "-c",
+        "import asyncio, json, pathlib, socket, sys, urllib.request\nimport pytest, importlib.util\n# Match the existing synchronous suite's real event-loop prerequisite before\n# denial begins. Windows implements asyncio's self-pipe using socketpair;\n# this is internal pytest setup, never an HTTP test server or provider probe.\nasyncio.set_event_loop(asyncio.new_event_loop())\nattempts=[]\ndef refuse_url(req, *args, **kwargs):\n    url=req.full_url if hasattr(req,'full_url') else str(req)\n    attempts.append({'kind':'urlopen', 'url':url})\n    raise OSError('P05 regression remote transport refused')\ndef deny(*args, **kwargs):\n    attempts.append({'kind':'socket_or_dns', 'arguments':repr(args[:1])})\n    raise OSError('P05 regression sockets/DNS refused')\nimport requests\nrequests.get=refuse_url\nurllib.request.urlopen=refuse_url\nsocket.socket.connect=deny\nsocket.socket.connect_ex=deny\nsocket.getaddrinfo=deny\ntry:\n    result=pytest.main([sys.argv[1],'-q','--basetemp',sys.argv[2]])\nfinally:\n    pathlib.Path(sys.argv[3]).write_text(json.dumps(attempts,indent=2),encoding='utf-8')\nraise SystemExit(result)\n",
+        "tests/agent/test_models_dev.py",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\0\\pytest-temp",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\0\\denied.json"
+      ],
+      [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "-c",
+        "import asyncio, json, pathlib, socket, sys, urllib.request\nimport pytest, importlib.util\n# Match the existing synchronous suite's real event-loop prerequisite before\n# denial begins. Windows implements asyncio's self-pipe using socketpair;\n# this is internal pytest setup, never an HTTP test server or provider probe.\nasyncio.set_event_loop(asyncio.new_event_loop())\nattempts=[]\ndef refuse_url(req, *args, **kwargs):\n    url=req.full_url if hasattr(req,'full_url') else str(req)\n    attempts.append({'kind':'urlopen', 'url':url})\n    raise OSError('P05 regression remote transport refused')\ndef deny(*args, **kwargs):\n    attempts.append({'kind':'socket_or_dns', 'arguments':repr(args[:1])})\n    raise OSError('P05 regression sockets/DNS refused')\nimport requests\nrequests.get=refuse_url\nurllib.request.urlopen=refuse_url\nsocket.socket.connect=deny\nsocket.socket.connect_ex=deny\nsocket.getaddrinfo=deny\ntry:\n    result=pytest.main([sys.argv[1],'-q','--basetemp',sys.argv[2]])\nfinally:\n    pathlib.Path(sys.argv[3]).write_text(json.dumps(attempts,indent=2),encoding='utf-8')\nraise SystemExit(result)\n",
+        "tests/agent/test_models_dev_meta_mapping.py",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\1\\pytest-temp",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\1\\denied.json"
+      ],
+      [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "-c",
+        "import asyncio, json, pathlib, socket, sys, urllib.request\nimport pytest, importlib.util\n# Match the existing synchronous suite's real event-loop prerequisite before\n# denial begins. Windows implements asyncio's self-pipe using socketpair;\n# this is internal pytest setup, never an HTTP test server or provider probe.\nasyncio.set_event_loop(asyncio.new_event_loop())\nattempts=[]\ndef refuse_url(req, *args, **kwargs):\n    url=req.full_url if hasattr(req,'full_url') else str(req)\n    attempts.append({'kind':'urlopen', 'url':url})\n    raise OSError('P05 regression remote transport refused')\ndef deny(*args, **kwargs):\n    attempts.append({'kind':'socket_or_dns', 'arguments':repr(args[:1])})\n    raise OSError('P05 regression sockets/DNS refused')\nimport requests\nrequests.get=refuse_url\nurllib.request.urlopen=refuse_url\nsocket.socket.connect=deny\nsocket.socket.connect_ex=deny\nsocket.getaddrinfo=deny\ntry:\n    result=pytest.main([sys.argv[1],'-q','--basetemp',sys.argv[2]])\nfinally:\n    pathlib.Path(sys.argv[3]).write_text(json.dumps(attempts,indent=2),encoding='utf-8')\nraise SystemExit(result)\n",
+        "tests/hermes_cli/test_models_dev_preferred_merge.py",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\2\\pytest-temp",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\2\\denied.json"
+      ],
+      [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "-c",
+        "import asyncio, json, pathlib, socket, sys, urllib.request\nimport pytest, importlib.util\n# Match the existing synchronous suite's real event-loop prerequisite before\n# denial begins. Windows implements asyncio's self-pipe using socketpair;\n# this is internal pytest setup, never an HTTP test server or provider probe.\nasyncio.set_event_loop(asyncio.new_event_loop())\nattempts=[]\ndef refuse_url(req, *args, **kwargs):\n    url=req.full_url if hasattr(req,'full_url') else str(req)\n    attempts.append({'kind':'urlopen', 'url':url})\n    raise OSError('P05 regression remote transport refused')\ndef deny(*args, **kwargs):\n    attempts.append({'kind':'socket_or_dns', 'arguments':repr(args[:1])})\n    raise OSError('P05 regression sockets/DNS refused')\nimport requests\nrequests.get=refuse_url\nurllib.request.urlopen=refuse_url\nsocket.socket.connect=deny\nsocket.socket.connect_ex=deny\nsocket.getaddrinfo=deny\ntry:\n    result=pytest.main([sys.argv[1],'-q','--basetemp',sys.argv[2]])\nfinally:\n    pathlib.Path(sys.argv[3]).write_text(json.dumps(attempts,indent=2),encoding='utf-8')\nraise SystemExit(result)\n",
+        "tests/hermes_cli/test_model_catalog.py",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\3\\pytest-temp",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\3\\denied.json"
+      ],
+      [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "-c",
+        "import asyncio, json, pathlib, socket, sys, urllib.request\nimport pytest, importlib.util\n# Match the existing synchronous suite's real event-loop prerequisite before\n# denial begins. Windows implements asyncio's self-pipe using socketpair;\n# this is internal pytest setup, never an HTTP test server or provider probe.\nasyncio.set_event_loop(asyncio.new_event_loop())\nattempts=[]\ndef refuse_url(req, *args, **kwargs):\n    url=req.full_url if hasattr(req,'full_url') else str(req)\n    attempts.append({'kind':'urlopen', 'url':url})\n    raise OSError('P05 regression remote transport refused')\ndef deny(*args, **kwargs):\n    attempts.append({'kind':'socket_or_dns', 'arguments':repr(args[:1])})\n    raise OSError('P05 regression sockets/DNS refused')\nimport requests\nrequests.get=refuse_url\nurllib.request.urlopen=refuse_url\nsocket.socket.connect=deny\nsocket.socket.connect_ex=deny\nsocket.getaddrinfo=deny\ntry:\n    result=pytest.main([sys.argv[1],'-q','--basetemp',sys.argv[2]])\nfinally:\n    pathlib.Path(sys.argv[3]).write_text(json.dumps(attempts,indent=2),encoding='utf-8')\nraise SystemExit(result)\n",
+        "tests/hermes_cli/test_model_catalog_adapter.py",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\4\\pytest-temp",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\4\\denied.json"
+      ],
+      [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "-c",
+        "import asyncio, json, pathlib, socket, sys, urllib.request\nimport pytest, importlib.util\n# Match the existing synchronous suite's real event-loop prerequisite before\n# denial begins. Windows implements asyncio's self-pipe using socketpair;\n# this is internal pytest setup, never an HTTP test server or provider probe.\nasyncio.set_event_loop(asyncio.new_event_loop())\nattempts=[]\ndef refuse_url(req, *args, **kwargs):\n    url=req.full_url if hasattr(req,'full_url') else str(req)\n    attempts.append({'kind':'urlopen', 'url':url})\n    raise OSError('P05 regression remote transport refused')\ndef deny(*args, **kwargs):\n    attempts.append({'kind':'socket_or_dns', 'arguments':repr(args[:1])})\n    raise OSError('P05 regression sockets/DNS refused')\nimport requests\nrequests.get=refuse_url\nurllib.request.urlopen=refuse_url\nsocket.socket.connect=deny\nsocket.socket.connect_ex=deny\nsocket.getaddrinfo=deny\ntry:\n    result=pytest.main([sys.argv[1],'-q','--basetemp',sys.argv[2]])\nfinally:\n    pathlib.Path(sys.argv[3]).write_text(json.dumps(attempts,indent=2),encoding='utf-8')\nraise SystemExit(result)\n",
+        "tests/hermes_cli/test_sale_pricing.py",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\5\\pytest-temp",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\5\\denied.json"
+      ],
+      [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "-c",
+        "import asyncio, json, pathlib, socket, sys, urllib.request\nimport pytest, importlib.util\n# Match the existing synchronous suite's real event-loop prerequisite before\n# denial begins. Windows implements asyncio's self-pipe using socketpair;\n# this is internal pytest setup, never an HTTP test server or provider probe.\nasyncio.set_event_loop(asyncio.new_event_loop())\nattempts=[]\ndef refuse_url(req, *args, **kwargs):\n    url=req.full_url if hasattr(req,'full_url') else str(req)\n    attempts.append({'kind':'urlopen', 'url':url})\n    raise OSError('P05 regression remote transport refused')\ndef deny(*args, **kwargs):\n    attempts.append({'kind':'socket_or_dns', 'arguments':repr(args[:1])})\n    raise OSError('P05 regression sockets/DNS refused')\nimport requests\nrequests.get=refuse_url\nurllib.request.urlopen=refuse_url\nsocket.socket.connect=deny\nsocket.socket.connect_ex=deny\nsocket.getaddrinfo=deny\ntry:\n    result=pytest.main([sys.argv[1],'-q','--basetemp',sys.argv[2]])\nfinally:\n    pathlib.Path(sys.argv[3]).write_text(json.dumps(attempts,indent=2),encoding='utf-8')\nraise SystemExit(result)\n",
+        "tests/hermes_cli/test_nous_policy_filter.py",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\6\\pytest-temp",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\6\\denied.json"
+      ],
+      [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "-c",
+        "import asyncio, json, pathlib, socket, sys, urllib.request\nimport pytest, importlib.util\n# Match the existing synchronous suite's real event-loop prerequisite before\n# denial begins. Windows implements asyncio's self-pipe using socketpair;\n# this is internal pytest setup, never an HTTP test server or provider probe.\nasyncio.set_event_loop(asyncio.new_event_loop())\nattempts=[]\ndef refuse_url(req, *args, **kwargs):\n    url=req.full_url if hasattr(req,'full_url') else str(req)\n    attempts.append({'kind':'urlopen', 'url':url})\n    raise OSError('P05 regression remote transport refused')\ndef deny(*args, **kwargs):\n    attempts.append({'kind':'socket_or_dns', 'arguments':repr(args[:1])})\n    raise OSError('P05 regression sockets/DNS refused')\nimport requests\nrequests.get=refuse_url\nurllib.request.urlopen=refuse_url\nsocket.socket.connect=deny\nsocket.socket.connect_ex=deny\nsocket.getaddrinfo=deny\ntry:\n    result=pytest.main([sys.argv[1],'-q','--basetemp',sys.argv[2]])\nfinally:\n    pathlib.Path(sys.argv[3]).write_text(json.dumps(attempts,indent=2),encoding='utf-8')\nraise SystemExit(result)\n",
+        "tests/hermes_cli/test_nous_policy_surfaces.py",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\7\\pytest-temp",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\7\\denied.json"
+      ],
+      [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "-c",
+        "import asyncio, json, pathlib, socket, sys, urllib.request\nimport pytest, importlib.util\n# Match the existing synchronous suite's real event-loop prerequisite before\n# denial begins. Windows implements asyncio's self-pipe using socketpair;\n# this is internal pytest setup, never an HTTP test server or provider probe.\nasyncio.set_event_loop(asyncio.new_event_loop())\nattempts=[]\ndef refuse_url(req, *args, **kwargs):\n    url=req.full_url if hasattr(req,'full_url') else str(req)\n    attempts.append({'kind':'urlopen', 'url':url})\n    raise OSError('P05 regression remote transport refused')\ndef deny(*args, **kwargs):\n    attempts.append({'kind':'socket_or_dns', 'arguments':repr(args[:1])})\n    raise OSError('P05 regression sockets/DNS refused')\nimport requests\nrequests.get=refuse_url\nurllib.request.urlopen=refuse_url\nsocket.socket.connect=deny\nsocket.socket.connect_ex=deny\nsocket.getaddrinfo=deny\ntry:\n    result=pytest.main([sys.argv[1],'-q','--basetemp',sys.argv[2]])\nfinally:\n    pathlib.Path(sys.argv[3]).write_text(json.dumps(attempts,indent=2),encoding='utf-8')\nraise SystemExit(result)\n",
+        "tests/hermes_cli/test_nous_reasoning_metadata.py",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\8\\pytest-temp",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\8\\denied.json"
+      ],
+      [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "-c",
+        "import asyncio, json, pathlib, socket, sys, urllib.request\nimport pytest, importlib.util\n# Match the existing synchronous suite's real event-loop prerequisite before\n# denial begins. Windows implements asyncio's self-pipe using socketpair;\n# this is internal pytest setup, never an HTTP test server or provider probe.\nasyncio.set_event_loop(asyncio.new_event_loop())\nattempts=[]\ndef refuse_url(req, *args, **kwargs):\n    url=req.full_url if hasattr(req,'full_url') else str(req)\n    attempts.append({'kind':'urlopen', 'url':url})\n    raise OSError('P05 regression remote transport refused')\ndef deny(*args, **kwargs):\n    attempts.append({'kind':'socket_or_dns', 'arguments':repr(args[:1])})\n    raise OSError('P05 regression sockets/DNS refused')\nimport requests\nrequests.get=refuse_url\nurllib.request.urlopen=refuse_url\nsocket.socket.connect=deny\nsocket.socket.connect_ex=deny\nsocket.getaddrinfo=deny\ntry:\n    result=pytest.main([sys.argv[1],'-q','--basetemp',sys.argv[2]])\nfinally:\n    pathlib.Path(sys.argv[3]).write_text(json.dumps(attempts,indent=2),encoding='utf-8')\nraise SystemExit(result)\n",
+        "tests/hermes_cli/test_reasoning_caps_disk_cache.py",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\9\\pytest-temp",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\9\\denied.json"
+      ],
+      [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "-c",
+        "import asyncio, json, pathlib, socket, sys, urllib.request\nimport pytest, importlib.util\n# Match the existing synchronous suite's real event-loop prerequisite before\n# denial begins. Windows implements asyncio's self-pipe using socketpair;\n# this is internal pytest setup, never an HTTP test server or provider probe.\nasyncio.set_event_loop(asyncio.new_event_loop())\nattempts=[]\ndef refuse_url(req, *args, **kwargs):\n    url=req.full_url if hasattr(req,'full_url') else str(req)\n    attempts.append({'kind':'urlopen', 'url':url})\n    raise OSError('P05 regression remote transport refused')\ndef deny(*args, **kwargs):\n    attempts.append({'kind':'socket_or_dns', 'arguments':repr(args[:1])})\n    raise OSError('P05 regression sockets/DNS refused')\nimport requests\nrequests.get=refuse_url\nurllib.request.urlopen=refuse_url\nsocket.socket.connect=deny\nsocket.socket.connect_ex=deny\nsocket.getaddrinfo=deny\ntry:\n    result=pytest.main([sys.argv[1],'-q','--basetemp',sys.argv[2]])\nfinally:\n    pathlib.Path(sys.argv[3]).write_text(json.dumps(attempts,indent=2),encoding='utf-8')\nraise SystemExit(result)\n",
+        "tests/hermes_cli/test_inventory.py",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\10\\pytest-temp",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\10\\denied.json"
+      ],
+      [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "-c",
+        "import asyncio, json, pathlib, socket, sys, urllib.request\nimport pytest, importlib.util\n# Match the existing synchronous suite's real event-loop prerequisite before\n# denial begins. Windows implements asyncio's self-pipe using socketpair;\n# this is internal pytest setup, never an HTTP test server or provider probe.\nasyncio.set_event_loop(asyncio.new_event_loop())\nattempts=[]\ndef refuse_url(req, *args, **kwargs):\n    url=req.full_url if hasattr(req,'full_url') else str(req)\n    attempts.append({'kind':'urlopen', 'url':url})\n    raise OSError('P05 regression remote transport refused')\ndef deny(*args, **kwargs):\n    attempts.append({'kind':'socket_or_dns', 'arguments':repr(args[:1])})\n    raise OSError('P05 regression sockets/DNS refused')\nimport requests\nrequests.get=refuse_url\nurllib.request.urlopen=refuse_url\nsocket.socket.connect=deny\nsocket.socket.connect_ex=deny\nsocket.getaddrinfo=deny\ntry:\n    result=pytest.main([sys.argv[1],'-q','--basetemp',sys.argv[2]])\nfinally:\n    pathlib.Path(sys.argv[3]).write_text(json.dumps(attempts,indent=2),encoding='utf-8')\nraise SystemExit(result)\n",
+        "tests/hermes_cli/test_inventory_reasoning_caps.py",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\11\\pytest-temp",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\11\\denied.json"
+      ],
+      [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "-c",
+        "import asyncio, json, pathlib, socket, sys, urllib.request\nimport pytest, importlib.util\n# Match the existing synchronous suite's real event-loop prerequisite before\n# denial begins. Windows implements asyncio's self-pipe using socketpair;\n# this is internal pytest setup, never an HTTP test server or provider probe.\nasyncio.set_event_loop(asyncio.new_event_loop())\nattempts=[]\ndef refuse_url(req, *args, **kwargs):\n    url=req.full_url if hasattr(req,'full_url') else str(req)\n    attempts.append({'kind':'urlopen', 'url':url})\n    raise OSError('P05 regression remote transport refused')\ndef deny(*args, **kwargs):\n    attempts.append({'kind':'socket_or_dns', 'arguments':repr(args[:1])})\n    raise OSError('P05 regression sockets/DNS refused')\nimport requests\nrequests.get=refuse_url\nurllib.request.urlopen=refuse_url\nsocket.socket.connect=deny\nsocket.socket.connect_ex=deny\nsocket.getaddrinfo=deny\ntry:\n    result=pytest.main([sys.argv[1],'-q','--basetemp',sys.argv[2]])\nfinally:\n    pathlib.Path(sys.argv[3]).write_text(json.dumps(attempts,indent=2),encoding='utf-8')\nraise SystemExit(result)\n",
+        "tests/hermes_cli/test_inventory_pricing.py",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\12\\pytest-temp",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\12\\denied.json"
+      ],
+      [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "-c",
+        "import asyncio, json, pathlib, socket, sys, urllib.request\nimport pytest, importlib.util\n# Match the existing synchronous suite's real event-loop prerequisite before\n# denial begins. Windows implements asyncio's self-pipe using socketpair;\n# this is internal pytest setup, never an HTTP test server or provider probe.\nasyncio.set_event_loop(asyncio.new_event_loop())\nattempts=[]\ndef refuse_url(req, *args, **kwargs):\n    url=req.full_url if hasattr(req,'full_url') else str(req)\n    attempts.append({'kind':'urlopen', 'url':url})\n    raise OSError('P05 regression remote transport refused')\ndef deny(*args, **kwargs):\n    attempts.append({'kind':'socket_or_dns', 'arguments':repr(args[:1])})\n    raise OSError('P05 regression sockets/DNS refused')\nimport requests\nrequests.get=refuse_url\nurllib.request.urlopen=refuse_url\nsocket.socket.connect=deny\nsocket.socket.connect_ex=deny\nsocket.getaddrinfo=deny\ntry:\n    result=pytest.main([sys.argv[1],'-q','--basetemp',sys.argv[2]])\nfinally:\n    pathlib.Path(sys.argv[3]).write_text(json.dumps(attempts,indent=2),encoding='utf-8')\nraise SystemExit(result)\n",
+        "tests/hermes_cli/test_provider_catalog.py",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\13\\pytest-temp",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\13\\denied.json"
+      ],
+      [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "-c",
+        "import asyncio, json, pathlib, socket, sys, urllib.request\nimport pytest, importlib.util\n# Match the existing synchronous suite's real event-loop prerequisite before\n# denial begins. Windows implements asyncio's self-pipe using socketpair;\n# this is internal pytest setup, never an HTTP test server or provider probe.\nasyncio.set_event_loop(asyncio.new_event_loop())\nattempts=[]\ndef refuse_url(req, *args, **kwargs):\n    url=req.full_url if hasattr(req,'full_url') else str(req)\n    attempts.append({'kind':'urlopen', 'url':url})\n    raise OSError('P05 regression remote transport refused')\ndef deny(*args, **kwargs):\n    attempts.append({'kind':'socket_or_dns', 'arguments':repr(args[:1])})\n    raise OSError('P05 regression sockets/DNS refused')\nimport requests\nrequests.get=refuse_url\nurllib.request.urlopen=refuse_url\nsocket.socket.connect=deny\nsocket.socket.connect_ex=deny\nsocket.getaddrinfo=deny\ntry:\n    result=pytest.main([sys.argv[1],'-q','--basetemp',sys.argv[2]])\nfinally:\n    pathlib.Path(sys.argv[3]).write_text(json.dumps(attempts,indent=2),encoding='utf-8')\nraise SystemExit(result)\n",
+        "tests/hermes_cli/test_cached_fetch_api_models.py",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\14\\pytest-temp",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\14\\denied.json"
+      ],
+      [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "-c",
+        "import asyncio, json, pathlib, socket, sys, urllib.request\nimport pytest, importlib.util\n# Match the existing synchronous suite's real event-loop prerequisite before\n# denial begins. Windows implements asyncio's self-pipe using socketpair;\n# this is internal pytest setup, never an HTTP test server or provider probe.\nasyncio.set_event_loop(asyncio.new_event_loop())\nattempts=[]\ndef refuse_url(req, *args, **kwargs):\n    url=req.full_url if hasattr(req,'full_url') else str(req)\n    attempts.append({'kind':'urlopen', 'url':url})\n    raise OSError('P05 regression remote transport refused')\ndef deny(*args, **kwargs):\n    attempts.append({'kind':'socket_or_dns', 'arguments':repr(args[:1])})\n    raise OSError('P05 regression sockets/DNS refused')\nimport requests\nrequests.get=refuse_url\nurllib.request.urlopen=refuse_url\nsocket.socket.connect=deny\nsocket.socket.connect_ex=deny\nsocket.getaddrinfo=deny\ntry:\n    result=pytest.main([sys.argv[1],'-q','--basetemp',sys.argv[2]])\nfinally:\n    pathlib.Path(sys.argv[3]).write_text(json.dumps(attempts,indent=2),encoding='utf-8')\nraise SystemExit(result)\n",
+        "tests/hermes_cli/test_model_cache_swr.py",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\15\\pytest-temp",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\15\\denied.json"
+      ],
+      [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "-c",
+        "import asyncio, json, pathlib, socket, sys, urllib.request\nimport pytest, importlib.util\n# Match the existing synchronous suite's real event-loop prerequisite before\n# denial begins. Windows implements asyncio's self-pipe using socketpair;\n# this is internal pytest setup, never an HTTP test server or provider probe.\nasyncio.set_event_loop(asyncio.new_event_loop())\nattempts=[]\ndef refuse_url(req, *args, **kwargs):\n    url=req.full_url if hasattr(req,'full_url') else str(req)\n    attempts.append({'kind':'urlopen', 'url':url})\n    raise OSError('P05 regression remote transport refused')\ndef deny(*args, **kwargs):\n    attempts.append({'kind':'socket_or_dns', 'arguments':repr(args[:1])})\n    raise OSError('P05 regression sockets/DNS refused')\nimport requests\nrequests.get=refuse_url\nurllib.request.urlopen=refuse_url\nsocket.socket.connect=deny\nsocket.socket.connect_ex=deny\nsocket.getaddrinfo=deny\ntry:\n    result=pytest.main([sys.argv[1],'-q','--basetemp',sys.argv[2]])\nfinally:\n    pathlib.Path(sys.argv[3]).write_text(json.dumps(attempts,indent=2),encoding='utf-8')\nraise SystemExit(result)\n",
+        "tests/hermes_cli/test_model_cache_parallel_prefetch.py",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\16\\pytest-temp",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\16\\denied.json"
+      ],
+      [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "-c",
+        "import asyncio, json, pathlib, socket, sys, urllib.request\nimport pytest, importlib.util\n# Match the existing synchronous suite's real event-loop prerequisite before\n# denial begins. Windows implements asyncio's self-pipe using socketpair;\n# this is internal pytest setup, never an HTTP test server or provider probe.\nasyncio.set_event_loop(asyncio.new_event_loop())\nattempts=[]\ndef refuse_url(req, *args, **kwargs):\n    url=req.full_url if hasattr(req,'full_url') else str(req)\n    attempts.append({'kind':'urlopen', 'url':url})\n    raise OSError('P05 regression remote transport refused')\ndef deny(*args, **kwargs):\n    attempts.append({'kind':'socket_or_dns', 'arguments':repr(args[:1])})\n    raise OSError('P05 regression sockets/DNS refused')\nimport requests\nrequests.get=refuse_url\nurllib.request.urlopen=refuse_url\nsocket.socket.connect=deny\nsocket.socket.connect_ex=deny\nsocket.getaddrinfo=deny\ntry:\n    result=pytest.main([sys.argv[1],'-q','--basetemp',sys.argv[2]])\nfinally:\n    pathlib.Path(sys.argv[3]).write_text(json.dumps(attempts,indent=2),encoding='utf-8')\nraise SystemExit(result)\n",
+        "tests/hermes_cli/test_model_cache_fallback_native.py",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\17\\pytest-temp",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\17\\denied.json"
+      ],
+      [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "-c",
+        "import asyncio, json, pathlib, socket, sys, urllib.request\nimport pytest, importlib.util\n# Match the existing synchronous suite's real event-loop prerequisite before\n# denial begins. Windows implements asyncio's self-pipe using socketpair;\n# this is internal pytest setup, never an HTTP test server or provider probe.\nasyncio.set_event_loop(asyncio.new_event_loop())\nattempts=[]\ndef refuse_url(req, *args, **kwargs):\n    url=req.full_url if hasattr(req,'full_url') else str(req)\n    attempts.append({'kind':'urlopen', 'url':url})\n    raise OSError('P05 regression remote transport refused')\ndef deny(*args, **kwargs):\n    attempts.append({'kind':'socket_or_dns', 'arguments':repr(args[:1])})\n    raise OSError('P05 regression sockets/DNS refused')\nimport requests\nrequests.get=refuse_url\nurllib.request.urlopen=refuse_url\nsocket.socket.connect=deny\nsocket.socket.connect_ex=deny\nsocket.getaddrinfo=deny\ntry:\n    result=pytest.main([sys.argv[1],'-q','--basetemp',sys.argv[2]])\nfinally:\n    pathlib.Path(sys.argv[3]).write_text(json.dumps(attempts,indent=2),encoding='utf-8')\nraise SystemExit(result)\n",
+        "tests/hermes_cli/test_model_cache_profile_native.py",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\18\\pytest-temp",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\18\\denied.json"
+      ],
+      [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "-c",
+        "import asyncio, json, pathlib, socket, sys, urllib.request\nimport pytest, importlib.util\n# Match the existing synchronous suite's real event-loop prerequisite before\n# denial begins. Windows implements asyncio's self-pipe using socketpair;\n# this is internal pytest setup, never an HTTP test server or provider probe.\nasyncio.set_event_loop(asyncio.new_event_loop())\nattempts=[]\ndef refuse_url(req, *args, **kwargs):\n    url=req.full_url if hasattr(req,'full_url') else str(req)\n    attempts.append({'kind':'urlopen', 'url':url})\n    raise OSError('P05 regression remote transport refused')\ndef deny(*args, **kwargs):\n    attempts.append({'kind':'socket_or_dns', 'arguments':repr(args[:1])})\n    raise OSError('P05 regression sockets/DNS refused')\nimport requests\nrequests.get=refuse_url\nurllib.request.urlopen=refuse_url\nsocket.socket.connect=deny\nsocket.socket.connect_ex=deny\nsocket.getaddrinfo=deny\ntry:\n    result=pytest.main([sys.argv[1],'-q','--basetemp',sys.argv[2]])\nfinally:\n    pathlib.Path(sys.argv[3]).write_text(json.dumps(attempts,indent=2),encoding='utf-8')\nraise SystemExit(result)\n",
+        "tests/tui_gateway/test_model_picker_profile_native.py",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\19\\pytest-temp",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\19\\denied.json"
+      ]
+    ],
+    "Required-source-committed-119-001.json": [
+      "C:/Program Files/Git/bin/bash.exe",
+      "scripts/run_tests.sh",
+      "tests/agent/test_models_dev.py",
+      "tests/tui_gateway/test_model_picker_p05_native.py",
+      "tests/tui_gateway/test_model_picker_cold_native.py",
+      "--file-retries=0",
+      "-j",
+      "2",
+      "--file-timeout",
+      "180"
+    ]
+  },
+  "execution_receipt_sha256_raw": {
+    "F05-F11-final-native-006.json": "90a83f5d9fe28793ebcad3b23325cf61188e5268695c7bea4ef01a7a061dc9eb",
+    "F05-current-restored-011.json": "80752f73325a7262ac2bf4ad856460487ce265a9472f881f0c37c4209a585499",
+    "Required-native-stable-008.json": "01a967fcd7b5ae309fbcff0087f8119442ac4c4d6dfd8bfa613da62a154e5d94",
+    "F08e-F12b-current-regression-009.json": "589401ead7952b82faa16ff7e423dd4b3abb1356f77da3f43fe050c92ee83863",
+    "S03b-final-regression-004.json": "4c0b7fafd37920b715cd7ac47e01bf1435684937e7ce990c6af3d98c67e79f0d",
+    "Picker-P05-final-standard119-001/receipt.json": "11d1e6d9fa4136a880f0d072318e907cfaffbfffe51dd32f0923321ed99c6fae",
+    "Picker-P05-final-regression-no-binding-001/receipt.json": "09736b34918994214c44306854f3b82cb9a404bf4a585b03396eeb76d6922e0b",
+    "Required-source-committed-119-001.json": "42509acec6e0c18a64b18f37ef583da68e08eca22f8bf4d5f657c11debf129af"
+  },
+  "additional_tests_and_commands": "Exact original argv, counts, native scope, source hashes, mutation and independent review paths are retained by each slice JSON; overlapping passes are not added.",
+  "dependency_scope": {
+    "D_BASE": "a553729853b9648bf8ca9e5c3c7e54365d7f5c62",
+    "head": "2a4124bb0ae000aac547dd4531703fa9e75a9359",
+    "required_dependency_added": [
+      "urllib3>=2.8.0,<3"
+    ],
+    "required_dependency_removed": [
+      "urllib3>=2.7.0,<3"
+    ],
+    "optional_dependencies_unchanged": true,
+    "product_version_unchanged": true,
+    "declaration_hashes": {
+      "D_BASE_pyproject": "c604efd08ceee56ad487f5c950d5c7c6dd859a3078419113ae95a467f003c530",
+      "current_pyproject": "43a16a1bc21d672a35c2551f6c52cf3b9a98dc6d4f683543aa31a19ca324cd78",
+      "current_uv_lock": "185eda6c770f017237283701a49b03463a1d0980fba1c22db655e7daa285c344"
+    },
+    "JS_Go_manifests_unchanged": {
+      "package.json": {
+        "D_BASE": "9cf41e6936b644db16f68dab624df4c03163ccdd27286a92b36668ab81e3823b",
+        "current": "9cf41e6936b644db16f68dab624df4c03163ccdd27286a92b36668ab81e3823b",
+        "equal": true
+      },
+      "package-lock.json": {
+        "D_BASE": "705f54d06375dc6618068c99b4fdcee9f2373ff306998dfe3484602e8434f273",
+        "current": "705f54d06375dc6618068c99b4fdcee9f2373ff306998dfe3484602e8434f273",
+        "equal": true
+      },
+      "apps/desktop/package.json": {
+        "D_BASE": "4d24ab3f526e8e82e0d42698e18d823c6e34f213ddcd1ec53285f345cf2622d1",
+        "current": "4d24ab3f526e8e82e0d42698e18d823c6e34f213ddcd1ec53285f345cf2622d1",
+        "equal": true
+      },
+      "ui-tui/package.json": {
+        "D_BASE": "5b7b79829475eb3d7d01d294a684ff710f6961d38b38cd50d922a7a596bf58fd",
+        "current": "5b7b79829475eb3d7d01d294a684ff710f6961d38b38cd50d922a7a596bf58fd",
+        "equal": true
+      },
+      "scripts/windows/watchdog-go/go.mod": {
+        "D_BASE": "1585182382a3b9c8b687f86a6b3401808df835360716596db7ab723427f615f0",
+        "current": "1585182382a3b9c8b687f86a6b3401808df835360716596db7ab723427f615f0",
+        "equal": true
+      },
+      "scripts/windows/watchdog-go/go.sum": {
+        "D_BASE": "f360583e2a7ffb6287d21044911c9ef920fc0fde22648a5e58ddf9401b6b4a46",
+        "current": "f360583e2a7ffb6287d21044911c9ef920fc0fde22648a5e58ddf9401b6b4a46",
+        "equal": true
+      }
+    },
+    "changed_Python_product_imports": [
+      {
+        "path": "agent/agent_runtime_helpers.py",
+        "sha256_raw": "2083684731262cadd728efa6769a94163335013eba2b270aebb02ea7ac2aac36",
+        "added_imports": []
+      },
+      {
+        "path": "agent/background_review.py",
+        "sha256_raw": "ef7185709988d2c6fc96500f61e76ed8b2e6e0cd74bceb7d48c1154090ec21d9",
+        "added_imports": []
+      },
+      {
+        "path": "agent/models_dev.py",
+        "sha256_raw": "ff39081a7e1067899aa431268c2cbb7d944462badad5739d97d0c2b60eadc05d",
+        "added_imports": [
+          "contextvars",
+          "hashlib",
+          "sys"
+        ]
+      },
+      {
+        "path": "agent/skill_commands.py",
+        "sha256_raw": "d6d5ef6b8f9f9c84cef6d99ee151f6dbb45f1553794f13f4b9fd31c897acdaae",
+        "added_imports": [
+          "hermes_cli.config"
+        ]
+      },
+      {
+        "path": "agent/skill_utils.py",
+        "sha256_raw": "345f13032c3f437aeadff7d842857523b42c18caa56031de744ff5c8dd5d607e",
+        "added_imports": []
+      },
+      {
+        "path": "agent/system_prompt.py",
+        "sha256_raw": "5855b79eb9419a6e6babd4121683b01e65be71fc6d1056170880f89e6d142d0f",
+        "added_imports": [
+          "agent.skill_commands"
+        ]
+      },
+      {
+        "path": "agent/tool_executor.py",
+        "sha256_raw": "2e61675e01d89b5cb6aae1a35eef4ae7b357293dccc18bc1dccf136e07f768e8",
+        "added_imports": [
+          "tools.skill_manager_tool"
+        ]
+      },
+      {
+        "path": "apps/desktop/test-fixtures/f04-availability/backend.py",
+        "sha256_raw": "9cde26b7b1768b37d7b200d0b89ae5526b017e9707911fc3e8c321dd188d9066",
+        "added_imports": [
+          "dataclasses",
+          "hermes_cli.commands",
+          "importlib",
+          "json",
+          "pathlib",
+          "queue",
+          "sys",
+          "unittest.mock"
+        ]
+      },
+      {
+        "path": "apps/desktop/test-fixtures/semantic-catalog/backend.py",
+        "sha256_raw": "cc83a38950fef672119e94d0daeb7e701c08b8ba3a99b3bb5a5e40c7eecbb463",
+        "added_imports": [
+          "hermes_cli.commands",
+          "importlib",
+          "json",
+          "pathlib",
+          "queue",
+          "sys",
+          "unittest.mock"
+        ]
+      },
+      {
+        "path": "cli.py",
+        "sha256_raw": "d08e83fef5fa8493802f4e9c89b90644275cafb6a7782d2f4cb07af10dbaab89",
+        "added_imports": [
+          "contextvars",
+          "hermes_cli.stream_json"
+        ]
+      },
+      {
+        "path": "hermes_cli/_parser.py",
+        "sha256_raw": "82df8f4c89264b09729bb8c03327000061678eccad4e7fc0950d353a62fd7080",
+        "added_imports": []
+      },
+      {
+        "path": "hermes_cli/cli_agent_setup_mixin.py",
+        "sha256_raw": "6eddc745b0a654e8ccec4d968e056ca7ebdb2612a46b0b0f8ed7b0e37db84d6b",
+        "added_imports": []
+      },
+      {
+        "path": "hermes_cli/cli_commands_mixin.py",
+        "sha256_raw": "bcc92dbf2ef559dead051f29e298c4eed38ea2f389b6723b5b08597edd86ce10",
+        "added_imports": []
+      },
+      {
+        "path": "hermes_cli/commands.py",
+        "sha256_raw": "7271650112ce491082a232cbd34be7fd833e47c5a8089cce1cf138d603a45ca4",
+        "added_imports": [
+          "agent.i18n"
+        ]
+      },
+      {
+        "path": "hermes_cli/inventory.py",
+        "sha256_raw": "d36456e900097db72194fa1e74dc2934732916649f333c77d3fc892f1339a6ed",
+        "added_imports": [
+          "hermes_cli.nous_account"
+        ]
+      },
+      {
+        "path": "hermes_cli/main.py",
+        "sha256_raw": "7ee97c970fe5e05c461edddcfcb4153512fdc22e4b9db7252c3cca2e5998a302",
+        "added_imports": [
+          "hermes_cli.stream_json"
+        ]
+      },
+      {
+        "path": "hermes_cli/model_catalog.py",
+        "sha256_raw": "c55ab873d491b41ba0fd04967d64c3bc0882b8ed3b49c1af239a0897292e6567",
+        "added_imports": []
+      },
+      {
+        "path": "hermes_cli/model_switch.py",
+        "sha256_raw": "e76e6f3482f4dce4533df77bef67423b85cb50fd347154880396999f7001eeb2",
+        "added_imports": [
+          "contextvars"
+        ]
+      },
+      {
+        "path": "hermes_cli/models.py",
+        "sha256_raw": "dc9fc814470c65e19f7120843e1714f318905e35d996cfb07b5d1e284aa8f49f",
+        "added_imports": [
+          "contextvars"
+        ]
+      },
+      {
+        "path": "hermes_cli/plugins.py",
+        "sha256_raw": "255ed19b0a16108aeaa2509a7556827723185b877dc78582f9d24162d238c218",
+        "added_imports": []
+      },
+      {
+        "path": "hermes_cli/stream_json.py",
+        "sha256_raw": "312e191eb1d9101f7ae21b9f81ccc8e62e6fd89aaefc6e35476b903e79050ac3",
+        "added_imports": [
+          "__future__",
+          "contextlib",
+          "contextvars",
+          "functools",
+          "inspect",
+          "json",
+          "sys",
+          "threading",
+          "time",
+          "typing"
+        ]
+      },
+      {
+        "path": "hermes_state.py",
+        "sha256_raw": "7234f882e8b01658d5b98fbc6d0c2bf7f5c2aeccc15ebbff264087047028a7a4",
+        "added_imports": []
+      },
+      {
+        "path": "hermes_state_search.py",
+        "sha256_raw": "fa881e6a8363ebe3a3e3029b4fad38a82bdb1d5a26f053a7dc1b742f577c91d3",
+        "added_imports": []
+      },
+      {
+        "path": "run_agent.py",
+        "sha256_raw": "b433326bfb74e9606313bfe0da0c2818e3e165a31dbc792bb6974998e4ad7d8a",
+        "added_imports": []
+      },
+      {
+        "path": "tools/file_tools.py",
+        "sha256_raw": "9216f03edc43c9b08526d294801141e2b4c92de7adfbad71582bceb207002ba4",
+        "added_imports": [
+          "tools.skill_manager_tool",
+          "tools.skill_provenance"
+        ]
+      },
+      {
+        "path": "tools/session_search_tool.py",
+        "sha256_raw": "03b538a2984b29bc1d0f6842d0f79d09492263b373d6346e10e0f0efe9532887",
+        "added_imports": [
+          "re",
+          "time"
+        ]
+      },
+      {
+        "path": "tools/skill_manager_tool.py",
+        "sha256_raw": "2c3530e3b0a34856309412dc0e0909ea205db50bb95f35cabb41e47aca3d82ca",
+        "added_imports": [
+          "contextlib"
+        ]
+      },
+      {
+        "path": "tools/skills_tool.py",
+        "sha256_raw": "0798134cd26981f1cdd3257fd17c37e879312fede31f025832bdbaa8487b3638",
+        "added_imports": []
+      },
+      {
+        "path": "tui_gateway/methods_complete.py",
+        "sha256_raw": "55b75b8fedff3a84610110249226f6de33b1a319c7da6498f6a8c0f7311c0366",
+        "added_imports": []
+      },
+      {
+        "path": "tui_gateway/methods_tools.py",
+        "sha256_raw": "97447ef72f430fb177cec424f0b1d2ba28784a7b2b5644fc1194a83dc9323b4a",
+        "added_imports": []
+      }
+    ],
+    "method": "Read-only AST/tomllib and explicit Git diff; no imports from reference trees.",
+    "conclusion_scope": "No new mandatory Nous/upstream runtime, PM, steward, Portal or artifact package dependency in declarations or added imports. Runtime behavior acceptance is separately bound by picker owned unconfigured/refused-network tests.",
+    "global_runtime_independence_proven": false
+  },
+  "dependency_receipt_sha256_raw": "7066d162ede6355a3199d42b36b78b7f57eda27a46de538e26c52be5a85b584a",
+  "Undici_block": {
+    "family": "S03",
+    "status": "BLOCKED_EXECUTION_CYBER_REVIEW",
+    "scope": "Additional native Undici memory-only Dispatcher/WebSocket security reproduction feasibility",
+    "agent": "01a0f790-c38c-7560-ba6f-cb68d168de76",
+    "observed_tool": "multi_agent_v1__wait_agent",
+    "actual_error": "This content was flagged for possible cybersecurity risk. If this seems wrong, try rephrasing your request. Otherwise, confirm that the access_programs.cyber parameter is set to the appropriate tier, and note that some cybersecurity requests are still limited, even when Daybreak is on.",
+    "detailed_reason_provided": false,
+    "same_action_retried_or_rerouted": false,
+    "accepted_native_RED": false,
+    "product_or_dependency_fix_claim": false,
+    "prior_readonly_source_and_CodeGraph_audit_retained": "S03b-undici-acceptance-001/receipt.json",
+    "not_blanket_blocked": "Unrelated optional Tornado and Electron readonly precondition analysis remain separate."
+  },
+  "Undici_block_receipt_sha256_raw": "477c33d2df14924ab55b865ac7eaf2744f01d703b84ce17ed306d3714c2bf84b",
+  "remaining_inventory": {
+    "other_seed_families_unreviewed": 39,
+    "history_behavioral_dispositions_unreviewed": 18820,
+    "dynamic_plugin_skill_RPC_complete": false
+  },
+  "claims": {
+    "whole_U_TARGET_parity": false,
+    "whole_family_parity": false,
+    "0_25_compatibility": false,
+    "production_stability": false,
+    "all_paths_runtime_dependency_zero": false,
+    "main_push_merge_release_deploy_restart_authorized_or_executed": false
+  }
+}
