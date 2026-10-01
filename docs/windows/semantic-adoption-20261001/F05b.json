@@ -1,0 +1,95 @@
+{
+  "id": "F05b",
+  "family": "F05",
+  "status": "ACCEPTED_REQUIRED_HELP_SCOPE",
+  "scope": "Current Japanese help, English fallback, aliases, completion and duplicate prevention. Existing implementation reused.",
+  "source_sha256_raw": {
+    "cli.py": "d08e83fef5fa8493802f4e9c89b90644275cafb6a7782d2f4cb07af10dbaab89",
+    "hermes_cli/commands.py": "7271650112ce491082a232cbd34be7fd833e47c5a8089cce1cf138d603a45ca4",
+    "agent/i18n.py": "9cea04b61315ee60d219b8b9b6745f43f1dc79120327c20822542c58114acca1",
+    "tests/hermes_cli/test_slash_localization.py": "577fb40791062ddbd6319f3b016e897255d8cea3d1a0e54eb59c1945389be83c",
+    "docs/windows/semantic-adoption-20261001/F05-help-mini-plan.md": "aaf2f004c91e0392c34a911d48d552b49f2f6569a2ef2e05926d56d9dadeaa34",
+    "locales/af.yaml": "b0423bfe2578f5e8e22f91c4ef2a2079d507a620c5c31e2827fa527b252f6ff8",
+    "locales/ar.yaml": "b7758e3527b2be280016593f9d94ead3472c0159d69fe8502f7be3cdfa37441a",
+    "locales/de.yaml": "97d158902809debe5724c50be5d7d2e335686dccbd241679c1de6043228263a8",
+    "locales/en.yaml": "4548f5a0a430c9c39992022b1e7f3b0eaca4e1841ba10af69b0095dfe911852f",
+    "locales/es.yaml": "2d8e192f725c10ffcaa72acd43b1b447cb0032c74b2d1e89eb1d7647e2d217d4",
+    "locales/fr.yaml": "a1160d61eeeb06cbccc739014a281b03a52051622c2e9ccd16e42ba25a05f764",
+    "locales/ga.yaml": "d6f7c896b9502c99a0538d5378238421f587a9a4badd4da7a55cbdf973aa80a9",
+    "locales/hu.yaml": "7c2075dec4c120eea89618434ab4a1a4d24887600eb1157061095ccf44452d71",
+    "locales/it.yaml": "bec9895b300fc4a2df8dbe14d9beace5581ce830938bb8d48301fe3ba185fcb3",
+    "locales/ja.yaml": "ffea6f95f1d49b785b46828ac254bbd3d514e8290ec808f09c829c1c7afb94c6",
+    "locales/ko.yaml": "01192bddaf506fc8ca68abd969d12cf74eaf241c7f677e7020d50b4ca5da244b",
+    "locales/pt.yaml": "147a39ddcb8e3bdb0defbed19b8088f23abf221baad2d52f205df8186d131be6",
+    "locales/ru.yaml": "24ef6205c501b76801cd5db4fa6619717a1320eb8515a91def2f89d0066bf351",
+    "locales/tr.yaml": "261e09679d6b72f09b3b2e2492a1b4346a970ed619cfb17457a922833e1f0e87",
+    "locales/uk.yaml": "fd47495f3a639db866e4eaeffe202fd8c6e03bb31df6a57cb73a007a5cbc8847",
+    "locales/zh-hant.yaml": "2ebb4c830adca5a076db2f50d1e06ba2461d8451afc54f4aabcee568d9ff9fb7",
+    "locales/zh.yaml": "c923d7f65fe7365d08a02131483a9385d873753ec9aca42a2d541d89c4582ace",
+    "hermes_cli/cli_commands_mixin.py": "bcc92dbf2ef559dead051f29e298c4eed38ea2f389b6723b5b08597edd86ce10",
+    "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+    "tests/hermes_cli/test_commands.py": "67ff9ba59c692cff092cfc7f7326f88dee563c2086f5916f515d630084a3580e",
+    "tests/agent/test_i18n.py": "833598a12998b514ab876a76b123c1e33f51ab626f8f9d9ce2b529186996ac77",
+    "tests/cli/test_cli_copy_command.py": "66121b25f698e28fffc6bec97bcba89cbf3143e100386cb9517b5e95d5c888fa",
+    "tests/cli/test_cli_prefix_matching.py": "eae5a7f7da5a847c81aab07097ad4a0f06f434fc4ea86f68b1cde0bb32e04c67",
+    "tests/cli/test_cli_new_session.py": "2551c34bf8059f0567abd528efac8d7234d4a0ebd159d4e455edc0fe73b97f24"
+  },
+  "evidence_sha256_raw": {
+    "F05-mutation-current-010.json": "2734906291789b30c400135b0694f7e4faedd8f12bcdc902ffba9a01d1c3b447",
+    "F05-current-restored-011.json": "80752f73325a7262ac2bf4ad856460487ce265a9472f881f0c37c4209a585499",
+    "F05-current-restored-011.log": "20a805d25a5276efd006368e98a23b200bb8a9554e7425c252437d1b55241c97",
+    "F05-current-restored-SDK-013.json": "43f046b228446faad32b4d8f45b31b909406ebb6d626752d5bd77ff2935616cb",
+    "F05-mutation-description-current-010.log": "db302f1fa2bf9d2061ccc3040c1bb61daa548034e93fa410128dfd9de056c60a",
+    "F05-mutation-fallback-current-010.log": "2cdfcd2be697f7fc91e96b226635e06b71d8115acc265c1d8c067bc6993a54c4",
+    "F05-mutation-literal-braces-current-010.log": "f0bb908f4d1a4d458e00c7606219189801659404cfb2569870b012007c96bb42",
+    "F05-mutation-mutable-override-current-010.log": "9dbf22f86df5d1247e53f544913c4658a1beb25a2da6a0670550b62ce314acbf",
+    "F05-independent-current-mutation-002/receipt.json": "90a7e14de23feb0c9673ddada972871bc0c974bb8950b026cfd35801cfa864b5",
+    "F05-independent-current-001/receipt.json": "63c76b84ccef888d27e0c61527c397bebcd1089d5d18a11a3998b7a213e74a71",
+    "F05-F11-final-native-006.json": "90a83f5d9fe28793ebcad3b23325cf61188e5268695c7bea4ef01a7a061dc9eb"
+  },
+  "current_runner_receipts": [
+    "F05-F11-final-native-006.json",
+    "F05-current-restored-011.json"
+  ],
+  "native_regression": {
+    "five_F05_files_unique_pass": 118,
+    "fail": 0,
+    "skip": 0,
+    "combined_with_new_session": 124,
+    "restored_localization_pass": 11,
+    "counts_overlap": true
+  },
+  "mutation": {
+    "receipt": "F05-mutation-current-010.json",
+    "faults": [
+      "description",
+      "fallback",
+      "literal-braces",
+      "mutable-override"
+    ],
+    "all_caught": true,
+    "source_restored_exactly": true
+  },
+  "codegraph": {
+    "fresh_current_SDK": "F05-current-restored-SDK-013.json",
+    "four_root_prior_receipts_preserved": true,
+    "whole_integration_pending_elsewhere_not_accepted": true
+  },
+  "independent_review": {
+    "receipt": "F05-independent-current-mutation-002/receipt.json",
+    "original": "F05-independent-current-001/receipt.json",
+    "requested_model": "gpt-6.1-sol",
+    "requested_effort": "high",
+    "actual_model": null,
+    "actual_effort": null
+  },
+  "retained_limits": [
+    "No all-locale translation requirement",
+    "No full F05 Gateway ingress or U_TARGET parity declaration"
+  ],
+  "explicit_paths": [],
+  "commit_message": "Accept current localized help and completion proof",
+  "parent_head": "359ce504faaa1afa3fc724d767f4cad769b74662",
+  "whole_U_TARGET_parity": false,
+  "whole_tree_GREEN": false
+}
