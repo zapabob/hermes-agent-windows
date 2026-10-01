@@ -2274,7 +2274,7 @@ def model_ids(*, force_refresh: bool = False) -> list[str]:
     return [mid for mid, _ in fetch_openrouter_models(force_refresh=force_refresh)]
 
 
-def get_curated_nous_model_ids() -> list[str]:
+def get_curated_nous_model_ids(*, cache_only: bool = False) -> list[str]:
     """Return the curated Nous Portal model-id list.
 
     Prefers the remotely-hosted catalog manifest (published under
@@ -2284,7 +2284,7 @@ def get_curated_nous_model_ids() -> list[str]:
     """
     try:
         from hermes_cli.model_catalog import get_curated_nous_models
-        remote = get_curated_nous_models()
+        remote = get_curated_nous_models(cache_only=True) if cache_only else get_curated_nous_models()
     except Exception:
         remote = None
     if remote:
@@ -2808,9 +2808,14 @@ def restrict_to_nous_policy(
     ]
 
 
-def get_pricing_for_provider(provider: str, *, force_refresh: bool = False) -> dict[str, dict[str, str]]:
+def get_pricing_for_provider(provider: str, *, force_refresh: bool = False, cache_only: bool = False) -> dict[str, dict[str, str]]:
     """Return live pricing for providers that support it (openrouter, nous, ai-gateway, novita)."""
     normalized = normalize_provider(provider)
+    if cache_only and not force_refresh:
+        # Only credential-independent public catalog keys are safe here.
+        # Nous account policy/tier is not inferred from URL-global metadata.
+        public_key = {"openrouter": "https://openrouter.ai/api", "fireworks": "models.dev/fireworks"}.get(normalized)
+        return (_cached_catalog(public_key) or {}) if public_key else {}
     if normalized == "openrouter":
         return fetch_models_with_pricing(
             api_key=_resolve_openrouter_api_key(),
@@ -4056,7 +4061,7 @@ def _model_dedup_key(model_id: str) -> str:
         return key
 
 
-def _merge_with_models_dev(provider: str, curated: list[str]) -> list[str]:
+def _merge_with_models_dev(provider: str, curated: list[str], *, allow_network: bool = True) -> list[str]:
     """Merge curated list with fresh models.dev entries for a preferred provider.
 
     Returns models.dev entries first (in models.dev order), then any
@@ -4068,7 +4073,7 @@ def _merge_with_models_dev(provider: str, curated: list[str]) -> list[str]:
     """
     try:
         from agent.models_dev import list_agentic_models
-        mdev = list_agentic_models(provider)
+        mdev = list_agentic_models(provider) if allow_network else list_agentic_models(provider, allow_network=False)
     except Exception:
         mdev = []
 
@@ -4917,6 +4922,7 @@ def cached_provider_model_ids(
     *,
     force_refresh: bool = False,
     ttl_seconds: int = _PROVIDER_MODELS_CACHE_TTL,
+    non_blocking: bool = False,
 ) -> list[str]:
     """Disk-cached wrapper around :func:`provider_model_ids`.
 
@@ -4940,6 +4946,12 @@ def cached_provider_model_ids(
         if tier == "stale":
             _spawn_swr_refresh(normalized)
         return list(entry["models"])
+
+    if non_blocking and not force_refresh:
+        # Cold/invalid rows use the same profile-scoped SWR and P03 admission;
+        # the inventory owns the configured/current/curated response floor.
+        _spawn_swr_refresh(normalized)
+        return []
 
     # Cache miss / stale / forced refresh — call the live path.
     live = provider_model_ids(normalized, force_refresh=force_refresh)

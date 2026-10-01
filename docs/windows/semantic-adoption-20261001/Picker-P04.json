@@ -1,0 +1,155 @@
+{
+  "id": "Picker-P04",
+  "status": "LOCAL_SLICE_VERIFIED",
+  "starting_commit": "3b6027c0ddc7b4e600ddfa9503b10598cfec64cc",
+  "source_sha256_raw": {
+    "hermes_cli/models.py": "33cdba313425ba4801f6dff3a0c80da8f193b7c577fd0d99fdd3f2be73467c52",
+    "hermes_cli/model_switch.py": "6e042c78a20412cfeba49c5cd5e3ffd662f8ce67abbda29293f87a16d49a7ad8",
+    "hermes_cli/inventory.py": "d36456e900097db72194fa1e74dc2934732916649f333c77d3fc892f1339a6ed",
+    "hermes_cli/model_catalog.py": "c55ab873d491b41ba0fd04967d64c3bc0882b8ed3b49c1af239a0897292e6567",
+    "tests/tui_gateway/test_model_picker_cold_native.py": "7d45b31ea7fe76a602fa5cdbb1c2e3ed081baa240c02f6264a27359b1f672a71",
+    "docs/windows/semantic-adoption-20261001/Model-picker-P04-mini-plan.md": "a21aa7b6be28c635d3249ee8c7ffe839176cf92e83797ea5c3e99042ba54bd34",
+    "tui_gateway/server.py": "05fba295146d0fb454f91fad1674d9acf9c490632acaa2a348d3eca655241cd5",
+    "tui_gateway/methods_complete.py": "55b75b8fedff3a84610110249226f6de33b1a319c7da6498f6a8c0f7311c0366",
+    "tui_gateway/method_ctx.py": "12200d5cd91f7e387d069b30d2254e407e94e428e99295ffbf0902165d8d36ac",
+    "hermes_constants.py": "70e75092fd443e586b4a344e8043f8020c84de7e2c7684c9c3a2880778d1a0aa",
+    "hermes_cli/auth.py": "1aacac94bce7ef8b1ea020a8a3479e6c1fecc4954ff96a293f3cc6904c236df7",
+    "hermes_cli/config.py": "d679ca0b84f2e184b84f8557bf92bbeea55a021f7fc2e18f269264e1310c30b5",
+    "hermes_cli/providers.py": "09bc7b69cb5e93c9b8959fe519367992db6f204756a7c3e07b717cbdd1c279c9",
+    "hermes_cli/nous_account.py": "5e9b1a20dff345a9b0021e8908a4c8a4bbf93112cc09553d6ca84f89004b2e34",
+    "providers/__init__.py": "eb55ccb80726aa2d4c8f1294a4ca8fdab82fc6f34b8c374b423b821d8012980b",
+    "providers/base.py": "65c735f999f60011c475db33ce23012de6ac5cf40d8bb255f0021867ebbb23fe",
+    "hermes_cli/urllib_security.py": "dbeb3be6d995dcc2668cf60f268aa83ca9f76c0bffa31e1355174d3b0b3cee70",
+    "agent/models_dev.py": "b40e48b99310223777cdd62246be815a746721f7bd3a2b95c82dc626b63d387b",
+    "tests/hermes_cli/test_model_cache_fallback_native.py": "1a16838add7f9c25d36916d8c6fe21a449a71e89a79624cd7510e33d4708fa77",
+    "tests/hermes_cli/test_model_cache_profile_native.py": "ff0ade823ba9ac078b2abdfbc079c8a04b6a07e22fe16b09389e8ebfb423f248",
+    "tests/hermes_cli/test_model_cache_swr.py": "745be7caefd6b001ed5994533469b2d05ac91ce847391bef50d0283762f87e2a",
+    "tests/hermes_cli/test_model_cache_parallel_prefetch.py": "7c38dbcfc02ef5e4bbcb3393971bea2ef43ae15926bd310c05698dbeed7b9891",
+    "tests/hermes_cli/test_cached_fetch_api_models.py": "6b33c62c395ec5ce5d2754c27632bb0512f265d3b4bf7f12baa47941294a7484",
+    "tests/hermes_cli/test_inventory.py": "2c06a3f428bc2b29b9ab94f1a190e6ae55cc3fbbd3d6c2b6c4515b3e9fa642fb",
+    "tests/hermes_cli/test_inventory_reasoning_caps.py": "843280456d9493b3d4b068bc8ea7582d1216bf97a5030b8f53917f1a30ac9ac2",
+    "tests/hermes_cli/test_inventory_pricing.py": "36dfa9d9296f8163bdd1de5476134a6238882be79195d476a694eac289e115b8",
+    "tests/hermes_cli/test_model_catalog.py": "eec3037b5fff2f824e1e7406c721b29ce462e4e38e73452093ce9288da92680e",
+    "tests/hermes_cli/test_model_catalog_adapter.py": "9822a895703ed281b33937439918b736420a9f9cd6413ce07f81f2e5efb16f15",
+    "tests/hermes_cli/test_nous_policy_filter.py": "3d0d7949a958a0d4df9aad8ed3ad28e10a0dcc012a46baeed815ba10631fd136",
+    "tests/hermes_cli/test_nous_policy_surfaces.py": "9a47f60641afda01410baa3e0e82ca49fc000de41e3455199dd431b138d9bffd",
+    "tests/tui_gateway/test_model_picker_profile_native.py": "ec8ff33bf1f413d9258eb35f5b3d10c2301085ec678cb771fc4bfc1ab1ec74e5",
+    "tests/conftest.py": "9780ba549bf6fb746ff08fc3ea793b9593fa636c13ee7f61537052082d7020b8"
+  },
+  "review_manifest_sha256_raw": "b1959d3f099d60365f55b7e640f2810eaa627ed514aeaca0331dbd66359ce542",
+  "review_receipt_sha256_raw": "c85b25c33c61477bf93ec629a0c9196d16e124fed88fcc4124d22d4d20261868",
+  "review_report_sha256_raw": "f960aa7dbac7a31e2825a6470e3e21afeea713bd92475a044e5155893198dc93",
+  "review": "APPROVE_BOUNDED_SLICE",
+  "tests": {
+    "canonical": {
+      "directory": "Picker-P04-final-canonical-003",
+      "argv": [
+        "C:/Program Files/Git/bin/bash.exe",
+        "scripts/run_tests.sh",
+        "tests/tui_gateway/test_model_picker_cold_native.py",
+        "--file-retries=0",
+        "-j",
+        "2",
+        "--file-timeout",
+        "180"
+      ],
+      "exit": 0,
+      "passed": 24,
+      "failed": 0,
+      "skipped": 0,
+      "collection_errors": 0
+    },
+    "regression": {
+      "directory": "Picker-P04-final-denied-regression-002",
+      "files": 13,
+      "passed": 191,
+      "failed": 0,
+      "skipped": 0,
+      "errors": 0,
+      "refused_remote_leaf_attempts": 27,
+      "count_211_rejected": true
+    },
+    "mutation": {
+      "directory": "Picker-P04-mutants-final-002",
+      "killed": 8,
+      "total": 8,
+      "behavioral_assertions": true,
+      "collection_errors_not_kills": true,
+      "exact_restore_current_raw": true,
+      "reviewer_mutations_run": false
+    },
+    "fresh_cases": {
+      "directory_suffix": "-002",
+      "provider_first_ms": 70.57170000189217,
+      "auth_first_ms": 80.84529999905499,
+      "metadata_first_ms": 75.15449999482371,
+      "controlled_leaves": true,
+      "imports_excluded": true,
+      "real_provider_HTTP_quality_proved": false,
+      "Electron_performance_proved": false
+    },
+    "retained_historical": [
+      "Picker-P04-public-red-001",
+      "Picker-P04-public-red-002",
+      "Picker-P04-final-canonical-001",
+      "Picker-P04-final-canonical-002"
+    ],
+    "historical_not_closing": [
+      "Picker-P04-public-red-001",
+      "Picker-P04-final-canonical-001",
+      "Picker-P04-final-canonical-002"
+    ]
+  },
+  "codegraph": {
+    "tool_version": "1.6.0",
+    "extraction_version": 25,
+    "roots": [
+      "D_BASE",
+      "R_AFTER",
+      "U_TARGET",
+      "integration"
+    ],
+    "CLI_operations_recorded": [
+      "status",
+      "query",
+      "explore",
+      "impact",
+      "affected"
+    ],
+    "SDK_required_I_files": 17,
+    "required_current_raw_equals_indexed": true,
+    "purpose_source_bindings": 15,
+    "reviewer_sync": false,
+    "whole_I_claim": false
+  },
+  "qualifications": [
+    {
+      "id": "E01",
+      "blocking": false,
+      "description": "Historical canonical normalized log drops final newline via splitlines/join; explicit handoff normalization preserves it. Both recipes verified separately; raw evidence valid. Generic handoff CRLF-only explanation is not the canonical-specific recipe.",
+      "raw_log_sha256": "a635bfba89598d9ee1ec9ab472bc42327e526633a5b4671a1468cefd3ccb24bc",
+      "historical_splitlines_drop_final_sha256": "5847d74af3fd9196f68613df52ed71403e966c66e3ba3ae47ac1ffe614a35a3e",
+      "explicit_ordered_preserve_final_sha256": "9d835d8bcea627c8791fb5652e79bf47ef6d6183d2df5a5c10a7d4c5a21d37f6"
+    }
+  ],
+  "full_picker_complete": false,
+  "mandatory_upstream_runtime_added": false,
+  "global_runtime_dependency_zero_proved": false,
+  "remaining": [
+    "models.dev4h lifecycle",
+    "Nous300s credential-bound policy catalogue",
+    "native HTTP fixture approval blocked"
+  ],
+  "explicit_paths": [
+    "hermes_cli/models.py",
+    "hermes_cli/model_switch.py",
+    "hermes_cli/inventory.py",
+    "hermes_cli/model_catalog.py",
+    "tests/tui_gateway/test_model_picker_cold_native.py",
+    "docs/windows/semantic-adoption-20261001/Model-picker-P04-mini-plan.md",
+    "docs/windows/semantic-adoption-20261001/Picker-P04.json",
+    "docs/windows/semantic-adoption-20261001/README.md",
+    "docs/windows/semantic-adoption-20261001/inventory-status.json",
+    "_docs/2026-10-01_windows-semantic-adoption_Codex.md"
+  ]
+}

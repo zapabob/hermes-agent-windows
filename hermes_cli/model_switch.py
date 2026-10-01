@@ -292,15 +292,54 @@ def _fetch_picker_live_models(
     headers: dict[str, str] | None = None,
     timeout: float = 5.0,
     api_mode: str | None = None,
+    *,
+    non_blocking: bool = False,
+    cache_only: bool = False,
+    refresh_cache_entry: bool = False,
 ) -> list[str] | None:
     """Fetch picker models with native Ollama and cached generic discovery."""
     from hermes_cli.models import (
         _get_ollama_native_headers,
         _normalize_openai_base_url,
         cached_fetch_api_models,
+        fetch_api_models,
         fetch_ollama_local_models,
         should_use_ollama_native_catalog,
     )
+
+    if non_blocking or cache_only:
+        from hermes_cli.models import (
+            _custom_endpoint_fingerprint, _disk_serve_tier,
+            _load_provider_models_cache, _provider_result_entry, _spawn_swr_refresh,
+        )
+
+        cache_key = f"custom:{str(api_url).strip().rstrip('/').lower()}"
+        fp = _custom_endpoint_fingerprint(api_key, api_mode, headers)
+        entry = _load_provider_models_cache().get(cache_key)
+        native = isinstance(entry, dict) and entry.get("native") is True
+        tier = _disk_serve_tier(entry, fp, time.time(), is_ollama=native)
+
+        def refresh_picker():
+            # Native recognition/probe also belongs off the foreground path.
+            # The existing writer admits this callback's row after transport.
+            live = _fetch_picker_live_models(
+                api_key, api_url, native_catalog_provider, preserve_native_models,
+                headers=headers, timeout=timeout, api_mode=api_mode,
+                refresh_cache_entry=True,
+            )
+            if live is None:
+                return None
+            result = _provider_result_entry(fp, live)
+            if isinstance(live, _NativePickerModelList):
+                result["native"] = True
+            return result
+
+        if not cache_only and tier != "fresh":
+            _spawn_swr_refresh(cache_key, refresh_picker)
+        if not tier:
+            return None
+        values = list(entry["models"])
+        return _NativePickerModelList(values) if native else values
 
     candidate_headers = _get_ollama_native_headers(api_url, api_key=api_key)
     caller_has_authorization = any(
@@ -335,14 +374,14 @@ def _fetch_picker_live_models(
             return _NativePickerModelList(native_models)
         # A failed native probe is not authoritative: retry the cached generic
         # OpenAI-compatible catalog before reporting no models.
-        return cached_fetch_api_models(
+        return (fetch_api_models if refresh_cache_entry else cached_fetch_api_models)(
             api_key,
             _normalize_openai_base_url(api_url),
             timeout=timeout,
             headers=resolved_headers,
             api_mode=api_mode,
         )
-    generic_models = cached_fetch_api_models(
+    generic_models = (fetch_api_models if refresh_cache_entry else cached_fetch_api_models)(
         api_key,
         api_url,
         timeout=timeout,
@@ -2647,6 +2686,7 @@ def list_authenticated_providers(
     probe_current_custom_provider: bool = False,
     for_picker: bool = False,
     excluded_providers: list | None = None,
+    non_blocking_catalogs: bool = False,
 ) -> List[dict]:
     """Detect which providers have credentials and list their curated models.
 
@@ -2696,6 +2736,16 @@ def list_authenticated_providers(
         _MODELS_DEV_PREFERRED, _merge_with_models_dev, cached_provider_model_ids,
         clear_provider_models_cache, get_curated_nous_model_ids,
     )
+    non_blocking_catalogs = bool(non_blocking_catalogs and not refresh)
+
+    def _listing_label(slug: str) -> str:
+        if not non_blocking_catalogs:
+            return get_label(slug)
+        from hermes_cli.providers import get_provider
+        from hermes_cli.models import provider_label
+
+        definition = get_provider(slug, allow_network=False)
+        return definition.name if definition is not None else provider_label(slug)
 
     # Explicit refresh: drop every provider's cached model-id list so the
     # cached_provider_model_ids() calls below all re-fetch live. Without this
@@ -2792,7 +2842,7 @@ def list_authenticated_providers(
         current_norm = str(current_provider or "").strip().lower()
         if _has_fast_aws_sdk_signal():
             return True
-        if slug_norm != current_norm:
+        if non_blocking_catalogs or slug_norm != current_norm:
             return False
         try:
             from agent.bedrock_adapter import has_aws_credentials
@@ -2800,7 +2850,7 @@ def list_authenticated_providers(
         except Exception:
             return False
 
-    data = fetch_models_dev()
+    data = fetch_models_dev(allow_network=False) if non_blocking_catalogs else fetch_models_dev()
 
     # Build curated model lists keyed by hermes provider ID
     curated: dict[str, list[str]] = dict(_PROVIDER_MODELS)
@@ -2810,11 +2860,15 @@ def list_authenticated_providers(
     # newly added Portal models surface in the /model picker without
     # requiring a Hermes release. Falls back to the in-repo
     # _PROVIDER_MODELS["nous"] snapshot when the manifest is unreachable.
-    curated["nous"] = get_curated_nous_model_ids()
+    curated["nous"] = get_curated_nous_model_ids(cache_only=True) if non_blocking_catalogs else get_curated_nous_model_ids()
     # Ollama Cloud uses dynamic discovery (no static curated list)
     if "ollama-cloud" not in curated:
         from hermes_cli.models import fetch_ollama_cloud_models
-        curated["ollama-cloud"] = fetch_ollama_cloud_models()
+        if non_blocking_catalogs:
+            from hermes_cli.models import _load_ollama_cloud_cache
+            curated["ollama-cloud"] = (_load_ollama_cloud_cache(ignore_ttl=True) or {}).get("models", [])
+        else:
+            curated["ollama-cloud"] = fetch_ollama_cloud_models()
     # LM Studio has no static catalog — probe its native /api/v1/models
     # endpoint live so the picker reflects whatever the user has loaded.
     # Base URL precedence: LM_BASE_URL env var > active config's base_url
@@ -2833,7 +2887,7 @@ def list_authenticated_providers(
             or "http://127.0.0.1:1234/v1"
         )
         try:
-            live = fetch_lmstudio_models(
+            live = cached_provider_model_ids("lmstudio", non_blocking=True) if non_blocking_catalogs else fetch_lmstudio_models(
                 api_key=os.environ.get("LM_API_KEY", ""),
                 base_url=lm_base,
                 timeout=1.5, # Smaller timeout for picker
@@ -2857,7 +2911,7 @@ def list_authenticated_providers(
     # and when there are 3 or fewer authed providers (serial is fast enough;
     # avoids thread-pool overhead for the common 1-2 provider case).
     _prefetch_slugs: list[str] = []
-    if not refresh:
+    if not refresh and not non_blocking_catalogs:
         _prefetch_slugs = _collect_authed_provider_slugs(
             data, curated, excluded_providers or []
         )
@@ -2960,11 +3014,11 @@ def list_authenticated_providers(
         # /model picker sees the SAME list `hermes model` would build, with
         # disk caching to keep the picker open snappy. Falls back to the
         # curated static list when the live fetcher returns nothing.
-        model_ids = cached_provider_model_ids(hermes_id)
+        model_ids = cached_provider_model_ids(hermes_id, **({"non_blocking": True} if non_blocking_catalogs else {}))
         if not model_ids:
             model_ids = curated.get(hermes_id, [])
             if hermes_id in _MODELS_DEV_PREFERRED:
-                model_ids = _merge_with_models_dev(hermes_id, model_ids)
+                model_ids = _merge_with_models_dev(hermes_id, model_ids, **({"allow_network": False} if non_blocking_catalogs else {}))
         # A providers.<built-in>.models block extends the provider's discovered
         # catalog. Section 3 cannot emit it later because this built-in row owns
         # the slug, so merge declarations here before applying max_models.
@@ -2980,7 +3034,7 @@ def list_authenticated_providers(
         else:
             top = model_ids[:max_models] if max_models is not None else model_ids
 
-        pinfo = _mdev_pinfo(mdev_id)
+        pinfo = _mdev_pinfo(mdev_id, allow_network=False) if non_blocking_catalogs else _mdev_pinfo(mdev_id)
         display_name = pconfig.name if pconfig and pconfig.name else (pinfo.name if pinfo else mdev_id)
 
         results.append({
@@ -3115,12 +3169,12 @@ def list_authenticated_providers(
             # catalog. ``cached_provider_model_ids()`` falls back to the
             # curated list when the live endpoint is unreachable, so this
             # is safe for unauthenticated and offline cases too.
-            model_ids = cached_provider_model_ids(hermes_slug)
+            model_ids = cached_provider_model_ids(hermes_slug, **({"non_blocking": True} if non_blocking_catalogs else {}))
         # For aws_sdk providers (bedrock), use live discovery so the list
         # reflects the active region (eu.*, ap.*) not the static us.* list.
         elif overlay.auth_type == "aws_sdk":
             try:
-                _ids = cached_provider_model_ids(hermes_slug)
+                _ids = cached_provider_model_ids(hermes_slug, **({"non_blocking": True} if non_blocking_catalogs else {}))
                 model_ids = _ids if _ids else (curated.get(hermes_slug, []) or curated.get(pid, []))
             except Exception:
                 model_ids = curated.get(hermes_slug, []) or curated.get(pid, [])
@@ -3136,31 +3190,32 @@ def list_authenticated_providers(
             # catalog; then: curated-only, which dropped the 4 Portal
             # recommendations (e.g. stepfun/step-3.7-flash:free).
             model_ids = curated.get("nous", [])
-            try:
-                from hermes_cli.models import (
-                    get_pricing_for_provider as _nous_pricing,
-                    check_nous_free_tier as _nous_free,
-                    union_with_portal_free_recommendations as _union_free,
-                    union_with_portal_paid_recommendations as _union_paid,
-                )
-                from hermes_cli.auth import get_provider_auth_state as _nous_state
-
-                _pricing = _nous_pricing("nous") or {}
-                _portal = ""
+            if not non_blocking_catalogs:
                 try:
-                    _st = _nous_state("nous") or {}
-                    _portal = _st.get("portal_base_url", "") or ""
-                except Exception:
+                    from hermes_cli.models import (
+                        get_pricing_for_provider as _nous_pricing,
+                        check_nous_free_tier as _nous_free,
+                        union_with_portal_free_recommendations as _union_free,
+                        union_with_portal_paid_recommendations as _union_paid,
+                    )
+                    from hermes_cli.auth import get_provider_auth_state as _nous_state
+
+                    _pricing = _nous_pricing("nous") or {}
                     _portal = ""
-                if _nous_free(force_fresh=force_fresh_nous_tier):
-                    model_ids, _ = _union_free(model_ids, _pricing, _portal)
-                else:
-                    model_ids, _ = _union_paid(model_ids, _pricing, _portal)
-            except Exception:
-                # Portal recommendation fetch failed — fall back to the
-                # curated list alone (still correct, just may lag newly
-                # launched models, exactly like an offline CLI run).
-                pass
+                    try:
+                        _st = _nous_state("nous") or {}
+                        _portal = _st.get("portal_base_url", "") or ""
+                    except Exception:
+                        _portal = ""
+                    if _nous_free(force_fresh=force_fresh_nous_tier):
+                        model_ids, _ = _union_free(model_ids, _pricing, _portal)
+                    else:
+                        model_ids, _ = _union_paid(model_ids, _pricing, _portal)
+                except Exception:
+                    # Portal recommendation fetch failed — fall back to the
+                    # curated list alone (still correct, just may lag newly
+                    # launched models, exactly like an offline CLI run).
+                    pass
             # Both the curated list and the Portal's recommendations are
             # unauthenticated, so neither knows what the org may reach. Narrow
             # to the policy outside the try, so a failed recommendation fetch
@@ -3178,11 +3233,11 @@ def list_authenticated_providers(
             # Unified pathway — see Section 1 rationale. Fall back to the
             # curated dict (with models.dev merge for preferred providers)
             # when the live fetcher comes up empty.
-            model_ids = cached_provider_model_ids(hermes_slug)
+            model_ids = cached_provider_model_ids(hermes_slug, **({"non_blocking": True} if non_blocking_catalogs else {}))
             if not model_ids:
                 model_ids = curated.get(hermes_slug, []) or curated.get(pid, [])
                 if hermes_slug in _MODELS_DEV_PREFERRED:
-                    model_ids = _merge_with_models_dev(hermes_slug, model_ids)
+                    model_ids = _merge_with_models_dev(hermes_slug, model_ids, **({"allow_network": False} if non_blocking_catalogs else {}))
         total = len(model_ids)
         if hermes_slug in _UNCAPPED_PICKER_PROVIDERS:
             top = model_ids  # Aggregator: show full catalog regardless of max_models
@@ -3191,7 +3246,7 @@ def list_authenticated_providers(
 
         results.append({
             "slug": hermes_slug,
-            "name": get_label(hermes_slug),
+            "name": _listing_label(hermes_slug),
             "is_current": hermes_slug == current_provider or pid == current_provider,
             "is_user_defined": False,
             "models": top,
@@ -3272,13 +3327,13 @@ def list_authenticated_providers(
         # region (eu.*, us.*, ap.*) instead of the hardcoded us.* static list.
         if _cp_config and getattr(_cp_config, "auth_type", "") == "aws_sdk":
             try:
-                _ids = cached_provider_model_ids(_cp.slug)
+                _ids = cached_provider_model_ids(_cp.slug, **({"non_blocking": True} if non_blocking_catalogs else {}))
                 _cp_model_ids = _ids if _ids else curated.get(_cp.slug, [])
             except Exception:
                 _cp_model_ids = curated.get(_cp.slug, [])
         else:
             # Unified pathway — same as sections 1 and 2.
-            _cp_model_ids = cached_provider_model_ids(_cp.slug)
+            _cp_model_ids = cached_provider_model_ids(_cp.slug, **({"non_blocking": True} if non_blocking_catalogs else {}))
             if not _cp_model_ids:
                 _cp_model_ids = curated.get(_cp.slug, [])
         _cp_total = len(_cp_model_ids)
@@ -3525,6 +3580,7 @@ def list_authenticated_providers(
                         headers=_extra_headers_from_config(ep_cfg) or None,
                         timeout=(1.5 if for_picker else 5.0),
                         api_mode=ep_cfg.get("api_mode"),
+                        **({"non_blocking": True} if non_blocking_catalogs else {}),
                     )
                     if isinstance(live_models, _NativePickerModelList):
                         native_catalog_empty = not live_models
@@ -3538,17 +3594,19 @@ def list_authenticated_providers(
                     pass
             elif _discovery_allowed:
                 try:
-                    from hermes_cli.models import cached_fetch_api_models
-
-                    cached_models = cached_fetch_api_models(
+                    cached_models = _fetch_picker_live_models(
                         api_key,
                         api_url,
+                        "custom",
+                        has_explicit_models,
                         cache_only=True,
                         timeout=(1.5 if for_picker else 5.0),
                         headers=_extra_headers_from_config(ep_cfg) or None,
                         api_mode=ep_cfg.get("api_mode"),
                     )
-                    if cached_models:
+                    if isinstance(cached_models, _NativePickerModelList):
+                        native_catalog_empty = not cached_models
+                    if cached_models or isinstance(cached_models, _NativePickerModelList):
                         models_list = cached_models
                 except _MODEL_DISCOVERY_ERRORS:
                     pass
@@ -3622,13 +3680,14 @@ def list_authenticated_providers(
                     "custom",
                     False,
                     timeout=(1.5 if for_picker else 5.0),
+                    **({"non_blocking": True} if non_blocking_catalogs else {}),
                 )
             else:
-                from hermes_cli.models import cached_fetch_api_models
-
-                _live_models = cached_fetch_api_models(
+                _live_models = _fetch_picker_live_models(
                     "",
                     str(current_base_url).strip().rstrip("/"),
+                    "custom",
+                    False,
                     cache_only=True,
                     timeout=(1.5 if for_picker else 5.0),
                 )
@@ -3914,6 +3973,7 @@ def list_authenticated_providers(
                         headers=grp.get("extra_headers") or None,
                         timeout=(1.5 if for_picker else 5.0),
                         api_mode=grp.get("api_mode"),
+                        **({"non_blocking": True} if non_blocking_catalogs else {}),
                     )
                     if live_models is not None and (
                         live_models
@@ -3924,27 +3984,30 @@ def list_authenticated_providers(
                             native_catalog_empty = not live_models
                         grp["models"] = live_models
                         grp["total_models"] = len(live_models)
-                        _save_discovered_models_to_config(
-                            api_url,
-                            live_models,
-                            api_mode=grp.get("api_mode"),
-                            headers=grp.get("extra_headers") or None,
-                        )
+                        if not non_blocking_catalogs:
+                            _save_discovered_models_to_config(
+                                api_url,
+                                live_models,
+                                api_mode=grp.get("api_mode"),
+                                headers=grp.get("extra_headers") or None,
+                            )
                 except Exception:
                     pass
             elif _discovery_allowed:
                 try:
-                    from hermes_cli.models import cached_fetch_api_models
-
-                    cached_models = cached_fetch_api_models(
+                    cached_models = _fetch_picker_live_models(
                         api_key,
                         api_url,
+                        "custom",
+                        bool(grp.get("has_explicit_models")),
                         cache_only=True,
                         timeout=(1.5 if for_picker else 5.0),
                         headers=grp.get("extra_headers") or None,
                         api_mode=grp.get("api_mode"),
                     )
-                    if cached_models:
+                    if isinstance(cached_models, _NativePickerModelList):
+                        native_catalog_empty = not cached_models
+                    if cached_models or isinstance(cached_models, _NativePickerModelList):
                         grp["models"] = cached_models
                         grp["total_models"] = len(cached_models)
                 except _MODEL_DISCOVERY_ERRORS:

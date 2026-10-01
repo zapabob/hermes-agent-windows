@@ -133,6 +133,8 @@ def build_models_payload(
     probe_current_custom_provider: bool = False,
     for_picker: bool = False,
     max_models: int | None = None,
+    non_blocking_catalogs: bool = False,
+    pricing_cache_only: bool = False,
 ) -> dict:
     """Build the ``{providers, model, provider}`` shape every consumer
     needs from a single substrate call.
@@ -204,6 +206,7 @@ def build_models_payload(
         probe_current_custom_provider=probe_current_custom_provider,
         for_picker=for_picker,
         excluded_providers=ctx.excluded_providers or [],
+        **({"non_blocking_catalogs": True} if non_blocking_catalogs and not refresh else {}),
     )
 
     moa_row = _moa_provider_row(ctx.current_provider)
@@ -258,7 +261,20 @@ def build_models_payload(
                 # share a name with — otherwise a subscription provider's own
                 # catalog (minimax-m3, glm-5, deepseek-v4-flash, ...) is silently
                 # gutted in the picker. (#47077)
-                if not _is_routing_aggregator(slug):
+                if non_blocking_catalogs and not refresh:
+                    from hermes_cli.providers import (
+                        _FLAT_NAMESPACE_RESELLERS, get_provider, normalize_provider,
+                    )
+
+                    normalized = normalize_provider(slug)
+                    definition = get_provider(normalized, allow_network=False)
+                    routing = normalized not in _FLAT_NAMESPACE_RESELLERS and (
+                        normalized.startswith("custom:")
+                        or bool(definition and definition.is_aggregator)
+                    )
+                else:
+                    routing = _is_routing_aggregator(slug)
+                if not routing:
                     continue
                 original = row.get("models") or []
                 filtered = [m for m in original if m.lower() not in user_models]
@@ -273,11 +289,11 @@ def build_models_payload(
     if canonical_order:
         rows = _reorder_canonical(rows)
     if pricing:
-        _apply_pricing(rows, force_fresh_nous_tier=force_fresh_nous_tier)
+        _apply_pricing(rows, force_fresh_nous_tier=force_fresh_nous_tier, cache_only=pricing_cache_only and not refresh)
     if capabilities:
-        _apply_capabilities(rows)
+        _apply_capabilities(rows, cache_only=pricing_cache_only and not refresh)
     if featured:
-        _apply_featured(rows)
+        _apply_featured(rows, cache_only=pricing_cache_only and not refresh)
     _apply_custom_aliases(rows)
 
     return {
@@ -317,6 +333,8 @@ def build_model_options_payload(
         refresh=refresh,
         probe_custom_providers=refresh,
         probe_current_custom_provider=not refresh,
+        non_blocking_catalogs=not refresh,
+        pricing_cache_only=not refresh,
     )
 
 
@@ -408,7 +426,7 @@ def format_aux_picker_entries(
     return entries
 
 
-def _reasoning_catalog_reader(slug: str):
+def _reasoning_catalog_reader(slug: str, *, cache_only: bool = False):
     """Per-model reasoning-capability reader for aggregators that publish one.
 
     Cache-only — building the picker payload must never block on HTTP. A cold
@@ -426,15 +444,18 @@ def _reasoning_catalog_reader(slug: str):
         return None
 
     if slug == "nous":
+        # Nous retains its existing authoritative restriction owner. Its
+        # credential/account resolution is outside the bounded cold slice.
         warm_nous_reasoning_caps_async()
         return nous_model_reasoning_capabilities
     if slug == "openrouter":
-        warm_openrouter_reasoning_caps_async()
+        if not cache_only:
+            warm_openrouter_reasoning_caps_async()
         return openrouter_model_reasoning_capabilities
     return None
 
 
-def _apply_capabilities(rows: list[dict]) -> None:
+def _apply_capabilities(rows: list[dict], *, cache_only: bool = False) -> None:
     """Attach a ``{model: {fast, reasoning, ...}}`` map to each provider row.
 
     `fast` mirrors ``model_supports_fast_mode`` (the same gate the runtime
@@ -467,13 +488,14 @@ def _apply_capabilities(rows: list[dict]) -> None:
     for row in rows:
         slug = row.get("slug") or ""
         caps: dict[str, dict[str, Any]] = {}
-        read_reasoning_catalog = _reasoning_catalog_reader(slug.lower())
+        read_reasoning_catalog = _reasoning_catalog_reader(slug.lower(), cache_only=cache_only)
 
         for model in row.get("models") or []:
             reasoning = True
+            meta = None
             if get_model_capabilities is not None and slug:
                 try:
-                    meta = get_model_capabilities(slug, model)
+                    meta = get_model_capabilities(slug, model, allow_network=False) if cache_only else get_model_capabilities(slug, model)
                     if meta is not None:
                         reasoning = bool(meta.supports_reasoning)
                 except Exception:
@@ -496,6 +518,9 @@ def _apply_capabilities(rows: list[dict]) -> None:
                     entry["reasoning"] = False
                 elif detail:
                     entry["can_disable_reasoning"] = not detail.get("mandatory")
+                elif cache_only and slug.lower() == "nous" and meta is None:
+                    # Unknown catalog detail is not a positive capability grant.
+                    entry.pop("reasoning", None)
 
             caps[model] = entry
 
@@ -509,7 +534,7 @@ def _apply_capabilities(rows: list[dict]) -> None:
 _FEATURED_PER_LAB = 5
 
 
-def _apply_featured(rows: list[dict]) -> None:
+def _apply_featured(rows: list[dict], *, cache_only: bool = False) -> None:
     """Attach a ``featured_models`` shortlist to each aggregator provider row.
 
     Aggregator providers (nous, openrouter) serve dozens of models across many
@@ -547,7 +572,10 @@ def _apply_featured(rows: list[dict]) -> None:
                 break
             date = ""
             if get_model_info is not None:
-                info = get_model_info(slug, model) or get_model_info("openrouter", model)
+                if cache_only:
+                    info = get_model_info(slug, model, allow_network=False) or get_model_info("openrouter", model, allow_network=False)
+                else:
+                    info = get_model_info(slug, model) or get_model_info("openrouter", model)
                 date = getattr(info, "release_date", "") if info else ""
             by_lab.setdefault(lab, []).append((pos, date, model))
 
@@ -954,6 +982,7 @@ def _apply_pricing(
     rows: list[dict],
     *,
     force_fresh_nous_tier: bool = False,
+    cache_only: bool = False,
 ) -> None:
     """Enrich each provider row with per-model pricing + Nous tier gating.
 
@@ -989,7 +1018,7 @@ def _apply_pricing(
         if not models:
             continue
         try:
-            raw_pricing = get_pricing_for_provider(slug) or {}
+            raw_pricing = get_pricing_for_provider(slug, cache_only=True) if cache_only and slug != "nous" else (get_pricing_for_provider(slug) or {})
         except Exception:
             raw_pricing = {}
         if not raw_pricing:
@@ -1041,6 +1070,16 @@ def _apply_pricing(
 
         if slug == "nous":
             try:
+                if cache_only:
+                    # Read the existing profile/account owner instead of the
+                    # process-global compatibility tier memo. Nous credential
+                    # resolution remains outside the bounded cold slice.
+                    from hermes_cli.nous_account import get_nous_portal_account_info
+
+                    account = get_nous_portal_account_info()
+                    if account.paid_service_access is None:
+                        continue
+                    nous_free_tier = account.is_free_tier
                 if nous_free_tier is None:
                     nous_free_tier = check_nous_free_tier(
                         force_fresh=force_fresh_nous_tier
@@ -1054,6 +1093,8 @@ def _apply_pricing(
                 else:
                     row["unavailable_models"] = []
             except Exception:
+                if cache_only:
+                    continue
                 # Tier detection failed — fail open (no gating) so the user
                 # is never blocked from picking a model.
                 row["free_tier"] = False

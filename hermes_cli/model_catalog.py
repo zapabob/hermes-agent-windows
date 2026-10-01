@@ -660,7 +660,7 @@ def _spawn_catalog_swr_refresh(url: str) -> None:
 # ---------------------------------------------------------------------------
 
 
-def get_catalog(*, force_refresh: bool = False, fallback_to_static: bool = False) -> dict[str, Any]:
+def get_catalog(*, force_refresh: bool = False, fallback_to_static: bool = False, cache_only: bool = False) -> dict[str, Any]:
     """Return the parsed model catalog manifest, or an empty dict on failure.
 
     Callers should treat a missing provider/model as "use the in-repo fallback"
@@ -679,6 +679,12 @@ def get_catalog(*, force_refresh: bool = False, fallback_to_static: bool = False
     disk_data, disk_mtime = _read_disk_cache()
     now = time.time()
     disk_fresh = disk_data is not None and (now - disk_mtime) < ttl_seconds
+
+    if cache_only and not force_refresh:
+        # Optional metadata must not initiate a fetch, including SWR, on a
+        # normal picker request. Read this profile's disk rather than a global
+        # in-process catalog left by a different profile.
+        return disk_data or (_get_static_fallback_catalog() if fallback_to_static else {})
 
     # In-process cache hit: disk hasn't changed since we loaded it and still fresh.
     if (
@@ -750,15 +756,15 @@ def _fetch_provider_override(provider: str) -> dict[str, Any] | None:
     return _fetch_manifest(override_url.strip(), DEFAULT_FETCH_TIMEOUT)
 
 
-def _get_provider_block(provider: str) -> dict[str, Any] | None:
+def _get_provider_block(provider: str, *, cache_only: bool = False) -> dict[str, Any] | None:
     """Return the provider's manifest block, respecting per-provider overrides."""
-    override = _fetch_provider_override(provider)
+    override = None if cache_only else _fetch_provider_override(provider)
     if override is not None:
         block = override.get("providers", {}).get(provider)
         if isinstance(block, dict):
             return block
 
-    catalog = get_catalog()
+    catalog = get_catalog(cache_only=True) if cache_only else get_catalog()
     if not catalog:
         return None
     block = catalog.get("providers", {}).get(provider)
@@ -784,12 +790,12 @@ def get_curated_openrouter_models() -> list[tuple[str, str]] | None:
     return out or None
 
 
-def get_curated_nous_models() -> list[str] | None:
+def get_curated_nous_models(*, cache_only: bool = False) -> list[str] | None:
     """Return Nous Portal's curated list of model ids from the manifest.
 
     Returns ``None`` when the manifest is unavailable.
     """
-    block = _get_provider_block("nous")
+    block = _get_provider_block("nous", cache_only=True) if cache_only else _get_provider_block("nous")
     if not block:
         return None
     out: list[str] = []
