@@ -1,0 +1,351 @@
+{
+  "id": "F08b",
+  "parent_family": "F08",
+  "status": "PARTIAL_WITH_BLOCKED_GATE",
+  "starting_commit": "5aa697a8d09f76d61efd70d5d0eec36ad6ac053b",
+  "scope": "Read/search admission, stable complete host read ownership, parent-finalized delivery proof within existing owners",
+  "source_sha256": {
+    "agent/background_review.py": "ef7185709988d2c6fc96500f61e76ed8b2e6e0cd74bceb7d48c1154090ec21d9",
+    "tools/file_tools.py": "9216f03edc43c9b08526d294801141e2b4c92de7adfbad71582bceb207002ba4",
+    "tests/agent/test_refine_read_save_native.py": "0cf585dbda31750c69b170f16900826090f927e5a471f17aeec74dfe46fec7e3",
+    "tests/agent/test_refine_read_marks_native.py": "25569de74d2b3e774cbcb3d66f23dc53a7adc887f578d93b9395685c98c925a4",
+    "tests/agent/test_refine_snapshot_native.py": "06c0068bad1a3fb12449298687ba0f974a5f42ce0f9439cf8e5764fc3d21086c",
+    "tests/agent/test_refine_provider_native.py": "b072abb211dc39e3f6880702ab56f7f4156eb9f7b44c2839d5cf502c8653cd6f",
+    "docs/windows/semantic-adoption-20261001/F08-mini-plan.md": "6b732ae1d7076ffd586a88c52b9e3074a120950b39f15c439ad9c888a682b873",
+    "cli.py": "211f457aed84f18c39c5a5918a2015c1b0862c2d681493062cd4de84a84b6cd4",
+    "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+    "run_agent.py": "61df6f728ce93c13a745a2d1251a9592c74fa5d9ad74e60b069a061da5f13eda",
+    "tools/skill_manager_tool.py": "2c3530e3b0a34856309412dc0e0909ea205db50bb95f35cabb41e47aca3d82ca",
+    "hermes_cli/plugins.py": "255ed19b0a16108aeaa2509a7556827723185b877dc78582f9d24162d238c218",
+    "agent/tool_executor.py": "3eb402c463704624e50c08bbd40b84083057a939bab13dc67d2c562e536f0298",
+    "tools/file_operations.py": "f137f0604838b804212173963b1162869fc502c3166999701077cffd15d67c0e",
+    "tools/tool_output_limits.py": "8ec0bdabbc576bb2aabf51b64c2196cf88fccf62ec8e42e156dee652be09abbb",
+    "tools/skill_provenance.py": "aab95e676e8013b1c5def7e66f48a15bdd19a5c8257f27cb530ef30e571110a1",
+    "tools/thread_context.py": "378175cb766f52da8826c742f0c5b45653866075b951ff93d1af1fcfb6451aa9",
+    "tools/approval.py": "63fd9c3ca2327d98413b30a6cf8c6d8a68377ba190339b7019362f4ead701b8b",
+    "model_tools.py": "b24d49678cde1e2f12e0fbe5ed84ad34e0170a36376ebde1e952640222cfb0de",
+    "hermes_state.py": "7234f882e8b01658d5b98fbc6d0c2bf7f5c2aeccc15ebbff264087047028a7a4",
+    "tests/tools/test_file_staleness.py": "d580e67413015376f2b7a88b85364b770e3b1359bcd43ec023b7867022646cfb",
+    "tests/tools/test_file_tools_container_config.py": "85026b685789813cdd66d8ab73040dfe5990b678db07a9f9e63f0e73523311e6",
+    "tests/agent/test_file_safety.py": "82a554d9b04ab16f681b8c6ecb7b3d690060e9095eaf2d1e0d512925ee568e3d",
+    "tests/agent/test_file_safety_cross_profile.py": "8f063db1268e9d6f644b59c1af36f934a2d9517e935a2641935095f8ade8d733",
+    "tests/agent/test_redact.py": "9692dc86b2423869ef829f900761d5b274c89cd25bd71a5d63c1192259524da5",
+    "tests/run_agent/test_background_review.py": "fc872c7f2a567f5678c0aa136bde82dbce77c826976d89e578c0f2bfb08712b6",
+    "tests/run_agent/test_background_review_cache_parity.py": "5f4a02276eb4f5bf1bcf8333eb7d738263deb9089ff61b17daf229ef1a244a5f",
+    "tests/run_agent/test_background_review_toolset_restriction.py": "acb3917b2e9d93c976c282697ae2c8307d428a76bc4278509e04afe2ac1edeb9",
+    "tests/tools/test_review_whitelist_thread_native.py": "96a1bdbf574dfeb73aeb2a6c8336488940502af4359231a1af1a887312a11ae3",
+    "tests/tools/test_execute_code_approval_cluster.py": "d2c865dc7cd26c227cad138965cc789edb8967b264daaf8632c042a79d12f1eb",
+    "tests/tools/test_skill_provenance.py": "4ee298dad328099aef3d31b8efbbf88c646982c445aaf833394a105eab07f116",
+    "tests/tools/test_skill_view_path_check.py": "daf548c724d951203c09f3a91c5f7c4b51f9080d40017db127c741b03783ac62",
+    "tests/tools/test_skills_guard_agent_config.py": "920d3530d0e0427b55cbc4f94b81c7a7959628b5c62be0fd1540275efbaedc9c",
+    "tests/hermes_cli/test_plugins.py": "87097ce7546f824699ebcdd3653358bc42519e0bd90997b9c10f854a539fe686",
+    "tests/run_agent/test_tool_executor_contextvar_propagation.py": "30301f26e2ff38321ddd553bf9cd665969c24015f4c874e92e2d4d04d09d4d9b",
+    "tools/skills_tool.py": "0798134cd26981f1cdd3257fd17c37e879312fede31f025832bdbaa8487b3638",
+    "tools/skills_guard.py": "61fb24a944c6a7fcc453b7fe1666703c9b6bca7617b87598750a8f4291fa113c",
+    "tools/registry.py": "f95d011cae75f0426dd77cb1e25df6bebb61a067d795312df297cb877dd616f5",
+    "tools/tool_result_storage.py": "489d32a781b3ed948cff7893a88398474ffe37b83175d7c659ce8424001dd608",
+    "tests/agent/test_refine_delivery_native.py": "9745d506250d99ce8c47973a9c2aca9a2f65412271a1a7f4e1d86e159a33060f",
+    "tests/agent/test_refine_delivery_owner_native.py": "46caf3b59c75d13f5dea1a92b2536cbf13937942b17fdebe4b6c7efae697bad7",
+    "tools/budget_config.py": "d644c484594bb9c8d155af134a6c2d2704bd068c4e33bafba9a5847f1c2530b3",
+    "docs/windows/semantic-adoption-20261001/README.md": "a83e01834f367d0f2831ac01ed21dea1706659e147936213ebb5b0b26d1b2a5e",
+    "docs/windows/semantic-adoption-20261001/inventory-status.json": "777b8d1ee349a6231551f1f464532202fad8fe7790ad181b97d53f6bf244b4ae",
+    "_docs/2026-10-01_windows-semantic-adoption_Codex.md": "ade1e2698abdc16b5a3f96a0a4f816f62cea9615c382bcf33a1598580d81b709"
+  },
+  "tested_worktree_source_sha256": {
+    "agent/background_review.py": "ef7185709988d2c6fc96500f61e76ed8b2e6e0cd74bceb7d48c1154090ec21d9",
+    "tools/file_tools.py": "9216f03edc43c9b08526d294801141e2b4c92de7adfbad71582bceb207002ba4",
+    "tests/agent/test_refine_read_save_native.py": "0cf585dbda31750c69b170f16900826090f927e5a471f17aeec74dfe46fec7e3",
+    "tests/agent/test_refine_read_marks_native.py": "25569de74d2b3e774cbcb3d66f23dc53a7adc887f578d93b9395685c98c925a4",
+    "tests/agent/test_refine_snapshot_native.py": "06c0068bad1a3fb12449298687ba0f974a5f42ce0f9439cf8e5764fc3d21086c",
+    "tests/agent/test_refine_provider_native.py": "b072abb211dc39e3f6880702ab56f7f4156eb9f7b44c2839d5cf502c8653cd6f",
+    "docs/windows/semantic-adoption-20261001/F08-mini-plan.md": "6b732ae1d7076ffd586a88c52b9e3074a120950b39f15c439ad9c888a682b873",
+    "cli.py": "211f457aed84f18c39c5a5918a2015c1b0862c2d681493062cd4de84a84b6cd4",
+    "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+    "run_agent.py": "61df6f728ce93c13a745a2d1251a9592c74fa5d9ad74e60b069a061da5f13eda",
+    "tools/skill_manager_tool.py": "2c3530e3b0a34856309412dc0e0909ea205db50bb95f35cabb41e47aca3d82ca",
+    "hermes_cli/plugins.py": "255ed19b0a16108aeaa2509a7556827723185b877dc78582f9d24162d238c218",
+    "agent/tool_executor.py": "3eb402c463704624e50c08bbd40b84083057a939bab13dc67d2c562e536f0298",
+    "tools/file_operations.py": "f137f0604838b804212173963b1162869fc502c3166999701077cffd15d67c0e",
+    "tools/tool_output_limits.py": "8ec0bdabbc576bb2aabf51b64c2196cf88fccf62ec8e42e156dee652be09abbb",
+    "tools/skill_provenance.py": "aab95e676e8013b1c5def7e66f48a15bdd19a5c8257f27cb530ef30e571110a1",
+    "tools/thread_context.py": "378175cb766f52da8826c742f0c5b45653866075b951ff93d1af1fcfb6451aa9",
+    "tools/approval.py": "63fd9c3ca2327d98413b30a6cf8c6d8a68377ba190339b7019362f4ead701b8b",
+    "model_tools.py": "b24d49678cde1e2f12e0fbe5ed84ad34e0170a36376ebde1e952640222cfb0de",
+    "hermes_state.py": "7234f882e8b01658d5b98fbc6d0c2bf7f5c2aeccc15ebbff264087047028a7a4",
+    "tests/tools/test_file_staleness.py": "d580e67413015376f2b7a88b85364b770e3b1359bcd43ec023b7867022646cfb",
+    "tests/tools/test_file_tools_container_config.py": "85026b685789813cdd66d8ab73040dfe5990b678db07a9f9e63f0e73523311e6",
+    "tests/agent/test_file_safety.py": "82a554d9b04ab16f681b8c6ecb7b3d690060e9095eaf2d1e0d512925ee568e3d",
+    "tests/agent/test_file_safety_cross_profile.py": "8f063db1268e9d6f644b59c1af36f934a2d9517e935a2641935095f8ade8d733",
+    "tests/agent/test_redact.py": "9692dc86b2423869ef829f900761d5b274c89cd25bd71a5d63c1192259524da5",
+    "tests/run_agent/test_background_review.py": "fc872c7f2a567f5678c0aa136bde82dbce77c826976d89e578c0f2bfb08712b6",
+    "tests/run_agent/test_background_review_cache_parity.py": "5f4a02276eb4f5bf1bcf8333eb7d738263deb9089ff61b17daf229ef1a244a5f",
+    "tests/run_agent/test_background_review_toolset_restriction.py": "acb3917b2e9d93c976c282697ae2c8307d428a76bc4278509e04afe2ac1edeb9",
+    "tests/tools/test_review_whitelist_thread_native.py": "96a1bdbf574dfeb73aeb2a6c8336488940502af4359231a1af1a887312a11ae3",
+    "tests/tools/test_execute_code_approval_cluster.py": "d2c865dc7cd26c227cad138965cc789edb8967b264daaf8632c042a79d12f1eb",
+    "tests/tools/test_skill_provenance.py": "4ee298dad328099aef3d31b8efbbf88c646982c445aaf833394a105eab07f116",
+    "tests/tools/test_skill_view_path_check.py": "daf548c724d951203c09f3a91c5f7c4b51f9080d40017db127c741b03783ac62",
+    "tests/tools/test_skills_guard_agent_config.py": "920d3530d0e0427b55cbc4f94b81c7a7959628b5c62be0fd1540275efbaedc9c",
+    "tests/hermes_cli/test_plugins.py": "87097ce7546f824699ebcdd3653358bc42519e0bd90997b9c10f854a539fe686",
+    "tests/run_agent/test_tool_executor_contextvar_propagation.py": "30301f26e2ff38321ddd553bf9cd665969c24015f4c874e92e2d4d04d09d4d9b",
+    "tools/skills_tool.py": "0798134cd26981f1cdd3257fd17c37e879312fede31f025832bdbaa8487b3638",
+    "tools/skills_guard.py": "61fb24a944c6a7fcc453b7fe1666703c9b6bca7617b87598750a8f4291fa113c",
+    "tools/registry.py": "f95d011cae75f0426dd77cb1e25df6bebb61a067d795312df297cb877dd616f5",
+    "tools/tool_result_storage.py": "489d32a781b3ed948cff7893a88398474ffe37b83175d7c659ce8424001dd608",
+    "tests/agent/test_refine_delivery_native.py": "9745d506250d99ce8c47973a9c2aca9a2f65412271a1a7f4e1d86e159a33060f",
+    "tests/agent/test_refine_delivery_owner_native.py": "8e122f6a96378817357f04be3aeca5887980789abdfd4816873bd90f5bbffca9",
+    "tools/budget_config.py": "d644c484594bb9c8d155af134a6c2d2704bd068c4e33bafba9a5847f1c2530b3",
+    "docs/windows/semantic-adoption-20261001/README.md": "4f79219f17906b234b9222ed7122b68c0acdeaf6fdfdd04118e0bc83eebf9293",
+    "docs/windows/semantic-adoption-20261001/inventory-status.json": "67999a460982dd6395e0f31f9bdb23759da30bc926f8370c77d2894e9ed72727",
+    "_docs/2026-10-01_windows-semantic-adoption_Codex.md": "eadf4d385bb5d83d9afa6238c2c55b54fd87e3dcd9a66c44918c426f22ba20ee"
+  },
+  "git_text_normalization": "existing .gitattributes text eol=lf; expected Git blobs normalize CRLF without changing tested working bytes",
+  "evidence_snapshot_sha256": "dc549ce24a50cb98b6d5b97aab09292064c3232ca1bc8cf6e3df008ef9cb59ae",
+  "red": {
+    "run": "F08b-delivery-red-003",
+    "pass": 4,
+    "fail": 6,
+    "skip": 0,
+    "errors": 0
+  },
+  "restored": {
+    "run": "F08b-delivery-restored-002",
+    "files": 2,
+    "pass": 18,
+    "fail": 0,
+    "skip": 0,
+    "overlaps_regression": true
+  },
+  "regression": {
+    "run": "F08b-delivery-regression-001",
+    "files": 23,
+    "pass": 434,
+    "fail": 0,
+    "skip": 0
+  },
+  "additional_regression": {
+    "run": "F08b-delivery-controls-001",
+    "pass": 64,
+    "fail": 1,
+    "status": "NOT_GREEN",
+    "reason": "native symlink privilege unavailable"
+  },
+  "prior_broad_regression": {
+    "candidate_runs": {
+      "F08b-file-regression-001": {
+        "pass": 186,
+        "fail": 15,
+        "skip": 6
+      },
+      "F08b-skill-review-regression-001": {
+        "pass": 187,
+        "fail": 1,
+        "skip": 7
+      }
+    },
+    "parent_affected_files": {
+      "pass": 99,
+      "fail": 16,
+      "skip": 9
+    },
+    "same_failed_files_and_counts": true,
+    "failed_files": [
+      [
+        "tests\\tools\\test_file_read_guards.py",
+        "6"
+      ],
+      [
+        "tests\\tools\\test_file_tools_cwd_resolution.py",
+        "2"
+      ],
+      [
+        "tests\\tools\\test_file_tools_tilde_profile.py",
+        "1"
+      ],
+      [
+        "tests\\tools\\test_read_file_utf8_binary_regression.py",
+        "2"
+      ],
+      [
+        "tests\\tools\\test_read_special_file_guard.py",
+        "4"
+      ],
+      [
+        "tests\\tools\\test_skill_manager_tool.py",
+        "1"
+      ]
+    ],
+    "native_gate_status": "NOT_GREEN; existing failures/skips remain open",
+    "classification": {
+      "native_symlink_privilege": "3 failures across cwd resolution and skill deletion; WinError1314; not skipped or waived",
+      "POSIX_primitives": "4 failures mkfifo/AF_UNIX plus device/proc semantics; not Windows proof",
+      "device_proc_contract": "6 failures including changed refusal wording; no expected assertion weakened",
+      "profile_tilde_separator": "1 failure on POSIX mock path Windows separator; separate source-bound followup",
+      "UTF16_no_BOM": "2 behavioral failures through unchanged ShellFileOperations; separate followup"
+    },
+    "parent_substitution": {
+      "parent": "5aa697a8d09f76d61efd70d5d0eec36ad6ac053b",
+      "candidate_sha256": {
+        "agent/background_review.py": "ef7185709988d2c6fc96500f61e76ed8b2e6e0cd74bceb7d48c1154090ec21d9",
+        "tools/file_tools.py": "323fca615df7eefbcdc78dc20a4cb87b7b800266c5523a130329c3a68c9516d3"
+      },
+      "baseline_sha256": {
+        "agent/background_review.py": "dbccacd0849588d1e88bd44e8e3d98fff95c97a6d1442952487b8ddda15124d7",
+        "tools/file_tools.py": "4c09d9951c983c1061de46f8c4b488c4e7a2190a5c669b727d80fb677e8cb9b5"
+      },
+      "tests": [
+        "tests/tools/test_file_read_guards.py",
+        "tests/tools/test_file_tools_cwd_resolution.py",
+        "tests/tools/test_file_tools_tilde_profile.py",
+        "tests/tools/test_read_special_file_guard.py",
+        "tests/tools/test_read_file_utf8_binary_regression.py",
+        "tests/tools/test_skill_manager_tool.py"
+      ],
+      "argv": [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\run-family-python.py",
+        "F08b-parent-regression-001",
+        "tests/tools/test_file_read_guards.py",
+        "tests/tools/test_file_tools_cwd_resolution.py",
+        "tests/tools/test_file_tools_tilde_profile.py",
+        "tests/tools/test_read_special_file_guard.py",
+        "tests/tools/test_read_file_utf8_binary_regression.py",
+        "tests/tools/test_skill_manager_tool.py",
+        "-q",
+        "-rs"
+      ],
+      "exit": 1,
+      "restored_sha256": {
+        "agent/background_review.py": "ef7185709988d2c6fc96500f61e76ed8b2e6e0cd74bceb7d48c1154090ec21d9",
+        "tools/file_tools.py": "323fca615df7eefbcdc78dc20a4cb87b7b800266c5523a130329c3a68c9516d3"
+      },
+      "exact_restored": true
+    },
+    "log_sha256": {
+      "F08b-file-regression-001": "d63c13f2de10ddc55046cebc84251f7282cef41208cdd6c2fc61c1ef89401693",
+      "F08b-skill-review-regression-001": "470e894ab4755d41f873d7bd6abe91dec7b2d2651aacf4f8abff0152a247a6e9",
+      "F08b-parent-regression-001": "4dfdb12aaf6855e6b143d632b802dc7b4695812f27c17dc601880301f60c85b4"
+    }
+  },
+  "mutation": {
+    "original_sha256": {
+      "tools/skill_manager_tool.py": "2c3530e3b0a34856309412dc0e0909ea205db50bb95f35cabb41e47aca3d82ca",
+      "agent/tool_executor.py": "3eb402c463704624e50c08bbd40b84083057a939bab13dc67d2c562e536f0298"
+    },
+    "frozen_tests": {
+      "tests/agent/test_refine_delivery_native.py": "9745d506250d99ce8c47973a9c2aca9a2f65412271a1a7f4e1d86e159a33060f",
+      "tests/agent/test_refine_delivery_owner_native.py": "8e122f6a96378817357f04be3aeca5887980789abdfd4816873bd90f5bbffca9"
+    },
+    "mutants": [
+      {
+        "name": "capture-not-returned",
+        "path": "agent/tool_executor.py",
+        "test": "tests/agent/test_refine_delivery_native.py",
+        "selected": "test_complete_delivered_skill_remains_editable",
+        "argv": [
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\run-family-python.py",
+          "F08b-delivery-mutation-001/capture-not-returned",
+          "tests/agent/test_refine_delivery_native.py",
+          "-k",
+          "test_complete_delivered_skill_remains_editable",
+          "-q",
+          "-rs"
+        ],
+        "exit": 1,
+        "killed_by_behavior_assertion": true,
+        "mutant_sha256": "067f72f531d51c598fed3d89c3d02fc313dc073d746bf647006f1b5069957931",
+        "log_sha256": "11578fcb8dfc115522463a577ecf1eb29c54adc011f1330acda1e0572fb67ae6"
+      },
+      {
+        "name": "preview-confirmed",
+        "path": "tools/skill_manager_tool.py",
+        "test": "tests/agent/test_refine_delivery_owner_native.py",
+        "selected": "test_omitted_delivery_does_not_confirm_or_replay",
+        "argv": [
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\run-family-python.py",
+          "F08b-delivery-mutation-001/preview-confirmed",
+          "tests/agent/test_refine_delivery_owner_native.py",
+          "-k",
+          "test_omitted_delivery_does_not_confirm_or_replay",
+          "-q",
+          "-rs"
+        ],
+        "exit": 1,
+        "killed_by_behavior_assertion": true,
+        "mutant_sha256": "6462e7d04ef60c8f56897215b37c6a6142d806f7570bcb1f118fb0ce6275e3e4",
+        "log_sha256": "fa2f43b03df585e4e8c6d2686a477e0b15365df3c16b16f1d4c8221af134d014"
+      },
+      {
+        "name": "mark-before-delivery",
+        "path": "tools/skill_manager_tool.py",
+        "test": "tests/agent/test_refine_delivery_native.py",
+        "selected": "test_same_batch_read_has_not_yet_reached_model",
+        "argv": [
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\run-family-python.py",
+          "F08b-delivery-mutation-001/mark-before-delivery",
+          "tests/agent/test_refine_delivery_native.py",
+          "-k",
+          "test_same_batch_read_has_not_yet_reached_model",
+          "-q",
+          "-rs"
+        ],
+        "exit": 1,
+        "killed_by_behavior_assertion": true,
+        "mutant_sha256": "6f99aed9074c850aac0a7a50bc30e72d5f89fa60bca1765c3468f86d4585d5ee",
+        "log_sha256": "ae74064839d9b4243afc3e9073043e4821379543d1f2127ae96a65f6511a205a"
+      },
+      {
+        "name": "cross-review-confirmed",
+        "path": "tools/skill_manager_tool.py",
+        "test": "tests/agent/test_refine_delivery_owner_native.py",
+        "selected": "test_delivery_cannot_cross_review_reset",
+        "argv": [
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+          "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\run-family-python.py",
+          "F08b-delivery-mutation-001/cross-review-confirmed",
+          "tests/agent/test_refine_delivery_owner_native.py",
+          "-k",
+          "test_delivery_cannot_cross_review_reset",
+          "-q",
+          "-rs"
+        ],
+        "exit": 1,
+        "killed_by_behavior_assertion": true,
+        "mutant_sha256": "87181408e6819a935237473f7411339ae587e2415c692d4466d5060fd9bd2af3",
+        "log_sha256": "8c01e6d3a0c5c19f33d26a1df04d0f05460c0bb2529a433947cc2c0ad649d8fa"
+      }
+    ],
+    "counting": "Four controls of one delivery-boundary repair, not four vulnerabilities.",
+    "restored_sha256": {
+      "tools/skill_manager_tool.py": "2c3530e3b0a34856309412dc0e0909ea205db50bb95f35cabb41e47aca3d82ca",
+      "agent/tool_executor.py": "3eb402c463704624e50c08bbd40b84083057a939bab13dc67d2c562e536f0298"
+    },
+    "after_test_sha256": {
+      "tests/agent/test_refine_delivery_native.py": "9745d506250d99ce8c47973a9c2aca9a2f65412271a1a7f4e1d86e159a33060f",
+      "tests/agent/test_refine_delivery_owner_native.py": "8e122f6a96378817357f04be3aeca5887980789abdfd4816873bd90f5bbffca9"
+    }
+  },
+  "review": {
+    "agent": "01a0f6de-5c09-7eb2-8955-5bd1924b6f06",
+    "verdict": "APPROVE_BOUNDED_SLICE",
+    "cycles": 1,
+    "requested_model": "gpt-6.1-sol",
+    "requested_effort": "high",
+    "actual_model": null,
+    "actual_effort": null,
+    "review_sha256": "7ea10d71ce0d365770bbd3d533ab71ea094b95d1a4a4aea940e2d2fb3578cdff",
+    "receipt_sha256": "b60e3e40639690511b3894a9ea0148f0f82daf50162eb087a375d5c7349aac89"
+  },
+  "graphs": [
+    "F08b-delivery-restored-bind-013",
+    "F08b-delivery-edited-owners-014",
+    "graph-bindings-F08b-delivery-014.json"
+  ],
+  "full_F08": false,
+  "full_U_TARGET_parity": false,
+  "runtime_independence_verified": false,
+  "production_runtime_used": false,
+  "published": false
+}

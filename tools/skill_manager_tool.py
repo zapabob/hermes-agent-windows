@@ -38,6 +38,7 @@ import re
 import shutil
 import threading
 import contextvars as _ctxvars
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -56,9 +57,12 @@ logger = logging.getLogger(__name__)
 class _BackgroundReviewReadMarks:
     """Read marks shared by copied tool contexts within one review run."""
 
-    def __init__(self) -> None:
+    def __init__(self, owner=None) -> None:
         self._lock = threading.Lock()
         self._paths: set[str] = set()
+        self._owner = owner
+        self._results: list[tuple[str, str]] = []
+        self._sealed = False
 
     def add(self, path: str) -> None:
         with self._lock:
@@ -68,13 +72,66 @@ class _BackgroundReviewReadMarks:
         with self._lock:
             return path in self._paths
 
+    def capture(self, path: str, result: str) -> None:
+        with self._lock:
+            if not self._sealed:
+                self._results.append((path, result))
+
+    def seal(self) -> None:
+        with self._lock:
+            self._sealed = True
+
+    def complete(self, owner, content: object) -> None:
+        with self._lock:
+            if not self._sealed or owner is None or owner is not self._owner or not isinstance(content, str):
+                return
+            results = tuple(self._results)
+            self._results.clear()
+        for path, result in results:
+            # Existing subdirectory and /steer hints may append to the full
+            # JSON. A preview or replacement must never confirm this read.
+            if content.startswith(result):
+                owner.add(path)
+
 
 _background_review_read_paths: (
     "_ctxvars.ContextVar[Optional[_BackgroundReviewReadMarks]]"
 ) = _ctxvars.ContextVar("background_review_read_paths", default=None)
 
+_background_review_read_capture: (
+    "_ctxvars.ContextVar[Optional[_BackgroundReviewReadMarks]]"
+) = _ctxvars.ContextVar("background_review_read_capture", default=None)
 
-def mark_background_review_skill_read(path: Path) -> None:
+
+@contextmanager
+def capture_background_review_skill_reads():
+    """Hold one dispatch's read candidates until parent output finalization."""
+    from tools.skill_provenance import is_background_review
+
+    owner = _background_review_read_paths.get()
+    if not is_background_review():
+        yield None
+        return
+    reads = _BackgroundReviewReadMarks(owner=owner)
+    token = _background_review_read_capture.set(reads)
+    try:
+        yield reads
+    finally:
+        reads.seal()
+        _background_review_read_capture.reset(token)
+
+
+def complete_background_review_skill_read_delivery(reads, *, content: object) -> None:
+    """Confirm only a complete result retained by the owning review's parent."""
+    if reads is None:
+        return
+    from tools.skill_provenance import is_background_review
+
+    if is_background_review():
+        reads.complete(_background_review_read_paths.get(), content)
+
+
+def mark_background_review_skill_read(path: Path, *, result: str | None = None) -> None:
     """Record that the active background-review fork has read a skill file.
 
     The autonomous review fork is allowed to evolve skills, but it must not
@@ -98,6 +155,11 @@ def mark_background_review_skill_read(path: Path) -> None:
     if marks is None:
         marks = _BackgroundReviewReadMarks()
         _background_review_read_paths.set(marks)
+    capture = _background_review_read_capture.get()
+    if capture is not None:
+        if isinstance(result, str) and result:
+            capture.capture(resolved, result)
+        return
     marks.add(resolved)
 
 

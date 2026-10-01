@@ -1941,7 +1941,23 @@ def read_file_tool(path: str, offset: int = 1, limit: int = 2000, task_id: str =
 
         # ── Perform the read ──────────────────────────────────────────
         file_ops = _get_file_ops(task_id)
+        review_read_identity = None
+        review_read_path = None
+        try:
+            from tools.skill_provenance import is_background_review
+
+            if is_background_review() and _file_ops_uses_host_paths(file_ops):
+                review_read_path = Path(resolved_str).resolve()
+                stat = review_read_path.stat()
+                review_read_identity = (
+                    stat.st_dev, stat.st_ino, stat.st_size,
+                    stat.st_mtime_ns, stat.st_ctime_ns,
+                )
+        except Exception:
+            logger.debug("background review read identity unavailable", exc_info=True)
+
         result = file_ops.read_file(path, offset, limit)
+        original_read_content = result.content
         result_dict = result.to_dict()
 
         # ── Populate negative-result cache on not-found ───────────────
@@ -2087,7 +2103,34 @@ def read_file_tool(path: str, offset: int = 1, limit: int = 2000, task_id: str =
                 "If you are stuck in a loop, stop reading and proceed with writing or responding."
             )
 
-        return json.dumps(result_dict, ensure_ascii=False)
+        result_json = json.dumps(result_dict, ensure_ascii=False)
+        # Reuse the skill owner's read-before-write record only when the
+        # returned host content is complete and unchanged during this read.
+        # Per-line clamps do not set ReadResult's pagination-truncated flag.
+        if (
+            review_read_identity is not None
+            and not result_dict.get("error")
+            and offset == 1
+            and not result_dict.get("truncated")
+            and original_read_content
+            and result_dict.get("content") == original_read_content
+            and "... [truncated]" not in original_read_content
+        ):
+            try:
+                current_path = Path(_resolve_path_for_task(path, task_id)).resolve()
+                stat = current_path.stat()
+                current_identity = (
+                    stat.st_dev, stat.st_ino, stat.st_size,
+                    stat.st_mtime_ns, stat.st_ctime_ns,
+                )
+                if current_path == review_read_path and current_identity == review_read_identity:
+                    from tools.skill_manager_tool import mark_background_review_skill_read
+
+                    mark_background_review_skill_read(current_path, result=result_json)
+            except Exception:
+                logger.debug("background review read mark unavailable", exc_info=True)
+
+        return result_json
     except Exception as e:
         return tool_error(str(e))
 

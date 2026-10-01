@@ -232,7 +232,8 @@ def test_blank_focus_keeps_existing_automatic_prompt_bytes(harness, command):
     harness.dispatch(command)
     harness.finish()
     expected = harness.review._COMBINED_REVIEW_PROMPT + (
-        "\n\nYou can only call memory and skill management tools. Other tools will be denied "
+        "\n\nYou can only call memory and skill management tools, "
+        "or read_file/search_files to inspect current files. Other tools will be denied "
         "at runtime — do not attempt them.")
     assert harness.calls[0][0] == expected
 

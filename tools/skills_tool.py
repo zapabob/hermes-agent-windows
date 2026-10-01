@@ -1604,18 +1604,7 @@ def skill_view(
                     ensure_ascii=False,
                 )
 
-            try:
-                from tools.skill_manager_tool import mark_background_review_skill_read
-
-                mark_background_review_skill_read(target_file)
-            except Exception:
-                logger.debug(
-                    "Could not record background-review skill read for %s",
-                    target_file,
-                    exc_info=True,
-                )
-
-            return json.dumps(
+            result_json = json.dumps(
                 {
                     "success": True,
                     "name": name,
@@ -1628,6 +1617,17 @@ def skill_view(
                 },
                 ensure_ascii=False,
             )
+            try:
+                from tools.skill_manager_tool import mark_background_review_skill_read
+
+                mark_background_review_skill_read(target_file, result=result_json)
+            except Exception:
+                logger.debug(
+                    "Could not record background-review skill read for %s",
+                    target_file,
+                    exc_info=True,
+                )
+            return result_json
 
         # Reuse the parse from the platform check above
         frontmatter = parsed_frontmatter
@@ -1892,17 +1892,6 @@ def skill_view(
         if capture_result["gateway_setup_hint"]:
             result["gateway_setup_hint"] = capture_result["gateway_setup_hint"]
 
-        try:
-            from tools.skill_manager_tool import mark_background_review_skill_read
-
-            mark_background_review_skill_read(skill_md)
-        except Exception:
-            logger.debug(
-                "Could not record background-review skill read for %s",
-                skill_md,
-                exc_info=True,
-            )
-
         if setup_needed:
             missing_items = [
                 f"env ${env_name}" for env_name in remaining_missing_required_envs
@@ -1925,7 +1914,18 @@ def skill_view(
         if isinstance(metadata, dict):
             result["metadata"] = metadata
 
-        return json.dumps(result, ensure_ascii=False)
+        result_json = json.dumps(result, ensure_ascii=False)
+        try:
+            from tools.skill_manager_tool import mark_background_review_skill_read
+
+            mark_background_review_skill_read(skill_md, result=result_json)
+        except Exception:
+            logger.debug(
+                "Could not record background-review skill read for %s",
+                skill_md,
+                exc_info=True,
+            )
+        return result_json
 
     except Exception as e:
         return tool_error(str(e), success=False)

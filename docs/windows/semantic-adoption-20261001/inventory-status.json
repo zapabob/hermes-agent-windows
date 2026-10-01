@@ -125,7 +125,14 @@
     {
       "id": "F08c",
       "status": "PARTIAL_WITH_UNPROVED_SURFACES",
-      "kind": "independent security prerequisite"
+      "kind": "independent security prerequisite",
+      "commit": "5aa697a8d09f76d61efd70d5d0eec36ad6ac053b"
+    },
+    {
+      "id": "F08b",
+      "status": "PARTIAL_WITH_BLOCKED_GATE",
+      "commit": null,
+      "review": "APPROVE_BOUNDED_SLICE"
     }
   ],
   "proof_only_slices": [
@@ -134,5 +141,107 @@
       "status": "PARTIAL_WITH_BLOCKED_GATE",
       "commit": "98b78701d19303c02dd75356ed06b1e4427863e0"
     }
-  ]
+  ],
+  "required_deliverables": {
+    "source": "direct user objective update during active task; supersedes all-candidate completion scope",
+    "frozen_inputs_unchanged": true,
+    "families": {
+      "F04": {
+        "status": "PARTIAL",
+        "complete": false,
+        "recorded_slices": [
+          "F04a"
+        ]
+      },
+      "F05": {
+        "status": "PARTIAL",
+        "complete": false,
+        "recorded_slices": [
+          "F05a"
+        ]
+      },
+      "F07": {
+        "status": "PARTIAL",
+        "complete": false,
+        "recorded_slices": [
+          "F07a",
+          "F07b"
+        ]
+      },
+      "S03": {
+        "status": "PARTIAL",
+        "complete": false,
+        "recorded_slices": [
+          "S03a"
+        ]
+      },
+      "F10": {
+        "status": "PARTIAL",
+        "complete": false,
+        "recorded_slices": [
+          "F10b",
+          "F10a",
+          "F10c"
+        ]
+      },
+      "F12": {
+        "status": "PARTIAL",
+        "complete": false,
+        "recorded_slices": [
+          "F12a"
+        ]
+      },
+      "F11": {
+        "status": "PARTIAL",
+        "complete": false,
+        "recorded_slices": [
+          "F11a"
+        ]
+      },
+      "F08": {
+        "status": "PARTIAL_WITH_BLOCKED_GATE",
+        "complete": false,
+        "recorded_slices": [
+          "F08a",
+          "F08c",
+          "F08b"
+        ],
+        "current_blocker": {
+          "code": "BLOCKED_ACCEPTANCE_F08",
+          "resolved_finding": "F08b-001",
+          "review": "APPROVE_BOUNDED_SLICE",
+          "native_symlink": "WinError1314 before product dispatch",
+          "actual_executor_timeout_and_segmented_delivery_E2E": "NOT_PROVEN",
+          "broad_regression": {
+            "fail": 16,
+            "skip": 13,
+            "classification": "retained from prior source-bound candidate/parent comparison"
+          }
+        }
+      }
+    },
+    "model_picker": {
+      "status": "SOURCE_COMPARED_INDEPENDENT_SLICES_IN_PROGRESS",
+      "complete": false,
+      "surfaces": [
+        "Desktop",
+        "backend"
+      ],
+      "acceptance_axes": [
+        "catalogue freshness",
+        "interactive response",
+        "communication volume",
+        "failure recovery",
+        "model and effort selection preservation"
+      ],
+      "interval_policy": "latest direct user instruction: fixed upstream purpose-specific lifetimes; models.dev4h/provider1h/nativeOllama300s preserved; no12h timer or mandatory upstream runtime"
+    },
+    "full_family_completion_count": 0,
+    "recorded_local_commit_count": 13,
+    "not_required_now": {
+      "other_seed_candidates_unreviewed": 39,
+      "historical_inventory_retained": true
+    },
+    "no_budget_percentage_verified": true
+  }
 }

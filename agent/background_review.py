@@ -1546,11 +1546,13 @@ def _run_review_in_thread(
                     quiet_mode=True,
                 )
             }
+            review_whitelist.update({"read_file", "search_files"})
             set_thread_tool_whitelist(
                 review_whitelist,
                 deny_msg_fmt=(
                     "Background review denied non-whitelisted tool: "
-                    "{tool_name}. Only memory/skill tools are allowed."
+                    "{tool_name}. Only memory/skill tools and "
+                    "read_file/search_files are allowed."
                 ),
             )
             try:
@@ -1576,7 +1578,8 @@ def _run_review_in_thread(
                         user_message=(
                             prompt
                             + "\n\nYou can only call memory and skill "
-                            "management tools. Other tools will be denied "
+                            "management tools, or read_file/search_files to inspect "
+                            "current files. Other tools will be denied "
                             "at runtime — do not attempt them."
                         ),
                         conversation_history=_review_history,

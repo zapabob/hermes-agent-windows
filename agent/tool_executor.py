@@ -446,6 +446,18 @@ class _ManagedToolResult:
     middleware_trace: list[dict[str, Any]]
     blocked: bool
     dispatched: bool
+    review_reads: object | None = None
+
+
+def _complete_background_review_reads(deliveries: list) -> None:
+    """Confirm captured reads after all output processing for this batch."""
+    if not deliveries:
+        return
+    from tools.skill_manager_tool import complete_background_review_skill_read_delivery
+
+    for reads, message in deliveries:
+        complete_background_review_skill_read_delivery(reads, content=message.get("content"))
+    deliveries.clear()
 
 
 class _ToolTimeoutResult(str):
@@ -624,6 +636,7 @@ def _run_agent_tool_execution_middleware(
         "middleware_trace": trace,
         "blocked": False,
         "dispatched": False,
+        "review_reads": None,
     }
     dispatch_lock = threading.Lock()
 
@@ -747,7 +760,12 @@ def _run_agent_tool_execution_middleware(
         )
         _hb_thread.start()
         try:
-            return execute(final_args)
+            from tools.skill_manager_tool import capture_background_review_skill_reads
+
+            with capture_background_review_skill_reads() as reads:
+                result = execute(final_args)
+            state["review_reads"] = reads
+            return result
         finally:
             _hb_stop.set()
             _hb_thread.join(timeout=2.0)
@@ -802,6 +820,7 @@ def _run_agent_tool_execution_middleware(
         middleware_trace=state["middleware_trace"],
         blocked=bool(state["blocked"]),
         dispatched=bool(state["dispatched"]),
+        review_reads=state["review_reads"],
     )
 
 
@@ -1113,7 +1132,7 @@ def _begin_tool_execution(
             pass
 
 
-def execute_tool_calls_concurrent(agent, assistant_message, messages: list, effective_task_id: str, api_call_count: int = 0, *, finalize: bool = True) -> None:
+def execute_tool_calls_concurrent(agent, assistant_message, messages: list, effective_task_id: str, api_call_count: int = 0, *, finalize: bool = True, _review_deliveries=None) -> None:
     """Execute multiple tool calls concurrently using a thread pool.
 
     Results are collected in the original tool-call order and appended to
@@ -1125,6 +1144,8 @@ def execute_tool_calls_concurrent(agent, assistant_message, messages: list, effe
     """
     tool_calls = assistant_message.tool_calls
     num_tools = len(tool_calls)
+    review_deliveries = [] if _review_deliveries is None else _review_deliveries
+    read_candidates = [None] * num_tools
 
     # Resolve the context-scaled tool-output budget once per turn (cheap, but
     # avoids rebuilding it per result inside the loop below).
@@ -1425,6 +1446,7 @@ def execute_tool_calls_concurrent(agent, assistant_message, messages: list, effe
                 middleware_trace = managed.middleware_trace
                 blocked = managed.blocked
                 dispatched = managed.dispatched
+                read_candidates[index] = managed.review_reads
             except _BatchAbandoned:
                 # The batch was abandoned while we were parked at the start-order
                 # gate. The main thread already synthesized this tool's result
@@ -1900,6 +1922,8 @@ def execute_tool_calls_concurrent(agent, assistant_message, messages: list, effe
             effect_disposition=effect_disposition,
         )
         messages.append(tool_message)
+        if r is not None and read_candidates[i] is not None:
+            review_deliveries.append((read_candidates[i], tool_message))
         risk_metadata = tool_message.get("_tool_output_risk")
         if not _flush_session_db_after_tool_progress(
             agent,
@@ -1977,6 +2001,7 @@ def execute_tool_calls_concurrent(agent, assistant_message, messages: list, effe
     # so the steer marker is never truncated. See steer() for details.
     if finalize and num_tools > 0:
         agent._apply_pending_steer_to_tool_results(messages, num_tools)
+        _complete_background_review_reads(review_deliveries)
 
 
 
@@ -2000,7 +2025,7 @@ def _append_cancelled_tool_results(messages: list, tool_calls, *, reason: str) -
         ))
 
 
-def execute_tool_calls_sequential(agent, assistant_message, messages: list, effective_task_id: str, api_call_count: int = 0, *, finalize: bool = True) -> None:
+def execute_tool_calls_sequential(agent, assistant_message, messages: list, effective_task_id: str, api_call_count: int = 0, *, finalize: bool = True, _review_deliveries=None) -> None:
     """Execute tool calls sequentially (original behavior). Used for single calls or interactive tools.
 
     ``finalize=False`` skips the end-of-batch aggregate budget enforcement
@@ -2012,10 +2037,17 @@ def execute_tool_calls_sequential(agent, assistant_message, messages: list, effe
 
     # Keep every runtime-tool branch on one bounded execution funnel without
     # duplicating timeout policy across the branch-specific callbacks below.
+    review_deliveries = [] if _review_deliveries is None else _review_deliveries
+    review_reads = None
+
     def _run_agent_tool_execution_middleware(agent, **kwargs):
-        return _run_sequential_tool_execution_middleware(agent, **kwargs)
+        nonlocal review_reads
+        outcome = _run_sequential_tool_execution_middleware(agent, **kwargs)
+        review_reads = outcome.review_reads
+        return outcome
 
     for i, tool_call in enumerate(assistant_message.tool_calls, 1):
+        review_reads = None
         tool_call_id = _pairing_tool_call_id(tool_call)
         if getattr(agent, "_incremental_persistence_failed", False):
             return
@@ -2934,6 +2966,8 @@ def execute_tool_calls_sequential(agent, assistant_message, messages: list, effe
             effect_disposition="unknown" if _execution_timed_out else None,
         )
         messages.append(tool_message)
+        if review_reads is not None:
+            review_deliveries.append((review_reads, tool_message))
         risk_metadata = tool_message.get("_tool_output_risk")
         if not _flush_session_db_after_tool_progress(
             agent,
@@ -3040,6 +3074,7 @@ def execute_tool_calls_sequential(agent, assistant_message, messages: list, effe
     # applied to sequential execution as well.
     if finalize and num_tools_seq > 0:
         agent._apply_pending_steer_to_tool_results(messages, num_tools_seq)
+        _complete_background_review_reads(review_deliveries)
 
 
 
@@ -3069,6 +3104,8 @@ def execute_tool_calls_segmented(agent, assistant_message, messages: list, effec
     """
     from types import SimpleNamespace
 
+    review_deliveries = []
+
     if segments is None:
         _active_env = get_active_env(effective_task_id)
         _exec_cwd = Path(_active_env.cwd) if _active_env is not None and _active_env.cwd else None
@@ -3082,11 +3119,13 @@ def execute_tool_calls_segmented(agent, assistant_message, messages: list, effec
             execute_tool_calls_concurrent(
                 agent, segment_message, messages, effective_task_id, api_call_count,
                 finalize=False,
+                _review_deliveries=review_deliveries,
             )
         else:
             execute_tool_calls_sequential(
                 agent, segment_message, messages, effective_task_id, api_call_count,
                 finalize=False,
+                _review_deliveries=review_deliveries,
             )
 
         if getattr(agent, "_incremental_persistence_failed", False):
@@ -3102,6 +3141,7 @@ def execute_tool_calls_segmented(agent, assistant_message, messages: list, effec
             config=_tool_budget,
         )
         agent._apply_pending_steer_to_tool_results(messages, total_tools)
+        _complete_background_review_reads(review_deliveries)
 
 
 __all__ = [
