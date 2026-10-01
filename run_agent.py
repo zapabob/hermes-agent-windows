@@ -1973,6 +1973,10 @@ class AIAgent:
         if review_run is None:
             return
         try:
+            from agent.conversation_loop import _clone_message_for_send
+
+            # The worker must not share mutable containers with the live history.
+            messages_snapshot = [_clone_message_for_send(message) for message in messages_snapshot]
             target, _prompt = spawn_background_review_thread(
                 self,
                 messages_snapshot,
