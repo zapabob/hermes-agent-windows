@@ -3562,6 +3562,7 @@ def invoke_tool(agent, function_name: str, function_args: dict, effective_task_i
                     after=next_args.get("after"),
                     before=next_args.get("before"),
                     exclude_session_ids=next_args.get("exclude_session_ids"),
+                    profile=next_args.get("profile"),
                     db=session_db,
                     current_session_id=agent.session_id,
                 ),

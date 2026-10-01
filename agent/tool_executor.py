@@ -2242,6 +2242,7 @@ def execute_tool_calls_sequential(agent, assistant_message, messages: list, effe
                     after=next_args.get("after"),
                     before=next_args.get("before"),
                     exclude_session_ids=next_args.get("exclude_session_ids"),
+                    profile=next_args.get("profile"),
                     db=session_db,
                     current_session_id=agent.session_id,
                 )
