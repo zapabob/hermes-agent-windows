@@ -137,8 +137,14 @@
     {
       "id": "Picker-P01P02",
       "status": "LOCAL_SLICE_VERIFIED",
-      "commit": null,
+      "commit": "e66562b6236b1758a5bf8764a7f184ad5a672137",
       "full_picker_complete": false
+    },
+    {
+      "id": "F04b",
+      "status": "LOCAL_SLICE_VERIFIED",
+      "commit": null,
+      "full_family_complete": false
     }
   ],
   "proof_only_slices": [
@@ -247,7 +253,7 @@
       "blocked_http_evidence": "Picker-loopback-approval-block-001.json"
     },
     "full_family_completion_count": 0,
-    "recorded_local_commit_count": 14,
+    "recorded_local_commit_count": 15,
     "not_required_now": {
       "other_seed_candidates_unreviewed": 39,
       "historical_inventory_retained": true

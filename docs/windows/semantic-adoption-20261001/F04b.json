@@ -1,0 +1,128 @@
+{
+  "id": "F04b",
+  "status": "LOCAL_SLICE_VERIFIED",
+  "starting_commit": "e66562b6236b1758a5bf8764a7f184ad5a672137",
+  "tested_worktree_source_sha256": {
+    "hermes_cli/commands.py": "7271650112ce491082a232cbd34be7fd833e47c5a8089cce1cf138d603a45ca4",
+    "tui_gateway/methods_tools.py": "97447ef72f430fb177cec424f0b1d2ba28784a7b2b5644fc1194a83dc9323b4a",
+    "apps/desktop/src/lib/desktop-slash-commands.ts": "3516c0f37baef4aefadba074e450940a0d962db2e3b59ae3aae392efa2c36bae",
+    "apps/desktop/src/app/chat/composer/hooks/use-slash-completions.ts": "572eb25ff322386e5fd1d494e7a215b77d0b46dd6c18c854cc6893847e623f4d",
+    "apps/desktop/src/app/chat/composer/hooks/f04-availability.test.tsx": "89d3800a8e6701aa55aa4db32f6d456e5f2269ed4d18d14a5ca28e61bd7d3712",
+    "apps/desktop/src/lib/f04-availability-boundaries.test.ts": "93406f75853b043e547209542e0693fade4721663a99abb93e222a5a5f107b6b",
+    "apps/desktop/src/lib/f04-availability-dispatch.test.tsx": "8b2766bcb5ccd7cf69308d863582f23d1ba3e8546a4d59c6113abbbb8aa33111",
+    "apps/desktop/src/lib/f04-availability.test.ts": "0c025df62921797e103d3c8b7dcdc072721dbd5328fd1dda2fb767e56b836e82",
+    "apps/desktop/test-fixtures/f04-availability/backend.py": "9cde26b7b1768b37d7b200d0b89ae5526b017e9707911fc3e8c321dd188d9066",
+    "apps/desktop/test-fixtures/f04-availability/index.html": "1a6cd3ba058a93e2e72d0df1cebb864404e06f923bcf8c97c1b45be27406543a",
+    "apps/desktop/test-fixtures/f04-availability/renderer.tsx": "20977ac385dc6d2b0f2552e87bae0c5e33d93cc4b2cdbb9b5a043443a7ac0ce2",
+    "apps/desktop/test-fixtures/f04-availability/run.mjs": "e55a6eafbd43a9b6afdc12cfea1c1d11e538899ee09f7215e8a152b74ef9c184",
+    "apps/desktop/test-fixtures/f04-availability/tsconfig.json": "87ff700c423a9d201f92ac4422329c407feac35d8899cc784e8c8872a7088a82",
+    "tests/tui_gateway/f04-availability/test_metadata.py": "db4c7c843d8be14cd8112ea6825d6da1031d20bd0a9ed8852e18ceedd33e0cca",
+    "apps/desktop/src/lib/slash-completion-cache.ts": "9a5f6ac30a2c4336da7ba71c0bab2e11f46e2ed434578d013c425be965f7029b",
+    "apps/desktop/src/app/chat/composer/hooks/use-live-completion-adapter.ts": "09c7769385c1b44d7afa083420fa17cb338b475be91ca29a7d8fc8eb4b517cf4",
+    "apps/desktop/src/app/chat/composer/hooks/use-composer-trigger.ts": "a6b816a4b2e081b795240dc51c6bb42acdec3b598930d5d61c4a62a00c4dde20",
+    "apps/desktop/src/app/session/hooks/use-prompt-actions/slash.ts": "f42465c4b95705d08ac36c911d65b56807a7fcbb89b9d3ec7eef59920ff454f7",
+    "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\docs\\windows\\semantic-adoption-20261001\\F04b-mini-plan.md": "8ac3bf2e7f48f1121b82f247a755762517225b55b56dfa8113b4df156cb699e7",
+    "tui_gateway/server.py": "05fba295146d0fb454f91fad1674d9acf9c490632acaa2a348d3eca655241cd5"
+  },
+  "tests": {
+    "python": {
+      "files": 3,
+      "passed": 99,
+      "failed": 0,
+      "skipped": 0,
+      "new_acceptance": 37
+    },
+    "ui": {
+      "files": 10,
+      "passed": 222,
+      "failed": 0,
+      "skipped": 0,
+      "new_acceptance": 26
+    },
+    "native_chromium": {
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "browser": "151.0.7922.34",
+      "transport": "Captured Python public dispatch plus owned fixture adapter, no live Gateway auth"
+    },
+    "mutants": {
+      "detected": 7,
+      "survived": 0,
+      "assertion_failures": true,
+      "exact_restoration": true
+    },
+    "types": {
+      "configs": 4,
+      "passed": 4
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 1
+    }
+  },
+  "codegraph": {
+    "roots": {
+      "integration": "006",
+      "downstream": "005",
+      "r-after": "005",
+      "upstream": "005"
+    },
+    "integration_bound_files": 17,
+    "indexed_files_audited": 9002,
+    "mismatches": 0,
+    "API": "public CLI1.6 and Node24 SDK getFiles/getFile/getNodesInFile/exact-owner",
+    "messaging_gateway": "BLOCKED_CODEGRAPH"
+  },
+  "review": {
+    "verdict": "APPROVE_BOUNDED_SLICE",
+    "manifest": "F04b-review-input-002.json",
+    "manifest_sha256": "5a1268254e769f19be1fd37b666ed97d9066eb35a967ba2aebdb9151faff8a7a",
+    "report_sha256": "d60e9caf4f487bf6c2a29d1c20fdb6b51c034d392bb8a8893f5acfb3f9d431eb",
+    "receipt_sha256": "e676da71785b1a2d457f64315ae3535345ae6b8d2019450aa154db2c6bbdf8e5",
+    "source_count": 20,
+    "evidence_count": 426,
+    "requested_model": "gpt-6.1-sol",
+    "requested_effort": "high",
+    "actual_model": null,
+    "actual_effort": null
+  },
+  "unchanged_execution_handler_sha256": {
+    "command.dispatch": "443972215e25ce6a76d9acd01915a4daaf78d49184cdddf6ca9a0a0121653190",
+    "slash.exec": "f1283da97f6d8a8856158b9f2a826c9c9dc7dd8028157bba233d7c491c562f5f"
+  },
+  "remaining": [
+    "live Gateway authentication/ACK/effect",
+    "full Electron integration",
+    "Gateway owner CodeGraph size exclusion"
+  ],
+  "full_family_complete": false,
+  "mandatory_upstream_runtime_added": false,
+  "runtime_dependency_zero_claim": false,
+  "published": false,
+  "source_sha256": {
+    "_docs/2026-10-01_windows-semantic-adoption_Codex.md": "dbda16b2c4467715346e0e10c5fc9a2440623433c0ea0c7c7107d37d13ce3b8c",
+    "apps/desktop/src/app/chat/composer/hooks/f04-availability.test.tsx": "89d3800a8e6701aa55aa4db32f6d456e5f2269ed4d18d14a5ca28e61bd7d3712",
+    "apps/desktop/src/app/chat/composer/hooks/use-composer-trigger.ts": "a6b816a4b2e081b795240dc51c6bb42acdec3b598930d5d61c4a62a00c4dde20",
+    "apps/desktop/src/app/chat/composer/hooks/use-live-completion-adapter.ts": "09c7769385c1b44d7afa083420fa17cb338b475be91ca29a7d8fc8eb4b517cf4",
+    "apps/desktop/src/app/chat/composer/hooks/use-slash-completions.ts": "572eb25ff322386e5fd1d494e7a215b77d0b46dd6c18c854cc6893847e623f4d",
+    "apps/desktop/src/app/session/hooks/use-prompt-actions/slash.ts": "f42465c4b95705d08ac36c911d65b56807a7fcbb89b9d3ec7eef59920ff454f7",
+    "apps/desktop/src/lib/desktop-slash-commands.ts": "3516c0f37baef4aefadba074e450940a0d962db2e3b59ae3aae392efa2c36bae",
+    "apps/desktop/src/lib/f04-availability-boundaries.test.ts": "93406f75853b043e547209542e0693fade4721663a99abb93e222a5a5f107b6b",
+    "apps/desktop/src/lib/f04-availability-dispatch.test.tsx": "8b2766bcb5ccd7cf69308d863582f23d1ba3e8546a4d59c6113abbbb8aa33111",
+    "apps/desktop/src/lib/f04-availability.test.ts": "0c025df62921797e103d3c8b7dcdc072721dbd5328fd1dda2fb767e56b836e82",
+    "apps/desktop/src/lib/slash-completion-cache.ts": "9a5f6ac30a2c4336da7ba71c0bab2e11f46e2ed434578d013c425be965f7029b",
+    "apps/desktop/test-fixtures/f04-availability/backend.py": "03ae8eff471c57cef2e9e170a2891f9f292114430de7dd0f9d38904f3009991a",
+    "apps/desktop/test-fixtures/f04-availability/index.html": "1a6cd3ba058a93e2e72d0df1cebb864404e06f923bcf8c97c1b45be27406543a",
+    "apps/desktop/test-fixtures/f04-availability/renderer.tsx": "8911ffdef5d08d7c188a05f8389b38d90206080401777f3a810692c44c753244",
+    "apps/desktop/test-fixtures/f04-availability/run.mjs": "a336561cb8fc0bffffec544460c2514ec1ad34daf996bae32073c5be10b530eb",
+    "apps/desktop/test-fixtures/f04-availability/tsconfig.json": "87ff700c423a9d201f92ac4422329c407feac35d8899cc784e8c8872a7088a82",
+    "docs/windows/semantic-adoption-20261001/F04b-mini-plan.md": "18a7035b7079f5ba6e17c70e5c659c0440f9f40037ab058202f2eea1f76c5a61",
+    "docs/windows/semantic-adoption-20261001/README.md": "0fbac9d2535e4bcc84f3be359a07b7628d52d0db1201682e49022e399bddd197",
+    "docs/windows/semantic-adoption-20261001/inventory-status.json": "429fcbeb4682ccb2bab3063cd9e5da84f8ba63264dfaec0a3d26a42984a1deb8",
+    "hermes_cli/commands.py": "7271650112ce491082a232cbd34be7fd833e47c5a8089cce1cf138d603a45ca4",
+    "tests/tui_gateway/f04-availability/test_metadata.py": "db4c7c843d8be14cd8112ea6825d6da1031d20bd0a9ed8852e18ceedd33e0cca",
+    "tui_gateway/methods_tools.py": "97447ef72f430fb177cec424f0b1d2ba28784a7b2b5644fc1194a83dc9323b4a",
+    "tui_gateway/server.py": "05fba295146d0fb454f91fad1674d9acf9c490632acaa2a348d3eca655241cd5"
+  }
+}

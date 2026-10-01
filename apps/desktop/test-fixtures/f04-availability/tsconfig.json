@@ -1,0 +1,6 @@
+{
+  "extends": "../../tsconfig.typecheck.json",
+  "references": [],
+  "include": ["renderer.tsx", "../../src", "../../../shared/src"],
+  "exclude": ["../../electron", "../../e2e"]
+}

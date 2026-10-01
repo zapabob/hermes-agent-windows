@@ -10,6 +10,7 @@ import {
   desktopSlashDescription,
   type DesktopThemeCommandOption,
   filterDesktopCommandsCatalog,
+  isDesktopSlashCommand,
   isDesktopSlashExtensionCommand,
   isDesktopSlashSuggestion,
   rankSkillCommands
@@ -210,7 +211,7 @@ export function useSlashCompletions(options: {
 
             return { ...item, text: `${prefix}${argText}` }
           })
-          .filter(item => isArgCompletion || isDesktopSlashSuggestion(item.text))
+          .filter(item => isArgCompletion ? isDesktopSlashCommand(item.text) : isDesktopSlashSuggestion(item.text))
           .map(item => ({
             ...item,
             // Arg suggestions (e.g. `/handoff <platform>`) live under one

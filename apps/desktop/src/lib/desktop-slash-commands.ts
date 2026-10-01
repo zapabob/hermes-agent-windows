@@ -6,12 +6,13 @@ export interface CommandsCatalogSection {
 }
 
 export interface CommandsCatalogLike {
+  canon?: Record<string, string>
   categories?: CommandsCatalogSection[]
   pairs?: [string, string][]
   skill_count?: number
   skills?: SkillCatalogMap
   warning?: string
-  commands?: Record<string, { argument_mode?: DesktopSlashArgumentMode | null }>
+  commands?: Record<string, { argument_mode?: DesktopSlashArgumentMode | null; desktop?: string | null }>
 }
 
 /**
@@ -439,21 +440,52 @@ function normalizeCommand(command: string): string {
   return base
 }
 
-export function canonicalDesktopSlashCommand(command: string): string {
+export function canonicalDesktopSlashCommand(command: string, catalog?: CommandsCatalogLike): string {
   const normalized = normalizeCommand(command)
 
-  return ALIAS_TO_CANONICAL.get(normalized) || normalized
+  if (SPEC_BY_NAME.has(normalized)) {
+    return normalized
+  }
+
+  const target = (catalog ?? peekCachedSlashCompletion<CommandsCatalogLike>('catalog'))?.canon?.[normalized]
+
+  return ALIAS_TO_CANONICAL.get(normalized) || (typeof target === 'string' ? normalizeCommand(target) : normalized)
 }
 
 /** Resolve a command (or alias) to its desktop spec, or null for unknown/extension commands. */
-export function resolveDesktopCommand(command: string): DesktopCommandSpec | null {
-  return SPEC_BY_NAME.get(canonicalDesktopSlashCommand(command)) ?? null
+export function resolveDesktopCommand(command: string, catalog?: CommandsCatalogLike): DesktopCommandSpec | null {
+  const name = canonicalDesktopSlashCommand(command, catalog)
+  const local = SPEC_BY_NAME.get(name)
+
+  if (local) {
+    return local
+  }
+
+  const entry = (catalog ?? peekCachedSlashCompletion<CommandsCatalogLike>('catalog'))?.commands?.[name]
+
+  if (!entry || typeof entry !== 'object') {
+    return null
+  }
+
+  const value = entry.desktop
+  const reason = value === 'advanced' || value === 'composer-voice' || value === 'messaging' || value === 'settings' || value === 'terminal'
+    ? value : null
+
+  if (reason) {
+    return { name, surface: unavailable(reason) }
+  }
+
+  if (value != null && value !== 'hidden') {
+    return null
+  }
+
+  return { name, surface: exec(), hidden: value === 'hidden' }
 }
 
-function isKnownHermesSlashCommand(command: string): boolean {
+function isKnownHermesSlashCommand(command: string, catalog?: CommandsCatalogLike): boolean {
   const normalized = normalizeCommand(command)
 
-  return SPEC_BY_NAME.has(normalized) || ALIAS_TO_CANONICAL.has(normalized)
+  return resolveDesktopCommand(normalized, catalog) !== null || ALIAS_TO_CANONICAL.has(normalized)
 }
 
 /**
@@ -462,14 +494,14 @@ function isKnownHermesSlashCommand(command: string): boolean {
  * `/codex`, …) and user-defined quick commands. These are user-activated, so
  * they appear in the desktop slash palette and execute when typed.
  */
-export function isDesktopSlashExtensionCommand(command: string): boolean {
+export function isDesktopSlashExtensionCommand(command: string, catalog?: CommandsCatalogLike): boolean {
   const normalized = normalizeCommand(command)
 
   if (!normalized || normalized === '/') {
     return false
   }
 
-  return !isKnownHermesSlashCommand(normalized)
+  return !isKnownHermesSlashCommand(normalized, catalog)
 }
 
 /** Gates execution: true unless the command is a known no-desktop-surface command. */
@@ -484,15 +516,15 @@ export function isDesktopSlashCommand(command: string): boolean {
 }
 
 /** Gates discovery in the popover/completions. */
-export function isDesktopSlashSuggestion(command: string): boolean {
+export function isDesktopSlashSuggestion(command: string, catalog?: CommandsCatalogLike): boolean {
   const normalized = normalizeCommand(command)
 
   // Aliases stay hidden so the popover isn't cluttered with duplicates.
-  if (ALIAS_TO_CANONICAL.has(normalized)) {
+  if (ALIAS_TO_CANONICAL.has(normalized) || canonicalDesktopSlashCommand(normalized, catalog) !== normalized) {
     return false
   }
 
-  const spec = SPEC_BY_NAME.get(normalized)
+  const spec = resolveDesktopCommand(normalized, catalog)
 
   if (spec) {
     return spec.surface.kind !== 'unavailable' && !spec.hidden
@@ -523,7 +555,7 @@ export function isModelPickerCommand(command: string): boolean {
 
 export function desktopSlashUnavailableMessage(command: string): string | null {
   const canonical = canonicalDesktopSlashCommand(command)
-  const surface = SPEC_BY_NAME.get(canonical)?.surface
+  const surface = resolveDesktopCommand(canonical)?.surface
 
   if (!surface) {
     return null
@@ -552,7 +584,7 @@ export function desktopSlashCommandArgumentMode(command: string): DesktopSlashAr
   }
 
   const catalog = peekCachedSlashCompletion<CommandsCatalogLike>('catalog')
-  const mode = catalog?.commands?.[normalizeCommand(command)]?.argument_mode
+  const mode = catalog?.commands?.[canonicalDesktopSlashCommand(command, catalog)]?.argument_mode
 
   return mode === 'text' || mode === 'options' || mode === 'mixed' ? mode : null
 }
@@ -631,13 +663,13 @@ export function filterDesktopCommandsCatalog(catalog: CommandsCatalogLike): Comm
     ?.map(section => ({
       ...section,
       pairs: section.pairs
-        .filter(([command]) => isDesktopSlashSuggestion(command))
+        .filter(([command]) => isDesktopSlashSuggestion(command, catalog))
         .map(([command, description]) => [command, desktopSlashDescription(command, description)] as [string, string])
     }))
     .filter(section => section.pairs.length > 0)
 
   const pairs = catalog.pairs
-    ?.filter(([command]) => isDesktopSlashSuggestion(command))
+    ?.filter(([command]) => isDesktopSlashSuggestion(command, catalog))
     .map(([command, description]) => [command, desktopSlashDescription(command, description)] as [string, string])
 
   // Recount skill commands from the filtered output so /help's footer reflects
@@ -659,7 +691,7 @@ export function filterDesktopCommandsCatalog(catalog: CommandsCatalogLike): Comm
   let skillCount = 0
 
   for (const command of filteredCommands) {
-    if (isDesktopSlashExtensionCommand(command)) {
+    if (isDesktopSlashExtensionCommand(command, catalog)) {
       skillCount += 1
     }
   }

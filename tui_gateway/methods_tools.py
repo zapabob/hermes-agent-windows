@@ -260,7 +260,7 @@ def _(rid, params: dict) -> dict:
             COMMAND_REGISTRY,
             SUBCOMMANDS,
             _build_description,
-            infer_argument_mode,
+            command_desktop_meta,
         )
 
         all_pairs: list[list[str]] = []
@@ -273,7 +273,10 @@ def _(rid, params: dict) -> dict:
         for cmd in COMMAND_REGISTRY:
             # Metadata survives palette filtering; it does not grant execution.
             for key in (cmd.name, *cmd.aliases):
-                command_meta[f"/{key}"] = {"argument_mode": infer_argument_mode(cmd)}
+                meta = command_desktop_meta(cmd)
+                # Preserve the legacy offered-command envelope: an absent
+                # desktop value is equivalent to None, as on older backends.
+                command_meta[f"/{key}"] = {k: v for k, v in meta.items() if k != "desktop" or v is not None}
             if cmd.name in _TUI_HIDDEN or cmd.gateway_only:
                 continue
 
