@@ -149,8 +149,14 @@
     {
       "id": "Picker-P03",
       "status": "LOCAL_SLICE_VERIFIED",
-      "commit": null,
+      "commit": "998ace4af0bbfe47cb85bec43da594bf3980007e",
       "full_picker_complete": false
+    },
+    {
+      "id": "F08d",
+      "status": "LOCAL_SLICE_VERIFIED",
+      "commit": null,
+      "full_family_complete": false
     }
   ],
   "proof_only_slices": [
@@ -222,19 +228,25 @@
         "recorded_slices": [
           "F08a",
           "F08c",
-          "F08b"
+          "F08b",
+          "F08d"
         ],
         "current_blocker": {
           "code": "BLOCKED_ACCEPTANCE_F08",
           "resolved_finding": "F08b-001",
           "review": "APPROVE_BOUNDED_SLICE",
           "native_symlink": "WinError1314 before product dispatch",
-          "actual_executor_timeout_and_segmented_delivery_E2E": "NOT_PROVEN",
+          "actual_executor_timeout_and_segmented_delivery_E2E": "PROVEN_BOUNDED_EXISTING_OWNER; successful payload prepared before timeout, not I/O started after revocation",
           "broad_regression": {
             "fail": 16,
             "skip": 13,
             "classification": "retained from prior source-bound candidate/parent comparison"
-          }
+          },
+          "remaining_command_contracts": [
+            "bare manual/refine explicit intent",
+            "review/MoA runtime restoration/cancellation",
+            "full memory-consent/native kernel/Relay conditions"
+          ]
         }
       }
     },
@@ -260,7 +272,7 @@
       "blocked_http_evidence": "Picker-loopback-approval-block-001.json"
     },
     "full_family_completion_count": 0,
-    "recorded_local_commit_count": 16,
+    "recorded_local_commit_count": 17,
     "not_required_now": {
       "other_seed_candidates_unreviewed": 39,
       "historical_inventory_retained": true
