@@ -839,6 +839,9 @@ def build_stacked_skill_invocation_message(
 def build_preloaded_skills_prompt(
     skill_identifiers: list[str],
     task_id: str | None = None,
+    excluded_loaded_names: set[str] | None = None,
+    *,
+    _auto_loaded: bool = False,
 ) -> tuple[str, list[str], list[str]]:
     """Load one or more skills for session-wide CLI/TUI preloading.
 
@@ -879,6 +882,10 @@ def build_preloaded_skills_prompt(
             missing.append(identifier)
             continue
 
+        if excluded_loaded_names and skill_name in excluded_loaded_names:
+            loaded_names.append(skill_name)
+            continue
+
         # Track active usage for Curator lifecycle management (#17782)
         try:
             from tools.skill_usage import bump_use
@@ -891,6 +898,12 @@ def build_preloaded_skills_prompt(
             "preloaded. Treat its instructions as active guidance for the duration of this "
             "session unless the user overrides them.]"
         )
+        if _auto_loaded:
+            activation_note = (
+                f"[IMPORTANT: The {skill_name} skill is auto-loaded via config (skills.auto_load). "
+                "Treat its instructions as active guidance for the duration of this session unless "
+                "the user overrides them.]"
+            )
         prompt_parts.append(
             _build_skill_message(
                 loaded_skill,
@@ -902,3 +915,38 @@ def build_preloaded_skills_prompt(
         loaded_names.append(skill_name)
 
     return "\n\n".join(prompt_parts), loaded_names, missing
+
+
+
+def resolve_auto_load_skills(user_config: dict | None = None) -> list[str]:
+    """Read configured identifiers without mutating cached profile config."""
+    if user_config is None:
+        try:
+            from hermes_cli.config import load_config_readonly
+            user_config = load_config_readonly()
+        except Exception:
+            return []
+    block = user_config.get("skills") if isinstance(user_config, dict) else None
+    values = block.get("auto_load") if isinstance(block, dict) else None
+    if not isinstance(values, list):
+        return []
+    names = [value.strip() for value in values if isinstance(value, str) and value.strip()]
+    return list(dict.fromkeys(names))
+
+
+def build_auto_load_prompt(
+    task_id: str | None = None,
+    user_config: dict | None = None,
+    home_override: Path | None = None,
+) -> tuple[str, list[str], list[str]]:
+    """Use existing skill admission/rendering in an explicit profile scope."""
+    from hermes_constants import reset_hermes_home_override, set_hermes_home_override
+    token = set_hermes_home_override(home_override) if home_override is not None else None
+    try:
+        names = resolve_auto_load_skills(user_config)
+        if not names:
+            return "", [], []
+        return build_preloaded_skills_prompt(names, task_id=task_id, _auto_loaded=True)
+    finally:
+        if token is not None:
+            reset_hermes_home_override(token)

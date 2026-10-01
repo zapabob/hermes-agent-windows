@@ -5947,6 +5947,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
         # finalize_preloaded_skills before any agent is built).
         self._preload_skills_thread: Optional[threading.Thread] = None
         self._preload_skills_result: Optional[tuple] = None
+        self._auto_load_skills_result: Optional[tuple] = None
         self._preload_skills_error: Optional[BaseException] = None
         self._preload_skills_requested: list = []
         self._preload_skills_finalized = False
@@ -8887,6 +8888,10 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
         err = getattr(self, "_preload_skills_error", None)
         if err is not None:
             raise err
+        auto_result = getattr(self, "_auto_load_skills_result", None)
+        if auto_result and auto_result[2]:
+            logger.warning("skills.auto_load: not found or disabled, skipped: %s", ", ".join(auto_result[2]))
+        self.preloaded_skills = list(auto_result[1]) if auto_result else []
         result = getattr(self, "_preload_skills_result", None)
         if not result:
             return
@@ -8912,7 +8917,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
             self.system_prompt = "\n\n".join(
                 part for part in (self.system_prompt, skills_prompt) if part
             ).strip()
-            self.preloaded_skills = loaded_skills
+        self.preloaded_skills += [name for name in loaded_skills if name not in self.preloaded_skills]
 
     def show_banner(self):
         """Display the welcome banner in Claude Code style."""
@@ -22334,7 +22339,12 @@ def main(
         ignore_rules=ignore_rules,
     )
 
-    if parsed_skills:
+    from agent.skill_commands import build_auto_load_prompt, resolve_auto_load_skills
+    auto_names = [] if getattr(cli, "ignore_rules", ignore_rules) else resolve_auto_load_skills(CLI_CONFIG)
+    cli._auto_load_skills_result = ("", [], [])
+    if parsed_skills or auto_names:
+        from contextvars import copy_context
+        preload_context = copy_context()
         # Load the skill payloads in the background: skill_view walks the
         # full skills tree per skill (~0.5s for a large library) and the
         # result is only consumed at agent init (first message / first
@@ -22344,16 +22354,26 @@ def main(
         # so no agent can be built with the skills missing.
         def _load_preloaded_skills() -> None:
             try:
-                cli._preload_skills_result = build_preloaded_skills_prompt(
-                    parsed_skills,
-                    task_id=cli.session_id,
-                )
+                if auto_names:
+                    try:
+                        cli._auto_load_skills_result = build_auto_load_prompt(
+                            task_id=cli.session_id, user_config=CLI_CONFIG,
+                        )
+                    except Exception:
+                        logger.debug("skills.auto_load: preload skipped", exc_info=True)
+                if parsed_skills:
+                    preload_kwargs = {}
+                    if cli._auto_load_skills_result[1]:
+                        preload_kwargs["excluded_loaded_names"] = set(cli._auto_load_skills_result[1])
+                    cli._preload_skills_result = build_preloaded_skills_prompt(
+                        parsed_skills, task_id=cli.session_id, **preload_kwargs,
+                    )
             except Exception as exc:  # surfaced by finalize below
                 cli._preload_skills_error = exc
 
-        cli._preload_skills_requested = parsed_skills
+        cli._preload_skills_requested = [*auto_names, *(name for name in parsed_skills if name not in auto_names)]
         cli._preload_skills_thread = threading.Thread(
-            target=_load_preloaded_skills, name="skills-preload", daemon=True
+            target=preload_context.run, args=(_load_preloaded_skills,), name="skills-preload", daemon=True
         )
         cli._preload_skills_thread.start()
 

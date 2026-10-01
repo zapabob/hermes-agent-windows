@@ -554,6 +554,10 @@ class CLIAgentSetupMixin:
             # forever — so memory shutdown never ran on /exit (#49287).
             import cli as _cli
             _cli._active_agent_ref = self.agent
+            auto_result = getattr(self, "_auto_load_skills_result", None)
+            if auto_result is not None:
+                self.agent._auto_load_skills_result = auto_result
+                self.agent._auto_load_skills_resolved = True
             # Route agent status output through prompt_toolkit so ANSI escape
             # sequences aren't garbled by patch_stdout's StdoutProxy (#2262).
             self.agent._print_fn = _cprint

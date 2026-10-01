@@ -422,6 +422,30 @@ def _agent_home(agent: Any) -> Optional[Path]:
     return None
 
 
+def _auto_load_parts(agent: Any) -> List[str]:
+    """Capture configured skill bytes once for this agent's prompt lifecycle."""
+    if getattr(agent, "skip_context_files", False) or not any(
+        name in (agent.valid_tool_names or []) for name in ("skills_list", "skill_view", "skill_manage")
+    ):
+        return []
+    if not getattr(agent, "_auto_load_skills_resolved", False):
+        result: tuple[str, list[str], list[str]] = ("", [], [])
+        try:
+            if not is_truthy_value(os.environ.get("HERMES_IGNORE_RULES")):
+                from agent.skill_commands import build_auto_load_prompt
+                result = build_auto_load_prompt(
+                    task_id=getattr(agent, "session_id", None), home_override=_agent_home(agent)
+                )
+            if result[2]:
+                logger.warning("skills.auto_load: not found or disabled, skipped: %s", ", ".join(result[2]))
+        except Exception:
+            logger.debug("skills.auto_load: injection skipped", exc_info=True)
+        agent._auto_load_skills_result = result
+        agent._auto_load_skills_resolved = True
+    text = agent._auto_load_skills_result[0]
+    return [text] if text else []
+
+
 def _agent_skills_dir(agent: Any) -> Optional[Path]:
     """The agent's own ``<home>/skills`` dir, or None to use ambient home."""
     home = _agent_home(agent)
@@ -662,6 +686,8 @@ def build_system_prompt_parts(agent: Any, system_message: Optional[str] = None) 
         )
     else:
         skills_prompt = ""
+
+    stable_parts.extend(_auto_load_parts(agent))
 
     # Alibaba Coding Plan API always returns "glm-4.7" as model name regardless
     # of the requested model. Inject explicit model identity into the system prompt

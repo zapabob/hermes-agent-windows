@@ -924,13 +924,13 @@ def normalize_skill_lookup_name(identifier: str) -> str:
 
     # Look the primary skills root up on tools.skills_tool at CALL time
     # (not via get_skills_dir()): callers and tests patch
-    # ``tools.skills_tool.SKILLS_DIR`` and skill_view() itself resolves
-    # against that module attribute, so normalization must agree with the
-    # exact root skill_view() will enforce.  Import deferred to avoid a
+    # ``tools.skills_tool.SKILLS_DIR`` and skill_view() uses ``_skills_dir()``
+    # (which follows the live profile unless explicitly patched), so
+    # normalization must agree with that exact root. Import deferred to avoid a
     # module cycle (tools.skills_tool imports agent.skill_utils).
     try:
         from tools import skills_tool as _skills_tool
-        primary_root = Path(_skills_tool.SKILLS_DIR)
+        primary_root = _skills_tool._skills_dir()
     except Exception:
         primary_root = get_skills_dir()
 
