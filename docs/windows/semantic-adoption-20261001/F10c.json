@@ -1,0 +1,293 @@
+{
+  "id": "F10c",
+  "parent_family": "F10",
+  "status": "PARTIAL_WITH_BLOCKED_GATE",
+  "starting_commit": "6816251347d216d14eecd52833ec1e43312932a1",
+  "scope": "Per-call discovery exclusion IDs normalized/capped at20 and expanded by existing lineage owner, through registry and both inline callers; title/raw hits excluded before distinct-result limit.",
+  "source_sha256": {
+    "hermes_state_search.py": "fa881e6a8363ebe3a3e3029b4fad38a82bdb1d5a26f053a7dc1b742f577c91d3",
+    "tools/session_search_tool.py": "03b538a2984b29bc1d0f6842d0f79d09492263b373d6346e10e0f0efe9532887",
+    "agent/agent_runtime_helpers.py": "77c3f4956d6291ba73d134f3996e931ad6ada816541592a27e565d748f8410f6",
+    "agent/tool_executor.py": "11b247f9620b5e44d4d9c98d672ef708690d2635a8e0d348cfbe6481059c136f",
+    "hermes_state.py": "7234f882e8b01658d5b98fbc6d0c2bf7f5c2aeccc15ebbff264087047028a7a4",
+    "hermes_state_common.py": "5a24e8f31cff1119741dc7031de2fe6b6afae332af342473629775b8e1bbad06",
+    "run_agent.py": "891f83eabfbe514d3f6bee2e67fd59b34f0c7d5b4cabf4ce255c25308b61a5f3",
+    "tools/registry.py": "f95d011cae75f0426dd77cb1e25df6bebb61a067d795312df297cb877dd616f5",
+    "tests/hermes_state/test_search_temporal_native.py": "0dcd5a0b540590e19eb2e2987572038288712d2a704d11bc8ef1985d8a1e79f6",
+    "tests/hermes_state/test_search_or_recall_native.py": "23158181b832974115ba100d4045121ceb671ef6a7aa84489b0340b8f57ef7b3",
+    "tests/tools/test_session_recall_visibility.py": "7718ba9006065ba8ca9a75196a512270edd596fd81c5b92f7a26126cbfa3ee46",
+    "tests/tools/test_session_search.py": "a3c48a737b8ce5742d9a4167c49afeaf3e308772ded4eab44d27c63baf7b8ce8",
+    "tests/test_hermes_state.py": "d196b90dc6792e0d714ae78efe1e01667ccbf24feda212dbacc810b6364f0114",
+    "tests/hermes_state/test_get_messages_around.py": "5987839fa74512dd1e9ac0818c5d8371b432b86f54e606431cab1b221a7e8870",
+    "tests/hermes_state/test_get_anchored_view.py": "959316c86207ecf4ad927e8e0db9e2fb5a4ec87c31a7d576f70852b5a086e890",
+    "tests/hermes_state/test_search_exclusions_native.py": "ae908335f87d1ce38ef07d51ead457049a87373db8ed16dc242c8a4d4d2f3723",
+    "docs/windows/semantic-adoption-20261001/F10c-mini-plan.md": "c1b99cb582bba6025585ef98b43eeabf4dce9bb33539f112fb50177bd5039822"
+  },
+  "red": {
+    "pass": 21,
+    "behavioral_fail": 16,
+    "missing_public_API_fail": 1,
+    "skip": 0,
+    "fixture_error": 0,
+    "collection_error": 0
+  },
+  "final_native_regression": {
+    "pass": 212,
+    "fail": 0,
+    "skip": 0,
+    "exclusion_cases": 38,
+    "existing_recall_cases": 174,
+    "runner": {
+      "argv": [
+        "C:/Program Files/Git/bin/bash.exe",
+        "scripts/run_tests.sh",
+        "tests/hermes_state/test_search_exclusions_native.py",
+        "tests/hermes_state/test_search_temporal_native.py",
+        "tests/hermes_state/test_search_or_recall_native.py",
+        "tests/tools/test_session_recall_visibility.py",
+        "tests/tools/test_session_search.py",
+        "tests/test_hermes_state.py",
+        "-k",
+        "search or recall or exclusion or cap or compression or current or title or read_scroll",
+        "-q",
+        "-j",
+        "2",
+        "--file-timeout",
+        "180"
+      ],
+      "cwd": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+      "environment_keys": [
+        "COMSPEC",
+        "HERMES_HOME",
+        "HERMES_PYTHON",
+        "HOME",
+        "PATH",
+        "PATHEXT",
+        "PYTHONIOENCODING",
+        "PYTHONUTF8",
+        "SystemRoot",
+        "TEMP",
+        "TMP",
+        "USERPROFILE",
+        "WINDIR"
+      ],
+      "exit": 0,
+      "source_sha256": {
+        "cli.py": "c701b5d99eb195f083f92aa90a3702fcb2cffe5156dc482a822d4044cd1d1e29",
+        "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+        "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+        "tests/hermes_state/test_search_exclusions_native.py": "ae908335f87d1ce38ef07d51ead457049a87373db8ed16dc242c8a4d4d2f3723",
+        "tests/hermes_state/test_search_temporal_native.py": "0dcd5a0b540590e19eb2e2987572038288712d2a704d11bc8ef1985d8a1e79f6",
+        "tests/hermes_state/test_search_or_recall_native.py": "23158181b832974115ba100d4045121ceb671ef6a7aa84489b0340b8f57ef7b3",
+        "tests/tools/test_session_recall_visibility.py": "7718ba9006065ba8ca9a75196a512270edd596fd81c5b92f7a26126cbfa3ee46",
+        "tests/tools/test_session_search.py": "a3c48a737b8ce5742d9a4167c49afeaf3e308772ded4eab44d27c63baf7b8ce8",
+        "tests/test_hermes_state.py": "d196b90dc6792e0d714ae78efe1e01667ccbf24feda212dbacc810b6364f0114"
+      },
+      "log_sha256": "7bd71a1aab2f104f7d85a85599a38a4dfe139481cf311c10f7e067ff0eff1bad"
+    }
+  },
+  "restored_acceptance": {
+    "pass": 38,
+    "fail": 0,
+    "skip": 0,
+    "runner": {
+      "argv": [
+        "C:/Program Files/Git/bin/bash.exe",
+        "scripts/run_tests.sh",
+        "tests/hermes_state/test_search_exclusions_native.py",
+        "-q",
+        "-j",
+        "2",
+        "--file-timeout",
+        "180"
+      ],
+      "cwd": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+      "environment_keys": [
+        "COMSPEC",
+        "HERMES_HOME",
+        "HERMES_PYTHON",
+        "HOME",
+        "PATH",
+        "PATHEXT",
+        "PYTHONIOENCODING",
+        "PYTHONUTF8",
+        "SystemRoot",
+        "TEMP",
+        "TMP",
+        "USERPROFILE",
+        "WINDIR"
+      ],
+      "exit": 0,
+      "source_sha256": {
+        "cli.py": "c701b5d99eb195f083f92aa90a3702fcb2cffe5156dc482a822d4044cd1d1e29",
+        "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+        "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+        "tests/hermes_state/test_search_exclusions_native.py": "ae908335f87d1ce38ef07d51ead457049a87373db8ed16dc242c8a4d4d2f3723"
+      },
+      "log_sha256": "5f0d7ba460d7986d196ddbce4b9e9b2d41528fa554ae763cb166308736132a71"
+    },
+    "not_additive": true
+  },
+  "owner_regression": {
+    "pass": 13,
+    "fail": 0,
+    "skip": 6,
+    "primitive_pass": 11,
+    "concurrency_pass": 2,
+    "gate": "BLOCKED_NATIVE_WAL_READ_CONCURRENCY",
+    "runners": [
+      {
+        "argv": [
+          "C:/Program Files/Git/bin/bash.exe",
+          "scripts/run_tests.sh",
+          "tests/hermes_state/test_get_messages_around.py",
+          "tests/hermes_state/test_get_anchored_view.py",
+          "-q",
+          "-j",
+          "2",
+          "--file-timeout",
+          "180"
+        ],
+        "cwd": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+        "environment_keys": [
+          "COMSPEC",
+          "HERMES_HOME",
+          "HERMES_PYTHON",
+          "HOME",
+          "PATH",
+          "PATHEXT",
+          "PYTHONIOENCODING",
+          "PYTHONUTF8",
+          "SystemRoot",
+          "TEMP",
+          "TMP",
+          "USERPROFILE",
+          "WINDIR"
+        ],
+        "exit": 0,
+        "source_sha256": {
+          "cli.py": "c701b5d99eb195f083f92aa90a3702fcb2cffe5156dc482a822d4044cd1d1e29",
+          "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+          "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+          "tests/hermes_state/test_get_messages_around.py": "5987839fa74512dd1e9ac0818c5d8371b432b86f54e606431cab1b221a7e8870",
+          "tests/hermes_state/test_get_anchored_view.py": "959316c86207ecf4ad927e8e0db9e2fb5a4ec87c31a7d576f70852b5a086e890"
+        },
+        "log_sha256": "72a3354a6b0103d6207bd7687b28d4e21efc13993e5053d7c7d3db360aae55d9"
+      },
+      {
+        "argv": [
+          "C:/Program Files/Git/bin/bash.exe",
+          "scripts/run_tests.sh",
+          "tests/test_session_db_read_path_split.py",
+          "-q",
+          "-rs",
+          "-j",
+          "2",
+          "--file-timeout",
+          "180"
+        ],
+        "cwd": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+        "environment_keys": [
+          "COMSPEC",
+          "HERMES_HOME",
+          "HERMES_PYTHON",
+          "HOME",
+          "PATH",
+          "PATHEXT",
+          "PYTHONIOENCODING",
+          "PYTHONUTF8",
+          "SystemRoot",
+          "TEMP",
+          "TMP",
+          "USERPROFILE",
+          "WINDIR"
+        ],
+        "exit": 0,
+        "source_sha256": {
+          "cli.py": "c701b5d99eb195f083f92aa90a3702fcb2cffe5156dc482a822d4044cd1d1e29",
+          "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+          "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+          "tests/test_session_db_read_path_split.py": "7857ab8a2ff93366ba0b3affbc3f80a7880f54d9ca70025aa1e79998823aeb82"
+        },
+        "log_sha256": "21268519c640007efb3301e2c16e82a24f3d93c4917c59cb43a9c533238ebe62"
+      }
+    ]
+  },
+  "mutations": {
+    "count": 7,
+    "all_detected": true,
+    "all_product_bytes_restored": true,
+    "receipt_sha256": "b4178fe885fa7102eb8c5ecf92ab4c830fb78549af9f35207c237cfb930542b3"
+  },
+  "codegraph": {
+    "tool": "1.6.0",
+    "owners": 9,
+    "CLI_outputs": 30,
+    "receipt_sha256": "3db67e4e02c1026645d12dd2e259442d6f475fdafefff25b0d3a22461d0633a5",
+    "four_index_source_mismatches": 0
+  },
+  "independent_review": {
+    "verdict": "APPROVE",
+    "actual_model_id": "unexposed",
+    "actual_reasoning_effort": "unexposed",
+    "requested_model_id": "gpt-6.1-sol",
+    "requested_reasoning_effort": "high",
+    "receipt_sha256": "61e4f09ebd9580856ec3368f630115d51a546168b831c923b8446bd3abbc81a1",
+    "review_sha256": "c8afd08185858f49c0c83f3685d3dcb2333a03fdafb69f700a54c5c1362ea404"
+  },
+  "codegraph_patch_observation": {
+    "candidate_version": "1.6.1",
+    "provenance_receipt_sha256": "dcbbbfb3da77c10868bcb6c3843f4f63a203ad9230cc26461c7bf3e3e8b3770a",
+    "source_sha256": {
+      "lib/dist/file-limits.js": "80c27c4a256387b485c27545d8a31a0f42da4286db99cff37611b72ec52d2e0a",
+      "lib/dist/extraction/index.js": "47f9e62af110f96d9d5fe9d22c49199139e49dd4645a9f93ba664b7321c9e7fc",
+      "lib/dist/resolution/index.js": "d860b9c7ebcbc36d7db135da50f565ca79ad0fac49781ac413be7a04c2acd3e4"
+    },
+    "source_cap_bytes": 1048576,
+    "candidate_installed": false,
+    "candidate_executed": false,
+    "runtime_cli_version_help_verified": false,
+    "existing_1_6_0_tool_and_indexes_replaced": false,
+    "gateway_owner_bytes": 1576015,
+    "gateway_owner_source_sha256": "056b8581cead2c172ef02e79e8527a7be5455e8d351cc66143f46f38044439f8",
+    "disposition": "SOURCE_CAP_UNCHANGED",
+    "F01_F02_F03_gate": "BLOCKED_CODEGRAPH",
+    "public_override_identified": false,
+    "observation_is_not_full_tool_option_exhaustiveness_proof": true
+  },
+  "evidence_sha256": {
+    "F10c-tests-001/F10c-tests-red-001-receipt.json": "1732723f38a38261815e7eca3f3b865aeb37a297f0c2fe681a3f2aef4c236d77",
+    "F10c-tests-red-001.json": "2a126b137f91b46958e97241fcc244f74f34e8f0d576d1035091110ebffed43c",
+    "F10c-implementation-001.json": "dccfe718713b27c067c157a4f908ebad5ccdde20c43ce082c84465cc0ca20d6c",
+    "F10c-native-green-001.json": "fc87879e1b1f09a0c085a3df6730a475b0bee825bd55bbd7873c6b55e1a8cc94",
+    "F10c-mutation-001.json": "b4178fe885fa7102eb8c5ecf92ab4c830fb78549af9f35207c237cfb930542b3",
+    "F10c-restored-green-002.json": "967db6a1fbd6bdcdd74ddcbaaa9660146272cf28b1d7e513dd3addf524b9d5b3",
+    "F10c-owner-regression-001.json": "19e56f7090532d3118ce518e511df80398c94c32a9bf30ddca13c1e18da3908c",
+    "F10c-concurrency-regression-001.json": "a173171e71c7838ee875d8d31e48c6a347558c36958b8553f7f35c0952d238e3",
+    "F10c-pre-bind-001/receipt.json": "ccedb50aced4f98f3bbac9b0c33fc2162736435126f3ee899b4e3dd3a0902019",
+    "F10c-upstream-bind-001/receipt.json": "a7b0174474fc724ec9047d772c278f1b8fffd28462e38bb7640a7f76bee0eff7",
+    "F10c-downstream-bind-001/receipt.json": "c298b105aef121efbdf091207745cac6de5109b752694040e1b6faf40ab8c55a",
+    "F10c-r-after-bind-001/receipt.json": "f1eb2f5a96a413c1d11d5d62e92cc490912445d7079b0c70313a3c39e8c3747b",
+    "F10c-final-bind-001/receipt.json": "3db67e4e02c1026645d12dd2e259442d6f475fdafefff25b0d3a22461d0633a5",
+    "F10c-restored-bind-002/receipt.json": "3db67e4e02c1026645d12dd2e259442d6f475fdafefff25b0d3a22461d0633a5",
+    "graph-bindings-F10c-final-001.json": "aa790669190ec5847250521f2f21652ac615301f464903c92b18c8d92bc9c614",
+    "F10c-review-001/receipt.json": "61e4f09ebd9580856ec3368f630115d51a546168b831c923b8446bd3abbc81a1",
+    "F10c-review-001/review.md": "c8afd08185858f49c0c83f3685d3dcb2333a03fdafb69f700a54c5c1362ea404",
+    "CodeGraph-1.6.1-readonly-001/receipt.json": "dcbbbfb3da77c10868bcb6c3843f4f63a203ad9230cc26461c7bf3e3e8b3770a",
+    "CodeGraph-1.6.1-readonly-001/disposition.json": "5a3e73a7d5e3a4c44b83e1721fbbece00ce29b369e98121e449744c8fdff31f0"
+  },
+  "remaining": [
+    "BLOCKED_NATIVE_CJK_BIGRAM",
+    "BLOCKED_NATIVE_WAL_READ_CONCURRENCY",
+    "Windows cross-process FTS admission proof",
+    "Cross-profile policy conflict",
+    "Hidden-scaffold visibility",
+    "Memory-provider deletion authority",
+    "SQLite worker cancellation"
+  ],
+  "full_F10": false,
+  "full_U_TARGET_parity": false,
+  "runtime_independence_verified": false,
+  "production_runtime_used": false,
+  "published": false
+}

@@ -63,6 +63,7 @@ _DEMOTED_SESSION_SOURCES = ("cron",)
 # interactive matches buried under a wall of cron hits, so this is well above
 # the handful of distinct sessions a typical query returns.
 _DISCOVER_SCAN_LIMIT = 300
+_EXCLUDE_SESSION_IDS_CAP = 20
 
 # Raw FTS rows are only a discovery-plan input. The final response hydrates
 # its own anchored message window and bookends after lineage deduplication.
@@ -170,6 +171,28 @@ def _resolve_to_parent(db, session_id: str) -> tuple[str, bool]:
 def _resolve_lineage(db, session_id: str) -> str:
     """Convenience: return only the lineage root (ignores compression hop)."""
     return _resolve_to_parent(db, session_id)[0]
+
+
+def _normalize_exclude_session_ids(raw: Any) -> List[str]:
+    """Normalize a per-call discovery preference, bounded to 20 unique IDs."""
+    items = [raw] if isinstance(raw, str) else list(raw) if isinstance(raw, (list, tuple)) else []
+    ids: List[str] = []
+    for item in items:
+        sid = item.strip() if isinstance(item, str) else ""
+        if sid and sid not in ids:
+            ids.append(sid)
+        if len(ids) >= _EXCLUDE_SESSION_IDS_CAP:
+            break
+    return ids
+
+
+def _excluded_lineage_roots(db, exclude_session_ids: List[str]) -> set[str]:
+    """Reuse the existing lineage resolver for raw IDs and their roots."""
+    roots: set[str] = set()
+    for sid in exclude_session_ids:
+        roots.add(sid)
+        roots.add(_resolve_lineage(db, sid) or sid)
+    return roots
 
 
 def _session_end_reason(db, session_id: str) -> Optional[str]:
@@ -816,11 +839,15 @@ def _discover(
     link_profile: str = None,
     after_ts: Optional[int] = None,
     before_ts: Optional[int] = None,
+    exclude_session_ids: Optional[List[str]] = None,
 ) -> str:
     """Discovery shape: FTS5 plus adaptive or full result hydration."""
     role_list = role_filter if role_filter else ["user", "assistant"]
     current_lineage_root = _resolve_lineage(db, current_session_id) if current_session_id else None
+    excluded_roots = _excluded_lineage_roots(db, exclude_session_ids or [])
     title_result = _title_match_result(db, query, current_lineage_root)
+    if title_result and {title_result["session_id"], title_result.get("_lineage_root") or title_result["session_id"]} & excluded_roots:
+        title_result = None
     if title_result and (after_ts is not None or before_ts is not None):
         title_sid = title_result["session_id"]
         title_root = title_result.get("_lineage_root") or title_sid
@@ -890,6 +917,8 @@ def _discover(
             break
         raw_sid = r["session_id"]
         resolved_sid, _ = _resolve_to_parent(db, raw_sid)
+        if raw_sid in excluded_roots or resolved_sid in excluded_roots:
+            continue
         # Skip the current session lineage — UNLESS the hit's transcript has
         # left live context. Three sub-cases:
         #
@@ -1029,6 +1058,7 @@ def _session_search_impl(
     detail: str = "adaptive",
     after: Optional[str] = None,
     before: Optional[str] = None,
+    exclude_session_ids: Optional[List[str]] = None,
     *,
     _owned_dbs: Optional[List[Any]] = None,
 ) -> str:
@@ -1146,6 +1176,7 @@ def _session_search_impl(
         link_profile=profile,
         after_ts=after_ts,
         before_ts=before_ts,
+        exclude_session_ids=_normalize_exclude_session_ids(exclude_session_ids),
     )
 
 
@@ -1167,6 +1198,7 @@ def session_search(
     detail: str = "adaptive",
     after: Optional[str] = None,
     before: Optional[str] = None,
+    exclude_session_ids: Optional[List[str]] = None,
 ) -> str:
     """Run session search and close databases opened by this invocation."""
     owned_dbs: List[Any] = []
@@ -1197,6 +1229,7 @@ def session_search(
             detail=detail,
             after=after,
             before=before,
+            exclude_session_ids=exclude_session_ids,
             _owned_dbs=owned_dbs,
         )
     finally:
@@ -1315,6 +1348,11 @@ SESSION_SEARCH_SCHEMA = {
                 "type": "string",
                 "description": "Discovery only: exclusive session-start upper bound. ISO date/datetime (naive means UTC) or integer h/d/w duration. Applied before result limits.",
             },
+            "exclude_session_ids": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Discovery only: omit up to 20 previously inspected session IDs and their lineages. Does not restrict explicit read, scroll or browse.",
+            },
             "profile": {
                 "type": "string",
                 "description": (
@@ -1348,6 +1386,7 @@ registry.register(
         detail=args.get("detail", "adaptive"),
         after=args.get("after"),
         before=args.get("before"),
+        exclude_session_ids=args.get("exclude_session_ids"),
         profile=args.get("profile"),
         db=kw.get("db"),
         current_session_id=kw.get("current_session_id"),

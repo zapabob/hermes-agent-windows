@@ -45,7 +45,14 @@
     "codegraph_max_bytes": 1048576,
     "indexed_nodes": 0,
     "tool": "1.6.0",
-    "source_sha256": "056b8581cead2c172ef02e79e8527a7be5455e8d351cc66143f46f38044439f8"
+    "source_sha256": "056b8581cead2c172ef02e79e8527a7be5455e8d351cc66143f46f38044439f8",
+    "official_patch_observation": {
+      "candidate": "1.6.1",
+      "source_cap_bytes": 1048576,
+      "candidate_installed": false,
+      "candidate_executed": false,
+      "disposition_sha256": "5a3e73a7d5e3a4c44b83e1721fbbece00ce29b369e98121e449744c8fdff31f0"
+    }
   },
   "partial_slice": {
     "id": "F05a",
@@ -89,6 +96,11 @@
     },
     {
       "id": "F10a",
+      "status": "PARTIAL_WITH_BLOCKED_GATE",
+      "commit": "6816251347d216d14eecd52833ec1e43312932a1"
+    },
+    {
+      "id": "F10c",
       "status": "PARTIAL_WITH_BLOCKED_GATE"
     }
   ],
