@@ -52,6 +52,7 @@ import cli
 from agent.plan_prompt import build_plan_prompt
 from openai.types.chat import ChatCompletion
 from run_agent import AIAgent
+from tools import approval
 
 case = sys.argv[1]
 workspace = Path.cwd()
@@ -60,6 +61,15 @@ config = home/'config.yaml'
 original_config = config.read_bytes()
 sentinel = workspace/'unrelated.txt'
 original_sentinel = sentinel.read_bytes()
+
+approval_session = 'owned-plan-native'
+other_approval_session = 'owned-other-plan-native'
+approval.approve_session(approval_session, 'owned-existing-pattern')
+approval.approve_session(other_approval_session, 'owned-other-pattern')
+approval_token = approval.set_current_session_key(approval_session)
+with approval._lock:
+    approval_snapshot = {key: set(value) for key, value in approval._session_approved.items()}
+    yolo_snapshot = set(approval._session_yolo)
 target = workspace/'.hermes/plans/2026-10-01_000000-fixture.md' if case == 'saved-plan' else config
 content = '# Fixture plan\n\n日本語の計画。実装しない。\n'
 
@@ -112,6 +122,13 @@ if case == 'saved-plan':
 else:
     assert not (workspace/'.hermes/plans').exists()
 assert all(tc['function']['name']=='write_file' for request in calls for message in request['messages'] for tc in message.get('tool_calls',[]))
+assert approval.get_current_session_key() == approval_session
+with approval._lock:
+    assert approval._session_approved == approval_snapshot
+    assert approval._session_yolo == yolo_snapshot
+approval.reset_current_session_key(approval_token)
+approval.clear_session(approval_session)
+approval.clear_session(other_approval_session)
 proof_logger = logging.getLogger('owned.plan.proof')
 proof_logger.disabled = False
 proof_logger.setLevel(logging.INFO)
