@@ -143,8 +143,14 @@
     {
       "id": "F04b",
       "status": "LOCAL_SLICE_VERIFIED",
-      "commit": null,
+      "commit": "4dea37991861f6dc16040f6a5f9f015acb4749db",
       "full_family_complete": false
+    },
+    {
+      "id": "Picker-P03",
+      "status": "LOCAL_SLICE_VERIFIED",
+      "commit": null,
+      "full_picker_complete": false
     }
   ],
   "proof_only_slices": [
@@ -246,18 +252,29 @@
         "failure recovery",
         "model and effort selection preservation"
       ],
-      "interval_policy": "fixed upstream purpose-specific lifetimes; metadata4h/provider1h/successful-stale7d/nativeOllama300s; fallback60 adoption pending; no consolidated12h timer or mandatory upstream runtime",
+      "interval_policy": "fixed source purpose-specific: metadata4h/provider1h/successful-stale7d/nativeOllama300s/failure30s/fallback60s; optional Nous artifact20min remains distinct and no mandatory runtime; no consolidated4h/12h timer",
       "recorded_slices": [
-        "Picker-P01P02"
+        "Picker-P01P02",
+        "Picker-P03"
       ],
       "blocked_http_evidence": "Picker-loopback-approval-block-001.json"
     },
     "full_family_completion_count": 0,
-    "recorded_local_commit_count": 15,
+    "recorded_local_commit_count": 16,
     "not_required_now": {
       "other_seed_candidates_unreviewed": 39,
       "historical_inventory_retained": true
     },
-    "no_budget_percentage_verified": true
+    "no_budget_percentage_verified": true,
+    "selected_integration_regression": {
+      "passed": 319,
+      "failed": 0,
+      "files": 16,
+      "retry": false,
+      "frozen_sources": 143,
+      "source_continuity": true,
+      "evidence": "Required-integration-001.json",
+      "full_family_proof": false
+    }
   }
 }

@@ -1,0 +1,160 @@
+{
+  "id": "Picker-P03",
+  "status": "LOCAL_SLICE_VERIFIED",
+  "starting_commit": "4dea37991861f6dc16040f6a5f9f015acb4749db",
+  "tested_worktree_source_sha256": {
+    "agent/models_dev.py": "b40e48b99310223777cdd62246be815a746721f7bd3a2b95c82dc626b63d387b",
+    "docs/windows/semantic-adoption-20261001/Model-picker-P03-mini-plan.md": "066904e466ae2ac71959eafccc1dd84786b9fd85c4fce4be4b5bdac262fd5212",
+    "hermes_cli/inventory.py": "bae70812129bfc9b1c5f67e2626ee2885a3440ee3f3a9f256142609e0e9878ec",
+    "hermes_cli/model_catalog.py": "f8ec9d5a21326bdb07f96a5112a5cc162b7ae946ace4274ab0ab8ff7a1911b40",
+    "hermes_cli/model_switch.py": "1d83a2914aa973bfe8f27912b3f46dc4fc5d21dd9a4a477f0d8d72b85cd53ac7",
+    "hermes_cli/models.py": "241f0badf1395e48e4654cb25028b5f88d62594ee0446b0b7b5402e309472747",
+    "tests/hermes_cli/test_model_cache_fallback_native.py": "1a16838add7f9c25d36916d8c6fe21a449a71e89a79624cd7510e33d4708fa77",
+    "tui_gateway/methods_complete.py": "55b75b8fedff3a84610110249226f6de33b1a319c7da6498f6a8c0f7311c0366",
+    "providers/base.py": "65c735f999f60011c475db33ce23012de6ac5cf40d8bb255f0021867ebbb23fe",
+    "providers/__init__.py": "eb55ccb80726aa2d4c8f1294a4ca8fdab82fc6f34b8c374b423b821d8012980b",
+    "hermes_cli/auth.py": "1aacac94bce7ef8b1ea020a8a3479e6c1fecc4954ff96a293f3cc6904c236df7",
+    "hermes_constants.py": "70e75092fd443e586b4a344e8043f8020c84de7e2c7684c9c3a2880778d1a0aa",
+    "hermes_cli/urllib_security.py": "dbeb3be6d995dcc2668cf60f268aa83ca9f76c0bffa31e1355174d3b0b3cee70",
+    "utils.py": "477e5d73ed714ab2b28ce3b5ccb611f9a6791976602fe7f37c164f8e17781cbb",
+    "tests/hermes_cli/test_model_cache_swr.py": "745be7caefd6b001ed5994533469b2d05ac91ce847391bef50d0283762f87e2a",
+    "tests/hermes_cli/test_model_cache_parallel_prefetch.py": "7c38dbcfc02ef5e4bbcb3393971bea2ef43ae15926bd310c05698dbeed7b9891",
+    "tui_gateway/method_ctx.py": "12200d5cd91f7e387d069b30d2254e407e94e428e99295ffbf0902165d8d36ac",
+    "tui_gateway/server.py": "05fba295146d0fb454f91fad1674d9acf9c490632acaa2a348d3eca655241cd5",
+    "hermes_cli/config.py": "d679ca0b84f2e184b84f8557bf92bbeea55a021f7fc2e18f269264e1310c30b5"
+  },
+  "worker_evidence": "Picker-P03-review-handoff-001/receipt.json",
+  "native": {
+    "passed": 35,
+    "failed": 0,
+    "skipped": 0
+  },
+  "regression": {
+    "passed": 211,
+    "failed": 0,
+    "skipped": 0,
+    "errors": 0,
+    "denied_attempts": 134
+  },
+  "canonical_restored_subset": {
+    "passed": 98,
+    "failed": 0,
+    "skipped": 0,
+    "files": 7
+  },
+  "unique_native_plus_regression": 246,
+  "counts_overlap": true,
+  "mutations": {
+    "killed": 10,
+    "survived": 0,
+    "invalid": 0,
+    "exact_restored": true
+  },
+  "native_transports": {
+    "records": 35,
+    "vendor_refusals": 2,
+    "unexpected_connections": 0
+  },
+  "codegraph": {
+    "version": "1.6.0",
+    "roots": 4,
+    "pending_refs": 0,
+    "pending_changes": 0,
+    "hash_mismatches": 0,
+    "required_owner_exclusions": 0,
+    "indexed_file_counts": {
+      "downstream": 8960,
+      "r-after": 8774,
+      "upstream": 13040,
+      "integration": 9002
+    }
+  },
+  "lint": {
+    "argv": [
+      "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\ruff.exe",
+      "check",
+      "hermes_cli/models.py",
+      "hermes_cli/model_switch.py",
+      "tests/hermes_cli/test_model_cache_fallback_native.py",
+      "--no-cache",
+      "--output-format",
+      "concise"
+    ],
+    "exit": 0
+  },
+  "review": {
+    "verdict": "APPROVE_BOUNDED_SLICE",
+    "manifest_sha256": "c10934a9ee7f30e3fef33274ecc69c608b160f0828782daec32133470171fe05",
+    "report_sha256": "b3854aa0cc9c1199287c6379cc8c347eab5f2ae960d44874399f2dfdd4560c9b",
+    "receipt_sha256": "2c28b08d716a8de9dbcb9604c69fa9c8a81243672f0ebb6d75b62d2fcf724f85",
+    "frozen_sources": 8,
+    "real_additional_sources": 11,
+    "evidence": 713,
+    "nonblocking_note": "P03-E01 historical normalized-LF log_sha256 label; independently20logs matched raw/normalized",
+    "actual_model": null,
+    "actual_effort": null
+  },
+  "lifetime_seconds": {
+    "models_dev": 14400,
+    "provider_catalogue": 3600,
+    "successful_stale_max": 604800,
+    "native_ollama_success": 300,
+    "native_ollama_failure": 30,
+    "fallback_placeholder": 60,
+    "optional_upstream_artifact_distinct_not_adopted": 1200
+  },
+  "supplementary_integration": {
+    "passed": 319,
+    "failed": 0,
+    "files": 16,
+    "retry": false,
+    "frozen_sources": 143,
+    "source_continuity": true,
+    "evidence": "Required-integration-001.json",
+    "full_family_proof": false
+  },
+  "remaining": [
+    "wider provider branches",
+    "cold GUI",
+    "Astra entitlement",
+    "OpenCode failed 300-second memo recovery",
+    "forced global-cache clear",
+    "whole picker/family parity",
+    "whole repository/runtime dependency zero"
+  ],
+  "blocked_evidence_modes": [
+    {
+      "mode": "real HTTP test-server execution",
+      "reason": "previous automatic approval review policy rejection; never retried"
+    }
+  ],
+  "mandatory_upstream_runtime_added": false,
+  "new_dependencies": false,
+  "global_runtime_dependency_zero_claim": false,
+  "full_picker_complete": false,
+  "published": false,
+  "source_sha256": {
+    "_docs/2026-10-01_windows-semantic-adoption_Codex.md": "6a9cfc2e62f2e1e40bafc110e0a98152ebcb417cbbeeb6619e926fcce7a9d331",
+    "agent/models_dev.py": "b40e48b99310223777cdd62246be815a746721f7bd3a2b95c82dc626b63d387b",
+    "docs/windows/semantic-adoption-20261001/Model-picker-P03-mini-plan.md": "066904e466ae2ac71959eafccc1dd84786b9fd85c4fce4be4b5bdac262fd5212",
+    "docs/windows/semantic-adoption-20261001/README.md": "3d280dbf769003d0694a2b4c2745851c4f5a8c35fd1207ba933147444efb17ef",
+    "docs/windows/semantic-adoption-20261001/inventory-status.json": "49f1145fffeef8fecc7a206584636f95881261b92bf4bd542e7c14422cdfadfc",
+    "hermes_cli/auth.py": "1aacac94bce7ef8b1ea020a8a3479e6c1fecc4954ff96a293f3cc6904c236df7",
+    "hermes_cli/config.py": "d679ca0b84f2e184b84f8557bf92bbeea55a021f7fc2e18f269264e1310c30b5",
+    "hermes_cli/inventory.py": "bae70812129bfc9b1c5f67e2626ee2885a3440ee3f3a9f256142609e0e9878ec",
+    "hermes_cli/model_catalog.py": "f8ec9d5a21326bdb07f96a5112a5cc162b7ae946ace4274ab0ab8ff7a1911b40",
+    "hermes_cli/model_switch.py": "1d83a2914aa973bfe8f27912b3f46dc4fc5d21dd9a4a477f0d8d72b85cd53ac7",
+    "hermes_cli/models.py": "241f0badf1395e48e4654cb25028b5f88d62594ee0446b0b7b5402e309472747",
+    "hermes_cli/urllib_security.py": "dbeb3be6d995dcc2668cf60f268aa83ca9f76c0bffa31e1355174d3b0b3cee70",
+    "hermes_constants.py": "70e75092fd443e586b4a344e8043f8020c84de7e2c7684c9c3a2880778d1a0aa",
+    "providers/__init__.py": "eb55ccb80726aa2d4c8f1294a4ca8fdab82fc6f34b8c374b423b821d8012980b",
+    "providers/base.py": "65c735f999f60011c475db33ce23012de6ac5cf40d8bb255f0021867ebbb23fe",
+    "tests/hermes_cli/test_model_cache_fallback_native.py": "1a16838add7f9c25d36916d8c6fe21a449a71e89a79624cd7510e33d4708fa77",
+    "tests/hermes_cli/test_model_cache_parallel_prefetch.py": "7c38dbcfc02ef5e4bbcb3393971bea2ef43ae15926bd310c05698dbeed7b9891",
+    "tests/hermes_cli/test_model_cache_swr.py": "745be7caefd6b001ed5994533469b2d05ac91ce847391bef50d0283762f87e2a",
+    "tui_gateway/method_ctx.py": "12200d5cd91f7e387d069b30d2254e407e94e428e99295ffbf0902165d8d36ac",
+    "tui_gateway/methods_complete.py": "55b75b8fedff3a84610110249226f6de33b1a319c7da6498f6a8c0f7311c0366",
+    "tui_gateway/server.py": "05fba295146d0fb454f91fad1674d9acf9c490632acaa2a348d3eca655241cd5",
+    "utils.py": "477e5d73ed714ab2b28ce3b5ccb611f9a6791976602fe7f37c164f8e17781cbb"
+  }
+}

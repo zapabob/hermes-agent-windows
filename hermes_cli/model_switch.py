@@ -20,6 +20,7 @@ OpenRouter variant suffixes (``:free``, ``:extended``, ``:fast``).
 
 from __future__ import annotations
 
+import contextvars
 import http.client
 import logging
 import os
@@ -2404,27 +2405,23 @@ _PARALLEL_PREFETCH_WORKERS = 8
 def _prefetch_provider_models_parallel(provider_slugs: list[str]) -> None:
     """Fetch model catalogs for multiple providers in parallel.
 
-    Only providers whose cache entry is stale or missing are fetched; fresh
-    entries are skipped to avoid unnecessary network calls.  Each worker uses
-    :func:`update_provider_cache_entry` (thread-safe) to persist its result,
-    so concurrent writes to ``provider_models_cache.json`` don't clobber each
-    other.
+    Only providers with no usable disk tier are fetched. Persistence and
+    admission belong to :func:`cached_provider_model_ids`; re-saving its
+    served list would discard provenance or retimestamp retained success.
 
     :param provider_slugs: Hermes provider IDs to prefetch (e.g. ``["openrouter",
         "anthropic", "deepseek"]``).  Unknown providers are silently skipped.
     """
     from hermes_cli.models import cached_provider_model_ids
 
-    # Quick-stale-check: skip providers whose cache is already fresh so we
-    # don't waste network calls on a warm cache.  We check staleness the same
-    # way cached_provider_model_ids does internally: load the cache, compare
-    # age to TTL.  This is a read-only check — if the cache file changes
+    # Skip usable fresh and SWR tiers with the public cache's shared policy.
+    # This is a read-only check — if the cache file changes
     # between this check and the actual fetch, cached_provider_model_ids will
     # still do the right thing (it re-reads the cache internally).
     from hermes_cli.models import (
         _load_provider_models_cache,
         _credential_fingerprint,
-        _PROVIDER_MODELS_CACHE_TTL,
+        _disk_serve_tier,
         normalize_provider,
     )
 
@@ -2432,20 +2429,14 @@ def _prefetch_provider_models_parallel(provider_slugs: list[str]) -> None:
     stale_slugs: list[str] = []
     cache = _load_provider_models_cache()
     for slug in provider_slugs:
-        normalized = normalize_provider(slug) or (slug or "")
+        requested = str(slug or "").strip().lower()
+        normalized = requested if requested == "ollama" else (normalize_provider(slug) or (slug or ""))
         if not normalized:
             continue
         entry = cache.get(normalized)
         fp = _credential_fingerprint(normalized)
-        if (
-            isinstance(entry, dict)
-            and entry.get("fp") == fp
-            and isinstance(entry.get("models"), list)
-            and entry["models"]
-        ):
-            age = now - float(entry.get("at", 0))
-            if age < _PROVIDER_MODELS_CACHE_TTL:
-                continue  # fresh, skip
+        if _disk_serve_tier(entry, fp, now, is_ollama=normalized == "ollama"):
+            continue
         stale_slugs.append(normalized)
 
     if not stale_slugs:
@@ -2455,13 +2446,7 @@ def _prefetch_provider_models_parallel(provider_slugs: list[str]) -> None:
 
     def _fetch_one(slug: str) -> None:
         try:
-            models = cached_provider_model_ids(slug, force_refresh=True)
-            # cached_provider_model_ids already persists the result, but in a
-            # non-locked read-modify-write.  Re-persist via the thread-safe
-            # path to guarantee no lost writes under concurrency.
-            if models:
-                from hermes_cli.models import update_provider_cache_entry
-                update_provider_cache_entry(slug, models)
+            cached_provider_model_ids(slug, force_refresh=True)
         except Exception:
             pass  # best-effort; picker falls back to curated list
 
@@ -2469,7 +2454,14 @@ def _prefetch_provider_models_parallel(provider_slugs: list[str]) -> None:
         max_workers=min(_PARALLEL_PREFETCH_WORKERS, len(stale_slugs)),
         thread_name_prefix="model-cache-prefetch",
     ) as executor:
-        list(executor.map(_fetch_one, stale_slugs))
+        # Each task needs its own Context: a Context cannot be entered by
+        # concurrent workers, and ambient HOME must not select its cache.
+        futures = [
+            executor.submit(contextvars.copy_context().run, _fetch_one, slug)
+            for slug in stale_slugs
+        ]
+        for future in futures:
+            future.result()
 
 
 def _collect_authed_provider_slugs(

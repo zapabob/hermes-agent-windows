@@ -4269,6 +4269,10 @@ def _openai_discovery_base_url(provider: str) -> str:
     return "https://api.openai.com/v1"
 
 
+class CuratedFallbackModels(list[str]):
+    """Curated placeholder returned when a supported live catalog is unavailable."""
+
+
 def provider_model_ids(provider: Optional[str], *, force_refresh: bool = False) -> list[str]:
     """Return the best known model catalog for a provider.
 
@@ -4348,8 +4352,7 @@ def provider_model_ids(provider: Optional[str], *, force_refresh: bool = False) 
                 return live
         except Exception:
             pass
-        if normalized == "copilot-acp":
-            return list(_PROVIDER_MODELS.get("copilot", []))
+        return CuratedFallbackModels(_PROVIDER_MODELS.get("copilot", []))
     if normalized in _OPENCODE_LIVE_MODEL_BASE_URLS:
         curated_static = list(_PROVIDER_MODELS.get(normalized, []))
         merged_static = _merge_with_models_dev(normalized, curated_static)
@@ -4525,12 +4528,14 @@ def provider_model_ids(provider: Optional[str], *, force_refresh: bool = False) 
     # ── Profile-based generic live fetch (all simple api-key providers) ──
     # Handles any provider registered in providers/ with auth_type="api_key".
     # Replaces per-provider copy-paste blocks (stepfun, gmi, zai, etc.).
+    degraded_profile = False
     try:
         from providers import get_provider_profile
         from hermes_cli.auth import resolve_api_key_provider_credentials
 
         _p = get_provider_profile(normalized)
         if _p and _p.auth_type == "api_key" and _p.base_url:
+            degraded_profile = True
             try:
                 creds = resolve_api_key_provider_credentials(normalized)
                 api_key = str(creds.get("api_key") or "").strip()
@@ -4540,7 +4545,11 @@ def provider_model_ids(provider: Optional[str], *, force_refresh: bool = False) 
             if not base_url:
                 base_url = _p.base_url
             if api_key:
-                live = _p.fetch_models(api_key=api_key, base_url=base_url or None)
+                try:
+                    live = _p.fetch_models(api_key=api_key, base_url=base_url or None)
+                except Exception:
+                    logger.debug("Profile catalog failed for %s", normalized, exc_info=True)
+                    live = None
                 if live:
                     # Merge static curated list with live API results so
                     # models that the live endpoint omits (stale cache,
@@ -4576,7 +4585,7 @@ def provider_model_ids(provider: Optional[str], *, force_refresh: bool = False) 
                     return live
             # Use profile's fallback_models if defined
             if _p.fallback_models:
-                return list(_p.fallback_models)
+                return CuratedFallbackModels(_p.fallback_models)
     except Exception:
         pass
 
@@ -4584,9 +4593,9 @@ def provider_model_ids(provider: Optional[str], *, force_refresh: bool = False) 
     if normalized in _MODELS_DEV_PREFERRED:
         merged = _merge_with_models_dev(normalized, curated_static)
         if normalized in {"xai", "xai-oauth"}:
-            return _xai_finalize_catalog(merged)
-        return merged
-    return curated_static
+            merged = _xai_finalize_catalog(merged)
+        return CuratedFallbackModels(merged) if degraded_profile else merged
+    return CuratedFallbackModels(curated_static) if degraded_profile else curated_static
 
 
 # ---------------------------------------------------------------------------
@@ -4611,6 +4620,7 @@ def provider_model_ids(provider: Optional[str], *, force_refresh: bool = False) 
 #     to a live fetch — the picker keeps working.
 
 _PROVIDER_MODELS_CACHE_TTL = 3600  # 1h
+_PROVIDER_MODELS_FALLBACK_TTL = 60
 # Providers whose catalog is served with NO credential and therefore gets a
 # stable (constant) credential fingerprint in the disk cache. The opencode-free
 # catalog is anonymous — its freshness comes from TTL revalidation, not from
@@ -4676,20 +4686,13 @@ def _spawn_swr_refresh(cache_key: str, refresh_fn=None) -> None:
                 }
         if not live:
             return None
-        return {
-            "fp": _credential_fingerprint(cache_key),
-            "at": time.time(),
-            "models": list(live),
-        }
+        return _provider_result_entry(_credential_fingerprint(cache_key), live)
 
     def _refresh() -> None:
         try:
             entry = (refresh_fn or _default_refresh)()
             if entry:
-                with _cache_write_lock:
-                    cache = _load_provider_models_cache()
-                    cache[cache_key] = entry
-                    _save_provider_models_cache(cache)
+                _store_provider_models_entry(cache_key, entry)
         except Exception:
             logger.debug("SWR refresh failed for %s", cache_key, exc_info=True)
         finally:
@@ -4846,6 +4849,51 @@ def _save_provider_models_cache(data: dict) -> None:
         pass
 
 
+def _provider_result_entry(fp: str, models: list[str]) -> dict[str, Any]:
+    """Capture provenance before converting a raw provider result to a list."""
+    entry = {"fp": fp, "at": time.time(), "models": list(models)}
+    if isinstance(models, CuratedFallbackModels):
+        entry["fallback"] = True
+    return entry
+
+
+def _store_provider_models_entry(cache_key: str, entry: dict[str, Any]) -> dict[str, Any]:
+    """Admit against the latest row under the existing writer lock, after I/O."""
+    with _cache_write_lock:
+        cache = _load_provider_models_cache()
+        existing = cache.get(cache_key)
+        if (
+            entry.get("fallback")
+            and _cache_entry_valid(existing, entry["fp"])
+            and not existing.get("fallback")
+        ):
+            # Failure cannot refresh or replace a successful account catalog,
+            # including success committed while this request was in flight.
+            return existing
+        cache[cache_key] = entry
+        _save_provider_models_cache(cache)
+        return entry
+
+
+def _disk_serve_tier(
+    entry: Any, fp: str, now: float, *, is_ollama: bool = False,
+    ttl_seconds: int = _PROVIDER_MODELS_CACHE_TTL,
+) -> Optional[str]:
+    """Shared freshness policy for public reads and parallel prefetch."""
+    if not _cache_entry_valid(entry, fp, allow_empty=is_ollama):
+        return None
+    if is_ollama:
+        ttl_seconds = min(ttl_seconds, _OLLAMA_LOCAL_MODELS_CACHE_TTL)
+    age = now - entry["at"]
+    if entry.get("fallback"):
+        return "fresh" if age < _PROVIDER_MODELS_FALLBACK_TTL else None
+    if age < ttl_seconds:
+        return "fresh"
+    if entry["models"] and age < _PROVIDER_MODELS_STALE_SERVE_MAX:
+        return "stale"
+    return None
+
+
 def update_provider_cache_entry(provider: str, models: list[str]) -> None:
     """Thread-safe single-entry update of the provider-models disk cache.
 
@@ -4859,14 +4907,7 @@ def update_provider_cache_entry(provider: str, models: list[str]) -> None:
         if not normalized or not models:
             return
         fp = _credential_fingerprint(normalized)
-        with _cache_write_lock:
-            cache = _load_provider_models_cache()
-            cache[normalized] = {
-                "fp": fp,
-                "at": time.time(),
-                "models": list(models),
-            }
-            _save_provider_models_cache(cache)
+        _store_provider_models_entry(normalized, _provider_result_entry(fp, models))
     except Exception:
         pass
 
@@ -4894,31 +4935,17 @@ def cached_provider_model_ids(
     entry = cache.get(normalized)
     now = time.time()
 
-    allow_empty_ollama = normalized == "ollama"
-    if not force_refresh and _cache_entry_valid(entry, fp, allow_empty=allow_empty_ollama):
-        age = now - entry["at"]
-        if age < ttl_seconds:
-            return list(entry["models"])
-        # Empty native catalogs are authoritative only for the short native
-        # TTL. Re-probe after expiry so newly pulled models become visible;
-        # do not serve an empty row through the generic stale window.
-        if entry["models"] and age < _PROVIDER_MODELS_STALE_SERVE_MAX:
-            # Stale-while-revalidate: serve the expired entry immediately so
-            # interactive picker opens never block on serial /v1/models
-            # round-trips; refresh the cache off-thread for the next open.
+    tier = _disk_serve_tier(entry, fp, now, is_ollama=normalized == "ollama", ttl_seconds=ttl_seconds)
+    if not force_refresh and tier:
+        if tier == "stale":
             _spawn_swr_refresh(normalized)
-            return list(entry["models"])
+        return list(entry["models"])
 
     # Cache miss / stale / forced refresh — call the live path.
     live = provider_model_ids(normalized, force_refresh=force_refresh)
     if live:
-        cache[normalized] = {
-            "fp": fp,
-            "at": now,
-            "models": list(live),
-        }
-        _save_provider_models_cache(cache)
-        return list(live)
+        admitted = _store_provider_models_entry(normalized, _provider_result_entry(fp, live))
+        return list(admitted["models"])
 
     if normalized == "ollama":
         base_url = _get_ollama_base_url()
@@ -4929,8 +4956,7 @@ def cached_provider_model_ids(
         if _OLLAMA_LOCAL_PROBE_REACHABLE.get(probe_key) is True:
             # A reachable empty native catalog is authoritative for the short
             # native TTL; do not resurrect a stale disk catalog.
-            cache[normalized] = {"fp": fp, "at": now, "models": []}
-            _save_provider_models_cache(cache)
+            _store_provider_models_entry(normalized, _provider_result_entry(fp, []))
             return []
 
         # A failed/non-native probe is not authoritative. Preserve a stale
@@ -4940,6 +4966,7 @@ def cached_provider_model_ids(
             and entry.get("fp") == fp
             and isinstance(entry.get("models"), list)
             and entry["models"]
+            and not entry.get("fallback")
         ):
             return list(entry["models"])
         return []
@@ -4947,7 +4974,7 @@ def cached_provider_model_ids(
     # Live fetch returned nothing. If we have a stale entry with the
     # SAME fingerprint, prefer it over an empty result — stale data
     # beats no data when the network is flaky.
-    if _cache_entry_valid(entry, fp):
+    if _cache_entry_valid(entry, fp) and not entry.get("fallback"):
         return list(entry["models"])
     return list(live or [])
 
@@ -6724,23 +6751,21 @@ def cached_fetch_api_models(
     cache = _load_provider_models_cache()
     entry = cache.get(cache_key)
     now = time.time()
+    tier = _disk_serve_tier(entry, fp, now, ttl_seconds=ttl_seconds)
 
     if cache_only:
         # Same trust window as the stale-while-revalidate tier below, minus
         # the revalidation: an entry this side of the bound is good enough to
         # render, and anything older is treated as a miss so the caller falls
         # back to its configured list rather than showing a stale catalog.
-        if force_refresh or not _cache_entry_valid(entry, fp):
-            return None
-        if now - entry["at"] >= _PROVIDER_MODELS_STALE_SERVE_MAX:
+        if force_refresh or not tier:
             return None
         return list(entry["models"])
 
-    if not force_refresh and _cache_entry_valid(entry, fp):
-        age = now - entry["at"]
-        if age < ttl_seconds:
+    if not force_refresh and tier:
+        if tier == "fresh":
             return list(entry["models"])
-        if age < _PROVIDER_MODELS_STALE_SERVE_MAX:
+        if tier == "stale":
             # Stale-while-revalidate: serve the expired entry immediately so
             # picker opens never block on a live /v1/models round-trip
             # (#72762's stall class, which a plain TTL would reintroduce an
@@ -6752,7 +6777,7 @@ def cached_fetch_api_models(
                 )
                 if not live:
                     return None
-                return {"fp": fp, "at": time.time(), "models": list(live)}
+                return _provider_result_entry(fp, live)
 
             _spawn_swr_refresh(cache_key, _refresh_custom)
             return list(entry["models"])
@@ -6761,13 +6786,12 @@ def cached_fetch_api_models(
         api_key, base_url, timeout=timeout, api_mode=api_mode, headers=headers
     )
     if live:
-        cache[cache_key] = {"fp": fp, "at": now, "models": list(live)}
-        _save_provider_models_cache(cache)
-        return list(live)
+        admitted = _store_provider_models_entry(cache_key, _provider_result_entry(fp, live))
+        return list(admitted["models"])
 
     # Live fetch returned nothing (offline endpoint, timeout, auth hiccup).
     # A stale same-fingerprint entry beats an empty result.
-    if _cache_entry_valid(entry, fp):
+    if _cache_entry_valid(entry, fp) and not entry.get("fallback"):
         return list(entry["models"])
     return live
 
