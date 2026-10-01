@@ -740,16 +740,16 @@ def test_hybrid_prefetch_fires_http_immediately(monkeypatch):
     HTTP request) the moment _enqueue_audio is called, NOT when the
     playback worker gets to it.
 
-    We verify by recording the wall-clock time when stream() first yields
-    and asserting that the second call's first yield happens before the
-    first call's playback completes.
+    Keep the first generator blocked until the second generator starts.
+    Assert that the second started before the first playback write, using
+    events rather than the platform clock's resolution.
     """
-    import time
     from tools import tts_tool
 
-    stream_start_times: list[float] = []
-    playback_done_times: list[float] = []
-    block_first_playback = threading.Event()
+    second_started = threading.Event()
+    first_observed_prefetch: list[bool] = []
+    first_write_observed_prefetch: list[bool] = []
+    streamed_texts: list[str] = []
 
     class _BlockingFirst(ts.StreamingTTSProvider):
         sample_rate = 24000
@@ -759,11 +759,11 @@ def test_hybrid_prefetch_fires_http_immediately(monkeypatch):
             return True
 
         def stream(self, text):
-            stream_start_times.append(time.monotonic())
-            # First sentence: block until the test signals playback to proceed.
-            # This simulates a long audio segment still playing.
-            if len(stream_start_times) == 1:
-                block_first_playback.wait(timeout=5.0)
+            streamed_texts.append(text)
+            if text.startswith("First"):
+                first_observed_prefetch.append(second_started.wait(timeout=2.0))
+            else:
+                second_started.set()
             yield b"\x00\x00" * 10
 
     sd, out = _sd_mock()
@@ -772,8 +772,7 @@ def test_hybrid_prefetch_fires_http_immediately(monkeypatch):
     def _mock_write(_data):
         write_count[0] += 1
         if write_count[0] == 1:
-            # First write of first sentence — unblock so playback can finish.
-            block_first_playback.set()
+            first_write_observed_prefetch.append(second_started.is_set())
 
     out.write.side_effect = _mock_write
 
@@ -787,18 +786,9 @@ def test_hybrid_prefetch_fires_http_immediately(monkeypatch):
         tts_tool.stream_tts_to_speaker(q, stop, done)
 
     assert done.is_set()
-    assert len(stream_start_times) == 2, (
-        f"expected 2 stream() calls, got {len(stream_start_times)}"
-    )
-    # The second stream() call must have started (HTTP fired) while the
-    # first was still blocked/playing. Since the first blocks until
-    # playback starts, and the second is enqueued immediately after,
-    # the second's start time should be very close to the first's.
-    # We just assert both fired (the timing is inherently tested by the
-    # fact that block_first_playback was needed to unblock the first).
-    assert stream_start_times[1] > stream_start_times[0], (
-        "second stream() should start after the first"
-    )
+    assert len(streamed_texts) == 2
+    assert first_observed_prefetch == [True], "second stream did not prefetch while first was blocked"
+    assert first_write_observed_prefetch == [True], "second stream began only after first playback"
 
 
 @pytest.mark.skipif(

@@ -88,9 +88,10 @@ dependencies = [
   "Markdown==3.10.2",
   # Skills Hub (GitHub App JWT auth — optional, only needed for bot identity)
   "PyJWT[crypto]==2.15.1",  # CVE-2026-102274, PYSEC-2026-175/177/178/179
-  # urllib3 2.7.0 fixes GHSA-mf9v-mfxr-j63j (decompression-bomb bypass)
-  # and GHSA-qccp-gfcp-xxvc (header leak across origins).
-  "urllib3>=2.7.0,<3",
+  # urllib3 2.8.0 also fixes GHSA-vxq7-64xx-v4gw (chunk headers),
+  # GHSA-gh4c-6fx4-qh6g (Deflate progress), and GHSA-8988-9cw3-xx77 (proxy TLS).
+  # Retain the 2.7.0 decompression and cross-origin header protections.
+  "urllib3>=2.8.0,<3",
   # oauthlib 4.0.0 fixes CVE-2026-49265
   "oauthlib==4.0.0",
   # PyJWT[crypto] pulls cryptography in transitively. Pin it here as well, so

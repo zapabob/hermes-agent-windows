@@ -1,0 +1,1120 @@
+{
+  "id": "S03a",
+  "parent_family": "S03",
+  "status": "LOCAL_SLICE_VERIFIED",
+  "starting_commit": "98b78701d19303c02dd75356ed06b1e4427863e0",
+  "scope": "Raise existing urllib3 floor/lock to 2.8.0; native Requests-to-TTS bounded chunk header rejection and unchanged body cap/closure.",
+  "source_sha256": {
+    "pyproject.toml": "43a16a1bc21d672a35c2551f6c52cf3b9a98dc6d4f683543aa31a19ca324cd78",
+    "uv.lock": "14500a60e4c942b3df3459333766ed8ff043ae6c1e0d32c96c4fbb301335aa49",
+    "tools/tts_tool.py": "89454e053cfe19a17b0363f7d95f43c1e2d05efc9d29df79948e92c8fc29aafc",
+    "tests/tools/test_urllib3_streaming_security.py": "18b197283cb083884bb4c7b57f05fc1e54ac383c46922ccd11168f29275ea30d",
+    "tests/tools/test_tts_streaming.py": "60134573af5fade8c41cf2f352f759101a3fe85d1d1c45b06897ba02437b8ab7",
+    "docs/windows/semantic-adoption-20261001/S03a-mini-plan.md": "03a794d8c6eaefeaed36c75a39657252f3f4311d5c25d81c3d9742cbef55f1e1",
+    "tools/tts_streaming.py": "da927aa0ae2e42765749f7a8af0716cac2d74069662f3e53d0c89841dc8479ce",
+    "tests/tools/test_tts_response_body_cap.py": "e321ef8c76ae42bc97c81e21ac9ce5b622e070988447592ebcc7d9249326f59b",
+    "tests/tools/test_tts_path_traversal.py": "b7971bfd4c028a9d50ee85f87ff0772dd5647bc01ad9da9966abad65c9ceed6a",
+    "cli.py": "c701b5d99eb195f083f92aa90a3702fcb2cffe5156dc482a822d4044cd1d1e29",
+    "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+    "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378"
+  },
+  "red": {
+    "pass": 8,
+    "fail": 1,
+    "skip": 0
+  },
+  "green": {
+    "pass": 44,
+    "fail": 0,
+    "skip": 0,
+    "receipt": {
+      "argv": [
+        "C:/Program Files/Git/bin/bash.exe",
+        "scripts/run_tests.sh",
+        "tests/tools/test_urllib3_streaming_security.py",
+        "tests/tools/test_tts_response_body_cap.py",
+        "tests/tools/test_tts_streaming.py",
+        "tests/tools/test_tts_path_traversal.py",
+        "-j",
+        "2",
+        "--file-timeout",
+        "180"
+      ],
+      "cwd": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+      "environment_keys": [
+        "COMSPEC",
+        "HERMES_HOME",
+        "HERMES_PYTHON",
+        "HOME",
+        "PATH",
+        "PATHEXT",
+        "PYTHONIOENCODING",
+        "PYTHONUTF8",
+        "SystemRoot",
+        "TEMP",
+        "TMP",
+        "USERPROFILE",
+        "WINDIR"
+      ],
+      "exit": 0,
+      "source_sha256": {
+        "cli.py": "c701b5d99eb195f083f92aa90a3702fcb2cffe5156dc482a822d4044cd1d1e29",
+        "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+        "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+        "tests/tools/test_urllib3_streaming_security.py": "18b197283cb083884bb4c7b57f05fc1e54ac383c46922ccd11168f29275ea30d",
+        "tests/tools/test_tts_response_body_cap.py": "e321ef8c76ae42bc97c81e21ac9ce5b622e070988447592ebcc7d9249326f59b",
+        "tests/tools/test_tts_streaming.py": "60134573af5fade8c41cf2f352f759101a3fe85d1d1c45b06897ba02437b8ab7",
+        "tests/tools/test_tts_path_traversal.py": "b7971bfd4c028a9d50ee85f87ff0772dd5647bc01ad9da9966abad65c9ceed6a"
+      },
+      "log_sha256": "3712b0642a3261c20c02acc9c4b7faa9809e554701082ef6e50f67705d8dedd3"
+    }
+  },
+  "postmutation_subset": {
+    "pass": 38,
+    "fail": 0,
+    "skip": 0,
+    "additive": false,
+    "receipt": {
+      "argv": [
+        "C:/Program Files/Git/bin/bash.exe",
+        "scripts/run_tests.sh",
+        "tests/tools/test_urllib3_streaming_security.py",
+        "tests/tools/test_tts_streaming.py",
+        "-j",
+        "2",
+        "--file-timeout",
+        "180"
+      ],
+      "cwd": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+      "environment_keys": [
+        "COMSPEC",
+        "HERMES_HOME",
+        "HERMES_PYTHON",
+        "HOME",
+        "PATH",
+        "PATHEXT",
+        "PYTHONIOENCODING",
+        "PYTHONUTF8",
+        "SystemRoot",
+        "TEMP",
+        "TMP",
+        "USERPROFILE",
+        "WINDIR"
+      ],
+      "exit": 0,
+      "source_sha256": {
+        "cli.py": "c701b5d99eb195f083f92aa90a3702fcb2cffe5156dc482a822d4044cd1d1e29",
+        "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+        "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+        "tests/tools/test_urllib3_streaming_security.py": "18b197283cb083884bb4c7b57f05fc1e54ac383c46922ccd11168f29275ea30d",
+        "tests/tools/test_tts_streaming.py": "60134573af5fade8c41cf2f352f759101a3fe85d1d1c45b06897ba02437b8ab7"
+      },
+      "log_sha256": "35e44f24b18545abcb3d62a82bb4e90e31d439c5a2b3f89506f03037636affdb"
+    }
+  },
+  "mutations": [
+    {
+      "source": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Lib\\site-packages\\urllib3\\response.py",
+      "original_sha256": "0e4559c737914d4f8f941dca9ecfaf6caec6792258302bffec7b8b41dae3c71a",
+      "mutant_sha256": "1660d734833388f6995c28c0c52c24c8a45535d199c1193d316addf1325f8f8b",
+      "argv": [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\run-family-python.py",
+        "S03a-mutant-001",
+        "tests/tools/test_urllib3_streaming_security.py",
+        "-k",
+        "overlong_chunk_header"
+      ],
+      "exit": 1,
+      "killed": true,
+      "restored_sha256": "0e4559c737914d4f8f941dca9ecfaf6caec6792258302bffec7b8b41dae3c71a"
+    },
+    {
+      "source_sha256": "89454e053cfe19a17b0363f7d95f43c1e2d05efc9d29df79948e92c8fc29aafc",
+      "mutant_sha256": "dc8e28054589b7f329569d24fb26253f7cef540b04c8b815b756a3d23ac0799f",
+      "test_sha256": "60134573af5fade8c41cf2f352f759101a3fe85d1d1c45b06897ba02437b8ab7",
+      "argv": [
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\test-env\\Scripts\\python.exe",
+        "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\run-family-python.py",
+        "S03a-prefetch-mutant-001",
+        "tests/tools/test_tts_streaming.py",
+        "-k",
+        "hybrid_prefetch_fires_http_immediately"
+      ],
+      "exit": 1,
+      "killed": true,
+      "restored_sha256": "89454e053cfe19a17b0363f7d95f43c1e2d05efc9d29df79948e92c8fc29aafc"
+    }
+  ],
+  "lock": {
+    "changed": [
+      {
+        "index": 88,
+        "name": "hermes-agent",
+        "old_version": "0.21.5",
+        "new_version": "0.21.5"
+      },
+      {
+        "index": 241,
+        "name": "urllib3",
+        "old_version": "2.7.0",
+        "new_version": "2.8.0"
+      }
+    ],
+    "total_lock_records": 259,
+    "unchanged_lock_records": 257,
+    "all_other_structure_unchanged": true,
+    "source_sha256": {
+      "pyproject.toml": "43a16a1bc21d672a35c2551f6c52cf3b9a98dc6d4f683543aa31a19ca324cd78",
+      "uv.lock": "14500a60e4c942b3df3459333766ed8ff043ae6c1e0d32c96c4fbb301335aa49"
+    }
+  },
+  "graph": {
+    "S03a-preedit-bind-002": {
+      "tool_version": "1.6.0",
+      "sources": {
+        "tools/tts_tool.py": "89454e053cfe19a17b0363f7d95f43c1e2d05efc9d29df79948e92c8fc29aafc"
+      },
+      "head": "f390a82c552fd2a657dfdf7dfd3a24a6ea484d53",
+      "tree": "1c551f9665914267eaea11ce170867d7eafc1c99",
+      "outputs": [
+        {
+          "argv": [
+            "status",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "status.json",
+          "sha256": "bff5aafaeb245fcbdb36cde6c8700984478f816422faf7184024d49e7430aded"
+        },
+        {
+          "argv": [
+            "query",
+            "_read_tts_response_bytes",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--limit",
+            "200",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "_read_tts_response_bytes_tools_tts_tool.py-query.json",
+          "sha256": "62261edfcf47d8ed9b9a9a3f682f32e089978d59d25a48d1b28d57492ed3ba96"
+        },
+        {
+          "argv": [
+            "explore",
+            "_read_tts_response_bytes",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--max-files",
+            "4"
+          ],
+          "exit": 0,
+          "output": "_read_tts_response_bytes_tools_tts_tool.py-explore.log",
+          "sha256": "91c02d2962f9e210f441e08c6be66a7d27478d50ac7e4244c52a1e7172eab4e6"
+        },
+        {
+          "argv": [
+            "impact",
+            "_read_tts_response_bytes",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--depth",
+            "2",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "_read_tts_response_bytes_tools_tts_tool.py-impact.json",
+          "sha256": "6b39d7a627cf413d11580deed01cde62b2e6d85e7973842cd0f1de8fb50a2185"
+        },
+        {
+          "argv": [
+            "query",
+            "_close_response",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--limit",
+            "200",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "_close_response_tools_tts_tool.py-query.json",
+          "sha256": "eb935210089b2cc02b379c3ec01dd09509b523fae1ad39605a94e162a4b4a655"
+        },
+        {
+          "argv": [
+            "explore",
+            "_close_response",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--max-files",
+            "4"
+          ],
+          "exit": 0,
+          "output": "_close_response_tools_tts_tool.py-explore.log",
+          "sha256": "d485bc610509f710ea92458cf5ac5c662c54b4ebd9ab0142c0f37d71ec18feca"
+        },
+        {
+          "argv": [
+            "impact",
+            "_close_response",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--depth",
+            "2",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "_close_response_tools_tts_tool.py-impact.json",
+          "sha256": "20df8975b1dfb93c980db8977edd4a69bdc38f68222ed0311eff30539b832de5"
+        },
+        {
+          "argv": [
+            "affected",
+            "tools/tts_tool.py",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--depth",
+            "2",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "affected.json",
+          "sha256": "d187485bb9768ea9025ec5eefa47b249ba27c0fd62b73b220b93078e3cfc063e"
+        },
+        {
+          "argv": [
+            "affected",
+            "tools/tts_tool.py",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--depth",
+            "2",
+            "--filter",
+            "**/*.py",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "affected-python.json",
+          "sha256": "e0e8a3b552ad43c7c2f7e927d730244e7f63578b8611b0bdbb5824ae124878cf"
+        }
+      ],
+      "owners": [
+        {
+          "name": "_read_tts_response_bytes",
+          "path": "tools/tts_tool.py",
+          "node_id": "function:cefeeb3ba6456696b3dcee2f10dddfb9",
+          "merged_symbol_results": true,
+          "node_count": 13
+        },
+        {
+          "name": "_close_response",
+          "path": "tools/tts_tool.py",
+          "node_id": "function:9dec37e9d89e6274866e35c87ad2b670",
+          "merged_symbol_results": true,
+          "node_count": 13
+        }
+      ],
+      "captured_status": {
+        "initialized": true,
+        "version": "1.6.0",
+        "projectPath": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+        "indexPath": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\.codegraph",
+        "lastIndexed": "2026-09-30T23:11:45.866Z",
+        "fileCount": 8970,
+        "nodeCount": 193120,
+        "edgeCount": 619158,
+        "dbSizeBytes": 662192128,
+        "walSizeBytes": 0,
+        "backend": "node-sqlite",
+        "journalMode": "wal",
+        "nodesByKind": {
+          "class": 13147,
+          "component": 64,
+          "constant": 5776,
+          "enum": 8,
+          "enum_member": 25,
+          "field": 10,
+          "file": 8636,
+          "function": 61203,
+          "import": 42487,
+          "interface": 2176,
+          "method": 42255,
+          "namespace": 1,
+          "property": 1472,
+          "route": 397,
+          "struct": 33,
+          "type_alias": 887,
+          "variable": 14543
+        },
+        "languages": [
+          "c",
+          "cpp",
+          "csharp",
+          "go",
+          "javascript",
+          "liquid",
+          "nix",
+          "php",
+          "python",
+          "rust",
+          "tsx",
+          "typescript",
+          "yaml"
+        ],
+        "pendingChanges": {
+          "added": 0,
+          "modified": 0,
+          "removed": 0
+        },
+        "worktreeMismatch": null,
+        "index": {
+          "builtWithVersion": "1.6.0",
+          "builtWithExtractionVersion": 25,
+          "currentExtractionVersion": 25,
+          "reindexRecommended": false,
+          "state": "complete",
+          "pendingRefs": 0
+        }
+      },
+      "receipt_sha256": "08408db53df440ae373af5b61716c03c2f5be11534b0661b72233574ebb5179c"
+    },
+    "S03a-postedit-bind-001": {
+      "tool_version": "1.6.0",
+      "sources": {
+        "tools/tts_tool.py": "89454e053cfe19a17b0363f7d95f43c1e2d05efc9d29df79948e92c8fc29aafc"
+      },
+      "head": "f390a82c552fd2a657dfdf7dfd3a24a6ea484d53",
+      "tree": "1c551f9665914267eaea11ce170867d7eafc1c99",
+      "outputs": [
+        {
+          "argv": [
+            "status",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "status.json",
+          "sha256": "bff5aafaeb245fcbdb36cde6c8700984478f816422faf7184024d49e7430aded"
+        },
+        {
+          "argv": [
+            "query",
+            "_read_tts_response_bytes",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--limit",
+            "200",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "_read_tts_response_bytes_tools_tts_tool.py-query.json",
+          "sha256": "62261edfcf47d8ed9b9a9a3f682f32e089978d59d25a48d1b28d57492ed3ba96"
+        },
+        {
+          "argv": [
+            "explore",
+            "_read_tts_response_bytes",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--max-files",
+            "4"
+          ],
+          "exit": 0,
+          "output": "_read_tts_response_bytes_tools_tts_tool.py-explore.log",
+          "sha256": "91c02d2962f9e210f441e08c6be66a7d27478d50ac7e4244c52a1e7172eab4e6"
+        },
+        {
+          "argv": [
+            "impact",
+            "_read_tts_response_bytes",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--depth",
+            "2",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "_read_tts_response_bytes_tools_tts_tool.py-impact.json",
+          "sha256": "6b39d7a627cf413d11580deed01cde62b2e6d85e7973842cd0f1de8fb50a2185"
+        },
+        {
+          "argv": [
+            "query",
+            "_close_response",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--limit",
+            "200",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "_close_response_tools_tts_tool.py-query.json",
+          "sha256": "eb935210089b2cc02b379c3ec01dd09509b523fae1ad39605a94e162a4b4a655"
+        },
+        {
+          "argv": [
+            "explore",
+            "_close_response",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--max-files",
+            "4"
+          ],
+          "exit": 0,
+          "output": "_close_response_tools_tts_tool.py-explore.log",
+          "sha256": "d485bc610509f710ea92458cf5ac5c662c54b4ebd9ab0142c0f37d71ec18feca"
+        },
+        {
+          "argv": [
+            "impact",
+            "_close_response",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--depth",
+            "2",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "_close_response_tools_tts_tool.py-impact.json",
+          "sha256": "20df8975b1dfb93c980db8977edd4a69bdc38f68222ed0311eff30539b832de5"
+        },
+        {
+          "argv": [
+            "affected",
+            "tools/tts_tool.py",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--depth",
+            "2",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "affected.json",
+          "sha256": "d187485bb9768ea9025ec5eefa47b249ba27c0fd62b73b220b93078e3cfc063e"
+        },
+        {
+          "argv": [
+            "affected",
+            "tools/tts_tool.py",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--depth",
+            "2",
+            "--filter",
+            "**/*.py",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "affected-python.json",
+          "sha256": "e0e8a3b552ad43c7c2f7e927d730244e7f63578b8611b0bdbb5824ae124878cf"
+        }
+      ],
+      "owners": [
+        {
+          "name": "_read_tts_response_bytes",
+          "path": "tools/tts_tool.py",
+          "node_id": "function:cefeeb3ba6456696b3dcee2f10dddfb9",
+          "merged_symbol_results": true,
+          "node_count": 13
+        },
+        {
+          "name": "_close_response",
+          "path": "tools/tts_tool.py",
+          "node_id": "function:9dec37e9d89e6274866e35c87ad2b670",
+          "merged_symbol_results": true,
+          "node_count": 13
+        }
+      ],
+      "captured_status": {
+        "initialized": true,
+        "version": "1.6.0",
+        "projectPath": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+        "indexPath": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\.codegraph",
+        "lastIndexed": "2026-09-30T23:11:45.866Z",
+        "fileCount": 8970,
+        "nodeCount": 193120,
+        "edgeCount": 619158,
+        "dbSizeBytes": 662192128,
+        "walSizeBytes": 0,
+        "backend": "node-sqlite",
+        "journalMode": "wal",
+        "nodesByKind": {
+          "class": 13147,
+          "component": 64,
+          "constant": 5776,
+          "enum": 8,
+          "enum_member": 25,
+          "field": 10,
+          "file": 8636,
+          "function": 61203,
+          "import": 42487,
+          "interface": 2176,
+          "method": 42255,
+          "namespace": 1,
+          "property": 1472,
+          "route": 397,
+          "struct": 33,
+          "type_alias": 887,
+          "variable": 14543
+        },
+        "languages": [
+          "c",
+          "cpp",
+          "csharp",
+          "go",
+          "javascript",
+          "liquid",
+          "nix",
+          "php",
+          "python",
+          "rust",
+          "tsx",
+          "typescript",
+          "yaml"
+        ],
+        "pendingChanges": {
+          "added": 0,
+          "modified": 0,
+          "removed": 0
+        },
+        "worktreeMismatch": null,
+        "index": {
+          "builtWithVersion": "1.6.0",
+          "builtWithExtractionVersion": 25,
+          "currentExtractionVersion": 25,
+          "reindexRecommended": false,
+          "state": "complete",
+          "pendingRefs": 0
+        }
+      },
+      "receipt_sha256": "08408db53df440ae373af5b61716c03c2f5be11534b0661b72233574ebb5179c"
+    },
+    "S03a-prefetch-test-bind-001": {
+      "tool_version": "1.6.0",
+      "sources": {
+        "tests/tools/test_tts_streaming.py": "8fa00fa3eac8592ed74fd56fee868546ff0c40a2ec10198c8ffd3336a37e9315",
+        "tools/tts_tool.py": "89454e053cfe19a17b0363f7d95f43c1e2d05efc9d29df79948e92c8fc29aafc"
+      },
+      "head": "f390a82c552fd2a657dfdf7dfd3a24a6ea484d53",
+      "tree": "1c551f9665914267eaea11ce170867d7eafc1c99",
+      "outputs": [
+        {
+          "argv": [
+            "status",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "status.json",
+          "sha256": "bff5aafaeb245fcbdb36cde6c8700984478f816422faf7184024d49e7430aded"
+        },
+        {
+          "argv": [
+            "query",
+            "test_hybrid_prefetch_fires_http_immediately",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--limit",
+            "200",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "test_hybrid_prefetch_fires_http_immediately_tests_tools_test_tts_streaming.py-query.json",
+          "sha256": "4d4ef128ac55032f2e20fa1de87ecadb9a5653c26720565db6063ec31ed7dfd9"
+        },
+        {
+          "argv": [
+            "explore",
+            "test_hybrid_prefetch_fires_http_immediately",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--max-files",
+            "4"
+          ],
+          "exit": 0,
+          "output": "test_hybrid_prefetch_fires_http_immediately_tests_tools_test_tts_streaming.py-explore.log",
+          "sha256": "ddfb13dbd56a6be0db08b8b675cf5b6d0ce346b10b4edbed19dec0ce625c7231"
+        },
+        {
+          "argv": [
+            "impact",
+            "test_hybrid_prefetch_fires_http_immediately",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--depth",
+            "2",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "test_hybrid_prefetch_fires_http_immediately_tests_tools_test_tts_streaming.py-impact.json",
+          "sha256": "06e5d0572917d802c88a1863b3011da2fdae90e85c4e6f09796f1d1a5272b612"
+        },
+        {
+          "argv": [
+            "query",
+            "stream_tts_to_speaker",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--limit",
+            "200",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "stream_tts_to_speaker_tools_tts_tool.py-query.json",
+          "sha256": "eb7dbca8853098670bdf7289b27e311c170559765d04a9ef8bf53e7df1b8de96"
+        },
+        {
+          "argv": [
+            "explore",
+            "stream_tts_to_speaker",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--max-files",
+            "4"
+          ],
+          "exit": 0,
+          "output": "stream_tts_to_speaker_tools_tts_tool.py-explore.log",
+          "sha256": "0c595117779cd1052e269adb4b4712ab29145a5eb134414356064773a1e95662"
+        },
+        {
+          "argv": [
+            "impact",
+            "stream_tts_to_speaker",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--depth",
+            "2",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "stream_tts_to_speaker_tools_tts_tool.py-impact.json",
+          "sha256": "119c63e43e9c70c612cf695ea0283c42b88920ee75ce3eb409b8b0502e2cd35a"
+        },
+        {
+          "argv": [
+            "affected",
+            "tests/tools/test_tts_streaming.py",
+            "tools/tts_tool.py",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--depth",
+            "2",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "affected.json",
+          "sha256": "597b63520ede35b616dcf2a8f3405837665c3cd921773b8192738b0ad598d27e"
+        },
+        {
+          "argv": [
+            "affected",
+            "tests/tools/test_tts_streaming.py",
+            "tools/tts_tool.py",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--depth",
+            "2",
+            "--filter",
+            "**/*.py",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "affected-python.json",
+          "sha256": "68c1494a704205ef81929d662c78ba210a74024db9f3ab0fb98f63514821cd6a"
+        }
+      ],
+      "owners": [
+        {
+          "name": "test_hybrid_prefetch_fires_http_immediately",
+          "path": "tests/tools/test_tts_streaming.py",
+          "node_id": "function:c87833a6b25bfd6e3632af49e07e78f9",
+          "merged_symbol_results": true,
+          "node_count": 1
+        },
+        {
+          "name": "stream_tts_to_speaker",
+          "path": "tools/tts_tool.py",
+          "node_id": "function:942671639a506038e67ff7cc04a023c9",
+          "merged_symbol_results": true,
+          "node_count": 24
+        }
+      ],
+      "captured_status": {
+        "initialized": true,
+        "version": "1.6.0",
+        "projectPath": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+        "indexPath": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\.codegraph",
+        "lastIndexed": "2026-09-30T23:11:45.866Z",
+        "fileCount": 8970,
+        "nodeCount": 193120,
+        "edgeCount": 619158,
+        "dbSizeBytes": 662192128,
+        "walSizeBytes": 0,
+        "backend": "node-sqlite",
+        "journalMode": "wal",
+        "nodesByKind": {
+          "class": 13147,
+          "component": 64,
+          "constant": 5776,
+          "enum": 8,
+          "enum_member": 25,
+          "field": 10,
+          "file": 8636,
+          "function": 61203,
+          "import": 42487,
+          "interface": 2176,
+          "method": 42255,
+          "namespace": 1,
+          "property": 1472,
+          "route": 397,
+          "struct": 33,
+          "type_alias": 887,
+          "variable": 14543
+        },
+        "languages": [
+          "c",
+          "cpp",
+          "csharp",
+          "go",
+          "javascript",
+          "liquid",
+          "nix",
+          "php",
+          "python",
+          "rust",
+          "tsx",
+          "typescript",
+          "yaml"
+        ],
+        "pendingChanges": {
+          "added": 0,
+          "modified": 0,
+          "removed": 0
+        },
+        "worktreeMismatch": null,
+        "index": {
+          "builtWithVersion": "1.6.0",
+          "builtWithExtractionVersion": 25,
+          "currentExtractionVersion": 25,
+          "reindexRecommended": false,
+          "state": "complete",
+          "pendingRefs": 0
+        }
+      },
+      "receipt_sha256": "040c372c950d11b8ae65db28597c7d219580947480e92fc422772df99f586af8"
+    },
+    "S03a-final-bind-003": {
+      "tool_version": "1.6.0",
+      "sources": {
+        "tools/tts_tool.py": "89454e053cfe19a17b0363f7d95f43c1e2d05efc9d29df79948e92c8fc29aafc",
+        "tests/tools/test_tts_streaming.py": "60134573af5fade8c41cf2f352f759101a3fe85d1d1c45b06897ba02437b8ab7"
+      },
+      "head": "f390a82c552fd2a657dfdf7dfd3a24a6ea484d53",
+      "tree": "1c551f9665914267eaea11ce170867d7eafc1c99",
+      "outputs": [
+        {
+          "argv": [
+            "status",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "status.json",
+          "sha256": "0606e9aaa5807fe78920bc6940b2057cd639f4409765dc832144afdb4944f9dc"
+        },
+        {
+          "argv": [
+            "query",
+            "_read_tts_response_bytes",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--limit",
+            "200",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "_read_tts_response_bytes_tools_tts_tool.py-query.json",
+          "sha256": "53ace6c0ef77959ff008fff0afd4157d46ec11b8a259f0119ff5656083a86fd7"
+        },
+        {
+          "argv": [
+            "explore",
+            "_read_tts_response_bytes",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--max-files",
+            "4"
+          ],
+          "exit": 0,
+          "output": "_read_tts_response_bytes_tools_tts_tool.py-explore.log",
+          "sha256": "91c02d2962f9e210f441e08c6be66a7d27478d50ac7e4244c52a1e7172eab4e6"
+        },
+        {
+          "argv": [
+            "impact",
+            "_read_tts_response_bytes",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--depth",
+            "2",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "_read_tts_response_bytes_tools_tts_tool.py-impact.json",
+          "sha256": "6b39d7a627cf413d11580deed01cde62b2e6d85e7973842cd0f1de8fb50a2185"
+        },
+        {
+          "argv": [
+            "query",
+            "_close_response",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--limit",
+            "200",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "_close_response_tools_tts_tool.py-query.json",
+          "sha256": "d72fd2ca066fc9fe3ebc3cae33ed61af190e70860b70c65e678f1b65c4602d59"
+        },
+        {
+          "argv": [
+            "explore",
+            "_close_response",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--max-files",
+            "4"
+          ],
+          "exit": 0,
+          "output": "_close_response_tools_tts_tool.py-explore.log",
+          "sha256": "d485bc610509f710ea92458cf5ac5c662c54b4ebd9ab0142c0f37d71ec18feca"
+        },
+        {
+          "argv": [
+            "impact",
+            "_close_response",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--depth",
+            "2",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "_close_response_tools_tts_tool.py-impact.json",
+          "sha256": "20df8975b1dfb93c980db8977edd4a69bdc38f68222ed0311eff30539b832de5"
+        },
+        {
+          "argv": [
+            "query",
+            "test_hybrid_prefetch_fires_http_immediately",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--limit",
+            "200",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "test_hybrid_prefetch_fires_http_immediately_tests_tools_test_tts_streaming.py-query.json",
+          "sha256": "9b9b86d6434120f6ce6c298ce1ad3df4eba014b69a4a7819d1f23c1c3f5c84ae"
+        },
+        {
+          "argv": [
+            "explore",
+            "test_hybrid_prefetch_fires_http_immediately",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--max-files",
+            "4"
+          ],
+          "exit": 0,
+          "output": "test_hybrid_prefetch_fires_http_immediately_tests_tools_test_tts_streaming.py-explore.log",
+          "sha256": "a09ad1b57bc2e7cb6d3441db9372abbb87f50cf9b222dc5b0d7d5bee372a6825"
+        },
+        {
+          "argv": [
+            "impact",
+            "test_hybrid_prefetch_fires_http_immediately",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--depth",
+            "2",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "test_hybrid_prefetch_fires_http_immediately_tests_tools_test_tts_streaming.py-impact.json",
+          "sha256": "06e5d0572917d802c88a1863b3011da2fdae90e85c4e6f09796f1d1a5272b612"
+        },
+        {
+          "argv": [
+            "affected",
+            "tools/tts_tool.py",
+            "tests/tools/test_tts_streaming.py",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--depth",
+            "2",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "affected.json",
+          "sha256": "0cbc2f61e5adad75a1d0f58d329eb24390680daa17264245de4871f6788b348c"
+        },
+        {
+          "argv": [
+            "affected",
+            "tools/tts_tool.py",
+            "tests/tools/test_tts_streaming.py",
+            "--path",
+            "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+            "--depth",
+            "2",
+            "--filter",
+            "**/*.py",
+            "--json"
+          ],
+          "exit": 0,
+          "output": "affected-python.json",
+          "sha256": "266cd3cdf8865bc81643c31ddabb9c81ecba5d6a0a57d83c3348f9a22e00d04c"
+        }
+      ],
+      "owners": [
+        {
+          "name": "_read_tts_response_bytes",
+          "path": "tools/tts_tool.py",
+          "node_id": "function:cefeeb3ba6456696b3dcee2f10dddfb9",
+          "merged_symbol_results": true,
+          "node_count": 13
+        },
+        {
+          "name": "_close_response",
+          "path": "tools/tts_tool.py",
+          "node_id": "function:9dec37e9d89e6274866e35c87ad2b670",
+          "merged_symbol_results": true,
+          "node_count": 13
+        },
+        {
+          "name": "test_hybrid_prefetch_fires_http_immediately",
+          "path": "tests/tools/test_tts_streaming.py",
+          "node_id": "function:c87833a6b25bfd6e3632af49e07e78f9",
+          "merged_symbol_results": true,
+          "node_count": 1
+        }
+      ],
+      "captured_status": {
+        "initialized": true,
+        "version": "1.6.0",
+        "projectPath": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+        "indexPath": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration\\.codegraph",
+        "lastIndexed": "2026-09-30T23:25:51.778Z",
+        "fileCount": 8971,
+        "nodeCount": 193146,
+        "edgeCount": 619251,
+        "dbSizeBytes": 662282240,
+        "walSizeBytes": 0,
+        "backend": "node-sqlite",
+        "journalMode": "wal",
+        "nodesByKind": {
+          "class": 13147,
+          "component": 64,
+          "constant": 5776,
+          "enum": 8,
+          "enum_member": 25,
+          "field": 10,
+          "file": 8637,
+          "function": 61217,
+          "import": 42498,
+          "interface": 2176,
+          "method": 42255,
+          "namespace": 1,
+          "property": 1472,
+          "route": 397,
+          "struct": 33,
+          "type_alias": 887,
+          "variable": 14543
+        },
+        "languages": [
+          "c",
+          "cpp",
+          "csharp",
+          "go",
+          "javascript",
+          "liquid",
+          "nix",
+          "php",
+          "python",
+          "rust",
+          "tsx",
+          "typescript",
+          "yaml"
+        ],
+        "pendingChanges": {
+          "added": 0,
+          "modified": 0,
+          "removed": 0
+        },
+        "worktreeMismatch": null,
+        "index": {
+          "builtWithVersion": "1.6.0",
+          "builtWithExtractionVersion": 25,
+          "currentExtractionVersion": 25,
+          "reindexRecommended": false,
+          "state": "complete",
+          "pendingRefs": 0
+        }
+      },
+      "receipt_sha256": "7b30ac6e07811a843282e05ca1d524267611648df45bcdd73b5700c21da101b3"
+    }
+  },
+  "independent_review": {
+    "verdict": "APPROVE",
+    "model": {
+      "accepted_model_id": "gpt-6.1-sol",
+      "accepted_effort": "high",
+      "thread_id": "01a0f49c-29a1-7911-be5b-7d3558622c89",
+      "turn_id": "01a0f49c-3901-7483-a3e6-cc0a0f169477",
+      "source": "C:/Users/downl/.codex/sessions/2026/10/01/rollout-2026-10-01T08-17-50-01a0f49c-29a1-7911-be5b-7d3558622c89.jsonl",
+      "source_timestamp": "2026-09-30T23:40:52.256Z",
+      "event_sha256": "7e6a70e5bbc1ad690ec1b74d49d745d7f726439d30c1146bc4df49390a81fec8",
+      "alias_substitution": false,
+      "global_configuration_changed": false
+    },
+    "source_bound": true
+  },
+  "vendor_advisories": [
+    "https://github.com/urllib3/urllib3/security/advisories/GHSA-vxq7-64xx-v4gw",
+    "https://github.com/urllib3/urllib3/security/advisories/GHSA-gh4c-6fx4-qh6g",
+    "https://github.com/urllib3/urllib3/security/advisories/GHSA-8988-9cw3-xx77"
+  ],
+  "evidence": {
+    "S03-urllib3-tests-001/S03a-red-001.json": "c358d33d3468e707da8807d25735aae1736c35ffc5f0e6d821cf991c1445aad6",
+    "S03a-final-green-003.json": "492bf0ba63c74913ff3560f72cfede517c3a5d589145be4fc254f4150c2d9662",
+    "S03a-postmutation-green-004.json": "0640f0d02bb52def12a5dde1f4930070415aa4432f037c9de4156da8285f4154",
+    "S03a-mutation-001.json": "33ef2ede0f107d96ef3e8f7f44a314d2db9f1715567c7787d7876e08174dda9f",
+    "S03a-prefetch-mutation-001.json": "5caffa1f6f08d9132fa1df6e444b4127e42bf66eef94188227867f3a1b1c0948",
+    "S03a-full-lock-audit-001.json": "e18528b15183767df923ab0956f6e5ec33bcc47b5b589d0bec6a54d16770713c",
+    "S03a-provision-001/receipt.json": "d7edbfd00e5342bd03fb10efba7e2d5ab9ec5eecc6ef53c3c17ea50d9786a77b",
+    "S03a-numpy-001/receipt.json": "4d8af543d44709932a1b71844e8d600834156717550cd53f48bf0f2e481223a8",
+    "S03a-final-bind-003/receipt.json": "7b30ac6e07811a843282e05ca1d524267611648df45bcdd73b5700c21da101b3",
+    "S03a-review-001/receipt.json": "fc0b685627cdd6eae8bd879ede4efcea489dad8c6eefd979a4ed23653fea19a5",
+    "S03a-review-001/review.md": "388d44e52dd71d0cad37643ae707c29bc778b99e13a15092792de1b2c4077c0e"
+  },
+  "prior_incomplete_runs": [
+    "S03a-green-001:15 pass/1 missing-numpy skip",
+    "S03a-restored-green-002:43 pass/1 equal-clock failure"
+  ],
+  "remaining": [
+    "Deflate/proxy TLS native conditions",
+    "Electron and other dependency security candidates",
+    "Full transitive/bundled security inventory",
+    "Native ClamAV baseline"
+  ],
+  "full_S03": false,
+  "full_U_TARGET_parity": false,
+  "runtime_independence_verified": false,
+  "production_runtime_used": false,
+  "published": false
+}

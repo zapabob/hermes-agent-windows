@@ -31,9 +31,10 @@
     "partial_families": [
       "F04",
       "F05",
-      "F07"
+      "F07",
+      "S03"
     ],
-    "other_seed_families_not_behaviorally_reviewed": 44,
+    "other_seed_families_not_behaviorally_reviewed": 43,
     "not_a_complete_contract_denominator": true
   },
   "blocker": {
@@ -67,7 +68,19 @@
     },
     {
       "id": "F07a",
+      "status": "LOCAL_SLICE_VERIFIED",
+      "commit": "f390a82c552fd2a657dfdf7dfd3a24a6ea484d53"
+    },
+    {
+      "id": "S03a",
       "status": "LOCAL_SLICE_VERIFIED"
+    }
+  ],
+  "proof_only_slices": [
+    {
+      "id": "F07b",
+      "status": "PARTIAL_WITH_BLOCKED_GATE",
+      "commit": "98b78701d19303c02dd75356ed06b1e4427863e0"
     }
   ]
 }
