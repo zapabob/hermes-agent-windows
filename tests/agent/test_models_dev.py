@@ -23,6 +23,17 @@ from agent.models_dev import (
 )
 
 
+@pytest.fixture(autouse=True)
+def _bind_legacy_fetch_state(_hermetic_environment, monkeypatch):
+    """Bind this file's deliberate globals to its isolated per-test home."""
+    import agent.models_dev as md
+    from hermes_constants import hermes_home_key
+
+    monkeypatch.setattr(
+        md, "_models_dev_default_key", (hermes_home_key(), md._get_models_dev_url())
+    )
+
+
 SAMPLE_REGISTRY = {
     "anthropic": {
         "id": "anthropic",

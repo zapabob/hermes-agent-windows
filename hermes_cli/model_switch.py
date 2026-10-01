@@ -2850,7 +2850,7 @@ def list_authenticated_providers(
         except Exception:
             return False
 
-    data = fetch_models_dev(allow_network=False) if non_blocking_catalogs else fetch_models_dev()
+    data = fetch_models_dev(non_blocking=True) if non_blocking_catalogs else fetch_models_dev()
 
     # Build curated model lists keyed by hermes provider ID
     curated: dict[str, list[str]] = dict(_PROVIDER_MODELS)
@@ -4062,6 +4062,13 @@ def list_authenticated_providers(
                 continue
             _models = _row.get("models") or []
             if current_model not in _models:
+                if _row.get("slug") == "nous":
+                    from hermes_cli.models import nous_policy_allowed_ids, restrict_to_nous_policy
+
+                    # Keep the saved selection in the payload, but never add
+                    # a known policy-denied model back to the eligible list.
+                    if not restrict_to_nous_policy([current_model], nous_policy_allowed_ids()):
+                        break
                 _row["models"] = [current_model, *_models]
                 _row["total_models"] = _row.get("total_models", len(_models)) + 1
             break

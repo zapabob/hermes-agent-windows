@@ -216,11 +216,32 @@ def test_cold_registered_dispatch_positive_before_held_leaf(native, leaf):
     if leaf != "metadata":
         assert n.state.entered.wait(1), "discovery leaf was never exercised"
     else:
-        assert not n.state.entered.is_set(), "normal foreground metadata attempted"
+        assert n.state.entered.wait(1), "normal RPC did not start the existing metadata worker"
+        from agent import models_dev
+        from hermes_constants import set_hermes_home_override, reset_hermes_home_override
+
+        token = set_hermes_home_override(n.root / "profiles/work")
+        try:
+            metadata_state = models_dev._get_models_dev_state()
+        finally:
+            reset_hermes_home_override(token)
+        metadata_workers = [t for t in threading.enumerate() if t.name == "models-dev-refresh"]
+        assert metadata_state._models_dev_refresh_in_flight and metadata_workers
     finish_refresh(n)
+    if leaf == "metadata":
+        for worker in metadata_workers:
+            worker.join(5)
+            assert not worker.is_alive()
+        assert not metadata_state._models_dev_refresh_in_flight
+        assert metadata_state._models_dev_retry_after > time.time()
+        metadata_requests = [r for r in n.state.records if "models.dev" in r["url"]]
+        assert len(metadata_requests) == 1
+        assert Path(metadata_requests[0]["home"]) == n.root / "profiles/work"
     second, at = submit(n)
     recovered = positive(second, at)
     assert "p04-live-only" in next(r["models"] for r in recovered["providers"] if r["slug"] == "deepseek")
+    if leaf == "metadata":
+        assert len([r for r in n.state.records if "models.dev" in r["url"]]) == 1
     from hermes_constants import get_hermes_home
     assert get_hermes_home() == n.root
     assert all(Path(r["home"]) == n.root / "profiles/work" for r in n.state.records

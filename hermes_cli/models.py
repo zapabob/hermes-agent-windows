@@ -2396,6 +2396,7 @@ _pricing_cache: dict[str, dict[str, dict[str, str]]] = {}
 # backend. Every caller falls back to a curated list meanwhile, so the cost of
 # the stale entry is silent and invisible.
 _FAILED_CATALOG_TTL_SECONDS = 120.0
+_NOUS_CATALOG_TTL_SECONDS = 300.0
 _pricing_cache_retry_after: dict[str, float] = {}
 
 
@@ -2413,11 +2414,14 @@ def _cached_catalog(cache_key: str) -> Optional[dict[str, dict[str, Any]]]:
 
 
 def _cache_catalog(
-    cache_key: str, result: dict[str, dict[str, Any]]
+    cache_key: str, result: dict[str, dict[str, Any]],
+    ttl_seconds: Optional[float] = None,
 ) -> dict[str, dict[str, Any]]:
-    """Cache a catalog result, giving an empty one an expiry."""
+    """Cache a catalogue; failures and policy-bearing successes expire."""
     _pricing_cache[cache_key] = result
-    if result:
+    if result and ttl_seconds is not None:
+        _pricing_cache_retry_after[cache_key] = time.monotonic() + ttl_seconds
+    elif result:
         _pricing_cache_retry_after.pop(cache_key, None)
     else:
         _pricing_cache_retry_after[cache_key] = (
@@ -2559,10 +2563,12 @@ def fetch_models_with_pricing(
     *,
     force_refresh: bool = False,
     include_sale_original: bool = False,
+    cache_ttl_seconds: Optional[float] = None,
 ) -> dict[str, dict[str, Any]]:
     """Fetch ``/v1/models`` and return ``{model_id: {prompt, completion, ...}}``.
 
-    Results are cached per *base_url* so repeated calls are free.
+    Public results are cached per *base_url*. Policy-bearing Nous results
+    additionally bind the profile and current credential and expire at300s.
     Works with any OpenRouter-compatible endpoint (OpenRouter, Nous Portal).
 
     When *include_sale_original* is true (Nous Portal only) and the gateway
@@ -2573,13 +2579,24 @@ def fetch_models_with_pricing(
     ``{prompt, completion}`` shape even if a response happens to nest
     ``original``.
     """
-    cache_key = (base_url or "").rstrip("/")
+    url_root = (base_url or "").rstrip("/")
+    # Sale-original callers are the existing Nous policy-bearing catalogue.
+    # Bind it to the current profile and the resolved credential, never to
+    # an arbitrary latest authenticated entry at this URL.
+    if include_sale_original and cache_ttl_seconds is None:
+        cache_ttl_seconds = _NOUS_CATALOG_TTL_SECONDS
+    cache_key = url_root
+    if cache_ttl_seconds is not None:
+        from hermes_constants import hermes_home_key
+
+        cache_key += "\x00" + hermes_home_key() + "\x00" + _custom_endpoint_fingerprint(api_key, None, None)
+    last_good = _pricing_cache.get(cache_key)
     if not force_refresh:
         cached = _cached_catalog(cache_key)
         if cached is not None:
             return cached
 
-    url = cache_key + "/v1/models"
+    url = url_root + "/v1/models"
     headers: dict[str, str] = {
         "Accept": "application/json",
         "User-Agent": _HERMES_USER_AGENT,
@@ -2591,7 +2608,18 @@ def fetch_models_with_pricing(
         req = urllib.request.Request(url, headers=headers)
         with _urlopen_model_catalog_request(req, timeout=timeout) as resp:
             payload = json.loads(resp.read().decode())
+        if not isinstance(payload, dict) or not isinstance(payload.get("data"), list):
+            raise ValueError("model pricing catalogue has no model rows")
+        if any(not isinstance(item, dict) or
+               (item.get("id") is not None and not isinstance(item.get("id"), str))
+               for item in payload["data"]):
+            raise ValueError("model pricing catalogue contains invalid rows")
     except Exception:
+        if cache_ttl_seconds is not None and api_key and last_good:
+            # A transport failure is not evidence that an org's denial ended.
+            # Retain only this identity's known restrictions for the existing
+            # failure retry window; do not mark them freshly revalidated.
+            return _cache_catalog(cache_key, last_good, _FAILED_CATALOG_TTL_SECONDS)
         return _cache_catalog(cache_key, {})
 
     # Same document the reasoning-capability fetch would pull, and every
@@ -2630,7 +2658,9 @@ def fetch_models_with_pricing(
                         entry["original"] = orig_entry
             result[mid] = entry
 
-    return _cache_catalog(cache_key, result)
+    if not result and cache_ttl_seconds is not None and api_key and last_good:
+        return _cache_catalog(cache_key, last_good, _FAILED_CATALOG_TTL_SECONDS)
+    return _cache_catalog(cache_key, result, cache_ttl_seconds)
 
 
 def fetch_ai_gateway_pricing(
@@ -2781,6 +2811,7 @@ def nous_policy_allowed_ids(*, force_refresh: bool = False) -> Optional[set[str]
         base_url=base_url,
         force_refresh=force_refresh,
         include_sale_original=True,
+        cache_ttl_seconds=_NOUS_CATALOG_TTL_SECONDS,
     )
     return set(pricing) or None
 
@@ -2839,6 +2870,7 @@ def get_pricing_for_provider(provider: str, *, force_refresh: bool = False, cach
                 force_refresh=force_refresh,
                 # Sale chrome (pricing.original) is Nous Portal-only.
                 include_sale_original=True,
+                cache_ttl_seconds=_NOUS_CATALOG_TTL_SECONDS,
             )
     return {}
 

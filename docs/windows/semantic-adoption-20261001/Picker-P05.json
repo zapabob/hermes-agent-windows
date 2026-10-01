@@ -1,0 +1,142 @@
+{
+  "id": "Picker-P05",
+  "family": "Picker",
+  "status": "ACCEPTED_REQUIRED_PURPOSE_POLICY_WITH_BLOCKED_HTTP_AXIS",
+  "scope": "Purpose-specific cache policy through existing backend owners; captured profile/source identity, nonblocking ordinary models.dev picker, pure cache-only reads, and credential-isolated optional Nous pricing.",
+  "source_sha256_raw": {
+    "hermes_cli/models.py": "dc9fc814470c65e19f7120843e1714f318905e35d996cfb07b5d1e284aa8f49f",
+    "agent/models_dev.py": "ff39081a7e1067899aa431268c2cbb7d944462badad5739d97d0c2b60eadc05d",
+    "hermes_cli/model_catalog.py": "c55ab873d491b41ba0fd04967d64c3bc0882b8ed3b49c1af239a0897292e6567",
+    "tests/agent/test_models_dev.py": "7728c52e25bcacb516c554d24b67bc63a8e77195819dcbc05fbb8b9f80f589ad",
+    "tests/conftest.py": "9780ba549bf6fb746ff08fc3ea793b9593fa636c13ee7f61537052082d7020b8",
+    "tests/tui_gateway/test_model_picker_p05_native.py": "9485a391286874419e1d18927bc9329b9ec2137370dca66e993aa36cc79d8373",
+    "utils.py": "477e5d73ed714ab2b28ce3b5ccb611f9a6791976602fe7f37c164f8e17781cbb",
+    "tests/tui_gateway/test_model_picker_cold_native.py": "259a8f0548782cf584b632f201c96b65d4d7bd80e0101499206c269a71cf4016",
+    "hermes_cli/model_switch.py": "e76e6f3482f4dce4533df77bef67423b85cb50fd347154880396999f7001eeb2",
+    "hermes_cli/inventory.py": "d36456e900097db72194fa1e74dc2934732916649f333c77d3fc892f1339a6ed",
+    "hermes_cli/nous_account.py": "5e9b1a20dff345a9b0021e8908a4c8a4bbf93112cc09553d6ca84f89004b2e34",
+    "hermes_cli/auth.py": "1aacac94bce7ef8b1ea020a8a3479e6c1fecc4954ff96a293f3cc6904c236df7",
+    "hermes_constants.py": "70e75092fd443e586b4a344e8043f8020c84de7e2c7684c9c3a2880778d1a0aa",
+    "hermes_cli/config.py": "d679ca0b84f2e184b84f8557bf92bbeea55a021f7fc2e18f269264e1310c30b5",
+    "tui_gateway/server.py": "05fba295146d0fb454f91fad1674d9acf9c490632acaa2a348d3eca655241cd5",
+    "tui_gateway/methods_complete.py": "55b75b8fedff3a84610110249226f6de33b1a319c7da6498f6a8c0f7311c0366",
+    "providers/base.py": "65c735f999f60011c475db33ce23012de6ac5cf40d8bb255f0021867ebbb23fe",
+    "hermes_cli/urllib_security.py": "dbeb3be6d995dcc2668cf60f268aa83ca9f76c0bffa31e1355174d3b0b3cee70",
+    "docs/windows/semantic-adoption-20261001/Model-picker-P05-mini-plan.md": "c9fb778c530175e3e606e5a92e5c1b7b60fceef11f5753c23eff1dd41d3edb13"
+  },
+  "evidence_sha256_raw": {
+    "Picker-P05-handoff-005/artifact-hashes.json": "1ed8d5d70e77669e9ae0a5901de576db24f618da7cab8c314066b4052849a4ef",
+    "Picker-P05-handoff-005/hashes.json": "21e5fccd7f89f56dd485b2b1bbd96f54d3223b8bacf6a94b5c9df26501a0e9c1",
+    "Picker-P05-handoff-005/receipt.json": "313af6a40d08584f6af8715c60050f3fd103bd0e8b902cdc7c6d81d3b89fee01",
+    "Picker-P05-handoff-005/report.md": "59f7c9584d50ec2d24a951cf95d3a50c82c5d98197a0557f69282bbbb6a47664",
+    "Picker-P05-handoff-005/ruff.log": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "Picker-P05-handoff-005/unit-fixture.diff": "2c9fb9a2be076a41aa2b70a98820c20631147dc1ce1d90fe6741b68e0af3b4e4",
+    "Picker-P05-independent-Hooke-final-003/final-executions-graph-verification.json": "b6abf916620bd603f16208c2af2f726aa797e77ca224ebe87dab31bf23c33e47",
+    "Picker-P05-independent-Hooke-final-003/hashes.json": "16959ed5611c0f5362de5b8b8c2019fc39c0c146af4d33f004307b48415d2e5c",
+    "Picker-P05-independent-Hooke-final-003/independent-graph.json": "e22913176d0b8d47b58c4650b5de6997c0c47474adc1db33f831785d9a55b259",
+    "Picker-P05-independent-Hooke-final-003/latest-observations-verification.json": "8890ae5a87e8c1e6a498d5041469f5aab2a7f78a62fa43ee3d5b3532aefed370",
+    "Picker-P05-independent-Hooke-final-003/receipt.json": "60030467cb29d9b47fd48c47109ceff93dd4ceeda79a060a13b5bd17798c8234",
+    "Picker-P05-independent-Hooke-final-003/report.md": "e92ab163a75b17f5023ba9544f579dd26883bd0b7c383b7d9f8a412e05db2a94",
+    "Picker-P05-independent-Hooke-final-003/restored-standard-picker-verification.json": "e70b0eda16e1512b38cb280e4db6e1d496a9d70f48d6d7264a55629efb884e1a",
+    "Picker-P05-independent-Hooke-final-003/standard-no-adapter-verification.json": "69f3dbf75e0ed66a432bd68895b50a45cc265b7d66a830f75ab0126d544932a8",
+    "Picker-P05-final-standard119-001/receipt.json": "11d1e6d9fa4136a880f0d072318e907cfaffbfffe51dd32f0923321ed99c6fae",
+    "Picker-P05-final-regression-no-binding-001/receipt.json": "09736b34918994214c44306854f3b82cb9a404bf4a585b03396eeb76d6922e0b",
+    "Picker-P05-unit-final-SDK-001.json": "a31aaf34e8d083ebb8f61213c398e8dd2ce3424e9502d7a482431f1fc196cab0",
+    "Picker-P05-unit-final-four-root-CLI-001/receipt.json": "a1554df37df8aa287e971402e88b4ba85a28ee28b5bf15998c672f1edda75dfd",
+    "Picker-P05-unit-final-sync-001/receipt.json": "8b0424f45f962c89a1eb5d2062730381abb3226079f0cda5dd7f0f75d2969fe7",
+    "Picker-P05-unit-fixture-mutant-001/receipt.json": "4ef6083dd6e410cadeffb8ec825e921b0477109a8e836f491196f07c8c1478eb"
+  },
+  "native_regression": {
+    "standard_repository": {
+      "files": 3,
+      "passed": 119,
+      "failed": 0,
+      "skipped": 0,
+      "deselected": 0,
+      "collection_errors": 0,
+      "retry": 0,
+      "no_external_cache_binding": true,
+      "receipt": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-standard119-001\\receipt.json"
+    },
+    "regression": {
+      "files": 20,
+      "passed": 290,
+      "failed": 0,
+      "skipped": 0,
+      "errors": 0,
+      "no_external_cache_binding": true,
+      "refused_attempts": 42,
+      "receipt": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-final-regression-no-binding-001\\receipt.json"
+    },
+    "native_picker": {
+      "passed": 51,
+      "P05": 27,
+      "P04": 24,
+      "no_deselection": true
+    },
+    "overlapping_counts_not_added": true
+  },
+  "mutation": {
+    "historical_product_trials": 21,
+    "historical_killed": 18,
+    "historical_survived_ids": [
+      5,
+      13,
+      17
+    ],
+    "latest_current_identity_lifecycle_kills": [
+      18,
+      19,
+      20,
+      21
+    ],
+    "fixture_only_additional_trial": "KILLED",
+    "fixture_exact_restore": true,
+    "all_mutants_green": false,
+    "005_016_kill_source_is_historical003": true,
+    "013_017_redundancy_only_three_shapes": true
+  },
+  "codegraph": {
+    "owner_CLI_outputs_verified": 79,
+    "owner_required_I_files": 18,
+    "independent_file_bindings": 27,
+    "independent_symbol_bindings": 74,
+    "all4_roots_complete_pending0": true,
+    "readOnly": true,
+    "sync": false,
+    "proof": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\evidence\\Picker-P05-independent-Hooke-final-003\\independent-graph.json",
+    "hash": {
+      "raw_sha256": "e22913176d0b8d47b58c4650b5de6997c0c47474adc1db33f831785d9a55b259",
+      "lf_sha256": "e22913176d0b8d47b58c4650b5de6997c0c47474adc1db33f831785d9a55b259",
+      "bytes": 6731327
+    }
+  },
+  "independent_review": {
+    "receipt": "Picker-P05-independent-Hooke-final-003/receipt.json",
+    "verdict_key": "classification",
+    "requested_model": "gpt-6.1-sol",
+    "requested_effort": "high",
+    "actual_model": null,
+    "actual_effort": null
+  },
+  "retained_limits": [
+    "Native HTTP wire acceptance blocked by previous new fixture rejection; no retry or reroute.",
+    "actual model.options config/top-level selection preservation; no new full model.select/inference/KV live proof",
+    "bounded declaration/import/default endpoint/named caller and controlled/refused entry scope from final002; no global all-path runtime0",
+    "No full Electron inference or all-provider latency proof; optional Nous foreground pricing path preserved.",
+    "Historical survived mutations retained; fixture-only mutation counted separately."
+  ],
+  "explicit_paths": [
+    "agent/models_dev.py",
+    "hermes_cli/models.py",
+    "hermes_cli/model_switch.py",
+    "tests/tui_gateway/test_model_picker_p05_native.py",
+    "tests/tui_gateway/test_model_picker_cold_native.py",
+    "tests/agent/test_models_dev.py",
+    "docs/windows/semantic-adoption-20261001/Model-picker-P05-mini-plan.md"
+  ],
+  "commit_message": "Adopt purpose-specific picker cache policy with isolated background refresh",
+  "parent_head": "13fc2588f03abc346dab4a76da972081340adb9e",
+  "whole_U_TARGET_parity": false,
+  "whole_tree_GREEN": false
+}
