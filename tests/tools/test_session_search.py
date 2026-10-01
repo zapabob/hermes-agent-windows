@@ -896,7 +896,12 @@ class TestRewindExclusion:
             query="rewound content gamma", db=db,
             current_session_id="s_mixed",
         ))
-        assert result_rewind["count"] == 0
+        # OR recall may return the permitted archive matching "content".
+        # The withdrawn row must stay absent from anchors and hydration.
+        assert all(row["match_message_id"] != mid2 for row in result_rewind["results"])
+        payload = json.dumps(result_rewind["results"])
+        assert "rewound content gamma" not in payload
+        assert "gamma" not in payload
 
 
 class TestCompressionEndedHelper:

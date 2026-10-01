@@ -615,7 +615,9 @@ def _scroll(
 
     # Fetch the window
     try:
-        view = db.get_messages_around(session_id, around_message_id, window=window)
+        view = db.get_messages_around(
+            session_id, around_message_id, window=window, exclude_withdrawn=True
+        )
     except Exception as e:
         logging.error("get_messages_around failed: %s", e, exc_info=True)
         return tool_error(f"failed to load messages: {e}", success=False)
@@ -633,7 +635,9 @@ def _scroll(
             o_root = _resolve_lineage(db, owning)
             if a_root and o_root and a_root == o_root:
                 try:
-                    rebind_view = db.get_messages_around(owning, around_message_id, window=window)
+                    rebind_view = db.get_messages_around(
+                        owning, around_message_id, window=window, exclude_withdrawn=True
+                    )
                     messages = rebind_view.get("window") or []
                     if messages:
                         view = rebind_view

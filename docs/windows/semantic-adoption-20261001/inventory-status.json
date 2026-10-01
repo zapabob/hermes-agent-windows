@@ -32,9 +32,10 @@
       "F04",
       "F05",
       "F07",
-      "S03"
+      "S03",
+      "F10"
     ],
-    "other_seed_families_not_behaviorally_reviewed": 43,
+    "other_seed_families_not_behaviorally_reviewed": 42,
     "not_a_complete_contract_denominator": true
   },
   "blocker": {
@@ -73,7 +74,16 @@
     },
     {
       "id": "S03a",
-      "status": "LOCAL_SLICE_VERIFIED"
+      "status": "LOCAL_SLICE_VERIFIED",
+      "commit": "85ccd797b34e206e336c59cdbec09161be76e2c2"
+    },
+    {
+      "id": "F10b",
+      "status": "PARTIAL_WITH_BLOCKED_GATE"
+    },
+    {
+      "id": "recall-visibility",
+      "status": "PARTIAL_WITH_BLOCKED_GATE"
     }
   ],
   "proof_only_slices": [

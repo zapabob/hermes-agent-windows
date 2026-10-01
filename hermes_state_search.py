@@ -1013,7 +1013,7 @@ class SessionSearchMixin:
         # Reuse the primitive — handles anchor-existence, content decoding,
         # tool_calls deserialisation, and boundary counts.
         primitive = self.get_messages_around(
-            session_id, around_message_id, window=window
+            session_id, around_message_id, window=window, exclude_withdrawn=True
         )
         window_rows = primitive["window"]
         if not window_rows:
@@ -1056,7 +1056,7 @@ class SessionSearchMixin:
                 bookend_start_rows = conn.execute(
                     f"SELECT * FROM messages "
                     f"WHERE session_id = ? AND id < ?{role_clause} "
-                    f"AND length(content) > 0 "
+                    f"AND (active = 1 OR compacted = 1) AND length(content) > 0 "
                     f"ORDER BY id ASC LIMIT ?",
                     (session_id, window_min_id, *role_params, bookend),
                 ).fetchall()
@@ -1064,7 +1064,7 @@ class SessionSearchMixin:
                 bookend_end_rows = conn.execute(
                     f"SELECT * FROM messages "
                     f"WHERE session_id = ? AND id > ?{role_clause} "
-                    f"AND length(content) > 0 "
+                    f"AND (active = 1 OR compacted = 1) AND length(content) > 0 "
                     f"ORDER BY id DESC LIMIT ?",
                     (session_id, window_max_id, *role_params, bookend),
                 ).fetchall()
@@ -1333,6 +1333,18 @@ class SessionSearchMixin:
             if t.upper() not in {"AND", "OR", "NOT"}
         ]
         return bool(tokens) and all(len(t) >= 3 for t in tokens)
+
+    @staticmethod
+    def _or_relaxed_query(query: str) -> Optional[str]:
+        """Relax a sanitized multi-unit miss while preserving explicit OR/NOT."""
+        units: List[str] = []
+        for token in re.findall(r'"[^"]+"|\S+', query):
+            operator = token.upper()
+            if operator in {"OR", "NOT"}:
+                return None
+            if operator != "AND":
+                units.append(token)
+        return " OR ".join(units) if len(units) >= 2 else None
 
     def _run_trigram_search(
         self,
@@ -2211,6 +2223,23 @@ class SessionSearchMixin:
                 )
                 if tri_matches:
                     matches = tri_matches
+
+        # Retry only after the existing exact and substring routes miss.
+        # Reuse their SQL predicates, projection, ordering and pagination.
+        if (
+            not matches
+            and not is_cjk
+            and not self._fts_stale
+            and not (bool(role_filter) and "tool" in role_filter)
+        ):
+            relaxed = self._or_relaxed_query(query)
+            if relaxed is not None:
+                try:
+                    with self._read_ctx() as conn:
+                        cursor = conn.execute(sql, [relaxed, *params[1:]])
+                        matches = [dict(row) for row in cursor.fetchall()]
+                except sqlite3.OperationalError as exc:
+                    logger.debug("OR-relaxed FTS retry failed: %s", exc)
 
         return self._finalize_search_matches(matches, result_fields=result_fields)
 

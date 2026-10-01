@@ -12223,6 +12223,8 @@ class SessionDB(SessionSearchMixin, SessionSchemaMixin, SessionPortabilityMixin)
         session_id: str,
         around_message_id: int,
         window: int = 5,
+        *,
+        exclude_withdrawn: bool = False,
     ) -> Dict[str, Any]:
         """Load a window of messages anchored on a specific message id.
 
@@ -12242,13 +12244,19 @@ class SessionDB(SessionSearchMixin, SessionSchemaMixin, SessionPortabilityMixin)
 
         Returns an empty window when ``around_message_id`` is not a real id in
         ``session_id`` — callers decide how to surface that.
+
+        ``exclude_withdrawn=True`` uses the existing recall/display visibility:
+        active or compaction-archived rows, excluding Undo/Rewind rows. The
+        default preserves raw audit reads.
         """
         if window < 0:
             window = 0
+        visibility_clause = " AND (active = 1 OR compacted = 1)" if exclude_withdrawn else ""
         with self._read_ctx() as conn:
             # Confirm the anchor exists in this session.
             anchor_exists = conn.execute(
-                "SELECT 1 FROM messages WHERE id = ? AND session_id = ? LIMIT 1",
+                "SELECT 1 FROM messages WHERE id = ? AND session_id = ?"
+                f"{visibility_clause} LIMIT 1",
                 (around_message_id, session_id),
             ).fetchone()
             if not anchor_exists:
@@ -12258,13 +12266,13 @@ class SessionDB(SessionSearchMixin, SessionSchemaMixin, SessionPortabilityMixin)
             # (ASC, take window). Final order is id ASC.
             before_rows = conn.execute(
                 "SELECT * FROM messages "
-                "WHERE session_id = ? AND id <= ? "
+                f"WHERE session_id = ? AND id <= ?{visibility_clause} "
                 "ORDER BY id DESC LIMIT ?",
                 (session_id, around_message_id, window + 1),
             ).fetchall()
             after_rows = conn.execute(
                 "SELECT * FROM messages "
-                "WHERE session_id = ? AND id > ? "
+                f"WHERE session_id = ? AND id > ?{visibility_clause} "
                 "ORDER BY id ASC LIMIT ?",
                 (session_id, around_message_id, window),
             ).fetchall()
