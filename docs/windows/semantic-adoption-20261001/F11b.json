@@ -1,0 +1,96 @@
+{
+  "id": "F11b",
+  "family": "F11",
+  "status": "ACCEPTED_REQUIRED_TERMINAL_BOUNDARY_PROOF",
+  "scope": "Public parser/cmd_chat/ordinary CLI through real current signal owner to one terminal UTF-8 JSONL result130 using owned self-SIGINT provider leaf.",
+  "implementation": "Reuse actual stream JSON sink and interrupt owners; new native signal proof only.",
+  "source_sha256_raw": {
+    "cli.py": "d08e83fef5fa8493802f4e9c89b90644275cafb6a7782d2f4cb07af10dbaab89",
+    "hermes_cli/main.py": "7ee97c970fe5e05c461edddcfcb4153512fdc22e4b9db7252c3cca2e5998a302",
+    "hermes_cli/_parser.py": "82df8f4c89264b09729bb8c03327000061678eccad4e7fc0950d353a62fd7080",
+    "hermes_cli/stream_json.py": "312e191eb1d9101f7ae21b9f81ccc8e62e6fd89aaefc6e35476b903e79050ac3",
+    "run_agent.py": "b433326bfb74e9606313bfe0da0c2818e3e165a31dbc792bb6974998e4ad7d8a",
+    "hermes_cli/cli_commands_mixin.py": "bcc92dbf2ef559dead051f29e298c4eed38ea2f389b6723b5b08597edd86ce10",
+    "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+    "tests/hermes_cli/test_stream_json_signal_native.py": "8aa78358429cd76d68694fdbc1ccf60cb028b460a6420cf2d6009554823204b1",
+    "tests/hermes_cli/test_stream_json_native.py": "21bd446b870728ae518685a5a89ae1e1801da52b3ab1d1ce84c7e31f7ea66f83",
+    "tests/hermes_cli/test_stream_json_boundaries_native.py": "860c9bcf7efe7aacb8694ca27c999cd1d91a1642f63409e7e0bbabc59727ee58",
+    "tests/hermes_cli/test_stream_json_startup_native.py": "e5d3bf87113e19b3f0813ba63ec665f95061dda0e86e9b9bf019608b0041ba2a",
+    "tests/conftest.py": "9780ba549bf6fb746ff08fc3ea793b9593fa636c13ee7f61537052082d7020b8",
+    "scripts/run_tests.sh": "fdc4d97c77027ba77813dac950254e0e8f37ad16895f12e8ebd9154ff8bf7f4c",
+    "scripts/run_tests_parallel.py": "545511ab00d011618538fd2cd72e6bc1c113d10e001e4b2a5d493f48f257143a",
+    "docs/windows/semantic-adoption-20261001/F11b-mini-plan.md": "054a052dfb836afe66966210555785778fefc7e2a475e685d30ef3dd79755ef8",
+    "agent/interrupt_compat.py": "f10ecfe97b6be6d150c3e41d5d377a9ca845e74d454240f2d6506f753dc23441"
+  },
+  "evidence_sha256_raw": {
+    "F11b-independent-final-001/receipt.json": "10bbbf6cd099a093ef3593f3a29fed01376fe322ce02dce2b8de84fb7739ba26",
+    "F11b-independent-final-001/hashes.json": "8aba329ea99fd47e6863c1e575ca2779d204d7f27164465e0edb595445fa66b7",
+    "F11b-independent-supplement-001/receipt.json": "5d6db1e2a0b73d9fe67b3a8026eabbe75e644c7b5000fd260cf227e2fd032d45",
+    "F11b-mutations-final-001/receipt.json": "cd1bf12e60c5408494b357d1b1aad0fa8fdbba66918b76b9c3be05b5c3eaaac3",
+    "F11b-mutant-actual-exit-code-001.log": "e499e7b664c679c6ddb34c009f8cce23e5eb408d2d2f11b3f4cfa092f7ffeaa4",
+    "F11b-current-entry-SDK-004.json": "1519745bf45b613c5e38bec39b437288e788ba64334133ea11cb4e9a219997f9",
+    "Required-native-stable-008.json": "01a967fcd7b5ae309fbcff0087f8119442ac4c4d6dfd8bfa613da62a154e5d94",
+    "Required-native-stable-008.log": "75398511be851b2d9e763a4db6ceb84f0aa2fe57114799d2c6ef8bc93fd15fc0",
+    "F11b-independent-current-002/receipt.json": "80fa1c59bea26977f25d874111f9b71bb0458cc3f966edc405cd239924fd7352",
+    "F11b-independent-current-002/review.md": "7182b511a47648bc7c7ff2999f55fe64ad0091a7f98b9ed45b651058e260982f",
+    "F11b-independent-current-002/signal-q-SDK.json": "83a857c4b4cb9dc42dfd282cf08689b2869228da1cdee5fa3c3b8d99631c4c61"
+  },
+  "current_runner_receipts": [
+    "Required-native-stable-008.json"
+  ],
+  "native_regression": {
+    "selected_F11_files": 4,
+    "pass": 51,
+    "fail": 0,
+    "skip": 0,
+    "combined_six_file_pass": 66,
+    "not_additive": true,
+    "selection_collections_verified": true
+  },
+  "mutation": {
+    "actual_reached_exit_code_fault_killed": true,
+    "receipt": "F11b-mutations-final-001/receipt.json",
+    "restored_sink": "312e191eb1d9101f7ae21b9f81ccc8e62e6fd89aaefc6e35476b903e79050ac3",
+    "historical_CLI_at_mutation": true,
+    "independent_reuse_basis": "unchanged relevant full CLI owner AST plus fresh current native proof; sink/test raw-identical",
+    "earlier_survived_outer_KeyboardInterrupt_retained": true
+  },
+  "codegraph": {
+    "exact_current_signal_owner": "_signal_handler_q@cli.py",
+    "SDK": {
+      "evidence": "signal-q-SDK.json",
+      "sha256_raw": "83a857c4b4cb9dc42dfd282cf08689b2869228da1cdee5fa3c3b8d99631c4c61",
+      "node_id": "function:a98ec17533020266365793ced2e9c447",
+      "actual_indexed_source": "d08e83fef5fa8493802f4e9c89b90644275cafb6a7782d2f4cb07af10dbaab89",
+      "tool_version": "1.6.0",
+      "SDK_sha256": "e4c5f144d8cab8f53d4e50cffaf88fd1d5b0c2ae1bd794ab3b5eedc49596105e"
+    },
+    "prior_four_root_graph": "F11b-independent-final-001/receipt.json",
+    "wrong_parent_signal_guess_not_accepted": true
+  },
+  "independent_review": {
+    "receipt": "F11b-independent-current-002/receipt.json",
+    "verdict": "APPROVE_BOUNDED_SLICE",
+    "prior": [
+      "F11b-independent-final-001",
+      "F11b-independent-supplement-001"
+    ],
+    "requested_model": "gpt-6.1-sol",
+    "requested_effort": "high",
+    "actual_model": null,
+    "actual_effort": null
+  },
+  "retained_limits": [
+    "Actual public self-SIGINT is not OS console/ConPTY/kernel input or native process cleanup proof",
+    "Wrong earlier file selection and runtime007 during CLI mutation retained; neither is final GREEN",
+    "No broad Relay/Gateway/Electron or full runtime independence claim"
+  ],
+  "explicit_paths": [
+    "tests/hermes_cli/test_stream_json_signal_native.py",
+    "docs/windows/semantic-adoption-20261001/F11b-mini-plan.md"
+  ],
+  "commit_message": "Verify the reached CLI terminal JSONL interrupt boundary",
+  "parent_head": "3a1591084266c13f4939187e1b693e18e97adec6",
+  "whole_U_TARGET_parity": false,
+  "whole_tree_GREEN": false
+}
