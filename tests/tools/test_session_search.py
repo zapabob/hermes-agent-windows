@@ -99,7 +99,13 @@ class TestSchema:
             "sort",
             "profile",
         ]
-        assert parameters == [*historical_prefix, "detail"]
+        historical_arguments = [*historical_prefix, "detail"]
+        assert parameters[:len(historical_arguments)] == historical_arguments
+        signature = inspect.signature(session_search)
+        for bound in ("after", "before"):
+            assert parameters.index(bound) >= len(historical_arguments)
+            assert signature.parameters[bound].default is None
+            assert signature.parameters[bound].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
 
 
 class TestFormatTimestamp:

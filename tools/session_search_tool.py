@@ -35,6 +35,9 @@ support.
 
 import json
 import logging
+import re
+import time
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union
 
 from hermes_state_common import _RESET_END_REASONS
@@ -686,6 +689,46 @@ def _scroll(
     return json.dumps(response, ensure_ascii=False)
 
 
+def _parse_iso_bound(value: Optional[str]) -> Optional[int]:
+    """Resolve a discovery bound to UTC seconds; blank means unbounded."""
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    relative = re.fullmatch(r"(\d+)\s*([hdw])", text, flags=re.IGNORECASE)
+    if relative:
+        seconds = {"h": 3600, "d": 86400, "w": 604800}[relative.group(2).lower()]
+        return int(time.time()) - int(relative.group(1)) * seconds
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        raise ValueError(f"invalid time bound: {value!r}; expected ISO date/datetime or integer h/d/w duration") from None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return int(parsed.timestamp())
+
+
+def _coerce_started_ts(value: Any) -> Optional[int]:
+    """Normalize existing numeric/ISO start metadata; unknown fails bounds."""
+    if value is None or value == "" or isinstance(value, bool):
+        return None
+    try:
+        return int(value) if isinstance(value, (int, float)) else int(float(value))
+    except (TypeError, ValueError, OverflowError):
+        try:
+            return _parse_iso_bound(str(value))
+        except (ValueError, OverflowError):
+            return None
+
+
+def _in_time_window(started: Optional[int], after_ts: Optional[int], before_ts: Optional[int]) -> bool:
+    """The lower bound includes equality and the upper bound excludes it."""
+    if after_ts is None and before_ts is None:
+        return True
+    return started is not None and (after_ts is None or started >= after_ts) and (before_ts is None or started < before_ts)
+
+
 def _normalize_title_query(query: str) -> str:
     """Strip common quoting the model may include around a remembered title."""
     return query.strip().strip("`'\"")
@@ -771,11 +814,23 @@ def _discover(
     detail: str,
     current_session_id: str = None,
     link_profile: str = None,
+    after_ts: Optional[int] = None,
+    before_ts: Optional[int] = None,
 ) -> str:
     """Discovery shape: FTS5 plus adaptive or full result hydration."""
     role_list = role_filter if role_filter else ["user", "assistant"]
     current_lineage_root = _resolve_lineage(db, current_session_id) if current_session_id else None
     title_result = _title_match_result(db, query, current_lineage_root)
+    if title_result and (after_ts is not None or before_ts is not None):
+        title_sid = title_result["session_id"]
+        title_root = title_result.get("_lineage_root") or title_sid
+        try:
+            title_meta = db.get_session(title_root) or db.get_session(title_sid) or {}
+        except Exception:
+            logging.debug("get_session failed for bounded title %s", title_sid, exc_info=True)
+            title_meta = {}
+        if not _in_time_window(_coerce_started_ts(title_meta.get("started_at")), after_ts, before_ts):
+            title_result = None
 
     try:
         raw_results = db.search_messages(
@@ -788,6 +843,8 @@ def _discover(
             offset=0,
             sort=sort,
             fields=_DISCOVER_SEARCH_FIELDS,
+            after_ts=after_ts,
+            before_ts=before_ts,
         )
     except Exception as e:
         logging.error("FTS5 search failed: %s", e, exc_info=True)
@@ -970,6 +1027,8 @@ def _session_search_impl(
     profile: str = None,
     # Discovery result shaping (appended to preserve positional compatibility)
     detail: str = "adaptive",
+    after: Optional[str] = None,
+    before: Optional[str] = None,
     *,
     _owned_dbs: Optional[List[Any]] = None,
 ) -> str:
@@ -1053,6 +1112,11 @@ def _session_search_impl(
     if not query or not isinstance(query, str) or not query.strip():
         return _list_recent_sessions(db, limit, current_session_id, link_profile=profile)
 
+    try:
+        after_ts, before_ts = _parse_iso_bound(after), _parse_iso_bound(before)
+    except (ValueError, OverflowError) as exc:
+        return tool_error(str(exc), success=False)
+
     # Parse role_filter
     role_list: Optional[List[str]] = None
     if isinstance(role_filter, str) and role_filter.strip():
@@ -1080,6 +1144,8 @@ def _session_search_impl(
         detail=detail_norm,
         current_session_id=current_session_id,
         link_profile=profile,
+        after_ts=after_ts,
+        before_ts=before_ts,
     )
 
 
@@ -1099,6 +1165,8 @@ def session_search(
     profile: str = None,
     # Discovery result shaping (appended to preserve positional compatibility)
     detail: str = "adaptive",
+    after: Optional[str] = None,
+    before: Optional[str] = None,
 ) -> str:
     """Run session search and close databases opened by this invocation."""
     owned_dbs: List[Any] = []
@@ -1127,6 +1195,8 @@ def session_search(
             sort=sort,
             profile=profile,
             detail=detail,
+            after=after,
+            before=before,
             _owned_dbs=owned_dbs,
         )
     finally:
@@ -1237,6 +1307,14 @@ SESSION_SEARCH_SCHEMA = {
                     "behaviour) or 'tool' to search tool output only."
                 ),
             },
+            "after": {
+                "type": "string",
+                "description": "Discovery only: inclusive session-start lower bound. ISO date/datetime (naive means UTC) or integer h/d/w duration, e.g. 7d.",
+            },
+            "before": {
+                "type": "string",
+                "description": "Discovery only: exclusive session-start upper bound. ISO date/datetime (naive means UTC) or integer h/d/w duration. Applied before result limits.",
+            },
             "profile": {
                 "type": "string",
                 "description": (
@@ -1268,6 +1346,8 @@ registry.register(
         window=args.get("window", 5),
         sort=args.get("sort"),
         detail=args.get("detail", "adaptive"),
+        after=args.get("after"),
+        before=args.get("before"),
         profile=args.get("profile"),
         db=kw.get("db"),
         current_session_id=kw.get("current_session_id"),

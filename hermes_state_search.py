@@ -47,6 +47,19 @@ _FTS5_SPECIAL_CHARS = '+{}():"^@/#&|~[]<>,;!?$=\\\''
 _FTS5_SPECIAL_RE = re.compile(f"[{re.escape(_FTS5_SPECIAL_CHARS)}]")
 
 
+def _append_session_start_bounds(
+    clauses: List[str], params: list,
+    after_ts: Optional[int], before_ts: Optional[int],
+) -> None:
+    """Append session-start predicates before each existing route's LIMIT."""
+    if after_ts is not None:
+        clauses.append("s.started_at >= ?")
+        params.append(int(after_ts))
+    if before_ts is not None:
+        clauses.append("s.started_at < ?")
+        params.append(int(before_ts))
+
+
 class SessionSearchMixin:
     """See module docstring — mixin for SessionDB (Search cluster)."""
 
@@ -1358,6 +1371,8 @@ class SessionSearchMixin:
         role_filter: List[str] = None,
         limit: int = 20,
         offset: int = 0,
+        after_ts: Optional[int] = None,
+        before_ts: Optional[int] = None,
     ) -> Optional[List[Dict[str, Any]]]:
         """Run a search against a substring-capable FTS index.
 
@@ -1397,6 +1412,7 @@ class SessionSearchMixin:
         if role_filter:
             tri_where.append(f"m.role IN ({','.join('?' for _ in role_filter)})")
             tri_params.extend(role_filter)
+        _append_session_start_bounds(tri_where, tri_params, after_ts, before_ts)
         tri_sql = f"""
             SELECT
                 m.id,
@@ -1435,6 +1451,8 @@ class SessionSearchMixin:
         sort: str = None,
         include_inactive: bool = False,
         fields: Optional[Collection[str]] = None,
+        after_ts: Optional[int] = None,
+        before_ts: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """Instrumented wrapper around :meth:`_search_messages_impl`.
 
@@ -1457,6 +1475,8 @@ class SessionSearchMixin:
                 sort=sort,
                 include_inactive=include_inactive,
                 fields=fields,
+                after_ts=after_ts,
+                before_ts=before_ts,
             )
             return rows
         finally:
@@ -1566,6 +1586,8 @@ class SessionSearchMixin:
         offset: int,
         sort: Optional[str],
         include_inactive: bool,
+        after_ts: Optional[int] = None,
+        before_ts: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """Search canonical messages while derived FTS state is stale."""
         predicate, params, snippet_term = self._compile_like_boolean_query(query)
@@ -1587,6 +1609,7 @@ class SessionSearchMixin:
             where.append(f"m.role IN ({','.join('?' for _ in role_filter)})")
             params.extend(role_filter)
 
+        _append_session_start_bounds(where, params, after_ts, before_ts)
         order = (
             "ASC"
             if isinstance(sort, str) and sort.strip().lower() == "oldest"
@@ -1729,6 +1752,8 @@ class SessionSearchMixin:
         sort: str = None,
         include_inactive: bool = False,
         fields: Optional[Collection[str]] = None,
+        after_ts: Optional[int] = None,
+        before_ts: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """
         Full-text search across session messages using FTS5.
@@ -1781,6 +1806,8 @@ class SessionSearchMixin:
                 offset=offset,
                 sort=sort,
                 include_inactive=include_inactive,
+                after_ts=after_ts,
+                before_ts=before_ts,
             )
             return self._finalize_search_matches(
                 matches, result_fields=result_fields
@@ -1831,6 +1858,7 @@ class SessionSearchMixin:
             where_clauses.append(f"m.role IN ({role_placeholders})")
             params.extend(role_filter)
 
+        _append_session_start_bounds(where_clauses, params, after_ts, before_ts)
         where_sql = " AND ".join(where_clauses)
         params.extend([limit, offset])
 
@@ -1923,6 +1951,7 @@ class SessionSearchMixin:
                 if role_filter:
                     cjk_where.append(f"m.role IN ({','.join('?' for _ in role_filter)})")
                     cjk_params.extend(role_filter)
+                _append_session_start_bounds(cjk_where, cjk_params, after_ts, before_ts)
                 cjk_sql = f"""
                     SELECT
                         m.id,
@@ -2011,6 +2040,7 @@ class SessionSearchMixin:
                 if role_filter:
                     tri_where.append(f"m.role IN ({','.join('?' for _ in role_filter)})")
                     tri_params.extend(role_filter)
+                _append_session_start_bounds(tri_where, tri_params, after_ts, before_ts)
                 tri_sql = f"""
                     SELECT
                         m.id,
@@ -2104,6 +2134,7 @@ class SessionSearchMixin:
                 if role_filter:
                     like_where.append(f"m.role IN ({','.join('?' for _ in role_filter)})")
                     like_params.extend(role_filter)
+                _append_session_start_bounds(like_where, like_params, after_ts, before_ts)
                 like_sql = f"""
                     SELECT m.id, m.session_id, m.role,
                            substr(m.content,
@@ -2163,6 +2194,8 @@ class SessionSearchMixin:
                     source_filter=source_filter,
                     exclude_sources=exclude_sources,
                     role_filter=role_filter,
+                    after_ts=after_ts,
+                    before_ts=before_ts,
                 )
                 seen_ids = {m["id"] for m in matches}
                 matches.extend(m for m in gap_matches if m["id"] not in seen_ids)
@@ -2203,6 +2236,8 @@ class SessionSearchMixin:
                     role_filter=role_filter,
                     limit=limit,
                     offset=offset,
+                    after_ts=after_ts,
+                    before_ts=before_ts,
                 )
                 if cjk_fb:
                     matches = cjk_fb
@@ -2220,6 +2255,8 @@ class SessionSearchMixin:
                     role_filter=role_filter,
                     limit=limit,
                     offset=offset,
+                    after_ts=after_ts,
+                    before_ts=before_ts,
                 )
                 if tri_matches:
                     matches = tri_matches
@@ -2252,6 +2289,8 @@ class SessionSearchMixin:
         source_filter: Optional[List[str]] = None,
         exclude_sources: Optional[List[str]] = None,
         role_filter: Optional[List[str]] = None,
+        after_ts: Optional[int] = None,
+        before_ts: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """LIKE-scan the rows the deferred rebuild hasn't indexed yet.
 
@@ -2298,6 +2337,7 @@ class SessionSearchMixin:
             where.append(f"m.role IN ({','.join('?' for _ in role_filter)})")
             params.extend(role_filter)
 
+        _append_session_start_bounds(where, params, after_ts, before_ts)
         sql = f"""
             SELECT m.id, m.session_id, m.role,
                    substr(m.content,

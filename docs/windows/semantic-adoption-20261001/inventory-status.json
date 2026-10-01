@@ -79,10 +79,16 @@
     },
     {
       "id": "F10b",
-      "status": "PARTIAL_WITH_BLOCKED_GATE"
+      "status": "PARTIAL_WITH_BLOCKED_GATE",
+      "commit": "8b2b2c3d3c758bdeaf7fa769d18ad1b0a8b25957"
     },
     {
       "id": "recall-visibility",
+      "status": "PARTIAL_WITH_BLOCKED_GATE",
+      "commit": "8b2b2c3d3c758bdeaf7fa769d18ad1b0a8b25957"
+    },
+    {
+      "id": "F10a",
       "status": "PARTIAL_WITH_BLOCKED_GATE"
     }
   ],

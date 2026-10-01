@@ -1,0 +1,180 @@
+{
+  "id": "F10a",
+  "parent_family": "F10",
+  "status": "PARTIAL_WITH_BLOCKED_GATE",
+  "starting_commit": "8b2b2c3d3c758bdeaf7fa769d18ad1b0a8b25957",
+  "scope": "UTC after/before discovery arguments through the existing registry/two inline callers and all existing SQL routes before LIMIT; title uses lineage-root start.",
+  "source_sha256": {
+    "hermes_state_search.py": "fa881e6a8363ebe3a3e3029b4fad38a82bdb1d5a26f053a7dc1b742f577c91d3",
+    "tools/session_search_tool.py": "626f55a90a3cb987cdb89baba634aac477ede739cca8558fd56e694e0f3562f6",
+    "agent/agent_runtime_helpers.py": "381da10beaad8c4f390d8bdac1283927fcf7f07d45713bd19eec7bfeec539436",
+    "agent/tool_executor.py": "06be9b42da56b0399b390182462b2c34991702c3ba37ecfe62deac6d798242bf",
+    "hermes_state.py": "7234f882e8b01658d5b98fbc6d0c2bf7f5c2aeccc15ebbff264087047028a7a4",
+    "hermes_state_common.py": "5a24e8f31cff1119741dc7031de2fe6b6afae332af342473629775b8e1bbad06",
+    "run_agent.py": "891f83eabfbe514d3f6bee2e67fd59b34f0c7d5b4cabf4ce255c25308b61a5f3",
+    "tools/registry.py": "f95d011cae75f0426dd77cb1e25df6bebb61a067d795312df297cb877dd616f5",
+    "tests/hermes_state/test_search_temporal_native.py": "0dcd5a0b540590e19eb2e2987572038288712d2a704d11bc8ef1985d8a1e79f6",
+    "tests/hermes_state/test_search_or_recall_native.py": "23158181b832974115ba100d4045121ceb671ef6a7aa84489b0340b8f57ef7b3",
+    "tests/tools/test_session_recall_visibility.py": "7718ba9006065ba8ca9a75196a512270edd596fd81c5b92f7a26126cbfa3ee46",
+    "tests/tools/test_session_search.py": "a3c48a737b8ce5742d9a4167c49afeaf3e308772ded4eab44d27c63baf7b8ce8",
+    "tests/test_hermes_state.py": "d196b90dc6792e0d714ae78efe1e01667ccbf24feda212dbacc810b6364f0114",
+    "tests/hermes_state/test_get_messages_around.py": "5987839fa74512dd1e9ac0818c5d8371b432b86f54e606431cab1b221a7e8870",
+    "tests/hermes_state/test_get_anchored_view.py": "959316c86207ecf4ad927e8e0db9e2fb5a4ec87c31a7d576f70852b5a086e890",
+    "docs/windows/semantic-adoption-20261001/F10a-mini-plan.md": "4e02e158887ab403605d92e7b98133e68d3eff7381fd3624dce3a02864e2bb76"
+  },
+  "red": {
+    "pass": 7,
+    "fail": 40,
+    "skip": 0,
+    "collection_error": 0,
+    "behavioral_fail": 32,
+    "missing_internal_argument_TypeError": 8
+  },
+  "final_native_regression": {
+    "pass": 145,
+    "fail": 0,
+    "skip": 0,
+    "temporal_cases": 49,
+    "existing_recall_cases": 96,
+    "runner": {
+      "argv": [
+        "C:/Program Files/Git/bin/bash.exe",
+        "scripts/run_tests.sh",
+        "tests/hermes_state/test_search_temporal_native.py",
+        "tests/hermes_state/test_search_or_recall_native.py",
+        "tests/tools/test_session_recall_visibility.py",
+        "tests/tools/test_session_search.py",
+        "tests/test_hermes_state.py",
+        "-k",
+        "search or recall",
+        "-j",
+        "2",
+        "--file-timeout",
+        "180"
+      ],
+      "cwd": "H:\\hermes-worktrees\\windows-semantic-adoption-20261001\\integration",
+      "environment_keys": [
+        "COMSPEC",
+        "HERMES_HOME",
+        "HERMES_PYTHON",
+        "HOME",
+        "PATH",
+        "PATHEXT",
+        "PYTHONIOENCODING",
+        "PYTHONUTF8",
+        "SystemRoot",
+        "TEMP",
+        "TMP",
+        "USERPROFILE",
+        "WINDIR"
+      ],
+      "exit": 0,
+      "source_sha256": {
+        "cli.py": "c701b5d99eb195f083f92aa90a3702fcb2cffe5156dc482a822d4044cd1d1e29",
+        "hermes_cli/cli_commands_mixin.py": "26b385327ecfba3967b30882e1cab1ae6a6a815040d062cc096927624f149f31",
+        "agent/plan_prompt.py": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378",
+        "tests/hermes_state/test_search_temporal_native.py": "0dcd5a0b540590e19eb2e2987572038288712d2a704d11bc8ef1985d8a1e79f6",
+        "tests/hermes_state/test_search_or_recall_native.py": "23158181b832974115ba100d4045121ceb671ef6a7aa84489b0340b8f57ef7b3",
+        "tests/tools/test_session_recall_visibility.py": "7718ba9006065ba8ca9a75196a512270edd596fd81c5b92f7a26126cbfa3ee46",
+        "tests/tools/test_session_search.py": "a3c48a737b8ce5742d9a4167c49afeaf3e308772ded4eab44d27c63baf7b8ce8",
+        "tests/test_hermes_state.py": "d196b90dc6792e0d714ae78efe1e01667ccbf24feda212dbacc810b6364f0114"
+      },
+      "log_sha256": "30eedc193b9d3defff8d2f42c8b8a77d9b284f70da08de48a368922b2ccd5730"
+    }
+  },
+  "owner_regression": {
+    "pass": 13,
+    "fail": 0,
+    "skip": 6,
+    "gate": "BLOCKED_NATIVE_WAL_READ_CONCURRENCY"
+  },
+  "fts_regression": {
+    "pass": 32,
+    "fail": 0,
+    "skip": 17,
+    "skip_classification": {
+      "CJK_no_compiler_extension": 9,
+      "POSIX_flock_admission_harness": 6,
+      "Linux_proc_harness": 2
+    },
+    "full_Windows_FTS_admission_proved": false
+  },
+  "mutations": {
+    "count": 7,
+    "all_detected": true,
+    "all_product_bytes_restored": true,
+    "receipt_sha256": "8dcbdee19bbd798a0cad665f87b0250bbe55b4409853fa916acc67a1cf5f7eca",
+    "test_continuity": {
+      "original_test_sha256": "f35208f49e009b11de2cd1063033934c6c074ad72ced9cd1154180e161fee527",
+      "final_test_sha256": "0dcd5a0b540590e19eb2e2987572038288712d2a704d11bc8ef1985d8a1e79f6",
+      "whole_original_module_AST_unchanged": true,
+      "added_case_count": 2,
+      "mutation_case_count": 7,
+      "mutation_receipt_sha256": "8dcbdee19bbd798a0cad665f87b0250bbe55b4409853fa916acc67a1cf5f7eca",
+      "restored_product_sha256": {
+        "hermes_state_search.py": "fa881e6a8363ebe3a3e3029b4fad38a82bdb1d5a26f053a7dc1b742f577c91d3",
+        "tools/session_search_tool.py": "626f55a90a3cb987cdb89baba634aac477ede739cca8558fd56e694e0f3562f6",
+        "agent/agent_runtime_helpers.py": "381da10beaad8c4f390d8bdac1283927fcf7f07d45713bd19eec7bfeec539436",
+        "agent/tool_executor.py": "06be9b42da56b0399b390182462b2c34991702c3ba37ecfe62deac6d798242bf"
+      },
+      "scope": "Earlier seven mutations ran with the original 47-case source; only two independent metadata controls were added afterwards. No claim that the earlier full-file test hash equals the expanded source."
+    }
+  },
+  "codegraph": {
+    "tool": "1.6.0",
+    "owners": 14,
+    "CLI_outputs": 45,
+    "receipt_sha256": "69a958c3016dbc49baf4bc37c3537b9c41f82178b53ed743d5b37c62df47dbd4",
+    "four_index_source_mismatches": 0
+  },
+  "independent_review": {
+    "verdict": "APPROVE",
+    "actual_model_id": "gpt-6.1-sol",
+    "actual_reasoning_effort": "high",
+    "receipt_sha256": "7c32b4708f2660e9df7d5c1a634303754c2a64bd2d99342cfac21805cd203c50",
+    "review_sha256": "18468854f3d4408e1b96ffdc3677fb03fa9a073fbf6825eaeacb192f41be0f4d"
+  },
+  "native_capability_probe_sha256": "3a3e0a4d862be71a0e0785842966811d41a9da1aae61c76b81e9dd283aa9d85c",
+  "evidence_sha256": {
+    "F10a-tests-001/receipt.json": "907470cc9f5b01cc1e40baf4f4dc4f5d7ac4e9672d7b8be5da70db64cd836a01",
+    "F10a-tests-001/red-001.json": "80b9bdc90526aae838772c4b1f24426543a063d281b1f7408e38e9444ba5e8f0",
+    "F10a-tests-001/red-002.json": "55dbdfa6f561589b5282d98fb868b919b2ec2f0aaae4dbe794d13c47c36c8f15",
+    "F10a-green-001.json": "929c02c684f75e8ef6b727bf44118f2c59d4daa470839c12b56153ffb0236c6d",
+    "F10a-regression-001.json": "7ace0f7bb23791982ec942e17ff7248ba7263d4af5e4fdeea0e011a9f59bdf17",
+    "F10a-regression-green-002.json": "ea6fdc83ed59b2963d561b2a5da22e76ae8c67c8c7a4e0cb789626c065de7d31",
+    "F10a-restored-green-003.json": "9fd3f3d49ad11dfe02bd7340f83ece93d7fd4b09ef2ec9d53fd65bbe5737a18f",
+    "F10a-title-metadata-green-004.json": "73a3309ee4ec80ce4ee792eaf56bc27159016efa5a36782179f946d43b5f55a4",
+    "F10a-final-regression-green-005.json": "5b7c9d3ab973da086a642091e64825d21f2a6e817598e9c592fb77ee0e844204",
+    "F10a-owner-regression-001.json": "fc66a5c2743e4a03a129cb0338263e27233918707edf2fce2536993490b7d0f1",
+    "F10a-fts-regression-001.json": "41eba5a3c2b49da4751bef57c3597d2828d1bdc6b27cb147d3d6176b437d4f9c",
+    "F10a-native-routes-001.json": "3a3e0a4d862be71a0e0785842966811d41a9da1aae61c76b81e9dd283aa9d85c",
+    "F10a-mutation-001.json": "8dcbdee19bbd798a0cad665f87b0250bbe55b4409853fa916acc67a1cf5f7eca",
+    "F10a-mutation-test-continuity-001.json": "98111a8b08a9662cf2d0550b8912b097fb228501a7cce634dcf07b2eb6b79a2d",
+    "F10a-preedit-bind-002/receipt.json": "a752af9412100eddb26cae5e0859ecbe0887e6f7ef66ec3e7000324260825ebe",
+    "F10a-final-bind-004/receipt.json": "69a958c3016dbc49baf4bc37c3537b9c41f82178b53ed743d5b37c62df47dbd4",
+    "graph-bindings-F10a-final-004.json": "470e15499a97a57a7c02e4607ca4cc20d21e9d0313c81d6c2b1d68969fa71bca",
+    "F10a-review-001/receipt.json": "7c32b4708f2660e9df7d5c1a634303754c2a64bd2d99342cfac21805cd203c50",
+    "F10a-review-001/review.md": "18468854f3d4408e1b96ffdc3677fb03fa9a073fbf6825eaeacb192f41be0f4d"
+  },
+  "earlier_runs": [
+    "First relative-clock fixture AttributeErrors are rejected, retained in red-001.",
+    "142 pass/1 fail stale full signature snapshot; historical positions/detail retained in repaired structural assertion.",
+    "47-case acceptance and seven mutations preceded two new unknown-start controls; original module AST is unchanged and raw old hash reconstructed.",
+    "Overlapping subsets/retries are not additive."
+  ],
+  "remaining": [
+    "BLOCKED_NATIVE_CJK_BIGRAM",
+    "BLOCKED_NATIVE_WAL_READ_CONCURRENCY",
+    "Windows cross-process FTS admission proof",
+    "Explicit session exclusions",
+    "Cross-profile policy conflict",
+    "Hidden-scaffold visibility",
+    "Memory-provider deletion authority",
+    "SQLite worker cancellation"
+  ],
+  "full_F10": false,
+  "full_U_TARGET_parity": false,
+  "runtime_independence_verified": false,
+  "production_runtime_used": false,
+  "published": false
+}
