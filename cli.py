@@ -22129,6 +22129,10 @@ def _run_kanban_goal_loop_q(cli: "HermesCLI", first_response: str) -> None:
     )
 
 
+from hermes_cli.stream_json import current_emitter, stream_json_entrypoint
+
+
+@stream_json_entrypoint
 def main(
     query: str = None,
     q: str = None,
@@ -22156,6 +22160,7 @@ def main(
     ignore_user_config: bool = False,
     ignore_rules: bool = False,
     oneshot: bool = False,
+    output_format: str = "text",
 ):
     """
     Hermes Agent CLI - Interactive AI Assistant
@@ -22338,6 +22343,10 @@ def main(
         pass_session_id=pass_session_id,
         ignore_rules=ignore_rules,
     )
+
+    emitter = current_emitter() if output_format == "stream-json" else None
+    if emitter is not None:
+        emitter.bind_session(cli.session_id or "", cli.model or "")
 
     from agent.skill_commands import build_auto_load_prompt, resolve_auto_load_skills
     auto_names = [] if getattr(cli, "ignore_rules", ignore_rules) else resolve_auto_load_skills(CLI_CONFIG)
@@ -22651,6 +22660,8 @@ def main(
                         # (they check agent.tool_progress_mode, initialized
                         # from display.tool_progress at construction).
                         cli.agent.tool_progress_mode = "off"
+                        if emitter is not None:
+                            emitter.attach(cli.agent)
                         try:
                             result = cli.agent.run_conversation(
                                 user_message=effective_query,
@@ -22685,7 +22696,7 @@ def main(
                             and (result.get("failed") or result.get("partial"))
                         ):
                             print(f"Error: {result['error']}", file=sys.stderr)
-                        elif response:
+                        elif response and emitter is None:
                             print(response)
 
                         # Kanban goal-loop mode: a worker spawned for a
@@ -22702,7 +22713,8 @@ def main(
                                 logger.debug("kanban goal loop failed: %s", _goal_exc)
 
                         # Session ID goes to stderr so piped stdout is clean.
-                        print(f"\nsession_id: {cli.session_id}", file=sys.stderr)
+                        if emitter is None:
+                            print(f"\nsession_id: {cli.session_id}", file=sys.stderr)
 
                         # Ensure proper exit code for automation wrappers.
                         #
@@ -22730,6 +22742,8 @@ def main(
                                     _exit_code = _RL_CODE
                                 except Exception:
                                     _exit_code = 1
+                        if emitter is not None:
+                            emitter.defer_result(result, session_id=cli.session_id or "")
                         sys.exit(_exit_code)
 
                 # Exit with error code if credentials or agent init fails

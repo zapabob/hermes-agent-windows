@@ -34,9 +34,10 @@
       "F07",
       "S03",
       "F10",
-      "F12"
+      "F12",
+      "F11"
     ],
-    "other_seed_families_not_behaviorally_reviewed": 41,
+    "other_seed_families_not_behaviorally_reviewed": 40,
     "not_a_complete_contract_denominator": true
   },
   "blocker": {
@@ -107,6 +108,11 @@
     },
     {
       "id": "F12a",
+      "status": "PARTIAL_WITH_BLOCKED_GATE",
+      "commit": "424e45f9a49e55fc1039dd075ac7c86f6117b09b"
+    },
+    {
+      "id": "F11a",
       "status": "PARTIAL_WITH_BLOCKED_GATE"
     }
   ],

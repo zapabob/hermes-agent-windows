@@ -431,6 +431,10 @@ def build_top_level_parser():
         help="Quiet mode for programmatic use: suppress banner, spinner, and tool previews. Only output the final response and session info.",
     )
     chat_parser.add_argument(
+        "--format", dest="output_format", choices=("text", "stream-json"), default="text",
+        help="Single-query output format; stream-json emits JSON events and implies quiet mode.",
+    )
+    chat_parser.add_argument(
         "--resume",
         "-r",
         metavar="SESSION_ID",

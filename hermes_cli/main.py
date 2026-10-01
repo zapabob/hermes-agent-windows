@@ -3178,9 +3178,16 @@ def _resolve_use_tui(args) -> bool:
         return False
 
 
+from hermes_cli.stream_json import stream_json_chat_entrypoint
+
+
+@stream_json_chat_entrypoint
 def cmd_chat(args):
     """Run interactive chat CLI."""
-    use_tui = _resolve_use_tui(args)
+    from hermes_cli.stream_json import stream_json_requested
+
+    _stream_json = stream_json_requested(args)
+    use_tui = False if _stream_json else _resolve_use_tui(args)
 
     _apply_safe_mode(args)
 
@@ -3532,10 +3539,16 @@ def cmd_chat(args):
     # Filter out None values
     kwargs = {k: v for k, v in kwargs.items() if v is not None}
 
+    if _stream_json:
+        kwargs["output_format"] = "stream-json"
+
     try:
         cli_main(**kwargs)
     except ValueError as e:
-        print(f"Error: {e}")
+        if _stream_json:
+            sys.stderr.write(f"Error: {e}\n")
+        else:
+            print(f"Error: {e}")
         sys.exit(1)
 
 
