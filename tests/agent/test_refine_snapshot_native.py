@@ -238,12 +238,28 @@ def test_blank_focus_keeps_existing_automatic_prompt_bytes(harness, command):
     assert harness.calls[0][0] == expected
 
 
-@pytest.mark.parametrize("gate", ["disabled", "delegate"])
-def test_blank_focus_retains_existing_spawn_gates(harness, gate):
-    if gate == "disabled":
-        harness.enabled = False
-    else:
-        harness.parent._delegate_depth = 1
+def test_automatic_blank_review_retains_disabled_gate(harness):
+    harness.enabled = False
+    harness.parent._spawn_background_review(
+        harness.parent._session_messages, review_memory=True, review_skills=True)
+    harness.finish()
+    assert not harness.threads and not harness.forks and not harness.calls
+
+
+@pytest.mark.parametrize("command", ["/refine", "/refine   ", "/refine \t"])
+def test_manual_bare_refine_runs_with_automatic_review_disabled(harness, command):
+    harness.enabled = False
+    before = _bytes(harness.parent._session_messages)
+    prompt = harness.parent._cached_system_prompt.encode("utf-8")
+    assert harness.dispatch(command) is not None
+    harness.finish()
+    assert len(harness.calls) == 1
+    assert _bytes(harness.parent._session_messages) == before
+    assert harness.parent._cached_system_prompt.encode("utf-8") == prompt
+
+
+def test_manual_bare_refine_retains_delegated_denial(harness):
+    harness.parent._delegate_depth = 1
     assert harness.dispatch() is None
     harness.finish()
     assert not harness.threads and not harness.forks and not harness.calls

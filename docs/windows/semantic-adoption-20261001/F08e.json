@@ -1,0 +1,189 @@
+{
+  "id": "F08e",
+  "status": "LOCAL_SLICE_VERIFIED",
+  "starting_commit": "2a17813d0c2f551700ea5dbd1d28955e2f7b17f6",
+  "tested_frozen_sources": {
+    "cli.py": "5a1097c595e492e261ee52e27b50737eea3e6753adacdd58e66bfd1c3ff8faff",
+    "run_agent.py": "b433326bfb74e9606313bfe0da0c2818e3e165a31dbc792bb6974998e4ad7d8a",
+    "hermes_cli/cli_commands_mixin.py": "bcc92dbf2ef559dead051f29e298c4eed38ea2f389b6723b5b08597edd86ce10",
+    "hermes_cli/cli_agent_setup_mixin.py": "6eddc745b0a654e8ccec4d968e056ca7ebdb2612a46b0b0f8ed7b0e37db84d6b",
+    "tests/cli/test_f08_command_runtime_native.py": "33f44d02b9ba76696a9d0eaf7585585c1ae00beecfbccb8c59bed5d720c3ef71",
+    "tests/agent/test_refine_snapshot_native.py": "f390546995dc819bdd14aa5b370f5471764a92408111a22f20660bbd44e17331",
+    "docs/windows/semantic-adoption-20261001/F08e-mini-plan.md": "807bc4eefaa0c22258ac161f55b337ec37bbd6c23828a81e80c3d57aa2d2fd80",
+    "agent/background_review.py": "ef7185709988d2c6fc96500f61e76ed8b2e6e0cd74bceb7d48c1154090ec21d9",
+    "agent/agent_init.py": "f9a90e599fc35db7996d8fb310ee023f790716c9fdfe3d1ba7461494b875a6c9",
+    "agent/agent_runtime_helpers.py": "2083684731262cadd728efa6769a94163335013eba2b270aebb02ea7ac2aac36",
+    "agent/tool_executor.py": "2e61675e01d89b5cb6aae1a35eef4ae7b357293dccc18bc1dccf136e07f768e8",
+    "agent/conversation_loop.py": "75cf47ee792a7feb5a7276b85f8235d109ca59e81c6f0e0f3f1a56bc4e23e992",
+    "agent/moa_loop.py": "74143ce0460dd453d1a34881ff685b456ac4fbc157f6d575de17d4dddab592f4",
+    "agent/auxiliary_client.py": "a28acafc0917a81ad4537f5390d5d2360bc5ed4ae820b1332d4b78f782bdd48b",
+    "hermes_cli/runtime_provider.py": "a00dd4f0a5cdeeb874a8c360117840a6d4389a409f6976589eec9eb2f9696dbe",
+    "hermes_cli/commands.py": "7271650112ce491082a232cbd34be7fd833e47c5a8089cce1cf138d603a45ca4",
+    "hermes_cli/plugins.py": "255ed19b0a16108aeaa2509a7556827723185b877dc78582f9d24162d238c218",
+    "tools/approval.py": "63fd9c3ca2327d98413b30a6cf8c6d8a68377ba190339b7019362f4ead701b8b",
+    "tools/delegate_tool.py": "3b9feae18dd3ef9e65183a40b4a3feae19fc1cd89288c628e5cb3d06934f2966",
+    "tools/thread_context.py": "378175cb766f52da8826c742f0c5b45653866075b951ff93d1af1fcfb6451aa9",
+    "tools/skill_manager_tool.py": "2c3530e3b0a34856309412dc0e0909ea205db50bb95f35cabb41e47aca3d82ca",
+    "tools/skill_provenance.py": "aab95e676e8013b1c5def7e66f48a15bdd19a5c8257f27cb530ef30e571110a1",
+    "tools/write_approval.py": "4a98656eebf1f4d5ff57bd67237bb9d540172676fd1301a4a21d8822b1fd23b4",
+    "tools/memory_tool.py": "7829c5ad36ee69aed03cd7c70b47a49c192f6832ecf0e0990c895e4d0e65747f",
+    "tools/file_tools.py": "9216f03edc43c9b08526d294801141e2b4c92de7adfbad71582bceb207002ba4",
+    "tests/agent/test_refine_read_save_native.py": "0cf585dbda31750c69b170f16900826090f927e5a471f17aeec74dfe46fec7e3",
+    "tests/agent/test_refine_read_marks_native.py": "25569de74d2b3e774cbcb3d66f23dc53a7adc887f578d93b9395685c98c925a4",
+    "tests/agent/test_refine_provider_native.py": "b072abb211dc39e3f6880702ab56f7f4156eb9f7b44c2839d5cf502c8653cd6f",
+    "tests/tools/test_file_staleness.py": "d580e67413015376f2b7a88b85364b770e3b1359bcd43ec023b7867022646cfb",
+    "tests/tools/test_file_tools_container_config.py": "85026b685789813cdd66d8ab73040dfe5990b678db07a9f9e63f0e73523311e6",
+    "tests/agent/test_file_safety.py": "82a554d9b04ab16f681b8c6ecb7b3d690060e9095eaf2d1e0d512925ee568e3d",
+    "tests/agent/test_file_safety_cross_profile.py": "8f063db1268e9d6f644b59c1af36f934a2d9517e935a2641935095f8ade8d733",
+    "tests/agent/test_redact.py": "9692dc86b2423869ef829f900761d5b274c89cd25bd71a5d63c1192259524da5",
+    "tests/run_agent/test_background_review.py": "fc872c7f2a567f5678c0aa136bde82dbce77c826976d89e578c0f2bfb08712b6",
+    "tests/run_agent/test_background_review_cache_parity.py": "5f4a02276eb4f5bf1bcf8333eb7d738263deb9089ff61b17daf229ef1a244a5f",
+    "tests/run_agent/test_background_review_toolset_restriction.py": "acb3917b2e9d93c976c282697ae2c8307d428a76bc4278509e04afe2ac1edeb9",
+    "tests/tools/test_review_whitelist_thread_native.py": "96a1bdbf574dfeb73aeb2a6c8336488940502af4359231a1af1a887312a11ae3",
+    "tests/tools/test_execute_code_approval_cluster.py": "d2c865dc7cd26c227cad138965cc789edb8967b264daaf8632c042a79d12f1eb",
+    "tests/tools/test_skill_provenance.py": "4ee298dad328099aef3d31b8efbbf88c646982c445aaf833394a105eab07f116",
+    "tests/tools/test_skill_view_path_check.py": "daf548c724d951203c09f3a91c5f7c4b51f9080d40017db127c741b03783ac62",
+    "tests/tools/test_skills_guard_agent_config.py": "920d3530d0e0427b55cbc4f94b81c7a7959628b5c62be0fd1540275efbaedc9c",
+    "tests/hermes_cli/test_plugins.py": "87097ce7546f824699ebcdd3653358bc42519e0bd90997b9c10f854a539fe686",
+    "tests/run_agent/test_tool_executor_contextvar_propagation.py": "30301f26e2ff38321ddd553bf9cd665969c24015f4c874e92e2d4d04d09d4d9b",
+    "tests/agent/test_refine_delivery_native.py": "9745d506250d99ce8c47973a9c2aca9a2f65412271a1a7f4e1d86e159a33060f",
+    "tests/tools/test_budget_config.py": "a91ceb6b5b0274fdb3215eb42075e0730ebfb54eb6945c053ab81b40ab39804e",
+    "tests/tools/test_tool_result_storage.py": "f85f2781b992885a35d71fd3f053c64e36fe08564cb63ed080daa5ea57cbf9d6",
+    "tests/agent/test_tool_executor_checkpoint_paths.py": "f2117cfe60aa68f9024b23086bab80eb97c964b7f1f1d16de8d1bf7790a920e7",
+    "tests/cli/test_moa_command.py": "aa277248c2ccec59e905d5149145f6ebe8bd80ea99e411c1ce316de14631cde1",
+    "tests/hermes_cli/test_cli_model_once.py": "1e578e9738b0d1bb32316bcf23c38f885e7868d73cd75321d7eb066306d46cf8",
+    "tests/run_agent/test_background_review_cost_controls.py": "8ca61219d31312c863e91c33e768f6f168f9149dd22a282018da2697cfcb7d34"
+  },
+  "owned_current_sources": {
+    "cli.py": "5a1097c595e492e261ee52e27b50737eea3e6753adacdd58e66bfd1c3ff8faff",
+    "run_agent.py": "b433326bfb74e9606313bfe0da0c2818e3e165a31dbc792bb6974998e4ad7d8a",
+    "hermes_cli/cli_commands_mixin.py": "bcc92dbf2ef559dead051f29e298c4eed38ea2f389b6723b5b08597edd86ce10",
+    "hermes_cli/cli_agent_setup_mixin.py": "6eddc745b0a654e8ccec4d968e056ca7ebdb2612a46b0b0f8ed7b0e37db84d6b",
+    "tests/cli/test_f08_command_runtime_native.py": "a5af0d130083ae06be5d19afd798fc211a4269b194f22a452cfbe06a62e2e525",
+    "tests/agent/test_refine_snapshot_native.py": "f390546995dc819bdd14aa5b370f5471764a92408111a22f20660bbd44e17331",
+    "docs/windows/semantic-adoption-20261001/F08e-mini-plan.md": "807bc4eefaa0c22258ac161f55b337ec37bbd6c23828a81e80c3d57aa2d2fd80"
+  },
+  "native": {
+    "tests": 17,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "regression": {
+    "tests": 458,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "mutation_count": 6,
+  "evidence_receipt_sha256_raw": {
+    "F08e-native-acceptance-final-008": "1919b76683ad84fb33a727e07fc154fd6d4aa0718d7daaf853d314dbd60888ec",
+    "F08e-regression-final-003": "a3dd395804969cdd3b3fc01bad84484930a78ceb35714d16b9a035484c8dd0fa",
+    "F08e-mutation-final-002": "c17e7e7706161721f7a09c616abe216b8727f5000629112524a9c2ddeed4a2b8",
+    "F08e-final-four-root-graph-006": "7307671238f0b02111dae3456f98ae643a81d772931a72c66965b5fa745d1e74",
+    "F08e-scope-graph-audit-007": "682b5bd338329077b10f1ff0adeaa19af26d5bc81827b07ba2349cbf990b7c80"
+  },
+  "review": {
+    "verdict": "APPROVE_BOUNDED",
+    "report_sha256_raw": "0436312ae1547af789ecdcc570946cf89e1f32208cbe4f2610303800f72446c8",
+    "manifest_sha256_raw": "62b0b697fe67f02e1f3da9e33771eb7feb7fdccf7d40d59c124b3138d6304846",
+    "requested_model": "gpt-6.1-sol",
+    "requested_effort": "high",
+    "actual_model": null,
+    "actual_effort": null
+  },
+  "shared_graph_qualification": [
+    {
+      "root": "integration",
+      "pending": {
+        "added": 0,
+        "modified": 3,
+        "removed": 0
+      },
+      "mismatches": [
+        {
+          "path": "agent/plan_prompt.py",
+          "indexed": "e593a3b1e0fb42d88c9388edd0eb14c65ea83dba0ef57c88763f443a75d34316",
+          "actual": "78fcb5f923c91ff31695942217070dda874ae8e5be3eac5aba6c581516bb9378"
+        },
+        {
+          "path": "apps/desktop/src/app/chat/composer/f04c-actual-ime.test.tsx",
+          "indexed": "f862cc1c71df730aa10d0374a9f784dfe216087ad1d2c10b2c0f30a7289374a4",
+          "actual": "2e73cbfdca0984498664b1cc99b08c4b61554a407168f63fb62d5bd67d5f44ea"
+        },
+        {
+          "path": "apps/desktop/test-fixtures/f04c-composer/run.mjs",
+          "indexed": "41a7f74084d636634ec4fc37c4be51e4197fcba3020b27c4fd251b73de4c1eb8",
+          "actual": "6728e3cce51ece2195452c0effad6922dbe9b5cd30c9667bdfb11d91a4c8738d"
+        },
+        {
+          "path": "hermes_cli/model_switch.py",
+          "indexed": "068136d8314b02c8623b12c56a32f667b95eb247e04f5f82f200cefe7a2215b0",
+          "actual": "e76e6f3482f4dce4533df77bef67423b85cb50fd347154880396999f7001eeb2"
+        },
+        {
+          "path": "tests/tui_gateway/test_model_picker_p05_native.py",
+          "indexed": "c59c7d9a73f50edefdfebd166285db446fb871e2aa8da28f03e4afdde6b5d3d8",
+          "actual": "ae52fbb4fc7447fb57d553ec0b1ce5f44dba7d654ca327adce5d014b6b2a8d5f"
+        },
+        {
+          "path": "tools/session_search_tool.py",
+          "indexed": "03b538a2984b29bc1d0f6842d0f79d09492263b373d6346e10e0f0efe9532887",
+          "actual": "48d93a68d997faecc4dbfd97350d920ffb8cc0656aca40575c83096c8eaadf7a"
+        }
+      ]
+    },
+    {
+      "root": "downstream",
+      "pending": {
+        "added": 0,
+        "modified": 0,
+        "removed": 0
+      },
+      "mismatches": []
+    },
+    {
+      "root": "r-after",
+      "pending": {
+        "added": 0,
+        "modified": 0,
+        "removed": 0
+      },
+      "mismatches": []
+    },
+    {
+      "root": "upstream",
+      "pending": {
+        "added": 0,
+        "modified": 0,
+        "removed": 0
+      },
+      "mismatches": []
+    }
+  ],
+  "whole_integration_green": false,
+  "full_F08_complete": false,
+  "mandatory_upstream_runtime_added": false,
+  "explicit_paths": [
+    "cli.py",
+    "run_agent.py",
+    "hermes_cli/cli_commands_mixin.py",
+    "hermes_cli/cli_agent_setup_mixin.py",
+    "tests/cli/test_f08_command_runtime_native.py",
+    "tests/agent/test_refine_snapshot_native.py",
+    "docs/windows/semantic-adoption-20261001/F08e-mini-plan.md",
+    "docs/windows/semantic-adoption-20261001/F08e.json",
+    "docs/windows/semantic-adoption-20261001/README.md",
+    "docs/windows/semantic-adoption-20261001/inventory-status.json",
+    "_docs/2026-10-01_windows-semantic-adoption_Codex.md"
+  ],
+  "EOF_normalization": {
+    "old_sha256_raw": "33f44d02b9ba76696a9d0eaf7585585c1ae00beecfbccb8c59bed5d720c3ef71",
+    "new_sha256_raw": "a5af0d130083ae06be5d19afd798fc211a4269b194f22a452cfbe06a62e2e525",
+    "AST_identical": true,
+    "only_extra_EOF_blank_removed": true,
+    "independent_receipt_sha256_raw": "f8487a4ee03e95a51f1994adb972f8c7242582a28ce994bb498d078720728b53",
+    "verdict": "APPROVE_WHITESPACE_ONLY",
+    "behavioral_source_unchanged": true
+  }
+}

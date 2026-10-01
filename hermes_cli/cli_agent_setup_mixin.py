@@ -185,7 +185,19 @@ class CLIAgentSetupMixin:
 
         # AIAgent/OpenAI client holds auth at init time, so rebuild if key,
         # routing, or the effective model changed.
-        if (credentials_changed or routing_changed or model_changed) and self.agent is not None:
+        # A one-turn override may restore unresolved CLI values while keeping
+        # the original agent. Compare its actual runtime before discarding it.
+        agent = self.agent
+        runtime_matches_agent = agent is not None and all(
+            getattr(agent, key, object()) == value
+            for key, value in (
+                ("api_key", api_key), ("base_url", base_url),
+                ("provider", resolved_provider), ("api_mode", resolved_api_mode),
+                ("model", self.model), ("acp_command", resolved_acp_command),
+                ("acp_args", resolved_acp_args),
+            )
+        ) and getattr(agent, "_credential_pool", None) is resolved_credential_pool
+        if (credentials_changed or routing_changed or model_changed) and agent is not None and not runtime_matches_agent:
             self.agent = None
             self._active_agent_route_signature = None
 

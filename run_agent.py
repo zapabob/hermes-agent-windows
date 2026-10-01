@@ -1928,6 +1928,7 @@ class AIAgent:
         review_memory: bool = False,
         review_skills: bool = False,
         focus: Optional[str] = None,
+        explicit: bool = False,
     ) -> None:
         """Spawn the background memory/skill review thread.
 
@@ -1957,7 +1958,7 @@ class AIAgent:
         # Load the task block once here and pass it into the spawn path so
         # aux routing does not re-read config.
         task_cfg = None
-        if focus is None:
+        if focus is None and not explicit:
             from agent.background_review import load_background_review_settings
             enabled, task_cfg = load_background_review_settings()
             if not enabled:

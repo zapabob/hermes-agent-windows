@@ -161,8 +161,14 @@
     {
       "id": "Picker-P04",
       "status": "LOCAL_SLICE_VERIFIED",
-      "commit": null,
+      "commit": "2a17813d0c2f551700ea5dbd1d28955e2f7b17f6",
       "full_picker_complete": false
+    },
+    {
+      "id": "F08e",
+      "status": "LOCAL_SLICE_VERIFIED",
+      "commit": null,
+      "full_family_complete": false
     }
   ],
   "proof_only_slices": [
@@ -235,7 +241,8 @@
           "F08a",
           "F08c",
           "F08b",
-          "F08d"
+          "F08d",
+          "F08e"
         ],
         "current_blocker": {
           "code": "BLOCKED_ACCEPTANCE_F08",
@@ -249,10 +256,14 @@
             "classification": "retained from prior source-bound candidate/parent comparison"
           },
           "remaining_command_contracts": [
-            "bare manual/refine explicit intent",
-            "review/MoA runtime restoration/cancellation",
-            "full memory-consent/native kernel/Relay conditions"
+            "kernel/Relay and full memory-consent native conditions remain individually unproved; command/runtime bounded contracts accepted"
           ]
+        },
+        "latest_command_regression": {
+          "passed": 458,
+          "failed": 0,
+          "skipped": 0,
+          "full_F08_complete": false
         }
       }
     },
@@ -283,7 +294,7 @@
       ]
     },
     "full_family_completion_count": 0,
-    "recorded_local_commit_count": 18,
+    "recorded_local_commit_count": 19,
     "not_required_now": {
       "other_seed_candidates_unreviewed": 39,
       "historical_inventory_retained": true

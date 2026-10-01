@@ -11679,6 +11679,10 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
             "api_key": self.api_key,
             "base_url": self.base_url,
             "api_mode": self.api_mode,
+            "acp_command": getattr(self, "acp_command", None),
+            "acp_args": list(getattr(self, "acp_args", None) or []),
+            "_credential_pool": getattr(self, "_credential_pool", None),
+            "_provider_source": getattr(self, "_provider_source", None),
             "agent_primary_runtime": copy.deepcopy(
                 getattr(agent, "_primary_runtime", None)
             ) if agent is not None else None,
@@ -11697,6 +11701,10 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
             "api_key",
             "base_url",
             "api_mode",
+            "acp_command",
+            "acp_args",
+            "_credential_pool",
+            "_provider_source",
         ):
             if key in snapshot:
                 setattr(self, key, snapshot.get(key))
@@ -13154,17 +13162,20 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
             if not payload:
                 _cprint(f"  {moa_usage()}")
                 return True
+            pending = getattr(self, "_pending_moa_restore_model", None) or {}
+            if (getattr(self, "_agent_running", False)
+                    or (pending.get("worker_started") and not pending.get("foreground_done"))):
+                _cprint("  /moa is unavailable while the current turn is running.")
+                return True
             moa_cfg = self.config.get("moa") if isinstance(self.config, dict) else {}
             normalized = normalize_moa_config(moa_cfg)
             preset = normalized["default_preset"]
-            self._pending_moa_restore_model = {
-                "requested_provider": getattr(self, "requested_provider", None),
-                "provider": getattr(self, "provider", None),
-                "model": getattr(self, "model", None),
-                "api_key": getattr(self, "api_key", None),
-                "base_url": getattr(self, "base_url", None),
-                "api_mode": getattr(self, "api_mode", None),
-            }
+            if not getattr(self, "_pending_moa_disable_after_turn", False):
+                self._pending_moa_restore_model = self._snapshot_model_runtime()
+                self._pending_moa_restore_model.update(
+                    saved_agent=self.agent,
+                    saved_route=getattr(self, "_active_agent_route_signature", None),
+                )
             self.requested_provider = "moa"
             self.provider = "moa"
             self.model = preset
@@ -17061,6 +17072,31 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                 pass
 
     def chat(self, message, images: list = None, voice_input: bool = False) -> Optional[str]:
+        """Run the existing chat turn and restore a queued one-shot MoA runtime."""
+        restore = (getattr(self, "_pending_moa_restore_model", None)
+                   if getattr(self, "_pending_moa_disable_after_turn", False) else None)
+        if restore is None:
+            return self._chat_turn(message, images, voice_input=voice_input)
+        try:
+            return self._chat_turn(message, images, voice_input=voice_input)
+        finally:
+            restore["foreground_done"] = True
+            temporary = restore.get("turn_agent", self.agent)
+            # The saved agent was never switched: keep its prefix and primary.
+            self.agent = None
+            try:
+                self._restore_model_runtime_snapshot(restore)
+            finally:
+                self.agent = restore["saved_agent"]
+                self._active_agent_route_signature = restore["saved_route"]
+                if self._pending_moa_restore_model is restore:
+                    self._pending_moa_restore_model = None
+                    self._pending_moa_disable_after_turn = False
+                if (temporary is not None and temporary is not self.agent
+                        and (not restore.get("worker_started") or restore.get("worker_done"))):
+                    temporary.release_clients()
+
+    def _chat_turn(self, message, images: list = None, voice_input: bool = False) -> Optional[str]:
         """
         Send a message to the agent and get a response.
 
@@ -17111,6 +17147,10 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
         agent = self.agent
         if agent is None:
             return None
+        moa_turn = (getattr(self, "_pending_moa_restore_model", None)
+                    if getattr(self, "_pending_moa_disable_after_turn", False) else None)
+        if moa_turn is not None:
+            moa_turn["turn_agent"] = agent
 
         # Route image attachments based on the active model's vision capability.
         # "native" → pass pixels as OpenAI-style content parts (adapters
@@ -17427,7 +17467,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                 )
                 self._pending_one_turn_model_restore = None
                 try:
-                    result = self.agent.run_conversation(
+                    result = agent.run_conversation(
                         user_message=agent_message,
                         conversation_history=self.conversation_history[
                             :-1
@@ -17437,18 +17477,10 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                         persist_user_message=_persist_clean_user_message,
                         moa_config=_moa_cfg,
                     )
-                    if getattr(self, "_pending_moa_disable_after_turn", False):
-                        _restore = getattr(self, "_pending_moa_restore_model", None) or {}
-                        for _key, _value in _restore.items():
-                            if _value is not None:
-                                setattr(self, _key, _value)
-                        self.agent = None
-                        self._pending_moa_restore_model = None
-                        self._pending_moa_disable_after_turn = False
                 except Exception as exc:
                     logging.error("run_conversation raised: %s", exc, exc_info=True)
                     _summary = getattr(
-                        self.agent, "_summarize_api_error", lambda e: str(e)[:300]
+                        agent, "_summarize_api_error", lambda e: str(e)[:300]
                     )(exc)
                     result = {
                         "final_response": f"Error: {_summary}",
@@ -17459,7 +17491,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                         "error": _summary,
                     }
                 finally:
-                    if _one_turn_model_restore:
+                    if _one_turn_model_restore and not (moa_turn and moa_turn.get("foreground_done")):
                         self._restore_model_runtime_snapshot(_one_turn_model_restore)
                     # Surface any credit notices queued during the turn (cold-start
                     # seed / per-turn capture) now that the response is done — printing
@@ -17487,6 +17519,11 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                         except Exception:
                             pass
 
+                    if moa_turn is not None:
+                        moa_turn["worker_done"] = True
+                        if moa_turn.get("foreground_done"):
+                            agent.release_clients()
+
             # Start agent in background thread (daemon so it cannot keep the
             # process alive when the user closes the terminal tab — SIGHUP
             # exits the main thread and daemon threads are reaped automatically).
@@ -17495,7 +17532,14 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
             self._prompt_start_time = time.time()
             self._prompt_duration = 0.0
             agent_thread = threading.Thread(target=run_agent, daemon=True)
-            agent_thread.start()
+            if moa_turn is not None:
+                moa_turn["worker_started"] = True
+            try:
+                agent_thread.start()
+            except RuntimeError:
+                if moa_turn is not None:
+                    moa_turn["worker_started"] = False
+                raise
 
             # Ambient "thinking" sound: calm bubble blips while the agent
             # works in voice mode with no audio flowing, so the user knows
