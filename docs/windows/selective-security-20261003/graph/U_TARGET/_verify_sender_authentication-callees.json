@@ -1,0 +1,59 @@
+{
+  "symbol": "_verify_sender_authentication",
+  "callees": [
+    {
+      "name": "_domain_of",
+      "kind": "function",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 323
+    },
+    {
+      "name": "split",
+      "kind": "method",
+      "filePath": "tests/e2e/core/providers/test_native_gemini_compaction.py",
+      "startLine": 57
+    },
+    {
+      "name": "_domains_aligned",
+      "kind": "function",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 328
+    },
+    {
+      "name": "_ar_clauses",
+      "kind": "function",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 283
+    },
+    {
+      "name": "match",
+      "kind": "method",
+      "filePath": "tui_gateway/project_tree.py",
+      "startLine": 326
+    },
+    {
+      "name": "append",
+      "kind": "method",
+      "filePath": "hermes_cli/pty_session.py",
+      "startLine": 26
+    },
+    {
+      "name": "_auth_props",
+      "kind": "function",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 317
+    },
+    {
+      "name": "aligned",
+      "kind": "function",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 361
+    },
+    {
+      "name": "_AUTH_METHOD_RE",
+      "kind": "variable",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 64
+    }
+  ]
+}

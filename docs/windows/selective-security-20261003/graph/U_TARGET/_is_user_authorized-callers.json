@@ -1,0 +1,125 @@
+{
+  "symbol": "_is_user_authorized",
+  "callers": [
+    {
+      "name": "_check",
+      "kind": "function",
+      "filePath": "gateway/run.py",
+      "startLine": 4081
+    },
+    {
+      "name": "check",
+      "kind": "function",
+      "filePath": "gateway/run_adapters.py",
+      "startLine": 1855
+    },
+    {
+      "name": "test_allowlist_matches_when_user_id_is_email",
+      "kind": "method",
+      "filePath": "tests/gateway/test_google_chat.py",
+      "startLine": 1574
+    },
+    {
+      "name": "test_central_allow_bots_gate_honours_a_secondary_yaml_policy",
+      "kind": "function",
+      "filePath": "tests/gateway/test_adapter_settings_scoped_precedence.py",
+      "startLine": 119
+    },
+    {
+      "name": "test_bare_localpart_entry_admits_no_foreign_domain",
+      "kind": "function",
+      "filePath": "tests/gateway/test_allowlist_qualified_ids.py",
+      "startLine": 41
+    },
+    {
+      "name": "_inbound",
+      "kind": "function",
+      "filePath": "tests/gateway/test_bot_loop_guard.py",
+      "startLine": 69
+    },
+    {
+      "name": "test_one_inbound_is_counted_once_however_often_the_verdict_is_asked",
+      "kind": "function",
+      "filePath": "tests/gateway/test_bot_loop_guard.py",
+      "startLine": 81
+    },
+    {
+      "name": "test_humans_are_never_metered_and_stay_authorized_during_cooldown",
+      "kind": "function",
+      "filePath": "tests/gateway/test_bot_loop_guard.py",
+      "startLine": 197
+    },
+    {
+      "name": "test_budget_is_scoped_by_chat_and_platform",
+      "kind": "function",
+      "filePath": "tests/gateway/test_bot_loop_guard.py",
+      "startLine": 210
+    },
+    {
+      "name": "test_cooldown_expiry_readmits_with_a_fresh_budget",
+      "kind": "function",
+      "filePath": "tests/gateway/test_bot_loop_guard.py",
+      "startLine": 222
+    },
+    {
+      "name": "_stub_busy_message",
+      "kind": "function",
+      "filePath": "tests/gateway/test_busy_session_profile_scope.py",
+      "startLine": 77
+    },
+    {
+      "name": "test_completed_board_wake_is_admitted_without_changing_human_input",
+      "kind": "function",
+      "filePath": "tests/gateway/test_busy_wake_admission.py",
+      "startLine": 45
+    },
+    {
+      "name": "test_npub_only_allowlist_authorizes_hex_identity",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 74
+    },
+    {
+      "name": "test_hex_only_allowlist_still_authorizes",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 81
+    },
+    {
+      "name": "test_mixed_npub_and_hex_allowlist_authorizes",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 88
+    },
+    {
+      "name": "test_npub_allowlist_still_denies_other_user",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 95
+    },
+    {
+      "name": "test_uppercase_npub_allowlist_authorizes",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 102
+    },
+    {
+      "name": "test_config_only_npub_allowlist_authorizes_single_profile",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 163
+    },
+    {
+      "name": "test_config_only_hex_allowlist_authorizes_single_profile",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 170
+    },
+    {
+      "name": "test_config_only_allowlist_still_denies_unlisted_sender",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 175
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "symbol": "_verify_sender_authentication",
+  "callees": [
+    {
+      "name": "_domain_of",
+      "kind": "function",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 353
+    },
+    {
+      "name": "split",
+      "kind": "function",
+      "filePath": "apps/desktop/src/components/pane-shell/tree/model.ts",
+      "startLine": 75
+    },
+    {
+      "name": "strip",
+      "kind": "function",
+      "filePath": "apps/desktop/src/components/ui/glyph-spinner.test.tsx",
+      "startLine": 33
+    },
+    {
+      "name": "_domains_aligned",
+      "kind": "function",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 359
+    },
+    {
+      "name": "_AUTH_PROP_RE",
+      "kind": "variable",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 383
+    },
+    {
+      "name": "_AUTH_METHOD_RE",
+      "kind": "variable",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 378
+    }
+  ]
+}

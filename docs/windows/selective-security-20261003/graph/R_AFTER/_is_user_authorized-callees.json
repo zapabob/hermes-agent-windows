@@ -1,0 +1,125 @@
+{
+  "symbol": "_is_user_authorized",
+  "callees": [
+    {
+      "name": "_adapter_profile_for_source",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 281
+    },
+    {
+      "name": "_chat_scoped_grant",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 422
+    },
+    {
+      "name": "get",
+      "kind": "method",
+      "filePath": "tests/openviking_plugin/test_openviking.py",
+      "startLine": 906
+    },
+    {
+      "name": "_registry_entry",
+      "kind": "function",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 74
+    },
+    {
+      "name": "_env_truthy",
+      "kind": "function",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 70
+    },
+    {
+      "name": "_pairing_store_for",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 344
+    },
+    {
+      "name": "is_approved",
+      "kind": "method",
+      "filePath": "gateway/pairing.py",
+      "startLine": 391
+    },
+    {
+      "name": "_auth_env",
+      "kind": "variable",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 67
+    },
+    {
+      "name": "_adapter_flag",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 286
+    },
+    {
+      "name": "_own_policy_authorizes",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 353
+    },
+    {
+      "name": "_adapter_extra_allowlist_authorizes",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 375
+    },
+    {
+      "name": "_allows",
+      "kind": "function",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 94
+    },
+    {
+      "name": "_coerce_allow_set",
+      "kind": "function",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 85
+    },
+    {
+      "name": "_legacy_telegram_chat_grant",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 455
+    },
+    {
+      "name": "_adapter_resolved_allowlist_ids",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 402
+    },
+    {
+      "name": "_principal_matches_allowlist",
+      "kind": "function",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 172
+    },
+    {
+      "name": "_GROUP_CHAT_ENV",
+      "kind": "variable",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 31
+    },
+    {
+      "name": "_GROUP_USER_ENV",
+      "kind": "variable",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 30
+    },
+    {
+      "name": "_ALLOWED_USERS_ENV",
+      "kind": "variable",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 28
+    },
+    {
+      "name": "_ALLOW_ALL_ENV",
+      "kind": "variable",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 29
+    }
+  ]
+}

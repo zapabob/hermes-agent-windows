@@ -40,19 +40,89 @@
           "sha256": "a7b6724a68e33e7243af5478f9efc743717caefc9265552e770fd8656234d703"
         }
       },
-      "existing_downstream_protection": "PENDING_SOURCE_BOUND_REVIEW",
-      "actual_gap": "CONFIRMED_WHOLE_HEADER_REGEX",
-      "RED_test": "PENDING",
-      "minimum_change": "PENDING_OWNER_REVIEW",
-      "regression_suite": "PENDING",
-      "mutation_set": "PENDING",
-      "E2E": "NOT_RUN",
-      "discovery_credit": "UNVERIFIED_REPORTER",
+      "existing_downstream_protection": "Topmost trusted authserv header selection, scoped secrets and opt-out already existed and are retained.",
+      "actual_gap": "Whole-header last-match regex allowed injected verdict/property text; multi-signature DKIM could falsely reject legitimate mail.",
+      "RED_test": {
+        "file": "tests/gateway/test_email_auth_clauses.py",
+        "initial_failed": 26,
+        "initial_passed": 16,
+        "baseline": "c20e98f1370c588645d796047788e3b6f9cc749d",
+        "log": "S01/red.log"
+      },
+      "minimum_change": "Adopt U_TARGET linear quote/comment clause parsing, head-only verdicts, token-wise properties, same-clause alignment and ambiguity guards. Strengthen result-token boundary beyond U_TARGET for escaped/pass1 results.",
+      "regression_suite": {
+        "files": 7,
+        "passed": 148,
+        "failed": 0,
+        "skipped": 0,
+        "canonical_runner": "scripts/run_tests.sh",
+        "log": "S01/regression.log"
+      },
+      "mutation_set": {
+        "os": "nt",
+        "python": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts\\python.exe",
+        "integration_parent": "17ad2e370a7f9e7f01fb5ee617ef4e96d62635d0",
+        "candidate_head": "cfe11cab3164f8d9f1ff6b8b6a181e49c869875d",
+        "candidate_tree": "f4a3bdc8152a23534c7f1c6593873f56fc9b1dd6",
+        "integration_branch_moved": false,
+        "owner_sha256": "fb5237da6ae7c7efeaf5fae7cd51aad87c8e8ba7a0c7adf71281ce07b6f75e97",
+        "test_sha256": "9b14660b2dbfd0ae6fe7914ea067b79c940d2f8fb5353d52a8e6d45b17474943",
+        "existing_framework": "scripts/ci/engineering_repair_mutations.py",
+        "baseline_passed": true,
+        "mutations": [
+          {
+            "mutant": "M01-whole-header-regex",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M02-last-match-wins",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M03-DKIM-cross-clause-domain",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M04-accept-malformed-comment",
+            "killed": true,
+            "exit_code": 1
+          }
+        ],
+        "restored_passed": true,
+        "tracked_diff_clean": true
+      },
+      "E2E": {
+        "os": "nt",
+        "actual_chain": "EmailAdapter._parse_fetched_message -> sender_authenticated -> _dispatch_message -> handle_message",
+        "positive": 9,
+        "negative": 19,
+        "network": "none",
+        "state": "pytest tmp_path HERMES_HOME",
+        "status": "PASS"
+      },
+      "discovery_credit": "GHSA reporter unverified; upstream implementation kshitijk4poor/kshitij, commit 3f4533b9dedb526e5891354164b07b59a8557cc5.",
       "upstream_implementation_provenance": [
         "3f4533b9dedb526e5891354164b07b59a8557cc5\nkshitijk4poor <82637225+kshitijk4poor@users.noreply.github.com>\nkshitij <82637225+kshitijk4poor@users.noreply.github.com>\nfix(email): read spf/dkim verdicts from their own Authentication-Results clause"
       ],
-      "downstream_implementation_provenance": "NOT_IMPLEMENTED",
-      "result": "PENDING_CODEGRAPH"
+      "downstream_implementation_provenance": "Codex local selective owner adaptation; verification candidate cfe11cab3164f8d9f1ff6b8b6a181e49c869875d",
+      "result": "IMPLEMENTED",
+      "CodeGraph": {
+        "initial": "graph/INTEGRATION_INITIAL/binding.json",
+        "fresh": "graph/S01_FINAL/binding.json",
+        "status": "COMPLETE_SOURCE_HASH_BOUND",
+        "limitation": "Fuzzy explore/builtin same-name edges excluded; filepath-pinned explore used."
+      },
+      "independent_review": {
+        "reviewer_agent": "01a0fef5-982a-7b82-a926-02264bf34f0e",
+        "result": "PASS",
+        "findings": [],
+        "reviewed_owner_sha256": "fb5237da6ae7c7efeaf5fae7cd51aad87c8e8ba7a0c7adf71281ce07b6f75e97",
+        "reviewed_test_sha256": "9b14660b2dbfd0ae6fe7914ea067b79c940d2f8fb5353d52a8e6d45b17474943",
+        "scope": "Pinned upstream commit/U_TARGET, D_BASE owner, exact candidate diff, RED/GREEN/regression, mutations, native dispatch, fresh CodeGraph."
+      }
     },
     {
       "family_id": "S02",
@@ -622,5 +692,11 @@
       "downstream_implementation_provenance": "NOT_IMPLEMENTED",
       "result": "PENDING_CODEGRAPH"
     }
-  ]
+  ],
+  "initial_codegraph_gate": {
+    "D_BASE": "c20e98f1370c588645d796047788e3b6f9cc749d",
+    "R_AFTER": "d3630f853239e8c41ce7201e09fbdf39bcbc5431",
+    "U_TARGET": "4ed093cb6be8a2fadb39e770898f6989fc67201d",
+    "INTEGRATION_INITIAL": "17ad2e370a7f9e7f01fb5ee617ef4e96d62635d0"
+  }
 }

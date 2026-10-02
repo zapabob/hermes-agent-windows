@@ -1,0 +1,36 @@
+{
+  "os": "nt",
+  "python": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts\\python.exe",
+  "integration_parent": "17ad2e370a7f9e7f01fb5ee617ef4e96d62635d0",
+  "candidate_head": "cfe11cab3164f8d9f1ff6b8b6a181e49c869875d",
+  "candidate_tree": "f4a3bdc8152a23534c7f1c6593873f56fc9b1dd6",
+  "integration_branch_moved": false,
+  "owner_sha256": "fb5237da6ae7c7efeaf5fae7cd51aad87c8e8ba7a0c7adf71281ce07b6f75e97",
+  "test_sha256": "9b14660b2dbfd0ae6fe7914ea067b79c940d2f8fb5353d52a8e6d45b17474943",
+  "existing_framework": "scripts/ci/engineering_repair_mutations.py",
+  "baseline_passed": true,
+  "mutations": [
+    {
+      "mutant": "M01-whole-header-regex",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M02-last-match-wins",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M03-DKIM-cross-clause-domain",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M04-accept-malformed-comment",
+      "killed": true,
+      "exit_code": 1
+    }
+  ],
+  "restored_passed": true,
+  "tracked_diff_clean": true
+}

@@ -99,3 +99,48 @@ this preparation; it is not an implemented-family commit. The goal remains activ
 
 Broad upstream merge was not performed. Main was not modified.
 Production Hermes resources were not used.
+
+
+## S01 implementation evidence (pending final independent review)
+
+All four CodeGraph indexes now reached complete/zero pending refs and have
+separate pinned revision/source-hash receipts. Filepath-pinned Email explore
+queries recover the actual owner; earlier fuzzy `verify` results and unrelated
+builtin-name edges remain recorded as excluded limitations.
+
+The original 42-case RED yielded 26 behavioral failures and 16 passes on the
+D_BASE-equivalent owner. The final 56-case fixture includes 28 real native
+parse-to-dispatch scenarios (19 hostile, nine legitimate), without IMAP/SMTP
+or production state. The canonical Windows regression run passed 148 tests
+across seven Email/profile/shared-authz files, with no skip or collection error.
+
+The owner adopts only the frozen upstream authentication clause logic. It
+preserves scoped secrets, dispatch policy, settings and existing authserv
+selection. A result-token end boundary additionally rejects escaped `pass`
+prefixes and `pass1`; the independent source review found this residual gap
+in U_TARGET itself. From-address parser replacement is outside this clause
+failure class and is not silently imported with the rest of the module.
+
+Mutation evidence uses the existing repository framework's isolated native
+environment and test execution functions. A verification-only commit-tree
+snapshot, with no integration branch movement, gives the disposable checkout
+a clean candidate HEAD. All four required semantic mutants fail behavioral
+assertions; each is reverted byte-for-byte with clean tracked diff. Restored
+candidate passes all 56 tests. Mutation code stays in ignored scratch.
+
+CodeGraph was freshly synced after both owner/test edits; receipt S01_FINAL
+records the indexed owner hash matching the clean verification candidate.
+Its revision field identifies the unchanged integration parent, explicitly
+distinguished from the indexed candidate source tree. No final family commit
+or completion claim is made before independent review.
+
+The stopped, task-generated C-drive partial R_AFTER index was moved, with
+contents preserved, into this checkout's ignored tmp archive. The earlier
+directory-delete request was rejected by automatic approval review with no
+specific policy explanation. No deletion was performed or bypassed. This
+preserving move allowed independent review to start; production indexes and
+personal files were not touched.
+
+Independent reviewer 01a0fef5-982a-7b82-a926-02264bf34f0e returned final S01 PASS with no actionable finding. Reviewed product/test hashes match the verified candidate; scope exclusion of From parser accepted. S01 is approved for its local family commit. No other family is complete.
+
+CodeGraph markdown receipts normalize trailing whitespace on source-number blank lines for git diff --check. Owner/test bytes and reviewed SHA256 values are unchanged.

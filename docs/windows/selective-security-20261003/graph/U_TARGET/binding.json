@@ -1,0 +1,74 @@
+{
+  "revision": "4ed093cb6be8a2fadb39e770898f6989fc67201d",
+  "tree": "f86c8a0f2b0feb27bfdd6b239fa216a88ab72bc7",
+  "root": "H:\\hermes-worktrees\\p0-p1-u-target-20261003",
+  "tool_version": "1.6.0",
+  "status": {
+    "initialized": true,
+    "version": "1.6.0",
+    "projectPath": "H:\\hermes-worktrees\\p0-p1-u-target-20261003",
+    "indexPath": "H:\\hermes-worktrees\\p0-p1-u-target-20261003\\.codegraph",
+    "lastIndexed": "2026-10-02T23:12:55.055Z",
+    "fileCount": 13144,
+    "nodeCount": 269472,
+    "edgeCount": 909886,
+    "dbSizeBytes": 902045696,
+    "walSizeBytes": 0,
+    "backend": "node-sqlite",
+    "journalMode": "wal",
+    "nodesByKind": {
+      "class": 15428,
+      "component": 69,
+      "constant": 8420,
+      "enum": 7,
+      "enum_member": 22,
+      "field": 20,
+      "file": 12512,
+      "function": 88370,
+      "import": 67554,
+      "interface": 3833,
+      "method": 48429,
+      "property": 1823,
+      "route": 402,
+      "struct": 22,
+      "type_alias": 1316,
+      "variable": 21245
+    },
+    "languages": [
+      "c",
+      "cpp",
+      "csharp",
+      "erlang",
+      "javascript",
+      "liquid",
+      "nix",
+      "objc",
+      "php",
+      "python",
+      "rust",
+      "tsx",
+      "typescript",
+      "xml",
+      "yaml"
+    ],
+    "pendingChanges": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "worktreeMismatch": null,
+    "index": {
+      "builtWithVersion": null,
+      "builtWithExtractionVersion": null,
+      "currentExtractionVersion": 25,
+      "reindexRecommended": true,
+      "state": "complete",
+      "pendingRefs": 0
+    }
+  },
+  "owner_source_sha256": {
+    "plugins/platforms/email/adapter.py": "dcfb9303b9e80c2cde4d0514c447463ffeda246f650ee5fab341a5ce6ef7f884",
+    "gateway/authz_mixin.py": "2f5b9507cd7fc3d5d559c005ec32317ec6f4aec5479cf89108c7c9d4ca5cd884"
+  },
+  "limitation": "Name-based graph fallback can falsely resolve builtins to unrelated same-name symbols; source audit remains required."
+}

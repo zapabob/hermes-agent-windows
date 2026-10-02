@@ -1,0 +1,35 @@
+{
+  "symbol": "_is_user_authorized",
+  "callees": [
+    {
+      "name": "_principal_authorized",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 629
+    },
+    {
+      "name": "blocked",
+      "kind": "method",
+      "filePath": "gateway/bot_loop_guard.py",
+      "startLine": 103
+    },
+    {
+      "name": "_bot_loop_guard_instance",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 586
+    },
+    {
+      "name": "_bot_loop_guard_conversation",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 595
+    },
+    {
+      "name": "append",
+      "kind": "method",
+      "filePath": "tests/hermes_cli/test_cli_interrupt_ack_race.py",
+      "startLine": 475
+    }
+  ]
+}

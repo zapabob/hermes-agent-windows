@@ -1,0 +1,69 @@
+{
+  "revision": "d3630f853239e8c41ce7201e09fbdf39bcbc5431",
+  "tree": "87e3e092806b030f6c06cd27bbfc43ec6fd2a263",
+  "root": "H:\\hermes-worktrees\\p0-p1-r-after-20261003",
+  "tool_version": "1.6.0",
+  "status": {
+    "initialized": true,
+    "version": "1.6.0",
+    "projectPath": "H:\\hermes-worktrees\\p0-p1-r-after-20261003",
+    "indexPath": "H:\\hermes-worktrees\\p0-p1-r-after-20261003\\.codegraph",
+    "lastIndexed": "2026-10-02T23:10:04.773Z",
+    "fileCount": 8774,
+    "nodeCount": 202078,
+    "edgeCount": 630157,
+    "dbSizeBytes": 640942080,
+    "walSizeBytes": 0,
+    "backend": "node-sqlite",
+    "journalMode": "wal",
+    "nodesByKind": {
+      "class": 13601,
+      "component": 63,
+      "constant": 5639,
+      "enum": 8,
+      "enum_member": 25,
+      "file": 8534,
+      "function": 63968,
+      "import": 44335,
+      "interface": 2343,
+      "method": 45552,
+      "property": 1496,
+      "route": 380,
+      "struct": 17,
+      "type_alias": 896,
+      "variable": 15221
+    },
+    "languages": [
+      "c",
+      "cpp",
+      "javascript",
+      "liquid",
+      "nix",
+      "php",
+      "python",
+      "rust",
+      "tsx",
+      "typescript",
+      "yaml"
+    ],
+    "pendingChanges": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "worktreeMismatch": null,
+    "index": {
+      "builtWithVersion": "1.6.0",
+      "builtWithExtractionVersion": 25,
+      "currentExtractionVersion": 25,
+      "reindexRecommended": false,
+      "state": "complete",
+      "pendingRefs": 0
+    }
+  },
+  "owner_source_sha256": {
+    "plugins/platforms/email/adapter.py": "edd0e47b9b4d107f7c73e686cc32f372f155aa95a939ec09f82a40921ce08e9c",
+    "gateway/authz_mixin.py": "861e3381488c4f53a9e9a12bbecd1d3261e20f7b6b6f84469919c658cd6ee5d3"
+  },
+  "limitation": "Name-based graph fallback can falsely resolve builtins to unrelated same-name symbols; source audit remains required."
+}

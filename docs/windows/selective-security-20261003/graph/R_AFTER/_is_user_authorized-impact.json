@@ -1,0 +1,728 @@
+{
+  "symbol": "_is_user_authorized",
+  "depth": 2,
+  "nodeCount": 120,
+  "edgeCount": 108,
+  "affected": [
+    {
+      "name": "_is_user_authorized",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 473
+    },
+    {
+      "name": "_check",
+      "kind": "function",
+      "filePath": "gateway/run.py",
+      "startLine": 3915
+    },
+    {
+      "name": "_is_user_authorized_for_source",
+      "kind": "method",
+      "filePath": "gateway/run.py",
+      "startLine": 3911
+    },
+    {
+      "name": "check",
+      "kind": "function",
+      "filePath": "gateway/run_adapters.py",
+      "startLine": 1476
+    },
+    {
+      "name": "_make_adapter_auth_check",
+      "kind": "method",
+      "filePath": "gateway/run_adapters.py",
+      "startLine": 1462
+    },
+    {
+      "name": "_handle_active_session_busy_message",
+      "kind": "method",
+      "filePath": "gateway/run_busy.py",
+      "startLine": 603
+    },
+    {
+      "name": "_handler",
+      "kind": "function",
+      "filePath": "gateway/run_adapters.py",
+      "startLine": 1308
+    },
+    {
+      "name": "test_sends_ack_when_agent_running",
+      "kind": "method",
+      "filePath": "tests/gateway/test_busy_session_ack.py",
+      "startLine": 152
+    },
+    {
+      "name": "test_steer_mode_calls_agent_steer_no_interrupt_no_queue",
+      "kind": "method",
+      "filePath": "tests/gateway/test_busy_session_ack.py",
+      "startLine": 193
+    },
+    {
+      "name": "test_steer_mode_transcribes_voice_before_injection",
+      "kind": "method",
+      "filePath": "tests/gateway/test_busy_session_ack.py",
+      "startLine": 229
+    },
+    {
+      "name": "test_steer_mode_falls_back_to_queue_when_agent_rejects",
+      "kind": "method",
+      "filePath": "tests/gateway/test_busy_session_ack.py",
+      "startLine": 268
+    },
+    {
+      "name": "test_steer_mode_falls_back_to_queue_when_agent_pending",
+      "kind": "method",
+      "filePath": "tests/gateway/test_busy_session_ack.py",
+      "startLine": 298
+    },
+    {
+      "name": "test_interrupt_mode_text_followups_fifo_not_merged",
+      "kind": "method",
+      "filePath": "tests/gateway/test_busy_session_ack.py",
+      "startLine": 321
+    },
+    {
+      "name": "test_includes_status_detail_when_opted_in",
+      "kind": "method",
+      "filePath": "tests/gateway/test_busy_session_ack.py",
+      "startLine": 368
+    },
+    {
+      "name": "test_first_busy_ack_appends_interrupt_hint",
+      "kind": "method",
+      "filePath": "tests/gateway/test_busy_session_ack.py",
+      "startLine": 410
+    },
+    {
+      "name": "test_unauthorized_user_dropped_in_busy_path",
+      "kind": "method",
+      "filePath": "tests/gateway/test_busy_session_auth_bypass.py",
+      "startLine": 104
+    },
+    {
+      "name": "test_unauthorized_user_during_drain_still_blocked",
+      "kind": "method",
+      "filePath": "tests/gateway/test_busy_session_auth_bypass.py",
+      "startLine": 142
+    },
+    {
+      "name": "test_unauthorized_user_cannot_steer_active_agent",
+      "kind": "method",
+      "filePath": "tests/gateway/test_busy_session_auth_bypass.py",
+      "startLine": 170
+    },
+    {
+      "name": "test_does_not_interrupt_when_compression_in_flight",
+      "kind": "method",
+      "filePath": "tests/gateway/test_compression_interrupt_demotion_56391.py",
+      "startLine": 119
+    },
+    {
+      "name": "test_ack_explains_compression_demotion",
+      "kind": "method",
+      "filePath": "tests/gateway/test_compression_interrupt_demotion_56391.py",
+      "startLine": 136
+    },
+    {
+      "name": "test_internal_event_does_not_interrupt_busy_session",
+      "kind": "function",
+      "filePath": "tests/gateway/test_internal_event_never_interrupts_busy_session.py",
+      "startLine": 108
+    },
+    {
+      "name": "test_secondary_profile_busy_mode_controls_live_busy_behavior",
+      "kind": "function",
+      "filePath": "tests/gateway/test_multiplex_busy_input_mode.py",
+      "startLine": 110
+    },
+    {
+      "name": "test_secondary_profile_busy_mode_controls_busy_handler_restart_drain",
+      "kind": "function",
+      "filePath": "tests/gateway/test_multiplex_busy_input_mode.py",
+      "startLine": 242
+    },
+    {
+      "name": "test_secondary_legacy_busy_text_mode_is_profile_specific",
+      "kind": "function",
+      "filePath": "tests/gateway/test_multiplex_busy_input_mode.py",
+      "startLine": 328
+    },
+    {
+      "name": "test_default_busy_mode_is_unchanged_by_secondary_profile",
+      "kind": "function",
+      "filePath": "tests/gateway/test_multiplex_busy_input_mode.py",
+      "startLine": 348
+    },
+    {
+      "name": "test_plaintext_yes_resolves_approval",
+      "kind": "function",
+      "filePath": "tests/gateway/test_plaintext_approval_routing.py",
+      "startLine": 97
+    },
+    {
+      "name": "test_no_pending_approval_does_not_consume_conversational_yes",
+      "kind": "function",
+      "filePath": "tests/gateway/test_plaintext_approval_routing.py",
+      "startLine": 114
+    },
+    {
+      "name": "test_interrupt_still_fires_when_no_subagents",
+      "kind": "method",
+      "filePath": "tests/gateway/test_subagent_protection_30170.py",
+      "startLine": 177
+    },
+    {
+      "name": "test_queue_mode_unchanged_with_subagents",
+      "kind": "method",
+      "filePath": "tests/gateway/test_subagent_protection_30170.py",
+      "startLine": 199
+    },
+    {
+      "name": "test_steer_mode_still_routes_through_running_agent_steer",
+      "kind": "method",
+      "filePath": "tests/gateway/test_subagent_protection_30170.py",
+      "startLine": 223
+    },
+    {
+      "name": "test_gateway_runner_busy_ack_replies_to_triggering_message_for_telegram_dm_topic",
+      "kind": "function",
+      "filePath": "tests/gateway/test_telegram_thread_fallback.py",
+      "startLine": 302
+    },
+    {
+      "name": "_dispatch_plugin_message_injection",
+      "kind": "method",
+      "filePath": "gateway/run_inbound.py",
+      "startLine": 1757
+    },
+    {
+      "name": "_schedule_plugin_message_injection",
+      "kind": "method",
+      "filePath": "gateway/run_inbound.py",
+      "startLine": 1707
+    },
+    {
+      "name": "test_dispatch_uses_stored_origin_and_adapter_message_path",
+      "kind": "function",
+      "filePath": "tests/gateway/test_plugin_message_injection.py",
+      "startLine": 152
+    },
+    {
+      "name": "test_dispatch_rejects_unroutable_session",
+      "kind": "function",
+      "filePath": "tests/gateway/test_plugin_message_injection.py",
+      "startLine": 194
+    },
+    {
+      "name": "test_dispatch_rechecks_current_authorization",
+      "kind": "function",
+      "filePath": "tests/gateway/test_plugin_message_injection.py",
+      "startLine": 210
+    },
+    {
+      "name": "test_dispatch_rejects_stored_role_only_authorization",
+      "kind": "function",
+      "filePath": "tests/gateway/test_plugin_message_injection.py",
+      "startLine": 229
+    },
+    {
+      "name": "test_dispatch_stops_when_gateway_drains_during_lookup",
+      "kind": "function",
+      "filePath": "tests/gateway/test_plugin_message_injection.py",
+      "startLine": 267
+    },
+    {
+      "name": "_resume_owner_authorized",
+      "kind": "method",
+      "filePath": "gateway/run_startup.py",
+      "startLine": 423
+    },
+    {
+      "name": "_schedule_resume_pending_sessions",
+      "kind": "method",
+      "filePath": "gateway/run_startup.py",
+      "startLine": 438
+    },
+    {
+      "name": "_handle_voice_channel_input",
+      "kind": "method",
+      "filePath": "gateway/run_voice.py",
+      "startLine": 236
+    },
+    {
+      "name": "test_input_creates_event_and_dispatches",
+      "kind": "method",
+      "filePath": "tests/gateway/test_voice_command.py",
+      "startLine": 615
+    },
+    {
+      "name": "test_input_resolves_channel_prompt",
+      "kind": "method",
+      "filePath": "tests/gateway/test_voice_command.py",
+      "startLine": 635
+    },
+    {
+      "name": "test_input_reuses_bound_source_metadata",
+      "kind": "method",
+      "filePath": "tests/gateway/test_voice_command.py",
+      "startLine": 653
+    },
+    {
+      "name": "_handle_stop_command",
+      "kind": "method",
+      "filePath": "gateway/slash_commands.py",
+      "startLine": 408
+    },
+    {
+      "name": "_handle_topic_command",
+      "kind": "method",
+      "filePath": "gateway/slash_commands_session.py",
+      "startLine": 661
+    },
+    {
+      "name": "test_topic_refuses_unauthorized_user",
+      "kind": "function",
+      "filePath": "tests/gateway/test_telegram_topic_mode.py",
+      "startLine": 692
+    },
+    {
+      "name": "test_allowlist_matches_when_user_id_is_email",
+      "kind": "method",
+      "filePath": "tests/gateway/test_google_chat.py",
+      "startLine": 1659
+    },
+    {
+      "name": "_is_user_authorized",
+      "kind": "method",
+      "filePath": "tests/gateway/test_slack_approval_buttons.py",
+      "startLine": 69
+    },
+    {
+      "name": "_is_user_authorized",
+      "kind": "method",
+      "filePath": "tests/gateway/test_slack_clarify_buttons.py",
+      "startLine": 72
+    },
+    {
+      "name": "_is_user_authorized",
+      "kind": "method",
+      "filePath": "tests/gateway/test_telegram_approval_buttons.py",
+      "startLine": 42
+    },
+    {
+      "name": "_is_user_authorized",
+      "kind": "method",
+      "filePath": "tests/gateway/test_telegram_clarify_buttons.py",
+      "startLine": 179
+    },
+    {
+      "name": "_is_user_authorized",
+      "kind": "method",
+      "filePath": "tests/gateway/test_slack_approval_buttons.py",
+      "startLine": 821
+    },
+    {
+      "name": "_is_user_authorized",
+      "kind": "method",
+      "filePath": "tests/gateway/test_telegram_auth_check.py",
+      "startLine": 235
+    },
+    {
+      "name": "_is_user_authorized",
+      "kind": "method",
+      "filePath": "tests/gateway/test_telegram_auth_check.py",
+      "startLine": 278
+    },
+    {
+      "name": "_is_user_authorized",
+      "kind": "method",
+      "filePath": "tests/gateway/test_slack.py",
+      "startLine": 1772
+    },
+    {
+      "name": "test_npub_only_allowlist_authorizes_hex_identity",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 74
+    },
+    {
+      "name": "test_hex_only_allowlist_still_authorizes",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 81
+    },
+    {
+      "name": "test_mixed_npub_and_hex_allowlist_authorizes",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 88
+    },
+    {
+      "name": "test_npub_allowlist_still_denies_other_user",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 95
+    },
+    {
+      "name": "test_uppercase_npub_allowlist_authorizes",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 102
+    },
+    {
+      "name": "test_config_only_npub_allowlist_authorizes_single_profile",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 163
+    },
+    {
+      "name": "test_config_only_hex_allowlist_authorizes_single_profile",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 170
+    },
+    {
+      "name": "test_config_only_allowlist_still_denies_unlisted_sender",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 175
+    },
+    {
+      "name": "test_config_only_empty_allowlist_keeps_default_deny",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 181
+    },
+    {
+      "name": "test_own_policy_allowlist_authorized_without_env_allowlist",
+      "kind": "function",
+      "filePath": "tests/gateway/test_config_driven_access_policy.py",
+      "startLine": 136
+    },
+    {
+      "name": "test_stored_route_cannot_reuse_prior_adapter_authorization",
+      "kind": "function",
+      "filePath": "tests/gateway/test_config_driven_access_policy.py",
+      "startLine": 153
+    },
+    {
+      "name": "test_own_policy_open_dm_authorized_with_gateway_allow_all",
+      "kind": "function",
+      "filePath": "tests/gateway/test_config_driven_access_policy.py",
+      "startLine": 172
+    },
+    {
+      "name": "test_own_policy_open_dm_not_authorized_without_allowlist",
+      "kind": "function",
+      "filePath": "tests/gateway/test_config_driven_access_policy.py",
+      "startLine": 185
+    },
+    {
+      "name": "test_own_policy_default_open_dm_is_fail_closed",
+      "kind": "function",
+      "filePath": "tests/gateway/test_config_driven_access_policy.py",
+      "startLine": 202
+    },
+    {
+      "name": "test_own_policy_allowlist_authorized_for_group_chat",
+      "kind": "function",
+      "filePath": "tests/gateway/test_config_driven_access_policy.py",
+      "startLine": 219
+    },
+    {
+      "name": "test_own_policy_open_group_not_authorized_without_allowlist",
+      "kind": "function",
+      "filePath": "tests/gateway/test_config_driven_access_policy.py",
+      "startLine": 231
+    },
+    {
+      "name": "test_wecom_open_group_with_per_group_sender_allowlist_is_authorized",
+      "kind": "function",
+      "filePath": "tests/gateway/test_config_driven_access_policy.py",
+      "startLine": 282
+    },
+    {
+      "name": "test_discord_bot_authorized_when_allow_bots_mentions",
+      "kind": "function",
+      "filePath": "tests/gateway/test_discord_bot_auth_bypass.py",
+      "startLine": 83
+    },
+    {
+      "name": "test_bot_bypass_does_not_leak_to_other_platforms",
+      "kind": "function",
+      "filePath": "tests/gateway/test_discord_bot_auth_bypass.py",
+      "startLine": 101
+    },
+    {
+      "name": "test_discord_role_config_does_not_bypass_gateway_allowlist",
+      "kind": "function",
+      "filePath": "tests/gateway/test_discord_bot_auth_bypass.py",
+      "startLine": 132
+    },
+    {
+      "name": "test_discord_role_config_does_not_leak_to_other_platforms",
+      "kind": "function",
+      "filePath": "tests/gateway/test_discord_bot_auth_bypass.py",
+      "startLine": 148
+    },
+    {
+      "name": "test_username_env_plus_resolved_adapter_authorizes",
+      "kind": "method",
+      "filePath": "tests/gateway/test_discord_username_allowlist_env_reload.py",
+      "startLine": 77
+    },
+    {
+      "name": "test_username_env_without_adapter_still_denies",
+      "kind": "method",
+      "filePath": "tests/gateway/test_discord_username_allowlist_env_reload.py",
+      "startLine": 84
+    },
+    {
+      "name": "test_stranger_denied_despite_resolved_adapter",
+      "kind": "method",
+      "filePath": "tests/gateway/test_discord_username_allowlist_env_reload.py",
+      "startLine": 91
+    },
+    {
+      "name": "test_empty_env_allowlist_never_consults_adapter",
+      "kind": "method",
+      "filePath": "tests/gateway/test_discord_username_allowlist_env_reload.py",
+      "startLine": 98
+    },
+    {
+      "name": "test_numeric_env_ids_still_work_without_adapter",
+      "kind": "method",
+      "filePath": "tests/gateway/test_discord_username_allowlist_env_reload.py",
+      "startLine": 116
+    },
+    {
+      "name": "test_non_set_resolver_return_is_ignored",
+      "kind": "method",
+      "filePath": "tests/gateway/test_discord_username_allowlist_env_reload.py",
+      "startLine": 122
+    },
+    {
+      "name": "test_raising_resolver_fails_closed",
+      "kind": "method",
+      "filePath": "tests/gateway/test_discord_username_allowlist_env_reload.py",
+      "startLine": 131
+    },
+    {
+      "name": "test_feishu_human_still_checked_against_allowlist_when_bot_policy_set",
+      "kind": "function",
+      "filePath": "tests/gateway/test_feishu_bot_auth_bypass.py",
+      "startLine": 61
+    },
+    {
+      "name": "test_feishu_bot_bypass_does_not_leak_to_other_platforms",
+      "kind": "function",
+      "filePath": "tests/gateway/test_feishu_bot_auth_bypass.py",
+      "startLine": 71
+    },
+    {
+      "name": "test_default_profile_still_trusts_own_allowlist",
+      "kind": "function",
+      "filePath": "tests/gateway/test_multiplex_profile_authz.py",
+      "startLine": 53
+    },
+    {
+      "name": "test_scoped_secondary_profile_still_uses_profile_adapters",
+      "kind": "function",
+      "filePath": "tests/gateway/test_multiplex_profile_authz.py",
+      "startLine": 77
+    },
+    {
+      "name": "test_secondary_buzz_extra_allowed_users_authorizes_listed_user",
+      "kind": "function",
+      "filePath": "tests/gateway/test_multiplex_profile_authz.py",
+      "startLine": 283
+    },
+    {
+      "name": "test_secondary_buzz_extra_allowed_users_denies_unlisted_sender",
+      "kind": "function",
+      "filePath": "tests/gateway/test_multiplex_profile_authz.py",
+      "startLine": 297
+    },
+    {
+      "name": "test_secondary_buzz_without_extra_allowlist_stays_default_deny",
+      "kind": "function",
+      "filePath": "tests/gateway/test_multiplex_profile_authz.py",
+      "startLine": 310
+    },
+    {
+      "name": "test_extra_allowed_users_not_consulted_without_registry_declaration",
+      "kind": "function",
+      "filePath": "tests/gateway/test_multiplex_profile_authz.py",
+      "startLine": 321
+    },
+    {
+      "name": "test_extra_allowed_users_wildcard_authorizes_any_sender",
+      "kind": "function",
+      "filePath": "tests/gateway/test_multiplex_profile_authz.py",
+      "startLine": 335
+    },
+    {
+      "name": "test_extra_allowed_users_blank_entries_are_dropped_not_denials",
+      "kind": "function",
+      "filePath": "tests/gateway/test_multiplex_profile_authz.py",
+      "startLine": 347
+    },
+    {
+      "name": "test_extra_allowed_users_case_insensitive_hex_and_uppercase_npub",
+      "kind": "function",
+      "filePath": "tests/gateway/test_multiplex_profile_authz.py",
+      "startLine": 360
+    },
+    {
+      "name": "test_adapter_intake_and_central_authz_agree_on_the_same_list",
+      "kind": "function",
+      "filePath": "tests/gateway/test_multiplex_profile_authz.py",
+      "startLine": 374
+    },
+    {
+      "name": "test_paired_user_authorized_even_when_not_in_allowlist",
+      "kind": "function",
+      "filePath": "tests/gateway/test_pairing_allowlist_bypass.py",
+      "startLine": 62
+    },
+    {
+      "name": "test_unpaired_user_in_allowlist_still_authorized",
+      "kind": "function",
+      "filePath": "tests/gateway/test_pairing_allowlist_bypass.py",
+      "startLine": 70
+    },
+    {
+      "name": "test_revoke_whatsapp_sole_entry_denies_live_adapter_without_restart",
+      "kind": "function",
+      "filePath": "tests/gateway/test_pairing_allowlist_bypass.py",
+      "startLine": 216
+    },
+    {
+      "name": "test_scoped_allow_all_honored",
+      "kind": "method",
+      "filePath": "tests/gateway/test_qqbot_scope_paths.py",
+      "startLine": 89
+    },
+    {
+      "name": "test_scope_does_not_inherit_environ_opt_in",
+      "kind": "method",
+      "filePath": "tests/gateway/test_qqbot_scope_paths.py",
+      "startLine": 100
+    },
+    {
+      "name": "test_single_profile_environ_unchanged",
+      "kind": "method",
+      "filePath": "tests/gateway/test_qqbot_scope_paths.py",
+      "startLine": 113
+    },
+    {
+      "name": "test_scoped_user_allowlist_authorizes",
+      "kind": "method",
+      "filePath": "tests/gateway/test_qqbot_scope_paths.py",
+      "startLine": 128
+    },
+    {
+      "name": "test_scoped_user_allowlist_excludes_non_member",
+      "kind": "method",
+      "filePath": "tests/gateway/test_qqbot_scope_paths.py",
+      "startLine": 138
+    },
+    {
+      "name": "test_scope_miss_does_not_inherit_environ_allowlist",
+      "kind": "method",
+      "filePath": "tests/gateway/test_qqbot_scope_paths.py",
+      "startLine": 150
+    },
+    {
+      "name": "test_scope_miss_does_not_inherit_gateway_allow_all",
+      "kind": "method",
+      "filePath": "tests/gateway/test_qqbot_scope_paths.py",
+      "startLine": 164
+    },
+    {
+      "name": "test_non_upstream_adapter_still_default_denies",
+      "kind": "function",
+      "filePath": "tests/gateway/test_relay_upstream_authz.py",
+      "startLine": 96
+    },
+    {
+      "name": "test_relay_message_with_underlying_discord_platform_authorized",
+      "kind": "function",
+      "filePath": "tests/gateway/test_relay_upstream_authz.py",
+      "startLine": 128
+    },
+    {
+      "name": "test_slack_bot_authorized_when_allow_bots_all",
+      "kind": "function",
+      "filePath": "tests/gateway/test_slack_bot_auth_bypass.py",
+      "startLine": 65
+    },
+    {
+      "name": "test_slack_human_unaffected_by_bot_bypass",
+      "kind": "function",
+      "filePath": "tests/gateway/test_slack_bot_auth_bypass.py",
+      "startLine": 71
+    },
+    {
+      "name": "test_telegram_bot_authorized_when_allow_bots_mentions",
+      "kind": "function",
+      "filePath": "tests/gateway/test_telegram_bot_auth_bypass.py",
+      "startLine": 55
+    },
+    {
+      "name": "test_telegram_human_still_checked_against_allowlist_when_bot_policy_set",
+      "kind": "function",
+      "filePath": "tests/gateway/test_telegram_bot_auth_bypass.py",
+      "startLine": 63
+    },
+    {
+      "name": "test_shared_group_observe_source_is_authorized_by_group_allowed_chats",
+      "kind": "function",
+      "filePath": "tests/gateway/test_telegram_group_gating.py",
+      "startLine": 261
+    },
+    {
+      "name": "test_whatsapp_lid_user_matches_phone_allowlist_via_modern_session_mapping",
+      "kind": "function",
+      "filePath": "tests/gateway/test_unauthorized_dm_behavior.py",
+      "startLine": 84
+    },
+    {
+      "name": "test_simplex_allowlist_accepts_display_name",
+      "kind": "function",
+      "filePath": "tests/gateway/test_unauthorized_dm_behavior.py",
+      "startLine": 120
+    },
+    {
+      "name": "test_telegram_group_users_legacy_chat_ids_still_authorize",
+      "kind": "function",
+      "filePath": "tests/gateway/test_unauthorized_dm_behavior.py",
+      "startLine": 158
+    },
+    {
+      "name": "test_telegram_group_users_mixed_sender_and_legacy_chat",
+      "kind": "function",
+      "filePath": "tests/gateway/test_unauthorized_dm_behavior.py",
+      "startLine": 184
+    },
+    {
+      "name": "_is_user_authorized",
+      "kind": "method",
+      "filePath": "tests/gateway/test_telegram_auth_check.py",
+      "startLine": 157
+    },
+    {
+      "name": "_is_user_authorized",
+      "kind": "method",
+      "filePath": "tests/gateway/test_telegram_auth_check.py",
+      "startLine": 180
+    },
+    {
+      "name": "_is_user_authorized",
+      "kind": "method",
+      "filePath": "tests/gateway/test_telegram_auth_check.py",
+      "startLine": 212
+    }
+  ]
+}

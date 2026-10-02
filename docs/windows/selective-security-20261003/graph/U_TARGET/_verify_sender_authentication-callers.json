@@ -1,0 +1,17 @@
+{
+  "symbol": "_verify_sender_authentication",
+  "callers": [
+    {
+      "name": "_parse_fetched_message",
+      "kind": "method",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 659
+    },
+    {
+      "name": "_verify",
+      "kind": "method",
+      "filePath": "tests/gateway/test_email.py",
+      "startLine": 1203
+    }
+  ]
+}
