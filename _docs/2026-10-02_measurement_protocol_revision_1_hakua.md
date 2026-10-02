@@ -176,10 +176,15 @@ fingerprint は少なくとも次を含む：
 `reachable` / `build_info` / `model_alias` / `model_ftype` / `socket_owner_pid` /
 llama-server プロセス一覧。
 
-**サーバの自己申告（`/props`）を正とする。**
+**`/props` は「その HTTP endpoint が返した server / model properties の一次証拠」であり、
+process identity の証拠ではない。** 両者は分けて扱う。
+
 Windows の socket 列挙（`netstat` / `Get-NetTCPConnection`）が
 生存中の endpoint と矛盾する場合を実際に観測したため、
-局所的な列挙よりサーバ自身の応答を優先する。
+**server-reported properties については `/props` を優先する。**
+ただし **PID がその socket を保持していることは，依然として別証拠を要する**——
+socket owner を直接示す観測が得られるまで、
+「PID がポートを保持している」とは書かない。
 
 ### 7.3 Interruption policy
 
