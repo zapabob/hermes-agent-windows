@@ -1,0 +1,68 @@
+[
+  {
+    "node": {
+      "id": "function:51beea8c3c75431b526499b5d9b57de9",
+      "kind": "function",
+      "name": "_verify_sender_authentication",
+      "qualifiedName": "_verify_sender_authentication",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "language": "python",
+      "startLine": 425,
+      "endLine": 503,
+      "startColumn": 0,
+      "endColumn": 60,
+      "signature": "(\n    msg: email_lib.message.Message,\n    from_addr: str,\n    *,\n    authserv_id: str = \"\",\n) -> Tuple[bool, str]",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790984276566
+    },
+    "score": 112.56816072327608
+  },
+  {
+    "node": {
+      "id": "function:4d0cfb54c81db062917d510517314505",
+      "kind": "function",
+      "name": "aligned",
+      "qualifiedName": "_verify_sender_authentication::aligned",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "language": "python",
+      "startLine": 486,
+      "endLine": 488,
+      "startColumn": 4,
+      "endColumn": 105,
+      "signature": "(props: List[Tuple[str, str]], names: Tuple[str, ...], *, required: bool = True) -> bool",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790984276566
+    },
+    "score": 28.654330671686314
+  },
+  {
+    "node": {
+      "id": "import:6b6481ac62e068a971dbe3dd8608b2d6",
+      "kind": "import",
+      "name": "plugins.platforms.email.adapter",
+      "qualifiedName": "plugins.platforms.email.adapter",
+      "filePath": "tests/gateway/test_email_auth_clauses.py",
+      "language": "python",
+      "startLine": 9,
+      "endLine": 9,
+      "startColumn": 0,
+      "endColumn": 87,
+      "signature": "from plugins.platforms.email.adapter import EmailAdapter, _verify_sender_authentication",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790984276739
+    },
+    "score": -0.27323719957540327
+  }
+]

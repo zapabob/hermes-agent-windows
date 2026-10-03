@@ -131,7 +131,7 @@
       "upstream_commits": [
         "467046753420c40aba05a118e5ffd5061e42f481"
       ],
-      "upstream_PR_GHSA": "UNVERIFIED",
+      "upstream_PR_GHSA": "Issue #44729 cited by fixed upstream commit; GHSA not asserted.",
       "upstream_source_files": [
         "gateway/authz_mixin.py",
         "plugins/platforms/simplex/adapter.py"
@@ -160,19 +160,100 @@
           "sha256": "99be34d9f449e6dc2b8d9f793eeb97818f3789ed2cbb9d97f8ba3c55f2a3ee02"
         }
       },
-      "existing_downstream_protection": "PENDING_SOURCE_BOUND_REVIEW",
-      "actual_gap": "PENDING_RED",
-      "RED_test": "PENDING",
-      "minimum_change": "PENDING_OWNER_REVIEW",
-      "regression_suite": "PENDING",
-      "mutation_set": "PENDING",
-      "E2E": "NOT_RUN",
-      "discovery_credit": "UNVERIFIED_REPORTER",
+      "existing_downstream_protection": "SimpleX adapter already emits stable contactId. Profile-scoped authz, pairing and WhatsApp-owned alias helpers retained.",
+      "actual_gap": "Mutable SimpleX user_name and generic @-prefix aliases could match configured allowlists.",
+      "RED_test": {
+        "file": "tests/gateway/test_simplex_principal_boundary.py",
+        "failed": 9,
+        "passed": 7,
+        "owner_baseline": "c20e98f1370c588645d796047788e3b6f9cc749d",
+        "log": "S02/red.log",
+        "excluded": "Initial erroneous WhatsAppCloud fixture used the Baileys env name; corrected before product edits and RED rerun."
+      },
+      "minimum_change": "Delete two generic alias lines and mutable SimpleX match. Update existing vulnerable contract test and numeric-contactId setup guidance; no new auth helper.",
+      "regression_suite": {
+        "files": 9,
+        "passed": 140,
+        "failed": 0,
+        "skipped": 0,
+        "canonical_runner": "scripts/run_tests.sh",
+        "log": "S02/regression.log"
+      },
+      "mutation_set": {
+        "os": "nt",
+        "python": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts\\python.exe",
+        "integration_parent": "709c7aeedf6c192137d231d719ad8cadf59414f6",
+        "candidate_head": "17143117ff9f51a701e2db14ae0ffd50b67691ec",
+        "candidate_tree": "1c42bcc4e8e5cf5980308afbc2f79e525742aaba",
+        "integration_branch_moved": false,
+        "source_sha256": {
+          "gateway/authz_mixin.py": "07206f8c74d8ddd49d1c31ac6dc2dec39295af0df5f0544ea8fc3df5d72de879",
+          "tests/gateway/test_simplex_principal_boundary.py": "138d15b7e2e51a8881a98fd77d7932b44855d46bbb6507323c1dbac882834d14",
+          "plugins/platforms/simplex/adapter.py": "41adc16484a86e681872a568a43d1dfc2e1cd0d67a592ae90645db43e650312a",
+          "tests/gateway/test_unauthorized_dm_behavior.py": "af22c518c951101405faccd75b3653f1d0868a7c2ad946266968e0c1ee95f321"
+        },
+        "existing_framework": "scripts/ci/engineering_repair_mutations.py",
+        "baseline_passed": true,
+        "mutations": [
+          {
+            "mutant": "M01-mutable-display-name",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M02-generic-bare-id",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M03-prefer-display-name",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M04-nonempty-allowlist-grants-all",
+            "killed": true,
+            "exit_code": 1
+          }
+        ],
+        "restored_passed": true,
+        "tracked_diff_clean": true
+      },
+      "E2E": {
+        "os": "nt",
+        "status": "PASS",
+        "positive": 3,
+        "negative": 6,
+        "actual_chain": "SimplexAdapter._handle_chat_item -> build_source contactId/memberId -> GatewayRunner._is_user_authorized",
+        "additional_contracts": "SimpleX profile-bound pairing and missing scoped allowlist do not inherit another profile's authority.",
+        "network": "none",
+        "state": "test-owned tmp_path; queue capture only"
+      },
+      "discovery_credit": "Reporter unverified; upstream implementation liuhao1024 (author), kshitij (committer); original cherry-pick b4aa29da1567d45920f79aabdb36b44c5f87bde5.",
       "upstream_implementation_provenance": [
         "467046753420c40aba05a118e5ffd5061e42f481\nliuhao1024 <sunsky.lau@gmail.com>\nkshitij <82637225+kshitijk4poor@users.noreply.github.com>\nfix(security): remove mutable display-name from SimpleX allowlist check"
       ],
-      "downstream_implementation_provenance": "NOT_IMPLEMENTED",
-      "result": "PENDING_CODEGRAPH"
+      "downstream_implementation_provenance": "Codex selective owner deletion; verification candidate 17143117ff9f51a701e2db14ae0ffd50b67691ec",
+      "result": "IMPLEMENTED",
+      "CodeGraph": {
+        "initial": "graph/S02_INITIAL/binding.json",
+        "fresh": "graph/S02_REVIEW_FINAL/binding.json",
+        "status": "COMPLETE_SOURCE_HASH_BOUND",
+        "limitation": "Fuzzy/builtin-name false edges excluded; filepath-pinned owner explore used."
+      },
+      "independent_review": {
+        "reviewer_agent": "01a0fef5-982a-7b82-a926-02264bf34f0e",
+        "result": "PASS",
+        "findings": [],
+        "reviewed_source_sha256": {
+          "gateway/authz_mixin.py": "07206f8c74d8ddd49d1c31ac6dc2dec39295af0df5f0544ea8fc3df5d72de879",
+          "tests/gateway/test_simplex_principal_boundary.py": "138d15b7e2e51a8881a98fd77d7932b44855d46bbb6507323c1dbac882834d14",
+          "plugins/platforms/simplex/adapter.py": "41adc16484a86e681872a568a43d1dfc2e1cd0d67a592ae90645db43e650312a",
+          "tests/gateway/test_unauthorized_dm_behavior.py": "af22c518c951101405faccd75b3653f1d0868a7c2ad946266968e0c1ee95f321"
+        },
+        "reviewed_candidate": "17143117ff9f51a701e2db14ae0ffd50b67691ec",
+        "scope": "Pinned source and final U_TARGET, D_BASE owner, exact diff, 24-case source-bound candidate, 140 regression PASS, four killed mutants, native adapter and profile cases, fresh graph."
+      }
     },
     {
       "family_id": "S03",
@@ -698,5 +779,8 @@
     "R_AFTER": "d3630f853239e8c41ce7201e09fbdf39bcbc5431",
     "U_TARGET": "4ed093cb6be8a2fadb39e770898f6989fc67201d",
     "INTEGRATION_INITIAL": "17ad2e370a7f9e7f01fb5ee617ef4e96d62635d0"
+  },
+  "family_commits": {
+    "S01": "709c7aeedf6c192137d231d719ad8cadf59414f6"
   }
 }

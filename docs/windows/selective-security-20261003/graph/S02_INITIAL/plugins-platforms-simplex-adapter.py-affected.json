@@ -1,0 +1,12 @@
+{
+  "changedFiles": [
+    "plugins/platforms/simplex/adapter.py"
+  ],
+  "affectedTests": [
+    "tests/gateway/test_api_server_declared_conversation.py",
+    "tests/gateway/test_channel_directory.py",
+    "tests/gateway/test_channel_directory_connected_only.py",
+    "tests/gateway/test_simplex_plugin.py"
+  ],
+  "totalDependentsTraversed": 9
+}

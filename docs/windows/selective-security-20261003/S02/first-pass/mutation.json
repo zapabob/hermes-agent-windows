@@ -1,0 +1,40 @@
+{
+  "os": "nt",
+  "python": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts\\python.exe",
+  "integration_parent": "709c7aeedf6c192137d231d719ad8cadf59414f6",
+  "candidate_head": "52c19781fffc0de9c4307936585b3659a8cfae24",
+  "candidate_tree": "15a5f0c6d169673742593dd2f1066cc683962256",
+  "integration_branch_moved": false,
+  "source_sha256": {
+    "gateway/authz_mixin.py": "07206f8c74d8ddd49d1c31ac6dc2dec39295af0df5f0544ea8fc3df5d72de879",
+    "tests/gateway/test_simplex_principal_boundary.py": "a34a9e78bad518cdc40640225455f636e47c8e4801eb744d170d5ea7a4a79035",
+    "plugins/platforms/simplex/adapter.py": "41adc16484a86e681872a568a43d1dfc2e1cd0d67a592ae90645db43e650312a",
+    "tests/gateway/test_unauthorized_dm_behavior.py": "af22c518c951101405faccd75b3653f1d0868a7c2ad946266968e0c1ee95f321"
+  },
+  "existing_framework": "scripts/ci/engineering_repair_mutations.py",
+  "baseline_passed": true,
+  "mutations": [
+    {
+      "mutant": "M01-mutable-display-name",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M02-generic-bare-id",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M03-prefer-display-name",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M04-nonempty-allowlist-grants-all",
+      "killed": true,
+      "exit_code": 1
+    }
+  ],
+  "restored_passed": true,
+  "tracked_diff_clean": true
+}

@@ -144,3 +144,55 @@ personal files were not touched.
 Independent reviewer 01a0fef5-982a-7b82-a926-02264bf34f0e returned final S01 PASS with no actionable finding. Reviewed product/test hashes match the verified candidate; scope exclusion of From parser accepted. S01 is approved for its local family commit. No other family is complete.
 
 CodeGraph markdown receipts normalize trailing whitespace on source-number blank lines for git diff --check. Owner/test bytes and reviewed SHA256 values are unchanged.
+
+
+## S02 implementation evidence (pending independent final review)
+
+S01 local family commit: 709c7aeedf6c192137d231d719ad8cadf59414f6.
+S02's initial fixture had a WhatsAppCloud env-name error; that failure is
+excluded, fixed before product edits, and the valid RED rerun yielded nine
+real unauthorized-acceptance failures and seven positive passes. The owner
+was otherwise D_BASE-equivalent. No import/dependency failure counts as RED.
+
+The authz change removes generic bare-ID splitting and SimpleX's mutable
+display-name match, while keeping the existing WhatsApp alias implementation.
+The adapter already emitted immutable contactId; only its operator-facing
+allowlist guidance changes. The old display-name acceptance test now asserts
+denial. Profile-scoped authz, pairing, wildcard and opt-in behavior are retained.
+
+Canonical Windows regression: nine files, 132 passed, zero failed or skipped,
+including SimpleX adapter, profile/multiplex, relay/shared authz and S01 Email.
+Four semantic mutants are killed, including all three required mutations and
+a fail-open nonempty-allowlist mutation. Clean verification-only candidate
+checkout restores byte-for-byte and all 16 behavioral tests pass again. Native
+adapter event-to-principal cases prove allowed rename and denied collisions,
+without WebSocket connections or production resources. Fresh S02_FINAL graph
+hashes equal the clean candidate owner hashes. Final review/commit still pending.
+
+
+## S02 implementation evidence (pending independent final review)
+
+S01 local family commit: 709c7aeedf6c192137d231d719ad8cadf59414f6.
+S02's initial fixture had a WhatsAppCloud env-name error; that failure is
+excluded, fixed before product edits, and the valid RED rerun yielded nine
+real unauthorized-acceptance failures and seven positive passes. The owner
+was otherwise D_BASE-equivalent. No import/dependency failure counts as RED.
+
+The authz change removes generic bare-ID splitting and SimpleX's mutable
+display-name match, while keeping the existing WhatsApp alias implementation.
+The adapter already emitted immutable contactId; only its operator-facing
+allowlist guidance changes. The old display-name acceptance test now asserts
+denial. Profile-scoped authz, pairing, wildcard and opt-in behavior are retained.
+
+Canonical Windows regression: nine files, 132 passed, zero failed or skipped,
+including SimpleX adapter, profile/multiplex, relay/shared authz and S01 Email.
+Four semantic mutants are killed, including all three required mutations and
+a fail-open nonempty-allowlist mutation. Clean verification-only candidate
+checkout restores byte-for-byte and all 16 behavioral tests pass again. Native
+adapter event-to-principal cases prove allowed rename and denied collisions,
+without WebSocket connections or production resources. Fresh S02_FINAL graph
+hashes equal the clean candidate owner hashes. Final review/commit still pending.
+
+S02 independent review requested additional SimpleX-specific profile pairing, scoped-miss, displayName fallback and group-collision evidence. Eight behavioral cases were added without changing product code. Reviewed suite now has 24 candidate tests and 140 total PASS across the same nine files; all four mutations were rerun at a new clean verification candidate and killed, restored 24 PASS. Nine native event-to-principal cases now cover direct/local name, profile.displayName fallback and group/memberProfile collisions. Fresh S02_REVIEW_FINAL includes the test update. First-pass evidence is preserved under S02/first-pass; final gate remains pending.
+
+S02 final independent review PASS: requested additional boundaries verified, product/test hashes equal reviewed candidate 17143117ff9f51a701e2db14ae0ffd50b67691ec. No remaining actionable finding. Formal family commit authorized by original directive. S03 and later remain unimplemented.
