@@ -1,0 +1,125 @@
+{
+  "symbol": "_sanitize_subprocess_env",
+  "callers": [
+    {
+      "name": "_run_ddgs_search_bounded",
+      "kind": "function",
+      "filePath": "plugins/web/ddgs/provider.py",
+      "startLine": 130
+    },
+    {
+      "name": "test_host_auto_preserves_real_home_when_profile_home_exists",
+      "kind": "method",
+      "filePath": "tests/test_subprocess_home_isolation.py",
+      "startLine": 189
+    },
+    {
+      "name": "test_profile_mode_injects_profile_home_when_profile_home_exists",
+      "kind": "method",
+      "filePath": "tests/test_subprocess_home_isolation.py",
+      "startLine": 205
+    },
+    {
+      "name": "test_no_injection_when_home_dir_missing",
+      "kind": "method",
+      "filePath": "tests/test_subprocess_home_isolation.py",
+      "startLine": 222
+    },
+    {
+      "name": "test_background_terminal_uses_active_profile_for_passthrough",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 220
+    },
+    {
+      "name": "test_background_terminal_omits_missing_scoped_passthrough",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 239
+    },
+    {
+      "name": "test_blocklisted_var_blocked_by_default",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 292
+    },
+    {
+      "name": "test_passthrough_cannot_override_provider_blocklist",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 303
+    },
+    {
+      "name": "test_passthrough_cannot_override_internal_dynamic_secret",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 324
+    },
+    {
+      "name": "test_passthrough_cannot_register_buzz_vars",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 346
+    },
+    {
+      "name": "test_bare_hermes_resolves_from_sanitized_subprocess_path",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 240
+    },
+    {
+      "name": "test_bare_hermes_path_does_not_duplicate_existing_install_dir",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 259
+    },
+    {
+      "name": "test_sanitize_subprocess_env_preserves_buzz_vars",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 328
+    },
+    {
+      "name": "test_buzz_vars_stripped_without_buzz_context",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 346
+    },
+    {
+      "name": "test_session_platform_buzz_enables_carveout",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 375
+    },
+    {
+      "name": "test_buzz_vars_use_plain_value_under_multiplex_without_scope",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 403
+    },
+    {
+      "name": "test_buzz_vars_are_not_scope_resolved",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 427
+    },
+    {
+      "name": "test_sanitize_subprocess_env_strips_markers",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 585
+    },
+    {
+      "name": "test_sanitize_subprocess_env_strips_foreign_session_key_when_engaged",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 163
+    },
+    {
+      "name": "test_sanitize_subprocess_env_set_contextvar_wins_when_engaged",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 185
+    }
+  ]
+}

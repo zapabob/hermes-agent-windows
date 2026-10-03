@@ -1,0 +1,81 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 1 test files (~61 tests) under ['tests\\plugins\\memory\\test_openviking_provider.py']; running with -j 1
+[100.0% |    61/~61 | ✓0 | ✗1] ✗ tests\plugins\memory\test_openviking_provider.py (1✗, 3.8s)
+
+  ╔╍ Failed: tests\plugins\memory\test_openviking_provider.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║ F                                                                        [100%]
+  ║ ================================== FAILURES ===================================
+  ║ _____ TestOpenVikingEnvWriter.test_non_utf8_env_preserves_unrelated_bytes _____
+  ║
+  ║ self = <tests.plugins.memory.test_openviking_provider.TestOpenVikingEnvWriter object at 0x000001ADA17FF250>
+  ║ tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-o4tjy7ic/pytest-of-unknown/pytest-0/test_non_utf8_env_preserves_un0')
+  ║
+  ║     def test_non_utf8_env_preserves_unrelated_bytes(self, tmp_path):
+  ║         from plugins.memory.openviking import _write_env_vars
+  ║
+  ║         env = tmp_path / ".env"
+  ║         env.write_bytes(b"NAME=caf\xe9\nOPENAI_API_KEY=old\n")
+  ║
+  ║         _write_env_vars(env, {"OPENAI_API_KEY": "new"})
+  ║
+  ║ >       assert env.read_bytes() == b"NAME=caf\xe9\nOPENAI_API_KEY=new\n"
+  ║ E       AssertionError: assert b'NAME=caf\xe...I_KEY=new\r\n' == b'NAME=caf\xe...API_KEY=new\n'
+  ║ E
+  ║ E         At index 9 diff: b'\r' != b'\n'
+  ║ E         Use -v to get more diff
+  ║
+  ║ tests\plugins\memory\test_openviking_provider.py:1911: AssertionError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/plugins/memory/test_openviking_provider.py::TestOpenVikingEnvWriter::test_non_utf8_env_preserves_unrelated_bytes
+  ║ 1 failed, 62 deselected in 2.15s
+  ║
+  ║  Repro: python -m pytest tests\plugins\memory\test_openviking_provider.py -q -k non_utf8_env_preserves_unrelated_bytes
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+
+=== Summary: 1 files, 0 tests passed, 1 failed (100% complete) in 3.8s (1 workers) ===
+  Durations cached to test_durations.json (1 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   1
+  Total subprocess CPU-wall: 3.8s  (runner wall: 3.8s, parallelism: 1x)
+  P50: 3.80s  P90: 3.80s  P95: 3.80s  P99: 3.80s  Max: 3.80s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+      3.80s  tests\plugins\memory\test_openviking_provider.py
+
+=== Failure output ===
+
+--- tests\plugins\memory\test_openviking_provider.py ---
+F                                                                        [100%]
+================================== FAILURES ===================================
+_____ TestOpenVikingEnvWriter.test_non_utf8_env_preserves_unrelated_bytes _____
+
+self = <tests.plugins.memory.test_openviking_provider.TestOpenVikingEnvWriter object at 0x000001ADA17FF250>
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-o4tjy7ic/pytest-of-unknown/pytest-0/test_non_utf8_env_preserves_un0')
+
+    def test_non_utf8_env_preserves_unrelated_bytes(self, tmp_path):
+        from plugins.memory.openviking import _write_env_vars
+
+        env = tmp_path / ".env"
+        env.write_bytes(b"NAME=caf\xe9\nOPENAI_API_KEY=old\n")
+
+        _write_env_vars(env, {"OPENAI_API_KEY": "new"})
+
+>       assert env.read_bytes() == b"NAME=caf\xe9\nOPENAI_API_KEY=new\n"
+E       AssertionError: assert b'NAME=caf\xe...I_KEY=new\r\n' == b'NAME=caf\xe...API_KEY=new\n'
+E
+E         At index 9 diff: b'\r' != b'\n'
+E         Use -v to get more diff
+
+tests\plugins\memory\test_openviking_provider.py:1911: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/plugins/memory/test_openviking_provider.py::TestOpenVikingEnvWriter::test_non_utf8_env_preserves_unrelated_bytes
+1 failed, 62 deselected in 2.15s
+
+=== 1 file with test failures (1 test failed) ===
+  tests\plugins\memory\test_openviking_provider.py  (1 test failed)

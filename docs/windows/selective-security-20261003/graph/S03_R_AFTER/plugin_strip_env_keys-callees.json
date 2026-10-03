@@ -1,0 +1,17 @@
+{
+  "symbol": "plugin_strip_env_keys",
+  "callees": [
+    {
+      "name": "values",
+      "kind": "method",
+      "filePath": "tests/test_tui_gateway_server.py",
+      "startLine": 14887
+    },
+    {
+      "name": "_registry",
+      "kind": "variable",
+      "filePath": "agent/terminal_env_registry.py",
+      "startLine": 37
+    }
+  ]
+}

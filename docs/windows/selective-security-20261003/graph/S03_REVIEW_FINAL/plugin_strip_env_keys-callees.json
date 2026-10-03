@@ -1,0 +1,29 @@
+{
+  "symbol": "plugin_strip_env_keys",
+  "callees": [
+    {
+      "name": "values",
+      "kind": "method",
+      "filePath": "tests/test_tui_gateway_server.py",
+      "startLine": 14234
+    },
+    {
+      "name": "_scoped_providers",
+      "kind": "variable",
+      "filePath": "agent/terminal_env_registry.py",
+      "startLine": 47
+    },
+    {
+      "name": "_providers",
+      "kind": "variable",
+      "filePath": "agent/terminal_env_registry.py",
+      "startLine": 46
+    },
+    {
+      "name": "_lock",
+      "kind": "variable",
+      "filePath": "agent/terminal_env_registry.py",
+      "startLine": 50
+    }
+  ]
+}

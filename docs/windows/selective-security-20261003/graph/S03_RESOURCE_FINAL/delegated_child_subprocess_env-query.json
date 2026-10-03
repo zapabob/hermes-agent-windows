@@ -1,0 +1,24 @@
+[
+  {
+    "node": {
+      "id": "function:10ccec2f9c5696dbd9a3285d076a8dd4",
+      "kind": "function",
+      "name": "delegated_child_subprocess_env",
+      "qualifiedName": "delegated_child_subprocess_env",
+      "filePath": "agent/delegation_context.py",
+      "language": "python",
+      "startLine": 142,
+      "endLine": 172,
+      "startColumn": 0,
+      "endColumn": 36,
+      "signature": "(\n    env: Mapping[str, str] | MutableMapping[str, str] | None = None,\n    *, allowed_provider_credentials: Iterable[str] = (),\n) -> dict[str, str] | None",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790993453673
+    },
+    "score": 113.99556920618055
+  }
+]

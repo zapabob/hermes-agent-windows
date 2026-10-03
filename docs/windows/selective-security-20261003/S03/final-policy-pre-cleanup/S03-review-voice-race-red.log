@@ -1,0 +1,406 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 1 test files (~5 tests) under ['tests\\tools\\test_child_credential_windows_native.py']; running with -j 1
+[100.0% |     5/~5 | ✓0 | ✗9] ✗ tests\tools\test_child_credential_windows_native.py (9✗, 8.9s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_windows_native.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║         output, probe = tmp_path / "observed.json", tmp_path / "probe.py"
+  ║         probe.write_text("import os,json,pathlib;pathlib.Path(" + repr(str(output)) + ").write_text(json.dumps({k:os.environ.get(k) for k in ['TELEGRAM_BOT_TOKEN','ORDINARY_EXPORT']}),encoding='utf-8')", encoding="utf-8")
+  ║         original_run = environment._run_bash
+  ║         try:
+  ║             assert environment.execute("export ORDINARY_EXPORT=$'first\\nsecond'")["returncode"] == 0
+  ║             def concurrent_snapshot_publication(script, **kwargs):
+  ║                 from pathlib import Path
+  ║                 replacement = Path(environment._snapshot_path + ".test-replacement")
+  ║                 replacement.write_text('declare -rx TELEGRAM_BOT_TOKEN="TEST_ONLY_RACING_SECRET"\n', encoding="utf-8")
+  ║                 replacement.replace(environment._snapshot_path)
+  ║                 return original_run(script, **kwargs)
+  ║             monkeypatch.setattr(environment, "_run_bash", concurrent_snapshot_publication)
+  ║             result = environment.execute(shlex.quote(sys.executable.replace("\\", "/")) + " " + shlex.quote(probe.as_posix()))
+  ║             assert result["returncode"] == 0, result
+  ║             observed = json.loads(output.read_text(encoding="utf-8"))
+  ║ >           assert observed["TELEGRAM_BOT_TOKEN"] is None
+  ║ E           AssertionError: assert 'TEST_ONLY_RACING_SECRET' is None
+  ║
+  ║ tests\tools\test_child_credential_windows_native.py:226: AssertionError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_native_voice_command_keeps_only_approved_profile_key[False-False-tts]
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_native_voice_command_keeps_only_approved_profile_key[False-False-stt]
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_native_voice_command_keeps_only_approved_profile_key[False-True-tts]
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_native_voice_command_keeps_only_approved_profile_key[False-True-stt]
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_native_voice_command_keeps_only_approved_profile_key[True-False-tts]
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_native_voice_command_keeps_only_approved_profile_key[True-False-stt]
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_native_voice_command_keeps_only_approved_profile_key[True-True-tts]
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_native_voice_command_keeps_only_approved_profile_key[True-True-stt]
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_snapshot_atomic_replacement_after_validation_cannot_restore_secret
+  ║ 9 failed, 13 deselected in 7.21s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_windows_native.py -q -k native_voice_command or snapshot_atomic_replacement
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+
+=== Summary: 1 files, 0 tests passed, 9 failed (100% complete) in 8.9s (1 workers) ===
+  Durations cached to test_durations.json (1 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   1
+  Total subprocess CPU-wall: 8.9s  (runner wall: 8.9s, parallelism: 1x)
+  P50: 8.94s  P90: 8.94s  P95: 8.94s  P99: 8.94s  Max: 8.94s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+      8.94s  tests\tools\test_child_credential_windows_native.py
+
+=== Failure output ===
+
+--- tests\tools\test_child_credential_windows_native.py ---
+FFFFFFFFF                                                                [100%]
+================================== FAILURES ===================================
+_ test_native_voice_command_keeps_only_approved_profile_key[False-False-tts] __
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-t9npj7sb/pytest-of-unknown/pytest-0/test_native_voice_command_keep0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000275C17A0E50>
+runner = 'tts', delegated = False, routed = False
+
+    @pytest.mark.parametrize("runner", ["tts", "stt"])
+    @pytest.mark.parametrize("delegated", [False, True])
+    @pytest.mark.parametrize("routed", [False, True])
+    def test_native_voice_command_keeps_only_approved_profile_key(tmp_path, monkeypatch, runner, delegated, routed):
+        from agent.delegation_context import delegated_child_context
+        from tools.tts_tool import _run_command_tts
+        from tools.transcription_tools import _run_command_stt
+        launch, target = tmp_path / "launch", tmp_path / "served"
+        launch.mkdir()
+        target.mkdir()
+        (target / ".env").write_text("OPENAI_API_KEY=TEST_ONLY_SERVED\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv("OPENAI_API_KEY", "TEST_ONLY_LAUNCH")
+        monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "TEST_ONLY_ADAPTER")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "TEST_ONLY_UNREQUESTED")
+        probe = tmp_path / "voice probe.py"
+        probe.write_text("import json,os,sys;sys.stdout.write(json.dumps({k:os.environ.get(k) for k in ['OPENAI_API_KEY','TELEGRAM_BOT_TOKEN','ANTHROPIC_API_KEY']}))", encoding="utf-8")
+        command = subprocess.list2cmdline([sys.executable, "-I", str(probe)])
+        home_token = set_hermes_home_override(target) if routed else None
+        try:
+            context = delegated_child_context("test-only-voice") if delegated else nullcontext()
+            with context:
+                result = (_run_command_tts if runner == "tts" else _run_command_stt)(
+                    command, timeout=20, env_passthrough=["OPENAI_API_KEY", "TELEGRAM_BOT_TOKEN"],
+                )
+            assert result.returncode == 0, result
+            observed = json.loads(result.stdout)
+            assert observed["OPENAI_API_KEY"] == ("TEST_ONLY_SERVED" if routed else "TEST_ONLY_LAUNCH")
+>           assert observed["TELEGRAM_BOT_TOKEN"] is None
+E           AssertionError: assert 'TEST_ONLY_ADAPTER' is None
+
+tests\tools\test_child_credential_windows_native.py:200: AssertionError
+_ test_native_voice_command_keeps_only_approved_profile_key[False-False-stt] __
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-t9npj7sb/pytest-of-unknown/pytest-0/test_native_voice_command_keep1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000275C17CC9D0>
+runner = 'stt', delegated = False, routed = False
+
+    @pytest.mark.parametrize("runner", ["tts", "stt"])
+    @pytest.mark.parametrize("delegated", [False, True])
+    @pytest.mark.parametrize("routed", [False, True])
+    def test_native_voice_command_keeps_only_approved_profile_key(tmp_path, monkeypatch, runner, delegated, routed):
+        from agent.delegation_context import delegated_child_context
+        from tools.tts_tool import _run_command_tts
+        from tools.transcription_tools import _run_command_stt
+        launch, target = tmp_path / "launch", tmp_path / "served"
+        launch.mkdir()
+        target.mkdir()
+        (target / ".env").write_text("OPENAI_API_KEY=TEST_ONLY_SERVED\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv("OPENAI_API_KEY", "TEST_ONLY_LAUNCH")
+        monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "TEST_ONLY_ADAPTER")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "TEST_ONLY_UNREQUESTED")
+        probe = tmp_path / "voice probe.py"
+        probe.write_text("import json,os,sys;sys.stdout.write(json.dumps({k:os.environ.get(k) for k in ['OPENAI_API_KEY','TELEGRAM_BOT_TOKEN','ANTHROPIC_API_KEY']}))", encoding="utf-8")
+        command = subprocess.list2cmdline([sys.executable, "-I", str(probe)])
+        home_token = set_hermes_home_override(target) if routed else None
+        try:
+            context = delegated_child_context("test-only-voice") if delegated else nullcontext()
+            with context:
+                result = (_run_command_tts if runner == "tts" else _run_command_stt)(
+                    command, timeout=20, env_passthrough=["OPENAI_API_KEY", "TELEGRAM_BOT_TOKEN"],
+                )
+            assert result.returncode == 0, result
+            observed = json.loads(result.stdout)
+            assert observed["OPENAI_API_KEY"] == ("TEST_ONLY_SERVED" if routed else "TEST_ONLY_LAUNCH")
+>           assert observed["TELEGRAM_BOT_TOKEN"] is None
+E           AssertionError: assert 'TEST_ONLY_ADAPTER' is None
+
+tests\tools\test_child_credential_windows_native.py:200: AssertionError
+__ test_native_voice_command_keeps_only_approved_profile_key[False-True-tts] __
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-t9npj7sb/pytest-of-unknown/pytest-0/test_native_voice_command_keep2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000275C185B450>
+runner = 'tts', delegated = True, routed = False
+
+    @pytest.mark.parametrize("runner", ["tts", "stt"])
+    @pytest.mark.parametrize("delegated", [False, True])
+    @pytest.mark.parametrize("routed", [False, True])
+    def test_native_voice_command_keeps_only_approved_profile_key(tmp_path, monkeypatch, runner, delegated, routed):
+        from agent.delegation_context import delegated_child_context
+        from tools.tts_tool import _run_command_tts
+        from tools.transcription_tools import _run_command_stt
+        launch, target = tmp_path / "launch", tmp_path / "served"
+        launch.mkdir()
+        target.mkdir()
+        (target / ".env").write_text("OPENAI_API_KEY=TEST_ONLY_SERVED\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv("OPENAI_API_KEY", "TEST_ONLY_LAUNCH")
+        monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "TEST_ONLY_ADAPTER")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "TEST_ONLY_UNREQUESTED")
+        probe = tmp_path / "voice probe.py"
+        probe.write_text("import json,os,sys;sys.stdout.write(json.dumps({k:os.environ.get(k) for k in ['OPENAI_API_KEY','TELEGRAM_BOT_TOKEN','ANTHROPIC_API_KEY']}))", encoding="utf-8")
+        command = subprocess.list2cmdline([sys.executable, "-I", str(probe)])
+        home_token = set_hermes_home_override(target) if routed else None
+        try:
+            context = delegated_child_context("test-only-voice") if delegated else nullcontext()
+            with context:
+                result = (_run_command_tts if runner == "tts" else _run_command_stt)(
+                    command, timeout=20, env_passthrough=["OPENAI_API_KEY", "TELEGRAM_BOT_TOKEN"],
+                )
+            assert result.returncode == 0, result
+            observed = json.loads(result.stdout)
+>           assert observed["OPENAI_API_KEY"] == ("TEST_ONLY_SERVED" if routed else "TEST_ONLY_LAUNCH")
+E           AssertionError: assert None == 'TEST_ONLY_LAUNCH'
+
+tests\tools\test_child_credential_windows_native.py:199: AssertionError
+__ test_native_voice_command_keeps_only_approved_profile_key[False-True-stt] __
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-t9npj7sb/pytest-of-unknown/pytest-0/test_native_voice_command_keep3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000275C508EED0>
+runner = 'stt', delegated = True, routed = False
+
+    @pytest.mark.parametrize("runner", ["tts", "stt"])
+    @pytest.mark.parametrize("delegated", [False, True])
+    @pytest.mark.parametrize("routed", [False, True])
+    def test_native_voice_command_keeps_only_approved_profile_key(tmp_path, monkeypatch, runner, delegated, routed):
+        from agent.delegation_context import delegated_child_context
+        from tools.tts_tool import _run_command_tts
+        from tools.transcription_tools import _run_command_stt
+        launch, target = tmp_path / "launch", tmp_path / "served"
+        launch.mkdir()
+        target.mkdir()
+        (target / ".env").write_text("OPENAI_API_KEY=TEST_ONLY_SERVED\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv("OPENAI_API_KEY", "TEST_ONLY_LAUNCH")
+        monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "TEST_ONLY_ADAPTER")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "TEST_ONLY_UNREQUESTED")
+        probe = tmp_path / "voice probe.py"
+        probe.write_text("import json,os,sys;sys.stdout.write(json.dumps({k:os.environ.get(k) for k in ['OPENAI_API_KEY','TELEGRAM_BOT_TOKEN','ANTHROPIC_API_KEY']}))", encoding="utf-8")
+        command = subprocess.list2cmdline([sys.executable, "-I", str(probe)])
+        home_token = set_hermes_home_override(target) if routed else None
+        try:
+            context = delegated_child_context("test-only-voice") if delegated else nullcontext()
+            with context:
+                result = (_run_command_tts if runner == "tts" else _run_command_stt)(
+                    command, timeout=20, env_passthrough=["OPENAI_API_KEY", "TELEGRAM_BOT_TOKEN"],
+                )
+            assert result.returncode == 0, result
+            observed = json.loads(result.stdout)
+>           assert observed["OPENAI_API_KEY"] == ("TEST_ONLY_SERVED" if routed else "TEST_ONLY_LAUNCH")
+E           AssertionError: assert None == 'TEST_ONLY_LAUNCH'
+
+tests\tools\test_child_credential_windows_native.py:199: AssertionError
+__ test_native_voice_command_keeps_only_approved_profile_key[True-False-tts] __
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-t9npj7sb/pytest-of-unknown/pytest-0/test_native_voice_command_keep4')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000275C17A0F10>
+runner = 'tts', delegated = False, routed = True
+
+    @pytest.mark.parametrize("runner", ["tts", "stt"])
+    @pytest.mark.parametrize("delegated", [False, True])
+    @pytest.mark.parametrize("routed", [False, True])
+    def test_native_voice_command_keeps_only_approved_profile_key(tmp_path, monkeypatch, runner, delegated, routed):
+        from agent.delegation_context import delegated_child_context
+        from tools.tts_tool import _run_command_tts
+        from tools.transcription_tools import _run_command_stt
+        launch, target = tmp_path / "launch", tmp_path / "served"
+        launch.mkdir()
+        target.mkdir()
+        (target / ".env").write_text("OPENAI_API_KEY=TEST_ONLY_SERVED\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv("OPENAI_API_KEY", "TEST_ONLY_LAUNCH")
+        monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "TEST_ONLY_ADAPTER")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "TEST_ONLY_UNREQUESTED")
+        probe = tmp_path / "voice probe.py"
+        probe.write_text("import json,os,sys;sys.stdout.write(json.dumps({k:os.environ.get(k) for k in ['OPENAI_API_KEY','TELEGRAM_BOT_TOKEN','ANTHROPIC_API_KEY']}))", encoding="utf-8")
+        command = subprocess.list2cmdline([sys.executable, "-I", str(probe)])
+        home_token = set_hermes_home_override(target) if routed else None
+        try:
+            context = delegated_child_context("test-only-voice") if delegated else nullcontext()
+            with context:
+                result = (_run_command_tts if runner == "tts" else _run_command_stt)(
+                    command, timeout=20, env_passthrough=["OPENAI_API_KEY", "TELEGRAM_BOT_TOKEN"],
+                )
+            assert result.returncode == 0, result
+            observed = json.loads(result.stdout)
+>           assert observed["OPENAI_API_KEY"] == ("TEST_ONLY_SERVED" if routed else "TEST_ONLY_LAUNCH")
+E           AssertionError: assert 'TEST_ONLY_LAUNCH' == 'TEST_ONLY_SERVED'
+E
+E             - TEST_ONLY_SERVED
+E             + TEST_ONLY_LAUNCH
+
+tests\tools\test_child_credential_windows_native.py:199: AssertionError
+__ test_native_voice_command_keeps_only_approved_profile_key[True-False-stt] __
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-t9npj7sb/pytest-of-unknown/pytest-0/test_native_voice_command_keep5')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000275C5028210>
+runner = 'stt', delegated = False, routed = True
+
+    @pytest.mark.parametrize("runner", ["tts", "stt"])
+    @pytest.mark.parametrize("delegated", [False, True])
+    @pytest.mark.parametrize("routed", [False, True])
+    def test_native_voice_command_keeps_only_approved_profile_key(tmp_path, monkeypatch, runner, delegated, routed):
+        from agent.delegation_context import delegated_child_context
+        from tools.tts_tool import _run_command_tts
+        from tools.transcription_tools import _run_command_stt
+        launch, target = tmp_path / "launch", tmp_path / "served"
+        launch.mkdir()
+        target.mkdir()
+        (target / ".env").write_text("OPENAI_API_KEY=TEST_ONLY_SERVED\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv("OPENAI_API_KEY", "TEST_ONLY_LAUNCH")
+        monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "TEST_ONLY_ADAPTER")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "TEST_ONLY_UNREQUESTED")
+        probe = tmp_path / "voice probe.py"
+        probe.write_text("import json,os,sys;sys.stdout.write(json.dumps({k:os.environ.get(k) for k in ['OPENAI_API_KEY','TELEGRAM_BOT_TOKEN','ANTHROPIC_API_KEY']}))", encoding="utf-8")
+        command = subprocess.list2cmdline([sys.executable, "-I", str(probe)])
+        home_token = set_hermes_home_override(target) if routed else None
+        try:
+            context = delegated_child_context("test-only-voice") if delegated else nullcontext()
+            with context:
+                result = (_run_command_tts if runner == "tts" else _run_command_stt)(
+                    command, timeout=20, env_passthrough=["OPENAI_API_KEY", "TELEGRAM_BOT_TOKEN"],
+                )
+            assert result.returncode == 0, result
+            observed = json.loads(result.stdout)
+>           assert observed["OPENAI_API_KEY"] == ("TEST_ONLY_SERVED" if routed else "TEST_ONLY_LAUNCH")
+E           AssertionError: assert 'TEST_ONLY_LAUNCH' == 'TEST_ONLY_SERVED'
+E
+E             - TEST_ONLY_SERVED
+E             + TEST_ONLY_LAUNCH
+
+tests\tools\test_child_credential_windows_native.py:199: AssertionError
+__ test_native_voice_command_keeps_only_approved_profile_key[True-True-tts] ___
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-t9npj7sb/pytest-of-unknown/pytest-0/test_native_voice_command_keep6')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000275C1790150>
+runner = 'tts', delegated = True, routed = True
+
+    @pytest.mark.parametrize("runner", ["tts", "stt"])
+    @pytest.mark.parametrize("delegated", [False, True])
+    @pytest.mark.parametrize("routed", [False, True])
+    def test_native_voice_command_keeps_only_approved_profile_key(tmp_path, monkeypatch, runner, delegated, routed):
+        from agent.delegation_context import delegated_child_context
+        from tools.tts_tool import _run_command_tts
+        from tools.transcription_tools import _run_command_stt
+        launch, target = tmp_path / "launch", tmp_path / "served"
+        launch.mkdir()
+        target.mkdir()
+        (target / ".env").write_text("OPENAI_API_KEY=TEST_ONLY_SERVED\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv("OPENAI_API_KEY", "TEST_ONLY_LAUNCH")
+        monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "TEST_ONLY_ADAPTER")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "TEST_ONLY_UNREQUESTED")
+        probe = tmp_path / "voice probe.py"
+        probe.write_text("import json,os,sys;sys.stdout.write(json.dumps({k:os.environ.get(k) for k in ['OPENAI_API_KEY','TELEGRAM_BOT_TOKEN','ANTHROPIC_API_KEY']}))", encoding="utf-8")
+        command = subprocess.list2cmdline([sys.executable, "-I", str(probe)])
+        home_token = set_hermes_home_override(target) if routed else None
+        try:
+            context = delegated_child_context("test-only-voice") if delegated else nullcontext()
+            with context:
+                result = (_run_command_tts if runner == "tts" else _run_command_stt)(
+                    command, timeout=20, env_passthrough=["OPENAI_API_KEY", "TELEGRAM_BOT_TOKEN"],
+                )
+            assert result.returncode == 0, result
+            observed = json.loads(result.stdout)
+>           assert observed["OPENAI_API_KEY"] == ("TEST_ONLY_SERVED" if routed else "TEST_ONLY_LAUNCH")
+E           AssertionError: assert None == 'TEST_ONLY_SERVED'
+
+tests\tools\test_child_credential_windows_native.py:199: AssertionError
+__ test_native_voice_command_keeps_only_approved_profile_key[True-True-stt] ___
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-t9npj7sb/pytest-of-unknown/pytest-0/test_native_voice_command_keep7')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000275C509DD50>
+runner = 'stt', delegated = True, routed = True
+
+    @pytest.mark.parametrize("runner", ["tts", "stt"])
+    @pytest.mark.parametrize("delegated", [False, True])
+    @pytest.mark.parametrize("routed", [False, True])
+    def test_native_voice_command_keeps_only_approved_profile_key(tmp_path, monkeypatch, runner, delegated, routed):
+        from agent.delegation_context import delegated_child_context
+        from tools.tts_tool import _run_command_tts
+        from tools.transcription_tools import _run_command_stt
+        launch, target = tmp_path / "launch", tmp_path / "served"
+        launch.mkdir()
+        target.mkdir()
+        (target / ".env").write_text("OPENAI_API_KEY=TEST_ONLY_SERVED\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv("OPENAI_API_KEY", "TEST_ONLY_LAUNCH")
+        monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "TEST_ONLY_ADAPTER")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "TEST_ONLY_UNREQUESTED")
+        probe = tmp_path / "voice probe.py"
+        probe.write_text("import json,os,sys;sys.stdout.write(json.dumps({k:os.environ.get(k) for k in ['OPENAI_API_KEY','TELEGRAM_BOT_TOKEN','ANTHROPIC_API_KEY']}))", encoding="utf-8")
+        command = subprocess.list2cmdline([sys.executable, "-I", str(probe)])
+        home_token = set_hermes_home_override(target) if routed else None
+        try:
+            context = delegated_child_context("test-only-voice") if delegated else nullcontext()
+            with context:
+                result = (_run_command_tts if runner == "tts" else _run_command_stt)(
+                    command, timeout=20, env_passthrough=["OPENAI_API_KEY", "TELEGRAM_BOT_TOKEN"],
+                )
+            assert result.returncode == 0, result
+            observed = json.loads(result.stdout)
+>           assert observed["OPENAI_API_KEY"] == ("TEST_ONLY_SERVED" if routed else "TEST_ONLY_LAUNCH")
+E           AssertionError: assert None == 'TEST_ONLY_SERVED'
+
+tests\tools\test_child_credential_windows_native.py:199: AssertionError
+___ test_snapshot_atomic_replacement_after_validation_cannot_restore_secret ___
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-t9npj7sb/pytest-of-unknown/pytest-0/test_snapshot_atomic_replaceme0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000275C5077F10>
+
+    def test_snapshot_atomic_replacement_after_validation_cannot_restore_secret(tmp_path, monkeypatch):
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setattr(local, "_resolve_shell_init_files", lambda: [])
+        environment = local.LocalEnvironment(cwd=str(tmp_path), timeout=20)
+        output, probe = tmp_path / "observed.json", tmp_path / "probe.py"
+        probe.write_text("import os,json,pathlib;pathlib.Path(" + repr(str(output)) + ").write_text(json.dumps({k:os.environ.get(k) for k in ['TELEGRAM_BOT_TOKEN','ORDINARY_EXPORT']}),encoding='utf-8')", encoding="utf-8")
+        original_run = environment._run_bash
+        try:
+            assert environment.execute("export ORDINARY_EXPORT=$'first\\nsecond'")["returncode"] == 0
+            def concurrent_snapshot_publication(script, **kwargs):
+                from pathlib import Path
+                replacement = Path(environment._snapshot_path + ".test-replacement")
+                replacement.write_text('declare -rx TELEGRAM_BOT_TOKEN="TEST_ONLY_RACING_SECRET"\n', encoding="utf-8")
+                replacement.replace(environment._snapshot_path)
+                return original_run(script, **kwargs)
+            monkeypatch.setattr(environment, "_run_bash", concurrent_snapshot_publication)
+            result = environment.execute(shlex.quote(sys.executable.replace("\\", "/")) + " " + shlex.quote(probe.as_posix()))
+            assert result["returncode"] == 0, result
+            observed = json.loads(output.read_text(encoding="utf-8"))
+>           assert observed["TELEGRAM_BOT_TOKEN"] is None
+E           AssertionError: assert 'TEST_ONLY_RACING_SECRET' is None
+
+tests\tools\test_child_credential_windows_native.py:226: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_windows_native.py::test_native_voice_command_keeps_only_approved_profile_key[False-False-tts]
+FAILED tests/tools/test_child_credential_windows_native.py::test_native_voice_command_keeps_only_approved_profile_key[False-False-stt]
+FAILED tests/tools/test_child_credential_windows_native.py::test_native_voice_command_keeps_only_approved_profile_key[False-True-tts]
+FAILED tests/tools/test_child_credential_windows_native.py::test_native_voice_command_keeps_only_approved_profile_key[False-True-stt]
+FAILED tests/tools/test_child_credential_windows_native.py::test_native_voice_command_keeps_only_approved_profile_key[True-False-tts]
+FAILED tests/tools/test_child_credential_windows_native.py::test_native_voice_command_keeps_only_approved_profile_key[True-False-stt]
+FAILED tests/tools/test_child_credential_windows_native.py::test_native_voice_command_keeps_only_approved_profile_key[True-True-tts]
+FAILED tests/tools/test_child_credential_windows_native.py::test_native_voice_command_keeps_only_approved_profile_key[True-True-stt]
+FAILED tests/tools/test_child_credential_windows_native.py::test_snapshot_atomic_replacement_after_validation_cannot_restore_secret
+9 failed, 13 deselected in 7.21s
+
+=== 1 file with test failures (9 tests failed) ===
+  tests\tools\test_child_credential_windows_native.py  (9 tests failed)

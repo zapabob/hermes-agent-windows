@@ -1,0 +1,10 @@
+........................................................................ [ 52%]
+.......................................F........................         [100%]
+================================== FAILURES ===================================
+_____________ test_oauth_provider_declared_api_key_is_classified ______________
+tests\tools\test_child_credential_boundary.py:210: in test_oauth_provider_declared_api_key_is_classified
+    assert "TEST_OAUTH_API_KEY" in blocked
+E   AssertionError: assert 'TEST_OAUTH_API_KEY' in frozenset({'A2A_AGENT_NAME', 'A2A_ALLOW_ALL_USERS', 'A2A_BEARER_TOKEN', 'A2A_HOME_CHANNEL', 'A2A_HOST', 'A2A_PEER_TOKENS', ...})
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_oauth_provider_declared_api_key_is_classified
+1 failed, 135 passed in 6.91s

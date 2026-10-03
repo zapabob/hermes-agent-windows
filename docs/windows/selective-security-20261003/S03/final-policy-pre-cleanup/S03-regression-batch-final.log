@@ -1,0 +1,198 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 20 test files (~422 tests) under ['tests\\agent\\test_terminal_env_registry.py', 'tests\\agent\\test_secret_scope.py', 'tests\\tools\\test_local_env_session_leak.py', 'tests\\tools\\test_local_env_blocklist.py', 'tests\\tools\\test_build_subprocess_env.py', 'tests\\tools\\test_hermes_subprocess_env.py', 'tests\\gateway\\test_raft_adapter.py', 'tests\\plugins\\memory\\test_openviking_provider.py', 'tests\\cron\\test_cron_script.py', 'tests\\tools\\test_env_passthrough.py', 'tests\\tools\\test_skill_env_passthrough.py', 'tests\\hermes_cli\\test_env_loader.py', 'tests\\test_env_loader_secret_sources.py', 'tests\\test_env_loader_applied_homes.py', 'tests\\test_env_loader_op_bootstrap.py', 'tests\\tools\\test_child_credential_boundary.py', 'tests\\tools\\test_child_bridge_credential_boundary.py', 'tests\\tools\\test_child_credential_windows_native.py', 'tests\\tools\\test_tts_command_providers.py', 'tests\\tools\\test_transcription_command_providers.py']; running with -j 1
+[  5.7% |    24/~422 | ✓24 | ✗ 0] ✓ tests\agent\test_secret_scope.py (24✓, 4.6s)
+[  9.7% |    41/~422 | ✓48 | ✗ 0] ✓ tests\agent\test_terminal_env_registry.py (24✓, 4.5s)
+[ 16.6% |    70/~422 | ✓75 | ✗ 0] ✓ tests\cron\test_cron_script.py (27✓ 2s, 16.9s)
+[ 18.2% |    77/~422 | ✓82 | ✗ 0] ✓ tests\gateway\test_raft_adapter.py (7✓, 4.8s)
+[ 24.4% |   103/~422 | ✓108 | ✗  0] ✓ tests\hermes_cli\test_env_loader.py (26✓, 5.3s)
+[ 38.9% |   164/~422 | ✓168 | ✗  0] ✓ tests\plugins\memory\test_openviking_provider.py (60✓ 2s, 18.2s)
+[ 40.0% |   169/~422 | ✓173 | ✗  0] ✓ tests\test_env_loader_applied_homes.py (5✓, 3.5s)
+[ 41.0% |   173/~422 | ✓177 | ✗  0] ✓ tests\test_env_loader_op_bootstrap.py (4✓, 3.2s)
+[ 45.3% |   191/~422 | ✓195 | ✗  0] ✓ tests\test_env_loader_secret_sources.py (18✓, 4.0s)
+[ 47.4% |   200/~422 | ✓205 | ✗  0] ✓ tests\tools\test_build_subprocess_env.py (10✓, 8.0s)
+[ 47.9% |   202/~422 | ✓207 | ✗  0] ✓ tests\tools\test_child_bridge_credential_boundary.py (2✓, 8.6s)
+[ 55.7% |   235/~422 | ✓411 | ✗  0] ✓ tests\tools\test_child_credential_boundary.py (204✓, 27.7s)
+[ 56.9% |   240/~422 | ✓434 | ✗  1] ✗ tests\tools\test_child_credential_windows_native.py (23✓ 1✗, 37.5s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_windows_native.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║ tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-cnteb16z/pytest-of-unknown/pytest-0/test_validated_snapshot_copy_i1')
+  ║ monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002EE0C8F0590>
+  ║ failure = 'timeout'
+  ║
+  ║     @pytest.mark.parametrize("failure", ["spawn", "timeout"])
+  ║     def test_validated_snapshot_copy_is_removed_on_failed_execution(tmp_path, monkeypatch, failure):
+  ║         from pathlib import Path
+  ║         monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+  ║         monkeypatch.setattr(local, "_resolve_shell_init_files", lambda: [])
+  ║         environment = local.LocalEnvironment(cwd=str(tmp_path), timeout=20)
+  ║         try:
+  ║             if failure == "spawn":
+  ║                 def failed_spawn(*args, **kwargs):
+  ║                     raise OSError("test-only spawn refusal")
+  ║                 monkeypatch.setattr(environment, "_spawn_bash", failed_spawn)
+  ║                 with pytest.raises(OSError, match="test-only"):
+  ║                     environment.execute("true")
+  ║             else:
+  ║                 result = environment.execute("sleep 30", timeout=1)
+  ║ >               assert result["returncode"] == 124 and "timed out" in result["output"], result
+  ║                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ║ E               AssertionError: {'output': '[Command timed out after 1s]', 'returncode': 124}
+  ║ E               assert None
+  ║ E                +  where None = <built-in method get of dict object at 0x000002EE0CB14880>('timed_out')
+  ║ E                +    where <built-in method get of dict object at 0x000002EE0CB14880> = {'output': '[Command timed out after 1s]', 'returncode': 124}.get
+  ║
+  ║ tests\tools\test_child_credential_windows_native.py:253: AssertionError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_validated_snapshot_copy_is_removed_on_failed_execution[timeout]
+  ║ 1 failed, 23 passed in 34.99s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_windows_native.py -q -k not test_non_utf8_env_preserves_unrelated_bytes
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+[ 62.3% |   263/~422 | ✓456 | ✗  2] ✗ tests\tools\test_env_passthrough.py (22✓ 1✗, 10.6s)
+
+  ╔╍ Failed: tests\tools\test_env_passthrough.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║ self = <tests.tools.test_env_passthrough.TestTerminalIntegration object at 0x00000212750606D0>
+  ║ monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000021277942490>
+  ║
+  ║     def test_background_terminal_uses_active_profile_for_passthrough(self, monkeypatch):
+  ║         """Background/PTY terminal children must use the routed profile value."""
+  ║         from tools.environments.local import _sanitize_subprocess_env
+  ║
+  ║         register_env_passthrough(["SERVICE_TOKEN"])
+  ║         monkeypatch.setenv("SERVICE_TOKEN", "token-for-default")
+  ║         ss.set_multiplex_active(True)
+  ║         token = ss.set_secret_scope({"SERVICE_TOKEN": "token-for-routed-profile"})
+  ║         try:
+  ║             child_env = _sanitize_subprocess_env(
+  ║                 {"SERVICE_TOKEN": "token-for-default"},
+  ║                 {"SERVICE_TOKEN": "token-for-default"},
+  ║             )
+  ║         finally:
+  ║             ss.reset_secret_scope(token)
+  ║             ss.set_multiplex_active(False)
+  ║
+  ║ >       assert child_env["SERVICE_TOKEN"] == "token-for-routed-profile"
+  ║ E       AssertionError: assert 'token-for-default' == 'token-for-routed-profile'
+  ║ E
+  ║ E         - token-for-routed-profile
+  ║ E         + token-for-default
+  ║
+  ║ tests\tools\test_env_passthrough.py:210: AssertionError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_env_passthrough.py::TestTerminalIntegration::test_background_terminal_uses_active_profile_for_passthrough
+  ║ 1 failed, 22 passed in 8.51s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_env_passthrough.py -q -k not test_non_utf8_env_preserves_unrelated_bytes
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+[ 67.3% |   284/~422 | ✓477 | ✗  2] ✓ tests\tools\test_hermes_subprocess_env.py (21✓, 8.0s)
+[ 84.1% |   355/~422 | ✓559 | ✗  2] ✓ tests\tools\test_local_env_blocklist.py (82✓ 1s, 29.0s)
+[ 86.0% |   363/~422 | ✓567 | ✗  2] ✓ tests\tools\test_local_env_session_leak.py (8✓, 5.3s)
+[ 87.0% |   367/~422 | ✓571 | ✗  2] ✓ tests\tools\test_skill_env_passthrough.py (4✓, 4.5s)
+[ 91.5% |   386/~422 | ✓590 | ✗  2] ✓ tests\tools\test_transcription_command_providers.py (19✓, 9.8s)
+[100.0% |   422/~422 | ✓625 | ✗  2] ✓ tests\tools\test_tts_command_providers.py (35✓ 1s, 9.0s)
+
+=== Summary: 20 files, 625 tests passed, 2 failed, 6 skipped (100% complete) in 223.2s (1 workers) ===
+
+  note: macos_only tests (in 1 file) were SKIPPED on this host (win32); they run on the tests-os CI lane (macos-latest).
+  Durations cached to test_durations.json (20 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   20
+  Total subprocess CPU-wall: 223.2s  (runner wall: 223.2s, parallelism: 1x)
+  P50: 8.03s  P90: 29.05s  P95: 37.55s  P99: 37.55s  Max: 37.55s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+     37.55s  tests\tools\test_child_credential_windows_native.py
+     29.05s  tests\tools\test_local_env_blocklist.py
+     27.67s  tests\tools\test_child_credential_boundary.py
+     18.25s  tests\plugins\memory\test_openviking_provider.py
+     16.86s  tests\cron\test_cron_script.py
+     10.59s  tests\tools\test_env_passthrough.py
+      9.81s  tests\tools\test_transcription_command_providers.py
+      9.03s  tests\tools\test_tts_command_providers.py
+      8.64s  tests\tools\test_child_bridge_credential_boundary.py
+      8.03s  tests\tools\test_build_subprocess_env.py
+
+=== Failure output ===
+
+--- tests\tools\test_child_credential_windows_native.py ---
+.......................F                                                 [100%]
+================================== FAILURES ===================================
+____ test_validated_snapshot_copy_is_removed_on_failed_execution[timeout] _____
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-cnteb16z/pytest-of-unknown/pytest-0/test_validated_snapshot_copy_i1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002EE0C8F0590>
+failure = 'timeout'
+
+    @pytest.mark.parametrize("failure", ["spawn", "timeout"])
+    def test_validated_snapshot_copy_is_removed_on_failed_execution(tmp_path, monkeypatch, failure):
+        from pathlib import Path
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setattr(local, "_resolve_shell_init_files", lambda: [])
+        environment = local.LocalEnvironment(cwd=str(tmp_path), timeout=20)
+        try:
+            if failure == "spawn":
+                def failed_spawn(*args, **kwargs):
+                    raise OSError("test-only spawn refusal")
+                monkeypatch.setattr(environment, "_spawn_bash", failed_spawn)
+                with pytest.raises(OSError, match="test-only"):
+                    environment.execute("true")
+            else:
+                result = environment.execute("sleep 30", timeout=1)
+>               assert result["returncode"] == 124 and "timed out" in result["output"], result
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AssertionError: {'output': '[Command timed out after 1s]', 'returncode': 124}
+E               assert None
+E                +  where None = <built-in method get of dict object at 0x000002EE0CB14880>('timed_out')
+E                +    where <built-in method get of dict object at 0x000002EE0CB14880> = {'output': '[Command timed out after 1s]', 'returncode': 124}.get
+
+tests\tools\test_child_credential_windows_native.py:253: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_windows_native.py::test_validated_snapshot_copy_is_removed_on_failed_execution[timeout]
+1 failed, 23 passed in 34.99s
+
+--- tests\tools\test_env_passthrough.py ---
+.............F.........                                                  [100%]
+================================== FAILURES ===================================
+_ TestTerminalIntegration.test_background_terminal_uses_active_profile_for_passthrough _
+
+self = <tests.tools.test_env_passthrough.TestTerminalIntegration object at 0x00000212750606D0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000021277942490>
+
+    def test_background_terminal_uses_active_profile_for_passthrough(self, monkeypatch):
+        """Background/PTY terminal children must use the routed profile value."""
+        from tools.environments.local import _sanitize_subprocess_env
+
+        register_env_passthrough(["SERVICE_TOKEN"])
+        monkeypatch.setenv("SERVICE_TOKEN", "token-for-default")
+        ss.set_multiplex_active(True)
+        token = ss.set_secret_scope({"SERVICE_TOKEN": "token-for-routed-profile"})
+        try:
+            child_env = _sanitize_subprocess_env(
+                {"SERVICE_TOKEN": "token-for-default"},
+                {"SERVICE_TOKEN": "token-for-default"},
+            )
+        finally:
+            ss.reset_secret_scope(token)
+            ss.set_multiplex_active(False)
+
+>       assert child_env["SERVICE_TOKEN"] == "token-for-routed-profile"
+E       AssertionError: assert 'token-for-default' == 'token-for-routed-profile'
+E
+E         - token-for-routed-profile
+E         + token-for-default
+
+tests\tools\test_env_passthrough.py:210: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_env_passthrough.py::TestTerminalIntegration::test_background_terminal_uses_active_profile_for_passthrough
+1 failed, 22 passed in 8.51s
+
+=== 2 files with test failures (2 tests failed) ===
+  tests\tools\test_child_credential_windows_native.py  (1 test failed)
+  tests\tools\test_env_passthrough.py  (1 test failed)

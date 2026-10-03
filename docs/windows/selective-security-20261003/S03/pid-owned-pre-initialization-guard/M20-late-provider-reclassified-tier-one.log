@@ -1,0 +1,12 @@
+........................................................................ [ 33%]
+........................................................................ [ 66%]
+................................................................F......  [100%]
+================================== FAILURES ===================================
+__________ test_late_provider_keeps_tier_two_authority_over_manifest __________
+tests\tools\test_child_credential_boundary.py:563: in test_late_provider_keeps_tier_two_authority_over_manifest
+    assert child_env("credential-cli")[key] == SECRET
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'LATE_OAUTH_API_KEY'
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_late_provider_keeps_tier_two_authority_over_manifest
+1 failed, 214 passed in 10.38s

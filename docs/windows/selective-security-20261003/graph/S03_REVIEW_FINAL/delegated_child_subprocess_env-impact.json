@@ -1,0 +1,110 @@
+{
+  "symbol": "delegated_child_subprocess_env",
+  "depth": 2,
+  "nodeCount": 17,
+  "edgeCount": 16,
+  "affected": [
+    {
+      "name": "delegated_child_subprocess_env",
+      "kind": "function",
+      "filePath": "agent/delegation_context.py",
+      "startLine": 142
+    },
+    {
+      "name": "_probe_python",
+      "kind": "function",
+      "filePath": "tools/code_execution_tool.py",
+      "startLine": 1968
+    },
+    {
+      "name": "_is_usable_python",
+      "kind": "function",
+      "filePath": "tools/code_execution_tool.py",
+      "startLine": 1947
+    },
+    {
+      "name": "_python_environment_prefix",
+      "kind": "function",
+      "filePath": "tools/code_execution_tool.py",
+      "startLine": 1990
+    },
+    {
+      "name": "_run_command_stt",
+      "kind": "function",
+      "filePath": "tools/transcription_tools.py",
+      "startLine": 710
+    },
+    {
+      "name": "test_command_provider_uses_sanitized_child_env",
+      "kind": "method",
+      "filePath": "tests/tools/test_transcription_tools.py",
+      "startLine": 224
+    },
+    {
+      "name": "test_stderr_progress_extends_beyond_timeout",
+      "kind": "method",
+      "filePath": "tests/tools/test_transcription_tools.py",
+      "startLine": 1199
+    },
+    {
+      "name": "test_silent_stall_still_times_out",
+      "kind": "method",
+      "filePath": "tests/tools/test_transcription_tools.py",
+      "startLine": 1225
+    },
+    {
+      "name": "_transcribe_command_stt",
+      "kind": "function",
+      "filePath": "tools/transcription_tools.py",
+      "startLine": 869
+    },
+    {
+      "name": "_run_command_tts",
+      "kind": "function",
+      "filePath": "tools/tts_tool.py",
+      "startLine": 1188
+    },
+    {
+      "name": "test_command_provider_uses_sanitized_child_env",
+      "kind": "method",
+      "filePath": "tests/tools/test_tts_command_providers.py",
+      "startLine": 106
+    },
+    {
+      "name": "test_reads_process_output_in_large_chunks",
+      "kind": "method",
+      "filePath": "tests/tools/test_tts_command_providers.py",
+      "startLine": 326
+    },
+    {
+      "name": "test_silent_after_progress_still_times_out_with_stderr",
+      "kind": "method",
+      "filePath": "tests/tools/test_tts_command_providers.py",
+      "startLine": 360
+    },
+    {
+      "name": "test_env_passthrough_restores_named_keys",
+      "kind": "method",
+      "filePath": "tests/tools/test_tts_command_providers.py",
+      "startLine": 503
+    },
+    {
+      "name": "_generate_command_tts",
+      "kind": "function",
+      "filePath": "tools/tts_tool.py",
+      "startLine": 1319
+    },
+    {
+      "name": "test_tts_command_providers.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_tts_command_providers.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_native_spawn_honors_served_profile_and_secret_minimization",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_windows_native.py",
+      "startLine": 27
+    }
+  ]
+}

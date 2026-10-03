@@ -140,7 +140,7 @@ def test_plugin_strip_env_keys_union():
     assert keys == frozenset({"TESTBOX_TOKEN", "TESTBOX_SECRET", "OTHER_KEY"})
 
 
-def test_plugin_strip_env_keys_fail_soft():
+def test_plugin_strip_env_keys_fail_closed():
     class Broken(_Provider):
         name = "broken"
 
@@ -149,7 +149,8 @@ def test_plugin_strip_env_keys_fail_soft():
             raise RuntimeError("boom")
 
     reg.register_provider(Broken())
-    assert reg.plugin_strip_env_keys() == frozenset()
+    with pytest.raises(RuntimeError, match="secret declaration"):
+        reg.plugin_strip_env_keys()
 
 
 def test_restore_registration_unregisters():

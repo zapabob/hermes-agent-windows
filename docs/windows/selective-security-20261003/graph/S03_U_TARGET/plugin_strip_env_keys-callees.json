@@ -1,0 +1,17 @@
+{
+  "symbol": "plugin_strip_env_keys",
+  "callees": [
+    {
+      "name": "values",
+      "kind": "method",
+      "filePath": "hermes_cli/observability/shared_metrics_contract.py",
+      "startLine": 180
+    },
+    {
+      "name": "_registry",
+      "kind": "variable",
+      "filePath": "agent/terminal_env_registry.py",
+      "startLine": 37
+    }
+  ]
+}

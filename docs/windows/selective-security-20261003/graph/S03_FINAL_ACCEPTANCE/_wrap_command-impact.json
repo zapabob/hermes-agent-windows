@@ -1,0 +1,86 @@
+{
+  "symbol": "_wrap_command",
+  "depth": 2,
+  "nodeCount": 13,
+  "edgeCount": 12,
+  "affected": [
+    {
+      "name": "_wrap_command",
+      "kind": "method",
+      "filePath": "tools/environments/base.py",
+      "startLine": 911
+    },
+    {
+      "name": "execute",
+      "kind": "method",
+      "filePath": "tools/environments/base.py",
+      "startLine": 1470
+    },
+    {
+      "name": "execute",
+      "kind": "method",
+      "filePath": "tools/environments/docker_isolation.py",
+      "startLine": 181
+    },
+    {
+      "name": "_exec",
+      "kind": "method",
+      "filePath": "tools/file_operations.py",
+      "startLine": 1023
+    },
+    {
+      "name": "kill_process",
+      "kind": "method",
+      "filePath": "tools/process_registry.py",
+      "startLine": 2324
+    },
+    {
+      "name": "_get_message_storage_state",
+      "kind": "function",
+      "filePath": "tools/session_search_tool.py",
+      "startLine": 249
+    },
+    {
+      "name": "test_many_accumulated_snapshot_names_refuse_before_windows_spawn",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_windows_native.py",
+      "startLine": 154
+    },
+    {
+      "name": "run",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_windows_native.py",
+      "startLine": 346
+    },
+    {
+      "name": "test_parallel_benign_scope_history_does_not_refuse_native_commands",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_windows_native.py",
+      "startLine": 336
+    },
+    {
+      "name": "_wrap_command",
+      "kind": "method",
+      "filePath": "tools/environments/local.py",
+      "startLine": 2120
+    },
+    {
+      "name": "test_wrap_command_uses_bash_compatible_cd_target",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "startLine": 130
+    },
+    {
+      "name": "test_windows_snapshot_path_and_cwd_marker_use_git_bash_paths",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "startLine": 181
+    },
+    {
+      "name": "test_wrap_command_converts_native_cwd_for_builtin_cd",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "startLine": 490
+    }
+  ]
+}

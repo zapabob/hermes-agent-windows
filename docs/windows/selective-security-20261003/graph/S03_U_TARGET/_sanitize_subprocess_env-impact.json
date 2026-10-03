@@ -1,0 +1,764 @@
+{
+  "symbol": "_sanitize_subprocess_env",
+  "depth": 2,
+  "nodeCount": 126,
+  "edgeCount": 126,
+  "affected": [
+    {
+      "name": "_sanitize_subprocess_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 310
+    },
+    {
+      "name": "_run_ddgs_search_bounded",
+      "kind": "function",
+      "filePath": "plugins/web/ddgs/provider.py",
+      "startLine": 141
+    },
+    {
+      "name": "search",
+      "kind": "method",
+      "filePath": "plugins/web/ddgs/provider.py",
+      "startLine": 199
+    },
+    {
+      "name": "test_background_terminal_uses_active_profile_for_passthrough",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 169
+    },
+    {
+      "name": "test_background_terminal_omits_missing_scoped_passthrough",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 188
+    },
+    {
+      "name": "test_scope_only_declared_name_reaches_every_local_child",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 204
+    },
+    {
+      "name": "test_scope_overlay_failure_is_loud_on_both_local_surfaces",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 230
+    },
+    {
+      "name": "test_blocklisted_var_blocked_by_default",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 283
+    },
+    {
+      "name": "test_passthrough_cannot_override_provider_blocklist",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 294
+    },
+    {
+      "name": "test_passthrough_cannot_override_internal_dynamic_secret",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 375
+    },
+    {
+      "name": "test_passthrough_cannot_register_buzz_vars",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 397
+    },
+    {
+      "name": "test_adapter_and_provider_profile_secrets_never_reach_children",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 112
+    },
+    {
+      "name": "test_passthrough_accepted_before_an_adapter_owns_the_name_stops_forwarding_it",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 385
+    },
+    {
+      "name": "test_builders_strip_runtime_markers_and_owned_paths",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 423
+    },
+    {
+      "name": "test_force_prefix_is_not_plugin_passthrough",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 449
+    },
+    {
+      "name": "test_buzz_context_and_plain_process_value",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 479
+    },
+    {
+      "name": "test_profile_passthrough_in_terminal_child",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 536
+    },
+    {
+      "name": "test_runtime_provenance_is_independent_of_aliases_and_virtual_env",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 628
+    },
+    {
+      "name": "test_background_hermes_path_repair_is_idempotent",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 663
+    },
+    {
+      "name": "test_base_python_sanitizer_uses_validated_separate_runtime_venv",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 783
+    },
+    {
+      "name": "test_sanitize_subprocess_env_strips_foreign_session_key_when_engaged",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 163
+    },
+    {
+      "name": "test_sanitize_subprocess_env_set_contextvar_wins_when_engaged",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 185
+    },
+    {
+      "name": "test_sanitize_subprocess_env_sets_msys_no_pathconv_on_windows",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "startLine": 227
+    },
+    {
+      "name": "test_host_auto_preserves_real_home_when_profile_home_exists",
+      "kind": "method",
+      "filePath": "tests/tools/test_subprocess_home_isolation.py",
+      "startLine": 216
+    },
+    {
+      "name": "test_profile_mode_injects_profile_home_when_profile_home_exists",
+      "kind": "method",
+      "filePath": "tests/tools/test_subprocess_home_isolation.py",
+      "startLine": 232
+    },
+    {
+      "name": "test_no_injection_when_home_dir_missing",
+      "kind": "method",
+      "filePath": "tests/tools/test_subprocess_home_isolation.py",
+      "startLine": 249
+    },
+    {
+      "name": "sanitized_cua_driver_env",
+      "kind": "function",
+      "filePath": "tools/computer_use/cua_backend.py",
+      "startLine": 175
+    },
+    {
+      "name": "_cua_driver_env",
+      "kind": "function",
+      "filePath": "hermes_cli/tools_config_cua.py",
+      "startLine": 62
+    },
+    {
+      "name": "_run_driver",
+      "kind": "function",
+      "filePath": "tools/computer_use/cua_backend.py",
+      "startLine": 200
+    },
+    {
+      "name": "_child_env",
+      "kind": "function",
+      "filePath": "tools/computer_use/permissions.py",
+      "startLine": 39
+    },
+    {
+      "name": "_sanitized_env",
+      "kind": "method",
+      "filePath": "tools/computer_use/cua_backend_daemon.py",
+      "startLine": 138
+    },
+    {
+      "name": "start",
+      "kind": "method",
+      "filePath": "tools/computer_use/cua_backend_daemon.py",
+      "startLine": 160
+    },
+    {
+      "name": "stop",
+      "kind": "method",
+      "filePath": "tools/computer_use/cua_backend_daemon.py",
+      "startLine": 202
+    },
+    {
+      "name": "_lifecycle_coro",
+      "kind": "method",
+      "filePath": "tools/computer_use/cua_backend_session.py",
+      "startLine": 210
+    },
+    {
+      "name": "drive_lifecycle",
+      "kind": "function",
+      "filePath": "tests/tools/test_computer_use.py",
+      "startLine": 1465
+    },
+    {
+      "name": "drive_lifecycle",
+      "kind": "function",
+      "filePath": "tests/tools/test_computer_use_cua_0_10_permissions.py",
+      "startLine": 201
+    },
+    {
+      "name": "_start_lifecycle_locked",
+      "kind": "method",
+      "filePath": "tools/computer_use/cua_backend_session.py",
+      "startLine": 293
+    },
+    {
+      "name": "_call_tool_via_cli",
+      "kind": "method",
+      "filePath": "tools/computer_use/cua_backend_session.py",
+      "startLine": 437
+    },
+    {
+      "name": "test_cli_fallback_sanitizes_env_and_hides_console_on_windows",
+      "kind": "function",
+      "filePath": "tests/computer_use/test_cua_spawn_env_sanitization.py",
+      "startLine": 118
+    },
+    {
+      "name": "test_cli_fallback_reads_screenshot_from_file",
+      "kind": "method",
+      "filePath": "tests/tools/test_computer_use.py",
+      "startLine": 1197
+    },
+    {
+      "name": "test_cli_fallback_uses_resolved_driver_under_thin_path",
+      "kind": "method",
+      "filePath": "tests/tools/test_computer_use.py",
+      "startLine": 1541
+    },
+    {
+      "name": "test_cli_fallback_fails_fast_on_daemon_not_running",
+      "kind": "function",
+      "filePath": "tests/tools/test_computer_use_empty_discovery_diagnosis.py",
+      "startLine": 58
+    },
+    {
+      "name": "test_cli_fallback_still_retries_transient_empty",
+      "kind": "function",
+      "filePath": "tests/tools/test_computer_use_empty_discovery_diagnosis.py",
+      "startLine": 80
+    },
+    {
+      "name": "_cli_refetch",
+      "kind": "method",
+      "filePath": "tools/computer_use/cua_backend_capture.py",
+      "startLine": 133
+    },
+    {
+      "name": "call_tool",
+      "kind": "method",
+      "filePath": "tools/computer_use/cua_backend_session.py",
+      "startLine": 468
+    },
+    {
+      "name": "build_subprocess_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 350
+    },
+    {
+      "name": "source_child_env",
+      "kind": "function",
+      "filePath": "agent/secret_sources/base.py",
+      "startLine": 53
+    },
+    {
+      "name": "_spawn",
+      "kind": "function",
+      "filePath": "agent/shell_hooks.py",
+      "startLine": 313
+    },
+    {
+      "name": "_run_quick_command",
+      "kind": "method",
+      "filePath": "cli.py",
+      "startLine": 1259
+    },
+    {
+      "name": "_launch_external_cron_worker",
+      "kind": "function",
+      "filePath": "cron/scheduler.py",
+      "startLine": 3620
+    },
+    {
+      "name": "_run_job_script",
+      "kind": "function",
+      "filePath": "cron/scheduler_script.py",
+      "startLine": 432
+    },
+    {
+      "name": "run_route_script",
+      "kind": "method",
+      "filePath": "gateway/platforms/webhook_filters.py",
+      "startLine": 169
+    },
+    {
+      "name": "_hm_run_exec_quick_command",
+      "kind": "method",
+      "filePath": "gateway/run_inbound.py",
+      "startLine": 1065
+    },
+    {
+      "name": "secret_cli_env",
+      "kind": "function",
+      "filePath": "hermes_cli/_secrets_common.py",
+      "startLine": 106
+    },
+    {
+      "name": "_bang_env",
+      "kind": "function",
+      "filePath": "hermes_cli/bang_shell.py",
+      "startLine": 89
+    },
+    {
+      "name": "_default_spawn",
+      "kind": "function",
+      "filePath": "hermes_cli/kanban_db_dispatch.py",
+      "startLine": 2831
+    },
+    {
+      "name": "_route_named_profile_dashboard",
+      "kind": "function",
+      "filePath": "hermes_cli/main_dashboard.py",
+      "startLine": 941
+    },
+    {
+      "name": "_launch_tui",
+      "kind": "function",
+      "filePath": "hermes_cli/main_tui_launch.py",
+      "startLine": 350
+    },
+    {
+      "name": "spawn",
+      "kind": "method",
+      "filePath": "hermes_cli/pty_bridge.py",
+      "startLine": 118
+    },
+    {
+      "name": "_resolve_chat_argv",
+      "kind": "function",
+      "filePath": "hermes_cli/web_server_chat.py",
+      "startLine": 379
+    },
+    {
+      "name": "_profile_action_environment",
+      "kind": "function",
+      "filePath": "hermes_cli/web_server_gateway.py",
+      "startLine": 340
+    },
+    {
+      "name": "_memory_provider_setup_env",
+      "kind": "function",
+      "filePath": "hermes_cli/web_server_memory.py",
+      "startLine": 91
+    },
+    {
+      "name": "spawn",
+      "kind": "method",
+      "filePath": "hermes_cli/win_pty_bridge.py",
+      "startLine": 57
+    },
+    {
+      "name": "_brv_child_env",
+      "kind": "function",
+      "filePath": "plugins/memory/byterover/__init__.py",
+      "startLine": 79
+    },
+    {
+      "name": "_handle_gmail_triage_callback",
+      "kind": "method",
+      "filePath": "plugins/platforms/telegram/adapter.py",
+      "startLine": 5003
+    },
+    {
+      "name": "test_child_env_for_served_profile_drops_launch_profile_settings",
+      "kind": "function",
+      "filePath": "tests/cron/test_cron_multiplex_served_profile_parity.py",
+      "startLine": 79
+    },
+    {
+      "name": "test_child_subprocess_environment_receives_child_id",
+      "kind": "function",
+      "filePath": "tests/gateway/test_delegation_session_id_leak.py",
+      "startLine": 76
+    },
+    {
+      "name": "run_child",
+      "kind": "function",
+      "filePath": "tests/gateway/test_delegation_session_id_leak.py",
+      "startLine": 93
+    },
+    {
+      "name": "test_service_gateway_boot_adopts_its_user_bus",
+      "kind": "function",
+      "filePath": "tests/hermes_cli/test_gateway_user_bus_adoption.py",
+      "startLine": 32
+    },
+    {
+      "name": "test_active_context_home_exported_to_wrapper_subprocess",
+      "kind": "function",
+      "filePath": "tests/pm/test_plugin_survival_contract.py",
+      "startLine": 521
+    },
+    {
+      "name": "test_factory_child_policy_and_profile_home",
+      "kind": "function",
+      "filePath": "tests/tools/test_build_subprocess_env.py",
+      "startLine": 12
+    },
+    {
+      "name": "test_no_scrub_is_byte_preserving_except_explicit_extra",
+      "kind": "function",
+      "filePath": "tests/tools/test_build_subprocess_env.py",
+      "startLine": 37
+    },
+    {
+      "name": "test_e2e_scrubbed_env_resolves_bare_hermes_under_minimal_parent_path",
+      "kind": "function",
+      "filePath": "tests/tools/test_build_subprocess_env.py",
+      "startLine": 44
+    },
+    {
+      "name": "test_build_subprocess_env_no_scrub_preserves_pythonhome",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1302
+    },
+    {
+      "name": "test_routed_no_agent_script_env_keeps_operator_allowlist_and_drops_platform_gate",
+      "kind": "function",
+      "filePath": "tests/tools/test_profile_gate_env_shape.py",
+      "startLine": 20
+    },
+    {
+      "name": "test_terminal_child_env_carries_home_when_host_has_none",
+      "kind": "method",
+      "filePath": "tests/tools/test_subprocess_home_isolation.py",
+      "startLine": 63
+    },
+    {
+      "name": "_git_env",
+      "kind": "function",
+      "filePath": "tools/checkpoint_manager.py",
+      "startLine": 316
+    },
+    {
+      "name": "_init_store",
+      "kind": "function",
+      "filePath": "tools/checkpoint_manager.py",
+      "startLine": 508
+    },
+    {
+      "name": "_get_or_build_sif",
+      "kind": "function",
+      "filePath": "tools/environments/singularity.py",
+      "startLine": 91
+    },
+    {
+      "name": "_dispatch_quick",
+      "kind": "function",
+      "filePath": "tui_gateway/methods_tools.py",
+      "startLine": 572
+    },
+    {
+      "name": "_",
+      "kind": "function",
+      "filePath": "tui_gateway/methods_tools.py",
+      "startLine": 1983
+    },
+    {
+      "name": "test_delegation_session_id_leak.py",
+      "kind": "file",
+      "filePath": "tests/gateway/test_delegation_session_id_leak.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_build_subprocess_env.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_build_subprocess_env.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_profile_gate_env_shape.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_profile_gate_env_shape.py",
+      "startLine": 1
+    },
+    {
+      "name": "_spawn_env",
+      "kind": "method",
+      "filePath": "tools/process_registry.py",
+      "startLine": 1278
+    },
+    {
+      "name": "_spawn_local_pty",
+      "kind": "method",
+      "filePath": "tools/process_registry.py",
+      "startLine": 1301
+    },
+    {
+      "name": "spawn_local",
+      "kind": "method",
+      "filePath": "tools/process_registry.py",
+      "startLine": 1324
+    },
+    {
+      "name": "test_local_env_session_leak.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_local_env_windows_msys.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "startLine": 1
+    },
+    {
+      "name": "process_registry.py",
+      "kind": "file",
+      "filePath": "tools/process_registry.py",
+      "startLine": 1
+    },
+    {
+      "name": "delivery_lifecycle.py",
+      "kind": "file",
+      "filePath": "evals/gateway_completion/delivery_lifecycle.py",
+      "startLine": 1
+    },
+    {
+      "name": "batch_failure_notice.py",
+      "kind": "file",
+      "filePath": "evals/postmortem/live_ab/batch_failure_notice.py",
+      "startLine": 1
+    },
+    {
+      "name": "notice_delivery_probe.py",
+      "kind": "file",
+      "filePath": "evals/postmortem/review_probes/notice_delivery_probe.py",
+      "startLine": 1
+    },
+    {
+      "name": "stress_handoff_live.py",
+      "kind": "file",
+      "filePath": "evals/subagent_process_handoff/stress_handoff_live.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_owned_process_cleanup.py",
+      "kind": "file",
+      "filePath": "tests/agent/test_owned_process_cleanup.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_review_engine.py",
+      "kind": "file",
+      "filePath": "tests/agent/test_review_engine.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_abandoned_turn_process_cleanup.py",
+      "kind": "file",
+      "filePath": "tests/gateway/test_abandoned_turn_process_cleanup.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_agents_command_delegations.py",
+      "kind": "file",
+      "filePath": "tests/gateway/test_agents_command_delegations.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_completion_delivery.py",
+      "kind": "file",
+      "filePath": "tests/gateway/test_completion_delivery.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_completion_session_boundary.py",
+      "kind": "file",
+      "filePath": "tests/gateway/test_completion_session_boundary.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_internal_event_bypass_pairing.py",
+      "kind": "file",
+      "filePath": "tests/gateway/test_internal_event_bypass_pairing.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_reaper_profile_scope.py",
+      "kind": "file",
+      "filePath": "tests/gateway/test_reaper_profile_scope.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_review_command.py",
+      "kind": "file",
+      "filePath": "tests/gateway/test_review_command.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_async_delegation.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_async_delegation.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_async_delegation_orphan_sweep.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_async_delegation_orphan_sweep.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_async_delegation_stale_profile_scope.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_async_delegation_stale_profile_scope.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_delegate_apiserver_background.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_delegate_apiserver_background.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_delegate_capacity_interrupt.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_delegate_capacity_interrupt.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_finite_delegation_outcomes.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_finite_delegation_outcomes.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_kill_verify_tree_death.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_kill_verify_tree_death.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_notify_on_complete.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_notify_on_complete.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_oneshot_completion_linger.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_oneshot_completion_linger.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_persist_on_release.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_persist_on_release.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_process_checkpoint_readopt.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_process_checkpoint_readopt.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_process_heartbeat.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_process_heartbeat.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_process_registry.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_process_registry.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_process_registry_owner_chain.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_process_registry_owner_chain.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_process_registry_write_stdin_surrogates.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_process_registry_write_stdin_surrogates.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_process_schema_diet.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_process_schema_diet.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_process_wait_clarity.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_process_wait_clarity.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_restored_delegation_ownership.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_restored_delegation_ownership.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_subagent_process_handoff.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_subagent_process_handoff.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_terminal_watcher_arming.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_terminal_watcher_arming.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_terminal_yield_to_background.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_terminal_yield_to_background.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_watch_patterns.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_watch_patterns.py",
+      "startLine": 1
+    },
+    {
+      "name": "close_terminal_tool.py",
+      "kind": "file",
+      "filePath": "tools/close_terminal_tool.py",
+      "startLine": 1
+    }
+  ]
+}

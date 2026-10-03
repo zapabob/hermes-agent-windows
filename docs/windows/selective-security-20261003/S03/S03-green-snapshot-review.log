@@ -1,0 +1,138 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 3 test files (~29 tests) under ['tests\\tools\\test_child_credential_boundary.py', 'tests\\tools\\test_child_bridge_credential_boundary.py', 'tests\\tools\\test_child_credential_windows_native.py']; running with -j 1
+[  6.9% |     2/~29 | ✓2 | ✗0] ✓ tests\tools\test_child_bridge_credential_boundary.py (2✓, 4.9s)
+[ 89.7% |    26/~29 | ✓165 | ✗  1] ✗ tests\tools\test_child_credential_boundary.py (163✓ 1✗, 15.2s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_boundary.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║ F....................................................................... [ 43%]
+  ║ ........................................................................ [ 87%]
+  ║ ....................                                                     [100%]
+  ║ ================================== FAILURES ===================================
+  ║ _______ test_invalid_protected_snapshot_identifier_refuses_before_shell _______
+  ║
+  ║ tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-g7y782yr/pytest-of-unknown/pytest-0/test_invalid_protected_snapsho0')
+  ║ monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000206BD058510>
+  ║
+  ║     def test_invalid_protected_snapshot_identifier_refuses_before_shell(tmp_path, monkeypatch):
+  ║         environment = object.__new__(local.LocalEnvironment)
+  ║         environment.env = {"GATEWAY_RELAY_INVALID-NAME": SECRET}
+  ║         environment._snapshot_path = str(tmp_path / "missing.sh")
+  ║         environment._snapshot_passthrough_names = set()
+  ║         monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+  ║ >       with pytest.raises(RuntimeError, match="(?i)(identifier|environment.*name)"):
+  ║ E       Failed: DID NOT RAISE RuntimeError
+  ║
+  ║ tests\tools\test_child_credential_boundary.py:24: Failed
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_invalid_protected_snapshot_identifier_refuses_before_shell
+  ║ 1 failed, 163 passed in 13.18s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_boundary.py -q
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+[100.0% |    29/~29 | ✓177 | ✗  2] ✗ tests\tools\test_child_credential_windows_native.py (12✓ 1✗, 26.0s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_windows_native.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║ ............F                                                            [100%]
+  ║ ================================== FAILURES ===================================
+  ║ ______ test_many_accumulated_snapshot_names_refuse_before_windows_spawn _______
+  ║
+  ║ tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-e9sgj8jn/pytest-of-unknown/pytest-0/test_many_accumulated_snapshot0')
+  ║ monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000019FA5F27F90>
+  ║
+  ║     def test_many_accumulated_snapshot_names_refuse_before_windows_spawn(tmp_path, monkeypatch):
+  ║         monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+  ║         monkeypatch.setattr(local, "_resolve_shell_init_files", lambda: [])
+  ║         environment = local.LocalEnvironment(cwd=str(tmp_path), timeout=20)
+  ║         spawned = []
+  ║         try:
+  ║             for batch in range(3):
+  ║                 for index in range(20):
+  ║                     environment.env[f"GATEWAY_RELAY_{batch}_{index}_" + "X" * 180] = "TEST_ONLY_SECRET_DO_NOT_USE"
+  ║                 wrapped = environment._wrap_command("true", str(tmp_path))
+  ║             monkeypatch.setattr(local.subprocess, "Popen", lambda *a, **kw: spawned.append(a))
+  ║ >           with pytest.raises(RuntimeError, match="(?i)(command.*limit|command.*length)"):
+  ║ E           Failed: DID NOT RAISE RuntimeError
+  ║
+  ║ tests\tools\test_child_credential_windows_native.py:164: Failed
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_many_accumulated_snapshot_names_refuse_before_windows_spawn
+  ║ 1 failed, 12 passed in 24.18s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_windows_native.py -q
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+
+=== Summary: 3 files, 177 tests passed, 2 failed (100% complete) in 46.0s (1 workers) ===
+  Durations cached to test_durations.json (3 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   3
+  Total subprocess CPU-wall: 46.0s  (runner wall: 46.0s, parallelism: 1x)
+  P50: 15.16s  P90: 25.95s  P95: 25.95s  P99: 25.95s  Max: 25.95s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+     25.95s  tests\tools\test_child_credential_windows_native.py
+     15.16s  tests\tools\test_child_credential_boundary.py
+      4.86s  tests\tools\test_child_bridge_credential_boundary.py
+
+=== Failure output ===
+
+--- tests\tools\test_child_credential_boundary.py ---
+F....................................................................... [ 43%]
+........................................................................ [ 87%]
+....................                                                     [100%]
+================================== FAILURES ===================================
+_______ test_invalid_protected_snapshot_identifier_refuses_before_shell _______
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-g7y782yr/pytest-of-unknown/pytest-0/test_invalid_protected_snapsho0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000206BD058510>
+
+    def test_invalid_protected_snapshot_identifier_refuses_before_shell(tmp_path, monkeypatch):
+        environment = object.__new__(local.LocalEnvironment)
+        environment.env = {"GATEWAY_RELAY_INVALID-NAME": SECRET}
+        environment._snapshot_path = str(tmp_path / "missing.sh")
+        environment._snapshot_passthrough_names = set()
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+>       with pytest.raises(RuntimeError, match="(?i)(identifier|environment.*name)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:24: Failed
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_protected_snapshot_identifier_refuses_before_shell
+1 failed, 163 passed in 13.18s
+
+--- tests\tools\test_child_credential_windows_native.py ---
+............F                                                            [100%]
+================================== FAILURES ===================================
+______ test_many_accumulated_snapshot_names_refuse_before_windows_spawn _______
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-e9sgj8jn/pytest-of-unknown/pytest-0/test_many_accumulated_snapshot0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000019FA5F27F90>
+
+    def test_many_accumulated_snapshot_names_refuse_before_windows_spawn(tmp_path, monkeypatch):
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setattr(local, "_resolve_shell_init_files", lambda: [])
+        environment = local.LocalEnvironment(cwd=str(tmp_path), timeout=20)
+        spawned = []
+        try:
+            for batch in range(3):
+                for index in range(20):
+                    environment.env[f"GATEWAY_RELAY_{batch}_{index}_" + "X" * 180] = "TEST_ONLY_SECRET_DO_NOT_USE"
+                wrapped = environment._wrap_command("true", str(tmp_path))
+            monkeypatch.setattr(local.subprocess, "Popen", lambda *a, **kw: spawned.append(a))
+>           with pytest.raises(RuntimeError, match="(?i)(command.*limit|command.*length)"):
+E           Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_windows_native.py:164: Failed
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_windows_native.py::test_many_accumulated_snapshot_names_refuse_before_windows_spawn
+1 failed, 12 passed in 24.18s
+
+=== 2 files with test failures (2 tests failed) ===
+  tests\tools\test_child_credential_boundary.py  (1 test failed)
+  tests\tools\test_child_credential_windows_native.py  (1 test failed)

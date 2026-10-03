@@ -1,0 +1,105 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 3 test files (~76 tests) under ['tests\\tools\\test_child_credential_boundary.py', 'tests\\tools\\test_child_credential_windows_native.py', 'tests\\tools\\test_local_env_windows_msys.py']; running with -j 1
+[ 47.4% |    36/~76 | ✓209 | ✗  1] ✗ tests\tools\test_child_credential_boundary.py (209✓ 1✗, 28.3s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_boundary.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║
+  ║     def test_dangling_manifest_link_is_unreadable_declaration(tmp_path, monkeypatch):
+  ║         directory = tmp_path / "plugins/platforms/test-link"
+  ║         directory.mkdir(parents=True)
+  ║         manifest = directory / "plugin.yaml"
+  ║         target = tmp_path / "manifest-target.yaml"
+  ║         target.write_text('kind: platform\nrequires_env:\n  - name: CUSTOM_LOGIN\n    secret: true\n', encoding="utf-8")
+  ║ >       manifest.symlink_to(target)
+  ║
+  ║ tests\tools\test_child_credential_boundary.py:572:
+  ║ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  ║
+  ║ self = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-pnrfkcsm/pytest-of-unknown/pytest-0/test_dangling_manifest_link_is0/plugins/platforms/test-link/plugin.yaml')
+  ║ target = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-pnrfkcsm/pytest-of-unknown/pytest-0/test_dangling_manifest_link_is0/manifest-target.yaml')
+  ║ target_is_directory = False
+  ║
+  ║     def symlink_to(self, target, target_is_directory=False):
+  ║         """
+  ║         Make this path a symlink pointing to the target path.
+  ║         Note the order of arguments (link, target) is the reverse of os.symlink.
+  ║         """
+  ║         if not hasattr(os, "symlink"):
+  ║             raise NotImplementedError("os.symlink() not available on this system")
+  ║ >       os.symlink(target, self, target_is_directory)
+  ║ E       OSError: [WinError 1314] クライアントは要求された特権を保有していません。: 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\test-temp\\hermes-pytest-tmproot-pnrfkcsm\\pytest-of-unknown\\pytest-0\\test_dangling_manifest_link_is0\\manifest-target.yaml' -> 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\test-temp\\hermes-pytest-tmproot-pnrfkcsm\\pytest-of-unknown\\pytest-0\\test_dangling_manifest_link_is0\\plugins\\platforms\\test-link\\plugin.yaml'
+  ║
+  ║ C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1198: OSError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_dangling_manifest_link_is_unreadable_declaration
+  ║ 1 failed, 209 passed in 22.32s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_boundary.py -q
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+[ 56.6% |    43/~76 | ✓235 | ✗  1] ✓ tests\tools\test_child_credential_windows_native.py (26✓, 42.2s)
+[100.0% |    76/~76 | ✓264 | ✗  1] ✓ tests\tools\test_local_env_windows_msys.py (29✓ 4s, 6.3s)
+
+=== Summary: 3 files, 264 tests passed, 1 failed, 4 skipped (100% complete) in 76.8s (1 workers) ===
+
+  note: linux_only tests (in 1 file) were SKIPPED on this host (win32); they run on the main Linux CI lane.
+  Durations cached to test_durations.json (3 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   3
+  Total subprocess CPU-wall: 76.8s  (runner wall: 76.8s, parallelism: 1x)
+  P50: 28.28s  P90: 42.22s  P95: 42.22s  P99: 42.22s  Max: 42.22s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+     42.22s  tests\tools\test_child_credential_windows_native.py
+     28.28s  tests\tools\test_child_credential_boundary.py
+      6.33s  tests\tools\test_local_env_windows_msys.py
+
+=== Failure output ===
+
+--- tests\tools\test_child_credential_boundary.py ---
+........................................................................ [ 34%]
+........................................................................ [ 68%]
+.................................................................F       [100%]
+================================== FAILURES ===================================
+____________ test_dangling_manifest_link_is_unreadable_declaration ____________
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-pnrfkcsm/pytest-of-unknown/pytest-0/test_dangling_manifest_link_is0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000227769C9210>
+
+    def test_dangling_manifest_link_is_unreadable_declaration(tmp_path, monkeypatch):
+        directory = tmp_path / "plugins/platforms/test-link"
+        directory.mkdir(parents=True)
+        manifest = directory / "plugin.yaml"
+        target = tmp_path / "manifest-target.yaml"
+        target.write_text('kind: platform\nrequires_env:\n  - name: CUSTOM_LOGIN\n    secret: true\n', encoding="utf-8")
+>       manifest.symlink_to(target)
+
+tests\tools\test_child_credential_boundary.py:572:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-pnrfkcsm/pytest-of-unknown/pytest-0/test_dangling_manifest_link_is0/plugins/platforms/test-link/plugin.yaml')
+target = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-pnrfkcsm/pytest-of-unknown/pytest-0/test_dangling_manifest_link_is0/manifest-target.yaml')
+target_is_directory = False
+
+    def symlink_to(self, target, target_is_directory=False):
+        """
+        Make this path a symlink pointing to the target path.
+        Note the order of arguments (link, target) is the reverse of os.symlink.
+        """
+        if not hasattr(os, "symlink"):
+            raise NotImplementedError("os.symlink() not available on this system")
+>       os.symlink(target, self, target_is_directory)
+E       OSError: [WinError 1314] クライアントは要求された特権を保有していません。: 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\test-temp\\hermes-pytest-tmproot-pnrfkcsm\\pytest-of-unknown\\pytest-0\\test_dangling_manifest_link_is0\\manifest-target.yaml' -> 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\test-temp\\hermes-pytest-tmproot-pnrfkcsm\\pytest-of-unknown\\pytest-0\\test_dangling_manifest_link_is0\\plugins\\platforms\\test-link\\plugin.yaml'
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1198: OSError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_dangling_manifest_link_is_unreadable_declaration
+1 failed, 209 passed in 22.32s
+
+=== 1 file with test failures (1 test failed) ===
+  tests\tools\test_child_credential_boundary.py  (1 test failed)

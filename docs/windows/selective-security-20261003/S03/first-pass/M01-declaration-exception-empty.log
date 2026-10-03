@@ -1,0 +1,45 @@
+..................................................................FFFF.. [ 52%]
+...............................................FFFF.............         [100%]
+================================== FAILURES ===================================
+_________ test_unreadable_security_declaration_blocks_child[terminal] _________
+tests\tools\test_child_credential_boundary.py:91: in test_unreadable_security_declaration_blocks_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|credential|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+________ test_unreadable_security_declaration_blocks_child[background] ________
+tests\tools\test_child_credential_boundary.py:91: in test_unreadable_security_declaration_blocks_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|credential|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+___________ test_unreadable_security_declaration_blocks_child[cli] ____________
+tests\tools\test_child_credential_boundary.py:91: in test_unreadable_security_declaration_blocks_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|credential|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+______ test_unreadable_security_declaration_blocks_child[credential-cli] ______
+tests\tools\test_child_credential_boundary.py:91: in test_unreadable_security_declaration_blocks_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|credential|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+______ test_invalid_provider_security_declaration_blocks_spawn[terminal] ______
+tests\tools\test_child_credential_boundary.py:261: in test_invalid_provider_security_declaration_blocks_spawn
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+_____ test_invalid_provider_security_declaration_blocks_spawn[background] _____
+tests\tools\test_child_credential_boundary.py:261: in test_invalid_provider_security_declaration_blocks_spawn
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+________ test_invalid_provider_security_declaration_blocks_spawn[cli] _________
+tests\tools\test_child_credential_boundary.py:261: in test_invalid_provider_security_declaration_blocks_spawn
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+___ test_invalid_provider_security_declaration_blocks_spawn[credential-cli] ___
+tests\tools\test_child_credential_boundary.py:261: in test_invalid_provider_security_declaration_blocks_spawn
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_unreadable_security_declaration_blocks_child[terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_unreadable_security_declaration_blocks_child[background]
+FAILED tests/tools/test_child_credential_boundary.py::test_unreadable_security_declaration_blocks_child[cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_unreadable_security_declaration_blocks_child[credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_provider_security_declaration_blocks_spawn[terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_provider_security_declaration_blocks_spawn[background]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_provider_security_declaration_blocks_spawn[cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_provider_security_declaration_blocks_spawn[credential-cli]
+8 failed, 128 passed in 6.46s

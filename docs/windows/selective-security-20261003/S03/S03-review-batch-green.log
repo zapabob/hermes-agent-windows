@@ -1,0 +1,22 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 3 test files (~38 tests) under ['tests\\tools\\test_child_credential_boundary.py', 'tests\\tools\\test_child_bridge_credential_boundary.py', 'tests\\tools\\test_child_credential_windows_native.py']; running with -j 1
+[  5.3% |     2/~38 | ✓2 | ✗0] ✓ tests\tools\test_child_bridge_credential_boundary.py (2✓, 5.2s)
+[ 92.1% |    35/~38 | ✓206 | ✗  0] ✓ tests\tools\test_child_credential_boundary.py (204✓, 22.7s)
+[100.0% |    38/~38 | ✓219 | ✗  0] ✓ tests\tools\test_child_credential_windows_native.py (13✓, 23.3s)
+
+=== Summary: 3 files, 219 tests passed, 0 failed (100% complete) in 51.2s (1 workers) ===
+  Durations cached to test_durations.json (3 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   3
+  Total subprocess CPU-wall: 51.2s  (runner wall: 51.2s, parallelism: 1x)
+  P50: 22.72s  P90: 23.31s  P95: 23.31s  P99: 23.31s  Max: 23.31s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+     23.31s  tests\tools\test_child_credential_windows_native.py
+     22.72s  tests\tools\test_child_credential_boundary.py
+      5.17s  tests\tools\test_child_bridge_credential_boundary.py

@@ -1,0 +1,34 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 8 test files (~99 tests) under ['tests\\tools\\test_env_passthrough.py', 'tests\\tools\\test_base_environment.py', 'tests\\tools\\test_snapshot_session_id_leak.py', 'tests\\tools\\test_snapshot_multiline_session_env_injection.py', 'tests\\tools\\test_subprocess_stdin_guard.py', 'tests\\tools\\test_local_env_cwd_recovery.py', 'tests\\tools\\test_local_env_relative_cwd.py', 'tests\\tools\\test_local_env_windows_msys.py']; running with -j 1
+[ 27.3% |    27/~99 | ✓24 | ✗ 0] ✓ tests\tools\test_base_environment.py (24✓, 4.1s)
+[ 50.5% |    50/~99 | ✓47 | ✗ 0] ✓ tests\tools\test_env_passthrough.py (23✓, 7.6s)
+[ 56.6% |    56/~99 | ✓52 | ✗ 0] ✓ tests\tools\test_local_env_cwd_recovery.py (5✓, 4.5s)
+[ 58.6% |    58/~99 | ✓54 | ✗ 0] ✓ tests\tools\test_local_env_relative_cwd.py (2✓, 5.5s)
+[ 91.9% |    91/~99 | ✓83 | ✗ 0] ✓ tests\tools\test_local_env_windows_msys.py (29✓ 4s, 5.0s)
+[ 93.9% |    93/~99 | ✓83 | ✗ 0] ✓ tests\tools\test_snapshot_multiline_session_env_injection.py (2s, 1.6s)
+[ 97.0% |    96/~99 | ✓85 | ✗ 0] ✓ tests\tools\test_snapshot_session_id_leak.py (2✓ 1s, 3.5s)
+[100.0% |    99/~99 | ✓88 | ✗ 0] ✓ tests\tools\test_subprocess_stdin_guard.py (3✓, 4.5s)
+
+=== Summary: 8 files, 88 tests passed, 0 failed, 7 skipped (100% complete) in 36.3s (1 workers) ===
+
+  note: linux_only tests (in 1 file) were SKIPPED on this host (win32); they run on the main Linux CI lane.
+  Durations cached to test_durations.json (8 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   8
+  Total subprocess CPU-wall: 36.3s  (runner wall: 36.3s, parallelism: 1x)
+  P50: 4.55s  P90: 7.62s  P95: 7.62s  P99: 7.62s  Max: 7.62s
+  <1s: 0 files (0%)  <2s: 1 files (12%)
+  Top 10 slowest:
+      7.62s  tests\tools\test_env_passthrough.py
+      5.48s  tests\tools\test_local_env_relative_cwd.py
+      4.97s  tests\tools\test_local_env_windows_msys.py
+      4.55s  tests\tools\test_subprocess_stdin_guard.py
+      4.53s  tests\tools\test_local_env_cwd_recovery.py
+      4.09s  tests\tools\test_base_environment.py
+      3.47s  tests\tools\test_snapshot_session_id_leak.py
+      1.58s  tests\tools\test_snapshot_multiline_session_env_injection.py

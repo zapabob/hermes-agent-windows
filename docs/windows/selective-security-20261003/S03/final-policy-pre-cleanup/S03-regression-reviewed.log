@@ -1,0 +1,3276 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 18 test files (~356 tests) under ['tests\\agent\\test_terminal_env_registry.py', 'tests\\agent\\test_secret_scope.py', 'tests\\tools\\test_local_env_session_leak.py', 'tests\\tools\\test_local_env_blocklist.py', 'tests\\tools\\test_build_subprocess_env.py', 'tests\\tools\\test_hermes_subprocess_env.py', 'tests\\gateway\\test_raft_adapter.py', 'tests\\plugins\\memory\\test_openviking_provider.py', 'tests\\cron\\test_cron_script.py', 'tests\\tools\\test_env_passthrough.py', 'tests\\tools\\test_skill_env_passthrough.py', 'tests\\hermes_cli\\test_env_loader.py', 'tests\\test_env_loader_secret_sources.py', 'tests\\test_env_loader_applied_homes.py', 'tests\\test_env_loader_op_bootstrap.py', 'tests\\tools\\test_child_credential_boundary.py', 'tests\\tools\\test_child_bridge_credential_boundary.py', 'tests\\tools\\test_child_credential_windows_native.py']; running with -j 2
+[  4.8% |    17/~356 | ✓24 | ✗ 0] ✓ tests\agent\test_terminal_env_registry.py (24✓, 4.0s)
+[ 11.5% |    41/~356 | ✓48 | ✗ 0] ✓ tests\agent\test_secret_scope.py (24✓, 4.0s)
+[ 13.5% |    48/~356 | ✓55 | ✗ 0] ✓ tests\gateway\test_raft_adapter.py (7✓, 3.9s)
+[ 20.8% |    74/~356 | ✓81 | ✗ 0] ✓ tests\hermes_cli\test_env_loader.py (26✓, 5.9s)
+[ 28.9% |   103/~356 | ✓108 | ✗  0] ✓ tests\cron\test_cron_script.py (27✓ 2s, 15.5s)
+[ 30.3% |   108/~356 | ✓113 | ✗  0] ✓ tests\test_env_loader_applied_homes.py (5✓, 3.3s)
+[ 31.5% |   112/~356 | ✓117 | ✗  0] ✓ tests\test_env_loader_op_bootstrap.py (4✓, 2.7s)
+[ 36.5% |   130/~356 | ✓135 | ✗  0] ✓ tests\test_env_loader_secret_sources.py (18✓, 3.5s)
+[ 53.7% |   191/~356 | ✓195 | ✗  0] ✓ tests\plugins\memory\test_openviking_provider.py (60✓ 2s, 17.5s)
+[ 56.2% |   200/~356 | ✓203 | ✗  2] ✗ tests\tools\test_build_subprocess_env.py (8✓ 2✗, 7.8s)
+
+  ╔╍ Failed: tests\tools\test_build_subprocess_env.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║     _warn_profile_fallback_once()
+  ║ hermes_constants.py:92: in _warn_profile_fallback_once
+  ║     fallback_home = _get_platform_default_hermes_home()
+  ║                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ║ hermes_constants.py:57: in _get_platform_default_hermes_home
+  ║     base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+  ║                                                      ^^^^^^^^^^^
+  ║ C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+  ║     return cls("~").expanduser()
+  ║            ^^^^^^^^^^^^^^^^^^^^^
+  ║ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  ║
+  ║ self = WindowsPath('~')
+  ║
+  ║     def expanduser(self):
+  ║         """ Return a new path with expanded ~ and ~user constructs
+  ║         (as returned by os.path.expanduser)
+  ║         """
+  ║         if (not (self._drv or self._root) and
+  ║             self._parts and self._parts[0][:1] == '~'):
+  ║             homedir = os.path.expanduser(self._parts[0])
+  ║             if homedir[:1] == "~":
+  ║ >               raise RuntimeError("Could not determine home directory.")
+  ║ E               RuntimeError: Could not determine home directory.
+  ║
+  ║ C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_build_subprocess_env.py::test_case_variants_in_plain_mapping_obey_credential_tiers[False]
+  ║ FAILED tests/tools/test_build_subprocess_env.py::test_case_variants_in_plain_mapping_obey_credential_tiers[True]
+  ║ 2 failed, 8 passed in 5.72s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_build_subprocess_env.py -q -k not test_non_utf8_env_preserves_unrelated_bytes
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+[ 56.7% |   202/~356 | ✓205 | ✗  2] ✓ tests\tools\test_child_bridge_credential_boundary.py (2✓, 7.0s)
+[ 63.5% |   226/~356 | ✓369 | ✗  2] ✓ tests\tools\test_child_credential_boundary.py (164✓, 20.9s)
+[ 64.3% |   229/~356 | ✓382 | ✗  2] ✓ tests\tools\test_child_credential_windows_native.py (13✓, 30.1s)
+[ 70.8% |   252/~356 | ✓405 | ✗  2] ✓ tests\tools\test_env_passthrough.py (23✓, 11.2s)
+[ 76.7% |   273/~356 | ✓411 | ✗ 17] ✗ tests\tools\test_hermes_subprocess_env.py (6✓ 15✗, 12.7s)
+
+  ╔╍ Failed: tests\tools\test_hermes_subprocess_env.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║
+  ║     def expanduser(self):
+  ║         """ Return a new path with expanded ~ and ~user constructs
+  ║         (as returned by os.path.expanduser)
+  ║         """
+  ║         if (not (self._drv or self._root) and
+  ║             self._parts and self._parts[0][:1] == '~'):
+  ║             homedir = os.path.expanduser(self._parts[0])
+  ║             if homedir[:1] == "~":
+  ║ >               raise RuntimeError("Could not determine home directory.")
+  ║ E               RuntimeError: Could not determine home directory.
+  ║
+  ║ C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_hermes_subprocess_env.py::TestAllowlistOnly::test_parent_canaries_and_arbitrary_variables_are_not_inherited
+  ║ FAILED tests/tools/test_hermes_subprocess_env.py::TestAllowlistOnly::test_locale_variables_survive_without_credential_shaped_lc_names
+  ║ FAILED tests/tools/test_hermes_subprocess_env.py::TestAllowlistOnly::test_explicit_non_secret_child_values_are_supported
+  ║ FAILED tests/tools/test_hermes_subprocess_env.py::TestStripByDefault::test_provider_keys_stripped_by_default
+  ║ FAILED tests/tools/test_hermes_subprocess_env.py::TestStripByDefault::test_tier1_secrets_stripped_by_default
+  ║ FAILED tests/tools/test_hermes_subprocess_env.py::TestStripByDefault::test_pythonutf8_set
+  ║ FAILED tests/tools/test_hermes_subprocess_env.py::TestInheritCredentials::test_provider_keys_preserved_when_inheriting
+  ║ FAILED tests/tools/test_hermes_subprocess_env.py::TestInheritCredentials::test_tier1_secrets_stripped_even_when_inheriting
+  ║ FAILED tests/tools/test_hermes_subprocess_env.py::TestInheritCredentials::test_pythonutf8_set_when_inheriting
+  ║ FAILED tests/tools/test_hermes_subprocess_env.py::TestTierInvariants::test_tier1_always_stripped_both_paths
+  ║ FAILED tests/tools/test_hermes_subprocess_env.py::TestBrowserPassthroughPattern::test_browser_keys_recoverable_after_strip
+  ║ FAILED tests/tools/test_hermes_subprocess_env.py::TestDelegatedChildMarker::test_delegated_child_context_scrubs_parent_kanban_keys_and_sets_marker
+  ║ FAILED tests/tools/test_hermes_subprocess_env.py::TestInternalDynamicSecrets::test_stripped_by_default
+  ║ FAILED tests/tools/test_hermes_subprocess_env.py::TestInternalDynamicSecrets::test_auxiliary_non_secrets_preserved
+  ║ FAILED tests/tools/test_hermes_subprocess_env.py::TestInternalDynamicSecrets::test_gateway_relay_id_stripped_even_when_inheriting
+  ║ 15 failed, 6 passed in 9.97s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_hermes_subprocess_env.py -q -k not test_non_utf8_env_preserves_unrelated_bytes
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+[ 78.9% |   281/~356 | ✓419 | ✗ 17] ✓ tests\tools\test_local_env_session_leak.py (8✓, 7.6s)
+[ 80.1% |   285/~356 | ✓423 | ✗ 17] ✓ tests\tools\test_skill_env_passthrough.py (4✓, 6.7s)
+[100.0% |   356/~356 | ✓476 | ✗ 46] ✗ tests\tools\test_local_env_blocklist.py (53✓ 29✗ 1s, 42.3s)
+
+  ╔╍ Failed: tests\tools\test_local_env_blocklist.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestProviderEnvBlocklist::test_blocked_vars_are_stripped
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestProviderEnvBlocklist::test_registry_derived_vars_are_stripped
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestProviderEnvBlocklist::test_bedrock_bearer_token_is_stripped
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestProviderEnvBlocklist::test_vertex_credentials_path_is_stripped
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestProviderEnvBlocklist::test_general_aws_credential_chain_is_preserved
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestProviderEnvBlocklist::test_non_registry_provider_vars_are_stripped
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestProviderEnvBlocklist::test_tool_and_gateway_vars_are_stripped
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestProviderEnvBlocklist::test_safe_vars_are_preserved
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestProviderEnvBlocklist::test_self_env_blocked_vars_also_stripped
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestForceEnvOptIn::test_force_prefix_passes_blocked_var
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestForceEnvOptIn::test_force_prefix_overrides_os_environ_block
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestActiveVenvMarkerStripping::test_virtualenv_marker_stripped_end_to_end
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestActiveVenvMarkerStripping::test_conda_prefix_marker_stripped_end_to_end
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestActiveVenvMarkerStripping::test_make_run_env_strips_markers
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestPythonpathSelectiveStrip::test_builders_strip_hermes_venv_pythonpath[_make_run_env]
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestPythonpathSelectiveStrip::test_builders_strip_hermes_venv_pythonpath[_sanitize_subprocess_env]
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestPythonpathSelectiveStrip::test_builders_strip_hermes_venv_pythonpath[hermes_subprocess_env]
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestPythonhomeSanitized::test_builders_strip_pythonhome[_make_run_env]
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestPythonhomeSanitized::test_builders_strip_pythonhome[_sanitize_subprocess_env]
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestPythonhomeSanitized::test_builders_strip_pythonhome[hermes_subprocess_env]
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestPythonhomeSanitized::test_builders_strip_pythonhome[build_subprocess_env]
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestBlocklistCoverage::test_gateway_credentials_are_stripped_from_all_local_env_paths
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestSanePathIncludesHomebrew::test_make_run_env_appends_homebrew_on_minimal_path
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestSanePathIncludesHomebrew::test_make_run_env_preserves_windows_mixed_case_path_key
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestHermesBinDirOnPath::test_make_run_env_injects_hermes_bin_dir
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestHermesInternalDynamicSecrets::test_auxiliary_secrets_stripped_from_subprocess
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestHermesInternalDynamicSecrets::test_gateway_relay_secret_stripped_from_subprocess
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestHermesInternalDynamicSecrets::test_auxiliary_secret_stripped_even_when_passthrough_registered
+  ║ FAILED tests/tools/test_local_env_blocklist.py::TestHermesInternalDynamicSecrets::test_make_run_env_strips_internal_secrets
+  ║ 29 failed, 53 passed, 1 skipped in 39.24s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_local_env_blocklist.py -q -k not test_non_utf8_env_preserves_unrelated_bytes
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+
+=== Summary: 18 files, 476 tests passed, 46 failed, 5 skipped (100% complete) in 111.2s (2 workers) ===
+
+  note: macos_only tests (in 1 file) were SKIPPED on this host (win32); they run on the tests-os CI lane (macos-latest).
+  Durations cached to test_durations.json (18 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   18
+  Total subprocess CPU-wall: 206.6s  (runner wall: 111.2s, parallelism: 2x)
+  P50: 7.59s  P90: 30.06s  P95: 42.25s  P99: 42.25s  Max: 42.25s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+     42.25s  tests\tools\test_local_env_blocklist.py
+     30.06s  tests\tools\test_child_credential_windows_native.py
+     20.88s  tests\tools\test_child_credential_boundary.py
+     17.53s  tests\plugins\memory\test_openviking_provider.py
+     15.47s  tests\cron\test_cron_script.py
+     12.66s  tests\tools\test_hermes_subprocess_env.py
+     11.23s  tests\tools\test_env_passthrough.py
+      7.84s  tests\tools\test_build_subprocess_env.py
+      7.59s  tests\tools\test_local_env_session_leak.py
+      7.02s  tests\tools\test_child_bridge_credential_boundary.py
+
+=== Failure output ===
+
+--- tests\tools\test_build_subprocess_env.py ---
+FF........                                                               [100%]
+================================== FAILURES ===================================
+______ test_case_variants_in_plain_mapping_obey_credential_tiers[False] _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000188A865F150>
+inherit = False
+
+    @pytest.mark.parametrize("inherit", [False, True])
+    def test_case_variants_in_plain_mapping_obey_credential_tiers(monkeypatch, inherit):
+        from tools.environments import local
+
+        parent = {"openai_api_key": "provider", "OpenAI_Api_Key": "provider-2",
+                  "telegram_bot_token": "gateway", "SLACK_BOT_TOKEN": "gateway-2"}
+        monkeypatch.setattr(local.os, "environ", parent)
+>       child = local.hermes_subprocess_env(inherit_credentials=inherit)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_build_subprocess_env.py:21:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\environments\local.py:886: in hermes_subprocess_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_______ test_case_variants_in_plain_mapping_obey_credential_tiers[True] _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000188A86B2A10>
+inherit = True
+
+    @pytest.mark.parametrize("inherit", [False, True])
+    def test_case_variants_in_plain_mapping_obey_credential_tiers(monkeypatch, inherit):
+        from tools.environments import local
+
+        parent = {"openai_api_key": "provider", "OpenAI_Api_Key": "provider-2",
+                  "telegram_bot_token": "gateway", "SLACK_BOT_TOKEN": "gateway-2"}
+        monkeypatch.setattr(local.os, "environ", parent)
+>       child = local.hermes_subprocess_env(inherit_credentials=inherit)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_build_subprocess_env.py:21:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\environments\local.py:886: in hermes_subprocess_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_build_subprocess_env.py::test_case_variants_in_plain_mapping_obey_credential_tiers[False]
+FAILED tests/tools/test_build_subprocess_env.py::test_case_variants_in_plain_mapping_obey_credential_tiers[True]
+2 failed, 8 passed in 5.72s
+
+--- tests\tools\test_hermes_subprocess_env.py ---
+FFF..FFFFFFF...FFFFF.                                                    [100%]
+================================== FAILURES ===================================
+_ TestAllowlistOnly.test_parent_canaries_and_arbitrary_variables_are_not_inherited _
+
+self = <tests.tools.test_hermes_subprocess_env.TestAllowlistOnly object at 0x0000018580A6FD90>
+
+    def test_parent_canaries_and_arbitrary_variables_are_not_inherited(self):
+        canaries = {
+            "HERMES_TEST_SECRET_CANARY": "HERMES_CANARY_DO_NOT_LEAK_8F421",
+            "OPENAI_API_KEY": "sk-test-HERMES-CANARY",
+            "ANTHROPIC_API_KEY": "test-anthropic-canary",
+            "NVIDIA_API_KEY": "nvapi-test-canary",
+            "OPENCODE_API_KEY": "opencode-test-canary",
+            "GITHUB_TOKEN": "ghp_test_canary",
+            "HF_TOKEN": "hf_test_canary",
+        }
+
+>       result = _build(canaries, allowlist_only=True)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_hermes_subprocess_env.py:77:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_hermes_subprocess_env.py:62: in _build
+    return hermes_subprocess_env(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:886: in hermes_subprocess_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_ TestAllowlistOnly.test_locale_variables_survive_without_credential_shaped_lc_names _
+
+self = <tests.tools.test_hermes_subprocess_env.TestAllowlistOnly object at 0x00000185FDE1A210>
+
+    def test_locale_variables_survive_without_credential_shaped_lc_names(self):
+        locales = {
+            "LC_ALL": "C.UTF-8",
+            "LC_CTYPE": "en_US.UTF-8",
+            "LC_MESSAGES": "C",
+        }
+        credential_canaries = {
+            "LC_API_KEY": "must-not-cross-boundary",
+            "lc_secret": "must-not-cross-boundary",
+            "LC_TOKEN_CACHE": "must-not-cross-boundary",
+            "LC_PASSWORD": "must-not-cross-boundary",
+        }
+
+>       result = _build(
+            {**locales, **credential_canaries},
+            allowlist_only=True,
+        )
+
+tests\tools\test_hermes_subprocess_env.py:100:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_hermes_subprocess_env.py:62: in _build
+    return hermes_subprocess_env(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:886: in hermes_subprocess_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+____ TestAllowlistOnly.test_explicit_non_secret_child_values_are_supported ____
+
+self = <tests.tools.test_hermes_subprocess_env.TestAllowlistOnly object at 0x0000018580A74D90>
+
+    def test_explicit_non_secret_child_values_are_supported(self):
+>       result = _build(
+            allowlist_only=True,
+            child_extra={"GOBIN": "/tmp/hermes-go-bin"},
+        )
+
+tests\tools\test_hermes_subprocess_env.py:111:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_hermes_subprocess_env.py:62: in _build
+    return hermes_subprocess_env(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:886: in hermes_subprocess_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+__________ TestStripByDefault.test_provider_keys_stripped_by_default __________
+
+self = <tests.tools.test_hermes_subprocess_env.TestStripByDefault object at 0x0000018580A76850>
+
+    def test_provider_keys_stripped_by_default(self):
+>       result = _build(_PROVIDER_SAMPLE)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_hermes_subprocess_env.py:131:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_hermes_subprocess_env.py:62: in _build
+    return hermes_subprocess_env(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:886: in hermes_subprocess_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+__________ TestStripByDefault.test_tier1_secrets_stripped_by_default __________
+
+self = <tests.tools.test_hermes_subprocess_env.TestStripByDefault object at 0x0000018580A76410>
+
+    def test_tier1_secrets_stripped_by_default(self):
+>       result = _build(_TIER1_SAMPLE)
+                 ^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_hermes_subprocess_env.py:136:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_hermes_subprocess_env.py:62: in _build
+    return hermes_subprocess_env(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:886: in hermes_subprocess_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+___________________ TestStripByDefault.test_pythonutf8_set ____________________
+
+self = <tests.tools.test_hermes_subprocess_env.TestStripByDefault object at 0x0000018580A76CD0>
+
+    def test_pythonutf8_set(self):
+>       result = _build()
+                 ^^^^^^^^
+
+tests\tools\test_hermes_subprocess_env.py:142:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_hermes_subprocess_env.py:62: in _build
+    return hermes_subprocess_env(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:886: in hermes_subprocess_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_____ TestInheritCredentials.test_provider_keys_preserved_when_inheriting _____
+
+self = <tests.tools.test_hermes_subprocess_env.TestInheritCredentials object at 0x0000018580A77150>
+
+    def test_provider_keys_preserved_when_inheriting(self):
+>       result = _build(_PROVIDER_SAMPLE, inherit_credentials=True)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_hermes_subprocess_env.py:148:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_hermes_subprocess_env.py:62: in _build
+    return hermes_subprocess_env(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:886: in hermes_subprocess_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+___ TestInheritCredentials.test_tier1_secrets_stripped_even_when_inheriting ___
+
+self = <tests.tools.test_hermes_subprocess_env.TestInheritCredentials object at 0x0000018580A77590>
+
+    def test_tier1_secrets_stripped_even_when_inheriting(self):
+        """The whole point of Tier 1: gateway/GitHub/infra secrets never reach
+        a child, even a model-driving CLI that legitimately needs provider keys."""
+>       result = _build({**_PROVIDER_SAMPLE, **_TIER1_SAMPLE}, inherit_credentials=True)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_hermes_subprocess_env.py:155:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_hermes_subprocess_env.py:62: in _build
+    return hermes_subprocess_env(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:886: in hermes_subprocess_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_________ TestInheritCredentials.test_pythonutf8_set_when_inheriting __________
+
+self = <tests.tools.test_hermes_subprocess_env.TestInheritCredentials object at 0x0000018580A77B10>
+
+    def test_pythonutf8_set_when_inheriting(self):
+>       assert _build(inherit_credentials=True).get("PYTHONUTF8") == "1"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_hermes_subprocess_env.py:165:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_hermes_subprocess_env.py:62: in _build
+    return hermes_subprocess_env(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:886: in hermes_subprocess_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+__________ TestTierInvariants.test_tier1_always_stripped_both_paths ___________
+
+self = <tests.tools.test_hermes_subprocess_env.TestTierInvariants object at 0x0000018580AA8250>
+
+    def test_tier1_always_stripped_both_paths(self):
+        """Behavioral invariant: every Tier-1 key is stripped on BOTH the
+        default path and the inherit_credentials=True path. This is what
+        guarantees no gap, regardless of whether the key also happens to be
+        in the provider blocklist."""
+        sample = {k: f"secret-{k}" for k in _ALWAYS_STRIP_KEYS}
+        for inherit in (False, True):
+>           result = _build(sample, inherit_credentials=inherit)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_hermes_subprocess_env.py:176:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_hermes_subprocess_env.py:62: in _build
+    return hermes_subprocess_env(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:886: in hermes_subprocess_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+___ TestBrowserPassthroughPattern.test_browser_keys_recoverable_after_strip ___
+
+self = <tests.tools.test_hermes_subprocess_env.TestBrowserPassthroughPattern object at 0x0000018580AA9A90>
+
+    def test_browser_keys_recoverable_after_strip(self):
+        """Browser tool pattern: strip everything, then re-add the browser
+        backend keys agent-browser actually needs."""
+        from tools.browser_tool import _BROWSER_PASSTHROUGH_KEYS
+
+        leaked = {
+            "BROWSERBASE_API_KEY": "bb-key",
+            "BROWSERBASE_PROJECT_ID": "bb-proj",
+            "FIRECRAWL_API_KEY": "fc-key",
+            "ANTHROPIC_API_KEY": "ant-should-go",
+            "TELEGRAM_BOT_TOKEN": "bot-should-go",
+        }
+        with patch.dict(os.environ, {**_SAFE_SAMPLE, **leaked}, clear=True):
+>           env = hermes_subprocess_env(inherit_credentials=False)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_hermes_subprocess_env.py:206:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\environments\local.py:886: in hermes_subprocess_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_ TestDelegatedChildMarker.test_delegated_child_context_scrubs_parent_kanban_keys_and_sets_marker _
+
+self = <tests.tools.test_hermes_subprocess_env.TestDelegatedChildMarker object at 0x0000018580AAA250>
+
+    def test_delegated_child_context_scrubs_parent_kanban_keys_and_sets_marker(self):
+        from agent.delegation_context import delegated_child_context
+
+        with patch.dict(
+            os.environ,
+            {
+                **_SAFE_SAMPLE,
+                "HERMES_KANBAN_TASK": "t_parent",
+                "HERMES_KANBAN_RUN_ID": "123",
+                "HERMES_KANBAN_DB": "/tmp/parent-kanban.db",
+                "HERMES_KANBAN_WORKSPACE": "/tmp/parent-workspace",
+            },
+            clear=True,
+        ):
+            with delegated_child_context():
+>               env = hermes_subprocess_env(inherit_credentials=True)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_hermes_subprocess_env.py:234:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\environments\local.py:886: in hermes_subprocess_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_____________ TestInternalDynamicSecrets.test_stripped_by_default _____________
+
+self = <tests.tools.test_hermes_subprocess_env.TestInternalDynamicSecrets object at 0x0000018580A76F50>
+
+    def test_stripped_by_default(self):
+>       result = _build(_INTERNAL_DYNAMIC_SAMPLE)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_hermes_subprocess_env.py:259:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_hermes_subprocess_env.py:62: in _build
+    return hermes_subprocess_env(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:886: in hermes_subprocess_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_______ TestInternalDynamicSecrets.test_auxiliary_non_secrets_preserved _______
+
+self = <tests.tools.test_hermes_subprocess_env.TestInternalDynamicSecrets object at 0x0000018580AA8B50>
+
+    def test_auxiliary_non_secrets_preserved(self):
+        """AUXILIARY_*_PROVIDER / _MODEL routing config survives (not secrets)."""
+>       result = _build(
+            {"AUXILIARY_VISION_PROVIDER": "openai", "AUXILIARY_VISION_MODEL": "gpt-4o"},
+        )
+
+tests\tools\test_hermes_subprocess_env.py:266:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_hermes_subprocess_env.py:62: in _build
+    return hermes_subprocess_env(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:886: in hermes_subprocess_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_ TestInternalDynamicSecrets.test_gateway_relay_id_stripped_even_when_inheriting _
+
+self = <tests.tools.test_hermes_subprocess_env.TestInternalDynamicSecrets object at 0x0000018580AAA9D0>
+
+    def test_gateway_relay_id_stripped_even_when_inheriting(self):
+        """GATEWAY_RELAY_ID has no secret suffix (predicate skips it) but is
+        gateway-identifying auth material provisioned alongside the relay
+        secret. It's in _ALWAYS_STRIP_KEYS so it's stripped on the inherit path
+        too — closes the codex/copilot leak the predicate alone would miss."""
+>       result = _build(
+            {**_PROVIDER_SAMPLE, "GATEWAY_RELAY_ID": "relay-id"},
+            inherit_credentials=True,
+        )
+
+tests\tools\test_hermes_subprocess_env.py:277:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_hermes_subprocess_env.py:62: in _build
+    return hermes_subprocess_env(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:886: in hermes_subprocess_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_hermes_subprocess_env.py::TestAllowlistOnly::test_parent_canaries_and_arbitrary_variables_are_not_inherited
+FAILED tests/tools/test_hermes_subprocess_env.py::TestAllowlistOnly::test_locale_variables_survive_without_credential_shaped_lc_names
+FAILED tests/tools/test_hermes_subprocess_env.py::TestAllowlistOnly::test_explicit_non_secret_child_values_are_supported
+FAILED tests/tools/test_hermes_subprocess_env.py::TestStripByDefault::test_provider_keys_stripped_by_default
+FAILED tests/tools/test_hermes_subprocess_env.py::TestStripByDefault::test_tier1_secrets_stripped_by_default
+FAILED tests/tools/test_hermes_subprocess_env.py::TestStripByDefault::test_pythonutf8_set
+FAILED tests/tools/test_hermes_subprocess_env.py::TestInheritCredentials::test_provider_keys_preserved_when_inheriting
+FAILED tests/tools/test_hermes_subprocess_env.py::TestInheritCredentials::test_tier1_secrets_stripped_even_when_inheriting
+FAILED tests/tools/test_hermes_subprocess_env.py::TestInheritCredentials::test_pythonutf8_set_when_inheriting
+FAILED tests/tools/test_hermes_subprocess_env.py::TestTierInvariants::test_tier1_always_stripped_both_paths
+FAILED tests/tools/test_hermes_subprocess_env.py::TestBrowserPassthroughPattern::test_browser_keys_recoverable_after_strip
+FAILED tests/tools/test_hermes_subprocess_env.py::TestDelegatedChildMarker::test_delegated_child_context_scrubs_parent_kanban_keys_and_sets_marker
+FAILED tests/tools/test_hermes_subprocess_env.py::TestInternalDynamicSecrets::test_stripped_by_default
+FAILED tests/tools/test_hermes_subprocess_env.py::TestInternalDynamicSecrets::test_auxiliary_non_secrets_preserved
+FAILED tests/tools/test_hermes_subprocess_env.py::TestInternalDynamicSecrets::test_gateway_relay_id_stripped_even_when_inheriting
+15 failed, 6 passed in 9.97s
+
+--- tests\tools\test_local_env_blocklist.py ---
+FFFFFFFF..FFFFFF...................FFF..........FFFF..............F.FsF. [ 86%]
+.F....FFFF.                                                              [100%]
+================================== FAILURES ===================================
+___________ TestProviderEnvBlocklist.test_blocked_vars_are_stripped ___________
+
+self = <tests.tools.test_local_env_blocklist.TestProviderEnvBlocklist object at 0x0000025FB41DC510>
+
+    def test_blocked_vars_are_stripped(self):
+        """OPENAI_BASE_URL and other provider vars must not appear in subprocess env."""
+        leaked_vars = {
+            "OPENAI_BASE_URL": "http://localhost:8000/v1",
+            "OPENAI_API_KEY": "sk-fake-key",
+            "OPENROUTER_API_KEY": "or-fake-key",
+            "ANTHROPIC_API_KEY": "ant-fake-key",
+            "LLM_MODEL": "anthropic/claude-opus-4-6",
+        }
+>       result_env = _run_with_env(extra_os_env=leaked_vars)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_local_env_blocklist.py:84:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_local_env_blocklist.py:67: in _run_with_env
+    env.execute("echo hello")
+tools\environments\base.py:1516: in execute
+    wrapped = self._wrap_command(exec_command, effective_cwd)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\base.py:931: in _wrap_command
+    passthrough_names = self._snapshot_excluded_passthrough_names()
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2045: in _snapshot_excluded_passthrough_names
+    self._snapshot_passthrough_names.update(self._additional_profile_scoped_passthrough_names())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2055: in _additional_profile_scoped_passthrough_names
+    names.update(_registered_adapter_secret_env())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+______ TestProviderEnvBlocklist.test_registry_derived_vars_are_stripped _______
+
+self = <tests.tools.test_local_env_blocklist.TestProviderEnvBlocklist object at 0x0000025FB486D2D0>
+
+    def test_registry_derived_vars_are_stripped(self):
+        """Vars from the provider registry (ANTHROPIC_TOKEN, ZAI_API_KEY, etc.)
+        must also be blocked — not just the hand-written extras."""
+        registry_vars = {
+            "ANTHROPIC_TOKEN": "ant-tok",
+            "ZAI_API_KEY": "zai-key",
+            "Z_AI_API_KEY": "z-ai-key",
+            "GLM_API_KEY": "glm-key",
+            "KIMI_API_KEY": "kimi-key",
+            "MINIMAX_API_KEY": "mm-key",
+            "MINIMAX_CN_API_KEY": "mmcn-key",
+            "DEEPSEEK_API_KEY": "deepseek-key",
+            "NVIDIA_API_KEY": "nvidia-key",
+        }
+>       result_env = _run_with_env(extra_os_env=registry_vars)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_local_env_blocklist.py:103:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_local_env_blocklist.py:67: in _run_with_env
+    env.execute("echo hello")
+tools\environments\base.py:1516: in execute
+    wrapped = self._wrap_command(exec_command, effective_cwd)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\base.py:931: in _wrap_command
+    passthrough_names = self._snapshot_excluded_passthrough_names()
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2045: in _snapshot_excluded_passthrough_names
+    self._snapshot_passthrough_names.update(self._additional_profile_scoped_passthrough_names())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2055: in _additional_profile_scoped_passthrough_names
+    names.update(_registered_adapter_secret_env())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_______ TestProviderEnvBlocklist.test_bedrock_bearer_token_is_stripped ________
+
+self = <tests.tools.test_local_env_blocklist.TestProviderEnvBlocklist object at 0x0000025FB486DC90>
+
+    def test_bedrock_bearer_token_is_stripped(self):
+        """Bedrock's Hermes-managed inference bearer must not leak."""
+>       result_env = _run_with_env(extra_os_env={
+            "AWS_BEARER_TOKEN_BEDROCK": "bedrock-bearer-secret",
+        })
+
+tests\tools\test_local_env_blocklist.py:110:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_local_env_blocklist.py:67: in _run_with_env
+    env.execute("echo hello")
+tools\environments\base.py:1516: in execute
+    wrapped = self._wrap_command(exec_command, effective_cwd)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\base.py:931: in _wrap_command
+    passthrough_names = self._snapshot_excluded_passthrough_names()
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2045: in _snapshot_excluded_passthrough_names
+    self._snapshot_passthrough_names.update(self._additional_profile_scoped_passthrough_names())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2055: in _additional_profile_scoped_passthrough_names
+    names.update(_registered_adapter_secret_env())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+______ TestProviderEnvBlocklist.test_vertex_credentials_path_is_stripped ______
+
+self = <tests.tools.test_local_env_blocklist.TestProviderEnvBlocklist object at 0x0000025FB486E250>
+
+    def test_vertex_credentials_path_is_stripped(self):
+        """The Vertex AI service-account JSON path must not leak into
+        subprocesses, even though it is filesystem path metadata rather
+        than a bare API key.
+
+        Regression: ``vertex`` authenticates via OAuth2 (service-account
+        JSON / ADC), not PROVIDER_REGISTRY, and OPTIONAL_ENV_VARS marks
+        VERTEX_CREDENTIALS_PATH as ``password=False`` (it's a path, not a
+        secret string) with ``category="provider"`` — a category the
+        registry-derived loop above never checks — so it fell through both
+        blocklist sources. GOOGLE_APPLICATION_CREDENTIALS (the ADC fallback
+        the adapter also reads) had the same gap. A leaked path discloses
+        the on-disk location of a GCP service-account key to every spawned
+        subprocess (terminal, codex/copilot app-server, browser workers).
+        """
+>       result_env = _run_with_env(extra_os_env={
+            "VERTEX_CREDENTIALS_PATH": "/home/user/.config/gcloud/sa-key.json",
+            "GOOGLE_APPLICATION_CREDENTIALS": "/home/user/.config/gcloud/adc.json",
+        })
+
+tests\tools\test_local_env_blocklist.py:133:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_local_env_blocklist.py:67: in _run_with_env
+    env.execute("echo hello")
+tools\environments\base.py:1516: in execute
+    wrapped = self._wrap_command(exec_command, effective_cwd)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\base.py:931: in _wrap_command
+    passthrough_names = self._snapshot_excluded_passthrough_names()
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2045: in _snapshot_excluded_passthrough_names
+    self._snapshot_passthrough_names.update(self._additional_profile_scoped_passthrough_names())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2055: in _additional_profile_scoped_passthrough_names
+    names.update(_registered_adapter_secret_env())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+___ TestProviderEnvBlocklist.test_general_aws_credential_chain_is_preserved ___
+
+self = <tests.tools.test_local_env_blocklist.TestProviderEnvBlocklist object at 0x0000025FB486D050>
+
+    def test_general_aws_credential_chain_is_preserved(self):
+        """User-owned AWS CLI/SDK credentials should remain inheritable."""
+        general_chain = {
+            "AWS_ACCESS_KEY_ID": "AKIAIOSFODNN7EXAMPLE",
+            "AWS_SECRET_ACCESS_KEY": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "AWS_SESSION_TOKEN": "session-token",
+            "AWS_PROFILE": "production",
+            "AWS_DEFAULT_REGION": "us-east-1",
+            "AWS_REGION": "us-east-1",
+            "AWS_SHARED_CREDENTIALS_FILE": "/home/user/.aws/credentials",
+            "AWS_CONFIG_FILE": "/home/user/.aws/config",
+            "AWS_WEB_IDENTITY_TOKEN_FILE": "/var/run/secrets/token",
+            "AWS_ROLE_ARN": "arn:aws:iam::123456789012:role/example",
+        }
+>       result_env = _run_with_env(extra_os_env=general_chain)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_local_env_blocklist.py:155:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_local_env_blocklist.py:67: in _run_with_env
+    env.execute("echo hello")
+tools\environments\base.py:1516: in execute
+    wrapped = self._wrap_command(exec_command, effective_cwd)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\base.py:931: in _wrap_command
+    passthrough_names = self._snapshot_excluded_passthrough_names()
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2045: in _snapshot_excluded_passthrough_names
+    self._snapshot_passthrough_names.update(self._additional_profile_scoped_passthrough_names())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2055: in _additional_profile_scoped_passthrough_names
+    names.update(_registered_adapter_secret_env())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+____ TestProviderEnvBlocklist.test_non_registry_provider_vars_are_stripped ____
+
+self = <tests.tools.test_local_env_blocklist.TestProviderEnvBlocklist object at 0x0000025FB486E7D0>
+
+    def test_non_registry_provider_vars_are_stripped(self):
+        """Extra provider vars not in PROVIDER_REGISTRY must also be blocked."""
+        extra_provider_vars = {
+            "GOOGLE_API_KEY": "google-key",
+            "MISTRAL_API_KEY": "mistral-key",
+            "GROQ_API_KEY": "groq-key",
+            "TOGETHER_API_KEY": "together-key",
+            "PERPLEXITY_API_KEY": "perplexity-key",
+            "COHERE_API_KEY": "cohere-key",
+            "FIREWORKS_API_KEY": "fireworks-key",
+            "XAI_API_KEY": "xai-key",
+            "HELICONE_API_KEY": "helicone-key",
+        }
+>       result_env = _run_with_env(extra_os_env=extra_provider_vars)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_local_env_blocklist.py:175:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_local_env_blocklist.py:67: in _run_with_env
+    env.execute("echo hello")
+tools\environments\base.py:1516: in execute
+    wrapped = self._wrap_command(exec_command, effective_cwd)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\base.py:931: in _wrap_command
+    passthrough_names = self._snapshot_excluded_passthrough_names()
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2045: in _snapshot_excluded_passthrough_names
+    self._snapshot_passthrough_names.update(self._additional_profile_scoped_passthrough_names())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2055: in _additional_profile_scoped_passthrough_names
+    names.update(_registered_adapter_secret_env())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+______ TestProviderEnvBlocklist.test_tool_and_gateway_vars_are_stripped _______
+
+self = <tests.tools.test_local_env_blocklist.TestProviderEnvBlocklist object at 0x0000025FB486EBD0>
+
+    def test_tool_and_gateway_vars_are_stripped(self):
+        """Tool and gateway secrets/config must not leak into subprocess env."""
+        leaked_vars = {
+            "TELEGRAM_BOT_TOKEN": "bot-token",
+            "TELEGRAM_HOME_CHANNEL": "12345",
+            "DISCORD_HOME_CHANNEL": "67890",
+            "SLACK_APP_TOKEN": "xapp-secret",
+            "WHATSAPP_ALLOWED_USERS": "+15555550123",
+            "SIGNAL_ACCOUNT": "+15555550124",
+            "HASS_TOKEN": "ha-secret",
+            "EMAIL_PASSWORD": "email-secret",
+            "MATRIX_PASSWORD": "matrix-secret",
+            "TWILIO_ACCOUNT_SID": "twilio-sid",
+            "TWILIO_AUTH_TOKEN": "twilio-secret",
+            "FIRECRAWL_API_KEY": "fc-secret",
+            "HERMES_DASHBOARD_SESSION_TOKEN": "dashboard-session-secret",
+            "BROWSERBASE_PROJECT_ID": "bb-project",
+            "ELEVENLABS_API_KEY": "el-secret",
+            "DINGTALK_CLIENT_SECRET": "dingtalk-secret",
+            "FEISHU_APP_SECRET": "feishu-secret",
+            "WECOM_SECRET": "wecom-secret",
+            "WECOM_CALLBACK_CORP_SECRET": "wecom-corp-secret",
+            "WEIXIN_TOKEN": "weixin-token",
+            "YUANBAO_APP_SECRET": "yuanbao-secret",
+            "QQ_STT_API_KEY": "qq-stt-key",
+            "TERMINAL_SSH_KEY": "ssh-private-key",
+            "LANGFUSE_SECRET_KEY": "langfuse-secret",
+            "GITHUB_TOKEN": "ghp_secret",
+            "GH_TOKEN": "gh_alias_secret",
+            "GATEWAY_ALLOW_ALL_USERS": "true",
+            "GATEWAY_ALLOWED_USERS": "alice,bob",
+            "MODAL_TOKEN_ID": "modal-id",
+            "MODAL_TOKEN_SECRET": "modal-secret",
+            "DAYTONA_API_KEY": "daytona-key",
+            "VERCEL_OIDC_TOKEN": "vercel-oidc-token",
+            "VERCEL_TOKEN": "vercel-token",
+            "VERCEL_PROJECT_ID": "vercel-project",
+            "VERCEL_TEAM_ID": "vercel-team",
+        }
+>       result_env = _run_with_env(extra_os_env=leaked_vars)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_local_env_blocklist.py:219:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_local_env_blocklist.py:67: in _run_with_env
+    env.execute("echo hello")
+tools\environments\base.py:1516: in execute
+    wrapped = self._wrap_command(exec_command, effective_cwd)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\base.py:931: in _wrap_command
+    passthrough_names = self._snapshot_excluded_passthrough_names()
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2045: in _snapshot_excluded_passthrough_names
+    self._snapshot_passthrough_names.update(self._additional_profile_scoped_passthrough_names())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2055: in _additional_profile_scoped_passthrough_names
+    names.update(_registered_adapter_secret_env())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+____________ TestProviderEnvBlocklist.test_safe_vars_are_preserved ____________
+
+self = <tests.tools.test_local_env_blocklist.TestProviderEnvBlocklist object at 0x0000025FB486F150>
+
+    def test_safe_vars_are_preserved(self):
+        """Standard env vars (PATH, HOME, USER) must still be passed through."""
+>       result_env = _run_with_env()
+                     ^^^^^^^^^^^^^^^
+
+tests\tools\test_local_env_blocklist.py:226:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_local_env_blocklist.py:67: in _run_with_env
+    env.execute("echo hello")
+tools\environments\base.py:1516: in execute
+    wrapped = self._wrap_command(exec_command, effective_cwd)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\base.py:931: in _wrap_command
+    passthrough_names = self._snapshot_excluded_passthrough_names()
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2045: in _snapshot_excluded_passthrough_names
+    self._snapshot_passthrough_names.update(self._additional_profile_scoped_passthrough_names())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2055: in _additional_profile_scoped_passthrough_names
+    names.update(_registered_adapter_secret_env())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+______ TestProviderEnvBlocklist.test_self_env_blocked_vars_also_stripped ______
+
+self = <tests.tools.test_local_env_blocklist.TestProviderEnvBlocklist object at 0x0000025FB4894210>
+
+    def test_self_env_blocked_vars_also_stripped(self):
+        """Blocked vars in self.env are stripped; non-blocked vars pass through."""
+>       result_env = _run_with_env(self_env={
+            "OPENAI_BASE_URL": "http://custom:9999/v1",
+            "MY_CUSTOM_VAR": "keep-this",
+        })
+
+tests\tools\test_local_env_blocklist.py:270:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_local_env_blocklist.py:67: in _run_with_env
+    env.execute("echo hello")
+tools\environments\base.py:1516: in execute
+    wrapped = self._wrap_command(exec_command, effective_cwd)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\base.py:931: in _wrap_command
+    passthrough_names = self._snapshot_excluded_passthrough_names()
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2045: in _snapshot_excluded_passthrough_names
+    self._snapshot_passthrough_names.update(self._additional_profile_scoped_passthrough_names())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2055: in _additional_profile_scoped_passthrough_names
+    names.update(_registered_adapter_secret_env())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+___________ TestForceEnvOptIn.test_force_prefix_passes_blocked_var ____________
+
+self = <tests.tools.test_local_env_blocklist.TestForceEnvOptIn object at 0x0000025FB4894990>
+
+    def test_force_prefix_passes_blocked_var(self):
+        """_HERMES_FORCE_OPENAI_API_KEY in self.env should inject OPENAI_API_KEY."""
+>       result_env = _run_with_env(self_env={
+            f"{_HERMES_PROVIDER_ENV_FORCE_PREFIX}OPENAI_API_KEY": "sk-explicit",
+        })
+
+tests\tools\test_local_env_blocklist.py:285:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_local_env_blocklist.py:67: in _run_with_env
+    env.execute("echo hello")
+tools\environments\base.py:1516: in execute
+    wrapped = self._wrap_command(exec_command, effective_cwd)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\base.py:931: in _wrap_command
+    passthrough_names = self._snapshot_excluded_passthrough_names()
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2045: in _snapshot_excluded_passthrough_names
+    self._snapshot_passthrough_names.update(self._additional_profile_scoped_passthrough_names())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2055: in _additional_profile_scoped_passthrough_names
+    names.update(_registered_adapter_secret_env())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_______ TestForceEnvOptIn.test_force_prefix_overrides_os_environ_block ________
+
+self = <tests.tools.test_local_env_blocklist.TestForceEnvOptIn object at 0x0000025FB4894F90>
+
+    def test_force_prefix_overrides_os_environ_block(self):
+        """Force-prefix in self.env wins even when os.environ has the blocked var."""
+>       result_env = _run_with_env(
+            extra_os_env={"OPENAI_BASE_URL": "http://leaked/v1"},
+            self_env={f"{_HERMES_PROVIDER_ENV_FORCE_PREFIX}OPENAI_BASE_URL": "http://intended/v1"},
+        )
+
+tests\tools\test_local_env_blocklist.py:296:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_local_env_blocklist.py:67: in _run_with_env
+    env.execute("echo hello")
+tools\environments\base.py:1516: in execute
+    wrapped = self._wrap_command(exec_command, effective_cwd)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\base.py:931: in _wrap_command
+    passthrough_names = self._snapshot_excluded_passthrough_names()
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2045: in _snapshot_excluded_passthrough_names
+    self._snapshot_passthrough_names.update(self._additional_profile_scoped_passthrough_names())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2055: in _additional_profile_scoped_passthrough_names
+    names.update(_registered_adapter_secret_env())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+__ TestActiveVenvMarkerStripping.test_virtualenv_marker_stripped_end_to_end ___
+
+self = <tests.tools.test_local_env_blocklist.TestActiveVenvMarkerStripping object at 0x0000025FB48956D0>
+
+    def test_virtualenv_marker_stripped_end_to_end(self):
+>       result_env = _run_with_env(extra_os_env={
+            "VIRTUAL_ENV": "/home/user/.hermes/hermes-agent/venv",
+        })
+
+tests\tools\test_local_env_blocklist.py:318:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_local_env_blocklist.py:67: in _run_with_env
+    env.execute("echo hello")
+tools\environments\base.py:1516: in execute
+    wrapped = self._wrap_command(exec_command, effective_cwd)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\base.py:931: in _wrap_command
+    passthrough_names = self._snapshot_excluded_passthrough_names()
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2045: in _snapshot_excluded_passthrough_names
+    self._snapshot_passthrough_names.update(self._additional_profile_scoped_passthrough_names())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2055: in _additional_profile_scoped_passthrough_names
+    names.update(_registered_adapter_secret_env())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_ TestActiveVenvMarkerStripping.test_conda_prefix_marker_stripped_end_to_end __
+
+self = <tests.tools.test_local_env_blocklist.TestActiveVenvMarkerStripping object at 0x0000025FB4895C90>
+
+    def test_conda_prefix_marker_stripped_end_to_end(self):
+>       result_env = _run_with_env(extra_os_env={
+            "CONDA_PREFIX": "/opt/conda/envs/hermes",
+        })
+
+tests\tools\test_local_env_blocklist.py:324:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_local_env_blocklist.py:67: in _run_with_env
+    env.execute("echo hello")
+tools\environments\base.py:1516: in execute
+    wrapped = self._wrap_command(exec_command, effective_cwd)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\base.py:931: in _wrap_command
+    passthrough_names = self._snapshot_excluded_passthrough_names()
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2045: in _snapshot_excluded_passthrough_names
+    self._snapshot_passthrough_names.update(self._additional_profile_scoped_passthrough_names())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2055: in _additional_profile_scoped_passthrough_names
+    names.update(_registered_adapter_secret_env())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_______ TestActiveVenvMarkerStripping.test_make_run_env_strips_markers ________
+
+self = <tests.tools.test_local_env_blocklist.TestActiveVenvMarkerStripping object at 0x0000025FB4896250>
+
+    def test_make_run_env_strips_markers(self):
+        from tools.environments.local import _make_run_env
+        poison = {"VIRTUAL_ENV": "/venv", "CONDA_PREFIX": "/conda", "PATH": "/usr/bin"}
+        with patch.dict(os.environ, poison, clear=True):
+>           result = _make_run_env({})
+                     ^^^^^^^^^^^^^^^^^
+
+tests\tools\test_local_env_blocklist.py:333:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\environments\local.py:1615: in _make_run_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_ TestPythonpathSelectiveStrip.test_builders_strip_hermes_venv_pythonpath[_make_run_env] _
+
+self = <tests.tools.test_local_env_blocklist.TestPythonpathSelectiveStrip object at 0x0000025FB48A7750>
+builder = '_make_run_env'
+
+    @pytest.mark.parametrize("builder", [
+        "_make_run_env",
+        "_sanitize_subprocess_env",
+        "hermes_subprocess_env",
+    ])
+    def test_builders_strip_hermes_venv_pythonpath(self, builder):
+        """Every subprocess env builder applies the same sanitation contract:
+        Hermes venv site-packages is stripped, user entries survive.
+        """
+        from tools.environments import local as local_mod
+
+        venv_sp = str(_running_venv_site_packages())
+        seed = {
+            "PATH": "/usr/bin:/bin",
+            "HOME": "/home/user",
+            "PYTHONPATH": os.pathsep.join([venv_sp, "/home/user/my-lib"]),
+        }
+        with patch.dict(os.environ, seed, clear=True):
+            if builder == "_make_run_env":
+>               result = local_mod._make_run_env({})
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_local_env_blocklist.py:660:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\environments\local.py:1615: in _make_run_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_ TestPythonpathSelectiveStrip.test_builders_strip_hermes_venv_pythonpath[_sanitize_subprocess_env] _
+
+self = <tests.tools.test_local_env_blocklist.TestPythonpathSelectiveStrip object at 0x0000025FB48A7990>
+builder = '_sanitize_subprocess_env'
+
+    @pytest.mark.parametrize("builder", [
+        "_make_run_env",
+        "_sanitize_subprocess_env",
+        "hermes_subprocess_env",
+    ])
+    def test_builders_strip_hermes_venv_pythonpath(self, builder):
+        """Every subprocess env builder applies the same sanitation contract:
+        Hermes venv site-packages is stripped, user entries survive.
+        """
+        from tools.environments import local as local_mod
+
+        venv_sp = str(_running_venv_site_packages())
+        seed = {
+            "PATH": "/usr/bin:/bin",
+            "HOME": "/home/user",
+            "PYTHONPATH": os.pathsep.join([venv_sp, "/home/user/my-lib"]),
+        }
+        with patch.dict(os.environ, seed, clear=True):
+            if builder == "_make_run_env":
+                result = local_mod._make_run_env({})
+            elif builder == "_sanitize_subprocess_env":
+>               result = local_mod._sanitize_subprocess_env(dict(os.environ))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_local_env_blocklist.py:662:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\environments\local.py:634: in _sanitize_subprocess_env
+    _provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_ TestPythonpathSelectiveStrip.test_builders_strip_hermes_venv_pythonpath[hermes_subprocess_env] _
+
+self = <tests.tools.test_local_env_blocklist.TestPythonpathSelectiveStrip object at 0x0000025FB48A7BD0>
+builder = 'hermes_subprocess_env'
+
+    @pytest.mark.parametrize("builder", [
+        "_make_run_env",
+        "_sanitize_subprocess_env",
+        "hermes_subprocess_env",
+    ])
+    def test_builders_strip_hermes_venv_pythonpath(self, builder):
+        """Every subprocess env builder applies the same sanitation contract:
+        Hermes venv site-packages is stripped, user entries survive.
+        """
+        from tools.environments import local as local_mod
+
+        venv_sp = str(_running_venv_site_packages())
+        seed = {
+            "PATH": "/usr/bin:/bin",
+            "HOME": "/home/user",
+            "PYTHONPATH": os.pathsep.join([venv_sp, "/home/user/my-lib"]),
+        }
+        with patch.dict(os.environ, seed, clear=True):
+            if builder == "_make_run_env":
+                result = local_mod._make_run_env({})
+            elif builder == "_sanitize_subprocess_env":
+                result = local_mod._sanitize_subprocess_env(dict(os.environ))
+            else:
+>               result = local_mod.hermes_subprocess_env()
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_local_env_blocklist.py:664:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\environments\local.py:886: in hermes_subprocess_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+____ TestPythonhomeSanitized.test_builders_strip_pythonhome[_make_run_env] ____
+
+self = <tests.tools.test_local_env_blocklist.TestPythonhomeSanitized object at 0x0000025FB48B7950>
+builder = '_make_run_env'
+
+    @pytest.mark.parametrize("builder", [
+        "_make_run_env",
+        "_sanitize_subprocess_env",
+        "hermes_subprocess_env",
+        "build_subprocess_env",
+    ])
+    def test_builders_strip_pythonhome(self, builder):
+        """The gateway's inherited PYTHONHOME must not reach any subprocess
+        builder -- terminal, background/PTY, cron no_agent scripts, and
+        execute_code children (#75018).
+        """
+        from tools.environments import local as local_mod
+
+        seed = {
+            "PATH": "/usr/bin:/bin",
+            "HOME": "/home/user",
+            "PYTHONHOME": "/opt/hermes-venv",
+        }
+        with patch.dict(os.environ, seed, clear=True):
+            if builder == "_make_run_env":
+>               result = local_mod._make_run_env({})
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_local_env_blocklist.py:1060:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\environments\local.py:1615: in _make_run_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_ TestPythonhomeSanitized.test_builders_strip_pythonhome[_sanitize_subprocess_env] _
+
+self = <tests.tools.test_local_env_blocklist.TestPythonhomeSanitized object at 0x0000025FB48B7A90>
+builder = '_sanitize_subprocess_env'
+
+    @pytest.mark.parametrize("builder", [
+        "_make_run_env",
+        "_sanitize_subprocess_env",
+        "hermes_subprocess_env",
+        "build_subprocess_env",
+    ])
+    def test_builders_strip_pythonhome(self, builder):
+        """The gateway's inherited PYTHONHOME must not reach any subprocess
+        builder -- terminal, background/PTY, cron no_agent scripts, and
+        execute_code children (#75018).
+        """
+        from tools.environments import local as local_mod
+
+        seed = {
+            "PATH": "/usr/bin:/bin",
+            "HOME": "/home/user",
+            "PYTHONHOME": "/opt/hermes-venv",
+        }
+        with patch.dict(os.environ, seed, clear=True):
+            if builder == "_make_run_env":
+                result = local_mod._make_run_env({})
+            elif builder == "_sanitize_subprocess_env":
+>               result = local_mod._sanitize_subprocess_env(dict(os.environ))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_local_env_blocklist.py:1062:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\environments\local.py:634: in _sanitize_subprocess_env
+    _provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_ TestPythonhomeSanitized.test_builders_strip_pythonhome[hermes_subprocess_env] _
+
+self = <tests.tools.test_local_env_blocklist.TestPythonhomeSanitized object at 0x0000025FB48B7BD0>
+builder = 'hermes_subprocess_env'
+
+    @pytest.mark.parametrize("builder", [
+        "_make_run_env",
+        "_sanitize_subprocess_env",
+        "hermes_subprocess_env",
+        "build_subprocess_env",
+    ])
+    def test_builders_strip_pythonhome(self, builder):
+        """The gateway's inherited PYTHONHOME must not reach any subprocess
+        builder -- terminal, background/PTY, cron no_agent scripts, and
+        execute_code children (#75018).
+        """
+        from tools.environments import local as local_mod
+
+        seed = {
+            "PATH": "/usr/bin:/bin",
+            "HOME": "/home/user",
+            "PYTHONHOME": "/opt/hermes-venv",
+        }
+        with patch.dict(os.environ, seed, clear=True):
+            if builder == "_make_run_env":
+                result = local_mod._make_run_env({})
+            elif builder == "_sanitize_subprocess_env":
+                result = local_mod._sanitize_subprocess_env(dict(os.environ))
+            elif builder == "hermes_subprocess_env":
+>               result = local_mod.hermes_subprocess_env()
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_local_env_blocklist.py:1064:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\environments\local.py:886: in hermes_subprocess_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_ TestPythonhomeSanitized.test_builders_strip_pythonhome[build_subprocess_env] _
+
+self = <tests.tools.test_local_env_blocklist.TestPythonhomeSanitized object at 0x0000025FB48B7D90>
+builder = 'build_subprocess_env'
+
+    @pytest.mark.parametrize("builder", [
+        "_make_run_env",
+        "_sanitize_subprocess_env",
+        "hermes_subprocess_env",
+        "build_subprocess_env",
+    ])
+    def test_builders_strip_pythonhome(self, builder):
+        """The gateway's inherited PYTHONHOME must not reach any subprocess
+        builder -- terminal, background/PTY, cron no_agent scripts, and
+        execute_code children (#75018).
+        """
+        from tools.environments import local as local_mod
+
+        seed = {
+            "PATH": "/usr/bin:/bin",
+            "HOME": "/home/user",
+            "PYTHONHOME": "/opt/hermes-venv",
+        }
+        with patch.dict(os.environ, seed, clear=True):
+            if builder == "_make_run_env":
+                result = local_mod._make_run_env({})
+            elif builder == "_sanitize_subprocess_env":
+                result = local_mod._sanitize_subprocess_env(dict(os.environ))
+            elif builder == "hermes_subprocess_env":
+                result = local_mod.hermes_subprocess_env()
+            else:
+>               result = local_mod.build_subprocess_env()
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_local_env_blocklist.py:1066:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\environments\local.py:985: in build_subprocess_env
+    return _sanitize_subprocess_env(
+tools\environments\local.py:634: in _sanitize_subprocess_env
+    _provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_ TestBlocklistCoverage.test_gateway_credentials_are_stripped_from_all_local_env_paths _
+
+self = <tests.tools.test_local_env_blocklist.TestBlocklistCoverage object at 0x0000025FB48D0790>
+
+    def test_gateway_credentials_are_stripped_from_all_local_env_paths(self):
+        """Gateway credentials must not leak into terminal or background subprocesses."""
+        from tools.environments.local import _make_run_env, _sanitize_subprocess_env
+
+        secrets = {
+            "DINGTALK_CLIENT_SECRET": "dingtalk-secret",
+            "FEISHU_APP_SECRET": "feishu-secret",
+            "FEISHU_ENCRYPT_KEY": "feishu-encrypt-key",
+            "FEISHU_VERIFICATION_TOKEN": "feishu-verification-token",
+            "MATRIX_PASSWORD": "matrix-password",
+            "TWILIO_AUTH_TOKEN": "twilio-auth-token",
+            "WECOM_CALLBACK_CORP_SECRET": "wecom-callback-secret",
+            "WECOM_CALLBACK_TOKEN": "wecom-callback-token",
+            "WECOM_CALLBACK_ENCODING_AES_KEY": "wecom-callback-aes-key",
+            "WECOM_SECRET": "wecom-secret",
+            "WEIXIN_TOKEN": "weixin-token",
+            "YUANBAO_APP_SECRET": "yuanbao-secret",
+            "QQ_STT_API_KEY": "qq-stt-key",
+            "TERMINAL_SSH_KEY": "ssh-private-key",
+            "LANGFUSE_SECRET_KEY": "langfuse-secret",
+        }
+
+        with patch.dict(os.environ, secrets | {"PATH": "/usr/bin:/bin"}, clear=True):
+>           run_env = _make_run_env({})
+                      ^^^^^^^^^^^^^^^^^
+
+tests\tools\test_local_env_blocklist.py:1362:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\environments\local.py:1615: in _make_run_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_ TestSanePathIncludesHomebrew.test_make_run_env_appends_homebrew_on_minimal_path _
+
+self = <tests.tools.test_local_env_blocklist.TestSanePathIncludesHomebrew object at 0x0000025FB48D1790>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025FB499A990>
+
+    def test_make_run_env_appends_homebrew_on_minimal_path(self, monkeypatch):
+        """When PATH is minimal, _make_run_env appends missing sane entries.
+
+        POSIX: the sane-path merge appends the Homebrew dirs.  Windows:
+        _append_missing_sane_path_entries is a documented passthrough (the
+        native PATH must not be touched), so the assertion is the unchanged
+        input.  Git Bash dir prepending is neutralised so the merged PATH
+        layout is deterministic on every host.
+        """
+        from tools.environments import local as local_mod
+        from tools.environments.local import _SANE_PATH, _make_run_env
+        monkeypatch.setattr(local_mod, "_git_bash_bin_dirs", lambda: [])
+        minimal_env = {"PATH": "/some/custom/bin"}
+        with patch.dict(os.environ, minimal_env, clear=True):
+>           result = _make_run_env({})
+                     ^^^^^^^^^^^^^^^^^
+
+tests\tools\test_local_env_blocklist.py:1406:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\environments\local.py:1615: in _make_run_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_ TestSanePathIncludesHomebrew.test_make_run_env_preserves_windows_mixed_case_path_key _
+
+self = <tests.tools.test_local_env_blocklist.TestSanePathIncludesHomebrew object at 0x0000025FB48BF050>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025FBA8ACF90>
+
+    @pytest.mark.windows_only
+    def test_make_run_env_preserves_windows_mixed_case_path_key(self, monkeypatch):
+        """Windows-only: ``_path_env_key`` looks for a case-insensitive PATH
+        key only on Windows, so the mixed-case ``Path`` preservation this
+        asserts is a genuinely Windows-native behaviour.
+
+        The Git Bash dir prepend is neutralised so the assertion is about the
+        key casing alone (a real Windows box has those dirs).
+        """
+        from tools.environments import local as local_mod
+        from tools.environments.local import _make_run_env
+        windows_env = {"Path": r"C:\Windows\System32;C:\Program Files\Git\bin"}
+        monkeypatch.setattr(local_mod, "_git_bash_bin_dirs", lambda: [])
+        with patch.object(local_mod.os, "environ", windows_env):
+>           result = _make_run_env({})
+                     ^^^^^^^^^^^^^^^^^
+
+tests\tools\test_local_env_blocklist.py:1448:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\environments\local.py:1615: in _make_run_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_______ TestHermesBinDirOnPath.test_make_run_env_injects_hermes_bin_dir _______
+
+self = <tests.tools.test_local_env_blocklist.TestHermesBinDirOnPath object at 0x0000025FB48D24D0>
+
+    def test_make_run_env_injects_hermes_bin_dir(self):
+        """A gateway env missing the hermes dir gets it back in the subshell PATH.
+
+        Platform-agnostic: ``_prepend_hermes_bin_dir`` uses ``os.pathsep`` on
+        every host, so no platform flag is faked here."""
+        from tools.environments import local as local_mod
+        from tools.environments.local import _make_run_env
+        self._reset_cache()
+        local_mod._HERMES_BIN_DIR = "/opt/hermes/bin"
+        with patch.dict(
+            os.environ,
+            {"PATH": os.pathsep.join(["/usr/bin", "/bin"])},
+            clear=True,
+        ):
+>           result = _make_run_env({})
+                     ^^^^^^^^^^^^^^^^^
+
+tests\tools\test_local_env_blocklist.py:1495:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\environments\local.py:1615: in _make_run_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_ TestHermesInternalDynamicSecrets.test_auxiliary_secrets_stripped_from_subprocess _
+
+self = <tests.tools.test_local_env_blocklist.TestHermesInternalDynamicSecrets object at 0x0000025FB48D3890>
+
+    def test_auxiliary_secrets_stripped_from_subprocess(self):
+        """AUXILIARY_*_API_KEY / _BASE_URL injected into os.environ must not
+        reach the terminal subprocess, while _PROVIDER / _MODEL survive."""
+>       result_env = _run_with_env(extra_os_env={
+            "AUXILIARY_VISION_API_KEY": "sk-vision-secret",
+            "AUXILIARY_VISION_BASE_URL": "http://internal:1234/v1",
+            "AUXILIARY_WEB_EXTRACT_API_KEY": "sk-webx-secret",
+            "AUXILIARY_VISION_PROVIDER": "openai",
+            "AUXILIARY_VISION_MODEL": "gpt-4o",
+        })
+
+tests\tools\test_local_env_blocklist.py:1555:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_local_env_blocklist.py:67: in _run_with_env
+    env.execute("echo hello")
+tools\environments\base.py:1516: in execute
+    wrapped = self._wrap_command(exec_command, effective_cwd)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\base.py:931: in _wrap_command
+    passthrough_names = self._snapshot_excluded_passthrough_names()
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2045: in _snapshot_excluded_passthrough_names
+    self._snapshot_passthrough_names.update(self._additional_profile_scoped_passthrough_names())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2055: in _additional_profile_scoped_passthrough_names
+    names.update(_registered_adapter_secret_env())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_ TestHermesInternalDynamicSecrets.test_gateway_relay_secret_stripped_from_subprocess _
+
+self = <tests.tools.test_local_env_blocklist.TestHermesInternalDynamicSecrets object at 0x0000025FB48D3E10>
+
+    def test_gateway_relay_secret_stripped_from_subprocess(self):
+>       result_env = _run_with_env(extra_os_env={
+            "GATEWAY_RELAY_SECRET": "relay-signing-secret",
+            "GATEWAY_RELAY_DELIVERY_KEY": "relay-delivery-key",
+            "GATEWAY_RELAY_URL": "https://relay.example.com",
+        })
+
+tests\tools\test_local_env_blocklist.py:1570:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_local_env_blocklist.py:67: in _run_with_env
+    env.execute("echo hello")
+tools\environments\base.py:1516: in execute
+    wrapped = self._wrap_command(exec_command, effective_cwd)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\base.py:931: in _wrap_command
+    passthrough_names = self._snapshot_excluded_passthrough_names()
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2045: in _snapshot_excluded_passthrough_names
+    self._snapshot_passthrough_names.update(self._additional_profile_scoped_passthrough_names())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2055: in _additional_profile_scoped_passthrough_names
+    names.update(_registered_adapter_secret_env())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_ TestHermesInternalDynamicSecrets.test_auxiliary_secret_stripped_even_when_passthrough_registered _
+
+self = <tests.tools.test_local_env_blocklist.TestHermesInternalDynamicSecrets object at 0x0000025FB48DC3D0>
+
+    def test_auxiliary_secret_stripped_even_when_passthrough_registered(self):
+        """A skill registering AUXILIARY_*_API_KEY as env_passthrough must NOT
+        be able to tunnel it into a subprocess — the strip is unconditional."""
+        with patch(
+            "tools.env_passthrough.is_env_passthrough",
+            side_effect=lambda name: name == "AUXILIARY_VISION_API_KEY",
+        ):
+>           result_env = _run_with_env(extra_os_env={
+                "AUXILIARY_VISION_API_KEY": "sk-vision-secret",
+            })
+
+tests\tools\test_local_env_blocklist.py:1587:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_local_env_blocklist.py:67: in _run_with_env
+    env.execute("echo hello")
+tools\environments\base.py:1516: in execute
+    wrapped = self._wrap_command(exec_command, effective_cwd)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\base.py:931: in _wrap_command
+    passthrough_names = self._snapshot_excluded_passthrough_names()
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2045: in _snapshot_excluded_passthrough_names
+    self._snapshot_passthrough_names.update(self._additional_profile_scoped_passthrough_names())
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2055: in _additional_profile_scoped_passthrough_names
+    names.update(_registered_adapter_secret_env())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+_ TestHermesInternalDynamicSecrets.test_make_run_env_strips_internal_secrets __
+
+self = <tests.tools.test_local_env_blocklist.TestHermesInternalDynamicSecrets object at 0x0000025FB48DC950>
+
+    def test_make_run_env_strips_internal_secrets(self):
+        """The foreground _make_run_env path strips the same dynamic secrets."""
+        from tools.environments.local import _make_run_env
+        with patch.dict(os.environ, {
+            "PATH": "/usr/bin:/bin",
+            "AUXILIARY_VISION_API_KEY": "sk-secret",
+            "GATEWAY_RELAY_SECRET": "relay-secret",
+            "AUXILIARY_VISION_PROVIDER": "openai",
+        }, clear=True):
+>           run_env = _make_run_env({})
+                      ^^^^^^^^^^^^^^^^^
+
+tests\tools\test_local_env_blocklist.py:1601:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\environments\local.py:1615: in _make_run_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_local_env_blocklist.py::TestProviderEnvBlocklist::test_blocked_vars_are_stripped
+FAILED tests/tools/test_local_env_blocklist.py::TestProviderEnvBlocklist::test_registry_derived_vars_are_stripped
+FAILED tests/tools/test_local_env_blocklist.py::TestProviderEnvBlocklist::test_bedrock_bearer_token_is_stripped
+FAILED tests/tools/test_local_env_blocklist.py::TestProviderEnvBlocklist::test_vertex_credentials_path_is_stripped
+FAILED tests/tools/test_local_env_blocklist.py::TestProviderEnvBlocklist::test_general_aws_credential_chain_is_preserved
+FAILED tests/tools/test_local_env_blocklist.py::TestProviderEnvBlocklist::test_non_registry_provider_vars_are_stripped
+FAILED tests/tools/test_local_env_blocklist.py::TestProviderEnvBlocklist::test_tool_and_gateway_vars_are_stripped
+FAILED tests/tools/test_local_env_blocklist.py::TestProviderEnvBlocklist::test_safe_vars_are_preserved
+FAILED tests/tools/test_local_env_blocklist.py::TestProviderEnvBlocklist::test_self_env_blocked_vars_also_stripped
+FAILED tests/tools/test_local_env_blocklist.py::TestForceEnvOptIn::test_force_prefix_passes_blocked_var
+FAILED tests/tools/test_local_env_blocklist.py::TestForceEnvOptIn::test_force_prefix_overrides_os_environ_block
+FAILED tests/tools/test_local_env_blocklist.py::TestActiveVenvMarkerStripping::test_virtualenv_marker_stripped_end_to_end
+FAILED tests/tools/test_local_env_blocklist.py::TestActiveVenvMarkerStripping::test_conda_prefix_marker_stripped_end_to_end
+FAILED tests/tools/test_local_env_blocklist.py::TestActiveVenvMarkerStripping::test_make_run_env_strips_markers
+FAILED tests/tools/test_local_env_blocklist.py::TestPythonpathSelectiveStrip::test_builders_strip_hermes_venv_pythonpath[_make_run_env]
+FAILED tests/tools/test_local_env_blocklist.py::TestPythonpathSelectiveStrip::test_builders_strip_hermes_venv_pythonpath[_sanitize_subprocess_env]
+FAILED tests/tools/test_local_env_blocklist.py::TestPythonpathSelectiveStrip::test_builders_strip_hermes_venv_pythonpath[hermes_subprocess_env]
+FAILED tests/tools/test_local_env_blocklist.py::TestPythonhomeSanitized::test_builders_strip_pythonhome[_make_run_env]
+FAILED tests/tools/test_local_env_blocklist.py::TestPythonhomeSanitized::test_builders_strip_pythonhome[_sanitize_subprocess_env]
+FAILED tests/tools/test_local_env_blocklist.py::TestPythonhomeSanitized::test_builders_strip_pythonhome[hermes_subprocess_env]
+FAILED tests/tools/test_local_env_blocklist.py::TestPythonhomeSanitized::test_builders_strip_pythonhome[build_subprocess_env]
+FAILED tests/tools/test_local_env_blocklist.py::TestBlocklistCoverage::test_gateway_credentials_are_stripped_from_all_local_env_paths
+FAILED tests/tools/test_local_env_blocklist.py::TestSanePathIncludesHomebrew::test_make_run_env_appends_homebrew_on_minimal_path
+FAILED tests/tools/test_local_env_blocklist.py::TestSanePathIncludesHomebrew::test_make_run_env_preserves_windows_mixed_case_path_key
+FAILED tests/tools/test_local_env_blocklist.py::TestHermesBinDirOnPath::test_make_run_env_injects_hermes_bin_dir
+FAILED tests/tools/test_local_env_blocklist.py::TestHermesInternalDynamicSecrets::test_auxiliary_secrets_stripped_from_subprocess
+FAILED tests/tools/test_local_env_blocklist.py::TestHermesInternalDynamicSecrets::test_gateway_relay_secret_stripped_from_subprocess
+FAILED tests/tools/test_local_env_blocklist.py::TestHermesInternalDynamicSecrets::test_auxiliary_secret_stripped_even_when_passthrough_registered
+FAILED tests/tools/test_local_env_blocklist.py::TestHermesInternalDynamicSecrets::test_make_run_env_strips_internal_secrets
+29 failed, 53 passed, 1 skipped in 39.24s
+
+=== 3 files with test failures (46 tests failed) ===
+  tests\tools\test_build_subprocess_env.py  (2 tests failed)
+  tests\tools\test_hermes_subprocess_env.py  (15 tests failed)
+  tests\tools\test_local_env_blocklist.py  (29 tests failed)

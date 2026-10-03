@@ -1,0 +1,56 @@
+{
+  "symbol": "plugin_strip_env_keys",
+  "depth": 2,
+  "nodeCount": 8,
+  "edgeCount": 7,
+  "affected": [
+    {
+      "name": "plugin_strip_env_keys",
+      "kind": "function",
+      "filePath": "agent/terminal_env_registry.py",
+      "startLine": 148
+    },
+    {
+      "name": "_plugin_terminal_env_strip_keys",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 476
+    },
+    {
+      "name": "_is_hermes_provider_credential",
+      "kind": "function",
+      "filePath": "tools/env_passthrough.py",
+      "startLine": 50
+    },
+    {
+      "name": "_sanitize_subprocess_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 641
+    },
+    {
+      "name": "hermes_subprocess_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 831
+    },
+    {
+      "name": "_make_run_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 1626
+    },
+    {
+      "name": "_additional_profile_scoped_passthrough_names",
+      "kind": "method",
+      "filePath": "tools/environments/local.py",
+      "startLine": 2078
+    },
+    {
+      "name": "_run_bash",
+      "kind": "method",
+      "filePath": "tools/environments/local.py",
+      "startLine": 2222
+    }
+  ]
+}

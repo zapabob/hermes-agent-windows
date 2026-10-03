@@ -1,0 +1,14 @@
+........................................................................ [ 33%]
+........................................................................ [ 66%]
+.........................................................F.............  [100%]
+================================== FAILURES ===================================
+_____ test_registered_benign_extra_keeps_explicit_precedence[background] ______
+tests\tools\test_child_credential_boundary.py:533: in test_registered_benign_extra_keeps_explicit_precedence
+    assert child_env(surface, {"CUSTOM_FLAG": "explicit-call-value"})["CUSTOM_FLAG"] == "explicit-call-value"
+E   AssertionError: assert 'target-default' == 'explicit-call-value'
+E
+E     - explicit-call-value
+E     + target-default
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_registered_benign_extra_keeps_explicit_precedence[background]
+1 failed, 214 passed in 9.88s

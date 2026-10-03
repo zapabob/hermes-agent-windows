@@ -1,0 +1,55 @@
+FFFFF                                                                    [100%]
+================================== FAILURES ===================================
+__________ test_late_provider_keeps_tier_two_authority_over_manifest __________
+tests\tools\test_child_credential_boundary.py:562: in test_late_provider_keeps_tier_two_authority_over_manifest
+    assert key not in child_env("cli")
+                      ^^^^^^^^^^^^^^^^
+tests\tools\test_child_credential_boundary.py:63: in child_env
+    return local.hermes_subprocess_env(
+tools\environments\local.py:914: in hermes_subprocess_env
+    provider_strip = _provider_secret_env()
+                     ^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:399: in _provider_secret_env
+    names.update(_registered_adapter_secret_env())
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:503: in _registered_adapter_secret_env
+    from gateway.platform_registry import platform_registry
+gateway\__init__.py:13: in <module>
+    from .session import (
+gateway\session.py:98: in <module>
+    from agent.turn_context import extract_api_content_sidecar
+agent\turn_context.py:34: in <module>
+    from agent.conversation_compression import (
+agent\conversation_compression.py:69: in <module>
+    from agent.auxiliary_client import AuxiliaryExplicitCancellation
+agent\auxiliary_client.py:167: in <module>
+    from agent.model_metadata import (
+agent\model_metadata.py:98: in <module>
+    _PROVIDER_PREFIXES: frozenset[str] = frozenset(
+agent\model_metadata.py:101: in <genexpr>
+    for value in (profile.name, *profile.aliases)
+                  ^^^^^^^^^^^^
+E   AttributeError: 'types.SimpleNamespace' object has no attribute 'name'
+____________ test_dangling_manifest_link_is_unreadable_declaration ____________
+tests\tools\test_child_credential_boundary.py:581: in test_dangling_manifest_link_is_unreadable_declaration
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+____________ test_native_dangling_platform_junction_refuses_child _____________
+tests\tools\test_child_credential_boundary.py:602: in test_native_dangling_platform_junction_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+__ test_late_declaration_between_wrap_and_spawn_refuses_stale_wrapper[False] __
+tests\tools\test_child_credential_windows_native.py:286: in test_late_declaration_between_wrap_and_spawn_refuses_stale_wrapper
+    with pytest.raises(RuntimeError, match="(?i)(declaration|readonly|authority)"):
+E   Failed: DID NOT RAISE RuntimeError
+__ test_late_declaration_between_wrap_and_spawn_refuses_stale_wrapper[True] ___
+tests\tools\test_child_credential_windows_native.py:286: in test_late_declaration_between_wrap_and_spawn_refuses_stale_wrapper
+    with pytest.raises(RuntimeError, match="(?i)(declaration|readonly|authority)"):
+E   Failed: DID NOT RAISE RuntimeError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_late_provider_keeps_tier_two_authority_over_manifest
+FAILED tests/tools/test_child_credential_boundary.py::test_dangling_manifest_link_is_unreadable_declaration
+FAILED tests/tools/test_child_credential_boundary.py::test_native_dangling_platform_junction_refuses_child
+FAILED tests/tools/test_child_credential_windows_native.py::test_late_declaration_between_wrap_and_spawn_refuses_stale_wrapper[False]
+FAILED tests/tools/test_child_credential_windows_native.py::test_late_declaration_between_wrap_and_spawn_refuses_stale_wrapper[True]
+5 failed, 232 deselected in 6.38s

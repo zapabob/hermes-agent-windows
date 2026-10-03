@@ -1,0 +1,1537 @@
+{
+  "candidate": "b32b74a72bcf0a14449e1625fab75e9511b7dbee",
+  "argv": [
+    "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts\\python.exe",
+    "-I",
+    "-B",
+    "-c",
+    "import pathlib,sys,importlib.util; root=pathlib.Path(sys.argv[1]).resolve(); sys.path.insert(0,str(root)); spec=importlib.util.find_spec('agent.engineering_diagnostics'); assert pathlib.Path(spec.origin).resolve().is_relative_to(root); import pytest; sys.exit(pytest.main(['--noconftest','-q','-rs','-o','addopts=']+sys.argv[2:]))",
+    "H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-verification",
+    "tests/tools/test_child_credential_windows_native.py"
+  ],
+  "isolated_environment_owner": "scripts/ci/engineering_repair_mutations.py",
+  "excluded_audit_ancestor_pids": [
+    12856,
+    18984,
+    19644,
+    29256,
+    31704,
+    32340
+  ],
+  "before": [],
+  "launched_runner": {
+    "pid": 32460,
+    "create_time": 1790997755.0603387,
+    "name": "python.exe"
+  },
+  "observed_process_identities": [
+    {
+      "pid": 32460,
+      "create_time": 1790997755.0603387,
+      "name": "python.exe"
+    },
+    {
+      "pid": 2516,
+      "create_time": 1790997755.06556,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 29152,
+      "create_time": 1790997755.0861547,
+      "name": "python.exe"
+    },
+    {
+      "pid": 31212,
+      "create_time": 1790997756.8387904,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 27036,
+      "create_time": 1790997756.8445473,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 12872,
+      "create_time": 1790997756.8685772,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 26696,
+      "create_time": 1790997756.999538,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 17816,
+      "create_time": 1790997757.004494,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 28436,
+      "create_time": 1790997757.0271363,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 20716,
+      "create_time": 1790997757.120494,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 31132,
+      "create_time": 1790997757.3579812,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 16216,
+      "create_time": 1790997757.4218729,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 28024,
+      "create_time": 1790997758.2359898,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 17772,
+      "create_time": 1790997758.2415082,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 9928,
+      "create_time": 1790997758.2647514,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 12116,
+      "create_time": 1790997758.325245,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 28792,
+      "create_time": 1790997758.3419483,
+      "name": "python.exe"
+    },
+    {
+      "pid": 24476,
+      "create_time": 1790997758.35235,
+      "name": "python.exe"
+    },
+    {
+      "pid": 24948,
+      "create_time": 1790997758.4968755,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 30768,
+      "create_time": 1790997758.513903,
+      "name": "mktemp.exe"
+    },
+    {
+      "pid": 4032,
+      "create_time": 1790997758.9380448,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 25408,
+      "create_time": 1790997758.9429233,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 11992,
+      "create_time": 1790997758.9668555,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 20440,
+      "create_time": 1790997759.0816042,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 23272,
+      "create_time": 1790997759.3246117,
+      "name": "python.exe"
+    },
+    {
+      "pid": 20052,
+      "create_time": 1790997759.33639,
+      "name": "python.exe"
+    },
+    {
+      "pid": 5636,
+      "create_time": 1790997759.6177711,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 30892,
+      "create_time": 1790997759.6217968,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 26528,
+      "create_time": 1790997759.646342,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 23024,
+      "create_time": 1790997759.7753017,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 29180,
+      "create_time": 1790997759.8277848,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 29028,
+      "create_time": 1790997759.8503244,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 16152,
+      "create_time": 1790997760.1166441,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 29992,
+      "create_time": 1790997760.243784,
+      "name": "python.exe"
+    },
+    {
+      "pid": 7552,
+      "create_time": 1790997760.2552276,
+      "name": "python.exe"
+    },
+    {
+      "pid": 28088,
+      "create_time": 1790997760.7448747,
+      "name": "python.exe"
+    },
+    {
+      "pid": 28420,
+      "create_time": 1790997760.7531729,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 416,
+      "create_time": 1790997761.0102444,
+      "name": "python.exe"
+    },
+    {
+      "pid": 30788,
+      "create_time": 1790997761.0219014,
+      "name": "python.exe"
+    },
+    {
+      "pid": 7216,
+      "create_time": 1790997761.2125733,
+      "name": "python.exe"
+    },
+    {
+      "pid": 8568,
+      "create_time": 1790997761.2257936,
+      "name": "python.exe"
+    },
+    {
+      "pid": 13336,
+      "create_time": 1790997761.4686787,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 1592,
+      "create_time": 1790997761.4745493,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 20900,
+      "create_time": 1790997761.4995348,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 28836,
+      "create_time": 1790997761.6240706,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 30084,
+      "create_time": 1790997761.928886,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 27444,
+      "create_time": 1790997761.9719028,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 9072,
+      "create_time": 1790997762.102225,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 18604,
+      "create_time": 1790997762.3319004,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 8080,
+      "create_time": 1790997762.3381295,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 22120,
+      "create_time": 1790997762.3644283,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 6148,
+      "create_time": 1790997762.4474928,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 28868,
+      "create_time": 1790997762.6719744,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 31892,
+      "create_time": 1790997762.6773112,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 6996,
+      "create_time": 1790997762.6998904,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 19228,
+      "create_time": 1790997762.7427788,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 22228,
+      "create_time": 1790997762.766323,
+      "name": "python.exe"
+    },
+    {
+      "pid": 30860,
+      "create_time": 1790997762.7802427,
+      "name": "python.exe"
+    },
+    {
+      "pid": 19444,
+      "create_time": 1790997763.0146792,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 17172,
+      "create_time": 1790997763.3397741,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 3132,
+      "create_time": 1790997763.3456953,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 21620,
+      "create_time": 1790997763.3701017,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 860,
+      "create_time": 1790997763.4149103,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 16956,
+      "create_time": 1790997763.435076,
+      "name": "python.exe"
+    },
+    {
+      "pid": 27208,
+      "create_time": 1790997763.445616,
+      "name": "python.exe"
+    },
+    {
+      "pid": 17012,
+      "create_time": 1790997763.9948528,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 28436,
+      "create_time": 1790997764.0000064,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 24612,
+      "create_time": 1790997764.0235224,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 30884,
+      "create_time": 1790997764.1560235,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 30780,
+      "create_time": 1790997764.4584396,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 26656,
+      "create_time": 1790997764.49045,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 32740,
+      "create_time": 1790997764.6180916,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 20596,
+      "create_time": 1790997764.8458493,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 28260,
+      "create_time": 1790997764.8523211,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 32100,
+      "create_time": 1790997764.8788657,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 30804,
+      "create_time": 1790997764.960301,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 26428,
+      "create_time": 1790997765.182392,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 11912,
+      "create_time": 1790997765.1882524,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 29456,
+      "create_time": 1790997765.210466,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 22588,
+      "create_time": 1790997765.2681012,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 27968,
+      "create_time": 1790997765.2855074,
+      "name": "python.exe"
+    },
+    {
+      "pid": 7304,
+      "create_time": 1790997765.2969985,
+      "name": "python.exe"
+    },
+    {
+      "pid": 31464,
+      "create_time": 1790997765.52762,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 30272,
+      "create_time": 1790997765.6789808,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 19720,
+      "create_time": 1790997765.6850646,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 32268,
+      "create_time": 1790997765.7085328,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 29420,
+      "create_time": 1790997765.7501726,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 28600,
+      "create_time": 1790997765.8306732,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 30244,
+      "create_time": 1790997765.8458252,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 29380,
+      "create_time": 1790997765.8620417,
+      "name": "git.exe"
+    },
+    {
+      "pid": 11052,
+      "create_time": 1790997765.972373,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 20168,
+      "create_time": 1790997766.0917025,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 31276,
+      "create_time": 1790997766.112386,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 20744,
+      "create_time": 1790997766.5317564,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 29832,
+      "create_time": 1790997766.5383108,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 25264,
+      "create_time": 1790997766.5616088,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 5992,
+      "create_time": 1790997766.6702516,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 29448,
+      "create_time": 1790997766.87069,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 19492,
+      "create_time": 1790997766.8769696,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 28444,
+      "create_time": 1790997766.9025168,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 2972,
+      "create_time": 1790997766.9461715,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 32712,
+      "create_time": 1790997766.968732,
+      "name": "python.exe"
+    },
+    {
+      "pid": 10852,
+      "create_time": 1790997766.9878385,
+      "name": "python.exe"
+    },
+    {
+      "pid": 18656,
+      "create_time": 1790997767.2098916,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 17368,
+      "create_time": 1790997767.543125,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 30248,
+      "create_time": 1790997767.5484612,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 12020,
+      "create_time": 1790997767.571162,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 24172,
+      "create_time": 1790997767.6214545,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 12372,
+      "create_time": 1790997767.6401885,
+      "name": "python.exe"
+    },
+    {
+      "pid": 13832,
+      "create_time": 1790997767.6584785,
+      "name": "python.exe"
+    },
+    {
+      "pid": 16972,
+      "create_time": 1790997767.992506,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 11744,
+      "create_time": 1790997767.9975245,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 24300,
+      "create_time": 1790997768.0259345,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 7424,
+      "create_time": 1790997768.1551838,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 28760,
+      "create_time": 1790997768.171419,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 12404,
+      "create_time": 1790997768.3670478,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 27428,
+      "create_time": 1790997768.4654963,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 31212,
+      "create_time": 1790997768.48168,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 5940,
+      "create_time": 1790997768.5908751,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 29576,
+      "create_time": 1790997768.8507743,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 28856,
+      "create_time": 1790997768.8564477,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 19444,
+      "create_time": 1790997768.8841267,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 29404,
+      "create_time": 1790997768.9319997,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 24432,
+      "create_time": 1790997769.1797328,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 25304,
+      "create_time": 1790997769.1854055,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 9060,
+      "create_time": 1790997769.2089703,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 9712,
+      "create_time": 1790997769.2563908,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 23456,
+      "create_time": 1790997769.2740855,
+      "name": "python.exe"
+    },
+    {
+      "pid": 18784,
+      "create_time": 1790997769.2859006,
+      "name": "python.exe"
+    },
+    {
+      "pid": 5948,
+      "create_time": 1790997769.507877,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 13416,
+      "create_time": 1790997769.8584254,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 16216,
+      "create_time": 1790997769.8644133,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 29980,
+      "create_time": 1790997769.897474,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 28764,
+      "create_time": 1790997770.0420127,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 2560,
+      "create_time": 1790997770.0608664,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 30480,
+      "create_time": 1790997770.0791273,
+      "name": "git.exe"
+    },
+    {
+      "pid": 30768,
+      "create_time": 1790997770.1990664,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 4192,
+      "create_time": 1790997770.309389,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 28024,
+      "create_time": 1790997770.330973,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 20680,
+      "create_time": 1790997770.721534,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 26656,
+      "create_time": 1790997770.726971,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 26616,
+      "create_time": 1790997770.7508123,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 29236,
+      "create_time": 1790997770.8831372,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 27644,
+      "create_time": 1790997771.0498865,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 17012,
+      "create_time": 1790997771.0560017,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 28392,
+      "create_time": 1790997771.091319,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 27260,
+      "create_time": 1790997771.1392615,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 13536,
+      "create_time": 1790997771.159404,
+      "name": "python.exe"
+    },
+    {
+      "pid": 24940,
+      "create_time": 1790997771.1757689,
+      "name": "python.exe"
+    },
+    {
+      "pid": 19816,
+      "create_time": 1790997771.7434936,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 23432,
+      "create_time": 1790997771.7501264,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 11904,
+      "create_time": 1790997771.7766793,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 32072,
+      "create_time": 1790997771.82628,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 22736,
+      "create_time": 1790997771.8460464,
+      "name": "python.exe"
+    },
+    {
+      "pid": 11708,
+      "create_time": 1790997771.8588092,
+      "name": "python.exe"
+    },
+    {
+      "pid": 22024,
+      "create_time": 1790997772.037593,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 8176,
+      "create_time": 1790997772.3900447,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 2728,
+      "create_time": 1790997772.3955488,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 22844,
+      "create_time": 1790997772.4209993,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 28876,
+      "create_time": 1790997772.5646355,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 30600,
+      "create_time": 1790997772.5801835,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 27328,
+      "create_time": 1790997772.595729,
+      "name": "git.exe"
+    },
+    {
+      "pid": 11836,
+      "create_time": 1790997772.8121195,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 13640,
+      "create_time": 1790997772.831044,
+      "name": "mktemp.exe"
+    },
+    {
+      "pid": 27040,
+      "create_time": 1790997772.8633053,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 28132,
+      "create_time": 1790997772.9174457,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 17020,
+      "create_time": 1790997772.9399664,
+      "name": "grep.exe"
+    },
+    {
+      "pid": 29740,
+      "create_time": 1790997773.2577271,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 1960,
+      "create_time": 1790997773.263853,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 30684,
+      "create_time": 1790997773.3044348,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 14364,
+      "create_time": 1790997773.6008828,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 17136,
+      "create_time": 1790997773.6067667,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 18656,
+      "create_time": 1790997773.62987,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 5424,
+      "create_time": 1790997773.6768904,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 22412,
+      "create_time": 1790997773.70406,
+      "name": "python.exe"
+    },
+    {
+      "pid": 7216,
+      "create_time": 1790997773.7156453,
+      "name": "python.exe"
+    },
+    {
+      "pid": 31988,
+      "create_time": 1790997774.284904,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 24396,
+      "create_time": 1790997774.2900057,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 29528,
+      "create_time": 1790997774.3120348,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 30248,
+      "create_time": 1790997774.4174616,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 28536,
+      "create_time": 1790997774.443542,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 6040,
+      "create_time": 1790997774.4602346,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 26804,
+      "create_time": 1790997774.4781094,
+      "name": "git.exe"
+    },
+    {
+      "pid": 17160,
+      "create_time": 1790997774.6260285,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 31904,
+      "create_time": 1790997774.646464,
+      "name": "locale.exe"
+    },
+    {
+      "pid": 7392,
+      "create_time": 1790997774.7961981,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 23796,
+      "create_time": 1790997775.3714952,
+      "name": "cmd.exe"
+    },
+    {
+      "pid": 26812,
+      "create_time": 1790997775.382337,
+      "name": "python.exe"
+    },
+    {
+      "pid": 26952,
+      "create_time": 1790997775.3959503,
+      "name": "python.exe"
+    },
+    {
+      "pid": 16724,
+      "create_time": 1790997775.6511471,
+      "name": "cmd.exe"
+    },
+    {
+      "pid": 29588,
+      "create_time": 1790997775.6663036,
+      "name": "python.exe"
+    },
+    {
+      "pid": 5804,
+      "create_time": 1790997775.6830256,
+      "name": "python.exe"
+    },
+    {
+      "pid": 22128,
+      "create_time": 1790997776.0432496,
+      "name": "cmd.exe"
+    },
+    {
+      "pid": 7076,
+      "create_time": 1790997776.0585115,
+      "name": "python.exe"
+    },
+    {
+      "pid": 10288,
+      "create_time": 1790997776.0736208,
+      "name": "python.exe"
+    },
+    {
+      "pid": 21932,
+      "create_time": 1790997776.4149396,
+      "name": "cmd.exe"
+    },
+    {
+      "pid": 28708,
+      "create_time": 1790997776.4264932,
+      "name": "python.exe"
+    },
+    {
+      "pid": 21968,
+      "create_time": 1790997776.4384797,
+      "name": "python.exe"
+    },
+    {
+      "pid": 16008,
+      "create_time": 1790997776.72628,
+      "name": "cmd.exe"
+    },
+    {
+      "pid": 14096,
+      "create_time": 1790997776.7388644,
+      "name": "python.exe"
+    },
+    {
+      "pid": 27744,
+      "create_time": 1790997776.7531931,
+      "name": "python.exe"
+    },
+    {
+      "pid": 10656,
+      "create_time": 1790997777.0053866,
+      "name": "cmd.exe"
+    },
+    {
+      "pid": 24432,
+      "create_time": 1790997777.0189042,
+      "name": "python.exe"
+    },
+    {
+      "pid": 28388,
+      "create_time": 1790997777.0431795,
+      "name": "python.exe"
+    },
+    {
+      "pid": 21808,
+      "create_time": 1790997777.4212213,
+      "name": "cmd.exe"
+    },
+    {
+      "pid": 17184,
+      "create_time": 1790997777.4333892,
+      "name": "python.exe"
+    },
+    {
+      "pid": 2560,
+      "create_time": 1790997777.4461966,
+      "name": "python.exe"
+    },
+    {
+      "pid": 24948,
+      "create_time": 1790997777.8194437,
+      "name": "cmd.exe"
+    },
+    {
+      "pid": 31340,
+      "create_time": 1790997777.8326347,
+      "name": "python.exe"
+    },
+    {
+      "pid": 27252,
+      "create_time": 1790997777.8460572,
+      "name": "python.exe"
+    },
+    {
+      "pid": 25220,
+      "create_time": 1790997778.1187277,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 6724,
+      "create_time": 1790997778.1264756,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 19748,
+      "create_time": 1790997778.153353,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 8392,
+      "create_time": 1790997778.2920527,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 17772,
+      "create_time": 1790997778.3189428,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 14688,
+      "create_time": 1790997778.3429916,
+      "name": "git.exe"
+    },
+    {
+      "pid": 23532,
+      "create_time": 1790997778.484524,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 29788,
+      "create_time": 1790997778.6349607,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 25772,
+      "create_time": 1790997778.9994648,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 32000,
+      "create_time": 1790997779.0067444,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 30532,
+      "create_time": 1790997779.0323732,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 8588,
+      "create_time": 1790997779.1891792,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 29420,
+      "create_time": 1790997779.3663952,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 20160,
+      "create_time": 1790997779.3725684,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 8252,
+      "create_time": 1790997779.4049723,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 22552,
+      "create_time": 1790997779.4623864,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 31696,
+      "create_time": 1790997779.4850888,
+      "name": "python.exe"
+    },
+    {
+      "pid": 19816,
+      "create_time": 1790997779.5020475,
+      "name": "python.exe"
+    },
+    {
+      "pid": 32136,
+      "create_time": 1790997780.0290022,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 27412,
+      "create_time": 1790997780.036142,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 6024,
+      "create_time": 1790997780.0635576,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 8636,
+      "create_time": 1790997780.1865244,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 31644,
+      "create_time": 1790997780.2034645,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 13340,
+      "create_time": 1790997780.4510684,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 26916,
+      "create_time": 1790997780.5073264,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 23896,
+      "create_time": 1790997780.5663283,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 32336,
+      "create_time": 1790997780.9601333,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 30788,
+      "create_time": 1790997780.9673777,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 25676,
+      "create_time": 1790997780.9952855,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 26764,
+      "create_time": 1790997781.0406687,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 5424,
+      "create_time": 1790997781.127214,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 23992,
+      "create_time": 1790997781.143685,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 32712,
+      "create_time": 1790997781.1617787,
+      "name": "git.exe"
+    },
+    {
+      "pid": 31188,
+      "create_time": 1790997781.3717527,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 1972,
+      "create_time": 1790997781.4290977,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 28556,
+      "create_time": 1790997781.478132,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 5544,
+      "create_time": 1790997781.5006213,
+      "name": "grep.exe"
+    },
+    {
+      "pid": 25104,
+      "create_time": 1790997781.8399296,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 32028,
+      "create_time": 1790997781.8455336,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 30472,
+      "create_time": 1790997781.8753848,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 11168,
+      "create_time": 1790997781.9375665,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 32128,
+      "create_time": 1790997781.9560091,
+      "name": "python.exe"
+    },
+    {
+      "pid": 27560,
+      "create_time": 1790997781.9694333,
+      "name": "python.exe"
+    },
+    {
+      "pid": 31700,
+      "create_time": 1790997785.4601862,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 29760,
+      "create_time": 1790997785.4658988,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 11916,
+      "create_time": 1790997785.4908047,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 1052,
+      "create_time": 1790997785.7142525,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 20516,
+      "create_time": 1790997785.8297908,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 27024,
+      "create_time": 1790997785.938885,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 27744,
+      "create_time": 1790997785.95747,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 21620,
+      "create_time": 1790997786.0662866,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 21196,
+      "create_time": 1790997786.3381243,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 13996,
+      "create_time": 1790997786.3452616,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 27088,
+      "create_time": 1790997786.376706,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 28196,
+      "create_time": 1790997786.5155928,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 19596,
+      "create_time": 1790997786.7455063,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 13416,
+      "create_time": 1790997786.7520187,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 11980,
+      "create_time": 1790997786.7838507,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 21796,
+      "create_time": 1790997786.920745,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 31500,
+      "create_time": 1790997786.9407258,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 21948,
+      "create_time": 1790997786.9583135,
+      "name": "git.exe"
+    },
+    {
+      "pid": 29344,
+      "create_time": 1790997787.2166407,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 12128,
+      "create_time": 1790997787.322235,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 26780,
+      "create_time": 1790997787.6241376,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 32000,
+      "create_time": 1790997787.629561,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 26720,
+      "create_time": 1790997787.6545808,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 30676,
+      "create_time": 1790997787.7797775,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 29028,
+      "create_time": 1790997788.0730853,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 22996,
+      "create_time": 1790997788.0790687,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 28960,
+      "create_time": 1790997788.1096034,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 10076,
+      "create_time": 1790997788.4844153,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 29644,
+      "create_time": 1790997788.5939715,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 29908,
+      "create_time": 1790997788.7083025,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 32136,
+      "create_time": 1790997789.0367088,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 19164,
+      "create_time": 1790997789.039254,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 15856,
+      "create_time": 1790997789.0457711,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 28776,
+      "create_time": 1790997789.043125,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 31016,
+      "create_time": 1790997789.0782323,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 16760,
+      "create_time": 1790997789.072588,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 32184,
+      "create_time": 1790997789.1741843,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 7424,
+      "create_time": 1790997789.3678472,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 28584,
+      "create_time": 1790997789.373888,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 25676,
+      "create_time": 1790997789.39849,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 31532,
+      "create_time": 1790997789.7407308,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 29260,
+      "create_time": 1790997789.812816,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 14828,
+      "create_time": 1790997789.8462138,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 27396,
+      "create_time": 1790997790.3375485,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 16400,
+      "create_time": 1790997790.3428233,
+      "name": "conhost.exe"
+    },
+    {
+      "pid": 32124,
+      "create_time": 1790997790.3680644,
+      "name": "bash.exe"
+    },
+    {
+      "pid": 16008,
+      "create_time": 1790997790.4216757,
+      "name": "bash.exe"
+    }
+  ],
+  "after": [],
+  "remaining_observed": [],
+  "owned_listeners": [],
+  "exit_code": 0,
+  "native_passed": 28,
+  "failed": 0,
+  "skipped": 0,
+  "limitation": "Descendant identity observations are polled at 100ms; very short-lived children may not appear. Final audit includes task temp cwd and pytest processes as well as all observed identities. No production process is signalled."
+}

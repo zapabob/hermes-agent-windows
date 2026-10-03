@@ -1,0 +1,434 @@
+{
+  "symbol": "_make_run_env",
+  "depth": 2,
+  "nodeCount": 71,
+  "edgeCount": 70,
+  "affected": [
+    {
+      "name": "_make_run_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 1626
+    },
+    {
+      "name": "_run",
+      "kind": "function",
+      "filePath": "tests/acp/test_server.py",
+      "startLine": 429
+    },
+    {
+      "name": "test_prompt_binds_session_id_into_subprocess_env",
+      "kind": "method",
+      "filePath": "tests/acp/test_server.py",
+      "startLine": 413
+    },
+    {
+      "name": "run_conversation",
+      "kind": "method",
+      "filePath": "tests/gateway/test_session_api.py",
+      "startLine": 137
+    },
+    {
+      "name": "_spawn_view",
+      "kind": "function",
+      "filePath": "tests/gateway/test_session_context_inheritance.py",
+      "startLine": 93
+    },
+    {
+      "name": "_b_body",
+      "kind": "function",
+      "filePath": "tests/gateway/test_session_context_inheritance.py",
+      "startLine": 112
+    },
+    {
+      "name": "test_host_auto_preserves_real_home_when_profile_home_exists",
+      "kind": "method",
+      "filePath": "tests/test_subprocess_home_isolation.py",
+      "startLine": 122
+    },
+    {
+      "name": "test_profile_mode_injects_profile_home_when_profile_home_exists",
+      "kind": "method",
+      "filePath": "tests/test_subprocess_home_isolation.py",
+      "startLine": 139
+    },
+    {
+      "name": "test_no_injection_when_home_dir_missing",
+      "kind": "method",
+      "filePath": "tests/test_subprocess_home_isolation.py",
+      "startLine": 157
+    },
+    {
+      "name": "test_no_injection_when_hermes_home_unset",
+      "kind": "method",
+      "filePath": "tests/test_subprocess_home_isolation.py",
+      "startLine": 170
+    },
+    {
+      "name": "test_make_run_env_blocklist_override_rejected",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 332
+    },
+    {
+      "name": "test_make_run_env_strips_markers",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 329
+    },
+    {
+      "name": "test_make_run_env_uses_active_profile_for_passthrough",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1099
+    },
+    {
+      "name": "test_make_run_env_omits_missing_scoped_passthrough",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1119
+    },
+    {
+      "name": "test_gateway_credentials_are_stripped_from_all_local_env_paths",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1339
+    },
+    {
+      "name": "test_make_run_env_appends_homebrew_on_minimal_path",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1392
+    },
+    {
+      "name": "test_make_run_env_real_launchd_path_gains_homebrew",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1417
+    },
+    {
+      "name": "test_make_run_env_preserves_windows_mixed_case_path_key",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1435
+    },
+    {
+      "name": "test_make_run_env_injects_hermes_bin_dir",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1481
+    },
+    {
+      "name": "test_make_run_env_strips_internal_secrets",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1592
+    },
+    {
+      "name": "test_engaged_unset_contextvar_strips_foreign_session_key",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 69
+    },
+    {
+      "name": "test_set_session_vars_engages_and_overrides_foreign_global",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 90
+    },
+    {
+      "name": "test_unengaged_process_preserves_os_environ_fallback",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 115
+    },
+    {
+      "name": "test_explicit_empty_thread_id_overrides_stale_value",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 132
+    },
+    {
+      "name": "child_env",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 58
+    },
+    {
+      "name": "test_adapter_and_plugin_secrets_never_reach_child",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 81
+    },
+    {
+      "name": "test_oauth_profile_api_keys_do_not_reach_ordinary_children",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 91
+    },
+    {
+      "name": "test_unreadable_security_declaration_blocks_child",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 97
+    },
+    {
+      "name": "test_force_prefix_cannot_reintroduce_tier_one_secret",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 107
+    },
+    {
+      "name": "test_native_child_observes_only_benign_values",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 113
+    },
+    {
+      "name": "test_profile_owned_value_is_resolved_before_child_policy",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 154
+    },
+    {
+      "name": "test_malformed_manifest_blocks_child",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 178
+    },
+    {
+      "name": "test_multiplex_credential_child_requires_bound_profile",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 185
+    },
+    {
+      "name": "test_bare_adapter_token_declaration_is_always_secret",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 197
+    },
+    {
+      "name": "test_plugin_manifest_cannot_demote_core_provider",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 224
+    },
+    {
+      "name": "test_routed_credential_child_receives_target_provider_only",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 233
+    },
+    {
+      "name": "test_same_profile_empty_scope_preserves_explicit_provider_inheritance",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 246
+    },
+    {
+      "name": "test_passthrough_registration_cannot_demote_adapter_authority",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 258
+    },
+    {
+      "name": "test_explicit_nonsecret_extra_keeps_precedence",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 273
+    },
+    {
+      "name": "test_invalid_provider_security_declaration_blocks_spawn",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 284
+    },
+    {
+      "name": "test_loaded_profile_name_stays_owned_after_source_file_removal",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 291
+    },
+    {
+      "name": "test_real_cron_profile_context_does_not_relabel_launch_secrets",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 313
+    },
+    {
+      "name": "test_extra_cannot_restore_launch_owned_secret",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 330
+    },
+    {
+      "name": "test_core_adapter_secret_cannot_be_forced_into_ordinary_child",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 355
+    },
+    {
+      "name": "test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 362
+    },
+    {
+      "name": "test_global_runtime_declaration_survives_minimal_os_environment",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 377
+    },
+    {
+      "name": "test_scoped_adapter_override_cannot_hide_global_security_declaration",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 391
+    },
+    {
+      "name": "test_falsey_non_list_manifest_declaration_refuses_child",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 414
+    },
+    {
+      "name": "test_explicit_empty_or_null_manifest_list_retains_benign_child",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 425
+    },
+    {
+      "name": "test_default_windows_launch_home_uses_canonical_resolver",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 435
+    },
+    {
+      "name": "test_invalid_manifest_security_flag_refuses_child",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 456
+    },
+    {
+      "name": "test_late_oauth_provider_credential_is_filtered",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 469
+    },
+    {
+      "name": "test_invalid_provider_profile_declaration_refuses_child",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 481
+    },
+    {
+      "name": "test_cached_passthrough_rechecks_late_adapter_ownership",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 495
+    },
+    {
+      "name": "test_registered_benign_extra_keeps_explicit_precedence",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 521
+    },
+    {
+      "name": "test_provider_discovery_preserves_user_cli_oauth_and_general_aws",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 540
+    },
+    {
+      "name": "test_late_provider_keeps_tier_two_authority_over_manifest",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 554
+    },
+    {
+      "name": "test_dangling_manifest_link_is_unreadable_declaration",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 566
+    },
+    {
+      "name": "test_native_dangling_platform_junction_refuses_child",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 586
+    },
+    {
+      "name": "test_startup_sdk_registration_preserves_general_aws_credentials",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 609
+    },
+    {
+      "name": "_lifecycle_coro",
+      "kind": "method",
+      "filePath": "tools/computer_use/cua_backend.py",
+      "startLine": 1735
+    },
+    {
+      "name": "_call_tool_via_cli",
+      "kind": "method",
+      "filePath": "tools/computer_use/cua_backend.py",
+      "startLine": 2209
+    },
+    {
+      "name": "test_make_run_env_sets_msys_no_pathconv_on_windows",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "startLine": 361
+    },
+    {
+      "name": "test_msys2_arg_conv_excl_respects_user_override",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "startLine": 373
+    },
+    {
+      "name": "test_make_run_env_noop_on_posix",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "startLine": 424
+    },
+    {
+      "name": "test_readonly_prior_scope_history_refuses_foreign_snapshot",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_windows_native.py",
+      "startLine": 329
+    },
+    {
+      "name": "_spawn_bash",
+      "kind": "method",
+      "filePath": "tools/environments/local.py",
+      "startLine": 2261
+    },
+    {
+      "name": "_run_bash",
+      "kind": "method",
+      "filePath": "tools/environments/local.py",
+      "startLine": 2222
+    },
+    {
+      "name": "test_session_context_inheritance.py",
+      "kind": "file",
+      "filePath": "tests/gateway/test_session_context_inheritance.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_local_env_session_leak.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_local_env_windows_msys.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "startLine": 1
+    }
+  ]
+}

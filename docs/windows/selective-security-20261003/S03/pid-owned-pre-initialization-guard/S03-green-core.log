@@ -1,0 +1,28 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 5 test files (~123 tests) under ['tests\\tools\\test_child_credential_boundary.py', 'tests\\agent\\test_terminal_env_registry.py', 'tests\\tools\\test_hermes_subprocess_env.py', 'tests\\tools\\test_build_subprocess_env.py', 'tests\\tools\\test_local_env_blocklist.py']; running with -j 1
+[ 13.8% |    17/~123 | ✓24 | ✗ 0] ✓ tests\agent\test_terminal_env_registry.py (24✓, 2.6s)
+[ 21.1% |    26/~123 | ✓34 | ✗ 0] ✓ tests\tools\test_build_subprocess_env.py (10✓, 4.3s)
+[ 25.2% |    31/~123 | ✓96 | ✗ 0] ✓ tests\tools\test_child_credential_boundary.py (62✓, 7.2s)
+[ 42.3% |    52/~123 | ✓117 | ✗  0] ✓ tests\tools\test_hermes_subprocess_env.py (21✓, 4.7s)
+[100.0% |   123/~123 | ✓199 | ✗  0] ✓ tests\tools\test_local_env_blocklist.py (82✓ 1s, 22.8s)
+
+=== Summary: 5 files, 199 tests passed, 0 failed, 1 skipped (100% complete) in 41.5s (1 workers) ===
+
+  note: macos_only tests (in 1 file) were SKIPPED on this host (win32); they run on the tests-os CI lane (macos-latest).
+  Durations cached to test_durations.json (5 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   5
+  Total subprocess CPU-wall: 41.5s  (runner wall: 41.5s, parallelism: 1x)
+  P50: 4.73s  P90: 22.77s  P95: 22.77s  P99: 22.77s  Max: 22.77s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+     22.77s  tests\tools\test_local_env_blocklist.py
+      7.17s  tests\tools\test_child_credential_boundary.py
+      4.73s  tests\tools\test_hermes_subprocess_env.py
+      4.28s  tests\tools\test_build_subprocess_env.py
+      2.58s  tests\agent\test_terminal_env_registry.py

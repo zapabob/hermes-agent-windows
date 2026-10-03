@@ -1,0 +1,26 @@
+........................................................................ [ 33%]
+........................................................................ [ 66%]
+..............................................FFFF.....................  [100%]
+================================== FAILURES ===================================
+______ test_invalid_provider_profile_declaration_refuses_child[terminal] ______
+tests\tools\test_child_credential_boundary.py:489: in test_invalid_provider_profile_declaration_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(credential|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+_____ test_invalid_provider_profile_declaration_refuses_child[background] _____
+tests\tools\test_child_credential_boundary.py:489: in test_invalid_provider_profile_declaration_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(credential|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+________ test_invalid_provider_profile_declaration_refuses_child[cli] _________
+tests\tools\test_child_credential_boundary.py:489: in test_invalid_provider_profile_declaration_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(credential|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+___ test_invalid_provider_profile_declaration_refuses_child[credential-cli] ___
+tests\tools\test_child_credential_boundary.py:489: in test_invalid_provider_profile_declaration_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(credential|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_provider_profile_declaration_refuses_child[terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_provider_profile_declaration_refuses_child[background]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_provider_profile_declaration_refuses_child[cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_provider_profile_declaration_refuses_child[credential-cli]
+4 failed, 211 passed in 9.43s

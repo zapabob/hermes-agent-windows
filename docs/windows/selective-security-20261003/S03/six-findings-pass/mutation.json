@@ -1,0 +1,142 @@
+{
+  "os": "nt",
+  "python": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts\\python.exe",
+  "integration_parent": "d0bba5c1d065b7b1d7d1c2d831a12ddc8e9e26f7",
+  "candidate_head": "0d73df6d606839b4c32ea3f48f37c098045dfe8c",
+  "candidate_tree": "a9a8762c82b0684d2f661e45bcee8a755b5b73d8",
+  "integration_branch_moved": false,
+  "source_sha256": {
+    "tools/environments/local.py": "6b3f02155f85abe02b57d3c8037dd5de8930d0bfe89ac8a1b46f55abf13e3c36",
+    "agent/terminal_env_registry.py": "54ae41ee1402bcdab56033d817be3996edb9b9682c5c35d58218ba0b4c82656a",
+    "hermes_cli/config.py": "6dc09337d7b4abe0d9eca147eeb3ad721f1e7204c8695d66d93e4d8d15409da9",
+    "hermes_cli/env_loader.py": "6ee89b599654eb8a56cb217fa9bd3599172197ec93a760f8b8de44f76336ed12",
+    "cron/scheduler.py": "e5caf50bebcf6e682607f7c292944087df2964e00190dde680b1114ac9c84b56",
+    "plugins/platforms/raft/adapter.py": "82667c721fba17d36ebd00c0e8e430cbb32a1b343d77a59cf814e1c8b10eb180",
+    "plugins/memory/openviking/__init__.py": "d180cde27e15598b6015f4c0d588c4b4f640f06571ce38402e2d28d64fa9a237",
+    "agent/delegation_context.py": "08c6b406f18db90c04671cf05f60d659a4cff42281060b0d70c85e02b2ed72d9",
+    "gateway/platform_registry.py": "9fa981abb930cf4f6ae35c2a7d1917374d56abeb0783e3d1f860deeaa9867a8c",
+    "tools/env_passthrough.py": "755c95a772071132cacf28862c9663a1ca59e5ae3a9243286829899e8321f200",
+    "tools/tts_tool.py": "4b4e9854f48bf8d7e33436ecb3dcff2aa247ed2fc2d898379523e5d2341abffb",
+    "tools/transcription_tools.py": "002f31316c8187a00f4f38a5c6f75bfc3a6b860d3168eb1231e518ccac98d541",
+    "tests/tools/test_child_credential_boundary.py": "5dbec781d4c90d2b4dec1a23b3e22c027b3ceb1f3bb634712ddde772ffe1d64a",
+    "tests/tools/test_child_bridge_credential_boundary.py": "ef98c33bdaadab73d24718e84bd2f9a489109e5fcca7f476e1b470c417d5c242",
+    "tests/tools/test_child_credential_windows_native.py": "946a53609c6982f14beeb58650064aa53caac89c820c0828b4bee52d36db0616",
+    "tests/agent/test_terminal_env_registry.py": "a81e4dbb16f980e009b9df67c951188b5af6402c1320f8ed219901dc37fbad2a",
+    "tests/tools/test_local_env_windows_msys.py": "6c8932ab846ad580dee3c5051e9567261896fdb4643709627498397194725cbf"
+  },
+  "existing_framework": "scripts/ci/engineering_repair_mutations.py",
+  "frozen_owner_red_exit": 1,
+  "baseline_passed": true,
+  "mutations": [
+    {
+      "mutant": "M01-declaration-exception-empty",
+      "owner": "agent/terminal_env_registry.py",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M02-plugin-secrets-process-wide",
+      "owner": "tools/environments/local.py",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M03-oauth-profile-exclusion",
+      "owner": "tools/environments/local.py",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M04-token-suffix-excluded",
+      "owner": "hermes_cli/config.py",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M05-launch-profile-fallback",
+      "owner": "tools/environments/local.py",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M06-snapshot-authority-guard-removed",
+      "owner": "tools/environments/local.py",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M07-runtime-adapter-declarations-ignored",
+      "owner": "tools/environments/local.py",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M08-readonly-snapshot-accepted",
+      "owner": "tools/environments/local.py",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M09-invalid-shell-identifiers-accepted",
+      "owner": "tools/environments/local.py",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M10-windows-argv-limit-ignored",
+      "owner": "tools/environments/local.py",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M11-scoped-registration-hides-global-declaration",
+      "owner": "gateway/platform_registry.py",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M12-falsey-invalid-manifest-declaration-accepted",
+      "owner": "hermes_cli/config.py",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M13-invalid-security-flag-accepted",
+      "owner": "hermes_cli/config.py",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M14-provider-declaration-fail-open",
+      "owner": "tools/environments/local.py",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M15-cached-passthrough-authority-retained",
+      "owner": "tools/env_passthrough.py",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M16-benign-explicit-value-overridden",
+      "owner": "tools/environments/local.py",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M17-delegated-approved-voice-key-lost",
+      "owner": "agent/delegation_context.py",
+      "killed": true,
+      "exit_code": 1
+    },
+    {
+      "mutant": "M18-snapshot-inspection-source-race-restored",
+      "owner": "tools/environments/local.py",
+      "killed": true,
+      "exit_code": 1
+    }
+  ],
+  "restored_passed": true,
+  "tracked_diff_clean": true
+}

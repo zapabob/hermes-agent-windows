@@ -1,0 +1,125 @@
+{
+  "symbol": "hermes_subprocess_env",
+  "callers": [
+    {
+      "name": "_build_subprocess_env",
+      "kind": "function",
+      "filePath": "agent/copilot_acp_client.py",
+      "startLine": 117
+    },
+    {
+      "name": "__init__",
+      "kind": "method",
+      "filePath": "agent/transports/codex_app_server.py",
+      "startLine": 45
+    },
+    {
+      "name": "ensure_dependency",
+      "kind": "function",
+      "filePath": "hermes_cli/dep_ensure.py",
+      "startLine": 76
+    },
+    {
+      "name": "_build",
+      "kind": "function",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 43
+    },
+    {
+      "name": "test_browser_keys_recoverable_after_strip",
+      "kind": "method",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 128
+    },
+    {
+      "name": "test_delegated_child_context_scrubs_parent_kanban_keys_and_sets_marker",
+      "kind": "method",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 154
+    },
+    {
+      "name": "test_hermes_subprocess_env_strips_foreign_session_key_when_engaged",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 208
+    },
+    {
+      "name": "test_hermes_subprocess_env_unengaged_preserves_fallback",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 228
+    },
+    {
+      "name": "test_hermes_subprocess_env_sets_msys_no_pathconv_on_windows",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "startLine": 231
+    },
+    {
+      "name": "_build_browser_env",
+      "kind": "function",
+      "filePath": "tools/browser_tool.py",
+      "startLine": 38
+    },
+    {
+      "name": "_venv_pip_install",
+      "kind": "function",
+      "filePath": "tools/lazy_deps.py",
+      "startLine": 482
+    },
+    {
+      "name": "_transcribe_local_command",
+      "kind": "function",
+      "filePath": "tools/transcription_local.py",
+      "startLine": 222
+    },
+    {
+      "name": "run_command_provider",
+      "kind": "function",
+      "filePath": "tools/tts_command_provider.py",
+      "startLine": 135
+    },
+    {
+      "name": "_run_system_player",
+      "kind": "function",
+      "filePath": "tools/voice_mode.py",
+      "startLine": 1057
+    },
+    {
+      "name": "_spawn_locked",
+      "kind": "method",
+      "filePath": "tui_gateway/host_supervisor.py",
+      "startLine": 309
+    },
+    {
+      "name": "_",
+      "kind": "function",
+      "filePath": "tui_gateway/methods_tools.py",
+      "startLine": 435
+    },
+    {
+      "name": "__init__",
+      "kind": "method",
+      "filePath": "tui_gateway/server.py",
+      "startLine": 227
+    },
+    {
+      "name": "copilot_acp_client.py",
+      "kind": "file",
+      "filePath": "agent/copilot_acp_client.py",
+      "startLine": 1
+    },
+    {
+      "name": "codex_app_server.py",
+      "kind": "file",
+      "filePath": "agent/transports/codex_app_server.py",
+      "startLine": 1
+    },
+    {
+      "name": "dep_ensure.py",
+      "kind": "file",
+      "filePath": "hermes_cli/dep_ensure.py",
+      "startLine": 1
+    }
+  ]
+}

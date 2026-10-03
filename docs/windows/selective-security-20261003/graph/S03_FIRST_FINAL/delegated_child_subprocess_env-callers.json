@@ -1,0 +1,29 @@
+{
+  "symbol": "delegated_child_subprocess_env",
+  "callers": [
+    {
+      "name": "_probe_python",
+      "kind": "function",
+      "filePath": "tools/code_execution_tool.py",
+      "startLine": 1968
+    },
+    {
+      "name": "_run_command_stt",
+      "kind": "function",
+      "filePath": "tools/transcription_tools.py",
+      "startLine": 710
+    },
+    {
+      "name": "_run_command_tts",
+      "kind": "function",
+      "filePath": "tools/tts_tool.py",
+      "startLine": 1188
+    },
+    {
+      "name": "test_native_spawn_honors_served_profile_and_secret_minimization",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_windows_native.py",
+      "startLine": 26
+    }
+  ]
+}

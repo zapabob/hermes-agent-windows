@@ -1,0 +1,17 @@
+{
+  "root": "H:\\hermes-worktrees\\p0-p1-local-20261003",
+  "integration_head": "d0bba5c1d065b7b1d7d1c2d831a12ddc8e9e26f7",
+  "verification_candidate": "935586f9b758f6b8dc59200cf746b9de558621fe",
+  "excluded_audit_ancestor_pids": [
+    12856,
+    18984,
+    19644,
+    20176,
+    24168,
+    24484
+  ],
+  "owned_processes": [],
+  "owned_listeners": [],
+  "signals_sent": 0,
+  "scope": "Accessible process cwd under task tmp, or pytest/per-file runner at integration root; no unrelated command line or listener is retained."
+}

@@ -6163,7 +6163,9 @@ def _inject_profile_env_vars() -> None:
     try:
         from providers import list_providers
         for _pp in list_providers():
-            if _pp.auth_type not in {"api_key",}:
+            # SDK credentials also serve unrelated child tools; they are not
+            # Hermes-owned provider keys or password prompts.
+            if _pp.auth_type == "aws_sdk":
                 continue
             for _var in _pp.env_vars:
                 if _var in OPTIONAL_ENV_VARS:
@@ -6206,6 +6208,94 @@ _inject_profile_env_vars()
 # (e.g. allowlist, home channel).
 
 _platform_plugin_env_vars_injected = False
+
+# Core/provider declarations retain their authority over plugin metadata.
+_CORE_DECLARED_ENV_NAMES = frozenset(name.upper() for name in OPTIONAL_ENV_VARS)
+PLATFORM_SECRET_ENV_SUFFIXES = ("_TOKEN", "_SECRET", "_KEY", "_PASSWORD", "_JSON")
+
+
+def provider_profile_secret_envs() -> frozenset[str]:
+    """Resolve current provider declarations for UI-independent security policy."""
+    names: set[str] = set()
+    try:
+        from providers import list_providers
+        for profile in list_providers():
+            declared = profile.env_vars
+            if not isinstance(declared, (tuple, list, set, frozenset)) or any(
+                not isinstance(name, str) or not name for name in declared
+            ):
+                raise ValueError("provider environment declaration is invalid")
+            if profile.auth_type != "aws_sdk":
+                names.update(name.upper() for name in declared if not name.upper().endswith("_URL"))
+    except Exception as exc:
+        raise RuntimeError("Cannot resolve provider credential declaration") from exc
+    names.discard("CLAUDE_CODE_OAUTH_TOKEN")
+    return frozenset(names)
+
+
+def platform_manifest_secret_envs(home: Path | None) -> frozenset[str]:
+    """Read platform security declarations without importing plugin code.
+
+    A known manifest that cannot be read or parsed cannot authorize a spawn.
+    User declarations stay home-scoped and cannot demote core credentials.
+    """
+    roots = [(Path(__file__).resolve().parents[1] / "plugins" / "platforms", True)]
+    if home is not None:
+        roots.extend(((Path(home) / "plugins" / "platforms", True), (Path(home) / "plugins", False)))
+    keys: set[str] = set()
+    try:
+        provider_names = provider_profile_secret_envs()
+        for root, platform_directory in roots:
+            if not root.exists():
+                if os.path.lexists(root):
+                    raise ValueError("platform manifest root is unreadable")
+                continue
+            for child in root.iterdir():
+                if not child.is_dir():
+                    if os.path.lexists(child) and not child.exists():
+                        raise ValueError("platform directory link is unreadable")
+                    continue
+                path = child / "plugin.yaml"
+                if not os.path.lexists(path):
+                    path = child / "plugin.yml"
+                if not os.path.lexists(path):
+                    continue
+                with path.open("r", encoding="utf-8") as stream:
+                    manifest = fast_safe_load(stream)
+                if not isinstance(manifest, dict):
+                    raise ValueError("platform manifest must be a mapping")
+                if not platform_directory and manifest.get("kind") != "platform":
+                    continue
+                for field in ("requires_env", "optional_env"):
+                    entries = manifest.get(field, [])
+                    if entries is None:
+                        entries = []
+                    if not isinstance(entries, list):
+                        raise ValueError("platform env declaration must be a list")
+                    for entry in entries:
+                        meta = entry if isinstance(entry, dict) else {}
+                        name = meta.get("name") if meta else entry
+                        if not isinstance(name, str) or not name:
+                            raise ValueError("platform env declaration requires a name")
+                        for flag in ("password", "secret"):
+                            if meta.get(flag) is not None and not isinstance(meta[flag], bool):
+                                raise ValueError("platform security flag must be boolean")
+                        upper = name.upper()
+                        core = OPTIONAL_ENV_VARS.get(upper, {})
+                        if upper in _CORE_DECLARED_ENV_NAMES:
+                            if core.get("category") == "messaging" and core.get("password"):
+                                keys.add(upper)
+                            continue
+                        if upper in provider_names:
+                            continue
+                        if meta.get("password") or meta.get("secret") or (
+                            meta.get("password") is not False
+                            and upper.endswith(PLATFORM_SECRET_ENV_SUFFIXES)
+                        ):
+                            keys.add(upper)
+    except Exception as exc:
+        raise RuntimeError("Cannot resolve platform manifest secret declaration") from exc
+    return frozenset(keys)
 
 
 def _inject_platform_plugin_env_vars() -> None:

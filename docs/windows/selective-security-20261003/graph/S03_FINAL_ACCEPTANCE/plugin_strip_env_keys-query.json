@@ -1,0 +1,154 @@
+[
+  {
+    "node": {
+      "id": "function:d2b0d5b5ebe71da91844778225a24f8d",
+      "kind": "function",
+      "name": "plugin_strip_env_keys",
+      "qualifiedName": "plugin_strip_env_keys",
+      "filePath": "agent/terminal_env_registry.py",
+      "language": "python",
+      "startLine": 148,
+      "endLine": 173,
+      "startColumn": 0,
+      "endColumn": 26,
+      "signature": "() -> frozenset",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790988193238
+    },
+    "score": 124.5306744756394
+  },
+  {
+    "node": {
+      "id": "function:3516ca9d78dab31375c9b676d8a349d7",
+      "kind": "function",
+      "name": "test_plugin_strip_env_keys_union",
+      "qualifiedName": "test_plugin_strip_env_keys_union",
+      "filePath": "tests/agent/test_terminal_env_registry.py",
+      "language": "python",
+      "startLine": 129,
+      "endLine": 140,
+      "startColumn": 0,
+      "endColumn": 78,
+      "signature": "()",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790988194800
+    },
+    "score": 44.382222232497824
+  },
+  {
+    "node": {
+      "id": "function:aca32494769af2c44b52379e008e0107",
+      "kind": "function",
+      "name": "test_plugin_strip_env_keys_fail_closed",
+      "qualifiedName": "test_plugin_strip_env_keys_fail_closed",
+      "filePath": "tests/agent/test_terminal_env_registry.py",
+      "language": "python",
+      "startLine": 143,
+      "endLine": 153,
+      "startColumn": 0,
+      "endColumn": 35,
+      "signature": "()",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790988194800
+    },
+    "score": 44.2843861622822
+  },
+  {
+    "node": {
+      "id": "method:54b10fa677ae70eb80210df31641979a",
+      "kind": "method",
+      "name": "strip_env_keys",
+      "qualifiedName": "test_plugin_strip_env_keys_union::Other::strip_env_keys",
+      "filePath": "tests/agent/test_terminal_env_registry.py",
+      "language": "python",
+      "startLine": 134,
+      "endLine": 135,
+      "startColumn": 8,
+      "endColumn": 43,
+      "signature": "(self)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790988194800
+    },
+    "score": 25.854333033291958
+  },
+  {
+    "node": {
+      "id": "method:05c0478c98313d4c5398832accfe432f",
+      "kind": "method",
+      "name": "strip_env_keys",
+      "qualifiedName": "test_plugin_strip_env_keys_fail_closed::Broken::strip_env_keys",
+      "filePath": "tests/agent/test_terminal_env_registry.py",
+      "language": "python",
+      "startLine": 148,
+      "endLine": 149,
+      "startColumn": 8,
+      "endColumn": 38,
+      "signature": "(self)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790988194800
+    },
+    "score": 25.684639658661947
+  },
+  {
+    "node": {
+      "id": "class:a3af49e7a3645fa7c9730d459cb9287c",
+      "kind": "class",
+      "name": "Other",
+      "qualifiedName": "test_plugin_strip_env_keys_union::Other",
+      "filePath": "tests/agent/test_terminal_env_registry.py",
+      "language": "python",
+      "startLine": 130,
+      "endLine": 135,
+      "startColumn": 4,
+      "endColumn": 43,
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790988194800
+    },
+    "score": 24.945059616691168
+  },
+  {
+    "node": {
+      "id": "class:42001e99540dff97d2c235bf18f63ec4",
+      "kind": "class",
+      "name": "Broken",
+      "qualifiedName": "test_plugin_strip_env_keys_fail_closed::Broken",
+      "filePath": "tests/agent/test_terminal_env_registry.py",
+      "language": "python",
+      "startLine": 144,
+      "endLine": 149,
+      "startColumn": 4,
+      "endColumn": 38,
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790988194800
+    },
+    "score": 24.75411057263707
+  }
+]

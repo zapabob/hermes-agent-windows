@@ -1,0 +1,125 @@
+{
+  "symbol": "hermes_subprocess_env",
+  "callers": [
+    {
+      "name": "_build_subprocess_env",
+      "kind": "function",
+      "filePath": "agent/copilot_acp_client.py",
+      "startLine": 125
+    },
+    {
+      "name": "_spawn",
+      "kind": "method",
+      "filePath": "agent/lsp/client.py",
+      "startLine": 249
+    },
+    {
+      "name": "_install_npm",
+      "kind": "function",
+      "filePath": "agent/lsp/install.py",
+      "startLine": 239
+    },
+    {
+      "name": "_install_go",
+      "kind": "function",
+      "filePath": "agent/lsp/install.py",
+      "startLine": 278
+    },
+    {
+      "name": "__init__",
+      "kind": "method",
+      "filePath": "agent/transports/codex_app_server.py",
+      "startLine": 91
+    },
+    {
+      "name": "_gh_env",
+      "kind": "function",
+      "filePath": "hermes_cli/kanban_pr_acceptance.py",
+      "startLine": 64
+    },
+    {
+      "name": "_start_local_openviking_server",
+      "kind": "function",
+      "filePath": "plugins/memory/openviking/__init__.py",
+      "startLine": 956
+    },
+    {
+      "name": "_exec_buzz",
+      "kind": "function",
+      "filePath": "plugins/platforms/buzz/adapter.py",
+      "startLine": 390
+    },
+    {
+      "name": "_spawn_bridge",
+      "kind": "method",
+      "filePath": "plugins/platforms/raft/adapter.py",
+      "startLine": 368
+    },
+    {
+      "name": "_build",
+      "kind": "function",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 43
+    },
+    {
+      "name": "test_browser_keys_recoverable_after_strip",
+      "kind": "method",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 133
+    },
+    {
+      "name": "test_delegated_child_context_scrubs_parent_kanban_keys_and_sets_marker",
+      "kind": "method",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 159
+    },
+    {
+      "name": "test_user_platform_plugin_secrets_belong_to_their_own_profile",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 142
+    },
+    {
+      "name": "stripped",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 201
+    },
+    {
+      "name": "test_a_partial_scan_is_rescanned_on_the_next_spawn",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 215
+    },
+    {
+      "name": "test_a_symlinked_home_alias_shares_its_profiles_plugin_declarations",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 247
+    },
+    {
+      "name": "test_inheriting_child_gets_provider_keys_but_never_adapter_secrets",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 344
+    },
+    {
+      "name": "child_sees",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 368
+    },
+    {
+      "name": "test_force_prefix_is_not_plugin_passthrough",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 449
+    },
+    {
+      "name": "test_buzz_context_and_plain_process_value",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 479
+    }
+  ]
+}

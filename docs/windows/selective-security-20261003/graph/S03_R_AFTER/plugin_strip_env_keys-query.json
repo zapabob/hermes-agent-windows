@@ -1,0 +1,154 @@
+[
+  {
+    "node": {
+      "id": "function:a461911633245a3607ef3229de67915b",
+      "kind": "function",
+      "name": "plugin_strip_env_keys",
+      "qualifiedName": "plugin_strip_env_keys",
+      "filePath": "agent/terminal_env_registry.py",
+      "language": "python",
+      "startLine": 69,
+      "endLine": 83,
+      "startColumn": 0,
+      "endColumn": 26,
+      "signature": "() -> frozenset",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982259658
+    },
+    "score": 124.61805646719947
+  },
+  {
+    "node": {
+      "id": "function:3516ca9d78dab31375c9b676d8a349d7",
+      "kind": "function",
+      "name": "test_plugin_strip_env_keys_union",
+      "qualifiedName": "test_plugin_strip_env_keys_union",
+      "filePath": "tests/agent/test_terminal_env_registry.py",
+      "language": "python",
+      "startLine": 129,
+      "endLine": 140,
+      "startColumn": 0,
+      "endColumn": 78,
+      "signature": "()",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982305047
+    },
+    "score": 44.47044387924515
+  },
+  {
+    "node": {
+      "id": "function:c1fadf35f64340462cef7625f0a98154",
+      "kind": "function",
+      "name": "test_plugin_strip_env_keys_fail_soft",
+      "qualifiedName": "test_plugin_strip_env_keys_fail_soft",
+      "filePath": "tests/agent/test_terminal_env_registry.py",
+      "language": "python",
+      "startLine": 143,
+      "endLine": 152,
+      "startColumn": 0,
+      "endColumn": 53,
+      "signature": "()",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982305047
+    },
+    "score": 44.373150333968304
+  },
+  {
+    "node": {
+      "id": "method:54b10fa677ae70eb80210df31641979a",
+      "kind": "method",
+      "name": "strip_env_keys",
+      "qualifiedName": "test_plugin_strip_env_keys_union::Other::strip_env_keys",
+      "filePath": "tests/agent/test_terminal_env_registry.py",
+      "language": "python",
+      "startLine": 134,
+      "endLine": 135,
+      "startColumn": 8,
+      "endColumn": 43,
+      "signature": "(self)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982305047
+    },
+    "score": 25.94977462052988
+  },
+  {
+    "node": {
+      "id": "method:05c0478c98313d4c5398832accfe432f",
+      "kind": "method",
+      "name": "strip_env_keys",
+      "qualifiedName": "test_plugin_strip_env_keys_fail_soft::Broken::strip_env_keys",
+      "filePath": "tests/agent/test_terminal_env_registry.py",
+      "language": "python",
+      "startLine": 148,
+      "endLine": 149,
+      "startColumn": 8,
+      "endColumn": 38,
+      "signature": "(self)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982305047
+    },
+    "score": 25.780605913370618
+  },
+  {
+    "node": {
+      "id": "class:a3af49e7a3645fa7c9730d459cb9287c",
+      "kind": "class",
+      "name": "Other",
+      "qualifiedName": "test_plugin_strip_env_keys_union::Other",
+      "filePath": "tests/agent/test_terminal_env_registry.py",
+      "language": "python",
+      "startLine": 130,
+      "endLine": 135,
+      "startColumn": 4,
+      "endColumn": 43,
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982305047
+    },
+    "score": 25.03647881701065
+  },
+  {
+    "node": {
+      "id": "class:42001e99540dff97d2c235bf18f63ec4",
+      "kind": "class",
+      "name": "Broken",
+      "qualifiedName": "test_plugin_strip_env_keys_fail_soft::Broken",
+      "filePath": "tests/agent/test_terminal_env_registry.py",
+      "language": "python",
+      "startLine": 144,
+      "endLine": 149,
+      "startColumn": 4,
+      "endColumn": 38,
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982305047
+    },
+    "score": 24.846315150196936
+  }
+]

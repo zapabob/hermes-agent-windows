@@ -1,0 +1,26 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 5 test files (~50 tests) under ['tests\\tools\\test_child_credential_boundary.py', 'tests\\tools\\test_child_bridge_credential_boundary.py', 'tests\\tools\\test_child_credential_windows_native.py', 'tests\\tools\\test_hermes_subprocess_env.py', 'tests\\tools\\test_build_subprocess_env.py']; running with -j 1
+[ 18.0% |     9/~50 | ✓10 | ✗ 0] ✓ tests\tools\test_build_subprocess_env.py (10✓, 4.4s)
+[ 22.0% |    11/~50 | ✓12 | ✗ 0] ✓ tests\tools\test_child_bridge_credential_boundary.py (2✓, 4.5s)
+[ 56.0% |    28/~50 | ✓139 | ✗  0] ✓ tests\tools\test_child_credential_boundary.py (127✓, 11.3s)
+[ 58.0% |    29/~50 | ✓145 | ✗  0] ✓ tests\tools\test_child_credential_windows_native.py (6✓, 8.1s)
+[100.0% |    50/~50 | ✓166 | ✗  0] ✓ tests\tools\test_hermes_subprocess_env.py (21✓, 4.9s)
+
+=== Summary: 5 files, 166 tests passed, 0 failed (100% complete) in 33.2s (1 workers) ===
+  Durations cached to test_durations.json (5 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   5
+  Total subprocess CPU-wall: 33.2s  (runner wall: 33.2s, parallelism: 1x)
+  P50: 4.86s  P90: 11.34s  P95: 11.34s  P99: 11.34s  Max: 11.34s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+     11.34s  tests\tools\test_child_credential_boundary.py
+      8.09s  tests\tools\test_child_credential_windows_native.py
+      4.86s  tests\tools\test_hermes_subprocess_env.py
+      4.48s  tests\tools\test_child_bridge_credential_boundary.py
+      4.44s  tests\tools\test_build_subprocess_env.py

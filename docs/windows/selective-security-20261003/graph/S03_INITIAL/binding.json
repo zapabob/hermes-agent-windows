@@ -1,0 +1,77 @@
+{
+  "revision": "d0bba5c1d065b7b1d7d1c2d831a12ddc8e9e26f7",
+  "tree": "7451956d836d550530596724228eb8fc51be7544",
+  "root": "H:\\hermes-worktrees\\p0-p1-local-20261003",
+  "tool_version": "1.6.0",
+  "status": {
+    "initialized": true,
+    "version": "1.6.0",
+    "projectPath": "H:\\hermes-worktrees\\p0-p1-local-20261003",
+    "indexPath": "H:\\hermes-worktrees\\p0-p1-local-20261003\\.codegraph",
+    "lastIndexed": "2026-10-02T23:56:42.981Z",
+    "fileCount": 9016,
+    "nodeCount": 194160,
+    "edgeCount": 610211,
+    "dbSizeBytes": 650498048,
+    "walSizeBytes": 0,
+    "backend": "node-sqlite",
+    "journalMode": "wal",
+    "nodesByKind": {
+      "class": 13169,
+      "component": 64,
+      "constant": 5830,
+      "enum": 8,
+      "enum_member": 25,
+      "field": 10,
+      "file": 8682,
+      "function": 61672,
+      "import": 42829,
+      "interface": 2179,
+      "method": 42320,
+      "namespace": 1,
+      "property": 1472,
+      "route": 397,
+      "struct": 33,
+      "type_alias": 887,
+      "variable": 14582
+    },
+    "languages": [
+      "c",
+      "cpp",
+      "csharp",
+      "go",
+      "javascript",
+      "liquid",
+      "nix",
+      "php",
+      "python",
+      "rust",
+      "tsx",
+      "typescript",
+      "yaml"
+    ],
+    "pendingChanges": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "worktreeMismatch": null,
+    "index": {
+      "builtWithVersion": null,
+      "builtWithExtractionVersion": null,
+      "currentExtractionVersion": 25,
+      "reindexRecommended": true,
+      "state": "complete",
+      "pendingRefs": 0
+    }
+  },
+  "owner_source_sha256": {
+    "tools/environments/local.py": "bae58232a1ffc1cddb0170f9979034085959263b2e231a84c3231c22fab023f3",
+    "agent/terminal_env_registry.py": "f03ea11c9f61da9e1e26d3c839296e60c5db306131c869ce9abcd3602171eb97",
+    "hermes_cli/config.py": "d679ca0b84f2e184b84f8557bf92bbeea55a021f7fc2e18f269264e1310c30b5",
+    "tools/env_passthrough.py": "2478e41b755d289a3758ff0cd733c08a0b632c5ffb7af0d67fc78a682477dffc",
+    "plugins/platforms/raft/adapter.py": "5966e7dfa8ea9260654e5d05a02a68f7e57cb40837ae89821ff036c76d37e7c3",
+    "plugins/memory/openviking/__init__.py": "73ced88fabf179a820de37b76d9b5badb76854d8b3bd5fdeeb1f73d1e4aa880f"
+  },
+  "limitation": "Name-based graph fallback can falsely resolve builtins to unrelated same-name symbols; source audit remains required."
+}

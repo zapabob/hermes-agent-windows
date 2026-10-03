@@ -1,0 +1,125 @@
+{
+  "symbol": "hermes_subprocess_env",
+  "callers": [
+    {
+      "name": "_run_fallback_start_command",
+      "kind": "function",
+      "filePath": "agent/chat_completion_helpers.py",
+      "startLine": 118
+    },
+    {
+      "name": "_build_subprocess_env",
+      "kind": "function",
+      "filePath": "agent/copilot_acp_client.py",
+      "startLine": 155
+    },
+    {
+      "name": "_spawn",
+      "kind": "method",
+      "filePath": "agent/lsp/client.py",
+      "startLine": 308
+    },
+    {
+      "name": "_install_npm",
+      "kind": "function",
+      "filePath": "agent/lsp/install.py",
+      "startLine": 238
+    },
+    {
+      "name": "_install_go",
+      "kind": "function",
+      "filePath": "agent/lsp/install.py",
+      "startLine": 308
+    },
+    {
+      "name": "_spawn",
+      "kind": "function",
+      "filePath": "agent/shell_hooks.py",
+      "startLine": 546
+    },
+    {
+      "name": "run_inline_shell",
+      "kind": "function",
+      "filePath": "agent/skill_preprocessing.py",
+      "startLine": 66
+    },
+    {
+      "name": "__init__",
+      "kind": "method",
+      "filePath": "agent/transports/codex_app_server.py",
+      "startLine": 71
+    },
+    {
+      "name": "check_codex_binary",
+      "kind": "function",
+      "filePath": "agent/transports/codex_app_server.py",
+      "startLine": 378
+    },
+    {
+      "name": "_spawn_watcher",
+      "kind": "function",
+      "filePath": "downstream/security/cli.py",
+      "startLine": 90
+    },
+    {
+      "name": "_handle_update_command",
+      "kind": "method",
+      "filePath": "gateway/slash_commands.py",
+      "startLine": 6244
+    },
+    {
+      "name": "ensure_dependency",
+      "kind": "function",
+      "filePath": "hermes_cli/dep_ensure.py",
+      "startLine": 159
+    },
+    {
+      "name": "_run_bootstrap",
+      "kind": "function",
+      "filePath": "hermes_cli/mcp_catalog.py",
+      "startLine": 467
+    },
+    {
+      "name": "start_exe",
+      "kind": "function",
+      "filePath": "plugins/ai-partner-os/process.py",
+      "startLine": 65
+    },
+    {
+      "name": "_run_probe",
+      "kind": "function",
+      "filePath": "plugins/hermes-antigravity/core.py",
+      "startLine": 58
+    },
+    {
+      "name": "run_agy",
+      "kind": "function",
+      "filePath": "plugins/hermes-antigravity/core.py",
+      "startLine": 119
+    },
+    {
+      "name": "sillytavern_start",
+      "kind": "function",
+      "filePath": "plugins/sillytavern/__init__.py",
+      "startLine": 223
+    },
+    {
+      "name": "sillytavern_proxy_start",
+      "kind": "function",
+      "filePath": "plugins/sillytavern/__init__.py",
+      "startLine": 485
+    },
+    {
+      "name": "test_case_variants_in_plain_mapping_obey_credential_tiers",
+      "kind": "function",
+      "filePath": "tests/tools/test_build_subprocess_env.py",
+      "startLine": 15
+    },
+    {
+      "name": "_build",
+      "kind": "function",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 48
+    }
+  ]
+}

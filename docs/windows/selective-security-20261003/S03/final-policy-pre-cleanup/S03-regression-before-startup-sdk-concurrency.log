@@ -1,0 +1,48 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 20 test files (~428 tests) under ['tests\\agent\\test_terminal_env_registry.py', 'tests\\agent\\test_secret_scope.py', 'tests\\tools\\test_local_env_session_leak.py', 'tests\\tools\\test_local_env_blocklist.py', 'tests\\tools\\test_build_subprocess_env.py', 'tests\\tools\\test_hermes_subprocess_env.py', 'tests\\gateway\\test_raft_adapter.py', 'tests\\plugins\\memory\\test_openviking_provider.py', 'tests\\cron\\test_cron_script.py', 'tests\\tools\\test_env_passthrough.py', 'tests\\tools\\test_skill_env_passthrough.py', 'tests\\hermes_cli\\test_env_loader.py', 'tests\\test_env_loader_secret_sources.py', 'tests\\test_env_loader_applied_homes.py', 'tests\\test_env_loader_op_bootstrap.py', 'tests\\tools\\test_child_credential_boundary.py', 'tests\\tools\\test_child_bridge_credential_boundary.py', 'tests\\tools\\test_child_credential_windows_native.py', 'tests\\tools\\test_tts_command_providers.py', 'tests\\tools\\test_transcription_command_providers.py']; running with -j 1
+[  5.6% |    24/~428 | ✓24 | ✗ 0] ✓ tests\agent\test_secret_scope.py (24✓, 2.6s)
+[  9.6% |    41/~428 | ✓48 | ✗ 0] ✓ tests\agent\test_terminal_env_registry.py (24✓, 2.7s)
+[ 16.4% |    70/~428 | ✓75 | ✗ 0] ✓ tests\cron\test_cron_script.py (27✓ 2s, 10.8s)
+[ 18.0% |    77/~428 | ✓82 | ✗ 0] ✓ tests\gateway\test_raft_adapter.py (7✓, 3.0s)
+[ 24.1% |   103/~428 | ✓108 | ✗  0] ✓ tests\hermes_cli\test_env_loader.py (26✓, 3.6s)
+[ 38.3% |   164/~428 | ✓168 | ✗  0] ✓ tests\plugins\memory\test_openviking_provider.py (60✓ 2s, 15.1s)
+[ 39.5% |   169/~428 | ✓173 | ✗  0] ✓ tests\test_env_loader_applied_homes.py (5✓, 2.5s)
+[ 40.4% |   173/~428 | ✓177 | ✗  0] ✓ tests\test_env_loader_op_bootstrap.py (4✓, 1.9s)
+[ 44.6% |   191/~428 | ✓195 | ✗  0] ✓ tests\test_env_loader_secret_sources.py (18✓, 2.5s)
+[ 46.7% |   200/~428 | ✓205 | ✗  0] ✓ tests\tools\test_build_subprocess_env.py (10✓, 4.9s)
+[ 47.2% |   202/~428 | ✓207 | ✗  0] ✓ tests\tools\test_child_bridge_credential_boundary.py (2✓, 5.3s)
+[ 55.8% |   239/~428 | ✓418 | ✗  0] ✓ tests\tools\test_child_credential_boundary.py (211✓, 18.0s)
+[ 57.5% |   246/~428 | ✓444 | ✗  0] ✓ tests\tools\test_child_credential_windows_native.py (26✓, 35.3s)
+[ 62.9% |   269/~428 | ✓467 | ✗  0] ✓ tests\tools\test_env_passthrough.py (23✓, 8.2s)
+[ 67.8% |   290/~428 | ✓488 | ✗  0] ✓ tests\tools\test_hermes_subprocess_env.py (21✓, 5.0s)
+[ 84.3% |   361/~428 | ✓570 | ✗  0] ✓ tests\tools\test_local_env_blocklist.py (82✓ 1s, 28.4s)
+[ 86.2% |   369/~428 | ✓578 | ✗  0] ✓ tests\tools\test_local_env_session_leak.py (8✓, 4.3s)
+[ 87.1% |   373/~428 | ✓582 | ✗  0] ✓ tests\tools\test_skill_env_passthrough.py (4✓, 4.1s)
+[ 91.6% |   392/~428 | ✓601 | ✗  0] ✓ tests\tools\test_transcription_command_providers.py (19✓, 8.5s)
+[100.0% |   428/~428 | ✓636 | ✗  0] ✓ tests\tools\test_tts_command_providers.py (35✓ 1s, 8.5s)
+
+=== Summary: 20 files, 636 tests passed, 0 failed, 6 skipped (100% complete) in 175.5s (1 workers) ===
+
+  note: macos_only tests (in 1 file) were SKIPPED on this host (win32); they run on the tests-os CI lane (macos-latest).
+  Durations cached to test_durations.json (20 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   20
+  Total subprocess CPU-wall: 175.5s  (runner wall: 175.5s, parallelism: 1x)
+  P50: 5.00s  P90: 28.41s  P95: 35.31s  P99: 35.31s  Max: 35.31s
+  <1s: 0 files (0%)  <2s: 1 files (5%)
+  Top 10 slowest:
+     35.31s  tests\tools\test_child_credential_windows_native.py
+     28.41s  tests\tools\test_local_env_blocklist.py
+     18.00s  tests\tools\test_child_credential_boundary.py
+     15.14s  tests\plugins\memory\test_openviking_provider.py
+     10.80s  tests\cron\test_cron_script.py
+      8.53s  tests\tools\test_transcription_command_providers.py
+      8.53s  tests\tools\test_tts_command_providers.py
+      8.22s  tests\tools\test_env_passthrough.py
+      5.34s  tests\tools\test_child_bridge_credential_boundary.py
+      5.00s  tests\tools\test_hermes_subprocess_env.py

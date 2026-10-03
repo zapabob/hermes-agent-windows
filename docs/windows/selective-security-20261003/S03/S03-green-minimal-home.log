@@ -1,0 +1,20 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 2 test files (~30 tests) under ['tests\\tools\\test_hermes_subprocess_env.py', 'tests\\tools\\test_build_subprocess_env.py']; running with -j 1
+[ 30.0% |     9/~30 | ✓10 | ✗ 0] ✓ tests\tools\test_build_subprocess_env.py (10✓, 5.4s)
+[100.0% |    30/~30 | ✓31 | ✗ 0] ✓ tests\tools\test_hermes_subprocess_env.py (21✓, 5.4s)
+
+=== Summary: 2 files, 31 tests passed, 0 failed (100% complete) in 10.8s (1 workers) ===
+  Durations cached to test_durations.json (2 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   2
+  Total subprocess CPU-wall: 10.8s  (runner wall: 10.8s, parallelism: 1x)
+  P50: 5.39s  P90: 5.39s  P95: 5.39s  P99: 5.39s  Max: 5.39s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+      5.39s  tests\tools\test_build_subprocess_env.py
+      5.38s  tests\tools\test_hermes_subprocess_env.py

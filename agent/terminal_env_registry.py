@@ -160,12 +160,16 @@ def plugin_strip_env_keys() -> frozenset:
             all_providers.extend(scoped.values())
     for provider in all_providers:
         try:
-            keys.update(provider.strip_env_keys)
-        except Exception:
-            logger.debug(
-                "Terminal environment provider strip_env_keys raised",
-                exc_info=True,
-            )
+            declaration = provider.strip_env_keys
+            if not isinstance(declaration, (set, frozenset, list, tuple)) or any(
+                not isinstance(name, str) or not name.strip() for name in declaration
+            ):
+                raise ValueError("invalid secret declaration")
+            keys.update(declaration)
+        except Exception as exc:
+            raise RuntimeError(
+                "Cannot resolve terminal provider secret declaration"
+            ) from exc
     return frozenset(keys)
 
 

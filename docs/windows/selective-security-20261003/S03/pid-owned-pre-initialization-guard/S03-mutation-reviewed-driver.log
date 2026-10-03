@@ -1,0 +1,10 @@
+M01-declaration-exception-empty: killed=True
+M02-plugin-secrets-process-wide: killed=True
+M03-oauth-profile-exclusion: killed=True
+M04-token-suffix-excluded: killed=True
+M05-launch-profile-fallback: killed=True
+M06-snapshot-authority-guard-removed: killed=True
+M07-runtime-adapter-declarations-ignored: killed=True
+M08-readonly-snapshot-accepted: killed=True
+M09-invalid-shell-identifiers-accepted: killed=True
+M10-windows-argv-limit-ignored: killed=True

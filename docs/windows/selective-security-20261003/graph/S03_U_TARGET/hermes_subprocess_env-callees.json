@@ -1,0 +1,23 @@
+{
+  "symbol": "hermes_subprocess_env",
+  "callees": [
+    {
+      "name": "copy",
+      "kind": "method",
+      "filePath": "hermes_cli/anon_sign_in.py",
+      "startLine": 81
+    },
+    {
+      "name": "_scrub_credentials",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 334
+    },
+    {
+      "name": "_finalize_child_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 276
+    }
+  ]
+}

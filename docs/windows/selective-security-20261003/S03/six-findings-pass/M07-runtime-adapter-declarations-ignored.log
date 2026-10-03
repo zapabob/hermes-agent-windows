@@ -1,0 +1,77 @@
+........................................................................ [ 34%]
+........................................................................ [ 69%]
+................FFFFFF............................FFFFFF........         [100%]
+================================== FAILURES ===================================
+_ test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[terminal] _
+tests\tools\test_child_credential_boundary.py:372: in test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins
+    assert "CUSTOM_ADAPTER_TOKEN" not in child_env(surface)
+E   AssertionError: assert 'CUSTOM_ADAPTER_TOKEN' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime\\hermes', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime\\hermes', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...} = child_env('terminal')
+_ test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[background] _
+tests\tools\test_child_credential_boundary.py:372: in test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins
+    assert "CUSTOM_ADAPTER_TOKEN" not in child_env(surface)
+E   AssertionError: assert 'CUSTOM_ADAPTER_TOKEN' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime\\hermes', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime\\hermes', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...} = child_env('background')
+_ test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[cli] _
+tests\tools\test_child_credential_boundary.py:372: in test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins
+    assert "CUSTOM_ADAPTER_TOKEN" not in child_env(surface)
+E   AssertionError: assert 'CUSTOM_ADAPTER_TOKEN' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime\\hermes', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime\\hermes', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...} = child_env('cli')
+_______ test_global_runtime_declaration_survives_minimal_os_environment _______
+tests\tools\test_child_credential_boundary.py:387: in test_global_runtime_declaration_survives_minimal_os_environment
+    assert "CUSTOM_ADAPTER_TOKEN" not in child_env("cli")
+E   AssertionError: assert 'CUSTOM_ADAPTER_TOKEN' not in {'HOME': '/test-only-home', 'CUSTOM_ADAPTER_TOKEN': 'TEST_ONLY_SECRET_DO_NOT_USE', 'PYTHONUTF8': '1', 'HERMES_REAL_HOME': '/test-only-home', ...}
+E    +  where {'HOME': '/test-only-home', 'CUSTOM_ADAPTER_TOKEN': 'TEST_ONLY_SECRET_DO_NOT_USE', 'PYTHONUTF8': '1', 'HERMES_REAL_HOME': '/test-only-home', ...} = child_env('cli')
+_ test_scoped_adapter_override_cannot_hide_global_security_declaration[False] _
+tests\tools\test_child_credential_boundary.py:409: in test_scoped_adapter_override_cannot_hide_global_security_declaration
+    assert "GLOBAL_ADAPTER_TOKEN" not in child_env("cli")
+E   AssertionError: assert 'GLOBAL_ADAPTER_TOKEN' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...test_scoped_adapter_override_c0', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...test_scoped_adapter_override_c0', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...} = child_env('cli')
+_ test_scoped_adapter_override_cannot_hide_global_security_declaration[True] __
+tests\tools\test_child_credential_boundary.py:406: in test_scoped_adapter_override_cannot_hide_global_security_declaration
+    with pytest.raises(RuntimeError, match="(?i)(credential|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+___ test_cached_passthrough_rechecks_late_adapter_ownership[terminal-skill] ___
+tests\tools\test_child_credential_boundary.py:513: in test_cached_passthrough_rechecks_late_adapter_ownership
+    assert key not in child_env(surface)
+E   AssertionError: assert 'CUSTOM_LATE_ADAPTER_TOKEN' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...} = child_env('terminal')
+__ test_cached_passthrough_rechecks_late_adapter_ownership[terminal-config] ___
+tests\tools\test_child_credential_boundary.py:513: in test_cached_passthrough_rechecks_late_adapter_ownership
+    assert key not in child_env(surface)
+E   AssertionError: assert 'CUSTOM_LATE_ADAPTER_TOKEN' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...} = child_env('terminal')
+__ test_cached_passthrough_rechecks_late_adapter_ownership[background-skill] __
+tests\tools\test_child_credential_boundary.py:513: in test_cached_passthrough_rechecks_late_adapter_ownership
+    assert key not in child_env(surface)
+E   AssertionError: assert 'CUSTOM_LATE_ADAPTER_TOKEN' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...} = child_env('background')
+_ test_cached_passthrough_rechecks_late_adapter_ownership[background-config] __
+tests\tools\test_child_credential_boundary.py:513: in test_cached_passthrough_rechecks_late_adapter_ownership
+    assert key not in child_env(surface)
+E   AssertionError: assert 'CUSTOM_LATE_ADAPTER_TOKEN' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...} = child_env('background')
+_____ test_cached_passthrough_rechecks_late_adapter_ownership[cli-skill] ______
+tests\tools\test_child_credential_boundary.py:513: in test_cached_passthrough_rechecks_late_adapter_ownership
+    assert key not in child_env(surface)
+E   AssertionError: assert 'CUSTOM_LATE_ADAPTER_TOKEN' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...} = child_env('cli')
+_____ test_cached_passthrough_rechecks_late_adapter_ownership[cli-config] _____
+tests\tools\test_child_credential_boundary.py:513: in test_cached_passthrough_rechecks_late_adapter_ownership
+    assert key not in child_env(surface)
+E   AssertionError: assert 'CUSTOM_LATE_ADAPTER_TOKEN' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...} = child_env('cli')
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[background]
+FAILED tests/tools/test_child_credential_boundary.py::test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_global_runtime_declaration_survives_minimal_os_environment
+FAILED tests/tools/test_child_credential_boundary.py::test_scoped_adapter_override_cannot_hide_global_security_declaration[False]
+FAILED tests/tools/test_child_credential_boundary.py::test_scoped_adapter_override_cannot_hide_global_security_declaration[True]
+FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[terminal-skill]
+FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[terminal-config]
+FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[background-skill]
+FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[background-config]
+FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[cli-skill]
+FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[cli-config]
+12 failed, 196 passed in 10.08s

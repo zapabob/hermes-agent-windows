@@ -1,0 +1,142 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 5 test files (~82 tests) under ['tests\\tools\\test_build_subprocess_env.py', 'tests\\tools\\test_hermes_subprocess_env.py', 'tests\\tools\\test_env_passthrough.py', 'tests\\tools\\test_skill_env_passthrough.py', 'tests\\tools\\test_child_credential_boundary.py']; running with -j 2
+[ 11.0% |     9/~82 | ✓10 | ✗ 0] ✓ tests\tools\test_build_subprocess_env.py (10✓, 6.3s)
+[ 39.0% |    32/~82 | ✓33 | ✗ 0] ✓ tests\tools\test_env_passthrough.py (23✓, 27.6s)
+[ 69.5% |    57/~82 | ✓197 | ✗  1] ✗ tests\tools\test_child_credential_boundary.py (164✓ 1✗, 37.5s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_boundary.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║             self._stdout_buff = []
+  ║             self.stdout_thread = \
+  ║                     threading.Thread(target=self._readerthread,
+  ║                                      args=(self.stdout, self._stdout_buff))
+  ║             self.stdout_thread.daemon = True
+  ║             self.stdout_thread.start()
+  ║         if self.stderr and not hasattr(self, "_stderr_buff"):
+  ║             self._stderr_buff = []
+  ║             self.stderr_thread = \
+  ║                     threading.Thread(target=self._readerthread,
+  ║                                      args=(self.stderr, self._stderr_buff))
+  ║             self.stderr_thread.daemon = True
+  ║             self.stderr_thread.start()
+  ║
+  ║         if self.stdin:
+  ║             self._stdin_write(input)
+  ║
+  ║         # Wait for the reader threads, or time out.  If we time out, the
+  ║         # threads remain reading and the fds left open in case the user
+  ║         # calls communicate again.
+  ║         if self.stdout is not None:
+  ║             self.stdout_thread.join(self._remaining_time(endtime))
+  ║             if self.stdout_thread.is_alive():
+  ║ >               raise TimeoutExpired(self.args, orig_timeout)
+  ║ E               subprocess.TimeoutExpired: Command '['C:\\Users\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts\\python.exe', '-I', '-c', "import json,os,sys;sys.stdout.write(json.dumps({k:os.environ.get(k) for k in ('WHATSAPP_CLOUD_ACCESS_TOKEN', 'WHATSAPP_CLOUD_APP_SECRET', 'WEIXIN_TOKEN', 'YUANBAO_APP_SECRET', 'FEISHU_ENCRYPT_KEY', 'TELEGRAM_WEBHOOK_SECRET', 'PHOTON_SIDECAR_TOKEN', 'HERMES_DASHBOARD_SECRET', 'HERMES_DASHBOARD_DRAIN_TOKEN', 'HERMES_DASHBOARD_OIDC_CLIENT_SECRET', 'HERMES_DASHBOARD_BASIC_AUTH_PASSWORD', 'HERMES_DASHBOARD_BASIC_AUTH_SECRET', 'HERMES_DASHBOARD_DRAIN_SECRET', 'HERMES_ANON_API_SECRET', 'FAKE_PLUGIN_SECRET', 'BOUNDARY_BENIGN')}))"]' timed out after 15 seconds
+  ║
+  ║ C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1630: TimeoutExpired
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_native_child_observes_only_benign_values[cli]
+  ║ 1 failed, 164 passed in 35.03s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_boundary.py -q
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+[ 74.4% |    61/~82 | ✓201 | ✗  1] ✓ tests\tools\test_skill_env_passthrough.py (4✓, 19.8s)
+[100.0% |    82/~82 | ✓222 | ✗  1] ✓ tests\tools\test_hermes_subprocess_env.py (21✓, 24.8s)
+
+=== Summary: 5 files, 222 tests passed, 1 failed (100% complete) in 58.7s (2 workers) ===
+  Durations cached to test_durations.json (5 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   5
+  Total subprocess CPU-wall: 116.0s  (runner wall: 58.7s, parallelism: 2x)
+  P50: 24.75s  P90: 37.48s  P95: 37.48s  P99: 37.48s  Max: 37.48s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+     37.48s  tests\tools\test_child_credential_boundary.py
+     27.56s  tests\tools\test_env_passthrough.py
+     24.75s  tests\tools\test_hermes_subprocess_env.py
+     19.83s  tests\tools\test_skill_env_passthrough.py
+      6.34s  tests\tools\test_build_subprocess_env.py
+
+=== Failure output ===
+
+--- tests\tools\test_child_credential_boundary.py ---
+........................................................................ [ 43%]
+.....F.................................................................. [ 87%]
+.....................                                                    [100%]
+================================== FAILURES ===================================
+_____________ test_native_child_observes_only_benign_values[cli] ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DD5DAB2750>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x000001DD5DAE0690>
+surface = 'cli'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_native_child_observes_only_benign_values(monkeypatch, plugin_provider, surface):
+        keys = ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET", "BOUNDARY_BENIGN")
+        for key in keys[:-1]:
+            monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv(keys[-1], "present")
+        code = "import json,os,sys;sys.stdout.write(json.dumps({k:os.environ.get(k) for k in " + repr(keys) + "}))"
+>       result = subprocess.run(
+            [sys.executable, "-I", "-c", code], env=child_env(surface),
+            stdin=subprocess.DEVNULL, capture_output=True, text=True,
+            encoding="utf-8", timeout=15, check=True,
+        )
+
+tests\tools\test_child_credential_boundary.py:119:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\conftest.py:1560: in _guarded
+    return real(cmd, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:550: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1209: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Popen: returncode: 1 args: ['C:\\Users\\downl\\Documents\\New project\\herm...>
+input = None, endtime = 16503.265, orig_timeout = 15
+
+    def _communicate(self, input, endtime, orig_timeout):
+        # Start reader threads feeding into a list hanging off of this
+        # object, unless they've already been started.
+        if self.stdout and not hasattr(self, "_stdout_buff"):
+            self._stdout_buff = []
+            self.stdout_thread = \
+                    threading.Thread(target=self._readerthread,
+                                     args=(self.stdout, self._stdout_buff))
+            self.stdout_thread.daemon = True
+            self.stdout_thread.start()
+        if self.stderr and not hasattr(self, "_stderr_buff"):
+            self._stderr_buff = []
+            self.stderr_thread = \
+                    threading.Thread(target=self._readerthread,
+                                     args=(self.stderr, self._stderr_buff))
+            self.stderr_thread.daemon = True
+            self.stderr_thread.start()
+
+        if self.stdin:
+            self._stdin_write(input)
+
+        # Wait for the reader threads, or time out.  If we time out, the
+        # threads remain reading and the fds left open in case the user
+        # calls communicate again.
+        if self.stdout is not None:
+            self.stdout_thread.join(self._remaining_time(endtime))
+            if self.stdout_thread.is_alive():
+>               raise TimeoutExpired(self.args, orig_timeout)
+E               subprocess.TimeoutExpired: Command '['C:\\Users\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts\\python.exe', '-I', '-c', "import json,os,sys;sys.stdout.write(json.dumps({k:os.environ.get(k) for k in ('WHATSAPP_CLOUD_ACCESS_TOKEN', 'WHATSAPP_CLOUD_APP_SECRET', 'WEIXIN_TOKEN', 'YUANBAO_APP_SECRET', 'FEISHU_ENCRYPT_KEY', 'TELEGRAM_WEBHOOK_SECRET', 'PHOTON_SIDECAR_TOKEN', 'HERMES_DASHBOARD_SECRET', 'HERMES_DASHBOARD_DRAIN_TOKEN', 'HERMES_DASHBOARD_OIDC_CLIENT_SECRET', 'HERMES_DASHBOARD_BASIC_AUTH_PASSWORD', 'HERMES_DASHBOARD_BASIC_AUTH_SECRET', 'HERMES_DASHBOARD_DRAIN_SECRET', 'HERMES_ANON_API_SECRET', 'FAKE_PLUGIN_SECRET', 'BOUNDARY_BENIGN')}))"]' timed out after 15 seconds
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1630: TimeoutExpired
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_native_child_observes_only_benign_values[cli]
+1 failed, 164 passed in 35.03s
+
+=== 1 file with test failures (1 test failed) ===
+  tests\tools\test_child_credential_boundary.py  (1 test failed)

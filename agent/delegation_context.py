@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from contextvars import ContextVar, Token
-from typing import Iterator, Mapping, MutableMapping
+from typing import Iterable, Iterator, Mapping, MutableMapping
 
 _DELEGATED_CHILD_CONTEXT: ContextVar[bool] = ContextVar(
     "hermes_delegated_child_context",
@@ -141,6 +141,7 @@ def scrub_kanban_env(env: Mapping[str, str] | MutableMapping[str, str]) -> dict[
 
 def delegated_child_subprocess_env(
     env: Mapping[str, str] | MutableMapping[str, str] | None = None,
+    *, allowed_provider_credentials: Iterable[str] = (),
 ) -> dict[str, str] | None:
     """Return an env override only when delegated-child lineage must cross fork.
 
@@ -158,4 +159,14 @@ def delegated_child_subprocess_env(
         import os
 
         env = os.environ
-    return scrub_kanban_env(env)
+    from tools.environments.local import build_subprocess_env, hermes_subprocess_env
+    cleaned = build_subprocess_env(env)
+    approved = {key.upper() for key in allowed_provider_credentials}
+    if approved:
+        eligible = hermes_subprocess_env(credential_keys=approved)
+        # Preserve only caller-requested values validated by the same profile
+        # and Tier-1 owner. A prepared foreign value cannot be reintroduced.
+        for key, value in env.items():
+            if key.upper() in approved and eligible.get(key) == value:
+                cleaned[key] = value
+    return scrub_kanban_env(cleaned)

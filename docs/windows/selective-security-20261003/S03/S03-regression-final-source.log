@@ -1,0 +1,58 @@
+Candidate: 935586f9b758f6b8dc59200cf746b9de558621fe
+Command: ["C:\\Program Files\\Git\\bin\\bash.exe", "scripts/run_tests.sh", "tests/agent/test_terminal_env_registry.py", "tests/agent/test_secret_scope.py", "tests/tools/test_local_env_session_leak.py", "tests/tools/test_local_env_blocklist.py", "tests/tools/test_build_subprocess_env.py", "tests/tools/test_hermes_subprocess_env.py", "tests/gateway/test_raft_adapter.py", "tests/plugins/memory/test_openviking_provider.py", "tests/cron/test_cron_script.py", "tests/tools/test_env_passthrough.py", "tests/tools/test_skill_env_passthrough.py", "tests/hermes_cli/test_env_loader.py", "tests/test_env_loader_secret_sources.py", "tests/test_env_loader_applied_homes.py", "tests/test_env_loader_op_bootstrap.py", "tests/tools/test_child_credential_boundary.py", "tests/tools/test_child_bridge_credential_boundary.py", "tests/tools/test_child_credential_windows_native.py", "tests/tools/test_tts_command_providers.py", "tests/tools/test_transcription_command_providers.py", "tests/tools/test_base_environment.py", "tests/tools/test_snapshot_session_id_leak.py", "tests/tools/test_snapshot_multiline_session_env_injection.py", "tests/tools/test_subprocess_stdin_guard.py", "tests/tools/test_local_env_cwd_recovery.py", "tests/tools/test_local_env_relative_cwd.py", "tests/tools/test_local_env_windows_msys.py", "-q", "-rs", "-j", "1", "--file-retries", "0", "-k", "not test_non_utf8_env_preserves_unrelated_bytes and not test_concurrent_writes_never_tear_the_snapshot and not test_failed_export_does_not_destroy_good_snapshot and not test_snapshot_and_cwd_files_are_0600 and not test_returns_root_when_only_root_exists"]
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 27 test files (~507 tests) under ['tests\\agent\\test_terminal_env_registry.py', 'tests\\agent\\test_secret_scope.py', 'tests\\tools\\test_local_env_session_leak.py', 'tests\\tools\\test_local_env_blocklist.py', 'tests\\tools\\test_build_subprocess_env.py', 'tests\\tools\\test_hermes_subprocess_env.py', 'tests\\gateway\\test_raft_adapter.py', 'tests\\plugins\\memory\\test_openviking_provider.py', 'tests\\cron\\test_cron_script.py', 'tests\\tools\\test_env_passthrough.py', 'tests\\tools\\test_skill_env_passthrough.py', 'tests\\hermes_cli\\test_env_loader.py', 'tests\\test_env_loader_secret_sources.py', 'tests\\test_env_loader_applied_homes.py', 'tests\\test_env_loader_op_bootstrap.py', 'tests\\tools\\test_child_credential_boundary.py', 'tests\\tools\\test_child_bridge_credential_boundary.py', 'tests\\tools\\test_child_credential_windows_native.py', 'tests\\tools\\test_tts_command_providers.py', 'tests\\tools\\test_transcription_command_providers.py', 'tests\\tools\\test_base_environment.py', 'tests\\tools\\test_snapshot_session_id_leak.py', 'tests\\tools\\test_snapshot_multiline_session_env_injection.py', 'tests\\tools\\test_subprocess_stdin_guard.py', 'tests\\tools\\test_local_env_cwd_recovery.py', 'tests\\tools\\test_local_env_relative_cwd.py', 'tests\\tools\\test_local_env_windows_msys.py']; running with -j 1
+[  4.7% |    24/~507 | ✓24 | ✗ 0] ✓ tests\agent\test_secret_scope.py (24✓, 3.2s)
+[  8.1% |    41/~507 | ✓48 | ✗ 0] ✓ tests\agent\test_terminal_env_registry.py (24✓, 2.7s)
+[ 13.8% |    70/~507 | ✓75 | ✗ 0] ✓ tests\cron\test_cron_script.py (27✓ 2s, 10.9s)
+[ 15.2% |    77/~507 | ✓82 | ✗ 0] ✓ tests\gateway\test_raft_adapter.py (7✓, 3.3s)
+[ 20.3% |   103/~507 | ✓108 | ✗  0] ✓ tests\hermes_cli\test_env_loader.py (26✓, 3.2s)
+[ 32.3% |   164/~507 | ✓168 | ✗  0] ✓ tests\plugins\memory\test_openviking_provider.py (60✓ 2s, 14.9s)
+[ 33.3% |   169/~507 | ✓173 | ✗  0] ✓ tests\test_env_loader_applied_homes.py (5✓, 2.4s)
+[ 34.1% |   173/~507 | ✓177 | ✗  0] ✓ tests\test_env_loader_op_bootstrap.py (4✓, 2.4s)
+[ 37.7% |   191/~507 | ✓195 | ✗  0] ✓ tests\test_env_loader_secret_sources.py (18✓, 3.0s)
+[ 43.0% |   218/~507 | ✓219 | ✗  0] ✓ tests\tools\test_base_environment.py (24✓, 6.2s)
+[ 44.8% |   227/~507 | ✓229 | ✗  0] ✓ tests\tools\test_build_subprocess_env.py (10✓, 4.5s)
+[ 45.2% |   229/~507 | ✓231 | ✗  0] ✓ tests\tools\test_child_bridge_credential_boundary.py (2✓, 4.6s)
+[ 52.7% |   267/~507 | ✓446 | ✗  0] ✓ tests\tools\test_child_credential_boundary.py (215✓, 18.5s)
+[ 54.4% |   276/~507 | ✓474 | ✗  0] ✓ tests\tools\test_child_credential_windows_native.py (28✓, 33.3s)
+[ 59.0% |   299/~507 | ✓497 | ✗  0] ✓ tests\tools\test_env_passthrough.py (23✓, 7.8s)
+[ 63.1% |   320/~507 | ✓518 | ✗  0] ✓ tests\tools\test_hermes_subprocess_env.py (21✓, 5.0s)
+[ 77.1% |   391/~507 | ✓600 | ✗  0] ✓ tests\tools\test_local_env_blocklist.py (82✓ 1s, 20.3s)
+[ 78.3% |   397/~507 | ✓605 | ✗  0] ✓ tests\tools\test_local_env_cwd_recovery.py (5✓, 4.1s)
+[ 78.7% |   399/~507 | ✓607 | ✗  0] ✓ tests\tools\test_local_env_relative_cwd.py (2✓, 4.8s)
+[ 80.3% |   407/~507 | ✓615 | ✗  0] ✓ tests\tools\test_local_env_session_leak.py (8✓, 4.5s)
+[ 86.8% |   440/~507 | ✓644 | ✗  0] ✓ tests\tools\test_local_env_windows_msys.py (29✓ 4s, 5.1s)
+[ 87.6% |   444/~507 | ✓648 | ✗  0] ✓ tests\tools\test_skill_env_passthrough.py (4✓, 3.5s)
+[ 88.0% |   446/~507 | ✓648 | ✗  0] ✓ tests\tools\test_snapshot_multiline_session_env_injection.py (2s, 1.6s)
+[ 88.6% |   449/~507 | ✓650 | ✗  0] ✓ tests\tools\test_snapshot_session_id_leak.py (2✓ 1s, 3.4s)
+[ 89.2% |   452/~507 | ✓653 | ✗  0] ✓ tests\tools\test_subprocess_stdin_guard.py (3✓, 4.4s)
+[ 92.9% |   471/~507 | ✓672 | ✗  0] ✓ tests\tools\test_transcription_command_providers.py (19✓, 7.9s)
+[100.0% |   507/~507 | ✓707 | ✗  0] ✓ tests\tools\test_tts_command_providers.py (35✓ 1s, 8.2s)
+
+=== Summary: 27 files, 707 tests passed, 0 failed, 13 skipped (100% complete) in 193.8s (1 workers) ===
+
+  note: linux_only tests (in 1 file) were SKIPPED on this host (win32); they run on the main Linux CI lane.
+  note: macos_only tests (in 1 file) were SKIPPED on this host (win32); they run on the tests-os CI lane (macos-latest).
+  Durations cached to test_durations.json (27 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   27
+  Total subprocess CPU-wall: 193.7s  (runner wall: 193.8s, parallelism: 1x)
+  P50: 4.48s  P90: 18.48s  P95: 20.28s  P99: 33.33s  Max: 33.33s
+  <1s: 0 files (0%)  <2s: 1 files (4%)
+  Top 10 slowest:
+     33.33s  tests\tools\test_child_credential_windows_native.py
+     20.28s  tests\tools\test_local_env_blocklist.py
+     18.48s  tests\tools\test_child_credential_boundary.py
+     14.91s  tests\plugins\memory\test_openviking_provider.py
+     10.88s  tests\cron\test_cron_script.py
+      8.22s  tests\tools\test_tts_command_providers.py
+      7.92s  tests\tools\test_transcription_command_providers.py
+      7.80s  tests\tools\test_env_passthrough.py
+      6.16s  tests\tools\test_base_environment.py
+      5.11s  tests\tools\test_local_env_windows_msys.py

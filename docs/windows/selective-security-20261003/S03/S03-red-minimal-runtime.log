@@ -1,0 +1,129 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 1 test files (~25 tests) under ['tests\\tools\\test_child_credential_boundary.py']; running with -j 1
+[100.0% |    25/~25 | ✓0 | ✗1] ✗ tests\tools\test_child_credential_boundary.py (1✗, 6.1s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_boundary.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║ hermes_constants.py:142: in get_hermes_home
+  ║     _warn_profile_fallback_once()
+  ║ hermes_constants.py:92: in _warn_profile_fallback_once
+  ║     fallback_home = _get_platform_default_hermes_home()
+  ║                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ║ hermes_constants.py:57: in _get_platform_default_hermes_home
+  ║     base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+  ║                                                      ^^^^^^^^^^^
+  ║ C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+  ║     return cls("~").expanduser()
+  ║            ^^^^^^^^^^^^^^^^^^^^^
+  ║ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  ║
+  ║ self = WindowsPath('~')
+  ║
+  ║     def expanduser(self):
+  ║         """ Return a new path with expanded ~ and ~user constructs
+  ║         (as returned by os.path.expanduser)
+  ║         """
+  ║         if (not (self._drv or self._root) and
+  ║             self._parts and self._parts[0][:1] == '~'):
+  ║             homedir = os.path.expanduser(self._parts[0])
+  ║             if homedir[:1] == "~":
+  ║ >               raise RuntimeError("Could not determine home directory.")
+  ║ E               RuntimeError: Could not determine home directory.
+  ║
+  ║ C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_global_runtime_declaration_survives_minimal_os_environment
+  ║ 1 failed, 164 deselected in 3.93s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_boundary.py -q -k global_runtime_declaration_survives_minimal
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+
+=== Summary: 1 files, 0 tests passed, 1 failed (100% complete) in 6.1s (1 workers) ===
+  Durations cached to test_durations.json (1 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   1
+  Total subprocess CPU-wall: 6.1s  (runner wall: 6.1s, parallelism: 1x)
+  P50: 6.11s  P90: 6.11s  P95: 6.11s  P99: 6.11s  Max: 6.11s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+      6.11s  tests\tools\test_child_credential_boundary.py
+
+=== Failure output ===
+
+--- tests\tools\test_child_credential_boundary.py ---
+F                                                                        [100%]
+================================== FAILURES ===================================
+_______ test_global_runtime_declaration_survives_minimal_os_environment _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000023E68827F50>
+
+    def test_global_runtime_declaration_survives_minimal_os_environment(monkeypatch):
+        import gateway.platform_registry as platform_module
+        registry = platform_module.PlatformRegistry()
+        registry.register(platform_module.PlatformEntry(
+            name="test-minimal", label="Test", adapter_factory=lambda _: None,
+            check_fn=lambda: True, required_env=["CUSTOM_ADAPTER_TOKEN"],
+        ))
+        monkeypatch.setattr(platform_module, "platform_registry", registry)
+        from unittest.mock import patch
+        with patch.dict(os.environ, {"HOME": "/test-only-home", "CUSTOM_ADAPTER_TOKEN": SECRET}, clear=True):
+>           assert "CUSTOM_ADAPTER_TOKEN" not in child_env("cli")
+                                                 ^^^^^^^^^^^^^^^^
+
+tests\tools\test_child_credential_boundary.py:387:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_child_credential_boundary.py:63: in child_env
+    return local.hermes_subprocess_env(
+tools\environments\local.py:886: in hermes_subprocess_env
+    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST} | _registered_adapter_secret_env()
+                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:482: in _registered_adapter_secret_env
+    name.upper() for name in platform_registry.required_env_names()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:582: in required_env_names
+    entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
+gateway\platform_registry.py:274: in current_scope_key
+    return hermes_home_key()
+           ^^^^^^^^^^^^^^^^^
+hermes_constants.py:154: in hermes_home_key
+    candidate = Path(path) if path is not None else get_hermes_home()
+                                                    ^^^^^^^^^^^^^^^^^
+hermes_constants.py:142: in get_hermes_home
+    _warn_profile_fallback_once()
+hermes_constants.py:92: in _warn_profile_fallback_once
+    fallback_home = _get_platform_default_hermes_home()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_constants.py:57: in _get_platform_default_hermes_home
+    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+                                                     ^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:914: in home
+    return cls("~").expanduser()
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('~')
+
+    def expanduser(self):
+        """ Return a new path with expanded ~ and ~user constructs
+        (as returned by os.path.expanduser)
+        """
+        if (not (self._drv or self._root) and
+            self._parts and self._parts[0][:1] == '~'):
+            homedir = os.path.expanduser(self._parts[0])
+            if homedir[:1] == "~":
+>               raise RuntimeError("Could not determine home directory.")
+E               RuntimeError: Could not determine home directory.
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\pathlib.py:1385: RuntimeError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_global_runtime_declaration_survives_minimal_os_environment
+1 failed, 164 deselected in 3.93s
+
+=== 1 file with test failures (1 test failed) ===
+  tests\tools\test_child_credential_boundary.py  (1 test failed)

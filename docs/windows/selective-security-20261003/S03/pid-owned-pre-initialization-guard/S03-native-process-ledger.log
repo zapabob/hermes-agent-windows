@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "H:\hermes-worktrees\p0-p1-local-20261003\tmp\probes\s03_native_ledger.py", line 43, in <module>
+    assert not before, before
+           ^^^^^^^^^^
+AssertionError: [{'name': 'python.exe', 'pid': 9440, 'create_time': 1790996794.5402348}]

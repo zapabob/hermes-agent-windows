@@ -40,6 +40,35 @@ _SECRET_SOURCES: dict[str, str] = {}
 # Applied values are immutable per-home snapshots.  ``os.environ`` is shared
 # across profiles and may be overwritten by a later home's source apply.
 _SECRET_SOURCE_VALUES_BY_HOME: dict[str, dict[str, str]] = {}
+_DOTENV_KEYS_BY_HOME: dict[str, set[str]] = {}
+_LAUNCH_PROFILE_HOME: Path | None = None
+
+
+def remember_launch_profile_home(home: str | os.PathLike) -> None:
+    """Bind process ownership after CLI profile selection, before routing."""
+    global _LAUNCH_PROFILE_HOME
+    with _SECRET_SOURCE_CACHE_LOCK:
+        if _LAUNCH_PROFILE_HOME is None:
+            _LAUNCH_PROFILE_HOME = Path(home).resolve()
+
+
+def launch_profile_home() -> Path:
+    """Return the launch identity even while cron changes process HERMES_HOME."""
+    from hermes_constants import get_process_hermes_home
+    return _LAUNCH_PROFILE_HOME or get_process_hermes_home()
+
+
+def _remember_loaded_env_keys(home: Path, path: Path) -> None:
+    key = os.path.normcase(str(home.resolve()))
+    with _SECRET_SOURCE_CACHE_LOCK:
+        _DOTENV_KEYS_BY_HOME.setdefault(key, set()).update(_env_keys_defined_in_dotenv(path))
+
+
+def loaded_profile_env_keys(hermes_home: str | os.PathLike) -> frozenset[str]:
+    """Names loaded for a home, retained across dotenv removal and reload."""
+    key = os.path.normcase(str(Path(hermes_home).resolve()))
+    with _SECRET_SOURCE_CACHE_LOCK:
+        return frozenset(_DOTENV_KEYS_BY_HOME.get(key, ()))
 
 # HERMES_HOME paths we've already pulled external secrets for during this
 # process.  ``load_hermes_dotenv()`` is called at module-import time from
@@ -486,7 +515,9 @@ def load_hermes_dotenv(
     """
     loaded: list[Path] = []
 
-    home_path = Path(hermes_home or os.getenv("HERMES_HOME", Path.home() / ".hermes"))
+    from hermes_constants import get_process_hermes_home
+    home_path = Path(hermes_home) if hermes_home is not None else get_process_hermes_home()
+    remember_launch_profile_home(home_path)
     user_env = home_path / ".env"
     project_env_path = Path(project_env) if project_env else None
 
@@ -497,6 +528,7 @@ def load_hermes_dotenv(
         _sanitize_env_file_if_needed(project_env_path)
 
     if user_env.exists():
+        _remember_loaded_env_keys(home_path, user_env)
         _load_dotenv_with_fallback(user_env, override=True)
         loaded.append(user_env)
         # Mirror reload_env() known-key cleanup so inherited Hermes keys
@@ -515,9 +547,11 @@ def load_hermes_dotenv(
     # ensures .op.env never clobbers a token already in the environment).
     op_env = home_path / ".op.env"
     if op_env.exists() and not os.environ.get("OP_SERVICE_ACCOUNT_TOKEN"):
+        _remember_loaded_env_keys(home_path, op_env)
         _load_dotenv_with_fallback(op_env, override=False)
 
     if project_env_path and project_env_path.exists():
+        _remember_loaded_env_keys(home_path, project_env_path)
         _load_dotenv_with_fallback(project_env_path, override=not loaded)
         loaded.append(project_env_path)
 

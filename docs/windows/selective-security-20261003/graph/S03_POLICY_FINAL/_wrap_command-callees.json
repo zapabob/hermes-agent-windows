@@ -1,0 +1,59 @@
+{
+  "symbol": "_wrap_command",
+  "callees": [
+    {
+      "name": "replace",
+      "kind": "method",
+      "filePath": "tools/memory_tool.py",
+      "startLine": 476
+    },
+    {
+      "name": "_quote_shell_path",
+      "kind": "method",
+      "filePath": "tools/environments/base.py",
+      "startLine": 902
+    },
+    {
+      "name": "_quote_cwd_for_cd",
+      "kind": "method",
+      "filePath": "tools/environments/base.py",
+      "startLine": 892
+    },
+    {
+      "name": "_export_dump_excluding_session_vars",
+      "kind": "function",
+      "filePath": "tools/environments/base.py",
+      "startLine": 591
+    },
+    {
+      "name": "_snapshot_excluded_passthrough_names",
+      "kind": "method",
+      "filePath": "tools/environments/base.py",
+      "startLine": 734
+    },
+    {
+      "name": "write",
+      "kind": "method",
+      "filePath": "agent/thread_scoped_output.py",
+      "startLine": 82
+    },
+    {
+      "name": "close",
+      "kind": "method",
+      "filePath": "tests/plugins/test_engineering_reasoning.py",
+      "startLine": 93
+    },
+    {
+      "name": "unlink",
+      "kind": "method",
+      "filePath": "tests/plugins/platforms/photon/test_npm_error_log_regression.py",
+      "startLine": 66
+    },
+    {
+      "name": "_quote_shell_path",
+      "kind": "method",
+      "filePath": "tools/environments/local.py",
+      "startLine": 2218
+    }
+  ]
+}

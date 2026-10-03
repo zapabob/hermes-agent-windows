@@ -1673,6 +1673,9 @@ def _cron_profile_context(job: dict):
 
     prior_home = _hermes_home
     prior_env = os.environ.get("HERMES_HOME")
+    from hermes_cli.env_loader import remember_launch_profile_home
+    from hermes_constants import get_process_hermes_home
+    remember_launch_profile_home(get_process_hermes_home())
     home_override_token = set_hermes_home_override(home)
     _hermes_home = home
     os.environ["HERMES_HOME"] = str(home)

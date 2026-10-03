@@ -1,0 +1,1742 @@
+{
+  "symbol": "hermes_subprocess_env",
+  "depth": 2,
+  "nodeCount": 289,
+  "edgeCount": 295,
+  "affected": [
+    {
+      "name": "hermes_subprocess_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 317
+    },
+    {
+      "name": "_build_subprocess_env",
+      "kind": "function",
+      "filePath": "agent/copilot_acp_client.py",
+      "startLine": 125
+    },
+    {
+      "name": "_spawn",
+      "kind": "method",
+      "filePath": "agent/copilot_acp_client.py",
+      "startLine": 349
+    },
+    {
+      "name": "_spawn",
+      "kind": "method",
+      "filePath": "agent/lsp/client.py",
+      "startLine": 249
+    },
+    {
+      "name": "start",
+      "kind": "method",
+      "filePath": "agent/lsp/client.py",
+      "startLine": 210
+    },
+    {
+      "name": "_run",
+      "kind": "function",
+      "filePath": "tests/tools/test_spawn_site_child_env.py",
+      "startLine": 125
+    },
+    {
+      "name": "_install_npm",
+      "kind": "function",
+      "filePath": "agent/lsp/install.py",
+      "startLine": 239
+    },
+    {
+      "name": "npm_consumers",
+      "kind": "function",
+      "filePath": "tests/pm/test_node_resolution.py",
+      "startLine": 219
+    },
+    {
+      "name": "test_third_party_children_never_see_hermes_credentials",
+      "kind": "function",
+      "filePath": "tests/tools/test_spawn_site_child_env.py",
+      "startLine": 111
+    },
+    {
+      "name": "_install_go",
+      "kind": "function",
+      "filePath": "agent/lsp/install.py",
+      "startLine": 278
+    },
+    {
+      "name": "__init__",
+      "kind": "method",
+      "filePath": "agent/transports/codex_app_server.py",
+      "startLine": 91
+    },
+    {
+      "name": "_gh_env",
+      "kind": "function",
+      "filePath": "hermes_cli/kanban_pr_acceptance.py",
+      "startLine": 64
+    },
+    {
+      "name": "_api",
+      "kind": "function",
+      "filePath": "hermes_cli/kanban_pr_acceptance.py",
+      "startLine": 31
+    },
+    {
+      "name": "_start_local_openviking_server",
+      "kind": "function",
+      "filePath": "plugins/memory/openviking/__init__.py",
+      "startLine": 956
+    },
+    {
+      "name": "_handle_runtime_openviking_unreachable",
+      "kind": "method",
+      "filePath": "plugins/memory/openviking/__init__.py",
+      "startLine": 1373
+    },
+    {
+      "name": "test_start_local_openviking_server_uses_endpoint_host_and_port",
+      "kind": "function",
+      "filePath": "tests/plugins/memory/test_openviking_provider.py",
+      "startLine": 294
+    },
+    {
+      "name": "test_start_local_openviking_server_strips_pythonpath_from_child_env",
+      "kind": "function",
+      "filePath": "tests/plugins/memory/test_openviking_provider.py",
+      "startLine": 314
+    },
+    {
+      "name": "test_start_local_openviking_server_does_not_spawn_when_port_already_open",
+      "kind": "function",
+      "filePath": "tests/plugins/memory/test_openviking_provider.py",
+      "startLine": 343
+    },
+    {
+      "name": "test_start_local_openviking_server_reports_occupied_port_without_cli_on_path",
+      "kind": "function",
+      "filePath": "tests/plugins/memory/test_openviking_provider.py",
+      "startLine": 373
+    },
+    {
+      "name": "test_start_local_openviking_server_rejects_unparseable_url_before_probing",
+      "kind": "function",
+      "filePath": "tests/plugins/memory/test_openviking_provider.py",
+      "startLine": 394
+    },
+    {
+      "name": "_exec_buzz",
+      "kind": "function",
+      "filePath": "plugins/platforms/buzz/adapter.py",
+      "startLine": 390
+    },
+    {
+      "name": "_run_cli",
+      "kind": "method",
+      "filePath": "plugins/platforms/buzz/adapter.py",
+      "startLine": 591
+    },
+    {
+      "name": "_standalone_send",
+      "kind": "function",
+      "filePath": "plugins/platforms/buzz/adapter.py",
+      "startLine": 1911
+    },
+    {
+      "name": "_spawn_bridge",
+      "kind": "method",
+      "filePath": "plugins/platforms/raft/adapter.py",
+      "startLine": 368
+    },
+    {
+      "name": "connect",
+      "kind": "method",
+      "filePath": "plugins/platforms/raft/adapter.py",
+      "startLine": 323
+    },
+    {
+      "name": "test_secondary_profile_uses_its_own_slug_and_never_borrows_default",
+      "kind": "method",
+      "filePath": "tests/gateway/test_raft_adapter.py",
+      "startLine": 246
+    },
+    {
+      "name": "_build",
+      "kind": "function",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 43
+    },
+    {
+      "name": "test_provider_keys_stripped_by_default",
+      "kind": "method",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 52
+    },
+    {
+      "name": "test_tier1_secrets_stripped_by_default",
+      "kind": "method",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 57
+    },
+    {
+      "name": "test_buzz_platform_vars_stripped_by_default",
+      "kind": "method",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 62
+    },
+    {
+      "name": "test_pythonutf8_set",
+      "kind": "method",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 76
+    },
+    {
+      "name": "test_provider_keys_preserved_when_inheriting",
+      "kind": "method",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 82
+    },
+    {
+      "name": "test_tier1_secrets_stripped_even_when_inheriting",
+      "kind": "method",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 87
+    },
+    {
+      "name": "test_pythonutf8_set_when_inheriting",
+      "kind": "method",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 99
+    },
+    {
+      "name": "test_tier1_always_stripped_both_paths",
+      "kind": "method",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 104
+    },
+    {
+      "name": "test_stripped_by_default",
+      "kind": "method",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 200
+    },
+    {
+      "name": "test_auxiliary_non_secrets_preserved",
+      "kind": "method",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 206
+    },
+    {
+      "name": "test_gateway_relay_id_stripped_even_when_inheriting",
+      "kind": "method",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 214
+    },
+    {
+      "name": "test_browser_keys_recoverable_after_strip",
+      "kind": "method",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 133
+    },
+    {
+      "name": "test_delegated_child_context_scrubs_parent_kanban_keys_and_sets_marker",
+      "kind": "method",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 159
+    },
+    {
+      "name": "test_user_platform_plugin_secrets_belong_to_their_own_profile",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 142
+    },
+    {
+      "name": "stripped",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 201
+    },
+    {
+      "name": "test_a_failed_rescan_keeps_the_denials_it_already_knew",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 182
+    },
+    {
+      "name": "test_a_partial_scan_is_rescanned_on_the_next_spawn",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 215
+    },
+    {
+      "name": "test_a_symlinked_home_alias_shares_its_profiles_plugin_declarations",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 247
+    },
+    {
+      "name": "test_inheriting_child_gets_provider_keys_but_never_adapter_secrets",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 344
+    },
+    {
+      "name": "child_sees",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 368
+    },
+    {
+      "name": "test_runtime_adapter_secret_follows_the_bound_profiles_registry",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 354
+    },
+    {
+      "name": "test_force_prefix_is_not_plugin_passthrough",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 449
+    },
+    {
+      "name": "test_buzz_context_and_plain_process_value",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 479
+    },
+    {
+      "name": "test_hermes_subprocess_env_strips_foreign_session_key_when_engaged",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 208
+    },
+    {
+      "name": "test_hermes_subprocess_env_unengaged_preserves_fallback",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 228
+    },
+    {
+      "name": "test_hermes_subprocess_env_sets_msys_no_pathconv_on_windows",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "startLine": 231
+    },
+    {
+      "name": "served_profile_child_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 386
+    },
+    {
+      "name": "_mint",
+      "kind": "function",
+      "filePath": "agent/command_token_source.py",
+      "startLine": 46
+    },
+    {
+      "name": "_deliver_to_bot_chat",
+      "kind": "function",
+      "filePath": "cron/scheduler_delivery.py",
+      "startLine": 773
+    },
+    {
+      "name": "_restart_watcher_env",
+      "kind": "method",
+      "filePath": "gateway/run_shutdown.py",
+      "startLine": 1398
+    },
+    {
+      "name": "_spawn_detached_gateway",
+      "kind": "function",
+      "filePath": "hermes_cli/gateway_launchd.py",
+      "startLine": 277
+    },
+    {
+      "name": "_spawn_detached",
+      "kind": "function",
+      "filePath": "hermes_cli/gateway_windows.py",
+      "startLine": 752
+    },
+    {
+      "name": "_forward_to_profile",
+      "kind": "method",
+      "filePath": "plugins/platforms/a2a/adapter.py",
+      "startLine": 578
+    },
+    {
+      "name": "test_routed_child_drops_gates_and_same_home_child_keeps_them",
+      "kind": "function",
+      "filePath": "tests/tools/test_profile_gate_env_isolation.py",
+      "startLine": 49
+    },
+    {
+      "name": "test_ambient_only_launch_credential_never_reaches_a_routed_child",
+      "kind": "function",
+      "filePath": "tests/tui_gateway/test_served_profile_child_env_authority.py",
+      "startLine": 46
+    },
+    {
+      "name": "test_routed_home_with_multiplex_flag_off_gets_no_launch_residue",
+      "kind": "function",
+      "filePath": "tests/tui_gateway/test_served_profile_child_env_authority.py",
+      "startLine": 63
+    },
+    {
+      "name": "test_real_child_observes_only_the_routed_profile",
+      "kind": "function",
+      "filePath": "tests/tui_gateway/test_served_profile_child_env_authority.py",
+      "startLine": 83
+    },
+    {
+      "name": "_spawn_and_wait",
+      "kind": "function",
+      "filePath": "tools/bot_desktop/runtime.py",
+      "startLine": 714
+    },
+    {
+      "name": "delivery_env",
+      "kind": "function",
+      "filePath": "tools/bot_relay.py",
+      "startLine": 580
+    },
+    {
+      "name": "_build_browser_env",
+      "kind": "function",
+      "filePath": "tools/browser_tool.py",
+      "startLine": 47
+    },
+    {
+      "name": "host_gateway_child_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 430
+    },
+    {
+      "name": "__init__",
+      "kind": "method",
+      "filePath": "tui_gateway/server.py",
+      "startLine": 249
+    },
+    {
+      "name": "test_profile_gate_env_isolation.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_profile_gate_env_isolation.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_served_profile_child_env_authority.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_served_profile_child_env_authority.py",
+      "startLine": 1
+    },
+    {
+      "name": "_run_managed_node_linter",
+      "kind": "method",
+      "filePath": "tools/file_operations_lint.py",
+      "startLine": 194
+    },
+    {
+      "name": "_check_lint",
+      "kind": "method",
+      "filePath": "tools/file_operations_lint.py",
+      "startLine": 143
+    },
+    {
+      "name": "_transcribe_local_command",
+      "kind": "function",
+      "filePath": "tools/transcription_local.py",
+      "startLine": 263
+    },
+    {
+      "name": "test_local_whisper_subprocess_uses_sanitized_env",
+      "kind": "method",
+      "filePath": "tests/tools/test_transcription_tools.py",
+      "startLine": 308
+    },
+    {
+      "name": "test_command_fallback_with_template",
+      "kind": "method",
+      "filePath": "tests/tools/test_transcription_tools.py",
+      "startLine": 358
+    },
+    {
+      "name": "test_env_var_template_metacharacters_are_literal_argv",
+      "kind": "method",
+      "filePath": "tests/tools/test_transcription_tools.py",
+      "startLine": 1240
+    },
+    {
+      "name": "transcribe_audio_local_fallback",
+      "kind": "function",
+      "filePath": "tools/transcription_tools.py",
+      "startLine": 562
+    },
+    {
+      "name": "transcription_tools.py",
+      "kind": "file",
+      "filePath": "tools/transcription_tools.py",
+      "startLine": 1
+    },
+    {
+      "name": "run_command_provider",
+      "kind": "function",
+      "filePath": "tools/tts_command_provider.py",
+      "startLine": 135
+    },
+    {
+      "name": "_generate_command_tts",
+      "kind": "function",
+      "filePath": "tools/tts_command_provider.py",
+      "startLine": 312
+    },
+    {
+      "name": "_run",
+      "kind": "function",
+      "filePath": "tools/tts_tool_lifecycle.py",
+      "startLine": 71
+    },
+    {
+      "name": "_run_system_player",
+      "kind": "function",
+      "filePath": "tools/voice_mode.py",
+      "startLine": 1087
+    },
+    {
+      "name": "_play_audio_file_impl",
+      "kind": "function",
+      "filePath": "tools/voice_mode.py",
+      "startLine": 1115
+    },
+    {
+      "name": "_spawn_locked",
+      "kind": "method",
+      "filePath": "tui_gateway/host_supervisor.py",
+      "startLine": 326
+    },
+    {
+      "name": "start",
+      "kind": "method",
+      "filePath": "tui_gateway/host_supervisor.py",
+      "startLine": 188
+    },
+    {
+      "name": "_respawn",
+      "kind": "function",
+      "filePath": "tui_gateway/host_supervisor.py",
+      "startLine": 473
+    },
+    {
+      "name": "_",
+      "kind": "function",
+      "filePath": "tui_gateway/methods_tools.py",
+      "startLine": 541
+    },
+    {
+      "name": "copilot_acp_client.py",
+      "kind": "file",
+      "filePath": "agent/copilot_acp_client.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_copilot_acp_client.py",
+      "kind": "file",
+      "filePath": "tests/agent/test_copilot_acp_client.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_copilot_acp_deprecation.py",
+      "kind": "file",
+      "filePath": "tests/agent/test_copilot_acp_deprecation.py",
+      "startLine": 1
+    },
+    {
+      "name": "codex_app_server.py",
+      "kind": "file",
+      "filePath": "agent/transports/codex_app_server.py",
+      "startLine": 1
+    },
+    {
+      "name": "codex_app_server_session.py",
+      "kind": "file",
+      "filePath": "agent/transports/codex_app_server_session.py",
+      "startLine": 1
+    },
+    {
+      "name": "kanban_scope_probe.py",
+      "kind": "file",
+      "filePath": "evals/kanban_scope_probe.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_codex_app_server_thread_resume.py",
+      "kind": "file",
+      "filePath": "tests/agent/test_codex_app_server_thread_resume.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_codex_app_server.py",
+      "kind": "file",
+      "filePath": "tests/agent/transports/test_codex_app_server.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_codex_app_server_session.py",
+      "kind": "file",
+      "filePath": "tests/agent/transports/test_codex_app_server_session.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_hermes_subprocess_env.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_local_env_session_leak.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_local_env_windows_msys.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "startLine": 1
+    },
+    {
+      "name": "host_supervisor.py",
+      "kind": "file",
+      "filePath": "tui_gateway/host_supervisor.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_compute_host_late_compress_ack.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_compute_host_late_compress_ack.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_compute_host_phase1.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_compute_host_phase1.py",
+      "startLine": 1
+    },
+    {
+      "name": "compute_host.py",
+      "kind": "file",
+      "filePath": "tui_gateway/compute_host.py",
+      "startLine": 1
+    },
+    {
+      "name": "server.py",
+      "kind": "file",
+      "filePath": "tui_gateway/server.py",
+      "startLine": 1
+    },
+    {
+      "name": "rebuild_observer.py",
+      "kind": "file",
+      "filePath": "evals/desktop_bug_campaign/rebuild_observer.py",
+      "startLine": 1
+    },
+    {
+      "name": "goal_repaste_probe.py",
+      "kind": "file",
+      "filePath": "evals/postmortem/review_probes/goal_repaste_probe.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_notification_persistence.py",
+      "kind": "file",
+      "filePath": "tests/agent/test_notification_persistence.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_cron_manage_profile_scope.py",
+      "kind": "file",
+      "filePath": "tests/cron/test_cron_manage_profile_scope.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_browser_control_cloud.py",
+      "kind": "file",
+      "filePath": "tests/gateway/test_browser_control_cloud.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_complete_path_at_filter.py",
+      "kind": "file",
+      "filePath": "tests/gateway/test_complete_path_at_filter.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_session_list_allowed_sources.py",
+      "kind": "file",
+      "filePath": "tests/gateway/test_session_list_allowed_sources.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_audio_playback_guard.py",
+      "kind": "file",
+      "filePath": "tests/hermes_cli/test_audio_playback_guard.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_history_commentary_display.py",
+      "kind": "file",
+      "filePath": "tests/hermes_cli/test_history_commentary_display.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_plugins_cmd_remove_bookkeeping.py",
+      "kind": "file",
+      "filePath": "tests/hermes_cli/test_plugins_cmd_remove_bookkeeping.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_process_notification_display.py",
+      "kind": "file",
+      "filePath": "tests/hermes_cli/test_process_notification_display.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_shared_metrics_desktop.py",
+      "kind": "file",
+      "filePath": "tests/hermes_cli/test_shared_metrics_desktop.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_shared_metrics_install_v4.py",
+      "kind": "file",
+      "filePath": "tests/hermes_cli/test_shared_metrics_install_v4.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_subagent_notification_display.py",
+      "kind": "file",
+      "filePath": "tests/hermes_cli/test_subagent_notification_display.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_plugins_manage_profile_scope.py",
+      "kind": "file",
+      "filePath": "tests/plugins/test_plugins_manage_profile_scope.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_bot_mode_canonical_chat_resolution.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_bot_mode_canonical_chat_resolution.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_approval_cancelled_on_reap.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_approval_cancelled_on_reap.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_attach_does_not_wait_for_agent.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_attach_does_not_wait_for_agent.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_auto_continue.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_auto_continue.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_billing_rpc.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_billing_rpc.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_bot_mode_silence_delivery.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_bot_mode_silence_delivery.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_bot_relay_methods.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_bot_relay_methods.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_busy_compression_demotion.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_busy_compression_demotion.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_change_watcher.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_change_watcher.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_change_watcher_sessions.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_change_watcher_sessions.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_closed_session_turn_lease.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_closed_session_turn_lease.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_codex_app_server_live_events.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_codex_app_server_live_events.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_composite_carrier_rewind.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_composite_carrier_rewind.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_compression_config_hot_reload.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_compression_config_hot_reload.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_compute_host_borrowed_lease.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_compute_host_borrowed_lease.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_compute_host_pending_model_switch.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_compute_host_pending_model_switch.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_compute_host_routed_secret_hydration.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_compute_host_routed_secret_hydration.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_compute_host_turn_protocol.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_compute_host_turn_protocol.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_config_profile_scope.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_config_profile_scope.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_config_set_display_toggles.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_config_set_display_toggles.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_config_set_session_profile_scope.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_config_set_session_profile_scope.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_config_set_voice_chat_mode.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_config_set_voice_chat_mode.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_connector_operation_e2e.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_connector_operation_e2e.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_connector_operation_rpc.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_connector_operation_rpc.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_container_backend_workdir.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_container_backend_workdir.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_context_local_slash.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_context_local_slash.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_credit_producer_suppression.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_credit_producer_suppression.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_cross_process_orphan_ownership.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_cross_process_orphan_ownership.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_deferred_lease_reaper.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_deferred_lease_reaper.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_deferred_model_history.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_deferred_model_history.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_deferred_model_switch_confirm.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_deferred_model_switch_confirm.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_delegation_session_lifecycle.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_delegation_session_lifecycle.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_desktop_session_login_identity.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_desktop_session_login_identity.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_desktop_session_row_git_meta.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_desktop_session_row_git_meta.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_diagnostic_notification_presentation.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_diagnostic_notification_presentation.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_diagnostic_turn_end_to_end.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_diagnostic_turn_end_to_end.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_diagnostics_share_nous.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_diagnostics_share_nous.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_empty_fast_status.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_empty_fast_status.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_failed_agent_build_retry.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_failed_agent_build_retry.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_failed_turn_retention.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_failed_turn_retention.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_fallback_chain_hot_reload.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_fallback_chain_hot_reload.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_fast_session_scope.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_fast_session_scope.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_finalize_session_cancels_background_review.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_finalize_session_cancels_background_review.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_first_contact_onboarding.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_first_contact_onboarding.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_foreground_notification_snapshot.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_foreground_notification_snapshot.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_free_tier_rpc.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_free_tier_rpc.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_gateway_owned_session_reap.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_gateway_owned_session_reap.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_groups_methods.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_groups_methods.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_groups_replication_methods.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_groups_replication_methods.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_gui_surface_toolsets.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_gui_surface_toolsets.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_heartbeat_wakes.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_heartbeat_wakes.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_history_inline_images.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_history_inline_images.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_hosted_room_member_activity_hook.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_hosted_room_member_activity_hook.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_hosted_room_prompt_fence.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_hosted_room_prompt_fence.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_hosted_room_turn_slot_release.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_hosted_room_turn_slot_release.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_hud_surface_note.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_hud_surface_note.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_image_history_display.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_image_history_display.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_image_ref_message.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_image_ref_message.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_image_routing_stale_model.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_image_routing_stale_model.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_init_targets_session_cwd.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_init_targets_session_cwd.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_isolated_orphan_activity.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_isolated_orphan_activity.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_kanban_notify_poller.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_kanban_notify_poller.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_launch_db_home_override_race.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_launch_db_home_override_race.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_launch_home_isolation.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_launch_home_isolation.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_launch_profile_scope_plugin_hooks.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_launch_profile_scope_plugin_hooks.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_live_config_context_pin_mirror.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_live_config_context_pin_mirror.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_local_model_session_identity.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_local_model_session_identity.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_make_agent_prefill.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_make_agent_prefill.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_mcp_profile_rpcs.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_mcp_profile_rpcs.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_mcp_reload_all_sessions.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_mcp_reload_all_sessions.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_mcp_reload_rev.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_mcp_reload_rev.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_model_options_profile_scope.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_model_options_profile_scope.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_model_rpc_skew_guard.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_model_rpc_skew_guard.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_model_switch_marker_role.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_model_switch_marker_role.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_model_switch_reasoning_flag.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_model_switch_reasoning_flag.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_multi_client_fanout.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_multi_client_fanout.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_multi_profile_hosting_fail_closed.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_multi_profile_hosting_fail_closed.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_multi_profile_hosting_transitions.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_multi_profile_hosting_transitions.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_none_agent_turn_guard.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_none_agent_turn_guard.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_notification_turn_release.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_notification_turn_release.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_out_of_band_history_adoption.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_out_of_band_history_adoption.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_pending_hidden_consumption.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_pending_hidden_consumption.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_personality_clobbers_system_prompt.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_personality_clobbers_system_prompt.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_ping_probe.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_ping_probe.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_plugin_inject_host.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_plugin_inject_host.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_plugins_manage_install.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_plugins_manage_install.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_plugins_manage_late_activation.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_plugins_manage_late_activation.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_plugins_manage_remove.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_plugins_manage_remove.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_plugins_manage_settings.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_plugins_manage_settings.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_preview_action_bridge_fail_fast.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_preview_action_bridge_fail_fast.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_profile_db_readonly.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_profile_db_readonly.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_profile_terminal_scope_entrypoints.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_profile_terminal_scope_entrypoints.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_profiles_configure.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_profiles_configure.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_profiles_configure_model_guard.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_profiles_configure_model_guard.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_profiles_create_env_refs.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_profiles_create_env_refs.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_profiles_describe_secret_scope.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_profiles_describe_secret_scope.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_profiles_inherit_launch_model.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_profiles_inherit_launch_model.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_profiles_list_canonical_session.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_profiles_list_canonical_session.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_profiles_list_session_field_cache.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_profiles_list_session_field_cache.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_profiles_list_ui_meta_cache.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_profiles_list_ui_meta_cache.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_profiles_list_worker_session.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_profiles_list_worker_session.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_profiles_ui_meta_cas.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_profiles_ui_meta_cas.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_projects_rpc.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_projects_rpc.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_prompt_accept_logging.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_prompt_accept_logging.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_provider_not_configured_code.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_provider_not_configured_code.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_queued_prompt_persistence.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_queued_prompt_persistence.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_queued_prompt_restart_retire.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_queued_prompt_restart_retire.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_readiness_singleflight.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_readiness_singleflight.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_reasoning_config_per_model.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_reasoning_config_per_model.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_reasoning_session_scope.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_reasoning_session_scope.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_resume_child_run_profile_scope.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_resume_child_run_profile_scope.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_resume_live_lazy_session.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_resume_live_lazy_session.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_resume_live_profile_scope.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_resume_live_profile_scope.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_resume_profile_scope.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_resume_profile_scope.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_resume_switched_provider_endpoint.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_resume_switched_provider_endpoint.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_rollback_container_refusal.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_rollback_container_refusal.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_routing_provenance_reopen.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_routing_provenance_reopen.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_runtime_identity.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_runtime_identity.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_secondary_profile_model_and_key.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_secondary_profile_model_and_key.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_seeded_session_create.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_seeded_session_create.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_serve_exit_flush.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_serve_exit_flush.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_session_archive_rpc.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_session_archive_rpc.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_session_cwd_follow.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_session_cwd_follow.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_session_cwd_profile_key.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_session_cwd_profile_key.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_session_db_ownership_teardown.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_session_db_ownership_teardown.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_session_finalize_reaps_kernels.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_session_finalize_reaps_kernels.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_session_git_metadata_generation.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_session_git_metadata_generation.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_session_hidden_rpc.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_session_hidden_rpc.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_session_history_codex_sidecar.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_session_history_codex_sidecar.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_session_id_injection.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_session_id_injection.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_session_images_dir.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_session_images_dir.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_session_reclaim_notify.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_session_reclaim_notify.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_session_resume_db_ownership.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_session_resume_db_ownership.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_session_resume_materializes_minted_key.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_session_resume_materializes_minted_key.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_shared_metrics_consent_rpc.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_shared_metrics_consent_rpc.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_shared_metrics_slash_command_rpc.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_shared_metrics_slash_command_rpc.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_shared_metrics_update_run_rpc.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_shared_metrics_update_run_rpc.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_shared_session_delivery.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_shared_session_delivery.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_shell_exec_security.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_shell_exec_security.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_show_reasoning_display_gate.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_show_reasoning_display_gate.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_skills_manage_install.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_skills_manage_install.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_slash_fuzzy.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_slash_fuzzy.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_slash_prompt_compose_seed.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_slash_prompt_compose_seed.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_slash_refine_live.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_slash_refine_live.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_slash_review_owner.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_slash_review_owner.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_slash_worker_provider.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_slash_worker_provider.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_spawn_tree_records.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_spawn_tree_records.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_startup_orphan_sweep.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_startup_orphan_sweep.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_status_profile_home.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_status_profile_home.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_submit_row_session_target.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_submit_row_session_target.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_submit_time_user_row.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_submit_time_user_row.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_subprocess_encoding.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_subprocess_encoding.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_todo_state_events.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_todo_state_events.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_tools_readback_scope.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_tools_readback_scope.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_tour_bridge_fail_fast.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_tour_bridge_fail_fast.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_tui_gateway_queue_on_busy.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_tui_gateway_queue_on_busy.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_tui_gateway_server.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_tui_gateway_server.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_tui_gateway_server_crash_history.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_tui_gateway_server_crash_history.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_tui_gateway_ws.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_tui_gateway_ws.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_tui_mcp_late_refresh.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_tui_mcp_late_refresh.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_turn_finished_failure_cause.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_turn_finished_failure_cause.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_turn_payload_interim_final.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_turn_payload_interim_final.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_turn_payload_response_transformed.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_turn_payload_response_transformed.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_vault_methods.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_vault_methods.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_voice_live_delegation.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_voice_live_delegation.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_warning_callback_conservation.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_warning_callback_conservation.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_ws_orphan_races.py",
+      "kind": "file",
+      "filePath": "tests/tui_gateway/test_ws_orphan_races.py",
+      "startLine": 1
+    },
+    {
+      "name": "entry.py",
+      "kind": "file",
+      "filePath": "tui_gateway/entry.py",
+      "startLine": 1
+    },
+    {
+      "name": "ws.py",
+      "kind": "file",
+      "filePath": "tui_gateway/ws.py",
+      "startLine": 1
+    }
+  ]
+}

@@ -305,34 +305,371 @@
         }
       },
       "downstream_owner_files": [
-        "tools/terminal_tool.py",
-        "agent/terminal_env_registry.py"
+        "tools/environments/local.py",
+        "agent/terminal_env_registry.py",
+        "hermes_cli/config.py",
+        "hermes_cli/env_loader.py",
+        "cron/scheduler.py",
+        "plugins/platforms/raft/adapter.py",
+        "plugins/memory/openviking/__init__.py",
+        "agent/delegation_context.py",
+        "gateway/platform_registry.py",
+        "tools/env_passthrough.py",
+        "tools/tts_tool.py",
+        "tools/transcription_tools.py"
       ],
       "downstream_blob_sha": {
-        "tools/terminal_tool.py": {
-          "blob_sha": "6730b8a04cd04c64cc34d8a3ed468d629edb72df",
-          "sha256": "3c9f526b1789ff7ba09bedcdefc03d170ff39946a3c1da8d276f25421d4f7c27"
+        "tools/environments/local.py": {
+          "blob_sha": "f46960619e9ae0b3df434aa924954c5555c0b154",
+          "sha256": "bae58232a1ffc1cddb0170f9979034085959263b2e231a84c3231c22fab023f3"
         },
         "agent/terminal_env_registry.py": {
           "blob_sha": "3c65cd2242b84e051ea0997c9384112024535aa3",
           "sha256": "f03ea11c9f61da9e1e26d3c839296e60c5db306131c869ce9abcd3602171eb97"
+        },
+        "hermes_cli/config.py": {
+          "blob_sha": "1faebf79a00d2bb9264460f4b5958e9d82a81eb9",
+          "sha256": "d679ca0b84f2e184b84f8557bf92bbeea55a021f7fc2e18f269264e1310c30b5"
+        },
+        "hermes_cli/env_loader.py": {
+          "blob_sha": "f926c6ed4e514e44442983d97477443912966249",
+          "sha256": "26712ba3e020b5c306cd456e8d2cc96084fd2295f7ec4104466fffd0adeab87d"
+        },
+        "cron/scheduler.py": {
+          "blob_sha": "a056440aecd6e1493b2bd3b2763b1448849b1531",
+          "sha256": "a7537a3822a05289a20262f133ab665e38cfeaaccb07a8e19ef0d82d60569783"
+        },
+        "plugins/platforms/raft/adapter.py": {
+          "blob_sha": "d31ee4601a4cb7a40f435384feab0844f460c8d1",
+          "sha256": "5966e7dfa8ea9260654e5d05a02a68f7e57cb40837ae89821ff036c76d37e7c3"
+        },
+        "plugins/memory/openviking/__init__.py": {
+          "blob_sha": "f5d93c472e6806d90226d285a1db68d40213d8b7",
+          "sha256": "73ced88fabf179a820de37b76d9b5badb76854d8b3bd5fdeeb1f73d1e4aa880f"
+        },
+        "agent/delegation_context.py": {
+          "blob_sha": "9b8bce97597a964e01507a744d9b67a0a41762bc",
+          "sha256": "d185d1746efa5516a2697dc7e58b1e049300239300475766e91decbfc0c2f754"
+        },
+        "gateway/platform_registry.py": {
+          "blob_sha": "e639bc838bd14a9edae64863fd2a74e13b46185c",
+          "sha256": "5c3f0758076d35d9f6cffa2664c52d0ae3de68cea4c59595054a8ba4a4cc3bce"
+        },
+        "tools/env_passthrough.py": {
+          "blob_sha": "5c7a4c10469f7949f5fcefdb58b2e0e2c66b77ee",
+          "sha256": "2478e41b755d289a3758ff0cd733c08a0b632c5ffb7af0d67fc78a682477dffc"
+        },
+        "tools/tts_tool.py": {
+          "blob_sha": "3aa4875922981478119b26f5eb0cda45beab26fc",
+          "sha256": "89454e053cfe19a17b0363f7d95f43c1e2d05efc9d29df79948e92c8fc29aafc"
+        },
+        "tools/transcription_tools.py": {
+          "blob_sha": "53fa074d95d5c2bd4a4c01e5b0890cb71ce03972",
+          "sha256": "72412bb07de673b0da7dd8d432dd1f8516b14f417a5508e28975f6639650b896"
         }
       },
-      "existing_downstream_protection": "PENDING_SOURCE_BOUND_REVIEW",
-      "actual_gap": "PENDING_RED",
-      "RED_test": "PENDING",
-      "minimum_change": "PENDING_OWNER_REVIEW",
-      "regression_suite": "PENDING",
-      "mutation_set": "PENDING",
-      "E2E": "NOT_RUN",
+      "existing_downstream_protection": "Two credential tiers, local/provider registry, scoped secrets, session/kanban/HOME/venv authority, passthrough owner and bridge-specific controls retained. BaseEnvironment and remote backend behavior remain unchanged.",
+      "actual_gap": "Adapter/OAuth/dashboard/plugin declarations could escape child filters or fail open; launch credentials and persisted shell exports could cross served-profile authority; Raft/OpenViking children inherited unfiltered or profile-home state.",
+      "RED_test": {
+        "files": [
+          "tests/tools/test_child_credential_boundary.py",
+          "tests/tools/test_child_bridge_credential_boundary.py",
+          "tests/tools/test_child_credential_windows_native.py",
+          "tests/tools/test_local_env_windows_msys.py"
+        ],
+        "frozen_owner_baseline": "c20e98f1370c588645d796047788e3b6f9cc749d",
+        "log": "S03/frozen-owner-red.log",
+        "frozen_owner_failed": 205,
+        "frozen_owner_passed": 40,
+        "intermediate_valid_red_logs": [
+          "S03/S03-red-boundary.log",
+          "S03/S03-red-profile.log",
+          "S03/S03-red-bridges-valid.log",
+          "S03/S03-native-valid-red.log",
+          "S03/S03-red-review-findings.log",
+          "S03/S03-red-final-review.log",
+          "S03/S03-red-minimal-runtime.log",
+          "S03/S03-red-runtime-shadow.log"
+        ],
+        "exclusions": "Missing mock symbol, wrong returncode key, and snapshot test names lacking protected suffix are fixture errors, not RED. Import/syntax failures and WinError206 during the first all-name snapshot implementation are not GREEN. Invalid-identifier/argv assertions now use protected names and are killed by M09/M10."
+      },
+      "minimum_change": "Extend existing child env owners with strict late-bound declarations and stable launch-profile identity; preserve general SDK credentials and approved command-provider credentials through the same factory; route profile-owned values before tier filtering; validate and pin identical local snapshot bytes; use an operation-scoped declaration policy/fingerprint while including restoration history in readonly refusal; retain parallel execution, ordinary explicit env precedence and shared atomic snapshot dumps. Refuse malformed/dangling placed declarations, shell identifiers and argv overflow. Explicit adapter bridge token/profile and real HOME; no remote/BaseEnvironment implementation change.",
+      "regression_suite": {
+        "canonical_runner": "scripts/run_tests.sh",
+        "log": "S03/S03-regression-final-source.log",
+        "status": "PASS",
+        "files": 27,
+        "passed": 707,
+        "failed": 0,
+        "skipped": 13,
+        "snapshot_owner_exclusions": "Four unmodified POSIX-only failures reproduced at D_BASE, recorded in S03-base-snapshot-existing-baseline.log. POSIX getpgid interrupt fixture is unsupported on Windows and excluded, not PASS; actual native timeout/spawn-failure cleanup is covered in the native family suite. Historical subset run 88 PASS/7 SKIP is intermediate; the final combined 27-file run covers the supported snapshot owners without duplicate counts.",
+        "known_baseline_failure": {
+          "test": "tests/plugins/memory/test_openviking_provider.py::TestOpenVikingEnvWriter::test_non_utf8_env_preserves_unrelated_bytes",
+          "baseline": "c20e98f1370c588645d796047788e3b6f9cc749d",
+          "log": "S03/S03-openviking-existing-baseline.log",
+          "reason": "Existing Windows LF/CRLF byte-writer mismatch; unrelated env-writer not modified. Explicitly deselected, never counted as PASS."
+        }
+      },
+      "mutation_set": {
+        "os": "nt",
+        "python": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts\\python.exe",
+        "integration_parent": "d0bba5c1d065b7b1d7d1c2d831a12ddc8e9e26f7",
+        "candidate_head": "935586f9b758f6b8dc59200cf746b9de558621fe",
+        "candidate_tree": "1887bdeb1b57e44405444c220b7e324b0e38129b",
+        "integration_branch_moved": false,
+        "source_sha256": {
+          "tools/environments/local.py": "1b13eabdf7bc36b5952152b909d94e2dafc4d3beb8759b8f84afc32bf207099b",
+          "agent/terminal_env_registry.py": "54ae41ee1402bcdab56033d817be3996edb9b9682c5c35d58218ba0b4c82656a",
+          "hermes_cli/config.py": "6b7c07a57a477c6cb747381f91d4cc818f8bb4ba5818851cbf9771079973de8c",
+          "hermes_cli/env_loader.py": "6ee89b599654eb8a56cb217fa9bd3599172197ec93a760f8b8de44f76336ed12",
+          "cron/scheduler.py": "e5caf50bebcf6e682607f7c292944087df2964e00190dde680b1114ac9c84b56",
+          "plugins/platforms/raft/adapter.py": "82667c721fba17d36ebd00c0e8e430cbb32a1b343d77a59cf814e1c8b10eb180",
+          "plugins/memory/openviking/__init__.py": "d180cde27e15598b6015f4c0d588c4b4f640f06571ce38402e2d28d64fa9a237",
+          "agent/delegation_context.py": "08c6b406f18db90c04671cf05f60d659a4cff42281060b0d70c85e02b2ed72d9",
+          "gateway/platform_registry.py": "9fa981abb930cf4f6ae35c2a7d1917374d56abeb0783e3d1f860deeaa9867a8c",
+          "tools/env_passthrough.py": "755c95a772071132cacf28862c9663a1ca59e5ae3a9243286829899e8321f200",
+          "tools/tts_tool.py": "4b4e9854f48bf8d7e33436ecb3dcff2aa247ed2fc2d898379523e5d2341abffb",
+          "tools/transcription_tools.py": "002f31316c8187a00f4f38a5c6f75bfc3a6b860d3168eb1231e518ccac98d541",
+          "tests/tools/test_child_credential_boundary.py": "856baa959942d388522ea3ff7bdb37e5f106b0967b827b236bb68ef31b2b2143",
+          "tests/tools/test_child_bridge_credential_boundary.py": "ef98c33bdaadab73d24718e84bd2f9a489109e5fcca7f476e1b470c417d5c242",
+          "tests/tools/test_child_credential_windows_native.py": "83134b6581525a2d34d875e030b072c46d9bb3477fbba0a72954b825681af6d7",
+          "tests/agent/test_terminal_env_registry.py": "a81e4dbb16f980e009b9df67c951188b5af6402c1320f8ed219901dc37fbad2a",
+          "tests/tools/test_local_env_windows_msys.py": "d8f1e2b29c9530270b28f42a1b0a693f94037af354613e18e7fefb8305db31cb"
+        },
+        "existing_framework": "scripts/ci/engineering_repair_mutations.py",
+        "frozen_owner_red_exit": 1,
+        "baseline_passed": true,
+        "mutations": [
+          {
+            "mutant": "M01-declaration-exception-empty",
+            "owner": "agent/terminal_env_registry.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M02-plugin-secrets-process-wide",
+            "owner": "tools/environments/local.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M03-oauth-profile-exclusion",
+            "owner": "hermes_cli/config.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M04-token-suffix-excluded",
+            "owner": "hermes_cli/config.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M05-launch-profile-fallback",
+            "owner": "tools/environments/local.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M06-snapshot-protected-restoration-removed",
+            "owner": "tools/environments/local.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M07-runtime-adapter-declarations-ignored",
+            "owner": "tools/environments/local.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M08-readonly-snapshot-accepted",
+            "owner": "tools/environments/local.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M09-invalid-shell-identifiers-accepted",
+            "owner": "tools/environments/local.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M10-windows-argv-limit-ignored",
+            "owner": "tools/environments/local.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M11-scoped-registration-hides-global-declaration",
+            "owner": "gateway/platform_registry.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M12-falsey-invalid-manifest-declaration-accepted",
+            "owner": "hermes_cli/config.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M13-invalid-security-flag-accepted",
+            "owner": "hermes_cli/config.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M14-provider-declaration-fail-open",
+            "owner": "hermes_cli/config.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M15-cached-passthrough-authority-retained",
+            "owner": "tools/env_passthrough.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M16-benign-explicit-value-overridden",
+            "owner": "tools/environments/local.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M17-delegated-approved-voice-key-lost",
+            "owner": "agent/delegation_context.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M18-snapshot-inspection-source-race-restored",
+            "owner": "tools/environments/local.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M19-dangling-declaration-ignored",
+            "owner": "hermes_cli/config.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M20-late-provider-reclassified-tier-one",
+            "owner": "hermes_cli/config.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M21-stale-wrapper-authority-accepted",
+            "owner": "tools/environments/local.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M22-sdk-credentials-promoted-to-hermes-passwords",
+            "owner": "hermes_cli/config.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M23-shared-history-becomes-operation-authority",
+            "owner": "tools/environments/local.py",
+            "killed": true,
+            "exit_code": 1
+          },
+          {
+            "mutant": "M24-readonly-historical-credential-accepted",
+            "owner": "tools/environments/local.py",
+            "killed": true,
+            "exit_code": 1
+          }
+        ],
+        "restored_passed": true,
+        "tracked_diff_clean": true
+      },
+      "E2E": {
+        "os": "nt",
+        "status": "PASS",
+        "targeted_passed": 245,
+        "native_cases": 28,
+        "skipped": 0,
+        "surfaces": [
+          "terminal",
+          "background",
+          "actual winpty",
+          "cron script",
+          "CLI",
+          "delegated child",
+          "Raft bridge Popen",
+          "OpenViking server Popen"
+        ],
+        "positive": "Served-profile benign values, bridge's required own token/profile, real HOME and ordinary shell exports retained.",
+        "negative": "Gateway/provider/plugin/other-profile secret absent; unbound credential scope or declaration failures refuse; byte-pinned and historically readonly snapshots cannot restore foreign authority; new declaration between wrap/spawn refuses; protected invalid names/Windows argv overflow refuse before spawn. Broken Windows junction refuses; file-link lstat semantics are unit-modelled because native symlink creation returned WinError1314, which is neither RED nor PASS.",
+        "resource_ledger": "S03/native-process-ledger.json",
+        "post_regression_resources": "S03/post-regression-resources.json",
+        "resources": "Candidate-bound native ledger: before/after owned processes, remaining observed identities and owned listeners all zero. PID/create_time guarded fixture cleanup includes wrapper identity before initialization wait and descendants during polling. Existing BaseEnvironment Windows timeout kills its direct shim but can leave MSYS children; this family does not change that product owner. Fixture owns and cleans its separate probe, and polling can miss short-lived children. Final campaign audit remains separate."
+      },
       "discovery_credit": "UNVERIFIED_REPORTER",
       "upstream_implementation_provenance": [
         "66019e5597e841709f75e39193189b0ca2e2d526\nJohn Paul Soliva <soliva.johnpaul@icloud.com>\nkshitij <82637225+kshitijk4poor@users.noreply.github.com>\nfix(terminal-env): strip adapter secrets and OAuth-profile keys from child envs",
         "3a6406137de7c6173d122065322eb980c7febe9b\nkshitijk4poor <82637225+kshitijk4poor@users.noreply.github.com>\nkshitij <82637225+kshitijk4poor@users.noreply.github.com>\nfix(child-env): per-profile plugin secrets, fail-closed declaration scans, dashboard auth in Tier 1",
         "26f42dd77265f7384a27120839248e6395cbae0a\ndsad <sswdarius@gmail.com>\nkshitij <82637225+kshitijk4poor@users.noreply.github.com>\nfix(platforms): strip secrets from the raft bridge subprocess env"
       ],
-      "downstream_implementation_provenance": "NOT_IMPLEMENTED",
-      "result": "PENDING_CODEGRAPH"
+      "downstream_implementation_provenance": "Codex existing-owner composition; clean verification candidate 935586f9b758f6b8dc59200cf746b9de558621fe",
+      "result": "IMPLEMENTED",
+      "CodeGraph": {
+        "initial": "graph/S03_INITIAL/binding.json",
+        "D_BASE": "graph/S03_D_BASE/binding.json",
+        "R_AFTER": "graph/S03_R_AFTER/binding.json",
+        "U_TARGET": "graph/S03_U_TARGET/binding.json",
+        "fresh": "graph/S03_FINAL_ACCEPTANCE/binding.json",
+        "status": "COMPLETE_SOURCE_HASH_BOUND",
+        "limitation": "Name-based false edges excluded by source/path-pinned owner review."
+      },
+      "independent_review": {
+        "status": "PASS",
+        "candidate_head": "935586f9b758f6b8dc59200cf746b9de558621fe",
+        "source_sha256": {
+          "tools/environments/local.py": "1b13eabdf7bc36b5952152b909d94e2dafc4d3beb8759b8f84afc32bf207099b",
+          "agent/terminal_env_registry.py": "54ae41ee1402bcdab56033d817be3996edb9b9682c5c35d58218ba0b4c82656a",
+          "hermes_cli/config.py": "6b7c07a57a477c6cb747381f91d4cc818f8bb4ba5818851cbf9771079973de8c",
+          "hermes_cli/env_loader.py": "6ee89b599654eb8a56cb217fa9bd3599172197ec93a760f8b8de44f76336ed12",
+          "cron/scheduler.py": "e5caf50bebcf6e682607f7c292944087df2964e00190dde680b1114ac9c84b56",
+          "plugins/platforms/raft/adapter.py": "82667c721fba17d36ebd00c0e8e430cbb32a1b343d77a59cf814e1c8b10eb180",
+          "plugins/memory/openviking/__init__.py": "d180cde27e15598b6015f4c0d588c4b4f640f06571ce38402e2d28d64fa9a237",
+          "agent/delegation_context.py": "08c6b406f18db90c04671cf05f60d659a4cff42281060b0d70c85e02b2ed72d9",
+          "gateway/platform_registry.py": "9fa981abb930cf4f6ae35c2a7d1917374d56abeb0783e3d1f860deeaa9867a8c",
+          "tools/env_passthrough.py": "755c95a772071132cacf28862c9663a1ca59e5ae3a9243286829899e8321f200",
+          "tools/tts_tool.py": "4b4e9854f48bf8d7e33436ecb3dcff2aa247ed2fc2d898379523e5d2341abffb",
+          "tools/transcription_tools.py": "002f31316c8187a00f4f38a5c6f75bfc3a6b860d3168eb1231e518ccac98d541",
+          "tests/tools/test_child_credential_boundary.py": "856baa959942d388522ea3ff7bdb37e5f106b0967b827b236bb68ef31b2b2143",
+          "tests/tools/test_child_bridge_credential_boundary.py": "ef98c33bdaadab73d24718e84bd2f9a489109e5fcca7f476e1b470c417d5c242",
+          "tests/tools/test_child_credential_windows_native.py": "83134b6581525a2d34d875e030b072c46d9bb3477fbba0a72954b825681af6d7",
+          "tests/agent/test_terminal_env_registry.py": "a81e4dbb16f980e009b9df67c951188b5af6402c1320f8ed219901dc37fbad2a",
+          "tests/tools/test_local_env_windows_msys.py": "d8f1e2b29c9530270b28f42a1b0a693f94037af354613e18e7fefb8305db31cb"
+        },
+        "reviewer_agent": "01a0fef5-982a-7b82-a926-02264bf34f0e",
+        "reviewer_model": "UNAVAILABLE_NOT_INFERRED",
+        "reasoning_effort": "UNAVAILABLE_NOT_INFERRED",
+        "findings": [],
+        "canonical_passed": 707,
+        "canonical_failed": 0,
+        "canonical_skipped": 13,
+        "targeted_passed": 245,
+        "native_passed": 28,
+        "mutants_killed": 24,
+        "mutants_survived": 0,
+        "post_regression_owned_processes": 0,
+        "post_regression_owned_listeners": 0,
+        "approval_scope": "Exact candidate product/test bytes and updated audit docs/helpers; local family commit only.",
+        "retained_limits": [
+          "D_BASE/POSIX-only explicit regression exclusions",
+          "Native file symlink privilege 1314 is not pass or RED",
+          "100ms process polling is not complete historical enumeration",
+          "Existing BaseEnvironment Windows timeout descendant limitation is not changed by this family"
+        ]
+      }
     },
     {
       "family_id": "S04",
@@ -781,6 +1118,7 @@
     "INTEGRATION_INITIAL": "17ad2e370a7f9e7f01fb5ee617ef4e96d62635d0"
   },
   "family_commits": {
-    "S01": "709c7aeedf6c192137d231d719ad8cadf59414f6"
+    "S01": "709c7aeedf6c192137d231d719ad8cadf59414f6",
+    "S02": "d0bba5c1d065b7b1d7d1c2d831a12ddc8e9e26f7"
   }
 }

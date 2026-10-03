@@ -1,0 +1,39 @@
+{
+  "changedFiles": [
+    "agent/terminal_env_registry.py"
+  ],
+  "affectedTests": [
+    "tests/agent/test_bot_profile_prompt_isolation.py",
+    "tests/agent/test_compression_busy_steer_anchor.py",
+    "tests/agent/test_org_skill_namespace.py",
+    "tests/agent/test_phantom_tool_references.py",
+    "tests/agent/test_platform_hint_desktop.py",
+    "tests/agent/test_profile_home_override_precedence.py",
+    "tests/agent/test_prompt_builder.py",
+    "tests/agent/test_skill_commands_reload.py",
+    "tests/agent/test_skill_session_platform_gate.py",
+    "tests/agent/test_skill_utils.py",
+    "tests/agent/test_skills_guidance_content_filter.py",
+    "tests/agent/test_soul_md_profile_isolation.py",
+    "tests/cron/test_scheduler.py",
+    "tests/hermes_cli/test_prompt_size.py",
+    "tests/run_agent/test_run_agent.py",
+    "tests/run_agent/test_steer.py",
+    "tests/run_agent/test_tool_batch_segmentation.py",
+    "tests/skills/test_google_workspace_credential_files.py",
+    "tests/test_windows_subprocess_no_window_flags.py",
+    "tests/tools/test_credential_files.py",
+    "tests/tools/test_docker_session_isolation.py",
+    "tests/tools/test_ensure_task_env.py",
+    "tests/tools/test_env_probe.py",
+    "tests/tools/test_hermes_subprocess_env.py",
+    "tests/tools/test_local_env_blocklist.py",
+    "tests/tools/test_modal_sandbox_fixes.py",
+    "tests/tools/test_process_registry.py",
+    "tests/tools/test_skills_tool.py",
+    "tests/tools/test_terminal_scope_multiplex.py",
+    "tests/tools/test_windows_agent_loop_papercuts.py",
+    "tests/tui_gateway/test_hud_surface_note.py"
+  ],
+  "totalDependentsTraversed": 71
+}

@@ -1,0 +1,308 @@
+{
+  "symbol": "_cron_profile_context",
+  "depth": 2,
+  "nodeCount": 50,
+  "edgeCount": 49,
+  "affected": [
+    {
+      "name": "_cron_profile_context",
+      "kind": "function",
+      "filePath": "cron/scheduler.py",
+      "startLine": 1651
+    },
+    {
+      "name": "run_job",
+      "kind": "function",
+      "filePath": "cron/scheduler.py",
+      "startLine": 5481
+    },
+    {
+      "name": "test_run_job_bounds_sessiondb_finalization",
+      "kind": "function",
+      "filePath": "tests/cron/test_cleanup_timeout.py",
+      "startLine": 51
+    },
+    {
+      "name": "test_cron_run_job_codex_path_handles_internal_401_refresh",
+      "kind": "function",
+      "filePath": "tests/cron/test_codex_execution_paths.py",
+      "startLine": 95
+    },
+    {
+      "name": "test_run_job_no_agent_success_returns_script_stdout",
+      "kind": "function",
+      "filePath": "tests/cron/test_cron_no_agent.py",
+      "startLine": 92
+    },
+    {
+      "name": "test_run_job_no_agent_reloads_dotenv_before_script",
+      "kind": "function",
+      "filePath": "tests/cron/test_cron_no_agent.py",
+      "startLine": 110
+    },
+    {
+      "name": "_run_with_current_provider",
+      "kind": "function",
+      "filePath": "tests/cron/test_cron_provider_pin.py",
+      "startLine": 47
+    },
+    {
+      "name": "_run_with_current_provider_and_model",
+      "kind": "function",
+      "filePath": "tests/cron/test_cron_provider_pin.py",
+      "startLine": 233
+    },
+    {
+      "name": "test_primary_resolution_passes_effective_model",
+      "kind": "method",
+      "filePath": "tests/cron/test_cron_provider_pin.py",
+      "startLine": 408
+    },
+    {
+      "name": "test_env_vars_cleaned_on_early_error",
+      "kind": "method",
+      "filePath": "tests/cron/test_cron_script.py",
+      "startLine": 601
+    },
+    {
+      "name": "test_first_run_always_runs_agent",
+      "kind": "function",
+      "filePath": "tests/cron/test_monitor_kind.py",
+      "startLine": 280
+    },
+    {
+      "name": "test_unchanged_output_suppresses_agent_run",
+      "kind": "function",
+      "filePath": "tests/cron/test_monitor_kind.py",
+      "startLine": 295
+    },
+    {
+      "name": "test_changed_output_injects_diff",
+      "kind": "function",
+      "filePath": "tests/cron/test_monitor_kind.py",
+      "startLine": 316
+    },
+    {
+      "name": "test_hash_persists_across_scheduler_restart",
+      "kind": "function",
+      "filePath": "tests/cron/test_monitor_kind.py",
+      "startLine": 339
+    },
+    {
+      "name": "test_monitor_script_failure_is_error_not_change",
+      "kind": "function",
+      "filePath": "tests/cron/test_monitor_kind.py",
+      "startLine": 369
+    },
+    {
+      "name": "_run_job_patched",
+      "kind": "function",
+      "filePath": "tests/cron/test_preflight_config.py",
+      "startLine": 65
+    },
+    {
+      "name": "test_run_job_passes_session_db_and_cron_platform",
+      "kind": "method",
+      "filePath": "tests/cron/test_scheduler.py",
+      "startLine": 544
+    },
+    {
+      "name": "test_run_job_memory_enabled_in_cron",
+      "kind": "method",
+      "filePath": "tests/cron/test_scheduler.py",
+      "startLine": 635
+    },
+    {
+      "name": "test_run_job_keeps_per_job_memory_toolset",
+      "kind": "method",
+      "filePath": "tests/cron/test_scheduler.py",
+      "startLine": 656
+    },
+    {
+      "name": "test_run_job_sets_auto_delivery_env_from_dotenv_home_channel",
+      "kind": "method",
+      "filePath": "tests/cron/test_scheduler.py",
+      "startLine": 728
+    },
+    {
+      "name": "test_run_job_preserves_slack_origin_thread_for_same_explicit_channel",
+      "kind": "method",
+      "filePath": "tests/cron/test_scheduler.py",
+      "startLine": 784
+    },
+    {
+      "name": "test_run_job_heartbeats_oneshot_claim_in_both_wait_modes",
+      "kind": "method",
+      "filePath": "tests/cron/test_scheduler.py",
+      "startLine": 845
+    },
+    {
+      "name": "test_run_job_resets_secret_source_cache_before_reload",
+      "kind": "method",
+      "filePath": "tests/cron/test_scheduler.py",
+      "startLine": 902
+    },
+    {
+      "name": "test_run_job_clears_stale_auto_delivery_thread_id_between_jobs",
+      "kind": "method",
+      "filePath": "tests/cron/test_scheduler.py",
+      "startLine": 949
+    },
+    {
+      "name": "test_bad_config_yaml_is_logged",
+      "kind": "method",
+      "filePath": "tests/cron/test_scheduler.py",
+      "startLine": 1028
+    },
+    {
+      "name": "test_model_env_ref_in_config_yaml_is_expanded",
+      "kind": "method",
+      "filePath": "tests/cron/test_scheduler.py",
+      "startLine": 1075
+    },
+    {
+      "name": "test_transient_dns_fallback_switches_provider_and_model_together",
+      "kind": "method",
+      "filePath": "tests/cron/test_scheduler.py",
+      "startLine": 1105
+    },
+    {
+      "name": "test_auth_fallback_switches_provider_and_model_together",
+      "kind": "method",
+      "filePath": "tests/cron/test_scheduler.py",
+      "startLine": 1169
+    },
+    {
+      "name": "test_unexpanded_ref_passthrough_when_var_unset",
+      "kind": "method",
+      "filePath": "tests/cron/test_scheduler.py",
+      "startLine": 1225
+    },
+    {
+      "name": "test_null_job_model_falls_back_to_env",
+      "kind": "method",
+      "filePath": "tests/cron/test_scheduler.py",
+      "startLine": 1270
+    },
+    {
+      "name": "test_no_model_anywhere_fails_with_actionable_error",
+      "kind": "method",
+      "filePath": "tests/cron/test_scheduler.py",
+      "startLine": 1296
+    },
+    {
+      "name": "test_config_model_alias_key_resolves",
+      "kind": "method",
+      "filePath": "tests/cron/test_scheduler.py",
+      "startLine": 1322
+    },
+    {
+      "name": "test_corrupt_config_yaml_does_not_crash_with_job_model",
+      "kind": "method",
+      "filePath": "tests/cron/test_scheduler.py",
+      "startLine": 1353
+    },
+    {
+      "name": "test_run_job_preserves_skill_env_passthrough_into_worker_thread",
+      "kind": "method",
+      "filePath": "tests/cron/test_scheduler.py",
+      "startLine": 1381
+    },
+    {
+      "name": "_run_booked_job",
+      "kind": "function",
+      "filePath": "tests/cron/test_scheduler_completion_verification.py",
+      "startLine": 66
+    },
+    {
+      "name": "test_run_job_cron_execute_code_deny_does_not_pollute_later_gateway_execute_code",
+      "kind": "function",
+      "filePath": "tests/cron/test_scheduler_cron_session_isolation.py",
+      "startLine": 87
+    },
+    {
+      "name": "test_no_agent_cron_job_does_not_initialize_mcp",
+      "kind": "function",
+      "filePath": "tests/cron/test_scheduler_mcp_init.py",
+      "startLine": 26
+    },
+    {
+      "name": "test_run_job_does_not_hang_when_sessiondb_init_wedges",
+      "kind": "method",
+      "filePath": "tests/cron/test_sessiondb_init_hang.py",
+      "startLine": 78
+    },
+    {
+      "name": "test_invalid_timeout_env_falls_back_to_default",
+      "kind": "method",
+      "filePath": "tests/cron/test_sessiondb_init_hang.py",
+      "startLine": 111
+    },
+    {
+      "name": "test_timeout_resolved_from_config_yaml",
+      "kind": "method",
+      "filePath": "tests/cron/test_sessiondb_init_hang.py",
+      "startLine": 149
+    },
+    {
+      "name": "test_late_session_db_result_is_closed",
+      "kind": "method",
+      "filePath": "tests/cron/test_sessiondb_init_hang.py",
+      "startLine": 296
+    },
+    {
+      "name": "test_wake_gate_false_never_opens_session_db",
+      "kind": "method",
+      "filePath": "tests/cron/test_sessiondb_init_hang.py",
+      "startLine": 359
+    },
+    {
+      "name": "test_keyboard_interrupt_in_end_session_does_not_skip_close",
+      "kind": "method",
+      "filePath": "tests/run_agent/test_exit_cleanup_interrupt.py",
+      "startLine": 35
+    },
+    {
+      "name": "_run_one_job_body",
+      "kind": "function",
+      "filePath": "cron/scheduler.py",
+      "startLine": 7184
+    },
+    {
+      "name": "test_cleanup_timeout.py",
+      "kind": "file",
+      "filePath": "tests/cron/test_cleanup_timeout.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_cron_provider_pin.py",
+      "kind": "file",
+      "filePath": "tests/cron/test_cron_provider_pin.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_preflight_config.py",
+      "kind": "file",
+      "filePath": "tests/cron/test_preflight_config.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_scheduler.py",
+      "kind": "file",
+      "filePath": "tests/cron/test_scheduler.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_sessiondb_init_hang.py",
+      "kind": "file",
+      "filePath": "tests/cron/test_sessiondb_init_hang.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_real_cron_profile_context_does_not_relabel_launch_secrets",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 288
+    }
+  ]
+}

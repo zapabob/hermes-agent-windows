@@ -1,0 +1,42 @@
+......FFFFFFF                                                            [100%]
+================================== FAILURES ===================================
+_ test_reused_terminal_snapshot_cannot_restore_profile_secrets[new-secret-declaration-False] _
+tests\tools\test_child_credential_windows_native.py:145: in test_reused_terminal_snapshot_cannot_restore_profile_secrets
+    assert observed[key] == ("served-benign" if handoff == "benign-target" else None)
+E   AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+_ test_reused_terminal_snapshot_cannot_restore_profile_secrets[new-secret-declaration-True] _
+tests\tools\test_child_credential_windows_native.py:138: in test_reused_terminal_snapshot_cannot_restore_profile_secrets
+    with pytest.raises(RuntimeError, match="readonly.*snapshot"):
+E   Failed: DID NOT RAISE RuntimeError
+_ test_reused_terminal_snapshot_cannot_restore_profile_secrets[absent-target-False] _
+tests\tools\test_child_credential_windows_native.py:145: in test_reused_terminal_snapshot_cannot_restore_profile_secrets
+    assert observed[key] == ("served-benign" if handoff == "benign-target" else None)
+E   AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+_ test_reused_terminal_snapshot_cannot_restore_profile_secrets[absent-target-True] _
+tests\tools\test_child_credential_windows_native.py:138: in test_reused_terminal_snapshot_cannot_restore_profile_secrets
+    with pytest.raises(RuntimeError, match="readonly.*snapshot"):
+E   Failed: DID NOT RAISE RuntimeError
+_ test_reused_terminal_snapshot_cannot_restore_profile_secrets[benign-target-False] _
+tests\tools\test_child_credential_windows_native.py:145: in test_reused_terminal_snapshot_cannot_restore_profile_secrets
+    assert observed[key] == ("served-benign" if handoff == "benign-target" else None)
+E   AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == 'served-benign'
+E
+E     - served-benign
+E     + TEST_ONLY_SECRET_DO_NOT_USE
+_ test_reused_terminal_snapshot_cannot_restore_profile_secrets[benign-target-True] _
+tests\tools\test_child_credential_windows_native.py:138: in test_reused_terminal_snapshot_cannot_restore_profile_secrets
+    with pytest.raises(RuntimeError, match="readonly.*snapshot"):
+E   Failed: DID NOT RAISE RuntimeError
+______ test_many_accumulated_snapshot_names_refuse_before_windows_spawn _______
+tests\tools\test_child_credential_windows_native.py:164: in test_many_accumulated_snapshot_names_refuse_before_windows_spawn
+    with pytest.raises(RuntimeError, match="(?i)(command.*limit|command.*length)"):
+E   Failed: DID NOT RAISE RuntimeError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[new-secret-declaration-False]
+FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[new-secret-declaration-True]
+FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[absent-target-False]
+FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[absent-target-True]
+FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[benign-target-False]
+FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[benign-target-True]
+FAILED tests/tools/test_child_credential_windows_native.py::test_many_accumulated_snapshot_names_refuse_before_windows_spawn
+7 failed, 6 passed in 23.73s

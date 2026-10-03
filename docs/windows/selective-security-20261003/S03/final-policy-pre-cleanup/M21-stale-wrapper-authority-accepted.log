@@ -1,0 +1,9 @@
+........................F...                                             [100%]
+================================== FAILURES ===================================
+__ test_late_declaration_between_wrap_and_spawn_refuses_stale_wrapper[False] __
+tests\tools\test_child_credential_windows_native.py:286: in test_late_declaration_between_wrap_and_spawn_refuses_stale_wrapper
+    with pytest.raises(RuntimeError, match="(?i)(declaration|readonly|authority)"):
+E   Failed: DID NOT RAISE RuntimeError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_windows_native.py::test_late_declaration_between_wrap_and_spawn_refuses_stale_wrapper[False]
+1 failed, 27 passed in 32.17s

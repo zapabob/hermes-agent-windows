@@ -1,0 +1,46 @@
+........................................................................ [ 33%]
+........................................................................ [ 66%]
+......................FFFFFFFF.........................................  [100%]
+================================== FAILURES ===================================
+_ test_falsey_non_list_manifest_declaration_refuses_child[False-requires_env] _
+tests\tools\test_child_credential_boundary.py:419: in test_falsey_non_list_manifest_declaration_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+_ test_falsey_non_list_manifest_declaration_refuses_child[False-optional_env] _
+tests\tools\test_child_credential_boundary.py:419: in test_falsey_non_list_manifest_declaration_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+___ test_falsey_non_list_manifest_declaration_refuses_child[0-requires_env] ___
+tests\tools\test_child_credential_boundary.py:419: in test_falsey_non_list_manifest_declaration_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+___ test_falsey_non_list_manifest_declaration_refuses_child[0-optional_env] ___
+tests\tools\test_child_credential_boundary.py:419: in test_falsey_non_list_manifest_declaration_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+___ test_falsey_non_list_manifest_declaration_refuses_child[-requires_env] ____
+tests\tools\test_child_credential_boundary.py:419: in test_falsey_non_list_manifest_declaration_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+___ test_falsey_non_list_manifest_declaration_refuses_child[-optional_env] ____
+tests\tools\test_child_credential_boundary.py:419: in test_falsey_non_list_manifest_declaration_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+_ test_falsey_non_list_manifest_declaration_refuses_child[value3-requires_env] _
+tests\tools\test_child_credential_boundary.py:419: in test_falsey_non_list_manifest_declaration_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+_ test_falsey_non_list_manifest_declaration_refuses_child[value3-optional_env] _
+tests\tools\test_child_credential_boundary.py:419: in test_falsey_non_list_manifest_declaration_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[False-requires_env]
+FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[False-optional_env]
+FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[0-requires_env]
+FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[0-optional_env]
+FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[-requires_env]
+FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[-optional_env]
+FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[value3-requires_env]
+FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[value3-optional_env]
+8 failed, 207 passed in 11.04s

@@ -1,0 +1,30 @@
+........................................................................ [ 43%]
+........................................................................ [ 87%]
+................FFFF.                                                    [100%]
+================================== FAILURES ===================================
+_ test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[terminal] _
+tests\tools\test_child_credential_boundary.py:372: in test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins
+    assert "CUSTOM_ADAPTER_TOKEN" not in child_env(surface)
+E   AssertionError: assert 'CUSTOM_ADAPTER_TOKEN' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime\\hermes', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime\\hermes', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...} = child_env('terminal')
+_ test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[background] _
+tests\tools\test_child_credential_boundary.py:372: in test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins
+    assert "CUSTOM_ADAPTER_TOKEN" not in child_env(surface)
+E   AssertionError: assert 'CUSTOM_ADAPTER_TOKEN' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime\\hermes', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime\\hermes', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...} = child_env('background')
+_ test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[cli] _
+tests\tools\test_child_credential_boundary.py:372: in test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins
+    assert "CUSTOM_ADAPTER_TOKEN" not in child_env(surface)
+E   AssertionError: assert 'CUSTOM_ADAPTER_TOKEN' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime\\hermes', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime\\hermes', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...} = child_env('cli')
+_______ test_global_runtime_declaration_survives_minimal_os_environment _______
+tests\tools\test_child_credential_boundary.py:387: in test_global_runtime_declaration_survives_minimal_os_environment
+    assert "CUSTOM_ADAPTER_TOKEN" not in child_env("cli")
+E   AssertionError: assert 'CUSTOM_ADAPTER_TOKEN' not in {'HOME': '/test-only-home', 'CUSTOM_ADAPTER_TOKEN': 'TEST_ONLY_SECRET_DO_NOT_USE', 'PYTHONUTF8': '1', 'HERMES_REAL_HOME': '/test-only-home', ...}
+E    +  where {'HOME': '/test-only-home', 'CUSTOM_ADAPTER_TOKEN': 'TEST_ONLY_SECRET_DO_NOT_USE', 'PYTHONUTF8': '1', 'HERMES_REAL_HOME': '/test-only-home', ...} = child_env('cli')
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[background]
+FAILED tests/tools/test_child_credential_boundary.py::test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_global_runtime_declaration_survives_minimal_os_environment
+4 failed, 161 passed in 8.04s

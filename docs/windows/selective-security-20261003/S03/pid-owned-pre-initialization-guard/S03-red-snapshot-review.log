@@ -1,0 +1,302 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 2 test files (~27 tests) under ['tests\\tools\\test_child_credential_boundary.py', 'tests\\tools\\test_child_credential_windows_native.py']; running with -j 1
+[ 88.9% |    24/~27 | ✓0 | ✗1] ✗ tests\tools\test_child_credential_boundary.py (1✗, 4.8s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_boundary.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║ F                                                                        [100%]
+  ║ ================================== FAILURES ===================================
+  ║ _______ test_invalid_protected_snapshot_identifier_refuses_before_shell _______
+  ║
+  ║ tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-0akoj4o_/pytest-of-unknown/pytest-0/test_invalid_protected_snapsho0')
+  ║ monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000241957633D0>
+  ║
+  ║     def test_invalid_protected_snapshot_identifier_refuses_before_shell(tmp_path, monkeypatch):
+  ║         environment = object.__new__(local.LocalEnvironment)
+  ║         environment.env = {"GATEWAY_RELAY_INVALID-NAME": SECRET}
+  ║         environment._snapshot_path = str(tmp_path / "missing.sh")
+  ║         environment._snapshot_passthrough_names = set()
+  ║         monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+  ║ >       with pytest.raises(RuntimeError, match="(?i)(identifier|environment.*name)"):
+  ║ E       Failed: DID NOT RAISE RuntimeError
+  ║
+  ║ tests\tools\test_child_credential_boundary.py:24: Failed
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_invalid_protected_snapshot_identifier_refuses_before_shell
+  ║ 1 failed, 163 deselected in 2.97s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_boundary.py -q -k invalid_protected_snapshot_identifier or reused_terminal_snapshot or many_accumulated_snapshot
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+[100.0% |    27/~27 | ✓3 | ✗5] ✗ tests\tools\test_child_credential_windows_native.py (3✓ 4✗, 21.2s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_windows_native.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║ >               with pytest.raises(RuntimeError, match="readonly.*snapshot"):
+  ║ E               Failed: DID NOT RAISE RuntimeError
+  ║
+  ║ tests\tools\test_child_credential_windows_native.py:138: Failed
+  ║ ______ test_many_accumulated_snapshot_names_refuse_before_windows_spawn _______
+  ║
+  ║ tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-xxcmaokb/pytest-of-unknown/pytest-0/test_many_accumulated_snapshot0')
+  ║ monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000021F68630450>
+  ║
+  ║     def test_many_accumulated_snapshot_names_refuse_before_windows_spawn(tmp_path, monkeypatch):
+  ║         monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+  ║         monkeypatch.setattr(local, "_resolve_shell_init_files", lambda: [])
+  ║         environment = local.LocalEnvironment(cwd=str(tmp_path), timeout=20)
+  ║         spawned = []
+  ║         try:
+  ║             for batch in range(3):
+  ║                 for index in range(20):
+  ║                     environment.env[f"GATEWAY_RELAY_{batch}_{index}_" + "X" * 180] = "TEST_ONLY_SECRET_DO_NOT_USE"
+  ║                 wrapped = environment._wrap_command("true", str(tmp_path))
+  ║             monkeypatch.setattr(local.subprocess, "Popen", lambda *a, **kw: spawned.append(a))
+  ║ >           with pytest.raises(RuntimeError, match="(?i)(command.*limit|command.*length)"):
+  ║ E           Failed: DID NOT RAISE RuntimeError
+  ║
+  ║ tests\tools\test_child_credential_windows_native.py:164: Failed
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[new-secret-declaration-True]
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[absent-target-True]
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[benign-target-True]
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_many_accumulated_snapshot_names_refuse_before_windows_spawn
+  ║ 4 failed, 3 passed, 6 deselected in 19.46s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_windows_native.py -q -k invalid_protected_snapshot_identifier or reused_terminal_snapshot or many_accumulated_snapshot
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+
+=== Summary: 2 files, 3 tests passed, 5 failed (100% complete) in 26.0s (1 workers) ===
+  Durations cached to test_durations.json (2 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   2
+  Total subprocess CPU-wall: 26.0s  (runner wall: 26.0s, parallelism: 1x)
+  P50: 21.20s  P90: 21.20s  P95: 21.20s  P99: 21.20s  Max: 21.20s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+     21.20s  tests\tools\test_child_credential_windows_native.py
+      4.77s  tests\tools\test_child_credential_boundary.py
+
+=== Failure output ===
+
+--- tests\tools\test_child_credential_boundary.py ---
+F                                                                        [100%]
+================================== FAILURES ===================================
+_______ test_invalid_protected_snapshot_identifier_refuses_before_shell _______
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-0akoj4o_/pytest-of-unknown/pytest-0/test_invalid_protected_snapsho0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000241957633D0>
+
+    def test_invalid_protected_snapshot_identifier_refuses_before_shell(tmp_path, monkeypatch):
+        environment = object.__new__(local.LocalEnvironment)
+        environment.env = {"GATEWAY_RELAY_INVALID-NAME": SECRET}
+        environment._snapshot_path = str(tmp_path / "missing.sh")
+        environment._snapshot_passthrough_names = set()
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+>       with pytest.raises(RuntimeError, match="(?i)(identifier|environment.*name)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:24: Failed
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_protected_snapshot_identifier_refuses_before_shell
+1 failed, 163 deselected in 2.97s
+
+--- tests\tools\test_child_credential_windows_native.py ---
+.F.F.FF                                                                  [100%]
+================================== FAILURES ===================================
+_ test_reused_terminal_snapshot_cannot_restore_profile_secrets[new-secret-declaration-True] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-xxcmaokb/pytest-of-unknown/pytest-0/test_reused_terminal_snapshot_1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000021F6C750890>
+handoff = 'new-secret-declaration', readonly = True
+
+    @pytest.mark.parametrize("readonly", [False, True])
+    @pytest.mark.parametrize("handoff", ["new-secret-declaration", "absent-target", "benign-target"])
+    def test_reused_terminal_snapshot_cannot_restore_profile_secrets(tmp_path, monkeypatch, handoff, readonly):
+        launch, target = tmp_path / "launch", tmp_path / "target"
+        launch.mkdir()
+        target.mkdir()
+        (launch / "home").mkdir()
+        (target / "home").mkdir()
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv("HOME", str(launch / "home"))
+        monkeypatch.setenv("USERPROFILE", str(launch / "home"))
+        monkeypatch.setenv("TERMINAL_HOME_MODE", "profile")
+        monkeypatch.setattr(local, "_resolve_shell_init_files", lambda: [])
+        key = "CUSTOM_SNAPSHOT_VALUE"
+        output = tmp_path / "observed.json"
+        probe = tmp_path / "probe.py"
+        probe.write_text(
+            "import json,os,pathlib;pathlib.Path(" + repr(str(output)) + ").write_text("
+            "json.dumps({k:os.environ.get(k) for k in " + repr((key, "ORDINARY_EXPORT")) + "}),encoding='utf-8')",
+            encoding="utf-8",
+        )
+        command = shlex.quote(sys.executable.replace("\\", "/")) + " " + shlex.quote(probe.as_posix())
+        environment = local.LocalEnvironment(cwd=str(launch), timeout=20)
+        token = None
+        try:
+            readonly_command = f"; readonly {key}" if readonly else ""
+            seeded = environment.execute(f"export {key}=TEST_ONLY_SECRET_DO_NOT_USE{readonly_command}; export ORDINARY_EXPORT=kept")
+            assert seeded["returncode"] == 0, seeded
+            assert environment.execute(command)["returncode"] == 0
+            assert json.loads(output.read_text(encoding="utf-8"))[key] == "TEST_ONLY_SECRET_DO_NOT_USE"
+            directory = launch / "plugins" / "platforms" / "snapshot-test"
+            directory.mkdir(parents=True)
+            (directory / "plugin.yaml").write_text(
+                f"kind: platform\nrequires_env:\n  - name: {key}\n    password: true\n",
+                encoding="utf-8",
+            )
+            if handoff != "new-secret-declaration":
+                if handoff == "benign-target":
+                    (target / ".env").write_text(f"{key}=served-benign\n", encoding="utf-8")
+                token = set_hermes_home_override(target)
+            if readonly:
+                # Refuse before source: a protected readonly binding cannot be
+                # unset or replaced by the served profile's benign value.
+                output.unlink()
+>               with pytest.raises(RuntimeError, match="readonly.*snapshot"):
+E               Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_windows_native.py:138: Failed
+_ test_reused_terminal_snapshot_cannot_restore_profile_secrets[absent-target-True] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-xxcmaokb/pytest-of-unknown/pytest-0/test_reused_terminal_snapshot_3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000021F6C802C50>
+handoff = 'absent-target', readonly = True
+
+    @pytest.mark.parametrize("readonly", [False, True])
+    @pytest.mark.parametrize("handoff", ["new-secret-declaration", "absent-target", "benign-target"])
+    def test_reused_terminal_snapshot_cannot_restore_profile_secrets(tmp_path, monkeypatch, handoff, readonly):
+        launch, target = tmp_path / "launch", tmp_path / "target"
+        launch.mkdir()
+        target.mkdir()
+        (launch / "home").mkdir()
+        (target / "home").mkdir()
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv("HOME", str(launch / "home"))
+        monkeypatch.setenv("USERPROFILE", str(launch / "home"))
+        monkeypatch.setenv("TERMINAL_HOME_MODE", "profile")
+        monkeypatch.setattr(local, "_resolve_shell_init_files", lambda: [])
+        key = "CUSTOM_SNAPSHOT_VALUE"
+        output = tmp_path / "observed.json"
+        probe = tmp_path / "probe.py"
+        probe.write_text(
+            "import json,os,pathlib;pathlib.Path(" + repr(str(output)) + ").write_text("
+            "json.dumps({k:os.environ.get(k) for k in " + repr((key, "ORDINARY_EXPORT")) + "}),encoding='utf-8')",
+            encoding="utf-8",
+        )
+        command = shlex.quote(sys.executable.replace("\\", "/")) + " " + shlex.quote(probe.as_posix())
+        environment = local.LocalEnvironment(cwd=str(launch), timeout=20)
+        token = None
+        try:
+            readonly_command = f"; readonly {key}" if readonly else ""
+            seeded = environment.execute(f"export {key}=TEST_ONLY_SECRET_DO_NOT_USE{readonly_command}; export ORDINARY_EXPORT=kept")
+            assert seeded["returncode"] == 0, seeded
+            assert environment.execute(command)["returncode"] == 0
+            assert json.loads(output.read_text(encoding="utf-8"))[key] == "TEST_ONLY_SECRET_DO_NOT_USE"
+            directory = launch / "plugins" / "platforms" / "snapshot-test"
+            directory.mkdir(parents=True)
+            (directory / "plugin.yaml").write_text(
+                f"kind: platform\nrequires_env:\n  - name: {key}\n    password: true\n",
+                encoding="utf-8",
+            )
+            if handoff != "new-secret-declaration":
+                if handoff == "benign-target":
+                    (target / ".env").write_text(f"{key}=served-benign\n", encoding="utf-8")
+                token = set_hermes_home_override(target)
+            if readonly:
+                # Refuse before source: a protected readonly binding cannot be
+                # unset or replaced by the served profile's benign value.
+                output.unlink()
+>               with pytest.raises(RuntimeError, match="readonly.*snapshot"):
+E               Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_windows_native.py:138: Failed
+_ test_reused_terminal_snapshot_cannot_restore_profile_secrets[benign-target-True] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-xxcmaokb/pytest-of-unknown/pytest-0/test_reused_terminal_snapshot_5')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000021F6C782210>
+handoff = 'benign-target', readonly = True
+
+    @pytest.mark.parametrize("readonly", [False, True])
+    @pytest.mark.parametrize("handoff", ["new-secret-declaration", "absent-target", "benign-target"])
+    def test_reused_terminal_snapshot_cannot_restore_profile_secrets(tmp_path, monkeypatch, handoff, readonly):
+        launch, target = tmp_path / "launch", tmp_path / "target"
+        launch.mkdir()
+        target.mkdir()
+        (launch / "home").mkdir()
+        (target / "home").mkdir()
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv("HOME", str(launch / "home"))
+        monkeypatch.setenv("USERPROFILE", str(launch / "home"))
+        monkeypatch.setenv("TERMINAL_HOME_MODE", "profile")
+        monkeypatch.setattr(local, "_resolve_shell_init_files", lambda: [])
+        key = "CUSTOM_SNAPSHOT_VALUE"
+        output = tmp_path / "observed.json"
+        probe = tmp_path / "probe.py"
+        probe.write_text(
+            "import json,os,pathlib;pathlib.Path(" + repr(str(output)) + ").write_text("
+            "json.dumps({k:os.environ.get(k) for k in " + repr((key, "ORDINARY_EXPORT")) + "}),encoding='utf-8')",
+            encoding="utf-8",
+        )
+        command = shlex.quote(sys.executable.replace("\\", "/")) + " " + shlex.quote(probe.as_posix())
+        environment = local.LocalEnvironment(cwd=str(launch), timeout=20)
+        token = None
+        try:
+            readonly_command = f"; readonly {key}" if readonly else ""
+            seeded = environment.execute(f"export {key}=TEST_ONLY_SECRET_DO_NOT_USE{readonly_command}; export ORDINARY_EXPORT=kept")
+            assert seeded["returncode"] == 0, seeded
+            assert environment.execute(command)["returncode"] == 0
+            assert json.loads(output.read_text(encoding="utf-8"))[key] == "TEST_ONLY_SECRET_DO_NOT_USE"
+            directory = launch / "plugins" / "platforms" / "snapshot-test"
+            directory.mkdir(parents=True)
+            (directory / "plugin.yaml").write_text(
+                f"kind: platform\nrequires_env:\n  - name: {key}\n    password: true\n",
+                encoding="utf-8",
+            )
+            if handoff != "new-secret-declaration":
+                if handoff == "benign-target":
+                    (target / ".env").write_text(f"{key}=served-benign\n", encoding="utf-8")
+                token = set_hermes_home_override(target)
+            if readonly:
+                # Refuse before source: a protected readonly binding cannot be
+                # unset or replaced by the served profile's benign value.
+                output.unlink()
+>               with pytest.raises(RuntimeError, match="readonly.*snapshot"):
+E               Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_windows_native.py:138: Failed
+______ test_many_accumulated_snapshot_names_refuse_before_windows_spawn _______
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-xxcmaokb/pytest-of-unknown/pytest-0/test_many_accumulated_snapshot0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000021F68630450>
+
+    def test_many_accumulated_snapshot_names_refuse_before_windows_spawn(tmp_path, monkeypatch):
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setattr(local, "_resolve_shell_init_files", lambda: [])
+        environment = local.LocalEnvironment(cwd=str(tmp_path), timeout=20)
+        spawned = []
+        try:
+            for batch in range(3):
+                for index in range(20):
+                    environment.env[f"GATEWAY_RELAY_{batch}_{index}_" + "X" * 180] = "TEST_ONLY_SECRET_DO_NOT_USE"
+                wrapped = environment._wrap_command("true", str(tmp_path))
+            monkeypatch.setattr(local.subprocess, "Popen", lambda *a, **kw: spawned.append(a))
+>           with pytest.raises(RuntimeError, match="(?i)(command.*limit|command.*length)"):
+E           Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_windows_native.py:164: Failed
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[new-secret-declaration-True]
+FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[absent-target-True]
+FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[benign-target-True]
+FAILED tests/tools/test_child_credential_windows_native.py::test_many_accumulated_snapshot_names_refuse_before_windows_spawn
+4 failed, 3 passed, 6 deselected in 19.46s
+
+=== 2 files with test failures (5 tests failed) ===
+  tests\tools\test_child_credential_boundary.py  (1 test failed)
+  tests\tools\test_child_credential_windows_native.py  (4 tests failed)

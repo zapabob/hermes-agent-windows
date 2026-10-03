@@ -196,3 +196,90 @@ hashes equal the clean candidate owner hashes. Final review/commit still pending
 S02 independent review requested additional SimpleX-specific profile pairing, scoped-miss, displayName fallback and group-collision evidence. Eight behavioral cases were added without changing product code. Reviewed suite now has 24 candidate tests and 140 total PASS across the same nine files; all four mutations were rerun at a new clean verification candidate and killed, restored 24 PASS. Nine native event-to-principal cases now cover direct/local name, profile.displayName fallback and group/memberProfile collisions. Fresh S02_REVIEW_FINAL includes the test update. First-pass evidence is preserved under S02/first-pass; final gate remains pending.
 
 S02 final independent review PASS: requested additional boundaries verified, product/test hashes equal reviewed candidate 17143117ff9f51a701e2db14ae0ffd50b67691ec. No remaining actionable finding. Formal family commit authorized by original directive. S03 and later remain unimplemented.
+
+
+## Task-local resource closeout before S03
+
+Clean disposable S01/S02 verification worktrees were removed only after
+their exact candidate commits were retained as refs/codex/verification/S01,
+S02-first and S02-reviewed. No mutant source was committed. The source-only
+R_AFTER checkout was moved without deletion from this chat's C: tmp/sources
+directory to H: tmp/archived-source-r-after, and its frozen SHA/clean status
+were checked afterwards. C: free space recovered to about 198 MB; H: about
+2.268 GB at that observation. These are storage observations, not runtime
+health or delivery gates.
+
+The subsequent Git worktree repair emitted the expected relocated R_AFTER
+gitdir repair and an unexpected diagnostic: .git file broken at
+C:/Users/downl/feat_x-status-jina. That unrelated path was not inspected or
+modified by a follow-up command. The repair command's diagnostic prevents
+claiming that all unrelated worktree metadata was untouched. Primary main's
+HEAD remained dcbce54f62b91863d1dd819d919db725cd3853d9 and its eight tracked
+dirty paths remained unchanged in the read-only verification. No primary
+product files, production processes or production Hermes state were changed.
+
+S02 formal local family commit is
+d0bba5c1d065b7b1d7d1c2d831a12ddc8e9e26f7. S01 and S02 are implemented;
+the remaining nine families are not yet complete. S03 now has a valid native
+boundary RED (50 failures/12 passes), a core GREEN (62 passes), a separate
+profile/manifest RED after that increment (49 failures/58 passes), and a
+profile GREEN (107 passes). The initial owner regression set passed 199 tests
+with one macOS-only skip; the skip is not native Windows proof. S03 still
+requires bridge coverage, full native spawn coverage, mutation, fresh graph,
+independent final review and a family commit.
+
+
+## S03 final candidate and native resource closeout
+
+The authoritative verification candidate is 935586f9b758f6b8dc59200cf746b9de558621fe,
+tree 1887bdeb1b57e44405444c220b7e324b0e38129b, parent
+d0bba5c1d065b7b1d7d1c2d831a12ddc8e9e26f7. Earlier S03 counts and candidate receipts
+are historical increments, not this final gate. Product owners use existing
+credential tiers, scoped declarations, child environment factories and local
+snapshot behavior. BaseEnvironment and remote backend source are unchanged.
+The final owner/test hashes are in S03/mutation.json and intake.json.
+
+Frozen D_BASE owners with these tests produce 205 behavioral failures and
+40 passes. The clean candidate baseline and restored suite each pass 245.
+All 24 semantic mutants are killed; syntax, import, collection and timeout
+errors are not accepted as kills. Canonical regression on this immutable
+candidate completes 27 files with 707 passed, zero failed and 13 skipped.
+S03/regression-candidate.json records the exact argv, candidate and 17 source
+hashes; S03-regression-final-source.log retains the runner output. Its explicit
+OpenViking byte-writer/POSIX-only exclusions are reproduced or identified in
+the manifest, and are not counted as passes.
+
+Native Windows coverage passes 28 cases without skips. The source-bound
+ledger observes 322 test process identities; before/after task footprints,
+remaining observed identities and owned listeners are all zero. A separate
+post-regression audit also reports zero processes/listeners and sends no
+signals. A mixed-case snapshot probe runs against the same candidate and
+retains served benign values and ordinary exports while removing the foreign
+value and owned temporary files. Actual winpty is exercised without fallback.
+
+The initial timeout fixture cleanup exposed an existing BaseEnvironment
+Windows limitation: direct shim termination can leave MSYS descendants. This
+family does not claim to fix that product timeout owner. Its test probe owns
+its PID/birth identity explicitly, records the wrapper before initialization
+wait, records descendants during polling, and cleans only matching owned
+identities. Failed earlier resource receipts are preserved under the historical
+S03 directories. Normal native and final resource gates now pass. Polling at
+100ms can miss short-lived children; the final footprint audit is complementary,
+not a claim of complete historical process enumeration. Windows file symlink
+creation privilege error 1314 is not RED/PASS; unit lstat and native broken
+junction tests provide their separately described coverage.
+
+Fresh S03_FINAL_ACCEPTANCE graph is complete with pendingRefs zero and binds
+the exact owner/test hashes and verification candidate. Source/path-pinned
+review excludes false name-based edges. Independent reviewer
+01a0fef5-982a-7b82-a926-02264bf34f0e approved source, all semantic mutants and
+native resources; final canonical receipt has been submitted for family
+approval. Backend model/effort are unavailable and are not inferred.
+
+No broad upstream merge, main modification, production Hermes state or
+production process restart is part of this family. Later-family preflight
+documents and the S06 draft regression file remain separate uncommitted work.
+
+S03 final independent review PASS: current candidate canonical 707 PASS/0 FAIL/13 SKIP and all source, mutation, native and resource receipts accepted. No actionable findings remain. Approval covers exact source/test bytes and audit helpers in the local family commit; its formal SHA is mapped after commit.
+
+S03 evidence text views trim trailing console whitespace and blank EOF lines for diff-check compliance. S03/raw_logs.zip and raw_logs_index.json preserve and hash every original log byte; product/test source and test outcomes are unchanged.

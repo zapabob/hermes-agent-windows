@@ -1,0 +1,41 @@
+{
+  "symbol": "_make_run_env",
+  "callees": [
+    {
+      "name": "_scrubbed_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 288
+    },
+    {
+      "name": "strip_launch_profile_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 458
+    },
+    {
+      "name": "copy",
+      "kind": "method",
+      "filePath": "hermes_cli/anon_sign_in.py",
+      "startLine": 81
+    },
+    {
+      "name": "_prepend_git_bash_dirs",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 564
+    },
+    {
+      "name": "_append_missing_sane_path_entries",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 677
+    },
+    {
+      "name": "published_env",
+      "kind": "function",
+      "filePath": "tools/bot_desktop/runtime.py",
+      "startLine": 468
+    }
+  ]
+}

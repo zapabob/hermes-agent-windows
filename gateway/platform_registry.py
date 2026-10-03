@@ -575,6 +575,21 @@ class PlatformRegistry:
             entries.update(self._scoped_entries.get(self.current_scope_key(), {}))
             return list(entries.values())
 
+    def required_env_names(self, *, include_profile: bool = True) -> frozenset[str]:
+        """Read concrete declarations without executing deferred loaders."""
+        with self._lock:
+            entries = list(self._entries.values())
+            if include_profile:
+                entries.extend(self._scoped_entries.get(self.current_scope_key(), {}).values())
+            names: set[str] = set()
+            for entry in entries:
+                if not isinstance(entry.required_env, (list, tuple, set, frozenset)) or any(
+                    not isinstance(name, str) or not name.strip() for name in entry.required_env
+                ):
+                    raise RuntimeError("Invalid platform credential declaration")
+                names.update(entry.required_env)
+            return frozenset(names)
+
     def plugin_entries(self) -> list[PlatformEntry]:
         """Return only plugin-registered platform entries."""
         self._resolve_all()

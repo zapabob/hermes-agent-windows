@@ -1,0 +1,871 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 10 test files (~107 tests) under ['tests\\tools\\test_child_credential_windows_native.py', 'tests\\tools\\test_env_passthrough.py', 'tests\\tools\\test_base_environment.py', 'tests\\tools\\test_snapshot_session_id_leak.py', 'tests\\tools\\test_snapshot_multiline_session_env_injection.py', 'tests\\tools\\test_subprocess_stdin_guard.py', 'tests\\tools\\test_local_env_cwd_recovery.py', 'tests\\tools\\test_local_env_relative_cwd.py', 'tests\\tools\\test_local_env_windows_msys.py', 'tests\\tools\\test_local_interrupt_cleanup.py']; running with -j 1
+[ 25.2% |    27/~107 | ✓24 | ✗ 3] ✗ tests\tools\test_base_environment.py (24✓ 3✗, 7.0s)
+
+  ╔╍ Failed: tests\tools\test_base_environment.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║             else:
+  ║                 comspec = executable
+  ║
+  ║             args = '{} /c "{}"'.format (comspec, args)
+  ║
+  ║         if cwd is not None:
+  ║             cwd = os.fsdecode(cwd)
+  ║
+  ║         sys.audit("subprocess.Popen", executable, args, cwd, env)
+  ║
+  ║         # Start the process
+  ║         try:
+  ║ >           hp, ht, pid, tid = _winapi.CreateProcess(executable, args,
+  ║                                      # no special security
+  ║                                      None, None,
+  ║                                      int(not close_fds),
+  ║                                      creationflags,
+  ║                                      env,
+  ║                                      cwd,
+  ║                                      startupinfo)
+  ║ E                                    FileNotFoundError: [WinError 2] 指定されたファイルが見つかりません。
+  ║
+  ║ C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1538: FileNotFoundError
+  ║ ------------------------------ Captured log call ------------------------------
+  ║ WARNING  tools.environments.base:base.py:880 init_session failed (session=0a4f7f48a510): [WinError 2] 指定されたファイルが見つかりません。; non-login probe: [WinError 2] 指定されたファイルが見つかりません。 — falling back to bash -l per command
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_base_environment.py::TestAtomicSnapshotConcurrencyBehavioral::test_concurrent_writes_never_tear_the_snapshot
+  ║ FAILED tests/tools/test_base_environment.py::TestAtomicSnapshotConcurrencyBehavioral::test_failed_export_does_not_destroy_good_snapshot
+  ║ FAILED tests/tools/test_base_environment.py::TestSnapshotFileModes::test_snapshot_and_cwd_files_are_0600
+  ║ 3 failed, 24 passed in 4.66s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_base_environment.py -q
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+[ 30.8% |    33/~107 | ✓48 | ✗ 3] ✓ tests\tools\test_child_credential_windows_native.py (24✓, 36.2s)
+[ 52.3% |    56/~107 | ✓71 | ✗ 3] ✓ tests\tools\test_env_passthrough.py (23✓, 8.1s)
+[ 57.9% |    62/~107 | ✓76 | ✗ 4] ✗ tests\tools\test_local_env_cwd_recovery.py (5✓ 1✗, 5.2s)
+
+  ╔╍ Failed: tests\tools\test_local_env_cwd_recovery.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║ .F....                                                                   [100%]
+  ║ ================================== FAILURES ===================================
+  ║ _________ TestResolveSafeCwd.test_returns_root_when_only_root_exists __________
+  ║
+  ║ self = <tests.tools.test_local_env_cwd_recovery.TestResolveSafeCwd object at 0x000001DD04D57ED0>
+  ║ monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DD04D5F650>
+  ║
+  ║     def test_returns_root_when_only_root_exists(self, monkeypatch):
+  ║         """If every ancestor except the filesystem root is gone, the root
+  ║         itself is still a valid recovery target — don't skip it just because
+  ║         ``os.path.dirname('/') == '/'`` is the loop's exit condition."""
+  ║         sep = os.path.sep
+  ║         monkeypatch.setattr(os.path, "isdir", lambda p: p == sep)
+  ║ >       assert _resolve_safe_cwd("/no/such/deep/dir") == sep
+  ║ E       AssertionError: assert 'H:\\hermes-w...mp\\test-temp' == '\\'
+  ║ E
+  ║ E         - \
+  ║ E         + H:\hermes-worktrees\p0-p1-local-20261003\tmp\test-temp
+  ║
+  ║ tests\tools\test_local_env_cwd_recovery.py:37: AssertionError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_local_env_cwd_recovery.py::TestResolveSafeCwd::test_returns_root_when_only_root_exists
+  ║ 1 failed, 5 passed in 3.29s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_local_env_cwd_recovery.py -q
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+[ 59.8% |    64/~107 | ✓78 | ✗ 4] ✓ tests\tools\test_local_env_relative_cwd.py (2✓, 5.9s)
+[ 90.7% |    97/~107 | ✓106 | ✗  5] ✗ tests\tools\test_local_env_windows_msys.py (28✓ 1✗ 4s, 6.1s)
+
+  ╔╍ Failed: tests\tools\test_local_env_windows_msys.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║     file = _io.open(dir, mode, buffering=buffering,
+  ║ C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\tempfile.py:577: in opener
+  ║     fd, name = _mkstemp_inner(dir, prefix, suffix, flags, output_type)
+  ║                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ║ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  ║
+  ║ dir = 'C:\\Users\\NVIDIA\\.hermes\\cache\\terminal', pre = 'snap.sh.validated.'
+  ║ suf = '', flags = 34050, output_type = <class 'str'>
+  ║
+  ║     def _mkstemp_inner(dir, pre, suf, flags, output_type):
+  ║         """Code common to mkstemp, TemporaryFile, and NamedTemporaryFile."""
+  ║
+  ║         dir = _os.path.abspath(dir)
+  ║         names = _get_candidate_names()
+  ║         if output_type is bytes:
+  ║             names = map(_os.fsencode, names)
+  ║
+  ║         for seq in range(TMP_MAX):
+  ║             name = next(names)
+  ║             file = _os.path.join(dir, pre + name + suf)
+  ║             _sys.audit("tempfile.mkstemp", file)
+  ║             try:
+  ║ >               fd = _os.open(file, flags, 0o600)
+  ║                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ║ E               FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\NVIDIA\\.hermes\\cache\\terminal\\snap.sh.validated.7insbg3u'
+  ║
+  ║ C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\tempfile.py:257: FileNotFoundError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_local_env_windows_msys.py::TestFindBashWindows::test_windows_snapshot_path_and_cwd_marker_use_git_bash_paths
+  ║ 1 failed, 28 passed, 4 skipped in 4.30s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_local_env_windows_msys.py -q
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+[ 92.5% |    99/~107 | ✓106 | ✗  6] ✗ tests\tools\test_local_interrupt_cleanup.py (1✗ 1s, 5.7s)
+
+  ╔╍ Failed: tests\tools\test_local_interrupt_cleanup.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║                                 target_pid = p.pid
+  ║                                 break
+  ║                         except (psutil.NoSuchProcess, psutil.AccessDenied):
+  ║                             continue
+  ║                 except ImportError:
+  ║                     # Fall back to ps
+  ║                     ps = subprocess.run(
+  ║                         ["ps", "-eo", "pid,ppid,pgid,cmd"], capture_output=True, text=True,
+  ║                     )
+  ║                     for line in ps.stdout.splitlines():
+  ║                         if "sleep 30" in line and "grep" not in line:
+  ║                             parts = line.split()
+  ║                             if parts and parts[0].isdigit():
+  ║                                 target_pid = int(parts[0])
+  ║                                 break
+  ║                 if target_pid:
+  ║                     break
+  ║                 time.sleep(0.1)
+  ║
+  ║             assert target_pid is not None, (
+  ║                 "test setup: couldn't find 'sleep 30' subprocess after 5 s"
+  ║             )
+  ║ >           pgid = getattr(os, "getpgid")(target_pid)
+  ║                    ^^^^^^^^^^^^^^^^^^^^^^
+  ║ E           AttributeError: module 'os' has no attribute 'getpgid'
+  ║
+  ║ tests\tools\test_local_interrupt_cleanup.py:162: AttributeError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_local_interrupt_cleanup.py::test_wait_for_process_kills_subprocess_on_keyboardinterrupt
+  ║ 1 failed, 1 skipped in 4.10s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_local_interrupt_cleanup.py -q
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+[ 94.4% |   101/~107 | ✓106 | ✗  6] ✓ tests\tools\test_snapshot_multiline_session_env_injection.py (2s, 1.8s)
+[ 97.2% |   104/~107 | ✓108 | ✗  6] ✓ tests\tools\test_snapshot_session_id_leak.py (2✓ 1s, 4.0s)
+[100.0% |   107/~107 | ✓111 | ✗  6] ✓ tests\tools\test_subprocess_stdin_guard.py (3✓, 5.9s)
+
+=== Summary: 10 files, 111 tests passed, 6 failed, 8 skipped (100% complete) in 85.8s (1 workers) ===
+
+  note: linux_only tests (in 1 file) were SKIPPED on this host (win32); they run on the main Linux CI lane.
+  Durations cached to test_durations.json (10 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   10
+  Total subprocess CPU-wall: 85.8s  (runner wall: 85.8s, parallelism: 1x)
+  P50: 5.92s  P90: 36.20s  P95: 36.20s  P99: 36.20s  Max: 36.20s
+  <1s: 0 files (0%)  <2s: 1 files (10%)
+  Top 10 slowest:
+     36.20s  tests\tools\test_child_credential_windows_native.py
+      8.11s  tests\tools\test_env_passthrough.py
+      6.95s  tests\tools\test_base_environment.py
+      6.06s  tests\tools\test_local_env_windows_msys.py
+      5.92s  tests\tools\test_subprocess_stdin_guard.py
+      5.91s  tests\tools\test_local_env_relative_cwd.py
+      5.72s  tests\tools\test_local_interrupt_cleanup.py
+      5.20s  tests\tools\test_local_env_cwd_recovery.py
+      3.95s  tests\tools\test_snapshot_session_id_leak.py
+      1.76s  tests\tools\test_snapshot_multiline_session_env_injection.py
+
+=== Failure output ===
+
+--- tests\tools\test_base_environment.py ---
+..........FFF..............                                              [100%]
+================================== FAILURES ===================================
+_ TestAtomicSnapshotConcurrencyBehavioral.test_concurrent_writes_never_tear_the_snapshot _
+
+self = <tests.tools.test_base_environment.TestAtomicSnapshotConcurrencyBehavioral object at 0x00000229414250D0>
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-0jm_9d1n/pytest-of-unknown/pytest-0/test_concurrent_writes_never_t0')
+
+    def test_concurrent_writes_never_tear_the_snapshot(self, tmp_path):
+        import shutil
+        if not shutil.which("bash"):
+            import pytest
+            pytest.skip("bash required")
+        import shlex
+        snap = str(tmp_path / "hermes-snap-x.sh")
+        _q = shlex.quote
+        _tmpl = _q(snap + ".tmp.XXXXXXXXXX")
+        # One writer iteration = the exact atomic sequence _wrap_command emits.
+        writer = (
+            "for i in $(seq 1 80); do "
+            "export BIG_$i=$(head -c 600 /dev/zero | tr '\\0' x); "
+            f"__hermes_snap_tmp=$(mktemp {_tmpl}) && "
+            f"{{ export -p > \"$__hermes_snap_tmp\" && mv -f \"$__hermes_snap_tmp\" {_q(snap)}; }} "
+            f"2>/dev/null || rm -f \"$__hermes_snap_tmp\" 2>/dev/null || true; "
+            "done"
+        )
+        # Reader: repeatedly source the snapshot and check PATH never absorbs
+        # an `export `/`declare -x` fragment (the corruption signature).
+        reader = (
+            "export PATH=/usr/bin:/bin; "
+            "for i in $(seq 1 160); do "
+            f"( source {_q(snap)} >/dev/null 2>&1 || true; "
+            "case \"$PATH\" in *'declare -x'*|*'export '*) echo CORRUPT;; esac ); "
+            "done"
+        )
+>       self._run(f"export -p > {_q(snap)}")  # seed a valid snapshot
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_base_environment.py:220:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_base_environment.py:191: in _run
+    return subprocess.run(["/bin/bash", "-c", script], capture_output=True, text=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\conftest.py:1560: in _guarded
+    return real(cmd, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:548: in run
+    with Popen(*popenargs, **kwargs) as process:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\conftest.py:1578: in __init__
+    super().__init__(cmd, *args, **kwargs)
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1026: in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Popen: returncode: None args: ['/bin/bash', '-c', "export -p > 'H:\\hermes-...>
+args = '/bin/bash -c "export -p > \'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\test-temp\\hermes-pytest-tmproot-0jm_9d1n\\pytest-of-unknown\\pytest-0\\test_concurrent_writes_never_t0\\hermes-snap-x.sh\'"'
+executable = None, preexec_fn = None, close_fds = False, pass_fds = ()
+cwd = None, env = None
+startupinfo = <subprocess.STARTUPINFO object at 0x0000022943C89090>
+creationflags = 0, shell = False, p2cread = Handle(1060), p2cwrite = -1
+c2pread = 11, c2pwrite = Handle(1052), errread = 12, errwrite = Handle(1272)
+unused_restore_signals = True, unused_gid = None, unused_gids = None
+unused_uid = None, unused_umask = -1, unused_start_new_session = False
+unused_process_group = -1
+
+    def _execute_child(self, args, executable, preexec_fn, close_fds,
+                       pass_fds, cwd, env,
+                       startupinfo, creationflags, shell,
+                       p2cread, p2cwrite,
+                       c2pread, c2pwrite,
+                       errread, errwrite,
+                       unused_restore_signals,
+                       unused_gid, unused_gids, unused_uid,
+                       unused_umask,
+                       unused_start_new_session, unused_process_group):
+        """Execute program (MS Windows version)"""
+
+        assert not pass_fds, "pass_fds not supported on Windows."
+
+        if isinstance(args, str):
+            pass
+        elif isinstance(args, bytes):
+            if shell:
+                raise TypeError('bytes args is not allowed on Windows')
+            args = list2cmdline([args])
+        elif isinstance(args, os.PathLike):
+            if shell:
+                raise TypeError('path-like args is not allowed when '
+                                'shell is true')
+            args = list2cmdline([args])
+        else:
+            args = list2cmdline(args)
+
+        if executable is not None:
+            executable = os.fsdecode(executable)
+
+        # Process startup details
+        if startupinfo is None:
+            startupinfo = STARTUPINFO()
+        else:
+            # bpo-34044: Copy STARTUPINFO since it is modified above,
+            # so the caller can reuse it multiple times.
+            startupinfo = startupinfo.copy()
+
+        use_std_handles = -1 not in (p2cread, c2pwrite, errwrite)
+        if use_std_handles:
+            startupinfo.dwFlags |= _winapi.STARTF_USESTDHANDLES
+            startupinfo.hStdInput = p2cread
+            startupinfo.hStdOutput = c2pwrite
+            startupinfo.hStdError = errwrite
+
+        attribute_list = startupinfo.lpAttributeList
+        have_handle_list = bool(attribute_list and
+                                "handle_list" in attribute_list and
+                                attribute_list["handle_list"])
+
+        # If we were given an handle_list or need to create one
+        if have_handle_list or (use_std_handles and close_fds):
+            if attribute_list is None:
+                attribute_list = startupinfo.lpAttributeList = {}
+            handle_list = attribute_list["handle_list"] = \
+                list(attribute_list.get("handle_list", []))
+
+            if use_std_handles:
+                handle_list += [int(p2cread), int(c2pwrite), int(errwrite)]
+
+            handle_list[:] = self._filter_handle_list(handle_list)
+
+            if handle_list:
+                if not close_fds:
+                    warnings.warn("startupinfo.lpAttributeList['handle_list'] "
+                                  "overriding close_fds", RuntimeWarning)
+
+                # When using the handle_list we always request to inherit
+                # handles but the only handles that will be inherited are
+                # the ones in the handle_list
+                close_fds = False
+
+        if shell:
+            startupinfo.dwFlags |= _winapi.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = _winapi.SW_HIDE
+            if not executable:
+                # gh-101283: without a fully-qualified path, before Windows
+                # checks the system directories, it first looks in the
+                # application directory, and also the current directory if
+                # NeedCurrentDirectoryForExePathW(ExeName) is true, so try
+                # to avoid executing unqualified "cmd.exe".
+                comspec = os.environ.get('ComSpec')
+                if not comspec:
+                    system_root = os.environ.get('SystemRoot', '')
+                    comspec = os.path.join(system_root, 'System32', 'cmd.exe')
+                    if not os.path.isabs(comspec):
+                        raise FileNotFoundError('shell not found: neither %ComSpec% nor %SystemRoot% is set')
+                if os.path.isabs(comspec):
+                    executable = comspec
+            else:
+                comspec = executable
+
+            args = '{} /c "{}"'.format (comspec, args)
+
+        if cwd is not None:
+            cwd = os.fsdecode(cwd)
+
+        sys.audit("subprocess.Popen", executable, args, cwd, env)
+
+        # Start the process
+        try:
+>           hp, ht, pid, tid = _winapi.CreateProcess(executable, args,
+                                     # no special security
+                                     None, None,
+                                     int(not close_fds),
+                                     creationflags,
+                                     env,
+                                     cwd,
+                                     startupinfo)
+E                                    FileNotFoundError: [WinError 2] 指定されたファイルが見つかりません。
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1538: FileNotFoundError
+_ TestAtomicSnapshotConcurrencyBehavioral.test_failed_export_does_not_destroy_good_snapshot _
+
+self = <tests.tools.test_base_environment.TestAtomicSnapshotConcurrencyBehavioral object at 0x0000022941426DD0>
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-0jm_9d1n/pytest-of-unknown/pytest-0/test_failed_export_does_not_de0')
+
+    def test_failed_export_does_not_destroy_good_snapshot(self, tmp_path):
+        """If ``export -p`` fails, the ``&&``-chained mv must NOT clobber the
+        existing good snapshot."""
+        import shutil
+        if not shutil.which("bash"):
+            import pytest
+            pytest.skip("bash required")
+        import shlex
+        snap = str(tmp_path / "snap.sh")
+        _q = shlex.quote
+>       self._run(f"echo 'export GOOD=1' > {_q(snap)}")  # seed good snapshot
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_base_environment.py:240:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\tools\test_base_environment.py:191: in _run
+    return subprocess.run(["/bin/bash", "-c", script], capture_output=True, text=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\conftest.py:1560: in _guarded
+    return real(cmd, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:548: in run
+    with Popen(*popenargs, **kwargs) as process:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\conftest.py:1578: in __init__
+    super().__init__(cmd, *args, **kwargs)
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1026: in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Popen: returncode: None args: ['/bin/bash', '-c', "echo 'export GOOD=1' > '...>
+args = '/bin/bash -c "echo \'export GOOD=1\' > \'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\test-temp\\hermes-pytest-tmproot-0jm_9d1n\\pytest-of-unknown\\pytest-0\\test_failed_export_does_not_de0\\snap.sh\'"'
+executable = None, preexec_fn = None, close_fds = False, pass_fds = ()
+cwd = None, env = None
+startupinfo = <subprocess.STARTUPINFO object at 0x0000022943C8A6D0>
+creationflags = 0, shell = False, p2cread = Handle(1200), p2cwrite = -1
+c2pread = 11, c2pwrite = Handle(1180), errread = 12, errwrite = Handle(804)
+unused_restore_signals = True, unused_gid = None, unused_gids = None
+unused_uid = None, unused_umask = -1, unused_start_new_session = False
+unused_process_group = -1
+
+    def _execute_child(self, args, executable, preexec_fn, close_fds,
+                       pass_fds, cwd, env,
+                       startupinfo, creationflags, shell,
+                       p2cread, p2cwrite,
+                       c2pread, c2pwrite,
+                       errread, errwrite,
+                       unused_restore_signals,
+                       unused_gid, unused_gids, unused_uid,
+                       unused_umask,
+                       unused_start_new_session, unused_process_group):
+        """Execute program (MS Windows version)"""
+
+        assert not pass_fds, "pass_fds not supported on Windows."
+
+        if isinstance(args, str):
+            pass
+        elif isinstance(args, bytes):
+            if shell:
+                raise TypeError('bytes args is not allowed on Windows')
+            args = list2cmdline([args])
+        elif isinstance(args, os.PathLike):
+            if shell:
+                raise TypeError('path-like args is not allowed when '
+                                'shell is true')
+            args = list2cmdline([args])
+        else:
+            args = list2cmdline(args)
+
+        if executable is not None:
+            executable = os.fsdecode(executable)
+
+        # Process startup details
+        if startupinfo is None:
+            startupinfo = STARTUPINFO()
+        else:
+            # bpo-34044: Copy STARTUPINFO since it is modified above,
+            # so the caller can reuse it multiple times.
+            startupinfo = startupinfo.copy()
+
+        use_std_handles = -1 not in (p2cread, c2pwrite, errwrite)
+        if use_std_handles:
+            startupinfo.dwFlags |= _winapi.STARTF_USESTDHANDLES
+            startupinfo.hStdInput = p2cread
+            startupinfo.hStdOutput = c2pwrite
+            startupinfo.hStdError = errwrite
+
+        attribute_list = startupinfo.lpAttributeList
+        have_handle_list = bool(attribute_list and
+                                "handle_list" in attribute_list and
+                                attribute_list["handle_list"])
+
+        # If we were given an handle_list or need to create one
+        if have_handle_list or (use_std_handles and close_fds):
+            if attribute_list is None:
+                attribute_list = startupinfo.lpAttributeList = {}
+            handle_list = attribute_list["handle_list"] = \
+                list(attribute_list.get("handle_list", []))
+
+            if use_std_handles:
+                handle_list += [int(p2cread), int(c2pwrite), int(errwrite)]
+
+            handle_list[:] = self._filter_handle_list(handle_list)
+
+            if handle_list:
+                if not close_fds:
+                    warnings.warn("startupinfo.lpAttributeList['handle_list'] "
+                                  "overriding close_fds", RuntimeWarning)
+
+                # When using the handle_list we always request to inherit
+                # handles but the only handles that will be inherited are
+                # the ones in the handle_list
+                close_fds = False
+
+        if shell:
+            startupinfo.dwFlags |= _winapi.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = _winapi.SW_HIDE
+            if not executable:
+                # gh-101283: without a fully-qualified path, before Windows
+                # checks the system directories, it first looks in the
+                # application directory, and also the current directory if
+                # NeedCurrentDirectoryForExePathW(ExeName) is true, so try
+                # to avoid executing unqualified "cmd.exe".
+                comspec = os.environ.get('ComSpec')
+                if not comspec:
+                    system_root = os.environ.get('SystemRoot', '')
+                    comspec = os.path.join(system_root, 'System32', 'cmd.exe')
+                    if not os.path.isabs(comspec):
+                        raise FileNotFoundError('shell not found: neither %ComSpec% nor %SystemRoot% is set')
+                if os.path.isabs(comspec):
+                    executable = comspec
+            else:
+                comspec = executable
+
+            args = '{} /c "{}"'.format (comspec, args)
+
+        if cwd is not None:
+            cwd = os.fsdecode(cwd)
+
+        sys.audit("subprocess.Popen", executable, args, cwd, env)
+
+        # Start the process
+        try:
+>           hp, ht, pid, tid = _winapi.CreateProcess(executable, args,
+                                     # no special security
+                                     None, None,
+                                     int(not close_fds),
+                                     creationflags,
+                                     env,
+                                     cwd,
+                                     startupinfo)
+E                                    FileNotFoundError: [WinError 2] 指定されたファイルが見つかりません。
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1538: FileNotFoundError
+_________ TestSnapshotFileModes.test_snapshot_and_cwd_files_are_0600 __________
+
+self = <tests.tools.test_base_environment.TestSnapshotFileModes object at 0x00000229414276D0>
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-0jm_9d1n/pytest-of-unknown/pytest-0/test_snapshot_and_cwd_files_ar0')
+
+    def test_snapshot_and_cwd_files_are_0600(self, tmp_path):
+        import os
+        from pathlib import Path
+        import shutil
+        import stat
+        import subprocess
+        if not shutil.which("bash"):
+            import pytest
+            pytest.skip("bash required")
+
+        class ExecutableEnv(BaseEnvironment):
+            def __init__(self, temp_dir):
+                self._temp_dir = str(temp_dir)
+                super().__init__(cwd=str(temp_dir), timeout=10)
+
+            def get_temp_dir(self):
+                return self._temp_dir
+
+            def _run_bash(self, cmd_string, *, login=False, timeout=120, stdin_data=None):
+                proc = subprocess.Popen(
+                    ["/bin/bash", "-lc", cmd_string],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    stdin=subprocess.DEVNULL,
+                    text=True,
+                    cwd=self.cwd,
+                )
+                proc.communicate(timeout=timeout)
+                return proc
+
+            def cleanup(self):
+                pass
+
+        old_umask = os.umask(0o022)
+        try:
+            env = ExecutableEnv(tmp_path)
+            env.init_session()
+
+            user_file = tmp_path / "user-created.txt"
+>           env.execute(f"touch {user_file}")
+
+tests\tools\test_base_environment.py:296:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\environments\base.py:1522: in execute
+    proc = self._run_bash(
+tests\tools\test_base_environment.py:276: in _run_bash
+    proc = subprocess.Popen(
+tests\conftest.py:1578: in __init__
+    super().__init__(cmd, *args, **kwargs)
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1026: in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Popen: returncode: None args: ['/bin/bash', '-lc', 'export AI_AGENT="${AI_A...>
+args = '/bin/bash -lc "export AI_AGENT=\\"${AI_AGENT:-hermes-agent}\\" HERMES_AGENT=\\"${HERMES_AGENT:-true}\\"\nexport GIT_P...ask 077\nprintf \'\\n__HERMES_CWD_0a4f7f48a510__%s__HERMES_CWD_0a4f7f48a510__\\n\' \\"$(pwd -P)\\"\nexit $__hermes_ec"'
+executable = None, preexec_fn = None, close_fds = False, pass_fds = ()
+cwd = 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\test-temp\\hermes-pytest-tmproot-0jm_9d1n\\pytest-of-unknown\\pytest-0\\test_snapshot_and_cwd_files_ar0'
+env = None, startupinfo = <subprocess.STARTUPINFO object at 0x0000022943D1FAD0>
+creationflags = 0, shell = False, p2cread = Handle(804), p2cwrite = -1
+c2pread = 12, c2pwrite = Handle(880), errread = -1, errwrite = Handle(1224)
+unused_restore_signals = True, unused_gid = None, unused_gids = None
+unused_uid = None, unused_umask = -1, unused_start_new_session = False
+unused_process_group = -1
+
+    def _execute_child(self, args, executable, preexec_fn, close_fds,
+                       pass_fds, cwd, env,
+                       startupinfo, creationflags, shell,
+                       p2cread, p2cwrite,
+                       c2pread, c2pwrite,
+                       errread, errwrite,
+                       unused_restore_signals,
+                       unused_gid, unused_gids, unused_uid,
+                       unused_umask,
+                       unused_start_new_session, unused_process_group):
+        """Execute program (MS Windows version)"""
+
+        assert not pass_fds, "pass_fds not supported on Windows."
+
+        if isinstance(args, str):
+            pass
+        elif isinstance(args, bytes):
+            if shell:
+                raise TypeError('bytes args is not allowed on Windows')
+            args = list2cmdline([args])
+        elif isinstance(args, os.PathLike):
+            if shell:
+                raise TypeError('path-like args is not allowed when '
+                                'shell is true')
+            args = list2cmdline([args])
+        else:
+            args = list2cmdline(args)
+
+        if executable is not None:
+            executable = os.fsdecode(executable)
+
+        # Process startup details
+        if startupinfo is None:
+            startupinfo = STARTUPINFO()
+        else:
+            # bpo-34044: Copy STARTUPINFO since it is modified above,
+            # so the caller can reuse it multiple times.
+            startupinfo = startupinfo.copy()
+
+        use_std_handles = -1 not in (p2cread, c2pwrite, errwrite)
+        if use_std_handles:
+            startupinfo.dwFlags |= _winapi.STARTF_USESTDHANDLES
+            startupinfo.hStdInput = p2cread
+            startupinfo.hStdOutput = c2pwrite
+            startupinfo.hStdError = errwrite
+
+        attribute_list = startupinfo.lpAttributeList
+        have_handle_list = bool(attribute_list and
+                                "handle_list" in attribute_list and
+                                attribute_list["handle_list"])
+
+        # If we were given an handle_list or need to create one
+        if have_handle_list or (use_std_handles and close_fds):
+            if attribute_list is None:
+                attribute_list = startupinfo.lpAttributeList = {}
+            handle_list = attribute_list["handle_list"] = \
+                list(attribute_list.get("handle_list", []))
+
+            if use_std_handles:
+                handle_list += [int(p2cread), int(c2pwrite), int(errwrite)]
+
+            handle_list[:] = self._filter_handle_list(handle_list)
+
+            if handle_list:
+                if not close_fds:
+                    warnings.warn("startupinfo.lpAttributeList['handle_list'] "
+                                  "overriding close_fds", RuntimeWarning)
+
+                # When using the handle_list we always request to inherit
+                # handles but the only handles that will be inherited are
+                # the ones in the handle_list
+                close_fds = False
+
+        if shell:
+            startupinfo.dwFlags |= _winapi.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = _winapi.SW_HIDE
+            if not executable:
+                # gh-101283: without a fully-qualified path, before Windows
+                # checks the system directories, it first looks in the
+                # application directory, and also the current directory if
+                # NeedCurrentDirectoryForExePathW(ExeName) is true, so try
+                # to avoid executing unqualified "cmd.exe".
+                comspec = os.environ.get('ComSpec')
+                if not comspec:
+                    system_root = os.environ.get('SystemRoot', '')
+                    comspec = os.path.join(system_root, 'System32', 'cmd.exe')
+                    if not os.path.isabs(comspec):
+                        raise FileNotFoundError('shell not found: neither %ComSpec% nor %SystemRoot% is set')
+                if os.path.isabs(comspec):
+                    executable = comspec
+            else:
+                comspec = executable
+
+            args = '{} /c "{}"'.format (comspec, args)
+
+        if cwd is not None:
+            cwd = os.fsdecode(cwd)
+
+        sys.audit("subprocess.Popen", executable, args, cwd, env)
+
+        # Start the process
+        try:
+>           hp, ht, pid, tid = _winapi.CreateProcess(executable, args,
+                                     # no special security
+                                     None, None,
+                                     int(not close_fds),
+                                     creationflags,
+                                     env,
+                                     cwd,
+                                     startupinfo)
+E                                    FileNotFoundError: [WinError 2] 指定されたファイルが見つかりません。
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1538: FileNotFoundError
+------------------------------ Captured log call ------------------------------
+WARNING  tools.environments.base:base.py:880 init_session failed (session=0a4f7f48a510): [WinError 2] 指定されたファイルが見つかりません。; non-login probe: [WinError 2] 指定されたファイルが見つかりません。 — falling back to bash -l per command
+=========================== short test summary info ===========================
+FAILED tests/tools/test_base_environment.py::TestAtomicSnapshotConcurrencyBehavioral::test_concurrent_writes_never_tear_the_snapshot
+FAILED tests/tools/test_base_environment.py::TestAtomicSnapshotConcurrencyBehavioral::test_failed_export_does_not_destroy_good_snapshot
+FAILED tests/tools/test_base_environment.py::TestSnapshotFileModes::test_snapshot_and_cwd_files_are_0600
+3 failed, 24 passed in 4.66s
+
+--- tests\tools\test_local_env_cwd_recovery.py ---
+.F....                                                                   [100%]
+================================== FAILURES ===================================
+_________ TestResolveSafeCwd.test_returns_root_when_only_root_exists __________
+
+self = <tests.tools.test_local_env_cwd_recovery.TestResolveSafeCwd object at 0x000001DD04D57ED0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DD04D5F650>
+
+    def test_returns_root_when_only_root_exists(self, monkeypatch):
+        """If every ancestor except the filesystem root is gone, the root
+        itself is still a valid recovery target — don't skip it just because
+        ``os.path.dirname('/') == '/'`` is the loop's exit condition."""
+        sep = os.path.sep
+        monkeypatch.setattr(os.path, "isdir", lambda p: p == sep)
+>       assert _resolve_safe_cwd("/no/such/deep/dir") == sep
+E       AssertionError: assert 'H:\\hermes-w...mp\\test-temp' == '\\'
+E
+E         - \
+E         + H:\hermes-worktrees\p0-p1-local-20261003\tmp\test-temp
+
+tests\tools\test_local_env_cwd_recovery.py:37: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_local_env_cwd_recovery.py::TestResolveSafeCwd::test_returns_root_when_only_root_exists
+1 failed, 5 passed in 3.29s
+
+--- tests\tools\test_local_env_windows_msys.py ---
+s............Fs............ss....                                        [100%]
+================================== FAILURES ===================================
+_ TestFindBashWindows.test_windows_snapshot_path_and_cwd_marker_use_git_bash_paths _
+
+self = <tests.tools.test_local_env_windows_msys.TestFindBashWindows object at 0x0000019B804B8710>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000019B82C69AD0>
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-lvbgef8g/pytest-of-unknown/pytest-0/test_windows_snapshot_path_and0')
+
+    def test_windows_snapshot_path_and_cwd_marker_use_git_bash_paths(
+        self, monkeypatch, tmp_path,
+    ):
+        monkeypatch.setattr(local_mod, "_IS_WINDOWS", True)
+
+        with patch.object(
+            LocalEnvironment, "init_session", autospec=True, return_value=None
+        ):
+            env = LocalEnvironment(cwd=str(tmp_path), timeout=10)
+
+        env.windows_bash_path_style = "wsl"
+        env._snapshot_path = r"C:/Users/NVIDIA/.hermes/cache/terminal/snap.sh"
+        env._cwd_file = r"C:/Users/NVIDIA/.hermes/cache/terminal/cwd.txt"
+        env._snapshot_ready = True
+
+>       script = env._wrap_command("pwd", r"C:\Users\NVIDIA")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_local_env_windows_msys.py:196:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\environments\local.py:2126: in _wrap_command
+    with tempfile.NamedTemporaryFile(
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\tempfile.py:580: in NamedTemporaryFile
+    file = _io.open(dir, mode, buffering=buffering,
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\tempfile.py:577: in opener
+    fd, name = _mkstemp_inner(dir, prefix, suffix, flags, output_type)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+dir = 'C:\\Users\\NVIDIA\\.hermes\\cache\\terminal', pre = 'snap.sh.validated.'
+suf = '', flags = 34050, output_type = <class 'str'>
+
+    def _mkstemp_inner(dir, pre, suf, flags, output_type):
+        """Code common to mkstemp, TemporaryFile, and NamedTemporaryFile."""
+
+        dir = _os.path.abspath(dir)
+        names = _get_candidate_names()
+        if output_type is bytes:
+            names = map(_os.fsencode, names)
+
+        for seq in range(TMP_MAX):
+            name = next(names)
+            file = _os.path.join(dir, pre + name + suf)
+            _sys.audit("tempfile.mkstemp", file)
+            try:
+>               fd = _os.open(file, flags, 0o600)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\NVIDIA\\.hermes\\cache\\terminal\\snap.sh.validated.7insbg3u'
+
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\tempfile.py:257: FileNotFoundError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_local_env_windows_msys.py::TestFindBashWindows::test_windows_snapshot_path_and_cwd_marker_use_git_bash_paths
+1 failed, 28 passed, 4 skipped in 4.30s
+
+--- tests\tools\test_local_interrupt_cleanup.py ---
+sF                                                                       [100%]
+================================== FAILURES ===================================
+_________ test_wait_for_process_kills_subprocess_on_keyboardinterrupt _________
+
+    def test_wait_for_process_kills_subprocess_on_keyboardinterrupt():
+        """When KeyboardInterrupt arrives mid-poll, the subprocess group must be
+        killed before the exception is re-raised."""
+        env = LocalEnvironment(cwd="/tmp")
+        try:
+            result_holder = {}
+            proc_holder = {}
+            started = threading.Event()
+            raise_at = [None]  # set by the main thread to tell worker when
+
+            # Drive execute() on a separate thread so we can SIGNAL-interrupt it
+            # via a thread-targeted exception without killing our test process.
+            def worker():
+                # Spawn a subprocess that will definitely be alive long enough
+                # to observe the cleanup, via env.execute(...) — the normal path
+                # that goes through _wait_for_process.
+                try:
+                    result_holder["result"] = env.execute("sleep 30", timeout=60)
+                except BaseException as e:  # noqa: BLE001 — we want to observe it
+                    result_holder["exception"] = type(e).__name__
+
+            t = threading.Thread(target=worker, daemon=True)
+            t.start()
+            # Wait until the subprocess actually exists.  LocalEnvironment.execute
+            # does init_session() (one spawn) before the real command, so we need
+            # to wait until a sleep 30 is visible.  Use pgrep-style lookup via
+            # /proc to find the bash process running our sleep.
+            deadline = time.monotonic() + 20.0  # generous: init_session + spawn dilate under CI load
+            target_pid = None
+            while time.monotonic() < deadline:
+                # Walk our children and grand-children to find one running 'sleep 30'
+                try:
+                    import psutil  # optional — fall back if absent
+                    for p in psutil.Process(os.getpid()).children(recursive=True):
+                        try:
+                            if "sleep 30" in " ".join(p.cmdline()):
+                                target_pid = p.pid
+                                break
+                        except (psutil.NoSuchProcess, psutil.AccessDenied):
+                            continue
+                except ImportError:
+                    # Fall back to ps
+                    ps = subprocess.run(
+                        ["ps", "-eo", "pid,ppid,pgid,cmd"], capture_output=True, text=True,
+                    )
+                    for line in ps.stdout.splitlines():
+                        if "sleep 30" in line and "grep" not in line:
+                            parts = line.split()
+                            if parts and parts[0].isdigit():
+                                target_pid = int(parts[0])
+                                break
+                if target_pid:
+                    break
+                time.sleep(0.1)
+
+            assert target_pid is not None, (
+                "test setup: couldn't find 'sleep 30' subprocess after 5 s"
+            )
+>           pgid = getattr(os, "getpgid")(target_pid)
+                   ^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'os' has no attribute 'getpgid'
+
+tests\tools\test_local_interrupt_cleanup.py:162: AttributeError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_local_interrupt_cleanup.py::test_wait_for_process_kills_subprocess_on_keyboardinterrupt
+1 failed, 1 skipped in 4.10s
+
+=== 4 files with test failures (6 tests failed) ===
+  tests\tools\test_base_environment.py  (3 tests failed)
+  tests\tools\test_local_env_cwd_recovery.py  (1 test failed)
+  tests\tools\test_local_env_windows_msys.py  (1 test failed)
+  tests\tools\test_local_interrupt_cleanup.py  (1 test failed)

@@ -1,0 +1,134 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 1 test files (~34 tests) under ['tests\\tools\\test_child_credential_boundary.py']; running with -j 1
+[100.0% |    34/~34 | ✓1 | ✗3] ✗ tests\tools\test_child_credential_boundary.py (1✓ 3✗, 6.0s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_boundary.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║ E        +  where False = all(<generator object test_provider_discovery_preserves_user_cli_oauth_and_general_aws.<locals>.<genexpr> at 0x00000145D4BA3AE0>)
+  ║
+  ║ tests\tools\test_child_credential_boundary.py:551: AssertionError
+  ║ ____ test_provider_discovery_preserves_user_cli_oauth_and_general_aws[cli] ____
+  ║
+  ║ monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000145D2753F90>
+  ║ surface = 'cli'
+  ║
+  ║     @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+  ║     def test_provider_discovery_preserves_user_cli_oauth_and_general_aws(monkeypatch, surface):
+  ║         from types import SimpleNamespace
+  ║         import providers
+  ║         monkeypatch.setattr(providers, "list_providers", lambda: [
+  ║             SimpleNamespace(auth_type="api_key", env_vars=("CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY")),
+  ║             SimpleNamespace(auth_type="aws_sdk", env_vars=("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY")),
+  ║         ])
+  ║         keys = ("CLAUDE_CODE_OAUTH_TOKEN", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY")
+  ║         for key in keys:
+  ║             monkeypatch.setenv(key, SECRET)
+  ║         env = child_env(surface)
+  ║ >       assert all(env.get(key) == SECRET for key in keys)
+  ║ E       assert False
+  ║ E        +  where False = all(<generator object test_provider_discovery_preserves_user_cli_oauth_and_general_aws.<locals>.<genexpr> at 0x00000145D4D46960>)
+  ║
+  ║ tests\tools\test_child_credential_boundary.py:551: AssertionError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_provider_discovery_preserves_user_cli_oauth_and_general_aws[terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_provider_discovery_preserves_user_cli_oauth_and_general_aws[background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_provider_discovery_preserves_user_cli_oauth_and_general_aws[cli]
+  ║ 3 failed, 1 passed, 204 deselected in 4.18s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_boundary.py -q -k provider_discovery_preserves
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+
+=== Summary: 1 files, 1 tests passed, 3 failed (100% complete) in 6.0s (1 workers) ===
+  Durations cached to test_durations.json (1 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   1
+  Total subprocess CPU-wall: 6.0s  (runner wall: 6.0s, parallelism: 1x)
+  P50: 6.00s  P90: 6.00s  P95: 6.00s  P99: 6.00s  Max: 6.00s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+      6.00s  tests\tools\test_child_credential_boundary.py
+
+=== Failure output ===
+
+--- tests\tools\test_child_credential_boundary.py ---
+FFF.                                                                     [100%]
+================================== FAILURES ===================================
+_ test_provider_discovery_preserves_user_cli_oauth_and_general_aws[terminal] __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000145D24B2550>
+surface = 'terminal'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_provider_discovery_preserves_user_cli_oauth_and_general_aws(monkeypatch, surface):
+        from types import SimpleNamespace
+        import providers
+        monkeypatch.setattr(providers, "list_providers", lambda: [
+            SimpleNamespace(auth_type="api_key", env_vars=("CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY")),
+            SimpleNamespace(auth_type="aws_sdk", env_vars=("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY")),
+        ])
+        keys = ("CLAUDE_CODE_OAUTH_TOKEN", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY")
+        for key in keys:
+            monkeypatch.setenv(key, SECRET)
+        env = child_env(surface)
+>       assert all(env.get(key) == SECRET for key in keys)
+E       assert False
+E        +  where False = all(<generator object test_provider_discovery_preserves_user_cli_oauth_and_general_aws.<locals>.<genexpr> at 0x00000145D4BA3AE0>)
+
+tests\tools\test_child_credential_boundary.py:551: AssertionError
+_ test_provider_discovery_preserves_user_cli_oauth_and_general_aws[background] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000145D24E5BD0>
+surface = 'background'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_provider_discovery_preserves_user_cli_oauth_and_general_aws(monkeypatch, surface):
+        from types import SimpleNamespace
+        import providers
+        monkeypatch.setattr(providers, "list_providers", lambda: [
+            SimpleNamespace(auth_type="api_key", env_vars=("CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY")),
+            SimpleNamespace(auth_type="aws_sdk", env_vars=("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY")),
+        ])
+        keys = ("CLAUDE_CODE_OAUTH_TOKEN", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY")
+        for key in keys:
+            monkeypatch.setenv(key, SECRET)
+        env = child_env(surface)
+>       assert all(env.get(key) == SECRET for key in keys)
+E       assert False
+E        +  where False = all(<generator object test_provider_discovery_preserves_user_cli_oauth_and_general_aws.<locals>.<genexpr> at 0x00000145D4BA3AE0>)
+
+tests\tools\test_child_credential_boundary.py:551: AssertionError
+____ test_provider_discovery_preserves_user_cli_oauth_and_general_aws[cli] ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000145D2753F90>
+surface = 'cli'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_provider_discovery_preserves_user_cli_oauth_and_general_aws(monkeypatch, surface):
+        from types import SimpleNamespace
+        import providers
+        monkeypatch.setattr(providers, "list_providers", lambda: [
+            SimpleNamespace(auth_type="api_key", env_vars=("CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY")),
+            SimpleNamespace(auth_type="aws_sdk", env_vars=("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY")),
+        ])
+        keys = ("CLAUDE_CODE_OAUTH_TOKEN", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY")
+        for key in keys:
+            monkeypatch.setenv(key, SECRET)
+        env = child_env(surface)
+>       assert all(env.get(key) == SECRET for key in keys)
+E       assert False
+E        +  where False = all(<generator object test_provider_discovery_preserves_user_cli_oauth_and_general_aws.<locals>.<genexpr> at 0x00000145D4D46960>)
+
+tests\tools\test_child_credential_boundary.py:551: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_provider_discovery_preserves_user_cli_oauth_and_general_aws[terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_provider_discovery_preserves_user_cli_oauth_and_general_aws[background]
+FAILED tests/tools/test_child_credential_boundary.py::test_provider_discovery_preserves_user_cli_oauth_and_general_aws[cli]
+3 failed, 1 passed, 204 deselected in 4.18s
+
+=== 1 file with test failures (3 tests failed) ===
+  tests\tools\test_child_credential_boundary.py  (3 tests failed)

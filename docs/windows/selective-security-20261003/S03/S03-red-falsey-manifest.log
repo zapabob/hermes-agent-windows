@@ -1,0 +1,209 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 1 test files (~28 tests) under ['tests\\tools\\test_child_credential_boundary.py']; running with -j 1
+[100.0% |    28/~28 | ✓ 4 | ✗ 8] ✗ tests\tools\test_child_credential_boundary.py (4✓ 8✗, 6.1s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_boundary.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║ E       Failed: DID NOT RAISE RuntimeError
+  ║
+  ║ tests\tools\test_child_credential_boundary.py:419: Failed
+  ║ _ test_falsey_non_list_manifest_declaration_refuses_child[value3-optional_env] _
+  ║
+  ║ tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-pt2vz_em/pytest-of-unknown/pytest-0/test_falsey_non_list_manifest_7')
+  ║ monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001AC759D9B10>
+  ║ field = 'optional_env', value = {}
+  ║
+  ║     @pytest.mark.parametrize("field", ["requires_env", "optional_env"])
+  ║     @pytest.mark.parametrize("value", [False, 0, "", {}])
+  ║     def test_falsey_non_list_manifest_declaration_refuses_child(tmp_path, monkeypatch, field, value):
+  ║         directory = tmp_path / "plugins/platforms/test-falsey"
+  ║         directory.mkdir(parents=True)
+  ║         (directory / "plugin.yaml").write_text(json.dumps({"kind": "platform", field: value}), encoding="utf-8")
+  ║         monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+  ║ >       with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+  ║ E       Failed: DID NOT RAISE RuntimeError
+  ║
+  ║ tests\tools\test_child_credential_boundary.py:419: Failed
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[False-requires_env]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[False-optional_env]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[0-requires_env]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[0-optional_env]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[-requires_env]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[-optional_env]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[value3-requires_env]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[value3-optional_env]
+  ║ 8 failed, 4 passed, 167 deselected in 4.14s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_boundary.py -q -k falsey_non_list or explicit_empty_or_null
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+
+=== Summary: 1 files, 4 tests passed, 8 failed (100% complete) in 6.1s (1 workers) ===
+  Durations cached to test_durations.json (1 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   1
+  Total subprocess CPU-wall: 6.1s  (runner wall: 6.1s, parallelism: 1x)
+  P50: 6.09s  P90: 6.09s  P95: 6.09s  P99: 6.09s  Max: 6.09s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+      6.09s  tests\tools\test_child_credential_boundary.py
+
+=== Failure output ===
+
+--- tests\tools\test_child_credential_boundary.py ---
+FFFFFFFF....                                                             [100%]
+================================== FAILURES ===================================
+_ test_falsey_non_list_manifest_declaration_refuses_child[False-requires_env] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-pt2vz_em/pytest-of-unknown/pytest-0/test_falsey_non_list_manifest_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001AC757F0C50>
+field = 'requires_env', value = False
+
+    @pytest.mark.parametrize("field", ["requires_env", "optional_env"])
+    @pytest.mark.parametrize("value", [False, 0, "", {}])
+    def test_falsey_non_list_manifest_declaration_refuses_child(tmp_path, monkeypatch, field, value):
+        directory = tmp_path / "plugins/platforms/test-falsey"
+        directory.mkdir(parents=True)
+        (directory / "plugin.yaml").write_text(json.dumps({"kind": "platform", field: value}), encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+>       with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:419: Failed
+_ test_falsey_non_list_manifest_declaration_refuses_child[False-optional_env] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-pt2vz_em/pytest-of-unknown/pytest-0/test_falsey_non_list_manifest_1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001AC7582C490>
+field = 'optional_env', value = False
+
+    @pytest.mark.parametrize("field", ["requires_env", "optional_env"])
+    @pytest.mark.parametrize("value", [False, 0, "", {}])
+    def test_falsey_non_list_manifest_declaration_refuses_child(tmp_path, monkeypatch, field, value):
+        directory = tmp_path / "plugins/platforms/test-falsey"
+        directory.mkdir(parents=True)
+        (directory / "plugin.yaml").write_text(json.dumps({"kind": "platform", field: value}), encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+>       with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:419: Failed
+___ test_falsey_non_list_manifest_declaration_refuses_child[0-requires_env] ___
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-pt2vz_em/pytest-of-unknown/pytest-0/test_falsey_non_list_manifest_2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001AC757EBF90>
+field = 'requires_env', value = 0
+
+    @pytest.mark.parametrize("field", ["requires_env", "optional_env"])
+    @pytest.mark.parametrize("value", [False, 0, "", {}])
+    def test_falsey_non_list_manifest_declaration_refuses_child(tmp_path, monkeypatch, field, value):
+        directory = tmp_path / "plugins/platforms/test-falsey"
+        directory.mkdir(parents=True)
+        (directory / "plugin.yaml").write_text(json.dumps({"kind": "platform", field: value}), encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+>       with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:419: Failed
+___ test_falsey_non_list_manifest_declaration_refuses_child[0-optional_env] ___
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-pt2vz_em/pytest-of-unknown/pytest-0/test_falsey_non_list_manifest_3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001AC757EBFD0>
+field = 'optional_env', value = 0
+
+    @pytest.mark.parametrize("field", ["requires_env", "optional_env"])
+    @pytest.mark.parametrize("value", [False, 0, "", {}])
+    def test_falsey_non_list_manifest_declaration_refuses_child(tmp_path, monkeypatch, field, value):
+        directory = tmp_path / "plugins/platforms/test-falsey"
+        directory.mkdir(parents=True)
+        (directory / "plugin.yaml").write_text(json.dumps({"kind": "platform", field: value}), encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+>       with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:419: Failed
+___ test_falsey_non_list_manifest_declaration_refuses_child[-requires_env] ____
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-pt2vz_em/pytest-of-unknown/pytest-0/test_falsey_non_list_manifest_4')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001AC77F5AF90>
+field = 'requires_env', value = ''
+
+    @pytest.mark.parametrize("field", ["requires_env", "optional_env"])
+    @pytest.mark.parametrize("value", [False, 0, "", {}])
+    def test_falsey_non_list_manifest_declaration_refuses_child(tmp_path, monkeypatch, field, value):
+        directory = tmp_path / "plugins/platforms/test-falsey"
+        directory.mkdir(parents=True)
+        (directory / "plugin.yaml").write_text(json.dumps({"kind": "platform", field: value}), encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+>       with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:419: Failed
+___ test_falsey_non_list_manifest_declaration_refuses_child[-optional_env] ____
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-pt2vz_em/pytest-of-unknown/pytest-0/test_falsey_non_list_manifest_5')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001AC7803C510>
+field = 'optional_env', value = ''
+
+    @pytest.mark.parametrize("field", ["requires_env", "optional_env"])
+    @pytest.mark.parametrize("value", [False, 0, "", {}])
+    def test_falsey_non_list_manifest_declaration_refuses_child(tmp_path, monkeypatch, field, value):
+        directory = tmp_path / "plugins/platforms/test-falsey"
+        directory.mkdir(parents=True)
+        (directory / "plugin.yaml").write_text(json.dumps({"kind": "platform", field: value}), encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+>       with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:419: Failed
+_ test_falsey_non_list_manifest_declaration_refuses_child[value3-requires_env] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-pt2vz_em/pytest-of-unknown/pytest-0/test_falsey_non_list_manifest_6')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001AC77E3EA10>
+field = 'requires_env', value = {}
+
+    @pytest.mark.parametrize("field", ["requires_env", "optional_env"])
+    @pytest.mark.parametrize("value", [False, 0, "", {}])
+    def test_falsey_non_list_manifest_declaration_refuses_child(tmp_path, monkeypatch, field, value):
+        directory = tmp_path / "plugins/platforms/test-falsey"
+        directory.mkdir(parents=True)
+        (directory / "plugin.yaml").write_text(json.dumps({"kind": "platform", field: value}), encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+>       with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:419: Failed
+_ test_falsey_non_list_manifest_declaration_refuses_child[value3-optional_env] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-pt2vz_em/pytest-of-unknown/pytest-0/test_falsey_non_list_manifest_7')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001AC759D9B10>
+field = 'optional_env', value = {}
+
+    @pytest.mark.parametrize("field", ["requires_env", "optional_env"])
+    @pytest.mark.parametrize("value", [False, 0, "", {}])
+    def test_falsey_non_list_manifest_declaration_refuses_child(tmp_path, monkeypatch, field, value):
+        directory = tmp_path / "plugins/platforms/test-falsey"
+        directory.mkdir(parents=True)
+        (directory / "plugin.yaml").write_text(json.dumps({"kind": "platform", field: value}), encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+>       with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:419: Failed
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[False-requires_env]
+FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[False-optional_env]
+FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[0-requires_env]
+FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[0-optional_env]
+FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[-requires_env]
+FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[-optional_env]
+FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[value3-requires_env]
+FAILED tests/tools/test_child_credential_boundary.py::test_falsey_non_list_manifest_declaration_refuses_child[value3-optional_env]
+8 failed, 4 passed, 167 deselected in 4.14s
+
+=== 1 file with test failures (8 tests failed) ===
+  tests\tools\test_child_credential_boundary.py  (8 tests failed)
