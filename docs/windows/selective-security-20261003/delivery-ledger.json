@@ -1,0 +1,24 @@
+{
+  "deadline": "2026-10-03T24:00:00+09:00",
+  "scope": "Accepted S01-S03, selected-conversation Desktop Git fix and documentation; retain incomplete families with implementation handoff",
+  "family_status": {
+    "S01": "ACCEPTED",
+    "S02": "ACCEPTED",
+    "S03": "ACCEPTED",
+    "S06": "IN_PROGRESS_NOT_PUBLISHED",
+    "S05": "NOT_IMPLEMENTED",
+    "S08": "NOT_IMPLEMENTED",
+    "S07": "NOT_IMPLEMENTED",
+    "S04": "NOT_IMPLEMENTED",
+    "S09": "NOT_IMPLEMENTED",
+    "S10": "NOT_IMPLEMENTED",
+    "S11": "NOT_IMPLEMENTED"
+  },
+  "desktop_git_fix": "2e68c90beca",
+  "handoff": "HANDOFF_20261003.md",
+  "publication": "PENDING",
+  "desktop_build_restart": "PENDING",
+  "go_restart": "PENDING",
+  "llama_action": "NONE_AUTHORIZED",
+  "ci": "NOT_YET_PUSHED"
+}
