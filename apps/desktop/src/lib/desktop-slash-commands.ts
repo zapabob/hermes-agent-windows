@@ -468,8 +468,15 @@ export function resolveDesktopCommand(command: string, catalog?: CommandsCatalog
   }
 
   const value = entry.desktop
-  const reason = value === 'advanced' || value === 'composer-voice' || value === 'messaging' || value === 'settings' || value === 'terminal'
-    ? value : null
+
+  const reason =
+    value === 'advanced' ||
+    value === 'composer-voice' ||
+    value === 'messaging' ||
+    value === 'settings' ||
+    value === 'terminal'
+      ? value
+      : null
 
   if (reason) {
     return { name, surface: unavailable(reason) }

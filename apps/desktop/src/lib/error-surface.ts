@@ -67,9 +67,7 @@ export function parseErrorSurface(value: unknown): ErrorSurface | null {
     ...(typeof raw.provider === 'string' && raw.provider ? { provider: raw.provider } : {}),
     ...(typeof raw.model === 'string' && raw.model ? { model: raw.model } : {}),
     ...(raw.auth_kind === 'oauth' || raw.auth_kind === 'api_key' ? { authKind: raw.auth_kind } : {}),
-    ...(typeof raw.provider_label === 'string' && raw.provider_label
-      ? { providerLabel: raw.provider_label }
-      : {})
+    ...(typeof raw.provider_label === 'string' && raw.provider_label ? { providerLabel: raw.provider_label } : {})
   }
 }
 
