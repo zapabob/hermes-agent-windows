@@ -1,5 +1,5 @@
 {
-  "deadline": "2026-10-03T24:00:00+09:00",
+  "deadline": "2026-10-04T00:00:00+09:00",
   "scope": "Accepted S01-S03, selected-conversation Desktop Git fix and documentation; retain incomplete families with implementation handoff",
   "family_status": {
     "S01": "ACCEPTED",
@@ -16,9 +16,209 @@
   },
   "desktop_git_fix": "2e68c90beca",
   "handoff": "HANDOFF_20261003.md",
-  "publication": "PENDING",
-  "desktop_build_restart": "PENDING",
-  "go_restart": "PENDING",
-  "llama_action": "NONE_AUTHORIZED",
-  "ci": "NOT_YET_PUSHED"
+  "publication": {
+    "status": "PUSHED_REMOTE_VERIFIED",
+    "product_head": "6decaba2acf21ac9a49f4acd89d9f8f558ce87d7",
+    "closeout_publication": "This receipt is committed with the handoff; final HEAD is verified after push"
+  },
+  "desktop_build_restart": {
+    "pack_exit_code": 0,
+    "stamp": {
+      "schemaVersion": 1,
+      "commit": "6decaba2acf21ac9a49f4acd89d9f8f558ce87d7",
+      "branch": "main",
+      "builtAt": "2026-10-03T11:00:45.008Z",
+      "dirty": true,
+      "source": "local"
+    },
+    "restart_completed": true,
+    "current_backend_port": 51207,
+    "api_status_http": 200,
+    "current_processes": [
+      {
+        "pid": 2540,
+        "birth": 1791036710.6358333,
+        "exe": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\apps\\desktop\\release\\win-unpacked\\Hermes.exe",
+        "parent": 10136
+      },
+      {
+        "pid": 10136,
+        "birth": 1791036705.419934,
+        "exe": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\apps\\desktop\\release\\win-unpacked\\Hermes.exe",
+        "parent": 20600
+      },
+      {
+        "pid": 18332,
+        "birth": 1791036731.9093556,
+        "exe": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\apps\\desktop\\release\\win-unpacked\\Hermes.exe",
+        "parent": 10136
+      },
+      {
+        "pid": 18580,
+        "birth": 1791036731.042143,
+        "exe": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\apps\\desktop\\release\\win-unpacked\\Hermes.exe",
+        "parent": 10136
+      },
+      {
+        "pid": 18632,
+        "birth": 1791036737.310616,
+        "exe": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\apps\\desktop\\release\\win-unpacked\\Hermes.exe",
+        "parent": 10136
+      }
+    ],
+    "later_process_replacement": "Observed after task interruption; current API was verified"
+  },
+  "go_restart": {
+    "operator_restart_completed_at": "2026-10-03T11:02:48.5361247Z",
+    "operator_admin": true,
+    "operator_pid": 16880,
+    "embedding_during_authorized_restart": "disabled",
+    "llama_action_by_this_task": "none",
+    "current_health_http": 200,
+    "current_processes": [
+      {
+        "pid": 6748,
+        "birth": 1791036709.2436192,
+        "exe": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\scripts\\windows\\watchdog-go\\dist\\hermes-watchdog.exe",
+        "parent": 10832
+      }
+    ],
+    "later_process_replacement": "Current Go PID6748 was started after interruption; its state reports embedding up and backend down while actual Desktop API returns 200"
+  },
+  "llama_action": {
+    "this_task": "NONE",
+    "probes_configuration_restart_kill": "NONE",
+    "later_external_process_drift": true,
+    "current_metadata_only": [
+      {
+        "pid": 10916,
+        "birth": 1791036877.3495443,
+        "exe": "C:\\Users\\downl\\AppData\\Local\\Programs\\llama-turboquant\\versions\\sm120a-b10597-95b8e33e1\\bin\\llama-server.exe",
+        "parent": 19208
+      },
+      {
+        "pid": 18076,
+        "birth": 1791036926.2910674,
+        "exe": "C:\\Users\\downl\\AppData\\Local\\Microsoft\\WinGet\\Packages\\ggml.llamacpp_Microsoft.Winget.Source_8wekyb3d8bbwe\\llama-server.exe",
+        "parent": 6748
+      },
+      {
+        "pid": 20952,
+        "birth": 1791036709.9398167,
+        "exe": "C:\\Users\\downl\\.hermes\\llama\\prism-b10735-842b188\\bin\\llama-server.exe",
+        "parent": 14124
+      }
+    ]
+  },
+  "ci": {
+    "sha": "6decaba2acf21ac9a49f4acd89d9f8f558ce87d7",
+    "all_green": false,
+    "runs": [
+      {
+        "conclusion": "skipped",
+        "databaseId": 37125310063,
+        "name": "Skills Index Freshness Check",
+        "status": "completed"
+      },
+      {
+        "conclusion": "failure",
+        "databaseId": 37123481161,
+        "name": ".github/workflows/install-e2e.yml",
+        "status": "completed"
+      },
+      {
+        "conclusion": "skipped",
+        "databaseId": 37119801556,
+        "name": "Publish E2E evidence",
+        "status": "completed"
+      },
+      {
+        "conclusion": "skipped",
+        "databaseId": 37119782074,
+        "name": "CI review comment",
+        "status": "completed"
+      },
+      {
+        "conclusion": "skipped",
+        "databaseId": 37119777475,
+        "name": "CI review comment",
+        "status": "completed"
+      },
+      {
+        "conclusion": "skipped",
+        "databaseId": 37118404359,
+        "name": "Build Skills Index",
+        "status": "completed"
+      },
+      {
+        "conclusion": "skipped",
+        "databaseId": 37118209926,
+        "name": "CI review comment",
+        "status": "completed"
+      },
+      {
+        "conclusion": "skipped",
+        "databaseId": 37118158325,
+        "name": "CI review comment",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37118152519,
+        "name": "Windows downstream release",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37118152515,
+        "name": "auto-fix lint issues & formatting",
+        "status": "completed"
+      },
+      {
+        "conclusion": "skipped",
+        "databaseId": 37118152518,
+        "name": "Deploy Site",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37118152492,
+        "name": "Docker Build, Test, and Publish",
+        "status": "completed"
+      },
+      {
+        "conclusion": "failure",
+        "databaseId": 37118152491,
+        "name": "Windows Workstation Tier-1 CI",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37118152493,
+        "name": "Nix flake check",
+        "status": "completed"
+      },
+      {
+        "conclusion": "failure",
+        "databaseId": 37118153137,
+        "name": "CI",
+        "status": "completed"
+      }
+    ],
+    "known_failures": [
+      "carry-surface generated metrics stale; regenerated in closeout",
+      "Node production audit: 8 advisories (1 low, 1 moderate, 6 high)",
+      "auxiliary strict-route contract: 9 failures; owner unchanged from D_BASE",
+      "Windows AppContainer fixture volume setup error",
+      "install-e2e workflow failure; detailed cause not investigated"
+    ]
+  },
+  "observed_at": "2026-10-03T14:28:34.560456+00:00",
+  "preservation": {
+    "primary_tracked_wip_count": 7,
+    "primary_untracked_count": 105,
+    "tracked_hashes_unchanged": true,
+    "untracked_metadata_unchanged": true
+  },
+  "s06_subwork_receipt": "s06-interrupted-work.json"
 }

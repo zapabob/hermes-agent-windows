@@ -1,0 +1,97 @@
+{
+  "observed_at": "2026-10-03T14:28:34.560456+00:00",
+  "status": "LOCAL_WIP_NOT_FAMILY_ACCEPTED_NOT_PUBLISHED",
+  "local_root": "H:\\hermes-worktrees\\p0-p1-local-20261003",
+  "base": "989b0709c3f0ae6ff4493ebd24e4fa82bbbdb9ac",
+  "source_bound_receipts": {
+    "plugin-update-focused/green-current-tests": {
+      "exit_code": 0,
+      "recorded_source_unchanged": true,
+      "matches_current_files": true,
+      "summary": "32 passed in 4.70s",
+      "sha256": {
+        "hermes_cli/plugins_cmd.py": "2263d9acec818903e05b7aa5154b93544abe33b743225546091ab26bc45561ba",
+        "hermes_cli/_subprocess_compat.py": "faafc936c4d9ff2ec58b1e75be9cf3d0c6cc7c3d39f68c252123d9662c553766",
+        "tests/hermes_cli/test_plugin_update_git_boundary.py": "435b74ecebddc5e31ecc5f99dd62372ac580df4f1218a7d4c96b1d305fcfdefd",
+        "tests/hermes_cli/test_plugins_cmd.py": "ea9dbd2944cf6ff9c49badfdd9cbde4ca3b19eec5458f4bd8124b94018e7591e",
+        "tests/hermes_cli/test_plugin_install_ref.py": "35368f371c7fd0a94e7c80dc6bf6b33fafdb3d9a83218e4df2dbe9acbc9e2501"
+      }
+    },
+    "updater-normal-native-final-v2": {
+      "exit_code": 0,
+      "recorded_source_unchanged": true,
+      "matches_current_files": true,
+      "summary": "36 passed in 128.71s (0:02:08)",
+      "sha256": {
+        "hermes_cli/update_cmd.py": "9999383eb48a58de45a0f1bfef5c051f615ae4b09d73190d651d67804d918966",
+        "hermes_cli/_subprocess_compat.py": "faafc936c4d9ff2ec58b1e75be9cf3d0c6cc7c3d39f68c252123d9662c553766",
+        "tests/hermes_cli/test_update_normal_git_policy.py": "693b09e1e234ff770717fc794745d2e4d05a6cf286830a97686dd2e6638851ba",
+        "tmp/probes/run_s06_updater_normal.py": "33ed3bb0f1de584959a6fd362eb90a3698a94f30918a2cefe0327dfe4f46521e",
+        "tests/hermes_cli/test_repo_git_execution_policy.py": "0d82182d45fb7fd0538d3f30e00bfcc0800d2c7366c18e3853f32e1cdae9d6c0"
+      }
+    },
+    "updater-normal-existing-exact-final-v2": {
+      "exit_code": 0,
+      "recorded_source_unchanged": true,
+      "matches_current_files": true,
+      "summary": "18 passed in 54.64s",
+      "sha256": {
+        "hermes_cli/update_cmd.py": "9999383eb48a58de45a0f1bfef5c051f615ae4b09d73190d651d67804d918966",
+        "hermes_cli/_subprocess_compat.py": "faafc936c4d9ff2ec58b1e75be9cf3d0c6cc7c3d39f68c252123d9662c553766",
+        "tests/hermes_cli/test_update_normal_git_policy.py": "693b09e1e234ff770717fc794745d2e4d05a6cf286830a97686dd2e6638851ba",
+        "tmp/probes/run_s06_updater_normal.py": "33ed3bb0f1de584959a6fd362eb90a3698a94f30918a2cefe0327dfe4f46521e",
+        "tests/hermes_cli/test_update_parked_branch_guard.py": "caf50dabfce6b3ec706afcaec5363b7eba714ed59093d5ed06d439d7b3afc4c9",
+        "tests/hermes_cli/test_update_autostash.py": "b9e55614d2909e084c46271358958a646871bd53f19e7d2cc0099fd00d3eebf2",
+        "tests/hermes_cli/test_update_yes_flag.py": "84e675185c560fea4dfdab092bba3d5a45ff7f74849df065dc03a75d47b30be5"
+      }
+    },
+    "updater-normal-existing-eol-final-v2": {
+      "exit_code": 1,
+      "recorded_source_unchanged": true,
+      "matches_current_files": true,
+      "summary": "1 failed, 7 passed, 1 skipped in 48.79s",
+      "sha256": {
+        "hermes_cli/update_cmd.py": "9999383eb48a58de45a0f1bfef5c051f615ae4b09d73190d651d67804d918966",
+        "hermes_cli/_subprocess_compat.py": "faafc936c4d9ff2ec58b1e75be9cf3d0c6cc7c3d39f68c252123d9662c553766",
+        "tests/hermes_cli/test_update_normal_git_policy.py": "693b09e1e234ff770717fc794745d2e4d05a6cf286830a97686dd2e6638851ba",
+        "tmp/probes/run_s06_updater_normal.py": "33ed3bb0f1de584959a6fd362eb90a3698a94f30918a2cefe0327dfe4f46521e",
+        "tests/hermes_cli/test_update_eol_churn.py": "25314adbcef8091f0af2c1750eeae766fdd0f5d037986fbd8ebf21070aa00ead"
+      }
+    },
+    "pf": {
+      "exit_code": 1,
+      "recorded_source_unchanged": true,
+      "matches_current_files": true,
+      "summary": "2 failed, 97 passed, 1 skipped in 154.46s (0:02:34)",
+      "sha256": {
+        "hermes_cli/plugins_cmd.py": "2263d9acec818903e05b7aa5154b93544abe33b743225546091ab26bc45561ba",
+        "hermes_cli/update_cmd.py": "9999383eb48a58de45a0f1bfef5c051f615ae4b09d73190d651d67804d918966",
+        "hermes_cli/_subprocess_compat.py": "faafc936c4d9ff2ec58b1e75be9cf3d0c6cc7c3d39f68c252123d9662c553766",
+        "tests/hermes_cli/test_plugin_install_ref.py": "35368f371c7fd0a94e7c80dc6bf6b33fafdb3d9a83218e4df2dbe9acbc9e2501",
+        "tests/hermes_cli/test_plugin_update_git_boundary.py": "435b74ecebddc5e31ecc5f99dd62372ac580df4f1218a7d4c96b1d305fcfdefd",
+        "tests/hermes_cli/test_plugins_cmd.py": "ea9dbd2944cf6ff9c49badfdd9cbde4ca3b19eec5458f4bd8124b94018e7591e"
+      }
+    }
+  },
+  "fixture_self_checks": {
+    "passed": 9,
+    "failed": 0,
+    "native_e2e": false
+  },
+  "snapshot": {
+    "patch": "H:\\hermes-worktrees\\selective-publication-20261003\\.codegraph\\delivery\\s06-wip.patch",
+    "patch_sha256": "bfe3756689f02eb02e421636e38daa5b9d3302cee7c8cce1f9522e52fb0ebeaf",
+    "untracked_archive": "H:\\hermes-worktrees\\selective-publication-20261003\\.codegraph\\delivery\\s06-wip-untracked.zip",
+    "archive_sha256": "fb8610e600de4bcc3af9fb564db64169ddb9a6eaf6500d80db76361d64459511",
+    "manifest": "H:\\hermes-worktrees\\selective-publication-20261003\\.codegraph\\delivery\\s06-wip-manifest.json",
+    "file_count": 1516
+  },
+  "pending_gates": [
+    "updater EOL owner regression",
+    "full native Desktop Git acceptance",
+    "minimum five current-source semantic mutations",
+    "fresh CodeGraph source binding",
+    "independent family review",
+    "family commit"
+  ]
+}
