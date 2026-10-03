@@ -48,7 +48,7 @@ import {
   toggleReviewTreeMode,
   unstageReviewFile
 } from './review'
-import { $currentCwd } from './session'
+import { $currentCwd, $selectedStoredSessionId, $workspaceCwdOwner } from './session'
 
 // requestOneShot is the only cross-module dependency that must be faked (it
 // reaches the gateway); everything else routes through window.hermesDesktop.git,
@@ -116,7 +116,89 @@ beforeEach(() => {
   $reviewRevertTarget.set(undefined)
   $reviewScopeCwd.set(null)
   $reviewScopeTarget.set('main')
+  $selectedStoredSessionId.set(null)
+  $workspaceCwdOwner.set(null)
   $currentCwd.set('/repo')
+})
+
+describe('selected conversation repository authority', () => {
+  it('refuses writes while the remembered cwd belongs to another conversation', async () => {
+    const review = stubReview()
+    $selectedStoredSessionId.set('conversation-a')
+    $workspaceCwdOwner.set('conversation-a')
+    $currentCwd.set('/repo-a')
+    $selectedStoredSessionId.set('conversation-b')
+
+    await commitChanges('message', { push: true })
+    await pushChanges()
+    await stageReviewFile('file.ts')
+    await unstageReviewFile('file.ts')
+    await revertReviewFile('file.ts')
+    await createOrOpenPr()
+
+    for (const name of ['commit', 'push', 'stage', 'unstage', 'revert', 'createPr']) {
+      expect(review[name]).not.toHaveBeenCalled()
+    }
+  })
+
+  it('commits to the selected conversation repository after its cwd is resolved', async () => {
+    const review = stubReview()
+    $selectedStoredSessionId.set('conversation-b')
+    $currentCwd.set('/repo-b')
+    $workspaceCwdOwner.set('conversation-b')
+
+    await commitChanges('message', { push: true })
+
+    expect(review.commit).toHaveBeenCalledWith('/repo-b', 'message', true)
+  })
+
+  it('preserves an explicitly selected tile repository during main conversation changes', async () => {
+    const review = stubReview()
+    openReview('/tile-repo', 'tile:one')
+    $selectedStoredSessionId.set('unresolved-main')
+    await commitChanges('tile message')
+    expect(review.commit).toHaveBeenCalledWith('/tile-repo', 'tile message', false)
+  })
+
+  it('does not retarget a tile with an unresolved cwd to the main repository', async () => {
+    const review = stubReview()
+    openReview(null, 'tile:one')
+    await commitChanges('message')
+    expect(review.commit).not.toHaveBeenCalled()
+  })
+
+  it('clears stale files and pending revert when conversation authority changes', () => {
+    stubReview()
+    $reviewOpen.set(true)
+    $reviewFiles.set([file('old.ts')])
+    requestRevert('old.ts')
+    $selectedStoredSessionId.set('conversation-b')
+    expect($reviewFiles.get()).toEqual([])
+    expect($reviewRevertTarget.get()).toBeUndefined()
+  })
+
+  it('drops a commit message generated for a previous repository', async () => {
+    let resolve!: (value: string) => void
+    requestOneShot.mockReturnValueOnce(
+      new Promise<string>(done => {
+        resolve = done
+      })
+    )
+    stubReview()
+    const pending = generateCommitMessage()
+    await Promise.resolve()
+    $currentCwd.set('/repo-b')
+    resolve('message for repo-a')
+    expect(await pending).toBe('')
+  })
+
+  it('clears a previous repository PR before the new probe completes', () => {
+    stubReview({ shipInfo: vi.fn(() => new Promise(() => {})) })
+    $reviewOpen.set(true)
+    $reviewShipInfo.set({ ghReady: true, pr: { url: 'https://example.test/old' } } as HermesReviewShipInfo)
+    $currentCwd.set('/repo-b')
+    expect($reviewShipInfo.get().pr).toBeNull()
+  })
 })
 
 afterEach(() => {

@@ -19,6 +19,7 @@ import { $panesFlipped } from '@/store/layout'
 import { notifyError } from '@/store/notifications'
 import {
   $currentCwd,
+  $reviewContextVersion,
   $reviewDiff,
   $reviewDiffLoading,
   $reviewFiles,
@@ -27,6 +28,7 @@ import {
   $reviewLoading,
   $reviewRevertTarget,
   $reviewScopeCwd,
+  $reviewScopeTarget,
   $reviewSelectedPath,
   $reviewTreeMode,
   $reviewView,
@@ -38,6 +40,7 @@ import {
   refreshReview,
   refreshReviewHistory,
   requestRevert,
+  reviewRepoCwd,
   setReviewView,
   stageReviewFile,
   toggleReviewTreeMode,
@@ -77,16 +80,21 @@ export function ReviewPane() {
   const scmLoading = branchesLoading || tagsLoading || stashesLoading
   const currentCwd = useStore($currentCwd)
   const scopeCwd = useStore($reviewScopeCwd)
+  const scopeTarget = useStore($reviewScopeTarget)
+  const contextVersion = useStore($reviewContextVersion)
 
   // Worktree switcher
   const [worktrees, setWorktrees] = useState<Array<{ path: string; branch: string }>>([])
   const [worktreesLoading, setWorktreesLoading] = useState(false)
 
   useEffect(() => {
-    const cwd = scopeCwd?.trim() || currentCwd?.trim()
+    const cwd = reviewRepoCwd()
+    let cancelled = false
+    setWorktrees([])
 
     if (!cwd || !desktopGit()?.worktreeList) {
       setWorktrees([])
+      setWorktreesLoading(false)
 
       return
     }
@@ -95,6 +103,10 @@ export function ReviewPane() {
     desktopGit()!
       .worktreeList(cwd)
       .then(wts => {
+        if (cancelled) {
+          return
+        }
+
         // Detached worktrees have no branch name and cannot be selected as a
         // branch-backed repository scope. Keep them out of the switcher while
         // retaining the actual worktree list for callers that need it.
@@ -106,10 +118,18 @@ export function ReviewPane() {
         setWorktreesLoading(false)
       })
       .catch(() => {
+        if (cancelled) {
+          return
+        }
+
         setWorktrees([])
         setWorktreesLoading(false)
       })
-  }, [scopeCwd, currentCwd])
+
+    return () => {
+      cancelled = true
+    }
+  }, [scopeCwd, currentCwd, contextVersion])
 
   const selectedFile = files.find(file => file.path === selectedPath)
   const hasFiles = files.length > 0
@@ -168,7 +188,7 @@ export function ReviewPane() {
           <div className="ml-2 mr-1 flex min-w-0 flex-1">
             <Tip label="Switch repository / worktree">
               <Select
-                onValueChange={path => (path ? openReview(path) : openReview(null))}
+                onValueChange={path => (path ? openReview(path, scopeTarget) : openReview(null))}
                 value={isScoped ? scopeCwd || '' : currentCwd || ''}
               >
                 <SelectTrigger className="w-full min-w-[160px] max-w-[280px]">

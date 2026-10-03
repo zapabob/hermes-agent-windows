@@ -1,5 +1,5 @@
 import { useStore } from '@nanostores/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { requestComposerSubmit } from '@/app/chat/composer/focus'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,7 @@ import { notifyError } from '@/store/notifications'
 import {
   $reviewCommitDefault,
   $reviewCommitMsgBusy,
+  $reviewContextVersion,
   $reviewFiles,
   $reviewScopeTarget,
   $reviewShipBusy,
@@ -22,7 +23,8 @@ import {
   type CommitAction,
   commitChanges,
   createOrOpenPr,
-  generateCommitMessage
+  generateCommitMessage,
+  reviewRepoCwd
 } from '@/store/review'
 
 // One size for every glyph in the bar so the row reads as a set of peers.
@@ -41,6 +43,8 @@ export function ReviewShipBar() {
   const generating = useStore($reviewCommitMsgBusy)
   const commitDefault = useStore($reviewCommitDefault)
   const [message, setMessage] = useState('')
+  const contextVersion = useStore($reviewContextVersion)
+  useEffect(() => setMessage(''), [contextVersion])
   const prLabel = ship.pr?.url ? c.openPr : c.createPr
 
   const hasFiles = files.length > 0
@@ -132,7 +136,9 @@ export function ReviewShipBar() {
           className="min-w-0 flex-1 justify-center px-7 text-[0.7rem] text-muted-foreground/85 hover:text-foreground"
           disabled={!hasFiles}
           onClick={() => {
-            if (!requestComposerSubmit(c.agentShipPrompt, { target: scopeTarget })) {
+            const cwd = reviewRepoCwd()
+
+            if (!cwd || !requestComposerSubmit(`${c.agentShipPrompt}\n\nRepository: ${cwd}`, { target: scopeTarget })) {
               notifyError(new Error(c.agentShipUnavailable), c.agentShip)
             }
           }}

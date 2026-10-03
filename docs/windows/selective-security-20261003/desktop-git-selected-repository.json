@@ -1,0 +1,79 @@
+{
+  "baseline": "6fa2e73b348f4eb99e8b58e0d2a6fd7ccbff2581",
+  "source_sha256": {
+    "apps/desktop/src/store/review.ts": "e6dee223fd2ec1e5c571656d4aae217ac9ed05509c18b0f0b08c14e7537a595f",
+    "apps/desktop/src/store/review.test.ts": "a7388a9ee5411de2fff5a42fc1c1e5b4600bdc9bb6a9c4d157f79534278823a6",
+    "apps/desktop/src/store/scm-refs.ts": "85b8072c7cab8e362bc1b430c26168a6bd6802bacddae00dffde5bc1b36d150b",
+    "apps/desktop/src/app/right-sidebar/review/index.tsx": "4dae09fb2275cb37fe45b999b615dadfd0541c2534cc7abd06d34ae9a36f23f6",
+    "apps/desktop/src/app/right-sidebar/review/ship-bar.tsx": "50c7e6e5036ff508b9affb4e7bbb683f75fb7d6fc010b5ca65b59cf4333ceaa3"
+  },
+  "red": {
+    "passed": 46,
+    "failed": 3,
+    "reason": "Wrong remembered repository, unresolved tile fallback, stale files/revert after conversation switch"
+  },
+  "green": {
+    "passed": 87,
+    "failed": 0,
+    "skipped": 0,
+    "files": 4
+  },
+  "native_owner_regression": {
+    "passed": 12,
+    "failed": 0,
+    "skipped": 0,
+    "files": 2,
+    "scope": "Real temporary Windows Git repositories in existing Electron owner suite; not live Desktop click E2E"
+  },
+  "mutation": {
+    "source_restored": true,
+    "source_sha256": "e6dee223fd2ec1e5c571656d4aae217ac9ed05509c18b0f0b08c14e7537a595f",
+    "mutants": [
+      {
+        "id": "M01-ignore-conversation-owner",
+        "exit_code": 1,
+        "killed": true,
+        "failed_tests": [
+          "selected conversation repository authority refuses writes while the remembered cwd belongs to another conversation"
+        ]
+      },
+      {
+        "id": "M02-unresolved-tile-fallback",
+        "exit_code": 1,
+        "killed": true,
+        "failed_tests": [
+          "selected conversation repository authority does not retarget a tile with an unresolved cwd to the main repository"
+        ]
+      }
+    ]
+  },
+  "codegraph": {
+    "version": "1.6.0",
+    "root": "H:\\hermes-worktrees\\selective-publication-20261003",
+    "fresh_sync_exit": 0,
+    "affected_exit": 0,
+    "owners": [
+      "reviewRepoCwd",
+      "commitChanges",
+      "scmCtx"
+    ],
+    "affected_tests": 583
+  },
+  "independent_review": {
+    "reviewer": "01a1015e-9a20-7dd2-afc7-7c9db46c3a34",
+    "result": "APPROVED",
+    "resolved_findings": [
+      "Skill guide must be bundled under references"
+    ]
+  },
+  "typecheck": {
+    "baseline_exit": 2,
+    "candidate_exit": 2,
+    "baseline_errors": 122,
+    "candidate_errors": 122,
+    "diagnostic_lines_identical": true,
+    "reason": "Existing duplicate React type identities; not counted as PASS"
+  },
+  "guide_sha256": "c341653368240f838cda78195804bbf3b7a4b538313143e4ebd3e9d94359e2c6",
+  "primary_wip_overlap": []
+}

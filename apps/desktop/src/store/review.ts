@@ -12,7 +12,14 @@ import { Codecs, persistentAtom } from '@/lib/persisted'
 
 import { refreshRepoStatus, repoStatusForCwd } from './coding-status'
 import { stampSessionPrBranch } from './pull-requests'
-import { $busy, $currentCwd, $selectedStoredSessionId, $sessions } from './session'
+import {
+  $busy,
+  $currentCwd,
+  $selectedStoredSessionId,
+  $sessions,
+  $workspaceCwdOwner,
+  workspaceCwdBelongsToSelectedSession
+} from './session'
 export { $currentCwd }
 import { $workspaceChangeTick } from './workspace-events'
 
@@ -114,10 +121,26 @@ export const $reviewScopeCwd = atom<null | string>(null)
 // surface, but its "let the agent ship it" action must return to the session
 // whose worktree the user is reviewing, not broadcast to every mounted tile.
 export const $reviewScopeTarget = atom('main')
+// Invalidates repository-bound drafts and async work, including a switch back
+// to the same path through a different conversation.
+export const $reviewContextVersion = atom(0)
 
 /** The repo the pane is reading right now: its pinned scope, else the active
  *  session's cwd. Exported for pane helpers that join repo-relative paths. */
-export const reviewRepoCwd = (): null | string => $reviewScopeCwd.get()?.trim() || $currentCwd.get()?.trim() || null
+export const reviewRepoCwd = (): null | string => {
+  const scope = $reviewScopeCwd.get()?.trim()
+
+  if (scope) {
+    return scope
+  }
+
+  // An unresolved tile must never inherit the main conversation's repository.
+  if ($reviewScopeTarget.get() !== 'main' || !workspaceCwdBelongsToSelectedSession()) {
+    return null
+  }
+
+  return $currentCwd.get()?.trim() || null
+}
 
 const repoCwd = reviewRepoCwd
 
@@ -512,17 +535,35 @@ async function afterMutation(): Promise<void> {
 }
 
 export async function stageReviewFile(path: null | string): Promise<void> {
-  await desktopGit()?.review?.stage(repoCwd() ?? '', path)
+  const ctx = reviewCtx()
+
+  if (!ctx) {
+    return
+  }
+
+  await ctx.review.stage(ctx.cwd, path)
   await afterMutation()
 }
 
 export async function unstageReviewFile(path: null | string): Promise<void> {
-  await desktopGit()?.review?.unstage(repoCwd() ?? '', path)
+  const ctx = reviewCtx()
+
+  if (!ctx) {
+    return
+  }
+
+  await ctx.review.unstage(ctx.cwd, path)
   await afterMutation()
 }
 
 export async function revertReviewFile(path: null | string): Promise<void> {
-  await desktopGit()?.review?.revert(repoCwd() ?? '', path)
+  const ctx = reviewCtx()
+
+  if (!ctx) {
+    return
+  }
+
+  await ctx.review.revert(ctx.cwd, path)
   await afterMutation()
 }
 
@@ -652,6 +693,8 @@ export async function createOrOpenPr(): Promise<void> {
   }
 
   const existing = $reviewShipInfo.get().pr
+  const sessionId = $reviewScopeTarget.get() === 'main' ? $selectedStoredSessionId.get() : null
+  const session = $sessions.get().find(s => s.id === sessionId)
 
   if (existing?.url) {
     void window.hermesDesktop?.openExternal?.(existing.url)
@@ -670,7 +713,6 @@ export async function createOrOpenPr(): Promise<void> {
     // moved since, so bind the conversation to the branch the PR actually came
     // from — otherwise a session that began on trunk badges whatever else lives
     // on trunk, or nothing.
-    const session = $sessions.get().find(s => s.id === $selectedStoredSessionId.get())
     const branch = repoStatusForCwd(ctx.cwd).get()?.branch
 
     if (session?.git_repo_root && branch) {
@@ -712,6 +754,13 @@ $busy.subscribe(busy => {
 // straight to its loading skeleton instead of blipping the previous repo's
 // diff into the new one.
 function onReviewRepoMoved(): void {
+  $reviewContextVersion.set($reviewContextVersion.get() + 1)
+  cancelCommitMessage()
+  cancelRevert()
+  shipInfoSeq += 1
+  shipInfoLastCheckedAt = 0
+  $reviewShipInfo.set({ ghReady: false, pr: null })
+
   if ($reviewOpen.get()) {
     clearReviewSelection()
     clearReviewCommitSelection()
@@ -729,6 +778,16 @@ $currentCwd.subscribe(() => {
     onReviewRepoMoved()
   }
 })
+
+for (const authority of [$selectedStoredSessionId, $workspaceCwdOwner]) {
+  authority.subscribe(() => {
+    if (!$reviewScopeCwd.get()) {
+      onReviewRepoMoved()
+    }
+  })
+}
+
+$reviewScopeTarget.listen(() => onReviewRepoMoved())
 
 let prevScopeCwd = $reviewScopeCwd.get()
 

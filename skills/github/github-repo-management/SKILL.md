@@ -15,6 +15,16 @@ metadata:
 
 Create, clone, fork, configure, and manage GitHub repositories. Each section shows `gh` first, then the `git` + `curl` fallback.
 
+## Hermes Desktop Git operations
+
+For Desktop Git CRUD, read `references/desktop-git-agent-operations.md`
+with `read_file` before acting. Use `terminal` in the session's authorized
+repository, preserve its approval policy, stage explicit files and verify
+Git exit codes and resulting refs. Use `focus_pane` with `pane="review"`
+to show the result in Desktop. The guide covers branches, tags, worktrees,
+staging, stashes, commits and publication. Do not extract dashboard tokens,
+invoke renderer IPC directly, or substitute force operations after failure.
+
 ## Prerequisites
 
 - Authenticated with GitHub (see `github-auth` skill)

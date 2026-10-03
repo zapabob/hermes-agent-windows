@@ -4,7 +4,7 @@ import type { HermesGitBranch, HermesGitStash, HermesGitTag } from '@/global'
 import { desktopGit } from '@/lib/desktop-git'
 
 import { refreshRepoStatus } from './coding-status'
-import { $reviewOpen, $reviewScopeCwd, refreshReviewHistory, reviewRepoCwd } from './review'
+import { $reviewContextVersion, $reviewOpen, $reviewScopeCwd, refreshReviewHistory, reviewRepoCwd } from './review'
 import { $busy, $currentCwd } from './session'
 import { $workspaceChangeTick } from './workspace-events'
 
@@ -327,6 +327,8 @@ function onScmRepoMoved(): void {
     scheduleScmRefresh()
   }
 }
+
+$reviewContextVersion.listen(onScmRepoMoved)
 
 $currentCwd.subscribe(() => {
   if (!$reviewScopeCwd.get()) {
