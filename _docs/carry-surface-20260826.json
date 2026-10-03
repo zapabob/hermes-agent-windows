@@ -20,12 +20,12 @@
   "schema_version": 1,
   "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
   "summary": {
-    "all_fork_specific_loc": 2775133,
-    "carry_surface_files": 5110,
-    "cwc": 86595012,
-    "fork_owned_loc": 1218653,
-    "upstream_owned_fork_loc": 1556480,
-    "utr": 0.560867
+    "all_fork_specific_loc": 3078201,
+    "carry_surface_files": 5116,
+    "cwc": 86691020,
+    "fork_owned_loc": 1519356,
+    "upstream_owned_fork_loc": 1558845,
+    "utr": 0.506414
   },
   "top_carry_risks": [
     {
@@ -47,10 +47,10 @@
       "upstream_frequency": 95
     },
     {
-      "added": 21576,
-      "cwc": 3859240,
+      "added": 21659,
+      "cwc": 3872022,
       "deleted": 3484,
-      "patch_size": 25060,
+      "patch_size": 25143,
       "path": "cli.py",
       "semantic_coupling": 2,
       "upstream_frequency": 77
@@ -65,19 +65,19 @@
       "upstream_frequency": 96
     },
     {
-      "added": 15143,
-      "cwc": 3637312,
+      "added": 15151,
+      "cwc": 3639104,
       "deleted": 1095,
-      "patch_size": 16238,
+      "patch_size": 16246,
       "path": "hermes_state.py",
       "semantic_coupling": 2,
       "upstream_frequency": 112
     },
     {
-      "added": 13775,
-      "cwc": 3501810,
+      "added": 13788,
+      "cwc": 3504657,
       "deleted": 2215,
-      "patch_size": 15990,
+      "patch_size": 16003,
       "path": "hermes_cli/main.py",
       "semantic_coupling": 3,
       "upstream_frequency": 73
@@ -119,10 +119,10 @@
       "upstream_frequency": 82
     },
     {
-      "added": 9275,
-      "cwc": 1519368,
+      "added": 9280,
+      "cwc": 1520108,
       "deleted": 991,
-      "patch_size": 10266,
+      "patch_size": 10271,
       "path": "run_agent.py",
       "semantic_coupling": 2,
       "upstream_frequency": 74
@@ -155,19 +155,19 @@
       "upstream_frequency": 73
     },
     {
-      "added": 7063,
-      "cwc": 1098944,
+      "added": 7066,
+      "cwc": 1099280,
       "deleted": 2749,
-      "patch_size": 9812,
+      "patch_size": 9815,
       "path": "cron/scheduler.py",
       "semantic_coupling": 2,
       "upstream_frequency": 56
     },
     {
-      "added": 6452,
-      "cwc": 1034748,
-      "deleted": 1270,
-      "patch_size": 7722,
+      "added": 6542,
+      "cwc": 1048550,
+      "deleted": 1283,
+      "patch_size": 7825,
       "path": "hermes_cli/models.py",
       "semantic_coupling": 2,
       "upstream_frequency": 67
@@ -227,10 +227,10 @@
       "upstream_frequency": 30
     },
     {
-      "added": 4599,
-      "cwc": 737424,
-      "deleted": 2229,
-      "patch_size": 6828,
+      "added": 4710,
+      "cwc": 751680,
+      "deleted": 2250,
+      "patch_size": 6960,
       "path": "hermes_cli/config.py",
       "semantic_coupling": 2,
       "upstream_frequency": 54
@@ -245,10 +245,10 @@
       "upstream_frequency": 30
     },
     {
-      "added": 4121,
-      "cwc": 691680,
+      "added": 4125,
+      "cwc": 692120,
       "deleted": 2167,
-      "patch_size": 6288,
+      "patch_size": 6292,
       "path": "agent/agent_runtime_helpers.py",
       "semantic_coupling": 2,
       "upstream_frequency": 55
