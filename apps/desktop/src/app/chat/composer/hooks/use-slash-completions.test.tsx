@@ -79,11 +79,15 @@ afterEach(() => {
 
 describe('useSlashCompletions', () => {
   it('prepares registry metadata for a cold typed search without a bare-slash fetch', async () => {
-    const request = vi.fn().mockImplementation((method: string) => Promise.resolve(
-      method === 'commands.catalog'
-        ? { ...CATALOG, commands: { '/rollback': { argument_mode: 'text' } } }
-        : { items: [{ text: '/rollback', display: '/rollback', meta: 'Restore' }] }
-    ))
+    const request = vi
+      .fn()
+      .mockImplementation((method: string) =>
+        Promise.resolve(
+          method === 'commands.catalog'
+            ? { ...CATALOG, commands: { '/rollback': { argument_mode: 'text' } } }
+            : { items: [{ text: '/rollback', display: '/rollback', meta: 'Restore' }] }
+        )
+      )
 
     const api = harness({ request } as unknown as HermesGateway)
     expect(commandsOf(await completions(api, 'roll'))).toContain('/rollback')

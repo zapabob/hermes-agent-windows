@@ -2,23 +2,43 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 import { $activeGatewayProfile } from '@/store/profile'
 
-import { canonicalDesktopSlashCommand, type CommandsCatalogLike, desktopSlashCommandArgumentMode,
-  desktopSlashUnavailableMessage, filterDesktopCommandsCatalog, isDesktopSlashCommand,
-  isDesktopSlashExtensionCommand, isDesktopSlashSuggestion, resolveDesktopCommand } from './desktop-slash-commands'
+import {
+  canonicalDesktopSlashCommand,
+  type CommandsCatalogLike,
+  desktopSlashCommandArgumentMode,
+  desktopSlashUnavailableMessage,
+  filterDesktopCommandsCatalog,
+  isDesktopSlashCommand,
+  isDesktopSlashExtensionCommand,
+  isDesktopSlashSuggestion,
+  resolveDesktopCommand
+} from './desktop-slash-commands'
 import { queryClient } from './query-client'
 import { invalidateSlashCompletions } from './slash-completion-cache'
 
-const fixture = (): CommandsCatalogLike => ({
-  canon: { '/f04-alias': '/f04-hidden' },
-  pairs: ['/f04-offered', '/f04-hidden', '/f04-terminal', '/f04-messaging', '/f04-advanced', '/f04-settings', '/f04-voice'].map(n => [n, n]),
-  commands: {
-    '/f04-offered': { argument_mode: 'text', desktop: null },
-    '/f04-hidden': { argument_mode: 'mixed', desktop: 'hidden' },
-    '/f04-alias': { argument_mode: 'mixed', desktop: 'hidden' },
-    '/f04-terminal': { desktop: 'terminal' }, '/f04-messaging': { desktop: 'messaging' },
-    '/f04-advanced': { desktop: 'advanced' }, '/f04-settings': { desktop: 'settings' }, '/f04-voice': { desktop: 'composer-voice' }
-  }
-} as CommandsCatalogLike)
+const fixture = (): CommandsCatalogLike =>
+  ({
+    canon: { '/f04-alias': '/f04-hidden' },
+    pairs: [
+      '/f04-offered',
+      '/f04-hidden',
+      '/f04-terminal',
+      '/f04-messaging',
+      '/f04-advanced',
+      '/f04-settings',
+      '/f04-voice'
+    ].map(n => [n, n]),
+    commands: {
+      '/f04-offered': { argument_mode: 'text', desktop: null },
+      '/f04-hidden': { argument_mode: 'mixed', desktop: 'hidden' },
+      '/f04-alias': { argument_mode: 'mixed', desktop: 'hidden' },
+      '/f04-terminal': { desktop: 'terminal' },
+      '/f04-messaging': { desktop: 'messaging' },
+      '/f04-advanced': { desktop: 'advanced' },
+      '/f04-settings': { desktop: 'settings' },
+      '/f04-voice': { desktop: 'composer-voice' }
+    }
+  }) as CommandsCatalogLike
 
 const warm = (catalog = fixture()) => queryClient.setQueryData(['slash-completions', 'catalog'], catalog)
 afterEach(() => queryClient.clear())
@@ -42,14 +62,17 @@ describe('F04b availability', () => {
     expect(desktopSlashUnavailableMessage('/f04-hidden')).toBeNull()
     expect(desktopSlashCommandArgumentMode('/f04-hidden')).toBe('mixed')
   })
-  it.each(['terminal', 'messaging', 'advanced', 'settings', 'composer-voice'] as const)('keeps %s unavailable with the existing reason', reason => {
-    warm()
-    const command = reason === 'composer-voice' ? '/f04-voice' : `/f04-${reason}`
-    expect(resolveDesktopCommand(command)?.surface).toEqual({ kind: 'unavailable', reason })
-    expect(isDesktopSlashCommand(command)).toBe(false)
-    expect(isDesktopSlashSuggestion(command)).toBe(false)
-    expect(desktopSlashUnavailableMessage(command)).toBeTruthy()
-  })
+  it.each(['terminal', 'messaging', 'advanced', 'settings', 'composer-voice'] as const)(
+    'keeps %s unavailable with the existing reason',
+    reason => {
+      warm()
+      const command = reason === 'composer-voice' ? '/f04-voice' : `/f04-${reason}`
+      expect(resolveDesktopCommand(command)?.surface).toEqual({ kind: 'unavailable', reason })
+      expect(isDesktopSlashCommand(command)).toBe(false)
+      expect(isDesktopSlashSuggestion(command)).toBe(false)
+      expect(desktopSlashUnavailableMessage(command)).toBeTruthy()
+    }
+  )
   it('uses registry alias identity and preserves its hidden status', () => {
     warm()
     expect(canonicalDesktopSlashCommand(' /F04-ALIAS arg')).toBe('/f04-hidden')
@@ -57,7 +80,14 @@ describe('F04b availability', () => {
     expect(isDesktopSlashCommand('/f04-alias')).toBe(true)
   })
   it('retains local action picker RPC and unavailable priorities over conflicting metadata', () => {
-    warm({ commands: Object.fromEntries(['/model', '/resume', '/new', '/save', '/approve', '/reasoning'].map(n => [n, { desktop: n === '/approve' || n === '/reasoning' ? null : 'terminal', argument_mode: 'text' }])) } as CommandsCatalogLike)
+    warm({
+      commands: Object.fromEntries(
+        ['/model', '/resume', '/new', '/save', '/approve', '/reasoning'].map(n => [
+          n,
+          { desktop: n === '/approve' || n === '/reasoning' ? null : 'terminal', argument_mode: 'text' }
+        ])
+      )
+    } as CommandsCatalogLike)
     expect(resolveDesktopCommand('/model')?.surface).toEqual({ kind: 'picker', picker: 'model' })
     expect(resolveDesktopCommand('/resume')?.surface).toEqual({ kind: 'picker', picker: 'session' })
     expect(resolveDesktopCommand('/new')?.surface).toEqual({ kind: 'action', action: 'new' })
