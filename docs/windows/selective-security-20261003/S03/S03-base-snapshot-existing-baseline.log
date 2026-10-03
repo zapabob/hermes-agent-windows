@@ -1,0 +1,59 @@
+FFFF                                                                     [100%]
+================================== FAILURES ===================================
+_ TestAtomicSnapshotConcurrencyBehavioral.test_concurrent_writes_never_tear_the_snapshot _
+tests\tools\test_base_environment.py:220: in test_concurrent_writes_never_tear_the_snapshot
+    self._run(f"export -p > {_q(snap)}")  # seed a valid snapshot
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\tools\test_base_environment.py:191: in _run
+    return subprocess.run(["/bin/bash", "-c", script], capture_output=True, text=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:548: in run
+    with Popen(*popenargs, **kwargs) as process:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1026: in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1538: in _execute_child
+    hp, ht, pid, tid = _winapi.CreateProcess(executable, args,
+E   FileNotFoundError: [WinError 2] �w�肳�ꂽ�t�@�C����������܂���B
+_ TestAtomicSnapshotConcurrencyBehavioral.test_failed_export_does_not_destroy_good_snapshot _
+tests\tools\test_base_environment.py:240: in test_failed_export_does_not_destroy_good_snapshot
+    self._run(f"echo 'export GOOD=1' > {_q(snap)}")  # seed good snapshot
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\tools\test_base_environment.py:191: in _run
+    return subprocess.run(["/bin/bash", "-c", script], capture_output=True, text=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:548: in run
+    with Popen(*popenargs, **kwargs) as process:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1026: in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1538: in _execute_child
+    hp, ht, pid, tid = _winapi.CreateProcess(executable, args,
+E   FileNotFoundError: [WinError 2] �w�肳�ꂽ�t�@�C����������܂���B
+_________ TestSnapshotFileModes.test_snapshot_and_cwd_files_are_0600 __________
+tests\tools\test_base_environment.py:296: in test_snapshot_and_cwd_files_are_0600
+    env.execute(f"touch {user_file}")
+tools\environments\base.py:1522: in execute
+    proc = self._run_bash(
+tests\tools\test_base_environment.py:276: in _run_bash
+    proc = subprocess.Popen(
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1026: in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1538: in _execute_child
+    hp, ht, pid, tid = _winapi.CreateProcess(executable, args,
+E   FileNotFoundError: [WinError 2] �w�肳�ꂽ�t�@�C����������܂���B
+------------------------------ Captured log call ------------------------------
+WARNING  tools.environments.base:base.py:880 init_session failed (session=9e91175bdbb4): [WinError 2] \u6307\u5b9a\u3055\u308c\u305f\u30d5\u30a1\u30a4\u30eb\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002; non-login probe: [WinError 2] \u6307\u5b9a\u3055\u308c\u305f\u30d5\u30a1\u30a4\u30eb\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002 \u2014 falling back to bash -l per command
+_________ TestResolveSafeCwd.test_returns_root_when_only_root_exists __________
+tests\tools\test_local_env_cwd_recovery.py:37: in test_returns_root_when_only_root_exists
+    assert _resolve_safe_cwd("/no/such/deep/dir") == sep
+E   AssertionError: assert 'H:\\hermes-w...eline-runtime' == '\\'
+E
+E     - \
+E     + H:\hermes-worktrees\p0-p1-local-20261003\tmp\s03-base-baseline-runtime
+=========================== short test summary info ===========================
+FAILED tests/tools/test_base_environment.py::TestAtomicSnapshotConcurrencyBehavioral::test_concurrent_writes_never_tear_the_snapshot
+FAILED tests/tools/test_base_environment.py::TestAtomicSnapshotConcurrencyBehavioral::test_failed_export_does_not_destroy_good_snapshot
+FAILED tests/tools/test_base_environment.py::TestSnapshotFileModes::test_snapshot_and_cwd_files_are_0600
+FAILED tests/tools/test_local_env_cwd_recovery.py::TestResolveSafeCwd::test_returns_root_when_only_root_exists
+4 failed in 2.39s

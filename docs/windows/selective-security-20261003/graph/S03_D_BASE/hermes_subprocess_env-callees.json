@@ -1,0 +1,101 @@
+{
+  "symbol": "hermes_subprocess_env",
+  "callees": [
+    {
+      "name": "items",
+      "kind": "method",
+      "filePath": "hermes_cli/nous_subscription.py",
+      "startLine": 128
+    },
+    {
+      "name": "search",
+      "kind": "method",
+      "filePath": "tests/agent/test_file_safety_credentials.py",
+      "startLine": 127
+    },
+    {
+      "name": "copy",
+      "kind": "method",
+      "filePath": "apps/desktop/src/app/chat/right-rail/preview-pane.tsx",
+      "startLine": 78
+    },
+    {
+      "name": "_plugin_terminal_env_strip_keys",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 445
+    },
+    {
+      "name": "_is_hermes_internal_secret",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 400
+    },
+    {
+      "name": "_inject_context_hermes_home",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 461
+    },
+    {
+      "name": "apply_subprocess_home_env",
+      "kind": "function",
+      "filePath": "hermes_constants.py",
+      "startLine": 1179
+    },
+    {
+      "name": "_strip_hermes_owned_pythonpath_and_runtime_markers",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 1746
+    },
+    {
+      "name": "_apply_windows_msys_bash_env_defaults",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 1459
+    },
+    {
+      "name": "_inject_session_context_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 473
+    },
+    {
+      "name": "_scrub_delegated_child_kanban_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 597
+    },
+    {
+      "name": "_HERMES_PROVIDER_ENV_BLOCKLIST",
+      "kind": "variable",
+      "filePath": "tools/environments/local.py",
+      "startLine": 372
+    },
+    {
+      "name": "_HERMES_PROVIDER_ENV_FORCE_PREFIX",
+      "kind": "variable",
+      "filePath": "tools/environments/local.py",
+      "startLine": 205
+    },
+    {
+      "name": "_ALWAYS_STRIP_KEYS",
+      "kind": "variable",
+      "filePath": "tools/environments/local.py",
+      "startLine": 620
+    },
+    {
+      "name": "_CREDENTIAL_ENV_NAME_RE",
+      "kind": "variable",
+      "filePath": "tools/environments/local.py",
+      "startLine": 709
+    },
+    {
+      "name": "_STRICT_SUBPROCESS_ENV_KEYS",
+      "kind": "variable",
+      "filePath": "tools/environments/local.py",
+      "startLine": 655
+    }
+  ]
+}

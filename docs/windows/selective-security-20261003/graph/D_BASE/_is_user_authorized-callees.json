@@ -1,0 +1,101 @@
+{
+  "symbol": "_is_user_authorized",
+  "callees": [
+    {
+      "name": "_adapter_profile_for_source",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 256
+    },
+    {
+      "name": "_adapter_authorization_is_upstream",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 261
+    },
+    {
+      "name": "_platform_gate_env",
+      "kind": "function",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 33
+    },
+    {
+      "name": "_adapter_for_source",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 163
+    },
+    {
+      "name": "_coerce_allow_set",
+      "kind": "function",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 74
+    },
+    {
+      "name": "strip",
+      "kind": "function",
+      "filePath": "apps/desktop/src/components/ui/glyph-spinner.test.tsx",
+      "startLine": 33
+    },
+    {
+      "name": "_auth_env",
+      "kind": "function",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 61
+    },
+    {
+      "name": "_pairing_store_for",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 438
+    },
+    {
+      "name": "is_approved",
+      "kind": "method",
+      "filePath": "gateway/pairing.py",
+      "startLine": 546
+    },
+    {
+      "name": "_adapter_enforces_own_access_policy",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 285
+    },
+    {
+      "name": "_adapter_group_policy",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 350
+    },
+    {
+      "name": "_adapter_group_has_sender_allowlist",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 385
+    },
+    {
+      "name": "_adapter_dm_policy",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 313
+    },
+    {
+      "name": "_authorization_adapter",
+      "kind": "method",
+      "filePath": "gateway/authz_mixin.py",
+      "startLine": 98
+    },
+    {
+      "name": "warning",
+      "kind": "method",
+      "filePath": "hermes_cli/plugin_dev.py",
+      "startLine": 157
+    },
+    {
+      "name": "append",
+      "kind": "method",
+      "filePath": "tests/cli/test_cli_interrupt_ack_race.py",
+      "startLine": 477
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "symbol": "_verify_sender_authentication",
+  "callers": [
+    {
+      "name": "_verify",
+      "kind": "method",
+      "filePath": "tests/gateway/test_email.py",
+      "startLine": 1075
+    },
+    {
+      "name": "_parse_fetched_message",
+      "kind": "method",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 971
+    },
+    {
+      "name": "test_injected_or_ambiguous_verdict_is_denied",
+      "kind": "function",
+      "filePath": "tests/gateway/test_email_auth_clauses.py",
+      "startLine": 56
+    },
+    {
+      "name": "test_legitimate_receiving_server_verdict_is_accepted",
+      "kind": "function",
+      "filePath": "tests/gateway/test_email_auth_clauses.py",
+      "startLine": 64
+    },
+    {
+      "name": "test_email_auth_clauses.py",
+      "kind": "file",
+      "filePath": "tests/gateway/test_email_auth_clauses.py",
+      "startLine": 1
+    }
+  ]
+}

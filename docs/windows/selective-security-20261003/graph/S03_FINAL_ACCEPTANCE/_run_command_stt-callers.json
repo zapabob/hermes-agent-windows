@@ -1,0 +1,29 @@
+{
+  "symbol": "_run_command_stt",
+  "callers": [
+    {
+      "name": "test_command_provider_uses_sanitized_child_env",
+      "kind": "method",
+      "filePath": "tests/tools/test_transcription_tools.py",
+      "startLine": 224
+    },
+    {
+      "name": "test_stderr_progress_extends_beyond_timeout",
+      "kind": "method",
+      "filePath": "tests/tools/test_transcription_tools.py",
+      "startLine": 1199
+    },
+    {
+      "name": "test_silent_stall_still_times_out",
+      "kind": "method",
+      "filePath": "tests/tools/test_transcription_tools.py",
+      "startLine": 1225
+    },
+    {
+      "name": "_transcribe_command_stt",
+      "kind": "function",
+      "filePath": "tools/transcription_tools.py",
+      "startLine": 869
+    }
+  ]
+}

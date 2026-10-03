@@ -1,0 +1,59 @@
+{
+  "symbol": "_run_command_stt",
+  "callees": [
+    {
+      "name": "hermes_subprocess_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 835
+    },
+    {
+      "name": "delegated_child_subprocess_env",
+      "kind": "function",
+      "filePath": "agent/delegation_context.py",
+      "startLine": 142
+    },
+    {
+      "name": "Thread",
+      "kind": "method",
+      "filePath": "tests/agent/test_refine_delivery_native.py",
+      "startLine": 75
+    },
+    {
+      "name": "monotonic",
+      "kind": "method",
+      "filePath": "tests/tools/test_voice_mode.py",
+      "startLine": 91
+    },
+    {
+      "name": "append",
+      "kind": "method",
+      "filePath": "tools/environments/base.py",
+      "startLine": 164
+    },
+    {
+      "name": "wait",
+      "kind": "method",
+      "filePath": "tests/tools/test_transcription_tools.py",
+      "startLine": 242
+    },
+    {
+      "name": "max",
+      "kind": "method",
+      "filePath": "tests/tools/test_wake_word.py",
+      "startLine": 446
+    },
+    {
+      "name": "_terminate_command_stt_process_tree",
+      "kind": "function",
+      "filePath": "tools/transcription_tools.py",
+      "startLine": 630
+    },
+    {
+      "name": "read_stream",
+      "kind": "function",
+      "filePath": "tools/transcription_tools.py",
+      "startLine": 749
+    }
+  ]
+}

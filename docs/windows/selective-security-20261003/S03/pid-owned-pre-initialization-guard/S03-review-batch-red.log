@@ -1,0 +1,562 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 1 test files (~33 tests) under ['tests\\tools\\test_child_credential_boundary.py']; running with -j 1
+[100.0% |    33/~33 | ✓ 4 | ✗21] ✗ tests\tools\test_child_credential_boundary.py (4✓ 21✗, 6.7s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_boundary.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║             assert key not in child_env(surface)
+  ║ >           assert not env_passthrough.is_env_passthrough(key)
+  ║ E           AssertionError: assert not True
+  ║ E            +  where True = <function is_env_passthrough at 0x000002565887A8E0>('CUSTOM_LATE_ADAPTER_TOKEN')
+  ║ E            +    where <function is_env_passthrough at 0x000002565887A8E0> = <module 'tools.env_passthrough' from 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tools\\env_passthrough.py'>.is_env_passthrough
+  ║
+  ║ tests\tools\test_child_credential_boundary.py:514: AssertionError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[value0-secret]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[value0-password]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[value1-secret]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[value1-password]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[0-secret]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[0-password]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[false-secret]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[false-password]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_late_oauth_provider_credential_is_filtered[terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_late_oauth_provider_credential_is_filtered[background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_late_oauth_provider_credential_is_filtered[cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_invalid_provider_profile_declaration_refuses_child[terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_invalid_provider_profile_declaration_refuses_child[background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_invalid_provider_profile_declaration_refuses_child[cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_invalid_provider_profile_declaration_refuses_child[credential-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[terminal-skill]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[terminal-config]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[background-skill]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[background-config]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[cli-skill]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[cli-config]
+  ║ 21 failed, 4 passed, 179 deselected in 4.97s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_boundary.py -q -k invalid_manifest_security_flag or late_oauth_provider or invalid_provider_profile or cached_passthrough_rechecks or registered_benign_extra
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+
+=== Summary: 1 files, 4 tests passed, 21 failed (100% complete) in 6.7s (1 workers) ===
+  Durations cached to test_durations.json (1 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   1
+  Total subprocess CPU-wall: 6.7s  (runner wall: 6.7s, parallelism: 1x)
+  P50: 6.70s  P90: 6.70s  P95: 6.70s  P99: 6.70s  Max: 6.70s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+      6.70s  tests\tools\test_child_credential_boundary.py
+
+=== Failure output ===
+
+--- tests\tools\test_child_credential_boundary.py ---
+FFFFFFFFFFFFFFFFFFFFF....                                                [100%]
+================================== FAILURES ===================================
+______ test_invalid_manifest_security_flag_refuses_child[value0-secret] _______
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-smj97gib/pytest-of-unknown/pytest-0/test_invalid_manifest_security0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025656010C50>
+flag = 'secret', value = []
+
+    @pytest.mark.parametrize("flag", ["secret", "password"])
+    @pytest.mark.parametrize("value", [[], {}, 0, "false"])
+    def test_invalid_manifest_security_flag_refuses_child(tmp_path, monkeypatch, flag, value):
+        directory = tmp_path / "plugins/platforms/test-flag"
+        directory.mkdir(parents=True)
+        (directory / "plugin.yaml").write_text(json.dumps({
+            "kind": "platform", "requires_env": [{"name": "CUSTOM_LOGIN", flag: value}],
+        }), encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("CUSTOM_LOGIN", SECRET)
+>       with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:464: Failed
+_____ test_invalid_manifest_security_flag_refuses_child[value0-password] ______
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-smj97gib/pytest-of-unknown/pytest-0/test_invalid_manifest_security1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002565604C210>
+flag = 'password', value = []
+
+    @pytest.mark.parametrize("flag", ["secret", "password"])
+    @pytest.mark.parametrize("value", [[], {}, 0, "false"])
+    def test_invalid_manifest_security_flag_refuses_child(tmp_path, monkeypatch, flag, value):
+        directory = tmp_path / "plugins/platforms/test-flag"
+        directory.mkdir(parents=True)
+        (directory / "plugin.yaml").write_text(json.dumps({
+            "kind": "platform", "requires_env": [{"name": "CUSTOM_LOGIN", flag: value}],
+        }), encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("CUSTOM_LOGIN", SECRET)
+>       with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:464: Failed
+______ test_invalid_manifest_security_flag_refuses_child[value1-secret] _______
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-smj97gib/pytest-of-unknown/pytest-0/test_invalid_manifest_security2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002565600B650>
+flag = 'secret', value = {}
+
+    @pytest.mark.parametrize("flag", ["secret", "password"])
+    @pytest.mark.parametrize("value", [[], {}, 0, "false"])
+    def test_invalid_manifest_security_flag_refuses_child(tmp_path, monkeypatch, flag, value):
+        directory = tmp_path / "plugins/platforms/test-flag"
+        directory.mkdir(parents=True)
+        (directory / "plugin.yaml").write_text(json.dumps({
+            "kind": "platform", "requires_env": [{"name": "CUSTOM_LOGIN", flag: value}],
+        }), encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("CUSTOM_LOGIN", SECRET)
+>       with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:464: Failed
+_____ test_invalid_manifest_security_flag_refuses_child[value1-password] ______
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-smj97gib/pytest-of-unknown/pytest-0/test_invalid_manifest_security3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002565866AB10>
+flag = 'password', value = {}
+
+    @pytest.mark.parametrize("flag", ["secret", "password"])
+    @pytest.mark.parametrize("value", [[], {}, 0, "false"])
+    def test_invalid_manifest_security_flag_refuses_child(tmp_path, monkeypatch, flag, value):
+        directory = tmp_path / "plugins/platforms/test-flag"
+        directory.mkdir(parents=True)
+        (directory / "plugin.yaml").write_text(json.dumps({
+            "kind": "platform", "requires_env": [{"name": "CUSTOM_LOGIN", flag: value}],
+        }), encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("CUSTOM_LOGIN", SECRET)
+>       with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:464: Failed
+_________ test_invalid_manifest_security_flag_refuses_child[0-secret] _________
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-smj97gib/pytest-of-unknown/pytest-0/test_invalid_manifest_security4')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002565893BA10>
+flag = 'secret', value = 0
+
+    @pytest.mark.parametrize("flag", ["secret", "password"])
+    @pytest.mark.parametrize("value", [[], {}, 0, "false"])
+    def test_invalid_manifest_security_flag_refuses_child(tmp_path, monkeypatch, flag, value):
+        directory = tmp_path / "plugins/platforms/test-flag"
+        directory.mkdir(parents=True)
+        (directory / "plugin.yaml").write_text(json.dumps({
+            "kind": "platform", "requires_env": [{"name": "CUSTOM_LOGIN", flag: value}],
+        }), encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("CUSTOM_LOGIN", SECRET)
+>       with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:464: Failed
+________ test_invalid_manifest_security_flag_refuses_child[0-password] ________
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-smj97gib/pytest-of-unknown/pytest-0/test_invalid_manifest_security5')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002565894D310>
+flag = 'password', value = 0
+
+    @pytest.mark.parametrize("flag", ["secret", "password"])
+    @pytest.mark.parametrize("value", [[], {}, 0, "false"])
+    def test_invalid_manifest_security_flag_refuses_child(tmp_path, monkeypatch, flag, value):
+        directory = tmp_path / "plugins/platforms/test-flag"
+        directory.mkdir(parents=True)
+        (directory / "plugin.yaml").write_text(json.dumps({
+            "kind": "platform", "requires_env": [{"name": "CUSTOM_LOGIN", flag: value}],
+        }), encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("CUSTOM_LOGIN", SECRET)
+>       with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:464: Failed
+_______ test_invalid_manifest_security_flag_refuses_child[false-secret] _______
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-smj97gib/pytest-of-unknown/pytest-0/test_invalid_manifest_security6')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002565891C090>
+flag = 'secret', value = 'false'
+
+    @pytest.mark.parametrize("flag", ["secret", "password"])
+    @pytest.mark.parametrize("value", [[], {}, 0, "false"])
+    def test_invalid_manifest_security_flag_refuses_child(tmp_path, monkeypatch, flag, value):
+        directory = tmp_path / "plugins/platforms/test-flag"
+        directory.mkdir(parents=True)
+        (directory / "plugin.yaml").write_text(json.dumps({
+            "kind": "platform", "requires_env": [{"name": "CUSTOM_LOGIN", flag: value}],
+        }), encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("CUSTOM_LOGIN", SECRET)
+>       with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:464: Failed
+______ test_invalid_manifest_security_flag_refuses_child[false-password] ______
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-smj97gib/pytest-of-unknown/pytest-0/test_invalid_manifest_security7')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025658934490>
+flag = 'password', value = 'false'
+
+    @pytest.mark.parametrize("flag", ["secret", "password"])
+    @pytest.mark.parametrize("value", [[], {}, 0, "false"])
+    def test_invalid_manifest_security_flag_refuses_child(tmp_path, monkeypatch, flag, value):
+        directory = tmp_path / "plugins/platforms/test-flag"
+        directory.mkdir(parents=True)
+        (directory / "plugin.yaml").write_text(json.dumps({
+            "kind": "platform", "requires_env": [{"name": "CUSTOM_LOGIN", flag: value}],
+        }), encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("CUSTOM_LOGIN", SECRET)
+>       with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:464: Failed
+__________ test_late_oauth_provider_credential_is_filtered[terminal] __________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025658939890>
+surface = 'terminal'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli"])
+    def test_late_oauth_provider_credential_is_filtered(monkeypatch, surface):
+        from types import SimpleNamespace
+        import providers
+        monkeypatch.setattr(providers, "list_providers", lambda: [SimpleNamespace(
+            name="test-late-oauth", auth_type="oauth", env_vars=("CUSTOM_OAUTH_API_KEY",),
+        )])
+        monkeypatch.setenv("CUSTOM_OAUTH_API_KEY", SECRET)
+>       assert "CUSTOM_OAUTH_API_KEY" not in child_env(surface)
+E       AssertionError: assert 'CUSTOM_OAUTH_API_KEY' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('terminal')
+
+tests\tools\test_child_credential_boundary.py:476: AssertionError
+_________ test_late_oauth_provider_credential_is_filtered[background] _________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002565893B5D0>
+surface = 'background'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli"])
+    def test_late_oauth_provider_credential_is_filtered(monkeypatch, surface):
+        from types import SimpleNamespace
+        import providers
+        monkeypatch.setattr(providers, "list_providers", lambda: [SimpleNamespace(
+            name="test-late-oauth", auth_type="oauth", env_vars=("CUSTOM_OAUTH_API_KEY",),
+        )])
+        monkeypatch.setenv("CUSTOM_OAUTH_API_KEY", SECRET)
+>       assert "CUSTOM_OAUTH_API_KEY" not in child_env(surface)
+E       AssertionError: assert 'CUSTOM_OAUTH_API_KEY' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('background')
+
+tests\tools\test_child_credential_boundary.py:476: AssertionError
+____________ test_late_oauth_provider_credential_is_filtered[cli] _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002565893B490>
+surface = 'cli'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli"])
+    def test_late_oauth_provider_credential_is_filtered(monkeypatch, surface):
+        from types import SimpleNamespace
+        import providers
+        monkeypatch.setattr(providers, "list_providers", lambda: [SimpleNamespace(
+            name="test-late-oauth", auth_type="oauth", env_vars=("CUSTOM_OAUTH_API_KEY",),
+        )])
+        monkeypatch.setenv("CUSTOM_OAUTH_API_KEY", SECRET)
+>       assert "CUSTOM_OAUTH_API_KEY" not in child_env(surface)
+E       AssertionError: assert 'CUSTOM_OAUTH_API_KEY' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('cli')
+
+tests\tools\test_child_credential_boundary.py:476: AssertionError
+______ test_invalid_provider_profile_declaration_refuses_child[terminal] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002565893B210>
+surface = 'terminal'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_invalid_provider_profile_declaration_refuses_child(monkeypatch, surface):
+        from types import SimpleNamespace
+        import providers
+        monkeypatch.setattr(providers, "list_providers", lambda: [
+            SimpleNamespace(name="invalid-oauth", auth_type="oauth", env_vars=None),
+            SimpleNamespace(name="valid-oauth", auth_type="oauth", env_vars=("CUSTOM_OAUTH_API_KEY",)),
+        ])
+        monkeypatch.setenv("CUSTOM_OAUTH_API_KEY", SECRET)
+>       with pytest.raises(RuntimeError, match="(?i)(credential|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:489: Failed
+_____ test_invalid_provider_profile_declaration_refuses_child[background] _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000256588566D0>
+surface = 'background'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_invalid_provider_profile_declaration_refuses_child(monkeypatch, surface):
+        from types import SimpleNamespace
+        import providers
+        monkeypatch.setattr(providers, "list_providers", lambda: [
+            SimpleNamespace(name="invalid-oauth", auth_type="oauth", env_vars=None),
+            SimpleNamespace(name="valid-oauth", auth_type="oauth", env_vars=("CUSTOM_OAUTH_API_KEY",)),
+        ])
+        monkeypatch.setenv("CUSTOM_OAUTH_API_KEY", SECRET)
+>       with pytest.raises(RuntimeError, match="(?i)(credential|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:489: Failed
+________ test_invalid_provider_profile_declaration_refuses_child[cli] _________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025658937C10>
+surface = 'cli'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_invalid_provider_profile_declaration_refuses_child(monkeypatch, surface):
+        from types import SimpleNamespace
+        import providers
+        monkeypatch.setattr(providers, "list_providers", lambda: [
+            SimpleNamespace(name="invalid-oauth", auth_type="oauth", env_vars=None),
+            SimpleNamespace(name="valid-oauth", auth_type="oauth", env_vars=("CUSTOM_OAUTH_API_KEY",)),
+        ])
+        monkeypatch.setenv("CUSTOM_OAUTH_API_KEY", SECRET)
+>       with pytest.raises(RuntimeError, match="(?i)(credential|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:489: Failed
+___ test_invalid_provider_profile_declaration_refuses_child[credential-cli] ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025658964BD0>
+surface = 'credential-cli'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_invalid_provider_profile_declaration_refuses_child(monkeypatch, surface):
+        from types import SimpleNamespace
+        import providers
+        monkeypatch.setattr(providers, "list_providers", lambda: [
+            SimpleNamespace(name="invalid-oauth", auth_type="oauth", env_vars=None),
+            SimpleNamespace(name="valid-oauth", auth_type="oauth", env_vars=("CUSTOM_OAUTH_API_KEY",)),
+        ])
+        monkeypatch.setenv("CUSTOM_OAUTH_API_KEY", SECRET)
+>       with pytest.raises(RuntimeError, match="(?i)(credential|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:489: Failed
+___ test_cached_passthrough_rechecks_late_adapter_ownership[terminal-skill] ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025658904810>
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-smj97gib/pytest-of-unknown/pytest-0/test_cached_passthrough_rechec0')
+source = 'skill', surface = 'terminal'
+
+    @pytest.mark.parametrize("source", ["skill", "config"])
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli"])
+    def test_cached_passthrough_rechecks_late_adapter_ownership(monkeypatch, tmp_path, source, surface):
+        from tools import env_passthrough
+        import gateway.platform_registry as platform_module
+        adapter_registry = platform_module.PlatformRegistry()
+        monkeypatch.setattr(platform_module, "platform_registry", adapter_registry)
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        key = "CUSTOM_LATE_ADAPTER_TOKEN"
+        token = env_passthrough._allowed_env_vars_var.set(set())
+        monkeypatch.setattr(env_passthrough, "_config_passthrough", frozenset({key}) if source == "config" else frozenset())
+        try:
+            if source == "skill":
+                env_passthrough.register_env_passthrough([key])
+            assert env_passthrough.is_env_passthrough(key)
+            adapter_registry.register(platform_module.PlatformEntry(
+                name="late-adapter", label="Late", adapter_factory=lambda _: None,
+                check_fn=lambda: True, required_env=[key],
+            ))
+            monkeypatch.setenv(key, SECRET)
+>           assert key not in child_env(surface)
+E           AssertionError: assert 'CUSTOM_LATE_ADAPTER_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E            +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('terminal')
+
+tests\tools\test_child_credential_boundary.py:513: AssertionError
+__ test_cached_passthrough_rechecks_late_adapter_ownership[terminal-config] ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025658907090>
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-smj97gib/pytest-of-unknown/pytest-0/test_cached_passthrough_rechec1')
+source = 'config', surface = 'terminal'
+
+    @pytest.mark.parametrize("source", ["skill", "config"])
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli"])
+    def test_cached_passthrough_rechecks_late_adapter_ownership(monkeypatch, tmp_path, source, surface):
+        from tools import env_passthrough
+        import gateway.platform_registry as platform_module
+        adapter_registry = platform_module.PlatformRegistry()
+        monkeypatch.setattr(platform_module, "platform_registry", adapter_registry)
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        key = "CUSTOM_LATE_ADAPTER_TOKEN"
+        token = env_passthrough._allowed_env_vars_var.set(set())
+        monkeypatch.setattr(env_passthrough, "_config_passthrough", frozenset({key}) if source == "config" else frozenset())
+        try:
+            if source == "skill":
+                env_passthrough.register_env_passthrough([key])
+            assert env_passthrough.is_env_passthrough(key)
+            adapter_registry.register(platform_module.PlatformEntry(
+                name="late-adapter", label="Late", adapter_factory=lambda _: None,
+                check_fn=lambda: True, required_env=[key],
+            ))
+            monkeypatch.setenv(key, SECRET)
+>           assert key not in child_env(surface)
+E           AssertionError: assert 'CUSTOM_LATE_ADAPTER_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E            +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('terminal')
+
+tests\tools\test_child_credential_boundary.py:513: AssertionError
+__ test_cached_passthrough_rechecks_late_adapter_ownership[background-skill] __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025658906810>
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-smj97gib/pytest-of-unknown/pytest-0/test_cached_passthrough_rechec2')
+source = 'skill', surface = 'background'
+
+    @pytest.mark.parametrize("source", ["skill", "config"])
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli"])
+    def test_cached_passthrough_rechecks_late_adapter_ownership(monkeypatch, tmp_path, source, surface):
+        from tools import env_passthrough
+        import gateway.platform_registry as platform_module
+        adapter_registry = platform_module.PlatformRegistry()
+        monkeypatch.setattr(platform_module, "platform_registry", adapter_registry)
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        key = "CUSTOM_LATE_ADAPTER_TOKEN"
+        token = env_passthrough._allowed_env_vars_var.set(set())
+        monkeypatch.setattr(env_passthrough, "_config_passthrough", frozenset({key}) if source == "config" else frozenset())
+        try:
+            if source == "skill":
+                env_passthrough.register_env_passthrough([key])
+            assert env_passthrough.is_env_passthrough(key)
+            adapter_registry.register(platform_module.PlatformEntry(
+                name="late-adapter", label="Late", adapter_factory=lambda _: None,
+                check_fn=lambda: True, required_env=[key],
+            ))
+            monkeypatch.setenv(key, SECRET)
+>           assert key not in child_env(surface)
+E           AssertionError: assert 'CUSTOM_LATE_ADAPTER_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E            +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('background')
+
+tests\tools\test_child_credential_boundary.py:513: AssertionError
+_ test_cached_passthrough_rechecks_late_adapter_ownership[background-config] __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025658668A50>
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-smj97gib/pytest-of-unknown/pytest-0/test_cached_passthrough_rechec3')
+source = 'config', surface = 'background'
+
+    @pytest.mark.parametrize("source", ["skill", "config"])
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli"])
+    def test_cached_passthrough_rechecks_late_adapter_ownership(monkeypatch, tmp_path, source, surface):
+        from tools import env_passthrough
+        import gateway.platform_registry as platform_module
+        adapter_registry = platform_module.PlatformRegistry()
+        monkeypatch.setattr(platform_module, "platform_registry", adapter_registry)
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        key = "CUSTOM_LATE_ADAPTER_TOKEN"
+        token = env_passthrough._allowed_env_vars_var.set(set())
+        monkeypatch.setattr(env_passthrough, "_config_passthrough", frozenset({key}) if source == "config" else frozenset())
+        try:
+            if source == "skill":
+                env_passthrough.register_env_passthrough([key])
+            assert env_passthrough.is_env_passthrough(key)
+            adapter_registry.register(platform_module.PlatformEntry(
+                name="late-adapter", label="Late", adapter_factory=lambda _: None,
+                check_fn=lambda: True, required_env=[key],
+            ))
+            monkeypatch.setenv(key, SECRET)
+>           assert key not in child_env(surface)
+E           AssertionError: assert 'CUSTOM_LATE_ADAPTER_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E            +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('background')
+
+tests\tools\test_child_credential_boundary.py:513: AssertionError
+_____ test_cached_passthrough_rechecks_late_adapter_ownership[cli-skill] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025658668FD0>
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-smj97gib/pytest-of-unknown/pytest-0/test_cached_passthrough_rechec4')
+source = 'skill', surface = 'cli'
+
+    @pytest.mark.parametrize("source", ["skill", "config"])
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli"])
+    def test_cached_passthrough_rechecks_late_adapter_ownership(monkeypatch, tmp_path, source, surface):
+        from tools import env_passthrough
+        import gateway.platform_registry as platform_module
+        adapter_registry = platform_module.PlatformRegistry()
+        monkeypatch.setattr(platform_module, "platform_registry", adapter_registry)
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        key = "CUSTOM_LATE_ADAPTER_TOKEN"
+        token = env_passthrough._allowed_env_vars_var.set(set())
+        monkeypatch.setattr(env_passthrough, "_config_passthrough", frozenset({key}) if source == "config" else frozenset())
+        try:
+            if source == "skill":
+                env_passthrough.register_env_passthrough([key])
+            assert env_passthrough.is_env_passthrough(key)
+            adapter_registry.register(platform_module.PlatformEntry(
+                name="late-adapter", label="Late", adapter_factory=lambda _: None,
+                check_fn=lambda: True, required_env=[key],
+            ))
+            monkeypatch.setenv(key, SECRET)
+            assert key not in child_env(surface)
+>           assert not env_passthrough.is_env_passthrough(key)
+E           AssertionError: assert not True
+E            +  where True = <function is_env_passthrough at 0x000002565887A8E0>('CUSTOM_LATE_ADAPTER_TOKEN')
+E            +    where <function is_env_passthrough at 0x000002565887A8E0> = <module 'tools.env_passthrough' from 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tools\\env_passthrough.py'>.is_env_passthrough
+
+tests\tools\test_child_credential_boundary.py:514: AssertionError
+_____ test_cached_passthrough_rechecks_late_adapter_ownership[cli-config] _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002565866A590>
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-smj97gib/pytest-of-unknown/pytest-0/test_cached_passthrough_rechec5')
+source = 'config', surface = 'cli'
+
+    @pytest.mark.parametrize("source", ["skill", "config"])
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli"])
+    def test_cached_passthrough_rechecks_late_adapter_ownership(monkeypatch, tmp_path, source, surface):
+        from tools import env_passthrough
+        import gateway.platform_registry as platform_module
+        adapter_registry = platform_module.PlatformRegistry()
+        monkeypatch.setattr(platform_module, "platform_registry", adapter_registry)
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        key = "CUSTOM_LATE_ADAPTER_TOKEN"
+        token = env_passthrough._allowed_env_vars_var.set(set())
+        monkeypatch.setattr(env_passthrough, "_config_passthrough", frozenset({key}) if source == "config" else frozenset())
+        try:
+            if source == "skill":
+                env_passthrough.register_env_passthrough([key])
+            assert env_passthrough.is_env_passthrough(key)
+            adapter_registry.register(platform_module.PlatformEntry(
+                name="late-adapter", label="Late", adapter_factory=lambda _: None,
+                check_fn=lambda: True, required_env=[key],
+            ))
+            monkeypatch.setenv(key, SECRET)
+            assert key not in child_env(surface)
+>           assert not env_passthrough.is_env_passthrough(key)
+E           AssertionError: assert not True
+E            +  where True = <function is_env_passthrough at 0x000002565887A8E0>('CUSTOM_LATE_ADAPTER_TOKEN')
+E            +    where <function is_env_passthrough at 0x000002565887A8E0> = <module 'tools.env_passthrough' from 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tools\\env_passthrough.py'>.is_env_passthrough
+
+tests\tools\test_child_credential_boundary.py:514: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[value0-secret]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[value0-password]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[value1-secret]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[value1-password]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[0-secret]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[0-password]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[false-secret]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[false-password]
+FAILED tests/tools/test_child_credential_boundary.py::test_late_oauth_provider_credential_is_filtered[terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_late_oauth_provider_credential_is_filtered[background]
+FAILED tests/tools/test_child_credential_boundary.py::test_late_oauth_provider_credential_is_filtered[cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_provider_profile_declaration_refuses_child[terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_provider_profile_declaration_refuses_child[background]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_provider_profile_declaration_refuses_child[cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_provider_profile_declaration_refuses_child[credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[terminal-skill]
+FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[terminal-config]
+FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[background-skill]
+FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[background-config]
+FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[cli-skill]
+FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[cli-config]
+21 failed, 4 passed, 179 deselected in 4.97s
+
+=== 1 file with test failures (21 tests failed) ===
+  tests\tools\test_child_credential_boundary.py  (21 tests failed)

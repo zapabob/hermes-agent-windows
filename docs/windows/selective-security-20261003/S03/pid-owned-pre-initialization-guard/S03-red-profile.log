@@ -1,0 +1,1336 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 1 test files (~8 tests) under ['tests\\tools\\test_child_credential_boundary.py']; running with -j 1
+[100.0% |     8/~8 | ✓ 58 | ✗ 49] ✗ tests\tools\test_child_credential_boundary.py (58✓ 49✗, 9.1s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_boundary.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-False-terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-False-background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-False-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-False-credential-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-True-terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-True-background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-True-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-True-credential-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-False-terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-False-background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-False-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-False-credential-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-True-terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-True-background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-True-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-True-credential-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[secret-False-terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[secret-False-background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[secret-False-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[secret-False-credential-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[secret-True-terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[secret-True-background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[secret-True-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[secret-True-credential-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_malformed_manifest_blocks_child[terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_malformed_manifest_blocks_child[background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_malformed_manifest_blocks_child[cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_malformed_manifest_blocks_child[credential-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_multiplex_credential_child_requires_bound_profile
+  ║ 49 failed, 58 passed in 7.27s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_boundary.py -q
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+
+=== Summary: 1 files, 58 tests passed, 49 failed (100% complete) in 9.1s (1 workers) ===
+  Durations cached to test_durations.json (1 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   1
+  Total subprocess CPU-wall: 9.1s  (runner wall: 9.1s, parallelism: 1x)
+  P50: 9.06s  P90: 9.06s  P95: 9.06s  P99: 9.06s  Max: 9.06s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+      9.06s  tests\tools\test_child_credential_boundary.py
+
+=== Failure output ===
+
+--- tests\tools\test_child_credential_boundary.py ---
+........................................FFFFFFFFFFFFFFFF................ [ 67%]
+..FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF                                      [100%]
+================================== FAILURES ===================================
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_BASIC_AUTH_PASSWORD-terminal] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000022126533F50>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x00000221265316D0>
+surface = 'terminal', key = 'HERMES_DASHBOARD_BASIC_AUTH_PASSWORD'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_BASIC_AUTH_PASSWORD' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:69: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_BASIC_AUTH_PASSWORD-background] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212650EDD0>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x00000221265EB910>
+surface = 'background', key = 'HERMES_DASHBOARD_BASIC_AUTH_PASSWORD'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_BASIC_AUTH_PASSWORD' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:69: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_BASIC_AUTH_PASSWORD-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221264A3BD0>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x000002212654E890>
+surface = 'cli', key = 'HERMES_DASHBOARD_BASIC_AUTH_PASSWORD'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_BASIC_AUTH_PASSWORD' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:69: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_BASIC_AUTH_PASSWORD-credential-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221264A9550>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x000002212660E890>
+surface = 'credential-cli', key = 'HERMES_DASHBOARD_BASIC_AUTH_PASSWORD'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_BASIC_AUTH_PASSWORD' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:69: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_BASIC_AUTH_SECRET-terminal] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000022126535FD0>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000022126602CD0>
+surface = 'terminal', key = 'HERMES_DASHBOARD_BASIC_AUTH_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_BASIC_AUTH_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:69: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_BASIC_AUTH_SECRET-background] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212654F750>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x00000221265313D0>
+surface = 'background', key = 'HERMES_DASHBOARD_BASIC_AUTH_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_BASIC_AUTH_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:69: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_BASIC_AUTH_SECRET-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212650EC10>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x000002212660E850>
+surface = 'cli', key = 'HERMES_DASHBOARD_BASIC_AUTH_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_BASIC_AUTH_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:69: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_BASIC_AUTH_SECRET-credential-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221265FC990>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x00000221265FE2D0>
+surface = 'credential-cli', key = 'HERMES_DASHBOARD_BASIC_AUTH_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_BASIC_AUTH_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:69: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_DRAIN_SECRET-terminal] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212654F6D0>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x00000221265324D0>
+surface = 'terminal', key = 'HERMES_DASHBOARD_DRAIN_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_DRAIN_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:69: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_DRAIN_SECRET-background] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221265EBB10>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x000002212654F190>
+surface = 'background', key = 'HERMES_DASHBOARD_DRAIN_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_DRAIN_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:69: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_DRAIN_SECRET-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212654FAD0>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x000002212660E350>
+surface = 'cli', key = 'HERMES_DASHBOARD_DRAIN_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_DRAIN_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:69: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_DRAIN_SECRET-credential-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212654EBD0>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000022126610BD0>
+surface = 'credential-cli', key = 'HERMES_DASHBOARD_DRAIN_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_DRAIN_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:69: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_ANON_API_SECRET-terminal] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000022126530610>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x00000221265EB390>
+surface = 'terminal', key = 'HERMES_ANON_API_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_ANON_API_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:69: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_ANON_API_SECRET-background] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000022126532850>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x000002212660A850>
+surface = 'background', key = 'HERMES_ANON_API_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_ANON_API_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:69: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_ANON_API_SECRET-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212654C9D0>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x000002212660D4D0>
+surface = 'cli', key = 'HERMES_ANON_API_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_ANON_API_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:69: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_ANON_API_SECRET-credential-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212654E150>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000022126624050>
+surface = 'credential-cli', key = 'HERMES_ANON_API_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_ANON_API_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:69: AssertionError
+___________ test_native_child_observes_only_benign_values[terminal] ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221265FE850>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000022126611F10>
+surface = 'terminal'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_native_child_observes_only_benign_values(monkeypatch, plugin_provider, surface):
+        keys = ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET", "BOUNDARY_BENIGN")
+        for key in keys[:-1]:
+            monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv(keys[-1], "present")
+        code = "import json,os,sys;sys.stdout.write(json.dumps({k:os.environ.get(k) for k in " + repr(keys) + "}))"
+        result = subprocess.run(
+            [sys.executable, "-I", "-c", code], env=child_env(surface),
+            stdin=subprocess.DEVNULL, capture_output=True, text=True,
+            encoding="utf-8", timeout=15, check=True,
+        )
+        observed = json.loads(result.stdout)
+        assert observed["BOUNDARY_BENIGN"] == "present"
+>       assert all(observed[key] is None for key in keys[:-1])
+E       assert False
+E        +  where False = all(<generator object test_native_child_observes_only_benign_values.<locals>.<genexpr> at 0x00000221265AB3E0>)
+
+tests\tools\test_child_credential_boundary.py:110: AssertionError
+__________ test_native_child_observes_only_benign_values[background] __________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212663E150>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x000002212663F350>
+surface = 'background'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_native_child_observes_only_benign_values(monkeypatch, plugin_provider, surface):
+        keys = ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET", "BOUNDARY_BENIGN")
+        for key in keys[:-1]:
+            monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv(keys[-1], "present")
+        code = "import json,os,sys;sys.stdout.write(json.dumps({k:os.environ.get(k) for k in " + repr(keys) + "}))"
+        result = subprocess.run(
+            [sys.executable, "-I", "-c", code], env=child_env(surface),
+            stdin=subprocess.DEVNULL, capture_output=True, text=True,
+            encoding="utf-8", timeout=15, check=True,
+        )
+        observed = json.loads(result.stdout)
+        assert observed["BOUNDARY_BENIGN"] == "present"
+>       assert all(observed[key] is None for key in keys[:-1])
+E       assert False
+E        +  where False = all(<generator object test_native_child_observes_only_benign_values.<locals>.<genexpr> at 0x00000221265ABAE0>)
+
+tests\tools\test_child_credential_boundary.py:110: AssertionError
+_____________ test_native_child_observes_only_benign_values[cli] ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221264CE710>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x000002212660A810>
+surface = 'cli'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_native_child_observes_only_benign_values(monkeypatch, plugin_provider, surface):
+        keys = ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET", "BOUNDARY_BENIGN")
+        for key in keys[:-1]:
+            monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv(keys[-1], "present")
+        code = "import json,os,sys;sys.stdout.write(json.dumps({k:os.environ.get(k) for k in " + repr(keys) + "}))"
+        result = subprocess.run(
+            [sys.executable, "-I", "-c", code], env=child_env(surface),
+            stdin=subprocess.DEVNULL, capture_output=True, text=True,
+            encoding="utf-8", timeout=15, check=True,
+        )
+        observed = json.loads(result.stdout)
+        assert observed["BOUNDARY_BENIGN"] == "present"
+>       assert all(observed[key] is None for key in keys[:-1])
+E       assert False
+E        +  where False = all(<generator object test_native_child_observes_only_benign_values.<locals>.<genexpr> at 0x00000221265AACE0>)
+
+tests\tools\test_child_credential_boundary.py:110: AssertionError
+________ test_native_child_observes_only_benign_values[credential-cli] ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000022126531A10>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000022126624AD0>
+surface = 'credential-cli'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_native_child_observes_only_benign_values(monkeypatch, plugin_provider, surface):
+        keys = ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET", "BOUNDARY_BENIGN")
+        for key in keys[:-1]:
+            monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv(keys[-1], "present")
+        code = "import json,os,sys;sys.stdout.write(json.dumps({k:os.environ.get(k) for k in " + repr(keys) + "}))"
+        result = subprocess.run(
+            [sys.executable, "-I", "-c", code], env=child_env(surface),
+            stdin=subprocess.DEVNULL, capture_output=True, text=True,
+            encoding="utf-8", timeout=15, check=True,
+        )
+        observed = json.loads(result.stdout)
+        assert observed["BOUNDARY_BENIGN"] == "present"
+>       assert all(observed[key] is None for key in keys[:-1])
+E       assert False
+E        +  where False = all(<generator object test_native_child_observes_only_benign_values.<locals>.<genexpr> at 0x00000221265AA340>)
+
+tests\tools\test_child_credential_boundary.py:110: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[absent-False-terminal] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221265317D0>
+surface = 'terminal', reverse = False, target_kind = 'absent'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E        +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x000002212660ADC0>('CUSTOM_SHARED_VALUE')
+E        +    where <built-in method get of dict object at 0x000002212660ADC0> = {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}.get
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[absent-False-background] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212650E410>
+surface = 'background', reverse = False, target_kind = 'absent'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E        +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x0000022126627A80>('CUSTOM_SHARED_VALUE')
+E        +    where <built-in method get of dict object at 0x0000022126627A80> = {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}.get
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[absent-False-cli] __
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221266131D0>
+surface = 'cli', reverse = False, target_kind = 'absent'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E        +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x0000022123E5BA40>('CUSTOM_SHARED_VALUE')
+E        +    where <built-in method get of dict object at 0x0000022123E5BA40> = {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}.get
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[absent-False-credential-cli] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212660B010>
+surface = 'credential-cli', reverse = False, target_kind = 'absent'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E        +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x0000022126613740>('CUSTOM_SHARED_VALUE')
+E        +    where <built-in method get of dict object at 0x0000022126613740> = {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}.get
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[absent-True-terminal] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re4')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212660A010>
+surface = 'terminal', reverse = True, target_kind = 'absent'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E        +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x00000221266098C0>('CUSTOM_SHARED_VALUE')
+E        +    where <built-in method get of dict object at 0x00000221266098C0> = {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}.get
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[absent-True-background] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re5')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000022126601C50>
+surface = 'background', reverse = True, target_kind = 'absent'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E        +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x0000022126611FC0>('CUSTOM_SHARED_VALUE')
+E        +    where <built-in method get of dict object at 0x0000022126611FC0> = {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}.get
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+__ test_profile_owned_value_is_resolved_before_child_policy[absent-True-cli] __
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re6')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000022126603290>
+surface = 'cli', reverse = True, target_kind = 'absent'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E        +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x000002212650EC00>('CUSTOM_SHARED_VALUE')
+E        +    where <built-in method get of dict object at 0x000002212650EC00> = {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}.get
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[absent-True-credential-cli] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re7')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000022126601F90>
+surface = 'credential-cli', reverse = True, target_kind = 'absent'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E        +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x0000022126601E40>('CUSTOM_SHARED_VALUE')
+E        +    where <built-in method get of dict object at 0x0000022126601E40> = {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}.get
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[benign-False-terminal] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re8')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000022126609A50>
+surface = 'terminal', reverse = False, target_kind = 'benign'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == 'target-value'
+E
+E         - target-value
+E         + TEST_ONLY_SECRET_DO_NOT_USE
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[benign-False-background] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re9')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212660D750>
+surface = 'background', reverse = False, target_kind = 'benign'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == 'target-value'
+E
+E         - target-value
+E         + TEST_ONLY_SECRET_DO_NOT_USE
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[benign-False-cli] __
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re10')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212660D610>
+surface = 'cli', reverse = False, target_kind = 'benign'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == 'target-value'
+E
+E         - target-value
+E         + TEST_ONLY_SECRET_DO_NOT_USE
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[benign-False-credential-cli] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re11')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000022126602950>
+surface = 'credential-cli', reverse = False, target_kind = 'benign'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == 'target-value'
+E
+E         - target-value
+E         + TEST_ONLY_SECRET_DO_NOT_USE
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[benign-True-terminal] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re12')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000022126601150>
+surface = 'terminal', reverse = True, target_kind = 'benign'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == 'target-value'
+E
+E         - target-value
+E         + TEST_ONLY_SECRET_DO_NOT_USE
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[benign-True-background] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re13')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212661BB90>
+surface = 'background', reverse = True, target_kind = 'benign'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == 'target-value'
+E
+E         - target-value
+E         + TEST_ONLY_SECRET_DO_NOT_USE
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+__ test_profile_owned_value_is_resolved_before_child_policy[benign-True-cli] __
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re14')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221266836D0>
+surface = 'cli', reverse = True, target_kind = 'benign'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == 'target-value'
+E
+E         - target-value
+E         + TEST_ONLY_SECRET_DO_NOT_USE
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[benign-True-credential-cli] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re15')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000022126610610>
+surface = 'credential-cli', reverse = True, target_kind = 'benign'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == 'target-value'
+E
+E         - target-value
+E         + TEST_ONLY_SECRET_DO_NOT_USE
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[secret-False-terminal] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re16')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000022126600490>
+surface = 'terminal', reverse = False, target_kind = 'secret'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E        +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x000002212663F540>('CUSTOM_SHARED_VALUE')
+E        +    where <built-in method get of dict object at 0x000002212663F540> = {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}.get
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[secret-False-background] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re17')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212660E650>
+surface = 'background', reverse = False, target_kind = 'secret'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E        +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x000002212660B680>('CUSTOM_SHARED_VALUE')
+E        +    where <built-in method get of dict object at 0x000002212660B680> = {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}.get
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[secret-False-cli] __
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re18')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212654EE50>
+surface = 'cli', reverse = False, target_kind = 'secret'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E        +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x000002212660EF40>('CUSTOM_SHARED_VALUE')
+E        +    where <built-in method get of dict object at 0x000002212660EF40> = {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}.get
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[secret-False-credential-cli] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re19')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212660DBD0>
+surface = 'credential-cli', reverse = False, target_kind = 'secret'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E        +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x00000221265FFB80>('CUSTOM_SHARED_VALUE')
+E        +    where <built-in method get of dict object at 0x00000221265FFB80> = {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}.get
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[secret-True-terminal] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re20')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212665A710>
+surface = 'terminal', reverse = True, target_kind = 'secret'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E        +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x000002212665A580>('CUSTOM_SHARED_VALUE')
+E        +    where <built-in method get of dict object at 0x000002212665A580> = {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}.get
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[secret-True-background] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re21')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212663FAD0>
+surface = 'background', reverse = True, target_kind = 'secret'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E        +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x0000022126697BC0>('CUSTOM_SHARED_VALUE')
+E        +    where <built-in method get of dict object at 0x0000022126697BC0> = {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}.get
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+__ test_profile_owned_value_is_resolved_before_child_policy[secret-True-cli] __
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re22')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212663DE90>
+surface = 'cli', reverse = True, target_kind = 'secret'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E        +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x000002212663D700>('CUSTOM_SHARED_VALUE')
+E        +    where <built-in method get of dict object at 0x000002212663D700> = {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}.get
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_ test_profile_owned_value_is_resolved_before_child_policy[secret-True-credential-cli] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_profile_owned_value_is_re23')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002212663DCD0>
+surface = 'credential-cli', reverse = True, target_kind = 'secret'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("target_kind", ["absent", "benign", "secret"])
+    def test_profile_owned_value_is_resolved_before_child_policy(
+        tmp_path, monkeypatch, surface, reverse, target_kind,
+    ):
+        homes = [tmp_path / "profile A", tmp_path / "profile B"]
+        for home in homes:
+            home.mkdir()
+        launch, target = reversed(homes) if reverse else homes
+        key = "CUSTOM_SHARED_VALUE"
+        declare_platform(launch, key)
+        (launch / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        if target_kind != "absent":
+            declare_platform(target, key, secret=target_kind == "secret")
+            (target / ".env").write_text(f"{key}=target-value\n", encoding="utf-8")
+        with bound_home(target):
+            env = child_env(surface)
+>       assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E       AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E        +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x0000022126601CC0>('CUSTOM_SHARED_VALUE')
+E        +    where <built-in method get of dict object at 0x0000022126601CC0> = {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}.get
+
+tests\tools\test_child_credential_boundary.py:156: AssertionError
+_______________ test_malformed_manifest_blocks_child[terminal] ________________
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_malformed_manifest_blocks0')
+surface = 'terminal'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_malformed_manifest_blocks_child(tmp_path, surface):
+        manifest = declare_platform(tmp_path, "FAKE_PLUGIN_SECRET")
+        manifest.write_text("requires_env: [\n", encoding="utf-8")
+>       with bound_home(tmp_path), pytest.raises(RuntimeError, match="(?i)(secret|declaration|manifest)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:165: Failed
+______________ test_malformed_manifest_blocks_child[background] _______________
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_malformed_manifest_blocks1')
+surface = 'background'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_malformed_manifest_blocks_child(tmp_path, surface):
+        manifest = declare_platform(tmp_path, "FAKE_PLUGIN_SECRET")
+        manifest.write_text("requires_env: [\n", encoding="utf-8")
+>       with bound_home(tmp_path), pytest.raises(RuntimeError, match="(?i)(secret|declaration|manifest)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:165: Failed
+__________________ test_malformed_manifest_blocks_child[cli] __________________
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_malformed_manifest_blocks2')
+surface = 'cli'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_malformed_manifest_blocks_child(tmp_path, surface):
+        manifest = declare_platform(tmp_path, "FAKE_PLUGIN_SECRET")
+        manifest.write_text("requires_env: [\n", encoding="utf-8")
+>       with bound_home(tmp_path), pytest.raises(RuntimeError, match="(?i)(secret|declaration|manifest)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:165: Failed
+____________ test_malformed_manifest_blocks_child[credential-cli] _____________
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-83w03wme/pytest-of-unknown/pytest-0/test_malformed_manifest_blocks3')
+surface = 'credential-cli'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_malformed_manifest_blocks_child(tmp_path, surface):
+        manifest = declare_platform(tmp_path, "FAKE_PLUGIN_SECRET")
+        manifest.write_text("requires_env: [\n", encoding="utf-8")
+>       with bound_home(tmp_path), pytest.raises(RuntimeError, match="(?i)(secret|declaration|manifest)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:165: Failed
+___________ test_multiplex_credential_child_requires_bound_profile ____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221266270D0>
+
+    def test_multiplex_credential_child_requires_bound_profile(monkeypatch):
+        from agent import secret_scope
+        monkeypatch.setattr(secret_scope, "_MULTIPLEX_ACTIVE", True)
+        scope_token = secret_scope.set_secret_scope(None)
+        try:
+>           with pytest.raises(secret_scope.UnscopedSecretError):
+E           Failed: DID NOT RAISE UnscopedSecretError
+
+tests\tools\test_child_credential_boundary.py:174: Failed
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_BASIC_AUTH_PASSWORD-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_BASIC_AUTH_PASSWORD-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_BASIC_AUTH_PASSWORD-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_BASIC_AUTH_PASSWORD-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_BASIC_AUTH_SECRET-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_BASIC_AUTH_SECRET-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_BASIC_AUTH_SECRET-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_BASIC_AUTH_SECRET-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_DRAIN_SECRET-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_DRAIN_SECRET-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_DRAIN_SECRET-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_DRAIN_SECRET-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_ANON_API_SECRET-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_ANON_API_SECRET-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_ANON_API_SECRET-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_ANON_API_SECRET-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_native_child_observes_only_benign_values[terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_native_child_observes_only_benign_values[background]
+FAILED tests/tools/test_child_credential_boundary.py::test_native_child_observes_only_benign_values[cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_native_child_observes_only_benign_values[credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-False-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-False-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-False-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-False-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-True-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-True-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-True-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-True-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-False-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-False-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-False-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-False-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-True-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-True-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-True-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-True-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[secret-False-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[secret-False-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[secret-False-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[secret-False-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[secret-True-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[secret-True-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[secret-True-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[secret-True-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_malformed_manifest_blocks_child[terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_malformed_manifest_blocks_child[background]
+FAILED tests/tools/test_child_credential_boundary.py::test_malformed_manifest_blocks_child[cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_malformed_manifest_blocks_child[credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_multiplex_credential_child_requires_bound_profile
+49 failed, 58 passed in 7.27s
+
+=== 1 file with test failures (49 tests failed) ===
+  tests\tools\test_child_credential_boundary.py  (49 tests failed)

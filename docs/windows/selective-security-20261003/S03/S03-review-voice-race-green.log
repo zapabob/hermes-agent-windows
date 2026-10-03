@@ -1,0 +1,18 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 1 test files (~5 tests) under ['tests\\tools\\test_child_credential_windows_native.py']; running with -j 1
+[100.0% |     5/~5 | ✓9 | ✗0] ✓ tests\tools\test_child_credential_windows_native.py (9✓, 12.9s)
+
+=== Summary: 1 files, 9 tests passed, 0 failed (100% complete) in 12.9s (1 workers) ===
+  Durations cached to test_durations.json (1 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   1
+  Total subprocess CPU-wall: 12.9s  (runner wall: 12.9s, parallelism: 1x)
+  P50: 12.91s  P90: 12.91s  P95: 12.91s  P99: 12.91s  Max: 12.91s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+     12.91s  tests\tools\test_child_credential_windows_native.py

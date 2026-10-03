@@ -1,0 +1,17 @@
+{
+  "symbol": "_sanitize_subprocess_env",
+  "callees": [
+    {
+      "name": "_scrubbed_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 288
+    },
+    {
+      "name": "_plugin_terminal_env_strip_keys",
+      "kind": "function",
+      "filePath": "tools/environments/local_env_policy.py",
+      "startLine": 351
+    }
+  ]
+}

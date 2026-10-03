@@ -1,0 +1,125 @@
+{
+  "symbol": "_make_run_env",
+  "callers": [
+    {
+      "name": "_run",
+      "kind": "function",
+      "filePath": "tests/acp_adapter/test_server.py",
+      "startLine": 384
+    },
+    {
+      "name": "run_conversation",
+      "kind": "method",
+      "filePath": "tests/gateway/test_session_api.py",
+      "startLine": 300
+    },
+    {
+      "name": "_spawn_view",
+      "kind": "function",
+      "filePath": "tests/gateway/test_session_context_inheritance.py",
+      "startLine": 93
+    },
+    {
+      "name": "test_existing_user_local_bin_appended_after_inherited_entries",
+      "kind": "function",
+      "filePath": "tests/tools/environments/test_local_path_completion.py",
+      "startLine": 19
+    },
+    {
+      "name": "test_make_run_env_blocklist_override_rejected",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 438
+    },
+    {
+      "name": "test_adapter_and_provider_profile_secrets_never_reach_children",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 112
+    },
+    {
+      "name": "test_user_platform_plugin_secrets_belong_to_their_own_profile",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 142
+    },
+    {
+      "name": "test_passthrough_accepted_before_an_adapter_owns_the_name_stops_forwarding_it",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 385
+    },
+    {
+      "name": "test_builders_strip_runtime_markers_and_owned_paths",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 423
+    },
+    {
+      "name": "test_force_prefix_is_not_plugin_passthrough",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 449
+    },
+    {
+      "name": "test_buzz_context_and_plain_process_value",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 479
+    },
+    {
+      "name": "test_foreground_minimal_path_preserves_operator_precedence",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 681
+    },
+    {
+      "name": "test_make_run_env_uses_active_profile_for_passthrough",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1326
+    },
+    {
+      "name": "test_make_run_env_omits_missing_scoped_passthrough",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1346
+    },
+    {
+      "name": "test_make_run_env_appends_homebrew_on_minimal_path",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1522
+    },
+    {
+      "name": "test_make_run_env_real_launchd_path_gains_homebrew",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1547
+    },
+    {
+      "name": "test_make_run_env_preserves_windows_mixed_case_path_key",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1565
+    },
+    {
+      "name": "test_running_bot_desktop_display_rides_along",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_bot_desktop.py",
+      "startLine": 12
+    },
+    {
+      "name": "test_running_bot_desktop_beats_the_session_snapshot",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_bot_desktop.py",
+      "startLine": 31
+    },
+    {
+      "name": "test_stopped_bot_desktop_leaves_the_seat_env_alone",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_bot_desktop.py",
+      "startLine": 38
+    }
+  ]
+}

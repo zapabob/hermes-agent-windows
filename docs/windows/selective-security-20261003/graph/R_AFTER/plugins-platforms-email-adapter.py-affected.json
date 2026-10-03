@@ -1,0 +1,15 @@
+{
+  "changedFiles": [
+    "plugins/platforms/email/adapter.py"
+  ],
+  "affectedTests": [
+    "tests/gateway/test_adapter_connect_classification.py",
+    "tests/gateway/test_email.py",
+    "tests/gateway/test_email_charset_fallback.py",
+    "tests/gateway/test_email_robustness.py",
+    "tests/gateway/test_email_secret_scope.py",
+    "tests/gateway/test_poller_fd_lifecycle.py",
+    "tests/gateway/test_send_multiple_images.py"
+  ],
+  "totalDependentsTraversed": 8
+}

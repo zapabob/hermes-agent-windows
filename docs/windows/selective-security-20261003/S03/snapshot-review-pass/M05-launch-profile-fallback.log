@@ -1,0 +1,217 @@
+........................................................................ [ 43%]
+.......FFFFFFFFFFFFFFFF............F......F............FFFFFFFFFFFF..... [ 87%]
+...................F                                                     [100%]
+================================== FAILURES ===================================
+_ test_profile_owned_value_is_resolved_before_child_policy[absent-False-terminal] _
+tests\tools\test_child_credential_boundary.py:172: in test_profile_owned_value_is_resolved_before_child_policy
+    assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E   AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E    +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x0000025415BDBE00>('CUSTOM_SHARED_VALUE')
+E    +    where <built-in method get of dict object at 0x0000025415BDBE00> = {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...e_owned_value_is_re0\\profile B', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}.get
+_ test_profile_owned_value_is_resolved_before_child_policy[absent-False-background] _
+tests\tools\test_child_credential_boundary.py:172: in test_profile_owned_value_is_resolved_before_child_policy
+    assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E   AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E    +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x00000254159DBC00>('CUSTOM_SHARED_VALUE')
+E    +    where <built-in method get of dict object at 0x00000254159DBC00> = {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...e_owned_value_is_re1\\profile B', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}.get
+_ test_profile_owned_value_is_resolved_before_child_policy[absent-False-cli] __
+tests\tools\test_child_credential_boundary.py:172: in test_profile_owned_value_is_resolved_before_child_policy
+    assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E   AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E    +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x0000025416C23A40>('CUSTOM_SHARED_VALUE')
+E    +    where <built-in method get of dict object at 0x0000025416C23A40> = {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...e_owned_value_is_re2\\profile B', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}.get
+_ test_profile_owned_value_is_resolved_before_child_policy[absent-False-credential-cli] _
+tests\tools\test_child_credential_boundary.py:172: in test_profile_owned_value_is_resolved_before_child_policy
+    assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E   AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E    +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x0000025415BB1E40>('CUSTOM_SHARED_VALUE')
+E    +    where <built-in method get of dict object at 0x0000025415BB1E40> = {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...e_owned_value_is_re3\\profile B', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}.get
+_ test_profile_owned_value_is_resolved_before_child_policy[absent-True-terminal] _
+tests\tools\test_child_credential_boundary.py:172: in test_profile_owned_value_is_resolved_before_child_policy
+    assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E   AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E    +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x00000254159D4600>('CUSTOM_SHARED_VALUE')
+E    +    where <built-in method get of dict object at 0x00000254159D4600> = {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...e_owned_value_is_re4\\profile A', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}.get
+_ test_profile_owned_value_is_resolved_before_child_policy[absent-True-background] _
+tests\tools\test_child_credential_boundary.py:172: in test_profile_owned_value_is_resolved_before_child_policy
+    assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E   AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E    +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x000002541595C600>('CUSTOM_SHARED_VALUE')
+E    +    where <built-in method get of dict object at 0x000002541595C600> = {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...e_owned_value_is_re5\\profile A', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}.get
+__ test_profile_owned_value_is_resolved_before_child_policy[absent-True-cli] __
+tests\tools\test_child_credential_boundary.py:172: in test_profile_owned_value_is_resolved_before_child_policy
+    assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E   AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E    +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x00000254157A72C0>('CUSTOM_SHARED_VALUE')
+E    +    where <built-in method get of dict object at 0x00000254157A72C0> = {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...e_owned_value_is_re6\\profile A', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}.get
+_ test_profile_owned_value_is_resolved_before_child_policy[absent-True-credential-cli] _
+tests\tools\test_child_credential_boundary.py:172: in test_profile_owned_value_is_resolved_before_child_policy
+    assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E   AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+E    +  where 'TEST_ONLY_SECRET_DO_NOT_USE' = <built-in method get of dict object at 0x00000254159FB9C0>('CUSTOM_SHARED_VALUE')
+E    +    where <built-in method get of dict object at 0x00000254159FB9C0> = {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...e_owned_value_is_re7\\profile A', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}.get
+_ test_profile_owned_value_is_resolved_before_child_policy[benign-False-terminal] _
+tests\tools\test_child_credential_boundary.py:172: in test_profile_owned_value_is_resolved_before_child_policy
+    assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E   AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == 'target-value'
+E
+E     - target-value
+E     + TEST_ONLY_SECRET_DO_NOT_USE
+_ test_profile_owned_value_is_resolved_before_child_policy[benign-False-background] _
+tests\tools\test_child_credential_boundary.py:172: in test_profile_owned_value_is_resolved_before_child_policy
+    assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E   AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == 'target-value'
+E
+E     - target-value
+E     + TEST_ONLY_SECRET_DO_NOT_USE
+_ test_profile_owned_value_is_resolved_before_child_policy[benign-False-cli] __
+tests\tools\test_child_credential_boundary.py:172: in test_profile_owned_value_is_resolved_before_child_policy
+    assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E   AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == 'target-value'
+E
+E     - target-value
+E     + TEST_ONLY_SECRET_DO_NOT_USE
+_ test_profile_owned_value_is_resolved_before_child_policy[benign-False-credential-cli] _
+tests\tools\test_child_credential_boundary.py:172: in test_profile_owned_value_is_resolved_before_child_policy
+    assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E   AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == 'target-value'
+E
+E     - target-value
+E     + TEST_ONLY_SECRET_DO_NOT_USE
+_ test_profile_owned_value_is_resolved_before_child_policy[benign-True-terminal] _
+tests\tools\test_child_credential_boundary.py:172: in test_profile_owned_value_is_resolved_before_child_policy
+    assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E   AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == 'target-value'
+E
+E     - target-value
+E     + TEST_ONLY_SECRET_DO_NOT_USE
+_ test_profile_owned_value_is_resolved_before_child_policy[benign-True-background] _
+tests\tools\test_child_credential_boundary.py:172: in test_profile_owned_value_is_resolved_before_child_policy
+    assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E   AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == 'target-value'
+E
+E     - target-value
+E     + TEST_ONLY_SECRET_DO_NOT_USE
+__ test_profile_owned_value_is_resolved_before_child_policy[benign-True-cli] __
+tests\tools\test_child_credential_boundary.py:172: in test_profile_owned_value_is_resolved_before_child_policy
+    assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E   AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == 'target-value'
+E
+E     - target-value
+E     + TEST_ONLY_SECRET_DO_NOT_USE
+_ test_profile_owned_value_is_resolved_before_child_policy[benign-True-credential-cli] _
+tests\tools\test_child_credential_boundary.py:172: in test_profile_owned_value_is_resolved_before_child_policy
+    assert env.get(key) == ("target-value" if target_kind == "benign" else None)
+E   AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == 'target-value'
+E
+E     - target-value
+E     + TEST_ONLY_SECRET_DO_NOT_USE
+___________ test_multiplex_credential_child_requires_bound_profile ____________
+tests\tools\test_child_credential_boundary.py:190: in test_multiplex_credential_child_requires_bound_profile
+    with pytest.raises(secret_scope.UnscopedSecretError):
+E   Failed: DID NOT RAISE UnscopedSecretError
+_________ test_routed_credential_child_receives_target_provider_only __________
+tests\tools\test_child_credential_boundary.py:242: in test_routed_credential_child_receives_target_provider_only
+    assert child_env("credential-cli")["OPENAI_API_KEY"] == "TEST_ONLY_SERVED"
+E   AssertionError: assert 'TEST_ONLY_LAUNCH' == 'TEST_ONLY_SERVED'
+E
+E     - TEST_ONLY_SERVED
+E     + TEST_ONLY_LAUNCH
+____ test_loaded_profile_name_stays_owned_after_source_file_removal[user] _____
+tests\tools\test_child_credential_boundary.py:309: in test_loaded_profile_name_stays_owned_after_source_file_removal
+    assert key not in child_env("terminal")
+E   AssertionError: assert 'CUSTOM_REMOVED_PROFILE_VALUE' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ded_profile_name_stays0\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ded_profile_name_stays0\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...} = child_env('terminal')
+_____ test_loaded_profile_name_stays_owned_after_source_file_removal[op] ______
+tests\tools\test_child_credential_boundary.py:309: in test_loaded_profile_name_stays_owned_after_source_file_removal
+    assert key not in child_env("terminal")
+E   AssertionError: assert 'CUSTOM_REMOVED_PROFILE_VALUE' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ded_profile_name_stays1\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ded_profile_name_stays1\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...} = child_env('terminal')
+___ test_loaded_profile_name_stays_owned_after_source_file_removal[project] ___
+tests\tools\test_child_credential_boundary.py:309: in test_loaded_profile_name_stays_owned_after_source_file_removal
+    assert key not in child_env("terminal")
+E   AssertionError: assert 'CUSTOM_REMOVED_PROFILE_VALUE' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ded_profile_name_stays2\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ded_profile_name_stays2\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...} = child_env('terminal')
+_______ test_real_cron_profile_context_does_not_relabel_launch_secrets ________
+tests\tools\test_child_credential_boundary.py:325: in test_real_cron_profile_context_does_not_relabel_launch_secrets
+    assert key not in child_env("terminal")
+E   AssertionError: assert 'CUSTOM_CRON_LAUNCH_VALUE' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...l_cron_profile_context0\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...l_cron_profile_context0\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...} = child_env('terminal')
+________ test_extra_cannot_restore_launch_owned_secret[False-terminal] ________
+tests\tools\test_child_credential_boundary.py:340: in test_extra_cannot_restore_launch_owned_secret
+    assert key not in child_env(surface, {extra_key: SECRET})
+E   AssertionError: assert 'CUSTOM_PROFILE_VALUE' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ra_cannot_restore_laun0\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ra_cannot_restore_laun0\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...} = child_env('terminal', {'CUSTOM_PROFILE_VALUE': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+_______ test_extra_cannot_restore_launch_owned_secret[False-background] _______
+tests\tools\test_child_credential_boundary.py:340: in test_extra_cannot_restore_launch_owned_secret
+    assert key not in child_env(surface, {extra_key: SECRET})
+E   AssertionError: assert 'CUSTOM_PROFILE_VALUE' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ra_cannot_restore_laun1\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ra_cannot_restore_laun1\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...} = child_env('background', {'CUSTOM_PROFILE_VALUE': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+__________ test_extra_cannot_restore_launch_owned_secret[False-cli] ___________
+tests\tools\test_child_credential_boundary.py:340: in test_extra_cannot_restore_launch_owned_secret
+    assert key not in child_env(surface, {extra_key: SECRET})
+E   AssertionError: assert 'CUSTOM_PROFILE_VALUE' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ra_cannot_restore_laun2\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ra_cannot_restore_laun2\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...} = child_env('cli', {'CUSTOM_PROFILE_VALUE': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+_____ test_extra_cannot_restore_launch_owned_secret[False-credential-cli] _____
+tests\tools\test_child_credential_boundary.py:340: in test_extra_cannot_restore_launch_owned_secret
+    assert key not in child_env(surface, {extra_key: SECRET})
+E   AssertionError: assert 'CUSTOM_PROFILE_VALUE' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ra_cannot_restore_laun3\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ra_cannot_restore_laun3\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...} = child_env('credential-cli', {'CUSTOM_PROFILE_VALUE': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+________ test_extra_cannot_restore_launch_owned_secret[True-terminal] _________
+tests\tools\test_child_credential_boundary.py:340: in test_extra_cannot_restore_launch_owned_secret
+    assert key not in child_env(surface, {extra_key: SECRET})
+E   AssertionError: assert 'CUSTOM_PROFILE_VALUE' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ra_cannot_restore_laun4\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ra_cannot_restore_laun4\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...} = child_env('terminal', {'_HERMES_FORCE_CUSTOM_PROFILE_VALUE': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+_______ test_extra_cannot_restore_launch_owned_secret[True-background] ________
+tests\tools\test_child_credential_boundary.py:340: in test_extra_cannot_restore_launch_owned_secret
+    assert key not in child_env(surface, {extra_key: SECRET})
+E   AssertionError: assert 'CUSTOM_PROFILE_VALUE' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ra_cannot_restore_laun5\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ra_cannot_restore_laun5\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...} = child_env('background', {'_HERMES_FORCE_CUSTOM_PROFILE_VALUE': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+___________ test_extra_cannot_restore_launch_owned_secret[True-cli] ___________
+tests\tools\test_child_credential_boundary.py:340: in test_extra_cannot_restore_launch_owned_secret
+    assert key not in child_env(surface, {extra_key: SECRET})
+E   AssertionError: assert 'CUSTOM_PROFILE_VALUE' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ra_cannot_restore_laun6\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ra_cannot_restore_laun6\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...} = child_env('cli', {'_HERMES_FORCE_CUSTOM_PROFILE_VALUE': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+_____ test_extra_cannot_restore_launch_owned_secret[True-credential-cli] ______
+tests\tools\test_child_credential_boundary.py:340: in test_extra_cannot_restore_launch_owned_secret
+    assert key not in child_env(surface, {extra_key: SECRET})
+E   AssertionError: assert 'CUSTOM_PROFILE_VALUE' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ra_cannot_restore_laun7\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HERMES_HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\t...ra_cannot_restore_laun7\\target', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-mutation-runtime', ...} = child_env('credential-cli', {'_HERMES_FORCE_CUSTOM_PROFILE_VALUE': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+__________ test_default_windows_launch_home_uses_canonical_resolver ___________
+tests\tools\test_child_credential_boundary.py:394: in test_default_windows_launch_home_uses_canonical_resolver
+    assert key not in child_env("terminal")
+E   AssertionError: assert 'CUSTOM_DEFAULT_PROFILE_VALUE' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...} = child_env('terminal')
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-False-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-False-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-False-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-False-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-True-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-True-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-True-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[absent-True-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-False-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-False-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-False-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-False-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-True-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-True-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-True-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_profile_owned_value_is_resolved_before_child_policy[benign-True-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_multiplex_credential_child_requires_bound_profile
+FAILED tests/tools/test_child_credential_boundary.py::test_routed_credential_child_receives_target_provider_only
+FAILED tests/tools/test_child_credential_boundary.py::test_loaded_profile_name_stays_owned_after_source_file_removal[user]
+FAILED tests/tools/test_child_credential_boundary.py::test_loaded_profile_name_stays_owned_after_source_file_removal[op]
+FAILED tests/tools/test_child_credential_boundary.py::test_loaded_profile_name_stays_owned_after_source_file_removal[project]
+FAILED tests/tools/test_child_credential_boundary.py::test_real_cron_profile_context_does_not_relabel_launch_secrets
+FAILED tests/tools/test_child_credential_boundary.py::test_extra_cannot_restore_launch_owned_secret[False-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_extra_cannot_restore_launch_owned_secret[False-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_extra_cannot_restore_launch_owned_secret[False-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_extra_cannot_restore_launch_owned_secret[False-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_extra_cannot_restore_launch_owned_secret[True-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_extra_cannot_restore_launch_owned_secret[True-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_extra_cannot_restore_launch_owned_secret[True-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_extra_cannot_restore_launch_owned_secret[True-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_default_windows_launch_home_uses_canonical_resolver
+31 failed, 133 passed in 11.69s

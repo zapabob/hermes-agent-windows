@@ -1,0 +1,125 @@
+{
+  "symbol": "_is_user_authorized",
+  "callers": [
+    {
+      "name": "test_own_policy_allowlist_authorized_without_env_allowlist",
+      "kind": "function",
+      "filePath": "tests/gateway/test_config_driven_access_policy.py",
+      "startLine": 136
+    },
+    {
+      "name": "test_stored_route_cannot_reuse_prior_adapter_authorization",
+      "kind": "function",
+      "filePath": "tests/gateway/test_config_driven_access_policy.py",
+      "startLine": 153
+    },
+    {
+      "name": "test_own_policy_open_dm_authorized_with_gateway_allow_all",
+      "kind": "function",
+      "filePath": "tests/gateway/test_config_driven_access_policy.py",
+      "startLine": 172
+    },
+    {
+      "name": "test_own_policy_open_dm_not_authorized_without_allowlist",
+      "kind": "function",
+      "filePath": "tests/gateway/test_config_driven_access_policy.py",
+      "startLine": 185
+    },
+    {
+      "name": "test_own_policy_default_open_dm_is_fail_closed",
+      "kind": "function",
+      "filePath": "tests/gateway/test_config_driven_access_policy.py",
+      "startLine": 202
+    },
+    {
+      "name": "test_own_policy_allowlist_authorized_for_group_chat",
+      "kind": "function",
+      "filePath": "tests/gateway/test_config_driven_access_policy.py",
+      "startLine": 219
+    },
+    {
+      "name": "test_own_policy_open_group_not_authorized_without_allowlist",
+      "kind": "function",
+      "filePath": "tests/gateway/test_config_driven_access_policy.py",
+      "startLine": 231
+    },
+    {
+      "name": "test_wecom_open_group_with_per_group_sender_allowlist_is_authorized",
+      "kind": "function",
+      "filePath": "tests/gateway/test_config_driven_access_policy.py",
+      "startLine": 282
+    },
+    {
+      "name": "test_discord_bot_authorized_when_allow_bots_mentions",
+      "kind": "function",
+      "filePath": "tests/gateway/test_discord_bot_auth_bypass.py",
+      "startLine": 83
+    },
+    {
+      "name": "test_bot_bypass_does_not_leak_to_other_platforms",
+      "kind": "function",
+      "filePath": "tests/gateway/test_discord_bot_auth_bypass.py",
+      "startLine": 101
+    },
+    {
+      "name": "test_discord_role_config_does_not_bypass_gateway_allowlist",
+      "kind": "function",
+      "filePath": "tests/gateway/test_discord_bot_auth_bypass.py",
+      "startLine": 132
+    },
+    {
+      "name": "test_discord_role_config_does_not_leak_to_other_platforms",
+      "kind": "function",
+      "filePath": "tests/gateway/test_discord_bot_auth_bypass.py",
+      "startLine": 148
+    },
+    {
+      "name": "test_feishu_human_still_checked_against_allowlist_when_bot_policy_set",
+      "kind": "function",
+      "filePath": "tests/gateway/test_feishu_bot_auth_bypass.py",
+      "startLine": 61
+    },
+    {
+      "name": "test_feishu_bot_bypass_does_not_leak_to_other_platforms",
+      "kind": "function",
+      "filePath": "tests/gateway/test_feishu_bot_auth_bypass.py",
+      "startLine": 71
+    },
+    {
+      "name": "test_allowlist_matches_when_user_id_is_email",
+      "kind": "method",
+      "filePath": "tests/gateway/test_google_chat.py",
+      "startLine": 1604
+    },
+    {
+      "name": "test_mid_turn_authorization_reads_admitting_transport_allowlist",
+      "kind": "function",
+      "filePath": "tests/gateway/test_multiplex_mid_turn_authz.py",
+      "startLine": 86
+    },
+    {
+      "name": "test_default_profile_still_trusts_own_allowlist",
+      "kind": "function",
+      "filePath": "tests/gateway/test_multiplex_profile_authz.py",
+      "startLine": 53
+    },
+    {
+      "name": "test_paired_user_authorized_even_when_not_in_allowlist",
+      "kind": "function",
+      "filePath": "tests/gateway/test_pairing_allowlist_bypass.py",
+      "startLine": 62
+    },
+    {
+      "name": "test_unpaired_user_in_allowlist_still_authorized",
+      "kind": "function",
+      "filePath": "tests/gateway/test_pairing_allowlist_bypass.py",
+      "startLine": 70
+    },
+    {
+      "name": "test_revoke_whatsapp_sole_entry_denies_live_adapter_without_restart",
+      "kind": "function",
+      "filePath": "tests/gateway/test_pairing_allowlist_bypass.py",
+      "startLine": 216
+    }
+  ]
+}

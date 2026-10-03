@@ -1,0 +1,46 @@
+[
+  {
+    "node": {
+      "id": "function:16762280b0ebfce7903da5c62513b03b",
+      "kind": "function",
+      "name": "_cron_profile_context",
+      "qualifiedName": "_cron_profile_context",
+      "filePath": "cron/scheduler.py",
+      "language": "python",
+      "startLine": 1651,
+      "endLine": 1696,
+      "startColumn": 0,
+      "endColumn": 55,
+      "signature": "(job: dict)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790988193357
+    },
+    "score": 118.9120748507394
+  },
+  {
+    "node": {
+      "id": "function:f6e8e60a276f2416bd50a1e755638f6b",
+      "kind": "function",
+      "name": "test_real_cron_profile_context_does_not_relabel_launch_secrets",
+      "qualifiedName": "test_real_cron_profile_context_does_not_relabel_launch_secrets",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "language": "python",
+      "startLine": 313,
+      "endLine": 325,
+      "startColumn": 0,
+      "endColumn": 47,
+      "signature": "(tmp_path, monkeypatch)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790993455567
+    },
+    "score": 33.1081331220055
+  }
+]

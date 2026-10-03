@@ -1,0 +1,80 @@
+{
+  "symbol": "_verify_sender_authentication",
+  "depth": 2,
+  "nodeCount": 12,
+  "edgeCount": 11,
+  "affected": [
+    {
+      "name": "_verify_sender_authentication",
+      "kind": "function",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 425
+    },
+    {
+      "name": "_verify",
+      "kind": "method",
+      "filePath": "tests/gateway/test_email.py",
+      "startLine": 1075
+    },
+    {
+      "name": "test_dmarc_pass_authenticates",
+      "kind": "method",
+      "filePath": "tests/gateway/test_email.py",
+      "startLine": 1084
+    },
+    {
+      "name": "test_dkim_pass_aligned_authenticates",
+      "kind": "method",
+      "filePath": "tests/gateway/test_email.py",
+      "startLine": 1092
+    },
+    {
+      "name": "test_spf_pass_misaligned_rejected",
+      "kind": "method",
+      "filePath": "tests/gateway/test_email.py",
+      "startLine": 1099
+    },
+    {
+      "name": "test_injected_header_below_trusted_does_not_authenticate",
+      "kind": "method",
+      "filePath": "tests/gateway/test_email.py",
+      "startLine": 1108
+    },
+    {
+      "name": "_parse_fetched_message",
+      "kind": "method",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 971
+    },
+    {
+      "name": "_fetch_new_messages",
+      "kind": "method",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 890
+    },
+    {
+      "name": "test_native_inbound_parse_to_dispatch",
+      "kind": "function",
+      "filePath": "tests/gateway/test_email_auth_clauses.py",
+      "startLine": 73
+    },
+    {
+      "name": "test_injected_or_ambiguous_verdict_is_denied",
+      "kind": "function",
+      "filePath": "tests/gateway/test_email_auth_clauses.py",
+      "startLine": 56
+    },
+    {
+      "name": "test_legitimate_receiving_server_verdict_is_accepted",
+      "kind": "function",
+      "filePath": "tests/gateway/test_email_auth_clauses.py",
+      "startLine": 64
+    },
+    {
+      "name": "test_email_auth_clauses.py",
+      "kind": "file",
+      "filePath": "tests/gateway/test_email_auth_clauses.py",
+      "startLine": 1
+    }
+  ]
+}

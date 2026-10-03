@@ -1,0 +1,26 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 5 test files (~118 tests) under ['tests\\gateway\\test_platform_registry.py', 'tests\\providers\\test_provider_registry.py', 'tests\\providers\\test_plugin_discovery.py', 'tests\\hermes_cli\\test_config.py', 'tests\\hermes_cli\\test_env_custom_keys.py']; running with -j 1
+[ 23.7% |    28/~118 | ✓35 | ✗ 0] ✓ tests\gateway\test_platform_registry.py (35✓, 19.2s)
+[ 93.2% |   110/~118 | ✓149 | ✗  0] ✓ tests\hermes_cli\test_config.py (114✓, 11.5s)
+[ 95.8% |   113/~118 | ✓152 | ✗  0] ✓ tests\hermes_cli\test_env_custom_keys.py (3✓, 7.7s)
+[ 98.3% |   116/~118 | ✓155 | ✗  0] ✓ tests\providers\test_plugin_discovery.py (3✓, 2.5s)
+[100.0% |   118/~118 | ✓157 | ✗  0] ✓ tests\providers\test_provider_registry.py (2✓, 2.0s)
+
+=== Summary: 5 files, 157 tests passed, 0 failed (100% complete) in 42.8s (1 workers) ===
+  Durations cached to test_durations.json (5 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   5
+  Total subprocess CPU-wall: 42.8s  (runner wall: 42.8s, parallelism: 1x)
+  P50: 7.67s  P90: 19.19s  P95: 19.19s  P99: 19.19s  Max: 19.19s
+  <1s: 0 files (0%)  <2s: 1 files (20%)
+  Top 10 slowest:
+     19.19s  tests\gateway\test_platform_registry.py
+     11.47s  tests\hermes_cli\test_config.py
+      7.67s  tests\hermes_cli\test_env_custom_keys.py
+      2.51s  tests\providers\test_plugin_discovery.py
+      1.97s  tests\providers\test_provider_registry.py

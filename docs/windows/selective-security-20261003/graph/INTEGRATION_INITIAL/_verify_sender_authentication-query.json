@@ -1,0 +1,24 @@
+[
+  {
+    "node": {
+      "id": "function:51039681b262c03d41e7b7cbfab450cc",
+      "kind": "function",
+      "name": "_verify_sender_authentication",
+      "qualifiedName": "_verify_sender_authentication",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "language": "python",
+      "startLine": 389,
+      "endLine": 466,
+      "startColumn": 0,
+      "endColumn": 60,
+      "signature": "(\n    msg: email_lib.message.Message,\n    from_addr: str,\n    *,\n    authserv_id: str = \"\",\n) -> Tuple[bool, str]",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982595436
+    },
+    "score": 114.31827754073814
+  }
+]

@@ -1198,11 +1198,7 @@ def _run_command_tts(
     from agent.delegation_context import delegated_child_subprocess_env
     from tools.environments.local import hermes_subprocess_env
 
-    scrubbed = hermes_subprocess_env(inherit_credentials=False)
-    for key in env_passthrough or []:
-        value = os.environ.get(key)
-        if value is not None:
-            scrubbed[key] = value
+    scrubbed = hermes_subprocess_env(credential_keys=env_passthrough or ())
     popen_kwargs: Dict[str, Any] = {
         "shell": True,
         "stdout": subprocess.PIPE,
@@ -1212,7 +1208,7 @@ def _run_command_tts(
         # must not raise in the reader threads on non-UTF-8 Windows (#45099).
         "encoding": "utf-8",
         "errors": "replace",
-        "env": delegated_child_subprocess_env(scrubbed),
+        "env": delegated_child_subprocess_env(scrubbed, allowed_provider_credentials=env_passthrough or ()),
     }
     if os.name == "nt":
         popen_kwargs["creationflags"] = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)

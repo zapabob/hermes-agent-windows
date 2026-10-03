@@ -1,0 +1,8 @@
+{
+  "reviewer_agent": "01a0fef5-982a-7b82-a926-02264bf34f0e",
+  "result": "PASS",
+  "findings": [],
+  "reviewed_owner_sha256": "fb5237da6ae7c7efeaf5fae7cd51aad87c8e8ba7a0c7adf71281ce07b6f75e97",
+  "reviewed_test_sha256": "9b14660b2dbfd0ae6fe7914ea067b79c940d2f8fb5353d52a8e6d45b17474943",
+  "scope": "Pinned upstream commit/U_TARGET, D_BASE owner, exact candidate diff, RED/GREEN/regression, mutations, native dispatch, fresh CodeGraph."
+}

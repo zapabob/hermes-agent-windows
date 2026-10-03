@@ -1,0 +1,73 @@
+{
+  "revision": "c20e98f1370c588645d796047788e3b6f9cc749d",
+  "tree": "7b943000699b7194acdaf2d16d4564a77e8af44c",
+  "root": "H:\\hermes-worktrees\\p0-p1-selective-20261003",
+  "tool_version": "1.6.0",
+  "status": {
+    "initialized": true,
+    "version": "1.6.0",
+    "projectPath": "H:\\hermes-worktrees\\p0-p1-selective-20261003",
+    "indexPath": "H:\\hermes-worktrees\\p0-p1-selective-20261003\\.codegraph",
+    "lastIndexed": "2026-10-02T23:02:18.918Z",
+    "fileCount": 9014,
+    "nodeCount": 194122,
+    "edgeCount": 610078,
+    "dbSizeBytes": 652849152,
+    "walSizeBytes": 0,
+    "backend": "node-sqlite",
+    "journalMode": "wal",
+    "nodesByKind": {
+      "class": 13169,
+      "component": 64,
+      "constant": 5830,
+      "enum": 8,
+      "enum_member": 25,
+      "field": 10,
+      "file": 8680,
+      "function": 61653,
+      "import": 42815,
+      "interface": 2179,
+      "method": 42320,
+      "namespace": 1,
+      "property": 1472,
+      "route": 397,
+      "struct": 33,
+      "type_alias": 887,
+      "variable": 14579
+    },
+    "languages": [
+      "c",
+      "cpp",
+      "csharp",
+      "go",
+      "javascript",
+      "liquid",
+      "nix",
+      "php",
+      "python",
+      "rust",
+      "tsx",
+      "typescript",
+      "yaml"
+    ],
+    "pendingChanges": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "worktreeMismatch": null,
+    "index": {
+      "builtWithVersion": null,
+      "builtWithExtractionVersion": null,
+      "currentExtractionVersion": 25,
+      "reindexRecommended": true,
+      "state": "complete",
+      "pendingRefs": 0
+    }
+  },
+  "owner_source_sha256": {
+    "plugins/platforms/email/adapter.py": "a7b6724a68e33e7243af5478f9efc743717caefc9265552e770fd8656234d703",
+    "gateway/authz_mixin.py": "aa6318fb1fdcf61cd9d71f4d5214012809750881f18b7e898f52b339fc734fa4"
+  },
+  "limitation": "Name-based graph fallback can falsely resolve builtins to unrelated same-name symbols; source audit remains required."
+}

@@ -1,0 +1,107 @@
+{
+  "symbol": "_make_run_env",
+  "callees": [
+    {
+      "name": "_profile_child_base",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 543
+    },
+    {
+      "name": "_plugin_terminal_env_strip_keys",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 476
+    },
+    {
+      "name": "_provider_secret_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 384
+    },
+    {
+      "name": "_is_hermes_internal_secret",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 421
+    },
+    {
+      "name": "search",
+      "kind": "method",
+      "filePath": "tests/agent/test_file_safety_credentials.py",
+      "startLine": 127
+    },
+    {
+      "name": "_path_env_key",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 1608
+    },
+    {
+      "name": "_append_missing_sane_path_entries",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 1529
+    },
+    {
+      "name": "_prepend_git_bash_dirs",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 1329
+    },
+    {
+      "name": "_prepend_hermes_bin_dir",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 1469
+    },
+    {
+      "name": "_inject_context_hermes_home",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 531
+    },
+    {
+      "name": "apply_subprocess_home_env",
+      "kind": "function",
+      "filePath": "hermes_constants.py",
+      "startLine": 1179
+    },
+    {
+      "name": "_inject_session_context_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 594
+    },
+    {
+      "name": "_strip_hermes_owned_pythonpath_and_runtime_markers",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 1876
+    },
+    {
+      "name": "_apply_windows_msys_bash_env_defaults",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 1585
+    },
+    {
+      "name": "_scrub_delegated_child_kanban_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 709
+    },
+    {
+      "name": "_CREDENTIAL_ENV_NAME_RE",
+      "kind": "variable",
+      "filePath": "tools/environments/local.py",
+      "startLine": 825
+    },
+    {
+      "name": "_HERMES_PROVIDER_ENV_FORCE_PREFIX",
+      "kind": "variable",
+      "filePath": "tools/environments/local.py",
+      "startLine": 207
+    }
+  ]
+}

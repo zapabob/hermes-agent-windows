@@ -189,16 +189,26 @@ class TestFindBashWindows:
             env = LocalEnvironment(cwd=str(tmp_path), timeout=10)
 
         env.windows_bash_path_style = "wsl"
-        env._snapshot_path = r"C:/Users/NVIDIA/.hermes/cache/terminal/snap.sh"
-        env._cwd_file = r"C:/Users/NVIDIA/.hermes/cache/terminal/cwd.txt"
+        snapshot = tmp_path / "Snapshot Workspace" / "snap.sh"
+        snapshot.parent.mkdir()
+        snapshot.write_text('declare -x ORDINARY_EXPORT="kept"\n', encoding="utf-8")
+        env._snapshot_path = str(snapshot)
+        env._cwd_file = str(snapshot.parent / "cwd.txt")
         env._snapshot_ready = True
 
-        script = env._wrap_command("pwd", r"C:\Users\NVIDIA")
-
-        assert "source /c/Users/NVIDIA/.hermes/cache/terminal/snap.sh" in script
-        assert "__HERMES_CWD_" in script
-        assert '"$(pwd -P)"' in script
-        assert "pwd -P > /c/Users/NVIDIA/.hermes/cache/terminal/cwd.txt" not in script
+        try:
+            script = env._wrap_command("pwd", r"C:\Users\NVIDIA")
+            pinned = next(iter(env._snapshot_copies.values()))[0]
+            from pathlib import Path
+            assert Path(pinned).read_bytes() == snapshot.read_bytes()
+            assert f"source {env._quote_shell_path(pinned)}" in script
+            assert f"source {env._quote_shell_path(env._snapshot_path)}" not in script
+            assert f"mv -f \"$__hermes_snap_tmp\" {env._quote_shell_path(env._snapshot_path)}" in script
+            assert "__HERMES_CWD_" in script
+            assert '"$(pwd -P)"' in script
+            assert "builtin cd -- /c/Users/NVIDIA" in script
+        finally:
+            env.cleanup()
 
 
 # ---------------------------------------------------------------------------

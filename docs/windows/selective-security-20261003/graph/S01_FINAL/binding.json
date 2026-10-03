@@ -1,0 +1,77 @@
+{
+  "revision": "17ad2e370a7f9e7f01fb5ee617ef4e96d62635d0",
+  "tree": "491401073a0d08c4725ad9ec98a9fe889ba275e2",
+  "root": "H:\\hermes-worktrees\\p0-p1-local-20261003",
+  "tool_version": "1.6.0",
+  "status": {
+    "initialized": true,
+    "version": "1.6.0",
+    "projectPath": "H:\\hermes-worktrees\\p0-p1-local-20261003",
+    "indexPath": "H:\\hermes-worktrees\\p0-p1-local-20261003\\.codegraph",
+    "lastIndexed": "2026-10-02T23:37:56.740Z",
+    "fileCount": 9015,
+    "nodeCount": 194139,
+    "edgeCount": 610115,
+    "dbSizeBytes": 648773632,
+    "walSizeBytes": 0,
+    "backend": "node-sqlite",
+    "journalMode": "wal",
+    "nodesByKind": {
+      "class": 13169,
+      "component": 64,
+      "constant": 5830,
+      "enum": 8,
+      "enum_member": 25,
+      "field": 10,
+      "file": 8681,
+      "function": 61660,
+      "import": 42821,
+      "interface": 2179,
+      "method": 42320,
+      "namespace": 1,
+      "property": 1472,
+      "route": 397,
+      "struct": 33,
+      "type_alias": 887,
+      "variable": 14582
+    },
+    "languages": [
+      "c",
+      "cpp",
+      "csharp",
+      "go",
+      "javascript",
+      "liquid",
+      "nix",
+      "php",
+      "python",
+      "rust",
+      "tsx",
+      "typescript",
+      "yaml"
+    ],
+    "pendingChanges": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "worktreeMismatch": null,
+    "index": {
+      "builtWithVersion": null,
+      "builtWithExtractionVersion": null,
+      "currentExtractionVersion": 25,
+      "reindexRecommended": true,
+      "state": "complete",
+      "pendingRefs": 0
+    }
+  },
+  "owner_source_sha256": {
+    "plugins/platforms/email/adapter.py": "fb5237da6ae7c7efeaf5fae7cd51aad87c8e8ba7a0c7adf71281ce07b6f75e97",
+    "gateway/authz_mixin.py": "aa6318fb1fdcf61cd9d71f4d5214012809750881f18b7e898f52b339fc734fa4"
+  },
+  "limitation": "Name-based graph fallback can falsely resolve builtins to unrelated same-name symbols; source audit remains required.",
+  "verification_candidate_head": "cfe11cab3164f8d9f1ff6b8b6a181e49c869875d",
+  "verification_candidate_tree": "f4a3bdc8152a23534c7f1c6593873f56fc9b1dd6",
+  "integration_worktree_dirty": true,
+  "source_binding_note": "Revision is integration parent; indexed working owner/test bytes match the clean verification candidate. Family commit is deliberately deferred until independent review."
+}

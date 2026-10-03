@@ -1,0 +1,100 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 1 test files (~9 tests) under ['tests\\tools\\test_child_credential_windows_native.py']; running with -j 1
+[100.0% |     9/~9 | ✓0 | ✗1] ✗ tests\tools\test_child_credential_windows_native.py (1✗, 5.9s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_windows_native.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║         from agent import secret_scope
+  ║         from tools import env_passthrough
+  ║         launch, served_a, served_b = (tmp_path / name for name in ("launch", "served-A", "served-B"))
+  ║         for home in (launch, served_a, served_b):
+  ║             home.mkdir()
+  ║         monkeypatch.setenv("HERMES_HOME", str(launch))
+  ║         monkeypatch.setattr(local, "_resolve_shell_init_files", lambda: [])
+  ║         environment = local.LocalEnvironment(cwd=str(launch), timeout=20)
+  ║         monkeypatch.setattr(secret_scope, "_MULTIPLEX_ACTIVE", True)
+  ║         home_token = set_hermes_home_override(served_a)
+  ║         scope_token = secret_scope.set_secret_scope({"SERVICE_TOKEN": "TEST_ONLY_SCOPE_A"})
+  ║         try:
+  ║             env_passthrough.register_env_passthrough(["SERVICE_TOKEN"])
+  ║             assert environment.execute("readonly SERVICE_TOKEN")["returncode"] == 0
+  ║             assert "declare -rx SERVICE_TOKEN=" in Path(environment._snapshot_path).read_text(encoding="utf-8")
+  ║             secret_scope.reset_secret_scope(scope_token)
+  ║             reset_hermes_home_override(home_token)
+  ║             home_token = set_hermes_home_override(served_b)
+  ║             scope_token = secret_scope.set_secret_scope({})
+  ║             env_passthrough.clear_env_passthrough()
+  ║             assert "SERVICE_TOKEN" not in local._make_run_env(environment.env)
+  ║             marker = tmp_path / "foreign-value.txt"
+  ║             command = "printf '%s' \"$SERVICE_TOKEN\" > " + shlex.quote(marker.as_posix())
+  ║ >           with pytest.raises(RuntimeError, match="readonly.*snapshot"):
+  ║ E           Failed: DID NOT RAISE RuntimeError
+  ║
+  ║ tests\tools\test_child_credential_windows_native.py:354: Failed
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_readonly_prior_scope_history_refuses_foreign_snapshot
+  ║ 1 failed, 27 deselected in 4.34s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_windows_native.py -q -k readonly_prior_scope_history
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+
+=== Summary: 1 files, 0 tests passed, 1 failed (100% complete) in 5.9s (1 workers) ===
+  Durations cached to test_durations.json (1 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   1
+  Total subprocess CPU-wall: 5.9s  (runner wall: 5.9s, parallelism: 1x)
+  P50: 5.88s  P90: 5.88s  P95: 5.88s  P99: 5.88s  Max: 5.88s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+      5.88s  tests\tools\test_child_credential_windows_native.py
+
+=== Failure output ===
+
+--- tests\tools\test_child_credential_windows_native.py ---
+F                                                                        [100%]
+================================== FAILURES ===================================
+_________ test_readonly_prior_scope_history_refuses_foreign_snapshot __________
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-13awhage/pytest-of-unknown/pytest-0/test_readonly_prior_scope_hist0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002AE05A4C790>
+
+    def test_readonly_prior_scope_history_refuses_foreign_snapshot(tmp_path, monkeypatch):
+        from pathlib import Path
+        from agent import secret_scope
+        from tools import env_passthrough
+        launch, served_a, served_b = (tmp_path / name for name in ("launch", "served-A", "served-B"))
+        for home in (launch, served_a, served_b):
+            home.mkdir()
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setattr(local, "_resolve_shell_init_files", lambda: [])
+        environment = local.LocalEnvironment(cwd=str(launch), timeout=20)
+        monkeypatch.setattr(secret_scope, "_MULTIPLEX_ACTIVE", True)
+        home_token = set_hermes_home_override(served_a)
+        scope_token = secret_scope.set_secret_scope({"SERVICE_TOKEN": "TEST_ONLY_SCOPE_A"})
+        try:
+            env_passthrough.register_env_passthrough(["SERVICE_TOKEN"])
+            assert environment.execute("readonly SERVICE_TOKEN")["returncode"] == 0
+            assert "declare -rx SERVICE_TOKEN=" in Path(environment._snapshot_path).read_text(encoding="utf-8")
+            secret_scope.reset_secret_scope(scope_token)
+            reset_hermes_home_override(home_token)
+            home_token = set_hermes_home_override(served_b)
+            scope_token = secret_scope.set_secret_scope({})
+            env_passthrough.clear_env_passthrough()
+            assert "SERVICE_TOKEN" not in local._make_run_env(environment.env)
+            marker = tmp_path / "foreign-value.txt"
+            command = "printf '%s' \"$SERVICE_TOKEN\" > " + shlex.quote(marker.as_posix())
+>           with pytest.raises(RuntimeError, match="readonly.*snapshot"):
+E           Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_windows_native.py:354: Failed
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_windows_native.py::test_readonly_prior_scope_history_refuses_foreign_snapshot
+1 failed, 27 deselected in 4.34s
+
+=== 1 file with test failures (1 test failed) ===
+  tests\tools\test_child_credential_windows_native.py  (1 test failed)

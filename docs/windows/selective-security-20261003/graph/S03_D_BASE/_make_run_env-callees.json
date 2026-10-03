@@ -1,0 +1,83 @@
+{
+  "symbol": "_make_run_env",
+  "callees": [
+    {
+      "name": "_is_hermes_internal_secret",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 400
+    },
+    {
+      "name": "_path_env_key",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 1482
+    },
+    {
+      "name": "_append_missing_sane_path_entries",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 1403
+    },
+    {
+      "name": "_prepend_git_bash_dirs",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 1203
+    },
+    {
+      "name": "_prepend_hermes_bin_dir",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 1343
+    },
+    {
+      "name": "_inject_context_hermes_home",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 461
+    },
+    {
+      "name": "apply_subprocess_home_env",
+      "kind": "function",
+      "filePath": "hermes_constants.py",
+      "startLine": 1179
+    },
+    {
+      "name": "_inject_session_context_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 473
+    },
+    {
+      "name": "_strip_hermes_owned_pythonpath_and_runtime_markers",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 1746
+    },
+    {
+      "name": "_apply_windows_msys_bash_env_defaults",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 1459
+    },
+    {
+      "name": "_scrub_delegated_child_kanban_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 597
+    },
+    {
+      "name": "_HERMES_PROVIDER_ENV_BLOCKLIST",
+      "kind": "variable",
+      "filePath": "tools/environments/local.py",
+      "startLine": 372
+    },
+    {
+      "name": "_HERMES_PROVIDER_ENV_FORCE_PREFIX",
+      "kind": "variable",
+      "filePath": "tools/environments/local.py",
+      "startLine": 205
+    }
+  ]
+}

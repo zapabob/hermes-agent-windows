@@ -1,0 +1,279 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 2 test files (~46 tests) under ['tests\\tools\\test_child_credential_boundary.py', 'tests\\tools\\test_child_credential_windows_native.py']; running with -j 1
+[ 82.6% |    38/~46 | ✓1 | ✗3] ✗ tests\tools\test_child_credential_boundary.py (1✓ 3✗, 5.0s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_boundary.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║ monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000024F2CB69FD0>
+  ║ surface = 'cli'
+  ║
+  ║     @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+  ║     def test_startup_sdk_registration_preserves_general_aws_credentials(monkeypatch, surface):
+  ║         import providers
+  ║         from providers.base import ProviderProfile
+  ║         from hermes_cli import config
+  ║         keys = ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN")
+  ║         monkeypatch.setattr(providers, "list_providers", lambda: [ProviderProfile(
+  ║             name="test-startup-sdk", auth_type="aws_sdk", env_vars=keys,
+  ║         )])
+  ║         monkeypatch.setattr(config, "OPTIONAL_ENV_VARS", {k: v for k, v in config.OPTIONAL_ENV_VARS.items() if k not in keys})
+  ║         monkeypatch.setattr(config, "_profile_env_vars_injected", False)
+  ║         config._inject_profile_env_vars()
+  ║         # Execute the same static-owner derivation used during local import.
+  ║         monkeypatch.setattr(local, "_HERMES_PROVIDER_ENV_BLOCKLIST", local._build_provider_env_blocklist())
+  ║         for key in keys:
+  ║             monkeypatch.setenv(key, SECRET)
+  ║         env = child_env(surface)
+  ║ >       assert all(env.get(key) == SECRET for key in keys)
+  ║ E       assert False
+  ║ E        +  where False = all(<generator object test_startup_sdk_registration_preserves_general_aws_credentials.<locals>.<genexpr> at 0x0000024F2F362F80>)
+  ║
+  ║ tests\tools\test_child_credential_boundary.py:625: AssertionError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_startup_sdk_registration_preserves_general_aws_credentials[terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_startup_sdk_registration_preserves_general_aws_credentials[background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_startup_sdk_registration_preserves_general_aws_credentials[cli]
+  ║ 3 failed, 1 passed, 211 deselected in 3.34s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_boundary.py -q -k startup_sdk_registration or parallel_benign_scope
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+[100.0% |    46/~46 | ✓1 | ✗4] ✗ tests\tools\test_child_credential_windows_native.py (1✗, 5.7s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_windows_native.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║                   stdin_data: str | None = None) -> subprocess.Popen:
+  ║         lock = getattr(self, "_snapshot_copy_lock", None)
+  ║         snapshot = None
+  ║         if lock is not None:
+  ║             with lock:
+  ║                 snapshot = self._snapshot_copies.pop(cmd_string, None)
+  ║         pinned = snapshot[0] if snapshot else None
+  ║         policy_token = None
+  ║         try:
+  ║             # One immutable policy for this spawn's wrapper and environment.
+  ║             # Concurrent registration after this boundary belongs to the next
+  ║             # operation; it cannot make these two consumers disagree.
+  ║             policy = (_plugin_terminal_env_strip_keys(), _provider_secret_env())
+  ║             policy_token = _CHILD_SECRET_POLICY.set(policy)
+  ║             if snapshot:
+  ║                 self._snapshot_read_context.text = Path(pinned).read_text(encoding="utf-8")
+  ║                 try:
+  ║                     current = self._snapshot_excluded_passthrough_names()
+  ║                 finally:
+  ║                     del self._snapshot_read_context.text
+  ║                     if hasattr(self._snapshot_read_context, "excluded"):
+  ║                         del self._snapshot_read_context.excluded
+  ║                 if current != snapshot[1]:
+  ║ >                   raise RuntimeError("Terminal credential declaration authority changed before spawn")
+  ║ E                   RuntimeError: Terminal credential declaration authority changed before spawn
+  ║
+  ║ tools\environments\local.py:2243: RuntimeError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_parallel_benign_scope_history_does_not_refuse_native_commands
+  ║ 1 failed, 26 deselected in 4.05s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_windows_native.py -q -k startup_sdk_registration or parallel_benign_scope
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+
+=== Summary: 2 files, 1 tests passed, 4 failed (100% complete) in 10.7s (1 workers) ===
+  Durations cached to test_durations.json (2 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   2
+  Total subprocess CPU-wall: 10.7s  (runner wall: 10.7s, parallelism: 1x)
+  P50: 5.69s  P90: 5.69s  P95: 5.69s  P99: 5.69s  Max: 5.69s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+      5.69s  tests\tools\test_child_credential_windows_native.py
+      5.03s  tests\tools\test_child_credential_boundary.py
+
+=== Failure output ===
+
+--- tests\tools\test_child_credential_boundary.py ---
+FFF.                                                                     [100%]
+================================== FAILURES ===================================
+__ test_startup_sdk_registration_preserves_general_aws_credentials[terminal] __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000024F2CB6A0D0>
+surface = 'terminal'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_startup_sdk_registration_preserves_general_aws_credentials(monkeypatch, surface):
+        import providers
+        from providers.base import ProviderProfile
+        from hermes_cli import config
+        keys = ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN")
+        monkeypatch.setattr(providers, "list_providers", lambda: [ProviderProfile(
+            name="test-startup-sdk", auth_type="aws_sdk", env_vars=keys,
+        )])
+        monkeypatch.setattr(config, "OPTIONAL_ENV_VARS", {k: v for k, v in config.OPTIONAL_ENV_VARS.items() if k not in keys})
+        monkeypatch.setattr(config, "_profile_env_vars_injected", False)
+        config._inject_profile_env_vars()
+        # Execute the same static-owner derivation used during local import.
+        monkeypatch.setattr(local, "_HERMES_PROVIDER_ENV_BLOCKLIST", local._build_provider_env_blocklist())
+        for key in keys:
+            monkeypatch.setenv(key, SECRET)
+        env = child_env(surface)
+>       assert all(env.get(key) == SECRET for key in keys)
+E       assert False
+E        +  where False = all(<generator object test_startup_sdk_registration_preserves_general_aws_credentials.<locals>.<genexpr> at 0x0000024F2F18D700>)
+
+tests\tools\test_child_credential_boundary.py:625: AssertionError
+_ test_startup_sdk_registration_preserves_general_aws_credentials[background] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000024F2CB69D10>
+surface = 'background'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_startup_sdk_registration_preserves_general_aws_credentials(monkeypatch, surface):
+        import providers
+        from providers.base import ProviderProfile
+        from hermes_cli import config
+        keys = ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN")
+        monkeypatch.setattr(providers, "list_providers", lambda: [ProviderProfile(
+            name="test-startup-sdk", auth_type="aws_sdk", env_vars=keys,
+        )])
+        monkeypatch.setattr(config, "OPTIONAL_ENV_VARS", {k: v for k, v in config.OPTIONAL_ENV_VARS.items() if k not in keys})
+        monkeypatch.setattr(config, "_profile_env_vars_injected", False)
+        config._inject_profile_env_vars()
+        # Execute the same static-owner derivation used during local import.
+        monkeypatch.setattr(local, "_HERMES_PROVIDER_ENV_BLOCKLIST", local._build_provider_env_blocklist())
+        for key in keys:
+            monkeypatch.setenv(key, SECRET)
+        env = child_env(surface)
+>       assert all(env.get(key) == SECRET for key in keys)
+E       assert False
+E        +  where False = all(<generator object test_startup_sdk_registration_preserves_general_aws_credentials.<locals>.<genexpr> at 0x0000024F2F361000>)
+
+tests\tools\test_child_credential_boundary.py:625: AssertionError
+____ test_startup_sdk_registration_preserves_general_aws_credentials[cli] _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000024F2CB69FD0>
+surface = 'cli'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_startup_sdk_registration_preserves_general_aws_credentials(monkeypatch, surface):
+        import providers
+        from providers.base import ProviderProfile
+        from hermes_cli import config
+        keys = ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN")
+        monkeypatch.setattr(providers, "list_providers", lambda: [ProviderProfile(
+            name="test-startup-sdk", auth_type="aws_sdk", env_vars=keys,
+        )])
+        monkeypatch.setattr(config, "OPTIONAL_ENV_VARS", {k: v for k, v in config.OPTIONAL_ENV_VARS.items() if k not in keys})
+        monkeypatch.setattr(config, "_profile_env_vars_injected", False)
+        config._inject_profile_env_vars()
+        # Execute the same static-owner derivation used during local import.
+        monkeypatch.setattr(local, "_HERMES_PROVIDER_ENV_BLOCKLIST", local._build_provider_env_blocklist())
+        for key in keys:
+            monkeypatch.setenv(key, SECRET)
+        env = child_env(surface)
+>       assert all(env.get(key) == SECRET for key in keys)
+E       assert False
+E        +  where False = all(<generator object test_startup_sdk_registration_preserves_general_aws_credentials.<locals>.<genexpr> at 0x0000024F2F362F80>)
+
+tests\tools\test_child_credential_boundary.py:625: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_startup_sdk_registration_preserves_general_aws_credentials[terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_startup_sdk_registration_preserves_general_aws_credentials[background]
+FAILED tests/tools/test_child_credential_boundary.py::test_startup_sdk_registration_preserves_general_aws_credentials[cli]
+3 failed, 1 passed, 211 deselected in 3.34s
+
+--- tests\tools\test_child_credential_windows_native.py ---
+F                                                                        [100%]
+================================== FAILURES ===================================
+_____ test_parallel_benign_scope_history_does_not_refuse_native_commands ______
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-_v4my021/pytest-of-unknown/pytest-0/test_parallel_benign_scope_his0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001A687297C90>
+
+    def test_parallel_benign_scope_history_does_not_refuse_native_commands(tmp_path, monkeypatch):
+        from concurrent.futures import ThreadPoolExecutor
+        from threading import Event
+        from agent.secret_scope import set_secret_scope, reset_secret_scope
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setattr(local, "_resolve_shell_init_files", lambda: [])
+        environment = local.LocalEnvironment(cwd=str(tmp_path), timeout=20, env={
+            "CUSTOM_FLAG_A": "benign-A", "CUSTOM_FLAG_B": "benign-B",
+        })
+        wrapped_a, wrapped_b = Event(), Event()
+        def run(name):
+            scope = set_secret_scope({"CUSTOM_FLAG_" + name: "benign-" + name})
+            try:
+                if name == "B":
+                    assert wrapped_a.wait(10)
+                script = environment._wrap_command('printf "%s" "$CUSTOM_FLAG_' + name + '"', str(tmp_path))
+                if name == "A":
+                    wrapped_a.set()
+                    assert wrapped_b.wait(10)
+                else:
+                    wrapped_b.set()
+                proc = environment._run_bash(script)
+                return environment._wait_for_process(proc, timeout=20)
+            finally:
+                reset_secret_scope(scope)
+        try:
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                future_a, future_b = executor.submit(run, "A"), executor.submit(run, "B")
+>               results = [future_a.result(timeout=30), future_b.result(timeout=30)]
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\tools\test_child_credential_windows_native.py:322:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\thread.py:58: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\tools\test_child_credential_windows_native.py:315: in run
+    proc = environment._run_bash(script)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <tools.environments.local.LocalEnvironment object at 0x000001A6898A8810>
+cmd_string = '_HERMES_RUNTIME_PASSTHROUGH_CUSTOM_FLAG_A_PRESENT=${CUSTOM_FLAG_A+x}\n_HERMES_RUNTIME_PASSTHROUGH_CUSTOM_FLAG_A_VALUE...null || true\nprintf \'\\n__HERMES_CWD_638415a208f4__%s__HERMES_CWD_638415a208f4__\\n\' "$(pwd -P)"\nexit $__hermes_ec'
+login = False, timeout = 120, stdin_data = None
+
+    def _run_bash(self, cmd_string: str, *, login: bool = False,
+                  timeout: int = 120,
+                  stdin_data: str | None = None) -> subprocess.Popen:
+        lock = getattr(self, "_snapshot_copy_lock", None)
+        snapshot = None
+        if lock is not None:
+            with lock:
+                snapshot = self._snapshot_copies.pop(cmd_string, None)
+        pinned = snapshot[0] if snapshot else None
+        policy_token = None
+        try:
+            # One immutable policy for this spawn's wrapper and environment.
+            # Concurrent registration after this boundary belongs to the next
+            # operation; it cannot make these two consumers disagree.
+            policy = (_plugin_terminal_env_strip_keys(), _provider_secret_env())
+            policy_token = _CHILD_SECRET_POLICY.set(policy)
+            if snapshot:
+                self._snapshot_read_context.text = Path(pinned).read_text(encoding="utf-8")
+                try:
+                    current = self._snapshot_excluded_passthrough_names()
+                finally:
+                    del self._snapshot_read_context.text
+                    if hasattr(self._snapshot_read_context, "excluded"):
+                        del self._snapshot_read_context.excluded
+                if current != snapshot[1]:
+>                   raise RuntimeError("Terminal credential declaration authority changed before spawn")
+E                   RuntimeError: Terminal credential declaration authority changed before spawn
+
+tools\environments\local.py:2243: RuntimeError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_windows_native.py::test_parallel_benign_scope_history_does_not_refuse_native_commands
+1 failed, 26 deselected in 4.05s
+
+=== 2 files with test failures (4 tests failed) ===
+  tests\tools\test_child_credential_boundary.py  (3 tests failed)
+  tests\tools\test_child_credential_windows_native.py  (1 test failed)

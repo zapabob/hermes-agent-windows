@@ -1,0 +1,222 @@
+[
+  {
+    "node": {
+      "id": "method:8d5d0dba502aa0d647f2f37ada66e641",
+      "kind": "method",
+      "name": "_is_user_authorized",
+      "qualifiedName": "GatewayAuthorizationMixin::_is_user_authorized",
+      "filePath": "gateway/authz_mixin.py",
+      "language": "python",
+      "startLine": 473,
+      "endLine": 544,
+      "startColumn": 4,
+      "endColumn": 95,
+      "signature": "(self, source: SessionSource, *, allow_adapter_delegation: bool = True) -> bool",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982274394
+    },
+    "score": 109.283745409067
+  },
+  {
+    "node": {
+      "id": "method:53d86c61c317676a463f9d0dc22803a9",
+      "kind": "method",
+      "name": "_is_user_authorized",
+      "qualifiedName": "_AuthRunner::_is_user_authorized",
+      "filePath": "tests/gateway/test_slack_approval_buttons.py",
+      "language": "python",
+      "startLine": 69,
+      "endLine": 71,
+      "startColumn": 4,
+      "endColumn": 36,
+      "signature": "(self, source)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982362661
+    },
+    "score": 94.5930957120394
+  },
+  {
+    "node": {
+      "id": "method:91f1551c4927ccb9edb1bea4044dcb25",
+      "kind": "method",
+      "name": "_is_user_authorized",
+      "qualifiedName": "_AuthRunner::_is_user_authorized",
+      "filePath": "tests/gateway/test_slack_clarify_buttons.py",
+      "language": "python",
+      "startLine": 72,
+      "endLine": 73,
+      "startColumn": 4,
+      "endColumn": 36,
+      "signature": "(self, source)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982362679
+    },
+    "score": 94.5930957120394
+  },
+  {
+    "node": {
+      "id": "method:7a01284f5eeeec6142bcace7dffb597c",
+      "kind": "method",
+      "name": "_is_user_authorized",
+      "qualifiedName": "_AuthRunner::_is_user_authorized",
+      "filePath": "tests/gateway/test_telegram_approval_buttons.py",
+      "language": "python",
+      "startLine": 42,
+      "endLine": 44,
+      "startColumn": 4,
+      "endColumn": 30,
+      "signature": "(self, source)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982363252
+    },
+    "score": 94.5930957120394
+  },
+  {
+    "node": {
+      "id": "method:fa7695e49e3f39d2baabeada41ab0f14",
+      "kind": "method",
+      "name": "_is_user_authorized",
+      "qualifiedName": "TestTelegramClarifyCallback::test_unauthorized_user_rejected::_DenyRunner::_is_user_authorized",
+      "filePath": "tests/gateway/test_telegram_clarify_buttons.py",
+      "language": "python",
+      "startLine": 179,
+      "endLine": 180,
+      "startColumn": 12,
+      "endColumn": 28,
+      "signature": "(self, source)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982363273
+    },
+    "score": 94.37112990691978
+  },
+  {
+    "node": {
+      "id": "method:6375dc9e310e2d6ab5aebeec6773a2a1",
+      "kind": "method",
+      "name": "_is_user_authorized",
+      "qualifiedName": "TestSlackReactionAuthorizationGate::test_unauthorized_reactor_rejected_in_pipeline::_Runner::_is_user_authorized",
+      "filePath": "tests/gateway/test_slack_approval_buttons.py",
+      "language": "python",
+      "startLine": 821,
+      "endLine": 823,
+      "startColumn": 12,
+      "endColumn": 47,
+      "signature": "(self, source)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982362661
+    },
+    "score": 94.283745409067
+  },
+  {
+    "node": {
+      "id": "method:816be372e38fce1f1650d980669e85bc",
+      "kind": "method",
+      "name": "_is_user_authorized",
+      "qualifiedName": "test_unauthorized_dm_with_pair_behavior_builds_event::Runner::_is_user_authorized",
+      "filePath": "tests/gateway/test_telegram_auth_check.py",
+      "language": "python",
+      "startLine": 235,
+      "endLine": 236,
+      "startColumn": 8,
+      "endColumn": 42,
+      "signature": "(self, source)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982363253
+    },
+    "score": 94.24034814290185
+  },
+  {
+    "node": {
+      "id": "method:006efa5e30e12e734682ef09cab9c46e",
+      "kind": "method",
+      "name": "_is_user_authorized",
+      "qualifiedName": "test_runner_auth_gets_group_user_allowlist_context::Runner::_is_user_authorized",
+      "filePath": "tests/gateway/test_telegram_auth_check.py",
+      "language": "python",
+      "startLine": 278,
+      "endLine": 280,
+      "startColumn": 8,
+      "endColumn": 103,
+      "signature": "(self, source)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982363253
+    },
+    "score": 94.24034814290185
+  },
+  {
+    "node": {
+      "id": "method:91685c72c5239daf5d4f4fb8ed8a7ce0",
+      "kind": "method",
+      "name": "_is_user_authorized",
+      "qualifiedName": "TestIncomingDocumentHandling::test_unauthorized_message_does_not_fetch_file_info::Runner::_is_user_authorized",
+      "filePath": "tests/gateway/test_slack.py",
+      "language": "python",
+      "startLine": 1772,
+      "endLine": 1773,
+      "startColumn": 12,
+      "endColumn": 52,
+      "signature": "(self, source)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982362775
+    },
+    "score": 94.19714576562869
+  },
+  {
+    "node": {
+      "id": "method:97537a6a5bc3f7c0de629b8c2c53ac7b",
+      "kind": "method",
+      "name": "_is_user_authorized",
+      "qualifiedName": "test_allowlist_dm_with_explicit_pair_behavior_reaches_gateway::Runner::_is_user_authorized",
+      "filePath": "tests/gateway/test_telegram_auth_check.py",
+      "language": "python",
+      "startLine": 157,
+      "endLine": 158,
+      "startColumn": 8,
+      "endColumn": 42,
+      "signature": "(self, source)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982363253
+    },
+    "score": 94.19714576562869
+  }
+]

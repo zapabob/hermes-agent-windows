@@ -1,0 +1,927 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 1 test files (~5 tests) under ['tests\\tools\\test_child_credential_boundary.py']; running with -j 1
+[100.0% |     5/~5 | ✓12 | ✗50] ✗ tests\tools\test_child_credential_boundary.py (12✓ 50✗, 7.3s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_boundary.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_SECRET-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_SECRET-credential-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_DRAIN_TOKEN-terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_DRAIN_TOKEN-background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_DRAIN_TOKEN-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_DRAIN_TOKEN-credential-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_OIDC_CLIENT_SECRET-terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_OIDC_CLIENT_SECRET-background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_OIDC_CLIENT_SECRET-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_OIDC_CLIENT_SECRET-credential-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[FAKE_PLUGIN_SECRET-terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_oauth_profile_api_keys_do_not_reach_ordinary_children[NOUS_API_KEY-terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_oauth_profile_api_keys_do_not_reach_ordinary_children[NOUS_API_KEY-background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_oauth_profile_api_keys_do_not_reach_ordinary_children[NOUS_API_KEY-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_oauth_profile_api_keys_do_not_reach_ordinary_children[QWEN_API_KEY-terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_oauth_profile_api_keys_do_not_reach_ordinary_children[QWEN_API_KEY-background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_oauth_profile_api_keys_do_not_reach_ordinary_children[QWEN_API_KEY-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_unreadable_security_declaration_blocks_child[terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_unreadable_security_declaration_blocks_child[background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_unreadable_security_declaration_blocks_child[cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_unreadable_security_declaration_blocks_child[credential-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_force_prefix_cannot_reintroduce_tier_one_secret[FAKE_PLUGIN_SECRET-terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_force_prefix_cannot_reintroduce_tier_one_secret[FAKE_PLUGIN_SECRET-background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_force_prefix_cannot_reintroduce_tier_one_secret[TELEGRAM_WEBHOOK_SECRET-terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_force_prefix_cannot_reintroduce_tier_one_secret[TELEGRAM_WEBHOOK_SECRET-background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_native_child_observes_only_benign_values[terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_native_child_observes_only_benign_values[background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_native_child_observes_only_benign_values[cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_native_child_observes_only_benign_values[credential-cli]
+  ║ 50 failed, 12 passed in 5.72s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_boundary.py -q
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+
+=== Summary: 1 files, 12 tests passed, 50 failed (100% complete) in 7.3s (1 workers) ===
+  Durations cached to test_durations.json (1 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   1
+  Total subprocess CPU-wall: 7.3s  (runner wall: 7.3s, parallelism: 1x)
+  P50: 7.33s  P90: 7.33s  P95: 7.33s  P99: 7.33s  Max: 7.33s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+      7.33s  tests\tools\test_child_credential_boundary.py
+
+=== Failure output ===
+
+--- tests\tools\test_child_credential_boundary.py ---
+FFFFFFFF...F...F...FFFFFFFFFFFFFFFFFFFFFF...FFFFFFFFFFFFFFFFFF           [100%]
+================================== FAILURES ===================================
+_ test_adapter_and_plugin_secrets_never_reach_child[WHATSAPP_CLOUD_ACCESS_TOKEN-terminal] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F590B0B50>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F59356E50>
+surface = 'terminal', key = 'WHATSAPP_CLOUD_ACCESS_TOKEN'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'WHATSAPP_CLOUD_ACCESS_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[WHATSAPP_CLOUD_ACCESS_TOKEN-background] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F590ABB90>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B892F10>
+surface = 'background', key = 'WHATSAPP_CLOUD_ACCESS_TOKEN'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'WHATSAPP_CLOUD_ACCESS_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[WHATSAPP_CLOUD_ACCESS_TOKEN-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F590E8690>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B807B10>
+surface = 'cli', key = 'WHATSAPP_CLOUD_ACCESS_TOKEN'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'WHATSAPP_CLOUD_ACCESS_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[WHATSAPP_CLOUD_ACCESS_TOKEN-credential-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8A2290>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8D0090>
+surface = 'credential-cli', key = 'WHATSAPP_CLOUD_ACCESS_TOKEN'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'WHATSAPP_CLOUD_ACCESS_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[WHATSAPP_CLOUD_APP_SECRET-terminal] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B6D6350>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B891C10>
+surface = 'terminal', key = 'WHATSAPP_CLOUD_APP_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'WHATSAPP_CLOUD_APP_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[WHATSAPP_CLOUD_APP_SECRET-background] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B807DD0>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8DD250>
+surface = 'background', key = 'WHATSAPP_CLOUD_APP_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'WHATSAPP_CLOUD_APP_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[WHATSAPP_CLOUD_APP_SECRET-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8B2010>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8B1E90>
+surface = 'cli', key = 'WHATSAPP_CLOUD_APP_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'WHATSAPP_CLOUD_APP_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[WHATSAPP_CLOUD_APP_SECRET-credential-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8EFDD0>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8EF3D0>
+surface = 'credential-cli', key = 'WHATSAPP_CLOUD_APP_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'WHATSAPP_CLOUD_APP_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[WEIXIN_TOKEN-credential-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B807910>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8DDF10>
+surface = 'credential-cli', key = 'WEIXIN_TOKEN'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'WEIXIN_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[YUANBAO_APP_SECRET-credential-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B805310>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B893E90>
+surface = 'credential-cli', key = 'YUANBAO_APP_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'YUANBAO_APP_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[FEISHU_ENCRYPT_KEY-credential-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8D2D10>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8D3650>
+surface = 'credential-cli', key = 'FEISHU_ENCRYPT_KEY'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'FEISHU_ENCRYPT_KEY' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[TELEGRAM_WEBHOOK_SECRET-terminal] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8D1FD0>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8D4B10>
+surface = 'terminal', key = 'TELEGRAM_WEBHOOK_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'TELEGRAM_WEBHOOK_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[TELEGRAM_WEBHOOK_SECRET-background] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8D3550>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8EE810>
+surface = 'background', key = 'TELEGRAM_WEBHOOK_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'TELEGRAM_WEBHOOK_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[TELEGRAM_WEBHOOK_SECRET-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8EE0D0>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8DEA90>
+surface = 'cli', key = 'TELEGRAM_WEBHOOK_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'TELEGRAM_WEBHOOK_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[TELEGRAM_WEBHOOK_SECRET-credential-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B9138D0>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B910AD0>
+surface = 'credential-cli', key = 'TELEGRAM_WEBHOOK_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'TELEGRAM_WEBHOOK_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[PHOTON_SIDECAR_TOKEN-terminal] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8B3CD0>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B891A50>
+surface = 'terminal', key = 'PHOTON_SIDECAR_TOKEN'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'PHOTON_SIDECAR_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[PHOTON_SIDECAR_TOKEN-background] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B890110>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8B2B50>
+surface = 'background', key = 'PHOTON_SIDECAR_TOKEN'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'PHOTON_SIDECAR_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[PHOTON_SIDECAR_TOKEN-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B892350>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B913D50>
+surface = 'cli', key = 'PHOTON_SIDECAR_TOKEN'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'PHOTON_SIDECAR_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[PHOTON_SIDECAR_TOKEN-credential-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8D06D0>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8F03D0>
+surface = 'credential-cli', key = 'PHOTON_SIDECAR_TOKEN'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'PHOTON_SIDECAR_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_SECRET-terminal] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8D0D90>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8B3D50>
+surface = 'terminal', key = 'HERMES_DASHBOARD_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_SECRET-background] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8D7690>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8D6490>
+surface = 'background', key = 'HERMES_DASHBOARD_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_SECRET-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8DD810>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8B1FD0>
+surface = 'cli', key = 'HERMES_DASHBOARD_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_SECRET-credential-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8932D0>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B913AD0>
+surface = 'credential-cli', key = 'HERMES_DASHBOARD_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_DRAIN_TOKEN-terminal] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8F2350>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8EEE10>
+surface = 'terminal', key = 'HERMES_DASHBOARD_DRAIN_TOKEN'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_DRAIN_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_DRAIN_TOKEN-background] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8DF9D0>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B915650>
+surface = 'background', key = 'HERMES_DASHBOARD_DRAIN_TOKEN'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_DRAIN_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_DRAIN_TOKEN-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8D7750>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8B0F90>
+surface = 'cli', key = 'HERMES_DASHBOARD_DRAIN_TOKEN'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_DRAIN_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_DRAIN_TOKEN-credential-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B92B050>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B929690>
+surface = 'credential-cli', key = 'HERMES_DASHBOARD_DRAIN_TOKEN'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_DRAIN_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_OIDC_CLIENT_SECRET-terminal] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B914910>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8D2DD0>
+surface = 'terminal', key = 'HERMES_DASHBOARD_OIDC_CLIENT_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_OIDC_CLIENT_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_OIDC_CLIENT_SECRET-background] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8D20D0>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8DD2D0>
+surface = 'background', key = 'HERMES_DASHBOARD_OIDC_CLIENT_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_OIDC_CLIENT_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_OIDC_CLIENT_SECRET-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8B3750>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8E1550>
+surface = 'cli', key = 'HERMES_DASHBOARD_OIDC_CLIENT_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_OIDC_CLIENT_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_OIDC_CLIENT_SECRET-credential-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8DC410>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8F2010>
+surface = 'credential-cli', key = 'HERMES_DASHBOARD_OIDC_CLIENT_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'HERMES_DASHBOARD_OIDC_CLIENT_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_adapter_and_plugin_secrets_never_reach_child[FAKE_PLUGIN_SECRET-terminal] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8F1510>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B917590>
+surface = 'terminal', key = 'FAKE_PLUGIN_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET",))
+    def test_adapter_and_plugin_secrets_never_reach_child(monkeypatch, plugin_provider, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        env = child_env(surface)
+>       assert key not in env
+E       AssertionError: assert 'FAKE_PLUGIN_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+
+tests\tools\test_child_credential_boundary.py:66: AssertionError
+_ test_oauth_profile_api_keys_do_not_reach_ordinary_children[NOUS_API_KEY-terminal] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B920310>
+surface = 'terminal', key = 'NOUS_API_KEY'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli"])
+    @pytest.mark.parametrize("key", PROVIDER_KEYS)
+    def test_oauth_profile_api_keys_do_not_reach_ordinary_children(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+>       assert key not in child_env(surface)
+E       AssertionError: assert 'NOUS_API_KEY' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('terminal')
+
+tests\tools\test_child_credential_boundary.py:74: AssertionError
+_ test_oauth_profile_api_keys_do_not_reach_ordinary_children[NOUS_API_KEY-background] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B7B1810>
+surface = 'background', key = 'NOUS_API_KEY'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli"])
+    @pytest.mark.parametrize("key", PROVIDER_KEYS)
+    def test_oauth_profile_api_keys_do_not_reach_ordinary_children(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+>       assert key not in child_env(surface)
+E       AssertionError: assert 'NOUS_API_KEY' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('background')
+
+tests\tools\test_child_credential_boundary.py:74: AssertionError
+_ test_oauth_profile_api_keys_do_not_reach_ordinary_children[NOUS_API_KEY-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B7B18D0>
+surface = 'cli', key = 'NOUS_API_KEY'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli"])
+    @pytest.mark.parametrize("key", PROVIDER_KEYS)
+    def test_oauth_profile_api_keys_do_not_reach_ordinary_children(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+>       assert key not in child_env(surface)
+E       AssertionError: assert 'NOUS_API_KEY' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('cli')
+
+tests\tools\test_child_credential_boundary.py:74: AssertionError
+_ test_oauth_profile_api_keys_do_not_reach_ordinary_children[QWEN_API_KEY-terminal] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F590AB6D0>
+surface = 'terminal', key = 'QWEN_API_KEY'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli"])
+    @pytest.mark.parametrize("key", PROVIDER_KEYS)
+    def test_oauth_profile_api_keys_do_not_reach_ordinary_children(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+>       assert key not in child_env(surface)
+E       AssertionError: assert 'QWEN_API_KEY' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('terminal')
+
+tests\tools\test_child_credential_boundary.py:74: AssertionError
+_ test_oauth_profile_api_keys_do_not_reach_ordinary_children[QWEN_API_KEY-background] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8DF850>
+surface = 'background', key = 'QWEN_API_KEY'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli"])
+    @pytest.mark.parametrize("key", PROVIDER_KEYS)
+    def test_oauth_profile_api_keys_do_not_reach_ordinary_children(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+>       assert key not in child_env(surface)
+E       AssertionError: assert 'QWEN_API_KEY' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('background')
+
+tests\tools\test_child_credential_boundary.py:74: AssertionError
+_ test_oauth_profile_api_keys_do_not_reach_ordinary_children[QWEN_API_KEY-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8B2050>
+surface = 'cli', key = 'QWEN_API_KEY'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli"])
+    @pytest.mark.parametrize("key", PROVIDER_KEYS)
+    def test_oauth_profile_api_keys_do_not_reach_ordinary_children(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+>       assert key not in child_env(surface)
+E       AssertionError: assert 'QWEN_API_KEY' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('cli')
+
+tests\tools\test_child_credential_boundary.py:74: AssertionError
+_________ test_unreadable_security_declaration_blocks_child[terminal] _________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8B2310>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8D3350>
+surface = 'terminal'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_unreadable_security_declaration_blocks_child(monkeypatch, plugin_provider, surface):
+        def unreadable(_self):
+            raise OSError("test-only unavailable declaration")
+        monkeypatch.setattr(SecretProvider, "strip_env_keys", property(unreadable))
+>       with pytest.raises(RuntimeError, match="(?i)(secret|credential|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:82: Failed
+________ test_unreadable_security_declaration_blocks_child[background] ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8D0510>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8DF190>
+surface = 'background'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_unreadable_security_declaration_blocks_child(monkeypatch, plugin_provider, surface):
+        def unreadable(_self):
+            raise OSError("test-only unavailable declaration")
+        monkeypatch.setattr(SecretProvider, "strip_env_keys", property(unreadable))
+>       with pytest.raises(RuntimeError, match="(?i)(secret|credential|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:82: Failed
+___________ test_unreadable_security_declaration_blocks_child[cli] ____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8D2350>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8F1510>
+surface = 'cli'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_unreadable_security_declaration_blocks_child(monkeypatch, plugin_provider, surface):
+        def unreadable(_self):
+            raise OSError("test-only unavailable declaration")
+        monkeypatch.setattr(SecretProvider, "strip_env_keys", property(unreadable))
+>       with pytest.raises(RuntimeError, match="(?i)(secret|credential|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:82: Failed
+______ test_unreadable_security_declaration_blocks_child[credential-cli] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8D1750>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B910D10>
+surface = 'credential-cli'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_unreadable_security_declaration_blocks_child(monkeypatch, plugin_provider, surface):
+        def unreadable(_self):
+            raise OSError("test-only unavailable declaration")
+        monkeypatch.setattr(SecretProvider, "strip_env_keys", property(unreadable))
+>       with pytest.raises(RuntimeError, match="(?i)(secret|credential|declaration)"):
+E       Failed: DID NOT RAISE RuntimeError
+
+tests\tools\test_child_credential_boundary.py:82: Failed
+_ test_force_prefix_cannot_reintroduce_tier_one_secret[FAKE_PLUGIN_SECRET-terminal] _
+
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B9169D0>
+surface = 'terminal', key = 'FAKE_PLUGIN_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background"])
+    @pytest.mark.parametrize("key", ["FAKE_PLUGIN_SECRET", "TELEGRAM_WEBHOOK_SECRET"])
+    def test_force_prefix_cannot_reintroduce_tier_one_secret(plugin_provider, surface, key):
+        extra = {local._HERMES_PROVIDER_ENV_FORCE_PREFIX + key: SECRET}
+>       assert key not in child_env(surface, extra)
+E       AssertionError: assert 'FAKE_PLUGIN_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('terminal', {'_HERMES_FORCE_FAKE_PLUGIN_SECRET': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+
+tests\tools\test_child_credential_boundary.py:90: AssertionError
+_ test_force_prefix_cannot_reintroduce_tier_one_secret[FAKE_PLUGIN_SECRET-background] _
+
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8E2650>
+surface = 'background', key = 'FAKE_PLUGIN_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background"])
+    @pytest.mark.parametrize("key", ["FAKE_PLUGIN_SECRET", "TELEGRAM_WEBHOOK_SECRET"])
+    def test_force_prefix_cannot_reintroduce_tier_one_secret(plugin_provider, surface, key):
+        extra = {local._HERMES_PROVIDER_ENV_FORCE_PREFIX + key: SECRET}
+>       assert key not in child_env(surface, extra)
+E       AssertionError: assert 'FAKE_PLUGIN_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('background', {'_HERMES_FORCE_FAKE_PLUGIN_SECRET': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+
+tests\tools\test_child_credential_boundary.py:90: AssertionError
+_ test_force_prefix_cannot_reintroduce_tier_one_secret[TELEGRAM_WEBHOOK_SECRET-terminal] _
+
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B9133D0>
+surface = 'terminal', key = 'TELEGRAM_WEBHOOK_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background"])
+    @pytest.mark.parametrize("key", ["FAKE_PLUGIN_SECRET", "TELEGRAM_WEBHOOK_SECRET"])
+    def test_force_prefix_cannot_reintroduce_tier_one_secret(plugin_provider, surface, key):
+        extra = {local._HERMES_PROVIDER_ENV_FORCE_PREFIX + key: SECRET}
+>       assert key not in child_env(surface, extra)
+E       AssertionError: assert 'TELEGRAM_WEBHOOK_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('terminal', {'_HERMES_FORCE_TELEGRAM_WEBHOOK_SECRET': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+
+tests\tools\test_child_credential_boundary.py:90: AssertionError
+_ test_force_prefix_cannot_reintroduce_tier_one_secret[TELEGRAM_WEBHOOK_SECRET-background] _
+
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8D7910>
+surface = 'background', key = 'TELEGRAM_WEBHOOK_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background"])
+    @pytest.mark.parametrize("key", ["FAKE_PLUGIN_SECRET", "TELEGRAM_WEBHOOK_SECRET"])
+    def test_force_prefix_cannot_reintroduce_tier_one_secret(plugin_provider, surface, key):
+        extra = {local._HERMES_PROVIDER_ENV_FORCE_PREFIX + key: SECRET}
+>       assert key not in child_env(surface, extra)
+E       AssertionError: assert 'TELEGRAM_WEBHOOK_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('background', {'_HERMES_FORCE_TELEGRAM_WEBHOOK_SECRET': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+
+tests\tools\test_child_credential_boundary.py:90: AssertionError
+___________ test_native_child_observes_only_benign_values[terminal] ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B913C50>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8E0490>
+surface = 'terminal'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_native_child_observes_only_benign_values(monkeypatch, plugin_provider, surface):
+        keys = ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET", "BOUNDARY_BENIGN")
+        for key in keys[:-1]:
+            monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv(keys[-1], "present")
+        code = "import json,os,sys;sys.stdout.write(json.dumps({k:os.environ.get(k) for k in " + repr(keys) + "}))"
+        result = subprocess.run(
+            [sys.executable, "-I", "-c", code], env=child_env(surface),
+            stdin=subprocess.DEVNULL, capture_output=True, text=True,
+            encoding="utf-8", timeout=15, check=True,
+        )
+        observed = json.loads(result.stdout)
+        assert observed["BOUNDARY_BENIGN"] == "present"
+>       assert all(observed[key] is None for key in keys[:-1])
+E       assert False
+E        +  where False = all(<generator object test_native_child_observes_only_benign_values.<locals>.<genexpr> at 0x0000025F5B889460>)
+
+tests\tools\test_child_credential_boundary.py:107: AssertionError
+__________ test_native_child_observes_only_benign_values[background] __________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8E0E90>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B8B2850>
+surface = 'background'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_native_child_observes_only_benign_values(monkeypatch, plugin_provider, surface):
+        keys = ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET", "BOUNDARY_BENIGN")
+        for key in keys[:-1]:
+            monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv(keys[-1], "present")
+        code = "import json,os,sys;sys.stdout.write(json.dumps({k:os.environ.get(k) for k in " + repr(keys) + "}))"
+        result = subprocess.run(
+            [sys.executable, "-I", "-c", code], env=child_env(surface),
+            stdin=subprocess.DEVNULL, capture_output=True, text=True,
+            encoding="utf-8", timeout=15, check=True,
+        )
+        observed = json.loads(result.stdout)
+        assert observed["BOUNDARY_BENIGN"] == "present"
+>       assert all(observed[key] is None for key in keys[:-1])
+E       assert False
+E        +  where False = all(<generator object test_native_child_observes_only_benign_values.<locals>.<genexpr> at 0x0000025F5B871EE0>)
+
+tests\tools\test_child_credential_boundary.py:107: AssertionError
+_____________ test_native_child_observes_only_benign_values[cli] ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8E1DD0>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B910CD0>
+surface = 'cli'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_native_child_observes_only_benign_values(monkeypatch, plugin_provider, surface):
+        keys = ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET", "BOUNDARY_BENIGN")
+        for key in keys[:-1]:
+            monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv(keys[-1], "present")
+        code = "import json,os,sys;sys.stdout.write(json.dumps({k:os.environ.get(k) for k in " + repr(keys) + "}))"
+        result = subprocess.run(
+            [sys.executable, "-I", "-c", code], env=child_env(surface),
+            stdin=subprocess.DEVNULL, capture_output=True, text=True,
+            encoding="utf-8", timeout=15, check=True,
+        )
+        observed = json.loads(result.stdout)
+        assert observed["BOUNDARY_BENIGN"] == "present"
+>       assert all(observed[key] is None for key in keys[:-1])
+E       assert False
+E        +  where False = all(<generator object test_native_child_observes_only_benign_values.<locals>.<genexpr> at 0x0000025F5B8892A0>)
+
+tests\tools\test_child_credential_boundary.py:107: AssertionError
+________ test_native_child_observes_only_benign_values[credential-cli] ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025F5B8E2F90>
+plugin_provider = <tests.tools.test_child_credential_boundary.SecretProvider object at 0x0000025F5B928650>
+surface = 'credential-cli'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_native_child_observes_only_benign_values(monkeypatch, plugin_provider, surface):
+        keys = ADAPTER_KEYS + ("FAKE_PLUGIN_SECRET", "BOUNDARY_BENIGN")
+        for key in keys[:-1]:
+            monkeypatch.setenv(key, SECRET)
+        monkeypatch.setenv(keys[-1], "present")
+        code = "import json,os,sys;sys.stdout.write(json.dumps({k:os.environ.get(k) for k in " + repr(keys) + "}))"
+        result = subprocess.run(
+            [sys.executable, "-I", "-c", code], env=child_env(surface),
+            stdin=subprocess.DEVNULL, capture_output=True, text=True,
+            encoding="utf-8", timeout=15, check=True,
+        )
+        observed = json.loads(result.stdout)
+        assert observed["BOUNDARY_BENIGN"] == "present"
+>       assert all(observed[key] is None for key in keys[:-1])
+E       assert False
+E        +  where False = all(<generator object test_native_child_observes_only_benign_values.<locals>.<genexpr> at 0x0000025F5B888E40>)
+
+tests\tools\test_child_credential_boundary.py:107: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[WHATSAPP_CLOUD_ACCESS_TOKEN-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[WHATSAPP_CLOUD_ACCESS_TOKEN-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[WHATSAPP_CLOUD_ACCESS_TOKEN-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[WHATSAPP_CLOUD_ACCESS_TOKEN-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[WHATSAPP_CLOUD_APP_SECRET-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[WHATSAPP_CLOUD_APP_SECRET-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[WHATSAPP_CLOUD_APP_SECRET-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[WHATSAPP_CLOUD_APP_SECRET-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[WEIXIN_TOKEN-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[YUANBAO_APP_SECRET-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[FEISHU_ENCRYPT_KEY-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[TELEGRAM_WEBHOOK_SECRET-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[TELEGRAM_WEBHOOK_SECRET-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[TELEGRAM_WEBHOOK_SECRET-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[TELEGRAM_WEBHOOK_SECRET-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[PHOTON_SIDECAR_TOKEN-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[PHOTON_SIDECAR_TOKEN-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[PHOTON_SIDECAR_TOKEN-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[PHOTON_SIDECAR_TOKEN-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_SECRET-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_SECRET-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_SECRET-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_SECRET-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_DRAIN_TOKEN-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_DRAIN_TOKEN-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_DRAIN_TOKEN-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_DRAIN_TOKEN-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_OIDC_CLIENT_SECRET-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_OIDC_CLIENT_SECRET-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_OIDC_CLIENT_SECRET-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[HERMES_DASHBOARD_OIDC_CLIENT_SECRET-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_adapter_and_plugin_secrets_never_reach_child[FAKE_PLUGIN_SECRET-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_oauth_profile_api_keys_do_not_reach_ordinary_children[NOUS_API_KEY-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_oauth_profile_api_keys_do_not_reach_ordinary_children[NOUS_API_KEY-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_oauth_profile_api_keys_do_not_reach_ordinary_children[NOUS_API_KEY-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_oauth_profile_api_keys_do_not_reach_ordinary_children[QWEN_API_KEY-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_oauth_profile_api_keys_do_not_reach_ordinary_children[QWEN_API_KEY-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_oauth_profile_api_keys_do_not_reach_ordinary_children[QWEN_API_KEY-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_unreadable_security_declaration_blocks_child[terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_unreadable_security_declaration_blocks_child[background]
+FAILED tests/tools/test_child_credential_boundary.py::test_unreadable_security_declaration_blocks_child[cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_unreadable_security_declaration_blocks_child[credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_force_prefix_cannot_reintroduce_tier_one_secret[FAKE_PLUGIN_SECRET-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_force_prefix_cannot_reintroduce_tier_one_secret[FAKE_PLUGIN_SECRET-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_force_prefix_cannot_reintroduce_tier_one_secret[TELEGRAM_WEBHOOK_SECRET-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_force_prefix_cannot_reintroduce_tier_one_secret[TELEGRAM_WEBHOOK_SECRET-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_native_child_observes_only_benign_values[terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_native_child_observes_only_benign_values[background]
+FAILED tests/tools/test_child_credential_boundary.py::test_native_child_observes_only_benign_values[cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_native_child_observes_only_benign_values[credential-cli]
+50 failed, 12 passed in 5.72s
+
+=== 1 file with test failures (50 tests failed) ===
+  tests\tools\test_child_credential_boundary.py  (50 tests failed)

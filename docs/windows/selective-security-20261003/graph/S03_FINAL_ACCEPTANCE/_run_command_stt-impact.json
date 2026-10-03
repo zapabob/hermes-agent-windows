@@ -1,0 +1,68 @@
+{
+  "symbol": "_run_command_stt",
+  "depth": 2,
+  "nodeCount": 10,
+  "edgeCount": 9,
+  "affected": [
+    {
+      "name": "_run_command_stt",
+      "kind": "function",
+      "filePath": "tools/transcription_tools.py",
+      "startLine": 710
+    },
+    {
+      "name": "test_command_provider_uses_sanitized_child_env",
+      "kind": "method",
+      "filePath": "tests/tools/test_transcription_tools.py",
+      "startLine": 224
+    },
+    {
+      "name": "test_stderr_progress_extends_beyond_timeout",
+      "kind": "method",
+      "filePath": "tests/tools/test_transcription_tools.py",
+      "startLine": 1199
+    },
+    {
+      "name": "test_silent_stall_still_times_out",
+      "kind": "method",
+      "filePath": "tests/tools/test_transcription_tools.py",
+      "startLine": 1225
+    },
+    {
+      "name": "_transcribe_command_stt",
+      "kind": "function",
+      "filePath": "tools/transcription_tools.py",
+      "startLine": 869
+    },
+    {
+      "name": "test_writes_transcript_to_output_path",
+      "kind": "method",
+      "filePath": "tests/tools/test_transcription_command_providers.py",
+      "startLine": 215
+    },
+    {
+      "name": "test_reads_transcript_from_stdout_when_no_file",
+      "kind": "method",
+      "filePath": "tests/tools/test_transcription_command_providers.py",
+      "startLine": 226
+    },
+    {
+      "name": "test_language_defaults_to_en",
+      "kind": "method",
+      "filePath": "tests/tools/test_transcription_command_providers.py",
+      "startLine": 237
+    },
+    {
+      "name": "_dispatch_stt_provider",
+      "kind": "function",
+      "filePath": "tools/transcription_tools.py",
+      "startLine": 3017
+    },
+    {
+      "name": "test_transcription_command_providers.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_transcription_command_providers.py",
+      "startLine": 1
+    }
+  ]
+}

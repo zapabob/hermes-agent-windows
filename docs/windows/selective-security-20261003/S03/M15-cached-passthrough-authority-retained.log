@@ -1,0 +1,44 @@
+........................................................................ [ 33%]
+........................................................................ [ 66%]
+..................................................FFFFFF...............  [100%]
+================================== FAILURES ===================================
+___ test_cached_passthrough_rechecks_late_adapter_ownership[terminal-skill] ___
+tests\tools\test_child_credential_boundary.py:513: in test_cached_passthrough_rechecks_late_adapter_ownership
+    assert key not in child_env(surface)
+E   AssertionError: assert 'CUSTOM_LATE_ADAPTER_TOKEN' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...} = child_env('terminal')
+__ test_cached_passthrough_rechecks_late_adapter_ownership[terminal-config] ___
+tests\tools\test_child_credential_boundary.py:513: in test_cached_passthrough_rechecks_late_adapter_ownership
+    assert key not in child_env(surface)
+E   AssertionError: assert 'CUSTOM_LATE_ADAPTER_TOKEN' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...} = child_env('terminal')
+__ test_cached_passthrough_rechecks_late_adapter_ownership[background-skill] __
+tests\tools\test_child_credential_boundary.py:513: in test_cached_passthrough_rechecks_late_adapter_ownership
+    assert key not in child_env(surface)
+E   AssertionError: assert 'CUSTOM_LATE_ADAPTER_TOKEN' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...} = child_env('background')
+_ test_cached_passthrough_rechecks_late_adapter_ownership[background-config] __
+tests\tools\test_child_credential_boundary.py:513: in test_cached_passthrough_rechecks_late_adapter_ownership
+    assert key not in child_env(surface)
+E   AssertionError: assert 'CUSTOM_LATE_ADAPTER_TOKEN' not in {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...}
+E    +  where {'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_NOSYSTEM': '1', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03...s\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\System32', ...} = child_env('background')
+_____ test_cached_passthrough_rechecks_late_adapter_ownership[cli-skill] ______
+tests\tools\test_child_credential_boundary.py:514: in test_cached_passthrough_rechecks_late_adapter_ownership
+    assert not env_passthrough.is_env_passthrough(key)
+E   AssertionError: assert not True
+E    +  where True = <function is_env_passthrough at 0x000001B73390CE00>('CUSTOM_LATE_ADAPTER_TOKEN')
+E    +    where <function is_env_passthrough at 0x000001B73390CE00> = <module 'tools.env_passthrough' from 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-verification\\tools\\env_passthrough.py'>.is_env_passthrough
+_____ test_cached_passthrough_rechecks_late_adapter_ownership[cli-config] _____
+tests\tools\test_child_credential_boundary.py:514: in test_cached_passthrough_rechecks_late_adapter_ownership
+    assert not env_passthrough.is_env_passthrough(key)
+E   AssertionError: assert not True
+E    +  where True = <function is_env_passthrough at 0x000001B73390CE00>('CUSTOM_LATE_ADAPTER_TOKEN')
+E    +    where <function is_env_passthrough at 0x000001B73390CE00> = <module 'tools.env_passthrough' from 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\s03-verification\\tools\\env_passthrough.py'>.is_env_passthrough
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[terminal-skill]
+FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[terminal-config]
+FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[background-skill]
+FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[background-config]
+FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[cli-skill]
+FAILED tests/tools/test_child_credential_boundary.py::test_cached_passthrough_rechecks_late_adapter_ownership[cli-config]
+6 failed, 209 passed in 9.23s

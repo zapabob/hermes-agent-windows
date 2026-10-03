@@ -1,0 +1,17 @@
+{
+  "symbol": "_cron_profile_context",
+  "callers": [
+    {
+      "name": "run_job",
+      "kind": "function",
+      "filePath": "cron/scheduler.py",
+      "startLine": 5481
+    },
+    {
+      "name": "test_real_cron_profile_context_does_not_relabel_launch_secrets",
+      "kind": "function",
+      "filePath": "tests/tools/test_child_credential_boundary.py",
+      "startLine": 288
+    }
+  ]
+}

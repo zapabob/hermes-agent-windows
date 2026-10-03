@@ -1,0 +1,11 @@
+F....................................................................... [ 34%]
+........................................................................ [ 69%]
+................................................................         [100%]
+================================== FAILURES ===================================
+_______ test_invalid_protected_snapshot_identifier_refuses_before_shell _______
+tests\tools\test_child_credential_boundary.py:24: in test_invalid_protected_snapshot_identifier_refuses_before_shell
+    with pytest.raises(RuntimeError, match="(?i)(identifier|environment.*name)"):
+E   Failed: DID NOT RAISE RuntimeError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_protected_snapshot_identifier_refuses_before_shell
+1 failed, 207 passed in 9.71s

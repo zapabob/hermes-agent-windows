@@ -1,0 +1,125 @@
+{
+  "symbol": "_make_run_env",
+  "callers": [
+    {
+      "name": "_run",
+      "kind": "function",
+      "filePath": "tests/acp/test_server.py",
+      "startLine": 429
+    },
+    {
+      "name": "run_conversation",
+      "kind": "method",
+      "filePath": "tests/gateway/test_session_api.py",
+      "startLine": 137
+    },
+    {
+      "name": "_spawn_view",
+      "kind": "function",
+      "filePath": "tests/gateway/test_session_context_inheritance.py",
+      "startLine": 93
+    },
+    {
+      "name": "test_host_auto_preserves_real_home_when_profile_home_exists",
+      "kind": "method",
+      "filePath": "tests/test_subprocess_home_isolation.py",
+      "startLine": 122
+    },
+    {
+      "name": "test_profile_mode_injects_profile_home_when_profile_home_exists",
+      "kind": "method",
+      "filePath": "tests/test_subprocess_home_isolation.py",
+      "startLine": 139
+    },
+    {
+      "name": "test_no_injection_when_home_dir_missing",
+      "kind": "method",
+      "filePath": "tests/test_subprocess_home_isolation.py",
+      "startLine": 157
+    },
+    {
+      "name": "test_no_injection_when_hermes_home_unset",
+      "kind": "method",
+      "filePath": "tests/test_subprocess_home_isolation.py",
+      "startLine": 170
+    },
+    {
+      "name": "test_make_run_env_blocklist_override_rejected",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 332
+    },
+    {
+      "name": "test_make_run_env_strips_markers",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 329
+    },
+    {
+      "name": "test_make_run_env_uses_active_profile_for_passthrough",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1099
+    },
+    {
+      "name": "test_make_run_env_omits_missing_scoped_passthrough",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1119
+    },
+    {
+      "name": "test_gateway_credentials_are_stripped_from_all_local_env_paths",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1339
+    },
+    {
+      "name": "test_make_run_env_appends_homebrew_on_minimal_path",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1392
+    },
+    {
+      "name": "test_make_run_env_real_launchd_path_gains_homebrew",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1417
+    },
+    {
+      "name": "test_make_run_env_preserves_windows_mixed_case_path_key",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1435
+    },
+    {
+      "name": "test_make_run_env_injects_hermes_bin_dir",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1481
+    },
+    {
+      "name": "test_make_run_env_strips_internal_secrets",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1592
+    },
+    {
+      "name": "test_engaged_unset_contextvar_strips_foreign_session_key",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 69
+    },
+    {
+      "name": "test_set_session_vars_engages_and_overrides_foreign_global",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 90
+    },
+    {
+      "name": "test_unengaged_process_preserves_os_environ_fallback",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 115
+    }
+  ]
+}

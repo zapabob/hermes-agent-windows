@@ -1,0 +1,23 @@
+{
+  "symbol": "_make_run_env",
+  "callees": [
+    {
+      "name": "_scrubbed_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 284
+    },
+    {
+      "name": "_prepend_git_bash_dirs",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 431
+    },
+    {
+      "name": "_append_missing_sane_path_entries",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 509
+    }
+  ]
+}

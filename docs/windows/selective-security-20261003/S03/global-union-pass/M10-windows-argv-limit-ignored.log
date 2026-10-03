@@ -1,0 +1,9 @@
+............F                                                            [100%]
+================================== FAILURES ===================================
+______ test_many_accumulated_snapshot_names_refuse_before_windows_spawn _______
+tests\tools\test_child_credential_windows_native.py:164: in test_many_accumulated_snapshot_names_refuse_before_windows_spawn
+    with pytest.raises(RuntimeError, match="(?i)(command.*limit|command.*length)"):
+E   Failed: DID NOT RAISE RuntimeError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_windows_native.py::test_many_accumulated_snapshot_names_refuse_before_windows_spawn
+1 failed, 12 passed in 21.40s

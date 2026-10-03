@@ -1,0 +1,13 @@
+{
+  "reviewer_agent": "01a0fef5-982a-7b82-a926-02264bf34f0e",
+  "result": "PASS",
+  "findings": [],
+  "reviewed_source_sha256": {
+    "gateway/authz_mixin.py": "07206f8c74d8ddd49d1c31ac6dc2dec39295af0df5f0544ea8fc3df5d72de879",
+    "tests/gateway/test_simplex_principal_boundary.py": "138d15b7e2e51a8881a98fd77d7932b44855d46bbb6507323c1dbac882834d14",
+    "plugins/platforms/simplex/adapter.py": "41adc16484a86e681872a568a43d1dfc2e1cd0d67a592ae90645db43e650312a",
+    "tests/gateway/test_unauthorized_dm_behavior.py": "af22c518c951101405faccd75b3653f1d0868a7c2ad946266968e0c1ee95f321"
+  },
+  "reviewed_candidate": "17143117ff9f51a701e2db14ae0ffd50b67691ec",
+  "scope": "Pinned source and final U_TARGET, D_BASE owner, exact diff, 24-case source-bound candidate, 140 regression PASS, four killed mutants, native adapter and profile cases, fresh graph."
+}

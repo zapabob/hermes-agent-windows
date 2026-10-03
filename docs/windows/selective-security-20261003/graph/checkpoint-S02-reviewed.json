@@ -1,0 +1,18 @@
+[
+  {
+    "database": "H:\\hermes-worktrees\\p0-p1-u-target-20261003\\.codegraph\\codegraph.db",
+    "checkpoint": [
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "database": "H:\\hermes-worktrees\\p0-p1-local-20261003\\.codegraph\\codegraph.db",
+    "checkpoint": [
+      0,
+      0,
+      0
+    ]
+  }
+]

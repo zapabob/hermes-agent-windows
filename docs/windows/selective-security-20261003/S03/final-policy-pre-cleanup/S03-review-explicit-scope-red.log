@@ -1,0 +1,119 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 1 test files (~33 tests) under ['tests\\tools\\test_child_credential_boundary.py']; running with -j 1
+[100.0% |    33/~33 | ✓2 | ✗2] ✗ tests\tools\test_child_credential_boundary.py (2✓ 2✗, 5.0s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_boundary.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║ _____ test_registered_benign_extra_keeps_explicit_precedence[background] ______
+  ║
+  ║ tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-mvf_cuc6/pytest-of-unknown/pytest-0/test_registered_benign_extra_k1')
+  ║ monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001742BE3FA90>
+  ║ surface = 'background'
+  ║
+  ║     @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+  ║     def test_registered_benign_extra_keeps_explicit_precedence(tmp_path, monkeypatch, surface):
+  ║         from tools import env_passthrough
+  ║         from agent.secret_scope import set_secret_scope, reset_secret_scope
+  ║         launch, target = tmp_path / "launch", tmp_path / "target"
+  ║         launch.mkdir()
+  ║         target.mkdir()
+  ║         (target / ".env").write_text("CUSTOM_FLAG=target-default\n", encoding="utf-8")
+  ║         monkeypatch.setenv("HERMES_HOME", str(launch))
+  ║         token = env_passthrough._allowed_env_vars_var.set({"CUSTOM_FLAG"})
+  ║         scope_token = set_secret_scope({"CUSTOM_FLAG": "target-default"})
+  ║         try:
+  ║             with bound_home(target):
+  ║ >               assert child_env(surface, {"CUSTOM_FLAG": "explicit-call-value"})["CUSTOM_FLAG"] == "explicit-call-value"
+  ║ E               AssertionError: assert 'target-default' == 'explicit-call-value'
+  ║ E
+  ║ E                 - explicit-call-value
+  ║ E                 + target-default
+  ║
+  ║ tests\tools\test_child_credential_boundary.py:533: AssertionError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_registered_benign_extra_keeps_explicit_precedence[terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_registered_benign_extra_keeps_explicit_precedence[background]
+  ║ 2 failed, 2 passed, 200 deselected in 3.24s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_boundary.py -q -k registered_benign_extra
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+
+=== Summary: 1 files, 2 tests passed, 2 failed (100% complete) in 5.0s (1 workers) ===
+  Durations cached to test_durations.json (1 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   1
+  Total subprocess CPU-wall: 5.0s  (runner wall: 5.0s, parallelism: 1x)
+  P50: 5.02s  P90: 5.02s  P95: 5.02s  P99: 5.02s  Max: 5.02s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+      5.02s  tests\tools\test_child_credential_boundary.py
+
+=== Failure output ===
+
+--- tests\tools\test_child_credential_boundary.py ---
+FF..                                                                     [100%]
+================================== FAILURES ===================================
+______ test_registered_benign_extra_keeps_explicit_precedence[terminal] _______
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-mvf_cuc6/pytest-of-unknown/pytest-0/test_registered_benign_extra_k0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001742BE10690>
+surface = 'terminal'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_registered_benign_extra_keeps_explicit_precedence(tmp_path, monkeypatch, surface):
+        from tools import env_passthrough
+        from agent.secret_scope import set_secret_scope, reset_secret_scope
+        launch, target = tmp_path / "launch", tmp_path / "target"
+        launch.mkdir()
+        target.mkdir()
+        (target / ".env").write_text("CUSTOM_FLAG=target-default\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        token = env_passthrough._allowed_env_vars_var.set({"CUSTOM_FLAG"})
+        scope_token = set_secret_scope({"CUSTOM_FLAG": "target-default"})
+        try:
+            with bound_home(target):
+>               assert child_env(surface, {"CUSTOM_FLAG": "explicit-call-value"})["CUSTOM_FLAG"] == "explicit-call-value"
+E               AssertionError: assert 'target-default' == 'explicit-call-value'
+E
+E                 - explicit-call-value
+E                 + target-default
+
+tests\tools\test_child_credential_boundary.py:533: AssertionError
+_____ test_registered_benign_extra_keeps_explicit_precedence[background] ______
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-mvf_cuc6/pytest-of-unknown/pytest-0/test_registered_benign_extra_k1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001742BE3FA90>
+surface = 'background'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    def test_registered_benign_extra_keeps_explicit_precedence(tmp_path, monkeypatch, surface):
+        from tools import env_passthrough
+        from agent.secret_scope import set_secret_scope, reset_secret_scope
+        launch, target = tmp_path / "launch", tmp_path / "target"
+        launch.mkdir()
+        target.mkdir()
+        (target / ".env").write_text("CUSTOM_FLAG=target-default\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        token = env_passthrough._allowed_env_vars_var.set({"CUSTOM_FLAG"})
+        scope_token = set_secret_scope({"CUSTOM_FLAG": "target-default"})
+        try:
+            with bound_home(target):
+>               assert child_env(surface, {"CUSTOM_FLAG": "explicit-call-value"})["CUSTOM_FLAG"] == "explicit-call-value"
+E               AssertionError: assert 'target-default' == 'explicit-call-value'
+E
+E                 - explicit-call-value
+E                 + target-default
+
+tests\tools\test_child_credential_boundary.py:533: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_registered_benign_extra_keeps_explicit_precedence[terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_registered_benign_extra_keeps_explicit_precedence[background]
+2 failed, 2 passed, 200 deselected in 3.24s
+
+=== 1 file with test failures (2 tests failed) ===
+  tests\tools\test_child_credential_boundary.py  (2 tests failed)

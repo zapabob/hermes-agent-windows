@@ -533,7 +533,10 @@ class RaftAdapter(BasePlatformAdapter):
             logger.warning("[raft] raft CLI not found in PATH; bridge not spawned — wake-only polling mode")
             return
 
-        profile = os.environ.get("RAFT_PROFILE", "")
+        from agent.secret_scope import get_secret
+        from tools.environments.local import hermes_subprocess_env
+
+        profile = get_secret("RAFT_PROFILE", "")
         if not profile:
             logger.warning("[raft] RAFT_PROFILE not set; bridge not spawned")
             return
@@ -545,7 +548,11 @@ class RaftAdapter(BasePlatformAdapter):
             "--wake-adapter", "wake-channel",
             "--wake-channel-endpoint", endpoint,
         ]
-        env = {**os.environ, "RAFT_CHANNEL_TOKEN": self._bridge_token}
+        env = hermes_subprocess_env()
+        env["RAFT_CHANNEL_TOKEN"] = self._bridge_token
+        env["RAFT_PROFILE"] = profile
+        from hermes_constants import get_real_home
+        env["HOME"] = get_real_home(env)
         try:
             self._bridge_process = subprocess.Popen(
                 cmd, env=env, stdin=subprocess.DEVNULL

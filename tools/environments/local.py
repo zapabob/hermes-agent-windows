@@ -10,12 +10,14 @@ import signal
 import subprocess
 import sys
 import tempfile
+import threading
 import time
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
+from contextvars import ContextVar
 from pathlib import Path
 
 from hermes_constants import get_process_hermes_home
-from tools.environments.base import BaseEnvironment, _pipe_stdin
+from tools.environments.base import BaseEnvironment, _pipe_stdin, _SHELL_ENV_NAME_RE
 from hermes_cli._subprocess_compat import windows_hide_flags
 
 _IS_WINDOWS = sys.platform == "win32"
@@ -245,7 +247,9 @@ def _build_provider_env_blocklist() -> frozenset:
         from hermes_cli.config import OPTIONAL_ENV_VARS
         for name, metadata in OPTIONAL_ENV_VARS.items():
             category = metadata.get("category")
-            if category in {"tool", "messaging"}:
+            if category in {"tool", "messaging"} or (
+                category == "provider" and metadata.get("password")
+            ):
                 blocked.add(name)
             elif category == "setting" and metadata.get("password"):
                 blocked.add(name)
@@ -255,6 +259,8 @@ def _build_provider_env_blocklist() -> frozenset:
     blocked.update({
         "OPENAI_BASE_URL",
         "OPENAI_API_KEY",
+        "NOUS_API_KEY",
+        "QWEN_API_KEY",
         "OPENAI_API_BASE",
         "OPENAI_ORG_ID",
         "OPENAI_ORGANIZATION",
@@ -370,6 +376,21 @@ def _build_provider_env_blocklist() -> frozenset:
 
 
 _HERMES_PROVIDER_ENV_BLOCKLIST = _build_provider_env_blocklist()
+_CHILD_SECRET_POLICY: ContextVar[tuple[frozenset[str], frozenset[str]] | None] = ContextVar(
+    "local_child_secret_policy", default=None,
+)
+
+
+def _provider_secret_env() -> frozenset[str]:
+    """Resolve current provider declarations, including late OAuth profiles."""
+    policy = _CHILD_SECRET_POLICY.get()
+    if policy is not None:
+        return policy[1]
+    from hermes_cli.config import provider_profile_secret_envs
+    names = {name.upper() for name in _HERMES_PROVIDER_ENV_BLOCKLIST}
+    names.update(provider_profile_secret_envs())
+    names.update(_registered_adapter_secret_env())
+    return frozenset(names)
 
 # Active-virtualenv markers that must NOT leak into terminal subprocesses.
 # The gateway runs inside its own venv, so its process environment carries
@@ -431,6 +452,16 @@ def _is_hermes_internal_secret(key: str) -> bool:
     a model-driving CLI legitimately needs matches these patterns.
     """
     upper = key.upper()
+    if upper in {
+        "WHATSAPP_CLOUD_ACCESS_TOKEN", "WHATSAPP_CLOUD_APP_SECRET",
+        "TELEGRAM_WEBHOOK_SECRET", "PHOTON_SIDECAR_TOKEN",
+        "HERMES_DASHBOARD_SECRET", "HERMES_DASHBOARD_DRAIN_TOKEN",
+        "HERMES_DASHBOARD_OIDC_CLIENT_SECRET",
+        "HERMES_DASHBOARD_BASIC_AUTH_PASSWORD", "HERMES_DASHBOARD_BASIC_AUTH_SECRET",
+        "HERMES_DASHBOARD_DRAIN_SECRET", "HERMES_ANON_API_SECRET",
+        "WEIXIN_TOKEN", "YUANBAO_APP_SECRET", "FEISHU_ENCRYPT_KEY",
+    }:
+        return True
     if upper.startswith("AUXILIARY_") and (
         upper.endswith("_API_KEY") or upper.endswith("_BASE_URL")
     ):
@@ -448,14 +479,53 @@ def _plugin_terminal_env_strip_keys() -> frozenset:
     Computed at call time (not import time) because plugins register after
     this module is imported. Treated as Tier-1: stripped from every spawned
     subprocess unconditionally, exactly like MODAL_*/DAYTONA_API_KEY in
-    ``_ALWAYS_STRIP_KEYS``. Fail-soft to an empty set.
+    ``_ALWAYS_STRIP_KEYS``. An unreadable security declaration blocks spawn.
     """
-    try:
-        from agent.terminal_env_registry import plugin_strip_env_keys
+    policy = _CHILD_SECRET_POLICY.get()
+    if policy is not None:
+        return policy[0]
+    from agent.terminal_env_registry import plugin_strip_env_keys
+    from hermes_cli.config import OPTIONAL_ENV_VARS, platform_manifest_secret_envs
 
-        return plugin_strip_env_keys()
-    except Exception:
+    adapter_secrets = frozenset(
+        name.upper() for name, meta in OPTIONAL_ENV_VARS.items()
+        if meta.get("category") == "messaging" and meta.get("password")
+    )
+    return plugin_strip_env_keys() | platform_manifest_secret_envs(_child_policy_home()) | adapter_secrets | _ALWAYS_STRIP_KEYS
+
+
+def _registered_adapter_secret_env() -> frozenset[str]:
+    """Unchecked runtime declarations are Tier 2, never core reclassification."""
+    from gateway.platform_registry import platform_registry
+    from hermes_cli.config import PLATFORM_SECRET_ENV_SUFFIXES
+    return frozenset(
+        name.upper() for name in platform_registry.required_env_names(include_profile=_child_policy_home() is not None)
+        if name.upper().endswith(PLATFORM_SECRET_ENV_SUFFIXES)
+    )
+
+
+def _launch_profile_owned_env_names() -> frozenset[str]:
+    from agent.secret_scope import _is_global_env, load_env_file
+    from hermes_cli.config import platform_manifest_secret_envs
+    from hermes_cli.env_loader import get_secret_source_values, loaded_profile_env_keys, launch_profile_home
+
+    if _child_policy_home() is None:
         return frozenset()
+    launch = launch_profile_home()
+    names = set(load_env_file(launch / ".env")) | set(load_env_file(launch / ".op.env"))
+    names.update(loaded_profile_env_keys(launch))
+    names.update(get_secret_source_values(launch))
+    return frozenset(name.upper() for name in names if not _is_global_env(name)) | platform_manifest_secret_envs(launch)
+
+
+def _child_policy_home() -> Path | None:
+    """A minimal OS environment may have no resolvable profile directory."""
+    from hermes_constants import get_hermes_home, get_hermes_home_override
+
+    home_names = ("HERMES_HOME", "LOCALAPPDATA", "USERPROFILE", "HOMEDRIVE") if _IS_WINDOWS else ("HERMES_HOME", "HOME")
+    if get_hermes_home_override() or any(os.environ.get(name) for name in home_names):
+        return get_hermes_home()
+    return None
 
 
 def _inject_context_hermes_home(env: dict) -> None:
@@ -468,6 +538,57 @@ def _inject_context_hermes_home(env: dict) -> None:
             env["HERMES_HOME"] = value
     except Exception:
         pass
+
+
+def _profile_child_base(
+    base: Mapping[str, str], *, inherit_credentials: bool = False,
+    extra: Mapping[str, str] | None = None,
+) -> dict:
+    """Resolve routed profile values before applying the child security tier."""
+    from agent.secret_scope import (
+        UnscopedSecretError, _is_global_env, build_profile_secret_scope,
+        current_secret_scope, is_multiplex_active, load_env_file,
+    )
+    from hermes_cli.config import platform_manifest_secret_envs
+    from hermes_cli.env_loader import get_secret_source_values, loaded_profile_env_keys, launch_profile_home
+    from hermes_constants import (
+        get_hermes_home, get_hermes_home_override, get_process_hermes_home, hermes_home_key,
+    )
+
+    env = dict(base)
+    scope = current_secret_scope()
+    if inherit_credentials and is_multiplex_active() and scope is None and not get_hermes_home_override():
+        raise UnscopedSecretError("Credential child requires a bound profile")
+    target = _child_policy_home()
+    if target is None:
+        env.update(extra or {})
+        return env
+    launch = launch_profile_home() if get_hermes_home_override() or is_multiplex_active() else get_process_hermes_home()
+    routed = hermes_home_key(launch) != hermes_home_key(target)
+    scoped_credentials = inherit_credentials and (routed or is_multiplex_active())
+    owned: set[str] = set()
+    if routed or scoped_credentials:
+        launch_names = set(load_env_file(launch / ".env"))
+        launch_names.update(load_env_file(launch / ".op.env"))
+        launch_names.update(loaded_profile_env_keys(launch))
+        launch_names.update(get_secret_source_values(launch))
+        owned = {name.upper() for name in launch_names if not _is_global_env(name)}
+        owned.update(platform_manifest_secret_envs(launch))
+        owned.update(_provider_secret_env())
+        for name in list(env):
+            upper = name.upper()
+            real = upper.removeprefix(_HERMES_PROVIDER_ENV_FORCE_PREFIX.upper())
+            if real in owned:
+                env.pop(name)
+        values = dict(scope) if scope is not None else build_profile_secret_scope(target)
+        for name, value in values.items():
+            if value is not None and not _is_global_env(name):
+                env[name] = value
+    for name, value in (extra or {}).items():
+        real = name.upper().removeprefix(_HERMES_PROVIDER_ENV_FORCE_PREFIX.upper())
+        if real not in owned:
+            env[name] = value
+    return env
 
 
 def _inject_session_context_env(env: dict) -> None:
@@ -530,10 +651,17 @@ def _sanitize_subprocess_env(base_env: dict | None, extra_env: dict | None = Non
 
     sanitized: dict[str, str] = {}
     _plugin_strip = {key.upper() for key in _plugin_terminal_env_strip_keys()}
-    _provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST}
+    _provider_strip = _provider_secret_env()
 
-    for key, value in (base_env or {}).items():
+    effective = _profile_child_base(base_env or {}, extra=extra_env)
+    for key, value in effective.items():
         if key.startswith(_HERMES_PROVIDER_ENV_FORCE_PREFIX):
+            if key not in (extra_env or {}):
+                continue
+            real_key = key[len(_HERMES_PROVIDER_ENV_FORCE_PREFIX):]
+            if _is_hermes_internal_secret(real_key) or real_key.upper() in _plugin_strip:
+                continue
+            sanitized[real_key] = value
             continue
         if _is_hermes_internal_secret(key):
             continue
@@ -542,27 +670,11 @@ def _sanitize_subprocess_env(base_env: dict | None, extra_env: dict | None = Non
         passthrough = _is_passthrough(key)
         if key.upper() in _provider_strip and not passthrough:
             continue
-        resolved = _resolve_passthrough_value(key, value) if passthrough else value
+        resolved = _resolve_passthrough_value(key, value) if passthrough and (
+            key not in (extra_env or {}) or _CREDENTIAL_ENV_NAME_RE.search(key)
+        ) else value
         if resolved is not None:
             sanitized[key] = resolved
-
-    for key, value in (extra_env or {}).items():
-        if key.startswith(_HERMES_PROVIDER_ENV_FORCE_PREFIX):
-            real_key = key[len(_HERMES_PROVIDER_ENV_FORCE_PREFIX):]
-            if _is_hermes_internal_secret(real_key):
-                continue
-            sanitized[real_key] = value
-        elif _is_hermes_internal_secret(key):
-            continue
-        elif key.upper() in _plugin_strip:
-            continue
-        else:
-            passthrough = _is_passthrough(key)
-            if key.upper() in _provider_strip and not passthrough:
-                continue
-            resolved = _resolve_passthrough_value(key, value) if passthrough else value
-            if resolved is not None:
-                sanitized[key] = resolved
 
     _inject_context_hermes_home(sanitized)
 
@@ -645,6 +757,10 @@ _ALWAYS_STRIP_KEYS: frozenset[str] = frozenset({
     "HASS_TOKEN",
     "EMAIL_PASSWORD",
     "HERMES_DASHBOARD_SESSION_TOKEN",
+    "MSGRAPH_CLIENT_SECRET",
+    "MSGRAPH_WEBHOOK_CLIENT_STATE",
+    "QQ_STT_API_KEY",
+    "RAFT_CHANNEL_TOKEN",
     # Remote-compute / infrastructure secrets
     "MODAL_TOKEN_ID",
     "MODAL_TOKEN_SECRET",
@@ -717,6 +833,7 @@ def hermes_subprocess_env(
     inherit_credentials: bool = False,
     allowlist_only: bool = False,
     extra: Mapping[str, str] | None = None,
+    credential_keys: Iterable[str] = (),
 ) -> dict[str, str]:
     """Build a sanitized environment dict for a spawned subprocess.
 
@@ -749,7 +866,8 @@ def hermes_subprocess_env(
     ``inherit_credentials=False`` and copy just those keys back from
     ``os.environ`` into the returned dict.
     """
-    if allowlist_only and inherit_credentials:
+    approved = {key.upper() for key in credential_keys}
+    if allowlist_only and (inherit_credentials or approved):
         raise ValueError("allowlist_only cannot be combined with inherit_credentials")
 
     if allowlist_only:
@@ -776,16 +894,23 @@ def hermes_subprocess_env(
             or _CREDENTIAL_ENV_NAME_RE.search(upper)
         ):
             raise ValueError(f"credential-shaped environment key is not allowed: {key}")
-        env[key] = value
+
+    env = _profile_child_base(env, inherit_credentials=inherit_credentials or bool(approved), extra=extra)
+    if allowlist_only:
+        env = {
+            key: value for key, value in env.items()
+            if key in (extra or {}) or key.upper() in _STRICT_SUBPROCESS_ENV_KEYS
+            or (key.upper().startswith("LC_") and not _CREDENTIAL_ENV_NAME_RE.search(key))
+        }
 
     # Compare names case-insensitively even when the host uses a plain dict.
     # A POSIX caller can pass Windows-style case variants to a child.
     always_strip = {key.upper() for key in _ALWAYS_STRIP_KEYS}
     always_strip.update(key.upper() for key in _plugin_terminal_env_strip_keys())
-    provider_strip = {key.upper() for key in _HERMES_PROVIDER_ENV_BLOCKLIST}
+    provider_strip = _provider_secret_env()
     for key in list(env):
         upper = key.upper()
-        if upper in always_strip or (not inherit_credentials and upper in provider_strip):
+        if upper in always_strip or (not inherit_credentials and upper in provider_strip and upper not in approved):
             env.pop(key, None)
     # Internal routing hints and Hermes-internal dynamic secrets
     # (``AUXILIARY_<TASK>_API_KEY`` / ``_BASE_URL`` side-LLM credentials,
@@ -801,7 +926,8 @@ def hermes_subprocess_env(
     if not inherit_credentials:
         # Tier 2 — strip provider/tool credentials unless explicitly inherited.
         for key in _HERMES_PROVIDER_ENV_BLOCKLIST:
-            env.pop(key, None)
+            if key.upper() not in approved:
+                env.pop(key, None)
 
     # Windows UTF-8 safety for spawned processes (#31420).
     env.setdefault("PYTHONUTF8", "1")
@@ -1508,21 +1634,25 @@ def _make_run_env(env: dict) -> dict:
         _is_passthrough = lambda _: False  # noqa: E731
         _resolve_passthrough_value = lambda _name, fallback: fallback  # noqa: E731
 
-    merged = dict(os.environ | env)
+    merged = _profile_child_base(os.environ, extra=env)
     run_env = {}
+    plugin_strip = {key.upper() for key in _plugin_terminal_env_strip_keys()}
+    provider_strip = _provider_secret_env()
     for k, v in merged.items():
         if k.startswith(_HERMES_PROVIDER_ENV_FORCE_PREFIX):
             real_key = k[len(_HERMES_PROVIDER_ENV_FORCE_PREFIX):]
-            if _is_hermes_internal_secret(real_key):
+            if _is_hermes_internal_secret(real_key) or real_key.upper() in plugin_strip:
                 continue
             run_env[real_key] = v
-        elif _is_hermes_internal_secret(k):
+        elif _is_hermes_internal_secret(k) or k.upper() in plugin_strip:
             continue
         else:
             passthrough = _is_passthrough(k)
-            if k in _HERMES_PROVIDER_ENV_BLOCKLIST and not passthrough:
+            if k.upper() in provider_strip and not passthrough:
                 continue
-            value = _resolve_passthrough_value(k, v) if passthrough else v
+            value = _resolve_passthrough_value(k, v) if passthrough and (
+                k not in env or _CREDENTIAL_ENV_NAME_RE.search(k)
+            ) else v
             if value is not None:
                 run_env[k] = value
     path_key = _path_env_key(run_env)
@@ -1936,10 +2066,101 @@ class LocalEnvironment(BaseEnvironment):
     # behavior (macOS TCC pruning, etc.) legitimately applies here.
     is_local = True
 
+    def _snapshot_excluded_passthrough_names(self) -> tuple[str, ...]:
+        names = super()._snapshot_excluded_passthrough_names()
+        # Security declarations are mandatory even outside multiplex mode.
+        self._snapshot_passthrough_names.update(self._additional_profile_scoped_passthrough_names())
+        excluded = self._snapshot_passthrough_names | set(names)
+        if any(not _SHELL_ENV_NAME_RE.fullmatch(name) for name in excluded):
+            raise RuntimeError("Invalid protected environment identifier")
+        return tuple(sorted(excluded))
+
+    def _additional_profile_scoped_passthrough_names(self) -> set[str]:
+        """Restore current authority after sourcing an older shell snapshot."""
+        from agent.secret_scope import _is_global_env, current_secret_scope
+        names = set(_provider_secret_env()) | set(_plugin_terminal_env_strip_keys())
+        names.update(_registered_adapter_secret_env())
+        names.update(_launch_profile_owned_env_names())
+        names.update(name for name in (current_secret_scope() or {}) if not _is_global_env(name))
+        visible = set(os.environ) | set(self.env)
+        snapshot = getattr(getattr(self, "_snapshot_read_context", None), "text", None)
+        if snapshot is None:
+            try:
+                snapshot = Path(self._snapshot_path).read_text(encoding="utf-8")
+            except FileNotFoundError:
+                snapshot = ""
+        declarations = re.findall(r"^declare -([A-Za-z]+) ([A-Za-z_][A-Za-z0-9_]*)(?:=|$)", snapshot, re.MULTILINE)
+        visible.update(name for flags, name in declarations if "x" in flags)
+        protected = {name.upper() for name in names}
+        if hasattr(getattr(self, "_snapshot_read_context", None), "text"):
+            # Compare this operation's declarations, not shared restoration
+            # history accumulated by other concurrently served profiles.
+            self._snapshot_read_context.authority = frozenset(
+                protected | {name.upper() for name in visible if _is_hermes_internal_secret(name)}
+            )
+        readonly_protected = protected | {name.upper() for name in self._snapshot_passthrough_names}
+        if any("r" in flags and "x" in flags and
+               (name.upper() in readonly_protected or _is_hermes_internal_secret(name))
+               for flags, name in declarations):
+            # A readonly value cannot be removed after source. Refuse without
+            # rewriting shell syntax or publishing a partial snapshot.
+            raise RuntimeError("Protected readonly export in terminal snapshot")
+        # Restoring every possible provider name exceeds Windows' argv limit.
+        # Read only snapshot identifiers; values never enter command arguments.
+        return {name for name in visible if name.upper() in protected or _is_hermes_internal_secret(name)}
+
     def __init__(self, cwd: str = "", timeout: int = 60, env: dict = None):
         cwd = _resolve_local_initial_cwd(cwd)
         super().__init__(cwd=cwd, timeout=timeout, env=env)
+        self._snapshot_read_context = threading.local()
+        self._snapshot_copy_lock = threading.Lock()
+        self._snapshot_copies: dict[str, tuple[str, frozenset[str]]] = {}
         self.init_session()
+
+    def _wrap_command(self, command: str, cwd: str) -> str:
+        if not self._snapshot_ready:
+            return super()._wrap_command(command, cwd)
+        try:
+            content = Path(self._snapshot_path).read_bytes()
+        except FileNotFoundError:
+            content = b""
+        # Validate and source the very same bytes. A concurrent command can
+        # atomically publish the next snapshot without replacing this input.
+        self._snapshot_read_context.text = content.decode("utf-8")
+        try:
+            wrapped = super()._wrap_command(command, cwd)
+            authority = self._snapshot_read_context.authority
+        finally:
+            del self._snapshot_read_context.text
+            if hasattr(self._snapshot_read_context, "authority"):
+                del self._snapshot_read_context.authority
+        with tempfile.NamedTemporaryFile(
+            prefix=Path(self._snapshot_path).name + ".validated.",
+            dir=Path(self._snapshot_path).parent, delete=False,
+        ) as stream:
+            pinned = stream.name
+            try:
+                os.chmod(pinned, 0o600)
+                stream.write(content)
+            except BaseException:
+                stream.close()
+                Path(pinned).unlink(missing_ok=True)
+                raise
+        wrapped = wrapped.replace(
+            f"source {self._quote_shell_path(self._snapshot_path)} >/dev/null 2>&1 || true",
+            f"source {self._quote_shell_path(pinned)} >/dev/null 2>&1 || true", 1,
+        )
+        with self._snapshot_copy_lock:
+            self._snapshot_copies[wrapped] = (pinned, authority)
+        return wrapped
+
+    def _wait_for_process(self, proc, timeout: int = 120, *, bounded_capture: bool = False) -> dict:
+        try:
+            return super()._wait_for_process(proc, timeout=timeout, bounded_capture=bounded_capture)
+        finally:
+            pinned = getattr(proc, "_hermes_snapshot_copy", None)
+            if pinned:
+                Path(pinned).unlink(missing_ok=True)
 
     def get_temp_dir(self) -> str:
         """Return a shell-safe writable temp dir for local execution.
@@ -2001,6 +2222,45 @@ class LocalEnvironment(BaseEnvironment):
     def _run_bash(self, cmd_string: str, *, login: bool = False,
                   timeout: int = 120,
                   stdin_data: str | None = None) -> subprocess.Popen:
+        lock = getattr(self, "_snapshot_copy_lock", None)
+        snapshot = None
+        if lock is not None:
+            with lock:
+                snapshot = self._snapshot_copies.pop(cmd_string, None)
+        pinned = snapshot[0] if snapshot else None
+        policy_token = None
+        try:
+            # One immutable policy for this spawn's wrapper and environment.
+            # Concurrent registration after this boundary belongs to the next
+            # operation; it cannot make these two consumers disagree.
+            policy = (_plugin_terminal_env_strip_keys(), _provider_secret_env())
+            policy_token = _CHILD_SECRET_POLICY.set(policy)
+            if snapshot:
+                self._snapshot_read_context.text = Path(pinned).read_text(encoding="utf-8")
+                try:
+                    self._snapshot_excluded_passthrough_names()
+                    current = self._snapshot_read_context.authority
+                finally:
+                    del self._snapshot_read_context.text
+                    if hasattr(self._snapshot_read_context, "authority"):
+                        del self._snapshot_read_context.authority
+                if current != snapshot[1]:
+                    raise RuntimeError("Terminal credential declaration authority changed before spawn")
+            proc = self._spawn_bash(cmd_string, login=login, timeout=timeout, stdin_data=stdin_data)
+            if pinned:
+                proc._hermes_snapshot_copy = pinned
+            return proc
+        except BaseException:
+            if pinned:
+                Path(pinned).unlink(missing_ok=True)
+            raise
+        finally:
+            if policy_token is not None:
+                _CHILD_SECRET_POLICY.reset(policy_token)
+
+    def _spawn_bash(self, cmd_string: str, *, login: bool = False,
+                    timeout: int = 120,
+                    stdin_data: str | None = None) -> subprocess.Popen:
         bash = _find_bash()
         # For login-shell invocations (used by init_session to build the
         # environment snapshot), prepend sources for the user's bashrc /
@@ -2013,6 +2273,10 @@ class LocalEnvironment(BaseEnvironment):
             if init_files:
                 cmd_string = _prepend_shell_init(cmd_string, init_files)
         args = [bash, "-l", "-c", cmd_string] if login else [bash, "-c", cmd_string]
+        if _IS_WINDOWS and len(subprocess.list2cmdline(args).encode("utf-16-le")) // 2 >= 30000:
+            # CreateProcess has a 32767 UTF-16-unit limit. Refuse with room
+            # for quoting/runtime overhead; never truncate protected names.
+            raise RuntimeError("Windows terminal command length exceeds safe limit")
         run_env = _make_run_env(self.env)
 
         # Recover when the cwd has been deleted out from under us — usually by
@@ -2241,10 +2505,14 @@ class LocalEnvironment(BaseEnvironment):
         # a failed/interrupted mv could have left behind (#38249).
         try:
             import glob
-            for tmp in glob.glob(f"{self._snapshot_path}.tmp.*"):
+            for tmp in (*glob.glob(f"{self._snapshot_path}.tmp.*"),
+                        *glob.glob(f"{self._snapshot_path}.validated.*")):
                 try:
                     os.unlink(tmp)
                 except OSError:
                     pass
         except Exception:
             pass
+        if hasattr(self, "_snapshot_copies"):
+            with self._snapshot_copy_lock:
+                self._snapshot_copies.clear()

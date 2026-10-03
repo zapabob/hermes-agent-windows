@@ -1608,7 +1608,11 @@ def _start_local_openviking_server(endpoint: str) -> tuple[str, str]:
         # aborting `hermes update` with access-denied on .pyd files.
         # Strip PYTHONPATH so the server resolves packages from its own
         # venv. (#78153)
-        child_env = os.environ.copy()
+        from tools.environments.local import hermes_subprocess_env
+
+        child_env = hermes_subprocess_env(inherit_credentials=True)
+        from hermes_constants import get_real_home
+        child_env["HOME"] = get_real_home(child_env)
         child_env.pop("PYTHONPATH", None)
         with log_path.open("ab") as log_file:
             subprocess.Popen(

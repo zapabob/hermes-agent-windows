@@ -1,0 +1,11 @@
+{
+  "symbol": "plugin_strip_env_keys",
+  "callers": [
+    {
+      "name": "_plugin_terminal_env_strip_keys",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 459
+    }
+  ]
+}

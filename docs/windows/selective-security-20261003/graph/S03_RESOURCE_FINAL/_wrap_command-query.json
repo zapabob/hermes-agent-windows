@@ -1,0 +1,178 @@
+[
+  {
+    "node": {
+      "id": "method:014970518b71ade95d9a6840925354fc",
+      "kind": "method",
+      "name": "_wrap_command",
+      "qualifiedName": "BaseEnvironment::_wrap_command",
+      "filePath": "tools/environments/base.py",
+      "language": "python",
+      "startLine": 911,
+      "endLine": 1032,
+      "startColumn": 4,
+      "endColumn": 31,
+      "signature": "(self, command: str, cwd: str) -> str",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982772379
+    },
+    "score": 111.16659831720168
+  },
+  {
+    "node": {
+      "id": "method:3da3211a10fe489ce1af4601e5e4d663",
+      "kind": "method",
+      "name": "_wrap_command",
+      "qualifiedName": "LocalEnvironment::_wrap_command",
+      "filePath": "tools/environments/local.py",
+      "language": "python",
+      "startLine": 2120,
+      "endLine": 2155,
+      "startColumn": 4,
+      "endColumn": 22,
+      "signature": "(self, command: str, cwd: str) -> str",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790995797841
+    },
+    "score": 111.16659831720168
+  },
+  {
+    "node": {
+      "id": "function:fca0b2f4c1fbc3bbd00b283e056baa58",
+      "kind": "function",
+      "name": "_wrap_command_with_watchdog",
+      "qualifiedName": "_wrap_command_with_watchdog",
+      "filePath": "tools/mcp_tool.py",
+      "language": "python",
+      "startLine": 1094,
+      "endLine": 1119,
+      "startColumn": 0,
+      "endColumn": 40,
+      "signature": "(command: str, args: list) -> tuple[str, list]",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982772675
+    },
+    "score": 54.97336015938224
+  },
+  {
+    "node": {
+      "id": "method:58791488a22a1c92dc61885958fbae2e",
+      "kind": "method",
+      "name": "test_wrap_command_contains_export",
+      "qualifiedName": "TestWrapCommandAdvertisesHarness::test_wrap_command_contains_export",
+      "filePath": "tests/hermes_cli/test_agent_env_advertisement.py",
+      "language": "python",
+      "startLine": 67,
+      "endLine": 70,
+      "startColumn": 4,
+      "endColumn": 64,
+      "signature": "(self)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982676379
+    },
+    "score": 31.117955719768673
+  },
+  {
+    "node": {
+      "id": "method:85f9b14fdbfca03363e76210ce18f344",
+      "kind": "method",
+      "name": "test_wrap_command_uses_atomic_temp_then_mv",
+      "qualifiedName": "TestAtomicSnapshotWrite::test_wrap_command_uses_atomic_temp_then_mv",
+      "filePath": "tests/tools/test_base_environment.py",
+      "language": "python",
+      "startLine": 103,
+      "endLine": 116,
+      "startColumn": 4,
+      "endColumn": 43,
+      "signature": "(self)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982699937
+    },
+    "score": 30.830731237505734
+  },
+  {
+    "node": {
+      "id": "method:60a85dd8ba5149da5cd53dc9ced607c0",
+      "kind": "method",
+      "name": "test_wrap_command_converts_native_cwd_for_builtin_cd",
+      "qualifiedName": "TestWrapCommandWindowsNativeCwd::test_wrap_command_converts_native_cwd_for_builtin_cd",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "language": "python",
+      "startLine": 490,
+      "endLine": 500,
+      "startColumn": 4,
+      "endColumn": 73,
+      "signature": "(self)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790995325031
+    },
+    "score": 30.736718142498685
+  },
+  {
+    "node": {
+      "id": "method:4e98e35c47fd55baa8f1a63e590bb163",
+      "kind": "method",
+      "name": "test_wrap_command_uses_bash_compatible_cd_target",
+      "qualifiedName": "TestQuoteCwdForWindowsBash::test_wrap_command_uses_bash_compatible_cd_target",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "language": "python",
+      "startLine": 130,
+      "endLine": 143,
+      "startColumn": 4,
+      "endColumn": 83,
+      "signature": "(self, monkeypatch, tmp_path)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790995325031
+    },
+    "score": 30.690029102887674
+  },
+  {
+    "node": {
+      "id": "function:0586693bc64ee99b4922093546a4bb36",
+      "kind": "function",
+      "name": "test_wrap_command_uses_stable_parent_pid_and_preserves_command_tail",
+      "qualifiedName": "test_wrap_command_uses_stable_parent_pid_and_preserves_command_tail",
+      "filePath": "tests/tools/test_mcp_stdio_watchdog.py",
+      "language": "python",
+      "startLine": 21,
+      "endLine": 40,
+      "startColumn": 0,
+      "endColumn": 46,
+      "signature": "()",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982769444
+    },
+    "score": 30.6435498331571
+  }
+]

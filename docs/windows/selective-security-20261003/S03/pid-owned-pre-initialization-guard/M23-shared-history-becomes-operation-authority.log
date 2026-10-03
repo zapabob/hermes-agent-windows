@@ -1,0 +1,23 @@
+..........................F.                                             [100%]
+================================== FAILURES ===================================
+_____ test_parallel_benign_scope_history_does_not_refuse_native_commands ______
+tests\tools\test_child_credential_windows_native.py:360: in test_parallel_benign_scope_history_does_not_refuse_native_commands
+    results = [future_a.result(timeout=30), future_b.result(timeout=30)]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+C:\Users\downl\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\concurrent\futures\thread.py:58: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\tools\test_child_credential_windows_native.py:353: in run
+    proc = environment._run_bash(script)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools\environments\local.py:2248: in _run_bash
+    raise RuntimeError("Terminal credential declaration authority changed before spawn")
+E   RuntimeError: Terminal credential declaration authority changed before spawn
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_windows_native.py::test_parallel_benign_scope_history_does_not_refuse_native_commands
+1 failed, 27 passed in 35.15s

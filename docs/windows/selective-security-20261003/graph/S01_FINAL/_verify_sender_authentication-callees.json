@@ -1,0 +1,59 @@
+{
+  "symbol": "_verify_sender_authentication",
+  "callees": [
+    {
+      "name": "_domain_of",
+      "kind": "function",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 393
+    },
+    {
+      "name": "split",
+      "kind": "function",
+      "filePath": "apps/desktop/src/components/pane-shell/tree/model.ts",
+      "startLine": 75
+    },
+    {
+      "name": "strip",
+      "kind": "function",
+      "filePath": "apps/desktop/src/components/ui/glyph-spinner.test.tsx",
+      "startLine": 33
+    },
+    {
+      "name": "_domains_aligned",
+      "kind": "function",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 399
+    },
+    {
+      "name": "_ar_clauses",
+      "kind": "function",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 353
+    },
+    {
+      "name": "append",
+      "kind": "method",
+      "filePath": "hermes_cli/pty_session.py",
+      "startLine": 38
+    },
+    {
+      "name": "_auth_props",
+      "kind": "function",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 387
+    },
+    {
+      "name": "aligned",
+      "kind": "function",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 486
+    },
+    {
+      "name": "_AUTH_METHOD_RE",
+      "kind": "variable",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 417
+    }
+  ]
+}

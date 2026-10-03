@@ -1,0 +1,80 @@
+{
+  "revision": "d0bba5c1d065b7b1d7d1c2d831a12ddc8e9e26f7",
+  "tree": "7451956d836d550530596724228eb8fc51be7544",
+  "root": "H:\\hermes-worktrees\\p0-p1-local-20261003",
+  "tool_version": "1.6.0",
+  "status": {
+    "initialized": true,
+    "version": "1.6.0",
+    "projectPath": "H:\\hermes-worktrees\\p0-p1-local-20261003",
+    "indexPath": "H:\\hermes-worktrees\\p0-p1-local-20261003\\.codegraph",
+    "lastIndexed": "2026-10-03T00:43:15.074Z",
+    "fileCount": 9019,
+    "nodeCount": 194241,
+    "edgeCount": 610489,
+    "dbSizeBytes": 660066304,
+    "walSizeBytes": 0,
+    "backend": "node-sqlite",
+    "journalMode": "wal",
+    "nodesByKind": {
+      "class": 13170,
+      "component": 64,
+      "constant": 5830,
+      "enum": 8,
+      "enum_member": 25,
+      "field": 10,
+      "file": 8685,
+      "function": 61711,
+      "import": 42853,
+      "interface": 2179,
+      "method": 42323,
+      "namespace": 1,
+      "property": 1472,
+      "route": 397,
+      "struct": 33,
+      "type_alias": 887,
+      "variable": 14593
+    },
+    "languages": [
+      "c",
+      "cpp",
+      "csharp",
+      "go",
+      "javascript",
+      "liquid",
+      "nix",
+      "php",
+      "python",
+      "rust",
+      "tsx",
+      "typescript",
+      "yaml"
+    ],
+    "pendingChanges": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "worktreeMismatch": null,
+    "index": {
+      "builtWithVersion": null,
+      "builtWithExtractionVersion": null,
+      "currentExtractionVersion": 25,
+      "reindexRecommended": true,
+      "state": "complete",
+      "pendingRefs": 0
+    }
+  },
+  "owner_source_sha256": {
+    "tools/environments/local.py": "37e5e4814fc4dad05a935420f294dc0b2bb8d70066b1a65a9810bd60ff7726ba",
+    "agent/terminal_env_registry.py": "54ae41ee1402bcdab56033d817be3996edb9b9682c5c35d58218ba0b4c82656a",
+    "hermes_cli/config.py": "50d25dc01bafd548b3945dc8be04bd59bff31ca426bb284148b4286da33b64b0",
+    "tools/env_passthrough.py": "2478e41b755d289a3758ff0cd733c08a0b632c5ffb7af0d67fc78a682477dffc",
+    "plugins/platforms/raft/adapter.py": "7711041228567e6a0be08488489f7006ed69e0ef5ccc08369c40c9ed793c3f76",
+    "plugins/memory/openviking/__init__.py": "d1bca73c6b5502067d0173370a24fb650cd92c0eb678cd2415fa7546fb76f2cb",
+    "agent/delegation_context.py": "346cbe236dd80d8773165b7834aa0d1042f50e10c747d5d9ecbe3906de100bce",
+    "hermes_cli/env_loader.py": "c38a163c9d838a844293027e2976875f3b7fdd470771f7daeae4b5295b2f35ff",
+    "cron/scheduler.py": "e5caf50bebcf6e682607f7c292944087df2964e00190dde680b1114ac9c84b56"
+  },
+  "limitation": "Name-based graph fallback can falsely resolve builtins to unrelated same-name symbols; source audit remains required."
+}

@@ -1,0 +1,46 @@
+........................................................................ [ 34%]
+........................................................................ [ 69%]
+...................................FFFFFFFF.....................         [100%]
+================================== FAILURES ===================================
+______ test_invalid_manifest_security_flag_refuses_child[value0-secret] _______
+tests\tools\test_child_credential_boundary.py:464: in test_invalid_manifest_security_flag_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+_____ test_invalid_manifest_security_flag_refuses_child[value0-password] ______
+tests\tools\test_child_credential_boundary.py:464: in test_invalid_manifest_security_flag_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+______ test_invalid_manifest_security_flag_refuses_child[value1-secret] _______
+tests\tools\test_child_credential_boundary.py:464: in test_invalid_manifest_security_flag_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+_____ test_invalid_manifest_security_flag_refuses_child[value1-password] ______
+tests\tools\test_child_credential_boundary.py:464: in test_invalid_manifest_security_flag_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+_________ test_invalid_manifest_security_flag_refuses_child[0-secret] _________
+tests\tools\test_child_credential_boundary.py:464: in test_invalid_manifest_security_flag_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+________ test_invalid_manifest_security_flag_refuses_child[0-password] ________
+tests\tools\test_child_credential_boundary.py:464: in test_invalid_manifest_security_flag_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+_______ test_invalid_manifest_security_flag_refuses_child[false-secret] _______
+tests\tools\test_child_credential_boundary.py:464: in test_invalid_manifest_security_flag_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+______ test_invalid_manifest_security_flag_refuses_child[false-password] ______
+tests\tools\test_child_credential_boundary.py:464: in test_invalid_manifest_security_flag_refuses_child
+    with pytest.raises(RuntimeError, match="(?i)(secret|declaration)"):
+E   Failed: DID NOT RAISE RuntimeError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[value0-secret]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[value0-password]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[value1-secret]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[value1-password]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[0-secret]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[0-password]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[false-secret]
+FAILED tests/tools/test_child_credential_boundary.py::test_invalid_manifest_security_flag_refuses_child[false-password]
+8 failed, 200 passed in 9.95s

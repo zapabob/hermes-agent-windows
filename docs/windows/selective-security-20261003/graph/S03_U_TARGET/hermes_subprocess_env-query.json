@@ -1,0 +1,222 @@
+[
+  {
+    "node": {
+      "id": "function:24abf50b55e5eb2dcf6c22bf7f83df4b",
+      "kind": "function",
+      "name": "hermes_subprocess_env",
+      "qualifiedName": "hermes_subprocess_env",
+      "filePath": "tools/environments/local.py",
+      "language": "python",
+      "startLine": 317,
+      "endLine": 331,
+      "startColumn": 0,
+      "endColumn": 35,
+      "signature": "(\n    *, inherit_credentials: bool = False, base_env: dict[str, str] | None = None\n) -> dict[str, str]",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982696704
+    },
+    "score": 115.46528983280271
+  },
+  {
+    "node": {
+      "id": "function:94805b88c6e55ccefa5c38350bdd6679",
+      "kind": "function",
+      "name": "test_hermes_subprocess_env_unengaged_preserves_fallback",
+      "qualifiedName": "test_hermes_subprocess_env_unengaged_preserves_fallback",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "language": "python",
+      "startLine": 228,
+      "endLine": 233,
+      "startColumn": 0,
+      "endColumn": 62,
+      "signature": "(monkeypatch)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982676466
+    },
+    "score": 43.69685962528711
+  },
+  {
+    "node": {
+      "id": "method:261fa46192dccb803ab45ae2783f73f1",
+      "kind": "method",
+      "name": "test_hermes_subprocess_env_sets_msys_no_pathconv_on_windows",
+      "qualifiedName": "TestWindowsMsysPathconvDefaults::test_hermes_subprocess_env_sets_msys_no_pathconv_on_windows",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "language": "python",
+      "startLine": 231,
+      "endLine": 233,
+      "startColumn": 4,
+      "endColumn": 49,
+      "signature": "(self)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982676502
+    },
+    "score": 43.37410638424338
+  },
+  {
+    "node": {
+      "id": "function:9ee2eb4c1e21530f544945a07f8c92f4",
+      "kind": "function",
+      "name": "test_hermes_subprocess_env_strips_foreign_session_key_when_engaged",
+      "qualifiedName": "test_hermes_subprocess_env_strips_foreign_session_key_when_engaged",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "language": "python",
+      "startLine": 208,
+      "endLine": 225,
+      "startColumn": 0,
+      "endColumn": 5,
+      "docstring": "--------------------------------------------------------------------------- #\nNon-terminal spawn surface (hermes_subprocess_env) — sibling path\n--------------------------------------------------------------------------- #",
+      "signature": "(monkeypatch)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982676466
+    },
+    "score": 43.07996442082613
+  },
+  {
+    "node": {
+      "id": "file:tests/tools/test_hermes_subprocess_env.py",
+      "kind": "file",
+      "name": "test_hermes_subprocess_env.py",
+      "qualifiedName": "tests/tools/test_hermes_subprocess_env.py",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "language": "python",
+      "startLine": 1,
+      "endLine": 232,
+      "startColumn": 0,
+      "endColumn": 0,
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982676235
+    },
+    "score": 33.55729312585066
+  },
+  {
+    "node": {
+      "id": "import:9a18adff0aeb8ae0a34582cbb788a529",
+      "kind": "import",
+      "name": "tools.environments.local",
+      "qualifiedName": "tools.environments.local",
+      "filePath": "agent/copilot_acp_client.py",
+      "language": "python",
+      "startLine": 34,
+      "endLine": 34,
+      "startColumn": 0,
+      "endColumn": 58,
+      "signature": "from tools.environments.local import hermes_subprocess_env",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982246404
+    },
+    "score": 14.393810798773584
+  },
+  {
+    "node": {
+      "id": "import:6e1f9af87872cca100459bcc40cdf817",
+      "kind": "import",
+      "name": "tools.environments.local",
+      "qualifiedName": "tools.environments.local",
+      "filePath": "agent/transports/codex_app_server.py",
+      "language": "python",
+      "startLine": 22,
+      "endLine": 22,
+      "startColumn": 0,
+      "endColumn": 58,
+      "signature": "from tools.environments.local import hermes_subprocess_env",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982258675
+    },
+    "score": 14.393810798773584
+  },
+  {
+    "node": {
+      "id": "import:c43f18318afd98e2b1ee64321d6fdc66",
+      "kind": "import",
+      "name": "tools.environments.local",
+      "qualifiedName": "tools.environments.local",
+      "filePath": "tui_gateway/host_supervisor.py",
+      "language": "python",
+      "startLine": 23,
+      "endLine": 23,
+      "startColumn": 0,
+      "endColumn": 58,
+      "signature": "from tools.environments.local import hermes_subprocess_env",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982705321
+    },
+    "score": 14.393810798773584
+  },
+  {
+    "node": {
+      "id": "import:94cb1eda323a7e89744faee37acb0b72",
+      "kind": "import",
+      "name": "tools.environments.local",
+      "qualifiedName": "tools.environments.local",
+      "filePath": "tui_gateway/server.py",
+      "language": "python",
+      "startLine": 32,
+      "endLine": 32,
+      "startColumn": 0,
+      "endColumn": 58,
+      "signature": "from tools.environments.local import hermes_subprocess_env",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982768907
+    },
+    "score": 14.393810798773584
+  },
+  {
+    "node": {
+      "id": "import:0e66c40cb7d948c0763f483599094640",
+      "kind": "import",
+      "name": "tools.environments.local",
+      "qualifiedName": "tools.environments.local",
+      "filePath": "tests/tools/test_hermes_subprocess_env.py",
+      "language": "python",
+      "startLine": 17,
+      "endLine": 17,
+      "startColumn": 0,
+      "endColumn": 58,
+      "signature": "from tools.environments.local import hermes_subprocess_env",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982676235
+    },
+    "score": 12.393810798773584
+  }
+]

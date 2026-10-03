@@ -1,0 +1,38 @@
+{
+  "symbol": "plugin_strip_env_keys",
+  "depth": 2,
+  "nodeCount": 5,
+  "edgeCount": 4,
+  "affected": [
+    {
+      "name": "plugin_strip_env_keys",
+      "kind": "function",
+      "filePath": "agent/terminal_env_registry.py",
+      "startLine": 148
+    },
+    {
+      "name": "_plugin_terminal_env_strip_keys",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 459
+    },
+    {
+      "name": "_sanitize_subprocess_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 593
+    },
+    {
+      "name": "hermes_subprocess_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 777
+    },
+    {
+      "name": "_make_run_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 1569
+    }
+  ]
+}

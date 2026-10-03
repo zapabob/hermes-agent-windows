@@ -1,0 +1,40 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 12 test files (~269 tests) under ['tests\\agent\\test_terminal_env_registry.py', 'tests\\agent\\test_secret_scope.py', 'tests\\tools\\test_local_env_session_leak.py', 'tests\\tools\\test_local_env_blocklist.py', 'tests\\tools\\test_build_subprocess_env.py', 'tests\\tools\\test_hermes_subprocess_env.py', 'tests\\gateway\\test_raft_adapter.py', 'tests\\plugins\\memory\\test_openviking_provider.py', 'tests\\cron\\test_cron_script.py', 'tests\\tools\\test_child_credential_boundary.py', 'tests\\tools\\test_child_bridge_credential_boundary.py', 'tests\\tools\\test_child_credential_windows_native.py']; running with -j 1
+[  8.9% |    24/~269 | ✓24 | ✗ 0] ✓ tests\agent\test_secret_scope.py (24✓, 2.7s)
+[ 15.2% |    41/~269 | ✓48 | ✗ 0] ✓ tests\agent\test_terminal_env_registry.py (24✓, 2.7s)
+[ 26.0% |    70/~269 | ✓75 | ✗ 0] ✓ tests\cron\test_cron_script.py (27✓ 2s, 10.6s)
+[ 28.6% |    77/~269 | ✓82 | ✗ 0] ✓ tests\gateway\test_raft_adapter.py (7✓, 3.0s)
+[ 51.3% |   138/~269 | ✓142 | ✗  0] ✓ tests\plugins\memory\test_openviking_provider.py (60✓ 2s, 15.6s)
+[ 54.6% |   147/~269 | ✓152 | ✗  0] ✓ tests\tools\test_build_subprocess_env.py (10✓, 4.6s)
+[ 55.4% |   149/~269 | ✓154 | ✗  0] ✓ tests\tools\test_child_bridge_credential_boundary.py (2✓, 4.4s)
+[ 62.5% |   168/~269 | ✓290 | ✗  0] ✓ tests\tools\test_child_credential_boundary.py (136✓, 12.8s)
+[ 62.8% |   169/~269 | ✓296 | ✗  0] ✓ tests\tools\test_child_credential_windows_native.py (6✓, 8.1s)
+[ 70.6% |   190/~269 | ✓317 | ✗  0] ✓ tests\tools\test_hermes_subprocess_env.py (21✓, 5.3s)
+[ 97.0% |   261/~269 | ✓399 | ✗  0] ✓ tests\tools\test_local_env_blocklist.py (82✓ 1s, 23.5s)
+[100.0% |   269/~269 | ✓407 | ✗  0] ✓ tests\tools\test_local_env_session_leak.py (8✓, 4.8s)
+
+=== Summary: 12 files, 407 tests passed, 0 failed, 5 skipped (100% complete) in 98.1s (1 workers) ===
+
+  note: macos_only tests (in 1 file) were SKIPPED on this host (win32); they run on the tests-os CI lane (macos-latest).
+  Durations cached to test_durations.json (12 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   12
+  Total subprocess CPU-wall: 98.1s  (runner wall: 98.1s, parallelism: 1x)
+  P50: 5.30s  P90: 15.62s  P95: 23.48s  P99: 23.48s  Max: 23.48s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+     23.48s  tests\tools\test_local_env_blocklist.py
+     15.62s  tests\plugins\memory\test_openviking_provider.py
+     12.80s  tests\tools\test_child_credential_boundary.py
+     10.56s  tests\cron\test_cron_script.py
+      8.12s  tests\tools\test_child_credential_windows_native.py
+      5.30s  tests\tools\test_hermes_subprocess_env.py
+      4.78s  tests\tools\test_local_env_session_leak.py
+      4.59s  tests\tools\test_build_subprocess_env.py
+      4.36s  tests\tools\test_child_bridge_credential_boundary.py
+      3.02s  tests\gateway\test_raft_adapter.py

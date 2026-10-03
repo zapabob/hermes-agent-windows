@@ -1,0 +1,78 @@
+{
+  "revision": "709c7aeedf6c192137d231d719ad8cadf59414f6",
+  "tree": "4dea3dfadcc9e98a5bc48f0c359414f20338411a",
+  "root": "H:\\hermes-worktrees\\p0-p1-local-20261003",
+  "tool_version": "1.6.0",
+  "status": {
+    "initialized": true,
+    "version": "1.6.0",
+    "projectPath": "H:\\hermes-worktrees\\p0-p1-local-20261003",
+    "indexPath": "H:\\hermes-worktrees\\p0-p1-local-20261003\\.codegraph",
+    "lastIndexed": "2026-10-02T23:56:42.981Z",
+    "fileCount": 9016,
+    "nodeCount": 194160,
+    "edgeCount": 610211,
+    "dbSizeBytes": 650498048,
+    "walSizeBytes": 0,
+    "backend": "node-sqlite",
+    "journalMode": "wal",
+    "nodesByKind": {
+      "class": 13169,
+      "component": 64,
+      "constant": 5830,
+      "enum": 8,
+      "enum_member": 25,
+      "field": 10,
+      "file": 8682,
+      "function": 61672,
+      "import": 42829,
+      "interface": 2179,
+      "method": 42320,
+      "namespace": 1,
+      "property": 1472,
+      "route": 397,
+      "struct": 33,
+      "type_alias": 887,
+      "variable": 14582
+    },
+    "languages": [
+      "c",
+      "cpp",
+      "csharp",
+      "go",
+      "javascript",
+      "liquid",
+      "nix",
+      "php",
+      "python",
+      "rust",
+      "tsx",
+      "typescript",
+      "yaml"
+    ],
+    "pendingChanges": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "worktreeMismatch": null,
+    "index": {
+      "builtWithVersion": null,
+      "builtWithExtractionVersion": null,
+      "currentExtractionVersion": 25,
+      "reindexRecommended": true,
+      "state": "complete",
+      "pendingRefs": 0
+    }
+  },
+  "owner_source_sha256": {
+    "plugins/platforms/email/adapter.py": "fb5237da6ae7c7efeaf5fae7cd51aad87c8e8ba7a0c7adf71281ce07b6f75e97",
+    "gateway/authz_mixin.py": "07206f8c74d8ddd49d1c31ac6dc2dec39295af0df5f0544ea8fc3df5d72de879",
+    "plugins/platforms/simplex/adapter.py": "41adc16484a86e681872a568a43d1dfc2e1cd0d67a592ae90645db43e650312a"
+  },
+  "limitation": "Name-based graph fallback can falsely resolve builtins to unrelated same-name symbols; source audit remains required.",
+  "verification_candidate_head": "17143117ff9f51a701e2db14ae0ffd50b67691ec",
+  "verification_candidate_tree": "1c42bcc4e8e5cf5980308afbc2f79e525742aaba",
+  "integration_worktree_dirty": true,
+  "source_binding_note": "Indexed owner bytes equal clean verification candidate; revision is unchanged integration parent until final independent review."
+}

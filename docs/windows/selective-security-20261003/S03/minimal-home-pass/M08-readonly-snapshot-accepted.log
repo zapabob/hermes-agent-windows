@@ -1,0 +1,19 @@
+.......F.F.F.                                                            [100%]
+================================== FAILURES ===================================
+_ test_reused_terminal_snapshot_cannot_restore_profile_secrets[new-secret-declaration-True] _
+tests\tools\test_child_credential_windows_native.py:138: in test_reused_terminal_snapshot_cannot_restore_profile_secrets
+    with pytest.raises(RuntimeError, match="readonly.*snapshot"):
+E   Failed: DID NOT RAISE RuntimeError
+_ test_reused_terminal_snapshot_cannot_restore_profile_secrets[absent-target-True] _
+tests\tools\test_child_credential_windows_native.py:138: in test_reused_terminal_snapshot_cannot_restore_profile_secrets
+    with pytest.raises(RuntimeError, match="readonly.*snapshot"):
+E   Failed: DID NOT RAISE RuntimeError
+_ test_reused_terminal_snapshot_cannot_restore_profile_secrets[benign-target-True] _
+tests\tools\test_child_credential_windows_native.py:138: in test_reused_terminal_snapshot_cannot_restore_profile_secrets
+    with pytest.raises(RuntimeError, match="readonly.*snapshot"):
+E   Failed: DID NOT RAISE RuntimeError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[new-secret-declaration-True]
+FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[absent-target-True]
+FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[benign-target-True]
+3 failed, 10 passed in 22.75s

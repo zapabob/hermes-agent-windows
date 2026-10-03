@@ -1,0 +1,24 @@
+...............FF..FF.......                                             [100%]
+================================== FAILURES ===================================
+__ test_native_voice_command_keeps_only_approved_profile_key[False-True-tts] __
+tests\tools\test_child_credential_windows_native.py:203: in test_native_voice_command_keeps_only_approved_profile_key
+    assert observed["OPENAI_API_KEY"] == ("TEST_ONLY_SERVED" if routed else "TEST_ONLY_LAUNCH")
+E   AssertionError: assert None == 'TEST_ONLY_LAUNCH'
+__ test_native_voice_command_keeps_only_approved_profile_key[False-True-stt] __
+tests\tools\test_child_credential_windows_native.py:203: in test_native_voice_command_keeps_only_approved_profile_key
+    assert observed["OPENAI_API_KEY"] == ("TEST_ONLY_SERVED" if routed else "TEST_ONLY_LAUNCH")
+E   AssertionError: assert None == 'TEST_ONLY_LAUNCH'
+__ test_native_voice_command_keeps_only_approved_profile_key[True-True-tts] ___
+tests\tools\test_child_credential_windows_native.py:203: in test_native_voice_command_keeps_only_approved_profile_key
+    assert observed["OPENAI_API_KEY"] == ("TEST_ONLY_SERVED" if routed else "TEST_ONLY_LAUNCH")
+E   AssertionError: assert None == 'TEST_ONLY_SERVED'
+__ test_native_voice_command_keeps_only_approved_profile_key[True-True-stt] ___
+tests\tools\test_child_credential_windows_native.py:203: in test_native_voice_command_keeps_only_approved_profile_key
+    assert observed["OPENAI_API_KEY"] == ("TEST_ONLY_SERVED" if routed else "TEST_ONLY_LAUNCH")
+E   AssertionError: assert None == 'TEST_ONLY_SERVED'
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_windows_native.py::test_native_voice_command_keeps_only_approved_profile_key[False-True-tts]
+FAILED tests/tools/test_child_credential_windows_native.py::test_native_voice_command_keeps_only_approved_profile_key[False-True-stt]
+FAILED tests/tools/test_child_credential_windows_native.py::test_native_voice_command_keeps_only_approved_profile_key[True-True-tts]
+FAILED tests/tools/test_child_credential_windows_native.py::test_native_voice_command_keeps_only_approved_profile_key[True-True-stt]
+4 failed, 24 passed in 32.79s

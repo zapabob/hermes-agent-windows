@@ -1,0 +1,125 @@
+{
+  "symbol": "_is_user_authorized",
+  "callers": [
+    {
+      "name": "_check",
+      "kind": "function",
+      "filePath": "gateway/run.py",
+      "startLine": 3915
+    },
+    {
+      "name": "check",
+      "kind": "function",
+      "filePath": "gateway/run_adapters.py",
+      "startLine": 1476
+    },
+    {
+      "name": "_handle_active_session_busy_message",
+      "kind": "method",
+      "filePath": "gateway/run_busy.py",
+      "startLine": 603
+    },
+    {
+      "name": "_dispatch_plugin_message_injection",
+      "kind": "method",
+      "filePath": "gateway/run_inbound.py",
+      "startLine": 1757
+    },
+    {
+      "name": "_resume_owner_authorized",
+      "kind": "method",
+      "filePath": "gateway/run_startup.py",
+      "startLine": 423
+    },
+    {
+      "name": "_handle_voice_channel_input",
+      "kind": "method",
+      "filePath": "gateway/run_voice.py",
+      "startLine": 236
+    },
+    {
+      "name": "_handle_stop_command",
+      "kind": "method",
+      "filePath": "gateway/slash_commands.py",
+      "startLine": 408
+    },
+    {
+      "name": "_handle_topic_command",
+      "kind": "method",
+      "filePath": "gateway/slash_commands_session.py",
+      "startLine": 661
+    },
+    {
+      "name": "test_allowlist_matches_when_user_id_is_email",
+      "kind": "method",
+      "filePath": "tests/gateway/test_google_chat.py",
+      "startLine": 1659
+    },
+    {
+      "name": "test_npub_only_allowlist_authorizes_hex_identity",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 74
+    },
+    {
+      "name": "test_hex_only_allowlist_still_authorizes",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 81
+    },
+    {
+      "name": "test_mixed_npub_and_hex_allowlist_authorizes",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 88
+    },
+    {
+      "name": "test_npub_allowlist_still_denies_other_user",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 95
+    },
+    {
+      "name": "test_uppercase_npub_allowlist_authorizes",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 102
+    },
+    {
+      "name": "test_config_only_npub_allowlist_authorizes_single_profile",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 163
+    },
+    {
+      "name": "test_config_only_hex_allowlist_authorizes_single_profile",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 170
+    },
+    {
+      "name": "test_config_only_allowlist_still_denies_unlisted_sender",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 175
+    },
+    {
+      "name": "test_config_only_empty_allowlist_keeps_default_deny",
+      "kind": "function",
+      "filePath": "tests/gateway/test_buzz_authz.py",
+      "startLine": 181
+    },
+    {
+      "name": "test_own_policy_allowlist_authorized_without_env_allowlist",
+      "kind": "function",
+      "filePath": "tests/gateway/test_config_driven_access_policy.py",
+      "startLine": 136
+    },
+    {
+      "name": "test_stored_route_cannot_reuse_prior_adapter_authorization",
+      "kind": "function",
+      "filePath": "tests/gateway/test_config_driven_access_policy.py",
+      "startLine": 153
+    }
+  ]
+}

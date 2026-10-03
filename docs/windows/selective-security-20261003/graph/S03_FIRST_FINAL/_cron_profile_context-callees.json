@@ -1,0 +1,65 @@
+{
+  "symbol": "_cron_profile_context",
+  "callees": [
+    {
+      "name": "strip",
+      "kind": "function",
+      "filePath": "apps/desktop/src/components/ui/glyph-spinner.test.tsx",
+      "startLine": 33
+    },
+    {
+      "name": "normalize_profile_name",
+      "kind": "function",
+      "filePath": "hermes_cli/profiles.py",
+      "startLine": 310
+    },
+    {
+      "name": "_execution_home_for_job",
+      "kind": "function",
+      "filePath": "cron/scheduler.py",
+      "startLine": 1585
+    },
+    {
+      "name": "get",
+      "kind": "method",
+      "filePath": "downstream/control_mcp/journal.py",
+      "startLine": 596
+    },
+    {
+      "name": "remember_launch_profile_home",
+      "kind": "function",
+      "filePath": "hermes_cli/env_loader.py",
+      "startLine": 47
+    },
+    {
+      "name": "get_process_hermes_home",
+      "kind": "function",
+      "filePath": "hermes_constants.py",
+      "startLine": 159
+    },
+    {
+      "name": "set_hermes_home_override",
+      "kind": "function",
+      "filePath": "hermes_constants.py",
+      "startLine": 30
+    },
+    {
+      "name": "pop",
+      "kind": "method",
+      "filePath": "hermes_cli/prompt_stash.py",
+      "startLine": 153
+    },
+    {
+      "name": "reset_hermes_home_override",
+      "kind": "function",
+      "filePath": "hermes_constants.py",
+      "startLine": 40
+    },
+    {
+      "name": "_hermes_home",
+      "kind": "variable",
+      "filePath": "cron/scheduler.py",
+      "startLine": 1562
+    }
+  ]
+}

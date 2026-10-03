@@ -1,0 +1,29 @@
+{
+  "symbol": "hermes_subprocess_env",
+  "callees": [
+    {
+      "name": "copy",
+      "kind": "function",
+      "filePath": "hermes_cli/agent_import.py",
+      "startLine": 503
+    },
+    {
+      "name": "_plugin_terminal_env_strip_keys",
+      "kind": "function",
+      "filePath": "tools/environments/local_env_policy.py",
+      "startLine": 184
+    },
+    {
+      "name": "_is_hermes_internal_secret",
+      "kind": "function",
+      "filePath": "tools/environments/local_env_policy.py",
+      "startLine": 172
+    },
+    {
+      "name": "_finalize_child_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 267
+    }
+  ]
+}

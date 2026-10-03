@@ -1,0 +1,23 @@
+{
+  "symbol": "delegated_child_subprocess_env",
+  "callees": [
+    {
+      "name": "is_delegated_child_process_context",
+      "kind": "function",
+      "filePath": "agent/delegation_context.py",
+      "startLine": 124
+    },
+    {
+      "name": "scrub_kanban_env",
+      "kind": "function",
+      "filePath": "agent/delegation_context.py",
+      "startLine": 133
+    },
+    {
+      "name": "build_subprocess_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 905
+    }
+  ]
+}

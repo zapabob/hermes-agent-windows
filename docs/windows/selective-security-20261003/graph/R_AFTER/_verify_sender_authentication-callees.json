@@ -1,0 +1,53 @@
+{
+  "symbol": "_verify_sender_authentication",
+  "callees": [
+    {
+      "name": "_domain_of",
+      "kind": "function",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 235
+    },
+    {
+      "name": "split",
+      "kind": "function",
+      "filePath": "apps/desktop/src/components/pane-shell/tree/model.ts",
+      "startLine": 75
+    },
+    {
+      "name": "next",
+      "kind": "method",
+      "filePath": "web/src/lib/pty-resume-sanitizer.ts",
+      "startLine": 85
+    },
+    {
+      "name": "strip",
+      "kind": "function",
+      "filePath": "tools/schema_sanitizer.py",
+      "startLine": 112
+    },
+    {
+      "name": "_domains_aligned",
+      "kind": "function",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 240
+    },
+    {
+      "name": "get",
+      "kind": "method",
+      "filePath": "tests/hermes_cli/test_local_context_resolution.py",
+      "startLine": 107
+    },
+    {
+      "name": "_AUTH_PROP_RE",
+      "kind": "variable",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 54
+    },
+    {
+      "name": "_AUTH_METHOD_RE",
+      "kind": "variable",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "startLine": 53
+    }
+  ]
+}

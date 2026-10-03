@@ -1,0 +1,743 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 3 test files (~26 tests) under ['tests\\tools\\test_child_credential_boundary.py', 'tests\\tools\\test_child_bridge_credential_boundary.py', 'tests\\tools\\test_child_credential_windows_native.py']; running with -j 1
+[  7.7% |     2/~26 | ✓0 | ✗2] ✗ tests\tools\test_child_bridge_credential_boundary.py (2✗, 5.8s)
+
+  ╔╍ Failed: tests\tools\test_child_bridge_credential_boundary.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║         monkeypatch.setattr(openviking, "_local_openviking_port_is_open", lambda *_: False)
+  ║         real_which = openviking.shutil.which
+  ║         monkeypatch.setattr(openviking.shutil, "which", lambda name: sys.executable if name == "openviking-server" else real_which(name))
+  ║         monkeypatch.setattr(openviking, "_openviking_server_log_path", lambda: tmp_path / "server.log")
+  ║         calls, output = native_probe(monkeypatch, openviking, tmp_path)
+  ║         token = set_hermes_home_override(served)
+  ║         try:
+  ║             status, message = openviking._start_local_openviking_server("http://127.0.0.1:18765")
+  ║         finally:
+  ║             reset_hermes_home_override(token)
+  ║         assert status == openviking._LOCAL_SERVER_STARTED, message
+  ║         assert len(calls) == 1
+  ║         observed = json.loads(output.read_text(encoding="utf-8"))
+  ║         assert observed["OPENAI_API_KEY"] == "TEST_ONLY_SERVED"
+  ║         assert observed["TELEGRAM_WEBHOOK_SECRET"] is None
+  ║         assert observed["BOUNDARY_BENIGN"] == "present"
+  ║ >       assert observed["HOME"] == str(tmp_path / "real-home")
+  ║ E       AssertionError: assert 'H:\\hermes-w...\served\\home' == 'H:\\hermes-w...e0\\real-home'
+  ║ E
+  ║ E         Skipping 135 identical leading characters in diff, use -v to show
+  ║ E         - _receive0\real-home
+  ║ E         ?             ^^^
+  ║ E         + _receive0\served\home
+  ║ E         ?           ++ + ^^
+  ║
+  ║ tests\tools\test_child_bridge_credential_boundary.py:104: AssertionError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_bridge_credential_boundary.py::test_raft_bridge_only_receives_its_scoped_authority
+  ║ FAILED tests/tools/test_child_bridge_credential_boundary.py::test_openviking_server_receives_served_provider_without_launch_secrets
+  ║ 2 failed in 4.11s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_bridge_credential_boundary.py -q
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+[ 92.3% |    24/~26 | ✓141 | ✗ 21] ✗ tests\tools\test_child_credential_boundary.py (141✓ 19✗, 14.6s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_boundary.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║         monkeypatch.setenv("HOME", str(user))
+  ║         monkeypatch.setenv(key, SECRET)
+  ║         load_hermes_dotenv(load_external_secrets=False)
+  ║         with bound_home(target):
+  ║ >           assert key not in child_env("terminal")
+  ║ E           AssertionError: assert 'CUSTOM_DEFAULT_PROFILE_VALUE' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\test-temp\...est-of-unknown\\pytest-0\\test_default_windows_launch_ho0\\User', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+  ║ E            +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\test-temp\...est-of-unknown\\pytest-0\\test_default_windows_launch_ho0\\User', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('terminal')
+  ║
+  ║ tests\tools\test_child_credential_boundary.py:369: AssertionError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_CLIENT_SECRET-terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_CLIENT_SECRET-background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_CLIENT_SECRET-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_CLIENT_SECRET-credential-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_WEBHOOK_CLIENT_STATE-terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_WEBHOOK_CLIENT_STATE-background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_WEBHOOK_CLIENT_STATE-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_WEBHOOK_CLIENT_STATE-credential-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[QQ_STT_API_KEY-terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[QQ_STT_API_KEY-background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[QQ_STT_API_KEY-credential-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[RAFT_CHANNEL_TOKEN-terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[RAFT_CHANNEL_TOKEN-background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[RAFT_CHANNEL_TOKEN-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[RAFT_CHANNEL_TOKEN-credential-cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[terminal]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[background]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[cli]
+  ║ FAILED tests/tools/test_child_credential_boundary.py::test_default_windows_launch_home_uses_canonical_resolver
+  ║ 19 failed, 141 passed in 12.72s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_boundary.py -q
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+[100.0% |    26/~26 | ✓147 | ✗ 24] ✗ tests\tools\test_child_credential_windows_native.py (6✓ 3✗, 14.8s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_windows_native.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║         try:
+  ║             seeded = environment.execute(f"export {key}=TEST_ONLY_SECRET_DO_NOT_USE; export ORDINARY_EXPORT=kept")
+  ║             assert seeded["returncode"] == 0, seeded
+  ║             assert environment.execute(command)["returncode"] == 0
+  ║             assert json.loads(output.read_text(encoding="utf-8"))[key] == "TEST_ONLY_SECRET_DO_NOT_USE"
+  ║             directory = launch / "plugins" / "platforms" / "snapshot-test"
+  ║             directory.mkdir(parents=True)
+  ║             (directory / "plugin.yaml").write_text(
+  ║                 f"kind: platform\nrequires_env:\n  - name: {key}\n    password: true\n",
+  ║                 encoding="utf-8",
+  ║             )
+  ║             if handoff != "new-secret-declaration":
+  ║                 if handoff == "benign-target":
+  ║                     (target / ".env").write_text(f"{key}=served-benign\n", encoding="utf-8")
+  ║                 token = set_hermes_home_override(target)
+  ║             result = environment.execute(command)
+  ║             assert result["returncode"] == 0, result
+  ║             observed = json.loads(output.read_text(encoding="utf-8"))
+  ║ >           assert observed[key] == ("served-benign" if handoff == "benign-target" else None)
+  ║ E           AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == 'served-benign'
+  ║ E
+  ║ E             - served-benign
+  ║ E             + TEST_ONLY_SECRET_DO_NOT_USE
+  ║
+  ║ tests\tools\test_child_credential_windows_native.py:135: AssertionError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[new-secret-declaration]
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[absent-target]
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[benign-target]
+  ║ 3 failed, 6 passed in 13.22s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_windows_native.py -q
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+
+=== Summary: 3 files, 147 tests passed, 24 failed (100% complete) in 35.3s (1 workers) ===
+  Durations cached to test_durations.json (3 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   3
+  Total subprocess CPU-wall: 35.3s  (runner wall: 35.3s, parallelism: 1x)
+  P50: 14.62s  P90: 14.84s  P95: 14.84s  P99: 14.84s  Max: 14.84s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+     14.84s  tests\tools\test_child_credential_windows_native.py
+     14.62s  tests\tools\test_child_credential_boundary.py
+      5.84s  tests\tools\test_child_bridge_credential_boundary.py
+
+=== Failure output ===
+
+--- tests\tools\test_child_bridge_credential_boundary.py ---
+FF                                                                       [100%]
+================================== FAILURES ===================================
+_____________ test_raft_bridge_only_receives_its_scoped_authority _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002256959C390>
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-e3z575eu/pytest-of-unknown/pytest-0/test_raft_bridge_only_receives0')
+
+    def test_raft_bridge_only_receives_its_scoped_authority(monkeypatch, tmp_path):
+        from agent.secret_scope import set_secret_scope, reset_secret_scope
+        from plugins.platforms.raft import adapter as raft
+
+        monkeypatch.setenv("RAFT_PROFILE", "launch-profile")
+        monkeypatch.setenv("OPENAI_API_KEY", SECRET)
+        monkeypatch.setenv("TELEGRAM_WEBHOOK_SECRET", SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        (tmp_path / "home").mkdir()
+        (tmp_path / "real-home").mkdir()
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        monkeypatch.setenv("HERMES_REAL_HOME", str(tmp_path / "real-home"))
+        monkeypatch.setenv("TERMINAL_HOME_MODE", "profile")
+        real_which = raft.shutil.which
+        monkeypatch.setattr(raft.shutil, "which", lambda name: sys.executable if name == "raft" else real_which(name))
+        calls, output = native_probe(monkeypatch, raft, tmp_path)
+        adapter = raft.RaftAdapter(PlatformConfig(enabled=True, extra={"bridge_token": "TEST_ONLY_BRIDGE"}))
+        token = set_secret_scope({"RAFT_PROFILE": "served-profile"})
+        try:
+            adapter._spawn_bridge(18765)
+        finally:
+            reset_secret_scope(token)
+        assert len(calls) == 1
+        assert calls[0][calls[0].index("--profile") + 1] == "served-profile"
+        observed = json.loads(output.read_text(encoding="utf-8"))
+>       assert observed == {
+            "OPENAI_API_KEY": None, "TELEGRAM_WEBHOOK_SECRET": None,
+            "RAFT_CHANNEL_TOKEN": "TEST_ONLY_BRIDGE", "BOUNDARY_BENIGN": "present",
+            "RAFT_PROFILE": "served-profile", "HOME": str(tmp_path / "real-home"),
+        }
+E       AssertionError: assert {'OPENAI_API_...present', ...} == {'OPENAI_API_...present', ...}
+E
+E         Omitting 4 identical items, use -vv to show
+E         Differing items:
+E         {'RAFT_PROFILE': 'launch-profile'} != {'RAFT_PROFILE': 'served-profile'}
+E         {'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\test-temp\\hermes-pytest-tmproot-e3z575eu\\pytest-of-unknown\\pytest-0\\test_raft_bridge_only_receives0\\home'} != {'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\test-temp\\hermes-pytest-tmproot-e3z575eu\\pytest-of-unknown\\pytest-0\\test_raft_bridge_only_receives0\\real-home'}
+E         Use -v to get more diff
+
+tests\tools\test_child_bridge_credential_boundary.py:65: AssertionError
+___ test_openviking_server_receives_served_provider_without_launch_secrets ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002256BDF5D10>
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-e3z575eu/pytest-of-unknown/pytest-0/test_openviking_server_receive0')
+
+    def test_openviking_server_receives_served_provider_without_launch_secrets(monkeypatch, tmp_path):
+        from plugins.memory import openviking
+
+        launch, served = tmp_path / "launch", tmp_path / "served"
+        launch.mkdir()
+        served.mkdir()
+        (served / "home").mkdir()
+        (tmp_path / "real-home").mkdir()
+        (launch / ".env").write_text(f"OPENAI_API_KEY={SECRET}\n", encoding="utf-8")
+        (served / ".env").write_text("OPENAI_API_KEY=TEST_ONLY_SERVED\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv("OPENAI_API_KEY", SECRET)
+        monkeypatch.setenv("TELEGRAM_WEBHOOK_SECRET", SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        monkeypatch.setenv("HERMES_REAL_HOME", str(tmp_path / "real-home"))
+        monkeypatch.setenv("TERMINAL_HOME_MODE", "profile")
+        monkeypatch.setattr(openviking, "_local_openviking_port_is_open", lambda *_: False)
+        real_which = openviking.shutil.which
+        monkeypatch.setattr(openviking.shutil, "which", lambda name: sys.executable if name == "openviking-server" else real_which(name))
+        monkeypatch.setattr(openviking, "_openviking_server_log_path", lambda: tmp_path / "server.log")
+        calls, output = native_probe(monkeypatch, openviking, tmp_path)
+        token = set_hermes_home_override(served)
+        try:
+            status, message = openviking._start_local_openviking_server("http://127.0.0.1:18765")
+        finally:
+            reset_hermes_home_override(token)
+        assert status == openviking._LOCAL_SERVER_STARTED, message
+        assert len(calls) == 1
+        observed = json.loads(output.read_text(encoding="utf-8"))
+        assert observed["OPENAI_API_KEY"] == "TEST_ONLY_SERVED"
+        assert observed["TELEGRAM_WEBHOOK_SECRET"] is None
+        assert observed["BOUNDARY_BENIGN"] == "present"
+>       assert observed["HOME"] == str(tmp_path / "real-home")
+E       AssertionError: assert 'H:\\hermes-w...\served\\home' == 'H:\\hermes-w...e0\\real-home'
+E
+E         Skipping 135 identical leading characters in diff, use -v to show
+E         - _receive0\real-home
+E         ?             ^^^
+E         + _receive0\served\home
+E         ?           ++ + ^^
+
+tests\tools\test_child_bridge_credential_boundary.py:104: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_bridge_credential_boundary.py::test_raft_bridge_only_receives_its_scoped_authority
+FAILED tests/tools/test_child_bridge_credential_boundary.py::test_openviking_server_receives_served_provider_without_launch_secrets
+2 failed in 4.11s
+
+--- tests\tools\test_child_credential_boundary.py ---
+........................................................................ [ 45%]
+....................................................................FFFF [ 90%]
+FFFFFF.FFFFFFFFF                                                         [100%]
+================================== FAILURES ===================================
+_ test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_CLIENT_SECRET-terminal] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C5564BA10>
+surface = 'terminal', key = 'MSGRAPH_CLIENT_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ["TELEGRAM_BOT_TOKEN", "MSGRAPH_CLIENT_SECRET", "MSGRAPH_WEBHOOK_CLIENT_STATE", "QQ_STT_API_KEY", "RAFT_CHANNEL_TOKEN"])
+    def test_core_adapter_secret_cannot_be_forced_into_ordinary_child(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        extra = {local._HERMES_PROVIDER_ENV_FORCE_PREFIX + key: SECRET}
+>       assert key not in child_env(surface, extra)
+E       AssertionError: assert 'MSGRAPH_CLIENT_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('terminal', {'_HERMES_FORCE_MSGRAPH_CLIENT_SECRET': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+
+tests\tools\test_child_credential_boundary.py:333: AssertionError
+_ test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_CLIENT_SECRET-background] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C55559DD0>
+surface = 'background', key = 'MSGRAPH_CLIENT_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ["TELEGRAM_BOT_TOKEN", "MSGRAPH_CLIENT_SECRET", "MSGRAPH_WEBHOOK_CLIENT_STATE", "QQ_STT_API_KEY", "RAFT_CHANNEL_TOKEN"])
+    def test_core_adapter_secret_cannot_be_forced_into_ordinary_child(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        extra = {local._HERMES_PROVIDER_ENV_FORCE_PREFIX + key: SECRET}
+>       assert key not in child_env(surface, extra)
+E       AssertionError: assert 'MSGRAPH_CLIENT_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('background', {'_HERMES_FORCE_MSGRAPH_CLIENT_SECRET': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+
+tests\tools\test_child_credential_boundary.py:333: AssertionError
+_ test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_CLIENT_SECRET-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C55650E50>
+surface = 'cli', key = 'MSGRAPH_CLIENT_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ["TELEGRAM_BOT_TOKEN", "MSGRAPH_CLIENT_SECRET", "MSGRAPH_WEBHOOK_CLIENT_STATE", "QQ_STT_API_KEY", "RAFT_CHANNEL_TOKEN"])
+    def test_core_adapter_secret_cannot_be_forced_into_ordinary_child(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        extra = {local._HERMES_PROVIDER_ENV_FORCE_PREFIX + key: SECRET}
+>       assert key not in child_env(surface, extra)
+E       AssertionError: assert 'MSGRAPH_CLIENT_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('cli', {'_HERMES_FORCE_MSGRAPH_CLIENT_SECRET': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+
+tests\tools\test_child_credential_boundary.py:333: AssertionError
+_ test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_CLIENT_SECRET-credential-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C55784210>
+surface = 'credential-cli', key = 'MSGRAPH_CLIENT_SECRET'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ["TELEGRAM_BOT_TOKEN", "MSGRAPH_CLIENT_SECRET", "MSGRAPH_WEBHOOK_CLIENT_STATE", "QQ_STT_API_KEY", "RAFT_CHANNEL_TOKEN"])
+    def test_core_adapter_secret_cannot_be_forced_into_ordinary_child(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        extra = {local._HERMES_PROVIDER_ENV_FORCE_PREFIX + key: SECRET}
+>       assert key not in child_env(surface, extra)
+E       AssertionError: assert 'MSGRAPH_CLIENT_SECRET' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('credential-cli', {'_HERMES_FORCE_MSGRAPH_CLIENT_SECRET': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+
+tests\tools\test_child_credential_boundary.py:333: AssertionError
+_ test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_WEBHOOK_CLIENT_STATE-terminal] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C55647CD0>
+surface = 'terminal', key = 'MSGRAPH_WEBHOOK_CLIENT_STATE'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ["TELEGRAM_BOT_TOKEN", "MSGRAPH_CLIENT_SECRET", "MSGRAPH_WEBHOOK_CLIENT_STATE", "QQ_STT_API_KEY", "RAFT_CHANNEL_TOKEN"])
+    def test_core_adapter_secret_cannot_be_forced_into_ordinary_child(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        extra = {local._HERMES_PROVIDER_ENV_FORCE_PREFIX + key: SECRET}
+>       assert key not in child_env(surface, extra)
+E       AssertionError: assert 'MSGRAPH_WEBHOOK_CLIENT_STATE' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('terminal', {'_HERMES_FORCE_MSGRAPH_WEBHOOK_CLIENT_STATE': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+
+tests\tools\test_child_credential_boundary.py:333: AssertionError
+_ test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_WEBHOOK_CLIENT_STATE-background] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C55635CD0>
+surface = 'background', key = 'MSGRAPH_WEBHOOK_CLIENT_STATE'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ["TELEGRAM_BOT_TOKEN", "MSGRAPH_CLIENT_SECRET", "MSGRAPH_WEBHOOK_CLIENT_STATE", "QQ_STT_API_KEY", "RAFT_CHANNEL_TOKEN"])
+    def test_core_adapter_secret_cannot_be_forced_into_ordinary_child(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        extra = {local._HERMES_PROVIDER_ENV_FORCE_PREFIX + key: SECRET}
+>       assert key not in child_env(surface, extra)
+E       AssertionError: assert 'MSGRAPH_WEBHOOK_CLIENT_STATE' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('background', {'_HERMES_FORCE_MSGRAPH_WEBHOOK_CLIENT_STATE': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+
+tests\tools\test_child_credential_boundary.py:333: AssertionError
+_ test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_WEBHOOK_CLIENT_STATE-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C55635690>
+surface = 'cli', key = 'MSGRAPH_WEBHOOK_CLIENT_STATE'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ["TELEGRAM_BOT_TOKEN", "MSGRAPH_CLIENT_SECRET", "MSGRAPH_WEBHOOK_CLIENT_STATE", "QQ_STT_API_KEY", "RAFT_CHANNEL_TOKEN"])
+    def test_core_adapter_secret_cannot_be_forced_into_ordinary_child(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        extra = {local._HERMES_PROVIDER_ENV_FORCE_PREFIX + key: SECRET}
+>       assert key not in child_env(surface, extra)
+E       AssertionError: assert 'MSGRAPH_WEBHOOK_CLIENT_STATE' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('cli', {'_HERMES_FORCE_MSGRAPH_WEBHOOK_CLIENT_STATE': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+
+tests\tools\test_child_credential_boundary.py:333: AssertionError
+_ test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_WEBHOOK_CLIENT_STATE-credential-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C55649C10>
+surface = 'credential-cli', key = 'MSGRAPH_WEBHOOK_CLIENT_STATE'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ["TELEGRAM_BOT_TOKEN", "MSGRAPH_CLIENT_SECRET", "MSGRAPH_WEBHOOK_CLIENT_STATE", "QQ_STT_API_KEY", "RAFT_CHANNEL_TOKEN"])
+    def test_core_adapter_secret_cannot_be_forced_into_ordinary_child(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        extra = {local._HERMES_PROVIDER_ENV_FORCE_PREFIX + key: SECRET}
+>       assert key not in child_env(surface, extra)
+E       AssertionError: assert 'MSGRAPH_WEBHOOK_CLIENT_STATE' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('credential-cli', {'_HERMES_FORCE_MSGRAPH_WEBHOOK_CLIENT_STATE': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+
+tests\tools\test_child_credential_boundary.py:333: AssertionError
+_ test_core_adapter_secret_cannot_be_forced_into_ordinary_child[QQ_STT_API_KEY-terminal] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C55649B10>
+surface = 'terminal', key = 'QQ_STT_API_KEY'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ["TELEGRAM_BOT_TOKEN", "MSGRAPH_CLIENT_SECRET", "MSGRAPH_WEBHOOK_CLIENT_STATE", "QQ_STT_API_KEY", "RAFT_CHANNEL_TOKEN"])
+    def test_core_adapter_secret_cannot_be_forced_into_ordinary_child(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        extra = {local._HERMES_PROVIDER_ENV_FORCE_PREFIX + key: SECRET}
+>       assert key not in child_env(surface, extra)
+E       AssertionError: assert 'QQ_STT_API_KEY' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('terminal', {'_HERMES_FORCE_QQ_STT_API_KEY': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+
+tests\tools\test_child_credential_boundary.py:333: AssertionError
+_ test_core_adapter_secret_cannot_be_forced_into_ordinary_child[QQ_STT_API_KEY-background] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C55766E50>
+surface = 'background', key = 'QQ_STT_API_KEY'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ["TELEGRAM_BOT_TOKEN", "MSGRAPH_CLIENT_SECRET", "MSGRAPH_WEBHOOK_CLIENT_STATE", "QQ_STT_API_KEY", "RAFT_CHANNEL_TOKEN"])
+    def test_core_adapter_secret_cannot_be_forced_into_ordinary_child(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        extra = {local._HERMES_PROVIDER_ENV_FORCE_PREFIX + key: SECRET}
+>       assert key not in child_env(surface, extra)
+E       AssertionError: assert 'QQ_STT_API_KEY' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('background', {'_HERMES_FORCE_QQ_STT_API_KEY': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+
+tests\tools\test_child_credential_boundary.py:333: AssertionError
+_ test_core_adapter_secret_cannot_be_forced_into_ordinary_child[QQ_STT_API_KEY-credential-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C55789110>
+surface = 'credential-cli', key = 'QQ_STT_API_KEY'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ["TELEGRAM_BOT_TOKEN", "MSGRAPH_CLIENT_SECRET", "MSGRAPH_WEBHOOK_CLIENT_STATE", "QQ_STT_API_KEY", "RAFT_CHANNEL_TOKEN"])
+    def test_core_adapter_secret_cannot_be_forced_into_ordinary_child(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        extra = {local._HERMES_PROVIDER_ENV_FORCE_PREFIX + key: SECRET}
+>       assert key not in child_env(surface, extra)
+E       AssertionError: assert 'QQ_STT_API_KEY' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('credential-cli', {'_HERMES_FORCE_QQ_STT_API_KEY': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+
+tests\tools\test_child_credential_boundary.py:333: AssertionError
+_ test_core_adapter_secret_cannot_be_forced_into_ordinary_child[RAFT_CHANNEL_TOKEN-terminal] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C5564E550>
+surface = 'terminal', key = 'RAFT_CHANNEL_TOKEN'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ["TELEGRAM_BOT_TOKEN", "MSGRAPH_CLIENT_SECRET", "MSGRAPH_WEBHOOK_CLIENT_STATE", "QQ_STT_API_KEY", "RAFT_CHANNEL_TOKEN"])
+    def test_core_adapter_secret_cannot_be_forced_into_ordinary_child(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        extra = {local._HERMES_PROVIDER_ENV_FORCE_PREFIX + key: SECRET}
+>       assert key not in child_env(surface, extra)
+E       AssertionError: assert 'RAFT_CHANNEL_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('terminal', {'_HERMES_FORCE_RAFT_CHANNEL_TOKEN': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+
+tests\tools\test_child_credential_boundary.py:333: AssertionError
+_ test_core_adapter_secret_cannot_be_forced_into_ordinary_child[RAFT_CHANNEL_TOKEN-background] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C5564FD50>
+surface = 'background', key = 'RAFT_CHANNEL_TOKEN'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ["TELEGRAM_BOT_TOKEN", "MSGRAPH_CLIENT_SECRET", "MSGRAPH_WEBHOOK_CLIENT_STATE", "QQ_STT_API_KEY", "RAFT_CHANNEL_TOKEN"])
+    def test_core_adapter_secret_cannot_be_forced_into_ordinary_child(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        extra = {local._HERMES_PROVIDER_ENV_FORCE_PREFIX + key: SECRET}
+>       assert key not in child_env(surface, extra)
+E       AssertionError: assert 'RAFT_CHANNEL_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('background', {'_HERMES_FORCE_RAFT_CHANNEL_TOKEN': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+
+tests\tools\test_child_credential_boundary.py:333: AssertionError
+_ test_core_adapter_secret_cannot_be_forced_into_ordinary_child[RAFT_CHANNEL_TOKEN-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C55623DD0>
+surface = 'cli', key = 'RAFT_CHANNEL_TOKEN'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ["TELEGRAM_BOT_TOKEN", "MSGRAPH_CLIENT_SECRET", "MSGRAPH_WEBHOOK_CLIENT_STATE", "QQ_STT_API_KEY", "RAFT_CHANNEL_TOKEN"])
+    def test_core_adapter_secret_cannot_be_forced_into_ordinary_child(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        extra = {local._HERMES_PROVIDER_ENV_FORCE_PREFIX + key: SECRET}
+>       assert key not in child_env(surface, extra)
+E       AssertionError: assert 'RAFT_CHANNEL_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('cli', {'_HERMES_FORCE_RAFT_CHANNEL_TOKEN': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+
+tests\tools\test_child_credential_boundary.py:333: AssertionError
+_ test_core_adapter_secret_cannot_be_forced_into_ordinary_child[RAFT_CHANNEL_TOKEN-credential-cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C5579A0D0>
+surface = 'credential-cli', key = 'RAFT_CHANNEL_TOKEN'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+    @pytest.mark.parametrize("key", ["TELEGRAM_BOT_TOKEN", "MSGRAPH_CLIENT_SECRET", "MSGRAPH_WEBHOOK_CLIENT_STATE", "QQ_STT_API_KEY", "RAFT_CHANNEL_TOKEN"])
+    def test_core_adapter_secret_cannot_be_forced_into_ordinary_child(monkeypatch, surface, key):
+        monkeypatch.setenv(key, SECRET)
+        extra = {local._HERMES_PROVIDER_ENV_FORCE_PREFIX + key: SECRET}
+>       assert key not in child_env(surface, extra)
+E       AssertionError: assert 'RAFT_CHANNEL_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('credential-cli', {'_HERMES_FORCE_RAFT_CHANNEL_TOKEN': 'TEST_ONLY_SECRET_DO_NOT_USE'})
+
+tests\tools\test_child_credential_boundary.py:333: AssertionError
+_ test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[terminal] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C5576A690>
+surface = 'terminal'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli"])
+    def test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins(monkeypatch, surface):
+        import gateway.platform_registry as platform_module
+        registry = platform_module.PlatformRegistry()
+        registry.register(platform_module.PlatformEntry(
+            name="test-boundary", label="Test", adapter_factory=lambda _: None,
+            check_fn=lambda: True, required_env=["CUSTOM_ADAPTER_TOKEN", "OPENAI_API_KEY"],
+        ))
+        registry.register_deferred("must-stay-deferred", lambda: pytest.fail("security scan loaded plugin code"))
+        monkeypatch.setattr(platform_module, "platform_registry", registry)
+        monkeypatch.setenv("CUSTOM_ADAPTER_TOKEN", SECRET)
+>       assert "CUSTOM_ADAPTER_TOKEN" not in child_env(surface)
+E       AssertionError: assert 'CUSTOM_ADAPTER_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('terminal')
+
+tests\tools\test_child_credential_boundary.py:347: AssertionError
+_ test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[background] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C55769750>
+surface = 'background'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli"])
+    def test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins(monkeypatch, surface):
+        import gateway.platform_registry as platform_module
+        registry = platform_module.PlatformRegistry()
+        registry.register(platform_module.PlatformEntry(
+            name="test-boundary", label="Test", adapter_factory=lambda _: None,
+            check_fn=lambda: True, required_env=["CUSTOM_ADAPTER_TOKEN", "OPENAI_API_KEY"],
+        ))
+        registry.register_deferred("must-stay-deferred", lambda: pytest.fail("security scan loaded plugin code"))
+        monkeypatch.setattr(platform_module, "platform_registry", registry)
+        monkeypatch.setenv("CUSTOM_ADAPTER_TOKEN", SECRET)
+>       assert "CUSTOM_ADAPTER_TOKEN" not in child_env(surface)
+E       AssertionError: assert 'CUSTOM_ADAPTER_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('background')
+
+tests\tools\test_child_credential_boundary.py:347: AssertionError
+_ test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[cli] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C554E3A90>
+surface = 'cli'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "cli"])
+    def test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins(monkeypatch, surface):
+        import gateway.platform_registry as platform_module
+        registry = platform_module.PlatformRegistry()
+        registry.register(platform_module.PlatformEntry(
+            name="test-boundary", label="Test", adapter_factory=lambda _: None,
+            check_fn=lambda: True, required_env=["CUSTOM_ADAPTER_TOKEN", "OPENAI_API_KEY"],
+        ))
+        registry.register_deferred("must-stay-deferred", lambda: pytest.fail("security scan loaded plugin code"))
+        monkeypatch.setattr(platform_module, "platform_registry", registry)
+        monkeypatch.setenv("CUSTOM_ADAPTER_TOKEN", SECRET)
+>       assert "CUSTOM_ADAPTER_TOKEN" not in child_env(surface)
+E       AssertionError: assert 'CUSTOM_ADAPTER_TOKEN' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E        +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'C:\\Users\\downl', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('cli')
+
+tests\tools\test_child_credential_boundary.py:347: AssertionError
+__________ test_default_windows_launch_home_uses_canonical_resolver ___________
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-awh7ytih/pytest-of-unknown/pytest-0/test_default_windows_launch_ho0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000028C5551CE90>
+
+    @pytest.mark.skipif(sys.platform != "win32", reason="Windows canonical default-home routing")
+    def test_default_windows_launch_home_uses_canonical_resolver(tmp_path, monkeypatch):
+        from hermes_cli.env_loader import load_hermes_dotenv
+        local_appdata, user = tmp_path / "Local", tmp_path / "User"
+        canonical, target = local_appdata / "hermes", tmp_path / "served"
+        canonical.mkdir(parents=True)
+        target.mkdir()
+        user.mkdir()
+        key = "CUSTOM_DEFAULT_PROFILE_VALUE"
+        (canonical / ".env").write_text(f"{key}={SECRET}\n", encoding="utf-8")
+        monkeypatch.delenv("HERMES_HOME", raising=False)
+        monkeypatch.setenv("LOCALAPPDATA", str(local_appdata))
+        monkeypatch.setenv("USERPROFILE", str(user))
+        monkeypatch.setenv("HOME", str(user))
+        monkeypatch.setenv(key, SECRET)
+        load_hermes_dotenv(load_external_secrets=False)
+        with bound_home(target):
+>           assert key not in child_env("terminal")
+E           AssertionError: assert 'CUSTOM_DEFAULT_PROFILE_VALUE' not in {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\test-temp\...est-of-unknown\\pytest-0\\test_default_windows_launch_ho0\\User', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...}
+E            +  where {'APPDATA': 'C:\\Users\\downl\\AppData\\Roaming', 'HOME': 'H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\test-temp\...est-of-unknown\\pytest-0\\test_default_windows_launch_ho0\\User', 'HOMEDRIVE': 'C:', 'HOMEPATH': '\\Users\\downl', ...} = child_env('terminal')
+
+tests\tools\test_child_credential_boundary.py:369: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_CLIENT_SECRET-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_CLIENT_SECRET-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_CLIENT_SECRET-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_CLIENT_SECRET-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_WEBHOOK_CLIENT_STATE-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_WEBHOOK_CLIENT_STATE-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_WEBHOOK_CLIENT_STATE-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[MSGRAPH_WEBHOOK_CLIENT_STATE-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[QQ_STT_API_KEY-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[QQ_STT_API_KEY-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[QQ_STT_API_KEY-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[RAFT_CHANNEL_TOKEN-terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[RAFT_CHANNEL_TOKEN-background]
+FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[RAFT_CHANNEL_TOKEN-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_core_adapter_secret_cannot_be_forced_into_ordinary_child[RAFT_CHANNEL_TOKEN-credential-cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[terminal]
+FAILED tests/tools/test_child_credential_boundary.py::test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[background]
+FAILED tests/tools/test_child_credential_boundary.py::test_runtime_adapter_secret_is_filtered_without_loading_deferred_plugins[cli]
+FAILED tests/tools/test_child_credential_boundary.py::test_default_windows_launch_home_uses_canonical_resolver
+19 failed, 141 passed in 12.72s
+
+--- tests\tools\test_child_credential_windows_native.py ---
+......FFF                                                                [100%]
+================================== FAILURES ===================================
+_ test_reused_terminal_snapshot_cannot_restore_profile_secrets[new-secret-declaration] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-rmvx_81l/pytest-of-unknown/pytest-0/test_reused_terminal_snapshot_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000023F439B7810>
+handoff = 'new-secret-declaration'
+
+    @pytest.mark.parametrize("handoff", ["new-secret-declaration", "absent-target", "benign-target"])
+    def test_reused_terminal_snapshot_cannot_restore_profile_secrets(tmp_path, monkeypatch, handoff):
+        launch, target = tmp_path / "launch", tmp_path / "target"
+        launch.mkdir()
+        target.mkdir()
+        (launch / "home").mkdir()
+        (target / "home").mkdir()
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv("HOME", str(launch / "home"))
+        monkeypatch.setenv("USERPROFILE", str(launch / "home"))
+        monkeypatch.setenv("TERMINAL_HOME_MODE", "profile")
+        monkeypatch.setattr(local, "_resolve_shell_init_files", lambda: [])
+        key = "CUSTOM_SNAPSHOT_VALUE"
+        output = tmp_path / "observed.json"
+        probe = tmp_path / "probe.py"
+        probe.write_text(
+            "import json,os,pathlib;pathlib.Path(" + repr(str(output)) + ").write_text("
+            "json.dumps({k:os.environ.get(k) for k in " + repr((key, "ORDINARY_EXPORT")) + "}),encoding='utf-8')",
+            encoding="utf-8",
+        )
+        command = shlex.quote(sys.executable.replace("\\", "/")) + " " + shlex.quote(probe.as_posix())
+        environment = local.LocalEnvironment(cwd=str(launch), timeout=20)
+        token = None
+        try:
+            seeded = environment.execute(f"export {key}=TEST_ONLY_SECRET_DO_NOT_USE; export ORDINARY_EXPORT=kept")
+            assert seeded["returncode"] == 0, seeded
+            assert environment.execute(command)["returncode"] == 0
+            assert json.loads(output.read_text(encoding="utf-8"))[key] == "TEST_ONLY_SECRET_DO_NOT_USE"
+            directory = launch / "plugins" / "platforms" / "snapshot-test"
+            directory.mkdir(parents=True)
+            (directory / "plugin.yaml").write_text(
+                f"kind: platform\nrequires_env:\n  - name: {key}\n    password: true\n",
+                encoding="utf-8",
+            )
+            if handoff != "new-secret-declaration":
+                if handoff == "benign-target":
+                    (target / ".env").write_text(f"{key}=served-benign\n", encoding="utf-8")
+                token = set_hermes_home_override(target)
+            result = environment.execute(command)
+            assert result["returncode"] == 0, result
+            observed = json.loads(output.read_text(encoding="utf-8"))
+>           assert observed[key] == ("served-benign" if handoff == "benign-target" else None)
+E           AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+
+tests\tools\test_child_credential_windows_native.py:135: AssertionError
+_ test_reused_terminal_snapshot_cannot_restore_profile_secrets[absent-target] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-rmvx_81l/pytest-of-unknown/pytest-0/test_reused_terminal_snapshot_1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000023F43E63350>
+handoff = 'absent-target'
+
+    @pytest.mark.parametrize("handoff", ["new-secret-declaration", "absent-target", "benign-target"])
+    def test_reused_terminal_snapshot_cannot_restore_profile_secrets(tmp_path, monkeypatch, handoff):
+        launch, target = tmp_path / "launch", tmp_path / "target"
+        launch.mkdir()
+        target.mkdir()
+        (launch / "home").mkdir()
+        (target / "home").mkdir()
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv("HOME", str(launch / "home"))
+        monkeypatch.setenv("USERPROFILE", str(launch / "home"))
+        monkeypatch.setenv("TERMINAL_HOME_MODE", "profile")
+        monkeypatch.setattr(local, "_resolve_shell_init_files", lambda: [])
+        key = "CUSTOM_SNAPSHOT_VALUE"
+        output = tmp_path / "observed.json"
+        probe = tmp_path / "probe.py"
+        probe.write_text(
+            "import json,os,pathlib;pathlib.Path(" + repr(str(output)) + ").write_text("
+            "json.dumps({k:os.environ.get(k) for k in " + repr((key, "ORDINARY_EXPORT")) + "}),encoding='utf-8')",
+            encoding="utf-8",
+        )
+        command = shlex.quote(sys.executable.replace("\\", "/")) + " " + shlex.quote(probe.as_posix())
+        environment = local.LocalEnvironment(cwd=str(launch), timeout=20)
+        token = None
+        try:
+            seeded = environment.execute(f"export {key}=TEST_ONLY_SECRET_DO_NOT_USE; export ORDINARY_EXPORT=kept")
+            assert seeded["returncode"] == 0, seeded
+            assert environment.execute(command)["returncode"] == 0
+            assert json.loads(output.read_text(encoding="utf-8"))[key] == "TEST_ONLY_SECRET_DO_NOT_USE"
+            directory = launch / "plugins" / "platforms" / "snapshot-test"
+            directory.mkdir(parents=True)
+            (directory / "plugin.yaml").write_text(
+                f"kind: platform\nrequires_env:\n  - name: {key}\n    password: true\n",
+                encoding="utf-8",
+            )
+            if handoff != "new-secret-declaration":
+                if handoff == "benign-target":
+                    (target / ".env").write_text(f"{key}=served-benign\n", encoding="utf-8")
+                token = set_hermes_home_override(target)
+            result = environment.execute(command)
+            assert result["returncode"] == 0, result
+            observed = json.loads(output.read_text(encoding="utf-8"))
+>           assert observed[key] == ("served-benign" if handoff == "benign-target" else None)
+E           AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == None
+
+tests\tools\test_child_credential_windows_native.py:135: AssertionError
+_ test_reused_terminal_snapshot_cannot_restore_profile_secrets[benign-target] _
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-rmvx_81l/pytest-of-unknown/pytest-0/test_reused_terminal_snapshot_2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000023F43CCF710>
+handoff = 'benign-target'
+
+    @pytest.mark.parametrize("handoff", ["new-secret-declaration", "absent-target", "benign-target"])
+    def test_reused_terminal_snapshot_cannot_restore_profile_secrets(tmp_path, monkeypatch, handoff):
+        launch, target = tmp_path / "launch", tmp_path / "target"
+        launch.mkdir()
+        target.mkdir()
+        (launch / "home").mkdir()
+        (target / "home").mkdir()
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv("HOME", str(launch / "home"))
+        monkeypatch.setenv("USERPROFILE", str(launch / "home"))
+        monkeypatch.setenv("TERMINAL_HOME_MODE", "profile")
+        monkeypatch.setattr(local, "_resolve_shell_init_files", lambda: [])
+        key = "CUSTOM_SNAPSHOT_VALUE"
+        output = tmp_path / "observed.json"
+        probe = tmp_path / "probe.py"
+        probe.write_text(
+            "import json,os,pathlib;pathlib.Path(" + repr(str(output)) + ").write_text("
+            "json.dumps({k:os.environ.get(k) for k in " + repr((key, "ORDINARY_EXPORT")) + "}),encoding='utf-8')",
+            encoding="utf-8",
+        )
+        command = shlex.quote(sys.executable.replace("\\", "/")) + " " + shlex.quote(probe.as_posix())
+        environment = local.LocalEnvironment(cwd=str(launch), timeout=20)
+        token = None
+        try:
+            seeded = environment.execute(f"export {key}=TEST_ONLY_SECRET_DO_NOT_USE; export ORDINARY_EXPORT=kept")
+            assert seeded["returncode"] == 0, seeded
+            assert environment.execute(command)["returncode"] == 0
+            assert json.loads(output.read_text(encoding="utf-8"))[key] == "TEST_ONLY_SECRET_DO_NOT_USE"
+            directory = launch / "plugins" / "platforms" / "snapshot-test"
+            directory.mkdir(parents=True)
+            (directory / "plugin.yaml").write_text(
+                f"kind: platform\nrequires_env:\n  - name: {key}\n    password: true\n",
+                encoding="utf-8",
+            )
+            if handoff != "new-secret-declaration":
+                if handoff == "benign-target":
+                    (target / ".env").write_text(f"{key}=served-benign\n", encoding="utf-8")
+                token = set_hermes_home_override(target)
+            result = environment.execute(command)
+            assert result["returncode"] == 0, result
+            observed = json.loads(output.read_text(encoding="utf-8"))
+>           assert observed[key] == ("served-benign" if handoff == "benign-target" else None)
+E           AssertionError: assert 'TEST_ONLY_SECRET_DO_NOT_USE' == 'served-benign'
+E
+E             - served-benign
+E             + TEST_ONLY_SECRET_DO_NOT_USE
+
+tests\tools\test_child_credential_windows_native.py:135: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[new-secret-declaration]
+FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[absent-target]
+FAILED tests/tools/test_child_credential_windows_native.py::test_reused_terminal_snapshot_cannot_restore_profile_secrets[benign-target]
+3 failed, 6 passed in 13.22s
+
+=== 3 files with test failures (24 tests failed) ===
+  tests\tools\test_child_bridge_credential_boundary.py  (2 tests failed)
+  tests\tools\test_child_credential_boundary.py  (19 tests failed)
+  tests\tools\test_child_credential_windows_native.py  (3 tests failed)

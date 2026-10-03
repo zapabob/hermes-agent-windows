@@ -350,6 +350,46 @@ def _extract_email_address(raw: str) -> str:
     return raw.strip().lower()
 
 
+def _ar_clauses(text: str) -> Optional[List[str]]:
+    """Split an Authentication-Results value on ``;`` outside quoted-strings and (nested) comments; comments are
+    dropped, quoted-strings kept (``header.from="x"`` stays readable). ``None`` when a quote or comment is unbalanced."""
+    clauses, cur, depth, quoted, i = [], [], 0, False, 0
+    while i < len(text):
+        c = text[i]
+        if c == "\\" and (quoted or depth):
+            if quoted:
+                cur.append(text[i:i + 2])
+            i += 2
+            continue
+        if quoted:
+            quoted = c != '"'
+            cur.append(c)
+        elif depth:
+            depth += {"(": 1, ")": -1}.get(c, 0)
+            if not depth:
+                cur.append(" ")
+        elif c == "(":
+            depth = 1
+        elif c == '"':
+            quoted = True
+            cur.append(c)
+        elif c == ")":
+            return None  # stray close paren: unbalanced
+        elif c == ";":
+            clauses.append("".join(cur))
+            cur = []
+        else:
+            cur.append(c)
+        i += 1
+    return None if quoted or depth else clauses + ["".join(cur)]
+
+
+def _auth_props(text: str) -> List[Tuple[str, str]]:
+    """``(property, value)`` pairs (``header.from=x``) of one comment-free Authentication-Results clause, property
+    lowercased, surrounding quotes stripped. Quoted-string contents are never scanned for properties."""
+    return [(p.lower(), v.strip('"')) for p, v in _AUTH_PROP_RE.findall(text) if p]
+
+
 def _domain_of(address: str) -> str:
     """Return the lowercased domain part of an email address, or ''."""
     _, _, domain = address.rpartition("@")
@@ -373,17 +413,13 @@ def _domains_aligned(a: str, b: str) -> bool:
     return a.endswith("." + b) or b.endswith("." + a)
 
 
-# Match a single "method=result" token in an Authentication-Results header,
-# e.g. ``dmarc=pass`` or ``spf=fail``.
-_AUTH_METHOD_RE = re.compile(
-    r"\b(dmarc|dkim|spf)\s*=\s*([a-z]+)", re.IGNORECASE
-)
-# Match a property value like ``header.from=example.com`` or
-# ``smtp.mailfrom=user@example.com``.
-_AUTH_PROP_RE = re.compile(
-    r"\b(header\.from|header\.d|smtp\.mailfrom|smtp\.from|envelope-from)\s*=\s*([^\s;]+)",
-    re.IGNORECASE,
-)
+# Authentication-Results clause head (``dmarc=pass``), matched only at the start of a clause.
+_AUTH_METHOD_RE = re.compile(r"\s*(dmarc|dkim|spf)\s*=\s*([a-z]+)(?=\s|$)", re.IGNORECASE)
+# One token of a clause: a property we read (``header.from=x``; the value may be or contain a quoted-string), or
+# any other whitespace-delimited token consumed whole, so text inside quotes or other values is never read as a prop.
+_QUOTED = r'"(?:[^"\\]|\\.)*"'
+_AUTH_PROP_RE = re.compile(r'(header\.from|header\.d|smtp\.mailfrom|smtp\.from|envelope-from)\s*=\s*((?:%s|[^\s";])+)'
+                           r'|(?:%s|[^\s"])+' % (_QUOTED, _QUOTED), re.IGNORECASE)
 
 
 def _verify_sender_authentication(
@@ -438,31 +474,32 @@ def _verify_sender_authentication(
     if trusted is None:
         return False, "no Authentication-Results from trusted authserv-id"
 
-    methods = {m.lower(): r.lower() for m, r in _AUTH_METHOD_RE.findall(trusted)}
-    props = {p.lower(): v.strip().strip('"') for p, v in _AUTH_PROP_RE.findall(trusted)}
+    # Each verdict comes from the head of its own clause (split outside quotes/comments) and its domains only from that
+    # clause: a quoted local part or comment can otherwise smuggle ``spf=pass``/``header.d=`` (GHSA-rxqh-5572-8m77).
+    if (clauses := _ar_clauses(trusted)) is None:
+        return False, "unbalanced quote or comment in Authentication-Results"
+    results: Dict[str, List[Tuple[str, List[Tuple[str, str]]]]] = {"dmarc": [], "spf": [], "dkim": []}
+    for clause in clauses:
+        if m := _AUTH_METHOD_RE.match(clause):
+            results[m.group(1).lower()].append((m.group(2).lower(), _auth_props(clause)))
 
-    # 1) DMARC pass is the strongest signal — DMARC already enforces From
-    #    alignment, so a pass means the From domain is authenticated.
-    if methods.get("dmarc") == "pass":
+    def aligned(props: List[Tuple[str, str]], names: Tuple[str, ...], *, required: bool = True) -> bool:
+        domains = [_domain_of(v) for p, v in props if p in names]
+        return (bool(domains) or not required) and all(_domains_aligned(d, from_domain) for d in domains)
+
+    if len(results["dmarc"]) > 1:
+        return False, "ambiguous dmarc result"
+    # every header.from in the dmarc clause must be the From domain we parsed (absent header.from: trust the verdict)
+    if any(r == "pass" and aligned(props, ("header.from",), required=False) for r, props in results["dmarc"]):
         return True, "dmarc=pass"
-
-    # 2) SPF pass aligned with the From domain (the envelope/MAIL FROM domain
-    #    must match the From domain).
-    if methods.get("spf") == "pass":
-        spf_domain = _domain_of(props.get("smtp.mailfrom", "")) or props.get(
-            "smtp.from", ""
-        ) or props.get("envelope-from", "")
-        spf_domain = _domain_of(spf_domain) if "@" in spf_domain else spf_domain
-        if _domains_aligned(spf_domain, from_domain):
-            return True, "spf=pass aligned"
-
-    # 3) DKIM pass aligned with the From domain (the signing domain header.d
-    #    must align with the From domain).
-    if methods.get("dkim") == "pass":
-        dkim_domain = props.get("header.d", "") or _domain_of(props.get("header.from", ""))
-        if _domains_aligned(dkim_domain, from_domain):
-            return True, "dkim=pass aligned"
-
+    # one SMTP transaction has one MAIL FROM verdict: a second spf clause means the SPF signal is not trusted
+    if len(results["spf"]) == 1 and (spf := results["spf"][0])[0] == "pass" and aligned(
+            spf[1], ("smtp.mailfrom", "smtp.from", "envelope-from")):
+        return True, "spf=pass aligned"
+    # several dkim clauses are normal (one per signature): any single pass whose own header.d aligns is enough
+    if any(r == "pass" and aligned(props, ("header.d",) if any(p == "header.d" for p, _ in props) else ("header.from",))
+           for r, props in results["dkim"]):
+        return True, "dkim=pass aligned"
     return False, f"authentication failed ({trusted[:120]})"
 
 

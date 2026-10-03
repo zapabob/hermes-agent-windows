@@ -1,0 +1,222 @@
+[
+  {
+    "node": {
+      "id": "function:859053d2442df208740b97ac9e1114a1",
+      "kind": "function",
+      "name": "_make_run_env",
+      "qualifiedName": "_make_run_env",
+      "filePath": "tools/environments/local.py",
+      "language": "python",
+      "startLine": 716,
+      "endLine": 741,
+      "startColumn": 0,
+      "endColumn": 18,
+      "signature": "(env: dict) -> dict",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982696704
+    },
+    "score": 115.55650093205553
+  },
+  {
+    "node": {
+      "id": "method:64f0296f837c787fcf33d47c01493a81",
+      "kind": "method",
+      "name": "test_make_run_env_blocklist_override_rejected",
+      "qualifiedName": "TestTerminalIntegration::test_make_run_env_blocklist_override_rejected",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "language": "python",
+      "startLine": 438,
+      "endLine": 456,
+      "startColumn": 4,
+      "endColumn": 45,
+      "signature": "(self)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982675946
+    },
+    "score": 43.23159359741379
+  },
+  {
+    "node": {
+      "id": "method:b9c87ab1b34a8a81a59ebb1bc8a0e7ae",
+      "kind": "method",
+      "name": "test_make_run_env_noop_on_posix",
+      "qualifiedName": "TestGitBashCoreutilsOnPath::test_make_run_env_noop_on_posix",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "language": "python",
+      "startLine": 286,
+      "endLine": 290,
+      "startColumn": 4,
+      "endColumn": 47,
+      "signature": "(self, monkeypatch)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982676502
+    },
+    "score": 43.18601479913275
+  },
+  {
+    "node": {
+      "id": "method:7016300aa5f1bbc5bbf28759e93730f1",
+      "kind": "method",
+      "name": "test_make_run_env_omits_missing_scoped_passthrough",
+      "qualifiedName": "TestProfileScopedPassthrough::test_make_run_env_omits_missing_scoped_passthrough",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "language": "python",
+      "startLine": 1346,
+      "endLine": 1364,
+      "startColumn": 4,
+      "endColumn": 44,
+      "signature": "(self, monkeypatch)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982676487
+    },
+    "score": 43.09547053297052
+  },
+  {
+    "node": {
+      "id": "method:5bcf97f77cf5646eba1264fe7719adb1",
+      "kind": "method",
+      "name": "test_make_run_env_real_launchd_path_gains_homebrew",
+      "qualifiedName": "TestSanePathIncludesHomebrew::test_make_run_env_real_launchd_path_gains_homebrew",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "language": "python",
+      "startLine": 1547,
+      "endLine": 1561,
+      "startColumn": 4,
+      "endColumn": 77,
+      "signature": "(self)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982676487
+    },
+    "score": 43.050502320155175
+  },
+  {
+    "node": {
+      "id": "method:f49df307514171f24ef8cbe7d77cf305",
+      "kind": "method",
+      "name": "test_make_run_env_uses_active_profile_for_passthrough",
+      "qualifiedName": "TestProfileScopedPassthrough::test_make_run_env_uses_active_profile_for_passthrough",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "language": "python",
+      "startLine": 1326,
+      "endLine": 1344,
+      "startColumn": 4,
+      "endColumn": 68,
+      "signature": "(self, monkeypatch)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982676487
+    },
+    "score": 43.00573491132323
+  },
+  {
+    "node": {
+      "id": "method:fec10641e1dea15876161b73bf0d0fb0",
+      "kind": "method",
+      "name": "test_make_run_env_appends_homebrew_on_minimal_path",
+      "qualifiedName": "TestSanePathIncludesHomebrew::test_make_run_env_appends_homebrew_on_minimal_path",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "language": "python",
+      "startLine": 1522,
+      "endLine": 1543,
+      "startColumn": 4,
+      "endColumn": 44,
+      "signature": "(self, monkeypatch)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982676487
+    },
+    "score": 43.00573491132323
+  },
+  {
+    "node": {
+      "id": "method:50f557461d3a5442c4f8e15387d92412",
+      "kind": "method",
+      "name": "test_make_run_env_sets_msys_no_pathconv_on_windows",
+      "qualifiedName": "TestWindowsMsysPathconvDefaults::test_make_run_env_sets_msys_no_pathconv_on_windows",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "language": "python",
+      "startLine": 223,
+      "endLine": 225,
+      "startColumn": 4,
+      "endColumn": 53,
+      "signature": "(self)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982676502
+    },
+    "score": 42.96116696444631
+  },
+  {
+    "node": {
+      "id": "method:a84cd29ebc09d2833c57c70429363730",
+      "kind": "method",
+      "name": "test_make_run_env_preserves_windows_mixed_case_path_key",
+      "qualifiedName": "TestSanePathIncludesHomebrew::test_make_run_env_preserves_windows_mixed_case_path_key",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "language": "python",
+      "startLine": 1565,
+      "endLine": 1583,
+      "startColumn": 4,
+      "endColumn": 35,
+      "signature": "(self, monkeypatch)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982676487
+    },
+    "score": 42.91679714942834
+  },
+  {
+    "node": {
+      "id": "class:74bd431165746cbb0bbf38dceb30eecc",
+      "kind": "class",
+      "name": "TestMakeRunEnvHomeInjection",
+      "qualifiedName": "TestMakeRunEnvHomeInjection",
+      "filePath": "tests/tools/test_subprocess_home_isolation.py",
+      "language": "python",
+      "startLine": 146,
+      "endLine": 205,
+      "startColumn": 0,
+      "endColumn": 45,
+      "docstring": "---------------------------------------------------------------------------\n_make_run_env() injection\n---------------------------------------------------------------------------",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982679118
+    },
+    "score": 20.014270206803367
+  }
+]

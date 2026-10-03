@@ -1,0 +1,46 @@
+[
+  {
+    "node": {
+      "id": "function:ec5f6394b75391386a7b5aa4c1dae1e4",
+      "kind": "function",
+      "name": "_run_command_stt",
+      "qualifiedName": "_run_command_stt",
+      "filePath": "tools/transcription_tools.py",
+      "language": "python",
+      "startLine": 710,
+      "endLine": 836,
+      "startColumn": 0,
+      "endColumn": 80,
+      "signature": "(\n    command: str,\n    timeout: float,\n    env_passthrough: Optional[list] = None,\n) -> subprocess.CompletedProcess",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790993454886
+    },
+    "score": 113.4231343969173
+  },
+  {
+    "node": {
+      "id": "function:ad76d41858bc2c338287c6c08a12ab89",
+      "kind": "function",
+      "name": "read_stream",
+      "qualifiedName": "_run_command_stt::read_stream",
+      "filePath": "tools/transcription_tools.py",
+      "language": "python",
+      "startLine": 749,
+      "endLine": 763,
+      "startColumn": 4,
+      "endColumn": 42,
+      "signature": "(name: str, stream: Any) -> None",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790993454886
+    },
+    "score": 30.17058417595517
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "node": {
+      "id": "function:8b1ae52363d9f2eb0e3c8cead3ee0124",
+      "kind": "function",
+      "name": "_verify_sender_authentication",
+      "qualifiedName": "_verify_sender_authentication",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "language": "python",
+      "startLine": 335,
+      "endLine": 378,
+      "startColumn": 0,
+      "endColumn": 60,
+      "signature": "(msg: email_lib.message.Message, from_addr: str, *, authserv_id: str = \"\") -> Tuple[bool, str]",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982359643
+    },
+    "score": 113.95097741767093
+  },
+  {
+    "node": {
+      "id": "function:bd30fadee98eaca89c7fe655dd505753",
+      "kind": "function",
+      "name": "aligned",
+      "qualifiedName": "_verify_sender_authentication::aligned",
+      "filePath": "plugins/platforms/email/adapter.py",
+      "language": "python",
+      "startLine": 361,
+      "endLine": 363,
+      "startColumn": 4,
+      "endColumn": 105,
+      "signature": "(props: List[Tuple[str, str]], names: Tuple[str, ...], *, required: bool = True) -> bool",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982359643
+    },
+    "score": 29.819584775996955
+  }
+]

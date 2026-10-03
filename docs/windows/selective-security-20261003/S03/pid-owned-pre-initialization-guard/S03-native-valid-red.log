@@ -1,0 +1,136 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 1 test files (~1 tests) under ['tests\\tools\\test_child_credential_windows_native.py']; running with -j 1
+[100.0% |     1/~1 | ✓5 | ✗1] ✗ tests\tools\test_child_credential_windows_native.py (5✓ 1✗, 8.5s)
+
+  ╔╍ Failed: tests\tools\test_child_credential_windows_native.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║                 session = registry.spawn_local(command, cwd=str(served), use_pty=surface == "pty")
+  ║                 if surface == "pty":
+  ║                     assert getattr(session, "_pty", None) is not None, "pipe fallback is not PTY proof"
+  ║                 deadline = time.monotonic() + 25
+  ║                 while not session.exited and time.monotonic() < deadline:
+  ║                     time.sleep(0.05)
+  ║                 assert session.exited, "test-owned native child did not finish"
+  ║                 assert session.exit_code == 0
+  ║             elif surface == "cron":
+  ║                 from cron.scheduler import _run_job_script
+  ║                 ok, result = _run_job_script(str(script), workdir=str(served))
+  ║                 assert ok, result
+  ║             elif surface == "subagent":
+  ║                 from agent.delegation_context import delegated_child_context, delegated_child_subprocess_env
+  ║                 with delegated_child_context("test-only-child"):
+  ║                     env = delegated_child_subprocess_env()
+  ║                 subprocess.run([sys.executable, "-I", str(script)], env=env, stdin=subprocess.DEVNULL, capture_output=True, timeout=20, check=True)
+  ║             else:
+  ║                 subprocess.run([sys.executable, "-I", str(script)], env=local.hermes_subprocess_env(), stdin=subprocess.DEVNULL, capture_output=True, timeout=20, check=True)
+  ║             observed = json.loads(output.read_text(encoding="utf-8"))
+  ║ >           assert observed["BOUNDARY_BENIGN"] == "served-value"
+  ║ E           AssertionError: assert 'launch-value' == 'served-value'
+  ║ E
+  ║ E             - served-value
+  ║ E             + launch-value
+  ║
+  ║ tests\tools\test_child_credential_windows_native.py:76: AssertionError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_credential_windows_native.py::test_native_spawn_honors_served_profile_and_secret_minimization[subagent]
+  ║ 1 failed, 5 passed in 6.90s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_credential_windows_native.py -q
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+
+=== Summary: 1 files, 5 tests passed, 1 failed (100% complete) in 8.5s (1 workers) ===
+  Durations cached to test_durations.json (1 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   1
+  Total subprocess CPU-wall: 8.5s  (runner wall: 8.5s, parallelism: 1x)
+  P50: 8.52s  P90: 8.52s  P95: 8.52s  P99: 8.52s  Max: 8.52s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+      8.52s  tests\tools\test_child_credential_windows_native.py
+
+=== Failure output ===
+
+--- tests\tools\test_child_credential_windows_native.py ---
+.....F                                                                   [100%]
+================================== FAILURES ===================================
+__ test_native_spawn_honors_served_profile_and_secret_minimization[subagent] __
+
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-mp9pcl9_/pytest-of-unknown/pytest-0/test_native_spawn_honors_serve5')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001D293ACC5D0>
+surface = 'subagent'
+
+    @pytest.mark.parametrize("surface", ["terminal", "background", "pty", "cron", "cli", "subagent"])
+    def test_native_spawn_honors_served_profile_and_secret_minimization(tmp_path, monkeypatch, surface):
+        launch, served = tmp_path / "launch profile", tmp_path / "served profile"
+        launch.mkdir()
+        (served / "home").mkdir(parents=True)
+        scripts = served / "scripts"
+        scripts.mkdir()
+        output = served / "observed.json"
+        (launch / ".env").write_text("CUSTOM_PROFILE_SECRET=TEST_ONLY_SECRET_DO_NOT_USE\n", encoding="utf-8")
+        (served / ".env").write_text("BOUNDARY_BENIGN=served-value\n", encoding="utf-8")
+        script = scripts / "probe.py"
+        script.write_text(
+            "import json,os,pathlib,sys\npathlib.Path(" + repr(str(output)) + ").write_text("
+            "json.dumps({k:os.environ.get(k) for k in " + repr(KEYS) + "}),encoding='utf-8')\n"
+            "sys.stdout.write('PROBE_DONE\\n')\n", encoding="utf-8",
+        )
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        for key in KEYS[:3]:
+            monkeypatch.setenv(key, "TEST_ONLY_SECRET_DO_NOT_USE")
+        monkeypatch.setenv("BOUNDARY_BENIGN", "launch-value")
+        monkeypatch.setenv("HOME", str(served / "home"))
+        monkeypatch.setenv("USERPROFILE", str(served / "home"))
+        monkeypatch.setenv("HERMES_REAL_HOME", str(served / "home"))
+        monkeypatch.setenv("TERMINAL_HOME_MODE", "profile")
+        monkeypatch.setattr(local, "_resolve_shell_init_files", lambda: [])
+        command = shlex.quote(sys.executable.replace("\\", "/")) + " " + shlex.quote(script.as_posix())
+        token = set_hermes_home_override(served)
+        registry = None
+        terminal = None
+        try:
+            if surface == "terminal":
+                terminal = local.LocalEnvironment(cwd=str(served), timeout=20)
+                result = terminal.execute(command)
+                assert result["returncode"] == 0, result
+            elif surface in {"background", "pty"}:
+                from tools.process_registry import ProcessRegistry
+                registry = ProcessRegistry()
+                session = registry.spawn_local(command, cwd=str(served), use_pty=surface == "pty")
+                if surface == "pty":
+                    assert getattr(session, "_pty", None) is not None, "pipe fallback is not PTY proof"
+                deadline = time.monotonic() + 25
+                while not session.exited and time.monotonic() < deadline:
+                    time.sleep(0.05)
+                assert session.exited, "test-owned native child did not finish"
+                assert session.exit_code == 0
+            elif surface == "cron":
+                from cron.scheduler import _run_job_script
+                ok, result = _run_job_script(str(script), workdir=str(served))
+                assert ok, result
+            elif surface == "subagent":
+                from agent.delegation_context import delegated_child_context, delegated_child_subprocess_env
+                with delegated_child_context("test-only-child"):
+                    env = delegated_child_subprocess_env()
+                subprocess.run([sys.executable, "-I", str(script)], env=env, stdin=subprocess.DEVNULL, capture_output=True, timeout=20, check=True)
+            else:
+                subprocess.run([sys.executable, "-I", str(script)], env=local.hermes_subprocess_env(), stdin=subprocess.DEVNULL, capture_output=True, timeout=20, check=True)
+            observed = json.loads(output.read_text(encoding="utf-8"))
+>           assert observed["BOUNDARY_BENIGN"] == "served-value"
+E           AssertionError: assert 'launch-value' == 'served-value'
+E
+E             - served-value
+E             + launch-value
+
+tests\tools\test_child_credential_windows_native.py:76: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_windows_native.py::test_native_spawn_honors_served_profile_and_secret_minimization[subagent]
+1 failed, 5 passed in 6.90s
+
+=== 1 file with test failures (1 test failed) ===
+  tests\tools\test_child_credential_windows_native.py  (1 test failed)

@@ -1,0 +1,118 @@
+▶ no local venv — using Nix dev venv via HERMES_PYTHON: /c/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe
+▶ running per-file parallel test suite via run_tests_parallel.py
+  (TZ=UTC LANG=C.UTF-8 PYTHONUTF8=1 PYTHONHASHSEED=0; clean env)
+▶ pre-compiling bytecode cache
+▶ launching test runner
+Discovered 1 test files (~2 tests) under ['tests\\tools\\test_child_bridge_credential_boundary.py']; running with -j 1
+[100.0% |     2/~2 | ✓0 | ✗2] ✗ tests\tools\test_child_bridge_credential_boundary.py (2✗, 4.9s)
+
+  ╔╍ Failed: tests\tools\test_child_bridge_credential_boundary.py ╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+  ║ E
+  ║ E         - served-profile
+  ║ E         + launch-profile
+  ║
+  ║ tests\tools\test_child_bridge_credential_boundary.py:51: AssertionError
+  ║ ___ test_openviking_server_receives_served_provider_without_launch_secrets ____
+  ║
+  ║ monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000146E7BC1E90>
+  ║ tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-qfgrscq4/pytest-of-unknown/pytest-0/test_openviking_server_receive0')
+  ║
+  ║     def test_openviking_server_receives_served_provider_without_launch_secrets(monkeypatch, tmp_path):
+  ║         from plugins.memory import openviking
+  ║
+  ║         launch, served = tmp_path / "launch", tmp_path / "served"
+  ║         launch.mkdir()
+  ║         served.mkdir()
+  ║         (launch / ".env").write_text(f"OPENAI_API_KEY={SECRET}\n", encoding="utf-8")
+  ║         (served / ".env").write_text("OPENAI_API_KEY=TEST_ONLY_SERVED\n", encoding="utf-8")
+  ║         monkeypatch.setenv("HERMES_HOME", str(launch))
+  ║         monkeypatch.setenv("OPENAI_API_KEY", SECRET)
+  ║         monkeypatch.setenv("TELEGRAM_WEBHOOK_SECRET", SECRET)
+  ║         monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+  ║ >       monkeypatch.setattr(openviking, "_is_local_port_open", lambda *_: False)
+  ║ E       AttributeError: <module 'plugins.memory.openviking' from 'H:\\hermes-worktrees\\p0-p1-local-20261003\\plugins\\memory\\openviking\\__init__.py'> has no attribute '_is_local_port_open'
+  ║
+  ║ tests\tools\test_child_bridge_credential_boundary.py:71: AttributeError
+  ║ =========================== short test summary info ===========================
+  ║ FAILED tests/tools/test_child_bridge_credential_boundary.py::test_raft_bridge_only_receives_its_scoped_authority
+  ║ FAILED tests/tools/test_child_bridge_credential_boundary.py::test_openviking_server_receives_served_provider_without_launch_secrets
+  ║ 2 failed in 3.11s
+  ║
+  ║  Repro: python -m pytest tests\tools\test_child_bridge_credential_boundary.py -q
+  ╚╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍
+
+
+=== Summary: 1 files, 0 tests passed, 2 failed (100% complete) in 4.9s (1 workers) ===
+  Durations cached to test_durations.json (1 files)
+
+=== Per-file subprocess time distribution ===
+  Files:   1
+  Total subprocess CPU-wall: 4.9s  (runner wall: 4.9s, parallelism: 1x)
+  P50: 4.86s  P90: 4.86s  P95: 4.86s  P99: 4.86s  Max: 4.86s
+  <1s: 0 files (0%)  <2s: 0 files (0%)
+  Top 10 slowest:
+      4.86s  tests\tools\test_child_bridge_credential_boundary.py
+
+=== Failure output ===
+
+--- tests\tools\test_child_bridge_credential_boundary.py ---
+FF                                                                       [100%]
+================================== FAILURES ===================================
+_____________ test_raft_bridge_only_receives_its_scoped_authority _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000146E7B7A790>
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-qfgrscq4/pytest-of-unknown/pytest-0/test_raft_bridge_only_receives0')
+
+    def test_raft_bridge_only_receives_its_scoped_authority(monkeypatch, tmp_path):
+        from agent.secret_scope import set_secret_scope, reset_secret_scope
+        from plugins.platforms.raft import adapter as raft
+
+        monkeypatch.setenv("RAFT_PROFILE", "launch-profile")
+        monkeypatch.setenv("OPENAI_API_KEY", SECRET)
+        monkeypatch.setenv("TELEGRAM_WEBHOOK_SECRET", SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+        real_which = raft.shutil.which
+        monkeypatch.setattr(raft.shutil, "which", lambda name: sys.executable if name == "raft" else real_which(name))
+        calls, output = native_probe(monkeypatch, raft, tmp_path)
+        adapter = raft.RaftAdapter(PlatformConfig(enabled=True, extra={"bridge_token": "TEST_ONLY_BRIDGE"}))
+        token = set_secret_scope({"RAFT_PROFILE": "served-profile"})
+        try:
+            adapter._spawn_bridge(18765)
+        finally:
+            reset_secret_scope(token)
+        assert len(calls) == 1
+>       assert calls[0][calls[0].index("--profile") + 1] == "served-profile"
+E       AssertionError: assert 'launch-profile' == 'served-profile'
+E
+E         - served-profile
+E         + launch-profile
+
+tests\tools\test_child_bridge_credential_boundary.py:51: AssertionError
+___ test_openviking_server_receives_served_provider_without_launch_secrets ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000146E7BC1E90>
+tmp_path = WindowsPath('H:/hermes-worktrees/p0-p1-local-20261003/tmp/test-temp/hermes-pytest-tmproot-qfgrscq4/pytest-of-unknown/pytest-0/test_openviking_server_receive0')
+
+    def test_openviking_server_receives_served_provider_without_launch_secrets(monkeypatch, tmp_path):
+        from plugins.memory import openviking
+
+        launch, served = tmp_path / "launch", tmp_path / "served"
+        launch.mkdir()
+        served.mkdir()
+        (launch / ".env").write_text(f"OPENAI_API_KEY={SECRET}\n", encoding="utf-8")
+        (served / ".env").write_text("OPENAI_API_KEY=TEST_ONLY_SERVED\n", encoding="utf-8")
+        monkeypatch.setenv("HERMES_HOME", str(launch))
+        monkeypatch.setenv("OPENAI_API_KEY", SECRET)
+        monkeypatch.setenv("TELEGRAM_WEBHOOK_SECRET", SECRET)
+        monkeypatch.setenv("BOUNDARY_BENIGN", "present")
+>       monkeypatch.setattr(openviking, "_is_local_port_open", lambda *_: False)
+E       AttributeError: <module 'plugins.memory.openviking' from 'H:\\hermes-worktrees\\p0-p1-local-20261003\\plugins\\memory\\openviking\\__init__.py'> has no attribute '_is_local_port_open'
+
+tests\tools\test_child_bridge_credential_boundary.py:71: AttributeError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_bridge_credential_boundary.py::test_raft_bridge_only_receives_its_scoped_authority
+FAILED tests/tools/test_child_bridge_credential_boundary.py::test_openviking_server_receives_served_provider_without_launch_secrets
+2 failed in 3.11s
+
+=== 1 file with test failures (2 tests failed) ===
+  tests\tools\test_child_bridge_credential_boundary.py  (2 tests failed)

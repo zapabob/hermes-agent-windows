@@ -1,0 +1,90 @@
+[
+  {
+    "node": {
+      "id": "function:c95e1da2709549cc5f6edea7244a7205",
+      "kind": "function",
+      "name": "_run_command_tts",
+      "qualifiedName": "_run_command_tts",
+      "filePath": "tools/tts_tool.py",
+      "language": "python",
+      "startLine": 1188,
+      "endLine": 1310,
+      "startColumn": 0,
+      "endColumn": 80,
+      "signature": "(\n    command: str,\n    timeout: float,\n    env_passthrough: Optional[list] = None,\n) -> subprocess.CompletedProcess",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790993455172
+    },
+    "score": 125.20066281174329
+  },
+  {
+    "node": {
+      "id": "function:958d571c91f315055515a9b9d5ef3bd8",
+      "kind": "function",
+      "name": "read_stream",
+      "qualifiedName": "_run_command_tts::read_stream",
+      "filePath": "tools/tts_tool.py",
+      "language": "python",
+      "startLine": 1223,
+      "endLine": 1237,
+      "startColumn": 4,
+      "endColumn": 42,
+      "signature": "(name: str, stream: Any) -> None",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790993455172
+    },
+    "score": 42.117897924082854
+  },
+  {
+    "node": {
+      "id": "class:edbaaa746307ab1261c4da71748c0f66",
+      "kind": "class",
+      "name": "TestRunCommandTts",
+      "qualifiedName": "TestRunCommandTts",
+      "filePath": "tests/tools/test_tts_command_providers.py",
+      "language": "python",
+      "startLine": 325,
+      "endLine": 378,
+      "startColumn": 0,
+      "endColumn": 77,
+      "docstring": "---------------------------------------------------------------------------\n_run_command_tts idle/progress timeout behavior\n---------------------------------------------------------------------------",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982770478
+    },
+    "score": 32.97507254152439
+  },
+  {
+    "node": {
+      "id": "import:6e81e4f1736de1a834d99db9aac35ae6",
+      "kind": "import",
+      "name": "tools.tts_tool",
+      "qualifiedName": "tools.tts_tool",
+      "filePath": "tests/tools/test_tts_command_providers.py",
+      "language": "python",
+      "startLine": 25,
+      "endLine": 46,
+      "startColumn": 0,
+      "endColumn": 1,
+      "signature": "from tools.tts_tool import (\n    BUILTIN_TTS_PROVIDERS,\n    COMMAND_TTS_OUTPUT_FORMATS,\n    DEFAULT_COMMAND_TTS_MAX_TEXT_LENGTH,\n    DEFAULT_COMMAND_TTS_OUTPUT_FORMAT,\n    DEFAULT_COMMAND_TTS_TIMEOUT_SECONDS,\n    _generate_command_tts,\n    _get_command_tts_output_format,\n    _get_command_tts_timeout,\n    _get_named_provider_config,\n    _has_any_command_tts_provider,\n    _is_command_provider_config,\n    _is_command_tts_voice_compatible,\n    _iter_command_providers,\n    _render_command_tts_template,\n    _resolve_command_provider_config,\n    _resolve_max_text_length,\n    _run_command_tts,\n    _shell_quote_context,\n    check_tts_requirements,\n    text_to_speech_tool,\n)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982770478
+    },
+    "score": 4.9094752797090315
+  }
+]

@@ -20,11 +20,9 @@ Required environment variables:
                                (default: ws://127.0.0.1:5225)
 
 Optional environment variables:
-    SIMPLEX_ALLOWED_USERS      Comma-separated allowlist. Each entry may be
-                               either a numeric contactId (stable across
-                               renames; visible via `/contacts` in the CLI)
-                               or a contact display name (what the SimpleX
-                               UI shows). Both forms are accepted.
+    SIMPLEX_ALLOWED_USERS      Comma-separated numeric contactIds, stable
+                               across renames; visible via `/contacts` in
+                               the CLI. Display names do not grant access.
     SIMPLEX_ALLOW_ALL_USERS    Set 'true' to allow all contacts
     SIMPLEX_AUTO_ACCEPT        Set 'false' to disable contact-request auto-accept
                                (default: 'true')
@@ -1330,7 +1328,7 @@ def interactive_setup() -> None:
             save_env_value(var, value)
 
     _prompt("SIMPLEX_WS_URL", "Daemon WebSocket URL (default ws://127.0.0.1:5225)")
-    _prompt("SIMPLEX_ALLOWED_USERS", "Allowed contactIds or display names (comma-separated; blank=skip)")
+    _prompt("SIMPLEX_ALLOWED_USERS", "Allowed numeric contactIds (comma-separated; blank=skip)")
     _prompt(
         "SIMPLEX_GROUP_ALLOWED",
         "Allowed group IDs (comma-separated, or '*' for any; blank=disable groups)",

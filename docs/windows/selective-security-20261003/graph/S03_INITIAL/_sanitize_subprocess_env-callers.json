@@ -1,0 +1,125 @@
+{
+  "symbol": "_sanitize_subprocess_env",
+  "callers": [
+    {
+      "name": "_bang_env",
+      "kind": "function",
+      "filePath": "hermes_cli/bang_shell.py",
+      "startLine": 128
+    },
+    {
+      "name": "_run_ddgs_search_bounded",
+      "kind": "function",
+      "filePath": "plugins/web/ddgs/provider.py",
+      "startLine": 142
+    },
+    {
+      "name": "test_host_auto_preserves_real_home_when_profile_home_exists",
+      "kind": "method",
+      "filePath": "tests/test_subprocess_home_isolation.py",
+      "startLine": 189
+    },
+    {
+      "name": "test_profile_mode_injects_profile_home_when_profile_home_exists",
+      "kind": "method",
+      "filePath": "tests/test_subprocess_home_isolation.py",
+      "startLine": 205
+    },
+    {
+      "name": "test_no_injection_when_home_dir_missing",
+      "kind": "method",
+      "filePath": "tests/test_subprocess_home_isolation.py",
+      "startLine": 222
+    },
+    {
+      "name": "test_background_terminal_uses_active_profile_for_passthrough",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 193
+    },
+    {
+      "name": "test_background_terminal_omits_missing_scoped_passthrough",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 212
+    },
+    {
+      "name": "test_blocklisted_var_blocked_by_default",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 265
+    },
+    {
+      "name": "test_passthrough_cannot_override_provider_blocklist",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 275
+    },
+    {
+      "name": "test_passthrough_cannot_override_internal_dynamic_secret",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 298
+    },
+    {
+      "name": "test_bare_hermes_resolves_from_sanitized_subprocess_path",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 233
+    },
+    {
+      "name": "test_bare_hermes_path_does_not_duplicate_existing_install_dir",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 252
+    },
+    {
+      "name": "test_sanitize_subprocess_env_strips_markers",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 337
+    },
+    {
+      "name": "test_gateway_credentials_are_stripped_from_all_local_env_paths",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1339
+    },
+    {
+      "name": "test_sanitize_subprocess_env_strips_foreign_session_key_when_engaged",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 163
+    },
+    {
+      "name": "test_sanitize_subprocess_env_set_contextvar_wins_when_engaged",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 185
+    },
+    {
+      "name": "test_sanitize_subprocess_env_sets_msys_no_pathconv_on_windows",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "startLine": 355
+    },
+    {
+      "name": "start",
+      "kind": "method",
+      "filePath": "tools/computer_use/cua_backend.py",
+      "startLine": 812
+    },
+    {
+      "name": "stop",
+      "kind": "method",
+      "filePath": "tools/computer_use/cua_backend.py",
+      "startLine": 917
+    },
+    {
+      "name": "_resolve_mcp_invocation",
+      "kind": "function",
+      "filePath": "tools/computer_use/cua_backend.py",
+      "startLine": 954
+    }
+  ]
+}

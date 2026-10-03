@@ -1,0 +1,9 @@
+.....................F..                                                 [100%]
+================================== FAILURES ===================================
+___ test_snapshot_atomic_replacement_after_validation_cannot_restore_secret ___
+tests\tools\test_child_credential_windows_native.py:230: in test_snapshot_atomic_replacement_after_validation_cannot_restore_secret
+    assert observed["TELEGRAM_BOT_TOKEN"] is None
+E   AssertionError: assert 'TEST_ONLY_RACING_SECRET' is None
+=========================== short test summary info ===========================
+FAILED tests/tools/test_child_credential_windows_native.py::test_snapshot_atomic_replacement_after_validation_cannot_restore_secret
+1 failed, 23 passed in 38.00s

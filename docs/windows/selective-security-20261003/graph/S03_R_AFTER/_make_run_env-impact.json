@@ -1,0 +1,224 @@
+{
+  "symbol": "_make_run_env",
+  "depth": 2,
+  "nodeCount": 36,
+  "edgeCount": 35,
+  "affected": [
+    {
+      "name": "_make_run_env",
+      "kind": "function",
+      "filePath": "tools/environments/local.py",
+      "startLine": 546
+    },
+    {
+      "name": "_run",
+      "kind": "function",
+      "filePath": "tests/acp/test_server.py",
+      "startLine": 429
+    },
+    {
+      "name": "test_prompt_binds_session_id_into_subprocess_env",
+      "kind": "method",
+      "filePath": "tests/acp/test_server.py",
+      "startLine": 413
+    },
+    {
+      "name": "run_conversation",
+      "kind": "method",
+      "filePath": "tests/gateway/test_session_api.py",
+      "startLine": 133
+    },
+    {
+      "name": "_spawn_view",
+      "kind": "function",
+      "filePath": "tests/gateway/test_session_context_inheritance.py",
+      "startLine": 93
+    },
+    {
+      "name": "_b_body",
+      "kind": "function",
+      "filePath": "tests/gateway/test_session_context_inheritance.py",
+      "startLine": 112
+    },
+    {
+      "name": "test_host_auto_preserves_real_home_when_profile_home_exists",
+      "kind": "method",
+      "filePath": "tests/test_subprocess_home_isolation.py",
+      "startLine": 122
+    },
+    {
+      "name": "test_profile_mode_injects_profile_home_when_profile_home_exists",
+      "kind": "method",
+      "filePath": "tests/test_subprocess_home_isolation.py",
+      "startLine": 139
+    },
+    {
+      "name": "test_no_injection_when_home_dir_missing",
+      "kind": "method",
+      "filePath": "tests/test_subprocess_home_isolation.py",
+      "startLine": 157
+    },
+    {
+      "name": "test_no_injection_when_hermes_home_unset",
+      "kind": "method",
+      "filePath": "tests/test_subprocess_home_isolation.py",
+      "startLine": 170
+    },
+    {
+      "name": "test_make_run_env_blocklist_override_rejected",
+      "kind": "method",
+      "filePath": "tests/tools/test_env_passthrough.py",
+      "startLine": 387
+    },
+    {
+      "name": "test_make_run_env_preserves_buzz_vars",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 306
+    },
+    {
+      "name": "test_buzz_vars_stripped_without_buzz_context",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 346
+    },
+    {
+      "name": "test_session_platform_buzz_enables_carveout",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 375
+    },
+    {
+      "name": "test_buzz_vars_use_plain_value_under_multiplex_without_scope",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 403
+    },
+    {
+      "name": "test_buzz_vars_are_not_scope_resolved",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 427
+    },
+    {
+      "name": "test_make_run_env_strips_markers",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 577
+    },
+    {
+      "name": "test_make_run_env_uses_active_profile_for_passthrough",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1355
+    },
+    {
+      "name": "test_make_run_env_omits_missing_scoped_passthrough",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1375
+    },
+    {
+      "name": "test_make_run_env_appends_homebrew_on_minimal_path",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1574
+    },
+    {
+      "name": "test_make_run_env_real_launchd_path_gains_homebrew",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1599
+    },
+    {
+      "name": "test_make_run_env_preserves_windows_mixed_case_path_key",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1617
+    },
+    {
+      "name": "test_make_run_env_injects_hermes_bin_dir",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1663
+    },
+    {
+      "name": "test_make_run_env_strips_internal_secrets",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_blocklist.py",
+      "startLine": 1774
+    },
+    {
+      "name": "test_engaged_unset_contextvar_strips_foreign_session_key",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 69
+    },
+    {
+      "name": "test_set_session_vars_engages_and_overrides_foreign_global",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 90
+    },
+    {
+      "name": "test_unengaged_process_preserves_os_environ_fallback",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 115
+    },
+    {
+      "name": "test_explicit_empty_thread_id_overrides_stale_value",
+      "kind": "function",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 132
+    },
+    {
+      "name": "test_make_run_env_sets_msys_no_pathconv_on_windows",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "startLine": 223
+    },
+    {
+      "name": "test_msys2_arg_conv_excl_respects_user_override",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "startLine": 235
+    },
+    {
+      "name": "test_make_run_env_noop_on_posix",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "startLine": 286
+    },
+    {
+      "name": "_run_bash",
+      "kind": "method",
+      "filePath": "tools/environments/local.py",
+      "startLine": 777
+    },
+    {
+      "name": "test_local_environment_survives_denied_cwd",
+      "kind": "method",
+      "filePath": "tests/tools/test_local_cwd_permission_fallback.py",
+      "startLine": 49
+    },
+    {
+      "name": "test_session_context_inheritance.py",
+      "kind": "file",
+      "filePath": "tests/gateway/test_session_context_inheritance.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_local_env_session_leak.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "startLine": 1
+    },
+    {
+      "name": "test_local_env_windows_msys.py",
+      "kind": "file",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "startLine": 1
+    }
+  ]
+}

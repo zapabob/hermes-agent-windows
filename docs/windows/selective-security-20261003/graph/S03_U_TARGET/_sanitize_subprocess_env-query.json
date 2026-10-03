@@ -1,0 +1,201 @@
+[
+  {
+    "node": {
+      "id": "function:fb2f51c8ee821a868a81747c6e6feef5",
+      "kind": "function",
+      "name": "_sanitize_subprocess_env",
+      "qualifiedName": "_sanitize_subprocess_env",
+      "filePath": "tools/environments/local.py",
+      "language": "python",
+      "startLine": 310,
+      "endLine": 314,
+      "startColumn": 0,
+      "endColumn": 72,
+      "signature": "(base_env: dict | None, extra_env: dict | None = None) -> dict",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982696704
+    },
+    "score": 116.383019317055
+  },
+  {
+    "node": {
+      "id": "function:cc900b6b5c6aa00d954faa32e2b5d6fe",
+      "kind": "function",
+      "name": "test_sanitize_subprocess_env_set_contextvar_wins_when_engaged",
+      "qualifiedName": "test_sanitize_subprocess_env_set_contextvar_wins_when_engaged",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "language": "python",
+      "startLine": 185,
+      "endLine": 201,
+      "startColumn": 0,
+      "endColumn": 88,
+      "signature": "()",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982676466
+    },
+    "score": 44.2868903001415
+  },
+  {
+    "node": {
+      "id": "method:33cf4abc679224f3d124d84eea83c0a7",
+      "kind": "method",
+      "name": "test_sanitize_subprocess_env_sets_msys_no_pathconv_on_windows",
+      "qualifiedName": "TestWindowsMsysPathconvDefaults::test_sanitize_subprocess_env_sets_msys_no_pathconv_on_windows",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "language": "python",
+      "startLine": 227,
+      "endLine": 229,
+      "startColumn": 4,
+      "endColumn": 49,
+      "signature": "(self)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982676502
+    },
+    "score": 44.09720209317951
+  },
+  {
+    "node": {
+      "id": "function:6cb3bd0984f906b151da753557568538",
+      "kind": "function",
+      "name": "test_sanitize_subprocess_env_strips_foreign_session_key_when_engaged",
+      "qualifiedName": "test_sanitize_subprocess_env_strips_foreign_session_key_when_engaged",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "language": "python",
+      "startLine": 163,
+      "endLine": 182,
+      "startColumn": 0,
+      "endColumn": 54,
+      "docstring": "--------------------------------------------------------------------------- #\nBackground / PTY path (_sanitize_subprocess_env via process_registry)\n--------------------------------------------------------------------------- #",
+      "signature": "(monkeypatch)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982676466
+    },
+    "score": 43.79262076189238
+  },
+  {
+    "node": {
+      "id": "class:fe6be449f58de4ac1174c6878b3e557a",
+      "kind": "class",
+      "name": "TestSanitizeSubprocessEnvHomeInjection",
+      "qualifiedName": "TestSanitizeSubprocessEnvHomeInjection",
+      "filePath": "tests/tools/test_subprocess_home_isolation.py",
+      "language": "python",
+      "startLine": 213,
+      "endLine": 258,
+      "startColumn": 0,
+      "endColumn": 40,
+      "docstring": "---------------------------------------------------------------------------\n_sanitize_subprocess_env() injection\n---------------------------------------------------------------------------",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982679118
+    },
+    "score": 33.69802947926131
+  },
+  {
+    "node": {
+      "id": "import:c4c71617049547b633e8641fc08591bc",
+      "kind": "import",
+      "name": "tools.environments.local",
+      "qualifiedName": "tools.environments.local",
+      "filePath": "tools/process_registry.py",
+      "language": "python",
+      "startLine": 28,
+      "endLine": 28,
+      "startColumn": 0,
+      "endColumn": 93,
+      "signature": "from tools.environments.local import _find_shell, _resolve_safe_cwd, _sanitize_subprocess_env",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982697166
+    },
+    "score": 13.706148191669532
+  },
+  {
+    "node": {
+      "id": "variable:2f6803f1c1b0afb36b7441da2c6bba0a",
+      "kind": "variable",
+      "name": "ALLOWED_RAW_SPAWN_ENV_FILES",
+      "qualifiedName": "ALLOWED_RAW_SPAWN_ENV_FILES",
+      "filePath": "tests/agent/test_subprocess_env_guard.py",
+      "language": "python",
+      "startLine": 44,
+      "endLine": 72,
+      "startColumn": 0,
+      "endColumn": 1,
+      "signature": "= {\n    # THE owner module: _sanitize_subprocess_env / hermes_subprocess_env /\n    # build_subprocess_...",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982415166
+    },
+    "score": 12.293782334816331
+  },
+  {
+    "node": {
+      "id": "import:6d96a7c2aea5d13635dce184a1bbaeaf",
+      "kind": "import",
+      "name": "tools.environments.local",
+      "qualifiedName": "tools.environments.local",
+      "filePath": "tests/tools/test_local_env_session_leak.py",
+      "language": "python",
+      "startLine": 32,
+      "endLine": 32,
+      "startColumn": 0,
+      "endColumn": 99,
+      "signature": "from tools.environments.local import _make_run_env, _sanitize_subprocess_env, hermes_subprocess_env",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982676466
+    },
+    "score": 11.496564341794006
+  },
+  {
+    "node": {
+      "id": "import:13f8427036ed9c56de75f906d7675fe8",
+      "kind": "import",
+      "name": "tools.environments.local",
+      "qualifiedName": "tools.environments.local",
+      "filePath": "tests/tools/test_local_env_windows_msys.py",
+      "language": "python",
+      "startLine": 39,
+      "endLine": 51,
+      "startColumn": 0,
+      "endColumn": 1,
+      "signature": "from tools.environments.local import (\n    LocalEnvironment,\n    _bash_safe_path,\n    _git_bash_bin_dirs,\n    _make_run_env,\n    _msys_to_windows_path,\n    _prepend_git_bash_dirs,\n    _quote_bash_path,\n    _resolve_safe_cwd,\n    _sanitize_subprocess_env,\n    _windows_to_msys_path,\n    hermes_subprocess_env,\n)",
+      "visibility": null,
+      "isExported": false,
+      "isAsync": false,
+      "isStatic": false,
+      "isAbstract": false,
+      "updatedAt": 1790982676502
+    },
+    "score": 7.745818081115575
+  }
+]
