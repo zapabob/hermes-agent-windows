@@ -1,0 +1,133 @@
+{
+  "observed_at": "2026-10-03T14:38:47.290499+00:00",
+  "published_closeout_head_before_this_receipt": "5ec659260b1313b56ca1c5a7d09f4455cee417ee",
+  "product_build_head": "6decaba2acf21ac9a49f4acd89d9f8f558ce87d7",
+  "primary_wip": {
+    "tracked_hashes_unchanged": true,
+    "untracked_metadata_unchanged": true,
+    "tracked_count": 7,
+    "untracked_count": 105
+  },
+  "S06": {
+    "status": "LOCAL_WIP_NOT_FAMILY_ACCEPTED",
+    "graph_sync_exit_code": 0,
+    "graph_capture_exit_code": 0,
+    "graph_receipt_files": 55,
+    "graph_binding": {
+      "revision": "989b0709c3f0ae6ff4493ebd24e4fa82bbbdb9ac",
+      "tree": "1238b6bef45e99a8b3d4c5502757cc1f37edbe40",
+      "root": "H:\\hermes-worktrees\\p0-p1-local-20261003",
+      "tool_version": "1.6.0",
+      "status": {
+        "initialized": true,
+        "version": "1.6.0",
+        "projectPath": "H:\\hermes-worktrees\\p0-p1-local-20261003",
+        "indexPath": "H:\\hermes-worktrees\\p0-p1-local-20261003\\.codegraph",
+        "lastIndexed": "2026-10-03T14:31:09.310Z",
+        "fileCount": 9034,
+        "nodeCount": 194800,
+        "edgeCount": 612485,
+        "dbSizeBytes": 658497536,
+        "walSizeBytes": 0,
+        "backend": "node-sqlite",
+        "journalMode": "wal",
+        "nodesByKind": {
+          "class": 13176,
+          "component": 64,
+          "constant": 5891,
+          "enum": 8,
+          "enum_member": 25,
+          "field": 10,
+          "file": 8700,
+          "function": 61945,
+          "import": 42979,
+          "interface": 2184,
+          "method": 42345,
+          "namespace": 1,
+          "property": 1473,
+          "route": 397,
+          "struct": 33,
+          "type_alias": 887,
+          "variable": 14682
+        },
+        "languages": [
+          "c",
+          "cpp",
+          "csharp",
+          "go",
+          "javascript",
+          "liquid",
+          "nix",
+          "php",
+          "python",
+          "rust",
+          "tsx",
+          "typescript",
+          "yaml"
+        ],
+        "pendingChanges": {
+          "added": 0,
+          "modified": 0,
+          "removed": 0
+        },
+        "worktreeMismatch": null,
+        "index": {
+          "builtWithVersion": "1.6.0",
+          "builtWithExtractionVersion": 25,
+          "currentExtractionVersion": 25,
+          "reindexRecommended": false,
+          "state": "complete",
+          "pendingRefs": 0
+        }
+      },
+      "owner_source_sha256": {
+        "hermes_cli/_subprocess_compat.py": "faafc936c4d9ff2ec58b1e75be9cf3d0c6cc7c3d39f68c252123d9662c553766",
+        "hermes_cli/update_cmd.py": "9999383eb48a58de45a0f1bfef5c051f615ae4b09d73190d651d67804d918966",
+        "hermes_cli/plugins_cmd.py": "2263d9acec818903e05b7aa5154b93544abe33b743225546091ab26bc45561ba",
+        "hermes_cli/main.py": "a68fb2a532b38358208db873d9380037f64f8c5540886af976144ce1d0c6c112",
+        "tools/checkpoint_manager.py": "c06d3f40ac8f380805b65b5bf8727213385a6915016b2dcb2d2fc7684d06886f",
+        "hermes_cli/profile_distribution.py": "76188a4321a515d1194b1fd60519db5df22cde1c58f11333be2c6407e835f97c",
+        "hermes_cli/mcp_catalog.py": "f049922ee51c342beb9796675f31ca262f32c84b2a1bf983aaeabd395ca70534"
+      },
+      "missing_owner_paths": [],
+      "limitation": "Name-based graph fallback can falsely resolve builtins to unrelated same-name symbols; source audit remains required."
+    },
+    "current_sources_match_graph": true,
+    "fixture_self_check_passed": 9,
+    "closeout_test_processes_remaining": [],
+    "process_metadata_access_denied": [
+      932,
+      5200,
+      7000,
+      7292,
+      9664,
+      14200,
+      20120,
+      20208,
+      20932,
+      21268,
+      24176,
+      24724,
+      25372,
+      27712,
+      28248,
+      28288,
+      28360,
+      28616,
+      28632
+    ],
+    "unknown_is_not_counted_as_clean": true
+  },
+  "llama_actions_by_this_task": [],
+  "remaining_families": [
+    "S06",
+    "S05",
+    "S08",
+    "S07",
+    "S04",
+    "S09",
+    "S10",
+    "S11"
+  ],
+  "CI_all_green": false
+}

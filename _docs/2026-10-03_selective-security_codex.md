@@ -283,3 +283,12 @@ documents and the S06 draft regression file remain separate uncommitted work.
 S03 final independent review PASS: current candidate canonical 707 PASS/0 FAIL/13 SKIP and all source, mutation, native and resource receipts accepted. No actionable findings remain. Approval covers exact source/test bytes and audit helpers in the local family commit; its formal SHA is mapped after commit.
 
 S03 evidence text views trim trailing console whitespace and blank EOF lines for diff-check compliance. S03/raw_logs.zip and raw_logs_index.json preserve and hash every original log byte; product/test source and test outcomes are unchanged.
+
+
+## Authorized delivery closeout, 2026-10-03 JST
+
+Later user instructions authorized main publication, canonical Desktop pack/restart and Go restart by 24:00 JST, with no llama operations and an implementation handoff for incomplete work. Accepted S01-S03 and selected-conversation Desktop Git fix were published at 6decaba; the handoff, runtime ledger and regenerated carry metrics were then published at 5ec659260b1313b56ca1c5a7d09f4455cee417ee. Product sources are unchanged between these heads. Existing primary tracked WIP hashes and 105 untracked file metadata remain unchanged.
+
+S06 plugin/update subwork source-bound results, incomplete gates, immutable local WIP snapshot hashes and runtime/CI limits are recorded in docs/windows/selective-security-20261003/HANDOFF_20261003.md, delivery-ledger.json and s06-interrupted-work.json. S06 and seven other families remain incomplete; no full campaign acceptance is claimed.
+
+Final S06 real CodeGraph 1.6 sync and capture both exit 0. The complete graph has 194800 nodes and 612485 edges; 55 receipts include query, explore, callers, callees, impact, affected and binding, at local S03 base 989b0709 with current WIP source hashes. All bound owner hashes still match. Graph receipts remain in the isolated S06 worktree. This is current graph evidence, not family acceptance. Nine fixture self checks passed; full native reacceptance and independent family review remain pending. The source-bound final audit is selective-security-delivery-closeout-20261003.json.
