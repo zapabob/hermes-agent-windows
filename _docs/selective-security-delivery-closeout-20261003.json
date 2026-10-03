@@ -129,5 +129,21 @@
     "S10",
     "S11"
   ],
-  "CI_all_green": false
+  "CI_all_green": false,
+  "runtime_final_observation": {
+    "observed_at": "2026-10-03T14:58:41.276299+00:00",
+    "desktop_pid": 11024,
+    "desktop_backend_port": 59770,
+    "desktop_api_http": 200,
+    "visible_window_responding": true,
+    "go_pid": 4364,
+    "go_health_http": 200,
+    "prior_incident": "Port51207 status timeout and renderer unresponsive; later external Desktop replacement hit90s announcement deadline",
+    "recovery_observed": "Desktop renderer reset at14:56:48Z; new backend ready at14:56:59Z; current HTTP200 verified",
+    "continuous_stability_proven": false,
+    "llama_actions_by_this_task": []
+  },
+  "latest_published_head_before_runtime_receipt": "c788077dfe32ed5e2219e0218e2f68c74dd15611",
+  "campaign_complete": false,
+  "final_head_ci": "Pending or in progress at last observation; not all green"
 }
