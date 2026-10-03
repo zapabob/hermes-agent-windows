@@ -569,9 +569,28 @@ async def loop_heartbeat_forever(
                 logger.debug(
                     "stale loop-tick socket sweep failed", exc_info=True
                 )
-        tick_server = await asyncio.start_unix_server(
-            _tick_socket_handler, path=str(tick_socket_path)
-        )
+            # AF_UNIX loop-tick socket only exists on POSIX (Proactor loop
+            # on Windows has no unix sockets). Guard the server creation.
+            try:
+                tick_server = await asyncio.start_unix_server(
+                    _tick_socket_handler, path=str(tick_socket_path)
+                )
+            except Exception:
+                tick_server = None
+                logger.warning(
+                    "Loop tick socket unavailable — liveness probes will have no "
+                    "loop-scheduling witness and will not escalate on a stale heartbeat",
+                    exc_info=True,
+                )
+        else:
+            # Windows: asyncio.start_unix_server raises AttributeError (no AF_UNIX
+            # support), so the witness is PERMANENTLY absent — the payload
+            # records loop_tick_socket=False and every stale-file probe
+            # classifies UNKNOWN, never WEDGED. This is deliberate fail-safe.
+            logger.debug(
+                "Loop tick socket unavailable on Windows (no AF_UNIX support) — "
+                "liveness probes will have no loop-scheduling witness"
+            )
     except Exception:
         tick_server = None
         logger.warning(

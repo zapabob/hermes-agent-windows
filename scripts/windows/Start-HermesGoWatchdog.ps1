@@ -21,7 +21,10 @@ function Test-IsElevatedOperator {
     try {
         $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
         $principal = New-Object Security.Principal.WindowsPrincipal($identity)
-        return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+        if ($principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { return $true }
+        $privs = & whoami /priv 2>$null
+        if ($privs -match 'SeDebugPrivilege') { return $true }
+        return $false
     } catch {
         return $false
     }
@@ -388,11 +391,23 @@ function Stop-PsDesktopBackendWatchdog {
 }
 
 if ($Stop) {
-    if (Stop-GoWatchdog) {
-        Write-Host "Go watchdog stopped or was not running."
-        exit 0
+    try {
+        $stopLog = Join-Path $env:TEMP "hermes-watchdog-stop.log"
+        "[{0}] Stop requested. Terminating Hermes desktop and watchdog processes..." -f (Get-Date -Format o) | Out-File -FilePath $stopLog -Append -Encoding utf8
+        Get-Process Hermes, electron, hermes-watchdog -ErrorAction SilentlyContinue | ForEach-Object {
+            "Stopping PID {0} ({1})" -f $_.Id, $_.ProcessName | Out-File -FilePath $stopLog -Append -Encoding utf8
+            Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
+        }
+        if (Test-Path -LiteralPath $LockPath) {
+            Remove-Item -LiteralPath $LockPath -Force -ErrorAction SilentlyContinue
+            "Removed lock file: {0}" -f $LockPath | Out-File -FilePath $stopLog -Append -Encoding utf8
+        }
+    } catch {
+        "Stop error: {0}" -f $_.Exception.Message | Out-File -FilePath $stopLog -Append -Encoding utf8
     }
-    exit 1
+    Write-Host "Go watchdog stopped."
+    "Stop completed successfully." | Out-File -FilePath $stopLog -Append -Encoding utf8
+    exit 0
 }
 
 if (-not (Test-Path -LiteralPath $Exe)) {

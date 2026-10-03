@@ -1,0 +1,156 @@
+{
+  "$id": "hakua-rsi/r2/candidate.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "action_permission": {
+      "const": "none",
+      "type": "string"
+    },
+    "adapter": {
+      "const": "hakua-epistemic",
+      "type": "string"
+    },
+    "candidate_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "claim_strength_after": {
+      "enum": [
+        "asserted",
+        "asserted_with_caveat",
+        "hedged",
+        "unverified",
+        "refuted"
+      ],
+      "type": "string"
+    },
+    "claim_strength_before": {
+      "enum": [
+        "asserted",
+        "asserted_with_caveat",
+        "hedged",
+        "unverified",
+        "refuted"
+      ],
+      "type": "string"
+    },
+    "content_role": {
+      "const": "quoted_data",
+      "type": "string"
+    },
+    "desired_behavior": {
+      "minLength": 4,
+      "type": "string"
+    },
+    "evidence_kind": {
+      "enum": [
+        "source_audit",
+        "measurement",
+        "process_attribution",
+        "counterexample",
+        "artifact_verification",
+        "replication"
+      ],
+      "type": "string"
+    },
+    "experience_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "new_evidence": {
+      "minLength": 4,
+      "type": "string"
+    },
+    "previous_claim": {
+      "minLength": 4,
+      "type": "string"
+    },
+    "revised_claim": {
+      "minLength": 4,
+      "type": "string"
+    },
+    "revision_reason": {
+      "minLength": 4,
+      "type": "string"
+    },
+    "snapshot_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "source_authority": {
+      "enum": [
+        "external_verified",
+        "internal_inspection",
+        "self_reported"
+      ],
+      "type": "string"
+    },
+    "source_memory_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "source_revision_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "superseded_lineage": {
+      "minLength": 4,
+      "type": "string"
+    },
+    "holdout_origin": {
+      "type": "boolean"
+    },
+    "contradictory_unresolved": {
+      "type": "boolean"
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*[\\\\:])[A-Za-z0-9_.\\-/]+$"
+      }
+    },
+    "source_record_status": {
+      "type": "string",
+      "enum": [
+        "resolved",
+        "unresolved"
+      ]
+    }
+  },
+  "required": [
+    "action_permission",
+    "adapter",
+    "candidate_id",
+    "claim_strength_after",
+    "claim_strength_before",
+    "content_role",
+    "desired_behavior",
+    "evidence_kind",
+    "experience_id",
+    "new_evidence",
+    "previous_claim",
+    "revised_claim",
+    "revision_reason",
+    "snapshot_id",
+    "source_authority",
+    "source_memory_id",
+    "source_revision_id",
+    "superseded_lineage",
+    "holdout_origin",
+    "contradictory_unresolved",
+    "evidence_refs",
+    "source_record_status"
+  ],
+  "title": "Quoted audit candidate (hakua-epistemic r2)",
+  "type": "object"
+}

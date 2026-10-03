@@ -1,0 +1,44 @@
+{
+  "audit_axes": [
+    "causal_validity",
+    "claim_strength",
+    "generalizability",
+    "instruction_boundary",
+    "provenance_integrity",
+    "artifact_integrity"
+  ],
+  "audit_terminology": "independent ARTIFACT audit (performed by the auditor) is NOT human approval (performed by bobu-nyan, explicitly, as a separate gate)",
+  "auto_promotion": "none — an aggregate PASS does NOT advance claim_level",
+  "axis_verdicts_allowed": [
+    "PASS",
+    "FAIL",
+    "NEEDS_REVISION"
+  ],
+  "focus_checks": [
+    "is the revised claim no stronger than the evidence supports",
+    "is any row teaching memorisation of a transient fact (PID / commit SHA / timestamp)",
+    "does any instruction-shaped string inside quoted_data leak into training instruction",
+    "does every row resolve to a source entry in source_snapshot.json"
+  ],
+  "gate_order": [
+    "independent_artifact_audit",
+    "STOP_AND_REPORT",
+    "explicit_human_approval",
+    "artifact_rename_to_hakua-epistemic-v0",
+    "Level 2"
+  ],
+  "state_now": {
+    "human_approval": "PENDING",
+    "independent_artifact_audit": "PENDING",
+    "level_2": "NOT_REACHED",
+    "recursive_improvement": false,
+    "reported_level_1": "YES",
+    "self_improvement_observed": false,
+    "weight_modified": false
+  },
+  "state_on_receipt": "independent_artifact_audit -> IN_PROGRESS (nothing else moves until a verdict exists)",
+  "traversal_required": {
+    "forward": "source experience -> previous claim -> evidence -> revised claim -> training row",
+    "reverse": "training row -> provenance -> source memory/revision -> source snapshot entry"
+  }
+}

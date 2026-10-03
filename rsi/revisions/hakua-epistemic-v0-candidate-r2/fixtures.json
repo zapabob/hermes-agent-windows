@@ -1,0 +1,451 @@
+{
+  "synthetic_only": true,
+  "purpose": "Negative compiler fixtures, never primary memory evidence or training records.",
+  "cases": [
+    {
+      "name": "missing-provenance",
+      "snapshot": {
+        "snapshot_id": "fixture-snapshot",
+        "holdout_registry": [],
+        "candidates": [
+          {
+            "candidate_id": "fixture-candidate-a",
+            "experience_id": "fixture-experience-a",
+            "source_memory_id": "fixture-memory-a",
+            "source_revision_id": "",
+            "snapshot_id": "fixture-snapshot",
+            "previous_claim": "An unsupported assertion.",
+            "claim_strength_before": "asserted",
+            "new_evidence": "Synthetic counterexample.",
+            "revised_claim": "The claim needs qualification.",
+            "claim_strength_after": "hedged",
+            "revision_reason": "A counterexample narrows the claim.",
+            "superseded_lineage": "fixture-initial->fixture-revision-a",
+            "desired_behavior": "Qualify claims according to evidence.",
+            "evidence_kind": "counterexample",
+            "source_authority": "self_reported",
+            "content_role": "quoted_data",
+            "action_permission": "none",
+            "adapter": "hakua-epistemic",
+            "holdout_origin": false,
+            "contradictory_unresolved": false,
+            "evidence_refs": [
+              "evidence/fixture.json"
+            ],
+            "source_record_status": "unresolved"
+          }
+        ]
+      },
+      "expected_reject_codes": [
+        "REJECT_MISSING_PROVENANCE"
+      ],
+      "expected_accepted": 0
+    },
+    {
+      "name": "permission-claim",
+      "snapshot": {
+        "snapshot_id": "fixture-snapshot",
+        "holdout_registry": [],
+        "candidates": [
+          {
+            "candidate_id": "fixture-candidate-a",
+            "experience_id": "fixture-experience-a",
+            "source_memory_id": "fixture-memory-a",
+            "source_revision_id": "fixture-revision-a",
+            "snapshot_id": "fixture-snapshot",
+            "previous_claim": "An unsupported assertion.",
+            "claim_strength_before": "asserted",
+            "new_evidence": "Synthetic counterexample.",
+            "revised_claim": "The claim needs qualification.",
+            "claim_strength_after": "hedged",
+            "revision_reason": "A counterexample narrows the claim.",
+            "superseded_lineage": "fixture-initial->fixture-revision-a",
+            "desired_behavior": "Qualify claims according to evidence.",
+            "evidence_kind": "counterexample",
+            "source_authority": "self_reported",
+            "content_role": "quoted_data",
+            "action_permission": "execute",
+            "adapter": "hakua-epistemic",
+            "holdout_origin": false,
+            "contradictory_unresolved": false,
+            "evidence_refs": [
+              "evidence/fixture.json"
+            ],
+            "source_record_status": "unresolved"
+          }
+        ]
+      },
+      "expected_reject_codes": [
+        "REJECT_PERMISSION_CLAIM"
+      ],
+      "expected_accepted": 0
+    },
+    {
+      "name": "holdout-flag",
+      "snapshot": {
+        "snapshot_id": "fixture-snapshot",
+        "holdout_registry": [],
+        "candidates": [
+          {
+            "candidate_id": "fixture-candidate-a",
+            "experience_id": "fixture-experience-a",
+            "source_memory_id": "fixture-memory-a",
+            "source_revision_id": "fixture-revision-a",
+            "snapshot_id": "fixture-snapshot",
+            "previous_claim": "An unsupported assertion.",
+            "claim_strength_before": "asserted",
+            "new_evidence": "Synthetic counterexample.",
+            "revised_claim": "The claim needs qualification.",
+            "claim_strength_after": "hedged",
+            "revision_reason": "A counterexample narrows the claim.",
+            "superseded_lineage": "fixture-initial->fixture-revision-a",
+            "desired_behavior": "Qualify claims according to evidence.",
+            "evidence_kind": "counterexample",
+            "source_authority": "self_reported",
+            "content_role": "quoted_data",
+            "action_permission": "none",
+            "adapter": "hakua-epistemic",
+            "holdout_origin": true,
+            "contradictory_unresolved": false,
+            "evidence_refs": [
+              "evidence/fixture.json"
+            ],
+            "source_record_status": "unresolved"
+          }
+        ]
+      },
+      "expected_reject_codes": [
+        "REJECT_HOLDOUT_ORIGIN"
+      ],
+      "expected_accepted": 0
+    },
+    {
+      "name": "unstable",
+      "snapshot": {
+        "snapshot_id": "fixture-snapshot",
+        "holdout_registry": [],
+        "candidates": [
+          {
+            "candidate_id": "fixture-candidate-a",
+            "experience_id": "fixture-experience-a",
+            "source_memory_id": "fixture-memory-a",
+            "source_revision_id": "fixture-revision-a",
+            "snapshot_id": "fixture-snapshot",
+            "previous_claim": "An unsupported assertion.",
+            "claim_strength_before": "asserted",
+            "new_evidence": "Synthetic counterexample.",
+            "revised_claim": "The claim needs qualification.",
+            "claim_strength_after": "unverified",
+            "revision_reason": "A counterexample narrows the claim.",
+            "superseded_lineage": "fixture-initial->fixture-revision-a",
+            "desired_behavior": "Qualify claims according to evidence.",
+            "evidence_kind": "counterexample",
+            "source_authority": "self_reported",
+            "content_role": "quoted_data",
+            "action_permission": "none",
+            "adapter": "hakua-epistemic",
+            "holdout_origin": false,
+            "contradictory_unresolved": false,
+            "evidence_refs": [
+              "evidence/fixture.json"
+            ],
+            "source_record_status": "unresolved"
+          }
+        ]
+      },
+      "expected_reject_codes": [
+        "REJECT_SUPERSEDED_UNSTABLE"
+      ],
+      "expected_accepted": 0
+    },
+    {
+      "name": "flagged-contradiction",
+      "snapshot": {
+        "snapshot_id": "fixture-snapshot",
+        "holdout_registry": [],
+        "candidates": [
+          {
+            "candidate_id": "fixture-candidate-a",
+            "experience_id": "fixture-experience-a",
+            "source_memory_id": "fixture-memory-a",
+            "source_revision_id": "fixture-revision-a",
+            "snapshot_id": "fixture-snapshot",
+            "previous_claim": "An unsupported assertion.",
+            "claim_strength_before": "asserted",
+            "new_evidence": "Synthetic counterexample.",
+            "revised_claim": "The claim needs qualification.",
+            "claim_strength_after": "hedged",
+            "revision_reason": "A counterexample narrows the claim.",
+            "superseded_lineage": "fixture-initial->fixture-revision-a",
+            "desired_behavior": "Qualify claims according to evidence.",
+            "evidence_kind": "counterexample",
+            "source_authority": "self_reported",
+            "content_role": "quoted_data",
+            "action_permission": "none",
+            "adapter": "hakua-epistemic",
+            "holdout_origin": false,
+            "contradictory_unresolved": true,
+            "evidence_refs": [
+              "evidence/fixture.json"
+            ],
+            "source_record_status": "unresolved"
+          }
+        ]
+      },
+      "expected_reject_codes": [
+        "REJECT_CONTRADICTORY_UNRESOLVED"
+      ],
+      "expected_accepted": 0
+    },
+    {
+      "name": "schema-type",
+      "snapshot": {
+        "snapshot_id": "fixture-snapshot",
+        "holdout_registry": [],
+        "candidates": [
+          {
+            "candidate_id": "fixture-candidate-a",
+            "experience_id": "fixture-experience-a",
+            "source_memory_id": "fixture-memory-a",
+            "source_revision_id": "fixture-revision-a",
+            "snapshot_id": "fixture-snapshot",
+            "previous_claim": "An unsupported assertion.",
+            "claim_strength_before": "asserted",
+            "new_evidence": "Synthetic counterexample.",
+            "revised_claim": "The claim needs qualification.",
+            "claim_strength_after": "hedged",
+            "revision_reason": "A counterexample narrows the claim.",
+            "superseded_lineage": "fixture-initial->fixture-revision-a",
+            "desired_behavior": "Qualify claims according to evidence.",
+            "evidence_kind": "counterexample",
+            "source_authority": "self_reported",
+            "content_role": "quoted_data",
+            "action_permission": "none",
+            "adapter": "hakua-epistemic",
+            "holdout_origin": false,
+            "contradictory_unresolved": false,
+            "evidence_refs": "not-a-list",
+            "source_record_status": "unresolved"
+          }
+        ]
+      },
+      "expected_reject_codes": [
+        "REJECT_SCHEMA_VIOLATION"
+      ],
+      "expected_accepted": 0
+    },
+    {
+      "name": "duplicate",
+      "snapshot": {
+        "snapshot_id": "fixture-snapshot",
+        "holdout_registry": [],
+        "candidates": [
+          {
+            "candidate_id": "fixture-candidate-a",
+            "experience_id": "fixture-experience-a",
+            "source_memory_id": "fixture-memory-a",
+            "source_revision_id": "fixture-revision-a",
+            "snapshot_id": "fixture-snapshot",
+            "previous_claim": "An unsupported assertion.",
+            "claim_strength_before": "asserted",
+            "new_evidence": "Synthetic counterexample.",
+            "revised_claim": "The claim needs qualification.",
+            "claim_strength_after": "hedged",
+            "revision_reason": "A counterexample narrows the claim.",
+            "superseded_lineage": "fixture-initial->fixture-revision-a",
+            "desired_behavior": "Qualify claims according to evidence.",
+            "evidence_kind": "counterexample",
+            "source_authority": "self_reported",
+            "content_role": "quoted_data",
+            "action_permission": "none",
+            "adapter": "hakua-epistemic",
+            "holdout_origin": false,
+            "contradictory_unresolved": false,
+            "evidence_refs": [
+              "evidence/fixture.json"
+            ],
+            "source_record_status": "unresolved"
+          },
+          {
+            "candidate_id": "fixture-candidate-z",
+            "experience_id": "fixture-experience-a",
+            "source_memory_id": "fixture-memory-a",
+            "source_revision_id": "fixture-revision-a",
+            "snapshot_id": "fixture-snapshot",
+            "previous_claim": "An unsupported assertion.",
+            "claim_strength_before": "asserted",
+            "new_evidence": "Synthetic counterexample.",
+            "revised_claim": "The claim needs qualification.",
+            "claim_strength_after": "hedged",
+            "revision_reason": "A counterexample narrows the claim.",
+            "superseded_lineage": "fixture-initial->fixture-revision-a",
+            "desired_behavior": "Qualify claims according to evidence.",
+            "evidence_kind": "counterexample",
+            "source_authority": "self_reported",
+            "content_role": "quoted_data",
+            "action_permission": "none",
+            "adapter": "hakua-epistemic",
+            "holdout_origin": false,
+            "contradictory_unresolved": false,
+            "evidence_refs": [
+              "evidence/fixture.json"
+            ],
+            "source_record_status": "unresolved"
+          }
+        ]
+      },
+      "expected_reject_codes": [
+        "REJECT_DUPLICATE"
+      ],
+      "expected_accepted": 1
+    },
+    {
+      "name": "holdout-registry-experience_id",
+      "snapshot": {
+        "snapshot_id": "fixture-snapshot",
+        "holdout_registry": [
+          "fixture-experience-a"
+        ],
+        "candidates": [
+          {
+            "candidate_id": "fixture-candidate-a",
+            "experience_id": "fixture-experience-a",
+            "source_memory_id": "fixture-memory-a",
+            "source_revision_id": "fixture-revision-a",
+            "snapshot_id": "fixture-snapshot",
+            "previous_claim": "An unsupported assertion.",
+            "claim_strength_before": "asserted",
+            "new_evidence": "Synthetic counterexample.",
+            "revised_claim": "The claim needs qualification.",
+            "claim_strength_after": "hedged",
+            "revision_reason": "A counterexample narrows the claim.",
+            "superseded_lineage": "fixture-initial->fixture-revision-a",
+            "desired_behavior": "Qualify claims according to evidence.",
+            "evidence_kind": "counterexample",
+            "source_authority": "self_reported",
+            "content_role": "quoted_data",
+            "action_permission": "none",
+            "adapter": "hakua-epistemic",
+            "holdout_origin": false,
+            "contradictory_unresolved": false,
+            "evidence_refs": [
+              "evidence/fixture.json"
+            ],
+            "source_record_status": "unresolved"
+          }
+        ]
+      },
+      "expected_reject_codes": [
+        "REJECT_HOLDOUT_ORIGIN"
+      ],
+      "expected_accepted": 0
+    },
+    {
+      "name": "holdout-registry-source_memory_id",
+      "snapshot": {
+        "snapshot_id": "fixture-snapshot",
+        "holdout_registry": [
+          "fixture-memory-a"
+        ],
+        "candidates": [
+          {
+            "candidate_id": "fixture-candidate-a",
+            "experience_id": "fixture-experience-a",
+            "source_memory_id": "fixture-memory-a",
+            "source_revision_id": "fixture-revision-a",
+            "snapshot_id": "fixture-snapshot",
+            "previous_claim": "An unsupported assertion.",
+            "claim_strength_before": "asserted",
+            "new_evidence": "Synthetic counterexample.",
+            "revised_claim": "The claim needs qualification.",
+            "claim_strength_after": "hedged",
+            "revision_reason": "A counterexample narrows the claim.",
+            "superseded_lineage": "fixture-initial->fixture-revision-a",
+            "desired_behavior": "Qualify claims according to evidence.",
+            "evidence_kind": "counterexample",
+            "source_authority": "self_reported",
+            "content_role": "quoted_data",
+            "action_permission": "none",
+            "adapter": "hakua-epistemic",
+            "holdout_origin": false,
+            "contradictory_unresolved": false,
+            "evidence_refs": [
+              "evidence/fixture.json"
+            ],
+            "source_record_status": "unresolved"
+          }
+        ]
+      },
+      "expected_reject_codes": [
+        "REJECT_HOLDOUT_ORIGIN"
+      ],
+      "expected_accepted": 0
+    },
+    {
+      "name": "conflict-before-dedup",
+      "snapshot": {
+        "snapshot_id": "fixture-snapshot",
+        "holdout_registry": [],
+        "candidates": [
+          {
+            "candidate_id": "fixture-candidate-a",
+            "experience_id": "fixture-experience-a",
+            "source_memory_id": "fixture-memory-a",
+            "source_revision_id": "fixture-revision-a",
+            "snapshot_id": "fixture-snapshot",
+            "previous_claim": "An unsupported assertion.",
+            "claim_strength_before": "asserted",
+            "new_evidence": "Synthetic counterexample.",
+            "revised_claim": "The claim needs qualification.",
+            "claim_strength_after": "hedged",
+            "revision_reason": "A counterexample narrows the claim.",
+            "superseded_lineage": "fixture-initial->fixture-revision-a",
+            "desired_behavior": "Qualify claims according to evidence.",
+            "evidence_kind": "counterexample",
+            "source_authority": "self_reported",
+            "content_role": "quoted_data",
+            "action_permission": "none",
+            "adapter": "hakua-epistemic",
+            "holdout_origin": false,
+            "contradictory_unresolved": false,
+            "evidence_refs": [
+              "evidence/fixture.json"
+            ],
+            "source_record_status": "unresolved"
+          },
+          {
+            "candidate_id": "fixture-candidate-z",
+            "experience_id": "fixture-experience-a",
+            "source_memory_id": "fixture-memory-a",
+            "source_revision_id": "fixture-revision-a",
+            "snapshot_id": "fixture-snapshot",
+            "previous_claim": "An unsupported assertion.",
+            "claim_strength_before": "asserted",
+            "new_evidence": "Synthetic counterexample.",
+            "revised_claim": "The opposite synthetic claim.",
+            "claim_strength_after": "hedged",
+            "revision_reason": "A counterexample narrows the claim.",
+            "superseded_lineage": "fixture-initial->fixture-revision-a",
+            "desired_behavior": "Qualify claims according to evidence.",
+            "evidence_kind": "counterexample",
+            "source_authority": "self_reported",
+            "content_role": "quoted_data",
+            "action_permission": "none",
+            "adapter": "hakua-epistemic",
+            "holdout_origin": false,
+            "contradictory_unresolved": false,
+            "evidence_refs": [
+              "evidence/fixture.json"
+            ],
+            "source_record_status": "unresolved"
+          }
+        ]
+      },
+      "expected_reject_codes": [
+        "REJECT_CONTRADICTORY_UNRESOLVED",
+        "REJECT_CONTRADICTORY_UNRESOLVED"
+      ],
+      "expected_accepted": 0
+    }
+  ]
+}

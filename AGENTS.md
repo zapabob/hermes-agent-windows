@@ -981,21 +981,109 @@ guides under `fork/local-workspace/`.
 
 Keep the repository **surface** (files directly under the repo root) limited to
 packaging, entry modules, and product ledgers. Do **not** delete operator
-scratch — **move** it into classified folders:
+scratch — **move** it into a classified folder.
+
+### 17.1 Read path (in order)
+
+1. **This section** — the normative policy and what may never move.
+2. [`doc/README.md`](doc/README.md) — the map of `doc/` classes.
+3. `doc/<class>/AGENTS.md` — the rules for that class, written **before**
+   anything lands there.
+4. [`fork/local-workspace/AGENTS.md`](fork/local-workspace/AGENTS.md) and
+   [`fork/local-workspace/README.md`](fork/local-workspace/README.md) — fork
+   harness and local-workspace guidance.
+
+Never place operator scratch at the repo root. If no `doc/` class fits, create a
+new class folder with its own `README.md` + `AGENTS.md` — do not dump into the
+nearest existing one.
+
+### 17.2 Classification table
 
 | Kind | Keep at root | Store under |
 |------|--------------|-------------|
 | Entry / packaging | `run_agent.py`, `cli.py`, `model_tools.py`, `hermes_*.py`, `toolsets.py`, `pyproject.toml`, lockfiles, `README*`, `AGENTS.md` | — |
 | Product ledgers | `FEATURES.yaml`, `CARRY.yaml`, `UPSTREAM_ADOPTION.yaml`, `DOWNSTREAM_POLICY.md` | — |
+| Operator scripts | — | `doc/scripts/**` (`db-inspect`, `osint`, `jma`, `semantic-scan`, `sync`) |
+| Bulk JSON / JSONL data | — | `doc/json/` |
+| Log / TXT output | — | `doc/logs/` |
+| Generated reports | — | `doc/reports/` |
+| Tracked archives | — | `doc/archive/` (contents **are** committed) |
 | Ignored scratch | — | `output/media/`, `output/reports/`, `output/logs/`, `tmp/probes/`, `tmp/snapshots/` |
-| Tracked operator archives | — | `notes/archives/` |
 | Maps / handoffs | — | `docs/maps/`, `docs/windows/` |
+| Dated audit records | — | `_docs/yyyy-mm-dd_<feature>_<agent>.md` |
 | Fork navigation | — | `fork/` (harness, operations, local-workspace, agent-harness) |
 
+`docs/` is upstream product documentation and is **not** an operator scratch sink.
+`doc/` (singular) is the operator scratch tree; the two are easy to confuse.
+
+### 17.3 SOP: adding a file to the repository
+
+**Step 1 — Decide the class before writing anything.** Check the table above and
+`doc/README.md`. A one-off inspection script is `doc/scripts/db-inspect/`; a
+generated dataset is `doc/json/`; a run log is `doc/logs/`.
+
+**Step 2 — Move, never copy.** Untracked scratch: `mv`. Tracked scratch:
+`git mv`. Leaving a copy behind at the root undoes this policy.
+
+**Step 3 — Create the folder's policy files first** if it is new: a
+`README.md` (what belongs here) and an `AGENTS.md` (the rules, written before
+content lands). `.gitignore` already force-includes exactly these two names at
+every `doc/` depth, so a fresh clone gets a self-describing empty folder.
+
+**Step 4 — Let `.gitignore` decide, never a manual skip.** The `doc/` block
+ignores contents and re-includes `README.md` / `AGENTS.md` / the directory.
+Verify with `git check-ignore -q <path>` before assuming. `doc/archive/` is the
+deliberate exception — its contents are committed.
+
+**Step 5 — Stage what is meant to be tracked, and only that.**
+
+```text
+git add doc/**/README.md doc/**/AGENTS.md      # policy files
+git add <explicit paths for real deliverables> # never `git add -A`
+git status --porcelain                           # confirm the intent
+```
+
+**Step 6 — Confirm the worktree is clean** with `git status --porcelain` showing
+only what you meant, then commit and push to `main`. Verify the pushed SHA:
+
+```text
+git log --oneline origin/main..HEAD   # must be empty after push
+git rev-parse HEAD; git rev-parse origin/main
+```
+
+### 17.4 What must never move
+
 Never relocate official root entry modules to "tidy" the tree — packaging and
-upstream parity depend on them. Details:
-[`fork/local-workspace/AGENTS.md`](fork/local-workspace/AGENTS.md) and
-[`fork/local-workspace/README.md`](fork/local-workspace/README.md).
+upstream parity depend on them. Specifically: `run_agent.py`, `cli.py`,
+`model_tools.py`, `hermes_*.py`, `toolsets.py`, `utils.py`,
+`trajectory_compressor.py`, `batch_runner.py`, `setup.py`, `mcp_serve.py`,
+`sync_memory.py`, and every lockfile / manifest / README. `docs/`, `skills/`,
+`tests/`, `scripts/`, `tools/`, `plugins/`, `agent/`, `gateway/`, `hermes_cli/`
+are first-class source trees — not scratch.
+
+### 17.5 Known root-surface hazards on Windows
+
+- **`nul`** — a 0-byte file named for the Windows reserved device, created by a
+  `> nul` redirect executed under a POSIX shell. The name is a reserved device,
+  so the normal unlink API returns `PermissionError: [WinError 5]`. It is
+  git-ignored and cannot reach the worktree status. Do not try to remove it
+  with `os.unlink`; if it must go, use a native `cmd` `del` or leave it.
+- **Literal-path directories** — a shell that expanded an absolute user path
+  into a relative name can create a stray directory at the root. If one
+  appears, confirm it is empty, then remove it.
+- **`.bytecode-fingerprint`** — tool-generated; keep ignored.
+
+### 17.6 What is git-ignored vs. committable
+
+| Category | Examples | Verdict |
+|----------|----------|---------|
+| Policy files | `doc/**/README.md`, `doc/**/AGENTS.md` | **Commit** |
+| Tracked archives | `doc/archive/**` (sealed audit bundles) | **Commit** |
+| Source deliverables | `agent/`, `tools/`, `tests/`, `plugins/`, `rsi/`, modified modules | **Commit** |
+| Operator scripts | `doc/scripts/**` | Ignore |
+| Bulk data | `doc/json/**`, `doc/logs/**`, `doc/reports/**` | Ignore |
+| Secrets | `.env`, `.env.*`, tokens, cookies | **Never commit** |
+| Machine-local | `.venv/`, `node_modules/`, `.cache/`, `.codegraph/`, `.worktrees/` | Ignore |
 
 ## 18. Learned User Preferences, Workspace Invariants & MILSPEC Standards
 

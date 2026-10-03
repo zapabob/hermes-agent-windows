@@ -1,0 +1,122 @@
+{
+  "$id": "hakua-rsi/candidate.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "action_permission": {
+      "const": "none"
+    },
+    "adapter": {
+      "const": "hakua-epistemic"
+    },
+    "candidate_id": {
+      "minLength": 8,
+      "type": "string"
+    },
+    "claim_strength_after": {
+      "enum": [
+        "asserted",
+        "asserted_with_caveat",
+        "hedged",
+        "unverified",
+        "refuted"
+      ]
+    },
+    "claim_strength_before": {
+      "enum": [
+        "asserted",
+        "asserted_with_caveat",
+        "hedged",
+        "unverified",
+        "refuted"
+      ]
+    },
+    "content_role": {
+      "const": "quoted_data"
+    },
+    "desired_behavior": {
+      "minLength": 4,
+      "type": "string"
+    },
+    "evidence_kind": {
+      "enum": [
+        "source_audit",
+        "measurement",
+        "process_attribution",
+        "counterexample",
+        "artifact_verification",
+        "replication"
+      ]
+    },
+    "experience_id": {
+      "minLength": 4,
+      "type": "string"
+    },
+    "new_evidence": {
+      "minLength": 4,
+      "type": "string"
+    },
+    "previous_claim": {
+      "minLength": 4,
+      "type": "string"
+    },
+    "revised_claim": {
+      "minLength": 4,
+      "type": "string"
+    },
+    "revision_reason": {
+      "minLength": 4,
+      "type": "string"
+    },
+    "snapshot_id": {
+      "minLength": 4,
+      "type": "string"
+    },
+    "source_authority": {
+      "enum": [
+        "external_verified",
+        "internal_inspection",
+        "self_reported"
+      ]
+    },
+    "source_memory_id": {
+      "type": [
+        "string",
+        "integer"
+      ]
+    },
+    "source_revision_id": {
+      "type": [
+        "string",
+        "integer",
+        "null"
+      ]
+    },
+    "superseded_lineage": {
+      "minLength": 4,
+      "type": "string"
+    }
+  },
+  "required": [
+    "candidate_id",
+    "experience_id",
+    "source_memory_id",
+    "source_revision_id",
+    "snapshot_id",
+    "previous_claim",
+    "claim_strength_before",
+    "new_evidence",
+    "revised_claim",
+    "claim_strength_after",
+    "revision_reason",
+    "superseded_lineage",
+    "desired_behavior",
+    "evidence_kind",
+    "source_authority",
+    "content_role",
+    "action_permission",
+    "adapter"
+  ],
+  "title": "Consolidation candidate (hakua-epistemic v0 pool)",
+  "type": "object"
+}

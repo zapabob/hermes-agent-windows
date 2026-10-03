@@ -1699,20 +1699,27 @@ def _make_redirect_header_stripper(
 
     async def _strip_on_cross_origin_redirect(response):
         if response.is_redirect and response.next_request:
-            target = response.next_request.url
-            if (target.scheme, target.host, target.port) != (
-                original_url.scheme, original_url.host, original_url.port,
-            ):
+            # Current request's origin (the request that got this redirect response)
+            current_origin = (
+                response.request.url.scheme,
+                response.request.url.host,
+                response.request.url.port,
+            )
+            # Next request's origin (the request that will be made if we follow)
+            target_origin = (
+                response.next_request.url.scheme,
+                response.next_request.url.host,
+                response.next_request.url.port,
+            )
+            if current_origin != target_origin:
                 response.next_request.headers.pop("authorization", None)
                 response.next_request.headers.pop("Authorization", None)
                 if strict:
                     for _name in configured_header_names:
                         while _name in response.next_request.headers:
                             del response.next_request.headers[_name]
-
+    
     return _strip_on_cross_origin_redirect
-
-
 def _format_connect_error(exc: BaseException) -> str:
     """Render nested MCP connection errors into an actionable short message."""
 

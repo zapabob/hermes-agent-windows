@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RSI training example (epistemic adapter, Level 1)",
+  "_note": "Teaches OBSERVABLE epistemic behaviour -- what evidence should move a claim to what strength -- not hidden chain-of-thought.",
+  "type": "object",
+  "required": [
+    "experience_id",
+    "source_memory_id",
+    "source_revision_id",
+    "previous_claim",
+    "new_evidence",
+    "revised_claim",
+    "superseded_reason",
+    "desired_behavior",
+    "adapter"
+  ],
+  "properties": {
+    "experience_id": {
+      "type": "string",
+      "description": "id of the originating experience"
+    },
+    "source_memory_id": {
+      "type": "integer",
+      "description": "hakua-memory memory id"
+    },
+    "source_revision_id": {
+      "type": [
+        "integer",
+        "string"
+      ],
+      "description": "belief revision"
+    },
+    "adapter": {
+      "const": "hakua-epistemic"
+    },
+    "memory_class": {
+      "enum": [
+        "corrected_belief",
+        "repeated_solution_pattern",
+        "self_audit_habit",
+        "tool_skill",
+        "stable_preference"
+      ]
+    },
+    "previous_claim": {
+      "type": "string",
+      "description": "the earlier, now-superseded belief"
+    },
+    "new_evidence": {
+      "type": "string",
+      "description": "what was observed that forced revision"
+    },
+    "revised_claim": {
+      "type": "string",
+      "description": "the corrected belief, at stated strength"
+    },
+    "superseded_reason": {
+      "type": "string",
+      "description": "why the old one was insufficient"
+    },
+    "desired_behavior": {
+      "type": "string",
+      "description": "observable action difference"
+    },
+    "evidence_kind": {
+      "enum": [
+        "tool_result",
+        "user_correction",
+        "source_audit",
+        "regression_test",
+        "repeated_independent_episode"
+      ]
+    },
+    "revision_stability": {
+      "type": "number",
+      "description": "how many consecutive stable periods"
+    },
+    "independent_episodes": {
+      "type": "integer",
+      "description": "successes across unrelated episodes"
+    },
+    "holdout_contaminated": {
+      "type": "boolean",
+      "default": false,
+      "description": "must be false; true rejects at compile time"
+    }
+  }
+}

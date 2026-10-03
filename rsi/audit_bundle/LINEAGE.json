@@ -1,0 +1,25 @@
+{
+  "artifact": "hakua-epistemic-v0-candidate",
+  "chain": [
+    "source_snapshot.json",
+    "compiler.py",
+    "candidate.schema.json",
+    "train.jsonl",
+    "dataset_manifest.json",
+    "verification_report.json"
+  ],
+  "claim_level": 1,
+  "hashes": {
+    "AUDIT_CHECKLIST.json": "bab4d66f2fd0cefaf1400e868a3e40373fff29ca7916b3bd9a82d48bb5b84d02",
+    "candidate.schema.json": "f84613b4bb65b32053c82252a3318e2086329745371ffc35b6b6fe48aa2be647",
+    "compiler.py": "1bb30b76eadc47cfaeec7c46a74ce7acd58b9d04a1f5e18ac50486fa10791dbd",
+    "hakua-epistemic-v0-candidate/dataset_manifest.json": "24993f247db8122e57e4e0400386a99eb7765967d607f67c6307b6d79f5d92b2",
+    "hakua-epistemic-v0-candidate/rejected_examples.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "hakua-epistemic-v0-candidate/source_snapshot_manifest.json": "e068485b5b6aec65fa990d0d3c165814480ddd85610f9fcedecaf4c58d466432",
+    "hakua-epistemic-v0-candidate/train.jsonl": "4f8f5b6439a78e41607d9b977da6397366f18265df5bf448a926d2fb266fb420",
+    "hakua-epistemic-v0-candidate/verification_report.json": "bc87c46ae57bbe9186e8faa5291aa1efaafb7dff731b8fd88d338b8f637d3bfc",
+    "source_snapshot.json": "f79b3232db372940e8165090fb87559e5750aea8166f03664236e3af3743d092",
+    "verifier_evidence.json": "88f73b3f375927e7494991bcba3a19465f253e0b3d6857b64e2e6ff7c04d0608"
+  },
+  "order_independence": "exhaustive 24/24 permutations"
+}

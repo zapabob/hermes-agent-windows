@@ -3055,18 +3055,16 @@ class TestMCPDiscoveryCrossProcessLock:
 class TestRedirectHeaderStripper:
     """Cross-origin redirect header boundary (portable Agent Plugins v1)."""
 
-    def _make_response(self, next_headers):
+    def _make_response(self, next_headers, next_url="https://other.example.test/mcp", original_url="https://origin.example.test/mcp"):
         import httpx
-
-        next_request = httpx.Request(
-            "GET", "https://other.example.test/mcp", headers=next_headers
-        )
+        original_request = httpx.Request("GET", httpx.URL(original_url))
+        next_request = httpx.Request("GET", httpx.URL(next_url), headers=next_headers)
         response = SimpleNamespace(
             is_redirect=True,
+            request=original_request,
             next_request=next_request,
         )
         return response, next_request
-
     def test_default_strips_only_authorization(self):
         import httpx
 
@@ -3111,12 +3109,70 @@ class TestRedirectHeaderStripper:
             strict=True,
             configured_header_names={"x-tenant"},
         )
-        next_request = httpx.Request(
-            "GET",
-            "https://origin.example.test/other",
-            headers={"Authorization": "Bearer x", "X-Tenant": "t"},
+        response, next_request = self._make_response(
+            {"Authorization": "Bearer x", "X-Tenant": "t"},
+            next_url="https://origin.example.test/other"
         )
-        response = SimpleNamespace(is_redirect=True, next_request=next_request)
         asyncio.run(hook(response))
         assert next_request.headers["authorization"] == "Bearer x"
         assert next_request.headers["x-tenant"] == "t"
+
+
+    def test_multi_hop_redirect_strips_headers_at_each_hop(self):
+        import httpx
+
+        from tools.mcp_tool import _make_redirect_header_stripper
+
+        # Simulate a 2-hop redirect: origin -> intermediate -> final
+        # Hop 1: origin to intermediate
+        hook = _make_redirect_header_stripper(
+            httpx.URL("https://origin.example.test/mcp"),
+            strict=True,
+            configured_header_names={"x-tenant", "x-api-key"},
+        )
+        # First redirect response
+        response1, next_request1 = self._make_response(
+            {"Authorization": "Bearer token1", "X-Tenant": "t1", "X-API-Key": "key1"},
+            next_url="https://intermediate.example.test/mcp",
+            original_url="https://origin.example.test/mcp"
+        )
+        asyncio.run(hook(response1))
+        # After hop 1 (cross-origin, strict), Authorization and configured headers should be stripped
+        assert "authorization" not in next_request1.headers
+        assert "x-tenant" not in next_request1.headers
+        assert "x-api-key" not in next_request1.headers
+
+        # Hop 2: intermediate to final (different origin)
+        # Create a new hook for this hop with the intermediate as original
+        hook2 = _make_redirect_header_stripper(
+            httpx.URL("https://intermediate.example.test/mcp"),
+            strict=True,
+            configured_header_names={"x-tenant", "x-api-key"},
+        )
+        response2, next_request2 = self._make_response(
+            {"Authorization": "Bearer token2", "X-Tenant": "t2", "X-API-Key": "key2"},
+            next_url="https://final.example.test/mcp",
+            original_url="https://intermediate.example.test/mcp"
+        )
+        asyncio.run(hook2(response2))
+        # After hop 2 (cross-origin, strict), Authorization and configured headers should be stripped
+        assert "authorization" not in next_request2.headers
+        assert "x-tenant" not in next_request2.headers
+        assert "x-api-key" not in next_request2.headers
+
+        # Test that same-origin redirects preserve headers
+        hook3 = _make_redirect_header_stripper(
+            httpx.URL("https://final.example.test/mcp"),
+            strict=True,
+            configured_header_names={"x-tenant", "x-api-key"},
+        )
+        response3, next_request3 = self._make_response(
+            {"Authorization": "Bearer token3", "X-Tenant": "t3", "X-API-Key": "key3"},
+            next_url="https://final.example.test/other",
+            original_url="https://final.example.test/mcp"
+        )
+        asyncio.run(hook3(response3))
+        # Same-origin should preserve all headers
+        assert next_request3.headers["authorization"] == "Bearer token3"
+        assert next_request3.headers["x-tenant"] == "t3"
+        assert next_request3.headers["x-api-key"] == "key3"

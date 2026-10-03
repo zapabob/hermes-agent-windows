@@ -318,6 +318,35 @@ native/fts5_cjk/*.so
 !/output/reports/README.md
 !/output/reports/AGENTS.md
 
+# doc/ — classified operator scratch (see AGENTS.md section 17 and doc/README.md).
+# Each class folder tracks ONLY its policy README.md / AGENTS.md; every data file,
+# script, log and report inside stays local. Re-include the directory itself first,
+# because the generic `logs/` rule above would swallow doc/logs/ wholesale.
+!/doc/
+/doc/*
+!/doc/README.md
+!/doc/AGENTS.md
+!/doc/*/
+/doc/*/*
+!/doc/*/README.md
+!/doc/*/AGENTS.md
+!/doc/*/*/
+/doc/*/*/*
+!/doc/*/*/README.md
+!/doc/*/*/AGENTS.md
+
+# doc/archive/ is the one exception: finished, sealed artifacts ARE tracked.
+# It needs an explicit re-include because the /doc/*/* rule above already
+# matched it; without this pair the archive stays ignored and the section 17.6
+# policy table would be a lie.
+!/doc/archive/
+!/doc/archive/*
+
+# Stray Windows redirect target created by `> nul` on a POSIX shell. The name is a
+# reserved device, so it cannot be unlinked through the normal API; it is ignored
+# here so it never reaches the worktree status.
+/nul
+
 # Root-level scrape dumps, probe scripts and stray redirect targets that
 # belong under output/ or tmp/probes/ instead of the repository surface.
 /hachioji*.html

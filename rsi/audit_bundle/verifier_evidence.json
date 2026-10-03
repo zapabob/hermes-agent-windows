@@ -1,0 +1,51 @@
+{
+  "fixture_reject_paths": {
+    "REJECT_DUPLICATE": [
+      "cand-dup"
+    ],
+    "REJECT_MISSING_PROVENANCE": [
+      "cand-noprov"
+    ],
+    "REJECT_PERMISSION_CLAIM": [
+      "cand-badperm",
+      "cand-badrole"
+    ],
+    "REJECT_SCHEMA_VIOLATION": [
+      "cand-otheradapter"
+    ],
+    "REJECT_SUPERSEDED_UNSTABLE": [
+      "cand-unstable"
+    ]
+  },
+  "fixture_rules_declared": [
+    "REJECT_MISSING_PROVENANCE",
+    "REJECT_PERMISSION_CLAIM",
+    "REJECT_HOLDOUT_ORIGIN",
+    "REJECT_SUPERSEDED_UNSTABLE",
+    "REJECT_DUPLICATE",
+    "REJECT_CONTRADICTORY_UNRESOLVED",
+    "REJECT_SCHEMA_VIOLATION"
+  ],
+  "fixture_rules_exercised": [
+    "REJECT_DUPLICATE",
+    "REJECT_MISSING_PROVENANCE",
+    "REJECT_PERMISSION_CLAIM",
+    "REJECT_SCHEMA_VIOLATION",
+    "REJECT_SUPERSEDED_UNSTABLE"
+  ],
+  "order_independence": {
+    "distinct_dataset_sha": 1,
+    "distinct_example_orderings": 1,
+    "method": "exhaustive 4! permutation, not sampled",
+    "permutations_tested": 24
+  },
+  "reproduce_check": {
+    "dataset_sha256": "4f8f5b6439a78e41607d9b977da6397366f18265df5bf448a926d2fb266fb420",
+    "note": "recomputed from shipped snapshot + compiler; must equal dataset_manifest.dataset_sha256"
+  },
+  "reproducibility_contract": "H(D)=SHA256(Canonicalize(Sort(records))); canon-1.0.0 = json.dumps(sort_keys=True, ensure_ascii=False, separators=(',',':')), records joined by \\n",
+  "rules_never_exercised": [
+    "REJECT_HOLDOUT_ORIGIN",
+    "REJECT_CONTRADICTORY_UNRESOLVED"
+  ]
+}

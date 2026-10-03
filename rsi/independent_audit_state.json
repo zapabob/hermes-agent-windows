@@ -1,0 +1,26 @@
+{
+  "artifact": "hakua-epistemic-v0-candidate",
+  "audit_report_json": "C:\\Users\\downl\\.hermes\\attachments\\hakua_rsi_independent_artifact_audit.json",
+  "audit_report_sha256": "8f59ecb34daa163e0bbed5c0858da965c031c88d6e89e65af97f4f31ed9292db",
+  "audited_bundle_sha256": "5ab281294b79a33565e6f1b0705995a542cb0972b9847aa42278692c3af368aa",
+  "automatic_promotion_allowed": false,
+  "axes": {
+    "artifact_integrity": "FAIL",
+    "causal_validity": "NEEDS_REVISION",
+    "claim_strength": "NEEDS_REVISION",
+    "generalizability": "NEEDS_REVISION",
+    "instruction_boundary": "PASS",
+    "provenance_integrity": "NEEDS_REVISION"
+  },
+  "candidate_repair_status": "NOT_PERFORMED",
+  "human_approval": "PENDING",
+  "independent_artifact_audit": "NEEDS_REVISION",
+  "level_1_independently_audited": false,
+  "level_2": "NOT_REACHED",
+  "next_allowed_transition": "revise_artifact_and_resubmit_for_independent_audit",
+  "recursive_improvement": false,
+  "reported_level_1": "YES",
+  "reported_level_1_scope": "Historical Hakua execution report, not independent certification",
+  "self_improvement_observed": false,
+  "weight_modified": false
+}
