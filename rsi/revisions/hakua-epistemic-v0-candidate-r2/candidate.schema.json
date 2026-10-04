@@ -95,9 +95,17 @@
       "pattern": "\\S"
     },
     "source_revision_id": {
-      "type": "string",
-      "minLength": 1,
-      "pattern": "\\S"
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        {
+          "type": "integer",
+          "minimum": 1
+        }
+      ]
     },
     "superseded_lineage": {
       "minLength": 4,

@@ -1,0 +1,167 @@
+{
+  "artifact_revision": 2,
+  "basis": "Audit v1 findings. This document records new edits, not retrospective memory revisions.",
+  "changes": [
+    {
+      "candidate_id": "cand-fence-authority",
+      "changed_fields": {
+        "contradictory_unresolved": {
+          "after": false,
+          "before": null
+        },
+        "evidence_refs": {
+          "after": [
+            "evidence/fence-source.json",
+            "evidence/message-593291.json",
+            "evidence/message-593482.json",
+            "evidence/message-593510.json",
+            "evidence/related-memory-114695.json"
+          ],
+          "before": null
+        },
+        "holdout_origin": {
+          "after": false,
+          "before": null
+        },
+        "new_evidence": {
+          "after": "保存された履歴と当時のgitオブジェクトで、build_memory_context_block() がsanitize_context後にmemory-contextで包む実装を確認できる。authority semanticsの因果効果は、このコード確認だけでは確定できない。",
+          "before": "build_memory_context_block() に既に fence 実装が存在。問題は構文的未実装ではなく authority semantics の再定義である。"
+        },
+        "revised_claim": {
+          "after": "fenceの実装は確認できるため、未実装との主張は撤回する。文言が権限解釈へ与える影響は別の行動試験を要する仮説であり、真因とは断定しない。",
+          "before": "fence は存在する。困難は実装欠如ではなく claim の権限位置づけにある。"
+        },
+        "revision_reason": {
+          "after": "監査v1で指摘された本文とasserted_with_caveatの不整合を訂正する。コードにある機構と未実証の行動上の原因を分離する。",
+          "before": "source audit が 'no fence' を反証。実装は存在し(initial claim 誤)、真因は別軸にある。"
+        },
+        "snapshot_id": {
+          "after": "hakua-epistemic-r2-2026-10-04",
+          "before": "a2a-conf1-2026-10-03"
+        },
+        "source_record_status": {
+          "after": "unresolved",
+          "before": null
+        }
+      }
+    },
+    {
+      "candidate_id": "cand-asr-censoring",
+      "changed_fields": {
+        "contradictory_unresolved": {
+          "after": false,
+          "before": null
+        },
+        "evidence_refs": {
+          "after": [
+            "evidence/asr-wire-observations.json",
+            "evidence/message-594466.json",
+            "evidence/message-594616.json",
+            "evidence/message-594678.json",
+            "evidence/message-595222.json",
+            "evidence/related-memory-114709.json"
+          ],
+          "before": null
+        },
+        "holdout_origin": {
+          "after": false,
+          "before": null
+        },
+        "snapshot_id": {
+          "after": "hakua-epistemic-r2-2026-10-04",
+          "before": "a2a-conf1-2026-10-03"
+        },
+        "source_record_status": {
+          "after": "unresolved",
+          "before": null
+        }
+      }
+    },
+    {
+      "candidate_id": "cand-pid-attribution",
+      "changed_fields": {
+        "contradictory_unresolved": {
+          "after": false,
+          "before": null
+        },
+        "evidence_refs": {
+          "after": [
+            "evidence/pid-observations.json",
+            "evidence/message-595262.json",
+            "evidence/message-595267.json",
+            "evidence/message-595269.json",
+            "evidence/message-595283.json"
+          ],
+          "before": null
+        },
+        "holdout_origin": {
+          "after": false,
+          "before": null
+        },
+        "snapshot_id": {
+          "after": "hakua-epistemic-r2-2026-10-04",
+          "before": "a2a-conf1-2026-10-03"
+        },
+        "source_record_status": {
+          "after": "unresolved",
+          "before": null
+        }
+      }
+    },
+    {
+      "candidate_id": "cand-checker-overgeneralization",
+      "changed_fields": {
+        "claim_strength_after": {
+          "after": "asserted_with_caveat",
+          "before": "asserted"
+        },
+        "contradictory_unresolved": {
+          "after": false,
+          "before": null
+        },
+        "desired_behavior": {
+          "after": "自分の達成度も証拠の範囲で報告する。検査器の成功を成果物の成立や独立認証に一般化しない。",
+          "before": "自分の達成度についても過度一般化しない。成果物の存在を主张の前提とする。"
+        },
+        "evidence_refs": {
+          "after": [
+            "evidence/message-602917.json",
+            "evidence/message-603219.json",
+            "evidence/message-603220.json"
+          ],
+          "before": null
+        },
+        "holdout_origin": {
+          "after": false,
+          "before": null
+        },
+        "new_evidence": {
+          "after": "会話DBにStage 1完了の自己報告と、その後のユーザー指摘・撤回が残る。当時のファイル不存在の独立した全件観測証跡は復元できていない。",
+          "before": "train.jsonl が存在しない。実成果物が 0 件であり、Stage 1 は未完。実際には Pre-Level 1。"
+        },
+        "revised_claim": {
+          "after": "当時のLevel 1達成報告は履歴として保持し、現在の認証から切り離す。保存された自己撤回は確認できるが、当時の成果物不存在を独立確認済みとは主張しない。コンパイルやhash一致だけでも独立監査の代わりにはならない。",
+          "before": "現状は governance scaffold と機械検査基盤の構築のみ。Level 1 は同一 snapshot から 2 回コンパイルして canonical hash 一致して初めて主張する。"
+        },
+        "revision_reason": {
+          "after": "external_verifiedの裏づけがないためself_reportedへ降格する。自己報告、保存された訂正、実成果物検証、独立監査、人間承認を分離する。",
+          "before": "自分の達成度についても証拠に応じて主張強度を下げる。検査基盤の存在を成果物の存在へ過度一般化していた。"
+        },
+        "snapshot_id": {
+          "after": "hakua-epistemic-r2-2026-10-04",
+          "before": "a2a-conf1-2026-10-03"
+        },
+        "source_authority": {
+          "after": "self_reported",
+          "before": "external_verified"
+        },
+        "source_record_status": {
+          "after": "unresolved",
+          "before": null
+        }
+      }
+    }
+  ],
+  "parent_artifact_sha256": "5ab281294b79a33565e6f1b0705995a542cb0972b9847aa42278692c3af368aa",
+  "parent_audit_verdict": "NEEDS_REVISION"
+}

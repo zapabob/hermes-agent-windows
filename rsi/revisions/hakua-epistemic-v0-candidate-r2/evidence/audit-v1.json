@@ -1,0 +1,86 @@
+{
+  "artifact": "hakua-epistemic-v0-candidate",
+  "bundle_sha256": "5ab281294b79a33565e6f1b0705995a542cb0972b9847aa42278692c3af368aa",
+  "state_before_audit": {
+    "reported_level_1": "YES",
+    "independent_artifact_audit": "PENDING",
+    "human_approval": "PENDING",
+    "level_2": "NOT_REACHED",
+    "weight_modified": false,
+    "self_improvement_observed": false,
+    "recursive_improvement": false
+  },
+  "independent_audit_result": "NEEDS_REVISION",
+  "level_1_independently_audited": false,
+  "axes": {
+    "causal_validity": {
+      "verdict": "NEEDS_REVISION",
+      "summary": "The correction directions are plausible and consistent with the supplied conversation, but the bundle does not contain primary/raw evidence for all four trajectories. source_snapshot.json mostly restates the claims rather than carrying the underlying evidence artifacts."
+    },
+    "claim_strength": {
+      "verdict": "NEEDS_REVISION",
+      "summary": "ASR censoring and PID hedging are appropriately revised. The fence row remains too categorical for an asserted_with_caveat label, and cand-checker-overgeneralization marks source_authority=external_verified without evidence supporting that authority class."
+    },
+    "generalizability": {
+      "verdict": "NEEDS_REVISION",
+      "summary": "desired_behavior fields are general epistemic lessons, but transient PID/port/experiment-specific facts remain in the training rows and no Stage-2 formatter contract specifies which fields are learned vs quoted/masked."
+    },
+    "instruction_boundary": {
+      "verdict": "PASS",
+      "summary": "All four shipped rows have content_role=quoted_data and action_permission=none; the supplied JSON Schema constrains both with const, and compiler.validate rejects violations of those two fields. This PASS is limited to the Stage-1 artifact boundary, not the future Stage-2 formatter."
+    },
+    "provenance_integrity": {
+      "verdict": "NEEDS_REVISION",
+      "summary": "Every train row exactly matches a source_snapshot candidate and carries experience_id/source_memory_id/source_revision_id, but the bundle does not include resolvable original memory/revision records or raw evidence. Reverse provenance therefore stops at the self-contained snapshot rather than the underlying hakua-memory record."
+    },
+    "artifact_integrity": {
+      "verdict": "FAIL",
+      "summary": "Core hashes and determinism are strong, but verification_report contains PASS/false assertions that are not actually computed by compiler.py. Full JSON Schema validation is not implemented; REJECT_HOLDOUT_ORIGIN and REJECT_CONTRADICTORY_UNRESOLVED are declared but unreachable; holdout_contamination=false and duplicate_conflict_check=PASS are hard-coded. The shipped compiler also cannot run standalone because its default SOURCE path is absent from the bundle."
+    }
+  },
+  "independently_verified_strengths": {
+    "zip_sha256_matches_claim": true,
+    "all_lineage_file_hashes_match": true,
+    "canonical_source_snapshot_hash_matches_manifest": true,
+    "compiler_sha256_matches_manifest": true,
+    "train_sha256_matches_manifest": true,
+    "manifest_body_sha256_recomputes": true,
+    "all_24_input_permutations_same_dataset_sha": true,
+    "all_24_input_permutations_same_example_order": true,
+    "all_4_rows_validate_against_supplied_json_schema_when_independently_checked": true,
+    "all_4_train_rows_exactly_match_corresponding_source_snapshot_candidates": true
+  },
+  "blocking_findings": [
+    "compiler.py does not load/apply candidate.schema.json; schema_result='PASS' is hard-coded.",
+    "A schema-invalid candidate missing a required field can be accepted while verification_report still says schema_result='PASS'.",
+    "REJECT_HOLDOUT_ORIGIN is declared but validate() has no holdout check and the schema has no holdout-origin field.",
+    "REJECT_CONTRADICTORY_UNRESOLVED is declared but validate() has no contradiction check and the schema has no contradiction-state field.",
+    "holdout_contamination=false and duplicate_conflict_check='PASS' are hard-coded rather than derived from executed checks.",
+    "verifier fixture source/code is not shipped, so verifier_evidence.json is a report rather than independently rerunnable evidence.",
+    "compiler.py default SOURCE points to source/snapshot_a2a_conf1.json, which is absent in the bundle; `python compiler.py` fails without a custom invocation.",
+    "The bundle does not contain the underlying hakua-memory records/raw evidence needed to independently resolve source_memory_id/source_revision_id."
+  ],
+  "required_revisions_before_reaudit": [
+    "Use real Draft 2020-12 JSON Schema validation inside the compiler/static verifier and derive schema_result from that check.",
+    "Implement and fixture REJECT_HOLDOUT_ORIGIN and REJECT_CONTRADICTORY_UNRESOLVED, or remove those rules/claims until they exist.",
+    "Separate duplicate and contradiction checks; do not report duplicate_conflict_check=PASS unless both are executed.",
+    "Derive holdout_contamination from an actual run-scoped holdout-origin check, not a literal false.",
+    "Ship the fixture definitions/test code so all declared reject paths can be independently rerun.",
+    "Make the compiler standalone-reproducible from the bundle (e.g. --source/--out CLI or default to shipped source_snapshot.json).",
+    "Include source evidence or an export of the actual memory/revision records that source_memory_id/source_revision_id identify.",
+    "Correct source_authority for cand-checker-overgeneralization unless external verification evidence is added.",
+    "Soften cand-fence-authority so the text itself matches asserted_with_caveat rather than asserting a unique final failure mode.",
+    "Define the Stage-2 formatter contract so transient facts stay quoted context and the learned target is the generalized epistemic behavior."
+  ],
+  "state_after_audit": {
+    "reported_level_1": "YES",
+    "independent_artifact_audit": "NEEDS_REVISION",
+    "human_approval": "PENDING",
+    "level_1_independently_audited": false,
+    "level_2": "NOT_REACHED",
+    "weight_modified": false,
+    "self_improvement_observed": false,
+    "recursive_improvement": false,
+    "next_allowed_transition": "revise_artifact_and_resubmit_for_independent_audit"
+  }
+}

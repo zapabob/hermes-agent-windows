@@ -1,0 +1,7 @@
+{
+  "status": "ERROR",
+  "phase": "before_archive_creation",
+  "exception": "KeyError: family",
+  "reason": "Parent packaging assumed evaluation rows include family; actual schema must join family from frozen eval by exact id",
+  "training_results_modified": false
+}

@@ -1,0 +1,8 @@
+{
+  "created_at": "2026-10-04T10:57:53.494007+00:00",
+  "supersedes": "runtime-r2/dataset_parent_verification.json:item_hashes_match_manifest=false",
+  "previous_check_error": "Compared NFKC/whitespace prompt_hash to a differently serialized registry hash. This was a comparator mismatch, not corrupted evaluation bytes.",
+  "observed_old_hash_contract": "SHA256(canonical JSON object with prompt/options, UTF8, sort_keys=True, separators=(comma,colon), ensure_ascii=False)",
+  "all_original_72_registry_hashes_match_observed_contract": true,
+  "revision_scope": "runtime-r3 names normalized prompt/options contract explicitly; task/answer bytes remain unchanged. No retroactive change to old registry or run verdicts."
+}

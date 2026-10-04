@@ -1,0 +1,108 @@
+{
+  "artifact": "hakua-epistemic-v0-candidate-r2",
+  "lookup_scope": "Read-only exact memory_id/belief_id searches in default profile ebbinghaus_memory.db. Topic scan found related records 114695/114709, belief_version1 only; not a global proof of nonexistence.",
+  "missing_primary_records": 4,
+  "overall_status": "unresolved",
+  "raw_database_exported": false,
+  "records": [
+    {
+      "candidate_id": "cand-fence-authority",
+      "evidence_refs": [
+        "evidence/fence-source.json",
+        "evidence/message-593291.json",
+        "evidence/message-593482.json",
+        "evidence/message-593510.json",
+        "evidence/related-memory-114695.json"
+      ],
+      "exact_lookup_matches": [],
+      "experience_id": "exp-fence-authority-001",
+      "file_sha256": {
+        "evidence/fence-source.json": "2872a9a6d0824f80c86cecf0380175bf9de191d301ff7b78c4e0ed16c33167bc",
+        "evidence/message-593291.json": "8eadfbc10dedfafe360846ab19434bb6a78ab4509684eb9a8e8bc3ae4d034804",
+        "evidence/message-593482.json": "329ba79b22168cc05e795f80f40515f02c623ba6474046db3e818c31e328f490",
+        "evidence/message-593510.json": "28a05f2077dbd28e23ddf402799f1010f47cb10cd1b7608deb9e8c44ec25e810",
+        "evidence/related-memory-114695.json": "8e1d3d07cc310efae6e3987239a2c9a2c7f2619778eeacde36ff9fe927e3936b"
+      },
+      "finding": "Legacy snapshot pseudo-ID has no exact memory_id/belief_id match in inspected default Ebbinghaus DB. Claimed revision does not resolve. Session excerpts and topical memory exports are not substitutes.",
+      "memory_record_ref": null,
+      "revision_record_ref": null,
+      "source_memory_id": "a2a:conf1:fence-semantics",
+      "source_revision_id": 3,
+      "status": "unresolved"
+    },
+    {
+      "candidate_id": "cand-asr-censoring",
+      "evidence_refs": [
+        "evidence/asr-wire-observations.json",
+        "evidence/message-594466.json",
+        "evidence/message-594616.json",
+        "evidence/message-594678.json",
+        "evidence/message-595222.json",
+        "evidence/related-memory-114709.json"
+      ],
+      "exact_lookup_matches": [],
+      "experience_id": "exp-asr-censor-001",
+      "file_sha256": {
+        "evidence/asr-wire-observations.json": "ecb709ef4aadc154ab8f1d74ca327678d9d2567439aa6e9b5996a84b3774c01d",
+        "evidence/message-594466.json": "ad303e94aeec9e75538ce0d23d1359f2d4be80941b1b15cea7b21316f3b1d302",
+        "evidence/message-594616.json": "907364f577266419fb5b19eff55eef1440997a862c024e7f20a77ab0846e1260",
+        "evidence/message-594678.json": "2315bdf9886f0c4ce98b53cf6a78e96c62932daec645bf18d6cdc98c5e37275f",
+        "evidence/message-595222.json": "3b718bc705d9c3c05223a396a7ef2e6e04654d893822a8014013e0b4aac3d4df",
+        "evidence/related-memory-114709.json": "202b5df0a61c296796e4c1ef8d58af21aa0d41d5eded93731f4e227a281a79b6"
+      },
+      "finding": "Legacy snapshot pseudo-ID has no exact memory_id/belief_id match in inspected default Ebbinghaus DB. Claimed revision does not resolve. Session excerpts and topical memory exports are not substitutes.",
+      "memory_record_ref": null,
+      "revision_record_ref": null,
+      "source_memory_id": "a2a:conf1:asr-denominator",
+      "source_revision_id": 2,
+      "status": "unresolved"
+    },
+    {
+      "candidate_id": "cand-pid-attribution",
+      "evidence_refs": [
+        "evidence/pid-observations.json",
+        "evidence/message-595262.json",
+        "evidence/message-595267.json",
+        "evidence/message-595269.json",
+        "evidence/message-595283.json"
+      ],
+      "exact_lookup_matches": [],
+      "experience_id": "exp-pid-attr-001",
+      "file_sha256": {
+        "evidence/message-595262.json": "ca34a56276bb72e8be35c6f398963630bf1d6fbc9fa827a36a262f3a13d0c523",
+        "evidence/message-595267.json": "bb2d65e598fe857e1dee97b68088ce990bb001cf8c381c787b24060cbd7cffad",
+        "evidence/message-595269.json": "ae64847d0e04e38b46007f8eb008356386e1b7edd54a796d857e9a24465ed593",
+        "evidence/message-595283.json": "9ad8d8aa50eb151fc7a3f0bfe23442c88173932f7cd5aabd8ead3f2766a3854a",
+        "evidence/pid-observations.json": "5bdd35ec13f7665cdfcca62db389f56cb84f21a2297b8adf1651ff1dec9bb09b"
+      },
+      "finding": "Legacy snapshot pseudo-ID has no exact memory_id/belief_id match in inspected default Ebbinghaus DB. Claimed revision does not resolve. Session excerpts and topical memory exports are not substitutes.",
+      "memory_record_ref": null,
+      "revision_record_ref": null,
+      "source_memory_id": "a2a:conf1:process-identity",
+      "source_revision_id": 1,
+      "status": "unresolved"
+    },
+    {
+      "candidate_id": "cand-checker-overgeneralization",
+      "evidence_refs": [
+        "evidence/message-602917.json",
+        "evidence/message-603219.json",
+        "evidence/message-603220.json"
+      ],
+      "exact_lookup_matches": [],
+      "experience_id": "exp-overgeneral-001",
+      "file_sha256": {
+        "evidence/message-602917.json": "3e53cd25e89f0d5689604d1dd0d36db6c59cb063261e3dcb7c66ac2784441645",
+        "evidence/message-603219.json": "9c4170032f7971b68a7694354da44fdaf1e25fbce2dc9f9adf56b43cf04a3852",
+        "evidence/message-603220.json": "7deb12624d8cbe5818110f19c804506b6c8e38c68000b11bdefb4c55c424ba93"
+      },
+      "finding": "Legacy snapshot pseudo-ID has no exact memory_id/belief_id match in inspected default Ebbinghaus DB. Claimed revision does not resolve. Session excerpts and topical memory exports are not substitutes.",
+      "memory_record_ref": null,
+      "revision_record_ref": null,
+      "source_memory_id": "rsi:stage0:claim-level",
+      "source_revision_id": 1,
+      "status": "unresolved"
+    }
+  ],
+  "source_revision_history_created": false
+}

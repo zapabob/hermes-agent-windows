@@ -1,0 +1,22 @@
+{
+  "activation_status": "STOP_AND_REPORT",
+  "artifact": "hakua-epistemic-v0-candidate-r2",
+  "artifact_revision": 2,
+  "automatic_promotion_allowed": false,
+  "current_independent_artifact_audit_v2": "PENDING",
+  "human_approval": "PENDING",
+  "improvement_fields_scope": "No training/evaluation was initiated by this revision workflow; not a measurement of all concurrent system activity",
+  "level_1_independently_audited": false,
+  "level_2": "NOT_REACHED",
+  "missing_original_sources": 4,
+  "next_allowed_transition": "independent_artifact_audit_v2_of_new_zip_without_inheriting_v1_verdicts",
+  "parent_artifact_sha256": "5ab281294b79a33565e6f1b0705995a542cb0972b9847aa42278692c3af368aa",
+  "parent_audit_verdict": "NEEDS_REVISION",
+  "parent_historical_reported_level_1": true,
+  "recursive_improvement_observed": false,
+  "self_improvement_observed": false,
+  "source_memory_revision_resolution": "ERROR",
+  "source_memory_revisions_created": 0,
+  "source_memory_rows_created": 0,
+  "training_status": "NOT_STARTED"
+}

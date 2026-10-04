@@ -1,0 +1,36 @@
+{
+  "rows": [
+    {
+      "id": "eval-confidence-00",
+      "choice": "A",
+      "choice_logits": [
+        24.867639541625977,
+        20.44458770751953,
+        23.151203155517578,
+        22.770187377929688
+      ],
+      "conditional_choice_probabilities": [
+        0.7607619166374207,
+        0.00912728812545538,
+        0.13671304285526276,
+        0.0933978408575058
+      ],
+      "unconstrained_first_token_id": 32,
+      "unconstrained_first_token": "A",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 170,
+      "seconds": 14.690465700001369
+    }
+  ],
+  "dimensions": {
+    "confidence": {
+      "correct": 1,
+      "total": 1,
+      "rate": 1.0
+    }
+  },
+  "scope": "Conditional choice-logit proxy; non-label argmax is separately reported, not hidden",
+  "format_first_token_rate": 1.0,
+  "total_forward_seconds": 14.690465700001369,
+  "total_input_tokens": 170
+}

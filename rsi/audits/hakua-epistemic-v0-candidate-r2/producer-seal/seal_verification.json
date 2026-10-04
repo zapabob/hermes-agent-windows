@@ -1,0 +1,111 @@
+{
+  "artifact": "hakua-epistemic-v0-candidate-r2",
+  "artifact_revision": 2,
+  "audit_v2_status": "PENDING",
+  "automatic_promotion_allowed": false,
+  "compiler_sha256": "44e874c25e72f53b5d1f77403d1f4062d890c3206bf2b91216f1e17c8dc46f68",
+  "dataset_sha256": "8d9fb634b5892b39834b5ed86b8f3aa1f142b650f8a85a626e9ac327c16eff72",
+  "download_path": "C:\\Users\\downl\\Downloads\\hakua-epistemic-v0-candidate-r2-audit-bundle.zip",
+  "human_approval": "PENDING",
+  "independent_artifact_audit_v2": "IN_PROGRESS",
+  "parent_artifact_sha256": "5ab281294b79a33565e6f1b0705995a542cb0972b9847aa42278692c3af368aa",
+  "parent_audit_verdict": "NEEDS_REVISION",
+  "producer_readback_checks": [
+    {
+      "check": "complete_lineage_file_hashes",
+      "status": "PASS",
+      "verified_files": 49
+    },
+    {
+      "check": "lineage_body_hash",
+      "status": "PASS"
+    },
+    {
+      "check": "extracted_unit",
+      "expected_exit_code": 0,
+      "observed_exit_code": 0,
+      "status": "PASS"
+    },
+    {
+      "check": "extracted_default_cli",
+      "expected_exit_code": 2,
+      "observed_exit_code": 2,
+      "status": "PASS"
+    },
+    {
+      "check": "extracted_explicit_cli",
+      "expected_exit_code": 2,
+      "observed_exit_code": 2,
+      "status": "PASS"
+    },
+    {
+      "check": "default_and_explicit_recompile_match_sealed_five_artifacts",
+      "files_compared": 5,
+      "status": "PASS"
+    },
+    {
+      "check": "unresolved_source_fails_closed",
+      "compiler_verdict": "NEEDS_REVISION",
+      "source_check": "ERROR",
+      "status": "PASS"
+    }
+  ],
+  "receiver_download_success": "NOT_CONFIRMED; local archive/extraction verified, not user receipt",
+  "sealed_file_hashes": {
+    "EVIDENCE_INDEX.json": "7a7b0703c62c11f4d6cd9b498f71cf85ddea8733ba594f54294196d14d1da67e",
+    "FORMATTER_CONTRACT.md": "2e53a46157e8c2348b20a89c9f094555c4f75d5551216e2a86dbd1d31893f45b",
+    "LINEAGE.json": "e76adcfedcdc3a6a671199c4cf4ea2c4eb41b6263b6b23ee2596ea776e520318",
+    "PARENT_PRESERVATION_VERIFICATION.json": "1fc358d25ca9dcf4d56a8e875604743f951db9710bcaf9eae6f17feabfed8ec6",
+    "README.md": "db89b8dc14af79d1ce69c42442a2b1cb82f5ce2758d4626d3180667c089fc25a",
+    "REVISION_CHANGES.json": "d60b67fe6ec962d51aba9506e90de76585594e12c31cac7b8fc2ec9cb5c03184",
+    "SOURCE_LOOKUP.json": "c5edc05618437664763b42b5c8685a836600218b7e40f524fbbb36881b98fa82",
+    "SUBMISSION.md": "ba9c759d2c8a6ef5f97dc11a2918cc29229fa1a848c5aa4ad16d26ae0b90f5e7",
+    "SUBMISSION_STATE.json": "f18ad0f948ae4a5d79200b7e37df75a92cf348b443d5a3dff23da0e0b714748b",
+    "candidate.schema.json": "076240eb4acbbc2ff750ef0de0f30f35c1d29e03b18ca3babec6b270a6059090",
+    "compiler.py": "44e874c25e72f53b5d1f77403d1f4062d890c3206bf2b91216f1e17c8dc46f68",
+    "dataset/dataset_manifest.json": "8d295d8e5c1e77f51f4bd144b612887e5c8cdd5c030da64ebe1996a3b3d09ee2",
+    "dataset/rejected_examples.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "dataset/source_snapshot_manifest.json": "5e4c4dc000be42167c155b274adce37568a191a117117bf82d9dc3eed2c1ac7c",
+    "dataset/train.jsonl": "8d9fb634b5892b39834b5ed86b8f3aa1f142b650f8a85a626e9ac327c16eff72",
+    "dataset/verification_report.json": "8026e5eb5b072a7c3fd318c56e8b450e1535014ca0a6f7870677a7633bdc1fc4",
+    "evidence/asr-wire-observations.json": "ecb709ef4aadc154ab8f1d74ca327678d9d2567439aa6e9b5996a84b3774c01d",
+    "evidence/audit-v1.json": "8f59ecb34daa163e0bbed5c0858da965c031c88d6e89e65af97f4f31ed9292db",
+    "evidence/audit-v1.md": "87f9a36de5a69561028d74b13435a1e51de230e5ab73b91917319700abefa78e",
+    "evidence/fence-source.json": "2872a9a6d0824f80c86cecf0380175bf9de191d301ff7b78c4e0ed16c33167bc",
+    "evidence/message-593291.json": "8eadfbc10dedfafe360846ab19434bb6a78ab4509684eb9a8e8bc3ae4d034804",
+    "evidence/message-593482.json": "329ba79b22168cc05e795f80f40515f02c623ba6474046db3e818c31e328f490",
+    "evidence/message-593510.json": "28a05f2077dbd28e23ddf402799f1010f47cb10cd1b7608deb9e8c44ec25e810",
+    "evidence/message-594466.json": "ad303e94aeec9e75538ce0d23d1359f2d4be80941b1b15cea7b21316f3b1d302",
+    "evidence/message-594616.json": "907364f577266419fb5b19eff55eef1440997a862c024e7f20a77ab0846e1260",
+    "evidence/message-594678.json": "2315bdf9886f0c4ce98b53cf6a78e96c62932daec645bf18d6cdc98c5e37275f",
+    "evidence/message-595222.json": "3b718bc705d9c3c05223a396a7ef2e6e04654d893822a8014013e0b4aac3d4df",
+    "evidence/message-595262.json": "ca34a56276bb72e8be35c6f398963630bf1d6fbc9fa827a36a262f3a13d0c523",
+    "evidence/message-595267.json": "bb2d65e598fe857e1dee97b68088ce990bb001cf8c381c787b24060cbd7cffad",
+    "evidence/message-595269.json": "ae64847d0e04e38b46007f8eb008356386e1b7edd54a796d857e9a24465ed593",
+    "evidence/message-595283.json": "9ad8d8aa50eb151fc7a3f0bfe23442c88173932f7cd5aabd8ead3f2766a3854a",
+    "evidence/message-602917.json": "3e53cd25e89f0d5689604d1dd0d36db6c59cb063261e3dcb7c66ac2784441645",
+    "evidence/message-603219.json": "9c4170032f7971b68a7694354da44fdaf1e25fbce2dc9f9adf56b43cf04a3852",
+    "evidence/message-603220.json": "7deb12624d8cbe5818110f19c804506b6c8e38c68000b11bdefb4c55c424ba93",
+    "evidence/pid-observations.json": "5bdd35ec13f7665cdfcca62db389f56cb84f21a2297b8adf1651ff1dec9bb09b",
+    "evidence/related-memory-114695.json": "8e1d3d07cc310efae6e3987239a2c9a2c7f2619778eeacde36ff9fe927e3936b",
+    "evidence/related-memory-114709.json": "202b5df0a61c296796e4c1ef8d58af21aa0d41d5eded93731f4e227a281a79b6",
+    "execution/black-check.log": "ab81d49758ee3d83e73f7d022b92772c8d7969bfd4d6680c5baf6a23890a301f",
+    "execution/final_pytest.log": "aba90ceb8fbbbd9de5f0c9801a718cfb25889585cfe6b3ced3f260e365fbde6b",
+    "execution/final_unit.log": "9d15e4ccc3d272266a5ae4a47c47807caeb048eaad2bc2a41a80453523a6a2b9",
+    "execution/flake8.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "execution/real_default_cli.log": "f5795e63f76eb8a63e1e01e912adcbe4750018101b55d87443838c3b6e9934a2",
+    "fixtures.json": "1ffb1d789dc43c3afebab3791640d3feb75fa87336013a14508f9201f7c677e7",
+    "formatter.py": "f27a4911d3b667708522f6d339ca39f01ee737730971525eda007db5a37cf146",
+    "parent_preservation.json": "bc077e137a2164a4106767e1b3fbae568c3750fc0366e6ea18a17136baed73f7",
+    "requirements.txt": "48ee7d1db1cfddbb445bdff4adca44ee15724e2d52b531d9d5bb7c77e2f1455f",
+    "source_provenance.json": "67c116ea2f3e4c377869687e75076b8dc313a2b9b7d1304425da92cd6bdf8189",
+    "source_snapshot.json": "8ea34507f532b1c9dd57c758f2c4aef34feb4e6ef2f9c7a4ed4d6b05f7ffdb26",
+    "test_compiler.py": "feaeaa44fcf13ae095a8696fb70c2e5182cec0ad625ac8483c2705ab497b1934",
+    "verifier_evidence.json": "da8d35283e04cd86e28b5d05e22f0712594c86f7be451b54448576cfac60a17e"
+  },
+  "verified_at": "2026-10-03T23:05:54.952404+00:00",
+  "zip_bytes": 91164,
+  "zip_entries": 50,
+  "zip_path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\output\\media\\hakua-epistemic-v0-candidate-r2-audit-bundle.zip",
+  "zip_sha256": "52b4cdd858a7dc0bee15f38c41f6abdbd5cafb1d7594bc94f5c5f188074ad331"
+}

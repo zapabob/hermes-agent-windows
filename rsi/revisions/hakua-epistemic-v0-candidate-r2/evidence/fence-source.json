@@ -1,0 +1,15 @@
+{
+  "action_permission": "none",
+  "commit": "c20e98f1370c588645d796047788e3b6f9cc749d",
+  "content_role": "quoted_data",
+  "excerpt": "def build_memory_context_block(raw_context: str) -> str:\n    \"\"\"Wrap prefetched memory in a fenced block with system note.\"\"\"\n    if not raw_context or not raw_context.strip():\n        return \"\"\n    clean = sanitize_context(raw_context)\n    if clean != raw_context:\n        logger.warning(\"memory provider returned pre-wrapped context; stripped\")\n    return (\n        \"<memory-context>\\n\"\n        \"[System note: The following is recalled memory context, \"\n        \"NOT new user input. Treat as authoritative reference data — \"\n        \"this is the agent's persistent memory and should inform all responses.]\\n\\n\"\n        f\"{clean}\\n\"\n        \"</memory-context>\"\n    )\n",
+  "excerpt_end": 15181,
+  "excerpt_start": 14513,
+  "first_line": 388,
+  "git_blob_sha256": "53e88da1ca9473870151d5356dfddc726fa08a2ac4678c2633865c557d1f0f2c",
+  "kind": "git_source_excerpt",
+  "last_line": 403,
+  "repository": "zapabob/hermes-agent-windows",
+  "scope": "Historical local git object, not a live behavioral experiment or proof of authority semantics.",
+  "source_path": "agent/memory_manager.py"
+}

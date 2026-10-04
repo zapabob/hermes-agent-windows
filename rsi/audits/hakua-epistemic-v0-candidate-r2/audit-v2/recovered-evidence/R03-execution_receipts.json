@@ -1,0 +1,57 @@
+{
+  "receipts": [
+    {
+      "label": "shipped_unittest",
+      "command": [
+        "C:/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe",
+        "-B",
+        "-m",
+        "unittest",
+        "-v",
+        "test_compiler"
+      ],
+      "command_windows": "\"C:/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe\" -B -m unittest -v test_compiler",
+      "cwd": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\tmp\\probes\\r2-auditor\\audit-v2-cb8ab69a69564fd8bb99182ae6aeba83\\execution-copy",
+      "exit_code": 0,
+      "duration_seconds": 6.311999999999898,
+      "stdout": "",
+      "stderr": "test_conflicting_revised_claims_reject_every_member_before_dedup (test_compiler.CompilerTests.test_conflicting_revised_claims_reject_every_member_before_dedup) ... ok\r\ntest_default_cli_and_explicit_paths_work_from_copied_standalone_bundle (test_compiler.CompilerTests.test_default_cli_and_explicit_paths_work_from_copied_standalone_bundle) ... ok\r\ntest_duplicate_winner_is_canonical_bytes_and_revision_is_part_of_key (test_compiler.CompilerTests.test_duplicate_winner_is_canonical_bytes_and_revision_is_part_of_key) ... ok\r\ntest_empty_or_unavailable_checks_cannot_claim_all_pass (test_compiler.CompilerTests.test_empty_or_unavailable_checks_cannot_claim_all_pass) ... ok\r\ntest_flagged_unresolved_contradiction_rejects (test_compiler.CompilerTests.test_flagged_unresolved_contradiction_rejects) ... ok\r\ntest_formatter_denies_without_explicit_separate_reviewed_targets (test_compiler.CompilerTests.test_formatter_denies_without_explicit_separate_reviewed_targets) ... ok\r\ntest_formatter_emits_only_explicit_approved_procedural_target_and_audit_sidecar (test_compiler.CompilerTests.test_formatter_emits_only_explicit_approved_procedural_target_and_audit_sidecar) ... ok\r\ntest_formatter_rejects_raw_targets_fake_approval_ambiguous_ids_and_tampered_result (test_compiler.CompilerTests.test_formatter_rejects_raw_targets_fake_approval_ambiguous_ids_and_tampered_result) ... ok\r\ntest_holdout_flag_and_registry_membership_reject (test_compiler.CompilerTests.test_holdout_flag_and_registry_membership_reject) ... ok\r\ntest_integral_float_revision_id_is_not_silently_coerced_or_admitted (test_compiler.CompilerTests.test_integral_float_revision_id_is_not_silently_coerced_or_admitted) ... ok\r\ntest_legacy_provenance_permission_and_unstable_rejection (test_compiler.CompilerTests.test_legacy_provenance_permission_and_unstable_rejection) ... ok\r\ntest_malformed_snapshot_and_nonobject_records_fail_closed (test_compiler.CompilerTests.test_malformed_snapshot_and_nonobject_records_fail_closed) ... ok\r\ntest_manifest_preserves_revision_and_unapproved_gates (test_compiler.CompilerTests.test_manifest_preserves_revision_and_unapproved_gates) ... ok\r\ntest_missing_or_invalid_holdout_registry_is_an_error (test_compiler.CompilerTests.test_missing_or_invalid_holdout_registry_is_an_error) ... ok\r\ntest_missing_required_check_is_error_not_pass (test_compiler.CompilerTests.test_missing_required_check_is_error_not_pass) ... ok\r\ntest_nonconflicting_duplicate_survivor_preserves_legacy_authority_strength_tiebreak (test_compiler.CompilerTests.test_nonconflicting_duplicate_survivor_preserves_legacy_authority_strength_tiebreak) ... ok\r\ntest_positive_integer_revision_ids_are_preserved_and_sorted_by_typed_bytes (test_compiler.CompilerTests.test_positive_integer_revision_ids_are_preserved_and_sorted_by_typed_bytes) ... ok\r\ntest_postcompile_accepted_body_hash_or_manifest_tampering_cannot_pass (test_compiler.CompilerTests.test_postcompile_accepted_body_hash_or_manifest_tampering_cannot_pass) ... ok\r\ntest_report_has_complete_executed_checks_and_separates_filtering_from_schema (test_compiler.CompilerTests.test_report_has_complete_executed_checks_and_separates_filtering_from_schema) ... ok\r\ntest_report_recompiles_twice_compares_real_bodies_and_hashes (test_compiler.CompilerTests.test_report_recompiles_twice_compares_real_bodies_and_hashes) ... ok\r\ntest_schema_negative_mutations_use_actual_types_and_all_required_fields (test_compiler.CompilerTests.test_schema_negative_mutations_use_actual_types_and_all_required_fields) ... ok\r\ntest_shipped_negative_fixtures_exercise_all_seven_reject_codes (test_compiler.CompilerTests.test_shipped_negative_fixtures_exercise_all_seven_reject_codes) ... ok\r\ntest_source_provenance_requires_primary_records_file_hashes_and_resolution (test_compiler.CompilerTests.test_source_provenance_requires_primary_records_file_hashes_and_resolution) ... ok\r\ntest_source_record_status_resolved_alone_does_not_prove_provenance (test_compiler.CompilerTests.test_source_record_status_resolved_alone_does_not_prove_provenance) ... ok\r\ntest_strict_json_parser_rejects_duplicate_keys_and_nonfinite_numbers (test_compiler.CompilerTests.test_strict_json_parser_rejects_duplicate_keys_and_nonfinite_numbers) ... ok\r\ntest_unknown_broken_or_weakened_schema_fail_closed (test_compiler.CompilerTests.test_unknown_broken_or_weakened_schema_fail_closed) ... ok\r\ntest_valid_candidate_compiles_with_shipped_22_field_schema (test_compiler.CompilerTests.test_valid_candidate_compiles_with_shipped_22_field_schema) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 27 tests in 5.449s\r\n\r\nOK\r\n"
+    },
+    {
+      "label": "default_compiler",
+      "command": [
+        "C:/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe",
+        "-B",
+        "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\tmp\\probes\\r2-auditor\\audit-v2-cb8ab69a69564fd8bb99182ae6aeba83\\execution-copy\\compiler.py"
+      ],
+      "command_windows": "\"C:/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe\" -B \"C:\\Users\\downl\\Documents\\New project\\hermes-agent\\tmp\\probes\\r2-auditor\\audit-v2-cb8ab69a69564fd8bb99182ae6aeba83\\execution-copy\\compiler.py\"",
+      "cwd": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\tmp\\probes\\r2-auditor\\audit-v2-cb8ab69a69564fd8bb99182ae6aeba83",
+      "exit_code": 2,
+      "duration_seconds": 0.5159999999996217,
+      "stdout": "{\"activation_status\":\"STOP_AND_REPORT\",\"artifact\":\"hakua-epistemic-v0-candidate-r2\",\"dataset_sha256\":\"8d9fb634b5892b39834b5ed86b8f3aa1f142b650f8a85a626e9ac327c16eff72\",\"example_count\":4,\"out\":\"C:\\\\Users\\\\downl\\\\Documents\\\\New project\\\\hermes-agent\\\\tmp\\\\probes\\\\r2-auditor\\\\audit-v2-cb8ab69a69564fd8bb99182ae6aeba83\\\\execution-copy\\\\dataset\",\"rejected_count\":0,\"verification_result\":\"NEEDS_REVISION\"}\r\n",
+      "stderr": ""
+    }
+  ],
+  "shipped_dataset_vs_default_output": [
+    {
+      "ref": "dataset/dataset_manifest.json",
+      "identical": true
+    },
+    {
+      "ref": "dataset/rejected_examples.json",
+      "identical": true
+    },
+    {
+      "ref": "dataset/source_snapshot_manifest.json",
+      "identical": true
+    },
+    {
+      "ref": "dataset/train.jsonl",
+      "identical": true
+    },
+    {
+      "ref": "dataset/verification_report.json",
+      "identical": true
+    }
+  ]
+}

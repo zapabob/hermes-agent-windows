@@ -1,0 +1,1562 @@
+{
+  "rows": [
+    {
+      "id": "eval-confidence-00",
+      "choice": "A",
+      "choice_logits": [
+        24.867639541625977,
+        20.44458770751953,
+        23.151203155517578,
+        22.770187377929688
+      ],
+      "conditional_choice_probabilities": [
+        0.7607619166374207,
+        0.00912728812545538,
+        0.13671304285526276,
+        0.0933978408575058
+      ],
+      "unconstrained_first_token_id": 32,
+      "unconstrained_first_token": "A",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 170,
+      "seconds": 0.18154299999878276
+    },
+    {
+      "id": "eval-confidence-01",
+      "choice": "B",
+      "choice_logits": [
+        18.784719467163086,
+        25.29591178894043,
+        19.533178329467773,
+        20.17820167541504
+      ],
+      "conditional_choice_probabilities": [
+        0.0014710846589878201,
+        0.989492654800415,
+        0.003109490731731057,
+        0.005926786921918392
+      ],
+      "unconstrained_first_token_id": 33,
+      "unconstrained_first_token": "B",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 180,
+      "seconds": 0.19013100000302074
+    },
+    {
+      "id": "eval-confidence-02",
+      "choice": "C",
+      "choice_logits": [
+        20.313709259033203,
+        19.03603744506836,
+        24.936386108398438,
+        21.187875747680664
+      ],
+      "conditional_choice_probabilities": [
+        0.00948392041027546,
+        0.002643029671162367,
+        0.9651413559913635,
+        0.022731786593794823
+      ],
+      "unconstrained_first_token_id": 34,
+      "unconstrained_first_token": "C",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 172,
+      "seconds": 0.22025870000288705
+    },
+    {
+      "id": "eval-confidence-03",
+      "choice": "D",
+      "choice_logits": [
+        21.69333267211914,
+        22.63620376586914,
+        19.72517204284668,
+        23.42531967163086
+      ],
+      "conditional_choice_probabilities": [
+        0.10684983432292938,
+        0.2743200659751892,
+        0.01492837630212307,
+        0.6039016842842102
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 180,
+      "seconds": 0.26887839999835705
+    },
+    {
+      "id": "eval-confidence-04",
+      "choice": "A",
+      "choice_logits": [
+        24.77402114868164,
+        20.656185150146484,
+        22.626018524169922,
+        22.61465835571289
+      ],
+      "conditional_choice_probabilities": [
+        0.8010282516479492,
+        0.013040504418313503,
+        0.09349364787340164,
+        0.09243755787611008
+      ],
+      "unconstrained_first_token_id": 32,
+      "unconstrained_first_token": "A",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 171,
+      "seconds": 0.25610430000233464
+    },
+    {
+      "id": "eval-confidence-05",
+      "choice": "B",
+      "choice_logits": [
+        18.319934844970703,
+        24.788864135742188,
+        18.94182014465332,
+        19.30149269104004
+      ],
+      "conditional_choice_probabilities": [
+        0.001537694945000112,
+        0.99149489402771,
+        0.002863858127966523,
+        0.004103508312255144
+      ],
+      "unconstrained_first_token_id": 33,
+      "unconstrained_first_token": "B",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 180,
+      "seconds": 0.27177380000284757
+    },
+    {
+      "id": "eval-confidence-06",
+      "choice": "C",
+      "choice_logits": [
+        20.835554122924805,
+        19.136638641357422,
+        24.808012008666992,
+        21.27363395690918
+      ],
+      "conditional_choice_probabilities": [
+        0.01790589466691017,
+        0.0032746612560003996,
+        0.9510701298713684,
+        0.027749277651309967
+      ],
+      "unconstrained_first_token_id": 34,
+      "unconstrained_first_token": "C",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 171,
+      "seconds": 0.22026439999899594
+    },
+    {
+      "id": "eval-confidence-07",
+      "choice": "D",
+      "choice_logits": [
+        21.74677085876465,
+        21.503604888916016,
+        19.355852127075195,
+        22.396142959594727
+      ],
+      "conditional_choice_probabilities": [
+        0.26385048031806946,
+        0.20689606666564941,
+        0.024154333397746086,
+        0.5050991177558899
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 181,
+      "seconds": 0.1856915000025765
+    },
+    {
+      "id": "eval-revision-00",
+      "choice": "B",
+      "choice_logits": [
+        18.452693939208984,
+        24.980987548828125,
+        17.68251609802246,
+        16.30674934387207
+      ],
+      "conditional_choice_probabilities": [
+        0.0014581308932974935,
+        0.9976963400840759,
+        0.0006750135798938572,
+        0.00017053933697752655
+      ],
+      "unconstrained_first_token_id": 33,
+      "unconstrained_first_token": "B",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 199,
+      "seconds": 0.2035991999982798
+    },
+    {
+      "id": "eval-revision-01",
+      "choice": "C",
+      "choice_logits": [
+        17.765172958374023,
+        15.879955291748047,
+        24.35883903503418,
+        18.546022415161133
+      ],
+      "conditional_choice_probabilities": [
+        0.0013627895386889577,
+        0.00020686602510977536,
+        0.9954549074172974,
+        0.002975414041429758
+      ],
+      "unconstrained_first_token_id": 34,
+      "unconstrained_first_token": "C",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 189,
+      "seconds": 0.25963509999928647
+    },
+    {
+      "id": "eval-revision-02",
+      "choice": "D",
+      "choice_logits": [
+        20.712650299072266,
+        19.325965881347656,
+        19.487539291381836,
+        25.254539489746094
+      ],
+      "conditional_choice_probabilities": [
+        0.010480906814336777,
+        0.0026192045770585537,
+        0.0030785053968429565,
+        0.9838213920593262
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 201,
+      "seconds": 0.2116429000016069
+    },
+    {
+      "id": "eval-revision-03",
+      "choice": "A",
+      "choice_logits": [
+        23.97107696533203,
+        20.01128387451172,
+        16.009620666503906,
+        17.11562728881836
+      ],
+      "conditional_choice_probabilities": [
+        0.979941189289093,
+        0.018684595823287964,
+        0.00034165161196142435,
+        0.0010325618786737323
+      ],
+      "unconstrained_first_token_id": 32,
+      "unconstrained_first_token": "A",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 189,
+      "seconds": 0.21603110000069137
+    },
+    {
+      "id": "eval-revision-04",
+      "choice": "B",
+      "choice_logits": [
+        18.20892333984375,
+        24.861656188964844,
+        17.600616455078125,
+        16.334938049316406
+      ],
+      "conditional_choice_probabilities": [
+        0.0012876694090664387,
+        0.9978138208389282,
+        0.0007008418906480074,
+        0.00019767097546719015
+      ],
+      "unconstrained_first_token_id": 33,
+      "unconstrained_first_token": "B",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 200,
+      "seconds": 0.257810300001438
+    },
+    {
+      "id": "eval-revision-05",
+      "choice": "C",
+      "choice_logits": [
+        17.592491149902344,
+        15.775062561035156,
+        24.270503997802734,
+        18.07355499267578
+      ],
+      "conditional_choice_probabilities": [
+        0.0012538894079625607,
+        0.0002036854566540569,
+        0.9965139031410217,
+        0.0020285355858504772
+      ],
+      "unconstrained_first_token_id": 34,
+      "unconstrained_first_token": "C",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 189,
+      "seconds": 0.32320139999865205
+    },
+    {
+      "id": "eval-revision-06",
+      "choice": "D",
+      "choice_logits": [
+        20.57657814025879,
+        19.168697357177734,
+        19.170440673828125,
+        24.990398406982422
+      ],
+      "conditional_choice_probabilities": [
+        0.011894268915057182,
+        0.002910066395998001,
+        0.0029151439666748047,
+        0.9822805523872375
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 200,
+      "seconds": 0.20836980000240146
+    },
+    {
+      "id": "eval-revision-07",
+      "choice": "A",
+      "choice_logits": [
+        23.221166610717773,
+        19.28136444091797,
+        15.689048767089844,
+        16.392972946166992
+      ],
+      "conditional_choice_probabilities": [
+        0.9793643355369568,
+        0.019050655886530876,
+        0.0005245502106845379,
+        0.0010604677954688668
+      ],
+      "unconstrained_first_token_id": 32,
+      "unconstrained_first_token": "A",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 190,
+      "seconds": 0.21217959999921732
+    },
+    {
+      "id": "eval-absence-00",
+      "choice": "C",
+      "choice_logits": [
+        17.896236419677734,
+        17.626792907714844,
+        24.95795440673828,
+        20.946834564208984
+      ],
+      "conditional_choice_probabilities": [
+        0.0008408029680140316,
+        0.000642209080979228,
+        0.9807524085044861,
+        0.017764467746019363
+      ],
+      "unconstrained_first_token_id": 34,
+      "unconstrained_first_token": "C",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 174,
+      "seconds": 0.2212137000024086
+    },
+    {
+      "id": "eval-absence-01",
+      "choice": "D",
+      "choice_logits": [
+        19.90972900390625,
+        19.73829460144043,
+        20.768943786621094,
+        25.19321632385254
+      ],
+      "conditional_choice_probabilities": [
+        0.004968706052750349,
+        0.004185914061963558,
+        0.011732635088264942,
+        0.9791127443313599
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 179,
+      "seconds": 0.16449049999937415
+    },
+    {
+      "id": "eval-absence-02",
+      "choice": "A",
+      "choice_logits": [
+        24.322519302368164,
+        19.35515022277832,
+        19.394866943359375,
+        22.687288284301758
+      ],
+      "conditional_choice_probabilities": [
+        0.8270530700683594,
+        0.005757479462772608,
+        0.005990749225020409,
+        0.1611987054347992
+      ],
+      "unconstrained_first_token_id": 32,
+      "unconstrained_first_token": "A",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 176,
+      "seconds": 0.16624959999899147
+    },
+    {
+      "id": "eval-absence-03",
+      "choice": "B",
+      "choice_logits": [
+        16.372516632080078,
+        24.30478286743164,
+        15.380611419677734,
+        14.201591491699219
+      ],
+      "conditional_choice_probabilities": [
+        0.00035878070048056543,
+        0.9994671940803528,
+        0.00013306080654729158,
+        4.092684685019776e-05
+      ],
+      "unconstrained_first_token_id": 33,
+      "unconstrained_first_token": "B",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 179,
+      "seconds": 0.2453456000002916
+    },
+    {
+      "id": "eval-absence-04",
+      "choice": "C",
+      "choice_logits": [
+        17.72089958190918,
+        17.491416931152344,
+        24.820276260375977,
+        21.04893684387207
+      ],
+      "conditional_choice_probabilities": [
+        0.0008058728999458253,
+        0.0006406244356185198,
+        0.9760828018188477,
+        0.022470606490969658
+      ],
+      "unconstrained_first_token_id": 34,
+      "unconstrained_first_token": "C",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 175,
+      "seconds": 0.1442150999973819
+    },
+    {
+      "id": "eval-absence-05",
+      "choice": "D",
+      "choice_logits": [
+        19.922218322753906,
+        19.710309982299805,
+        20.622468948364258,
+        24.99910545349121
+      ],
+      "conditional_choice_probabilities": [
+        0.006093932781368494,
+        0.004930227994918823,
+        0.01227474957704544,
+        0.9767012000083923
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 179,
+      "seconds": 0.12851030000092578
+    },
+    {
+      "id": "eval-absence-06",
+      "choice": "A",
+      "choice_logits": [
+        24.301645278930664,
+        18.766620635986328,
+        18.904956817626953,
+        21.902019500732422
+      ],
+      "conditional_choice_probabilities": [
+        0.9097279906272888,
+        0.0035898881033062935,
+        0.004122489131987095,
+        0.08255954831838608
+      ],
+      "unconstrained_first_token_id": 32,
+      "unconstrained_first_token": "A",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 175,
+      "seconds": 0.13170259999969858
+    },
+    {
+      "id": "eval-absence-07",
+      "choice": "B",
+      "choice_logits": [
+        16.20091438293457,
+        24.021270751953125,
+        14.869179725646973,
+        13.292476654052734
+      ],
+      "conditional_choice_probabilities": [
+        0.00040126615203917027,
+        0.9994708895683289,
+        0.00010594184277579188,
+        2.18934437725693e-05
+      ],
+      "unconstrained_first_token_id": 33,
+      "unconstrained_first_token": "B",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 180,
+      "seconds": 0.13011339999866323
+    },
+    {
+      "id": "eval-permission-00",
+      "choice": "D",
+      "choice_logits": [
+        21.59048080444336,
+        22.144800186157227,
+        22.15085220336914,
+        23.068782806396484
+      ],
+      "conditional_choice_probabilities": [
+        0.11264341324567795,
+        0.19608467817306519,
+        0.19727496802806854,
+        0.49399685859680176
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 203,
+      "seconds": 0.13352730000042357
+    },
+    {
+      "id": "eval-permission-01",
+      "choice": "A",
+      "choice_logits": [
+        24.130313873291016,
+        21.59286880493164,
+        21.318744659423828,
+        22.006328582763672
+      ],
+      "conditional_choice_probabilities": [
+        0.7944496870040894,
+        0.06281567364931107,
+        0.04775484651327133,
+        0.09497981518507004
+      ],
+      "unconstrained_first_token_id": 32,
+      "unconstrained_first_token": "A",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 207,
+      "seconds": 0.14603429999988293
+    },
+    {
+      "id": "eval-permission-02",
+      "choice": "B",
+      "choice_logits": [
+        18.57558822631836,
+        25.0689697265625,
+        19.005401611328125,
+        19.051944732666016
+      ],
+      "conditional_choice_probabilities": [
+        0.0015039832796901464,
+        0.9937627911567688,
+        0.0023115777876228094,
+        0.0024217090103775263
+      ],
+      "unconstrained_first_token_id": 33,
+      "unconstrained_first_token": "B",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 205,
+      "seconds": 0.18996380000317004
+    },
+    {
+      "id": "eval-permission-03",
+      "choice": "C",
+      "choice_logits": [
+        21.320262908935547,
+        20.151546478271484,
+        23.130090713500977,
+        21.787683486938477
+      ],
+      "conditional_choice_probabilities": [
+        0.11091351509094238,
+        0.03446810320019722,
+        0.6776145100593567,
+        0.17700384557247162
+      ],
+      "unconstrained_first_token_id": 34,
+      "unconstrained_first_token": "C",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 207,
+      "seconds": 0.1455009000019345
+    },
+    {
+      "id": "eval-permission-04",
+      "choice": "D",
+      "choice_logits": [
+        21.578371047973633,
+        22.03465461730957,
+        22.133371353149414,
+        23.066726684570312
+      ],
+      "conditional_choice_probabilities": [
+        0.11428644508123398,
+        0.1803666055202484,
+        0.19908030331134796,
+        0.5062666535377502
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 204,
+      "seconds": 0.1558934999993653
+    },
+    {
+      "id": "eval-permission-05",
+      "choice": "A",
+      "choice_logits": [
+        24.10619354248047,
+        21.754505157470703,
+        20.6020450592041,
+        21.816614151000977
+      ],
+      "conditional_choice_probabilities": [
+        0.8152685761451721,
+        0.07762032002210617,
+        0.024517057463526726,
+        0.08259409666061401
+      ],
+      "unconstrained_first_token_id": 32,
+      "unconstrained_first_token": "A",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 207,
+      "seconds": 0.15609970000150497
+    },
+    {
+      "id": "eval-permission-06",
+      "choice": "B",
+      "choice_logits": [
+        19.457021713256836,
+        24.684520721435547,
+        18.93357276916504,
+        19.338926315307617
+      ],
+      "conditional_choice_probabilities": [
+        0.005296405404806137,
+        0.9868592023849487,
+        0.003137980354949832,
+        0.00470644561573863
+      ],
+      "unconstrained_first_token_id": 33,
+      "unconstrained_first_token": "B",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 204,
+      "seconds": 0.1390227000010782
+    },
+    {
+      "id": "eval-permission-07",
+      "choice": "C",
+      "choice_logits": [
+        21.179473876953125,
+        19.929723739624023,
+        22.54344367980957,
+        21.31755828857422
+      ],
+      "conditional_choice_probabilities": [
+        0.15757115185260773,
+        0.045156169682741165,
+        0.6163696646690369,
+        0.18090307712554932
+      ],
+      "unconstrained_first_token_id": 34,
+      "unconstrained_first_token": "C",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 208,
+      "seconds": 0.14791380000315257
+    },
+    {
+      "id": "eval-censoring-00",
+      "choice": "D",
+      "choice_logits": [
+        21.738224029541016,
+        20.48856544494629,
+        21.188983917236328,
+        22.349449157714844
+      ],
+      "conditional_choice_probabilities": [
+        0.2697833180427551,
+        0.07732059806585312,
+        0.15576975047588348,
+        0.4971263110637665
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 177,
+      "seconds": 0.14735540000037872
+    },
+    {
+      "id": "eval-censoring-01",
+      "choice": "B",
+      "choice_logits": [
+        21.400705337524414,
+        24.526844024658203,
+        20.928756713867188,
+        21.211362838745117
+      ],
+      "conditional_choice_probabilities": [
+        0.039624180644750595,
+        0.9028697609901428,
+        0.024716993793845177,
+        0.03278913348913193
+      ],
+      "unconstrained_first_token_id": 33,
+      "unconstrained_first_token": "B",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 197,
+      "seconds": 0.13974799999778043
+    },
+    {
+      "id": "eval-censoring-02",
+      "choice": "D",
+      "choice_logits": [
+        21.35707664489746,
+        21.581289291381836,
+        22.034198760986328,
+        22.194347381591797
+      ],
+      "conditional_choice_probabilities": [
+        0.1531488299369812,
+        0.19164080917835236,
+        0.30142834782600403,
+        0.3537819981575012
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 179,
+      "seconds": 0.13489430000117864
+    },
+    {
+      "id": "eval-censoring-03",
+      "choice": "D",
+      "choice_logits": [
+        21.158790588378906,
+        20.32244300842285,
+        21.46063804626465,
+        22.676557540893555
+      ],
+      "conditional_choice_probabilities": [
+        0.13609753549098969,
+        0.05896972492337227,
+        0.18405216932296753,
+        0.6208805441856384
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 197,
+      "seconds": 0.13628160000007483
+    },
+    {
+      "id": "eval-censoring-04",
+      "choice": "D",
+      "choice_logits": [
+        21.593372344970703,
+        20.46351432800293,
+        20.883255004882812,
+        22.423982620239258
+      ],
+      "conditional_choice_probabilities": [
+        0.2433454692363739,
+        0.07861983776092529,
+        0.11962534487247467,
+        0.5584093332290649
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 178,
+      "seconds": 0.14320539999971515
+    },
+    {
+      "id": "eval-censoring-05",
+      "choice": "B",
+      "choice_logits": [
+        21.366270065307617,
+        24.39754295349121,
+        20.835773468017578,
+        21.004241943359375
+      ],
+      "conditional_choice_probabilities": [
+        0.04346281662583351,
+        0.900705873966217,
+        0.02556973323225975,
+        0.03026154637336731
+      ],
+      "unconstrained_first_token_id": 33,
+      "unconstrained_first_token": "B",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 197,
+      "seconds": 0.13447570000062115
+    },
+    {
+      "id": "eval-censoring-06",
+      "choice": "B",
+      "choice_logits": [
+        21.478912353515625,
+        21.891088485717773,
+        21.742467880249023,
+        21.840923309326172
+      ],
+      "conditional_choice_probabilities": [
+        0.1905536949634552,
+        0.28775522112846375,
+        0.24801509082317352,
+        0.2736760377883911
+      ],
+      "unconstrained_first_token_id": 33,
+      "unconstrained_first_token": "B",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 178,
+      "seconds": 0.16253059999871766
+    },
+    {
+      "id": "eval-censoring-07",
+      "choice": "D",
+      "choice_logits": [
+        20.48021125793457,
+        19.559093475341797,
+        21.022323608398438,
+        21.654653549194336
+      ],
+      "conditional_choice_probabilities": [
+        0.15738001465797424,
+        0.06264887005090714,
+        0.27063626050949097,
+        0.5093348622322083
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 198,
+      "seconds": 0.14123649999964982
+    },
+    {
+      "id": "eval-provenance-00",
+      "choice": "B",
+      "choice_logits": [
+        20.65890121459961,
+        24.169689178466797,
+        23.838275909423828,
+        20.496408462524414
+      ],
+      "conditional_choice_probabilities": [
+        0.016847390681505203,
+        0.5639601945877075,
+        0.40487179160118103,
+        0.014320655725896358
+      ],
+      "unconstrained_first_token_id": 33,
+      "unconstrained_first_token": "B",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 198,
+      "seconds": 0.1560341000003973
+    },
+    {
+      "id": "eval-provenance-01",
+      "choice": "C",
+      "choice_logits": [
+        19.545299530029297,
+        20.298433303833008,
+        24.806798934936523,
+        21.07292366027832
+      ],
+      "conditional_choice_probabilities": [
+        0.004987502004951239,
+        0.01059168204665184,
+        0.9614422917366028,
+        0.022978506982326508
+      ],
+      "unconstrained_first_token_id": 34,
+      "unconstrained_first_token": "C",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 209,
+      "seconds": 0.13887239999894518
+    },
+    {
+      "id": "eval-provenance-02",
+      "choice": "D",
+      "choice_logits": [
+        22.871131896972656,
+        21.35884666442871,
+        21.1025333404541,
+        22.95111083984375
+      ],
+      "conditional_choice_probabilities": [
+        0.40416422486305237,
+        0.08908011019229889,
+        0.06893904507160187,
+        0.43781667947769165
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 200,
+      "seconds": 0.13339520000226912
+    },
+    {
+      "id": "eval-provenance-03",
+      "choice": "A",
+      "choice_logits": [
+        25.472660064697266,
+        21.57491111755371,
+        20.499317169189453,
+        22.29659080505371
+      ],
+      "conditional_choice_probabilities": [
+        0.9354913234710693,
+        0.01897880807518959,
+        0.006473578047007322,
+        0.039056241512298584
+      ],
+      "unconstrained_first_token_id": 32,
+      "unconstrained_first_token": "A",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 209,
+      "seconds": 0.13878769999791984
+    },
+    {
+      "id": "eval-provenance-04",
+      "choice": "B",
+      "choice_logits": [
+        20.403465270996094,
+        24.066585540771484,
+        23.8188533782959,
+        20.29271697998047
+      ],
+      "conditional_choice_probabilities": [
+        0.014023926109075546,
+        0.5466917753219604,
+        0.4267306327819824,
+        0.012553715147078037
+      ],
+      "unconstrained_first_token_id": 33,
+      "unconstrained_first_token": "B",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 199,
+      "seconds": 0.13149290000001201
+    },
+    {
+      "id": "eval-provenance-05",
+      "choice": "C",
+      "choice_logits": [
+        19.67918586730957,
+        20.23576545715332,
+        24.55406379699707,
+        21.05697250366211
+      ],
+      "conditional_choice_probabilities": [
+        0.007263800594955683,
+        0.012673115357756615,
+        0.9512540102005005,
+        0.028809059411287308
+      ],
+      "unconstrained_first_token_id": 34,
+      "unconstrained_first_token": "C",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 209,
+      "seconds": 0.12955299999885028
+    },
+    {
+      "id": "eval-provenance-06",
+      "choice": "A",
+      "choice_logits": [
+        22.87310218811035,
+        20.99721908569336,
+        20.98482322692871,
+        22.34927749633789
+      ],
+      "conditional_choice_probabilities": [
+        0.5272029638290405,
+        0.08077782392501831,
+        0.07978270202875137,
+        0.3122365176677704
+      ],
+      "unconstrained_first_token_id": 32,
+      "unconstrained_first_token": "A",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 199,
+      "seconds": 0.14136579999831156
+    },
+    {
+      "id": "eval-provenance-07",
+      "choice": "A",
+      "choice_logits": [
+        24.558574676513672,
+        21.054256439208984,
+        19.718658447265625,
+        21.130849838256836
+      ],
+      "conditional_choice_probabilities": [
+        0.9341989755630493,
+        0.028088809922337532,
+        0.0073873805813491344,
+        0.03032476082444191
+      ],
+      "unconstrained_first_token_id": 32,
+      "unconstrained_first_token": "A",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 210,
+      "seconds": 0.17954420000023674
+    },
+    {
+      "id": "eval-coding-00",
+      "choice": "A",
+      "choice_logits": [
+        24.677324295043945,
+        19.577117919921875,
+        22.314964294433594,
+        21.73407745361328
+      ],
+      "conditional_choice_probabilities": [
+        0.8673121333122253,
+        0.00528669124469161,
+        0.08169876784086227,
+        0.04570245370268822
+      ],
+      "unconstrained_first_token_id": 32,
+      "unconstrained_first_token": "A",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 128,
+      "seconds": 0.15316970000276342
+    },
+    {
+      "id": "eval-coding-01",
+      "choice": "B",
+      "choice_logits": [
+        21.66797637939453,
+        26.734909057617188,
+        19.24599266052246,
+        21.25822639465332
+      ],
+      "conditional_choice_probabilities": [
+        0.006232882849872112,
+        0.9890764951705933,
+        0.0005531397182494402,
+        0.0041374885477125645
+      ],
+      "unconstrained_first_token_id": 33,
+      "unconstrained_first_token": "B",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 119,
+      "seconds": 0.1351202000005287
+    },
+    {
+      "id": "eval-coding-02",
+      "choice": "A",
+      "choice_logits": [
+        25.074325561523438,
+        21.012361526489258,
+        24.75554084777832,
+        22.331945419311523
+      ],
+      "conditional_choice_probabilities": [
+        0.5528942942619324,
+        0.009518171660602093,
+        0.40197184681892395,
+        0.0356157012283802
+      ],
+      "unconstrained_first_token_id": 32,
+      "unconstrained_first_token": "A",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 124,
+      "seconds": 0.14871869999842602
+    },
+    {
+      "id": "eval-coding-03",
+      "choice": "C",
+      "choice_logits": [
+        19.690898895263672,
+        19.888530731201172,
+        26.117277145385742,
+        23.651811599731445
+      ],
+      "conditional_choice_probabilities": [
+        0.00148664484731853,
+        0.0018114970298483968,
+        0.9186452031135559,
+        0.07805661857128143
+      ],
+      "unconstrained_first_token_id": 34,
+      "unconstrained_first_token": "C",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 123,
+      "seconds": 0.24499619999915012
+    },
+    {
+      "id": "eval-coding-04",
+      "choice": "A",
+      "choice_logits": [
+        26.33384132385254,
+        20.263620376586914,
+        22.852998733520508,
+        20.660526275634766
+      ],
+      "conditional_choice_probabilities": [
+        0.9647587537765503,
+        0.0022292318753898144,
+        0.029696686193346977,
+        0.003315349342301488
+      ],
+      "unconstrained_first_token_id": 32,
+      "unconstrained_first_token": "A",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 124,
+      "seconds": 0.21486999999979162
+    },
+    {
+      "id": "eval-coding-05",
+      "choice": "D",
+      "choice_logits": [
+        21.73810386657715,
+        22.56899070739746,
+        20.768339157104492,
+        25.126062393188477
+      ],
+      "conditional_choice_probabilities": [
+        0.03004809468984604,
+        0.06897100061178207,
+        0.011393404565751553,
+        0.8895874619483948
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 122,
+      "seconds": 0.21315540000068722
+    },
+    {
+      "id": "eval-coding-06",
+      "choice": "C",
+      "choice_logits": [
+        21.504823684692383,
+        18.87462043762207,
+        26.198829650878906,
+        21.948637008666992
+      ],
+      "conditional_choice_probabilities": [
+        0.008934888988733292,
+        0.0006438822019845247,
+        0.9764950275421143,
+        0.013926271349191666
+      ],
+      "unconstrained_first_token_id": 34,
+      "unconstrained_first_token": "C",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 127,
+      "seconds": 0.1717422000001534
+    },
+    {
+      "id": "eval-coding-07",
+      "choice": "D",
+      "choice_logits": [
+        24.36178970336914,
+        21.49066925048828,
+        20.804166793823242,
+        25.114736557006836
+      ],
+      "conditional_choice_probabilities": [
+        0.3116828501224518,
+        0.017652291804552078,
+        0.008884989656507969,
+        0.6617798805236816
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 121,
+      "seconds": 0.1655544999994163
+    },
+    {
+      "id": "eval-coding-08",
+      "choice": "A",
+      "choice_logits": [
+        26.320974349975586,
+        20.371280670166016,
+        22.53691291809082,
+        21.663984298706055
+      ],
+      "conditional_choice_probabilities": [
+        0.9663405418395996,
+        0.002518900902941823,
+        0.02196510322391987,
+        0.009175402112305164
+      ],
+      "unconstrained_first_token_id": 32,
+      "unconstrained_first_token": "A",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 121,
+      "seconds": 0.3075045000005048
+    },
+    {
+      "id": "eval-coding-09",
+      "choice": "D",
+      "choice_logits": [
+        23.382123947143555,
+        23.395389556884766,
+        20.53278923034668,
+        23.729644775390625
+      ],
+      "conditional_choice_probabilities": [
+        0.2867966890335083,
+        0.290626585483551,
+        0.016600599512457848,
+        0.40597614645957947
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 129,
+      "seconds": 0.18152099999861093
+    },
+    {
+      "id": "eval-coding-10",
+      "choice": "C",
+      "choice_logits": [
+        17.140409469604492,
+        16.191116333007812,
+        25.876956939697266,
+        17.162382125854492
+      ],
+      "conditional_choice_probabilities": [
+        0.00016054531442932785,
+        6.2133367464412e-05,
+        0.9996132254600525,
+        0.0001641119597479701
+      ],
+      "unconstrained_first_token_id": 34,
+      "unconstrained_first_token": "C",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 118,
+      "seconds": 0.20258680000188178
+    },
+    {
+      "id": "eval-coding-11",
+      "choice": "D",
+      "choice_logits": [
+        23.83062744140625,
+        21.7211856842041,
+        21.246627807617188,
+        25.03486442565918
+      ],
+      "conditional_choice_probabilities": [
+        0.22070226073265076,
+        0.026772433891892433,
+        0.01665673963725567,
+        0.7358685731887817
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 125,
+      "seconds": 0.20169760000135284
+    },
+    {
+      "id": "eval-tool-00",
+      "choice": "B",
+      "choice_logits": [
+        22.375120162963867,
+        22.986305236816406,
+        20.90955924987793,
+        22.820497512817383
+      ],
+      "conditional_choice_probabilities": [
+        0.21576642990112305,
+        0.39757415652275085,
+        0.04983091354370117,
+        0.33682847023010254
+      ],
+      "unconstrained_first_token_id": 33,
+      "unconstrained_first_token": "B",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 134,
+      "seconds": 0.8744133000000147
+    },
+    {
+      "id": "eval-tool-01",
+      "choice": "C",
+      "choice_logits": [
+        20.30816078186035,
+        18.17891502380371,
+        23.76559066772461,
+        20.67182731628418
+      ],
+      "conditional_choice_probabilities": [
+        0.029160620644688606,
+        0.003467983566224575,
+        0.9254211783409119,
+        0.041950300335884094
+      ],
+      "unconstrained_first_token_id": 34,
+      "unconstrained_first_token": "C",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 133,
+      "seconds": 0.7191071999986889
+    },
+    {
+      "id": "eval-tool-02",
+      "choice": "D",
+      "choice_logits": [
+        21.890275955200195,
+        20.807035446166992,
+        19.120128631591797,
+        23.20340347290039
+      ],
+      "conditional_choice_probabilities": [
+        0.19535322487354279,
+        0.06612645089626312,
+        0.012239420786499977,
+        0.7262808680534363
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 131,
+      "seconds": 0.5083792000004905
+    },
+    {
+      "id": "eval-tool-03",
+      "choice": "C",
+      "choice_logits": [
+        21.99603271484375,
+        19.71509552001953,
+        23.429643630981445,
+        21.91606330871582
+      ],
+      "conditional_choice_probabilities": [
+        0.1607937216758728,
+        0.016431251540780067,
+        0.6743391752243042,
+        0.14843584597110748
+      ],
+      "unconstrained_first_token_id": 34,
+      "unconstrained_first_token": "C",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 143,
+      "seconds": 0.9399851000016497
+    },
+    {
+      "id": "eval-tool-04",
+      "choice": "D",
+      "choice_logits": [
+        21.76569366455078,
+        21.351911544799805,
+        21.769947052001953,
+        22.773914337158203
+      ],
+      "conditional_choice_probabilities": [
+        0.18497531116008759,
+        0.12229549139738083,
+        0.18576374650001526,
+        0.5069655179977417
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 130,
+      "seconds": 0.6715586999998777
+    },
+    {
+      "id": "eval-tool-05",
+      "choice": "C",
+      "choice_logits": [
+        20.089874267578125,
+        18.75328826904297,
+        22.731552124023438,
+        19.457521438598633
+      ],
+      "conditional_choice_probabilities": [
+        0.06316794455051422,
+        0.01659681648015976,
+        0.8866716623306274,
+        0.03356366232037544
+      ],
+      "unconstrained_first_token_id": 34,
+      "unconstrained_first_token": "C",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 142,
+      "seconds": 0.48955470000146306
+    },
+    {
+      "id": "eval-tool-06",
+      "choice": "B",
+      "choice_logits": [
+        21.364601135253906,
+        24.387624740600586,
+        20.822973251342773,
+        22.28770637512207
+      ],
+      "conditional_choice_probabilities": [
+        0.040564268827438354,
+        0.8337313532829285,
+        0.02360030822455883,
+        0.10210409760475159
+      ],
+      "unconstrained_first_token_id": 33,
+      "unconstrained_first_token": "B",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 134,
+      "seconds": 0.7200460999993084
+    },
+    {
+      "id": "eval-tool-07",
+      "choice": "D",
+      "choice_logits": [
+        22.267284393310547,
+        20.724382400512695,
+        22.282480239868164,
+        23.051109313964844
+      ],
+      "conditional_choice_probabilities": [
+        0.226300448179245,
+        0.048373956233263016,
+        0.22976554930210114,
+        0.49556002020835876
+      ],
+      "unconstrained_first_token_id": 35,
+      "unconstrained_first_token": "D",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 130,
+      "seconds": 0.5670733000006294
+    },
+    {
+      "id": "eval-tool-08",
+      "choice": "B",
+      "choice_logits": [
+        19.529605865478516,
+        23.933298110961914,
+        19.948598861694336,
+        20.776874542236328
+      ],
+      "conditional_choice_probabilities": [
+        0.011395568959414959,
+        0.9316123127937317,
+        0.01732615940272808,
+        0.03966594859957695
+      ],
+      "unconstrained_first_token_id": 33,
+      "unconstrained_first_token": "B",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 138,
+      "seconds": 0.359997999999905
+    },
+    {
+      "id": "eval-tool-09",
+      "choice": "C",
+      "choice_logits": [
+        19.247133255004883,
+        18.024242401123047,
+        23.565195083618164,
+        19.311111450195312
+      ],
+      "conditional_choice_probabilities": [
+        0.012919314205646515,
+        0.0038031612057238817,
+        0.9695046544075012,
+        0.013772884383797646
+      ],
+      "unconstrained_first_token_id": 34,
+      "unconstrained_first_token": "C",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 141,
+      "seconds": 0.6434602000008454
+    },
+    {
+      "id": "eval-tool-10",
+      "choice": "B",
+      "choice_logits": [
+        20.33977508544922,
+        24.46189308166504,
+        18.76504898071289,
+        20.60719108581543
+      ],
+      "conditional_choice_probabilities": [
+        0.015575496479868889,
+        0.9608486890792847,
+        0.0032251288648694754,
+        0.02035069279372692
+      ],
+      "unconstrained_first_token_id": 33,
+      "unconstrained_first_token": "B",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 136,
+      "seconds": 0.4223697999987053
+    },
+    {
+      "id": "eval-tool-11",
+      "choice": "C",
+      "choice_logits": [
+        22.877283096313477,
+        19.144683837890625,
+        23.110363006591797,
+        21.918066024780273
+      ],
+      "conditional_choice_probabilities": [
+        0.37458717823028564,
+        0.00896407850086689,
+        0.47290968894958496,
+        0.14353908598423004
+      ],
+      "unconstrained_first_token_id": 34,
+      "unconstrained_first_token": "C",
+      "unconstrained_first_token_is_label": true,
+      "input_tokens": 136,
+      "seconds": 0.4316495999992185
+    }
+  ],
+  "dimensions": {
+    "absence": {
+      "correct": 8,
+      "total": 8,
+      "rate": 1.0
+    },
+    "censoring": {
+      "correct": 4,
+      "total": 8,
+      "rate": 0.5
+    },
+    "coding": {
+      "correct": 8,
+      "total": 12,
+      "rate": 0.6666666666666666
+    },
+    "confidence": {
+      "correct": 8,
+      "total": 8,
+      "rate": 1.0
+    },
+    "permission": {
+      "correct": 8,
+      "total": 8,
+      "rate": 1.0
+    },
+    "provenance": {
+      "correct": 7,
+      "total": 8,
+      "rate": 0.875
+    },
+    "revision": {
+      "correct": 8,
+      "total": 8,
+      "rate": 1.0
+    },
+    "tool": {
+      "correct": 6,
+      "total": 12,
+      "rate": 0.5
+    }
+  },
+  "scope": "Conditional choice-logit proxy; non-label argmax is separately reported, not hidden",
+  "format_first_token_rate": 1.0,
+  "total_forward_seconds": 18.209916100018745,
+  "total_input_tokens": 12267
+}

@@ -1,0 +1,33 @@
+{
+  "gating_assertions": 1,
+  "gating_passed": 1,
+  "observations": [
+    {
+      "name": "snapshot_row_linkage_mismatch",
+      "passed": true,
+      "accepted_count": 4,
+      "structural_provenance": {
+        "status": "FAIL",
+        "details": {
+          "exact_snapshot_linkage": false
+        }
+      },
+      "verification_result": "NEEDS_REVISION"
+    },
+    {
+      "name": "candidate_id_registry_out_of_scope",
+      "classification": "scope_observation",
+      "accepted_count": 4,
+      "limitation": "Registry checks experience_id/source_memory_id, not candidate_id; this is explicitly documented, not claimed complete evaluation exclusion."
+    },
+    {
+      "name": "contradiction_semantics_cross_revision_out_of_scope",
+      "classification": "scope_observation",
+      "accepted_count": 2,
+      "limitation": "Conflict detection compares revised_claim strings only within the same typed memory/revision key or an explicit unresolved flag; it is not a semantic contradiction reasoner."
+    }
+  ],
+  "python_version": "3.11.11 (main, Mar 11 2025, 17:17:30) [MSC v.1943 64 bit (AMD64)]",
+  "compiler_module_path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\tmp\\probes\\r2-auditor\\audit-v2-cb8ab69a69564fd8bb99182ae6aeba83\\execution-copy\\compiler.py",
+  "formatter_module_path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\tmp\\probes\\r2-auditor\\audit-v2-cb8ab69a69564fd8bb99182ae6aeba83\\execution-copy\\formatter.py"
+}

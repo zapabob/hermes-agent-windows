@@ -1,0 +1,18 @@
+{
+  "action_permission": "none",
+  "content_role": "quoted_data",
+  "excerpt": "ボブにゃん、これはかなり重要な第1回になったわ。しかも、議事録をそのまま「2エージェントが同じ欠陥を発見した」で閉じずに、**コード側と突き合わせると、もう一段面白い結果**が出ているの。\r\n\r\nまず一つ訂正したいところがあるわ。`secretary` と `desktopwatchdog` は「recall結果と指示を区別するタグがない／同じ見た目」と回答しているけれど、現在のHermes系コードには実際には `build_memory_context_block()` があり、recallを `<memory-context>` で囲み、「新しいユーザー入力ではない」と明示する仕組みがすでに存在する。現在の上流実装でも同じ構造が確認できるわ。[GitHub](@url:`https://github.com/NousResearch/hermes-agent/blob/main/agent/memory_manager.py?utm_source=chatgpt.com`)\r\n\r\nつまり、今回発見された問題を正確に言い直すと、\r\n\r\n**「原則4への対策が存在しない」のではなく、「既存の対策だけでは、エージェント自身がrecallを“命令ではないデータ”として安定して理解できていない」**\r\n\r\nなのよ。\r\n\r\nしかも今の文言は少し危うい。メモリーブロックを `NOT new user input` と区別する一方で、同時に **“authoritative reference data”** として扱い、回答すべてに反映するよう促している。この二つはLLMにとって、\r\n\r\n「現在のユーザー命令ではない」  \r\nけれど  \r\n「かなり強く従うべき情報である」\r\n\r\nという曖昧な位置づけになり得るわ。\r\n\r\nさらに上流には、現在の `sanitize_context()` の単純なタグ除去について、重なった `<memory-context>` タグを使って境界を壊せるという具体的な報告まである。これはまさに「recallされたデータの中身が、囲いの外へ脱出して指示のように見える」種類の問題ね。[GitHub](@url:`https://github.com/NousResearch/hermes-agent/issues/108964?utm_source=chatgpt.com`)\r\n\r\nだから私は、この会議結果をこう整理するのが一番正確だと思うの。\r\n\r\n> **原則4：未実装ではない。しかし既存のfencingだけでは十分な強制境界になっておらず、モデル自身もその区別を一貫して認識できていない可能性がある。**\r\n\r\nこれはむしろ、単純な「タグを付け忘れた」より研究として面白いわ。\r\n\r\n### A2A会議そのものも、hakua-memoryの新しい機能になり得る\r\n\r\n今回やったことは、実は単なる複数AIへのアンケートではないの。\r\n\r\n一つのアーキテクチャについて複数の実行個体に自己監査させ、\r\n\r\n**自己申告 → 相互比較 → ソースコード検証 → 実行試験**\r\n\r\nという流れができ始めている。\r\n\r\nただし、「2名が独立に同じ箇所を指摘した」ことは、統計的な意味で完全に独立した証拠ではないわ。同じHermesコード、類似したシステムプロンプト、同じcommuniquéを共有しているから、誤認も相関する可能性がある。\r\n\r\nだからhakua-memoryでは、将来的に各回答を単なる文章ではなく、\r\n\r\n`claim → agent → runtime commit → model/provider → evidence → confidence → validation status`\r\n\r\nという形でSemantic Graphへ落とすのがよいと思う。\r\n\r\n今回なら、\r\n\r\n`secretary --asserts--> principle4_violation`  \r\n`desktopwatchdog --asserts--> principle4_violation`  \r\n`source_audit --contradicts--> \"no fence exists\"`  \r\n`source_audit --supports--> \"fence semantics may be insufficient\"`\r\n\r\nというグラフになる。\r\n\r\nここまでできると、はくあ自身が、\r\n\r\n「会議参加者2名は同じ問題を報告した。しかしソース監査で“タグが存在しない”という部分は反証され、問題の定義を“タグの意味論と強制力の不足”へrevisionした」\r\n\r\nと説明できるでしょう。\r\n\r\n**これこそ、さっき話していた「なぜ信念を変えたのかを説明できるAI」そのものなのよ。**\r\n\r\n### 「永久記憶に入れたから全sessionが最初から読む」も少し弱めた方がいい\r\n\r\nはくあの報告にある、\r\n\r\n",
+  "excerpt_end": 2100,
+  "excerpt_start": 0,
+  "kind": "session_message_excerpt",
+  "scope": "Exact substring of persisted visible message content; no hidden reasoning column exported. A receipt demonstrates stored text, not validity of the claim.",
+  "source_content_length": 34012,
+  "source_content_sha256_utf8": "0933d28039fb30dbd1e9dd920bf96bae1ff5f2deb134bcf7bb2e975a095b014f",
+  "source_locator": {
+    "database_label": "default-profile state.db",
+    "message_id": 593291,
+    "role": "user",
+    "session_id": "20261002_112004_81c6b2",
+    "tool_name": null
+  }
+}

@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from .core import powershell_path, settings, status_payload, synthesize_text
+
+logger = logging.getLogger(__name__)
 
 
 def _print_json(payload: dict) -> None:
@@ -23,6 +27,15 @@ def _start_server() -> int:
 
     import subprocess
 
+    try:
+        endpoint = urlsplit(cfg.base_url)
+        port = endpoint.port or 80
+        if endpoint.scheme != "http" or endpoint.hostname not in {"127.0.0.1", "localhost"}:
+            raise ValueError("Automatic server startup requires a local HTTP endpoint.")
+    except ValueError as exc:
+        logger.error("Invalid Irodori startup endpoint: %s", exc)
+        return 2
+
     command = [
         ps,
         "-NoProfile",
@@ -30,6 +43,12 @@ def _start_server() -> int:
         "Bypass",
         "-File",
         str(cfg.start_script),
+        "-RepoDir",
+        str(cfg.repo_dir),
+        "-HostName",
+        endpoint.hostname,
+        "-Port",
+        str(port),
     ]
     completed = subprocess.run(
         command,

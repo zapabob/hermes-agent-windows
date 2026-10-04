@@ -1,0 +1,131 @@
+{
+  "record_type": "audit_v2_recovery_receipt",
+  "created_at": "2026-10-03T23:39:58.025957+00:00",
+  "artifact": "hakua-epistemic-v0-candidate-r2",
+  "artifact_revision": 2,
+  "zip_sha256": "52b4cdd858a7dc0bee15f38c41f6abdbd5cafb1d7594bc94f5c5f188074ad331",
+  "async_delegation_id": "deleg_39231ad9",
+  "async_execution_status": "ERROR",
+  "async_failure_reason": "Stalled; no final completion event",
+  "runtime_root_cause": "UNDETERMINED",
+  "audit_report_status": "RECOVERED_FROM_DISK_AND_VERIFIED",
+  "audit_verdict": "NEEDS_REVISION",
+  "audit_verdict_source": {
+    "path": "C:/Users/downl/Documents/New project/hermes-agent/rsi/audits/hakua-epistemic-v0-candidate-r2/audit-v2/independent_artifact_audit_v2.json",
+    "sha256": "be2610bb0038e4888707bba45b957d7d2809e71459aeafdafb9dfcdea78b76cf",
+    "delivery_copy": "C:/Users/downl/Downloads/hakua-rsi-r2-independent-audit-v2.json"
+  },
+  "axes": {
+    "causal_validity": "NEEDS_REVISION",
+    "claim_strength": "PASS",
+    "generalizability": "NEEDS_REVISION",
+    "instruction_boundary": "PASS",
+    "provenance_integrity": "NEEDS_REVISION",
+    "artifact_integrity": "NEEDS_REVISION"
+  },
+  "markdown_report": {
+    "path": "C:/Users/downl/Documents/New project/hermes-agent/rsi/audits/hakua-epistemic-v0-candidate-r2/audit-v2/independent_artifact_audit_v2.md",
+    "sha256": "2fd7186cae18d28c06bdb232b7431dff4c35518578fad90ea906c5bd859e42c0",
+    "delivery_copy": "C:/Users/downl/Downloads/hakua-rsi-r2-independent-audit-v2.md"
+  },
+  "evidence_registry_verified_count": 13,
+  "preserved_evidence": [
+    {
+      "evidence_id": "R01",
+      "original_path": "C:/Users/downl/Documents/New project/hermes-agent/tmp/probes/r2-auditor/audit-v2-cb8ab69a69564fd8bb99182ae6aeba83/audit_state.json",
+      "preserved_path": "C:/Users/downl/Documents/New project/hermes-agent/rsi/audits/hakua-epistemic-v0-candidate-r2/audit-v2/recovered-evidence/R01-audit_state.json",
+      "sha256": "5e81331cd5ae0a6d6641af166dfbcfdb83a7917d98756990871a76658e25edce"
+    },
+    {
+      "evidence_id": "R02",
+      "original_path": "C:/Users/downl/Documents/New project/hermes-agent/tmp/probes/r2-auditor/audit-v2-cb8ab69a69564fd8bb99182ae6aeba83/integrity_receipt.json",
+      "preserved_path": "C:/Users/downl/Documents/New project/hermes-agent/rsi/audits/hakua-epistemic-v0-candidate-r2/audit-v2/recovered-evidence/R02-integrity_receipt.json",
+      "sha256": "a99ac980846b156788009cfc8ee2fbc65c8e9a72f70f22a1231ae2dbff4c9b44"
+    },
+    {
+      "evidence_id": "R03",
+      "original_path": "C:/Users/downl/Documents/New project/hermes-agent/tmp/probes/r2-auditor/audit-v2-cb8ab69a69564fd8bb99182ae6aeba83/execution_receipts.json",
+      "preserved_path": "C:/Users/downl/Documents/New project/hermes-agent/rsi/audits/hakua-epistemic-v0-candidate-r2/audit-v2/recovered-evidence/R03-execution_receipts.json",
+      "sha256": "89397dbc10a5fcf04abd1c621a6b02820842a0b114fbc74e113a18564124f4be"
+    },
+    {
+      "evidence_id": "R04",
+      "original_path": "C:/Users/downl/Documents/New project/hermes-agent/tmp/probes/r2-auditor/audit-v2-cb8ab69a69564fd8bb99182ae6aeba83/independent_probes.py",
+      "preserved_path": "C:/Users/downl/Documents/New project/hermes-agent/rsi/audits/hakua-epistemic-v0-candidate-r2/audit-v2/recovered-evidence/R04-independent_probes.py",
+      "sha256": "cc4bb17b1c0ca536aabbea0e7d5bd3790805f869b29bff1827d3981d531e4dca"
+    },
+    {
+      "evidence_id": "R05",
+      "original_path": "C:/Users/downl/Documents/New project/hermes-agent/tmp/probes/r2-auditor/audit-v2-cb8ab69a69564fd8bb99182ae6aeba83/independent_probe_execution.json",
+      "preserved_path": "C:/Users/downl/Documents/New project/hermes-agent/rsi/audits/hakua-epistemic-v0-candidate-r2/audit-v2/recovered-evidence/R05-independent_probe_execution.json",
+      "sha256": "712c4d9f1d04df04fa712227b4f86006d682f08c487c9b509f49b9e3b1886bcb"
+    },
+    {
+      "evidence_id": "R06",
+      "original_path": "C:/Users/downl/Documents/New project/hermes-agent/tmp/probes/r2-auditor/audit-v2-cb8ab69a69564fd8bb99182ae6aeba83/independent_probe_results.json",
+      "preserved_path": "C:/Users/downl/Documents/New project/hermes-agent/rsi/audits/hakua-epistemic-v0-candidate-r2/audit-v2/recovered-evidence/R06-independent_probe_results.json",
+      "sha256": "de9b4b65d0b6efa1463b61f539aaa0b62cc7fd93bea7a2247c3d2b9575928e20"
+    },
+    {
+      "evidence_id": "R07",
+      "original_path": "C:/Users/downl/Documents/New project/hermes-agent/tmp/probes/r2-auditor/audit-v2-cb8ab69a69564fd8bb99182ae6aeba83/source_validation.py",
+      "preserved_path": "C:/Users/downl/Documents/New project/hermes-agent/rsi/audits/hakua-epistemic-v0-candidate-r2/audit-v2/recovered-evidence/R07-source_validation.py",
+      "sha256": "0db526c6c167baef087f096f7174df7e0b74b471a444559fd6067340609e1388"
+    },
+    {
+      "evidence_id": "R08",
+      "original_path": "C:/Users/downl/Documents/New project/hermes-agent/tmp/probes/r2-auditor/audit-v2-cb8ab69a69564fd8bb99182ae6aeba83/source_validation_execution.json",
+      "preserved_path": "C:/Users/downl/Documents/New project/hermes-agent/rsi/audits/hakua-epistemic-v0-candidate-r2/audit-v2/recovered-evidence/R08-source_validation_execution.json",
+      "sha256": "79933aecbb7486a87dcf42ecc7d694f1d9ce896e99879dc61ddb039d19f28564"
+    },
+    {
+      "evidence_id": "R09",
+      "original_path": "C:/Users/downl/Documents/New project/hermes-agent/tmp/probes/r2-auditor/audit-v2-cb8ab69a69564fd8bb99182ae6aeba83/source_validation_results.json",
+      "preserved_path": "C:/Users/downl/Documents/New project/hermes-agent/rsi/audits/hakua-epistemic-v0-candidate-r2/audit-v2/recovered-evidence/R09-source_validation_results.json",
+      "sha256": "c059e21ca765a6d5d9b4741625dacb44bca0149d74007c23db5ad5e1b3015cbe"
+    },
+    {
+      "evidence_id": "R10",
+      "original_path": "C:/Users/downl/Documents/New project/hermes-agent/tmp/probes/r2-auditor/audit-v2-cb8ab69a69564fd8bb99182ae6aeba83/parent_validation_results.json",
+      "preserved_path": "C:/Users/downl/Documents/New project/hermes-agent/rsi/audits/hakua-epistemic-v0-candidate-r2/audit-v2/recovered-evidence/R10-parent_validation_results.json",
+      "sha256": "712f1f8ee384cfc141f87cda6508db2356c182137821ac9ec67c5be99f976390"
+    },
+    {
+      "evidence_id": "R11",
+      "original_path": "C:/Users/downl/Documents/New project/hermes-agent/tmp/probes/r2-auditor/audit-v2-cb8ab69a69564fd8bb99182ae6aeba83/additional_probes.py",
+      "preserved_path": "C:/Users/downl/Documents/New project/hermes-agent/rsi/audits/hakua-epistemic-v0-candidate-r2/audit-v2/recovered-evidence/R11-additional_probes.py",
+      "sha256": "bd9a80e780f556b7ba803fac87d3824382ad81ab45ad8bcfcc50f8a52f700d25"
+    },
+    {
+      "evidence_id": "R12",
+      "original_path": "C:/Users/downl/Documents/New project/hermes-agent/tmp/probes/r2-auditor/audit-v2-cb8ab69a69564fd8bb99182ae6aeba83/additional_probe_execution.json",
+      "preserved_path": "C:/Users/downl/Documents/New project/hermes-agent/rsi/audits/hakua-epistemic-v0-candidate-r2/audit-v2/recovered-evidence/R12-additional_probe_execution.json",
+      "sha256": "ed99ac52f132f62708e477f455e3373e764c3972083c13a1f186ae2ee6c21ccc"
+    },
+    {
+      "evidence_id": "R13",
+      "original_path": "C:/Users/downl/Documents/New project/hermes-agent/tmp/probes/r2-auditor/audit-v2-cb8ab69a69564fd8bb99182ae6aeba83/additional_probe_results.json",
+      "preserved_path": "C:/Users/downl/Documents/New project/hermes-agent/rsi/audits/hakua-epistemic-v0-candidate-r2/audit-v2/recovered-evidence/R13-additional_probe_results.json",
+      "sha256": "5dac8c3fa23e1af1f32f9b3639542251b90da597d033e3231c8e00476224e014"
+    }
+  ],
+  "parent_corroboration": {
+    "receipt_path": "C:/Users/downl/Documents/New project/hermes-agent/rsi/audits/hakua-epistemic-v0-candidate-r2/audit-v2/parent_recovery_execution.json",
+    "sha256": "5dda3090c3ec7327b8d0a14b499459b0f5e1af664dd3ed6ac6f6acf300cca203",
+    "scope": "Producer-side repeat checks, not another independent audit"
+  },
+  "level_1_independently_audited": false,
+  "human_approval": "PENDING",
+  "level_2": "NOT_REACHED",
+  "automatic_promotion_allowed": false,
+  "activation_status": "STOP_AND_REPORT",
+  "training_status": "NOT_STARTED_BY_THIS_WORKFLOW",
+  "next_execution": "WAIT_FOR_EXPLICIT_USER_REQUEST",
+  "audited_zip_modified_by_recovery": false,
+  "original_audit_reports_modified_by_recovery": false,
+  "interpretation_limits": [
+    "Runtime completion ERROR is preserved; recovering a report does not convert it to successful worker execution.",
+    "Stage-2 learning effects and unknown-task generalization are not claimed; their absence is not an instruction to start training.",
+    "Separate context shares host/tools/model substrate; this is not human approval or complete independent institutional validation."
+  ]
+}

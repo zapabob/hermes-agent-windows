@@ -29,7 +29,11 @@ try {
     if ([string]::IsNullOrWhiteSpace($StartScriptPath)) {
         $StartScriptPath = Join-Path $PSScriptRoot "start-irodori-tts.ps1"
     }
-    & $StartScriptPath | Out-Null
+    $endpoint = [Uri]$BaseUrl
+    if ($endpoint.Scheme -ne "http" -or $endpoint.Host -notin @("127.0.0.1", "localhost")) {
+        throw "Automatic server startup is limited to local HTTP endpoints."
+    }
+    & $StartScriptPath -HostName $endpoint.Host -Port $endpoint.Port | Out-Null
 }
 
 $text = Get-Content -LiteralPath $InputPath -Raw -Encoding UTF8

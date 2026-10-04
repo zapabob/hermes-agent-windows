@@ -1,0 +1,206 @@
+{
+  "actual_artifact_verification": {
+    "cli_exit_code": 2,
+    "source_provenance": "ERROR",
+    "verdict": "NEEDS_REVISION"
+  },
+  "checked_at": "2026-10-03T23:01:28.561086+00:00",
+  "codex_review": "ERROR: configured local responses endpoint 127.0.0.1:17841 refused connection; exit 1; no review findings available",
+  "compiled_file_sha256": "44e874c25e72f53b5d1f77403d1f4062d890c3206bf2b91216f1e17c8dc46f68",
+  "dataset_sha256": "8d9fb634b5892b39834b5ed86b8f3aa1f142b650f8a85a626e9ac327c16eff72",
+  "declared_reject_codes": [
+    "REJECT_MISSING_PROVENANCE",
+    "REJECT_PERMISSION_CLAIM",
+    "REJECT_HOLDOUT_ORIGIN",
+    "REJECT_SUPERSEDED_UNSTABLE",
+    "REJECT_DUPLICATE",
+    "REJECT_CONTRADICTORY_UNRESOLVED",
+    "REJECT_SCHEMA_VIOLATION"
+  ],
+  "executions": [
+    {
+      "argv": [
+        "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts\\python.exe",
+        "-B",
+        "-m",
+        "unittest",
+        "-v",
+        "test_compiler"
+      ],
+      "exit_code": 0,
+      "output_log": "execution/final_unit.log",
+      "step": "final_unit"
+    },
+    {
+      "argv": [
+        "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "test_compiler.py",
+        "-q",
+        "-o",
+        "addopts=",
+        "-p",
+        "no:randomly",
+        "-p",
+        "no:cacheprovider"
+      ],
+      "exit_code": 0,
+      "output_log": "execution/final_pytest.log",
+      "step": "final_pytest"
+    },
+    {
+      "argv": [
+        "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts\\python.exe",
+        "-B",
+        "compiler.py"
+      ],
+      "exit_code": 2,
+      "output_log": "execution/real_default_cli.log",
+      "step": "real_default_cli"
+    }
+  ],
+  "exercised_reject_codes": [
+    "REJECT_CONTRADICTORY_UNRESOLVED",
+    "REJECT_DUPLICATE",
+    "REJECT_HOLDOUT_ORIGIN",
+    "REJECT_MISSING_PROVENANCE",
+    "REJECT_PERMISSION_CLAIM",
+    "REJECT_SCHEMA_VIOLATION",
+    "REJECT_SUPERSEDED_UNSTABLE"
+  ],
+  "fixtures": [
+    {
+      "accepted_count": 0,
+      "case": "missing-provenance",
+      "expected_reject_codes": [
+        "REJECT_MISSING_PROVENANCE"
+      ],
+      "observed_reject_codes": [
+        "REJECT_MISSING_PROVENANCE"
+      ],
+      "status": "PASS"
+    },
+    {
+      "accepted_count": 0,
+      "case": "permission-claim",
+      "expected_reject_codes": [
+        "REJECT_PERMISSION_CLAIM"
+      ],
+      "observed_reject_codes": [
+        "REJECT_PERMISSION_CLAIM"
+      ],
+      "status": "PASS"
+    },
+    {
+      "accepted_count": 0,
+      "case": "holdout-flag",
+      "expected_reject_codes": [
+        "REJECT_HOLDOUT_ORIGIN"
+      ],
+      "observed_reject_codes": [
+        "REJECT_HOLDOUT_ORIGIN"
+      ],
+      "status": "PASS"
+    },
+    {
+      "accepted_count": 0,
+      "case": "unstable",
+      "expected_reject_codes": [
+        "REJECT_SUPERSEDED_UNSTABLE"
+      ],
+      "observed_reject_codes": [
+        "REJECT_SUPERSEDED_UNSTABLE"
+      ],
+      "status": "PASS"
+    },
+    {
+      "accepted_count": 0,
+      "case": "flagged-contradiction",
+      "expected_reject_codes": [
+        "REJECT_CONTRADICTORY_UNRESOLVED"
+      ],
+      "observed_reject_codes": [
+        "REJECT_CONTRADICTORY_UNRESOLVED"
+      ],
+      "status": "PASS"
+    },
+    {
+      "accepted_count": 0,
+      "case": "schema-type",
+      "expected_reject_codes": [
+        "REJECT_SCHEMA_VIOLATION"
+      ],
+      "observed_reject_codes": [
+        "REJECT_SCHEMA_VIOLATION"
+      ],
+      "status": "PASS"
+    },
+    {
+      "accepted_count": 1,
+      "case": "duplicate",
+      "expected_reject_codes": [
+        "REJECT_DUPLICATE"
+      ],
+      "observed_reject_codes": [
+        "REJECT_DUPLICATE"
+      ],
+      "status": "PASS"
+    },
+    {
+      "accepted_count": 0,
+      "case": "holdout-registry-experience_id",
+      "expected_reject_codes": [
+        "REJECT_HOLDOUT_ORIGIN"
+      ],
+      "observed_reject_codes": [
+        "REJECT_HOLDOUT_ORIGIN"
+      ],
+      "status": "PASS"
+    },
+    {
+      "accepted_count": 0,
+      "case": "holdout-registry-source_memory_id",
+      "expected_reject_codes": [
+        "REJECT_HOLDOUT_ORIGIN"
+      ],
+      "observed_reject_codes": [
+        "REJECT_HOLDOUT_ORIGIN"
+      ],
+      "status": "PASS"
+    },
+    {
+      "accepted_count": 0,
+      "case": "conflict-before-dedup",
+      "expected_reject_codes": [
+        "REJECT_CONTRADICTORY_UNRESOLVED",
+        "REJECT_CONTRADICTORY_UNRESOLVED"
+      ],
+      "observed_reject_codes": [
+        "REJECT_CONTRADICTORY_UNRESOLVED",
+        "REJECT_CONTRADICTORY_UNRESOLVED"
+      ],
+      "status": "PASS"
+    }
+  ],
+  "independent_artifact_audit": "PENDING",
+  "permutation_check": {
+    "distinct_dataset_sha": 1,
+    "distinct_example_orderings": 1,
+    "method": "exhaustive input permutations, not sampled; finite-snapshot evidence",
+    "permutations_tested": 24
+  },
+  "producer_verification_only": true,
+  "reject_fixture_count": 10,
+  "rules_never_exercised": [],
+  "snapshot_candidate_count": 4,
+  "static_checks": {
+    "black": "PASS",
+    "flake8": "PASS",
+    "full_repo_suite": "SKIP: isolated standalone revision, no Hermes runtime code modified",
+    "mypy": "SKIP: no static type checker configured for standalone artifact",
+    "print_calls_found": 0,
+    "python_syntax": "PASS",
+    "utf8_no_bom": "PASS"
+  }
+}

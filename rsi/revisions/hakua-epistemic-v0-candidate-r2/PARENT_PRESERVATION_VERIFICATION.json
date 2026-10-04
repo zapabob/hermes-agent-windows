@@ -1,0 +1,208 @@
+{
+  "baseline_file": "parent_preservation.json",
+  "checked_at": "2026-10-03T22:55:21.020942+00:00",
+  "checks": [
+    {
+      "actual_sha256": "5ab281294b79a33565e6f1b0705995a542cb0972b9847aa42278692c3af368aa",
+      "current_path": "doc/archive/hakua-epistemic-v0-candidate_audit_bundle.zip",
+      "expected_sha256": "5ab281294b79a33565e6f1b0705995a542cb0972b9847aa42278692c3af368aa",
+      "original_path": "hakua-epistemic-v0-candidate_audit_bundle.zip",
+      "relocated_by_concurrent_layout_commit": true,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "fff47401f250c8b5ccde002d2748bb691a2ec800709c74ff22b9f91fac4409c2",
+      "current_path": "rsi/CONSTITUTION.md",
+      "expected_sha256": "fff47401f250c8b5ccde002d2748bb691a2ec800709c74ff22b9f91fac4409c2",
+      "original_path": "rsi/CONSTITUTION.md",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "6b9d6c5cc75d8c1da38680429b6fe34acfdf2144505ce148002f9e83a6307bdd",
+      "current_path": "rsi/acceptance.yaml",
+      "expected_sha256": "6b9d6c5cc75d8c1da38680429b6fe34acfdf2144505ce148002f9e83a6307bdd",
+      "original_path": "rsi/acceptance.yaml",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "bab4d66f2fd0cefaf1400e868a3e40373fff29ca7916b3bd9a82d48bb5b84d02",
+      "current_path": "rsi/audit_bundle/AUDIT_CHECKLIST.json",
+      "expected_sha256": "bab4d66f2fd0cefaf1400e868a3e40373fff29ca7916b3bd9a82d48bb5b84d02",
+      "original_path": "rsi/audit_bundle/AUDIT_CHECKLIST.json",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "84b1c69910b46bf622a3356d9e68fdb90844d328e89b09cf3faf3f609a1dbce5",
+      "current_path": "rsi/audit_bundle/LINEAGE.json",
+      "expected_sha256": "84b1c69910b46bf622a3356d9e68fdb90844d328e89b09cf3faf3f609a1dbce5",
+      "original_path": "rsi/audit_bundle/LINEAGE.json",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "f84613b4bb65b32053c82252a3318e2086329745371ffc35b6b6fe48aa2be647",
+      "current_path": "rsi/audit_bundle/candidate.schema.json",
+      "expected_sha256": "f84613b4bb65b32053c82252a3318e2086329745371ffc35b6b6fe48aa2be647",
+      "original_path": "rsi/audit_bundle/candidate.schema.json",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "1bb30b76eadc47cfaeec7c46a74ce7acd58b9d04a1f5e18ac50486fa10791dbd",
+      "current_path": "rsi/audit_bundle/compiler.py",
+      "expected_sha256": "1bb30b76eadc47cfaeec7c46a74ce7acd58b9d04a1f5e18ac50486fa10791dbd",
+      "original_path": "rsi/audit_bundle/compiler.py",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "24993f247db8122e57e4e0400386a99eb7765967d607f67c6307b6d79f5d92b2",
+      "current_path": "rsi/audit_bundle/hakua-epistemic-v0-candidate/dataset_manifest.json",
+      "expected_sha256": "24993f247db8122e57e4e0400386a99eb7765967d607f67c6307b6d79f5d92b2",
+      "original_path": "rsi/audit_bundle/hakua-epistemic-v0-candidate/dataset_manifest.json",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "current_path": "rsi/audit_bundle/hakua-epistemic-v0-candidate/rejected_examples.json",
+      "expected_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "original_path": "rsi/audit_bundle/hakua-epistemic-v0-candidate/rejected_examples.json",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "e068485b5b6aec65fa990d0d3c165814480ddd85610f9fcedecaf4c58d466432",
+      "current_path": "rsi/audit_bundle/hakua-epistemic-v0-candidate/source_snapshot_manifest.json",
+      "expected_sha256": "e068485b5b6aec65fa990d0d3c165814480ddd85610f9fcedecaf4c58d466432",
+      "original_path": "rsi/audit_bundle/hakua-epistemic-v0-candidate/source_snapshot_manifest.json",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "4f8f5b6439a78e41607d9b977da6397366f18265df5bf448a926d2fb266fb420",
+      "current_path": "rsi/audit_bundle/hakua-epistemic-v0-candidate/train.jsonl",
+      "expected_sha256": "4f8f5b6439a78e41607d9b977da6397366f18265df5bf448a926d2fb266fb420",
+      "original_path": "rsi/audit_bundle/hakua-epistemic-v0-candidate/train.jsonl",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "bc87c46ae57bbe9186e8faa5291aa1efaafb7dff731b8fd88d338b8f637d3bfc",
+      "current_path": "rsi/audit_bundle/hakua-epistemic-v0-candidate/verification_report.json",
+      "expected_sha256": "bc87c46ae57bbe9186e8faa5291aa1efaafb7dff731b8fd88d338b8f637d3bfc",
+      "original_path": "rsi/audit_bundle/hakua-epistemic-v0-candidate/verification_report.json",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "f79b3232db372940e8165090fb87559e5750aea8166f03664236e3af3743d092",
+      "current_path": "rsi/audit_bundle/source_snapshot.json",
+      "expected_sha256": "f79b3232db372940e8165090fb87559e5750aea8166f03664236e3af3743d092",
+      "original_path": "rsi/audit_bundle/source_snapshot.json",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "88f73b3f375927e7494991bcba3a19465f253e0b3d6857b64e2e6ff7c04d0608",
+      "current_path": "rsi/audit_bundle/verifier_evidence.json",
+      "expected_sha256": "88f73b3f375927e7494991bcba3a19465f253e0b3d6857b64e2e6ff7c04d0608",
+      "original_path": "rsi/audit_bundle/verifier_evidence.json",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "f84613b4bb65b32053c82252a3318e2086329745371ffc35b6b6fe48aa2be647",
+      "current_path": "rsi/candidate.schema.json",
+      "expected_sha256": "f84613b4bb65b32053c82252a3318e2086329745371ffc35b6b6fe48aa2be647",
+      "original_path": "rsi/candidate.schema.json",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "4d62a1af56b9d538ef8473400a3ac2fee4f432cf15ae29eed7ab44510738cf9a",
+      "current_path": "rsi/constitution.py",
+      "expected_sha256": "4d62a1af56b9d538ef8473400a3ac2fee4f432cf15ae29eed7ab44510738cf9a",
+      "original_path": "rsi/constitution.py",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "24993f247db8122e57e4e0400386a99eb7765967d607f67c6307b6d79f5d92b2",
+      "current_path": "rsi/dataset/dataset_manifest.json",
+      "expected_sha256": "24993f247db8122e57e4e0400386a99eb7765967d607f67c6307b6d79f5d92b2",
+      "original_path": "rsi/dataset/dataset_manifest.json",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "c2fc10f935659bc85431406cdcb8a613acd59074543a3cf014fc27544852be9d",
+      "current_path": "rsi/dataset/example.schema.json",
+      "expected_sha256": "c2fc10f935659bc85431406cdcb8a613acd59074543a3cf014fc27544852be9d",
+      "original_path": "rsi/dataset/example.schema.json",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "current_path": "rsi/dataset/rejected_examples.json",
+      "expected_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "original_path": "rsi/dataset/rejected_examples.json",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "e068485b5b6aec65fa990d0d3c165814480ddd85610f9fcedecaf4c58d466432",
+      "current_path": "rsi/dataset/source_snapshot_manifest.json",
+      "expected_sha256": "e068485b5b6aec65fa990d0d3c165814480ddd85610f9fcedecaf4c58d466432",
+      "original_path": "rsi/dataset/source_snapshot_manifest.json",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "4f8f5b6439a78e41607d9b977da6397366f18265df5bf448a926d2fb266fb420",
+      "current_path": "rsi/dataset/train.jsonl",
+      "expected_sha256": "4f8f5b6439a78e41607d9b977da6397366f18265df5bf448a926d2fb266fb420",
+      "original_path": "rsi/dataset/train.jsonl",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "bc87c46ae57bbe9186e8faa5291aa1efaafb7dff731b8fd88d338b8f637d3bfc",
+      "current_path": "rsi/dataset/verification_report.json",
+      "expected_sha256": "bc87c46ae57bbe9186e8faa5291aa1efaafb7dff731b8fd88d338b8f637d3bfc",
+      "original_path": "rsi/dataset/verification_report.json",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "1bb30b76eadc47cfaeec7c46a74ce7acd58b9d04a1f5e18ac50486fa10791dbd",
+      "current_path": "rsi/dataset_compiler.py",
+      "expected_sha256": "1bb30b76eadc47cfaeec7c46a74ce7acd58b9d04a1f5e18ac50486fa10791dbd",
+      "original_path": "rsi/dataset_compiler.py",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "3ea69f0d91cff09e27165945c3f46448c1ab69514db79b95e545ffb8a212a220",
+      "current_path": "rsi/independent_audit_state.json",
+      "expected_sha256": "3ea69f0d91cff09e27165945c3f46448c1ab69514db79b95e545ffb8a212a220",
+      "original_path": "rsi/independent_audit_state.json",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    },
+    {
+      "actual_sha256": "f79b3232db372940e8165090fb87559e5750aea8166f03664236e3af3743d092",
+      "current_path": "rsi/source/snapshot_a2a_conf1.json",
+      "expected_sha256": "f79b3232db372940e8165090fb87559e5750aea8166f03664236e3af3743d092",
+      "original_path": "rsi/source/snapshot_a2a_conf1.json",
+      "relocated_by_concurrent_layout_commit": false,
+      "status": "PASS"
+    }
+  ],
+  "concurrent_workspace_head": "f08b3166bdf42d238fa2801a5b8b8e055ab839f1",
+  "our_git_commit_or_push_performed": false
+}

@@ -1,0 +1,11 @@
+{
+  "train.jsonl": "79e127c51c0be0ebfbce3ca43395ce124d0d18f95747ad80a6b6d351da827732",
+  "frozen_eval.jsonl": "2cde0d19f7ae1341c71e87359b199f49d5b4b6f1f42be9eebd57ce5eea706061",
+  "frozen_eval_manifest.json": "4d60203a446c46e583386db27822ee3616df8b9a790464f2a24a22f5e549b494",
+  "historical_roots.json": "a56a2c9a9ea45508f03f286bca64873dbda393f249f6b5a763d5b383830d02c2",
+  "protocol.json": "59ef599d16ad126e5fd30cec51b9c54256ce08e8c6e9dc77041df3153ee7b5c4",
+  "pilot_data.py": "49c8ba303bf37ef315515e25c6f10e66625c1289ce557e5b2025905cc056c125",
+  "frozen_evaluator.py": "c7952d9becd81e7b722cdcbb9dd78a50c95ef48849e6d2e4e1d7963f1cc757dc",
+  "pilot_train.py": "d0449eeb1bfd740172f23ad6f67d356ee394850a754a908271199b63c3bdc234",
+  "supervise_runtime.py": "ead9451af6de9a57a33099902564a59fa135dc95e881cddbd997ae1b69b2c050"
+}

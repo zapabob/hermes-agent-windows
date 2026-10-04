@@ -1,0 +1,17 @@
+{
+  "epochs": [
+    {
+      "epoch": 1,
+      "rows": 64,
+      "mean_training_loss": 0.4702931701322086,
+      "optimizer_steps_so_far": 16
+    },
+    {
+      "epoch": 2,
+      "rows": 64,
+      "mean_training_loss": 0.18284535370912636,
+      "optimizer_steps_so_far": 32
+    }
+  ],
+  "seconds": 111.85382840000239
+}

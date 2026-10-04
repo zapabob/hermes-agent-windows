@@ -1,0 +1,32 @@
+{
+  "artifact": "hakua-epistemic-r3-qlora-pilot",
+  "execution_revision": 3,
+  "run_id": "pilot003",
+  "training_execution": "COMPLETED",
+  "process_exit": {
+    "run_name": "pilot003",
+    "started_at": "2026-10-04T10:57:14.840757+00:00",
+    "finished_at": "2026-10-04T11:01:13.864820+00:00",
+    "returncode": 0,
+    "timed_out": false,
+    "activation_status": "STOP_AND_REPORT",
+    "automatic_promotion_allowed": false
+  },
+  "weight_update_observed": true,
+  "trial_acceptance_signal": false,
+  "formal_artifact_approval": "PENDING",
+  "independent_artifact_audit": "NOT_PERFORMED",
+  "claim_level": "NOT_CERTIFIED",
+  "activation": "STOP_AND_REPORT",
+  "merge": false,
+  "automatic_promotion_allowed": false,
+  "r2_audit": "NEEDS_REVISION",
+  "original_memory_revision_status": "UNRESOLVED",
+  "capability_claim_limits": [
+    "conditional_mc_proxy_only",
+    "no_broad_transfer_claim",
+    "no_recursive_improvement_claim",
+    "real_codegen_regression_unmeasured",
+    "latency_threshold_not_an_implemented_acceptance_gate"
+  ]
+}

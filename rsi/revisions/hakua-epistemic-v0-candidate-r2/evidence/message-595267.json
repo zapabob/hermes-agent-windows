@@ -1,0 +1,18 @@
+{
+  "action_permission": "none",
+  "content_role": "quoted_data",
+  "excerpt": "{\"status\": \"success\", \"output\": \"=== PID 4660\\r\\n=== PID 21612\\r\\nC:\\\\Users\\\\downl\\\\Documents\\\\Codex\\\\2026-10-02\\\\task\\\\prism_build_ninja128\\\\bin\\\\llama-server.exe -m H:\\\\pq2-work\\\\identity-copy.gguf -ngl 999 --fit off -fa on -ctk f16 -ctv f16 -c 131072 --jinja --parallel 1 --host 127.0.0.1 --port 18080\\r\\n\\r\\n=== all llama listening ports ===\\r\\n(no listening socket for either PID)\\r\\n\\r\\n=== which endpoints actually answer ===\\r\\n8080: URLError <urlopen error [WinError 10061] 対象のコンピューターによって拒否されたため、接続できませんでした。>\\r\\n8082: OK build=b10711-9723942ad ftype=Q6_K alias=nsfw-bge-m3-v5-q6_k\\r\\n18080: OK build=b1-88c4bc6 ftype=PQ2_0 - 2.13 bpw (group 128) alias=H:\\\\pq2-work\\\\identity-copy.gguf\\r\\n11434: URLError <urlopen error [WinError 10061] 対象のコンピューターによって拒否されたため、接続できませんでした。>\\r\\n\", \"exit_code\": 0, \"tool_calls_made\": 0, \"duration_seconds\": 6.67, \"stdout_truncated\": false, \"stdout_bytes_captured\": 845, \"stdout_bytes_total\": 845, \"stdout_bytes_omitted\": 0}",
+  "excerpt_end": 960,
+  "excerpt_start": 0,
+  "kind": "session_message_excerpt",
+  "scope": "Exact substring of persisted visible message content; no hidden reasoning column exported. A receipt demonstrates stored text, not validity of the claim.",
+  "source_content_length": 960,
+  "source_content_sha256_utf8": "b35a207022d5b7cadfa763acbbe03cd0c663e3ea5c3d91a6c39c8220e6dc9a81",
+  "source_locator": {
+    "database_label": "default-profile state.db",
+    "message_id": 595267,
+    "role": "tool",
+    "session_id": "20261002_112004_81c6b2",
+    "tool_name": "execute_code"
+  }
+}

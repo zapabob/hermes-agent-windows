@@ -1,0 +1,12 @@
+{
+  "adapter_loaded_from_saved_bytes": true,
+  "loaded_adapter_tensor_count": 192,
+  "loaded_adapter_tensors_match_posttrain_identity": true,
+  "reloaded_backbone_matches_training_fingerprint": true,
+  "sampled_choice_matches_original_child": true,
+  "actual_eval_count": 1,
+  "adapter_sha256": "1a286bc00e353e059e83cdfd034a8d89d1380b8936daeae48cd1b791205a1e52",
+  "scope": "Fresh-process reload verifies every adapter tensor and the base fingerprint, plus one deterministic first-item forward. Not an all72 repeat evaluation or an independent capability experiment",
+  "activation": "STOP_AND_REPORT",
+  "training_performed": false
+}

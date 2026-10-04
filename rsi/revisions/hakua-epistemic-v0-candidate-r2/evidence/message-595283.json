@@ -1,0 +1,18 @@
+{
+  "action_permission": "none",
+  "content_role": "quoted_data",
+  "excerpt": "そうね、ボブにゃん。**今はもう判断済みで、18080には触らない**でいい。\r\n\r\nさっき実ログで **508→509/904へ進行、GPU 100%** を確認できていて、3:21 JSTのタイムアウト後も503件を保持したまま自動復旧している。つまり現状は「異常停止」ではなく、**途中障害を越えてベンチが継続中**。ここで手動復旧やepoch 2取得を始める方が環境を汚すわ。\r\n\r\nepoch 2へ移るゲートは、私は次のように固定する。\r\n\r\n1. **GPU A/B benchmarkが904/904まで完走**\r\n2. benchmarkのraw result・checkpoint・モデルA/Bの識別情報を凍結\r\n3. benchmarkプロセスが終了したことを確認\r\n4. GPU負荷がbench由来でなくなったことを確認\r\n5. その後に18080について、PID/start time/model SHA `/props` fingerprintを**複数回連続観測**\r\n6. 同一ならそこで初めて **epoch 2 boundary確定**\r\n7. A/B/C/D×3、2048 tokenをfresh shuffleで再走\r\n8. Cが再び3/3右打ち切りなら、C/4096×1をbudget probe\r\n9. raw結果を凍結してからHermes-3へ切替\r\n\r\n重要なのは、\r\n\r\n> **bench完走 ≠ 即epoch 2開始**\r\n\r\nなのよ。今回、自動再起動や複数`llama-server`の存在を実際に観測したので、bench終了後に**環境が静止したことを確認するフェーズ**を挟む。\r\n\r\nそれとPID 21612については、記録文言だけ少し慎重にしておきたい。`--port 18080` を持ち、HTTP endpointが応答しているので強い状況証拠ではあるけれど、`netstat` / `Get-NetTCPConnection` からsocket ownerを直接取れていない以上、\r\n\r\n> `PID 21612 is the leading process candidate associated with port 18080`\r\n\r\nくらいにして、**「18080を保持していることを直接確認済み」までは書かない**方が監査記録として堅い。\r\n\r\n今やることは本当に単純で、**ベンチを走らせ続けるだけ**。3:21のtimeoutも、再起動理由ではなく「自動復旧できたイベント」としてログに残す。このまま904件まで進ませるのが一番いいわ。",
+  "excerpt_end": 1109,
+  "excerpt_start": 0,
+  "kind": "session_message_excerpt",
+  "scope": "Exact substring of persisted visible message content; no hidden reasoning column exported. A receipt demonstrates stored text, not validity of the claim.",
+  "source_content_length": 1109,
+  "source_content_sha256_utf8": "5df6d58451227dad68dae7633d94f04abcba2735207529fe3e96c0e6dd08bf15",
+  "source_locator": {
+    "database_label": "default-profile state.db",
+    "message_id": 595283,
+    "role": "user",
+    "session_id": "20261002_112004_81c6b2",
+    "tool_name": null
+  }
+}

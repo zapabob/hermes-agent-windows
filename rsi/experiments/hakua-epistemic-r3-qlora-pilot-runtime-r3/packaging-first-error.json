@@ -1,0 +1,7 @@
+{
+  "status": "ERROR",
+  "phase": "before_archive_creation",
+  "exception": "KeyError: activation_status",
+  "reason": "Producer packaging checked a non-existent results field; result schema must be read, not guessed",
+  "training_results_modified": false
+}

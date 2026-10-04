@@ -1,0 +1,18 @@
+{
+  "action_permission": "none",
+  "content_role": "quoted_data",
+  "excerpt": "**矛盾が解消した。** PID 21612 が 18080 を保持し、`--port 18080` を持つ。でも `netstat` も `Get-NetTCPConnection` も **どちらの PID も listeningとして出さない**。\n\n`netstat -ano` は非管理者には非表示-structural な問題だ。**endpoint は実在し、正しく応答している。**",
+  "excerpt_end": 199,
+  "excerpt_start": 0,
+  "kind": "session_message_excerpt",
+  "scope": "Exact substring of persisted visible message content; no hidden reasoning column exported. A receipt demonstrates stored text, not validity of the claim.",
+  "source_content_length": 199,
+  "source_content_sha256_utf8": "ede51baa7e93600dc01f262d9eec177ea4d0dd36bbb987544406fd82231ad01e",
+  "source_locator": {
+    "database_label": "default-profile state.db",
+    "message_id": 595269,
+    "role": "assistant",
+    "session_id": "20261002_112004_81c6b2",
+    "tool_name": null
+  }
+}

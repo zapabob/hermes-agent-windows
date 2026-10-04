@@ -1,0 +1,9 @@
+{
+  "run_name": "pilot003",
+  "started_at": "2026-10-04T10:57:14.840757+00:00",
+  "finished_at": "2026-10-04T11:01:13.864820+00:00",
+  "returncode": 0,
+  "timed_out": false,
+  "activation_status": "STOP_AND_REPORT",
+  "automatic_promotion_allowed": false
+}

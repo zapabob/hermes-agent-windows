@@ -1085,6 +1085,64 @@ are first-class source trees — not scratch.
 | Secrets | `.env`, `.env.*`, tokens, cookies | **Never commit** |
 | Machine-local | `.venv/`, `node_modules/`, `.cache/`, `.codegraph/`, `.worktrees/` | Ignore |
 
+### 17.7 Desktop-to-repository sync SOP
+
+The Windows Desktop (`C:\Users\downl\Desktop`) is the operator's working surface,
+not a version-controlled location. Scripts and data accumulate there and drift
+from the repository with no detection — three divergent `memory_sync.py` copies
+existed before this policy. `doc/desktop-inbox/` makes that drift reviewable.
+
+**Step 1 — Survey before moving.** List the Desktop's loose script/data files and
+check each for a live reference:
+
+```text
+<name> in ~/.hermes/cron/jobs.json       # cron jobs
+<name> in schtasks /query /fo csv /v      # scheduled tasks
+git grep -l <name>                       # repo references
+```
+
+A file with a live reference is **copied and left in place**, never moved.
+
+**Step 2 — Move, do not copy.** `shutil.move` into `doc/desktop-inbox/scripts/`
+(`.py`, `.ps1`, `.bat`, `.js`, `.awk`) or `doc/desktop-inbox/data/`
+(`.json`, `.jsonl`, `.txt`, `.md`, `*.env.example`). A duplicate left in both
+places is how the divergence happened.
+
+**Step 3 — Record divergence, never merge blind.** For every inbox file with a
+repo counterpart, compare `sha256` and append a row to
+`doc/desktop-inbox/DIVERGENCE.md` naming both paths, both hashes, and the
+verdict. If they differ, the resolution is an explicit decision — not an
+overwrite. Never assume "Desktop is newer".
+
+**Step 4 — Promote deliberately.** Product code goes to `scripts/`, `tools/`, or
+a plugin **with a test**. Operator scratch goes to the matching
+`doc/scripts/<class>/`. Generated data goes to `doc/json/` or `doc/logs/`.
+Dead files are deleted — nothing in the inbox is irreplaceable.
+
+**Step 5 — Keep `.gitignore` ordering correct.** The `doc/desktop-inbox/` block
+**must appear after** the generic `/doc/*/*` rule. Git applies the last matching
+pattern, so an early block loses and the policy `.md` files get swallowed. This
+is the same last-match-wins trap as `output/logs/` needing a re-include.
+
+### 17.8 Periodic sync
+
+The survey in §17.7 Step 1 is the periodic check. Run it when the Desktop
+accumulates scratch, and at minimum:
+
+- whenever a cron or scheduled-task script is added outside the repo;
+- before any `git add -A` (an untracked Desktop script silently entering the
+  repository is a policy violation, not a convenience);
+- when a duplicate-reported bug appears, as in the 2026-10-02
+  `sync_memory_cron.py` incident, where a wrapper resolved a stale debug stub
+  at the repo root instead of the real CLI under `scripts/standalone/`.
+
+The durable pattern for a script that must live in both places — repo
+authoritative, deployed copy, allowlist entry — is
+`cron-runtime-reliability` -> `references/sync-allowlist-workflow.md`: the repo
+copy is the source of truth, the script is listed in `ALLOWLIST`, and the sync
+report confirms `deployed_to_hermes` or `unchanged`.
+
+
 ## 18. Learned User Preferences, Workspace Invariants & MILSPEC Standards
 
 1. **Hermes Restart Protocol**: Rebuild desktop via `hermes desktop --build-only --force-build` combined with `-StartLlama`. Never launch from `.worktrees/`.

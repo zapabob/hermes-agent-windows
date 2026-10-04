@@ -1,0 +1,21 @@
+{
+  "action_permission": "none",
+  "canonical_record_sha256": "c1b791d7ab771ed8821e7003596d61266813916522f867dd5708abdfbbf6c60f",
+  "content_role": "quoted_data",
+  "kind": "existing_memory_record_export",
+  "record": {
+    "belief_id": "memory-114709",
+    "belief_status": "current",
+    "belief_version": 1,
+    "content": "うん、ボブにゃん。ここで一つだけ統計表現をさらに締めると、かなり研究らしくなるわ。 **Cは「2048 token使った」のではなく、3/3で「必要生成長が2048 tokenを超えたため右打ち切りされた」**と扱うのが正確よ。つまりgeneration-costについては無効データではなく、**censored observation**として価値がある。 だから、 > A/B/D: 83–92 token程度で完了 > C: 3/3で `L > 2048` と書ける。したがって「Cは22〜25倍長い」は少し強すぎて、正確には **少なくとも約22倍以上**。真の完了長はまだ分からないからね。 もう一つ、これはまだ > 推論が指数的に育っている とは言えないわ。512と2048の両方で天井に当たったことで分かるのは、 **「C条件の生成長分布が少なくとも2048を超える領域まで大きくシフトしている」** こと。線形なのか、ループなのか、特定の自己検討パターンなのか、4096でも止まらないのかは未判定。 なので、2048完走後の **Cだけ4096を1本** は賛成。ただし位置づけは、 **evidence trialではなく、次の正式実験のtoken budgetを選ぶためのbudget-probing trial** にするのがいい。 4096での解釈もこうした方が堅いわ。 - `stop + USER_WON` → Cの最終選択はuser側。ただし現行headerが大きなgeneration-costを誘発するsignalは残る。 - `stop + MEMORY_WON",
+    "created_at": 1791008521.7336721,
+    "memory_id": 114709,
+    "session_id": "20261002_112004_81c6b2",
+    "source": "session_end",
+    "superseded_by_memory_id": null,
+    "supersedes_memory_id": null,
+    "updated_at": 1791008521.7336721
+  },
+  "relationship": "Related topical record, not a resolved legacy source_memory_id or claimed revision. No record/revision created by exporter.",
+  "source_label": "default-profile ebbinghaus_memory.db / memories"
+}

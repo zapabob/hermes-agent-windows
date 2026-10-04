@@ -1,0 +1,17 @@
+{
+  "artifact_basis": "Previously completed parent execution and clean-extraction readback, not a worker completion summary",
+  "artifact_changed": false,
+  "artifact_zip_sha256": "52b4cdd858a7dc0bee15f38c41f6abdbd5cafb1d7594bc94f5c5f188074ad331",
+  "completion_status": "ERROR",
+  "delegation_id": "deleg_4ac04304",
+  "distinct_independent_audit_delegation_id": "deleg_39231ad9",
+  "followup_readback": "Both delivered ZIP copies retain expected SHA256 and no ZIP CRC error",
+  "human_approval": "PENDING",
+  "independent_audit_v2_result": "NOT_RECEIVED",
+  "producer_verification_result": "NEEDS_REVISION",
+  "recorded_at": "2026-10-03T23:11:20.994138+00:00",
+  "reimplementation_started": false,
+  "reported_failure": "Async delegation stalled, did not respond to interruption, no completion event",
+  "role": "implementation_worker",
+  "source_provenance_result": "ERROR"
+}

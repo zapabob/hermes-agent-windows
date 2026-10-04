@@ -1,0 +1,18 @@
+{
+  "action_permission": "none",
+  "content_role": "quoted_data",
+  "excerpt": "(◕‿◕) ★ **「Stage と Level の混同」を完全に固定し、状態機械を機械可読化する。**\n\n---\n\n## 現在の位置の確定\n\n> **Stage 1 完了 / Claim Level 1 達成 / Level 2 human audit 待ち**\n\n### この 3 つは別軸\n\n| 軸 | 値 | 条件 |\n|---|---|---|\n| **Engineering stage** | 1 | Stage 1 dry-run pipeline クリア |\n| **Claim level** | 1 | `hakua-epistemic-v0-candidate` ALL PASS |\n| **Level** | 0 | まだ human audit 未通過 |\n| **Level** | 2 | human audit 合格後 |\n| **Level** | 3 | frozen evaluator で事前定義改善観測＋hard gate 守って activation |\n| **Level** | 4 | N+1 自身が同じ仕組みで N+2 生成し、同じ憲法・評価器・provenance chain で改善実証 |\n\n---\n\n## 機械可読な state manifest（推奨）\n\n```json\n{\n  \"claim_level\": 1,\n  \"engineering_stage\": 1,\n  \"artifact\": \"hakua-epistemic-v0",
+  "excerpt_end": 650,
+  "excerpt_start": 0,
+  "kind": "session_message_excerpt",
+  "scope": "Exact substring of persisted visible message content; no hidden reasoning column exported. A receipt demonstrates stored text, not validity of the claim.",
+  "source_content_length": 2716,
+  "source_content_sha256_utf8": "65f27d8f43399fd70d25ac083fb17667b00f3290b65999b6338b4034011698ae",
+  "source_locator": {
+    "database_label": "default-profile state.db",
+    "message_id": 602917,
+    "role": "assistant",
+    "session_id": "20261002_112004_81c6b2",
+    "tool_name": null
+  }
+}

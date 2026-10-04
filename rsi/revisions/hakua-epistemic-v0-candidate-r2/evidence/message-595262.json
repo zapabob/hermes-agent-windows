@@ -1,0 +1,18 @@
+{
+  "action_permission": "none",
+  "content_role": "quoted_data",
+  "excerpt": "{\"status\": \"success\", \"output\": \"netstat 18080:\\r\\n(nothing)\\r\\nGet-NetTCPConnection:\\r\\n(nothing)\\r\\nllama-server processes:\\r\\nPID=4660 START=10/03/2026 02:03:28\\r\\nPID=21612 START=10/03/2026 03:23:49\\r\\n\", \"exit_code\": 0, \"tool_calls_made\": 0, \"duration_seconds\": 38.31, \"stdout_truncated\": false, \"stdout_bytes_captured\": 159, \"stdout_bytes_total\": 159, \"stdout_bytes_omitted\": 0}",
+  "excerpt_end": 384,
+  "excerpt_start": 0,
+  "kind": "session_message_excerpt",
+  "scope": "Exact substring of persisted visible message content; no hidden reasoning column exported. A receipt demonstrates stored text, not validity of the claim.",
+  "source_content_length": 384,
+  "source_content_sha256_utf8": "8d2a1b455656507ed6dd6f042026138076ab89edad5f1964dd03a553305e2b67",
+  "source_locator": {
+    "database_label": "default-profile state.db",
+    "message_id": 595262,
+    "role": "tool",
+    "session_id": "20261002_112004_81c6b2",
+    "tool_name": "execute_code"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "prior_run_receipt": {
+    "run_name": "pilot002",
+    "started_at": "2026-10-04T10:53:10.861177+00:00",
+    "finished_at": "2026-10-04T10:54:53.783685+00:00",
+    "returncode": 2,
+    "timed_out": false,
+    "activation_status": "STOP_AND_REPORT",
+    "automatic_promotion_allowed": false
+  },
+  "prior_frozen_manifest_sha256": "2f4032e511b08357d7ba8ff1831a966706fa4d8752ac0738ff738da62a758c81",
+  "preserved_original_data_bytes": {
+    "train.jsonl": true,
+    "frozen_eval.jsonl": true,
+    "historical_roots.json": true
+  },
+  "old_item_hash_method_investigation": [
+    {
+      "keys": [
+        "prompt",
+        "options"
+      ],
+      "compact": true
+    }
+  ],
+  "metadata_only_revision": true,
+  "scores_seen_before_revision": false,
+  "prior_runtime_files_unchanged": {
+    "train.jsonl": true,
+    "frozen_eval.jsonl": true,
+    "frozen_eval_manifest.json": true,
+    "historical_roots.json": true,
+    "protocol.json": true,
+    "pilot_data.py": true,
+    "frozen_evaluator.py": true,
+    "pilot_train.py": true,
+    "supervise_runtime.py": true
+  }
+}

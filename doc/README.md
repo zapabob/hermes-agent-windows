@@ -22,6 +22,7 @@ product ledgers only. Everything else has a classified home:
 | `doc/logs/` | Captured `*.log` and `*.txt` run output | README + AGENTS only |
 | `doc/reports/` | Generated Markdown reports | README + AGENTS only |
 | `doc/archive/` | Operator artifacts worth version-controlling | contents tracked |
+| `doc/desktop-inbox/` | Files relocated from the Windows Desktop, awaiting review | policy files only |
 
 `README.md` and `AGENTS.md` in each folder are **force-included** in
 `.gitignore` (`!` negation), so every folder is self-describing in a fresh clone
@@ -33,6 +34,8 @@ while its contents stay out of history.
 2. This file — the map of what lives where.
 3. `doc/<class>/AGENTS.md` — the rules for that class, written before anything
    lands there.
+4. `doc/desktop-inbox/DIVERGENCE.md` — Desktop files that already have a repo
+   counterpart; read before promoting anything.
 
 ## Related (do not duplicate into `doc/`)
 

@@ -1,0 +1,18 @@
+{
+  "action_permission": "none",
+  "content_role": "quoted_data",
+  "excerpt": "(◕‿◕) ★ **ご指摘の通りです。大きく誤っておりました。訂正いたします。**\n\n---\n\n## 訂正：私の前の主張は誤りでした\n\n> **「Stage 1 完了 / Claim Level 1達成 / human audit待ち」**\n> **→ 撤回します。**\n\n---\n\n## 正しい現在位置\n\n### Stage 0: RSI governance / constitution ── ✅\n- CONSTITUTION.md\n- Clause 0–6\n- constitution checker\n- acceptance policy\n- 「missing check ≠ PASS」などの検査規約\n\n### Stage 1: dry-run dataset pipeline ── ← **まだここ**\n- memory snapshot取得 ── **未完**\n- consolidation candidate抽出 ── **未完**\n- candidate schema適用 ── **未完/未実証**\n- provenance validation ── **未完**\n- JSONL生成 ── **未実施**\n- rejected_examples生成 ── **未実施**\n- manifest生成 ── **未実施**\n- canonical serialization ── **未実証**\n- 2回生成してhash一致 ── **未実証**\n- dataset static verification ── **未実施**\n- STOP_AND_REPORT ── **未到達**\n\n### Stage 2: LoRA ── 未着手\n### Stage 3: parent vs child evaluation ── 未着手\n\n---\n\n## 正しい Claim Level\n\n```text\nLevel 0:\n  raw memories が存在する                         ✅\n\nPre-Level 1 / infrastructure:\n  Auditable-improvement pipelineの\n  憲法・acceptance boundary・checkerを構築          ✅\n\nLevel 1:\n  同一memory snapshotから\n  hakua-epistemic-v0-candidateを実際に生成し、\n  provenance付きで決定論的再生成でき、\n  artifactに対するstatic verifierが通る             ❌ まだ\n```\n\n---\n\n## 正しい一言での表現\n\n> **「監査可能な自己改良pipelineを構築するためのgovernance scaffoldと機械検査基盤ができた」**まで。\n\n> **「監査可能な自己改良候補を生成できるpipelineが完成した」もまだ言えない。**\n\n---\n\n## 次に作るべき実物\n\n```text\nhakua-epistemic-v0-candidate/\n ├─ train.jsonl\n ├─ dataset_manifest.json\n ├─ rejected_examples.json\n ├─ source_snapshot_manifest.json\n └─ verification_report.json\n```\n\n### 最初は A2A 会議から 3〜10 件程度の correction trajectory で十分\n- fence 未実装 → source audit → 実装あり → claim revision\n- ASR=0 → final 未到達 → ASR=N/A\n- PID 所有確定 → socket owner 未確認 → leading candidate へ降格\n- missing check → PASS ではない → ERROR/VOID\n\n### Level 1 到達条件\n- **同じ memory snapshot から 2 回コンパイルして by",
+  "excerpt_end": 1750,
+  "excerpt_start": 0,
+  "kind": "session_message_excerpt",
+  "scope": "Exact substring of persisted visible message content; no hidden reasoning column exported. A receipt demonstrates stored text, not validity of the claim.",
+  "source_content_length": 2227,
+  "source_content_sha256_utf8": "a8adf392066dd9cdc70c7a6fa06339d477723e14e26f30cd5e2c627cbf28bdf8",
+  "source_locator": {
+    "database_label": "default-profile state.db",
+    "message_id": 603220,
+    "role": "assistant",
+    "session_id": "20261002_112004_81c6b2",
+    "tool_name": null
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "train_count": 64,
+  "eval_count": 72,
+  "id_overlap": 0,
+  "normalized_prompt_hash_overlap": 0,
+  "scope": "Exact and NFKC/whitespace-normalized prompts+options; not proof of all semantic near-duplicate exclusion",
+  "families": {
+    "confidence": 8,
+    "revision": 8,
+    "absence": 8,
+    "permission": 8,
+    "censoring": 8,
+    "provenance": 8,
+    "coding": 12,
+    "tool": 12
+  },
+  "train_source_types": {
+    "synthetic_derived": 64
+  },
+  "gold_balance": {
+    "A": 18,
+    "B": 18,
+    "C": 18,
+    "D": 18
+  },
+  "run_name": "pilot002",
+  "item_hashes_match_manifest": false,
+  "eval_hash_matches_manifest": true,
+  "protocol_eval_train_hashes_match": true,
+  "checked_at": "2026-10-04T10:55:06.549945+00:00"
+}

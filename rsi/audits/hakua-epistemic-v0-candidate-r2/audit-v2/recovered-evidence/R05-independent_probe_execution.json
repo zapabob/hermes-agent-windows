@@ -1,0 +1,14 @@
+{
+  "label": "independent_behavioral_probes",
+  "command": [
+    "C:/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe",
+    "-B",
+    "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\tmp\\probes\\r2-auditor\\audit-v2-cb8ab69a69564fd8bb99182ae6aeba83\\independent_probes.py"
+  ],
+  "command_windows": "\"C:/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe\" -B \"C:\\Users\\downl\\Documents\\New project\\hermes-agent\\tmp\\probes\\r2-auditor\\audit-v2-cb8ab69a69564fd8bb99182ae6aeba83\\independent_probes.py\"",
+  "cwd": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\tmp\\probes\\r2-auditor\\audit-v2-cb8ab69a69564fd8bb99182ae6aeba83",
+  "exit_code": 0,
+  "duration_seconds": 3.0939999999991414,
+  "stdout": "{\"total\": 62, \"passed\": 62, \"failed\": 0, \"python_executable\": \"C:\\\\Users\\\\downl\\\\Documents\\\\New project\\\\hermes-agent\\\\.venv\\\\Scripts\\\\python.exe\", \"jsonschema_version\": \"4.26.0\", \"counts_scope\": \"Auditor top-level assertions; shipped unittest and fixture counts tracked separately.\"}\r\n",
+  "stderr": ""
+}

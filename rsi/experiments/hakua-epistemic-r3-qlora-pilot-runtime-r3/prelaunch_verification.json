@@ -1,0 +1,10 @@
+{
+  "train_count": 64,
+  "eval_count": 72,
+  "id_overlap": 0,
+  "normalized_prompt_hash_overlap": 0,
+  "scope": "Exact and NFKC/whitespace-normalized prompts+options; not proof of all semantic near-duplicate exclusion",
+  "item_hashes_match": true,
+  "full_eval_sha_matches": true,
+  "input_count": 8
+}

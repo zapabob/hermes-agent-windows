@@ -1,0 +1,145 @@
+{
+  "report_json_sha256": "9ebff93e524a196043e8305b27fa71f3f24aedc8f5dc9c3dc4ee322e9f073150",
+  "report_md_sha256": "06610c1e8a1f669ccfb220569bcc2b2886e317a8a3f8083442ea1c29024f22ba",
+  "report_type": "READ_ONLY_SCIENTIFIC_AND_CODE_REVIEW",
+  "checked_reference_count": 32,
+  "all_inspected_and_reference_hashes_match": true,
+  "all_checks": [
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\protocol.json",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\frozen_inputs.json",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\pilot_train.py",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\frozen_evaluator.py",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\pilot_data.py",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\frozen_eval.jsonl",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\train.jsonl",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\test_runtime.py",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\frozen_eval_manifest.json",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\historical_roots.json",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\supervise_runtime.py",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\hash_comparator_correction.json",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\execution_manifest.json",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\revision_receipt.json",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\prelaunch_verification.json",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\test_integrity.py",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\test_integrity.log",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\pilot003-launch.json",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\pilot003-exit.json",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\pilot003.log",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r3\\runs\\pilot003\\execution.log",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r2\\protocol.json",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r2\\frozen_inputs.json",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r2\\frozen_eval_manifest.json",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r2\\pilot_train.py",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r2\\frozen_evaluator.py",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r2\\supervise_runtime.py",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r2\\pilot002.log",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r2\\pilot002-exit.json",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r2\\tdd-runtime-final-green.log",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r2\\review\\independent_runtime_review.json",
+      "matches_report_sha256": true
+    },
+    {
+      "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot-runtime-r2\\review\\independent_runtime_review.md",
+      "matches_report_sha256": true
+    }
+  ],
+  "code_methodology_verdict": "NO_CURRENT_CRITICAL_DEFECT_IDENTIFIED_IN_REVIEWED_SCOPE",
+  "formal_artifact_audit": false,
+  "parent_addenda": [
+    "Review says user mid-turn r3 scope update; actual scope update was the parent assistant steering the delegated task. This does not constitute additional human artifact approval.",
+    "Review remaining_unknowns refer to its review time and static scope. Subsequent producer fresh reload verifies all192 stored adapter tensors and one sample only; it is not added independent audit coverage.",
+    "Review files recovered and verified; no separate asynchronous completion notification has been received in this context."
+  ],
+  "verified_at": "2026-10-04T11:14:54.423979+00:00"
+}

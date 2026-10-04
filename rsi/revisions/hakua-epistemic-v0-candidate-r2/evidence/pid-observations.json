@@ -1,0 +1,37 @@
+{
+  "action_permission": "none",
+  "anomaly": {
+    "epoch_impact": "epoch 1's boundary is INVALID as a process-continuity record. The listener it named is gone; a different process now serves 18080. This is exactly the condition the epoch protocol exists to detect.",
+    "next_required_step": "Record epoch 2 boundary naming PID 21612 explicitly, and treat any comparison against epoch 1 as across-epoch only.",
+    "not_claimed": [
+      "why PID 31800 died",
+      "whether PID 4660 or PID 21612 served the epoch-1 trials",
+      "whether the 4 invalid_transport trials were caused by the restart that produced PID 21612"
+    ],
+    "observation": "Three disjoint views of port 18080 disagreed at the same instant: (a) netstat -ano listed NO listening socket; (b) Get-NetTCPConnection listed NOTHING; (c) HTTP GET /props returned a valid llama.cpp payload with build_info=b1-88c4bc6 and model alias identity-copy.gguf.",
+    "process_attribution": {
+      "evidence_for": [
+        "its command line contains --port 18080",
+        "HTTP GET /props on 127.0.0.1:18080 returns build_info=b1-88c4bc6 with model alias identity-copy.gguf, matching that binary path"
+      ],
+      "not_verified": "That PID 21612 actually holds the bound socket. Neither netstat -ano nor Get-NetTCPConnection named any owning process for 18080 at the same instant, so the socket owner was never directly confirmed.",
+      "statement": "PID 21612 is the LEADING PROCESS CANDIDATE associated with port 18080.",
+      "wording_rule": "Do not write 'confirmed to hold port 18080'. Write 'leading process candidate associated with port 18080' until a socket-owner view names it directly."
+    },
+    "resolution": "PARTIALLY RESOLVED. Two llama-server processes exist (PID 4660 started 02:03:28, PID 21612 started 03:23:49). PID 21612's cmdline carries --port 18080 and /props answers with that instance's build. The epoch-1 boundary recorded PID 31800, which is GONE. So the process currently serving 18080 is NOT the one epoch 1 measured.",
+    "why_netasm_and_getnettcpconnection_agree_on_nothing": "UNDETERMINED but no longer load-bearing: the server is reachable and identifies itself. Both Windows socket queries returning empty while an HTTP endpoint on that exact port answers is consistent with a permissions/visibility limitation on socket enumeration, not with the port being free."
+  },
+  "content_role": "quoted_data",
+  "kind": "historical_process_observation_export",
+  "observations": {
+    "build_info": "b1-88c4bc6",
+    "captured_at": "2026-10-03T03:45:21+0900",
+    "epoch_id": "None-?",
+    "listener_pid": null,
+    "model_ftype": "PQ2_0 - 2.13 bpw (group 128)",
+    "port": 18080
+  },
+  "original_source_path": "tmp/probes/env_epoch_probe_dryrun.json",
+  "original_source_sha256": "1e70dee6c4150a698c269dcf46bf07304031fb55dec1bf16f70311797c19a7b4",
+  "scope": "Stored observer output and its revision; endpoint properties do not certify socket owner. No fresh server query or GPU/process control."
+}

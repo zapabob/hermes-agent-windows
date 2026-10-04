@@ -3,6 +3,8 @@ from __future__ import annotations
 import importlib
 from pathlib import Path
 
+import pytest
+
 
 class FakePluginContext:
     def __init__(self) -> None:
@@ -102,3 +104,72 @@ def test_synthesize_can_skip_persistent_audio_buffer(monkeypatch, tmp_path: Path
     result = core.synthesize_text("hello", output_path=output_path, buffer=False)
     assert result["ok"] is True
     assert output_path.exists()
+
+
+def test_cli_start_targets_configured_port(monkeypatch, tmp_path: Path) -> None:
+    from plugins.irodori_tts import cli, core
+    import subprocess
+
+    start_script = tmp_path / "start.ps1"
+    start_script.write_text("# test", encoding="utf-8")
+    cfg = core.IrodoriSettings(
+        repo_dir=tmp_path,
+        start_script=start_script,
+        invoke_script=start_script,
+        base_url="http://127.0.0.1:8089",
+        model="irodori-tts",
+        voice="hakua",
+        speed=1.0,
+        timeout=30,
+    )
+    captured = []
+
+    def fake_run(command, **kwargs):
+        captured.extend(command)
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr(cli, "settings", lambda: cfg)
+    monkeypatch.setattr(cli, "powershell_path", lambda: "powershell")
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    assert cli._start_server() == 0
+    assert captured[captured.index("-HostName") + 1] == "127.0.0.1"
+    assert captured[captured.index("-Port") + 1] == "8089"
+    assert captured[captured.index("-RepoDir") + 1] == str(tmp_path)
+
+
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "http://example.invalid:8089",
+        "https://127.0.0.1:8089",
+        "http://127.0.0.1:invalid",
+        "not-a-url",
+    ],
+)
+def test_cli_start_refuses_nonlocal_or_invalid_endpoint(
+    monkeypatch, tmp_path: Path, base_url: str
+) -> None:
+    import subprocess
+
+    from plugins.irodori_tts import cli, core
+
+    start_script = tmp_path / "start.ps1"
+    start_script.write_text("# test", encoding="utf-8")
+    cfg = core.IrodoriSettings(
+        repo_dir=tmp_path,
+        start_script=start_script,
+        invoke_script=start_script,
+        base_url=base_url,
+        model="irodori-tts",
+        voice="hakua",
+        speed=1.0,
+        timeout=30,
+    )
+
+    def unexpected_start(*args, **kwargs):
+        raise AssertionError("Invalid endpoint must not launch a process")
+
+    monkeypatch.setattr(cli, "settings", lambda: cfg)
+    monkeypatch.setattr(cli, "powershell_path", lambda: "powershell")
+    monkeypatch.setattr(subprocess, "run", unexpected_start)
+    assert cli._start_server() == 2

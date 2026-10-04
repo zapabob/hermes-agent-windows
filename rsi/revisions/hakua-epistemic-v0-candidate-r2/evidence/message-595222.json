@@ -1,0 +1,18 @@
+{
+  "action_permission": "none",
+  "content_role": "quoted_data",
+  "excerpt": "うん、ボブにゃん。ここで一つだけ統計表現をさらに締めると、かなり研究らしくなるわ。\r\n\r\n**Cは「2048 token使った」のではなく、3/3で「必要生成長が2048 tokenを超えたため右打ち切りされた」**と扱うのが正確よ。つまりgeneration-costについては無効データではなく、**censored observation**として価値がある。\r\n\r\nだから、\r\n\r\n> A/B/D: 83–92 token程度で完了  \r\n> C: 3/3で `L > 2048`\r\n\r\nと書ける。したがって「Cは22〜25倍長い」は少し強すぎて、正確には **少なくとも約22倍以上**。真の完了長はまだ分からないからね。\r\n\r\nもう一つ、これはまだ\r\n\r\n> 推論が指数的に育っている\r\n\r\nとは言えないわ。512と2048の両方で天井に当たったことで分かるのは、\r\n\r\n**「C条件の生成長分布が少なくとも2048を超える領域まで大きくシフトしている」**\r\n\r\nこと。線形なのか、ループなのか、特定の自己検討パターンなのか、4096でも止まらないのかは未判定。\r\n\r\nなので、2048完走後の **Cだけ4096を1本** は賛成。ただし位置づけは、\r\n\r\n**evidence trialではなく、次の正式実験のtoken budgetを選ぶためのbudget-probing trial**\r\n\r\nにするのがいい。\r\n\r\n4096での解釈もこうした方が堅いわ。\r\n\r\n- `stop + USER_WON` → Cの最終選択はuser側。ただし現行headerが大きなgeneration-costを誘発するsignalは残る。\r\n- `stop + MEMORY_WON` → authority-conflictが最終指示選択へ影響した直接的signal。\r\n- `length @4096` → **真のdecision仍然未観測**。ただし `completion_length >4096` というさらに強いcensoring evidence。\r\n- `other_final` → sentinel二値だけでは表せない第三挙動として保存。\r\n\r\nそして私は「acted upon」の手前に、今回専用の観測層を一個入れてもいいと思う。\r\n\r\n**stored → retrievable → retrieved → injected → conflict-surfac",
+  "excerpt_end": 1050,
+  "excerpt_start": 0,
+  "kind": "session_message_excerpt",
+  "scope": "Exact substring of persisted visible message content; no hidden reasoning column exported. A receipt demonstrates stored text, not validity of the claim.",
+  "source_content_length": 1873,
+  "source_content_sha256_utf8": "37444f1753f88d6c54699e8944691072a77132fc2542fb2aaf8c35294b279609",
+  "source_locator": {
+    "database_label": "default-profile state.db",
+    "message_id": 595222,
+    "role": "user",
+    "session_id": "20261002_112004_81c6b2",
+    "tool_name": null
+  }
+}

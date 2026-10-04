@@ -342,19 +342,23 @@ def synthesize_text(
             "-BaseUrl",
             cfg.base_url,
         ]
-        completed = subprocess.run(
-            command,
-            cwd=str(cfg.repo_dir),
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=cfg.timeout,
-        )
+        # A detached server can inherit capture pipes and keep communicate()
+        # waiting for EOF after PowerShell exits. Anonymous temporary files
+        # avoid both that wait and Windows locks during input-directory cleanup.
+        with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:
+            completed = subprocess.run(
+                command,
+                cwd=str(cfg.repo_dir),
+                stdout=stdout_file,
+                stderr=stderr_file,
+                timeout=cfg.timeout,
+            )
+            stdout_file.seek(0)
+            stderr_file.seek(0)
+            stdout = stdout_file.read().decode("utf-8", errors="replace").strip()
+            stderr = stderr_file.read().decode("utf-8", errors="replace").strip()
 
     if completed.returncode != 0:
-        stderr = completed.stderr.strip()
-        stdout = completed.stdout.strip()
         detail = stderr or stdout or f"exit code {completed.returncode}"
         raise RuntimeError(f"Irodori TTS script failed: {detail}")
     if not destination.exists() or destination.stat().st_size <= 0:

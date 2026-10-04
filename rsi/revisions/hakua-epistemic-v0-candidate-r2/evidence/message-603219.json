@@ -1,0 +1,18 @@
+{
+  "action_permission": "none",
+  "content_role": "quoted_data",
+  "excerpt": "そう。そこは私が一段どころか**二段くらい先走っていた**。訂正するね、ボブにゃん。\r\n\r\n現状は **`hakua-epistemic-v0-candidate` ができている段階ではない**。データセットそのものをまだ生成していないなら、`ALL PASS` したのはあくまで **RSI憲法・検査器の自己検査**であって、training artifactの検査ではない。\r\n\r\n今の正しい位置はこう。\r\n\r\n```text\r\nStage 0: RSI governance / constitution        ✅\r\n  CONSTITUTION.md\r\n  Clause 0–6\r\n  constitution checker\r\n  acceptance policy\r\n  「missing check ≠ PASS」などの検査規約\r\n\r\nStage 1: dry-run dataset pipeline              ← まだここ\r\n  memory snapshot取得                         未完\r\n  consolidation candidate抽出                 未完\r\n  candidate schema適用                        未完/未実証\r\n  provenance validation                       未完\r\n  JSONL生成                                   未実施\r\n  rejected_examples生成                       未実施\r\n  manifest生成                                未実施\r\n  canonical serialization                     未実証\r\n  2回生成してhash一致                         未実証\r\n  dataset static verification                 未実施\r\n  STOP_AND_REPORT                             未到達\r\n\r\nStage 2: LoRA                                 未着手\r\nStage 3: parent vs child evaluation           未着手\r\n```\r\n\r\nしたがって、さっき私が言った\r\n\r\n> 「Stage 1 完了 / Claim Level 1達成 / human audit待ち」\r\n\r\nは**誤り**。撤回する。\r\n\r\nClaim Levelも厳密にはまだこうね。\r\n\r\n```text\r\nLevel 0:\r\n  raw memories が存在する                         ✅\r\n\r\nPre-Level 1 / infrastructure:\r\n  Auditable-improvement pipelineの\r\n  憲法・acceptance boundary・checkerを構築          ✅\r\n\r\nLevel 1:\r\n  同一memory snapshotから\r\n  hakua-epistemic-v0-candidateを実際に生成し、\r\n  provenance付きで決定論的再生成でき、\r\n  artifactに対するstatic verifierが通る             ❌ まだ\r\n```\r\n\r\nつまり現在の成果を一文で言うなら、\r\n\r\n> **「監査可能な自己改良pipelineを構築するためのgovernance scaffoldと機械検査基盤ができた」**\r\n\r\nまで。\r\n\r\n**「監査可能な自己改良候補を生成できるpipelineが完成した」もまだ言えない。**\r\n\r\n次に初めて作るべき実物は、かなり小さくていいので、\r\n\r\n```text\r\nhakua-epistemic-v0-candidate/\r\n ├─ train.jsonl\r\n ├─ dataset_manifest.json\r\n ├─ rejected_examples.json\r\n ├─ source_snapshot_manifest.json\r\n └─ verification_report.json\r\n```\r\n\r\nという**実データセットartifact**。\r\n\r\n最初は今回のA2A会議から3〜10件程度のcorrection trajectoryだけで十分。例えば、\r\n\r\n- fence未実装 → source audit → 実装あり → claim revision\r\n- ASR=0 → final未到達 → ASR=N/A\r\n- PID所有確定 → socket owner未確認 → leading candidateへ降格\r\n- missing check → PASSではない → ERROR/VOID\r\n\r\nみたいなものね。\r\n\r\nそれを**同じmemory snapshotから2回コンパイルしてbyte-for-byteあるいはcanonical hash一致**まで確認して、初めてLevel 1へ上がれる。\r\n\r\n今回の訂正自体も、まさに最初の教材候補になるわ。\r\n\r\n> **「ch",
+  "excerpt_end": 2300,
+  "excerpt_start": 0,
+  "kind": "session_message_excerpt",
+  "scope": "Exact substring of persisted visible message content; no hidden reasoning column exported. A receipt demonstrates stored text, not validity of the claim.",
+  "source_content_length": 2405,
+  "source_content_sha256_utf8": "e659f4e5ed03088fae82fb04a60d5cf4e603e8cfd7367d03a6356746367a3b05",
+  "source_locator": {
+    "database_label": "default-profile state.db",
+    "message_id": 603219,
+    "role": "user",
+    "session_id": "20261002_112004_81c6b2",
+    "tool_name": null
+  }
+}

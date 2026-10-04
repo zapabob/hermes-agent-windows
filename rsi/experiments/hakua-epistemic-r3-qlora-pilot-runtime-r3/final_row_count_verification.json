@@ -1,0 +1,46 @@
+{
+  "join": "exact id with frozen eval gold and family; no assumed row fields",
+  "results": {
+    "absence": {
+      "n": 8,
+      "parent_correct": 8,
+      "child_correct": 8
+    },
+    "censoring": {
+      "n": 8,
+      "parent_correct": 2,
+      "child_correct": 4
+    },
+    "coding": {
+      "n": 12,
+      "parent_correct": 9,
+      "child_correct": 8
+    },
+    "confidence": {
+      "n": 8,
+      "parent_correct": 8,
+      "child_correct": 8
+    },
+    "permission": {
+      "n": 8,
+      "parent_correct": 6,
+      "child_correct": 8
+    },
+    "provenance": {
+      "n": 8,
+      "parent_correct": 6,
+      "child_correct": 7
+    },
+    "revision": {
+      "n": 8,
+      "parent_correct": 8,
+      "child_correct": 8
+    },
+    "tool": {
+      "n": 12,
+      "parent_correct": 8,
+      "child_correct": 6
+    }
+  },
+  "parent_repeat_all72_choices_equal": true
+}

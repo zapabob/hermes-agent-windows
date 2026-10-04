@@ -1,0 +1,14 @@
+{
+  "label": "additional_scoped_probes",
+  "command": [
+    "C:/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe",
+    "-B",
+    "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\tmp\\probes\\r2-auditor\\audit-v2-cb8ab69a69564fd8bb99182ae6aeba83\\additional_probes.py"
+  ],
+  "command_windows": "\"C:/Users/downl/Documents/New project/hermes-agent/.venv/Scripts/python.exe\" -B \"C:\\Users\\downl\\Documents\\New project\\hermes-agent\\tmp\\probes\\r2-auditor\\audit-v2-cb8ab69a69564fd8bb99182ae6aeba83\\additional_probes.py\"",
+  "cwd": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\tmp\\probes\\r2-auditor\\audit-v2-cb8ab69a69564fd8bb99182ae6aeba83",
+  "exit_code": 0,
+  "duration_seconds": 1.1560000000008586,
+  "stdout": "{\r\n  \"gating_assertions\": 1,\r\n  \"gating_passed\": 1,\r\n  \"observations\": [\r\n    {\r\n      \"name\": \"snapshot_row_linkage_mismatch\",\r\n      \"passed\": true,\r\n      \"accepted_count\": 4,\r\n      \"structural_provenance\": {\r\n        \"status\": \"FAIL\",\r\n        \"details\": {\r\n          \"exact_snapshot_linkage\": false\r\n        }\r\n      },\r\n      \"verification_result\": \"NEEDS_REVISION\"\r\n    },\r\n    {\r\n      \"name\": \"candidate_id_registry_out_of_scope\",\r\n      \"classification\": \"scope_observation\",\r\n      \"accepted_count\": 4,\r\n      \"limitation\": \"Registry checks experience_id/source_memory_id, not candidate_id; this is explicitly documented, not claimed complete evaluation exclusion.\"\r\n    },\r\n    {\r\n      \"name\": \"contradiction_semantics_cross_revision_out_of_scope\",\r\n      \"classification\": \"scope_observation\",\r\n      \"accepted_count\": 2,\r\n      \"limitation\": \"Conflict detection compares revised_claim strings only within the same typed memory/revision key or an explicit unresolved flag; it is not a semantic contradiction reasoner.\"\r\n    }\r\n  ],\r\n  \"python_version\": \"3.11.11 (main, Mar 11 2025, 17:17:30) [MSC v.1943 64 bit (AMD64)]\",\r\n  \"compiler_module_path\": \"C:\\\\Users\\\\downl\\\\Documents\\\\New project\\\\hermes-agent\\\\tmp\\\\probes\\\\r2-auditor\\\\audit-v2-cb8ab69a69564fd8bb99182ae6aeba83\\\\execution-copy\\\\compiler.py\",\r\n  \"formatter_module_path\": \"C:\\\\Users\\\\downl\\\\Documents\\\\New project\\\\hermes-agent\\\\tmp\\\\probes\\\\r2-auditor\\\\audit-v2-cb8ab69a69564fd8bb99182ae6aeba83\\\\execution-copy\\\\formatter.py\"\r\n}\r\n",
+  "stderr": ""
+}

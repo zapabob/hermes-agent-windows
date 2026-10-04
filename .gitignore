@@ -283,6 +283,19 @@ native/fts5_cjk/*.so
 /h.includes('relay')
 /linejs-storage.json
 /nul
+
+
+# RSI experiment model weights and adapter binaries. rsi/ evidence, datasets,
+# protocols and receipts ARE tracked; weight blobs never are - a single
+# base_checkpoint/model.safetensors is ~988 MB and a blob, once written, is
+# permanent in history. Provenance belongs in the JSON manifests, not the weights.
+/rsi/experiments/**/base_checkpoint/
+/rsi/experiments/**/runs/**/adapter/
+/rsi/experiments/**/runs/**/adapter_initial/
+/rsi/experiments/**/adapter/
+**/*.safetensors
+**/*.gguf
+**/*.bin
 /*.wav
 /*.mp4
 
@@ -334,6 +347,14 @@ native/fts5_cjk/*.so
 /doc/*/*/*
 !/doc/*/*/README.md
 !/doc/*/*/AGENTS.md
+
+# doc/desktop-inbox/ — files relocated from the Windows Desktop. The policy files
+# are tracked so the inbox survives a fresh clone; the relocated payload is not,
+# because it duplicates repo scripts and may contain session dumps. This block
+# MUST come after the generic /doc/*/* rule above, or that rule wins and even the
+# .md policy files get swallowed.
+/doc/desktop-inbox/*
+!/doc/desktop-inbox/*.md
 
 # doc/archive/ is the one exception: finished, sealed artifacts ARE tracked.
 # It needs an explicit re-include because the /doc/*/* rule above already

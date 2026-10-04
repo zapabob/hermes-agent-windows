@@ -1,0 +1,264 @@
+{
+  "additional_named_stores": [
+    {
+      "database_label": "hakua-memory/.memory/ebbinghaus.db",
+      "exact_alias_matches": {
+        "correction_rehearsals": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "insight_sources": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "memories": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "memory_events": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "memory_provenance": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "memory_relations": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        }
+      },
+      "tables": [
+        "memories",
+        "memory_provenance",
+        "dream_previews",
+        "ebbinghaus_schema_migrations",
+        "memory_events",
+        "retrieval_attempts",
+        "memory_relations",
+        "correction_rehearsals",
+        "association_previews",
+        "insight_candidates",
+        "insight_sources"
+      ]
+    },
+    {
+      "database_label": "hakua-memory/.memory/semantic.db",
+      "exact_alias_matches": {
+        "artifacts": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "artifacts_fts": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "artifacts_fts_content": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "artifacts_fts_data": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "artifacts_fts_docsize": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "evidence_spans": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "memory_node_links": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "memory_state_cache": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "node_embeddings": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "nodes": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "nodes_fts": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "nodes_fts_content": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "nodes_fts_data": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "nodes_fts_docsize": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "run_nodes": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        }
+      },
+      "tables": [
+        "graph_runs",
+        "artifacts",
+        "nodes",
+        "run_nodes",
+        "edges",
+        "run_edges",
+        "evidence_spans",
+        "fragments",
+        "evaluations",
+        "graph_events",
+        "nodes_fts",
+        "nodes_fts_data",
+        "nodes_fts_idx",
+        "nodes_fts_content",
+        "nodes_fts_docsize",
+        "nodes_fts_config",
+        "artifacts_fts",
+        "artifacts_fts_data",
+        "artifacts_fts_idx",
+        "artifacts_fts_content",
+        "artifacts_fts_docsize",
+        "artifacts_fts_config",
+        "node_embeddings",
+        "memory_node_links",
+        "memory_state_cache"
+      ]
+    },
+    {
+      "database_label": "hakua-memory/.memory/rag.db",
+      "exact_alias_matches": {
+        "chunks": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "chunks_fts": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "chunks_fts_content": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "chunks_fts_data": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "chunks_fts_docsize": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "documents_fts_content": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "documents_fts_data": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "documents_fts_docsize": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        },
+        "meeting_items": {
+          "a2a:conf1:asr-denominator": 0,
+          "a2a:conf1:fence-semantics": 0,
+          "a2a:conf1:process-identity": 0,
+          "rsi:stage0:claim-level": 0
+        }
+      },
+      "tables": [
+        "documents",
+        "chunks",
+        "chunk_embeddings",
+        "citations",
+        "meeting_items",
+        "acl",
+        "chunks_fts",
+        "chunks_fts_data",
+        "chunks_fts_idx",
+        "chunks_fts_content",
+        "chunks_fts_docsize",
+        "chunks_fts_config",
+        "documents_fts",
+        "documents_fts_data",
+        "documents_fts_idx",
+        "documents_fts_content",
+        "documents_fts_docsize",
+        "documents_fts_config"
+      ]
+    }
+  ],
+  "checked_at": "2026-10-03T22:50:57.358363+00:00",
+  "excluded_scope": "Other profiles were not examined. hakua-memory seed/test datasets were not treated as live source records. Nonexistence outside searched scopes is not claimed.",
+  "memory_rows_created": 0,
+  "primary_store": "default ebbinghaus_memory.db: exact memory_id/belief_id matches zero for four legacy aliases; topical memory exports do not resolve claimed revision",
+  "revisions_created": 0
+}

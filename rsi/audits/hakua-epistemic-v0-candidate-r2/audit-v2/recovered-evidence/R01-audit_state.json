@@ -1,0 +1,259 @@
+{
+  "zip": "C:\\Users\\downl\\Downloads\\hakua-epistemic-v0-candidate-r2-audit-bundle.zip",
+  "zip_hash": "52b4cdd858a7dc0bee15f38c41f6abdbd5cafb1d7594bc94f5c5f188074ad331",
+  "claimed_zip_hash": "52b4cdd858a7dc0bee15f38c41f6abdbd5cafb1d7594bc94f5c5f188074ad331",
+  "probe": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\tmp\\probes\\r2-auditor\\audit-v2-cb8ab69a69564fd8bb99182ae6aeba83",
+  "root": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\tmp\\probes\\r2-auditor\\audit-v2-cb8ab69a69564fd8bb99182ae6aeba83\\hakua-epistemic-v0-candidate-r2",
+  "inventory": [
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/candidate.schema.json",
+      "size": 3573,
+      "compressed_size": 836
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/compiler.py",
+      "size": 27746,
+      "compressed_size": 6897
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/dataset/dataset_manifest.json",
+      "size": 1129,
+      "compressed_size": 678
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/dataset/rejected_examples.json",
+      "size": 3,
+      "compressed_size": 5
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/dataset/source_snapshot_manifest.json",
+      "size": 349,
+      "compressed_size": 238
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/dataset/train.jsonl",
+      "size": 6252,
+      "compressed_size": 2229
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/dataset/verification_report.json",
+      "size": 3157,
+      "compressed_size": 946
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/asr-wire-observations.json",
+      "size": 5993,
+      "compressed_size": 1721
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/audit-v1.json",
+      "size": 6278,
+      "compressed_size": 2352
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/audit-v1.md",
+      "size": 3981,
+      "compressed_size": 1875
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/fence-source.json",
+      "size": 1264,
+      "compressed_size": 690
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/message-593291.json",
+      "size": 5106,
+      "compressed_size": 2691
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/message-593482.json",
+      "size": 2353,
+      "compressed_size": 1443
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/message-593510.json",
+      "size": 4018,
+      "compressed_size": 2266
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/message-594466.json",
+      "size": 2578,
+      "compressed_size": 1640
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/message-594616.json",
+      "size": 3372,
+      "compressed_size": 1915
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/message-594678.json",
+      "size": 2955,
+      "compressed_size": 1815
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/message-595222.json",
+      "size": 2774,
+      "compressed_size": 1639
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/message-595262.json",
+      "size": 1084,
+      "compressed_size": 596
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/message-595267.json",
+      "size": 1828,
+      "compressed_size": 1017
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/message-595269.json",
+      "size": 990,
+      "compressed_size": 659
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/message-595283.json",
+      "size": 2859,
+      "compressed_size": 1754
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/message-602917.json",
+      "size": 1574,
+      "compressed_size": 1012
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/message-603219.json",
+      "size": 4216,
+      "compressed_size": 2058
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/message-603220.json",
+      "size": 3260,
+      "compressed_size": 1742
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/pid-observations.json",
+      "size": 3002,
+      "compressed_size": 1528
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/related-memory-114695.json",
+      "size": 1902,
+      "compressed_size": 1231
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/evidence/related-memory-114709.json",
+      "size": 2298,
+      "compressed_size": 1375
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/EVIDENCE_INDEX.json",
+      "size": 2338,
+      "compressed_size": 1122
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/execution/black-check.log",
+      "size": 58,
+      "compressed_size": 58
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/execution/final_pytest.log",
+      "size": 76,
+      "compressed_size": 49
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/execution/final_unit.log",
+      "size": 4614,
+      "compressed_size": 1022
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/execution/flake8.log",
+      "size": 0,
+      "compressed_size": 2
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/execution/real_default_cli.log",
+      "size": 367,
+      "compressed_size": 266
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/fixtures.json",
+      "size": 18133,
+      "compressed_size": 1104
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/formatter.py",
+      "size": 3784,
+      "compressed_size": 1270
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/FORMATTER_CONTRACT.md",
+      "size": 3766,
+      "compressed_size": 2022
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/LINEAGE.json",
+      "size": 6030,
+      "compressed_size": 3185
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/parent_preservation.json",
+      "size": 2839,
+      "compressed_size": 1033
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/PARENT_PRESERVATION_VERIFICATION.json",
+      "size": 10344,
+      "compressed_size": 1544
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/README.md",
+      "size": 13205,
+      "compressed_size": 6255
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/requirements.txt",
+      "size": 20,
+      "compressed_size": 22
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/REVISION_CHANGES.json",
+      "size": 6760,
+      "compressed_size": 2002
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/SOURCE_LOOKUP.json",
+      "size": 8486,
+      "compressed_size": 945
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/source_provenance.json",
+      "size": 5717,
+      "compressed_size": 1681
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/source_snapshot.json",
+      "size": 7730,
+      "compressed_size": 2524
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/SUBMISSION.md",
+      "size": 4105,
+      "compressed_size": 2357
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/SUBMISSION_STATE.json",
+      "size": 1027,
+      "compressed_size": 530
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/test_compiler.py",
+      "size": 33410,
+      "compressed_size": 6498
+    },
+    {
+      "name": "hakua-epistemic-v0-candidate-r2/verifier_evidence.json",
+      "size": 5392,
+      "compressed_size": 1373
+    }
+  ]
+}

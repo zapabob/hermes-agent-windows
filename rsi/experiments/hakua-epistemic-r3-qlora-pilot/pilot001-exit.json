@@ -1,0 +1,14 @@
+{
+  "command": [
+    "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot\\.venv-cuda\\Scripts\\python.exe",
+    "-B",
+    "-u",
+    "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot\\pilot_train.py",
+    "--run-id",
+    "pilot001"
+  ],
+  "pid": 2916,
+  "exit_code": 3221226505,
+  "timed_out": false,
+  "seconds": 71.26701140403748
+}

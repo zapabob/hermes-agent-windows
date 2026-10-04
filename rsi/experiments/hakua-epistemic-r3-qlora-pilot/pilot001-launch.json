@@ -1,0 +1,16 @@
+{
+  "supervisor_pid": 27472,
+  "started_at": "2026-10-04T01:09:55.230538+00:00",
+  "command": [
+    "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot\\.venv-cuda\\Scripts\\python.exe",
+    "-B",
+    "-u",
+    "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot\\pilot_train.py",
+    "--run-id",
+    "pilot001"
+  ],
+  "log_path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot\\pilot001-supervisor.log",
+  "exit_receipt_path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\rsi\\experiments\\hakua-epistemic-r3-qlora-pilot\\pilot001-exit.json",
+  "timeout_seconds": 900,
+  "scope": "only pilot001; existing services preserved"
+}
