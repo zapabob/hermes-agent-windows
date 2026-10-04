@@ -37,7 +37,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from hermes_cli._subprocess_compat import noninteractive_git_env
+from hermes_cli._subprocess_compat import GitPolicyError, _with_git_deadline, noninteractive_git_env
 from hermes_cli.config import get_hermes_home
 from hermes_constants import get_default_hermes_root, venv_python_path
 
@@ -123,6 +123,108 @@ def _no_prompt_git_kwargs() -> dict[str, object]:
         "stdin": subprocess.DEVNULL,
         "env": noninteractive_git_env(),
     }
+
+
+class _UpdateGitExecutionError(subprocess.CalledProcessError):
+    """An indeterminate Git operation must not authorize destructive fallback."""
+
+
+def _run_update_git(command, *, cwd=None, check=False, timeout=30, **legacy_kwargs):
+    """Preserve updater call contracts through the shared policy/process owner.
+
+    Legacy subprocess formatting kwargs are accepted during caller composition;
+    executable selection, environment, stdin and output bounds stay owned here.
+    """
+    from hermes_cli._subprocess_compat import bounded_probe_run, run_internal_git
+
+    binary = shutil.which(command[0]) or command[0]
+    if cwd is None:
+        if command[1:] not in (["--version"], ["-c", "windows.appendAtomically=false", "--version"]):
+            raise GitPolicyError("updater repository path is required")
+        result = bounded_probe_run(
+            [binary, "--version"], timeout=min(timeout, 30), env=noninteractive_git_env(),
+            binary_output=True, max_output_bytes=8 * 1024 * 1024,
+        )
+        if result is None:
+            raise _UpdateGitExecutionError(124, command, stderr="bounded Git version probe failed")
+    else:
+        result = run_internal_git(
+            command[1:], cwd, timeout=min(timeout, 30),
+            git_bin=binary, check_policy=True,
+            binary_output=True, max_output_bytes=8 * 1024 * 1024,
+        )
+    stdout = result.stdout.decode("utf-8", errors="replace") if isinstance(result.stdout, bytes) else result.stdout
+    stderr = result.stderr.decode("utf-8", errors="replace") if isinstance(result.stderr, bytes) else result.stderr
+    result = subprocess.CompletedProcess(result.args, result.returncode, stdout, stderr)
+    if result.returncode in (124, 127) or (check and result.returncode):
+        raise _UpdateGitExecutionError(result.returncode, result.args, output=stdout, stderr=stderr)
+    return result
+
+
+def _run_update_eol_git(command, *, cwd, check=False, input=None, **legacy_kwargs):
+    return _run_update_eol_git_bounded(command, cwd=cwd, check=check, input=input,
+                                      timeout=30, **legacy_kwargs)
+
+
+@_with_git_deadline
+def _run_update_eol_git_bounded(command, *, cwd, timeout, check=False, input=None, **legacy_kwargs):
+    """Apply only the updater's fixed EOL probe after shared repo discovery.
+
+    The general shared policy intentionally forbids arbitrary inline EOL
+    overrides. This owner needs exactly autocrlf=false to assess its existing
+    normalization transaction, without changing the general allowed set.
+    """
+    import tempfile
+    from hermes_cli._subprocess_compat import (
+        bounded_probe_run, git_policy_environment_valid, harden_git_argv, noninteractive_repo_git_env,
+    )
+
+    binary = shutil.which(command[0]) or command[0]
+    env = noninteractive_repo_git_env(cwd, git_bin=binary, preserve_eol=True)
+    if env is None or not git_policy_environment_valid(env):
+        raise GitPolicyError("updater EOL policy discovery failed")
+    args = list(command[1:])
+    # This is a fixed owner-controlled value, never a caller-supplied config.
+    override = args.index("core.autocrlf=false")
+    if override == 0 or args[override - 1] != "-c":
+        raise GitPolicyError("invalid updater EOL probe")
+    del args[override - 1:override + 1]
+    offset = int(env["GIT_CONFIG_COUNT"])
+    env[f"GIT_CONFIG_KEY_{offset}"] = "core.autocrlf"
+    env[f"GIT_CONFIG_VALUE_{offset}"] = "false"
+    env["GIT_CONFIG_COUNT"] = str(offset + 1)
+    pathspec = None
+    try:
+        if input is not None:
+            # Close before Git reads it on Windows. Avoid argv length limits
+            # without opening stdin or giving up bounded process cleanup.
+            with tempfile.NamedTemporaryFile(prefix="hermes-update-pathspec-", delete=False) as stream:
+                pathspec = Path(stream.name)
+                stream.write(input.encode("utf-8"))
+            args[args.index("--pathspec-from-file=-")] = f"--pathspec-from-file={pathspec}"
+        result = bounded_probe_run(
+            [binary, *harden_git_argv(args)], cwd=cwd, env=env, timeout=timeout,
+            binary_output=True, max_output_bytes=8 * 1024 * 1024,
+        )
+    finally:
+        if pathspec is not None:
+            pathspec.unlink(missing_ok=True)
+    if result is None:
+        raise _UpdateGitExecutionError(124, [binary, *args], stderr="bounded EOL operation failed")
+    result = subprocess.CompletedProcess(result.args, result.returncode,
+        result.stdout.decode("utf-8", errors="replace"), result.stderr.decode("utf-8", errors="replace"))
+    if result.returncode in (124, 127) or (check and result.returncode):
+        raise _UpdateGitExecutionError(result.returncode, result.args, output=result.stdout, stderr=result.stderr)
+    return result
+
+
+def _run_update_ff_only(git_cmd, cwd, branch):
+    """Only a proven fast-forward refusal may enter divergence recovery."""
+    result = _run_update_git(git_cmd + ["merge", "--ff-only", f"origin/{branch}"], cwd=cwd)
+    if result.returncode and "not possible to fast-forward" not in result.stderr.lower():
+        raise _UpdateGitExecutionError(result.returncode, result.args,
+                                       output=result.stdout, stderr=result.stderr)
+    return result
 
 
 def _m():
@@ -650,7 +752,7 @@ _UPDATE_CRITICAL_FILES = (
 def _capture_head_sha(git_cmd, cwd) -> str | None:
     """Return the current HEAD SHA, or None if it can't be resolved."""
     try:
-        result = subprocess.run(
+        result = _run_update_git(
             git_cmd + ["rev-parse", "HEAD"],
             cwd=cwd,
             capture_output=True,
@@ -658,6 +760,8 @@ def _capture_head_sha(git_cmd, cwd) -> str | None:
             check=True,
         )
         return result.stdout.strip() or None
+    except (GitPolicyError, _UpdateGitExecutionError):
+        raise
     except (subprocess.CalledProcessError, OSError):
         return None
 
@@ -696,7 +800,7 @@ def _editable_install_is_current(git_cmd, cwd, pre_pull_sha: str | None) -> bool
     if not pre_pull_sha:
         return False
     try:
-        result = subprocess.run(
+        result = _run_update_git(
             git_cmd
             + ["diff", "--name-only", f"{pre_pull_sha}..HEAD", "--"]
             + list(_INSTALL_DEFINING_FILES),
@@ -714,7 +818,7 @@ def _editable_install_is_current(git_cmd, cwd, pre_pull_sha: str | None) -> bool
 def _git_is_trampoline(git_cmd: list) -> bool:
     """Whether Git for Windows resolves to its broken fork-bomb trampoline."""
     try:
-        result = subprocess.run(
+        result = _run_update_git(
             git_cmd + ["--version"],
             capture_output=True,
             text=True,
@@ -722,6 +826,8 @@ def _git_is_trampoline(git_cmd: list) -> bool:
             errors="replace",
             timeout=15,
         )
+    except (GitPolicyError, _UpdateGitExecutionError):
+        raise
     except Exception:
         return False
     output = ((result.stdout or "") + (result.stderr or "")).lower()
@@ -751,7 +857,7 @@ def _locate_real_git() -> Optional[Path]:
         if not candidate.exists():
             continue
         try:
-            result = subprocess.run(
+            result = _run_update_git(
                 [str(candidate), "--version"],
                 capture_output=True,
                 text=True,
@@ -762,7 +868,7 @@ def _locate_real_git() -> Optional[Path]:
         except Exception:
             continue
         output = ((result.stdout or "") + (result.stderr or "")).lower()
-        if "fork bomb" not in output:
+        if result.returncode == 0 and "fork bomb" not in output:
             return candidate
     return None
 
@@ -1440,12 +1546,14 @@ def _branch_head_label(git_cmd=None, cwd=None) -> str | None:
     try:
         cmd = list(git_cmd) if git_cmd else ["git"]
         root = cwd if cwd is not None else _m().PROJECT_ROOT
-        branch = subprocess.run(
+        if not Path(root).is_dir():
+            return None
+        branch = _run_update_git(
             cmd + ["rev-parse", "--abbrev-ref", "HEAD"],
             cwd=root, capture_output=True,
             text=True, encoding="utf-8", errors="replace",
         )
-        sha = subprocess.run(
+        sha = _run_update_git(
             cmd + ["rev-parse", "--short", "HEAD"],
             cwd=root, capture_output=True,
             text=True, encoding="utf-8", errors="replace",
@@ -1458,6 +1566,8 @@ def _branch_head_label(git_cmd=None, cwd=None) -> str | None:
             return None
         label = "detached" if branch_name == "HEAD" else branch_name
         return f"{label} @ {sha_text}"
+    except (GitPolicyError, _UpdateGitExecutionError):
+        raise
     except Exception:
         return None
 
@@ -1505,12 +1615,14 @@ def _assess_parked_branch_switch(
             _update_cfg.get("auto_switch_parked_branch", True)
         ):
             return False, "disabled"
+    except (GitPolicyError, _UpdateGitExecutionError):
+        raise
     except Exception as exc:
         # A config read failure must not disable the guard's safety checks —
         # fall through to them with the default (auto-switch allowed).
         logger.debug("Could not read updates.auto_switch_parked_branch: %s", exc)
 
-    status = subprocess.run(
+    status = _run_update_git(
         git_cmd + ["status", "--porcelain"],
         cwd=cwd, capture_output=True,
         text=True, encoding="utf-8", errors="replace",
@@ -1520,7 +1632,7 @@ def _assess_parked_branch_switch(
     if status.stdout.strip():
         return False, "dirty"
 
-    cherry = subprocess.run(
+    cherry = _run_update_git(
         git_cmd + ["cherry", f"origin/{target_branch}"],
         cwd=cwd, capture_output=True,
         text=True, encoding="utf-8", errors="replace",
@@ -1549,13 +1661,15 @@ def _print_parked_branch_skip_warning(
     branch, with the behind-count and the exact commands to resolve."""
     behind = None
     try:
-        behind_result = subprocess.run(
+        behind_result = _run_update_git(
             git_cmd + ["rev-list", f"HEAD..origin/{target_branch}", "--count"],
             cwd=cwd, capture_output=True,
             text=True, encoding="utf-8", errors="replace",
         )
         if behind_result.returncode == 0 and behind_result.stdout.strip():
             behind = int(behind_result.stdout.strip())
+    except (GitPolicyError, _UpdateGitExecutionError):
+        raise
     except Exception:
         behind = None
 
@@ -1742,6 +1856,8 @@ def _should_zip_fallback_on_update_error(exc: BaseException) -> bool:
     every top-level entry except ``venv`` / ``node_modules`` / ``.git`` /
     ``.env`` — permanently deleting uncommitted edits and untracked files.
     """
+    if isinstance(exc, (GitPolicyError, _UpdateGitExecutionError)):
+        return False
     return (
         isinstance(exc, subprocess.CalledProcessError)
         and _m()._is_windows()
@@ -1784,7 +1900,7 @@ def _zip_overlay_block_reason(
     git_cmd = ["git"]
     if sys.platform == "win32":
         git_cmd = ["git", "-c", "windows.appendAtomically=false"]
-    result = subprocess.run(
+    result = _run_update_git(
         # -uall: a user-level ``status.showUntrackedFiles = no`` git config
         # would otherwise hide untracked files and silently blind this guard.
         # --ignored=matching: gitignored files are still USER DATA the ZIP
@@ -2500,12 +2616,46 @@ def _update_via_zip(args, *, had_desktop_app_before_update: bool = False) -> boo
         logger.debug("Update receipt finalize (zip path) failed: %s", _receipt_exc)
     return update_complete
 
+
+def _run_update_recovery_git(
+    command: list[str], *, cwd: Path, check: bool = False
+) -> subprocess.CompletedProcess[str]:
+    """Keep updater recovery on the shared Git policy and process owner."""
+    from hermes_cli._subprocess_compat import run_internal_git
+
+    result = run_internal_git(
+        command[1:], cwd, timeout=30,
+        git_bin=shutil.which(command[0]) or command[0], check_policy=True,
+    )
+    if result.returncode in (124, 127):
+        raise _UpdateGitExecutionError(
+            result.returncode, result.args, output=result.stdout, stderr=result.stderr,
+        )
+    if check and result.returncode:
+        raise subprocess.CalledProcessError(
+            result.returncode, result.args, output=result.stdout, stderr=result.stderr,
+        )
+    return result
+
+
+def _read_update_stash_ref(git_cmd: list[str], cwd: Path, *, required: bool = False) -> str:
+    result = _run_update_recovery_git(
+        git_cmd + ["rev-parse", "--verify", "--quiet", "refs/stash"], cwd=cwd,
+    )
+    if result.returncode == 0 and result.stdout.strip():
+        return result.stdout.strip()
+    # --quiet distinguishes an absent ref (1) from a failed Git operation.
+    if not required and result.returncode == 1 and not result.stdout.strip():
+        return ""
+    raise subprocess.CalledProcessError(
+        result.returncode or 1, result.args, output=result.stdout, stderr=result.stderr,
+    )
+
+
 def _stash_local_changes_if_needed(git_cmd: list[str], cwd: Path) -> Optional[str]:
-    status = subprocess.run(
+    status = _run_update_recovery_git(
         git_cmd + ["status", "--porcelain"],
         cwd=cwd,
-        capture_output=True,
-        text=True, encoding="utf-8", errors="replace",
         check=True,
     )
     if not status.stdout.strip():
@@ -2515,15 +2665,13 @@ def _stash_local_changes_if_needed(git_cmd: list[str], cwd: Path) -> Optional[st
     # git stash will fail with "needs merge / could not write index".  Clear the
     # conflict state with `git reset` so the stash can proceed.  Working-tree
     # changes are preserved; only the index conflict markers are dropped.
-    unmerged = subprocess.run(
+    unmerged = _run_update_recovery_git(
         git_cmd + ["ls-files", "--unmerged"],
-        cwd=cwd,
-        capture_output=True,
-        text=True, encoding="utf-8", errors="replace",
+        cwd=cwd, check=True,
     )
     if unmerged.stdout.strip():
         print("→ Clearing unmerged index entries from a previous conflict...")
-        subprocess.run(git_cmd + ["reset"], cwd=cwd, capture_output=True)
+        _run_update_recovery_git(git_cmd + ["reset"], cwd=cwd, check=True)
 
     from datetime import datetime, timezone
 
@@ -2531,30 +2679,15 @@ def _stash_local_changes_if_needed(git_cmd: list[str], cwd: Path) -> Optional[st
         "hermes-update-autostash-%Y%m%d-%H%M%S"
     )
     print("→ Local changes detected — stashing before update...")
-    prev_stash = subprocess.run(
-        git_cmd + ["rev-parse", "--verify", "refs/stash"],
-        cwd=cwd,
-        capture_output=True,
-        text=True, encoding="utf-8", errors="replace",
-    ).stdout.strip()
-    push = subprocess.run(
+    prev_stash = _read_update_stash_ref(git_cmd, cwd)
+    push = _run_update_recovery_git(
         git_cmd + ["stash", "push", "--include-untracked", "-m", stash_name],
         cwd=cwd,
-        capture_output=True,
-        text=True, encoding="utf-8", errors="replace",
     )
     if push.stdout.strip():
         print(push.stdout.strip())
-    stash_probe = subprocess.run(
-        git_cmd + ["rev-parse", "--verify", "refs/stash"],
-        cwd=cwd,
-        capture_output=True,
-        text=True, encoding="utf-8", errors="replace",
-    )
-    stash_ref = stash_probe.stdout.strip()
-    stash_created = (
-        stash_probe.returncode == 0 and bool(stash_ref) and stash_ref != prev_stash
-    )
+    stash_ref = _read_update_stash_ref(git_cmd, cwd, required=push.returncode == 0)
+    stash_created = bool(stash_ref) and stash_ref != prev_stash
 
     if push.returncode != 0:
         if stash_created:
@@ -2578,10 +2711,9 @@ def _stash_local_changes_if_needed(git_cmd: list[str], cwd: Path) -> Optional[st
             # cleanup for TRACKED modifications — they are saved in the stash
             # but still dirty the tree, which would break the checkout/pull
             # that follows. Safe to reset: everything is in the stash entry.
-            subprocess.run(
+            _run_update_recovery_git(
                 git_cmd + ["reset", "--hard", "HEAD"],
-                cwd=cwd,
-                capture_output=True,
+                cwd=cwd, check=True,
             )
         else:
             # No stash entry was created: the changes were NOT saved.  This
@@ -2602,11 +2734,9 @@ def _stash_local_changes_if_needed(git_cmd: list[str], cwd: Path) -> Optional[st
 def _resolve_stash_selector(
     git_cmd: list[str], cwd: Path, stash_ref: str
 ) -> Optional[str]:
-    stash_list = subprocess.run(
+    stash_list = _run_update_recovery_git(
         git_cmd + ["stash", "list", "--format=%gd %H"],
         cwd=cwd,
-        capture_output=True,
-        text=True, encoding="utf-8", errors="replace",
         check=True,
     )
     for line in stash_list.stdout.splitlines():
@@ -2706,19 +2836,15 @@ def _restore_stashed_changes(
             return False
 
     print("→ Restoring local changes...")
-    restore = subprocess.run(
+    restore = _run_update_recovery_git(
         git_cmd + ["stash", "apply", stash_ref],
         cwd=cwd,
-        capture_output=True,
-        text=True, encoding="utf-8", errors="replace",
     )
 
     # Check for unmerged (conflicted) files — can happen even when returncode is 0
-    unmerged = subprocess.run(
+    unmerged = _run_update_recovery_git(
         git_cmd + ["diff", "--name-only", "--diff-filter=U"],
-        cwd=cwd,
-        capture_output=True,
-        text=True, encoding="utf-8", errors="replace",
+        cwd=cwd, check=True,
     )
     has_conflicts = bool(unmerged.stdout.strip())
 
@@ -2754,10 +2880,9 @@ def _restore_stashed_changes(
         # Always reset to clean state — leaving conflict markers in source
         # files makes hermes completely unrunnable (SyntaxError on import).
         # The user's changes are safe in the stash for manual recovery.
-        subprocess.run(
+        _run_update_recovery_git(
             git_cmd + ["reset", "--hard", "HEAD"],
-            cwd=cwd,
-            capture_output=True,
+            cwd=cwd, check=True,
         )
         print("Working tree reset to clean state.")
         print(f"Restore your changes later with: git stash apply {stash_ref}")
@@ -2776,11 +2901,9 @@ def _restore_stashed_changes(
         )
         _print_stash_cleanup_guidance(stash_ref)
     else:
-        drop = subprocess.run(
+        drop = _run_update_recovery_git(
             git_cmd + ["stash", "drop", stash_selector],
             cwd=cwd,
-            capture_output=True,
-            text=True, encoding="utf-8", errors="replace",
         )
         if drop.returncode != 0:
             print(
@@ -2827,11 +2950,9 @@ def _discard_stashed_changes(
         _print_stash_cleanup_guidance(stash_ref)
         return False
 
-    drop = subprocess.run(
+    drop = _run_update_recovery_git(
         git_cmd + ["stash", "drop", stash_selector],
         cwd=cwd,
-        capture_output=True,
-        text=True, encoding="utf-8", errors="replace",
     )
     if drop.returncode != 0:
         print(
@@ -2891,7 +3012,7 @@ def _is_managed_distribution_origin(origin_url: Optional[str]) -> bool:
 def _get_origin_url(git_cmd: list[str], cwd: Path) -> Optional[str]:
     """Get the URL of the origin remote, or None if not set."""
     try:
-        result = subprocess.run(
+        result = _run_update_git(
             git_cmd + ["remote", "get-url", "origin"],
             cwd=cwd,
             capture_output=True,
@@ -2899,6 +3020,8 @@ def _get_origin_url(git_cmd: list[str], cwd: Path) -> Optional[str]:
         )
         if result.returncode == 0:
             return result.stdout.strip()
+    except (GitPolicyError, _UpdateGitExecutionError):
+        raise
     except Exception:
         pass
     return None
@@ -2926,33 +3049,37 @@ def _distribution_archive_url(branch: str) -> str:
 def _has_upstream_remote(git_cmd: list[str], cwd: Path) -> bool:
     """Check if an 'upstream' remote already exists."""
     try:
-        result = subprocess.run(
+        result = _run_update_git(
             git_cmd + ["remote", "get-url", "upstream"],
             cwd=cwd,
             capture_output=True,
             text=True, encoding="utf-8", errors="replace",
         )
         return result.returncode == 0
+    except (GitPolicyError, _UpdateGitExecutionError):
+        raise
     except Exception:
         return False
 
 def _add_upstream_remote(git_cmd: list[str], cwd: Path) -> bool:
     """Add the official repo as the 'upstream' remote. Returns True on success."""
     try:
-        result = subprocess.run(
+        result = _run_update_git(
             git_cmd + ["remote", "add", "upstream", OFFICIAL_REPO_URL],
             cwd=cwd,
             capture_output=True,
             text=True, encoding="utf-8", errors="replace",
         )
         return result.returncode == 0
+    except (GitPolicyError, _UpdateGitExecutionError):
+        raise
     except Exception:
         return False
 
 def _count_commits_between(git_cmd: list[str], cwd: Path, base: str, head: str) -> int:
     """Count commits on `head` that are not on `base`. Returns -1 on error."""
     try:
-        result = subprocess.run(
+        result = _run_update_git(
             git_cmd + ["rev-list", "--count", f"{base}..{head}"],
             cwd=cwd,
             capture_output=True,
@@ -2960,6 +3087,8 @@ def _count_commits_between(git_cmd: list[str], cwd: Path, base: str, head: str) 
         )
         if result.returncode == 0:
             return int(result.stdout.strip())
+    except (GitPolicyError, _UpdateGitExecutionError):
+        raise
     except Exception:
         pass
     return -1
@@ -2985,7 +3114,7 @@ def _sync_fork_with_upstream(git_cmd: list[str], cwd: Path) -> bool:
     Returns True if push succeeded, False otherwise.
     """
     try:
-        result = subprocess.run(
+        result = _run_update_git(
             git_cmd + ["push", "origin", "main", "--force-with-lease"],
             cwd=cwd,
             capture_output=True,
@@ -2993,6 +3122,8 @@ def _sync_fork_with_upstream(git_cmd: list[str], cwd: Path) -> bool:
             **_no_prompt_git_kwargs(),
         )
         return result.returncode == 0
+    except (GitPolicyError, _UpdateGitExecutionError):
+        raise
     except Exception:
         return False
 
@@ -3079,13 +3210,18 @@ def _sync_with_upstream_if_needed(
     print()
     print("→ Fetching upstream...")
     try:
-        subprocess.run(
+        fetched = _run_update_git(
             git_cmd + ["fetch", "upstream", "main", "--quiet"],
             cwd=cwd,
             capture_output=True,
-            check=True,
+            check=False,
             **_no_prompt_git_kwargs(),
         )
+        if fetched.returncode:
+            print("  ✗ Failed to fetch upstream. Skipping upstream sync.")
+            return False
+    except (GitPolicyError, _UpdateGitExecutionError):
+        raise
     except subprocess.CalledProcessError:
         print("  ✗ Failed to fetch upstream. Skipping upstream sync.")
         return False
@@ -3120,12 +3256,14 @@ def _sync_with_upstream_if_needed(
     print("→ Pulling from upstream...")
 
     try:
-        subprocess.run(
+        _run_update_git(
             git_cmd + ["pull", "--ff-only", "upstream", "main"],
             cwd=cwd,
             check=True,
             **_no_prompt_git_kwargs(),
         )
+    except (GitPolicyError, _UpdateGitExecutionError):
+        raise
     except subprocess.CalledProcessError:
         print(
             "  ✗ Failed to pull from upstream. You may need to resolve conflicts manually."
@@ -4331,7 +4469,7 @@ def _cmd_update_check(branch: str = "main", *, branch_explicit: bool = False):
     # would then report a huge bogus "behind" number. Detect shallow up front:
     # fetch with --depth 1 to preserve the boundary and report presence-only.
     is_shallow = (
-        subprocess.run(
+        _run_update_git(
             git_cmd + ["rev-parse", "--is-shallow-repository"],
             cwd=_m().PROJECT_ROOT,
             capture_output=True,
@@ -4350,7 +4488,7 @@ def _cmd_update_check(branch: str = "main", *, branch_explicit: bool = False):
         # 'upstream' remote, and the old flow burned a failed network attempt
         # (~0.3-1 s) on every --check before falling back to origin.
         has_upstream_remote = (
-            subprocess.run(
+            _run_update_git(
                 git_cmd + ["remote", "get-url", "upstream"],
                 cwd=_m().PROJECT_ROOT,
                 capture_output=True,
@@ -4361,7 +4499,7 @@ def _cmd_update_check(branch: str = "main", *, branch_explicit: bool = False):
         fetch_result = None
         if has_upstream_remote:
             print("→ Fetching from upstream...")
-            fetch_result = subprocess.run(
+            fetch_result = _run_update_git(
                 git_cmd + ["fetch"] + depth_args + ["upstream", branch],
                 cwd=_m().PROJECT_ROOT,
                 capture_output=True,
@@ -4374,7 +4512,7 @@ def _cmd_update_check(branch: str = "main", *, branch_explicit: bool = False):
         else:
             # No upstream remote, or the upstream fetch failed — use origin.
             print("→ Fetching from origin...")
-            fetch_result = subprocess.run(
+            fetch_result = _run_update_git(
                 git_cmd + ["fetch"] + depth_args + ["origin", branch],
                 cwd=_m().PROJECT_ROOT,
                 capture_output=True,
@@ -4386,7 +4524,7 @@ def _cmd_update_check(branch: str = "main", *, branch_explicit: bool = False):
     else:
         # Non-default branch: compare against origin/<branch> directly.
         print("→ Fetching from origin...")
-        fetch_result = subprocess.run(
+        fetch_result = _run_update_git(
             git_cmd + ["fetch"] + depth_args + ["origin", branch],
             cwd=_m().PROJECT_ROOT,
             capture_output=True,
@@ -4404,7 +4542,7 @@ def _cmd_update_check(branch: str = "main", *, branch_explicit: bool = False):
     # Without this, `git rev-list HEAD..origin/<bogus> --count` exits 128 and
     # (with check=True) raises CalledProcessError, surfacing a Python
     # traceback. Friendlier to detect-and-report.
-    verify_result = subprocess.run(
+    verify_result = _run_update_git(
         git_cmd + ["rev-parse", "--verify", "--quiet", compare_branch],
         cwd=_m().PROJECT_ROOT,
         capture_output=True,
@@ -4419,11 +4557,11 @@ def _cmd_update_check(branch: str = "main", *, branch_explicit: bool = False):
         # (mirrors the banner's _check_via_local_git), then try to recover the
         # exact count via the GitHub compare API — the remote graph is complete
         # even when the local one is truncated.
-        head_sha = subprocess.run(
+        head_sha = _run_update_git(
             git_cmd + ["rev-parse", "HEAD"],
             cwd=_m().PROJECT_ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace",
         ).stdout.strip()
-        target_sha = subprocess.run(
+        target_sha = _run_update_git(
             git_cmd + ["rev-parse", compare_branch],
             cwd=_m().PROJECT_ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace",
         ).stdout.strip()
@@ -4446,7 +4584,7 @@ def _cmd_update_check(branch: str = "main", *, branch_explicit: bool = False):
             print(f"  Run '{recommended_update_command()}' to install.")
         return
 
-    rev_result = subprocess.run(
+    rev_result = _run_update_git(
         git_cmd + ["rev-list", f"HEAD..{compare_branch}", "--count"],
         cwd=_m().PROJECT_ROOT,
         capture_output=True,
@@ -7628,7 +7766,7 @@ def _discard_lockfile_churn(git_cmd, repo_root):
     Best-effort; only ever touches files named ``package-lock.json``.
     """
     try:
-        diff = subprocess.run(
+        diff = _run_update_git(
             git_cmd + ["diff", "--name-only"],
             cwd=repo_root,
             capture_output=True,
@@ -7649,14 +7787,16 @@ def _discard_lockfile_churn(git_cmd, repo_root):
         ]
         if not dirty:
             return
-        subprocess.run(
+        _run_update_git(
             git_cmd + ["checkout", "--", *dirty],
             cwd=repo_root,
             capture_output=True,
             text=True, encoding="utf-8", errors="replace",
-            check=False,
+            check=True,
         )
         print(f"→ Discarded npm lockfile churn ({len(dirty)} file(s))")
+    except (GitPolicyError, _UpdateGitExecutionError):
+        raise
     except Exception:
         # Never let lockfile cleanup block an update.
         pass
@@ -7685,7 +7825,7 @@ def _normalize_managed_eol(git_cmd, repo_root):
     probe = git_cmd + ["-c", "core.autocrlf=false"]
 
     def _dirty(*extra):
-        out = subprocess.run(
+        out = _run_update_eol_git(
             probe + ["diff", "-z", "--name-only", *extra],
             cwd=repo_root,
             capture_output=True,
@@ -7703,7 +7843,7 @@ def _normalize_managed_eol(git_cmd, repo_root):
         # edits. ``--numstat`` does honor the filter: a CR-only file produces
         # no numstat record, while a genuinely-edited file does. Parse the
         # paths out of numstat instead.
-        out = subprocess.run(
+        out = _run_update_eol_git(
             probe + ["-c", "core.quotepath=false",
                      "diff", "--numstat", "--ignore-cr-at-eol"],
             cwd=repo_root,
@@ -7730,7 +7870,7 @@ def _normalize_managed_eol(git_cmd, repo_root):
         return all_dirty - real_dirty
 
     try:
-        effective = subprocess.run(
+        effective = _run_update_git(
             git_cmd + ["config", "--get", "core.autocrlf"],
             cwd=repo_root,
             capture_output=True,
@@ -7747,7 +7887,7 @@ def _normalize_managed_eol(git_cmd, repo_root):
         if eol_only:
             # Pathspec over stdin, not argv: a fully renormalized checkout is
             # thousands of paths, well past the Windows command-line limit.
-            subprocess.run(
+            restored = _run_update_eol_git(
                 probe
                 + ["checkout", "--pathspec-from-file=-", "--pathspec-file-nul", "--"],
                 cwd=repo_root,
@@ -7756,18 +7896,23 @@ def _normalize_managed_eol(git_cmd, repo_root):
                 text=True, encoding="utf-8", errors="replace",
                 check=False,
             )
-            if _eol_only():
+            if restored.returncode:
+                return
+            remaining = _eol_only()
+            if remaining is None or remaining:
                 # Still dirty — persisting the pin here would only surface churn
                 # we failed to clear. Leave the checkout as we found it.
                 return
             print(f"→ Normalized line-ending churn ({len(eol_only)} file(s))")
 
-        subprocess.run(
+        _run_update_git(
             git_cmd + ["config", "core.autocrlf", "false"],
             cwd=repo_root,
             capture_output=True,
-            check=False,
+            check=True,
         )
+    except (GitPolicyError, _UpdateGitExecutionError):
+        raise
     except Exception:
         # Never let line-ending cleanup block an update.
         pass
@@ -8295,28 +8440,22 @@ def _cmd_update_impl(args, gateway_mode: bool):
             )
             sys.exit(1)
 
-    # On Windows, git can fail with "unable to write loose object file: Invalid argument"
-    # due to filesystem atomicity issues. Set the recommended workaround.
-    if sys.platform == "win32" and git_dir.exists():
-        subprocess.run(
-            [
-                "git",
-                "-c",
-                "windows.appendAtomically=false",
-                "config",
-                "windows.appendAtomically",
-                "false",
-            ],
-            cwd=_m().PROJECT_ROOT,
-            check=False,
-            capture_output=True,
-        )
-
     # Build git command once — reused for fork detection and the update itself.
     git_cmd = ["git"]
     if sys.platform == "win32":
         git_cmd = ["git", "-c", "windows.appendAtomically=false"]
     git_cmd = _ensure_non_trampoline_git(git_cmd)
+
+    # On Windows, git can fail with "unable to write loose object file: Invalid argument"
+    # due to filesystem atomicity issues. Set the recommended workaround.
+    if sys.platform == "win32" and git_dir.exists():
+        _run_update_git(
+            git_cmd + ["config", "windows.appendAtomically", "false"],
+            cwd=_m().PROJECT_ROOT,
+            check=False,
+            capture_output=True,
+        )
+
 
     # Discard npm lockfile churn before any stash/branch logic. npm rewrites
     # tracked package-lock.json files non-deterministically at install/build
@@ -8377,7 +8516,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
             print("  (removed %d aborted-fetch pack temp file(s))" % len(swept))
 
         print("→ Fetching updates...")
-        fetch_result = subprocess.run(
+        fetch_result = _run_update_git(
             git_cmd + ["fetch", "origin", branch],
             cwd=_m().PROJECT_ROOT,
             capture_output=True,
@@ -8389,7 +8528,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
             sys.exit(1)
 
         # Get current branch (returns literal "HEAD" when detached)
-        result = subprocess.run(
+        result = _run_update_git(
             git_cmd + ["rev-parse", "--abbrev-ref", "HEAD"],
             cwd=_m().PROJECT_ROOT,
             capture_output=True,
@@ -8467,7 +8606,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                     # The merge source must exist upstream; --branch typos
                     # previously surfaced through the checkout failing, which
                     # does not run on this path.
-                    verify_ref = subprocess.run(
+                    verify_ref = _run_update_git(
                         git_cmd + ["rev-parse", "--verify", "--quiet", f"origin/{branch}"],
                         cwd=_m().PROJECT_ROOT,
                         capture_output=True,
@@ -8503,7 +8642,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                 )
             # Stash before checkout so uncommitted work isn't lost
             auto_stash_ref = _m()._stash_local_changes_if_needed(git_cmd, _m().PROJECT_ROOT)
-            checkout_result = subprocess.run(
+            checkout_result = _run_update_git(
                 git_cmd + ["checkout", branch],
                 cwd=_m().PROJECT_ROOT,
                 capture_output=True,
@@ -8514,8 +8653,8 @@ def _cmd_update_impl(args, gateway_mode: bool):
                 # it up as a tracking branch of origin/<branch>. This is
                 # the common case when the requested branch exists upstream
                 # but was never checked out locally.
-                track_result = subprocess.run(
-                    git_cmd + ["checkout", "-B", branch, f"origin/{branch}"],
+                track_result = _run_update_git(
+                    git_cmd + ["checkout", "-b", branch, f"origin/{branch}"],
                     cwd=_m().PROJECT_ROOT,
                     capture_output=True,
                     text=True, encoding="utf-8", errors="replace",
@@ -8550,7 +8689,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
         # The zero/nonzero gate is still sound (HEAD == origin/<branch> counts
         # 0), so keep it, but treat the shallow NUMBER as unknown and recover
         # the real one via the GitHub compare API when possible.
-        result = subprocess.run(
+        result = _run_update_git(
             git_cmd + ["rev-list", f"HEAD..origin/{branch}", "--count"],
             cwd=_m().PROJECT_ROOT,
             capture_output=True,
@@ -8560,7 +8699,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
         commit_count = int(result.stdout.strip())
 
         apply_is_shallow = (
-            subprocess.run(
+            _run_update_git(
                 git_cmd + ["rev-parse", "--is-shallow-repository"],
                 cwd=_m().PROJECT_ROOT,
                 capture_output=True,
@@ -8571,12 +8710,12 @@ def _cmd_update_impl(args, gateway_mode: bool):
         if commit_count > 0 and apply_is_shallow:
             from hermes_cli.banner import _github_compare_behind
 
-            head_sha = subprocess.run(
+            head_sha = _run_update_git(
                 git_cmd + ["rev-parse", "HEAD"],
                 cwd=_m().PROJECT_ROOT, capture_output=True,
                 text=True, encoding="utf-8", errors="replace",
             ).stdout.strip()
-            target_sha = subprocess.run(
+            target_sha = _run_update_git(
                 git_cmd + ["rev-parse", f"origin/{branch}"],
                 cwd=_m().PROJECT_ROOT, capture_output=True,
                 text=True, encoding="utf-8", errors="replace",
@@ -8644,7 +8783,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                         f"merged) — switched back to {branch}."
                     )
             elif current_branch not in {branch, "HEAD"}:
-                subprocess.run(
+                _run_update_git(
                     git_cmd + ["checkout", current_branch],
                     cwd=_m().PROJECT_ROOT,
                     capture_output=True,
@@ -8818,6 +8957,9 @@ def _cmd_update_impl(args, gateway_mode: bool):
         # every user who ran ``hermes update`` for the 7 minutes between
         # the bad commit and the fix landing).
         pre_pull_sha = _capture_head_sha(git_cmd, _m().PROJECT_ROOT)
+        if not pre_pull_sha:
+            raise _UpdateGitExecutionError(1, git_cmd + ["rev-parse", "HEAD"],
+                                           stderr="update rollback anchor unavailable; stash retained")
         try:
             # Merge the ref we already fetched above (→ Fetching updates...)
             # instead of `git pull`, which performs a SECOND network fetch of
@@ -8825,12 +8967,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
             # `merge --ff-only origin/<branch>` is byte-identical in effect to
             # `pull --ff-only origin <branch>` given the fresh tracking ref;
             # the divergence fallback below is unchanged.
-            pull_result = subprocess.run(
-                git_cmd + ["merge", "--ff-only", f"origin/{branch}"],
-                cwd=_m().PROJECT_ROOT,
-                capture_output=True,
-                text=True, encoding="utf-8", errors="replace",
-            )
+            pull_result = _run_update_ff_only(git_cmd, _m().PROJECT_ROOT, branch)
             if pull_result.returncode != 0:
                 # ff-only failed — local and remote have diverged. Before
                 # assuming an upstream force-push, check WHY: a checkout on a
@@ -8839,35 +8976,39 @@ def _cmd_update_impl(args, gateway_mode: bool):
                 # discard that work. Merge instead and stop cleanly on
                 # conflict — an update must never destroy local commits.
                 _cur_branch = (
-                    subprocess.run(
+                    _run_update_git(
                         git_cmd + ["branch", "--show-current"],
                         cwd=_m().PROJECT_ROOT,
                         capture_output=True,
                         text=True, encoding="utf-8", errors="replace",
+                        check=True,
                     ).stdout
                     or ""
                 ).strip()
+                if not _cur_branch:
+                    raise _UpdateGitExecutionError(1, git_cmd + ["branch", "--show-current"],
+                                                   stderr="update branch authority unavailable; stash retained")
                 if _cur_branch and _cur_branch != branch:
                     print(
                         f"  ⚠ Checkout is on custom branch '{_cur_branch}' — "
                         f"merging origin/{branch} instead of resetting so local commits survive..."
                     )
                     # Best-effort safety tag; recovery anchor if anything goes wrong.
-                    subprocess.run(
+                    _run_update_git(
                         git_cmd
                         + ["tag", f"pre-update-{_time.strftime('%Y%m%d-%H%M%S')}"],
                         cwd=_m().PROJECT_ROOT,
                         capture_output=True,
                         check=False,
                     )
-                    merge_result = subprocess.run(
+                    merge_result = _run_update_git(
                         git_cmd + ["merge", "--no-edit", f"origin/{branch}"],
                         cwd=_m().PROJECT_ROOT,
                         capture_output=True,
                         text=True, encoding="utf-8", errors="replace",
                     )
                     if merge_result.returncode != 0:
-                        subprocess.run(
+                        _run_update_git(
                             git_cmd + ["merge", "--abort"],
                             cwd=_m().PROJECT_ROOT,
                             capture_output=True,
@@ -8892,7 +9033,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                     print(
                         "  ⚠ Fast-forward not possible (history diverged), resetting to match remote..."
                     )
-                    reset_result = subprocess.run(
+                    reset_result = _run_update_git(
                         git_cmd + ["reset", "--hard", f"origin/{branch}"],
                         cwd=_m().PROJECT_ROOT,
                         capture_output=True,
@@ -8928,7 +9069,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                 if pre_pull_sha:
                     print()
                     print(f"→ Rolling back to {pre_pull_sha[:10]}...")
-                    rollback_result = subprocess.run(
+                    rollback_result = _run_update_git(
                         git_cmd + ["reset", "--hard", pre_pull_sha],
                         cwd=_m().PROJECT_ROOT,
                         capture_output=True,
@@ -9018,7 +9159,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
         # branch, so the running code *is* up to date and HEAD staying put is
         # the whole point. Claiming failure there would make every update on a
         # real working branch exit 1 after doing exactly the right thing.
-        post_pull_branch = subprocess.run(
+        post_pull_branch = _run_update_git(
             git_cmd + ["rev-parse", "--abbrev-ref", "HEAD"],
             cwd=_m().PROJECT_ROOT,
             capture_output=True,
@@ -10762,6 +10903,8 @@ def _cmd_update_impl(args, gateway_mode: bool):
         # Fail-closed shim contention (#87331): strict quarantine refused
         # BEFORE any installer ran — defer via marker, exit 2, no ZIP.
         _refuse_update_for_contended_shims(e)
+    except (GitPolicyError, _UpdateGitExecutionError):
+        raise
     except subprocess.CalledProcessError as e:
         stage = _format_update_failure_stage(e)
         if _should_zip_fallback_on_update_error(e):

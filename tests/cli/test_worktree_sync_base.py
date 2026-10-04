@@ -143,16 +143,17 @@ class TestResolveWorktreeBaseStartupCost:
         not cascade into a second fetch or blow up."""
         clone, remote_head, stale_local_head = remote_and_clone
 
-        real_run = subprocess.run
+        from hermes_cli import _subprocess_compat as compat
+        real_probe = compat.bounded_probe_run
         fetches = []
 
         def stall_fetches(args, **kw):
             if isinstance(args, (list, tuple)) and "fetch" in args:
                 fetches.append(list(args))
-                raise subprocess.TimeoutExpired(cmd=args, timeout=kw.get("timeout", 5))
-            return real_run(args, **kw)
+                return None
+            return real_probe(args, **kw)
 
-        monkeypatch.setattr(subprocess, "run", stall_fetches)
+        monkeypatch.setattr(compat, "bounded_probe_run", stall_fetches)
         start = time.monotonic()
         base_ref, label = cli._resolve_worktree_base(str(clone))
         elapsed = time.monotonic() - start

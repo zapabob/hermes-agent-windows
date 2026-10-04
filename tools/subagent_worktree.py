@@ -53,15 +53,9 @@ _BRANCH_NAMESPACE = "hermes-subagent"
 
 def _run_git(args, cwd: str, timeout: int = _GIT_TIMEOUT):
     """Run a git command, capturing output. Never raises on non-zero exit."""
-    return subprocess.run(
-        ["git", *args],
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        timeout=timeout,
-    )
+    from hermes_cli._subprocess_compat import run_internal_git
+
+    return run_internal_git(args, cwd, timeout=timeout)
 
 
 def local_backend_active() -> bool:

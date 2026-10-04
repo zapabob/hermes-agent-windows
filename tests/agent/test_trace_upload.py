@@ -146,8 +146,10 @@ def test_upload_happy_path_mocked(monkeypatch):
 
     with patch.object(trace_upload, "load_session_messages",
                       return_value=(messages, {"model": "claude-x"})), \
+         patch("tools.lazy_deps.ensure") as mocked_ensure, \
          patch("huggingface_hub.HfApi", return_value=fake_api):
         msg = upload_session_trace("20260531_abc", cwd="/tmp")
+        mocked_ensure.assert_called_once_with("tool.trace_upload", prompt=False)
 
     # Returned a viewer URL
     assert "huggingface.co/datasets/alice/hermes-traces" in msg

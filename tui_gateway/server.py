@@ -15339,36 +15339,23 @@ def _list_repo_files(root: str) -> list[str]:
             return cached[1]
 
     files: list[str] = []
-    from hermes_cli._subprocess_compat import windows_hide_flags
-
-    _creationflags = windows_hide_flags()
+    from hermes_cli._subprocess_compat import GitPolicyError, run_internal_git
     try:
-        top_result = subprocess.run(
-            ["git", "-C", root, "rev-parse", "--show-toplevel"],
-            capture_output=True,
-            timeout=2.0,
-            check=False,
-            stdin=subprocess.DEVNULL,
-            creationflags=_creationflags,
+        top_result = run_internal_git(
+            ["rev-parse", "--show-toplevel"], root,
+            timeout=2.0, check_policy=True,
         )
         if top_result.returncode == 0:
-            top = top_result.stdout.decode("utf-8", "replace").strip()
-            list_result = subprocess.run(
+            top = top_result.stdout.strip()
+            list_result = run_internal_git(
                 [
-                    "git",
-                    "-C",
-                    top,
                     "ls-files",
                     "-z",
                     "--cached",
                     "--others",
                     "--exclude-standard",
                 ],
-                capture_output=True,
-                timeout=2.0,
-                check=False,
-                stdin=subprocess.DEVNULL,
-                creationflags=_creationflags,
+                top, timeout=2.0, check_policy=True, binary_output=True,
             )
             if list_result.returncode == 0:
                 for p in list_result.stdout.decode("utf-8", "replace").split("\0"):
@@ -15384,6 +15371,8 @@ def _list_repo_files(root: str) -> list[str]:
                     files.append(rel)
                     if len(files) >= _FUZZY_CACHE_MAX_FILES:
                         break
+    except GitPolicyError:
+        return []
     except (OSError, subprocess.TimeoutExpired):
         pass
 

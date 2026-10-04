@@ -185,20 +185,15 @@ def _git_run(
     network: bool = False,
 ):
     """Run ``git <args>`` with shared subprocess flags, UTF-8 encoding, and hidden console window."""
-    from hermes_cli._subprocess_compat import noninteractive_git_env, windows_hide_flags
-
-    kwargs: dict = {"creationflags": windows_hide_flags()}
-    if network:
-        kwargs.update({"stdin": subprocess.DEVNULL, "env": noninteractive_git_env()})
+    from hermes_cli._subprocess_compat import run_internal_git, GitPolicyError
     try:
-        return subprocess.run(
-            ["git", *args],
-            capture_output=True,
-            timeout=timeout,
-            cwd=str(cwd) if cwd is not None else None,
-            **(_GIT_TEXT_KW if text else {}),
-            **kwargs,
-        )
+        result = run_internal_git(args, cwd if cwd is not None else os.getcwd(), timeout=timeout, check_policy=True)
+        if not text:
+            result.stdout = result.stdout.encode("utf-8")
+            result.stderr = result.stderr.encode("utf-8")
+        return result
+    except GitPolicyError:
+        raise
     except Exception:
         return None
 
@@ -292,7 +287,7 @@ def _check_via_rev(local_rev: str) -> Optional[int]:
 
 def _check_via_local_git(repo_dir: Path) -> Optional[int]:
     """Count commits behind origin/main in a local checkout."""
-    from hermes_cli._subprocess_compat import noninteractive_git_env
+    from hermes_cli._subprocess_compat import GitPolicyError
 
     origin_url = _git_stdout(["remote", "get-url", "origin"], cwd=repo_dir, network=True)
     if _is_official_ssh_remote(origin_url):
@@ -312,12 +307,8 @@ def _check_via_local_git(repo_dir: Path) -> Optional[int]:
         # Local-ahead: the remote tip is an ancestor of HEAD. Checked against
         # the FRESH upstream SHA (not the possibly stale origin/main tracking
         # ref) so a stale ref can't fake an up-to-date report.
-        ancestor = subprocess.run(
-            ["git", "merge-base", "--is-ancestor", upstream_rev, "HEAD"],
-            creationflags=windows_hide_flags(),
-            capture_output=True, timeout=5, cwd=str(repo_dir),
-        )
-        if ancestor.returncode == 0:
+        ancestor = _git_run(['merge-base', '--is-ancestor', upstream_rev, 'HEAD'], cwd=str(repo_dir), timeout=5)
+        if ancestor is not None and ancestor.returncode == 0:
             return 0
         # Genuinely behind (or diverged). Recover the exact count via the
         # GitHub compare API; a local-only HEAD 404s there, which safely
@@ -364,6 +355,8 @@ def _check_via_local_git(repo_dir: Path) -> Optional[int]:
         fetch_args.append("--quiet")
         fetch_proc = _git_run(fetch_args, cwd=repo_dir, timeout=10, network=True)
         fetch_ok = fetch_proc is not None and fetch_proc.returncode == 0
+    except GitPolicyError:
+        return None
     except Exception:
         fetch_ok = False  # Offline or timeout — don't use stale refs
 
@@ -376,14 +369,8 @@ def _check_via_local_git(repo_dir: Path) -> Optional[int]:
     if not fetch_ok:
         if not is_shallow:
             try:
-                result = subprocess.run(
-                    ["git", "rev-list", "--count", "HEAD..origin/main"],
-                    creationflags=windows_hide_flags(),
-                    capture_output=True, text=True, encoding="utf-8", errors="replace",
-                    timeout=5,
-                    cwd=str(repo_dir),
-                )
-                if result.returncode == 0:
+                result = _git_run(['rev-list', '--count', 'HEAD..origin/main'], cwd=str(repo_dir), timeout=5)
+                if result is not None and result.returncode == 0:
                     behind = int(result.stdout.strip())
                     if behind > 0:
                         return behind
@@ -412,14 +399,8 @@ def _check_via_local_git(repo_dir: Path) -> Optional[int]:
         return counted if counted is not None else UPDATE_AVAILABLE_NO_COUNT
 
     try:
-        result = subprocess.run(
-            ["git", "rev-list", "--count", "HEAD..origin/main"],
-            creationflags=windows_hide_flags(),
-            capture_output=True, text=True, encoding="utf-8", errors="replace",
-            timeout=5,
-            cwd=str(repo_dir),
-        )
-        if result.returncode == 0:
+        result = _git_run(['rev-list', '--count', 'HEAD..origin/main'], cwd=str(repo_dir), timeout=5)
+        if result is not None and result.returncode == 0:
             return int(result.stdout.strip())
     except Exception:
         pass
@@ -521,19 +502,10 @@ def _resolve_repo_dir() -> Optional[Path]:
 def _git_short_hash(repo_dir: Path, rev: str) -> Optional[str]:
     """Resolve a git revision to an 8-character short hash."""
     try:
-        result = subprocess.run(
-            ["git", "rev-parse", "--short=8", rev],
-            creationflags=windows_hide_flags(),
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=5,
-            cwd=str(repo_dir),
-        )
+        result = _git_run(['rev-parse', '--short=8', rev], cwd=str(repo_dir), timeout=5)
     except Exception:
         return None
-    if result.returncode != 0:
+    if result is None or result.returncode != 0:
         return None
     value = (result.stdout or "").strip()
     return value or None
@@ -599,17 +571,8 @@ def _compute_git_banner_state(repo_dir: Optional[Path] = None) -> Optional[dict]
 
     ahead = 0
     try:
-        result = subprocess.run(
-            ["git", "rev-list", "--count", "origin/main..HEAD"],
-            creationflags=windows_hide_flags(),
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=5,
-            cwd=str(repo_dir),
-        )
-        if result.returncode == 0:
+        result = _git_run(['rev-list', '--count', 'origin/main..HEAD'], cwd=str(repo_dir), timeout=5)
+        if result is not None and result.returncode == 0:
             ahead = int((result.stdout or "0").strip() or "0")
     except Exception:
         ahead = 0
@@ -638,21 +601,12 @@ def get_latest_release_tag(repo_dir: Optional[Path] = None) -> Optional[tuple]:
         return None
 
     try:
-        result = subprocess.run(
-            ["git", "describe", "--tags", "--abbrev=0"],
-            creationflags=windows_hide_flags(),
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=3,
-            cwd=str(repo_dir),
-        )
+        result = _git_run(['describe', '--tags', '--abbrev=0'], cwd=str(repo_dir), timeout=3)
     except Exception:
         _latest_release_cache = ()
         return None
 
-    if result.returncode != 0:
+    if result is None or result.returncode != 0:
         _latest_release_cache = ()
         return None
 

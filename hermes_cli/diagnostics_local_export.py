@@ -101,19 +101,15 @@ def collect_identity_metadata() -> dict[str, Any]:
 
     # Best-effort git identity — never fail the export if git is unavailable.
     try:
-        import subprocess
+        from hermes_cli._subprocess_compat import run_internal_git
 
         root = Path(__file__).resolve().parents[1]
-        sha = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"],
-            cwd=str(root),
-            stderr=subprocess.DEVNULL,
-            timeout=5,
-            text=True,
-            encoding="utf-8",
-        ).strip()
+        result = run_internal_git(["rev-parse", "HEAD"], root, timeout=5, check_policy=True)
+        sha = result.stdout.strip() if result.returncode == 0 else ""
         if sha:
             meta["downstream_sha"] = sha
+        elif result.returncode != 0:
+            meta["downstream_sha"] = None
     except Exception:
         meta["downstream_sha"] = None
 

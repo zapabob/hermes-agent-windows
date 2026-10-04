@@ -4979,26 +4979,16 @@ def _recent_upstream_commits(n: int = 20) -> List[Dict[str, Any]]:
     or git is unavailable. Never raises into the request path.
     """
     try:
-        out = subprocess.run(
+        from hermes_cli._subprocess_compat import run_internal_git
+
+        out = run_internal_git(
             [
-                "git",
-                "-C",
-                str(PROJECT_ROOT),
                 "log",
                 "--format=%H%x1f%s%x1f%an%x1f%ct",
                 "HEAD..origin/main",
                 f"-n{int(n)}",
             ],
-            creationflags=windows_hide_flags(),
-            capture_output=True,
-            text=True,
-            # git log emits UTF-8 (commit subjects can carry emoji/CJK). On
-            # Windows text=True defaults to the ANSI code page — a byte like
-            # 0x90 (3rd byte of 🐛) is undefined in cp1252 and crashed the
-            # stdlib _readerthread, killing the desktop backend (#52649).
-            encoding="utf-8",
-            errors="replace",
-            timeout=5,
+            PROJECT_ROOT, timeout=5, check_policy=True,
         )
         if out.returncode != 0:
             return []

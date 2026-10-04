@@ -324,6 +324,7 @@ def test_make_tui_argv_skips_build_only_on_termux_when_fresh(
     monkeypatch.setattr(main_mod, "_tui_need_npm_install", lambda _root: False)
     monkeypatch.setattr(main_mod, "_tui_need_rebuild", lambda _root: False)
     monkeypatch.setattr(main_mod.shutil, "which", lambda name: f"/bin/{name}")
+    monkeypatch.setattr("hermes_constants.find_node_executable", lambda name: f"/bin/{name}")
 
     def fail_run(*_args, **_kwargs):
         raise AssertionError("fresh Termux TUI launch must not rebuild")
@@ -344,6 +345,7 @@ def test_make_tui_argv_skips_install_on_termux_when_bundle_fresh(
     monkeypatch.setattr(main_mod, "_tui_need_npm_install", lambda _root: True)
     monkeypatch.setattr(main_mod, "_tui_need_rebuild", lambda _root: False)
     monkeypatch.setattr(main_mod.shutil, "which", lambda name: f"/bin/{name}")
+    monkeypatch.setattr("hermes_constants.find_node_executable", lambda name: f"/bin/{name}")
 
     def fail_run(*_args, **_kwargs):
         raise AssertionError("fresh Termux TUI launch must not run npm")
@@ -371,6 +373,7 @@ def test_make_tui_argv_scopes_npm_install_on_termux_workspace(
     monkeypatch.setattr(main_mod, "_tui_need_npm_install", lambda _root: True)
     monkeypatch.setattr(main_mod, "_tui_need_rebuild", lambda _root: True)
     monkeypatch.setattr(main_mod.shutil, "which", lambda name: f"/bin/{name}")
+    monkeypatch.setattr("hermes_constants.find_node_executable", lambda name: f"/bin/{name}")
     calls = []
 
     def fake_run(*args, **kwargs):
@@ -408,6 +411,7 @@ def test_make_tui_argv_keeps_desktop_workspace_install_behaviour(
     monkeypatch.setenv("PREFIX", "/usr")
     monkeypatch.setattr(main_mod, "_tui_need_npm_install", lambda _root: True)
     monkeypatch.setattr(main_mod.shutil, "which", lambda name: f"/bin/{name}")
+    monkeypatch.setattr("hermes_constants.find_node_executable", lambda name: f"/bin/{name}")
     calls = []
 
     def fake_run(*args, **kwargs):
@@ -452,6 +456,7 @@ def test_make_tui_argv_npm_install_forces_include_dev(
     monkeypatch.setenv("NODE_ENV", "production")
     monkeypatch.setattr(main_mod, "_tui_need_npm_install", lambda _root: True)
     monkeypatch.setattr(main_mod.shutil, "which", lambda name: f"/bin/{name}")
+    monkeypatch.setattr("hermes_constants.find_node_executable", lambda name: f"/bin/{name}")
     calls = []
 
     def fake_run(*args, **kwargs):
@@ -476,6 +481,7 @@ def test_make_tui_argv_keeps_desktop_always_build_behaviour(
     monkeypatch.setattr(main_mod, "_tui_need_npm_install", lambda _root: False)
     monkeypatch.setattr(main_mod, "_tui_need_rebuild", lambda _root: False)
     monkeypatch.setattr(main_mod.shutil, "which", lambda name: f"/bin/{name}")
+    monkeypatch.setattr("hermes_constants.find_node_executable", lambda name: f"/bin/{name}")
     calls = []
 
     def fake_run(*args, **kwargs):
@@ -502,6 +508,7 @@ def test_make_tui_argv_decodes_dev_prebuild_with_utf8_replace(
 
     monkeypatch.setattr(main_mod, "_tui_need_npm_install", lambda _root: False)
     monkeypatch.setattr(main_mod.shutil, "which", lambda name: f"/bin/{name}")
+    monkeypatch.setattr("hermes_constants.find_node_executable", lambda name: f"/bin/{name}")
     calls = []
 
     def fake_run(*args, **kwargs):
@@ -536,7 +543,7 @@ def test_make_tui_argv_exits_with_recovery_hint_when_workspace_unrecoverable(
             return "/usr/bin/node"
         raise AssertionError(f"unexpected shutil.which({name!r}) call — bundled path must not need npm/git")
 
-    monkeypatch.setattr(main_mod.shutil, "which", which)
+    monkeypatch.setattr("hermes_constants.find_node_executable", which)
 
     def fail_run(*_args, **_kwargs):
         raise AssertionError("bundled TUI path must not spawn any subprocess (no npm install/build, no git restore)")
@@ -755,6 +762,7 @@ def test_make_tui_argv_omits_workspace_and_scrubs_esbuild_override(
     monkeypatch.setenv("ESBUILD_BINARY_PATH", "/opt/esbuild-0.28.2")
     monkeypatch.setattr(main_mod, "_tui_need_npm_install", lambda _root: True)
     monkeypatch.setattr(main_mod.shutil, "which", lambda name: f"/bin/{name}")
+    monkeypatch.setattr("hermes_constants.find_node_executable", lambda name: f"/bin/{name}")
     calls = []
 
     def fake_run(*args, **kwargs):

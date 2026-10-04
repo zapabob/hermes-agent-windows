@@ -515,7 +515,7 @@ class TestInstall:
         # load_config resolves it; config.yaml itself stays secret-free.
         from hermes_cli.config import get_config_path
 
-        raw = get_config_path().read_text()
+        raw = get_config_path().read_text(encoding="utf-8")
         assert "${MCP_DEMO_API_KEY}" in raw
         assert "secret-val" not in raw
 
@@ -745,7 +745,13 @@ class TestGitInstallShaRef:
             # Make every command succeed
             return _FakeProc(returncode=0)
 
-        monkeypatch.setattr(mcp_catalog.subprocess, "run", fake_run)
+        def fake_clone(source, destination, **kwargs):
+            argv = ["git", "clone"]
+            if kwargs.get("branch") is not None:
+                argv += ["--branch", kwargs["branch"]]
+            return fake_run([*argv, source, str(destination)])
+        monkeypatch.setattr(mcp_catalog, "clone_git_repository", fake_clone)
+        monkeypatch.setattr(mcp_catalog, "run_internal_git", lambda args, *a, **kw: fake_run(["git", *args]))
         monkeypatch.setattr(mcp_catalog.shutil, "which", lambda x: "/usr/bin/git")
 
         from hermes_cli.mcp_catalog import get_entry

@@ -67,11 +67,9 @@ def _get_git_commit(project_root: Path) -> str:
     The output format is identical regardless of source.
     """
     try:
-        result = subprocess.run(
-            ["git", "rev-parse", "--short=8", "HEAD"],
-            capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=5,
-            cwd=str(project_root),
-        )
+        from hermes_cli._subprocess_compat import run_internal_git
+        result = run_internal_git(["rev-parse", "--short=8", "HEAD"], project_root,
+                                  timeout=5, check_policy=True)
         if result.returncode == 0:
             value = result.stdout.strip()
             if value:
@@ -103,11 +101,9 @@ def _get_git_commit_date(project_root: Path) -> str:
     build).
     """
     try:
-        result = subprocess.run(
-            ["git", "log", "-1", "--format=%cd", "--date=short", "HEAD"],
-            capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=5,
-            cwd=str(project_root),
-        )
+        from hermes_cli._subprocess_compat import run_internal_git
+        result = run_internal_git(["log", "-1", "--format=%cd", "--date=short", "HEAD"],
+                                  project_root, timeout=5, check_policy=True)
         if result.returncode == 0:
             value = result.stdout.strip()
             if value:

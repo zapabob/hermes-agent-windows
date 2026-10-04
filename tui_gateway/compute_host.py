@@ -112,15 +112,9 @@ def _repo_root() -> Path:
 
 def _build_sha() -> str:
     try:
-        return subprocess.check_output(
-            ["git", "rev-parse", "HEAD"],
-            cwd=str(_repo_root()),
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            stderr=subprocess.DEVNULL,
-            timeout=2,
-        ).strip()
+        from hermes_cli._subprocess_compat import run_internal_git
+        result = run_internal_git(["rev-parse", "HEAD"], _repo_root(), timeout=2, check_policy=True)
+        return result.stdout.strip() if result.returncode == 0 else "unknown"
     except Exception:
         return "unknown"
 

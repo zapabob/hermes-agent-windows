@@ -1608,6 +1608,15 @@ def _normalize_git_bash_path(p: Optional[str]) -> Optional[str]:
     return translated if translated is not None else p
 
 
+from hermes_cli._subprocess_compat import GitPolicyError
+
+
+def _worktree_git(args, *, cwd=None, timeout=20):
+    """Keep worktree recovery behind the shared internal Git policy."""
+    from hermes_cli._subprocess_compat import run_internal_git
+    return run_internal_git(args, cwd or os.getcwd(), timeout=timeout, check_policy=True)
+
+
 def _git_repo_root() -> Optional[str]:
     """Return the git repo root for CWD, or None if not in a repo.
 
@@ -1619,10 +1628,7 @@ def _git_repo_root() -> Optional[str]:
     import subprocess
 
     try:
-        result = subprocess.run(
-            ["git", "rev-parse", "--show-toplevel"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5,
-        )
+        result = _worktree_git(['rev-parse', '--show-toplevel'], timeout=5)
         if result.returncode == 0:
             return _normalize_git_bash_path(result.stdout.strip())
     except Exception:
@@ -1639,7 +1645,7 @@ def _path_is_within_root(path: Path, root: Path) -> bool:
         return False
 
 
-def _cleanup_failed_worktree_add(repo_root: str, wt_path: Path, branch_name: str) -> None:
+def _cleanup_failed_worktree_add(repo_root: str, wt_path: Path, branch_name: str) -> bool:
     """Make a failed/timed-out ``git worktree add`` atomic after the fact.
 
     ``git worktree add`` is not transactional: killed mid-checkout (the 30s
@@ -1655,10 +1661,9 @@ def _cleanup_failed_worktree_add(repo_root: str, wt_path: Path, branch_name: str
 
     def _git(*args: str) -> None:
         try:
-            subprocess.run(
-                ["git", *args],
-                capture_output=True, text=True, timeout=15, cwd=repo_root, check=False,
-            )
+            _worktree_git([*args], timeout=15, cwd=repo_root)
+        except GitPolicyError:
+            raise
         except Exception:
             pass
 
@@ -1672,8 +1677,13 @@ def _cleanup_failed_worktree_add(repo_root: str, wt_path: Path, branch_name: str
         # (`remove` needs the dir; `prune` handles the dirless case).
         _git("worktree", "prune")
         _git("branch", "-D", branch_name)
+        return True
+    except GitPolicyError as exc:
+        logger.warning("Worktree cleanup refused: %s", exc)
+        return False
     except Exception as e:
         logger.debug("cleanup after failed worktree add: %s", e)
+        return False
 
 
 _PACK_SPRAWL_THRESHOLD = 15
@@ -1702,19 +1712,19 @@ def _maintain_pack_health(repo_root: str) -> None:
         if packs < _PACK_SPRAWL_THRESHOLD:
             return
         logger.info("git pack sprawl (%d packs) — repacking in background", packs)
-        cmd = ["git", "repack", "-a", "-d", "--quiet"]
         if os.name == "posix":
-            cmd = ["nice", "-n", "19", *cmd]
-        subprocess.run(
-            cmd,
-            capture_output=True, text=True, timeout=1800, cwd=repo_root, check=False,
-        )
+            from hermes_cli._subprocess_compat import noninteractive_repo_git_env, bounded_probe_run
+            binary = shutil.which("git")
+            env = noninteractive_repo_git_env(repo_root, git_bin=binary) if binary else None
+            if env is None:
+                raise GitPolicyError("git filter discovery failed")
+            bounded_probe_run(["nice", "-n", "19", binary, "repack", "-a", "-d", "--quiet"],
+                              timeout=1800, env=env, cwd=repo_root)
+        else:
+            _worktree_git(["repack", "-a", "-d", "--quiet"], timeout=1800, cwd=repo_root)
         # Repacking can strand now-duplicated admin files; a prune here keeps
         # the worktree bookkeeping tight on the same maintenance pass.
-        subprocess.run(
-            ["git", "worktree", "prune"],
-            capture_output=True, text=True, timeout=60, cwd=repo_root, check=False,
-        )
+        _worktree_git(['worktree', 'prune'], timeout=60, cwd=repo_root)
     except Exception as e:
         logger.debug("pack maintenance skipped: %s", e)
 
@@ -1765,16 +1775,13 @@ def _resolve_worktree_base(
     from hermes_cli._subprocess_compat import noninteractive_git_env
 
     def _git(args, timeout: float = 20):
-        return subprocess.run(
-            ["git", *args],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout, cwd=repo_root,
-            stdin=subprocess.DEVNULL,
-            env=noninteractive_git_env(),
-        )
+        return _worktree_git([*args], timeout=timeout, cwd=repo_root)
 
     def _ref_exists(ref: str) -> bool:
         try:
             return _git(["rev-parse", "--verify", "--quiet", ref + "^{commit}"]).returncode == 0
+        except GitPolicyError:
+            raise
         except Exception:
             return False
 
@@ -1791,6 +1798,8 @@ def _resolve_worktree_base(
             if not fetch_head.exists():
                 return None
             return max(0.0, time.time() - fetch_head.stat().st_mtime)
+        except GitPolicyError:
+            raise
         except Exception:
             return None
 
@@ -1807,9 +1816,12 @@ def _resolve_worktree_base(
             fetched = _git(["fetch", remote, branch], timeout=fetch_timeout)
             if fetched.returncode == 0:
                 return ref, f"{ref} (fetched)"
-            reason = "fetch failed"
+            reason = (f"fetch failed or timed out after {fetch_timeout:g}s"
+                      if fetched.returncode == 124 else "fetch failed")
         except subprocess.TimeoutExpired:
             reason = f"fetch timed out after {fetch_timeout:g}s"
+        except GitPolicyError:
+            raise
         except Exception as e:
             reason = f"fetch error: {e}"
         if _ref_exists(ref):
@@ -1825,6 +1837,8 @@ def _resolve_worktree_base(
             if upstream and "/" in upstream:
                 remote, branch = upstream.split("/", 1)
                 return _refresh(remote, branch, upstream)
+    except GitPolicyError:
+        raise
     except Exception as e:
         logger.debug("worktree base: upstream resolution failed: %s", e)
 
@@ -1851,6 +1865,8 @@ def _resolve_worktree_base(
         if default_ref and "/" in default_ref:
             remote, branch = default_ref.split("/", 1)
             return _refresh(remote, branch, default_ref)
+    except GitPolicyError:
+        raise
     except Exception as e:
         logger.debug("worktree base: default-branch resolution failed: %s", e)
 
@@ -1881,6 +1897,20 @@ def _setup_worktree(repo_root: str = None, sync_base: bool = True,
     if not repo_root:
         _cprint("\033[31m✗ --worktree requires being inside a git repository.\033[0m")
         print("  cd into your project repo first, then run hermes -w")
+        return None
+
+    # Refusal is distinct from an unavailable remote. Do this before any
+    # mkdir/gitignore write and never convert policy failure into HEAD fallback.
+    try:
+        probe = _worktree_git(["rev-parse", "--git-dir"], cwd=repo_root, timeout=5)
+        if probe.returncode != 0:
+            return None
+        if sync_base:
+            base_ref, base_label = _resolve_worktree_base(repo_root)
+        else:
+            base_ref, base_label = "HEAD", "HEAD (local — worktree_sync disabled)"
+    except GitPolicyError as exc:
+        logger.warning("Worktree setup refused: %s", exc)
         return None
 
     if name:
@@ -1927,11 +1957,6 @@ def _setup_worktree(repo_root: str = None, sync_base: bool = True,
     # Resolve the base ref. By default branch from the freshly-fetched remote
     # tip so the worktree starts current with the project, not from the
     # (possibly stale) local HEAD of the standalone clone (#10760 follow-up).
-    if sync_base:
-        base_ref, base_label = _resolve_worktree_base(repo_root)
-    else:
-        base_ref, base_label = "HEAD", "HEAD (local — worktree_sync disabled)"
-
     # Create the worktree. checkout.workers parallelizes the file
     # materialization (~6k files on this repo): 0.6s serial → ~0.2s with 8
     # workers. Harmless on git builds without parallel-checkout support —
@@ -1947,10 +1972,7 @@ def _setup_worktree(repo_root: str = None, sync_base: bool = True,
         # builds for the same disk — measured 113s wall at near-zero CPU
         # under load vs 1.2s idle (Aug 2026). A too-tight timeout kills a
         # legitimately slow create and wastes the work already done.
-        result = subprocess.run(
-            ["git", *_wt_add_cfg, "worktree", "add", str(wt_path), "-b", branch_name, base_ref],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120, cwd=repo_root,
-        )
+        result = _worktree_git([*_wt_add_cfg, 'worktree', 'add', str(wt_path), '-b', branch_name, base_ref], timeout=120, cwd=repo_root)
         if result.returncode != 0:
             # If branching from the resolved remote ref failed for any reason
             # (e.g. a partial fetch left the ref unusable), retry from local
@@ -1960,16 +1982,17 @@ def _setup_worktree(repo_root: str = None, sync_base: bool = True,
                     "worktree add from %s failed (%s); retrying from local HEAD",
                     base_ref, result.stderr.strip(),
                 )
-                _cleanup_failed_worktree_add(repo_root, wt_path, branch_name)
+                if _cleanup_failed_worktree_add(repo_root, wt_path, branch_name) is False:
+                    return None
                 base_ref, base_label = "HEAD", "HEAD (fallback — remote base failed)"
-                result = subprocess.run(
-                    ["git", "worktree", "add", str(wt_path), "-b", branch_name, base_ref],
-                    capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120, cwd=repo_root,
-                )
+                result = _worktree_git(['worktree', 'add', str(wt_path), '-b', branch_name, base_ref], timeout=120, cwd=repo_root)
             if result.returncode != 0:
                 _cleanup_failed_worktree_add(repo_root, wt_path, branch_name)
                 _cprint(f"\033[31m✗ Failed to create worktree: {result.stderr.strip()}\033[0m")
                 return None
+    except GitPolicyError as exc:
+        logger.warning("Worktree creation refused: %s", exc)
+        return None
     except Exception as e:
         # A timed-out/failed `worktree add` is NOT atomic: git leaves the
         # partially-materialized directory plus a LOCKED admin entry under
@@ -2066,10 +2089,7 @@ def _setup_worktree(repo_root: str = None, sync_base: bool = True,
     # Lock the worktree so other processes (and `git worktree remove`) can see
     # it is actively in use.  Fail-soft: a lock failure never blocks the session.
     try:
-        subprocess.run(
-            ["git", "worktree", "lock", "--reason", f"hermes pid={os.getpid()}", str(wt_path)],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10, cwd=repo_root,
-        )
+        _worktree_git(['worktree', 'lock', '--reason', f'hermes pid={os.getpid()}', str(wt_path)], timeout=10, cwd=repo_root)
         logger.debug("Worktree locked: %s (pid=%s)", wt_path, os.getpid())
     except Exception as e:
         logger.debug("git worktree lock failed (non-fatal): %s", e)
@@ -2107,19 +2127,13 @@ def _worktree_has_unpushed_commits(worktree_path: str, timeout: int = 10) -> boo
     import subprocess
 
     try:
-        remote_refs = subprocess.run(
-            ["git", "for-each-ref", "--format=%(refname)", "refs/remotes"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout, cwd=worktree_path,
-        )
+        remote_refs = _worktree_git(['for-each-ref', '--format=%(refname)', 'refs/remotes'], timeout=timeout, cwd=worktree_path)
         if remote_refs.returncode != 0:
             return True
         if not remote_refs.stdout.strip():
             return False
 
-        result = subprocess.run(
-            ["git", "log", "--oneline", "HEAD", "--not", "--remotes"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout, cwd=worktree_path,
-        )
+        result = _worktree_git(['log', '--oneline', 'HEAD', '--not', '--remotes'], timeout=timeout, cwd=worktree_path)
         if result.returncode != 0:
             return True
         return bool(result.stdout.strip())
@@ -2137,10 +2151,7 @@ def _worktree_is_dirty(worktree_path: str, timeout: int = 10) -> bool:
     import subprocess
 
     try:
-        result = subprocess.run(
-            ["git", "status", "--porcelain"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout, cwd=worktree_path,
-        )
+        result = _worktree_git(['status', '--porcelain'], timeout=timeout, cwd=worktree_path)
         if result.returncode != 0:
             return True
         return bool(result.stdout.strip())
@@ -2165,10 +2176,7 @@ def _repo_is_shallow(repo_path: str, timeout: int = 5) -> bool:
     import subprocess
 
     try:
-        result = subprocess.run(
-            ["git", "rev-parse", "--is-shallow-repository"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout, cwd=repo_path,
-        )
+        result = _worktree_git(['rev-parse', '--is-shallow-repository'], timeout=timeout, cwd=repo_path)
         return result.returncode == 0 and result.stdout.strip() == "true"
     except Exception:
         return False
@@ -2193,10 +2201,7 @@ def _deepen_shallow_repo(repo_root: str, timeout: int = 600) -> bool:
         return True
 
     try:
-        remotes = subprocess.run(
-            ["git", "remote"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10, cwd=repo_root,
-        )
+        remotes = _worktree_git(['remote'], timeout=10, cwd=repo_root)
         names = [r.strip() for r in remotes.stdout.splitlines() if r.strip()]
         if remotes.returncode != 0 or not names:
             return False
@@ -2204,10 +2209,7 @@ def _deepen_shallow_repo(repo_root: str, timeout: int = 600) -> bool:
 
         for extra in (["--filter=blob:none"], []):
             try:
-                result = subprocess.run(
-                    ["git", "fetch", remote, "--unshallow", *extra],
-                    capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout, cwd=repo_root,
-                )
+                result = _worktree_git(['fetch', remote, '--unshallow', *extra], timeout=timeout, cwd=repo_root)
             except subprocess.TimeoutExpired:
                 return False
             if result.returncode == 0:
@@ -2321,10 +2323,7 @@ def _worktree_commits_all_merged_upstream(
     base = None
     for candidate in ("origin/HEAD", "origin/main", "origin/master"):
         try:
-            probe = subprocess.run(
-                ["git", "rev-parse", "--verify", "--quiet", candidate],
-                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout, cwd=worktree_path,
-            )
+            probe = _worktree_git(['rev-parse', '--verify', '--quiet', candidate], timeout=timeout, cwd=worktree_path)
             if probe.returncode == 0 and probe.stdout.strip():
                 base = candidate
                 break
@@ -2339,10 +2338,7 @@ def _worktree_commits_all_merged_upstream(
         # (~1ms) relative to the diff-hashing `git cherry` they guard.
         cache_key = None
         if cache is not None:
-            revs = subprocess.run(
-                ["git", "rev-parse", f"{base}^{{commit}}", "HEAD^{commit}"],
-                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout, cwd=worktree_path,
-            )
+            revs = _worktree_git(['rev-parse', f'{base}^{{commit}}', 'HEAD^{commit}'], timeout=timeout, cwd=worktree_path)
             if revs.returncode == 0:
                 shas = revs.stdout.split()
                 if len(shas) == 2:
@@ -2355,10 +2351,7 @@ def _worktree_commits_all_merged_upstream(
                 cache[cache_key] = verdict
             return verdict
 
-        ahead = subprocess.run(
-            ["git", "rev-list", "--count", f"{base}..HEAD"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout, cwd=worktree_path,
-        )
+        ahead = _worktree_git(['rev-list', '--count', f'{base}..HEAD'], timeout=timeout, cwd=worktree_path)
         if ahead.returncode != 0:
             return False
         count = int(ahead.stdout.strip() or "0")
@@ -2367,10 +2360,7 @@ def _worktree_commits_all_merged_upstream(
         if count > max_ahead:
             return _memo(False)
 
-        cherry = subprocess.run(
-            ["git", "cherry", base, "HEAD"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout, cwd=worktree_path,
-        )
+        cherry = _worktree_git(['cherry', base, 'HEAD'], timeout=timeout, cwd=worktree_path)
         if cherry.returncode != 0:
             return False
         lines = [ln for ln in cherry.stdout.splitlines() if ln.strip()]
@@ -2412,10 +2402,7 @@ def _worktree_branch_pr_merged(
     import subprocess
 
     try:
-        head = subprocess.run(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout, cwd=worktree_path,
-        )
+        head = _worktree_git(['rev-parse', '--abbrev-ref', 'HEAD'], timeout=timeout, cwd=worktree_path)
         if head.returncode != 0:
             return False
         branch = head.stdout.strip()
@@ -2427,24 +2414,13 @@ def _worktree_branch_pr_merged(
         # that for unpublished scratch work. Only consult GitHub when local
         # Git metadata already proves the branch is remote-known. Both probes
         # are local-only and therefore safe on the startup path.
-        upstream_remote = subprocess.run(
-            [
-                "git", "for-each-ref", "--count=1",
-                "--format=%(upstream:remotename)", f"refs/heads/{branch}",
-            ],
-            capture_output=True, text=True, encoding="utf-8", errors="replace",
-            timeout=timeout, cwd=worktree_path,
-        )
+        upstream_remote = _worktree_git(['for-each-ref', '--count=1', '--format=%(upstream:remotename)', f'refs/heads/{branch}'], timeout=timeout, cwd=worktree_path)
         remote_known = (
             upstream_remote.returncode == 0
             and upstream_remote.stdout.strip() not in ("", ".")
         )
         if not remote_known:
-            remote_refs = subprocess.run(
-                ["git", "for-each-ref", "--format=%(refname)", "refs/remotes"],
-                capture_output=True, text=True, encoding="utf-8", errors="replace",
-                timeout=timeout, cwd=worktree_path,
-            )
+            remote_refs = _worktree_git(['for-each-ref', '--format=%(refname)', 'refs/remotes'], timeout=timeout, cwd=worktree_path)
             remote_known = remote_refs.returncode == 0 and any(
                 len(parts := ref.split("/", 3)) == 4 and parts[3] == branch
                 for ref in remote_refs.stdout.splitlines()
@@ -2452,10 +2428,7 @@ def _worktree_branch_pr_merged(
         if not remote_known:
             return False
 
-        sha = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout, cwd=worktree_path,
-        )
+        sha = _worktree_git(['rev-parse', 'HEAD'], timeout=timeout, cwd=worktree_path)
         if sha.returncode != 0 or not sha.stdout.strip():
             return False
         head_sha = sha.stdout.strip()
@@ -2464,11 +2437,9 @@ def _worktree_branch_pr_merged(
         if cache is not None and cache.get(cache_key) is True:
             return True
 
-        result = subprocess.run(
-            ["gh", "pr", "list", "--head", branch, "--state", "merged",
-             "--json", "number,headRefOid", "--limit", "100"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout, cwd=worktree_path,
-        )
+        from hermes_cli._subprocess_compat import run_internal_gh
+        result = run_internal_gh(["pr", "list", "--head", branch, "--state", "merged",
+             "--json", "number,headRefOid", "--limit", "100"], worktree_path, timeout=timeout)
         if result.returncode != 0:
             return False
         prs = json.loads(result.stdout or "[]")
@@ -2491,16 +2462,8 @@ def _worktree_branch_head(
     import subprocess
 
     try:
-        branch_result = subprocess.run(
-            ["git", "branch", "--show-current"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace",
-            timeout=timeout, cwd=worktree_path,
-        )
-        head_result = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace",
-            timeout=timeout, cwd=worktree_path,
-        )
+        branch_result = _worktree_git(['branch', '--show-current'], timeout=timeout, cwd=worktree_path)
+        head_result = _worktree_git(['rev-parse', 'HEAD'], timeout=timeout, cwd=worktree_path)
         branch = branch_result.stdout.strip()
         head_sha = head_result.stdout.strip()
         if (
@@ -2537,10 +2500,7 @@ def _worktree_lock_is_live(repo_root: str, worktree_path: str, timeout: int = 10
     import subprocess
 
     try:
-        result = subprocess.run(
-            ["git", "worktree", "list", "--porcelain"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout, cwd=repo_root,
-        )
+        result = _worktree_git(['worktree', 'list', '--porcelain'], timeout=timeout, cwd=repo_root)
         if result.returncode != 0:
             return "live"
     except Exception:
@@ -2621,27 +2581,24 @@ def _cleanup_worktree(info: Dict[str, str] = None) -> None:
     # Unlock first so `git worktree remove` isn't blocked by the lock we
     # placed at creation time.  Fail-soft — never block cleanup.
     try:
-        subprocess.run(
-            ["git", "worktree", "unlock", wt_path],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10, cwd=repo_root,
-        )
+        _worktree_git(['worktree', 'unlock', wt_path], timeout=10, cwd=repo_root)
+    except GitPolicyError:
+        return
     except Exception as e:
         logger.debug("git worktree unlock failed (non-fatal): %s", e)
 
     try:
-        subprocess.run(
-            ["git", "worktree", "remove", wt_path, "--force"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=15, cwd=repo_root,
-        )
+        _worktree_git(['worktree', 'remove', wt_path, '--force'], timeout=15, cwd=repo_root)
+    except GitPolicyError:
+        return
     except Exception as e:
         logger.debug("Failed to remove worktree: %s", e)
 
     # Delete the branch
     try:
-        subprocess.run(
-            ["git", "branch", "-D", branch],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10, cwd=repo_root,
-        )
+        _worktree_git(['branch', '-D', branch], timeout=10, cwd=repo_root)
+    except GitPolicyError:
+        return
     except Exception as e:
         logger.debug("Failed to delete branch %s: %s", branch, e)
 
@@ -2840,6 +2797,8 @@ def _prune_stale_worktrees(repo_root: str, max_age_hours: int = 24) -> None:
             mtime = entry.stat().st_mtime
             if mtime > soft_cutoff:
                 continue  # Too recent — skip
+        except GitPolicyError:
+            return
         except Exception:
             continue
 
@@ -2912,6 +2871,8 @@ def _prune_stale_worktrees(repo_root: str, max_age_hours: int = 24) -> None:
                 verdicts = list(pool.map(_classify, candidates))
         else:
             verdicts = [_classify(c) for c in candidates]
+    except GitPolicyError:
+        return
     except Exception as e:
         # Never let a pool failure block startup — fall back to serial.
         logger.debug("Parallel worktree classification failed (%s); serial", e)
@@ -2984,26 +2945,22 @@ def _prune_stale_worktrees(repo_root: str, max_age_hours: int = 24) -> None:
 
         if lock_state == "dead":
             try:
-                unlock_result = subprocess.run(
-                    ["git", "worktree", "unlock", str(entry)],
-                    capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10, cwd=repo_root,
-                )
+                unlock_result = _worktree_git(['worktree', 'unlock', str(entry)], timeout=10, cwd=repo_root)
                 if unlock_result.returncode != 0:
                     logger.debug(
                         "Failed to unlock dead worktree %s: %s",
                         entry.name, unlock_result.stderr.strip(),
                     )
                     continue
+            except GitPolicyError:
+                return
             except Exception as e:
                 logger.debug("Failed to unlock dead worktree %s: %s", entry.name, e)
                 continue
 
         # Safe to remove
         try:
-            remove_result = subprocess.run(
-                ["git", "worktree", "remove", str(entry)],
-                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=15, cwd=repo_root,
-            )
+            remove_result = _worktree_git(['worktree', 'remove', str(entry)], timeout=15, cwd=repo_root)
             if remove_result.returncode != 0:
                 # Removal failed — keep the branch so any commits stay
                 # reachable rather than orphaning it.
@@ -3018,20 +2975,15 @@ def _prune_stale_worktrees(repo_root: str, max_age_hours: int = 24) -> None:
                 # window where another process can advance the branch between
                 # the check and deletion. update-ref rejects the delete unless
                 # the ref still has the exact worktree HEAD we classified.
-                delete_result = subprocess.run(
-                    [
-                        "git", "update-ref", "-d",
-                        f"refs/heads/{branch}", head_sha,
-                    ],
-                    capture_output=True, text=True, encoding="utf-8",
-                    errors="replace", timeout=10, cwd=repo_root,
-                )
+                delete_result = _worktree_git(['update-ref', '-d', f'refs/heads/{branch}', head_sha], timeout=10, cwd=repo_root)
                 if delete_result.returncode != 0:
                     logger.debug(
                         "Preserved branch changed during worktree prune %s: %s",
                         branch, delete_result.stderr.strip(),
                     )
             logger.debug("Pruned stale worktree: %s (force=%s)", entry.name, force)
+        except GitPolicyError:
+            return
         except Exception as e:
             logger.debug("Failed to prune worktree %s: %s", entry.name, e)
 
@@ -3063,6 +3015,8 @@ def _prune_stale_worktrees(repo_root: str, max_age_hours: int = 24) -> None:
                 "to audit and `hermes worktree prune` to reclaim safely.",
                 count, size_txt,
             )
+    except GitPolicyError:
+        return
     except Exception:
         pass
 
@@ -3077,40 +3031,37 @@ def _prune_orphaned_branches(repo_root: str) -> None:
     import subprocess
 
     try:
-        result = subprocess.run(
-            ["git", "branch", "--format=%(refname:short)"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10, cwd=repo_root,
-        )
+        result = _worktree_git(['branch', '--format=%(refname:short)'], timeout=10, cwd=repo_root)
         if result.returncode != 0:
             return
         all_branches = [
             b.strip() for b in result.stdout.strip().split("\n") if b.strip()
         ]
+    except GitPolicyError:
+        return
     except Exception:
         return
 
     # Collect branches that are actively checked out in a worktree
     active_branches: set = set()
     try:
-        wt_result = subprocess.run(
-            ["git", "worktree", "list", "--porcelain"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10, cwd=repo_root,
-        )
+        wt_result = _worktree_git(['worktree', 'list', '--porcelain'], timeout=10, cwd=repo_root)
         for line in wt_result.stdout.split("\n"):
             if line.startswith("branch refs/heads/"):
                 active_branches.add(line.split("branch refs/heads/", 1)[-1].strip())
+    except GitPolicyError:
+        return
     except Exception:
         return  # Can't determine active branches — bail
 
     # Also protect the currently checked-out branch and main
     try:
-        head_result = subprocess.run(
-            ["git", "branch", "--show-current"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5, cwd=repo_root,
-        )
+        head_result = _worktree_git(['branch', '--show-current'], timeout=5, cwd=repo_root)
         current = head_result.stdout.strip()
         if current:
             active_branches.add(current)
+    except GitPolicyError:
+        return
     except Exception:
         pass
     active_branches.add("main")
@@ -3129,10 +3080,9 @@ def _prune_orphaned_branches(repo_root: str) -> None:
     for i in range(0, len(orphaned), 50):
         batch = orphaned[i : i + 50]
         try:
-            subprocess.run(
-                ["git", "branch", "-D"] + batch,
-                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30, cwd=repo_root,
-            )
+            _worktree_git(["branch", "-D", *batch], timeout=30, cwd=repo_root)
+        except GitPolicyError:
+            return
         except Exception as e:
             logger.debug("Failed to prune orphaned branches: %s", e)
 

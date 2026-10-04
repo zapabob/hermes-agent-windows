@@ -25,10 +25,10 @@ from pathlib import Path
 from typing import Any, Optional
 
 from hermes_constants import get_hermes_home
-from hermes_cli._subprocess_compat import noninteractive_git_env
+from hermes_cli._subprocess_compat import GitPolicyError, clone_git_repository, noninteractive_git_env, run_internal_git
 from hermes_cli.config import cfg_get
 from hermes_cli.secret_prompt import masked_secret_prompt
-from utils import atomic_write_text
+from utils import atomic_write_text, remove_owned_tree
 
 logger = logging.getLogger(__name__)
 
@@ -613,17 +613,7 @@ def _safe_git_error(result: subprocess.CompletedProcess, source_url: str = "") -
 
 
 def _git_head_revision(repo: Path, git_exe: str) -> str:
-    result = subprocess.run(
-        [git_exe, "rev-parse", "HEAD"],
-        cwd=str(repo),
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        timeout=15,
-        stdin=subprocess.DEVNULL,
-        env=noninteractive_git_env(),
-    )
+    result = _run_plugin_git(git_exe, repo, "rev-parse", "HEAD", timeout=15)
     if result.returncode != 0:
         err = _safe_git_error(result)
         raise PluginOperationError(f"Could not determine installed Git revision:\n{err}")
@@ -633,17 +623,7 @@ def _git_head_revision(repo: Path, git_exe: str) -> str:
 def _checkout_exact_revision(repo: Path, git_exe: str, revision: str) -> None:
     """Fetch and detach at one immutable commit, then verify the resulting HEAD."""
     try:
-        fetched = subprocess.run(
-            [git_exe, "fetch", "--depth", "1", "origin", revision],
-            cwd=str(repo),
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=60,
-            stdin=subprocess.DEVNULL,
-            env=noninteractive_git_env(),
-        )
+        fetched = _run_plugin_git(git_exe, repo, "fetch", "--depth", "1", "origin", revision)
     except subprocess.TimeoutExpired as exc:
         raise PluginOperationError(
             f"Git fetch of commit '{revision}' timed out after 60 seconds."
@@ -654,17 +634,7 @@ def _checkout_exact_revision(repo: Path, git_exe: str, revision: str) -> None:
             f"Git commit '{revision}' could not be fetched:\n{err}"
         )
     try:
-        checked_out = subprocess.run(
-            [git_exe, "checkout", "--detach", revision],
-            cwd=str(repo),
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=60,
-            stdin=subprocess.DEVNULL,
-            env=noninteractive_git_env(),
-        )
+        checked_out = _run_plugin_git(git_exe, repo, "checkout", "--detach", revision)
     except subprocess.TimeoutExpired as exc:
         raise PluginOperationError(
             f"Git checkout of commit '{revision}' timed out after 60 seconds."
@@ -704,20 +674,18 @@ def _scrub_cloned_origin(repo: Path, git_exe: str, git_url: str) -> None:
     scrubbed = _scrub_git_url(git_url)
     if scrubbed == git_url:
         return
-    result = subprocess.run(
-        [git_exe, "remote", "set-url", "origin", scrubbed],
-        cwd=str(repo),
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        timeout=15,
-        stdin=subprocess.DEVNULL,
-        env=noninteractive_git_env(),
-    )
+    result = _run_plugin_git(git_exe, repo, "remote", "set-url", "origin", scrubbed, timeout=15)
     if result.returncode != 0:
         err = _safe_git_error(result, git_url)
         raise PluginOperationError(f"Could not sanitize installed Git remote:\n{err}")
+
+
+def _remove_plugin_tree(target: Path) -> None:
+    """Keep plugin rollback cleanup within its profile storage boundary."""
+    try:
+        remove_owned_tree(target, boundary=_plugins_dir())
+    except ValueError as exc:
+        raise PluginOperationError(str(exc)) from exc
 
 
 def _install_plugin_core(
@@ -757,23 +725,8 @@ def _install_plugin_core(
         if not git_exe:
             raise PluginOperationError("git is not installed or not in PATH.")
 
-        clone_args = [git_exe, "clone", "--depth", "1"]
-        if requested_revision:
-            clone_args.append("--no-checkout")
-        clone_args.extend([git_url, str(tmp_clone)])
-        try:
-            result = subprocess.run(
-                clone_args,
-                capture_output=True,
-                text=True, encoding='utf-8', errors='replace',
-                timeout=60,
-                stdin=subprocess.DEVNULL,
-                env=noninteractive_git_env(),
-            )
-        except FileNotFoundError as e:
-            raise PluginOperationError("git is not installed or not in PATH.") from e
-        except subprocess.TimeoutExpired as e:
-            raise PluginOperationError("Git clone timed out after 60 seconds.") from e
+        result = clone_git_repository(git_url, tmp_clone, timeout=60, git_bin=git_exe,
+                                      shallow=True, no_checkout=bool(requested_revision))
         if result.returncode != 0:
             err = _safe_git_error(result, git_url)
             raise PluginOperationError(f"Git clone failed:\n{err}")
@@ -866,7 +819,9 @@ def _install_plugin_core(
             "revision": installed_revision,
             "source": source,
         }
-        backup = Path(tmp) / "previous-plugin"
+        # Recovery must outlive TemporaryDirectory if rollback itself fails.
+        recovery = Path(tempfile.mkdtemp(prefix=f".{plugin_name}.reinstall-", dir=plugins_dir))
+        backup = recovery / "previous-plugin"
         replaced_existing = target.exists()
         if replaced_existing:
             os.replace(target, backup)
@@ -874,15 +829,19 @@ def _install_plugin_core(
             os.replace(tmp_target, target)
             _write_install_metadata(new_metadata)
         except Exception:
-            if target.exists():
-                shutil.rmtree(target)
-            if replaced_existing and backup.exists():
-                os.replace(backup, target)
-            if old_metadata:
-                _write_install_metadata(old_metadata)
-            else:
-                _install_metadata_path().unlink(missing_ok=True)
+            try:
+                if target.exists():
+                    _remove_plugin_tree(target)
+                if replaced_existing:
+                    os.replace(backup, target)
+                # atomic_write_text preserves the previous metadata on failure.
+                _remove_plugin_tree(recovery)
+            except (OSError, PluginOperationError) as restore_exc:
+                raise PluginOperationError(
+                    f"Plugin installation failed; recovery copy remains at {backup}."
+                ) from restore_exc
             raise
+        _remove_plugin_tree(recovery)
 
     has_yaml = (target / "plugin.yaml").exists() or (target / "plugin.yml").exists()
     has_portable = (target / "plugin.json").exists()
@@ -1220,7 +1179,7 @@ def _remove_plugin_core(target: Path) -> None:
     """Remove one plugin and its metadata without splitting their state."""
     metadata = _read_install_metadata()
     if target.name not in metadata:
-        shutil.rmtree(target)
+        _remove_plugin_tree(target)
         return
 
     updated = dict(metadata)
@@ -1242,7 +1201,7 @@ def _remove_plugin_core(target: Path) -> None:
             ) from restore_exc
         shutil.rmtree(staging, ignore_errors=True)
         raise
-    shutil.rmtree(staging)
+    _remove_plugin_tree(staging)
 
 
 def cmd_remove(name: str) -> None:
@@ -2962,21 +2921,48 @@ def _run_plugin_git(
     git_exe: str, target: Path, *args: str, timeout: int = 60
 ) -> subprocess.CompletedProcess:
     """Run one git command inside a plugin checkout (non-interactive)."""
-    return subprocess.run(
-        [git_exe, *args],
-        capture_output=True,
-        text=True, encoding='utf-8', errors='replace',
-        timeout=timeout,
-        cwd=str(target),
-        stdin=subprocess.DEVNULL,
-        env=noninteractive_git_env(),
-    )
+    try:
+        return run_internal_git(
+            args, target, timeout=timeout, git_bin=git_exe, check_policy=True,
+        )
+    except GitPolicyError as exc:
+        raise PluginOperationError(f"Plugin Git policy refused: {exc}") from exc
 
 
 def _stash_ref(git_exe: str, target: Path) -> str:
     """Current ``refs/stash`` commit, or empty string when no stash exists."""
-    probe = _run_plugin_git(git_exe, target, "rev-parse", "--verify", "refs/stash")
-    return probe.stdout.strip() if probe.returncode == 0 else ""
+    probe = _run_plugin_git(git_exe, target, "rev-parse", "--verify", "--quiet", "refs/stash")
+    if probe.returncode == 1 and not probe.stdout.strip() and not probe.stderr.strip():
+        return ""  # --quiet distinguishes an absent ref from a failed probe.
+    if probe.returncode != 0:
+        raise PluginOperationError("Could not inspect git stash: " + _safe_git_error(probe))
+    revision = probe.stdout.strip()
+    if not re.fullmatch(r"[0-9a-fA-F]{40}|[0-9a-fA-F]{64}", revision):
+        raise PluginOperationError("Git returned an invalid stash reference.")
+    return revision
+
+
+def _restore_plugin_stash(git_exe: str, target: Path, revision: str) -> tuple[bool, str]:
+    """Restore the saved commit; failed verification must never discard it."""
+    note = f"Local changes are preserved in git stash ({revision})."
+    restore = _run_plugin_git(git_exe, target, "stash", "apply", revision)
+    unmerged = _run_plugin_git(git_exe, target, "diff", "--name-only", "--diff-filter=U")
+    status = _run_plugin_git(git_exe, target, "status", "--porcelain")
+    if unmerged.returncode != 0 or status.returncode != 0:
+        return False, "Could not verify restored local changes. " + note
+    if unmerged.stdout.strip():
+        reset = _run_plugin_git(git_exe, target, "reset", "--hard", "HEAD")
+        if reset.returncode != 0:
+            return False, "Could not reset the conflicted checkout. " + note
+        return False, "Local changes conflicted with the checkout and were NOT re-applied. " + note
+    if restore.returncode != 0:
+        return False, "Could not restore local changes. " + note
+    if _stash_ref(git_exe, target) != revision:
+        return False, "The stash changed during the update; no entry was dropped. " + note
+    drop = _run_plugin_git(git_exe, target, "stash", "drop", "stash@{0}")
+    if drop.returncode != 0:
+        return False, "Local changes were restored, but stash cleanup failed. " + note
+    return True, "Local changes were re-applied on top of the checkout."
 
 
 def _git_pull_plugin_dir(target: Path) -> tuple[bool, str]:
@@ -2994,14 +2980,18 @@ def _git_pull_plugin_dir(target: Path) -> tuple[bool, str]:
     (ref-compared, so "nothing saved" is distinguished from "saved but exit
     1"), pull, stash apply. A clean re-apply drops the entry; a conflicted
     re-apply resets the tree to the updated revision and KEEPS the stash so
-    the plugin still imports and no local work is lost.
+    the plugin still imports and no local work is lost. Incomplete recovery
+    or failed verification reports failure to both CLI and dashboard callers.
     """
     git_exe = _resolve_git_executable()
     if not git_exe:
         return False, "git is not installed or not in PATH."
+    saved_revision = ""
     try:
         status = _run_plugin_git(git_exe, target, "status", "--porcelain")
-        dirty = status.returncode == 0 and bool(status.stdout.strip())
+        if status.returncode != 0:
+            return False, "Could not inspect plugin checkout; update aborted. " + _safe_git_error(status)
+        dirty = bool(status.stdout.strip())
 
         stash_created = False
         pre_stash = ""
@@ -3022,11 +3012,14 @@ def _git_pull_plugin_dir(target: Path) -> tuple[bool, str]:
                     "stashed; update aborted before touching the checkout."
                     + (f"\n{err}" if err else "")
                 )
+            saved_revision = post_stash
             if push.returncode != 0:
                 # Saved-but-couldn't-clean (undeletable untracked files):
                 # the stash entry is complete; reset tracked mods so the
                 # pull isn't blocked by a still-dirty tree.
-                _run_plugin_git(git_exe, target, "reset", "--hard", "HEAD")
+                reset = _run_plugin_git(git_exe, target, "reset", "--hard", "HEAD")
+                if reset.returncode != 0:
+                    return False, "Could not reset plugin checkout; update aborted. Local changes are preserved in git stash."
 
         result = _run_plugin_git(git_exe, target, "pull", "--ff-only")
 
@@ -3034,15 +3027,7 @@ def _git_pull_plugin_dir(target: Path) -> tuple[bool, str]:
             err = _safe_git_error(result)
             if stash_created:
                 # Put the user's edits back before reporting the failure.
-                restore = _run_plugin_git(git_exe, target, "stash", "apply", "stash@{0}")
-                if restore.returncode == 0:
-                    _run_plugin_git(git_exe, target, "stash", "drop", "stash@{0}")
-                    note = "Local changes were restored."
-                else:
-                    note = (
-                        "Local changes are preserved in git stash "
-                        "(restore with: git stash pop)."
-                    )
+                _, note = _restore_plugin_stash(git_exe, target, saved_revision)
                 return False, (err or "git pull failed.") + f"\n{note}"
             return False, err or "git pull failed."
 
@@ -3050,29 +3035,14 @@ def _git_pull_plugin_dir(target: Path) -> tuple[bool, str]:
         if not stash_created:
             return True, pulled
 
-        restore = _run_plugin_git(git_exe, target, "stash", "apply", "stash@{0}")
-        unmerged = _run_plugin_git(
-            git_exe, target, "diff", "--name-only", "--diff-filter=U"
-        )
-        has_conflicts = bool(unmerged.stdout.strip())
-
-        if restore.returncode == 0 and not has_conflicts:
-            _run_plugin_git(git_exe, target, "stash", "drop", "stash@{0}")
-            return True, pulled + "\nLocal changes were re-applied on top of the update."
-
-        # Conflicted re-apply: leave the plugin importable on the updated
-        # revision; the user's edits stay safe in the stash entry.
-        _run_plugin_git(git_exe, target, "reset", "--hard", "HEAD")
-        return True, pulled + (
-            "\n⚠ Local changes in this plugin conflicted with the update and "
-            "were NOT re-applied. They are preserved in git stash — inspect "
-            "with `git stash show -p stash@{0}` and re-apply with "
-            f"`git stash pop` inside {target}."
-        )
-    except FileNotFoundError:
-        return False, "git is not installed or not in PATH."
+        restored, note = _restore_plugin_stash(git_exe, target, saved_revision)
+        return restored, pulled + "\n" + note
+    except (GitPolicyError, PluginOperationError, OSError) as exc:
+        note = f" Local changes are preserved in git stash ({saved_revision})." if saved_revision else ""
+        return False, f"Plugin Git operation failed: {exc}." + note
     except subprocess.TimeoutExpired:
-        return False, "Git operation timed out after 60 seconds."
+        note = f" Local changes are preserved in git stash ({saved_revision})." if saved_revision else ""
+        return False, "Git operation timed out after 60 seconds." + note
 
 
 def dashboard_remove_user_plugin(name: str) -> dict[str, Any]:

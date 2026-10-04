@@ -22,6 +22,7 @@ exercise the same code path through the ``bounded_git_probe`` delegation.
 
 import subprocess
 import sys
+import shutil
 import time
 
 import pytest
@@ -95,8 +96,10 @@ def test_stdin_is_devnull_not_inherited():
 def test_bounded_git_probe_delegates_same_contract():
     """The historical git-probe wrapper keeps its exact contract on top of
     bounded_probe_run: stripped stdout on rc==0, '' on any failure."""
-    assert bounded_git_probe([_PY, "-c", "print('  x  ')"], timeout=30) == "x"
-    assert bounded_git_probe([_PY, "-c", "import sys; sys.exit(1)"], timeout=30) == ""
+    git = shutil.which('git')
+    assert git, 'Native Git is required for the Git execution owner'
+    assert bounded_git_probe([git, '--version'], timeout=30).startswith('git version ')
+    assert bounded_git_probe([git, 'rev-parse', '--verify', 'refs/heads/owned-missing-ref-87134'], timeout=30) == ""
     assert bounded_git_probe(["definitely-not-a-real-binary-87134"], timeout=5) == ""
 
 

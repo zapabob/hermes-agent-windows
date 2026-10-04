@@ -22,6 +22,30 @@ _ATOMIC_REPLACE_MAX_ATTEMPTS = 8
 _ATOMIC_REPLACE_RETRY_DELAY = 0.01
 
 
+def remove_owned_tree(target: Path, *, boundary: Path) -> None:
+    """Remove a strict child tree; retry only read-only Windows regular files."""
+    target, boundary = Path(target), Path(boundary)
+    root = target.resolve()
+    if boundary.resolve() not in root.parents or target.is_symlink():
+        raise ValueError("Tree removal escaped its storage boundary")
+    if getattr(target.lstat(), "st_file_attributes", 0) & 0x400:
+        raise ValueError("Tree removal cannot target a reparse point")
+
+    def retry_readonly(func, path, exc_info):
+        candidate = Path(path)
+        metadata = candidate.lstat()
+        if (os.name != "nt" or not isinstance(exc_info[1], PermissionError)
+                or func is not os.unlink or not stat.S_ISREG(metadata.st_mode)
+                or metadata.st_mode & stat.S_IWRITE
+                or getattr(metadata, "st_file_attributes", 0) & 0x400
+                or root not in candidate.resolve().parents):
+            raise exc_info[1]
+        candidate.chmod(metadata.st_mode | stat.S_IWRITE)
+        func(path)
+
+    shutil.rmtree(target, onerror=retry_readonly)
+
+
 def is_truthy_value(value: Any, default: bool = False) -> bool:
     """Coerce bool-ish values using the project's shared truthy string set."""
     if value is None:

@@ -5,9 +5,9 @@
 // own `check-ref-format` at the boundary — never sanitized-and-fixed, because
 // a rewritten name would hide a typo the user should see.
 
-import { execFile } from 'node:child_process'
 
 import { resolveRequestedPathForIpc } from './hardening'
+import { executeGitChecked, rethrowGitPolicyError } from './git-execution-policy'
 
 // Unit separator between format fields. Git's pretty-format parser only honors
 // `%xNN` escapes (and for-each-ref honors neither `%xNN` nor `%NN`), so the
@@ -15,24 +15,8 @@ import { resolveRequestedPathForIpc } from './hardening'
 // assumption parseHistory makes for its record/field separators.
 const SEP = String.fromCharCode(31)
 
-function runGit(gitBin, args, cwd): Promise<string> {
-  return new Promise((resolve, reject) => {
-    execFile(
-      gitBin,
-      args,
-      { cwd, windowsHide: true, timeout: 30_000, maxBuffer: 8 * 1024 * 1024 },
-      (err, stdout, stderr) => {
-        if (err) {
-          err.stderr = String(stderr || '')
-          reject(err)
-
-          return
-        }
-
-        resolve(String(stdout || ''))
-      }
-    )
-  })
+async function runGit(gitBin: string, args: string[], cwd: string): Promise<string> {
+  return executeGitChecked(cwd, gitBin, args)
 }
 
 // Validate a branch name with git's own ref-name grammar. Throws on anything
@@ -46,7 +30,8 @@ async function assertBranchName(gitBin, cwd, name) {
 
   try {
     await runGit(gitBin, ['check-ref-format', '--branch', label], cwd)
-  } catch {
+  } catch (error) {
+    rethrowGitPolicyError(error)
     throw new Error('Invalid branch name.')
   }
 }
@@ -60,7 +45,8 @@ async function assertTagName(gitBin, cwd, name) {
 
   try {
     await runGit(gitBin, ['check-ref-format', `refs/tags/${label}`], cwd)
-  } catch {
+  } catch (error) {
+    rethrowGitPolicyError(error)
     throw new Error('Invalid tag name.')
   }
 }
@@ -146,7 +132,8 @@ async function listTags(repoPath, gitBin) {
 
   try {
     cwd = resolveRequestedPathForIpc(repoPath, { purpose: 'Tag list' })
-  } catch {
+  } catch (error) {
+    rethrowGitPolicyError(error)
     return []
   }
 
@@ -163,7 +150,8 @@ async function listTags(repoPath, gitBin) {
     )
 
     return parseTags(out)
-  } catch {
+  } catch (error) {
+    rethrowGitPolicyError(error)
     return []
   }
 }
@@ -173,7 +161,8 @@ async function listStashes(repoPath, gitBin) {
 
   try {
     cwd = resolveRequestedPathForIpc(repoPath, { purpose: 'Stash list' })
-  } catch {
+  } catch (error) {
+    rethrowGitPolicyError(error)
     return []
   }
 
@@ -183,7 +172,8 @@ async function listStashes(repoPath, gitBin) {
     const out = await runGit(gitBin, ['log', '-g', `--format=%gd${SEP}%H${SEP}%aI${SEP}%s`, 'refs/stash'], cwd)
 
     return parseStashes(out)
-  } catch {
+  } catch (error) {
+    rethrowGitPolicyError(error)
     return []
   }
 }

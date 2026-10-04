@@ -37,8 +37,9 @@ from typing import Any, Dict, List, Optional
 import yaml
 
 from hermes_constants import get_hermes_home, get_optional_mcps_dir
-from hermes_cli._subprocess_compat import noninteractive_git_env
+from hermes_cli._subprocess_compat import GitPolicyError, clone_git_repository, noninteractive_git_env, run_internal_git
 from hermes_cli.colors import Colors, color
+from utils import remove_owned_tree
 from hermes_cli.config import (
     load_config,
     save_config,
@@ -499,7 +500,7 @@ def _do_git_install(entry: CatalogEntry) -> Path:
         # Fresh checkout each install — manifest version is the source of truth,
         # so wipe + re-clone for determinism.
         print(color(f"  Removing existing install at {dest}", Colors.DIM))
-        shutil.rmtree(dest)
+        remove_owned_tree(dest, boundary=_install_root())
 
     print(color(f"  Cloning {install.url} ({install.ref}) → {dest}", Colors.CYAN))
 
@@ -512,38 +513,27 @@ def _do_git_install(entry: CatalogEntry) -> Path:
     # Never let an install hang on a credential prompt: catalog installs run
     # from CLI commands and dashboard flows where nobody can answer git's
     # username/password prompt (private repo, bad remote, auth required).
-    _git_env = noninteractive_git_env()
-
     if not is_sha_ref:
-        proc = subprocess.run(
-            [git, "clone", "--depth", "1", "--branch", install.ref, install.url, str(dest)],
-            stdin=subprocess.DEVNULL,
-            env=_git_env,
-        )
-        if proc.returncode == 0:
-            pass
-        else:
-            # Branch/tag form failed (unlikely for valid manifests; possible if
-            # the ref was deleted upstream). Fall through to the full-clone path.
+        proc = clone_git_repository(install.url, dest, timeout=60, git_bin=git,
+                                    shallow=True, branch=install.ref)
+        if proc.returncode != 0:
+            if proc.returncode in {124, 127}:
+                raise CatalogError(f"git clone failed: {proc.stderr}")
             if dest.exists():
-                shutil.rmtree(dest)
-            is_sha_ref = True  # treat the same as a SHA ref from here
+                remove_owned_tree(dest, boundary=_install_root())
+            is_sha_ref = True
 
     if is_sha_ref:
-        proc = subprocess.run(
-            [git, "clone", install.url, str(dest)],
-            stdin=subprocess.DEVNULL,
-            env=_git_env,
-        )
+        proc = clone_git_repository(install.url, dest, timeout=60, git_bin=git)
         if proc.returncode != 0:
-            raise CatalogError(f"git clone failed for {install.url}")
-        proc = subprocess.run(
-            [git, "-C", str(dest), "checkout", install.ref],
-            stdin=subprocess.DEVNULL,
-            env=_git_env,
-        )
+            raise CatalogError(f"git clone failed: {proc.stderr}")
+        try:
+            proc = run_internal_git(["checkout", install.ref], dest, timeout=60,
+                                    git_bin=git, check_policy=True)
+        except GitPolicyError as exc:
+            raise CatalogError(f"git checkout policy refused: {exc}") from exc
         if proc.returncode != 0:
-            raise CatalogError(f"git checkout {install.ref} failed")
+            raise CatalogError(f"git checkout {install.ref} failed: {proc.stderr}")
 
     if install.bootstrap:
         _run_bootstrap(dest, install.bootstrap)

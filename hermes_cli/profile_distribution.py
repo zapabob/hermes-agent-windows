@@ -71,7 +71,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Dict, List, Optional, Tuple
 
 from agent.skill_utils import is_excluded_skill_path
-from hermes_cli._subprocess_compat import noninteractive_git_env
+from hermes_cli._subprocess_compat import clone_git_repository, noninteractive_git_env
 
 
 # ---------------------------------------------------------------------------
@@ -392,19 +392,11 @@ def _git_clone(url: str, dest: Path) -> None:
     # Normalize github.com/user/repo shorthand
     if re.match(r"^github\.com/[\w.-]+/[\w.-]+/?$", url):
         url = f"https://{url.rstrip('/')}"
-    try:
-        subprocess.run(
-            ["git", "clone", "--depth", "1", url, str(dest)],
-            check=True,
-            capture_output=True,
-            stdin=subprocess.DEVNULL,
-            env=noninteractive_git_env(),
-        )
-    except FileNotFoundError as exc:
-        raise DistributionError("git is required for git-URL installs") from exc
-    except subprocess.CalledProcessError as exc:
-        stderr = exc.stderr.decode("utf-8", errors="replace") if exc.stderr else ""
-        raise DistributionError(f"git clone failed: {stderr.strip()}") from exc
+    result = clone_git_repository(url, dest, timeout=60, shallow=True)
+    if result.returncode == 127:
+        raise DistributionError("git is required for git-URL installs")
+    if result.returncode != 0:
+        raise DistributionError(f"git clone failed: {result.stderr.strip()}")
 
 
 def _stage_source(source: str, workdir: Path) -> Tuple[Path, str]:
@@ -426,7 +418,8 @@ def _stage_source(source: str, workdir: Path) -> Tuple[Path, str]:
         cloned = workdir / "clone"
         _git_clone(src_str, cloned)
         # Remove .git to keep the staged tree clean
-        shutil.rmtree(cloned / ".git", ignore_errors=True)
+        from utils import remove_owned_tree
+        remove_owned_tree(cloned / ".git", boundary=cloned)
         if not (cloned / MANIFEST_FILENAME).is_file():
             raise DistributionError(
                 f"No {MANIFEST_FILENAME} at the root of {src_str!r}. "

@@ -1351,11 +1351,8 @@ class CLICommandsMixin:
                 print("  Not inside a git repository.")
                 return
             try:
-                result = subprocess.run(
-                    ["git", "worktree", "list"],
-                    capture_output=True, text=True, encoding="utf-8",
-                    errors="replace", timeout=10, cwd=repo_root,
-                )
+                from hermes_cli._subprocess_compat import run_internal_git
+                result = run_internal_git(["worktree", "list"], timeout=10, cwd=repo_root)
                 out = result.stdout.strip() if result.returncode == 0 else ""
             except Exception:
                 out = ""

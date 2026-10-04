@@ -4,6 +4,7 @@ import os
 import signal
 import subprocess
 import threading
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -41,6 +42,26 @@ def run_bounded(
     if max_output_bytes_per_stream <= 0:
         raise ValueError("output limit must be positive")
 
+    deadline = time.monotonic() + timeout
+    stdout = bytearray()
+    stderr = bytearray()
+    output_truncated = threading.Event()
+    pipe_read_failed = threading.Event()
+    buffers_lock = threading.Lock()
+    started_readers = []
+    timed_out = False
+    returncode: int | None = None
+    readers_were_stuck = False
+    process_tree_incomplete = False
+    lifecycle_failed = True
+
+    def reap_owned() -> None:
+        _terminate_process_tree(process, job_handle)
+        try:
+            process.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            pass
+
     job_handle = _create_windows_job() if os.name == "nt" else None
     try:
         process = subprocess.Popen(
@@ -52,102 +73,119 @@ def run_bounded(
             env=dict(env) if env is not None else None,
             close_fds=True,
             start_new_session=(os.name != "nt"),
-            creationflags=0x00000004 if os.name == "nt" else 0,  # CREATE_SUSPENDED
+            # Assign the retained Job before execution, without a console window.
+            creationflags=(0x00000004 | 0x08000000) if os.name == "nt" else 0,  # CREATE_SUSPENDED | CREATE_NO_WINDOW
         )
-    except Exception:
+    except BaseException:
         _close_windows_job(job_handle)
         raise
-    if job_handle is not None:
-        try:
-            _assign_windows_job(job_handle, process)
-            _resume_suspended_process(process.pid)
-        except Exception as exc:
-            _terminate_process_tree(process, job_handle)
-            _close_windows_job(job_handle)
-            try:
-                process.wait(timeout=2)
-            except subprocess.TimeoutExpired:
-                pass
-            raise subprocess.SubprocessError("could not establish bounded Windows process job") from exc
-    stdout = bytearray()
-    stderr = bytearray()
-    output_truncated = threading.Event()
-    pipe_read_failed = threading.Event()
-    buffers_lock = threading.Lock()
-
-    def drain(stream, buffer: bytearray) -> None:
-        try:
-            while True:
-                chunk = os.read(stream.fileno(), 4096)
-                if not chunk:
-                    return
-                with buffers_lock:
-                    buffer.extend(chunk)
-                    overflow = len(buffer) - max_output_bytes_per_stream
-                    if overflow > 0:
-                        del buffer[:overflow]
-                        output_truncated.set()
-        except (OSError, ValueError):
-            pipe_read_failed.set()
-            _terminate_process_tree(process, job_handle)
-            return
-
-    assert process.stdout is not None
-    assert process.stderr is not None
-    readers = (
-        threading.Thread(target=drain, args=(process.stdout, stdout), daemon=True),
-        threading.Thread(target=drain, args=(process.stderr, stderr), daemon=True),
-    )
-    for reader in readers:
-        reader.start()
-
-    timed_out = False
-    returncode: int | None = None
-    readers_were_stuck = False
-    process_tree_incomplete = False
+    # Every operation after obtaining Popen is inside this cleanup boundary,
+    # including job setup and reader construction/startup.
     try:
-        returncode = process.wait(timeout=timeout)
-    except subprocess.TimeoutExpired:
-        timed_out = True
-        _terminate_process_tree(process, job_handle)
+        if job_handle is not None:
+            try:
+                _assign_windows_job(job_handle, process)
+                _resume_suspended_process(process.pid)
+            except Exception as exc:
+                raise subprocess.SubprocessError("could not establish bounded Windows process job") from exc
+
+        def drain(stream, buffer: bytearray) -> None:
+            try:
+                while True:
+                    chunk = os.read(stream.fileno(), 4096)
+                    if not chunk:
+                        return
+                    with buffers_lock:
+                        buffer.extend(chunk)
+                        overflow = len(buffer) - max_output_bytes_per_stream
+                        if overflow > 0:
+                            del buffer[:overflow]
+                            output_truncated.set()
+            except (OSError, ValueError):
+                pipe_read_failed.set()
+                _terminate_process_tree(process, job_handle)
+
+        assert process.stdout is not None
+        assert process.stderr is not None
+        for stream, buffer in ((process.stdout, stdout), (process.stderr, stderr)):
+            reader = threading.Thread(target=drain, args=(stream, buffer), daemon=True)
+            reader.start()
+            started_readers.append((reader, stream))
         try:
-            returncode = process.wait(timeout=2)
+            returncode = process.wait(timeout=max(0.0, deadline - time.monotonic()))
         except subprocess.TimeoutExpired:
-            returncode = process.poll()
-    finally:
-        for reader in readers:
-            reader.join(timeout=0.5)
-        readers_stuck = any(reader.is_alive() for reader in readers)
-        readers_were_stuck = readers_stuck
-        if readers_stuck:
+            timed_out = True
             _terminate_process_tree(process, job_handle)
-            for reader in readers:
+            try:
+                returncode = process.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                returncode = process.poll()
+        lifecycle_failed = False
+    finally:
+        try:
+            if lifecycle_failed:
+                reap_owned()
+            for reader, _stream in started_readers:
                 reader.join(timeout=0.5)
-        for stream, reader in zip((process.stdout, process.stderr), readers, strict=True):
-            # Closing a buffered pipe from another thread can itself block while
-            # that thread is waiting on a descendant-held pipe handle.
-            if reader.is_alive():
-                continue
-            if stream is not None:
+            readers_were_stuck = any(reader.is_alive() for reader, _stream in started_readers)
+            if readers_were_stuck:
+                reap_owned()
+                for reader, _stream in started_readers:
+                    reader.join(timeout=0.5)
+            for stream in (getattr(process, "stdout", None), getattr(process, "stderr", None)):
+                # Closing a buffered pipe can block while its reader waits on
+                # descendants. Unstarted readers cannot hold that pipe lock.
+                if stream is None or any(reader.is_alive() and owned_stream is stream
+                                         for reader, owned_stream in started_readers):
+                    continue
                 try:
                     stream.close()
                 except OSError:
                     pass
-        for reader in readers:
-            reader.join(timeout=0.1)
-        if os.name != "nt" and _posix_process_group_exists(process.pid):
-            # A descendant may deliberately close both captured pipes and
-            # outlive the command. Keep the group boundary fail closed even
-            # when the pipe readers already reached EOF.
-            _terminate_process_tree(process, job_handle)
-            process_tree_incomplete = True
-        total_processes, active_processes = _windows_job_process_counts(job_handle)
-        process_tree_incomplete = process_tree_incomplete or (
-            total_processes >= MAX_BOUNDED_PROCESS_TREE_NODES or active_processes > 0
-        )
-        if process_tree_incomplete:
-            _terminate_process_tree(process, job_handle)
-        _close_windows_job(job_handle)
+            for reader, _stream in started_readers:
+                reader.join(timeout=0.1)
+            if not lifecycle_failed:
+                if os.name != "nt" and _posix_process_group_exists(process.pid):
+                    # Descendants can close their pipes and outlive the command.
+                    process_tree_incomplete = True
+                total_processes, active_processes = _windows_job_process_counts(job_handle)
+                # Job exit accounting can briefly lag root/pipe completion.
+                # Only observe within the original budget; UNKNOWN/limit
+                # sentinels refuse immediately and cleanup retains this Job.
+                quiescence_deadline = min(deadline, time.monotonic() + 0.25)
+                while (job_handle is not None
+                       and total_processes < MAX_BOUNDED_PROCESS_TREE_NODES
+                       and active_processes > 0):
+                    remaining = quiescence_deadline - time.monotonic()
+                    if remaining <= 0:
+                        break
+                    time.sleep(min(0.01, remaining))
+                    if time.monotonic() > quiescence_deadline:
+                        break
+                    observed_total, observed_active = _windows_job_process_counts(job_handle)
+                    if time.monotonic() > quiescence_deadline:
+                        # A late zero cannot prove quiescence within budget.
+                        total_processes = max(total_processes, observed_total)
+                        break
+                    total_processes, active_processes = observed_total, observed_active
+                process_tree_incomplete = process_tree_incomplete or (
+                    total_processes >= MAX_BOUNDED_PROCESS_TREE_NODES or active_processes > 0
+                )
+                if process_tree_incomplete:
+                    reap_owned()
+        except BaseException as cleanup_error:
+            try:
+                reap_owned()
+            finally:
+                raise cleanup_error
+        finally:
+            try:
+                _close_windows_job(job_handle)
+            except BaseException as close_error:
+                try:
+                    reap_owned()
+                finally:
+                    raise close_error
 
     with buffers_lock:
         out_text = bytes(stdout).decode("utf-8", errors="replace")
@@ -163,7 +201,7 @@ def run_bounded(
         )
     if returncode is None:
         raise subprocess.SubprocessError("process exit status unavailable")
-    if readers_were_stuck or any(reader.is_alive() for reader in readers) or process_tree_incomplete:
+    if readers_were_stuck or any(reader.is_alive() for reader, _stream in started_readers) or process_tree_incomplete:
         reason = (
             "process_tree_limit_or_active_descendant"
             if process_tree_incomplete
@@ -369,8 +407,9 @@ def _windows_job_process_counts(handle: object | None) -> tuple[int, int]:
 def _close_windows_job(handle: object | None) -> None:
     if handle is None:
         return
-    _ctypes, wintypes, kernel32 = _windows_api()
-    kernel32.CloseHandle(wintypes.HANDLE(handle))
+    ctypes, wintypes, kernel32 = _windows_api()
+    if not kernel32.CloseHandle(wintypes.HANDLE(handle)):
+        raise ctypes.WinError(ctypes.get_last_error(), "CloseHandle failed; bounded job cleanup is unknown")
 
 
 def _terminate_process_tree(process: subprocess.Popen[bytes], job_handle: object | None = None) -> None:

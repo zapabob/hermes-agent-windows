@@ -1,0 +1,1051 @@
+{
+  "schema": "s06-selective-adoption-local-acceptance-v1",
+  "family_id": "S06",
+  "result": "ACCEPTED_LOCAL_S06_GATES_PUBLICATION_CI_RUNTIME_SEPARATE",
+  "recorded_at_utc": "2026-10-04T21:57:17.732987+00:00",
+  "composition_parent": "a3f8bfa910c48ea0d397313f78e3400c86940ddf",
+  "publication": "PENDING",
+  "exact_sha_ci": "NOT_OBSERVED",
+  "runtime": "PENDING",
+  "runtime_product_count": 36,
+  "test_runtime_helper_count": 1,
+  "transferred_paths": [
+    "agent/context_references.py",
+    "agent/trace_upload.py",
+    "apps/desktop/assets/git-transport.cjs",
+    "apps/desktop/electron/git-execution-policy.ts",
+    "apps/desktop/electron/git-ipc.ts",
+    "apps/desktop/electron/git-ref-ops.test.ts",
+    "apps/desktop/electron/git-ref-ops.ts",
+    "apps/desktop/electron/git-review-ops.test.ts",
+    "apps/desktop/electron/git-review-ops.ts",
+    "apps/desktop/electron/git-test-runtime.ts",
+    "apps/desktop/electron/git-worktree-ops.test.ts",
+    "apps/desktop/electron/git-worktree-ops.ts",
+    "apps/desktop/electron/main.ts",
+    "apps/desktop/electron/python-backend-command.ts",
+    "cli.py",
+    "downstream/security/bounded_process.py",
+    "hermes_cli/_subprocess_compat.py",
+    "hermes_cli/banner.py",
+    "hermes_cli/cli_commands_mixin.py",
+    "hermes_cli/dashboard_managed_files.py",
+    "hermes_cli/diagnostics_local_export.py",
+    "hermes_cli/dump.py",
+    "hermes_cli/gitlock.py",
+    "hermes_cli/goals.py",
+    "hermes_cli/kanban_db.py",
+    "hermes_cli/main.py",
+    "hermes_cli/mcp_catalog.py",
+    "hermes_cli/plugins_cmd.py",
+    "hermes_cli/profile_distribution.py",
+    "hermes_cli/update_cmd.py",
+    "hermes_cli/web_git.py",
+    "hermes_cli/web_server.py",
+    "hermes_cli/worktree_gc.py",
+    "tests/agent/test_trace_upload.py",
+    "tests/cli/test_worktree_sync_base.py",
+    "tests/hermes_cli/test_banner_git_state.py",
+    "tests/hermes_cli/test_banner_hidden_git.py",
+    "tests/hermes_cli/test_bounded_probe_run.py",
+    "tests/hermes_cli/test_dump_git_commit.py",
+    "tests/hermes_cli/test_fresh_clone_git_policy.py",
+    "tests/hermes_cli/test_goal_gates.py",
+    "tests/hermes_cli/test_kanban_db.py",
+    "tests/hermes_cli/test_mcp_catalog.py",
+    "tests/hermes_cli/test_noninteractive_git.py",
+    "tests/hermes_cli/test_plugin_install_ref.py",
+    "tests/hermes_cli/test_plugin_update_git_boundary.py",
+    "tests/hermes_cli/test_plugins_cmd.py",
+    "tests/hermes_cli/test_repo_git_execution_policy.py",
+    "tests/hermes_cli/test_resolve_last_session.py",
+    "tests/hermes_cli/test_tui_npm_install.py",
+    "tests/hermes_cli/test_tui_restore_git_policy.py",
+    "tests/hermes_cli/test_tui_resume_flow.py",
+    "tests/hermes_cli/test_update_autostash.py",
+    "tests/hermes_cli/test_update_git_review_boundaries.py",
+    "tests/hermes_cli/test_update_normal_git_policy.py",
+    "tests/hermes_cli/test_web_server_hidden_helpers.py",
+    "tests/hermes_cli/test_worktree_git_review_boundaries.py",
+    "tests/security/test_t16_bounded_security.py",
+    "tests/test_remove_owned_tree.py",
+    "tests/tools/test_checkpoint_git_policy.py",
+    "tests/tools/test_checkpoint_manager.py",
+    "tests/tools/test_working_diff.py",
+    "tests/windows/fixtures/run_s06_desktop_direct_native.py",
+    "tests/windows/fixtures/s06_desktop_direct_native.mjs",
+    "tests/windows/fixtures/s06_fixture_contracts.test.mjs",
+    "tests/windows/fixtures/s06_git_proxy_windows.go",
+    "tests/windows/fixtures/test_s06_fixture_contracts.py",
+    "tools/checkpoint_manager.py",
+    "tools/subagent_worktree.py",
+    "tools/working_diff.py",
+    "tui_gateway/compute_host.py",
+    "tui_gateway/host_supervisor.py",
+    "tui_gateway/server.py",
+    "utils.py"
+  ],
+  "preserved_validation_paths": [
+    "tests/agent/test_coding_context.py",
+    "tests/agent/test_context_references.py",
+    "tests/cli/test_worktree_security.py",
+    "tests/cli/test_worktree_selfheal.py",
+    "tests/hermes_cli/test_gitlock_tmp_packs.py",
+    "tests/hermes_cli/test_goals.py",
+    "tests/hermes_cli/test_kanban_db_init.py",
+    "tests/hermes_cli/test_kanban_db_repair.py",
+    "tests/hermes_cli/test_profile_distribution.py",
+    "tests/hermes_cli/test_update_eol_churn.py",
+    "tests/hermes_cli/test_web_server_git.py",
+    "tests/hermes_cli/test_worktree_gc.py",
+    "tests/test_gitlock.py",
+    "tests/tools/test_subagent_worktree.py",
+    "tests/tui_gateway/test_diagnostics_export_local.py",
+    "tests/tui_gateway/test_session_git_metadata_generation.py",
+    "tests/tui_gateway/test_slash_fuzzy.py"
+  ],
+  "source_sha256": {
+    "agent/context_references.py": "8b8b9e4faf3c5178d00a282b029f9e95863462ba186389bd05a6ba796d731992",
+    "agent/trace_upload.py": "73d388c3c5f0751597c71b268154dfc8b6f0537d501f9232c1528f8f3a714a15",
+    "apps/desktop/assets/git-transport.cjs": "e62e53c3456b09af3f4f7923acb39e791d638dca6b2cbb79fcbd136b80b4d86c",
+    "apps/desktop/electron/git-execution-policy.ts": "c1504f6e56630c7f428ede5bfeabd3fc1012ba5c236237cd1960cacc98607a23",
+    "apps/desktop/electron/git-ipc.ts": "ee0dfcb70e2613eec9f366dce3c6e5ffa15535493d774e0005f2b314ec5350cd",
+    "apps/desktop/electron/git-ref-ops.test.ts": "60b60004460f6918ecfd750a4faeac06a703cadcad5f67b32705ea19cb18c0a2",
+    "apps/desktop/electron/git-ref-ops.ts": "c140872bacbe52c519be0114b3390b1fe5671a37c55f39e9815dbce6dc8fcf73",
+    "apps/desktop/electron/git-review-ops.test.ts": "8eb3b26934f82a73d860940548371b96a0d638ecedeaef2a6de83e89b4ffd227",
+    "apps/desktop/electron/git-review-ops.ts": "e9eb291931d0585179308365b77f0a1440e1cd17188c37e104e0909390d7a06f",
+    "apps/desktop/electron/git-test-runtime.ts": "09c7c03e6f90680bf723750222cc3c9f7a09c85a1f384b5b4cff2fefada16890",
+    "apps/desktop/electron/git-worktree-ops.test.ts": "25bbca70e37d0073653fd0b775b7963534bb88779485a5e8775c4a22f937fac2",
+    "apps/desktop/electron/git-worktree-ops.ts": "8f1a3da5497bf1b38300902c4f049ae75ca9050470920db7954315bd1844dc12",
+    "apps/desktop/electron/main.ts": "b0a40e9c49ff13745e694e60638d02188289000c7e999d6a93959a547b677ba0",
+    "apps/desktop/electron/python-backend-command.ts": "7f5b2b7b34b980372327ec2d0b5cc136d1005976a770668f029f7aa29906bde3",
+    "cli.py": "3df6bbd464f22e4c07c129f89f53a91f62071bf47110836a45fbba013ea1085e",
+    "downstream/security/bounded_process.py": "e8b2f95cdf6346e56d9ed3e2a1cf28276c62acdd82aab427cd0267a3adff1bec",
+    "hermes_cli/_subprocess_compat.py": "f4b73d95b591a540abcb7284dec7c817c49b929a98ec8f9f02cd8b0d8f35629e",
+    "hermes_cli/banner.py": "969dd485d0fd808403268bbbdcdb8b2d613063567dd67c49c225f3a6603a8454",
+    "hermes_cli/cli_commands_mixin.py": "7a092ffe71957cd8226b95670b4bb53299790c4d8bf8bf6e776a5bc65ee37495",
+    "hermes_cli/dashboard_managed_files.py": "4a8a327e1ebf03ca0b3baa7cbb799e83a0883e1c93e9913f20815afef6b34fd6",
+    "hermes_cli/diagnostics_local_export.py": "b632cc87b2b5ff9eee95b974dff8bfc7aea3250da0b69494e0b6b84d9ff8bf7b",
+    "hermes_cli/dump.py": "9bc0b99c875833c4059774111998a2e79675f39b8229e99315011c262054fe42",
+    "hermes_cli/gitlock.py": "f2740545f6b2a3f5e7ed85d7ce4bd8e6de2ff4bd7b2f498dde42f492dcbb7374",
+    "hermes_cli/goals.py": "48430afe594c5e0ce054c01d07b4e89ab273e0eae87b5887b0a47f53926fc08a",
+    "hermes_cli/kanban_db.py": "a57d6bfcd04b435685fa5de4cf34bb1149960ec1346965052014121f44d100fd",
+    "hermes_cli/main.py": "76439aee495d7d6e972345891da954ff42542357532f83d4ad03043ca49629e2",
+    "hermes_cli/mcp_catalog.py": "bf7d2a3a92b2fac6851741d946e3c6bcedb66feae97f1d44569c4f4c4c80104f",
+    "hermes_cli/plugins_cmd.py": "51efc10b35a5d054e2c779e440af6f264e0993d1a33a4b2dbdd0533b7f4551da",
+    "hermes_cli/profile_distribution.py": "84f904b6f9932098858ce65df57d2f6b16afb12fc0d19b112d9596a0f262e686",
+    "hermes_cli/update_cmd.py": "e743cedffdcb3a26fa9321354fd91472d31a2160cfa071052e8b7982a18bff95",
+    "hermes_cli/web_git.py": "f37159c8b5f0d7b9c78bca4cba273c43305ed34205904591bf5449227bd3f738",
+    "hermes_cli/web_server.py": "b8095d418f671c08b44c2fbe4b0dca7ba5ee83ef24b660aefa8013b9462cfc5a",
+    "hermes_cli/worktree_gc.py": "6ef2c0cd4b0c84f1a4974f050c03ec182ad80dbe45ffadd98f04d09e53ff234c",
+    "tests/agent/test_coding_context.py": "85c19a155ec6c10d423ac311fad75f716ac99cccaad814bb30162359775ad7f1",
+    "tests/agent/test_context_references.py": "f0413a8f183b10ea380a93f19a5f4634ceb1d4b8d291002c9bb7da76ad14c2f6",
+    "tests/agent/test_trace_upload.py": "212c295550934e166e7dd88ae0bd781bd20b19a08d662f3e5cde4778f2124f77",
+    "tests/cli/test_worktree_security.py": "fc2aea0406f3193a2ed26e4574c00da920951720f48cb213749daf72ff5d42b5",
+    "tests/cli/test_worktree_selfheal.py": "ba798f05c3410c12778c882e5f418201a8f6cf2c812e857b00a8af88ae89697e",
+    "tests/cli/test_worktree_sync_base.py": "db575a553c3c98e8dc4b53428ed5b1fb63e7fc7329989aac780d4ae8192ea201",
+    "tests/hermes_cli/test_banner_git_state.py": "7247483b91c5feeca7bc15d6b7c51118e897c73eb3bd612342a001ab244d2225",
+    "tests/hermes_cli/test_banner_hidden_git.py": "68bf199bcbd9e743b23cc462f6dda45b94a56efce50dfb94068148b6d6639609",
+    "tests/hermes_cli/test_bounded_probe_run.py": "bfc5462d2ebe9f056d9b9468ffce56607898502fc5719b4545bf223912b1e5fa",
+    "tests/hermes_cli/test_dump_git_commit.py": "e249606498a3f9e50895ba096749e975f9800d49d696ac84a629eab13d5e9a6f",
+    "tests/hermes_cli/test_fresh_clone_git_policy.py": "cd5d4c6ed132df76f0df39881d3480dc4024090047496402f3752265f900a248",
+    "tests/hermes_cli/test_gitlock_tmp_packs.py": "3f63c36bc5b5300b41503c8307089240cdd2fa0c1ac4bd3c6921a590983cada0",
+    "tests/hermes_cli/test_goal_gates.py": "ec6a9b5ec308e7e431cff8e886c4f6870113716d25dbaebe117ab702e135a7a5",
+    "tests/hermes_cli/test_goals.py": "2bdd4845b3ddb6db4a5148b7e09ef3aefd0650bbcb4f92dab1fcecfa4a2e6c47",
+    "tests/hermes_cli/test_kanban_db_init.py": "cc53afff9f7274587e578922c8e72ec94d83c21b610ef77b80186fe71cecb6a6",
+    "tests/hermes_cli/test_kanban_db_repair.py": "e870b2f13e24087c9f4612ee7bc4acfe9985b9e8ca889d7f5ea4b53b3efe1ecb",
+    "tests/hermes_cli/test_kanban_db.py": "4fd3314b6d942a778aeeac35a6128c79dba9a1408ca1875b40372d71f9dd9630",
+    "tests/hermes_cli/test_mcp_catalog.py": "f6cb13f58e1457a05fd39a832595f7458300a52780d4abf1faa01dcbcf77c60c",
+    "tests/hermes_cli/test_noninteractive_git.py": "cbc8efffe794364e99551b0b3c088d07f652032cb22120ac5a1d40985882e53f",
+    "tests/hermes_cli/test_plugin_install_ref.py": "7da8ef14aa93ed9e31a41156ca6507f5c78993afcfb2db54cb4247d2c87ac831",
+    "tests/hermes_cli/test_plugin_update_git_boundary.py": "435b74ecebddc5e31ecc5f99dd62372ac580df4f1218a7d4c96b1d305fcfdefd",
+    "tests/hermes_cli/test_plugins_cmd.py": "682eb531c2f64114b9e5ff747b4d0d8fe7afa03803efca15d293fbd1ad3f8bdb",
+    "tests/hermes_cli/test_profile_distribution.py": "629ce6e41a08597ff9d8e36978bfe4e2077c82d6a58d894ba2c191476930cbcc",
+    "tests/hermes_cli/test_repo_git_execution_policy.py": "3361c4dde66b6d00af29f4c59b6ba63e3e74e955ed0b6b0f2a92126be9b5e5d6",
+    "tests/hermes_cli/test_resolve_last_session.py": "85c1d2ef9f018a1aa1cc6ccf94e3f9f220e67c7619e0c304abe98f37e2daa9dd",
+    "tests/hermes_cli/test_tui_npm_install.py": "a5e5dc31c97065b955986aa386993dabf948a5b82e7e8add4bdfb4f66d911743",
+    "tests/hermes_cli/test_tui_restore_git_policy.py": "1910fdec8890f3c8ae821d88cf124f154c109e515bb060bdd9a5e27b4fe9629e",
+    "tests/hermes_cli/test_tui_resume_flow.py": "64ef9de6a04156a3082e99d45a15dfe7741fdf8c9ddc00d5871618db9e27aa39",
+    "tests/hermes_cli/test_update_autostash.py": "b9e55614d2909e084c46271358958a646871bd53f19e7d2cc0099fd00d3eebf2",
+    "tests/hermes_cli/test_update_eol_churn.py": "25314adbcef8091f0af2c1750eeae766fdd0f5d037986fbd8ebf21070aa00ead",
+    "tests/hermes_cli/test_update_git_review_boundaries.py": "fa4828c0efe61de69c0763b308a3e2653fef742ba440ca23c63d680639c02a69",
+    "tests/hermes_cli/test_update_normal_git_policy.py": "693b09e1e234ff770717fc794745d2e4d05a6cf286830a97686dd2e6638851ba",
+    "tests/hermes_cli/test_web_server_git.py": "fb87bc05d2d48b3c068ffebe91c7e6c25344556e3241e60fdf1856c5550e3aae",
+    "tests/hermes_cli/test_web_server_hidden_helpers.py": "b5cafa199c149c95d31677757b3bdcc6305b7e7c8749905ccbc6923891f6fb86",
+    "tests/hermes_cli/test_worktree_gc.py": "57cf4931c1d8184badf2e104f01161e0f959c9267dd53936fe6e28ee2015d4d9",
+    "tests/hermes_cli/test_worktree_git_review_boundaries.py": "b3c06505fa07f0e7354a52f9ceea3537906b6086939282ea12b5e8082158542e",
+    "tests/security/test_t16_bounded_security.py": "e3f9aaf833b94eb02e8f320989414e85aed18918893ba2136bfd4de0022a663e",
+    "tests/test_gitlock.py": "f2783ae7629acc9cdecbfac71bfd499e9a8f51ad017f96e4bf626ea084b3c1ff",
+    "tests/test_remove_owned_tree.py": "088a92dc7cd28035546ca02c825517acf52201c0e567b0aa0d205e820448fe2a",
+    "tests/tools/test_checkpoint_git_policy.py": "f8e8f6ec36e4af669c1a36372940821b7744ae0ba0a049c87725b09e04badf1b",
+    "tests/tools/test_checkpoint_manager.py": "6ced50997ebf50659c19f06d5c3ce0eed2a532fb2af0e909149b15dd6c3af791",
+    "tests/tools/test_subagent_worktree.py": "a42bd183ffdde1c5b2f1f89c518ad9d1f201c6ecbcdf100d25bc1a087f09e3d8",
+    "tests/tools/test_working_diff.py": "c79b1df13eb7932912c379d7bff9f53d2cc6e0816cff8144fa17e2c14895c46e",
+    "tests/tui_gateway/test_diagnostics_export_local.py": "8e1fbc2a31771d5eb84e649f935d199b8d05515f649c305d1776f660fdf064a8",
+    "tests/tui_gateway/test_session_git_metadata_generation.py": "a296a1d1386a01441a5bfc62194bc3bdc5bd1af7b1d1b855baee215a68dc0138",
+    "tests/tui_gateway/test_slash_fuzzy.py": "b147134514caa4bc6496654a10758ad4b176922eedbbf7ca656174ce9e49b542",
+    "tests/windows/fixtures/run_s06_desktop_direct_native.py": "f60b75fedfe520bb9543c5531efbd31d012dd9f35d6d257cdc6ed82c4ae28fc4",
+    "tests/windows/fixtures/s06_desktop_direct_native.mjs": "3c653124dc4b52e5267b06f291503dbc04f4d8df798d5ee9dcdbc05d8ed62e61",
+    "tests/windows/fixtures/s06_fixture_contracts.test.mjs": "4973067dfcda7946ed22a36d144179f523e9f452cf8220f07e502c22df2e9589",
+    "tests/windows/fixtures/s06_git_proxy_windows.go": "289f1e12503c4c4f6d0a0130373af2679c7cb26788fd54a42c16f6f182170004",
+    "tests/windows/fixtures/test_s06_fixture_contracts.py": "31a7d2df74cb942fa6f5a3484a9f83d30395fa082e828ca9bc7b98ec228c1803",
+    "tools/checkpoint_manager.py": "de569b5706501725196fdfeb2cfe818ad0e0973055564bdc6baaaa9f2a6acdbb",
+    "tools/subagent_worktree.py": "3755253aed26cdf53115f85d59183d0293fb08b8dd20de16ae4fe757ecc1c5d3",
+    "tools/working_diff.py": "7471e7c8255c4f9fc7a1f56452548fae09b80c4fc50c99c5f95a7831a08415c8",
+    "tui_gateway/compute_host.py": "9f8938a8d1fb67d886969362f6edbf2bb9f9ee20f8448f0bfef92e1820c23c88",
+    "tui_gateway/host_supervisor.py": "bb4d2e1f68751b483a2502b9617607dc6878592449a5938aee6ce7a40c9e1b41",
+    "tui_gateway/server.py": "530694acd791a8bdbbdb4e9733d283c9b3ae10648252f877bdaa385784def475",
+    "utils.py": "249aaba0819cc1a853d1f8b352dcd5b5e578dce9d317dc21c35b94aaaf2fd411"
+  },
+  "python_regression": {
+    "evidence_kind": "OCT4_EXECUTION_REVALIDATED_OCT5_UNCHANGED_BYTES",
+    "passed": 866,
+    "failed": 0,
+    "skipped": 12,
+    "explicit_excluded": 3,
+    "disjoint_test_files": 45,
+    "suites": [
+      {
+        "label": "bounded-owner-canonical-oct4-final-2034",
+        "files": 1,
+        "passed": 78,
+        "failed": 0,
+        "skipped": 3,
+        "selection": [
+          "tests/security/test_t16_bounded_security.py"
+        ],
+        "receipt_sha256": "12a9a401d3e37eb864e1c0f9407d21458e76de78b59e925174cb3141a2e68c52",
+        "log_sha256": "9d2043dc9e188de2ac99a6051150d9d0cc1ca9250f76d71bd8dcebf70821ad82"
+      },
+      {
+        "label": "oct4-canonical-core-v6-final-2034",
+        "files": 29,
+        "passed": 571,
+        "failed": 0,
+        "skipped": 9,
+        "selection": [
+          "tests/hermes_cli/test_fresh_clone_git_policy.py",
+          "tests/hermes_cli/test_plugin_update_git_boundary.py",
+          "tests/hermes_cli/test_plugin_install_ref.py",
+          "tests/hermes_cli/test_plugins_cmd.py",
+          "tests/hermes_cli/test_profile_distribution.py",
+          "tests/hermes_cli/test_mcp_catalog.py",
+          "tests/hermes_cli/test_noninteractive_git.py",
+          "tests/tools/test_checkpoint_git_policy.py",
+          "tests/tools/test_checkpoint_manager.py",
+          "tests/test_remove_owned_tree.py",
+          "tests/hermes_cli/test_tui_restore_git_policy.py",
+          "tests/hermes_cli/test_tui_npm_install.py",
+          "tests/hermes_cli/test_tui_resume_flow.py",
+          "tests/hermes_cli/test_update_eol_churn.py",
+          "tests/cli/test_worktree_selfheal.py",
+          "tests/cli/test_worktree_sync_base.py",
+          "tests/cli/test_worktree_security.py",
+          "tests/tools/test_working_diff.py",
+          "tests/hermes_cli/test_bounded_probe_run.py",
+          "tests/hermes_cli/test_resolve_last_session.py",
+          "tests/hermes_cli/test_web_server_hidden_helpers.py",
+          "tests/hermes_cli/test_banner_git_state.py",
+          "tests/hermes_cli/test_banner_hidden_git.py",
+          "tests/hermes_cli/test_dump_git_commit.py",
+          "tests/hermes_cli/test_goal_gates.py",
+          "tests/agent/test_trace_upload.py",
+          "tests/hermes_cli/test_repo_git_execution_policy.py",
+          "tests/hermes_cli/test_update_normal_git_policy.py",
+          "tests/hermes_cli/test_update_git_review_boundaries.py"
+        ],
+        "receipt_sha256": "f655d98e2ce09ecb350681820b4554e3511087974e56b11e39b92f8dbaa28d7c",
+        "log_sha256": "0e45c7594c79c605030381477124e7f62a428167ecd702daf6e3f67a14aa9648"
+      },
+      {
+        "label": "cross-owner-final-2034",
+        "files": 15,
+        "passed": 217,
+        "failed": 0,
+        "skipped": 0,
+        "selection": [
+          "tests/tools/test_subagent_worktree.py",
+          "tests/hermes_cli/test_worktree_gc.py",
+          "tests/hermes_cli/test_kanban_db.py",
+          "tests/hermes_cli/test_kanban_db_repair.py",
+          "tests/hermes_cli/test_kanban_db_init.py",
+          "tests/agent/test_coding_context.py",
+          "tests/agent/test_context_references.py",
+          "tests/hermes_cli/test_goals.py",
+          "tests/test_gitlock.py",
+          "tests/hermes_cli/test_gitlock_tmp_packs.py",
+          "tests/hermes_cli/test_web_server_git.py",
+          "tests/tui_gateway/test_session_git_metadata_generation.py",
+          "tests/tui_gateway/test_diagnostics_export_local.py",
+          "tests/tui_gateway/test_slash_fuzzy.py",
+          "tests/hermes_cli/test_worktree_git_review_boundaries.py"
+        ],
+        "receipt_sha256": "66e1d9a40c7f3699efb49c9d64387c28b63a120a4f56db6ceeed9bbb39a11108",
+        "log_sha256": "7887c1853d8bd79152aca8c13628abb301d8cc9892b00a576e6f21fa10dfb67c"
+      }
+    ],
+    "aggregate_sha256": "9d0169d2effa25c41ae2eee968dd793a14170846f82d09e2aaeb2d5361f62e2d",
+    "public_source_sha256": {
+      "downstream/security/bounded_process.py": "e8b2f95cdf6346e56d9ed3e2a1cf28276c62acdd82aab427cd0267a3adff1bec",
+      "downstream/security/bounded_walk.py": "452a9159700e53753d8d22c6cc5518e1f9f75da691f3dff18b6113cfc36a69a2",
+      "downstream/security/clamav_definitions.py": "9ab937c24f6b32d19a2ad72a5a254f772127717ca370e216a627cbff1c29cfe4",
+      "downstream/security/cli.py": "62352df98c44a57638ba293158923e3d9a560dd649985de5cd6f6743978827c6",
+      "downstream/security/engines.py": "e5c78e0ac2e2f2be63faceaf102022fc36905a7d882b69654429a5498f4c4953",
+      "downstream/security/execution_gate.py": "3799f7d136a250deba792d04864cf00bc24c58e32707a6f62d45f03a1ac85d08",
+      "downstream/security/models.py": "a51e14b3567f7143d694be9830367896f43518338ab4e290f82678efdb9404d7",
+      "downstream/security/policy.py": "1cd10bd7da784000b07833c67ffce8724aa49fb81a78d9f5784782186fe10783",
+      "downstream/security/service.py": "f8781f7fbc898d618451c2d8f9ec991546ea964185871d5be853e11b653ea5ad",
+      "downstream/security/snapshot_budget.py": "e7b5a89a0f733ce94ee6208da5ec207c2daaf1b46097cca017711ef6d79fbf5a",
+      "downstream/security/store.py": "f6257364fde8943d57bcec698b4654aa9231ca406b3b6cdaa6c66aa4e27feda7",
+      "downstream/security/updates.py": "794208861f7a1873d3c08dc25b0cf1d26d7f2a3d9b65fd1c1011535113bae973",
+      "downstream/security/vault.py": "ec86706454a03b23b2b0cfa90d50dca8172b830fec51d65c40d28185d1d992b4",
+      "downstream/security/watcher.py": "3e5ce66b7899f21271b44dfdba9b626901a526787595ae128d135e458d113a75",
+      "downstream/security/watch_state.py": "709547457c6d5842ec0230a00083263910d34000808d88f91c4eef7cd9fa9bc2",
+      "downstream/security/__init__.py": "192b90905c515ea4ccb5ac9163342eda22f62675277da2434c4d33b223891fd3",
+      "tests/security/test_t16_bounded_security.py": "e3f9aaf833b94eb02e8f320989414e85aed18918893ba2136bfd4de0022a663e",
+      "scripts/run_tests.sh": "fdc4d97c77027ba77813dac950254e0e8f37ad16895f12e8ebd9154ff8bf7f4c",
+      "scripts/run_tests_parallel.py": "545511ab00d011618538fd2cd72e6bc1c113d10e001e4b2a5d493f48f257143a",
+      "cli.py": "3df6bbd464f22e4c07c129f89f53a91f62071bf47110836a45fbba013ea1085e",
+      "hermes_cli/_subprocess_compat.py": "f4b73d95b591a540abcb7284dec7c817c49b929a98ec8f9f02cd8b0d8f35629e",
+      "hermes_cli/main.py": "76439aee495d7d6e972345891da954ff42542357532f83d4ad03043ca49629e2",
+      "hermes_cli/mcp_catalog.py": "bf7d2a3a92b2fac6851741d946e3c6bcedb66feae97f1d44569c4f4c4c80104f",
+      "hermes_cli/plugins_cmd.py": "51efc10b35a5d054e2c779e440af6f264e0993d1a33a4b2dbdd0533b7f4551da",
+      "hermes_cli/profile_distribution.py": "84f904b6f9932098858ce65df57d2f6b16afb12fc0d19b112d9596a0f262e686",
+      "hermes_cli/update_cmd.py": "e743cedffdcb3a26fa9321354fd91472d31a2160cfa071052e8b7982a18bff95",
+      "tests/agent/test_trace_upload.py": "212c295550934e166e7dd88ae0bd781bd20b19a08d662f3e5cde4778f2124f77",
+      "tests/cli/test_worktree_security.py": "fc2aea0406f3193a2ed26e4574c00da920951720f48cb213749daf72ff5d42b5",
+      "tests/cli/test_worktree_selfheal.py": "ba798f05c3410c12778c882e5f418201a8f6cf2c812e857b00a8af88ae89697e",
+      "tests/cli/test_worktree_sync_base.py": "db575a553c3c98e8dc4b53428ed5b1fb63e7fc7329989aac780d4ae8192ea201",
+      "tests/hermes_cli/test_banner_git_state.py": "7247483b91c5feeca7bc15d6b7c51118e897c73eb3bd612342a001ab244d2225",
+      "tests/hermes_cli/test_banner_hidden_git.py": "68bf199bcbd9e743b23cc462f6dda45b94a56efce50dfb94068148b6d6639609",
+      "tests/hermes_cli/test_bounded_probe_run.py": "bfc5462d2ebe9f056d9b9468ffce56607898502fc5719b4545bf223912b1e5fa",
+      "tests/hermes_cli/test_dump_git_commit.py": "e249606498a3f9e50895ba096749e975f9800d49d696ac84a629eab13d5e9a6f",
+      "tests/hermes_cli/test_fresh_clone_git_policy.py": "cd5d4c6ed132df76f0df39881d3480dc4024090047496402f3752265f900a248",
+      "tests/hermes_cli/test_goal_gates.py": "ec6a9b5ec308e7e431cff8e886c4f6870113716d25dbaebe117ab702e135a7a5",
+      "tests/hermes_cli/test_mcp_catalog.py": "f6cb13f58e1457a05fd39a832595f7458300a52780d4abf1faa01dcbcf77c60c",
+      "tests/hermes_cli/test_noninteractive_git.py": "cbc8efffe794364e99551b0b3c088d07f652032cb22120ac5a1d40985882e53f",
+      "tests/hermes_cli/test_plugin_install_ref.py": "7da8ef14aa93ed9e31a41156ca6507f5c78993afcfb2db54cb4247d2c87ac831",
+      "tests/hermes_cli/test_plugin_update_git_boundary.py": "435b74ecebddc5e31ecc5f99dd62372ac580df4f1218a7d4c96b1d305fcfdefd",
+      "tests/hermes_cli/test_plugins_cmd.py": "682eb531c2f64114b9e5ff747b4d0d8fe7afa03803efca15d293fbd1ad3f8bdb",
+      "tests/hermes_cli/test_profile_distribution.py": "629ce6e41a08597ff9d8e36978bfe4e2077c82d6a58d894ba2c191476930cbcc",
+      "tests/hermes_cli/test_repo_git_execution_policy.py": "3361c4dde66b6d00af29f4c59b6ba63e3e74e955ed0b6b0f2a92126be9b5e5d6",
+      "tests/hermes_cli/test_resolve_last_session.py": "85c1d2ef9f018a1aa1cc6ccf94e3f9f220e67c7619e0c304abe98f37e2daa9dd",
+      "tests/hermes_cli/test_tui_npm_install.py": "a5e5dc31c97065b955986aa386993dabf948a5b82e7e8add4bdfb4f66d911743",
+      "tests/hermes_cli/test_tui_restore_git_policy.py": "1910fdec8890f3c8ae821d88cf124f154c109e515bb060bdd9a5e27b4fe9629e",
+      "tests/hermes_cli/test_tui_resume_flow.py": "64ef9de6a04156a3082e99d45a15dfe7741fdf8c9ddc00d5871618db9e27aa39",
+      "tests/hermes_cli/test_update_eol_churn.py": "25314adbcef8091f0af2c1750eeae766fdd0f5d037986fbd8ebf21070aa00ead",
+      "tests/hermes_cli/test_update_git_review_boundaries.py": "fa4828c0efe61de69c0763b308a3e2653fef742ba440ca23c63d680639c02a69",
+      "tests/hermes_cli/test_update_normal_git_policy.py": "693b09e1e234ff770717fc794745d2e4d05a6cf286830a97686dd2e6638851ba",
+      "tests/hermes_cli/test_web_server_hidden_helpers.py": "b5cafa199c149c95d31677757b3bdcc6305b7e7c8749905ccbc6923891f6fb86",
+      "tests/test_remove_owned_tree.py": "088a92dc7cd28035546ca02c825517acf52201c0e567b0aa0d205e820448fe2a",
+      "tests/tools/test_checkpoint_git_policy.py": "f8e8f6ec36e4af669c1a36372940821b7744ae0ba0a049c87725b09e04badf1b",
+      "tests/tools/test_checkpoint_manager.py": "6ced50997ebf50659c19f06d5c3ce0eed2a532fb2af0e909149b15dd6c3af791",
+      "tests/tools/test_working_diff.py": "c79b1df13eb7932912c379d7bff9f53d2cc6e0816cff8144fa17e2c14895c46e",
+      "tools/checkpoint_manager.py": "de569b5706501725196fdfeb2cfe818ad0e0973055564bdc6baaaa9f2a6acdbb",
+      "tools/working_diff.py": "7471e7c8255c4f9fc7a1f56452548fae09b80c4fc50c99c5f95a7831a08415c8",
+      "utils.py": "249aaba0819cc1a853d1f8b352dcd5b5e578dce9d317dc21c35b94aaaf2fd411",
+      "agent/context_references.py": "8b8b9e4faf3c5178d00a282b029f9e95863462ba186389bd05a6ba796d731992",
+      "agent/trace_upload.py": "73d388c3c5f0751597c71b268154dfc8b6f0537d501f9232c1528f8f3a714a15",
+      "hermes_cli/banner.py": "969dd485d0fd808403268bbbdcdb8b2d613063567dd67c49c225f3a6603a8454",
+      "hermes_cli/cli_commands_mixin.py": "7a092ffe71957cd8226b95670b4bb53299790c4d8bf8bf6e776a5bc65ee37495",
+      "hermes_cli/dashboard_managed_files.py": "4a8a327e1ebf03ca0b3baa7cbb799e83a0883e1c93e9913f20815afef6b34fd6",
+      "hermes_cli/diagnostics_local_export.py": "b632cc87b2b5ff9eee95b974dff8bfc7aea3250da0b69494e0b6b84d9ff8bf7b",
+      "hermes_cli/dump.py": "9bc0b99c875833c4059774111998a2e79675f39b8229e99315011c262054fe42",
+      "hermes_cli/gitlock.py": "f2740545f6b2a3f5e7ed85d7ce4bd8e6de2ff4bd7b2f498dde42f492dcbb7374",
+      "hermes_cli/goals.py": "48430afe594c5e0ce054c01d07b4e89ab273e0eae87b5887b0a47f53926fc08a",
+      "hermes_cli/kanban_db.py": "a57d6bfcd04b435685fa5de4cf34bb1149960ec1346965052014121f44d100fd",
+      "hermes_cli/web_git.py": "f37159c8b5f0d7b9c78bca4cba273c43305ed34205904591bf5449227bd3f738",
+      "hermes_cli/web_server.py": "b8095d418f671c08b44c2fbe4b0dca7ba5ee83ef24b660aefa8013b9462cfc5a",
+      "hermes_cli/worktree_gc.py": "6ef2c0cd4b0c84f1a4974f050c03ec182ad80dbe45ffadd98f04d09e53ff234c",
+      "tests/agent/test_coding_context.py": "85c19a155ec6c10d423ac311fad75f716ac99cccaad814bb30162359775ad7f1",
+      "tests/agent/test_context_references.py": "f0413a8f183b10ea380a93f19a5f4634ceb1d4b8d291002c9bb7da76ad14c2f6",
+      "tests/hermes_cli/test_gitlock_tmp_packs.py": "3f63c36bc5b5300b41503c8307089240cdd2fa0c1ac4bd3c6921a590983cada0",
+      "tests/hermes_cli/test_goals.py": "2bdd4845b3ddb6db4a5148b7e09ef3aefd0650bbcb4f92dab1fcecfa4a2e6c47",
+      "tests/hermes_cli/test_kanban_db.py": "4fd3314b6d942a778aeeac35a6128c79dba9a1408ca1875b40372d71f9dd9630",
+      "tests/hermes_cli/test_kanban_db_init.py": "cc53afff9f7274587e578922c8e72ec94d83c21b610ef77b80186fe71cecb6a6",
+      "tests/hermes_cli/test_kanban_db_repair.py": "e870b2f13e24087c9f4612ee7bc4acfe9985b9e8ca889d7f5ea4b53b3efe1ecb",
+      "tests/hermes_cli/test_update_autostash.py": "b9e55614d2909e084c46271358958a646871bd53f19e7d2cc0099fd00d3eebf2",
+      "tests/hermes_cli/test_web_server_git.py": "fb87bc05d2d48b3c068ffebe91c7e6c25344556e3241e60fdf1856c5550e3aae",
+      "tests/hermes_cli/test_worktree_gc.py": "57cf4931c1d8184badf2e104f01161e0f959c9267dd53936fe6e28ee2015d4d9",
+      "tests/hermes_cli/test_worktree_git_review_boundaries.py": "b3c06505fa07f0e7354a52f9ceea3537906b6086939282ea12b5e8082158542e",
+      "tests/test_gitlock.py": "f2783ae7629acc9cdecbfac71bfd499e9a8f51ad017f96e4bf626ea084b3c1ff",
+      "tests/tools/test_subagent_worktree.py": "a42bd183ffdde1c5b2f1f89c518ad9d1f201c6ecbcdf100d25bc1a087f09e3d8",
+      "tests/tui_gateway/test_diagnostics_export_local.py": "8e1fbc2a31771d5eb84e649f935d199b8d05515f649c305d1776f660fdf064a8",
+      "tests/tui_gateway/test_session_git_metadata_generation.py": "a296a1d1386a01441a5bfc62194bc3bdc5bd1af7b1d1b855baee215a68dc0138",
+      "tests/tui_gateway/test_slash_fuzzy.py": "b147134514caa4bc6496654a10758ad4b176922eedbbf7ca656174ce9e49b542",
+      "tools/subagent_worktree.py": "3755253aed26cdf53115f85d59183d0293fb08b8dd20de16ae4fe757ecc1c5d3",
+      "tui_gateway/compute_host.py": "9f8938a8d1fb67d886969362f6edbf2bb9f9ee20f8448f0bfef92e1820c23c88",
+      "tui_gateway/host_supervisor.py": "bb4d2e1f68751b483a2502b9617607dc6878592449a5938aee6ce7a40c9e1b41",
+      "tui_gateway/server.py": "530694acd791a8bdbbdb4e9733d283c9b3ae10648252f877bdaa385784def475"
+    },
+    "private_harness_sha256_not_published": {
+      "run_s06_bounded_canonical.py": "863dc308c6bf45a4ae013ce0cbd47411986a53943c984e4e137953c1e4223c00",
+      "s06_updater_guard.py": "bebd71e5ea9dd11b7026349825b0a43d629afef1a114b5b8a5c637154b770c8a",
+      "run_s06_oct4_canonical.py": "49b79dd2b24d8317eb821867397888422a20aa15b26bba996f10cf4f43bde480",
+      "run_s06_cross_canonical.py": "72cd7325865b61350b1aa0f706c2a2e68553d679550f33a2f537649efdb28f9f"
+    },
+    "skips_or_exclusions_counted_as_success": false
+  },
+  "desktop_regression": {
+    "passed_disjoint_union": 71,
+    "failed_in_accepted_union": 0,
+    "modules": [
+      {
+        "module": "git-ref-ops.test.ts",
+        "passed": 23,
+        "run": "isolated-v4"
+      },
+      {
+        "module": "git-review-ops.test.ts",
+        "passed": 23,
+        "run": "isolated-v4"
+      },
+      {
+        "module": "git-worktree-ops.test.ts",
+        "passed": 25,
+        "run": "original-budget-v5"
+      }
+    ],
+    "v4_whole_run_exit": 1,
+    "v4_worktree_timeouts": 4,
+    "v4_per_test_budget_seconds": 15,
+    "v5_whole_run_exit": 0,
+    "v5_original_per_test_budget_seconds": 90,
+    "v4_receipt_sha256": "d31c252fb68734c74ef173eac61caf5e67ba41e973ed366c048da22f14704214",
+    "v5_receipt_sha256": "99ef73f876fbf6ce03ccc8d515aa1ac6bcabb80796f4d856e7c711aead522f26",
+    "v4_log_sha256": "175d6f54ba6a770ce0055d732ec8debf45d79126673e19df2bead173d57aeb44",
+    "v5_log_sha256": "573809d4bbe7b1181b5487717a9c94e364aae74e6b54918c20069f47865e0f24",
+    "earlier_invalid_NUL_config_run_is_not_RED_or_success": true,
+    "production_timeout_increased": false
+  },
+  "electron_types": {
+    "exit_code": 0,
+    "diagnostics_bytes": 0,
+    "receipt_sha256": "53fb84e1d6c278c6e78a8eb31ac97becdfbb6393a3246e5fde741f57e12f2aa7"
+  },
+  "fixture_validation": {
+    "pure_passed": 106,
+    "self_passed": 9,
+    "fixture_mutants_killed": 22,
+    "runner_sha256": "f60b75fedfe520bb9543c5531efbd31d012dd9f35d6d257cdc6ed82c4ae28fc4",
+    "contracts_sha256": "31a7d2df74cb942fa6f5a3484a9f83d30395fa082e828ca9bc7b98ec228c1803",
+    "freeze_receipt_sha256": "b2ac83e562496f12153f0887e93e5a14dfe12137f8f31c90755dec5ed64fa3ab"
+  },
+  "product_mutations": {
+    "killed": [
+      {
+        "name": "M01-filter-overrides",
+        "selection": "internal_diff_neutralizes_repository_clean_filter",
+        "exit_code": 1,
+        "semantic_kill": true,
+        "baseline_sha256": "f4b73d95b591a540abcb7284dec7c817c49b929a98ec8f9f02cd8b0d8f35629e",
+        "mutant_sha256": "0dc21ecec504ff8ac9d2783d384d84d1582c4de0a6a6edbb0faef4f1a7c26ebf"
+      },
+      {
+        "name": "M02-filter-case-fold",
+        "selection": "internal_worktree_preserves_filter_subsection_case",
+        "exit_code": 1,
+        "semantic_kill": true,
+        "baseline_sha256": "f4b73d95b591a540abcb7284dec7c817c49b929a98ec8f9f02cd8b0d8f35629e",
+        "mutant_sha256": "9fdce234c618f381a9ad7611e8895995e21fb6d91b60a4f82ba6426548230f54"
+      },
+      {
+        "name": "M03-inactive-include",
+        "selection": "inactive_include_is_checked_before_branch_checkout",
+        "exit_code": 1,
+        "semantic_kill": true,
+        "baseline_sha256": "f4b73d95b591a540abcb7284dec7c817c49b929a98ec8f9f02cd8b0d8f35629e",
+        "mutant_sha256": "ea6d217879fe9bec85e0ba459f66b24a62df9350c79fcdfb4e4aeeec14b652a6"
+      },
+      {
+        "name": "M04-subagent-raw-env",
+        "selection": "internal_diff_neutralizes_repository_clean_filter and delegation",
+        "exit_code": 1,
+        "semantic_kill": true,
+        "baseline_sha256": "3755253aed26cdf53115f85d59183d0293fb08b8dd20de16ae4fe757ecc1c5d3",
+        "mutant_sha256": "843b3df3d4b7b757cc8279c6b544bce142218037dc3441065a472d9e7673fdb5"
+      },
+      {
+        "name": "M06-discovery-fail-open",
+        "selection": "policy_discovery_failure_refuses_actual_git",
+        "exit_code": 1,
+        "semantic_kill": true,
+        "baseline_sha256": "f4b73d95b591a540abcb7284dec7c817c49b929a98ec8f9f02cd8b0d8f35629e",
+        "mutant_sha256": "54b9320d30ca957cdab4bc628ef478c6f33244bd4e0b491898f0185ea18f2d04"
+      }
+    ],
+    "receipt_sha256": "59603ecc21b99f4f3b02d6d23a4ccc91af4b983d94a48f96f2d739e8b6bf631c",
+    "M05": "UNVERIFIED_NOT_COUNTED"
+  },
+  "native": {
+    "independent_jobs": 7,
+    "CREATE_total": 1279,
+    "all_retained_handles_exited": true,
+    "all_owned_ports_closed": true,
+    "git_discovery_seconds": 2,
+    "controller_seconds": 90,
+    "job_process_cap": 256,
+    "runs": [
+      {
+        "label": "oct5-debug-git-v3-0610",
+        "receipt_sha256": "2b6071ceb288e754fececff997752222654b2f46a7e5894ea742c42bc8109c69",
+        "ledger_sha256": "b77658722c0c164fdc066d6a6677eebfa702a98d3987f6c6877a0f2b8e2a1b44",
+        "source_sha256": {
+          "hermes_cli/_subprocess_compat.py": "f4b73d95b591a540abcb7284dec7c817c49b929a98ec8f9f02cd8b0d8f35629e",
+          "agent/deadline.py": "95ba4b2df1a697cff2673dc3304baa9ef89e132ddfa818e968c3e3e19c423e45",
+          "apps/desktop/electron/git-execution-policy.ts": "c1504f6e56630c7f428ede5bfeabd3fc1012ba5c236237cd1960cacc98607a23",
+          "downstream/security/bounded_process.py": "e8b2f95cdf6346e56d9ed3e2a1cf28276c62acdd82aab427cd0267a3adff1bec",
+          "apps/desktop/electron/git-ref-ops.ts": "c140872bacbe52c519be0114b3390b1fe5671a37c55f39e9815dbce6dc8fcf73",
+          "apps/desktop/electron/git-ipc.ts": "ee0dfcb70e2613eec9f366dce3c6e5ffa15535493d774e0005f2b314ec5350cd",
+          "apps/desktop/electron/git-worktree-ops.ts": "8f1a3da5497bf1b38300902c4f049ae75ca9050470920db7954315bd1844dc12",
+          "apps/desktop/electron/git-review-ops.ts": "e9eb291931d0585179308365b77f0a1440e1cd17188c37e104e0909390d7a06f",
+          "apps/desktop/electron/main.ts": "b0a40e9c49ff13745e694e60638d02188289000c7e999d6a93959a547b677ba0",
+          "apps/desktop/assets/git-transport.cjs": "e62e53c3456b09af3f4f7923acb39e791d638dca6b2cbb79fcbd136b80b4d86c",
+          "tests/windows/fixtures/s06_git_proxy_windows.go": "289f1e12503c4c4f6d0a0130373af2679c7cb26788fd54a42c16f6f182170004",
+          "tests/windows/fixtures/s06_desktop_direct_native.mjs": "3c653124dc4b52e5267b06f291503dbc04f4d8df798d5ee9dcdbc05d8ed62e61",
+          "tests/windows/fixtures/run_s06_desktop_direct_native.py": "f60b75fedfe520bb9543c5531efbd31d012dd9f35d6d257cdc6ed82c4ae28fc4"
+        },
+        "source_unchanged": true,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "child_exit_code": 0,
+        "receipt_valid": true,
+        "timed_out": false,
+        "identity_error_count": 0,
+        "debug_coverage_complete": true,
+        "create_count": 249,
+        "job_before_cleanup": [
+          249,
+          0
+        ],
+        "job_after_cleanup": [
+          249,
+          0
+        ],
+        "retained_handle_count": 249,
+        "retained_handles_all_exited": true,
+        "debug_timings": {
+          "capture_seconds": 1.2049999999971988,
+          "continue_seconds": 0.32700000000204454,
+          "registry_seconds": 0.17199999999957072,
+          "classify_seconds": 1.4380000000001019,
+          "registry_reads": 1,
+          "classification_passes": 1
+        },
+        "results": [
+          {
+            "name": "hermes:git:review:diff-preserves-large-no-index-exit-one",
+            "result": "PASS",
+            "output_bytes": 9437395
+          },
+          {
+            "name": "hermes:git:fileDiff-preserves-large-no-index-exit-one",
+            "result": "PASS",
+            "output_bytes": 9437395
+          },
+          {
+            "name": "direct-fetch-owned-descendant-deadline",
+            "result": "PASS",
+            "elapsed_ms": 39682.8517,
+            "operationCode": "HERMES_GIT_POLICY_REFUSED",
+            "before_listeners": 3,
+            "before_all_closed": false,
+            "after_listeners": 3,
+            "after_all_closed": true
+          }
+        ]
+      },
+      {
+        "label": "oct5-debug-gh-v3-0612-gh-large",
+        "receipt_sha256": "96ff9e2063c1ef42ce2909be1bb01db25c523b0754a7012354f83872cee5ea32",
+        "ledger_sha256": "96086c905c30140bd655ff3968d1b0856d5ee9fec4f22d939ec461cfdaf6fe14",
+        "source_sha256": {
+          "hermes_cli/_subprocess_compat.py": "f4b73d95b591a540abcb7284dec7c817c49b929a98ec8f9f02cd8b0d8f35629e",
+          "agent/deadline.py": "95ba4b2df1a697cff2673dc3304baa9ef89e132ddfa818e968c3e3e19c423e45",
+          "apps/desktop/electron/git-execution-policy.ts": "c1504f6e56630c7f428ede5bfeabd3fc1012ba5c236237cd1960cacc98607a23",
+          "downstream/security/bounded_process.py": "e8b2f95cdf6346e56d9ed3e2a1cf28276c62acdd82aab427cd0267a3adff1bec",
+          "apps/desktop/electron/git-ref-ops.ts": "c140872bacbe52c519be0114b3390b1fe5671a37c55f39e9815dbce6dc8fcf73",
+          "apps/desktop/electron/git-ipc.ts": "ee0dfcb70e2613eec9f366dce3c6e5ffa15535493d774e0005f2b314ec5350cd",
+          "apps/desktop/electron/git-worktree-ops.ts": "8f1a3da5497bf1b38300902c4f049ae75ca9050470920db7954315bd1844dc12",
+          "apps/desktop/electron/git-review-ops.ts": "e9eb291931d0585179308365b77f0a1440e1cd17188c37e104e0909390d7a06f",
+          "apps/desktop/electron/main.ts": "b0a40e9c49ff13745e694e60638d02188289000c7e999d6a93959a547b677ba0",
+          "apps/desktop/assets/git-transport.cjs": "e62e53c3456b09af3f4f7923acb39e791d638dca6b2cbb79fcbd136b80b4d86c",
+          "tests/windows/fixtures/s06_git_proxy_windows.go": "289f1e12503c4c4f6d0a0130373af2679c7cb26788fd54a42c16f6f182170004",
+          "tests/windows/fixtures/s06_desktop_direct_native.mjs": "3c653124dc4b52e5267b06f291503dbc04f4d8df798d5ee9dcdbc05d8ed62e61",
+          "tests/windows/fixtures/run_s06_desktop_direct_native.py": "f60b75fedfe520bb9543c5531efbd31d012dd9f35d6d257cdc6ed82c4ae28fc4"
+        },
+        "source_unchanged": true,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "child_exit_code": 0,
+        "receipt_valid": true,
+        "timed_out": false,
+        "identity_error_count": 0,
+        "debug_coverage_complete": true,
+        "create_count": 215,
+        "job_before_cleanup": [
+          215,
+          0
+        ],
+        "job_after_cleanup": [
+          215,
+          0
+        ],
+        "retained_handle_count": 215,
+        "retained_handles_all_exited": true,
+        "debug_timings": {
+          "capture_seconds": 0.6099999999987631,
+          "continue_seconds": 0.25199999999949796,
+          "registry_seconds": 0.125,
+          "classify_seconds": 0.9690000000000509,
+          "registry_reads": 1,
+          "classification_passes": 1
+        },
+        "results": [
+          {
+            "name": "hermes:git:review:diff-preserves-large-no-index-exit-one",
+            "result": "PASS",
+            "output_bytes": 9437395
+          },
+          {
+            "name": "hermes:git:fileDiff-preserves-large-no-index-exit-one",
+            "result": "PASS",
+            "output_bytes": 9437395
+          }
+        ]
+      },
+      {
+        "label": "oct5-debug-gh-v3-0612-gh-positive",
+        "receipt_sha256": "bb22039fae8654a1186a1c6fef55d440ea192ce96ae78c71f9375b70a0b4fd7b",
+        "ledger_sha256": "deed706df35eca5292561f56e45bba50ec4ebe5f9e6b139f6d534edacbac2fb4",
+        "source_sha256": {
+          "hermes_cli/_subprocess_compat.py": "f4b73d95b591a540abcb7284dec7c817c49b929a98ec8f9f02cd8b0d8f35629e",
+          "agent/deadline.py": "95ba4b2df1a697cff2673dc3304baa9ef89e132ddfa818e968c3e3e19c423e45",
+          "apps/desktop/electron/git-execution-policy.ts": "c1504f6e56630c7f428ede5bfeabd3fc1012ba5c236237cd1960cacc98607a23",
+          "downstream/security/bounded_process.py": "e8b2f95cdf6346e56d9ed3e2a1cf28276c62acdd82aab427cd0267a3adff1bec",
+          "apps/desktop/electron/git-ref-ops.ts": "c140872bacbe52c519be0114b3390b1fe5671a37c55f39e9815dbce6dc8fcf73",
+          "apps/desktop/electron/git-ipc.ts": "ee0dfcb70e2613eec9f366dce3c6e5ffa15535493d774e0005f2b314ec5350cd",
+          "apps/desktop/electron/git-worktree-ops.ts": "8f1a3da5497bf1b38300902c4f049ae75ca9050470920db7954315bd1844dc12",
+          "apps/desktop/electron/git-review-ops.ts": "e9eb291931d0585179308365b77f0a1440e1cd17188c37e104e0909390d7a06f",
+          "apps/desktop/electron/main.ts": "b0a40e9c49ff13745e694e60638d02188289000c7e999d6a93959a547b677ba0",
+          "apps/desktop/assets/git-transport.cjs": "e62e53c3456b09af3f4f7923acb39e791d638dca6b2cbb79fcbd136b80b4d86c",
+          "tests/windows/fixtures/s06_git_proxy_windows.go": "289f1e12503c4c4f6d0a0130373af2679c7cb26788fd54a42c16f6f182170004",
+          "tests/windows/fixtures/s06_desktop_direct_native.mjs": "3c653124dc4b52e5267b06f291503dbc04f4d8df798d5ee9dcdbc05d8ed62e61",
+          "tests/windows/fixtures/run_s06_desktop_direct_native.py": "f60b75fedfe520bb9543c5531efbd31d012dd9f35d6d257cdc6ed82c4ae28fc4"
+        },
+        "source_unchanged": true,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "child_exit_code": 0,
+        "receipt_valid": true,
+        "timed_out": false,
+        "identity_error_count": 0,
+        "debug_coverage_complete": true,
+        "create_count": 84,
+        "job_before_cleanup": [
+          84,
+          0
+        ],
+        "job_after_cleanup": [
+          84,
+          0
+        ],
+        "retained_handle_count": 84,
+        "retained_handles_all_exited": true,
+        "debug_timings": {
+          "capture_seconds": 0.3719999999993888,
+          "continue_seconds": 0.15399999999954161,
+          "registry_seconds": 0.10900000000037835,
+          "classify_seconds": 0.4849999999996726,
+          "registry_reads": 1,
+          "classification_passes": 1
+        },
+        "results": [
+          {
+            "name": "gh-preserves-operator-token-selected-git-and-noninteractive-policy",
+            "result": "PASS"
+          },
+          {
+            "name": "gh-ordinary-authentication-failure-remains-unavailable",
+            "result": "PASS"
+          }
+        ]
+      },
+      {
+        "label": "oct5-debug-gh-v3-0612-gh-deadline",
+        "receipt_sha256": "bc83eff3ccf0ae853d716964f9cf921d138ee84bc160e8ddf05cc8f97185fc33",
+        "ledger_sha256": "94d96208faf80f328da45a7c82271d5bc53104350ef58b4fbc595c79a052ed8f",
+        "source_sha256": {
+          "hermes_cli/_subprocess_compat.py": "f4b73d95b591a540abcb7284dec7c817c49b929a98ec8f9f02cd8b0d8f35629e",
+          "agent/deadline.py": "95ba4b2df1a697cff2673dc3304baa9ef89e132ddfa818e968c3e3e19c423e45",
+          "apps/desktop/electron/git-execution-policy.ts": "c1504f6e56630c7f428ede5bfeabd3fc1012ba5c236237cd1960cacc98607a23",
+          "downstream/security/bounded_process.py": "e8b2f95cdf6346e56d9ed3e2a1cf28276c62acdd82aab427cd0267a3adff1bec",
+          "apps/desktop/electron/git-ref-ops.ts": "c140872bacbe52c519be0114b3390b1fe5671a37c55f39e9815dbce6dc8fcf73",
+          "apps/desktop/electron/git-ipc.ts": "ee0dfcb70e2613eec9f366dce3c6e5ffa15535493d774e0005f2b314ec5350cd",
+          "apps/desktop/electron/git-worktree-ops.ts": "8f1a3da5497bf1b38300902c4f049ae75ca9050470920db7954315bd1844dc12",
+          "apps/desktop/electron/git-review-ops.ts": "e9eb291931d0585179308365b77f0a1440e1cd17188c37e104e0909390d7a06f",
+          "apps/desktop/electron/main.ts": "b0a40e9c49ff13745e694e60638d02188289000c7e999d6a93959a547b677ba0",
+          "apps/desktop/assets/git-transport.cjs": "e62e53c3456b09af3f4f7923acb39e791d638dca6b2cbb79fcbd136b80b4d86c",
+          "tests/windows/fixtures/s06_git_proxy_windows.go": "289f1e12503c4c4f6d0a0130373af2679c7cb26788fd54a42c16f6f182170004",
+          "tests/windows/fixtures/s06_desktop_direct_native.mjs": "3c653124dc4b52e5267b06f291503dbc04f4d8df798d5ee9dcdbc05d8ed62e61",
+          "tests/windows/fixtures/run_s06_desktop_direct_native.py": "f60b75fedfe520bb9543c5531efbd31d012dd9f35d6d257cdc6ed82c4ae28fc4"
+        },
+        "source_unchanged": true,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "child_exit_code": 0,
+        "receipt_valid": true,
+        "timed_out": false,
+        "identity_error_count": 0,
+        "debug_coverage_complete": true,
+        "create_count": 52,
+        "job_before_cleanup": [
+          52,
+          0
+        ],
+        "job_after_cleanup": [
+          52,
+          0
+        ],
+        "retained_handle_count": 52,
+        "retained_handles_all_exited": true,
+        "debug_timings": {
+          "capture_seconds": 0.23500000000149157,
+          "continue_seconds": 0.01599999999962165,
+          "registry_seconds": 0.032000000000152795,
+          "classify_seconds": 0.20300000000042928,
+          "registry_reads": 1,
+          "classification_passes": 1
+        },
+        "results": [
+          {
+            "name": "direct-gh-owned-descendant-deadline",
+            "result": "PASS",
+            "elapsed_ms": 38487.7399,
+            "operationCode": "HERMES_GIT_POLICY_REFUSED",
+            "before_listeners": 3,
+            "before_all_closed": false,
+            "after_listeners": 3,
+            "after_all_closed": true
+          }
+        ]
+      },
+      {
+        "label": "oct5-debug-output-v3-0614",
+        "receipt_sha256": "26bb310261be462d486b8a33b9aca3fea9145fe66b710dc7606512ebe002de0f",
+        "ledger_sha256": "a17897926f2e6e0fdedb08ab4ef9b1a2208a6d673db147de2e3197ec83323933",
+        "source_sha256": {
+          "hermes_cli/_subprocess_compat.py": "f4b73d95b591a540abcb7284dec7c817c49b929a98ec8f9f02cd8b0d8f35629e",
+          "agent/deadline.py": "95ba4b2df1a697cff2673dc3304baa9ef89e132ddfa818e968c3e3e19c423e45",
+          "apps/desktop/electron/git-execution-policy.ts": "c1504f6e56630c7f428ede5bfeabd3fc1012ba5c236237cd1960cacc98607a23",
+          "downstream/security/bounded_process.py": "e8b2f95cdf6346e56d9ed3e2a1cf28276c62acdd82aab427cd0267a3adff1bec",
+          "apps/desktop/electron/git-ref-ops.ts": "c140872bacbe52c519be0114b3390b1fe5671a37c55f39e9815dbce6dc8fcf73",
+          "apps/desktop/electron/git-ipc.ts": "ee0dfcb70e2613eec9f366dce3c6e5ffa15535493d774e0005f2b314ec5350cd",
+          "apps/desktop/electron/git-worktree-ops.ts": "8f1a3da5497bf1b38300902c4f049ae75ca9050470920db7954315bd1844dc12",
+          "apps/desktop/electron/git-review-ops.ts": "e9eb291931d0585179308365b77f0a1440e1cd17188c37e104e0909390d7a06f",
+          "apps/desktop/electron/main.ts": "b0a40e9c49ff13745e694e60638d02188289000c7e999d6a93959a547b677ba0",
+          "apps/desktop/assets/git-transport.cjs": "e62e53c3456b09af3f4f7923acb39e791d638dca6b2cbb79fcbd136b80b4d86c",
+          "tests/windows/fixtures/s06_git_proxy_windows.go": "289f1e12503c4c4f6d0a0130373af2679c7cb26788fd54a42c16f6f182170004",
+          "tests/windows/fixtures/s06_desktop_direct_native.mjs": "3c653124dc4b52e5267b06f291503dbc04f4d8df798d5ee9dcdbc05d8ed62e61",
+          "tests/windows/fixtures/run_s06_desktop_direct_native.py": "f60b75fedfe520bb9543c5531efbd31d012dd9f35d6d257cdc6ed82c4ae28fc4"
+        },
+        "source_unchanged": true,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "child_exit_code": 0,
+        "receipt_valid": true,
+        "timed_out": false,
+        "identity_error_count": 0,
+        "debug_coverage_complete": true,
+        "create_count": 239,
+        "job_before_cleanup": [
+          239,
+          0
+        ],
+        "job_after_cleanup": [
+          239,
+          0
+        ],
+        "retained_handle_count": 239,
+        "retained_handles_all_exited": true,
+        "debug_timings": {
+          "capture_seconds": 0.9229999999979555,
+          "continue_seconds": 0.20099999999638385,
+          "registry_seconds": 0.15599999999994907,
+          "classify_seconds": 1.2970000000004802,
+          "registry_reads": 1,
+          "classification_passes": 1
+        },
+        "results": [
+          {
+            "name": "hermes:git:review:diff-preserves-large-no-index-exit-one",
+            "result": "PASS",
+            "output_bytes": 9437395
+          },
+          {
+            "name": "hermes:git:fileDiff-preserves-large-no-index-exit-one",
+            "result": "PASS",
+            "output_bytes": 9437395
+          },
+          {
+            "name": "finite-output-stops-at-stream-limit",
+            "result": "PASS",
+            "refusal_code": "HERMES_GIT_POLICY_REFUSED",
+            "completion_marker_exists": false
+          }
+        ]
+      },
+      {
+        "label": "oct5-debug-resolver-v3-0616",
+        "receipt_sha256": "f1613f5d263c592b1b3f02ae407332f7d52a80b8b719fdb87804aebddc5507a5",
+        "ledger_sha256": "a3709fb6dfb9db9383922ef6ac73b823f43dfde49e2c520d8c520f34ed2b5ae0",
+        "source_sha256": {
+          "hermes_cli/_subprocess_compat.py": "f4b73d95b591a540abcb7284dec7c817c49b929a98ec8f9f02cd8b0d8f35629e",
+          "agent/deadline.py": "95ba4b2df1a697cff2673dc3304baa9ef89e132ddfa818e968c3e3e19c423e45",
+          "apps/desktop/electron/git-execution-policy.ts": "c1504f6e56630c7f428ede5bfeabd3fc1012ba5c236237cd1960cacc98607a23",
+          "downstream/security/bounded_process.py": "e8b2f95cdf6346e56d9ed3e2a1cf28276c62acdd82aab427cd0267a3adff1bec",
+          "apps/desktop/electron/git-ref-ops.ts": "c140872bacbe52c519be0114b3390b1fe5671a37c55f39e9815dbce6dc8fcf73",
+          "apps/desktop/electron/git-ipc.ts": "ee0dfcb70e2613eec9f366dce3c6e5ffa15535493d774e0005f2b314ec5350cd",
+          "apps/desktop/electron/git-worktree-ops.ts": "8f1a3da5497bf1b38300902c4f049ae75ca9050470920db7954315bd1844dc12",
+          "apps/desktop/electron/git-review-ops.ts": "e9eb291931d0585179308365b77f0a1440e1cd17188c37e104e0909390d7a06f",
+          "apps/desktop/electron/main.ts": "b0a40e9c49ff13745e694e60638d02188289000c7e999d6a93959a547b677ba0",
+          "apps/desktop/assets/git-transport.cjs": "e62e53c3456b09af3f4f7923acb39e791d638dca6b2cbb79fcbd136b80b4d86c",
+          "tests/windows/fixtures/s06_git_proxy_windows.go": "289f1e12503c4c4f6d0a0130373af2679c7cb26788fd54a42c16f6f182170004",
+          "tests/windows/fixtures/s06_desktop_direct_native.mjs": "3c653124dc4b52e5267b06f291503dbc04f4d8df798d5ee9dcdbc05d8ed62e61",
+          "tests/windows/fixtures/run_s06_desktop_direct_native.py": "f60b75fedfe520bb9543c5531efbd31d012dd9f35d6d257cdc6ed82c4ae28fc4"
+        },
+        "source_unchanged": true,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "child_exit_code": 0,
+        "receipt_valid": true,
+        "timed_out": false,
+        "identity_error_count": 0,
+        "debug_coverage_complete": true,
+        "create_count": 215,
+        "job_before_cleanup": [
+          215,
+          0
+        ],
+        "job_after_cleanup": [
+          215,
+          0
+        ],
+        "retained_handle_count": 215,
+        "retained_handles_all_exited": true,
+        "debug_timings": {
+          "capture_seconds": 0.8149999999968713,
+          "continue_seconds": 0.25200000000040745,
+          "registry_seconds": 0.15599999999994907,
+          "classify_seconds": 1.125,
+          "registry_reads": 1,
+          "classification_passes": 1
+        },
+        "results": [
+          {
+            "name": "hermes:git:review:diff-preserves-large-no-index-exit-one",
+            "result": "PASS",
+            "output_bytes": 9437395
+          },
+          {
+            "name": "hermes:git:fileDiff-preserves-large-no-index-exit-one",
+            "result": "PASS",
+            "output_bytes": 9437395
+          },
+          {
+            "name": "actual-main-gh-resolver-missing-is-unavailable",
+            "result": "PASS"
+          }
+        ]
+      },
+      {
+        "label": "oct5-debug-static-v3-0618",
+        "receipt_sha256": "63965c89b80d64efe99037dd1b46bf103700e0302d91079287a92e8e68de2c49",
+        "ledger_sha256": "059984cf79431b1e036e9900fc4545256ab936a408d50c37cb169120ba20221a",
+        "source_sha256": {
+          "hermes_cli/_subprocess_compat.py": "f4b73d95b591a540abcb7284dec7c817c49b929a98ec8f9f02cd8b0d8f35629e",
+          "agent/deadline.py": "95ba4b2df1a697cff2673dc3304baa9ef89e132ddfa818e968c3e3e19c423e45",
+          "apps/desktop/electron/git-execution-policy.ts": "c1504f6e56630c7f428ede5bfeabd3fc1012ba5c236237cd1960cacc98607a23",
+          "downstream/security/bounded_process.py": "e8b2f95cdf6346e56d9ed3e2a1cf28276c62acdd82aab427cd0267a3adff1bec",
+          "apps/desktop/electron/git-ref-ops.ts": "c140872bacbe52c519be0114b3390b1fe5671a37c55f39e9815dbce6dc8fcf73",
+          "apps/desktop/electron/git-ipc.ts": "ee0dfcb70e2613eec9f366dce3c6e5ffa15535493d774e0005f2b314ec5350cd",
+          "apps/desktop/electron/git-worktree-ops.ts": "8f1a3da5497bf1b38300902c4f049ae75ca9050470920db7954315bd1844dc12",
+          "apps/desktop/electron/git-review-ops.ts": "e9eb291931d0585179308365b77f0a1440e1cd17188c37e104e0909390d7a06f",
+          "apps/desktop/electron/main.ts": "b0a40e9c49ff13745e694e60638d02188289000c7e999d6a93959a547b677ba0",
+          "apps/desktop/assets/git-transport.cjs": "e62e53c3456b09af3f4f7923acb39e791d638dca6b2cbb79fcbd136b80b4d86c",
+          "tests/windows/fixtures/s06_git_proxy_windows.go": "289f1e12503c4c4f6d0a0130373af2679c7cb26788fd54a42c16f6f182170004",
+          "tests/windows/fixtures/s06_desktop_direct_native.mjs": "3c653124dc4b52e5267b06f291503dbc04f4d8df798d5ee9dcdbc05d8ed62e61",
+          "tests/windows/fixtures/run_s06_desktop_direct_native.py": "f60b75fedfe520bb9543c5531efbd31d012dd9f35d6d257cdc6ed82c4ae28fc4"
+        },
+        "source_unchanged": true,
+        "classification": "COMPLETED",
+        "exit_code": 0,
+        "child_exit_code": 0,
+        "receipt_valid": true,
+        "timed_out": false,
+        "identity_error_count": 0,
+        "debug_coverage_complete": true,
+        "create_count": 225,
+        "job_before_cleanup": [
+          225,
+          0
+        ],
+        "job_after_cleanup": [
+          225,
+          0
+        ],
+        "retained_handle_count": 225,
+        "retained_handles_all_exited": true,
+        "debug_timings": {
+          "capture_seconds": 0.6400000000021464,
+          "continue_seconds": 0.15600000000176806,
+          "registry_seconds": 0.09400000000005093,
+          "classify_seconds": 1.0,
+          "registry_reads": 1,
+          "classification_passes": 1
+        },
+        "results": [
+          {
+            "name": "hermes:git:review:diff-preserves-large-no-index-exit-one",
+            "result": "PASS",
+            "output_bytes": 9437395
+          },
+          {
+            "name": "hermes:git:fileDiff-preserves-large-no-index-exit-one",
+            "result": "PASS",
+            "output_bytes": 9437395
+          },
+          {
+            "name": "missing-static-controls",
+            "result": "PASS"
+          },
+          {
+            "name": "changed-static-controls",
+            "result": "PASS"
+          }
+        ]
+      }
+    ]
+  },
+  "historical_refusals_preserved": [
+    "v1 identity refusal",
+    "v2 controller deadline exceeded despite exited handles",
+    "invalid NUL test configuration",
+    "15-second worktree harness timeouts"
+  ],
+  "remaining_auxiliary_callers": [
+    "Honcho",
+    "OpenManus",
+    "SillyTavern",
+    "Tookie",
+    "Akari",
+    "Neuro"
+  ],
+  "scope_limit": "No acceptance of other families, auxiliary callers, full CI, renderer E2E, or model health is implied.",
+  "RED_provenance": [
+    {
+      "label": "native-boundary-red",
+      "exit_code": 1,
+      "failed": 12,
+      "passed": 3,
+      "receipt_sha256": "1c5ab70aa5c45a5c372e2ef79340e75607c1b11f474003545916ac6962e2df76",
+      "log_sha256": "71c98fad8c2eed1b430070ba0b4c5efb6a11091665fa6e48ff5e45a6051f629e",
+      "baseline_owner_sha256": {
+        "hermes_cli/_subprocess_compat.py": "dedf0edb2ae184f29a33486940be6fabd43e60cd548941a68336f3576e39949a",
+        "tools/subagent_worktree.py": "37edf22fd919ede3f0dcae0467813d596b03ca181bb42a0e25eff101bf54bbc5",
+        "hermes_cli/worktree_gc.py": "4d289fcf90a167479ec75568a9aa58de99ef4e1d4408e4d326cc530c4efe88c9",
+        "hermes_cli/web_git.py": "787c2d0fd1dbd9f9cd038af52de6de3ca07ad8234d25373f1df1c8313590350d"
+      },
+      "test_sha256": "76a7a8826f330ad7dc09ce8bfa655106882e44d9993384255ac8fbf63b5731c3",
+      "baseline_kind": "Historical semantic failure before corresponding fix; not a rerun of final bytes"
+    },
+    {
+      "label": "filter-native-boundary-red",
+      "exit_code": 1,
+      "failed": 9,
+      "passed": 3,
+      "receipt_sha256": "17b842ffced6b5baac716cc6fb8fcde9da90f306c4901e4b0d738d587b294f73",
+      "log_sha256": "4473d43d72e055d4fb70b89556bedd2906710af6a2c47704d253d3629a80f25a",
+      "baseline_owner_sha256": {
+        "hermes_cli/_subprocess_compat.py": "dedf0edb2ae184f29a33486940be6fabd43e60cd548941a68336f3576e39949a",
+        "tools/subagent_worktree.py": "37edf22fd919ede3f0dcae0467813d596b03ca181bb42a0e25eff101bf54bbc5",
+        "hermes_cli/worktree_gc.py": "4d289fcf90a167479ec75568a9aa58de99ef4e1d4408e4d326cc530c4efe88c9",
+        "hermes_cli/web_git.py": "787c2d0fd1dbd9f9cd038af52de6de3ca07ad8234d25373f1df1c8313590350d"
+      },
+      "test_sha256": "eb382310823d54196623d451b22c39cc1830793a74c48533e1c8d7ed1b0c0ad5",
+      "baseline_kind": "Historical semantic failure before corresponding fix; not a rerun of final bytes"
+    },
+    {
+      "label": "updater-review-red",
+      "exit_code": 1,
+      "failed": 8,
+      "passed": 0,
+      "receipt_sha256": "94080068890e5eb38b8473b925053e956efb56b123beb222e86f91fdd26d8b42",
+      "log_sha256": "af0c300f4f3b3ed46cd3ad7eb82670dae6c2ad391c1800f2e02754ef8bdf6051",
+      "baseline_owner_sha256": {
+        "hermes_cli/plugins_cmd.py": "51efc10b35a5d054e2c779e440af6f264e0993d1a33a4b2dbdd0533b7f4551da",
+        "hermes_cli/update_cmd.py": "9999383eb48a58de45a0f1bfef5c051f615ae4b09d73190d651d67804d918966",
+        "hermes_cli/_subprocess_compat.py": "f4b73d95b591a540abcb7284dec7c817c49b929a98ec8f9f02cd8b0d8f35629e",
+        "hermes_cli/main.py": "76439aee495d7d6e972345891da954ff42542357532f83d4ad03043ca49629e2",
+        "tools/checkpoint_manager.py": "de569b5706501725196fdfeb2cfe818ad0e0973055564bdc6baaaa9f2a6acdbb",
+        "utils.py": "249aaba0819cc1a853d1f8b352dcd5b5e578dce9d317dc21c35b94aaaf2fd411",
+        "hermes_cli/profile_distribution.py": "84f904b6f9932098858ce65df57d2f6b16afb12fc0d19b112d9596a0f262e686",
+        "hermes_cli/mcp_catalog.py": "bf7d2a3a92b2fac6851741d946e3c6bcedb66feae97f1d44569c4f4c4c80104f",
+        "tests/hermes_cli/test_update_git_review_boundaries.py": "fa4828c0efe61de69c0763b308a3e2653fef742ba440ca23c63d680639c02a69"
+      },
+      "test_sha256": null,
+      "baseline_kind": "Historical semantic failure before corresponding fix; not a rerun of final bytes"
+    },
+    {
+      "label": "plugin-rollback-native-red",
+      "exit_code": 1,
+      "failed": 3,
+      "passed": 0,
+      "receipt_sha256": "d152d35506982935f340d414f557d6b04779c8972392c658a55f312ea7a803a2",
+      "log_sha256": "d52d24b70e25c859fdf60ea5a94fee948f4e204e0bf25894b0a09c697d820d23",
+      "baseline_owner_sha256": {
+        "hermes_cli/plugins_cmd.py": "2263d9acec818903e05b7aa5154b93544abe33b743225546091ab26bc45561ba",
+        "hermes_cli/update_cmd.py": "9999383eb48a58de45a0f1bfef5c051f615ae4b09d73190d651d67804d918966",
+        "hermes_cli/_subprocess_compat.py": "fb3f998bfe1e9d0024580c64c1e702ec2e7c264e44494991ff2a404d7636178d",
+        "hermes_cli/main.py": "76439aee495d7d6e972345891da954ff42542357532f83d4ad03043ca49629e2",
+        "tests/hermes_cli/test_plugin_install_ref.py": "4b60169b9760cd92107a861d87439e43f1acd38daf230756c3bc1c0adf7276f4"
+      },
+      "test_sha256": null,
+      "baseline_kind": "Historical semantic failure before corresponding fix; not a rerun of final bytes"
+    }
+  ],
+  "graph": {
+    "sync_exit_code": 0,
+    "state": "complete",
+    "pending_refs": 0,
+    "pending_changes": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "files": 9082,
+    "nodes": 196010,
+    "edges": 616028,
+    "last_indexed": "2026-10-04T21:51:43.679Z",
+    "status_sha256": "8494ddbec9caca25208d95e2100f94c1c14d8c2b05ddca844dde994c2a6f5441",
+    "FinalPathAudit": {
+      "file": "tests/windows/fixtures/run_s06_desktop_direct_native.py",
+      "start_line": 29,
+      "end_line": 54
+    }
+  },
+  "independent_reviews": {
+    "Beauvoir": "APPROVE_PUBLIC_PROOF_INTAKE_SOURCE_READINESS",
+    "Laplace": "APPROVE_NATIVE7_CURRENT_TS71_SOURCE_BINDINGS_PRODUCT_MUTANTS5"
+  },
+  "style_check": {
+    "staged_diff_check": "FAIL",
+    "accepted_cosmetic_exceptions": [
+      "tests/windows/fixtures/run_s06_desktop_direct_native.py:1287 trailing whitespace on blank line",
+      "tests/windows/fixtures/run_s06_desktop_direct_native.py:1328 extra blank line at EOF"
+    ],
+    "review": "Beauvoir: no material P1/P2",
+    "suppression_added": false,
+    "source_changed": false
+  }
+}

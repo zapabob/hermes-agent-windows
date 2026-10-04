@@ -23,6 +23,7 @@ import os
 import shutil
 import subprocess
 from typing import Dict, List
+from hermes_cli._subprocess_compat import GitPolicyError, run_internal_git
 
 _GIT_TIMEOUT = 15
 _MAX_UNTRACKED_FILES = 50  # sanity cap so a node_modules explosion can't hang us
@@ -31,19 +32,16 @@ VALID_MODES = ("working", "staged", "all")
 
 
 def _run(args: List[str], cwd: str, timeout: int = _GIT_TIMEOUT):
-    """Run git, returning (returncode, stdout). Never raises on git failure."""
-    proc = subprocess.run(
-        ["git", "-c", "core.quotePath=false", *args],
-        cwd=cwd, capture_output=True, text=True, timeout=timeout,
-        encoding="utf-8", errors="replace",
-    )
+    """Return Git output; policy refusal propagates to the public error result."""
+    proc = run_internal_git(["-c", "core.quotePath=false", *args], cwd=cwd,
+                            timeout=timeout, check_policy=True)
     return proc.returncode, proc.stdout
 
 
 def _untracked_files(cwd: str) -> List[str]:
     code, out = _run(["ls-files", "--others", "--exclude-standard"], cwd)
     if code != 0:
-        return []
+        raise OSError("git ls-files failed or timed out")
     return [line for line in out.splitlines() if line.strip()]
 
 
@@ -51,16 +49,13 @@ def _untracked_diff(cwd: str, files: List[str]) -> str:
     """Render untracked files as new-file diffs via ``git diff --no-index``."""
     chunks: List[str] = []
     for rel in files[:_MAX_UNTRACKED_FILES]:
-        try:
-            # --no-index exits 1 when the files differ — that's the success
-            # path here, so ignore the return code and keep the output.
-            _, out = _run(
-                ["diff", "--no-index", "--", os.devnull, rel], cwd,
-            )
-            if out.strip():
-                chunks.append(out.rstrip("\n"))
-        except (subprocess.TimeoutExpired, OSError):
-            continue
+        # --no-index exits 1 when the files differ; other failures must not
+        # turn an incomplete collection into an apparently clean workspace.
+        code, out = _run(["diff", "--no-index", "--", os.devnull, rel], cwd)
+        if code not in (0, 1):
+            raise OSError("git untracked diff failed or timed out")
+        if out.strip():
+            chunks.append(out.rstrip("\n"))
     if len(files) > _MAX_UNTRACKED_FILES:
         chunks.append(
             f"... ({len(files) - _MAX_UNTRACKED_FILES} more untracked files not shown)"
@@ -86,7 +81,7 @@ def collect_working_diff(cwd: str, mode: str = "working",
 
     try:
         code, _ = _run(["rev-parse", "--is-inside-work-tree"], cwd, timeout=5)
-    except (subprocess.TimeoutExpired, OSError) as e:
+    except (GitPolicyError, subprocess.TimeoutExpired, OSError) as e:
         return {"success": False, "error": f"git failed: {e}"}
     if code != 0:
         return {"success": False, "error": "Not a git repository."}
@@ -101,8 +96,12 @@ def collect_working_diff(cwd: str, mode: str = "working",
     pathspec = ["--", *paths] if paths else []
 
     try:
-        _, stat_out = _run([*base_args, "--stat", *pathspec], cwd)
-        _, diff_out = _run([*base_args, *pathspec], cwd, timeout=_GIT_TIMEOUT * 2)
+        stat_code, stat_out = _run([*base_args, "--stat", *pathspec], cwd)
+        if stat_code != 0:
+            return {"success": False, "error": "git diff failed or timed out."}
+        diff_code, diff_out = _run([*base_args, *pathspec], cwd, timeout=_GIT_TIMEOUT * 2)
+        if diff_code != 0:
+            return {"success": False, "error": "git diff failed or timed out."}
 
         untracked: List[str] = []
         untracked_diff = ""
@@ -112,6 +111,8 @@ def collect_working_diff(cwd: str, mode: str = "working",
                 untracked_diff = _untracked_diff(cwd, untracked)
     except subprocess.TimeoutExpired:
         return {"success": False, "error": "git diff timed out."}
+    except GitPolicyError as e:
+        return {"success": False, "error": str(e)}
     except OSError as e:
         return {"success": False, "error": f"git failed: {e}"}
 

@@ -6000,13 +6000,7 @@ def _cleanup_worktree_workspace(
         # git's own dirty guard re-verifies at removal time. If the tree
         # became dirty between our check and the removal (TOCTOU), removal
         # fails safe and the worktree is preserved.
-        result = subprocess.run(
-            ["git", "-C", str(repo_root), "worktree", "remove", str(wp)],
-            capture_output=True,
-            text=True, encoding='utf-8', errors='replace',
-            timeout=60,
-            check=False,
-        )
+        result = run_internal_git(['worktree', 'remove', str(wp)], str(repo_root), timeout=60, check_policy=True)
         if result.returncode != 0:
             _log.warning(
                 "git worktree remove failed for task %s at %s: %s",
@@ -6016,13 +6010,7 @@ def _cleanup_worktree_workspace(
         _log.debug("Removed worktree workspace: %s", wp)
         branch = (branch_name or "").strip() or f"wt/{task_id}"
         if branch.startswith("wt/"):
-            subprocess.run(
-                ["git", "-C", str(repo_root), "branch", "-D", branch],
-                capture_output=True,
-                text=True, encoding='utf-8', errors='replace',
-                timeout=30,
-                check=False,
-            )
+            run_internal_git(['branch', '-D', branch], str(repo_root), timeout=30, check_policy=True)
     except Exception:
         pass  # best-effort — never block completion
 
@@ -7603,16 +7591,22 @@ def delete_task(conn: sqlite3.Connection, task_id: str) -> bool:
 # Workspace resolution
 # ---------------------------------------------------------------------------
 
+from hermes_cli._subprocess_compat import GitPolicyError, run_internal_git
+
+
 def _git_toplevel(path: Path) -> Optional[Path]:
     """Return the git toplevel containing ``path``, or ``None`` if not in a repo."""
+    # A new worktree target is not a Git execution directory yet. Let the
+    # caller locate its existing ancestor without weakening policy refusals
+    # for directories that can actually be inspected.
     try:
-        result = subprocess.run(
-            ["git", "-C", str(path), "rev-parse", "--show-toplevel"],
-            capture_output=True,
-            text=True, encoding='utf-8', errors='replace',
-            timeout=30,
-            check=False,
-        )
+        path.stat()
+    except FileNotFoundError:
+        return None
+    try:
+        result = run_internal_git(['rev-parse', '--show-toplevel'], str(path), timeout=30, check_policy=True)
+    except GitPolicyError:
+        raise
     except Exception:
         return None
     if result.returncode != 0:
@@ -7622,19 +7616,17 @@ def _git_toplevel(path: Path) -> Optional[Path]:
         return None
     try:
         return Path(out).expanduser().resolve()
+    except GitPolicyError:
+        raise
     except Exception:
         return Path(out).expanduser()
 
 
 def _git_branch_exists(repo_root: Path, branch_name: str) -> bool:
     try:
-        result = subprocess.run(
-            ["git", "-C", str(repo_root), "show-ref", "--verify", f"refs/heads/{branch_name}"],
-            capture_output=True,
-            text=True, encoding='utf-8', errors='replace',
-            timeout=30,
-            check=False,
-        )
+        result = run_internal_git(['show-ref', '--verify', f'refs/heads/{branch_name}'], str(repo_root), timeout=30, check_policy=True)
+    except GitPolicyError:
+        raise
     except Exception:
         return False
     return result.returncode == 0
@@ -7642,13 +7634,9 @@ def _git_branch_exists(repo_root: Path, branch_name: str) -> bool:
 
 def _git_common_dir(path: Path) -> Optional[Path]:
     try:
-        result = subprocess.run(
-            ["git", "-C", str(path), "rev-parse", "--path-format=absolute", "--git-common-dir"],
-            capture_output=True,
-            text=True, encoding='utf-8', errors='replace',
-            timeout=30,
-            check=False,
-        )
+        result = run_internal_git(['rev-parse', '--path-format=absolute', '--git-common-dir'], str(path), timeout=30, check_policy=True)
+    except GitPolicyError:
+        raise
     except Exception:
         return None
     if result.returncode != 0:
@@ -7661,13 +7649,9 @@ def _git_common_dir(path: Path) -> Optional[Path]:
 
 def _git_dir(path: Path) -> Optional[Path]:
     try:
-        result = subprocess.run(
-            ["git", "-C", str(path), "rev-parse", "--path-format=absolute", "--git-dir"],
-            capture_output=True,
-            text=True, encoding='utf-8', errors='replace',
-            timeout=30,
-            check=False,
-        )
+        result = run_internal_git(['rev-parse', '--path-format=absolute', '--git-dir'], str(path), timeout=30, check_policy=True)
+    except GitPolicyError:
+        raise
     except Exception:
         return None
     if result.returncode != 0:
@@ -7680,13 +7664,9 @@ def _git_dir(path: Path) -> Optional[Path]:
 
 def _git_current_branch(path: Path) -> Optional[str]:
     try:
-        result = subprocess.run(
-            ["git", "-C", str(path), "branch", "--show-current"],
-            capture_output=True,
-            text=True, encoding='utf-8', errors='replace',
-            timeout=30,
-            check=False,
-        )
+        result = run_internal_git(['branch', '--show-current'], str(path), timeout=30, check_policy=True)
+    except GitPolicyError:
+        raise
     except Exception:
         return None
     if result.returncode != 0:
@@ -7725,25 +7705,22 @@ def _ensure_git_worktree(repo_root: Path, target: Path, branch_name: str) -> Non
     """Materialize ``target`` as a linked git worktree under ``repo_root``."""
     target = target.expanduser()
     repo_common = _git_common_dir(repo_root)
+    if repo_common is None:
+        raise RuntimeError(f"Cannot resolve Git worktree owner for {repo_root}")
     if target.exists() and repo_common is not None:
         target_common = _git_common_dir(target)
         if target_common == repo_common:
             return
+    branch_exists = _git_branch_exists(repo_root, branch_name)
     target.parent.mkdir(parents=True, exist_ok=True)
-    if _git_branch_exists(repo_root, branch_name):
+    if branch_exists:
         cmd = ["git", "-C", str(repo_root), "worktree", "add", str(target), branch_name]
     else:
         cmd = [
             "git", "-C", str(repo_root), "worktree", "add", "-b", branch_name,
             str(target), "HEAD",
         ]
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True, encoding='utf-8', errors='replace',
-        timeout=60,
-        check=False,
-    )
+    result = run_internal_git(cmd[3:], repo_root, timeout=60, check_policy=True)
     if result.returncode != 0:
         stderr = (result.stderr or result.stdout or "").strip()
         raise RuntimeError(

@@ -21,7 +21,7 @@ pytestmark = pytest.mark.skipif(
 def _git(repo, *args):
     subprocess.run(
         ["git", *args], cwd=repo, check=True, capture_output=True,
-        env={"HOME": str(repo), "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
+        env={**__import__("os").environ, "HOME": str(repo), "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
              "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t",
              "PATH": __import__("os").environ["PATH"]},
     )
@@ -71,13 +71,13 @@ def test_run_decodes_git_output_as_utf8(monkeypatch, repo):
     git failure" contract in ``_run``'s docstring.
     """
     captured = {}
-    real_run = subprocess.run
+    real_popen = subprocess.Popen
 
-    def fake_run(*args, **kwargs):
+    def fake_popen(*args, **kwargs):
         captured.update(kwargs)
-        return real_run(*args, **kwargs)
+        return real_popen(*args, **kwargs)
 
-    monkeypatch.setattr(working_diff.subprocess, "run", fake_run)
+    monkeypatch.setattr(subprocess, "Popen", fake_popen)
 
     working_diff._run(["status"], str(repo))
 

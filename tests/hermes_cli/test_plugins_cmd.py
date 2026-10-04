@@ -157,7 +157,7 @@ class TestResolveGitExecutable:
             "_resolve_git_executable",
             return_value="/resolved/git",
         ):
-            with patch.object(pc.subprocess, "run") as run:
+            with patch.object(pc, "_run_plugin_git") as run:
                 # First call is `git status --porcelain` (clean tree),
                 # second is the pull itself.
                 run.side_effect = [
@@ -168,15 +168,15 @@ class TestResolveGitExecutable:
         assert ok is True
         assert run.call_count == 2
         for call in run.call_args_list:
-            assert call.args[0][0] == "/resolved/git"
-        assert run.call_args_list[1].args[0][1:] == ["pull", "--ff-only"]
+            assert call.args[:2] == ("/resolved/git", tmp_path)
+        assert run.call_args_list[1].args[2:] == ("pull", "--ff-only")
 
     def test_git_pull_clean_tree_never_stashes(self, tmp_path):
         import hermes_cli.plugins_cmd as pc
 
         _resolve_git_executable.cache_clear()
         with patch.object(pc, "_resolve_git_executable", return_value="/g"):
-            with patch.object(pc.subprocess, "run") as run:
+            with patch.object(pc, "_run_plugin_git") as run:
                 run.side_effect = [
                     MagicMock(returncode=0, stdout="", stderr=""),      # status
                     MagicMock(returncode=0, stdout="Updated\n", stderr=""),  # pull
@@ -184,7 +184,7 @@ class TestResolveGitExecutable:
                 ok, msg = pc._git_pull_plugin_dir(tmp_path)
         assert ok is True
         assert msg == "Updated"
-        commands = [c.args[0][1] for c in run.call_args_list]
+        commands = [c.args[2] for c in run.call_args_list]
         assert "stash" not in commands
 
 
@@ -260,7 +260,7 @@ class TestGitPullPluginDirAutostash:
         self._set_line(checkout, "VALUE", "VALUE = 99")
 
         ok, msg = pc._git_pull_plugin_dir(checkout)
-        assert ok is True
+        assert ok is False
         content = (checkout / "plugin.py").read_text(encoding="utf-8")
         # Checkout is importable on the updated revision — no conflict markers.
         assert "<<<<<<<" not in content
@@ -404,7 +404,7 @@ class TestCmdUpdate:
 
     @patch("hermes_cli.plugins_cmd._sanitize_plugin_name")
     @patch("hermes_cli.plugins_cmd._plugins_dir")
-    @patch("hermes_cli.plugins_cmd.subprocess.run")
+    @patch("hermes_cli.plugins_cmd._run_plugin_git")
     def test_update_git_pull_success(self, mock_run, mock_plugins_dir, mock_sanitize):
         from hermes_cli.plugins_cmd import cmd_update
 
@@ -453,17 +453,20 @@ class TestCmdRemove:
     @patch("hermes_cli.plugins_cmd._sanitize_plugin_name")
     @patch("hermes_cli.plugins_cmd._plugins_dir")
     @patch("hermes_cli.plugins_cmd.shutil.rmtree")
-    def test_remove_deletes_plugin(self, mock_rmtree, mock_plugins_dir, mock_sanitize):
+    def test_remove_deletes_plugin(self, mock_rmtree, mock_plugins_dir, mock_sanitize, tmp_path):
         from hermes_cli.plugins_cmd import cmd_remove
 
-        mock_plugins_dir.return_value = MagicMock()
-        mock_target = MagicMock()
-        mock_target.exists.return_value = True
-        mock_sanitize.return_value = mock_target
+        plugins = tmp_path / "plugins"
+        target = plugins / "test-plugin"
+        target.mkdir(parents=True)
+        mock_plugins_dir.return_value = plugins
+        mock_sanitize.return_value = target
 
         cmd_remove("test-plugin")
 
-        mock_rmtree.assert_called_once_with(mock_target)
+        mock_rmtree.assert_called_once()
+        assert mock_rmtree.call_args.args == (target,)
+        assert callable(mock_rmtree.call_args.kwargs["onerror"])
 
     @patch("hermes_cli.plugins_cmd._sanitize_plugin_name")
     @patch("hermes_cli.plugins_cmd._plugins_dir")

@@ -6,6 +6,8 @@ import path from 'node:path'
 
 import { afterEach, test } from 'vitest'
 
+import { gitBinary } from './git-test-runtime'
+
 import {
   branchCreate,
   branchDelete,
@@ -58,12 +60,12 @@ function makeRepo() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-desktop-git-ref-'))
 
   tempDirs.push(dir)
-  execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: dir })
-  execFileSync('git', ['config', 'user.email', 'hermes-test@example.com'], { cwd: dir })
-  execFileSync('git', ['config', 'user.name', 'Hermes Test'], { cwd: dir })
+  execFileSync(gitBinary, ['init', '-q', '-b', 'main'], { cwd: dir })
+  execFileSync(gitBinary, ['config', 'user.email', 'hermes-test@example.com'], { cwd: dir })
+  execFileSync(gitBinary, ['config', 'user.name', 'Hermes Test'], { cwd: dir })
   fs.writeFileSync(path.join(dir, 'tracked.txt'), 'one\n')
-  execFileSync('git', ['add', 'tracked.txt'], { cwd: dir })
-  execFileSync('git', ['commit', '-qm', 'initial'], { cwd: dir })
+  execFileSync(gitBinary, ['add', 'tracked.txt'], { cwd: dir })
+  execFileSync(gitBinary, ['commit', '-qm', 'initial'], { cwd: dir })
 
   return dir
 }
@@ -75,8 +77,8 @@ function seedRemoteAndClone(label) {
   const cloneDir = fs.mkdtempSync(path.join(os.tmpdir(), `hermes-${label}-clone-`))
 
   tempDirs.push(remoteDir, cloneDir)
-  execFileSync('git', ['init', '-q', '-b', 'main', remoteDir])
-  execFileSync('git', [
+  execFileSync(gitBinary, ['init', '-q', '-b', 'main', remoteDir])
+  execFileSync(gitBinary, [
     '-C',
     remoteDir,
     '-c',
@@ -88,13 +90,13 @@ function seedRemoteAndClone(label) {
     '-m',
     'root'
   ])
-  execFileSync('git', ['clone', '-q', remoteDir, cloneDir])
+  execFileSync(gitBinary, ['clone', '-q', remoteDir, cloneDir])
 
   return { cloneDir, remoteDir }
 }
 
 function remoteHead(remoteDir) {
-  return execFileSync('git', ['-C', remoteDir, 'rev-parse', 'HEAD']).toString().trim()
+  return execFileSync(gitBinary, ['-C', remoteDir, 'rev-parse', 'HEAD']).toString().trim()
 }
 
 test('parseTags: parses lightweight and annotated tag rows', () => {
@@ -135,151 +137,151 @@ test('parseStashes: parses stash list rows into indexes and messages', () => {
 test('listTags: empty on a fresh repo and on a non-repo path', async () => {
   const dir = makeRepo()
 
-  assert.deepEqual(await listTags(dir, 'git'), [])
+  assert.deepEqual(await listTags(dir, gitBinary), [])
 
   const nonRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-nonrepo-tags-'))
 
   tempDirs.push(nonRepo)
-  assert.deepEqual(await listTags(nonRepo, 'git'), [])
+  assert.deepEqual(await listTags(nonRepo, gitBinary), [])
 })
 
 test('listStashes: empty when nothing is stashed', async () => {
-  assert.deepEqual(await listStashes(makeRepo(), 'git'), [])
+  assert.deepEqual(await listStashes(makeRepo(), gitBinary), [])
 })
 
 test('tagCreate: creates a lightweight tag at HEAD and lists it', async () => {
   const dir = makeRepo()
 
-  await tagCreate(dir, 'v1.0', null, 'git')
+  await tagCreate(dir, 'v1.0', null, gitBinary)
 
-  const tags = await listTags(dir, 'git')
+  const tags = await listTags(dir, gitBinary)
 
   assert.equal(tags.length, 1)
   assert.equal(tags[0].name, 'v1.0')
-  assert.equal(tags[0].sha, execFileSync('git', ['-C', dir, 'rev-parse', 'HEAD']).toString().trim())
+  assert.equal(tags[0].sha, execFileSync(gitBinary, ['-C', dir, 'rev-parse', 'HEAD']).toString().trim())
 })
 
 test('tagCreate: tags a specified target and rejects invalid names', async () => {
   const dir = makeRepo()
 
   fs.writeFileSync(path.join(dir, 'tracked.txt'), 'two\n')
-  execFileSync('git', ['add', 'tracked.txt'], { cwd: dir })
-  execFileSync('git', ['commit', '-qm', 'second'], { cwd: dir })
+  execFileSync(gitBinary, ['add', 'tracked.txt'], { cwd: dir })
+  execFileSync(gitBinary, ['commit', '-qm', 'second'], { cwd: dir })
 
-  await tagCreate(dir, 'v-old', 'HEAD~1', 'git')
+  await tagCreate(dir, 'v-old', 'HEAD~1', gitBinary)
 
-  const tags = await listTags(dir, 'git')
+  const tags = await listTags(dir, gitBinary)
 
   assert.equal(tags.length, 1)
-  assert.equal(tags[0].sha, execFileSync('git', ['-C', dir, 'rev-parse', 'HEAD~1']).toString().trim())
+  assert.equal(tags[0].sha, execFileSync(gitBinary, ['-C', dir, 'rev-parse', 'HEAD~1']).toString().trim())
 
-  await assert.rejects(tagCreate(dir, 'bad..name', null, 'git'))
-  await assert.rejects(tagCreate(dir, 'has space', null, 'git'))
+  await assert.rejects(tagCreate(dir, 'bad..name', null, gitBinary))
+  await assert.rejects(tagCreate(dir, 'has space', null, gitBinary))
 })
 
 test('tagDelete: removes a tag', async () => {
   const dir = makeRepo()
 
-  await tagCreate(dir, 'v1.0', null, 'git')
-  await tagDelete(dir, 'v1.0', 'git')
+  await tagCreate(dir, 'v1.0', null, gitBinary)
+  await tagDelete(dir, 'v1.0', gitBinary)
 
-  assert.deepEqual(await listTags(dir, 'git'), [])
+  assert.deepEqual(await listTags(dir, gitBinary), [])
 })
 
 test('branchCreate: creates a branch at HEAD', async () => {
   const dir = makeRepo()
 
-  await branchCreate(dir, 'feature/one', null, 'git')
+  await branchCreate(dir, 'feature/one', null, gitBinary)
 
-  const created = execFileSync('git', ['-C', dir, 'rev-parse', 'feature/one']).toString().trim()
+  const created = execFileSync(gitBinary, ['-C', dir, 'rev-parse', 'feature/one']).toString().trim()
 
-  assert.equal(created, execFileSync('git', ['-C', dir, 'rev-parse', 'HEAD']).toString().trim())
+  assert.equal(created, execFileSync(gitBinary, ['-C', dir, 'rev-parse', 'HEAD']).toString().trim())
 })
 
 test('branchCreate: base param branches off a specified commit', async () => {
   const dir = makeRepo()
 
   fs.writeFileSync(path.join(dir, 'tracked.txt'), 'two\n')
-  execFileSync('git', ['add', 'tracked.txt'], { cwd: dir })
-  execFileSync('git', ['commit', '-qm', 'second'], { cwd: dir })
+  execFileSync(gitBinary, ['add', 'tracked.txt'], { cwd: dir })
+  execFileSync(gitBinary, ['commit', '-qm', 'second'], { cwd: dir })
 
-  await branchCreate(dir, 'from-base', 'HEAD~1', 'git')
+  await branchCreate(dir, 'from-base', 'HEAD~1', gitBinary)
 
   assert.equal(
-    execFileSync('git', ['-C', dir, 'rev-parse', 'from-base']).toString().trim(),
-    execFileSync('git', ['-C', dir, 'rev-parse', 'HEAD~1']).toString().trim()
+    execFileSync(gitBinary, ['-C', dir, 'rev-parse', 'from-base']).toString().trim(),
+    execFileSync(gitBinary, ['-C', dir, 'rev-parse', 'HEAD~1']).toString().trim()
   )
 })
 
 test('branchCreate: rejects invalid branch names', async () => {
   const dir = makeRepo()
 
-  await assert.rejects(branchCreate(dir, '-leading-dash', null, 'git'))
-  await assert.rejects(branchCreate(dir, 'bad..name', null, 'git'))
-  await assert.rejects(branchCreate(dir, '', null, 'git'))
+  await assert.rejects(branchCreate(dir, '-leading-dash', null, gitBinary))
+  await assert.rejects(branchCreate(dir, 'bad..name', null, gitBinary))
+  await assert.rejects(branchCreate(dir, '', null, gitBinary))
 })
 
 test('branchRename: renames a branch', async () => {
   const dir = makeRepo()
 
-  await branchCreate(dir, 'old-name', null, 'git')
-  await branchRename(dir, 'old-name', 'new-name', 'git')
+  await branchCreate(dir, 'old-name', null, gitBinary)
+  await branchRename(dir, 'old-name', 'new-name', gitBinary)
 
   assert.equal(
-    execFileSync('git', ['-C', dir, 'rev-parse', 'new-name']).toString().trim(),
-    execFileSync('git', ['-C', dir, 'rev-parse', 'HEAD']).toString().trim()
+    execFileSync(gitBinary, ['-C', dir, 'rev-parse', 'new-name']).toString().trim(),
+    execFileSync(gitBinary, ['-C', dir, 'rev-parse', 'HEAD']).toString().trim()
   )
-  assert.throws(() => execFileSync('git', ['-C', dir, 'rev-parse', '--verify', 'old-name'], { stdio: 'ignore' }))
+  assert.throws(() => execFileSync(gitBinary, ['-C', dir, 'rev-parse', '--verify', 'old-name'], { stdio: 'ignore' }))
 })
 
 test('branchRename: rejects a rename to an invalid name', async () => {
   const dir = makeRepo()
 
-  await assert.rejects(branchRename(dir, 'main', 'bad..name', 'git'))
+  await assert.rejects(branchRename(dir, 'main', 'bad..name', gitBinary))
 })
 
 test('branchDelete: deletes a merged branch', async () => {
   const dir = makeRepo()
 
-  await branchCreate(dir, 'merged', null, 'git')
-  await branchDelete(dir, 'merged', false, 'git')
+  await branchCreate(dir, 'merged', null, gitBinary)
+  await branchDelete(dir, 'merged', false, gitBinary)
 
-  assert.throws(() => execFileSync('git', ['-C', dir, 'rev-parse', '--verify', 'merged'], { stdio: 'ignore' }))
+  assert.throws(() => execFileSync(gitBinary, ['-C', dir, 'rev-parse', '--verify', 'merged'], { stdio: 'ignore' }))
 })
 
 test('branchDelete: refuses the checked-out branch', async () => {
   const dir = makeRepo()
 
-  await assert.rejects(branchDelete(dir, 'main', false, 'git'))
+  await assert.rejects(branchDelete(dir, 'main', false, gitBinary))
 })
 
 test('branchDelete: force-deletes an unmerged branch', async () => {
   const dir = makeRepo()
 
-  await branchCreate(dir, 'unmerged', null, 'git')
-  execFileSync('git', ['-C', dir, 'switch', 'unmerged'], { cwd: dir })
+  await branchCreate(dir, 'unmerged', null, gitBinary)
+  execFileSync(gitBinary, ['-C', dir, 'switch', 'unmerged'], { cwd: dir })
   fs.writeFileSync(path.join(dir, 'tracked.txt'), 'two\n')
-  execFileSync('git', ['add', 'tracked.txt'], { cwd: dir })
-  execFileSync('git', ['commit', '-qm', 'unmerged work'], { cwd: dir })
-  execFileSync('git', ['-C', dir, 'switch', 'main'], { cwd: dir })
+  execFileSync(gitBinary, ['add', 'tracked.txt'], { cwd: dir })
+  execFileSync(gitBinary, ['commit', '-qm', 'unmerged work'], { cwd: dir })
+  execFileSync(gitBinary, ['-C', dir, 'switch', 'main'], { cwd: dir })
 
   // `-d` refuses an unmerged branch; `-D` goes through.
-  await assert.rejects(branchDelete(dir, 'unmerged', false, 'git'))
-  await branchDelete(dir, 'unmerged', true, 'git')
-  assert.throws(() => execFileSync('git', ['-C', dir, 'rev-parse', '--verify', 'unmerged'], { stdio: 'ignore' }))
+  await assert.rejects(branchDelete(dir, 'unmerged', false, gitBinary))
+  await branchDelete(dir, 'unmerged', true, gitBinary)
+  assert.throws(() => execFileSync(gitBinary, ['-C', dir, 'rev-parse', '--verify', 'unmerged'], { stdio: 'ignore' }))
 })
 
 test('stashCreate: stashes working-tree changes and leaves the tree clean', async () => {
   const dir = makeRepo()
 
   fs.writeFileSync(path.join(dir, 'tracked.txt'), 'two\n')
-  await stashCreate(dir, 'wip fixture', false, 'git')
+  await stashCreate(dir, 'wip fixture', false, gitBinary)
 
   // git's autocrlf normalizes the checkout to CRLF on Windows; compare the
   // line endings stripped.
   assert.equal(fs.readFileSync(path.join(dir, 'tracked.txt'), 'utf8').replace(/\r\n/g, '\n'), 'one\n')
 
-  const stashes = await listStashes(dir, 'git')
+  const stashes = await listStashes(dir, gitBinary)
 
   assert.equal(stashes.length, 1)
   assert.equal(stashes[0].index, 0)
@@ -291,18 +293,18 @@ test('stashCreate: includeUntracked sweeps new files too', async () => {
 
   fs.writeFileSync(path.join(dir, 'tracked.txt'), 'two\n')
   fs.writeFileSync(path.join(dir, 'new.txt'), 'brand new\n')
-  await stashCreate(dir, 'with untracked', true, 'git')
+  await stashCreate(dir, 'with untracked', true, gitBinary)
 
   assert.equal(fs.existsSync(path.join(dir, 'new.txt')), false)
-  assert.equal((await listStashes(dir, 'git')).length, 1)
+  assert.equal((await listStashes(dir, gitBinary)).length, 1)
 })
 
 test('stashApply: restores the stashed changes', async () => {
   const dir = makeRepo()
 
   fs.writeFileSync(path.join(dir, 'tracked.txt'), 'two\n')
-  await stashCreate(dir, 'wip fixture', false, 'git')
-  await stashApply(dir, 0, 'git')
+  await stashCreate(dir, 'wip fixture', false, gitBinary)
+  await stashApply(dir, 0, gitBinary)
 
   assert.equal(fs.readFileSync(path.join(dir, 'tracked.txt'), 'utf8').replace(/\r\n/g, '\n'), 'two\n')
 })
@@ -311,17 +313,17 @@ test('stashDrop: removes a stash', async () => {
   const dir = makeRepo()
 
   fs.writeFileSync(path.join(dir, 'tracked.txt'), 'two\n')
-  await stashCreate(dir, 'first', false, 'git')
+  await stashCreate(dir, 'first', false, gitBinary)
   fs.writeFileSync(path.join(dir, 'tracked.txt'), 'three\n')
-  await stashCreate(dir, 'second', false, 'git')
+  await stashCreate(dir, 'second', false, gitBinary)
 
-  assert.equal((await listStashes(dir, 'git')).length, 2)
+  assert.equal((await listStashes(dir, gitBinary)).length, 2)
 
-  await stashDrop(dir, 0, 'git')
+  await stashDrop(dir, 0, gitBinary)
 
   // Stashes are LIFO: dropping 0 removes the newest ("second"), leaving the
   // older "first" stash behind.
-  const stashes = await listStashes(dir, 'git')
+  const stashes = await listStashes(dir, gitBinary)
 
   assert.equal(stashes.length, 1)
   assert.match(stashes[0].message, /first/)
@@ -330,15 +332,15 @@ test('stashDrop: removes a stash', async () => {
 test('stashApply: rejects a bad index and an empty stash', async () => {
   const dir = makeRepo()
 
-  await assert.rejects(stashApply(dir, -1, 'git'))
-  await assert.rejects(stashApply(dir, 0, 'git'))
+  await assert.rejects(stashApply(dir, -1, gitBinary))
+  await assert.rejects(stashApply(dir, 0, gitBinary))
 })
 
 test('gitFetch: fetches new commits from the remote', async () => {
   const { cloneDir, remoteDir } = seedRemoteAndClone('fetch')
 
   try {
-    execFileSync('git', [
+    execFileSync(gitBinary, [
       '-C',
       remoteDir,
       '-c',
@@ -351,10 +353,10 @@ test('gitFetch: fetches new commits from the remote', async () => {
       'remote work'
     ])
 
-    await gitFetch(cloneDir, 'origin', 'git')
+    await gitFetch(cloneDir, 'origin', gitBinary)
 
     assert.equal(
-      execFileSync('git', ['-C', cloneDir, 'rev-parse', 'origin/main']).toString().trim(),
+      execFileSync(gitBinary, ['-C', cloneDir, 'rev-parse', 'origin/main']).toString().trim(),
       remoteHead(remoteDir)
     )
   } finally {
@@ -367,7 +369,7 @@ test('gitPull: fast-forwards the local branch', async () => {
   const { cloneDir, remoteDir } = seedRemoteAndClone('pull')
 
   try {
-    execFileSync('git', [
+    execFileSync(gitBinary, [
       '-C',
       remoteDir,
       '-c',
@@ -380,9 +382,9 @@ test('gitPull: fast-forwards the local branch', async () => {
       'remote work'
     ])
 
-    await gitPull(cloneDir, false, 'git')
+    await gitPull(cloneDir, false, gitBinary)
 
-    assert.equal(execFileSync('git', ['-C', cloneDir, 'rev-parse', 'HEAD']).toString().trim(), remoteHead(remoteDir))
+    assert.equal(execFileSync(gitBinary, ['-C', cloneDir, 'rev-parse', 'HEAD']).toString().trim(), remoteHead(remoteDir))
   } finally {
     fs.rmSync(cloneDir, { recursive: true, force: true })
     fs.rmSync(remoteDir, { recursive: true, force: true })
@@ -392,5 +394,5 @@ test('gitPull: fast-forwards the local branch', async () => {
 test('gitPull: rejects when no upstream is configured', async () => {
   const dir = makeRepo()
 
-  await assert.rejects(gitPull(dir, false, 'git'))
+  await assert.rejects(gitPull(dir, false, gitBinary))
 })

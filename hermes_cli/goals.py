@@ -479,18 +479,11 @@ def workspace_fingerprint(cwd: Optional[str] = None) -> str:
     """
     workdir = cwd or os.getcwd()
     try:
-        head = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace",
-            timeout=10, cwd=workdir,
-        )
+        from hermes_cli._subprocess_compat import run_internal_git
+        head = run_internal_git(["rev-parse", "HEAD"], timeout=10, cwd=workdir)
         if head.returncode != 0:
             return ""
-        status = subprocess.run(
-            ["git", "status", "--porcelain"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace",
-            timeout=30, cwd=workdir,
-        )
+        status = run_internal_git(["status", "--porcelain"], timeout=30, cwd=workdir)
         if status.returncode != 0:
             return ""
         blob = head.stdout.strip() + "\n" + status.stdout

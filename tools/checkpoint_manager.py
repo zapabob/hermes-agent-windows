@@ -58,10 +58,10 @@ import subprocess
 import time
 from pathlib import Path
 from hermes_constants import get_hermes_home
-from hermes_cli._subprocess_compat import windows_hide_flags
+from hermes_cli._subprocess_compat import bounded_probe_run, harden_git_argv, noninteractive_git_env
 from typing import Dict, List, Optional, Set, Tuple
 
-from utils import env_int
+from utils import env_int, remove_owned_tree
 
 logger = logging.getLogger(__name__)
 
@@ -315,11 +315,12 @@ def _git_env(
     # git child with hand-isolated config env; exact preservation — a HOME
     # rewrite would change which ~/.gitconfig the isolation vars are hiding.
     from tools.environments.local import build_subprocess_env
-    env = build_subprocess_env(scrub_secrets=False, inherit_profile_home=False)
+    env = noninteractive_git_env(build_subprocess_env(scrub_secrets=False, inherit_profile_home=False))
     env["GIT_DIR"] = str(store)
     env["GIT_WORK_TREE"] = str(normalized_working_dir)
-    env.pop("GIT_NAMESPACE", None)
-    env.pop("GIT_ALTERNATE_OBJECT_DIRECTORIES", None)
+    for key in ("GIT_NAMESPACE", "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+                "GIT_OBJECT_DIRECTORY", "GIT_COMMON_DIR", "GIT_SHALLOW_FILE"):
+        env.pop(key, None)
     if index_file is not None:
         env["GIT_INDEX_FILE"] = str(index_file)
     else:
@@ -377,23 +378,16 @@ def _run_git(
         return False, "", msg
 
     env = _git_env(store, str(normalized_working_dir), index_file=index_file)
-    cmd = ["git"] + list(args)
+    git = shutil.which("git", path=env.get("PATH"))
+    if git is None:
+        return False, "", "git not found"
+    cmd = [git] + harden_git_argv(args)
     allowed_returncodes = allowed_returncodes or set()
 
     try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True, encoding='utf-8', errors='replace',
-            timeout=timeout,
-            env=env,
-            cwd=str(normalized_working_dir),
-            stdin=subprocess.DEVNULL,
-            # Checkpoints fire several bare git calls per turn from the
-            # console-less desktop/gateway backend; suppress the per-call
-            # conhost flash on Windows (no-op on POSIX).
-            creationflags=windows_hide_flags(),
-        )
+        result = bounded_probe_run(cmd, timeout=timeout, env=env, cwd=str(normalized_working_dir))
+        if result is None:
+            return False, "", "git timed out or could not start"
         ok = result.returncode == 0
         stdout = result.stdout.strip()
         stderr = result.stderr.strip()
@@ -489,47 +483,47 @@ def _init_store(store: Path, working_dir: str) -> Optional[str]:
         # our own v2 layout.
         _migrate_legacy_store(base)
 
-    if (store / "HEAD").exists():
+    pending = store / "hermes-init-pending"
+    if (store / "HEAD").exists() and not pending.exists():
         return None
 
     store.mkdir(parents=True, exist_ok=True)
     (store / _INDEXES_DIRNAME).mkdir(exist_ok=True)
     (store / _PROJECTS_DIRNAME).mkdir(exist_ok=True)
+    pending.touch()
 
     # ``git init --bare`` rejects GIT_WORK_TREE, so we can't use _run_git
     # here (which always sets GIT_DIR + GIT_WORK_TREE).  Use a raw
     # subprocess with just the config-isolation env vars.
     from tools.environments.local import build_subprocess_env
-    init_env = build_subprocess_env(scrub_secrets=False, inherit_profile_home=False)
+    init_env = noninteractive_git_env(build_subprocess_env(scrub_secrets=False, inherit_profile_home=False))
     init_env["GIT_CONFIG_GLOBAL"] = os.devnull
     init_env["GIT_CONFIG_SYSTEM"] = os.devnull
     init_env["GIT_CONFIG_NOSYSTEM"] = "1"
     # Drop any inherited GIT_* that would interfere.
     for k in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_NAMESPACE",
-              "GIT_ALTERNATE_OBJECT_DIRECTORIES"):
+              "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_OBJECT_DIRECTORY",
+              "GIT_COMMON_DIR", "GIT_SHALLOW_FILE"):
         init_env.pop(k, None)
-    try:
-        result = subprocess.run(
-            ["git", "init", "--bare", str(store)],
-            capture_output=True, text=True, encoding='utf-8', errors='replace',
-            env=init_env, timeout=_GIT_TIMEOUT,
-            stdin=subprocess.DEVNULL,
-            creationflags=windows_hide_flags(),
-        )
-        if result.returncode != 0:
-            return f"Shadow store init failed: {result.stderr.strip()}"
-    except (subprocess.TimeoutExpired, FileNotFoundError) as exc:
-        return f"Shadow store init failed: {exc}"
+    git = shutil.which("git", path=init_env.get("PATH"))
+    if git is None:
+        return "Shadow store init failed: git not found"
+    result = bounded_probe_run([git, "init", "--bare", "--template=", str(store)],
+                               env=init_env, timeout=_GIT_TIMEOUT, cwd=str(base))
+    if result is None:
+        return "Shadow store init failed: git timed out or could not start"
+    if result.returncode != 0:
+        return f"Shadow store init failed: {result.stderr.strip()}"
 
     # Per-store config (isolated by env vars above, but belt-and-suspenders).
     # Use the base dir as the working_dir for config commands — it always
     # exists since we just created the store inside it.
     cfg_wd = str(base)
-    _run_git(["config", "user.email", "hermes@local"], store, cfg_wd)
-    _run_git(["config", "user.name", "Hermes Checkpoint"], store, cfg_wd)
-    _run_git(["config", "commit.gpgsign", "false"], store, cfg_wd)
-    _run_git(["config", "tag.gpgSign", "false"], store, cfg_wd)
-    _run_git(["config", "gc.auto", "0"], store, cfg_wd)
+    for key, value in (("user.email", "hermes@local"), ("user.name", "Hermes Checkpoint"),
+                       ("commit.gpgsign", "false"), ("tag.gpgSign", "false"), ("gc.auto", "0")):
+        ok, _, error = _run_git(["config", key, value], store, cfg_wd)
+        if not ok:
+            return f"Shadow store config failed: {error}"
 
     info_dir = store / "info"
     info_dir.mkdir(exist_ok=True)
@@ -537,6 +531,7 @@ def _init_store(store: Path, working_dir: str) -> Optional[str]:
         "\n".join(DEFAULT_EXCLUDES) + "\n", encoding="utf-8"
     )
 
+    pending.unlink()
     logger.debug("Initialised checkpoint store at %s", store)
     return None
 
@@ -2213,10 +2208,10 @@ def clear_all(checkpoint_base: Optional[Path] = None) -> Dict[str, int]:
         return out
     size = _dir_size_bytes(base)
     try:
-        shutil.rmtree(base)
+        remove_owned_tree(base, boundary=base.parent)
         out["bytes_freed"] = size
         out["deleted"] = True
-    except OSError as exc:
+    except (OSError, ValueError) as exc:
         logger.warning("Could not clear checkpoint base %s: %s", base, exc)
     return out
 
@@ -2235,9 +2230,9 @@ def clear_legacy(checkpoint_base: Optional[Path] = None) -> Dict[str, int]:
             continue
         try:
             size = _dir_size_bytes(child)
-            shutil.rmtree(child)
+            remove_owned_tree(child, boundary=base)
             out["bytes_freed"] += size
             out["deleted"] += 1
-        except OSError as exc:
+        except (OSError, ValueError) as exc:
             logger.warning("Could not delete legacy archive %s: %s", child, exc)
     return out

@@ -156,7 +156,11 @@ def _assert_noninteractive(call: dict):
 def test_mcp_catalog_git_install_runs_noninteractively(monkeypatch, tmp_path):
     from hermes_cli import mcp_catalog
 
-    calls = _capture_run(monkeypatch, mcp_catalog)
+    calls = []
+    def bounded(argv, **kwargs):
+        calls.append({"argv": argv, **kwargs})
+        return subprocess.CompletedProcess(argv, 0, "", "")
+    monkeypatch.setattr("hermes_cli._subprocess_compat.bounded_probe_run", bounded)
     monkeypatch.setattr(mcp_catalog.shutil, "which", lambda name: "/usr/bin/git")
     monkeypatch.setattr(mcp_catalog, "_install_root", lambda: tmp_path)
 
@@ -177,4 +181,7 @@ def test_mcp_catalog_git_install_runs_noninteractively(monkeypatch, tmp_path):
     assert calls
     for call in calls:
         if call["argv"][0].endswith("git") or "git" in call["argv"][0]:
-            _assert_noninteractive(call)
+            assert call["env"]["GIT_TERMINAL_PROMPT"] == "0"
+            assert call["timeout"] == 60
+            assert Path(call["cwd"]) == tmp_path
+            assert "--template=" in call["argv"]

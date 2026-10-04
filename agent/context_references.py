@@ -422,19 +422,8 @@ def _expand_git_reference(
     args: list[str],
     label: str,
 ) -> tuple[str | None, str | None]:
-    _popen_kwargs = {"creationflags": windows_hide_flags()} if IS_WINDOWS else {}
-    try:
-        result = subprocess.run(
-            ["git", *args],
-            cwd=cwd,
-            capture_output=True,
-            text=True, encoding='utf-8', errors='replace',
-            timeout=30,
-            stdin=subprocess.DEVNULL,
-            **_popen_kwargs,
-        )
-    except subprocess.TimeoutExpired:
-        return f"{ref.raw}: git command timed out (30s)", None
+    from hermes_cli._subprocess_compat import run_internal_git
+    result = run_internal_git(args, cwd=cwd, timeout=30)
     if result.returncode != 0:
         stderr = (result.stderr or "").strip() or "git command failed"
         return f"{ref.raw}: {stderr}", None

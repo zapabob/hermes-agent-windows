@@ -2,11 +2,11 @@
 // fresh worktree the lightest way (`git worktree add -b`), list real worktrees,
 // and remove them. Git is the source of truth; the renderer just drives these.
 
-import { execFile } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 
 import { resolveRequestedPathForIpc } from './hardening'
+import { executeGitChecked, rethrowGitPolicyError } from './git-execution-policy'
 
 // Unit separator between format fields. Git's pretty-format parser only honors
 // `%xNN` escapes (and for-each-ref honors neither `%xNN` nor `%NN`), so the
@@ -15,24 +15,8 @@ import { resolveRequestedPathForIpc } from './hardening'
 const SEP = String.fromCharCode(31)
 
 // HermesGitBranch now carries a `sha` field (commit the ref points at), so the
-function runGit(gitBin: string, args: string[], cwd: string): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
-    execFile(
-      gitBin,
-      args,
-      { cwd, windowsHide: true, timeout: 30_000, maxBuffer: 8 * 1024 * 1024 },
-      (err, stdout, stderr) => {
-        if (err) {
-          ;(err as any).stderr = String(stderr || '')
-          reject(err)
-
-          return
-        }
-
-        resolve(String(stdout || ''))
-      }
-    )
-  })
+async function runGit(gitBin: string, args: string[], cwd: string): Promise<string> {
+  return executeGitChecked(cwd, gitBin, args)
 }
 
 // Parse `git worktree list --porcelain`. The first record is the main worktree.
@@ -75,7 +59,8 @@ async function listWorktrees(repoPath, gitBin) {
 
   try {
     resolved = resolveRequestedPathForIpc(repoPath, { purpose: 'Worktree list' })
-  } catch {
+  } catch (error) {
+    rethrowGitPolicyError(error)
     return []
   }
 
@@ -89,7 +74,8 @@ async function listWorktrees(repoPath, gitBin) {
       detached: tree.detached,
       locked: tree.locked
     }))
-  } catch {
+  } catch (error) {
+    rethrowGitPolicyError(error)
     return []
   }
 }
@@ -124,7 +110,8 @@ const TRUNK_BRANCHES = ['main', 'master']
 async function gitLine(gitBin, args, cwd) {
   try {
     return (await runGit(gitBin, args, cwd)).trim()
-  } catch {
+  } catch (error) {
+    rethrowGitPolicyError(error)
     return ''
   }
 }
@@ -137,7 +124,8 @@ async function gitOk(gitBin, args, cwd) {
     await runGit(gitBin, args, cwd)
 
     return true
-  } catch {
+  } catch (error) {
+    rethrowGitPolicyError(error)
     return false
   }
 }
@@ -200,11 +188,13 @@ async function ensureGitRepo(gitBin, dir) {
       // Repo exists; a worktree still needs a HEAD to branch from.
       try {
         await runGit(gitBin, ['rev-parse', '--verify', 'HEAD'], dir)
-      } catch {
+      } catch (error) {
+        rethrowGitPolicyError(error)
         needsRoot = true
       }
     }
-  } catch {
+  } catch (error) {
+    rethrowGitPolicyError(error)
     await runGit(gitBin, ['init'], dir)
     needsRoot = true
   }
@@ -277,7 +267,8 @@ async function addExistingBranchWorktree(gitBin, root, name) {
     // to branch from.
     try {
       await runGit(gitBin, ['fetch', remote, branch], root)
-    } catch {
+    } catch (error) {
+      rethrowGitPolicyError(error)
       // The user is offline, or the branch is gone from the remote. Use the ref
       // that the repo already has.
     }
@@ -322,7 +313,8 @@ async function addWorktree(repoPath, options, gitBin) {
 
       try {
         await runGit(gitBin, ['fetch', 'origin', remoteBranch], root)
-      } catch {
+      } catch (error) {
+        rethrowGitPolicyError(error)
         // The fetch isn't mandatory, but it would be nice to do if possible.
         // If it's not possible, just use the local ref of the remote branch.
         // If it doesn't exist locally, we'll get an error
@@ -383,12 +375,13 @@ async function listBranches(repoPath, gitBin) {
 
   try {
     resolved = resolveRequestedPathForIpc(repoPath, { purpose: 'Branch list' })
-  } catch {
+  } catch (error) {
+    rethrowGitPolicyError(error)
     return []
   }
 
   try {
-    const [localOut, remoteOut] = await Promise.all([
+    const results = await Promise.allSettled([
       runGit(
         gitBin,
         ['for-each-ref', `--format=%(refname:short)${SEP}%(objectname)`, '--sort=-committerdate', 'refs/heads'],
@@ -400,6 +393,16 @@ async function listBranches(repoPath, gitBin) {
         resolved
       )
     ])
+
+    // Both requests must finish before a read falls back or rejects. Preserve
+    // typed policy refusal even when the other ref listing failed first.
+    for (const result of results) {
+      if (result.status === 'rejected') rethrowGitPolicyError(result.reason)
+    }
+    const [localOut, remoteOut] = results.map(result => {
+      if (result.status === 'rejected') throw result.reason
+      return result.value
+    })
 
     const trees = await listWorktrees(resolved, gitBin)
     const pathByBranch = new Map(trees.filter(tree => tree.branch).map(tree => [tree.branch, tree.path]))
@@ -452,7 +455,8 @@ async function listBranches(repoPath, gitBin) {
         sha: entry.sha
       }))
     ]
-  } catch {
+  } catch (error) {
+    rethrowGitPolicyError(error)
     return []
   }
 }
@@ -470,7 +474,8 @@ async function switchBranch(repoPath, branch, gitBin) {
 
   try {
     inside = (await runGit(gitBin, ['rev-parse', '--is-inside-work-tree'], resolved)).trim()
-  } catch {
+  } catch (error) {
+    rethrowGitPolicyError(error)
     // Not a git repo (or git unavailable): fall through to the short-circuit.
   }
 
@@ -498,7 +503,8 @@ async function listBaseBranches(repoPath, gitBin) {
 
   try {
     resolved = resolveRequestedPathForIpc(repoPath, { purpose: 'Base branch list' })
-  } catch {
+  } catch (error) {
+    rethrowGitPolicyError(error)
     return []
   }
 
@@ -541,7 +547,8 @@ async function listBaseBranches(repoPath, gitBin) {
           )
         }
       })
-  } catch {
+  } catch (error) {
+    rethrowGitPolicyError(error)
     return []
   }
 }

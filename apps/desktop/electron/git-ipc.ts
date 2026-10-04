@@ -4,6 +4,7 @@
 // resolvers stay injected because main.ts also uses them for self-update and
 // plugin installs.
 import { ipcMain } from 'electron'
+import { configureGitPolicyRuntime, type GitPolicyRuntime } from './git-execution-policy'
 
 import {
   branchCreate,
@@ -50,10 +51,12 @@ import {
 
 export interface GitIpcDeps {
   resolveGitBinary: () => string
-  resolveGhBinary: () => string
+  resolveGhBinary: () => string | null
+  resolveGitPolicyRuntime: () => GitPolicyRuntime | null
 }
 
-export function registerGitIpc({ resolveGitBinary, resolveGhBinary }: GitIpcDeps) {
+export function registerGitIpc({ resolveGitBinary, resolveGhBinary, resolveGitPolicyRuntime }: GitIpcDeps) {
+  configureGitPolicyRuntime(resolveGitPolicyRuntime, resolveGitBinary)
   // Git-driven worktree management ("Start work" flow). Errors surface to the
   // renderer as rejected promises so it can toast a friendly message.
   ipcMain.handle('hermes:git:worktreeList', async (_event, repoPath) => listWorktrees(repoPath, resolveGitBinary()))

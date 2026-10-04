@@ -126,8 +126,8 @@ def test_resolve_last_session_real_db_prefers_workspace(monkeypatch, tmp_path):
 
     monkeypatch.chdir(repo_a)
     monkeypatch.setattr(
-        "hermes_cli.main.subprocess.run",
-        lambda cmd, **kw: __import__("subprocess").CompletedProcess(
+        "hermes_cli._subprocess_compat.run_internal_git",
+        lambda cmd, cwd, **kw: __import__("subprocess").CompletedProcess(
             cmd, 0, stdout=str(repo_a), stderr=""
         ),
     )

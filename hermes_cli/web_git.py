@@ -19,7 +19,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from hermes_cli._subprocess_compat import noninteractive_git_env
+from hermes_cli._subprocess_compat import run_internal_git, run_internal_gh
 
 _GIT_TIMEOUT = 30
 _GH_TIMEOUT = 30
@@ -42,18 +42,7 @@ def _git(cwd: str, args: list[str], *, timeout: int = _GIT_TIMEOUT) -> tuple[int
     credential prompt from ``fetch``/``push``/``pull`` could never be answered
     — it would just hang the request until the timeout. Failing fast surfaces
     the real auth error in the toast instead."""
-    try:
-        proc = subprocess.run(
-            ["git", *args],
-            cwd=cwd,
-            capture_output=True,
-            text=True, encoding='utf-8', errors='replace',
-            timeout=timeout,
-            stdin=subprocess.DEVNULL,
-            env=noninteractive_git_env(),
-        )
-    except (OSError, subprocess.SubprocessError):
-        return 1, "", "git invocation failed"
+    proc = run_internal_git(args, cwd, timeout=timeout)
     return proc.returncode, proc.stdout, proc.stderr
 
 
@@ -491,20 +480,10 @@ def review_commit_context(cwd: str) -> dict:
 
 
 def _gh(cwd: str, args: list[str]) -> tuple[bool, str]:
-    if not shutil.which("gh"):
-        return False, ""
     # Same non-interactive contract as _git: these serve REST requests, so gh
     # must fail fast instead of prompting (GH_PROMPT_DISABLED is gh's own
     # documented kill-switch for interactive prompts).
-    env = noninteractive_git_env()
-    env["GH_PROMPT_DISABLED"] = "1"
-    try:
-        proc = subprocess.run(
-            ["gh", *args], cwd=cwd, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=_GH_TIMEOUT,
-            stdin=subprocess.DEVNULL, env=env,
-        )
-    except (OSError, subprocess.SubprocessError):
-        return False, ""
+    proc = run_internal_gh(args, cwd, timeout=_GH_TIMEOUT)
     return proc.returncode == 0, proc.stdout or ""
 
 

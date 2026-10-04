@@ -20,7 +20,7 @@ def test_get_git_commit_uses_live_git_when_available(tmp_path):
 
     git_result = MagicMock(returncode=0, stdout="deadbeef\n")
     # build_info should NOT be consulted when live git succeeds.
-    with patch("hermes_cli.dump.subprocess.run", return_value=git_result) as mock_run, \
+    with patch("hermes_cli._subprocess_compat.run_internal_git", return_value=git_result) as mock_run, \
          patch("hermes_cli.build_info.get_build_sha") as mock_build:
         commit = dump._get_git_commit(repo_dir)
 
@@ -44,12 +44,12 @@ def test_get_git_commit_output_format_identical_between_sources(tmp_path):
 
     # Live-git path.
     git_result = MagicMock(returncode=0, stdout="b2f477a3\n")
-    with patch("hermes_cli.dump.subprocess.run", return_value=git_result):
+    with patch("hermes_cli._subprocess_compat.run_internal_git", return_value=git_result):
         live = dump._get_git_commit(repo_dir)
 
     # Baked-SHA path.
     failed = MagicMock(returncode=128, stdout="")
-    with patch("hermes_cli.dump.subprocess.run", return_value=failed), \
+    with patch("hermes_cli._subprocess_compat.run_internal_git", return_value=failed), \
          patch("hermes_cli.build_info.get_build_sha", return_value="b2f477a3"):
         baked = dump._get_git_commit(repo_dir)
 
@@ -67,7 +67,7 @@ def test_get_git_commit_date_empty_when_git_fails(tmp_path):
     repo_dir.mkdir()
 
     failed = MagicMock(returncode=128, stdout="")
-    with patch("hermes_cli.dump.subprocess.run", return_value=failed):
+    with patch("hermes_cli._subprocess_compat.run_internal_git", return_value=failed):
         date = dump._get_git_commit_date(repo_dir)
 
     assert date == ""

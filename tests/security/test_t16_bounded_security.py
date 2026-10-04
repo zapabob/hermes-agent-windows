@@ -967,7 +967,7 @@ def test_watcher_state_read_rejects_oversized_status_file(
     assert status["running"] is False
 
 
-def test_bounded_process_retains_only_a_limited_output_tail() -> None:
+def test_bounded_process_retains_only_a_limited_output_tail(tmp_path: Path) -> None:
     result = run_bounded(
         [
             sys.executable,
@@ -976,6 +976,7 @@ def test_bounded_process_retains_only_a_limited_output_tail() -> None:
         ],
         timeout=10,
         max_output_bytes_per_stream=128,
+        cwd=tmp_path,
     )
 
     assert result.returncode == 0
@@ -986,16 +987,17 @@ def test_bounded_process_retains_only_a_limited_output_tail() -> None:
     assert result.output_truncated is True
 
 
-def test_bounded_process_terminates_a_timed_out_child() -> None:
+def test_bounded_process_terminates_a_timed_out_child(tmp_path: Path) -> None:
     with pytest.raises(subprocess.TimeoutExpired):
         run_bounded(
             [sys.executable, "-c", "import time; time.sleep(10)"],
             timeout=0.1,
             max_output_bytes_per_stream=64,
+            cwd=tmp_path,
         )
 
 
-def test_bounded_process_rejects_pipe_held_open_by_descendant() -> None:
+def test_bounded_process_rejects_pipe_held_open_by_descendant(tmp_path: Path) -> None:
     descendant_pid: int | None = None
     try:
         with pytest.raises(BoundedProcessOutputError) as raised:
@@ -1007,6 +1009,7 @@ def test_bounded_process_rejects_pipe_held_open_by_descendant() -> None:
                 ],
                 timeout=5,
                 max_output_bytes_per_stream=256,
+                cwd=tmp_path,
             )
         descendant_pid = int(raised.value.stdout.strip())
         import psutil
@@ -1032,7 +1035,7 @@ def test_bounded_process_rejects_pipe_held_open_by_descendant() -> None:
 
 
 @pytest.mark.skipif(os.name == "nt", reason="POSIX process groups enforce descendant quiescence")
-def test_bounded_process_rejects_descendant_that_closes_captured_pipes() -> None:
+def test_bounded_process_rejects_descendant_that_closes_captured_pipes(tmp_path: Path) -> None:
     descendant_pid: int | None = None
     try:
         try:
@@ -1044,6 +1047,7 @@ def test_bounded_process_rejects_descendant_that_closes_captured_pipes() -> None
                 ],
                 timeout=5,
                 max_output_bytes_per_stream=256,
+                cwd=tmp_path,
             )
             pytest.fail("bounded process returned while a detached descendant remained in its group")
         except BoundedProcessOutputError as exc:
@@ -1062,6 +1066,7 @@ def test_bounded_process_rejects_descendant_that_closes_captured_pipes() -> None
 @pytest.mark.skipif(os.name != "nt", reason="Windows process jobs enforce descendant-count limits")
 def test_bounded_process_marks_process_tree_over_256_as_incomplete(
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     monkeypatch.setattr(
         security_bounded_process,
@@ -1070,7 +1075,7 @@ def test_bounded_process_marks_process_tree_over_256_as_incomplete(
     )
 
     with pytest.raises(BoundedProcessOutputError):
-        run_bounded([sys.executable, "-c", "pass"], timeout=5)
+        run_bounded([sys.executable, "-c", "pass"], timeout=5, cwd=tmp_path)
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows suspended job setup is platform-specific")
@@ -1108,6 +1113,363 @@ def test_bounded_process_job_setup_failure_terminates_and_fails_closed(
     terminate.assert_called_once_with(process, job)
     close_job.assert_called_once_with(job)
     process.wait.assert_called_once_with(timeout=2)
+
+
+# S06 retained-owner repair receipt, 2026-10-04 (pure composition only):
+# CodeGraph status was up to date before product edits; query/explore/callers/
+# impact covered run_bounded and its dedicated owner regressions.
+# Input owner SHA256: ea5db927c02f3f7f16a440d9ee7b730726b11eef459f4554e4e84f78be905c3c
+# GREEN owner SHA256: 3536892ea6739ebcb797d27e3e3de47aecb7d32743a07e91b0bdeb37b5f2a5bd
+# RED: 8 behavioral failures / 2 passes (no missing-helper API errors).
+# GREEN: 16 new pure contracts + 2 existing job-setup regressions = 18 passes.
+# Isolated python -I -B, pytest --noconftest/no cache/no plugin autoload;
+# outer Popen/socket guards prohibit real children/network, inner fakes only.
+# Native lifecycle/CloseHandle proof and independent rereview remain pending.
+def _fake_retained_job_owner(monkeypatch: pytest.MonkeyPatch, *, start_failure=None,
+                             construct_failure=None, join_failure=None, patch_close=True,
+                             run_drain=False):
+    """No threads, native children, real handles or process signals in these fakes."""
+    job = object()
+    events = []
+    streams = [SimpleNamespace(close=Mock(), fileno=Mock(return_value=101)),
+               SimpleNamespace(close=Mock(), fileno=Mock(return_value=102))]
+    process = SimpleNamespace(pid=4242, stdout=streams[0], stderr=streams[1],
+                              wait=Mock(return_value=0), poll=Mock(return_value=0))
+    readers = []
+
+    class Reader:
+        def __init__(self, **kwargs):
+            self.index = len(readers)
+            if self.index == construct_failure:
+                raise RuntimeError("synthetic reader construction failure")
+            self.started = False
+            self.joins = []
+            self.target, self.args = kwargs['target'], kwargs['args']
+            readers.append(self)
+
+        def start(self):
+            events.append(("start", self.index))
+            if self.index == start_failure:
+                raise RuntimeError("synthetic reader startup failure")
+            self.started = True
+            if run_drain:
+                self.target(*self.args)
+
+        def join(self, timeout):
+            assert self.started, "must not join an unstarted reader"
+            self.joins.append(timeout)
+            if self.index == join_failure:
+                raise RuntimeError("synthetic reader join failure")
+
+        def is_alive(self):
+            return False
+
+    terminate, close, counts = Mock(), Mock(), Mock(return_value=(1, 0))
+    monkeypatch.setattr(security_bounded_process, "_create_windows_job", lambda: job)
+    monkeypatch.setattr(security_bounded_process, "_assign_windows_job", Mock())
+    monkeypatch.setattr(security_bounded_process, "_resume_suspended_process", Mock())
+    monkeypatch.setattr(security_bounded_process, "_terminate_process_tree", terminate)
+    monkeypatch.setattr(security_bounded_process, "_windows_job_process_counts", counts)
+    if patch_close:
+        monkeypatch.setattr(security_bounded_process, "_close_windows_job", close)
+    monkeypatch.setattr(security_bounded_process.subprocess, "Popen", Mock(return_value=process))
+    monkeypatch.setattr(security_bounded_process.threading, "Thread", Reader)
+    return SimpleNamespace(job=job, process=process, readers=readers, streams=streams,
+                           terminate=terminate, close=close, counts=counts, events=events)
+
+
+@pytest.mark.windows_only
+def test_retained_job_windows_spawn_is_hidden_and_suspended_until_assigned(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    owner = _fake_retained_job_owner(monkeypatch)
+    popen = security_bounded_process.subprocess.Popen
+    popen.side_effect = lambda *args, **kwargs: (
+        owner.events.append(("popen",)), owner.process
+    )[1]
+    monkeypatch.setattr(security_bounded_process, "_assign_windows_job",
+        lambda job, process: owner.events.append(("assign", job, process)))
+    monkeypatch.setattr(security_bounded_process, "_resume_suspended_process",
+        lambda pid: owner.events.append(("resume", pid)))
+    arguments = ["owned-pure-fake.exe", "--captured-probe"]
+    environment = {"OWNED_PROBE": "inert"}
+
+    result = run_bounded(arguments, timeout=5, cwd=tmp_path, env=environment)
+
+    assert result == BoundedProcessResult(0, "", "", False)
+    popen.assert_called_once()
+    assert popen.call_args.args == (arguments,)
+    options = popen.call_args.kwargs
+    # Exact flags also reject detached/new-console/breakaway authority.
+    assert options["creationflags"] == 0x00000004 | subprocess.CREATE_NO_WINDOW
+    assert options["start_new_session"] is False
+    assert options["close_fds"] is True
+    assert options["cwd"] == str(tmp_path)
+    assert options["env"] == environment
+    assert options["stdin"] == subprocess.DEVNULL
+    assert options["stdout"] == options["stderr"] == subprocess.PIPE
+    assert owner.events[:3] == [
+        ("popen",), ("assign", owner.job, owner.process), ("resume", owner.process.pid)
+    ]
+    assert owner.events[3:] == [("start", 0), ("start", 1)]
+    owner.terminate.assert_not_called()
+    owner.close.assert_called_once_with(owner.job)
+
+
+@pytest.mark.windows_only
+@pytest.mark.parametrize("failed_reader", (0, 1))
+def test_retained_job_reader_start_failure_reaps_and_joins_only_started(
+    monkeypatch: pytest.MonkeyPatch, failed_reader: int,
+) -> None:
+    owner = _fake_retained_job_owner(monkeypatch, start_failure=failed_reader)
+    with pytest.raises(RuntimeError, match="synthetic reader startup failure"):
+        run_bounded(["owned-pure-fake.exe"], timeout=5)
+    owner.terminate.assert_called_once_with(owner.process, owner.job)
+    owner.close.assert_called_once_with(owner.job)
+    owner.process.wait.assert_called_once_with(timeout=2)
+    for reader in owner.readers:
+        assert bool(reader.joins) is reader.started
+    for stream in owner.streams:
+        stream.close.assert_called_once_with()
+
+
+@pytest.mark.windows_only
+def test_retained_job_accounting_exception_still_reaps_and_closes(monkeypatch: pytest.MonkeyPatch) -> None:
+    owner = _fake_retained_job_owner(monkeypatch)
+    owner.counts.side_effect = RuntimeError("synthetic Job accounting failure")
+    with pytest.raises(RuntimeError, match="synthetic Job accounting failure"):
+        run_bounded(["owned-pure-fake.exe"], timeout=5)
+    owner.terminate.assert_called_once_with(owner.process, owner.job)
+    owner.close.assert_called_once_with(owner.job)
+    assert owner.process.wait.call_args_list[-1].kwargs == {"timeout": 2}
+
+
+def _fake_job_close_api(monkeypatch: pytest.MonkeyPatch, success: bool):
+    close = Mock(return_value=success)
+
+    def win_error(code, description):
+        error = OSError(code, description)
+        error.winerror = code
+        return error
+
+    api = Mock(return_value=(SimpleNamespace(get_last_error=lambda: 6, WinError=win_error),
+                             SimpleNamespace(HANDLE=lambda handle: handle),
+                             SimpleNamespace(CloseHandle=close)))
+    monkeypatch.setattr(security_bounded_process, "_windows_api", api)
+    return close, api
+
+
+def test_retained_job_close_false_is_typed_unknown(monkeypatch: pytest.MonkeyPatch) -> None:
+    close, _ = _fake_job_close_api(monkeypatch, False)
+    job = object()
+    with pytest.raises(OSError, match="cleanup is unknown") as error:
+        security_bounded_process._close_windows_job(job)
+    assert error.value.winerror == 6
+    close.assert_called_once_with(job)
+
+
+@pytest.mark.windows_only
+def test_retained_job_close_failure_composition_reaps_and_cannot_return_success(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    owner = _fake_retained_job_owner(monkeypatch, patch_close=False)
+    close, _ = _fake_job_close_api(monkeypatch, False)
+    with pytest.raises(OSError, match="cleanup is unknown") as error:
+        run_bounded(["owned-pure-fake.exe"], timeout=5)
+    assert error.value.winerror == 6
+    close.assert_called_once_with(owner.job)
+    owner.terminate.assert_called_once_with(owner.process, owner.job)
+    assert owner.process.wait.call_args_list[-1].kwargs == {"timeout": 2}
+
+
+@pytest.mark.windows_only
+def test_retained_job_healthy_lifecycle_does_not_signal_completed_child(monkeypatch: pytest.MonkeyPatch) -> None:
+    owner = _fake_retained_job_owner(monkeypatch, patch_close=False)
+    close, _ = _fake_job_close_api(monkeypatch, True)
+    result = run_bounded(["owned-pure-fake.exe"], timeout=5)
+    assert result == BoundedProcessResult(0, "", "", False)
+    owner.terminate.assert_not_called()
+    close.assert_called_once_with(owner.job)
+    assert all(reader.joins for reader in owner.readers)
+
+
+def test_retained_job_none_does_not_call_native_close(monkeypatch: pytest.MonkeyPatch) -> None:
+    _, api = _fake_job_close_api(monkeypatch, True)
+    security_bounded_process._close_windows_job(None)
+    api.assert_not_called()
+
+
+@pytest.mark.windows_only
+@pytest.mark.parametrize("failure_stage", ("construction", "join", "wait"))
+def test_retained_job_other_lifecycle_exception_always_reaps_and_closes(
+    monkeypatch: pytest.MonkeyPatch, failure_stage: str,
+) -> None:
+    owner = _fake_retained_job_owner(monkeypatch,
+        construct_failure=1 if failure_stage == "construction" else None,
+        join_failure=0 if failure_stage == "join" else None)
+    if failure_stage == "wait":
+        owner.process.wait.side_effect = [RuntimeError("synthetic wait failure"), 0]
+    with pytest.raises(RuntimeError, match="synthetic"):
+        run_bounded(["owned-pure-fake.exe"], timeout=5)
+    owner.terminate.assert_called_with(owner.process, owner.job)
+    owner.close.assert_called_once_with(owner.job)
+    assert owner.process.wait.call_args_list[-1].kwargs == {"timeout": 2}
+
+
+@pytest.mark.windows_only
+def test_retained_job_output_tail_contract_with_pure_pipe_fakes(monkeypatch: pytest.MonkeyPatch) -> None:
+    owner = _fake_retained_job_owner(monkeypatch, run_drain=True)
+    chunks = {101: [b"a" * 10000 + b"TAIL", b""], 102: [b"b" * 10000 + b"END", b""]}
+    monkeypatch.setattr(security_bounded_process.os, "read", lambda descriptor, _size: chunks[descriptor].pop(0))
+    result = run_bounded(["owned-pure-fake.exe"], timeout=5, max_output_bytes_per_stream=128)
+    assert result.stdout == "a" * 124 + "TAIL"
+    assert result.stderr == "b" * 125 + "END"
+    assert result.output_truncated is True
+    owner.close.assert_called_once_with(owner.job)
+
+
+@pytest.mark.windows_only
+@pytest.mark.parametrize("read_error", (OSError, ValueError))
+def test_retained_job_pipe_read_error_remains_typed_with_pure_fakes(
+    monkeypatch: pytest.MonkeyPatch, read_error,
+) -> None:
+    owner = _fake_retained_job_owner(monkeypatch, run_drain=True)
+    monkeypatch.setattr(security_bounded_process.os, "read", Mock(side_effect=read_error("synthetic pipe failure")))
+    with pytest.raises(BoundedProcessOutputError) as error:
+        run_bounded(["owned-pure-fake.exe"], timeout=5)
+    assert error.value.reason == "output_pipe_read_failed"
+    owner.terminate.assert_called_with(owner.process, owner.job)
+    owner.close.assert_called_once_with(owner.job)
+
+
+@pytest.mark.windows_only
+def test_retained_job_timeout_remains_typed_and_reaped_with_pure_fakes(monkeypatch: pytest.MonkeyPatch) -> None:
+    owner = _fake_retained_job_owner(monkeypatch)
+    owner.process.wait.side_effect = [subprocess.TimeoutExpired(["owned-pure-fake.exe"], 5), 0]
+    with pytest.raises(subprocess.TimeoutExpired) as error:
+        run_bounded(["owned-pure-fake.exe"], timeout=5)
+    assert error.value.timeout == 5
+    assert error.value.output == ""
+    owner.terminate.assert_called_once_with(owner.process, owner.job)
+    owner.close.assert_called_once_with(owner.job)
+
+
+@pytest.mark.windows_only
+@pytest.mark.parametrize("counts", ((1, 1), (256, 0)))
+def test_retained_job_active_or_limited_accounting_never_returns_success(
+    monkeypatch: pytest.MonkeyPatch, counts,
+) -> None:
+    owner = _fake_retained_job_owner(monkeypatch)
+    owner.counts.return_value = counts
+    with pytest.raises(BoundedProcessOutputError) as error:
+        run_bounded(["owned-pure-fake.exe"], timeout=5)
+    assert error.value.reason == "process_tree_limit_or_active_descendant"
+    owner.terminate.assert_called_once_with(owner.process, owner.job)
+    owner.close.assert_called_once_with(owner.job)
+
+
+def _fake_retained_job_clock(monkeypatch: pytest.MonkeyPatch):
+    clock = SimpleNamespace(now=100.0, sleeps=[])
+
+    def sleep(seconds):
+        assert seconds > 0
+        clock.sleeps.append(seconds)
+        clock.now += seconds
+
+    monkeypatch.setattr(security_bounded_process, "time",
+                        SimpleNamespace(monotonic=lambda: clock.now, sleep=sleep), raising=False)
+    return clock
+
+
+@pytest.mark.windows_only
+@pytest.mark.parametrize("samples,elapsed", (
+    ([(3, 1), (3, 0)], 0.2),
+    ([(3, 1), (3, 1), (3, 0)], 0.2),
+    ([(3, 1), (3, 0)], 9.995),
+))
+def test_retained_job_quiescence_transient_within_original_deadline(
+    monkeypatch: pytest.MonkeyPatch, samples, elapsed,
+) -> None:
+    owner = _fake_retained_job_owner(monkeypatch)
+    clock = _fake_retained_job_clock(monkeypatch)
+    owner.process.wait.side_effect = lambda **_kwargs: (setattr(clock, "now", 100.0 + elapsed), 0)[1]
+    owner.counts.side_effect = samples
+
+    result = run_bounded(["owned-pure-fake.exe"], timeout=10)
+
+    assert result == BoundedProcessResult(0, "", "", False)
+    assert 0 < sum(clock.sleeps) <= min(0.25, 10 - elapsed) + 1e-10
+    assert clock.now <= 110.0
+    owner.terminate.assert_not_called()
+    owner.close.assert_called_once_with(owner.job)
+
+
+@pytest.mark.windows_only
+@pytest.mark.parametrize("elapsed", (0.2, 9.995, 10.0))
+def test_retained_job_quiescence_persistent_active_is_bounded_and_reaped(
+    monkeypatch: pytest.MonkeyPatch, elapsed: float,
+) -> None:
+    owner = _fake_retained_job_owner(monkeypatch)
+    clock = _fake_retained_job_clock(monkeypatch)
+    owner.process.wait.side_effect = lambda **_kwargs: (setattr(clock, "now", max(clock.now, 100.0 + elapsed)), 0)[1]
+    owner.counts.return_value = (3, 1)
+
+    with pytest.raises(BoundedProcessOutputError) as error:
+        run_bounded(["owned-pure-fake.exe"], timeout=10)
+
+    assert error.value.reason == "process_tree_limit_or_active_descendant"
+    assert sum(clock.sleeps) <= min(0.25, max(0, 10 - elapsed)) + 1e-10
+    assert clock.now <= 110.0
+    if elapsed == 10.0:
+        assert clock.sleeps == []
+        assert owner.counts.call_count == 1
+    owner.terminate.assert_called_once_with(owner.process, owner.job)
+    owner.close.assert_called_once_with(owner.job)
+
+
+@pytest.mark.windows_only
+@pytest.mark.parametrize("counts", ((256, 1), (256, 0), (257, 0)))
+def test_retained_job_quiescence_unknown_or_tree_limit_is_immediate(
+    monkeypatch: pytest.MonkeyPatch, counts,
+) -> None:
+    owner = _fake_retained_job_owner(monkeypatch)
+    clock = _fake_retained_job_clock(monkeypatch)
+    # (256, 1) is the existing QueryInformationJobObject UNKNOWN sentinel.
+    owner.counts.side_effect = [counts, (3, 0)]
+    with pytest.raises(BoundedProcessOutputError):
+        run_bounded(["owned-pure-fake.exe"], timeout=10)
+    assert owner.counts.call_count == 1
+    assert clock.sleeps == []
+    owner.terminate.assert_called_once_with(owner.process, owner.job)
+    owner.close.assert_called_once_with(owner.job)
+
+
+@pytest.mark.windows_only
+def test_retained_job_quiescence_followup_exception_still_reaps_and_closes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    owner = _fake_retained_job_owner(monkeypatch)
+    clock = _fake_retained_job_clock(monkeypatch)
+    owner.counts.side_effect = [(3, 1), RuntimeError("synthetic followup accounting failure")]
+    with pytest.raises(RuntimeError, match="synthetic followup accounting failure"):
+        run_bounded(["owned-pure-fake.exe"], timeout=10)
+    assert sum(clock.sleeps) <= 0.25
+    owner.terminate.assert_called_once_with(owner.process, owner.job)
+    owner.close.assert_called_once_with(owner.job)
+
+
+@pytest.mark.windows_only
+def test_retained_job_quiescence_launch_time_is_charged_to_single_deadline(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    owner = _fake_retained_job_owner(monkeypatch)
+    clock = _fake_retained_job_clock(monkeypatch)
+    monkeypatch.setattr(security_bounded_process, "_assign_windows_job",
+                        lambda *_args: setattr(clock, "now", 102.0))
+    run_bounded(["owned-pure-fake.exe"], timeout=10)
+    owner.process.wait.assert_called_once_with(timeout=8.0)
+    owner.terminate.assert_not_called()
+    owner.close.assert_called_once_with(owner.job)
 
 
 def test_scan_roots_and_direct_file_targets_reject_symlinks_without_scanning_outside(
@@ -1591,6 +1953,7 @@ def test_watcher_root_limit_remains_incomplete_until_inventory_recovers(
 
 def test_bounded_process_pipe_read_failure_is_typed_and_fails_closed(
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     monkeypatch.setattr(
         security_bounded_process.os,
@@ -1603,6 +1966,7 @@ def test_bounded_process_pipe_read_failure_is_typed_and_fails_closed(
             [sys.executable, "-c", "print('benign scanner output')"],
             timeout=10,
             max_output_bytes_per_stream=128,
+            cwd=tmp_path,
         )
 
     assert error.value.reason == "output_pipe_read_failed"

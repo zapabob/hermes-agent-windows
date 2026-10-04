@@ -358,9 +358,46 @@ def test_reinstall_after_manual_directory_removal_retains_pin(monkeypatch, tmp_p
     target, _manifest, _name = _install_plugin_core(
         repo.as_uri(), force=False, ref=old_sha
     )
-    shutil.rmtree(target)
+    from hermes_cli.plugins_cmd import _remove_plugin_tree
+    _remove_plugin_tree(target)
 
     target, _manifest, _name = _install_plugin_core(repo.as_uri(), force=False)
 
     assert _git(target, "rev-parse", "HEAD") == old_sha
     assert _metadata(home)["demo"]["pinned"] is True
+
+
+def test_reinstall_rollback_cleanup_failure_keeps_previous_plugin(monkeypatch, tmp_path):
+    from hermes_cli import plugins_cmd as pc
+
+    repo, old_sha, new_sha = _plugin_repo(tmp_path)
+    home = tmp_path / "home"
+    monkeypatch.setenv("HERMES_HOME", str(home))
+    target, _, _ = pc._install_plugin_core(repo.as_uri(), force=False, ref=old_sha)
+    before = _metadata(home)
+    monkeypatch.setattr(pc, "_write_install_metadata", lambda data: (_ for _ in ()).throw(OSError("disk full")))
+    monkeypatch.setattr(pc, "_remove_plugin_tree", lambda path: (_ for _ in ()).throw(PermissionError("owned cleanup failure")), raising=False)
+    with pytest.raises(pc.PluginOperationError, match="recovery copy"):
+        pc._install_plugin_core(repo.as_uri(), force=True, ref=new_sha)
+    backups = list((home / "plugins").glob(".demo.reinstall-*/previous-plugin"))
+    assert len(backups) == 1
+    assert _git(backups[0], "rev-parse", "HEAD") == old_sha
+    assert _metadata(home) == before
+    assert target.exists()
+
+
+def test_removal_of_readonly_git_objects_succeeds(monkeypatch, tmp_path):
+    from hermes_cli import plugins_cmd as pc
+
+    repo, old_sha, _ = _plugin_repo(tmp_path)
+    home = tmp_path / "home"
+    monkeypatch.setenv("HERMES_HOME", str(home))
+    target, _, _ = pc._install_plugin_core(repo.as_uri(), force=False, ref=old_sha)
+    objects = [p for p in (target / ".git" / "objects").rglob("*") if p.is_file()]
+    assert objects
+    for obj in objects:
+        obj.chmod(0o400)
+    pc._remove_plugin_core(target)
+    assert not target.exists()
+    assert "demo" not in _metadata(home)
+    assert not list((home / "plugins").glob(".demo.remove-*"))

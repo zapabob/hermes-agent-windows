@@ -1645,11 +1645,11 @@ def _resolve_workspace_key() -> Optional[str]:
     neither can be determined — callers fall back to the global MRU then.
     """
     try:
-        import subprocess
+        from hermes_cli._subprocess_compat import run_internal_git
 
-        result = subprocess.run(
-            ["git", "rev-parse", "--show-toplevel"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5,
+        result = run_internal_git(
+            ["rev-parse", "--show-toplevel"], os.getcwd(),
+            timeout=5, check_policy=True,
         )
         if result.returncode == 0 and result.stdout.strip():
             return os.path.abspath(result.stdout.strip())
@@ -2516,20 +2516,19 @@ def _restore_tui_workspace(tui_dir: Path) -> bool:
     or the restore leaves the directory still missing — the caller then prints
     the manual-recovery message.
     """
+    from hermes_cli._subprocess_compat import GitPolicyError, run_internal_git
+
     git = shutil.which("git")
     if not git or not (tui_dir.parent / ".git").exists():
         return False
     try:
-        subprocess.run(
-            [git, "restore", "--", tui_dir.name],
-            cwd=str(tui_dir.parent),
-            capture_output=True,
-            text=True, encoding="utf-8", errors="replace",
-            check=False,
+        result = run_internal_git(
+            ["restore", "--", tui_dir.name], tui_dir.parent,
+            timeout=10, git_bin=git, check_policy=True,
         )
-    except OSError:
+    except (GitPolicyError, OSError):
         return False
-    return tui_dir.is_dir()
+    return result.returncode == 0 and tui_dir.is_dir()
 
 
 def _ensure_tui_workspace(tui_dir: Path) -> None:

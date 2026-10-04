@@ -30,12 +30,12 @@ def test_get_git_banner_state_reads_origin_and_head(tmp_path):
     }
 
     def fake_run(cmd, **kwargs):
-        key = tuple(cmd)
+        key = ("git", *cmd)
         if key not in results:
             raise AssertionError(f"unexpected command: {cmd}")
         return results[key]
 
-    with patch("hermes_cli.banner.subprocess.run", side_effect=fake_run):
+    with patch.object(banner, "_git_run", side_effect=fake_run):
         state = banner.get_git_banner_state(repo_dir)
 
     assert state == {"upstream": "b2f477a3", "local": "af8aad31", "ahead": 3}
@@ -66,7 +66,7 @@ def test_check_via_local_git_ssh_fastpath_ahead_not_behind(tmp_path):
         patch.object(banner, "_git_stdout", side_effect=fake_git_stdout),
         patch.object(banner, "_upstream_main_sha", return_value="a" * 40),
         # merge-base --is-ancestor exits 0: upstream tip IS an ancestor of HEAD
-        patch.object(banner.subprocess, "run", return_value=MagicMock(returncode=0)),
+        patch.object(banner, "_git_run", return_value=MagicMock(returncode=0)),
     ):
         behind = banner._check_via_local_git(repo_dir)
 
@@ -93,7 +93,7 @@ def test_check_via_local_git_ssh_fastpath_genuinely_behind(tmp_path):
         patch.object(banner, "_git_stdout", side_effect=fake_git_stdout),
         patch.object(banner, "_upstream_main_sha", return_value="a" * 40),
         # merge-base --is-ancestor exits 1: not an ancestor -> genuinely behind
-        patch.object(banner.subprocess, "run", return_value=MagicMock(returncode=1)),
+        patch.object(banner, "_git_run", return_value=MagicMock(returncode=1)),
         patch.object(banner, "_github_compare_behind", return_value=3),
     ):
         behind = banner._check_via_local_git(repo_dir)
@@ -120,7 +120,7 @@ def test_check_via_local_git_ssh_fastpath_offline_keeps_sentinel(tmp_path):
     with (
         patch.object(banner, "_git_stdout", side_effect=fake_git_stdout),
         patch.object(banner, "_upstream_main_sha", return_value="a" * 40),
-        patch.object(banner.subprocess, "run", return_value=MagicMock(returncode=1)),
+        patch.object(banner, "_git_run", return_value=MagicMock(returncode=1)),
         patch.object(banner, "_github_compare_behind", return_value=None),
     ):
         behind = banner._check_via_local_git(repo_dir)

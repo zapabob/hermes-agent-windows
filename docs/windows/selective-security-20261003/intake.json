@@ -834,8 +834,42 @@
         }
       },
       "downstream_owner_files": [
+        "agent/context_references.py",
+        "agent/trace_upload.py",
+        "apps/desktop/assets/git-transport.cjs",
+        "apps/desktop/electron/git-execution-policy.ts",
+        "apps/desktop/electron/git-ipc.ts",
+        "apps/desktop/electron/git-ref-ops.ts",
+        "apps/desktop/electron/git-review-ops.ts",
+        "apps/desktop/electron/git-worktree-ops.ts",
+        "apps/desktop/electron/main.ts",
+        "apps/desktop/electron/python-backend-command.ts",
+        "cli.py",
+        "downstream/security/bounded_process.py",
         "hermes_cli/_subprocess_compat.py",
-        "tools/subagent_worktree.py"
+        "hermes_cli/banner.py",
+        "hermes_cli/cli_commands_mixin.py",
+        "hermes_cli/dashboard_managed_files.py",
+        "hermes_cli/diagnostics_local_export.py",
+        "hermes_cli/dump.py",
+        "hermes_cli/gitlock.py",
+        "hermes_cli/goals.py",
+        "hermes_cli/kanban_db.py",
+        "hermes_cli/main.py",
+        "hermes_cli/mcp_catalog.py",
+        "hermes_cli/plugins_cmd.py",
+        "hermes_cli/profile_distribution.py",
+        "hermes_cli/update_cmd.py",
+        "hermes_cli/web_git.py",
+        "hermes_cli/web_server.py",
+        "hermes_cli/worktree_gc.py",
+        "tools/checkpoint_manager.py",
+        "tools/subagent_worktree.py",
+        "tools/working_diff.py",
+        "tui_gateway/compute_host.py",
+        "tui_gateway/host_supervisor.py",
+        "tui_gateway/server.py",
+        "utils.py"
       ],
       "downstream_blob_sha": {
         "hermes_cli/_subprocess_compat.py": {
@@ -847,13 +881,32 @@
           "sha256": "37edf22fd919ede3f0dcae0467813d596b03ca181bb42a0e25eff101bf54bbc5"
         }
       },
-      "existing_downstream_protection": "PENDING_SOURCE_BOUND_REVIEW",
-      "actual_gap": "PENDING_RED",
-      "RED_test": "PENDING",
-      "minimum_change": "PENDING_OWNER_REVIEW",
-      "regression_suite": "PENDING",
-      "mutation_set": "PENDING",
-      "E2E": "NOT_RUN",
+      "existing_downstream_protection": "Compose existing bounded Windows process owner; preserve EOL/no-index exit-one, selected-repository UI, existing worktree semantics and noninteractive credentials policy.",
+      "actual_gap": "Repository filter/include execution and unchecked updater/plugin state/restoration failures.",
+      "RED_test": {
+        "receipt": "S06/acceptance-20261005.json",
+        "section": "RED_provenance",
+        "original_native_failed": 12,
+        "filter_native_failed": 9,
+        "updater_failed": 8,
+        "plugin_rollback_failed": 3,
+        "invalid_fixture_setup_timeout_is_RED": false
+      },
+      "minimum_change": "Neutralize repository-named Git filters with case-exact bounded include discovery; route existing callers through typed refusal; retain failed restoration stash identity.",
+      "regression_suite": {
+        "receipt": "S06/acceptance-20261005.json",
+        "python_passed": 866,
+        "python_skipped": 12,
+        "python_explicit_excluded": 3,
+        "desktop_passed": 71,
+        "types": "PASS"
+      },
+      "mutation_set": {
+        "product_killed": 5,
+        "fixture_killed": 22,
+        "M05": "UNVERIFIED"
+      },
+      "E2E": "Seven Windows native jobs with complete CREATE/EXIT/held-handle/Job/owned-port accounting; desktop renderer UI and model inference are not covered.",
       "discovery_credit": "UNVERIFIED_REPORTER",
       "upstream_implementation_provenance": [
         "c77a2dda9fc7e75b5a8462bafe16bae74383f6cc\nJoaoMarcos44 <joaomarcosdias444@gmail.com>\nkshitij <82637225+kshitijk4poor@users.noreply.github.com>\nfix(git): add noninteractive_repo_git_env to neutralize repository-named filters",
@@ -861,8 +914,9 @@
         "22a81ca50ae728256f564e9fb423327674eabb6c\nkshitijk4poor <82637225+kshitijk4poor@users.noreply.github.com>\nkshitij <82637225+kshitijk4poor@users.noreply.github.com>\nfix(git): neutralize filters named in includeIf targets instead of refusing the repo",
         "13ea517514fd8fcc0c533df2ce094356b8fae948\nJohn Paul Soliva <soliva.johnpaul@icloud.com>\nkshitij <82637225+kshitijk4poor@users.noreply.github.com>\nfix(git): run the worktree reclaim ls-remote, unshallow fetch and prune under noninteractive_git_env"
       ],
-      "downstream_implementation_provenance": "NOT_IMPLEMENTED",
-      "result": "PENDING_CODEGRAPH"
+      "downstream_implementation_provenance": "Selective S06 composition on current fork main; pinned upstream authors remain recorded above.",
+      "result": "ACCEPTED_LOCAL_S06_GATES_PUBLICATION_CI_RUNTIME_SEPARATE",
+      "acceptance_receipt": "S06/acceptance-20261005.json"
     },
     {
       "family_id": "S07",

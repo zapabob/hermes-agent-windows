@@ -34,6 +34,19 @@ from tools.checkpoint_manager import (
 # Fixtures
 # =========================================================================
 
+@pytest.fixture(autouse=True)
+def isolate_project_markers(tmp_path, monkeypatch):
+    # A test-owned project must not adopt the surrounding checkout as its root.
+    markers = {".git", "pyproject.toml", "package.json", "Cargo.toml", "go.mod",
+               "Makefile", "pom.xml", ".hg", "Gemfile"}
+    exists = Path.exists
+    def scoped_exists(path):
+        if path.name in markers and not path.is_relative_to(tmp_path):
+            return False
+        return exists(path)
+    monkeypatch.setattr(Path, "exists", scoped_exists)
+
+
 @pytest.fixture()
 def work_dir(tmp_path):
     d = tmp_path / "project"
@@ -613,7 +626,7 @@ class TestWorkingDirResolution:
             s = str(self)
             stop = str(tmp_path)
             if not s.startswith(stop) and any(
-                s.endswith("/" + m) or s == "/" + m
+                _pl.Path(s).name == m
                 for m in (".git", "pyproject.toml", "package.json",
                           "Cargo.toml", "go.mod", "Makefile", "pom.xml",
                           ".hg", "Gemfile")
@@ -650,7 +663,7 @@ class TestGitEnvIsolation:
         env = _git_env(
             store, str(work), index_file=store / "indexes" / "abc",
         )
-        assert env["GIT_INDEX_FILE"].endswith("indexes/abc")
+        assert Path(env["GIT_INDEX_FILE"]) == store / "indexes" / "abc"
 
         # ~ in the work tree is expanded.
         tilde_work = fake_home / "work"
@@ -673,7 +686,7 @@ class TestErrorResilience:
             args=["git", "diff", "--cached", "--quiet"],
             returncode=1, stdout="", stderr="",
         )
-        with patch("tools.checkpoint_manager.subprocess.run", return_value=completed):
+        with patch("tools.checkpoint_manager.bounded_probe_run", return_value=completed):
             with caplog.at_level(logging.ERROR, logger="tools.checkpoint_manager"):
                 ok, stdout, stderr = _run_git(
                     ["diff", "--cached", "--quiet"],

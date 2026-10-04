@@ -313,18 +313,8 @@ def _fs_default_cwd() -> str:
 
 def _fs_git_branch(cwd: str) -> str:
     try:
-        run_kwargs: Dict[str, Any] = {
-            "capture_output": True,
-            "text": True,
-            "timeout": 2,
-            "check": False,
-        }
-        if sys.platform == "win32":
-            run_kwargs["creationflags"] = windows_hide_flags()
-        result = subprocess.run(
-            ["git", "-C", cwd, "branch", "--show-current"],
-            **run_kwargs,
-        )
+        from hermes_cli._subprocess_compat import run_internal_git
+        result = run_internal_git(["branch", "--show-current"], cwd=cwd, timeout=2)
         return result.stdout.strip() if result.returncode == 0 else ""
     except Exception:
         return ""

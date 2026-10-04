@@ -33,6 +33,11 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
+import time
+from contextvars import ContextVar
+from functools import wraps
+from pathlib import Path
 from typing import Mapping, Sequence
 
 __all__ = [
@@ -47,6 +52,13 @@ __all__ = [
     "bounded_git_probe",
     "bounded_probe_run",
     "noninteractive_git_env",
+    "noninteractive_repo_git_env",
+    "harden_git_argv",
+    "FILTER_DISCOVERY_FAILED",
+    "GitPolicyError",
+    "run_internal_git",
+    "clone_git_repository",
+    "run_internal_gh",
     "pid_is_hermes",
 ]
 
@@ -398,7 +410,13 @@ def noninteractive_git_env(
     # Drop caller-supplied config injection; the GIT_CONFIG_COUNT block is rebuilt below so
     # ambient -c values cannot re-enable pagers, hooks, fsmonitor, editors or credential prompts.
     for key in list(env):
-        if key == "GIT_CONFIG_PARAMETERS" or key.startswith(_GIT_CONFIG_INJECT_PREFIXES):
+        canonical = key.upper() if IS_WINDOWS else key
+        if canonical in ("GIT_CONFIG", "GIT_CONFIG_PARAMETERS", "GIT_CONFIG_COUNT") or canonical.startswith(_GIT_CONFIG_INJECT_PREFIXES):
+            env.pop(key, None)
+        elif key != canonical and canonical in {
+            "GIT_TERMINAL_PROMPT", "GCM_INTERACTIVE", "GIT_CONFIG_GLOBAL",
+            "GIT_CONFIG_SYSTEM", "GIT_CONFIG_NOSYSTEM", "GIT_PAGER", "PAGER", "GIT_EDITOR",
+        }:
             env.pop(key, None)
     env.pop("GIT_CONFIG_COUNT", None)
     env["GIT_CONFIG_GLOBAL"] = os.devnull
@@ -412,6 +430,415 @@ def noninteractive_git_env(
         env[f"GIT_CONFIG_KEY_{idx}"] = key
         env[f"GIT_CONFIG_VALUE_{idx}"] = value
     return env
+
+
+FILTER_DISCOVERY_FAILED = "git filter discovery failed"
+
+
+class GitPolicyError(RuntimeError):
+    """Internal Git policy refused an operation; recovery must not bypass it."""
+
+
+def git_policy_environment_valid(env: Mapping[str, str], base: Mapping[str, str] | None = None) -> bool:
+    """Check required controls using the existing static policy as authority."""
+    expected = noninteractive_git_env(base)
+    def effective(values):
+        count = int(values['GIT_CONFIG_COUNT'])
+        if not 1 <= count <= 1000:
+            raise ValueError('invalid configuration count')
+        result = {}
+        for index in range(count):
+            key, value = values[f'GIT_CONFIG_KEY_{index}'], values[f'GIT_CONFIG_VALUE_{index}']
+            if not isinstance(key, str) or not isinstance(value, str):
+                raise ValueError('invalid configuration entry')
+            result[key.lower()] = value
+        return result
+    try:
+        actual = effective(env)
+        if any(actual.get(key) != value for key, value in effective(expected).items()):
+            return False
+        names = ('GIT_TERMINAL_PROMPT', 'GCM_INTERACTIVE', 'GIT_CONFIG_GLOBAL',
+                 'GIT_CONFIG_SYSTEM', 'GIT_CONFIG_NOSYSTEM', 'GIT_PAGER', 'PAGER', 'GIT_EDITOR')
+        return all(env.get(key) == expected[key] for key in names)
+    except (KeyError, ValueError, TypeError, AttributeError):
+        return False
+
+
+NO_DRIVER_DIFF_FLAGS = ("--no-ext-diff", "--no-textconv")
+_FILTER_COMMAND_KEY = re.compile(r"^filter\..+\.(?:clean|smudge|process)$", re.IGNORECASE)
+_INCLUDE_IF_KEY = re.compile(r"^includeif\..*\.path$", re.IGNORECASE)
+_INCLUDE_KEY = re.compile(r"^include(?:if\..*)?\.path$", re.IGNORECASE)
+_DISCOVERY_KEYS_REGEXP = r"^(filter\..*\.(clean|smudge|process)|include\.path|includeif\..*\.path)$"
+_MAX_INCLUDE_TARGETS = 16
+_MAX_FILTER_KEYS = 256
+_SAFE_INLINE_CONFIG = {"user.name", "user.email", "checkout.workers", "checkout.thresholdforparallelism", "core.quotepath", "core.abbrev", "windows.appendatomically"}
+_EOL_VALUES = {"core.autocrlf": {"true", "false", "input"}, "core.eol": {"lf", "crlf", "native"}}
+_INTERNAL_GIT_DEADLINE: ContextVar[float | None] = ContextVar("internal_git_deadline", default=None)
+
+
+def _with_git_deadline(function):
+    """Share one operation budget across discovery and execution probes."""
+    @wraps(function)
+    def bounded(*args, timeout, **kwargs):
+        previous = _INTERNAL_GIT_DEADLINE.get()
+        deadline = time.monotonic() + timeout
+        token = _INTERNAL_GIT_DEADLINE.set(min(previous, deadline) if previous is not None else deadline)
+        try:
+            return function(*args, timeout=timeout, **kwargs)
+        finally:
+            _INTERNAL_GIT_DEADLINE.reset(token)
+    return bounded
+
+
+def _git_boolean(value: str | None, cwd, base, git_bin) -> str | None:
+    """Parse with the selected Git without reading repository configuration."""
+    # --default is type-converted by Git. A null config source avoids parsing
+    # unrelated repository values (notably the valid autocrlf=input setting).
+    # A valueless config entry means true; an explicitly empty value is false.
+    default = "true" if value is None else value
+    result = bounded_probe_run(
+        [git_bin, "config", "--file", os.devnull, "--type=bool", "--default", default,
+         "--get", "hermes.policyboolean"],
+        cwd=cwd, timeout=2, env=noninteractive_git_env(base),
+    )
+    if result is None or result.returncode != 0:
+        return None
+    value = result.stdout.strip()
+    return value if value in {"true", "false"} else None
+
+
+def _effective_eol_config(cwd, base, git_bin) -> dict[str, str] | None:
+    """Read only benign EOL values; executable Git config remains disabled."""
+    original = os.environ if base is None else base
+    env = noninteractive_git_env(original)
+    controls = {"GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM", "GIT_CONFIG_NOSYSTEM"}
+    for key in controls:
+        env.pop(key, None)
+    for key, value in original.items():
+        canonical = key.upper() if IS_WINDOWS else key
+        if canonical in controls:
+            env[canonical] = value
+    nosystem = env.get("GIT_CONFIG_NOSYSTEM")
+    system_disabled = _git_boolean(nosystem, cwd, original, git_bin) if nosystem is not None else "false"
+    if system_disabled is None:
+        return None
+    # Git silently ignores unreadable global/system sources in ordinary config
+    # queries. Resolve implicit sources through the same Git, rather than
+    # guessing HOME/XDG or compiled system-config paths.
+    for key in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM"):
+        if key == "GIT_CONFIG_SYSTEM" and system_disabled == "true":
+            continue
+        value = env.get(key)
+        if value is None:
+            path_env = noninteractive_git_env(original)
+            path_env.pop(key, None)
+            if key == "GIT_CONFIG_SYSTEM":
+                path_env["GIT_CONFIG_NOSYSTEM"] = "0"
+            paths = bounded_probe_run([git_bin, "-C", str(cwd), "var", key], timeout=2, env=path_env)
+            if paths is None or paths.returncode != 0 or not paths.stdout.endswith("\n"):
+                return None
+            values = [line.rstrip("\r") for line in paths.stdout[:-1].split("\n")]
+            if not values or len(values) > 16 or any(not path for path in values):
+                return None
+        else:
+            values = [value]
+        for value in values:
+            if not value or value.lower() == os.devnull.lower():
+                continue
+            source = Path(value)
+            if not source.is_absolute():
+                source = Path(cwd) / source
+            try:
+                source.stat()
+            except FileNotFoundError:
+                continue
+            except OSError:
+                return None
+            if not source.is_file():
+                return None
+            readable = bounded_probe_run(
+                [git_bin, "config", "--file", str(source), "--no-includes",
+                 "--name-only", "-z", "--list"], timeout=2,
+                env=noninteractive_git_env(original),
+            )
+            if readable is None or readable.returncode != 0:
+                return None
+    result = bounded_probe_run(
+        [git_bin, "-C", str(cwd), "config", "--includes", "-z", "--get-regexp",
+         r"^(core\.autocrlf|core\.eol)$"], timeout=2, env=env,
+    )
+    if result is None or result.returncode not in (0, 1):
+        return None
+    if result.returncode == 1:
+        return {} if not result.stdout else None
+    fields = result.stdout.split("\0")
+    if fields[-1]:
+        return None
+    raw_effective: dict[str, tuple[str, bool]] = {}
+    for entry in fields[:-1]:
+        key, separator, value = entry.partition("\n")
+        key = key.lower()
+        if key not in _EOL_VALUES:
+            return None
+        raw_effective[key] = (value, bool(separator))
+    effective: dict[str, str] = {}
+    for key, (raw, has_value) in raw_effective.items():
+        value = raw.strip().lower()
+        if key == "core.autocrlf" and value != "input":
+            value = _git_boolean(raw if has_value else None, cwd, original, git_bin)
+        if value not in _EOL_VALUES[key]:
+            return None
+        effective[key] = value
+    return effective
+
+
+def harden_git_argv(args: Sequence[str]) -> list[str]:
+    """Disable attribute-selected diff programs on internal rendering commands."""
+    out = list(args)
+    index = 0
+    while index < len(out):
+        token = out[index]
+        if token == "-c":
+            if index + 1 >= len(out) or out[index + 1].partition("=")[0].lower() not in _SAFE_INLINE_CONFIG:
+                raise ValueError("Unsupported internal Git configuration override")
+            index += 2
+        elif token.startswith("-c") and not token.startswith("--"):
+            if token[2:].partition("=")[0].lower() not in _SAFE_INLINE_CONFIG:
+                raise ValueError("Unsupported internal Git configuration override")
+            index += 1
+        elif token.startswith("-"):
+            if token not in {"--no-pager", "--no-replace-objects", "--version"}:
+                raise ValueError("Unsupported internal Git authority argument")
+            index += 1
+        else:
+            if token in {"diff", "show", "log", "blame"}:
+                options = out[index + 1:]
+                if "--" in options:
+                    options = options[:options.index("--")]
+                if any(option in {"--textconv", "--ext-diff"} for option in options):
+                    raise ValueError("Internal Git diff program cannot be reenabled")
+                return out[:index + 1] + list(NO_DRIVER_DIFF_FLAGS) + out[index + 1:]
+            break
+    return out
+
+
+def noninteractive_repo_git_env(
+    cwd: str | os.PathLike[str],
+    base: Mapping[str, str] | None = None,
+    *,
+    git_bin: str = "git",
+    preserve_eol: bool = False,
+) -> dict[str, str] | None:
+    """Extend the existing policy with bounded, fail-closed filter discovery.
+
+    Use the same selected Git for discovery and the operation. Inactive
+    conditional includes are scanned because a worktree/branch change can
+    activate them. This sequence is not an atomic configuration snapshot.
+    """
+    env = noninteractive_git_env(base)
+    try:
+        result = bounded_probe_run(
+            [git_bin, "-C", str(cwd), "config", "--includes", "--show-origin", "-z",
+             "--get-regexp", _DISCOVERY_KEYS_REGEXP], timeout=2, env=env,
+        )
+        if result is None or result.returncode not in (0, 1):
+            return None
+        if result.returncode == 1 and result.stdout:
+            return None
+        fields = result.stdout.split("\0")
+        if fields[-1] or len(fields[:-1]) % 2:
+            return None
+        names: list[str] = []
+        targets: set[Path] = set()
+        include_entries: set[tuple[str, str, str]] = set()
+        toplevel: Path | None = None
+        for origin, entry in zip(fields[:-1:2], fields[1:-1:2]):
+            key, separator, value = entry.partition("\n")
+            if not separator:
+                return None
+            if not _INCLUDE_IF_KEY.fullmatch(key):
+                names.append(key)
+                continue
+            if not origin.startswith("file:"):
+                return None
+            entry_identity = (origin, key, value)
+            if entry_identity in include_entries:
+                continue
+            if len(include_entries) >= _MAX_INCLUDE_TARGETS:
+                return None
+            include_entries.add(entry_identity)
+            origin_path = Path(origin[5:])
+            if not origin_path.is_absolute():
+                if env.get("GIT_DIR") or env.get("GIT_WORK_TREE"):
+                    return None
+                if toplevel is None:
+                    top = bounded_probe_run(
+                        [git_bin, "-C", str(cwd), "rev-parse", "--show-toplevel"], timeout=2, env=env,
+                    )
+                    if top is None or top.returncode != 0:
+                        return None
+                    toplevel = Path(top.stdout.rstrip("\r\n"))
+                origin_path = toplevel / origin_path
+            if value.startswith(("~", "%(")):
+                expanded = bounded_probe_run(
+                    [git_bin, "config", "--file", str(origin_path), "--path", "--fixed-value", "-z",
+                     "--get", key, value], timeout=2, env=env,
+                )
+                if expanded is None or expanded.returncode != 0 or not expanded.stdout.endswith("\0"):
+                    return None
+                value = expanded.stdout[:-1]
+                if "\0" in value or value.startswith(("~", "%(")):
+                    return None
+            target = (origin_path.parent / value).resolve()
+            if target in targets or not target.exists():
+                continue
+            if not target.is_file() or len(targets) >= _MAX_INCLUDE_TARGETS:
+                return None
+            targets.add(target)
+            probe = bounded_probe_run(
+                [git_bin, "config", "--file", str(target), "--name-only", "-z",
+                 "--get-regexp", _DISCOVERY_KEYS_REGEXP], timeout=2, env=env,
+            )
+            if probe is None or probe.returncode not in (0, 1):
+                return None
+            if probe.returncode == 1 and probe.stdout:
+                return None
+            found = probe.stdout.split("\0")
+            if found[-1] or any(_INCLUDE_KEY.fullmatch(name) for name in found):
+                return None
+            names.extend(found[:-1])
+        keys: list[str] = []
+        required: list[str] = []
+        seen: set[str] = set()
+        for raw in names:
+            key = raw.strip()
+            if key in seen or not _FILTER_COMMAND_KEY.fullmatch(key):
+                continue
+            seen.add(key)
+            keys.append(key)
+            if len(keys) > _MAX_FILTER_KEYS:
+                return None
+            required_key = key.rsplit(".", 1)[0] + ".required"
+            if required_key not in seen:
+                seen.add(required_key)
+                required.append(required_key)
+        start = int(env["GIT_CONFIG_COUNT"])
+        overrides = [(key, "") for key in keys] + [(key, "false") for key in required]
+        if preserve_eol:
+            eol = _effective_eol_config(cwd, base, git_bin)
+            if eol is None:
+                return None
+            overrides.extend(eol.items())
+        for offset, (key, value) in enumerate(overrides):
+            env[f"GIT_CONFIG_KEY_{start + offset}"] = key
+            env[f"GIT_CONFIG_VALUE_{start + offset}"] = value
+        env["GIT_CONFIG_COUNT"] = str(start + len(overrides))
+        return env
+    except (OSError, ValueError, TypeError):
+        return None
+
+
+@_with_git_deadline
+def run_internal_git(
+    args: Sequence[str],
+    cwd: str | os.PathLike[str],
+    *,
+    timeout: float,
+    base: Mapping[str, str] | None = None,
+    git_bin: str | None = None,
+    check_policy: bool = False,
+    preserve_eol: bool = True,
+    binary_output: bool = False,
+    max_output_bytes: int | None = None,
+) -> subprocess.CompletedProcess[str]:
+    """Run internal plumbing through the existing environment/timeout owners."""
+    binary = git_bin or shutil.which("git", path=(base if base is not None else os.environ).get("PATH"))
+    try:
+        argv = [binary or "git", *harden_git_argv(args)]
+    except ValueError:
+        if check_policy:
+            raise GitPolicyError("unsupported internal git arguments")
+        return subprocess.CompletedProcess([binary or "git", *args], 1, "", "unsupported internal git arguments")
+    if not binary:
+        return subprocess.CompletedProcess(argv, 127, "", "git executable unavailable")
+    env = noninteractive_repo_git_env(cwd, base, git_bin=binary, preserve_eol=preserve_eol)
+    if env is None or not git_policy_environment_valid(env, base):
+        if check_policy:
+            raise GitPolicyError(FILTER_DISCOVERY_FAILED)
+        return subprocess.CompletedProcess(argv, 1, "", FILTER_DISCOVERY_FAILED)
+    result = bounded_probe_run(argv, timeout=timeout, env=env, cwd=cwd, binary_output=binary_output,
+                               **({"max_output_bytes": max_output_bytes} if max_output_bytes is not None else {}))
+    if result is None:
+        return subprocess.CompletedProcess(argv, 124, "", "git invocation failed or timed out")
+    return result
+
+
+@_with_git_deadline
+def clone_git_repository(
+    source: str, destination: str | os.PathLike[str], *, timeout: float,
+    git_bin: str | None = None, branch: str | None = None,
+    shallow: bool = False, no_checkout: bool = False,
+    base: Mapping[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    """Clone through the static policy; a fresh repo has no config to discover."""
+    env = noninteractive_git_env(base)
+    for key in list(env):
+        canonical = key.upper() if IS_WINDOWS else key
+        if canonical in {"GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_INDEX_FILE",
+                         "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+                         "GIT_NAMESPACE", "GIT_SHALLOW_FILE"}:
+            env.pop(key)
+    binary = git_bin or shutil.which("git", path=env.get("PATH"))
+    argv = [binary or "git", "clone", "--template="]
+    if shallow:
+        argv += ["--depth", "1"]
+    if no_checkout:
+        argv.append("--no-checkout")
+    if branch is not None:
+        argv += ["--branch", branch]
+    destination = Path(destination).absolute()
+    argv += ["--", source, str(destination)]
+    if binary is None:
+        return subprocess.CompletedProcess(argv, 127, "", "git executable unavailable")
+    result = bounded_probe_run(argv, timeout=timeout, env=env, cwd=destination.parent)
+    if result is None:
+        return subprocess.CompletedProcess(argv, 124, "", "git clone timed out or could not start")
+    return result
+
+
+@_with_git_deadline
+def run_internal_gh(
+    args: Sequence[str],
+    cwd: str | os.PathLike[str],
+    *,
+    timeout: float,
+    base: Mapping[str, str] | None = None,
+    gh_bin: str | None = None,
+    git_bin: str | None = None,
+    check_policy: bool = False,
+    preserve_eol: bool = True,
+    binary_output: bool = False,
+    max_output_bytes: int | None = None,
+) -> subprocess.CompletedProcess[str]:
+    """Protect gh's delegated Git calls with the same repository policy."""
+    inherited = base if base is not None else os.environ
+    binary = gh_bin or shutil.which("gh", path=inherited.get("PATH"))
+    git_binary = git_bin or shutil.which("git", path=inherited.get("PATH"))
+    argv = [binary or "gh", *args]
+    if not binary or not git_binary:
+        return subprocess.CompletedProcess(argv, 127, "", "gh or git executable unavailable")
+    env = noninteractive_repo_git_env(cwd, base, git_bin=git_binary, preserve_eol=preserve_eol)
+    if env is None or not git_policy_environment_valid(env, base):
+        if check_policy:
+            raise GitPolicyError(FILTER_DISCOVERY_FAILED)
+        return subprocess.CompletedProcess(argv, 1, "", FILTER_DISCOVERY_FAILED)
+    env["GH_PROMPT_DISABLED"] = "1"
+    env["PATH"] = str(Path(git_binary).parent) + os.pathsep + env.get("PATH", "")
+    result = bounded_probe_run(argv, timeout=timeout, env=env, cwd=cwd, binary_output=binary_output,
+                               **({"max_output_bytes": max_output_bytes} if max_output_bytes is not None else {}))
+    if result is None:
+        return subprocess.CompletedProcess(argv, 124, "", "gh invocation failed or timed out")
+    return result
 
 
 # -----------------------------------------------------------------------------
@@ -594,11 +1021,59 @@ def _legacy_kill_process_tree(proc: "subprocess.Popen") -> None:
             pass
 
 
+def _bounded_pipe_output(proc: subprocess.Popen, timeout: float, limit: int) -> tuple[bytes, bytes] | None:
+    """Bound each binary pipe while preserving the existing tree-cleanup owner."""
+    failed = threading.Event()
+    outputs: list[list[bytes]] = [[], []]
+
+    def read_pipe(stream, chunks: list[bytes]) -> None:
+        total = 0
+        try:
+            while chunk := os.read(stream.fileno(), 65536):
+                total += len(chunk)
+                if total > limit:
+                    failed.set()
+                if not failed.is_set():
+                    chunks.append(chunk)
+        except (OSError, ValueError):
+            failed.set()
+        finally:
+            stream.close()
+
+    readers = [threading.Thread(target=read_pipe, args=(stream, chunks), daemon=True)
+               for stream, chunks in zip((proc.stdout, proc.stderr), outputs)]
+    for reader in readers:
+        reader.start()
+    expires = time.monotonic() + timeout
+    while not failed.is_set():
+        if proc.poll() is not None and not any(reader.is_alive() for reader in readers):
+            if failed.is_set():
+                break
+            return b"".join(outputs[0]), b"".join(outputs[1])
+        remaining = expires - time.monotonic()
+        if remaining <= 0:
+            break
+        failed.wait(min(.02, remaining))
+    kill_process_tree(proc)
+    drain_until = time.monotonic() + 1
+    for reader in readers:
+        reader.join(max(0, drain_until - time.monotonic()))
+    try:
+        proc.wait(timeout=max(0, drain_until - time.monotonic()))
+    except subprocess.TimeoutExpired:
+        pass
+    return None
+
+
 def bounded_probe_run(
     argv: Sequence[str],
     *,
     timeout: float,
     errors: str = "replace",
+    env: Mapping[str, str] | None = None,
+    cwd: str | os.PathLike[str] | None = None,
+    binary_output: bool = False,
+    max_output_bytes: int | None = None,
 ) -> "subprocess.CompletedProcess[str] | None":
     """Deadlock-safe ``subprocess.run(argv, capture_output=True, timeout=...)``
     for fail-open probe call sites. Returns a ``CompletedProcess`` when the
@@ -626,22 +1101,42 @@ def bounded_probe_run(
     Python ≥3.11) so timeout cleanup can take down descendants with the
     launcher instead of orphaning them.
     """
+    if max_output_bytes is not None and (not binary_output or isinstance(max_output_bytes, bool)
+                                        or not isinstance(max_output_bytes, int) or max_output_bytes <= 0):
+        raise ValueError("output limit requires a positive integer and binary pipes")
+    deadline = _INTERNAL_GIT_DEADLINE.get()
+    if deadline is not None:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return None
+        timeout = min(timeout, remaining)
     _popen_kwargs: dict = {"creationflags": windows_hide_flags()} if IS_WINDOWS else {"process_group": 0}
+    if env is not None:
+        _popen_kwargs["env"] = env
+    if cwd is not None:
+        _popen_kwargs["cwd"] = cwd
+    if not binary_output:
+        _popen_kwargs.update(text=True, encoding="utf-8", errors=errors)
     try:
         proc = subprocess.Popen(
             list(argv),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             stdin=subprocess.DEVNULL,
-            text=True,
-            encoding="utf-8",
-            errors=errors,
             **_popen_kwargs,
         )
     except Exception:
         return None
     try:
-        stdout, stderr = proc.communicate(timeout=timeout)
+        if deadline is not None:
+            timeout = max(0, min(timeout, deadline - time.monotonic()))
+        if max_output_bytes is not None:
+            output = _bounded_pipe_output(proc, timeout, max_output_bytes)
+            if output is None:
+                return None
+            stdout, stderr = output
+        else:
+            stdout, stderr = proc.communicate(timeout=timeout)
     except Exception:
         # Timeout OR any other communicate() failure (torn-down pipe, decode
         # error): terminate the child + descendants and drain bounded. Leaving
@@ -687,8 +1182,17 @@ def bounded_git_probe(argv: Sequence[str], *, timeout: float) -> str:
     openai/codex#36793). ``process_group`` only changes which group the child
     belongs to; it does not detach the terminal or alter the fast path.
     """
-    result = bounded_probe_run(argv, timeout=timeout)
-    if result is None or result.returncode != 0:
+    if not argv:
+        return ""
+    binary = shutil.which(argv[0])
+    if binary is None:
+        return ""
+    args = list(argv[1:])
+    if len(args) >= 2 and args[0] == "-C":
+        result = run_internal_git(args[2:], args[1], timeout=timeout, git_bin=binary)
+    else:
+        result = run_internal_git(args, os.getcwd(), timeout=timeout, git_bin=binary)
+    if result.returncode != 0:
         return ""
     return (result.stdout or "").strip()
 

@@ -201,6 +201,7 @@ import {
 } from './gateway-file-download'
 import { probeGatewayWebSocket } from './gateway-ws-probe'
 import { registerGitIpc } from './git-ipc'
+import { pythonBackendCommand } from './python-backend-command'
 import { readAndConsumeHandoffResult } from './handoff-result'
 import {
   ATTACHMENT_UPLOAD_DEFAULT_MAX_BYTES,
@@ -2731,7 +2732,7 @@ function resolveGhBinary() {
     candidates.push('/opt/homebrew/bin/gh', '/usr/local/bin/gh', '/usr/bin/gh', path.join(home, '.local', 'bin', 'gh'))
   }
 
-  _ghBinaryCache = candidates.find(fileExists) || findOnPath('gh') || 'gh'
+  _ghBinaryCache = candidates.find(fileExists) || findOnPath('gh') || null
 
   return _ghBinaryCache
 }
@@ -4530,9 +4531,11 @@ function writeDefaultProjectDir(dir) {
 }
 
 function createPythonBackend(root, label, backendArgs, options: any = {}) {
-  const python = findPythonForRoot(root)
+  const selection = pythonBackendCommand(root, {
+    findPythonForRoot, venvRootForPython, getVenvPython, fileExists, isWindows: IS_WINDOWS
+  })
 
-  if (!python) {
+  if (!selection) {
     return null
   }
 
@@ -4541,9 +4544,7 @@ function createPythonBackend(root, label, backendArgs, options: any = {}) {
   // `venv`, and mixing the two crashes the backend on its first native
   // import (see venvRootForPython). Fall back to root/venv only for a
   // system python, where the historical layout is the best guess.
-  const venvRoot = venvRootForPython(python, root) ?? path.join(root, 'venv')
-  const venvPython = getVenvPython(venvRoot)
-  const command = IS_WINDOWS && fileExists(venvPython) ? venvPython : python
+  const {command, venvRoot} = selection
 
   return {
     kind: 'python',
@@ -16673,7 +16674,18 @@ registerFsIpc({
 })
 
 // Git-driven features (worktrees, review pane, repo scan) — see git-ipc.ts.
-registerGitIpc({ resolveGitBinary, resolveGhBinary })
+function resolveGitPolicyRuntime() {
+  const ownerRoot = resolveUpdateRoot()
+  if (!isHermesSourceRoot(ownerRoot) || !fileExists(path.join(ownerRoot, 'hermes_cli', '_subprocess_compat.py'))) {
+    return null
+  }
+  const selection = pythonBackendCommand(ownerRoot, {
+    findPythonForRoot, venvRootForPython, getVenvPython, fileExists, isWindows: IS_WINDOWS
+  })
+  return selection ? {command: selection.command, argsPrefix: [], ownerRoot} : null
+}
+
+registerGitIpc({ resolveGitBinary, resolveGhBinary, resolveGitPolicyRuntime })
 
 // Embedded terminal PTY host (hermes:terminal:*) — see terminal-ipc.ts.
 const terminalIpc = registerTerminalIpc({

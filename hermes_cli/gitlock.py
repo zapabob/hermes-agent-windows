@@ -181,11 +181,8 @@ def is_ancestor_of_head(repo_root: Path, rev: str) -> bool:
     conservative direction for an update check.
     """
     try:
-        result = subprocess.run(
-            ["git", "merge-base", "--is-ancestor", rev, "HEAD"],
-            cwd=str(repo_root),
-            capture_output=True, text=True, timeout=10,
-        )
+        from hermes_cli._subprocess_compat import run_internal_git
+        result = run_internal_git(["merge-base", "--is-ancestor", rev, "HEAD"], cwd=str(repo_root), timeout=10)
         return result.returncode == 0
     except Exception:
         logger.debug("merge-base --is-ancestor probe failed for %s", rev, exc_info=True)

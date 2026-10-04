@@ -88,30 +88,15 @@ def _git(args: list, cwd: str, timeout: int = 15) -> subprocess.CompletedProcess
     (live-verified failure on a 746MB .git: TimeoutExpired escaped and
     aborted the branch audit mid-list).
     """
-    try:
-        return subprocess.run(
-            ["git", *args],
-            capture_output=True, text=True, encoding="utf-8",
-            errors="replace", timeout=timeout, cwd=cwd,
-        )
-    except subprocess.TimeoutExpired:
-        return subprocess.CompletedProcess(
-            args=["git", *args], returncode=124,
-            stdout="", stderr=f"timeout after {timeout}s",
-        )
+    from hermes_cli._subprocess_compat import run_internal_git
+
+    return run_internal_git(args, cwd, timeout=timeout)
 
 
 def _gh(args: list, cwd: str, timeout: int = 15) -> subprocess.CompletedProcess:
     """Run gh with the same fail-closed timeout contract as git."""
-    try:
-        return subprocess.run(
-            ["gh", *args], capture_output=True, text=True, encoding="utf-8",
-            errors="replace", timeout=timeout, cwd=cwd,
-        )
-    except (OSError, subprocess.TimeoutExpired) as exc:
-        return subprocess.CompletedProcess(
-            args=["gh", *args], returncode=124, stdout="", stderr=str(exc),
-        )
+    from hermes_cli._subprocess_compat import run_internal_gh
+    return run_internal_gh(args, cwd, timeout=timeout)
 
 
 def _oid(ref: str, cwd: str) -> str:

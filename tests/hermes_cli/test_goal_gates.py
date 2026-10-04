@@ -1,6 +1,9 @@
 """Tests for /goal quality gates (GoalGate, run_gate, GoalManager gate flow)."""
 
 import json
+import os
+import shlex
+import subprocess
 import sys
 import time
 from unittest.mock import patch
@@ -65,7 +68,9 @@ def test_run_gate_pass():
 
 
 def test_run_gate_fail_captures_output():
-    passed, code, out = run_gate(GoalGate(command="echo broken >&2; exit 3"))
+    argv = [sys.executable, "-I", "-c", "import sys;sys.stderr.write('broken');sys.exit(3)"]
+    command = subprocess.list2cmdline(argv) if os.name == "nt" else shlex.join(argv)
+    passed, code, out = run_gate(GoalGate(command=command))
     assert passed is False
     assert code == 3
     assert "broken" in out
