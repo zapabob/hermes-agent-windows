@@ -1,7 +1,7 @@
 {
   "schema": "selective-security-partial-delivery-v1",
   "date": "2026-10-04",
-  "captured_at_jst": "2026-10-04T22:46:15.670270+09:00",
+  "captured_at_jst": "2026-10-04T23:31:57.796608+09:00",
   "status": "PARTIAL_IMPLEMENTATION_HANDOFF_PUBLISHED_RUNTIME_VERIFIED",
   "acceptance": "S06_HOLD",
   "documentation_only": false,
@@ -570,13 +570,114 @@
   ],
   "handoff": {
     "path": "H:/hermes-worktrees/selective-publication-20261003/docs/windows/selective-security-20261003/HANDOFF_20261004.md",
-    "sha256": "d3afd35ce55d056541e412c68374b2f4dcfa5abc6136a02b8177e5927f89776f"
+    "sha256": "16aeb3b2283af4482432c438e8b27e53678be7e8b874d5000b2afec4a3320f8c"
   },
-  "revision_at_jst": "2026-10-04T22:46:15.670270+09:00",
+  "revision_at_jst": "2026-10-04T23:31:57.796608+09:00",
   "freeze": {
-    "source": "S06_CURRENT_FE1_TEST86CE_PRODUCT_B168",
+    "source": "HISTORICAL_2220_FE1_TEST86CE_PRODUCT_B168",
     "acceptance": "HOLD",
-    "runtime": "DESKTOP_AND_GO_OBSERVED_PASS"
+    "runtime": "DESKTOP_AND_GO_OBSERVED_PASS",
+    "current_fixture_source": "GH_THREE_STAGE_CC8833_TEST61ACC6; full hashes in goal_continuation_gh_stages",
+    "product_inventory_unchanged": "b168b06f68a2526c2be1076fe41464b3666bdd8a7389b39d63c82cf290df813c"
   },
-  "captured_at_utc": "2026-10-04T13:44:17.873908+00:00"
+  "captured_at_utc": "2026-10-04T14:31:57.796608+00:00",
+  "goal_continuation_gh_stages": {
+    "recorded_at_jst": "2026-10-04T23:27:04.781742+09:00",
+    "S06_status": "HOLD",
+    "scope": "FOUR_FIXTURE_FILES_ONLY; product source unchanged; not published on main",
+    "source_sha256": {
+      "tests/windows/fixtures/run_s06_desktop_direct_native.py": "cc8833a0939b17753142150550e9aaca250c031d5d83dbb0328c8f13e921360a",
+      "tests/windows/fixtures/s06_desktop_direct_native.mjs": "3c653124dc4b52e5267b06f291503dbc04f4d8df798d5ee9dcdbc05d8ed62e61",
+      "tests/windows/fixtures/test_s06_fixture_contracts.py": "61acc6a0ee87c426736a4669c6f851e896fb980787cad15b415a615d986b357f",
+      "tests/windows/fixtures/s06_fixture_contracts.test.mjs": "4973067dfcda7946ed22a36d144179f523e9f452cf8220f07e502c22df2e9589"
+    },
+    "checks": {
+      "python": 62,
+      "owned_loopback_included_in_python": 2,
+      "node": 11,
+      "python_self": 9,
+      "node_self": 9
+    },
+    "fixture_mutants": "5 KILLED; separate from the earlier5 product mutants",
+    "graph": {
+      "version": "1.6.0",
+      "complete": true,
+      "pending_refs": 0,
+      "changed_files": 4
+    },
+    "independent_source_review": "Sartre readiness APPROVE; native acceptance separate",
+    "capacity_gate": "PASS: three separate retained Jobs, unchanged256 limit",
+    "native_stages": [
+      {
+        "mode": "gh-large",
+        "exit_code": 1,
+        "child_exit_code": 0,
+        "receipt_valid": true,
+        "job_before": [
+          215,
+          0
+        ],
+        "job_after": [
+          215,
+          0
+        ],
+        "identity_errors": 7,
+        "live_retained_handles": 0
+      },
+      {
+        "mode": "gh-positive",
+        "exit_code": 1,
+        "child_exit_code": 0,
+        "receipt_valid": true,
+        "job_before": [
+          84,
+          0
+        ],
+        "job_after": [
+          84,
+          0
+        ],
+        "identity_errors": 6,
+        "live_retained_handles": 0
+      },
+      {
+        "mode": "gh-deadline",
+        "exit_code": 1,
+        "child_exit_code": 0,
+        "receipt_valid": true,
+        "job_before": [
+          52,
+          0
+        ],
+        "job_after": [
+          52,
+          0
+        ],
+        "identity_errors": 3,
+        "live_retained_handles": 0
+      }
+    ],
+    "native_acceptance": false,
+    "remaining": "Deterministic first live complete identity capture; full native5, fresh graph/review and accepted family commit remain required",
+    "preservation": {
+      "archive": "H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\probes\\s06-gh-stages-2325\\fixture-increment-2320.zip",
+      "sha256": "de00e115bb68f2bd11395778180463b5f10b3eefaecceeae89a4b27c860af0d4",
+      "files": 57,
+      "scope": "fixture increment and all native stage evidence; previous full WIP archive retained"
+    },
+    "evidence_folder": "H:\\hermes-worktrees\\p0-p1-local-20261003\\tmp\\probes\\s06-gh-stages-2325",
+    "old_native_records": "Incorrect dependencies pre-Job refusal and two-stage281 overflow both retained; no timeout or UNKNOWN converted to PASS",
+    "ci_observed_sha": "fffb794de851716472afdb1c99bbf3f7423d73e7",
+    "ci_tier1": {
+      "conclusion": "failure",
+      "metrics_downstream_policy": "success",
+      "failures": [
+        "Windows footgun scan",
+        "Node production dependency advisory audit"
+      ],
+      "run": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37207014132"
+    },
+    "production_actions": [],
+    "llama_embedding_actions": []
+  }
 }
