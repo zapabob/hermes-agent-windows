@@ -34,7 +34,9 @@ export function cachedSlashCompletion<T>(key: string, fetcher: () => Promise<T>)
 export function hasCachedSlashCompletion(key: string): boolean {
   const state = queryClient.getQueryState([SLASH_COMPLETIONS_KEY, key])
 
-  return state?.data !== undefined && !state.isInvalidated && Date.now() - state.dataUpdatedAt < SLASH_COMPLETIONS_TTL_MS
+  return (
+    state?.data !== undefined && !state.isInvalidated && Date.now() - state.dataUpdatedAt < SLASH_COMPLETIONS_TTL_MS
+  )
 }
 
 /**

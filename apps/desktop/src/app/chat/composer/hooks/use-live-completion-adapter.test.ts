@@ -7,13 +7,22 @@ describe('completion epoch ownership', () => {
   it('clears prior rows and ignores a pending old-scope response when epoch changes', async () => {
     let finish!: (value: { query: string; items: { text: string }[] }) => void
 
-    const hook = renderHook(({ epoch }) => useLiveCompletionAdapter({
-      enabled: true, epoch, debounceMs: 0,
-      fetcher: query => query === 'first'
-        ? Promise.resolve({ query, items: [{ text: '/old' }] })
-        : new Promise(resolve => { finish = resolve }),
-      toItem: entry => ({ id: entry.text, label: entry.text, type: 'slash' })
-    }), { initialProps: { epoch: 0 } })
+    const hook = renderHook(
+      ({ epoch }) =>
+        useLiveCompletionAdapter({
+          enabled: true,
+          epoch,
+          debounceMs: 0,
+          fetcher: query =>
+            query === 'first'
+              ? Promise.resolve({ query, items: [{ text: '/old' }] })
+              : new Promise(resolve => {
+                  finish = resolve
+                }),
+          toItem: entry => ({ id: entry.text, label: entry.text, type: 'slash' })
+        }),
+      { initialProps: { epoch: 0 } }
+    )
 
     await act(async () => {
       hook.result.current.adapter.search!('first')
@@ -25,9 +34,13 @@ describe('completion epoch ownership', () => {
       await new Promise(resolve => setTimeout(resolve, 10))
     })
     hook.rerender({ epoch: 1 })
-    await act(async () => { finish({ query: 'pending', items: [{ text: '/late-old' }] }) })
+    await act(async () => {
+      finish({ query: 'pending', items: [{ text: '/late-old' }] })
+    })
     let items: readonly unknown[] = []
-    act(() => { items = hook.result.current.adapter.search!('pending') })
+    act(() => {
+      items = hook.result.current.adapter.search!('pending')
+    })
     expect(items).toEqual([])
   })
 })
