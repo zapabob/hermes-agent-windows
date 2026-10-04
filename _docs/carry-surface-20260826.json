@@ -20,12 +20,12 @@
   "schema_version": 1,
   "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
   "summary": {
-    "all_fork_specific_loc": 3085783,
-    "carry_surface_files": 5116,
-    "cwc": 86696562,
-    "fork_owned_loc": 1526327,
-    "upstream_owned_fork_loc": 1559456,
-    "utr": 0.505368
+    "all_fork_specific_loc": 3125826,
+    "carry_surface_files": 5122,
+    "cwc": 86764364,
+    "fork_owned_loc": 1564659,
+    "upstream_owned_fork_loc": 1561167,
+    "utr": 0.499441
   },
   "top_carry_risks": [
     {
@@ -38,28 +38,28 @@
       "upstream_frequency": 158
     },
     {
-      "added": 20296,
-      "cwc": 6134910,
+      "added": 20286,
+      "cwc": 6132060,
       "deleted": 1230,
-      "patch_size": 21526,
+      "patch_size": 21516,
       "path": "hermes_cli/web_server.py",
       "semantic_coupling": 3,
       "upstream_frequency": 95
     },
     {
-      "added": 21659,
-      "cwc": 3872022,
-      "deleted": 3484,
-      "patch_size": 25143,
+      "added": 21627,
+      "cwc": 3869866,
+      "deleted": 3502,
+      "patch_size": 25129,
       "path": "cli.py",
       "semantic_coupling": 2,
       "upstream_frequency": 77
     },
     {
-      "added": 16858,
-      "cwc": 3730560,
+      "added": 16847,
+      "cwc": 3728448,
       "deleted": 2572,
-      "patch_size": 19430,
+      "patch_size": 19419,
       "path": "tui_gateway/server.py",
       "semantic_coupling": 2,
       "upstream_frequency": 96
@@ -74,10 +74,10 @@
       "upstream_frequency": 112
     },
     {
-      "added": 13788,
-      "cwc": 3504657,
-      "deleted": 2215,
-      "patch_size": 16003,
+      "added": 13782,
+      "cwc": 3502248,
+      "deleted": 2210,
+      "patch_size": 15992,
       "path": "hermes_cli/main.py",
       "semantic_coupling": 3,
       "upstream_frequency": 73
@@ -92,10 +92,10 @@
       "upstream_frequency": 89
     },
     {
-      "added": 10979,
-      "cwc": 3067140,
-      "deleted": 1049,
-      "patch_size": 12028,
+      "added": 11177,
+      "cwc": 3131655,
+      "deleted": 1104,
+      "patch_size": 12281,
       "path": "hermes_cli/update_cmd.py",
       "semantic_coupling": 3,
       "upstream_frequency": 85
@@ -218,10 +218,10 @@
       "upstream_frequency": 46
     },
     {
-      "added": 10895,
-      "cwc": 835380,
-      "deleted": 3028,
-      "patch_size": 13923,
+      "added": 10876,
+      "cwc": 834480,
+      "deleted": 3032,
+      "patch_size": 13908,
       "path": "hermes_cli/kanban_db.py",
       "semantic_coupling": 2,
       "upstream_frequency": 30
