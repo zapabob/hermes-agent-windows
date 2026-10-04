@@ -13,9 +13,9 @@ In accordance with official Hermes repository standards and root layout hygiene:
 | Script | Purpose | Typical Invocation |
 |---|---|---|
 | p`mini_swe_runner.py` | SWE runner supporting Hermes trajectory format across execution environments (local, Docker, Modal) | uv run python scripts/standalone/mini_swe_runner.py --help |
-| p`sync_memory.py` | Unified social memory synchronizer (Gateway sessions -> Ebbinghaus SQLite -> Obsidian wiki) | uv run python scripts/standalone/sync_memory.py |
+| `sync_memory.py` **(CANONICAL)** | Unified social memory synchronizer (Gateway sessions -> Ebbinghaus SQLite -> Obsidian wiki) | `uv run python scripts/standalone/sync_memory.py` | |
 | p`cron_sync_script.py` | Automated Cron background synchronization for Ebbinghaus & social trace scrubbing | uv run python scripts/standalone/cron_sync_script.py |
-¦ p`dream_verify_insert.py` | Quick SQLite probe for validating Ebbinghaus consolidated memory records | uv run python scripts/standalone/dream_verify_insert.py |
+ï¿½ p`dream_verify_insert.py` | Quick SQLite probe for validating Ebbinghaus consolidated memory records | uv run python scripts/standalone/dream_verify_insert.py |
 | p`reply_mentions_test.py` | Direct verification and dry-run test harness for `lm-twitterer` reply mentions | uv run python scripts/standalone/reply_mentions_test.py |
 
 ## Execution Guidelines

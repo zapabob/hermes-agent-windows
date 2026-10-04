@@ -207,23 +207,34 @@ def resolve_index_path(explicit: Path | None) -> Path:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    args = build_arg_parser().parse_args(argv)
-    sources = tuple(part.strip() for part in args.sources.split(",") if part.strip())
-    result = run_sync(
-        sources=sources,
-        max_sessions=args.max_sessions,
-        max_x_events=args.max_x_events,
-        sleep=not args.no_sleep,
-        incremental=not args.full,
-        index_path=resolve_index_path(args.index_file),
-        export_obsidian=not args.no_obsidian,
-        obsidian_dry_run=args.dry_run,
-        max_ebbinghaus_export=args.max_ebbinghaus_export,
-        state_db=args.state_db,
-        memory_db=args.memory_db,
-    )
-    print(json.dumps(result, ensure_ascii=False, indent=2))
-    return 0
+    """CLI entrypoint.
+
+    Failures are reported as a JSON object on stdout rather than a traceback on
+    stderr: the cron wrapper (``scripts/memory/sync_memory_cron.py``) parses
+    this stdout with ``json.loads`` and would mislabel a traceback as
+    "invalid JSON from sync_memory.py".
+    """
+    try:
+        args = build_arg_parser().parse_args(argv)
+        sources = tuple(part.strip() for part in args.sources.split(",") if part.strip())
+        result = run_sync(
+            sources=sources,
+            max_sessions=args.max_sessions,
+            max_x_events=args.max_x_events,
+            sleep=not args.no_sleep,
+            incremental=not args.full,
+            index_path=resolve_index_path(args.index_file),
+            export_obsidian=not args.no_obsidian,
+            obsidian_dry_run=args.dry_run,
+            max_ebbinghaus_export=args.max_ebbinghaus_export,
+            state_db=args.state_db,
+            memory_db=args.memory_db,
+        )
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0
+    except Exception as exc:
+        print(json.dumps({"success": False, "error": str(exc)}, ensure_ascii=False, indent=2))
+        return 1
 
 
 if __name__ == "__main__":  # pragma: no cover

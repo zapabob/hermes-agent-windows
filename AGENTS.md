@@ -1057,7 +1057,14 @@ Never relocate official root entry modules to "tidy" the tree — packaging and
 upstream parity depend on them. Specifically: `run_agent.py`, `cli.py`,
 `model_tools.py`, `hermes_*.py`, `toolsets.py`, `utils.py`,
 `trajectory_compressor.py`, `batch_runner.py`, `setup.py`, `mcp_serve.py`,
-`sync_memory.py`, and every lockfile / manifest / README. `docs/`, `skills/`,
+`sync_memory.py`, and every lockfile / manifest / README.
+
+A root module that has been consolidated elsewhere stays at root as a **shim** that
+re-exports the canonical implementation — it holds no logic, so it cannot drift.
+`sync_memory.py` is the current example: the implementation lives in
+`scripts/standalone/sync_memory.py`. When consolidating a root module, keep two
+properties and verify both: importing the shim has no side effects, and its stdout
+JSON contract is byte-identical to running the canonical file directly. `docs/`, `skills/`,
 `tests/`, `scripts/`, `tools/`, `plugins/`, `agent/`, `gateway/`, `hermes_cli/`
 are first-class source trees — not scratch.
 

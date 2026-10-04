@@ -41,15 +41,39 @@ def _safe_summary(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _resolve_sync_script(repo_root):
+    """Resolve the sync orchestrator by CLI surface, not by filename.
+
+    The repo root may hold a compatibility shim; the implementation lives in
+    ``scripts/standalone/sync_memory.py``. Both are acceptable entrypoints, but the
+    canonical file is preferred so the subprocess does not pay shim indirection.
+    """
+    for cand in (
+        repo_root / "scripts" / "standalone" / "sync_memory.py",
+        repo_root / "sync_memory.py",
+    ):
+        if not cand.is_file():
+            continue
+        try:
+            head = cand.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if "--max-x-events" in head and "json.dumps" in head:
+            return cand
+    return None
+
+
 def main() -> int:
     repo_root = Path.cwd()
-    sync_script = repo_root / "sync_memory.py"
-    if not sync_script.is_file():
+    sync_script = _resolve_sync_script(repo_root)
+    if sync_script is None:
         print(json.dumps({"success": False, "error": f"sync_memory.py not found under {repo_root}"}))
         return 1
 
     proc = subprocess.run(
-        [sys.executable, str(sync_script)],
+        # X/lm-twitterer activity stays in its own ledger; only first-hand
+        # session memories are imported (memory source policy 2026-09-26).
+        [sys.executable, str(sync_script), "--max-x-events", "0"],
         cwd=repo_root,
         capture_output=True,
         text=True,
