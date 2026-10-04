@@ -1,0 +1,146 @@
+{
+  "schema": "oct4-runtime-closeout-v1",
+  "recorded_at_utc": "2026-10-04T13:44:17.873908+00:00",
+  "scope": "DESKTOP_AND_GO_OBSERVED_HEALTH_ONLY",
+  "campaign_complete": false,
+  "s06_acceptance": "HOLD",
+  "llama_and_embedding_actions": [],
+  "build": {
+    "command": "npm run pack",
+    "exit_code": 0,
+    "source_commit": "d3579b222e5b6c725d61177c7cfbdd6cdf907d2b",
+    "branch": "main",
+    "source_dirty": true,
+    "dirty_reason": "10 preexisting unrelated tracked WIP items preserved; not committed",
+    "built_at_utc": "2026-10-04T13:34:12.829Z",
+    "app_asar": {
+      "path": "C:/Users/downl/Documents/New project/hermes-agent/apps/desktop/release/win-unpacked/resources/app.asar",
+      "sha256": "ed13a1d6d29ee92c25d662cb1c5b1559a9113513fa883c8202265c67245749a7"
+    },
+    "install_stamp": {
+      "path": "C:/Users/downl/Documents/New project/hermes-agent/apps/desktop/release/win-unpacked/resources/install-stamp.json",
+      "sha256": "04a051b268f671fb5b0f59f9a6caf940661fad1eecb6db9057943ce56b041f00"
+    },
+    "build_log": {
+      "path": "H:/hermes-worktrees/selective-publication-20261003/.codegraph/delivery/oct4/desktop-pack-main-d357.log",
+      "sha256": "ddd086d66e1208d6d391fac593658cb2c5deb9fc5fbc788026c124f3d0304cac"
+    }
+  },
+  "desktop": {
+    "launch_ok": true,
+    "independent_verify_ok": true,
+    "observed_at_utc": "2026-10-04T13:39:15Z",
+    "identity": {
+      "pid": 32992,
+      "birth_filetime": 134355945893136540,
+      "exe": "c:\\users\\downl\\documents\\new project\\hermes-agent\\apps\\desktop\\release\\win-unpacked\\hermes.exe"
+    },
+    "backend_identity": {
+      "pid": 32928,
+      "birth_filetime": 134355945964341239,
+      "exe": "c:\\users\\downl\\appdata\\roaming\\uv\\python\\cpython-3.11.11-windows-x86_64-none\\python.exe"
+    },
+    "backend_module": "hermes_cli.main",
+    "backend_subcommand": "serve",
+    "status": {
+      "url": "http://127.0.0.1:54212/api/status",
+      "http_status": 200,
+      "body_sha256": "98ef10535bbd63fd6d61f6d8d4c91985c18df60bec5f6d9d94bd1a787666f9c3",
+      "body_bytes": 7714,
+      "version": "0.21.5"
+    },
+    "window": {
+      "hwnd": 592604,
+      "owner_pid": 32992,
+      "visible": true,
+      "responding": true,
+      "probe": "SendMessageTimeoutW WM_NULL",
+      "renderer_interactions_verified": false
+    },
+    "integrity": {
+      "rid": 8192,
+      "elevated": false
+    },
+    "configuration_unchanged": true,
+    "launch_receipt": {
+      "path": "H:/hermes-worktrees/selective-publication-20261003/.codegraph/delivery/oct4/desktop-launch-20261004T133628Z-b86aea20ee7e453eb2b83c6ce692f496.json",
+      "sha256": "314c4e71a59287cf5b3f228c11f2f04451da389fb9451d331036afd77f387fff"
+    },
+    "verify_receipt": {
+      "path": "H:/hermes-worktrees/selective-publication-20261003/.codegraph/delivery/oct4/desktop-verify-20261004T133914Z-625d60e2d57546f5a182349163cf29c7.json",
+      "sha256": "030f3b1a6b67647a0170827bcfd07cc6ab219381acc2a2b8290fbb13d2516b54"
+    }
+  },
+  "go": {
+    "restart_and_health_ok": true,
+    "observed_at_utc": "2026-10-04T13:37:32.1289531Z",
+    "identity": {
+      "repoRoot": "C:\\Users\\downl\\Documents\\New project\\hermes-agent",
+      "processCreated": "134355946489251441",
+      "pid": 35228,
+      "heldAccess": "QUERY_LIMITED_INFORMATION|SYNCHRONIZE",
+      "executable": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\scripts\\windows\\watchdog-go\\dist\\hermes-watchdog.exe"
+    },
+    "health": {
+      "bodyBytes": 16,
+      "bodySha256": "6489d6d7a33c5d40e18fc61eeb6c34c341279ee61816394dde5189aa4ad8fae5",
+      "timeoutMs": 5000,
+      "maximumBytes": 65536,
+      "httpStatus": 200,
+      "url": "http://127.0.0.1:9920/health",
+      "status": "ok"
+    },
+    "embedding_enabled": false,
+    "embedding_proof": "absent_default_false_reviewed_source",
+    "handle_closed": true,
+    "wrapper_receipt": {
+      "path": "H:/hermes-worktrees/selective-publication-20261003/.codegraph/delivery/oct4/go-closeout-20261004T133727Z-da670f102c6041ccb006ac47f79b1447.json",
+      "sha256": "448d41711c1153ca36729750a82f63595c2799873853d96668b16094eef77d7b"
+    },
+    "verify_receipt": {
+      "path": "H:/hermes-worktrees/selective-publication-20261003/.codegraph/delivery/oct4/go-verify-20261004T133727Z-da670f102c6041ccb006ac47f79b1447.json",
+      "sha256": "5d922005dbba844d33195655095624dd351f58146cf6a5ad6b1234b1199afabc"
+    },
+    "verification_helper": {
+      "path": "H:/hermes-worktrees/selective-publication-20261003/.codegraph/delivery/oct4/Verify-Go.ps1",
+      "sha256": "2ea4cd9af91ab40a53a469b80eaa34c980b26dc4f8eaa75a99a33e77a6801a21"
+    },
+    "listener_red": {
+      "path": "H:/hermes-worktrees/selective-publication-20261003/.codegraph/delivery/oct4/go-listener-repair-red.json",
+      "sha256": "d7757f0164e15d8486b28e9f0d03df1887945a5eb4fdd2bd664777f84c62c454"
+    },
+    "listener_green": {
+      "path": "H:/hermes-worktrees/selective-publication-20261003/.codegraph/delivery/oct4/go-listener-repair-green-v2.json",
+      "sha256": "b9cdc4917e8fadfffe8d4cc944f5948a311685061f6548d0ab474a3c352fe0eb"
+    },
+    "listener_tests_passed": 26
+  },
+  "preservation": {
+    "tracked_items": 10,
+    "baseline_untracked_items": 95,
+    "observed_untracked_items": 172,
+    "tracked_preserved": true,
+    "baseline_untracked_preserved": true,
+    "receipt": {
+      "path": "H:/hermes-worktrees/selective-publication-20261003/.codegraph/delivery/oct4/primary-preservation-20261004T133827Z.json",
+      "sha256": "3b59c9aca60d564ba58fc2961ea9f5c8e4329569d9e5e60cc66f1f6e72d98181"
+    }
+  },
+  "limitations": [
+    "No continuous stability proof",
+    "No renderer interaction E2E",
+    "No model/provider/llama/embedding inference proof",
+    "No detached gateway health proof",
+    "CI is not all green"
+  ],
+  "prior_failures_retained": {
+    "desktop_first_stop": {
+      "path": "H:/hermes-worktrees/selective-publication-20261003/.codegraph/delivery/oct4/desktop-stop-20261004T131854Z-4397b9f94c1f4a2ba74885dd9b7ae5ff.json",
+      "sha256": "5bb00a2753e90d1eb16b049a3e8075c49740e35504de726adcbcf1ec26f0c6fa"
+    },
+    "go_first_closeout": {
+      "path": "H:/hermes-worktrees/selective-publication-20261003/.codegraph/delivery/oct4/go-closeout-20261004T131908Z-f10e91b0d8b84b449f6135103ac162ea.json",
+      "sha256": "6368631f854ac131fdc361e28638a873c06ce5ca006443920e1e8ad9bcadd683"
+    }
+  }
+}

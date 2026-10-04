@@ -1,0 +1,149 @@
+{
+  "commit": "d3579b222e5b6c725d61177c7cfbdd6cdf907d2b",
+  "allGreen": false,
+  "runs": [
+    {
+      "id": 37206043087,
+      "name": "CI review comment",
+      "status": "completed",
+      "conclusion": "skipped",
+      "sha": "d3579b222e5b6c725d61177c7cfbdd6cdf907d2b",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37206043087"
+    },
+    {
+      "id": 37205983757,
+      "name": "CI review comment",
+      "status": "completed",
+      "conclusion": "skipped",
+      "sha": "d3579b222e5b6c725d61177c7cfbdd6cdf907d2b",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37205983757"
+    },
+    {
+      "id": 37205978827,
+      "name": "CI",
+      "status": "in_progress",
+      "conclusion": null,
+      "sha": "d3579b222e5b6c725d61177c7cfbdd6cdf907d2b",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37205978827"
+    },
+    {
+      "id": 37205978106,
+      "name": "Windows downstream release",
+      "status": "in_progress",
+      "conclusion": null,
+      "sha": "d3579b222e5b6c725d61177c7cfbdd6cdf907d2b",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37205978106"
+    },
+    {
+      "id": 37205978071,
+      "name": "Docker Build, Test, and Publish",
+      "status": "completed",
+      "conclusion": "success",
+      "sha": "d3579b222e5b6c725d61177c7cfbdd6cdf907d2b",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37205978071"
+    },
+    {
+      "id": 37205978069,
+      "name": "Windows Workstation Tier-1 CI",
+      "status": "completed",
+      "conclusion": "failure",
+      "sha": "d3579b222e5b6c725d61177c7cfbdd6cdf907d2b",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37205978069"
+    },
+    {
+      "id": 37205978141,
+      "name": "Nix flake check",
+      "status": "completed",
+      "conclusion": "success",
+      "sha": "d3579b222e5b6c725d61177c7cfbdd6cdf907d2b",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37205978141"
+    }
+  ],
+  "tier1Jobs": [
+    {
+      "id": 111447124123,
+      "name": "Windows native Python",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37205978069/job/111447124123",
+      "failedSteps": [
+        {
+          "name": "Windows footgun scan",
+          "number": 8
+        }
+      ]
+    },
+    {
+      "id": 111447124190,
+      "name": "Windows native Desktop",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37205978069/job/111447124190",
+      "failedSteps": []
+    },
+    {
+      "id": 111447124191,
+      "name": "Downstream policy",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37205978069/job/111447124191",
+      "failedSteps": [
+        {
+          "name": "Validate carry-surface metrics",
+          "number": 8
+        }
+      ]
+    },
+    {
+      "id": 111447124250,
+      "name": "Security and lockfiles",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37205978069/job/111447124250",
+      "failedSteps": [
+        {
+          "name": "Node production dependency advisory audit",
+          "number": 9
+        }
+      ]
+    },
+    {
+      "id": 111447124299,
+      "name": "Windows watchdog Go",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37205978069/job/111447124299",
+      "failedSteps": []
+    },
+    {
+      "id": 111447124333,
+      "name": "Upstream API compatibility",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37205978069/job/111447124333",
+      "failedSteps": []
+    },
+    {
+      "id": 111447124339,
+      "name": "Windows regression",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37205978069/job/111447124339",
+      "failedSteps": []
+    }
+  ],
+  "finalClosingCommitCi": "Must query exact final pushed SHA separately; this observation is the first Oct4 doc publication.",
+  "recordedAtUtc": "2026-10-04T13:44:17.873908+00:00",
+  "localFootgunScan": {
+    "exitCode": 1,
+    "scannedFiles": 1512,
+    "findings": 1,
+    "path": "plugins/nimble_scorer/core.py:54",
+    "rule": "hardcoded Desktop path",
+    "changedByThisDelivery": false,
+    "receipt": {
+      "path": "H:/hermes-worktrees/selective-publication-20261003/.codegraph/delivery/oct4/footgun-final.log",
+      "sha256": "3a3cfc65abea212864e3637289e849ce935dc01085a425be62e517c7ef455937"
+    }
+  }
+}

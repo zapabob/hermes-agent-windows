@@ -1,8 +1,8 @@
 {
   "schema": "selective-security-partial-delivery-v1",
   "date": "2026-10-04",
-  "captured_at_jst": "2026-10-04T21:16:17.437150+09:00",
-  "status": "PARTIAL_IMPLEMENTATION_RECORDED_RUNTIME_CLOSEOUT_IN_PROGRESS",
+  "captured_at_jst": "2026-10-04T22:46:15.670270+09:00",
+  "status": "PARTIAL_IMPLEMENTATION_HANDOFF_PUBLISHED_RUNTIME_VERIFIED",
   "acceptance": "S06_HOLD",
   "documentation_only": false,
   "authorization": {
@@ -491,59 +491,17 @@
     "cache_future_mutants_additional": 2
   },
   "runtime_oct4": {
-    "desktop_stop": "SUCCESS_FRESH_ABSENCE_AFTER_FAILED_WM_CLOSE_RECEIPT",
-    "desktop_rebuild": "PENDING",
-    "desktop_restart": "PENDING",
-    "go_restart": "LAUNCH_COMPLETED_EMBEDDING_FALSE_HEALTH_HOLD_CIM_EXCEPTION",
-    "desktop_helper": {
-      "path": "H:\\hermes-worktrees\\selective-publication-20261003\\.codegraph\\delivery\\oct4\\desktop-runtime-oct4.py",
-      "sha256": "a6ae2e8a0fe0607775941f2de19372ba6c0f8795113f0c6c08c0daa3f9005183"
+    "status": "DESKTOP_GO_OBSERVED_HEALTH_PASS",
+    "summary": {
+      "path": "H:/hermes-worktrees/selective-publication-20261003/docs/windows/selective-security-20261003/runtime-closeout-20261004.json",
+      "sha256": "f61e245340cdbc266ac344daf7fc5289f6bed5050a805be78acafa0a7fb84ae9"
     },
-    "desktop_readme": {
-      "path": "H:\\hermes-worktrees\\selective-publication-20261003\\.codegraph\\delivery\\oct4\\desktop-runtime-oct4-README.md",
-      "sha256": "d7e0d216ef243e472893ceb2a05a1b6bc2e5afaef52f53a0da9714d5861801c1"
-    },
-    "prepared_binding": {
-      "path": "H:\\hermes-worktrees\\selective-publication-20261003\\.codegraph\\delivery\\oct4\\desktop-runtime-oct4-prepared-20261004T114445Z-23b5670f09af4d408e83e7daf09c2f0c.json",
-      "sha256": "002b6ec24940f36bb544983925c7a0726a217d18e2102ee50ebb8a4027bc60b2"
-    },
-    "desktop_observation_plan": {
-      "artifact": {
-        "path": "H:\\hermes-worktrees\\selective-publication-20261003\\.codegraph\\delivery\\oct4\\desktop-plan-20261004T115102Z-f240a908e52942f0a37fc1b3d902646e.json",
-        "sha256": "4ef9334ca074c2a3f8b9d29cdce4b1f803e538f518c2fedc04b6c7664042c100"
-      },
-      "status": "OBSERVATIONAL_PLAN_EXISTS; not stop/build/restart proof"
-    },
-    "desktop_independent_review": "Final acceptance receipt pending in this draft",
-    "go_helpers": [
-      {
-        "path": "H:\\hermes-worktrees\\selective-publication-20261003\\.codegraph\\delivery\\oct4\\Run-Go.ps1",
-        "sha256": "a2af9b33e9b63aab8d28ddd8552c4e8d96d819517756dfb112af669f7a8ab69e"
-      },
-      {
-        "path": "H:\\hermes-worktrees\\selective-publication-20261003\\.codegraph\\delivery\\oct4\\Start-Go-NoLlama.ps1",
-        "sha256": "b609992a42e46bf31282070bbb21f1a7f53a7dbdfbae28b576fe2325b159e6c9"
-      }
-    ],
-    "go_binding": {
-      "path": "H:\\hermes-worktrees\\selective-publication-20261003\\.codegraph\\delivery\\oct4\\go-helper-binding.json",
-      "sha256": "20271cc4e86eda346c9c4539c9c13d5233062cf01219b1d5d874f66914b24f63"
-    },
-    "go_review": {
-      "latest_user_report": "REVIEWED_HELPERS_PREPARED_ONLY",
-      "saved_binding_field": "PENDING",
-      "final_review_receipt": "PARENT_TO_FILL"
-    },
-    "protected_llama_actions": "NONE",
-    "console_association": "UNKNOWN; private diagnostic is not Native 5 acceptance",
-    "desktop_stop_receipt": {
-      "path": "H:/hermes-worktrees/selective-publication-20261003/.codegraph/delivery/oct4/desktop-stop-20261004T131953Z-d427006b52344e44aaf2e81b8fe4eceb.json",
-      "sha256": "ed078cb7c2eb68c1dc2f21459cc252393f8e360ad2ad095d04a48bb16e7b0566"
-    },
-    "go_first_closeout": {
-      "path": "H:/hermes-worktrees/selective-publication-20261003/.codegraph/delivery/oct4/go-closeout-20261004T131908Z-f10e91b0d8b84b449f6135103ac162ea.json",
-      "sha256": "6368631f854ac131fdc361e28638a873c06ce5ca006443920e1e8ad9bcadd683"
-    }
+    "desktop_stop": "PASS_FRESH_ABSENCE",
+    "desktop_rebuild": "PASS_PACK_EXIT_0_MAIN_D357_DIRTY_PREEXISTING_WIP",
+    "desktop_restart": "PASS_LAUNCH_AND_SEPARATE_VERIFY",
+    "go_restart": "PASS_OWNED_HEALTH_200_EMBEDDING_FALSE",
+    "protected_llama_actions": [],
+    "continuous_stability_proven": false
   },
   "preservation": {
     "primary_root": "C:\\Users\\downl\\Documents\\New project\\hermes-agent",
@@ -554,48 +512,47 @@
       "path": "H:\\hermes-worktrees\\selective-publication-20261003\\.codegraph\\delivery\\oct4-prepublication-primary.json",
       "sha256": "2f7198ddbcf22fd147fc972d81433388b42630752166a7f716213c3a2aa77c60"
     },
-    "before_after_preservation": "BEFORE_PUBLICATION_BASELINE_PRESERVED",
+    "before_after_preservation": "POST_MAIN_FF_AND_PACK_BASELINE_PRESERVED",
     "current_untracked_items": 172,
     "baseline_untracked_items": 95,
     "additional_external_untracked_items": 77,
     "latest_receipt": {
-      "path": "H:/hermes-worktrees/selective-publication-20261003/.codegraph/delivery/oct4/primary-preservation-20261004T132155Z.json",
-      "sha256": "106a9dfac6802d5d3b7ff74a99ea2ef13025162ec5118de9f5f3e44e1d7583f7"
+      "path": "H:/hermes-worktrees/selective-publication-20261003/.codegraph/delivery/oct4/primary-preservation-20261004T133827Z.json",
+      "sha256": "3b59c9aca60d564ba58fc2961ea9f5c8e4329569d9e5e60cc66f1f6e72d98181"
     }
   },
   "publication_oct4": {
-    "status": "PENDING",
+    "status": "FIRST_DOCUMENT_PUBLICATION_MAIN_VERIFIED_FINAL_RECORD_COMMIT_PENDING",
     "family_commit": null,
-    "publication_commit": null,
-    "pushed_head": null,
-    "remote_ref_equality": null,
-    "ci_sha": null,
-    "required_ci_results": null,
-    "all_required_ci_green": null,
-    "note": "Oct3 publication/runtime ledger is historical and cannot satisfy Oct4 gates"
+    "publication_commit": "d3579b222e5b6c725d61177c7cfbdd6cdf907d2b",
+    "pushed_head": "d3579b222e5b6c725d61177c7cfbdd6cdf907d2b",
+    "remote_ref_equality": true,
+    "ci_sha": "d3579b222e5b6c725d61177c7cfbdd6cdf907d2b",
+    "required_ci_results": "ci-observation-20261004.json",
+    "all_required_ci_green": false,
+    "note": "Oct3 publication/runtime ledger is historical and cannot satisfy Oct4 gates",
+    "final_closing_commit_receipt": ".codegraph/delivery/oct4/final-publication.json",
+    "local_recreated_commit": "cd375fd1823be53f3c7697e0a22dc0dd5ead53cf",
+    "same_tree_verified": "548342bacd9843f803e3ef0518f18fb44d67b160",
+    "transport": "GitHub connector API after CLI auth failure; normal Git final push attempted after user reauthentication"
   },
   "documentation_actions": {
-    "new_documents": [
-      "H:\\hermes-worktrees\\selective-publication-20261003\\docs\\windows\\selective-security-20261003\\HANDOFF_20261004.md",
-      "H:\\hermes-worktrees\\selective-publication-20261003\\docs\\windows\\selective-security-20261003\\delivery-ledger-20261004.json",
-      "H:\\hermes-worktrees\\selective-publication-20261003\\docs\\windows\\selective-security-20261003\\S05\\implementation-plan-20261004.md"
+    "scope": "PUB publication only; integration S06 preserved separately",
+    "documents": [
+      "HANDOFF_20261004.md",
+      "delivery-ledger-20261004.json",
+      "S05/implementation-plan-20261004.md",
+      "runtime-closeout-20261004.json",
+      "ci-observation-20261004.json"
     ],
-    "git_commands": [],
-    "source_edits": [],
-    "configuration_edits": [],
-    "runtime_actions": [],
-    "test_spawns": [],
-    "installs": [],
-    "network_requests": []
+    "pub_product_source_edits": [],
+    "persistent_configuration_edits": [],
+    "runtime_evidence": "runtime-closeout-20261004.json"
   },
   "parent_finalization_fields": [
-    "Five native scoped independent-review acceptance and durable ALL2107 verified current Graph binding receipt path",
-    "Five native checks and observer WinError31/exited-parent QueryImage race disposition; allowed custom-binary warning is not failure cause",
-    "exact scoped family/publication commit and remote equality",
-    "Desktop two stop epochs plus pack/source/exe stamp and visible/responding owned backend proof",
-    "Go reviewed ownership/restart/health receipt",
-    "primary preservation comparison",
-    "required CI outcomes on exact pushed SHA"
+    "S06 native5 acceptance remains HOLD; requires source-bound reimplementation and review",
+    "Final record/metrics commit SHA and exact-head CI saved separately in final-publication.json",
+    "Remaining seven families and six metadata probes remain OPEN"
   ],
   "evidence_bindings": [
     {
@@ -613,13 +570,13 @@
   ],
   "handoff": {
     "path": "H:/hermes-worktrees/selective-publication-20261003/docs/windows/selective-security-20261003/HANDOFF_20261004.md",
-    "sha256": "b5a26957f4236c2badecacf13870b591889866cb5c422fffd466306962872acb"
+    "sha256": "d3afd35ce55d056541e412c68374b2f4dcfa5abc6136a02b8177e5927f89776f"
   },
-  "revision_at_jst": "2026-10-04T21:23:47.816638+09:00",
+  "revision_at_jst": "2026-10-04T22:46:15.670270+09:00",
   "freeze": {
     "source": "S06_CURRENT_FE1_TEST86CE_PRODUCT_B168",
     "acceptance": "HOLD",
-    "runtime": "IN_PROGRESS"
+    "runtime": "DESKTOP_AND_GO_OBSERVED_PASS"
   },
-  "captured_at_utc": "2026-10-04T13:26:07.658976+00:00"
+  "captured_at_utc": "2026-10-04T13:44:17.873908+00:00"
 }
