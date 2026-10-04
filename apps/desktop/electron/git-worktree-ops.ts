@@ -5,8 +5,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { resolveRequestedPathForIpc } from './hardening'
 import { executeGitChecked, rethrowGitPolicyError } from './git-execution-policy'
+import { resolveRequestedPathForIpc } from './hardening'
 
 // Unit separator between format fields. Git's pretty-format parser only honors
 // `%xNN` escapes (and for-each-ref honors neither `%xNN` nor `%NN`), so the
@@ -397,10 +397,10 @@ async function listBranches(repoPath, gitBin) {
     // Both requests must finish before a read falls back or rejects. Preserve
     // typed policy refusal even when the other ref listing failed first.
     for (const result of results) {
-      if (result.status === 'rejected') rethrowGitPolicyError(result.reason)
+      if (result.status === 'rejected') {rethrowGitPolicyError(result.reason)}
     }
     const [localOut, remoteOut] = results.map(result => {
-      if (result.status === 'rejected') throw result.reason
+      if (result.status === 'rejected') {throw result.reason}
       return result.value
     })
 

@@ -1,0 +1,83 @@
+{
+  "schema": "s06-ci-repair-acceptance-v1",
+  "base_commit": "78d6530fad9b214a5a2e69f73e34eecf7450d4bc",
+  "observed_utc": "2026-10-04T22:40:35.646704+00:00",
+  "scope_sha256": {
+    "apps/desktop/electron/git-execution-policy.ts": "592c77e10ccd5ae6980708033d69415d1cae79b9d99954654bfa4926b59f9369",
+    "apps/desktop/electron/git-ipc.ts": "f7afbf69f328c559eb4fd7a3d600edc43c130fb26cf96b2f177ca634ca479991",
+    "apps/desktop/electron/git-ref-ops.test.ts": "32b98322b402339a326f095b09894bb8aeecc8377ff7743a28d46826ec6dc2e1",
+    "apps/desktop/electron/git-ref-ops.ts": "f7c40485645b27d4bbe1c5fd592c3476b6d69d102b7a060b872eafd0207bd4fa",
+    "apps/desktop/electron/git-review-ops.test.ts": "8799a184b0f5f47f89eb07003ddd72b1cba32dce9c1ea3b176cd53941c90aa73",
+    "apps/desktop/electron/git-review-ops.ts": "1b31abbafceb717049b636a01cbe6b83c9d07a20bee803d1ecf7a5da04ac2833",
+    "apps/desktop/electron/git-test-runtime.ts": "db3a3c0e1125931283426f1ccf6b8f777fed031b101952eb6fb38e54432e56c5",
+    "apps/desktop/electron/git-worktree-ops.test.ts": "64b6c308f2a85a9691ad926bb4052667820f8f5edf897d7ed1fdf334d23a9e38",
+    "apps/desktop/electron/git-worktree-ops.ts": "2d1e470b0036dca5e0137746336c7dd5c17c50131381816dfa77c0b9d5065247",
+    "apps/desktop/electron/main.ts": "10d00b6e7baab83bac276eba84bc4da690811ad9112942c31e0e4b84a565a569",
+    "apps/desktop/electron/python-backend-command.ts": "ef1d915bdc6502ec2cfecef303a0ff81c6c92002e5c4a6a1005d0d8331e64b13",
+    "tests/hermes_cli/test_downstream_update_authority.py": "3c534e053424fcc6a33430266bfa9d0e0d0844a425321dea5abac8edbd3d8000",
+    "tests/hermes_cli/test_update_zip_fallback_guards.py": "d0e62dc49c08d2bbb3cae7eae24339ac35320816a021a9c67fa24aee5ff8b7ea"
+  },
+  "lint": {
+    "before_errors": 57,
+    "after_errors": 0,
+    "config_changed": false,
+    "warnings_retained": 194
+  },
+  "behavior_contracts_passed": 16,
+  "protocol_mutants_killed": 2,
+  "desktop_tests": {
+    "git-ref-ops": 23,
+    "git-review-ops": 23,
+    "git-worktree-ops": 25,
+    "total_passed": 71,
+    "failed": 0,
+    "original_per_test_timeout_ms": 90000,
+    "receipt_sha256": {
+      "git-ref-ops": "d740f62abe9cf91ed8cb3c594e532227ba9869784f2a85d554563cdf88ddd7a1",
+      "git-review-ops": "0bf61f073dae314970eaf3ac2001a45791b646061daade1dde61e823ae24fc4d",
+      "git-worktree-ops": "b2b48601ad419ec95e9db3c1927d1c41dcd830138ab4fe113fd1bfc46c249dab"
+    }
+  },
+  "updater_contracts": {
+    "passed": 30,
+    "failed": 0,
+    "receipt_sha256": "28f4f8402c09e5fdfd2f45cb6c48ff4d5e4750df7602564556468a3266b74332",
+    "mock_boundary": "_run_update_git",
+    "python_runtime_products_changed": false,
+    "red_local_failed": 7,
+    "red_local_passed": 23,
+    "red_old_mock_allowed_a_real_bounded_fetch_timeout": true
+  },
+  "native": {
+    "modes": 7,
+    "all_exit_codes": 0,
+    "create_exit_held_handle_count": 1279,
+    "jobs_active": 0,
+    "unknown_identity_errors": 0,
+    "ports": "CLOSED",
+    "immutable_fixture_sha256": "f60b75fedfe520bb9543c5531efbd31d012dd9f35d6d257cdc6ed82c4ae28fc4",
+    "independent_audit_sha256": "22974ca108ebdc004125ed70c0c5085bf651c8bded1740c39e85238a6aff20a1"
+  },
+  "typecheck": {
+    "exit_code": 0,
+    "diagnostics_bytes": 0,
+    "time": "2026-10-04T22:32:10.3985742Z"
+  },
+  "codegraph": {
+    "state": "complete",
+    "pending": 0,
+    "last_indexed": "2026-10-04T22:30:38.325Z"
+  },
+  "source_review": "APPROVE; Beauvoir; no P1/P2",
+  "fresh_evidence_review": "APPROVE; Laplace; no missing gates",
+  "historical_python_regression": {
+    "passed": 866,
+    "skipped": 12,
+    "excluded": 3,
+    "rerun_for_this_repair": false,
+    "original_full_TS_bindings_are_historical": true
+  },
+  "runtime_rebuild": "PENDING separate delivery receipt",
+  "cloud_ci": "NOT_YET_RUN_FOR_NEW_COMMIT",
+  "campaign_complete": false
+}

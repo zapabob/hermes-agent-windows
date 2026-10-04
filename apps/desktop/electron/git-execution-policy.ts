@@ -1,9 +1,10 @@
 // The Python subprocess compatibility owner defines Git policy. This module
 // only transports its result through a main-owned interpreter, without a backend.
 import { execFile, spawn } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
-import { randomUUID } from 'node:crypto'
+
 import { GitError } from 'simple-git'
 
 export interface GitPolicyRuntime {
@@ -20,7 +21,7 @@ export class GitPolicyError extends GitError {
 }
 
 export function rethrowGitPolicyError(error: unknown): void {
-  if (error instanceof GitPolicyError) throw error
+  if (error instanceof GitPolicyError) {throw error}
 }
 
 let resolveRuntime: (() => GitPolicyRuntime | null) | null = null
@@ -124,12 +125,12 @@ export async function gitExecutionPolicy(cwd: string, selectedGit?: string, args
         const entries = Object.entries(result.environment)
         if (entries.length > 1100 || entries.some(([key, value]) =>
           !/^(?:GIT_(?:TERMINAL_PROMPT|PAGER|EDITOR|CONFIG_(?:GLOBAL|SYSTEM|NOSYSTEM|COUNT|KEY_\d+|VALUE_\d+))|GCM_INTERACTIVE|PAGER)$/.test(key) ||
-          typeof value !== 'string' || value.length > 8192)) throw new Error('Invalid policy environment')
+          typeof value !== 'string' || value.length > 8192)) {throw new Error('Invalid policy environment')}
         const count = Number(result.environment.GIT_CONFIG_COUNT)
-        if (!Number.isInteger(count) || count < 1 || count > 1000) throw new Error('Invalid configuration count')
+        if (!Number.isInteger(count) || count < 1 || count > 1000) {throw new Error('Invalid configuration count')}
         for (let index = 0; index < count; index++) {
           if (typeof result.environment[`GIT_CONFIG_KEY_${index}`] !== 'string' ||
-              typeof result.environment[`GIT_CONFIG_VALUE_${index}`] !== 'string') throw new Error('Incomplete configuration')
+              typeof result.environment[`GIT_CONFIG_VALUE_${index}`] !== 'string') {throw new Error('Incomplete configuration')}
         }
         // Runtime authority comes only from the captured main-process resolver,
         // never from a similarly named field in the Python response.
@@ -148,7 +149,7 @@ export function applyGitPolicyEnvironment(policy: Pick<PolicyResult, 'environmen
   const controlled = new Set(Object.keys(policy.environment))
   for (const key of Object.keys(env)) {
     const canonical = process.platform === 'win32' ? key.toUpperCase() : key
-    if (/^GIT_CONFIG(?:$|_)/.test(canonical) || controlled.has(canonical)) delete env[key]
+    if (/^GIT_CONFIG(?:$|_)/.test(canonical) || controlled.has(canonical)) {delete env[key]}
   }
   return {...env, ...policy.environment}
 }
@@ -156,13 +157,15 @@ export function applyGitPolicyEnvironment(policy: Pick<PolicyResult, 'environmen
 // Electron must support Node mode before it may be used as a transport binary.
 // Unknown or disabled fuse metadata fails closed without starting the app.
 function assertNodeTransportAvailable(): void {
-  if (!process.versions.electron) return
+  if (!process.versions.electron) {return}
   assertElectronNodeTransportAvailable(process.execPath)
 }
 
 export function assertElectronNodeTransportAvailable(binary: string): void {
   const sentinel = Buffer.from('dL7pKGdnNz796PbbjQWNKmHXBZaB9tsX')
   let fd: number | undefined
+  let available = false
+  let failure: GitPolicyError | undefined
   try {
     fd = fs.openSync(binary, 'r')
     const chunk = Buffer.alloc(1024 * 1024)
@@ -170,15 +173,15 @@ export function assertElectronNodeTransportAvailable(binary: string): void {
     let position = 0
     for (;;) {
       const length = fs.readSync(fd, chunk, 0, chunk.length, position)
-      if (!length) break
+      if (!length) {break}
       const data = Buffer.concat([prefix, chunk.subarray(0, length)])
       const index = data.indexOf(sentinel)
       if (index >= 0 && data.length > index + sentinel.length + 2) {
         const offset = index + sentinel.length
         const declaredLength = data[offset + 1]
-        if (data[offset] !== 1 || declaredLength === 0) break
+        if (data[offset] !== 1 || declaredLength === 0) {break}
         if (data.length >= offset + 2 + declaredLength) {
-          if (data[offset + 2] === 49) return
+          if (data[offset + 2] === 49) { available = true }
           break
         }
       }
@@ -186,35 +189,37 @@ export function assertElectronNodeTransportAvailable(binary: string): void {
       position += length
     }
   } catch {
-    throw new GitPolicyError('Trusted Node Git transport metadata is unreadable.')
+    failure = new GitPolicyError('Trusted Node Git transport metadata is unreadable.')
   } finally {
     if (fd !== undefined) {
       try { fs.closeSync(fd) }
-      catch { throw new GitPolicyError('Trusted Node Git transport metadata could not be closed.') }
+      catch { failure = new GitPolicyError('Trusted Node Git transport metadata could not be closed.') }
     }
   }
+  if (failure) { throw failure }
+  if (available) { return }
   throw new GitPolicyError('Trusted Node Git transport is unavailable.')
 }
 
 export function simpleGitTransport(cwd: string, policy: Pick<PolicyResult, 'git' | 'runtime' | 'environment'>, timeout = 30, maxOutputBytes = 8 * 1024 * 1024,
   gh?: string, base: NodeJS.ProcessEnv = process.env) {
   const runtime = policy.runtime
-  if (!runtime || runtime.argsPrefix.length !== 0) throw new GitPolicyError('Trusted Git runtime is unavailable.')
+  if (!runtime || runtime.argsPrefix.length !== 0) {throw new GitPolicyError('Trusted Git runtime is unavailable.')}
   const script = path.join(runtime.ownerRoot, 'apps', 'desktop', 'assets', 'git-transport.cjs')
-  if (!fs.existsSync(script)) throw new GitPolicyError('Trusted Git transport is unavailable.')
+  if (!fs.existsSync(script)) {throw new GitPolicyError('Trusted Git transport is unavailable.')}
   assertNodeTransportAvailable()
   const nonce = randomUUID()
   const eolSources: Record<string, string> = {}
   for (const [key, value] of Object.entries(process.env)) {
     const canonical = process.platform === 'win32' ? key.toUpperCase() : key
-    if (value !== undefined && ['GIT_CONFIG_GLOBAL', 'GIT_CONFIG_SYSTEM', 'GIT_CONFIG_NOSYSTEM'].includes(canonical)) eolSources[canonical] = value
+    if (value !== undefined && ['GIT_CONFIG_GLOBAL', 'GIT_CONFIG_SYSTEM', 'GIT_CONFIG_NOSYSTEM'].includes(canonical)) {eolSources[canonical] = value}
   }
   const request = {nonce, python: runtime.command, root: runtime.ownerRoot,
     git: policy.git, cwd: path.resolve(cwd), timeout, eolSources, maxOutputBytes,
     ...(gh ? {gh} : {})}
   const environment = applyGitPolicyEnvironment(policy, base)
   for (const key of Object.keys(environment)) {
-    if (['NODE_OPTIONS', 'NODE_PATH', 'ELECTRON_RUN_AS_NODE', '__HERMES_GIT_TRANSPORT_REQUEST'].includes(key.toUpperCase())) delete environment[key]
+    if (['NODE_OPTIONS', 'NODE_PATH', 'ELECTRON_RUN_AS_NODE', '__HERMES_GIT_TRANSPORT_REQUEST'].includes(key.toUpperCase())) {delete environment[key]}
   }
   environment.ELECTRON_RUN_AS_NODE = '1'
   environment.__HERMES_GIT_TRANSPORT_REQUEST = JSON.stringify(request)
@@ -241,7 +246,7 @@ export function simpleGitTransport(cwd: string, policy: Pick<PolicyResult, 'git'
       // Preserve simple-git's ordinary Git contract: a nonzero result without
       // Git stderr (e.g. diff --exit-code) is parsed normally. Transport startup
       // errors never have an authenticated completion frame.
-      if (result.exitCode && offset) return new GitError(undefined, Buffer.concat([...result.stdOut, originalStderr]).toString('utf8'))
+      if (result.exitCode && offset) {return new GitError(undefined, Buffer.concat([...result.stdOut, originalStderr]).toString('utf8'))}
       return undefined
     }
   }
@@ -265,8 +270,8 @@ export async function executeGit(cwd: string, selectedGit: string | undefined, a
 export async function executeGh(cwd: string, gh: string | null, args: string[],
   base: NodeJS.ProcessEnv): Promise<GitExecutionResult> {
   const policy = {...gitExecutionAuthority(), environment: {}}
-  if (!gh) return {exitCode: 127, stdout: '', stderr: 'gh executable unavailable'}
-  if (!path.isAbsolute(gh)) throw new GitPolicyError('Trusted GH executable is unavailable.')
+  if (!gh) {return {exitCode: 127, stdout: '', stderr: 'gh executable unavailable'}}
+  if (!path.isAbsolute(gh)) {throw new GitPolicyError('Trusted GH executable is unavailable.')}
   const maxOutputBytes = 8 * 1024 * 1024
   const transport = simpleGitTransport(cwd, policy, 30, maxOutputBytes, gh, base)
   return executeTransport(cwd, args, transport, maxOutputBytes)
@@ -283,8 +288,8 @@ function executeTransport(cwd: string, args: string[], transport: ReturnType<typ
     let overflow = false
     const collect = (chunks: Buffer[], chunk: Buffer) => {
       bytes += chunk.length
-      if (bytes > 2 * maxOutputBytes + 512) overflow = true
-      if (!overflow) chunks.push(chunk)
+      if (bytes > 2 * maxOutputBytes + 512) {overflow = true}
+      if (!overflow) {chunks.push(chunk)}
     }
     child.stdout.on('data', chunk => collect(stdOut, chunk))
     child.stderr.on('data', chunk => collect(stdErr, chunk))

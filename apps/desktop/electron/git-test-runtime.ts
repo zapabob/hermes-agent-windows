@@ -2,12 +2,13 @@
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
+
 import { configureGitPolicyRuntime } from './git-execution-policy'
 
 function executable(name: string): string {
   for (const directory of (process.env.PATH || '').split(path.delimiter)) {
     const candidate = path.resolve(directory, name + (process.platform === 'win32' ? '.exe' : ''))
-    if (fs.existsSync(candidate)) return candidate
+    if (fs.existsSync(candidate)) {return candidate}
   }
   throw new Error(`Native test executable is unavailable: ${name}`)
 }

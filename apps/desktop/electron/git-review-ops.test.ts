@@ -1,15 +1,14 @@
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
+import { createRequire } from 'node:module'
 import os from 'node:os'
 import path from 'node:path'
-import { createRequire } from 'node:module'
 
 import { afterEach, test } from 'vitest'
 
-import { gitBinary } from './git-test-runtime'
 import { GitPolicyError, rethrowGitPolicyError } from './git-execution-policy'
-
+import type * as ReviewOpsModule from './git-review-ops'
 import {
   gitFor,
   repoStatus,
@@ -19,6 +18,7 @@ import {
   reviewHistoryDiff,
   reviewList
 } from './git-review-ops'
+import { gitBinary } from './git-test-runtime'
 
 // Pure contracts evaluate the current source with an explicit dependency table.
 // They never invoke Git/GH, discover policy, or resolve a real repository.
@@ -56,9 +56,9 @@ function mockReview(overrides: Record<string, unknown> = {}) {
     './hardening': {resolveRequestedPathForIpc: () => cwd},
     './git-execution-policy': policy
   }
-  const module = {exports: {}} as {exports: typeof import('./git-review-ops')}
+  const module = {exports: {}} as {exports: typeof ReviewOpsModule}
   new Function('require', 'module', 'exports', pureReviewSource)(name => {
-    if (!(name in dependencies)) throw new Error(`Unexpected pure dependency: ${name}`)
+    if (!(name in dependencies)) {throw new Error(`Unexpected pure dependency: ${name}`)}
     return dependencies[name]
   }, module, module.exports)
   return {ops: module.exports, cwd, calls}
@@ -76,7 +76,7 @@ test.each([true, false])('pure S06 review: policy refusal cached=%s waits for st
   const refusal = new GitPolicyError('diff refused')
   const {ops} = mockReview({git: {status: () => status.promise}, policy: {
     gitExecutionPolicy: async (_cwd, _binary, args = []) => {
-      if (args[0] === 'diff' && args.includes('--cached') === cached) throw refusal
+      if (args[0] === 'diff' && args.includes('--cached') === cached) {throw refusal}
       return {argv: args}
     }
   }})
@@ -96,7 +96,7 @@ test('pure S06 review: a first diff refusal still starts and drains the other di
   let otherStarted = false
   const {ops} = mockReview({git: {diffSummary: () => { otherStarted = true; return diff.promise }}, policy: {
     gitExecutionPolicy: async (_cwd, _binary, args = []) => {
-      if (args.includes('--cached')) throw refusal
+      if (args.includes('--cached')) {throw refusal}
       return {argv: args}
     }
   }})
@@ -148,7 +148,7 @@ test('pure S06 review: success retains selected cwd, executable and staged count
   assert.equal(result.files[0].removed, 2)
   assert.equal((calls[0][0] as {baseDir: string}).baseDir, cwd)
   assert.equal(policyCalls.length, 3)
-  for (const args of policyCalls) assert.deepEqual(args.slice(0, 2), [cwd, 'selected-git'])
+  for (const args of policyCalls) {assert.deepEqual(args.slice(0, 2), [cwd, 'selected-git'])}
 })
 
 test('pure S06 review: ordinary diff failure retains empty read fallback', async () => {

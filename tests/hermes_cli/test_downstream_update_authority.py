@@ -59,7 +59,7 @@ def test_downstream_update_check_never_fetches_upstream(
             return subprocess.CompletedProcess(command, 0, "0\n", "")
         return subprocess.CompletedProcess(command, 0, "", "")
 
-    monkeypatch.setattr(update_cmd.subprocess, "run", run)
+    monkeypatch.setattr(update_cmd, "_run_update_git", run)
     update_cmd._cmd_update_check()
 
     assert any("fetch origin main" in " ".join(command) for command in commands)

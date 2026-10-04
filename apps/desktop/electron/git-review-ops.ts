@@ -9,8 +9,8 @@ import path from 'node:path'
 
 import simpleGit from 'simple-git'
 
+import { executeGh, executeGit, gitExecutionPolicy, rethrowGitPolicyError, simpleGitTransport } from './git-execution-policy'
 import { resolveRequestedPathForIpc } from './hardening'
-import { gitExecutionPolicy, rethrowGitPolicyError, simpleGitTransport, executeGit, executeGh } from './git-execution-policy'
 
 const COMMIT_CONTEXT_DIFF_MAX_CHARS = 120_000
 const COMMIT_CONTEXT_UNTRACKED_MAX = 80
@@ -331,10 +331,10 @@ async function reviewList(repoPath, scope, baseRef, gitBin) {
     // Drain every owner request before reporting failure. A policy refusal must
     // not be hidden by an earlier ordinary Git error and its empty-read fallback.
     for (const result of results) {
-      if (result.status === 'rejected') rethrowGitPolicyError(result.reason)
+      if (result.status === 'rejected') {rethrowGitPolicyError(result.reason)}
     }
     const [status, staged, unstaged] = results.map(result => {
-      if (result.status === 'rejected') throw result.reason
+      if (result.status === 'rejected') {throw result.reason}
       return result.value
     })
 

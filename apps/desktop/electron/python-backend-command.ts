@@ -12,7 +12,7 @@ export interface PythonBackendCommandDeps {
 
 export function pythonBackendCommand(root: string, deps: PythonBackendCommandDeps) {
   const python = deps.findPythonForRoot(root)
-  if (!python) return null
+  if (!python) {return null}
   const venvRoot = deps.venvRootForPython(python, root) ?? path.join(root, 'venv')
   const venvPython = deps.getVenvPython(venvRoot)
   const command = deps.isWindows && deps.fileExists(venvPython) ? venvPython : python

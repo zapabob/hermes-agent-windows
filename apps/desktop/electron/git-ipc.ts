@@ -4,8 +4,8 @@
 // resolvers stay injected because main.ts also uses them for self-update and
 // plugin installs.
 import { ipcMain } from 'electron'
-import { configureGitPolicyRuntime, type GitPolicyRuntime } from './git-execution-policy'
 
+import { configureGitPolicyRuntime, type GitPolicyRuntime } from './git-execution-policy'
 import {
   branchCreate,
   branchDelete,

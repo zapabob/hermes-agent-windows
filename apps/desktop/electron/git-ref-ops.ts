@@ -6,8 +6,8 @@
 // a rewritten name would hide a typo the user should see.
 
 
-import { resolveRequestedPathForIpc } from './hardening'
 import { executeGitChecked, rethrowGitPolicyError } from './git-execution-policy'
+import { resolveRequestedPathForIpc } from './hardening'
 
 // Unit separator between format fields. Git's pretty-format parser only honors
 // `%xNN` escapes (and for-each-ref honors neither `%xNN` nor `%NN`), so the

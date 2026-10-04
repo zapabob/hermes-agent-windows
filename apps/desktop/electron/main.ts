@@ -201,7 +201,6 @@ import {
 } from './gateway-file-download'
 import { probeGatewayWebSocket } from './gateway-ws-probe'
 import { registerGitIpc } from './git-ipc'
-import { pythonBackendCommand } from './python-backend-command'
 import { readAndConsumeHandoffResult } from './handoff-result'
 import {
   ATTACHMENT_UPLOAD_DEFAULT_MAX_BYTES,
@@ -316,6 +315,7 @@ import {
   spliceRegistrySessionRows,
   tagRegistrySessionResponse
 } from './profile-session-routing'
+import { pythonBackendCommand } from './python-backend-command'
 import { createQuickEntryShortcut, quickEntryWindowBounds, sanitizeQuickEntrySettings } from './quick-entry'
 import { type ActiveWork, mergeActiveWork, normalizeActiveWork, quitPromptFor } from './quit-guard'
 import * as remoteLifecycle from './remote-lifecycle'

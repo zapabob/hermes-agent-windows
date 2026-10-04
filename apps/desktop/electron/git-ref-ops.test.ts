@@ -6,8 +6,6 @@ import path from 'node:path'
 
 import { afterEach, test } from 'vitest'
 
-import { gitBinary } from './git-test-runtime'
-
 import {
   branchCreate,
   branchDelete,
@@ -24,6 +22,7 @@ import {
   tagCreate,
   tagDelete
 } from './git-ref-ops'
+import { gitBinary } from './git-test-runtime'
 
 const tempDirs: string[] = []
 
