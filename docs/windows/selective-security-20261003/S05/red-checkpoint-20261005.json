@@ -1,0 +1,73 @@
+{
+  "schema": "s05-sanitized-red-checkpoint-20261005-v1",
+  "family": "S05",
+  "status": "OPEN_PARTIAL_RED_PREPARATION_ONLY",
+  "family_acceptance": false,
+  "epoch": "v2",
+  "collected_tests": 3,
+  "semantic_failures": 3,
+  "errors": 0,
+  "collection_exit": 0,
+  "run_exit": 1,
+  "source_count": 12,
+  "source_unchanged": true,
+  "source_before": {
+    "agent/runtime_cwd.py": "c9a79cd5086e0afce63285de30c719257f0b2e84a7b8fa8fe5309aa13bd1bb75",
+    "agent/lsp/workspace.py": "3cf2155fd06655ab57bdf7b768274f2d64207924283e87909dbfd5241cd609e9",
+    "agent/lsp/manager.py": "0ea7126ba7499f15ac90b5871fa6f40dffedaca7f1da5ee14d48661d20beff8f",
+    "agent/lsp/servers.py": "f71211a96e1b5198b9e354d8a0fca3ca8de830fb347da3cb4ff734e95c35987e",
+    "agent/lsp/__init__.py": "5fce00264dd2e4d02750fd092063fb54de3308993003e234ee228f4b7f02981f",
+    "agent/lsp/client.py": "ad9e90e32bf410b3e5b8a1f5071aca6233e6174304c5cfae4b1da9aa0640c579",
+    "agent/lsp/install.py": "2f2f69191b43342d8259fd37f0ebe5aa7680c28e5b812533c03351406e693cc7",
+    "tools/file_operations.py": "f137f0604838b804212173963b1162869fc502c3166999701077cffd15d67c0e",
+    "tools/file_tools.py": "9216f03edc43c9b08526d294801141e2b4c92de7adfbad71582bceb207002ba4",
+    "hermes_cli/config.py": "6b7c07a57a477c6cb747381f91d4cc818f8bb4ba5818851cbf9771079973de8c",
+    "gateway/session_context.py": "b68908ffec7891b12080933a4d50a63d449479a596335c2579776c6e545c4500",
+    "cron/scheduler.py": "e5caf50bebcf6e682607f7c292944087df2964e00190dde680b1114ac9c84b56"
+  },
+  "source_after": {
+    "agent/runtime_cwd.py": "c9a79cd5086e0afce63285de30c719257f0b2e84a7b8fa8fe5309aa13bd1bb75",
+    "agent/lsp/workspace.py": "3cf2155fd06655ab57bdf7b768274f2d64207924283e87909dbfd5241cd609e9",
+    "agent/lsp/manager.py": "0ea7126ba7499f15ac90b5871fa6f40dffedaca7f1da5ee14d48661d20beff8f",
+    "agent/lsp/servers.py": "f71211a96e1b5198b9e354d8a0fca3ca8de830fb347da3cb4ff734e95c35987e",
+    "agent/lsp/__init__.py": "5fce00264dd2e4d02750fd092063fb54de3308993003e234ee228f4b7f02981f",
+    "agent/lsp/client.py": "ad9e90e32bf410b3e5b8a1f5071aca6233e6174304c5cfae4b1da9aa0640c579",
+    "agent/lsp/install.py": "2f2f69191b43342d8259fd37f0ebe5aa7680c28e5b812533c03351406e693cc7",
+    "tools/file_operations.py": "f137f0604838b804212173963b1162869fc502c3166999701077cffd15d67c0e",
+    "tools/file_tools.py": "9216f03edc43c9b08526d294801141e2b4c92de7adfbad71582bceb207002ba4",
+    "hermes_cli/config.py": "6b7c07a57a477c6cb747381f91d4cc818f8bb4ba5818851cbf9771079973de8c",
+    "gateway/session_context.py": "b68908ffec7891b12080933a4d50a63d449479a596335c2579776c6e545c4500",
+    "cron/scheduler.py": "e5caf50bebcf6e682607f7c292944087df2964e00190dde680b1114ac9c84b56"
+  },
+  "product_changes": 0,
+  "test_actor_children": 0,
+  "real_lsp_or_installer_executed": false,
+  "npm_network_server_model_calls": false,
+  "provider_credentials_inherited": false,
+  "cases": [
+    {
+      "name": "test_untrusted_git_rust_does_not_reach_launch",
+      "result": "SEMANTIC_RED"
+    },
+    {
+      "name": "test_unlisted_checkout_venv_not_forwarded_to_pyright",
+      "result": "SEMANTIC_RED"
+    },
+    {
+      "name": "test_untrusted_override_cannot_replace_operator_python",
+      "result": "SEMANTIC_RED"
+    }
+  ],
+  "private_receipt_sha256": "990c179b79a7bfa28eb2e6a0e36695ad7feb88d7bd42ea75390d9fe78b8e0580",
+  "test_sha256": "aa5e20b5b7201eb0791ba748c17f3cebed54a5afd864f01d1f3f91cf4815d227",
+  "runner_sha256": "3246c0830adbacceb665ed5333c9c66e87774f4961ee1830a9222d014b790177",
+  "approved_harness_sha256": "8c2f3c1334203c96fc17a6dd0d950a2923e32eb439b8861868b0ddf50908cb99",
+  "artifact_sha256": {
+    "collection-v2.log": "0cf8acc65661ba5585a36533f58d7da38430b0d984bc0f3c8f704b01db3b4720",
+    "red-v2.log": "3e92e06db5ce207641c15b5a0f5402f7ad59a0c40cbc7c6d94a68c12bd76aacd",
+    "red-v2.junit.xml": "da689eacc0d24d9ca680bee2018ad846ad29bd19c13b1b5b8accd953ba6454d5",
+    "source-before.json": "ea22b63a103b668ac97085b2b62ab6e7627983b3d6cc604f1e57a6296113e3c2"
+  },
+  "raw_storage": "PRIVATE_RETAINED_NOT_PUBLISHED",
+  "scope_limit": "Production routing/selection intent with blocked launch; no native proof, complete cache/future revocation coverage, GREEN, mutants or family acceptance."
+}

@@ -1,0 +1,57 @@
+{
+  "schema": "exact-sha-ci-observation-v1",
+  "observed_at_utc": "2026-10-04 22:10:21 UTC",
+  "head_sha": "78d6530fad9b214a5a2e69f73e34eecf7450d4bc",
+  "all_required_success": false,
+  "scope": "first page per_page=100; exact SHA required; pending and skipped never count as success",
+  "runs": [
+    {
+      "id": 37238338143,
+      "name": "CI",
+      "status": "pending",
+      "conclusion": null,
+      "head_sha": "78d6530fad9b214a5a2e69f73e34eecf7450d4bc",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37238338143"
+    },
+    {
+      "id": 37238337325,
+      "name": "Windows downstream release",
+      "status": "in_progress",
+      "conclusion": null,
+      "head_sha": "78d6530fad9b214a5a2e69f73e34eecf7450d4bc",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37238337325"
+    },
+    {
+      "id": 37238337320,
+      "name": "Docker Build, Test, and Publish",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "78d6530fad9b214a5a2e69f73e34eecf7450d4bc",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37238337320"
+    },
+    {
+      "id": 37238337363,
+      "name": "auto-fix lint issues & formatting",
+      "status": "in_progress",
+      "conclusion": null,
+      "head_sha": "78d6530fad9b214a5a2e69f73e34eecf7450d4bc",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37238337363"
+    },
+    {
+      "id": 37238337360,
+      "name": "Windows Workstation Tier-1 CI",
+      "status": "completed",
+      "conclusion": "failure",
+      "head_sha": "78d6530fad9b214a5a2e69f73e34eecf7450d4bc",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37238337360"
+    },
+    {
+      "id": 37238337321,
+      "name": "Nix flake check",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "78d6530fad9b214a5a2e69f73e34eecf7450d4bc",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37238337321"
+    }
+  ]
+}

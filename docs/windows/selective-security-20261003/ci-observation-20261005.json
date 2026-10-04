@@ -1,0 +1,69 @@
+{
+  "schema": "selective-security-ci-observation-v1",
+  "observed_at_jst": "2026-10-05T05:36:57+09:00",
+  "head_sha": "b5be59dbcbf816a20f6b0d79495b0091afe02577",
+  "run_id": 37209696594,
+  "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37209696594",
+  "status": "completed",
+  "conclusion": "failure",
+  "all_green": false,
+  "evidence_source": "Authenticated GitHub connector GET run and jobs; remote main ref independently matched",
+  "total_jobs": 30,
+  "counts": {
+    "success": 17,
+    "failure": 7,
+    "skipped": 6
+  },
+  "failed_jobs": [
+    {
+      "id": 111460760168,
+      "name": "Native engineering workflow / native-docker",
+      "failed_steps": [
+        "Real native execution, parent-only HTTP inference and sabotage controls"
+      ]
+    },
+    {
+      "id": 111460760220,
+      "name": "Native engineering workflow / contracts (ubuntu-latest)",
+      "failed_steps": [
+        "Native picker, strict inference and execution boundary"
+      ]
+    },
+    {
+      "id": 111460760263,
+      "name": "Native engineering workflow / contracts (windows-latest)",
+      "failed_steps": [
+        "Native picker, strict inference and execution boundary"
+      ]
+    },
+    {
+      "id": 111460760434,
+      "name": "Python lints / Windows footguns (blocking)",
+      "failed_steps": [
+        "Run footgun checker"
+      ]
+    },
+    {
+      "id": 111460760503,
+      "name": "Python tests / Run tests",
+      "failed_steps": [
+        "Run tests"
+      ]
+    },
+    {
+      "id": 111460760540,
+      "name": "OS-specific tests / Windows-only tests",
+      "failed_steps": [
+        "Run windows_only tests"
+      ]
+    },
+    {
+      "id": 111468211873,
+      "name": "All required checks pass",
+      "failed_steps": [
+        "Evaluate job results"
+      ]
+    }
+  ],
+  "scope": "Historical b5be main CI only. No S06 acceptance, new-head CI or runtime inference proof."
+}

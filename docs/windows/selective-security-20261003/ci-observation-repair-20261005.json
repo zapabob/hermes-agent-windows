@@ -1,0 +1,50 @@
+{
+  "schema": "exact-sha-ci-observation",
+  "commit": "feda2921da95cb5d112e49f84cdb932721be762d",
+  "observed_utc": "2026-10-04T22:42:36.919146+00:00",
+  "all_required_success": false,
+  "runs": [
+    {
+      "id": 37240941401,
+      "name": "CI",
+      "status": "pending",
+      "conclusion": null,
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37240941401"
+    },
+    {
+      "id": 37240940658,
+      "name": "Windows Workstation Tier-1 CI",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37240940658"
+    },
+    {
+      "id": 37240940690,
+      "name": "Nix flake check",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37240940690"
+    },
+    {
+      "id": 37240940597,
+      "name": "Docker Build, Test, and Publish",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37240940597"
+    },
+    {
+      "id": 37240940661,
+      "name": "auto-fix lint issues & formatting",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37240940661"
+    },
+    {
+      "id": 37240940647,
+      "name": "Windows downstream release",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37240940647"
+    }
+  ]
+}

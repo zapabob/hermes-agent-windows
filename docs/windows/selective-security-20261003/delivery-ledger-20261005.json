@@ -1,0 +1,2073 @@
+{
+  "schema": "selective-security-delivery-20261005-v1",
+  "date": "2026-10-05",
+  "captured_at_utc": "2026-10-04T22:48:57.657142+00:00",
+  "status": "PARTIAL_CAMPAIGN_S06_AND_CI_REPAIR_PUBLISHED_DESKTOP_GO_VERIFIED_CI_NOT_GREEN",
+  "campaign_completed": false,
+  "documentation_only_actions": false,
+  "pinned": {
+    "R_BEFORE": "63279301bcbdc185c1b07b98a9312eb0c862f26d",
+    "R_AFTER": "d3630f853239e8c41ce7201e09fbdf39bcbc5431",
+    "U_TARGET": "4ed093cb6be8a2fadb39e770898f6989fc67201d",
+    "D_BASE": "c20e98f1370c588645d796047788e3b6f9cc749d"
+  },
+  "current_base": {
+    "main": "a3f8bfa910c48ea0d397313f78e3400c86940ddf",
+    "previous_baseline": "f1bce7b2060ea7866c71819d3c7864afabbf8968",
+    "reported_confirmed_at_jst": "2026-10-05 06:51; current source equality confirmed after publication",
+    "source": "PARENT_CONFIRMED_PUBLIC_AND_CANONICAL",
+    "concurrent_external_commit_paths": 8,
+    "s06_overlap": 0,
+    "pub_fast_forward": "CONFIRMED_PRESERVED_A3_BASE",
+    "concurrent_changes_preserved": true,
+    "evidence_epoch": "COMPOSITION_AND_FIRST_PUBLICATION_HISTORY_NOT_LATEST_REPAIR_HEAD"
+  },
+  "s06": {
+    "local_gates": "PASSED",
+    "local_native_independent_review": "APPROVE_SEVEN_NATIVE_RECEIPT_GATES_ONLY",
+    "publication_acceptance": "PUBLISHED_LOCAL_GATES_ACCEPTED",
+    "family_delivery_acceptance": "LOCAL_ACCEPTED_PUBLISHED_RUNTIME_VERIFIED_CI_NOT_GREEN_AUX_OPEN",
+    "product_inventory": {
+      "existing_product": 33,
+      "new_runtime": 3,
+      "new_test_helper": 1,
+      "inventory_total": 37,
+      "runtime_products": 36
+    },
+    "publication_scope": {
+      "transfer_paths": 74,
+      "existing_preserved_validation_paths": 17,
+      "bindings_total": 91,
+      "focused_tests": 49,
+      "native_fixture_and_contract_files": 5,
+      "pub_equals_integration": true,
+      "bindings": [
+        {
+          "path": "agent/context_references.py",
+          "sha256": "8b8b9e4faf3c5178d00a282b029f9e95863462ba186389bd05a6ba796d731992",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "agent/trace_upload.py",
+          "sha256": "73d388c3c5f0751597c71b268154dfc8b6f0537d501f9232c1528f8f3a714a15",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "apps/desktop/assets/git-transport.cjs",
+          "sha256": "e62e53c3456b09af3f4f7923acb39e791d638dca6b2cbb79fcbd136b80b4d86c",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "apps/desktop/electron/git-execution-policy.ts",
+          "sha256": "c1504f6e56630c7f428ede5bfeabd3fc1012ba5c236237cd1960cacc98607a23",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "apps/desktop/electron/git-ipc.ts",
+          "sha256": "ee0dfcb70e2613eec9f366dce3c6e5ffa15535493d774e0005f2b314ec5350cd",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "apps/desktop/electron/git-ref-ops.test.ts",
+          "sha256": "60b60004460f6918ecfd750a4faeac06a703cadcad5f67b32705ea19cb18c0a2",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "apps/desktop/electron/git-ref-ops.ts",
+          "sha256": "c140872bacbe52c519be0114b3390b1fe5671a37c55f39e9815dbce6dc8fcf73",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "apps/desktop/electron/git-review-ops.test.ts",
+          "sha256": "8eb3b26934f82a73d860940548371b96a0d638ecedeaef2a6de83e89b4ffd227",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "apps/desktop/electron/git-review-ops.ts",
+          "sha256": "e9eb291931d0585179308365b77f0a1440e1cd17188c37e104e0909390d7a06f",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "apps/desktop/electron/git-test-runtime.ts",
+          "sha256": "09c7c03e6f90680bf723750222cc3c9f7a09c85a1f384b5b4cff2fefada16890",
+          "category": "new_test_runtime_helper",
+          "transfer": true
+        },
+        {
+          "path": "apps/desktop/electron/git-worktree-ops.test.ts",
+          "sha256": "25bbca70e37d0073653fd0b775b7963534bb88779485a5e8775c4a22f937fac2",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "apps/desktop/electron/git-worktree-ops.ts",
+          "sha256": "8f1a3da5497bf1b38300902c4f049ae75ca9050470920db7954315bd1844dc12",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "apps/desktop/electron/main.ts",
+          "sha256": "b0a40e9c49ff13745e694e60638d02188289000c7e999d6a93959a547b677ba0",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "apps/desktop/electron/python-backend-command.ts",
+          "sha256": "7f5b2b7b34b980372327ec2d0b5cc136d1005976a770668f029f7aa29906bde3",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "cli.py",
+          "sha256": "3df6bbd464f22e4c07c129f89f53a91f62071bf47110836a45fbba013ea1085e",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "downstream/security/bounded_process.py",
+          "sha256": "e8b2f95cdf6346e56d9ed3e2a1cf28276c62acdd82aab427cd0267a3adff1bec",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "hermes_cli/_subprocess_compat.py",
+          "sha256": "f4b73d95b591a540abcb7284dec7c817c49b929a98ec8f9f02cd8b0d8f35629e",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "hermes_cli/banner.py",
+          "sha256": "969dd485d0fd808403268bbbdcdb8b2d613063567dd67c49c225f3a6603a8454",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "hermes_cli/cli_commands_mixin.py",
+          "sha256": "7a092ffe71957cd8226b95670b4bb53299790c4d8bf8bf6e776a5bc65ee37495",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "hermes_cli/dashboard_managed_files.py",
+          "sha256": "4a8a327e1ebf03ca0b3baa7cbb799e83a0883e1c93e9913f20815afef6b34fd6",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "hermes_cli/diagnostics_local_export.py",
+          "sha256": "b632cc87b2b5ff9eee95b974dff8bfc7aea3250da0b69494e0b6b84d9ff8bf7b",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "hermes_cli/dump.py",
+          "sha256": "9bc0b99c875833c4059774111998a2e79675f39b8229e99315011c262054fe42",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "hermes_cli/gitlock.py",
+          "sha256": "f2740545f6b2a3f5e7ed85d7ce4bd8e6de2ff4bd7b2f498dde42f492dcbb7374",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "hermes_cli/goals.py",
+          "sha256": "48430afe594c5e0ce054c01d07b4e89ab273e0eae87b5887b0a47f53926fc08a",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "hermes_cli/kanban_db.py",
+          "sha256": "a57d6bfcd04b435685fa5de4cf34bb1149960ec1346965052014121f44d100fd",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "hermes_cli/main.py",
+          "sha256": "76439aee495d7d6e972345891da954ff42542357532f83d4ad03043ca49629e2",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "hermes_cli/mcp_catalog.py",
+          "sha256": "bf7d2a3a92b2fac6851741d946e3c6bcedb66feae97f1d44569c4f4c4c80104f",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "hermes_cli/plugins_cmd.py",
+          "sha256": "51efc10b35a5d054e2c779e440af6f264e0993d1a33a4b2dbdd0533b7f4551da",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "hermes_cli/profile_distribution.py",
+          "sha256": "84f904b6f9932098858ce65df57d2f6b16afb12fc0d19b112d9596a0f262e686",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "hermes_cli/update_cmd.py",
+          "sha256": "e743cedffdcb3a26fa9321354fd91472d31a2160cfa071052e8b7982a18bff95",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "hermes_cli/web_git.py",
+          "sha256": "f37159c8b5f0d7b9c78bca4cba273c43305ed34205904591bf5449227bd3f738",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "hermes_cli/web_server.py",
+          "sha256": "b8095d418f671c08b44c2fbe4b0dca7ba5ee83ef24b660aefa8013b9462cfc5a",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "hermes_cli/worktree_gc.py",
+          "sha256": "6ef2c0cd4b0c84f1a4974f050c03ec182ad80dbe45ffadd98f04d09e53ff234c",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "tests/agent/test_coding_context.py",
+          "sha256": "85c19a155ec6c10d423ac311fad75f716ac99cccaad814bb30162359775ad7f1",
+          "category": "focused_test",
+          "transfer": false
+        },
+        {
+          "path": "tests/agent/test_context_references.py",
+          "sha256": "f0413a8f183b10ea380a93f19a5f4634ceb1d4b8d291002c9bb7da76ad14c2f6",
+          "category": "focused_test",
+          "transfer": false
+        },
+        {
+          "path": "tests/agent/test_trace_upload.py",
+          "sha256": "212c295550934e166e7dd88ae0bd781bd20b19a08d662f3e5cde4778f2124f77",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/cli/test_worktree_security.py",
+          "sha256": "fc2aea0406f3193a2ed26e4574c00da920951720f48cb213749daf72ff5d42b5",
+          "category": "focused_test",
+          "transfer": false
+        },
+        {
+          "path": "tests/cli/test_worktree_selfheal.py",
+          "sha256": "ba798f05c3410c12778c882e5f418201a8f6cf2c812e857b00a8af88ae89697e",
+          "category": "focused_test",
+          "transfer": false
+        },
+        {
+          "path": "tests/cli/test_worktree_sync_base.py",
+          "sha256": "db575a553c3c98e8dc4b53428ed5b1fb63e7fc7329989aac780d4ae8192ea201",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_banner_git_state.py",
+          "sha256": "7247483b91c5feeca7bc15d6b7c51118e897c73eb3bd612342a001ab244d2225",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_banner_hidden_git.py",
+          "sha256": "68bf199bcbd9e743b23cc462f6dda45b94a56efce50dfb94068148b6d6639609",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_bounded_probe_run.py",
+          "sha256": "bfc5462d2ebe9f056d9b9468ffce56607898502fc5719b4545bf223912b1e5fa",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_dump_git_commit.py",
+          "sha256": "e249606498a3f9e50895ba096749e975f9800d49d696ac84a629eab13d5e9a6f",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_fresh_clone_git_policy.py",
+          "sha256": "cd5d4c6ed132df76f0df39881d3480dc4024090047496402f3752265f900a248",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_gitlock_tmp_packs.py",
+          "sha256": "3f63c36bc5b5300b41503c8307089240cdd2fa0c1ac4bd3c6921a590983cada0",
+          "category": "focused_test",
+          "transfer": false
+        },
+        {
+          "path": "tests/hermes_cli/test_goal_gates.py",
+          "sha256": "ec6a9b5ec308e7e431cff8e886c4f6870113716d25dbaebe117ab702e135a7a5",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_goals.py",
+          "sha256": "2bdd4845b3ddb6db4a5148b7e09ef3aefd0650bbcb4f92dab1fcecfa4a2e6c47",
+          "category": "focused_test",
+          "transfer": false
+        },
+        {
+          "path": "tests/hermes_cli/test_kanban_db_init.py",
+          "sha256": "cc53afff9f7274587e578922c8e72ec94d83c21b610ef77b80186fe71cecb6a6",
+          "category": "focused_test",
+          "transfer": false
+        },
+        {
+          "path": "tests/hermes_cli/test_kanban_db_repair.py",
+          "sha256": "e870b2f13e24087c9f4612ee7bc4acfe9985b9e8ca889d7f5ea4b53b3efe1ecb",
+          "category": "focused_test",
+          "transfer": false
+        },
+        {
+          "path": "tests/hermes_cli/test_kanban_db.py",
+          "sha256": "4fd3314b6d942a778aeeac35a6128c79dba9a1408ca1875b40372d71f9dd9630",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_mcp_catalog.py",
+          "sha256": "f6cb13f58e1457a05fd39a832595f7458300a52780d4abf1faa01dcbcf77c60c",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_noninteractive_git.py",
+          "sha256": "cbc8efffe794364e99551b0b3c088d07f652032cb22120ac5a1d40985882e53f",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_plugin_install_ref.py",
+          "sha256": "7da8ef14aa93ed9e31a41156ca6507f5c78993afcfb2db54cb4247d2c87ac831",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_plugin_update_git_boundary.py",
+          "sha256": "435b74ecebddc5e31ecc5f99dd62372ac580df4f1218a7d4c96b1d305fcfdefd",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_plugins_cmd.py",
+          "sha256": "682eb531c2f64114b9e5ff747b4d0d8fe7afa03803efca15d293fbd1ad3f8bdb",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_profile_distribution.py",
+          "sha256": "629ce6e41a08597ff9d8e36978bfe4e2077c82d6a58d894ba2c191476930cbcc",
+          "category": "focused_test",
+          "transfer": false
+        },
+        {
+          "path": "tests/hermes_cli/test_repo_git_execution_policy.py",
+          "sha256": "3361c4dde66b6d00af29f4c59b6ba63e3e74e955ed0b6b0f2a92126be9b5e5d6",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_resolve_last_session.py",
+          "sha256": "85c1d2ef9f018a1aa1cc6ccf94e3f9f220e67c7619e0c304abe98f37e2daa9dd",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_tui_npm_install.py",
+          "sha256": "a5e5dc31c97065b955986aa386993dabf948a5b82e7e8add4bdfb4f66d911743",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_tui_restore_git_policy.py",
+          "sha256": "1910fdec8890f3c8ae821d88cf124f154c109e515bb060bdd9a5e27b4fe9629e",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_tui_resume_flow.py",
+          "sha256": "64ef9de6a04156a3082e99d45a15dfe7741fdf8c9ddc00d5871618db9e27aa39",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_update_autostash.py",
+          "sha256": "b9e55614d2909e084c46271358958a646871bd53f19e7d2cc0099fd00d3eebf2",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_update_eol_churn.py",
+          "sha256": "25314adbcef8091f0af2c1750eeae766fdd0f5d037986fbd8ebf21070aa00ead",
+          "category": "focused_test",
+          "transfer": false
+        },
+        {
+          "path": "tests/hermes_cli/test_update_git_review_boundaries.py",
+          "sha256": "fa4828c0efe61de69c0763b308a3e2653fef742ba440ca23c63d680639c02a69",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_update_normal_git_policy.py",
+          "sha256": "693b09e1e234ff770717fc794745d2e4d05a6cf286830a97686dd2e6638851ba",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_web_server_git.py",
+          "sha256": "fb87bc05d2d48b3c068ffebe91c7e6c25344556e3241e60fdf1856c5550e3aae",
+          "category": "focused_test",
+          "transfer": false
+        },
+        {
+          "path": "tests/hermes_cli/test_web_server_hidden_helpers.py",
+          "sha256": "b5cafa199c149c95d31677757b3bdcc6305b7e7c8749905ccbc6923891f6fb86",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/hermes_cli/test_worktree_gc.py",
+          "sha256": "57cf4931c1d8184badf2e104f01161e0f959c9267dd53936fe6e28ee2015d4d9",
+          "category": "focused_test",
+          "transfer": false
+        },
+        {
+          "path": "tests/hermes_cli/test_worktree_git_review_boundaries.py",
+          "sha256": "b3c06505fa07f0e7354a52f9ceea3537906b6086939282ea12b5e8082158542e",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/security/test_t16_bounded_security.py",
+          "sha256": "e3f9aaf833b94eb02e8f320989414e85aed18918893ba2136bfd4de0022a663e",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/test_gitlock.py",
+          "sha256": "f2783ae7629acc9cdecbfac71bfd499e9a8f51ad017f96e4bf626ea084b3c1ff",
+          "category": "focused_test",
+          "transfer": false
+        },
+        {
+          "path": "tests/test_remove_owned_tree.py",
+          "sha256": "088a92dc7cd28035546ca02c825517acf52201c0e567b0aa0d205e820448fe2a",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/tools/test_checkpoint_git_policy.py",
+          "sha256": "f8e8f6ec36e4af669c1a36372940821b7744ae0ba0a049c87725b09e04badf1b",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/tools/test_checkpoint_manager.py",
+          "sha256": "6ced50997ebf50659c19f06d5c3ce0eed2a532fb2af0e909149b15dd6c3af791",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/tools/test_subagent_worktree.py",
+          "sha256": "a42bd183ffdde1c5b2f1f89c518ad9d1f201c6ecbcdf100d25bc1a087f09e3d8",
+          "category": "focused_test",
+          "transfer": false
+        },
+        {
+          "path": "tests/tools/test_working_diff.py",
+          "sha256": "c79b1df13eb7932912c379d7bff9f53d2cc6e0816cff8144fa17e2c14895c46e",
+          "category": "focused_test",
+          "transfer": true
+        },
+        {
+          "path": "tests/tui_gateway/test_diagnostics_export_local.py",
+          "sha256": "8e1fbc2a31771d5eb84e649f935d199b8d05515f649c305d1776f660fdf064a8",
+          "category": "focused_test",
+          "transfer": false
+        },
+        {
+          "path": "tests/tui_gateway/test_session_git_metadata_generation.py",
+          "sha256": "a296a1d1386a01441a5bfc62194bc3bdc5bd1af7b1d1b855baee215a68dc0138",
+          "category": "focused_test",
+          "transfer": false
+        },
+        {
+          "path": "tests/tui_gateway/test_slash_fuzzy.py",
+          "sha256": "b147134514caa4bc6496654a10758ad4b176922eedbbf7ca656174ce9e49b542",
+          "category": "focused_test",
+          "transfer": false
+        },
+        {
+          "path": "tests/windows/fixtures/run_s06_desktop_direct_native.py",
+          "sha256": "f60b75fedfe520bb9543c5531efbd31d012dd9f35d6d257cdc6ed82c4ae28fc4",
+          "category": "native_fixture_or_contract",
+          "transfer": true
+        },
+        {
+          "path": "tests/windows/fixtures/s06_desktop_direct_native.mjs",
+          "sha256": "3c653124dc4b52e5267b06f291503dbc04f4d8df798d5ee9dcdbc05d8ed62e61",
+          "category": "native_fixture_or_contract",
+          "transfer": true
+        },
+        {
+          "path": "tests/windows/fixtures/s06_fixture_contracts.test.mjs",
+          "sha256": "4973067dfcda7946ed22a36d144179f523e9f452cf8220f07e502c22df2e9589",
+          "category": "native_fixture_or_contract",
+          "transfer": true
+        },
+        {
+          "path": "tests/windows/fixtures/s06_git_proxy_windows.go",
+          "sha256": "289f1e12503c4c4f6d0a0130373af2679c7cb26788fd54a42c16f6f182170004",
+          "category": "native_fixture_or_contract",
+          "transfer": true
+        },
+        {
+          "path": "tests/windows/fixtures/test_s06_fixture_contracts.py",
+          "sha256": "31a7d2df74cb942fa6f5a3484a9f83d30395fa082e828ca9bc7b98ec228c1803",
+          "category": "native_fixture_or_contract",
+          "transfer": true
+        },
+        {
+          "path": "tools/checkpoint_manager.py",
+          "sha256": "de569b5706501725196fdfeb2cfe818ad0e0973055564bdc6baaaa9f2a6acdbb",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "tools/subagent_worktree.py",
+          "sha256": "3755253aed26cdf53115f85d59183d0293fb08b8dd20de16ae4fe757ecc1c5d3",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "tools/working_diff.py",
+          "sha256": "7471e7c8255c4f9fc7a1f56452548fae09b80c4fc50c99c5f95a7831a08415c8",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "tui_gateway/compute_host.py",
+          "sha256": "9f8938a8d1fb67d886969362f6edbf2bb9f9ee20f8448f0bfef92e1820c23c88",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "tui_gateway/host_supervisor.py",
+          "sha256": "bb4d2e1f68751b483a2502b9617607dc6878592449a5938aee6ce7a40c9e1b41",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "tui_gateway/server.py",
+          "sha256": "530694acd791a8bdbbdb4e9733d283c9b3ae10648252f877bdaa385784def475",
+          "category": "product_runtime",
+          "transfer": true
+        },
+        {
+          "path": "utils.py",
+          "sha256": "249aaba0819cc1a853d1f8b352dcd5b5e578dce9d317dc21c35b94aaaf2fd411",
+          "category": "product_runtime",
+          "transfer": true
+        }
+      ],
+      "binding_epoch": "FIRST_PUBLICATION_78_HISTORICAL_NOT_POST_REPAIR"
+    },
+    "python_historical": {
+      "passed": 866,
+      "failed": 0,
+      "skipped": 12,
+      "explicit_excluded": 3,
+      "excluded_counted_as_pass": false,
+      "disjoint_test_files": 45,
+      "source_binding_total": 95,
+      "public_count": 91,
+      "private_count": 4,
+      "current_bytes_revalidated": false,
+      "new_full_execution_claim": false,
+      "publication_scope_same_set": false,
+      "public_bindings": [
+        {
+          "path": "downstream/security/bounded_process.py",
+          "sha256": "e8b2f95cdf6346e56d9ed3e2a1cf28276c62acdd82aab427cd0267a3adff1bec"
+        },
+        {
+          "path": "downstream/security/bounded_walk.py",
+          "sha256": "452a9159700e53753d8d22c6cc5518e1f9f75da691f3dff18b6113cfc36a69a2"
+        },
+        {
+          "path": "downstream/security/clamav_definitions.py",
+          "sha256": "9ab937c24f6b32d19a2ad72a5a254f772127717ca370e216a627cbff1c29cfe4"
+        },
+        {
+          "path": "downstream/security/cli.py",
+          "sha256": "62352df98c44a57638ba293158923e3d9a560dd649985de5cd6f6743978827c6"
+        },
+        {
+          "path": "downstream/security/engines.py",
+          "sha256": "e5c78e0ac2e2f2be63faceaf102022fc36905a7d882b69654429a5498f4c4953"
+        },
+        {
+          "path": "downstream/security/execution_gate.py",
+          "sha256": "3799f7d136a250deba792d04864cf00bc24c58e32707a6f62d45f03a1ac85d08"
+        },
+        {
+          "path": "downstream/security/models.py",
+          "sha256": "a51e14b3567f7143d694be9830367896f43518338ab4e290f82678efdb9404d7"
+        },
+        {
+          "path": "downstream/security/policy.py",
+          "sha256": "1cd10bd7da784000b07833c67ffce8724aa49fb81a78d9f5784782186fe10783"
+        },
+        {
+          "path": "downstream/security/service.py",
+          "sha256": "f8781f7fbc898d618451c2d8f9ec991546ea964185871d5be853e11b653ea5ad"
+        },
+        {
+          "path": "downstream/security/snapshot_budget.py",
+          "sha256": "e7b5a89a0f733ce94ee6208da5ec207c2daaf1b46097cca017711ef6d79fbf5a"
+        },
+        {
+          "path": "downstream/security/store.py",
+          "sha256": "f6257364fde8943d57bcec698b4654aa9231ca406b3b6cdaa6c66aa4e27feda7"
+        },
+        {
+          "path": "downstream/security/updates.py",
+          "sha256": "794208861f7a1873d3c08dc25b0cf1d26d7f2a3d9b65fd1c1011535113bae973"
+        },
+        {
+          "path": "downstream/security/vault.py",
+          "sha256": "ec86706454a03b23b2b0cfa90d50dca8172b830fec51d65c40d28185d1d992b4"
+        },
+        {
+          "path": "downstream/security/watcher.py",
+          "sha256": "3e5ce66b7899f21271b44dfdba9b626901a526787595ae128d135e458d113a75"
+        },
+        {
+          "path": "downstream/security/watch_state.py",
+          "sha256": "709547457c6d5842ec0230a00083263910d34000808d88f91c4eef7cd9fa9bc2"
+        },
+        {
+          "path": "downstream/security/__init__.py",
+          "sha256": "192b90905c515ea4ccb5ac9163342eda22f62675277da2434c4d33b223891fd3"
+        },
+        {
+          "path": "tests/security/test_t16_bounded_security.py",
+          "sha256": "e3f9aaf833b94eb02e8f320989414e85aed18918893ba2136bfd4de0022a663e"
+        },
+        {
+          "path": "scripts/run_tests.sh",
+          "sha256": "fdc4d97c77027ba77813dac950254e0e8f37ad16895f12e8ebd9154ff8bf7f4c"
+        },
+        {
+          "path": "scripts/run_tests_parallel.py",
+          "sha256": "545511ab00d011618538fd2cd72e6bc1c113d10e001e4b2a5d493f48f257143a"
+        },
+        {
+          "path": "cli.py",
+          "sha256": "3df6bbd464f22e4c07c129f89f53a91f62071bf47110836a45fbba013ea1085e"
+        },
+        {
+          "path": "hermes_cli/_subprocess_compat.py",
+          "sha256": "f4b73d95b591a540abcb7284dec7c817c49b929a98ec8f9f02cd8b0d8f35629e"
+        },
+        {
+          "path": "hermes_cli/main.py",
+          "sha256": "76439aee495d7d6e972345891da954ff42542357532f83d4ad03043ca49629e2"
+        },
+        {
+          "path": "hermes_cli/mcp_catalog.py",
+          "sha256": "bf7d2a3a92b2fac6851741d946e3c6bcedb66feae97f1d44569c4f4c4c80104f"
+        },
+        {
+          "path": "hermes_cli/plugins_cmd.py",
+          "sha256": "51efc10b35a5d054e2c779e440af6f264e0993d1a33a4b2dbdd0533b7f4551da"
+        },
+        {
+          "path": "hermes_cli/profile_distribution.py",
+          "sha256": "84f904b6f9932098858ce65df57d2f6b16afb12fc0d19b112d9596a0f262e686"
+        },
+        {
+          "path": "hermes_cli/update_cmd.py",
+          "sha256": "e743cedffdcb3a26fa9321354fd91472d31a2160cfa071052e8b7982a18bff95"
+        },
+        {
+          "path": "tests/agent/test_trace_upload.py",
+          "sha256": "212c295550934e166e7dd88ae0bd781bd20b19a08d662f3e5cde4778f2124f77"
+        },
+        {
+          "path": "tests/cli/test_worktree_security.py",
+          "sha256": "fc2aea0406f3193a2ed26e4574c00da920951720f48cb213749daf72ff5d42b5"
+        },
+        {
+          "path": "tests/cli/test_worktree_selfheal.py",
+          "sha256": "ba798f05c3410c12778c882e5f418201a8f6cf2c812e857b00a8af88ae89697e"
+        },
+        {
+          "path": "tests/cli/test_worktree_sync_base.py",
+          "sha256": "db575a553c3c98e8dc4b53428ed5b1fb63e7fc7329989aac780d4ae8192ea201"
+        },
+        {
+          "path": "tests/hermes_cli/test_banner_git_state.py",
+          "sha256": "7247483b91c5feeca7bc15d6b7c51118e897c73eb3bd612342a001ab244d2225"
+        },
+        {
+          "path": "tests/hermes_cli/test_banner_hidden_git.py",
+          "sha256": "68bf199bcbd9e743b23cc462f6dda45b94a56efce50dfb94068148b6d6639609"
+        },
+        {
+          "path": "tests/hermes_cli/test_bounded_probe_run.py",
+          "sha256": "bfc5462d2ebe9f056d9b9468ffce56607898502fc5719b4545bf223912b1e5fa"
+        },
+        {
+          "path": "tests/hermes_cli/test_dump_git_commit.py",
+          "sha256": "e249606498a3f9e50895ba096749e975f9800d49d696ac84a629eab13d5e9a6f"
+        },
+        {
+          "path": "tests/hermes_cli/test_fresh_clone_git_policy.py",
+          "sha256": "cd5d4c6ed132df76f0df39881d3480dc4024090047496402f3752265f900a248"
+        },
+        {
+          "path": "tests/hermes_cli/test_goal_gates.py",
+          "sha256": "ec6a9b5ec308e7e431cff8e886c4f6870113716d25dbaebe117ab702e135a7a5"
+        },
+        {
+          "path": "tests/hermes_cli/test_mcp_catalog.py",
+          "sha256": "f6cb13f58e1457a05fd39a832595f7458300a52780d4abf1faa01dcbcf77c60c"
+        },
+        {
+          "path": "tests/hermes_cli/test_noninteractive_git.py",
+          "sha256": "cbc8efffe794364e99551b0b3c088d07f652032cb22120ac5a1d40985882e53f"
+        },
+        {
+          "path": "tests/hermes_cli/test_plugin_install_ref.py",
+          "sha256": "7da8ef14aa93ed9e31a41156ca6507f5c78993afcfb2db54cb4247d2c87ac831"
+        },
+        {
+          "path": "tests/hermes_cli/test_plugin_update_git_boundary.py",
+          "sha256": "435b74ecebddc5e31ecc5f99dd62372ac580df4f1218a7d4c96b1d305fcfdefd"
+        },
+        {
+          "path": "tests/hermes_cli/test_plugins_cmd.py",
+          "sha256": "682eb531c2f64114b9e5ff747b4d0d8fe7afa03803efca15d293fbd1ad3f8bdb"
+        },
+        {
+          "path": "tests/hermes_cli/test_profile_distribution.py",
+          "sha256": "629ce6e41a08597ff9d8e36978bfe4e2077c82d6a58d894ba2c191476930cbcc"
+        },
+        {
+          "path": "tests/hermes_cli/test_repo_git_execution_policy.py",
+          "sha256": "3361c4dde66b6d00af29f4c59b6ba63e3e74e955ed0b6b0f2a92126be9b5e5d6"
+        },
+        {
+          "path": "tests/hermes_cli/test_resolve_last_session.py",
+          "sha256": "85c1d2ef9f018a1aa1cc6ccf94e3f9f220e67c7619e0c304abe98f37e2daa9dd"
+        },
+        {
+          "path": "tests/hermes_cli/test_tui_npm_install.py",
+          "sha256": "a5e5dc31c97065b955986aa386993dabf948a5b82e7e8add4bdfb4f66d911743"
+        },
+        {
+          "path": "tests/hermes_cli/test_tui_restore_git_policy.py",
+          "sha256": "1910fdec8890f3c8ae821d88cf124f154c109e515bb060bdd9a5e27b4fe9629e"
+        },
+        {
+          "path": "tests/hermes_cli/test_tui_resume_flow.py",
+          "sha256": "64ef9de6a04156a3082e99d45a15dfe7741fdf8c9ddc00d5871618db9e27aa39"
+        },
+        {
+          "path": "tests/hermes_cli/test_update_eol_churn.py",
+          "sha256": "25314adbcef8091f0af2c1750eeae766fdd0f5d037986fbd8ebf21070aa00ead"
+        },
+        {
+          "path": "tests/hermes_cli/test_update_git_review_boundaries.py",
+          "sha256": "fa4828c0efe61de69c0763b308a3e2653fef742ba440ca23c63d680639c02a69"
+        },
+        {
+          "path": "tests/hermes_cli/test_update_normal_git_policy.py",
+          "sha256": "693b09e1e234ff770717fc794745d2e4d05a6cf286830a97686dd2e6638851ba"
+        },
+        {
+          "path": "tests/hermes_cli/test_web_server_hidden_helpers.py",
+          "sha256": "b5cafa199c149c95d31677757b3bdcc6305b7e7c8749905ccbc6923891f6fb86"
+        },
+        {
+          "path": "tests/test_remove_owned_tree.py",
+          "sha256": "088a92dc7cd28035546ca02c825517acf52201c0e567b0aa0d205e820448fe2a"
+        },
+        {
+          "path": "tests/tools/test_checkpoint_git_policy.py",
+          "sha256": "f8e8f6ec36e4af669c1a36372940821b7744ae0ba0a049c87725b09e04badf1b"
+        },
+        {
+          "path": "tests/tools/test_checkpoint_manager.py",
+          "sha256": "6ced50997ebf50659c19f06d5c3ce0eed2a532fb2af0e909149b15dd6c3af791"
+        },
+        {
+          "path": "tests/tools/test_working_diff.py",
+          "sha256": "c79b1df13eb7932912c379d7bff9f53d2cc6e0816cff8144fa17e2c14895c46e"
+        },
+        {
+          "path": "tools/checkpoint_manager.py",
+          "sha256": "de569b5706501725196fdfeb2cfe818ad0e0973055564bdc6baaaa9f2a6acdbb"
+        },
+        {
+          "path": "tools/working_diff.py",
+          "sha256": "7471e7c8255c4f9fc7a1f56452548fae09b80c4fc50c99c5f95a7831a08415c8"
+        },
+        {
+          "path": "utils.py",
+          "sha256": "249aaba0819cc1a853d1f8b352dcd5b5e578dce9d317dc21c35b94aaaf2fd411"
+        },
+        {
+          "path": "agent/context_references.py",
+          "sha256": "8b8b9e4faf3c5178d00a282b029f9e95863462ba186389bd05a6ba796d731992"
+        },
+        {
+          "path": "agent/trace_upload.py",
+          "sha256": "73d388c3c5f0751597c71b268154dfc8b6f0537d501f9232c1528f8f3a714a15"
+        },
+        {
+          "path": "hermes_cli/banner.py",
+          "sha256": "969dd485d0fd808403268bbbdcdb8b2d613063567dd67c49c225f3a6603a8454"
+        },
+        {
+          "path": "hermes_cli/cli_commands_mixin.py",
+          "sha256": "7a092ffe71957cd8226b95670b4bb53299790c4d8bf8bf6e776a5bc65ee37495"
+        },
+        {
+          "path": "hermes_cli/dashboard_managed_files.py",
+          "sha256": "4a8a327e1ebf03ca0b3baa7cbb799e83a0883e1c93e9913f20815afef6b34fd6"
+        },
+        {
+          "path": "hermes_cli/diagnostics_local_export.py",
+          "sha256": "b632cc87b2b5ff9eee95b974dff8bfc7aea3250da0b69494e0b6b84d9ff8bf7b"
+        },
+        {
+          "path": "hermes_cli/dump.py",
+          "sha256": "9bc0b99c875833c4059774111998a2e79675f39b8229e99315011c262054fe42"
+        },
+        {
+          "path": "hermes_cli/gitlock.py",
+          "sha256": "f2740545f6b2a3f5e7ed85d7ce4bd8e6de2ff4bd7b2f498dde42f492dcbb7374"
+        },
+        {
+          "path": "hermes_cli/goals.py",
+          "sha256": "48430afe594c5e0ce054c01d07b4e89ab273e0eae87b5887b0a47f53926fc08a"
+        },
+        {
+          "path": "hermes_cli/kanban_db.py",
+          "sha256": "a57d6bfcd04b435685fa5de4cf34bb1149960ec1346965052014121f44d100fd"
+        },
+        {
+          "path": "hermes_cli/web_git.py",
+          "sha256": "f37159c8b5f0d7b9c78bca4cba273c43305ed34205904591bf5449227bd3f738"
+        },
+        {
+          "path": "hermes_cli/web_server.py",
+          "sha256": "b8095d418f671c08b44c2fbe4b0dca7ba5ee83ef24b660aefa8013b9462cfc5a"
+        },
+        {
+          "path": "hermes_cli/worktree_gc.py",
+          "sha256": "6ef2c0cd4b0c84f1a4974f050c03ec182ad80dbe45ffadd98f04d09e53ff234c"
+        },
+        {
+          "path": "tests/agent/test_coding_context.py",
+          "sha256": "85c19a155ec6c10d423ac311fad75f716ac99cccaad814bb30162359775ad7f1"
+        },
+        {
+          "path": "tests/agent/test_context_references.py",
+          "sha256": "f0413a8f183b10ea380a93f19a5f4634ceb1d4b8d291002c9bb7da76ad14c2f6"
+        },
+        {
+          "path": "tests/hermes_cli/test_gitlock_tmp_packs.py",
+          "sha256": "3f63c36bc5b5300b41503c8307089240cdd2fa0c1ac4bd3c6921a590983cada0"
+        },
+        {
+          "path": "tests/hermes_cli/test_goals.py",
+          "sha256": "2bdd4845b3ddb6db4a5148b7e09ef3aefd0650bbcb4f92dab1fcecfa4a2e6c47"
+        },
+        {
+          "path": "tests/hermes_cli/test_kanban_db.py",
+          "sha256": "4fd3314b6d942a778aeeac35a6128c79dba9a1408ca1875b40372d71f9dd9630"
+        },
+        {
+          "path": "tests/hermes_cli/test_kanban_db_init.py",
+          "sha256": "cc53afff9f7274587e578922c8e72ec94d83c21b610ef77b80186fe71cecb6a6"
+        },
+        {
+          "path": "tests/hermes_cli/test_kanban_db_repair.py",
+          "sha256": "e870b2f13e24087c9f4612ee7bc4acfe9985b9e8ca889d7f5ea4b53b3efe1ecb"
+        },
+        {
+          "path": "tests/hermes_cli/test_update_autostash.py",
+          "sha256": "b9e55614d2909e084c46271358958a646871bd53f19e7d2cc0099fd00d3eebf2"
+        },
+        {
+          "path": "tests/hermes_cli/test_web_server_git.py",
+          "sha256": "fb87bc05d2d48b3c068ffebe91c7e6c25344556e3241e60fdf1856c5550e3aae"
+        },
+        {
+          "path": "tests/hermes_cli/test_worktree_gc.py",
+          "sha256": "57cf4931c1d8184badf2e104f01161e0f959c9267dd53936fe6e28ee2015d4d9"
+        },
+        {
+          "path": "tests/hermes_cli/test_worktree_git_review_boundaries.py",
+          "sha256": "b3c06505fa07f0e7354a52f9ceea3537906b6086939282ea12b5e8082158542e"
+        },
+        {
+          "path": "tests/test_gitlock.py",
+          "sha256": "f2783ae7629acc9cdecbfac71bfd499e9a8f51ad017f96e4bf626ea084b3c1ff"
+        },
+        {
+          "path": "tests/tools/test_subagent_worktree.py",
+          "sha256": "a42bd183ffdde1c5b2f1f89c518ad9d1f201c6ecbcdf100d25bc1a087f09e3d8"
+        },
+        {
+          "path": "tests/tui_gateway/test_diagnostics_export_local.py",
+          "sha256": "8e1fbc2a31771d5eb84e649f935d199b8d05515f649c305d1776f660fdf064a8"
+        },
+        {
+          "path": "tests/tui_gateway/test_session_git_metadata_generation.py",
+          "sha256": "a296a1d1386a01441a5bfc62194bc3bdc5bd1af7b1d1b855baee215a68dc0138"
+        },
+        {
+          "path": "tests/tui_gateway/test_slash_fuzzy.py",
+          "sha256": "b147134514caa4bc6496654a10758ad4b176922eedbbf7ca656174ce9e49b542"
+        },
+        {
+          "path": "tools/subagent_worktree.py",
+          "sha256": "3755253aed26cdf53115f85d59183d0293fb08b8dd20de16ae4fe757ecc1c5d3"
+        },
+        {
+          "path": "tui_gateway/compute_host.py",
+          "sha256": "9f8938a8d1fb67d886969362f6edbf2bb9f9ee20f8448f0bfef92e1820c23c88"
+        },
+        {
+          "path": "tui_gateway/host_supervisor.py",
+          "sha256": "bb4d2e1f68751b483a2502b9617607dc6878592449a5938aee6ce7a40c9e1b41"
+        },
+        {
+          "path": "tui_gateway/server.py",
+          "sha256": "530694acd791a8bdbbdb4e9733d283c9b3ae10648252f877bdaa385784def475"
+        }
+      ],
+      "private_binding_hashes_only": [
+        "863dc308c6bf45a4ae013ce0cbd47411986a53943c984e4e137953c1e4223c00",
+        "bebd71e5ea9dd11b7026349825b0a43d629afef1a114b5b8a5c637154b770c8a",
+        "49b79dd2b24d8317eb821867397888422a20aa15b26bba996f10cf4f43bde480",
+        "72cd7325865b61350b1aa0f706c2a2e68553d679550f33a2f537649efdb28f9f"
+      ],
+      "binding_epoch": "PRE_DESKTOP_LINT_REPAIR_HISTORICAL",
+      "current_95_all_source_match_claim": false
+    },
+    "typescript_current_union": {
+      "passed": 71,
+      "worktree": {
+        "epoch": "v5",
+        "passed": 25,
+        "per_test_budget_seconds": 90,
+        "exit_code": 0,
+        "source_unchanged": true,
+        "full_module": true
+      },
+      "ref": {
+        "epoch": "v4",
+        "passed": 23
+      },
+      "review": {
+        "epoch": "v4",
+        "passed": 23
+      },
+      "v4_overall_exit": 1,
+      "v4_worktree_timeout_cases": 4,
+      "union_does_not_promote_failed_run": true,
+      "native_lifetime_acceptance_claim": false,
+      "evidence_epoch": "PRE_LINT_REPAIR_HISTORICAL"
+    },
+    "typecheck": {
+      "integration_exit": 0,
+      "pub_exit": 0,
+      "source": "PARENT_CONFIRMED"
+    },
+    "fixture": {
+      "runner_sha256": "f60b75fedfe520bb9543c5531efbd31d012dd9f35d6d257cdc6ed82c4ae28fc4",
+      "python_contracts_sha256": "31a7d2df74cb942fa6f5a3484a9f83d30395fa082e828ca9bc7b98ec228c1803",
+      "pure_passed": 106,
+      "selfcheck_passed": 9,
+      "protocol_mutants_killed": 22,
+      "source_unchanged": true,
+      "write_freeze": true
+    },
+    "product_mutants": {
+      "killed": [
+        "M01",
+        "M02",
+        "M03",
+        "M04",
+        "M06"
+      ],
+      "killed_count": 5,
+      "M05": "UNVERIFIED",
+      "baseline_restored": true,
+      "fixture_mutants_are_separate": true
+    },
+    "native_v3": {
+      "status": "ALL_7_PASS",
+      "actual_jobs": 7,
+      "create_total": 1279,
+      "stages": [
+        {
+          "mode": "git",
+          "creates": 249
+        },
+        {
+          "mode": "gh-large",
+          "creates": 215
+        },
+        {
+          "mode": "gh-positive",
+          "creates": 84
+        },
+        {
+          "mode": "gh-deadline",
+          "creates": 52
+        },
+        {
+          "mode": "output",
+          "creates": 239
+        },
+        {
+          "mode": "resolver",
+          "creates": 215
+        },
+        {
+          "mode": "static",
+          "creates": 225
+        }
+      ],
+      "all_controllers_exit": 0,
+      "all_children_exit": 0,
+      "unknown_or_error_count": 0,
+      "active_before_cleanup": 0,
+      "active_after_cleanup": 0,
+      "all_retained_handles": "EXITED_AND_CLOSED",
+      "before_after_debug_coverage": true,
+      "full_identity_before_continue": true,
+      "source_bound_registry": true,
+      "retired_console_generation_job_interval": true,
+      "owned_listener_checks": "GIT_AND_GH_DEADLINE_CLOSED",
+      "unchanged_product_bytes": true,
+      "budgets": {
+        "fixture_seconds": 90,
+        "strict_git_config_probe_seconds": 2,
+        "job_cumulative_limit": 256,
+        "unknown_never_pass": true
+      }
+    },
+    "failed_history": [
+      {
+        "epoch": "native_v1",
+        "status": "FAIL_RETAINED",
+        "reason": "Identity/receipt observation failures; no promotion from later success"
+      },
+      {
+        "epoch": "native_v2",
+        "status": "FAIL_RETAINED",
+        "controller_exit": 124,
+        "creates": 249,
+        "product_payload": "PASS_ONLY",
+        "final_classification_seconds": 33.11,
+        "reason": "Original90s deadline exceeded"
+      },
+      {
+        "epoch": "direct_ts_v3",
+        "status": "FAIL_RETAINED",
+        "passed": 66,
+        "timeout_cases": 5,
+        "per_test_seconds": 15
+      },
+      {
+        "epoch": "isolated_ts_v3",
+        "status": "FAIL_RETAINED",
+        "reason": "Invalid inaccessible NUL config source; setup failures"
+      },
+      {
+        "epoch": "isolated_ts_v4",
+        "status": "FAIL_RETAINED",
+        "worktree_passed": 21,
+        "worktree_timeout_cases": 4,
+        "ref_passed": 23,
+        "review_passed": 23,
+        "per_test_seconds": 15,
+        "exit_code": 1
+      }
+    ],
+    "evidence_bindings": {
+      "native_v3_independent_review": {
+        "sha256": "7f6f5ec1f526178aedb8323d522ec057cbb5c0c099e98b0402926c816551f12f",
+        "storage": "PRIVATE_RETAINED_NOT_COPIED_TO_PUBLIC_DOCS"
+      },
+      "fixture_freeze": {
+        "sha256": "b2ac83e562496f12153f0887e93e5a14dfe12137f8f31c90755dec5ed64fa3ab",
+        "storage": "PRIVATE_RETAINED_NOT_COPIED_TO_PUBLIC_DOCS"
+      },
+      "fixture_pure106": {
+        "sha256": "7a11c8398a4d9d17d43059885681367c2dee2921510e4df7423af130b984e90d",
+        "storage": "PRIVATE_RETAINED_NOT_COPIED_TO_PUBLIC_DOCS"
+      },
+      "fixture_selfcheck9": {
+        "sha256": "246b0cbc8f91b1ab6a23f783fc8a2330990655e0e6585bea2219a703d72effa5",
+        "storage": "PRIVATE_RETAINED_NOT_COPIED_TO_PUBLIC_DOCS"
+      },
+      "fixture_mutants22": {
+        "sha256": "2876e5bf7ef3a35608e7e4c49e51d57770d8bf55e424ea056a9eb54f8406191e",
+        "storage": "PRIVATE_RETAINED_NOT_COPIED_TO_PUBLIC_DOCS"
+      },
+      "python_aggregate866": {
+        "sha256": "9d0169d2effa25c41ae2eee968dd793a14170846f82d09e2aaeb2d5361f62e2d",
+        "storage": "PRIVATE_RETAINED_NOT_COPIED_TO_PUBLIC_DOCS"
+      },
+      "product_mutants5": {
+        "sha256": "59603ecc21b99f4f3b02d6d23a4ccc91af4b983d94a48f96f2d739e8b6bf631c",
+        "storage": "PRIVATE_RETAINED_NOT_COPIED_TO_PUBLIC_DOCS"
+      },
+      "ts_v3_direct_failed": {
+        "sha256": "69cfddb34abd8fc6ab7d7a0465b81e34a4616bff320772e8e250b9b46828ed01",
+        "storage": "PRIVATE_RETAINED_NOT_COPIED_TO_PUBLIC_DOCS"
+      },
+      "ts_v3_invalid_config_failed": {
+        "sha256": "b4e10ab1ddacc8ed434c96d40e6194b1c21fb8dc575a36d0ce1f5279e2b66efe",
+        "storage": "PRIVATE_RETAINED_NOT_COPIED_TO_PUBLIC_DOCS"
+      },
+      "ts_v4_parity_failed": {
+        "sha256": "d31c252fb68734c74ef173eac61caf5e67ba41e973ed366c048da22f14704214",
+        "storage": "PRIVATE_RETAINED_NOT_COPIED_TO_PUBLIC_DOCS"
+      },
+      "ts_v5_worktree25": {
+        "sha256": "99ef73f876fbf6ce03ccc8d515aa1ac6bcabb80796f4d856e7c711aead522f26",
+        "storage": "PRIVATE_RETAINED_NOT_COPIED_TO_PUBLIC_DOCS"
+      }
+    },
+    "evidence_epoch": "FIRST_PUBLICATION_78_HISTORICAL; CI_REPAIR_CHECKPOINT_SEPARATE; ACCEPTANCE_UPDATE_PARENT"
+  },
+  "existing_families": {
+    "S01": "PREVIOUSLY_DELIVERED_PRESERVE",
+    "S02": "PREVIOUSLY_DELIVERED_PRESERVE",
+    "S03": "PREVIOUSLY_DELIVERED_PRESERVE"
+  },
+  "remaining_families": [
+    {
+      "id": "S05",
+      "title": "LSP workspace authority",
+      "status": "OPEN",
+      "minimal_adoption_scope": "Trust generation/profile/cache/future/start and lint fallback; owned Windows positive/negative, regression and mutants",
+      "required_gates": [
+        "CURRENT_SOURCE_BINDING",
+        "RED",
+        "GREEN",
+        "OWNED_NATIVE",
+        "REGRESSION",
+        "MUTANTS",
+        "FRESH_GRAPH",
+        "INDEPENDENT_REVIEW"
+      ],
+      "plan": "IMPLEMENTATION_PLAN_20261005.md",
+      "red_checkpoint": "S05/red-checkpoint-20261005.json"
+    },
+    {
+      "id": "S08",
+      "title": "Backup/restore integrity",
+      "status": "OPEN",
+      "minimal_adoption_scope": "All-member atomic publication and CRC/SQLite checks before first live write",
+      "required_gates": [
+        "CURRENT_SOURCE_BINDING",
+        "RED",
+        "GREEN",
+        "OWNED_NATIVE",
+        "REGRESSION",
+        "MUTANTS",
+        "FRESH_GRAPH",
+        "INDEPENDENT_REVIEW"
+      ],
+      "plan": "IMPLEMENTATION_PLAN_20261005.md"
+    },
+    {
+      "id": "S07",
+      "title": "Corrupt cron baseline",
+      "status": "OPEN",
+      "minimal_adoption_scope": "Refuse unknown pre-stage and post-stage baseline; preserve explicit repair positive",
+      "required_gates": [
+        "CURRENT_SOURCE_BINDING",
+        "RED",
+        "GREEN",
+        "OWNED_NATIVE",
+        "REGRESSION",
+        "MUTANTS",
+        "FRESH_GRAPH",
+        "INDEPENDENT_REVIEW"
+      ],
+      "plan": "IMPLEMENTATION_PLAN_20261005.md"
+    },
+    {
+      "id": "S04",
+      "title": "Outbound URL credential redaction",
+      "status": "OPEN",
+      "minimal_adoption_scope": "Strict owner redaction in actual synthetic outbound body with functional URLs preserved",
+      "required_gates": [
+        "CURRENT_SOURCE_BINDING",
+        "RED",
+        "GREEN",
+        "OWNED_NATIVE",
+        "REGRESSION",
+        "MUTANTS",
+        "FRESH_GRAPH",
+        "INDEPENDENT_REVIEW"
+      ],
+      "plan": "IMPLEMENTATION_PLAN_20261005.md"
+    },
+    {
+      "id": "S09",
+      "title": "Approval profile scope",
+      "status": "OPEN",
+      "minimal_adoption_scope": "Compose config.get/set and _save_cfg because B loads but launch A is written; preserve manual/smart/off and blank/default precedence",
+      "required_gates": [
+        "CURRENT_SOURCE_BINDING",
+        "RED",
+        "GREEN",
+        "OWNED_NATIVE",
+        "REGRESSION",
+        "MUTANTS",
+        "FRESH_GRAPH",
+        "INDEPENDENT_REVIEW"
+      ],
+      "plan": "IMPLEMENTATION_PLAN_20261005.md"
+    },
+    {
+      "id": "S10",
+      "title": "Spaced Windows command paths",
+      "status": "OPEN",
+      "minimal_adoption_scope": "Existing Windows child owner, actual received command/arguments, primary/pool/relaunch",
+      "required_gates": [
+        "CURRENT_SOURCE_BINDING",
+        "RED",
+        "GREEN",
+        "OWNED_NATIVE",
+        "REGRESSION",
+        "MUTANTS",
+        "FRESH_GRAPH",
+        "INDEPENDENT_REVIEW"
+      ],
+      "plan": "IMPLEMENTATION_PLAN_20261005.md"
+    },
+    {
+      "id": "S11",
+      "title": "Dead PTY child with held endpoint",
+      "status": "OPEN",
+      "minimal_adoption_scope": "Owned bridge death/held endpoint/registry cleanup with live-child and race positives",
+      "required_gates": [
+        "CURRENT_SOURCE_BINDING",
+        "RED",
+        "GREEN",
+        "OWNED_NATIVE",
+        "REGRESSION",
+        "MUTANTS",
+        "FRESH_GRAPH",
+        "INDEPENDENT_REVIEW"
+      ],
+      "plan": "IMPLEMENTATION_PLAN_20261005.md"
+    }
+  ],
+  "auxiliary_metadata": [
+    {
+      "id": "S06-META-HONCHO",
+      "status": "OPEN",
+      "next": "Source-bound caller/execution scope/deadline/unknown semantics review; preserve existing metadata functionality",
+      "completed": false
+    },
+    {
+      "id": "S06-META-OPENMANUS",
+      "status": "OPEN",
+      "next": "Source-bound caller/execution scope/deadline/unknown semantics review; preserve existing metadata functionality",
+      "completed": false
+    },
+    {
+      "id": "S06-META-SILLYTAVERN",
+      "status": "OPEN",
+      "next": "Source-bound caller/execution scope/deadline/unknown semantics review; preserve existing metadata functionality",
+      "completed": false
+    },
+    {
+      "id": "S06-META-TOOKIE",
+      "status": "OPEN",
+      "next": "Source-bound caller/execution scope/deadline/unknown semantics review; preserve existing metadata functionality",
+      "completed": false
+    },
+    {
+      "id": "S06-META-AKARI",
+      "status": "OPEN",
+      "next": "Source-bound caller/execution scope/deadline/unknown semantics review; preserve existing metadata functionality",
+      "completed": false
+    },
+    {
+      "id": "S06-META-NEURO",
+      "status": "OPEN",
+      "next": "Source-bound caller/execution scope/deadline/unknown semantics review; preserve existing metadata functionality",
+      "completed": false
+    }
+  ],
+  "family_order": [
+    "S06",
+    "S05",
+    "S08",
+    "S07",
+    "S04",
+    "S09",
+    "S10",
+    "S11"
+  ],
+  "preservation": {
+    "primary_current_status": "CLEAN_AFTER_FEDA_PACK",
+    "historical_0637_dirty_path": "scripts/standalone/sync_memory.py",
+    "historical_0637_dirty_committed_by_other_thread": true,
+    "historical_ten_wip_is_not_current": true,
+    "unrelated_untracked": "PRESERVE_EXCLUDE",
+    "no_reset_clean": true,
+    "selected_repository_commit": "2e68c90beca98138c9e3d6682c0214cfc5223ee5",
+    "selected_repository_behavior": "PRESERVED_IN_PUB_RENDERER"
+  },
+  "graph": {
+    "sync_exit_code": 0,
+    "state": "complete",
+    "pending_refs": 0,
+    "pending_changes": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "files": 9082,
+    "nodes": 196010,
+    "edges": 616028,
+    "last_indexed": "2026-10-04T21:51:43.679Z",
+    "status_sha256": "8494ddbec9caca25208d95e2100f94c1c14d8c2b05ddca844dde994c2a6f5441",
+    "FinalPathAudit": {
+      "file": "tests/windows/fixtures/run_s06_desktop_direct_native.py",
+      "start_line": 29,
+      "end_line": 54
+    }
+  },
+  "publication": {
+    "scope": "S06_EXPLICIT_74_PLUS_INTAKE_ACCEPTANCE; SEPARATE_CLOSEOUT_DOCS",
+    "family_commit_sha": "78d6530fad9b214a5a2e69f73e34eecf7450d4bc",
+    "push_sha": "78d6530fad9b214a5a2e69f73e34eecf7450d4bc",
+    "remote_equality": true,
+    "intake_edit_by_this_writer": false,
+    "stage_commit_push_by_this_writer": false,
+    "family_paths": 76,
+    "closeout_documents_commit": "SUBSEQUENT_DOCS_ONLY_COMMIT",
+    "latest_product_commit_sha": "feda2921da95cb5d112e49f84cdb932721be762d"
+  },
+  "ci": {
+    "schema": "exact-sha-ci-observation",
+    "commit": "feda2921da95cb5d112e49f84cdb932721be762d",
+    "observed_utc": "2026-10-04T22:42:36.919146+00:00",
+    "all_required_success": false,
+    "runs": [
+      {
+        "id": 37240941401,
+        "name": "CI",
+        "status": "pending",
+        "conclusion": null,
+        "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37240941401"
+      },
+      {
+        "id": 37240940658,
+        "name": "Windows Workstation Tier-1 CI",
+        "status": "in_progress",
+        "conclusion": null,
+        "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37240940658"
+      },
+      {
+        "id": 37240940690,
+        "name": "Nix flake check",
+        "status": "in_progress",
+        "conclusion": null,
+        "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37240940690"
+      },
+      {
+        "id": 37240940597,
+        "name": "Docker Build, Test, and Publish",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37240940597"
+      },
+      {
+        "id": 37240940661,
+        "name": "auto-fix lint issues & formatting",
+        "status": "in_progress",
+        "conclusion": null,
+        "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37240940661"
+      },
+      {
+        "id": 37240940647,
+        "name": "Windows downstream release",
+        "status": "in_progress",
+        "conclusion": null,
+        "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37240940647"
+      }
+    ]
+  },
+  "build": {
+    "build_exit_code": 0,
+    "build_source_clean": true,
+    "built_at_utc": "2026-10-04T22:41:45.471Z",
+    "build_receipt_sha256": "84cc0661c9c6ef5e4dd47e75c392f36932fe512182b0d3fa55e2dc69b2935cc6",
+    "install_stamp_sha256": "d6010cccb37591ba66f5d864556b3347fef11844057b467ff3ef1416fd7b2f9f",
+    "app_asar_sha256": "00716eb00a58188d23d56a82955d38683226382c0a26e5dacd1b10bd0a84d398",
+    "executable_sha256": "ce32de2e76180faf61c7383dea2b5230377e4742c3e59b7bd408aa2c71da2233",
+    "packaged_git_transport_matches_source": true,
+    "packaged_git_transport_sha256": "e62e53c3456b09af3f4f7923acb39e791d638dca6b2cbb79fcbd136b80b4d86c",
+    "launch": "PASS",
+    "verify": "PASS",
+    "same_held_process_generation": true,
+    "same_owned_backend": true,
+    "medium_integrity": true,
+    "elevated": false,
+    "visible_responding_window": true,
+    "window_probe": "SendMessageTimeoutW WM_NULL",
+    "owned_backend_http_status": 200,
+    "version": "0.21.5",
+    "observed_at_utc": "2026-10-04T22:47:30Z",
+    "configuration_unchanged": true,
+    "launch_receipt_sha256": "cb2958d5c50bece8fdae854042bb43bec3021f8f7d2e917486d216ecf04d835e",
+    "verify_receipt_sha256": "267584d693b4a852320fcf82239196c46e99848a0cc58a39fe2517659bc1d1ef",
+    "renderer_interactions_verified": false,
+    "model_inference_verified": false,
+    "build_source_commit": "feda2921da95cb5d112e49f84cdb932721be762d",
+    "prebuild_stop": "PASS",
+    "prebuild_stop_receipt_sha256": "cb6dc91668a7edfdfcc78772399424f50f26e6cc46344ae0c72a3f6a1ba3a2af",
+    "postbuild_empty_stop": "PASS",
+    "postbuild_stop_receipt_sha256": "252ac55ca2f37cb8c01e345ca3fcd6ad3b7084494268a8239f12901ee074a749"
+  },
+  "runtime_oct5": {
+    "schema": "selective-security-runtime-closeout-20261005-v1",
+    "recorded_at_utc": "2026-10-04T22:48:57.646115+00:00",
+    "source_commit": "feda2921da95cb5d112e49f84cdb932721be762d",
+    "Desktop": {
+      "build_exit_code": 0,
+      "build_source_clean": true,
+      "built_at_utc": "2026-10-04T22:41:45.471Z",
+      "build_receipt_sha256": "84cc0661c9c6ef5e4dd47e75c392f36932fe512182b0d3fa55e2dc69b2935cc6",
+      "install_stamp_sha256": "d6010cccb37591ba66f5d864556b3347fef11844057b467ff3ef1416fd7b2f9f",
+      "app_asar_sha256": "00716eb00a58188d23d56a82955d38683226382c0a26e5dacd1b10bd0a84d398",
+      "executable_sha256": "ce32de2e76180faf61c7383dea2b5230377e4742c3e59b7bd408aa2c71da2233",
+      "packaged_git_transport_matches_source": true,
+      "packaged_git_transport_sha256": "e62e53c3456b09af3f4f7923acb39e791d638dca6b2cbb79fcbd136b80b4d86c",
+      "launch": "PASS",
+      "verify": "PASS",
+      "same_held_process_generation": true,
+      "same_owned_backend": true,
+      "medium_integrity": true,
+      "elevated": false,
+      "visible_responding_window": true,
+      "window_probe": "SendMessageTimeoutW WM_NULL",
+      "owned_backend_http_status": 200,
+      "version": "0.21.5",
+      "observed_at_utc": "2026-10-04T22:47:30Z",
+      "configuration_unchanged": true,
+      "launch_receipt_sha256": "cb2958d5c50bece8fdae854042bb43bec3021f8f7d2e917486d216ecf04d835e",
+      "verify_receipt_sha256": "267584d693b4a852320fcf82239196c46e99848a0cc58a39fe2517659bc1d1ef",
+      "renderer_interactions_verified": false,
+      "model_inference_verified": false,
+      "build_source_commit": "feda2921da95cb5d112e49f84cdb932721be762d",
+      "prebuild_stop": "PASS",
+      "prebuild_stop_receipt_sha256": "cb6dc91668a7edfdfcc78772399424f50f26e6cc46344ae0c72a3f6a1ba3a2af",
+      "postbuild_empty_stop": "PASS",
+      "postbuild_stop_receipt_sha256": "252ac55ca2f37cb8c01e345ca3fcd6ad3b7084494268a8239f12901ee074a749"
+    },
+    "Go": {
+      "restart": "PASS_ACTUAL_ADMIN_RUN",
+      "restart_completed_at_utc": "2026-10-04T22:03:51.4370278Z",
+      "verify": "PASS_QUERY_ONLY_WINDOWS_POWERSHELL_5",
+      "actual_elevated_admin": true,
+      "launch_receipt_sha256": "cd47b0c3d8a8c0bd81dab07f53c928b3f3cc65d22e2c99e4b29335aa5a7587b4",
+      "verify_receipt_sha256": "730ab91acf2eb1866c9845d392591c264681b27ef2518ef1a76da4416699206f",
+      "executable_sha256": "10ce17db6a754e4427600ea5205dd9a438d8dc7ca16b7614f10ee7feec57e5e2",
+      "lock_sha256": "f05d80b3aadf1fd0996eefc6558180ab3bc544c1a96bf4fc64b2d97946ba846c",
+      "same_retained_handle_identity_across_health": true,
+      "retained_handle_closed": true,
+      "health_http_status": 200,
+      "health_status": "ok",
+      "owned_listener_port": 9920,
+      "observed_at_utc": "2026-10-04T22:06:21.3607976Z",
+      "embedding_supervision": false,
+      "initial_wrapper": {
+        "result": "FAIL_FRESH_LAUNCH_RECEIPT_CHECK",
+        "receipt_sha256": "575ab8da90a7b5f249cc6e09b114a8c0a2c984003adf46d86119446c0feeda20",
+        "cause": "PowerShell 7 JSON date auto-conversion followed by culture string conversion lost UTC offset before reparsing.",
+        "recovery": "Immutable actual launch bytes verified by unchanged query-only helper under Windows PowerShell 5; no repeated restart.",
+        "admin_guard_or_600_second_freshness_weakened": false,
+        "helpers_changed": false
+      },
+      "source_epoch": "78d6530fad9b214a5a2e69f73e34eecf7450d4bc; Go products unchanged in CI repair",
+      "restart_repeated_for_TS_only_repair": false,
+      "health_reprobed_for_TS_only_repair": false
+    },
+    "llama": "NO_TOUCH",
+    "embedding": "NO_TOUCH",
+    "model_endpoints_requested_by_closeout": false,
+    "private_identity_or_credentials_published": false,
+    "old_runtime_receipts_reused_as_current_success": false,
+    "scope": "Desktop window/backend and Go watchdog owned-health at recorded instants; separate from renderer interactions, model inference, fleet gateway health, durable scheduled tasks and CI.",
+    "historical_first_publication": {
+      "schema": "selective-security-runtime-closeout-20261005-v1",
+      "recorded_at_utc": "2026-10-04T22:12:23.618252+00:00",
+      "source_commit": "78d6530fad9b214a5a2e69f73e34eecf7450d4bc",
+      "Desktop": {
+        "build_exit_code": 0,
+        "build_source_clean": true,
+        "built_at_utc": "2026-10-04T22:04:26.138Z",
+        "build_receipt_sha256": "585e09bc2d65cd6b3206414b844546c8da429a5e89a96a6e40b9a3d9d376a524",
+        "install_stamp_sha256": "3f1ca62c8e22ac6a8ef01681dac0e3053186c34be02b93a57540a6bb26081310",
+        "app_asar_sha256": "2c9cb17eaf31cea7145f49523605efc6c639f5d2098c69ca878cf8685f4719d8",
+        "executable_sha256": "2417fcd531be29547a30c40579910694865c479d8c800b4f2ec33df778c2d315",
+        "packaged_git_transport_matches_source": true,
+        "packaged_git_transport_sha256": "e62e53c3456b09af3f4f7923acb39e791d638dca6b2cbb79fcbd136b80b4d86c",
+        "launch": "PASS",
+        "verify": "PASS",
+        "same_held_process_generation": true,
+        "same_owned_backend": true,
+        "medium_integrity": true,
+        "elevated": false,
+        "visible_responding_window": true,
+        "window_probe": "SendMessageTimeoutW WM_NULL",
+        "owned_backend_http_status": 200,
+        "version": "0.21.5",
+        "observed_at_utc": "2026-10-04T22:08:59Z",
+        "configuration_unchanged": true,
+        "launch_receipt_sha256": "1f83ddffd2cd1d466060585e6b715b9bfd57455d34aaabf93eb8fba7f63f29c1",
+        "verify_receipt_sha256": "c3dac40197f04ffa90830eefdca2d5ad1c18fc2a465843c6d06d5068eeb91bc1",
+        "renderer_interactions_verified": false,
+        "model_inference_verified": false,
+        "initial_stop": {
+          "result": "FAIL_PERMISSION_ERROR_DURING_EXIT_CONFIRMATION",
+          "receipt_sha256": "4e2e00adee6ecb55a50423f355e67a44db1e259aa4718621ab37300d8d6343e5",
+          "recovery": "Fresh observation proved no canonical Desktop processes; successful empty stop before pack and separate post-pack empty stop.",
+          "source_helper_changed": false,
+          "bare_PID_cleanup": false
+        }
+      },
+      "Go": {
+        "restart": "PASS_ACTUAL_ADMIN_RUN",
+        "restart_completed_at_utc": "2026-10-04T22:03:51.4370278Z",
+        "verify": "PASS_QUERY_ONLY_WINDOWS_POWERSHELL_5",
+        "actual_elevated_admin": true,
+        "launch_receipt_sha256": "cd47b0c3d8a8c0bd81dab07f53c928b3f3cc65d22e2c99e4b29335aa5a7587b4",
+        "verify_receipt_sha256": "730ab91acf2eb1866c9845d392591c264681b27ef2518ef1a76da4416699206f",
+        "executable_sha256": "10ce17db6a754e4427600ea5205dd9a438d8dc7ca16b7614f10ee7feec57e5e2",
+        "lock_sha256": "f05d80b3aadf1fd0996eefc6558180ab3bc544c1a96bf4fc64b2d97946ba846c",
+        "same_retained_handle_identity_across_health": true,
+        "retained_handle_closed": true,
+        "health_http_status": 200,
+        "health_status": "ok",
+        "owned_listener_port": 9920,
+        "observed_at_utc": "2026-10-04T22:06:21.3607976Z",
+        "embedding_supervision": false,
+        "initial_wrapper": {
+          "result": "FAIL_FRESH_LAUNCH_RECEIPT_CHECK",
+          "receipt_sha256": "575ab8da90a7b5f249cc6e09b114a8c0a2c984003adf46d86119446c0feeda20",
+          "cause": "PowerShell 7 JSON date auto-conversion followed by culture string conversion lost UTC offset before reparsing.",
+          "recovery": "Immutable actual launch bytes verified by unchanged query-only helper under Windows PowerShell 5; no repeated restart.",
+          "admin_guard_or_600_second_freshness_weakened": false,
+          "helpers_changed": false
+        }
+      },
+      "llama": "NO_TOUCH",
+      "embedding": "NO_TOUCH",
+      "model_endpoints_requested_by_closeout": false,
+      "private_identity_or_credentials_published": false,
+      "old_runtime_receipts_reused_as_current_success": false,
+      "scope": "Desktop window/backend and Go watchdog owned-health at recorded instants; separate from renderer interactions, model inference, fleet gateway health, durable scheduled tasks and CI."
+    }
+  },
+  "rollback": {
+    "method": "git revert of explicit published S06 family commit",
+    "family_commit": "78d6530fad9b214a5a2e69f73e34eecf7450d4bc",
+    "preserve": [
+      "concurrent external8paths",
+      "S01",
+      "S02",
+      "S03",
+      "selected repo fix2e68",
+      "unrelated untracked data"
+    ],
+    "whole_tree_reset_clean": false,
+    "executed": false
+  },
+  "next_actions": [
+    "Resolve exact-SHA CI failures without suppression or losing existing contracts.",
+    "Implement S05 using prepared launch/profile authority RED and real Windows positives.",
+    "Then implement S08, S07, S04, S09, S10, S11 in documented order with each family separate.",
+    "Review six auxiliary metadata callers independently; keep OPEN until proven.",
+    "Rebuild/restart again only after subsequent accepted runtime product changes."
+  ],
+  "parent_update_fields": [
+    "current_base",
+    "graph",
+    "publication",
+    "ci",
+    "build",
+    "runtime_oct5"
+  ],
+  "public_privacy": {
+    "absolute_private_user_paths_included": false,
+    "raw_commands_included": false,
+    "process_ids_included": false,
+    "credentials_included": false,
+    "raw_graph_archive_receipts_copied": false
+  },
+  "writer_actions": {
+    "files": [
+      "docs/windows/selective-security-20261003/IMPLEMENTATION_PLAN_20261005.md",
+      "docs/windows/selective-security-20261003/HANDOFF_20261005.md",
+      "_docs/2026-10-05_selective-security-s06_codex.md",
+      "docs/windows/selective-security-20261003/delivery-ledger-20261005.json",
+      "docs/windows/selective-security-20261003/intake.json",
+      "docs/windows/selective-security-20261003/S05/red-checkpoint-20261005.json"
+    ],
+    "product_edits": 0,
+    "intake_edits": 1,
+    "sanitized_s05_summary_created": 1,
+    "s06_acceptance_or_runtime_closeout_edits": 0,
+    "stage_commit_push": 0,
+    "test_runs": 0,
+    "runtime_actions": 0
+  },
+  "style_check": {
+    "staged_diff_check": "FAIL",
+    "accepted_cosmetic_exceptions": [
+      "tests/windows/fixtures/run_s06_desktop_direct_native.py:1287 trailing whitespace on blank line",
+      "tests/windows/fixtures/run_s06_desktop_direct_native.py:1328 extra blank line at EOF"
+    ],
+    "review": "Beauvoir: no material P1/P2",
+    "suppression_added": false,
+    "source_changed": false
+  },
+  "all_campaign": false,
+  "ci_repair_checkpoint": {
+    "reported_at_jst": "2026-10-05 07:39 JST",
+    "source": "SOURCE_BOUND_RECEIPTS_AND_INDEPENDENT_REVIEW",
+    "lint": {
+      "target_files": 11,
+      "before_errors": 57,
+      "after_errors": 0,
+      "suppression_added": false,
+      "typed_close_refusal_preserved": true,
+      "primary_error_close_precedence_preserved": true,
+      "behavior_contracts_passed": 16,
+      "mutants_killed": 2,
+      "source_bindings": [
+        {
+          "path": "apps/desktop/electron/git-execution-policy.ts",
+          "before_sha256": "c1504f6e56630c7f428ede5bfeabd3fc1012ba5c236237cd1960cacc98607a23",
+          "after_sha256": "592c77e10ccd5ae6980708033d69415d1cae79b9d99954654bfa4926b59f9369",
+          "eol": "LF",
+          "changed": true
+        },
+        {
+          "path": "apps/desktop/electron/git-ipc.ts",
+          "before_sha256": "ee0dfcb70e2613eec9f366dce3c6e5ffa15535493d774e0005f2b314ec5350cd",
+          "after_sha256": "f7afbf69f328c559eb4fd7a3d600edc43c130fb26cf96b2f177ca634ca479991",
+          "eol": "LF",
+          "changed": true
+        },
+        {
+          "path": "apps/desktop/electron/git-ref-ops.test.ts",
+          "before_sha256": "60b60004460f6918ecfd750a4faeac06a703cadcad5f67b32705ea19cb18c0a2",
+          "after_sha256": "32b98322b402339a326f095b09894bb8aeecc8377ff7743a28d46826ec6dc2e1",
+          "eol": "LF",
+          "changed": true
+        },
+        {
+          "path": "apps/desktop/electron/git-ref-ops.ts",
+          "before_sha256": "c140872bacbe52c519be0114b3390b1fe5671a37c55f39e9815dbce6dc8fcf73",
+          "after_sha256": "f7c40485645b27d4bbe1c5fd592c3476b6d69d102b7a060b872eafd0207bd4fa",
+          "eol": "LF",
+          "changed": true
+        },
+        {
+          "path": "apps/desktop/electron/git-review-ops.test.ts",
+          "before_sha256": "8eb3b26934f82a73d860940548371b96a0d638ecedeaef2a6de83e89b4ffd227",
+          "after_sha256": "8799a184b0f5f47f89eb07003ddd72b1cba32dce9c1ea3b176cd53941c90aa73",
+          "eol": "LF",
+          "changed": true
+        },
+        {
+          "path": "apps/desktop/electron/git-review-ops.ts",
+          "before_sha256": "e9eb291931d0585179308365b77f0a1440e1cd17188c37e104e0909390d7a06f",
+          "after_sha256": "1b31abbafceb717049b636a01cbe6b83c9d07a20bee803d1ecf7a5da04ac2833",
+          "eol": "LF",
+          "changed": true
+        },
+        {
+          "path": "apps/desktop/electron/git-test-runtime.ts",
+          "before_sha256": "09c7c03e6f90680bf723750222cc3c9f7a09c85a1f384b5b4cff2fefada16890",
+          "after_sha256": "db3a3c0e1125931283426f1ccf6b8f777fed031b101952eb6fb38e54432e56c5",
+          "eol": "LF",
+          "changed": true
+        },
+        {
+          "path": "apps/desktop/electron/git-worktree-ops.test.ts",
+          "before_sha256": "25bbca70e37d0073653fd0b775b7963534bb88779485a5e8775c4a22f937fac2",
+          "after_sha256": "64b6c308f2a85a9691ad926bb4052667820f8f5edf897d7ed1fdf334d23a9e38",
+          "eol": "LF",
+          "changed": true
+        },
+        {
+          "path": "apps/desktop/electron/git-worktree-ops.ts",
+          "before_sha256": "8f1a3da5497bf1b38300902c4f049ae75ca9050470920db7954315bd1844dc12",
+          "after_sha256": "2d1e470b0036dca5e0137746336c7dd5c17c50131381816dfa77c0b9d5065247",
+          "eol": "LF",
+          "changed": true
+        },
+        {
+          "path": "apps/desktop/electron/main.ts",
+          "before_sha256": "b0a40e9c49ff13745e694e60638d02188289000c7e999d6a93959a547b677ba0",
+          "after_sha256": "10d00b6e7baab83bac276eba84bc4da690811ad9112942c31e0e4b84a565a569",
+          "eol": "LF",
+          "changed": true
+        },
+        {
+          "path": "apps/desktop/electron/python-backend-command.ts",
+          "before_sha256": "7f5b2b7b34b980372327ec2d0b5cc136d1005976a770668f029f7aa29906bde3",
+          "after_sha256": "ef1d915bdc6502ec2cfecef303a0ff81c6c92002e5c4a6a1005d0d8331e64b13",
+          "eol": "LF",
+          "changed": true
+        }
+      ]
+    },
+    "updater_contracts": {
+      "passed": 30,
+      "source": "FRESH_RECEIPT_30_PASS",
+      "python_product_delta": false
+    },
+    "typescript": {
+      "passed": 71,
+      "terminal_exit": 0,
+      "source": "FRESH_RECEIPTS_SAME_SOURCE_71_PASS"
+    },
+    "native": {
+      "stages": 7,
+      "terminal_exit": 0,
+      "source": "INDEPENDENT_RAW_LEDGER_REVIEW",
+      "full_source_coverage_audit": "APPROVE; 1279 CREATE/EXIT/HELD, active0, portsCLOSED"
+    },
+    "final_repair_commit_sha": "feda2921da95cb5d112e49f84cdb932721be762d",
+    "exact_sha_ci": "OBSERVED_NOT_ALL_REQUIRED_SUCCESS",
+    "latest_desktop_rebuild_restart": "PASS_NEW_FEDA_BUILD_LAUNCH_SEPARATE_VERIFY",
+    "s06_acceptance_update_owner": "PARENT",
+    "historical_866_not_new_full_run": true,
+    "current_95_raw_source_match_claim": false,
+    "ci_observation": "ci-observation-repair-20261005.json",
+    "independent_review": "Beauvoir source/privacy APPROVE; Laplace fresh evidence APPROVE",
+    "receipt": "S06/ci-repair-acceptance-20261005.json",
+    "receipt_sha256": "26866a2249ca7f17d9014ee4b695c783f22eb8085dbe2936816e46fcee76f63c"
+  },
+  "latest_runtime": {
+    "schema": "selective-security-runtime-closeout-20261005-v1",
+    "recorded_at_utc": "2026-10-04T22:48:57.646115+00:00",
+    "source_commit": "feda2921da95cb5d112e49f84cdb932721be762d",
+    "Desktop": {
+      "build_exit_code": 0,
+      "build_source_clean": true,
+      "built_at_utc": "2026-10-04T22:41:45.471Z",
+      "build_receipt_sha256": "84cc0661c9c6ef5e4dd47e75c392f36932fe512182b0d3fa55e2dc69b2935cc6",
+      "install_stamp_sha256": "d6010cccb37591ba66f5d864556b3347fef11844057b467ff3ef1416fd7b2f9f",
+      "app_asar_sha256": "00716eb00a58188d23d56a82955d38683226382c0a26e5dacd1b10bd0a84d398",
+      "executable_sha256": "ce32de2e76180faf61c7383dea2b5230377e4742c3e59b7bd408aa2c71da2233",
+      "packaged_git_transport_matches_source": true,
+      "packaged_git_transport_sha256": "e62e53c3456b09af3f4f7923acb39e791d638dca6b2cbb79fcbd136b80b4d86c",
+      "launch": "PASS",
+      "verify": "PASS",
+      "same_held_process_generation": true,
+      "same_owned_backend": true,
+      "medium_integrity": true,
+      "elevated": false,
+      "visible_responding_window": true,
+      "window_probe": "SendMessageTimeoutW WM_NULL",
+      "owned_backend_http_status": 200,
+      "version": "0.21.5",
+      "observed_at_utc": "2026-10-04T22:47:30Z",
+      "configuration_unchanged": true,
+      "launch_receipt_sha256": "cb2958d5c50bece8fdae854042bb43bec3021f8f7d2e917486d216ecf04d835e",
+      "verify_receipt_sha256": "267584d693b4a852320fcf82239196c46e99848a0cc58a39fe2517659bc1d1ef",
+      "renderer_interactions_verified": false,
+      "model_inference_verified": false,
+      "build_source_commit": "feda2921da95cb5d112e49f84cdb932721be762d",
+      "prebuild_stop": "PASS",
+      "prebuild_stop_receipt_sha256": "cb6dc91668a7edfdfcc78772399424f50f26e6cc46344ae0c72a3f6a1ba3a2af",
+      "postbuild_empty_stop": "PASS",
+      "postbuild_stop_receipt_sha256": "252ac55ca2f37cb8c01e345ca3fcd6ad3b7084494268a8239f12901ee074a749"
+    },
+    "Go": {
+      "restart": "PASS_ACTUAL_ADMIN_RUN",
+      "restart_completed_at_utc": "2026-10-04T22:03:51.4370278Z",
+      "verify": "PASS_QUERY_ONLY_WINDOWS_POWERSHELL_5",
+      "actual_elevated_admin": true,
+      "launch_receipt_sha256": "cd47b0c3d8a8c0bd81dab07f53c928b3f3cc65d22e2c99e4b29335aa5a7587b4",
+      "verify_receipt_sha256": "730ab91acf2eb1866c9845d392591c264681b27ef2518ef1a76da4416699206f",
+      "executable_sha256": "10ce17db6a754e4427600ea5205dd9a438d8dc7ca16b7614f10ee7feec57e5e2",
+      "lock_sha256": "f05d80b3aadf1fd0996eefc6558180ab3bc544c1a96bf4fc64b2d97946ba846c",
+      "same_retained_handle_identity_across_health": true,
+      "retained_handle_closed": true,
+      "health_http_status": 200,
+      "health_status": "ok",
+      "owned_listener_port": 9920,
+      "observed_at_utc": "2026-10-04T22:06:21.3607976Z",
+      "embedding_supervision": false,
+      "initial_wrapper": {
+        "result": "FAIL_FRESH_LAUNCH_RECEIPT_CHECK",
+        "receipt_sha256": "575ab8da90a7b5f249cc6e09b114a8c0a2c984003adf46d86119446c0feeda20",
+        "cause": "PowerShell 7 JSON date auto-conversion followed by culture string conversion lost UTC offset before reparsing.",
+        "recovery": "Immutable actual launch bytes verified by unchanged query-only helper under Windows PowerShell 5; no repeated restart.",
+        "admin_guard_or_600_second_freshness_weakened": false,
+        "helpers_changed": false
+      },
+      "source_epoch": "78d6530fad9b214a5a2e69f73e34eecf7450d4bc; Go products unchanged in CI repair",
+      "restart_repeated_for_TS_only_repair": false,
+      "health_reprobed_for_TS_only_repair": false
+    },
+    "llama": "NO_TOUCH",
+    "embedding": "NO_TOUCH",
+    "model_endpoints_requested_by_closeout": false,
+    "private_identity_or_credentials_published": false,
+    "old_runtime_receipts_reused_as_current_success": false,
+    "scope": "Desktop window/backend and Go watchdog owned-health at recorded instants; separate from renderer interactions, model inference, fleet gateway health, durable scheduled tasks and CI.",
+    "historical_first_publication": {
+      "schema": "selective-security-runtime-closeout-20261005-v1",
+      "recorded_at_utc": "2026-10-04T22:12:23.618252+00:00",
+      "source_commit": "78d6530fad9b214a5a2e69f73e34eecf7450d4bc",
+      "Desktop": {
+        "build_exit_code": 0,
+        "build_source_clean": true,
+        "built_at_utc": "2026-10-04T22:04:26.138Z",
+        "build_receipt_sha256": "585e09bc2d65cd6b3206414b844546c8da429a5e89a96a6e40b9a3d9d376a524",
+        "install_stamp_sha256": "3f1ca62c8e22ac6a8ef01681dac0e3053186c34be02b93a57540a6bb26081310",
+        "app_asar_sha256": "2c9cb17eaf31cea7145f49523605efc6c639f5d2098c69ca878cf8685f4719d8",
+        "executable_sha256": "2417fcd531be29547a30c40579910694865c479d8c800b4f2ec33df778c2d315",
+        "packaged_git_transport_matches_source": true,
+        "packaged_git_transport_sha256": "e62e53c3456b09af3f4f7923acb39e791d638dca6b2cbb79fcbd136b80b4d86c",
+        "launch": "PASS",
+        "verify": "PASS",
+        "same_held_process_generation": true,
+        "same_owned_backend": true,
+        "medium_integrity": true,
+        "elevated": false,
+        "visible_responding_window": true,
+        "window_probe": "SendMessageTimeoutW WM_NULL",
+        "owned_backend_http_status": 200,
+        "version": "0.21.5",
+        "observed_at_utc": "2026-10-04T22:08:59Z",
+        "configuration_unchanged": true,
+        "launch_receipt_sha256": "1f83ddffd2cd1d466060585e6b715b9bfd57455d34aaabf93eb8fba7f63f29c1",
+        "verify_receipt_sha256": "c3dac40197f04ffa90830eefdca2d5ad1c18fc2a465843c6d06d5068eeb91bc1",
+        "renderer_interactions_verified": false,
+        "model_inference_verified": false,
+        "initial_stop": {
+          "result": "FAIL_PERMISSION_ERROR_DURING_EXIT_CONFIRMATION",
+          "receipt_sha256": "4e2e00adee6ecb55a50423f355e67a44db1e259aa4718621ab37300d8d6343e5",
+          "recovery": "Fresh observation proved no canonical Desktop processes; successful empty stop before pack and separate post-pack empty stop.",
+          "source_helper_changed": false,
+          "bare_PID_cleanup": false
+        }
+      },
+      "Go": {
+        "restart": "PASS_ACTUAL_ADMIN_RUN",
+        "restart_completed_at_utc": "2026-10-04T22:03:51.4370278Z",
+        "verify": "PASS_QUERY_ONLY_WINDOWS_POWERSHELL_5",
+        "actual_elevated_admin": true,
+        "launch_receipt_sha256": "cd47b0c3d8a8c0bd81dab07f53c928b3f3cc65d22e2c99e4b29335aa5a7587b4",
+        "verify_receipt_sha256": "730ab91acf2eb1866c9845d392591c264681b27ef2518ef1a76da4416699206f",
+        "executable_sha256": "10ce17db6a754e4427600ea5205dd9a438d8dc7ca16b7614f10ee7feec57e5e2",
+        "lock_sha256": "f05d80b3aadf1fd0996eefc6558180ab3bc544c1a96bf4fc64b2d97946ba846c",
+        "same_retained_handle_identity_across_health": true,
+        "retained_handle_closed": true,
+        "health_http_status": 200,
+        "health_status": "ok",
+        "owned_listener_port": 9920,
+        "observed_at_utc": "2026-10-04T22:06:21.3607976Z",
+        "embedding_supervision": false,
+        "initial_wrapper": {
+          "result": "FAIL_FRESH_LAUNCH_RECEIPT_CHECK",
+          "receipt_sha256": "575ab8da90a7b5f249cc6e09b114a8c0a2c984003adf46d86119446c0feeda20",
+          "cause": "PowerShell 7 JSON date auto-conversion followed by culture string conversion lost UTC offset before reparsing.",
+          "recovery": "Immutable actual launch bytes verified by unchanged query-only helper under Windows PowerShell 5; no repeated restart.",
+          "admin_guard_or_600_second_freshness_weakened": false,
+          "helpers_changed": false
+        }
+      },
+      "llama": "NO_TOUCH",
+      "embedding": "NO_TOUCH",
+      "model_endpoints_requested_by_closeout": false,
+      "private_identity_or_credentials_published": false,
+      "old_runtime_receipts_reused_as_current_success": false,
+      "scope": "Desktop window/backend and Go watchdog owned-health at recorded instants; separate from renderer interactions, model inference, fleet gateway health, durable scheduled tasks and CI."
+    }
+  },
+  "s05_preparation": {
+    "status": "OPEN",
+    "summary": "S05/red-checkpoint-20261005.json",
+    "semantic_failures": 3,
+    "errors": 0,
+    "source_count": 12,
+    "source_unchanged": true,
+    "product_changes": 0,
+    "family_acceptance": false
+  },
+  "latest_publication": {
+    "source_commit": "feda2921da95cb5d112e49f84cdb932721be762d",
+    "published": true,
+    "source": "PARENT_CONFIRMED",
+    "remote_ref_equality": true
+  },
+  "ci_repair_observation": {
+    "schema": "exact-sha-ci-observation",
+    "commit": "feda2921da95cb5d112e49f84cdb932721be762d",
+    "observed_utc": "2026-10-04T22:42:36.919146+00:00",
+    "all_required_success": false,
+    "runs": [
+      {
+        "id": 37240941401,
+        "name": "CI",
+        "status": "pending",
+        "conclusion": null,
+        "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37240941401"
+      },
+      {
+        "id": 37240940658,
+        "name": "Windows Workstation Tier-1 CI",
+        "status": "in_progress",
+        "conclusion": null,
+        "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37240940658"
+      },
+      {
+        "id": 37240940690,
+        "name": "Nix flake check",
+        "status": "in_progress",
+        "conclusion": null,
+        "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37240940690"
+      },
+      {
+        "id": 37240940597,
+        "name": "Docker Build, Test, and Publish",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37240940597"
+      },
+      {
+        "id": 37240940661,
+        "name": "auto-fix lint issues & formatting",
+        "status": "in_progress",
+        "conclusion": null,
+        "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37240940661"
+      },
+      {
+        "id": 37240940647,
+        "name": "Windows downstream release",
+        "status": "in_progress",
+        "conclusion": null,
+        "url": "https://github.com/zapabob/hermes-agent-windows/actions/runs/37240940647"
+      }
+    ]
+  },
+  "historical_runtime_oct5": {
+    "schema": "selective-security-runtime-closeout-20261005-v1",
+    "recorded_at_utc": "2026-10-04T22:12:23.618252+00:00",
+    "source_commit": "78d6530fad9b214a5a2e69f73e34eecf7450d4bc",
+    "Desktop": {
+      "build_exit_code": 0,
+      "build_source_clean": true,
+      "built_at_utc": "2026-10-04T22:04:26.138Z",
+      "build_receipt_sha256": "585e09bc2d65cd6b3206414b844546c8da429a5e89a96a6e40b9a3d9d376a524",
+      "install_stamp_sha256": "3f1ca62c8e22ac6a8ef01681dac0e3053186c34be02b93a57540a6bb26081310",
+      "app_asar_sha256": "2c9cb17eaf31cea7145f49523605efc6c639f5d2098c69ca878cf8685f4719d8",
+      "executable_sha256": "2417fcd531be29547a30c40579910694865c479d8c800b4f2ec33df778c2d315",
+      "packaged_git_transport_matches_source": true,
+      "packaged_git_transport_sha256": "e62e53c3456b09af3f4f7923acb39e791d638dca6b2cbb79fcbd136b80b4d86c",
+      "launch": "PASS",
+      "verify": "PASS",
+      "same_held_process_generation": true,
+      "same_owned_backend": true,
+      "medium_integrity": true,
+      "elevated": false,
+      "visible_responding_window": true,
+      "window_probe": "SendMessageTimeoutW WM_NULL",
+      "owned_backend_http_status": 200,
+      "version": "0.21.5",
+      "observed_at_utc": "2026-10-04T22:08:59Z",
+      "configuration_unchanged": true,
+      "launch_receipt_sha256": "1f83ddffd2cd1d466060585e6b715b9bfd57455d34aaabf93eb8fba7f63f29c1",
+      "verify_receipt_sha256": "c3dac40197f04ffa90830eefdca2d5ad1c18fc2a465843c6d06d5068eeb91bc1",
+      "renderer_interactions_verified": false,
+      "model_inference_verified": false,
+      "initial_stop": {
+        "result": "FAIL_PERMISSION_ERROR_DURING_EXIT_CONFIRMATION",
+        "receipt_sha256": "4e2e00adee6ecb55a50423f355e67a44db1e259aa4718621ab37300d8d6343e5",
+        "recovery": "Fresh observation proved no canonical Desktop processes; successful empty stop before pack and separate post-pack empty stop.",
+        "source_helper_changed": false,
+        "bare_PID_cleanup": false
+      }
+    },
+    "Go": {
+      "restart": "PASS_ACTUAL_ADMIN_RUN",
+      "restart_completed_at_utc": "2026-10-04T22:03:51.4370278Z",
+      "verify": "PASS_QUERY_ONLY_WINDOWS_POWERSHELL_5",
+      "actual_elevated_admin": true,
+      "launch_receipt_sha256": "cd47b0c3d8a8c0bd81dab07f53c928b3f3cc65d22e2c99e4b29335aa5a7587b4",
+      "verify_receipt_sha256": "730ab91acf2eb1866c9845d392591c264681b27ef2518ef1a76da4416699206f",
+      "executable_sha256": "10ce17db6a754e4427600ea5205dd9a438d8dc7ca16b7614f10ee7feec57e5e2",
+      "lock_sha256": "f05d80b3aadf1fd0996eefc6558180ab3bc544c1a96bf4fc64b2d97946ba846c",
+      "same_retained_handle_identity_across_health": true,
+      "retained_handle_closed": true,
+      "health_http_status": 200,
+      "health_status": "ok",
+      "owned_listener_port": 9920,
+      "observed_at_utc": "2026-10-04T22:06:21.3607976Z",
+      "embedding_supervision": false,
+      "initial_wrapper": {
+        "result": "FAIL_FRESH_LAUNCH_RECEIPT_CHECK",
+        "receipt_sha256": "575ab8da90a7b5f249cc6e09b114a8c0a2c984003adf46d86119446c0feeda20",
+        "cause": "PowerShell 7 JSON date auto-conversion followed by culture string conversion lost UTC offset before reparsing.",
+        "recovery": "Immutable actual launch bytes verified by unchanged query-only helper under Windows PowerShell 5; no repeated restart.",
+        "admin_guard_or_600_second_freshness_weakened": false,
+        "helpers_changed": false
+      }
+    },
+    "llama": "NO_TOUCH",
+    "embedding": "NO_TOUCH",
+    "model_endpoints_requested_by_closeout": false,
+    "private_identity_or_credentials_published": false,
+    "old_runtime_receipts_reused_as_current_success": false,
+    "scope": "Desktop window/backend and Go watchdog owned-health at recorded instants; separate from renderer interactions, model inference, fleet gateway health, durable scheduled tasks and CI.",
+    "evidence_epoch": "FIRST_PUBLICATION_78_HISTORICAL",
+    "validates_latest_ci_repair_source": false
+  }
+}

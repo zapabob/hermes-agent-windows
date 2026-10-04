@@ -77,7 +77,8 @@
     "rerun_for_this_repair": false,
     "original_full_TS_bindings_are_historical": true
   },
-  "runtime_rebuild": "PENDING separate delivery receipt",
-  "cloud_ci": "NOT_YET_RUN_FOR_NEW_COMMIT",
-  "campaign_complete": false
+  "runtime_rebuild": "PASS; runtime-closeout-20261005.json",
+  "cloud_ci": "ci-observation-repair-20261005.json; ALL_REQUIRED_SUCCESS_FALSE",
+  "campaign_complete": false,
+  "publication_commit": "feda2921da95cb5d112e49f84cdb932721be762d"
 }

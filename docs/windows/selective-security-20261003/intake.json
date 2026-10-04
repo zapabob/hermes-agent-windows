@@ -11,7 +11,7 @@
     "downstream": "c20e98f1370c588645d796047788e3b6f9cc749d"
   },
   "integration_branch": "codex/p0-p1-local-20261003",
-  "integration_root": "H:\\hermes-worktrees\\p0-p1-local-20261003",
+  "integration_root": "isolated selective-intake worktree (local path retained privately)",
   "candidate_count": 11,
   "families": [
     {
@@ -60,7 +60,7 @@
       },
       "mutation_set": {
         "os": "nt",
-        "python": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts\\python.exe",
+        "python": "canonical .venv/Scripts/python.exe",
         "integration_parent": "17ad2e370a7f9e7f01fb5ee617ef4e96d62635d0",
         "candidate_head": "cfe11cab3164f8d9f1ff6b8b6a181e49c869875d",
         "candidate_tree": "f4a3bdc8152a23534c7f1c6593873f56fc9b1dd6",
@@ -181,7 +181,7 @@
       },
       "mutation_set": {
         "os": "nt",
-        "python": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts\\python.exe",
+        "python": "canonical .venv/Scripts/python.exe",
         "integration_parent": "709c7aeedf6c192137d231d719ad8cadf59414f6",
         "candidate_head": "17143117ff9f51a701e2db14ae0ffd50b67691ec",
         "candidate_tree": "1c42bcc4e8e5cf5980308afbc2f79e525742aaba",
@@ -412,7 +412,7 @@
       },
       "mutation_set": {
         "os": "nt",
-        "python": "C:\\Users\\downl\\Documents\\New project\\hermes-agent\\.venv\\Scripts\\python.exe",
+        "python": "canonical .venv/Scripts/python.exe",
         "integration_parent": "d0bba5c1d065b7b1d7d1c2d831a12ddc8e9e26f7",
         "candidate_head": "935586f9b758f6b8dc59200cf746b9de558621fe",
         "candidate_tree": "1887bdeb1b57e44405444c220b7e324b0e38129b",
@@ -785,8 +785,17 @@
         }
       },
       "existing_downstream_protection": "PENDING_SOURCE_BOUND_REVIEW",
-      "actual_gap": "PENDING_RED",
-      "RED_test": "PENDING",
+      "actual_gap": "Partial semantic RED-v2: unlisted Git checkout reaches Rust launch intent; checkout venv is selected for Pyright; final override replaces operator Python. Native execution was blocked.",
+      "RED_test": {
+        "status": "PARTIAL_SEMANTIC_RED_V2",
+        "summary": "S05/red-checkpoint-20261005.json",
+        "semantic_failures": 3,
+        "errors": 0,
+        "source_count": 12,
+        "source_unchanged": true,
+        "raw_receipt_sha256": "990c179b79a7bfa28eb2e6a0e36695ad7feb88d7bd42ea75390d9fe78b8e0580",
+        "raw_logs": "PRIVATE_RETAINED_NOT_PUBLISHED"
+      },
       "minimum_change": "PENDING_OWNER_REVIEW",
       "regression_suite": "PENDING",
       "mutation_set": "PENDING",
@@ -796,7 +805,8 @@
         "f5c754d4365e17ff7c6e7c1c51808ec36f4d7cc9\nJohn Paul Soliva <soliva.johnpaul@icloud.com>\nkshitij <82637225+kshitijk4poor@users.noreply.github.com>\nfix(lsp): never run a cloned repository's own interpreter or TypeScript SDK in an untrusted workspace"
       ],
       "downstream_implementation_provenance": "NOT_IMPLEMENTED",
-      "result": "PENDING_CODEGRAPH"
+      "result": "OPEN_PARTIAL_RED_PREPARATION_ONLY",
+      "family_acceptance": false
     },
     {
       "family_id": "S06",
@@ -915,8 +925,12 @@
         "13ea517514fd8fcc0c533df2ce094356b8fae948\nJohn Paul Soliva <soliva.johnpaul@icloud.com>\nkshitij <82637225+kshitijk4poor@users.noreply.github.com>\nfix(git): run the worktree reclaim ls-remote, unshallow fetch and prune under noninteractive_git_env"
       ],
       "downstream_implementation_provenance": "Selective S06 composition on current fork main; pinned upstream authors remain recorded above.",
-      "result": "ACCEPTED_LOCAL_S06_GATES_PUBLICATION_CI_RUNTIME_SEPARATE",
-      "acceptance_receipt": "S06/acceptance-20261005.json"
+      "result": "LOCAL_ACCEPTED_PUBLISHED_CI_NOT_GREEN",
+      "acceptance_receipt": "S06/acceptance-20261005.json",
+      "downstream_commit": "78d6530fad9b214a5a2e69f73e34eecf7450d4bc",
+      "latest_ci_repair_commit": "feda2921da95cb5d112e49f84cdb932721be762d",
+      "latest_ci_repair_receipt": "S06/ci-repair-acceptance-20261005.json",
+      "latest_runtime": "runtime-closeout-20261005.json"
     },
     {
       "family_id": "S07",
