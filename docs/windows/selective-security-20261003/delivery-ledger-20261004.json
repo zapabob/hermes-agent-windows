@@ -1,0 +1,625 @@
+{
+  "schema": "selective-security-partial-delivery-v1",
+  "date": "2026-10-04",
+  "captured_at_jst": "2026-10-04T21:16:17.437150+09:00",
+  "status": "PARTIAL_IMPLEMENTATION_RECORDED_RUNTIME_CLOSEOUT_IN_PROGRESS",
+  "acceptance": "S06_HOLD",
+  "documentation_only": false,
+  "authorization": {
+    "main_commit_push_and_restarts": "AUTHORIZED_BY_USER",
+    "delivery_deadline_jst": "2026-10-05T00:00:00+09:00",
+    "remaining_plans": "AUTHORIZED; implementation gates unchanged"
+  },
+  "pinned": {
+    "R_BEFORE": "63279301bcbdc185c1b07b98a9312eb0c862f26d",
+    "R_AFTER": "d3630f853239e8c41ce7201e09fbdf39bcbc5431",
+    "U_TARGET": "4ed093cb6be8a2fadb39e770898f6989fc67201d",
+    "D_BASE": "c20e98f1370c588645d796047788e3b6f9cc749d"
+  },
+  "paths": {
+    "publication": "H:\\hermes-worktrees\\selective-publication-20261003",
+    "integration": "H:\\hermes-worktrees\\p0-p1-local-20261003",
+    "frozen_upstream": "H:\\hermes-worktrees\\p0-p1-u-target-20261003",
+    "frozen_downstream_baseline": "H:\\hermes-worktrees\\p0-p1-selective-20261003"
+  },
+  "family_order": [
+    "S01",
+    "S02",
+    "S03",
+    "S06",
+    "S05",
+    "S08",
+    "S07",
+    "S04",
+    "S09",
+    "S10",
+    "S11"
+  ],
+  "families": [
+    {
+      "id": "S01",
+      "status": "ACCEPTED_ON_MAIN_REPORTED_AND_HISTORICAL_RECEIPTS",
+      "severity": "P0",
+      "action": "ADOPT",
+      "upstream_commits": [
+        "3f4533b9dedb526e5891354164b07b59a8557cc5"
+      ],
+      "frozen_upstream_files": [
+        "plugins/platforms/email/adapter.py"
+      ],
+      "existing_downstream_owner_paths": [
+        "plugins/platforms/email/adapter.py"
+      ],
+      "plan_state": null
+    },
+    {
+      "id": "S02",
+      "status": "ACCEPTED_ON_MAIN_REPORTED_AND_HISTORICAL_RECEIPTS",
+      "severity": "P0",
+      "action": "ADOPT",
+      "upstream_commits": [
+        "467046753420c40aba05a118e5ffd5061e42f481"
+      ],
+      "frozen_upstream_files": [
+        "gateway/authz_mixin.py",
+        "plugins/platforms/simplex/adapter.py"
+      ],
+      "existing_downstream_owner_paths": [
+        "gateway/authz_mixin.py",
+        "plugins/platforms/simplex/adapter.py"
+      ],
+      "plan_state": null
+    },
+    {
+      "id": "S03",
+      "status": "ACCEPTED_ON_MAIN_REPORTED_AND_HISTORICAL_RECEIPTS",
+      "severity": "P0",
+      "action": "COMPOSE",
+      "upstream_commits": [
+        "66019e5597e841709f75e39193189b0ca2e2d526",
+        "3a6406137de7c6173d122065322eb980c7febe9b",
+        "26f42dd77265f7384a27120839248e6395cbae0a"
+      ],
+      "frozen_upstream_files": [
+        "gateway/platform_registry.py",
+        "hermes_cli/config.py",
+        "plugins/memory/openviking/__init__.py",
+        "plugins/platforms/raft/adapter.py",
+        "providers/__init__.py",
+        "tools/environments/local.py",
+        "tools/environments/local_env_policy.py"
+      ],
+      "existing_downstream_owner_paths": [
+        "tools/environments/local.py",
+        "agent/terminal_env_registry.py",
+        "hermes_cli/config.py",
+        "hermes_cli/env_loader.py",
+        "cron/scheduler.py",
+        "plugins/platforms/raft/adapter.py",
+        "plugins/memory/openviking/__init__.py",
+        "agent/delegation_context.py",
+        "gateway/platform_registry.py",
+        "tools/env_passthrough.py",
+        "tools/tts_tool.py",
+        "tools/transcription_tools.py"
+      ],
+      "plan_state": null
+    },
+    {
+      "id": "S06",
+      "status": "HOLD_CURRENT_EPOCH_GATES_PENDING_NOT_PUBLISHED",
+      "severity": "P0",
+      "action": "COMPOSE",
+      "upstream_commits": [
+        "c77a2dda9fc7e75b5a8462bafe16bae74383f6cc",
+        "21c4b228b1b98a48efa8ff8c5efd949ce96b3726",
+        "22a81ca50ae728256f564e9fb423327674eabb6c",
+        "13ea517514fd8fcc0c533df2ce094356b8fae948"
+      ],
+      "frozen_upstream_files": [
+        "hermes_cli/_subprocess_compat.py",
+        "hermes_cli/kanban_db_workspace.py",
+        "hermes_cli/worktree_gc.py",
+        "hermes_cli/worktree_ops.py"
+      ],
+      "existing_downstream_owner_paths": [
+        "hermes_cli/_subprocess_compat.py",
+        "tools/subagent_worktree.py"
+      ],
+      "plan_state": null
+    },
+    {
+      "id": "S05",
+      "status": "OPEN_NOT_IMPLEMENTED_NOT_ACCEPTED",
+      "severity": "P0",
+      "action": "COMPOSE",
+      "upstream_commits": [
+        "f5c754d4365e17ff7c6e7c1c51808ec36f4d7cc9"
+      ],
+      "frozen_upstream_files": [
+        "agent/lsp/manager.py",
+        "agent/lsp/servers.py",
+        "agent/lsp/workspace.py",
+        "cli-config.yaml.example",
+        "hermes_cli/config_defaults.py"
+      ],
+      "existing_downstream_owner_paths": [
+        "agent/runtime_cwd.py",
+        "agent/lsp/workspace.py",
+        "agent/lsp/manager.py",
+        "agent/lsp/servers.py",
+        "agent/lsp/__init__.py",
+        "tools/file_operations.py",
+        "hermes_cli/config.py"
+      ],
+      "plan_state": "READ_ONLY_PLAN_AVAILABLE"
+    },
+    {
+      "id": "S08",
+      "status": "OPEN_NOT_IMPLEMENTED_NOT_ACCEPTED",
+      "severity": "P0",
+      "action": "COMPOSE",
+      "upstream_commits": [
+        "736a06beac297df26c39b6eb9a0ab74aff22f821",
+        "a609bad294c735672043455240515ae664649c47",
+        "2ddc1dc195cf5f76aec2e5afd885f7c001065f0b",
+        "9efb9a7af3e4a3753d7b229c89efea2bb9f52987"
+      ],
+      "frozen_upstream_files": [
+        "hermes_cli/backup.py",
+        "hermes_cli/backup_restore.py"
+      ],
+      "existing_downstream_owner_paths": [
+        "hermes_cli/backup.py",
+        "hermes_cli/profiles.py"
+      ],
+      "plan_state": "SPEC_DRIVEN_PENDING_OWNER_REVIEW_RED"
+    },
+    {
+      "id": "S07",
+      "status": "OPEN_NOT_IMPLEMENTED_NOT_ACCEPTED",
+      "severity": "P0",
+      "action": "COMPOSE",
+      "upstream_commits": [
+        "553388b320cf0a30e01fc44374aaeaa7c573fa86"
+      ],
+      "frozen_upstream_files": [
+        "cron/jobs.py"
+      ],
+      "existing_downstream_owner_paths": [
+        "cron/jobs.py"
+      ],
+      "plan_state": "SPEC_DRIVEN_PENDING_OWNER_REVIEW_RED"
+    },
+    {
+      "id": "S04",
+      "status": "OPEN_NOT_IMPLEMENTED_NOT_ACCEPTED",
+      "severity": "P0",
+      "action": "ADOPT",
+      "upstream_commits": [
+        "b8a8be185d6e88b35e0a4fa794fea64fb06ed85b",
+        "205d5d78f1ff8a20701555bff26e107df48d5b92"
+      ],
+      "frozen_upstream_files": [
+        "agent/redact.py",
+        "hermes_cli/debug.py",
+        "hermes_cli/dump.py"
+      ],
+      "existing_downstream_owner_paths": [
+        "agent/redact.py",
+        "hermes_cli/debug.py",
+        "hermes_cli/dump.py"
+      ],
+      "plan_state": "SPEC_DRIVEN_PENDING_OWNER_REVIEW_RED"
+    },
+    {
+      "id": "S09",
+      "status": "OPEN_NOT_IMPLEMENTED_NOT_ACCEPTED",
+      "severity": "P1",
+      "action": "ADOPT",
+      "upstream_commits": [
+        "ef6039cc770563a05ec31a97232b5124aaf3079b"
+      ],
+      "frozen_upstream_files": [
+        "apps/desktop/src/store/approval-mode.test.ts",
+        "apps/desktop/src/store/approval-mode.ts"
+      ],
+      "existing_downstream_owner_paths": [
+        "apps/desktop/src/store/approval-mode.ts"
+      ],
+      "plan_state": "SPEC_DRIVEN_PENDING_OWNER_REVIEW_RED"
+    },
+    {
+      "id": "S10",
+      "status": "OPEN_NOT_IMPLEMENTED_NOT_ACCEPTED",
+      "severity": "P1",
+      "action": "ADOPT",
+      "upstream_commits": [
+        "b9cb268deffc97946ec11645aa622a7353dd0591"
+      ],
+      "frozen_upstream_files": [
+        "apps/desktop/electron/backend-probes.test.ts",
+        "apps/desktop/electron/backend-probes.ts",
+        "apps/desktop/electron/backend-serve-support.ts",
+        "apps/desktop/electron/main.ts",
+        "apps/desktop/electron/windows-child-options.test.ts",
+        "apps/desktop/electron/windows-child-options.ts"
+      ],
+      "existing_downstream_owner_paths": [
+        "apps/desktop/electron/windows-child-options.ts",
+        "apps/desktop/electron/backend-probes.ts",
+        "apps/desktop/electron/main.ts"
+      ],
+      "plan_state": "SPEC_DRIVEN_PENDING_OWNER_REVIEW_RED"
+    },
+    {
+      "id": "S11",
+      "status": "OPEN_NOT_IMPLEMENTED_NOT_ACCEPTED",
+      "severity": "P1",
+      "action": "OWNER_REVIEW",
+      "upstream_commits": [
+        "f336141022125c03d4ee6f62e5913de3ae13a53f"
+      ],
+      "frozen_upstream_files": [
+        "hermes_cli/pty_session.py"
+      ],
+      "existing_downstream_owner_paths": [
+        "hermes_cli/pty_session.py"
+      ],
+      "plan_state": "SPEC_DRIVEN_PENDING_OWNER_REVIEW_RED"
+    }
+  ],
+  "s06": {
+    "status": "HOLD_NOT_ACCEPTED_NOT_PUBLISHED",
+    "source_epoch": {
+      "bounded_process_sha256": "e8b2f95cdf6346e56d9ed3e2a1cf28276c62acdd82aab427cd0267a3adff1bec",
+      "compat_sha256": "f4b73d95b591a540abcb7284dec7c817c49b929a98ec8f9f02cd8b0d8f35629e"
+    },
+    "canonical": {
+      "files": 45,
+      "passed": 866,
+      "failed": 0,
+      "skipped": 12,
+      "explicit_exclusions": 3,
+      "exclusions_counted_as_pass": false,
+      "receipts": [
+        {
+          "receipt": {
+            "path": "H:\\hermes-worktrees\\p0-p1-local-20261003\\docs\\windows\\selective-security-20261003\\S06\\oct4-canonical-core-v6-final-2034.json",
+            "sha256": "f655d98e2ce09ecb350681820b4554e3511087974e56b11e39b92f8dbaa28d7c"
+          },
+          "log": {
+            "path": "H:\\hermes-worktrees\\p0-p1-local-20261003\\docs\\windows\\selective-security-20261003\\S06\\oct4-canonical-core-v6-final-2034.log",
+            "sha256": "0e45c7594c79c605030381477124e7f62a428167ecd702daf6e3f67a14aa9648"
+          },
+          "files": 29,
+          "passed": 571,
+          "failed": 0,
+          "skipped": 9,
+          "exit_code": 0,
+          "source_unchanged_reported": true,
+          "product_hash_mismatches_on_document_read": [],
+          "exclusions": 0
+        },
+        {
+          "receipt": {
+            "path": "H:\\hermes-worktrees\\p0-p1-local-20261003\\docs\\windows\\selective-security-20261003\\S06\\cross-owner-final-2034.json",
+            "sha256": "66e1d9a40c7f3699efb49c9d64387c28b63a120a4f56db6ceeed9bbb39a11108"
+          },
+          "log": {
+            "path": "H:\\hermes-worktrees\\p0-p1-local-20261003\\docs\\windows\\selective-security-20261003\\S06\\cross-owner-final-2034.log",
+            "sha256": "7887c1853d8bd79152aca8c13628abb301d8cc9892b00a576e6f21fa10dfb67c"
+          },
+          "files": 15,
+          "passed": 217,
+          "failed": 0,
+          "skipped": 0,
+          "exit_code": 0,
+          "source_unchanged_reported": true,
+          "product_hash_mismatches_on_document_read": [],
+          "exclusions": "test_rate_limit_exit_requeues_without_counting_failure; existing POSIX wait-status dependency on native Windows, not counted PASS"
+        },
+        {
+          "receipt": {
+            "path": "H:\\hermes-worktrees\\p0-p1-local-20261003\\docs\\windows\\selective-security-20261003\\S06\\bounded-owner-canonical-oct4-final-2034.json",
+            "sha256": "12a9a401d3e37eb864e1c0f9407d21458e76de78b59e925174cb3141a2e68c52"
+          },
+          "log": {
+            "path": "H:\\hermes-worktrees\\p0-p1-local-20261003\\docs\\windows\\selective-security-20261003\\S06\\bounded-owner-canonical-oct4-final-2034.log",
+            "sha256": "9d2043dc9e188de2ac99a6051150d9d0cc1ca9250f76d71bd8dcebf70821ad82"
+          },
+          "files": 1,
+          "passed": 78,
+          "failed": 0,
+          "skipped": 3,
+          "exit_code": 0,
+          "source_unchanged_reported": true,
+          "product_hash_mismatches_on_document_read": [],
+          "exclusions": 2
+        }
+      ],
+      "aggregate": {
+        "path": "H:\\hermes-worktrees\\p0-p1-local-20261003\\docs\\windows\\selective-security-20261003\\S06\\canonical-aggregate-oct4-final-2111.json",
+        "sha256": "9d0169d2effa25c41ae2eee968dd793a14170846f82d09e2aaeb2d5361f62e2d",
+        "status": "PASS_SOURCE_BOUND_DISJOINT_SELECTIONS",
+        "disjoint_file_selection_checked_by_document_author": true,
+        "files": 45,
+        "passed": 866,
+        "failed": 0,
+        "skipped": 12,
+        "explicit_exclusions": 3,
+        "exclusions_counted_as_success": false
+      }
+    },
+    "broader_canonical_receipt_product_hashes": {
+      "cli.py": "3df6bbd464f22e4c07c129f89f53a91f62071bf47110836a45fbba013ea1085e",
+      "downstream/security/bounded_process.py": "e8b2f95cdf6346e56d9ed3e2a1cf28276c62acdd82aab427cd0267a3adff1bec",
+      "hermes_cli/_subprocess_compat.py": "f4b73d95b591a540abcb7284dec7c817c49b929a98ec8f9f02cd8b0d8f35629e",
+      "hermes_cli/main.py": "76439aee495d7d6e972345891da954ff42542357532f83d4ad03043ca49629e2",
+      "hermes_cli/mcp_catalog.py": "bf7d2a3a92b2fac6851741d946e3c6bcedb66feae97f1d44569c4f4c4c80104f",
+      "hermes_cli/plugins_cmd.py": "51efc10b35a5d054e2c779e440af6f264e0993d1a33a4b2dbdd0533b7f4551da",
+      "hermes_cli/profile_distribution.py": "84f904b6f9932098858ce65df57d2f6b16afb12fc0d19b112d9596a0f262e686",
+      "hermes_cli/update_cmd.py": "e743cedffdcb3a26fa9321354fd91472d31a2160cfa071052e8b7982a18bff95",
+      "tools/checkpoint_manager.py": "de569b5706501725196fdfeb2cfe818ad0e0973055564bdc6baaaa9f2a6acdbb",
+      "tools/working_diff.py": "7471e7c8255c4f9fc7a1f56452548fae09b80c4fc50c99c5f95a7831a08415c8",
+      "utils.py": "249aaba0819cc1a853d1f8b352dcd5b5e578dce9d317dc21c35b94aaaf2fd411",
+      "agent/context_references.py": "8b8b9e4faf3c5178d00a282b029f9e95863462ba186389bd05a6ba796d731992",
+      "agent/trace_upload.py": "73d388c3c5f0751597c71b268154dfc8b6f0537d501f9232c1528f8f3a714a15",
+      "hermes_cli/banner.py": "969dd485d0fd808403268bbbdcdb8b2d613063567dd67c49c225f3a6603a8454",
+      "hermes_cli/cli_commands_mixin.py": "7a092ffe71957cd8226b95670b4bb53299790c4d8bf8bf6e776a5bc65ee37495",
+      "hermes_cli/dashboard_managed_files.py": "4a8a327e1ebf03ca0b3baa7cbb799e83a0883e1c93e9913f20815afef6b34fd6",
+      "hermes_cli/diagnostics_local_export.py": "b632cc87b2b5ff9eee95b974dff8bfc7aea3250da0b69494e0b6b84d9ff8bf7b",
+      "hermes_cli/dump.py": "9bc0b99c875833c4059774111998a2e79675f39b8229e99315011c262054fe42",
+      "hermes_cli/gitlock.py": "f2740545f6b2a3f5e7ed85d7ce4bd8e6de2ff4bd7b2f498dde42f492dcbb7374",
+      "hermes_cli/goals.py": "48430afe594c5e0ce054c01d07b4e89ab273e0eae87b5887b0a47f53926fc08a",
+      "hermes_cli/kanban_db.py": "a57d6bfcd04b435685fa5de4cf34bb1149960ec1346965052014121f44d100fd",
+      "hermes_cli/web_git.py": "f37159c8b5f0d7b9c78bca4cba273c43305ed34205904591bf5449227bd3f738",
+      "hermes_cli/web_server.py": "b8095d418f671c08b44c2fbe4b0dca7ba5ee83ef24b660aefa8013b9462cfc5a",
+      "hermes_cli/worktree_gc.py": "6ef2c0cd4b0c84f1a4974f050c03ec182ad80dbe45ffadd98f04d09e53ff234c",
+      "tools/subagent_worktree.py": "3755253aed26cdf53115f85d59183d0293fb08b8dd20de16ae4fe757ecc1c5d3",
+      "tui_gateway/compute_host.py": "9f8938a8d1fb67d886969362f6edbf2bb9f9ee20f8448f0bfef92e1820c23c88",
+      "tui_gateway/host_supervisor.py": "bb4d2e1f68751b483a2502b9617607dc6878592449a5938aee6ce7a40c9e1b41",
+      "tui_gateway/server.py": "530694acd791a8bdbbdb4e9733d283c9b3ae10648252f877bdaa385784def475",
+      "downstream/security/bounded_walk.py": "452a9159700e53753d8d22c6cc5518e1f9f75da691f3dff18b6113cfc36a69a2",
+      "downstream/security/clamav_definitions.py": "9ab937c24f6b32d19a2ad72a5a254f772127717ca370e216a627cbff1c29cfe4",
+      "downstream/security/cli.py": "62352df98c44a57638ba293158923e3d9a560dd649985de5cd6f6743978827c6",
+      "downstream/security/engines.py": "e5c78e0ac2e2f2be63faceaf102022fc36905a7d882b69654429a5498f4c4953",
+      "downstream/security/execution_gate.py": "3799f7d136a250deba792d04864cf00bc24c58e32707a6f62d45f03a1ac85d08",
+      "downstream/security/models.py": "a51e14b3567f7143d694be9830367896f43518338ab4e290f82678efdb9404d7",
+      "downstream/security/policy.py": "1cd10bd7da784000b07833c67ffce8724aa49fb81a78d9f5784782186fe10783",
+      "downstream/security/service.py": "f8781f7fbc898d618451c2d8f9ec991546ea964185871d5be853e11b653ea5ad",
+      "downstream/security/snapshot_budget.py": "e7b5a89a0f733ce94ee6208da5ec207c2daaf1b46097cca017711ef6d79fbf5a",
+      "downstream/security/store.py": "f6257364fde8943d57bcec698b4654aa9231ca406b3b6cdaa6c66aa4e27feda7",
+      "downstream/security/updates.py": "794208861f7a1873d3c08dc25b0cf1d26d7f2a3d9b65fd1c1011535113bae973",
+      "downstream/security/vault.py": "ec86706454a03b23b2b0cfa90d50dca8172b830fec51d65c40d28185d1d992b4",
+      "downstream/security/watcher.py": "3e5ce66b7899f21271b44dfdba9b626901a526787595ae128d135e458d113a75",
+      "downstream/security/watch_state.py": "709547457c6d5842ec0230a00083263910d34000808d88f91c4eef7cd9fa9bc2",
+      "downstream/security/__init__.py": "192b90905c515ea4ccb5ac9163342eda22f62675277da2434c4d33b223891fd3"
+    },
+    "broader_hash_inventory_is_not_33_owner_graph_claim": true,
+    "latest_parent_report": {
+      "product_inventory_sha256": "b168b06f68a2526c2be1076fe41464b3666bdd8a7389b39d63c82cf290df813c",
+      "typescript_passed": 71,
+      "electron_typecheck_exit_code": 0,
+      "semantic_mutants_killed": 5,
+      "native_acceptance": "FAIL_HOLD",
+      "fixture_python_sha256": "fe1a0293a05321e667d6fc163d6245b457c896568d4c6f94ae813348922e93f6",
+      "fixture_test_sha256": "86ce6e793b460a6052f0caf1285342df973706b8ede2b795dc20dd5710cbfc18",
+      "product_finding": "NONE_ESTABLISHED"
+    },
+    "required_gates": [
+      "Deterministic first live identity capture without weakening retained HANDLE/Job/deadline boundary",
+      "Separate GH fixture accumulated scope without blindly increasing cap",
+      "Freeze exact fixture source before all five native cases; do not parallelize heavy Graph",
+      "Native positive/adversarial and zero owned child/listener/temp removability proof",
+      "Fresh source-bound Graph, independent final review, explicit family acceptance before commit"
+    ],
+    "claim_scope": "Required callers and reviewed owners only; no all-internal-Python-Git completeness claim",
+    "graph": {
+      "label": "S06_ALL_REVIEW_OCT4_FINAL_2202",
+      "status": "COMPLETE",
+      "exit_code": 0,
+      "pendingRefs": 0,
+      "nodes": 195018,
+      "edges": 613300,
+      "source_bindings": 43,
+      "receipt": {
+        "path": "H:/hermes-worktrees/p0-p1-local-20261003/docs/windows/selective-security-20261003/graph/S06_ALL_REVIEW_OCT4_FINAL_2202/binding.json",
+        "sha256": "4c79c510de359bdf39ee7abf34ff12cce793cecee8f66e04916f2930f0b94561"
+      }
+    },
+    "independent_review": {
+      "status": "HOLD",
+      "scope": "FINAL_FAMILY_NATIVE_ACCEPTANCE",
+      "reviewer": "Sartre",
+      "product_finding": "NONE_ESTABLISHED"
+    },
+    "native_failures": {
+      "git2202": {
+        "sticky_unknowns": 8,
+        "source_bound_receipt": {
+          "path": "H:/hermes-worktrees/p0-p1-local-20261003/tmp/s06-desktop-direct-evidence/oct4-final-git-2202/oct4-final-git-2202.ledger.json",
+          "sha256": "4828a99f9d5e2687fd0e67858972ae8d067594b681c86dfad48480d633f1a1b0"
+        }
+      },
+      "quad2206": "EXPERIMENTAL_NOT_ACCEPTANCE_SOURCE_EDITS_OVERLAPPED",
+      "gh2206_outer_job_total": 315,
+      "outer_job_cap": 256,
+      "interrupted": {
+        "path": "H:/hermes-worktrees/p0-p1-local-20261003/docs/windows/selective-security-20261003/S06/fixture-interrupted-2220/INTERRUPTED_HANDOFF_20261004_2220.json",
+        "sha256": "607c875ac9eb26210328c5949fd8406d75c3413a725b8b0db65958a5c6036c32"
+      }
+    },
+    "interrupted_backup": {
+      "path": "H:/hermes-worktrees/selective-publication-20261003/.codegraph/delivery/oct4/s06-interrupted-20261004T132330Z.json",
+      "sha256": "0863313539f763c574419d2182539bf1453d3e06d341373bee60430e94945bcb"
+    }
+  },
+  "auxiliary_metadata": {
+    "status": "ALL_SIX_OPEN",
+    "source": {
+      "path": "H:\\hermes-worktrees\\p0-p1-local-20261003\\docs\\windows\\selective-security-20261003\\S06\\remaining-metadata-oct4.md",
+      "sha256": "c61e5c8fee4716850f8f5e2536bac10eaaccc2ea693c9a678a118bf2afe3a3a0"
+    },
+    "ids": [
+      "S06-META-HONCHO",
+      "S06-META-AKARI",
+      "S06-META-NEURO",
+      "S06-META-OPENMANUS",
+      "S06-META-SILLYTAVERN",
+      "S06-META-TOOKIE"
+    ],
+    "closure_requires": "Current caller/cwd/argv/deadline/ambient-authority/output proof and source-bound scope decision"
+  },
+  "s05_plan": {
+    "status": "HOLD_NOT_IMPLEMENTED_NOT_ACCEPTED",
+    "source": {
+      "path": "H:\\hermes-worktrees\\p0-p1-local-20261003\\docs\\windows\\selective-security-20261003\\S05\\implementation-plan-20261004.md",
+      "sha256": "3f97f7096fdbf7ea3c5f0153dc22f8302c68363a308f9c8677b70ec417e5f52a"
+    },
+    "publication_copy": {
+      "path": "H:\\hermes-worktrees\\selective-publication-20261003\\docs\\windows\\selective-security-20261003\\S05\\implementation-plan-20261004.md",
+      "sha256": "3f97f7096fdbf7ea3c5f0153dc22f8302c68363a308f9c8677b70ec417e5f52a",
+      "byte_exact": true
+    },
+    "estimate_minutes": [
+      90,
+      150
+    ],
+    "required_red": 5,
+    "minimum_mutants": 4,
+    "cache_future_mutants_additional": 2
+  },
+  "runtime_oct4": {
+    "desktop_stop": "SUCCESS_FRESH_ABSENCE_AFTER_FAILED_WM_CLOSE_RECEIPT",
+    "desktop_rebuild": "PENDING",
+    "desktop_restart": "PENDING",
+    "go_restart": "LAUNCH_COMPLETED_EMBEDDING_FALSE_HEALTH_HOLD_CIM_EXCEPTION",
+    "desktop_helper": {
+      "path": "H:\\hermes-worktrees\\selective-publication-20261003\\.codegraph\\delivery\\oct4\\desktop-runtime-oct4.py",
+      "sha256": "a6ae2e8a0fe0607775941f2de19372ba6c0f8795113f0c6c08c0daa3f9005183"
+    },
+    "desktop_readme": {
+      "path": "H:\\hermes-worktrees\\selective-publication-20261003\\.codegraph\\delivery\\oct4\\desktop-runtime-oct4-README.md",
+      "sha256": "d7e0d216ef243e472893ceb2a05a1b6bc2e5afaef52f53a0da9714d5861801c1"
+    },
+    "prepared_binding": {
+      "path": "H:\\hermes-worktrees\\selective-publication-20261003\\.codegraph\\delivery\\oct4\\desktop-runtime-oct4-prepared-20261004T114445Z-23b5670f09af4d408e83e7daf09c2f0c.json",
+      "sha256": "002b6ec24940f36bb544983925c7a0726a217d18e2102ee50ebb8a4027bc60b2"
+    },
+    "desktop_observation_plan": {
+      "artifact": {
+        "path": "H:\\hermes-worktrees\\selective-publication-20261003\\.codegraph\\delivery\\oct4\\desktop-plan-20261004T115102Z-f240a908e52942f0a37fc1b3d902646e.json",
+        "sha256": "4ef9334ca074c2a3f8b9d29cdce4b1f803e538f518c2fedc04b6c7664042c100"
+      },
+      "status": "OBSERVATIONAL_PLAN_EXISTS; not stop/build/restart proof"
+    },
+    "desktop_independent_review": "Final acceptance receipt pending in this draft",
+    "go_helpers": [
+      {
+        "path": "H:\\hermes-worktrees\\selective-publication-20261003\\.codegraph\\delivery\\oct4\\Run-Go.ps1",
+        "sha256": "a2af9b33e9b63aab8d28ddd8552c4e8d96d819517756dfb112af669f7a8ab69e"
+      },
+      {
+        "path": "H:\\hermes-worktrees\\selective-publication-20261003\\.codegraph\\delivery\\oct4\\Start-Go-NoLlama.ps1",
+        "sha256": "b609992a42e46bf31282070bbb21f1a7f53a7dbdfbae28b576fe2325b159e6c9"
+      }
+    ],
+    "go_binding": {
+      "path": "H:\\hermes-worktrees\\selective-publication-20261003\\.codegraph\\delivery\\oct4\\go-helper-binding.json",
+      "sha256": "20271cc4e86eda346c9c4539c9c13d5233062cf01219b1d5d874f66914b24f63"
+    },
+    "go_review": {
+      "latest_user_report": "REVIEWED_HELPERS_PREPARED_ONLY",
+      "saved_binding_field": "PENDING",
+      "final_review_receipt": "PARENT_TO_FILL"
+    },
+    "protected_llama_actions": "NONE",
+    "console_association": "UNKNOWN; private diagnostic is not Native 5 acceptance",
+    "desktop_stop_receipt": {
+      "path": "H:/hermes-worktrees/selective-publication-20261003/.codegraph/delivery/oct4/desktop-stop-20261004T131953Z-d427006b52344e44aaf2e81b8fe4eceb.json",
+      "sha256": "ed078cb7c2eb68c1dc2f21459cc252393f8e360ad2ad095d04a48bb16e7b0566"
+    },
+    "go_first_closeout": {
+      "path": "H:/hermes-worktrees/selective-publication-20261003/.codegraph/delivery/oct4/go-closeout-20261004T131908Z-f10e91b0d8b84b449f6135103ac162ea.json",
+      "sha256": "6368631f854ac131fdc361e28638a873c06ce5ca006443920e1e8ad9bcadd683"
+    }
+  },
+  "preservation": {
+    "primary_root": "C:\\Users\\downl\\Documents\\New project\\hermes-agent",
+    "tracked_dirty_items": 10,
+    "untracked_items": 95,
+    "latest_report_source": "User and saved Oct4 preinventory; no new Git scan",
+    "inventory": {
+      "path": "H:\\hermes-worktrees\\selective-publication-20261003\\.codegraph\\delivery\\oct4-prepublication-primary.json",
+      "sha256": "2f7198ddbcf22fd147fc972d81433388b42630752166a7f716213c3a2aa77c60"
+    },
+    "before_after_preservation": "BEFORE_PUBLICATION_BASELINE_PRESERVED",
+    "current_untracked_items": 172,
+    "baseline_untracked_items": 95,
+    "additional_external_untracked_items": 77,
+    "latest_receipt": {
+      "path": "H:/hermes-worktrees/selective-publication-20261003/.codegraph/delivery/oct4/primary-preservation-20261004T132155Z.json",
+      "sha256": "106a9dfac6802d5d3b7ff74a99ea2ef13025162ec5118de9f5f3e44e1d7583f7"
+    }
+  },
+  "publication_oct4": {
+    "status": "PENDING",
+    "family_commit": null,
+    "publication_commit": null,
+    "pushed_head": null,
+    "remote_ref_equality": null,
+    "ci_sha": null,
+    "required_ci_results": null,
+    "all_required_ci_green": null,
+    "note": "Oct3 publication/runtime ledger is historical and cannot satisfy Oct4 gates"
+  },
+  "documentation_actions": {
+    "new_documents": [
+      "H:\\hermes-worktrees\\selective-publication-20261003\\docs\\windows\\selective-security-20261003\\HANDOFF_20261004.md",
+      "H:\\hermes-worktrees\\selective-publication-20261003\\docs\\windows\\selective-security-20261003\\delivery-ledger-20261004.json",
+      "H:\\hermes-worktrees\\selective-publication-20261003\\docs\\windows\\selective-security-20261003\\S05\\implementation-plan-20261004.md"
+    ],
+    "git_commands": [],
+    "source_edits": [],
+    "configuration_edits": [],
+    "runtime_actions": [],
+    "test_spawns": [],
+    "installs": [],
+    "network_requests": []
+  },
+  "parent_finalization_fields": [
+    "Five native scoped independent-review acceptance and durable ALL2107 verified current Graph binding receipt path",
+    "Five native checks and observer WinError31/exited-parent QueryImage race disposition; allowed custom-binary warning is not failure cause",
+    "exact scoped family/publication commit and remote equality",
+    "Desktop two stop epochs plus pack/source/exe stamp and visible/responding owned backend proof",
+    "Go reviewed ownership/restart/health receipt",
+    "primary preservation comparison",
+    "required CI outcomes on exact pushed SHA"
+  ],
+  "evidence_bindings": [
+    {
+      "path": "H:\\hermes-worktrees\\selective-publication-20261003\\docs\\windows\\selective-security-20261003\\intake.json",
+      "sha256": "e148373ffe418b76050134d6e50d35ba0fbbb8f5f64092d5b97a5f967a80365b"
+    },
+    {
+      "path": "H:\\hermes-worktrees\\selective-publication-20261003\\docs\\windows\\selective-security-20261003\\HANDOFF_20261003.md",
+      "sha256": "3354961f31b577e7230da07d42dcb36ec3eb2cc73270a04a70718b5411686f56"
+    },
+    {
+      "path": "H:\\hermes-worktrees\\selective-publication-20261003\\docs\\windows\\selective-security-20261003\\delivery-ledger.json",
+      "sha256": "6755453680ba9bae73ea91667a5435b65ede82922e57e0d9683290443ee78a87"
+    }
+  ],
+  "handoff": {
+    "path": "H:/hermes-worktrees/selective-publication-20261003/docs/windows/selective-security-20261003/HANDOFF_20261004.md",
+    "sha256": "b5a26957f4236c2badecacf13870b591889866cb5c422fffd466306962872acb"
+  },
+  "revision_at_jst": "2026-10-04T21:23:47.816638+09:00",
+  "freeze": {
+    "source": "S06_CURRENT_FE1_TEST86CE_PRODUCT_B168",
+    "acceptance": "HOLD",
+    "runtime": "IN_PROGRESS"
+  },
+  "captured_at_utc": "2026-10-04T13:26:07.658976+00:00"
+}
