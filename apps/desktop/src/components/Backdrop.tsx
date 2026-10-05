@@ -1,3 +1,8 @@
+import {
+  safeBackgroundImageFit,
+  safeBackgroundImagePosition,
+  safeBackgroundOverlay
+} from '@hermes/shared/skin-css'
 import { useStore } from '@nanostores/react'
 import { Leva, useControls } from 'leva'
 import { type CSSProperties, useEffect, useMemo, useState } from 'react'
@@ -36,6 +41,9 @@ export function Backdrop() {
   // Use only the skin-provided wallpaper. A hardcoded local fallback causes
   // palette/wallpaper mismatch (e.g. light palette over portrait background).
   const wallpaper = (theme.backgroundImage ?? '').trim()
+  // Skin YAML is user-imported: allow-list the overlay before it reaches an
+  // inline style so a skin cannot smuggle url() past the media path check.
+  const wallpaperOverlay = safeBackgroundOverlay(theme.backgroundOverlay)
 
   useEffect(() => {
     if (!import.meta.env.DEV) {
@@ -156,8 +164,8 @@ export function Backdrop() {
     { collapsed: true }
   )
 
-  const skinFit = theme.backgroundImageFit || 'cover'
-  const skinPosition = theme.backgroundImagePosition || 'center'
+  const skinFit = safeBackgroundImageFit(theme.backgroundImageFit)
+  const skinPosition = safeBackgroundImagePosition(theme.backgroundImagePosition)
   // When a wallpaper is active, the chat surface must be opaque so text stays
   // readable over the image. We signal this via a CSS class on <html>.
   const hasWallpaper = !!skinWallpaperUrl
@@ -168,7 +176,7 @@ export function Backdrop() {
     return () => document.documentElement.classList.remove('has-skin-wallpaper')
   }, [hasWallpaper])
 
-  const skinOverlay = theme.backgroundOverlay || ''
+  const skinOverlay = wallpaperOverlay
 
   const skinLayer = useMemo(() => {
     if (!skinWallpaperUrl) {

@@ -203,6 +203,8 @@ export default defineConfig(({ command }) => ({
       '@': path.resolve(__dirname, './src'),
       '@hermes/plugin-sdk': path.resolve(__dirname, './src/sdk/index.ts'),
       '@hermes/shared/billing': path.resolve(__dirname, '../shared/src/billing-types.ts'),
+      '@hermes/shared/translucency': path.resolve(__dirname, '../shared/src/translucency.ts'),
+      '@hermes/shared/skin-css': path.resolve(__dirname, '../shared/src/skin-css.ts'),
       '@hermes/shared': path.resolve(__dirname, '../shared/src'),
       // The tour tool's preview surface injects driver.js's prebuilt IIFE into
       // the pane's guest page as raw source; the package's exports map doesn't
