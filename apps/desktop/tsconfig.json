@@ -19,6 +19,7 @@
       "@hermes/plugin-sdk": ["./src/sdk/index.ts"],
       "@hermes/shared/billing": ["../shared/src/billing-types.ts"],
       "@hermes/shared/translucency": ["../shared/src/translucency.ts"],
+      "@hermes/shared/skin-css": ["../shared/src/skin-css.ts"],
       "@hermes/shared": ["../shared/src/index.ts"]
     }
   },
