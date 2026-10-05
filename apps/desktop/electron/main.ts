@@ -4532,7 +4532,11 @@ function writeDefaultProjectDir(dir) {
 
 function createPythonBackend(root, label, backendArgs, options: any = {}) {
   const selection = pythonBackendCommand(root, {
-    findPythonForRoot, venvRootForPython, getVenvPython, fileExists, isWindows: IS_WINDOWS
+    findPythonForRoot,
+    venvRootForPython,
+    getVenvPython,
+    fileExists,
+    isWindows: IS_WINDOWS
   })
 
   if (!selection) {
@@ -4544,7 +4548,7 @@ function createPythonBackend(root, label, backendArgs, options: any = {}) {
   // `venv`, and mixing the two crashes the backend on its first native
   // import (see venvRootForPython). Fall back to root/venv only for a
   // system python, where the historical layout is the best guess.
-  const {command, venvRoot} = selection
+  const { command, venvRoot } = selection
 
   return {
     kind: 'python',
@@ -16676,13 +16680,20 @@ registerFsIpc({
 // Git-driven features (worktrees, review pane, repo scan) — see git-ipc.ts.
 function resolveGitPolicyRuntime() {
   const ownerRoot = resolveUpdateRoot()
+
   if (!isHermesSourceRoot(ownerRoot) || !fileExists(path.join(ownerRoot, 'hermes_cli', '_subprocess_compat.py'))) {
     return null
   }
+
   const selection = pythonBackendCommand(ownerRoot, {
-    findPythonForRoot, venvRootForPython, getVenvPython, fileExists, isWindows: IS_WINDOWS
+    findPythonForRoot,
+    venvRootForPython,
+    getVenvPython,
+    fileExists,
+    isWindows: IS_WINDOWS
   })
-  return selection ? {command: selection.command, argsPrefix: [], ownerRoot} : null
+
+  return selection ? { command: selection.command, argsPrefix: [], ownerRoot } : null
 }
 
 registerGitIpc({ resolveGitBinary, resolveGhBinary, resolveGitPolicyRuntime })

@@ -61,6 +61,7 @@ async function listWorktrees(repoPath, gitBin) {
     resolved = resolveRequestedPathForIpc(repoPath, { purpose: 'Worktree list' })
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return []
   }
 
@@ -76,6 +77,7 @@ async function listWorktrees(repoPath, gitBin) {
     }))
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return []
   }
 }
@@ -112,6 +114,7 @@ async function gitLine(gitBin, args, cwd) {
     return (await runGit(gitBin, args, cwd)).trim()
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return ''
   }
 }
@@ -126,6 +129,7 @@ async function gitOk(gitBin, args, cwd) {
     return true
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return false
   }
 }
@@ -377,6 +381,7 @@ async function listBranches(repoPath, gitBin) {
     resolved = resolveRequestedPathForIpc(repoPath, { purpose: 'Branch list' })
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return []
   }
 
@@ -397,10 +402,16 @@ async function listBranches(repoPath, gitBin) {
     // Both requests must finish before a read falls back or rejects. Preserve
     // typed policy refusal even when the other ref listing failed first.
     for (const result of results) {
-      if (result.status === 'rejected') {rethrowGitPolicyError(result.reason)}
+      if (result.status === 'rejected') {
+        rethrowGitPolicyError(result.reason)
+      }
     }
+
     const [localOut, remoteOut] = results.map(result => {
-      if (result.status === 'rejected') {throw result.reason}
+      if (result.status === 'rejected') {
+        throw result.reason
+      }
+
       return result.value
     })
 
@@ -457,6 +468,7 @@ async function listBranches(repoPath, gitBin) {
     ]
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return []
   }
 }
@@ -505,6 +517,7 @@ async function listBaseBranches(repoPath, gitBin) {
     resolved = resolveRequestedPathForIpc(repoPath, { purpose: 'Base branch list' })
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return []
   }
 
@@ -549,6 +562,7 @@ async function listBaseBranches(repoPath, gitBin) {
       })
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return []
   }
 }

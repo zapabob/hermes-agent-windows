@@ -383,7 +383,10 @@ test('gitPull: fast-forwards the local branch', async () => {
 
     await gitPull(cloneDir, false, gitBinary)
 
-    assert.equal(execFileSync(gitBinary, ['-C', cloneDir, 'rev-parse', 'HEAD']).toString().trim(), remoteHead(remoteDir))
+    assert.equal(
+      execFileSync(gitBinary, ['-C', cloneDir, 'rev-parse', 'HEAD']).toString().trim(),
+      remoteHead(remoteDir)
+    )
   } finally {
     fs.rmSync(cloneDir, { recursive: true, force: true })
     fs.rmSync(remoteDir, { recursive: true, force: true })
