@@ -10,13 +10,17 @@ from __future__ import annotations
 import math
 import os
 import sys
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from plugins.nimble_scorer import core  # noqa: E402
+
+
+def test_default_model_path_is_not_machine_specific():
+    assert not PureWindowsPath(core.DEFAULT_MODEL_PATH).is_absolute()
 
 
 # ---------------------------------------------------------------------------

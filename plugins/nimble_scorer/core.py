@@ -50,11 +50,8 @@ SYSTEM_PROMPT = (
 )
 
 DEFAULT_BASE_URL = "http://127.0.0.1:8080"
-DEFAULT_MODEL_PATH = (
-    "C:/Users/downl/Desktop/SO8T/gguf_models/Hikari07jp/"
-    "Ternary-Bonsai-2-27B-Abliterated-GGUF/"
-    "Ternary-Bonsai-2-27B-Abliterated-PQ2_0.gguf"
-)
+# llama-server owns model loading; keep a portable display default for callers.
+DEFAULT_MODEL_PATH = "model.gguf"
 DEFAULT_MAX_INPUT_TOKENS = 8192
 # Enough top-k rows to contain every candidate for a wide enum, cheap enough to
 # stay interactive: the full 248k-token vocabulary was also measured at ~2.3s.

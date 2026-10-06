@@ -8619,12 +8619,47 @@ def _preserve_provider_with_base_url(prov: Optional[str]) -> bool:
         }
 
 
+def _validate_expected_auxiliary_route(
+    expected_route: Optional[tuple[str, str]],
+) -> None:
+    """Reject malformed route pins before runtime or credential resolution."""
+    if expected_route is None:
+        return
+    if (
+        not isinstance(expected_route, tuple)
+        or len(expected_route) != 2
+        or not all(isinstance(part, str) and part.strip() for part in expected_route)
+    ):
+        raise ValueError("expected_route must be a (provider, model) tuple of non-empty strings")
+
+
+def _validate_auxiliary_routing_policy(
+    allow_fallback: bool,
+    expected_route: Optional[tuple[str, str]],
+) -> None:
+    """Validate host routing controls before any resolution side effects."""
+    if type(allow_fallback) is not bool:
+        raise ValueError("allow_fallback must be a boolean")
+    _validate_expected_auxiliary_route(expected_route)
+
+
+def _validate_strict_extra_body_model(
+    extra_body: Dict[str, Any],
+    selected_model: Optional[str],
+) -> None:
+    """Prevent extra_body from replacing the model on a pinned route."""
+    if "model" in extra_body and extra_body["model"] != selected_model:
+        raise ValueError("extra_body.model cannot override the selected routing model")
+
+
 def _resolve_task_provider_model(
     task: str = None,
     provider: str = None,
     model: str = None,
     base_url: Optional[str] = None,
     api_key: Optional[str] = None,
+    *,
+    expected_route: Optional[tuple[str, str]] = None,
 ) -> Tuple[str, Optional[str], Optional[str], Optional[str], Optional[str]]:
     """Determine provider + model for a call.
 
@@ -8639,6 +8674,26 @@ def _resolve_task_provider_model(
     auth, transport, and request-shaping behavior still apply. api_mode is one
     of "chat_completions", "codex_responses", or None (auto-detect).
     """
+    _validate_expected_auxiliary_route(expected_route)
+
+    def _result(
+        selected_provider: str,
+        selected_model: Optional[str],
+        selected_base_url: Optional[str],
+        selected_api_key: Optional[str],
+        selected_api_mode: Optional[str],
+    ) -> Tuple[str, Optional[str], Optional[str], Optional[str], Optional[str]]:
+        result = (
+            selected_provider,
+            selected_model,
+            selected_base_url,
+            selected_api_key,
+            selected_api_mode,
+        )
+        if expected_route is not None and result[:2] != expected_route:
+            raise RuntimeError("Selected auxiliary route changed after it was pinned")
+        return result
+
     cfg_provider = None
     cfg_model = None
     cfg_base_url = None
@@ -8740,17 +8795,17 @@ def _resolve_task_provider_model(
             api_key = cfg_api_key
 
     if base_url and _preserve_provider_with_base_url(provider):
-        return provider, resolved_model, base_url, api_key, resolved_api_mode
+        return _result(provider, resolved_model, base_url, api_key, resolved_api_mode)
     if base_url:
-        return "custom", resolved_model, base_url, api_key, resolved_api_mode
+        return _result("custom", resolved_model, base_url, api_key, resolved_api_mode)
     if provider:
-        return provider, resolved_model, base_url, api_key, resolved_api_mode
+        return _result(provider, resolved_model, base_url, api_key, resolved_api_mode)
 
     if task:
         # Config.yaml is the primary source for per-task overrides.
         if cfg_base_url and cfg_api_key:
             # Both base_url and api_key explicitly set → custom endpoint.
-            return (
+            return _result(
                 "custom",
                 resolved_model,
                 cfg_base_url,
@@ -8761,9 +8816,9 @@ def _resolve_task_provider_model(
             # base_url set without api_key but with a known provider — use
             # the provider so it can resolve credentials from env vars
             # (e.g. OPENROUTER_API_KEY) instead of locking into "custom".
-            return cfg_provider, resolved_model, cfg_base_url, None, resolved_api_mode
+            return _result(cfg_provider, resolved_model, cfg_base_url, None, resolved_api_mode)
         if cfg_provider and cfg_provider != "auto":
-            return (
+            return _result(
                 cfg_provider,
                 resolved_model,
                 cfg_base_url,
@@ -8771,9 +8826,9 @@ def _resolve_task_provider_model(
                 resolved_api_mode,
             )
 
-        return "auto", resolved_model, None, None, resolved_api_mode
+        return _result("auto", resolved_model, None, None, resolved_api_mode)
 
-    return "auto", resolved_model, None, None, resolved_api_mode
+    return _result("auto", resolved_model, None, None, resolved_api_mode)
 
 
 _DEFAULT_AUX_TIMEOUT = 30.0
@@ -9921,8 +9976,11 @@ def call_llm(
     stream: bool = False,
     stream_options: dict = None,
     route_info: Optional[Dict[str, str]] = None,
+    allow_fallback: bool = True,
+    expected_route: Optional[tuple[str, str]] = None,
 ) -> Any:
     """Run an auxiliary LLM request, applying the configured task limit."""
+    _validate_auxiliary_routing_policy(allow_fallback, expected_route)
     semaphore = _acquire_sync_aux_semaphore(task)
     if semaphore is not None:
         semaphore.acquire()
@@ -9946,6 +10004,8 @@ def call_llm(
             stream=stream,
             stream_options=stream_options,
             route_info=route_info,
+            **({"allow_fallback": False} if not allow_fallback else {}),
+            **({"expected_route": expected_route} if expected_route is not None else {}),
         )
         if stream and semaphore is not None:
             stream_semaphore = semaphore
@@ -9992,6 +10052,8 @@ def _call_llm_impl(
     stream: bool = False,
     stream_options: dict = None,
     route_info: Optional[Dict[str, str]] = None,
+    allow_fallback: bool = True,
+    expected_route: Optional[tuple[str, str]] = None,
 ) -> Any:
     """Centralized synchronous LLM call.
 
@@ -10031,17 +10093,27 @@ def _call_llm_impl(
     Raises:
         RuntimeError: If no provider is configured.
     """
+    _validate_auxiliary_routing_policy(allow_fallback, expected_route)
     # Capture one immutable runtime snapshot for keying, resolution, retries,
     # and fallbacks. Reading ambient state independently in each phase lets a
     # concurrent /model switch produce a key for one runtime and a client for
     # another.
     main_runtime = _normalize_main_runtime(main_runtime)
-    resolved_provider, resolved_model, resolved_base_url, resolved_api_key, resolved_api_mode = _resolve_task_provider_model(
-        task, provider, model, base_url, api_key)
+    route_args = (task, provider, model, base_url, api_key)
+    if expected_route is None:
+        resolved_provider, resolved_model, resolved_base_url, resolved_api_key, resolved_api_mode = _resolve_task_provider_model(
+            *route_args
+        )
+    else:
+        resolved_provider, resolved_model, resolved_base_url, resolved_api_key, resolved_api_mode = _resolve_task_provider_model(
+            *route_args, expected_route=expected_route
+        )
     if api_mode:
         resolved_api_mode = api_mode
     effective_extra_body = _get_task_extra_body(task)
     effective_extra_body.update(extra_body or {})
+    if not allow_fallback:
+        _validate_strict_extra_body_model(effective_extra_body, resolved_model)
     effective_provider = resolved_provider
 
     if task == "vision":
@@ -10054,6 +10126,11 @@ def _call_llm_impl(
             main_runtime=main_runtime,
         )
         if client is None and resolved_provider != "auto" and not resolved_base_url:
+            if not allow_fallback:
+                raise RuntimeError(
+                    f"Strict auxiliary route unavailable for task={task} "
+                    f"provider={resolved_provider}. Fallback is disabled."
+                )
             logger.warning(
                 "Vision provider %s unavailable, falling back to auto vision backends",
                 resolved_provider,
@@ -10084,6 +10161,11 @@ def _call_llm_impl(
             client, resolved_provider,
         )
         if client is None:
+            if not allow_fallback:
+                raise RuntimeError(
+                    f"Strict auxiliary route unavailable for task={task} "
+                    f"provider={resolved_provider}. Fallback is disabled."
+                )
             # When the user explicitly chose a non-OpenRouter provider but no
             # credentials were found, honor the task fallback_chain before
             # raising.  Missing raw env keys are recoverable for auxiliary
@@ -10651,7 +10733,7 @@ def _call_llm_impl(
             or _is_model_incompatible_error(first_err)
             or _is_invalid_aux_response_error(first_err)
         )
-        if should_fallback and (is_auto or is_capacity_error):
+        if allow_fallback and should_fallback and (is_auto or is_capacity_error):
             if _is_auth_error(first_err):
                 reason = "auth error"
             elif _is_payment_error(first_err):
@@ -10848,8 +10930,11 @@ async def async_call_llm(
     extra_body: dict = None,
     reasoning_config: Optional[dict] = None,
     route_info: Optional[Dict[str, str]] = None,
+    allow_fallback: bool = True,
+    expected_route: Optional[tuple[str, str]] = None,
 ) -> Any:
     """Run an asynchronous auxiliary LLM request under the configured limit."""
+    _validate_auxiliary_routing_policy(allow_fallback, expected_route)
     semaphore = _acquire_async_aux_semaphore(task)
     if semaphore is not None:
         await semaphore.acquire()
@@ -10869,6 +10954,8 @@ async def async_call_llm(
             extra_body=extra_body,
             reasoning_config=reasoning_config,
             route_info=route_info,
+            **({"allow_fallback": False} if not allow_fallback else {}),
+            **({"expected_route": expected_route} if expected_route is not None else {}),
         )
     finally:
         if semaphore is not None:
@@ -10891,18 +10978,30 @@ async def _async_call_llm_impl(
     extra_body: dict = None,
     reasoning_config: Optional[dict] = None,
     route_info: Optional[Dict[str, str]] = None,
+    allow_fallback: bool = True,
+    expected_route: Optional[tuple[str, str]] = None,
 ) -> Any:
     """Centralized asynchronous LLM call.
 
     Same as call_llm() but async. See call_llm() for full documentation.
     """
+    _validate_auxiliary_routing_policy(allow_fallback, expected_route)
     # Keep every async phase on the same runtime identity, even if another
     # session switches models while this task is awaiting network I/O.
     main_runtime = _normalize_main_runtime(main_runtime)
-    resolved_provider, resolved_model, resolved_base_url, resolved_api_key, resolved_api_mode = _resolve_task_provider_model(
-        task, provider, model, base_url, api_key)
+    route_args = (task, provider, model, base_url, api_key)
+    if expected_route is None:
+        resolved_provider, resolved_model, resolved_base_url, resolved_api_key, resolved_api_mode = _resolve_task_provider_model(
+            *route_args
+        )
+    else:
+        resolved_provider, resolved_model, resolved_base_url, resolved_api_key, resolved_api_mode = _resolve_task_provider_model(
+            *route_args, expected_route=expected_route
+        )
     effective_extra_body = _get_task_extra_body(task)
     effective_extra_body.update(extra_body or {})
+    if not allow_fallback:
+        _validate_strict_extra_body_model(effective_extra_body, resolved_model)
     effective_provider = resolved_provider
 
     if task == "vision":
@@ -10915,6 +11014,11 @@ async def _async_call_llm_impl(
             main_runtime=main_runtime,
         )
         if client is None and resolved_provider != "auto" and not resolved_base_url:
+            if not allow_fallback:
+                raise RuntimeError(
+                    f"Strict auxiliary route unavailable for task={task} "
+                    f"provider={resolved_provider}. Fallback is disabled."
+                )
             logger.warning(
                 "Vision provider %s unavailable, falling back to auto vision backends",
                 resolved_provider,
@@ -10946,6 +11050,11 @@ async def _async_call_llm_impl(
             client, resolved_provider,
         )
         if client is None:
+            if not allow_fallback:
+                raise RuntimeError(
+                    f"Strict auxiliary route unavailable for task={task} "
+                    f"provider={resolved_provider}. Fallback is disabled."
+                )
             _explicit = (resolved_provider or "").strip().lower()
             if _explicit and _explicit not in {"auto", "openrouter", "custom"}:
                 fb_client, fb_model, fb_label = _try_configured_fallback_for_unavailable_client(
@@ -11384,7 +11493,7 @@ async def _async_call_llm_impl(
             or _is_model_incompatible_error(first_err)
             or _is_invalid_aux_response_error(first_err)
         )
-        if should_fallback and (is_auto or is_capacity_error):
+        if allow_fallback and should_fallback and (is_auto or is_capacity_error):
             if _is_auth_error(first_err):
                 reason = "auth error"
             elif _is_payment_error(first_err):
