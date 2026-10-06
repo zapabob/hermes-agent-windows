@@ -1,0 +1,1170 @@
+from __future__ import annotations
+
+# Adapted from zapabob/hermes-gpt (MIT); OAuth security behavior retained.
+
+import base64
+import hashlib
+import hmac
+import json
+import os
+import re
+import secrets
+import time
+import urllib.parse
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+from starlette.requests import Request
+from starlette.responses import JSONResponse, RedirectResponse
+from starlette.types import ASGIApp, Receive, Scope, Send
+
+AUTH_CODE_TTL_SECONDS = 300
+ACCESS_TOKEN_TTL_SECONDS = 3600
+REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60
+MAX_AUTH_CODES = 1024
+MAX_ACCESS_TOKENS = 4096
+MAX_REFRESH_TOKENS = 4096
+MAX_TOKEN_REQUEST_BYTES = 16384
+AUTH_TOKEN_ENV = "HERMES_GPT_BEARER_TOKEN"
+OAUTH_ENABLE_ENV = "HERMES_GPT_OAUTH_ENABLE"
+OAUTH_ISSUER_ENV = "HERMES_GPT_OAUTH_ISSUER"
+OAUTH_CLIENT_ID_ENV = "HERMES_GPT_OAUTH_CLIENT_ID"
+OAUTH_CLIENT_SECRET_ENV = "HERMES_GPT_OAUTH_CLIENT_SECRET"
+OAUTH_REDIRECT_URI_ENV = "HERMES_GPT_OAUTH_REDIRECT_URI"
+OAUTH_SCOPE_ENV = "HERMES_GPT_OAUTH_SCOPE"
+GEMINI_ENABLE_ENV = "HERMES_GPT_OAUTH_GEMINI_ENABLE"
+GEMINI_CLIENT_ID_ENV = "HERMES_GPT_OAUTH_GEMINI_CLIENT_ID"
+GEMINI_CLIENT_SECRET_ENV = "HERMES_GPT_OAUTH_GEMINI_CLIENT_SECRET"
+GEMINI_REDIRECT_URI_ENV = "HERMES_GPT_OAUTH_GEMINI_REDIRECT_URI"
+_PKCE_VALUE = re.compile(r"^[A-Za-z0-9._~-]{43,128}$")
+_CLIENT_SECRET = re.compile(r"^[A-Za-z0-9._~-]{43,128}$")
+_BASE64URL = re.compile(r"^[A-Za-z0-9_-]+$")
+_NONCE = re.compile(r"^[A-Za-z0-9_-]{32,128}$")
+
+# Optional persistence hook (v0.7 S5). server.py installs it so every token
+# issuance/refresh persists through token_store without oauth_auth depending
+# on a concrete hermes_root. Never raises; token material never logged.
+_persist_hook: Any | None = None
+# Optional revocation hook. server.py installs it so a durable revocation
+# (hermes_oauth_revoke) also drops the live process's in-memory token caches;
+# otherwise the next issuance would re-persist pre-revocation tokens through
+# the persist hook and resurrect them in the durable store.
+_revocation_hook: Any | None = None
+
+
+def set_revocation_hook(hook: Any | None) -> None:
+    """Install (or clear) the durable-revocation notification hook."""
+    global _revocation_hook
+    _revocation_hook = hook
+
+
+def run_revocation_hook() -> None:
+    """Notify installed hooks that the durable token store was revoked."""
+    if _revocation_hook is None:
+        return
+    try:
+        _revocation_hook()
+    except Exception:
+        # Revocation notification must never break the revoke path.
+        pass
+
+
+def set_persist_hook(hook: Any | None) -> None:
+    """Install (or clear) the durable-token persistence hook.
+
+    The hook receives ``(state, kind)`` where kind is one of
+    ``authorization_code`` | ``refresh`` and returns a bounded summary.
+    """
+    global _persist_hook
+    _persist_hook = hook
+
+
+def _run_persist_hook(state: "OAuthState", kind: str) -> None:
+    if _persist_hook is None:
+        return
+    try:
+        _persist_hook(state, kind)
+    except Exception:
+        # Persistence must never break the token exchange path.
+        pass
+
+
+def _run_persist_hook_strict(state: "OAuthState", kind: str) -> None:
+    """Persist or fail the exchange.
+
+    Durable persistence is part of the exchange contract in server mode:
+    returning credentials that were never persisted would hand the client
+    tokens that die on the next validation. When no store is bound the call
+    is a no-op (pure in-memory mode).
+    """
+    if _persist_hook is None:
+        return
+    _persist_hook(state, kind)
+
+
+def _base64url_encode(value: bytes) -> str:
+    return base64.urlsafe_b64encode(value).rstrip(b"=").decode("ascii")
+
+
+def _base64url_decode(value: str) -> bytes:
+    if not value or not _BASE64URL.fullmatch(value):
+        raise ValueError("invalid base64url value")
+    padding = "=" * (-len(value) % 4)
+    decoded = base64.b64decode(value + padding, altchars=b"-_", validate=True)
+    if _base64url_encode(decoded) != value:
+        raise ValueError("non-canonical base64url value")
+    return decoded
+
+
+ACCESS_TOKEN_PREFIX = "hg.at.v1."
+_ACCESS_TOKEN_MAC_CONTEXT = b"hermes-gpt.oauth.access.v1\0"
+
+
+def _durable_record(kind: str, value: str, item: dict[str, Any]) -> dict[str, Any]:
+    """Token item carrying the internal markers the store needs to file it."""
+    record = dict(item)
+    record["_kind"] = kind
+    record["_token_value"] = value
+    return record
+
+
+class OAuthError(RuntimeError):
+    def __init__(self, error: str, description: str, *, status_code: int = 400) -> None:
+        super().__init__(description)
+        self.error = error
+        self.description = description
+        self.status_code = status_code
+
+
+@dataclass(frozen=True)
+class OAuthClient:
+    """One registered confidential OAuth client.
+
+    Hermes GPT has no dynamic client registration; every client is an
+    operator-provisioned entry with its own secret and its own exact-match
+    redirect-URI allowlist. Additional clients (for example the opt-in Gemini
+    Spark client profile) stay isolated from the primary client: a client can
+    only redirect to, or authenticate with, its own credentials.
+    """
+
+    client_id: str
+    client_secret: str
+    redirect_uris: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if not self.client_id.strip():
+            raise ValueError("OAuth client_id is required.")
+        if not _CLIENT_SECRET.fullmatch(self.client_secret):
+            raise ValueError("OAuth client_secret must contain 43 to 128 URL-safe characters.")
+        if not self.redirect_uris:
+            raise ValueError("At least one OAuth redirect URI is required.")
+        for redirect_uri in self.redirect_uris:
+            redirect = urllib.parse.urlparse(redirect_uri)
+            if (
+                redirect.scheme != "https"
+                or not redirect.netloc
+                or not redirect.hostname
+                or redirect.fragment
+                or redirect.username is not None
+                or redirect.password is not None
+            ):
+                raise ValueError("OAuth redirect URIs must be absolute HTTPS URLs without userinfo or fragments.")
+        object.__setattr__(self, "client_id", self.client_id.strip())
+        object.__setattr__(self, "redirect_uris", tuple(dict.fromkeys(self.redirect_uris)))
+
+
+@dataclass(frozen=True)
+class OAuthConfig:
+    issuer: str
+    client_id: str
+    client_secret: str
+    redirect_uris: tuple[str, ...]
+    scope: str = "hermes"
+    additional_clients: tuple[OAuthClient, ...] = ()
+    # Derived, primary-client-first registry. Additive clients never replace
+    # or weaken the primary client's credentials or redirect allowlist.
+    clients: tuple[OAuthClient, ...] = field(init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        issuer = self.issuer.rstrip("/")
+        parsed = urllib.parse.urlparse(issuer)
+        if parsed.scheme != "https" and parsed.hostname not in {"localhost", "127.0.0.1", "::1"}:
+            raise ValueError("OAuth issuer must use HTTPS except on loopback.")
+        if (
+            not parsed.netloc
+            or parsed.path not in {"", "/"}
+            or parsed.query
+            or parsed.fragment
+            or parsed.username is not None
+            or parsed.password is not None
+        ):
+            raise ValueError("OAuth issuer must be an origin URL without path, userinfo, query, or fragment.")
+        primary = OAuthClient(
+            client_id=self.client_id,
+            client_secret=self.client_secret,
+            redirect_uris=tuple(self.redirect_uris),
+        )
+        clients = (primary,) + tuple(self.additional_clients)
+        seen: set[str] = set()
+        for client in clients:
+            if client.client_id in seen:
+                raise ValueError("OAuth client_id values must be unique across registered clients.")
+            seen.add(client.client_id)
+        if not self.scope.strip() or len(self.scope.split()) != 1:
+            raise ValueError("OAuth scope must be one non-empty scope token.")
+        object.__setattr__(self, "issuer", issuer)
+        object.__setattr__(self, "client_id", primary.client_id)
+        object.__setattr__(self, "client_secret", primary.client_secret)
+        object.__setattr__(self, "redirect_uris", primary.redirect_uris)
+        object.__setattr__(self, "clients", clients)
+        object.__setattr__(self, "scope", self.scope.strip())
+
+    @property
+    def resource(self) -> str:
+        return f"{self.issuer}/mcp"
+
+    @property
+    def supported_scopes(self) -> tuple[str, ...]:
+        # ChatGPT currently adds `openid` even when its OIDC toggle is disabled.
+        # It is accepted as a compatibility scope; this server does not advertise
+        # OpenID Provider metadata or issue ID tokens.
+        return tuple(dict.fromkeys((self.scope, "openid", "offline_access")))
+
+    def client_for_id(self, client_id: str) -> OAuthClient | None:
+        """Return the registered client with this exact id, or ``None``."""
+        for client in self.clients:
+            if hmac.compare_digest(client.client_id, client_id):
+                return client
+        return None
+
+    def client_registered(self, client_id: Any) -> bool:
+        """True when ``client_id`` identifies a registered client.
+
+        Tokens that predate additional clients carry no ``client_id``; they are
+        treated as the primary client so existing deployments keep validating.
+        """
+        if not isinstance(client_id, str) or not client_id:
+            client_id = self.clients[0].client_id
+        return self.client_for_id(client_id) is not None
+
+
+class OAuthState:
+    def __init__(
+        self,
+        config: OAuthConfig,
+        *,
+        max_auth_codes: int = MAX_AUTH_CODES,
+        max_access_tokens: int = MAX_ACCESS_TOKENS,
+        max_refresh_tokens: int = MAX_REFRESH_TOKENS,
+    ) -> None:
+        self.config = config
+        self.max_auth_codes = max_auth_codes
+        self.max_access_tokens = max_access_tokens
+        self.max_refresh_tokens = max_refresh_tokens
+        self._authorization_code_key = secrets.token_bytes(32)
+        self.used_auth_codes: dict[str, dict[str, Any]] = {}
+        self.access_tokens: dict[str, dict[str, Any]] = {}
+        self.refresh_tokens: dict[str, dict[str, Any]] = {}
+        # Bound by restore_tokens()/persist_tokens() in server mode. When set,
+        # the durable store is authoritative for bearer validity so revocation
+        # cannot be bypassed by the clustered signed-token fallback.
+        self._hermes_root: Path | None = None
+        # Durable revocation epoch this process's in-memory caches were built
+        # under. A peer that misses a revocation event detects the mismatch
+        # from this value and refuses to re-persist stale tokens.
+        self._epoch: int = 0
+        # Refresh tokens consumed/rotated since the last durable persist.
+        # Because persistence merges rather than replaces, removals must be
+        # carried explicitly or a rotated token would remain durable and
+        # become replayable after a restart.
+        self._retired_refresh_tokens: set[str] = set()
+
+    def cleanup(self) -> None:
+        now = time.time()
+        for store in (self.used_auth_codes, self.access_tokens, self.refresh_tokens):
+            for credential, item in list(store.items()):
+                if item.get("expires_at", 0) <= now:
+                    store.pop(credential, None)
+
+    def normalize_scope(self, scope: str) -> str:
+        requested = list(dict.fromkeys(scope.split()))
+        if (
+            not requested
+            or self.config.scope not in requested
+            or not set(requested).issubset(self.config.supported_scopes)
+        ):
+            raise OAuthError("invalid_scope", "Requested scope is not supported.")
+        return " ".join(requested)
+
+    def _require_capacity(self, store: dict[str, Any], maximum: int, credential_type: str) -> None:
+        self.cleanup()
+        if len(store) >= maximum:
+            raise OAuthError(
+                "temporarily_unavailable",
+                f"{credential_type} capacity is temporarily unavailable.",
+                status_code=503,
+            )
+
+    def issue_authorization_code(
+        self,
+        *,
+        client_id: str,
+        redirect_uri: str,
+        scope: str,
+        resource: str,
+        code_challenge: str,
+    ) -> str:
+        from . import token_store as _ts
+
+        issuance_epoch = 0
+        if self._hermes_root is not None:
+            try:
+                issuance_epoch = _ts.read_revocation_epoch(self._hermes_root)
+            except Exception:
+                issuance_epoch = 0
+        payload = {
+            "v": 2,
+            "nonce": secrets.token_urlsafe(24),
+            "client_id": client_id,
+            "redirect_uri": redirect_uri,
+            "scope": scope,
+            "resource": resource,
+            "code_challenge": code_challenge,
+            "expires_at": int(time.time()) + AUTH_CODE_TTL_SECONDS,
+            "epoch": issuance_epoch,
+        }
+        encoded = _base64url_encode(json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8"))
+        signature = hmac.new(self._authorization_code_key, encoded.encode("ascii"), hashlib.sha256).digest()
+        return f"{encoded}.{_base64url_encode(signature)}"
+
+    def _decode_authorization_code(self, code: str) -> dict[str, Any]:
+        if len(code) > 4096:
+            raise OAuthError("invalid_grant", "Invalid, expired, or already used authorization code.")
+        encoded, separator, encoded_signature = code.partition(".")
+        if not separator:
+            raise OAuthError("invalid_grant", "Invalid, expired, or already used authorization code.")
+        try:
+            supplied_signature = _base64url_decode(encoded_signature)
+            expected_signature = hmac.new(
+                self._authorization_code_key,
+                encoded.encode("ascii"),
+                hashlib.sha256,
+            ).digest()
+            if not hmac.compare_digest(supplied_signature, expected_signature):
+                raise ValueError("signature mismatch")
+            payload = json.loads(_base64url_decode(encoded))
+        except (UnicodeError, ValueError, TypeError, json.JSONDecodeError) as exc:
+            raise OAuthError("invalid_grant", "Invalid, expired, or already used authorization code.") from exc
+        required_types = {
+            "v": int,
+            "nonce": str,
+            "client_id": str,
+            "redirect_uri": str,
+            "scope": str,
+            "resource": str,
+            "code_challenge": str,
+            "expires_at": int,
+        }
+        if not isinstance(payload, dict) or any(not isinstance(payload.get(key), kind) for key, kind in required_types.items()):
+            raise OAuthError("invalid_grant", "Invalid, expired, or already used authorization code.")
+        if payload["v"] not in (1, 2) or not _NONCE.fullmatch(payload["nonce"]):
+            raise OAuthError("invalid_grant", "Invalid, expired, or already used authorization code.")
+        # v2 codes are bound to the revocation epoch they were issued under;
+        # a revocation since issuance invalidates every outstanding code.
+        if payload["v"] == 2:
+            epoch = payload.get("epoch")
+            if isinstance(epoch, bool) or not isinstance(epoch, int) or epoch < 0:
+                raise OAuthError("invalid_grant", "Invalid, expired, or already used authorization code.")
+            if self._hermes_root is not None:
+                from . import token_store as _ts
+
+                try:
+                    current_epoch = _ts.read_revocation_epoch(self._hermes_root)
+                except Exception:
+                    raise OAuthError("invalid_grant", "Invalid, expired, or already used authorization code.")
+                if epoch < current_epoch:
+                    raise OAuthError("invalid_grant", "Invalid, expired, or already used authorization code.")
+        return payload
+
+    def _access_token_key(self) -> bytes:
+        """Derive the clustered access-token HMAC key from the shared client secret.
+
+        Clustered origins (the same public MCP hostname served by more than one
+        process) share ``HERMES_GPT_OAUTH_CLIENT_SECRET`` but not process memory.
+        Opaque ``token_urlsafe`` access tokens therefore 401 on the origin that
+        did not issue them. HMAC-SHA256 over a versioned payload lets any origin
+        with the same confidential client secret validate the bearer without a
+        shared token table. Rotating the client secret invalidates every signed
+        access token.
+        """
+        return hashlib.sha256(_ACCESS_TOKEN_MAC_CONTEXT + self.config.client_secret.encode("utf-8")).digest()
+
+    def _new_access_token(self, *, client_id: str, scope: str, resource: str) -> tuple[str, dict[str, Any]]:
+        expires_at = int(time.time()) + ACCESS_TOKEN_TTL_SECONDS
+        payload = {
+            "v": 1,
+            "typ": "access",
+            "nonce": secrets.token_urlsafe(24),
+            "client_id": client_id,
+            "scope": scope,
+            "resource": resource,
+            "expires_at": expires_at,
+        }
+        encoded = _base64url_encode(json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8"))
+        signature = hmac.new(self._access_token_key(), encoded.encode("ascii"), hashlib.sha256).digest()
+        token_value = f"{ACCESS_TOKEN_PREFIX}{encoded}.{_base64url_encode(signature)}"
+        item = {
+            "client_id": client_id,
+            "scope": scope,
+            "resource": resource,
+            "expires_at": float(expires_at),
+        }
+        return token_value, item
+
+    def _decode_signed_access_token(self, token_value: str) -> dict[str, Any] | None:
+        if not token_value.startswith(ACCESS_TOKEN_PREFIX) or len(token_value) > 4096:
+            return None
+        encoded, separator, encoded_signature = token_value[len(ACCESS_TOKEN_PREFIX) :].partition(".")
+        if not separator:
+            return None
+        try:
+            supplied_signature = _base64url_decode(encoded_signature)
+            expected_signature = hmac.new(
+                self._access_token_key(),
+                encoded.encode("ascii"),
+                hashlib.sha256,
+            ).digest()
+            if not hmac.compare_digest(supplied_signature, expected_signature):
+                return None
+            payload = json.loads(_base64url_decode(encoded))
+        except (UnicodeError, ValueError, TypeError, json.JSONDecodeError):
+            return None
+        required_types = {
+            "v": int,
+            "typ": str,
+            "nonce": str,
+            "client_id": str,
+            "scope": str,
+            "resource": str,
+            "expires_at": int,
+        }
+        if not isinstance(payload, dict) or any(
+            not isinstance(payload.get(key), kind) for key, kind in required_types.items()
+        ):
+            return None
+        if payload["v"] not in (1, 2) or payload["typ"] != "access" or not _NONCE.fullmatch(payload["nonce"]):
+            return None
+        if payload["expires_at"] <= time.time():
+            return None
+        if payload["resource"] != self.config.resource or not self.config.client_registered(payload["client_id"]):
+            return None
+        # v2 codes are bound to the revocation epoch they were issued under;
+        # a revocation since issuance invalidates every outstanding code.
+        if payload["v"] == 2 and self._hermes_root is not None:
+            from . import token_store as _ts
+
+            try:
+                current_epoch = _ts.read_revocation_epoch(self._hermes_root)
+            except Exception:
+                return None  # unreadable store: fail closed
+            if int(payload.get("epoch", 0)) < current_epoch:
+                return None
+        try:
+            self.normalize_scope(payload["scope"])
+        except OAuthError:
+            return None
+        return payload
+
+    def _new_refresh_token(self, *, client_id: str, scope: str) -> tuple[str, dict[str, Any]]:
+        token_value = secrets.token_urlsafe(48)
+        item = {
+            "client_id": client_id,
+            "scope": scope,
+            "expires_at": time.time() + REFRESH_TOKEN_TTL_SECONDS,
+        }
+        return token_value, item
+
+    def _sync_epoch_for_fresh_grant(self) -> None:
+        """Adopt the current durable epoch when holding no pre-revocation tokens.
+
+        A fresh grant (authorization-code exchange) mints NEW credentials that
+        must be persistable even right after a revocation. When this process
+        holds no live access/refresh tokens, its epoch can only be stale by
+        revocation — nothing here needs fencing — so adopting the current
+        epoch is safe and unblocks the persist hook. When live tokens ARE
+        held, keep the stricter epoch so a fenced persist still discards them.
+        """
+        if self._hermes_root is None:
+            return
+        if self.access_tokens or self.refresh_tokens:
+            return
+        self._adopt_current_epoch()
+
+    def exchange_authorization_code(
+        self,
+        *,
+        code: str,
+        client_id: str,
+        redirect_uri: str,
+        code_verifier: str,
+    ) -> dict[str, Any]:
+        self.cleanup()
+        self._sync_epoch_for_fresh_grant()
+        item = self._decode_authorization_code(code)
+        nonce = item["nonce"]
+        if nonce in self.used_auth_codes or item.get("expires_at", 0) <= time.time():
+            raise OAuthError("invalid_grant", "Invalid, expired, or already used authorization code.")
+        if item.get("client_id") != client_id or item.get("redirect_uri") != redirect_uri:
+            raise OAuthError("invalid_grant", "Authorization code validation failed.")
+        challenge = item.get("code_challenge", "")
+        if challenge:
+            if not _valid_pkce_verifier(code_verifier) or not hmac.compare_digest(_s256(code_verifier), challenge):
+                raise OAuthError("invalid_grant", "Authorization code validation failed.")
+
+        scope = self.normalize_scope(item["scope"])
+        self._require_capacity(self.used_auth_codes, self.max_auth_codes, "Authorization-code replay cache")
+        self._require_capacity(self.access_tokens, self.max_access_tokens, "Access-token")
+        if "offline_access" in scope.split():
+            self._require_capacity(self.refresh_tokens, self.max_refresh_tokens, "Refresh-token")
+
+        access_value, access_item = self._new_access_token(
+            client_id=client_id,
+            scope=scope,
+            resource=item["resource"],
+        )
+        response: dict[str, Any] = {
+            "access_token": access_value,
+            "token_type": "Bearer",
+            "expires_in": ACCESS_TOKEN_TTL_SECONDS,
+            "scope": scope,
+        }
+        refresh_value = ""
+        refresh_item: dict[str, Any] | None = None
+        if "offline_access" in scope.split():
+            refresh_value, refresh_item = self._new_refresh_token(client_id=client_id, scope=scope)
+            response["refresh_token"] = refresh_value
+
+        self.used_auth_codes[nonce] = {"expires_at": item["expires_at"]}
+        self.access_tokens[access_value] = access_item
+        if refresh_item is not None:
+            self.refresh_tokens[refresh_value] = refresh_item
+        # Durable persistence is part of the exchange contract in server
+        # mode: never hand out credentials that were not durably committed.
+        try:
+            _run_persist_hook_strict(self, "authorization_code")
+        except OAuthError:
+            self.access_tokens.pop(access_value, None)
+            if refresh_item is not None:
+                self.refresh_tokens.pop(refresh_value, None)
+            raise
+        except Exception as exc:
+            self.access_tokens.pop(access_value, None)
+            if refresh_item is not None:
+                self.refresh_tokens.pop(refresh_value, None)
+            raise OAuthError(
+                "temporarily_unavailable",
+                "Token persistence failed; no credentials were issued.",
+                status_code=503,
+            ) from exc
+        return response
+
+    def validate_refresh_token_grant(self, refresh_token: str, client_id: str) -> dict[str, Any]:
+        """Validate a refresh grant against the authoritative durable envelope.
+
+        In server mode (``_hermes_root`` bound) the durable store is the
+        revocation authority for refresh tokens exactly as for access tokens:
+        a refresh token that is not currently present in the durable envelope
+        is rejected, so an owner revocation cannot be outlived by a copy held
+        in process memory. Returns the validated item.
+        """
+        item = self.refresh_tokens.get(refresh_token)
+        if not item or item.get("expires_at", 0) <= time.time():
+            self.refresh_tokens.pop(refresh_token, None)
+            raise OAuthError("invalid_grant", "Invalid, expired, or already used refresh token.")
+        if item.get("client_id") != client_id:
+            raise OAuthError("invalid_grant", "Refresh token validation failed.")
+        if self._hermes_root is None:
+            return item
+        durable_item: Any = None
+        try:
+            from . import token_store
+
+            durable_item = token_store.lookup_token(
+                self._hermes_root, "refresh", refresh_token
+            )
+        except Exception:
+            durable_item = None
+        if not (
+            isinstance(durable_item, dict)
+            and durable_item.get("expires_at", 0) > time.time()
+            and durable_item.get("client_id") == client_id
+        ):
+            self.refresh_tokens.pop(refresh_token, None)
+            raise OAuthError("invalid_grant", "Invalid, expired, or already used refresh token.")
+        return item
+
+    def exchange_refresh_token(
+        self,
+        *,
+        refresh_token: str,
+        client_id: str,
+        requested_scope: str,
+    ) -> dict[str, Any]:
+        self.cleanup()
+        item = self.validate_refresh_token_grant(refresh_token, client_id)
+        original_scope = self.normalize_scope(item["scope"])
+        scope = self.normalize_scope(requested_scope) if requested_scope.strip() else original_scope
+        if not set(scope.split()).issubset(original_scope.split()):
+            raise OAuthError("invalid_scope", "Requested scope exceeds the originally granted scope.")
+
+        self._require_capacity(self.access_tokens, self.max_access_tokens, "Access-token")
+        access_value, access_item = self._new_access_token(
+            client_id=client_id,
+            scope=scope,
+            resource=self.config.resource,
+        )
+        rotated_value, rotated_item = self._new_refresh_token(client_id=client_id, scope=scope)
+
+        if self._hermes_root is not None:
+            # Atomic consume+issue: the presented refresh token is retired
+            # and its replacements published in ONE transaction, so racing
+            # peers cannot both spend the same token.
+            from . import token_store
+
+            try:
+                token_store.exchange_commit(
+                    self._hermes_root,
+                    source_epoch=self._epoch,
+                    presented_kind="refresh",
+                    presented_value=refresh_token,
+                    issue={
+                        token_store.issue_key("access", access_value): _durable_record("access", access_value, access_item),
+                        token_store.issue_key("refresh", rotated_value): _durable_record("refresh", rotated_value, rotated_item),
+                    },
+                )
+            except token_store.TokenStoreError as exc:
+                # Revoked/stale/spent: the exchange fails without publishing.
+                self.refresh_tokens.pop(refresh_token, None)
+                self.access_tokens.pop(access_value, None)
+                self._sync_epoch_for_fresh_grant()
+                raise OAuthError(
+                    "invalid_grant",
+                    "Refresh token could not be durably exchanged.",
+                ) from exc
+        self.refresh_tokens.pop(refresh_token, None)
+        self._retired_refresh_tokens.add(refresh_token)
+        self.refresh_tokens[rotated_value] = rotated_item
+        self.access_tokens[access_value] = access_item
+        return {
+            "access_token": access_value,
+            "token_type": "Bearer",
+            "expires_in": ACCESS_TOKEN_TTL_SECONDS,
+            "refresh_token": rotated_value,
+            "scope": scope,
+        }
+
+    def _durable_access_token_valid(self, token_value: str) -> bool:
+        """Validate bearer presence against the authoritative durable envelope.
+
+        A clustered peer may not have the token in process memory, so a cache
+        miss is resolved by reading the shared durable store. Conversely, once
+        revocation removes that envelope, an already-cached token is rejected
+        immediately instead of being resurrected solely from its MAC.
+        """
+        if self._hermes_root is None:
+            item = self.access_tokens.get(token_value)
+            return bool(
+                item
+                and item.get("expires_at", 0) > time.time()
+                and item.get("resource") == self.config.resource
+                and self.config.client_registered(item.get("client_id"))
+            )
+        try:
+            from . import token_store
+
+            item = token_store.lookup_token(self._hermes_root, "access", token_value)
+        except Exception:
+            self.access_tokens.pop(token_value, None)
+            return False
+        if not (
+            isinstance(item, dict)
+            and item.get("expires_at", 0) > time.time()
+            and item.get("resource") == self.config.resource
+            and self.config.client_registered(item.get("client_id"))
+        ):
+            self.access_tokens.pop(token_value, None)
+            return False
+        self.access_tokens[token_value] = item
+        return True
+
+    def validate_access_token(self, token_value: str) -> bool:
+        if not token_value:
+            return False
+        self.cleanup()
+
+        # In server mode the encrypted durable envelope is the revocation
+        # authority for both legacy opaque and v1 signed tokens. Signed tokens
+        # still require a valid MAC, but a MAC alone is never enough.
+        if self._hermes_root is not None:
+            if token_value.startswith(ACCESS_TOKEN_PREFIX) and self._decode_signed_access_token(token_value) is None:
+                return False
+            return self._durable_access_token_valid(token_value)
+
+        # Standalone/in-memory OAuthState instances have no durable authority.
+        # Preserve their local validation behavior for tests and embedded use.
+        item = self.access_tokens.get(token_value)
+        if (
+            item
+            and item.get("expires_at", 0) > time.time()
+            and item.get("resource") == self.config.resource
+            and self.config.client_registered(item.get("client_id"))
+        ):
+            return True
+        return self._decode_signed_access_token(token_value) is not None
+
+    # ------------------------------------------------------------------
+    # Durable token persistence (v0.7 S5, ADR-001). Tokens are persisted
+    # through token_store (AES-256-GCM envelope); no token material is
+    # ever written to the audit log or returned on surfaces.
+    # ------------------------------------------------------------------
+
+    def clear_live_tokens(self) -> None:
+        """Drop live bearer/refresh caches after a durable revocation.
+
+        Used-code replay state is deliberately RETAINED: clearing it would let
+        an already-exchanged authorization code be exchanged again (fresh
+        credentials minted immediately after revocation) until its five-minute
+        expiry. Rotating the authorization-code key below additionally
+        invalidates every outstanding (unexchanged) code.
+        """
+        self.access_tokens.clear()
+        self.refresh_tokens.clear()
+        self._authorization_code_key = secrets.token_bytes(32)
+
+    def _adopt_current_epoch(self) -> None:
+        """Re-sync this process's view to the durable revocation epoch.
+
+        Called after stale credentials were discarded because a commit was
+        fenced off: with the stale caches dropped, adopting the current epoch
+        lets FRESH issuance persist normally instead of being refused forever.
+        """
+        if self._hermes_root is None:
+            return
+        try:
+            from . import token_store
+
+            self._epoch = token_store.read_revocation_epoch(self._hermes_root)
+        except Exception:
+            pass
+
+    def persist_tokens(self, hermes_root: Path | None = None) -> dict[str, Any]:
+        """Commit current live tokens to the shared durable store.
+
+        Issuance and retirement commit as one locked, epoch-fenced
+        transaction covering both the encrypted envelope (raw values) and
+        the plaintext hash ledger (liveness/retirement). Other processes'
+        tokens are never replaced, and retirement is permanent, so a stale
+        peer cache can never resurrect a rotated or revoked token.
+        """
+        from . import token_store
+
+        if not hermes_root:
+            hermes_root = Path.home() / ".hermes"
+        self._hermes_root = Path(hermes_root)
+        now = time.time()
+        issue: dict[str, dict[str, Any]] = {}
+        for value, item in self.access_tokens.items():
+            if item.get("expires_at", 0) > now:
+                issue[token_store.issue_key("access", value)] = _durable_record("access", value, item)
+        for value, item in self.refresh_tokens.items():
+            if item.get("expires_at", 0) > now:
+                issue[token_store.issue_key("refresh", value)] = _durable_record("refresh", value, item)
+        retire: dict[str, list[str]] = {}
+        if self._retired_refresh_tokens:
+            retire["refresh"] = list(self._retired_refresh_tokens)
+        try:
+            result = token_store.commit_tokens(
+                hermes_root,
+                source_epoch=self._epoch,
+                issue=issue,
+                retire=retire,
+            )
+        except token_store.TokenStoreError:
+            # A revocation fenced this commit off. Drop the stale live
+            # caches, re-sync the epoch so fresh issuance can persist, and
+            # surface the failure.
+            self.clear_live_tokens()
+            self._retired_refresh_tokens.clear()
+            self._adopt_current_epoch()
+            raise
+        self._epoch = int(result.get("epoch", self._epoch))
+        self._retired_refresh_tokens.clear()
+        return result
+
+    def restore_tokens(self, hermes_root: Path | None = None) -> dict[str, Any]:
+        """Load + decrypt persisted tokens into the in-memory stores.
+
+        Returns a bounded summary; never exposes token material.
+        """
+        from . import token_store
+
+        if not hermes_root:
+            hermes_root = Path.home() / ".hermes"
+        self._hermes_root = Path(hermes_root)
+        # Complete the legacy -> SQLite migration BEFORE loading, so an
+        # upgrade restores existing credentials instead of seeing an empty
+        # store. migrate_store imports the legacy revocation epoch
+        # faithfully (migration is not credential issuance, so the grant
+        # fence does not apply); it is idempotent and marker-closed.
+        try:
+            token_store.migrate_store(hermes_root)
+        except token_store.TokenStoreError:
+            pass  # corrupt/unmigratable store: fail closed below
+        self._epoch = token_store.read_revocation_epoch(hermes_root)
+        bundle = token_store.load_live_tokens(hermes_root)
+        if not bundle:
+            return {"restored": 0, "present": False}
+        restored = 0
+        for kind, store in (("access_tokens", self.access_tokens), ("refresh_tokens", self.refresh_tokens)):
+            for value, item in (bundle.get(kind) or {}).items():
+                if isinstance(item, dict) and item.get("expires_at", 0) > time.time():
+                    store[value] = item
+                    restored += 1
+        return {"restored": restored, "present": True}
+
+
+def config_from_env() -> OAuthConfig | None:
+    if os.environ.get(OAUTH_ENABLE_ENV) != "1":
+        return None
+    required = {
+        OAUTH_ISSUER_ENV: os.environ.get(OAUTH_ISSUER_ENV, "").strip(),
+        OAUTH_CLIENT_ID_ENV: os.environ.get(OAUTH_CLIENT_ID_ENV, "").strip(),
+        OAUTH_CLIENT_SECRET_ENV: os.environ.get(OAUTH_CLIENT_SECRET_ENV, ""),
+        OAUTH_REDIRECT_URI_ENV: os.environ.get(OAUTH_REDIRECT_URI_ENV, "").strip(),
+    }
+    missing = [name for name, value in required.items() if not value]
+    if missing:
+        raise ValueError(f"OAuth is enabled but required configuration is missing: {', '.join(missing)}")
+    redirects = tuple(
+        item.strip()
+        for item in required[OAUTH_REDIRECT_URI_ENV].replace("\n", ",").split(",")
+        if item.strip()
+    )
+    additional: list[OAuthClient] = []
+    gemini = gemini_client_from_env()
+    if gemini is not None:
+        additional.append(gemini)
+    return OAuthConfig(
+        issuer=required[OAUTH_ISSUER_ENV],
+        client_id=required[OAUTH_CLIENT_ID_ENV],
+        client_secret=required[OAUTH_CLIENT_SECRET_ENV],
+        redirect_uris=redirects,
+        scope=os.environ.get(OAUTH_SCOPE_ENV, "hermes").strip() or "hermes",
+        additional_clients=tuple(additional),
+    )
+
+
+def gemini_client_from_env() -> OAuthClient | None:
+    """Opt-in Gemini Spark client profile (additional registered client).
+
+    Google's consumer "Custom apps for Spark" flow completes as a manually
+    configured confidential client against a server that advertises no dynamic
+    registration endpoint. When enabled, this profile is a fully isolated
+    registered client with its own secret and its own exact-match redirect-URI
+    allowlist; the primary (for example ChatGPT) client is untouched.
+    """
+    if os.environ.get(GEMINI_ENABLE_ENV) != "1":
+        return None
+    required = {
+        GEMINI_CLIENT_ID_ENV: os.environ.get(GEMINI_CLIENT_ID_ENV, "").strip(),
+        GEMINI_CLIENT_SECRET_ENV: os.environ.get(GEMINI_CLIENT_SECRET_ENV, ""),
+        GEMINI_REDIRECT_URI_ENV: os.environ.get(GEMINI_REDIRECT_URI_ENV, "").strip(),
+    }
+    missing = [name for name, value in required.items() if not value]
+    if missing:
+        raise ValueError(
+            "The Gemini Spark client profile is enabled but required configuration is missing: "
+            + ", ".join(missing)
+        )
+    redirects = tuple(
+        item.strip()
+        for item in required[GEMINI_REDIRECT_URI_ENV].replace("\n", ",").split(",")
+        if item.strip()
+    )
+    try:
+        return OAuthClient(
+            client_id=required[GEMINI_CLIENT_ID_ENV],
+            client_secret=required[GEMINI_CLIENT_SECRET_ENV],
+            redirect_uris=redirects,
+        )
+    except ValueError as exc:
+        raise ValueError(f"Gemini Spark client profile: {exc}") from exc
+
+
+def static_bearer_from_env() -> str | None:
+    token_value = os.environ.get(AUTH_TOKEN_ENV, "")
+    if not token_value:
+        return None
+    if not _CLIENT_SECRET.fullmatch(token_value):
+        raise ValueError(f"{AUTH_TOKEN_ENV} must contain 43 to 128 URL-safe characters.")
+    return token_value
+
+
+def _s256(verifier: str) -> str:
+    digest = hashlib.sha256(verifier.encode("ascii")).digest()
+    return base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
+
+
+def _valid_pkce_verifier(verifier: str) -> bool:
+    return bool(_PKCE_VALUE.fullmatch(verifier))
+
+
+def _error_response(exc: OAuthError) -> JSONResponse:
+    headers = {"Cache-Control": "no-store", "Pragma": "no-cache"}
+    if exc.error == "invalid_client":
+        headers["WWW-Authenticate"] = "Basic realm=oauth-token"
+    return JSONResponse(
+        {"error": exc.error, "error_description": exc.description},
+        status_code=exc.status_code,
+        headers=headers,
+    )
+
+
+def validate_bearer_token(token_value: str, state: OAuthState | None, *, static_token: str | None = None) -> bool:
+    expected = (static_bearer_from_env() or "") if static_token is None else static_token
+    if expected and token_value and hmac.compare_digest(token_value, expected):
+        return True
+    return bool(state and state.validate_access_token(token_value))
+
+
+class DefaultMcpAcceptMiddleware:
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope.get("type") == "http" and scope.get("path") == "/mcp":
+            headers = list(scope.get("headers") or [])
+            accept_indexes = [index for index, (key, _value) in enumerate(headers) if key.lower() == b"accept"]
+            replacement = b"application/json, text/event-stream"
+            if not accept_indexes:
+                headers.append((b"accept", replacement))
+                scope = {**scope, "headers": headers}
+            else:
+                index = accept_indexes[-1]
+                value = headers[index][1].decode("latin-1").strip()
+                if not value or value == "*/*":
+                    headers[index] = (b"accept", replacement)
+                    scope = {**scope, "headers": headers}
+        await self.app(scope, receive, send)
+
+
+class BearerAuthMiddleware:
+    PUBLIC_PATHS = {
+        "/",
+        "/.well-known/oauth-protected-resource",
+        "/.well-known/oauth-protected-resource/mcp",
+        "/.well-known/oauth-authorization-server",
+        # ChatGPT probes OIDC discovery after OAuth even when OIDC is disabled.
+        # Keep this path unauthenticated so the normal router can return 404
+        # (no OpenID Provider is implemented) instead of an auth-challenge.
+        "/.well-known/openid-configuration",
+        "/oauth/authorize",
+        "/oauth/token",
+    }
+
+    def __init__(self, app: ASGIApp, state: OAuthState | None = None, *, static_token: str | None = None) -> None:
+        self.app = app
+        self.state = state
+        self.static_token = static_token
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope.get("type") != "http":
+            await self.app(scope, receive, send)
+            return
+        expected_static = (static_bearer_from_env() or "") if self.static_token is None else self.static_token
+        if not expected_static and self.state is None:
+            await self.app(scope, receive, send)
+            return
+        if scope.get("method") == "OPTIONS" or scope.get("path") in self.PUBLIC_PATHS:
+            await self.app(scope, receive, send)
+            return
+        headers = {key.lower(): value for key, value in scope.get("headers") or []}
+        authorization = headers.get(b"authorization", b"").decode("latin-1")
+        supplied = authorization[7:].strip() if authorization.lower().startswith("bearer ") else ""
+        if not validate_bearer_token(supplied, self.state, static_token=expected_static):
+            challenge = "Bearer"
+            if self.state is not None:
+                metadata = f"{self.state.config.issuer}/.well-known/oauth-protected-resource"
+                challenge = f'Bearer realm="hermes-gpt", resource_metadata="{metadata}"'
+            response = JSONResponse(
+                {"error": "unauthorized"},
+                status_code=401,
+                headers={"WWW-Authenticate": challenge},
+            )
+            await response(scope, receive, send)
+            return
+        await self.app(scope, receive, send)
+
+
+def authorization_metadata(_request: Request, state: OAuthState) -> JSONResponse:
+    issuer = state.config.issuer
+    return JSONResponse(
+        {
+            "issuer": issuer,
+            "authorization_endpoint": f"{issuer}/oauth/authorize",
+            "token_endpoint": f"{issuer}/oauth/token",
+            "response_types_supported": ["code"],
+            "grant_types_supported": ["authorization_code", "refresh_token"],
+            "token_endpoint_auth_methods_supported": ["client_secret_post", "client_secret_basic"],
+            "code_challenge_methods_supported": ["S256"],
+            "scopes_supported": list(state.config.supported_scopes),
+        }
+    )
+
+
+def protected_resource_metadata(_request: Request, state: OAuthState) -> JSONResponse:
+    return JSONResponse(
+        {
+            "resource": state.config.resource,
+            "authorization_servers": [state.config.issuer],
+            "bearer_methods_supported": ["header"],
+            "scopes_supported": list(state.config.supported_scopes),
+        }
+    )
+
+
+def _redirect_response(redirect_uri: str, values: list[tuple[str, str]]) -> RedirectResponse:
+    parsed = urllib.parse.urlparse(redirect_uri)
+    existing = urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+    location = urllib.parse.urlunparse(parsed._replace(query=urllib.parse.urlencode(existing + values)))
+    return RedirectResponse(location, status_code=302)
+
+
+def authorize(request: Request, state: OAuthState) -> JSONResponse | RedirectResponse:
+    params = request.query_params
+    client_id = params.get("client_id", "")
+    redirect_uri = params.get("redirect_uri", "")
+    client = state.config.client_for_id(client_id)
+    if client is None:
+        return _error_response(OAuthError("invalid_client", "Unknown OAuth client.", status_code=401))
+    if redirect_uri not in client.redirect_uris:
+        return _error_response(OAuthError("invalid_request", "redirect_uri is not registered."))
+    try:
+        if params.get("response_type", "") != "code":
+            raise OAuthError("unsupported_response_type", "Only response_type=code is supported.")
+        scope = state.normalize_scope(params.get("scope", "") or state.config.scope)
+        resource = params.get("resource", "") or state.config.resource
+        if resource != state.config.resource:
+            raise OAuthError("invalid_target", "Requested resource is not supported.")
+        challenge = params.get("code_challenge", "")
+        method = params.get("code_challenge_method", "")
+        if challenge and (method != "S256" or not _PKCE_VALUE.fullmatch(challenge)):
+            raise OAuthError("invalid_request", "Only a valid S256 PKCE challenge is supported.")
+        if method and not challenge:
+            raise OAuthError("invalid_request", "code_challenge is required when a method is supplied.")
+        code = state.issue_authorization_code(
+            client_id=client.client_id,
+            redirect_uri=redirect_uri,
+            scope=scope,
+            resource=resource,
+            code_challenge=challenge,
+        )
+    except OAuthError as exc:
+        error_query = [("error", exc.error), ("error_description", exc.description)]
+        if params.get("state"):
+            error_query.append(("state", params["state"]))
+        return _redirect_response(redirect_uri, error_query)
+    query = [("code", code)]
+    if params.get("state"):
+        query.append(("state", params["state"]))
+    return _redirect_response(redirect_uri, query)
+
+
+def _form_value(form: dict[str, list[str]], name: str) -> str:
+    values = form.get(name) or []
+    return values[0] if values else ""
+
+
+def _client_credentials(request: Request, form: dict[str, list[str]]) -> tuple[str, str]:
+    authorization = request.headers.get("authorization", "")
+    if authorization.lower().startswith("basic "):
+        try:
+            decoded = base64.b64decode(authorization.split(" ", 1)[1], validate=True).decode("utf-8")
+        except Exception as exc:
+            raise OAuthError("invalid_client", "Invalid OAuth client credentials.", status_code=401) from exc
+        client_id, separator, client_secret = decoded.partition(":")
+        if not separator:
+            raise OAuthError("invalid_client", "Invalid OAuth client credentials.", status_code=401)
+        return urllib.parse.unquote(client_id), urllib.parse.unquote(client_secret)
+    return _form_value(form, "client_id"), _form_value(form, "client_secret")
+
+
+def _authenticate_client(request: Request, form: dict[str, list[str]], state: OAuthState) -> str:
+    client_id, client_secret = _client_credentials(request, form)
+    client = state.config.client_for_id(client_id)
+    if client is None or not hmac.compare_digest(client_secret, client.client_secret):
+        raise OAuthError("invalid_client", "Invalid OAuth client credentials.", status_code=401)
+    return client.client_id
+
+
+async def token(request: Request, state: OAuthState) -> JSONResponse:
+    try:
+        content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+        if content_type != "application/x-www-form-urlencoded":
+            raise OAuthError("invalid_request", "Token requests must use form encoding.")
+        content_length = request.headers.get("content-length", "")
+        if content_length:
+            try:
+                if int(content_length) > MAX_TOKEN_REQUEST_BYTES:
+                    raise OAuthError("invalid_request", "Token request is too large.")
+            except ValueError as exc:
+                raise OAuthError("invalid_request", "Invalid Content-Length header.") from exc
+        buffered = bytearray()
+        async for chunk in request.stream():
+            if len(buffered) + len(chunk) > MAX_TOKEN_REQUEST_BYTES:
+                raise OAuthError("invalid_request", "Token request is too large.")
+            buffered.extend(chunk)
+        body = bytes(buffered).decode("utf-8")
+        try:
+            form = urllib.parse.parse_qs(body, keep_blank_values=True, max_num_fields=32)
+        except ValueError as exc:
+            raise OAuthError("invalid_request", "Token request form is invalid.") from exc
+        grant_type = _form_value(form, "grant_type")
+        if not grant_type:
+            raise OAuthError("invalid_request", "grant_type is required.")
+        if grant_type not in {"authorization_code", "refresh_token"}:
+            raise OAuthError("unsupported_grant_type", "The requested grant type is not supported.")
+        client_id = _authenticate_client(request, form, state)
+        if grant_type == "authorization_code":
+            response = state.exchange_authorization_code(
+                code=_form_value(form, "code"),
+                client_id=client_id,
+                redirect_uri=_form_value(form, "redirect_uri"),
+                code_verifier=_form_value(form, "code_verifier"),
+            )
+        else:
+            refresh_token = _form_value(form, "refresh_token")
+            if not refresh_token:
+                raise OAuthError("invalid_request", "refresh_token is required.")
+            response = state.exchange_refresh_token(
+                refresh_token=refresh_token,
+                client_id=client_id,
+                requested_scope=_form_value(form, "scope"),
+            )
+        return JSONResponse(response, headers={"Cache-Control": "no-store", "Pragma": "no-cache"})
+    except UnicodeDecodeError:
+        return _error_response(OAuthError("invalid_request", "Token request is malformed."))
+    except OAuthError as exc:
+        return _error_response(exc)
+    except Exception as exc:  # noqa: BLE001
+        # Strict durable persistence failures (and anything else unexpected)
+        # surface as a bounded OAuth error, never an unhandled 500 after the
+        # authorization code was consumed.
+        return _error_response(
+            OAuthError(
+                "temporarily_unavailable",
+                "The authorization server could not persist the token.",
+                status_code=503,
+            )
+        )

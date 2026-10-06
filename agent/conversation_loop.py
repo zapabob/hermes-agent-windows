@@ -113,6 +113,16 @@ from utils import base_url_host_matches, env_var_enabled
 logger = logging.getLogger(__name__)
 
 
+def emit_provider_retry_wait_notice(
+    agent: Any, wait_time: float, retry_count: int, max_retries: int,
+) -> None:
+    """Name provider backoff on the transient live status line."""
+    agent._emit_wait_notice(
+        f"⏳ waiting on provider — retrying in {wait_time:.0f}s "
+        f"(attempt {retry_count}/{max_retries})"
+    )
+
+
 # Scaffold marker used by _apply_active_turn_redirect and the ghost-row filter
 # in the api_messages loop. Module-level so both sites can never drift.
 _INTERRUPT_SCAFFOLD_MARKER = "[This response was interrupted by a user correction.]"
@@ -3395,13 +3405,27 @@ def run_conversation(
                         _use_streaming = False
 
                 def _perform_api_call(next_api_kwargs):
-                    if agent.api_mode == "codex_responses":
+                    inference_port = getattr(agent, "_inference_port", None)
+                    if agent.api_mode == "codex_responses" and inference_port is None:
                         next_api_kwargs = agent._get_transport().preflight_kwargs(
                             next_api_kwargs,
                             allow_stream=False,
                             is_github_responses=agent._is_copilot_url(),
                             sanitize_harmony_tokens=agent._is_codex_backend(),
                         )
+                    if inference_port is not None:
+                        from downstream.delegation.inference_port import InferenceTurn
+
+                        turn = InferenceTurn(
+                            api_kwargs=next_api_kwargs,
+                            requester=agent,
+                            original_api_kwargs=_original_api_kwargs,
+                        )
+                        return inference_port.complete(
+                            turn,
+                            route_binding=inference_port.route_binding,
+                            cancel_generation=getattr(agent, "_inference_cancel_generation", 0),
+                        ).response
                     if _use_streaming:
                         return agent._interruptible_streaming_api_call(
                             next_api_kwargs, on_first_delta=_stop_spinner
@@ -3508,6 +3532,41 @@ def run_conversation(
                     logging.debug(
                         f"API Response received - Model: {resp_model}, Usage: {response.usage if hasattr(response, 'usage') else 'N/A'}"
                     )
+
+                try:
+                    from agent.model_route_observation import (
+                        build_route_observation,
+                        commit_route_observation,
+                    )
+
+                    wire_model = str(api_kwargs.get("model") or agent.model or "")
+                    wire_provider = str(agent.provider or "")
+                    response_model = getattr(response, "model", None)
+                    explicit_source = getattr(response, "effective_model_source", None)
+                    reported = isinstance(response_model, str) and bool(response_model.strip())
+                    if reported and wire_model and response_model.strip() != wire_model:
+                        normalized_wire = wire_model.lower().replace("-", "").replace(".", "").replace("/", "")
+                        normalized_response = response_model.strip().lower().replace("-", "").replace(".", "").replace("/", "")
+                        if normalized_wire not in normalized_response and normalized_response not in normalized_wire:
+                            logger.warning(
+                                "Provider response reported unexpected model %r (requested wire model: %r)",
+                                response_model.strip(), wire_model,
+                            )
+                    observation = build_route_observation(
+                        requested_provider=str(getattr(agent, "requested_provider", "") or wire_provider),
+                        requested_model=str(getattr(agent, "requested_model", "") or wire_model),
+                        wire_provider=wire_provider,
+                        wire_model=wire_model,
+                        effective_provider=wire_provider,
+                        effective_model=response_model.strip() if reported else wire_model,
+                        fallback=bool(getattr(agent, "_fallback_activated", False)),
+                        reason=getattr(agent, "_fallback_reason", None),
+                        effective_model_source=str(explicit_source or ("response" if reported else "request")),
+                        turn_seq=getattr(agent, "_user_turn_count", None),
+                    )
+                    commit_route_observation(agent, observation, turn_seq=getattr(agent, "_user_turn_count", None))
+                except Exception:
+                    logger.debug("Failed to record model route observation", exc_info=True)
 
                 # Validate response shape before proceeding
                 response_invalid = False
@@ -3775,6 +3834,7 @@ def run_conversation(
                     # Backoff before retry — jittered exponential: 5s base, 120s cap
                     wait_time = jittered_backoff(retry_count, base_delay=5.0, max_delay=120.0)
                     agent._buffer_vprint(f"⏳ Retrying in {wait_time:.1f}s ({_failure_hint})...")
+                    emit_provider_retry_wait_notice(agent, wait_time, retry_count, max_retries)
                     logger.warning("Invalid API response (retry %d/%d): %s | Provider: %s", retry_count, max_retries, ', '.join(error_details), provider_name)
                     
                     # Sleep in small increments to stay responsive to interrupts
@@ -7149,6 +7209,7 @@ def run_conversation(
                     agent._buffer_status(
                         f"⏳ Retrying in {wait_time:.1f}s (attempt {retry_count}/{max_retries})..."
                     )
+                emit_provider_retry_wait_notice(agent, wait_time, retry_count, max_retries)
                 logger.warning(
                     "Retrying API call in %ss (attempt %s/%s) %s policy=%s error=%s",
                     wait_time,

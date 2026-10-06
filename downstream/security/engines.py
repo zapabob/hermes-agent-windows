@@ -218,13 +218,8 @@ class YaraEngine:
 
     @staticmethod
     def _identity(metadata: os.stat_result) -> tuple[int, int, int, int, int]:
-        return (
-            int(metadata.st_dev),
-            int(metadata.st_ino),
-            int(metadata.st_size),
-            int(metadata.st_mtime_ns),
-            int(metadata.st_ctime_ns),
-        )
+        from .file_identity import stable_stat_identity
+        return stable_stat_identity(metadata)
 
     @staticmethod
     def _metadata_is_reparse(metadata: os.stat_result) -> bool:

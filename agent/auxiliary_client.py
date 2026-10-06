@@ -1241,6 +1241,18 @@ _NOUS_MODEL = "google/gemini-3.6-flash"
 _NOUS_DEFAULT_BASE_URL = "https://inference-api.nousresearch.com/v1"
 _ANTHROPIC_DEFAULT_BASE_URL = "https://api.anthropic.com"
 _AUTH_JSON_PATH = get_hermes_home() / "auth.json"
+_AUTH_JSON_PATH_AT_IMPORT = _AUTH_JSON_PATH
+
+
+def _auth_json_path():
+    """Resolve the routed profile at call time, retaining explicit test overrides."""
+    from hermes_cli.auth import _auth_file_path
+
+    return (
+        _AUTH_JSON_PATH
+        if _AUTH_JSON_PATH != _AUTH_JSON_PATH_AT_IMPORT
+        else _auth_file_path()
+    )
 
 # Codex OAuth endpoint used when a caller explicitly requests
 # provider="openai-codex".  There is deliberately no hardcoded default
@@ -2650,9 +2662,10 @@ def _read_nous_auth() -> Optional[dict]:
         }
 
     try:
-        if not _AUTH_JSON_PATH.is_file():
+        auth_path = _auth_json_path()
+        if not auth_path.is_file():
             return None
-        data = json.loads(_AUTH_JSON_PATH.read_text(encoding="utf-8-sig"))
+        data = json.loads(auth_path.read_text(encoding="utf-8-sig"))
         if data.get("active_provider") != "nous":
             return None
         provider = data.get("providers", {}).get("nous", {})
@@ -2687,7 +2700,7 @@ def _nous_api_key(provider: dict) -> str:
 
 def _nous_base_url() -> str:
     """Resolve the Nous inference base URL from env or default."""
-    return os.getenv("NOUS_INFERENCE_BASE_URL", _NOUS_DEFAULT_BASE_URL)
+    return _scoped_key_env("NOUS_INFERENCE_BASE_URL") or _NOUS_DEFAULT_BASE_URL
 
 
 def _resolve_nous_pool_runtime_api(*, force_refresh: bool = False) -> Optional[tuple[str, str]]:
@@ -2800,8 +2813,8 @@ def _resolve_xai_oauth_for_aux() -> Optional[Tuple[str, str]]:
                     or ""
                 ).strip()
                 base_url = _xai_validate_inference_base_url(
-                    os.getenv("HERMES_XAI_BASE_URL", "").strip().rstrip("/")
-                    or os.getenv("XAI_BASE_URL", "").strip().rstrip("/")
+                    _scoped_key_env("HERMES_XAI_BASE_URL").rstrip("/")
+                    or _scoped_key_env("XAI_BASE_URL").rstrip("/")
                     or str(getattr(entry, "runtime_base_url", None) or "")
                     .strip()
                     .rstrip("/")
@@ -3780,7 +3793,7 @@ def _resolve_custom_runtime() -> Tuple[Optional[str], Optional[str], Optional[st
         runtime = None
 
     if not isinstance(runtime, dict):
-        openai_base = os.getenv("OPENAI_BASE_URL", "").strip().rstrip("/")
+        openai_base = _scoped_key_env("OPENAI_BASE_URL").rstrip("/")
         openai_key = _scoped_key_env("OPENAI_API_KEY")
         if not openai_base:
             return None, None, None
@@ -6282,7 +6295,7 @@ def _resolve_auto_route(
     #    scenario where a user switches providers via `hermes model` but the
     #    old OPENAI_BASE_URL lingers in ~/.hermes/.env. ──
     if not _stale_base_url_warned:
-        _env_base = os.getenv("OPENAI_BASE_URL", "").strip()
+        _env_base = _scoped_key_env("OPENAI_BASE_URL")
         _cfg_provider = runtime_provider or _read_main_provider()
         if (
             _env_base
@@ -8590,7 +8603,7 @@ def _expand_direct_api_alias(
     return (
         "custom",
         existing_base
-        or os.getenv("OPENAI_BASE_URL", "").strip().rstrip("/")
+        or _scoped_key_env("OPENAI_BASE_URL").rstrip("/")
         or target_base,
     )
 
@@ -10098,6 +10111,12 @@ def _call_llm_impl(
     # and fallbacks. Reading ambient state independently in each phase lets a
     # concurrent /model switch produce a key for one runtime and a client for
     # another.
+    from downstream.delegation.inference_port import active_inference_port
+
+    if active_inference_port() is not None:
+        raise RuntimeError(
+            "Auxiliary model calls are disabled during parent-owned delegation."
+        )
     main_runtime = _normalize_main_runtime(main_runtime)
     route_args = (task, provider, model, base_url, api_key)
     if expected_route is None:

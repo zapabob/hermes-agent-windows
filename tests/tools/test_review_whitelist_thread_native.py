@@ -41,8 +41,10 @@ def expected(allowed, fmt=REVIEW_FMT):
 
 @pytest.fixture(autouse=True)
 def owned_environment(monkeypatch, tmp_path):
-    assert Path(tmp_path).drive.upper() == "H:"
-    assert Path(os.environ["HERMES_HOME"]).drive.upper() == "H:"
+    hermes_home = tmp_path / "hermes-home"
+    hermes_home.mkdir()
+    monkeypatch.setenv("HERMES_HOME", str(hermes_home))
+    assert hermes_home.is_dir()
     attempted = []
 
     def deny_network(*args, **kwargs):

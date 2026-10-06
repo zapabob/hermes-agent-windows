@@ -12,6 +12,8 @@ indicator said 1). The fix has two halves:
    the full graph regardless of local clone depth.
 """
 
+from tests.hermes_cli.git_transport_fixture import mock_legacy_git_transport  # noqa: F401
+
 import io
 import json
 from pathlib import Path

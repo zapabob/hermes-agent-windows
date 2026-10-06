@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from tests.hermes_cli.git_transport_fixture import mock_legacy_git_transport  # noqa: F401
+
 import textwrap
 from pathlib import Path
 from types import SimpleNamespace

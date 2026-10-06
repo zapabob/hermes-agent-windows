@@ -18,7 +18,11 @@ envs in engaged multi-session hosts.
 """
 
 import os
+from pathlib import Path
+import shutil
 import subprocess
+
+import pytest
 
 from hermes_cli.main import _advertise_agent_env
 
@@ -57,6 +61,7 @@ class TestWrapCommandAdvertisesHarness:
         from tools.environments.local import LocalEnvironment
 
         env = LocalEnvironment.__new__(LocalEnvironment)
+        env.env = {}
         env._snapshot_ready = False
         env._session_id = "testsession0"
         env._cwd_marker = "__HERMES_CWD_testsession0__"
@@ -79,15 +84,24 @@ class TestWrapCommandAdvertisesHarness:
 
         clean_env = {k: v for k, v in os.environ.items()
                      if k not in ("AI_AGENT", "HERMES_AGENT")}
+        bash = shutil.which("bash")
+        if os.name == "nt":
+            git = shutil.which("git")
+            git_bash = Path(git).parent.parent / "bin/bash.exe" if git else None
+            if git_bash is None or not git_bash.is_file():
+                pytest.skip("the POSIX wrapper requires Git Bash on Windows")
+            bash = str(git_bash)
+        if bash is None:
+            pytest.skip("the POSIX wrapper requires bash")
         out = subprocess.run(
-            ["bash", "-c", wrapped], capture_output=True, text=True,
+            [bash, "-c", wrapped], capture_output=True, text=True,
             env=clean_env, timeout=30,
         )
         assert f"AI={HARNESS_ID} HERMES=true" in out.stdout
 
         outer_env = dict(clean_env, AI_AGENT="pi", HERMES_AGENT="false")
         out = subprocess.run(
-            ["bash", "-c", wrapped], capture_output=True, text=True,
+            [bash, "-c", wrapped], capture_output=True, text=True,
             env=outer_env, timeout=30,
         )
         assert "AI=pi HERMES=false" in out.stdout

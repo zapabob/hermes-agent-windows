@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .bounded_walk import ReparsePathError, absolute_path_without_reparse
+from .file_identity import stable_stat_identity
 
 
 MAX_DEFINITION_DIRECTORY_ENTRIES = 512
@@ -65,13 +66,7 @@ class DefinitionInventory:
 
 
 def _identity(metadata: os.stat_result) -> tuple[int, int, int, int, int]:
-    return (
-        int(metadata.st_dev),
-        int(metadata.st_ino),
-        int(metadata.st_size),
-        int(metadata.st_mtime_ns),
-        int(metadata.st_ctime_ns),
-    )
+    return stable_stat_identity(metadata)
 
 
 def _directory_identity(metadata: os.stat_result) -> tuple[int, int, int]:

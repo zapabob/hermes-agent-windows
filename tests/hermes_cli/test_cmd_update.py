@@ -3,6 +3,8 @@
 import hashlib
 import subprocess
 from types import SimpleNamespace
+from tests.hermes_cli.git_transport_fixture import mock_legacy_git_transport  # noqa: F401
+
 from unittest.mock import ANY, patch
 
 import pytest
@@ -12,13 +14,20 @@ from hermes_cli.main import cmd_update, PROJECT_ROOT
 
 def _make_run_side_effect(branch="main", verify_ok=True, commit_count="0"):
     """Build a side_effect function for subprocess.run that simulates git commands."""
+    head_reads = 0
 
     def side_effect(cmd, **kwargs):
+        nonlocal head_reads
         joined = " ".join(str(c) for c in cmd)
 
         # git rev-parse --abbrev-ref HEAD  (get current branch)
         if "rev-parse" in joined and "--abbrev-ref" in joined:
             return subprocess.CompletedProcess(cmd, 0, stdout=f"{branch}\n", stderr="")
+
+        if cmd[-2:] == ["rev-parse", "HEAD"]:
+            head_reads += 1
+            head = "a" * 40 if head_reads == 1 or commit_count == "0" else "b" * 40
+            return subprocess.CompletedProcess(cmd, 0, stdout=head + "\n", stderr="")
 
         # git rev-parse --verify origin/{branch}  (check remote branch exists)
         if "rev-parse" in joined and "--verify" in joined:
@@ -87,11 +96,21 @@ def _patch_gateway_discovery():
     Discovery returning nothing makes the phase a clean no-op for every test
     in this module (none of them assert on gateway restarts).
     """
+    from hermes_cli.update_inventory import UpdatePlan
+
+    def complete_without_node_rebuild(print_completion, **kwargs):
+        return print_completion(kwargs["completion_message"])
+
     with patch("hermes_cli.gateway.find_gateway_pids", return_value=[]), \
          patch("hermes_cli.gateway.supports_systemd_services", return_value=False), \
          patch("hermes_cli.gateway.find_profile_gateway_processes", return_value=[]), \
          patch("hermes_cli.main._detect_venv_python_processes", return_value=[]), \
          patch("hermes_cli.main._find_stale_dashboard_pids", return_value=[]), \
+         patch("hermes_cli.main._pause_windows_gateways_for_update", return_value=None), \
+         patch("hermes_cli.main._resume_windows_gateways_after_update", return_value=None), \
+         patch("hermes_cli.update_cmd._repair_node_deps_on_current_checkout", side_effect=complete_without_node_rebuild), \
+         patch("hermes_cli.main._build_web_ui", return_value=True), \
+         patch("hermes_cli.update_inventory.collect_runtime_inventory", side_effect=lambda: UpdatePlan(install_method="git")), \
          patch("hermes_cli.main._purge_stale_hermes_modules", return_value=None):
         yield
 
@@ -809,11 +828,19 @@ class TestCmdUpdateBranchFlag:
         - ``commit_count``    rev-list count returned (0 = up-to-date, >0 = behind)
         """
 
+        head_reads = 0
+
         def side_effect(cmd, **kwargs):
+            nonlocal head_reads
             joined = " ".join(str(c) for c in cmd)
 
             if "rev-parse" in joined and "--abbrev-ref" in joined:
                 return subprocess.CompletedProcess(cmd, 0, stdout=f"{current_branch}\n", stderr="")
+
+            if cmd[-2:] == ["rev-parse", "HEAD"]:
+                head_reads += 1
+                head = "a" * 40 if head_reads == 1 or commit_count == "0" else "b" * 40
+                return subprocess.CompletedProcess(cmd, 0, stdout=head + "\n", stderr="")
 
             if "checkout" in joined and "-B" in joined:
                 rc = 128 if track_fails else 0

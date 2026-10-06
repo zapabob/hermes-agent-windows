@@ -87,7 +87,11 @@ def test_posix_spawn_uses_own_process_group(tmp_path):
     script.write_text("#!/bin/bash\necho \"$$ $(ps -o pgid= -p $$ | tr -d ' ')\"\n")
     script.chmod(0o755)
 
-    out = bounded_git_probe([str(script)], timeout=5.0)
+    # This is a process-owner test, not a repository Git-policy probe. The
+    # helper script deliberately is not Git and has no repository arguments.
+    result = _subprocess_compat.bounded_probe_run([str(script)], timeout=5.0)
+    assert result is not None and result.returncode == 0
+    out = result.stdout.strip()
     pid, pgid = out.split()
     assert pid == pgid, f"probe child pid={pid} does not lead its group pgid={pgid}"
     assert int(pgid) != os.getpgid(0), "probe child must not share our group"

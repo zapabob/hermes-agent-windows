@@ -495,7 +495,16 @@ class WindowsDebugEvents:
     """
     def __init__(self):
         import ctypes as c
-        from ctypes import wintypes as t
+        from types import SimpleNamespace
+
+        class FileTime(c.Structure):
+            _fields_ = [('dwLowDateTime', c.c_uint32), ('dwHighDateTime', c.c_uint32)]
+
+        # Windows LLP64 types must stay fixed-width even when the ABI is
+        # decoded by a mocked adapter on a POSIX test host (LP64).
+        t = SimpleNamespace(HANDLE=c.c_void_p, LPVOID=c.c_void_p,
+                            DWORD=c.c_uint32, WORD=c.c_uint16,
+                            BOOL=c.c_int32, FILETIME=FileTime)
         self.c, self.t = c, t
         self.thread = threading.get_ident()
         self.kernel = c.WinDLL('kernel32',use_last_error=True)
@@ -777,7 +786,7 @@ def supervise(command, root, operation, allowed, env, stream, *, owner=None, obs
             pump = DebugBirthPump(api,observer,job,errors)
         process = subprocess.Popen(command, cwd=operation, env=env, stdin=subprocess.DEVNULL,
             stdout=stream, stderr=subprocess.STDOUT, close_fds=True,
-            creationflags=subprocess.CREATE_NO_WINDOW | 0x00000004 | (1 if debug_births else 0))
+            creationflags=0x08000000 | 0x00000004 | (1 if debug_births else 0))
         # Reuse the existing owner: no child executes before Job assignment.
         owner._assign_windows_job(job, process)
         if auxiliary is not None and observer is None:

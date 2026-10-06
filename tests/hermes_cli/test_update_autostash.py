@@ -1,6 +1,8 @@
 from pathlib import Path
 from subprocess import CalledProcessError
 from types import SimpleNamespace
+from tests.hermes_cli.git_transport_fixture import mock_legacy_git_transport  # noqa: F401
+
 from unittest.mock import patch
 
 import pytest
@@ -67,6 +69,9 @@ def _setup_update_mocks(monkeypatch, tmp_path):
     monkeypatch.setattr(hermes_config, "migrate_config", lambda **kw: {"env_added": [], "config_added": []})
     monkeypatch.setattr(hermes_main, "_upgrade_pip_before_lazy_refresh", lambda *a, **kw: None)
     monkeypatch.setattr(hermes_main, "_refresh_active_lazy_features", lambda *a, **kw: True)
+    monkeypatch.setattr(hermes_main, "_pause_windows_gateways_for_update", lambda: None)
+    monkeypatch.setattr(hermes_main, "_resume_windows_gateways_after_update", lambda token: None)
+    monkeypatch.setattr(hermes_main, "_purge_stale_hermes_modules", lambda: None)
 
 
 
@@ -74,6 +79,7 @@ def _setup_update_mocks(monkeypatch, tmp_path):
 def test_refresh_active_memory_provider_dependencies_reinstalls_active_provider(monkeypatch):
     """#53272/#70636: update must re-run the active provider's dep install."""
     recorded = []
+    head_reads = 0
 
     monkeypatch.setattr(
         "hermes_cli.config.load_config",
@@ -121,15 +127,22 @@ def _make_update_side_effect(
 ):
     """Build a subprocess.run side_effect for cmd_update tests."""
     recorded = []
+    head_reads = 0
 
     def side_effect(cmd, **kwargs):
+        nonlocal head_reads
         recorded.append(cmd)
         joined = " ".join(str(c) for c in cmd)
+        if cmd[-2:] == ["rev-parse", "HEAD"]:
+            head_reads += 1
+            return SimpleNamespace(returncode=0, stdout=("a" if head_reads == 1 else "b") * 40 + "\n", stderr="")
         if "fetch" in joined and "origin" in joined:
             if fetch_fails:
                 return SimpleNamespace(stdout="", stderr=fetch_stderr, returncode=128)
             return SimpleNamespace(stdout="", stderr="", returncode=0)
         if "rev-parse" in joined and "--abbrev-ref" in joined:
+            return SimpleNamespace(stdout=f"{current_branch}\n", stderr="", returncode=0)
+        if cmd[-2:] == ["branch", "--show-current"]:
             return SimpleNamespace(stdout=f"{current_branch}\n", stderr="", returncode=0)
         if "checkout" in joined and "main" in joined:
             return SimpleNamespace(stdout="", stderr="", returncode=0)

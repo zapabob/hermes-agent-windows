@@ -20,7 +20,7 @@ import sys
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "tmp"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "scripts", "model_quantization", "pq2"))
 import pq2_lattice as L  # noqa: E402
 
 

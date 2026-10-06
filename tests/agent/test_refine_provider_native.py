@@ -210,7 +210,8 @@ def ordinary(tmp_path, monkeypatch):
                      "owned_threads": [{"name": t.name, "alive": t.is_alive()} for t in threads],
                      "network_attempts": attempts,
                      "relay_scope_pool_disposal_deferred_to_fixture_teardown": initial_scope_pool is None}
-            evidence = Path(__file__).resolve().parents[3] / "evidence/F08-provider-tests-001"
+            evidence = tmp_path / "evidence/F08-provider-tests-001"
+            evidence.mkdir(parents=True, exist_ok=True)
             identity = hashlib.sha256(str(tmp_path).encode("utf-8")).hexdigest()[:16]
             trace_path = evidence / (tmp_path.name + "-" + identity + "-trace.json")
             assert not trace_path.exists()

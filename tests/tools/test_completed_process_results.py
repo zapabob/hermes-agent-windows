@@ -20,7 +20,9 @@ def test_headless_terminal_result_survives_cli_exit(tmp_path):
     (home / "config.yaml").write_text(
         "model:\n  provider: custom\n  api_mode: chat_completions\n"
         "terminal:\n  env: local\n  oneshot_completion_wait_seconds: 10\n"
-        "memory:\n  memory_enabled: false\n  user_profile_enabled: false\n",
+        "memory:\n  memory_enabled: false\n  user_profile_enabled: false\n"
+        # This acceptance case owns process receipts, with no scanner fixture.
+        "security:\n  malware:\n    execution_gate: false\n",
         encoding="utf-8",
     )
     release = tmp_path / "release"
@@ -113,6 +115,7 @@ def test_headless_terminal_result_survives_cli_exit(tmp_path):
     assert producer.returncode == 0, producer.stdout + producer.stderr
     assert "Coordinator finished." in producer.stdout
     assert len(observed) == 1, (observed, producer.stdout, producer.stderr)
+    assert "session_id" in observed[0], (observed, producer.stdout, producer.stderr)
     process_id = observed[0]["session_id"]
     assert observed[0].get("notify_on_complete") is True, observed
 

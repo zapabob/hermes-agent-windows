@@ -1042,30 +1042,21 @@ async def auth_native_refresh(request: Request, body: _NativeRefreshBody):
         ``session_expired`` so the desktop starts a fresh native login;
       * a provider's IDP is unreachable and none rotated → 503.
     """
-    from hermes_cli.dashboard_auth import list_session_providers
-    from hermes_cli.dashboard_auth.base import RefreshExpiredError
+    from starlette.concurrency import run_in_threadpool
+    from hermes_cli.dashboard_auth.refresh_singleflight import refresh_session_coalesced
 
     if not body.refresh_token:
         raise HTTPException(status_code=400, detail="refresh_token required")
 
-    providers = list_session_providers()
-    if body.provider:
-        providers.sort(key=lambda p: p.name != body.provider)
-
-    unreachable: str | None = None
-    for provider in providers:
-        try:
-            session = provider.refresh_session(refresh_token=body.refresh_token)
-        except RefreshExpiredError:
-            continue
-        except ProviderError as e:
-            if unreachable is None:
-                unreachable = provider.name
-            _log.warning(
-                "dashboard-auth: provider %r unreachable during native refresh: %s",
-                provider.name, e,
-            )
-            continue
+    try:
+        refreshed = await run_in_threadpool(
+            refresh_session_coalesced, body.refresh_token, body.provider,
+            phase="native refresh", log=_log,
+        )
+    except ProviderError as exc:
+        raise HTTPException(status_code=503, detail=f"Auth provider {str(exc)!r} unreachable") from exc
+    if refreshed is not None:
+        session, _provider_name = refreshed
         audit_log(
             AuditEvent.REFRESH_SUCCESS,
             provider=session.provider,
@@ -1081,11 +1072,6 @@ async def auth_native_refresh(request: Request, body: _NativeRefreshBody):
             "user_id": session.user_id,
         }
 
-    if unreachable is not None:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Auth provider {unreachable!r} unreachable",
-        )
     audit_log(
         AuditEvent.REFRESH_FAILURE,
         reason="all_providers_rejected_rt",

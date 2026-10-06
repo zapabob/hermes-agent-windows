@@ -429,13 +429,8 @@ def _inventory_bundled_yara_rules(
 
 
 def _file_identity(metadata: os.stat_result) -> tuple[int, int, int, int, int]:
-    return (
-        int(metadata.st_dev),
-        int(metadata.st_ino),
-        int(metadata.st_size),
-        int(metadata.st_mtime_ns),
-        int(metadata.st_ctime_ns),
-    )
+    from .file_identity import stable_stat_identity
+    return stable_stat_identity(metadata)
 
 
 def _read_existing_yara_rule(path: Path) -> bytes | None:

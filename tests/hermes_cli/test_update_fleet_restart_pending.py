@@ -16,6 +16,8 @@ No live gateway, no network. Git and restart are mocked.
 
 from __future__ import annotations
 
+from tests.hermes_cli.git_transport_fixture import mock_legacy_git_transport  # noqa: F401
+
 import json
 from types import SimpleNamespace
 

@@ -1,5 +1,7 @@
 """Tests for the update check mechanism in hermes_cli.banner."""
 
+from tests.hermes_cli.git_transport_fixture import mock_legacy_git_transport  # noqa: F401
+
 import json
 import os
 import threading

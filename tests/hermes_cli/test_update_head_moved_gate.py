@@ -11,6 +11,8 @@ and fails loudly when the update was a no-op.
 
 from types import SimpleNamespace
 
+from tests.hermes_cli.git_transport_fixture import mock_legacy_git_transport  # noqa: F401
+
 import pytest
 
 from hermes_cli import main as hermes_main
@@ -105,6 +107,14 @@ def _patch_update_deps(monkeypatch, tmp_path, run_side_effect):
     monkeypatch.setattr(hermes_main, "_clear_update_incomplete_marker", lambda: None)
     # Gateway restart path (called after a successful update).
     monkeypatch.setattr(hermes_main, "_finish_dashboard_update_cleanup", lambda *a: None)
+    # Keep scenario discovery doubles bound to the same imported modules.
+    monkeypatch.setattr(hermes_main, "_purge_stale_hermes_modules", lambda: None)
+    # This synthetic plan contains no runtime; do not inventory host gateways.
+    from hermes_cli.update_inventory import UpdatePlan
+    monkeypatch.setattr(
+        "hermes_cli.update_inventory.collect_runtime_inventory",
+        lambda: UpdatePlan(install_method="git"),
+    )
     # Keep the (now surfaced — #78574) gateway auto-restart phase away from
     # this machine's real gateways: discovery returns nothing, systemd is
     # unsupported, so the phase is a clean no-op for both snapshots.

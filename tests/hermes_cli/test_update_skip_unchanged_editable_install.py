@@ -105,4 +105,8 @@ def test_unresolvable_pre_pull_sha_fails_closed(repo):
 def test_unusable_git_fails_closed(repo):
     """A git that cannot be executed must not be read as 'nothing changed'."""
     before = _head(repo)
-    assert _editable_install_is_current(["definitely-not-git"], repo, before) is False
+    from hermes_cli._subprocess_compat import GitPolicyError
+    # The shared owner refuses an unavailable executable before the updater
+    # can interpret its output or start an install/reset fallback.
+    with pytest.raises(GitPolicyError):
+        _editable_install_is_current(["definitely-not-git"], repo, before)

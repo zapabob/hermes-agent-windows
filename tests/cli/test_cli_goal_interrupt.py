@@ -143,7 +143,9 @@ class TestInterruptFlagLifecycle:
         from cli import HermesCLI
         import inspect
 
-        src = inspect.getsource(HermesCLI.chat)
+        # chat() owns dispatch and delegates the turn to _chat_turn().
+        assert "self._chat_turn(" in inspect.getsource(HermesCLI.chat)
+        src = inspect.getsource(HermesCLI._chat_turn)
         # Look for an explicit reset near the top of chat().
         head = src.split("if not self._ensure_runtime_credentials", 1)[0]
         assert "self._last_turn_interrupted = False" in head, (

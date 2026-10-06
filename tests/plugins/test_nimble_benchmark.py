@@ -18,6 +18,9 @@ from pathlib import Path
 
 import pytest
 
+if os.environ.get("NIMBLE_BENCH") != "1":
+    pytest.skip("set NIMBLE_BENCH=1 to run the upstream holdout", allow_module_level=True)
+
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
 

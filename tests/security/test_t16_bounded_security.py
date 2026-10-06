@@ -131,7 +131,7 @@ def _freeze_clamav_definition_metadata(
             return getattr(self.handle, name)
 
     def stable_scandir(path):
-        if Path(path) == database:
+        if not isinstance(path, int) and Path(path) == database:
             return FrozenEntries()
         return original_scandir(path)
 
@@ -270,7 +270,7 @@ def test_scan_paths_marks_file_inventory_truncation_for_review(
 
     scanned = [result for result in results if result.error is None]
     incomplete = [result for result in results if result.error == "directory_scan_incomplete"]
-    assert len(scanned) == 2
+    assert len(scanned) == 2, [result.error for result in results]
     assert len(incomplete) == 1
     assert incomplete[0].verdict == Verdict.SCAN_ERROR
     assert incomplete[0].action == "blocked_pending_review"
@@ -529,7 +529,7 @@ def test_clamav_inventory_failure_cannot_reuse_or_write_clean_cache(
         original_scandir = security_engines.os.scandir
 
         def scandir_database_only(path):
-            if Path(path) == database:
+            if not isinstance(path, int) and Path(path) == database:
                 return FailedScandir()
             return original_scandir(path)
 
@@ -1955,10 +1955,19 @@ def test_bounded_process_pipe_read_failure_is_typed_and_fails_closed(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
+    original_read = os.read
+
+    def fail_owned_reader(fd, size):
+        # Popen also uses os.read for its POSIX launch-error pipe. Inject the
+        # fault into the bounded owner's output readers after launch instead.
+        if threading.current_thread() is not threading.main_thread():
+            raise OSError("synthetic pipe read failure")
+        return original_read(fd, size)
+
     monkeypatch.setattr(
         security_bounded_process.os,
         "read",
-        Mock(side_effect=OSError("synthetic pipe read failure")),
+        fail_owned_reader,
     )
 
     with pytest.raises(BoundedProcessOutputError) as error:

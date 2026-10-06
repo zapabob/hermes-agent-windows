@@ -71,6 +71,10 @@ class _FakeGateway:
     def _clear_plugin_message_injector(self):
         pass
 
+    def _stop_free_route_catalogue_refresh_host(self):
+        # This fake owns no route-catalogue refresh host.
+        pass
+
     async def _run_in_executor_with_context(self, func, *args):
         # stop() offloads agent-resource cleanup off the loop (#53175); run
         # inline in tests so the bounded-cleanup path is exercised.

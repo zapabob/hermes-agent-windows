@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Iterable, Iterator
 
 from hermes_cli.config import load_config
+from .file_identity import stable_stat_identity
 
 from .bounded_walk import (
     DirectoryWalkReport,
@@ -277,13 +278,7 @@ def _create_scan_snapshot(
 
 
 def _stat_identity(metadata: os.stat_result) -> FileIdentity:
-    return (
-        int(metadata.st_dev),
-        int(metadata.st_ino),
-        int(metadata.st_size),
-        int(metadata.st_mtime_ns),
-        int(metadata.st_ctime_ns),
-    )
+    return stable_stat_identity(metadata)
 
 
 def _assert_path_has_no_reparse_components(path: Path) -> None:

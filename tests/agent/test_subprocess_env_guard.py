@@ -91,32 +91,36 @@ LEGACY_RAW_ENV_RATIONALE = (
     "Exact pre-existing raw environment set outside SEC-001 through SEC-015; any hash change requires review."
 )
 APPROVED_IMPLICIT_SPAWN_BASELINES = {
-    "agent": ("d782f1f78702bebfba47c9f3bf8e0e6756358f63747f609022eb650e6a8ff36f", LEGACY_IMPLICIT_RATIONALE),
+    # Source comparison against 265cb44c84e: former Git calls moved to the
+    # bounded shared owner. Record reductions, not new spawn exemptions.
+    "agent": ("6157fd45a1e244ef3067523cf44910cb3cf955e6df6c292ec397892a2fef312c", LEGACY_IMPLICIT_RATIONALE),
     "apps/desktop/electron": (
-        # Audited reduction: link-title fetching no longer spawns curl.
-        "60f4332f15f4af885771753792fb58715e72c2a7fa28a4ab7c7dd5cdecd47d02",
+        # Git routes share one bounded policy discovery process. Native test
+        # runtime adds one isolated, five-second interpreter identity probe.
+        "597bba1d73326763fca6f762cfe9ea8775291d335712c528884124cfa19b2da2",
         LEGACY_IMPLICIT_RATIONALE,
     ),
     "apps/desktop/scripts": (
         "e96c609717f53b2f4f1c984d9f209f0f6467883e02c31d8d16d3a4196aa65687",
         LEGACY_IMPLICIT_RATIONALE,
     ),
-    "cli.py": ("b2bd458df1c719588dd62ee33336fa9aacffe54438e3eb817bbe70bbd89b6760", LEGACY_IMPLICIT_RATIONALE),
     "cron": ("e3b322c51645ed1dab6a817a4c24bc210b7ebeb5a32edfc726f55ebfc9c86ce9", LEGACY_IMPLICIT_RATIONALE),
-    "downstream": ("8eb57e2d493e19d6e0e0b9c91627d3980693c6a4ec5a5dea503c3441ef139551", LEGACY_IMPLICIT_RATIONALE),
+    "downstream": ("b621fff921a4ef51bb6a3315030d8a5b7a0965aaa112e3d26b0dce20e1a478a2", LEGACY_IMPLICIT_RATIONALE),
     "gateway": ("7c888db74531e5ade41e806eb9ae704b5657b00c27fbe36a00e547d5f7ca6c78", LEGACY_IMPLICIT_RATIONALE),
     # Hypura harness daemon launch switched DETACHED_PROCESS → windows_detach_flags
     # (CREATE_NO_WINDOW + explicit env=); implicit-spawn fingerprint refreshed.
-    "hermes_cli": ("a77cceee55970f1d3f8ea55578e2bf52058189619324cce555a31e49b1515c05", LEGACY_IMPLICIT_RATIONALE),
+    "hermes_cli": ("653329ae966667ce5607f92b4b15612c34379deee84282f26b295cf28f0098ce", LEGACY_IMPLICIT_RATIONALE),
     "hermes_constants.py": (
         "5b23578a51cafa9b8233e03e7bdddf96a68954014b2cfeae2b1da311ee734704",
         LEGACY_IMPLICIT_RATIONALE,
     ),
     # #110 irodori/TTS cleanup adjusted plugin spawn sites (explicit env paths).
     "plugins": ("d97964b55eebff2d63b9b85b0b6170bb0af033e84408b7c22f84855c2bd6148f", LEGACY_IMPLICIT_RATIONALE),
-    "scripts": ("f64ead6f1425a0a575a1cc7804e2ca8ee271a7edc8ebdbe3abaab0e9a4100f8d", LEGACY_IMPLICIT_RATIONALE),
-    "tools": ("994ae77721eef4e6b519cff5882672141f42fc725e79c3d46c12067c9a14ceaf", LEGACY_IMPLICIT_RATIONALE),
-    "tui_gateway": ("4de651931815b6b2a6acbb92092aaa973e738ca0e3424a7a3b66268c9c169447", LEGACY_IMPLICIT_RATIONALE),
+    # Existing memory cron now excludes X imports; existing price utility
+    # uses curl for public read-only searches with --max-time=45.
+    "scripts": ("faae2347ba9a9237eed1776d1a0ff1a7bf87b8a30ea822ca2841f80387c262ce", LEGACY_IMPLICIT_RATIONALE),
+    "tools": ("c81f90543719f88d6350bf0342ea73d36b158d8e682a94036be738fb73162996", LEGACY_IMPLICIT_RATIONALE),
+    "tui_gateway": ("2d1248afe4d8acd6620038458dc9bb154f5449b10278878e62231e06b8d4f41f", LEGACY_IMPLICIT_RATIONALE),
     "ui-tui": ("88a4d1e5198da9b00a66f33915ae9908b1c80ffa0e3c5d7fba0636a4d70d4108", LEGACY_IMPLICIT_RATIONALE),
 }
 APPROVED_RAW_ENV_BASELINES = {
@@ -131,7 +135,8 @@ APPROVED_RAW_ENV_BASELINES = {
     ),
     "cron": ("f6ef16046414a0c08cf18132190d0df8d54be0a994aa02e190dee44268b2d0df", LEGACY_RAW_ENV_RATIONALE),
     "hermes_cli": ("4f78087143e76d2ecd930fcd7df0b928b8d0e8b7516fbfaba13c961f39b24c24", LEGACY_RAW_ENV_RATIONALE),
-    "plugins": ("a697e30cb6201ebfb649772c3183d77482d578fc181ccf36d5d0fe77e346d2af", LEGACY_RAW_ENV_RATIONALE),
+    # OpenViking launch now uses hermes_subprocess_env instead of a raw copy.
+    "plugins": ("4dccec979a6b553eaee2c059539ba93c288f2579ce9c5edc87ced22db506e852", LEGACY_RAW_ENV_RATIONALE),
     "scripts": ("8fe4efbc63affcc3adbe3b926bd35e6df7a49b03c79aa31d67ae515a7d66e0e6", LEGACY_RAW_ENV_RATIONALE),
     "tools": ("3f4ecb3e5f0b39a7c4766a23a5569aff5bfd1d16a581dba0773158f219dc2dbc", LEGACY_RAW_ENV_RATIONALE),
     "ui-tui": ("9b8fdcb1ea838cf26416d233911dbea3e716bc27f8b35216a61654e6b584e813", LEGACY_RAW_ENV_RATIONALE),

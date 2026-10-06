@@ -12,6 +12,15 @@ import pytest
 from pathlib import Path
 
 
+@pytest.fixture(autouse=True)
+def isolate_github_probe(monkeypatch):
+    """Synthetic repositories have no hosted PRs; never contact GitHub."""
+    monkeypatch.setattr(
+        "hermes_cli._subprocess_compat.run_internal_gh",
+        lambda args, **kwargs: subprocess.CompletedProcess(["gh", *args], 0, "[]", ""),
+    )
+
+
 @pytest.fixture
 def git_repo(tmp_path):
     """Create a temporary git repo for testing."""
@@ -1068,13 +1077,14 @@ class TestWidenedPruner:
         ).stdout.strip()
 
         real_run = subprocess.run
+        real_git = cli._worktree_git
         saw_atomic_delete = False
 
         def race_ref_delete(args, *pargs, **kwargs):
             nonlocal saw_atomic_delete
             if (
-                args[:3] == ["git", "update-ref", "-d"]
-                and args[3] == f"refs/heads/{branch}"
+                args[:2] == ["update-ref", "-d"]
+                and args[2] == f"refs/heads/{branch}"
             ):
                 saw_atomic_delete = True
                 real_run(
@@ -1084,9 +1094,9 @@ class TestWidenedPruner:
                     ],
                     cwd=git_repo, capture_output=True, check=True,
                 )
-            return real_run(args, *pargs, **kwargs)
+            return real_git(args, *pargs, **kwargs)
 
-        monkeypatch.setattr(subprocess, "run", race_ref_delete)
+        monkeypatch.setattr(cli, "_worktree_git", race_ref_delete)
         cli._prune_stale_worktrees(str(git_repo))
 
         assert saw_atomic_delete, "fixture must race the compare-and-delete call"
@@ -1477,19 +1487,14 @@ class TestPrMergedEscapeHatch:
     @staticmethod
     def _stub_gh(tmp_path, monkeypatch, stdout="[]", exit_code=0):
         del tmp_path  # Kept in the helper signature for compact call sites.
-        real_run = subprocess.run
 
         def run(args, *pargs, **kwargs):
-            if args and args[0] == "gh":
-                return subprocess.CompletedProcess(
-                    args=args,
-                    returncode=exit_code,
-                    stdout=stdout,
-                    stderr="",
-                )
-            return real_run(args, *pargs, **kwargs)
+            return subprocess.CompletedProcess(
+                args=["gh", *args], returncode=exit_code,
+                stdout=stdout, stderr="",
+            )
 
-        monkeypatch.setattr(subprocess, "run", run)
+        monkeypatch.setattr("hermes_cli._subprocess_compat.run_internal_gh", run)
 
     @staticmethod
     def _merged_payload(worktree):
@@ -1531,16 +1536,13 @@ class TestPrMergedEscapeHatch:
         wt = self._mk_diverged(
             git_repo, "private-local-work", remote_known=False
         )
-        real_run = subprocess.run
         gh_calls = []
 
         def reject_gh(args, *pargs, **kwargs):
-            if args and args[0] == "gh":
-                gh_calls.append(args)
-                raise AssertionError("local-only branch must not reach gh")
-            return real_run(args, *pargs, **kwargs)
+            gh_calls.append(args)
+            raise AssertionError("local-only branch must not reach gh")
 
-        monkeypatch.setattr(subprocess, "run", reject_gh)
+        monkeypatch.setattr("hermes_cli._subprocess_compat.run_internal_gh", reject_gh)
         cli._prune_stale_worktrees(str(git_repo))
 
         assert wt.exists(), "unpublished local work must be preserved"
