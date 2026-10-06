@@ -35,6 +35,52 @@ func TestBackendObservationRequiresConfiguredRoot(t *testing.T) {
 	}
 }
 
+func TestBackendObservationIncludesVenvPythonWorker(t *testing.T) {
+	cfg := Config{HermesRoot: `C:\Hermes Project`, HermesHome: `C:\Users\bob\.hermes`}
+	parent := win32Process{ProcessID: 41, CreationTime: 100, Name: "python.exe",
+		ExecutablePath: `C:\Hermes Project\.venv\Scripts\python.exe`,
+		CommandLine:    `"C:\Hermes Project\.venv\Scripts\python.exe" -m hermes_cli.main --profile default serve --host 127.0.0.1 --port 0`}
+	worker := win32Process{ProcessID: 42, ParentProcessID: 41, CreationTime: 200, Name: "python.exe",
+		ExecutablePath: `C:\Users\bob\AppData\Roaming\uv\python\python.exe`,
+		CommandLine:    `"C:\Users\bob\AppData\Roaming\uv\python\python.exe"  -m hermes_cli.main --profile default serve --host 127.0.0.1 --port 0`}
+	cases := []struct {
+		name   string
+		mutate func(*win32Process, *win32Process)
+		want   bool
+	}{
+		{name: "direct venv worker", want: true},
+		{name: "reused parent pid", mutate: func(p *win32Process, _ *win32Process) { p.CreationTime = 300 }},
+		{name: "unknown worker identity", mutate: func(_ *win32Process, w *win32Process) { w.CreationTime = 0 }},
+		{name: "missing parent", mutate: func(_ *win32Process, w *win32Process) { w.ParentProcessID = 99 }},
+		{name: "foreign checkout parent", mutate: func(p *win32Process, _ *win32Process) { p.ExecutablePath = `C:\OtherRepo\.venv\Scripts\python.exe` }},
+		{name: "different profile", mutate: func(_ *win32Process, w *win32Process) {
+			w.CommandLine = strings.Replace(w.CommandLine, "--profile default", "--profile other", 1)
+		}},
+		{name: "different service", mutate: func(_ *win32Process, w *win32Process) {
+			w.CommandLine = strings.Replace(w.CommandLine, " serve ", " gateway ", 1)
+		}},
+		{name: "different interpreter", mutate: func(_ *win32Process, w *win32Process) { w.Name = "unrelated.exe" }},
+		{name: "extra argument", mutate: func(_ *win32Process, w *win32Process) { w.CommandLine += " --other-option" }},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			p, w := parent, worker
+			if tc.mutate != nil {
+				tc.mutate(&p, &w)
+			}
+			found := false
+			for _, candidate := range filterDesktopBackendCandidates(cfg, []win32Process{w, p}) {
+				if candidate.ProcessID == w.ProcessID {
+					found = true
+				}
+			}
+			if found != tc.want {
+				t.Fatalf("worker observed=%v, want %v", found, tc.want)
+			}
+		})
+	}
+}
+
 func TestWatchdogProductionHasNoDesktopOrBackendLifecycleAuthority(t *testing.T) {
 	for _, name := range []string{"process_windows.go", "watchdog.go", "main.go", "config.go"} {
 		raw, err := os.ReadFile(name)

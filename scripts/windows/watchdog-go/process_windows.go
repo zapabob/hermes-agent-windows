@@ -17,11 +17,12 @@ import (
 )
 
 type win32Process struct {
-	ProcessID      uint32
-	CreationTime   uint64
-	Name           string
-	CommandLine    string
-	ExecutablePath string
+	ProcessID       uint32
+	ParentProcessID uint32
+	CreationTime    uint64
+	Name            string
+	CommandLine     string
+	ExecutablePath  string
 }
 
 func isOwnedDesktopExecutable(cfg Config, executablePath string) bool {
@@ -127,6 +128,50 @@ func isOwnedDesktopBackendProcess(cfg Config, proc win32Process) bool {
 	return pathWithin(proc.ExecutablePath, cfg.HermesRoot) || pathWithin(proc.ExecutablePath, cfg.HermesHome)
 }
 
+func filterDesktopBackendCandidates(cfg Config, all []win32Process) []win32Process {
+	byPID := make(map[uint32]win32Process, len(all))
+	for _, proc := range all {
+		byPID[proc.ProcessID] = proc
+	}
+	out := make([]win32Process, 0, 4)
+	for _, proc := range all {
+		if isOwnedDesktopBackendProcess(cfg, proc) {
+			out = append(out, proc)
+			continue
+		}
+		parent, found := byPID[proc.ParentProcessID]
+		if proc.ParentProcessID == 0 || !found || !isOwnedDesktopBackendProcess(cfg, parent) ||
+			proc.CreationTime == 0 || parent.CreationTime == 0 || parent.CreationTime > proc.CreationTime {
+			continue
+		}
+		// Windows venv Python is a launcher: its direct base-Python child owns
+		// the socket. Observe that worker only when its interpreter name and
+		// complete argument list match the configured-root launcher.
+		if !strings.EqualFold(proc.Name, parent.Name) ||
+			(!strings.EqualFold(proc.Name, "python.exe") && !strings.EqualFold(proc.Name, "pythonw.exe")) ||
+			!strings.EqualFold(filepath.Base(proc.ExecutablePath), proc.Name) ||
+			!strings.EqualFold(filepath.Base(parent.ExecutablePath), parent.Name) {
+			continue
+		}
+		workerArgs, workerErr := windows.DecomposeCommandLine(proc.CommandLine)
+		parentArgs, parentErr := windows.DecomposeCommandLine(parent.CommandLine)
+		if workerErr != nil || parentErr != nil || len(workerArgs) < 2 || len(workerArgs) != len(parentArgs) {
+			continue
+		}
+		matches := true
+		for i := 1; i < len(workerArgs); i++ {
+			if workerArgs[i] != parentArgs[i] {
+				matches = false
+				break
+			}
+		}
+		if matches {
+			out = append(out, proc)
+		}
+	}
+	return out
+}
+
 func getDesktopBackendCandidates(cfg Config) ([]win32Process, error) {
 	type result struct {
 		procs []win32Process
@@ -136,18 +181,21 @@ func getDesktopBackendCandidates(cfg Config) ([]win32Process, error) {
 	go func() {
 		var all []win32Process
 		// Full Win32_Process+CommandLine can hang when a process is wedged.
-		err := wmi.Query("SELECT ProcessId, Name, CommandLine, ExecutablePath FROM Win32_Process", &all)
+		err := wmi.Query("SELECT ProcessId, ParentProcessId, Name, CommandLine, ExecutablePath FROM Win32_Process", &all)
 		if err != nil {
 			ch <- result{nil, err}
 			return
 		}
-		out := make([]win32Process, 0, 4)
-		for _, p := range all {
-			if isOwnedDesktopBackendProcess(cfg, p) {
-				out = append(out, p)
+		for i := range all {
+			if !isDesktopBackendCommandLine(all[i].CommandLine) {
+				continue
+			}
+			identity, ok := readProcessIdentity(int(all[i].ProcessID))
+			if ok && sameExecutablePath(identity.ExecutablePath, all[i].ExecutablePath) {
+				all[i].CreationTime = identity.CreationTime
 			}
 		}
-		ch <- result{out, nil}
+		ch <- result{filterDesktopBackendCandidates(cfg, all), nil}
 	}()
 	select {
 	case r := <-ch:
