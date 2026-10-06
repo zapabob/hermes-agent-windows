@@ -250,11 +250,13 @@ class StreamingContextScrubber:
 
     def __init__(self) -> None:
         self._in_span: bool = False
+        self._span_depth: int = 0
         self._buf: str = ""
         self._at_block_boundary: bool = True
 
     def reset(self) -> None:
         self._in_span = False
+        self._span_depth = 0
         self._buf = ""
         self._at_block_boundary = True
 
@@ -273,15 +275,30 @@ class StreamingContextScrubber:
 
         while buf:
             if self._in_span:
-                idx = buf.lower().find(self._CLOSE_TAG)
-                if idx == -1:
-                    # Hold back a potential partial close tag; drop the rest
-                    held = self._max_partial_suffix(buf, self._CLOSE_TAG)
+                buf_lower = buf.lower()
+                open_idx = buf_lower.find(self._OPEN_TAG)
+                close_idx = buf_lower.find(self._CLOSE_TAG)
+                if open_idx == -1 and close_idx == -1:
+                    # Hold either tag's partial suffix so nesting is counted
+                    # even when an opening or closing tag crosses deltas.
+                    held = max(
+                        self._max_partial_suffix(buf, self._OPEN_TAG),
+                        self._max_partial_suffix(buf, self._CLOSE_TAG),
+                    )
                     self._buf = buf[-held:] if held else ""
                     return "".join(out)
-                # Found close — skip span content + tag, continue
-                buf = buf[idx + len(self._CLOSE_TAG) :]
-                self._in_span = False
+                if open_idx != -1 and (close_idx == -1 or open_idx < close_idx):
+                    self._span_depth += 1
+                    buf = buf[open_idx + len(self._OPEN_TAG) :]
+                    continue
+                # A nested close only exits its own fence. The outer span
+                # remains hidden until its matching close arrives.
+                if self._span_depth > 1:
+                    self._span_depth -= 1
+                else:
+                    self._span_depth = 0
+                    self._in_span = False
+                buf = buf[close_idx + len(self._CLOSE_TAG) :]
             else:
                 idx = self._find_boundary_open_tag(buf)
                 if idx == -1:
@@ -300,6 +317,7 @@ class StreamingContextScrubber:
                     self._append_visible(out, buf[:idx])
                 buf = buf[idx + len(self._OPEN_TAG) :]
                 self._in_span = True
+                self._span_depth = 1
 
         return "".join(out)
 
@@ -314,6 +332,7 @@ class StreamingContextScrubber:
         if self._in_span:
             self._buf = ""
             self._in_span = False
+            self._span_depth = 0
             return ""
         tail = self._buf
         self._buf = ""

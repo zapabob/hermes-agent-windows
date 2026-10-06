@@ -53,3 +53,15 @@ class TestNestedFenceDoesNotEndSpanEarly:
         out = "".join(s.feed(d) for d in deltas) + s.flush()
         assert "NESTED_TAIL_MARKER" not in out
         assert "Visible answer" in out
+
+    def test_nested_opening_tag_split_across_deltas(self):
+        """An inner opening tag split across chunks still increments depth."""
+        s = StreamingContextScrubber()
+        deltas = [
+            "<memory-context>\nlead\n<memory-con",
+            "text>\ninner payload\n</memory-context>\n",
+            "NESTED_TAIL_MARKER\n</memory-context>\nVisible answer",
+        ]
+        out = "".join(s.feed(d) for d in deltas) + s.flush()
+        assert "NESTED_TAIL_MARKER" not in out
+        assert "Visible answer" in out
