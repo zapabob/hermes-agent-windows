@@ -49,6 +49,39 @@ async function runGh(args, cwd, ghBin): Promise<{ ok: boolean; stdout: string; s
 async function gitFor(cwd, gitBin, timeout = 30) {
   const policy = await gitExecutionPolicy(cwd, gitBin)
   const transport = simpleGitTransport(cwd, policy, timeout)
+  const policyEnvironment = Object.keys(policy.environment || {})
+  const allowedEnvironment = new Set(policyEnvironment.map(key => key.toUpperCase()))
+  const inheritedIdentityEnvironment = new Set([
+    'GIT_AUTHOR_DATE',
+    'GIT_AUTHOR_EMAIL',
+    'GIT_AUTHOR_NAME',
+    'GIT_COMMITTER_DATE',
+    'GIT_COMMITTER_EMAIL',
+    'GIT_COMMITTER_NAME'
+  ])
+  const gitEnvironment = Object.fromEntries(
+    Object.entries(transport.environment || {}).filter(([key]) => {
+      const canonical = key.toUpperCase()
+      const guarded =
+        canonical.startsWith('GIT_') || ['EDITOR', 'VISUAL', 'PAGER', 'GCM_INTERACTIVE'].includes(canonical)
+
+      if (!guarded) {
+        return true
+      }
+
+      if (allowedEnvironment.has(canonical)) {
+        return true
+      }
+
+      if (inheritedIdentityEnvironment.has(canonical)) {
+        allowedEnvironment.add(canonical)
+
+        return true
+      }
+
+      return false
+    })
+  )
 
   // `gitBin` is resolved inside the Electron main process from known install
   // locations or PATH — never renderer/user input. simple-git's custom-binary
@@ -63,6 +96,9 @@ async function gitFor(cwd, gitBin, timeout = 30) {
     errors: transport.errors,
     maxConcurrentProcesses: 4,
     trimmed: false,
+    // v4 blocks Git-affecting environment by default. Only the validated
+    // repository-policy overrides and data-only commit identity survive.
+    allowEnvironment: [...allowedEnvironment],
     // These flags let simple-git carry the owner's disabling overrides. Values
     // and config paths come from the validated policy, not repository settings.
     unsafe: {
@@ -81,7 +117,7 @@ async function gitFor(cwd, gitBin, timeout = 30) {
     }
   })
 
-  git.env(transport.environment)
+  git.env(gitEnvironment)
 
   return git
 }

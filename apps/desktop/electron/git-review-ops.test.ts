@@ -47,7 +47,7 @@ function mockReview(overrides: Record<string, unknown> = {}) {
   const cwd = path.join(root, 'tmp', 'pure-selected-repo')
 
   const git = {
-    env() {},
+    env(_value?: NodeJS.ProcessEnv) {},
     status: async () => ({ files: [], tracking: null, current: null }),
     diffSummary: async () => ({ files: [] }),
     ...(overrides.git as object)
@@ -67,14 +67,22 @@ function mockReview(overrides: Record<string, unknown> = {}) {
   }
 
   const calls: unknown[][] = []
+  const environments: NodeJS.ProcessEnv[] = []
 
   const dependencies = {
     'node:fs/promises': {},
     'node:path': path,
-    'simple-git': options => {
-      calls.push([options])
+    'simple-git': {
+      simpleGit: options => {
+        calls.push([options])
+        git.env = (value?: NodeJS.ProcessEnv) => {
+          if (value) {
+            environments.push(value)
+          }
+        }
 
-      return git
+        return git
+      }
     },
     './hardening': { resolveRequestedPathForIpc: () => cwd },
     './git-execution-policy': policy
@@ -93,7 +101,7 @@ function mockReview(overrides: Record<string, unknown> = {}) {
     module.exports
   )
 
-  return { ops: module.exports, cwd, calls }
+  return { ops: module.exports, cwd, calls, environments }
 }
 
 function reviewGate<T>() {
@@ -373,6 +381,31 @@ test('resolveRenamePath: plain path is unchanged', () => {
 
 test('gitFor accepts the main-owned native Git executable', async () => {
   await assert.doesNotReject(() => gitFor(process.cwd(), gitBinary))
+})
+
+test('gitFor passes only policy Git overrides and commit identity through the v4 environment guard', async () => {
+  const { ops, calls, environments } = mockReview({
+    policy: {
+      gitExecutionPolicy: async () => ({ environment: { GIT_CONFIG_NOSYSTEM: '1' } }),
+      simpleGitTransport: () => ({
+        binary: ['node', 'git-transport.cjs'],
+        environment: {
+          EDITOR: 'untrusted-editor',
+          GIT_AUTHOR_NAME: 'Bob',
+          GIT_CONFIG_NOSYSTEM: '1',
+          GIT_DIR: 'untrusted-repo',
+          VISUAL: 'untrusted-visual'
+        }
+      })
+    }
+  })
+
+  await ops.gitFor('repo', 'git')
+
+  const options = calls[0][0] as { allowEnvironment: string[] }
+
+  assert.deepEqual(options.allowEnvironment.sort(), ['GIT_AUTHOR_NAME', 'GIT_CONFIG_NOSYSTEM'])
+  assert.deepEqual(environments[0], { GIT_AUTHOR_NAME: 'Bob', GIT_CONFIG_NOSYSTEM: '1' })
 })
 
 test('gitFor runs git through a spaced binary path', async () => {

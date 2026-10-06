@@ -55,6 +55,9 @@
     "baseline-browser-mapping": "2.11.0",
     "compression": "1.8.2",
     "proxy-addr": "2.0.8",
+    "http-cache-semantics": "4.3.0",
+    "source-map-js": "1.2.2",
+    "tinypool": "2.1.2",
     "brace-expansion@^5.0.0": "5.0.12",
     "postcss-selector-parser@7": "7.1.6"
   },
