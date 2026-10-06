@@ -190,7 +190,9 @@ export function useSlashCompletions(options: {
           cachedSlashCompletion(`slash:${text.toLowerCase()}`, () =>
             gateway.request<{ items?: CompletionEntry[]; replace_from?: number }>('complete.slash', { text })
           ),
-          cachedSlashCompletion('catalog', () => gateway.request<CommandsCatalogLike>('commands.catalog')).catch(() => undefined)
+          cachedSlashCompletion('catalog', () => gateway.request<CommandsCatalogLike>('commands.catalog')).catch(
+            () => undefined
+          )
         ])
 
         // Arg-completion items (replace_from > 1) carry just the arg stub —
@@ -211,7 +213,7 @@ export function useSlashCompletions(options: {
 
             return { ...item, text: `${prefix}${argText}` }
           })
-          .filter(item => isArgCompletion ? isDesktopSlashCommand(item.text) : isDesktopSlashSuggestion(item.text))
+          .filter(item => (isArgCompletion ? isDesktopSlashCommand(item.text) : isDesktopSlashSuggestion(item.text)))
           .map(item => ({
             ...item,
             // Arg suggestions (e.g. `/handoff <platform>`) live under one
@@ -297,7 +299,10 @@ export function useSlashCompletions(options: {
         return true
       }
 
-      return hasCachedSlashCompletion(query ? `slash:${text.toLowerCase()}` : 'catalog') && hasCachedSlashCompletion('catalog')
+      return (
+        hasCachedSlashCompletion(query ? `slash:${text.toLowerCase()}` : 'catalog') &&
+        hasCachedSlashCompletion('catalog')
+      )
     },
     [skinThemes]
   )

@@ -1,8 +1,4 @@
-import {
-  safeBackgroundImageFit,
-  safeBackgroundImagePosition,
-  safeBackgroundOverlay
-} from '@hermes/shared/skin-css'
+import { safeBackgroundImageFit, safeBackgroundImagePosition, safeBackgroundOverlay } from '@hermes/shared/skin-css'
 import { expect, test } from 'vitest'
 
 test('safeBackgroundOverlay accepts plain CSS colour literals', () => {

@@ -9,7 +9,13 @@ import path from 'node:path'
 
 import simpleGit from 'simple-git'
 
-import { executeGh, executeGit, gitExecutionPolicy, rethrowGitPolicyError, simpleGitTransport } from './git-execution-policy'
+import {
+  executeGh,
+  executeGit,
+  gitExecutionPolicy,
+  rethrowGitPolicyError,
+  simpleGitTransport
+} from './git-execution-policy'
 import { resolveRequestedPathForIpc } from './hardening'
 
 const COMMIT_CONTEXT_DIFF_MAX_CHARS = 120_000
@@ -36,12 +42,14 @@ function ghEnv(ghBin) {
 // availability/auth without a throw. gh missing/unauthed → ok:false.
 async function runGh(args, cwd, ghBin): Promise<{ ok: boolean; stdout: string; stderr: string }> {
   const result = await executeGh(cwd, ghBin, args, ghEnv(ghBin))
-  return {ok: result.exitCode === 0, stdout: result.stdout, stderr: result.stderr}
+
+  return { ok: result.exitCode === 0, stdout: result.stdout, stderr: result.stderr }
 }
 
 async function gitFor(cwd, gitBin, timeout = 30) {
   const policy = await gitExecutionPolicy(cwd, gitBin)
   const transport = simpleGitTransport(cwd, policy, timeout)
+
   // `gitBin` is resolved inside the Electron main process from known install
   // locations or PATH — never renderer/user input. simple-git's custom-binary
   // validation rejects paths containing spaces (the default Windows install is
@@ -72,12 +80,15 @@ async function gitFor(cwd, gitBin, timeout = 30) {
       allowUnsafeCustomBinary: true
     }
   })
+
   git.env(transport.environment)
+
   return git
 }
 
 async function protectedDiffArgs(git, cwd: string, gitBin: string, args: string[]): Promise<string[]> {
   const current = await gitExecutionPolicy(cwd, gitBin, ['diff', ...args])
+
   // The transport rediscovers policy for the final generated argv. Keep its
   // request nonce paired with the instance's public error handler.
   return current.argv.slice(1)
@@ -148,6 +159,7 @@ async function untrackedInsertions(cwd, relPath) {
     return buf.length > 0 && buf[buf.length - 1] !== 10 ? lines + 1 : lines
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return 0
   }
 }
@@ -267,6 +279,7 @@ async function reviewList(repoPath, scope, baseRef, gitBin) {
     cwd = resolveRequestedPathForIpc(repoPath, { purpose: 'Review list' })
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return { files: [], base: null }
   }
 
@@ -331,10 +344,16 @@ async function reviewList(repoPath, scope, baseRef, gitBin) {
     // Drain every owner request before reporting failure. A policy refusal must
     // not be hidden by an earlier ordinary Git error and its empty-read fallback.
     for (const result of results) {
-      if (result.status === 'rejected') {rethrowGitPolicyError(result.reason)}
+      if (result.status === 'rejected') {
+        rethrowGitPolicyError(result.reason)
+      }
     }
+
     const [status, staged, unstaged] = results.map(result => {
-      if (result.status === 'rejected') {throw result.reason}
+      if (result.status === 'rejected') {
+        throw result.reason
+      }
+
       return result.value
     })
 
@@ -361,6 +380,7 @@ async function reviewList(repoPath, scope, baseRef, gitBin) {
     return { files, base: null }
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return { files: [], base: null }
   }
 }
@@ -372,11 +392,18 @@ async function reviewDiff(repoPath, filePath, scope, baseRef, staged, gitBin) {
     cwd = resolveRequestedPathForIpc(repoPath, { purpose: 'Review diff' })
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return ''
   }
 
   const git = await gitFor(cwd, gitBin)
-  const safe = async args => git.diff(await protectedDiffArgs(git, cwd, gitBin, args)).catch(error => { rethrowGitPolicyError(error); return '' })
+
+  const safe = async args =>
+    git.diff(await protectedDiffArgs(git, cwd, gitBin, args)).catch(error => {
+      rethrowGitPolicyError(error)
+
+      return ''
+    })
 
   if (scope === 'branch') {
     const base = await branchBase(git)
@@ -401,8 +428,8 @@ async function reviewDiff(repoPath, filePath, scope, baseRef, staged, gitBin) {
   // Untracked file: no worktree diff exists, so synthesize an all-add diff via
   // --no-index (exits non-zero by design when files differ, so go around
   // simple-git's reject-on-nonzero with the shared execution owner).
-  const result = await executeGit(cwd, gitBin, ['diff', '--no-index', '--', '/dev/null', filePath],
-    32 * 1024 * 1024)
+  const result = await executeGit(cwd, gitBin, ['diff', '--no-index', '--', '/dev/null', filePath], 32 * 1024 * 1024)
+
   return result.exitCode === 0 || result.exitCode === 1 ? result.stdout : ''
 }
 
@@ -462,11 +489,14 @@ async function reviewHistory(repoPath, limit, gitBin) {
     cwd = resolveRequestedPathForIpc(repoPath, { purpose: 'Review history' })
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return []
   }
 
   try {
-    const raw = await (await gitFor(cwd, gitBin)).raw([
+    const raw = await (
+      await gitFor(cwd, gitBin)
+    ).raw([
       'log',
       `--max-count=${historyLimit(limit)}`,
       '--date=iso-strict',
@@ -476,6 +506,7 @@ async function reviewHistory(repoPath, limit, gitBin) {
     return parseHistory(raw)
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return []
   }
 }
@@ -491,14 +522,18 @@ async function reviewHistoryDiff(repoPath, sha, gitBin) {
     cwd = resolveRequestedPathForIpc(repoPath, { purpose: 'Review history diff' })
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return ''
   }
 
   const args = ['show', '--format=', '--find-renames', '--find-copies', sha, '--']
   const policy = await gitExecutionPolicy(cwd, gitBin, args)
-  return (await gitFor(cwd, gitBin))
-    .raw(policy.argv)
-    .catch(error => { rethrowGitPolicyError(error); return '' })
+
+  return (await gitFor(cwd, gitBin)).raw(policy.argv).catch(error => {
+    rethrowGitPolicyError(error)
+
+    return ''
+  })
 }
 
 // Working-tree-vs-HEAD diff for ONE file — the "what changed since the last
@@ -512,11 +547,17 @@ async function fileDiffVsHead(repoPath, filePath, gitBin) {
     cwd = resolveRequestedPathForIpc(repoPath, { purpose: 'File diff' })
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return ''
   }
 
   const git = await gitFor(cwd, gitBin)
-  const head = await git.diff(await protectedDiffArgs(git, cwd, gitBin, ['HEAD', '--', filePath])).catch(error => { rethrowGitPolicyError(error); return '' })
+
+  const head = await git.diff(await protectedDiffArgs(git, cwd, gitBin, ['HEAD', '--', filePath])).catch(error => {
+    rethrowGitPolicyError(error)
+
+    return ''
+  })
 
   if (head.trim()) {
     return head
@@ -524,14 +565,18 @@ async function fileDiffVsHead(repoPath, filePath, gitBin) {
 
   // No tracked changes vs HEAD. Only synthesize an all-add diff for a file git
   // doesn't know yet; a clean tracked file must return empty.
-  const status = await git.raw(['status', '--porcelain', '--', filePath]).catch(error => { rethrowGitPolicyError(error); return '' })
+  const status = await git.raw(['status', '--porcelain', '--', filePath]).catch(error => {
+    rethrowGitPolicyError(error)
+
+    return ''
+  })
 
   if (!status.trim().startsWith('??')) {
     return ''
   }
 
-  const result = await executeGit(cwd, gitBin, ['diff', '--no-index', '--', '/dev/null', filePath],
-    32 * 1024 * 1024)
+  const result = await executeGit(cwd, gitBin, ['diff', '--no-index', '--', '/dev/null', filePath], 32 * 1024 * 1024)
+
   return result.exitCode === 0 || result.exitCode === 1 ? result.stdout : ''
 }
 
@@ -558,11 +603,27 @@ async function reviewRevert(repoPath, filePath, gitBin) {
   const git = await gitFor(cwd, gitBin)
 
   if (filePath) {
-    await git.raw(['checkout', 'HEAD', '--', filePath]).catch(error => { rethrowGitPolicyError(error); return undefined })
-    await git.raw(['clean', '-fd', '--', filePath]).catch(error => { rethrowGitPolicyError(error); return undefined })
+    await git.raw(['checkout', 'HEAD', '--', filePath]).catch(error => {
+      rethrowGitPolicyError(error)
+
+      return undefined
+    })
+    await git.raw(['clean', '-fd', '--', filePath]).catch(error => {
+      rethrowGitPolicyError(error)
+
+      return undefined
+    })
   } else {
-    await git.raw(['checkout', 'HEAD', '--', '.']).catch(error => { rethrowGitPolicyError(error); return undefined })
-    await git.raw(['clean', '-fd']).catch(error => { rethrowGitPolicyError(error); return undefined })
+    await git.raw(['checkout', 'HEAD', '--', '.']).catch(error => {
+      rethrowGitPolicyError(error)
+
+      return undefined
+    })
+    await git.raw(['clean', '-fd']).catch(error => {
+      rethrowGitPolicyError(error)
+
+      return undefined
+    })
   }
 
   return { ok: true }
@@ -576,6 +637,7 @@ async function reviewRevParse(repoPath, ref, gitBin) {
     cwd = resolveRequestedPathForIpc(repoPath, { purpose: 'Review rev-parse' })
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return null
   }
 
@@ -583,6 +645,7 @@ async function reviewRevParse(repoPath, ref, gitBin) {
     return (await (await gitFor(cwd, gitBin)).revparse([ref || 'HEAD'])).trim() || null
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return null
   }
 }
@@ -626,11 +689,18 @@ async function reviewCommitContext(repoPath, gitBin) {
     cwd = resolveRequestedPathForIpc(repoPath, { purpose: 'Review commit context' })
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return { diff: '', recent: '' }
   }
 
   const git = await gitFor(cwd, gitBin)
-  const safe = async args => git.diff(await protectedDiffArgs(git, cwd, gitBin, args)).catch(error => { rethrowGitPolicyError(error); return '' })
+
+  const safe = async args =>
+    git.diff(await protectedDiffArgs(git, cwd, gitBin, args)).catch(error => {
+      rethrowGitPolicyError(error)
+
+      return ''
+    })
 
   let status
 
@@ -638,6 +708,7 @@ async function reviewCommitContext(repoPath, gitBin) {
     status = await git.status()
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return { diff: '', recent: '' }
   }
 
@@ -662,7 +733,11 @@ async function reviewCommitContext(repoPath, gitBin) {
     diff = diff ? `${diff}${note}` : note
   }
 
-  const recent = await git.raw(['log', '-n', '10', '--pretty=format:%s']).catch(error => { rethrowGitPolicyError(error); return '' })
+  const recent = await git.raw(['log', '-n', '10', '--pretty=format:%s']).catch(error => {
+    rethrowGitPolicyError(error)
+
+    return ''
+  })
 
   return { diff: diff || '', recent: String(recent || '').trim() }
 }
@@ -691,6 +766,7 @@ async function reviewShipInfo(repoPath, ghBin) {
     cwd = resolveRequestedPathForIpc(repoPath, { purpose: 'Review ship info' })
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return { ghReady: false, pr: null }
   }
 
@@ -713,6 +789,7 @@ async function reviewShipInfo(repoPath, ghBin) {
     return { ghReady: true, pr: pr && pr.url ? { url: pr.url, state: pr.state, number: pr.number } : null }
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return { ghReady: true, pr: null }
   }
 }
@@ -788,6 +865,7 @@ async function reviewFetchPrComment(repoPath, ghBin, url) {
     cwd = resolveRequestedPathForIpc(repoPath, { purpose: 'Review comment fetch' })
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return null
   }
 
@@ -820,6 +898,7 @@ async function reviewFetchPrComment(repoPath, ghBin, url) {
     }
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return null
   }
 }
@@ -835,6 +914,7 @@ async function reviewPrList(repoPath, ghBin, branches, numbers) {
     cwd = resolveRequestedPathForIpc(repoPath, { purpose: 'Review PR list' })
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return { ghReady: false, prs: [] }
   }
 
@@ -902,12 +982,18 @@ async function reviewPrList(repoPath, ghBin, branches, numbers) {
 async function reviewCreatePr(repoPath, gitBin, ghBin) {
   const cwd = resolveRequestedPathForIpc(repoPath, { purpose: 'Review create PR' })
 
-  await reviewPush(repoPath, gitBin).catch(error => { rethrowGitPolicyError(error); return undefined })
+  await reviewPush(repoPath, gitBin).catch(error => {
+    rethrowGitPolicyError(error)
+
+    return undefined
+  })
 
   const created = await runGh(['pr', 'create', '--fill'], cwd, ghBin)
 
   if (!created.ok) {
-    throw new Error(created.stderr.trim() || created.stdout.trim() || 'gh pr create failed (is gh installed and authenticated?)')
+    throw new Error(
+      created.stderr.trim() || created.stdout.trim() || 'gh pr create failed (is gh installed and authenticated?)'
+    )
   }
 
   const url = created.stdout.trim().split('\n').filter(Boolean).pop() || ''
@@ -924,6 +1010,7 @@ async function repoStatus(repoPath, gitBin) {
     cwd = resolveRequestedPathForIpc(repoPath, { purpose: 'Repo status' })
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return null
   }
 
@@ -938,6 +1025,7 @@ async function repoStatus(repoPath, gitBin) {
     }
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return null
   }
 
@@ -947,6 +1035,7 @@ async function repoStatus(repoPath, gitBin) {
     git = await gitFor(cwd, gitBin)
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return null
   }
 
@@ -960,6 +1049,7 @@ async function repoStatus(repoPath, gitBin) {
     status = await git.status(['--untracked-files=normal'])
   } catch (error) {
     rethrowGitPolicyError(error)
+
     // Not a repo / git unavailable / remote backend.
     return null
   }
