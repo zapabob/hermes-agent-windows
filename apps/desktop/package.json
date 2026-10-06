@@ -190,7 +190,7 @@
     "wait-on": "9.0.10"
   },
   "build": {
-    "electronVersion": "41.10.3",
+    "electronVersion": "41.10.7",
     "appId": "io.github.zapabob.hermes-agent-windows",
     "productName": "Hermes Agent Windows Workstation Edition",
     "executableName": "Hermes",

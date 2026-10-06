@@ -124,7 +124,10 @@ def test_privilege_failure_never_means_process_absent(tmp_path: Path, shell_name
         assert actual["handle"] == 0 and actual["error"] == 87
     else:
         assert actual["handle"] == 0
-        assert actual["error"] not in {0, 87}, "Privilege API failure must preserve the unverified lock"
+        assert actual["error"] not in {0, 87}, (
+            "Privilege API failure must preserve the unverified lock "
+            f"(scenario={scenario}, shell={shell_name}, Win32 error={actual['error']})"
+        )
     if scenario not in {"token_error", "absent", "direct"}:
         assert 202 in actual["closed"], "Token handle leaked"
     if scenario in {"privileged", "second_absent"}:

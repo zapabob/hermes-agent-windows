@@ -173,6 +173,11 @@ def test_explicit_stop_runs_before_binary_availability_checks() -> None:
     stop_dispatch = launcher.index("if ($Stop) {")
     missing_binary = launcher.index("if (-not (Test-Path -LiteralPath $Exe)) {")
     assert stop_dispatch < missing_binary
+    stop_body = launcher[stop_dispatch:missing_binary]
+    assert "Stop-GoWatchdog" in stop_body
+    assert "Stop-Process" not in stop_body
+    assert "Get-Process" not in stop_body
+    assert "Remove-Item" not in stop_body
 
 
 def test_legacy_watchdog_shim_is_never_stopped_by_command_line() -> None:

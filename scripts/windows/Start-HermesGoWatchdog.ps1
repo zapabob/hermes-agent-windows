@@ -392,21 +392,14 @@ function Stop-PsDesktopBackendWatchdog {
 
 if ($Stop) {
     try {
-        $stopLog = Join-Path $env:TEMP "hermes-watchdog-stop.log"
-        "[{0}] Stop requested. Terminating Hermes desktop and watchdog processes..." -f (Get-Date -Format o) | Out-File -FilePath $stopLog -Append -Encoding utf8
-        Get-Process Hermes, electron, hermes-watchdog -ErrorAction SilentlyContinue | ForEach-Object {
-            "Stopping PID {0} ({1})" -f $_.Id, $_.ProcessName | Out-File -FilePath $stopLog -Append -Encoding utf8
-            Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
-        }
-        if (Test-Path -LiteralPath $LockPath) {
-            Remove-Item -LiteralPath $LockPath -Force -ErrorAction SilentlyContinue
-            "Removed lock file: {0}" -f $LockPath | Out-File -FilePath $stopLog -Append -Encoding utf8
+        if (-not (Stop-GoWatchdog)) {
+            exit 1
         }
     } catch {
-        "Stop error: {0}" -f $_.Exception.Message | Out-File -FilePath $stopLog -Append -Encoding utf8
+        Write-Warning ("Go watchdog stop failed: {0}" -f $_.Exception.Message)
+        exit 1
     }
     Write-Host "Go watchdog stopped."
-    "Stop completed successfully." | Out-File -FilePath $stopLog -Append -Encoding utf8
     exit 0
 }
 
