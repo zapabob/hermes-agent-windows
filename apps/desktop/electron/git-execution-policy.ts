@@ -234,6 +234,7 @@ function assertNodeTransportAvailable(): void {
   if (!process.versions.electron) {
     return
   }
+
   assertElectronNodeTransportAvailable(process.execPath)
 }
 
@@ -255,6 +256,7 @@ export function assertElectronNodeTransportAvailable(binary: string): void {
       if (!length) {
         break
       }
+
       const data = Buffer.concat([prefix, chunk.subarray(0, length)])
       const index = data.indexOf(sentinel)
 
@@ -297,6 +299,7 @@ export function assertElectronNodeTransportAvailable(binary: string): void {
   if (available) {
     return
   }
+
   throw new GitPolicyError('Trusted Node Git transport is unavailable.')
 }
 
@@ -313,11 +316,13 @@ export function simpleGitTransport(
   if (!runtime || runtime.argsPrefix.length !== 0) {
     throw new GitPolicyError('Trusted Git runtime is unavailable.')
   }
+
   const script = path.join(runtime.ownerRoot, 'apps', 'desktop', 'assets', 'git-transport.cjs')
 
   if (!fs.existsSync(script)) {
     throw new GitPolicyError('Trusted Git transport is unavailable.')
   }
+
   assertNodeTransportAvailable()
   const nonce = randomUUID()
   const eolSources: Record<string, string> = {}
@@ -428,6 +433,7 @@ export async function executeGh(
   if (!path.isAbsolute(gh)) {
     throw new GitPolicyError('Trusted GH executable is unavailable.')
   }
+
   const maxOutputBytes = 8 * 1024 * 1024
   const transport = simpleGitTransport(cwd, policy, 30, maxOutputBytes, gh, base)
 

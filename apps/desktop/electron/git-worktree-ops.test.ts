@@ -33,6 +33,7 @@ function mockWorktree(executeGitChecked: (cwd: string, binary: string, args: str
     const requireTest = createRequire(
       path.join(process.env.S06_DESKTOP_DEPS || path.join(root, 'apps/desktop'), 'package.json')
     )
+
     const esbuild = requireTest('esbuild')
 
     try {
@@ -73,6 +74,7 @@ function mockWorktree(executeGitChecked: (cwd: string, binary: string, args: str
 function worktreeGate() {
   let resolve!: (value: string) => void
   let reject!: (error: unknown) => void
+
   const promise = new Promise<string>((yes, no) => {
     resolve = yes
     reject = no
@@ -134,6 +136,7 @@ test('pure S06 worktree: later policy refusal is not hidden by an earlier ordina
     value => ({ value }),
     error => ({ error })
   )
+
   await new Promise<void>(resolve => setImmediate(resolve))
   remote.reject(refusal)
   assert.equal(((await result) as { error: unknown }).error, refusal)
@@ -161,6 +164,7 @@ test('pure S06 worktree: success retains SHAs, selected repo and remote deduplic
     if (args[0] === 'symbolic-ref') {
       return 'origin/main\n'
     }
+
     throw new Error(`Unexpected fake Git argv: ${args.join(' ')}`)
   })
 
@@ -173,6 +177,7 @@ test('pure S06 worktree: success retains SHAs, selected repo and remote deduplic
   for (const request of requests) {
     assert.deepEqual(request.slice(0, 2), [cwd, 'selected-git'])
   }
+
   assert.deepEqual(
     requests.slice(0, 2).map(request => request[2]),
     [
