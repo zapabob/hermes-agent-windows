@@ -22,7 +22,7 @@ jobs:
     # 82s). A second slice divides work that is already at that floor, and
     # adds a second setup.
     runs-on: ${{ github.repository == 'NousResearch/hermes-agent' && 'ubuntu-latest-96-core' || 'ubuntu-latest' }}
-    timeout-minutes: ${{ github.repository == 'NousResearch/hermes-agent' && 30 || 60 }}
+    timeout-minutes: ${{ github.repository == 'NousResearch/hermes-agent' && 30 || 120 }}
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
