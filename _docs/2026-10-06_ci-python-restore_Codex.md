@@ -35,3 +35,7 @@ Spawn fingerprints were compared with source archive `265cb44c84e`, which reprod
 Local test output, stopped test-process identities, pre-edit snapshots, and spawn-boundary source comparisons are retained in task-local artifacts. During diagnosis, an updater recovery path acted on the isolated checkout; the resulting stash was retained and applied to recover all changes, then that transport boundary was repaired. The canonical live main was not modified by the isolated tests.
 
 Publish only reviewed source changes and this record. Keep runtime databases, authentication data, model weights, logs, generated releases, and task-local investigation artifacts outside Git. After publication, fast-forward canonical main, rebuild/restart the authorized runtime stack, and verify all required workflows reach terminal success on the same pushed commit. Pending runs, earlier successful commits, process existence, and conditional E2E skips are not completion evidence.
+
+## Native CI follow-up
+
+Run `37464368563` on `19d64281f5c796a283362784a5dc40ad9f468137` exposed a race in the browser warmup spawn test: its process-wide Popen replacement also captured an import-time Git prefetch. Replace only the browser module's subprocess and executable-discovery references, retaining all original helper constants and the exact npx executable and hidden-window assertions. Assert that the shared Popen reference is unchanged. All ten native hidden-window tests pass with this isolation. No production browser behavior changes.

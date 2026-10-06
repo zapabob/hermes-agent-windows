@@ -227,16 +227,25 @@ def test_agent_browser_npx_warmup_hides_npx_window(monkeypatch):
         def communicate(self, timeout=None):
             return ("1.2.3\n", "")
 
+    # Module-owned stand-ins keep import-time Git prefetch threads on their
+    # real transport; changing the shared subprocess/shutil singletons races.
+    real_popen = subprocess.Popen
     monkeypatch.setattr(
-        browser_tool.shutil, "which",
-        lambda name, path=None: "/usr/bin/npx",
+        browser_tool, "shutil",
+        SimpleNamespace(**(vars(browser_tool.shutil) | {
+            "which": lambda name, path=None: "/usr/bin/npx",
+        })),
     )
     monkeypatch.setattr(browser_tool, "node_tool_runnable", lambda p: True)
     monkeypatch.setattr(browser_tool, "_ensure_agent_browser_runtime", lambda _cmd: True)
     monkeypatch.setattr(browser_tool, "windows_hide_flags", lambda: _CREATE_NO_WINDOW)
-    monkeypatch.setattr(browser_tool.subprocess, "Popen", _FakePopen)
+    monkeypatch.setattr(
+        browser_tool, "subprocess",
+        SimpleNamespace(**(vars(subprocess) | {"Popen": _FakePopen})),
+    )
 
     assert browser_tool.warm_agent_browser_npx_cache() is True
+    assert subprocess.Popen is real_popen
     assert captured[0][0][0] == "/usr/bin/npx"
     assert captured[0][1]["creationflags"] & _CREATE_NO_WINDOW == _CREATE_NO_WINDOW
 
