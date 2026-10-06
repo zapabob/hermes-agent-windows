@@ -7,7 +7,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
-import simpleGit from 'simple-git'
+import { simpleGit } from 'simple-git'
 
 import { executeGh, executeGit, gitExecutionPolicy, rethrowGitPolicyError, simpleGitTransport } from './git-execution-policy'
 import { resolveRequestedPathForIpc } from './hardening'
