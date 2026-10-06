@@ -1040,6 +1040,24 @@ class TestGatewayRunRestartWatcherOuterPopenFallback:
             gr.GatewayRunner._launch_detached_restart_command(cls._fake_self())
         )
 
+    @staticmethod
+    def _patch_watcher_popen(monkeypatch, watcher_popen):
+        """Mock only the detached Python watcher, leaving helper subprocesses real."""
+        real_popen = subprocess.Popen
+
+        def selective_popen(argv, *args, **kwargs):
+            is_watcher = (
+                isinstance(argv, (list, tuple))
+                and len(argv) > 2
+                and argv[1] == "-c"
+                and "windows_detach_flags_without_breakaway" in argv[2]
+            )
+            if is_watcher:
+                return watcher_popen(argv, *args, **kwargs)
+            return real_popen(argv, *args, **kwargs)
+
+        monkeypatch.setattr("subprocess.Popen", selective_popen)
+
     def test_outer_watcher_retries_without_breakaway_on_oserror(self, monkeypatch):
         import gateway.run as gr
         from hermes_cli._subprocess_compat import (
@@ -1057,7 +1075,7 @@ class TestGatewayRunRestartWatcherOuterPopenFallback:
                 raise OSError(5, "Access is denied")  # ERROR_ACCESS_DENIED
             return MagicMock()
 
-        monkeypatch.setattr("subprocess.Popen", fake_popen)
+        self._patch_watcher_popen(monkeypatch, fake_popen)
 
         self._drive(gr)
 
@@ -1109,8 +1127,8 @@ class TestGatewayRunRestartWatcherOuterPopenFallback:
         monkeypatch.setattr(gr, "_resolve_hermes_bin", lambda: ["hermes"])
 
         calls = []
-        monkeypatch.setattr(
-            "subprocess.Popen",
+        self._patch_watcher_popen(
+            monkeypatch,
             lambda argv, **kwargs: calls.append((argv, kwargs)) or MagicMock(),
         )
         warn = MagicMock()
@@ -1134,7 +1152,7 @@ class TestGatewayRunRestartWatcherOuterPopenFallback:
             calls.append((argv, kwargs))
             raise OSError(5, "Access is denied")
 
-        monkeypatch.setattr("subprocess.Popen", always_fail)
+        self._patch_watcher_popen(monkeypatch, always_fail)
         warn = MagicMock()
         monkeypatch.setattr(gr.logger, "warning", warn)
 

@@ -28,6 +28,24 @@ if (typeof (globalThis as any).localStorage === 'undefined') {
   }
 }
 
+// Node may expose its own Event constructors beside jsdom's Window. Events
+// created by Radix during deferred focus restoration must belong to the same
+// DOM realm as the target, or jsdom rejects dispatchEvent after a menu closes.
+if (typeof window !== 'undefined') {
+  const domWindow = window as unknown as Record<string, unknown>
+  const globalConstructors = globalThis as unknown as Record<string, unknown>
+  for (const name of ['Event', 'CustomEvent', 'FocusEvent', 'KeyboardEvent', 'MouseEvent', 'PointerEvent']) {
+    const constructor = domWindow[name]
+    if (typeof constructor === 'function' && globalConstructors[name] !== constructor) {
+      Object.defineProperty(globalThis, name, {
+        value: constructor,
+        configurable: true,
+        writable: true,
+      })
+    }
+  }
+}
+
 // React 19 + Testing Library 16: opt into the act environment so render(),
 // fireEvent(), and findBy* queries automatically flush state updates without
 // spurious "not wrapped in act(...)" warnings.

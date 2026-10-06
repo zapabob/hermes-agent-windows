@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import threading
 import time
+import uuid
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socket import socket, AF_INET, SOCK_DGRAM
@@ -165,14 +166,25 @@ def test_profile_path_policy_rejects_ads_and_unc_without_opening_them(
 def native_python_profile(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, request):
     repo_root = Path(request.config.rootpath).resolve()
     test_root = tmp_path.resolve()
+    if (
+        test_root.drive.casefold() != repo_root.drive.casefold()
+        or not test_root.is_relative_to(repo_root)
+    ):
+        # Hosted Windows places RUNNER_TEMP on C: while the checkout is often
+        # on D:. Keep native T06 files inside a unique ignored directory in
+        # the checkout so ACL and AppContainer probes stay on one volume.
+        cache_root = repo_root / ".pytest_cache"
+        cache_root.mkdir(parents=True, exist_ok=True)
+        test_root = cache_root / f"t06-{uuid.uuid4().hex}"
+        test_root.mkdir()
     assert test_root.drive.casefold() == repo_root.drive.casefold(), (
         "native T06 probe basetemp must share the isolated worktree volume"
     )
     assert test_root.is_relative_to(repo_root), (
-        f"native T06 probe files must remain inside pytest tmp_path: {test_root}"
+        f"native T06 probe files must remain inside the isolated worktree: {test_root}"
     )
-    workspace = tmp_path / "workspace"
-    toolchains = tmp_path / "toolchains"
+    workspace = test_root / "workspace"
+    toolchains = test_root / "toolchains"
     python_root = toolchains / "python"
     private_temp = workspace / ".private-temp"
     workspace.mkdir()
