@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import ctypes
 import json
 import os
 from pathlib import Path
 import shutil
 import subprocess
 import sys
+from ctypes import wintypes
 
 import pytest
 
@@ -75,6 +77,34 @@ def _run_stop(local_app_data: Path) -> subprocess.CompletedProcess[str]:
         timeout=60,
         check=False,
     )
+
+
+def _current_process_created_filetime() -> int:
+    """Return the exact Win32 creation FILETIME used by the launcher."""
+    class _FileTime(ctypes.Structure):
+        _fields_ = [("low", wintypes.DWORD), ("high", wintypes.DWORD)]
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.GetCurrentProcess.argtypes = []
+    kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+    kernel32.GetProcessTimes.argtypes = [
+        wintypes.HANDLE,
+        ctypes.POINTER(_FileTime),
+        ctypes.POINTER(_FileTime),
+        ctypes.POINTER(_FileTime),
+        ctypes.POINTER(_FileTime),
+    ]
+    kernel32.GetProcessTimes.restype = wintypes.BOOL
+    created, exited, kernel, user = (_FileTime() for _ in range(4))
+    if not kernel32.GetProcessTimes(
+        kernel32.GetCurrentProcess(),
+        ctypes.byref(created),
+        ctypes.byref(exited),
+        ctypes.byref(kernel),
+        ctypes.byref(user),
+    ):
+        raise ctypes.WinError(ctypes.get_last_error())
+    return (created.high << 32) | created.low
 
 
 def test_launcher_requires_full_process_identity_before_claiming_a_lock() -> None:
@@ -181,7 +211,7 @@ def test_explicit_stop_preserves_a_foreign_live_process_and_lock(tmp_path: Path)
         json.dumps(
             {
                 "pid": os.getpid(),
-                "processCreated": 1,
+                "processCreated": _current_process_created_filetime(),
                 "executablePath": sys.executable,
                 "startedAt": "1970-01-01T00:00:00Z",
                 "repoRoot": str(REPO_ROOT),

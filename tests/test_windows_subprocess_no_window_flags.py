@@ -38,7 +38,7 @@ def _spawns(captured, *needles):
 
 
 def _is_git_spawn(cmd) -> bool:
-    """True only for a ``git -C <cwd> ...`` spawn.
+    """True only for the internal Git command under test.
 
     ``bounded_git_probe`` lives in ``hermes_cli._subprocess_compat`` and both
     probe call sites delegate to it, so these tests patch
@@ -46,8 +46,10 @@ def _is_git_spawn(cmd) -> bool:
     module singleton, i.e. a process-wide patch. Any unrelated daemon spawn
     (e.g. an import-time update-check thread) must stay benign and out of the
     recorded spawns, mirroring the ``_spawns`` scoping the other tests use.
+    Internal Git resolves an executable and passes ``cwd`` separately instead
+    of keeping ``git -C`` in argv.
     """
-    return bool(cmd) and cmd[:2] == ["git", "-C"]
+    return bool(cmd) and "--show-current" in cmd and "branch" in cmd
 
 
 def _make_fake_popen(spawns, *, stdout="ok\n", returncode=0):
@@ -83,6 +85,17 @@ def test_bounded_git_probe_fast_path_spawn_contract_windows(monkeypatch):
 
     spawns = []
     monkeypatch.setattr(_subprocess_compat, "windows_hide_flags", lambda: _CREATE_NO_WINDOW)
+    monkeypatch.setattr(
+        _subprocess_compat,
+        "shutil",
+        SimpleNamespace(which=lambda name, path=None: r"C:\Git\cmd\git.exe"),
+    )
+    monkeypatch.setattr(
+        _subprocess_compat,
+        "noninteractive_repo_git_env",
+        lambda cwd, base=None, **kwargs: {"PATH": r"C:\Git\cmd"},
+    )
+    monkeypatch.setattr(_subprocess_compat, "git_policy_environment_valid", lambda env, base=None: True)
     monkeypatch.setattr(_subprocess_compat.subprocess, "Popen", _make_fake_popen(spawns, stdout="main\n"))
 
     out = _subprocess_compat.bounded_git_probe(
@@ -91,7 +104,9 @@ def test_bounded_git_probe_fast_path_spawn_contract_windows(monkeypatch):
     assert out == "main"
     assert len(spawns) == 1, spawns
     cmd, kwargs = spawns[0]
-    assert cmd == ["git", "-C", "C:/repo", "branch", "--show-current"]
+    assert cmd[0] == r"C:\Git\cmd\git.exe"
+    assert cmd[1:] == ["branch", "--show-current"]
+    assert kwargs["cwd"] == "C:/repo"
     assert kwargs["stdout"] == subprocess.PIPE
     assert kwargs["stderr"] == subprocess.PIPE
     assert kwargs["stdin"] == subprocess.DEVNULL
