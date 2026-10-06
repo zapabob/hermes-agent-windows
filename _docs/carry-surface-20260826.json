@@ -20,12 +20,12 @@
   "schema_version": 1,
   "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
   "summary": {
-    "all_fork_specific_loc": 3126026,
+    "all_fork_specific_loc": 3126649,
     "carry_surface_files": 5123,
-    "cwc": 86764372,
-    "fork_owned_loc": 1564845,
-    "upstream_owned_fork_loc": 1561181,
-    "utr": 0.499414
+    "cwc": 86798770,
+    "fork_owned_loc": 1564898,
+    "upstream_owned_fork_loc": 1561751,
+    "utr": 0.499497
   },
   "top_carry_risks": [
     {
@@ -83,10 +83,10 @@
       "upstream_frequency": 73
     },
     {
-      "added": 8465,
-      "cwc": 3410925,
-      "deleted": 4310,
-      "patch_size": 12775,
+      "added": 8578,
+      "cwc": 3442164,
+      "deleted": 4314,
+      "patch_size": 12892,
       "path": "agent/auxiliary_client.py",
       "semantic_coupling": 3,
       "upstream_frequency": 89
