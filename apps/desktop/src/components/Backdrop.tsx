@@ -1,8 +1,4 @@
-import {
-  safeBackgroundImageFit,
-  safeBackgroundImagePosition,
-  safeBackgroundOverlay
-} from '@hermes/shared/skin-css'
+import { safeBackgroundImageFit, safeBackgroundImagePosition, safeBackgroundOverlay } from '@hermes/shared/skin-css'
 import { useStore } from '@nanostores/react'
 import { Leva, useControls } from 'leva'
 import { type CSSProperties, useEffect, useMemo, useState } from 'react'

@@ -5,7 +5,6 @@
 // own `check-ref-format` at the boundary — never sanitized-and-fixed, because
 // a rewritten name would hide a typo the user should see.
 
-
 import { executeGitChecked, rethrowGitPolicyError } from './git-execution-policy'
 import { resolveRequestedPathForIpc } from './hardening'
 
@@ -134,6 +133,7 @@ async function listTags(repoPath, gitBin) {
     cwd = resolveRequestedPathForIpc(repoPath, { purpose: 'Tag list' })
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return []
   }
 
@@ -152,6 +152,7 @@ async function listTags(repoPath, gitBin) {
     return parseTags(out)
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return []
   }
 }
@@ -163,6 +164,7 @@ async function listStashes(repoPath, gitBin) {
     cwd = resolveRequestedPathForIpc(repoPath, { purpose: 'Stash list' })
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return []
   }
 
@@ -174,6 +176,7 @@ async function listStashes(repoPath, gitBin) {
     return parseStashes(out)
   } catch (error) {
     rethrowGitPolicyError(error)
+
     return []
   }
 }

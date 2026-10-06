@@ -23,68 +23,120 @@ import {
 // Current-source pure contracts: only the explicitly supplied owner fake can
 // receive a Git request. No policy process, real repository or Git is used.
 let pureWorktreeSource: string
+
 function mockWorktree(executeGitChecked: (cwd: string, binary: string, args: string[]) => Promise<string>) {
-  const root = process.env.S06_OWNER_ROOT || (fs.existsSync('electron/git-worktree-ops.ts')
-    ? path.resolve('../..') : process.cwd())
+  const root =
+    process.env.S06_OWNER_ROOT ||
+    (fs.existsSync('electron/git-worktree-ops.ts') ? path.resolve('../..') : process.cwd())
+
   if (!pureWorktreeSource) {
-    const requireTest = createRequire(path.join(process.env.S06_DESKTOP_DEPS || path.join(root, 'apps/desktop'), 'package.json'))
+    const requireTest = createRequire(
+      path.join(process.env.S06_DESKTOP_DEPS || path.join(root, 'apps/desktop'), 'package.json')
+    )
     const esbuild = requireTest('esbuild')
+
     try {
-      pureWorktreeSource = esbuild.transformSync(fs.readFileSync(path.join(root, 'apps/desktop/electron/git-worktree-ops.ts'), 'utf8'),
-        {loader: 'ts', format: 'cjs', target: 'node24'}).code
-    } finally { esbuild.stop() }
+      pureWorktreeSource = esbuild.transformSync(
+        fs.readFileSync(path.join(root, 'apps/desktop/electron/git-worktree-ops.ts'), 'utf8'),
+        { loader: 'ts', format: 'cjs', target: 'node24' }
+      ).code
+    } finally {
+      esbuild.stop()
+    }
   }
+
   const cwd = path.join(root, 'tmp', 'pure-selected-repo')
+
   const dependencies = {
-    'node:fs': {}, 'node:path': path,
-    './hardening': {resolveRequestedPathForIpc: () => cwd},
-    './git-execution-policy': {executeGitChecked, rethrowGitPolicyError}
+    'node:fs': {},
+    'node:path': path,
+    './hardening': { resolveRequestedPathForIpc: () => cwd },
+    './git-execution-policy': { executeGitChecked, rethrowGitPolicyError }
   }
-  const module = {exports: {}} as {exports: typeof WorktreeOpsModule}
-  new Function('require', 'module', 'exports', pureWorktreeSource)(name => {
-    if (!(name in dependencies)) {throw new Error(`Unexpected pure dependency: ${name}`)}
-    return dependencies[name]
-  }, module, module.exports)
-  return {ops: module.exports, cwd}
+
+  const module = { exports: {} } as { exports: typeof WorktreeOpsModule }
+  new Function('require', 'module', 'exports', pureWorktreeSource)(
+    name => {
+      if (!(name in dependencies)) {
+        throw new Error(`Unexpected pure dependency: ${name}`)
+      }
+
+      return dependencies[name]
+    },
+    module,
+    module.exports
+  )
+
+  return { ops: module.exports, cwd }
 }
 
 function worktreeGate() {
   let resolve!: (value: string) => void
   let reject!: (error: unknown) => void
-  const promise = new Promise<string>((yes, no) => { resolve = yes; reject = no })
-  return {promise, resolve, reject}
+  const promise = new Promise<string>((yes, no) => {
+    resolve = yes
+    reject = no
+  })
+
+  return { promise, resolve, reject }
 }
 
-test.each(['refs/heads', 'refs/remotes'])('pure S06 worktree: failure in %s waits for the other owner request', async failed => {
-  const sibling = worktreeGate()
-  const failure = failed === 'refs/heads' ? new Error('ordinary local failure') : new GitPolicyError('remote refused')
-  let calls = 0
-  const {ops} = mockWorktree(async (_cwd, _binary, args) => {
-    calls++
-    return args.at(-1) === failed ? Promise.reject(failure) : sibling.promise
-  })
-  let settled = false
-  const result = ops.listBranches('renderer-repo', 'selected-git')
-    .then(value => ({value}), error => ({error})).finally(() => { settled = true })
-  try {
-    await new Promise<void>(resolve => setImmediate(resolve))
-    assert.equal(calls, 2)
-    assert.equal(settled, false, 'branch list returned while the other request remained owned')
-  } finally { sibling.resolve('') }
-  if (failure instanceof GitPolicyError) {assert.equal((await result as {error: unknown}).error, failure)}
-  else {assert.deepEqual((await result as {value: unknown}).value, [])}
-})
+test.each(['refs/heads', 'refs/remotes'])(
+  'pure S06 worktree: failure in %s waits for the other owner request',
+  async failed => {
+    const sibling = worktreeGate()
+    const failure = failed === 'refs/heads' ? new Error('ordinary local failure') : new GitPolicyError('remote refused')
+    let calls = 0
+
+    const { ops } = mockWorktree(async (_cwd, _binary, args) => {
+      calls++
+
+      return args.at(-1) === failed ? Promise.reject(failure) : sibling.promise
+    })
+
+    let settled = false
+
+    const result = ops
+      .listBranches('renderer-repo', 'selected-git')
+      .then(
+        value => ({ value }),
+        error => ({ error })
+      )
+      .finally(() => {
+        settled = true
+      })
+
+    try {
+      await new Promise<void>(resolve => setImmediate(resolve))
+      assert.equal(calls, 2)
+      assert.equal(settled, false, 'branch list returned while the other request remained owned')
+    } finally {
+      sibling.resolve('')
+    }
+
+    if (failure instanceof GitPolicyError) {
+      assert.equal(((await result) as { error: unknown }).error, failure)
+    } else {
+      assert.deepEqual(((await result) as { value: unknown }).value, [])
+    }
+  }
+)
 
 test('pure S06 worktree: later policy refusal is not hidden by an earlier ordinary failure', async () => {
   const remote = worktreeGate()
   const refusal = new GitPolicyError('remote authority refused')
-  const {ops} = mockWorktree(async (_cwd, _binary, args) => {
+
+  const { ops } = mockWorktree(async (_cwd, _binary, args) => {
     return args.at(-1) === 'refs/heads' ? Promise.reject(new Error('local failed')) : remote.promise
   })
-  const result = ops.listBranches('renderer-repo', 'selected-git').then(value => ({value}), error => ({error}))
+
+  const result = ops.listBranches('renderer-repo', 'selected-git').then(
+    value => ({ value }),
+    error => ({ error })
+  )
   await new Promise<void>(resolve => setImmediate(resolve))
   remote.reject(refusal)
-  assert.equal((await result as {error: unknown}).error, refusal)
+  assert.equal(((await result) as { error: unknown }).error, refusal)
 })
 
 test('pure S06 worktree: success retains SHAs, selected repo and remote deduplication', async () => {
@@ -92,24 +144,42 @@ test('pure S06 worktree: success retains SHAs, selected repo and remote deduplic
   const sep = String.fromCharCode(31)
   const mainSha = 'a'.repeat(40)
   const remoteSha = 'b'.repeat(40)
-  const {ops, cwd} = mockWorktree(async (repo, binary, args) => {
+
+  const { ops, cwd } = mockWorktree(async (repo, binary, args) => {
     requests.push([repo, binary, args])
-    if (args[0] === 'for-each-ref') {return args.at(-1) === 'refs/heads'
-      ? `main${sep}${mainSha}\n` : `origin/HEAD${sep}${mainSha}\norigin/main${sep}${mainSha}\norigin/feature${sep}${remoteSha}\n`}
-    if (args[0] === 'worktree') {return `worktree ${repo}\nbranch refs/heads/main\n`}
-    if (args[0] === 'symbolic-ref') {return 'origin/main\n'}
+
+    if (args[0] === 'for-each-ref') {
+      return args.at(-1) === 'refs/heads'
+        ? `main${sep}${mainSha}\n`
+        : `origin/HEAD${sep}${mainSha}\norigin/main${sep}${mainSha}\norigin/feature${sep}${remoteSha}\n`
+    }
+
+    if (args[0] === 'worktree') {
+      return `worktree ${repo}\nbranch refs/heads/main\n`
+    }
+
+    if (args[0] === 'symbolic-ref') {
+      return 'origin/main\n'
+    }
     throw new Error(`Unexpected fake Git argv: ${args.join(' ')}`)
   })
+
   assert.deepEqual(await ops.listBranches('renderer-repo', 'selected-git'), [
-    {name: 'main', checkedOut: true, isDefault: true, isRemote: false, worktreePath: cwd, sha: mainSha},
-    {name: 'origin/feature', checkedOut: false, isDefault: false, isRemote: true, worktreePath: null, sha: remoteSha}
+    { name: 'main', checkedOut: true, isDefault: true, isRemote: false, worktreePath: cwd, sha: mainSha },
+    { name: 'origin/feature', checkedOut: false, isDefault: false, isRemote: true, worktreePath: null, sha: remoteSha }
   ])
   assert.equal(requests.length, 4)
-  for (const request of requests) {assert.deepEqual(request.slice(0, 2), [cwd, 'selected-git'])}
-  assert.deepEqual(requests.slice(0, 2).map(request => request[2]), [
-    ['for-each-ref', `--format=%(refname:short)${sep}%(objectname)`, '--sort=-committerdate', 'refs/heads'],
-    ['for-each-ref', `--format=%(refname:short)${sep}%(objectname)`, '--sort=-committerdate', 'refs/remotes']
-  ])
+
+  for (const request of requests) {
+    assert.deepEqual(request.slice(0, 2), [cwd, 'selected-git'])
+  }
+  assert.deepEqual(
+    requests.slice(0, 2).map(request => request[2]),
+    [
+      ['for-each-ref', `--format=%(refname:short)${sep}%(objectname)`, '--sort=-committerdate', 'refs/heads'],
+      ['for-each-ref', `--format=%(refname:short)${sep}%(objectname)`, '--sort=-committerdate', 'refs/remotes']
+    ]
+  )
 })
 
 function assertSameDirectory(actual: string, expected: string) {
