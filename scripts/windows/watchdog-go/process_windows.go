@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -128,6 +129,15 @@ func isOwnedDesktopBackendProcess(cfg Config, proc win32Process) bool {
 	return pathWithin(proc.ExecutablePath, cfg.HermesRoot) || pathWithin(proc.ExecutablePath, cfg.HermesHome)
 }
 
+func sameProcessImageFile(left, right string) bool {
+	if sameExecutablePath(left, right) {
+		return true
+	}
+	leftInfo, leftErr := os.Stat(left)
+	rightInfo, rightErr := os.Stat(right)
+	return leftErr == nil && rightErr == nil && os.SameFile(leftInfo, rightInfo)
+}
+
 func filterDesktopBackendCandidates(cfg Config, all []win32Process) []win32Process {
 	byPID := make(map[uint32]win32Process, len(all))
 	for _, proc := range all {
@@ -179,21 +189,35 @@ func getDesktopBackendCandidates(cfg Config) ([]win32Process, error) {
 	}
 	ch := make(chan result, 1)
 	go func() {
-		var all []win32Process
+		// WMI fills every field of the row type. Native CreationTime is not
+		// a Win32_Process property, so keep it out of the queried row shape.
+		var rows []struct {
+			ProcessID       uint32
+			ParentProcessID uint32
+			Name            string
+			CommandLine     string
+			ExecutablePath  string
+		}
 		// Full Win32_Process+CommandLine can hang when a process is wedged.
-		err := wmi.Query("SELECT ProcessId, ParentProcessId, Name, CommandLine, ExecutablePath FROM Win32_Process", &all)
+		err := wmi.Query("SELECT ProcessId, ParentProcessId, Name, CommandLine, ExecutablePath FROM Win32_Process", &rows)
 		if err != nil {
 			ch <- result{nil, err}
 			return
 		}
-		for i := range all {
-			if !isDesktopBackendCommandLine(all[i].CommandLine) {
+		all := make([]win32Process, 0, len(rows))
+		for _, row := range rows {
+			if !isDesktopBackendCommandLine(row.CommandLine) {
 				continue
 			}
-			identity, ok := readProcessIdentity(int(all[i].ProcessID))
-			if ok && sameExecutablePath(identity.ExecutablePath, all[i].ExecutablePath) {
-				all[i].CreationTime = identity.CreationTime
+			proc := win32Process{ProcessID: row.ProcessID, ParentProcessID: row.ParentProcessID,
+				Name: row.Name, CommandLine: row.CommandLine, ExecutablePath: row.ExecutablePath}
+			identity, ok := readProcessIdentity(int(proc.ProcessID))
+			// uv's version alias is a junction: WMI may report that alias while
+			// QueryFullProcessImageName returns the concrete version directory.
+			if ok && sameProcessImageFile(identity.ExecutablePath, proc.ExecutablePath) {
+				proc.CreationTime = identity.CreationTime
 			}
+			all = append(all, proc)
 		}
 		ch <- result{filterDesktopBackendCandidates(cfg, all), nil}
 	}()

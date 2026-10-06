@@ -81,6 +81,40 @@ func TestBackendObservationIncludesVenvPythonWorker(t *testing.T) {
 	}
 }
 
+func TestProcessImageFileAcceptsAliasWithoutTrustingDifferentFile(t *testing.T) {
+	dir := t.TempDir()
+	image, alias, other := filepath.Join(dir, "python.exe"), filepath.Join(dir, "alias.exe"), filepath.Join(dir, "other.exe")
+	if err := os.WriteFile(image, []byte("image"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(other, []byte("image"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Link(image, alias); err != nil {
+		t.Fatal(err)
+	}
+	if !sameProcessImageFile(image, alias) {
+		t.Fatal("same file under two paths must retain its identity")
+	}
+	if sameProcessImageFile(image, other) {
+		t.Fatal("identical bytes in a different file must not match")
+	}
+	if sameProcessImageFile(image, filepath.Join(dir, "missing.exe")) {
+		t.Fatal("unknown image must fail closed")
+	}
+}
+
+func TestDesktopBackendObservationQueryAcceptsWMIProcessRows(t *testing.T) {
+	dir := t.TempDir()
+	candidates, err := getDesktopBackendCandidates(Config{HermesRoot: dir, HermesHome: dir})
+	if err != nil {
+		t.Fatalf("native WMI observation failed: %v", err)
+	}
+	if len(candidates) != 0 {
+		t.Fatal("unrelated processes must not belong to an empty configured root")
+	}
+}
+
 func TestWatchdogProductionHasNoDesktopOrBackendLifecycleAuthority(t *testing.T) {
 	for _, name := range []string{"process_windows.go", "watchdog.go", "main.go", "config.go"} {
 		raw, err := os.ReadFile(name)
