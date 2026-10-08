@@ -458,7 +458,7 @@ def _state_db_stats(issues: list, state_db_path: Path) -> None:
                 issues.append("state.db is large — enable sessions.auto_prune in config.yaml"
                               + (" and run 'hermes sessions optimize-storage' offline (gateway stopped)"
                                  if "optimize-storage" in _detail else ""))
-            elif "optimize-storage" in _detail:
+            elif "optimize-storage" in _detail and "consider enabling sessions.auto_prune" not in _detail:
                 issues.append("state.db is large — run 'hermes sessions optimize-storage' offline "
                               "(gateway stopped) to compact FTS storage")
 
