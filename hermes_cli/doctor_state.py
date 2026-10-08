@@ -31,6 +31,31 @@ def _doctor_memory_config(hermes_home: Path | None = None) -> dict:
 
 # state.db size threshold — advisory only; deliberately a module constant, not config (doctor warnings are guidance, not policy).
 STATE_DB_SIZE_WARN_BYTES = 1 * 1024 * 1024 * 1024   # 1 GiB logical size
+def _sessions_auto_prune_effective(hermes_home: Path | None = None) -> bool:
+    """Effective value of ``sessions.auto_prune`` for the *active* profile, defaults to True.
+
+    The default comes from ``sessions.get("auto_prune", True)`` when the key is missing.
+    When ``config.yaml`` exists, ``load_user_config_effective`` is used (does not merge DEFAULT_CONFIG).
+    When no config exists, ``load_config_readonly`` is used as fallback (merges DEFAULT_CONFIG).
+    A False means the operator has *explicitly* disabled it — that matters for the ``state.db is large`` warning:
+    when auto_prune is already on, re-suggesting "consider enabling sessions.auto_prune in config.yaml" is misleading and loops forever.
+    The check is best-effort: any read failure falls back to ``True`` so the warning stays conservative
+    (off is the rare, actionable case) and a bad config never silences the size warning."""
+    try:
+        from hermes_cli.config import load_config_readonly
+        if hermes_home is not None and (hermes_home / "config.yaml").exists():
+            from hermes_cli.config_effective import load_user_config_effective
+            cfg = load_user_config_effective(hermes_home / "config.yaml")
+        else:
+            cfg = load_config_readonly()
+        sessions = cfg.get("sessions") or {}
+        if not isinstance(sessions, dict):
+            return True
+        val = sessions.get("auto_prune", True)
+        return bool(val)
+    except Exception:
+        return True
+
 
 
 def _sessions_auto_prune_effective(hermes_home: Path | None = None) -> bool:
@@ -457,7 +482,7 @@ def _state_db_stats(issues: list, state_db_path: Path) -> None:
             if "consider enabling sessions.auto_prune" in _detail:
                 issues.append("state.db is large — enable sessions.auto_prune in config.yaml"
                               + (" and run 'hermes sessions optimize-storage' offline (gateway stopped)"
-                                 if "optimize-storage" in _detail else ""))
+                                 if "optimize-storage" in _detail and _text.startswith("state.db is large") else ""))
             elif "optimize-storage" in _detail and "consider enabling sessions.auto_prune" not in _detail:
                 issues.append("state.db is large — run 'hermes sessions optimize-storage' offline "
                               "(gateway stopped) to compact FTS storage")
