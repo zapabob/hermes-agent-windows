@@ -250,7 +250,7 @@ COMMAND_REGISTRY: list[CommandDef] = [
                aliases=("q",), args_hint="<prompt>",
                busy_policy="dispatch", busy_handler="queue"),
     CommandDef("steer", "Inject a message after the next tool call without interrupting", "Session",
-               args_hint="<prompt>", busy_policy="dispatch", busy_handler="steer"),
+               aliases=("s",), args_hint="<prompt>", busy_policy="dispatch", busy_handler="steer"),
     CommandDef("goal", "Set a standing goal Hermes works on across turns until achieved", "Session",
                args_hint="[text | draft <text> | show | gate add <cmd> | pause | resume | clear | status | wait <pid> | unwait]",
                busy_policy="dispatch", busy_handler="goal", argument_mode="mixed"),
@@ -555,7 +555,7 @@ HELP_SESSION_SUBGROUPS: dict[str, tuple[str, ...]] = {
         "compress", "compact", "context", "ctx", "status",
     ),
     "Background & Automation": (
-        "bg", "btw", "agents", "tasks", "queue", "q", "steer",
+        "bg", "btw", "agents", "tasks", "queue", "q", "steer", "s",
         "goal", "subgoal", "heartbeat", "hb", "refine", "loop", "proactive",
         "moa", "journey", "learning", "memory-graph",
     ),

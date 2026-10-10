@@ -326,6 +326,7 @@ const DESKTOP_COMMAND_SPECS: readonly DesktopCommandSpec[] = [
   {
     name: '/steer',
     description: 'Steer the current run after the next tool call',
+    aliases: ['/s'],
     surface: exec(),
     argumentMode: 'text'
   },

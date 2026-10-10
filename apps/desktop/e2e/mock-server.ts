@@ -9,9 +9,8 @@
  *   GET  /v1/models             → { data: [{ id, ... }] }
  *   POST /v1/chat/completions   → streaming (SSE) or non-streaming response
  *
- * The canned response is a short, deterministic assistant message. Tool-call
- * requests are not simulated — the E2E tests only need the chat surface to
- * prove the full boot → gateway → inference → renderer chain works.
+ * The provider emits deterministic text or scripted tool calls. Hermes owns
+ * the actual tool handlers and effects in every real-backend E2E scenario.
  */
 
 import fs from 'node:fs'
@@ -24,6 +23,8 @@ import nodePath from 'node:path'
 export const MOCK_REPLY = 'Hello from the mock inference server! The full boot chain is working.'
 
 export interface MockServerOptions {
+  /** Fixed tool-bearing conversation responses; auxiliary requests remain plain text. */
+  scriptedTurns?: ScriptedTurn[]
   /** Pause the matching stream after its first token for session-switch E2E coverage. */
   holdFirstStreamForPrompt?: string
   /** Model ids returned by /v1/models and written into the E2E provider config. */
@@ -47,6 +48,7 @@ export interface MockServer {
   url: string
   receivedPrompts: string[]
   receivedModels: string[]
+  receivedRequests: Record<string, unknown>[]
   waitForHeldStream: () => Promise<void>
   waitForHeldCompletion: () => Promise<void>
   releaseHeldStream: () => void
@@ -401,6 +403,8 @@ export function startMockServer(options: MockServerOptions = {}): Promise<MockSe
   return new Promise((resolve, reject) => {
     const receivedPrompts: string[] = []
     const receivedModels: string[] = []
+    const receivedRequests: Record<string, unknown>[] = []
+    let customScriptIndex = 0
     const modelIds = options.modelIds?.length ? options.modelIds : ['mock-model']
     let resolveHeldStreamStarted: (() => void) | null = null
     let releaseHeldStream: (() => void) | null = null
@@ -469,6 +473,19 @@ export function startMockServer(options: MockServerOptions = {}): Promise<MockSe
           const stream = parsed.stream === true
           const model = parsed.model || 'mock-model'
           receivedModels.push(model)
+          receivedRequests.push(JSON.parse(JSON.stringify(parsed)) as Record<string, unknown>)
+          if (options.scriptedTurns?.length) {
+            if (!Array.isArray(parsed.tools) || parsed.tools.length === 0) {
+              if (stream) {streamTextResponse(res, model, 'Auxiliary response.')}
+              else {nonStreamingTextResponse(res, model, 'Auxiliary response.')}
+              return
+            }
+            const turns = options.scriptedTurns
+            const turn = turns[Math.min(customScriptIndex++, turns.length - 1)]
+            if (stream) {streamScriptedTurn(res, model, turn)}
+            else {nonStreamingScriptedTurn(res, model, turn)}
+            return
+          }
           const holdThisCompletion = Boolean(
             options.holdFirstCompletionContaining &&
             heldCompletionCount === 0 &&
@@ -671,6 +688,7 @@ export function startMockServer(options: MockServerOptions = {}): Promise<MockSe
         url,
         receivedPrompts,
         receivedModels,
+        receivedRequests,
         waitForHeldStream: () => heldStreamStarted,
         waitForHeldCompletion: () => heldStreamStarted,
         releaseHeldStream: () => releaseHeldStream?.(),

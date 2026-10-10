@@ -215,6 +215,15 @@ describe('desktop slash command curation', () => {
     expect(isDesktopSlashCommand('/reset')).toBe(true)
   })
 
+  it('resolves the steer shorthand before the backend catalog is ready', () => {
+    for (const alias of ['/s', '/S']) {
+      expect(resolveDesktopCommand(alias)).toBe(resolveDesktopCommand('/steer'))
+      expect(isDesktopSlashCommand(alias)).toBe(true)
+      expect(desktopSlashCommandArgumentMode(alias)).toBe('text')
+      expect(isDesktopSlashSuggestion(alias)).toBe(false)
+    }
+  })
+
   it('filters built-in catalog noise but keeps skill / quick-command extensions', () => {
     const filtered = filterDesktopCommandsCatalog({
       categories: [

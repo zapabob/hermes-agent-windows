@@ -777,20 +777,20 @@ def _(rid, params: dict) -> dict:
     if name == "steer":
         if not arg:
             return _err(rid, 4004, "usage: /steer <prompt>")
-        agent = session.get("agent") if session else None
-        if agent and hasattr(agent, "steer"):
-            try:
-                accepted = agent.steer(arg)
-                if accepted:
-                    return _ok(
-                        rid,
-                        {
-                            "type": "exec",
-                            "output": f"⏩ Steer queued — arrives after the next tool call: {arg[:80]}{'...' if len(arg) > 80 else ''}",
-                        },
-                    )
-            except Exception:
-                pass
+        try:
+            accepted = _try_session_steer(session, arg)
+            if accepted is None:
+                return _err(rid, 4009, "session interrupt settling")
+            if accepted:
+                return _ok(
+                    rid,
+                    {
+                        "type": "exec",
+                        "output": f"⏩ Steer queued — arrives after the next tool call: {arg[:80]}{'...' if len(arg) > 80 else ''}",
+                    },
+                )
+        except Exception:
+            pass
         # Fallback: no active run, treat as next-turn message
         return _ok(rid, {"type": "send", "message": arg})
 
@@ -1161,14 +1161,20 @@ def _(rid, params: dict) -> dict:
     if live_output is not None:
         return _ok(rid, {"output": live_output or "(no output)"})
 
-    if _cmd_base in _PENDING_INPUT_COMMANDS:
+    # Resolve built-in aliases before selecting the live-session route. A
+    # worker has no access to the current agent's steer or next-turn queue.
+    from hermes_cli.commands import resolve_command
+
+    _cmd_definition = resolve_command(_cmd_base)
+    _canonical_base = _cmd_definition.name if _cmd_definition else _cmd_base
+    if _canonical_base in _PENDING_INPUT_COMMANDS:
         # Route directly to command.dispatch instead of returning an error
         # that requires the frontend to retry.  Some TUI clients fail the
         # fallback, leaving the command empty and showing "empty command".
         return _methods["command.dispatch"](
             rid,
             {
-                "name": _cmd_base,
+                "name": _canonical_base,
                 "arg": _cmd_arg,
                 "session_id": params.get("session_id", ""),
             },

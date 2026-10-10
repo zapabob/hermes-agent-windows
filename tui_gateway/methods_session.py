@@ -3568,22 +3568,23 @@ def _(rid, params: dict) -> dict:
     if agent is None or not hasattr(agent, "steer"):
         return _err(rid, 4010, "agent does not support steer")
     try:
-        accepted = agent.steer(text)
+        accepted = _try_session_steer(session, text, record_correction=True)
     except Exception as exc:
         return _err(rid, 5000, f"steer failed: {exc}")
-    if accepted:
-        # Record the correction on the live turn exactly like session.redirect
-        # does. Without this, a resume/reconnect while the turn is running
-        # rebuilds the transcript from the inflight snapshot and the steered
-        # text has no user bubble — the "my message vanished on reload" loss.
+    if accepted is None:
+        return _err(rid, 4009, "session interrupt settling")
+    if not accepted:
+        # A stale-busy client may reach an idle cached agent, or lose the
+        # finishing race. Preserve the text in the existing next-turn FIFO.
         with session["history_lock"]:
-            _record_inflight_correction(session, text)
-            # #84417: steer does not cancel the live original, but a server
-            # queue self-copy of that original must still not re-fire after
-            # settle (same class as redirect).
-            _drop_queued_duplicates_of_inflight_user(session)
+            if session.get("running") and session.get("_turn_cancel_requested"):
+                return _err(rid, 4009, "session interrupt settling")
+            if not session.get("running"):
+                session["_turn_cancel_requested"] = False
+            _enqueue_prompt(session, text, current_transport() or _stdio_transport, explicit_steer=True)
             session["last_active"] = time.time()
-    return _ok(rid, {"status": "queued" if accepted else "rejected", "text": text})
+        _drain_queued_prompt(rid, params["session_id"], session)
+    return _ok(rid, {"status": "queued", "text": text})
 
 
 @method("session.redirect")

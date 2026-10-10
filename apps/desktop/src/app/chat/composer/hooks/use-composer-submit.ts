@@ -157,6 +157,7 @@ export function useComposerSubmit({
     // on the way out so it attaches instead of submitting as inert text.
     const text = pathifyRefs(draftRef.current)
     const payloadPresent = text.trim().length > 0 || attachments.length > 0
+    const slashInvocation = !attachments.length && SLASH_COMMAND_RE.test(text.trim())
 
     // A clarify card parked on this session owns the turn: the agent is blocked
     // inside its tool batch waiting on `clarify.respond`, so a follow-up routed
@@ -169,13 +170,15 @@ export function useComposerSubmit({
     // both RPCs ride the same socket in call order, so the gateway resolves the
     // clarify before it sees the follow-up. Awaiting first would leave the draft
     // live for a tick — long enough for a second Enter to send it twice.
-    if (payloadPresent && !queueEdit && hasClarifyRequest(sessionId)) {
+    // Control commands keep the parked card answerable; their dispatcher owns
+    // the command's effect on the live turn.
+    if (payloadPresent && !slashInvocation && !queueEdit && hasClarifyRequest(sessionId)) {
       void skipClarifyRequest(sessionId)
     }
 
     // Same deal for a pending MCP setup card: the agent is blocked on
     // mcp.setup.respond, so a typed message declines the card and rides on.
-    if (payloadPresent && !queueEdit && hasMcpSetupRequest(sessionId)) {
+    if (payloadPresent && !slashInvocation && !queueEdit && hasMcpSetupRequest(sessionId)) {
       void skipMcpSetupRequest(sessionId)
     }
 
@@ -198,7 +201,7 @@ export function useComposerSubmit({
       // busy guard for commands that genuinely need an idle session (skill
       // /send directives).  Queuing them would make every slash command wait
       // for the current turn to finish, which is how the TUI never behaves.
-      if (!attachments.length && SLASH_COMMAND_RE.test(text.trim())) {
+      if (slashInvocation) {
         triggerHaptic('submit')
         clearDraft()
         dispatchSubmit(text)

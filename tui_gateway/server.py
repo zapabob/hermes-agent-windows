@@ -1264,6 +1264,17 @@ def _interrupt_session_turn(
         session["_queued_prompt_generation"] = int(
             session.get("_queued_prompt_generation", 0)
         ) + 1
+        if not use_compute_host:
+            # Discard unconsumed local notes before interrupt/pending-card
+            # cleanup releases a parked tool. Admission takes this same lock.
+            drain_steer = getattr(session.get("agent"), "_drain_pending_steer", None)
+            if callable(drain_steer):
+                try:
+                    drain_steer()
+                except Exception:
+                    # Optional legacy agents must still receive hard Stop and
+                    # pending-card cleanup when their private drain fails.
+                    logger.warning("Pending steer discard failed; continuing session interrupt")
 
     if not use_compute_host:
         if should_interrupt:
@@ -9689,6 +9700,8 @@ def _enqueue_prompt(
     text: Any,
     transport: Any,
     image_paths: list[str] | None = None,
+    *,
+    explicit_steer: bool = False,
 ) -> None:
     """Stash a message to run as the very next turn once the live one ends.
 
@@ -9707,7 +9720,7 @@ def _enqueue_prompt(
     # Never queue a text-only self-copy of the live inflight user prompt. The
     # live turn already owns that text; draining it after settle would restart
     # the same user turn as a fresh agent invocation.
-    if not image_paths and isinstance(text, str):
+    if not explicit_steer and not image_paths and isinstance(text, str):
         turn = session.get("inflight_turn")
         original = (
             str(turn.get("user") or "").strip() if isinstance(turn, dict) else ""
@@ -9715,6 +9728,10 @@ def _enqueue_prompt(
         if original and text.strip() == original:
             return
     queued = {"text": text, "transport": transport}
+    if explicit_steer:
+        # Internal provenance: an accepted steer/retry is intentional even if
+        # it repeats the original. Never populate this from RPC parameters.
+        queued["_explicit_steer"] = True
     if image_paths:
         queued["image_paths"] = image_paths
     existing = session.get("queued_prompt")
@@ -9725,6 +9742,7 @@ def _enqueue_prompt(
         and not existing.get("image_paths")
         and not image_paths
         and not session.get("queued_prompts")
+        and bool(existing.get("_explicit_steer")) == explicit_steer
     ):
         prev = existing["text"]
         existing["text"] = f"{prev}\n\n{text}" if prev and text else (prev or text)
@@ -9749,7 +9767,7 @@ def _sanitize_queued_entry_vs_inflight_user(
     """
     if not original or not isinstance(entry, dict):
         return entry if isinstance(entry, dict) else None
-    if entry.get("image_paths"):
+    if entry.get("image_paths") or entry.get("_explicit_steer"):
         return entry
     text = entry.get("text")
     if not isinstance(text, str):
@@ -9846,6 +9864,32 @@ def _interrupt_busy_session(sid: str, session: dict, agent: Any) -> None:
     threading.Thread(target=interrupt, daemon=True, name=f"busy-interrupt-{sid}").start()
 
 
+def _try_session_steer(session: dict | None, text: str, *, record_correction: bool = False) -> bool | None:
+    """Serialize in-memory steer admission with the turn's idle transition.
+
+    A cached agent is not an active turn. AIAgent.steer only appends to its
+    local buffer; holding history_lock here prevents admission after settle.
+    None identifies a stopping turn; False keeps the idle/unsupported fallback.
+    Provider requests and interrupts do not belong inside this lock.
+    """
+    if session is None:
+        return False
+    with session["history_lock"]:
+        agent = session.get("agent")
+        if not session.get("running") or agent is None or not hasattr(agent, "steer"):
+            return False
+        if session.get("_turn_cancel_requested"):
+            return None
+        accepted = bool(agent.steer(text))
+        if accepted and record_correction:
+            # Settle must not replace this turn between admission and snapshot
+            # metadata; ordinary queued self-copies still need the old scrub.
+            _record_inflight_correction(session, text)
+            _drop_queued_duplicates_of_inflight_user(session)
+            session["last_active"] = time.time()
+        return accepted
+
+
 def _handle_busy_submit(
     rid, sid: str, session: dict, text: Any, transport: Any, queued: bool = False
 ) -> dict | None:
@@ -9887,11 +9931,10 @@ def _handle_busy_submit(
     plain_text = _coerce_message_text(text).strip() if text_only else ""
     if mode == "steer" and text_only and plain_text and agent is not None and hasattr(agent, "steer"):
         try:
-            if agent.steer(plain_text):
-                with session["history_lock"]:
-                    _record_inflight_correction(session, plain_text)
-                    _drop_queued_duplicates_of_inflight_user(session)
-                    session["last_active"] = time.time()
+            accepted = _try_session_steer(session, plain_text, record_correction=True)
+            if accepted is None:
+                return _err(rid, 4009, "session interrupt settling")
+            if accepted:
                 return _ok(rid, {"status": "steered"})
         except Exception:
             pass  # fall through to queue
@@ -9925,6 +9968,10 @@ def _handle_busy_submit(
             if image_paths:
                 session["attached_images"] = image_paths + list(session.get("attached_images", []))
             return None
+        if mode == "steer" and session.get("_turn_cancel_requested"):
+            if image_paths:
+                session["attached_images"] = image_paths + list(session.get("attached_images", []))
+            return _err(rid, 4009, "session interrupt settling")
         _enqueue_prompt(session, text, transport, image_paths=image_paths)
         session["last_active"] = time.time()
 
@@ -9968,6 +10015,11 @@ def _drain_queued_prompt(rid, sid: str, session: dict) -> bool:
     use_compute_host = _session_uses_compute_host(session)
     with session["history_lock"]:
         if int(session.get("_queued_prompt_generation", 0)) != queue_generation:
+            if queued.get("_explicit_steer") and session.get("_turn_cancel_requested"):
+                # Stop owns cancellation even after this explicit note was
+                # claimed. Preserve any newer envelopes, not the cancelled one.
+                session["running"] = False
+                return True
             # Generation cancelled the claim (Stop, compress re-anchor, …).
             # Do not dispatch — but put the claimed envelope back so a
             # legitimate follow-up is not silently dropped. Order: claimed
@@ -12432,15 +12484,34 @@ def _start_usage_ticker(
     return stop, thread
 
 
+def _settle_session_turn(session: dict, agent, result: dict | None, error_retained: bool) -> None:
+    """Hand off late accepted notes before making this turn available again."""
+    with session["history_lock"]:
+        # Keep this drain in the same critical section as running=False.
+        # A later turn may reuse this agent as soon as that flag is cleared.
+        drain = getattr(agent, "_drain_pending_steer", None)
+        late_steer = drain() if callable(drain) else None
+        earlier = result.pop("pending_steer", None) if isinstance(result, dict) else None
+        notes = [note for note in (earlier, late_steer)
+                 if isinstance(note, str) and note.strip()]
+        if notes and not session.get("_turn_cancel_requested"):
+            _enqueue_prompt(session, "\n".join(notes), session.get("transport"), explicit_steer=True)
+        session["running"] = False
+        session["last_active"] = time.time()
+        if not error_retained:
+            _clear_inflight_turn(session)
+
+
 def _run_post_turn_followups(
     rid: str, sid: str, session: dict, result: dict | None, goal_followup: str | None
 ) -> None:
     if not isinstance(result, dict):
         result = {}
-    _leftover_steer = result.get("pending_steer")
-    if isinstance(_leftover_steer, str) and _leftover_steer.strip():
-        with session["history_lock"]:
-            _enqueue_prompt(session, _leftover_steer, session.get("transport"))
+    with session["history_lock"]:
+        _leftover_steer = result.pop("pending_steer", None)
+        if (isinstance(_leftover_steer, str) and _leftover_steer.strip()
+                and not session.get("_turn_cancel_requested")):
+            _enqueue_prompt(session, _leftover_steer, session.get("transport"), explicit_steer=True)
     if _drain_queued_prompt(rid, sid, session):
         return
 
@@ -13351,11 +13422,7 @@ def _run_prompt_submit(
             # Clear the per-turn interim callback so a stale closure from
             # this turn can't fire during a later turn on the same agent.
             agent.interim_assistant_callback = None
-            with session["history_lock"]:
-                session["running"] = False
-                session["last_active"] = time.time()
-                if not turn_error_retained:
-                    _clear_inflight_turn(session)
+            _settle_session_turn(session, agent, result, turn_error_retained)
             # Closing bookend of the "tui prompt accepted" record above —
             # fires on every path (success, returned error, exception,
             # interrupt), so one accepted prompt always produces exactly one

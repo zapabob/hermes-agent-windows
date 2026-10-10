@@ -11229,7 +11229,7 @@ def test_rollback_restore_preserves_composite_carrier_scaffold(monkeypatch, tmp_
 
 
 def test_session_steer_calls_agent_steer_when_agent_supports_it():
-    """The TUI RPC method must call agent.steer(text) and return a
+    """An active TUI turn must call agent.steer(text) and return a
     queued status without touching interrupt state.
     """
     calls = {}
@@ -11242,7 +11242,7 @@ def test_session_steer_calls_agent_steer_when_agent_supports_it():
         def interrupt(self, *args, **kwargs):
             calls["interrupt_called"] = True
 
-    server._sessions["sid"] = _session(agent=_Agent())
+    server._sessions["sid"] = _session(agent=_Agent(), running=True)
     try:
         resp = server.handle_request({
             "id": "1",
