@@ -73,3 +73,9 @@ This bounded candidate composes exact issuer fields into the actual existing SDK
 Current promoted relay15, lifecycle11 and native3 mutations require independent raw evidence qualification and known restoration before these records are prepared. Original mutation runs remain historical. Local staged/blob/commit identity remains a separate gate; the receipt must not imply it has already occurred.
 
 Status: BOUNDED_RECEIPT_AND_LOCAL_IDENTITY_REQUIRED. This entry does not accept the entire M03 family or campaign. In-place authorization remint/revival, REST startup uncertainty and TTL resource retention, plugin OAuth/module split, M01/M04/M05/M06, complete compatibility inventory and remaining feature/security/Windows families remain required work. Actual external browser, live model inference, packaged runtime, cloud CI, production restart and scheduled-task health are unqualified.
+
+## M03: verified bounded local product identity
+
+M03 product commit: 9e2b69aac59e673aa448e70ebeccf60a89905b4d; tree: bdbf3ba616318d97e1db5143abad03d280fbff7b; patch SHA256: 5130d82e731f486ed37d8eef0736f46d7129a4a55d1b9de73230838c61665ba6. The independently accepted bounded slice preserves issuer propagation, caller profile/session authority and admission-aware cancellation. Actual32 committed blobs match the reviewed final bytes with exact EOF inheritance, and protected primary HEAD/status/23 hashes remain unchanged.
+
+Original29 distinct restored mutation executions inherited through exact EOF projection, canonical57 cases, three dev Electron controls and two fresh cold children remain scoped to the bound records. In-place remint/revival, token revocation/config replacement, REST startup uncertainty/TTL retention, other MCP and campaign families remain open. Actual browser/model, packaged runtime, cloud CI, production and scheduled-task health are unqualified.

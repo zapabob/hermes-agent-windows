@@ -830,8 +830,19 @@
     "Remaining feature/security/Windows families including B07/B08/B12/B13",
     "Actual browser/model, packaging, cloud exact-SHA CI, production and scheduled-task health"
   ],
-  "local_commit_identity": null,
-  "postcommit_proof": null,
+  "local_commit_identity": {
+    "sha": "9e2b69aac59e673aa448e70ebeccf60a89905b4d",
+    "parent": "3ab298018926b7846e8ef7fb3dc2abe2226a957b",
+    "tree": "bdbf3ba616318d97e1db5143abad03d280fbff7b",
+    "patch_sha256": "5130d82e731f486ed37d8eef0736f46d7129a4a55d1b9de73230838c61665ba6"
+  },
+  "postcommit_proof": {
+    "file": "tmp/probes/v0216-20261010/evidence/m03-product-postcommit-binding-v2.json",
+    "sha256": "6dde1dcd98652ec34b3f02c7203e301b30142c08020e496db4a223186025b8a1",
+    "all_32_blobs_equal_reviewed_final_bytes": true,
+    "protected_primary_23_unchanged": true,
+    "root_tested_build_384_unchanged": true
+  },
   "publication": false,
   "full_m03_accepted": false,
   "full_campaign_accepted": false,
