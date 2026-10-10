@@ -315,32 +315,44 @@ async def auth_mcp_server(name: str, request: Request, profile: Optional[str] = 
 
 
 @router.get("/api/mcp/oauth/flows/{flow_id}")
-async def mcp_oauth_flow_status(flow_id: str, request: Request):
+async def mcp_oauth_flow_status(flow_id: str, request: Request, profile: Optional[str] = None):
     _require_token(request)
     _gc_mcp_oauth_flows()
-    flow = _mcp_oauth_flows.get(flow_id)
-    if flow is None:
-        raise HTTPException(status_code=404, detail="OAuth flow not found or expired")
+    flow = _profile_mcp_oauth_flow(flow_id, profile)
     snapshot = flow.snapshot()
     snapshot["tools"] = flow.tools
     return snapshot
 
 
 @router.delete("/api/mcp/oauth/flows/{flow_id}")
-async def cancel_mcp_oauth_flow(flow_id: str, request: Request):
+async def cancel_mcp_oauth_flow(flow_id: str, request: Request, profile: Optional[str] = None):
     """Cancel an in-flight MCP OAuth flow (the desktop's inline-card/pill
-    cancel). mark_error unblocks both worker waits, so the worker exits and
+    cancel). Cancellation before callback admission unblocks worker waits and
     frees the per-server "already in progress" slot — without this, a renderer
     that stops polling leaves the flow squatting until its 300s callback
     timeout and every retry 409s. Idempotent: an already-settled flow is left
     as-is (approved stays approved)."""
     _require_token(request)
-    flow = _mcp_oauth_flows.get(flow_id)
+    flow = _profile_mcp_oauth_flow(flow_id, profile, allow_expired=True)
     if flow is None:
         # Expired/GC'd is the goal state of a cancel — not an error.
         return {"ok": True, "status": "expired"}
-    flow.mark_error("Cancelled by user")
-    return {"ok": True, "status": flow.snapshot()["status"]}
+    cancelled = flow.cancel_pending()
+    return {"ok": True, "cancelled": cancelled, "status": flow.snapshot()["status"]}
+
+
+def _profile_mcp_oauth_flow(flow_id: str, profile: Optional[str], *, allow_expired: bool = False):
+    from hermes_constants import hermes_home_key
+
+    with _config_profile_scope(profile):
+        caller_home = hermes_home_key()
+    with _mcp_oauth_flows_lock:
+        flow = _mcp_oauth_flows.get(flow_id)
+    if flow is None and allow_expired:
+        return None
+    if flow is None or hermes_home_key(flow.hermes_home) != caller_home:
+        raise HTTPException(status_code=404, detail="OAuth flow not found or expired")
+    return flow
 
 
 @router.get("/api/mcp/oauth/callback/{server_name:path}")
@@ -349,6 +361,7 @@ async def mcp_oauth_callback(
     code: Optional[str] = None,
     state: Optional[str] = None,
     error: Optional[str] = None,
+    iss: Optional[str] = None,
 ):
     _gc_mcp_oauth_flows()
     with _mcp_oauth_flows_lock:
@@ -371,7 +384,7 @@ async def mcp_oauth_callback(
     if flow is None:
         return HTMLResponse("<h1>OAuth flow expired</h1><p>Return to Hermes and try again.</p>", status_code=404)
     try:
-        flow.deliver_callback(code=code, state=state, error=error)
+        flow.deliver_callback(code=code, state=state, error=error, iss=iss)
     except ValueError as exc:
         reason = str(exc)
         status_code = 409 if "already received" in reason else 400

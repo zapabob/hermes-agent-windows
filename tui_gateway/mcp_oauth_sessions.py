@@ -44,12 +44,15 @@ provider redirect back via ``deliver_callback_flow`` /
 from __future__ import annotations
 
 import http.server
+import logging
 import secrets
 import threading
 import time
 from pathlib import Path
 from typing import Any, Dict, Optional
 from urllib.parse import parse_qs, urlparse
+
+logger = logging.getLogger(__name__)
 
 # Session registry: session_id -> record. A record wraps the shared
 # DashboardOAuthFlow bridge plus a bit of gateway bookkeeping.
@@ -62,28 +65,34 @@ _SESSION_TTL_SECONDS = 900
 _MAX_PENDING = 12
 
 
+class _ListenerSetupCleanupError(RuntimeError):
+    """Retain an acquired listener whose failed startup cleanup is unconfirmed."""
+
+    def __init__(self, cause: Exception, httpd, started: bool):
+        super().__init__(str(cause))
+        self.httpd = httpd
+        self.started = started
+
+
 def _gc_sessions() -> None:
-    """Drop expired sessions. Called opportunistically on start."""
+    """Collect expired sessions only after owned worker/listener cleanup."""
     cutoff = time.time() - _SESSION_TTL_SECONDS
     with _sessions_lock:
-        stale = [sid for sid, rec in _sessions.items() if rec["created_at"] < cutoff]
+        stale = [sid for sid, rec in _sessions.items()
+                 if rec["created_at"] < cutoff and rec["flow"].worker_done
+                 and rec.get("httpd") is None]
         for sid in stale:
-            rec = _sessions.pop(sid, None)
-            if rec is not None:
-                _shutdown_listener(rec)
+            _sessions.pop(sid, None)
 
 
 def _shutdown_listener(rec: Dict[str, Any]) -> None:
     server = rec.get("httpd")
     if server is not None:
         try:
-            server.shutdown()
-        except Exception:
-            pass
-        try:
+            if rec.get("listener_started", True):
+                server.shutdown()
+        finally:
             server.server_close()
-        except Exception:
-            pass
         rec["httpd"] = None
 
 
@@ -128,14 +137,15 @@ def _start_loopback_listener(flow) -> "http.server.HTTPServer":
                 self.send_response(404)
                 self.end_headers()
                 return
-            qs = parse_qs(parsed.query)
+            qs = parse_qs(parsed.query, keep_blank_values=True)
             code = (qs.get("code") or [None])[0]
             state = (qs.get("state") or [None])[0]
             error = (qs.get("error") or [None])[0]
+            iss = (qs.get("iss") or [None])[0]
             body = b"<h1>Authorization received</h1><p>You can close this tab and return to Hermes.</p>"
             status = 200
             try:
-                flow.deliver_callback(code=code, state=state, error=error)
+                flow.deliver_callback(code=code, state=state, error=error, iss=iss)
             except Exception:
                 body = b"<h1>OAuth callback rejected</h1><p>The callback was invalid or already used.</p>"
                 status = 400
@@ -151,12 +161,26 @@ def _start_loopback_listener(flow) -> "http.server.HTTPServer":
             return
 
     httpd = http.server.HTTPServer(("127.0.0.1", 0), _Handler)
-    threading.Thread(
-        target=httpd.serve_forever,
-        kwargs={"poll_interval": 0.5},
-        daemon=True,
-        name=f"mcp-oauth-cb-{flow.server_name}",
-    ).start()
+    listener = None
+    try:
+        listener = threading.Thread(
+            target=httpd.serve_forever,
+            kwargs={"poll_interval": 0.5},
+            daemon=True,
+            name=f"mcp-oauth-cb-{flow.server_name}",
+        )
+        listener.start()
+    except Exception as exc:
+        started = listener is not None and listener.ident is not None
+        try:
+            try:
+                if started:
+                    httpd.shutdown()
+            finally:
+                httpd.server_close()
+        except Exception as cleanup:
+            raise _ListenerSetupCleanupError(exc, httpd, started) from cleanup
+        raise
     return httpd
 
 
@@ -244,10 +268,10 @@ def _worker(session_id: str, hermes_home: str, server_name: str, cfg: dict, reco
         if flow is not None:
             flow.mark_error(msg)
     finally:
-        if flow is not None:
-            flow.mark_worker_done()
         if rec is not None:
             _shutdown_listener(rec)
+        if flow is not None:
+            flow.mark_worker_done()
 
 
 def start_flow(
@@ -272,85 +296,90 @@ def start_flow(
     listener, and the client relays the redirect's ``code``/``state`` back via
     ``deliver_callback_flow``. Invalid values raise ``ValueError``.
     """
+    from hermes_constants import hermes_home_key
     from tools.mcp_dashboard_oauth import DashboardOAuthFlow
+
+    deadline = time.monotonic() + max(0.0, url_timeout)
+    caller_home = hermes_home_key(hermes_home)
 
     if client_redirect_uri is not None:
         client_redirect_uri = _validate_client_redirect_uri(client_redirect_uri)
 
     _gc_sessions()
 
-    with _sessions_lock:
-        pending = sum(
-            1
-            for r in _sessions.values()
-            if not r["flow"].worker_done
-        )
-        if pending >= _MAX_PENDING:
-            raise RuntimeError("Too many MCP OAuth flows are already in progress")
-        if any(
-            r["server_name"] == server_name
-            and r["hermes_home"] == hermes_home
-            and not r["flow"].worker_done
-            for r in _sessions.values()
-        ):
-            raise RuntimeError(f"MCP OAuth for '{server_name}' is already in progress")
+    while True:
+        with _sessions_lock:
+            blockers = [
+                r["flow"] for r in _sessions.values()
+                if r["server_name"] == server_name
+                and hermes_home_key(r["hermes_home"]) == caller_home
+                and not r["flow"].worker_done
+            ]
+            if any(not previous.cancelled for previous in blockers):
+                raise RuntimeError(f"MCP OAuth for '{server_name}' is already in progress")
+            if not blockers:
+                if time.monotonic() >= deadline:
+                    raise TimeoutError("Timed out waiting for MCP authorization URL")
+                if sum(not r["flow"].worker_done for r in _sessions.values()) >= _MAX_PENDING:
+                    raise RuntimeError("Too many MCP OAuth flows are already in progress")
+                session_id = secrets.token_urlsafe(24)
+                flow = DashboardOAuthFlow(
+                    flow_id=session_id, server_name=server_name, profile=None,
+                    hermes_home=hermes_home, redirect_uri=client_redirect_uri or "",
+                    reconnect_live=reconnect_live,
+                )
+                rec = {
+                    "session_id": session_id, "server_name": server_name,
+                    "hermes_home": hermes_home, "flow": flow,
+                    "httpd": None, "created_at": time.time(),
+                }
+                # Reserve before listener/thread acquisition. Other starts see
+                # this active owner while setup and network waits run outside.
+                _sessions[session_id] = rec
+                break
+        remaining = deadline - time.monotonic()
+        if remaining <= 0 or not blockers[0].wait_worker_done(remaining):
+            raise TimeoutError("Timed out waiting for cancelled MCP OAuth flow to finish")
 
-    session_id = secrets.token_urlsafe(24)
-    flow = DashboardOAuthFlow(
-        flow_id=session_id,
-        server_name=server_name,
-        profile=None,
-        hermes_home=hermes_home,
-        redirect_uri="",  # set below once the loopback port is known
-        reconnect_live=reconnect_live,
-    )
-    if client_redirect_uri:
-        # Remote-backend variant: the CLIENT hosts the callback listener on its
-        # own machine and relays the code via deliver_callback_flow(). No
-        # gateway-side listener is bound — a 127.0.0.1 port here would be
-        # unreachable from the user's browser anyway.
-        httpd = None
-        flow.redirect_uri = client_redirect_uri
-    else:
-        httpd = _start_loopback_listener(flow)
-        port = httpd.server_address[1]
-        flow.redirect_uri = f"http://127.0.0.1:{port}/callback"
-
-    rec = {
-        "session_id": session_id,
-        "server_name": server_name,
-        "hermes_home": hermes_home,
-        "flow": flow,
-        "httpd": httpd,
-        "created_at": time.time(),
-    }
-    with _sessions_lock:
-        _sessions[session_id] = rec
-
-    threading.Thread(
-        target=_worker,
-        args=(session_id, hermes_home, server_name, dict(cfg), reconnect_live),
-        daemon=True,
-        name=f"mcp-oauth-{server_name}",
-    ).start()
-
+    worker = None
     try:
+        if not client_redirect_uri:
+            httpd = _start_loopback_listener(flow)
+            rec["httpd"] = httpd
+            port = httpd.server_address[1]
+            flow.redirect_uri = f"http://127.0.0.1:{port}/callback"
+        worker = threading.Thread(
+            target=_worker,
+            args=(session_id, hermes_home, server_name, dict(cfg), reconnect_live),
+            daemon=True, name=f"mcp-oauth-{server_name}",
+        )
+        worker.start()
         auth_url = None
         # wait_for_authorization_url is async; run its wait synchronously.
-        deadline = time.time() + url_timeout
-        while time.time() < deadline:
+        while time.monotonic() < deadline:
             snap = flow.snapshot()
             if snap.get("authorization_url"):
                 auth_url = snap["authorization_url"]
                 break
             if snap.get("status") == "error":
                 raise RuntimeError(snap.get("error") or "MCP OAuth flow failed before authorization")
-            time.sleep(0.1)
+            time.sleep(min(0.1, max(0.0, deadline - time.monotonic())))
         if not auth_url:
             raise TimeoutError("Timed out waiting for MCP authorization URL")
-    except Exception:
-        flow.mark_error("Timed out waiting for MCP authorization URL")
-        _shutdown_listener(rec)
+    except Exception as exc:
+        flow.mark_error(str(exc))
+        if isinstance(exc, _ListenerSetupCleanupError):
+            rec["httpd"] = exc.httpd
+            rec["listener_started"] = exc.started
+        # An acquired worker owns rollback and listener cleanup. A failed
+        # startup without a worker must settle its reserved slot locally.
+        if worker is None or worker.ident is None:
+            try:
+                _shutdown_listener(rec)
+            except Exception:
+                logger.exception("MCP OAuth listener cleanup failed for '%s'", server_name)
+            else:
+                flow.mark_worker_done()
         raise
 
     return {
@@ -362,6 +391,19 @@ def start_flow(
     }
 
 
+def _lookup_flow(session_id: str, server_name: str):
+    """Resolve only sessions owned by the caller's current profile HOME."""
+    from hermes_constants import hermes_home_key
+
+    with _sessions_lock:
+        rec = _sessions.get(session_id)
+    if rec is None or hermes_home_key(rec["hermes_home"]) != hermes_home_key():
+        return None, "OAuth session not found or expired"
+    if rec["server_name"] != server_name:
+        return None, "server name mismatch for session"
+    return rec, None
+
+
 def poll_flow(session_id: str, server_name: str) -> Dict[str, Any]:
     """Poll a session's status → ``{status, error_message?, auth_url?, tools?}``.
 
@@ -370,12 +412,9 @@ def poll_flow(session_id: str, server_name: str) -> Dict[str, Any]:
     the underlying bridge maps to ``pending`` since the client only needs to
     know whether to keep waiting).
     """
-    with _sessions_lock:
-        rec = _sessions.get(session_id)
+    rec, error = _lookup_flow(session_id, server_name)
     if rec is None:
-        return {"status": "error", "error_message": "OAuth session not found or expired"}
-    if rec["server_name"] != server_name:
-        return {"status": "error", "error_message": "server name mismatch for session"}
+        return {"status": "error", "error_message": error}
 
     flow = rec["flow"]
     snap = flow.snapshot()
@@ -404,6 +443,7 @@ def deliver_callback_flow(
     code: Optional[str],
     state: Optional[str],
     error: Optional[str] = None,
+    iss: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Relay a client-captured OAuth redirect into a session's flow.
 
@@ -417,16 +457,29 @@ def deliver_callback_flow(
 
     Returns ``{ok: true}`` on acceptance or ``{ok: false, error_message}``.
     """
-    with _sessions_lock:
-        rec = _sessions.get(session_id)
+    rec, lookup_error = _lookup_flow(session_id, server_name)
     if rec is None:
-        return {"ok": False, "error_message": "OAuth session not found or expired"}
-    if rec["server_name"] != server_name:
-        return {"ok": False, "error_message": "server name mismatch for session"}
+        return {"ok": False, "error_message": lookup_error}
 
     flow = rec["flow"]
     try:
-        flow.deliver_callback(code=code, state=state, error=error)
+        flow.deliver_callback(code=code, state=state, error=error, iss=iss)
     except ValueError as exc:
         return {"ok": False, "error_message": str(exc)}
     return {"ok": True, "session_id": session_id}
+
+
+def cancel_flow(session_id: str, server_name: str) -> Dict[str, Any]:
+    """Request cancellation of this profile's unadmitted callback.
+
+    The worker owns listener shutdown in its finally block. Waking its flow
+    releases the callback wait without blocking the gateway reader on HTTP
+    shutdown; clients continue polling the actual settled result.
+    """
+    rec, error = _lookup_flow(session_id, server_name)
+    if rec is None:
+        return {"ok": False, "error_message": error}
+    flow = rec["flow"]
+    cancelled = flow.cancel_pending()
+    return {"ok": True, "session_id": session_id, "cancelled": cancelled,
+            "status": flow.snapshot()["status"]}

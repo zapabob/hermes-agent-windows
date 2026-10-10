@@ -831,7 +831,7 @@ def _make_callback_handler() -> tuple[type, dict]:
             # omits it when the authorization server advertised
             # `authorization_response_iss_parameter_supported`, so dropping it
             # here would break login against those providers.
-            iss = params.get("iss", [None])[0]
+            iss = parse_qs(urlparse(self.path).query, keep_blank_values=True).get("iss", [None])[0]
 
             result["auth_code"] = code
             result["state"] = state
@@ -1018,8 +1018,8 @@ def _make_callback_waiter(
         if dashboard_flow is not None:
             # The dashboard flow still speaks the legacy tuple; normalize it
             # here so both callback sources hand the SDK one shape.
-            dash_code, dash_state = await dashboard_flow.wait_for_callback()
-            return _authorization_code_result(dash_code, dash_state)
+            dash_code, dash_state, dash_iss = await dashboard_flow.wait_for_callback()
+            return _authorization_code_result(dash_code, dash_state, dash_iss)
 
         # Reject before binding the callback listener in non-interactive
         # contexts. Reaching here means the SDK entered the authorization-code
@@ -1199,7 +1199,8 @@ def _paste_callback_reader(result: dict) -> None:
     code = params.get("code", [None])[0]
     state = params.get("state", [None])[0]
     error = params.get("error", [None])[0]
-    iss = params.get("iss", [None])[0]  # RFC 9207 — see _make_callback_handler
+    # Preserve present-empty issuer without changing code/state/error parsing.
+    iss = parse_qs(query, keep_blank_values=True).get("iss", [None])[0]
 
     if not code and not error:
         print(

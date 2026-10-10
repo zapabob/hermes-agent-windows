@@ -2443,10 +2443,31 @@ def _(rid, params: dict) -> dict:
             code=str(params.get("code") or "") or None,
             state=str(params.get("state") or "") or None,
             error=str(params.get("error") or "") or None,
+            iss=str(params["iss"]) if params.get("iss") is not None else None,
         )
         return _ok(rid, result)
     except Exception as e:
         return _err(rid, 5024, str(e))
+    finally:
+        _mcp_reset_profile(token)
+
+
+@method("mcp.servers.oauth.cancel")
+def _(rid, params: dict) -> dict:
+    """Cancel this profile's flow before callback admission; preserve exchanges."""
+    name = str(params.get("name") or "").strip()
+    session_id = str(params.get("session_id") or "").strip()
+    if not name or not session_id:
+        return _err(rid, 4063, "name and session_id required")
+    token, err = _mcp_resolve_profile(rid, params)
+    if err:
+        return err
+    try:
+        from tui_gateway import mcp_oauth_sessions
+
+        return _ok(rid, mcp_oauth_sessions.cancel_flow(session_id, name))
+    except Exception as exc:
+        return _err(rid, 5024, str(exc))
     finally:
         _mcp_reset_profile(token)
 
