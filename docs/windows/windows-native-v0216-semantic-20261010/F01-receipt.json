@@ -4,8 +4,8 @@
   "scope": "Classic CLI queue CRUD, literal routing and pending-input ownership",
   "lane": "FEATURE",
   "action": "COMPOSE",
-  "status": "APPROVED_FOR_F01_LOCAL_PRODUCT_COMMIT",
-  "accepted": false,
+  "status": "ACCEPTED_F01_LOCAL_PRODUCT_COMMIT",
+  "accepted": true,
   "source": {
     "upstream_introduction": "ce318290bddd39199a15ee973ec513581f81231e",
     "upstream_atomic_literal_fix": "ded27d42548ba927d24f1a172d1d7fcae0988e27",
@@ -15,9 +15,9 @@
     ],
     "upstream_release": "818c13be1dc4fd28987e1e881a9408224afd4535",
     "downstream_base": "606f7e557c13a0789a2420f7adf6181becf60d75",
-    "candidate_sha": null,
-    "candidate_tree": null,
-    "candidate_patch_sha256": null,
+    "candidate_sha": "3384af8a76cad5891f24ca3af9a7add71bbeb588",
+    "candidate_tree": "9a111e8ab55709aa0523e993b4f740b6563dc464",
+    "candidate_patch_sha256": "fafb71ee72fc7859c821156c49db7d56e850270c908518b60c0c7a60e95e8680",
     "files": [
       {
         "file": "cli.py",
@@ -705,7 +705,15 @@
       "sha256": "84330b0d22d5f648bb1a7d553b76727e2c8f808ffc21eb42fe4e80efc0804491"
     },
     "protected_primary_items": 23,
-    "protected_primary_matched": true
+    "protected_primary_matched": true,
+    "postcommit_binding": {
+      "file": "tmp/probes/v0216-20261010/evidence/f01-product-postcommit-binding.json",
+      "sha256": "685a5f6817a2fb7d099cfccbd04da74cbdb6848d005450daa9ebd270006d7ba6"
+    },
+    "postcommit_primary_audit": {
+      "file": "tmp/probes/v0216-20261010/evidence/f01-postcommit-canonical-wip-audit.json",
+      "sha256": "8296dbebeda30daefe9e6ffe3e2d7cc1b247607c753bb59eb9bb118904ff8cc4"
+    }
   },
   "review": {
     "reviewer": "/root/f03_contract_review",
