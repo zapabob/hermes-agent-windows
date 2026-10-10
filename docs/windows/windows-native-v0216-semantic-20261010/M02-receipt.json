@@ -4,7 +4,7 @@
     "M02"
   ],
   "lane": "MCP",
-  "status": "APPROVED_M02_BOUNDED_CONTENT_FOR_LOCAL_COMMIT",
+  "status": "ACCEPTED_M02_LOCAL_COMMIT_IDENTITY_VERIFIED",
   "accepted": true,
   "scope": "Saved MCP policy, caller-scoped RPC admission and stable existing Desktop conversations only",
   "parent": "7e3e2f298b78d846d833172c156f544bcf815a59",
@@ -4988,5 +4988,21 @@
   ],
   "publication": false,
   "full_campaign_accepted": false,
-  "stable_or_release_ready": false
+  "stable_or_release_ready": false,
+  "candidate_sha": "cde78c29004a1a4bc51c723ba67894f0f5edc379",
+  "candidate_tree": "08682f4ea2ee449a0fc4319d42a06f0e01bf634d",
+  "candidate_patch_sha256": "5aea76dfc6c8aef929491a014e5bfee5b326df18ee489550337346df18425d6a",
+  "independent_review": {
+    "file": "tmp/probes/v0216-20261010/evidence/m02-independent-final-review.json",
+    "sha256": "33d71953ca53631a024ca33da9f22812fc0a7b2a6738ff31347ad984bd192b50"
+  },
+  "postcommit_binding": {
+    "file": "tmp/probes/v0216-20261010/evidence/m02-product-postcommit-binding.json",
+    "sha256": "aa57a56d385081d3d6f67da3c6900dfe209b4e9ace2e291097ac437d1d234bc0"
+  },
+  "protected_primary_postcommit": {
+    "file": "tmp/probes/v0216-20261010/evidence/m02-final-postcommit-canonical-wip-audit.json",
+    "sha256": "be3582e2a46f5d533f31121f8b6ef9b9300122abe2634a9b25c1163749075039",
+    "matched": true
+  }
 }
