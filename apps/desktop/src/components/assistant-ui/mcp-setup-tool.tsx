@@ -210,9 +210,9 @@ function McpSetupPending({ args }: ToolCallMessagePartProps) {
 
       // A successful outcome changed mcp_servers — reload the live session
       // BEFORE unblocking the tool, or the agent resumes being told the
-      // server is ready while its tool snapshot still lacks it (the same
-      // write-through mcp-tab's silentReload does; consent was the card
-      // click, so no confirm prompt). Reload failure isn't outcome failure:
+      // server is ready while its tool snapshot still lacks it. This setup
+      // card retains its own activation flow, separate from settings saves.
+      // Reload failure isn't outcome failure:
       // the config landed, tools arrive next session — report it and move on.
       if (outcome.status === 'installed' || outcome.status === 'enabled' || outcome.status === 'authorized') {
         try {

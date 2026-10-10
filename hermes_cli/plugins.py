@@ -5512,7 +5512,18 @@ class PluginManager:
                         internal_name,
                     )
                     continue
-                self._portable_mcp_servers[internal_name] = dict(config)
+                registered_config = dict(config)
+                self._portable_mcp_servers[internal_name] = registered_config
+
+                def release_server(name=internal_name, entry=registered_config):
+                    # A targeted unload owns this registration, never a newer
+                    # replacement or another portable plugin's server.
+                    if self._portable_mcp_servers.get(name) is entry:
+                        self._portable_mcp_servers.pop(name, None)
+
+                self._track_registration(
+                    manifest, "portable_mcp", internal_name, release_server
+                )
             loaded.enabled = True
         except Exception as exc:
             loaded.error = str(exc)
@@ -6306,6 +6317,18 @@ def _clear_plugin_submodules(manager: Optional[PluginManager]) -> None:
         with _MODULE_NAMESPACE_LOCK:
             if _BARE_MODULE_SCOPE.get(module_name) == manager.scope_key:
                 _BARE_MODULE_SCOPE.pop(module_name, None)
+
+
+def get_loaded_plugin_manager() -> Optional[PluginManager]:
+    """Read current profile discovery state without creating or discovering it."""
+    current_home = _plugin_home_key()
+    with _plugin_managers_lock:
+        if (
+            _plugin_manager is not None
+            and _plugin_manager not in _plugin_managers_by_home.values()
+        ):
+            return _plugin_manager  # Existing embedder/test injection seam.
+        return _plugin_managers_by_home.get(current_home)
 
 
 def get_plugin_manager() -> PluginManager:

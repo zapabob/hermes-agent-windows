@@ -1,6 +1,6 @@
 """MCP dashboard routes (extracted verbatim from web_server.py).
 
-Handler bodies are byte-identical.  The OAuth flow registry
+The OAuth flow registry
 (``_mcp_oauth_flows`` + lock + pending cap) and the worker/helpers stay in
 web_server - reached via the late-binding seam in :mod:`hermes_cli.web_deps`
 (``late`` for callables, ``LateState`` for the mutable registry/lock/limit) so
@@ -56,6 +56,15 @@ _MAX_PENDING_MCP_OAUTH_FLOWS = LateState("_MAX_PENDING_MCP_OAUTH_FLOWS")
 # Config read-modify-write serialization for off-loop handlers (defined in
 # web_server.py; LateState supports ``with``-blocks, so this is the live lock).
 _CONFIG_MUTATION_LOCK = LateState("_CONFIG_MUTATION_LOCK")
+
+
+def _mcp_save_application() -> dict[str, str]:
+    """Describe admission separately from a cached conversation's catalogue."""
+    return {
+        "policy_check": "rpc_admission",
+        "catalogue": "new_session_or_explicit_reload",
+        "admitted_calls": "may_complete",
+    }
 
 
 @router.get("/api/mcp/servers")
@@ -137,7 +146,7 @@ async def replace_mcp_servers(body: MCPServersReplace, profile: Optional[str] = 
     ok, issues = await asyncio.to_thread(_run)
     if not ok:
         raise HTTPException(status_code=400, detail="; ".join(issues))
-    return {"ok": True}
+    return {"ok": True, "application": _mcp_save_application()}
 
 
 @router.delete("/api/mcp/servers/{name}")
@@ -380,11 +389,12 @@ async def mcp_oauth_callback(
 async def set_mcp_server_enabled(
     name: str, body: MCPEnabledToggle, profile: Optional[str] = None
 ):
-    """Enable or disable an MCP server (takes effect on next session/gateway).
+    """Save an MCP server's policy for subsequent RPC admission.
 
     Toggles the ``enabled`` key on the server's config.yaml entry — the same
-    flag the agent reads at startup.  Disabled servers stay in config so they
-    can be re-enabled without re-entering their settings.
+    flag discovery reads at startup. Existing handlers check it before RPC
+    admission without rebuilding cached schemas. Already admitted calls may
+    finish; disabled servers retain their settings for re-enabling.
     """
     def _run():
         with _profile_scope(body.profile or profile):
@@ -397,7 +407,12 @@ async def set_mcp_server_enabled(
                     raise HTTPException(status_code=400, detail="Malformed server config")
                 servers[name]["enabled"] = bool(body.enabled)
                 save_config(cfg)
-        return {"ok": True, "name": name, "enabled": bool(body.enabled)}
+        return {
+            "ok": True,
+            "name": name,
+            "enabled": bool(body.enabled),
+            "application": _mcp_save_application(),
+        }
 
     return await asyncio.to_thread(_run)
 

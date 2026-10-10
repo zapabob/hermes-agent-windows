@@ -53,3 +53,15 @@ B10/B11 product commit: 2858b4708956b4e4b57452bf796db6fd0581b792; tree: 1557cce4
 F02 product commit: d7fc8a859e9be6117997914a6a81a7f1c45d7225; tree: 9898617817e6c546efc141ae4429231404d559f4; patch SHA256: f5657d1574c15083a033de45a42714e0931a4abb617807309e30029914808e59. The bounded receipt accepts selected CLI/API/TUI lifecycle, authenticated Gateway/Relay destinations and reply streams. Fifteen qualified/restored mutations, 66 selected files with 669 deduplicated passing cases, native ConPTY branch/resume nonempty sidecars and authenticated loopback WebSocket effects passed independent review. Exact committed blob identity and protected primary HEAD/status/23 hashes match.
 
 Status: ACCEPTED_F02_LOCAL_COMMIT_IDENTITY_VERIFIED. Native model tool execution, Relay media/typing/task-card owners, production connectors, packaged Desktop, B07/B08/B12 and all remaining campaign/compatibility families remain open.
+
+## B13: native Windows agent package fixtures
+
+M02's six-file plugin caller regression run recorded 137 passes and two failures in tests/hermes_cli/test_agent_plugins.py. test_loads_manifest_skill_and_stdio_server expects uniform Windows backslashes although the unchanged `${PLUGIN_ROOT}/server.py` expansion retains mixed separators. test_symlink_escape_is_isolated_to_component fails creating a symlink with WinError 1314 on this PC. An isolated D_BASE control reproduced both failures with the same 38 other cases passing. The agent_plugins.py and test_agent_plugins.py Git blobs are unchanged from D_BASE. Command evidence is retained as m02-plugin-caller-regressions-v1 and m02-agent-package-fixed-base-control-v1 under the owned probe evidence folder.
+
+Status: FIXED_BASE_WINDOWS_FIXTURE_FAILURES_OPEN. No test assertion, marker, dependency, privilege or product owner was changed. Platform applicability, canonical path comparison and the privilege-independent escape oracle require a separately qualified disposition.
+
+## M06: separate Desktop MCP activation actions
+
+M02 removes automatic reload from McpTab settings persistence, OAuth success and catalog installation. The existing setup card, connect suggestion and repair suggestion still send confirm:true to reload.mcp after their activation actions. Their effects are separate from settings saves. Inspect the user-visible consent and cached-prefix behavior through their actual owners before claiming those activation actions satisfy the explicit reload contract. Their presence is not proof of a vulnerability or authorization bypass, and M02's settings tests do not qualify them.
+
+Status: SOURCE_BOUND_ACTIVATION_CONSENT_AND_CACHE_DISPOSITION_OPEN. Owners are apps/desktop/src/components/assistant-ui/mcp-setup-tool.tsx, apps/desktop/src/store/suggestion-providers/mcp.ts and apps/desktop/src/store/suggestion-providers/repair.ts. Runtime behavior remains unchanged in this slice; comments no longer equate these actions with Capabilities settings saves.

@@ -42,7 +42,6 @@ import { countEnabledTools, isToolEnabled, toggleToolInServer } from '@/lib/mcp-
 import { cn } from '@/lib/utils'
 import { notify, notifyError } from '@/store/notifications'
 import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'
-import { $activeSessionId } from '@/store/session'
 
 import { hermesConfigCacheWriter, useHermesConfigRecord } from '../hooks/use-config-record'
 import { useOnProfileSwitch } from '../hooks/use-on-profile-switch'
@@ -341,10 +340,9 @@ function scanServerBlocks(text: string): ServerBlock[] {
   return blocks
 }
 
-export function McpTab({ gateway, profile }: { gateway: HermesGateway | null; profile?: ProfileScope }) {
+export function McpTab({ profile }: { gateway: HermesGateway | null; profile?: ProfileScope }) {
   const { t } = useI18n()
   const m = t.settings.mcp
-  const activeSessionId = useStore($activeSessionId)
 
   // The profile this tab configures: the Capabilities profile-scope selector's
   // choice (`profile`) when set, otherwise the app-wide active profile. Every
@@ -651,7 +649,6 @@ export function McpTab({ gateway, profile }: { gateway: HermesGateway | null; pr
           title: m.authenticatedTitle,
           message: m.authenticatedMessage(serverName, result.tools.length)
         })
-        void silentReload()
       } else if (result.error) {
         notifyError(new Error(result.error), serverName)
       }
@@ -717,35 +714,35 @@ export function McpTab({ gateway, profile }: { gateway: HermesGateway | null; pr
     }
   }
 
-  // Config writes reach live sessions immediately — no manual "Reload MCP".
-  const silentReload = async () => {
-    if (!gateway) {
-      return
-    }
-
-    try {
-      await gateway.request('reload.mcp', { confirm: true, session_id: activeSessionId ?? undefined })
-    } catch (err) {
-      notifyError(err, m.reloadFailed)
-    }
-  }
-
   // Whole-map replace (NOT saveHermesConfig, which deep-merges and so can never
   // delete a server, drop `enabled: false`, or remove a nested field). Only
-  // after the replace lands do we write the cache through + reload live sessions.
+  // after the replace lands do we write through the settings cache. Cached
+  // conversations keep their schemas; save is not consent to rebuild a prefix.
   // Returns false when the profile switched mid-save: the write hit profile A's
   // backend (correct), but the client-side cache/editor now belong to B, so the
   // caller must skip its post-await writes.
   const persist = async (nextServers: McpServers): Promise<boolean> => {
     const epoch = profileEpoch.current
-    await saveMcpServers(nextServers, profile ?? undefined)
+    const saved = await saveMcpServers(nextServers, profile ?? undefined)
 
     if (profileEpoch.current !== epoch) {
       return false
     }
 
     setConfig(current => ({ ...current, mcp_servers: nextServers }))
-    void silentReload()
+
+    const application = saved.application
+
+    const admissionAcknowledged =
+      application?.policy_check === 'rpc_admission' &&
+      application.catalogue === 'new_session_or_explicit_reload' &&
+      application.admitted_calls === 'may_complete'
+
+    notify({
+      kind: 'success',
+      title: m.savedTitle,
+      message: admissionAcknowledged ? m.savedPolicyMessage('mcp.json') : m.savedMessage('mcp.json')
+    })
 
     return true
   }
@@ -767,8 +764,6 @@ export function McpTab({ gateway, profile }: { gateway: HermesGateway | null; pr
     } else {
       resetDraft(nextServers)
     }
-
-    void silentReload()
   }
 
   const withEnabled = (server: Record<string, unknown>, enabled: boolean) => {
@@ -993,7 +988,6 @@ export function McpTab({ gateway, profile }: { gateway: HermesGateway | null; pr
           )
         )
       )
-      notify({ kind: 'success', title: m.savedTitle, message: m.savedMessage('mcp.json') })
     } catch (err) {
       notifyError(err, m.saveFailed)
     } finally {
