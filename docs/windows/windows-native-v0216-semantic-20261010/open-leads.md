@@ -33,3 +33,15 @@ The candidate adds only two existing skipif decorators. Native per-file JUnit re
 Status: ACCEPTED_B09_LOCAL_COMMIT_IDENTITY_VERIFIED. Linux/macOS execution and cloud CI remain separate unqualified gates.
 
 B09 product commit: 1a8f669d4e39440d1b41de6720ddce966e4d4aa9; tree: 3fa69f9a463aea6eb2ca72cac4011873d32da2d8; patch SHA256: b76ffea35f438dc80921450557f41a5d344f6370de2f3d241252cba74200a9dd. Independent review and postcommit blob checks passed; protected primary HEAD/status/23 hashes match the campaign baseline.
+
+## B10/B11: command transport and foreground cancellation
+
+Native RED reproduced short-command argv refusal under synthetic exclusion growth and owned descendant survivors on timeout/interrupt. The candidate preserves credential authority, uses complete owned UTF-8 command transport with unchanged caller stdin/eval context, captures creation identity at spawn, and retains live input ownership for recovery. The public terminal entry succeeds for four short commands without policy bypass. B10-B11-mini-plan.md and its receipt define the precise slice; independent final evidence acceptance and local commit identity are required before closure.
+
+Status: NATIVE_CANDIDATE_FINAL_QUALIFICATION_IN_PROGRESS. This does not accept all W02 or separate process_registry/background stop owners. U_RELEASE's additional LocalEnvironment._force_kill_process override remains an unqualified compatibility lead.
+
+## B12: related native Windows test applicability and bare-bash fixtures
+
+The B10/B11 16-file regression run has ten failures. Nine reproduce at fixed D_BASE; one unchanged test reaches POSIX os.getpgid on Windows, with its D_BASE rerun still unperformed. Another stdin fixture suite has five bare-bash failures reproduced at fixed D_BASE. Exact executable-resolution cause is unverified. Retain the raw logs and assertions; native effect tests for the affected supported Windows contracts must accompany any later applicability correction.
+
+Status: BASELINE_FAILURES_AND_SOURCE_APPLICABILITY_LEADS_OPEN. No weakening/skipping or whole-suite GREEN acceptance occurred.
