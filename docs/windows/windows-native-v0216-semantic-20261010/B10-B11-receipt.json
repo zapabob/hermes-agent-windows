@@ -5,8 +5,8 @@
     "B11"
   ],
   "lane": "INVENTORY_LEAD",
-  "status": "APPROVED_AWAITING_LOCAL_COMMIT_IDENTITY",
-  "accepted": false,
+  "status": "ACCEPTED_B10_B11_LOCAL_COMMIT_IDENTITY_VERIFIED",
+  "accepted": true,
   "scope": "LocalEnvironment foreground/bootstrap/file-tool ownership only; no background owner/full W02/release/production acceptance",
   "parent": "34254176282b61d1c4ed8ff4cd20b1a8a8f59ed6",
   "contract": "B10-B11-mini-plan.md",
@@ -1626,5 +1626,16 @@
     "required_next_gate": "Explicit staged bytes and local product/metadata commit identity closure",
     "record": "tmp/probes/v0216-20261010/evidence/b10-b11-independent-final-review.json",
     "record_sha256": "ce56bb827b66ccd276e9402cc413ff17592c083662aa2829da859a83064a9605"
+  },
+  "candidate_sha": "2858b4708956b4e4b57452bf796db6fd0581b792",
+  "candidate_tree": "1557cce400e3d2d6c66ac47445ccc09a0edbf9c2",
+  "candidate_patch_sha256": "866244e238436cf80c8f51b2907b0530194e4fe7495f849fc6d68fe764c8c732",
+  "postcommit_binding": {
+    "file": "tmp/probes/v0216-20261010/evidence/b10-b11-product-postcommit-binding.json",
+    "sha256": "3d7444786ffc91e23e4179743da7dc47fb00228968515b7c57fd62f898a59046"
+  },
+  "protected_primary_postcommit": {
+    "file": "tmp/probes/v0216-20261010/evidence/b10-b11-postcommit-canonical-wip-audit.json",
+    "sha256": "dcadeb536a704eee3e5696df8eb511011e3834d91523b821d483ecc8fb3957c4"
   }
 }
