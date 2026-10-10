@@ -4,7 +4,7 @@
   "scope": "Canonical /s alias, local Desktop/TUI steer admission, settle/FIFO and Stop cancellation",
   "lane": "FEATURE",
   "action": "COMPOSE",
-  "status": "INDEPENDENTLY_APPROVED_AWAITING_LOCAL_COMMIT_CLOSURE",
+  "status": "ACCEPTED_F03_LOCAL_PRODUCT_COMMIT",
   "source": {
     "upstream_commit": "a0ec0d286f1f8911617ba0a7fddcd9a0e0108d6d",
     "upstream_paths": [
@@ -38,9 +38,9 @@
       "apps/desktop/e2e/owned-process-observer.unit.test.ts",
       "apps/desktop/e2e/steer-alias-contract.spec.ts"
     ],
-    "candidate_head": null,
-    "candidate_tree": null,
-    "candidate_patch_sha256": null,
+    "candidate_head": "d6963d46ed9f63ec0479577755b1e0be3a9368e0",
+    "candidate_tree": "1a55b4d6756238479d4f385f701ce9264e7f8df4",
+    "candidate_patch_sha256": "c911a672ade29e71fe7e98b2b34c74b117425d22a57216c2fe9f28ec4528cf23",
     "build_artifact_sha256": {
       "apps/desktop/dist/electron-main.mjs": "bdbb2ffa585962c70413a0d4d1d917f0b10a3b0c7634389c7df0b51fe8eeec48",
       "apps/desktop/dist/electron-preload.js": "c5c7c6f8964b988ff1debb56751f291c4203d0f01a9ba3798c648b463a311f1a",
@@ -447,8 +447,13 @@
       "apps/desktop/e2e/owned-process-observer.unit.test.ts": "dab38d2bd018c2e37944693a79be6b8a61a9b8027e9213084379a33fbf8ec6cd",
       "apps/desktop/e2e/steer-alias-contract.spec.ts": "db0b6dcc7a88dd5efeeb1276fd888c8b10e20b865319cff98ac17562a5252171"
     },
-    "candidate_revision_note": "Content-bound precommit candidate; final local product commit and tree require postcommit closure.",
-    "build_binding_note": "Task-owned development artifacts, source content and actual native effects are bound separately; dirty build stamp is not a release revision."
+    "candidate_revision_note": "The preceding logical product commit is content-bound to all22qualified runtime source files. A subsequent documentation-only commit records its identities; no self-referential commit hash is claimed.",
+    "build_binding_note": "Task-owned development artifacts, source content and actual native effects are bound separately; dirty build stamp is not a release revision.",
+    "postcommit_binding": {
+      "path": "tmp/probes/v0216-20261010/evidence/f03-product-postcommit-binding.json",
+      "sha256": "314fd9825db829d046300fd62bb14d6d0463d20e1672fccd715787dabe4c5de4",
+      "all_22_working_and_git_blobs_match": true
+    }
   },
   "model": {
     "requested": "gpt-6.1-sol",
@@ -3426,7 +3431,7 @@
         "provenance_hashes_verified": 58
       }
     ],
-    "status": "APPROVED_FOR_LOCAL_PRODUCT_COMMIT",
+    "status": "APPROVED_F03_CONTENT",
     "reviewer": "/root/f03_contract_review",
     "evidence": {
       "path": "tmp/probes/v0216-20261010/evidence/f03-independent-final-review.json",
@@ -3467,15 +3472,18 @@
     "audit": {
       "path": "tmp/probes/v0216-20261010/evidence/f03-final-canonical-wip-audit.json",
       "sha256": "3205273c1b13a970af38a9feb0f9e31351efe1710d6798e4f250202d02f31b1b"
+    },
+    "postcommit_primary_audit": {
+      "path": "tmp/probes/v0216-20261010/evidence/f03-postcommit-canonical-wip-audit.json",
+      "sha256": "3dc27695a0195c99fe56c0fb5b8863d4e1f363feee2339bb56bc0b941fd874ed",
+      "matched": true
     }
   },
   "acceptance": {
-    "requirements_complete": false,
-    "required_blockers": [
-      "Local product commit and postcommit identity closure"
-    ],
+    "requirements_complete": true,
+    "required_blockers": [],
     "unresolved_failures": [],
-    "accepted": false,
+    "accepted": true,
     "claim_limits": [
       "F03 family only; campaign remains open",
       "Development Electron, not packaged release",
@@ -3483,7 +3491,8 @@
       "B07 helper-local taken-before-Stop restore risk requires reproduction",
       "No messaging/classic CLI/compute-host Stop closure",
       "Desktop lint exits zero with 94 padding warnings; TUI lint has three padding warnings"
-    ]
+    ],
+    "scope": "F03 only: local source-bound product commit"
   },
   "check_results": [
     {

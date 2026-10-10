@@ -1,6 +1,6 @@
 # F03: canonical steer alias and local Desktop admission
 
-Status: source-bound candidate independently approved for local product commit. Postcommit identity closure remains required; full campaign acceptance remains open.
+Status: F03 independently accepted through local product commit d6963d46ed9f63ec0479577755b1e0be3a9368e0. The family receipt binds its tree, patch and all22qualified source bytes. Full campaign acceptance remains open.
 
 ## Source and owners
 
