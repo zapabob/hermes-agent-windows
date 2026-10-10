@@ -30,4 +30,6 @@ This is a reproduced fixed-base test applicability defect, not a F01 queue regre
 
 The candidate adds only two existing skipif decorators. Native per-file JUnit records retain all 41 collected nodes: 37 PASS and four expected POSIX SKIPPED, including the two corrected methods and three explicit native Windows counterpart passes. Product owners and every assertion remain unchanged. See B09-mini-plan.md and B09-receipt.json for exact qualification.
 
-Status: IMPLEMENTED_AWAITING_INDEPENDENT_B09_ACCEPTANCE. Linux/macOS execution and cloud CI remain separate unqualified gates.
+Status: ACCEPTED_B09_LOCAL_COMMIT_IDENTITY_VERIFIED. Linux/macOS execution and cloud CI remain separate unqualified gates.
+
+B09 product commit: 1a8f669d4e39440d1b41de6720ddce966e4d4aa9; tree: 3fa69f9a463aea6eb2ca72cac4011873d32da2d8; patch SHA256: b76ffea35f438dc80921450557f41a5d344f6370de2f3d241252cba74200a9dd. Independent review and postcommit blob checks passed; protected primary HEAD/status/23 hashes match the campaign baseline.

@@ -4,13 +4,13 @@
   "scope": "POSIX-only CLI initialization test applicability on native Windows",
   "lane": "INVENTORY_LEAD",
   "action": "TEST_CONTRACT_CORRECTION",
-  "status": "APPROVED_AWAITING_LOCAL_COMMIT_IDENTITY",
-  "accepted": false,
+  "status": "ACCEPTED_B09_LOCAL_COMMIT_IDENTITY_VERIFIED",
+  "accepted": true,
   "source": {
     "fixed_base": "606f7e557c13a0789a2420f7adf6181becf60d75",
-    "candidate_sha": null,
-    "candidate_tree": null,
-    "candidate_patch_sha256": null,
+    "candidate_sha": "1a8f669d4e39440d1b41de6720ddce966e4d4aa9",
+    "candidate_tree": "3fa69f9a463aea6eb2ca72cac4011873d32da2d8",
+    "candidate_patch_sha256": "b76ffea35f438dc80921450557f41a5d344f6370de2f3d241252cba74200a9dd",
     "before": [
       {
         "file": "cli.py",
@@ -196,7 +196,15 @@
         "file": "tmp/probes/v0216-20261010/evidence/b09-marker-ruff.log",
         "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
       }
-    ]
+    ],
+    "postcommit_binding": {
+      "file": "tmp/probes/v0216-20261010/evidence/b09-product-postcommit-binding.json",
+      "sha256": "280d971b488c90015165397bf6157f266f59d1cd79c9644a448037ecd64ed79a"
+    },
+    "protected_primary_postcommit": {
+      "file": "tmp/probes/v0216-20261010/evidence/b09-postcommit-canonical-wip-audit.json",
+      "sha256": "035f967eb3fa902ce1036180bd062b7e48de66f9792ee78cf83b2ec69be03046"
+    }
   },
   "review": {
     "reviewer": "/root/f03_contract_review",
