@@ -3615,5 +3615,14 @@
         }
       ]
     }
-  ]
+  ],
+  "evidence_retention": {
+    "path": "tmp/probes/v0216-20261010/evidence/f03-evidence-retention-binding.json",
+    "sha256": "d23c3f28f8ae85d4b65db7583b49ee4fa772c9029e3824829bfc2833eeed8b84",
+    "graph_database_copies": 1,
+    "build_file_copies": 371,
+    "bytes": 935796178,
+    "status": "IMMUTABLE_COPIES_MATCH_FROZEN_GRAPH_AND_BUILD_BINDINGS",
+    "note": "Immutable local copies preserve the accepted F03 graph/build byte bindings before subsequent family changes. They remain outside commits; product source and acceptance scope are unchanged."
+  }
 }
