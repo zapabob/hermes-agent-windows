@@ -14020,6 +14020,7 @@ def _gc_mcp_oauth_flows() -> None:
             flow_id
             for flow_id, flow in _mcp_oauth_flows.items()
             if getattr(flow, "created_at", 0) < cutoff
+            and flow.worker_done
         ]
         for flow_id in stale:
             _mcp_oauth_flows.pop(flow_id, None)
