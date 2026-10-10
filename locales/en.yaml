@@ -99,6 +99,13 @@ gateway:
     no_conversation:       "No conversation to branch — send a message first."
     create_failed:         "Failed to create branch: {error}"
     switch_failed:         "Branch created but failed to switch to it."
+    created_thread_without_branch: "Thread {thread} was created, but no branch session was created. The original chat remains selected."
+    thread_location: "Thread: {thread}"
+    persistence_incomplete: "The branch is selected, but history or title persistence is incomplete or could not be confirmed.\nOriginal: `{parent}`\nBranch: `{new}`\nUse `/resume` to inspect or return to the original."
+    binding_incomplete: "The branch was saved, but its destination binding could not be confirmed.\nOriginal: `{parent}`\nBranch: `{new}`\nUse `/resume` to inspect the saved branch."
+    branched_thread_one: "⑂ Branched to **{title}** in a new thread ({count} message copied)\nThread: {thread}\nOriginal: `{parent}` — this chat stays on it\nBranch: `{new}`\nUse `/branch --here` to branch in this chat instead."
+    branched_thread_many: "⑂ Branched to **{title}** in a new thread ({count} messages copied)\nThread: {thread}\nOriginal: `{parent}` — this chat stays on it\nBranch: `{new}`\nUse `/branch --here` to branch in this chat instead."
+    thread_fallback: "No thread could be created here, so the branch replaced this chat's session."
     branched_one:          "⑂ Branched to **{title}** ({count} message copied)\nOriginal: `{parent}`\nBranch: `{new}`\nUse `/resume` to switch back to the original."
     branched_many:         "⑂ Branched to **{title}** ({count} messages copied)\nOriginal: `{parent}`\nBranch: `{new}`\nUse `/resume` to switch back to the original."
 

@@ -3163,6 +3163,11 @@ def _(rid, params: dict) -> dict:
         new_key = _new_session_key()
         new_sid = uuid.uuid4().hex[:8]
         source = _session_source(session)
+        parent_prompt = None
+        try:
+            parent_prompt = (db.get_session(old_key) or {}).get("system_prompt")
+        except Exception:
+            logger.debug("branch parent prompt read failed", exc_info=True)
         lease = None  # claimed lazily on the first turn (_ensure_active_session_slot)
         branch_name = params.get("name", "")
         try:
@@ -3186,6 +3191,7 @@ def _(rid, params: dict) -> dict:
                 # thing that surfaces TUI branches. See issue #20856.
                 model_config={"_branched_from": old_key},
                 parent_session_id=old_key,
+                system_prompt=parent_prompt or None,
                 cwd=_session_cwd(session),
                 # The branch stays on its parent's profile. Explicit stamp (not
                 # just the parent-backfill) so it holds even when the parent row

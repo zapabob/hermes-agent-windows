@@ -104,6 +104,13 @@ def _thread_metadata_for_source(source, reply_to_message_id: str | None = None) 
     """
     thread_id = getattr(source, "thread_id", None)
     metadata = {"thread_id": thread_id} if thread_id is not None else {}
+    if getattr(source, "delivered_via_upstream_relay", False) is True:
+        # The authenticated inbound source owns this reply's route, including
+        # unknown identity fields. Shared chat caches may belong to another turn.
+        metadata["_relay_logical_platform"] = _platform_name(getattr(source, "platform", None))
+        metadata["scope_id"] = getattr(source, "scope_id", None)
+        metadata["user_id"] = getattr(source, "user_id", None)
+        metadata["_relay_chat_type"] = getattr(source, "chat_type", None)
     # Slack workspace identity is durable routing state, not ephemeral event
     # metadata. Carry it on every outbound path (including unthreaded sends)
     # so a multi-workspace Socket Mode gateway never falls back to its primary

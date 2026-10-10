@@ -101,17 +101,20 @@ class TestBranchRoutingColumns:
         captured_new_session_id = {}
         real_switch_session = store.switch_session
 
+        class SimulatedProcessCrash(BaseException):
+            """Bypass operational recovery without terminating the test process."""
+
         def _crash_before_switch(session_key, target_session_id):
             # Simulate the process dying right here — before routing gets
             # backfilled — by capturing the id and raising instead of
             # forwarding to the real switch_session().
             captured_new_session_id["id"] = target_session_id
-            raise RuntimeError("simulated crash before switch_session")
+            raise SimulatedProcessCrash("simulated crash before switch_session")
 
         import unittest.mock as mock
 
         with mock.patch.object(store, "switch_session", side_effect=_crash_before_switch):
-            with pytest.raises(RuntimeError, match="simulated crash"):
+            with pytest.raises(SimulatedProcessCrash, match="simulated crash"):
                 await runner._handle_branch_command(_make_event("/branch"))
 
         new_session_id = captured_new_session_id["id"]
