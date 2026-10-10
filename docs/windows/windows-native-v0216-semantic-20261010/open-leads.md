@@ -21,3 +21,11 @@ Task-owned native transport calibration observed real input/Enter/output, then W
 This proves the bounded retained-fixture behavior, not a leak in the public dashboard lifecycle. Trace the real /api/pty bridge owner and its reference lifetime, then reproduce close/disconnect/update through that public owner before proposing a product repair. F01 native fixture cleanup may release its own connection/handles but must not claim WinPtyBridge.close alone passed this oracle.
 
 Status: NATIVE_CALIBRATION_OBSERVATION_REQUIRES_PUBLIC_OWNER_REPRO. No product implementation or final disposition.
+
+## B09: POSIX-only CLI initialization assertions executed on Windows
+
+F01's related-owner regression run observed two failures in tests/cli/test_cli_init.py: test_lf_enter_binding_respects_multiline_shortcuts expected a POSIX legacy c-j binding, and test_cpr_gating_posix_suppresses_without_ssh expected POSIX CPR suppression. A clean isolated worktree at D_BASE 606f7e557c13a0789a2420f7adf6181becf60d75 reproduced exactly the same two node failures, with 35 other tests passing. The test docstrings describe POSIX coverage and refer to separate native Windows cases, but the two methods lack linux_only/platform gating. Windows leaves c-j available for its newline handler and its normal CPR result is False.
+
+This is a reproduced fixed-base test applicability defect, not a F01 queue regression. Preserve the full failed runs. Add correctly scoped POSIX markers in a separately reviewed change, retain and execute the native Windows counterpart tests, and verify the Windows runner's skip/selection semantics before claiming closure. No platform identity mocking or weakening of the Windows expectation is authorized by this observation.
+
+Status: FIXED_BASE_REPRODUCED_TEST_APPLICABILITY_DEFECT. Bounded marker repair and counterpart qualification remain open.

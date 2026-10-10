@@ -89,10 +89,18 @@ class TestSteerInlineDetector:
         assert cli._should_handle_steer_command_inline("steer without slash") is False
         assert cli._should_handle_steer_command_inline("") is False
 
+    def test_detects_queue_control_when_agent_running(self):
+        cli = _make_cli()
+        cli._agent_running = True
+        assert cli._should_handle_steer_command_inline("/queue hello") is True
+        assert cli._should_handle_steer_command_inline("/q list") is True
+        assert cli._should_handle_steer_command_inline("/q list", has_images=True) is False
+        cli._agent_running = False
+        assert cli._should_handle_steer_command_inline("/q list") is False
+
     def test_ignores_other_slash_commands(self):
         cli = _make_cli()
         cli._agent_running = True
-        assert cli._should_handle_steer_command_inline("/queue hello") is False
         assert cli._should_handle_steer_command_inline("/stop") is False
         assert cli._should_handle_steer_command_inline("/help") is False
 

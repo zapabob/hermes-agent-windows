@@ -12375,7 +12375,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
     def _should_handle_steer_command_inline(
         self, text: str, has_images: bool = False
     ) -> bool:
-        """Return True when /steer should be dispatched immediately while the agent is running.
+        """Return True when /steer or /queue should dispatch while the agent runs.
 
         /steer MUST bypass the normal _pending_input → process_loop path when
         the agent is active, because process_loop is blocked inside
@@ -12386,6 +12386,8 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
         injecting it mid-run.  Dispatching inline on the UI thread calls
         agent.steer() directly, which is thread-safe (uses _pending_steer_lock).
         """
+        # Queue controls also bypass the blocked process loop, so management
+        # changes pending inputs before the next model turn consumes them.
         if not text or has_images or not _looks_like_slash_command(text):
             return False
         if not getattr(self, "_agent_running", False):
@@ -12395,7 +12397,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
 
             base = text.split(None, 1)[0].lower().lstrip("/")
             cmd = resolve_command(base)
-            return bool(cmd and cmd.name == "steer")
+            return bool(cmd and cmd.name in {"steer", "queue"})
         except Exception:
             return False
 
@@ -13042,22 +13044,9 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
         elif canonical == "btw":
             self._handle_btw_command(cmd_original)
         elif canonical == "queue":
-            # Extract prompt after "/queue " or "/q "
-            parts = cmd_original.split(None, 1)
-            payload = parts[1].strip() if len(parts) > 1 else ""
-            payload = self._expand_paste_references(payload)
-            if not payload:
-                _cprint("  Usage: /queue <prompt>")
-            else:
-                self._pending_input.put(payload)
-                if self._agent_running:
-                    _cprint(
-                        f"  Queued for the next turn: {payload[:80]}{'...' if len(payload) > 80 else ''}"
-                    )
-                else:
-                    _cprint(
-                        f"  Queued: {payload[:80]}{'...' if len(payload) > 80 else ''}"
-                    )
+            from hermes_cli.cli_queue import process_queue_command
+
+            process_queue_command(self, cmd_original, _cprint)
         elif canonical == "steer":
             # Inject a message after the next tool call without interrupting.
             # If the agent is actively running, push the text into the agent's

@@ -17,7 +17,9 @@ The local integration branch is codex/v0216-semantic-20261010. Product changes a
 
 ## Current scope and qualification
 
-F03 covers /s through the existing steer owners and associated local Desktop/TUI admission and handoff repairs. Its mini-plan and receipt describe exact qualification; a family receipt does not imply full release parity. F01 follows F03 as a separate logical commit. All remaining seed families and inventory-derived families require independent disposition and acceptance.
+F03 covers /s through the existing steer owners and associated local Desktop/TUI admission and handoff repairs. F01 covers classic CLI queue list/edit/rm/move/clear/add through the existing input queue and dispatcher. Each mini-plan and receipt describes exact qualification; a family receipt does not imply full release parity. F01 follows F03 as a separate logical commit. All remaining seed families and inventory-derived families require independent disposition and acceptance.
+
+F01's native Windows provider ledger observes the edited pending prompts once, in order, with the removed prompt absent. Its eight semantic mutants and source/graph bindings have independent local acceptance. Two unrelated POSIX-only CLI initialization assertions reproduce at the fixed base on Windows; their missing applicability guards are recorded separately as B09, alongside the still-open B07 and B08 leads.
 
 The complete DAG enumeration captured 18,805 unique commits, including 491 merge commits, and 16,704 changed paths. This is metadata coverage. Semantic classification and combined-merge review remain open. Static manifest enumeration captured R_AFTER 4,838 files/3,914 candidate surfaces, U_RELEASE 7,067/5,243, D_BASE 5,868/6,950 and the initial integration 5,868/6,950, without parser errors. Candidate surface counts are navigation data; TypeScript AST/runtime resolution and dynamic plugin/provider/tool catalogs remain unqualified.
 
