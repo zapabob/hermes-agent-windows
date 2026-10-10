@@ -28,4 +28,6 @@ F01's related-owner regression run observed two failures in tests/cli/test_cli_i
 
 This is a reproduced fixed-base test applicability defect, not a F01 queue regression. Preserve the full failed runs. Add correctly scoped POSIX markers in a separately reviewed change, retain and execute the native Windows counterpart tests, and verify the Windows runner's skip/selection semantics before claiming closure. No platform identity mocking or weakening of the Windows expectation is authorized by this observation.
 
-Status: FIXED_BASE_REPRODUCED_TEST_APPLICABILITY_DEFECT. Bounded marker repair and counterpart qualification remain open.
+The candidate adds only two existing skipif decorators. Native per-file JUnit records retain all 41 collected nodes: 37 PASS and four expected POSIX SKIPPED, including the two corrected methods and three explicit native Windows counterpart passes. Product owners and every assertion remain unchanged. See B09-mini-plan.md and B09-receipt.json for exact qualification.
+
+Status: IMPLEMENTED_AWAITING_INDEPENDENT_B09_ACCEPTANCE. Linux/macOS execution and cloud CI remain separate unqualified gates.
