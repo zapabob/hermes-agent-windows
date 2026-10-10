@@ -47,3 +47,9 @@ The B10/B11 16-file regression run has ten failures. Nine reproduce at fixed D_B
 Status: BASELINE_FAILURES_AND_SOURCE_APPLICABILITY_LEADS_OPEN. No weakening/skipping or whole-suite GREEN acceptance occurred.
 
 B10/B11 product commit: 2858b4708956b4e4b57452bf796db6fd0581b792; tree: 1557cce400e3d2d6c66ac47445ccc09a0edbf9c2; patch SHA256: 866244e238436cf80c8f51b2907b0530194e4fe7495f849fc6d68fe764c8c732. Independent review, exact local blob identity and protected primary audit passed. B12 and separate force-kill/background/W02 leads remain open.
+
+## F02: accepted local branch lifecycle and reply scope
+
+F02 product commit: d7fc8a859e9be6117997914a6a81a7f1c45d7225; tree: 9898617817e6c546efc141ae4429231404d559f4; patch SHA256: f5657d1574c15083a033de45a42714e0931a4abb617807309e30029914808e59. The bounded receipt accepts selected CLI/API/TUI lifecycle, authenticated Gateway/Relay destinations and reply streams. Fifteen qualified/restored mutations, 66 selected files with 669 deduplicated passing cases, native ConPTY branch/resume nonempty sidecars and authenticated loopback WebSocket effects passed independent review. Exact committed blob identity and protected primary HEAD/status/23 hashes match.
+
+Status: ACCEPTED_F02_LOCAL_COMMIT_IDENTITY_VERIFIED. Native model tool execution, Relay media/typing/task-card owners, production connectors, packaged Desktop, B07/B08/B12 and all remaining campaign/compatibility families remain open.

@@ -4,8 +4,8 @@
     "F02"
   ],
   "lane": "FEATURE",
-  "status": "APPROVED_AWAITING_LOCAL_COMMIT_IDENTITY",
-  "accepted": false,
+  "status": "ACCEPTED_F02_LOCAL_COMMIT_IDENTITY_VERIFIED",
+  "accepted": true,
   "scope": "Local CLI/API/TUI branch lifecycle and authenticated Gateway/Relay destination/reply slice only",
   "parent": "492e119d604a344d6d14d97e3d97f51440d24a6c",
   "contract": "F02-mini-plan.md",
@@ -3390,5 +3390,16 @@
   "independent_review": {
     "file": "tmp/probes/v0216-20261010/evidence/f02-independent-final-review-v1.json",
     "sha256": "75a0e1294253ae3ae3dcf931838358b88d978e3f312daa1ca08fad42590b944e"
+  },
+  "candidate_sha": "d7fc8a859e9be6117997914a6a81a7f1c45d7225",
+  "candidate_tree": "9898617817e6c546efc141ae4429231404d559f4",
+  "candidate_patch_sha256": "f5657d1574c15083a033de45a42714e0931a4abb617807309e30029914808e59",
+  "postcommit_binding": {
+    "file": "tmp/probes/v0216-20261010/evidence/f02-product-postcommit-binding.json",
+    "sha256": "0a6eb7207d6f6eca8b7bf7eb715ab4f9824b5ee0bd4827d82ae9e673d8dbf6cc"
+  },
+  "protected_primary_postcommit": {
+    "file": "tmp/probes/v0216-20261010/evidence/f02-postcommit-canonical-wip-audit.json",
+    "sha256": "3b152fb21b89a19ab0319dd309abaff14ad9593f75bccae22b96108482b49421"
   }
 }
