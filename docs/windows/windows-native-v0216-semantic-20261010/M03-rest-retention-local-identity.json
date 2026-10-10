@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "family": "M03",
+  "slice": "REST expired-flow ownership retention",
+  "status": "QUALIFIED_M03_REST_LOCAL_PRODUCT_IDENTITY_ONLY",
+  "reviewer": "/root/f03_contract_review",
+  "product": {
+    "commit": "acd46a9f4a45d9d0a75e8191174262736762ee16",
+    "parent": "0ea37256069c897ff81e01f644253a00078b2ace",
+    "tree": "2262bf35d4676c03121d6d413087fb0031d82f2f",
+    "binary_patch_sha256": "793b531b36404c59723d1985655802776a6639011c459bedbff2d4765d797945",
+    "entries": {
+      "hermes_cli/web_server.py": "cc0598b7d177ae4ddce310e2eb1f7e947cc3851fdebed6c8ab2c1d723fbabc41",
+      "tests/hermes_cli/test_mcp_oauth_rest_retention.py": "4fa1e611897838ac19c18bf575eab9c030b56d4d1fd1fbf3e1067a8f6dae0346",
+      "docs/windows/windows-native-v0216-semantic-20261010/M03-rest-retention-mini-plan.md": "dd95295d05c4df3514f5648508a40b459976d890f4ed88851496679e1f7d7f41",
+      "docs/windows/windows-native-v0216-semantic-20261010/M03-rest-retention-receipt.json": "8bafd1f77303c45e42447e9053e84f871a17f3e493de9ca204567407b25fa645"
+    },
+    "all_four_blobs_equal_reviewed_bytes": true,
+    "candidate_source_inputs_unchanged_at_product_acceptance": 110,
+    "index_and_worktree_clean_at_product_acceptance": true
+  },
+  "evidence": {
+    "root": "tmp/probes/v0216-20261010/evidence/",
+    "independent_content_review": {"file": "m03-rest-independent-content-review-v1.json", "sha256": "09586863cbb1173b04c9d5f5e4040e6789436d329b7cb70e5537aa7247bbc2f1"},
+    "stage": {"file": "m03-rest-product-stage-v1.json", "sha256": "89fe54858d50f5e4f3637f744baa69ffc38a8a2ee50d24ba5a1ecfa7d567fba3"},
+    "product_binding": {"file": "m03-rest-product-commit-binding-v1.json", "sha256": "5261258807c0212bf190175d5cccdf06efb5883226bfce0b2a996f88487a2236"},
+    "product_outer": {"file": "m03-rest-product-local-commit-v1.json", "sha256": "710653724703834cf3acbb821721aec27dd0d9f40b17789db5b0db9fb71b33f7"},
+    "product_log": {"file": "m03-rest-product-local-commit-v1.log", "sha256": "949291d6445cf65cb39bc1298490251b68eea7d6eb812c29fbbf0a02c152170f"},
+    "verify_outer": {"file": "m03-rest-product-verify-reviewed-v1.json", "sha256": "b5ff0ad6b0abf883ddfb7528ca7550403a10be775a3522216c28606119d5e46d"},
+    "verify_log": {"file": "m03-rest-product-verify-reviewed-v1.log", "sha256": "802923a323cbf4f9f73a3b1884f7fba9ec019519cf5161e93b5d7fc593254933"},
+    "precommit_primary_audit": {"file": "m03-rest-precommit-canonical-wip-audit-v1.json", "sha256": "223c01ec73cff9ba9bdf1667a7dad2ae407eca330e1ed2fe8b6293faaa56ce93"},
+    "postcommit_primary_audit": {"file": "m03-rest-postcommit-canonical-wip-audit-v1.json", "sha256": "b130eab569181314f821e181f93af7d0991a2da9872dafdd87089a79ead631de"},
+    "postcommit_primary_outer": {"file": "m03-rest-primary-postcommit-audit-v1.json", "sha256": "756e7658d1e11fc2527c0049d47eeae5c3daa010d1d5493d1a09a6982fae30f6"},
+    "postcommit_primary_log": {"file": "m03-rest-primary-postcommit-audit-v1.log", "sha256": "c7ce33e695307223848b1656cd676a7d82bae4d9e98a631b093e7afc6fb6b640"}
+  },
+  "protected_primary": {
+    "head": "606f7e557c13a0789a2420f7adf6181becf60d75",
+    "dirty_items": 23,
+    "precommit_and_postcommit_head_status_bytes_matched": true
+  },
+  "accepted_scope": "The single GC completion condition, three canonical REST cases, 12 owner regressions, five qualified variants with six AssertionErrors and 12 restored/control pass executions; all mandatory owned cleanup completed.",
+  "transport_limits": "Public REST handlers via TestClient and synthetic signed cookie; actual test-owned issuer/MCP loopback SDK transports. No public-network REST, external browser/model, packaged runtime or full installed-environment qualification.",
+  "historical_receipt": "M03-rest-retention-receipt.json preserves its reviewed precommit snapshot; this separate metadata record supplies the subsequently observed product identity and primary audits.",
+  "remaining": "REST startup uncertainty, in-place OAuth remint/revival, revoked-token/config replacement, plugin OAuth/module split and all other mandatory M03/campaign inventory remain open.",
+  "bounded_acceptance": true,
+  "full_m03_accepted": false,
+  "full_campaign_accepted": false,
+  "publication": false
+}
