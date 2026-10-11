@@ -402,3 +402,193 @@ def test_non_tool_handlers_also_reconnect_on_session_expired(
     finally:
         mcp_tool._servers.pop(f"srv-{op_label}", None)
         mcp_tool._server_error_counts.pop(f"srv-{op_label}", None)
+
+
+@pytest.fixture
+def failed_auth_reconnect(monkeypatch, tmp_path):
+    """Exercise real auth policy/recovery with only the transport wait stubbed."""
+    from types import SimpleNamespace
+    from tools import mcp_tool, mcp_oauth_manager
+    from tools.mcp_oauth import OAuthNonInteractiveError
+
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text(
+        "mcp_servers:\n  retained-auth:\n    command: owned-unused\n    enabled: true\n",
+        encoding="utf-8",
+    )
+    server = SimpleNamespace(
+        session=None, _task=object(), _reconnect_event=object(),
+        _error=ExceptionGroup("transport", [OAuthNonInteractiveError("owned expired token")]),
+    )
+    key = mcp_tool._resolve_server_key("retained-auth")
+    monkeypatch.setitem(mcp_tool._servers, key, server)
+    monkeypatch.setattr(mcp_tool, "_mcp_loop", SimpleNamespace(is_running=lambda: True))
+    monkeypatch.setattr(mcp_tool, "_signal_reconnect_and_wait", lambda *args, **kw: False)
+    monkeypatch.setattr(mcp_tool, "_run_on_mcp_loop", lambda factory, **kw: asyncio.run(factory()))
+    calls = {"manager": 0, "retry": 0}
+
+    async def handle_401(name, response):
+        assert name == "retained-auth"
+        assert response is None
+        calls["manager"] += 1
+        return False
+
+    monkeypatch.setattr(mcp_oauth_manager, "get_manager", lambda: SimpleNamespace(handle_401=handle_401))
+    monkeypatch.setattr(mcp_tool, "_server_error_counts", {})
+    monkeypatch.setattr(mcp_tool, "_server_breaker_opened_at", {})
+
+    def retry():
+        calls["retry"] += 1
+        return json.dumps({"result": "protected effect"})
+
+    policy = mcp_tool._MCPInvocationPolicy("retained-auth")
+
+    def invoke():
+        return mcp_tool._handle_session_expired_and_retry(
+            "retained-auth", RuntimeError("Connection closed"), retry,
+            "tools/call", admission_check=policy.check,
+        )
+
+    return SimpleNamespace(
+        core=mcp_tool, server=server, key=key, calls=calls,
+        config_path=config_path, invoke=invoke,
+    )
+
+
+def test_retained_auth_failure_surfaces_reauth_after_failed_reconnect(failed_auth_reconnect):
+    state = failed_auth_reconnect
+    result = json.loads(state.invoke())
+    assert result["needs_reauth"] is True
+    assert result["server"] == "retained-auth"
+    assert state.calls == {"manager": 1, "retry": 0}
+
+
+@pytest.mark.parametrize("failure", [RuntimeError("401 token expired"), TimeoutError(), None])
+def test_non_auth_reconnect_failure_never_recovers_oauth(failed_auth_reconnect, failure):
+    state = failed_auth_reconnect
+    state.server._error = failure
+    assert state.invoke() is None
+    assert state.calls == {"manager": 0, "retry": 0}
+
+
+def test_http_403_reconnect_failure_never_recovers_oauth(failed_auth_reconnect):
+    state = failed_auth_reconnect
+    transport = state.core.sdk_httpx()
+    request = transport.Request("POST", "http://127.0.0.1/owned-unused")
+    response = transport.Response(403, request=request)
+    state.server._error = transport.HTTPStatusError("owned forbidden", request=request, response=response)
+    assert state.invoke() is None
+    assert state.calls == {"manager": 0, "retry": 0}
+
+
+@pytest.mark.parametrize("boundary", ["manager_admission", "recovery_end"])
+def test_recovery_rechecks_owner_at_manager_and_retry_boundaries(
+    monkeypatch, failed_auth_reconnect, boundary
+):
+    from types import SimpleNamespace
+    from tools import mcp_oauth_manager
+    state = failed_auth_reconnect
+
+    async def handle_401(name, response):
+        state.calls["manager"] += 1
+        state.server._task = object()
+        return True
+
+    def manager():
+        if boundary == "manager_admission":
+            state.server._task = object()
+        return SimpleNamespace(handle_401=handle_401)
+
+    monkeypatch.setattr(mcp_oauth_manager, "get_manager", manager)
+    result = json.loads(state.invoke())
+    assert result["mcp_policy"] == "connection_replaced"
+    assert state.calls == {"manager": int(boundary == "recovery_end"), "retry": 0}
+
+
+@pytest.mark.parametrize("replacement", ["server", "task"])
+def test_replaced_connection_denies_reauth_before_side_effects(
+    monkeypatch, failed_auth_reconnect, replacement
+):
+    state = failed_auth_reconnect
+
+    def reconnect(*args, **kwargs):
+        if replacement == "server":
+            state.core._servers[state.key] = object()
+        else:
+            state.server._task = object()
+        return False
+
+    monkeypatch.setattr(state.core, "_signal_reconnect_and_wait", reconnect)
+    result = json.loads(state.invoke())
+    assert result["mcp_policy"] == "connection_replaced"
+    assert state.calls == {"manager": 0, "retry": 0}
+
+
+def test_disabled_config_denies_reauth_before_side_effects(monkeypatch, failed_auth_reconnect):
+    state = failed_auth_reconnect
+
+    def reconnect(*args, **kwargs):
+        state.config_path.write_text(
+            "mcp_servers:\n  retained-auth:\n    command: owned-unused\n    enabled: false\n",
+            encoding="utf-8",
+        )
+        return False
+
+    monkeypatch.setattr(state.core, "_signal_reconnect_and_wait", reconnect)
+    result = json.loads(state.invoke())
+    assert result["mcp_policy"] == "disabled"
+    assert state.calls == {"manager": 0, "retry": 0}
+
+
+def test_live_session_does_not_reuse_retained_auth_failure(failed_auth_reconnect):
+    state = failed_auth_reconnect
+    state.server.session = object()
+    assert state.invoke() is None
+    assert state.calls == {"manager": 0, "retry": 0}
+
+
+@pytest.mark.parametrize("next_attempt", ["success", "non_auth"])
+def test_run_retains_original_failure_until_next_transport_attempt(monkeypatch, next_attempt):
+    """A real persistent run task parks with its group, then drops stale auth."""
+    from tools import mcp_tool
+    from tools.mcp_oauth import OAuthNonInteractiveError
+
+    original = ExceptionGroup("owned transport", [OAuthNonInteractiveError("expired")])
+    non_auth = RuntimeError("owned network failure")
+    attempts = []
+    parked = []
+    monkeypatch.setattr(mcp_tool, "_ensure_mcp_sdk", lambda: True)
+
+    async def transport(server, config):
+        assert server._error is None
+        attempts.append(asyncio.current_task())
+        if len(attempts) == 1:
+            raise original
+        assert len(attempts) == 2
+        server._shutdown_event.set()
+        if next_attempt == "non_auth":
+            raise non_auth
+        return "shutdown"
+
+    async def wait(server, timeout):
+        assert server._error is original
+        parked.append(asyncio.current_task())
+        return "reconnect"
+
+    monkeypatch.setattr(mcp_tool.MCPServerTask, "_run_stdio", transport)
+    monkeypatch.setattr(mcp_tool.MCPServerTask, "_wait_for_reconnect_or_shutdown", wait)
+
+    async def scenario():
+        server = mcp_tool.MCPServerTask("owned-lifetime")
+        server._ever_connected = True
+        server._task = asyncio.current_task()
+        await server.run({
+            "command": "owned-unused", "sampling": {"enabled": False},
+            "elicitation": {"enabled": False},
+        })
+        assert attempts == [server._task, server._task]
+        assert parked == [server._task]
+        assert server._error is (non_auth if next_attempt == "non_auth" else None)
+
+    asyncio.run(scenario())

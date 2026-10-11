@@ -4068,6 +4068,10 @@ class MCPServerTask:
                 )
                 first_connection_attempt = False
                 with oauth_context:
+                    # A failure belongs to one transport attempt. Keep its
+                    # original exception while parked, then clear it only as
+                    # the next actual connection attempt begins.
+                    self._error = None
                     if self._is_http():
                         lifecycle_reason = await self._run_http(config)
                     else:
@@ -4178,6 +4182,7 @@ class MCPServerTask:
                 raise
             except Exception as exc:
                 self.session = None
+                self._error = exc
                 # Unwrap anyio TaskGroup wrappers first: str(exc) on a
                 # BaseExceptionGroup is "unhandled errors in a TaskGroup
                 # (N sub-exceptions)" — useless in logs, and it hides the
@@ -5375,10 +5380,10 @@ def _handle_session_expired_and_retry(
 ):
     """Trigger a transport reconnect and retry once on session expiry.
 
-    Unlike :func:`_handle_auth_error_and_retry`, this does **not** call
-    the OAuth manager's ``handle_401`` — the access token is still
-    valid, only the server-side session state is stale.  Setting
-    ``_reconnect_event`` causes the server task's lifecycle loop to
+    Ordinary session expiry reuses the valid access token without calling
+    the OAuth manager. If reconnect instead retains a typed authentication
+    failure on the same owned run task, use the existing auth recovery path.
+    Setting ``_reconnect_event`` causes the server task's lifecycle loop to
     tear down the current ``streamablehttp_client`` + ``ClientSession``
     and rebuild them, reusing the existing OAuth provider instance.
     See #13383.
@@ -5402,7 +5407,9 @@ def _handle_session_expired_and_retry(
         return denied
 
     with _lock:
-        srv = _servers.get(_resolve_server_key(server_name))
+        server_key = _resolve_server_key(server_name)
+        srv = _servers.get(server_key)
+        run_task = getattr(srv, "_task", None)
     if srv is None or not hasattr(srv, "_reconnect_event"):
         return None
 
@@ -5427,6 +5434,46 @@ def _handle_session_expired_and_retry(
     ):
         if admission_check is not None and (denied := admission_check()) is not None:
             return denied
+
+        def owned_admission_check() -> Optional[str]:
+            if admission_check is not None and (denied := admission_check()) is not None:
+                return denied
+            with _lock:
+                if (
+                    _resolve_server_key(server_name) != server_key
+                    or _servers.get(server_key) is not srv
+                    or getattr(srv, "_task", None) is not run_task
+                ):
+                    return tool_error(
+                        f"MCP server '{server_name}' connection changed during recovery",
+                        mcp_policy="connection_replaced",
+                        server=server_name,
+                    )
+            return None
+
+        if (denied := owned_admission_check()) is not None:
+            return denied
+        with _lock:
+            # Snapshot the current failed attempt only while the captured
+            # profile/server/task still owns a disconnected connection.
+            failure = (
+                getattr(srv, "_error", None)
+                if _servers.get(server_key) is srv
+                and getattr(srv, "_task", None) is run_task
+                and run_task is not None
+                and srv.session is None
+                else None
+            )
+        if failure is not None:
+            root = _unwrap_exception_group(failure)
+            if _is_auth_error(root):
+                return _handle_auth_error_and_retry(
+                    server_name,
+                    root,
+                    retry_call,
+                    op_description,
+                    admission_check=owned_admission_check,
+                )
         logger.warning(
             "MCP server '%s': reconnect did not ready within 15s after "
             "session-expired error; falling through to error response.",
