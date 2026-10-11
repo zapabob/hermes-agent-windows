@@ -54,7 +54,7 @@ def rpc(operation, *, profile="work", **params):
 
 
 @contextmanager
-def running_flow(owner, root):
+def running_flow(owner, root, *, manual_start=False):
     from hermes_cli.mcp_config import _replace_mcp_servers
 
     cfg = {"url": owner.mcp_url, "transport": "http", "auth": "oauth", "oauth": {"cimd": False}, "timeout": 5}
@@ -69,6 +69,9 @@ def running_flow(owner, root):
     owned_loops = []
     ports = set()
     try:
+        if manual_start:
+            yield None, None, None, None, None, owned_loops
+            return
         result = rpc("start")
         if core._mcp_loop is not None:
             owned_loops.append((core._mcp_loop, core._mcp_thread))

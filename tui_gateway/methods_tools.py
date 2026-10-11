@@ -2372,9 +2372,17 @@ def _(rid, params: dict) -> dict:
                 "flow": result["flow"],
             },
         )
-    except ValueError as e:
-        return _err(rid, 4001, str(e))
     except Exception as e:
+        from tui_gateway.mcp_oauth_sessions import McpOAuthStartupError
+
+        if isinstance(e, McpOAuthStartupError):
+            return _err(rid, 5024, str(e), data={
+                "kind": "mcp_oauth_startup_failure",
+                "session_id": e.session_id,
+                "server_name": e.server_name,
+            })
+        if isinstance(e, ValueError):
+            return _err(rid, 4001, str(e))
         return _err(rid, 5024, str(e))
     finally:
         _mcp_reset_profile(token)

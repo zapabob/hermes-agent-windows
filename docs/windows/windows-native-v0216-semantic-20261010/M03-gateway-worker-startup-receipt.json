@@ -1,0 +1,147 @@
+{
+  "status": "QUALIFIED_M03_GATEWAY_WORKER_EVIDENCE_PENDING_LOCAL_COMMIT",
+  "parent": "c69d65f234b00eca1894aa3613a6347ea5fde490",
+  "scope": "Gateway acquired worker startup, typed reserved public identity, captured Desktop cleanup",
+  "candidate_sources": {
+    "apps/desktop/e2e/mcp-oauth.spec.ts": {
+      "sha256": "f02aa16747e84da732566771e1815ca2453e41a52b8146bf8285ce146c494479",
+      "bytes": 46077
+    },
+    "apps/desktop/src/lib/mcp-dashboard-oauth.test.ts": {
+      "sha256": "985de3b8f75945dd4a7a2b93c745b0096d35ef124899951e6032ef4c4311f580",
+      "bytes": 8589
+    },
+    "apps/desktop/src/lib/mcp-dashboard-oauth.ts": {
+      "sha256": "d76d8c03b8ef17baee57eb860eb9ca88e4267a82abeb50494a0c038db0036797",
+      "bytes": 7255
+    },
+    "tests/fakes/mcp_oauth_gateway.py": {
+      "sha256": "f3e9897605afa255abeadcea12891b1b2d767b9c3aa124bf4be9c063f58a2207",
+      "bytes": 6824
+    },
+    "tests/tui_gateway/test_mcp_oauth_admission_edges.py": {
+      "sha256": "ca8c0bbba9632f208909491407bdc85653658be0377f4a7668c49ac23b1ea793",
+      "bytes": 17949
+    },
+    "tui_gateway/mcp_oauth_sessions.py": {
+      "sha256": "2e16ba402be76b2be7305a38fb7892b0889ac4ebaaf84d358d629fe030fe039a",
+      "bytes": 20842
+    },
+    "tui_gateway/methods_tools.py": {
+      "sha256": "0dd722c2232a9e366eff3f712dafc1e5800aab39d8c8f407fd247d83100ce06c",
+      "bytes": 104780
+    },
+    "apps/desktop/e2e/mcp-oauth-worker-cold.py": {
+      "sha256": "d6fc5c510e7cd0624d4b61b2fa1767cbb5db698bd890439761884a1d4ba4a162",
+      "bytes": 5457
+    },
+    "apps/desktop/e2e/mcp-oauth-worker-sitecustomize.py": {
+      "sha256": "13727f8694a59c21e09a1a66e8064de7d645c6b0fd4c2a944c484da8965060b0",
+      "bytes": 19177
+    },
+    "tests/tui_gateway/test_mcp_oauth_worker_startup.py": {
+      "sha256": "5bb02faecfb6f9fe67084b6bb0c874e7f2236c241600b521b974aad9149c0775",
+      "bytes": 28268
+    }
+  },
+  "python_startup_cases": 12,
+  "desktop_unit_cases": 19,
+  "legacy_admission_cases": 8,
+  "python_mutations": {
+    "variants": 6,
+    "assertion_failures": 5,
+    "private_reservation_keyerror": 1,
+    "review_ref": "tmp/probes/v0216-20261010/evidence/m03-gateway-worker-python-mutations-qualification-independent-review-v1.json",
+    "review_sha256": "233c364d25ec2f4b4364ac1e91b89bfbe01c8901c45ec2fbf6f48fd7ba47488b"
+  },
+  "desktop_mutations": {
+    "variants": 6,
+    "assertion_failures": 45,
+    "green_control_cases": 228,
+    "scope": "unit doubles only",
+    "review_ref": "tmp/probes/v0216-20261010/evidence/m03-gateway-worker-desktop-mutations-qualification-independent-review-v1.json",
+    "review_sha256": "19c6c813cb89e415da71ecc3f61f1081a31b67e500ac0620579fe499f9069f73"
+  },
+  "native_dev_scenarios": [
+    "constructor failure plus actual SDK warm/cold recovery",
+    "acquired-before-ident bootstrap held plus duplicate denial/directjoin and SDK warm/cold recovery"
+  ],
+  "native_limits": "source-tree dev Electron, owned synthetic issuer/MCP, scripted model, browser-open observation; historical constructor exact earlier spec, held later exact spec; no packaged/external-provider/model/browser/production qualification",
+  "affected_regression": {
+    "expected_cases": 64,
+    "inherited_qualified_cases": 18,
+    "fresh_expected_cases": 46,
+    "status": "QUALIFIED_18_INHERITED_PLUS_46_FRESH",
+    "partial_exclusion_ref": "tmp/probes/v0216-20261010/evidence/m03-gateway-worker-affected-regression-v1-partial-independent-review-v1.json",
+    "partial_exclusion_sha256": "121d869cf9e52b35064c0fd0c94956841ac2d90f03bf26ba9b9bee2935ca430f",
+    "original_profile_raw_cases_not_inherited": 8,
+    "original_credential_classifier_limit": "four suffixes only",
+    "fresh_classifier": "exact unchanged conftest source policy plus actual two-node synthetic output proof",
+    "fresh_executed_cases": 46,
+    "qualified_cases": 64,
+    "review_ref": "tmp/probes/v0216-20261010/evidence/m03-gateway-worker-affected-regression-qualification-independent-review-v1.json",
+    "review_sha256": "d200da06107d9fe8b727f9e1bc04a338d3ea1bacf78260af775fc1582bbc0267",
+    "single_complete_64_case_run_claimed": false
+  },
+  "finite_archive_status": "QUALIFIED_FINITE_4477_ENTRY_ARCHIVE",
+  "content_accepted": false,
+  "commit_identity_status": "NOT_CREATED",
+  "separate_gateway_listener_startup_qualified": false,
+  "full_M03_qualified": false,
+  "campaign_completed": false,
+  "production_qualified": false,
+  "cloud_CI_qualified": false,
+  "publication": false,
+  "bounded_acceptance": true,
+  "local_commit": {
+    "publication": false,
+    "parent": "c69d65f234b00eca1894aa3613a6347ea5fde490",
+    "created": false
+  },
+  "source_binding": {
+    "ref": "tmp/probes/v0216-20261010/evidence/m03-gateway-worker-affected-regression-v2/pre-source.json",
+    "source_inputs": 51,
+    "sha256": "1d53a96fe01a927a8a0e443c15c04dd4fb21c318296fc5462dc623828632e83a",
+    "installed_runtime_inputs": 2
+  },
+  "finite_retention": {
+    "production_state_retained": false,
+    "archive_bytes": 32797748,
+    "receipt_sha256": "bd9444f1724c0d0ef2b9ddc8f233c3909e3ddd966876d4a0c431028c8d4c152c",
+    "all_members_and_current_inputs_independently_equal": true,
+    "whole_database_retained": false,
+    "inventory_sha256": "b8223de7badc7b79c8670a1087303ef4a8adc5e7613629d2d920c11bf494da00",
+    "review_ref": "tmp/probes/v0216-20261010/evidence/m03-gateway-worker-finite-archive-qualification-independent-review-v1.json",
+    "expanded_bytes": 93953185,
+    "entries": 4477,
+    "review_sha256": "5fb68fdd3b12274ec5ee202c230a7de6130dbc877d2af608ce9c8504ff4291c7",
+    "archive_sha256": "c8c5d510a1b9480aa96b35abd5a71b568d9d18e271f3049c9b1d38440376ae42"
+  },
+  "candidate_qualifications": {
+    "native_bootstrap_held": "3d6442f13f6e2f0952d609056e7c78dc5c85f926626e507395f2c93d7665c2ac",
+    "python_startup": "2f53f03fe7ec51e7bf0355e1f0c3de28ef85f5c6889ad176f4718c3e694fe83d",
+    "legacy_admission": "5a6a11fd558e19fcf3caa221cc8a4f1c37064cdd77912dd0bfdc8d4d15765c3d",
+    "native_dev_build": "5d8ff7f04c0db09bb308aef1737c0279e40a3c29a6282556a5e0718827c55e22",
+    "native_constructor": "a75bafb841cd782fdee457a4843df9521fb557dad9a8892d504a5ffa7b954718",
+    "desktop_unit": "c9de4229fba80b9b286507d9fb6d432f71496f280a814157fc89b06d74eeee69"
+  },
+  "protected_primary": {
+    "current_items": 25,
+    "precommit_postcommit_audits_pending": true,
+    "original_items_preserved": 23,
+    "head": "606f7e557c13a0789a2420f7adf6181becf60d75",
+    "read_only": true,
+    "additive_baseline_sha256": "7a070ff5369447818ca582c71fcaf980d38180badd17e9c0f0c170a808d427aa",
+    "postcandidate_audit_sha256": "78d3419a21e4080e990fd7a5f3752e501c97884cce5e9057b6e10931dc15b47b",
+    "additive_items_preserved": 2,
+    "original_baseline_sha256": "7b6bbcdf5013b1d7e202377b8f4d40951a53009e83ce9f7e6efc76d21d6929f6",
+    "zero_additions_claimed": false
+  },
+  "qualification_scope": "Bounded evidence only; content/staged patch and local commit identity require subsequent review. Case suites overlap and counts are not summed as unique coverage.",
+  "frozen_campaign": {
+    "R_BEFORE": "63279301bcbdc185c1b07b98a9312eb0c862f26d",
+    "D_BASE": "606f7e557c13a0789a2420f7adf6181becf60d75",
+    "U_RELEASE": "818c13be1dc4fd28987e1e881a9408224afd4535",
+    "R_AFTER": "d3630f853239e8c41ce7201e09fbdf39bcbc5431"
+  }
+}

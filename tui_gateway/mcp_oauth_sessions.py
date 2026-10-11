@@ -65,6 +65,15 @@ _SESSION_TTL_SECONDS = 900
 _MAX_PENDING = 12
 
 
+class McpOAuthStartupError(RuntimeError):
+    """Carry the already-reserved caller identity without claiming cleanup."""
+
+    def __init__(self, message: str, *, session_id: str, server_name: str):
+        super().__init__(message)
+        self.session_id = session_id
+        self.server_name = server_name
+
+
 class _ListenerSetupCleanupError(RuntimeError):
     """Retain an acquired listener whose failed startup cleanup is unconfirmed."""
 
@@ -373,14 +382,16 @@ def start_flow(
             rec["listener_started"] = exc.started
         # An acquired worker owns rollback and listener cleanup. A failed
         # startup without a worker must settle its reserved slot locally.
-        if worker is None or worker.ident is None:
+        if worker is None:
             try:
                 _shutdown_listener(rec)
             except Exception:
                 logger.exception("MCP OAuth listener cleanup failed for '%s'", server_name)
             else:
                 flow.mark_worker_done()
-        raise
+        raise McpOAuthStartupError(
+            str(exc), session_id=session_id, server_name=server_name,
+        ) from exc
 
     return {
         "session_id": session_id,
