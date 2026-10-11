@@ -1,5 +1,5 @@
 {
-  "status": "QUALIFIED_M03_LISTENER_EVIDENCE_PENDING_FINAL_CONTENT_AND_LOCAL_COMMIT",
+  "status": "ACCEPTED_M03_LISTENER_LOCAL_PRODUCT_IDENTITY",
   "parent": "8a6e924c180485d2da1e64c48e803125793b0789",
   "scope": "Gateway callback listener startup, actual socket ownership and late acquired-worker cleanup",
   "raw_candidate_sources": {
@@ -543,12 +543,30 @@
   "startup_settlement_without_acquired_OAuth_worker_proves": "Socket closure and serve-target completion; Python bootstrap-tail return remains a separate observation",
   "ordinary_acquired_worker_completion_requires": "Actual same-callback join and exact ownership recheck before flow completion",
   "local_commit": {
-    "created": false,
+    "created": true,
     "parent": "8a6e924c180485d2da1e64c48e803125793b0789",
-    "identity_record_required": true
+    "sha": "214858d4ced95425ab425c267613d54faac606e3",
+    "tree": "0f68230d960f2de1601e83f044d1835ea645c84b",
+    "branch": "refs/heads/codex/v0216-semantic-20261010",
+    "paths": 14,
+    "patch_sha256": "95b7b9f717428b658614e365268c0d3749bcca16bc003fbc1316939b547510f2",
+    "patch_bytes": 137530,
+    "identity_record_required": true,
+    "identity_record": {
+      "ref": "tmp/probes/v0216-20261010/evidence/m03-listener-product-commit-v1/result.json",
+      "sha256": "c0120e3ceb2a1b25aa3004468d31a74dfcd51f9dbd2c48a3bc585e675ac9d6bc",
+      "bytes": 5256
+    },
+    "independent_identity_review": {
+      "ref": "tmp/probes/v0216-20261010/evidence/m03-listener-local-product-identity-independent-review-v1.json",
+      "sha256": "a2929990a9799f6fcd6b5459504d770476dc0d3455f660f907d355a5e900777a",
+      "bytes": 19746
+    },
+    "working_raw_bytes_preserved": true,
+    "committed_blobs_use_qualified_normal_Git_LF_projection": true
   },
-  "final_content_accepted": false,
-  "staged_content_accepted": false,
+  "final_content_accepted": true,
+  "staged_content_accepted": true,
   "full_M03_qualified": false,
   "campaign_completed": false,
   "publication": false,
@@ -565,5 +583,13 @@
     "Revoked-token and config replacement",
     "Plugin OAuth/module split and other M03 contracts",
     "Complete frozen feature/security/compatibility/Windows denominator"
-  ]
+  ],
+  "postcommit_primary": {
+    "ref": "tmp/probes/v0216-20261010/evidence/m03-listener-postcommit-canonical-wip-audit-v1.json",
+    "sha256": "8c55ce762f3681e298cce29a03532795351bfac45704499ab454e974bc05854e",
+    "bytes": 5555,
+    "original_23_preserved": true,
+    "current_entries": 25,
+    "additive_two_preserved": true
+  }
 }
