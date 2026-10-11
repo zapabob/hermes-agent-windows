@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "family": "M03",
+  "slice": "Gateway worker startup ownership and captured Desktop failed-flow cleanup",
+  "status": "QUALIFIED_M03_GATEWAY_WORKER_LOCAL_PRODUCT_IDENTITY_AND_POSTCOMMIT_PRIMARY_ONLY",
+  "reviewer": "/root/f03_contract_review",
+  "product": {
+    "commit": "19e32b1df18cd3360c602ba66a32abd73d8b39db",
+    "parent": "c69d65f234b00eca1894aa3613a6347ea5fde490",
+    "tree": "424936c885977b91eb14df90d61977987ffc26ed",
+    "binary_patch_sha256": "c6704fd4244e6fe1ec4d53912113124ef0bde97dd9191fc28628944f582f7223",
+    "entries": {
+      "apps/desktop/e2e/mcp-oauth.spec.ts": {
+        "reviewed_worktree_sha256": "f02aa16747e84da732566771e1815ca2453e41a52b8146bf8285ce146c494479",
+        "committed_sha256": "f02aa16747e84da732566771e1815ca2453e41a52b8146bf8285ce146c494479",
+        "blob": "2db12b92b6348415eec132a769b79a250fee11c0"
+      },
+      "apps/desktop/src/lib/mcp-dashboard-oauth.test.ts": {
+        "reviewed_worktree_sha256": "985de3b8f75945dd4a7a2b93c745b0096d35ef124899951e6032ef4c4311f580",
+        "committed_sha256": "985de3b8f75945dd4a7a2b93c745b0096d35ef124899951e6032ef4c4311f580",
+        "blob": "68eee7dce0711b8e753a295228dd8acc7451b9a8"
+      },
+      "apps/desktop/src/lib/mcp-dashboard-oauth.ts": {
+        "reviewed_worktree_sha256": "d76d8c03b8ef17baee57eb860eb9ca88e4267a82abeb50494a0c038db0036797",
+        "committed_sha256": "d76d8c03b8ef17baee57eb860eb9ca88e4267a82abeb50494a0c038db0036797",
+        "blob": "63f7f07b89fd0e20b6ab8277041e8887069b38bf"
+      },
+      "tests/fakes/mcp_oauth_gateway.py": {
+        "reviewed_worktree_sha256": "f3e9897605afa255abeadcea12891b1b2d767b9c3aa124bf4be9c063f58a2207",
+        "committed_sha256": "f3e9897605afa255abeadcea12891b1b2d767b9c3aa124bf4be9c063f58a2207",
+        "blob": "a34a2b2b6e36cb94a4d534bea87342bf6b70550f"
+      },
+      "tests/tui_gateway/test_mcp_oauth_admission_edges.py": {
+        "reviewed_worktree_sha256": "ca8c0bbba9632f208909491407bdc85653658be0377f4a7668c49ac23b1ea793",
+        "committed_sha256": "ca8c0bbba9632f208909491407bdc85653658be0377f4a7668c49ac23b1ea793",
+        "blob": "958925a3a8a6cd864fd3cd9eabc820d92e4dbfd1"
+      },
+      "tui_gateway/mcp_oauth_sessions.py": {
+        "reviewed_worktree_sha256": "2e16ba402be76b2be7305a38fb7892b0889ac4ebaaf84d358d629fe030fe039a",
+        "committed_sha256": "2e16ba402be76b2be7305a38fb7892b0889ac4ebaaf84d358d629fe030fe039a",
+        "blob": "d5f6e304dacb0ebc775f3562753d18062d185b65"
+      },
+      "tui_gateway/methods_tools.py": {
+        "reviewed_worktree_sha256": "0dd722c2232a9e366eff3f712dafc1e5800aab39d8c8f407fd247d83100ce06c",
+        "committed_sha256": "0dd722c2232a9e366eff3f712dafc1e5800aab39d8c8f407fd247d83100ce06c",
+        "blob": "e64a52d05d0e2901f2e40c177a0d270aa113cd7e"
+      },
+      "apps/desktop/e2e/mcp-oauth-worker-cold.py": {
+        "reviewed_worktree_sha256": "d6fc5c510e7cd0624d4b61b2fa1767cbb5db698bd890439761884a1d4ba4a162",
+        "committed_sha256": "d6fc5c510e7cd0624d4b61b2fa1767cbb5db698bd890439761884a1d4ba4a162",
+        "blob": "a594e45d8d12f210b029efdf2e27b48869dffde4"
+      },
+      "apps/desktop/e2e/mcp-oauth-worker-sitecustomize.py": {
+        "reviewed_worktree_sha256": "13727f8694a59c21e09a1a66e8064de7d645c6b0fd4c2a944c484da8965060b0",
+        "committed_sha256": "c100eee7fe6c5fee099600e5d59ffd44b22016f92f1e036834540d6b8fe5f21e",
+        "blob": "a7e26236d9b4e2caab1c5dfb77b80347b04f0fb5"
+      },
+      "tests/tui_gateway/test_mcp_oauth_worker_startup.py": {
+        "reviewed_worktree_sha256": "5bb02faecfb6f9fe67084b6bb0c874e7f2236c241600b521b974aad9149c0775",
+        "committed_sha256": "5bb02faecfb6f9fe67084b6bb0c874e7f2236c241600b521b974aad9149c0775",
+        "blob": "54a68f030a2e4f1d1c1edfbd22365228e891a87b"
+      },
+      "docs/windows/windows-native-v0216-semantic-20261010/M03-gateway-worker-startup-mini-plan.md": {
+        "reviewed_worktree_sha256": "4442bee588d64b63f6ce8c8145484b9ea5a13a18f81cbfecb150babc5b14b10a",
+        "committed_sha256": "4442bee588d64b63f6ce8c8145484b9ea5a13a18f81cbfecb150babc5b14b10a",
+        "blob": "bac3febbbd1bfe99aa062404a8f1fabdba8a0692"
+      },
+      "docs/windows/windows-native-v0216-semantic-20261010/M03-gateway-worker-startup-receipt.json": {
+        "reviewed_worktree_sha256": "84c5469a1ceac6ccfc0742bb45fa5b00e728fa1c12be0bc28b6ea26204c52c64",
+        "committed_sha256": "c7fd1904a6f154ea2e9402a5e1f4833c4d9a00890767a2c3f46d9ebc8fee4c27",
+        "blob": "ce743c26db717481338fff0cd21bfb6ef5dab25d"
+      }
+    },
+    "all_twelve_committed_blobs_equal_reviewed_raw_bytes": false,
+    "all_twelve_committed_blobs_equal_reviewed_lf_projection": true,
+    "identity_projected_paths": 10,
+    "crlf_normalized_paths": 2,
+    "line_ending_normalizations": {
+      "apps/desktop/e2e/mcp-oauth-worker-sitecustomize.py": {
+        "raw_sha256": "13727f8694a59c21e09a1a66e8064de7d645c6b0fd4c2a944c484da8965060b0",
+        "committed_sha256": "c100eee7fe6c5fee099600e5d59ffd44b22016f92f1e036834540d6b8fe5f21e",
+        "raw_bytes": 19177,
+        "committed_bytes": 19176,
+        "crlf_to_lf_count": 1,
+        "only_crlf_to_lf": true,
+        "ast_or_json_semantics_equal": true,
+        "compiled_code_equal_if_python": true
+      },
+      "docs/windows/windows-native-v0216-semantic-20261010/M03-gateway-worker-startup-receipt.json": {
+        "raw_sha256": "84c5469a1ceac6ccfc0742bb45fa5b00e728fa1c12be0bc28b6ea26204c52c64",
+        "committed_sha256": "c7fd1904a6f154ea2e9402a5e1f4833c4d9a00890767a2c3f46d9ebc8fee4c27",
+        "raw_bytes": 7430,
+        "committed_bytes": 7284,
+        "crlf_to_lf_count": 146,
+        "only_crlf_to_lf": true,
+        "ast_or_json_semantics_equal": true,
+        "compiled_code_equal_if_python": false
+      }
+    },
+    "attributes_sha256": "b8061d5eec8403b348d99b2267f3328b8852af1d42c8bf5a396daf3086ca1b22",
+    "reviewed_raw_source_inputs_unchanged_at_acceptance": 51,
+    "installed_runtime_inputs_unchanged_at_acceptance": 2,
+    "index_and_worktree_clean_at_product_acceptance": true
+  },
+  "evidence": {
+    "root": "tmp/probes/v0216-20261010/evidence/",
+    "records": {
+      "m03-gateway-worker-independent-content-review-v1.json": "fda0645c8a534e17b0958b06ea858f96b1f56ec79cdd522bd822fc331f6eb0e0",
+      "m03-gateway-worker-staged-commit-gate-independent-review-v1.json": "4ae4742ed74ca72d687bd06cca5a490d6348a7c6cd94c49a1304bb7753b8b97d",
+      "m03-gateway-worker-local-identity-independent-review-v1.json": "28cd3b65fe5b5b8fa9fb068f6957740bd40ec84ef38cb65122b464c2569b1795",
+      "m03-gateway-worker-stage-v2-lf-binding-refusal-independent-review-v1.json": "3dd1c299516b3d39098f59f8c32cec0edd72e7d99fece78ca48af174bc4c9802",
+      "m03-gateway-worker-product-stage-reviewed-v1.json": "00685511dc4230776c110a9a6c1730a0c80347d1134ffe36054efcbafe863990",
+      "m03-gateway-worker-product-stage-reviewed-v1.log": "ab7c34862ca950b40f00c0695d5a9fb922c59ca5e65937a107c350b954f3eda0",
+      "m03-gateway-worker-product-stage-reviewed-v2.json": "592f0c93ed259612e5fe7c95b78d8d1db37f97f1c6b965726900b0bf5b91a0e7",
+      "m03-gateway-worker-product-stage-reviewed-v2.log": "7c2584553c45d356b8ea40e451b0cbce5246c32e451e9af19b6e241059d5da39",
+      "m03-gateway-worker-product-stage-v2.json": "4ca978fa08f3bcf4b2bf91516f0e1e7ddaf446befdf9c9815bca22b528533947",
+      "m03-gateway-worker-product-stage-v2.patch": "c6704fd4244e6fe1ec4d53912113124ef0bde97dd9191fc28628944f582f7223",
+      "m03-gateway-worker-product-commit-binding-v2.json": "951689fd2ddcc92e2d4f760c44d272f39b797f6301cc8a7264d4d44759905cbd",
+      "m03-gateway-worker-product-commit-reviewed-v1.json": "a4ca3edc9fc51738ad17033b4e91de6fb655b42782ced17f75a99bb85920913f",
+      "m03-gateway-worker-product-commit-reviewed-v1.log": "0f138ffe26734dc73f2d393225219a30f4878700d5c801e4ed382d582f5b4973",
+      "m03-gateway-worker-product-verify-reviewed-v1.json": "350083ef007ae32b4ec143cf8c682a2ce77b07db7fae84e907d4eb0de72c01f5",
+      "m03-gateway-worker-product-verify-reviewed-v1.log": "a20fbd154c6527d12550490c3f53b162c3726a30cf09db726ee44cb7d6316016",
+      "m03-gateway-worker-precommit-canonical-wip-audit-v2.json": "e570d453cd424885cbe72c29331a2173949bcd2d111bcad7eabf5900fb78dc99",
+      "m03-gateway-worker-postcommit-canonical-wip-audit-v2.json": "3fbf3941a9dabe65178cba0af51798aace516c381314bde1bf91aa0cc7d3a3df",
+      "worker-primary-postcommit-v2.json": "a861549e2d99e0ee6c06822a41c83b094296846a58e28d4a65f2de31f967d75b",
+      "worker-primary-postcommit-v2.log": "27ef2baabca13a62d6083e543e88a21c61d32d6dec1cf7b0732382efd3e3a839",
+      "m03-gateway-worker-affected-regression-qualification-independent-review-v1.json": "d200da06107d9fe8b727f9e1bc04a338d3ea1bacf78260af775fc1582bbc0267",
+      "m03-gateway-worker-finite-archive-qualification-independent-review-v1.json": "5fb68fdd3b12274ec5ee202c230a7de6130dbc877d2af608ce9c8504ff4291c7"
+    }
+  },
+  "protected_primary": {
+    "head": "606f7e557c13a0789a2420f7adf6181becf60d75",
+    "original_dirty_items": 23,
+    "additional_opaque_untracked_items": 2,
+    "current_items": 25,
+    "original_23_preserved": true,
+    "additive_2_preserved": true,
+    "original_baseline_sha256": "7b6bbcdf5013b1d7e202377b8f4d40951a53009e83ce9f7e6efc76d21d6929f6",
+    "additive_baseline_sha256": "7a070ff5369447818ca582c71fcaf980d38180badd17e9c0f0c170a808d427aa",
+    "current_status_sha256": "6f98b37cfaf5467f15518c54d46445d0e3e92e5d9bb29450cdc718b401492320",
+    "precommit_and_postcommit_match_additive_baseline": true,
+    "primary_had_no_additions_claimed": false,
+    "primary_written_by_this_task": false
+  },
+  "accepted_scope": "Acquired worker retains reservation until actual finally; already-reserved identity reaches caller via typed error5024; Desktop cleanup uses original captured connection/profile and preserves the same error. Twelve canonical startup, nineteen Desktop unit and eight admission cases are bounded and overlap the regression denominator.",
+  "affected_regressions": {
+    "files": 13,
+    "fixed_unique_node_ids": 64,
+    "inherited_qualified_cases": 18,
+    "fresh_qualified_cases": 46,
+    "single_successful_64_case_run_claimed": false,
+    "old_profile_eight_raw_passes_qualified": false,
+    "setup_call_teardown_pass_reports": 192,
+    "mandatory_cleanup_property_instances": 55,
+    "owned_pid_births_verified_absent": 1113,
+    "old_inherited_credential_classifier_limit": "Original four suffixes only; no broader absence inference.",
+    "fresh_profile_credential_scope": "Two exact unchanged synthetic producers are source-bound; unknown surviving keys fail without recording values."
+  },
+  "mutation_limits": "Six Python mutations: five intended AssertionErrors and one explicitly private-reservation KeyError, not public-poll coverage. Six Desktop mutations: forty-five intended AssertionErrors, 228 passing before/restored control case executions. Unit doubles do not qualify native behavior.",
+  "native_limits": "Two exact historically bound source-tree dev Electron scenarios with test-owned loopback issuer/MCP peer, real native ownership/joins/SDK/token/nonce/cold-process effects, scripted model and observed browser-open call. Constructor evidence uses historical spec; later held-only navigation changes are not a fresh constructor execution. No normalized-byte native rerun is claimed.",
+  "finite_retention": {
+    "production_state_retained": false,
+    "archive_bytes": 32797748,
+    "receipt_sha256": "bd9444f1724c0d0ef2b9ddc8f233c3909e3ddd966876d4a0c431028c8d4c152c",
+    "all_members_and_current_inputs_independently_equal": true,
+    "whole_database_retained": false,
+    "inventory_sha256": "b8223de7badc7b79c8670a1087303ef4a8adc5e7613629d2d920c11bf494da00",
+    "review_ref": "tmp/probes/v0216-20261010/evidence/m03-gateway-worker-finite-archive-qualification-independent-review-v1.json",
+    "expanded_bytes": 93953185,
+    "entries": 4477,
+    "review_sha256": "5fb68fdd3b12274ec5ee202c230a7de6130dbc877d2af608ce9c8504ff4291c7",
+    "archive_sha256": "c8c5d510a1b9480aa96b35abd5a71b568d9d18e271f3049c9b1d38440376ae42"
+  },
+  "historical_records": "Product receipt remains the reviewed precommit snapshot. Verify binding was written before the postcommit primary audit and keeps its pending flag. The later independent identity review links the completed audit. Raw files/evidence are retained; two committed LF projections preserve Python code and JSON semantics.",
+  "remaining": "Separate Gateway callback listener native allocation and shutdown-before-serve_forever; in-place remint/revival, revoked-token/config replacement, plugin OAuth/module split, other M03 obligations and full frozen campaign inventory.",
+  "rollback": "Targeted reviewed Git revert of isolated product commit; no reset/clean/primary restoration.",
+  "bounded_acceptance": true,
+  "full_m03_accepted": false,
+  "full_campaign_accepted": false,
+  "cloud_CI_qualified": false,
+  "production_qualified": false,
+  "publication": false
+}
