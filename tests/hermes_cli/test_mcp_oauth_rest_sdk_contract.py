@@ -23,7 +23,7 @@ def without_dashboard_cookie(client):
 
 
 @contextmanager
-def running_rest(owner, root, monkeypatch):
+def running_rest(owner, root, monkeypatch, *, manual_start=False, raise_server_exceptions=True):
     from hermes_cli import web_server
     from hermes_cli.mcp_config import _replace_mcp_servers
     from tools import mcp_tool as core
@@ -50,13 +50,16 @@ def running_rest(owner, root, monkeypatch):
     try:
         register_provider(auth_provider, scope=auth_scope)
         registered = True
-        client = TestClient(web_server.app, base_url="http://127.0.0.1:18888")
+        client = TestClient(web_server.app, base_url="http://127.0.0.1:18888", raise_server_exceptions=raise_server_exceptions)
         assert client.post("/api/mcp/servers/reports/auth?profile=work").status_code == 401
         # Existing signed in-memory identity-provider fixture; the real gate
         # verifies the cookie. No public login/provider integration is claimed.
         signed = auth_provider.complete_password_login(username="admin", password="hunter2")
         client.cookies.set(SESSION_AT_COOKIE, signed.access_token)
         client.cookies.set(SESSION_PROVIDER_COOKIE, auth_provider.name)
+        if manual_start:
+            yield client, None, None, None, loops
+            return
         started = client.post("/api/mcp/servers/reports/auth?profile=work")
         assert started.status_code == 200, started.text
         data = started.json()

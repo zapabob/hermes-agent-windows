@@ -301,16 +301,20 @@ async def auth_mcp_server(name: str, request: Request, profile: Optional[str] = 
                 detail=f"MCP OAuth for '{name}' is already in progress",
             )
         _mcp_oauth_flows[flow_id] = flow
-    threading.Thread(
-        target=_run_dashboard_mcp_oauth,
-        args=(flow, cfg),
-        daemon=True,
-        name=f"mcp-oauth-{name}",
-    ).start()
+    worker = None
     try:
+        worker = threading.Thread(
+            target=_run_dashboard_mcp_oauth,
+            args=(flow, cfg),
+            daemon=True,
+            name=f"mcp-oauth-{name}",
+        )
+        worker.start()
         await flow.wait_for_authorization_url(timeout=30)
     except Exception as exc:
         flow.mark_error(str(exc))
+        if worker is None:
+            flow.mark_worker_done()
     return flow.snapshot()
 
 
