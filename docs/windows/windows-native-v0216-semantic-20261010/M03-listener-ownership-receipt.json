@@ -1,0 +1,569 @@
+{
+  "status": "QUALIFIED_M03_LISTENER_EVIDENCE_PENDING_FINAL_CONTENT_AND_LOCAL_COMMIT",
+  "parent": "8a6e924c180485d2da1e64c48e803125793b0789",
+  "scope": "Gateway callback listener startup, actual socket ownership and late acquired-worker cleanup",
+  "raw_candidate_sources": {
+    "tui_gateway/mcp_oauth_sessions.py": {
+      "sha256": "22f46f7aefc093e807c4152a644d0d818a8a63587fb0b6cc5cab9855e0a5d5d4",
+      "bytes": 27999
+    },
+    "apps/desktop/e2e/mcp-oauth-worker-sitecustomize.py": {
+      "sha256": "63db09e18b827865f33adbf9b35ca8a185662c8ee124c49244b87f264b24b2bf",
+      "bytes": 25828
+    },
+    "apps/desktop/e2e/mcp-oauth.spec.ts": {
+      "sha256": "d99043caa9db8b3eb1f1d2cb0488bec62291d5bd544c37b632d820c06887f8be",
+      "bytes": 50625
+    },
+    "tests/tui_gateway/test_mcp_oauth_admission_edges.py": {
+      "sha256": "2b316161822f89c2a83f13d2acb71728e7ed5dd58a9e1d9f8e52c7ddab95ce5a",
+      "bytes": 18712
+    },
+    "tests/tui_gateway/test_mcp_oauth_cleanup_uncertainty.py": {
+      "sha256": "8a9e849bd1dd18e9b904458a3e2841e4d6ea00f8048239e9d2ea6f19b1003578",
+      "bytes": 5826
+    },
+    "tests/tui_gateway/test_mcp_oauth_listener_startup.py": {
+      "sha256": "240a9d4ffa038dd7653763f636dc4e65c0744cb6732fd33bd2431f10980cdc2e",
+      "bytes": 13813
+    },
+    "tests/tui_gateway/test_mcp_oauth_listener_owner_setup.py": {
+      "sha256": "cc1a4eca04dd072aa481e836113cd024f9c85650a5114aa87946e46a38efe165",
+      "bytes": 4461
+    },
+    "tests/tui_gateway/test_mcp_oauth_listener_controls.py": {
+      "sha256": "3cd9fb205d1c348a5a160b6490b46d2d618e64fb00d31a1c8959364259a07f72",
+      "bytes": 11163
+    },
+    "tests/tui_gateway/test_mcp_oauth_listener_owner_setup_uncertainty.py": {
+      "sha256": "0e91ce2988ddccd10acb40c17c831d64d1605c81064c6f9ebd9835551bbcf026",
+      "bytes": 5282
+    },
+    "tests/tui_gateway/test_mcp_oauth_normal_cleanup.py": {
+      "sha256": "558f40944519c28087e138f0d60f37355b2f5cda5b037a189abde07f55ca3e70",
+      "bytes": 10178
+    },
+    "tests/tui_gateway/test_mcp_oauth_normal_cleanup_controls.py": {
+      "sha256": "e46e00893178c08ba297b29f6a7d8967750fcc077cd0b1ed57a515ff2fd88610",
+      "bytes": 13563
+    }
+  },
+  "normal_git_LF_projection": {
+    "tui_gateway/mcp_oauth_sessions.py": {
+      "raw_sha256": "22f46f7aefc093e807c4152a644d0d818a8a63587fb0b6cc5cab9855e0a5d5d4",
+      "raw_bytes": 27999,
+      "LF_sha256": "8ae202dcb99e15bd3fe772b6d67ddf77837d7741a35ddf0ea978264aac754a4f",
+      "LF_bytes": 27997,
+      "CRLF_count": 2,
+      "only_CRLF_replaced": true,
+      "source_rewritten": false,
+      "AST_with_attributes_equal": true,
+      "AST_sha256": "24c900dbfb4480d71493b4a9700678a14aae46b7a4b62c5a91a3d1c5efb72857",
+      "all_nested_compiled_code_objects_equal": true,
+      "marshalled_code_sha256": "80b77f78e7af49dade6f92ab9a37ef03292efdc0cc924e62377d4094c9dbeedd",
+      "product_code_executed": false
+    },
+    "apps/desktop/e2e/mcp-oauth-worker-sitecustomize.py": {
+      "raw_sha256": "63db09e18b827865f33adbf9b35ca8a185662c8ee124c49244b87f264b24b2bf",
+      "raw_bytes": 25828,
+      "LF_sha256": "9110e0f7c70a2cc64d54f99a35727729dcc2a0dc8e062ce7ffc85d5e00e75fb3",
+      "LF_bytes": 25827,
+      "CRLF_count": 1,
+      "only_CRLF_replaced": true,
+      "source_rewritten": false,
+      "AST_with_attributes_equal": true,
+      "AST_sha256": "290c28b1ac6e69109919817651bcec1187902de3a5ddc632967aae1d9abc21bb",
+      "all_nested_compiled_code_objects_equal": true,
+      "marshalled_code_sha256": "aecc07a9b8a215c22d922d1594fb9fad0e554db3381fb0275b831be9f8911ba8",
+      "product_code_executed": false
+    },
+    "apps/desktop/e2e/mcp-oauth.spec.ts": {
+      "raw_sha256": "d99043caa9db8b3eb1f1d2cb0488bec62291d5bd544c37b632d820c06887f8be",
+      "raw_bytes": 50625,
+      "LF_sha256": "d99043caa9db8b3eb1f1d2cb0488bec62291d5bd544c37b632d820c06887f8be",
+      "LF_bytes": 50625,
+      "CRLF_count": 0,
+      "only_CRLF_replaced": true,
+      "source_rewritten": false
+    },
+    "tests/tui_gateway/test_mcp_oauth_admission_edges.py": {
+      "raw_sha256": "2b316161822f89c2a83f13d2acb71728e7ed5dd58a9e1d9f8e52c7ddab95ce5a",
+      "raw_bytes": 18712,
+      "LF_sha256": "2b316161822f89c2a83f13d2acb71728e7ed5dd58a9e1d9f8e52c7ddab95ce5a",
+      "LF_bytes": 18712,
+      "CRLF_count": 0,
+      "only_CRLF_replaced": true,
+      "source_rewritten": false,
+      "AST_with_attributes_equal": true,
+      "AST_sha256": "d8e78060c94f04f71bc452ceb63281ff6e0c9049003a4a5e5746e6ee78b57f14",
+      "all_nested_compiled_code_objects_equal": true,
+      "marshalled_code_sha256": "ec2b0c5727fda229b4e1a6a2e989d41e9e6fe92673fb36441d1f05eba3c67159",
+      "product_code_executed": false
+    },
+    "tests/tui_gateway/test_mcp_oauth_cleanup_uncertainty.py": {
+      "raw_sha256": "8a9e849bd1dd18e9b904458a3e2841e4d6ea00f8048239e9d2ea6f19b1003578",
+      "raw_bytes": 5826,
+      "LF_sha256": "8a9e849bd1dd18e9b904458a3e2841e4d6ea00f8048239e9d2ea6f19b1003578",
+      "LF_bytes": 5826,
+      "CRLF_count": 0,
+      "only_CRLF_replaced": true,
+      "source_rewritten": false,
+      "AST_with_attributes_equal": true,
+      "AST_sha256": "e7163e2f0d4d2bbc38b62115c262c6bb45218cf92aa6ee49f41308eeb2d25f6b",
+      "all_nested_compiled_code_objects_equal": true,
+      "marshalled_code_sha256": "605cec5d347369cb11ce42b1de4069e8f60a40e5892cde79b7e24cb9dd2c65d1",
+      "product_code_executed": false
+    },
+    "tests/tui_gateway/test_mcp_oauth_listener_startup.py": {
+      "raw_sha256": "240a9d4ffa038dd7653763f636dc4e65c0744cb6732fd33bd2431f10980cdc2e",
+      "raw_bytes": 13813,
+      "LF_sha256": "240a9d4ffa038dd7653763f636dc4e65c0744cb6732fd33bd2431f10980cdc2e",
+      "LF_bytes": 13813,
+      "CRLF_count": 0,
+      "only_CRLF_replaced": true,
+      "source_rewritten": false,
+      "AST_with_attributes_equal": true,
+      "AST_sha256": "5e6f502752e5fbeb350523e9c4cad13a94d85200a2f2dcb56e1a568729bb5d6c",
+      "all_nested_compiled_code_objects_equal": true,
+      "marshalled_code_sha256": "3644f92648ff5947ce28282aed2fc6356e04bcc2fef52cf70e6f7791a38235ed",
+      "product_code_executed": false
+    },
+    "tests/tui_gateway/test_mcp_oauth_listener_owner_setup.py": {
+      "raw_sha256": "cc1a4eca04dd072aa481e836113cd024f9c85650a5114aa87946e46a38efe165",
+      "raw_bytes": 4461,
+      "LF_sha256": "cc1a4eca04dd072aa481e836113cd024f9c85650a5114aa87946e46a38efe165",
+      "LF_bytes": 4461,
+      "CRLF_count": 0,
+      "only_CRLF_replaced": true,
+      "source_rewritten": false,
+      "AST_with_attributes_equal": true,
+      "AST_sha256": "80cf804c4073f67a544c67f55629c12fdaffedf209bdbe95abbe04cc680373ce",
+      "all_nested_compiled_code_objects_equal": true,
+      "marshalled_code_sha256": "365229ee7a021fb753e4a46d6327818188ac3d9080250e53c6f2a0c1e19975af",
+      "product_code_executed": false
+    },
+    "tests/tui_gateway/test_mcp_oauth_listener_controls.py": {
+      "raw_sha256": "3cd9fb205d1c348a5a160b6490b46d2d618e64fb00d31a1c8959364259a07f72",
+      "raw_bytes": 11163,
+      "LF_sha256": "3cd9fb205d1c348a5a160b6490b46d2d618e64fb00d31a1c8959364259a07f72",
+      "LF_bytes": 11163,
+      "CRLF_count": 0,
+      "only_CRLF_replaced": true,
+      "source_rewritten": false,
+      "AST_with_attributes_equal": true,
+      "AST_sha256": "893ced95e2614c100438e38220c9ff6fd3483105747fb02fddb5cf746cc05fc6",
+      "all_nested_compiled_code_objects_equal": true,
+      "marshalled_code_sha256": "331ef6098358ac7a1889128683c8b55806b00c9539dabfcc63f04980d5b2db0f",
+      "product_code_executed": false
+    },
+    "tests/tui_gateway/test_mcp_oauth_listener_owner_setup_uncertainty.py": {
+      "raw_sha256": "0e91ce2988ddccd10acb40c17c831d64d1605c81064c6f9ebd9835551bbcf026",
+      "raw_bytes": 5282,
+      "LF_sha256": "0e91ce2988ddccd10acb40c17c831d64d1605c81064c6f9ebd9835551bbcf026",
+      "LF_bytes": 5282,
+      "CRLF_count": 0,
+      "only_CRLF_replaced": true,
+      "source_rewritten": false,
+      "AST_with_attributes_equal": true,
+      "AST_sha256": "b925c662ca5f4c1991de1945f0bbf022e16a0d0e87b3988259a4f9a321303e00",
+      "all_nested_compiled_code_objects_equal": true,
+      "marshalled_code_sha256": "2fcda01dc1bc18a836622a926af4c83278f69381e872df9eb48f09340a8cddb9",
+      "product_code_executed": false
+    },
+    "tests/tui_gateway/test_mcp_oauth_normal_cleanup.py": {
+      "raw_sha256": "558f40944519c28087e138f0d60f37355b2f5cda5b037a189abde07f55ca3e70",
+      "raw_bytes": 10178,
+      "LF_sha256": "558f40944519c28087e138f0d60f37355b2f5cda5b037a189abde07f55ca3e70",
+      "LF_bytes": 10178,
+      "CRLF_count": 0,
+      "only_CRLF_replaced": true,
+      "source_rewritten": false,
+      "AST_with_attributes_equal": true,
+      "AST_sha256": "f967cc681bcbe678deb0a990d055df4100be7acd886325bbe51230a5642a9c84",
+      "all_nested_compiled_code_objects_equal": true,
+      "marshalled_code_sha256": "88df3d6457ab87824c135fcfa9f4f1bf1e58b032351e11012130dfa4b7b7bf0b",
+      "product_code_executed": false
+    },
+    "tests/tui_gateway/test_mcp_oauth_normal_cleanup_controls.py": {
+      "raw_sha256": "e46e00893178c08ba297b29f6a7d8967750fcc077cd0b1ed57a515ff2fd88610",
+      "raw_bytes": 13563,
+      "LF_sha256": "e46e00893178c08ba297b29f6a7d8967750fcc077cd0b1ed57a515ff2fd88610",
+      "LF_bytes": 13563,
+      "CRLF_count": 0,
+      "only_CRLF_replaced": true,
+      "source_rewritten": false,
+      "AST_with_attributes_equal": true,
+      "AST_sha256": "e4d5a9f50c0ff64f88fff25951ec418ca57ee8181886e059572b3da0726c57fd",
+      "all_nested_compiled_code_objects_equal": true,
+      "marshalled_code_sha256": "dc6f31c912106687aefd999fff5e234e6239b0f28248a807e689fbe3d9b38f67",
+      "product_code_executed": false
+    }
+  },
+  "independent_reviews": {
+    "m03-listener-source5-content-native-primary-independent-review-v1.json": {
+      "ref": "tmp/probes/v0216-20261010/evidence/m03-listener-source5-content-native-primary-independent-review-v1.json",
+      "sha256": "86304e202093f25d0165753c262e7966166fa60c1f0fec085e7be3015a5d7de4",
+      "bytes": 10601
+    },
+    "m03-listener-normal-canonical-independent-review-v1.json": {
+      "ref": "tmp/probes/v0216-20261010/evidence/m03-listener-normal-canonical-independent-review-v1.json",
+      "sha256": "0a5413b16f3854d21434ff572c6492fd02f954c0c7ab7aee002119ebaa1ebead",
+      "bytes": 8806
+    },
+    "m03-listener-source5-gateway-regression-independent-review-v1.json": {
+      "ref": "tmp/probes/v0216-20261010/evidence/m03-listener-source5-gateway-regression-independent-review-v1.json",
+      "sha256": "ef028ef1a9cf2fc6a2923e86e1d1de1f261f1d6d2d8adffd60f0a1ca49f9cfa2",
+      "bytes": 2152
+    },
+    "m03-listener-navigation-v8-independent-review-v1.json": {
+      "ref": "tmp/probes/v0216-20261010/evidence/m03-listener-navigation-v8-independent-review-v1.json",
+      "sha256": "6598cd0b56564e715e56cceb70b05f216a2cdee3b0aaf06bad2d98cbde61369f",
+      "bytes": 3699
+    },
+    "m03-listener-semantic-mutants-combined-independent-review-v1.json": {
+      "ref": "tmp/probes/v0216-20261010/evidence/m03-listener-semantic-mutants-combined-independent-review-v1.json",
+      "sha256": "605ddfb845a2e76b738cddbf94a4f831275876702558fee2f9479b7d8d08b10a",
+      "bytes": 15855
+    },
+    "m03-listener-lf-projection-independent-review-v1.json": {
+      "ref": "tmp/probes/v0216-20261010/evidence/m03-listener-lf-projection-independent-review-v1.json",
+      "sha256": "f7b14a65ef1c8532614bf0c30d466e1f4d9e9abb0d39141c7b19e65d1d155b21",
+      "bytes": 9276
+    }
+  },
+  "canonical_normal_cleanup": {
+    "fresh_source5_cases": 5,
+    "maintained_file_executions": 2,
+    "single_complete_five_case_run_claimed": false
+  },
+  "focused_gateway_regression": {
+    "fresh_source5_cases": 26,
+    "scope": "SDK, resource ownership, native cancellation and worker startup"
+  },
+  "cross_suite_counts_summed_as_unique_coverage": false,
+  "mutations": {
+    "test_executions": 12,
+    "unique_frozen_cases": 4,
+    "candidate_GREEN": 4,
+    "semantic_mutant_failures": 4,
+    "restored_GREEN": 4,
+    "complete_triples": 4,
+    "inherited_original_v2_executions": 8,
+    "inherited_original_v2_GREEN": 5,
+    "inherited_original_v2_semantic_failures": 3,
+    "fresh_continuation_executions": 4,
+    "testcase_XMLs_verified": 12,
+    "setup_reports_passed": 12,
+    "call_reports_passed": 8,
+    "call_reports_failed_as_declared": 4,
+    "teardown_reports_passed": 12,
+    "testcase_errors": 0,
+    "skips_or_xfails": 0,
+    "duplicate_properties": 0,
+    "raw_observation_errors": 0,
+    "raw_import_failures": 0,
+    "cases": [
+      {
+        "name": "startup-reservation",
+        "mutated_owner_sha256": "6d8b022ae396d208b8c7e0acd2f9d46abe89dae151dd73867240a3932a621bc0",
+        "semantic_change": "Remove target-completion or known-no-start requirement from startup settlement.",
+        "test_file": "tests/tui_gateway/test_mcp_oauth_listener_startup.py",
+        "function": "test_acquired_listener_failure_returns_identity_and_retains_native_owner",
+        "parameter": "bootstrap_held",
+        "primary_exception_type": "AssertionError",
+        "primary_line": 256,
+        "predicate": "not rec[\"flow\"].worker_done",
+        "candidate_mutant_restored": [
+          0,
+          1,
+          0
+        ],
+        "all_three_phases_inherited": true,
+        "secondary_exceptions": 0,
+        "cleanup_failures": 0,
+        "native_thread_exit_and_admission_cleanup_verified": true
+      },
+      {
+        "name": "owner-socket",
+        "mutated_owner_sha256": "cd6bbc7a7e741e33df89ec8ad2189a0e2520aa7cc619e24765779cd7738aefe4",
+        "semantic_change": "Remove actual server_close from known-no-callback-constructor setup failure cleanup.",
+        "test_file": "tests/tui_gateway/test_mcp_oauth_listener_owner_setup.py",
+        "function": "test_owner_state_constructor_failure_closes_actual_socket",
+        "primary_exception_type": "AssertionError",
+        "primary_line": 64,
+        "predicate": "port_result == \"refused\"",
+        "candidate_mutant_restored": [
+          0,
+          1,
+          0
+        ],
+        "all_three_phases_inherited": true,
+        "mutant_socket_accepted_before_fixture_close": true,
+        "candidate_and_restored_socket_refused": true,
+        "actual_server_count": 1,
+        "callback_native_start_attempted": false,
+        "secondary_exceptions": 0,
+        "cleanup_failures": 0
+      },
+      {
+        "name": "late-worker",
+        "mutated_owner_sha256": "df51ec1d8d2b313f4fecb2df3c19f8d2893630429796140533c0ac92ff55d726",
+        "semantic_change": "Remove the acquired worker's wait, same-callback join, ownership recheck and cleanup retry responsibility.",
+        "test_file": "tests/tui_gateway/test_mcp_oauth_normal_cleanup.py",
+        "function": "test_normal_cleanup_pending_then_actual_late_exit_settles_owner",
+        "primary_exception_type": "AssertionError",
+        "primary_line": 150,
+        "predicate": "flow.worker_done",
+        "candidate_mutant_restored": [
+          0,
+          1,
+          0
+        ],
+        "candidate_and_mutant_inherited": true,
+        "restored_GREEN_fresh": true,
+        "mutant_actual_callback_and_worker_exited": true,
+        "mutant_socket_fd": -1,
+        "mutant_owner_completed": true,
+        "mutant_worker_done": false,
+        "mutant_reservation_retained": true,
+        "original_flow_error_preserved": true,
+        "expected_owned_worker_exception": {
+          "thread": "mcp-oauth-reports",
+          "type": "_ListenerCleanupPending",
+          "message": "MCP OAuth callback cleanup is unconfirmed",
+          "cause": "None",
+          "notes": []
+        },
+        "actual_gateway_crash_log_sha256": "7996924ae1c7559d6ed152a1c0401b35e70d17dbc2f39f9ef1b9abbc2979cd65",
+        "actual_gateway_producer_bound": true,
+        "pytest_warning_producer_bound": false,
+        "restored_GREEN_same_actual_threads_joined": 4,
+        "restored_GREEN_distinct_replacement_session": true,
+        "restored_GREEN_replacement_done": true,
+        "SDK_authorization_proof_from_this_case": false,
+        "cleanup_failures": 0
+      },
+      {
+        "name": "flow-identity",
+        "mutated_owner_sha256": "ab3f22c48ac81d2085d9b705b04bdac060fbd02e4e299c3691fa97461ca422b1",
+        "semantic_change": "Replace the exact current record flow identity predicate with True.",
+        "test_file": "tests/tui_gateway/test_mcp_oauth_normal_cleanup_controls.py",
+        "function": "test_normal_cleanup_requires_truthful_owned_completion",
+        "parameter": "changed_identity",
+        "primary_exception_type": "AssertionError",
+        "primary_line": 205,
+        "predicate": "rec[\"httpd\"] is servers[0] and rec[\"flow\"] is changed_flow",
+        "candidate_mutant_restored": [
+          0,
+          1,
+          0
+        ],
+        "all_three_phases_fresh": true,
+        "declared_secondary": {
+          "count": 1,
+          "type": "AssertionError",
+          "function": "restore_owned_flow",
+          "line": 229,
+          "same_record_as_primary": true,
+          "actual_record_id": 2298051837760,
+          "httpd_is_same_server": false,
+          "cleanup_failure_exactly_matches_observed_secondary_repr": true,
+          "primary_note_exactly_preserves_cleanup_failure_list": true
+        },
+        "mutant_actual_worker_and_callback_exited": true,
+        "mutant_native_ids": [
+          10704,
+          7188
+        ],
+        "mutant_event_set": true,
+        "mutant_socket_fd": -1,
+        "mutant_worker_done": true,
+        "mutant_record_retained": false,
+        "mutant_flow_identity": false,
+        "mutant_original_error_preserved": true,
+        "mutant_barrier_errors": [],
+        "mutant_other_thread_errors": [],
+        "mutant_cleanup_failures_empty": false,
+        "candidate_and_restored_expected_typed_pending_error_verified": true,
+        "candidate_and_restored_reservation_retained_until_fixture_recovery": true,
+        "fixture_recovery_is_product_completion_proof": false
+      }
+    ],
+    "original_v2_whole_run_qualified": false,
+    "third_actual_gateway_producer_bound": true,
+    "fourth_declared_secondary_preserved": true,
+    "new_oracle_or_previous_phase_replay": false
+  },
+  "native": {
+    "exact_leaf": "actual Electron Gateway worker startup bootstrap_held",
+    "passed": 1,
+    "retry": 0,
+    "source_tree_dev": true,
+    "browser_launch_intercepted": true,
+    "scripted_model": true,
+    "test_owned_loopback_issuer": true,
+    "installed_SDK_and_threading": true,
+    "fresh_renderer_build": false,
+    "packaged_runtime_qualified": false,
+    "external_provider_or_live_model_qualified": false
+  },
+  "historical_evidence": {
+    "source4_canonical_cases": 15,
+    "source4_affected_cases": 55,
+    "fresh_source5_runs": false,
+    "original_startup_RED_cases": 2,
+    "owner_setup_RED_then_GREEN": true,
+    "late_worker_same_oracle_RED_then_source5_GREEN": true,
+    "early_failure_calibration_scope": "Pre-OAuth fixture cleanup only; not OAuth success or mutation kills"
+  },
+  "retained_failures": {
+    "original_mutation_v2": {
+      "outer_sha256": "a8569f99ca98b3f579b68840e87f25e616f00723241204a0d1c66558ac08f748",
+      "outer_log_sha256": "bd905ca687c785a845e00b8e755c27ade006f0888835000c71c41a3f01b30340",
+      "before_sha256": "8ca9b8b1369878dd371be648d8f55bd1181351f9d276eb0c53098a970b5f8773",
+      "outer_exit_code": 1,
+      "whole_run_qualified": false,
+      "operational_refusal": "Third mutant raw execution reached the intended semantic assertion, but the driver incorrectly required a pytest warning producer. The actual Gateway threading exception hook produced the retained stderr and crash log instead.",
+      "pytest_warning_producer_qualified": false,
+      "original_failure_and_raw_artifacts_preserved": true
+    },
+    "earlier_collection_readiness_and_displayed_message_predicate_failures_retained": true,
+    "historical_compression_v2_missing_native_ledger_qualified": false
+  },
+  "graph": {
+    "navigation_review": {
+      "ref": "tmp/probes/v0216-20261010/evidence/m03-listener-navigation-v8-independent-review-v1.json",
+      "sha256": "6598cd0b56564e715e56cceb70b05f216a2cdee3b0aaf06bad2d98cbde61369f",
+      "bytes": 3699
+    },
+    "root_NAV8_binding": {
+      "ref": "tmp/probes/v0216-20261010/evidence/m03-listener-navigation-v8/binding.json",
+      "sha256": "3ab5e7aa6fbcd3444d21b007c194b48edff3508637bf7d90db7112cdbaeacf94",
+      "bytes": 530861
+    },
+    "root_source_rows": 18,
+    "root_nodes": 685,
+    "mutation_graph_states": 9,
+    "mutation_graph_archive_bytes": 1342229337,
+    "runtime_coverage": false
+  },
+  "finite_retention": {
+    "original_partial_manifest": {
+      "ref": "tmp/probes/v0216-20261010/evidence/m03-listener-mutants-partial-retention-manifest-v1.json",
+      "sha256": "d3543fb203965117194e6aec462862f4215674976c78135a9009283f1f086d74",
+      "bytes": 27127
+    },
+    "original_entries": 110,
+    "original_bytes": 906992719,
+    "all_original_pins_preserved": true,
+    "fresh_phase_artifacts": [
+      {
+        "phase": "3-late-worker-restored-continuation",
+        "qualified_sha256": "f20dc43a5357e2ca0181c1aa102adb3d92a48c5f4181f813ec1bc20821861165",
+        "observation_sha256": "68ace2b91cd620e25129fc982c83701c637d1c74a751eacb70ba1b7e0877901f",
+        "XML_sha256": "922dfe5ec47daa2fcef89eb39acb0e9f35e64891181642265acc7025bdfd53c2",
+        "command_sha256": "92b2787c2ac3570262c4b2353bce3afd3183d100c0f9b1e3b829edd7789e8fc1"
+      },
+      {
+        "phase": "4-flow-identity-candidate-continuation",
+        "qualified_sha256": "b8bb4872132686e1868ae2f3ca8101e952f5ffd2331cd1907800fb4a57a2e071",
+        "observation_sha256": "ab1fa73230ced2101aaae65710695ed981e446f6a404fb3ca188d8929d8c23d6",
+        "XML_sha256": "a3e8fdb5b881d12e87609568ed69158172237fd22eb27e999afb82b45f8f327f",
+        "command_sha256": "d3e573cd903d811b59155065445a9813560327305b4bd2d775e84823c82f885e"
+      },
+      {
+        "phase": "4-flow-identity-mutant-continuation",
+        "qualified_sha256": "5ebcef31cc3aef08a0f479f11e75301af3f701b66cb061cdc34bdb945741a330",
+        "observation_sha256": "9e9f93f8245833f414e631fda0e98230c9cfae48e52726525459793d09d7bc5a",
+        "XML_sha256": "5f0009b1f90e4f96d1fe852dc1d45c1c38a529e9fd9df93e66b0cef635161bae",
+        "command_sha256": "b6c353cafef7e11fc75a73a68d9aa463f673fbec6673834ddd374e101bcb5540"
+      },
+      {
+        "phase": "4-flow-identity-restored-continuation",
+        "qualified_sha256": "ee489bc9f95cd8c66bfcbd141bb3588c0cf4dc0db95069e176a68f76f18701b2",
+        "observation_sha256": "65b8fc942a44c34eaa63f0c304183e078ede5688dae166b845d8cb473cf4eccd",
+        "XML_sha256": "3a23d37643fa1b7dbe74b4145ad4a0d49389fe57355c22d23642d1ce15907ddb",
+        "command_sha256": "6478a3e0f16c1065b50a2bf5eef0bd4579ff404832baf827b7ad9328bcc1666d"
+      }
+    ],
+    "fresh_graph_archives": [
+      {
+        "phase": "3-late-worker-restored-continuation",
+        "archive_sha256": "40afeac79ffde0fe67083fa023416a35dd1f9e792081056d9f4c9e8967827344",
+        "archive_bytes": 149258412,
+        "database_sha256": "21eff94ef6e2545e9f68f0c59d4e84efc5af4af997469d2026a9af00cba05601"
+      },
+      {
+        "phase": "4-flow-identity-mutant-continuation",
+        "archive_sha256": "3adefea13a06e4ae27a42e5a238fddf16643a040c97e9dcd3df2fcbe2f271cf8",
+        "archive_bytes": 149256828,
+        "database_sha256": "efe7d918bfd1cd96d137d142e69831bbca39d283d26be9472aa1e224469c026f"
+      },
+      {
+        "phase": "4-flow-identity-restored-continuation",
+        "archive_sha256": "ec52cfce0335af929f1d0b5f1ce4ec45455643e39cef15d6bb4eea6d40889f37",
+        "archive_bytes": 149249391,
+        "database_sha256": "72d9f58c84913d485a1ee542909ba809dcb0a828ddaf7e2fcfd5e01709236e12"
+      }
+    ],
+    "whole_database_committed": false,
+    "installed_executables_or_general_package_trees_committed": false,
+    "personal_state_committed": false
+  },
+  "protected_primary": {
+    "audit": {
+      "ref": "tmp/probes/v0216-20261010/evidence/m03-listener-postcandidate-canonical-wip-audit-v1.json",
+      "sha256": "42bc3e46f39db979d383f5a8e6764110877f72d0764793bd626430bac2645e4a",
+      "bytes": 5558
+    },
+    "head": "606f7e557c13a0789a2420f7adf6181becf60d75",
+    "original_items": 23,
+    "current_items": 25,
+    "original_23_preserved": true,
+    "additive_two_preserved": true,
+    "primary_changes_authored_by_this_task": false
+  },
+  "LF_evidence_inheritance": {
+    "review": {
+      "ref": "tmp/probes/v0216-20261010/evidence/m03-listener-lf-projection-independent-review-v1.json",
+      "sha256": "f7b14a65ef1c8532614bf0c30d466e1f4d9e9abb0d39141c7b19e65d1d155b21",
+      "bytes": 9276
+    },
+    "result": {
+      "ref": "tmp/probes/v0216-20261010/evidence/m03-listener-lf-projection-inspection-v2/result.json",
+      "sha256": "6dec831e5cb246de959a83c9067be480b97e8256585ef087ae959a953344e10f",
+      "bytes": 12038
+    },
+    "source_files": 11,
+    "CRLF_sources": 2,
+    "CRLF_pairs": 3,
+    "working_sources_rewritten": false,
+    "fresh_normalized_byte_runtime_execution": false
+  },
+  "startup_settlement_without_acquired_OAuth_worker_proves": "Socket closure and serve-target completion; Python bootstrap-tail return remains a separate observation",
+  "ordinary_acquired_worker_completion_requires": "Actual same-callback join and exact ownership recheck before flow completion",
+  "local_commit": {
+    "created": false,
+    "parent": "8a6e924c180485d2da1e64c48e803125793b0789",
+    "identity_record_required": true
+  },
+  "final_content_accepted": false,
+  "staged_content_accepted": false,
+  "full_M03_qualified": false,
+  "campaign_completed": false,
+  "publication": false,
+  "production_qualified": false,
+  "cloud_CI_qualified": false,
+  "frozen_campaign": {
+    "R_BEFORE": "63279301bcbdc185c1b07b98a9312eb0c862f26d",
+    "R_AFTER": "d3630f853239e8c41ce7201e09fbdf39bcbc5431",
+    "U_RELEASE": "818c13be1dc4fd28987e1e881a9408224afd4535",
+    "D_BASE": "606f7e557c13a0789a2420f7adf6181becf60d75"
+  },
+  "remaining_required_work": [
+    "In-place authorization remint/revival",
+    "Revoked-token and config replacement",
+    "Plugin OAuth/module split and other M03 contracts",
+    "Complete frozen feature/security/compatibility/Windows denominator"
+  ]
+}

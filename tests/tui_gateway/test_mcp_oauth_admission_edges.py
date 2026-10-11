@@ -1,6 +1,8 @@
 """Public admission wait/start failure effects; SDK success is separate."""
+import errno
 import json
 import socket
+import sys
 import threading
 import time
 
@@ -143,7 +145,7 @@ def test_expired_cancelled_worker_keeps_its_owned_slot(admission, monkeypatch, r
     assert "error" in result and "cancelled" in result["error"]["message"].lower(), result
 
 
-@pytest.mark.parametrize("failure_kind", ["listener-start", "callback-thread-start"])
+@pytest.mark.parametrize("failure_kind", ["listener-start", "callback-thread-constructor"])
 def test_setup_failure_does_not_leave_a_pending_reservation(admission, monkeypatch, failure_kind, record_property):
     rpc, release, callers, sessions, ledger, guard, authorization_release, authorization_held = admission
     acquired = []
@@ -154,55 +156,63 @@ def test_setup_failure_does_not_leave_a_pending_reservation(admission, monkeypat
                     raise OSError("Owned synthetic listener startup failure")
                 local.setattr(sessions, "_start_loopback_listener", failed_listener)
             else:
-                original = threading.Thread.start
-                def failed_worker(thread):
-                    target = "mcp-oauth-cb-reports" if failure_kind == "callback-thread-start" else "mcp-oauth-reports"
-                    if thread.name == target:
-                        raise RuntimeError("Owned synthetic worker startup failure")
-                    return original(thread)
-                local.setattr(threading.Thread, "start", failed_worker)
-                if failure_kind == "callback-thread-start":
-                    actual_server = sessions.http.server.HTTPServer
-                    def observed_server(*args, **kwargs):
-                        httpd = actual_server(*args, **kwargs)
-                        acquired.append(httpd)
-                        return httpd
-                    local.setattr(sessions.http.server, "HTTPServer", observed_server)
+                from types import SimpleNamespace
+                actual_thread = threading.Thread
+                actual_server = sessions.http.server.HTTPServer
+                def failed_constructor(*args, **kwargs):
+                    if kwargs.get("name") == "mcp-oauth-cb-reports":
+                        raise RuntimeError("Owned synthetic callback constructor failure")
+                    return actual_thread(*args, **kwargs)
+                def observed_server(*args, **kwargs):
+                    httpd = actual_server(*args, **kwargs)
+                    acquired.append(httpd)
+                    return httpd
+                local.setattr(sessions, "threading", SimpleNamespace(Thread=failed_constructor))
+                local.setattr(sessions, "http", SimpleNamespace(server=SimpleNamespace(
+                    HTTPServer=observed_server,
+                    BaseHTTPRequestHandler=sessions.http.server.BaseHTTPRequestHandler)))
             result = rpc("start")
             with sessions._sessions_lock:
                 snapshot = [{"id": sid, "done": rec["flow"].worker_done, "flow": rec["flow"].snapshot(),
                              "listener_present": rec.get("httpd") is not None} for sid, rec in sessions._sessions.items()]
             record_property("failed_start_reservations", json.dumps({"response": result, "reservations": snapshot,
-                            "callback_ports_before_fixture_close": [httpd.server_address[1] for httpd in acquired]}))
+                            "callback_ports_before_fixture_close": [httpd.server_address[1] for httpd in acquired],
+                            "control": failure_kind, "callback_native_start_attempted": False}))
             assert "error" in result and "Owned synthetic" in result["error"]["message"], result
             assert all(row["done"] and not row["listener_present"] for row in snapshot), snapshot
-            if failure_kind == "callback-thread-start":
+            if failure_kind == "callback-thread-constructor":
                 assert len(acquired) == 1
                 try:
                     with socket.create_connection(("127.0.0.1", acquired[0].server_address[1]), timeout=4):
                         port_outcome = {"status": "accepted"}
-                except ConnectionRefusedError:
-                    port_outcome = {"status": "refused"}
+                except ConnectionRefusedError as refusal:
+                    assert refusal.errno == errno.ECONNREFUSED or getattr(refusal, "winerror", None) == 10061
+                    port_outcome = {"status": "refused", "errno": refusal.errno,
+                                    "winerror": getattr(refusal, "winerror", None)}
                 except BaseException as error:
                     port_outcome = {"status": "unexpected_exception", "error": repr(error)}
                 record_property("unstarted_callback_before_fixture_close", json.dumps(port_outcome))
                 assert port_outcome["status"] == "refused", port_outcome
     finally:
-        # These servers belong to the constructor spy; the injected callback
-        # thread failure occurs before Thread.start and never enters serving.
+        # Constructor failure occurs before any callback Thread is acquired.
+        primary = sys.exception()
         failures = []
-        for httpd in acquired:
-            port = httpd.server_address[1]
+        def attempt(label, action):
             try:
-                httpd.server_close()
-                refused(port)
+                action()
             except BaseException as error:
-                failures.append(repr(error))
-        record_property("unstarted_callback_cleanup", json.dumps({"failures": failures}))
-        assert not failures, failures
+                failures.append(label + ": " + repr(error))
+        for index, httpd in enumerate(acquired):
+            attempt("actual_close_" + str(index), httpd.server_close)
+            attempt("actual_refusal_" + str(index), lambda httpd=httpd: refused(httpd.server_address[1]))
+        attempt("cleanup_property", lambda: record_property("unstarted_callback_cleanup", json.dumps({"failures": failures})))
+        if failures:
+            if primary is not None:
+                primary.add_note("Unstarted callback fixture cleanup failed: " + repr(failures))
+            else:
+                raise AssertionError(failures)
     recovery = rpc("start")
     assert recovery.get("result", {}).get("ok"), recovery
-
 
 def test_foreign_cancel_cannot_release_owner_admission(admission, record_property):
     rpc, release, callers, sessions, ledger, guard, authorization_release, authorization_held = admission

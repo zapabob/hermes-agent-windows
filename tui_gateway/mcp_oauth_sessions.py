@@ -49,6 +49,8 @@ import secrets
 import threading
 import time
 from pathlib import Path
+from threading import Event, Lock
+from types import MethodType
 from typing import Any, Dict, Optional
 from urllib.parse import parse_qs, urlparse
 
@@ -83,6 +85,109 @@ class _ListenerSetupCleanupError(RuntimeError):
         self.started = started
 
 
+class _ListenerStop(Exception):
+    """Leave the actual HTTP serve loop through its normal finally path."""
+
+
+class _ListenerCleanupPending(RuntimeError):
+    """The acquired callback owner has not confirmed resource completion."""
+
+
+class _ListenerOwner:
+    def __init__(self, httpd, flow):
+        self.httpd = httpd
+        self.flow = flow
+        self.listener = None
+        self.start_attempted = False
+        self.serving = False
+        self.target_completed = False
+        self.closed = False
+        self.settle_startup_failure = False
+        self.lock = Lock()
+        self.stop_requested = Event()
+        self.completed = Event()
+        self.serve = httpd.serve_forever
+        self.service_actions = httpd.service_actions
+        with _sessions_lock:
+            rec = _sessions.get(flow.flow_id)
+            self.rec = rec if rec is not None and rec["flow"] is flow else None
+            if self.rec is not None:
+                self.rec["httpd"] = httpd
+
+    def _close_locked(self):
+        if not self.closed:
+            self.httpd.server_close()
+            self.closed = True
+
+    def _clear_record_locked(self):
+        if self.rec is not None:
+            with _sessions_lock:
+                if self.rec.get("httpd") is self.httpd:
+                    self.rec["httpd"] = None
+
+    def _settle_locked(self):
+        if self.closed and (self.target_completed or not self.start_attempted):
+            self.completed.set()
+            if self.settle_startup_failure:
+                self._clear_record_locked()
+                self.flow.mark_worker_done()
+
+    def authorize_startup_settlement(self):
+        # Only start_flow can prove it has not acquired an OAuth worker.
+        with self.lock:
+            self.settle_startup_failure = True
+            self._settle_locked()
+
+    def request_stop(self):
+        with self.lock:
+            self.stop_requested.set()
+            if not self.serving or self.target_completed:
+                self._close_locked()
+            self._settle_locked()
+
+    def check_stop(self):
+        if self.stop_requested.is_set():
+            raise _ListenerStop()
+        self.service_actions()
+        if self.stop_requested.is_set():
+            raise _ListenerStop()
+
+    def run(self, *, poll_interval=0.5):
+        try:
+            with self.lock:
+                enter = not self.stop_requested.is_set()
+                self.serving = enter
+            if enter:
+                self.serve(poll_interval=poll_interval)
+        except _ListenerStop:
+            pass
+        finally:
+            with self.lock:
+                self.target_completed = True
+                try:
+                    self._close_locked()
+                except Exception:
+                    logger.exception("MCP OAuth callback socket close is unconfirmed")
+                self._settle_locked()
+
+    def shutdown(self):
+        deadline = time.monotonic() + 5.0
+        try:
+            self.request_stop()
+        except Exception as exc:
+            raise _ListenerCleanupPending(
+                'MCP OAuth callback socket closure is unconfirmed'
+            ) from exc
+        if not self.completed.wait(max(0.0, deadline - time.monotonic())):
+            raise _ListenerCleanupPending("MCP OAuth callback cleanup is unconfirmed")
+        if self.start_attempted:
+            self.listener.join(timeout=max(0.0, deadline - time.monotonic()))
+            if self.listener.is_alive():
+                raise _ListenerCleanupPending("MCP OAuth callback thread exit is unconfirmed")
+        with self.lock:
+            self._clear_record_locked()
+
+
 def _gc_sessions() -> None:
     """Collect expired sessions only after owned worker/listener cleanup."""
     cutoff = time.time() - _SESSION_TTL_SECONDS
@@ -97,6 +202,12 @@ def _gc_sessions() -> None:
 def _shutdown_listener(rec: Dict[str, Any]) -> None:
     server = rec.get("httpd")
     if server is not None:
+        owner = getattr(server, "_hermes_oauth_listener_owner", None)
+        if owner is not None and owner.httpd is server:
+            owner.shutdown()
+            if rec.get("httpd") is server:
+                rec["httpd"] = None
+            return
         try:
             if rec.get("listener_started", True):
                 server.shutdown()
@@ -170,26 +281,43 @@ def _start_loopback_listener(flow) -> "http.server.HTTPServer":
             return
 
     httpd = http.server.HTTPServer(("127.0.0.1", 0), _Handler)
-    listener = None
+    owner = None
     try:
-        listener = threading.Thread(
+        owner = _ListenerOwner(httpd, flow)
+        httpd._hermes_oauth_listener_owner = owner
+        httpd.service_actions = owner.check_stop
+
+        def serve_owned(server, *, poll_interval=0.5):
+            # Keep the bound HTTPServer identity for existing direct callers.
+            owner.run(poll_interval=poll_interval)
+
+        httpd.serve_forever = MethodType(serve_owned, httpd)
+        owner.listener = threading.Thread(
             target=httpd.serve_forever,
             kwargs={"poll_interval": 0.5},
             daemon=True,
             name=f"mcp-oauth-cb-{flow.server_name}",
         )
-        listener.start()
+        owner.start_attempted = True
+        owner.listener.start()
     except Exception as exc:
-        started = listener is not None and listener.ident is not None
-        try:
+        if owner is None:
+            # No callback Thread has been constructed or started. Preserve
+            # the acquired socket if even this direct closure is uncertain.
             try:
-                if started:
-                    httpd.shutdown()
-            finally:
                 httpd.server_close()
-        except Exception as cleanup:
-            raise _ListenerSetupCleanupError(exc, httpd, started) from cleanup
-        raise
+            except Exception as cleanup:
+                failure = _ListenerSetupCleanupError(exc, httpd, False)
+                failure.add_note("MCP OAuth callback socket closure failed: " + repr(cleanup))
+                raise failure from exc
+            raise
+        try:
+            owner.request_stop()
+        except Exception:
+            logger.exception("MCP OAuth listener startup cleanup is unconfirmed")
+        # start() may have acquired a native thread before raising, even
+        # before its ident is populated. Carry ownership without waiting.
+        raise _ListenerSetupCleanupError(exc, httpd, owner.start_attempted) from exc
     return httpd
 
 
@@ -278,7 +406,42 @@ def _worker(session_id: str, hermes_home: str, server_name: str, cfg: dict, reco
             flow.mark_error(msg)
     finally:
         if rec is not None:
-            _shutdown_listener(rec)
+            try:
+                _shutdown_listener(rec)
+            except _ListenerCleanupPending as pending:
+                # A close failure is not evidence of a callback still running.
+                if pending.__cause__ is not None:
+                    raise
+                httpd = rec.get("httpd")
+                owner = getattr(httpd, "_hermes_oauth_listener_owner", None)
+                if not isinstance(owner, _ListenerOwner) or owner.listener is None:
+                    raise
+                callback = owner.listener
+
+                def owns_pending_listener():
+                    return (
+                        _sessions.get(session_id) is rec
+                        and rec.get("flow") is flow
+                        and rec.get("httpd") is httpd
+                        and rec.get("server_name") == server_name
+                        and rec.get("hermes_home") == hermes_home
+                        and getattr(httpd, "_hermes_oauth_listener_owner", None) is owner
+                        and owner.httpd is httpd and owner.flow is flow
+                        and owner.rec is rec and owner.listener is callback
+                        and owner.start_attempted
+                    )
+
+                with _sessions_lock:
+                    if not owns_pending_listener():
+                        raise
+                # This acquired OAuth worker keeps responsibility for late
+                # callback completion. Neither ownership lock is held here.
+                owner.completed.wait()
+                callback.join()
+                with _sessions_lock:
+                    if not owns_pending_listener():
+                        raise
+                _shutdown_listener(rec)
         if flow is not None:
             flow.mark_worker_done()
 
@@ -377,18 +540,27 @@ def start_flow(
             raise TimeoutError("Timed out waiting for MCP authorization URL")
     except Exception as exc:
         flow.mark_error(str(exc))
-        if isinstance(exc, _ListenerSetupCleanupError):
-            rec["httpd"] = exc.httpd
-            rec["listener_started"] = exc.started
-        # An acquired worker owns rollback and listener cleanup. A failed
-        # startup without a worker must settle its reserved slot locally.
+        # An acquired OAuth worker owns rollback and completion. Only an
+        # unacquired worker permits this caller to authorize local settlement.
         if worker is None:
-            try:
-                _shutdown_listener(rec)
-            except Exception:
-                logger.exception("MCP OAuth listener cleanup failed for '%s'", server_name)
+            server = exc.httpd if isinstance(exc, _ListenerSetupCleanupError) else rec.get("httpd")
+            owner = getattr(server, "_hermes_oauth_listener_owner", None)
+            if isinstance(exc, _ListenerSetupCleanupError) and owner is None:
+                rec["httpd"] = server
+                rec["listener_started"] = False
+            if owner is not None and owner.httpd is server and owner.flow is flow and owner.rec is rec:
+                owner.authorize_startup_settlement()
+                try:
+                    owner.request_stop()
+                except Exception:
+                    logger.exception("MCP OAuth listener cleanup failed for '%s'", server_name)
             else:
-                flow.mark_worker_done()
+                try:
+                    _shutdown_listener(rec)
+                except Exception:
+                    logger.exception("MCP OAuth listener cleanup failed for '%s'", server_name)
+                else:
+                    flow.mark_worker_done()
         raise McpOAuthStartupError(
             str(exc), session_id=session_id, server_name=server_name,
         ) from exc

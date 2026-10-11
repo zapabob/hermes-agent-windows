@@ -107,6 +107,53 @@ def bind(module):
     return actual_home() == HOME
 
 
+def install_banner(module):
+    # The server imports this function during its own original module execution.
+    # Binding must finish here, before the original server loader can continue.
+    active_home = actual_home()
+    assert active_home.is_relative_to(HOME.parent), active_home
+    original = module.prefetch_update_check
+    source = Path(module.__file__).resolve()
+    assert original.__module__ == module.__name__
+    assert original.__name__ == "prefetch_update_check"
+    assert Path(original.__code__.co_filename).resolve() == source
+    lifetime = "default_finish" if active_home == HOME else "owned_process_exit"
+
+    @functools.wraps(original)
+    def contained():
+        assert module.prefetch_update_check is contained
+        caller = sys._getframe(1)
+        caller_source = Path(caller.f_code.co_filename).resolve()
+        assert caller_source == (ROOT / CONFIG["modules"]["tui_gateway.server"]["path"]).resolve()
+        assert hashlib.sha256(caller_source.read_bytes()).hexdigest() == CONFIG["modules"]["tui_gateway.server"]["sha256"]
+        record("banner_prefetch_contained", original_invoked=False,
+               caller_path=str(caller_source), caller_line=caller.f_lineno,
+               actual_home=str(actual_home()), lifetime=lifetime)
+
+    def restore():
+        def check_identity():
+            assert module.prefetch_update_check is contained
+        def check_restoration():
+            assert module.prefetch_update_check is original
+        attempt("banner_containment_identity", check_identity)
+        attempt("banner_containment_restore", lambda: setattr(module, "prefetch_update_check", original))
+        attempt("banner_containment_restore_identity", check_restoration)
+        attempt("banner_containment_restore_record", lambda: record("banner_containment_restored",
+                module=module.__name__, path=str(source), original_identity=module.prefetch_update_check is original,
+                completed=not FAILURES, actual_home=str(actual_home()), lifetime=lifetime))
+
+    module.prefetch_update_check = contained
+    # Foreign profile backends retain only this no-op until their confirmed
+    # owned process exit. They acquire no additional watcher or fault injection.
+    if active_home == HOME:
+        MODULES["hermes_cli.banner"] = module
+        MODULES["banner_original_prefetch"] = original
+        RESTORERS.append(("banner_prefetch", restore))
+    record("banner_containment_installed", module=module.__name__, path=str(source),
+           sha256=CONFIG["modules"][module.__name__]["sha256"], original_identity_bound=True,
+           actual_home=str(active_home), lifetime=lifetime, extra_watcher_acquired=False)
+
+
 def release_file(name, timeout):
     path = BOOT / name
     deadline = time.monotonic() + timeout
@@ -305,6 +352,59 @@ def install_sessions(module):
            control_original_start_attempted=CONTROL_START_ATTEMPTED, control_actual_started=CONTROL_STARTED_CONFIRMED)
 
 
+def no_control_cleanup(server):
+    # A name-only poll returns before the sessions lazy import. This path may
+    # settle an acquired SDK loop, but must never invent worker/control exit.
+    finish = BOOT / "finish"
+    assert finish.is_file() and not finish.is_symlink()
+    assert finish.resolve() == finish.absolute() and finish.read_bytes() == b"release"
+    assert actual_home() == HOME and MODULES.get("tui_gateway.server") is server
+    process = psutil.Process(BIRTH["pid"])
+    assert process.create_time() == BIRTH["created"]
+    assert process.exe() == BIRTH["executable"] and process.cmdline() == BIRTH["argv"]
+    with LOCK:
+        assert CONTROL is None and not CONTROL_START_ATTEMPTED and not CONTROL_STARTED_CONFIRMED
+        assert not FAULT_USED and not ROWS and not CONSTRUCTOR_FLOWS
+        loops = list(LOOPS)
+    # Both the actual shutdown and the exact thread joins run outside LOCK.
+    attempt("no_control_terminal_cleanup", terminal_cleanup)
+
+    def verify_restoration():
+        assert actual_home() == HOME
+        with LOCK:
+            assert CONTROL is None and not CONTROL_START_ATTEMPTED and not CONTROL_STARTED_CONFIRMED
+            assert not FAULT_USED and not ROWS and not CONSTRUCTOR_FLOWS
+            assert len(LOOPS) == len(loops) and all(a is b for a, b in zip(LOOPS, loops))
+        assert MODULES["hermes_cli.banner"].prefetch_update_check is MODULES["banner_original_prefetch"]
+        assert OWNED_FINDER not in sys.meta_path
+        assert all(server._methods[key] is original for key, original in PUBLIC_HANDLERS.items())
+        for row in loops:
+            assert row["loop"].is_closed() and not row["loop"].is_running()
+            worker = row["worker"]
+            assert worker is not None and worker._started.is_set() and not worker.is_alive()
+
+    attempt("no_control_restoration_check", verify_restoration)
+    def observe_cleanup():
+        record("no_control_cleanup", actual_home=str(actual_home()),
+               control_acquired=CONTROL is not None,
+               control_start_attempted=CONTROL_START_ATTEMPTED,
+               control_started_confirmed=CONTROL_STARTED_CONFIRMED,
+               fault_used=FAULT_USED, oauth_workers=len(ROWS), constructor_flows=len(CONSTRUCTOR_FLOWS),
+               acquired_sdk_loops=len(loops), sdk_loops=[{
+                   "object_id": id(row["loop"]), "closed": row["loop"].is_closed(),
+                   "running": row["loop"].is_running(), "thread_object_id": id(row["worker"]),
+                   "ident": None if row["worker"] is None else row["worker"].ident,
+                   "native_id": None if row["worker"] is None else row["worker"].native_id,
+                   "actual_started": row["worker"] is not None and row["worker"]._started.is_set(),
+                   "alive": None if row["worker"] is None else row["worker"].is_alive()
+               } for row in loops],
+               banner_original_identity=MODULES["hermes_cli.banner"].prefetch_update_check is MODULES["banner_original_prefetch"],
+               import_finder_restored=OWNED_FINDER not in sys.meta_path,
+               rpc_handlers_restored=all(server._methods[key] is original for key, original in PUBLIC_HANDLERS.items()),
+               controller_join_claimed=False, completed=not FAILURES, failures=list(FAILURES))
+    attempt("no_control_cleanup_record", observe_cleanup)
+
+
 def install_server(module):
     MODULES[module.__name__] = module
     for action in ("start", "poll", "cancel", "callback"):
@@ -324,6 +424,8 @@ def install_server(module):
                         params=params, response=result, owner_rows=[row_snapshot(row) for row in list(ROWS)],
                         constructor_rows=[{"flow_id": flow.flow_id, "worker_done": flow.worker_done,
                                            "snapshot": flow.snapshot()} for flow in list(CONSTRUCTOR_FLOWS)]))
+                if action == "poll" and CONTROL is None and (BOOT / "finish").is_file():
+                    attempt("no_control_cleanup", lambda: no_control_cleanup(module))
                 if action == "poll" and CONTROL_COMPLETE.is_set() and CONTROL is not None:
                     joined = []
                     def join_control():
@@ -355,7 +457,10 @@ class ObservedLoader(importlib.abc.Loader):
     def exec_module(self, module):
         try:
             self.original.exec_module(module)
-            if not bind(module):
+            active = bind(module)
+            if self.fullname == "hermes_cli.banner":
+                install_banner(module)
+            if not active:
                 return
             if self.fullname == "tui_gateway.mcp_oauth_sessions":
                 install_sessions(module)
@@ -403,6 +508,12 @@ class OwnedFinder(importlib.abc.MetaPathFinder):
         return spec
 
 
+for required in ("hermes_cli.banner", "tui_gateway.server"):
+    if required in sys.modules:
+        error = RuntimeError("Pre-import banner containment unavailable: " + required)
+        failure("banner_preimport_boundary", error)
+        raise error
+assert "hermes_cli.banner" in CONFIG["modules"]
 OWNED_FINDER = OwnedFinder()
 sys.meta_path.insert(0, OWNED_FINDER)
 record("bootstrap_bound", hook_sha256=CONFIG["hook_sha256"], threading_sha256=CONFIG["threading_sha256"],

@@ -296,6 +296,7 @@ function workerBootstrap(sandbox: ReturnType<typeof createSandbox>, mode: string
   const source = path.join(import.meta.dirname, 'mcp-oauth-worker-sitecustomize.py')
   const modules: Record<string, { path: string; sha256: string }> = {}
   for (const [name, relative] of Object.entries({
+    'hermes_cli.banner': 'hermes_cli/banner.py',
     'tui_gateway.server': 'tui_gateway/server.py',
     'tui_gateway.mcp_oauth_sessions': 'tui_gateway/mcp_oauth_sessions.py',
     'tools.mcp_tool': 'tools/mcp_tool.py'
@@ -450,7 +451,7 @@ for (const mode of ['constructor', 'bootstrap_held']) {
       fs.copyFileSync(path.join(sandbox.hermesHome, 'config.yaml'), path.join(other, 'config.yaml'))
       bootstrap = workerBootstrap(sandbox, mode)
       launched = await launchDesktop(buildAppEnv(sandbox, { HERMES_TUI_TOOLSETS: 'reports', PYTHONPATH: bootstrap.directory }))
-      await waitForAppReady({ ...launched, mock, mockUrl: mock.url, sandbox, cleanup: async () => {} })
+      await waitForAppReady({ ...launched, mock, mockUrl: mock.url, sandbox, cleanup: async () => {} }, 120_000)
       identities.push(...captureOwnedTree(python, launched.app.process().pid!))
       await expect.poll(() => bootstrap!.observations().filter(row => row.kind === 'public_observer_ready' && path.resolve(row.actual_home!) === path.resolve(sandbox!.hermesHome)).length, { timeout: 30_000 }).toBe(1)
       const chat = await launched.page.evaluate(() => window.location.hash)
@@ -637,10 +638,71 @@ for (const mode of ['constructor', 'bootstrap_held']) {
             expect(joined.completed).toBe(true); expect(joined.failures).toEqual([])
           })
         }
+        if (!controlObserved && sandbox && launched) {
+          let observedDefault: NativeWorkerRecord | undefined
+          await attempt(() => { observedDefault = bootstrap!.observations().find(row => row.kind === 'public_observer_ready' && path.resolve(row.actual_home!) === path.resolve(sandbox!.hermesHome)) })
+          if (observedDefault) {
+            const defaultBackend = observedDefault
+            await attempt(async () => {
+              if (!gateway) { gateway = await workerGateway(launched!.page) }
+              let pollError: unknown
+              try { await gateway.request('mcp.servers.oauth.poll', { name: 'reports' }) } catch (error) { pollError = error }
+              expect(pollError).toBeInstanceOf(JsonRpcGatewayError)
+              expect((pollError as JsonRpcGatewayError).code).toBe(4063)
+              expect((pollError as Error).message).toBe('session_id required')
+              const sameBackend = (row: NativeWorkerRecord) => row.birth.pid === defaultBackend.birth.pid && row.birth.created === defaultBackend.birth.created
+              await expect.poll(() => bootstrap!.observations().filter(row => row.kind === 'no_control_cleanup' && sameBackend(row)).length).toBe(1)
+              const cleanup = bootstrap!.observations().find(row => row.kind === 'no_control_cleanup' && sameBackend(row))!
+              expect(cleanup.completed).toBe(true); expect(cleanup.failures).toEqual([])
+              expect(cleanup.control_acquired).toBe(false)
+              expect(cleanup.control_start_attempted).toBe(false)
+              expect(cleanup.control_started_confirmed).toBe(false)
+              expect(cleanup.fault_used).toBe(false)
+              expect(cleanup.oauth_workers).toBe(0); expect(cleanup.constructor_flows).toBe(0)
+              expect(cleanup.controller_join_claimed).toBe(false)
+              expect(cleanup.banner_original_identity).toBe(true)
+              expect(cleanup.import_finder_restored).toBe(true)
+              expect(cleanup.rpc_handlers_restored).toBe(true)
+              expect(Array.isArray(cleanup.sdk_loops)).toBe(true)
+              const loops = cleanup.sdk_loops as Array<{ object_id: number; thread_object_id: number; closed: boolean; running: boolean; actual_started: boolean; alive: boolean }>
+              expect(loops).toHaveLength(cleanup.acquired_sdk_loops as number)
+              const rows = bootstrap!.observations().filter(sameBackend)
+              for (const loop of loops) {
+                expect(loop.closed).toBe(true); expect(loop.running).toBe(false)
+                expect(loop.actual_started).toBe(true); expect(loop.alive).toBe(false)
+                expect(rows.filter(row => row.kind === 'sdk_loop_closed' && row.object_id === loop.object_id)).toHaveLength(1)
+                expect(rows.filter(row => row.kind === 'sdk_loop_thread_joined' && row.object_id === loop.object_id && row.thread_object_id === loop.thread_object_id)).toHaveLength(1)
+              }
+            })
+          }
+        }
         await attempt(async () => {
           const rows = bootstrap!.observations()
           await test.info().attach('native-worker-operational-observations', { body: JSON.stringify(rows), contentType: 'application/json' })
           expect(rows.filter(row => row.kind === 'operational_failure')).toEqual([])
+          const serverBindings = rows.filter(row => row.kind === 'module_binding' && row.module === 'tui_gateway.server')
+          expect(serverBindings.length).toBeGreaterThan(0)
+          for (const server of serverBindings) {
+            const backend = rows.filter(row => row.birth.pid === server.birth.pid && row.birth.created === server.birth.created)
+            const installed = backend.filter(row => row.kind === 'banner_containment_installed')
+            expect(installed).toHaveLength(1)
+            expect(installed[0].sha256).toBe(bootstrap!.configuration.modules['hermes_cli.banner'].sha256)
+            expect(installed[0].original_identity_bound).toBe(true)
+            expect(installed[0].extra_watcher_acquired).toBe(false)
+            const calls = backend.filter(row => row.kind === 'banner_prefetch_contained')
+            expect(calls.length).toBeGreaterThan(0)
+            for (const call of calls) { expect(call.original_invoked).toBe(false) }
+            const restored = backend.filter(row => row.kind === 'banner_containment_restored')
+            if (server.active) {
+              expect(installed[0].lifetime).toBe('default_finish')
+              expect(restored).toHaveLength(1)
+              expect(restored[0].original_identity).toBe(true)
+              expect(restored[0].completed).toBe(true)
+            } else {
+              expect(installed[0].lifetime).toBe('owned_process_exit')
+              expect(restored).toEqual([])
+            }
+          }
           await test.info().attach('native-worker-bootstrap-config', { body: JSON.stringify(bootstrap!.configuration), contentType: 'application/json' })
           await test.info().attach('native-worker-hook-observations', { body: JSON.stringify(rows), contentType: 'application/json' })
           for (const entry of fs.readdirSync(bootstrap!.directory, { withFileTypes: true })) {

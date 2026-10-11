@@ -1,6 +1,7 @@
 """Keep ownership when an acquired callback socket cannot confirm cleanup."""
 import json
 import socket
+import sys
 import threading
 
 from tests.fakes.mcp_oauth_admission import admission as admission
@@ -11,6 +12,7 @@ def test_unconfirmed_callback_startup_cleanup_keeps_admission(admission, monkeyp
     rpc, release, callers, sessions, ledger, guard, authorization_release, authorization_held = admission
     acquired = []
     close_attempts = []
+    acquired_threads, thread_errors = [], []
     actual_server = sessions.http.server.HTTPServer
     actual_thread_start = threading.Thread.start
     try:
@@ -29,6 +31,15 @@ def test_unconfirmed_callback_startup_cleanup_keeps_admission(admission, monkeyp
 
             def failed_start(thread):
                 if thread.name == "mcp-oauth-cb-reports":
+                    acquired_threads.append(thread)
+                    actual_run = thread.run
+                    def observed_run():
+                        try:
+                            return actual_run()
+                        except BaseException as error:
+                            thread_errors.append(repr(error))
+                            raise
+                    thread.run = observed_run
                     raise RuntimeError("Owned synthetic callback startup failure")
                 return actual_thread_start(thread)
 
@@ -64,14 +75,36 @@ def test_unconfirmed_callback_startup_cleanup_keeps_admission(admission, monkeyp
             assert "error" in overlap and "already in progress" in overlap["error"]["message"], overlap
             assert ids == [snapshot[0]["id"]] and len(acquired) == 1
     finally:
-        # The callback thread never starts. Recover only each captured socket
-        # through its original bound close method after removing the seam.
+        primary = sys.exception()
         failures = []
-        for httpd, actual_close in acquired:
+        def attempt(label, action):
             try:
-                actual_close()
-                refused(httpd.server_address[1])
+                action()
             except BaseException as error:
-                failures.append(repr(error))
-        record_property("uncertain_callback_fixture_cleanup", json.dumps({"failures": failures}))
-        assert not failures, failures
+                failures.append(label + ": " + repr(error))
+        def join(listener):
+            listener.join(timeout=6)
+            assert not listener.is_alive()
+        # Only this fixture knows its injected start skipped native allocation.
+        # Close the captured sockets independently, then start/join those same
+        # real callback Threads to let their stopped product targets settle.
+        for index, (httpd, actual_close) in enumerate(acquired):
+            attempt("actual_close_" + str(index), actual_close)
+            attempt("actual_refusal_" + str(index), lambda httpd=httpd: refused(httpd.server_address[1]))
+        for index, listener in enumerate(acquired_threads):
+            attempt("actual_native_start_" + str(index), lambda listener=listener: actual_thread_start(listener))
+            if listener._started.wait(2):
+                attempt("actual_native_join_" + str(index), lambda listener=listener: join(listener))
+            else:
+                failures.append("actual_native_start_unconfirmed_" + str(index))
+        attempt("cleanup_property", lambda: record_property("uncertain_callback_fixture_cleanup", json.dumps({
+            "failures": failures, "thread_errors": thread_errors,
+            "same_actual_callback_threads": len(acquired_threads),
+            "actual_native_ids": [listener.native_id for listener in acquired_threads],
+            "fixture_native_start_is_product_absence_proof": False,
+        })))
+        if failures or thread_errors:
+            if primary is not None:
+                primary.add_note("Uncertain callback fixture cleanup failed: " + repr(failures + thread_errors))
+            else:
+                raise AssertionError(failures + thread_errors)
