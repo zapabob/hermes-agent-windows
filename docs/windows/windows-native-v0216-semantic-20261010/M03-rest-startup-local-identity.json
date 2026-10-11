@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "family": "M03",
+  "slice": "REST worker startup ownership",
+  "status": "QUALIFIED_M03_REST_STARTUP_LOCAL_PRODUCT_IDENTITY_ONLY",
+  "reviewer": "/root/f03_contract_review",
+  "product": {
+    "commit": "ad97374eccfe1f8095e5b9186a36a7a75e3211ce",
+    "parent": "fd9d8a39c23a353d2d66009f9a0f6a3a2c31e6b2",
+    "tree": "3b25f3f21bec21a1c8ce9a78b26e65400fe92e5a",
+    "binary_patch_sha256": "8e5de6febfe22e0eccc213dc9ed4f4579e31a84ceab1a4cbc166639b842684b8",
+    "entries": {
+      "hermes_cli/web_routers/mcp.py": "8fcc47305dbb77393a66ec2fe1f27581f69934ebd0bc3cfc61a9b0cc56de8e9f",
+      "tests/hermes_cli/test_mcp_oauth_rest_sdk_contract.py": "96d7954638267d13fe04c3043992b6558ae7f26241865e5c6a20bdddd4e73c28",
+      "tests/hermes_cli/test_mcp_oauth_rest_startup.py": "b4704514a23e8986f138c648e494e04fb1fa512f86fc8a7ccce90db087c8421c",
+      "docs/windows/windows-native-v0216-semantic-20261010/M03-rest-startup-mini-plan.md": "d0c9f69e5e6a74a69e68b1efbad9259cb262adf32f891e73a5e68b185f2ca530",
+      "docs/windows/windows-native-v0216-semantic-20261010/M03-rest-startup-receipt.json": "439051ce10f1e703097ad03f8c68937a52dd7789ae1f8c5bc79c8b9e970772b5"
+    },
+    "all_five_blobs_equal_reviewed_bytes": true,
+    "candidate_source_inputs_unchanged_at_product_acceptance": 32,
+    "index_and_worktree_clean_at_product_acceptance": true
+  },
+  "evidence": {
+    "root": "tmp/probes/v0216-20261010/evidence/",
+    "records": {
+      "m03-rest-startup-independent-content-review-v1.json": "63c8647f16982b86675f0304f67f03c82ed34f7e7799189fdec445154221e17e",
+      "m03-rest-startup-product-stage-v1.json": "cbfa37cf86bbf303917e2f9237d1f5f093fe5830b216439416ceb9bcfe91f066",
+      "m03-rest-startup-product-commit-binding-v1.json": "6ec34e04bed2d0c728464773977709a66103624fa5301596efdaaa242034f9f8",
+      "m03-rest-startup-product-local-commit-v1.json": "fbd0e18e4d22ec211757f0c7ffe9b488a2222a4d7e0495618c577fccd5f8d8b0",
+      "m03-rest-startup-product-local-commit-v1.log": "36705b908ec4c3e33438e3ce4c3478202756924b4d34eba75c6f3e031ec039c0",
+      "m03-rest-startup-product-verify-reviewed-v1.json": "f37c9c07537c556d2c97f1eafdbbbbcf89797f2af4fc01989d6015688f72d2ce",
+      "m03-rest-startup-product-verify-reviewed-v1.log": "abc9d7e700ab219be0cae00f76d1eaaf16c5900c6d6490512e27bcd28c9ea96f",
+      "m03-rest-startup-precommit-canonical-wip-audit-v1.json": "5afa9fc0efefbe61473bc4608a29ea0249d22d02fa46f1736af99aaae956d426",
+      "m03-rest-startup-postcommit-canonical-wip-audit-v1.json": "7c089962f94a0584f75a574ea714089dcc0332af9f7b83a9856417dde0c89369",
+      "m03-rest-startup-primary-postcommit-v1.json": "733ab590c32c240deeab97ca2fd92b0e1984157b577183faf349d4491f3a06c2",
+      "m03-rest-startup-primary-postcommit-v1.log": "c7ce33e695307223848b1656cd676a7d82bae4d9e98a631b093e7afc6fb6b640"
+    }
+  },
+  "protected_primary": {
+    "head": "606f7e557c13a0789a2420f7adf6181becf60d75",
+    "dirty_items": 23,
+    "precommit_and_postcommit_head_status_bytes_matched": true
+  },
+  "accepted_scope": "Minimum REST construction/start exception boundary and no-worker-only local completion; four genuine original RED/four candidate GREEN cases, seven distinct qualified mutation kills with fourteen selected GREEN controls and seven owner regressions, mandatory captured-owner and fixture cleanup complete.",
+  "finite_retention": {
+    "inventory_sha256": "7a2429e27b30b337ddd923e1b1aa730fc6f4867d3c90e259d955988614f66089",
+    "receipt_sha256": "ea2ec45a85248dbc3dc351f27e9bc3ccd03695e972fe9ef9f88a93164931b912",
+    "archive_sha256": "a601fc0aa287dec9837fc540a2e3495c9feae0b72014f906b755f66d5c0b54d9",
+    "entries": 880,
+    "archive_bytes": 8992802,
+    "roundtrip_and_input_equality_verified": true
+  },
+  "transport_limits": "Actual REST handlers through TestClient and synthetic signed cookie; real test-owned loopback issuer/MCP SDK transports. No public-network REST, external browser/model, packaged runtime or cloud/production qualification.",
+  "startup_limits": "Unresolved attempted start remains conservatively reserved without a fabricated retry or automatic OS recovery. First error persists after actual worker completion; authorization URL byte stability after worker exit is unasserted.",
+  "historical_receipt": "M03-rest-startup-receipt.json remains the reviewed precommit snapshot. This record supplies subsequently observed product identity and primary audits.",
+  "remaining": "Gateway worker/listener startup and public failed-flow identity, in-place remint/revival, revoked-token/config replacement, plugin OAuth/module split and the complete remaining M03/campaign inventory.",
+  "bounded_acceptance": true,
+  "full_m03_accepted": false,
+  "full_campaign_accepted": false,
+  "publication": false
+}
