@@ -11,6 +11,7 @@ import {
   type DesktopCommandSurface,
   type DesktopPickerId,
   desktopSlashUnavailableMessage,
+  desktopSubcommandUnavailableMessage,
   isDesktopSlashCommand,
   resolveDesktopCommand
 } from '@/lib/desktop-slash-commands'
@@ -259,8 +260,12 @@ export function useSlashCommand(deps: SlashCommandDeps) {
 
         const { render: renderSlashOutput, sessionId, storedSessionId } = resolved
 
-        if (!isDesktopSlashCommand(name)) {
-          renderSlashOutput(desktopSlashUnavailableMessage(name) || `/${name} is not available in the desktop app.`)
+        if (!isDesktopSlashCommand(name, arg)) {
+          renderSlashOutput(
+            desktopSubcommandUnavailableMessage(name, arg) ||
+              desktopSlashUnavailableMessage(name) ||
+              `/${name} is not available in the desktop app.`
+          )
 
           return
         }

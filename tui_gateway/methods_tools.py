@@ -268,7 +268,7 @@ def _(rid, params: dict) -> dict:
         categories: list[dict] = []
         cat_map: dict[str, list[list[str]]] = {}
         cat_order: list[str] = []
-        command_meta: dict[str, dict[str, str | None]] = {}
+        command_meta: dict[str, dict[str, object]] = {}
 
         for cmd in COMMAND_REGISTRY:
             # Metadata survives palette filtering; it does not grant execution.

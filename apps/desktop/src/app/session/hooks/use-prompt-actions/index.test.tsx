@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getSession } from '@/hermes'
 import { textPart } from '@/lib/chat-messages'
 import { createClientSessionState } from '@/lib/chat-runtime'
+import { queryClient } from '@/lib/query-client'
 import { $composerAttachments, $composerDraft, type ComposerAttachment, setComposerDraft } from '@/store/composer'
 import { $queuedPromptsBySession, getQueuedPrompts } from '@/store/composer-queue'
 import { requestGatewayForAgent } from '@/store/gateway'
@@ -5705,4 +5706,53 @@ describe('usePromptActions editMessage stale-target recovery (#82462)', () => {
       (submitCalls[0]?.[1] as { truncate_before_user_ordinal?: unknown } | undefined)?.truncate_before_user_ordinal
     ).toBeUndefined()
   })
+})
+
+describe('F04 public review submit', () => {
+  afterEach(() => {
+    cleanup()
+    queryClient.clear()
+    vi.restoreAllMocks()
+  })
+
+  it.each(['pending', 'approve record-id', 'reject record-id', 'diff record-id', 'approval on'])(
+    'forwards %s to the selected runtime through submitText',
+    async arg => {
+      const requestGateway = vi.fn(async () => ({ output: 'owned review result' }) as never)
+      let handle: HarnessHandle | null = null
+      await actRender(
+        <Harness
+          activeSessionId="f04-runtime"
+          onReady={h => (handle = h)}
+          refreshSessions={async () => undefined}
+          requestGateway={requestGateway}
+          storedSessionId="f04-stored"
+        />
+      )
+      await handle!.submitText(`/skills ${arg}`)
+      expect(requestGateway).toHaveBeenCalledExactlyOnceWith('slash.exec', {
+        session_id: 'f04-runtime',
+        command: `skills ${arg}`
+      })
+    }
+  )
+
+  it.each(['', 'install source', 'audit', 'search term', 'unknown'])(
+    'sends no execution request for the unsupported hub input %s',
+    async arg => {
+      const requestGateway = vi.fn(async () => ({ output: 'must not execute' }) as never)
+      let handle: HarnessHandle | null = null
+      await actRender(
+        <Harness
+          activeSessionId="f04-runtime"
+          onReady={h => (handle = h)}
+          refreshSessions={async () => undefined}
+          requestGateway={requestGateway}
+          storedSessionId="f04-stored"
+        />
+      )
+      await handle!.submitText(`/skills ${arg}`)
+      expect(requestGateway).not.toHaveBeenCalled()
+    }
+  )
 })

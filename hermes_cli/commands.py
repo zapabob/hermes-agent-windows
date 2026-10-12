@@ -154,6 +154,8 @@ class CommandDef:
     # Desktop metadata, independent of CLI/gateway admission: hidden is
     # executable but not suggested; other values describe a missing UI surface.
     desktop: str | None = None
+    # Optional Desktop review slice; CLI completion/authority remain unchanged.
+    desktop_subcommands: tuple[str, ...] | None = None
 
     def describe(self) -> str:
         """Translate the display description; retain its English source."""
@@ -171,9 +173,12 @@ def infer_argument_mode(cmd: CommandDef) -> str | None:
     return "text" if hint else None
 
 
-def command_desktop_meta(cmd: CommandDef) -> dict[str, str | None]:
+def command_desktop_meta(cmd: CommandDef) -> dict[str, object]:
     """Static composer metadata; never grants command execution authority."""
-    return {"argument_mode": infer_argument_mode(cmd), "desktop": cmd.desktop}
+    meta: dict[str, object] = {"argument_mode": infer_argument_mode(cmd), "desktop": cmd.desktop}
+    if cmd.desktop_subcommands is not None:
+        meta["desktop_subcommands"] = list(cmd.desktop_subcommands)
+    return meta
 
 
 # Valid values for CommandDef.busy_policy (see field docs above).
@@ -361,7 +366,8 @@ COMMAND_REGISTRY: list[CommandDef] = [
                "Tools & Skills", cli_only=True,
                gateway_config_gate="skills.write_approval",
                subcommands=("search", "browse", "inspect", "install", "audit",
-                            "pending", "approve", "reject", "diff", "approval"), desktop="settings"),
+                            "pending", "approve", "reject", "diff", "approval"), desktop="settings",
+               desktop_subcommands=("pending", "approve", "reject", "diff", "approval")),
     CommandDef("memory", "Review pending memory writes / toggle the approval gate",
                "Tools & Skills",
                args_hint="[pending|approve|reject|approval] [id|on|off]",

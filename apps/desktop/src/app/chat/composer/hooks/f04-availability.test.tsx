@@ -72,3 +72,36 @@ it.each(['hidden', 'terminal', 'messaging', 'advanced'])(
     expect(commandsOf(search('f04-argument '))).toEqual(desktop === 'hidden' ? ['/f04-argument on'] : [])
   }
 )
+
+it('offers only the review subcommands after replace_from rewriting', async () => {
+  const request = vi.fn(async (method: string) =>
+    method === 'commands.catalog'
+      ? {
+          commands: {
+            '/skills': {
+              desktop: 'settings',
+              desktop_subcommands: ['pending', 'approve', 'reject', 'diff', 'approval']
+            }
+          }
+        }
+      : {
+          items: ['pending', 'diff', 'install', 'audit'].map(text => ({ text, display: text })),
+          replace_from: '/skills '.length
+        }
+  )
+
+  let search!: (q: string) => readonly Unstable_TriggerItem[]
+
+  function Probe() {
+    search = useSlashCompletions({ gateway: { request } as unknown as HermesGateway }).adapter.search!
+
+    return null
+  }
+
+  render(<Probe />)
+  await act(async () => {
+    search('skills ')
+    await new Promise(r => setTimeout(r, 160))
+  })
+  expect(commandsOf(search('skills '))).toEqual(['/skills pending', '/skills diff'])
+})

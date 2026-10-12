@@ -33,7 +33,7 @@ def rpc(server, method, params=None):
 
 
 def test_append_only_api_and_offered_metadata():
-    assert fields(CommandDef)[-1].name == 'desktop'
+    assert [field.name for field in fields(CommandDef)][-2:] == ['desktop', 'desktop_subcommands']
     from hermes_cli.commands import command_desktop_meta
     assert command_desktop_meta(CommandDef('fixture', 'Fixture', 'Session')) == {
         'argument_mode': None, 'desktop': None}
