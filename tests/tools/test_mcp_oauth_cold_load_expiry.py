@@ -476,3 +476,71 @@ async def test_initialize_skips_prefetch_when_no_tokens(tmp_path, monkeypatch):
     assert calls == [], (
         f"Pre-flight must not fire when no tokens are stored, but got {calls}"
     )
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("expires_in", [0, 60, None], ids=["expired", "fresh", "unknown"])
+@pytest.mark.parametrize("decision_delta", [0.0, -0.5], ids=["same_tick", "half_second_back"])
+async def test_cold_loaded_token_validity_at_clock_boundary(
+    tmp_path, monkeypatch, expires_in, decision_delta, record_property
+):
+    """Exercise real storage/provider/SDK expiry with a controlled component clock."""
+    from mcp.client.auth import oauth2 as sdk_auth
+    from mcp.shared.auth import (
+        OAuthClientInformationFull, OAuthClientMetadata, OAuthMetadata, OAuthToken,
+    )
+    from pydantic import AnyUrl
+    from tools.mcp_oauth import HermesTokenStorage
+    from tools.mcp_oauth_manager import _HERMES_PROVIDER_CLS, reset_manager_for_tests
+
+    assert _HERMES_PROVIDER_CLS is not None
+    reset_manager_for_tests()
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    clock = [10000.0]
+    # SDK auth_utils and Hermes storage share this time module. No SDK code,
+    # provider state, token validity method, transport, or native oracle is replaced.
+    monkeypatch.setattr(sdk_auth.time, "time", lambda: clock[0])
+    issuer = "https://owned-issuer.example/issuer"
+    storage = HermesTokenStorage("owned-clock-boundary", hermes_home=tmp_path)
+    storage.bind_issuer(issuer)
+    await storage.set_client_info(OAuthClientInformationFull(
+        client_id="owned-clock-client",
+        redirect_uris=[AnyUrl("http://127.0.0.1:12345/callback")],
+        grant_types=["authorization_code", "refresh_token"],
+        response_types=["code"],
+        token_endpoint_auth_method="none",
+    ))
+    storage.save_oauth_metadata(OAuthMetadata(
+        issuer=issuer,
+        authorization_endpoint="https://owned-issuer.example/authorize",
+        token_endpoint="https://owned-issuer.example/token",
+        response_types_supported=["code"],
+    ))
+    await storage.set_tokens(OAuthToken(
+        access_token="owned-clock-access", token_type="Bearer",
+        expires_in=expires_in, refresh_token="owned-clock-refresh",
+    ))
+    provider = _HERMES_PROVIDER_CLS(
+        server_name="owned-clock-boundary",
+        server_url="https://owned-resource.example/mcp",
+        client_metadata=OAuthClientMetadata(
+            redirect_uris=[AnyUrl("http://127.0.0.1:12345/callback")],
+            client_name="Hermes Agent",
+        ),
+        storage=storage, redirect_handler=_noop_redirect, callback_handler=_noop_callback,
+    )
+    await provider._initialize()
+    context = provider.context
+    assert context.current_tokens.expires_in == expires_in
+    assert context.current_tokens.refresh_token == "owned-clock-refresh"
+    assert context.client_info.client_id == "owned-clock-client"
+    assert storage.loaded_issuer == issuer
+    assert str(context.oauth_metadata.issuer) == issuer
+    assert context.can_refresh_token()
+    clock[0] += decision_delta
+    record_property("clock_boundary_scope", "Controlled-clock component only; no native wire credit.")
+    assert context.is_token_valid() is (expires_in != 0)
+    if expires_in == 60:
+        clock[0] = 10061.0
+        assert not context.is_token_valid()
+    elif expires_in is None:
+        assert context.token_expiry_time is None

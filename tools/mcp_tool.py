@@ -1682,44 +1682,44 @@ def _apply_identity_header(server_name: str, config: dict, headers: dict) -> dic
 
 
 def _make_redirect_header_stripper(
-    original_url,
     *,
     strict: bool = False,
     configured_header_names: "set[str] | frozenset[str]" = frozenset(),
 ):
-    """Build an httpx response hook that guards cross-origin redirects.
+    """Build request/response hooks guarding each immediate redirect hop.
 
-    Always strips ``Authorization`` when a redirect leaves the original
-    origin. When *strict* is true (portable Agent Plugins v1 packages with
-    ``strict_redirect_headers``), every *configured* header (lowercase names
-    in *configured_header_names*) is stripped as well — the v1 spec forbids
-    forwarding package-configured headers to a different origin without
-    explicit user authorization.
+    The response hook records the responding Request's origin as an immutable
+    tuple in that Request's extensions. HTTPX copies it into the redirect Request
+    after response hooks run; the request hook consumes it before the next send.
+    Foreign hops lose Authorization and, in strict package mode, configured
+    headers. Same-origin hops and independent fresh OAuth requests retain their
+    credentials. No client-wide origin state is shared between requests.
     """
+    marker = "_hermes_mcp_redirect_origin"
+    configured_names = frozenset(name.lower() for name in configured_header_names)
 
-    async def _strip_on_cross_origin_redirect(response):
-        if response.is_redirect and response.next_request:
-            # Current request's origin (the request that got this redirect response)
-            current_origin = (
-                response.request.url.scheme,
-                response.request.url.host,
-                response.request.url.port,
-            )
-            # Next request's origin (the request that will be made if we follow)
-            target_origin = (
-                response.next_request.url.scheme,
-                response.next_request.url.host,
-                response.next_request.url.port,
-            )
-            if current_origin != target_origin:
-                response.next_request.headers.pop("authorization", None)
-                response.next_request.headers.pop("Authorization", None)
-                if strict:
-                    for _name in configured_header_names:
-                        while _name in response.next_request.headers:
-                            del response.next_request.headers[_name]
-    
-    return _strip_on_cross_origin_redirect
+    def _origin(url):
+        port = url.port
+        if port is None:
+            port = {"http": 80, "https": 443}.get(url.scheme)
+        return url.scheme, url.host, port
+
+    async def _remember_redirect_origin(response):
+        if response.has_redirect_location:
+            response.request.extensions[marker] = _origin(response.request.url)
+
+    async def _strip_on_cross_origin_redirect(request):
+        previous_origin = request.extensions.pop(marker, None)
+        if previous_origin is None or previous_origin == _origin(request.url):
+            return
+        request.headers.pop("Authorization", None)
+        if strict:
+            for name in configured_names:
+                request.headers.pop(name, None)
+
+    return {"request": [_strip_on_cross_origin_redirect], "response": [_remember_redirect_origin]}
+
+
 def _format_connect_error(exc: BaseException) -> str:
     """Render nested MCP connection errors into an actionable short message."""
 
@@ -3794,10 +3794,7 @@ class MCPServerTask:
             # sdk_httpx().
             httpx = sdk_httpx()
 
-            _original_url = httpx.URL(url)
-
-            _strip_auth_on_cross_origin_redirect = _make_redirect_header_stripper(
-                _original_url,
+            _redirect_header_hooks = _make_redirect_header_stripper(
                 strict=_strict_cfg_headers,
                 configured_header_names=_configured_header_names,
             )
@@ -3806,7 +3803,7 @@ class MCPServerTask:
                 "follow_redirects": True,
                 "timeout": httpx.Timeout(float(connect_timeout), read=300.0),
                 "verify": ssl_verify,
-                "event_hooks": {"response": [_strip_auth_on_cross_origin_redirect]},
+                "event_hooks": _redirect_header_hooks,
             }
             if headers:
                 client_kwargs["headers"] = headers

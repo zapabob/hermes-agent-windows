@@ -3053,126 +3053,241 @@ class TestMCPDiscoveryCrossProcessLock:
 
 
 class TestRedirectHeaderStripper:
-    """Cross-origin redirect header boundary (portable Agent Plugins v1)."""
+    """Exercise redirect boundaries through the installed SDK HTTP client."""
 
-    def _make_response(self, next_headers, next_url="https://other.example.test/mcp", original_url="https://origin.example.test/mcp"):
-        import httpx
-        original_request = httpx.Request("GET", httpx.URL(original_url))
-        next_request = httpx.Request("GET", httpx.URL(next_url), headers=next_headers)
-        response = SimpleNamespace(
-            is_redirect=True,
-            request=original_request,
-            next_request=next_request,
-        )
-        return response, next_request
+    def _follow_redirects(self, urls, headers, *, strict=False,
+                          configured_header_names=frozenset(), reinsertion=None):
+        from tools.mcp_tool import _make_redirect_header_stripper, sdk_httpx
+
+        httpx = sdk_httpx()
+        assert httpx is not None
+        received = []
+
+        def handle(request):
+            index = len(received)
+            assert request.url == httpx.URL(urls[index])
+            received.append(httpx.Headers(request.headers))
+            # Component-only credentials for the next hop: record receipt first.
+            if reinsertion and index in reinsertion:
+                request.headers.update(reinsertion[index])
+            if index + 1 < len(urls):
+                return httpx.Response(307, headers={"Location": urls[index + 1]})
+            return httpx.Response(200, content=b"done")
+
+        async def follow():
+            hooks = _make_redirect_header_stripper(
+                strict=strict, configured_header_names=configured_header_names,
+            )
+            async with httpx.AsyncClient(
+                transport=httpx.MockTransport(handle), follow_redirects=True,
+                event_hooks=hooks,
+            ) as client:
+                response = await client.get(urls[0], headers=headers)
+                assert response.status_code == 200
+                assert len(received) == len(urls)
+            assert client.is_closed
+            return received
+
+        return asyncio.run(follow())
+
     def test_default_strips_only_authorization(self):
-        import httpx
-
-        from tools.mcp_tool import _make_redirect_header_stripper
-
-        hook = _make_redirect_header_stripper(
-            httpx.URL("https://origin.example.test/mcp")
+        received = self._follow_redirects(
+            ["https://origin.example.test/mcp", "https://other.example.test/mcp"],
+            {"Authorization": "Bearer x", "X-Tenant": "t"},
         )
-        response, next_request = self._make_response(
-            {"Authorization": "Bearer x", "X-Tenant": "t"}
-        )
-        asyncio.run(hook(response))
-        assert "authorization" not in next_request.headers
-        assert next_request.headers["x-tenant"] == "t"
+        next_headers = received[1]
+        assert "authorization" not in next_headers
+        assert next_headers["x-tenant"] == "t"
 
     def test_strict_strips_configured_headers_cross_origin(self):
-        import httpx
-
-        from tools.mcp_tool import _make_redirect_header_stripper
-
-        hook = _make_redirect_header_stripper(
-            httpx.URL("https://origin.example.test/mcp"),
-            strict=True,
-            configured_header_names={"x-tenant"},
+        received = self._follow_redirects(
+            ["https://origin.example.test/mcp", "https://other.example.test/mcp"],
+            {"Authorization": "Bearer x", "X-Tenant": "t", "Accept": "a"},
+            strict=True, configured_header_names={"X-Tenant"},
         )
-        response, next_request = self._make_response(
-            {"Authorization": "Bearer x", "X-Tenant": "t", "Accept": "a"}
-        )
-        asyncio.run(hook(response))
-        assert "authorization" not in next_request.headers
-        assert "x-tenant" not in next_request.headers
+        next_headers = received[1]
+        assert "authorization" not in next_headers
+        assert "x-tenant" not in next_headers
         # Client-generated headers unrelated to package config survive.
-        assert next_request.headers["accept"] == "a"
+        assert next_headers["accept"] == "a"
 
     def test_same_origin_redirect_keeps_headers(self):
-        import httpx
-
-        from tools.mcp_tool import _make_redirect_header_stripper
-
-        hook = _make_redirect_header_stripper(
-            httpx.URL("https://origin.example.test/mcp"),
-            strict=True,
-            configured_header_names={"x-tenant"},
-        )
-        response, next_request = self._make_response(
+        received = self._follow_redirects(
+            ["https://origin.example.test/mcp", "https://origin.example.test:443/other"],
             {"Authorization": "Bearer x", "X-Tenant": "t"},
-            next_url="https://origin.example.test/other"
+            strict=True, configured_header_names={"x-tenant"},
         )
-        asyncio.run(hook(response))
-        assert next_request.headers["authorization"] == "Bearer x"
-        assert next_request.headers["x-tenant"] == "t"
-
+        next_headers = received[1]
+        assert next_headers["authorization"] == "Bearer x"
+        assert next_headers["x-tenant"] == "t"
 
     def test_multi_hop_redirect_strips_headers_at_each_hop(self):
-        import httpx
-
-        from tools.mcp_tool import _make_redirect_header_stripper
-
-        # Simulate a 2-hop redirect: origin -> intermediate -> final
-        # Hop 1: origin to intermediate
-        hook = _make_redirect_header_stripper(
-            httpx.URL("https://origin.example.test/mcp"),
-            strict=True,
-            configured_header_names={"x-tenant", "x-api-key"},
-        )
-        # First redirect response
-        response1, next_request1 = self._make_response(
+        received = self._follow_redirects(
+            ["https://origin.example.test/mcp", "https://intermediate.example.test/mcp",
+             "https://final.example.test/mcp", "https://final.example.test/other"],
             {"Authorization": "Bearer token1", "X-Tenant": "t1", "X-API-Key": "key1"},
-            next_url="https://intermediate.example.test/mcp",
-            original_url="https://origin.example.test/mcp"
+            strict=True, configured_header_names={"x-tenant", "x-api-key"},
+            reinsertion={
+                1: {"Authorization": "Bearer token2", "X-Tenant": "t2", "X-API-Key": "key2"},
+                2: {"Authorization": "Bearer token3", "X-Tenant": "t3", "X-API-Key": "key3"},
+            },
         )
-        asyncio.run(hook(response1))
-        # After hop 1 (cross-origin, strict), Authorization and configured headers should be stripped
-        assert "authorization" not in next_request1.headers
-        assert "x-tenant" not in next_request1.headers
-        assert "x-api-key" not in next_request1.headers
+        next_headers1, next_headers2, next_headers3 = received[1:]
+        assert "authorization" not in next_headers1
+        assert "x-tenant" not in next_headers1
+        assert "x-api-key" not in next_headers1
+        assert "authorization" not in next_headers2
+        assert "x-tenant" not in next_headers2
+        assert "x-api-key" not in next_headers2
+        assert next_headers3["authorization"] == "Bearer token3"
+        assert next_headers3["x-tenant"] == "t3"
+        assert next_headers3["x-api-key"] == "key3"
 
-        # Hop 2: intermediate to final (different origin)
-        # Create a new hook for this hop with the intermediate as original
-        hook2 = _make_redirect_header_stripper(
-            httpx.URL("https://intermediate.example.test/mcp"),
-            strict=True,
-            configured_header_names={"x-tenant", "x-api-key"},
+    def test_http_to_https_same_host_strips_credentials(self):
+        received = self._follow_redirects(
+            ["http://origin.example.test/mcp", "https://origin.example.test/mcp"],
+            {"Authorization": "Bearer upgrade", "X-Tenant": "t", "Accept": "a"},
+            strict=True, configured_header_names={"x-tenant"},
         )
-        response2, next_request2 = self._make_response(
-            {"Authorization": "Bearer token2", "X-Tenant": "t2", "X-API-Key": "key2"},
-            next_url="https://final.example.test/mcp",
-            original_url="https://intermediate.example.test/mcp"
-        )
-        asyncio.run(hook2(response2))
-        # After hop 2 (cross-origin, strict), Authorization and configured headers should be stripped
-        assert "authorization" not in next_request2.headers
-        assert "x-tenant" not in next_request2.headers
-        assert "x-api-key" not in next_request2.headers
+        # HTTPX permits Authorization on this upgrade; the product must remove it.
+        assert "authorization" not in received[1]
+        assert "x-tenant" not in received[1]
+        assert received[1]["accept"] == "a"
 
-        # Test that same-origin redirects preserve headers
-        hook3 = _make_redirect_header_stripper(
-            httpx.URL("https://final.example.test/mcp"),
-            strict=True,
-            configured_header_names={"x-tenant", "x-api-key"},
+    def test_return_to_initial_origin_still_strips_previous_origin_credentials(self):
+        received = self._follow_redirects(
+            ["https://origin.example.test/mcp", "https://other.example.test/mcp",
+             "https://origin.example.test/return", "https://origin.example.test/other"],
+            {"Authorization": "Bearer token1", "X-Tenant": "t1", "X-API-Key": "key1"},
+            strict=True, configured_header_names={"x-tenant", "x-api-key"},
+            reinsertion={
+                1: {"Authorization": "Bearer token2", "X-Tenant": "t2", "X-API-Key": "key2"},
+                2: {"Authorization": "Bearer token3", "X-Tenant": "t3", "X-API-Key": "key3"},
+            },
         )
-        response3, next_request3 = self._make_response(
-            {"Authorization": "Bearer token3", "X-Tenant": "t3", "X-API-Key": "key3"},
-            next_url="https://final.example.test/other",
-            original_url="https://final.example.test/mcp"
-        )
-        asyncio.run(hook3(response3))
-        # Same-origin should preserve all headers
-        assert next_request3.headers["authorization"] == "Bearer token3"
-        assert next_request3.headers["x-tenant"] == "t3"
-        assert next_request3.headers["x-api-key"] == "key3"
+        for hop in received[1:3]:
+            assert "authorization" not in hop
+            assert "x-tenant" not in hop
+            assert "x-api-key" not in hop
+        assert received[3]["authorization"] == "Bearer token3"
+        assert received[3]["x-tenant"] == "t3"
+        assert received[3]["x-api-key"] == "key3"
+
+    def test_fresh_sdk_basic_request_survives_overlapping_redirect(self):
+        from mcp.client.auth.oauth2 import OAuthContext
+        from mcp.shared.auth import OAuthClientInformationFull, OAuthClientMetadata
+        from tools.mcp_tool import _make_redirect_header_stripper, sdk_httpx
+
+        async def overlap():
+            httpx = sdk_httpx()
+            assert httpx is not None
+            origin = "https://origin.example.test/mcp"
+            foreign = "https://other.example.test/mcp"
+            issuer = "https://issuer.example.test/token"
+            entered, release = asyncio.Event(), asyncio.Event()
+            received = []
+            tasks = []
+            first = None
+
+            def record_failure(label, exc):
+                nonlocal first
+                if first is None:
+                    first = exc
+                elif exc is not first:
+                    first.add_note(label + " also failed: " + repr(exc))
+
+            def handle(request):
+                received.append((str(request.url), httpx.Headers(request.headers)))
+                if request.url == httpx.URL(origin):
+                    return httpx.Response(307, headers={"Location": foreign})
+                if request.url == httpx.URL(issuer):
+                    return httpx.Response(200, json={"access_token": "synthetic", "token_type": "Bearer"})
+                assert request.url == httpx.URL(foreign)
+                return httpx.Response(200, content=b"done")
+
+            async def hold_after_product_response(response):
+                if response.request.url == httpx.URL(origin) and response.has_redirect_location:
+                    entered.set()
+                    await asyncio.wait_for(release.wait(), timeout=5)
+
+            hooks = _make_redirect_header_stripper(
+                strict=True, configured_header_names={"x-tenant"},
+            )
+            hooks["response"].append(hold_after_product_response)
+            client = httpx.AsyncClient(
+                transport=httpx.MockTransport(handle), follow_redirects=True,
+                event_hooks=hooks,
+            )
+            try:
+                redirect_task = asyncio.create_task(client.get(
+                    origin, headers={"Authorization": "Bearer resource", "X-Tenant": "tenant"},
+                ))
+                tasks.append(redirect_task)
+                await asyncio.wait_for(entered.wait(), timeout=2)
+                context = OAuthContext(
+                    server_url=origin,
+                    client_metadata=OAuthClientMetadata(redirect_uris=["http://127.0.0.1/callback"]),
+                    storage=MagicMock(), redirect_handler=None, callback_handler=None,
+                    client_info=OAuthClientInformationFull(
+                        client_id="component-client", client_secret="component-secret",
+                        token_endpoint_auth_method="client_secret_basic",
+                    ),
+                )
+                data, headers = context.prepare_token_auth({
+                    "grant_type": "refresh_token", "refresh_token": "synthetic-refresh",
+                    "client_secret": "component-secret",
+                })
+                expected_basic = headers["Authorization"]
+                assert expected_basic.startswith("Basic ")
+                assert "client_secret" not in data
+                # Actual SDK producer output travels as a fresh independent Request.
+                token_request = httpx.Request("POST", issuer, data=data, headers=headers)
+                issuer_task = asyncio.create_task(client.send(token_request))
+                tasks.append(issuer_task)
+                issuer_response = await asyncio.wait_for(asyncio.shield(issuer_task), timeout=2)
+                assert issuer_response.status_code == 200
+                assert [url for url, _ in received] == [origin, issuer]
+                assert received[1][1]["authorization"] == expected_basic
+                assert not redirect_task.done()
+                release.set()
+                resource_response = await asyncio.wait_for(asyncio.shield(redirect_task), timeout=2)
+                assert resource_response.status_code == 200
+                assert [url for url, _ in received] == [origin, issuer, foreign]
+                assert "authorization" not in received[2][1]
+                assert "x-tenant" not in received[2][1]
+            except BaseException as exc:
+                first = exc
+            finally:
+                try:
+                    release.set()
+                except BaseException as exc:
+                    record_failure("barrier_release", exc)
+                if tasks:
+                    try:
+                        _, pending = await asyncio.wait(tasks, timeout=2)
+                        if pending:
+                            record_failure("task_join", AssertionError("Owned task exceeded normal join"))
+                            for task in pending:
+                                task.cancel()
+                            _, pending = await asyncio.wait(tasks, timeout=2)
+                            if pending:
+                                record_failure("task_join", AssertionError("Owned task survived cancellation join"))
+                    except BaseException as exc:
+                        record_failure("task_join", exc)
+                    for task in tasks:
+                        if task.done():
+                            try:
+                                task.result()
+                            except BaseException as exc:
+                                record_failure("task_result", exc)
+                try:
+                    await asyncio.wait_for(client.aclose(), timeout=2)
+                    assert client.is_closed
+                except BaseException as exc:
+                    record_failure("client_close", exc)
+            if first is not None:
+                raise first
+            assert len(tasks) == 2 and all(task.done() and not task.cancelled() for task in tasks)
+            assert client.is_closed
+
+        asyncio.run(overlap())

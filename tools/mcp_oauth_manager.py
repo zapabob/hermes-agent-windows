@@ -38,6 +38,7 @@ import asyncio
 import logging
 import re
 import threading
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
@@ -283,7 +284,11 @@ def _make_hermes_provider_class() -> Optional[type]:
             await super()._initialize()
             tokens = self.context.current_tokens
             if tokens is not None and tokens.expires_in is not None:
-                self.context.update_token_expiry(tokens)
+                # A zero TTL must be expired before the SDK accepts same-tick equality.
+                if tokens.expires_in <= 0:
+                    self.context.token_expiry_time = time.time() - 1
+                else:
+                    self.context.update_token_expiry(tokens)
 
             # Cold-load: restore OAuth server metadata from disk before any
             # refresh attempt. Without this, a restarted process with cached
