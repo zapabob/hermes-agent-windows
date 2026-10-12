@@ -1,112 +1,16 @@
 """Actual new-process persisted token use and foreign peer/profile isolation."""
 
 import json
-import subprocess
-import sys
-import time
-from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-import psutil
 import pytest
 
 from tests.fakes.mcp_oauth_issuer import serve_issuer
 from tests.fakes.mcp_oauth_gateway import deliver, finish, homes as homes, rpc, running_flow, scoped
 
 
-def cold(home, nonce, allowed, owned_root):
-    script = Path(__file__).resolve().parents[1] / "fakes/mcp_oauth_cold_child.py"
-    owned_root = owned_root.resolve()
-    assert home.resolve().is_relative_to(owned_root)
-    receipt_path = home / "m03-cold-receipt.json"
-    launcher = actual_identity = None
-    actual_verified = False
-    original_error = None
-    cleanup_errors = []
-    process = subprocess.Popen([sys.executable, str(script), str(home), nonce,
-                                "allowed" if allowed else "denied", str(receipt_path), str(owned_root)],
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8",
-                               creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0)
-    try:
-        parent = psutil.Process(process.pid)
-        launcher = identity(parent)
-        assert Path(launcher["argv"][1]).resolve() == script.resolve()
-        assert str(owned_root) in launcher["argv"]
-        assert str(home) in launcher["argv"] and str(receipt_path) in launcher["argv"]
-        birth = receipt_path.with_suffix(".birth.json")
-        deadline = time.monotonic() + 6
-        while not birth.exists() and process.poll() is None and time.monotonic() < deadline:
-            time.sleep(0.025)
-        actual_identity = json.loads(birth.read_text(encoding="utf-8"))
-        actual = same_process(actual_identity)
-        assert actual is not None
-        assert actual.pid == parent.pid or actual.pid in {child.pid for child in parent.children(recursive=True)}
-        assert Path(actual_identity["argv"][1]).resolve() == script.resolve()
-        assert str(owned_root) in actual_identity["argv"]
-        assert str(home) in actual_identity["argv"] and str(receipt_path) in actual_identity["argv"]
-        actual_verified = True
-        temporary = receipt_path.with_suffix(".observed.tmp")
-        temporary.write_text("observed", encoding="utf-8")
-        temporary.replace(receipt_path.with_suffix(".observed"))
-        stdout, stderr = process.communicate(timeout=45)
-        receipt_path.with_suffix(".stdout.log").write_text(stdout, encoding="utf-8")
-        receipt_path.with_suffix(".stderr.log").write_text(stderr, encoding="utf-8")
-        assert process.returncode == 0, (stdout, stderr)
-        result = json.loads(receipt_path.read_text(encoding="utf-8"))
-        assert {key: result[key] for key in ("pid", "created", "exe", "argv")} == actual_identity
-        assert result["allowed"] is allowed
-        assert Path(result["home"]).resolve() == home.resolve()
-    except BaseException as error:
-        original_error = error
-    finally:
-        def attempt(label, action):
-            try:
-                action()
-            except BaseException as error:
-                cleanup_errors.append(label + ": " + repr(error))
-
-        def terminate_actual():
-            actual = same_process(actual_identity)
-            if actual is not None:
-                actual.terminate()
-
-        if actual_verified:
-            attempt("terminate_owned_actual", terminate_actual)
-        attempt("launcher_wait", lambda: process.wait(timeout=8 if actual_verified else 12))
-        for label, pipe in (("stdout", process.stdout), ("stderr", process.stderr)):
-            if pipe:
-                attempt(label + "_close", pipe.close)
-        for label, observed_identity in (("launcher", launcher), ("actual", actual_identity if actual_verified else None)):
-            if observed_identity:
-                attempt(label + "_exit_audit", lambda row=observed_identity: exited(row))
-        cleanup = {"original_error": repr(original_error), "errors": cleanup_errors,
-                   "launcher": launcher, "actual": actual_identity, "actual_verified": actual_verified}
-        attempt("cleanup_receipt", lambda: receipt_path.with_suffix(".cleanup.json").write_text(json.dumps(cleanup), encoding="utf-8"))
-    if original_error is not None:
-        original_error.add_note("Owned cleanup: " + repr(cleanup_errors))
-        raise original_error
-    assert cleanup_errors == [], cleanup_errors
-    return result
-
-
-def identity(process):
-    return {"pid": process.pid, "created": process.create_time(), "exe": process.exe(), "argv": process.cmdline()}
-
-
-def same_process(row):
-    try:
-        process = psutil.Process(row["pid"])
-        if process.create_time() != row["created"]:
-            return None
-        assert process.exe() == row["exe"] and process.cmdline() == row["argv"]
-        return process
-    except psutil.NoSuchProcess:
-        return None
-
-
-def exited(row):
-    assert same_process(row) is None, row
+from tests.fakes.mcp_oauth_cold_process import cold
 
 
 def test_cold_process_uses_only_owner_token_and_foreign_peer_has_no_token_or_effect(homes, record_property):
@@ -142,3 +46,136 @@ def test_cold_process_uses_only_owner_token_and_foreign_peer_has_no_token_or_eff
         assert not (homes / "profiles" / "other" / "mcp-tokens" / "reports.json").exists()
         record_property("owned_processes", json.dumps([owned, denied_child]))
         record_property("foreign_peer_ledger", json.dumps(foreign.ledger))
+
+
+@pytest.mark.parametrize("initial_error", [FileNotFoundError(2, "pending"), PermissionError(13, "sharing refusal")])
+def test_owned_handshake_waits_for_readable_content(tmp_path, monkeypatch, initial_error):
+    from tests.fakes import mcp_oauth_cold_process as launcher
+
+    path = tmp_path / "owned.observed"
+    path.write_text("observed", encoding="utf-8")
+    original_read = type(path).read_text
+    attempts = []
+
+    def read(candidate, *args, **kwargs):
+        if candidate == path and not attempts:
+            attempts.append(initial_error)
+            raise initial_error
+        return original_read(candidate, *args, **kwargs)
+
+    monkeypatch.setattr(launcher.sys, "platform", "win32")
+    monkeypatch.setattr(type(path), "read_text", read)
+    assert launcher.read_handshake(path, tmp_path, launcher.time.monotonic() + 1) == "observed"
+    assert attempts == [initial_error]
+
+
+def test_owned_handshake_expiry_preserves_original_access_error(tmp_path, monkeypatch):
+    from tests.fakes import mcp_oauth_cold_process as launcher
+
+    path = tmp_path / "owned.observed"
+    original = PermissionError(13, "persistent sharing refusal")
+    monkeypatch.setattr(launcher.sys, "platform", "win32")
+
+    def refused(*args, **kwargs):
+        raise original
+
+    monkeypatch.setattr(type(path), "read_text", refused)
+    with pytest.raises(PermissionError) as failure:
+        launcher.read_handshake(path, tmp_path, launcher.time.monotonic() - 1)
+    assert failure.value is original
+    assert "final read" in failure.value.__notes__[-1]
+
+
+def test_owned_handshake_other_errors_and_wrong_content_are_not_retried(tmp_path, monkeypatch):
+    from tests.fakes import mcp_oauth_cold_process as launcher
+
+    path = tmp_path / "owned.observed"
+    path.write_text("unexpected", encoding="utf-8")
+    assert launcher.read_handshake(path, tmp_path, launcher.time.monotonic() + 1) == "unexpected"
+    original = OSError(5, "read failure")
+
+    def refused(*args, **kwargs):
+        raise original
+
+    monkeypatch.setattr(type(path), "read_text", refused)
+    with pytest.raises(OSError) as failure:
+        launcher.read_handshake(path, tmp_path, launcher.time.monotonic() + 1)
+    assert failure.value is original
+
+
+def test_owned_handshake_rejects_foreign_paths_before_read(tmp_path):
+    from tests.fakes import mcp_oauth_cold_process as launcher
+
+    owner = tmp_path / "owner"
+    owner.mkdir()
+    foreign = tmp_path / "foreign.observed"
+    foreign.write_text("observed", encoding="utf-8")
+    with pytest.raises(AssertionError):
+        launcher.read_handshake(foreign, owner, launcher.time.monotonic() + 1)
+
+
+def test_owned_handshake_never_reads_again_after_original_deadline(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    from tests.fakes import mcp_oauth_cold_process as launcher
+
+    path = tmp_path / "owned.observed"
+    original = PermissionError(13, "sharing refusal")
+    attempts = []
+    ticks = iter((0.0, 1.0))
+
+    def read(*args, **kwargs):
+        attempts.append(True)
+        if len(attempts) == 1:
+            raise original
+        return "observed"
+
+    monkeypatch.setattr(launcher.sys, "platform", "win32")
+    monkeypatch.setattr(launcher, "time", SimpleNamespace(monotonic=lambda: next(ticks), sleep=lambda _: None))
+    monkeypatch.setattr(type(path), "read_text", read)
+    with pytest.raises(PermissionError) as failure:
+        launcher.read_handshake(path, tmp_path, 1.0)
+    assert failure.value is original and attempts == [True]
+
+
+def test_owned_handshake_never_reads_again_after_child_exit(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    from tests.fakes import mcp_oauth_cold_process as launcher
+
+    path = tmp_path / "owned.birth.json"
+    original = FileNotFoundError(2, "birth pending")
+    attempts = []
+    poll_results = iter((None, 1))
+
+    def read(*args, **kwargs):
+        attempts.append(True)
+        if len(attempts) == 1:
+            raise original
+        return "{}"
+
+    monkeypatch.setattr(launcher, "time", SimpleNamespace(monotonic=lambda: 0.0, sleep=lambda _: None))
+    monkeypatch.setattr(type(path), "read_text", read)
+    with pytest.raises(FileNotFoundError) as failure:
+        launcher.read_handshake(path, tmp_path, 6.0, SimpleNamespace(poll=lambda: next(poll_results)))
+    assert failure.value is original and attempts == [True]
+
+
+def test_owned_handshake_keeps_first_cause_and_last_access_detail(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    from tests.fakes import mcp_oauth_cold_process as launcher
+
+    path = tmp_path / "owned.observed"
+    first = FileNotFoundError(2, "pending publication")
+    last = PermissionError(13, "sharing refusal")
+    errors = iter((first, last))
+    ticks = iter((0.0, 0.0, 0.0, 1.0))
+
+    def read(*args, **kwargs):
+        raise next(errors)
+
+    monkeypatch.setattr(launcher.sys, "platform", "win32")
+    monkeypatch.setattr(launcher, "time", SimpleNamespace(monotonic=lambda: next(ticks), sleep=lambda _: None))
+    monkeypatch.setattr(type(path), "read_text", read)
+    with pytest.raises(FileNotFoundError) as failure:
+        launcher.read_handshake(path, tmp_path, 1.0)
+    assert failure.value is first
+    assert repr(last) in failure.value.__notes__[-1]
