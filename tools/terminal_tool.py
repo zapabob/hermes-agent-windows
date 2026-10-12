@@ -2092,7 +2092,11 @@ def _create_environment(env_type: str, image: str, cwd: str, timeout: int,
     docker_network = cc.get("docker_network", True)
 
     if env_type == "local":
-        return _LocalEnvironment(cwd=cwd, timeout=timeout)
+        return _LocalEnvironment(
+            cwd=cwd,
+            timeout=timeout,
+            persist_env=(local_config or {}).get("persistent", False),
+        )
 
     elif env_type == "docker":
         # One-shot orphan reaper: clean up labeled containers left behind by

@@ -2109,9 +2109,10 @@ class LocalEnvironment(BaseEnvironment):
         # Read only snapshot identifiers; values never enter command arguments.
         return {name for name in visible if name.upper() in protected or _is_hermes_internal_secret(name)}
 
-    def __init__(self, cwd: str = "", timeout: int = 60, env: dict = None):
+    def __init__(self, cwd: str = "", timeout: int = 60, env: dict = None,
+                 persist_env: bool = True):
         cwd = _resolve_local_initial_cwd(cwd)
-        super().__init__(cwd=cwd, timeout=timeout, env=env)
+        super().__init__(cwd=cwd, timeout=timeout, env=env, persist_env=persist_env)
         self._snapshot_read_context = threading.local()
         self._snapshot_copy_lock = threading.Lock()
         self._snapshot_copies: dict[str, tuple[str, frozenset[str]]] = {}
