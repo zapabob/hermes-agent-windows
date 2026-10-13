@@ -591,8 +591,13 @@ def _(rid, params: dict) -> dict:
                 target, exc,
             )
 
-        profile_resume_cwd = str(found.get("cwd") or "").strip() or _profile_configured_cwd(
-            profile_home
+        profile_resume_cwd = _resumable_stored_cwd(
+            found.get("cwd"), profile_home
+        ) or _profile_default_cwd(profile_home)
+        profile_resume_explicit_cwd = bool(
+            profile_home is not None
+            and profile_resume_cwd
+            and _profile_terminal_backend(profile_home) == "local"
         )
 
         def _reuse_live_payload(sid: str, session: dict) -> dict:
@@ -680,6 +685,7 @@ def _(rid, params: dict) -> dict:
                 close_on_disconnect=is_truthy_value(params.get("close_on_disconnect", False)),
                 profile_home=profile_home,
                 lazy=True,
+                explicit_cwd=profile_resume_explicit_cwd,
             )
             if (live := _claim_or_reuse_live(sid, target, record, lease)) is not None:
                 return _reuse_live_response(*live)
@@ -748,6 +754,7 @@ def _(rid, params: dict) -> dict:
                 profile_home=profile_home,
                 model_override=overrides.get("model_override"),
                 resume_runtime_overrides=overrides or None,
+                explicit_cwd=profile_resume_explicit_cwd,
             )
             record["resume_history_ready"] = threading.Event()
             record["resume_hydrating"] = True
@@ -755,6 +762,7 @@ def _(rid, params: dict) -> dict:
             if (live := _claim_or_reuse_live(sid, target, record, lease)) is not None:
                 return _reuse_live_response(*live)
 
+            _hydrate_profile_resume_cwd(sid, target, db, profile_home)
             _schedule_resume_hydration(sid, target, db, close_db=owns_db)
             # The hydration worker now owns a profile-scoped handle and closes it
             # after the transcript read. The shared launch DB is process-owned.
@@ -844,10 +852,12 @@ def _(rid, params: dict) -> dict:
                 profile_home=profile_home,
                 model_override=overrides.get("model_override"),
                 resume_runtime_overrides=overrides or None,
+                explicit_cwd=profile_resume_explicit_cwd,
             )
             if (live := _claim_or_reuse_live(sid, target, record, lease)) is not None:
                 return _reuse_live_response(*live)
 
+            _hydrate_profile_resume_cwd(sid, target, db, profile_home)
             _schedule_agent_build(sid)
             _schedule_session_cap_enforcement()  # trim detached idle sessions over the cap
             auto_continue = _maybe_schedule_auto_continue(sid, record, target)
@@ -978,6 +988,8 @@ def _(rid, params: dict) -> dict:
                         cwd=profile_resume_cwd,
                         session_db=db,
                         source=source,
+                        profile_home=str(profile_home) if profile_home is not None else None,
+                        explicit_cwd=profile_resume_explicit_cwd,
                     )
                     # Ownership TRANSFER — the registered session's agent now
                     # holds this handle for its whole life, and _init_session

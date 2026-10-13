@@ -2486,6 +2486,123 @@ def _profile_configured_cwd(profile_home: Path | None) -> str | None:
         return None
 
 
+def _profile_terminal_backend(profile_home: Path | None) -> str | None:
+    """Return a named profile's configured backend without borrowing its cwd.
+
+    A non-local process backend is authoritative for the running tool surface;
+    otherwise inspect the target profile's own config rather than the launch
+    profile's settings. Unknown config is kept unknown so resume validation
+    fails open instead of rewriting a possibly remote workspace.
+    """
+    if profile_home is None:
+        return None
+    process_backend = str(os.environ.get("TERMINAL_ENV") or "").strip().lower()
+    if process_backend and process_backend != "local":
+        return process_backend
+    try:
+        from hermes_cli.config import _expand_env_vars, read_user_config_raw
+
+        path = Path(profile_home) / "config.yaml"
+        if not path.exists():
+            return "local"
+        cfg = _expand_env_vars(_apply_managed(read_user_config_raw(path)))
+        terminal = cfg.get("terminal") if isinstance(cfg, dict) else None
+        if not isinstance(terminal, dict):
+            return "local"
+        return str(terminal.get("backend") or "local").strip().lower() or "local"
+    except Exception:
+        return None
+
+
+def _profile_default_cwd(profile_home: Path | None) -> str | None:
+    """Choose the target profile's configured workspace or its local home."""
+    if profile_home is None:
+        return None
+    configured = _profile_configured_cwd(profile_home)
+    if configured:
+        return configured
+    if _profile_terminal_backend(profile_home) == "local":
+        return str(Path(profile_home).expanduser().resolve())
+    return None
+
+
+def _resumable_stored_cwd(cwd: str | None, profile_home: Path | None) -> str:
+    """Reject stale local-profile state paths while retaining chosen workspaces."""
+    raw = str(cwd or "").strip()
+    if not raw or profile_home is None:
+        return raw
+    if _profile_terminal_backend(profile_home) != "local":
+        return raw
+    try:
+        from agent.runtime_cwd import _is_install_tree
+        from hermes_constants import get_default_hermes_root
+
+        candidate = Path(os.path.abspath(os.path.expanduser(raw))).resolve()
+        own_home = Path(profile_home).expanduser().resolve()
+        root = (
+            own_home.parent.parent
+            if own_home.parent.name.lower() == "profiles"
+            else get_default_hermes_root()
+        ).resolve()
+        profile_root = (root / "profiles").resolve()
+        if _is_install_tree(candidate) or not candidate.is_dir():
+            return ""
+        candidate.relative_to(root)
+        if candidate == root or candidate == (root / "home").resolve():
+            return ""
+        if candidate == own_home:
+            return ""
+        try:
+            candidate.relative_to(profile_root)
+            if own_home not in candidate.parents:
+                return ""
+        except ValueError:
+            pass
+    except ValueError:
+        # A path outside the profile root is a valid user-selected workspace.
+        try:
+            if not Path(os.path.abspath(os.path.expanduser(raw))).is_dir():
+                return ""
+        except Exception:
+            return ""
+    except Exception:
+        # Validation errors must not redirect a session to another profile.
+        return ""
+    return raw
+
+
+def _hydrate_profile_resume_cwd(
+    sid: str, key: str, db, profile_home: Path | str | None
+) -> None:
+    """Apply and persist a validated named-profile cwd using its owning DB."""
+    if (
+        profile_home is None
+        or db is None
+        or _profile_terminal_backend(Path(profile_home)) != "local"
+    ):
+        return
+    try:
+        row = db.get_session(key) if hasattr(db, "get_session") else None
+    except Exception:
+        logger.debug("failed to read profile resume cwd", exc_info=True)
+        return
+    original_cwd = row.get("cwd") if isinstance(row, dict) else None
+    stored = _resumable_stored_cwd(original_cwd, Path(profile_home))
+    repaired = not stored
+    with _sessions_lock:
+        session = _sessions.get(sid)
+        if session is None:
+            return
+        if stored:
+            session["cwd"] = stored
+        else:
+            stored = str(session.get("cwd") or "")
+        session["explicit_cwd"] = bool(stored)
+    _register_session_cwd(session)
+    if repaired and stored and hasattr(db, "update_session_cwd"):
+        _persist_session_cwd_and_schedule_git_meta(session, stored, db=db)
+
+
 def _launch_configured_cwd() -> str | None:
     """Resolve the launch profile's ``terminal.cwd`` from config.yaml.
 
@@ -8820,6 +8937,7 @@ def _init_session(
     session_db=None,
     source: str | None = None,
     profile_home: str | None = None,
+    explicit_cwd: bool = False,
 ):
     now = time.time()
     with _sessions_lock:
@@ -8836,6 +8954,7 @@ def _init_session(
             "attached_images": [],
             "image_counter": 0,
             "cwd": cwd or _completion_cwd(),
+            "explicit_cwd": explicit_cwd,
             "cols": cols,
             "slash_worker": None,
             "show_reasoning": _load_show_reasoning(),
@@ -8878,7 +8997,9 @@ def _init_session(
     else:
         db = _get_db()
     try:
-        if db is not None:
+        if profile_home is not None:
+            _hydrate_profile_resume_cwd(sid, key, db, profile_home)
+        elif db is not None:
             row = db.get_session(key) if hasattr(db, "get_session") else None
             if row and row.get("cwd"):
                 with _sessions_lock:
@@ -10276,6 +10397,7 @@ def _deferred_session_record(
     display_history_prefix: list | None = None,
     profile_home: Path | None = None,
     lazy: bool = False,
+    explicit_cwd: bool = False,
     model_override=None,
     resume_runtime_overrides: dict | None = None,
 ) -> dict:
@@ -10294,7 +10416,7 @@ def _deferred_session_record(
         "cwd": cwd,
         "display_history_prefix": display_history_prefix or [],
         "edit_snapshots": {},
-        "explicit_cwd": False,
+        "explicit_cwd": explicit_cwd,
         "history": history,
         "history_lock": threading.Lock(),
         "history_version": 0,
