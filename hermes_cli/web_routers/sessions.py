@@ -23,6 +23,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import StreamingResponse
 
 from hermes_cli.web_deps import late
+from utils import is_truthy_value
 from hermes_cli.web_models import (
     BulkDeleteSessions,
     SessionImport,
@@ -626,6 +627,15 @@ async def get_session_messages(
         )
 
     def _read():
+        from hermes_cli.config import load_config
+
+        # Read the display policy in the requested profile's config scope,
+        # without changing provider history or process-global profile state.
+        with late("_config_profile_scope")(profile):
+            display = load_config().get("display")
+            show_interim = not isinstance(display, dict) or is_truthy_value(
+                display.get("interim_assistant_messages", True)
+            )
         db = _open_session_db_for_profile(profile, read_only=True)
         try:
             sid = db.resolve_session_id(session_id)
@@ -646,21 +656,31 @@ async def get_session_messages(
                 offset=offset,
                 latest=latest_page,
                 include_compacted=include_compacted,
-            )
+            ), show_interim
         finally:
             db.close()
 
     result = await asyncio.to_thread(_read)
     if result is None:
         raise HTTPException(status_code=404, detail="Session not found")
-    sid, _limit, messages = result
+    sid, _limit, messages, show_interim = result
     from agent.compaction_display import project_compaction_message_for_display
     from agent.context_compressor import is_compaction_summary_message
 
     projected_messages = []
     for message in messages:
         if not is_compaction_summary_message(message):
-            projected_messages.append(message)
+            if (
+                not show_interim
+                and message.get("role") == "assistant"
+                and message.get("tool_calls")
+                and "display_content" not in message
+            ):
+                # Keep content/tool_calls intact for inspection and export.
+                # Only the UI projection suppresses pre-tool commentary.
+                projected_messages.append({**message, "display_content": ""})
+            else:
+                projected_messages.append(message)
             continue
         display_view = project_compaction_message_for_display(message)
         projected = message.copy()
