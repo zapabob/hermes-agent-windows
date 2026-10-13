@@ -3429,9 +3429,36 @@ def get_install_id() -> Optional[str]:
 # when these handlers ran on the event loop the loop itself serialized the
 # whole cycle, but off-loop two concurrent updates could interleave
 # load→mutate→save and silently drop one another's writes. Held only in
-# worker threads, so it can never block the event loop. RLock so a locked
-# section that calls helpers which also take it can't self-deadlock.
-_CONFIG_MUTATION_LOCK = threading.RLock()
+# worker threads, so it can never block the event loop. This compatibility
+# context manager resolves config.py's live lock on every entry.
+
+
+class _DynamicConfigMutationLock:
+    """Forward each context entry to config.py's current process lock."""
+
+    def __init__(self) -> None:
+        self._held = threading.local()
+
+    def __enter__(self):
+        from hermes_cli import config as config_module
+
+        lock = config_module._CONFIG_LOCK
+        result = lock.__enter__()
+        stack = getattr(self._held, "stack", None)
+        if stack is None:
+            stack = self._held.stack = []
+        stack.append(lock)
+        return result
+
+    def __exit__(self, exc_type, exc, tb):
+        stack = getattr(self._held, "stack", None)
+        if not stack:
+            raise RuntimeError("config mutation lock exited without entry")
+        lock = stack.pop()
+        return lock.__exit__(exc_type, exc, tb)
+
+
+_CONFIG_MUTATION_LOCK = _DynamicConfigMutationLock()
 
 
 def _topology_cache_get(fn: Any) -> Optional[Dict[str, Any]]:
@@ -14058,9 +14085,7 @@ def _mcp_oauth_transaction(flow) -> threading.Lock:
 def _run_dashboard_mcp_oauth(flow, cfg: dict) -> None:
     """Run the normal MCP probe with dashboard redirect/callback handlers."""
     from hermes_cli.mcp_config import (
-        _oauth_tokens_present,
         _probe_single_server,
-        _save_mcp_server,
     )
     try:
         from agent.secret_scope import (
@@ -14081,38 +14106,59 @@ def _run_dashboard_mcp_oauth(flow, cfg: dict) -> None:
             with transaction, force_interactive_oauth(), dashboard_oauth_flow(flow):
                 manager = get_manager()
                 storage = HermesTokenStorage(flow.server_name)
-                backup = storage.snapshot()
+                backup, backup_generations = storage.snapshot_with_generations()
                 previous_entry = None
                 try:
                     previous_entry = manager.remove(
                         flow.server_name,
                         hermes_home=flow.hermes_home,
+                        removal_owner=flow,
                     )
                     tools = _probe_single_server(
                         flow.server_name,
                         cfg,
                         connect_timeout=max(float(cfg.get("connect_timeout", 0) or 0), 315),
                     )
-                    if not _oauth_tokens_present(flow.server_name):
-                        raise RuntimeError(
-                            "The server responded, but no OAuth token was obtained — "
-                            "this provider may require a manually-registered OAuth client."
-                        )
-                    _save_mcp_server(flow.server_name, cfg)
-                    flow.tools = [{"name": t, "description": d} for t, d in tools]
-                    flow.mark_approved()
+                    manager.adopt_dashboard_flow(
+                        flow,
+                        storage,
+                        [{"name": t, "description": d} for t, d in tools],
+                    )
                     if flow.reconnect_live:
                         from tools.mcp_tool import reconnect_mcp_server
 
                         reconnect_mcp_server(flow.server_name)
                 except Exception:
-                    storage.restore(backup, only_if_absent=True)
-                    manager.restore_entry(
-                        flow.server_name,
-                        previous_entry,
-                        hermes_home=flow.hermes_home,
-                    )
+                    binding = flow.config_binding
+                    authority_current = binding is None
+                    if binding is not None:
+                        try:
+                            binding.assert_current()
+                            authority_current = True
+                        except Exception:
+                            authority_current = False
+                    if authority_current:
+                        try:
+                            storage.restore_snapshot_if_owned(backup, backup_generations)
+                        except Exception as restore_exc:
+                            from tools.mcp_dashboard_oauth import McpOAuthConfigChangedError
+
+                            if not isinstance(restore_exc, McpOAuthConfigChangedError):
+                                raise
+                            authority_current = False
+                    if authority_current:
+                        manager.restore_entry(
+                            flow.server_name,
+                            previous_entry,
+                            hermes_home=flow.hermes_home,
+                            binding=binding,
+                            removal_owner=flow,
+                        )
+                    else:
+                        storage.rollback_owned_effects()
                     raise
+                finally:
+                    manager.release_dashboard_flow(flow)
         finally:
             if secret_token is not None:
                 reset_secret_scope(secret_token)

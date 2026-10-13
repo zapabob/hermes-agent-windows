@@ -332,9 +332,7 @@ def _worker(session_id: str, hermes_home: str, server_name: str, cfg: dict, reco
     is (re)saved into the profile's config.yaml.
     """
     from hermes_cli.mcp_config import (
-        _oauth_tokens_present,
         _probe_single_server,
-        _save_mcp_server,
     )
     from hermes_constants import reset_hermes_home_override, set_hermes_home_override
 
@@ -359,32 +357,61 @@ def _worker(session_id: str, hermes_home: str, server_name: str, cfg: dict, reco
 
                 manager = get_manager()
                 storage = HermesTokenStorage(server_name)
-                backup = storage.snapshot()
+                backup, backup_generations = storage.snapshot_with_generations()
                 previous_entry = None
                 try:
-                    previous_entry = manager.remove(server_name, hermes_home=hermes_home)
+                    previous_entry = manager.remove(
+                        server_name,
+                        hermes_home=hermes_home,
+                        removal_owner=flow,
+                    )
                     tools = _probe_single_server(
                         server_name,
                         cfg,
                         connect_timeout=max(float(cfg.get("connect_timeout", 0) or 0), 315),
                     )
-                    if not _oauth_tokens_present(server_name):
-                        raise RuntimeError(
-                            "The server responded, but no OAuth token was obtained — "
-                            "this provider may require a manually-registered OAuth client."
-                        )
-                    _save_mcp_server(server_name, cfg)
-                    if flow is not None:
-                        flow.tools = [{"name": t, "description": d} for t, d in tools]
-                        flow.mark_approved()
+                    if flow is None:
+                        raise RuntimeError("MCP OAuth flow state is unavailable")
+                    manager.adopt_dashboard_flow(
+                        flow,
+                        storage,
+                        [{"name": t, "description": d} for t, d in tools],
+                    )
                     if reconnect_live:
                         from tools.mcp_tool import reconnect_mcp_server
 
                         reconnect_mcp_server(server_name)
                 except Exception:
-                    storage.restore(backup, only_if_absent=True)
-                    manager.restore_entry(server_name, previous_entry, hermes_home=hermes_home)
+                    binding = flow.config_binding if flow is not None else None
+                    authority_current = binding is None
+                    if binding is not None:
+                        try:
+                            binding.assert_current()
+                            authority_current = True
+                        except Exception:
+                            authority_current = False
+                    if authority_current:
+                        try:
+                            storage.restore_snapshot_if_owned(backup, backup_generations)
+                        except Exception as restore_exc:
+                            from tools.mcp_dashboard_oauth import McpOAuthConfigChangedError
+
+                            if not isinstance(restore_exc, McpOAuthConfigChangedError):
+                                raise
+                            authority_current = False
+                    if authority_current:
+                        manager.restore_entry(
+                            server_name,
+                            previous_entry,
+                            hermes_home=hermes_home,
+                            binding=binding,
+                            removal_owner=flow,
+                        )
+                    else:
+                        storage.rollback_owned_effects()
                     raise
+                finally:
+                    manager.release_dashboard_flow(flow)
         finally:
             if secret_token is not None:
                 reset_secret_scope(secret_token)
@@ -451,6 +478,7 @@ def start_flow(
     server_name: str,
     cfg: dict,
     *,
+    config_binding=None,
     reconnect_live: bool = False,
     url_timeout: float = 30.0,
     client_redirect_uri: Optional[str] = None,
@@ -469,7 +497,7 @@ def start_flow(
     ``deliver_callback_flow``. Invalid values raise ``ValueError``.
     """
     from hermes_constants import hermes_home_key
-    from tools.mcp_dashboard_oauth import DashboardOAuthFlow
+    from tools.mcp_dashboard_oauth import DashboardOAuthFlow, SavedMcpConfigBinding
 
     deadline = time.monotonic() + max(0.0, url_timeout)
     caller_home = hermes_home_key(hermes_home)
@@ -495,10 +523,16 @@ def start_flow(
                 if sum(not r["flow"].worker_done for r in _sessions.values()) >= _MAX_PENDING:
                     raise RuntimeError("Too many MCP OAuth flows are already in progress")
                 session_id = secrets.token_urlsafe(24)
+                binding = config_binding
+                if binding is None:
+                    binding = SavedMcpConfigBinding.capture(hermes_home, server_name)
+                else:
+                    binding.assert_current()
                 flow = DashboardOAuthFlow(
                     flow_id=session_id, server_name=server_name, profile=None,
                     hermes_home=hermes_home, redirect_uri=client_redirect_uri or "",
                     reconnect_live=reconnect_live,
+                    config_binding=binding,
                 )
                 rec = {
                     "session_id": session_id, "server_name": server_name,

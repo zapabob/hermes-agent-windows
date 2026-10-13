@@ -298,6 +298,9 @@ _RAW_CONFIG_CACHE: Dict[str, Tuple[int, int, Dict[str, Any]]] = {}
 # calls read_raw_config. Also covers mutation of the module-level cache
 # dicts above.
 _CONFIG_LOCK = threading.RLock()
+
+
+
 # Env var names written to .env that aren't in OPTIONAL_ENV_VARS
 # (managed by setup/provider flows directly).
 _EXTRA_ENV_KEYS = frozenset({
@@ -5761,158 +5764,181 @@ def set_config_value(key: str, value: str, force: bool = False):
     # "did you mean" hint, without blocking legitimate unknown keys.
     is_known, suggestion = _validate_config_key(key)
 
-    # Otherwise it goes to config.yaml
-    # Read the raw user config (not merged with defaults) to avoid
-    # dumping all default values back to the file
-    config_path = get_config_path()
-    # Fail-closed parse via require_readable (unparseable / non-mapping
-    # refuse-write); returns the mapping so we do not re-parse / collapse.
-    user_config = require_readable_config_before_write(config_path)
+    config_path = None
+    user_config = {}
+    deferred_output = []
+
+    def _write_raw_user_config():
+        nonlocal key, value, user_config, config_path
+
+        def print(*args, **kwargs):
+            stream = kwargs.get("file", sys.stdout)
+            separator = kwargs.get("sep", " ")
+            ending = kwargs.get("end", "\n")
+            deferred_output.append((stream, separator.join(str(arg) for arg in args) + ending))
+
+        # Otherwise it goes to config.yaml
+        # Read the raw user config (not merged with defaults) to avoid
+        # dumping all default values back to the file
+        config_path = get_config_path()
+        # Fail-closed parse via require_readable (unparseable / non-mapping
+        # refuse-write); returns the mapping so we do not re-parse / collapse.
+        user_config = require_readable_config_before_write(config_path)
     
-    # Handle nested keys (e.g., "tts.provider") including numeric list
-    # indices (e.g., "custom_providers.0.api_key").  Delegates to
-    # _set_nested which preserves list-typed nodes; before #17876 the
-    # inline navigation here silently overwrote lists with dicts.
+        # Handle nested keys (e.g., "tts.provider") including numeric list
+        # indices (e.g., "custom_providers.0.api_key").  Delegates to
+        # _set_nested which preserves list-typed nodes; before #17876 the
+        # inline navigation here silently overwrote lists with dicts.
 
-    # Preserve values for string-typed settings.  In particular, enum members
-    # such as approvals.mode="off" must not become YAML booleans.  Unknown keys
-    # retain the historical best-effort coercion behavior.
-    coerced_value: Any = value
-    if not isinstance(_default_value_for_key(key), str):
-        _stripped = value.strip()
-        _lower = _stripped.lower()
-        if _lower in {'true', 'yes', 'on'}:
-            coerced_value = True
-        elif _lower in {'false', 'no', 'off'}:
-            coerced_value = False
-        elif _lower in {'null', 'none', '~'}:
-            # YAML null / "off" state. Many DEFAULT_CONFIG leaves default to
-            # None and are documented as "null/absent = off"; without this,
-            # ``config set X null`` stored the truthy string "null" and the
-            # feature could never be cleared via set (CFG-05).
-            coerced_value = None
-        elif _coerce_int(_stripped) is not None:
-            # int() handles signs, surrounding whitespace, and underscores —
-            # unlike the old ``value.isdigit()`` which rejected "-5" and " 5 "
-            # and silently stored them as strings on int-typed keys (CFG-02).
-            coerced_value = _coerce_int(_stripped)
-        elif _coerce_float(_stripped) is not None:
-            coerced_value = _coerce_float(_stripped)
-        elif _looks_structured_value(value):
-            # List/mapping literals -- e.g.
-            #   hermes config set platform_toolsets.line '["file","web"]'
-            # or a multi-line YAML block:
-            #   hermes config set custom_providers '- name: foo
-            #     base_url: https://...'
-            # Without this, such values were stored as a raw STRING, and every
-            # reader that gates on isinstance(..., list) (``_get_platform_tools``,
-            # ``_get_enabled_set``, ...) silently ignored them and fell back to
-            # its default -- the setting looked saved but never took effect.
-            # Folded INSIDE the string-typed guard so a genuinely string-typed
-            # setting whose value merely starts with '[' or '{' is left intact
-            # (preserves the guard added in e4ea0a0ed).  The trigger is
-            # deliberately conservative (see _looks_structured_value): plain
-            # scalars like '-5' or '--flag' never reach the YAML parser.
-            try:
-                parsed = yaml.safe_load(value)
-                if isinstance(parsed, (list, dict)):
-                    coerced_value = parsed
-                else:
-                    print(
-                        f"Warning: value for '{key}' looks like a list/mapping but "
-                        f"parsed as {type(parsed).__name__}; storing as string.",
-                        file=sys.stderr,
-                    )
-            except yaml.YAMLError:
-                print(
-                    f"Warning: value for '{key}' looks like a list/mapping but is "
-                    f"not valid YAML/JSON; storing as string. Most isinstance-gated "
-                    f"readers will ignore a string here.",
-                    file=sys.stderr,
-                )
-
-    value = coerced_value
-    # Normalize a scalar ``model`` key before writing sub-keys so that
-    # ``hermes config set model.provider openai`` doesn't silently
-    # destroy the model id when ``model`` is a bare string shorthand
-    # (e.g. ``model: gpt-4o``).  Without this _set_nested replaces the
-    # scalar with an empty dict, dropping the model id permanently.
-    _model_key = key.strip().lower()
-    if _model_key.startswith("model."):
-        _model_val = user_config.get("model")
-        if isinstance(_model_val, str) and _model_val:
-            user_config["model"] = {"default": _model_val}
-    # Guard against #74995: a single-segment key that names an existing
-    # mapping would silently overwrite the entire section with a scalar
-    # (e.g. ``hermes config set model gpt-5.6-sol`` when model already
-    # contains default/provider/context_length).  Bare ``model`` is a
-    # documented shorthand — redirect to ``model.default`` and preserve
-    # siblings.  All other mapping sections are rejected unless --force.
-    if "." not in key:
-        _existing = user_config.get(key)
-        if isinstance(_existing, dict):
-            if key == "model":
-                if force:
-                    # --force: allow destructive section overwrite.
-                    print(
-                        f"⚠ Replacing entire 'model' section with a scalar "
-                        f"(discarding {len(_existing)} existing sub-key(s))"
-                    )
-                else:
-                    # Redirect bare-model shorthand to model.default while
-                    # keeping every sibling mapping key intact.
-                    key = "model.default"
-                    print(
-                        f"✓ Redirecting bare 'model' to 'model.default' "
-                        f"(preserving {len(_existing)} existing model sub-key(s))"
-                    )
-                    # value was already coerced above; proceed to _set_nested
-            elif not force:
-                _sub = [k for k in _existing if isinstance(k, str)]
-                print(
-                    f"✗ Cannot set '{key}' to a scalar — '{key}' is a "
-                    f"configuration section with {len(_sub)} sub-key(s).",
-                    file=sys.stderr,
-                )
-                if _sub:
-                    _sub_list = ", ".join(_sub[:8])
-                    print(f"  Sub-keys: {_sub_list}", file=sys.stderr)
-                    if len(_sub) > 8:
+        # Preserve values for string-typed settings.  In particular, enum members
+        # such as approvals.mode="off" must not become YAML booleans.  Unknown keys
+        # retain the historical best-effort coercion behavior.
+        coerced_value: Any = value
+        if not isinstance(_default_value_for_key(key), str):
+            _stripped = value.strip()
+            _lower = _stripped.lower()
+            if _lower in {'true', 'yes', 'on'}:
+                coerced_value = True
+            elif _lower in {'false', 'no', 'off'}:
+                coerced_value = False
+            elif _lower in {'null', 'none', '~'}:
+                # YAML null / "off" state. Many DEFAULT_CONFIG leaves default to
+                # None and are documented as "null/absent = off"; without this,
+                # ``config set X null`` stored the truthy string "null" and the
+                # feature could never be cleared via set (CFG-05).
+                coerced_value = None
+            elif _coerce_int(_stripped) is not None:
+                # int() handles signs, surrounding whitespace, and underscores —
+                # unlike the old ``value.isdigit()`` which rejected "-5" and " 5 "
+                # and silently stored them as strings on int-typed keys (CFG-02).
+                coerced_value = _coerce_int(_stripped)
+            elif _coerce_float(_stripped) is not None:
+                coerced_value = _coerce_float(_stripped)
+            elif _looks_structured_value(value):
+                # List/mapping literals -- e.g.
+                #   hermes config set platform_toolsets.line '["file","web"]'
+                # or a multi-line YAML block:
+                #   hermes config set custom_providers '- name: foo
+                #     base_url: https://...'
+                # Without this, such values were stored as a raw STRING, and every
+                # reader that gates on isinstance(..., list) (``_get_platform_tools``,
+                # ``_get_enabled_set``, ...) silently ignored them and fell back to
+                # its default -- the setting looked saved but never took effect.
+                # Folded INSIDE the string-typed guard so a genuinely string-typed
+                # setting whose value merely starts with '[' or '{' is left intact
+                # (preserves the guard added in e4ea0a0ed).  The trigger is
+                # deliberately conservative (see _looks_structured_value): plain
+                # scalars like '-5' or '--flag' never reach the YAML parser.
+                try:
+                    parsed = yaml.safe_load(value)
+                    if isinstance(parsed, (list, dict)):
+                        coerced_value = parsed
+                    else:
                         print(
-                            f"  ... and {len(_sub) - 8} more",
+                            f"Warning: value for '{key}' looks like a list/mapping but "
+                            f"parsed as {type(parsed).__name__}; storing as string.",
                             file=sys.stderr,
                         )
-                print(
-                    "  Use a dotted path to set a specific leaf key:",
-                    file=sys.stderr,
-                )
-                print(
-                    f"    hermes config set {key}.<sub-key> <value>",
-                    file=sys.stderr,
-                )
-                print(
-                    "  Or use --force to replace the entire section:",
-                    file=sys.stderr,
-                )
-                print(
-                    f"    hermes config set --force {key} {value!r}",
-                    file=sys.stderr,
-                )
-                sys.exit(1)
-    _set_nested(user_config, key, value)
-    # Normalize the api_base → base_url alias at set-time too (issue #8919),
-    # so a fresh `hermes config set model.api_base ...` lands on the canonical
-    # key the runtime resolver actually reads, instead of being silently
-    # ignored. Mirrors the load-time migration in _normalize_root_model_keys.
-    _alias_norm = key.strip().lower()
-    if _alias_norm in ("model.api_base", "api_base"):
-        user_config = _normalize_root_model_keys(user_config)
-        key = "model.base_url"
-        print("  (note: 'api_base' is an alias — saved as model.base_url)")
-    # Write only user config back (not the full merged defaults)
-    ensure_hermes_home()
-    from utils import atomic_yaml_write
-    atomic_yaml_write(config_path, user_config, sort_keys=False)
+                except yaml.YAMLError:
+                    print(
+                        f"Warning: value for '{key}' looks like a list/mapping but is "
+                        f"not valid YAML/JSON; storing as string. Most isinstance-gated "
+                        f"readers will ignore a string here.",
+                        file=sys.stderr,
+                    )
+
+        value = coerced_value
+        # Normalize a scalar ``model`` key before writing sub-keys so that
+        # ``hermes config set model.provider openai`` doesn't silently
+        # destroy the model id when ``model`` is a bare string shorthand
+        # (e.g. ``model: gpt-4o``).  Without this _set_nested replaces the
+        # scalar with an empty dict, dropping the model id permanently.
+        _model_key = key.strip().lower()
+        if _model_key.startswith("model."):
+            _model_val = user_config.get("model")
+            if isinstance(_model_val, str) and _model_val:
+                user_config["model"] = {"default": _model_val}
+        # Guard against #74995: a single-segment key that names an existing
+        # mapping would silently overwrite the entire section with a scalar
+        # (e.g. ``hermes config set model gpt-5.6-sol`` when model already
+        # contains default/provider/context_length).  Bare ``model`` is a
+        # documented shorthand — redirect to ``model.default`` and preserve
+        # siblings.  All other mapping sections are rejected unless --force.
+        if "." not in key:
+            _existing = user_config.get(key)
+            if isinstance(_existing, dict):
+                if key == "model":
+                    if force:
+                        # --force: allow destructive section overwrite.
+                        print(
+                            f"⚠ Replacing entire 'model' section with a scalar "
+                            f"(discarding {len(_existing)} existing sub-key(s))"
+                        )
+                    else:
+                        # Redirect bare-model shorthand to model.default while
+                        # keeping every sibling mapping key intact.
+                        key = "model.default"
+                        print(
+                            f"✓ Redirecting bare 'model' to 'model.default' "
+                            f"(preserving {len(_existing)} existing model sub-key(s))"
+                        )
+                        # value was already coerced above; proceed to _set_nested
+                elif not force:
+                    _sub = [k for k in _existing if isinstance(k, str)]
+                    print(
+                        f"✗ Cannot set '{key}' to a scalar — '{key}' is a "
+                        f"configuration section with {len(_sub)} sub-key(s).",
+                        file=sys.stderr,
+                    )
+                    if _sub:
+                        _sub_list = ", ".join(_sub[:8])
+                        print(f"  Sub-keys: {_sub_list}", file=sys.stderr)
+                        if len(_sub) > 8:
+                            print(
+                                f"  ... and {len(_sub) - 8} more",
+                                file=sys.stderr,
+                            )
+                    print(
+                        "  Use a dotted path to set a specific leaf key:",
+                        file=sys.stderr,
+                    )
+                    print(
+                        f"    hermes config set {key}.<sub-key> <value>",
+                        file=sys.stderr,
+                    )
+                    print(
+                        "  Or use --force to replace the entire section:",
+                        file=sys.stderr,
+                    )
+                    print(
+                        f"    hermes config set --force {key} {value!r}",
+                        file=sys.stderr,
+                    )
+                    sys.exit(1)
+        _set_nested(user_config, key, value)
+        # Normalize the api_base → base_url alias at set-time too (issue #8919),
+        # so a fresh `hermes config set model.api_base ...` lands on the canonical
+        # key the runtime resolver actually reads, instead of being silently
+        # ignored. Mirrors the load-time migration in _normalize_root_model_keys.
+        _alias_norm = key.strip().lower()
+        if _alias_norm in ("model.api_base", "api_base"):
+            user_config = _normalize_root_model_keys(user_config)
+            key = "model.base_url"
+            print("  (note: 'api_base' is an alias — saved as model.base_url)")
+        # Write only user config back (not the full merged defaults)
+        ensure_hermes_home()
+        from utils import atomic_yaml_write
+        atomic_yaml_write(config_path, user_config, sort_keys=False)
+
+    from hermes_cli import config as config_module
+
+    try:
+        with config_module._CONFIG_LOCK:
+            _write_raw_user_config()
+    finally:
+        for _stream, _text in deferred_output:
+            _stream.write(_text)
+
 
     # Keep .env in sync for keys that terminal_tool reads directly from env vars.
     # config.yaml is authoritative, but terminal_tool only reads TERMINAL_ENV etc.
@@ -6011,24 +6037,29 @@ def unset_config_value(key: str):
         return
 
     config_path = get_config_path()
-    # Fail-closed parse via require_readable (unparseable / non-mapping
-    # refuse-write); returns the mapping so we do not re-parse / collapse.
-    user_config = require_readable_config_before_write(config_path)
+    from hermes_cli import config as config_module
 
-    removed = _unset_nested(user_config, key)
+    with config_module._CONFIG_LOCK:
+        # Fail-closed parse and raw-file mutation stay within the short config
+        # transaction. Secret-file IO follows after releasing this lock.
+        user_config = require_readable_config_before_write(config_path)
+        removed_from_config = _unset_nested(user_config, key)
+        if removed_from_config:
+            ensure_hermes_home()
+            from utils import atomic_yaml_write
+            atomic_yaml_write(config_path, user_config, sort_keys=False)
 
     # Keep .env in sync for keys that terminal_tool reads directly from env vars.
     env_var = terminal_config_env_var_for_key(key)
+    removed_from_env = False
     if env_var and key != "terminal.cwd":
-        removed = remove_env_value(env_var) or removed
+        removed_from_env = remove_env_value(env_var)
 
+    removed = removed_from_config or removed_from_env
     if not removed:
         print(f"Config key not set: {key}", file=sys.stderr)
         sys.exit(1)
 
-    ensure_hermes_home()
-    from utils import atomic_yaml_write
-    atomic_yaml_write(config_path, user_config, sort_keys=False)
     print(f"✓ Unset {key} from {config_path}")
 
 

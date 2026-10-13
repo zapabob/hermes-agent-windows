@@ -5190,7 +5190,10 @@ def save_config_value(key_path: str, value: any) -> bool:
         # readable Unicode in user-edited config.yaml.
         from utils import atomic_roundtrip_yaml_update
 
-        atomic_roundtrip_yaml_update(config_path, key_path, value)
+        from hermes_cli import config as config_module
+
+        with config_module._CONFIG_LOCK:
+            atomic_roundtrip_yaml_update(config_path, key_path, value)
 
         # Enforce owner-only permissions on config files (contain API keys)
         try:
@@ -5233,8 +5236,10 @@ def save_config_values(updates: dict[str, Any]) -> bool:
     try:
         config_path.parent.mkdir(parents=True, exist_ok=True)
         from utils import atomic_roundtrip_yaml_update_multi
+        from hermes_cli import config as config_module
 
-        atomic_roundtrip_yaml_update_multi(config_path, updates)
+        with config_module._CONFIG_LOCK:
+            atomic_roundtrip_yaml_update_multi(config_path, updates)
 
         try:
             os.chmod(config_path, 0o600)

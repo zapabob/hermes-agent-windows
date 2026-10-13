@@ -2144,47 +2144,82 @@ def _(rid, params: dict) -> dict:
     if err:
         return err
     try:
-        from hermes_cli.config import load_config, save_config, save_env_value
+        from hermes_cli import config as config_module
+        from hermes_cli.config import save_env_value
         from hermes_cli.mcp_config import (
             _bearer_auth_headers,
             _env_key_for_server,
             _get_mcp_servers,
+            _read_raw_mcp_config,
             _strip_bearer_prefix,
+            _write_raw_mcp_config,
         )
+        from copy import deepcopy
 
-        servers = _get_mcp_servers()
-        if name not in servers:
-            return _err(rid, 4064, f"server '{name}' not found")
+        with config_module._CONFIG_LOCK:
+            servers = _get_mcp_servers()
+            if name not in servers:
+                return _err(rid, 4064, f"server '{name}' not found")
 
-        env_var = str(params.get("env_var") or "").strip() or _env_key_for_server(name)
+            env_var = str(params.get("env_var") or "").strip() or _env_key_for_server(name)
 
-        entry = servers[name]
-        if not isinstance(entry, dict):
-            return _err(rid, 4001, "malformed server config")
+            entry = servers[name]
+            if not isinstance(entry, dict):
+                return _err(rid, 4001, "malformed server config")
 
-        if entry.get("url"):
-            # http/sse server: store a bearer token + Authorization template.
-            normalized = _strip_bearer_prefix(str(value))
-            if not normalized or normalized.lower() == "bearer":
-                return _err(rid, 4063, "value is not a valid credential")
-            save_env_value(env_var, normalized)
-            if env_var == _env_key_for_server(name):
-                headers = _bearer_auth_headers(name)
+            original_raw = _read_raw_mcp_config().get("mcp_servers", {})
+            original_entry = original_raw.get(name) if isinstance(original_raw, dict) else None
+            if not isinstance(original_entry, dict) or original_entry.get("enabled") is False:
+                return _err(rid, 4001, "server configuration changed while saving credential")
+            expected_entry = deepcopy(original_entry)
+
+            uses_http = bool(entry.get("url"))
+            if uses_http:
+                normalized = _strip_bearer_prefix(str(value))
+                if not normalized or normalized.lower() == "bearer":
+                    return _err(rid, 4063, "value is not a valid credential")
+                secret_value = normalized
+                auth_headers = (
+                    _bearer_auth_headers(name)
+                    if env_var == _env_key_for_server(name)
+                    else {"Authorization": f"Bearer ${{{env_var}}}"}
+                )
             else:
-                headers = {"Authorization": f"Bearer ${{{env_var}}}"}
-            entry["headers"] = headers
-        else:
-            # stdio server: reference the secret from the process env block.
-            save_env_value(env_var, str(value))
-            env_block = entry.get("env")
-            if not isinstance(env_block, dict):
-                env_block = {}
-            env_block[env_var] = f"${{{env_var}}}"
-            entry["env"] = env_block
+                secret_value = str(value)
+                auth_headers = None
 
-        cfg = load_config()
-        cfg.setdefault("mcp_servers", {})[name] = entry
-        save_config(cfg)
+        # Secret-file IO can be slow and must not hold the configuration lock.
+        save_env_value(env_var, secret_value)
+
+        # Re-read the raw file after secret IO. The earlier effective entry is
+        # only an admission check; it is never written back over newer config.
+        with config_module._CONFIG_LOCK:
+            raw_config = _read_raw_mcp_config()
+            raw_servers = raw_config.get("mcp_servers", {})
+            if not isinstance(raw_servers, dict):
+                return _err(rid, 4001, "malformed server config")
+            raw_entry = raw_servers.get(name)
+            if not isinstance(raw_entry, dict):
+                return _err(rid, 4064, f"server '{name}' changed or was removed")
+            if raw_entry != expected_entry:
+                return _err(rid, 4001, "server configuration changed while saving credential")
+
+            entry = deepcopy(raw_entry)
+            if uses_http:
+                headers = entry.get("headers")
+                if not isinstance(headers, dict):
+                    headers = {}
+                headers.update(auth_headers or {})
+                entry["headers"] = headers
+            else:
+                env_block = entry.get("env")
+                if not isinstance(env_block, dict):
+                    env_block = {}
+                env_block[env_var] = f"${{{env_var}}}"
+                entry["env"] = env_block
+            raw_servers[name] = entry
+            raw_config["mcp_servers"] = raw_servers
+            _write_raw_mcp_config(raw_config)
         return _ok(
             rid,
             {
@@ -2341,14 +2376,19 @@ def _(rid, params: dict) -> dict:
     if err:
         return err
     try:
+        from hermes_cli import config as config_module
         from hermes_cli.mcp_config import _get_mcp_servers
         from hermes_constants import get_hermes_home
         from tui_gateway import mcp_oauth_sessions
+        from tools.mcp_dashboard_oauth import SavedMcpConfigBinding
 
-        servers = _get_mcp_servers()
-        if name not in servers:
-            return _err(rid, 4064, f"server '{name}' not found")
-        cfg = dict(servers[name])
+        hermes_home = str(get_hermes_home().expanduser().resolve(strict=False))
+        with config_module._CONFIG_LOCK:
+            servers = _get_mcp_servers()
+            if name not in servers:
+                return _err(rid, 4064, f"server '{name}' not found")
+            cfg = dict(servers[name])
+            binding = SavedMcpConfigBinding.capture(hermes_home, name)
         if not cfg.get("url"):
             return _err(
                 rid, 4001, "stdio servers authenticate via env keys, not OAuth"
@@ -2359,9 +2399,9 @@ def _(rid, params: dict) -> dict:
             )
         cfg["auth"] = "oauth"
 
-        hermes_home = str(get_hermes_home().expanduser().resolve(strict=False))
         result = mcp_oauth_sessions.start_flow(
-            hermes_home, name, cfg, client_redirect_uri=client_redirect_uri
+            hermes_home, name, cfg, client_redirect_uri=client_redirect_uri,
+            config_binding=binding,
         )
         return _ok(
             rid,

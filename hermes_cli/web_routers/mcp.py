@@ -248,7 +248,7 @@ async def test_mcp_server(name: str, profile: Optional[str] = None):
 async def auth_mcp_server(name: str, request: Request, profile: Optional[str] = None):
     """Start MCP OAuth and hand the authorization URL to the dashboard browser."""
     from hermes_cli.mcp_config import _get_mcp_servers
-    from tools.mcp_dashboard_oauth import DashboardOAuthFlow
+    from tools.mcp_dashboard_oauth import DashboardOAuthFlow, SavedMcpConfigBinding
 
     _require_token(request)
     _gc_mcp_oauth_flows()
@@ -258,9 +258,19 @@ async def auth_mcp_server(name: str, request: Request, profile: Optional[str] = 
 
     def _read():
         with _profile_scope(profile):
-            return _get_mcp_servers(), str(get_hermes_home().expanduser().resolve(strict=False))
+            from hermes_cli import config as config_module
 
-    servers, flow_home = await asyncio.to_thread(_read)
+            with config_module._CONFIG_LOCK:
+                servers = _get_mcp_servers()
+                flow_home = str(get_hermes_home().expanduser().resolve(strict=False))
+                binding = (
+                    SavedMcpConfigBinding.capture(flow_home, name)
+                    if name in servers
+                    else None
+                )
+            return servers, flow_home, binding
+
+    servers, flow_home, binding = await asyncio.to_thread(_read)
     if name not in servers:
         raise HTTPException(status_code=404, detail=f"Server '{name}' not found")
     cfg = dict(servers[name])
@@ -279,6 +289,7 @@ async def auth_mcp_server(name: str, request: Request, profile: Optional[str] = 
         redirect_uri=(cfg.get("oauth") or {}).get("redirect_uri")
         or _mcp_oauth_callback_url(request, name),
         reconnect_live=flow_home == process_home,
+        config_binding=binding,
     )
     with _mcp_oauth_flows_lock:
         pending = sum(

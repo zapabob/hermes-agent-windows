@@ -594,6 +594,9 @@ class MCPOAuthManager:
     def __init__(self) -> None:
         self._entries: dict[tuple[str, str], _ProviderEntry] = {}
         self._entries_lock = threading.Lock()
+        # A failed reauthorization may restore only the cache slot it removed,
+        # or the replacement provider created by that same flow.
+        self._removed_entry_owners: dict[tuple[str, str], Any] = {}
         # Holds strong references to in-flight 401 handler tasks so the
         # event loop's weak-reference bookkeeping cannot GC them mid-run
         # and leave `await pending` waiters hanging forever.
@@ -617,6 +620,27 @@ class MCPOAuthManager:
         """
         key = self._key(server_name)
         with self._entries_lock:
+            from tools.mcp_dashboard_oauth import get_dashboard_oauth_flow
+
+            active_flow = get_dashboard_oauth_flow()
+            if (
+                active_flow is not None
+                and active_flow.server_name == server_name
+                and str(Path(active_flow.hermes_home).expanduser().resolve(strict=False)) == key[0]
+                and active_flow.config_binding is not None
+            ):
+                from hermes_cli import config as config_module
+
+                # A stale connection retry must not replace a newer provider
+                # before its storage read eventually rejects the old grant.
+                # Keep construction outside this short manager -> config lock.
+                with config_module._CONFIG_LOCK:
+                    active_flow.config_binding.assert_current_locked(config_module)
+
+            removal_owner = self._removed_entry_owners.get(key)
+            if removal_owner is not None and removal_owner is not active_flow:
+                self._removed_entry_owners.pop(key, None)
+
             entry = self._entries.get(key)
             if entry is not None and entry.server_url != server_url:
                 logger.info(
@@ -637,7 +661,36 @@ class MCPOAuthManager:
                 if entry.provider is not None:
                     entry.provider._hermes_home = key[0]
 
+            if entry.provider is not None:
+                if (
+                    active_flow is not None
+                    and active_flow.server_name == server_name
+                    and str(Path(active_flow.hermes_home).expanduser().resolve(strict=False)) == key[0]
+                ):
+                    active_flow.record_provider_identity(entry, entry.provider)
+
             return entry.provider
+
+    def adopt_dashboard_flow(self, flow, storage, tools: list[dict]) -> None:
+        """Adopt tokens only while the flow's exact provider entry remains current."""
+        from tools.mcp_dashboard_oauth import McpOAuthConfigChangedError
+
+        key = self._key(flow.server_name, flow.hermes_home)
+        with self._entries_lock:
+            # Keep the manager lock through flow -> config adoption, so the
+            # exact provider entry cannot change between CAS and persistence.
+            # adopt_approved performs no manager call while holding flow/config.
+            entry = self._entries.get(key)
+            if entry is None or entry.provider is None:
+                raise McpOAuthConfigChangedError(
+                    "MCP OAuth configuration changed; start a new authorization."
+                )
+            flow.adopt_approved(
+                storage,
+                tools,
+                provider_entry=entry,
+                provider_object=entry.provider,
+            )
 
     @staticmethod
     def _key(
@@ -741,17 +794,39 @@ class MCPOAuthManager:
         server_name: str,
         *,
         hermes_home: str | Path | None = None,
+        removal_owner=None,
     ) -> _ProviderEntry | None:
         """Evict the provider from cache AND delete tokens from disk.
 
         Called by ``hermes mcp remove <name>`` and (indirectly) by
         ``hermes mcp login <name>`` during forced re-auth.
         """
-        with self._entries_lock:
-            entry = self._entries.pop(self._key(server_name, hermes_home), None)
-
+        from hermes_cli import config as config_module
+        from tools.mcp_dashboard_oauth import get_dashboard_oauth_flow
         from tools.mcp_oauth import remove_oauth_tokens
-        remove_oauth_tokens(server_name, hermes_home=hermes_home)
+
+        flow = get_dashboard_oauth_flow()
+        binding = (
+            flow.config_binding
+            if flow is not None and flow.server_name == server_name
+            else None
+        )
+        owner = removal_owner
+        if owner is None and flow is not None and flow.server_name == server_name:
+            owner = flow
+        key = self._key(server_name, hermes_home)
+        with self._entries_lock:
+            # Manager -> config is the shared lock order. Do not evict the
+            # prior provider until the saved-entry authority is still current.
+            with config_module._CONFIG_LOCK:
+                if binding is not None:
+                    binding.assert_current_locked(config_module)
+                entry = self._entries.pop(key, None)
+                if owner is None:
+                    self._removed_entry_owners.pop(key, None)
+                else:
+                    self._removed_entry_owners[key] = owner
+                remove_oauth_tokens(server_name, hermes_home=hermes_home)
         logger.info(
             "MCP OAuth '%s': evicted from cache and removed from disk",
             server_name,
@@ -764,12 +839,48 @@ class MCPOAuthManager:
         entry: _ProviderEntry | None,
         *,
         hermes_home: str | Path | None = None,
+        binding=None,
+        removal_owner=None,
     ) -> None:
         """Restore a provider entry removed for a failed reauthorization."""
-        if entry is None:
+        if entry is None or removal_owner is None:
             return
+        from hermes_cli import config as config_module
+
+        key = self._key(server_name, hermes_home)
         with self._entries_lock:
-            self._entries.setdefault(self._key(server_name, hermes_home), entry)
+            expected_entry, expected_provider, conflict = removal_owner.provider_settlement_identity()
+            with config_module._CONFIG_LOCK:
+                if binding is not None:
+                    try:
+                        binding.assert_current_locked(config_module)
+                    except RuntimeError:
+                        return
+                if self._removed_entry_owners.get(key) is not removal_owner:
+                    return
+                if conflict:
+                    return
+                current = self._entries.get(key)
+                if current is None:
+                    self._entries[key] = entry
+                    self._removed_entry_owners.pop(key, None)
+                    return
+                if (
+                    current is expected_entry
+                    and current.provider is expected_provider
+                    and current.provider is not None
+                ):
+                    self._entries[key] = entry
+                    self._removed_entry_owners.pop(key, None)
+
+    def release_dashboard_flow(self, flow) -> None:
+        """Release only this worker's settlement ownership on every outcome."""
+        key = self._key(flow.server_name, flow.hermes_home)
+        with self._entries_lock:
+            if self._removed_entry_owners.get(key) is flow:
+                self._removed_entry_owners.pop(key, None)
+        # No config lock is held while taking the flow lock.
+        flow.release_provider_settlement()
 
     def evict(
         self,
@@ -779,7 +890,9 @@ class MCPOAuthManager:
     ) -> None:
         """Drop only the in-process provider, preserving persisted OAuth state."""
         with self._entries_lock:
-            self._entries.pop(self._key(server_name, hermes_home), None)
+            key = self._key(server_name, hermes_home)
+            self._entries.pop(key, None)
+            self._removed_entry_owners.pop(key, None)
 
     async def force_login(
         self,
