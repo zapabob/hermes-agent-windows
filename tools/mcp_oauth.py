@@ -1071,6 +1071,25 @@ class HermesTokenStorage:
         """Return True if we have tokens on disk (may be expired)."""
         return self._tokens_path().exists()
 
+    def credential_stamp(
+        self,
+    ) -> tuple[tuple[int, int, int] | None, tuple[int, int, int] | None]:
+        """Return token/client file metadata without reading credential contents.
+
+        This detects later OAuth writes after an authentication failure. The
+        paths come from this storage object's captured Hermes home, so a
+        profile change cannot redirect the comparison to another profile.
+        """
+        stamps: list[tuple[int, int, int] | None] = []
+        for path in (self._tokens_path(), self._client_info_path()):
+            try:
+                info = path.stat()
+            except OSError:
+                stamps.append(None)
+            else:
+                stamps.append((info.st_mtime_ns, info.st_size, getattr(info, "st_ino", 0)))
+        return stamps[0], stamps[1]
+
 
 # ---------------------------------------------------------------------------
 # Callback handler factory -- each invocation gets its own result dict

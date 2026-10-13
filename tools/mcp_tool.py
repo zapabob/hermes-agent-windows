@@ -2419,7 +2419,7 @@ class MCPServerTask:
         "_task", "_ready", "_shutdown_event", "_reconnect_event",
         "_tools", "_error", "_config",
         "_sampling", "_elicitation",
-        "_registered_tool_names", "_auth_type", "_refresh_lock",
+        "_registered_tool_names", "_auth_type", "_auth_park", "_refresh_lock",
         "_rpc_lock", "_pending_refresh_tasks",
         "_pending_call_context",
         "_lifecycle_started_at", "_last_tool_call_at",
@@ -2494,6 +2494,9 @@ class MCPServerTask:
         # (#81995).
         self._stdio_child_pids: Set[int] = set()
         self._auth_type: str = ""
+        # (profile-bound storage, stat-only credential stamp) after an OAuth
+        # auth failure; discovery retries only when those files change.
+        self._auth_park = None
         self._refresh_lock = asyncio.Lock()
         # MCP stdio sessions are a single JSON-RPC stream. Some servers emit
         # list_changed notifications during startup; if the notification
@@ -3961,6 +3964,24 @@ class MCPServerTask:
                 if live is self:
                     _server_connect_errors.pop(key, None)
 
+    def _arm_auth_park(self) -> None:
+        """Remember this server's profile-owned OAuth credential metadata."""
+        self._auth_park = None
+        if self._auth_type != "oauth":
+            return
+        try:
+            from tools.mcp_oauth import HermesTokenStorage
+
+            storage = HermesTokenStorage(self.name)
+            self._auth_park = (storage, storage.credential_stamp())
+        except Exception as exc:
+            # A failed metadata snapshot must leave ordinary discovery wakeups
+            # enabled. Avoid logging exception text that could contain auth data.
+            logger.debug(
+                "MCP server '%s': could not snapshot OAuth credential metadata (%s)",
+                self.name, type(exc).__name__,
+            )
+
     async def run(self, config: dict):
         """Long-lived coroutine: connect, discover tools, wait, disconnect.
 
@@ -4068,6 +4089,7 @@ class MCPServerTask:
                     # A failure belongs to one transport attempt. Keep its
                     # original exception while parked, then clear it only as
                     # the next actual connection attempt begins.
+                    self._auth_park = None
                     self._error = None
                     if self._is_http():
                         lifecycle_reason = await self._run_http(config)
@@ -4222,6 +4244,7 @@ class MCPServerTask:
                         # keeps the task alive so the 300s self-probe (and an
                         # explicit /mcp refresh) can pick up fresh tokens.
                         if _is_auth_error(root):
+                            self._arm_auth_park()
                             logger.warning(
                                 "MCP server '%s' failed initial authentication, "
                                 "parking until credentials change; re-authenticate "
@@ -4348,6 +4371,8 @@ class MCPServerTask:
                         if self._shutdown_event.is_set():
                             return
                         continue
+                    if _is_auth_error(root):
+                        self._arm_auth_park()
                     # A previously-working server now fails deterministically
                     # (revoked credentials, URL now serving a web page, stdio
                     # binary uninstalled). Retrying can't help — park
@@ -8299,6 +8324,16 @@ def register_mcp_servers(servers: Dict[str, dict]) -> List[str]:
                 _parallel_safe_servers.discard(own_key)
 
     for srv in stale_cached:
+        auth_park = getattr(srv, "_auth_park", None)
+        if auth_park is not None:
+            storage, parked_stamp = auth_park
+            try:
+                if storage.credential_stamp() == parked_stamp:
+                    continue
+            except Exception:
+                # Keep ordinary discovery wakeups available if metadata cannot
+                # be read; a failed stamp must never pin the server parked.
+                pass
         _signal_reconnect(srv)
 
     if not new_servers:
