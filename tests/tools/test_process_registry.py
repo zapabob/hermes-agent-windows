@@ -1111,6 +1111,308 @@ class TestKillProcess:
         assert result["status"] == "already_exited"
 
 
+    @pytest.mark.skipif(sys.platform != "win32", reason="requires native Windows ConPTY")
+    def test_windows_pty_kill_terminates_owned_descendant_and_preserves_sentinel(
+        self, registry, tmp_path
+    ):
+        """A terminal PTY kill reaps its owned child without touching a peer."""
+        import psutil
+
+        nonce = os.urandom(16).hex()
+        workdir = tmp_path / "owned PTY 日本語 spaced"
+        workdir.mkdir()
+        parent_script = workdir / "pty_parent.py"
+        child_script = workdir / "pty_child.py"
+        sentinel_script = workdir / "unrelated_sentinel.py"
+        parent_marker = workdir / "parent.json"
+        child_marker = workdir / "child.json"
+        sentinel_marker = workdir / "sentinel.json"
+
+        child_script.write_text(
+            "import json, os, sys, time\n"
+            "nonce, marker = sys.argv[1:]\n"
+            "with open(marker, 'w', encoding='utf-8') as stream:\n"
+            "    json.dump({'nonce': nonce, 'pid': os.getpid(), 'ppid': os.getppid(), "
+            "'script': os.path.abspath(__file__), 'cwd': os.getcwd()}, stream)\n"
+            "print('CHILD_READY:' + nonce, flush=True)\n"
+            "deadline = time.monotonic() + 25.0\n"
+            "while time.monotonic() < deadline: time.sleep(0.05)\n",
+            encoding="utf-8",
+        )
+        parent_script.write_text(
+            "import json, os, subprocess, sys, time\n"
+            "nonce, child_script, child_marker, marker = sys.argv[1:]\n"
+            "child = subprocess.Popen([sys.executable, '-I', '-S', child_script, nonce, child_marker], cwd=os.getcwd())\n"
+            "with open(marker, 'w', encoding='utf-8') as stream:\n"
+            "    json.dump({'nonce': nonce, 'pid': os.getpid(), 'ppid': os.getppid(), "
+            "'child_popen_pid': child.pid, 'script': os.path.abspath(__file__), "
+            "'cwd': os.getcwd()}, stream)\n"
+            "print('PARENT_READY:' + nonce, flush=True)\n"
+            "deadline = time.monotonic() + 25.0\n"
+            "while time.monotonic() < deadline and child.poll() is None: time.sleep(0.05)\n",
+            encoding="utf-8",
+        )
+        sentinel_script.write_text(
+            "import json, os, sys, time\n"
+            "nonce, marker = sys.argv[1:]\n"
+            "with open(marker, 'w', encoding='utf-8') as stream:\n"
+            "    json.dump({'nonce': nonce, 'pid': os.getpid(), 'ppid': os.getppid(), "
+            "'script': os.path.abspath(__file__), 'cwd': os.getcwd()}, stream)\n"
+            "deadline = time.monotonic() + 25.0\n"
+            "while time.monotonic() < deadline: time.sleep(0.05)\n",
+            encoding="utf-8",
+        )
+
+        base_python = Path(getattr(sys, "_base_executable", sys.executable))
+        assert base_python.is_file()
+        python_arg = base_python.as_posix()
+        command_args = [
+            python_arg,
+            "-I",
+            "-S",
+            parent_script.as_posix(),
+            nonce,
+            child_script.as_posix(),
+            child_marker.as_posix(),
+            parent_marker.as_posix(),
+        ]
+        command = " ".join(shlex.quote(arg) for arg in command_args)
+        sentinel = subprocess.Popen(
+            [str(base_python), "-I", "-S", str(sentinel_script), nonce, str(sentinel_marker)],
+            cwd=str(workdir),
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        session = None
+        identities = {}
+
+        def read_marker(path, timeout=10.0):
+            deadline = time.monotonic() + timeout
+            while time.monotonic() < deadline:
+                try:
+                    return json.loads(path.read_text(encoding="utf-8"))
+                except (FileNotFoundError, json.JSONDecodeError):
+                    time.sleep(0.05)
+            raise AssertionError(f"marker was not written: {path.name}")
+
+        def same_process(pid, started):
+            try:
+                process = psutil.Process(pid)
+                return abs(process.create_time() - started) < 0.01
+            except (psutil.NoSuchProcess, psutil.ZombieProcess):
+                return False
+            except psutil.AccessDenied:
+                raise AssertionError(f"cannot verify test-owned PID {pid}")
+
+        def wait_exited(pid, started, timeout=4.0):
+            deadline = time.monotonic() + timeout
+            while time.monotonic() < deadline and same_process(pid, started):
+                time.sleep(0.05)
+            return not same_process(pid, started)
+
+        def terminate_exact(pid, started, script):
+            if not same_process(pid, started):
+                return
+            process = psutil.Process(pid)
+            command_line = " ".join(process.cmdline()).replace("/", "\\").casefold()
+            expected_script = str(script.resolve()).replace("/", "\\").casefold()
+            if nonce not in command_line or expected_script not in command_line:
+                return
+            process.terminate()
+            try:
+                process.wait(timeout=2.0)
+            except psutil.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=2.0)
+
+        try:
+            session = registry.spawn_local(command, cwd=str(workdir), use_pty=True)
+            assert session._pty is not None
+            assert session.host_start_time is not None
+            parent = read_marker(parent_marker)
+            child = read_marker(child_marker)
+            sentinel_info = read_marker(sentinel_marker)
+            assert parent["nonce"] == child["nonce"] == sentinel_info["nonce"] == nonce
+            assert parent["child_popen_pid"] == child["pid"]
+            assert child["ppid"] == parent["pid"]
+
+            for name, info, script in (
+                ("parent", parent, parent_script),
+                ("child", child, child_script),
+                ("sentinel", sentinel_info, sentinel_script),
+            ):
+                process = psutil.Process(info["pid"])
+                command_line = " ".join(process.cmdline()).replace("/", "\\").casefold()
+                expected_script = str(script.resolve()).replace("/", "\\").casefold()
+                assert info["script"] == str(script.resolve())
+                assert expected_script in command_line
+                assert nonce in command_line
+                identities[name] = (info["pid"], process.create_time())
+
+            assert session.pid in {p.pid for p in psutil.Process(parent["pid"]).parents()}
+            assert session.pid not in {p.pid for p in psutil.Process(sentinel_info["pid"]).parents()}
+            assert same_process(*identities["sentinel"])
+
+            result = registry.kill_process(session.id)
+
+            assert result["status"] == "killed"
+            assert wait_exited(*identities["parent"]), "PTY parent process survived kill"
+            assert wait_exited(*identities["child"]), "owned PTY descendant survived kill"
+            assert same_process(*identities["sentinel"]), "unrelated sentinel was killed"
+        finally:
+            if (
+                session is not None
+                and session._pty is not None
+                and session.pid is not None
+                and session.host_start_time is not None
+                and same_process(session.pid, session.host_start_time)
+            ):
+                session._pty.terminate(force=True)
+            for name, script in (("child", child_script), ("parent", parent_script)):
+                if name in identities:
+                    terminate_exact(*identities[name], script)
+            if sentinel.poll() is None:
+                sentinel.terminate()
+                try:
+                    sentinel.wait(timeout=2.0)
+                except subprocess.TimeoutExpired:
+                    sentinel.kill()
+                    sentinel.wait(timeout=2.0)
+
+
+    @pytest.mark.skipif(sys.platform != "win32", reason="Windows PTY PID ownership guard")
+    def test_windows_pty_kill_refuses_reused_pid_without_signal_fallback(
+        self, registry, monkeypatch
+    ):
+        session = _make_session(sid="pty-reused-pid")
+        session._pty = MagicMock()
+        session.pid = 424242
+        session.host_start_time = 12345
+        registry._running[session.id] = session
+        monkeypatch.setattr("tools.process_registry._IS_WINDOWS", True)
+        monkeypatch.setattr(
+            registry, "_host_pid_identity_state", lambda *_args: "reused"
+        )
+
+        with patch.object(registry, "_terminate_host_pid") as tree_kill, patch(
+            "tools.process_registry.os.kill"
+        ) as bare_kill:
+            result = registry.kill_process(session.id)
+
+        assert result["status"] == "already_exited"
+        assert session.exited
+        session._pty.terminate.assert_not_called()
+        tree_kill.assert_not_called()
+        bare_kill.assert_not_called()
+
+    @pytest.mark.parametrize(
+        ("captured_start", "current_start"),
+        [
+            (None, 12345),  # No ownership baseline was captured.
+            (12345, None),  # The live identity query failed.
+        ],
+    )
+    def test_windows_pty_kill_keeps_session_unresolved_when_identity_is_unknown(
+        self, registry, monkeypatch, captured_start, current_start
+    ):
+        session = _make_session(sid="pty-owner-unknown")
+        session._pty = MagicMock()
+        session.pid = 424242
+        session.host_start_time = captured_start
+        registry._running[session.id] = session
+        monkeypatch.setattr("tools.process_registry._IS_WINDOWS", True)
+        monkeypatch.setattr(
+            ProcessRegistry, "_is_host_pid_alive", staticmethod(lambda _pid: True)
+        )
+        monkeypatch.setattr(
+            ProcessRegistry,
+            "_safe_host_start_time",
+            staticmethod(lambda _pid: current_start),
+        )
+
+        with patch("tools.process_registry.subprocess.run") as taskkill, patch(
+            "tools.process_registry.os.kill"
+        ) as bare_kill:
+            result = registry.kill_process(session.id)
+
+        assert result["status"] == "error"
+        assert "ownership" in result["error"].lower()
+        assert session.exited is False
+        assert registry.get(session.id) is session
+        assert session.id not in registry._finished
+        session._pty.terminate.assert_not_called()
+        taskkill.assert_not_called()
+        bare_kill.assert_not_called()
+
+    def test_windows_pty_kill_refuses_second_identity_change(self, registry, monkeypatch):
+        session = _make_session(sid="pty-owner-changed-during-kill")
+        session._pty = MagicMock()
+        session.pid = 424242
+        session.host_start_time = 12345
+        registry._running[session.id] = session
+        monkeypatch.setattr("tools.process_registry._IS_WINDOWS", True)
+        monkeypatch.setattr(
+            ProcessRegistry, "_is_host_pid_alive", staticmethod(lambda _pid: True)
+        )
+        start_times = iter((12345, 67890))
+        monkeypatch.setattr(
+            ProcessRegistry,
+            "_safe_host_start_time",
+            staticmethod(lambda _pid: next(start_times)),
+        )
+
+        with patch("tools.process_registry.subprocess.run") as taskkill, patch(
+            "tools.process_registry.os.kill"
+        ) as bare_kill:
+            result = registry.kill_process(session.id)
+
+        assert result["status"] == "already_exited"
+        assert session.exited is True
+        assert session.id in registry._finished
+        taskkill.assert_not_called()
+        bare_kill.assert_not_called()
+
+    @pytest.mark.parametrize("failure", ["nonzero", "timeout", "oserror"])
+    def test_windows_pty_kill_reports_taskkill_failure_and_keeps_session_retryable(
+        self, registry, monkeypatch, failure
+    ):
+        session = _make_session(sid=f"pty-taskkill-{failure}")
+        session._pty = MagicMock()
+        session.pid = 424242
+        session.host_start_time = 12345
+        registry._running[session.id] = session
+        monkeypatch.setattr("tools.process_registry._IS_WINDOWS", True)
+        monkeypatch.setattr(
+            ProcessRegistry, "_is_host_pid_alive", staticmethod(lambda _pid: True)
+        )
+        monkeypatch.setattr(
+            ProcessRegistry,
+            "_safe_host_start_time",
+            staticmethod(lambda _pid: 12345),
+        )
+
+        if failure == "nonzero":
+            taskkill_effect = MagicMock(returncode=1, stderr="access denied", stdout="")
+        elif failure == "timeout":
+            taskkill_effect = subprocess.TimeoutExpired(["taskkill"], 10)
+        else:
+            taskkill_effect = OSError("taskkill unavailable")
+
+        with patch(
+            "tools.process_registry.subprocess.run", side_effect=taskkill_effect
+        ) as taskkill, patch("tools.process_registry.os.kill") as bare_kill:
+            result = registry.kill_process(session.id)
+
+        assert result["status"] == "error"
+        assert session.exited is False
+        assert registry.get(session.id) is session
+        assert session.id not in registry._finished
+        taskkill.assert_called_once()
+        session._pty.terminate.assert_not_called()
+        bare_kill.assert_not_called()
+
+
     def test_kill_detached_session_uses_host_pid(self, registry):
         s = _make_session(sid="proc_detached", command="sleep 999")
         s.pid = 424242
