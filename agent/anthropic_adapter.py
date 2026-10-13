@@ -92,6 +92,8 @@ from agent.anthropic_credentials import (  # noqa: F401
     _get_hermes_oauth_file,
     _getenv,
     _is_oauth_token,
+    anthropic_route_is_oauth,
+    is_native_anthropic_host,
     _prefer_refreshable_claude_code_token,
     _read_claude_code_credentials_from_file,
     _read_claude_code_credentials_from_keychain,
@@ -604,7 +606,13 @@ def _build_anthropic_client_with_bearer_hook(
         import re as _re
         normalized_base_url = _re.sub(r"/v1/?$", "", normalized_base_url.rstrip("/"))
 
-    http_client = build_bearer_http_client(token_provider, timeout=timeout_obj)
+    http_client = build_bearer_http_client(
+        token_provider,
+        timeout=timeout_obj,
+        sends_as_api_key=(lambda token: not _is_oauth_token(token))
+        if is_native_anthropic_host(base_url)
+        else None,
+    )
 
     kwargs = {
         "timeout": timeout_obj,
@@ -630,7 +638,13 @@ def _build_anthropic_client_with_bearer_hook(
         normalized_base_url,
         drop_context_1m_beta=drop_context_1m_beta,
     )
-    if common_betas:
+    if anthropic_route_is_oauth(base_url, token_provider):
+        kwargs["default_headers"] = {
+            "anthropic-beta": ",".join(common_betas + _OAUTH_ONLY_BETAS),
+            "user-agent": f"claude-code/{_get_claude_code_version()} (external, cli)",
+            "x-app": "cli",
+        }
+    elif common_betas:
         kwargs["default_headers"] = {"anthropic-beta": ",".join(common_betas)}
 
     client = _anthropic_sdk.Anthropic(**kwargs)
