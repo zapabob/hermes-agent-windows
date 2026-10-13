@@ -6,6 +6,7 @@ import sys
 import threading
 from pathlib import Path
 
+import psutil
 import pytest
 
 from tui_gateway.compute_host import ComputeHost, HostSession
@@ -30,6 +31,42 @@ def _read_json_line(out: queue.Queue[dict], timeout: float = 2.0) -> dict:
         raise AssertionError("timed out waiting for compute host JSON") from exc
 
 
+def _owned_host_child(proc: subprocess.Popen, host_pid: int):
+    """Return the reported host only when this test's launcher owns it."""
+    if host_pid == proc.pid:
+        return None
+    assert os.name == "nt", "only the Windows venv launcher may report a child PID"
+    launcher = psutil.Process(proc.pid)
+    child = next(
+        (candidate for candidate in launcher.children(recursive=True)
+         if candidate.pid == host_pid),
+        None,
+    )
+    assert child is not None, "reported compute host is not owned by this test launcher"
+    parent = child.parent()
+    assert parent is not None and parent.pid == proc.pid
+    return child
+
+
+def _terminate_owned_child(child, pid: int, created_at: float) -> None:
+    """Stop only a child previously verified under this test's launcher."""
+    try:
+        if child.pid != pid or child.create_time() != created_at:
+            return
+        try:
+            child.wait(timeout=2)
+        except psutil.TimeoutExpired:
+            if child.create_time() == created_at:
+                child.terminate()
+                try:
+                    child.wait(timeout=2)
+                except psutil.TimeoutExpired:
+                    child.kill()
+                    child.wait(timeout=2)
+    except psutil.NoSuchProcess:
+        pass
+
+
 def test_compute_host_line_json_seed_turn_interrupt():
     repo = Path(__file__).resolve().parents[2]
     env = dict(os.environ)
@@ -46,10 +83,17 @@ def test_compute_host_line_json_seed_turn_interrupt():
     )
     assert proc.stdin is not None
     out = _stdout_queue(proc)
+    owned_host = None
+    owned_host_pid = None
+    owned_host_created_at = None
     try:
         hello = _read_json_line(out)
         assert hello["type"] == "hello"
-        assert hello["host_pid"] == proc.pid
+        host_pid = int(hello["host_pid"])
+        owned_host = _owned_host_child(proc, host_pid)
+        if owned_host is not None:
+            owned_host_pid = owned_host.pid
+            owned_host_created_at = owned_host.create_time()
 
         proc.stdin.write(json.dumps({"type": "session.seed", "sid": "s1", "request_id": "seed"}) + "\n")
         proc.stdin.flush()
@@ -85,8 +129,24 @@ def test_compute_host_line_json_seed_turn_interrupt():
         assert _read_json_line(out)["type"] == "shutdown.ack"
         proc.wait(timeout=2)
     finally:
+        # Closing stdin lets a started compute host exit through its normal
+        # EOF shutdown path when an assertion fails before the explicit frame.
+        if proc.stdin is not None and not proc.stdin.closed:
+            proc.stdin.close()
+        if owned_host is not None:
+            _terminate_owned_child(
+                owned_host, owned_host_pid, owned_host_created_at
+            )
         if proc.poll() is None:
-            proc.kill()
+            try:
+                proc.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                proc.terminate()
+                try:
+                    proc.wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+                    proc.wait(timeout=2)
 
 
 @pytest.mark.parametrize("kind", ["legacy", "hard-only", "dynamic-getattr"])

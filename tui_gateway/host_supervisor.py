@@ -160,6 +160,7 @@ class HostSupervisor:
         self._stopped_respawning = False
         self._restart_times: list[float] = []
         self._pending_turns: dict[str, tuple[str, Callable[[dict], None] | None]] = {}
+        self._completing_turns: dict[str, tuple[str, Callable[[dict], None] | None]] = {}
         self._pending_controls: dict[str, queue.Queue[dict]] = {}
         self._stderr_tail: list[str] = []
         self._last_progress_counter = 0
@@ -246,8 +247,6 @@ class HostSupervisor:
         try:
             self._send_frame(payload)
         except Exception as exc:
-            with self._lock:
-                self._pending_turns.pop(request_id, None)
             err = {
                 "type": "turn.error",
                 "sid": sid,
@@ -255,10 +254,16 @@ class HostSupervisor:
                 "reason": "send_failed",
                 "message": str(exc),
             }
-            if on_complete is not None:
-                on_complete(err)
+            self._complete_turn(err)
             raise
         return request_id
+
+    def has_pending_turn(self, sid: str) -> bool:
+        """Include callbacks still settling parent state, even after host exit."""
+        with self._lock:
+            return any(owner == sid for owner, _ in self._pending_turns.values()) or any(
+                owner == sid for owner, _ in self._completing_turns.values()
+            )
 
     def interrupt(self, sid: str, *, request_id: str | None = None) -> None:
         self.start()
@@ -448,14 +453,25 @@ class HostSupervisor:
         request_id = str(frame.get("request_id") or "")
         with self._lock:
             pending = self._pending_turns.pop(request_id, None)
+            if pending is not None:
+                self._completing_turns[request_id] = pending
         if pending is None:
             return
+        self._deliver_turn_completion(request_id, pending, frame)
+
+    def _deliver_turn_completion(self, request_id, pending, frame) -> None:
         _sid, cb = pending
-        if cb is not None:
-            try:
+        try:
+            if cb is not None:
                 cb(frame)
-            except Exception:
-                logger.exception("compute host turn completion callback failed")
+        except Exception:
+            # Settlement is uncertain: retain ownership instead of letting a
+            # later Stop mistake a partially applied callback for idle state.
+            logger.exception("compute host turn completion callback failed")
+        else:
+            with self._lock:
+                if self._completing_turns.get(request_id) is pending:
+                    self._completing_turns.pop(request_id, None)
 
     def _wait_for_exit(self, proc: subprocess.Popen[str]) -> None:
         code = proc.wait()
@@ -473,6 +489,7 @@ class HostSupervisor:
         with self._lock:
             pending = self._pending_turns
             self._pending_turns = {}
+            self._completing_turns.update(pending)
         for request_id, (sid, cb) in pending.items():
             frame = {
                 "type": "turn.error",
@@ -492,11 +509,7 @@ class HostSupervisor:
                     },
                 }
             )
-            if cb is not None:
-                try:
-                    cb(frame)
-                except Exception:
-                    logger.exception("compute host error callback failed")
+            self._deliver_turn_completion(request_id, pending[request_id], frame)
 
     def _maybe_respawn_after_crash(self) -> None:
         now = time.monotonic()

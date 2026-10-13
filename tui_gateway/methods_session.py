@@ -3353,7 +3353,9 @@ def _(rid, params: dict) -> dict:
     if _session_uses_compute_host(session):
         sid = str(params.get("session_id") or "")
         try:
-            _interrupt_session_turn(sid, session, request_id=f"interrupt-{rid}")
+            _interrupt_session_turn(
+                sid, session, request_id=f"interrupt-{rid}", recover_stale=True
+            )
         except Exception as exc:
             return _err(rid, 5019, f"compute-host interrupt failed: {exc}")
         return _ok(rid, {"status": "interrupted", "turn_isolation": True})
