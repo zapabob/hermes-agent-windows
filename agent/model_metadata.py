@@ -2713,6 +2713,8 @@ def _extract_chatgpt_account_id(access_token: str) -> Optional[str]:
 
 def _fetch_codex_oauth_context_lengths_with_source(
     access_token: str,
+    *,
+    refresh_catalog: bool = False,
 ) -> Tuple[Dict[str, int], bool]:
     """Fetch Codex catalogue data and report whether it came from HTTP.
 
@@ -2721,15 +2723,22 @@ def _fetch_codex_oauth_context_lengths_with_source(
     token is never retained in the cache key. The boolean is false for a
     same-token in-process hit, which must not be treated as a fresh provider
     confirmation when deciding whether to update persistent state.
+
+    ``refresh_catalog`` bypasses a fresh context-window cache so an independent
+    account-scoped catalogue consumer can recover its own bounded cache. When
+    that fresh context entry exists, leave it untouched by this auxiliary probe.
     """
     global _codex_oauth_context_cache
     now = time.time()
     cache_key = _codex_oauth_token_fingerprint(access_token)
     cached = _codex_oauth_context_cache.get(cache_key)
+    has_fresh_context_cache = False
     if cached is not None:
         cached_models, cached_at = cached
         if now - cached_at < _CODEX_OAUTH_CONTEXT_CACHE_TTL:
-            return cached_models, False
+            has_fresh_context_cache = True
+            if not refresh_catalog:
+                return cached_models, False
 
     headers = {"Authorization": f"Bearer {access_token}"}
     acct_id = _extract_chatgpt_account_id(access_token)
@@ -2756,6 +2765,9 @@ def _fetch_codex_oauth_context_lengths_with_source(
         return {}, False
 
     entries = data.get("models", []) if isinstance(data, dict) else []
+    if isinstance(entries, list):
+        from agent.codex_service_tiers import remember_catalog
+        remember_catalog(_codex_oauth_token_fingerprint(access_token), entries)
     result: Dict[str, int] = {}
     for item in entries:
         if not isinstance(item, dict):
@@ -2765,7 +2777,7 @@ def _fetch_codex_oauth_context_lengths_with_source(
         if isinstance(slug, str) and isinstance(ctx, int) and ctx > 0:
             result[slug.strip()] = ctx
 
-    if result:
+    if result and not (refresh_catalog and has_fresh_context_cache):
         _codex_oauth_context_cache[cache_key] = (result, now)
     return result, True
 

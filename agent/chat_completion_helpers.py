@@ -2086,6 +2086,13 @@ def build_api_kwargs(agent, api_messages: list, tools_for_api: list | None = Non
             is_github_responses=is_github_responses,
         )
 
+        # Negotiate a copy so account-specific limits never mutate saved preference.
+        _codex_request_overrides = agent.request_overrides
+        if _codex_request_overrides:
+            _codex_request_overrides = dict(_codex_request_overrides)
+            if is_codex_backend:
+                from agent.codex_service_tiers import negotiate_request_tier
+                negotiate_request_tier(agent, _codex_request_overrides)
         # xAI's /responses endpoint rejects ``pattern`` and ``format`` keywords
         # in tool schemas (HTTP 400 "Invalid arguments passed to the model").
         # Most commonly hit when MCP-derived tools carry JSON Schema validation
@@ -2130,7 +2137,7 @@ def build_api_kwargs(agent, api_messages: list, tools_for_api: list | None = Non
             base_url=agent.base_url,
             max_tokens=agent.max_tokens,
             timeout=agent._resolved_api_call_timeout(),
-            request_overrides=agent.request_overrides,
+            request_overrides=_codex_request_overrides,
             provider=getattr(agent, "provider", None),
             is_github_responses=is_github_responses,
             is_codex_backend=is_codex_backend,
