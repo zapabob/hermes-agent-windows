@@ -29,7 +29,9 @@ class TestParseServiceTierConfig(unittest.TestCase):
         self.assertEqual(self._parse("fast"), "priority")
         self.assertEqual(self._parse("priority"), "priority")
 
-
+    def test_ultrafast_and_ultra_map_to_ultrafast(self):
+        self.assertEqual(self._parse("ultrafast"), "ultrafast")
+        self.assertEqual(self._parse("ultra"), "ultrafast")
 
 class TestHandleFastCommand(unittest.TestCase):
     def _make_cli(self, service_tier=None):
@@ -72,6 +74,127 @@ class TestHandleFastCommand(unittest.TestCase):
         self.assertIsNone(stub.service_tier)
         self.assertIsNone(stub.agent)
 
+    def test_ultrafast_aliases_are_session_scoped_and_global_save_canonical_value(self):
+        cli_mod = _import_cli()
+        for arg in ("ultrafast", "ultra"):
+            with self.subTest(arg=arg):
+                stub = self._make_cli(service_tier=None)
+                with (
+                    patch.object(cli_mod, "_cprint"),
+                    patch.object(cli_mod, "save_config_value") as mock_save,
+                ):
+                    cli_mod.HermesCLI._handle_fast_command(stub, f"/fast {arg}")
+
+                self.assertEqual(stub.service_tier, "ultrafast")
+                self.assertIsNone(stub.agent)
+                mock_save.assert_not_called()
+
+                stub = self._make_cli(service_tier=None)
+                with (
+                    patch.object(cli_mod, "_cprint"),
+                    patch.object(cli_mod, "save_config_value", return_value=True) as mock_save,
+                ):
+                    cli_mod.HermesCLI._handle_fast_command(
+                        stub, f"/fast {arg} --global"
+                    )
+
+                self.assertEqual(stub.service_tier, "ultrafast")
+                mock_save.assert_called_once_with(
+                    "agent.service_tier", "ultrafast"
+                )
+
+    def test_fast_and_normal_controls_keep_existing_global_config_values(self):
+        cli_mod = _import_cli()
+        cases = (
+            ("fast", "priority", "fast"),
+            ("on", "priority", "fast"),
+            ("normal", None, "normal"),
+            ("off", None, "normal"),
+        )
+        for arg, expected_tier, expected_config in cases:
+            with self.subTest(arg=arg):
+                stub = self._make_cli(service_tier=None)
+                with (
+                    patch.object(cli_mod, "_cprint"),
+                    patch.object(cli_mod, "save_config_value", return_value=True) as mock_save,
+                ):
+                    cli_mod.HermesCLI._handle_fast_command(
+                        stub, f"/fast {arg} --global"
+                    )
+                self.assertEqual(stub.service_tier, expected_tier)
+                mock_save.assert_called_once_with(
+                    "agent.service_tier", expected_config
+                )
+
+    def test_session_flag_keeps_all_fast_mode_choices_unpersisted(self):
+        cli_mod = _import_cli()
+        cases = (
+            ("fast", "priority"),
+            ("off", None),
+            ("ultrafast", "ultrafast"),
+            ("ultra", "ultrafast"),
+        )
+        for arg, expected_tier in cases:
+            with self.subTest(arg=arg):
+                stub = self._make_cli(service_tier=None)
+                with (
+                    patch.object(cli_mod, "_cprint"),
+                    patch.object(cli_mod, "save_config_value") as mock_save,
+                ):
+                    cli_mod.HermesCLI._handle_fast_command(
+                        stub, f"/fast {arg} --session"
+                    )
+                self.assertEqual(stub.service_tier, expected_tier)
+                mock_save.assert_not_called()
+
+    def test_ultrafast_status_reports_selected_tier_without_mutating_it(self):
+        cli_mod = _import_cli()
+        stub = self._make_cli(service_tier="ultrafast")
+        with (
+            patch.object(cli_mod, "_cprint") as mock_cprint,
+            patch.object(cli_mod, "save_config_value") as mock_save,
+        ):
+            cli_mod.HermesCLI._handle_fast_command(stub, "/fast status")
+
+        self.assertIn("ultrafast", " ".join(str(call) for call in mock_cprint.call_args_list))
+        self.assertEqual(stub.service_tier, "ultrafast")
+        mock_save.assert_not_called()
+
+    def test_new_session_reloads_ultrafast_service_tier_from_config(self):
+        cli_mod = _import_cli()
+        stub = SimpleNamespace(
+            agent=None,
+            conversation_history=[],
+            session_id="old-session",
+            _session_db=None,
+            _pending_title=None,
+            _resumed=False,
+            reasoning_config=None,
+            service_tier="priority",
+            model="gpt-5.4",
+            provider="openai-codex",
+            api_key="test-key",
+            base_url="https://chatgpt.com/backend-api/codex",
+            api_mode="codex_responses",
+            _notify_session_boundary=lambda _event: None,
+        )
+
+        with (
+            patch.dict(
+                cli_mod.CLI_CONFIG.setdefault("agent", {}),
+                {"reasoning_effort": "", "service_tier": "ultrafast"},
+            ),
+            patch.dict(
+                cli_mod.CLI_CONFIG,
+                {"model": {"default": "gpt-5.4", "provider": "openai-codex"}},
+            ),
+            patch.object(cli_mod, "_sync_process_session_id"),
+        ):
+            cli_mod.HermesCLI.new_session(stub, silent=True)
+
+        self.assertEqual(stub.service_tier, "ultrafast")
+        self.assertEqual(stub.model, "gpt-5.4")
+        self.assertEqual(stub.provider, "openai-codex")
 
     def test_unsupported_model_does_not_expose_fast(self):
         cli_mod = _import_cli()
@@ -174,6 +297,66 @@ class TestFastModeRouting(unittest.TestCase):
         assert route["runtime"]["provider"] == "openrouter"
         assert route["runtime"]["api_mode"] == "chat_completions"
         # But request_overrides should be set
+        assert route["request_overrides"] == {"service_tier": "priority"}
+
+    def test_ultrafast_preference_reaches_official_codex_request_route(self):
+        cli_mod = _import_cli()
+        stub = SimpleNamespace(
+            model="gpt-5.4",
+            api_key="test-key",
+            base_url="https://chatgpt.com/backend-api/codex",
+            provider="openai-codex",
+            api_mode="codex_responses",
+            acp_command=None,
+            acp_args=[],
+            _credential_pool=None,
+            service_tier="ultrafast",
+        )
+
+        route = cli_mod.HermesCLI._resolve_turn_agent_config(stub, "hi")
+
+        assert route["runtime"]["provider"] == "openai-codex"
+        assert route["runtime"]["api_mode"] == "codex_responses"
+        assert route["model"] == "gpt-5.4"
+        assert route["request_overrides"] == {"service_tier": "ultrafast"}
+
+    def test_ultrafast_preference_does_not_escalate_other_provider_route(self):
+        cli_mod = _import_cli()
+        stub = SimpleNamespace(
+            model="gpt-5.4",
+            api_key="test-key",
+            base_url="https://openrouter.ai/api/v1",
+            provider="openrouter",
+            api_mode="chat_completions",
+            acp_command=None,
+            acp_args=[],
+            _credential_pool=None,
+            service_tier="ultrafast",
+        )
+
+        route = cli_mod.HermesCLI._resolve_turn_agent_config(stub, "hi")
+
+        assert route["runtime"]["provider"] == "openrouter"
+        assert route["runtime"]["api_mode"] == "chat_completions"
+        assert route["request_overrides"] == {"service_tier": "priority"}
+
+    def test_ultrafast_preference_does_not_escalate_custom_codex_endpoint(self):
+        cli_mod = _import_cli()
+        stub = SimpleNamespace(
+            model="gpt-5.4",
+            api_key="test-key",
+            base_url="https://gateway.example.invalid/codex",
+            provider="openai-codex",
+            api_mode="codex_responses",
+            acp_command=None,
+            acp_args=[],
+            _credential_pool=None,
+            service_tier="ultrafast",
+        )
+
+        route = cli_mod.HermesCLI._resolve_turn_agent_config(stub, "hi")
+
+        assert route["runtime"]["base_url"] == "https://gateway.example.invalid/codex"
         assert route["request_overrides"] == {"service_tier": "priority"}
 
     def test_turn_route_keeps_primary_runtime_when_model_has_no_fast_backend(self):

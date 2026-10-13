@@ -422,6 +422,8 @@ def _parse_service_tier_config(raw: str) -> str | None:
     value = str(raw or "").strip().lower()
     if not value or value in {"normal", "default", "standard", "off", "none"}:
         return None
+    if value in {"ultrafast", "ultra"}:
+        return "ultrafast"
     if value in {"fast", "priority", "on"}:
         return "priority"
     logger.warning("Unknown service_tier '%s', ignoring", raw)

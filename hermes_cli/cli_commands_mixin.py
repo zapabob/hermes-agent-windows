@@ -3915,9 +3915,15 @@ class CLICommandsMixin:
 
         parts = cmd.strip().split(maxsplit=1)
         if len(parts) < 2 or parts[1].strip().lower() == "status":
-            status = "fast" if self.service_tier == "priority" else "normal"
+            if self.service_tier == "ultrafast":
+                status = "ultrafast"
+            else:
+                status = "fast" if self.service_tier == "priority" else "normal"
             _cprint(f"  {_ACCENT}{feature_name}: {status}{_RST}")
-            _cprint(f"  {_DIM}Usage: /fast [normal|fast|status] [--global]{_RST}")
+            _cprint(
+                f"  {_DIM}Usage: /fast [normal|fast|ultrafast|ultra|status] "
+                f"[--global|--session]{_RST}"
+            )
             return
 
         arg_tokens = parts[1].strip().lower().split()
@@ -3926,8 +3932,14 @@ class CLICommandsMixin:
             token for token in arg_tokens
             if token not in ("--global", "--session")
         )
+        if arg == "ultra":
+            arg = "ultrafast"
 
-        if arg in {"fast", "on"}:
+        if arg == "ultrafast":
+            self.service_tier = "ultrafast"
+            saved_value = "ultrafast"
+            label = "ULTRAFAST"
+        elif arg in {"fast", "on"}:
             self.service_tier = "priority"
             saved_value = "fast"
             label = "FAST"
@@ -3937,7 +3949,10 @@ class CLICommandsMixin:
             label = "NORMAL"
         else:
             _cprint(f"  {_DIM}(._.) Unknown argument: {arg}{_RST}")
-            _cprint(f"  {_DIM}Usage: /fast [normal|fast|status] [--global]{_RST}")
+            _cprint(
+                f"  {_DIM}Usage: /fast [normal|fast|ultrafast|ultra|status] "
+                f"[--global|--session]{_RST}"
+            )
             return
 
         self.agent = None  # Force agent re-init with new service-tier config
