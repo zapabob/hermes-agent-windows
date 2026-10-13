@@ -504,7 +504,8 @@ export function startMockServer(options: MockServerOptions = {}): Promise<MockSe
           if (userText) {
             _receivedUserTexts.push(userText)
           }
-          const isInterimTrigger = userText.includes('E2E_INTERIM_TRIGGER')
+          const isInterimTrigger = userText.includes('E2E_INTERIM_TRIGGER') &&
+            Array.isArray(parsed.tools) && parsed.tools.length > 0
           const isSidebarTrigger = userText.includes('E2E_SIDEBAR_TRIGGER')
           const isSidebarCrossTrigger = userText.includes('E2E_SIDEBAR_CROSS')
           const isQueueStopTrigger = userText.includes('E2E_QUEUE_STOP_TRIGGER')
