@@ -1305,7 +1305,8 @@ def init_agent(
                 else False
             )
             agent._anthropic_client = build_anthropic_client(
-                effective_key, base_url, timeout=_provider_timeout
+                effective_key, base_url, timeout=_provider_timeout,
+                provider=agent.provider,
             )
             # No OpenAI client needed for Anthropic mode
             agent.client = None

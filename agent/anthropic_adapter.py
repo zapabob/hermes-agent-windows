@@ -659,6 +659,7 @@ def build_anthropic_client(
     base_url: str = None,
     timeout: float = None,
     *,
+    provider: Optional[str] = None,
     drop_context_1m_beta: bool = False,
 ):
     """Create an Anthropic client, auto-detecting setup-tokens vs API keys.
@@ -761,6 +762,18 @@ def build_anthropic_client(
         kwargs["auth_token"] = api_key
         if common_betas:
             kwargs["default_headers"] = {"anthropic-beta": ",".join(common_betas)}
+    elif anthropic_route_is_oauth(base_url, api_key, provider=provider):
+        # OAuth identity is valid on the native Anthropic host, or when the
+        # caller explicitly selected the Anthropic provider for its configured
+        # route. A token-shaped secret alone must not identify an arbitrary
+        # third-party Anthropic-compatible endpoint as Claude Code.
+        all_betas = common_betas + _OAUTH_ONLY_BETAS
+        kwargs["auth_token"] = api_key
+        kwargs["default_headers"] = {
+            "anthropic-beta": ",".join(all_betas),
+            "user-agent": f"claude-code/{_get_claude_code_version()} (external, cli)",
+            "x-app": "cli",
+        }
     elif _is_third_party_anthropic_endpoint(base_url):
         # Third-party proxies (Microsoft Foundry, AWS Bedrock, etc.) use their
         # own API keys with x-api-key auth. Skip OAuth detection — their keys
@@ -769,17 +782,6 @@ def build_anthropic_client(
         kwargs["api_key"] = api_key
         if common_betas:
             kwargs["default_headers"] = {"anthropic-beta": ",".join(common_betas)}
-    elif _is_oauth_token(api_key):
-        # OAuth access token / setup-token → Bearer auth + Claude Code identity.
-        # Anthropic routes OAuth requests based on user-agent and headers;
-        # without Claude Code's fingerprint, requests get intermittent 500s.
-        all_betas = common_betas + _OAUTH_ONLY_BETAS
-        kwargs["auth_token"] = api_key
-        kwargs["default_headers"] = {
-            "anthropic-beta": ",".join(all_betas),
-            "user-agent": f"claude-code/{_get_claude_code_version()} (external, cli)",
-            "x-app": "cli",
-        }
     else:
         # Regular API key → x-api-key header + common betas
         kwargs["api_key"] = api_key

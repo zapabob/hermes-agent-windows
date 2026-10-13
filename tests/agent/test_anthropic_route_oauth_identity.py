@@ -53,3 +53,68 @@ def test_callable_oauth_identity_is_added_only_on_native_anthropic_route(monkeyp
     assert not any(
         beta in third_party_headers["anthropic-beta"] for beta in _OAUTH_ONLY_BETAS
     )
+
+
+def test_static_oauth_proxy_requires_explicit_anthropic_provider(monkeypatch):
+    monkeypatch.setattr("agent.anthropic_adapter._claude_code_version_cache", "0.0.0")
+
+    with patch("agent.anthropic_adapter._anthropic_sdk") as mock_sdk:
+        build_anthropic_client(OAUTH, "https://proxy.example.com/anthropic")
+    unbound_kwargs = mock_sdk.Anthropic.call_args.kwargs
+    assert unbound_kwargs["api_key"] == OAUTH
+    assert "auth_token" not in unbound_kwargs
+    assert "user-agent" not in unbound_kwargs["default_headers"]
+
+    with patch("agent.anthropic_adapter._anthropic_sdk") as mock_sdk:
+        build_anthropic_client(
+            OAUTH,
+            "https://proxy.example.com/anthropic",
+            provider="anthropic",
+        )
+    provider_kwargs = mock_sdk.Anthropic.call_args.kwargs
+    assert provider_kwargs["auth_token"] == OAUTH
+    assert "api_key" not in provider_kwargs
+    assert provider_kwargs["default_headers"]["user-agent"].startswith("claude-code/")
+
+
+def test_explicit_anthropic_provider_proxy_uses_oauth_identity(monkeypatch):
+    """The production init path must carry explicit provider identity to the client."""
+    monkeypatch.setattr("agent.anthropic_adapter._claude_code_version_cache", "0.0.0")
+    from run_agent import AIAgent
+
+    with patch("agent.anthropic_adapter._anthropic_sdk") as mock_sdk:
+        agent = AIAgent(
+            provider="anthropic",
+            base_url="https://proxy.example.com/anthropic",
+            api_key=OAUTH,
+            model="claude-sonnet-4-5",
+            api_mode="anthropic_messages",
+            quiet_mode=True,
+            skip_context_files=True,
+            skip_memory=True,
+        )
+
+    kwargs = mock_sdk.Anthropic.call_args.kwargs
+    assert agent._is_anthropic_oauth is True
+    assert kwargs["auth_token"] == OAUTH
+    assert "api_key" not in kwargs
+    headers = kwargs["default_headers"]
+    assert headers["user-agent"].startswith("claude-code/")
+    assert headers["x-app"] == "cli"
+    assert all(beta in headers["anthropic-beta"] for beta in _OAUTH_ONLY_BETAS)
+
+    rotated = "sk-ant-oat01-rotated-test-token"
+    with patch(
+        "agent.anthropic_adapter.resolve_anthropic_token",
+        return_value=rotated,
+    ), patch("agent.anthropic_adapter._anthropic_sdk") as mock_sdk:
+        assert agent._try_refresh_anthropic_client_credentials() is True
+    refresh_kwargs = mock_sdk.Anthropic.call_args.kwargs
+    assert refresh_kwargs["auth_token"] == rotated
+    assert refresh_kwargs["default_headers"]["user-agent"].startswith("claude-code/")
+
+    with patch("agent.anthropic_adapter._anthropic_sdk") as mock_sdk:
+        agent._rebuild_anthropic_client()
+    rebuild_kwargs = mock_sdk.Anthropic.call_args.kwargs
+    assert rebuild_kwargs["auth_token"] == rotated
+    assert rebuild_kwargs["default_headers"]["user-agent"].startswith("claude-code/")

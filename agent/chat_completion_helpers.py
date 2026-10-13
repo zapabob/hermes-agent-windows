@@ -3006,6 +3006,7 @@ def try_activate_fallback(agent, reason: "FailoverReason | None" = None) -> bool
                     effective_key,
                     agent._anthropic_base_url,
                     timeout=_fb_timeout,
+                    provider=fb_provider,
                 )
                 agent._is_anthropic_oauth = (
                     _is_oauth_token(effective_key) if fb_provider == "anthropic" else False

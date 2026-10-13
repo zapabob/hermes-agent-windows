@@ -105,3 +105,39 @@ def test_custom_endpoint_chat_completions_still_uses_openai_wire():
     assert client is not None
     assert model == "my-model"
     assert not isinstance(client, AnthropicAuxiliaryClient)
+
+
+def test_anthropic_auxiliary_client_passes_explicit_provider():
+    from agent.auxiliary_client import _try_anthropic
+
+    oauth = "sk-ant-oat01-auxiliary-test-token"
+    with patch(
+        "agent.auxiliary_client._select_pool_entry",
+        return_value=(False, None),
+    ), patch(
+        "agent.auxiliary_client._get_aux_model_for_provider",
+        return_value="claude-haiku-4-5-20251001",
+    ), patch(
+        "agent.auxiliary_client._aux_probe_active",
+        return_value=False,
+    ), patch(
+        "agent.anthropic_adapter.resolve_anthropic_token",
+        return_value=oauth,
+    ), patch(
+        "hermes_cli.config.load_config_readonly",
+        return_value={
+            "model": {
+                "provider": "anthropic",
+                "base_url": "https://proxy.example.com/anthropic",
+            }
+        },
+    ), patch(
+        "agent.anthropic_adapter.build_anthropic_client",
+        return_value=MagicMock(name="anthropic_client"),
+    ) as build_client:
+        client, model = _try_anthropic()
+
+    assert client is not None
+    assert model == "claude-haiku-4-5-20251001"
+    assert build_client.call_args.args == (oauth, "https://proxy.example.com/anthropic")
+    assert build_client.call_args.kwargs["provider"] == "anthropic"

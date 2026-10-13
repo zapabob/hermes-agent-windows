@@ -5889,6 +5889,7 @@ class AIAgent:
                 self._anthropic_api_key,
                 getattr(self, "_anthropic_base_url", None),
                 timeout=key[3],
+                provider=self.provider,
                 drop_context_1m_beta=key[4],
             )
         logger.debug(
@@ -6570,6 +6571,7 @@ class AIAgent:
                 new_token,
                 getattr(self, "_anthropic_base_url", None),
                 timeout=get_provider_request_timeout(self.provider, self.model),
+                provider=self.provider,
             )
         except Exception as exc:
             logger.warning("Failed to rebuild Anthropic client after credential refresh: %s", exc)
@@ -6712,6 +6714,7 @@ class AIAgent:
             self._anthropic_client = build_anthropic_client(
                 runtime_key, self._anthropic_base_url,
                 timeout=get_provider_request_timeout(self.provider, self.model),
+                provider=self.provider,
             )
             self._is_anthropic_oauth = _is_oauth_token(runtime_key) if self.provider == "anthropic" else False
             self.api_key = runtime_key
@@ -6825,6 +6828,7 @@ class AIAgent:
                 self._anthropic_api_key,
                 getattr(self, "_anthropic_base_url", None),
                 timeout=get_provider_request_timeout(self.provider, self.model),
+                provider=self.provider,
                 drop_context_1m_beta=_drop_1m,
             )
 
