@@ -11516,10 +11516,6 @@ def cmd_profile(args):
 
         from hermes_cli.profiles import profile_exists, validate_alias_name
 
-        if not profile_exists(name):
-            print(f"Error: Profile '{name}' does not exist.")
-            sys.exit(1)
-
         alias_name = custom_name or name
 
         try:
@@ -11534,6 +11530,10 @@ def cmd_profile(args):
             else:
                 print(f"No alias '{alias_name}' found to remove.")
         else:
+            if not profile_exists(name):
+                print(f"Error: Profile '{name}' does not exist.")
+                sys.exit(1)
+
             collision = check_alias_collision(alias_name)
             if collision:
                 print(f"Error: {collision}")

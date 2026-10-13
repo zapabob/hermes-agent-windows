@@ -322,6 +322,40 @@ class TestDeleteProfile:
 
 
 
+    @pytest.mark.windows_only
+    def test_delete_profile_lists_and_removes_owned_bat_after_confirmation(
+        self, profile_env, monkeypatch, capsys
+    ):
+        profile_dir = create_profile("coder", no_alias=True)
+        wrapper = create_wrapper_script("coder")
+        assert wrapper is not None and wrapper.suffix.lower() == ".bat"
+        monkeypatch.setattr("builtins.input", lambda _prompt: "coder")
+
+        with patch("hermes_cli.profiles._cleanup_gateway_service"), \
+             patch("hermes_cli.profiles._maybe_unregister_gateway_service"), \
+             patch("hermes_cli.profiles._check_gateway_running", return_value=False), \
+             patch("hermes_cli.profiles._stop_profile_backends"), \
+             patch("downstream.security.cli.disable_watch_for_profile", return_value={"ok": True}):
+            assert delete_profile("coder") == profile_dir
+
+        output = capsys.readouterr().out
+        assert f"Command alias ({wrapper})" in output
+        assert not wrapper.exists()
+        assert not profile_dir.exists()
+
+    @pytest.mark.windows_only
+    def test_delete_profile_keeps_owned_bat_when_confirmation_is_wrong(
+        self, profile_env, monkeypatch
+    ):
+        profile_dir = create_profile("coder", no_alias=True)
+        wrapper = create_wrapper_script("coder")
+        assert wrapper is not None and wrapper.suffix.lower() == ".bat"
+        monkeypatch.setattr("builtins.input", lambda _prompt: "not-coder")
+
+        assert delete_profile("coder") == profile_dir
+        assert profile_dir.is_dir()
+        assert wrapper.is_file()
+
     def test_backend_scan_only_matches_this_profile(self, profile_env, monkeypatch):
         """The backend PID scan binds by --profile selector and skips self."""
         create_profile("coder", no_alias=True)
@@ -638,6 +672,79 @@ class TestWrapperScript:
         removed = remove_wrapper_script("mybot")
         assert removed is True
         assert not wrapper.exists()
+
+    @pytest.mark.windows_only
+    def test_alias_remove_can_clean_wrapper_after_profile_deletion(
+        self, profile_env, capsys
+    ):
+        from hermes_cli.main import cmd_profile
+        from hermes_cli.profiles import _get_wrapper_dir
+
+        wrapper = _get_wrapper_dir() / "orphan.bat"
+        wrapper.parent.mkdir(parents=True, exist_ok=True)
+        wrapper.write_text("@echo off\r\nhermes -p orphan %*\r\n", encoding="utf-8")
+
+        cmd_profile(
+            types.SimpleNamespace(
+                profile_action="alias",
+                profile_name="deleted-profile",
+                remove=True,
+                alias_name="orphan",
+            )
+        )
+
+        assert not wrapper.exists()
+        assert "Removed alias 'orphan'" in capsys.readouterr().out
+
+    @pytest.mark.windows_only
+    def test_orphan_alias_remove_preserves_foreign_wrapper(self, profile_env, capsys):
+        from hermes_cli.main import cmd_profile
+        from hermes_cli.profiles import _get_wrapper_dir
+
+        wrapper = _get_wrapper_dir() / "foreign.bat"
+        wrapper.parent.mkdir(parents=True, exist_ok=True)
+        original = b"@echo off\r\necho owned by another application\r\n"
+        wrapper.write_bytes(original)
+
+        cmd_profile(
+            types.SimpleNamespace(
+                profile_action="alias",
+                profile_name="deleted-profile",
+                remove=True,
+                alias_name="foreign",
+            )
+        )
+
+        assert wrapper.read_bytes() == original
+        assert "No alias 'foreign' found to remove." in capsys.readouterr().out
+
+    @pytest.mark.windows_only
+    def test_orphan_alias_remove_validates_before_profile_lookup(
+        self, profile_env, monkeypatch, tmp_path
+    ):
+        from hermes_cli import profiles as profiles_module
+        from hermes_cli.main import cmd_profile
+
+        sentinel = tmp_path / "sentinel.txt"
+        sentinel.write_text("keep", encoding="utf-8")
+        monkeypatch.setattr(
+            profiles_module,
+            "profile_exists",
+            lambda _name: pytest.fail("profile lookup must follow alias validation"),
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            cmd_profile(
+                types.SimpleNamespace(
+                    profile_action="alias",
+                    profile_name="deleted-profile",
+                    remove=True,
+                    alias_name="../../sentinel.txt",
+                )
+            )
+
+        assert exc_info.value.code == 1
+        assert sentinel.read_text(encoding="utf-8") == "keep"
 
 
 
