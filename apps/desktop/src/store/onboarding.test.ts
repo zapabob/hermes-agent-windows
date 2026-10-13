@@ -91,10 +91,15 @@ describe('refreshOnboarding', () => {
   })
 
   it('keeps onboarding work in its initiating lifetime and profile', async () => {
-    const { closeManualOnboarding, saveOnboardingApiKey, startManualOnboarding, startProviderOAuth } =
-      await import('./onboarding')
+    const {
+      closeManualOnboarding,
+      confirmOnboardingModel,
+      saveOnboardingApiKey,
+      startManualOnboarding,
+      startProviderOAuth
+    } = await import('./onboarding')
 
-    const requests: { path: string; profile?: string }[] = []
+    const requests: { body?: unknown; path: string; profile?: string }[] = []
     let release!: () => void
     let delayKey = true
 
@@ -138,15 +143,23 @@ describe('refreshOnboarding', () => {
     vi.spyOn(window, 'open').mockReturnValue(null)
     let profile = 'beta'
 
+    const gatewayCalls: { method: string; params?: unknown }[] = []
+    const onCompleted = vi.fn()
+
     const ctx: OnboardingContext = {
       get profile() {
         return profile
       },
-      requestGateway: async method =>
-        (method === 'setup.status' ? { provider_configured: true } : { ok: true }) as never
+      requestGateway: async (method, params) => {
+        gatewayCalls.push({ method, params })
+
+        return (method === 'setup.status' ? { provider_configured: true } : { ok: true }) as never
+      },
+      onCompleted
     }
 
     try {
+      $desktopOnboarding.set(baseState({ configured: true }))
       startManualOnboarding(null, 'beta')
       const pending = saveOnboardingApiKey('FIREWORKS_API_KEY', 'fake-key', 'Fireworks', ctx)
       await vi.waitFor(() => expect(release).toBeTypeOf('function'))
@@ -170,11 +183,173 @@ describe('refreshOnboarding', () => {
         timeout: 5000
       })
 
-      expect(requests.slice(startAt).some(r => r.path.includes('/poll/'))).toBe(true)
-      expect(requests.slice(startAt).some(r => r.path === '/api/model/set')).toBe(true)
-      expect(requests.slice(startAt).every(r => r.profile === 'beta')).toBe(true)
+      const oauthRequests = requests.slice(startAt)
+      expect(oauthRequests.some(r => r.path.includes('/poll/'))).toBe(true)
+      expect(oauthRequests.filter(r => r.path === '/api/model/set')).toHaveLength(0)
+      expect(oauthRequests.every(r => r.profile === 'beta')).toBe(true)
+      expect(gatewayCalls).toContainEqual({ method: 'setup.runtime_check', params: { provider: 'fixture' } })
+
+      await confirmOnboardingModel(ctx)
+
+      const oauthModelWrites = requests.slice(startAt).filter(r => r.path === '/api/model/set')
+      expect(oauthModelWrites).toHaveLength(1)
+      expect(oauthModelWrites[0]?.profile).toBe('beta')
+      expect(onCompleted).toHaveBeenCalledTimes(1)
+
+      closeManualOnboarding()
+      startManualOnboarding(null, 'beta')
+      const apiKeyStartAt = requests.length
+      const apiKeyResult = await saveOnboardingApiKey('FIREWORKS_API_KEY', 'fake-key', 'Fireworks', ctx)
+      expect(apiKeyResult.ok).toBe(true)
+      await vi.waitFor(() => expect($desktopOnboarding.get().flow.status).toBe('confirming_model'))
+
+      expect(requests.slice(apiKeyStartAt).filter(r => r.path === '/api/model/set')).toHaveLength(0)
+
+      await confirmOnboardingModel(ctx)
+
+      expect(requests.slice(apiKeyStartAt).filter(r => r.path === '/api/model/set')).toHaveLength(1)
+      expect(onCompleted).toHaveBeenCalledTimes(2)
     } finally {
       closeManualOnboarding()
+    }
+  })
+
+  it('preserves the prior default when manual model confirmation is dismissed', async () => {
+    const { closeManualOnboarding, startManualOnboarding, startProviderOAuth } = await import('./onboarding')
+    const previousDefault = { model: 'openrouter/auto', provider: 'openrouter' }
+    let persistedDefault = { ...previousDefault }
+    const requests: { body?: unknown; path: string; profile?: string }[] = []
+
+    installApiMock(async request => {
+      requests.push(request)
+
+      if (request.path.endsWith('/start')) {
+        return {
+          expires_in: 600,
+          flow: 'device_code',
+          session_id: 'dismiss-fixture',
+          user_code: 'FAKE',
+          verification_url: 'http://localhost/fixture'
+        }
+      }
+
+      if (request.path.includes('/poll/')) {
+        return { status: 'approved' }
+      }
+
+      if (request.path.startsWith('/api/model/options')) {
+        return { providers: [{ slug: 'fixture', name: 'Fixture', models: ['fixture-model'] }] }
+      }
+
+      if (request.path.startsWith('/api/model/recommended-default')) {
+        return { model: 'fixture-model' }
+      }
+
+      if (request.path === '/api/model/set') {
+        persistedDefault = request.body as typeof previousDefault
+      }
+
+      return { ok: true }
+    })
+    vi.spyOn(window, 'open').mockReturnValue(null)
+
+    const ctx: OnboardingContext = {
+      profile: 'beta',
+      requestGateway: async method => (method === 'setup.status' ? { provider_configured: true } : { ok: true }) as never
+    }
+
+    $desktopOnboarding.set(baseState({ configured: true }))
+    startManualOnboarding(null, 'beta')
+
+    try {
+      await startProviderOAuth(makeOAuthProvider('fixture'), ctx)
+      await vi.waitFor(() => expect($desktopOnboarding.get().flow.status).toBe('confirming_model'), {
+        timeout: 5000
+      })
+
+      expect(persistedDefault).toEqual(previousDefault)
+      expect(requests.filter(request => request.path === '/api/model/set')).toHaveLength(0)
+
+      closeManualOnboarding()
+
+      expect(persistedDefault).toEqual(previousDefault)
+      expect(requests.filter(request => request.path === '/api/model/set')).toHaveLength(0)
+      expect($desktopOnboarding.get()).toMatchObject({ configured: true, flow: { status: 'idle' }, manual: false })
+    } finally {
+      closeManualOnboarding()
+    }
+  })
+
+  it('notifies and completes best-effort when saving the confirmed model fails', async () => {
+    const { confirmOnboardingModel, startManualOnboarding, startProviderOAuth } = await import('./onboarding')
+    const requests: { body?: unknown; path: string; profile?: string }[] = []
+    const onCompleted = vi.fn()
+
+    notifications.clearNotifications()
+
+    installApiMock(async request => {
+      requests.push(request)
+
+      if (request.path.endsWith('/start')) {
+        return {
+          expires_in: 600,
+          flow: 'device_code',
+          session_id: 'save-failure-fixture',
+          user_code: 'FAKE',
+          verification_url: 'http://localhost/fixture'
+        }
+      }
+
+      if (request.path.includes('/poll/')) {
+        return { status: 'approved' }
+      }
+
+      if (request.path.startsWith('/api/model/options')) {
+        return { providers: [{ slug: 'fixture', name: 'Fixture', models: ['fixture-model'] }] }
+      }
+
+      if (request.path.startsWith('/api/model/recommended-default')) {
+        return { model: 'fixture-model' }
+      }
+
+      if (request.path === '/api/model/set') {
+        throw new Error('fixture model assignment failed')
+      }
+
+      return { ok: true }
+    })
+    vi.spyOn(window, 'open').mockReturnValue(null)
+
+    const ctx: OnboardingContext = {
+      profile: 'beta',
+      requestGateway: async method => (method === 'setup.status' ? { provider_configured: true } : { ok: true }) as never,
+      onCompleted
+    }
+
+    $desktopOnboarding.set(baseState({ configured: true }))
+    startManualOnboarding(null, 'beta')
+
+    try {
+      await startProviderOAuth(makeOAuthProvider('fixture'), ctx)
+      await vi.waitFor(() => expect($desktopOnboarding.get().flow.status).toBe('confirming_model'), {
+        timeout: 5000
+      })
+
+      await confirmOnboardingModel(ctx)
+
+      expect(requests.filter(request => request.path === '/api/model/set')).toHaveLength(1)
+      expect(notifications.$notifications.get()).toContainEqual(
+        expect.objectContaining({
+          kind: 'error',
+          title: 'Could not save the selected model.',
+          message: 'fixture model assignment failed'
+        })
+      )
+      expect(onCompleted).toHaveBeenCalledTimes(1)
+    } finally {
+      const { closeManualOnboarding } = await import('./onboarding')
+      closeManualOnboarding()
+      notifications.clearNotifications()
     }
   })
 
