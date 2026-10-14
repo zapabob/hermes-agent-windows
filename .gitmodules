@@ -51,3 +51,6 @@
 [submodule "plugins/artemis"]
 	path = plugins/artemis
 	url = https://github.com/zapabob/artemis.git
+[submodule "vendor/Familiar"]
+	path = vendor/familiar
+	url = https://github.com/Shoalstone/familiar.git

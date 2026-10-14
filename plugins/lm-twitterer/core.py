@@ -186,30 +186,51 @@ MENTIONS_SCHEMA = {
 _llm_factory: Callable[[], Any] | None = None
 
 
-@dataclass
+# PATCHED: @dataclass removed
 class Settings:
-    bot_screen_name: str
-    auth_token: str
-    ct0: str
-    max_tokens: int
-    max_post_chars: int
-    max_replies_per_run: int
-    default_topic: str
-    tweet_prompt: str
-    reply_prompt: str
-    provider: str
-    model: str
-    identity_name: str
-    required_hashtag: str
-    signature_replies: bool
-    require_follower: bool
-    state_dir: Path
-    whitelist_file: Path
-    replied_ids_file: Path
-    log_file: Path
-    media_dir: Path | None = None
+    bot_screen_name: str = "zapabob_ouj"
+    auth_token: str = ""
+    ct0: str = ""
+    max_tokens: int = 200
+    max_post_chars: int = 280
+    max_replies_per_run: int = 3
+    default_topic: str = ""
+    tweet_prompt: str = ""
+    reply_prompt: str = ""
+    provider: str = ""
+    model: str = ""
+    identity_name: str = "Hakua"
+    required_hashtag: str = ""
+    signature_replies: bool = True
+    require_follower: bool = False
+    state_dir: str = ""
+    whitelist_file: str = ""
+    replied_ids_file: str = ""
+    log_file: str = ""
+
+    def __init__(self, **kwargs):
+        self.bot_screen_name = kwargs.get("bot_screen_name", "zapabob_ouj")
+        self.auth_token = kwargs.get("auth_token", "")
+        self.ct0 = kwargs.get("ct0", "")
+        self.max_tokens = kwargs.get("max_tokens", 200)
+        self.max_post_chars = kwargs.get("max_post_chars", 280)
+        self.max_replies_per_run = kwargs.get("max_replies_per_run", 3)
+        self.default_topic = kwargs.get("default_topic", "")
+        self.tweet_prompt = kwargs.get("tweet_prompt", "")
+        self.reply_prompt = kwargs.get("reply_prompt", "")
+        self.provider = kwargs.get("provider", "")
+        self.model = kwargs.get("model", "")
+        self.identity_name = kwargs.get("identity_name", "Hakua")
+        self.required_hashtag = kwargs.get("required_hashtag", "")
+        self.signature_replies = kwargs.get("signature_replies", True)
+        self.require_follower = kwargs.get("require_follower", False)
+        self.state_dir = kwargs.get("state_dir", "")
+        self.whitelist_file = kwargs.get("whitelist_file", "")
+        self.replied_ids_file = kwargs.get("replied_ids_file", "")
+        self.log_file = kwargs.get("log_file", "")
+    media_dir: Optional[Path] = None
     memory_bridge_enabled: bool = True
-    memory_db: Path | None = None
+    memory_db: Optional[Path] = None
     memory_recall_limit: int = 5
     # Posts already live in activity.jsonl; copying each one into the recall
     # store crowds out first-hand memories, so write-back is opt-in.

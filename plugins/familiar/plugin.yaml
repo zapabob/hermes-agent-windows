@@ -1,0 +1,9 @@
+name: familiar
+version: 0.1.0
+description: "Launch the vendored Familiar body only for the exact Hermes Desktop user message VRChat起動."
+author: zapabob
+kind: standalone
+platforms:
+  - windows
+provides_hooks:
+  - pre_llm_call

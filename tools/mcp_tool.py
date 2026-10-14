@@ -3635,44 +3635,24 @@ class MCPServerTask:
         # Capture the configured header names before client-generated
         # headers (identity, protocol version) are merged in.
         _strict_cfg_headers = bool(config.get("strict_redirect_headers"))
+        headers = dict(config.get("headers") or {})
         _configured_header_names = {key.lower() for key in headers}
         # Optional per-user identity header (config-gated; static or
         # profile-derived). Explicit headers of the same name win.
         headers = _apply_identity_header(self.name, config, headers)
         # Some MCP servers require MCP-Protocol-Version on the initial
-        # initialize request and reject session-less POSTs otherwise.
-        # Seed it as a client-level default, but treat user overrides as
-        # case-insensitive so conventional casing is preserved.
-        #
-        # Seeded from the HANDSHAKE version, not the latest one: this transport
-        # connects via `ClientSession.initialize()`, which sends
-        # LATEST_HANDSHAKE_VERSION (2025-11-25) in the body. Advertising
-        # 2026-07-28 in the header routes the request onto the server's
-        # per-request-envelope ladder, which then rejects the legacy body for
-        # missing its required `params._meta` envelope keys. The header has to
-        # agree with what the body actually speaks.
+        # POST/GET. Anything else on a 2xx response means the URL is not
+        # an MCP endpoint.
         if not any(key.lower() == "mcp-protocol-version" for key in headers):
             headers["mcp-protocol-version"] = LATEST_HANDSHAKE_VERSION
-        connect_timeout = config.get("connect_timeout", _DEFAULT_CONNECT_TIMEOUT)
-        ssl_verify = config.get("ssl_verify", True)
-        client_cert = _resolve_client_cert(self.name, config)
-
-        # OAuth 2.1 PKCE: route through the central MCPOAuthManager so the
-        # same provider instance is reused across reconnects, pre-flow
-        # disk-watch is active, and config-time CLI code paths share state.
-        # If OAuth setup fails (e.g. non-interactive env without cached
-        # tokens), re-raise so this server is reported as failed without
-        # blocking other MCP servers from connecting.
-        _oauth_auth = None
-        if self._auth_type == "oauth":
-            try:
-                from tools.mcp_oauth_manager import get_manager
-                _oauth_auth = get_manager().get_or_build_provider(
-                    self.name, url, config.get("oauth"),
-                )
-            except Exception as exc:
-                logger.warning("MCP OAuth setup failed for '%s': %s", self.name, exc)
-                raise
+        try:
+            from tools.mcp_oauth_manager import get_manager
+            _oauth_auth = get_manager().get_or_build_provider(
+                self.name, url, config.get("oauth"),
+            )
+        except Exception as exc:
+            logger.warning("MCP OAuth setup failed for '%s': %s", self.name, exc)
+            raise
 
         sampling_kwargs = self._sampling.session_kwargs() if self._sampling else {}
         if self._elicitation:
@@ -3686,6 +3666,9 @@ class MCPServerTask:
         # rather than Streamable HTTP). Configure with ``transport: sse`` in the
         # mcp_servers entry in config.yaml.
         if config.get("transport") == "sse":
+            if _strict_cfg_headers:
+                # Portable packages never translate to SSE; if a config
+                # combines both anyway, fail closed rather than run a
             if _strict_cfg_headers:
                 # Portable packages never translate to SSE; if a config
                 # combines both anyway, fail closed rather than run a
@@ -4034,19 +4017,35 @@ class MCPServerTask:
             # without a cached token the endpoint returns HTML or 401, which
             # would incorrectly block the OAuth flow before it can run.
             if config.get("transport") != "sse" and not config.get("skip_preflight") and not self._ready.is_set() and self._auth_type != "oauth":
+                # Portable Agent Plugins v1 packages set strict_redirect_headers:
+                # configured headers are visible package data and MUST NOT be
+                # forwarded to a different origin through a redirect (spec §7.2.1).
+                # Capture the configured header names before client-generated
+                # headers (identity, protocol version) are merged in.
+                _strict_cfg_headers = bool(config.get("strict_redirect_headers"))
+                _configured_header_names = {key.lower() for key in headers}
+                # Optional per-user identity header (config-gated; static or
+                # profile-derived). Explicit headers of the same name win.
+                headers = _apply_identity_header(self.name, config, headers)
+                # Some MCP servers require MCP-Protocol-Version on the initial
+                # POST/GET. Anything else on a 2xx response means the URL is not
+                # an MCP endpoint.
+                if not any(key.lower() == "mcp-protocol-version" for key in headers):
+                headers["mcp-protocol-version"] = LATEST_HANDSHAKE_VERSION
+                
                 try:
-                    _probe_headers = dict(config.get("headers") or {})
-                    await self._preflight_content_type(
-                        config["url"],
-                        headers=_probe_headers,
-                        ssl_verify=config.get("ssl_verify", True),
-                        client_cert=_resolve_client_cert(self.name, config),
-                    )
+                _probe_headers = dict(config.get("headers") or {})
+                await self._preflight_content_type(
+                config["url"],
+                headers=_probe_headers,
+                ssl_verify=config.get("ssl_verify", True),
+                client_cert=_resolve_client_cert(self.name, config),
+                )
                 except NonMcpEndpointError as exc:
-                    logger.warning("%s", exc)
-                    self._error = exc
-                    self._ready.set()
-                    return
+                logger.warning("%s", exc)
+                self._error = exc
+                self._ready.set()
+                return
 
         self._reconnect_retries = 0
         initial_retries = 0
