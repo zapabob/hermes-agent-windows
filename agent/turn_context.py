@@ -663,6 +663,11 @@ def build_turn_context(
     from agent.agent_runtime_helpers import note_turn_start
     note_turn_start(agent, turn_id)
 
+    # Recovery belongs to the turn boundary, never the per-request retry loop.
+    # The health probe grants one trial; the normal stale/success paths settle it.
+    from agent.chat_completion_helpers import _retry_recovered_local_server
+    _retry_recovered_local_server(agent)
+
     # Reset retry counters and iteration budget at the start of each turn.
     agent._invalid_tool_retries = 0
     agent._invalid_json_retries = 0
