@@ -3765,6 +3765,47 @@ def _build_partial_stream_stub(
     )
 
 
+class _LocalPromptProgress:
+    """Attempt-local high-water mark for progress-only local stream frames."""
+
+    def __init__(self) -> None:
+        self.processed = 0
+
+    @staticmethod
+    def metadata_only(chunk: Any) -> bool:
+        """Usage/heartbeat metadata is not forward work; output/errors are."""
+        def field(value: Any, name: str) -> Any:
+            return value.get(name) if isinstance(value, dict) else getattr(value, name, None)
+
+        if field(chunk, "error_type") or field(chunk, "error_message"):
+            return False
+        for choice in field(chunk, "choices") or []:
+            if field(choice, "finish_reason"):
+                return False
+            delta = field(choice, "delta")
+            if any(field(delta, name) for name in (
+                "content", "tool_calls", "reasoning_content", "reasoning", "refusal",
+            )):
+                return False
+        return True
+
+    def advance(self, chunk: Any) -> bool:
+        """Only a strictly increasing valid token count buys more idle time."""
+        extra = chunk if isinstance(chunk, dict) else getattr(chunk, "model_extra", None)
+        progress = extra.get("prompt_progress") if isinstance(extra, dict) else None
+        if not isinstance(progress, dict):
+            return False
+        processed, total = progress.get("processed"), progress.get("total")
+        if not isinstance(processed, int) or isinstance(processed, bool) or processed <= self.processed:
+            return False
+        if total is not None and (
+            not isinstance(total, int) or isinstance(total, bool) or total < processed
+        ):
+            return False
+        self.processed = processed
+        return True
+
+
 def _poll_local_llama_progress(
     base_url: str | None,
     model: str | None = None,
@@ -4719,6 +4760,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
         _writer_token = {"value": None}
         attempt_request_client = {"value": None}
         attempt_stream_response = {"value": None}
+        prompt_progress = _LocalPromptProgress()
 
         def _open_stream(next_api_kwargs: dict[str, Any]):
             stream_kwargs = {
@@ -4782,7 +4824,14 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
             # prevents the stale watchdog from cancelling a live stream while
             # an interceptor or codec is still handling an already-received
             # event.
-            last_chunk_time["t"] = time.time()
+            with stream_attempt_lock:
+                if (stream_attempt_id != stream_attempt_state["current"]
+                        or stream_attempt_id in stream_attempt_state["cancelled"]):
+                    return False
+                if not (_is_local_request and prompt_progress.metadata_only(_chunk)):
+                    last_chunk_time["t"] = time.time()
+                elif prompt_progress.advance(_chunk):
+                    last_chunk_time["t"] = time.time()
             return True
 
         def _relay_final_response() -> dict[str, Any]:
@@ -4859,7 +4908,15 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
             stream,
             response=lambda: attempt_stream_response["value"],
         ):
-            last_chunk_time["t"] = time.time()
+            # The receive callback already accounts for this frame before
+            # Relay processing. Do not count it again or treat duplicate
+            # progress/heartbeats as output or a first-token diagnostic.
+            if _is_local_request and prompt_progress.metadata_only(chunk):
+                if hasattr(chunk, "model") and chunk.model:
+                    model_name = chunk.model
+                if hasattr(chunk, "usage") and chunk.usage:
+                    usage_obj = chunk.usage
+                continue
             agent._touch_activity("receiving stream response")
 
             # Update per-attempt diagnostic counters.  Best-effort —
