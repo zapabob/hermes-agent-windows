@@ -349,21 +349,33 @@ class TestRunCompressContextWithProgressTimeout:
             f"overrun; got: {[r.getMessage() for r in records]}"
         )
 
-    def test_commit_overrun_callback_failure_does_not_break_wait(self):
+    def test_commit_overrun_callback_failure_does_not_break_wait(self, monkeypatch):
         """A raising on_commit_overrun callback must not abort the commit wait."""
         original = [{"role": "user", "content": "a"}]
         compressed = [{"role": "assistant", "content": "ok"}]
+        from types import SimpleNamespace
+
         release = threading.Event()
+        admitted = threading.Event()
+        overrun_seen = threading.Event()
+        clock = [0.0]
+        # Cold imports and worker scheduling are not the behavior under test.
+        # Expire the budget only after the worker has entered the commit fence.
+        monkeypatch.setattr(cc, "time", SimpleNamespace(
+            monotonic=lambda: clock[0], sleep=time.sleep,
+        ))
 
         def worker(fence: CompressionCommitFence):
             assert fence.begin_commit()
+            admitted.set()
             try:
-                assert release.wait(timeout=5)
+                assert release.wait(timeout=10)
                 return (compressed, "done")
             finally:
                 fence.finish_commit()
 
         def boom(waited, ceiling):
+            overrun_seen.set()
             raise RuntimeError("callback exploded")
 
         done = {}
@@ -380,9 +392,13 @@ class TestRunCompressContextWithProgressTimeout:
 
         t = threading.Thread(target=run)
         t.start()
-        time.sleep(0.3)
-        release.set()
-        t.join(timeout=5)
+        try:
+            assert admitted.wait(timeout=5)
+            clock[0] = 1.0
+            assert overrun_seen.wait(timeout=5)
+        finally:
+            release.set()
+            t.join(timeout=5)
         assert not t.is_alive()
         assert done["result"] == (compressed, "done")
 

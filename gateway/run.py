@@ -20517,8 +20517,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                                                     0.005,
                                                 ),
                                                 max(
-                                                    _hyg_total_ceiling_seconds
-                                                    - _hyg_waited,
+                                                    _hyg_commit_fence.remaining_total_seconds(),
                                                     0.005,
                                                 ),
                                             )
@@ -20529,11 +20528,16 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                                                 )
                                                 break
                                             except asyncio.TimeoutError:
+                                                # A completed worker may itself
+                                                # raise TimeoutError. Rewaiting
+                                                # that future would spin.
+                                                if _hyg_future.done():
+                                                    raise
                                                 _hyg_waited = time.monotonic() - _hyg_wait_started
                                                 _idle = _hyg_commit_fence.seconds_since_progress()
                                                 if (
                                                     _idle < _hyg_timeout_seconds
-                                                    and _hyg_waited < _hyg_total_ceiling_seconds
+                                                    and _hyg_commit_fence.remaining_total_seconds() > 0
                                                 ):
                                                     logger.info(
                                                         "Session hygiene compression for "
@@ -20549,8 +20553,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                                     except asyncio.TimeoutError:
                                         _hyg_waited = time.monotonic() - _hyg_wait_started
                                         _hyg_total_exhausted = (
-                                            _hyg_waited >= _hyg_total_ceiling_seconds
-                                            or _hyg_commit_fence.deadline_exceeded
+                                            _hyg_commit_fence.deadline_exceeded
                                         )
                                         if _hyg_total_exhausted:
                                             # The worker cooperatively checks this

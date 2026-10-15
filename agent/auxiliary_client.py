@@ -53,6 +53,7 @@ import inspect
 import json
 import ipaddress
 import logging
+import math
 import os
 import re
 import threading
@@ -62,6 +63,10 @@ from pathlib import Path  # noqa: F401 — used by test mocks
 from types import SimpleNamespace
 from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, TYPE_CHECKING
 from urllib.parse import urlparse, parse_qs, urlunparse
+
+from agent.local_prompt_progress import (
+    PromptReadingClock, tracks_prompt_progress, with_prompt_progress,
+)
 
 # NOTE: `from openai import OpenAI` is deliberately NOT at module top — the
 # openai SDK pulls a large type tree (~240 ms cold, including responses/*,
@@ -448,15 +453,19 @@ class _AuxiliaryCancellationDecision:
 _aux_progress = threading.local()
 
 
-def _notify_aux_progress() -> None:
-    """Tick the installed forward-progress hook, if any. Never raises."""
-    hook = getattr(_aux_progress, "hook", None)
+def _call_aux_progress_hook(hook: Optional[Callable[[], Any]]) -> None:
+    """Call an attempt's captured hook without consulting another scope."""
     if hook is None:
         return
     try:
         hook()
     except Exception:
         logger.debug("aux progress hook failed", exc_info=True)
+
+
+def _notify_aux_progress() -> None:
+    """Tick the installed forward-progress hook, if any. Never raises."""
+    _call_aux_progress_hook(getattr(_aux_progress, "hook", None))
 
 
 def _aux_progress_active() -> bool:
@@ -9693,11 +9702,17 @@ def _create_with_progress(
     original error is surfaced to the normal recovery chains instead.
     """
     _notify_aux_progress()  # request dispatched counts as progress
-    if (not _aux_progress_active() and not force_stream) or _client_streams_internally(client):
+    if _client_streams_internally(client):
+        return client.chat.completions.create(**kwargs)
+    base_url = str(getattr(client, "base_url", "") or "")
+    prepared = with_prompt_progress(kwargs, base_url)
+    extra = prepared.get("extra_body")
+    progress_requested = isinstance(extra, dict) and extra.get("return_progress") is True
+    if not _aux_progress_active() and not force_stream and not progress_requested:
         return client.chat.completions.create(**kwargs)
 
     total_ceiling = _aux_stream_total_ceiling(kwargs.get("timeout"))
-    stream_kwargs = dict(kwargs)
+    stream_kwargs = dict(prepared)
     stream_kwargs["stream"] = True
     stream_kwargs["stream_options"] = {"include_usage": True}
     try:
@@ -9708,7 +9723,7 @@ def _create_with_progress(
         # recovery chains (credential refresh, pool rotation, provider
         # fallback) see the same error they would on a plain call.
         if (
-            force_stream
+            (force_stream or progress_requested)
             or _is_transient_transport_error(exc)
             or _is_auth_error(exc)
             or _is_payment_error(exc)
@@ -9732,6 +9747,7 @@ def _create_with_progress(
         return chunks
     return _aggregate_chat_stream(
         chunks, model=str(kwargs.get("model") or ""), total_ceiling=total_ceiling,
+        prompt_progress=tracks_prompt_progress(base_url, stream_kwargs), idle_timeout=kwargs.get("timeout"),
     )
 
 
@@ -9740,17 +9756,20 @@ def _aggregate_chat_stream(
     *,
     model: str = "",
     total_ceiling: Optional[float] = None,
+    prompt_progress: bool = False,
+    idle_timeout: Optional[float] = None,
 ) -> Any:
     """Consume a chat.completions chunk stream into a complete response.
 
-    Ticks the thread-local aux progress hook on every chunk. Raises
-    TimeoutError when *total_ceiling* seconds elapse before the stream
+    Ticks the captured hook for forward work on progress-aware routes.
+    Raises TimeoutError when *total_ceiling* non-reading seconds elapse before the stream
     finishes — phrased with "timed out" so existing timeout classification
     (``_is_timeout_error``) treats it exactly like a request timeout.
     Accumulation is shared with the async mirror via
     :class:`_ChatStreamAccumulator`.
     """
-    acc = _ChatStreamAccumulator(model=model, total_ceiling=total_ceiling)
+    acc = _ChatStreamAccumulator(model=model, total_ceiling=total_ceiling,
+                                 prompt_progress=prompt_progress, idle_timeout=idle_timeout)
     try:
         for chunk in chunks:
             acc.feed(chunk)
@@ -9772,9 +9791,19 @@ class _ChatStreamAccumulator:
     tool-call delta reassembly, same "timed out" ceiling phrasing).
     """
 
-    def __init__(self, model: str = "", total_ceiling: Optional[float] = None):
+    def __init__(self, model: str = "", total_ceiling: Optional[float] = None, *,
+                 prompt_progress: bool = False, idle_timeout: Optional[float] = None):
         self._started = time.monotonic()
         self._total_ceiling = total_ceiling
+        self._progress_enabled = prompt_progress
+        self._reading = PromptReadingClock(self._started)
+        self._progress_hook = getattr(_aux_progress, "hook", None)
+        captured_cancel = _capture_aux_cancel_check() if _aux_interrupt_protected() else None
+        self._cancel_check = _AuxiliaryCancellationDecision(captured_cancel) if callable(captured_cancel) else None
+        self._last_progress = self._started
+        self._idle_timeout = (float(idle_timeout) if isinstance(idle_timeout, (int, float))
+                              and not isinstance(idle_timeout, bool) and math.isfinite(idle_timeout)
+                              and idle_timeout > 0 else None)
         self.content_parts: List[str] = []
         self.reasoning_parts: List[str] = []
         self.tool_calls_acc: Dict[int, Dict[str, Any]] = {}
@@ -9784,15 +9813,26 @@ class _ChatStreamAccumulator:
         self.resp_model = model or ""
 
     def feed(self, chunk: Any) -> None:
-        _notify_aux_progress()
-        if (
+        if self._cancel_check is not None and self._cancel_check():
+            raise AuxiliaryExplicitCancellation()
+        now = time.monotonic()
+        if (self._progress_enabled and self._idle_timeout is not None
+                and now - self._last_progress >= self._idle_timeout):
+            raise TimeoutError("Auxiliary streamed call timed out without forward progress")
+        advanced = True
+        if self._progress_enabled and self._reading.metadata_only(chunk):
+            advanced = self._reading.tick(chunk, now)
+        deadline = self._reading.deadline_monotonic()
+        if ((deadline is not None and now >= deadline) or (
             self._total_ceiling is not None
-            and (time.monotonic() - self._started) >= self._total_ceiling
-        ):
-            raise TimeoutError(
-                f"Auxiliary streamed call timed out after {self._total_ceiling:.0f}s "
-                "total ceiling (stream still open but over budget)"
-            )
+            and now - self._started - self._reading.seconds >= self._total_ceiling
+        )):
+            budget = (f"{self._total_ceiling:.0f}s total ceiling" if self._total_ceiling is not None
+                      else "shared compression deadline")
+            raise TimeoutError(f"Auxiliary streamed call timed out after {budget} (stream still open but over budget)")
+        if advanced:
+            _call_aux_progress_hook(self._progress_hook)
+            self._last_progress = now
         self.resp_id = getattr(chunk, "id", None) or self.resp_id
         self.resp_model = getattr(chunk, "model", None) or self.resp_model
         chunk_usage = getattr(chunk, "usage", None)
@@ -9868,6 +9908,8 @@ async def _aggregate_chat_stream_async(
     *,
     model: str = "",
     total_ceiling: Optional[float] = None,
+    prompt_progress: bool = False,
+    idle_timeout: Optional[float] = None,
 ) -> Any:
     """Async mirror of :func:`_aggregate_chat_stream` (``async for`` consumer).
 
@@ -9875,7 +9917,8 @@ async def _aggregate_chat_stream_async(
     the sync helper raises. Same accumulation and ceiling semantics via
     :class:`_ChatStreamAccumulator`.
     """
-    acc = _ChatStreamAccumulator(model=model, total_ceiling=total_ceiling)
+    acc = _ChatStreamAccumulator(model=model, total_ceiling=total_ceiling,
+                                 prompt_progress=prompt_progress, idle_timeout=idle_timeout)
     try:
         async for chunk in chunks:
             acc.feed(chunk)
@@ -9902,8 +9945,10 @@ async def _acreate_with_stream(
     complete response (credit @kudi88, PR #60686 — async contract fixed to
     ``async for`` and tool-call deltas preserved per sweeper review).
     """
+    base_url = str(getattr(client, "base_url", "") or "")
+    prepared = with_prompt_progress(kwargs, base_url)
     total_ceiling = _aux_stream_total_ceiling(kwargs.get("timeout"))
-    stream_kwargs = dict(kwargs)
+    stream_kwargs = dict(prepared)
     stream_kwargs["stream"] = True
     stream_kwargs["stream_options"] = {"include_usage": True}
     chunks = await client.chat.completions.create(**stream_kwargs)
@@ -9912,6 +9957,7 @@ async def _acreate_with_stream(
         return chunks
     return await _aggregate_chat_stream_async(
         chunks, model=str(kwargs.get("model") or ""), total_ceiling=total_ceiling,
+        prompt_progress=tracks_prompt_progress(base_url, stream_kwargs), idle_timeout=kwargs.get("timeout"),
     )
 
 
@@ -9939,18 +9985,24 @@ async def _acreate_with_progress(
     edac5f6378).
     """
     _notify_aux_progress()
-    if (not _aux_progress_active() and not force_stream) or _async_client_streams_internally(client):
+    if _async_client_streams_internally(client):
+        return await client.chat.completions.create(**kwargs)
+    base_url = str(getattr(client, "base_url", "") or "")
+    prepared = with_prompt_progress(kwargs, base_url)
+    extra = prepared.get("extra_body")
+    progress_requested = isinstance(extra, dict) and extra.get("return_progress") is True
+    if not _aux_progress_active() and not force_stream and not progress_requested:
         return await client.chat.completions.create(**kwargs)
 
     total_ceiling = _aux_stream_total_ceiling(kwargs.get("timeout"))
-    stream_kwargs = dict(kwargs)
+    stream_kwargs = dict(prepared)
     stream_kwargs["stream"] = True
     stream_kwargs["stream_options"] = {"include_usage": True}
     try:
         chunks = await client.chat.completions.create(**stream_kwargs)
     except Exception as exc:
         if (
-            force_stream
+            (force_stream or progress_requested)
             or _is_transient_transport_error(exc)
             or _is_auth_error(exc)
             or _is_payment_error(exc)
@@ -9967,6 +10019,7 @@ async def _acreate_with_progress(
         return chunks
     return await _aggregate_chat_stream_async(
         chunks, model=str(kwargs.get("model") or ""), total_ceiling=total_ceiling,
+        prompt_progress=tracks_prompt_progress(base_url, stream_kwargs), idle_timeout=kwargs.get("timeout"),
     )
 
 
