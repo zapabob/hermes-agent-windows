@@ -62,8 +62,10 @@ class NativeObserver:
         self.oauth_sources = {}
         for relative, expected in {
             ".venv/Lib/site-packages/mcp/client/auth/oauth2.py": "912f43f60a023b66b05d102a5f2312affbccb6a626644f195aa6739d52c8717c",
-            "tools/mcp_oauth_manager.py": "64c353cc8eb645827b352629a757e54ddfab5f552cb3347491cabea4aa5709c7",
-            "tools/mcp_oauth.py": "f194aefcad8142e460fc374e94f7513d960e25fab3d488cbe6e6dcfb9b54ed33",
+            # U02's independently reviewed and committed owner bytes; keep
+            # this source guard rather than reverting the retirement fix.
+            "tools/mcp_oauth_manager.py": "e96e4c8cacf937964aca1dc6f6c802837439d7d75a4141d2ba2d28c64f3eaa8f",
+            "tools/mcp_oauth.py": "3ad0d5af28de7ee2771fa139fe2dc861a6c6be808bbdf66de50bb046e663d678",
         }.items():
             path = (root / relative).resolve()
             actual = hashlib.sha256(path.read_bytes()).hexdigest()
