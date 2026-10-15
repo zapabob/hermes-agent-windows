@@ -131,15 +131,14 @@ class HolographicMemoryProvider(MemoryProvider):
         from pathlib import Path
         config_path = Path(hermes_home) / "config.yaml"
         try:
-            import yaml
+            from utils import atomic_yaml_write
             # Write-back round-trip: raw read is correct (merged defaults
             # must not be persisted back into the user's file).
             from hermes_cli.config import read_user_config_raw
             existing = read_user_config_raw(config_path)
             existing.setdefault("plugins", {})
             existing["plugins"]["hermes-memory-store"] = values
-            with open(config_path, "w", encoding="utf-8") as f:
-                yaml.dump(existing, f, default_flow_style=False)
+            atomic_yaml_write(config_path, existing)
         except Exception:
             pass
 

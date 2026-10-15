@@ -1788,7 +1788,8 @@ def run_doctor(args):
                 config_path.parent.mkdir(parents=True, exist_ok=True)
                 example_config = PROJECT_ROOT / 'cli-config.yaml.example'
                 if example_config.exists():
-                    shutil.copy2(str(example_config), str(config_path))
+                    from utils import atomic_write_text
+                    atomic_write_text(config_path, example_config.read_text(encoding="utf-8"), preserve_mode=True)
                     check_ok(f"Created {_DHH}/config.yaml from cli-config.yaml.example")
                 else:
                     from hermes_cli.config import DEFAULT_CONFIG, save_config

@@ -35,6 +35,8 @@ Design reference:
 from __future__ import annotations
 
 import asyncio
+import copy
+from contextlib import contextmanager
 import logging
 import re
 import threading
@@ -42,6 +44,8 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
+from tools.mcp_oauth_provider import oauth_flow_guard, oauth_response_guard, publication_guard
+from tools.mcp_oauth_state import StaleOAuthCommitError
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +101,8 @@ class _ProviderEntry:
     last_mtime_ns: int = 0
     lock: asyncio.Lock = field(default_factory=asyncio.Lock)
     pending_401: dict[str, "asyncio.Future[bool]"] = field(default_factory=dict)
+    epoch: object = field(default_factory=object, repr=False)
+    hermes_home: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -206,6 +212,7 @@ def _make_hermes_provider_class() -> Optional[type]:
             request = await super()._refresh_token()
             return self._stamp_token_user_agent(request)
 
+        @oauth_response_guard
         async def _handle_token_response(self, response):
             """Accept any 2xx token response and avoid leaking token bodies in errors."""
             if 200 <= response.status_code < 300:
@@ -217,20 +224,22 @@ def _make_hermes_provider_class() -> Optional[type]:
                     token_response = await handle_token_response_scopes(response)
                 except (HTTPError, OAuthTokenError):
                     raise OAuthTokenError("Invalid token response") from None
-                self.context.current_tokens = token_response
-                self.context.update_token_expiry(token_response)
-                await self.context.storage.set_tokens(token_response)
+                from tools.mcp_oauth_provider import persist_provider_tokens
+
+                await persist_provider_tokens(self.context, token_response)
                 return
 
             from mcp.client.auth.oauth2 import OAuthTokenError
 
             raise OAuthTokenError(f"Token exchange failed ({response.status_code})")
 
+        @oauth_response_guard
         async def _handle_refresh_response(self, response) -> bool:
             """Accept any 2xx refresh response and avoid logging token bodies."""
             if not (200 <= response.status_code < 300):
                 logger.warning("Token refresh failed: %s", response.status_code)
-                self.context.clear_tokens()
+                with publication_guard(self.context.storage):
+                    self.context.clear_tokens()
                 return False
 
             from mcp.shared.auth import OAuthToken
@@ -240,13 +249,14 @@ def _make_hermes_provider_class() -> Optional[type]:
             try:
                 content = await response.aread()
                 token_response = OAuthToken.model_validate_json(content)
-                self.context.current_tokens = token_response
-                self.context.update_token_expiry(token_response)
-                await self.context.storage.set_tokens(token_response)
+                from tools.mcp_oauth_provider import persist_provider_tokens
+
+                await persist_provider_tokens(self.context, token_response)
                 return True
             except (HTTPError, ValidationError):
                 logger.warning("Invalid refresh response: %s", response.status_code)
-                self.context.clear_tokens()
+                with publication_guard(self.context.storage):
+                    self.context.clear_tokens()
                 return False
 
         async def _initialize(self) -> None:
@@ -526,6 +536,7 @@ def _make_hermes_provider_class() -> Optional[type]:
                     self._hermes_server_name, exc,
                 )
 
+        @oauth_flow_guard
         async def async_auth_flow(self, request):  # type: ignore[override]
             # Pre-flow hook: ask the manager to refresh from disk if needed.
             # Any failure here is non-fatal — we just log and proceed with
@@ -569,6 +580,8 @@ def _make_hermes_provider_class() -> Optional[type]:
                 # 401 branch so a subsequent cold-load skips discovery.
                 self._persist_oauth_metadata_if_changed()
                 return
+            finally:
+                await inner.aclose()
 
     return HermesMCPOAuthProvider
 
@@ -593,7 +606,7 @@ class MCPOAuthManager:
 
     def __init__(self) -> None:
         self._entries: dict[tuple[str, str], _ProviderEntry] = {}
-        self._entries_lock = threading.Lock()
+        self._entries_lock = threading.RLock()
         # A failed reauthorization may restore only the cache slot it removed,
         # or the replacement provider created by that same flow.
         self._removed_entry_owners: dict[tuple[str, str], Any] = {}
@@ -642,17 +655,30 @@ class MCPOAuthManager:
                 self._removed_entry_owners.pop(key, None)
 
             entry = self._entries.get(key)
-            if entry is not None and entry.server_url != server_url:
+            authority_changed = False
+            if entry is not None and entry.provider is not None:
+                storage = getattr(getattr(entry.provider, "context", None), "storage", None)
+                from tools.mcp_oauth import HermesTokenStorage
+                from tools.mcp_dashboard_oauth import McpOAuthConfigChangedError
+                if isinstance(storage, HermesTokenStorage):
+                    try:
+                        with storage._mutation_guard():
+                            pass
+                    except (StaleOAuthCommitError, McpOAuthConfigChangedError):
+                        authority_changed = True
+            if entry is not None and (entry.server_url != server_url or entry.oauth_config != oauth_config or authority_changed):
                 logger.info(
                     "MCP OAuth '%s': URL changed from %s to %s, discarding cache",
                     server_name, entry.server_url, server_url,
                 )
+                entry.epoch = object()
                 entry = None
 
             if entry is None:
                 entry = _ProviderEntry(
                     server_url=server_url,
-                    oauth_config=oauth_config,
+                    oauth_config=copy.deepcopy(oauth_config),
+                    hermes_home=key[0],
                 )
                 self._entries[key] = entry
 
@@ -660,6 +686,7 @@ class MCPOAuthManager:
                 entry.provider = self._build_provider(server_name, entry)
                 if entry.provider is not None:
                     entry.provider._hermes_home = key[0]
+                    self._bind_provider(key, entry)
 
             if entry.provider is not None:
                 if (
@@ -670,6 +697,28 @@ class MCPOAuthManager:
                     active_flow.record_provider_identity(entry, entry.provider)
 
             return entry.provider
+
+    def _bind_provider(self, key, entry):
+        """Let storage enter the manager's short, synchronous commit boundary."""
+        from tools.mcp_oauth import HermesTokenStorage
+        storage = getattr(getattr(entry.provider, "context", None), "storage", None)
+        if not isinstance(storage, HermesTokenStorage):
+            return
+
+        def capture_guard():
+            epoch = entry.epoch
+            provider = entry.provider
+
+            @contextmanager
+            def guard():
+                with self._entries_lock:
+                    if (self._entries.get(key) is not entry
+                            or entry.provider is not provider or entry.epoch is not epoch):
+                        raise StaleOAuthCommitError("MCP OAuth provider was retired")
+                    yield
+            return guard
+
+        storage._provider_guard = capture_guard
 
     def adopt_dashboard_flow(self, flow, storage, tools: list[dict]) -> None:
         """Adopt tokens only while the flow's exact provider entry remains current."""
@@ -746,7 +795,7 @@ class MCPOAuthManager:
         apply_oauth_provider_defaults(
             cfg, server_name=server_name, server_url=entry.server_url
         )
-        storage = HermesTokenStorage(server_name)
+        storage = HermesTokenStorage(server_name, hermes_home=entry.hermes_home)
 
         from tools.mcp_dashboard_oauth import get_dashboard_oauth_flow
 
@@ -822,6 +871,8 @@ class MCPOAuthManager:
                 if binding is not None:
                     binding.assert_current_locked(config_module)
                 entry = self._entries.pop(key, None)
+                if entry is not None:
+                    entry.epoch = object()
                 if owner is None:
                     self._removed_entry_owners.pop(key, None)
                 else:
@@ -862,6 +913,7 @@ class MCPOAuthManager:
                     return
                 current = self._entries.get(key)
                 if current is None:
+                    entry.epoch = object()
                     self._entries[key] = entry
                     self._removed_entry_owners.pop(key, None)
                     return
@@ -870,6 +922,8 @@ class MCPOAuthManager:
                     and current.provider is expected_provider
                     and current.provider is not None
                 ):
+                    current.epoch = object()
+                    entry.epoch = object()
                     self._entries[key] = entry
                     self._removed_entry_owners.pop(key, None)
 
@@ -891,7 +945,9 @@ class MCPOAuthManager:
         """Drop only the in-process provider, preserving persisted OAuth state."""
         with self._entries_lock:
             key = self._key(server_name, hermes_home)
-            self._entries.pop(key, None)
+            retired = self._entries.pop(key, None)
+            if retired is not None:
+                retired.epoch = object()
             self._removed_entry_owners.pop(key, None)
 
     async def force_login(
@@ -907,47 +963,79 @@ class MCPOAuthManager:
         probe can succeed without ever obtaining a token.  This path drives
         authorization directly for pre-registered clients.
         """
+        key = self._key(server_name)
         provider = self.get_or_build_provider(server_name, server_url, oauth_config)
         if provider is None:
             return False
 
-        entry = self._entries.get(server_name)
-        if entry is None:
-            return False
+        with self._entries_lock:
+            entry = self._entries.get(key)
+            if entry is None or entry.provider is not provider:
+                return False
+            epoch = entry.epoch
 
+        def still_current() -> bool:
+            # The entry's asyncio lock serializes its own logins, but cache
+            # eviction and URL changes happen under the manager's thread lock.
+            # Recheck after awaits without holding that lock across I/O.
+            with self._entries_lock:
+                return self._entries.get(key) is entry and entry.provider is provider and entry.epoch is epoch
+
+        from tools.mcp_oauth_provider import oauth_commit_scope
         async with entry.lock:
-            if not getattr(provider, "_initialized", False):
-                await provider._initialize()
+            storage = getattr(getattr(provider, "context", None), "storage", None)
+            with oauth_commit_scope(storage):
+                if not still_current():
+                    return False
+                changed = getattr(storage, "disk_generations_changed", None)
+                if callable(changed) and changed():
+                    provider._initialized = False
+                    provider.context.oauth_metadata = None
+                if not getattr(provider, "_initialized", False):
+                    await provider._initialize()
+                    if not still_current():
+                        return False
 
-            prefetch = getattr(provider, "_prefetch_oauth_metadata", None)
-            if (
-                callable(prefetch)
-                and getattr(provider.context, "oauth_metadata", None) is None
-            ):
-                await prefetch()
+                prefetch = getattr(provider, "_prefetch_oauth_metadata", None)
+                if (
+                    callable(prefetch)
+                    and getattr(provider.context, "oauth_metadata", None) is None
+                ):
+                    await prefetch()
+                    if not still_current():
+                        return False
 
-            token_request = await provider._perform_authorization()
+                token_request = await provider._perform_authorization()
+                if not still_current():
+                    return False
 
-            import httpx
+                import httpx
 
-            timeout = float((oauth_config or {}).get("timeout", 300))
-            async with httpx.AsyncClient(timeout=timeout) as client:
-                token_response = await client.send(token_request)
+                timeout = float((oauth_config or {}).get("timeout", 300))
+                async with httpx.AsyncClient(timeout=timeout) as client:
+                    token_response = await client.send(token_request)
+                if not still_current():
+                    return False
 
-            await provider._handle_token_response(token_response)
-
-            persist = getattr(provider, "_persist_oauth_metadata_if_changed", None)
-            if callable(persist):
-                persist()
-
-            storage = getattr(provider.context, "storage", None)
-            tokens_path_fn = getattr(storage, "_tokens_path", None)
-            if callable(tokens_path_fn):
                 try:
-                    entry.last_mtime_ns = tokens_path_fn().stat().st_mtime_ns
-                except OSError:
-                    entry.last_mtime_ns = 0
-            return True
+                    await provider._handle_token_response(token_response)
+                except StaleOAuthCommitError:
+                    return False
+                if not still_current():
+                    return False
+
+                persist = getattr(provider, "_persist_oauth_metadata_if_changed", None)
+                if callable(persist):
+                    persist()
+
+                storage = getattr(provider.context, "storage", None)
+                tokens_path_fn = getattr(storage, "_tokens_path", None)
+                if callable(tokens_path_fn):
+                    try:
+                        entry.last_mtime_ns = tokens_path_fn().stat().st_mtime_ns
+                    except OSError:
+                        entry.last_mtime_ns = 0
+                return True
 
     # -- Disk watch ----------------------------------------------------------
 
@@ -973,12 +1061,17 @@ class MCPOAuthManager:
 
         async with entry.lock:
             tokens_path = _get_token_dir(hermes_home) / f"{_safe_filename(server_name)}.json"
+            from tools.mcp_oauth import HermesTokenStorage
+            storage = getattr(getattr(entry.provider, "context", None), "storage", None)
+            generation_changed = isinstance(storage, HermesTokenStorage) and storage.disk_generations_changed()
             try:
                 mtime_ns = tokens_path.stat().st_mtime_ns
             except (FileNotFoundError, OSError):
-                return False
+                if not generation_changed:
+                    return False
+                mtime_ns = 0
 
-            if mtime_ns != entry.last_mtime_ns:
+            if mtime_ns != entry.last_mtime_ns or generation_changed:
                 old = entry.last_mtime_ns
                 entry.last_mtime_ns = mtime_ns
                 # Force the SDK's OAuthClientProvider to reload from storage
@@ -986,6 +1079,8 @@ class MCPOAuthManager:
                 # stable across the MCP SDK versions we pin (>=1.26.0).
                 if hasattr(entry.provider, "_initialized"):
                     entry.provider._initialized = False  # noqa: SLF001
+                if generation_changed:
+                    entry.provider.context.oauth_metadata = None
                 logger.info(
                     "MCP OAuth '%s': tokens file changed (mtime %d -> %d), "
                     "forcing reload",

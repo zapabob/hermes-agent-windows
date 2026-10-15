@@ -300,11 +300,9 @@ def test_changed_connection_cannot_adopt_actual_grant(homes, monkeypatch, reques
             else:
                 assert len(owner.operations("token_request")) == 1
                 assert len(owner.operations("token_redemption")) == 1
-                assert len(persistence) == 1, persistence
-                assert not persistence[0]["returned"], "Real SDK setter persisted the stale grant before cleanup"
-                assert persistence[0]["file_exists_after_original"] is False
-                assert persistence[0]["complete_bytes_after_original_hex"] is None
-                assert "configuration changed" in (persistence[0]["exception"] or "").lower(), persistence
+                # The operation lease now rejects this response at the SDK
+                # boundary, before the real setter may even attempt a save.
+                assert persistence == [], "Retired grant reached the storage setter"
             assert owner.operations("sentinel") == []
             assert_foreign_absent(foreign, homes)
 

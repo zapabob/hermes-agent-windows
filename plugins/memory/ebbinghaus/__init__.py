@@ -357,7 +357,7 @@ class EbbinghausMemoryProvider(MemoryProvider):
 
     def save_config(self, values: Dict[str, Any], hermes_home: str) -> None:
         try:
-            import yaml
+            from utils import atomic_yaml_write
             # Write-back round-trip: raw read only (do not persist merged defaults).
             from hermes_cli.config import read_user_config_raw
 
@@ -365,8 +365,7 @@ class EbbinghausMemoryProvider(MemoryProvider):
             existing = read_user_config_raw(config_path)
             existing.setdefault("plugins", {})
             existing["plugins"]["ebbinghaus"] = values
-            with open(config_path, "w", encoding="utf-8") as handle:
-                yaml.safe_dump(existing, handle, allow_unicode=True, sort_keys=False)
+            atomic_yaml_write(config_path, existing, sort_keys=False)
         except Exception as exc:
             logger.debug("Ebbinghaus save_config failed: %s", exc)
 

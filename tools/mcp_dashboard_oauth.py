@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterator
 from urllib.parse import parse_qs, urlparse
+from tools.mcp_oauth_state import oauth_state_lock
 
 
 class McpOAuthConfigChangedError(RuntimeError):
@@ -25,12 +26,13 @@ class McpOAuthConfigChangedError(RuntimeError):
 
 
 @contextmanager
-def _config_lock():
+def _config_lock(home=None):
     # Resolve the module attribute for every acquisition. Tests and embedded
     # hosts replace this lock, so a captured alias would split the lock domain.
     from hermes_cli import config as config_module
 
-    with config_module._CONFIG_LOCK:
+    from hermes_constants import get_hermes_home
+    with config_module._CONFIG_LOCK, oauth_state_lock(home or get_hermes_home()):
         yield config_module
 
 
@@ -63,6 +65,7 @@ class SavedMcpConfigBinding:
     needs_auth_commit: bool
     owner: object = field(default_factory=object, repr=False)
     sealed: bool = False
+    revision: int = 0
     # Bytes live only while rollback may need to identify a grant created by
     # this flow. The path-generation scalar itself lives in mcp_oauth.py.
     owned_effects: dict[str, tuple[int, bytes | None]] = field(
@@ -74,7 +77,7 @@ class SavedMcpConfigBinding:
     @classmethod
     def capture(cls, hermes_home: str, server_name: str) -> "SavedMcpConfigBinding":
         home = str(Path(hermes_home).expanduser().resolve(strict=False))
-        with _config_lock() as config_module:
+        with _config_lock(home) as config_module, oauth_state_lock(home) as state:
             _, document = _read_raw_config(config_module, home)
             servers = document.get("mcp_servers")
             entry = servers.get(server_name) if isinstance(servers, dict) else None
@@ -87,9 +90,14 @@ class SavedMcpConfigBinding:
                 server_name=server_name,
                 expected_entry=copy.deepcopy(entry),
                 needs_auth_commit=("auth" not in entry or entry.get("auth") is None),
+                revision=state.generation("config", server_name),
             )
 
     def _current_entry_locked(self, config_module) -> tuple[Path, dict, dict]:
+        with oauth_state_lock(self.hermes_home):
+            return self._read_current_entry_locked(config_module)
+
+    def _read_current_entry_locked(self, config_module) -> tuple[Path, dict, dict]:
         path, document = _read_raw_config(config_module, self.hermes_home)
         servers = document.get("mcp_servers")
         entry = servers.get(self.server_name) if isinstance(servers, dict) else None
@@ -97,7 +105,9 @@ class SavedMcpConfigBinding:
             raise McpOAuthConfigChangedError(
                 "MCP OAuth configuration changed; start a new authorization."
             )
-        if entry != self.expected_entry:
+        with oauth_state_lock(self.hermes_home) as state:
+            revision = state.generation("config", self.server_name)
+        if entry != self.expected_entry or revision != self.revision:
             raise McpOAuthConfigChangedError(
                 "MCP OAuth configuration changed; start a new authorization."
             )
@@ -107,11 +117,15 @@ class SavedMcpConfigBinding:
         self._current_entry_locked(config_module)
 
     def assert_current(self) -> None:
-        with _config_lock() as config_module:
+        with _config_lock(self.hermes_home) as config_module:
             self.assert_current_locked(config_module)
 
     def commit_auth_locked(self, config_module) -> None:
         """Persist implicit OAuth selection from raw YAML and seal authority."""
+        with oauth_state_lock(self.hermes_home):
+            self._commit_auth_locked(config_module)
+
+    def _commit_auth_locked(self, config_module) -> None:
         path, document, current = self._current_entry_locked(config_module)
         if self.needs_auth_commit:
             if config_module.is_managed():
@@ -135,6 +149,8 @@ class SavedMcpConfigBinding:
                     "MCP OAuth configuration changed; start a new authorization."
                 )
             self.expected_entry = copy.deepcopy(entry)
+            with oauth_state_lock(self.hermes_home) as state:
+                self.revision = state.generation("config", self.server_name)
             self.needs_auth_commit = False
         elif current.get("auth") not in (None, "oauth"):
             raise McpOAuthConfigChangedError(
@@ -323,7 +339,7 @@ class DashboardOAuthFlow:
                 self.status = "approved"
                 self.error = None
                 return
-            with _config_lock() as config_module:
+            with _config_lock(self.hermes_home) as config_module:
                 self.config_binding.assert_current_locked(config_module)
                 if not storage.has_cached_tokens():
                     raise RuntimeError("No OAuth token was obtained")

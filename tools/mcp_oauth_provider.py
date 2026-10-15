@@ -9,11 +9,115 @@ modules keep their own subclass (logger name, disk-watch hooks) on top of it.
 from __future__ import annotations
 
 import logging
+import contextvars
+from contextlib import contextmanager, nullcontext
+from functools import wraps
+import time
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from tools.mcp_oauth import HermesTokenStorage
 logger = logging.getLogger(__name__)
+_active_commit = contextvars.ContextVar("mcp_oauth_commit", default=None)
+_token_publication = contextvars.ContextVar("mcp_oauth_publication", default=None)
+
+
+@contextmanager
+def oauth_commit_scope(storage):
+    capture = getattr(storage, "capture_commit", None)
+    marker = _active_commit.set(capture() if callable(capture) else None)
+    try:
+        yield
+    finally:
+        _active_commit.reset(marker)
+
+
+def oauth_response_guard(method):
+    """Capture immutable ownership before parsing or awaiting a response."""
+    @wraps(method)
+    async def guarded(self, *args, **kwargs):
+        storage = self.context.storage
+        existing = _active_commit.get()
+        if existing is not None and existing[0] is storage:
+            return await method(self, *args, **kwargs)
+        capture = getattr(storage, "capture_commit", None)
+        token = _active_commit.set(capture() if callable(capture) else None)
+        try:
+            return await method(self, *args, **kwargs)
+        finally:
+            _active_commit.reset(token)
+    return guarded
+
+
+def oauth_flow_guard(method):
+    """Carry one lease across SDK generator yields without leaking ContextVars."""
+    @wraps(method)
+    async def guarded(self, *args, **kwargs):
+        storage = self.context.storage
+        capture = getattr(storage, "capture_commit", None)
+        operation = capture() if callable(capture) else None
+        inner = method(self, *args, **kwargs)
+
+        async def advance(action, *values):
+            marker = _active_commit.set(operation)
+            try:
+                if operation is not None:
+                    with storage._mutation_guard(check_token=False):
+                        pass
+                result = await action(*values)
+                if operation is not None:
+                    with storage._mutation_guard():
+                        pass
+                return result
+            finally:
+                _active_commit.reset(marker)
+
+        try:
+            outgoing = await advance(inner.__anext__)
+            while True:
+                incoming = yield outgoing
+                outgoing = await advance(inner.asend, incoming)
+        except StopAsyncIteration:
+            return
+        finally:
+            # Always release the SDK context lock, including revoked/cancelled
+            # operations; no ContextVar token remains installed across yield.
+            await inner.aclose()
+    return guarded
+
+
+def publication_guard(storage):
+    guard = getattr(storage, "_mutation_guard", None)
+    return guard() if callable(guard) else nullcontext()
+
+
+async def persist_provider_tokens(context: Any, token_response: Any) -> None:
+    """Publish credentials only after storage has accepted and persisted them.
+
+    Storage may reject a revoked configuration or fail an atomic replacement.
+    Neither outcome authorizes publishing the candidate in the SDK context.
+    """
+    expires_in = getattr(token_response, "expires_in", None)
+    # Preserve the response's expiry reference time even when storage is slow;
+    # publishing later must not grant an additional storage-duration TTL.
+    deadline = None if expires_in is None else time.time() + int(expires_in)
+    published = False
+
+    def publish():
+        nonlocal published
+        context.current_tokens = token_response
+        context.update_token_expiry(token_response)
+        context.token_expiry_time = deadline
+        published = True
+
+    marker = _token_publication.set((context.storage, publish))
+    try:
+        await context.storage.set_tokens(token_response)
+        if not published:
+            with publication_guard(context.storage):
+                publish()
+    finally:
+        _token_publication.reset(marker)
 
 
 class HermesProviderMixin:
@@ -28,6 +132,10 @@ class HermesProviderMixin:
     - Any 2xx token/refresh response is accepted; token bodies never leak into errors/logs."""
 
     _hermes_logger: logging.Logger = logger
+
+    @oauth_flow_guard
+    def async_auth_flow(self, request):
+        return super().async_auth_flow(request)
 
     def __init__(self, *args: Any, token_user_agent: str | None = None, oauth_flow: str = "browser", **kwargs: Any):
         super().__init__(*args, **kwargs)
@@ -86,11 +194,10 @@ class HermesProviderMixin:
         enforce_refresh_token_issuer(self.context)
 
     async def _store_tokens(self, token_response) -> None:
-        self.context.current_tokens = token_response
-        self.context.update_token_expiry(token_response)
         bind_issuer_from_context(self.context)
-        await self.context.storage.set_tokens(token_response)
+        await persist_provider_tokens(self.context, token_response)
 
+    @oauth_response_guard
     async def _handle_token_response(self, response):
         """Accept any 2xx token response; never echo the body into errors."""
         from mcp.client.auth.oauth2 import OAuthTokenError
@@ -104,11 +211,13 @@ class HermesProviderMixin:
             raise OAuthTokenError("Invalid token response") from None
         await self._store_tokens(token_response)
 
+    @oauth_response_guard
     async def _handle_refresh_response(self, response) -> bool:
         """Accept any 2xx refresh response; never log the body."""
         if not (200 <= response.status_code < 300):
             self._hermes_logger.warning("Token refresh failed: %s", response.status_code)
-            self.context.clear_tokens()
+            with publication_guard(self.context.storage):
+                self.context.clear_tokens()
             return False
         from httpx import HTTPError
         from mcp.shared.auth import OAuthToken
@@ -117,7 +226,8 @@ class HermesProviderMixin:
             token_response = OAuthToken.model_validate_json(await response.aread())
         except (HTTPError, ValidationError):
             self._hermes_logger.warning("Invalid refresh response: %s", response.status_code)
-            self.context.clear_tokens()
+            with publication_guard(self.context.storage):
+                self.context.clear_tokens()
             return False
         # RFC 6749 §6: a refresh response may omit refresh_token / scope.
         prior = self.context.current_tokens

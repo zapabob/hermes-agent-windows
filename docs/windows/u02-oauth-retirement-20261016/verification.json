@@ -1,0 +1,625 @@
+{
+  "status": "U02_SAVE_RETIREMENT_LOCAL_GATES_PASSED",
+  "scope": "OAuth save, retirement, restore, cross-process writers and config ABA; not the whole Windows release campaign",
+  "candidate_parent": "ec5af6f193ca9ad799d652838802dfe83ea4dc32",
+  "branch": "codex/v0216-semantic-20261010",
+  "source_sha256": {
+    "hermes_cli/backup.py": "307e0a7fb8c3f5e1bf6201a233eae9be0e6f8033a012e0a5df59ef2b2f638ba5",
+    "hermes_cli/doctor.py": "bc909fa7e0fd9a3c4bc738d13382fb56094d34124c0ee84f0a89a7c00cf8580e",
+    "plugins/ai-employee-org/stack.py": "c05599f41984a8ed04dbaa2aae487393ef3c00825114666f581384daa7bdd4c9",
+    "plugins/freebuff/core.py": "826ceff4917a6c2c9cc651c9aef466a557ba9e6fea222b918b2d8bba9363239b",
+    "plugins/freellmapi/core.py": "1828a66da4f7eb3ae7d50d07bdb00f035bc165fba3abb999c550d3ca185dab74",
+    "plugins/memory/ebbinghaus/__init__.py": "4e307adb642e3d186f4f0c3bbfee07103b67d44593ed145f9be4930d85dacca7",
+    "plugins/memory/holographic/__init__.py": "6e50762c2de03df27f4e982cf59fb9560d6d4210ebcdf4d7e26788159d904f94",
+    "plugins/vrchat-autonomy/core.py": "0bb07dc17b6766b9854991b1229932180de2fee6e86c2e87f342b6215d2bd01b",
+    "pyproject.toml": "43a16a1bc21d672a35c2551f6c52cf3b9a98dc6d4f683543aa31a19ca324cd78",
+    "tests/hermes_cli/test_backup.py": "cf7074791956bb2af7e92b77e5bd9416695cdc04145bd3a7deea5ad60947151a",
+    "tests/hermes_cli/test_backup_stability.py": "c1773a2bf6cf873b6064d7b8a61ca04ca6bdeb0b66ca42dceefd5c70b7324519",
+    "tests/test_atomic_replace_symlinks.py": "1ccce0cc01e3135d629fdb887472b7772f949b39747b81fb8aa94e86e89bf4a7",
+    "tests/tools/test_mcp_oauth_callback_rendering.py": "e05f23a2960d9b734ab8b60d1b1972ea6ed33790a91bb99ae662381e06d7efc3",
+    "tests/tools/test_mcp_oauth_commit_contract.py": "55f4197a067c4bda7fa074e44aa86c5740e3d86a565b969fbb6d059ae8ca63a9",
+    "tests/tools/test_mcp_oauth_config_binding.py": "ecf47fba1eb60f9c126ec9d119f802949e54c852c6ced2bf8d1ad9e0f064e865",
+    "tests/tools/test_mcp_oauth_manager.py": "7b11d3a058bbb5542d88aeb09e6bc7d388e9391c1072a6015e3b9485917ceef5",
+    "tests/tools/test_mcp_oauth_retirement.py": "3a461cfe4859c65dcbbe4535475d925bfe9d26a9a015d085e36a8a384f414215",
+    "tests/tools/test_mcp_oauth_retirement_sdk.py": "fc83eee929d5cc09e04f81508681a826f9cec3c1b32930710eed61fbd18f51fc",
+    "tools/mcp_dashboard_oauth.py": "caf893c0460794f244cc227e0858c0ed6d7ffa897a1cc3d88f3495b8fd9536fa",
+    "tools/mcp_oauth.py": "3ad0d5af28de7ee2771fa139fe2dc861a6c6be808bbdf66de50bb046e663d678",
+    "tools/mcp_oauth_manager.py": "e96e4c8cacf937964aca1dc6f6c802837439d7d75a4141d2ba2d28c64f3eaa8f",
+    "tools/mcp_oauth_provider.py": "bc467202dab1aaab3f51cca712f3290505064fc19f35b245306c944801a5ebde",
+    "tools/mcp_oauth_state.py": "18eea2b7f0e1717c093ebcede040b637d2fa0571a9315d6dbd631ff1a7ee17a2",
+    "utils.py": "1c9ce531677f6dc7439aa1500e0505e8ffbe855f0756a845730b03c969c9bd4d",
+    "uv.lock": "45487f72f5fe438fd90f1c0839b83b747e6abfa37110e2e3305b54bc1cac601b"
+  },
+  "runtime": {
+    "python": "3.12.13",
+    "platform": "win32",
+    "mcp": "2.0.0",
+    "pytest": "9.1.1",
+    "httpx": "0.28.1",
+    "httpx2": "2.12.0"
+  },
+  "totals": {
+    "regression": {
+      "tests": 272,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "passed": 271
+    },
+    "writers": {
+      "tests": 236,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 20,
+      "passed": 216
+    },
+    "e2e": {
+      "tests": 71,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 71
+    }
+  },
+  "combined": {
+    "tests": 579,
+    "passed": 558,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 21
+  },
+  "runs": [
+    {
+      "path": "tests/tools/test_mcp_oauth_retirement_sdk.py",
+      "group": "regression",
+      "counts": {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "8a91412da3c1ab58fe458d1e9052162d79fee294dbaab7716c1aabe485cfe15b"
+    },
+    {
+      "path": "tests/tools/test_mcp_oauth_retirement.py",
+      "group": "regression",
+      "counts": {
+        "tests": 28,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "5c99b3d0e48aec31b2c3c6a222b7fee4ad68122dafd7b616df674d334f58e987"
+    },
+    {
+      "path": "tests/tools/test_mcp_oauth_commit_contract.py",
+      "group": "regression",
+      "counts": {
+        "tests": 60,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "25878b91e7e7ab59be41ca1939727bf3c7bc7420ace3baae62189f048bd4e0a2"
+    },
+    {
+      "path": "tests/tools/test_mcp_oauth_callback_rendering.py",
+      "group": "regression",
+      "counts": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "7f79029ff5180c479c3c57d150775b53098555dfceea203f26286c82fddcd063"
+    },
+    {
+      "path": "tests/tools/test_mcp_oauth_manager.py",
+      "group": "regression",
+      "counts": {
+        "tests": 19,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "659d36fd1603ab5d5cfdbe463a4a95aa99464e8446d0ca6b18b1f9022a29b624"
+    },
+    {
+      "path": "tests/tools/test_mcp_oauth_config_binding_repair.py",
+      "group": "regression",
+      "counts": {
+        "tests": 29,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "64c59b1456d702630c94fa1b6f001267cd30070d8b4c07717ccb7c3d6fa6d9ba"
+    },
+    {
+      "path": "tests/tools/test_mcp_oauth_config_writer_locking.py",
+      "group": "regression",
+      "counts": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "94a923feb04f2361daa861989673b1a2ee8b9dd69b8d7d7ea6cc7c1aaa16cfa8"
+    },
+    {
+      "path": "tests/tools/test_mcp_dashboard_oauth.py",
+      "group": "regression",
+      "counts": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "f2289830da1c2f169e26bdac91048ee025e28e60bc427a8bea5c97ac7c14f7f8"
+    },
+    {
+      "path": "tests/tools/test_mcp_oauth.py",
+      "group": "regression",
+      "counts": {
+        "tests": 58,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "xml_sha256": "f9f639f7400d42235011319cc72a9d188874e4884c3fd9df5393d2e23c9df940"
+    },
+    {
+      "path": "tests/tools/test_mcp_oauth_issuer_binding.py",
+      "group": "regression",
+      "counts": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "4c1bff159b9e9329aa3de519e9f276a74576fbd9ac72ee6b7c14479f5fd370f7"
+    },
+    {
+      "path": "tests/tools/test_mcp_oauth_cold_load_expiry.py",
+      "group": "regression",
+      "counts": {
+        "tests": 14,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "7727d8ee2d8831de73081ff9ca100bdc8d3c36c43ca7ca37c5d776e06180dd2d"
+    },
+    {
+      "path": "tests/tools/test_mcp_oauth_bidirectional.py",
+      "group": "regression",
+      "counts": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "279bbee65891c4fa67a4838a3486d1cc9cfdb539465ee8a53bc51e3426a314b4"
+    },
+    {
+      "path": "tests/tools/test_mcp_oauth_user_agent.py",
+      "group": "regression",
+      "counts": {
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "9f7a723acb95224a1161bb254604968b3970a8d16cbca37f88aab7aa616a802b"
+    },
+    {
+      "path": "tests/tools/test_mcp_oauth_metadata.py",
+      "group": "regression",
+      "counts": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "d08588c01e366723eff6261ff284bfed08a0eac2224859219d1988fc0a508ff0"
+    },
+    {
+      "path": "tests/tools/test_mcp_oauth_cli_issuer_presence.py",
+      "group": "regression",
+      "counts": {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "c12a705fc4db335debb0c6ed3c3bee0810160bcf836d0b798f59df5c5b88523c"
+    },
+    {
+      "path": "tests/hermes_cli/test_atomic_yaml_write.py",
+      "group": "writers",
+      "counts": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "4a77b6faf2f60a9c66a36a42844096772d57ecf5d0e2e5ad6959547c205bcf20"
+    },
+    {
+      "path": "tests/test_utils_atomic_roundtrip_yaml_save.py",
+      "group": "writers",
+      "counts": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "xml_sha256": "ccc448701bef1063e45a8ec6a5aecc7c90aa5447aa5be6a55e28b0f860caa7ac"
+    },
+    {
+      "path": "tests/test_atomic_replace_symlinks.py",
+      "group": "writers",
+      "counts": {
+        "tests": 25,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 10
+      },
+      "xml_sha256": "08ee5d9968462ed2a5dac3f18406793d7b392795cb9b8f9292dc26c9f1dc3a95"
+    },
+    {
+      "path": "tests/plugins/test_freellmapi_plugin.py",
+      "group": "writers",
+      "counts": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "f5fa410ec21c7945d9004958570ffde2b93aa625988a78726d7df359b45e60f1"
+    },
+    {
+      "path": "tests/plugins/test_freebuff_plugin.py",
+      "group": "writers",
+      "counts": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "eb1ac1eb92cc01680788f416226043b8f26cd116e3f8be13ce53162e5ab63bc3"
+    },
+    {
+      "path": "tests/plugins/test_vrchat_autonomy_plugin.py",
+      "group": "writers",
+      "counts": {
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "f47fc3e2870592e9cbcef287297eacfbb1e9e3f0277f848fbefe10a660ed9072"
+    },
+    {
+      "path": "tests/plugins/test_ai_employee_org_plugin.py",
+      "group": "writers",
+      "counts": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "a64cd77f5faa5172f4eeb7b4a6ee589d17b42d9df0a81e473bd83e77fb99cc5b"
+    },
+    {
+      "path": "tests/plugins/test_ebbinghaus_plugin.py",
+      "group": "writers",
+      "counts": {
+        "tests": 29,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "2287b496462ea152afe28c57b3fb2627f72bf7327cf1f301c1498ba45902e2ba"
+    },
+    {
+      "path": "tests/hermes_cli/test_backup.py",
+      "group": "writers",
+      "counts": {
+        "tests": 62,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 9
+      },
+      "xml_sha256": "f64ad247aca5286c3fb9f4c7c8f9c305a8b66ea055f9bb0484243099c785583c"
+    },
+    {
+      "path": "tests/hermes_cli/test_backup_stability.py",
+      "group": "writers",
+      "counts": {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "a8252eeee00043657a920a4732ef82fbf1d182a3c43e582623d9d2108c50e8de"
+    },
+    {
+      "path": "tests/hermes_cli/test_doctor.py",
+      "group": "writers",
+      "counts": {
+        "tests": 65,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "4b6837866a4d82c9bbc679c0d21e211838653aadb1cf2616424fa334a56ed94c"
+    },
+    {
+      "path": "tests/tools/test_mcp_oauth_config_binding.py",
+      "group": "e2e",
+      "counts": {
+        "tests": 71,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml_sha256": "b91850b9ee51e5338ce8fd5b993dcd955dbe31dbe65d70cf564d6c7affa416e8"
+    }
+  ],
+  "skipped": [
+    {
+      "file": "tests/tools/test_mcp_oauth.py",
+      "case": "test_token_file_created_with_0o600",
+      "reason": "POSIX mode bits not enforced on Windows"
+    },
+    {
+      "file": "tests/test_utils_atomic_roundtrip_yaml_save.py",
+      "case": "test_restores_owner",
+      "reason": "POSIX-only"
+    },
+    {
+      "file": "tests/test_atomic_replace_symlinks.py",
+      "case": "test_atomic_replace_preserves_symlink",
+      "reason": "Environment does not support symbolic links (requires admin/developer mode on Windows)"
+    },
+    {
+      "file": "tests/test_atomic_replace_symlinks.py",
+      "case": "test_atomic_json_write_preserves_symlink",
+      "reason": "Environment does not support symbolic links (requires admin/developer mode on Windows)"
+    },
+    {
+      "file": "tests/test_atomic_replace_symlinks.py",
+      "case": "test_atomic_yaml_write_preserves_symlink",
+      "reason": "Environment does not support symbolic links (requires admin/developer mode on Windows)"
+    },
+    {
+      "file": "tests/test_atomic_replace_symlinks.py",
+      "case": "test_atomic_json_write_preserves_symlink_permissions",
+      "reason": "Environment does not support symbolic links (requires admin/developer mode on Windows)"
+    },
+    {
+      "file": "tests/test_atomic_replace_symlinks.py",
+      "case": "test_atomic_yaml_write_restores_owner_on_real_symlink_target",
+      "reason": "POSIX-only"
+    },
+    {
+      "file": "tests/test_atomic_replace_symlinks.py",
+      "case": "test_atomic_roundtrip_yaml_save_restores_owner",
+      "reason": "POSIX-only"
+    },
+    {
+      "file": "tests/test_atomic_replace_symlinks.py",
+      "case": "test_atomic_replace_broken_symlink_creates_target",
+      "reason": "Environment does not support symbolic links (requires admin/developer mode on Windows)"
+    },
+    {
+      "file": "tests/test_atomic_replace_symlinks.py",
+      "case": "test_atomic_replace_copy_fallback_preserves_symlink",
+      "reason": "Environment does not support symbolic links (requires admin/developer mode on Windows)"
+    },
+    {
+      "file": "tests/test_atomic_replace_symlinks.py",
+      "case": "test_atomic_replace_real_cross_device",
+      "reason": "requires writable /dev/shm"
+    },
+    {
+      "file": "tests/test_atomic_replace_symlinks.py",
+      "case": "test_symlinked_target_survives_a_contended_rename",
+      "reason": "Environment does not support symbolic links (requires admin/developer mode on Windows)"
+    },
+    {
+      "file": "tests/hermes_cli/test_backup.py",
+      "case": "test_skips_symlinked_files",
+      "reason": "symlinks unavailable in test environment: [WinError 1314] クライアントは要求された特権を保有していません。: '<isolated-worktree>\\\\tmp\\\\probes\\\\u02-20261016\\\\final2\\\\writers-08-temp\\\\test_skips_symlinked_files0\\\\outside-secret.txt' -> '<isolated-worktree>\\\\tmp\\\\probes\\\\u02-20261016\\\\final2\\\\writers-08-temp\\\\test_skips_symlinked_files0\\\\.hermes\\\\skills\\\\outside-link.txt'"
+    },
+    {
+      "file": "tests/hermes_cli/test_backup.py",
+      "case": "test_restores_secret_files_with_0600_perms",
+      "reason": "POSIX file permissions only"
+    },
+    {
+      "file": "tests/hermes_cli/test_backup.py",
+      "case": "test_symlinked_target_keeps_its_symlink",
+      "reason": "POSIX symlinks"
+    },
+    {
+      "file": "tests/hermes_cli/test_backup.py",
+      "case": "test_symlinked_external_target_keeps_its_symlink",
+      "reason": "POSIX symlinks"
+    },
+    {
+      "file": "tests/hermes_cli/test_backup.py",
+      "case": "test_restore_preserves_existing_file_mode",
+      "reason": "POSIX file modes"
+    },
+    {
+      "file": "tests/hermes_cli/test_backup.py",
+      "case": "test_restore_preserves_existing_file_owner",
+      "reason": "POSIX ownership"
+    },
+    {
+      "file": "tests/hermes_cli/test_backup.py",
+      "case": "test_mode_is_applied_before_the_replace_without_fchmod",
+      "reason": "needs fchmod present to remove it"
+    },
+    {
+      "file": "tests/hermes_cli/test_backup.py",
+      "case": "test_restore_does_not_carry_setuid_onto_archive_content",
+      "reason": "POSIX setuid/setgid bits"
+    },
+    {
+      "file": "tests/hermes_cli/test_backup.py",
+      "case": "test_skips_symlinked_files",
+      "reason": "symlinks unavailable in test environment: [WinError 1314] クライアントは要求された特権を保有していません。: '<isolated-worktree>\\\\tmp\\\\probes\\\\u02-20261016\\\\final2\\\\writers-08-temp\\\\test_skips_symlinked_files1\\\\outside-secret.txt' -> '<isolated-worktree>\\\\tmp\\\\probes\\\\u02-20261016\\\\final2\\\\writers-08-temp\\\\test_skips_symlinked_files1\\\\.hermes\\\\skills\\\\outside-link.txt'"
+    }
+  ],
+  "graph": {
+    "version": "1.6.0",
+    "fileCount": 9188,
+    "nodeCount": 198677,
+    "edgeCount": 626951,
+    "pendingChanges": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "index": {
+      "builtWithVersion": "1.6.0",
+      "builtWithExtractionVersion": 25,
+      "currentExtractionVersion": 25,
+      "reindexRecommended": false,
+      "state": "complete",
+      "pendingRefs": 0
+    }
+  },
+  "graph_status_sha256": "6db6271453f7af04a0bde6efbb5a6898bc01b2bc8e551739eaf820db46eda2d1",
+  "mutations": [
+    {
+      "mutation": "provider_fence_removed",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "mutation": "disk_cas_removed",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "mutation": "config_revision_removed",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "mutation": "publish_before_storage",
+      "tests": 18,
+      "failures": 18,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "mutation": "operation_lease_removed",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "mutation": "journal_import_allowed",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "mutation": "own_generation_not_advanced",
+      "tests": 2,
+      "failures": 2,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "mutation": "malformed_recovery_refused",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "mutation": "case_alias_fence_removed",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "mutation": "native_mutex_removed",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "independent_review": {
+    "status": "APPROVED_FOR_U02_LOCAL_COMMIT",
+    "reviewer": "Linnaeus, fresh read-only native inherited agent",
+    "scope": "Original five source-backed findings and final generator/cache refinements; parent full E2E remains a separate gate",
+    "original_findings": 5,
+    "original_findings_remaining": 0,
+    "independent_tests": {
+      "passed": 59,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "additional_direct_setter_barriers": {
+      "cases": 2,
+      "passed": 2
+    },
+    "source_and_test_before_after_unchanged": true,
+    "source_sha256": {
+      "tools/mcp_oauth_provider.py": "bc467202dab1aaab3f51cca712f3290505064fc19f35b245306c944801a5ebde",
+      "tools/mcp_oauth_manager.py": "e96e4c8cacf937964aca1dc6f6c802837439d7d75a4141d2ba2d28c64f3eaa8f",
+      "tools/mcp_oauth.py": "3ad0d5af28de7ee2771fa139fe2dc861a6c6be808bbdf66de50bb046e663d678",
+      "tools/mcp_dashboard_oauth.py": "caf893c0460794f244cc227e0858c0ed6d7ffa897a1cc3d88f3495b8fd9536fa",
+      "tools/mcp_oauth_state.py": "18eea2b7f0e1717c093ebcede040b637d2fa0571a9315d6dbd631ff1a7ee17a2",
+      "utils.py": "1c9ce531677f6dc7439aa1500e0505e8ffbe855f0756a845730b03c969c9bd4d",
+      "hermes_cli/backup.py": "307e0a7fb8c3f5e1bf6201a233eae9be0e6f8033a012e0a5df59ef2b2f638ba5",
+      "tests/tools/test_mcp_oauth_retirement_sdk.py": "fc83eee929d5cc09e04f81508681a826f9cec3c1b32930710eed61fbd18f51fc",
+      "tests/tools/test_mcp_oauth_manager.py": "7b11d3a058bbb5542d88aeb09e6bc7d388e9391c1072a6015e3b9485917ceef5",
+      "tests/tools/test_mcp_oauth_retirement.py": "3a461cfe4859c65dcbbe4535475d925bfe9d26a9a015d085e36a8a384f414215",
+      "tests/tools/test_mcp_oauth_config_binding.py": "ecf47fba1eb60f9c126ec9d119f802949e54c852c6ced2bf8d1ad9e0f064e865"
+    },
+    "independent_xml": [
+      "reviewer-refinement-2703d27a548944c69ea69c6985e14e85/test_mcp_oauth_retirement_sdk.xml",
+      "reviewer-refinement-2703d27a548944c69ea69c6985e14e85/test_mcp_oauth_manager.xml",
+      "reviewer-refinement-2703d27a548944c69ea69c6985e14e85/test_mcp_oauth_retirement.xml",
+      "reviewer-refinement-native-943006e563ff4da2961e11aa2c8a4344/native.xml"
+    ]
+  },
+  "scope_limits": [
+    "Cooperating repository writers use the shared transaction; arbitrary external file edits or manual journal tampering are outside that protocol.",
+    "Symlink privilege and POSIX-only checks are listed as skips, never passes.",
+    "No dedicated Windows machine was available for the whole-campaign eight-hour soak and three sleep/resume cycles.",
+    "No push, PR, main merge, release, version bump, deployment or production restart was authorized or performed."
+  ],
+  "preserved_history": {
+    "initial_retirement_red": "red-matrix.xml: 6 failures",
+    "native_harness_baseline": "baseline.xml: pristine HEAD reproduced two failures and one teardown error",
+    "superseded_candidate_e2e": "final/e2e-00.xml: 18 failures retained; 12 stale setter-count expectations and 6 newer-provider identity regressions",
+    "qualification": "Only final2 records count toward acceptance"
+  },
+  "commit_hook": {
+    "runner": "Existing shared Lefthook launcher",
+    "project_configuration_present": false,
+    "referenced_binary_present": false,
+    "action": "Disable only that launcher for the single local commit using LEFTHOOK=0; do not change shared hook or install dependencies",
+    "qualification": "Hook not run and not claimed as passed; actual checks and staged-scope validation run separately"
+  }
+}

@@ -66,6 +66,7 @@ _QUICK_SNAPSHOTS_DIR = "state-snapshots"
 # exclude ``.archive`` here because the curator's ``skills/.archive/`` holds
 # restorable user skills that must survive a backup.
 _EXCLUDED_DIRS = {
+    ".mcp-oauth-state",  # machine-local fencing/lock identity; never roll back
     "hermes-agent",     # the codebase repo — re-clone instead
     "__pycache__",      # bytecode caches — regenerated on import
     ".git",             # nested git dirs (profiles shouldn't have these, but safety)
@@ -339,6 +340,8 @@ def _iter_external_files(base: Path) -> List[Path]:
 def _should_exclude(rel_path: Path) -> bool:
     """Return True if *rel_path* (relative to hermes root) should be skipped."""
     parts = rel_path.parts
+    if any(os.path.normcase(part) == os.path.normcase(".mcp-oauth-state") for part in parts):
+        return True
 
     for part in parts:
         if part not in _EXCLUDED_DIRS:
@@ -1189,6 +1192,10 @@ def _extract_member_atomically(
     pre-replace ``fchmod`` nor the post-replace restore can re-elevate the
     target.
     """
+    # Historical archives may predate the export exclusion. Never replace a
+    # held lock or decrease an authorization counter, even through this helper.
+    if any(os.path.normcase(part) == os.path.normcase(".mcp-oauth-state") for part in target.parts):
+        return
     # ``_preserve_file_mode`` returns None when the target does not exist (or
     # cannot be stat'd), in which case the umask-derived create-mode applies —
     # the same shape as ``atomic_yaml_write``'s ``create_mode`` fallback.
@@ -1376,7 +1383,10 @@ def run_import(args) -> None:
             # reconciler on the target and disconnects hosted instances from the
             # Nous portal. Matched by basename so both the root profile and
             # named profiles (profiles/<name>/gateway_state.json) are covered.
-            if Path(rel).name in _IMPORT_SKIP_NAMES:
+            if Path(rel).name in _IMPORT_SKIP_NAMES or any(
+                os.path.normcase(part) == os.path.normcase(".mcp-oauth-state")
+                for part in Path(rel).parts
+            ):
                 skipped_runtime.append(rel)
                 continue
 
@@ -1892,6 +1902,9 @@ def restore_quick_snapshot(
                 # restored data instead of continuing to serve stale
                 # cached pages from a replaced inode (issue #65942).
                 _safe_restore_db(src, dst)
+            elif dst.name == "config.yaml":
+                from utils import atomic_write_text
+                atomic_write_text(dst, src.read_text(encoding="utf-8"), preserve_mode=True)
             else:
                 shutil.copy2(src, dst)
             restored += 1
