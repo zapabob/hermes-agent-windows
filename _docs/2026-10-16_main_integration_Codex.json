@@ -1,5 +1,5 @@
 {
-  "status": "LOCAL_MERGE_READY_FULL_CI_PENDING",
+  "status": "LOCAL_MERGE_COMMITTED_REMOTE_CI_PENDING",
   "main": "53b65c99587f7c1fe437a44c32d1566576376a17",
   "source_branch": "bb4d2c0c8d8b91ebb3a08546ef365ecc00b83fc7",
   "version_bump": false,
@@ -33,7 +33,7 @@
     "files": 1527
   },
   "policy_validation": 0,
-  "carry_metrics": "STALE; regenerate from committed merge HEAD before promotion",
+  "carry_metrics": "REGENERATED_FROM_MERGE_HEAD; --check exit 0",
   "codegraph": {
     "parsed_files": 11,
     "input_hashes": 12,
@@ -43,7 +43,7 @@
     "whole_repository": false
   },
   "github_cli_authenticated": false,
-  "git_transport_credentials": "NOT_TESTED",
+  "git_transport_credentials": "DRY_RUN_SUCCESS; integration/v0222-main-20261016; no remote mutation from dry-run",
   "main_pushed": false,
   "pr_operations": false,
   "stable_release_proven": false,
@@ -77,5 +77,15 @@
     "tmp/probes/main-integration-20261016/reviewer-transport/approval.json": "d3a04eae96626d1ba2c6440f531b07c0127da4ba46544b199bceb276f7f731aa",
     "tmp/probes/main-integration-20261016/reviewer-transport/tsconfig-approval.json": "ced22a645195f5137b81f2a8d6dc069e56db74ada23f40a4e055fc81bffcbbc3",
     "tmp/probes/main-integration-20261016/reviewer-settings/approval.json": "2c25f5fdd118022633b2ed70c0e187afd27b7a3caaa7dea2daaa1735c8f2bfd5"
-  }
+  },
+  "merge_commit": "e1f79e57a642eb3195e35c189b3879a1651835c0",
+  "carry_report_sha256": {
+    "_docs/carry-surface-20260826.json": "d7c3ae526024a7928990466d80746a9ce4fdc10c01118ce975bb5e5b058bb5b9",
+    "_docs/carry-surface-20260826.md": "4c91b57b3b629a299918631cd8949a509be73f1caa5e2ad12f921571f3a38801"
+  },
+  "remote_main_last_observed": "53b65c99587f7c1fe437a44c32d1566576376a17",
+  "budget_observed_used_percent": 20,
+  "budget_window_minutes": 10080,
+  "budget_resets_at_unix": 1792661695,
+  "internal_reviewers": "completed and closed; no PR reading or reviewer-response work"
 }

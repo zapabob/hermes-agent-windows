@@ -139,3 +139,43 @@ assertion failures. Eight other main-only paths remain unchanged. The final
 source graph binds12 exact inputs and parses11 files (938 nodes,2784 edges,
 pending0). Independent approvals remain scoped; they do not certify the whole
 campaign or main's long-duration stability.
+
+## Local integration commit and carry report closeout
+
+Created merge commit e1f79e57a642eb3195e35c189b3879a1651835c0 with
+first parent 53b65c99587f7c1fe437a44c32d1566576376a17 and second parent
+bb4d2c0c8d8b91ebb3a08546ef365ecc00b83fc7. The explicit five reviewed
+source/config/test paths and two implementation records were staged alongside
+the automatic merge of previously committed history. The protected source
+worktree's dirty log was excluded: the committed log blob was used. Both
+protected worktree statuses, all nine protected WIP byte hashes, shared hook
+and all version owners remain unchanged. LEFTHOOK=0 was scoped only to this
+commit command; no hook-pass claim is made. Exact staged/commit receipts are
+retained privately in merge-prestage.json, merge-precommit.json and
+merge-postcommit.json.
+
+Ran the existing scripts/downstream/carry_metrics.py against committed merge
+HEAD, then its --check: both exit 0. Only the two prescribed _docs carry reports
+were generated; the calculator, frozen snapshot and policy were not changed.
+All _docs paths are excluded by the existing calculator, so this subsequent
+docs-only commit does not invalidate the report. These carry metrics use the
+existing downstream policy snapshot; they do not replace the separately
+frozen v0.22.2 semantic comparison baseline.
+
+Fresh git ls-remote still reports origin/main at 53b65c99587f7c1fe437a44c32d1566576376a17.
+Noninteractive git push --dry-run to integration/v0222-main-20261016 succeeded.
+This proves Git transport write preflight, not an actual push or GitHub REST
+authentication. GitHub CLI authentication remains unqualified. No PR has been
+read, created or replied to. All four internal review agents were already
+complete and were closed after the user's PR-automation question. No further
+review agent is running. The existing main-push js-autofix workflow can create
+or update its own formatting PR and enable auto-merge when its conditions and
+protected-environment authorization permit; this agent has not modified or
+manually dispatched it.
+
+Next permitted publication step is the validation branch, whose push triggers
+Windows Workstation Tier-1 CI. Full orchestrator CI requires its own run and
+must not be inferred from that native lane alone. Main promotion, exact-SHA CI,
+remote equality and all original stability gates remain OPEN at this checkpoint.
+The current account meter is 20 percent used in a 10080-minute window, reset
+1792661695. No paid provider fallback or new model dispatch was used.
