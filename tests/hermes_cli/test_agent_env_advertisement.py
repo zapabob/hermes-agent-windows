@@ -21,6 +21,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+from unittest.mock import patch
 
 import pytest
 
@@ -60,13 +61,9 @@ class TestWrapCommandAdvertisesHarness:
     def _wrap(self, command: str) -> str:
         from tools.environments.local import LocalEnvironment
 
-        env = LocalEnvironment.__new__(LocalEnvironment)
-        env.env = {}
-        env._snapshot_ready = False
-        env._session_id = "testsession0"
-        env._cwd_marker = "__HERMES_CWD_testsession0__"
-        env._snapshot_path = "/tmp/hermes-snap-testsession0.sh"
-        env._snapshot_passthrough_names = set()
+        # Initialise the real wrapper state without capturing a login shell.
+        with patch.object(LocalEnvironment, "init_session"):
+            env = LocalEnvironment(cwd="/tmp")
         return env._wrap_command(command, "/tmp")
 
     def test_wrap_command_contains_export(self):

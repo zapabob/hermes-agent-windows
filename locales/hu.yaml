@@ -84,6 +84,13 @@ gateway:
     no_conversation:       "Nincs elágaztatható beszélgetés — küldj előbb egy üzenetet."
     create_failed:         "Nem sikerült létrehozni az ágat: {error}"
     switch_failed:         "Az ág létrejött, de nem sikerült rá váltani."
+    created_thread_without_branch: "A(z) {thread} szál létrejött, de ághoz tartozó munkamenet nem jött létre. Továbbra is az eredeti csevegés van kiválasztva."
+    thread_location: "Szál: {thread}"
+    persistence_incomplete: "Az ág van kiválasztva, de az előzmények vagy a cím mentése hiányos, vagy nem sikerült megerősíteni.\nEredeti: `{parent}`\nÁg: `{new}`\nHasználd a `/resume` parancsot az állapot ellenőrzéséhez vagy az eredetihez való visszatéréshez."
+    binding_incomplete: "Az ág mentve lett, de a célhoz rendelését nem sikerült megerősíteni.\nEredeti: `{parent}`\nÁg: `{new}`\nHasználd a `/resume` parancsot a mentett ág ellenőrzéséhez."
+    branched_thread_one: "⑂ Új ág: **{title}** egy új szálban ({count} üzenet másolva)\nSzál: {thread}\nEredeti: `{parent}` — ez a csevegés azon marad\nÁg: `{new}`\nHasználd a `/branch --here` parancsot, ha inkább ebben a csevegésben szeretnél elágaztatni."
+    branched_thread_many: "⑂ Új ág: **{title}** egy új szálban ({count} üzenet másolva)\nSzál: {thread}\nEredeti: `{parent}` — ez a csevegés azon marad\nÁg: `{new}`\nHasználd a `/branch --here` parancsot, ha inkább ebben a csevegésben szeretnél elágaztatni."
+    thread_fallback: "Itt nem sikerült szálat létrehozni, ezért az ág váltotta fel ennek a csevegésnek a munkamenetét."
     branched_one:          "⑂ Új ág: **{title}** ({count} üzenet másolva)\nEredeti: `{parent}`\nÁg: `{new}`\nHasználd a `/resume` parancsot az eredetihez való visszatéréshez."
     branched_many:         "⑂ Új ág: **{title}** ({count} üzenet másolva)\nEredeti: `{parent}`\nÁg: `{new}`\nHasználd a `/resume` parancsot az eredetihez való visszatéréshez."
 

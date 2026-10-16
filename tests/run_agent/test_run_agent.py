@@ -117,6 +117,7 @@ def test_flush_persist_override_replaces_api_local_multimodal_note(agent):
     assert api_content[0]["text"] == "[MODEL SWITCH NOTE]\n\nDescribe this screenshot"
 
 
+@pytest.mark.filterwarnings("error::pytest.PytestUnhandledThreadExceptionWarning")
 def test_direct_session_db_flushes_share_marker_claim(agent):
     """A direct flush cannot interleave its marker check with `_persist_session`."""
     class _BarrierDB:
@@ -125,7 +126,12 @@ def test_direct_session_db_flushes_share_marker_claim(agent):
             self.entered = threading.Event()
             self.release = threading.Event()
             self.calls = 0
+            self.token_flushes = 0
             self._lock = threading.Lock()
+
+        def flush_token_counts(self):
+            with self._lock:
+                self.token_flushes += 1
 
         def append_message(self, **kwargs):
             with self._lock:
@@ -177,6 +183,7 @@ def test_direct_session_db_flushes_share_marker_claim(agent):
     assert not normal.is_alive()
     assert not direct.is_alive()
     assert db.rows == ["exactly once"]
+    assert db.token_flushes == 1
 
 
 def test_malformed_memory_config_still_builds_default_store():
@@ -5948,6 +5955,7 @@ class TestAnthropicCredentialRefresh:
         old_client.close.assert_called_once()
         rebuild.assert_called_once_with(
             "sk-ant-oat01-fresh-token", "https://api.anthropic.com", timeout=None,
+            provider="anthropic",
         )
         assert agent._anthropic_client is new_client
         assert agent._anthropic_api_key == "sk-ant-oat01-fresh-token"

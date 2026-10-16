@@ -44,6 +44,7 @@ class TestAnthropicPoolExhaustedFallsBackToEnv:
         assert model == "claude-haiku-4-5-20251001"
         # Must have used the env/legacy token, not a pooled entry.
         assert mock_build.call_args.args[0] == "«redacted:sk-…»-oauth-token"
+        assert mock_build.call_args.kwargs["provider"] == "anthropic"
 
     def test_pool_present_no_entry_and_no_token_still_returns_none(self, monkeypatch):
         """No pooled entry AND no resolvable token → clean (None, None), no crash."""
@@ -68,18 +69,25 @@ class TestAnthropicPoolExhaustedFallsBackToEnv:
         monkeypatch.setenv("ANTHROPIC_TOKEN", "«redacted:sk-…»-oauth-token")
         captured = {}
 
-        def _fake_build(token, base_url):
-            captured["base_url"] = base_url
+        def _fake_build(token, base_url, *, provider):
+            # Provider identity controls OAuth routing even for custom URLs.
+            captured.update(token=token, base_url=base_url, provider=provider)
             return MagicMock()
 
         with patch(
             "agent.auxiliary_client._select_pool_entry", return_value=(True, None)
         ), patch(
-            "agent.anthropic_adapter.build_anthropic_client", side_effect=_fake_build
+            "agent.anthropic_adapter.build_anthropic_client",
+            autospec=True,
+            side_effect=_fake_build,
         ):
             from agent.auxiliary_client import _try_anthropic
 
             client, _model = _try_anthropic()
 
         assert client is not None
-        assert captured["base_url"] == "https://api.anthropic.com"
+        assert captured == {
+            "token": "«redacted:sk-…»-oauth-token",
+            "base_url": "https://api.anthropic.com",
+            "provider": "anthropic",
+        }

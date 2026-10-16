@@ -1,6 +1,8 @@
 import logging
 import os
 from io import StringIO
+from pathlib import Path
+import shutil
 import subprocess
 
 import pytest
@@ -301,16 +303,28 @@ def test_wrapped_exec_scopes_explicit_forward_env_across_profiles(monkeypatch, t
     from agent import secret_scope as ss
 
     env = _make_execute_only_env(forward_env=["EXPLICIT_TOKEN"])
-    env.cwd = str(tmp_path)
-    env._snapshot_path = str(tmp_path / "snapshot.sh")
-    env._cwd_file = str(tmp_path / "cwd.txt")
-    env._snapshot_passthrough_names = set()
+    # Docker's constructor initialises this shared state before starting a container.
+    docker_env.BaseEnvironment.__init__(env, cwd=tmp_path.as_posix(), timeout=60)
+    env._snapshot_ready = True
+    env._snapshot_path = (tmp_path / "snapshot.sh").as_posix()
+    env._cwd_file = (tmp_path / "cwd.txt").as_posix()
     (tmp_path / "snapshot.sh").write_text(
         "export EXPLICIT_TOKEN=stale-from-previous-profile\n",
         encoding="utf-8",
     )
     monkeypatch.setenv("EXPLICIT_TOKEN", "token-for-default")
     monkeypatch.setattr(docker_env, "_load_hermes_env_vars", lambda: {})
+
+    bash = shutil.which("bash")
+    if os.name == "nt":
+        # A bare bash may select the WSL launcher rather than a local POSIX shell.
+        git = shutil.which("git")
+        git_bash = Path(git).parent.parent / "bin/bash.exe" if git else None
+        if git_bash is None or not git_bash.is_file():
+            pytest.skip("the POSIX wrapper requires Git Bash on Windows")
+        bash = str(git_bash)
+    if bash is None:
+        pytest.skip("the POSIX wrapper requires bash")
 
     def _run_fake_docker_exec(cmd, stdin_data=None):
         """Execute the generated docker exec command in a real local bash."""
@@ -324,7 +338,7 @@ def test_wrapped_exec_scopes_explicit_forward_env_across_profiles(monkeypatch, t
             index += 2
         assert cmd[container_index + 1 : container_index + 3] == ["bash", "-c"]
         return subprocess.Popen(
-            ["bash", "-c", cmd[container_index + 3]],
+            [bash, "-c", cmd[container_index + 3]],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             stdin=subprocess.PIPE if stdin_data is not None else subprocess.DEVNULL,
@@ -349,7 +363,7 @@ def test_wrapped_exec_scopes_explicit_forward_env_across_profiles(monkeypatch, t
             finally:
                 ss.reset_secret_scope(scope_token)
 
-            assert result["returncode"] == 0
+            assert result["returncode"] == 0, result
             assert result["output"] == expected
             assert "EXPLICIT_TOKEN=" not in (
                 tmp_path / "snapshot.sh"

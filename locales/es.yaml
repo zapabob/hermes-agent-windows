@@ -84,6 +84,13 @@ gateway:
     no_conversation:       "No hay conversación para ramificar — envía un mensaje primero."
     create_failed:         "No se pudo crear la rama: {error}"
     switch_failed:         "Rama creada pero no se pudo cambiar a ella."
+    created_thread_without_branch: "Se creó el hilo {thread}, pero no se creó ninguna sesión de rama. El chat original sigue seleccionado."
+    thread_location: "Hilo: {thread}"
+    persistence_incomplete: "La rama está seleccionada, pero el guardado del historial o del título está incompleto o no se pudo confirmar.\nOriginal: `{parent}`\nRama: `{new}`\nUsa `/resume` para comprobar el estado o volver al original."
+    binding_incomplete: "La rama se guardó, pero no se pudo confirmar su vinculación con el destino.\nOriginal: `{parent}`\nRama: `{new}`\nUsa `/resume` para revisar la rama guardada."
+    branched_thread_one: "⑂ Ramificado a **{title}** en un hilo nuevo ({count} mensaje copiado)\nHilo: {thread}\nOriginal: `{parent}` — este chat permanece en él\nRama: `{new}`\nUsa `/branch --here` para ramificar en este chat en su lugar."
+    branched_thread_many: "⑂ Ramificado a **{title}** en un hilo nuevo ({count} mensajes copiados)\nHilo: {thread}\nOriginal: `{parent}` — este chat permanece en él\nRama: `{new}`\nUsa `/branch --here` para ramificar en este chat en su lugar."
+    thread_fallback: "No se pudo crear un hilo aquí, así que la rama reemplazó la sesión de este chat."
     branched_one:          "⑂ Ramificado a **{title}** ({count} mensaje copiado)\nOriginal: `{parent}`\nRama: `{new}`\nUsa `/resume` para volver al original."
     branched_many:         "⑂ Ramificado a **{title}** ({count} mensajes copiados)\nOriginal: `{parent}`\nRama: `{new}`\nUsa `/resume` para volver al original."
 

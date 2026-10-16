@@ -88,6 +88,13 @@ gateway:
     no_conversation:       "Níl aon chomhrá le brainseáil — seol teachtaireacht ar dtús."
     create_failed:         "Theip ar an mbrainse a chruthú: {error}"
     switch_failed:         "Cruthaíodh an brainse ach theip ar athrú chuige."
+    created_thread_without_branch: "Cruthaíodh an snáithe {thread}, ach níor cruthaíodh seisiún brainse. Tá an comhrá bunaidh fós roghnaithe."
+    thread_location: "Snáithe: {thread}"
+    persistence_incomplete: "Tá an brainse roghnaithe, ach tá sábháil na staire nó an teidil neamhiomlán nó níorbh fhéidir í a dheimhniú.\nBunaidh: `{parent}`\nBrainse: `{new}`\nÚsáid `/resume` chun an staid a sheiceáil nó filleadh ar an mbunaidh."
+    binding_incomplete: "Sábháladh an brainse, ach níorbh fhéidir a cheangal leis an gceann scríbe a dheimhniú.\nBunaidh: `{parent}`\nBrainse: `{new}`\nÚsáid `/resume` chun an brainse sábháilte a sheiceáil."
+    branched_thread_one: "⑂ Brainseáilte go **{title}** i snáithe nua ({count} teachtaireacht cóipeáilte)\nSnáithe: {thread}\nBunaidh: `{parent}` — fanann an comhrá seo ann\nBrainse: `{new}`\nÚsáid `/branch --here` chun brainse a chruthú sa chomhrá seo ina ionad."
+    branched_thread_many: "⑂ Brainseáilte go **{title}** i snáithe nua ({count} teachtaireacht cóipeáilte)\nSnáithe: {thread}\nBunaidh: `{parent}` — fanann an comhrá seo ann\nBrainse: `{new}`\nÚsáid `/branch --here` chun brainse a chruthú sa chomhrá seo ina ionad."
+    thread_fallback: "Níorbh fhéidir snáithe a chruthú anseo, mar sin tháinig an brainse in ionad sheisiún an chomhrá seo."
     branched_one:          "⑂ Brainseáilte go **{title}** ({count} teachtaireacht cóipeáilte)\nBunaidh: `{parent}`\nBrainse: `{new}`\nÚsáid `/resume` chun filleadh ar an mbunaidh."
     branched_many:         "⑂ Brainseáilte go **{title}** ({count} teachtaireacht cóipeáilte)\nBunaidh: `{parent}`\nBrainse: `{new}`\nÚsáid `/resume` chun filleadh ar an mbunaidh."
 

@@ -84,6 +84,13 @@ gateway:
     no_conversation:       "Aucune conversation à brancher — envoyez d'abord un message."
     create_failed:         "Échec de la création de la branche : {error}"
     switch_failed:         "Branche créée mais impossible de basculer dessus."
+    created_thread_without_branch: "Le fil {thread} a été créé, mais aucune session de branche n'a été créée. Le chat d'origine reste sélectionné."
+    thread_location: "Fil : {thread}"
+    persistence_incomplete: "La branche est sélectionnée, mais l'enregistrement de l'historique ou du titre est incomplet ou n'a pas pu être confirmé.\nOriginal : `{parent}`\nBranche : `{new}`\nUtilisez `/resume` pour vérifier l'état ou revenir à l'original."
+    binding_incomplete: "La branche a été enregistrée, mais son association à la destination n'a pas pu être confirmée.\nOriginal : `{parent}`\nBranche : `{new}`\nUtilisez `/resume` pour vérifier la branche enregistrée."
+    branched_thread_one: "⑂ Branche **{title}** créée dans un nouveau fil ({count} message copié)\nFil : {thread}\nOriginal : `{parent}` — ce chat y reste\nBranche : `{new}`\nUtilisez `/branch --here` pour créer la branche dans ce chat à la place."
+    branched_thread_many: "⑂ Branche **{title}** créée dans un nouveau fil ({count} messages copiés)\nFil : {thread}\nOriginal : `{parent}` — ce chat y reste\nBranche : `{new}`\nUtilisez `/branch --here` pour créer la branche dans ce chat à la place."
+    thread_fallback: "Aucun fil n'a pu être créé ici ; la branche a donc remplacé la session de ce chat."
     branched_one:          "⑂ Branche **{title}** créée ({count} message copié)\nOriginal : `{parent}`\nBranche : `{new}`\nUtilisez `/resume` pour revenir à l'original."
     branched_many:         "⑂ Branche **{title}** créée ({count} messages copiés)\nOriginal : `{parent}`\nBranche : `{new}`\nUtilisez `/resume` pour revenir à l'original."
 

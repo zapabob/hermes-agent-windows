@@ -96,6 +96,11 @@ def _fake_worker_publishes_url(monkeypatch, state="teststate123"):
 
 
 def test_start_flow_client_redirect_skips_gateway_listener(monkeypatch):
+    from hermes_cli.mcp_config import _replace_mcp_servers
+
+    cfg = {"url": "https://mcp.example.com/mcp", "auth": "oauth"}
+    ok, issues = _replace_mcp_servers({"clicky": cfg})
+    assert ok and not issues, issues
     _fake_worker_publishes_url(monkeypatch)
 
     bound = []
@@ -109,7 +114,7 @@ def test_start_flow_client_redirect_skips_gateway_listener(monkeypatch):
     result = mcp_oauth_sessions.start_flow(
         str(get_hermes_home()),
         "clicky",
-        {"url": "https://mcp.example.com/mcp", "auth": "oauth"},
+        cfg,
         client_redirect_uri="http://127.0.0.1:8412/callback",
     )
 

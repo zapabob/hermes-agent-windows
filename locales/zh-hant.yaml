@@ -84,6 +84,13 @@ gateway:
     no_conversation:       "沒有可分支的對話 — 請先傳送一則訊息。"
     create_failed:         "建立分支失敗：{error}"
     switch_failed:         "分支已建立，但無法切換到該分支。"
+    created_thread_without_branch: "討論串 {thread} 已建立，但未建立分支工作階段。目前仍選取原始聊天。"
+    thread_location: "討論串：{thread}"
+    persistence_incomplete: "已選取分支，但歷史紀錄或標題的儲存尚未完成，或無法確認是否已儲存。\n原始：`{parent}`\n分支：`{new}`\n使用 `/resume` 檢查狀態或返回原始工作階段。"
+    binding_incomplete: "分支已儲存，但無法確認其與目的地的綁定。\n原始：`{parent}`\n分支：`{new}`\n使用 `/resume` 檢查已儲存的分支。"
+    branched_thread_one: "⑂ 已在新的討論串中分支至 **{title}**（已複製 {count} 則訊息）\n討論串：{thread}\n原始：`{parent}` — 此聊天仍保留在原始工作階段\n分支：`{new}`\n若要改在此聊天中建立分支，請使用 `/branch --here`。"
+    branched_thread_many: "⑂ 已在新的討論串中分支至 **{title}**（已複製 {count} 則訊息）\n討論串：{thread}\n原始：`{parent}` — 此聊天仍保留在原始工作階段\n分支：`{new}`\n若要改在此聊天中建立分支，請使用 `/branch --here`。"
+    thread_fallback: "此處無法建立討論串，因此分支已取代此聊天的工作階段。"
     branched_one:          "⑂ 已分支至 **{title}**（已複製 {count} 則訊息）\n原始：`{parent}`\n分支：`{new}`\n使用 `/resume` 切換回原始工作階段。"
     branched_many:         "⑂ 已分支至 **{title}**（已複製 {count} 則訊息）\n原始：`{parent}`\n分支：`{new}`\n使用 `/resume` 切換回原始工作階段。"
 

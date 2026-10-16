@@ -87,11 +87,15 @@ def test_hosted_callback_bypasses_gated_cookie_auth(monkeypatch):
 
 
 def test_hosted_auth_allows_same_server_name_in_different_profiles(tmp_path, monkeypatch):
+    import json
+
     from hermes_cli import web_server
     from tools.mcp_dashboard_oauth import DashboardOAuthFlow
 
     profile_home = tmp_path / "profiles" / "work"
     profile_home.mkdir(parents=True)
+    saved = {"mcp_servers": {"reports": {"url": "https://mcp.example"}}}
+    (profile_home / "config.yaml").write_text(json.dumps(saved), encoding="utf-8")
     monkeypatch.setattr(web_server, "_resolve_profile_dir", lambda _name: profile_home)
 
     existing = DashboardOAuthFlow(
@@ -108,11 +112,16 @@ def test_hosted_auth_allows_same_server_name_in_different_profiles(tmp_path, mon
 
         asyncio.run(flow.publish_authorization_url("https://idp.example/authorize?state=work"))
 
-    with patch("hermes_cli.mcp_config._get_mcp_servers", return_value={"reports": {"url": "https://mcp.example"}}), \
-         patch.object(web_server, "_run_dashboard_mcp_oauth", fake_worker):
+    with patch.object(web_server, "_run_dashboard_mcp_oauth", fake_worker):
         response = _client().post("/api/mcp/servers/reports/auth?profile=work")
 
-    assert response.status_code != 409
+    assert response.status_code == 200
+    body = response.json()
+    assert body["authorization_url"] == "https://idp.example/authorize?state=work"
+    work_flow = web_server._mcp_oauth_flows[body["flow_id"]]
+    assert work_flow.hermes_home == str(profile_home)
+    assert web_server._mcp_oauth_flows[existing.flow_id] is existing
+    assert json.loads((profile_home / "config.yaml").read_text(encoding="utf-8")) == saved
 
 
 

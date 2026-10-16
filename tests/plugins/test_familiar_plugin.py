@@ -176,3 +176,51 @@ def test_missing_vendor_checkout_fails_without_spawning(tmp_path):
     assert result["status"] == "unavailable"
     assert result["reason"] == "vendor_missing"
     spawn.assert_not_called()
+
+
+@pytest.mark.parametrize("operation", ["status", "spawn"])
+def test_process_boundaries_scrub_hermes_secrets_and_keep_body_settings(
+    operation, monkeypatch, tmp_path
+):
+    import subprocess
+
+    from plugins.familiar import core
+
+    home = tmp_path / "profile"
+    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setenv("OPENAI_API_KEY", "synthetic-provider-secret")
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "synthetic-messaging-secret")
+    monkeypatch.setenv("GITHUB_TOKEN", "synthetic-github-secret")
+    monkeypatch.setenv("AUXILIARY_VISION_API_KEY", "synthetic-aux-secret")
+    monkeypatch.setenv("FAMILIAR_CONFIG", str(tmp_path / "body.yaml"))
+    monkeypatch.setenv("FAMILIAR_PORT", "18870")
+    monkeypatch.setenv("FAMILIAR_TOKEN", "synthetic-body-control-secret")
+    monkeypatch.setenv("PATH", "synthetic-search-path")
+    process = Mock(return_value=Mock(returncode=0))
+    vendor = tmp_path / "familiar"
+    vendor.mkdir()
+
+    if operation == "status":
+        monkeypatch.setattr(core.subprocess, "run", process)
+        assert core._familiar_is_running("uv.exe", vendor) is True
+        assert process.call_args.kwargs["timeout"] == 15
+        assert process.call_args.kwargs["creationflags"] == getattr(
+            subprocess, "CREATE_NO_WINDOW", 0
+        )
+    else:
+        core._spawn_familiar(
+            "uv.exe", vendor, popen=process, log_path=tmp_path / "body.log"
+        )
+
+    environment = process.call_args.kwargs["env"]
+    assert environment["HERMES_HOME"] == str(home)
+    assert environment["FAMILIAR_CONFIG"] == str(tmp_path / "body.yaml")
+    assert environment["FAMILIAR_PORT"] == "18870"
+    assert environment["FAMILIAR_TOKEN"] == "synthetic-body-control-secret"
+    assert environment["PATH"] == "synthetic-search-path"
+    for key in (
+        "OPENAI_API_KEY", "TELEGRAM_BOT_TOKEN", "GITHUB_TOKEN",
+        "AUXILIARY_VISION_API_KEY",
+    ):
+        assert key not in environment
+    assert process.call_count == 1

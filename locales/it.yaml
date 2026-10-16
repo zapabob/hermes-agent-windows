@@ -84,6 +84,13 @@ gateway:
     no_conversation:       "Nessuna conversazione da diramare — invia prima un messaggio."
     create_failed:         "Creazione del ramo non riuscita: {error}"
     switch_failed:         "Ramo creato ma il passaggio ad esso non è riuscito."
+    created_thread_without_branch: "Il thread {thread} è stato creato, ma non è stata creata alcuna sessione di ramo. La chat originale rimane selezionata."
+    thread_location: "Thread: {thread}"
+    persistence_incomplete: "Il ramo è selezionato, ma il salvataggio della cronologia o del titolo è incompleto o non è stato possibile confermarlo.\nOriginale: `{parent}`\nRamo: `{new}`\nUsa `/resume` per verificare lo stato o tornare all'originale."
+    binding_incomplete: "Il ramo è stato salvato, ma non è stato possibile confermarne l'associazione alla destinazione.\nOriginale: `{parent}`\nRamo: `{new}`\nUsa `/resume` per verificare il ramo salvato."
+    branched_thread_one: "⑂ Diramato in **{title}** in un nuovo thread ({count} messaggio copiato)\nThread: {thread}\nOriginale: `{parent}` — questa chat vi rimane\nRamo: `{new}`\nUsa `/branch --here` per diramare invece in questa chat."
+    branched_thread_many: "⑂ Diramato in **{title}** in un nuovo thread ({count} messaggi copiati)\nThread: {thread}\nOriginale: `{parent}` — questa chat vi rimane\nRamo: `{new}`\nUsa `/branch --here` per diramare invece in questa chat."
+    thread_fallback: "Non è stato possibile creare un thread qui, quindi il ramo ha sostituito la sessione di questa chat."
     branched_one:          "⑂ Diramato in **{title}** ({count} messaggio copiato)\nOriginale: `{parent}`\nRamo: `{new}`\nUsa `/resume` per tornare all'originale."
     branched_many:         "⑂ Diramato in **{title}** ({count} messaggi copiati)\nOriginale: `{parent}`\nRamo: `{new}`\nUsa `/resume` per tornare all'originale."
 

@@ -1652,6 +1652,12 @@ class NativeDebugAdapterContracts(unittest.TestCase):
         kernel = SimpleNamespace(**{name:Mock(return_value=1) for name in names})
         with patch.object(ctypes,'WinDLL',return_value=kernel,create=True):
             api = fixture.WindowsDebugEvents()
+        # This host-independent adapter double must include Win32 error APIs
+        # as well as kernel calls; Linux ctypes does not expose these names.
+        native = dict(vars(ctypes))
+        native.update(get_last_error=lambda:5,
+                      WinError=lambda code:OSError(code,'Owned Win32 adapter fault'))
+        api.c = SimpleNamespace(**native)
         def duplicate(src,handle,target,out,rights,inherit,options):
             out._obj.value=901
             return 1
@@ -1688,8 +1694,10 @@ class NativeDebugAdapterContracts(unittest.TestCase):
             else:
                 kernel.GetProcessTimes.side_effect=None
                 kernel.GetProcessTimes.return_value=0
-            with self.subTest(defect=defect),self.assertRaises((RuntimeError,OSError)):
+            with self.subTest(defect=defect),self.assertRaises((RuntimeError,OSError)) as caught:
                 api.generation(901,501,17)
+            if defect=='times':
+                self.assertEqual(caught.exception.errno,5)
 
     def test_actual_adapter_decodes_create_and_exception_without_running_native(self):
         api,kernel=self.adapter()

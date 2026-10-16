@@ -208,7 +208,7 @@ def test_public_start_rejects_actual_anonymous_catalogue_as_oauth_success(homes,
             assert any(row["method"] == "tools/list" for row in ledger), ledger
             assert all(row["authorization"] is None for row in ledger), ledger
             assert snapshot["status"] == "error", snapshot
-            assert "no OAuth token" in snapshot["error"], snapshot
+            assert "no oauth token" in snapshot["error"].casefold(), snapshot
             assert "error" in response, response
             assert not (work / "mcp-tokens/reports.json").exists()
             assert not (homes / "profiles/other/mcp-tokens/reports.json").exists()

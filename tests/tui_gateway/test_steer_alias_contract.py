@@ -1,4 +1,5 @@
 """F03: slash.exec must steer the live session through its canonical owner."""
+from contextlib import contextmanager
 from copy import deepcopy
 import threading
 from types import SimpleNamespace
@@ -309,16 +310,47 @@ def test_stop_cancels_an_explicit_steer_already_claimed_from_fifo(monkeypatch):
     server._settle_session_turn(session, agent, {}, False)
     delivered = []
     monkeypatch.setattr(server, "_run_prompt_submit", lambda *_args, **_kwargs: delivered.append(True))
+    original_lock = session["history_lock"]
+
+    @contextmanager
+    def stop_between_claim_and_generation_check():
+        with original_lock:
+            yield
+        # Routing is resolved before claim; use the actual claim unlock so
+        # Stop observes a claimed envelope and the unchanged generation token.
+        session["history_lock"] = original_lock
+        assert session["running"] is True
+        assert session.get("queued_prompt") is None
+        assert session["_queued_prompt_generation"] == 7
+        response = server._methods["session.interrupt"]("F03", {"session_id": "F03-owned"})
+        assert "error" not in response
+
+    session["history_lock"] = stop_between_claim_and_generation_check()
+    assert server._drain_queued_prompt("F03", "F03-owned", session)
+    assert delivered == []
+    assert session.get("queued_prompt") is None
+    assert session.get("queued_prompts") is None
+    assert session["_queued_prompt_generation"] == 8
+
+
+def test_stop_before_fifo_claim_leaves_nothing_to_drain(monkeypatch):
+    agent, session = _stoppable_session(monkeypatch)
+    agent.steer("Cancelled before claim 日本語")
+    server._settle_session_turn(session, agent, {}, False)
+    delivered = []
+    monkeypatch.setattr(server, "_run_prompt_submit", lambda *_args, **_kwargs: delivered.append(True))
     real_compute_host_decision = server._session_uses_compute_host
 
-    def stop_between_claim_and_generation_check(_session):
+    def stop_before_claim(_session):
         monkeypatch.setattr(server, "_session_uses_compute_host", real_compute_host_decision)
+        assert session["running"] is False
+        assert session["queued_prompt"]["_explicit_steer"] is True
         response = server._methods["session.interrupt"]("F03", {"session_id": "F03-owned"})
         assert "error" not in response
         return False
 
-    monkeypatch.setattr(server, "_session_uses_compute_host", stop_between_claim_and_generation_check)
-    assert server._drain_queued_prompt("F03", "F03-owned", session)
+    monkeypatch.setattr(server, "_session_uses_compute_host", stop_before_claim)
+    assert server._drain_queued_prompt("F03", "F03-owned", session) is False
     assert delivered == []
     assert session.get("queued_prompt") is None
     assert session.get("queued_prompts") is None

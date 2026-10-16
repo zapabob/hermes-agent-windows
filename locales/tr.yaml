@@ -84,6 +84,13 @@ gateway:
     no_conversation:       "Dallandırılacak konuşma yok — önce bir mesaj gönderin."
     create_failed:         "Dal oluşturulamadı: {error}"
     switch_failed:         "Dal oluşturuldu ancak ona geçilemedi."
+    created_thread_without_branch: "{thread} ileti dizisi oluşturuldu, ancak dal oturumu oluşturulmadı. Orijinal sohbet seçili kalır."
+    thread_location: "İleti dizisi: {thread}"
+    persistence_incomplete: "Dal seçili, ancak geçmişin veya başlığın kaydedilmesi tamamlanmadı ya da doğrulanamadı.\nOrijinal: `{parent}`\nDal: `{new}`\nDurumu incelemek veya orijinale dönmek için `/resume` kullanın."
+    binding_incomplete: "Dal kaydedildi, ancak hedefle olan bağlantısı doğrulanamadı.\nOrijinal: `{parent}`\nDal: `{new}`\nKaydedilen dalı incelemek için `/resume` kullanın."
+    branched_thread_one: "⑂ Yeni bir ileti dizisinde **{title}** dalı oluşturuldu ({count} mesaj kopyalandı)\nİleti dizisi: {thread}\nOrijinal: `{parent}` — bu sohbet orada kalır\nDal: `{new}`\nBunun yerine bu sohbette dallandırmak için `/branch --here` kullanın."
+    branched_thread_many: "⑂ Yeni bir ileti dizisinde **{title}** dalı oluşturuldu ({count} mesaj kopyalandı)\nİleti dizisi: {thread}\nOrijinal: `{parent}` — bu sohbet orada kalır\nDal: `{new}`\nBunun yerine bu sohbette dallandırmak için `/branch --here` kullanın."
+    thread_fallback: "Burada ileti dizisi oluşturulamadığından dal, bu sohbetin oturumunun yerini aldı."
     branched_one:          "⑂ **{title}** dalına geçildi ({count} mesaj kopyalandı)\nOrijinal: `{parent}`\nDal: `{new}`\nOrijinale geri dönmek için `/resume` kullanın."
     branched_many:         "⑂ **{title}** dalına geçildi ({count} mesaj kopyalandı)\nOrijinal: `{parent}`\nDal: `{new}`\nOrijinale geri dönmek için `/resume` kullanın."
 

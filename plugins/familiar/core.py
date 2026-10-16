@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from hermes_constants import get_hermes_home
+from tools.environments.local import hermes_subprocess_env
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,8 @@ def _familiar_is_running(uv_executable: str, vendor_dir: Path) -> bool:
         stderr=subprocess.DEVNULL,
         check=False,
         timeout=15,
+        env=hermes_subprocess_env(),
+        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
     )
     return completed.returncode == 0
 
@@ -65,6 +68,7 @@ def _spawn_familiar(
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=stderr_handle,
+            env=hermes_subprocess_env(),
             creationflags=(
                 getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
                 | getattr(subprocess, "CREATE_NO_WINDOW", 0)

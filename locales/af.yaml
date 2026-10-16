@@ -84,6 +84,13 @@ gateway:
     no_conversation:       "Geen gesprek om te vertak nie — stuur eers 'n boodskap."
     create_failed:         "Kon nie tak skep nie: {error}"
     switch_failed:         "Tak is geskep, maar oorskakeling het misluk."
+    created_thread_without_branch: "Gespreksdraad {thread} is geskep, maar geen taksessie is geskep nie. Die oorspronklike klets bly gekies."
+    thread_location: "Gespreksdraad: {thread}"
+    persistence_incomplete: "Die tak is gekies, maar die stoor van die geskiedenis of titel is onvolledig of kon nie bevestig word nie.\nOorspronklik: `{parent}`\nTak: `{new}`\nGebruik `/resume` om die toestand na te gaan of na die oorspronklike terug te keer."
+    binding_incomplete: "Die tak is gestoor, maar sy koppeling aan die bestemming kon nie bevestig word nie.\nOorspronklik: `{parent}`\nTak: `{new}`\nGebruik `/resume` om die gestoorde tak na te gaan."
+    branched_thread_one: "⑂ Vertak na **{title}** in 'n nuwe gespreksdraad ({count} boodskap gekopieer)\nGespreksdraad: {thread}\nOorspronklik: `{parent}` — hierdie klets bly daarop\nTak: `{new}`\nGebruik `/branch --here` om eerder in hierdie klets te vertak."
+    branched_thread_many: "⑂ Vertak na **{title}** in 'n nuwe gespreksdraad ({count} boodskappe gekopieer)\nGespreksdraad: {thread}\nOorspronklik: `{parent}` — hierdie klets bly daarop\nTak: `{new}`\nGebruik `/branch --here` om eerder in hierdie klets te vertak."
+    thread_fallback: "Geen gespreksdraad kon hier geskep word nie, dus het die tak hierdie klets se sessie vervang."
     branched_one:          "⑂ Vertak na **{title}** ({count} boodskap gekopieer)\nOorspronklik: `{parent}`\nTak: `{new}`\nGebruik `/resume` om terug te gaan na die oorspronklike."
     branched_many:         "⑂ Vertak na **{title}** ({count} boodskappe gekopieer)\nOorspronklik: `{parent}`\nTak: `{new}`\nGebruik `/resume` om terug te gaan na die oorspronklike."
 

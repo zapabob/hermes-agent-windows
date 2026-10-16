@@ -84,6 +84,13 @@ gateway:
     no_conversation:       "Keine Konversation zum Verzweigen — senden Sie zuerst eine Nachricht."
     create_failed:         "Verzweigung fehlgeschlagen: {error}"
     switch_failed:         "Verzweigung erstellt, aber Wechsel fehlgeschlagen."
+    created_thread_without_branch: "Thread {thread} wurde erstellt, aber keine Zweigsitzung angelegt. Der ursprüngliche Chat bleibt ausgewählt."
+    thread_location: "Thread: {thread}"
+    persistence_incomplete: "Der Zweig ist ausgewählt, aber das Speichern des Verlaufs oder Titels ist unvollständig oder konnte nicht bestätigt werden.\nOriginal: `{parent}`\nZweig: `{new}`\nVerwenden Sie `/resume`, um den Zustand zu prüfen oder zum Original zurückzukehren."
+    binding_incomplete: "Der Zweig wurde gespeichert, aber seine Zuordnung zum Ziel konnte nicht bestätigt werden.\nOriginal: `{parent}`\nZweig: `{new}`\nVerwenden Sie `/resume`, um den gespeicherten Zweig zu prüfen."
+    branched_thread_one: "⑂ Verzweigt zu **{title}** in einem neuen Thread ({count} Nachricht kopiert)\nThread: {thread}\nOriginal: `{parent}` — dieser Chat bleibt dort\nZweig: `{new}`\nVerwenden Sie `/branch --here`, um stattdessen in diesem Chat zu verzweigen."
+    branched_thread_many: "⑂ Verzweigt zu **{title}** in einem neuen Thread ({count} Nachrichten kopiert)\nThread: {thread}\nOriginal: `{parent}` — dieser Chat bleibt dort\nZweig: `{new}`\nVerwenden Sie `/branch --here`, um stattdessen in diesem Chat zu verzweigen."
+    thread_fallback: "Hier konnte kein Thread erstellt werden, daher hat der Zweig die Sitzung dieses Chats ersetzt."
     branched_one:          "⑂ Verzweigt zu **{title}** ({count} Nachricht kopiert)\nOriginal: `{parent}`\nZweig: `{new}`\nVerwenden Sie `/resume`, um zum Original zurückzukehren."
     branched_many:         "⑂ Verzweigt zu **{title}** ({count} Nachrichten kopiert)\nOriginal: `{parent}`\nZweig: `{new}`\nVerwenden Sie `/resume`, um zum Original zurückzukehren."
 

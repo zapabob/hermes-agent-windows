@@ -101,21 +101,25 @@ def test_normal_cleanup_requires_truthful_owned_completion(homes, monkeypatch, r
         try:
             while frame is not None:
                 result.append({"function": frame.f_code.co_name,
-                    "file": frame.f_code.co_filename, "line": frame.f_lineno})
+                    "file": frame.f_code.co_filename, "line": frame.f_lineno,
+                    "owned_event_wait": frame.f_code.co_name == "wait"
+                        and frame.f_locals.get("self") is owner.completed,
+                    "owned_callback_join": frame.f_code.co_name == "join"
+                        and frame.f_locals.get("self") is owner.listener})
                 frame = frame.f_back
         finally:
             del frame
         return result
 
-    def await_worker_line(worker, line):
+    def await_worker_phase(worker, phase):
         deadline = time.monotonic() + 3
         while time.monotonic() < deadline:
             stack = worker_stack(worker)
             if any(row["function"] == "_worker" and row["file"] == sessions.__file__
-                   and row["line"] == line for row in stack):
+                   for row in stack) and any(row[phase] for row in stack):
                 return stack
             time.sleep(0.01)
-        raise AssertionError(("Worker did not reach owned wait/join", line, worker_stack(worker)))
+        raise AssertionError(("Worker did not reach owned wait/join", phase, worker_stack(worker)))
 
     def snapshot(worker, listener):
         return {"mode": mode, "worker_alive": worker.is_alive(), "callback_alive": listener.is_alive(),
@@ -167,14 +171,14 @@ def test_normal_cleanup_requires_truthful_owned_completion(homes, monkeypatch, r
                 assert errors[0]["type"] == "_ListenerCleanupPending" and errors[0]["cause_type"] == "OSError"
                 assert errors[0]["cause"] == "Owned deterministic callback close fault"
             else:
-                observations["waiting_stack"] = await_worker_line(worker, 439)
+                observations["waiting_stack"] = await_worker_phase(worker, "owned_event_wait")
                 observations["before"] = snapshot(worker, listener)
                 assert worker.is_alive() and listener.is_alive() and not flow.worker_done
                 assert not owner.completed.is_set() and rec["httpd"] is servers[0]
                 if mode == "event_before_exit":
                     hook_release.set()
                     assert wrapper_entered.wait(6) and owner.completed.is_set()
-                    observations["join_stack"] = await_worker_line(worker, 440)
+                    observations["join_stack"] = await_worker_phase(worker, "owned_callback_join")
                     observations["event_before_native_exit"] = snapshot(worker, listener)
                     assert any(row["function"] == "join" for row in observations["join_stack"])
                     assert listener.is_alive() and worker.is_alive() and not flow.worker_done

@@ -9,9 +9,12 @@ policy: redirect the live turn by default, with the legacy interrupt + queue
 path retained as a compatibility fallback.
 """
 
+from contextlib import contextmanager
 import threading
 import time
 import types
+
+import pytest
 
 import tools.async_delegation as ad
 from tui_gateway import server
@@ -689,7 +692,24 @@ def test_drain_releases_running_on_dispatch_failure(monkeypatch):
     assert session["running"] is False
 
 
-def test_drain_does_not_dispatch_a_prompt_cancelled_after_claim(monkeypatch):
+def _bump_generation_after_claim(session, expected_next):
+    """Interrupt at the claim boundary, independently of routing decisions."""
+    original_lock = session["history_lock"]
+
+    @contextmanager
+    def cancel_after_unlock():
+        with original_lock:
+            yield
+        session["history_lock"] = original_lock
+        assert session["running"] is True
+        assert session.get("queued_prompt") == expected_next
+        session["_queued_prompt_generation"] = 1
+
+    session["history_lock"] = cancel_after_unlock()
+
+
+@pytest.mark.parametrize("use_compute_host", [False, True])
+def test_drain_does_not_dispatch_a_prompt_cancelled_after_claim(monkeypatch, use_compute_host):
     """Generation cancel aborts dispatch but must restore the claimed head.
 
     Compress re-anchor / Stop bump generation between claim and check. Dropping
@@ -699,42 +719,53 @@ def test_drain_does_not_dispatch_a_prompt_cancelled_after_claim(monkeypatch):
         queued_prompt={"text": "B", "transport": "ws-1"},
         queued_prompts=[{"text": "C", "transport": "ws-1"}],
     )
-    monkeypatch.setattr(
-        server,
-        "_session_uses_compute_host",
-        lambda _session: session.__setitem__("_queued_prompt_generation", 1) or False,
-    )
-    monkeypatch.setattr(
-        server,
-        "_run_prompt_submit",
-        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("must not dispatch")),
-    )
+    dispatched = []
+    monkeypatch.setattr(server, "_session_uses_compute_host", lambda _session: use_compute_host)
+    monkeypatch.setattr(server, "_run_prompt_submit", lambda *args, **kwargs: dispatched.append(args))
+    monkeypatch.setattr(server, "_submit_prompt_to_compute_host", lambda *args, **kwargs: dispatched.append(args))
+    _bump_generation_after_claim(session, {"text": "C", "transport": "ws-1"})
 
     assert server._drain_queued_prompt("r1", "sid", session) is True
+    assert dispatched == []
     assert session["running"] is False
     # Claimed B restored first; C that advanced into the slot is behind it.
     assert session.get("queued_prompt") == {"text": "B", "transport": "ws-1"}
     assert session.get("queued_prompts") == [{"text": "C", "transport": "ws-1"}]
 
 
-def test_drain_restores_claimed_prompt_when_generation_bumps_mid_claim(monkeypatch):
+@pytest.mark.parametrize("use_compute_host", [False, True])
+def test_drain_restores_claimed_prompt_when_generation_bumps_mid_claim(monkeypatch, use_compute_host):
     """Single-item queue: generation cancel must not empty the queue."""
     session = _session(queued_prompt={"text": "follow-up Q", "transport": None})
-    monkeypatch.setattr(
-        server,
-        "_session_uses_compute_host",
-        lambda _session: session.__setitem__("_queued_prompt_generation", 1) or False,
-    )
-    monkeypatch.setattr(
-        server,
-        "_run_prompt_submit",
-        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("must not dispatch")),
-    )
+    dispatched = []
+    monkeypatch.setattr(server, "_session_uses_compute_host", lambda _session: use_compute_host)
+    monkeypatch.setattr(server, "_run_prompt_submit", lambda *args, **kwargs: dispatched.append(args))
+    monkeypatch.setattr(server, "_submit_prompt_to_compute_host", lambda *args, **kwargs: dispatched.append(args))
+    _bump_generation_after_claim(session, None)
 
     assert server._drain_queued_prompt("r1", "sid", session) is True
+    assert dispatched == []
     assert session["running"] is False
     assert session.get("queued_prompt") == {"text": "follow-up Q", "transport": None}
     assert not session.get("queued_prompts")
+
+
+def test_generation_bump_before_claim_dispatches_with_current_generation(monkeypatch):
+    """Routing precedes claim; its generation becomes the new claim's token."""
+    session = _session(queued_prompt={"text": "follow-up Q", "transport": None})
+    dispatched = []
+    monkeypatch.setattr(
+        server, "_session_uses_compute_host",
+        lambda _session: session.__setitem__("_queued_prompt_generation", 1) or False,
+    )
+    monkeypatch.setattr(
+        server, "_run_prompt_submit",
+        lambda _rid, _sid, _session, text, **kwargs: dispatched.append((text, kwargs)),
+    )
+
+    assert server._drain_queued_prompt("r1", "sid", session) is True
+    assert dispatched == [("follow-up Q", {"queued_prompt_generation": 1})]
+    assert session.get("queued_prompt") is None
 
 
 def test_drain_does_not_clear_stop_after_its_final_generation_check(monkeypatch):

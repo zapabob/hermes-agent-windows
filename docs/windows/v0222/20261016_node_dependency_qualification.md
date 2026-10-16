@@ -90,7 +90,7 @@ packaged live Desktop.
 
 The updated pnpm lock passed an isolated manifest-only resolution and an
 offline frozen-lock check for all eight workspace projects. A source-bound
-CodeGraph 1.6 index of seven complete maintained JavaScript files contained
+CodeGraph CLI (reporting version 1.5.0) index of seven complete maintained JavaScript files contained
 23 nodes and 26 edges. Impact traversal resolved compile and expand through
 the public entry module, and append through expand. The graph used an exact
 hash-bound copy outside the normally excluded vendor directory; it was not

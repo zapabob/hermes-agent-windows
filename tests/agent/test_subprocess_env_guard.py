@@ -133,7 +133,9 @@ APPROVED_RAW_ENV_BASELINES = {
         "2a3c19121878dd4331bb84eeb82606ed3cbcc330700c09308e914a9e99a15199",
         LEGACY_RAW_ENV_RATIONALE,
     ),
-    "cron": ("f6ef16046414a0c08cf18132190d0df8d54be0a994aa02e190dee44268b2d0df", LEGACY_RAW_ENV_RATIONALE),
+    # b691bacece1 removed cron's sole raw-env exception: _deliver_to_bot_chat
+    # now uses hermes_subprocess_env(inherit_credentials=True) within the
+    # target profile's secret scope; the child CLI legitimately runs an agent.
     "hermes_cli": ("4f78087143e76d2ecd930fcd7df0b928b8d0e8b7516fbfaba13c961f39b24c24", LEGACY_RAW_ENV_RATIONALE),
     # OpenViking launch now uses hermes_subprocess_env instead of a raw copy.
     "plugins": ("4dccec979a6b553eaee2c059539ba93c288f2579ce9c5edc87ced22db506e852", LEGACY_RAW_ENV_RATIONALE),

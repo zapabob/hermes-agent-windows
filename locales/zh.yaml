@@ -84,6 +84,13 @@ gateway:
     no_conversation:       "没有可分支的对话 — 请先发送一条消息。"
     create_failed:         "创建分支失败：{error}"
     switch_failed:         "分支已创建，但无法切换到它。"
+    created_thread_without_branch: "讨论串 {thread} 已创建，但未创建分支会话。当前仍选中原始聊天。"
+    thread_location: "讨论串：{thread}"
+    persistence_incomplete: "已选中分支，但历史记录或标题的保存尚未完成，或无法确认是否已保存。\n原始：`{parent}`\n分支：`{new}`\n使用 `/resume` 检查状态或返回原始会话。"
+    binding_incomplete: "分支已保存，但无法确认其与目标的绑定。\n原始：`{parent}`\n分支：`{new}`\n使用 `/resume` 检查已保存的分支。"
+    branched_thread_one: "⑂ 已在新的讨论串中分支到 **{title}**（已复制 {count} 条消息）\n讨论串：{thread}\n原始：`{parent}` — 此聊天仍保留在原始会话\n分支：`{new}`\n如需改在此聊天中创建分支，请使用 `/branch --here`。"
+    branched_thread_many: "⑂ 已在新的讨论串中分支到 **{title}**（已复制 {count} 条消息）\n讨论串：{thread}\n原始：`{parent}` — 此聊天仍保留在原始会话\n分支：`{new}`\n如需改在此聊天中创建分支，请使用 `/branch --here`。"
+    thread_fallback: "此处无法创建讨论串，因此分支替换了此聊天的会话。"
     branched_one:          "⑂ 已分支到 **{title}**（已复制 {count} 条消息）\n原始：`{parent}`\n分支：`{new}`\n使用 `/resume` 切换回原始会话。"
     branched_many:         "⑂ 已分支到 **{title}**（已复制 {count} 条消息）\n原始：`{parent}`\n分支：`{new}`\n使用 `/resume` 切换回原始会话。"
 
