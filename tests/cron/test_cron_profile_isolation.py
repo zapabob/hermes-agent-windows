@@ -17,6 +17,10 @@ was filed for. These tests pin per-profile isolation so a stale-branch merge or
 a re-anchor "fix" can't silently flip it back.
 """
 import importlib
+import concurrent.futures
+import os
+import subprocess
+import sys
 import threading
 from pathlib import Path
 
@@ -82,5 +86,52 @@ def test_job_needs_sequential_tick_for_workdir_or_named_profile():
     assert _job_needs_sequential_tick({"profile": "alpha"}) is True
     assert _job_needs_sequential_tick({"profile": "default"}) is True
     assert _job_needs_sequential_tick({"profile": "  "}) is False
+
+
+def test_named_cron_cannot_retarget_concurrent_desktop_model_inventory(tmp_path, monkeypatch):
+    """Hold a real cron scope while the Desktop's other thread reads config."""
+    from cron import scheduler
+    from hermes_cli.inventory import load_picker_context
+    from hermes_constants import get_hermes_home
+    from tools.environments.local import build_subprocess_env
+
+    root = tmp_path / "root"
+    profile = root / "profiles" / "cloud"
+    profile.mkdir(parents=True)
+    (root / "config.yaml").write_text(
+        "model:\n  provider: fixture-local\n  default: local-fixture-model\n", encoding="utf-8",
+    )
+    (profile / "config.yaml").write_text(
+        "model:\n  provider: nvidia\n  default: cloud-fixture-model\n", encoding="utf-8",
+    )
+    _set_profile_env(monkeypatch, root, root)
+    monkeypatch.setattr(scheduler, "_hermes_home", root)
+    entered, release = threading.Event(), threading.Event()
+
+    def cron_worker():
+        with scheduler._cron_profile_context({"id": "owned", "profile": "cloud"}):
+            entered.set()
+            assert release.wait(10)
+            context = load_picker_context()
+            child_home = subprocess.check_output(
+                [sys.executable, "-B", "-c", "import os; print(os.environ['HERMES_HOME'])"],
+                env=build_subprocess_env(), text=True, encoding="utf-8", timeout=10,
+            ).strip()
+            return context, scheduler._get_hermes_home(), child_home
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(cron_worker)
+        try:
+            assert entered.wait(10)
+            desktop = load_picker_context()
+            assert os.environ["HERMES_HOME"] == str(root)
+            assert get_hermes_home() == root and scheduler._get_hermes_home() == root
+            assert (desktop.current_provider, desktop.current_model) == ("fixture-local", "local-fixture-model")
+        finally:
+            release.set()
+        context, scheduler_home, child_home = future.result(timeout=15)
+    assert (context.current_provider, context.current_model) == ("nvidia", "cloud-fixture-model")
+    assert scheduler_home == profile and Path(child_home) == profile
+    assert os.environ["HERMES_HOME"] == str(root)
 
 

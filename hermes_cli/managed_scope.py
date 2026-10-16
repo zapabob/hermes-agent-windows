@@ -161,7 +161,7 @@ def apply_managed_overlay(config: dict) -> dict:
         # Imported lazily to avoid an import cycle (config imports managed_scope).
         from hermes_cli.config import _deep_merge, _expand_env_vars, _normalize_root_model_keys
 
-        managed_expanded = _normalize_root_model_keys(_expand_env_vars(managed))
+        managed_expanded = _normalize_root_model_keys(_expand_env_vars(managed, environ=os.environ))
         # A bare ``model: x/y`` string in the managed file must merge as
         # ``model.default`` — otherwise _deep_merge would replace the caller's
         # ``model`` dict with a string and break every ``cfg["model"]["..."]``

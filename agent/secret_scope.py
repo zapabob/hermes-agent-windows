@@ -156,8 +156,9 @@ def get_secret(name: str, default: Optional[str] = None) -> Optional[str]:
     2. When a secret scope is installed (multiplexed turn), read from it. Under
        multiplexing the scope is authoritative — an absent key returns
        ``default`` and we do NOT fall through to ``os.environ``, because in a
-       multiplexer ``os.environ`` may hold another profile's value. When
-       multiplexing is OFF, a scope miss falls through to ``os.environ``:
+       multiplexer ``os.environ`` may hold another profile's value. A routed
+       home override has the same isolation rule, even without multiplexing.
+       Otherwise a launch-home scope miss falls through to ``os.environ``:
        single-profile deployments legitimately provide credentials via the
        process environment (systemd ``Environment=``, secret-manager wrappers
        like ``pass-cli run`` / ``op run``, plain shell exports) rather than
@@ -178,10 +179,13 @@ def get_secret(name: str, default: Optional[str] = None) -> Optional[str]:
         val = scope.get(name)
         if val is not None:
             return val
-        if _MULTIPLEX_ACTIVE:
+        from hermes_constants import get_hermes_home_override, get_process_hermes_home, hermes_home_key
+
+        home = get_hermes_home_override()
+        if _MULTIPLEX_ACTIVE or (home is not None and hermes_home_key(home) != hermes_home_key(get_process_hermes_home())):
             return default
-        # Multiplex off: the scope is an overlay over the process environment,
-        # not an isolation boundary — there is no other profile to leak from.
+        # The launch home's scope is an overlay over its process environment.
+        # A routed cron profile must not borrow the launch owner's credentials.
         # Without this fallthrough, credentials injected only into the process
         # environment vanish inside any set_secret_scope(...) block (the cron
         # scheduler installs one around every job), so cron jobs send a

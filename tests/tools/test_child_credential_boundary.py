@@ -312,6 +312,7 @@ def test_loaded_profile_name_stays_owned_after_source_file_removal(tmp_path, mon
 
 def test_real_cron_profile_context_does_not_relabel_launch_secrets(tmp_path, monkeypatch):
     from cron import scheduler
+    from hermes_constants import get_hermes_home
     launch, target = tmp_path / "launch", tmp_path / "target"
     launch.mkdir()
     target.mkdir()
@@ -321,8 +322,11 @@ def test_real_cron_profile_context_does_not_relabel_launch_secrets(tmp_path, mon
     monkeypatch.setenv(key, SECRET)
     monkeypatch.setattr(scheduler, "_execution_home_for_job", lambda _: target)
     with scheduler._cron_profile_context({"id": "test-only", "profile": "served"}):
-        assert os.environ["HERMES_HOME"] == str(target)
-        assert key not in child_env("terminal")
+        assert os.environ["HERMES_HOME"] == str(launch)
+        assert get_hermes_home() == target
+        child = child_env("terminal")
+        assert child["HERMES_HOME"] == str(target)
+        assert key not in child
 
 
 @pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])

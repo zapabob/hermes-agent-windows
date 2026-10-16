@@ -40,6 +40,48 @@ def test_managed_beats_user(homes):
     assert cfg_get(load_config(), "model", "default") == "managed/model"
 
 
+@pytest.mark.parametrize("loader", ["config", "overlay"])
+def test_profile_scope_cannot_shadow_managed_environment_refs(homes, monkeypatch, loader):
+    from agent.secret_scope import set_secret_scope, reset_secret_scope
+    from hermes_constants import set_hermes_home_override, reset_hermes_home_override
+    from hermes_cli.config import load_config
+    from hermes_cli.managed_scope import apply_managed_overlay
+
+    home, managed = homes
+    monkeypatch.setenv("MANAGED_MODEL_FIXTURE", "administrator/model")
+    _write(home / "config.yaml", "model:\n  default: user/model\n")
+    _write(managed / "config.yaml", "model:\n  default: ${MANAGED_MODEL_FIXTURE}\n")
+    home_token = set_hermes_home_override(home)
+    scope_token = set_secret_scope({"MANAGED_MODEL_FIXTURE": "user/override"})
+    try:
+        result = load_config() if loader == "config" else apply_managed_overlay({})
+        assert result["model"]["default"] == "administrator/model"
+    finally:
+        reset_secret_scope(scope_token)
+        reset_hermes_home_override(home_token)
+
+
+def test_managed_environment_rotation_invalidates_profile_cache(homes, monkeypatch):
+    from agent.secret_scope import set_secret_scope, reset_secret_scope
+    from hermes_constants import set_hermes_home_override, reset_hermes_home_override
+    from hermes_cli.config import load_config, peek_effective_config
+
+    home, managed = homes
+    _write(home / "config.yaml", "model:\n  default: ${MODEL_FIXTURE}\n")
+    _write(managed / "config.yaml", "model:\n  default: ${MODEL_FIXTURE}\n")
+    home_token = set_hermes_home_override(home)
+    scope_token = set_secret_scope({"MODEL_FIXTURE": "profile/model"})
+    try:
+        monkeypatch.setenv("MODEL_FIXTURE", "administrator/first")
+        assert load_config()["model"]["default"] == "administrator/first"
+        monkeypatch.setenv("MODEL_FIXTURE", "administrator/rotated")
+        assert peek_effective_config(home / "config.yaml") is None
+        assert load_config()["model"]["default"] == "administrator/rotated"
+    finally:
+        reset_secret_scope(scope_token)
+        reset_hermes_home_override(home_token)
+
+
 def test_managed_list_wins_wholesale(homes):
     """D3: a managed list value replaces the user's wholesale."""
     from hermes_cli.config import load_config, cfg_get

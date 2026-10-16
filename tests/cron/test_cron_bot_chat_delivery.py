@@ -144,8 +144,11 @@ def test_deliver_runs_canonical_bot_chat_lane():
     assert not any("the output" in str(a) for a in argv)
 
 
-def test_deliver_named_profile_uses_p_flag_and_clears_home():
+def test_deliver_named_profile_uses_p_flag_and_target_home(tmp_path, monkeypatch):
     calls = {}
+    target_home = tmp_path / "custom-root" / "profiles" / "research"
+    target_home.mkdir(parents=True)
+    monkeypatch.setattr("hermes_cli.profiles.get_profile_dir", lambda name: target_home)
 
     def fake_run(argv, **kwargs):
         calls["argv"] = argv
@@ -160,8 +163,8 @@ def test_deliver_named_profile_uses_p_flag_and_clears_home():
     assert err is None
     argv = calls["argv"]
     assert argv[1:3] == ["-p", "research"]
-    # -p owns resolution; the scheduler's own HERMES_HOME must not leak in.
-    assert "HERMES_HOME" not in calls["kwargs"]["env"]
+    # The child keeps the explicit profile under its custom root.
+    assert calls["kwargs"]["env"]["HERMES_HOME"] == str(target_home)
 
 
 def test_deliver_failure_returns_error_string():

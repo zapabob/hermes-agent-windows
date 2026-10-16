@@ -47,6 +47,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from hermes_constants import (
     get_default_hermes_root,
     get_hermes_home,
+    get_hermes_home_override,
     reset_hermes_home_override,
     set_hermes_home_override,
 )
@@ -1571,7 +1572,8 @@ def _get_hermes_home() -> Path:
     (its .env, config.yaml, scripts, skills). Do not freeze this at import or
     anchor it at the shared default root — either re-breaks profile isolation.
     """
-    return _hermes_home or get_hermes_home()
+    override = get_hermes_home_override()
+    return Path(override) if override else (_hermes_home or get_hermes_home())
 
 
 def _job_needs_sequential_tick(job: dict) -> bool:
@@ -1649,8 +1651,11 @@ def _cron_profile_guard(job: dict):
 
 @contextlib.contextmanager
 def _cron_profile_context(job: dict):
-    """Temporarily switch HERMES_HOME for profile-pinned cron jobs."""
-    global _hermes_home
+    """Scope a pinned job without retargeting concurrent Desktop/API threads.
+
+    Child processes receive the context-local home through
+    ``build_subprocess_env``; the shared process environment stays unchanged.
+    """
 
     profile_name = str(job.get("profile") or "").strip()
     if not profile_name:
@@ -1671,14 +1676,10 @@ def _cron_profile_context(job: dict):
         )
         raise
 
-    prior_home = _hermes_home
-    prior_env = os.environ.get("HERMES_HOME")
     from hermes_cli.env_loader import remember_launch_profile_home
     from hermes_constants import get_process_hermes_home
     remember_launch_profile_home(get_process_hermes_home())
     home_override_token = set_hermes_home_override(home)
-    _hermes_home = home
-    os.environ["HERMES_HOME"] = str(home)
     logger.info(
         "Job '%s': switched to profile %r (%s)",
         job.get("id"),
@@ -1688,12 +1689,43 @@ def _cron_profile_context(job: dict):
     try:
         yield
     finally:
-        _hermes_home = prior_home
-        if prior_env is None:
-            os.environ.pop("HERMES_HOME", None)
-        else:
-            os.environ["HERMES_HOME"] = prior_env
         reset_hermes_home_override(home_override_token)
+
+
+@contextlib.contextmanager
+def _cron_profile_environment():
+    """Refresh a scoped job's values without loading them into other threads."""
+    if get_hermes_home_override() is None:
+        yield
+        return
+    from agent.secret_scope import build_profile_secret_scope, set_secret_scope, reset_secret_scope
+    from hermes_cli.env_loader import hydrate_profile_secret_sources
+    from hermes_cli.managed_scope import load_managed_env
+
+    home = _get_hermes_home()
+    hydrate_profile_secret_sources(home)
+    values = build_profile_secret_scope(home)
+    values.update(load_managed_env())
+    token = set_secret_scope(values)
+    try:
+        yield
+    finally:
+        reset_secret_scope(token)
+
+
+def _reload_cron_environment():
+    # A scoped run has a fresh private mapping from _cron_profile_environment.
+    # The legacy standalone/root reload remains available on its own process.
+    if get_hermes_home_override() is None:
+        from hermes_cli.env_loader import load_hermes_dotenv, reset_secret_source_cache
+        reset_secret_source_cache()
+        load_hermes_dotenv(hermes_home=_get_hermes_home())
+
+
+def _cron_env_value(name: str, default=None):
+    from hermes_cli.config import _env_ref_value
+    value = _env_ref_value(name)
+    return default if value is None else value
 
 
 def _scripts_dir_for_job(job: dict | None) -> Path:
@@ -2448,11 +2480,11 @@ def _env_home_target_chat_id(platform_name: str) -> str:
     env_var = _resolve_home_env_var(platform_name)
     if not env_var:
         return ""
-    value = os.getenv(env_var, "")
+    value = _cron_env_value(env_var, "")
     if not value:
         legacy = _LEGACY_HOME_TARGET_ENV_VARS.get(env_var)
         if legacy:
-            value = os.getenv(legacy, "")
+            value = _cron_env_value(legacy, "")
     return value
 
 
@@ -2485,14 +2517,14 @@ def _get_home_target_thread_id(platform_name: str) -> Optional[str]:
     """
     env_var = _resolve_home_env_var(platform_name)
     if platform_name.lower() == "telegram":
-        cron_thread = os.getenv("TELEGRAM_CRON_THREAD_ID", "").strip()
+        cron_thread = _cron_env_value("TELEGRAM_CRON_THREAD_ID", "").strip()
         if cron_thread:
             return cron_thread
-    value = os.getenv(f"{env_var}_THREAD_ID", "").strip() if env_var else ""
+    value = _cron_env_value(f"{env_var}_THREAD_ID", "").strip() if env_var else ""
     if not value and env_var:
         legacy = _LEGACY_HOME_TARGET_ENV_VARS.get(env_var)
         if legacy:
-            value = os.getenv(f"{legacy}_THREAD_ID", "").strip()
+            value = _cron_env_value(f"{legacy}_THREAD_ID", "").strip()
     if value:
         return value
     # Canonical config.yaml fallback — same rationale as
@@ -2808,12 +2840,20 @@ def _deliver_to_bot_chat(job: dict, content: str, profile: str) -> Optional[str]
         except Exception:
             return "bot-chat delivery failed: hermes CLI not resolvable"
 
-    env = os.environ.copy()
+    from tools.environments.local import hermes_subprocess_env
+    from hermes_cli.profiles import get_profile_dir
+
+    target_home = get_profile_dir(profile) if profile else get_hermes_home()
+    home_token = set_hermes_home_override(target_home)
+    try:
+        with _cron_profile_environment():
+            # This child runs an agent. Keep only this profile's model
+            # credentials through the established CLI environment boundary.
+            env = hermes_subprocess_env(inherit_credentials=True)
+    finally:
+        reset_hermes_home_override(home_token)
     if profile:
         argv += ["-p", profile]
-        # -p owns profile resolution in the child; a leftover HERMES_HOME
-        # from THIS scheduler's profile must not shadow it.
-        env.pop("HERMES_HOME", None)
 
     # The prefix tells the receiving bot this is scheduled output, not the
     # human typing — mirrors the Bot Mode sender-attribution convention.
@@ -3210,6 +3250,11 @@ def _is_channel_dm_topic(
 
 
 def _deliver_result(job: dict, content: str, adapters=None, loop=None) -> Optional[str]:
+    with _cron_profile_context(job), _cron_profile_environment():
+        return _deliver_result_unscoped(job, content, adapters=adapters, loop=loop)
+
+
+def _deliver_result_unscoped(job: dict, content: str, adapters=None, loop=None) -> Optional[str]:
     """
     Deliver job output to the configured target(s) (origin chat, specific platform, etc.).
 
@@ -5180,7 +5225,7 @@ def _preflight_check_provider_key(job: dict, cfg: dict) -> Optional[str]:
         or str((_cron_cfg or {}).get("model_provider") or "").strip()
         or None
     )
-    model = job.get("model") or os.getenv("HERMES_MODEL") or ""
+    model = job.get("model") or _cron_env_value("HERMES_MODEL") or ""
 
     from hermes_cli.auth import AuthError
 
@@ -5510,7 +5555,7 @@ def run_job(
 
         owner_home = cron_jobs._current_cron_store().cron_dir.parent
         with cron_jobs.use_cron_store(owner_home):
-            with _cron_profile_context(job):
+            with _cron_profile_context(job), _cron_profile_environment():
                 return _run_job_unscoped(
                     job,
                     defer_agent_teardown=defer_agent_teardown,
@@ -5553,12 +5598,10 @@ def _run_job_unscoped(
         # TELEGRAM_HOME_CHANNEL/DISCORD_HOME_CHANNEL in its environment, and
         # the agent path's per-run dotenv reload below never executes for
         # no_agent jobs — every deliver=telegram/all script job failed with
-        # "no delivery target resolved". load_hermes_dotenv does not override
-        # already-set vars, so the gateway's in-process tick is unaffected.
+        # "no delivery target resolved". Scoped runs use a private mapping;
+        # only the standalone launch home reloads the process environment.
         try:
-            from hermes_cli.env_loader import load_hermes_dotenv
-
-            load_hermes_dotenv(hermes_home=_get_hermes_home())
+            _reload_cron_environment()
         except Exception:
             logger.debug(
                 "Job '%s': no_agent .env reload failed", job_id, exc_info=True
@@ -5972,12 +6015,7 @@ def _run_job_unscoped(
         # is set (mirrors startup), and the Bitwarden value-cache keeps the
         # forced re-pull off the network. load_hermes_dotenv also handles the
         # utf-8/latin-1 encoding fallback internally.
-        from hermes_cli.env_loader import (
-            load_hermes_dotenv,
-            reset_secret_source_cache,
-        )
-        reset_secret_source_cache()
-        load_hermes_dotenv(hermes_home=_get_hermes_home())
+        _reload_cron_environment()
 
         delivery_target = _resolve_delivery_target(job)
         if delivery_target:
@@ -5995,7 +6033,7 @@ def _run_job_unscoped(
         # re-read from storage every tick so a ``hermes cron edit --model``
         # after a failed run takes effect on the next tick — there is no
         # in-memory cache.
-        model = job.get("model") or os.getenv("HERMES_MODEL") or ""
+        model = job.get("model") or _cron_env_value("HERMES_MODEL") or ""
 
         # cron.model / cron.model_provider: a deliberate cron-fleet default
         # so unattended jobs stop shadowing chat `/model` switches. When an
@@ -6080,7 +6118,7 @@ def _run_job_unscoped(
         prefill_messages = None
         agent_cfg = _cfg.get("agent", {}) if isinstance(_cfg.get("agent", {}), dict) else {}
         prefill_file = (
-            os.getenv("HERMES_PREFILL_MESSAGES_FILE", "")
+            _cron_env_value("HERMES_PREFILL_MESSAGES_FILE", "")
             or _cfg.get("prefill_messages_file", "")
             or agent_cfg.get("prefill_messages_file", "")
         )
@@ -6449,7 +6487,8 @@ def _run_job_unscoped(
 
             if _session_db_timeout > 0:
                 _session_db_pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
-                _session_db_future = _session_db_pool.submit(SessionDB)
+                _session_db_context = contextvars.copy_context()
+                _session_db_future = _session_db_pool.submit(_session_db_context.run, SessionDB)
                 try:
                     _session_db = _session_db_future.result(timeout=_session_db_timeout)
                 except concurrent.futures.TimeoutError:
