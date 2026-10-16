@@ -15,7 +15,9 @@ Regression tests for two bugs in WhatsAppAdapter.connect():
 import asyncio
 import subprocess
 import signal
+import sys
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -423,9 +425,23 @@ class TestHttpSessionLifecycle:
         adapter._running = True
         adapter._session_lock_identity = None
 
-        with patch("plugins.platforms.whatsapp.adapter.subprocess.run", return_value=MagicMock(returncode=0)) as mock_run, \
-             patch("plugins.platforms.whatsapp.adapter.asyncio.sleep", new_callable=AsyncMock):
+        mock_run = MagicMock(return_value=SimpleNamespace(returncode=0))
+        # Replace only this module's dependencies: patching a stdlib module's
+        # attributes also intercepts cleanup from unrelated background workers.
+        with patch("plugins.platforms.whatsapp.adapter.subprocess", SimpleNamespace(run=mock_run)), \
+             patch("plugins.platforms.whatsapp.adapter.asyncio", SimpleNamespace(
+                 sleep=AsyncMock(), CancelledError=asyncio.CancelledError,
+             )):
             await adapter.disconnect()
+
+            # Other lifecycle workers share stdlib subprocess, but their
+            # cleanup must never be counted as a WhatsApp bridge operation.
+            unrelated = subprocess.run(
+                [sys.executable, "-I", "-S", "-B", "-c", "pass"],
+                check=True, capture_output=True,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            )
+            assert unrelated.returncode == 0
 
         mock_run.assert_called_once_with(
             ["taskkill", "/PID", "12345", "/T"],

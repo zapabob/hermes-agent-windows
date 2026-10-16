@@ -106,6 +106,41 @@ retains 50.0.2. No protected manifest was edited and no security dependency
 was downgraded. This functional recovery does not establish byte identity
 with the environment that the hook replaced.
 
+## Full-CI follow-up and runtime results
+
+The eight candidate Tier-1 jobs passed at `08fe9964604`. Its main run hit
+Chocolatey's HTTP 503 during ClamAV installation; the failed job was rerun
+without omitting antivirus qualification and the workflow then succeeded.
+Nix, Docker and Windows runtime authority also succeeded at that SHA.
+
+The broader Windows-only suite exposed a pre-existing WhatsApp test isolation
+race: patching `adapter.subprocess.run` replaced the shared standard-library
+function, so a background cleanup worker's separate `taskkill` polluted the
+mock call count. The test now injects only the adapter module's subprocess
+and asyncio dependencies. The exact one-call bridge-tree assertion remains.
+An unrelated, harmless, hidden Python child is started inside the scope:
+the original global mock deterministically fails with two calls, while the
+isolated mock permits that real child and still requires exactly one bridge
+termination. Production WhatsApp behavior is unchanged. Native file result:
+11 passed and one POSIX-only test skipped. The focused regression also passed
+with RuntimeWarning treated as an error. Whole-file execution emitted an
+existing unawaited-AsyncMock warning during GC; it is not reported as a clean
+warning-free suite. Ruff and whitespace checks passed.
+
+The full Hermes fleet was restarted without force-killing gateways. Both
+generation slots reported 131072-token capacity and speculative decoding;
+the model, q4_0 cache flags and existing decoding/template options were
+retained. After pending cold long-context work completed, two simultaneous
+short requests returned final content in 16.438 and 16.203 seconds with the
+same 45-second probe deadline that failed before. A structured tool call
+returned in 1.765 seconds, and embedding returned 1024 finite nonzero values.
+One real isolated Hermes conversation completed in 13.594 seconds. An earlier
+post-restart probe still timed out while a resumed 58K-token prompt occupied
+the server; these results do not guarantee bounded latency when both slots
+are occupied by long work. No prompt cache, tool or reasoning capability was
+removed to obtain the warm response results. The separate Hikari re-launch
+script was backed up and given the same verified two-slot capacity.
+
 At this implementation commit, cloud validation and runtime deployment are
 pending. Keep private machine receipts outside the repository. Completion
 requires terminal-success workflows on the final main SHA, preserved WIP
