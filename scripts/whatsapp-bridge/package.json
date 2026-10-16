@@ -18,6 +18,7 @@
     "body-parser": "1.20.6",
     "proxy-addr": "2.0.8",
     "qs": "6.16.0",
-    "sharp": "0.35.4"
+    "sharp": "0.35.5",
+    "music-metadata": "11.16.0"
   }
 }

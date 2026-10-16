@@ -30,6 +30,7 @@ overrides:
   vitest: 4.1.11
   '@vitest/mocker': 4.1.11
   qs: 6.16.0
+  global-agent>roarr: 6.0.0
 
 importers:
 
@@ -407,8 +408,8 @@ importers:
         specifier: 0.5.43
         version: 0.5.43(react@19.2.7)
       concurrently:
-        specifier: 10.0.4
-        version: 10.0.4
+        specifier: 10.0.6
+        version: 10.0.6
       cross-env:
         specifier: 10.1.0
         version: 10.1.0
@@ -3520,8 +3521,8 @@ packages:
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
-  concurrently@10.0.4:
-    resolution: {integrity: sha512-trZql+7l/0+WRAsAnEdctr4+iiOS6ZrViI6H8QWcCF9MFS/LT0dKpe8vluB1to6it+OxSI4VospFTIFMW8DJRw==}
+  concurrently@10.0.6:
+    resolution: {integrity: sha512-qgICXXFp2/3nAebRLmxcINKEXM1mLK3ij/y31P02VTs/KIkddIeC05n73DxOXsXMB9LFSqNU1/na3lDlOhcbIw==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -4096,8 +4097,16 @@ packages:
   fast-json-stable-stringify@2.1.0:
     resolution: {integrity: sha512-lhd/wF+Lk98HZoTCtlVraHtfh5XYijIjalXck7saUtuanSDyLMxnHhSXEDJqHxD7msR8D0uCmqlkwjCV8xvwHw==}
 
+  fast-json-stringify@2.7.13:
+    resolution: {integrity: sha512-ar+hQ4+OIurUGjSJD1anvYSDcUflywhKjfxnsW4TBTD7+u0tJufv6DKRWoQk3vI6YBOWMoz0TQtfbe7dxbQmvA==}
+    engines: {node: '>= 10.0.0'}
+
   fast-levenshtein@2.0.6:
     resolution: {integrity: sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==}
+
+  fast-printf@1.6.10:
+    resolution: {integrity: sha512-GwTgG9O4FVIdShhbVF3JxOgSBY2+ePGsu2V/UONgoCPzF9VY6ZdBMKsHKCYQHZwNk3qNouUolRDsgVxcVA5G1w==}
+    engines: {node: '>=10.0'}
 
   fast-uri@3.1.8:
     resolution: {integrity: sha512-GZMtZUTNRpOVIECoXwLNZS5xUGE+mVNbTB8h/7Rwh2TFWcBQiPzTgyZi05BF9UMZKkLJv8XBRJTlU7zg8+ZfMg==}
@@ -4500,6 +4509,9 @@ packages:
 
   is-alphanumerical@2.0.1:
     resolution: {integrity: sha512-hmbYhX/9MUMF5uh7tOXyK/n0ZvWpad5caBA17GsC6vyuCqaWliRG5K1qS9inmUhEMaOBIW7/whAnSwveW/LtZw==}
+
+  is-circular@1.0.2:
+    resolution: {integrity: sha512-YttjnrswnUYRVJvxCvu8z+PGMUSzC2JttP0OEXezlAEdp3EXzhf7IZ3j0gRAybJBQupedIZFhY61Tga6E0qASA==}
 
   is-decimal@2.0.1:
     resolution: {integrity: sha512-AAB9hiomQs5DXWcRB1rqsxGUstbRroFOPPVAomNk/3XHR5JyEZChOyTWe2oayKnsSsr/kcGqF+z6yuH6HHpN0A==}
@@ -5749,6 +5761,9 @@ packages:
     resolution: {integrity: sha512-9LkiTwjUh6rT555DtE9rTX+BKByPfrMzEAtnlEtdEwr3Nkffwiihqe2bWADg+OQRjt9gl6ICdmB/ZFDCGAtSow==}
     engines: {node: '>= 4'}
 
+  rfdc@1.4.1:
+    resolution: {integrity: sha512-q1b3N5QkRUWUl7iyylaaj3kOpIT0N2i9MqIEQXP73GVsN9cw3fdx8X63cEmWhJGi2PPCF23Ijp7ktmd39rawIA==}
+
   rimraf@2.6.3:
     resolution: {integrity: sha512-mwqeW5XsA2qAejG46gYdENaxXjx9onRNCfn7L0duuP4hCuTIi/QO7PDK07KJfp1d+izWPrzEJDcSqBa0OZQriA==}
     deprecated: Rimraf versions prior to v4 are no longer supported
@@ -5759,9 +5774,9 @@ packages:
     deprecated: Rimraf versions prior to v4 are no longer supported
     hasBin: true
 
-  roarr@2.15.4:
-    resolution: {integrity: sha512-CHhPh+UNHD2GTXNYhPWLnU8ONHdI+5DI+4EYIAOaiD63rHeYlZvyh8P+in5999TTSFgUYuKUAjzRI4mdh/p+2A==}
-    engines: {node: '>=8.0'}
+  roarr@6.0.0:
+    resolution: {integrity: sha512-DAeQ46Ck7KiyQDVbpyomboa8Lq075d0bJsJkIEfxE3qDiSfo6qV/KlQPm1Llnlfl23QIYUOauRzHv9fFv/IqHg==}
+    engines: {node: '>=12.0'}
 
   robust-predicates@3.0.3:
     resolution: {integrity: sha512-NS3levdsRIUOmiJ8FZWCP7LG3QpJyrs/TE0Zpf1yvZu8cAJJ6QMW92H1c7kWpdIHo8RvmLxN/o2JXTKHp74lUA==}
@@ -5853,8 +5868,8 @@ packages:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
 
-  shell-quote@1.9.0:
-    resolution: {integrity: sha512-Iov+JwFv/2HcTpcwNMKd8+IWNb8tboQJNQTkAY/LLVK7gGH9jy+LGkVqPxfekHl+yMmiqXszdGWXgkfml7hjqA==}
+  shell-quote@1.12.0:
+    resolution: {integrity: sha512-PcByqNyT/38F2kDNi006HAMRJaULuBzq/FOsw3qdZvX/GA9W/jamDaRskgHjubHiftXK5sIFxLNkvrXUwcof6Q==}
     engines: {node: '>= 0.4'}
 
   shiki@3.23.0:
@@ -5915,9 +5930,6 @@ packages:
     resolution: {integrity: sha512-NzNVhJDYpwceVVii8/Hu6DKfD2G+NrQHlS/V/qgv763EYudVwEcMQNxd2lh+0VrUByXN/oJkl5grOhYWvQUYiw==}
     engines: {node: '>=0.10.0'}
 
-  sprintf-js@1.1.3:
-    resolution: {integrity: sha512-Oo+0REFV59/rz3gfJNKQiBlwfHaSESl1pcGyABQsnnIfWOFt6JNj5gCog2U6MLZ//IGYD+nA8nI+mTShREReaA==}
-
   ssri@10.0.6:
     resolution: {integrity: sha512-MGrFH9Z4NP9Iyhqn16sDtBpRRNJ0Y2hNa6D65h736fVSaPCHr4DM4sWUNvVaSuC+0OBGhwsrydQwmgfg5LncqQ==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
@@ -5941,6 +5953,10 @@ packages:
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
+
+  string-similarity@4.0.4:
+    resolution: {integrity: sha512-/q/8Q4Bl4ZKAPjj8WerIBJWALKkaPRfrvhfF8k/B23i4nzrlRj2/go1m90In7nG/3XDSbOo0+pu6RvCTM9RGMQ==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   string-width@4.2.3:
     resolution: {integrity: sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==}
@@ -9798,11 +9814,11 @@ snapshots:
 
   concat-map@0.0.1: {}
 
-  concurrently@10.0.4:
+  concurrently@10.0.6:
     dependencies:
       chalk: 5.6.2
       rxjs: 7.8.2
-      shell-quote: 1.9.0
+      shell-quote: 1.12.0
       supports-color: 10.2.2
       tree-kill: 1.2.2
       yargs: 18.0.0
@@ -10464,7 +10480,18 @@ snapshots:
 
   fast-json-stable-stringify@2.1.0: {}
 
+  fast-json-stringify@2.7.13:
+    dependencies:
+      ajv: 6.15.0
+      deepmerge: 4.3.1
+      rfdc: 1.4.1
+      string-similarity: 4.0.4
+    optional: true
+
   fast-levenshtein@2.0.6: {}
+
+  fast-printf@1.6.10:
+    optional: true
 
   fast-uri@3.1.8: {}
 
@@ -10671,7 +10698,7 @@ snapshots:
       boolean: 3.2.0
       es6-error: 4.1.1
       matcher: 3.0.0
-      roarr: 2.15.4
+      roarr: 6.0.0
       semver: 7.8.5
       serialize-error: 7.0.1
     optional: true
@@ -10997,6 +11024,9 @@ snapshots:
     dependencies:
       is-alphabetical: 2.0.1
       is-decimal: 2.0.1
+
+  is-circular@1.0.2:
+    optional: true
 
   is-decimal@2.0.1: {}
 
@@ -12525,6 +12555,9 @@ snapshots:
 
   retry@0.12.0: {}
 
+  rfdc@1.4.1:
+    optional: true
+
   rimraf@2.6.3:
     dependencies:
       glob: 7.2.3
@@ -12534,14 +12567,16 @@ snapshots:
       glob: 7.2.3
     optional: true
 
-  roarr@2.15.4:
+  roarr@6.0.0:
     dependencies:
       boolean: 3.2.0
       detect-node: 2.1.0
+      fast-json-stringify: 2.7.13
+      fast-printf: 1.6.10
       globalthis: 1.0.4
+      is-circular: 1.0.2
       json-stringify-safe: 5.0.1
       semver-compare: 1.0.0
-      sprintf-js: 1.1.3
     optional: true
 
   robust-predicates@3.0.3: {}
@@ -12643,7 +12678,7 @@ snapshots:
 
   shebang-regex@3.0.0: {}
 
-  shell-quote@1.9.0: {}
+  shell-quote@1.12.0: {}
 
   shiki@3.23.0:
     dependencies:
@@ -12725,9 +12760,6 @@ snapshots:
     dependencies:
       extend-shallow: 3.0.2
 
-  sprintf-js@1.1.3:
-    optional: true
-
   ssri@10.0.6:
     dependencies:
       minipass: 7.1.3
@@ -12765,6 +12797,9 @@ snapshots:
       unist-util-visit-parents: 6.0.2
     transitivePeerDependencies:
       - supports-color
+
+  string-similarity@4.0.4:
+    optional: true
 
   string-width@4.2.3:
     dependencies:

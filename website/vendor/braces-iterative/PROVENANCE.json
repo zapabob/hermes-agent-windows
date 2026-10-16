@@ -1,0 +1,21 @@
+{
+  "upstream": {
+    "package": "braces",
+    "version": "3.0.3",
+    "commit": "74b2db2938fad48a2ea54a9c8bf27a37a62c350d",
+    "tarball": "https://registry.npmjs.org/braces/-/braces-3.0.3.tgz",
+    "integrity": "sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA=="
+  },
+  "advisory": "GHSA-vfj7-8cjw-p6xm",
+  "cve": "CVE-2026-93687",
+  "patch": "Replace recursive AST compile/stringify/expand, append and flatten with explicit traversal frames. Parser grammar and expansion/range limits are unchanged.",
+  "registry_patch_status": "No official patched braces release listed on 2026-10-16; this is a local source fork, not an upstream release.",
+  "upstream_files": {
+    "lib/compile.js": "dc98f22eee3d511785d92a00758d5f0d48efed5f5813bdecc2de430c529b5c9f",
+    "lib/constants.js": "c18ac5adb57308f1ce42a28552da3a31f5d83709743ebd9a636336813a744d4b",
+    "lib/expand.js": "41ccc196ebfa7b7781a634e721eb744e4e7bcb54cba427a7e3d6806a1b9e58f7",
+    "lib/parse.js": "e572166565f15fa6ad9865ae49d678218e32aabfd1b3720f6d0d43d39800d310",
+    "lib/stringify.js": "379f22d77bfa1478341ccd49c5e4267464aabcbba03558bab332aac23fc6f23a",
+    "lib/utils.js": "b5a7596aa67730412b3c029ef09e84e6b67b8e445cffd35d1d295549c89066c7"
+  }
+}

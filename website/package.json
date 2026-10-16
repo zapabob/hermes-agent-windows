@@ -17,7 +17,8 @@
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
     "typecheck": "tsc -p . --noEmit",
-    "lint:diagrams": "ascii-guard lint --exclude-code-blocks docs"
+    "lint:diagrams": "ascii-guard lint --exclude-code-blocks docs",
+    "test:braces": "node --test tests/braces-iterative.test.cjs"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.2",
@@ -28,7 +29,8 @@
     "clsx": "2.1.1",
     "prism-react-renderer": "2.3.0",
     "react": "19.2.7",
-    "react-dom": "19.2.7"
+    "react-dom": "19.2.7",
+    "braces": "file:vendor/braces-iterative"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.10.2",
@@ -59,8 +61,16 @@
     "source-map-js": "1.2.2",
     "tinypool": "2.1.2",
     "brace-expansion@^5.0.0": "5.0.12",
-    "postcss-selector-parser@7": "7.1.6",
-    "katex": "0.18.2"
+    "postcss-selector-parser": "7.1.6",
+    "webpack-dev-middleware": "7.4.6",
+    "shell-quote": "1.11.0",
+    "katex": "0.18.2",
+    "chokidar@3.6.0": {
+      "braces": "file:../../vendor/braces-iterative"
+    },
+    "micromatch@4.0.8": {
+      "braces": "file:../../vendor/braces-iterative"
+    }
   },
   "browserslist": {
     "production": [

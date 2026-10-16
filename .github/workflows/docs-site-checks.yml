@@ -33,6 +33,10 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Verify maintained brace traversal and consumer routing
+        run: npm run test:braces
+        working-directory: website
+
       - name: Install ascii-guard
         uses: ./.github/actions/retry
         with:
