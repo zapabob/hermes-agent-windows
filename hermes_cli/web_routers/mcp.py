@@ -1,6 +1,6 @@
 """MCP dashboard routes (extracted verbatim from web_server.py).
 
-Handler bodies are byte-identical.  The OAuth flow registry
+The OAuth flow registry
 (``_mcp_oauth_flows`` + lock + pending cap) and the worker/helpers stay in
 web_server - reached via the late-binding seam in :mod:`hermes_cli.web_deps`
 (``late`` for callables, ``LateState`` for the mutable registry/lock/limit) so
@@ -56,6 +56,15 @@ _MAX_PENDING_MCP_OAUTH_FLOWS = LateState("_MAX_PENDING_MCP_OAUTH_FLOWS")
 # Config read-modify-write serialization for off-loop handlers (defined in
 # web_server.py; LateState supports ``with``-blocks, so this is the live lock).
 _CONFIG_MUTATION_LOCK = LateState("_CONFIG_MUTATION_LOCK")
+
+
+def _mcp_save_application() -> dict[str, str]:
+    """Describe admission separately from a cached conversation's catalogue."""
+    return {
+        "policy_check": "rpc_admission",
+        "catalogue": "new_session_or_explicit_reload",
+        "admitted_calls": "may_complete",
+    }
 
 
 @router.get("/api/mcp/servers")
@@ -137,7 +146,7 @@ async def replace_mcp_servers(body: MCPServersReplace, profile: Optional[str] = 
     ok, issues = await asyncio.to_thread(_run)
     if not ok:
         raise HTTPException(status_code=400, detail="; ".join(issues))
-    return {"ok": True}
+    return {"ok": True, "application": _mcp_save_application()}
 
 
 @router.delete("/api/mcp/servers/{name}")
@@ -239,7 +248,7 @@ async def test_mcp_server(name: str, profile: Optional[str] = None):
 async def auth_mcp_server(name: str, request: Request, profile: Optional[str] = None):
     """Start MCP OAuth and hand the authorization URL to the dashboard browser."""
     from hermes_cli.mcp_config import _get_mcp_servers
-    from tools.mcp_dashboard_oauth import DashboardOAuthFlow
+    from tools.mcp_dashboard_oauth import DashboardOAuthFlow, SavedMcpConfigBinding
 
     _require_token(request)
     _gc_mcp_oauth_flows()
@@ -249,9 +258,19 @@ async def auth_mcp_server(name: str, request: Request, profile: Optional[str] = 
 
     def _read():
         with _profile_scope(profile):
-            return _get_mcp_servers(), str(get_hermes_home().expanduser().resolve(strict=False))
+            from hermes_cli import config as config_module
 
-    servers, flow_home = await asyncio.to_thread(_read)
+            with config_module._CONFIG_LOCK:
+                servers = _get_mcp_servers()
+                flow_home = str(get_hermes_home().expanduser().resolve(strict=False))
+                binding = (
+                    SavedMcpConfigBinding.capture(flow_home, name)
+                    if name in servers
+                    else None
+                )
+            return servers, flow_home, binding
+
+    servers, flow_home, binding = await asyncio.to_thread(_read)
     if name not in servers:
         raise HTTPException(status_code=404, detail=f"Server '{name}' not found")
     cfg = dict(servers[name])
@@ -270,6 +289,7 @@ async def auth_mcp_server(name: str, request: Request, profile: Optional[str] = 
         redirect_uri=(cfg.get("oauth") or {}).get("redirect_uri")
         or _mcp_oauth_callback_url(request, name),
         reconnect_live=flow_home == process_home,
+        config_binding=binding,
     )
     with _mcp_oauth_flows_lock:
         pending = sum(
@@ -292,46 +312,62 @@ async def auth_mcp_server(name: str, request: Request, profile: Optional[str] = 
                 detail=f"MCP OAuth for '{name}' is already in progress",
             )
         _mcp_oauth_flows[flow_id] = flow
-    threading.Thread(
-        target=_run_dashboard_mcp_oauth,
-        args=(flow, cfg),
-        daemon=True,
-        name=f"mcp-oauth-{name}",
-    ).start()
+    worker = None
     try:
+        worker = threading.Thread(
+            target=_run_dashboard_mcp_oauth,
+            args=(flow, cfg),
+            daemon=True,
+            name=f"mcp-oauth-{name}",
+        )
+        worker.start()
         await flow.wait_for_authorization_url(timeout=30)
     except Exception as exc:
         flow.mark_error(str(exc))
+        if worker is None:
+            flow.mark_worker_done()
     return flow.snapshot()
 
 
 @router.get("/api/mcp/oauth/flows/{flow_id}")
-async def mcp_oauth_flow_status(flow_id: str, request: Request):
+async def mcp_oauth_flow_status(flow_id: str, request: Request, profile: Optional[str] = None):
     _require_token(request)
     _gc_mcp_oauth_flows()
-    flow = _mcp_oauth_flows.get(flow_id)
-    if flow is None:
-        raise HTTPException(status_code=404, detail="OAuth flow not found or expired")
+    flow = _profile_mcp_oauth_flow(flow_id, profile)
     snapshot = flow.snapshot()
     snapshot["tools"] = flow.tools
     return snapshot
 
 
 @router.delete("/api/mcp/oauth/flows/{flow_id}")
-async def cancel_mcp_oauth_flow(flow_id: str, request: Request):
+async def cancel_mcp_oauth_flow(flow_id: str, request: Request, profile: Optional[str] = None):
     """Cancel an in-flight MCP OAuth flow (the desktop's inline-card/pill
-    cancel). mark_error unblocks both worker waits, so the worker exits and
+    cancel). Cancellation before callback admission unblocks worker waits and
     frees the per-server "already in progress" slot — without this, a renderer
     that stops polling leaves the flow squatting until its 300s callback
     timeout and every retry 409s. Idempotent: an already-settled flow is left
     as-is (approved stays approved)."""
     _require_token(request)
-    flow = _mcp_oauth_flows.get(flow_id)
+    flow = _profile_mcp_oauth_flow(flow_id, profile, allow_expired=True)
     if flow is None:
         # Expired/GC'd is the goal state of a cancel — not an error.
         return {"ok": True, "status": "expired"}
-    flow.mark_error("Cancelled by user")
-    return {"ok": True, "status": flow.snapshot()["status"]}
+    cancelled = flow.cancel_pending()
+    return {"ok": True, "cancelled": cancelled, "status": flow.snapshot()["status"]}
+
+
+def _profile_mcp_oauth_flow(flow_id: str, profile: Optional[str], *, allow_expired: bool = False):
+    from hermes_constants import hermes_home_key
+
+    with _config_profile_scope(profile):
+        caller_home = hermes_home_key()
+    with _mcp_oauth_flows_lock:
+        flow = _mcp_oauth_flows.get(flow_id)
+    if flow is None and allow_expired:
+        return None
+    if flow is None or hermes_home_key(flow.hermes_home) != caller_home:
+        raise HTTPException(status_code=404, detail="OAuth flow not found or expired")
+    return flow
 
 
 @router.get("/api/mcp/oauth/callback/{server_name:path}")
@@ -340,6 +376,7 @@ async def mcp_oauth_callback(
     code: Optional[str] = None,
     state: Optional[str] = None,
     error: Optional[str] = None,
+    iss: Optional[str] = None,
 ):
     _gc_mcp_oauth_flows()
     with _mcp_oauth_flows_lock:
@@ -362,7 +399,7 @@ async def mcp_oauth_callback(
     if flow is None:
         return HTMLResponse("<h1>OAuth flow expired</h1><p>Return to Hermes and try again.</p>", status_code=404)
     try:
-        flow.deliver_callback(code=code, state=state, error=error)
+        flow.deliver_callback(code=code, state=state, error=error, iss=iss)
     except ValueError as exc:
         reason = str(exc)
         status_code = 409 if "already received" in reason else 400
@@ -380,11 +417,12 @@ async def mcp_oauth_callback(
 async def set_mcp_server_enabled(
     name: str, body: MCPEnabledToggle, profile: Optional[str] = None
 ):
-    """Enable or disable an MCP server (takes effect on next session/gateway).
+    """Save an MCP server's policy for subsequent RPC admission.
 
     Toggles the ``enabled`` key on the server's config.yaml entry — the same
-    flag the agent reads at startup.  Disabled servers stay in config so they
-    can be re-enabled without re-entering their settings.
+    flag discovery reads at startup. Existing handlers check it before RPC
+    admission without rebuilding cached schemas. Already admitted calls may
+    finish; disabled servers retain their settings for re-enabling.
     """
     def _run():
         with _profile_scope(body.profile or profile):
@@ -397,7 +435,12 @@ async def set_mcp_server_enabled(
                     raise HTTPException(status_code=400, detail="Malformed server config")
                 servers[name]["enabled"] = bool(body.enabled)
                 save_config(cfg)
-        return {"ok": True, "name": name, "enabled": bool(body.enabled)}
+        return {
+            "ok": True,
+            "name": name,
+            "enabled": bool(body.enabled),
+            "application": _mcp_save_application(),
+        }
 
     return await asyncio.to_thread(_run)
 

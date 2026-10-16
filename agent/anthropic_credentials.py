@@ -37,6 +37,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from hermes_constants import get_hermes_home
+from utils import base_url_hostname
 from agent.secret_scope import get_secret as _get_secret
 
 logger = logging.getLogger(__name__)
@@ -57,17 +58,14 @@ def _is_oauth_token(key: str) -> bool:
     """Check if the key is an Anthropic OAuth/setup token.
 
     Positively identifies Anthropic OAuth tokens by their key format:
-    - ``sk-ant-`` prefix (but NOT ``sk-ant-api``) → setup tokens, managed keys
+    - ``sk-ant-`` prefix (but NOT the Console API-key families) → setup tokens, managed keys
     - ``eyJ`` prefix → JWTs from the Anthropic OAuth flow
     - ``cc-`` prefix → Claude Code OAuth access tokens (from CLAUDE_CODE_OAUTH_TOKEN)
 
     Non-Anthropic keys (MiniMax, Alibaba, etc.) don't match any pattern
     and correctly return False.
     """
-    if not key:
-        return False
-    # Regular Anthropic Console API keys — x-api-key auth, never OAuth
-    if key.startswith("sk-ant-api"):
+    if not key or key.startswith(("sk-ant-api", "sk-ant-usr", "sk-ant-svc", "sk-ant-admin")):
         return False
     # Anthropic-issued tokens (setup-tokens sk-ant-oat-*, managed keys)
     if key.startswith("sk-ant-"):
@@ -79,6 +77,31 @@ def _is_oauth_token(key: str) -> bool:
     if key.startswith("cc-"):
         return True
     return False
+
+
+def is_native_anthropic_host(base_url: Any) -> bool:
+    """Return whether *base_url* is the native Anthropic host or its default route."""
+    text = str(base_url or "").strip()
+    return not text or base_url_hostname(text) == "api.anthropic.com"
+
+
+def anthropic_route_is_oauth(
+    base_url: Any, credential: Any, *, provider: Optional[str] = None
+) -> bool:
+    """Return whether a route and credential require Claude Code OAuth identity headers.
+
+    OAuth identity is limited to the Anthropic provider itself or the exact native Anthropic
+    host. Callable credentials are materialized once for classification; a failed mint remains
+    an authentication failure and is left for the request hook to surface.
+    """
+    if not (is_native_anthropic_host(base_url) or (provider or "").strip().lower() == "anthropic"):
+        return False
+    if callable(credential) and not isinstance(credential, str):
+        try:
+            credential = credential()
+        except Exception:
+            return False
+    return isinstance(credential, str) and _is_oauth_token(credential)
 
 
 

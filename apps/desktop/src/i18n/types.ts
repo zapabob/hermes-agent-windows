@@ -949,6 +949,7 @@ export interface Translations {
       reloadFailed: string
       savedTitle: string
       savedMessage: (name: string) => string
+      savedPolicyMessage: (name: string) => string
       newServer: string
       reload: string
       reloading: string

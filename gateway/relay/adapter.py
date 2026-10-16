@@ -19,6 +19,8 @@ deprecation cycle until >=2 Class-1 platforms validate them.
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import json
 import logging
 import secrets
 import time
@@ -286,6 +288,19 @@ class RelayAdapter(BasePlatformAdapter):
                     return per_platform
         return self.descriptor
 
+    def _descriptor_for_platform(self, platform: str) -> Optional[CapabilityDescriptor]:
+        """Resolve the requested identity without borrowing the primary's flags."""
+        descriptor = None
+        resolve = getattr(self._transport, "descriptor_for_platform", None)
+        if callable(resolve):
+            try:
+                descriptor = resolve(platform)
+            except Exception:
+                logger.debug("relay descriptor lookup failed", exc_info=True)
+        if descriptor is None and self.descriptor.platform == platform:
+            descriptor = self.descriptor
+        return descriptor if descriptor is not None and descriptor.platform == platform else None
+
     def max_message_length_for_chat(self, chat_id: str) -> int:
         return self._descriptor_for_chat(chat_id).max_message_length
 
@@ -312,11 +327,15 @@ class RelayAdapter(BasePlatformAdapter):
         # name the chat, resolve through its platform's negotiated
         # descriptor; the scalar remains the fallback (chat unknown,
         # single-platform gateways: identical behavior).
-        desc = (
-            self._descriptor_for_chat(str(chat_id))
-            if chat_id is not None
-            else self.descriptor
-        )
+        platform = (metadata or {}).get("_relay_logical_platform")
+        if platform:
+            if not self.fronts_platform(platform):
+                return False
+            desc = self._descriptor_for_platform(str(platform))
+        else:
+            desc = self._descriptor_for_chat(str(chat_id)) if chat_id is not None else self.descriptor
+        if desc is None:
+            return False
         if not (
             desc.supports_draft_streaming
             and "draft" in (desc.supported_ops or ())
@@ -326,8 +345,7 @@ class RelayAdapter(BasePlatformAdapter):
         # SlackAdapter already refuses streaming when those knobs are set
         # so chat.postMessage can carry them. Mirror that here or a
         # configured true never reaches Slack (bot default = no preview).
-        platform = None
-        if chat_id is not None:
+        if platform is None and chat_id is not None:
             platform = self._platform_by_chat.get(str(chat_id))
         if platform is None:
             platform = getattr(desc, "platform", None)
@@ -335,7 +353,7 @@ class RelayAdapter(BasePlatformAdapter):
             return False
         return True
 
-    def stream_is_message_for_chat(self, chat_id: str) -> bool:
+    def stream_is_message_for_chat(self, chat_id: str, metadata: Optional[Dict[str, Any]] = None) -> bool:
         """Per-chat stream-is-the-message semantic (review r2, finding 2).
 
         The class-level ``draft_stream_is_message`` can only reflect the
@@ -348,10 +366,12 @@ class RelayAdapter(BasePlatformAdapter):
         descriptor-level field is the eventual contract (gg follow-up)
         so a future platform can advertise the semantic explicitly.
         """
-        return (
-            str(self._descriptor_for_chat(str(chat_id)).platform or "").lower()
-            == "slack"
-        )
+        platform = (metadata or {}).get("_relay_logical_platform")
+        if platform:
+            descriptor = self._descriptor_for_platform(str(platform)) if self.fronts_platform(platform) else None
+        else:
+            descriptor = self._descriptor_for_chat(str(chat_id))
+        return descriptor is not None and str(descriptor.platform or "").lower() == "slack"
 
     # ── Live cards: native draft streaming + task cards (NS-658) ─────────
     #
@@ -385,6 +405,16 @@ class RelayAdapter(BasePlatformAdapter):
         return self.supports_native_task_cards()
 
     @staticmethod
+    def _draft_route_prefix(chat_id: str, metadata: Optional[Dict[str, Any]]) -> str:
+        md = metadata or {}
+        if md.get("_relay_logical_platform") and "scope_id" in md and "user_id" in md:
+            identity = json.dumps([md["_relay_logical_platform"], md["scope_id"], md["user_id"]],
+                                  ensure_ascii=True, separators=(",", ":"))
+            # Existing stream diagnostics print keys; keep tenant/author IDs out.
+            return f"{chat_id}:relay:{hashlib.sha256(identity.encode('utf-8')).hexdigest()}:"
+        return f"{chat_id}:"
+
+    @staticmethod
     def _draft_key(chat_id: str, metadata: Optional[Dict[str, Any]]) -> str:
         """Coordination key for one turn's stream.
 
@@ -405,11 +435,12 @@ class RelayAdapter(BasePlatformAdapter):
         (single-turn semantics).
         """
         md = metadata or {}
+        prefix = RelayAdapter._draft_route_prefix(chat_id, metadata)
         turn_id = md.get("message_id") or md.get("reply_to_message_id")
         if turn_id:
-            return f"{chat_id}:turn:{turn_id}"
+            return f"{prefix}turn:{turn_id}"
         anchor = md.get("thread_ts") or md.get("thread_id") or ""
-        return f"{chat_id}:{anchor}"
+        return f"{prefix}{anchor}"
 
     # Cap for the draft/seal coordination dicts, matching the sibling
     # bounded caches (_auto_thread_by_chat). Entries are per-turn keys;
@@ -480,9 +511,10 @@ class RelayAdapter(BasePlatformAdapter):
         # turn-keyed stream).
         if md.get("message_id") or md.get("reply_to_message_id"):
             return None
-        prefix = f"{chat_id}:"
+        prefix = self._draft_route_prefix(str(chat_id), metadata)
         candidates = [
             k for k in self._open_draft_by_chat if k.startswith(prefix)
+            and (prefix != f"{chat_id}:" or not k.startswith(f"{chat_id}:relay:"))
         ]
         if len(candidates) == 1:
             # Absorbing a send into a stream is a significant, previously
@@ -504,7 +536,7 @@ class RelayAdapter(BasePlatformAdapter):
         content: str,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> SendResult:
-        if not self.supports_draft_streaming(chat_id=str(chat_id)):
+        if not self.supports_draft_streaming(chat_id=str(chat_id), metadata=metadata):
             raise NotImplementedError(
                 "connector does not advertise the 'draft' relay op"
             )
@@ -548,7 +580,7 @@ class RelayAdapter(BasePlatformAdapter):
         # as a separate real send — arming here would intercept that final
         # into draft(final=true) and no history message would ever be
         # posted. Resolved per chat: one adapter fronts N platforms.
-        if self.stream_is_message_for_chat(str(chat_id)):
+        if self.stream_is_message_for_chat(str(chat_id), metadata):
             self._open_draft_by_chat[chat_key] = draft_id
             self._evict_oldest(self._open_draft_by_chat)
         try:
@@ -564,12 +596,12 @@ class RelayAdapter(BasePlatformAdapter):
                     # can only render blocks if its frames carry the hint.
                     "metadata": self._with_scope(
                         chat_id,
-                        self._with_format_hints_for_chat(
-                            chat_id, dict(metadata or {})
-                        ),
+                        self._with_format_hints_for_platform(str(metadata["_relay_logical_platform"]), dict(metadata))
+                        if (metadata or {}).get("_relay_logical_platform")
+                        else self._with_format_hints_for_chat(chat_id, dict(metadata or {})),
                     ),
                 },
-                platform=self._platform_by_chat.get(str(chat_id)),
+                platform=(metadata or {}).get("_relay_logical_platform") or self._platform_by_chat.get(str(chat_id)),
             )
         except Exception as e:
             # Ambiguous by definition (stale socket, mid-write drop): the
@@ -609,6 +641,9 @@ class RelayAdapter(BasePlatformAdapter):
         draft_key: Optional[str] = None,
     ) -> SendResult:
         """Convert the turn-final send into the sealing draft frame."""
+        explicit_platform = (metadata or {}).get("_relay_logical_platform")
+        if explicit_platform and not self.fronts_platform(explicit_platform):
+            return SendResult(success=False, error=f"relay does not front platform {explicit_platform}")
         if draft_key is None:
             draft_key = self._draft_key(str(chat_id), metadata)
         draft_id = self._open_draft_by_chat.pop(draft_key)
@@ -635,10 +670,11 @@ class RelayAdapter(BasePlatformAdapter):
             # exactly the plain-code-block downgrade seen in live relay testing.
             "metadata": self._with_scope(
                 chat_id,
-                self._with_format_hints_for_chat(chat_id, dict(metadata or {})),
+                self._with_format_hints_for_platform(str(explicit_platform), dict(metadata or {}))
+                if explicit_platform else self._with_format_hints_for_chat(chat_id, dict(metadata or {})),
             ),
         }
-        _seal_platform = self._platform_by_chat.get(str(chat_id))
+        _seal_platform = explicit_platform or self._platform_by_chat.get(str(chat_id))
         _transport = self._transport  # narrowed by the None-guard above
 
         async def _attempt() -> Optional[Dict[str, Any]]:
@@ -1340,10 +1376,13 @@ class RelayAdapter(BasePlatformAdapter):
             onboarded tenant'. See gateway-gateway routedEgressGuard.ts /
             discordTenant.ts.
 
-        No-op when the relevant value is already present or unknown for this chat.
+        Explicit keys, including None/empty, preserve source/home provenance.
+        Only a missing key may use the legacy chat-addressed fallback.
         """
         meta: Dict[str, Any] = dict(metadata or {})
-        if not meta.get("scope_id"):
+        meta.pop("_relay_logical_platform", None)
+        meta.pop("_relay_chat_type", None)
+        if "scope_id" not in meta:
             scope = self._scope_by_chat.get(str(chat_id))
             if scope:
                 meta["scope_id"] = scope
@@ -1352,7 +1391,7 @@ class RelayAdapter(BasePlatformAdapter):
         # AND scoped replies (the connector's guild-route-miss fallback). It is
         # only consulted by the connector when the scope/route lookup misses, so
         # carrying it alongside scope_id never overrides routing-table resolution.
-        if not meta.get("user_id"):
+        if "user_id" not in meta:
             author = self._dm_user_by_chat.get(str(chat_id))
             if author:
                 meta["user_id"] = author
@@ -1762,6 +1801,8 @@ class RelayAdapter(BasePlatformAdapter):
                 error=f"relay does not front platform {platform_value}",
             )
         _sfp_metadata = dict(metadata or {})
+        _sfp_metadata["_relay_logical_platform"] = str(platform_value)
+        effective_reply_to = self._apply_slack_thread_anchor(chat_id, reply_to, _sfp_metadata)
         # Gateway-internal interim marker (see send()): strip before the
         # wire; an interim send through this door also skips interception.
         _interim = bool(_sfp_metadata.pop("_interim_send", False))
@@ -1796,7 +1837,7 @@ class RelayAdapter(BasePlatformAdapter):
                 "op": "send",
                 "chat_id": chat_id,
                 "content": content,
-                "reply_to": reply_to,
+                "reply_to": effective_reply_to,
                 # format_hints on the explicit-platform lane too: this is the
                 # scheduled/cron delivery path — the in_channel brief itself —
                 # and it must render blocks exactly like an interactive send.
@@ -1921,7 +1962,11 @@ class RelayAdapter(BasePlatformAdapter):
         metadata: Optional[Dict[str, Any]] = None,
     ) -> SendResult:
         send_metadata = dict(metadata or {})
-        explicit_platform = send_metadata.pop("_relay_logical_platform", None)
+        explicit_platform = send_metadata.get("_relay_logical_platform")
+        if explicit_platform:
+            return await self.send_for_platform(
+                explicit_platform, chat_id, content, reply_to=reply_to, metadata=send_metadata,
+            )
         # Consumer-declared interim send (commentary, tail flush): NOT the
         # turn-final, so it must never trigger seal-interception — sealing
         # the live stream with interim text orphans the true final into a
@@ -1956,14 +2001,6 @@ class RelayAdapter(BasePlatformAdapter):
             logger.warning(
                 "relay seal failed (%s); delivering turn-final as plain send",
                 seal.error,
-            )
-        if explicit_platform:
-            return await self.send_for_platform(
-                explicit_platform,
-                chat_id,
-                content,
-                reply_to=reply_to,
-                metadata=send_metadata or None,
             )
         if self._transport is None:
             return SendResult(success=False, error="no transport")
@@ -2110,11 +2147,13 @@ class RelayAdapter(BasePlatformAdapter):
         """
         if reply_to is None:
             return None
-        if self._platform_by_chat.get(str(chat_id)) != Platform.SLACK.value:
-            return reply_to
-        if self._chat_type_by_chat.get(str(chat_id)) != "dm":
-            return reply_to
         md = metadata or {}
+        platform = md.get("_relay_logical_platform") or self._platform_by_chat.get(str(chat_id))
+        if platform != Platform.SLACK.value:
+            return reply_to
+        chat_type = md.get("_relay_chat_type") if "_relay_chat_type" in md else self._chat_type_by_chat.get(str(chat_id))
+        if chat_type != "dm":
+            return reply_to
         if md.get("thread_id") or md.get("thread_ts"):
             # A real thread was resolved by run.py — honour it.
             return reply_to
@@ -2170,7 +2209,7 @@ class RelayAdapter(BasePlatformAdapter):
             metadata.pop(mirror_key, None)
         if (
             effective_reply_to is not None
-            and self._platform_by_chat.get(str(chat_id)) == Platform.SLACK.value
+            and (metadata.get("_relay_logical_platform") or self._platform_by_chat.get(str(chat_id))) == Platform.SLACK.value
             and not (metadata.get("thread_id") or metadata.get("thread_ts"))
         ):
             metadata["thread_id"] = str(effective_reply_to)
@@ -2220,6 +2259,9 @@ class RelayAdapter(BasePlatformAdapter):
         """Edit a relayed message through the connector-owned platform API."""
         if self._transport is None:
             return SendResult(success=False, error="no transport")
+        explicit_platform = (metadata or {}).get("_relay_logical_platform")
+        if explicit_platform and not self.fronts_platform(explicit_platform):
+            return SendResult(success=False, error=f"relay does not front platform {explicit_platform}")
         result = await self._transport.send_outbound(
             {
                 "op": "edit",
@@ -2231,10 +2273,12 @@ class RelayAdapter(BasePlatformAdapter):
                 # lane must signal block rendering too or streams would seal
                 # as plain text (boundary rule: every text egress lane).
                 "metadata": self._with_scope(
-                    chat_id, self._with_format_hints_for_chat(chat_id, metadata)
+                    chat_id,
+                    self._with_format_hints_for_platform(str(explicit_platform), metadata)
+                    if explicit_platform else self._with_format_hints_for_chat(chat_id, metadata),
                 ),
             },
-            platform=self._platform_by_chat.get(str(chat_id)),
+            platform=explicit_platform or self._platform_by_chat.get(str(chat_id)),
         )
         return SendResult(
             success=bool(result.get("success")),
@@ -3251,6 +3295,10 @@ class RelayAdapter(BasePlatformAdapter):
         self,
         parent_chat_id: str,
         name: str,
+        *,
+        logical_platform: Any = None,
+        scope_id: Optional[str] = None,
+        user_id: Optional[str] = None,
     ) -> Optional[str]:
         """Create a thread/topic under ``parent_chat_id`` via the connector.
 
@@ -3261,7 +3309,23 @@ class RelayAdapter(BasePlatformAdapter):
         watcher falls back to the parent channel — the same contract as the
         native adapters' create_handoff_thread.
         """
-        if self._transport is None or not self.descriptor.supports_op("thread_create"):
+        if self._transport is None:
+            return None
+        platform_value = self._platform_by_chat.get(str(parent_chat_id))
+        descriptor = self.descriptor
+        if logical_platform is not None:
+            platform_value = str(getattr(logical_platform, "value", logical_platform))
+            if not self.fronts_platform(platform_value):
+                return None
+            descriptor = self._descriptor_for_platform(platform_value)
+            if descriptor is None:
+                return None
+            # Unknown source/home provenance stays unknown. A colliding chat
+            # cache is not authority for a different tenant or author.
+            metadata = {"scope_id": scope_id, "user_id": user_id}
+        else:
+            metadata = self._with_scope(str(parent_chat_id), None)
+        if not descriptor.supports_op("thread_create"):
             return None
         thread_name = (str(name or "").strip() or "handoff")[:100]
         try:
@@ -3270,9 +3334,9 @@ class RelayAdapter(BasePlatformAdapter):
                     "op": "thread_create",
                     "chat_id": str(parent_chat_id),
                     "thread_name": thread_name,
-                    "metadata": self._with_scope(str(parent_chat_id), None),
+                    "metadata": metadata,
                 },
-                platform=self._platform_by_chat.get(str(parent_chat_id)),
+                platform=platform_value,
             )
         except Exception:  # noqa: BLE001 - handoff falls back to the parent channel
             logger.debug("relay thread_create transport failure", exc_info=True)

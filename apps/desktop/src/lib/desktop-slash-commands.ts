@@ -12,7 +12,14 @@ export interface CommandsCatalogLike {
   skill_count?: number
   skills?: SkillCatalogMap
   warning?: string
-  commands?: Record<string, { argument_mode?: DesktopSlashArgumentMode | null; desktop?: string | null }>
+  commands?: Record<
+    string,
+    {
+      argument_mode?: DesktopSlashArgumentMode | null
+      desktop?: string | null
+      desktop_subcommands?: readonly string[] | null
+    }
+  >
 }
 
 /**
@@ -137,6 +144,8 @@ export interface DesktopCommandSpec {
   hidden?: boolean
   /** Composer behavior for text following the command token. */
   argumentMode?: DesktopSlashArgumentMode
+  /** Maximum review slice forwarded by an exec command. */
+  desktopSubcommands?: readonly string[]
 }
 
 const exec = (): DesktopCommandSurface => ({ kind: 'exec' })
@@ -326,6 +335,7 @@ const DESKTOP_COMMAND_SPECS: readonly DesktopCommandSpec[] = [
   {
     name: '/steer',
     description: 'Steer the current run after the next tool call',
+    aliases: ['/s'],
     surface: exec(),
     argumentMode: 'text'
   },
@@ -339,6 +349,13 @@ const DESKTOP_COMMAND_SPECS: readonly DesktopCommandSpec[] = [
   { name: '/undo', description: 'Remove the last user/assistant exchange', surface: exec() },
   { name: '/usage', description: 'Show token usage for this session', surface: exec() },
   { name: '/version', description: 'Show Hermes Agent version', surface: exec() },
+  {
+    name: '/skills',
+    description: 'Review staged skill writes and approval mode',
+    surface: exec(),
+    argumentMode: 'options',
+    desktopSubcommands: ['pending', 'approve', 'reject', 'diff', 'approval']
+  },
 
   // No desktop surface, but carry an alias (underscore spelling variants).
   { name: '/reload-mcp', aliases: ['/reload_mcp'], surface: unavailable('advanced') },
@@ -382,7 +399,7 @@ const NO_DESKTOP_SURFACE: Record<DesktopUnavailableReason, readonly string[]> = 
     '/verbose'
   ],
   messaging: ['/approve', '/deny'],
-  settings: ['/skills', '/pets'],
+  settings: ['/pets'],
   advanced: [
     '/auth',
     '/billing',
@@ -456,12 +473,23 @@ export function canonicalDesktopSlashCommand(command: string, catalog?: Commands
 export function resolveDesktopCommand(command: string, catalog?: CommandsCatalogLike): DesktopCommandSpec | null {
   const name = canonicalDesktopSlashCommand(command, catalog)
   const local = SPEC_BY_NAME.get(name)
+  const entry = (catalog ?? peekCachedSlashCompletion<CommandsCatalogLike>('catalog'))?.commands?.[name]
+  const liveScope = subcommandList(entry?.desktop_subcommands)
 
   if (local) {
+    // Catalog metadata may narrow an exec slice, never widen a fixed local
+    // maximum or open a terminal/action/picker/RPC surface.
+    if (local.surface.kind === 'exec' && liveScope !== undefined) {
+      return {
+        ...local,
+        desktopSubcommands: local.desktopSubcommands
+          ? local.desktopSubcommands.filter(sub => liveScope.includes(sub))
+          : liveScope
+      }
+    }
+
     return local
   }
-
-  const entry = (catalog ?? peekCachedSlashCompletion<CommandsCatalogLike>('catalog'))?.commands?.[name]
 
   if (!entry || typeof entry !== 'object') {
     return null
@@ -486,7 +514,45 @@ export function resolveDesktopCommand(command: string, catalog?: CommandsCatalog
     return null
   }
 
-  return { name, surface: exec(), hidden: value === 'hidden' }
+  return { name, surface: exec(), hidden: value === 'hidden', desktopSubcommands: liveScope }
+}
+
+function subcommandList(value: unknown): readonly string[] | undefined {
+  if (value == null) {
+    return undefined
+  }
+
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value
+    .filter((sub): sub is string => typeof sub === 'string')
+    .map(sub => sub.trim().toLowerCase())
+    .filter(Boolean)
+}
+
+function invocationArgument(command: string, arg?: string): string {
+  return arg ?? command.trim().replace(/^\S+\s*/, '')
+}
+
+export function desktopSubcommandUnavailableMessage(command: string, arg?: string): string | null {
+  const spec = resolveDesktopCommand(command)
+  const allowed = spec?.desktopSubcommands
+
+  if (!spec || allowed === undefined) {
+    return null
+  }
+
+  const first = invocationArgument(command, arg).trim().split(/\s+/)[0]?.toLowerCase() ?? ''
+
+  if (first && allowed.includes(first)) {
+    return null
+  }
+
+  return allowed.length
+    ? `${spec.name} requires a supported subcommand: ${allowed.join(', ')}.`
+    : `${spec.name} has no supported subcommands in the desktop app.`
 }
 
 function isKnownHermesSlashCommand(command: string, catalog?: CommandsCatalogLike): boolean {
@@ -512,11 +578,11 @@ export function isDesktopSlashExtensionCommand(command: string, catalog?: Comman
 }
 
 /** Gates execution: true unless the command is a known no-desktop-surface command. */
-export function isDesktopSlashCommand(command: string): boolean {
+export function isDesktopSlashCommand(command: string, arg?: string): boolean {
   const spec = resolveDesktopCommand(command)
 
   if (spec) {
-    return spec.surface.kind !== 'unavailable'
+    return spec.surface.kind !== 'unavailable' && desktopSubcommandUnavailableMessage(command, arg) === null
   }
 
   return isDesktopSlashExtensionCommand(command)
@@ -534,7 +600,7 @@ export function isDesktopSlashSuggestion(command: string, catalog?: CommandsCata
   const spec = resolveDesktopCommand(normalized, catalog)
 
   if (spec) {
-    return spec.surface.kind !== 'unavailable' && !spec.hidden
+    return spec.surface.kind !== 'unavailable' && !spec.hidden && spec.desktopSubcommands?.length !== 0
   }
 
   // Skill / quick commands the backend provides.

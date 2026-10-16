@@ -215,8 +215,8 @@ export function SkillsView({
   const routeTab = useRouteEnumParam('tab', SKILLS_MODES, 'skills')
   const localTab = useState<(typeof SKILLS_MODES)[number]>('skills')
   const [mode, setMode] = embedded ? localTab : routeTab
-  // $gateway only feeds the MCP tab — gate the subscription so Skills/Toolsets
-  // tabs don't re-render on connect/disconnect/reconnect.
+  // Keep the legacy MCP prop scoped to that tab; settings saves use scoped
+  // REST and do not rebuild a cached conversation's tool catalogue.
   const gateway = useStoreSelector($gateway, g => (mode === 'mcp' ? g : null))
 
   const [query, setQuery] = useState('')
@@ -259,9 +259,8 @@ export function SkillsView({
   const scopeConnectionId =
     scopeProfile && typeof scopeProfile === 'object' ? (scopeProfile.connectionId ?? '').trim() || 'local' : null
 
-  // Scoped to a DIFFERENT backend than the window's active gateway? The MCP
-  // tab's live-reload RPC rides the active gateway socket, which would reload
-  // the wrong machine — withhold it for cross-backend scopes.
+  // Preserve the legacy gateway prop's backend boundary. Actual MCP settings
+  // mutations use the selected profile's REST owner, without live reload.
   const crossBackendScope = scopeConnectionId !== null && scopeConnectionId !== (activeGatewayConnectionId() ?? 'local')
 
   const { data: profilesData } = useQuery({
@@ -789,11 +788,9 @@ export function SkillsView({
         <div className="flex min-h-0 flex-1 flex-col">
           <div className={mode === 'skills' ? 'min-h-40 flex-1 overflow-hidden' : 'min-h-0 flex-1'}>
             {mode === 'mcp' ? (
-              // The gateway instance backs ONLY the live `reload.mcp` RPC, and
-              // it is the ACTIVE gateway's socket — for a scope pinned to a
-              // different backend that RPC would hot-reload the wrong
-              // machine's MCP servers, so it is withheld (config edits still
-              // apply on that backend's next session).
+              // Retain the gateway prop for caller compatibility. Saving
+              // settings keeps cached schemas stable; catalogue changes load
+              // in a new session or a separately requested explicit reload.
               <McpTab gateway={crossBackendScope ? null : gateway} key={`mcp-${scopeKey}`} profile={scopeProfile} />
             ) : (skillsFailed || toolsetsFailed) && (!skills || !toolsets) ? (
               <PanelEmpty

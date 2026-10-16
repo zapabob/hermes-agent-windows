@@ -49,6 +49,14 @@ from utils import (
 
 logger = logging.getLogger("gateway.run")
 
+
+class _BranchThreadSetupError(RuntimeError):
+    """A thread exists, but its local setup failed before child publication."""
+
+    def __init__(self, destination: SessionSource, error: Exception):
+        super().__init__(str(error))
+        self.destination = destination
+
 # Upper bound on the off-loop agent-resource cleanup during a /new or /reset
 # (see _handle_reset_command). A stuck teardown must not block the event loop;
 # past this the reset proceeds and the cleanup is left to finish (or leak) in
@@ -5246,13 +5254,16 @@ class GatewaySlashCommandsMixin:
         )
 
     async def _handle_branch_command(self, event: MessageEvent) -> str:
-        """Handle /branch [name] — fork the current session into a new independent copy.
+        """Handle /branch [--here] [name] — fork the current session into a new independent copy.
 
         Copies conversation history to a new session so the user can explore
         a different approach without losing the original.
         Inspired by Claude Code's /branch command.
         """
         import uuid as _uuid
+        from gateway.slash_commands_branch_thread import (
+            BRANCH_THREAD_PLATFORMS, format_thread_ref, parse_branch_args,
+        )
 
         if not self._session_db:
             from hermes_state import format_session_db_unavailable
@@ -5267,7 +5278,7 @@ class GatewaySlashCommandsMixin:
         if not history:
             return t("gateway.branch.no_conversation")
 
-        branch_name = event.get_command_args().strip()
+        stay_here, branch_name = parse_branch_args(event.get_command_args())
 
         # Generate the new session ID
         from datetime import datetime as _dt
@@ -5285,12 +5296,28 @@ class GatewaySlashCommandsMixin:
             branch_title = await self._session_db.get_next_title_in_lineage(base)
 
         parent_session_id = current_entry.session_id
+        try:
+            dest_source = None if stay_here else await self._branch_open_thread(source, branch_title)
+        except _BranchThreadSetupError as exc:
+            logger.warning("Branch: created thread setup failed", exc_info=True)
+            return t("gateway.branch.create_failed", error=exc) + "\n" + t(
+                "gateway.branch.created_thread_without_branch",
+                thread=format_thread_ref(source.platform, exc.destination.thread_id),
+            )
+        in_place = dest_source is None
+        if in_place:
+            dest_source = source
+        dest_key = session_key if in_place else self._session_key_for_source(dest_source)
+        thread_location = "" if in_place else "\n" + t(
+            "gateway.branch.thread_location",
+            thread=format_thread_ref(source.platform, dest_source.thread_id),
+        )
 
         # Serialize the parent's full origin (same shape as the reset path's
         # db_create_kwargs in gateway/session.py, #82633) so the branch row
         # carries complete identity from birth. Prefer the live entry's origin
         # (it may hold richer metadata than the triggering event's source).
-        _branch_origin = current_entry.origin or source
+        _branch_origin = (current_entry.origin or source) if in_place else dest_source
         _branch_origin_json = None
         if _branch_origin is not None:
             try:
@@ -5306,13 +5333,15 @@ class GatewaySlashCommandsMixin:
         # /sessions even after the parent is reopened and re-ended with a
         # different end_reason (e.g. tui_shutdown overwriting 'branched').
         try:
+            parent = await self._session_db.get_session(parent_session_id)
             await self._session_db.create_session(
                 session_id=new_session_id,
                 source=source.platform.value if source.platform else "gateway",
-                user_id=source.user_id,
+                user_id=dest_source.user_id,
                 model=(self.config.get("model", {}) or {}).get("default") if isinstance(self.config, dict) else None,
                 model_config={"_branched_from": parent_session_id},
                 parent_session_id=parent_session_id,
+                system_prompt=(parent or {}).get("system_prompt") or None,
                 # Gateway routing columns — forward ALL of them at CREATE time,
                 # same fix as the compression-rotation bug in
                 # agent/conversation_compression.py. Without these, the branched
@@ -5331,22 +5360,27 @@ class GatewaySlashCommandsMixin:
                 # consumers that read routing/presentation data from state.db
                 # (mcp_serve, mirror, channel directory) see the branch row
                 # fully formed with zero backfill gap.
-                session_key=session_key,
-                chat_id=source.chat_id,
-                chat_type=source.chat_type,
-                thread_id=source.thread_id,
+                session_key=dest_key,
+                chat_id=dest_source.chat_id,
+                chat_type=dest_source.chat_type,
+                thread_id=dest_source.thread_id,
                 origin_json=_branch_origin_json,
                 display_name=current_entry.display_name,
             )
         except Exception as e:
             logger.error("Failed to create branch session: %s", e)
-            return t("gateway.branch.create_failed", error=e)
+            reply = t("gateway.branch.create_failed", error=e)
+            if not in_place:
+                reply += "\n" + t("gateway.branch.created_thread_without_branch",
+                                    thread=format_thread_ref(source.platform, dest_source.thread_id))
+            return reply
 
         # Copy conversation history to the new session in bounded-chunk
         # transactions (see #23254): one txn per row was the removed
         # write-amplification pattern, and a history can be hundreds of rows.
         # Best-effort like the old loop — a failed copy still yields a
         # usable (partial) branch.
+        persistence_incomplete = False
         try:
             await self._session_db.append_messages_batch(
                 new_session_id,
@@ -5374,26 +5408,76 @@ class GatewaySlashCommandsMixin:
                 chunk_rows=500,
             )
         except Exception:
-            pass  # Best-effort copy
+            persistence_incomplete = True
+            logger.warning("Branch %s history copy incomplete", new_session_id, exc_info=True)
 
         # Set title
         try:
             await self._session_db.set_session_title(new_session_id, branch_title)
         except Exception:
-            pass
+            persistence_incomplete = True
+            logger.warning("Branch %s title persistence failed", new_session_id, exc_info=True)
 
         # Switch the session store entry to the new session
-        new_entry = await self.async_session_store.switch_session(session_key, new_session_id)
+        try:
+            if not in_place:
+                await self.async_session_store.get_or_create_session(dest_source)
+            new_entry = await self.async_session_store.switch_session(dest_key, new_session_id)
+        except Exception:
+            logger.warning("Branch %s destination binding not confirmed", new_session_id, exc_info=True)
+            return t("gateway.branch.binding_incomplete", parent=parent_session_id, new=new_session_id) + thread_location
         if not new_entry:
-            return t("gateway.branch.switch_failed")
-        self._clear_session_boundary_security_state(session_key)
+            return t("gateway.branch.binding_incomplete", parent=parent_session_id, new=new_session_id) + thread_location
+        self._clear_session_boundary_security_state(dest_key)
 
         # Evict any cached agent for this session
-        self._evict_cached_agent(session_key)
+        self._evict_cached_agent(dest_key)
+
+        if persistence_incomplete:
+            return t("gateway.branch.persistence_incomplete", parent=parent_session_id, new=new_session_id) + thread_location
 
         msg_count = len([m for m in history if m.get("role") == "user"])
-        key = "gateway.branch.branched_one" if msg_count == 1 else "gateway.branch.branched_many"
-        return t(key, title=branch_title, count=msg_count, parent=parent_session_id, new=new_session_id)
+        if in_place:
+            key = "gateway.branch.branched_one" if msg_count == 1 else "gateway.branch.branched_many"
+            reply = t(key, title=branch_title, count=msg_count, parent=parent_session_id, new=new_session_id)
+            if not stay_here and source.platform in BRANCH_THREAD_PLATFORMS:
+                reply += "\n" + t("gateway.branch.thread_fallback")
+            return reply
+        key = "gateway.branch.branched_thread_one" if msg_count == 1 else "gateway.branch.branched_thread_many"
+        return t(key, title=branch_title, count=msg_count, parent=parent_session_id, new=new_session_id,
+                 thread=format_thread_ref(source.platform, dest_source.thread_id))
+
+    async def _branch_open_thread(self, source: SessionSource, title: str) -> Optional[SessionSource]:
+        """Create the sibling on the source's authenticated delivery adapter."""
+        from gateway.relay.adapter import RelayAdapter
+        from gateway.slash_commands_branch_thread import branch_dest_source, branch_thread_parent
+
+        parent_id = branch_thread_parent(source)
+        adapter = self._adapter_for_source(source) if parent_id else None
+        if adapter is None:
+            return None
+        try:
+            if isinstance(adapter, RelayAdapter):
+                thread_id = await adapter.create_handoff_thread(
+                    parent_id, title, logical_platform=source.platform,
+                    scope_id=source.scope_id, user_id=source.user_id,
+                )
+            else:
+                thread_id = await adapter.create_handoff_thread(parent_id, title)
+        except Exception:
+            logger.warning("Branch: thread creation failed on %s; branching in place",
+                           source.platform.value, exc_info=True)
+            return None
+        if not thread_id:
+            return None
+        destination = branch_dest_source(source, parent_id=parent_id, thread_id=str(thread_id), title=title)
+        threads = getattr(adapter, "_threads", None)
+        if threads is not None:
+            try:
+                await threads.mark_async(str(thread_id))
+            except Exception as exc:
+                raise _BranchThreadSetupError(destination, exc) from exc
+        return destination
 
     async def _handle_topup_command(self, event: MessageEvent) -> str:
         """Handle /topup -- show the Nous balance and hand off to the portal.

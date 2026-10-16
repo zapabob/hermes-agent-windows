@@ -228,6 +228,14 @@ class Settings:
         self.whitelist_file = kwargs.get("whitelist_file", "")
         self.replied_ids_file = kwargs.get("replied_ids_file", "")
         self.log_file = kwargs.get("log_file", "")
+        # Optional constructor settings must remain instance-scoped; falling
+        # back to class defaults discards configured memory and media policy.
+        self.media_dir = kwargs.get("media_dir", None)
+        self.memory_bridge_enabled = kwargs.get("memory_bridge_enabled", True)
+        self.memory_db = kwargs.get("memory_db", None)
+        self.memory_recall_limit = kwargs.get("memory_recall_limit", 5)
+        self.memory_writeback_enabled = kwargs.get("memory_writeback_enabled", False)
+
     media_dir: Optional[Path] = None
     memory_bridge_enabled: bool = True
     memory_db: Optional[Path] = None

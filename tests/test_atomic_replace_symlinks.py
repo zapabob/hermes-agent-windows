@@ -506,6 +506,7 @@ def test_in_place_rewrite_never_exposes_a_truncated_file(
     assert observed == [5000]
 
 
+@pytest.mark.require_symlinks
 def test_symlinked_target_survives_a_contended_rename(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fast_replace_retries: None
 ) -> None:

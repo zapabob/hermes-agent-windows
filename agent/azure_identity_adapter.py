@@ -475,7 +475,12 @@ def materialize_bearer_for_http(value: Any) -> str:
     raise ValueError("no usable api_key / token provider")
 
 
-def build_bearer_http_client(token_provider: Callable[[], str], **httpx_kwargs: Any) -> Any:
+def build_bearer_http_client(
+    token_provider: Callable[[], str],
+    *,
+    sends_as_api_key: Optional[Callable[[str], bool]] = None,
+    **httpx_kwargs: Any,
+) -> Any:
     """Return an ``httpx.Client`` that mints a fresh Entra bearer JWT
     per outbound request.
 
@@ -493,7 +498,9 @@ def build_bearer_http_client(token_provider: Callable[[], str], **httpx_kwargs: 
       2. Strips any pre-set ``Authorization`` / ``api-key`` /
          ``x-api-key`` headers the SDK may have added (avoids
          conflicting auth values).
-      3. Sets ``Authorization: Bearer <fresh-jwt>``.
+    3. Sets ``Authorization: Bearer <fresh-jwt>``. When the optional
+       ``sends_as_api_key`` predicate accepts the minted token, it instead sets
+       ``x-api-key``; this is used for native Anthropic Console keys from ``key_cmd``.
 
     ``token_provider`` must be a zero-arg callable returning a string —
     typically the result of :func:`build_token_provider`.
@@ -548,7 +555,10 @@ def build_bearer_http_client(token_provider: Callable[[], str], **httpx_kwargs: 
             return
         for header_name in ("Authorization", "authorization", "Api-Key", "api-key", "X-Api-Key", "x-api-key"):
             request.headers.pop(header_name, None)
-        request.headers["Authorization"] = f"Bearer {token}"
+        if sends_as_api_key is not None and sends_as_api_key(token):
+            request.headers["x-api-key"] = token
+        else:
+            request.headers["Authorization"] = f"Bearer {token}"
 
     return httpx.Client(
         event_hooks={"request": [_inject_bearer]},

@@ -1,0 +1,3628 @@
+{
+  "schema_version": 1,
+  "family_id": "F03",
+  "scope": "Canonical /s alias, local Desktop/TUI steer admission, settle/FIFO and Stop cancellation",
+  "lane": "FEATURE",
+  "action": "COMPOSE",
+  "status": "ACCEPTED_F03_LOCAL_PRODUCT_COMMIT",
+  "source": {
+    "upstream_commit": "a0ec0d286f1f8911617ba0a7fddcd9a0e0108d6d",
+    "upstream_paths": [
+      "hermes_cli/commands.py"
+    ],
+    "upstream_sha256": {
+      "hermes_cli/commands.py": "505108e7e85333d8759622bdd7c9722dd3826af96a4b8e1a7557f7265682187f"
+    },
+    "downstream_base_sha": "606f7e557c13a0789a2420f7adf6181becf60d75",
+    "downstream_owner_paths": [
+      "hermes_cli/commands.py",
+      "tui_gateway/methods_tools.py",
+      "tui_gateway/methods_session.py",
+      "tui_gateway/server.py",
+      "run_agent.py",
+      "gateway/run.py",
+      "tests/test_tui_gateway_server.py",
+      "tests/cli/test_steer_alias_contract.py",
+      "tests/gateway/test_steer_alias_contract.py",
+      "tests/tui_gateway/test_steer_alias_contract.py",
+      "apps/desktop/src/lib/desktop-slash-commands.ts",
+      "apps/desktop/src/lib/desktop-slash-commands.test.ts",
+      "apps/desktop/src/app/chat/composer/hooks/use-composer-submit.ts",
+      "apps/desktop/src/app/chat/composer/hooks/use-composer-submit.test.tsx",
+      "ui-tui/src/app/slash/commands/core.ts",
+      "ui-tui/src/__tests__/steerAlias.test.ts",
+      "apps/desktop/e2e/fixtures.ts",
+      "apps/desktop/e2e/mock-server.ts",
+      "apps/desktop/e2e/fixtures.unit.test.ts",
+      "apps/desktop/e2e/owned-process-observer.ts",
+      "apps/desktop/e2e/owned-process-observer.unit.test.ts",
+      "apps/desktop/e2e/steer-alias-contract.spec.ts"
+    ],
+    "candidate_head": "d6963d46ed9f63ec0479577755b1e0be3a9368e0",
+    "candidate_tree": "1a55b4d6756238479d4f385f701ce9264e7f8df4",
+    "candidate_patch_sha256": "c911a672ade29e71fe7e98b2b34c74b117425d22a57216c2fe9f28ec4528cf23",
+    "build_artifact_sha256": {
+      "apps/desktop/dist/electron-main.mjs": "bdbb2ffa585962c70413a0d4d1d917f0b10a3b0c7634389c7df0b51fe8eeec48",
+      "apps/desktop/dist/electron-preload.js": "c5c7c6f8964b988ff1debb56751f291c4203d0f01a9ba3798c648b463a311f1a",
+      "apps/desktop/dist/index.html": "289b3740cfc9bd28333e64f319112e6236a39d076d042319da5fe5dfd663049b",
+      "apps/desktop/build/install-stamp.json": "1b8d435966ec01ac845191c10d95765095b20666749ea43dd866a262295b8c04",
+      "node_modules/electron/dist/electron.exe": "b387201078ccfb7ed1e705d3865c1f4e2650dd6ac807876f86ce4c7c97e11a49",
+      "node_modules/electron/package.json": "f67a634a16222823dc9a0a62de0d30c21004c2d1e4d39e36400c2929bc491304",
+      "apps/desktop/dist/assets/agents-CPk9b8JS.js": "781b2ece6eb19a5c65367b0d1f0cb02c340f4eea566c26756d977f524ef6da04",
+      "apps/desktop/dist/assets/alert-B2PF65Dv.js": "a5859bc6c61ea455f0eac372fef28e439e34eee47f8debd2f382db2f281fc03d",
+      "apps/desktop/dist/assets/apl-gfMMiTNf.js": "9619f3fb6609168d82b468b6f950530bd23fafbc261f7b56696b10c483522d93",
+      "apps/desktop/dist/assets/artifacts-djdPL9gd.js": "890260c04d503d50132ba5125cca9e0b485b718b0f4a861412a0a065b2c9a122",
+      "apps/desktop/dist/assets/asciiarmor-C_eisQCp.js": "d0d548398b732306f912bbd8cd04486543520e3882a05e98b20a86bfa2b70089",
+      "apps/desktop/dist/assets/asn1-DCl_8MCW.js": "ecd2d25e2e3152f480db9d3e698b2ac94f01fc3dc90d7f51d53d71f5c2a0db33",
+      "apps/desktop/dist/assets/asterisk-BEn0Cwpx.js": "2a2f286533f7527943a00fba13a31187ca2ddfdd1d8dac717175eb734f0dd14e",
+      "apps/desktop/dist/assets/avatar-chip-LZ3c8s9L.js": "f64e85e6b2a2a97aa79efcfd86db9d9564b10a526b4d71aa06b40970e51c1de5",
+      "apps/desktop/dist/assets/badge-DFUxQY8X.js": "49024cd3563abcefc2335c3f3b03e12d3764b0ef56a47e21ac70f73676d8901d",
+      "apps/desktop/dist/assets/brainfuck-D5EjA2JK.js": "5475a1a35d2dd641d8cd989a938161509774ccd2b76150b09c4058185476df6e",
+      "apps/desktop/dist/assets/bundle-mjs-DxdGK6Xj.js": "51faf219e23edbaa6302aee83315c633576f6f868dfabf7e7b96bd5402f2999c",
+      "apps/desktop/dist/assets/button-BakCmJN4.js": "1dd0b89f927f6d1525ae53e9e1defd425e9ccb00488191d4fb22926721426519",
+      "apps/desktop/dist/assets/chat-runtime-BeuhtyZS.js": "e8b55815190bb7beddc67c309587003df8ef569c4ac636c0221c903162c58d37",
+      "apps/desktop/dist/assets/checkbox-D8-qnWdk.js": "6ab39ab106456c48ff1bf14cd876af5b7fd0cd6165fe3e7aee976bb123a84177",
+      "apps/desktop/dist/assets/chunk-BO2N2NFS-CUSCrYrq.js": "eee1d3663dfe8314feb83cb5edb95f2b529f845bfbc4d613f817fe8222a040c4",
+      "apps/desktop/dist/assets/clike-DfEtMM_h.js": "56ee4e7e1e971353f623bf7d288dbc5ea79b0f72b67f67b3c26dfa02fbacfd98",
+      "apps/desktop/dist/assets/clojure-BflJGmDX.js": "3ccea67a7d55baa7ada3701e3382834b1c4b98caad17385635495df8ecf1b075",
+      "apps/desktop/dist/assets/cmake-84nbDH0I.js": "b04b2d247760958ea0055bc5f2e6b71768ce16eb6c4c9ef107f9756832a49fbf",
+      "apps/desktop/dist/assets/cobol-DHLQUbN7.js": "dbabfa9a971f5684d1ec67be806185042bec8f381ddc8d72f29671d403741e3d",
+      "apps/desktop/dist/assets/code-card-zygAL7a0.js": "c179309c943456e7901184c03dc63f36c4a1793f98be1f5d19a149f5bb35cdc4",
+      "apps/desktop/dist/assets/code-editor-BZc9Fxv8.js": "c12052d0bb97dfec1f951fe84f58817d8cd538997eb3bc2d70bc5fae5731b568",
+      "apps/desktop/dist/assets/codicon-Cb77RV29.js": "83d55a9ca811cab4063f2fb7af41032f250cf2bb751a8662b3b819e8f9cc5966",
+      "apps/desktop/dist/assets/codicon-DjkITdqj.ttf": "2bb558cb693451e73c28c33fe64aa89bc19b1a4b70f95948322c243f93476920",
+      "apps/desktop/dist/assets/coffeescript-De_zI4J0.js": "036cefc2b4652f1513a94c360f9131b00d05c2b91f8d1e1de998075eb2bb802c",
+      "apps/desktop/dist/assets/Collapse-Bold-mgICk9-_.woff2": "cb1bc6803168cffb3ef7b8113f95f82480a6d0f46d6e37edc854259377c6c00b",
+      "apps/desktop/dist/assets/combo-Dee3N4rp.js": "76d468e4d2d455fe4c175de374ab22f006af4e0d608666ccd18ecf21dfd942c1",
+      "apps/desktop/dist/assets/command-center-DRb174qZ.js": "30766da1026cba2aff43e561dd3b0432f004732d6381c00aa7d2fbdc87980c29",
+      "apps/desktop/dist/assets/commonlisp-DgAKBe0r.js": "a5cf5425784f04223503bbebd02c95a25190604640b15c238143c65585dd3146",
+      "apps/desktop/dist/assets/composer-status-Dr0aly6I.js": "81749a753540668684a006047167e2c61d4d564ac99116e1b1b898c94ab8fd43",
+      "apps/desktop/dist/assets/confirm-dialog-BA4HsUoq.js": "886a3f2bb44fac02c0847237a51150531d6ac367b85a72c1c61cde321e473fc6",
+      "apps/desktop/dist/assets/confirm-jAYaxQUQ.js": "8c5af7532b99cb2a75300c5dbd390b3f029076985c1b2c9d60941399370750fb",
+      "apps/desktop/dist/assets/connection-display-DHZ01N2Z.js": "853fb5488a7740bb7f2fff7111c0e624ff9c6fcfab7b2913502a01c73de9039b",
+      "apps/desktop/dist/assets/connection-registry-state-Bnshorii.js": "c8c12a2c5bb7905ec92ac049f3d30daad43c06e09e87d60afce2edeaed5d2a8b",
+      "apps/desktop/dist/assets/connections-CfQcXSLM.js": "7acc7faa3079657d7e2e03c29174869e673f65a71c4b0976d1fef8b936c91e3f",
+      "apps/desktop/dist/assets/context-BXUPoHdE.js": "dac69048e911580ed9de82af4330f5dc3659ae7a643cf4668a19b8f66f1f7758",
+      "apps/desktop/dist/assets/context-menu-DcnQUGui.js": "6313b32607bd8489af6c302c04edf723141e43f30237722ad912e9ed06e59cfb",
+      "apps/desktop/dist/assets/copy-button-DgK3Ygek.js": "adcd3760eb424dbd9de1185ae0441e92622a6afc36cd4738cd2a8f18e344a902",
+      "apps/desktop/dist/assets/credential-key-ui-D9Z0kibf.js": "f3991050c65e1569295ef999ae2a4d4cea1817fb8a7fb05c10ed79bb24cff396",
+      "apps/desktop/dist/assets/cron-CI0elohz.js": "b581a98b4a28d7d1afc46d338692d2a73d2775c0de54cde8a15bb84bf15d505e",
+      "apps/desktop/dist/assets/cron-CKfW4Srf.js": "8396fafb0acdf2988c23c29b50574dcca0c191b0cc27f467b15a1e3663ee0915",
+      "apps/desktop/dist/assets/crystal-Bsdphhtm.js": "13bbc57de4aebda33b48734f2b181e8f46383f7f4cd991c854fa30c3b63cf15a",
+      "apps/desktop/dist/assets/css-CnaYoQib.js": "196216d43c6f0da651aed4b274a684b1ccb5b693a057e26e01ac66002f5434f6",
+      "apps/desktop/dist/assets/cypher-p9eYesGn.js": "cd05736f31fba1aa9830d94e6b3799236e0b8cd2b989674fb9b074532a8bb42c",
+      "apps/desktop/dist/assets/d-DWkQyNnU.js": "eb4116d03dcda3c7dcb1f8681fe9858eb6f7c7b24213a8397c4862151627d532",
+      "apps/desktop/dist/assets/desktop-fs-Bgoy4iEE.js": "557a73be0721bcacaafd986e3842a873ef73d21fed17e6895e24835baa98569b",
+      "apps/desktop/dist/assets/dialog-DRd7FfBF.js": "91e3ec09c4f99a69782384ed8ce8d1989cd351d4c9f33407eb6a3f9959e305c6",
+      "apps/desktop/dist/assets/diff-ChtP43wD.js": "cf4c32c773b4aec08498fd170b7f74733a695fdbcbb18170413e05c8d64d4848",
+      "apps/desktop/dist/assets/display-path-BV46rQ4D.js": "cc5179584869ce0ade2424f0eaca310136e051f6d2cd0c4b04a76a744088ce81",
+      "apps/desktop/dist/assets/dist-BIBYNzFA.js": "d77fd0ceeee62339f3de123856fdde745656359b55948d1fe33c847ea9512ed3",
+      "apps/desktop/dist/assets/dist-BIDuaTo0.js": "74f2f50e5844feff8e2a40255d791373d8607a8cdfc3f435d4f8a85167c96bd7",
+      "apps/desktop/dist/assets/dist-BOiKAoU1.js": "03ab246f57483a1fdf049461926e37c63b4af46998f8bcc68ff2bdda0fad9cb5",
+      "apps/desktop/dist/assets/dist-bQt7K144.js": "26a51ff3db5aa9cd774fddcac735aa2d8dcbeb656fca2cff09aeacc7a037907f",
+      "apps/desktop/dist/assets/dist-C9FML95I.js": "70ae89f4f533330207eb6023893fc30c7dda3f157f3211332877399717cfa0c6",
+      "apps/desktop/dist/assets/dist-Cc3Z2DrY.js": "d0025c2091ed8564ede3ecea6f7b70e8778906f1f02213e28712230c50544e79",
+      "apps/desktop/dist/assets/dist-Ce5QqW20.js": "dec585c096694ff5006e65f5caa1660162b8b3d67cc4788741b0c9d314d64a5f",
+      "apps/desktop/dist/assets/dist-CfI0Z7w-.js": "4b6127f349558cdf853c9b72c5c1719f51978878f895f230a1df6c6cefc51f63",
+      "apps/desktop/dist/assets/dist-CflEw8bU.js": "ed4f2baca01787dee68e5b2b18033eda40b199fe55bb3d1f5118f602437fe3bf",
+      "apps/desktop/dist/assets/dist-CQeZwX-M.js": "1e3b1f257f6f878b46a6de7d9012b7cc88250c67f854ad01f5bc91d4c49e8cef",
+      "apps/desktop/dist/assets/dist-CV4Ndqoq.js": "d9bc5d9e82d74bdfc33bc52603b288d56c92f5cc0487aa859b5187bca5d82c5a",
+      "apps/desktop/dist/assets/dist-CWRm8h5f.js": "a07bacb937977b063e19a39997e9e67872d1c49731db7805ff0571ddcc042f64",
+      "apps/desktop/dist/assets/dist-Cy34BK_5.js": "3fd957807a72ba3fb644b958d56fe945891860231ca13dd4c1e4cb2a5abd130b",
+      "apps/desktop/dist/assets/dist-DhrnM-zi.js": "140caeb318cc6842ca2b3d8f5f32a7b75c95ad1a6f218f127f2f08e976197a55",
+      "apps/desktop/dist/assets/dist-Djd5AZj5.js": "e8b9bab4c5c188db4c5fb08a62613ddb625af7dd5421f3409d6fbc97d142bed1",
+      "apps/desktop/dist/assets/dist-DLV9mf6O.js": "edfae3b28a4ca9e7b559f28827ec91b4e92b2c8331c74295fa03f6b3e1c8bfda",
+      "apps/desktop/dist/assets/dist-Dmb_vQ2F.js": "cd5a785e668dd6fd0c0cee7c58f9365211558ac96e93f98dff3adc4c276a7b6e",
+      "apps/desktop/dist/assets/dist-DmyWFfxx.js": "d2299a57dbc659c89139f41780e67914f842ddb3d2362d77a7e20f4e2d579606",
+      "apps/desktop/dist/assets/dist-FGv56pCw.js": "70a9521f6d5839a0c161adddd7075cf14d2fd0dfdb1a7f3ce491cc2cdc2cf437",
+      "apps/desktop/dist/assets/dist-GEZKg7WE.js": "560c380b1eec04e1c84e21595422fc419d8a48c9892b901688e9c137f5c1be6f",
+      "apps/desktop/dist/assets/dist-KOMAEXc6.js": "fec09b7bfeba75b34c913ec85f0e10c73196b2c89a42a23670976495ec61d556",
+      "apps/desktop/dist/assets/dist-OhSADO_S.js": "16bf7e99a4984bdcb413f2b309760a0bdedd70259d633abed02f863bd7b0a81e",
+      "apps/desktop/dist/assets/dist-PlGiIvuU.js": "69d0fb427dc17abfe250de371826c55b63a2315f85095030cacb61563170768b",
+      "apps/desktop/dist/assets/dist-QuGB9Sgt.js": "94a454c7ad764fe039cf962148e609e9b492b412258366d9aeb87349b0f8f926",
+      "apps/desktop/dist/assets/dist-snIvpmp7.js": "29d3b6d8195d16e8b4dba2b7814731ecbdd223b79adc6ea96e894595f92d3db3",
+      "apps/desktop/dist/assets/dockerfile-DJkHQgkl.js": "c86168d3e36da3ebce319561f0be8af50366b8c9889ea2822b18aba45febe8fb",
+      "apps/desktop/dist/assets/dropdown-menu-Biw9wj0o.js": "c4a9bbdac39281907f214534be884a4f7fd99c28d3d0deeda1292c28f6d54a8d",
+      "apps/desktop/dist/assets/dtd-DTF72YNO.js": "8f289b3c0a603c2de057f44cfb513dcb9e24dfeff1ac299a0acde4f1279385a9",
+      "apps/desktop/dist/assets/dylan-C6jEEEk-.js": "99f9413d9e91787727a9ecd6fef31a575ae64cf052c8497ddb687e34a62d02b9",
+      "apps/desktop/dist/assets/ebnf-D4c0_ac3.js": "e39d883c18e1d0436f36926b7b46617128b40cfd7ed0a10bd66af695fcadfe97",
+      "apps/desktop/dist/assets/ecl-BVIeWmwY.js": "fa4f1534359480b3174b2ca9ff915972f9475bdaa74aab645bfda1eca46074e9",
+      "apps/desktop/dist/assets/eiffel-BEjRio4Q.js": "df2f416a891d40045c83ff1900af1cb87f72695ad4d87c50682738624c38a266",
+      "apps/desktop/dist/assets/elm-Cshzl8qu.js": "7dc9b8c8a1289df3800c9ca773519840019d47deefb03dca7f7302b9882f12e9",
+      "apps/desktop/dist/assets/erlang-BV0c4Hdn.js": "17d201413a70fc04906b3d0265bc6b80e7d8f176c38f46979c366ecbea144e77",
+      "apps/desktop/dist/assets/error-boundary-CnCem6jS.js": "ae57cb5c9fffa34c61ed4ca2bbb41f392e3901ffacc1b92e445fa162acd3df24",
+      "apps/desktop/dist/assets/error-state-CP8OJPN6.js": "cc4389b73376aed0258a2087a762c659dfcfce19452148330603817c759e21ea",
+      "apps/desktop/dist/assets/external-link-DPlP3b1B.js": "2fd8c9b4f86b3b3658616fbcbecaefbbcb14380955c926b26b96525b354baa87",
+      "apps/desktop/dist/assets/factor-LKH5gN8L.js": "985d490b848506f5c777d7a0584fc9343798e03d2a69c2a556a486d43db1237a",
+      "apps/desktop/dist/assets/fcl-ClOhbFR7.js": "08ce5e646edb4d614970bead56bd5b06f14093bc904af846e33b1d60fa142052",
+      "apps/desktop/dist/assets/feature-automation-Cfh3yZ0u.webp": "50079a429ac0693b03df886e970a4919a01237b700e060ed55e626e8dfcc3bab",
+      "apps/desktop/dist/assets/feature-connect-CJaRKk-v.webp": "18b08fe16bb510210bcfc3acb342cd2b730c18a769e6cbec1129d8923646a521",
+      "apps/desktop/dist/assets/feature-memory-CmUcl3ix.webp": "2623d9ef20871e25458ecfce56cf236462a5cd258f144af96bf5e56e8652c95a",
+      "apps/desktop/dist/assets/feature-sandbox-DvwEVQkh.webp": "776bb7fb12e0210bbe49e57fbfa692b353c6e66b371b1d5ac468d1c44291d408",
+      "apps/desktop/dist/assets/field-CfXFsn-v.js": "dee5bd360fef12d76454f02829591c8657435a0d947c7a793bf61f84a0a54090",
+      "apps/desktop/dist/assets/format-CYnFnnkk.js": "ca4bd853290659c50229547f704ab87d47bd80efec558f20b27dfefa970028ff",
+      "apps/desktop/dist/assets/forth-Cezjo90N.js": "47d27b8b48a27e973c2395874d47df480293feee48bd5eb2c1c9e6446123e7e2",
+      "apps/desktop/dist/assets/fortran-Bt6PBEDR.js": "0ee1b38b1c87eddf928e6d11929c96ad15d006d477182f4d6fb181475cbaaa25",
+      "apps/desktop/dist/assets/frame-embed-CktX9zE8.js": "116cf3bf6d7ba7b47994062b092c845f240a5d6ae78f7cf22c11116f7fdda036",
+      "apps/desktop/dist/assets/gas-BHEdbvp9.js": "72ce032bf8e2f97291cb8070c844d7a36255c89a0b32f65d8f2865b9344ef472",
+      "apps/desktop/dist/assets/gateway-Bt7PSDtF.js": "0b2eaa5c965e3107ad01359da6a59816f24c29f3dd1d31bd5e141d3f8731aca4",
+      "apps/desktop/dist/assets/gateway-settings-CcQA_L1Q.js": "2efec46c6ef69dcdb4b5f97325057e8dbd78d4798634886ec4b1b717f42791ac",
+      "apps/desktop/dist/assets/gherkin-oBAE_ms0.js": "ca63055e8d4e39e3280607c357763a89ff08c3e719f48a2749f3d8cde1fea56d",
+      "apps/desktop/dist/assets/glyph-spinner-BXWQeiiB.js": "a21a4a96227594bcf2c1dcc0afd5cb24997987efd664adb2eb6661a6dfc85412",
+      "apps/desktop/dist/assets/glyph-spinner-DL5QKO4M.css": "15417918dcbbc0f57cf5260a05ab27a116972101822355aaaac10f2c57bc546e",
+      "apps/desktop/dist/assets/groovy-D5BFAy6W.js": "de895c7c45bb2000cfc9e2f2b9917dfba3bddd48f2e64c52f97b260fb81deccf",
+      "apps/desktop/dist/assets/haptics-Dpzf745U.js": "e8d905c1e4e296f7d99baf84340849a52826747e2e0bfa62ecd4f2f2121e39d3",
+      "apps/desktop/dist/assets/haskell-BRsoo5mP.js": "868e8b21da5021140b51775df3d9ebb51bf5aa0925b2dba75b9923e71a717e6d",
+      "apps/desktop/dist/assets/haxe-DjVOVvNP.js": "d82d48ac4fdb69dd2dca969ecfb5e59dca97e15d10ec4872afe73d5ac1253325",
+      "apps/desktop/dist/assets/hermes-DXiJ6r_p.js": "b5a5d5e157b2888654497c566ba638bea1767706f74aacb6ed97fc358fdf16cf",
+      "apps/desktop/dist/assets/highlighted-body-OFNGDK62-DcCMLkhO.js": "871410053d959325ab21be5530643ec4368c8f7010f38d9b72b5f3a01586acbe",
+      "apps/desktop/dist/assets/http-CLVgA2GD.js": "94a0d68f2fa36fd78ed3f3c9483b33062fee90c694f4e70797d9cc5a6715b914",
+      "apps/desktop/dist/assets/i18n-C5jHISvv.js": "be257c11a912a98b42183497a1bb406fc4593a179d687aef0636b4e12e49b3b0",
+      "apps/desktop/dist/assets/IconAlertCircle-ClsGShOO.js": "60f61bcb047cfc5cc11aeb1a0a98f4451a40f753c3078c635b1bd80de9556ffe",
+      "apps/desktop/dist/assets/IconAlertTriangle-KxTMs0Ca.js": "63a56ab51b32cb0c379117dadea2f939a448929bee236b8bc7916603ae27a30a",
+      "apps/desktop/dist/assets/IconCheck-bYP2KapR.js": "353cef821bd6e00c7dd6c00783e908c3d3f89f0d85343347f69c5bdb9f3443bd",
+      "apps/desktop/dist/assets/IconChevronDown-tfqFrSyn.js": "fed31631181377a843893514b78b0a4046377393c23cf61be9d18e651dcb5fd3",
+      "apps/desktop/dist/assets/IconCopy-eqrIbSA7.js": "3544307abdf21c543c8eab6bf2bb3000bd0fc4cacea068aa4ccc9a7dad6ebceb",
+      "apps/desktop/dist/assets/IconDeviceFloppy-zPqL0Xeu.js": "a07a715973844ed28bff68fdde32f466f8b1b83ce899f29d5b808a7d9fbceb91",
+      "apps/desktop/dist/assets/IconFileText-CW5YMwx8.js": "1f988826d0478bba04db61eaf769baf5fd2c2c5b15868c901600064fc580a3c0",
+      "apps/desktop/dist/assets/IconLink-VbfGTnZV.js": "a36e1238fa6065a13263a4d3468b3f78ae5f01b11778bf986211cba8cb40906e",
+      "apps/desktop/dist/assets/IconPhoto-BaRFNLEv.js": "f664f9380c01047f4a4e6055645a9c8fecfedec4e01fdb0253dea1a5c8e29674",
+      "apps/desktop/dist/assets/IconPlus-Dx27Deg9.js": "7c51343ba4553e2bf7dfb275b0d77287ed46467216261aaca7fb8582a6cc9a22",
+      "apps/desktop/dist/assets/IconRefresh-CkQeMs2j.js": "528d5abfa0152b5d40678f590ef9402df399df3e308e38f7106af647c7fe79b0",
+      "apps/desktop/dist/assets/IconSearch-CgOegAEm.js": "f9a7aa3de2b5a29330ec109ebf402bc94d5ee80f07f81ac466c9658dac64d4f3",
+      "apps/desktop/dist/assets/IconTerminal2-BT-mOKIZ.js": "3e0276f3666a04998ade75c250ac817bb31f07b741b2425a8427d1fc4004c545",
+      "apps/desktop/dist/assets/IconTrash-DW13OvLc.js": "01c5d372b9ed3f602704f311cba47b8e65079448e44602c2b46abbcb67302ee0",
+      "apps/desktop/dist/assets/IconUpload-C2WcSEdf.js": "ef81e35b7b2269f91407c274d487d715f005274d2422e16338418155d10a4a86",
+      "apps/desktop/dist/assets/IconX-Bg0FFlBS.js": "b2fe097f26468db536f0f06625085f192f9d83cca9a417f95bf113febf516916",
+      "apps/desktop/dist/assets/IconZoomOut-CQScQb55.js": "bf896de254f7bfa40776bb0fb68adc8b67c53952bec47170f4853684b6f608fa",
+      "apps/desktop/dist/assets/idl-BUZw3wgd.js": "438714d3559726d0a0a3ac7a0a08267c929d0bb690fa2eef514b82322be2f6a4",
+      "apps/desktop/dist/assets/index-BAmqYgXj.js": "2c68b38faf552358bd679d4a6cc54c5c6d5aa59cd8e59ba1353ed54d08e5fc24",
+      "apps/desktop/dist/assets/index-Bty1jYhb.css": "0c0c44d678b1c98c8bbb8334a4d94afcb6ced4634999b044b22f0cad8c31cb54",
+      "apps/desktop/dist/assets/input-C7J-hpII.js": "cfbaadf41235769192a1367ca9a9698af258ae273f39d8e25557ee285fc15aa9",
+      "apps/desktop/dist/assets/javascript-DoL9Wb-Q.js": "e08aee1ac6d8fa1b90dd2dbbe3bb6d71d27357eeaa073f763994365be84b5587",
+      "apps/desktop/dist/assets/JetBrainsMono-Bold-CUogYd9I.woff2": "08863c7964612257a90bd821e3127dc5ccb0b5046f881673a1ade5809eb21d0f",
+      "apps/desktop/dist/assets/JetBrainsMono-Italic-LIR7wr3B.woff2": "9f158b85eca345daeee01dfffa602709a905ea08b0cc60dbf6153cbbd97da08f",
+      "apps/desktop/dist/assets/JetBrainsMono-Regular-CA-Os4ii.woff2": "f1a7a03672cdd494ce0d5543fac6e4360fe22403c6de297fdc2e55a815f7baff",
+      "apps/desktop/dist/assets/job-state-D1YJzJXX.js": "5b9e03f4119f39ad95e9cb6b2452ec737c4b13a507c14fe9b3449f3449933522",
+      "apps/desktop/dist/assets/julia-CQfgDRfP.js": "0c2cf72d1ac90213c3b42a91c800c587f75ee81e2bcde2712dddfd386d8967eb",
+      "apps/desktop/dist/assets/katex-DHtBcSK4.js": "be9b754bf44ace3745993ec430d1799a34d2f153f4a9c71d758386e2d57c9625",
+      "apps/desktop/dist/assets/KaTeX_AMS-Regular-BQhdFMY1.woff2": "0cdd387c9590a1a9f9794560022dbb59654a7d86f187aa0c81495ad42d3a7308",
+      "apps/desktop/dist/assets/KaTeX_AMS-Regular-DMm9YOAa.woff": "30da91e84c893f875e252689faebdc590b2871145e8adc7f9a9d4dbd8ce0b251",
+      "apps/desktop/dist/assets/KaTeX_AMS-Regular-DRggAlZN.ttf": "68534840bcfdd2bffb6f0e8deb48684dd01e7f04ea2813267577afb906de1d13",
+      "apps/desktop/dist/assets/KaTeX_Caligraphic-Bold-ATXxdsX0.ttf": "07d8e303ce4fc12b4bb54f1004170dd190a1f3db45d400fe68060df3e0897268",
+      "apps/desktop/dist/assets/KaTeX_Caligraphic-Bold-BEiXGLvX.woff": "1ae6bd7475590e97e7f145a89e09ccde322f7a6bc0b91607b1c8b8ee28290fed",
+      "apps/desktop/dist/assets/KaTeX_Caligraphic-Bold-Dq_IR9rO.woff2": "de7701e42cf1f4cf0b766c03fb27977207eee2f4fd5d76fa82188406da43ea4c",
+      "apps/desktop/dist/assets/KaTeX_Caligraphic-Regular-CTRA-rTL.woff": "3398dd02302557a793f2863f88e02d96ce10df2abffa07c8e9fa90775116e65c",
+      "apps/desktop/dist/assets/KaTeX_Caligraphic-Regular-Di6jR-x-.woff2": "5d53e70ad607c2352162dec9e0923fb54ecdafaccbf604cd8dcf7d00facb989b",
+      "apps/desktop/dist/assets/KaTeX_Caligraphic-Regular-wX97UBjC.ttf": "ed0b74372feefcbb9c0666b2e210da37b7e49fa7fbbf3eeb11db5f693dacfbb7",
+      "apps/desktop/dist/assets/KaTeX_Fraktur-Bold-BdnERNNW.ttf": "9163df9c7122432e6495b4229fa9071cf9ae86a758ae5efc4924ec2e1a6dbce1",
+      "apps/desktop/dist/assets/KaTeX_Fraktur-Bold-BsDP51OF.woff": "9be7ceb88004ab8ad124082246fbfcca4091e36385d4ec6ed1df67375dad50fb",
+      "apps/desktop/dist/assets/KaTeX_Fraktur-Bold-CL6g_b3V.woff2": "74444efd593c005e3f4573b44524704c0af0a937fe911cca9e94068d0d140d3f",
+      "apps/desktop/dist/assets/KaTeX_Fraktur-Regular-CB_wures.ttf": "1e6f9579e90e2cac37f8f60a597c436e075c114385652b7cbeb0dec0421291b3",
+      "apps/desktop/dist/assets/KaTeX_Fraktur-Regular-CTYiF6lA.woff2": "51814d270d06ff0255dba0799994fa4d8c84d11f09951d47595f4abb1f3602dc",
+      "apps/desktop/dist/assets/KaTeX_Fraktur-Regular-Dxdc4cR9.woff": "5e28753be717dac97f559f49bc10be9cf3c124ddcabda6659d11cb68febc6463",
+      "apps/desktop/dist/assets/KaTeX_Main-Bold-Cx986IdX.woff2": "0f60d1b897938ec918c8ce073092411baf9438f6739465693ff18b0f9d20b021",
+      "apps/desktop/dist/assets/KaTeX_Main-Bold-Jm3AIy58.woff": "c76c5d696297d51b9cb1639c7da4334f0e7dec81b42b11213b5e25ef671bb822",
+      "apps/desktop/dist/assets/KaTeX_Main-Bold-waoOVXN0.ttf": "138ac28d1663b3037e9c5f52371fa5c63d8324f4a38d22cd573e6ea3a3fd0cf8",
+      "apps/desktop/dist/assets/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2": "99cd42a3c072d918f2f44984a807cf7aa16e13545fd0875fc07c6c65f99e715b",
+      "apps/desktop/dist/assets/KaTeX_Main-BoldItalic-DzxPMmG6.ttf": "70ee1f64a20f2048c21940ef46d0144fd215baa953ca69afd1e31e98544f708f",
+      "apps/desktop/dist/assets/KaTeX_Main-BoldItalic-SpSLRI95.woff": "a6f7ec0d846ac7ad975adb8959c37ed49b94acbc4ae436db9ce9e20287e4a64c",
+      "apps/desktop/dist/assets/KaTeX_Main-Italic-3WenGoN9.ttf": "0d85ae7cc30f23790a7f1a58c4a112fdca8aae769b6ba11429af1d98b1b6cb3a",
+      "apps/desktop/dist/assets/KaTeX_Main-Italic-BMLOBm91.woff": "f1d6ef86f3b11a528bd5185199bd2443ecb2b0dead96d88674b5a2c12be24bdf",
+      "apps/desktop/dist/assets/KaTeX_Main-Italic-NWA7e6Wa.woff2": "97479ca6cce906abc961ecac96faa5f9ca2e61b8e7670d475826bcdee9a7c267",
+      "apps/desktop/dist/assets/KaTeX_Main-Regular-B22Nviop.woff2": "c2342cd8b869e01752a9321dc17213fc40d4d04c79688c1d43f2cf316abd7866",
+      "apps/desktop/dist/assets/KaTeX_Main-Regular-Dr94JaBh.woff": "c6368d87e8a1a3a5d337623d83d8dc4b868f242a9ad476237d6f8d1e0f168cdc",
+      "apps/desktop/dist/assets/KaTeX_Main-Regular-ypZvNtVU.ttf": "d0332f52868370fd83ae7fa46470f90c8f2eab2fcf12bc4f88080b340c95a830",
+      "apps/desktop/dist/assets/KaTeX_Math-BoldItalic-B3XSjfu4.ttf": "f9377ab0271cda59af24bcffbd46a4d0c8a3572ffafdbb38de2ad5ea7b0d5ee5",
+      "apps/desktop/dist/assets/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2": "dc47344dbb6cb5b655c8460d561f4df5f501b90c804ad3c6cec65fe322351ab1",
+      "apps/desktop/dist/assets/KaTeX_Math-BoldItalic-iY-2wyZ7.woff": "850c0af5c2238497febaf5e461d880bf458c341f42f4f330f1b1ab5698b1998e",
+      "apps/desktop/dist/assets/KaTeX_Math-Italic-DA0__PXp.woff": "8a8d244581371912b8f3f5a23e2437cb2a59cd9bcaebb0346e722c05737a2571",
+      "apps/desktop/dist/assets/KaTeX_Math-Italic-flOr_0UB.ttf": "08ce98e51b04d58945a301e639e02b6998af29fdfd61a7b8afdd07bbfc479d4a",
+      "apps/desktop/dist/assets/KaTeX_Math-Italic-t53AETM-.woff2": "7af58c5ec8f132a2ddde9027c6d7814decce4d3b822a11192a42a20e2e973264",
+      "apps/desktop/dist/assets/KaTeX_SansSerif-Bold-CFMepnvq.ttf": "1ece03f79f95277d57dc7f6b435a74e1379b0d46104a8530286b60ff49369ea0",
+      "apps/desktop/dist/assets/KaTeX_SansSerif-Bold-D1sUS0GD.woff2": "e99ae51144bf1232efcc1bfe5add36262c6866b0faab24fa75740e1b98577a62",
+      "apps/desktop/dist/assets/KaTeX_SansSerif-Bold-DbIhKOiC.woff": "ece03cfd83e22c212cdef66feb8442d25a083beb988db3f1883f3f9738d750ba",
+      "apps/desktop/dist/assets/KaTeX_SansSerif-Italic-C3H0VqGB.woff2": "00b26ac825e2095056396e0553b8ac26d3f8ad158c3826e28b4c45b385c4714a",
+      "apps/desktop/dist/assets/KaTeX_SansSerif-Italic-DN2j7dab.woff": "91ee67500cc0129aa0ace3ac5c61ff1692102f0f31d02b69347fba35dcb75bf2",
+      "apps/desktop/dist/assets/KaTeX_SansSerif-Italic-YYjJ1zSn.ttf": "3931dd81faed86ba021bb2bbdc36f5bed9a38d6b4f4077aca59b265aa1b02083",
+      "apps/desktop/dist/assets/KaTeX_SansSerif-Regular-BNo7hRIc.ttf": "f36ea897e19f4a2e571d1e900e4e3710e438deb05a842486045ba0a3e616a4ad",
+      "apps/desktop/dist/assets/KaTeX_SansSerif-Regular-CS6fqUqJ.woff": "11e4dc8a6471ff6d6ee561d53d10fde8f7489e798257ff449c5d37c197435605",
+      "apps/desktop/dist/assets/KaTeX_SansSerif-Regular-DDBCnlJ7.woff2": "68e8c73ef42afd3ccec58bf0fba302cce448938e7fc020a5e31f8a952eee1342",
+      "apps/desktop/dist/assets/KaTeX_Script-Regular-C5JkGWo-.ttf": "1c67f068fea8bb09bf099c088b1cf64bd27516a6e07f4684344873564bb66a67",
+      "apps/desktop/dist/assets/KaTeX_Script-Regular-D3wIWfF6.woff2": "036d4e95149b69ff9bcc0cd55771efeb25ffa3947293e69acd78d5ac328c684b",
+      "apps/desktop/dist/assets/KaTeX_Script-Regular-D5yQViql.woff": "d96cdf2b3bdd4d64a8fd5f74a4c467f123a8a73931cd435889f08ffaf9bf947a",
+      "apps/desktop/dist/assets/KaTeX_Size1-Regular-C195tn64.woff": "c943cc986384f59e86bea5fd7dc50a9c4dfe567a7c05eb40d6790720dead97c9",
+      "apps/desktop/dist/assets/KaTeX_Size1-Regular-Dbsnue_I.ttf": "95b6d2f1a50173bfedb8c63e1d1c99b10427d0a4df4201cb44513b226951a22b",
+      "apps/desktop/dist/assets/KaTeX_Size1-Regular-mCD8mA8B.woff2": "6b47c40166b6dbe21a5dfca7718413f2147fd2399be1ba605d8ad39cedf25dfe",
+      "apps/desktop/dist/assets/KaTeX_Size2-Regular-B7gKUWhC.ttf": "a6b2099fb555c60e3a0db3a08842ebf1d732c6eb4e4bf44913613bed4fc4e39b",
+      "apps/desktop/dist/assets/KaTeX_Size2-Regular-Dy4dx90m.woff2": "d04c54219f9eaec6d4d4fd42dfb28785975a4794d6b2fc71e566b9cd6db842dd",
+      "apps/desktop/dist/assets/KaTeX_Size2-Regular-oD1tc_U0.woff": "2014c523c3210bcc166648c4d4cc57f05b747df07a24277bf71c51e67dc79e3d",
+      "apps/desktop/dist/assets/KaTeX_Size3-Regular-CTq5MqoE.woff": "6ab6b62e9b62dae2c00dd90f791bd10950be0ecc3490d7d6045f51c2e8fe0949",
+      "apps/desktop/dist/assets/KaTeX_Size3-Regular-DgpXs0kz.ttf": "500e04d54f0d51666332c9d2089aa803be22aa878eca539e59fa53c6e522b082",
+      "apps/desktop/dist/assets/KaTeX_Size4-Regular-BF-4gkZK.woff": "99f9c6750b489c9462bf04900bd3f939df9b829339daaaaa99ef5495cdddea58",
+      "apps/desktop/dist/assets/KaTeX_Size4-Regular-Dl5lxZxV.woff2": "a4af7d414440a1c1790825cfb700cf9cf43b0f2c4b04f0ebc523011ad9853ec0",
+      "apps/desktop/dist/assets/KaTeX_Size4-Regular-DWFBv043.ttf": "c647367d1dd4e162468717d020e1fc0f1dc5c26ebfdffbe55261713bf88c5877",
+      "apps/desktop/dist/assets/KaTeX_Typewriter-Regular-C0xS9mPB.woff": "e14fed02b1aba7ce9f5afd5844b5d0321b22351febc720e0de8b8723527609f7",
+      "apps/desktop/dist/assets/KaTeX_Typewriter-Regular-CO6r4hn1.woff2": "71d517d67827787cfabdf186914cc3358eda539e37931941f2b2fd4a21f68c0b",
+      "apps/desktop/dist/assets/KaTeX_Typewriter-Regular-D3Ib7_Hf.ttf": "f01f3e87d9c6a61c0c081ceb577abd864eb00a612f7ac1620dd6915fad2ef5aa",
+      "apps/desktop/dist/assets/layout-BA74sdmA.js": "3c4d5b1c330b3cf9cba9d4244fd88042cdf1c53c3bdd7b5e92c9a028bde002ac",
+      "apps/desktop/dist/assets/layout-constants-ByGyMn3R.js": "867d93f38190a1bdc3698738e5745e2fa3017fccc58b9f49e3af0de52af353b6",
+      "apps/desktop/dist/assets/live-sync-x1xL7c1i.js": "c5d595765d204622e7240afc41fb4307a86a5ae8f1de99c4088c37cb15167452",
+      "apps/desktop/dist/assets/livescript-BXxG0Yva.js": "fe8dcb554ae3e959a556e5e0d4c1d6b186818e451a4269ae603062c478094f96",
+      "apps/desktop/dist/assets/log-tail-OttSjPxm.js": "dea8173111b5653ad3e02f8b279c136c5693a052600d0b068a77449076a95e70",
+      "apps/desktop/dist/assets/lua-CiA1ziua.js": "090af1e4fd29be8231bae96f9d77d102b44102d3bd6dcb3b8b3f1c516c5ca3d8",
+      "apps/desktop/dist/assets/markdown-code-D-sX4EdE.js": "9f2cc2f8882558d643c416c515f264fbc8a251e80ff2616952f7144889284216",
+      "apps/desktop/dist/assets/mathematica-u8YMmbU0.js": "84ae4ba6bf879a4608696af785e17cedd8b581bdbea0c90f856585d451b34190",
+      "apps/desktop/dist/assets/mbox-BEMVcqjs.js": "44dc8f20f0534aa78d31245211628291e31351f36bee1ac1d7aeb8a59a11d254",
+      "apps/desktop/dist/assets/media-CECxza8f.js": "992cce743fc2820d2546594d1aabcfe39e39c7c446c8533a27fdc3a5fcc7a3ce",
+      "apps/desktop/dist/assets/mermaid-BRsxXEPV.js": "c747f90b261b9d10956e9ab7c394ea60bc061643e433597b6b8c2066cc78b98c",
+      "apps/desktop/dist/assets/mermaid-embed-C-Nv9kwh.js": "7a8ccad41c86c2e9541f1f01714ab370e3f224bbe19741af75ed5c5c937d0fea",
+      "apps/desktop/dist/assets/mermaid-GHXKKRXX-hPZyTSzu.js": "78277e65c7e2e510519de6b9f7a0eddab60beedc779952da888d00852af86724",
+      "apps/desktop/dist/assets/messaging-D0LQSS5h.js": "14382a394b8702f701e5bf4be89499b8a57aa42109bb070ad95be4d6c43ed7ff",
+      "apps/desktop/dist/assets/mirc-C9zpzAZU.js": "edc1c63e88e0942b88240b589af3bc3e6ada91a4996eb5eff61d64d069d8085a",
+      "apps/desktop/dist/assets/mllike-B45xgp2S.js": "0530b163f7297af3234377ec8d70cc26919c6e38f3dd34c8069a30387ff666a0",
+      "apps/desktop/dist/assets/modelica-CqHI_q-D.js": "e620fa810ea18a71a5d491ea8da8638f6113f1ae435c7300b9a2f2d332c5691f",
+      "apps/desktop/dist/assets/mscgen-qgSLujhx.js": "53b24ee7c56bc57af791aed5bc20b0cf51333dd20c6f48eb9dd7d7a222a4d96b",
+      "apps/desktop/dist/assets/mumps-BSzj6Xyz.js": "b74f315529764ac8bd1dc5de0000a81e8ec336ca167b130a9380af3f8e2c2527",
+      "apps/desktop/dist/assets/native-notifications-D5hppH50.js": "b89d68ecee64b95170d1cd22bfebc05ea4bff2d798f28b42d2a48f26d1f0e158",
+      "apps/desktop/dist/assets/nginx-BMaDbqW3.js": "9d644ab2b41f3999d66c3bcb24d6edd1271b8ecf829d5e0c2fb887c21b459515",
+      "apps/desktop/dist/assets/notifications-Ddv7O0gb.js": "30893ddd2f64d2ada35c930d3663c5317020e66433844054ed37247174662fa9",
+      "apps/desktop/dist/assets/nsis-CfSuhXs5.js": "8a1e79c1f0b5ba3690b24a109000879389e50bd66aa700e89402298b08b559ff",
+      "apps/desktop/dist/assets/ntriples-B9h1VB_g.js": "4cbb7f70c5252f4f7411a7dcd77fbf2a7eeb3401217580ea58454dbf61b39f77",
+      "apps/desktop/dist/assets/octave-D2Q8cUp1.js": "435819b2e5cd3263138c94a8970bb09101e4c3f186594eb4649f8bc604eecad9",
+      "apps/desktop/dist/assets/open-session-B01q0qwX.js": "0822c384f38708221f3c4c487c15a349d77cbea6d6a2405400839a085fda871a",
+      "apps/desktop/dist/assets/overlay-root-B39X2qS8.js": "d6918ac7969acabf1910403d1fea9a55b8559fa289b67180de6e53f0e35ddc3e",
+      "apps/desktop/dist/assets/overlay-split-layout-DbJOvMO7.js": "ba4741452158bb227884ac0165abe22ddc96008ae98f169c3c1c27d33270cc08",
+      "apps/desktop/dist/assets/overlay-view-D6f2bWnG.js": "d4120da8b38f3763f97c44107e44aaf8453bed455dd1df56cdaec5eb4fce7ba2",
+      "apps/desktop/dist/assets/oz-BwTct_5T.js": "122d799c67d18e54c5ef26e7786f81ae0fc4ce2dbdeb57aa2ff4b2e5f23fb0a8",
+      "apps/desktop/dist/assets/page-loader-BDwSSkTe.js": "01305f1ecc4fa819d8b4675f73c08ab59973230a5a4863d83c92f16571e17c38",
+      "apps/desktop/dist/assets/page-search-shell-DhoheoPX.js": "41dce58caa61e9e345dff1efb1080b210f3b512b01f98dea2099fdd1bf3373aa",
+      "apps/desktop/dist/assets/panel-BF3ejADM.js": "1dd0460178ace247bcc978fe9a77f1a7f273568632831ab118d43a29c92e69a9",
+      "apps/desktop/dist/assets/panes-CMhK1Taz.js": "d28d495d5a13ea78cdd40fc2158865d0a2284b2e514e8b13b2d7bebcabca21de",
+      "apps/desktop/dist/assets/pascal-Dp_KdFgX.js": "2d5e3c493596b6ffcc688ab63c6501d11be92ccb669d92b5c2a36cc876b7acdd",
+      "apps/desktop/dist/assets/perl-BkSkiI9m.js": "efd47f9ae8043b2e00b8ac2ecf12d5b3916d049fd230d4e2de748e79c633d125",
+      "apps/desktop/dist/assets/pig-AF4Hwhju.js": "fff5fffe6757c1708a03dec395f9b3bd038d30fce56b70e00960da5ea203c78e",
+      "apps/desktop/dist/assets/powershell-BcIto6Sf.js": "8024135b87241820f964efccd79e04a67b5a30366f474f54fdb5e63d8fb51a92",
+      "apps/desktop/dist/assets/preview-act-nmSVJXCx.js": "5328e4bd25f5b5198547531e80bd35a90a167b2c7eb50538bffc266a7c37465e",
+      "apps/desktop/dist/assets/preview-DbRRl-rY.js": "b5ae45350151695aae263eab6a3dc5002eaa4e5eb099c78f9c5627625aa6769e",
+      "apps/desktop/dist/assets/primitives-DVN08-OJ.js": "a2832de158d1d274af10af42d622b6bc62b7cf33aac2e967fc9a29221e54c800",
+      "apps/desktop/dist/assets/profile-CZJHHH9s.js": "2d199e72482ac5068bb0d7f1f555ab54395f66a6228756b9f38a22c1fcb4fe0f",
+      "apps/desktop/dist/assets/profile-scope-CFo4W2r7.js": "10d406c7f8e9746243f5e455e78969d3531624c5aef859bc07ea34aa5145db2b",
+      "apps/desktop/dist/assets/profiles-B2Y4Ibo6.js": "7405857986d1a8e9163b59bce0dff5783d4fc7e255003d1494afafe9025acfee",
+      "apps/desktop/dist/assets/properties-C357ku5U.js": "265cd5a3bc8e8e1426825db6da7dfd6398db08f4ca5dc266b3f432a982868452",
+      "apps/desktop/dist/assets/protobuf-D1ij_kNL.js": "7c936836371bd94a649f756e6c07bb3f3139555c4a2c18c0ac6060ca26332d77",
+      "apps/desktop/dist/assets/pug-Gsm0M45u.js": "85a9a4122f229dcd4131219fe7b9dd18b56013521ac65037f9d5538eccfd4f4a",
+      "apps/desktop/dist/assets/puppet-BZyAS7I4.js": "a600a4c00b1745a13b1e619a137f2c67ae87352aa1ab57dad71cf94d633265a7",
+      "apps/desktop/dist/assets/python-B5eWn6H5.js": "183df50df675b4455b08df8493ee9a1c520b88b6693cef355aff7f3f3235cac9",
+      "apps/desktop/dist/assets/q-B9NhS7L_.js": "b1aacfc6dada3beff2530353c44dbd3b7c9fa39f6c315e27de6b44825fcd7cb4",
+      "apps/desktop/dist/assets/quick-entry-BGIxK20A.js": "7f8b2dfc9cafdc08df119e97e866343e032b831fa491eb689812d6ff2553603d",
+      "apps/desktop/dist/assets/quick-entry-root-n4zxekU-.js": "be22ef73959f170743599690348e489a396a3e30d449788f65d64ccb4eccf0fd",
+      "apps/desktop/dist/assets/r-CxDmU1I4.js": "ce1385db9dc69828b103ea845015e5ebdad1b624eef79f4c9f5dc56d5d23a7ad",
+      "apps/desktop/dist/assets/registry-DyYDUGUf.js": "ab80be4b14bfb4a98127ded3e02c75baf84c1c80547579a33d79f1f862a90f99",
+      "apps/desktop/dist/assets/rolldown-runtime-C_s2cVnS.js": "5ad20d115dde331d723fdd7ddcbe48abe8e074b3f8fae1f40f70b7894cf87ad3",
+      "apps/desktop/dist/assets/routes-BWCGYCQH.js": "d3e42f7a12ec82c21a7039eee29556d4e196e12c0774afefb828ceefeae24cf3",
+      "apps/desktop/dist/assets/row-button-SdX8LEQH.js": "c8bdd3ddc254a37ac630c79e1d6b5b753a8f002ad767cd530da63f86de57e38c",
+      "apps/desktop/dist/assets/rpm-gpDK5sbt.js": "5ad9e795d1d7fe0390cc015a03d54aef739a2244340e2deaf5df4f6ed013a8df",
+      "apps/desktop/dist/assets/ruby-BjXV7-Qa.js": "6024d915337012cc22878c550651e886514abcfa661ffe1f7d9c8f2269f96285",
+      "apps/desktop/dist/assets/sas-C2OyD2Y6.js": "9c51535bc98848d00a7a16101ad2ff162cb44106468b7a7d595f04719e082cab",
+      "apps/desktop/dist/assets/scheme-tChLYBuY.js": "5d96d02c0ef2c317bff6cc9d2decee813692ab89daf0a19fb39f86ff74117c0e",
+      "apps/desktop/dist/assets/search-field-dpwdxQYf.js": "627ecd0c207b050e16046a461969ebe9dec959eeb2cc8d383cf0867d42e152c5",
+      "apps/desktop/dist/assets/security-BLkrFpAx.js": "0fc288b061fa388ad0aa06fae305a2c013b085d3a63e9f0740e494789c2b6c30",
+      "apps/desktop/dist/assets/segmented-control-Cq4KM_g2.js": "776d1b6b43e4339494effc032ea7e831482002d19312c8cbcb4c70f09d6d6775",
+      "apps/desktop/dist/assets/select-BpTqShu8.js": "3863a6cdb0a21634e43e0070c00d804350593b6cbdf928cecdb1ad9018170435",
+      "apps/desktop/dist/assets/session-list-density-CcXfnGx-.js": "c2eca24980627e487a0d651a71a8b1e9950e89ced1f2bd56ad7a49721f15cb43",
+      "apps/desktop/dist/assets/session-states-mHDHcx-I.js": "7b87e398abbef679afbd9f7adda87c454e257ce9d193c9ba7eaa1d41f5e8fdc4",
+      "apps/desktop/dist/assets/settings-BhnJUIsA.js": "be1e2dd80361588f45e07785bb29c0fd00cbf9cd9ede6bc4d3da96f8bab14cef",
+      "apps/desktop/dist/assets/shell-DwuoZtxw.js": "eada594fb1134cc2dfb8874e055a8db889b2685fa6aa6342841343be30038937",
+      "apps/desktop/dist/assets/shiki-AmrucX1Z.js": "4debb91f71f95213b34713a786e0f58f595deea0015aac20bf35ed5115ad9c41",
+      "apps/desktop/dist/assets/shiki-block-BcFHESl6.js": "8c5d4416dbae0922ba8ff38c71790aa872a26efca20d1d2b6561b4f67543478d",
+      "apps/desktop/dist/assets/sieve-BAxa3IjF.js": "5635d5ffda49d846ee9d85decc3b9a376a7eb8a23004ac1b47399ed3dd8c7b39",
+      "apps/desktop/dist/assets/simple-mode-DXiLM1-G.js": "1da2ff3f952ded0f8e8080499e58b44d3b22bc7c5e2ae8db2f99a3a6105310b2",
+      "apps/desktop/dist/assets/skeleton-CU7Yndmv.js": "5075e6cac10203a8dbbb917544fb5c17b5e7fafc16a423414dcb8928a12d1aeb",
+      "apps/desktop/dist/assets/skills-CbL8tmtF.js": "af854898ae648fc47d668f2bdf146d6a2c8f61a6d10cc8a0b6f8e908ca2d5ac3",
+      "apps/desktop/dist/assets/smalltalk-BLp5-jwC.js": "559d0a977880456b4f916cf9b1592b375c96047cd9dd0a13b3598b4369072553",
+      "apps/desktop/dist/assets/social-embed-8uym-0yW.js": "d090c142ebe3e04405d823cf9f1e4bc00384456bd89caaa078149d94d3c536bc",
+      "apps/desktop/dist/assets/solr-BBopId9w.js": "85fb02343f917c8bc6f0fbfe6aeeb55afc1a46400f1637074b7279a4fc3e7876",
+      "apps/desktop/dist/assets/sparql-Dz-mlCAC.js": "02e59f6539d324beb643eee727f0b4356549cafe15f7aaceb3d3c34ee5bdad0d",
+      "apps/desktop/dist/assets/spotify-embed-Dw0ym9gX.js": "ba56e706b0a50e070c1e54da9e7d0da8a652b992d1022bd45c61344841747ac0",
+      "apps/desktop/dist/assets/spreadsheet-CTIncYxj.js": "d3af197570b0a504e7c45dcd619b58422c5cb2f54b9028e556768e2213b070f6",
+      "apps/desktop/dist/assets/sql-DuQMFDvy.js": "648b34cda3d7da91025ed7ec142ffbd5bf26528407740383bdf690643a16c73c",
+      "apps/desktop/dist/assets/starmap-C0TXk4MZ.js": "aeb64b7250bc939ea6197960f7a9433533de81324274848ee735cade815a597a",
+      "apps/desktop/dist/assets/status-dot-CSs2capH.js": "82c6b03b3f02703d8938e0b90c1b0a122af87eb72509e0d1580d1f3e2830d542",
+      "apps/desktop/dist/assets/stex-DNzd62Q_.js": "f12ad11c2bff04c45c80f79d02250c76f0b1d01b254d04da7b195f4ad15b556f",
+      "apps/desktop/dist/assets/storage-Qfg3Ykci.js": "473c1dc9e4e43baf38ffeb197505cdbb27b45bdd67e71800d43b61b3883bc87a",
+      "apps/desktop/dist/assets/store-aX5CZmbg.js": "4cd6b3e4bcfac8b91a0b83e6f3bf4d3fa38ec692e56b17851c9a0aada25c7d52",
+      "apps/desktop/dist/assets/store-DLwnJLPb.js": "0c76576704ad9ad8f12c11efd96136d0c3a1f3ff8b90f40c40d6a95da21945b3",
+      "apps/desktop/dist/assets/stylus-BOVgKnng.js": "8522dc37629aa3153da10fac7505ac8f289219c3eb79246bc6d9e05f1a5ed148",
+      "apps/desktop/dist/assets/subagents-CW8qg1MO.js": "e2e9e5c6fc37c6626521f3f8fa0bc8bf80129110e69581e5fead96ba553f8772",
+      "apps/desktop/dist/assets/svg-embed-DMzI_Ywj.js": "7791cdec6b1bd8ae6d8a8f13f642a7c00267424f136c36dd2ae374a50e74ac99",
+      "apps/desktop/dist/assets/swift-DKB6_1j6.js": "f0835c04896ba11cf7884b2175e31574762723655d4e6461ce6ec7046479eaa3",
+      "apps/desktop/dist/assets/syntax-diff-BCp_AFAI.js": "8deafd41e2befb8bdd26df13989945847b3bf4c13b33b7f6e2d5373ff18c37c8",
+      "apps/desktop/dist/assets/system-actions-Cc2HAkli.js": "a4320aee9f46cb9fa021d7d2b0a01112d70ac9d7049693916372ba2f7c17706d",
+      "apps/desktop/dist/assets/tab-dropdown-BEZCms5t.js": "42278d107f866c07909f327ae6d8ddb2d31de743d8515ee21eda4406dc06a242",
+      "apps/desktop/dist/assets/tcl-BGfruO1u.js": "3e07cc02b94880557cd297c19f467421a7f452c8240534e7e9e7dbc4607b1813",
+      "apps/desktop/dist/assets/textarea-Ylww01Bh.js": "70aa0962dc599a511baf6176ee67004b57474179f33656c36399537d1f3df08d",
+      "apps/desktop/dist/assets/textile-C4jVoHG1.js": "87165770d704543ebf20f4da7f1a84f4c97bd43dc707f71759b32239f9516f9e",
+      "apps/desktop/dist/assets/tiddlywiki-VlUiK86J.js": "1bd675104bdfd2ac7ec250cefe80d8f48581bf103519f1c7407b2a4e3502da93",
+      "apps/desktop/dist/assets/tiki-AK6FwT8q.js": "40f9417ef31d3a2a2671e52e8cf0d2a62f60f6c3e928dbaa831817ecdd77eead",
+      "apps/desktop/dist/assets/time-C9cxykbR.js": "689eb3678ff8ca83a2f82dece9f1f70bc087ad9c4764ff96960982524f951f83",
+      "apps/desktop/dist/assets/titlebar-icon-BDEV6ktD.js": "a5e7830fdf09d2d4b34deedad69571c66d8fd71e9b2cd6b391867180446b6bcc",
+      "apps/desktop/dist/assets/toml-BPTmHmyx.js": "55c50c3d69b919264e6f1d9e6d9279d381d88c1c9a9e1cd4a75c82abe9680de8",
+      "apps/desktop/dist/assets/tooltip-BYG6_Cdd.js": "b55e20256fefe9b8ddbc23e836b92fdd9c53645a86ef1342866eea0b2bdaff13",
+      "apps/desktop/dist/assets/tour-d-2_L1ol.css": "3340414d5bffad614fe50efa1f5d861fe6e0c5aff2279e000ea505322abd41a3",
+      "apps/desktop/dist/assets/tour-g7-dPMsc.js": "8983311e684ed6335db8d2259e6605249a65a4be1c2b75653cf613d7f6823682",
+      "apps/desktop/dist/assets/trackpad-gestures-B3jbuTYy.js": "483a04a930a602ba75e0b422e8de7702d7a5c484375cf83dbf0f27172d4c61ea",
+      "apps/desktop/dist/assets/troff-C2dAgh7P.js": "46bba1f3f4223fd204bf913bbeebdbc0256db1e69bd9a2e804175c5841ec8fe5",
+      "apps/desktop/dist/assets/ttcn-cfg-2b4Gb5sE.js": "ac7fc0a6da171cc715153f966c7907e688604a7e78cc00db914af119e976eb68",
+      "apps/desktop/dist/assets/ttcn-PPSTk1ow.js": "6d53eb1b3bceb8f3a212937286bfdaeed42149560fa0e815d735527686a7f6d2",
+      "apps/desktop/dist/assets/turtle-Cx3rYX2g.js": "ceb6ee2aef9f2a911bd3d33a4913af35ce960f77ce309d0e3173e5f257c50afc",
+      "apps/desktop/dist/assets/updates-CQg25lgx.js": "285f46d2355c518dfa85b5f5be3e79eacf0c4fcd5a944d136ad474ee8eb3b86d",
+      "apps/desktop/dist/assets/use-media-query-CjsmpmMy.js": "377be5c9098e253bac22a1e9dfcadcb300d6d0a1d026c4faa0dc2d1f96c1925a",
+      "apps/desktop/dist/assets/use-on-profile-switch-DrQEmJuO.js": "ccb6c7f2165c3f1c29d82cea16f5e36fb82226eab7ddbf268a5350221e1fee83",
+      "apps/desktop/dist/assets/use-refresh-hotkey-iYMwqMqi.js": "4257208839a8efb2d68b5d8a583d218aae9e7b44c1855e988aeacdc98e3fc989",
+      "apps/desktop/dist/assets/use-resize-observer-BITdgeeZ.js": "7a2da3a827d8961bed343c771de6a316225c7eb951a0e4a842500d7681f34aa2",
+      "apps/desktop/dist/assets/use-theme-epoch-ffO6z5PW.js": "fcb705b1d2a227219c80bf611661bfdef91a74bba574ab380b65d77755ad38d7",
+      "apps/desktop/dist/assets/utils-BRwGVQJx.js": "5f777156b1d865320ba9db94c914d4cb0eb015a6929fe09a34f02a5f61d1485c",
+      "apps/desktop/dist/assets/vb-BthdM_4N.js": "e025945bc97ae2640b26c11b737636cc735b0600387077412dbbae1e488d2686",
+      "apps/desktop/dist/assets/vbscript-D9f6rSsU.js": "17756f99b070ecf14eb93e21030c15c6fb5f483d189b18d34943ebef3802b173",
+      "apps/desktop/dist/assets/velocity-CqftRsjg.js": "73fe5a94c56d83b21ad4bca500a377e32d2ecaab55df875ecae446a65a680cbe",
+      "apps/desktop/dist/assets/vendor-md-BPTkkidF.js": "f8b7c1ce5460dca6f294eac050202a7c03704b73b771af27f6776558ac20fb3a",
+      "apps/desktop/dist/assets/vendor-react-BA5gow0i.js": "7790b9a43edcb0f4a25e5ce514ce2fb635ef1acfd960a608e0a90b5fae42f737",
+      "apps/desktop/dist/assets/vendor-util-B9iD4-72.js": "fd549561136508202de8900701eb8d59c3476eac58cd942edbf3996aef082482",
+      "apps/desktop/dist/assets/verilog-Be6GoVpy.js": "45842e742d23b2f9266b459670fa142f5e2c4384ca7530f192aabe36c5940e39",
+      "apps/desktop/dist/assets/vhdl-kS471soi.js": "dcbd07bcd5b806eee08ab28b0b0819438abebb9b05aee10a5b983fec08e5b828",
+      "apps/desktop/dist/assets/vibe-hearts-enabled-c9ygqNK1.js": "000753a3d9d38a17dbb56c5867ee95464188f5032b5d172c274bbf5856668c75",
+      "apps/desktop/dist/assets/wake-indicator-root-D5jbHiTw.js": "8595023557ed07714630d62a8a5a01fe2263451f3285dafc6d7f728b328ea25c",
+      "apps/desktop/dist/assets/wake-indicator-root-DH8JPTry.css": "7fb0bf09b773b2c5de133ee00f52b3293203a25f375b6faf68bdad77378bacd8",
+      "apps/desktop/dist/assets/webhooks-CV74Be6f.js": "6e3d77f63690d08206a2206ae5da331006186f6e5aa5d703e019610d0745ddc7",
+      "apps/desktop/dist/assets/webidl-D5jiJvOU.js": "fc2dfdc276c574d2bbda79a675c05f6cebc4a24313b1c3a5743ef0b31290e05e",
+      "apps/desktop/dist/assets/xquery-BOL914df.js": "df37cc393b9b3b5f3949ff48abe2e7e1aa23e66d7d3e4a9cdf1517ea893f931d",
+      "apps/desktop/dist/assets/yacas-CXXgtw0p.js": "717ca22d8f94a5a221635a01bc506c11f0fe36088ed98f3a08532a7da9297831",
+      "apps/desktop/dist/assets/youtube-embed-9xKsHtCe.js": "accc88c78f4634e602917e4add7f9b77f47d2406942003bfee3d2d5811fd7df1",
+      "apps/desktop/dist/assets/z80-CL1naaMV.js": "137aa1ae99e516077226e37e4b76756a11830ca30e5d91b9b837d02f68ffdca5",
+      "apps/desktop/dist/node_modules/node-pty/lib/conpty_console_list_agent.js": "0d010879bb6680a0253d44363183d53e631f42972594eb6dcb1fb842c8c85e52",
+      "apps/desktop/dist/node_modules/node-pty/lib/eventEmitter2.js": "f1c14613aa90c10def4ca7238329270871997eb26f919f7074dc25533e3e75dd",
+      "apps/desktop/dist/node_modules/node-pty/lib/eventEmitter2.test.js": "9cd06569c14d4cd180031ed4df914b817e75ceb104ac10ef65cae6815f46c568",
+      "apps/desktop/dist/node_modules/node-pty/lib/index.js": "c1b82c92c4c63aaa8e8441fc5a291c4727cd3f3550666d2fec7250e0f6d4b173",
+      "apps/desktop/dist/node_modules/node-pty/lib/interfaces.js": "56e4173f09aad26173f9d4c79800fda0b808c34424f987ef8d671cc931119a0a",
+      "apps/desktop/dist/node_modules/node-pty/lib/shared/conout.js": "6ae3b0532616da11aa2a11b4506bb89b0d40be005a9ea9fb369fb59eefdbda47",
+      "apps/desktop/dist/node_modules/node-pty/lib/terminal.js": "5ed5cd66a766afba4a04093284e999f8516d41936501839055800b10eca5d304",
+      "apps/desktop/dist/node_modules/node-pty/lib/terminal.test.js": "6f6ae435c9c6e93d8146fa7a79fe155ec3291880aa4de68fbad7ed8891e4f87b",
+      "apps/desktop/dist/node_modules/node-pty/lib/testUtils.test.js": "eb13d8ffc04ef385604b37170bafa9914736d5c5be8bca857c9f32958f6fe7ec",
+      "apps/desktop/dist/node_modules/node-pty/lib/types.js": "408bf8287717b6322cc380ea66caf1b5e366dcf697707ae2f3cc454e08f3b151",
+      "apps/desktop/dist/node_modules/node-pty/lib/unixTerminal.js": "e2749a3c39c5680061dcf205b70a7c3d3fdd068ff67a0451ce5dc87274cd6a56",
+      "apps/desktop/dist/node_modules/node-pty/lib/unixTerminal.test.js": "608d6c9bcfa07873440ed813b499d347e3e79dace1cc58ea3bd61b53356f0937",
+      "apps/desktop/dist/node_modules/node-pty/lib/utils.js": "f75ad341c13fbf1a9a6605d7ee42dff5bbc5d43b7b381e413fb97eb1b8300beb",
+      "apps/desktop/dist/node_modules/node-pty/lib/windowsConoutConnection.js": "1440f70908fb1f55911ac8e936a1230f68a9c00c03096fcef6788eac6aad9d62",
+      "apps/desktop/dist/node_modules/node-pty/lib/windowsPtyAgent.js": "8636d16b38266112204061a22b135734177c242837982fd3a4055be726efa64a",
+      "apps/desktop/dist/node_modules/node-pty/lib/windowsPtyAgent.test.js": "4c83dd76ec446031876dc81869e4c204715f72c0ba7ba3389e10b390b6d08da1",
+      "apps/desktop/dist/node_modules/node-pty/lib/windowsTerminal.js": "c3a65716f53fed0135a8a633373d5f9c2ab092544d651f27ef0a67096dd3bcd9",
+      "apps/desktop/dist/node_modules/node-pty/lib/windowsTerminal.test.js": "325567d8d6b461df3d3b7990a51bac09f662733988df653de7ee9113880e67a3",
+      "apps/desktop/dist/node_modules/node-pty/lib/worker/conoutSocketWorker.js": "3e4bac095ac3870c3248a7302f5d10217de625f30c32b7000fe48a34788e47ac",
+      "apps/desktop/dist/node_modules/node-pty/package.json": "f8b6a14f7022c14f1cd5d109486f5dacd32bffb63a9a63e38eced37dacb47439",
+      "apps/desktop/dist/node_modules/node-pty/prebuilds/win32-x64/conpty/conpty.dll": "7c7430632052ff703540b68371ec43821820aa1335d8e11dfbcd9ff00e9daaed",
+      "apps/desktop/dist/node_modules/node-pty/prebuilds/win32-x64/conpty/OpenConsole.exe": "d1fe7faa62f9e955e2ac2371f95d7e5513df4d496255097158f979c94782c5fc",
+      "apps/desktop/dist/node_modules/node-pty/prebuilds/win32-x64/conpty.node": "ee8f4e6f4dad71939eecfda11de249400e34bfefe4c8b48af13f3b5476f4035b",
+      "apps/desktop/dist/node_modules/node-pty/prebuilds/win32-x64/conpty_console_list.node": "879dd94cfc79f1e263a00077597ae9448a5394b7d193381aaa50d992a1f91090",
+      "apps/desktop/dist/node_modules/node-pty/prebuilds/win32-x64/pty.node": "ae323edd0835ee7b9e18cc96a7b2bb4b8173ff768317d178af2788406feb71ff",
+      "apps/desktop/dist/node_modules/node-pty/prebuilds/win32-x64/winpty-agent.exe": "0c4834a0ab2a4f8c855a2f1db9b21fa6e5fc324ae8e3c82addd53d503d999825",
+      "apps/desktop/dist/node_modules/node-pty/prebuilds/win32-x64/winpty.dll": "e1cb26d868c954ba26817bedf3e4a5744e4ca2030adf51a7156e5ff2fadb881b",
+      "apps/desktop/dist/node_modules/get-windows/index.js": "e680d6db79d1e584609ffba15d4e961576ae73e639ec31074237d24ce07bcc75",
+      "apps/desktop/dist/node_modules/get-windows/lib/binding/napi-9-win32-unknown-x64/node-get-windows.node": "528cf76b3d7b85bcaf9c0fac928b3150bb338de41c9185ce1f06e2a4d998ebbf",
+      "apps/desktop/dist/node_modules/get-windows/lib/linux.js": "c3274155be875e0a490e24e1f55128c59a86baeeaeb1c32be8df8937a851e0d8",
+      "apps/desktop/dist/node_modules/get-windows/lib/macos.js": "f4893bd69d469f6242cdc03967b13805eb3ba07c794c347595190893940e0d5b",
+      "apps/desktop/dist/node_modules/get-windows/lib/windows.js": "0102131edd180b8fb4fb37cb3f4011c518f61dc6b2d2f48ae0cfe1984c9a7b17",
+      "apps/desktop/dist/node_modules/get-windows/package.json": "c0af24618bbee6951965796aee88dd341ca53e032d3938a940b8770675f297b4"
+    },
+    "lockfile_sha256": {
+      "uv.lock": "45487f72f5fe438fd90f1c0839b83b747e6abfa37110e2e3305b54bc1cac601b",
+      "package-lock.json": "f4f7ca7cff4f371a46fd266bd0739c154e33298b50511e0d4003e70504296fe4",
+      "apps/desktop/package.json": "cbc34763310fe110e99386afa2d55834c9386ca8ff3a7af6521f12ac98d916a2",
+      "apps/desktop/playwright.config.ts": "32383e03cce387bd2cac6f3ca84a1453664373479ae09f4c878c2c6fda08aff3"
+    },
+    "all_callers_reviewed": true,
+    "release_commit": "818c13be1dc4fd28987e1e881a9408224afd4535",
+    "candidate_content_digest": "9903a8a09c9b33010210fa1295dd16ebc02a3ee7ffde978b900a104679116499",
+    "candidate_source_sha256": {
+      "hermes_cli/commands.py": "97d2f96704007e3908706d827b86d0e48cafa13d086ef0eb6284bcd102c2642f",
+      "tui_gateway/methods_tools.py": "05441d2ff9e764e3facb43cfa5e9c83c5606755e5f36fa6836068e71c87db567",
+      "tui_gateway/methods_session.py": "78d1aae367d51e3ca5369e247e80cf65143d3212d220d5d4c69e0b5d20e5535f",
+      "tui_gateway/server.py": "c00eac79e016eb39b7cf72faf1a7e9afa38443a6419b6f82ee192c3019dfa7b4",
+      "run_agent.py": "b433326bfb74e9606313bfe0da0c2818e3e165a31dbc792bb6974998e4ad7d8a",
+      "gateway/run.py": "056b8581cead2c172ef02e79e8527a7be5455e8d351cc66143f46f38044439f8",
+      "tests/test_tui_gateway_server.py": "d4ee6fd73236095a5bb4ea22d51f7299f7d5de687389089f9387672e73515e6b",
+      "tests/cli/test_steer_alias_contract.py": "b506638b485d1dc635c2663160eccea69c75d55ffd5dba5f84d97043844cb1a9",
+      "tests/gateway/test_steer_alias_contract.py": "7d27abc3bc3b37da5ef97f9d5f875fd20d85af61b8a0eb7da173901d297bb7d5",
+      "tests/tui_gateway/test_steer_alias_contract.py": "5edfa02a7eb49e9287a7c20bffb70008b03f348552acad5c3794c77111025ff7",
+      "apps/desktop/src/lib/desktop-slash-commands.ts": "aed3bba8a2601d2db12618705221518817a6de6ecea0efca0b0b7bdef310d5c0",
+      "apps/desktop/src/lib/desktop-slash-commands.test.ts": "db6666376074509e4bfbab0a138cb6e711644e41d51b61b43f2ba8896179f9d8",
+      "apps/desktop/src/app/chat/composer/hooks/use-composer-submit.ts": "ce5e39acc68b165b34921ef183422bf142713b7a1f5d77cf35c054f717c47dc1",
+      "apps/desktop/src/app/chat/composer/hooks/use-composer-submit.test.tsx": "c9615528176832284adc1aaaa2e0afc28f3bc550b4b3c773a1f91ef1f61b9c39",
+      "ui-tui/src/app/slash/commands/core.ts": "b1f91f4b41d6b4a2e93ef8cc6b4c9aa8eb0dfe8818546686e8f357b210ffda3e",
+      "ui-tui/src/__tests__/steerAlias.test.ts": "228fc30db46bf13156351ea6bdf2ad6f14026bd8efb4d446cdef5d92ebb1edc5",
+      "apps/desktop/e2e/fixtures.ts": "3c25389a6e095dae9b7515aad96cbc31c1310a0af56b258bcddbe7dec6f2862d",
+      "apps/desktop/e2e/mock-server.ts": "a9952b1526332ef69eaaef1b53ebfe64fdbcb5b791a924ff514b444c28d4e38a",
+      "apps/desktop/e2e/fixtures.unit.test.ts": "5f840601a7455ae7e16f83882c76bb42768358681fdc448f489f976e72b45494",
+      "apps/desktop/e2e/owned-process-observer.ts": "cf245b6edf7785f84f4316424d135b347d7fd8bf80df422c1d964dba78b09550",
+      "apps/desktop/e2e/owned-process-observer.unit.test.ts": "dab38d2bd018c2e37944693a79be6b8a61a9b8027e9213084379a33fbf8ec6cd",
+      "apps/desktop/e2e/steer-alias-contract.spec.ts": "db0b6dcc7a88dd5efeeb1276fd888c8b10e20b865319cff98ac17562a5252171"
+    },
+    "candidate_revision_note": "The preceding logical product commit is content-bound to all22qualified runtime source files. A subsequent documentation-only commit records its identities; no self-referential commit hash is claimed.",
+    "build_binding_note": "Task-owned development artifacts, source content and actual native effects are bound separately; dirty build stamp is not a release revision.",
+    "postcommit_binding": {
+      "path": "tmp/probes/v0216-20261010/evidence/f03-product-postcommit-binding.json",
+      "sha256": "314fd9825db829d046300fd62bb14d6d0463d20e1672fccd715787dabe4c5de4",
+      "all_22_working_and_git_blobs_match": true
+    }
+  },
+  "model": {
+    "requested": "gpt-6.1-sol",
+    "requested_effort": "high",
+    "accepted_id": "gpt-6.1-sol",
+    "accepted_effort": "high"
+  },
+  "requirements": [
+    "Canonical /s and /S preserve payload and original steer owner",
+    "Existing authorization and profile/session boundaries remain enforced",
+    "Parked clarify/MCP cards survive control slash input",
+    "Idle cached agent uses existing next-turn consumer",
+    "Admission and settle serialize effects and correction metadata",
+    "Late accepted notes survive exactly once with explicit-steer provenance",
+    "Local Stop denies settling-turn admission and cancels unconsumed accepted notes before parked tool release",
+    "Idle input after Stop uses fresh turn without replay",
+    "Native owned processes exit and loopback listener refuses connections"
+  ],
+  "test_results": [
+    {
+      "phase": "GREEN",
+      "command": {
+        "executable": "C:\\Program Files\\Git\\bin\\bash.exe",
+        "args": [
+          "scripts/run_tests.sh",
+          "--paths",
+          "tests/test_tui_gateway_queue_on_busy.py;tests/tui_gateway/test_failed_turn_retention.py;tests/tui_gateway/test_auto_continue.py;tests/tui_gateway/test_goal_command.py;tests/tui_gateway/test_prompt_accept_logging.py;tests/cli/test_cli_steer_busy_path.py;tests/run_agent/test_steer.py;tests/gateway/test_steer_command.py;tests/gateway/test_steer_fifo_overwrite.py;tests/gateway/test_tui_slash_worker_path.py;tests/hermes_cli/test_commands.py;tests/gateway/test_slash_access_dispatch.py;tests/tui_gateway/test_slash_worker_subprocess.py;tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py;tests/test_tui_gateway_server.py",
+          "--file-retries",
+          "0",
+          "--",
+          "--tb=short"
+        ]
+      },
+      "cwd": "<integration-root>",
+      "platform": "native_windows",
+      "source_digest": "39b7003c7f52f0285aee7d5608a09e547261139e6b32a59c0a980a13786b3786",
+      "exit_code": 0,
+      "files": 17,
+      "passed": 862,
+      "failed": 0,
+      "skipped": 0,
+      "deselected": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "collection_errors": 0,
+      "status": "PASS",
+      "evidence": [
+        {
+          "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-final-owner-suite.json",
+          "sha256": "f7fb6b0b1f5f8b8da80b73b0d2db1c4745782ff545a17f124e0f970f65d27dcd"
+        },
+        {
+          "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-final-owner-suite.log",
+          "sha256": "5148a0f062af1a6c069a4e07a39006f5baaf8093249b3f32478574e2e399c191"
+        }
+      ]
+    },
+    {
+      "phase": "GREEN",
+      "command": {
+        "executable": "<user-home>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+        "args": [
+          "node_modules/@playwright/test/cli.js",
+          "test",
+          "--config",
+          "apps/desktop/playwright.config.ts",
+          "apps/desktop/e2e/steer-alias-contract.spec.ts",
+          "--workers",
+          "1",
+          "--retries",
+          "0",
+          "--reporter",
+          "json",
+          "--output",
+          "tmp/probes/v0216-20261010/evidence/native-final-json-proof"
+        ]
+      },
+      "cwd": "<integration-root>",
+      "platform": "native_windows",
+      "source_digest": "9903a8a09c9b33010210fa1295dd16ebc02a3ee7ffde978b900a104679116499",
+      "exit_code": 0,
+      "files": 1,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "deselected": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "collection_errors": 0,
+      "status": "PASS",
+      "evidence": [
+        {
+          "path": "tmp/probes/v0216-20261010/evidence/f03-final-native-json-proof.json",
+          "sha256": "8e09d36246dc6575a4b1eab47b61ca244556243282cc8c1ed5b91ce3dae2db56"
+        },
+        {
+          "path": "tmp/probes/v0216-20261010/evidence/f03-final-native-json-proof.log",
+          "sha256": "07785db63c0ec9231f8100be94cd9e2854d5197aa7ad7ebd63f9b1584b0008b1"
+        }
+      ]
+    },
+    {
+      "phase": "GREEN",
+      "command": {
+        "executable": "<user-home>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--root",
+          "apps/desktop",
+          "--project",
+          "electron",
+          "e2e/fixtures.unit.test.ts",
+          "e2e/owned-process-observer.unit.test.ts",
+          "--maxWorkers",
+          "1"
+        ]
+      },
+      "cwd": "<integration-root>",
+      "platform": "native_windows",
+      "source_digest": "af5eaa1807fbf292f7f3e75e76eabbea0ca4b7c85495b4b84df5ff7e2e2fa91b",
+      "exit_code": 0,
+      "files": 2,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "deselected": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "collection_errors": 0,
+      "status": "PASS",
+      "evidence": [
+        {
+          "path": "tmp/probes/v0216-20261010/evidence/f03-style-final-fixture-unit.json",
+          "sha256": "58a24cbcbf1ed862c7b0d3c5e9b8c8485bd72a201eee4e53a903cfea10ed2d0d"
+        },
+        {
+          "path": "tmp/probes/v0216-20261010/evidence/f03-style-final-fixture-unit.log",
+          "sha256": "3ebc7585e61c345ffdf2adb01447dbd3ca8aaca61bfa6edfec135f11866c4e1e"
+        }
+      ]
+    },
+    {
+      "phase": "GREEN",
+      "command": {
+        "executable": "<user-home>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+        "args": [
+          "C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js",
+          "--prefix",
+          "apps/desktop",
+          "run",
+          "typecheck"
+        ]
+      },
+      "cwd": "<integration-root>",
+      "platform": "native_windows",
+      "source_digest": "4349d59e951634c9517aa739809dd448db3260a96698659dbcef7dd49bfc1e07",
+      "exit_code": 0,
+      "files": 3,
+      "passed": null,
+      "failed": 0,
+      "skipped": 0,
+      "deselected": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "collection_errors": 0,
+      "status": "PASS",
+      "evidence": [
+        {
+          "path": "tmp/probes/v0216-20261010/evidence/f03-style-final-typecheck.json",
+          "sha256": "4273720ccd35641deffe7efb63ae00d8fa3eb1fb12d4dcecc206b89fe483eb2a"
+        },
+        {
+          "path": "tmp/probes/v0216-20261010/evidence/f03-style-final-typecheck.log",
+          "sha256": "4112d534d8a1db7737f11bc42e78eeb8f0d8db3cff9cd5011b53dda097361ff2"
+        }
+      ]
+    },
+    {
+      "phase": "GREEN",
+      "command": {
+        "executable": "<user-home>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--root",
+          "apps/desktop",
+          "--project",
+          "ui",
+          "src/app/chat/composer/f04c-actual-ime.test.tsx",
+          "src/app/chat/composer/hooks/use-composer-submit.test.tsx",
+          "src/app/chat/index.test.tsx",
+          "src/app/chat/session-tile-actions.test.ts",
+          "src/app/chat/session-tile-attachments.test.tsx",
+          "src/app/chat/session-tile-row.test.ts",
+          "src/app/chat/session-tile.test.ts",
+          "src/app/contrib/hooks/live-status-reap.test.ts",
+          "src/app/contrib/hooks/live-status-spinner.test.ts",
+          "src/app/contrib/hooks/use-background-sync.test.ts",
+          "src/app/contrib/hooks/use-background-sync.test.tsx",
+          "src/app/contrib/hooks/use-session-tile-delegate.test.ts",
+          "src/app/contrib/latest-actions.test.ts",
+          "src/app/contrib/surfaces.test.tsx",
+          "--maxWorkers",
+          "1"
+        ]
+      },
+      "cwd": "<integration-root>",
+      "platform": "native_windows",
+      "source_digest": "9091d5ac76aa6f18cbbe68c5b792c59d1cc1801c14a2a7f617b64c57be3ca18a",
+      "exit_code": 0,
+      "files": 14,
+      "passed": 108,
+      "failed": 0,
+      "skipped": 0,
+      "deselected": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "collection_errors": 0,
+      "status": "PASS",
+      "evidence": [
+        {
+          "path": "tmp/probes/v0216-20261010/evidence/f03-composer-affected-green.json",
+          "sha256": "6c231d9df802feea1ca8e770f122c338cbf24f003a17a71f369753f5a9d21ae6"
+        },
+        {
+          "path": "tmp/probes/v0216-20261010/evidence/f03-composer-affected-green.log",
+          "sha256": "98fc1a398afca9f91b7401eeaadb0340b2eac114393876ea7dfc29afcac4d195"
+        }
+      ]
+    },
+    {
+      "phase": "GREEN",
+      "command": {
+        "executable": "<user-home>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--root",
+          "apps/desktop",
+          "--project",
+          "ui",
+          "src/lib/desktop-slash-commands.test.ts",
+          "--maxWorkers",
+          "1"
+        ]
+      },
+      "cwd": "<integration-root>",
+      "platform": "native_windows",
+      "source_digest": "8f9b9389b34a896769e9662485a6754eb7087f58e8ce3b18333d22efd72da704",
+      "exit_code": 0,
+      "files": 1,
+      "passed": 31,
+      "failed": 0,
+      "skipped": 0,
+      "deselected": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "collection_errors": 0,
+      "status": "PASS",
+      "evidence": [
+        {
+          "path": "tmp/probes/v0216-20261010/evidence/f03-desktop-green.json",
+          "sha256": "6de0093589df4fff309c4389c75e6ac4feedeb0bd24c7ec71eb6a02b72193364"
+        },
+        {
+          "path": "tmp/probes/v0216-20261010/evidence/f03-desktop-green.log",
+          "sha256": "1309e8528009666c1fa6527988daf0c794e27724be61ffa53315e3cb3e08c8a4"
+        }
+      ]
+    },
+    {
+      "phase": "GREEN",
+      "command": {
+        "executable": "<user-home>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+        "args": [
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "--root",
+          "ui-tui",
+          "src/__tests__/steerAlias.test.ts",
+          "src/__tests__/slashParity.test.ts",
+          "--maxWorkers",
+          "1"
+        ]
+      },
+      "cwd": "<integration-root>",
+      "platform": "native_windows",
+      "source_digest": "3dcac9a54ff905a75d6370cba69467ce98a956ef566d2392d1c4f297143645be",
+      "exit_code": 0,
+      "files": 2,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "deselected": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "collection_errors": 0,
+      "status": "PASS",
+      "evidence": [
+        {
+          "path": "tmp/probes/v0216-20261010/evidence/f03-tui-parity-green.json",
+          "sha256": "a394ef9f020e4d45e0bfa482fc2a881eb5969f174fe67eda27bc37c63102d734"
+        },
+        {
+          "path": "tmp/probes/v0216-20261010/evidence/f03-tui-parity-green.log",
+          "sha256": "e15a05a74fe396c6c98d3746a038e426999a1c8a398ccf08f707db366e065655"
+        }
+      ]
+    }
+  ],
+  "mutation": {
+    "mutants": [
+      {
+        "id": "baseline",
+        "kind": "NEGATIVE_CONTROL_BASELINE",
+        "killed_behaviorally": false,
+        "baseline_before": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "mutant_exit_code": 0,
+        "baseline_after": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "source_digest": "32f7fd72de2b54ccd6d9d3b7bb51ab9f0d2660681d0227b45fbc5cc24a9f67ea",
+        "restored": true,
+        "patches": [],
+        "evidence": [
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/baseline/current-v5-tool-stop/receipt.json",
+            "sha256": "f8d371a217f85092d21c32cfe5cf6fe9fa3b7bdc96ec06a7971c4d04bb8b981f"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/baseline/current-v5-tool-stop/baseline-before.log",
+            "sha256": "6f7b15df2542d6a0dd1c26b56a177d5bc838ce8ef1d54fa17d8ef22fe93b5f5f"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/baseline/current-v5-tool-stop/mutant.log",
+            "sha256": "23dc44f033704f2a752a7a84a2d2dae24afe030ffd9dac8d0b1f0629339e9678"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/baseline/current-v5-tool-stop/baseline-after.log",
+            "sha256": "850093e337edf1339fdd4af7222a862c86ff41cc054430c0207090c5b2fc6df6"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/baseline/current-v5-tool-stop/graph-before.log",
+            "sha256": "b193229f14c80619a47a35c38587c09f6f778762cfcb5c0d7c4c8372d0ae424d"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/baseline/current-v5-tool-stop/graph-after.log",
+            "sha256": "e25e91ace1af976d2d054321dcd5af46c6e02275100f5585823ba1e632b5aa7e"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/baseline/current-v5-tool-stop/graph-restored.log",
+            "sha256": "e25e91ace1af976d2d054321dcd5af46c6e02275100f5585823ba1e632b5aa7e"
+          }
+        ],
+        "command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "selection": null,
+        "original_full_run": null,
+        "qualification_scope": "Full 63 tests in frozen Python owner population",
+        "command_provenance": {
+          "status": "RECOVERED_FROM_RETAINED_RUNNER_SOURCE_AND_TARGET_RECEIPT",
+          "runner": {
+            "path": "tmp/probes/v0216-20261010/run-f03-python-mutants-final.cjs",
+            "sha256": "8596c59c785670d5e8d928360cb32b37ec6a0dd0cc658a9ab004b1547803781f"
+          },
+          "parent_command_record": {
+            "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-final-python-mutations.json",
+            "sha256": "6f02375ad680466e933bc7320a9a3d398563fce3a5361449bc947bc8aeb3cc91"
+          },
+          "raw_receipt": {
+            "path": "tmp/probes/v0216-20261010/mutants/baseline/current-v5-tool-stop/receipt.json",
+            "sha256": "f8d371a217f85092d21c32cfe5cf6fe9fa3b7bdc96ec06a7971c4d04bb8b981f"
+          },
+          "note": "Original per-child argv was not separately logged; exact fixed argv is recovered from retained runner source lines103-116 and cwd from its original target receipt. Runner source digest captured retrospectively; parent run later failed on an excluded cached-idle run."
+        },
+        "baseline_before_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_after_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        }
+      },
+      {
+        "id": "alias-removed",
+        "kind": "SEMANTIC_MUTANT",
+        "killed_behaviorally": true,
+        "baseline_before": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "mutant_exit_code": 1,
+        "baseline_after": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "source_digest": "32f7fd72de2b54ccd6d9d3b7bb51ab9f0d2660681d0227b45fbc5cc24a9f67ea",
+        "restored": true,
+        "patches": [
+          {
+            "file": "hermes_cli/commands.py",
+            "from": "aliases=(\"s\",), args_hint=\"<prompt>\", busy_policy=\"dispatch\", busy_handler=\"steer\"",
+            "to": "args_hint=\"<prompt>\", busy_policy=\"dispatch\", busy_handler=\"steer\"",
+            "before_sha256": "97d2f96704007e3908706d827b86d0e48cafa13d086ef0eb6284bcd102c2642f",
+            "after_sha256": "cce1ae87256e5d8ba9c90c0aba31996f9b5cac3906b928bb62a883eb29eaa6bd"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/alias-removed/current-v5-tool-stop/receipt.json",
+            "sha256": "cd3602d0094b103ea0eec2e140fe1d427b71e69a70e0d46a8aca8594030f2108"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/alias-removed/current-v5-tool-stop/baseline-before.log",
+            "sha256": "a28180b80225ceee947284bfa3496f8a4d0350ac5bb99d3106ecaa61e978b15b"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/alias-removed/current-v5-tool-stop/mutant.log",
+            "sha256": "1f88f57a3150e309ace7b86739709ac1e40cde068e1bae12a86dd67c60260ee3"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/alias-removed/current-v5-tool-stop/baseline-after.log",
+            "sha256": "a7d91f505a5e8dc177a5a9812cd03930c074d0ed69ba3836ba590be5e21ccbb8"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/alias-removed/current-v5-tool-stop/graph-before.log",
+            "sha256": "9348cdd3351a839ee77f1e92f24ce35d12e16ab5255a7094baec62dc006f8e68"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/alias-removed/current-v5-tool-stop/graph-after.log",
+            "sha256": "2e509db84604c2055abea6434c9314bc7350dc67c6b0335c9a6f2372682752fa"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/alias-removed/current-v5-tool-stop/graph-restored.log",
+            "sha256": "857d0d55b37c4c85e4cd08179985d40603725e648a34101e8487e456682090ff"
+          }
+        ],
+        "command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "selection": null,
+        "original_full_run": null,
+        "qualification_scope": "Full 63 tests in frozen Python owner population",
+        "observed_failure_breakdown": {
+          "passed": 36,
+          "failed": 27,
+          "behavioral_assertion_failures": 25,
+          "incidental_key_errors": 2,
+          "incidental_failures_used_as_kill_evidence": false,
+          "note": "The frozen qualifier requires real behavioral AssertionError and excludes collection/syntax/import/AttributeError/TypeError failures. This mutation is killed by 25 independent assertions; two KeyErrors are transparently recorded and excluded from the kill basis."
+        },
+        "command_provenance": {
+          "status": "RECOVERED_FROM_RETAINED_RUNNER_SOURCE_AND_TARGET_RECEIPT",
+          "runner": {
+            "path": "tmp/probes/v0216-20261010/run-f03-python-mutants-final.cjs",
+            "sha256": "8596c59c785670d5e8d928360cb32b37ec6a0dd0cc658a9ab004b1547803781f"
+          },
+          "parent_command_record": {
+            "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-final-python-mutations.json",
+            "sha256": "6f02375ad680466e933bc7320a9a3d398563fce3a5361449bc947bc8aeb3cc91"
+          },
+          "raw_receipt": {
+            "path": "tmp/probes/v0216-20261010/mutants/alias-removed/current-v5-tool-stop/receipt.json",
+            "sha256": "cd3602d0094b103ea0eec2e140fe1d427b71e69a70e0d46a8aca8594030f2108"
+          },
+          "note": "Original per-child argv was not separately logged; exact fixed argv is recovered from retained runner source lines103-116 and cwd from its original target receipt. Runner source digest captured retrospectively; parent run later failed on an excluded cached-idle run."
+        },
+        "baseline_before_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_after_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        }
+      },
+      {
+        "id": "steer-success-noop",
+        "kind": "SEMANTIC_MUTANT",
+        "killed_behaviorally": true,
+        "baseline_before": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "mutant_exit_code": 1,
+        "baseline_after": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "source_digest": "32f7fd72de2b54ccd6d9d3b7bb51ab9f0d2660681d0227b45fbc5cc24a9f67ea",
+        "restored": true,
+        "patches": [
+          {
+            "file": "run_agent.py",
+            "from": "    def steer(self, text: str) -> bool:\n",
+            "to": "    def steer(self, text: str) -> bool:\n        return True\n",
+            "before_sha256": "b433326bfb74e9606313bfe0da0c2818e3e165a31dbc792bb6974998e4ad7d8a",
+            "after_sha256": "3d4fa181e5b6587664d8b4887d5c24aa82b707eed11fb39d6e275fe5c1ff6b43"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/steer-success-noop/current-v5-tool-stop/receipt.json",
+            "sha256": "236a5861dd3ba391c030fc9880f6a238a8611d6a38023e9f25c9cbaf40e7c7a7"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/steer-success-noop/current-v5-tool-stop/baseline-before.log",
+            "sha256": "4512277824b66c46c822b586400807ab7f3debb8b9b7465a513dc11e550164f2"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/steer-success-noop/current-v5-tool-stop/mutant.log",
+            "sha256": "2d4473ecaa6d0ac7ea98d861d936042ce85e6b74fc3354edf9d7b43249bb1adc"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/steer-success-noop/current-v5-tool-stop/baseline-after.log",
+            "sha256": "f7fc29b84d75caa3177db46504b60811aca6dda416d1a8d46828c571c2cb779b"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/steer-success-noop/current-v5-tool-stop/graph-before.log",
+            "sha256": "faeac9502376c266240a11fdcffd4379d0eac606b4faed959bc7f3658d44de3f"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/steer-success-noop/current-v5-tool-stop/graph-after.log",
+            "sha256": "4eb7af13a05d248d870aa5f9a761b33e728fc7ed90dd4b7a753bc84087091619"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/steer-success-noop/current-v5-tool-stop/graph-restored.log",
+            "sha256": "51e7dbcf99d1c16079380b7761280e55ee163d69ab640d2425c4ffe8db5f31ad"
+          }
+        ],
+        "command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "selection": null,
+        "original_full_run": null,
+        "qualification_scope": "Full 63 tests in frozen Python owner population",
+        "command_provenance": {
+          "status": "RECOVERED_FROM_RETAINED_RUNNER_SOURCE_AND_TARGET_RECEIPT",
+          "runner": {
+            "path": "tmp/probes/v0216-20261010/run-f03-python-mutants-final.cjs",
+            "sha256": "8596c59c785670d5e8d928360cb32b37ec6a0dd0cc658a9ab004b1547803781f"
+          },
+          "parent_command_record": {
+            "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-final-python-mutations.json",
+            "sha256": "6f02375ad680466e933bc7320a9a3d398563fce3a5361449bc947bc8aeb3cc91"
+          },
+          "raw_receipt": {
+            "path": "tmp/probes/v0216-20261010/mutants/steer-success-noop/current-v5-tool-stop/receipt.json",
+            "sha256": "236a5861dd3ba391c030fc9880f6a238a8611d6a38023e9f25c9cbaf40e7c7a7"
+          },
+          "note": "Original per-child argv was not separately logged; exact fixed argv is recovered from retained runner source lines103-116 and cwd from its original target receipt. Runner source digest captured retrospectively; parent run later failed on an excluded cached-idle run."
+        },
+        "baseline_before_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_after_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        }
+      },
+      {
+        "id": "steer-all-deny",
+        "kind": "SEMANTIC_MUTANT",
+        "killed_behaviorally": true,
+        "baseline_before": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "mutant_exit_code": 1,
+        "baseline_after": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "source_digest": "32f7fd72de2b54ccd6d9d3b7bb51ab9f0d2660681d0227b45fbc5cc24a9f67ea",
+        "restored": true,
+        "patches": [
+          {
+            "file": "run_agent.py",
+            "from": "    def steer(self, text: str) -> bool:\n",
+            "to": "    def steer(self, text: str) -> bool:\n        return False\n",
+            "before_sha256": "b433326bfb74e9606313bfe0da0c2818e3e165a31dbc792bb6974998e4ad7d8a",
+            "after_sha256": "2812aad15843b6e7db6afa52a3d3842c6e3b4e8da683558e2ca10200d2f660a5"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/steer-all-deny/current-v5-tool-stop/receipt.json",
+            "sha256": "495a515b56fb25195ef73818b73d56ba35a3803e26155f43311bf4c7698de5d6"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/steer-all-deny/current-v5-tool-stop/baseline-before.log",
+            "sha256": "894ab6e1e540a0993d1e2b38ce0eab076a2348ce9eb2da2640bad756499ca0da"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/steer-all-deny/current-v5-tool-stop/mutant.log",
+            "sha256": "b5d7f0fb3078d37cd0f2653bcbd8c52ec8619ce5c908328640085562fd2f8b69"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/steer-all-deny/current-v5-tool-stop/baseline-after.log",
+            "sha256": "7d84db1a749a4309e94e8b3155dd162c743535aa0f19eb1368e2ada420f70f0b"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/steer-all-deny/current-v5-tool-stop/graph-before.log",
+            "sha256": "e8463b1444f8d5805d55126bdaa97907835b0de7ba7e25cda889e2c779a08add"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/steer-all-deny/current-v5-tool-stop/graph-after.log",
+            "sha256": "8ef9d0c9b12241f44d61e728a88bf5bafa1dddc1c46bd9a6b5b2a3a90aaf9c15"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/steer-all-deny/current-v5-tool-stop/graph-restored.log",
+            "sha256": "67af34c9306f3d9df0d760a834d328edc4e73d05702a0d5c81748d415b219995"
+          }
+        ],
+        "command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "selection": null,
+        "original_full_run": null,
+        "qualification_scope": "Full 63 tests in frozen Python owner population",
+        "command_provenance": {
+          "status": "RECOVERED_FROM_RETAINED_RUNNER_SOURCE_AND_TARGET_RECEIPT",
+          "runner": {
+            "path": "tmp/probes/v0216-20261010/run-f03-python-mutants-final.cjs",
+            "sha256": "8596c59c785670d5e8d928360cb32b37ec6a0dd0cc658a9ab004b1547803781f"
+          },
+          "parent_command_record": {
+            "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-final-python-mutations.json",
+            "sha256": "6f02375ad680466e933bc7320a9a3d398563fce3a5361449bc947bc8aeb3cc91"
+          },
+          "raw_receipt": {
+            "path": "tmp/probes/v0216-20261010/mutants/steer-all-deny/current-v5-tool-stop/receipt.json",
+            "sha256": "495a515b56fb25195ef73818b73d56ba35a3803e26155f43311bf4c7698de5d6"
+          },
+          "note": "Original per-child argv was not separately logged; exact fixed argv is recovered from retained runner source lines103-116 and cwd from its original target receipt. Runner source digest captured retrospectively; parent run later failed on an excluded cached-idle run."
+        },
+        "baseline_before_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_after_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        }
+      },
+      {
+        "id": "rpc-worker-route",
+        "kind": "SEMANTIC_MUTANT",
+        "killed_behaviorally": true,
+        "baseline_before": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "mutant_exit_code": 1,
+        "baseline_after": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "source_digest": "32f7fd72de2b54ccd6d9d3b7bb51ab9f0d2660681d0227b45fbc5cc24a9f67ea",
+        "restored": true,
+        "patches": [
+          {
+            "file": "tui_gateway/methods_tools.py",
+            "from": "if _canonical_base in _PENDING_INPUT_COMMANDS:",
+            "to": "if _cmd_base in _PENDING_INPUT_COMMANDS:",
+            "before_sha256": "05441d2ff9e764e3facb43cfa5e9c83c5606755e5f36fa6836068e71c87db567",
+            "after_sha256": "a561bc6d0e2b7ab7ae0b919bf7bd234b316447b5b879ff4e969defe42d534e36"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/rpc-worker-route/current-v5-tool-stop/receipt.json",
+            "sha256": "c05eafc3541f04cf8a4c126948af059c0cef034528a0807304f86cccd2db02bd"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/rpc-worker-route/current-v5-tool-stop/baseline-before.log",
+            "sha256": "a112f1cd7ea07016efa60e8bcd92fa333a7988e6a4702990ba6fe339f36046d8"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/rpc-worker-route/current-v5-tool-stop/mutant.log",
+            "sha256": "4a5e39071321fa234c4593640bd09f6f743868d732976804527ab4f895428d77"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/rpc-worker-route/current-v5-tool-stop/baseline-after.log",
+            "sha256": "80c77130959766506833551e0532896e56411d73e9007441710b981aa64e6dfb"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/rpc-worker-route/current-v5-tool-stop/graph-before.log",
+            "sha256": "c2ee3e5a69cfab452ff100ff443c3b665e0c133f9c90338dd76c4da699527216"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/rpc-worker-route/current-v5-tool-stop/graph-after.log",
+            "sha256": "b18178e18e73beb99fb424b80d5029141c180251ff7253058c5b3bc19a6cf9be"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/rpc-worker-route/current-v5-tool-stop/graph-restored.log",
+            "sha256": "9a60f945b57a058dbc6857ac3394e569db58312291ec2c492d9b8c95cf2508be"
+          }
+        ],
+        "command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "selection": null,
+        "original_full_run": null,
+        "qualification_scope": "Full 63 tests in frozen Python owner population",
+        "command_provenance": {
+          "status": "RECOVERED_FROM_RETAINED_RUNNER_SOURCE_AND_TARGET_RECEIPT",
+          "runner": {
+            "path": "tmp/probes/v0216-20261010/run-f03-python-mutants-final.cjs",
+            "sha256": "8596c59c785670d5e8d928360cb32b37ec6a0dd0cc658a9ab004b1547803781f"
+          },
+          "parent_command_record": {
+            "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-final-python-mutations.json",
+            "sha256": "6f02375ad680466e933bc7320a9a3d398563fce3a5361449bc947bc8aeb3cc91"
+          },
+          "raw_receipt": {
+            "path": "tmp/probes/v0216-20261010/mutants/rpc-worker-route/current-v5-tool-stop/receipt.json",
+            "sha256": "c05eafc3541f04cf8a4c126948af059c0cef034528a0807304f86cccd2db02bd"
+          },
+          "note": "Original per-child argv was not separately logged; exact fixed argv is recovered from retained runner source lines103-116 and cwd from its original target receipt. Runner source digest captured retrospectively; parent run later failed on an excluded cached-idle run."
+        },
+        "baseline_before_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_after_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        }
+      },
+      {
+        "id": "gateway-all-allow",
+        "kind": "SEMANTIC_MUTANT",
+        "killed_behaviorally": true,
+        "baseline_before": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "mutant_exit_code": 1,
+        "baseline_after": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "source_digest": "32f7fd72de2b54ccd6d9d3b7bb51ab9f0d2660681d0227b45fbc5cc24a9f67ea",
+        "restored": true,
+        "patches": [
+          {
+            "file": "gateway/run.py",
+            "from": "_denied = self._check_slash_access(source, _cmd_def_inner.name)",
+            "to": "_denied = None",
+            "before_sha256": "056b8581cead2c172ef02e79e8527a7be5455e8d351cc66143f46f38044439f8",
+            "after_sha256": "814a2d0d02acaefa9a693b154d798a58173f56e584acda6b0440c66109f23f6c"
+          },
+          {
+            "file": "gateway/run.py",
+            "from": "_denied = self._check_slash_access(source, canonical)",
+            "to": "_denied = None",
+            "before_sha256": "814a2d0d02acaefa9a693b154d798a58173f56e584acda6b0440c66109f23f6c",
+            "after_sha256": "f114272256222461bece21ec695495dfb735a6e007126fe6740b1ebe01ea29b8"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/gateway-all-allow/current-v5-tool-stop/receipt.json",
+            "sha256": "c8af8597eb114ee08db7959f4a64017490e14bf923b433dfa9c9e99fdf8fc43d"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/gateway-all-allow/current-v5-tool-stop/baseline-before.log",
+            "sha256": "d2b0b254d327f33d2f9b7b6f21c8ef15e089015b85d8f6675c49ec0c08a6487b"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/gateway-all-allow/current-v5-tool-stop/mutant.log",
+            "sha256": "90bd169d965431d25dd8f3af25e748dff9c6c148898ed14dac3bcd0beb9c3147"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/gateway-all-allow/current-v5-tool-stop/baseline-after.log",
+            "sha256": "cbe394e8c91c0a1c0da78cb29627c8145958ed5ac79296f5314dd8b46ee8e0fa"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/gateway-all-allow/current-v5-tool-stop/graph-before.log",
+            "sha256": "b55b1d58010742c7e3f5125e7ffc197f55564d3ec2924633e3e230bcd97c9834"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/gateway-all-allow/current-v5-tool-stop/graph-after.log",
+            "sha256": "cccf2847fe7f0e680aeae1ea7ec022d5403ceec57cccfc83d0b60e3059ddafa5"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/gateway-all-allow/current-v5-tool-stop/graph-restored.log",
+            "sha256": "3f1e5da034e81850b8609d3d8338a5f9e1db885c629fcf9cd5073fee751c369c"
+          }
+        ],
+        "command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "selection": null,
+        "original_full_run": null,
+        "qualification_scope": "Full 63 tests in frozen Python owner population",
+        "command_provenance": {
+          "status": "RECOVERED_FROM_RETAINED_RUNNER_SOURCE_AND_TARGET_RECEIPT",
+          "runner": {
+            "path": "tmp/probes/v0216-20261010/run-f03-python-mutants-final.cjs",
+            "sha256": "8596c59c785670d5e8d928360cb32b37ec6a0dd0cc658a9ab004b1547803781f"
+          },
+          "parent_command_record": {
+            "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-final-python-mutations.json",
+            "sha256": "6f02375ad680466e933bc7320a9a3d398563fce3a5361449bc947bc8aeb3cc91"
+          },
+          "raw_receipt": {
+            "path": "tmp/probes/v0216-20261010/mutants/gateway-all-allow/current-v5-tool-stop/receipt.json",
+            "sha256": "c8af8597eb114ee08db7959f4a64017490e14bf923b433dfa9c9e99fdf8fc43d"
+          },
+          "note": "Original per-child argv was not separately logged; exact fixed argv is recovered from retained runner source lines103-116 and cwd from its original target receipt. Runner source digest captured retrospectively; parent run later failed on an excluded cached-idle run."
+        },
+        "baseline_before_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_after_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        }
+      },
+      {
+        "id": "cached-idle-admitted",
+        "kind": "SEMANTIC_MUTANT",
+        "killed_behaviorally": true,
+        "baseline_before": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "mutant_exit_code": 1,
+        "baseline_after": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "source_digest": "32f7fd72de2b54ccd6d9d3b7bb51ab9f0d2660681d0227b45fbc5cc24a9f67ea",
+        "restored": true,
+        "patches": [
+          {
+            "file": "tui_gateway/server.py",
+            "from": "if not session.get(\"running\") or agent is None or not hasattr(agent, \"steer\"):",
+            "to": "if agent is None or not hasattr(agent, \"steer\"):",
+            "before_sha256": "c00eac79e016eb39b7cf72faf1a7e9afa38443a6419b6f82ee192c3019dfa7b4",
+            "after_sha256": "0342d9a96e87952e1995702978d9ebfe13cbdd4204d9bf9ffad4cbddb4ef8318"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/cached-idle-admitted/current-v5-tool-stop/receipt.json",
+            "sha256": "e09e0b49b52ea3ba541fcb78b2cfa9e7d8268b17b29b1e8797608d02cbe8b2e7"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/cached-idle-admitted/current-v5-tool-stop/baseline-before.log",
+            "sha256": "bb1755e92d6f0328ad4e58008442df6aeac419b1af1d8a10ff0dd977fe3e70f3"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/cached-idle-admitted/current-v5-tool-stop/mutant-targeted.log",
+            "sha256": "6488b93e06101596187bf64411bf7f64b97be130e8aec55ca5f6446a9627cde2"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/cached-idle-admitted/current-v5-tool-stop/baseline-after.log",
+            "sha256": "5cf5dc2c1e88cb5817f1b5a004e7b9ef4df961e9335c6d20a86ca15f668e318a"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/cached-idle-admitted/current-v5-tool-stop/graph-before.log",
+            "sha256": "87958bf1ca09acd8e4f81ff8148915727f56093f27056a9d7ff0142f62b78e8f"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/cached-idle-admitted/current-v5-tool-stop/graph-after.log",
+            "sha256": "049e36f3c74ddc1f423e8fd5ec97920b14cc8a143788598b5f146c60ab2c6e1f"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/cached-idle-admitted/current-v5-tool-stop/graph-restored.log",
+            "sha256": "f2ba3afc6a9622de23d973276af214606ffa02769f2231bec28d8af419ab29f5"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/cached-idle-admitted/current-v5-tool-stop/mutant.log",
+            "sha256": "0c0308d8c3c1e49ed2bc64f71799b1fefd01367dcd2c7e9adf84fc4d2d80622f"
+          }
+        ],
+        "command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short",
+            "-v",
+            "-k",
+            "stale_busy_client or explicit_idle_retry or slash_exec_idle_alias"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "selection": {
+          "passed": 3,
+          "failed_behaviorally": 5,
+          "deselected": 34,
+          "selected": 8,
+          "collected": 42,
+          "node_ids": [
+            "tests/tui_gateway/test_steer_alias_contract.py::test_session_steer_stale_busy_client_delivers_idle_cached_agent_text",
+            "tests/tui_gateway/test_steer_alias_contract.py::test_explicit_idle_retry_equal_to_retained_error_is_delivered",
+            "tests/tui_gateway/test_steer_alias_contract.py::test_slash_exec_idle_alias_returns_next_turn_text[False-/steer]",
+            "tests/tui_gateway/test_steer_alias_contract.py::test_slash_exec_idle_alias_returns_next_turn_text[False-/s]",
+            "tests/tui_gateway/test_steer_alias_contract.py::test_slash_exec_idle_alias_returns_next_turn_text[False-/S]",
+            "tests/tui_gateway/test_steer_alias_contract.py::test_slash_exec_idle_alias_returns_next_turn_text[True-/steer]",
+            "tests/tui_gateway/test_steer_alias_contract.py::test_slash_exec_idle_alias_returns_next_turn_text[True-/s]",
+            "tests/tui_gateway/test_steer_alias_contract.py::test_slash_exec_idle_alias_returns_next_turn_text[True-/S]"
+          ]
+        },
+        "original_full_run": {
+          "status": "UNQUALIFIED",
+          "log": "mutant.log",
+          "passed": 56,
+          "failed": 7,
+          "assertion_failures": 5,
+          "exception_failures": 2,
+          "reason": "KeyError and AttributeError in secondary scenarios; excluded from qualified mutation proof"
+        },
+        "qualification_scope": "Eight selected public cached-idle effects; full 63 GREEN before and after; original full mutant run UNQUALIFIED",
+        "command_provenance": {
+          "status": "EXPLICIT_COMMAND_IN_PRESERVED_MUTATION_RECEIPT",
+          "runner": {
+            "path": "tmp/probes/v0216-20261010/run-f03-python-mutants-continuation.cjs",
+            "sha256": "b8f8eb85fac50ae1bb01ddf64835ee0fd7fd79435943ebf3c4cfb7cd10363c0a"
+          },
+          "parent_command_record": {
+            "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-python-mutations-continuation.json",
+            "sha256": "f98a5a8c4beee44cb8a27b7479bdbb041105aef108ebc9aaf3d5bf4f45c7918c"
+          },
+          "raw_receipt": {
+            "path": "tmp/probes/v0216-20261010/mutants/cached-idle-admitted/current-v5-tool-stop/receipt.json",
+            "sha256": "e09e0b49b52ea3ba541fcb78b2cfa9e7d8268b17b29b1e8797608d02cbe8b2e7"
+          },
+          "note": "The mutation receipt records executable/argv/cwd."
+        },
+        "baseline_before_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_after_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        }
+      },
+      {
+        "id": "late-handoff-noop",
+        "kind": "SEMANTIC_MUTANT",
+        "killed_behaviorally": true,
+        "baseline_before": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "mutant_exit_code": 1,
+        "baseline_after": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "source_digest": "32f7fd72de2b54ccd6d9d3b7bb51ab9f0d2660681d0227b45fbc5cc24a9f67ea",
+        "restored": true,
+        "patches": [
+          {
+            "file": "tui_gateway/server.py",
+            "from": "late_steer = drain() if callable(drain) else None",
+            "to": "late_steer = None",
+            "before_sha256": "c00eac79e016eb39b7cf72faf1a7e9afa38443a6419b6f82ee192c3019dfa7b4",
+            "after_sha256": "4de285a7670aa7759c8deca7d01eb284500d5909ce5390ec3c3a0f0d1f385a54"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/late-handoff-noop/current-v5-tool-stop/receipt.json",
+            "sha256": "20b2ed72936cfaf0fa8e5df4dc4f3643a1f0837cb21d343e08eec380cd5240c0"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/late-handoff-noop/current-v5-tool-stop/baseline-before.log",
+            "sha256": "459ad09a93a577db10acb1975608f104c4d3910d43b8ba6aef816be24c9fe13e"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/late-handoff-noop/current-v5-tool-stop/mutant.log",
+            "sha256": "209c46a9c62c6d0c56d557ff6bdc1f2618cd9378a7f702c9c617c88f56ab2d01"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/late-handoff-noop/current-v5-tool-stop/baseline-after.log",
+            "sha256": "5017371c2a046a8b9eaff5a79bb7a4b5d0290fa729e1052c75f118274476a326"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/late-handoff-noop/current-v5-tool-stop/graph-before.log",
+            "sha256": "deb4f4010f3b596dd64492b3936140b5779d2de3f3e2e01ada1617ac600827e0"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/late-handoff-noop/current-v5-tool-stop/graph-after.log",
+            "sha256": "a0e783197abc8c88ba2f1282b0bc3639e78b0b02ab4d1b3978842ed126870ff0"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/late-handoff-noop/current-v5-tool-stop/graph-restored.log",
+            "sha256": "338a5c18106fb0207871ca7c81d6709a4d12e0ccdcacb21e1f7ac5f8df925032"
+          }
+        ],
+        "command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "selection": null,
+        "original_full_run": null,
+        "qualification_scope": "Full 63 tests in frozen Python owner population",
+        "command_provenance": {
+          "status": "EXPLICIT_COMMAND_IN_PRESERVED_MUTATION_RECEIPT",
+          "runner": {
+            "path": "tmp/probes/v0216-20261010/run-f03-python-mutants-continuation.cjs",
+            "sha256": "b8f8eb85fac50ae1bb01ddf64835ee0fd7fd79435943ebf3c4cfb7cd10363c0a"
+          },
+          "parent_command_record": {
+            "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-python-mutations-continuation.json",
+            "sha256": "f98a5a8c4beee44cb8a27b7479bdbb041105aef108ebc9aaf3d5bf4f45c7918c"
+          },
+          "raw_receipt": {
+            "path": "tmp/probes/v0216-20261010/mutants/late-handoff-noop/current-v5-tool-stop/receipt.json",
+            "sha256": "20b2ed72936cfaf0fa8e5df4dc4f3643a1f0837cb21d343e08eec380cd5240c0"
+          },
+          "note": "The mutation receipt records executable/argv/cwd."
+        },
+        "baseline_before_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_after_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        }
+      },
+      {
+        "id": "admission-unlocked",
+        "kind": "SEMANTIC_MUTANT",
+        "killed_behaviorally": true,
+        "baseline_before": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "mutant_exit_code": 1,
+        "baseline_after": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "source_digest": "32f7fd72de2b54ccd6d9d3b7bb51ab9f0d2660681d0227b45fbc5cc24a9f67ea",
+        "restored": true,
+        "patches": [
+          {
+            "file": "tui_gateway/server.py",
+            "from": "    with session[\"history_lock\"]:\n        agent = session.get(\"agent\")\n        if not session.get(\"running\")",
+            "to": "    with threading.Lock():\n        agent = session.get(\"agent\")\n        if not session.get(\"running\")",
+            "before_sha256": "c00eac79e016eb39b7cf72faf1a7e9afa38443a6419b6f82ee192c3019dfa7b4",
+            "after_sha256": "a51e31a3e3b4700bceb4891a941e48d3eb955331dbc402975a3dd8cbc55351a8"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/admission-unlocked/current-v5-tool-stop/receipt.json",
+            "sha256": "5aaa51dd2b890fe1db3396941e425ffd7b2067bccd2a8a26adb635a8d9fda768"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/admission-unlocked/current-v5-tool-stop/baseline-before.log",
+            "sha256": "5f8b04c247b8fa35b4c672851675599634b65b09055dd394b725219d2c29909c"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/admission-unlocked/current-v5-tool-stop/mutant.log",
+            "sha256": "a137682199be6130b7b9607e4c05dc0be47e8a49e63878151bb1c4812ab4b2d4"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/admission-unlocked/current-v5-tool-stop/baseline-after.log",
+            "sha256": "cc915195a4b19c825a7228157f3c25a2bd94496abd4d9462a48443b9fdc19b4c"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/admission-unlocked/current-v5-tool-stop/graph-before.log",
+            "sha256": "fe0a529da3e9ac7bc4dea2047ec9a1a0a3057a9755f65ee9ce19674c59c6b5b6"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/admission-unlocked/current-v5-tool-stop/graph-after.log",
+            "sha256": "3e7f8845c3e246403a81c306c4b29cbe24e257c94344e69c3e01aaf9ce0629b3"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/admission-unlocked/current-v5-tool-stop/graph-restored.log",
+            "sha256": "0e2cd250030d494443bab180453a10c3f4b7a11fce27d834937efc3017f45cd9"
+          }
+        ],
+        "command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "selection": null,
+        "original_full_run": null,
+        "qualification_scope": "Full 63 tests in frozen Python owner population",
+        "command_provenance": {
+          "status": "EXPLICIT_COMMAND_IN_PRESERVED_MUTATION_RECEIPT",
+          "runner": {
+            "path": "tmp/probes/v0216-20261010/run-f03-python-mutants-continuation.cjs",
+            "sha256": "b8f8eb85fac50ae1bb01ddf64835ee0fd7fd79435943ebf3c4cfb7cd10363c0a"
+          },
+          "parent_command_record": {
+            "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-python-mutations-continuation.json",
+            "sha256": "f98a5a8c4beee44cb8a27b7479bdbb041105aef108ebc9aaf3d5bf4f45c7918c"
+          },
+          "raw_receipt": {
+            "path": "tmp/probes/v0216-20261010/mutants/admission-unlocked/current-v5-tool-stop/receipt.json",
+            "sha256": "5aaa51dd2b890fe1db3396941e425ffd7b2067bccd2a8a26adb635a8d9fda768"
+          },
+          "note": "The mutation receipt records executable/argv/cwd."
+        },
+        "baseline_before_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_after_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        }
+      },
+      {
+        "id": "later-turn-buffer-stolen",
+        "kind": "SEMANTIC_MUTANT",
+        "killed_behaviorally": true,
+        "baseline_before": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "mutant_exit_code": 1,
+        "baseline_after": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "source_digest": "32f7fd72de2b54ccd6d9d3b7bb51ab9f0d2660681d0227b45fbc5cc24a9f67ea",
+        "restored": true,
+        "patches": [
+          {
+            "file": "tui_gateway/server.py",
+            "from": "        _leftover_steer = result.pop(\"pending_steer\", None)\n",
+            "to": "        session[\"agent\"]._drain_pending_steer()\n        _leftover_steer = result.pop(\"pending_steer\", None)\n",
+            "before_sha256": "c00eac79e016eb39b7cf72faf1a7e9afa38443a6419b6f82ee192c3019dfa7b4",
+            "after_sha256": "e1d688068f353a29583af13fe01d290d142c655f4cf1484a43b1786c77840c72"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/later-turn-buffer-stolen/current-v5-tool-stop/receipt.json",
+            "sha256": "dfff444b3b2a5e5d3d0fc72ddee46387c064b7d9e99185edbc054c97fbc26663"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/later-turn-buffer-stolen/current-v5-tool-stop/baseline-before.log",
+            "sha256": "264ead2f3d02528a37f47c08df79a3bbdeaabeeaa531a49575a29437fbc67145"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/later-turn-buffer-stolen/current-v5-tool-stop/mutant.log",
+            "sha256": "0f69fb7ce4e8215f45214b558780989cb9413459204538456ae59cab846cb49f"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/later-turn-buffer-stolen/current-v5-tool-stop/baseline-after.log",
+            "sha256": "5738f59c400d214cedfa37523a936b3a0fdb91d18262195e99f220754c27bde5"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/later-turn-buffer-stolen/current-v5-tool-stop/graph-before.log",
+            "sha256": "d9c658deb88c458d0a796f6cfcab75b7cd1f98d3db10d61a6c61dcc683035627"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/later-turn-buffer-stolen/current-v5-tool-stop/graph-after.log",
+            "sha256": "3e7f8845c3e246403a81c306c4b29cbe24e257c94344e69c3e01aaf9ce0629b3"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/later-turn-buffer-stolen/current-v5-tool-stop/graph-restored.log",
+            "sha256": "8f63f2af2140b284bd74b8f96a84665fef2cade1c6bc5346423c8997504e9305"
+          }
+        ],
+        "command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "selection": null,
+        "original_full_run": null,
+        "qualification_scope": "Full 63 tests in frozen Python owner population",
+        "command_provenance": {
+          "status": "EXPLICIT_COMMAND_IN_PRESERVED_MUTATION_RECEIPT",
+          "runner": {
+            "path": "tmp/probes/v0216-20261010/run-f03-python-mutants-continuation.cjs",
+            "sha256": "b8f8eb85fac50ae1bb01ddf64835ee0fd7fd79435943ebf3c4cfb7cd10363c0a"
+          },
+          "parent_command_record": {
+            "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-python-mutations-continuation.json",
+            "sha256": "f98a5a8c4beee44cb8a27b7479bdbb041105aef108ebc9aaf3d5bf4f45c7918c"
+          },
+          "raw_receipt": {
+            "path": "tmp/probes/v0216-20261010/mutants/later-turn-buffer-stolen/current-v5-tool-stop/receipt.json",
+            "sha256": "dfff444b3b2a5e5d3d0fc72ddee46387c064b7d9e99185edbc054c97fbc26663"
+          },
+          "note": "The mutation receipt records executable/argv/cwd."
+        },
+        "baseline_before_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_after_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        }
+      },
+      {
+        "id": "explicit-steer-scrubbed",
+        "kind": "SEMANTIC_MUTANT",
+        "killed_behaviorally": true,
+        "baseline_before": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "mutant_exit_code": 1,
+        "baseline_after": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "source_digest": "32f7fd72de2b54ccd6d9d3b7bb51ab9f0d2660681d0227b45fbc5cc24a9f67ea",
+        "restored": true,
+        "patches": [
+          {
+            "file": "tui_gateway/server.py",
+            "from": "if entry.get(\"image_paths\") or entry.get(\"_explicit_steer\"):",
+            "to": "if entry.get(\"image_paths\"):",
+            "before_sha256": "c00eac79e016eb39b7cf72faf1a7e9afa38443a6419b6f82ee192c3019dfa7b4",
+            "after_sha256": "1f2e090eecce11fe03ff824bc93262213eebcb2dffa3144263503a86b238ae00"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/explicit-steer-scrubbed/current-v5-tool-stop/receipt.json",
+            "sha256": "fb4d6306e5ef08559ba449d6a233e56f9e396257dc5db547961974d9e67f8f8c"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/explicit-steer-scrubbed/current-v5-tool-stop/baseline-before.log",
+            "sha256": "78a512ec04fcd57f2a868f5f72a9d2c4a8ff7ed38d59ee86047999b507f0fe1b"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/explicit-steer-scrubbed/current-v5-tool-stop/mutant.log",
+            "sha256": "d2af6b4ab19298dae11ff065c223c1b519d91dcb04d2baaa7653f75cf59401c7"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/explicit-steer-scrubbed/current-v5-tool-stop/baseline-after.log",
+            "sha256": "7c0d11c52d186dd36d0fb5240f5b9bc560cb40826393b5d412534c81089bd2f3"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/explicit-steer-scrubbed/current-v5-tool-stop/graph-before.log",
+            "sha256": "8a8c522ac829c8f80de5aebe0ff500d6409c319c2304cdbcdfd3c25bea52d49a"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/explicit-steer-scrubbed/current-v5-tool-stop/graph-after.log",
+            "sha256": "2c3d82439479eed4113775ed05a3452d018f25392bdf7188e6bf49ef67f13827"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/explicit-steer-scrubbed/current-v5-tool-stop/graph-restored.log",
+            "sha256": "b247c134ba06818d88b4480d7750ad24757c380af4c587c3a03f4b70820e48b7"
+          }
+        ],
+        "command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "selection": null,
+        "original_full_run": null,
+        "qualification_scope": "Full 63 tests in frozen Python owner population",
+        "command_provenance": {
+          "status": "EXPLICIT_COMMAND_IN_PRESERVED_MUTATION_RECEIPT",
+          "runner": {
+            "path": "tmp/probes/v0216-20261010/run-f03-python-mutants-continuation.cjs",
+            "sha256": "b8f8eb85fac50ae1bb01ddf64835ee0fd7fd79435943ebf3c4cfb7cd10363c0a"
+          },
+          "parent_command_record": {
+            "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-python-mutations-continuation.json",
+            "sha256": "f98a5a8c4beee44cb8a27b7479bdbb041105aef108ebc9aaf3d5bf4f45c7918c"
+          },
+          "raw_receipt": {
+            "path": "tmp/probes/v0216-20261010/mutants/explicit-steer-scrubbed/current-v5-tool-stop/receipt.json",
+            "sha256": "fb4d6306e5ef08559ba449d6a233e56f9e396257dc5db547961974d9e67f8f8c"
+          },
+          "note": "The mutation receipt records executable/argv/cwd."
+        },
+        "baseline_before_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_after_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        }
+      },
+      {
+        "id": "admission-metadata-noop",
+        "kind": "SEMANTIC_MUTANT",
+        "killed_behaviorally": true,
+        "baseline_before": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "mutant_exit_code": 1,
+        "baseline_after": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "source_digest": "32f7fd72de2b54ccd6d9d3b7bb51ab9f0d2660681d0227b45fbc5cc24a9f67ea",
+        "restored": true,
+        "patches": [
+          {
+            "file": "tui_gateway/server.py",
+            "from": "if accepted and record_correction:",
+            "to": "if False:",
+            "before_sha256": "c00eac79e016eb39b7cf72faf1a7e9afa38443a6419b6f82ee192c3019dfa7b4",
+            "after_sha256": "fe141af73b2ad89cb86a1a79ce0bfec1f76867b0967f3196631eda9184f40a16"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/admission-metadata-noop/current-v5-tool-stop/receipt.json",
+            "sha256": "eda46a315b55ac0fca8402d2143c87064d1365eaa219cbf30bf7e410f48e4533"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/admission-metadata-noop/current-v5-tool-stop/baseline-before.log",
+            "sha256": "a2c492187b448f892ae72f7d613f020cbb3db5422a1f2af6384f6c331a51b922"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/admission-metadata-noop/current-v5-tool-stop/mutant.log",
+            "sha256": "7b7ad2a4e77abfd5ee621f47f885c1b0ee13ae66fe2929c22ac041791d5dcfbf"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/admission-metadata-noop/current-v5-tool-stop/baseline-after.log",
+            "sha256": "0d82034e96cc48a1e5d17aa2335ee536b6686e262c17a856000b30e80696b486"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/admission-metadata-noop/current-v5-tool-stop/graph-before.log",
+            "sha256": "0a37c336bed4a320908638ace3ad04a5047795fba86816e7f41ed60a8c324601"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/admission-metadata-noop/current-v5-tool-stop/graph-after.log",
+            "sha256": "3e7f8845c3e246403a81c306c4b29cbe24e257c94344e69c3e01aaf9ce0629b3"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/admission-metadata-noop/current-v5-tool-stop/graph-restored.log",
+            "sha256": "1205ce1c78b282cb05598aa799975345cd144ed003ccbb9fe9ed601e1dc650a3"
+          }
+        ],
+        "command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "selection": null,
+        "original_full_run": null,
+        "qualification_scope": "Full 63 tests in frozen Python owner population",
+        "command_provenance": {
+          "status": "EXPLICIT_COMMAND_IN_PRESERVED_MUTATION_RECEIPT",
+          "runner": {
+            "path": "tmp/probes/v0216-20261010/run-f03-python-mutants-continuation.cjs",
+            "sha256": "b8f8eb85fac50ae1bb01ddf64835ee0fd7fd79435943ebf3c4cfb7cd10363c0a"
+          },
+          "parent_command_record": {
+            "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-python-mutations-continuation.json",
+            "sha256": "f98a5a8c4beee44cb8a27b7479bdbb041105aef108ebc9aaf3d5bf4f45c7918c"
+          },
+          "raw_receipt": {
+            "path": "tmp/probes/v0216-20261010/mutants/admission-metadata-noop/current-v5-tool-stop/receipt.json",
+            "sha256": "eda46a315b55ac0fca8402d2143c87064d1365eaa219cbf30bf7e410f48e4533"
+          },
+          "note": "The mutation receipt records executable/argv/cwd."
+        },
+        "baseline_before_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_after_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        }
+      },
+      {
+        "id": "stop-result-revived",
+        "kind": "SEMANTIC_MUTANT",
+        "killed_behaviorally": true,
+        "baseline_before": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "mutant_exit_code": 1,
+        "baseline_after": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "source_digest": "32f7fd72de2b54ccd6d9d3b7bb51ab9f0d2660681d0227b45fbc5cc24a9f67ea",
+        "restored": true,
+        "patches": [
+          {
+            "file": "tui_gateway/server.py",
+            "from": "if notes and not session.get(\"_turn_cancel_requested\"):",
+            "to": "if notes:",
+            "before_sha256": "c00eac79e016eb39b7cf72faf1a7e9afa38443a6419b6f82ee192c3019dfa7b4",
+            "after_sha256": "4ecf45ee36e6786e728cf5ba9c74c2312c1395417941f642f3ab96fb59a01d6b"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/stop-result-revived/current-v5-tool-stop/receipt.json",
+            "sha256": "cf626e763c7fdd877f06b7084645aaa2531cce545b4e641131f11e0b4ed22617"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/stop-result-revived/current-v5-tool-stop/baseline-before.log",
+            "sha256": "53ca5603eaa55870c845a8c744c647a8d7727a69e692909f0ab845bab8bb66a7"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/stop-result-revived/current-v5-tool-stop/mutant.log",
+            "sha256": "1c2840d47c42da27878f4f5e8d1770872b1d0b3534f0635b3f5ebb1f45483de4"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/stop-result-revived/current-v5-tool-stop/baseline-after.log",
+            "sha256": "e7a7f4ffe35534bd221f4fc8399002f016f6f918ef5260bf470200614bc7eb33"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/stop-result-revived/current-v5-tool-stop/graph-before.log",
+            "sha256": "df89625cf3561d27967b8bc67c4cc1aec35a3f4c8cd29cef63f5faf78b55875b"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/stop-result-revived/current-v5-tool-stop/graph-after.log",
+            "sha256": "faf50316cbc4c6e89ad73843037c17a9626aa79225f513f20a051da632432417"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/stop-result-revived/current-v5-tool-stop/graph-restored.log",
+            "sha256": "28a86e7040d731ccc3017b7fcb452fcf1589a0f3db5fb91b197666a543410fa9"
+          }
+        ],
+        "command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "selection": null,
+        "original_full_run": null,
+        "qualification_scope": "Full 63 tests in frozen Python owner population",
+        "command_provenance": {
+          "status": "EXPLICIT_COMMAND_IN_PRESERVED_MUTATION_RECEIPT",
+          "runner": {
+            "path": "tmp/probes/v0216-20261010/run-f03-python-mutants-continuation.cjs",
+            "sha256": "b8f8eb85fac50ae1bb01ddf64835ee0fd7fd79435943ebf3c4cfb7cd10363c0a"
+          },
+          "parent_command_record": {
+            "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-python-mutations-continuation.json",
+            "sha256": "f98a5a8c4beee44cb8a27b7479bdbb041105aef108ebc9aaf3d5bf4f45c7918c"
+          },
+          "raw_receipt": {
+            "path": "tmp/probes/v0216-20261010/mutants/stop-result-revived/current-v5-tool-stop/receipt.json",
+            "sha256": "cf626e763c7fdd877f06b7084645aaa2531cce545b4e641131f11e0b4ed22617"
+          },
+          "note": "The mutation receipt records executable/argv/cwd."
+        },
+        "baseline_before_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_after_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        }
+      },
+      {
+        "id": "stop-admission-allowed",
+        "kind": "SEMANTIC_MUTANT",
+        "killed_behaviorally": true,
+        "baseline_before": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "mutant_exit_code": 1,
+        "baseline_after": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "source_digest": "32f7fd72de2b54ccd6d9d3b7bb51ab9f0d2660681d0227b45fbc5cc24a9f67ea",
+        "restored": true,
+        "patches": [
+          {
+            "file": "tui_gateway/server.py",
+            "from": "        if session.get(\"_turn_cancel_requested\"):\n            return None",
+            "to": "        if False:\n            return None",
+            "before_sha256": "c00eac79e016eb39b7cf72faf1a7e9afa38443a6419b6f82ee192c3019dfa7b4",
+            "after_sha256": "7298fc390b5c2c93d15841d72beaa2fd36862c977299d116aba7ebfaf1fe7ae8"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/stop-admission-allowed/current-v5-tool-stop/receipt.json",
+            "sha256": "1895b0d81f80dad6ae4b6b9112515f9d8b4539945540031d112090b05823c87d"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/stop-admission-allowed/current-v5-tool-stop/baseline-before.log",
+            "sha256": "2f574aa8ee96fc8b3cf50b0a58e1d027bdc5920280e3a1a74e4a316effe9de9c"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/stop-admission-allowed/current-v5-tool-stop/mutant.log",
+            "sha256": "23c9858442f7300a1ba8471eec556a4b879a2b081202b87c77264ad27e319ba3"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/stop-admission-allowed/current-v5-tool-stop/baseline-after.log",
+            "sha256": "4a4a3e4627ccffeff52bcc77e0faa05ed646064fb34e9106a487572b9775178d"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/stop-admission-allowed/current-v5-tool-stop/graph-before.log",
+            "sha256": "447d8fb2b3873cf5edddb2fc1879abc6ba4af2323eb51dc95e8bdce554a99520"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/stop-admission-allowed/current-v5-tool-stop/graph-after.log",
+            "sha256": "95c8477ac20fc2dc089e3d2dc0e3be769e1e153552982d94b55379b63e0bb4f2"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/stop-admission-allowed/current-v5-tool-stop/graph-restored.log",
+            "sha256": "b247c134ba06818d88b4480d7750ad24757c380af4c587c3a03f4b70820e48b7"
+          }
+        ],
+        "command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "selection": null,
+        "original_full_run": null,
+        "qualification_scope": "Full 63 tests in frozen Python owner population",
+        "command_provenance": {
+          "status": "EXPLICIT_COMMAND_IN_PRESERVED_MUTATION_RECEIPT",
+          "runner": {
+            "path": "tmp/probes/v0216-20261010/run-f03-python-mutants-continuation.cjs",
+            "sha256": "b8f8eb85fac50ae1bb01ddf64835ee0fd7fd79435943ebf3c4cfb7cd10363c0a"
+          },
+          "parent_command_record": {
+            "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-python-mutations-continuation.json",
+            "sha256": "f98a5a8c4beee44cb8a27b7479bdbb041105aef108ebc9aaf3d5bf4f45c7918c"
+          },
+          "raw_receipt": {
+            "path": "tmp/probes/v0216-20261010/mutants/stop-admission-allowed/current-v5-tool-stop/receipt.json",
+            "sha256": "1895b0d81f80dad6ae4b6b9112515f9d8b4539945540031d112090b05823c87d"
+          },
+          "note": "The mutation receipt records executable/argv/cwd."
+        },
+        "baseline_before_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_after_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        }
+      },
+      {
+        "id": "idle-stop-flag-retained",
+        "kind": "SEMANTIC_MUTANT",
+        "killed_behaviorally": true,
+        "baseline_before": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "mutant_exit_code": 1,
+        "baseline_after": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "source_digest": "32f7fd72de2b54ccd6d9d3b7bb51ab9f0d2660681d0227b45fbc5cc24a9f67ea",
+        "restored": true,
+        "patches": [
+          {
+            "file": "tui_gateway/methods_session.py",
+            "from": "            if not session.get(\"running\"):\n                session[\"_turn_cancel_requested\"] = False",
+            "to": "            if not session.get(\"running\"):\n                session[\"_turn_cancel_requested\"] = True",
+            "before_sha256": "78d1aae367d51e3ca5369e247e80cf65143d3212d220d5d4c69e0b5d20e5535f",
+            "after_sha256": "1bf720ff4dd47b0b37f8e73e3a7ad49dead355942dab532970808d3d04a1ac42"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/idle-stop-flag-retained/current-v5-tool-stop/receipt.json",
+            "sha256": "f4dbcbdefb53b4f644a75f1b074e6f76434eb267a7179a01869277a9562ce42d"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/idle-stop-flag-retained/current-v5-tool-stop/baseline-before.log",
+            "sha256": "2d3276843a500dbe269aba02a7adc8d03ccd223f5334203850f9922054fbef6e"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/idle-stop-flag-retained/current-v5-tool-stop/mutant.log",
+            "sha256": "014bd5a728cfd0475892fd3b390cb115bbfd06506152c30d458852eb6da4c1d5"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/idle-stop-flag-retained/current-v5-tool-stop/baseline-after.log",
+            "sha256": "d2e75e6d2b1a903f0fedea340fcb3cbab2268c055468eb63baddd81df423af65"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/idle-stop-flag-retained/current-v5-tool-stop/graph-before.log",
+            "sha256": "b5e9f50de4c3f4cc7568a27ce222a6bf7c19d86156a4479101c89a118b380aa3"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/idle-stop-flag-retained/current-v5-tool-stop/graph-after.log",
+            "sha256": "7fb4dd23265ce135aaae2aefb17480148afb5771d62b8ee7d136109e9069212f"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/idle-stop-flag-retained/current-v5-tool-stop/graph-restored.log",
+            "sha256": "c9d2dea014df994a032b920bdf5c6fbd11d260322340f899dc68981648d4777f"
+          }
+        ],
+        "command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "selection": null,
+        "original_full_run": null,
+        "qualification_scope": "Full 63 tests in frozen Python owner population",
+        "command_provenance": {
+          "status": "EXPLICIT_COMMAND_IN_PRESERVED_MUTATION_RECEIPT",
+          "runner": {
+            "path": "tmp/probes/v0216-20261010/run-f03-python-mutants-continuation.cjs",
+            "sha256": "b8f8eb85fac50ae1bb01ddf64835ee0fd7fd79435943ebf3c4cfb7cd10363c0a"
+          },
+          "parent_command_record": {
+            "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-python-mutations-continuation.json",
+            "sha256": "f98a5a8c4beee44cb8a27b7479bdbb041105aef108ebc9aaf3d5bf4f45c7918c"
+          },
+          "raw_receipt": {
+            "path": "tmp/probes/v0216-20261010/mutants/idle-stop-flag-retained/current-v5-tool-stop/receipt.json",
+            "sha256": "f4dbcbdefb53b4f644a75f1b074e6f76434eb267a7179a01869277a9562ce42d"
+          },
+          "note": "The mutation receipt records executable/argv/cwd."
+        },
+        "baseline_before_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_after_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        }
+      },
+      {
+        "id": "claimed-steer-restored",
+        "kind": "SEMANTIC_MUTANT",
+        "killed_behaviorally": true,
+        "baseline_before": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "mutant_exit_code": 1,
+        "baseline_after": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "source_digest": "32f7fd72de2b54ccd6d9d3b7bb51ab9f0d2660681d0227b45fbc5cc24a9f67ea",
+        "restored": true,
+        "patches": [
+          {
+            "file": "tui_gateway/server.py",
+            "from": "if queued.get(\"_explicit_steer\") and session.get(\"_turn_cancel_requested\"):",
+            "to": "if False:",
+            "before_sha256": "c00eac79e016eb39b7cf72faf1a7e9afa38443a6419b6f82ee192c3019dfa7b4",
+            "after_sha256": "a994496dcfeddbd92972b5a85a68ee98cece58c25d1abb7ef1cfaac0bcb22ac9"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/claimed-steer-restored/current-v5-tool-stop/receipt.json",
+            "sha256": "467b79e98dbaf39472b5634e2136d6393923c60fa3a6e1e835de7f7b137afc40"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/claimed-steer-restored/current-v5-tool-stop/baseline-before.log",
+            "sha256": "70a3c3b72b3d32465fc2fe013c4e97976aeebe1c71d53e26c5b582b3bd3ace13"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/claimed-steer-restored/current-v5-tool-stop/mutant.log",
+            "sha256": "4f2977898fd2887fe2ac86617dafd164979f3c327b129202a3b95007a38b9cb2"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/claimed-steer-restored/current-v5-tool-stop/baseline-after.log",
+            "sha256": "0da87f5ece3b9260558ace3f72c80efd0822f02d43cee3543c8cf7e730cc1d28"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/claimed-steer-restored/current-v5-tool-stop/graph-before.log",
+            "sha256": "8dcf96633436a10e66a1e8c66fcb4114bca96b1c47abe4a191e96a906eaf25f2"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/claimed-steer-restored/current-v5-tool-stop/graph-after.log",
+            "sha256": "4c770e9de12b2861151eb6a167876824e1fa64e512b1c8c28020bd4b0b41cc6d"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/claimed-steer-restored/current-v5-tool-stop/graph-restored.log",
+            "sha256": "3e7f8845c3e246403a81c306c4b29cbe24e257c94344e69c3e01aaf9ce0629b3"
+          }
+        ],
+        "command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "selection": null,
+        "original_full_run": null,
+        "qualification_scope": "Full 63 tests in frozen Python owner population",
+        "command_provenance": {
+          "status": "EXPLICIT_COMMAND_IN_PRESERVED_MUTATION_RECEIPT",
+          "runner": {
+            "path": "tmp/probes/v0216-20261010/run-f03-python-mutants-continuation.cjs",
+            "sha256": "b8f8eb85fac50ae1bb01ddf64835ee0fd7fd79435943ebf3c4cfb7cd10363c0a"
+          },
+          "parent_command_record": {
+            "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-python-mutations-continuation.json",
+            "sha256": "f98a5a8c4beee44cb8a27b7479bdbb041105aef108ebc9aaf3d5bf4f45c7918c"
+          },
+          "raw_receipt": {
+            "path": "tmp/probes/v0216-20261010/mutants/claimed-steer-restored/current-v5-tool-stop/receipt.json",
+            "sha256": "467b79e98dbaf39472b5634e2136d6393923c60fa3a6e1e835de7f7b137afc40"
+          },
+          "note": "The mutation receipt records executable/argv/cwd."
+        },
+        "baseline_before_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_after_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        }
+      },
+      {
+        "id": "busy-stop-fallback-allowed",
+        "kind": "SEMANTIC_MUTANT",
+        "killed_behaviorally": true,
+        "baseline_before": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "mutant_exit_code": 1,
+        "baseline_after": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "source_digest": "32f7fd72de2b54ccd6d9d3b7bb51ab9f0d2660681d0227b45fbc5cc24a9f67ea",
+        "restored": true,
+        "patches": [
+          {
+            "file": "tui_gateway/server.py",
+            "from": "if mode == \"steer\" and session.get(\"_turn_cancel_requested\"):",
+            "to": "if False:",
+            "before_sha256": "c00eac79e016eb39b7cf72faf1a7e9afa38443a6419b6f82ee192c3019dfa7b4",
+            "after_sha256": "e904244f7f781b753a5a015838962407d934902e212c75580b6fb2a52067c9ea"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/busy-stop-fallback-allowed/current-v5-tool-stop/receipt.json",
+            "sha256": "1d5dfffe79f70440386202b92ddf683069d28ff924367fcd4390be6f8d3585fd"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/busy-stop-fallback-allowed/current-v5-tool-stop/baseline-before.log",
+            "sha256": "0604263aeb417c1078707170a5803d1b817acc623bb04cb9c8375a565f7035bf"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/busy-stop-fallback-allowed/current-v5-tool-stop/mutant.log",
+            "sha256": "874f33064685192d7198924afcea704fc82b1dd17caa6e955c7e603241c09aa7"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/busy-stop-fallback-allowed/current-v5-tool-stop/baseline-after.log",
+            "sha256": "da257c97ae6031f236b5d2c900b3902fc759d3eb043b5e669e0cfb5a32cfc18a"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/busy-stop-fallback-allowed/current-v5-tool-stop/graph-before.log",
+            "sha256": "1a051876b86cddb0c970e09a46ed4d40bd42aed2f418b5a31a11dd88816683d3"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/busy-stop-fallback-allowed/current-v5-tool-stop/graph-after.log",
+            "sha256": "28a86e7040d731ccc3017b7fcb452fcf1589a0f3db5fb91b197666a543410fa9"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/busy-stop-fallback-allowed/current-v5-tool-stop/graph-restored.log",
+            "sha256": "3e7f8845c3e246403a81c306c4b29cbe24e257c94344e69c3e01aaf9ce0629b3"
+          }
+        ],
+        "command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "selection": null,
+        "original_full_run": null,
+        "qualification_scope": "Full 63 tests in frozen Python owner population",
+        "command_provenance": {
+          "status": "EXPLICIT_COMMAND_IN_PRESERVED_MUTATION_RECEIPT",
+          "runner": {
+            "path": "tmp/probes/v0216-20261010/run-f03-python-mutants-continuation.cjs",
+            "sha256": "b8f8eb85fac50ae1bb01ddf64835ee0fd7fd79435943ebf3c4cfb7cd10363c0a"
+          },
+          "parent_command_record": {
+            "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-python-mutations-continuation.json",
+            "sha256": "f98a5a8c4beee44cb8a27b7479bdbb041105aef108ebc9aaf3d5bf4f45c7918c"
+          },
+          "raw_receipt": {
+            "path": "tmp/probes/v0216-20261010/mutants/busy-stop-fallback-allowed/current-v5-tool-stop/receipt.json",
+            "sha256": "1d5dfffe79f70440386202b92ddf683069d28ff924367fcd4390be6f8d3585fd"
+          },
+          "note": "The mutation receipt records executable/argv/cwd."
+        },
+        "baseline_before_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_after_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        }
+      },
+      {
+        "id": "cancelled-tool-steer-replayed",
+        "kind": "SEMANTIC_MUTANT",
+        "killed_behaviorally": true,
+        "baseline_before": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "mutant_exit_code": 1,
+        "baseline_after": {
+          "exit_code": 0,
+          "passed": 63
+        },
+        "source_digest": "32f7fd72de2b54ccd6d9d3b7bb51ab9f0d2660681d0227b45fbc5cc24a9f67ea",
+        "restored": true,
+        "patches": [
+          {
+            "file": "tui_gateway/server.py",
+            "from": "                    drain_steer()",
+            "to": "                    pass",
+            "before_sha256": "c00eac79e016eb39b7cf72faf1a7e9afa38443a6419b6f82ee192c3019dfa7b4",
+            "after_sha256": "aabf220f1a4813ed8bfa7ed29f7a118f1df0973ca254ef5c714561875f071955"
+          }
+        ],
+        "evidence": [
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/cancelled-tool-steer-replayed/current-v5-tool-stop/receipt.json",
+            "sha256": "cbe4f2cd10915b1df8483f813035023c7a03ac60aa7c0a00ed9c44f0d7e82bde"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/cancelled-tool-steer-replayed/current-v5-tool-stop/baseline-before.log",
+            "sha256": "6fd21181f469ed45bf718b6f902f09940305f89de5a0905e48a4ba839a239259"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/cancelled-tool-steer-replayed/current-v5-tool-stop/mutant.log",
+            "sha256": "249fb397473304cb2391554c8a73142bec99e4769787ca5c62a80d8264ad1596"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/cancelled-tool-steer-replayed/current-v5-tool-stop/baseline-after.log",
+            "sha256": "1156aa5490da4e9d37ecf20ba976feacd3ad8dfa365b02573f74879491d8812f"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/cancelled-tool-steer-replayed/current-v5-tool-stop/graph-before.log",
+            "sha256": "788ed3c6242f407f12b6b97421db6efc4ad95ca5c9db5c83b1af5721a152885a"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/cancelled-tool-steer-replayed/current-v5-tool-stop/graph-after.log",
+            "sha256": "4c770e9de12b2861151eb6a167876824e1fa64e512b1c8c28020bd4b0b41cc6d"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/cancelled-tool-steer-replayed/current-v5-tool-stop/graph-restored.log",
+            "sha256": "3e7f8845c3e246403a81c306c4b29cbe24e257c94344e69c3e01aaf9ce0629b3"
+          }
+        ],
+        "command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "selection": null,
+        "original_full_run": null,
+        "qualification_scope": "Full 63 tests in frozen Python owner population",
+        "command_provenance": {
+          "status": "EXPLICIT_COMMAND_IN_PRESERVED_MUTATION_RECEIPT",
+          "runner": {
+            "path": "tmp/probes/v0216-20261010/run-f03-python-mutants-continuation.cjs",
+            "sha256": "b8f8eb85fac50ae1bb01ddf64835ee0fd7fd79435943ebf3c4cfb7cd10363c0a"
+          },
+          "parent_command_record": {
+            "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-python-mutations-continuation.json",
+            "sha256": "f98a5a8c4beee44cb8a27b7479bdbb041105aef108ebc9aaf3d5bf4f45c7918c"
+          },
+          "raw_receipt": {
+            "path": "tmp/probes/v0216-20261010/mutants/cancelled-tool-steer-replayed/current-v5-tool-stop/receipt.json",
+            "sha256": "cbe4f2cd10915b1df8483f813035023c7a03ac60aa7c0a00ed9c44f0d7e82bde"
+          },
+          "note": "The mutation receipt records executable/argv/cwd."
+        },
+        "baseline_before_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_after_command": {
+          "executable": "C:/Program Files/Git/bin/bash.exe",
+          "args": [
+            "scripts/run_tests.sh",
+            "--paths",
+            "tests/cli/test_steer_alias_contract.py;tests/gateway/test_steer_alias_contract.py;tests/tui_gateway/test_steer_alias_contract.py",
+            "--file-retries",
+            "0",
+            "--",
+            "--tb=short"
+          ],
+          "cwd": "<owned-mutant-root>"
+        }
+      },
+      {
+        "id": "clarify-autoskip",
+        "kind": "SEMANTIC_MUTANT",
+        "killed_behaviorally": true,
+        "baseline_before": {
+          "exit_code": 0,
+          "passed": 36
+        },
+        "mutant_exit_code": 1,
+        "expected_behavioral_failures": "6 failed",
+        "baseline_after": {
+          "exit_code": 0,
+          "passed": 36
+        },
+        "source_digest": "78f6832f21a530c3deceddeab63964c4c40c028a263537d855c37be8e0131ad6",
+        "restored": true,
+        "mutation": {
+          "source": "apps/desktop/src/app/chat/composer/hooks/use-composer-submit.ts",
+          "from": "payloadPresent && !slashInvocation && !queueEdit && hasClarifyRequest(sessionId)",
+          "to": "payloadPresent && !queueEdit && hasClarifyRequest(sessionId)",
+          "before_sha256": "ce5e39acc68b165b34921ef183422bf142713b7a1f5d77cf35c054f717c47dc1",
+          "after_sha256": "9f435fba303ada27c2638850796dbeb560af4c492fbd00f14da7db1f523b51c9"
+        },
+        "evidence": [
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/composer-clarify-autoskip/retry-v2/receipt.json",
+            "sha256": "9736016247184419fc4caddbdcbe68d640d44b151fab4f2d7eabdf380adbfecc"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/composer-clarify-autoskip/retry-v2/baseline-before.log",
+            "sha256": "48f101dd00d23a8ac304a8bf1d5aacd3511cd9aeb486fd079f0e433b034e464e"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/composer-clarify-autoskip/retry-v2/mutant.log",
+            "sha256": "98b3dd362046d507cab13026f9a87cf016d3d1a22ca04d803302544bff568520"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/composer-clarify-autoskip/retry-v2/baseline-after.log",
+            "sha256": "76e5ebcc0c1d96f80abf3ad2be54e54b70c163aff2fc863037b9556f576c9178"
+          }
+        ],
+        "command": {
+          "executable": "<user-home>/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe",
+          "args": [
+            "<integration-root>/node_modules/vitest/vitest.mjs",
+            "run",
+            "--root",
+            "<owned-mutant-root>/apps/desktop",
+            "--project",
+            "ui",
+            "src/app/chat/composer/hooks/use-composer-submit.test.tsx",
+            "--maxWorkers",
+            "1"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_before_command": {
+          "executable": "<user-home>/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe",
+          "args": [
+            "<integration-root>/node_modules/vitest/vitest.mjs",
+            "run",
+            "--root",
+            "<owned-mutant-root>/apps/desktop",
+            "--project",
+            "ui",
+            "src/app/chat/composer/hooks/use-composer-submit.test.tsx",
+            "--maxWorkers",
+            "1"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_after_command": {
+          "executable": "<user-home>/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe",
+          "args": [
+            "<integration-root>/node_modules/vitest/vitest.mjs",
+            "run",
+            "--root",
+            "<owned-mutant-root>/apps/desktop",
+            "--project",
+            "ui",
+            "src/app/chat/composer/hooks/use-composer-submit.test.tsx",
+            "--maxWorkers",
+            "1"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "command_provenance": {
+          "status": "RECOVERED_FROM_RETAINED_RUNNER_SOURCE_AND_TARGET_RECEIPT",
+          "runner": {
+            "path": "tmp/probes/v0216-20261010/run-f03-composer-mutants.cjs",
+            "sha256": "c3e74625d88bbd29ac6a4a5383b3215695871b51c865abe5b704d7f74868c7dd"
+          },
+          "raw_receipt": {
+            "path": "tmp/probes/v0216-20261010/mutants/composer-clarify-autoskip/retry-v2/receipt.json",
+            "sha256": "9736016247184419fc4caddbdcbe68d640d44b151fab4f2d7eabdf380adbfecc"
+          },
+          "per_child_command_record": "UNAVAILABLE",
+          "note": "Exact argv is the fixed args declaration used unchanged for before/mutant/after in the retained retry-v2 runner; cwd and dependency root come from the preserved target receipt. Source digest captured retrospectively, not a claimed contemporaneous process argv observation."
+        }
+      },
+      {
+        "id": "mcpsetup-autoskip",
+        "kind": "SEMANTIC_MUTANT",
+        "killed_behaviorally": true,
+        "baseline_before": {
+          "exit_code": 0,
+          "passed": 36
+        },
+        "mutant_exit_code": 1,
+        "expected_behavioral_failures": "3 failed",
+        "baseline_after": {
+          "exit_code": 0,
+          "passed": 36
+        },
+        "source_digest": "78f6832f21a530c3deceddeab63964c4c40c028a263537d855c37be8e0131ad6",
+        "restored": true,
+        "mutation": {
+          "source": "apps/desktop/src/app/chat/composer/hooks/use-composer-submit.ts",
+          "from": "payloadPresent && !slashInvocation && !queueEdit && hasMcpSetupRequest(sessionId)",
+          "to": "payloadPresent && !queueEdit && hasMcpSetupRequest(sessionId)",
+          "before_sha256": "ce5e39acc68b165b34921ef183422bf142713b7a1f5d77cf35c054f717c47dc1",
+          "after_sha256": "6ca7c49b78104132ba7d37209c4442c6e3a96b930961c9bd4f2ee9655ef9b01f"
+        },
+        "evidence": [
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/composer-mcpsetup-autoskip/retry-v2/receipt.json",
+            "sha256": "40d96a852761cab376f2277439d46aa65251eca47c904cd22c36c184e70febad"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/composer-mcpsetup-autoskip/retry-v2/baseline-before.log",
+            "sha256": "bc1ea06fb4f8ec6883043b3d6aef57a42ab529638b85411715324f6292702c06"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/composer-mcpsetup-autoskip/retry-v2/mutant.log",
+            "sha256": "864665de3bbe3080744c0e93ed1a5f3e6feec74c6a0e2c0edfe337957fcc4b79"
+          },
+          {
+            "path": "tmp/probes/v0216-20261010/mutants/composer-mcpsetup-autoskip/retry-v2/baseline-after.log",
+            "sha256": "04fe0c3016a7b0e2a703360b583c2ea55931564d872ba8788ca5b5cb237fff51"
+          }
+        ],
+        "command": {
+          "executable": "<user-home>/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe",
+          "args": [
+            "<integration-root>/node_modules/vitest/vitest.mjs",
+            "run",
+            "--root",
+            "<owned-mutant-root>/apps/desktop",
+            "--project",
+            "ui",
+            "src/app/chat/composer/hooks/use-composer-submit.test.tsx",
+            "--maxWorkers",
+            "1"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_before_command": {
+          "executable": "<user-home>/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe",
+          "args": [
+            "<integration-root>/node_modules/vitest/vitest.mjs",
+            "run",
+            "--root",
+            "<owned-mutant-root>/apps/desktop",
+            "--project",
+            "ui",
+            "src/app/chat/composer/hooks/use-composer-submit.test.tsx",
+            "--maxWorkers",
+            "1"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "baseline_after_command": {
+          "executable": "<user-home>/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe",
+          "args": [
+            "<integration-root>/node_modules/vitest/vitest.mjs",
+            "run",
+            "--root",
+            "<owned-mutant-root>/apps/desktop",
+            "--project",
+            "ui",
+            "src/app/chat/composer/hooks/use-composer-submit.test.tsx",
+            "--maxWorkers",
+            "1"
+          ],
+          "cwd": "<owned-mutant-root>"
+        },
+        "command_provenance": {
+          "status": "RECOVERED_FROM_RETAINED_RUNNER_SOURCE_AND_TARGET_RECEIPT",
+          "runner": {
+            "path": "tmp/probes/v0216-20261010/run-f03-composer-mutants.cjs",
+            "sha256": "c3e74625d88bbd29ac6a4a5383b3215695871b51c865abe5b704d7f74868c7dd"
+          },
+          "raw_receipt": {
+            "path": "tmp/probes/v0216-20261010/mutants/composer-mcpsetup-autoskip/retry-v2/receipt.json",
+            "sha256": "40d96a852761cab376f2277439d46aa65251eca47c904cd22c36c184e70febad"
+          },
+          "per_child_command_record": "UNAVAILABLE",
+          "note": "Exact argv is the fixed args declaration used unchanged for before/mutant/after in the retained retry-v2 runner; cwd and dependency root come from the preserved target receipt. Source digest captured retrospectively, not a claimed contemporaneous process argv observation."
+        }
+      }
+    ],
+    "killed_behaviorally": 19,
+    "survived": 0,
+    "not_covered": 0,
+    "timed_out": 0,
+    "invalid_or_incompetent": 0,
+    "equivalent_reviewed": 0,
+    "no_op_success_killed": true,
+    "all_deny_killed": true,
+    "all_required_invariants_covered": true,
+    "obsolete_evidence_note": "Earlier invalid/obsolete mutation runs are preserved separately and excluded from this final population.",
+    "frozen_qualification_criteria": "Mutant exit 1, real behavioral AssertionError and failed test identity; no collection/syntax/import/AttributeError/TypeError failure; exact source restore and full baseline GREEN. Incidental KeyErrors are disclosed separately and never substitute for behavioral assertion evidence."
+  },
+  "e2e": {
+    "positive_effect": "Real tool result contains accepted nonce once; provider prefix unchanged; idle next-turn ledger agrees with transcript",
+    "denial_no_effect": "Usage rejection leaves pending real tool; Stop removes accepted nonce from fresh provider request",
+    "persistence_restart": "No new persisted alias state; static source/build configuration. General restart qualification belongs to W01.",
+    "profile_isolation": "CLI/Gateway denial and session isolation contracts exercised in Python; no native profile-switch qualification claimed here",
+    "real_protocol": "External OpenAI-compatible loopback provider; real Electron/Python/RPC/clarify handlers",
+    "native_windows": true,
+    "packaged_artifact": false,
+    "external_client": false,
+    "status": "NATIVE_DEVELOPMENT_EFFECT_PASS",
+    "raw_native_artifacts": [
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/.last-run.json",
+        "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--s-em-cf82c-y-without-stopping-the-tool/attachments/agent-log-1765bcad3f75c3fe9ce8f51f517d68342710ee5e.log",
+        "sha256": "86aa67c5851819825d434284e1904fb0436a39941010be6b32562af014136166"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--s-em-cf82c-y-without-stopping-the-tool/attachments/desktop-log-617affebcff116232a7eb6aeea480d347d2a7b21.log",
+        "sha256": "3829205bddcd2c6591f9f7b0556374a018426b907d4b1c96322aebe7fd399f39"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--s-em-cf82c-y-without-stopping-the-tool/attachments/errors-log-ad30ecc2ae8c2327d98e5367e9b4d89564941730.log",
+        "sha256": "b1dfe49416602ecf1406f3ec3dfe314af2ffc149d7fb6a2c357d520fb1949894"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--s-em-cf82c-y-without-stopping-the-tool/attachments/gui-log-e6ad31acf58292c4efff7b7fabe5d017d23e71ba.log",
+        "sha256": "e6f3811fec388cc18401fe6a21c19e65df1f86caeeedcfe5fd9504b48f8f9695"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--s-em-cf82c-y-without-stopping-the-tool/test-finished-1.png",
+        "sha256": "fa2831663d6f2cff74b049463bf04fed686285e2e91052f6269340b14bd7d0ef"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--s-em-cf82c-y-without-stopping-the-tool/trace.zip",
+        "sha256": "cb5917550db0d6ac752c3ab07400a8950b1c86f1a80bcca5012167f5f23cdde0"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--S-re-97a33-y-without-stopping-the-tool/attachments/agent-log-66727c9ca54be261ea78643a3eff25a4521a7d17.log",
+        "sha256": "5a9abc3519c0a25a442fd3e4af30649358e9160260f5e198164c8e4b2f6c06f0"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--S-re-97a33-y-without-stopping-the-tool/attachments/desktop-log-1b7712e172939dfb65c2a89ba46396b4ae7cc3f1.log",
+        "sha256": "bab1b09b32d2b8bb33fefd457a38f8af841527dc979ca5c138b4e31bc677d56d"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--S-re-97a33-y-without-stopping-the-tool/attachments/errors-log-276717dee4b4461dcf805df4b04578b178853e12.log",
+        "sha256": "e042ea5041a9c2ecc4e344299f6ced8d4e0193618ea76e2a82b906ce3bf1b53b"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--S-re-97a33-y-without-stopping-the-tool/attachments/gui-log-6e1639a127736a65bb1d2a4561a9a55aa08475e0.log",
+        "sha256": "e1b78448366749e82a9a1c2ca7237d99ce893b1e124980bc96e685e9a19b14b9"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--S-re-97a33-y-without-stopping-the-tool/test-finished-1.png",
+        "sha256": "5f38d5802973c858dd100ef7704230964261c74ac6abcd119b18f6a7f0e5696d"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--S-re-97a33-y-without-stopping-the-tool/trace.zip",
+        "sha256": "7d2808042c0da770ecbf8e0509fd0912d29ba039190e489f9d39b056e032ce53"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--s-re-e0c2c-y-without-stopping-the-tool/attachments/agent-log-bd3e50db32a0e8c39dc4d0b38545063b8bbdc5ae.log",
+        "sha256": "6f2f75e73c9d7008bf94c28d6c2b57f51715d6edb7023b4700a40d57e9f1c51d"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--s-re-e0c2c-y-without-stopping-the-tool/attachments/desktop-log-7567d1c7e17fdb7d04276bbc850b7c263a1c24f8.log",
+        "sha256": "e18ed85254dee436f1b615d3a2b32222b9eab31d75badfa32e1d4754158d1e72"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--s-re-e0c2c-y-without-stopping-the-tool/attachments/errors-log-e126ee3a1f70a3e11df455c141aa3ca58eee1ae7.log",
+        "sha256": "64b52c5596cf6c42752aafaf584a3cb0bce743268f8ae82616adf427ee63095d"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--s-re-e0c2c-y-without-stopping-the-tool/attachments/gui-log-1b8b4325e441421e268cd149d9079d0fc5e435ca.log",
+        "sha256": "de6ef0e41ddf672f386de8359d55ad7918863e621868b7f87c010035a7c4ea3d"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--s-re-e0c2c-y-without-stopping-the-tool/test-finished-1.png",
+        "sha256": "f5c958dadd80c8bf6d1a344d87d8fbc8be6b66121c00a71c4f80e93e8c635492"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--s-re-e0c2c-y-without-stopping-the-tool/trace.zip",
+        "sha256": "cf50dde688a7e5a62577ff0f96059d55e47b9914c8c5926e364bd99b7d4bee4d"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--s-wh-d98f0-y-without-stopping-the-tool/attachments/agent-log-f3c119aa6d718474b13788a3614b2ce3110dacdd.log",
+        "sha256": "7d9d8960e4575cfe683c4b1a3fe7cedd37715c2afaab49394c880dfc47b6069e"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--s-wh-d98f0-y-without-stopping-the-tool/attachments/desktop-log-2c576799c76e287f1236982cf7418f8d3f13c2c8.log",
+        "sha256": "8280d827194738a2e6d27dd829a4e38594a45430fd5f21ba298a171d2548d01e"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--s-wh-d98f0-y-without-stopping-the-tool/attachments/errors-log-35d500d2e298fc86b1926adb7b13d21773d95b8a.log",
+        "sha256": "169d9d87f3163e4e35802f335e673c8f70455ccb88378d620cd93200e9aad1ba"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--s-wh-d98f0-y-without-stopping-the-tool/attachments/gui-log-fd5bfe5e28c6a304f8a557a0614922080225c39a.log",
+        "sha256": "3ffc223474286018e3fb4a2a58eaafed0dfcfa56586b51a75c0335bd9615228d"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--s-wh-d98f0-y-without-stopping-the-tool/test-finished-1.png",
+        "sha256": "8d68f303f20cf57028811a4a4a4d86d6d98309aa11b754271a2b07cd182db010"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--s-wh-d98f0-y-without-stopping-the-tool/trace.zip",
+        "sha256": "1e6309f20d28759a40746d65163a8aa050bd955ed0bfbd77041d6e69d195e47f"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--stee-9303c-y-without-stopping-the-tool/attachments/agent-log-095986a693ee393d810d5cd51de1542d7c079ac3.log",
+        "sha256": "00f5122dd1238e64798c8fd9b21f8364ebcc91fb0be9cac03a8171bc1f01731a"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--stee-9303c-y-without-stopping-the-tool/attachments/desktop-log-696e69eda8acd34f33ef5a954c8152b6121e9818.log",
+        "sha256": "4f69860db2ebb61cb25057ee74d02bb5d46c1bae01082d6da4526f91fc508b02"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--stee-9303c-y-without-stopping-the-tool/attachments/errors-log-31722254d2bdfaaed85f659aa61753c1ef46b7f9.log",
+        "sha256": "eac92563fa9b4358bb2113db697fbbd7e9aef25b013a89efdacbd327eb88d77e"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--stee-9303c-y-without-stopping-the-tool/attachments/gui-log-e51d3c38cfa14a7485ac6ef7777783fd451cb913.log",
+        "sha256": "8996394a063351d4942ed2801a523dc63bbd164fa1be3afdb5a3090bed6288a8"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--stee-9303c-y-without-stopping-the-tool/test-finished-1.png",
+        "sha256": "5f38d5802973c858dd100ef7704230964261c74ac6abcd119b18f6a7f0e5696d"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract--stee-9303c-y-without-stopping-the-tool/trace.zip",
+        "sha256": "75e60c4ec908b528c8e2027890950b1cbffa55be40a31252b27c5946b410129b"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract-idle--f6f87-oad-and-existing-transcript/attachments/agent-log-e4c6b7e9d660b46387219e723ee55025529c584b.log",
+        "sha256": "408c1fa8b151ce483dd1b6d60764069837205ac73a2e6066261b94dce4df0e5f"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract-idle--f6f87-oad-and-existing-transcript/attachments/desktop-log-05438e960d274ab85f365fda8adc6eca58e4f44c.log",
+        "sha256": "11070e21e98a13f1b95e0291bb6f9db586dbb88a7804442bf864d56e14fa49e8"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract-idle--f6f87-oad-and-existing-transcript/attachments/errors-log-abea26f6d603205a68e0dff8efa420e68001440b.log",
+        "sha256": "0323542929c6fdaa99a973e3308faf104158257ee1efaa1fcac12cec07a20660"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract-idle--f6f87-oad-and-existing-transcript/attachments/gui-log-868f1e0c3bc432210528ce6c668872da4982e46a.log",
+        "sha256": "49b9149ece250c50cc584a2b9c0da955e682caf71b21f314eacf004d0673304f"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract-idle--f6f87-oad-and-existing-transcript/test-finished-1.png",
+        "sha256": "a9e05e1a31e0432ba2e064a12db59ae11149aba76dedf62f50d72d51abfb8c00"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract-idle--f6f87-oad-and-existing-transcript/trace.zip",
+        "sha256": "c1cb37a0db4baec2f42296586f91093d2305d812d7a39055f40967879096b806"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract-Stop--087cd--idle-s-starts-a-fresh-turn/attachments/agent-log-9a5f2578e354cf667651a32f397c9716cfd7a6fe.log",
+        "sha256": "19f72345149931059a0501d2c5b470e3305485eb2fe60349b7d3bd160495443e"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract-Stop--087cd--idle-s-starts-a-fresh-turn/attachments/desktop-log-f60da2db2e583ac4d8361582e11a48d5a267d432.log",
+        "sha256": "c0cf2dd2352043261ad9d70d787e5adc671c1140a1eaf793a045268db3d5ab0a"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract-Stop--087cd--idle-s-starts-a-fresh-turn/attachments/errors-log-bc79fae964aa96c0bea9ecf1d71b32d809109e8d.log",
+        "sha256": "e45c3d3e84973e7ff581cb2a665290a962c7c91923848d88715c521e9ec24ccc"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract-Stop--087cd--idle-s-starts-a-fresh-turn/attachments/gui-log-7cd53309940ea2449068d95f919d95a6eb1644b3.log",
+        "sha256": "32bb55a4f838c1ca2dc746de04bf90d28e24c59d8169482e8d23d802357bc472"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract-Stop--087cd--idle-s-starts-a-fresh-turn/test-finished-1.png",
+        "sha256": "427a8414b17f2e1e34c043b3c7d08ad1a1f1f07ef0043c3fd3eb0c348f9fcf1b"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-final-json-proof/steer-alias-contract-Stop--087cd--idle-s-starts-a-fresh-turn/trace.zip",
+        "sha256": "c5572ab09cbe15fcdf76a6b0da7a1ef468c821ec89fbdbab70ea427abe0c473e"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-json-proof-attachments/owned-process-exit-audit-0.json",
+        "sha256": "76bf1ebf488db6814871edf912bbcbb365bb6e0d2c1f52c6f971184fc942d92c"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-json-proof-attachments/owned-process-exit-audit-1.json",
+        "sha256": "d9189723b8972332dc56963f544bb24d588df2eb7ceb69a27e6bd23f45a4f1a7"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-json-proof-attachments/owned-process-exit-audit-2.json",
+        "sha256": "0f908b8f38e4b91585e848dd1caec92044832e1c2e620dcf43ee428e63677c62"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-json-proof-attachments/owned-process-exit-audit-3.json",
+        "sha256": "69b9daaa850882d01e401740bd7684e858d86783ad485b316be20c768f8097bb"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-json-proof-attachments/owned-process-exit-audit-4.json",
+        "sha256": "b695f36e0cce67b2d56250fdd964bf43d6e74f79be17567e0f715e8135d1b186"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-json-proof-attachments/owned-process-exit-audit-5.json",
+        "sha256": "c4be579d342d2f15753f35d7f7ae058e3322375cb8ddea4ddfa8c2fcd1735dd3"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-json-proof-attachments/owned-process-exit-audit-6.json",
+        "sha256": "1bf04dc0758e299d77e00d5e01e202aa4d2014babc7c1e1812352acdd4e16d03"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-json-proof-attachments/provider-requests-0.json",
+        "sha256": "55f313f0566b4201f313511ffc8be0473c0c77587ed3d1eb03b35ef02f624672"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-json-proof-attachments/provider-requests-1.json",
+        "sha256": "b8d5a79899ed6d4bd7a83f12f42c65a3285b1321be55c9ff67bfe3f041c5d1f1"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-json-proof-attachments/provider-requests-2.json",
+        "sha256": "0809319ba3ec128767bff6c4666ea5f13c130b15b3923072016e6d8ac0d433e0"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-json-proof-attachments/provider-requests-3.json",
+        "sha256": "889b7a21f6574ed383505f0a0d177d5ac4720eabf330959f2fdef816ca75dc87"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-json-proof-attachments/provider-requests-4.json",
+        "sha256": "c8139e0cd518e1078d2386d07c4a20f2ddf219f78c3018ca92195b47933d81c8"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-json-proof-attachments/provider-requests-5.json",
+        "sha256": "d7a26d0125bbe6a3745a9c6af733d3511b1e0cbd6b3641abf3824eae0bd84cd5"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/native-json-proof-attachments/provider-requests-6.json",
+        "sha256": "355254428b897056e7afa4922b9186651205974025179b94502838f16ccf5723"
+      },
+      {
+        "path": "tmp/probes/v0216-20261010/evidence/f03-native-json-report.json",
+        "sha256": "bd0e97c9ac8fc3fa9c111794a592b841a3ac81451c19dc65785020d78ae024f4"
+      }
+    ]
+  },
+  "codegraph": {
+    "tool": "CodeGraph CLI",
+    "version": "1.6.0",
+    "bindings": [
+      {
+        "base": "606f7e557c13a0789a2420f7adf6181becf60d75",
+        "source_digest": "9903a8a09c9b33010210fa1295dd16ebc02a3ee7ffde978b900a104679116499"
+      }
+    ],
+    "queries": [
+      {
+        "args": [
+          "status"
+        ],
+        "exit_code": 0,
+        "artifact": "f03-qualified-graph-0-status.txt",
+        "sha256": "c1cd13a8b8236276fa0ec00a9d84cd626b54c5fcfe31167eac4378a5d0b68675"
+      },
+      {
+        "args": [
+          "query",
+          "_try_session_steer",
+          "-j",
+          "-p",
+          "<integration-root>"
+        ],
+        "exit_code": 0,
+        "artifact": "f03-qualified-graph-1-query.txt",
+        "sha256": "a5ecb309f07331b203b24da016ff6257a62ea1f921ff7490cf456574c6179132"
+      },
+      {
+        "args": [
+          "query",
+          "_settle_session_turn",
+          "-j",
+          "-p",
+          "<integration-root>"
+        ],
+        "exit_code": 0,
+        "artifact": "f03-qualified-graph-2-query.txt",
+        "sha256": "a963722c0b5869beefb5cf2583cb67593abf05b0fea450c4a27fede3b2820198"
+      },
+      {
+        "args": [
+          "explore",
+          "_try_session_steer",
+          "_settle_session_turn",
+          "_interrupt_session_turn",
+          "--max-files",
+          "2",
+          "-p",
+          "<integration-root>"
+        ],
+        "exit_code": 0,
+        "artifact": "f03-qualified-graph-3-explore.txt",
+        "sha256": "afaa789c1e7af00f7d03c28c1d7edf4f9f3be6e79adc6fbbb3ce597cb0170e57"
+      },
+      {
+        "args": [
+          "callers",
+          "_try_session_steer",
+          "-j",
+          "-p",
+          "<integration-root>"
+        ],
+        "exit_code": 0,
+        "artifact": "f03-qualified-graph-4-callers.txt",
+        "sha256": "1ed9f0f21119ad0aebe46eccdf68267a2bd6c5b21e22531736055a0d120e81d4"
+      },
+      {
+        "args": [
+          "callees",
+          "_settle_session_turn",
+          "-j",
+          "-p",
+          "<integration-root>"
+        ],
+        "exit_code": 0,
+        "artifact": "f03-qualified-graph-5-callees.txt",
+        "sha256": "4e23d4c1f464d91436830c6e1f6db62b2bbdc9eb42fc130917bd0515ea296d63"
+      },
+      {
+        "args": [
+          "affected",
+          "tui_gateway/methods_session.py",
+          "-j",
+          "-p",
+          "<integration-root>"
+        ],
+        "exit_code": 0,
+        "artifact": "f03-qualified-graph-6-affected.txt",
+        "sha256": "f8e887a03ce7216d5c552ca47c09895e7a9d643801f20a40205f5a70865a487f"
+      },
+      {
+        "args": [
+          "impact",
+          "_try_session_steer",
+          "-j",
+          "-p",
+          "<integration-root>"
+        ],
+        "exit_code": 0,
+        "artifact": "f03-qualified-graph-7-impact.txt",
+        "sha256": "b83ccccac4e6629184b8ad1bda8194877315f62964b50f75fb32cb8860c623e0"
+      }
+    ],
+    "post_edit_binding": {
+      "database": [
+        {
+          "file": ".codegraph/codegraph.db",
+          "sha256": "f4bc1d41a02ff8f1df30d8adadca77b94d359aced1682e2e0865cfd8347dec5d",
+          "mtime": "2026-10-10T07:00:29.372Z"
+        }
+      ],
+      "source_digest": "9903a8a09c9b33010210fa1295dd16ebc02a3ee7ffde978b900a104679116499"
+    },
+    "status": "BOUND_QUERIED",
+    "limitations": [
+      "RPC/dynamic agent dispatch also reviewed directly",
+      "Broad static affected sets are navigation, not proof of all tests executed"
+    ]
+  },
+  "review": {
+    "independent": true,
+    "source_binding": "9903a8a09c9b33010210fa1295dd16ebc02a3ee7ffde978b900a104679116499",
+    "findings": [],
+    "resolved_findings": [
+      {
+        "id": "F03-R01",
+        "issue": "Missing command/provenance in six Python and two Composer entries",
+        "resolution": "Exact retained runner/record argv plus original target receipts; retrospective provenance and unavailable individual child recording disclosed",
+        "provenance_hashes_verified": 58
+      }
+    ],
+    "status": "APPROVED_F03_CONTENT",
+    "reviewer": "/root/f03_contract_review",
+    "evidence": {
+      "path": "tmp/probes/v0216-20261010/evidence/f03-independent-final-review.json",
+      "sha256": "91d7570f84ed1a3f4c9c255e90f1866a66e04c2f783b49670f30ee8633860aef"
+    }
+  },
+  "credit": {
+    "advisory_ids": [],
+    "advisory_reporters": [],
+    "advisory_discoverers": [],
+    "public_issue_reporters": [],
+    "original_fix_authors": [
+      "Brooklyn Nicholson"
+    ],
+    "upstream_implementation_commits": [
+      "a0ec0d286f1f8911617ba0a7fddcd9a0e0108d6d"
+    ],
+    "salvage_links": [],
+    "coauthor_trailers_preserved": [],
+    "downstream_adaptation_commits": [],
+    "source_references": [
+      "https://github.com/NousResearch/hermes-agent/commit/a0ec0d286f1f8911617ba0a7fddcd9a0e0108d6d",
+      "https://github.com/NousResearch/hermes-agent/issues/119176"
+    ],
+    "unverified_fields": [
+      "Public issue reporter not resolved; no inferred attribution"
+    ]
+  },
+  "safety": {
+    "main_wip_unchanged": true,
+    "production_state_unchanged": "No campaign writes to production runtime/profile/scheduled tasks; live health not qualified",
+    "test_owned_resources_remaining": {
+      "scope": "final_seven_native_cases",
+      "live_owned_processes": 0,
+      "open_fixture_listeners": 0,
+      "evidence_files_and_disposable_worktrees": "Retained intentionally; historical campaign-wide resource audit is a separate gate"
+    },
+    "audit": {
+      "path": "tmp/probes/v0216-20261010/evidence/f03-final-canonical-wip-audit.json",
+      "sha256": "3205273c1b13a970af38a9feb0f9e31351efe1710d6798e4f250202d02f31b1b"
+    },
+    "postcommit_primary_audit": {
+      "path": "tmp/probes/v0216-20261010/evidence/f03-postcommit-canonical-wip-audit.json",
+      "sha256": "3dc27695a0195c99fe56c0fb5b8863d4e1f363feee2339bb56bc0b941fd874ed",
+      "matched": true
+    }
+  },
+  "acceptance": {
+    "requirements_complete": true,
+    "required_blockers": [],
+    "unresolved_failures": [],
+    "accepted": true,
+    "claim_limits": [
+      "F03 family only; campaign remains open",
+      "Development Electron, not packaged release",
+      "No production health or cloud CI claim",
+      "B07 helper-local taken-before-Stop restore risk requires reproduction",
+      "No messaging/classic CLI/compute-host Stop closure",
+      "Desktop lint exits zero with 94 padding warnings; TUI lint has three padding warnings"
+    ],
+    "scope": "F03 only: local source-bound product commit"
+  },
+  "check_results": [
+    {
+      "phase": "GREEN",
+      "command": {
+        "executable": "<integration-root>\\.venv\\Scripts\\ruff.exe",
+        "args": [
+          "check",
+          "hermes_cli/commands.py",
+          "tui_gateway/methods_session.py",
+          "tui_gateway/methods_tools.py",
+          "tui_gateway/server.py",
+          "tests/test_tui_gateway_server.py",
+          "tests/cli/test_steer_alias_contract.py",
+          "tests/gateway/test_steer_alias_contract.py",
+          "tests/tui_gateway/test_steer_alias_contract.py"
+        ]
+      },
+      "cwd": "<integration-root>",
+      "platform": "native_windows",
+      "source_digest": "39b7003c7f52f0285aee7d5608a09e547261139e6b32a59c0a980a13786b3786",
+      "exit_code": 0,
+      "passed": null,
+      "failed": 0,
+      "warnings": 0,
+      "skipped": 0,
+      "deselected": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "collection_errors": 0,
+      "status": "PASS",
+      "evidence": [
+        {
+          "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-python-lint.json",
+          "sha256": "87b6ff306f318c0963a6d5016efea2dd10a3c22b9b07b080e39c6e0a8e3859b5"
+        },
+        {
+          "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-python-lint.log",
+          "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+        }
+      ]
+    },
+    {
+      "phase": "GREEN",
+      "command": {
+        "executable": "<user-home>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+        "args": [
+          "node_modules/eslint/bin/eslint.js",
+          "--config",
+          "apps/desktop/eslint.config.mjs",
+          "apps/desktop/src/app/chat/composer/hooks/use-composer-submit.ts",
+          "apps/desktop/src/app/chat/composer/hooks/use-composer-submit.test.tsx",
+          "apps/desktop/src/lib/desktop-slash-commands.ts",
+          "apps/desktop/src/lib/desktop-slash-commands.test.ts",
+          "apps/desktop/e2e/fixtures.ts",
+          "apps/desktop/e2e/mock-server.ts",
+          "apps/desktop/e2e/fixtures.unit.test.ts",
+          "apps/desktop/e2e/owned-process-observer.ts",
+          "apps/desktop/e2e/owned-process-observer.unit.test.ts",
+          "apps/desktop/e2e/steer-alias-contract.spec.ts"
+        ]
+      },
+      "cwd": "<integration-root>",
+      "platform": "native_windows",
+      "source_digest": "2d4f6e5e901a46eb2171155742891df715c68ead16e79a488b0e1f32c24aabcf",
+      "exit_code": 0,
+      "passed": null,
+      "failed": 0,
+      "warnings": 94,
+      "skipped": 0,
+      "deselected": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "collection_errors": 0,
+      "status": "PASS",
+      "evidence": [
+        {
+          "path": "tmp/probes/v0216-20261010/evidence/f03-style-final-desktop-lint.json",
+          "sha256": "7ded17948e3d070f4c9f8c8414da26c81c5b0d86191484de73b17fab42f99fbf"
+        },
+        {
+          "path": "tmp/probes/v0216-20261010/evidence/f03-style-final-desktop-lint.log",
+          "sha256": "e52c19e49559af7e18d285d5b9161d9dfaac0da253cabac9e991078c5d19af05"
+        }
+      ]
+    },
+    {
+      "phase": "GREEN",
+      "command": {
+        "executable": "<user-home>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+        "args": [
+          "node_modules/eslint/bin/eslint.js",
+          "--config",
+          "ui-tui/eslint.config.mjs",
+          "ui-tui/src/app/slash/commands/core.ts",
+          "ui-tui/src/__tests__/steerAlias.test.ts"
+        ]
+      },
+      "cwd": "<integration-root>",
+      "platform": "native_windows",
+      "source_digest": "3dcac9a54ff905a75d6370cba69467ce98a956ef566d2392d1c4f297143645be",
+      "exit_code": 0,
+      "passed": null,
+      "failed": 0,
+      "warnings": 3,
+      "skipped": 0,
+      "deselected": 0,
+      "xfail": 0,
+      "xpass": 0,
+      "collection_errors": 0,
+      "status": "PASS",
+      "evidence": [
+        {
+          "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-tui-lint.json",
+          "sha256": "e71f7baf5afe0d74ffb7dc780b1c32e75767d686b1966fdd407c6a79409fccd0"
+        },
+        {
+          "path": "tmp/probes/v0216-20261010/evidence/f03-qualified-tui-lint.log",
+          "sha256": "1cf51b05b46ce050a762f310d580c3fe2b3f79780067664ff10a0dcfed1ad881"
+        }
+      ]
+    }
+  ],
+  "evidence_retention": {
+    "path": "tmp/probes/v0216-20261010/evidence/f03-evidence-retention-binding.json",
+    "sha256": "d23c3f28f8ae85d4b65db7583b49ee4fa772c9029e3824829bfc2833eeed8b84",
+    "graph_database_copies": 1,
+    "build_file_copies": 371,
+    "bytes": 935796178,
+    "status": "IMMUTABLE_COPIES_MATCH_FROZEN_GRAPH_AND_BUILD_BINDINGS",
+    "note": "Immutable local copies preserve the accepted F03 graph/build byte bindings before subsequent family changes. They remain outside commits; product source and acceptance scope are unchanged."
+  }
+}

@@ -1,9 +1,19 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "types": ["node", "@playwright/test"],
+    "types": [
+      "node",
+      "@playwright/test"
+    ],
     "composite": true
   },
-  "include": ["e2e", "playwright.config.ts"],
-  "exclude": ["src", "electron"]
+  "include": [
+    "e2e",
+    "playwright.config.ts",
+    "../shared/src/json-rpc-gateway.ts"
+  ],
+  "exclude": [
+    "src",
+    "electron"
+  ]
 }

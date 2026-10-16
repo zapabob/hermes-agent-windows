@@ -62,6 +62,183 @@ def test_manager_restore_entry_preserves_newer_concurrent_entry(tmp_path, monkey
     assert manager.get_or_build_provider("shared", "https://new.example", {}) is new_provider
     assert new_provider is not old_provider
 
+
+@pytest.mark.asyncio
+async def test_force_login_completes_preregistered_token_exchange(tmp_path, monkeypatch):
+    """Explicit login must find the profile's provider and persist a real result."""
+    import httpx
+
+    from tools.mcp_oauth_manager import MCPOAuthManager
+
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    monkeypatch.setattr("tools.mcp_dashboard_oauth.get_dashboard_oauth_flow", lambda: None)
+    token_path = tmp_path / "mcp-tokens" / "example.json"
+    events = []
+
+    class _Storage:
+        def _tokens_path(self):
+            return token_path
+
+    class _Provider:
+        def __init__(self):
+            self._initialized = False
+            self.context = type("Context", (), {"oauth_metadata": None, "storage": _Storage()})()
+
+        async def _initialize(self):
+            self._initialized = True
+
+        async def _perform_authorization(self):
+            events.append("authorization")
+            return httpx.Request("POST", "https://auth.example.invalid/token")
+
+        async def _handle_token_response(self, response):
+            events.append("token_received")
+            assert response.status_code == 200
+            token_path.parent.mkdir(parents=True, exist_ok=True)
+            token_path.write_text(response.json()["access_token"], encoding="utf-8")
+
+        def _persist_oauth_metadata_if_changed(self):
+            events.append("metadata_persisted")
+
+    provider = _Provider()
+    manager = MCPOAuthManager()
+    monkeypatch.setattr(manager, "_build_provider", lambda _name, _entry: provider)
+    original_client = httpx.AsyncClient
+
+    def isolated_client(*, timeout):
+        def response_for(request):
+            assert request.url == "https://auth.example.invalid/token"
+            events.append("token_request")
+            return httpx.Response(200, json={"access_token": "TEST_ACCESS_TOKEN"})
+
+        return original_client(timeout=timeout, transport=httpx.MockTransport(response_for))
+
+    monkeypatch.setattr(httpx, "AsyncClient", isolated_client)
+
+    assert await manager.force_login(
+        "example", "https://mcp.example.invalid/mcp", {"client_id": "fixture-client"}
+    ) is True
+    assert events == [
+        "authorization", "token_request", "token_received", "metadata_persisted"
+    ]
+    assert token_path.read_text(encoding="utf-8") == "TEST_ACCESS_TOKEN"
+
+
+@pytest.mark.parametrize("retirement", ("evict", "url-change"))
+@pytest.mark.asyncio
+async def test_force_login_rejects_provider_retired_while_waiting(
+    tmp_path, monkeypatch, retirement
+):
+    """Retirement while awaiting the async lock must prevent OAuth effects."""
+    import asyncio
+
+    from tools.mcp_oauth_manager import MCPOAuthManager
+
+    monkeypatch.setattr("tools.mcp_dashboard_oauth.get_dashboard_oauth_flow", lambda: None)
+    manager = MCPOAuthManager()
+
+    class _DummyProvider:
+        _initialized = True
+
+        async def _perform_authorization(self):
+            authorization_events.append("stale_authorization")
+            raise AssertionError("retired provider attempted authorization")
+
+    authorization_events = []
+    monkeypatch.setattr(manager, "_build_provider", lambda _name, _entry: _DummyProvider())
+    original_url = "https://old.example.invalid/mcp"
+    config = {"client_id": "fixture-client"}
+
+    # Register the same logical server in two isolated profile homes.
+    profile_a = tmp_path / "profile-a"
+    profile_b = tmp_path / "profile-b"
+    monkeypatch.setenv("HERMES_HOME", str(profile_a))
+    provider_a = manager.get_or_build_provider("shared", original_url, config)
+    entry_a = manager._entries[manager._key("shared")]
+    monkeypatch.setenv("HERMES_HOME", str(profile_b))
+    provider_b = manager.get_or_build_provider("shared", original_url, config)
+    assert provider_a is not provider_b
+
+    monkeypatch.setenv("HERMES_HOME", str(profile_a))
+    async with entry_a.lock:
+        login = asyncio.create_task(manager.force_login("shared", original_url, config))
+        await asyncio.sleep(0)
+        assert not login.done(), "login should be blocked on the original entry"
+        if retirement == "evict":
+            manager.evict("shared")
+        else:
+            new_provider = manager.get_or_build_provider(
+                "shared", "https://replacement.example.invalid/mcp", config
+            )
+            assert new_provider is not provider_a
+
+    assert await login is False
+    assert authorization_events == []
+    monkeypatch.setenv("HERMES_HOME", str(profile_b))
+    assert manager.get_or_build_provider("shared", original_url, config) is provider_b
+
+
+@pytest.mark.parametrize("stage", ("authorization", "token-http"))
+@pytest.mark.asyncio
+async def test_force_login_rejects_provider_retired_during_io(
+    tmp_path, monkeypatch, stage
+):
+    """An async OAuth result may not resume on an evicted provider."""
+    import asyncio
+    import httpx
+
+    from tools.mcp_oauth_manager import MCPOAuthManager
+
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    monkeypatch.setattr("tools.mcp_dashboard_oauth.get_dashboard_oauth_flow", lambda: None)
+    started, finish = asyncio.Event(), asyncio.Event()
+    events = []
+
+    class _Provider:
+        _initialized = True
+
+        async def _perform_authorization(self):
+            if stage == "authorization":
+                started.set()
+                await finish.wait()
+            events.append("authorization_completed")
+            return httpx.Request("POST", "https://auth.example.invalid/token")
+
+        async def _handle_token_response(self, _response):
+            events.append("stale_token_written")
+            raise AssertionError("revoked provider attempted token persistence")
+
+    manager = MCPOAuthManager()
+    monkeypatch.setattr(manager, "_build_provider", lambda *_: _Provider())
+    url = "https://mcp.example.invalid/mcp"
+    config = {"client_id": "fixture-client"}
+
+    original_client = httpx.AsyncClient
+
+    def isolated_client(*, timeout):
+        async def response_for(request):
+            assert request.url == "https://auth.example.invalid/token"
+            if stage == "token-http":
+                started.set()
+                await finish.wait()
+            events.append("http_completed")
+            return httpx.Response(200, json={"access_token": "TEST_ACCESS_TOKEN"})
+
+        return original_client(timeout=timeout, transport=httpx.MockTransport(response_for))
+
+    monkeypatch.setattr(httpx, "AsyncClient", isolated_client)
+
+    login = asyncio.create_task(manager.force_login("example", url, config))
+    await asyncio.wait_for(started.wait(), timeout=5)
+    manager.evict("example")
+    finish.set()
+    assert await login is False
+    assert events == (
+        ["authorization_completed"]
+        if stage == "authorization"
+        else ["authorization_completed", "http_completed"]
+    )
+
 pytest.importorskip(
     "mcp.client.auth.oauth2",
     reason="MCP SDK 1.26.0+ required for OAuth support",

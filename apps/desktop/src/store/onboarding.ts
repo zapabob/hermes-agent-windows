@@ -339,10 +339,13 @@ async function completeWithModelConfirm(
     return
   }
 
-  if (defaults) {
-    // Persist the chosen provider/model before the runtime gate so a stale
-    // config provider (e.g. anthropic from a prior failed setup) cannot make
-    // setup.runtime_check validate the wrong backend after a fresh OAuth login.
+  const manual = $desktopOnboarding.get().manual
+
+  if (defaults && !manual) {
+    // First-run only: persist the chosen provider/model before the runtime gate
+    // so a stale config provider cannot make setup.runtime_check validate the
+    // wrong backend after a fresh OAuth login. Manual add-provider keeps the
+    // previous default until the user confirms the model on Begin.
     try {
       const res = await setMainModelAssignment(
         {
@@ -1088,14 +1091,42 @@ export async function setOnboardingModel(model: string) {
   }
 }
 
-// User clicked "Start chatting" on the confirm card. Finalizes onboarding
-// — the model was already persisted by completeWithModelConfirm (or by
-// setOnboardingModel if they changed it), so all that's left is to mark
-// onboarding done and unblock the rest of the app.
-export function confirmOnboardingModel(ctx: OnboardingContext) {
-  const { flow } = $desktopOnboarding.get()
+// User clicked "Start chatting" on the confirm card. First-run already
+// persisted the model in completeWithModelConfirm (or through
+// setOnboardingModel). Manual add-provider deliberately deferred that write
+// so dismissing the card leaves the previous default unchanged.
+export async function confirmOnboardingModel(ctx: OnboardingContext) {
+  const { flow, manual } = $desktopOnboarding.get()
 
   if (flow.status !== 'confirming_model') {
+    return
+  }
+
+  const generation = flowGeneration
+
+  if (manual) {
+    try {
+      const res = await setMainModelAssignment(
+        { provider: flow.providerSlug, model: flow.currentModel },
+        flowProfile ?? ctx.profile,
+        { skipConfirmPrompt: true }
+      )
+
+      if (generation !== flowGeneration) {
+        return
+      }
+
+      notifyGatewayTools(res.gateway_tools)
+    } catch (error) {
+      if (generation !== flowGeneration) {
+        return
+      }
+
+      notifyError(error, 'Could not save the selected model.')
+    }
+  }
+
+  if (generation !== flowGeneration) {
     return
   }
 

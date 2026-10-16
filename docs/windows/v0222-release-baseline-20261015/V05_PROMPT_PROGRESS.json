@@ -1,0 +1,477 @@
+{
+  "schema_version": 1,
+  "status": "SCOPED_RECEIVE_PROGRESS_VERIFIED_CAMPAIGN_OPEN",
+  "source_parent_commit": "af2b8279f643c267bf25b852093ed2a340187bef",
+  "upstream_commit": "d923a5eb487a17c0a68801bba9ef0f56c81040a8",
+  "upstream_tree": "5a064077e8d1de9fc7a4b27efc04f0caa2cb06c0",
+  "candidate": "V05 receiving-stream prompt progress only; full A18/A23/V05 remain open",
+  "sources_sha256": {
+    "agent/chat_completion_helpers.py": "31c74a8e82dec35b246ad67562d305063a727318f09d6e9b39e3ef2dafd4ff14",
+    "tests/run_agent/test_local_prompt_progress.py": "5f889351b85dd9a768144baa52faea87fe090c1bccab5dd9903e6188817ce305",
+    "run_agent.py": "343ab8f2822e095de3d0c5f98dfaf3b73e97d519bb0435de3ad70a5aac94c20b",
+    "agent/relay_llm.py": "43684908144f05a097cda971b213de21625231630aa8aab49dbe84c6127fef90",
+    "agent/turn_context.py": "1077fd6d10ae8322382c2b374410b4e413271953ab8ded956207c3a1328b903e",
+    "uv.lock": "bfd6c974796206cad6e29ab83dbdf553c200cfaf76821c574d666716407ea726",
+    "pyproject.toml": "43a16a1bc21d672a35c2551f6c52cf3b9a98dc6d4f683543aa31a19ca324cd78",
+    "tests/run_agent/test_stream_stale_breaker_reset.py": "7052197925daa84b91e90f90153c0bf0e59e693de7e7450d7b519589cd37e271",
+    "tests/run_agent/test_stream_stale_circuit_breaker.py": "a4c9d9dfaa4e96ad2cfbac7a6c496cbbcc8d5ee5714056051ea516a6c54b329e",
+    "tests/run_agent/test_partial_stream_finish_reason.py": "81d893c813e17d84f09f1035b533f3cd54315e4a49d26cd3d2e1f72bc2c89d9b",
+    "tests/run_agent/test_stream_single_writer_65991.py": "0d670d59b8680aa45bc32d25ac9cc1c7aa39f34a7bdb7598ea9cb544ecc136ad",
+    "tests/run_agent/test_request_client_reuse_abort_races.py": "7afdc63617d8f08c62fec17096c7641cb7d5ad8fd7c4d2b9e50df6318200c392",
+    "tests/run_agent/test_70773_shared_client_fd_corruption.py": "465bf54dd3c22e60cc6037aa7317e84bfe86e40c5d9d39c24c3851219225d489",
+    "tests/run_agent/test_stream_interrupt_retry.py": "cfd38dae563b3ad8c75258edfe04a457d86174e083ea3b718a5c3f8a440733da",
+    "tests/e2e/test_relay_native_anthropic_stream.py": "3d7316426cc15f9855c52bea9ac1e7e80611b2831b94cede8ccc5e68e011c8dd"
+  },
+  "qualification": {
+    "counts": {
+      "tests": 131,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "files": [
+      {
+        "test_file": "tests/run_agent/test_local_prompt_progress.py",
+        "exit_code": 0,
+        "tests": 37,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "xml_sha256": "b29f6d35164037c86c58c6cc81829609874402ff24516b8fb67216243d1c992c",
+        "source_receipt": {
+          "path": "tmp/probes/v05-prompt-progress-20261016/whitespace-qualified/verification.json",
+          "sha256": "994ae9fab33f766ea66c0c50d4d195791092bcf63330ccb7c5094a63df75798a",
+          "test_file_sha256": "5f889351b85dd9a768144baa52faea87fe090c1bccab5dd9903e6188817ce305"
+        }
+      },
+      {
+        "test_file": "tests/run_agent/test_stream_stale_breaker_reset.py",
+        "exit_code": 0,
+        "tests": 49,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "xml_sha256": "77ed05d6cea1c8f69accb0d6da6fba140cb0dfeb89e606d0c797421997682aa6",
+        "source_receipt": {
+          "path": "tmp/probes/v05-prompt-progress-20261016/qualified-final2/verification.json",
+          "sha256": "a8e0fed5c78a5f7ca7f4d9d01b78e736ec300c0c401d82fed213f3af6c9dca57",
+          "test_file_sha256": "7052197925daa84b91e90f90153c0bf0e59e693de7e7450d7b519589cd37e271"
+        }
+      },
+      {
+        "test_file": "tests/run_agent/test_stream_stale_circuit_breaker.py",
+        "exit_code": 0,
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "xml_sha256": "22125c8cffd4f0f8c4d34618118d249b804b58dc775f338797af991d35d2477b",
+        "source_receipt": {
+          "path": "tmp/probes/v05-prompt-progress-20261016/qualified-final2/verification.json",
+          "sha256": "a8e0fed5c78a5f7ca7f4d9d01b78e736ec300c0c401d82fed213f3af6c9dca57",
+          "test_file_sha256": "a4c9d9dfaa4e96ad2cfbac7a6c496cbbcc8d5ee5714056051ea516a6c54b329e"
+        }
+      },
+      {
+        "test_file": "tests/run_agent/test_partial_stream_finish_reason.py",
+        "exit_code": 0,
+        "tests": 17,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "xml_sha256": "0f4ea9569c81dac47daed42821a769bd40ab44c8bb208f7617523037b77abb31",
+        "source_receipt": {
+          "path": "tmp/probes/v05-prompt-progress-20261016/qualified-final2/verification.json",
+          "sha256": "a8e0fed5c78a5f7ca7f4d9d01b78e736ec300c0c401d82fed213f3af6c9dca57",
+          "test_file_sha256": "81d893c813e17d84f09f1035b533f3cd54315e4a49d26cd3d2e1f72bc2c89d9b"
+        }
+      },
+      {
+        "test_file": "tests/run_agent/test_stream_single_writer_65991.py",
+        "exit_code": 0,
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "xml_sha256": "8d7645729e55590a06f3648b471ec2258d08e9351d846185239a6d3a8bed7ef4",
+        "source_receipt": {
+          "path": "tmp/probes/v05-prompt-progress-20261016/qualified-final2/verification.json",
+          "sha256": "a8e0fed5c78a5f7ca7f4d9d01b78e736ec300c0c401d82fed213f3af6c9dca57",
+          "test_file_sha256": "0d670d59b8680aa45bc32d25ac9cc1c7aa39f34a7bdb7598ea9cb544ecc136ad"
+        }
+      },
+      {
+        "test_file": "tests/run_agent/test_request_client_reuse_abort_races.py",
+        "exit_code": 0,
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "xml_sha256": "87d9b298186de7956ae8cfb93654d6d51f1ff6df2df9babddaef62a7a36a089d",
+        "source_receipt": {
+          "path": "tmp/probes/v05-prompt-progress-20261016/qualified-final2/verification.json",
+          "sha256": "a8e0fed5c78a5f7ca7f4d9d01b78e736ec300c0c401d82fed213f3af6c9dca57",
+          "test_file_sha256": "7afdc63617d8f08c62fec17096c7641cb7d5ad8fd7c4d2b9e50df6318200c392"
+        }
+      },
+      {
+        "test_file": "tests/run_agent/test_70773_shared_client_fd_corruption.py",
+        "exit_code": 0,
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "xml_sha256": "faf606f94f7d709d007b63386f6ce5c509b6a04f74505fe12d2664ba4e725dc0",
+        "source_receipt": {
+          "path": "tmp/probes/v05-prompt-progress-20261016/qualified-final2/verification.json",
+          "sha256": "a8e0fed5c78a5f7ca7f4d9d01b78e736ec300c0c401d82fed213f3af6c9dca57",
+          "test_file_sha256": "465bf54dd3c22e60cc6037aa7317e84bfe86e40c5d9d39c24c3851219225d489"
+        }
+      },
+      {
+        "test_file": "tests/run_agent/test_stream_interrupt_retry.py",
+        "exit_code": 0,
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "xml_sha256": "2017167eff2a3a5c91d7ec3d8402178360093adfd6748189c63aad59c1308da3",
+        "source_receipt": {
+          "path": "tmp/probes/v05-prompt-progress-20261016/qualified-final2/verification.json",
+          "sha256": "a8e0fed5c78a5f7ca7f4d9d01b78e736ec300c0c401d82fed213f3af6c9dca57",
+          "test_file_sha256": "cfd38dae563b3ad8c75258edfe04a457d86174e083ea3b718a5c3f8a440733da"
+        }
+      },
+      {
+        "test_file": "tests/e2e/test_relay_native_anthropic_stream.py",
+        "exit_code": 0,
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "xml_sha256": "287a02ce7c43417eed82519062435041f79af40c37db00cf0c7bf0a9f1e3db2b",
+        "source_receipt": {
+          "path": "tmp/probes/v05-prompt-progress-20261016/anthropic-qualified/verification.json",
+          "sha256": "2b41e6d77cf417d96cce0e51b660f7a9a25c352254d19463dea1f2e822aad38d",
+          "test_file_sha256": "3d7316426cc15f9855c52bea9ac1e7e80611b2831b94cede8ccc5e68e011c8dd"
+        }
+      }
+    ],
+    "runtime": "3.12.13 (main, Jun 23 2026, 15:23:43) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "win32",
+    "fresh_process_per_file": true,
+    "containment": {
+      "scope": "Python audit events in each test process only; not whole-OS or child-process coverage",
+      "blocked_attempts_by_event": {
+        "outside_workspace_write": 27,
+        "socket.getaddrinfo": 39
+      },
+      "interpretation": "PASS under additional containment, not an unfenced hermeticity claim"
+    }
+  },
+  "mutations": [
+    {
+      "mode": "receive",
+      "tests": 2,
+      "failures": 2,
+      "errors": 0,
+      "skipped": 0,
+      "detected_by": [
+        "test_native_progress_before_first_token_is_bounded[duplicate]",
+        "test_native_progress_before_first_token_is_bounded[duplicate-with-usage]"
+      ]
+    },
+    {
+      "mode": "assembly",
+      "tests": 2,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "detected_by": [
+        "test_native_progress_before_first_token_is_bounded[duplicate-with-usage]"
+      ]
+    },
+    {
+      "mode": "high-water",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "detected_by": [
+        "test_progress_high_water_survives_regression_and_new_attempt_starts_clean"
+      ]
+    },
+    {
+      "mode": "boolean",
+      "tests": 9,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "detected_by": [
+        "test_untrusted_processed_counts_cannot_advance[True]"
+      ]
+    },
+    {
+      "mode": "mixed-output",
+      "tests": 8,
+      "failures": 8,
+      "errors": 0,
+      "skipped": 0,
+      "detected_by": [
+        "test_mixed_real_output_preserves_its_original_path[content]",
+        "test_mixed_real_output_preserves_its_original_path[tool_calls]",
+        "test_mixed_real_output_preserves_its_original_path[reasoning]",
+        "test_mixed_real_output_preserves_its_original_path[reasoning_content]",
+        "test_mixed_real_output_preserves_its_original_path[refusal]",
+        "test_usage_finish_and_provider_error_keep_existing_processing[fields0]",
+        "test_usage_finish_and_provider_error_keep_existing_processing[fields1]",
+        "test_usage_finish_and_provider_error_keep_existing_processing[fields2]"
+      ]
+    },
+    {
+      "mode": "custom-field",
+      "tests": 2,
+      "failures": 2,
+      "errors": 0,
+      "skipped": 0,
+      "detected_by": [
+        "test_native_progress_before_first_token_is_bounded[unsupported]",
+        "test_native_progress_before_first_token_is_bounded[opt-out]"
+      ]
+    },
+    {
+      "mode": "usage-liveness",
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "detected_by": [
+        "test_native_progress_before_first_token_is_bounded[duplicate-with-usage]"
+      ]
+    }
+  ],
+  "preservation": {
+    "base_versions_file_sets_and_bytes_unchanged": true,
+    "base_packages": 16,
+    "base_files": 837,
+    "named_locked_payloads_unchanged": 372,
+    "sdk_locked_payloads_unchanged": 2784,
+    "base_optional_sdks_remain_absent": true,
+    "prior_unrelated_wip_unchanged": true,
+    "primary_head": "53b65c99587f7c1fe437a44c32d1566576376a17"
+  },
+  "codegraph": {
+    "version": "1.6.0",
+    "fileCount": 9192,
+    "nodeCount": 198827,
+    "edgeCount": 628149,
+    "pendingChanges": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "index": {
+      "builtWithVersion": "1.6.0",
+      "builtWithExtractionVersion": 25,
+      "currentExtractionVersion": 25,
+      "reindexRecommended": false,
+      "state": "complete",
+      "pendingRefs": 0
+    }
+  },
+  "independent_review": {
+    "decision": "APPROVED_SCOPED",
+    "binding": {
+      "path": "tmp/probes/v05-prompt-progress-20261016/reviewer-usage-fix-20261016-b/whitespace-approval.json",
+      "sha256": "30612671ef569938f2f254ceed8003f84b7d1cd84b68a954c0913bff05b94b71"
+    },
+    "reviewed_source_pins": {
+      "agent/chat_completion_helpers.py": "31c74a8e82dec35b246ad67562d305063a727318f09d6e9b39e3ef2dafd4ff14",
+      "tests/run_agent/test_local_prompt_progress.py": "5f889351b85dd9a768144baa52faea87fe090c1bccab5dd9903e6188817ce305",
+      "docs/windows/v0222-release-baseline-20261015/V05_PROMPT_PROGRESS.md": "7ef51f600988c5a64327589c80867dfcfeac55f2ff0d44e461191e23b3fc7794"
+    },
+    "independent_tests": {
+      "representative_native": 6,
+      "unit": 24,
+      "errors": 0,
+      "warnings": 0,
+      "failures": 0,
+      "skipped": 0,
+      "total": 31,
+      "retained_counterexample_replay": 1
+    },
+    "counterexample_resolution": {
+      "old_duplicate_usage_clock_updates": 24,
+      "prior_test": "fcb294302ff7691e3105ce587d67e40c8fd86be47278c759302c1f6b6dc2744f",
+      "prior_source": "439734182a11ad4e337049fdae8b2078fc3b2e0d0f4e5adbeff25adadb4aec9f",
+      "current_replay": "same retained fixture, current real SDK/Relay, processed=10 and constant usage",
+      "current_expected_stale_abort": true,
+      "current_duplicate_clock_updates": 0,
+      "current_duplicate_samples": 11,
+      "old_assertion_failures": 1
+    },
+    "late_callback_checks": {
+      "cancelled_late_callbacks": 2,
+      "false_first_output_diagnostics": 0,
+      "progress_frames": 48,
+      "cancelled_late_accepted": 0,
+      "cancelled_clock_and_high_water_unchanged": true
+    },
+    "findings": [
+      {
+        "status": "RESOLVED_IN_REVIEWED_PIN",
+        "reason": "Usage/model retained in assembly; metadata alone cannot refresh stale time or first-output diagnostics",
+        "severity": "P2",
+        "id": "constant-usage-liveness"
+      }
+    ],
+    "boundary": "Source/test/MD review complete; parent nine-suite receipt separately verified by parent"
+  },
+  "sdk_payload_subset": [
+    {
+      "name": "openai",
+      "version": "2.54.0",
+      "wheel": {
+        "url": "https://files.pythonhosted.org/packages/64/a8/bb76c7356de8ad57f59d5ff993d434df0607f07f08bcc9c9a5c275e399c0/openai-2.54.0-py3-none-any.whl",
+        "hash": "sha256:89089789197ccdb87f173a03145ed1598d00795220c93e96cf712b1cbf5e5f2b",
+        "size": 1660351,
+        "upload-time": "2026-08-11T18:46:56.684Z"
+      },
+      "payload_count": 1503
+    },
+    {
+      "name": "anthropic",
+      "version": "0.125.0",
+      "wheel": {
+        "url": "https://files.pythonhosted.org/packages/2f/1a/b1bd30cda3790557e8791bec5922a6ec8fabb6fa8b008c76a39cf7be6152/anthropic-0.125.0-py3-none-any.whl",
+        "hash": "sha256:3486013602eca76d8b12540764e53654f02cf4951110bca86cf06e67428a9f21",
+        "size": 1184067,
+        "upload-time": "2026-08-19T22:00:44.596Z"
+      },
+      "payload_count": 1271
+    },
+    {
+      "name": "docstring-parser",
+      "version": "0.18.0",
+      "wheel": {
+        "url": "https://files.pythonhosted.org/packages/a7/5f/ed01f9a3cdffbd5a008556fc7b2a08ddb1cc6ace7effa7340604b1d16699/docstring_parser-0.18.0-py3-none-any.whl",
+        "hash": "sha256:b3fcbed555c47d8479be0796ef7e19c2670d428d72e96da63f3a40122860374b",
+        "size": 22484,
+        "upload-time": "2026-04-14T04:09:18.638Z"
+      },
+      "payload_count": 10
+    }
+  ],
+  "historical_unaccepted": [
+    "qualified-final2 optional Anthropic absence skip retained; accepted provider fixture rerun uses isolated exact locked SDK",
+    "qualified (superseded by independently confirmed usage finding; owned verifier tree stopped)",
+    "qualified-final (pytest logging guard setup failure)",
+    "mutation-final (assembly anti-fix anchor setup failure)",
+    "earlier independent guard/CLI setup and inconclusive counter runs"
+  ],
+  "residuals": [
+    "Managed automatic return_progress capability/ownership binding remains mandatory OPEN",
+    "Auxiliary requests and closed-compression fences remain mandatory OPEN",
+    "End-to-end surface dispatch remains mandatory OPEN",
+    "Whole A18/A23/V05 and campaign remain OPEN",
+    "Immediate backend cancellation / every blocked-read release not established",
+    "Awake-clock, real-model and long-duration qualification remain outside this review",
+    "Actual retry with progress high-water reset was reviewed in source and helper tests; not independently exercised as a combined integration scenario",
+    "Full remaining original U01-U18 and retained slice acceptance",
+    "Full build/release/complete dependency closure",
+    "Eight-hour soak and three actual sleep/resume cycles unavailable without dedicated Windows environment"
+  ],
+  "evidence": [
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/combined-whitespace-qualification.json",
+      "sha256": "4e80bed1f0b74fa67f4479f22b587ad0425c23549702a9181e373ed9d7be3391"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/mutation-final3-result.json",
+      "sha256": "00b40cfe4f2053e548cdc60dae07b11951ac1b156c6cd99784fe23b6e243a0b8"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/red-receipt.json",
+      "sha256": "4193e264021a2b209d3062adf42216f14f9eaa3a0d38aacf509f5df16babccee"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/preservation-final.json",
+      "sha256": "7e9fc761c99b79120f4d02c6aaec11d913ddb9a0326c1b8d8ab3dcf8e873dedc"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/codegraph-whitespace.json",
+      "sha256": "4b8ecb424e984cfe03d28956c78bdb26055e804d28e6d521ef0bd3a1e89d6469"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/codegraph-progress-impact-final.txt",
+      "sha256": "e2994667745a167e903a6f8742c118474da38cc01ba4a6d601c4df52d4bbdb6a"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/codegraph-progress-owner-final.json",
+      "sha256": "c1e33d4434a2050d8ca200d3e930d355843a459278b0cf959c2790e430bbd224"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/sdk-proof.json",
+      "sha256": "377e692cd75c550bfe509d2c2a53e6a9f1c4d194717fd59b6caa28485d02d1cd"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/sdk-wheels.json",
+      "sha256": "ea7758f254c27da290644d6583edb816e0f46b17102b9cc3fb68ec124ce5b90f"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/sdk-versions.json",
+      "sha256": "ad545f8c934c8c4117e07308f1deacda9bdbf9b6de11362919935c8a4433e793"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/anthropic-qualified/verification.json",
+      "sha256": "2b41e6d77cf417d96cce0e51b660f7a9a25c352254d19463dea1f2e822aad38d"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/qualified-final2/verification.json",
+      "sha256": "a8e0fed5c78a5f7ca7f4d9d01b78e736ec300c0c401d82fed213f3af6c9dca57"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/contained_pytest.py",
+      "sha256": "33637fc5280ec5edbf233c8cb78f15074723985a6494f9c0bc521c697fd1faca"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/verify-final2.py",
+      "sha256": "5c60479c4e698b3e1dd63240fc72ce0525bf276062e94dcb04edf96874248389"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/mutation-final3.py",
+      "sha256": "8f5b61bf155c977eb2fc0f8000023d1a328d370fb35f410b86c0416e60d42c8a"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/whitespace-qualified/verification.json",
+      "sha256": "994ae9fab33f766ea66c0c50d4d195791092bcf63330ccb7c5094a63df75798a"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/whitespace-equivalence.json",
+      "sha256": "37a7f965eb7bf9b16e113eb549ed8352f28a370cadd92f8d13f8ae7917a9510c"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/superseded-qualification.json",
+      "sha256": "e625276fa134d041a908ef061a9ebe32753e5ba086533ee3476ca52ccef10cac"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/reviewer-independent-20261016-a/verification.json",
+      "sha256": "98b499db20e4ca0a20efd02adb095c9d712d050aa0cbdac03b6f27f8831b8e89"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/reviewer-usage-fix-20261016-b/whitespace-byte-review.json",
+      "sha256": "b8daf099bd72f3893ebd3ec4ec09fe6bc4843f8cf82ff66dd2b9534209737d35"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/reviewer-usage-fix-20261016-b/whitespace-evidence-review.json",
+      "sha256": "c9e0d90b2fba79933cdde22894d04e9baa139a32eb7ea4b6d37aa4c8e4ba1a84"
+    },
+    {
+      "path": "tmp/probes/v05-prompt-progress-20261016/reviewer-usage-fix-20261016-b/verification.json",
+      "sha256": "38a114300fd223fa6ac642353ff85f50a7077556d1b5912b92bd658e55c5203d"
+    }
+  ],
+  "local_commit_hook": "Unchanged stale shared launcher disabled only for local commit with LEFTHOOK=0; not a passed hook",
+  "push_or_production_change": false,
+  "created_utc": "2026-10-15T23:02:23.602772+00:00"
+}

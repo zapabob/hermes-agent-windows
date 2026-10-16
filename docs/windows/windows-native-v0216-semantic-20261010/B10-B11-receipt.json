@@ -1,0 +1,1641 @@
+{
+  "schema_version": 1,
+  "family_ids": [
+    "B10",
+    "B11"
+  ],
+  "lane": "INVENTORY_LEAD",
+  "status": "ACCEPTED_B10_B11_LOCAL_COMMIT_IDENTITY_VERIFIED",
+  "accepted": true,
+  "scope": "LocalEnvironment foreground/bootstrap/file-tool ownership only; no background owner/full W02/release/production acceptance",
+  "parent": "34254176282b61d1c4ed8ff4cd20b1a8a8f59ed6",
+  "contract": "B10-B11-mini-plan.md",
+  "source": {
+    "tools/environments/local.py": "d83d56a86c901b09d1bf486a87140d87f3d535f19f0493a15648bdd828a3f2dd",
+    "tools/environments/base.py": "1dafca9a32fbbd4da9c80c3f95e25a87b2f9d68e3104391c39ceec0326bcec15",
+    "gateway/status.py": "4d1cd34cfe78c0321cca340d58484aa6d43b6e22b9ef74738d3fae2c2fa9887b",
+    "tools/process_registry.py": "0a702bc59fc9642452f8145f0ce140167b6c54d12f96bdcc9cca5d30ae60a0a6",
+    "tools/terminal_tool.py": "3c9f526b1789ff7ba09bedcdefc03d170ff39946a3c1da8d276f25421d4f7c27",
+    "agent/secret_scope.py": "51d91d280ef05d59c0c450dbfaecd6f50b314a4ff75614cb23b5288a308c645d",
+    "tools/env_passthrough.py": "755c95a772071132cacf28862c9663a1ca59e5ae3a9243286829899e8321f200",
+    "tests/tools/test_local_windows_command_payload.py": "33977e9655e6983818b150e2b9e567d1191b18992a7b12b5cd67689e1195ac46",
+    "tests/tools/test_child_credential_windows_native.py": "d6f08ed8043ef336b3969fc705db20d45a4f457efcd79cdabc951212886f0093",
+    "tests/gateway/test_status.py": "b3847b363ca7584963eb148e5508a09052a0c8f77723fafb4cceff19dc6bc656",
+    "tests/tools/test_windows_native_support.py": "1f0fa19d535b48dcd08e9587fa73757921725bf8349cb395a0862958b5277b74",
+    "tests/cli/test_branch_contract.py": "cde6afafdafb6f9d80a6dac8dc71e6d5a1d56a747898789de521f7ef486648de",
+    "tests/gateway/test_branch_api_contract.py": "55b1849b6084d13827beb9d0520135b1634f5014de34108a7185d5cf5a7bfef3",
+    "tests/gateway/test_branch_thread_contract.py": "99796e4d7f864f879f0937e34e982f31dc0eb5b2fae8499ba8965452566d1163",
+    "tests/tui_gateway/test_branch_prompt_contract.py": "b06cd92647fda5605bfb2fa1a526bfcb052bcc283ce946c42ca86453505035f6",
+    "pyproject.toml": "43a16a1bc21d672a35c2551f6c52cf3b9a98dc6d4f683543aa31a19ca324cd78",
+    "uv.lock": "45487f72f5fe438fd90f1c0839b83b747e6abfa37110e2e3305b54bc1cac601b"
+  },
+  "native": {
+    "passed": 30,
+    "failed": 0,
+    "skipped": 0,
+    "before_and_after": true,
+    "nodes": {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-final-native-nodes.json",
+      "sha256": "56a636a8b78344a812796a8bc4f80a047b8fbaf582314c4efb4d0a369e88d621"
+    }
+  },
+  "mutations": {
+    "qualified": 14,
+    "failed_by_assertion_only": true,
+    "exact_restore": true,
+    "results": {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/results.json",
+      "sha256": "f3d8b5128d676414f1a4ca2bd3c77113e27f2bfcbd7a023f65165157e191e5b3"
+    }
+  },
+  "public_entry": {
+    "file": "tmp/probes/v0216-20261010/evidence/b10-public-terminal-receipt.json",
+    "sha256": "2fb12350b257a5c2ae700e15f4fc03333a8079932337d67b680c5305247b2f03"
+  },
+  "public_cleanup_scope": "Active environment released; child termination is established by separate native lifecycle cases",
+  "codegraph": {
+    "version": "1.6.0",
+    "index_sha256": "461d9a69c1e8c2f0d491170b0db132a788701d833f7f827a0c888389efcdc201",
+    "original_bytes": 681820160,
+    "retained": {
+      "file": "tmp/probes/v0216-20261010/evidence/retained-b10-b11/codegraph.db.gz",
+      "sha256": "712e652b7954cb7f3b800b6691a6e85d51fdbf1e6a796f9cd2025e527278ab0d"
+    },
+    "gzip_roundtrip_verified": true,
+    "limitations": "No dynamic wait callers resolved; actual Base-to-Local source/manual public/native proof retained"
+  },
+  "regressions": {
+    "broader_owner": {
+      "passed": 345,
+      "failed": 10,
+      "skipped": 14
+    },
+    "d_base_nine_control": {
+      "passed": 89,
+      "failed": 9,
+      "skipped": 2
+    },
+    "stdin_credential_msys": {
+      "passed": 68,
+      "failed": 5,
+      "skipped": 4
+    },
+    "d_base_stdin_control": {
+      "passed": 11,
+      "failed": 5
+    },
+    "limits": "Nine broader failures and five stdin failures reproduced at D_BASE; one unchanged POSIX getpgid node not rerun at base; exact bare-bash executable cause unverified; no all-green claim"
+  },
+  "binding": {
+    "file": "tmp/probes/v0216-20261010/evidence/b10-b11-final-source-binding-v2.json",
+    "sha256": "82c938b238915512c46607060b4fce7278a6326d4fa092545945f55d8680b90f"
+  },
+  "protected_primary": {
+    "file": "tmp/probes/v0216-20261010/evidence/b10-b11-precommit-canonical-wip-audit.json",
+    "sha256": "8bcf675abec714bbff62fa29243938a54b3e31486b9d7ba11fe83ec6b09417d5"
+  },
+  "artifacts": [
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-affected.json",
+      "sha256": "5875739df0ac511b58c22483574c85b27d9584b32b505b17dc78ad80f52b2b4d"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-affected.log",
+      "sha256": "9309d945746c8bacc031a815293b71dce82c65b7c0ad11e293fb1a060a8b474d"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-before-stream-repair-binding.json",
+      "sha256": "6e5dceaa62a774eb4707d3929d9902fcc6271b79ae3c5761cecb699158e7ec3d"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-before-stream-repair-freeze-v2.json",
+      "sha256": "873ac7b3f5b6242dc10a4adb051c58e18e02ecdfc93a96db78eeccb145dae1e5"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-before-stream-repair-freeze-v2.log",
+      "sha256": "b36dcf63b859f40d8f656fd91164a09097627df8aeef7531328e99a506e32694"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-before-stream-repair-freeze.json",
+      "sha256": "a5d5d7e41af38128962368147f0ca4b52fc9a302af22438ce0e65f5c5a258cd0"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-before-stream-repair-freeze.log",
+      "sha256": "8007de60254bed3c1efd5a36148b430795814ccaec6fff81f944bb9690dd02ff"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-before-writer-repair-binding.json",
+      "sha256": "b818e5911a694f5bce314d3362ea0c49d445902d1c27a18796cd6a314eee45bd"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-before-writer-repair-freeze.json",
+      "sha256": "1472a7ed97553521266f64accc32df39c35789b3b4e0295f63f7661f50a00578"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-before-writer-repair-freeze.log",
+      "sha256": "7de9d73e87372b9118e671c34660b744e7e26032c6c314d98a32fa043fa240cd"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-d-base-owner-controls.json",
+      "sha256": "3e4009e1fd9b9f5eb59d374b527befc1c2bde8ad9997082f351c899b0b7a234b"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-d-base-owner-controls.log",
+      "sha256": "2befba70499746853b502d21bf66cc3dcf6f223255ec10eb8915ec8704fedebd"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-d-base-stdin-controls.json",
+      "sha256": "652a6d1cac772171db7400c5a30ee902cd3714758c231522ada45f5ade263b27"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-d-base-stdin-controls.log",
+      "sha256": "e80c946f1f72056d35a2ee5fedb3a4243517c136901e054ede11844853095f74"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-d-base-stdin-controls.xml",
+      "sha256": "f3c5b8c25217667850fc02bb470eceeabe18bd99040207803273da4f969caa08"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-doc-final-graph-sync.json",
+      "sha256": "3d02c9842e1740633bae0a903faf675c2301c126ab0dc2eb54279b861537b10a"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-doc-final-graph-sync.log",
+      "sha256": "e25e91ace1af976d2d054321dcd5af46c6e02275100f5585823ba1e632b5aa7e"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-final-bind.log",
+      "sha256": "0226c60cdc108e943d1525d9a9b3516617ab55661f3339c67e6c45760b7f6dce"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-final-native-nodes.json",
+      "sha256": "56a636a8b78344a812796a8bc4f80a047b8fbaf582314c4efb4d0a369e88d621"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-final-owner-sync.json",
+      "sha256": "080c0ccfe7b5ca4b4b35e214089ed3367281fa5cb353db3ae6f26aa6d098f054"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-final-owner-sync.log",
+      "sha256": "b0253831ab05d186ed53e801f4d9956f25daa6bec1c92ef8dd500061449ac0e1"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-final-ruff-v3.json",
+      "sha256": "e2898b82bdbaa3080ecabb7338ab212cc5beb8e73a145dd38a99dcee543110d6"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-final-ruff-v3.log",
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-final-spawn-callers.json",
+      "sha256": "b144187b16b5b2731d6e8435b2b3f34a0f0b82f751c670319934d7e663e38726"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-final-spawn-callers.log",
+      "sha256": "c101f68ebb9a77a1c4311ef2f9fda285c4cee43c06c304275cf9d73e3a58ed26"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-final-spawn-query.json",
+      "sha256": "4b236496be1b2573c6f3dd69ceae45b92184006a8de732c37a268925c960d011"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-final-spawn-query.log",
+      "sha256": "34f6f71e4c1218e4739b686428cd1cdbbc77dd550efa86540ec6c2b023d6a8ae"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-final-stdin-credential-regressions.json",
+      "sha256": "d9a65bf9b9c83353603c7a2f56f4a816ca770ec13a13012e56a56c85d467496b"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-final-stdin-credential-regressions.log",
+      "sha256": "fd1ff196640166fa45ba2fc7715619298b7e9350f37978f4954811e9dd837608"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-final-stop-impact.json",
+      "sha256": "c6bc23b688fbd1366a6088c772b312b0b92e13acaea3c882dec5ffa46b50c95f"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-final-stop-impact.log",
+      "sha256": "21ac8849824a17647d1b84f959f251df5c3ab7f13749556643520be572c173ba"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-final-wait-callers.json",
+      "sha256": "2146bbf09d65b3854bc209c5f081d707be9763fa3822239f68ab7147086b1896"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-final-wait-callers.log",
+      "sha256": "d8750be30bb182db58bd4ae89afde2bc9e7f6f222df52ceb9ed7e0cac2dfcdb5"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-first-lifecycle-green.json",
+      "sha256": "fdea08e7ff2ec3f1f702db0c6e6e2198836956f7a3b22f33283367b4b2d941f7"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-first-lifecycle-green.log",
+      "sha256": "2060fbc07a31e950a584c26edc3e3c11506997a79ea9a73bbbaf51fbb76b42c3"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-first-lifecycle-green.xml",
+      "sha256": "3a31530bfa11c6146028224dc99f6b13691ef7df800dc3d28d2a4f844d0c853e"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-identity-budget-green-v1.json",
+      "sha256": "e5065bec8993a4610581354d2bb30fbc5f0c718345bbcee4cb8c261400a0a913"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-identity-budget-green-v1.log",
+      "sha256": "39763564c8174d32a9f11325129254db023d56c151c662b8085c6f1884966f37"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-identity-budget-green-v1.xml",
+      "sha256": "2f7eb4502f9f8cfe1dc788d156ed59adff8c7f88ae9071cb99d9454b4ca9b9dc"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-junit-type-inspection.json",
+      "sha256": "fcaf40ab25a68d0698590ecb27c449d147a9f43ded29b8061d6894b36f579bd0"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-junit-type-inspection.log",
+      "sha256": "ac4670284ae370d51a2ddec92dd93793b3dc45c72cc5c8ecae54f18e8ec648f4"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-live-stdin-recovery-green.json",
+      "sha256": "e2647ef1ed76922fb1a56c279bda9ec177d4102141e8db76ec3d0c33a84f8d66"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-live-stdin-recovery-green.log",
+      "sha256": "23d5cdcea5612791e8d654463be11c9e842e0277150a39e65bbfd1b1f899efc3"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-live-stdin-recovery-green.xml",
+      "sha256": "a592967b50aab3bbdef5a0e2a9116089f7f01e8e48ed521df4e62e1023e1a9d3"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-live-stdin-recovery-red.json",
+      "sha256": "02ad67632933b46f8fd2e5c48ceaf613eef44db447cfb0bb1208748dca05cf10"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-live-stdin-recovery-red.log",
+      "sha256": "cbb61e33c88e9d391d3d4ec8a6a92d696c4879ce935e1c0cbd9a8b9da2fbd5c2"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-live-stdin-recovery-red.xml",
+      "sha256": "a3f95d042c065901e987cb6735b9ae01bee33da553b70fb20721904fa244a236"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-mutant-anchor-validation.json",
+      "sha256": "3e75a012611e3e351444988aad6eadce1f03c93c19b1a2ccfc5d7141041c6a8b"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-mutant-anchor-validation.log",
+      "sha256": "2960c31e036f8c70f1d10743141a6a936ee85626a6230d4cbc7e1d6abfae7879"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-native-30-green-v1.json",
+      "sha256": "a2ff4aff8d6f75657c3a41e2baaa7b8b0f5b84549a0a5b1394542748603914d4"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-native-30-green-v1.log",
+      "sha256": "85a33fd84e88ac5204a7f2a0e1f8fa7c87a1505e85c3eb6cee7ac973843aa827"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-native-30-green-v1.xml",
+      "sha256": "a1f34c8657c14d41f5a2f001e46b0117888682948666007f12c2932bceab0834"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-owner-regressions-v1.json",
+      "sha256": "5ece8bff8d6272cb51e4e6ba9de453801926e7fe16ac97b14d5cc8521196ea79"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-owner-regressions-v1.log",
+      "sha256": "90e8b02fd1e911b9318fcc998131559932ba2cd2d51254af7a2112f1ca9d57a2"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-pre-mutation-binding.json",
+      "sha256": "4ba2717e7902555572352e90f027f218fd075b245b6a97aab33780fcd1d8f2bc"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-pre-mutation-freeze.json",
+      "sha256": "414425998cb13e82589853bcfba21271f2a2d80d0f7431dac863f30e4783e9ab"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-pre-mutation-freeze.log",
+      "sha256": "0a4d4875c3f6af07b673c2ac4d9e6646f6a3a11ff3b4f137521134806e56d5a9"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-precommit-canonical-wip-audit.json",
+      "sha256": "8bcf675abec714bbff62fa29243938a54b3e31486b9d7ba11fe83ec6b09417d5"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-precommit-primary-audit.json",
+      "sha256": "e96828b85b4b85fcb0e59dabe3fc9c58a0d75fa83df563bf158b384f8869a39d"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-precommit-primary-audit.log",
+      "sha256": "ab509ecfec5e9f8b2a40c30032e1e2c254e8a0d0d3417bae052f07157f36e8ed"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-prepare-mutants-v2.json",
+      "sha256": "c2787e65ad225c058a86c8b501db0443f84db8f22856efd23c13a6359ae0da29"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-prepare-mutants-v2.log",
+      "sha256": "9821047d762b1ce6af84740b3b8330b4daecc37f2a77547970e53f0620c979b7"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-ruff-v2.json",
+      "sha256": "44a6eab4551de76a89e4e0cad7a557c30f8cbcb060debb289a1a5aba13297c11"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-ruff-v2.log",
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-semantic-mutants-v1.json",
+      "sha256": "50daf727331f4f5cc2b39f6bd2e5de8e6cf728fb54d666fa52aee7f1f53f4a9c"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-semantic-mutants-v1.log",
+      "sha256": "0158bff4cbf1a3a0fbbd052649c5723bb5e3d2017c522b3a405c57560e4d8fd0"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-semantic-mutants-v2.json",
+      "sha256": "d1ac57f397985d3c5ef5139669c8fa79454022231b458ca459f70ef65194f9c5"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-semantic-mutants-v2.log",
+      "sha256": "05ca7dd74d379de6750bd45eeeb9fda030de1e67bcf02a2450a6643381b470ed"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-source-final-sync-v2.json",
+      "sha256": "1dfe1fe9b6dc944b76a6eb1a250924eee54f797e9dab3655cf6bb688a70e271d"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-source-final-sync-v2.log",
+      "sha256": "c53a688bd21b8b6815ee1cc12e82a0e1fb6a78052f4709f6c7d660ef9ead0638"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-writer-start-recovery-assertion-red.json",
+      "sha256": "7283032fb2442935f166b3bb19c5bf7bc950285e19209c5f341db1abe4386107"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-writer-start-recovery-assertion-red.log",
+      "sha256": "65b8c1507ca14bf68e811727200807eeeebf6fdd3a081317459feb1a287c5de5"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-writer-start-recovery-assertion-red.xml",
+      "sha256": "8c26c7f42c4047a51f9b7f404b6132c3e6696361ca68ea1423ada74510374568"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-writer-start-recovery-red.json",
+      "sha256": "ee000c54dfa55c0fc043c10d87263b02da22c7eae68cc6f786fa39e5daccc88c"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-writer-start-recovery-red.log",
+      "sha256": "5c6f1c9da0ce21b58541d848202cae839b62e35c53c4b56a8b73466cb0c56e5b"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-writer-start-recovery-red.xml",
+      "sha256": "6912f5137824b679f878bfa81e06c214000021e33a8828cbdc9363e324f42add"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-before-binding.json",
+      "sha256": "d75e3bdacf0a91df8554b57ce8dcf1b28e24f7376fdc3faf3391610a7308147a"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-bounded-semantics-v2.json",
+      "sha256": "a81cb37497e57b215cd022cd5a58c275ad3c6cbf0136a536b686c95dda5352e5"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-bounded-semantics-v2.log",
+      "sha256": "5071ec9bcce96392f7d498db163eec1a501f2428f6e0146bfd891dab8f96cc2c"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-bounded-semantics.json",
+      "sha256": "d0012ca20ef9c77a19e29ad9e60044f89acaf4ca44951d12d6dc912a28635d6f"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-bounded-semantics.log",
+      "sha256": "463cc2dd2ae41da0e91d42204287a1ca3a81a227ddc87a7a5c87fbe3b957f07a"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-callers.json",
+      "sha256": "a13b6dd5c53409edaed4e6da1285cd59e193acbb8b35319c80e4e0b77393571b"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-callers.log",
+      "sha256": "ea9a7fc9a24e4776955a10c66e116fa7fc3d3335878d95cc0266285bccb89023"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-command-effect-red.json",
+      "sha256": "506dd851d579f0b2d7c5731ab204ec9036646f17569f5f48b0751cde3c974038"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-command-effect-red.log",
+      "sha256": "0a984993b1d6efbacc2d872c4e480a8eb75a8f2bb873e94e89298da3818fd495"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-command-effect-red.xml",
+      "sha256": "94d7f5674f30c9af4ed992b91667f6121300f5bf07d40cb123b566c9d78ea1a7"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-command-final-guard-control.json",
+      "sha256": "0089ce31c577e26563deee7d0d49e064ba4c705e2b80e0263aa4b6fa94c5443a"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-command-final-guard-control.log",
+      "sha256": "70b227d64ef878fcca694ae5f6fd687596a0b80d0ece0a9887b136def4f4683a"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-command-first-green.json",
+      "sha256": "cb9f9f3a903649c9d65241f5176d3827b5e628ccbbff0785eb8d3cf6cb5af9c5"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-command-first-green.log",
+      "sha256": "7e2c54adddfc921419e9f2a8d3dc20d9c7ce5b619e0455b69269dc500dfab05b"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-command-first-green.xml",
+      "sha256": "7d30be3c64075c03dee7cc3198cdab32ebac95f33ec7a6064962edce2f9c8c26"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-command-green-v2.json",
+      "sha256": "c5b1ba13e1b6d6d7349d5ce082218518c43d63367108e04bd9809c733194d11a"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-command-green-v2.log",
+      "sha256": "b0a2b1fe5fae21b9b4fe4ca841a8d155407e7b2d64e1baa1da6f109ead8b691f"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-command-green-v2.xml",
+      "sha256": "93b4d52837c654ba12be29b4422a52fd4bee36db044d936c3f0a1720eecd7a04"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-context-red-v2.json",
+      "sha256": "d8151b06ddf3f68a7cf0e3883aee6bc6fd00185c25ec28ec367f0cdac4930662"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-context-red-v2.log",
+      "sha256": "fea098389b8e1552af2f08397f883055fe9e1af59dffd620ff421535feecad10"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-context-red-v2.xml",
+      "sha256": "dc228fb315f487d040c433f419d5dd23f2fe34fc371613eb65f9ab3964ee560b"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-context-red-v3.json",
+      "sha256": "c3a5a7d015069d3a73131cb5514e814780fd6b89fe81209c6966e11a7991edf7"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-context-red-v3.log",
+      "sha256": "4ea44ea3875578566601bf2b1dc47b36ab531489ac072ee8687739d65a4a9ec2"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-context-red-v3.xml",
+      "sha256": "6590879aec5944ec52e22d9af4246e44f3a6f30ce40161934d58d65cca57233d"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-context-red.json",
+      "sha256": "2cf2689760ad7e4479f1cc9cd33ae20b1d92697e37a6e7495cf4ac55dec000e5"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-context-red.log",
+      "sha256": "cb8d5ea4df0be0b5a82ac1b7a689c2f59013a638bead54ff4ba0b24c3f9e6959"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-context-red.xml",
+      "sha256": "9723cd3fc0e765d09568d664f29c6d7b2d912c4c279a5748b0e28183fab99c7e"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-d-base-controls-red.json",
+      "sha256": "f94ad6f753caca46ad5dce557c39e9764a0e3485a98bb4d167754fc9eb1347a3"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-d-base-controls-red.log",
+      "sha256": "f8101ef2ead7e1e487893cbb1df6f48aded2c5a2c06f6e6ff5a7248daf90621d"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-d-base-controls-red.xml",
+      "sha256": "6b7644eb1a0c7103710d5de17971797bd77aed6d05c7fb43c942a59edec4b486"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-existing-refusal-control.json",
+      "sha256": "8a3f1c6f9a1cdd9d3b3eae00cc8b009277e958cb99570b71bd1e79338afc882a"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-existing-refusal-control.log",
+      "sha256": "da6b5b1faed3a8f1e18517624a651d87638686d2952d82c2653866cf4febff11"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-expanded-red.json",
+      "sha256": "704812c2a91c9f7fd2beea882242a5a9eacda1b664b555280563c687ab6c1819"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-expanded-red.log",
+      "sha256": "b3082825cf56297e4ea9c4953c28c44ae8de008a54ebadd47f605c0b3b107b80"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-expanded-red.xml",
+      "sha256": "6a16e782d4f804b6805a6b3843f22f653e7cc650d28c7d233dcbdfb6269f85c3"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-explore.json",
+      "sha256": "3126da510ae25ef22450e9e1abbd0d1d6bf5e5f225936eddf5727789aa0bc6ad"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-explore.log",
+      "sha256": "357e217302b35169a49fdac7c782f5df626943b8d9c7f7589dcab0a3173c0e81"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-final-guard-red.xml",
+      "sha256": "72c8f5f50f1ff277271490e941fb31d555de5ea03b46d8aece685dc631694cee"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-final-owner-red.json",
+      "sha256": "0f7a36179c3bb312696dc81093a0ff46cefa9c4a3b4302ac0713dce190953de9"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-final-owner-red.log",
+      "sha256": "cd425e7a607c93056a9c74ca1b5b4993c2df7d3e6e035559d12dfe54b9dc6b7b"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-final-owner-red.xml",
+      "sha256": "057629e658c49ea087f31ab79da404d7d7cce07e1f1b1d3d34d214444aa04b29"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-final-red-hashes.json",
+      "sha256": "f797bcb6026b04140440cbd25fb927d96d34776993d92bcb64694c07322f1acb"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-final-red-hashes.log",
+      "sha256": "97b0f6deccb44144a542b119564eb372962e321471c5fb854ae37bfddea41cbf"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-freeze-before.json",
+      "sha256": "d91bd7d8a6f05536e8aad7398226efa3fb73f9df44922953dbc596f65fd91e62"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-freeze-before.log",
+      "sha256": "5c6f3888e8a3b23dbbaabb1fd5ec7c28d0d459a49547c9bd54009f9810ce1733"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-impact.json",
+      "sha256": "dfe387e85daac5e4e16d2c0f13294aa900fabafb1fdc6d27c821cb5416ac7451"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-impact.log",
+      "sha256": "f5b16612b160a3c9648948e346b8e7d10aa236bd2ad09e6054982930a211a605"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-login-diagnostic.json",
+      "sha256": "36da4d91dcec3278fc83cc11787cfd6a969f2a2d8ad873f08e004eb85d80e9e4"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-login-diagnostic.log",
+      "sha256": "039d1f35afe406320ac3b5e22845c7cb514faeaeae2f98fc0547dc6f6ba3bb3b"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-login-syntax-diagnostic.json",
+      "sha256": "f3d3a9b4eb8721885bc5badef41a46b6347703fbcfa23c71b558a89df0ba4a44"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-login-syntax-diagnostic.log",
+      "sha256": "a74c23f79f85b15ab01ae7a7da2c1ee169f244dfb3eb82ecfa0a95a8bd1923d0"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-native-credential-green.json",
+      "sha256": "818af0b22daeea584dd0a346e24b1830c2fae45b5ccd0db7c4c06627f163a651"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-native-credential-green.log",
+      "sha256": "e0fce8fc23152216a2ada316989c1563b248324b8acbda65aa9b2e5dbd3ba5b3"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-native-credential-green.xml",
+      "sha256": "8920ef9ab80ea3222930334b87ecaee6d7d46e36b888f7e87c7819e7198e1f66"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-old-refusal.xml",
+      "sha256": "4f8b4d4555c24c3b618424daa9d3ee9c1b588e3abe7f5d0c24c0012583843a42"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-owner-query.json",
+      "sha256": "dc7a59c8810cd8625a2c32c46b0c1b5bfb0cac861832a00307e7ba26cda9469b"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-owner-query.log",
+      "sha256": "8cbb9ab792aae792d0d02a2ed115d9176fa6cfad697bb23b336957e1efc8503f"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-post-implementation-sync.json",
+      "sha256": "78a76343d960916a68eee054aa9cf4d7e572563700c737fba12370e84677e182"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-post-implementation-sync.log",
+      "sha256": "38785b65671844e5aaecaaf4d2eacce1475100d7988729152d040a02352e48c3"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-public-terminal-native.json",
+      "sha256": "9898e696ed5978eb12116f0411ca0d82746db9e57368b65431476be9a38b087d"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-public-terminal-native.log",
+      "sha256": "4dc92fd47d79b7c1c0c50a8d00a518df9bf66a2f4e81f8b64266d8b460bb78a7"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-public-terminal-receipt.json",
+      "sha256": "2fb12350b257a5c2ae700e15f4fc03333a8079932337d67b680c5305247b2f03"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-red-source-hash.json",
+      "sha256": "76cbd0c07b027a218513dc895014f7c00d393d6ad2927487552b5193612bf9ef"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-red-source-hash.log",
+      "sha256": "e7fc04e5808c16a47246d73e91b8bc9079474ac144d3888154ce630443599cab"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-ruff-initial.json",
+      "sha256": "8e69586ea0480872e386760550e9dfad280717b1e2fa83cf5195626f21a6cace"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-ruff-initial.log",
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-stop-and-read-lifecycle.json",
+      "sha256": "17e72ee17e7b71af1326d482f6411957f448d2819837f0bccc5e9b0245391bb0"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-stop-and-read-lifecycle.log",
+      "sha256": "b046a845f087c507b8659dafd4d87b56964c047c88e949665b5cbce46415af66"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-stop-and-read-lifecycle.xml",
+      "sha256": "2408c7b341357f17931d60d17675fff4e7123de273fc72fdb9f907657ca9ab4e"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b11-status-owner-query.json",
+      "sha256": "b7e77a033b0dce981f0a33660a25aa0865f7d61d86ebc2f56656640140105d1a"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b11-status-owner-query.log",
+      "sha256": "47ca692c7f9d144f12a1ff5ecba861190b16060cd5a528e27a54c83e26fb7fd7"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b11-stop-before-binding.json",
+      "sha256": "918320bd4500eaeb122bc536ec886fde4a85568135d35e041b45839f64381b12"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b11-stop-before-binding.log",
+      "sha256": "838a65fa09746012d0c6bbc810c9729d1f2b722a71ef7435b0d11fb1d81e49e9"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b11-stop-impact.json",
+      "sha256": "d21778b0a49b18d5b0b0aa4cabcf934a05cbbf16025467f93f7cfa89f29103ac"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b11-stop-impact.log",
+      "sha256": "e99287ef2fb036be695477b8b53d243388017ab86e794b7db1aba306da7618c1"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b11-stop-owner-query.json",
+      "sha256": "1587fa2a850e2aabb5bd70555869fb7bb0178af9b07ccac8c77396c614f44471"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b11-stop-owner-query.log",
+      "sha256": "970a19bb9f60b1fd359a47ae760e0e83dd9fbe3d4c98a7745e8af28f16918ca5"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/acknowledgement-only-after.json",
+      "sha256": "01eb5bd7095d2a8140983200839b96396034226417f930122c9081beeba13902"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/acknowledgement-only-after.log",
+      "sha256": "0c37b252fb24c3b687d9c6db295bf06b25565ecafb637bb6dbd918485ffb3404"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/acknowledgement-only-after.xml",
+      "sha256": "e148ef913ff3490779f0f9f18e098597bc92b69c8000718c35a17c518abfaa33"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/acknowledgement-only-before.json",
+      "sha256": "4cb3ca6f331911916d4b36f376e58a0e6807ee8e87fdfdc9fd3ec44ac265b6f1"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/acknowledgement-only-before.log",
+      "sha256": "ba57b6d1e8a5b6b3a5e456ff25daabdf63206f8ed8df70674ecf8420afbd67e0"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/acknowledgement-only-before.xml",
+      "sha256": "d4fe4132f07e230032999d91aaa3689a43b04626853e5b0b772cf716f9878f29"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/acknowledgement-only-graph-mutant.json",
+      "sha256": "2d2f7508e2502cfa4d5d62feabdee29007b09bfee46921b4a5424e71b3651d1e"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/acknowledgement-only-graph-mutant.log",
+      "sha256": "42023b974e3f5673e03911bef8782449782bdbbcedffe416b57cb4560a2715cd"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/acknowledgement-only-graph-restored.json",
+      "sha256": "ff168c6c3774c1a1367a61ff8648c0932ce1b82cac9a6447ead1e9a97071a9bb"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/acknowledgement-only-graph-restored.log",
+      "sha256": "3e75e64d219b76c608fd02269b44bb8668201932cfe2f72d31c02db12565b683"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/acknowledgement-only-mutant.json",
+      "sha256": "3f04a1b26c4e7b432930f85b50b6cbfd7e40768558f8c6b6e851f2d1a18c5cfd"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/acknowledgement-only-mutant.log",
+      "sha256": "53efbbc166dddf95f5d6abc1afc3f743d1ca580e206408e804024e91d64fbd22"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/acknowledgement-only-mutant.xml",
+      "sha256": "411039a2116722bc434fc8dc57cbb58da941ba1e370f390adfc765450dfe592e"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/acknowledgement-only-receipt.json",
+      "sha256": "4235c08ba91a297dca9f568180310e531a01a539eae9284d512f84a00955a1e3"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/command-cleanup-removed-after.json",
+      "sha256": "2dd575da3c74e2e033994adb9abab63f625a0d2515611389ef5eff8259f11bd9"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/command-cleanup-removed-after.log",
+      "sha256": "03c2ea6b1539a1c7c1cc806e2905139b4616a58c6826089b4d57700c41914d25"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/command-cleanup-removed-after.xml",
+      "sha256": "b9a1914d01914b5975aa2703cbff8992ff6b48cf0d7745fa7654c349bb40f0b5"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/command-cleanup-removed-before.json",
+      "sha256": "ed5690cc1b12253d747715e8ec9be2cb716b8ab2de86797c890bcbec6549dbc5"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/command-cleanup-removed-before.log",
+      "sha256": "bb0138d0bfb9a07773e4c4289b6daee8fa29deb18cf942ca3abda3848248e6b4"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/command-cleanup-removed-before.xml",
+      "sha256": "9c94b65bc68e091d611d0ef20b09ace9199925d8f7b611f986f71a9bb5cd64f4"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/command-cleanup-removed-graph-mutant.json",
+      "sha256": "cb7f2cef317ab8ccc8cb7aa7822c2c7a56af7fd36ca82e913b0034bb9e185be8"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/command-cleanup-removed-graph-mutant.log",
+      "sha256": "42023b974e3f5673e03911bef8782449782bdbbcedffe416b57cb4560a2715cd"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/command-cleanup-removed-graph-restored.json",
+      "sha256": "7565bac863ba8bb1f07f6ed5ee772433cd6ae0da2ee7cc28bae01552c4f4cca5"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/command-cleanup-removed-graph-restored.log",
+      "sha256": "62791e287217fd7ac8ec45f889a92a0673246647e623feb0a6a786d2f3b54b3c"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/command-cleanup-removed-mutant.json",
+      "sha256": "6abd969aceec46ac53f7a889f8e976ff4d2b725f1ef9cffe735c1209e6d00aa3"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/command-cleanup-removed-mutant.log",
+      "sha256": "78e6904710b3926278010372955c8ffed46eecfff41c33cd7fdb42156a8aa759"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/command-cleanup-removed-mutant.xml",
+      "sha256": "a3d357511e6a7c5a9c5cddce38bd9bea54d3a260eaf89309247e2a819b5af61f"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/command-cleanup-removed-receipt.json",
+      "sha256": "46d9ef14614b3e28e160ab6837e0d8abb4c88dc92d7e76f1c64c94310f9ff52a"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/final-argv-guard-removed-after.json",
+      "sha256": "07886f3d05f2e0640496f36f3f825d0b45ae7b92e55a5d192251b8017a79fee1"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/final-argv-guard-removed-after.log",
+      "sha256": "b75b08e6e656b7c42d8537cdff8955b95f87a367d6b3696202b9df029eb5c392"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/final-argv-guard-removed-after.xml",
+      "sha256": "741a4fd49bf52015972c31a4e8f92dd7bb700d214dd831819303c6da3e336c28"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/final-argv-guard-removed-before.json",
+      "sha256": "f28762418f43a7adf1910a440c1e751eb7cbcae1f061e480be930749d4335a9e"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/final-argv-guard-removed-before.log",
+      "sha256": "075280ffbb0104c063ab5895392c715d320f10c0903c8b64dc1794bc7bc5f68c"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/final-argv-guard-removed-before.xml",
+      "sha256": "e3906ebcc3c312d7544a1a0463ad9b07c62106b9b4581b275a212a6381370be2"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/final-argv-guard-removed-graph-mutant.json",
+      "sha256": "00a89c6ce838043a5fa82eca9c7e3747fb760adf4ec482ef6183f207979a7853"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/final-argv-guard-removed-graph-mutant.log",
+      "sha256": "d7311f4a21c3f8679cd063d361805458bfdbb69a3fa7cd5484e08f90107b944e"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/final-argv-guard-removed-graph-restored.json",
+      "sha256": "0b2a3fb2cdb522b00115fa0c3f08c01e6d038706e483655df5b22fbc68f5a033"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/final-argv-guard-removed-graph-restored.log",
+      "sha256": "332c0840dcf4364410b8c34668ec6c571665a7b6aa8f65dc86e39c5cc8680f21"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/final-argv-guard-removed-mutant.json",
+      "sha256": "0ad07ff47f1bdf0020ab227f1a0468047b0433d804452c086ce6576f10c16a89"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/final-argv-guard-removed-mutant.log",
+      "sha256": "263df22deacd1faadc5623f80f9b940f71038eb812d11d332e3ac4dfa3f611a6"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/final-argv-guard-removed-mutant.xml",
+      "sha256": "5444d558304bfc02fb03a719c9bc894108adbe4081cddb23a39a5d2630faa95d"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/final-argv-guard-removed-receipt.json",
+      "sha256": "db2a5043ef28c88c8a35cd921872f6dcce9c6db87679f419ed7312ddefaa2c5b"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/frozen-source.json",
+      "sha256": "16d58f9c6f579657cf465bac59c3774a0a33607ebaf60761ce2c3e44eabe014f"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/full-after.json",
+      "sha256": "e34fd87e81a740c97da1511e30145f0dc86a783f981a7af61e2836762f67ac38"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/full-after.log",
+      "sha256": "5a1bd4ac90cc37cd8e4e68aa3a72de364c20a683573a3fb17a938eab1dbd7a61"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/full-after.xml",
+      "sha256": "88e44c3b6486561c616012858786e27683e3b06d2eb261bc5feed4e1606a2a0b"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/full-before.json",
+      "sha256": "7518be51b7b6fe7420a642e82d749ec1642c2d43fdfe30faf95dcf07951b47db"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/full-before.log",
+      "sha256": "f92af7f3fa20ac2ff3952a01c62221b41471ff20cd2377eaf2fad2ff08cbf0aa"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/full-before.xml",
+      "sha256": "45fd8697f04b7b310f21c4e6a49bccfae12ff0ffe2bc24cc2bdfdaa5d5d0252b"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/graph-initial.json",
+      "sha256": "fba81a85b137b19131598e95a3da25852acbcf4d09ff4ebb1c4acf79a0db79e8"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/graph-initial.log",
+      "sha256": "e25e91ace1af976d2d054321dcd5af46c6e02275100f5585823ba1e632b5aa7e"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/identity-guard-removed-after.json",
+      "sha256": "9b072c57faffb60cf91640be41aa73b4caced5a4373765044aab2f103fa60ebf"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/identity-guard-removed-after.log",
+      "sha256": "de7ebe89cd0503df82728792506bff68f890fc7711334f53271dcab35c973f44"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/identity-guard-removed-after.xml",
+      "sha256": "fcdbe6493d460e5390d61aefd642af4fd7a48a0e00e69a1baad19b16e77f7b8c"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/identity-guard-removed-before.json",
+      "sha256": "4256e00c5d18ed227b3ec2fe67ba33d2daf2af1e7da9c6a9cc469e5de9823108"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/identity-guard-removed-before.log",
+      "sha256": "626b4103f58848495e25e83e88b54661b24cd2e90c52c7c11b9971e47e798fbf"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/identity-guard-removed-before.xml",
+      "sha256": "c8a379d0db437adfc439aa0196f91817176ca688367a32e0d222e7e086c9ceb1"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/identity-guard-removed-graph-mutant.json",
+      "sha256": "8372457965cd2f27755ee6e6267e83f3c5a5d11b835e944c11f27bb8bc828af2"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/identity-guard-removed-graph-mutant.log",
+      "sha256": "67cdcfa48d60b14387b3450b1b7ae4e63d83a1699461bbca9148c5967ceda24e"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/identity-guard-removed-graph-restored.json",
+      "sha256": "0dc28059d2610dab4cf363ccbfe50f50bbfc9c8c174502ffea33ca7b06c40d4a"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/identity-guard-removed-graph-restored.log",
+      "sha256": "1f8620c5ab624333745eb6876fc7811630d8af6e262891b8dc099ef76776705a"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/identity-guard-removed-mutant.json",
+      "sha256": "3502c773686ece6ad18fbed9a2bd6d662848ce013de427b2137f2f2b0d3b0eae"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/identity-guard-removed-mutant.log",
+      "sha256": "9d9e3489b6c98d94ce4d5b8c8093e238274355d7c6a7786b464f43f19ce454e7"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/identity-guard-removed-mutant.xml",
+      "sha256": "6fb2badbfe94ebfff2eb82b32b7bdac840edb0b4cb2ea8d52b965c7f1020ce84"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/identity-guard-removed-receipt.json",
+      "sha256": "9a346b066acad52523432065821aabe2879da186883d1d03f20f125870252d05"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/initial-head.json",
+      "sha256": "2f852698cdf2bfb08b63c8dea5294ef897a855781f6f743da4e87ec062972f5d"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/initial-head.log",
+      "sha256": "47e0a1bddda03f12b70cdf17e6c316f6a397d3802e3e6bb9f2c93881da3ae653"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/initial-status.json",
+      "sha256": "2404e0a0a4b9541220fe6e7a378a6937edc68d195de7e07fb6d6df477363003e"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/initial-status.log",
+      "sha256": "be38d2bdc5e99f73b1301f27e05423b359c2e81250969e22ebc923403c79f3ca"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/late-transport-budget-after.json",
+      "sha256": "945025a4233491979030a20d618f782fa8a155ba4afb1634a03e42582ddb2afd"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/late-transport-budget-after.log",
+      "sha256": "c5e464fadf93766a1f08273ec6cd46331dd07d51ec91213607e60664dc81e125"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/late-transport-budget-after.xml",
+      "sha256": "70e3f0d434b45fce6e5d975fb4170e3563797ffd25c43ac2b1ad81479d1ee752"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/late-transport-budget-before.json",
+      "sha256": "12f2acaa70fb0016e82cd7cb75532050e714cca9a5346cd58c2d0d8a5d8f07d2"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/late-transport-budget-before.log",
+      "sha256": "bdf1f010abc07fd3359e47f083a31fb1b1f9e0a657bc9e7617e480225420d800"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/late-transport-budget-before.xml",
+      "sha256": "de1e8d69472cec5b5b96818fab83005aea1f8eb9e5519c67cf359ae85587cbc5"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/late-transport-budget-graph-mutant.json",
+      "sha256": "fe717ac7940ee43d8cf017db0be99c24cf23a60abee15d7b44e35ecdb0ccc1ef"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/late-transport-budget-graph-mutant.log",
+      "sha256": "b67c8fc472c530b31788c05fc3b8de5d82f45c1d095dcf2379ce2d7854b0bcba"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/late-transport-budget-graph-restored.json",
+      "sha256": "6526c222e77a1988d820161bd73d421f085cd36827e9d18d9fa33ea19a269efe"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/late-transport-budget-graph-restored.log",
+      "sha256": "62791e287217fd7ac8ec45f889a92a0673246647e623feb0a6a786d2f3b54b3c"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/late-transport-budget-mutant.json",
+      "sha256": "32eee8da2de663988f3cac4819334eb6c4625071a60d0072732ab3b9904a6b82"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/late-transport-budget-mutant.log",
+      "sha256": "3ff639e4c7fdb3a78a2e3382b802d4cb20c937d4ab950e5a2b6db7b0a2f22658"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/late-transport-budget-mutant.xml",
+      "sha256": "e8d0b68a75ff77b01f0238f0261371c274ecfef5af59430a1ae517572473dcae"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/late-transport-budget-receipt.json",
+      "sha256": "d123518457491349edefdfcb101a231b8b3ca950a34a06dcc2c0c8495f75a708"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/live-inputs-released-after.json",
+      "sha256": "ed16c50be5303c86adf38b07bd72e18be00d817dc0b6b1ede83245f33f1817d4"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/live-inputs-released-after.log",
+      "sha256": "e45dcace9fdd009ccd6d47a42fb9d06c044c40c02117408711998e033241add4"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/live-inputs-released-after.xml",
+      "sha256": "20013f13eade8a6aa034ac1d33f162633cc8728c8acd0e71f768ad594499c51b"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/live-inputs-released-before.json",
+      "sha256": "8e0508134b5811ea801c5321f923bca4721679a6564cf8361e89f746babf827e"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/live-inputs-released-before.log",
+      "sha256": "2c1009f6f9bef7d8411410e66fa72f9d7a5d32f57d8318a990aa9f64cd949471"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/live-inputs-released-before.xml",
+      "sha256": "3ad155655b487e6126c38d9dfde7dc2be3f8ff5099d4e35e6c690004a4697bec"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/live-inputs-released-graph-mutant.json",
+      "sha256": "5995b5efb3f9e0f0f093e278f29b7e9b95e10c221914741de97430d977c2397b"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/live-inputs-released-graph-mutant.log",
+      "sha256": "d7311f4a21c3f8679cd063d361805458bfdbb69a3fa7cd5484e08f90107b944e"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/live-inputs-released-graph-restored.json",
+      "sha256": "5f0734a6a7e3643a1884efa3088149383b3c35fcfe7222659c7607142895e243"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/live-inputs-released-graph-restored.log",
+      "sha256": "62791e287217fd7ac8ec45f889a92a0673246647e623feb0a6a786d2f3b54b3c"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/live-inputs-released-mutant.json",
+      "sha256": "29bcbfbe7e341bda0245f784d0d381a2a1ff47bf1ea07cb90a6f941003091b99"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/live-inputs-released-mutant.log",
+      "sha256": "fc953500fd5fdac559f6cba9c95f8e741c9c777c4e040a479afccdfc687a93c2"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/live-inputs-released-mutant.xml",
+      "sha256": "34646dbc44f888244d262d548773642af704574c6de206b6b14636255a93ecaf"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/live-inputs-released-receipt.json",
+      "sha256": "b21cce68f92bbf7d65fabac0b984eec3e2ede826fc2d5a922f5ce57c46018434"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/payload-truncated-after.json",
+      "sha256": "edc300cd03a86ad8b296000750a3794953d255260af1835494b31a5994a64379"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/payload-truncated-after.log",
+      "sha256": "392313b4e7ef3129bd463654da8d7b87e19ebbac1ca74a8e6043044fdbd70136"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/payload-truncated-after.xml",
+      "sha256": "12e2e7fad5f6c33a32e07b5a51bf6b703be137ee3ae21cd1d35fa844181e3b5b"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/payload-truncated-before.json",
+      "sha256": "7908519236d82c9504b6047d5c05b880c4868e0a82e6413ff21ddb7cbbe48780"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/payload-truncated-before.log",
+      "sha256": "00f121eca253e9805db8c2b64e4632d26a81aef1d7c6f1e3603e6c0747b56b04"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/payload-truncated-before.xml",
+      "sha256": "fad8d1ddbf2179939956aae2f6915e387455ff77e061b364673b7239a326a582"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/payload-truncated-graph-mutant.json",
+      "sha256": "aca0f3aaf1a1391b0fed69aa81c57c110c3ae3a3288b02935f849fe0928b9b91"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/payload-truncated-graph-mutant.log",
+      "sha256": "d7311f4a21c3f8679cd063d361805458bfdbb69a3fa7cd5484e08f90107b944e"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/payload-truncated-graph-restored.json",
+      "sha256": "40222393029426ccaa82229c1bdeb7ebf435f1e1ab9e758c8ab966cda2376df5"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/payload-truncated-graph-restored.log",
+      "sha256": "de6272d1506fa5c70fb40e30eb62af52f951ce6adae1dc368d00682e99867dd5"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/payload-truncated-mutant.json",
+      "sha256": "670a6bffd2ee3260fe6d247c20aa4b1f9ef3edf9667fd3c0064de09a381978f9"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/payload-truncated-mutant.log",
+      "sha256": "1ea55d751d0228396c4266760963158fc32a3c7a33df17d6b940ab7207ac14d1"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/payload-truncated-mutant.xml",
+      "sha256": "540a61f16e3527833cedd8cf31bb47e9f6d19104d509ea092be07749e887a8a4"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/payload-truncated-receipt.json",
+      "sha256": "4a05b536043072853530f869f32d05672adab45f55b4f8299467795a85a9cfdd"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/recovery-input-handle-leaked-after.json",
+      "sha256": "244be26e62ee95d4a3f79afe60a7fc6e7ca8c5c5a46234a1b84ce4859483317d"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/recovery-input-handle-leaked-after.log",
+      "sha256": "b3e998031672f51b30b489a2cfff16cb35a1d284d087992072b6a6588308d96c"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/recovery-input-handle-leaked-after.xml",
+      "sha256": "f56f4327f12a5640f6caa8e3924e839261e6d1d80aafba119b81ac816e419f48"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/recovery-input-handle-leaked-before.json",
+      "sha256": "89dd6949c714b5fa282be437d42a93d7b5ef7a644b9a737768a373c6daecc311"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/recovery-input-handle-leaked-before.log",
+      "sha256": "61817e657fa08e7640ee071a40456b88219cc521c1a6a2850870cd00d415494d"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/recovery-input-handle-leaked-before.xml",
+      "sha256": "94f01cb6449eb2b67c8ef23231d0670c8777d4f60c3b0c126593a6aeec38657f"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/recovery-input-handle-leaked-graph-mutant.json",
+      "sha256": "a7ff9a14b208971ed7d8dc6cc4a09f45acee4ed47631776baf8057fb3f95b3e1"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/recovery-input-handle-leaked-graph-mutant.log",
+      "sha256": "de6272d1506fa5c70fb40e30eb62af52f951ce6adae1dc368d00682e99867dd5"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/recovery-input-handle-leaked-graph-restored.json",
+      "sha256": "2533e7a2765a3783567f7cd426b2978db936f56d23a6b2b8c4cb06c5c2c6e93f"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/recovery-input-handle-leaked-graph-restored.log",
+      "sha256": "7c48660c765141eaa381c974699d5f377482c4555b528db67472371b3fcbf0b9"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/recovery-input-handle-leaked-mutant.json",
+      "sha256": "ca3fd68c04ba46174f0767809749b8dc70d0cd1897911bc73afa1c0892e8f529"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/recovery-input-handle-leaked-mutant.log",
+      "sha256": "6813220e54414300a0d3bfbc66cc9b8afa7b696f22e1e6f2f864b693e5bcfb28"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/recovery-input-handle-leaked-mutant.xml",
+      "sha256": "4d6740387bd6e447cfe4da79145f31f5e68fe7555c79b8fa1d77e1cb76a0b353"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/recovery-input-handle-leaked-receipt.json",
+      "sha256": "a4741651e49dc6762ffa476a3fbfa18615c81be77f122efb6551b424e8bc90e3"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/results.json",
+      "sha256": "f3d8b5128d676414f1a4ca2bd3c77113e27f2bfcbd7a023f65165157e191e5b3"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/source-context-after.json",
+      "sha256": "239108c9c1eafb60920942c20fb4e4182837db029bc68f6eacfc153c1c3ca6ff"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/source-context-after.log",
+      "sha256": "6e471eb524c33c33418636cc21b59798482e674c8d5582faedccf95a4f367fa8"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/source-context-after.xml",
+      "sha256": "06abd5493744b0d32b30e4c8bb4f3bb0d4eb261fbde789991a4ef05a1c09c71f"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/source-context-before.json",
+      "sha256": "5155235df382a329b806152d347ce0c2801af482d86d5a52a48470602ba872c9"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/source-context-before.log",
+      "sha256": "9394479e450aeb973bc3f7229b15ebae50296d306398627a39632a596adc188b"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/source-context-before.xml",
+      "sha256": "78fa316eeb2caa269b80800ee766c6e5c0e1090f93c674faa80a21a8509f3169"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/source-context-graph-mutant.json",
+      "sha256": "4b88ef1b18133d201ea096715118738b2d1f00f2c78f79c751a3550ca3712d0a"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/source-context-graph-mutant.log",
+      "sha256": "de6272d1506fa5c70fb40e30eb62af52f951ce6adae1dc368d00682e99867dd5"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/source-context-graph-restored.json",
+      "sha256": "cb42479a84650ef00959b3c7efb56eba81f70e9520db498889b47ccbb7b8089f"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/source-context-graph-restored.log",
+      "sha256": "62791e287217fd7ac8ec45f889a92a0673246647e623feb0a6a786d2f3b54b3c"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/source-context-mutant.json",
+      "sha256": "70099663b5de87e66055737813d9e15dd1f350ed6a98b3e6b96e34ca34608712"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/source-context-mutant.log",
+      "sha256": "f7a727c59f47949d429f0ce76a53d2145b01b8319473d0dcb43545943b83e815"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/source-context-mutant.xml",
+      "sha256": "23bda6908036a81e23bd6965cb943000d21cb28b5fb11a2b6bc38c6c4d7d7666"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/source-context-receipt.json",
+      "sha256": "4bb3f7daa67636c7a7ecd1d59eb35c0dbc00e5f876f17bd3ca576c1576d5d188"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/started-writer-discarded-after.json",
+      "sha256": "7ab2435bf5be37e2f34939f23268975e9be03259c975b59d5dce06dc212a819c"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/started-writer-discarded-after.log",
+      "sha256": "a790e0618ecf4e44c3f7a364a981b69a0dfe3d7da0556f7cca2682efe28c8eef"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/started-writer-discarded-after.xml",
+      "sha256": "379fd5f9887298b46cac2ec4de05faaa34559fc2f45f638ffa32c63aa2198759"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/started-writer-discarded-before.json",
+      "sha256": "5595c20a6798128deb6ac7567bca5534c297a1324bc4033d6aad771e5d4e8422"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/started-writer-discarded-before.log",
+      "sha256": "782d6ea46dfb69038d2ccf678dd574737e6c41830a0166ea6d730e9e510a2657"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/started-writer-discarded-before.xml",
+      "sha256": "dfcc2d7df7db4866852d1b536ce715a045d92740f32b2b6b132ef624099390c9"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/started-writer-discarded-graph-mutant.json",
+      "sha256": "e4ed44629d2e4e5691fc3e13098ba2c1c388d7da61f98593ce0a67ac6e381fab"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/started-writer-discarded-graph-mutant.log",
+      "sha256": "c6106df9f06a2cfce2068a587c4c21f00986a0ff179732f3372feddba3d89245"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/started-writer-discarded-graph-restored.json",
+      "sha256": "6c8728127f7ab176b8bea3e6cdcc79315812a3afa123e451d6249f89695b7285"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/started-writer-discarded-graph-restored.log",
+      "sha256": "de6272d1506fa5c70fb40e30eb62af52f951ce6adae1dc368d00682e99867dd5"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/started-writer-discarded-mutant.json",
+      "sha256": "ad10b77c54d907aff690c7a40755acb4b637311873b9a9894078ce3545fdc8fa"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/started-writer-discarded-mutant.log",
+      "sha256": "fd9301acd912eaa6361f2b30b05f5f532ae289086db3fd321db4b508588d4423"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/started-writer-discarded-mutant.xml",
+      "sha256": "2092565a132b92ffc71220894565378857144a8a4a0a66841fbe585faf61b1c0"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/started-writer-discarded-receipt.json",
+      "sha256": "072219260252eefb158d20d24ac94d37b959fa8899c2fa56c344659ce03c5805"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stdin-corrupted-after.json",
+      "sha256": "e41678634bfb5b59f4bb4d148644bd6a49cb87d6874cffdcf92646c1b327c5c4"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stdin-corrupted-after.log",
+      "sha256": "d9e9edfbcf3c1e232f8669d60d9f02f86b269f62453c41d235aaa57db5daf773"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stdin-corrupted-after.xml",
+      "sha256": "f4553391f8a473e99bdbc717d645f80102ae27169b88de3a8a057d1894f2c0ba"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stdin-corrupted-before.json",
+      "sha256": "199189f145fb6d359d121ab066bbbac13e92dd7fbde9a5677f6f3ffbf6e05e33"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stdin-corrupted-before.log",
+      "sha256": "14405ff41583d0c272072c14875579b2298fb409959b2917fc33cf17ad997737"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stdin-corrupted-before.xml",
+      "sha256": "f68b606382f6aeb3ae0950de7a0a84b5d6815e7d2a35165b17e0e42b96cc2ab3"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stdin-corrupted-graph-mutant.json",
+      "sha256": "7a0d5ca99d92f521e518caa57f9e6ccb4eb6632e194b866380e68cab66731816"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stdin-corrupted-graph-mutant.log",
+      "sha256": "62791e287217fd7ac8ec45f889a92a0673246647e623feb0a6a786d2f3b54b3c"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stdin-corrupted-graph-restored.json",
+      "sha256": "c1c9170de053bd2ad45cbbb43e47f43a32e7522c1d34e83b4f930df9233df8d4"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stdin-corrupted-graph-restored.log",
+      "sha256": "d7311f4a21c3f8679cd063d361805458bfdbb69a3fa7cd5484e08f90107b944e"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stdin-corrupted-mutant.json",
+      "sha256": "1d83c959e80e41c19634cf4e810ee3dfd41aa296355b263843ee1507082c2551"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stdin-corrupted-mutant.log",
+      "sha256": "0b5af650cc5e4bf159a32c777f05205acb15cf10d3cd553bc8a631d6ef314f71"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stdin-corrupted-mutant.xml",
+      "sha256": "1daa3651eccaf8752683a72bcfaeee6dabe3228a92f9a8a101b103c7d67d4e0a"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stdin-corrupted-receipt.json",
+      "sha256": "e70e546012074dc56eb2ed3ee1fa2e14bc6d3dbb8a6c9160fd7ddc836d9885e8"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-missing-after.json",
+      "sha256": "1b8b165915b604bbb49bed2a786dbdf616e71bd6c37b82db3d14f5cfc44b73e9"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-missing-after.log",
+      "sha256": "654586afa2a867f7a8de4853150ef4c8805971cffec7c64ca1b237730b01a495"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-missing-after.xml",
+      "sha256": "f71780a2cb5ae6081a8064b883c6fec4d4d7c50fa77a2e0dcd43a458fd6e8213"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-missing-before.json",
+      "sha256": "1a4b75853c5aba2a5372a39ee6b7d5be2dd074c26a8599f84746b1f678c1aa03"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-missing-before.log",
+      "sha256": "f8f09e1482c1300d35174bdc1fcf20b835964c129a940f081d3a1305aa1e6310"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-missing-before.xml",
+      "sha256": "f2661915b78e9c3266fda72e495085bc550f7b8e761d73db92245591c4021bbc"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-missing-graph-mutant.json",
+      "sha256": "de8f8da738b530b541728c0e071099353b9dda0db830cc56bb44ba1e200f1f37"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-missing-graph-mutant.log",
+      "sha256": "de6272d1506fa5c70fb40e30eb62af52f951ce6adae1dc368d00682e99867dd5"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-missing-graph-restored.json",
+      "sha256": "de2e7fb7ee2ea2ae11eb31c6bacb7ab8c475adcbe605224d0ecff499ea926c6f"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-missing-graph-restored.log",
+      "sha256": "b67c8fc472c530b31788c05fc3b8de5d82f45c1d095dcf2379ce2d7854b0bcba"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-missing-mutant.json",
+      "sha256": "07e535e32256e25b4074779a823238d41237cd56d8bda55fa5a1bed2df0dd118"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-missing-mutant.log",
+      "sha256": "c80b0d904c95a0f765ac96433a3b2873d68969c128572d0a3df2380123d9f9a6"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-missing-mutant.xml",
+      "sha256": "af24a56bd75c80d76117d49ae6374f9166f80b7a782ba349ea07b14997f1ef97"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-missing-receipt.json",
+      "sha256": "454a3fffb52a411aa26b61b199c128191bc785cb12b6a8bdfe1d43e2947c27eb"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-reacquired-after.json",
+      "sha256": "244fef0608aea755874051c2b1dbd3739c754e0ba7d9676520c959b9394d1ca0"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-reacquired-after.log",
+      "sha256": "1fbc31bcca7f0b2bb219213a2eb20f3eef745b13937d37ae15a8f4c9c262546a"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-reacquired-after.xml",
+      "sha256": "369e7cf536c0166dc2be5008ccebc542d9660eb961d9b55775dfc7ed8988316b"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-reacquired-before.json",
+      "sha256": "bad0818fe9dfa79aea9b026bf7befa744c30a000da140ea653cb797c3e98082c"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-reacquired-before.log",
+      "sha256": "698a8b21a183e842f458fbc7a0f4b2f226a87408af1d9972302d44f7d04d0059"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-reacquired-before.xml",
+      "sha256": "6e31b113018a02e6ae32ea549082f0b16da4b7ad42e835df3e5bde1a2df2902e"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-reacquired-graph-mutant.json",
+      "sha256": "b8209372373379f9bd15bd76a3aaedfaf6967cc32c88fc71c08150108ff2c8b7"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-reacquired-graph-mutant.log",
+      "sha256": "8cf7d96d7cf9495a38553014263fdc778936020be100355837d80c053188eb52"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-reacquired-graph-restored.json",
+      "sha256": "e5dd3e8ab84b39f7202c059b18836442c59aa5669b754ab629f97d4a6c690dcd"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-reacquired-graph-restored.log",
+      "sha256": "3e75e64d219b76c608fd02269b44bb8668201932cfe2f72d31c02db12565b683"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-reacquired-mutant.json",
+      "sha256": "c10eebde21d9bdf2d62f9795165508d17357fc5ec1091236e15e3b5f3dd189ae"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-reacquired-mutant.log",
+      "sha256": "ad2288e2756ef6f2baf5784378c1c0265f56bb77c8663237a0f560fe4cae5ea1"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-reacquired-mutant.xml",
+      "sha256": "529fccd098d3abf0a5cdb6c2f0f424cbcf3c2f0559e6835e7feabaf1ddc09fba"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/stop-identity-reacquired-receipt.json",
+      "sha256": "00be46aa0abb0eec4b3997d75eed1f86901dbb30a6cdbf18c9d532e8171b25b7"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/unstarted-writer-retained-after.json",
+      "sha256": "c2811b345b9f4487136f848006bb7b77113f32a2edf981182ff446e995094bb9"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/unstarted-writer-retained-after.log",
+      "sha256": "1081dca5520a419b86ddd97994da4c62b4a2ae3f4540d8d7453bf2a7456a2e39"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/unstarted-writer-retained-after.xml",
+      "sha256": "93d18065c69e81dce549577787af60efa949dbc1cb85e3e0fe9a008e431919b0"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/unstarted-writer-retained-before.json",
+      "sha256": "64b230666c824a7160c7f20f0d88775dc809293037d07a97086736b339ee4316"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/unstarted-writer-retained-before.log",
+      "sha256": "84b6e1f9acc1d8768d1125d9cddd553040df2799d45aa5190fc3256d1f5cfa20"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/unstarted-writer-retained-before.xml",
+      "sha256": "0a00f6ff9e56312b832b7b79e607f3c40c53cd8979b800ba06ce295eff661619"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/unstarted-writer-retained-graph-mutant.json",
+      "sha256": "41519b4e4bff1ca7408bf8e6f91626b9a774d95327c3e31160a59ff301ceef8f"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/unstarted-writer-retained-graph-mutant.log",
+      "sha256": "1460f067e7bef1fcda04afa55ff848637054c4cf523c3a95abbecf1ea562587d"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/unstarted-writer-retained-graph-restored.json",
+      "sha256": "2008beb79a891cd32519b06dbfa002f4fdfe549ba61fc8762efbc660a6db0243"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/unstarted-writer-retained-graph-restored.log",
+      "sha256": "ddff42d7bf0980b2b40dc84ec644813be0014505e3cffd529f85eb40a3ff70dc"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/unstarted-writer-retained-mutant.json",
+      "sha256": "50004e75727802448fa9a8a43b1cafae84a8a4ba7107c09281d0b176bcc78ff5"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/unstarted-writer-retained-mutant.log",
+      "sha256": "71de041ceb3c0619454b180e4d538a8c1e2f3017d7ec11b813c4b9d6d951dd47"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/unstarted-writer-retained-mutant.xml",
+      "sha256": "92aab1a19917d69513980649e9077244d810e95c73d9e2bbd8cb4688c174457f"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/b10-b11-mutants-v2/unstarted-writer-retained-receipt.json",
+      "sha256": "7aa9c96f4bf96c8c06ccbab1f0f63393482a7a790f574178db9e35c2494c23f6"
+    },
+    {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-final-bind.json",
+      "sha256": "2d44e4aa55db2aa9e59887c87fa9e22f5ed29f891a370a2672b967a3c8ed0fa9"
+    }
+  ],
+  "excluded": [
+    "First mutation controller invalid JUnit type classifier",
+    "Context RED v1/v2 fixture assumptions",
+    "First GREEN cwd/CR expectations",
+    "Writer-start initial pytest.fail run not AssertionError-qualified"
+  ],
+  "source_credit": [
+    {
+      "sha": "989b0709c3f0ae6ff4493ebd24e4fa82bbbdb9ac",
+      "human": "峯岸 亮",
+      "behavior": "Mandatory child credential snapshot authority preserved"
+    },
+    {
+      "sha": "ed6d5fc803a1c0adc4aaf386e9d80c123fef6d8e",
+      "human": "burak33bb",
+      "behavior": "Guarded Windows process identity stop; saved spawn identity safety refinement"
+    }
+  ],
+  "intentional_policy_difference": "U_RELEASE/R_AFTER lookup creation identity at kill; this fork supplies saved spawn identity, refusing PID-tree authority when missing/mismatched and retaining original-handle fallback",
+  "known_open_leads": [
+    "B12 broader Windows fixture applicability and bare-bash failures",
+    "Separate U_RELEASE _force_kill_process override",
+    "Remaining W02 and distinct background process owner"
+  ],
+  "limitations": [
+    "No all-green broader regression claim",
+    "One POSIX getpgid failure not rerun at D_BASE",
+    "Bare-bash failure executable cause unverified",
+    "No POSIX/packaged/CI/production/full compatibility qualification"
+  ],
+  "rollback": "Reviewed local logical-commit revert in isolated branch; no primary/profile/runtime restoration",
+  "provenance_correction": {
+    "original_binding": {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-final-source-binding.json",
+      "sha256": "9955cdd9f91049bbd7f7c6344b9a449d019863b4e2c02624e52ae7719c123285"
+    },
+    "original_receipt": {
+      "file": "tmp/probes/v0216-20261010/evidence/b10-b11-receipt-pre-provenance-correction.json",
+      "sha256": "544fa81bcc4723bf7a0cae07ad37ac3b3f1092e8eea527cb9255330b91e5dfd7"
+    },
+    "reason": "Original generator captured its active empty log; completed prior-run log and exit-code record now bound; embedded original console binding digest remains original-run provenance",
+    "active_generator_output_included": false
+  },
+  "review": {
+    "reviewer": "/root/f03_contract_review",
+    "status": "APPROVED_FOR_B10_B11_ONLY_LOCAL_COMMIT",
+    "receipt_before_review_sha256": "a49c2e2d47a490b311dfa849062ea3573c803f57da7cbbb75b7386d279705b5e",
+    "binding_sha256": "82c938b238915512c46607060b4fce7278a6326d4fa092545945f55d8680b90f",
+    "sources_verified": 17,
+    "artifact_entries_verified": 364,
+    "unique_references_verified": 368,
+    "semantic_mutants_verified": 14,
+    "mutant_assertion_failures": 25,
+    "exact_mutant_restore": true,
+    "native_before": {
+      "passed": 30,
+      "failed": 0,
+      "skipped": 0
+    },
+    "native_after": {
+      "passed": 30,
+      "failed": 0,
+      "skipped": 0
+    },
+    "graph_expanded_bytes": 681820160,
+    "graph_expanded_sha256": "461d9a69c1e8c2f0d491170b0db132a788701d833f7f827a0c888389efcdc201",
+    "public_terminal_and_ruff_exit_zero": true,
+    "protected_primary_items_verified": 23,
+    "findings": [],
+    "provenance_finding_corrected": true,
+    "scope": "LocalEnvironment command transport and foreground/bootstrap/file-tool ownership/cancellation; no whole W02, force-kill/background, POSIX/packaged/CI/production/full compatibility acceptance",
+    "required_next_gate": "Explicit staged bytes and local product/metadata commit identity closure",
+    "record": "tmp/probes/v0216-20261010/evidence/b10-b11-independent-final-review.json",
+    "record_sha256": "ce56bb827b66ccd276e9402cc413ff17592c083662aa2829da859a83064a9605"
+  },
+  "candidate_sha": "2858b4708956b4e4b57452bf796db6fd0581b792",
+  "candidate_tree": "1557cce400e3d2d6c66ac47445ccc09a0edbf9c2",
+  "candidate_patch_sha256": "866244e238436cf80c8f51b2907b0530194e4fe7495f849fc6d68fe764c8c732",
+  "postcommit_binding": {
+    "file": "tmp/probes/v0216-20261010/evidence/b10-b11-product-postcommit-binding.json",
+    "sha256": "3d7444786ffc91e23e4179743da7dc47fb00228968515b7c57fd62f898a59046"
+  },
+  "protected_primary_postcommit": {
+    "file": "tmp/probes/v0216-20261010/evidence/b10-b11-postcommit-canonical-wip-audit.json",
+    "sha256": "dcadeb536a704eee3e5696df8eb511011e3834d91523b821d483ecc8fb3957c4"
+  }
+}

@@ -1,0 +1,390 @@
+{
+  "schema_version": 1,
+  "status": "SCOPED_LOCAL_STALE_RECOVERY_VERIFIED_CAMPAIGN_OPEN",
+  "source_parent_commit": "95bfa6ee7b690e4c6b989d3ca5a49b76540b57ee",
+  "branch": "codex/v0216-semantic-20261010",
+  "upstream_commit": "d923a5eb487a17c0a68801bba9ef0f56c81040a8",
+  "upstream_tree": "5a064077e8d1de9fc7a4b27efc04f0caa2cb06c0",
+  "contract_reference": "518ce272b922ab24048696b3b2d322633ef7e6d1",
+  "candidate": "C05/V05 health recovery and one trial only",
+  "sources_sha256": {
+    "agent/chat_completion_helpers.py": "14ef3c8bc73d936ab94a54220885254bb884ad3e4c130b7a4e598c78587d8e06",
+    "agent/turn_context.py": "1077fd6d10ae8322382c2b374410b4e413271953ab8ded956207c3a1328b903e",
+    "tests/agent/test_turn_context.py": "e5d047ce4cba92bf311713793df687043cd5ba7ff8a9198f8cb6e2afc0058d00",
+    "tests/run_agent/test_stream_stale_breaker_reset.py": "7052197925daa84b91e90f90153c0bf0e59e693de7e7450d7b519589cd37e271",
+    "tests/run_agent/test_partial_stream_finish_reason.py": "81d893c813e17d84f09f1035b533f3cd54315e4a49d26cd3d2e1f72bc2c89d9b"
+  },
+  "verification_inputs_sha256": {
+    "agent/chat_completion_helpers.py": "14ef3c8bc73d936ab94a54220885254bb884ad3e4c130b7a4e598c78587d8e06",
+    "agent/turn_context.py": "1077fd6d10ae8322382c2b374410b4e413271953ab8ded956207c3a1328b903e",
+    "tests/agent/test_turn_context.py": "e5d047ce4cba92bf311713793df687043cd5ba7ff8a9198f8cb6e2afc0058d00",
+    "tests/run_agent/test_stream_stale_breaker_reset.py": "7052197925daa84b91e90f90153c0bf0e59e693de7e7450d7b519589cd37e271",
+    "tests/run_agent/test_stream_stale_circuit_breaker.py": "a4c9d9dfaa4e96ad2cfbac7a6c496cbbcc8d5ee5714056051ea516a6c54b329e",
+    "pyproject.toml": "43a16a1bc21d672a35c2551f6c52cf3b9a98dc6d4f683543aa31a19ca324cd78",
+    "uv.lock": "45487f72f5fe438fd90f1c0839b83b747e6abfa37110e2e3305b54bc1cac601b",
+    "tests/run_agent/test_partial_stream_finish_reason.py": "81d893c813e17d84f09f1035b533f3cd54315e4a49d26cd3d2e1f72bc2c89d9b",
+    "agent/deadline.py": "95ba4b2df1a697cff2673dc3304baa9ef89e132ddfa818e968c3e3e19c423e45"
+  },
+  "parity": {
+    "counts": {
+      "tests": 90,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "files": [
+      {
+        "test_file": "tests/agent/test_turn_context.py",
+        "exit_code": 0,
+        "tests": 20,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "xml_sha256": "6e794109607381b24ec262918097274f38bb4ae408f1622ffa3b2c0fde1af964"
+      },
+      {
+        "test_file": "tests/run_agent/test_stream_stale_breaker_reset.py",
+        "exit_code": 0,
+        "tests": 49,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "xml_sha256": "9b60679f69ff759ba3b5fc80ee43ed91dc8708fdaf6329f563b0267d1a189294"
+      },
+      {
+        "test_file": "tests/run_agent/test_stream_stale_circuit_breaker.py",
+        "exit_code": 0,
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "xml_sha256": "e04feee6db954f759b9e7f6f2ce6df847e1da802992b1b85e06a0e1da72ef33b"
+      },
+      {
+        "test_file": "tests/run_agent/test_partial_stream_finish_reason.py",
+        "exit_code": 0,
+        "tests": 17,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "xml_sha256": "ef03a54faf52a299268567fcda4c881bf76f4bcb7c6f567a270d2b9a8ca8a402"
+      }
+    ],
+    "fresh_process_per_file": true,
+    "native_python": "3.12.13 (main, Jun 23 2026, 15:23:43) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "win32",
+    "source_unchanged": true,
+    "artifact": {
+      "private_path": "tmp/probes/v05-breaker-20261016/candidate-parity/verification.json",
+      "sha256": "677a6faa9814ef779107799bfebd566ed0d4e303a6763584f0c6135549133295",
+      "bytes": 3457
+    }
+  },
+  "native_owned_peer_cases": [
+    {
+      "case": "test_native_health_recovery_then_real_sdk_stream_completion[complete-stream]",
+      "health_requests": 1,
+      "model_requests": 1
+    },
+    {
+      "case": "test_native_health_recovery_then_real_sdk_stream_completion[stall-stream]",
+      "health_requests": 1,
+      "model_requests": 1
+    },
+    {
+      "case": "test_native_health_recovery_then_real_sdk_stream_completion[partial-stream]",
+      "health_requests": 1,
+      "model_requests": 1
+    },
+    {
+      "case": "test_native_health_recovery_then_real_sdk_stream_completion[trickle-stream]",
+      "health_requests": 1,
+      "model_requests": 0,
+      "health_total_elapsed_seconds": 3.0159999999996217
+    },
+    {
+      "case": "test_native_health_recovery_then_real_sdk_stream_completion[server-error-stream]",
+      "health_requests": 1,
+      "model_requests": 1
+    },
+    {
+      "case": "test_native_health_recovery_then_real_sdk_stream_completion[complete-nonstream]",
+      "health_requests": 1,
+      "model_requests": 1
+    },
+    {
+      "case": "test_native_health_recovery_then_real_sdk_stream_completion[server-error-nonstream]",
+      "health_requests": 1,
+      "model_requests": 1
+    },
+    {
+      "case": "test_native_health_recovery_then_real_sdk_stream_completion[complete-inline]",
+      "health_requests": 1,
+      "model_requests": 1
+    },
+    {
+      "case": "test_native_health_recovery_then_real_sdk_stream_completion[server-error-inline]",
+      "health_requests": 1,
+      "model_requests": 1
+    }
+  ],
+  "mutation": {
+    "detected": 12,
+    "assertion_failures": 24,
+    "source_unchanged": true,
+    "variants": [
+      {
+        "mutation": "remote_guard",
+        "tests": 34,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "detected_by": [
+          "test_ineligible_recovery_never_opens_health_connection[changes0]"
+        ]
+      },
+      {
+        "mutation": "success_reset",
+        "tests": 34,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "detected_by": [
+          "test_local_health_grants_one_trial_then_another_stall_recloses"
+        ]
+      },
+      {
+        "mutation": "once_per_turn",
+        "tests": 34,
+        "failures": 6,
+        "errors": 0,
+        "skipped": 0,
+        "detected_by": [
+          "test_local_health_grants_one_trial_then_another_stall_recloses",
+          "test_health_denial_keeps_breaker_latched_without_following_redirects[301]",
+          "test_health_denial_keeps_breaker_latched_without_following_redirects[302]",
+          "test_health_denial_keeps_breaker_latched_without_following_redirects[401]",
+          "test_health_denial_keeps_breaker_latched_without_following_redirects[404]",
+          "test_health_denial_keeps_breaker_latched_without_following_redirects[503]"
+        ]
+      },
+      {
+        "mutation": "unhealthy_admission",
+        "tests": 34,
+        "failures": 5,
+        "errors": 0,
+        "skipped": 0,
+        "detected_by": [
+          "test_health_denial_keeps_breaker_latched_without_following_redirects[301]",
+          "test_health_denial_keeps_breaker_latched_without_following_redirects[302]",
+          "test_health_denial_keeps_breaker_latched_without_following_redirects[401]",
+          "test_health_denial_keeps_breaker_latched_without_following_redirects[404]",
+          "test_health_denial_keeps_breaker_latched_without_following_redirects[503]"
+        ]
+      },
+      {
+        "mutation": "route_recheck",
+        "tests": 34,
+        "failures": 3,
+        "errors": 0,
+        "skipped": 0,
+        "detected_by": [
+          "test_health_result_cannot_change_replaced_runtime_or_new_turn[changes0]",
+          "test_health_result_cannot_change_replaced_runtime_or_new_turn[changes1]",
+          "test_health_result_cannot_change_replaced_runtime_or_new_turn[changes2]"
+        ]
+      },
+      {
+        "mutation": "streak_recheck",
+        "tests": 34,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "detected_by": [
+          "test_health_result_cannot_change_replaced_runtime_or_new_turn[changes4]"
+        ]
+      },
+      {
+        "mutation": "turn_recheck",
+        "tests": 34,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "detected_by": [
+          "test_health_result_cannot_change_replaced_runtime_or_new_turn[changes3]"
+        ]
+      },
+      {
+        "mutation": "cancel_recheck",
+        "tests": 34,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "detected_by": [
+          "test_health_result_cannot_change_replaced_runtime_or_new_turn[changes5]"
+        ]
+      },
+      {
+        "mutation": "partial_success",
+        "tests": 34,
+        "failures": 2,
+        "errors": 0,
+        "skipped": 0,
+        "detected_by": [
+          "test_only_an_actual_completion_settles_the_local_trial[partial-True]",
+          "test_only_an_actual_completion_settles_the_local_trial[failure-True]"
+        ]
+      },
+      {
+        "mutation": "total_deadline",
+        "tests": 34,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "detected_by": [
+          "test_timed_out_health_connect_cannot_write_late_or_accumulate"
+        ]
+      },
+      {
+        "mutation": "late_connect",
+        "tests": 34,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "detected_by": [
+          "test_timed_out_health_connect_cannot_write_late_or_accumulate"
+        ]
+      },
+      {
+        "mutation": "outstanding_probe",
+        "tests": 34,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "detected_by": [
+          "test_timed_out_health_connect_cannot_write_late_or_accumulate"
+        ]
+      }
+    ],
+    "artifact": {
+      "private_path": "tmp/probes/v05-breaker-20261016/candidate-mutation/mutation-result.json",
+      "sha256": "3c6aa00075402170cbcb932be1a369aa568aeb547a7db5d740593019bcc48f4d",
+      "bytes": 5233
+    }
+  },
+  "codegraph": {
+    "version": "1.6.0",
+    "lastIndexed": "2026-10-15T21:43:30.077Z",
+    "fileCount": 9190,
+    "nodeCount": 198778,
+    "edgeCount": 627550,
+    "pendingChanges": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "index": {
+      "builtWithVersion": "1.6.0",
+      "builtWithExtractionVersion": 25,
+      "currentExtractionVersion": 25,
+      "reindexRecommended": false,
+      "state": "complete",
+      "pendingRefs": 0
+    }
+  },
+  "independent_review": {
+    "status": "APPROVED_SCOPED",
+    "agent_id": "01a1416e-bf44-7f33-901d-d29eedbe90b6",
+    "sources_sha256": {
+      "agent/chat_completion_helpers.py": "14ef3c8bc73d936ab94a54220885254bb884ad3e4c130b7a4e598c78587d8e06",
+      "agent/turn_context.py": "1077fd6d10ae8322382c2b374410b4e413271953ab8ded956207c3a1328b903e",
+      "tests/agent/test_turn_context.py": "e5d047ce4cba92bf311713793df687043cd5ba7ff8a9198f8cb6e2afc0058d00",
+      "tests/run_agent/test_stream_stale_breaker_reset.py": "7052197925daa84b91e90f90153c0bf0e59e693de7e7450d7b519589cd37e271",
+      "tests/run_agent/test_partial_stream_finish_reason.py": "81d893c813e17d84f09f1035b533f3cd54315e4a49d26cd3d2e1f72bc2c89d9b"
+    },
+    "artifact": {
+      "private_path": "tmp/probes/v05-breaker-20261016/reviewer-97737d34-8f1c-4471-96d6-7b72dddff862/final-scoped-review-20261015T214903Z-fb73e585-3be1-4eb5-a886-44253ca11233.json",
+      "sha256": "69c42fabbd94d24d01c05c8fc398560777ef52ba7f86408d93706bb94ac1d81a",
+      "bytes": 12743
+    },
+    "historical_findings_retained": true,
+    "scope": "Bounded local health, one trial, streaming/non-streaming/inline completion and failure, preserved partial text",
+    "independently_executed": {
+      "total_passed": 25,
+      "reports": [
+        {
+          "path": "tmp/probes/v05-breaker-20261016/reviewer-97737d34-8f1c-4471-96d6-7b72dddff862/three-path-boundaries.xml",
+          "sha256": "3983a1f94f56711e8e42314db33598755276563fd9281078e5a1bbd4629fc575",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "binding": {
+            "path": "tmp/probes/v05-breaker-20261016/reviewer-97737d34-8f1c-4471-96d6-7b72dddff862/source-three-path-boundaries.json",
+            "sha256": "a3d4f048e432f3892ce0ab4a871f7bba5b644dccee82f8f6ddd426258a852776"
+          }
+        },
+        {
+          "path": "tmp/probes/v05-breaker-20261016/reviewer-97737d34-8f1c-4471-96d6-7b72dddff862/three-path-ownership.xml",
+          "sha256": "c14b2cd2657aefac86779cd89c942d5224bde890a2283cab133483e5741f5f37",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "binding": {
+            "path": "tmp/probes/v05-breaker-20261016/reviewer-97737d34-8f1c-4471-96d6-7b72dddff862/source-three-path-ownership.json",
+            "sha256": "a3d4f048e432f3892ce0ab4a871f7bba5b644dccee82f8f6ddd426258a852776"
+          }
+        },
+        {
+          "path": "tmp/probes/v05-breaker-20261016/reviewer-97737d34-8f1c-4471-96d6-7b72dddff862/regular-partial.xml",
+          "sha256": "ca1e53731cd5185d440f3141622f8f1a5fa7bebfbecc486f4c92af0a1d9c4899",
+          "tests": 17,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "binding": {
+            "path": "tmp/probes/v05-breaker-20261016/reviewer-97737d34-8f1c-4471-96d6-7b72dddff862/source-regular-partial.json",
+            "sha256": "a3d4f048e432f3892ce0ab4a871f7bba5b644dccee82f8f6ddd426258a852776"
+          }
+        }
+      ],
+      "containment": {
+        "ownership_denials": 0,
+        "regular_partial_denials": {
+          "outside_write_attempts_blocked": 3,
+          "external_dns_attempts_blocked": 1
+        },
+        "policy": "Private write guard, non-loopback DNS/connect denied, subprocess denied",
+        "regular_partial_result_qualified_as": "PASS under reviewer containment, not an unfenced hermeticity claim"
+      }
+    }
+  },
+  "protected_primary_head": "53b65c99587f7c1fe437a44c32d1566576376a17",
+  "protected_wip_sha256": {
+    "tests/tools/test_mcp_oauth_manager.py": "7b11d3a058bbb5542d88aeb09e6bc7d388e9391c1072a6015e3b9485917ceef5",
+    ".omo/evidence/U02-code-review.md": "fabee38e810f9226bcf40a3e7777ab7bbc618d809af23d470c227ddb1dca1d31"
+  },
+  "historical_runs_not_counted": [
+    "red",
+    "native",
+    "review-red",
+    "failure-red",
+    "review-green",
+    "review-green2",
+    "nonstream-red",
+    "qualified-parity",
+    "qualified-mutation"
+  ],
+  "residuals": [
+    "Full V05 progress/awake clocks/compression/status/autoload/memory gates",
+    "Immediate model request cancellation is not qualified",
+    "Blocked DNS cannot be killed; at most one probe worker per agent remains pending until it returns",
+    "Remaining U01-U18/retained and semantic history acceptance",
+    "C04 idna difference",
+    "Eight-hour soak and three physical sleep/resume cycles",
+    "Full build/release acceptance"
+  ],
+  "local_commit_hook": "Existing stale launcher retained unchanged; LEFTHOOK=0 only for local commit; hook not claimed passed",
+  "external_writes_or_production_changes": false
+}

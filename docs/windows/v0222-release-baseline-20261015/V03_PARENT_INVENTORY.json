@@ -1,0 +1,387 @@
+{
+  "schema_version": 1,
+  "status": "SCOPED_TOOL_AND_TEST_CHECKPOINT_CAMPAIGN_OPEN",
+  "source_parent_commit": "54c6f5680033c3d7ae8364ab3ad3743db5909508",
+  "branch": "codex/v0216-semantic-20261010",
+  "protected_primary_head": "53b65c99587f7c1fe437a44c32d1566576376a17",
+  "u02_save_retirement_commit": "54c6f5680033c3d7ae8364ab3ad3743db5909508",
+  "u02_scope": "Save/retirement/CAS/config ABA closed in its separately approved commit; whole-unit U02 remains open",
+  "release": {
+    "schema_version": 1,
+    "status": "PARENT_PATH_BLOB_ENUMERATED_NOT_SEMANTICALLY_REVIEWED",
+    "base": "d3630f853239e8c41ce7201e09fbdf39bcbc5431",
+    "end": "d923a5eb487a17c0a68801bba9ef0f56c81040a8",
+    "tree": "5a064077e8d1de9fc7a4b27efc04f0caa2cb06c0",
+    "commit_count": 22565,
+    "parent_edge_count": 23218,
+    "root_edge_count": 0,
+    "empty_parent_edge_count": 83,
+    "first_parent_count": 17398,
+    "parent_edges_complete": true,
+    "semantic_review_complete": false,
+    "unassessed_commit_count": 22565,
+    "surface_tags_are_triage_only": true,
+    "path_surface_edge_counts": {
+      "DEPENDENCY_PATH": 536,
+      "DOC_PATH": 3488,
+      "EMPTY_PARENT_DIFF": 83,
+      "SECURITY_REVIEW_CUE_NOT_A_VERDICT": 2122,
+      "SOURCE_OR_OTHER_PATH": 19786,
+      "TEST_PATH": 13229,
+      "WINDOWS_PATH": 1235
+    },
+    "stable_path_observations": {
+      "ABSENT": 125752,
+      "CHANGED_OBJECT": 512912,
+      "EXACT_OBJECT": 188257,
+      "REINTRODUCED": 6275
+    },
+    "files": {
+      "parent-diffs.raw": {
+        "bytes": 121088453,
+        "sha256": "3e45c185cfb9948f7f5bbc3446c0729a920407b337c44539c15f19cc49dc4af9"
+      },
+      "history-index.jsonl": {
+        "bytes": 289471704,
+        "sha256": "711b691c13dd4639a15b045298cea2ae9bb068bdc6230d00c518f66d1e977c6d"
+      },
+      "first-parent.txt": {
+        "bytes": 713318,
+        "sha256": "44af2620e347fc84044435984a3264248e94637c955253bbfbf476fe238646dc"
+      }
+    },
+    "rename_policy": "No heuristic rename limit; exact blob relocation candidates retain all raw paths. Other renames remain unreviewed.",
+    "raw_path_encoding": "Authoritative base64 bytes plus nullable strict UTF-8 display; NUL framed",
+    "operator_config_or_runtime_accessed": false
+  },
+  "supplemental": {
+    "schema_version": 1,
+    "status": "PARENT_PATH_BLOB_ENUMERATED_NOT_SEMANTICALLY_REVIEWED",
+    "base": "d3630f853239e8c41ce7201e09fbdf39bcbc5431",
+    "end": "db44c46208f1b421b4ecb7e56bf9d68b0423906f",
+    "tree": "f608cda81e5d1af37d8b5b450f0e0966f49ce150",
+    "commit_count": 22637,
+    "parent_edge_count": 23287,
+    "root_edge_count": 0,
+    "empty_parent_edge_count": 82,
+    "first_parent_count": 17495,
+    "parent_edges_complete": true,
+    "semantic_review_complete": false,
+    "unassessed_commit_count": 22637,
+    "surface_tags_are_triage_only": true,
+    "path_surface_edge_counts": {
+      "DEPENDENCY_PATH": 535,
+      "DOC_PATH": 3488,
+      "EMPTY_PARENT_DIFF": 82,
+      "SECURITY_REVIEW_CUE_NOT_A_VERDICT": 2125,
+      "SOURCE_OR_OTHER_PATH": 19846,
+      "TEST_PATH": 13295,
+      "WINDOWS_PATH": 1232
+    },
+    "stable_path_observations": {
+      "ABSENT": 69420,
+      "CHANGED_OBJECT": 531326,
+      "EXACT_OBJECT": 227002,
+      "REINTRODUCED": 3491
+    },
+    "files": {
+      "parent-diffs.raw": {
+        "bytes": 120821734,
+        "sha256": "2c97819eecc124036a2660193623dae2cc6ecf00d5f4b09c583b857ec4c890bf"
+      },
+      "history-index.jsonl": {
+        "bytes": 289282250,
+        "sha256": "6d6cf165c37e11ea1c937ce57a7113af3bf146d2ed06b6a0995aefd2947c7c1e"
+      },
+      "first-parent.txt": {
+        "bytes": 717295,
+        "sha256": "6480e772a17cfa87c07af4d9286d75bfb33119a62afa6fb0dccaf73224f3642f"
+      }
+    },
+    "rename_policy": "No heuristic rename limit; exact blob relocation candidates retain all raw paths. Other renames remain unreviewed.",
+    "raw_path_encoding": "Authoritative base64 bytes plus nullable strict UTF-8 display; NUL framed",
+    "operator_config_or_runtime_accessed": false
+  },
+  "triage_only_counts": {
+    "release-inventory": {
+      "exact_blob_move_groups": 4597,
+      "edges_with_inverse_candidates": 45,
+      "edges_with_reapply_candidates": 200
+    },
+    "supplemental-inventory": {
+      "exact_blob_move_groups": 4597,
+      "edges_with_inverse_candidates": 45,
+      "edges_with_reapply_candidates": 199
+    },
+    "overlap": {
+      "both": 22554,
+      "release_only": 11,
+      "supplemental_only": 83
+    }
+  },
+  "source_and_dependencies_sha256": {
+    "docs/windows/v0222-release-baseline-20261015/tools/parent_diff_inventory.py": "47647cc1f40894c7e1f008c9a44d3a22fda88f3ac53df48ef20d58af9082dac5",
+    "tests/scripts/test_parent_diff_inventory.py": "3b2565c770823bf7cd4a6cea331b79a7892226119cab0806f1899cc99c789348",
+    "tests/tools/test_mcp_redirect_header_boundary.py": "74d4c4d9cc75d4b7b9fd31dd9a41ad7e6e8006fdae55c6d47a82b3c63fb9e209",
+    "docs/windows/workstation-20260924/tools/inventory_commits.py": "47f9446acba7aabba9db33c77583955465efb85488c4c0aaf3dbd5ec4bca3097",
+    "docs/windows/u02-oauth-retirement-20261016/verification.json": "2c178fc3714b3c9ec9fb55a018fd421f73f0fa389f77fda844651a45426382e4"
+  },
+  "regression": {
+    "tests": 30,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "artifact": {
+      "private_path": "tmp/probes/v03-20261016/final-tool.xml",
+      "sha256": "f7f31c8ccaf903c02c80eacc724c4ee950b7550b1da8dada7f12e345e9c81558",
+      "bytes": 8252
+    }
+  },
+  "independent_tests": {
+    "tests": 14,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "artifact": {
+      "private_path": "tmp/probes/v03-20261016/reviewer-90a6f837547d44de9c5bc9cbbcf25d1f/pytest.xml",
+      "sha256": "37aa51524035cd1ba2ded60a6e4d4b946a94a8d72c954d5bc851f6649b7afe5e",
+      "bytes": 3120
+    }
+  },
+  "native_http": {
+    "counts": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "source_before": {
+      "pyproject.toml": "43a16a1bc21d672a35c2551f6c52cf3b9a98dc6d4f683543aa31a19ca324cd78",
+      "uv.lock": "45487f72f5fe438fd90f1c0839b83b747e6abfa37110e2e3305b54bc1cac601b",
+      "tools/mcp_tool.py": "6deb4568cb0a487e923d67d482f9b559d190d47c83d09b5e58519b0f3ab9495f",
+      "tools/lazy_deps.py": "afd0a1748d153c1045481d45ffbc0f182e306ca9f68c31c92fee2d1566c3763d",
+      "tools/mcp_oauth.py": "3ad0d5af28de7ee2771fa139fe2dc861a6c6be808bbdf66de50bb046e663d678",
+      "tools/mcp_oauth_manager.py": "e96e4c8cacf937964aca1dc6f6c802837439d7d75a4141d2ba2d28c64f3eaa8f",
+      "tools/mcp_oauth_provider.py": "bc467202dab1aaab3f51cca712f3290505064fc19f35b245306c944801a5ebde",
+      "tools/mcp_oauth_state.py": "18eea2b7f0e1717c093ebcede040b637d2fa0571a9315d6dbd631ff1a7ee17a2",
+      "tools/mcp_dashboard_oauth.py": "caf893c0460794f244cc227e0858c0ed6d7ffa897a1cc3d88f3495b8fd9536fa",
+      "tests/tools/test_mcp_redirect_header_boundary.py": "74d4c4d9cc75d4b7b9fd31dd9a41ad7e6e8006fdae55c6d47a82b3c63fb9e209"
+    },
+    "source_after": {
+      "pyproject.toml": "43a16a1bc21d672a35c2551f6c52cf3b9a98dc6d4f683543aa31a19ca324cd78",
+      "uv.lock": "45487f72f5fe438fd90f1c0839b83b747e6abfa37110e2e3305b54bc1cac601b",
+      "tools/mcp_tool.py": "6deb4568cb0a487e923d67d482f9b559d190d47c83d09b5e58519b0f3ab9495f",
+      "tools/lazy_deps.py": "afd0a1748d153c1045481d45ffbc0f182e306ca9f68c31c92fee2d1566c3763d",
+      "tools/mcp_oauth.py": "3ad0d5af28de7ee2771fa139fe2dc861a6c6be808bbdf66de50bb046e663d678",
+      "tools/mcp_oauth_manager.py": "e96e4c8cacf937964aca1dc6f6c802837439d7d75a4141d2ba2d28c64f3eaa8f",
+      "tools/mcp_oauth_provider.py": "bc467202dab1aaab3f51cca712f3290505064fc19f35b245306c944801a5ebde",
+      "tools/mcp_oauth_state.py": "18eea2b7f0e1717c093ebcede040b637d2fa0571a9315d6dbd631ff1a7ee17a2",
+      "tools/mcp_dashboard_oauth.py": "caf893c0460794f244cc227e0858c0ed6d7ffa897a1cc3d88f3495b8fd9536fa",
+      "tests/tools/test_mcp_redirect_header_boundary.py": "74d4c4d9cc75d4b7b9fd31dd9a41ad7e6e8006fdae55c6d47a82b3c63fb9e209"
+    },
+    "source_unchanged": true,
+    "runtime_versions": {
+      "mcp": "2.0.0",
+      "httpx2": "2.12.0",
+      "httpcore2": "2.12.0",
+      "httpx": "0.28.1",
+      "httpcore": "1.0.9",
+      "anyio": "4.14.2",
+      "truststore": "0.10.4",
+      "h11": "0.16.0",
+      "h2": null,
+      "certifi": "2026.5.20",
+      "idna": "3.18",
+      "typing-extensions": "4.16.0",
+      "sniffio": "1.3.1",
+      "hpack": null,
+      "hyperframe": null
+    },
+    "run": {
+      "private_path": "tmp/probes/v03-20261016/c04-reviewed/native-run.json",
+      "sha256": "698aedf98333b4c3cf92cfdf95fea4942b92a61c959595d382d51900b915fd46",
+      "bytes": 3403
+    },
+    "xml": {
+      "private_path": "tmp/probes/v03-20261016/c04-reviewed/native.xml",
+      "sha256": "fbc54fe824167c09a18d1dbfc2357dc2ac542fa0d875ae13a952607883cd2993",
+      "bytes": 939341
+    },
+    "start_utc": "2026-10-15T20:59:53.262585+00:00",
+    "end_utc": "2026-10-15T21:00:45.134984+00:00",
+    "boundary": "Real SDK/owned loopback HTTP; no remote-provider, TLS, sleep or soak qualification"
+  },
+  "locked_wheel_payload": {
+    "status": "EXACT_LOCKED_WHEEL_MODULE_PAYLOADS",
+    "packages": [
+      {
+        "name": "anyio",
+        "version": "4.14.2",
+        "url": "https://files.pythonhosted.org/packages/da/35/f2287558c17e29fafc8ef3daf819bb9834061cfa43bff8014f7df7f63bdc/anyio-4.14.2-py3-none-any.whl",
+        "wheel_sha256": "9f505dda5ac9f0c8309b5e8bd445a8c2bf7246f3ce950121e45ea15bc41d1494",
+        "wheel_bytes": 125813,
+        "same_frozen_release_wheel": true,
+        "frozen_release_version": "4.14.2",
+        "matched_payload_files": 44
+      },
+      {
+        "name": "certifi",
+        "version": "2026.5.20",
+        "url": "https://files.pythonhosted.org/packages/59/8c/57e832b7af6d7c5abe66eb3fbe3a3a32f4d11ea23a1aa7131371035be991/certifi-2026.5.20-py3-none-any.whl",
+        "wheel_sha256": "3c52e209ba0a4ad7aebe60436a4ab349c39e1e602e8c134221e546902ad25897",
+        "wheel_bytes": 134134,
+        "same_frozen_release_wheel": true,
+        "frozen_release_version": "2026.5.20",
+        "matched_payload_files": 5
+      },
+      {
+        "name": "h11",
+        "version": "0.16.0",
+        "url": "https://files.pythonhosted.org/packages/04/4b/29cac41a4d98d144bf5f6d33995617b185d14b22401f75ca86f384e87ff1/h11-0.16.0-py3-none-any.whl",
+        "wheel_sha256": "63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86",
+        "wheel_bytes": 37515,
+        "same_frozen_release_wheel": true,
+        "frozen_release_version": "0.16.0",
+        "matched_payload_files": 12
+      },
+      {
+        "name": "httpcore2",
+        "version": "2.12.0",
+        "url": "https://files.pythonhosted.org/packages/d2/74/d370e55600d9bcfa0d9794b0166126d49291a3d2b20c268fc98c453a4948/httpcore2-2.12.0-py3-none-any.whl",
+        "wheel_sha256": "7e04258ce01013d7d615e5b910a3b27fac937d7a95038227e79652b4ba3b4ceb",
+        "wheel_bytes": 83074,
+        "same_frozen_release_wheel": true,
+        "frozen_release_version": "2.12.0",
+        "matched_payload_files": 32
+      },
+      {
+        "name": "httpx2",
+        "version": "2.12.0",
+        "url": "https://files.pythonhosted.org/packages/c8/95/411ba65569158e862368917aaf56597f3e5fa3b91b0502919638465a08f3/httpx2-2.12.0-py3-none-any.whl",
+        "wheel_sha256": "cc8b6eecb8661c146b8f89a60e97456ee086e91a784ed31ac450c3a9e613dd36",
+        "wheel_bytes": 95427,
+        "same_frozen_release_wheel": true,
+        "frozen_release_version": "2.12.0",
+        "matched_payload_files": 31
+      },
+      {
+        "name": "idna",
+        "version": "3.18",
+        "url": "https://files.pythonhosted.org/packages/1e/5e/d4e9f1a599fb8e573b7b87160658329fbf28d19eac2718f51fc3def3aa5a/idna-3.18-py3-none-any.whl",
+        "wheel_sha256": "7f952cbe720b688055e3f87de14f5c3e5fdaa8bc3928985c4077ca689de849a2",
+        "wheel_bytes": 65455,
+        "same_frozen_release_wheel": false,
+        "frozen_release_version": "3.19",
+        "matched_payload_files": 11
+      },
+      {
+        "name": "mcp",
+        "version": "2.0.0",
+        "url": "https://files.pythonhosted.org/packages/67/72/7d7897418912c1d12e87556630dfb7bf0eac71160e9bef8b447960804ee3/mcp-2.0.0-py3-none-any.whl",
+        "wheel_sha256": "1cb4c75d2d2c7b8c1d756355e5d82a39f2822cc7f13e22a2051d7ca3592349d6",
+        "wheel_bytes": 349980,
+        "same_frozen_release_wheel": true,
+        "frozen_release_version": "2.0.0",
+        "matched_payload_files": 123
+      },
+      {
+        "name": "sniffio",
+        "version": "1.3.1",
+        "url": "https://files.pythonhosted.org/packages/e9/44/75a9c9421471a6c4805dbf2356f7c181a29c1879239abab1ea2cc8f38b40/sniffio-1.3.1-py3-none-any.whl",
+        "wheel_sha256": "2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2",
+        "wheel_bytes": 10235,
+        "same_frozen_release_wheel": true,
+        "frozen_release_version": "1.3.1",
+        "matched_payload_files": 6
+      },
+      {
+        "name": "truststore",
+        "version": "0.10.4",
+        "url": "https://files.pythonhosted.org/packages/19/97/56608b2249fe206a67cd573bc93cd9896e1efb9e98bce9c163bcdc704b88/truststore-0.10.4-py3-none-any.whl",
+        "wheel_sha256": "adaeaecf1cbb5f4de3b1959b42d41f6fab57b2b1666adb59e89cb0b53361d981",
+        "wheel_bytes": 18660,
+        "same_frozen_release_wheel": true,
+        "frozen_release_version": "0.10.4",
+        "matched_payload_files": 7
+      },
+      {
+        "name": "typing-extensions",
+        "version": "4.16.0",
+        "url": "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl",
+        "wheel_sha256": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8",
+        "wheel_bytes": 45571,
+        "same_frozen_release_wheel": true,
+        "frozen_release_version": "4.16.0",
+        "matched_payload_files": 1
+      }
+    ],
+    "matched_files": 272,
+    "proof": {
+      "private_path": "tmp/probes/v03-20261016/locked-payload-final/verification.json",
+      "sha256": "84299b1cad584b42b98d13dd40d95983298a120874dac6167d256a93ed19e685",
+      "bytes": 48077
+    },
+    "verifier": {
+      "private_path": "tmp/probes/v03-20261016/verify-locked-payload.py",
+      "sha256": "1583a5832104322eb44983c5bf90279a628f32760859978c8a3c386b7712a713",
+      "bytes": 4399
+    },
+    "downloaded_code_executed": false,
+    "runtime_installed_or_modified": false,
+    "scope": "Named 10-package HTTP/SDK slice, not the entire virtualenv dependency closure",
+    "idna_difference": "UNASSESSED local 3.18 vs frozen release 3.19",
+    "full_v04_accepted": false,
+    "optional_http2_tested": false
+  },
+  "codegraph": {
+    "version": "1.6.0",
+    "lastIndexed": "2026-10-15T21:04:10.598Z",
+    "fileCount": 9190,
+    "nodeCount": 198731,
+    "edgeCount": 627385,
+    "pendingChanges": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "index": {
+      "builtWithVersion": "1.6.0",
+      "builtWithExtractionVersion": 25,
+      "currentExtractionVersion": 25,
+      "reindexRecommended": false,
+      "state": "complete",
+      "pendingRefs": 0
+    }
+  },
+  "independent_review": {
+    "status": "APPROVED_SCOPED",
+    "agent_id": "01a1415e-3633-7cf3-9358-87df3996d035",
+    "scope": "Exact tool/test hashes above; two product-source pins updated without weakening functional assertions",
+    "coverage": [
+      "All commit/parent tuples against independent git rev-list --parents",
+      "All raw/index edge signatures and inverse/reapply links",
+      "All final-tree path/mode/OID observations",
+      "6 direct Git diff-tree edge samples",
+      "Reference file names/sizes/mtimes unchanged during audit",
+      "Native XML wire/effect records and U02 committed source binding"
+    ],
+    "required_source_changes": 0,
+    "whole_v03_or_v04_approval": false
+  },
+  "historical_failures_retained": [
+    "red.xml",
+    "green2.xml",
+    "c04/native.xml",
+    "locked-payload.log"
+  ],
+  "remaining": [
+    "Full semantic history classification",
+    "Full V04 dependency/security assessment including idna difference",
+    "Remaining U01-U18 and retained acceptance gates",
+    "Eight-hour soak and three real sleep/resume cycles",
+    "Build/release qualification and final full-campaign review"
+  ],
+  "local_commit_hook_policy": "LEFTHOOK=0 for this command only: existing stale launcher has no project config/executable; checks explicitly run; hook not claimed passed",
+  "external_writes_or_live_changes": false,
+  "existing_unrelated_wip_staged": false
+}

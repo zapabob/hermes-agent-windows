@@ -46,6 +46,9 @@ from agent.message_sanitization import (
 )
 from agent.reasoning_summaries import separate_glued_reasoning_blocks
 from agent.stream_single_writer import claim_stream_writer, stream_writer_is_current
+from agent.local_prompt_progress import (
+    LocalPromptProgress as _LocalPromptProgress, tracks_prompt_progress, with_prompt_progress,
+)
 from tools.terminal_tool import is_persistent_env
 from utils import base_url_host_matches, base_url_hostname, env_float, env_int
 from agent.redact import redact_base_url
@@ -772,6 +775,135 @@ def _codex_wait_notice_recovery(
 # Past the give-up threshold, calls abort immediately with an actionable
 # error instead of re-waiting out the stale timeout.
 
+_local_stale_probe_lock = threading.Lock()
+
+
+def _local_stale_health_check(host: str, port: int, scheme: str, done: threading.Event) -> bool:
+    """Bound the entire owned health exchange, including trickled headers/DNS."""
+    import http.client
+    import socket
+    from agent.deadline import run_bounded_sync
+
+    deadline = time.monotonic() + 3.0
+    expired = threading.Event()
+    close_lock = threading.RLock()
+    holder: dict[str, Any] = {}
+    base = http.client.HTTPSConnection if scheme == "https" else http.client.HTTPConnection
+
+    class HealthConnection(base):
+        def connect(self) -> None:
+            super().connect()
+            # DNS/TLS can outlive the caller. Never send a late health request.
+            if expired.is_set() or time.monotonic() >= deadline:
+                self.close()
+                raise TimeoutError("local health deadline expired during connect")
+
+        def close(self) -> None:
+            # Serialize the only owner's close with shutdown; no pooled socket
+            # or recycled descriptor from another request can be reached.
+            with close_lock:
+                super().close()
+
+    def stop_read() -> None:
+        expired.set()
+        with close_lock:
+            connection = holder.get("connection")
+            sock = getattr(connection, "sock", None)
+            if sock is not None:
+                try:
+                    sock.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    logger.debug("Owned health socket already shut down")
+
+    def probe() -> bool:
+        connection = None
+        try:
+            connection = HealthConnection(host, port, timeout=3.0)
+            with close_lock:
+                holder["connection"] = connection
+            if expired.is_set():
+                return False
+            connection.request("GET", "/health", headers={"Connection": "close"})
+            status = connection.getresponse().status
+            return status == 200 and not expired.is_set() and time.monotonic() < deadline
+        finally:
+            try:
+                if connection is not None:
+                    connection.close()
+            finally:
+                done.set()
+
+    try:
+        result = run_bounded_sync(probe, 3.0, label="local-stale-health", on_timeout=stop_read)
+        return not result.timed_out and bool(result.value)
+    except (OSError, ValueError, RuntimeError, http.client.HTTPException):
+        done.set()
+        logger.debug("Local stale-breaker health probe did not recover")
+        return False
+
+
+def _retry_recovered_local_server(agent: Any) -> bool:
+    """Admit one half-open trial per turn after the configured local peer recovers.
+
+    A health response is permission to try the same model, never completion.
+    Unsupported health endpoints leave the breaker closed. No provider, model,
+    credential or configured timeout is changed, and redirects are not followed.
+    """
+    from urllib.parse import urlsplit
+
+    def route() -> tuple[str, str, str, str]:
+        kwargs = getattr(agent, "_client_kwargs", None)
+        url = getattr(agent, "base_url", None) or (
+            kwargs.get("base_url") if isinstance(kwargs, dict) else ""
+        )
+        return (
+            str(getattr(agent, "provider", "") or ""),
+            str(getattr(agent, "model", "") or ""),
+            str(getattr(agent, "api_mode", "") or ""),
+            str(url or ""),
+        )
+
+    giveup = env_int("HERMES_STREAM_STALE_GIVEUP", 5)
+    turn_id = getattr(agent, "_current_turn_id", None)
+    initial_route = route()
+    url = initial_route[3]
+    if (giveup <= 0 or not turn_id or initial_route[2] not in ("", "chat_completions")
+            or not url or not is_local_endpoint(url)):
+        return False
+    try:
+        parts = urlsplit(url)
+        if (parts.scheme not in ("http", "https") or not parts.hostname
+                or parts.username is not None or parts.password is not None
+                or parts.query or parts.fragment):
+            return False
+        host = parts.hostname
+        port = parts.port or (443 if parts.scheme == "https" else 80)
+    except ValueError:
+        return False
+    with _local_stale_probe_lock:
+        streak = _stale_streak(agent)
+        previous_probe = getattr(agent, "_local_stale_probe_done", None)
+        if (streak < giveup or getattr(agent, "_local_stale_probe_turn", None) == turn_id
+                or getattr(agent, "_interrupt_requested", False)
+                or (previous_probe is not None and not previous_probe.is_set())):
+            return False
+        agent._local_stale_probe_turn = turn_id
+        done = threading.Event()
+        agent._local_stale_probe_done = done
+    if not _local_stale_health_check(host, port, parts.scheme, done):
+        return False
+    with _local_stale_probe_lock:
+        if (route() != initial_route or _stale_streak(agent) != streak
+                or getattr(agent, "_current_turn_id", None) != turn_id
+                or getattr(agent, "_interrupt_requested", False)
+                or env_int("HERMES_STREAM_STALE_GIVEUP", 5) != giveup):
+            return False
+        agent._consecutive_stale_streams = giveup - 1
+        agent._local_stale_trial = (turn_id, giveup)
+    logger.info("Local server health recovered; admitting one stale-breaker trial")
+    return True
+
+
 def _stale_streak(agent) -> int:
     try:
         return int(getattr(agent, "_consecutive_stale_streams", 0) or 0)
@@ -789,8 +921,21 @@ def _bump_stale_streak(agent) -> None:
 def _reset_stale_streak(agent) -> None:
     try:
         agent._consecutive_stale_streams = 0
+        agent._local_stale_trial = None
     except Exception:
         pass
+
+
+def _settle_stream_stale_trial(agent: Any, response: Any) -> bool:
+    """Preserve partial text, but reclose a half-open trial without completion."""
+    trial = getattr(agent, "_local_stale_trial", None)
+    if (trial is not None and trial[0] == getattr(agent, "_current_turn_id", None)
+            and (response is None or getattr(response, "id", None) == PARTIAL_STREAM_STUB_ID)):
+        agent._consecutive_stale_streams = max(_stale_streak(agent), trial[1])
+        return True
+    if response is not None:
+        _reset_stale_streak(agent)
+    return False
 
 
 _INTERRUPTED_WAIT_STALE_SECONDS = 30.0
@@ -1397,12 +1542,14 @@ def direct_api_call(agent, api_kwargs: dict):
     except Exception:
         if network_lease is not None and network_lease.cancelled:
             if network_lease.cancel_reason == "deadline":
+                _settle_stream_stale_trial(agent, None)
                 raise TimeoutError(
                     "Delegated provider request exceeded its total deadline."
                 ) from None
             raise InterruptedError("Delegated provider request was cancelled.") from None
         if getattr(agent, "_interrupt_requested", False):
             raise InterruptedError("Agent interrupted during API call") from None
+        _settle_stream_stale_trial(agent, None)
         with request_client_lock:
             was_stale = request_state["stale"]
         if was_stale:
@@ -1430,7 +1577,7 @@ def direct_api_call(agent, api_kwargs: dict):
             request_state["done"] = True
         if network_lease is not None:
             network_lease.mark_progress()
-        _reset_stale_streak(agent)
+        _settle_stream_stale_trial(agent, response)
         succeeded = True
         return response
     finally:
@@ -1997,11 +2144,12 @@ def interruptible_api_call(agent, api_kwargs: dict):
             raise InterruptedError("Agent interrupted during API call")
     _progress_tracker.stop()
     if result["error"] is not None:
+        _settle_stream_stale_trial(agent, None)
         raise result["error"]
     # Success — clear the circuit breaker (#58962): the provider proved
     # responsive.  See the canonical comment block above ``_stale_streak()``.
     if result["response"] is not None:
-        _reset_stale_streak(agent)
+        _settle_stream_stale_trial(agent, result["response"])
     return result["response"]
 
 
@@ -2086,6 +2234,13 @@ def build_api_kwargs(agent, api_messages: list, tools_for_api: list | None = Non
             is_github_responses=is_github_responses,
         )
 
+        # Negotiate a copy so account-specific limits never mutate saved preference.
+        _codex_request_overrides = agent.request_overrides
+        if _codex_request_overrides:
+            _codex_request_overrides = dict(_codex_request_overrides)
+            if is_codex_backend:
+                from agent.codex_service_tiers import negotiate_request_tier
+                negotiate_request_tier(agent, _codex_request_overrides)
         # xAI's /responses endpoint rejects ``pattern`` and ``format`` keywords
         # in tool schemas (HTTP 400 "Invalid arguments passed to the model").
         # Most commonly hit when MCP-derived tools carry JSON Schema validation
@@ -2130,7 +2285,7 @@ def build_api_kwargs(agent, api_messages: list, tools_for_api: list | None = Non
             base_url=agent.base_url,
             max_tokens=agent.max_tokens,
             timeout=agent._resolved_api_call_timeout(),
-            request_overrides=agent.request_overrides,
+            request_overrides=_codex_request_overrides,
             provider=getattr(agent, "provider", None),
             is_github_responses=is_github_responses,
             is_codex_backend=is_codex_backend,
@@ -3006,6 +3161,7 @@ def try_activate_fallback(agent, reason: "FailoverReason | None" = None) -> bool
                     effective_key,
                     agent._anthropic_base_url,
                     timeout=_fb_timeout,
+                    provider=fb_provider,
                 )
                 agent._is_anthropic_oauth = (
                     _is_oauth_token(effective_key) if fb_provider == "anthropic" else False
@@ -4566,6 +4722,8 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
         _writer_token = {"value": None}
         attempt_request_client = {"value": None}
         attempt_stream_response = {"value": None}
+        prompt_progress = _LocalPromptProgress()
+        progress_receiving = {"value": _is_local_request}
 
         def _open_stream(next_api_kwargs: dict[str, Any]):
             stream_kwargs = {
@@ -4586,6 +4744,10 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
                     reason="chat_completion_stream_request",
                     api_kwargs=stream_kwargs,
                 )
+            )
+            stream_kwargs = with_prompt_progress(stream_kwargs, str(getattr(request_client, "base_url", "") or ""))
+            progress_receiving["value"] = tracks_prompt_progress(
+                str(getattr(request_client, "base_url", "") or ""), stream_kwargs,
             )
             attempt_request_client["value"] = request_client
             last_chunk_time["t"] = time.time()
@@ -4629,7 +4791,14 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
             # prevents the stale watchdog from cancelling a live stream while
             # an interceptor or codec is still handling an already-received
             # event.
-            last_chunk_time["t"] = time.time()
+            with stream_attempt_lock:
+                if (stream_attempt_id != stream_attempt_state["current"]
+                        or stream_attempt_id in stream_attempt_state["cancelled"]):
+                    return False
+                if not (progress_receiving["value"] and prompt_progress.metadata_only(_chunk)):
+                    last_chunk_time["t"] = time.time()
+                elif prompt_progress.advance(_chunk):
+                    last_chunk_time["t"] = time.time()
             return True
 
         def _relay_final_response() -> dict[str, Any]:
@@ -4706,7 +4875,15 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
             stream,
             response=lambda: attempt_stream_response["value"],
         ):
-            last_chunk_time["t"] = time.time()
+            # The receive callback already accounts for this frame before
+            # Relay processing. Do not count it again or treat duplicate
+            # progress/heartbeats as output or a first-token diagnostic.
+            if progress_receiving["value"] and prompt_progress.metadata_only(chunk):
+                if hasattr(chunk, "model") and chunk.model:
+                    model_name = chunk.model
+                if hasattr(chunk, "usage") and chunk.usage:
+                    usage_obj = chunk.usage
+                continue
             agent._touch_activity("receiving stream response")
 
             # Update per-attempt diagnostic counters.  Best-effort —
@@ -5408,6 +5585,11 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
                             type(e).__name__,
                         )
                         return
+                    if _settle_stream_stale_trial(agent, None):
+                        # A recovered peer gets one attempt, including on a
+                        # transport/API failure before any watchdog can fire.
+                        result["error"] = e
+                        return
                     _is_timeout = isinstance(
                         e,
                         (_httpx.ReadTimeout, _httpx.ConnectTimeout, _httpx.PoolTimeout),
@@ -6021,13 +6203,13 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
             # Partial-stream stub: chunks WERE received (deltas fired), so
             # the provider is demonstrably responsive — clear the circuit
             # breaker (#58962) just like the full-success return below.
-            _reset_stale_streak(agent)
+            _settle_stream_stale_trial(agent, _stub)
             return _stub
         raise result["error"]
     # Success — clear the circuit breaker (#58962): the provider proved
     # responsive.  See the canonical comment block above ``_stale_streak()``.
     if result["response"] is not None:
-        _reset_stale_streak(agent)
+        _settle_stream_stale_trial(agent, result["response"])
     return result["response"]
 
 

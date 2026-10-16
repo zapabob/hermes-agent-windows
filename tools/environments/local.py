@@ -2109,9 +2109,10 @@ class LocalEnvironment(BaseEnvironment):
         # Read only snapshot identifiers; values never enter command arguments.
         return {name for name in visible if name.upper() in protected or _is_hermes_internal_secret(name)}
 
-    def __init__(self, cwd: str = "", timeout: int = 60, env: dict = None):
+    def __init__(self, cwd: str = "", timeout: int = 60, env: dict = None,
+                 persist_env: bool = True):
         cwd = _resolve_local_initial_cwd(cwd)
-        super().__init__(cwd=cwd, timeout=timeout, env=env)
+        super().__init__(cwd=cwd, timeout=timeout, env=env, persist_env=persist_env)
         self._snapshot_read_context = threading.local()
         self._snapshot_copy_lock = threading.Lock()
         self._snapshot_copies: dict[str, tuple[str, frozenset[str]]] = {}
@@ -2157,10 +2158,22 @@ class LocalEnvironment(BaseEnvironment):
     def _wait_for_process(self, proc, timeout: int = 120, *, bounded_capture: bool = False) -> dict:
         try:
             return super()._wait_for_process(proc, timeout=timeout, bounded_capture=bounded_capture)
+        except BaseException as exc:
+            if proc.poll() is None:
+                # Keep the real owner and both inputs available for recovery.
+                exc._hermes_process = proc
+            raise
         finally:
-            pinned = getattr(proc, "_hermes_snapshot_copy", None)
-            if pinned:
-                Path(pinned).unlink(missing_ok=True)
+            if proc.poll() is not None:
+                for attribute in ("_hermes_snapshot_copy", "_hermes_command_script"):
+                    owned = getattr(proc, attribute, None)
+                    if owned:
+                        Path(owned).unlink(missing_ok=True)
+                if getattr(proc, "_hermes_stdin_setup_failed", False) and proc.stdin is not None:
+                    try:
+                        proc.stdin.close()
+                    except (OSError, ValueError):
+                        pass
 
     def get_temp_dir(self) -> str:
         """Return a shell-safe writable temp dir for local execution.
@@ -2250,9 +2263,13 @@ class LocalEnvironment(BaseEnvironment):
             if pinned:
                 proc._hermes_snapshot_copy = pinned
             return proc
-        except BaseException:
+        except BaseException as exc:
             if pinned:
-                Path(pinned).unlink(missing_ok=True)
+                recovery = getattr(exc, "_hermes_process", None)
+                if recovery is not None and recovery.poll() is None:
+                    recovery._hermes_snapshot_copy = pinned
+                else:
+                    Path(pinned).unlink(missing_ok=True)
             raise
         finally:
             if policy_token is not None:
@@ -2273,10 +2290,6 @@ class LocalEnvironment(BaseEnvironment):
             if init_files:
                 cmd_string = _prepend_shell_init(cmd_string, init_files)
         args = [bash, "-l", "-c", cmd_string] if login else [bash, "-c", cmd_string]
-        if _IS_WINDOWS and len(subprocess.list2cmdline(args).encode("utf-16-le")) // 2 >= 30000:
-            # CreateProcess has a 32767 UTF-16-unit limit. Refuse with room
-            # for quoting/runtime overhead; never truncate protected names.
-            raise RuntimeError("Windows terminal command length exceeds safe limit")
         run_env = _make_run_env(self.env)
 
         # Recover when the cwd has been deleted out from under us — usually by
@@ -2308,27 +2321,98 @@ class LocalEnvironment(BaseEnvironment):
 
         _popen_kwargs = {"creationflags": windows_hide_flags()} if _IS_WINDOWS else {}
 
-        proc = subprocess.Popen(
-            args,
-            text=True,
-            env=run_env,
-            encoding="utf-8",
-            errors="replace",
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            stdin=subprocess.PIPE if stdin_data is not None else subprocess.DEVNULL,
-            start_new_session=True,
-            cwd=_popen_cwd,
-            **_popen_kwargs,
-        )
-        if not _IS_WINDOWS:
+        command_script = None
+        try:
+            # Keep inline transport conservative: Windows Bash launchers may
+            # fail below CreateProcess's limit. Select before any execution.
+            if _IS_WINDOWS and len(subprocess.list2cmdline(args).encode("utf-16-le")) // 2 >= 4096:
+                if "\x00" in cmd_string:
+                    raise ValueError("embedded null byte")
+                with tempfile.NamedTemporaryFile(
+                    prefix=Path(self._snapshot_path).name + ".command.",
+                    dir=self.get_temp_dir(), delete=False,
+                ) as stream:
+                    command_script = stream.name
+                    os.chmod(command_script, 0o600)
+                    stream.write(cmd_string.encode("utf-8"))
+                # Read exact bytes without consuming caller stdin. A top-level
+                # eval preserves return/BASH_SOURCE semantics; source would not.
+                # EOF is normal for read -d '', including under inherited -e.
+                quoted = self._quote_shell_path(command_script)
+                args[-1] = (
+                    "if { IFS= builtin read -r -d '' __hermes_command_payload "
+                    '|| [ "$?" -eq 1 ]; } < ' + quoted +
+                    ' && [ -n "$__hermes_command_payload" ]; then '
+                    "builtin eval 'builtin unset __hermes_command_payload\n'"
+                    '"$__hermes_command_payload"; else exit 126; fi'
+                )
+            if _IS_WINDOWS and len(subprocess.list2cmdline(args).encode("utf-16-le")) // 2 >= 30000:
+                # Final argv still respects CreateProcess's 32767-unit limit,
+                # with headroom. Never truncate protected identifiers/payload.
+                raise RuntimeError("Windows terminal command length exceeds safe limit")
+            proc = subprocess.Popen(
+                args,
+                text=True,
+                env=run_env,
+                encoding="utf-8",
+                errors="replace",
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                stdin=subprocess.PIPE if stdin_data is not None else subprocess.DEVNULL,
+                start_new_session=True,
+                cwd=_popen_cwd,
+                **_popen_kwargs,
+            )
+        except BaseException:
+            if command_script:
+                Path(command_script).unlink(missing_ok=True)
+            raise
+        if command_script:
+            proc._hermes_command_script = command_script
+        if _IS_WINDOWS:
+            # Capture authority while the original Popen handle is still live.
+            # Never acquire fresh PID authority at cancellation time.
+            proc._hermes_start_time = None
+            try:
+                from gateway.status import get_process_start_time
+
+                if proc.poll() is None:
+                    start_time = get_process_start_time(proc.pid)
+                    if proc.poll() is None:
+                        proc._hermes_start_time = start_time
+            except Exception:
+                pass  # Missing identity permits only handle-based termination.
+        else:
             try:
                 proc._hermes_pgid = os.getpgid(proc.pid)
             except ProcessLookupError:
                 pass
 
         if stdin_data is not None:
-            _pipe_stdin(proc, stdin_data)
+            try:
+                _pipe_stdin(proc, stdin_data)
+            except BaseException as exc:
+                proc._hermes_stdin_setup_failed = True
+                writer = getattr(proc, "_hermes_stdin_thread", None)
+                if isinstance(exc, RuntimeError) and writer is not None and writer.ident is None:
+                    # Thread.start failed before starting this writer. Keep
+                    # started/finished writers attached for the normal join.
+                    if getattr(proc, "_hermes_stdin_thread", None) is writer:
+                        del proc._hermes_stdin_thread
+                exc._hermes_process = proc
+                try:
+                    self._kill_process(proc)
+                    proc.wait(timeout=5)
+                except Exception:
+                    # A live owner remains on the exception for explicit recovery.
+                    pass
+                if proc.poll() is not None:
+                    if command_script:
+                        Path(command_script).unlink(missing_ok=True)
+                    for stream in (proc.stdin, proc.stdout):
+                        if stream is not None:
+                            stream.close()
+                raise
 
         return proc
 
@@ -2369,7 +2453,10 @@ class LocalEnvironment(BaseEnvironment):
                 try:
                     from gateway.status import terminate_pid
 
-                    terminate_pid(proc.pid, force=True)
+                    terminate_pid(
+                        proc.pid, force=True,
+                        expected_start_time=getattr(proc, "_hermes_start_time", None),
+                    )
                 except Exception:
                     proc.kill()
                 try:

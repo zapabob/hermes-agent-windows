@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "family_ids": ["M03"],
+  "slice": "REST expired-flow ownership retention",
+  "status": "APPROVED_M03_REST_RETENTION_CONTENT_FOR_LOCAL_COMMIT",
+  "bounded_acceptance": true,
+  "full_m03_accepted": false,
+  "full_campaign_accepted": false,
+  "publication": false,
+  "parent": "0ea37256069c897ff81e01f644253a00078b2ace",
+  "contract": "M03-rest-retention-mini-plan.md",
+  "frozen_inputs": {
+    "r_before": "63279301bcbdc185c1b07b98a9312eb0c862f26d",
+    "r_after": "d3630f853239e8c41ce7201e09fbdf39bcbc5431",
+    "u_release": "818c13be1dc4fd28987e1e881a9408224afd4535",
+    "d_base": "606f7e557c13a0789a2420f7adf6181becf60d75"
+  },
+  "behavior": "Expired REST OAuth entries remain registered while the real worker owns probe or scoped cleanup; completed expired entries remain collectable and pending duplicate admission remains denied.",
+  "implementation": "One additional and flow.worker_done condition in hermes_cli/web_server.py:_gc_mcp_oauth_flows; the existing worker completion event is the authority.",
+  "source": {
+    "hermes_cli/web_server.py": "cc0598b7d177ae4ddce310e2eb1f7e947cc3851fdebed6c8ab2c1d723fbabc41",
+    "tests/hermes_cli/test_mcp_oauth_rest_retention.py": "4fa1e611897838ac19c18bf575eab9c030b56d4d1fd1fbf3e1067a8f6dae0346"
+  },
+  "baseline_owner_sha256": "b8095d418f671c08b44c2fbe4b0dca7ba5ee83ef24b660aefa8013b9462cfc5a",
+  "unchanged_owners": {
+    "hermes_cli/web_routers/mcp.py": "80628cbce9d5365c7a94d59391e720b157327f54edc5ee14868936ec06a4f534",
+    "tools/mcp_dashboard_oauth.py": "aa297e12e4be68eb062425242f74c29702d6021b9cb9efc5c6bd8ccf5e36fa85",
+    "tools/mcp_tool.py": "e8ab14a41c12d4996e0e8dc7ef494d9dd472f393f6b926d15b6de61267d51b82"
+  },
+  "source_binding": {
+    "path": "tmp/probes/v0216-20261010/evidence/m03-rest-candidate-binding-v1.json",
+    "sha256": "74d9e9ec0fe7ce94add701e5554f0fb06e9b29044ac1e161a1199f8bb57b2f2d",
+    "repository_inputs": 110,
+    "original_oracle_assertions_preserved": true
+  },
+  "original_red": {
+    "command_label": "m03-rest-retention-original-red-v1",
+    "exit_code": 1,
+    "passed": 0,
+    "failed": 3,
+    "errors": 0,
+    "skipped": 0,
+    "qualification": "QUALIFIED_M03_REST_RETENTION_ORIGINAL_THREE_NODE_RED_ONLY",
+    "qualified_record": "tmp/probes/v0216-20261010/evidence/m03-rest-retention-original-red-qualified-v1.json",
+    "sha256": "405a281d6abba157cfce03af97b0d81b36285c62c46c00ab330c132aa4a971b3",
+    "oracle": "Owner status returns 404 while an expired worker still owns the flow; final original assertions are 404 == 200 at normal-case line94 and cancellation-case line142.",
+    "mandatory_cleanups_completed": true
+  },
+  "green": {
+    "canonical_runner": "UV run --frozen --no-sync python scripts/run_tests_parallel.py --paths <individual test file> -j 1 --file-retries=0 -q -o junit_family=legacy; exact executed argv, unique XML and basetemp are retained in the four outer command records.",
+    "exact_argv_records": [
+      "tmp/probes/v0216-20261010/evidence/m03-rest-candidate-canonical-green-v1.json",
+      "tmp/probes/v0216-20261010/evidence/m03-rest-regression-rest-sdk-v1.json",
+      "tmp/probes/v0216-20261010/evidence/m03-rest-regression-dashboard-http-v1.json",
+      "tmp/probes/v0216-20261010/evidence/m03-rest-regression-shared-flow-v1.json"
+    ],
+    "qualified_record": "tmp/probes/v0216-20261010/evidence/m03-rest-candidate-green-qualified-v1.json",
+    "sha256": "a3a3584c3421daab2fe917c0193abfc842d8531c7e14505ba2c07063508dde88",
+    "qualification": "QUALIFIED_M03_REST_CANDIDATE_GREEN_RECORD_ONLY",
+    "commands": [
+      {"label": "m03-rest-candidate-canonical-green-v1", "passed": 3, "failed": 0, "errors": 0, "skipped": 0, "exit_code": 0},
+      {"label": "m03-rest-regression-rest-sdk-v1", "passed": 4, "failed": 0, "errors": 0, "skipped": 0, "exit_code": 0},
+      {"label": "m03-rest-regression-dashboard-http-v1", "passed": 4, "failed": 0, "errors": 0, "skipped": 0, "exit_code": 0},
+      {"label": "m03-rest-regression-shared-flow-v1", "passed": 4, "failed": 0, "errors": 0, "skipped": 0, "exit_code": 0}
+    ],
+    "lint": {"label": "m03-rest-candidate-ruff-v1", "files": 2, "exit_code": 0},
+    "mandatory_cleanups_completed": true
+  },
+  "native_scope": {
+    "platform": "Windows Python 3.12.13 win32",
+    "rest_transport": "Actual public FastAPI routes via TestClient and synthetic signed-cookie authentication.",
+    "oauth_transport": "Actual MCP SDK discovery, DCR, PKCE, callback and token exchange against a test-owned loopback issuer.",
+    "protected_effect": "Actual MCP discovery and registry dispatch produce the specified nonce exactly once in successful cases.",
+    "cancellation": "The real worker is held after SDK exit and before outer scoped cleanup; registry retention persists until actual worker_done.",
+    "production_home": false,
+    "real_credentials": false,
+    "public_network_rest_qualified": false,
+    "external_browser_qualified": false,
+    "model_inference_qualified": false
+  },
+  "mutations": {
+    "qualification": "QUALIFIED_M03_REST_FIVE_MUTANTS_V2_ONLY",
+    "receipt": "tmp/probes/v0216-20261010/evidence/m03-rest-retention-mutants-v2/receipt.json",
+    "receipt_sha256": "26203d290448b4f3a7aea0ce2b4971e3b69b84e32a1a18a2414c8522bf0ab8e3",
+    "frozen_inputs_sha256": "b3384b3efb46e1d9bc8fbcc0ee0b5b349dd6a1ee659be1eee833b4e3ee103b69",
+    "completed_outer_sha256": "2891f59cb7975e87820d1c70c7bcf42832a1c70aed8f6eb64b7fb517a961738b",
+    "raw_log_sha256": "bbe514d4806c6e2f9151f1b9ac40757e7bb5a626883f56f277ed43f43683727b",
+    "distinct_variants": 5,
+    "actual_assertion_failures": 6,
+    "restored_selected_pass_executions": 6,
+    "full_before_pass_executions": 3,
+    "full_restored_pass_executions": 3,
+    "variants": [
+      {"label": "forget-live-worker", "failed": 2, "final_file": "tests/hermes_cli/test_mcp_oauth_rest_retention.py", "final_line": 105, "assertion": "status.status_code == 200"},
+      {"label": "collect-terminal-before-cleanup", "failed": 1, "final_file": "tests/hermes_cli/test_mcp_oauth_rest_retention.py", "final_line": 159, "assertion": "retained.status_code == 200"},
+      {"label": "disable-all-collection", "failed": 1, "final_file": "tests/hermes_cli/test_mcp_oauth_rest_retention.py", "final_line": 123, "assertion": "expired.status_code == 404"},
+      {"label": "bypass-duplicate-reservation", "failed": 1, "final_file": "tests/hermes_cli/test_mcp_oauth_rest_retention.py", "final_line": 110, "assertion": "duplicate.status_code == 409"},
+      {"label": "success-without-protected-effect", "failed": 1, "final_file": "tests/fakes/mcp_oauth_gateway.py", "final_line": 167, "assertion": "len(after) == before + 1"}
+    ],
+    "errors": 0,
+    "skipped": 0,
+    "all_known_variant_bytes_restored": true,
+    "all_mandatory_cleanups_completed": true,
+    "owned_process_survivors": 0,
+    "unconfirmed_process_identities": 0,
+    "excluded_attempt": "v1 stopped at mklink junction startup before candidate copying, graph generation or tests; preserved raw bytes count as no mutant kill."
+  },
+  "codegraph": {
+    "actual_version": "1.6.0",
+    "root_candidate_commands": ["sync", "query", "impact", "status", "explore", "affected"],
+    "mutation_phase_snapshots": 12,
+    "compressed_phase_bytes": 1798277860,
+    "expanded_phase_bytes": 7999709184,
+    "roundtrip_mismatches": 0,
+    "last_restored_database_sha256": "1159f959d195e69e15ff032762c2c484b24870658cc5e20bee155727d67db13b",
+    "last_restored_database_bytes": 668729344,
+    "quick_check": "ok",
+    "per_phase_source_bound": true,
+    "runtime_coverage_implied": false
+  },
+  "finite_retention": {
+    "manifest": "tmp/probes/v0216-20261010/evidence/m03-rest-local-retention-v1/manifest.json",
+    "manifest_sha256": "9e94c3d5e6d7f1d3b5d5d72c94e8df2d3334f3ecc96ae38298b3f02cebd98b15",
+    "archive": "tmp/probes/v0216-20261010/evidence/m03-rest-local-retention-v1/rest-evidence.zip",
+    "archive_sha256": "c303466d8cb106539ca2627c7c1a59a7e0f8593348629e7bf27929fbed4743f3",
+    "archive_bytes": 1967385231,
+    "roundtrip_verified_entries": 357,
+    "roundtrip_mismatches": 0,
+    "generator_sha256": "e5fe6d73f31cc02727605b12a6f633b4f03009f311556e447c143e3f2cc208ad",
+    "completed_generator_outer_sha256": "af018ce0d70fddcfe4e9607d2b001800264d6c3a4c16af04a909ce944c08f915",
+    "completed_generator_log_sha256": "ac226272d7a91a544168dcbd354be3bd795a650555952bd71f44c0d20990e8f9",
+    "finite_rest_scope_only": true,
+    "complete_installed_environment_bytes_retained": false,
+    "old_m03_proof_recursively_requalified": false
+  },
+  "protected_primary": {
+    "prequalification_audit": "tmp/probes/v0216-20261010/evidence/m03-rest-prequalification-canonical-wip-audit-v1.json",
+    "sha256": "b9523026604a77441e719658360a3362424386b7020d24313f9295b91ef4bac7",
+    "head": "606f7e557c13a0789a2420f7adf6181becf60d75",
+    "dirty_items": 23,
+    "head_status_and_bytes_matched": true,
+    "precommit_and_postcommit_audits_pending": true
+  },
+  "local_commit": {"created": false, "exact_staged_and_committed_blob_gate_pending": true},
+  "remaining": [
+    "Independent durable content acceptance and exact local commit identity.",
+    "In-place OAuth remint/revival, revoked token/config replacement, REST startup uncertainty and plugin OAuth/module split.",
+    "M01/M04/M05/M06 and the complete remaining feature/security/Windows/compatibility inventory.",
+    "Public-network REST, external browser/model, packaged Desktop, cloud CI, production and scheduled-task qualification."
+  ],
+  "credit": {
+    "upstream_gc": "Frozen upstream retains creation-time-only collection; this retention correction is a downstream adaptation.",
+    "new_security_discovery_claimed": false,
+    "prior_upstream_contributor_credit": "Preserved by the earlier M03 receipt; this slice does not reconstruct reporter or discovery credit."
+  }
+}

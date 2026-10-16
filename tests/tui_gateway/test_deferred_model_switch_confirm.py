@@ -15,6 +15,7 @@ possible. The user's pick silently reverted and the confirm was never offered
 on this path at all.
 """
 
+import os
 import threading
 import types
 
@@ -139,6 +140,100 @@ class TestUnguardedPickStillDefers:
 
         pending = running_session["pending_model_switch"]
         assert pending["display_provider"] == "anthropic"
+
+
+def test_registered_idle_model_pick_switches_agent_and_pins_session_provider(monkeypatch):
+    """The idle config.set route must apply a valid session-scoped picker pick.
+
+    Busy-session tests above only verify the deferred acknowledgement. This
+    exercises the registered JSON-RPC handler through its normal success path,
+    while stubbing provider discovery/client construction so the test remains
+    offline and focused on the request-to-session state transition.
+    """
+    model = "anthropic/claude-sonnet-4.6"
+    expected_provider = "anthropic"
+    env_keys = (
+        "HERMES_MODEL",
+        "HERMES_INFERENCE_MODEL",
+        "HERMES_TUI_PROVIDER",
+        "HERMES_INFERENCE_PROVIDER",
+    )
+
+    class _Agent:
+        model = "old-model"
+        provider = "old-provider"
+        base_url = "https://old.example/v1"
+        api_key = "old-test-key"
+
+        def switch_model(self, **kwargs):
+            self.switch_args = kwargs
+            self.model = kwargs["new_model"]
+            self.provider = kwargs["new_provider"]
+
+    agent = _Agent()
+    session = _session(agent=agent, running=False, model_override=None)
+    monkeypatch.setitem(server._sessions, "sid", session)
+
+    switch_result = types.SimpleNamespace(
+        success=True,
+        error_message="",
+        warning_message="",
+        new_model=model,
+        target_provider=expected_provider,
+        base_url="https://api.anthropic.com",
+        api_key="test-api-key",
+        api_mode="anthropic_messages",
+        runtime_capabilities=None,
+        model_info=None,
+    )
+    switch_calls = []
+    global_writes = []
+
+    def _resolve_switch(**kwargs):
+        switch_calls.append(kwargs)
+        return switch_result
+
+    monkeypatch.setattr("hermes_cli.model_switch.switch_model", _resolve_switch)
+    monkeypatch.setattr("hermes_cli.config.load_config", lambda: {"providers": {}})
+    monkeypatch.setattr("hermes_cli.config.get_compatible_custom_providers", lambda _cfg: [])
+    monkeypatch.setattr("hermes_cli.context_switch_guard.merge_preflight_compression_warning", lambda *_a, **_kw: None)
+    monkeypatch.setattr("hermes_cli.model_selection_guards.combined_selection_warning", lambda *_a, **_kw: None)
+    monkeypatch.setattr(
+        server,
+        "_picker_catalogue_validates",
+        lambda _session, _parsed: True,
+    )
+    monkeypatch.setattr(server, "_restart_slash_worker", lambda *_a, **_kw: None)
+    monkeypatch.setattr(server, "_persist_live_session_runtime", lambda *_a, **_kw: None)
+    monkeypatch.setattr(server, "_persist_live_session_system_prompt", lambda *_a, **_kw: None)
+    monkeypatch.setattr(server, "_append_model_switch_marker", lambda *_a, **_kw: None)
+    monkeypatch.setattr(server, "_session_info", lambda *_a, **_kw: {})
+    monkeypatch.setattr(server, "_emit", lambda *_a, **_kw: None)
+    monkeypatch.setattr(
+        server, "_persist_model_switch", lambda *args: global_writes.append(args)
+    )
+    monkeypatch.setattr(server, "_write_config_key", lambda *args: global_writes.append(args))
+
+    before_env = dict(os.environ)
+    response = _config_set_model(f"{model} --provider {expected_provider} --session")
+    after_env = dict(os.environ)
+
+    assert not response.get("error")
+    assert response["result"]["value"] == model
+    assert response["result"]["scope"] == "session"
+    assert len(switch_calls) == 1
+    assert switch_calls[0]["raw_input"] == model
+    assert switch_calls[0]["explicit_provider"] == expected_provider
+    assert switch_calls[0]["is_global"] is False
+    assert agent.switch_args["new_model"] == model
+    assert agent.switch_args["new_provider"] == expected_provider
+    assert session["model_override"]["model"] == model
+    assert session["model_override"]["provider"] == expected_provider
+    assert global_writes == []
+    assert {key: after_env.get(key) for key in env_keys} == {
+        key: before_env.get(key) for key in env_keys
+    }
+    assert after_env == before_env
 
 
 class TestGuardFailureIsNotFatal:

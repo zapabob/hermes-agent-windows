@@ -210,6 +210,36 @@ def test_returns_turn_context_with_user_message_appended():
     assert ctx.active_system_prompt == "SYSTEM"
 
 
+def test_new_turn_admits_one_trial_after_local_health_recovers(monkeypatch):
+    """A completed local health probe must unblock one actual model attempt."""
+    import http.client
+
+    agent = _FakeAgent()
+    agent.provider = "custom"
+    agent.base_url = "http://127.0.0.1:8080/v1"
+    agent._consecutive_stale_streams = 5
+    calls = []
+
+    class HealthyConnection:
+        def __init__(self, host, port, *, timeout):
+            calls.append((host, port, timeout))
+
+        def request(self, method, path, **kwargs):
+            assert (method, path) == ("GET", "/health")
+
+        def getresponse(self):
+            return types.SimpleNamespace(status=200)
+
+        def close(self):
+            pass
+
+    monkeypatch.setenv("HERMES_STREAM_STALE_GIVEUP", "5")
+    monkeypatch.setattr(http.client, "HTTPConnection", HealthyConnection)
+    _build(agent)
+    assert agent._consecutive_stale_streams == 4, "healthy recovery admits one trial, not a success reset"
+    assert calls == [("127.0.0.1", 8080, 3.0)]
+
+
 def test_user_message_preserves_platform_event_timestamp():
     agent = _FakeAgent()
 

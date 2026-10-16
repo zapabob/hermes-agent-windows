@@ -1,0 +1,184 @@
+{
+  "status": "VERIFIED_LOCAL_COMMIT_SCOPE",
+  "campaign_complete": false,
+  "scope": "V05 A18/A19/A20/A23 request/auxiliary/closed-fence progress; managed ownership remains mandatory OPEN",
+  "parent": "8eea9970e6b211e84d2b50c0aeb2c68678aec28e",
+  "frozen_release": "d923a5eb487a17c0a68801bba9ef0f56c81040a8",
+  "frozen_tree": "5a064077e8d1de9fc7a4b27efc04f0caa2cb06c0",
+  "runtime": {
+    "platform": "win32",
+    "python": "3.12.13",
+    "dependency_installation_this_slice": false,
+    "product_lock_unchanged": true
+  },
+  "source": {
+    "agent/local_prompt_progress.py": "650847d1c8177501a50638a6f110fd6024d176311806482d6a6a522255d12f22",
+    "agent/chat_completion_helpers.py": "2596065ddc3d36a4c6c693d180d71e760e8baf2e19fc4d2e928190904e482ad9",
+    "agent/auxiliary_client.py": "eeadaf697184374b533a64cf32a05a8078b88c96587558bb17bf51baadcfe418",
+    "agent/conversation_compression.py": "e4125cb52a6ca9aa1d5ab7f7648610d2316bfd319303d0cafd6511a73569b4ea",
+    "gateway/run.py": "51862604ae47868ea962c997c9ba2a77bb32cee56c4b588deffb0812c8c97c03",
+    "uv.lock": "bfd6c974796206cad6e29ab83dbdf553c200cfaf76821c574d666716407ea726",
+    "pyproject.toml": "43a16a1bc21d672a35c2551f6c52cf3b9a98dc6d4f683543aa31a19ca324cd78",
+    "tests/agent/test_aux_local_prompt_progress.py": "10ac9ca1cbd52abafc9a1bc68e20dd7524f7ed55cf07d104be88df8c943aa5a3",
+    "tests/agent/test_aux_progress_streaming.py": "d4a38983935668fef4234a4549850f83b17bec3fa12d586e3842536bcb982db1",
+    "tests/agent/test_aux_relay_progress_seam.py": "9dfbfc7654c722355fcc927c4318ab0d4f7111e732969e9ea71c8f855af3c5f0",
+    "tests/agent/test_auxiliary_explicit_cancellation.py": "64847d32b047bdcc040a1bc8b073826045beb4ae519ff8bbfbc39106742589f5",
+    "tests/agent/test_compress_context_progress_timeout.py": "25aeb95e58860e9c89fd2d09d99ec9f8e0a85fc669d50f1705a422c452837489",
+    "tests/agent/test_compression_attempt_lifecycle.py": "e2edae1e6d24175abde9dd4b4c1871872741b85b02968a022bd58e3fa3b4f2f1",
+    "tests/agent/test_compression_attempt_ownership.py": "3791524ae8bcfdca9c88993ece4919a6cb2c2179e37d9e28fa6c895e82d36cb8",
+    "tests/agent/test_compression_concurrent_fork.py": "29075445294ff134dfa08f756dadd985bf1dcc286f551703fecc9b9b02c5e9e8",
+    "tests/agent/test_compression_review_76354.py": "31c474e705356ab261a34da3b9ad528e68a507ef75d0516af1f823be1999ff50",
+    "tests/agent/test_compression_worker_isolation_76354.py": "4f4a88f39151dae01ec084bf264c2c3e96b51735a872ee9031b0f08506d4529b",
+    "tests/agent/test_native_aux_prompt_progress.py": "8af3b33c74eaa224dfcbefd7999a1fd9de66d80ddbccb49f7cacb7bb2aceb1a3",
+    "tests/gateway/test_hygiene_prompt_reading_budget.py": "720bc7c237ee4c9380ca653253252d86556f08cc4b7747c148331fe1e2c8e2ee",
+    "tests/gateway/test_session_hygiene.py": "bfbd385e68d5abfb2123fc5f9aefd3293692837fb44c47feaccdaee5f10a4102",
+    "tests/run_agent/test_local_prompt_progress.py": "5f889351b85dd9a768144baa52faea87fe090c1bccab5dd9903e6188817ce305"
+  },
+  "commit_candidates": {
+    "agent/local_prompt_progress.py": "650847d1c8177501a50638a6f110fd6024d176311806482d6a6a522255d12f22",
+    "agent/chat_completion_helpers.py": "2596065ddc3d36a4c6c693d180d71e760e8baf2e19fc4d2e928190904e482ad9",
+    "agent/auxiliary_client.py": "eeadaf697184374b533a64cf32a05a8078b88c96587558bb17bf51baadcfe418",
+    "agent/conversation_compression.py": "e4125cb52a6ca9aa1d5ab7f7648610d2316bfd319303d0cafd6511a73569b4ea",
+    "gateway/run.py": "51862604ae47868ea962c997c9ba2a77bb32cee56c4b588deffb0812c8c97c03",
+    "tests/agent/test_aux_local_prompt_progress.py": "10ac9ca1cbd52abafc9a1bc68e20dd7524f7ed55cf07d104be88df8c943aa5a3",
+    "tests/agent/test_native_aux_prompt_progress.py": "8af3b33c74eaa224dfcbefd7999a1fd9de66d80ddbccb49f7cacb7bb2aceb1a3",
+    "tests/gateway/test_hygiene_prompt_reading_budget.py": "720bc7c237ee4c9380ca653253252d86556f08cc4b7747c148331fe1e2c8e2ee",
+    "tests/agent/test_compress_context_progress_timeout.py": "25aeb95e58860e9c89fd2d09d99ec9f8e0a85fc669d50f1705a422c452837489",
+    "_docs/2026-10-16_V05_aux_prompt_progress_Codex.md": "ff2384e28d5ef38a49ea932bf3f3ead3a9c489f28a5e96be0996a249ef40f82e",
+    "docs/windows/v0222-release-baseline-20261015/V05_AUX_PROMPT_PROGRESS.md": "60c4fc7116380ab4c672a0f03cec96a1b13fc620916555de95ff6859ce58c8d7"
+  },
+  "accepted": {
+    "tests": 248,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "test_files": 14,
+    "source_bound": true,
+    "substitutions": [
+      {
+        "old": "final-fast/0",
+        "new": "final-unit-stable/0",
+        "why": "test-only virtual-clock stabilization; product bytes unchanged"
+      },
+      {
+        "old": "final-compression/0",
+        "new": "overrun-final2/0",
+        "why": "existing test waits for commit admission before advancing virtual time; asserts callback reached"
+      },
+      {
+        "old": [
+          "final-concurrent-0/10",
+          "final-concurrent-2/9"
+        ],
+        "new": "review-fork-recheck",
+        "why": "original audit guard refused Windows NUL stdout; v2 admits only canonical null device; external network and outside file writes still blocked"
+      }
+    ]
+  },
+  "independent_reexecution": {
+    "tests": 63,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "additional_unique_tests": 0
+  },
+  "mutation": {
+    "detected": 17,
+    "assertion_failures": 45,
+    "errors": 0,
+    "skipped": 0
+  },
+  "codegraph": {
+    "version": "1.6.0",
+    "main_index": true,
+    "gateway_full_file_excluded_by_1MiB_limit": true,
+    "exact_method_projection": {
+      "reason": "CodeGraph 1.6.0 extraction MAX_FILE_SIZE=1048576; original gateway/run.py exceeds it",
+      "original_sha256": "51862604ae47868ea962c997c9ba2a77bb32cee56c4b588deffb0812c8c97c03",
+      "original_size": 1577221,
+      "projection_size": 166654,
+      "method_start": 19677,
+      "method_end": 21914,
+      "exact_method_sha256": "d78cb6a913df41e376af19d87cc21f06f0a79ea696379130bad5cf25131668ff",
+      "projection_sha256": "89dae3315ceb21d2522184e8f5a40ae3fb42357766137c593c4c4bbbbafb8947",
+      "scope": "Exact selected method and original imports/line locations only; remaining gateway methods excluded; four agent files byte-identical"
+    },
+    "gateway_whole_graph_coverage": false
+  },
+  "containment": {
+    "scope": "Python interpreter audit events only; not OS or arbitrary children",
+    "refused_attempts": {
+      "outside_workspace_write:": 220,
+      "socket.getaddrinfo:openrouter.ai": 90
+    },
+    "network_credentials_sanitized": true,
+    "null_device_correction": "Only canonical Windows null device is allowed by the replacement guard; no outside directory exception"
+  },
+  "preservation": {
+    "base_versions_file_sets_and_bytes_unchanged": true,
+    "base_packages": 16,
+    "base_files": 837,
+    "named_locked_payloads_unchanged": 372,
+    "sdk_locked_payloads_unchanged": 2784,
+    "base_optional_sdks_remain_absent": true,
+    "prior_unrelated_wip_unchanged": true,
+    "primary_head": "53b65c99587f7c1fe437a44c32d1566576376a17"
+  },
+  "lint": {
+    "introduced_diagnostics": 0,
+    "existing_gateway_selected_diagnostics": 67,
+    "new_source_tests_selected_checks": "passed",
+    "whole_repository_pass": false
+  },
+  "independent_review": {
+    "status": "APPROVED_SCOPED",
+    "blocking_findings": 0,
+    "findings_reproduced_and_fixed": 3,
+    "independent_cases": 81,
+    "scope": "five product files, four tests and two Markdown files; public receipt pending metadata audit; no main merge or release approval"
+  },
+  "evidence": {
+    "tmp/probes/v05-aux-progress-20261016/composite-final.json": "6c70b36e3def8321163f0ce6add14d2eb1294bac149637d63c9e5b4000098794",
+    "tmp/probes/v05-aux-progress-20261016/mutations-final3.json": "7e922bdd42fa6e010f150e20f0a41192ed76d1c882fcaebe59ac243f01f80d3c",
+    "tmp/probes/v05-aux-progress-20261016/mutations-overrun-final.json": "7cde862818602c9cee2abf304afe2891bd1804e17386d25fc2a7811ca9433e35",
+    "tmp/probes/v05-aux-progress-20261016/reviewer-final.json": "bdcb1cbd4085dcbc1a9c8d2464873e0e8ad262fa98c766259c5a30e89bed0e15",
+    "tmp/probes/v05-aux-progress-20261016/review-red.json": "21fd9d44f2325fb2982487112d79d61c89fc59262d749f0954723876bbb75632",
+    "tmp/probes/v05-aux-progress-20261016/close-race-red.json": "fd875926e6bb619ceb6e7e766cf2fd9238977861fb41a90c2013d042171806d0",
+    "tmp/probes/v05-aux-progress-20261016/preservation-final.json": "7e9fc761c99b79120f4d02c6aaec11d913ddb9a0326c1b8d8ab3dcf8e873dedc",
+    "tmp/probes/v05-aux-progress-20261016/lint-baseline-comparison.json": "ceca5e0f3738ab85ce68e7258e724ef0e47bc0edd5dfb6f819e705b6b8882056",
+    "tmp/probes/v05-aux-progress-20261016/graph-fence-before.json": "adb19a0daf7490db6f4726fcf53eec5b58888fd0ffaba6bc04fc192d8c819f3a",
+    "tmp/probes/v05-aux-progress-20261016/graph-aux-before.json": "2ea41051259b4780f70fff6f9d60bab904466fb9d4327f0493989a6c969436c0",
+    "tmp/probes/v05-aux-progress-20261016/graph-main-before.json": "c1e33d4434a2050d8ca200d3e930d355843a459278b0cf959c2790e430bbd224",
+    "tmp/probes/v05-aux-progress-20261016/graph-fence-final.json": "38a8b76c498f0efcf5e53543b29ded0c0805553956bfe6e64f629b70abed20b7",
+    "tmp/probes/v05-aux-progress-20261016/graph-fence-impact.txt": "1f83ded807043c6c62d418e486a9084628ee176b2c94e38d3508ab178cf80bbc",
+    "tmp/probes/v05-aux-progress-20261016/graph-reading-owner.json": "dd251611faee91a5266b7d10d5ffcfcb1e39356be3132d0a57160abfd4505a31",
+    "tmp/probes/v05-aux-progress-20261016/graph-reading-impact.txt": "18b64b5c076a9b37eaf57db68b4fd4a898fe8ffc90c4470bf2e138445a24afae",
+    "tmp/probes/v05-aux-progress-20261016/graph-projection-binding.json": "5d1da9d99af0e24128ac7d151eac2768e478b78d85156bdcff990469893cd705",
+    "tmp/probes/v05-aux-progress-20261016/graph-projection-owner.json": "4c0f7369bb36f1d2299383ee2d5e0293748f8d52a0f013211564b0062bec0dc6",
+    "tmp/probes/v05-aux-progress-20261016/graph-projection-impact.txt": "9a7c3de10cca31cefb58cc1372ca6151765ff3cbb9441481bcbeda1d88ed00a8",
+    "tmp/probes/v05-aux-progress-20261016/graph-projection-init.log": "b6bf1bae382a76eead05a02beb0dc8940eb1155d94169addd40d4a8549c35d80",
+    "tmp/probes/v05-aux-progress-20261016/superseded-timeout.json": "9a256d958276537e86d10e838f014c99d2a5f22d98a9ba5108c68dd55bb8510b",
+    "tmp/probes/v05-aux-progress-20261016/reviewer-overrun.json": "2a470ee10f118617d002b75e9397a45a0a69260008191b4389c77ab3dc949ccb",
+    "tmp/probes/v05-aux-progress-20261016/graph-final-status.json": "3fcdb247ef61e79b22ce29f70b292d96afa9d6fac179ee2f7c1c60f176b051ff",
+    "tmp/probes/v05-aux-progress-20261016/graph-projection-status.json": "1ffbbde7920eff3a3d77b31a48b0ad6f060d5e645b090185ac90443e2ad6d333"
+  },
+  "mandatory_open": [
+    "managed-runtime automatic ownership/capability binding",
+    "full A18/A23/V05 adoption",
+    "awake-clock qualification",
+    "status/autoload",
+    "memory budgets and real model completion",
+    "remaining original U01-U18 and five retained gates",
+    "8-hour soak",
+    "three actual sleep/resume cycles"
+  ],
+  "authority": {
+    "local_commit_only": true,
+    "push": false,
+    "pull_request": false,
+    "main_integration": false,
+    "version_bump": false,
+    "release": false,
+    "live_configuration_or_services": false
+  }
+}

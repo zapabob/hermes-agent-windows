@@ -151,24 +151,17 @@ def test_reused_terminal_snapshot_cannot_restore_profile_secrets(tmp_path, monke
         environment.cleanup()
 
 
-def test_many_accumulated_snapshot_names_refuse_before_windows_spawn(tmp_path, monkeypatch):
+def test_many_accumulated_snapshot_names_execute_without_protected_values(tmp_path, monkeypatch):
     monkeypatch.setenv("HERMES_HOME", str(tmp_path))
     monkeypatch.setattr(local, "_resolve_shell_init_files", lambda: [])
     environment = local.LocalEnvironment(cwd=str(tmp_path), timeout=20)
-    spawned = []
     try:
         for batch in range(3):
             for index in range(20):
                 environment.env[f"GATEWAY_RELAY_{batch}_{index}_" + "X" * 180 + "_SECRET"] = "TEST_ONLY_SECRET_DO_NOT_USE"
-            wrapped = environment._wrap_command("true", str(tmp_path))
-        from types import SimpleNamespace
-        def record_spawn(*args, **kwargs):
-            spawned.append(args)
-            return SimpleNamespace()
-        monkeypatch.setattr(local.subprocess, "Popen", record_spawn)
-        with pytest.raises(RuntimeError, match="(?i)(command.*limit|command.*length)"):
-            environment._run_bash(wrapped)
-        assert not spawned
+            result = environment.execute('printf guarded; printf "%s" "${!GATEWAY_RELAY_@}"')
+            assert result["returncode"] == 0, result
+            assert result["output"] == "guarded", result
     finally:
         environment.cleanup()
 

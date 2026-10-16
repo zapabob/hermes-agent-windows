@@ -16,6 +16,7 @@ import threading
 
 import pytest
 
+from hermes_constants import get_hermes_home
 from tools.mcp_dashboard_oauth import DashboardOAuthFlow
 from tui_gateway import mcp_oauth_sessions
 from tui_gateway.mcp_oauth_sessions import (
@@ -106,7 +107,7 @@ def test_start_flow_client_redirect_skips_gateway_listener(monkeypatch):
     )
 
     result = mcp_oauth_sessions.start_flow(
-        "/tmp/hermes-test-home",
+        str(get_hermes_home()),
         "clicky",
         {"url": "https://mcp.example.com/mcp", "auth": "oauth"},
         client_redirect_uri="http://127.0.0.1:8412/callback",
@@ -152,7 +153,7 @@ def _make_session(session_id="sess-relay-1", server="hosp", state="s3cr3tstate")
         flow_id=session_id,
         server_name=server,
         profile=None,
-        hermes_home="/tmp/hermes-test-home",
+        hermes_home=str(get_hermes_home()),
         redirect_uri="http://127.0.0.1:9000/callback",
     )
     # Pin the expected state the way publish_authorization_url does.
@@ -166,7 +167,7 @@ def _make_session(session_id="sess-relay-1", server="hosp", state="s3cr3tstate")
     rec = {
         "session_id": session_id,
         "server_name": server,
-        "hermes_home": "/tmp/hermes-test-home",
+        "hermes_home": str(get_hermes_home()),
         "flow": flow,
         "httpd": None,
         "created_at": __import__("time").time(),
@@ -185,7 +186,7 @@ def test_deliver_callback_accepts_matching_state():
     flow = _make_session()
     out = deliver_callback_flow("sess-relay-1", "hosp", code="abc", state="s3cr3tstate")
     assert out == {"ok": True, "session_id": "sess-relay-1"}
-    assert flow._callback == ("abc", "s3cr3tstate")
+    assert flow._callback == ("abc", "s3cr3tstate", None)
 
 
 def test_deliver_callback_rejects_state_mismatch():

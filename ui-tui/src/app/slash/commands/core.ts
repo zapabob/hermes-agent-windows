@@ -685,6 +685,7 @@ export const coreCommands: SlashCommand[] = [
   {
     help: 'inject a message after the next tool call (no interrupt)',
     name: 'steer',
+    aliases: ['s'],
     run: (arg, ctx) => {
       const payload = arg?.trim() ?? ''
 

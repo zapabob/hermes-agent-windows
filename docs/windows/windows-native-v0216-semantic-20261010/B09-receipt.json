@@ -1,0 +1,229 @@
+{
+  "schema_version": 1,
+  "family_id": "B09",
+  "scope": "POSIX-only CLI initialization test applicability on native Windows",
+  "lane": "INVENTORY_LEAD",
+  "action": "TEST_CONTRACT_CORRECTION",
+  "status": "ACCEPTED_B09_LOCAL_COMMIT_IDENTITY_VERIFIED",
+  "accepted": true,
+  "source": {
+    "fixed_base": "606f7e557c13a0789a2420f7adf6181becf60d75",
+    "candidate_sha": "1a8f669d4e39440d1b41de6720ddce966e4d4aa9",
+    "candidate_tree": "3fa69f9a463aea6eb2ca72cac4011873d32da2d8",
+    "candidate_patch_sha256": "b76ffea35f438dc80921450557f41a5d344f6370de2f3d241252cba74200a9dd",
+    "before": [
+      {
+        "file": "cli.py",
+        "sha256": "f557ef15b85c385a2b9a3f7f943800c6873f8e2d813ef04ac99b228cee7021e7"
+      },
+      {
+        "file": "tests/cli/test_cli_init.py",
+        "sha256": "353e54a9c88cb4b1fd84ccc765bdc94abb705541e1acd048659099850105ba80"
+      },
+      {
+        "file": "tests/cli/test_cpr_local_leak.py",
+        "sha256": "a796de96eaac7ed60bc58b2d6dcf2156aee74589058a33d3c28d055be4dd284c"
+      },
+      {
+        "file": "tests/conftest.py",
+        "sha256": "9780ba549bf6fb746ff08fc3ea793b9593fa636c13ee7f61537052082d7020b8"
+      }
+    ],
+    "after": {
+      "file": "tests/cli/test_cli_init.py",
+      "sha256": "399426b26ac40dba9353ea6787ba41ce6b156925b93f7db74b19556d166a1d4b"
+    },
+    "change": "Two existing skipif decorators only; all assertions/production owners unchanged"
+  },
+  "contract": "B09-mini-plan.md",
+  "tests": {
+    "passed": 37,
+    "skipped": 4,
+    "failed": 0,
+    "specific_posix_skipped": 2,
+    "specific_windows_passed": 3
+  },
+  "negative_control": "Original unmarked test file failed at identical two POSIX nodes at clean D_BASE and pre-change F01 candidate; retained raw evidence",
+  "codegraph": {
+    "version": "1.6.0",
+    "index_sha256": "09cc026f880c5ae4d448a2437d72c2ebb0409899e45c559e7b38a9a42a8ad042",
+    "retained": "tmp/probes/v0216-20261010/evidence/retained-b09/codegraph.db.gz",
+    "retained_sha256": "685c9e4a65df62465ec65819880e4c5babccec9c2e637a88fe2475d71a871387",
+    "original_bytes": 679071744,
+    "gzip_roundtrip_verified": true,
+    "queries": 4,
+    "limitations": "Generic-name links and empty affected test list are navigation only; they do not supersede actual collected node outcomes."
+  },
+  "evidence": {
+    "binding": {
+      "file": "tmp/probes/v0216-20261010/evidence/b09-final-source-binding.json",
+      "sha256": "c448717016e9b9d58dbbe84f3f6c79e4609f8a7a6db14dddc92a01259fec96c7"
+    },
+    "artifacts": [
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-init-green.xml",
+        "sha256": "d3925a0bc0cf0f03269dadfa6825d36610718434fdf33f5cf6f938a95863eb8d"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-cpr-green.xml",
+        "sha256": "f1eac64b6dc9d10005eaa38f076128857e5a0f2efb383fdadc7dbeced9aeefd8"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-native-node-outcomes.json",
+        "sha256": "39b674ec339e8b6bcfabe8e3ce8b75e55d9309e501e73d450ec2535171b3cd98"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-preimplementation-source-binding.json",
+        "sha256": "c87d34735e9783b7e19b11457352332835e80402b335ee79a739cbbc31cb7867"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-final-graph-query-lf.json",
+        "sha256": "ca43a4c106849125a082d5cb7136b2007d7f89205c8c9210ccb3d2719f222bb6"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-final-graph-query-lf.log",
+        "sha256": "d522f0e4173f4823be53b45ac65968533a17bbd86f96220fc2c0cfb0f7969f2e"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-final-graph-query-cpr.json",
+        "sha256": "939a7fa59106848b26184d91bdeeca1ff441622f31c036d8474cf3219eb4a056"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-final-graph-query-cpr.log",
+        "sha256": "80c82c2403b1bec1e95926a27bed7bcd8a8dc447e0239031c0dab37cf3decdcc"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-final-graph-impact.json",
+        "sha256": "bfd32ad2938767e111af684b7d8c39eeadc84a101be2a280f609f2bff4cd74cb"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-final-graph-impact.log",
+        "sha256": "8041c1446341c216483046112bfdbf1b3578550884c53056952973c91304bbc3"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-final-graph-callers.json",
+        "sha256": "8db95abc001448b233e33e005e1df8c11c5238d8c6ad1476a7180d83c5b0e791"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-final-graph-callers.log",
+        "sha256": "f6483c66dd668bf95ded7bdf4ba5a98969241824e5e525cc488b2a403e3de42c"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/f01-queue-owner-regression-valid.json",
+        "sha256": "5828fc9ffad3bbbd7a290fcc8a5b154e857b69a37056da19f5f07e231a3e40e2"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/f01-queue-owner-regression-valid.log",
+        "sha256": "539cffdd87998edce7c78b6c14069ee5d473c43cebead36bc8f32a0ebb7e0e48"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/f01-d-base-cli-init-regression-control.json",
+        "sha256": "e428ae2c342697d580c34a43a38c1f26cb5279980084a0222429df2bcdb8faff"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/f01-d-base-cli-init-regression-control.log",
+        "sha256": "0e8c443ae9d2a5cebf41133f0943ec7c18ebca0f286d7c052425dac23d9ad6d1"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-native-counterpart-baseline.json",
+        "sha256": "e8ef3746f215b30316544a1db9c4cf8a598db699d472fa2a2dd242d29ebdec65"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-native-counterpart-baseline.log",
+        "sha256": "0288f1cc2bd56d8aac1d6b21921a50ca052a9ba9ca1570bc155eba8adc078ee2"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-init-marker-green.json",
+        "sha256": "996025f5d7a60fa8045f8438f7cfd03122abf1e4d7c70418e18c95f20785396c"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-init-marker-green.log",
+        "sha256": "12451ed4c856c9842afe9cd4a48e2cc6d451cbf6348a465ff3fffd312d7f849a"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-cpr-counterpart-green.json",
+        "sha256": "7a29a358ff2bacac2467b9fdc133c77d55b2f649aae10ff85e18d8584cae02d5"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-cpr-counterpart-green.log",
+        "sha256": "3265b1320392c09c7296e7b8e92106e509312e84d8d43ddf1ad58bedd9d7c5e3"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-final-graph-sync.json",
+        "sha256": "f82b9418c2d457adb6d1fc3fdd3f003391a4cdd30753d1d44ea913f93a5480cc"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-final-graph-sync.log",
+        "sha256": "350bc8bb63d320cbf11c1790edd56262ed2fc94c3fe40f761fc7790b4fdb0cd3"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-preimplementation-query.json",
+        "sha256": "13637a844cb32bda25afee5650942c35ff70cf9031e9f19de5e0341b578dd8b4"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-preimplementation-query.log",
+        "sha256": "75f1d8844de0fb22c62f29f8edb88de916e9cf70eaa47e7a48a40dcf81a8653a"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-preimplementation-explore.json",
+        "sha256": "714220782c747bf1e16dc90600f6105b40c258f1f4f555febf80bed3f317944e"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-preimplementation-explore.log",
+        "sha256": "214c12665af6bf1f35ed92f0b4852b0bc0575f06e86c45701bc54ba66ecb6cc6"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-preimplementation-impact.json",
+        "sha256": "1d3fdd77f1eff1846be161422e96f8773064017751d3c3f9d36c850da0973124"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-preimplementation-impact.log",
+        "sha256": "6ebf20e3c5cfacc6a546dd5b98debc25d679ef1ce3b01461b4888c42c53a3794"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-preimplementation-affected.json",
+        "sha256": "918a03e231796601cbd8266ce94a8a76d45a35cafedd62780cbee97ea9971a52"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-preimplementation-affected.log",
+        "sha256": "3b300ec2fb365c6167156ca1144dcba42e9e4b51519457d451b61aa603e3dfc6"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-marker-ruff.json",
+        "sha256": "42daf419578fa153b0e9fd3671f55e93470e1955a3ae5517922c8e6a3786e163"
+      },
+      {
+        "file": "tmp/probes/v0216-20261010/evidence/b09-marker-ruff.log",
+        "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+      }
+    ],
+    "postcommit_binding": {
+      "file": "tmp/probes/v0216-20261010/evidence/b09-product-postcommit-binding.json",
+      "sha256": "280d971b488c90015165397bf6157f266f59d1cd79c9644a448037ecd64ed79a"
+    },
+    "protected_primary_postcommit": {
+      "file": "tmp/probes/v0216-20261010/evidence/b09-postcommit-canonical-wip-audit.json",
+      "sha256": "035f967eb3fa902ce1036180bd062b7e48de66f9792ee78cf83b2ec69be03046"
+    }
+  },
+  "review": {
+    "reviewer": "/root/f03_contract_review",
+    "status": "APPROVED_FOR_B09_ONLY_LOCAL_COMMIT",
+    "source_sha256": "399426b26ac40dba9353ea6787ba41ce6b156925b93f7db74b19556d166a1d4b",
+    "receipt_before_review_sha256": "8daf14481b25ca121988aaf5482f5829f2fb6477adbac1f3aef5ee78109c2215",
+    "verified_artifact_references": 34,
+    "verified_collected_nodes": 41,
+    "passed": 37,
+    "skipped": 4,
+    "specific_windows_passed": 3,
+    "findings": [],
+    "scope": "Windows test applicability only; Git identity closure required; no Linux/macOS, CI, runtime or campaign acceptance.",
+    "record": "tmp/probes/v0216-20261010/evidence/b09-independent-final-review.json",
+    "record_sha256": "5368303b45a5ea0f49ece3f290016e1bc4ad677939d3bd9ab08419ca1d1c803d"
+  },
+  "limitations": [
+    "Native Windows test applicability only; no Linux/macOS run claimed",
+    "No production/CI/runtime or full campaign qualification"
+  ],
+  "rollback": "Reviewed revert of this local test-applicability commit; no runtime/profile restoration."
+}

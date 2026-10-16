@@ -1682,44 +1682,44 @@ def _apply_identity_header(server_name: str, config: dict, headers: dict) -> dic
 
 
 def _make_redirect_header_stripper(
-    original_url,
     *,
     strict: bool = False,
     configured_header_names: "set[str] | frozenset[str]" = frozenset(),
 ):
-    """Build an httpx response hook that guards cross-origin redirects.
+    """Build request/response hooks guarding each immediate redirect hop.
 
-    Always strips ``Authorization`` when a redirect leaves the original
-    origin. When *strict* is true (portable Agent Plugins v1 packages with
-    ``strict_redirect_headers``), every *configured* header (lowercase names
-    in *configured_header_names*) is stripped as well — the v1 spec forbids
-    forwarding package-configured headers to a different origin without
-    explicit user authorization.
+    The response hook records the responding Request's origin as an immutable
+    tuple in that Request's extensions. HTTPX copies it into the redirect Request
+    after response hooks run; the request hook consumes it before the next send.
+    Foreign hops lose Authorization and, in strict package mode, configured
+    headers. Same-origin hops and independent fresh OAuth requests retain their
+    credentials. No client-wide origin state is shared between requests.
     """
+    marker = "_hermes_mcp_redirect_origin"
+    configured_names = frozenset(name.lower() for name in configured_header_names)
 
-    async def _strip_on_cross_origin_redirect(response):
-        if response.is_redirect and response.next_request:
-            # Current request's origin (the request that got this redirect response)
-            current_origin = (
-                response.request.url.scheme,
-                response.request.url.host,
-                response.request.url.port,
-            )
-            # Next request's origin (the request that will be made if we follow)
-            target_origin = (
-                response.next_request.url.scheme,
-                response.next_request.url.host,
-                response.next_request.url.port,
-            )
-            if current_origin != target_origin:
-                response.next_request.headers.pop("authorization", None)
-                response.next_request.headers.pop("Authorization", None)
-                if strict:
-                    for _name in configured_header_names:
-                        while _name in response.next_request.headers:
-                            del response.next_request.headers[_name]
-    
-    return _strip_on_cross_origin_redirect
+    def _origin(url):
+        port = url.port
+        if port is None:
+            port = {"http": 80, "https": 443}.get(url.scheme)
+        return url.scheme, url.host, port
+
+    async def _remember_redirect_origin(response):
+        if response.has_redirect_location:
+            response.request.extensions[marker] = _origin(response.request.url)
+
+    async def _strip_on_cross_origin_redirect(request):
+        previous_origin = request.extensions.pop(marker, None)
+        if previous_origin is None or previous_origin == _origin(request.url):
+            return
+        request.headers.pop("Authorization", None)
+        if strict:
+            for name in configured_names:
+                request.headers.pop(name, None)
+
+    return {"request": [_strip_on_cross_origin_redirect], "response": [_remember_redirect_origin]}
+
+
 def _format_connect_error(exc: BaseException) -> str:
     """Render nested MCP connection errors into an actionable short message."""
 
@@ -2419,7 +2419,7 @@ class MCPServerTask:
         "_task", "_ready", "_shutdown_event", "_reconnect_event",
         "_tools", "_error", "_config",
         "_sampling", "_elicitation",
-        "_registered_tool_names", "_auth_type", "_refresh_lock",
+        "_registered_tool_names", "_auth_type", "_auth_park", "_refresh_lock",
         "_rpc_lock", "_pending_refresh_tasks",
         "_pending_call_context",
         "_lifecycle_started_at", "_last_tool_call_at",
@@ -2494,6 +2494,9 @@ class MCPServerTask:
         # (#81995).
         self._stdio_child_pids: Set[int] = set()
         self._auth_type: str = ""
+        # (profile-bound storage, stat-only credential stamp) after an OAuth
+        # auth failure; discovery retries only when those files change.
+        self._auth_park = None
         self._refresh_lock = asyncio.Lock()
         # MCP stdio sessions are a single JSON-RPC stream. Some servers emit
         # list_changed notifications during startup; if the notification
@@ -3635,24 +3638,44 @@ class MCPServerTask:
         # Capture the configured header names before client-generated
         # headers (identity, protocol version) are merged in.
         _strict_cfg_headers = bool(config.get("strict_redirect_headers"))
-        headers = dict(config.get("headers") or {})
         _configured_header_names = {key.lower() for key in headers}
         # Optional per-user identity header (config-gated; static or
         # profile-derived). Explicit headers of the same name win.
         headers = _apply_identity_header(self.name, config, headers)
         # Some MCP servers require MCP-Protocol-Version on the initial
-        # POST/GET. Anything else on a 2xx response means the URL is not
-        # an MCP endpoint.
+        # initialize request and reject session-less POSTs otherwise.
+        # Seed it as a client-level default, but treat user overrides as
+        # case-insensitive so conventional casing is preserved.
+        #
+        # Seeded from the HANDSHAKE version, not the latest one: this transport
+        # connects via `ClientSession.initialize()`, which sends
+        # LATEST_HANDSHAKE_VERSION (2025-11-25) in the body. Advertising
+        # 2026-07-28 in the header routes the request onto the server's
+        # per-request-envelope ladder, which then rejects the legacy body for
+        # missing its required `params._meta` envelope keys. The header has to
+        # agree with what the body actually speaks.
         if not any(key.lower() == "mcp-protocol-version" for key in headers):
             headers["mcp-protocol-version"] = LATEST_HANDSHAKE_VERSION
-        try:
-            from tools.mcp_oauth_manager import get_manager
-            _oauth_auth = get_manager().get_or_build_provider(
-                self.name, url, config.get("oauth"),
-            )
-        except Exception as exc:
-            logger.warning("MCP OAuth setup failed for '%s': %s", self.name, exc)
-            raise
+        connect_timeout = config.get("connect_timeout", _DEFAULT_CONNECT_TIMEOUT)
+        ssl_verify = config.get("ssl_verify", True)
+        client_cert = _resolve_client_cert(self.name, config)
+
+        # OAuth 2.1 PKCE: route through the central MCPOAuthManager so the
+        # same provider instance is reused across reconnects, pre-flow
+        # disk-watch is active, and config-time CLI code paths share state.
+        # If OAuth setup fails (e.g. non-interactive env without cached
+        # tokens), re-raise so this server is reported as failed without
+        # blocking other MCP servers from connecting.
+        _oauth_auth = None
+        if self._auth_type == "oauth":
+            try:
+                from tools.mcp_oauth_manager import get_manager
+                _oauth_auth = get_manager().get_or_build_provider(
+                    self.name, url, config.get("oauth"),
+                )
+            except Exception as exc:
+                logger.warning("MCP OAuth setup failed for '%s': %s", self.name, exc)
+                raise
 
         sampling_kwargs = self._sampling.session_kwargs() if self._sampling else {}
         if self._elicitation:
@@ -3666,9 +3689,6 @@ class MCPServerTask:
         # rather than Streamable HTTP). Configure with ``transport: sse`` in the
         # mcp_servers entry in config.yaml.
         if config.get("transport") == "sse":
-            if _strict_cfg_headers:
-                # Portable packages never translate to SSE; if a config
-                # combines both anyway, fail closed rather than run a
             if _strict_cfg_headers:
                 # Portable packages never translate to SSE; if a config
                 # combines both anyway, fail closed rather than run a
@@ -3777,10 +3797,7 @@ class MCPServerTask:
             # sdk_httpx().
             httpx = sdk_httpx()
 
-            _original_url = httpx.URL(url)
-
-            _strip_auth_on_cross_origin_redirect = _make_redirect_header_stripper(
-                _original_url,
+            _redirect_header_hooks = _make_redirect_header_stripper(
                 strict=_strict_cfg_headers,
                 configured_header_names=_configured_header_names,
             )
@@ -3789,7 +3806,7 @@ class MCPServerTask:
                 "follow_redirects": True,
                 "timeout": httpx.Timeout(float(connect_timeout), read=300.0),
                 "verify": ssl_verify,
-                "event_hooks": {"response": [_strip_auth_on_cross_origin_redirect]},
+                "event_hooks": _redirect_header_hooks,
             }
             if headers:
                 client_kwargs["headers"] = headers
@@ -3947,6 +3964,24 @@ class MCPServerTask:
                 if live is self:
                     _server_connect_errors.pop(key, None)
 
+    def _arm_auth_park(self) -> None:
+        """Remember this server's profile-owned OAuth credential metadata."""
+        self._auth_park = None
+        if self._auth_type != "oauth":
+            return
+        try:
+            from tools.mcp_oauth import HermesTokenStorage
+
+            storage = HermesTokenStorage(self.name)
+            self._auth_park = (storage, storage.credential_stamp())
+        except Exception as exc:
+            # A failed metadata snapshot must leave ordinary discovery wakeups
+            # enabled. Avoid logging exception text that could contain auth data.
+            logger.debug(
+                "MCP server '%s': could not snapshot OAuth credential metadata (%s)",
+                self.name, type(exc).__name__,
+            )
+
     async def run(self, config: dict):
         """Long-lived coroutine: connect, discover tools, wait, disconnect.
 
@@ -4017,35 +4052,19 @@ class MCPServerTask:
             # without a cached token the endpoint returns HTML or 401, which
             # would incorrectly block the OAuth flow before it can run.
             if config.get("transport") != "sse" and not config.get("skip_preflight") and not self._ready.is_set() and self._auth_type != "oauth":
-                # Portable Agent Plugins v1 packages set strict_redirect_headers:
-                # configured headers are visible package data and MUST NOT be
-                # forwarded to a different origin through a redirect (spec §7.2.1).
-                # Capture the configured header names before client-generated
-                # headers (identity, protocol version) are merged in.
-                _strict_cfg_headers = bool(config.get("strict_redirect_headers"))
-                _configured_header_names = {key.lower() for key in headers}
-                # Optional per-user identity header (config-gated; static or
-                # profile-derived). Explicit headers of the same name win.
-                headers = _apply_identity_header(self.name, config, headers)
-                # Some MCP servers require MCP-Protocol-Version on the initial
-                # POST/GET. Anything else on a 2xx response means the URL is not
-                # an MCP endpoint.
-                if not any(key.lower() == "mcp-protocol-version" for key in headers):
-                headers["mcp-protocol-version"] = LATEST_HANDSHAKE_VERSION
-                
                 try:
-                _probe_headers = dict(config.get("headers") or {})
-                await self._preflight_content_type(
-                config["url"],
-                headers=_probe_headers,
-                ssl_verify=config.get("ssl_verify", True),
-                client_cert=_resolve_client_cert(self.name, config),
-                )
+                    _probe_headers = dict(config.get("headers") or {})
+                    await self._preflight_content_type(
+                        config["url"],
+                        headers=_probe_headers,
+                        ssl_verify=config.get("ssl_verify", True),
+                        client_cert=_resolve_client_cert(self.name, config),
+                    )
                 except NonMcpEndpointError as exc:
-                logger.warning("%s", exc)
-                self._error = exc
-                self._ready.set()
-                return
+                    logger.warning("%s", exc)
+                    self._error = exc
+                    self._ready.set()
+                    return
 
         self._reconnect_retries = 0
         initial_retries = 0
@@ -4067,6 +4086,11 @@ class MCPServerTask:
                 )
                 first_connection_attempt = False
                 with oauth_context:
+                    # A failure belongs to one transport attempt. Keep its
+                    # original exception while parked, then clear it only as
+                    # the next actual connection attempt begins.
+                    self._auth_park = None
+                    self._error = None
                     if self._is_http():
                         lifecycle_reason = await self._run_http(config)
                     else:
@@ -4177,6 +4201,7 @@ class MCPServerTask:
                 raise
             except Exception as exc:
                 self.session = None
+                self._error = exc
                 # Unwrap anyio TaskGroup wrappers first: str(exc) on a
                 # BaseExceptionGroup is "unhandled errors in a TaskGroup
                 # (N sub-exceptions)" — useless in logs, and it hides the
@@ -4219,6 +4244,7 @@ class MCPServerTask:
                         # keeps the task alive so the 300s self-probe (and an
                         # explicit /mcp refresh) can pick up fresh tokens.
                         if _is_auth_error(root):
+                            self._arm_auth_park()
                             logger.warning(
                                 "MCP server '%s' failed initial authentication, "
                                 "parking until credentials change; re-authenticate "
@@ -4345,6 +4371,8 @@ class MCPServerTask:
                         if self._shutdown_event.is_set():
                             return
                         continue
+                    if _is_auth_error(root):
+                        self._arm_auth_park()
                     # A previously-working server now fails deterministically
                     # (revoked credentials, URL now serving a web page, stdio
                     # binary uninstalled). Retrying can't help — park
@@ -4552,6 +4580,10 @@ _server_tool_scopes: Dict[ServerKey, Set[str]] = {}
 _lazy_server_configs: Dict[ServerKey, dict] = {}
 _lazy_server_fingerprints: Dict[ServerKey, str] = {}
 _lazy_server_tool_names: Dict[ServerKey, List[str]] = {}
+# Caller-HOME configuration provenance outlives transport shutdown because
+# retained handlers may still be used. It does not identify a connection.
+_native_mcp_names_by_home: Dict[str, Set[str]] = {}
+_portable_mcp_names_by_home: Dict[str, Set[str]] = {}
 # Discovery installs a task-local claim before calling ``_connect_server`` so
 # it can retain a recoverable parked task without making standalone probe calls
 # publish failed servers into module-global ownership.
@@ -4959,6 +4991,7 @@ def _wait_for_server_session_ready(
     *,
     old_session: Any = None,
     timeout: float = 15.0,
+    admission_check: Optional[Callable[[], Optional[str]]] = None,
 ) -> bool:
     """Wait for an MCP server to expose a usable session.
 
@@ -4980,6 +5013,8 @@ def _wait_for_server_session_ready(
     poll_interval = 0.25
     iterations = max(1, int(max(float(timeout), 0.0) / poll_interval))
     for i in range(iterations):
+        if admission_check is not None and admission_check() is not None:
+            return False
         session = getattr(srv, "session", None)
         ready = getattr(srv, "_ready", None)
         is_ready = True
@@ -5001,6 +5036,7 @@ def _signal_reconnect_and_wait(
     *,
     op_description: str,
     timeout: float = 15.0,
+    admission_check: Optional[Callable[[], Optional[str]]] = None,
 ) -> bool:
     """Ask a live MCP server task to rebuild its transport session.
 
@@ -5013,12 +5049,16 @@ def _signal_reconnect_and_wait(
     could connect successfully.
     """
     loop = _mcp_loop
+    if admission_check is not None and admission_check() is not None:
+        return False
     if loop is None or not loop.is_running():
         return False
 
     old_session = getattr(srv, "session", None)
 
     def _request_reconnect() -> None:
+        if admission_check is not None and admission_check() is not None:
+            return
         ready = getattr(srv, "_ready", None)
         if ready is not None and hasattr(ready, "clear"):
             ready.clear()
@@ -5035,6 +5075,7 @@ def _signal_reconnect_and_wait(
         srv,
         old_session=old_session,
         timeout=timeout,
+        admission_check=admission_check,
     )
 
 # ---------------------------------------------------------------------------
@@ -5131,6 +5172,8 @@ def _handle_auth_error_and_retry(
     exc: BaseException,
     retry_call,
     op_description: str,
+    *,
+    admission_check: Optional[Callable[[], Optional[str]]] = None,
 ):
     """Attempt auth recovery and one retry; return None to fall through.
 
@@ -5162,15 +5205,21 @@ def _handle_auth_error_and_retry(
     """
     if not _is_auth_error(exc):
         return None
+    if admission_check is not None and (denied := admission_check()) is not None:
+        return denied
 
     from tools.mcp_oauth_manager import get_manager
     manager = get_manager()
 
     async def _recover():
+        if admission_check is not None and (denied := admission_check()) is not None:
+            raise _MCPPolicyDenied(denied)
         return await manager.handle_401(server_name, None)
 
     try:
         recovered = _run_on_mcp_loop(_recover, timeout=10)
+    except _MCPPolicyDenied as denied:
+        return denied.result
     except Exception as rec_exc:
         logger.warning(
             "MCP OAuth '%s': recovery attempt failed: %s",
@@ -5179,6 +5228,8 @@ def _handle_auth_error_and_retry(
         recovered = False
 
     if recovered:
+        if admission_check is not None and (denied := admission_check()) is not None:
+            return denied
         with _lock:
             srv = _servers.get(_resolve_server_key(server_name))
         reconnected = False
@@ -5188,6 +5239,7 @@ def _handle_auth_error_and_retry(
                 srv,
                 op_description=f"{op_description} after OAuth recovery",
                 timeout=15,
+                admission_check=admission_check,
             )
 
         # A successful OAuth recovery + transport reconnect is independent
@@ -5201,15 +5253,21 @@ def _handle_auth_error_and_retry(
             _reset_server_error(server_name)
 
         try:
+            if admission_check is not None and (denied := admission_check()) is not None:
+                return denied
             result = retry_call()
             try:
                 parsed = json.loads(result)
+                if parsed.get("mcp_policy"):
+                    return result
                 if "error" not in parsed:
                     _reset_server_error(server_name)
                     return result
             except (json.JSONDecodeError, TypeError):
                 _reset_server_error(server_name)
                 return result
+        except _MCPPolicyDenied as denied:
+            return denied.result
         except Exception as retry_exc:
             logger.warning(
                 "MCP %s/%s retry after auth recovery failed: %s",
@@ -5219,6 +5277,8 @@ def _handle_auth_error_and_retry(
     # No recovery available, or retry also failed: surface a structured
     # needs_reauth error. Bumps the circuit breaker so the model stops
     # retrying the tool.
+    if admission_check is not None and (denied := admission_check()) is not None:
+        return denied
     _bump_server_error(server_name)
     return tool_error(
         f"MCP server '{server_name}' requires re-authentication. "
@@ -5337,13 +5397,15 @@ def _handle_session_expired_and_retry(
     exc: BaseException,
     retry_call,
     op_description: str,
+    *,
+    admission_check: Optional[Callable[[], Optional[str]]] = None,
 ):
     """Trigger a transport reconnect and retry once on session expiry.
 
-    Unlike :func:`_handle_auth_error_and_retry`, this does **not** call
-    the OAuth manager's ``handle_401`` — the access token is still
-    valid, only the server-side session state is stale.  Setting
-    ``_reconnect_event`` causes the server task's lifecycle loop to
+    Ordinary session expiry reuses the valid access token without calling
+    the OAuth manager. If reconnect instead retains a typed authentication
+    failure on the same owned run task, use the existing auth recovery path.
+    Setting ``_reconnect_event`` causes the server task's lifecycle loop to
     tear down the current ``streamablehttp_client`` + ``ClientSession``
     and rebuild them, reusing the existing OAuth provider instance.
     See #13383.
@@ -5363,9 +5425,13 @@ def _handle_session_expired_and_retry(
     """
     if not _is_session_expired_error(exc):
         return None
+    if admission_check is not None and (denied := admission_check()) is not None:
+        return denied
 
     with _lock:
-        srv = _servers.get(_resolve_server_key(server_name))
+        server_key = _resolve_server_key(server_name)
+        srv = _servers.get(server_key)
+        run_task = getattr(srv, "_task", None)
     if srv is None or not hasattr(srv, "_reconnect_event"):
         return None
 
@@ -5386,7 +5452,50 @@ def _handle_session_expired_and_retry(
         srv,
         op_description=op_description,
         timeout=15,
+        admission_check=admission_check,
     ):
+        if admission_check is not None and (denied := admission_check()) is not None:
+            return denied
+
+        def owned_admission_check() -> Optional[str]:
+            if admission_check is not None and (denied := admission_check()) is not None:
+                return denied
+            with _lock:
+                if (
+                    _resolve_server_key(server_name) != server_key
+                    or _servers.get(server_key) is not srv
+                    or getattr(srv, "_task", None) is not run_task
+                ):
+                    return tool_error(
+                        f"MCP server '{server_name}' connection changed during recovery",
+                        mcp_policy="connection_replaced",
+                        server=server_name,
+                    )
+            return None
+
+        if (denied := owned_admission_check()) is not None:
+            return denied
+        with _lock:
+            # Snapshot the current failed attempt only while the captured
+            # profile/server/task still owns a disconnected connection.
+            failure = (
+                getattr(srv, "_error", None)
+                if _servers.get(server_key) is srv
+                and getattr(srv, "_task", None) is run_task
+                and run_task is not None
+                and srv.session is None
+                else None
+            )
+        if failure is not None:
+            root = _unwrap_exception_group(failure)
+            if _is_auth_error(root):
+                return _handle_auth_error_and_retry(
+                    server_name,
+                    root,
+                    retry_call,
+                    op_description,
+                    admission_check=owned_admission_check,
+                )
         logger.warning(
             "MCP server '%s': reconnect did not ready within 15s after "
             "session-expired error; falling through to error response.",
@@ -5395,15 +5504,21 @@ def _handle_session_expired_and_retry(
         return None
 
     try:
+        if admission_check is not None and (denied := admission_check()) is not None:
+            return denied
         result = retry_call()
         try:
             parsed = json.loads(result)
+            if parsed.get("mcp_policy"):
+                return result
             if "error" not in parsed:
                 _reset_server_error(server_name)
                 return result
         except (json.JSONDecodeError, TypeError):
             _reset_server_error(server_name)
             return result
+    except _MCPPolicyDenied as denied:
+        return denied.result
     except Exception as retry_exc:
         logger.warning(
             "MCP %s/%s retry after session reconnect failed: %s",
@@ -5952,6 +6067,7 @@ def _load_mcp_config() -> Dict[str, dict]:
         if _env_enabled("HERMES_SAFE_MODE"):
             return {}
         config = load_config()
+        _remember_native_mcp_names(config)
         servers = config.get("mcp_servers")
         if not isinstance(servers, dict):
             servers = {}
@@ -6047,8 +6163,120 @@ async def _connect_server(name: str, config: dict) -> MCPServerTask:
 # Handler / check-fn factories
 # ---------------------------------------------------------------------------
 
+def _remember_native_mcp_names(config: Optional[dict] = None) -> None:
+    """Remember actual native names, including entries disabled before use."""
+    from hermes_constants import hermes_home_key
+    if config is None:
+        from hermes_cli.config import load_config_readonly, ConfigReadError
+        try:
+            config = load_config_readonly(require_valid=True)
+        except ConfigReadError:
+            return  # Admission will expose the current typed refusal.
+    native = config.get("mcp_servers")
+    if isinstance(native, dict):
+        with _lock:
+            _native_mcp_names_by_home.setdefault(hermes_home_key(), set()).update(native)
+    portable = _loaded_portable_mcp_servers()
+    if portable:
+        with _lock:
+            _portable_mcp_names_by_home.setdefault(hermes_home_key(), set()).update(portable)
+
+
+def _loaded_portable_mcp_servers() -> Dict[str, dict]:
+    from hermes_cli.plugins import get_loaded_plugin_manager
+    manager = get_loaded_plugin_manager()
+    return manager.get_portable_mcp_servers() if manager is not None else {}
+
+
+class _MCPPolicyDenied(Exception):
+    def __init__(self, result: str):
+        self.result = result
+        super().__init__("MCP invocation policy denied")
+
+
+class _MCPInvocationPolicy:
+    """Fresh admission for the invocation caller, never the connection owner."""
+
+    def __init__(self, name: str):
+        from hermes_constants import get_hermes_home, hermes_home_key
+        self.name = name
+        self.home = get_hermes_home()
+        self.home_key = hermes_home_key(self.home)
+
+    def check(self) -> Optional[str]:
+        from hermes_constants import set_hermes_home_override, reset_hermes_home_override
+        from hermes_cli.config import load_config_readonly, ConfigReadError
+        from utils import env_var_enabled
+        if env_var_enabled("HERMES_SAFE_MODE"):
+            return self._deny("safe_mode", "is unavailable in safe mode")
+        token = set_hermes_home_override(self.home)
+        try:
+            try:
+                config = load_config_readonly(require_valid=True)
+            except ConfigReadError as exc:
+                return self._deny("configuration_unreadable", str(exc))
+            native = config.get("mcp_servers")
+            if native is not None and not isinstance(native, dict):
+                return self._deny("native_malformed", "has malformed native configuration")
+            native = native or {}
+            with _lock:
+                known = _native_mcp_names_by_home.setdefault(self.home_key, set())
+                known.update(native)
+                was_native = self.name in known
+            if self.name in native:
+                entry = native[self.name]
+                if not isinstance(entry, dict):
+                    return self._deny("native_malformed", "has malformed native configuration")
+                if not mcp_server_enabled(entry):
+                    return self._deny("disabled", "is disabled in current configuration")
+            elif was_native:
+                return self._deny("native_removed", "was removed from current configuration")
+            else:
+                portable = _loaded_portable_mcp_servers()
+                with _lock:
+                    known_portable = _portable_mcp_names_by_home.setdefault(self.home_key, set())
+                    known_portable.update(portable)
+                    was_portable = self.name in known_portable
+                if self.name in portable:
+                    entry = portable[self.name]
+                    if not isinstance(entry, dict) or not mcp_server_enabled(entry):
+                        return self._deny("portable_disabled", "is disabled by its current plugin")
+                elif was_portable:
+                    return self._deny("portable_removed", "is no longer supplied by its plugin")
+            # Never-native explicit registration remains valid. This boundary
+            # never discovers plugins, loads dotenv or rebuilds tool schemas.
+            return None
+        except Exception:
+            # Validation failures must never leak parser/plugin source values
+            # or authorize a cached connection with defaults.
+            return self._deny("configuration_unreadable", "current configuration could not be validated")
+        finally:
+            reset_hermes_home_override(token)
+
+    def _deny(self, code: str, reason: str) -> str:
+        return tool_error(f"MCP server '{self.name}' {reason}", mcp_policy=code, server=self.name)
+
+    def require(self) -> None:
+        denied = self.check()
+        if denied is not None:
+            raise _MCPPolicyDenied(denied)
+
+
+@asynccontextmanager
+async def _admit_mcp_rpc(server: Any, policy: _MCPInvocationPolicy, op: str):
+    """One admitted operation includes all pages, but not recovery retries."""
+    async with server._rpc_lock:
+        policy.require()
+        _mark_server_call_started(server)
+        async with _track_inflight_rpc(server, policy.name, op):
+            yield
+
+
 def _request_lazy_reconnect(server_name: str, server: MCPServerTask) -> bool:
     """Wake a recycled stdio server and wait briefly for a fresh session."""
+    policy = _MCPInvocationPolicy(server_name)
+    if policy.check() is not None:
+        return False
     if not server._is_recycled_stdio():
         return False
 
@@ -6058,6 +6286,8 @@ def _request_lazy_reconnect(server_name: str, server: MCPServerTask) -> bool:
         return False
 
     def _signal_reconnect() -> None:
+        if policy.check() is not None:
+            return
         server._ready.clear()
         server._reconnect_event.set()
 
@@ -6066,6 +6296,8 @@ def _request_lazy_reconnect(server_name: str, server: MCPServerTask) -> bool:
     async def _await_ready() -> bool:
         deadline = time.monotonic() + _RECYCLED_RECONNECT_TIMEOUT
         while time.monotonic() < deadline:
+            if policy.check() is not None:
+                return False
             if server.session is not None and server._ready.is_set():
                 return True
             await asyncio.sleep(0.05)
@@ -6100,6 +6332,9 @@ def _ensure_lazy_server_connected(server_name: str) -> bool:
     cooldown bookkeeping stays in one place. Returns True when a live
     session is available afterwards.
     """
+    policy = _MCPInvocationPolicy(server_name)
+    if policy.check() is not None:
+        return False
     with _lock:
         key = _resolve_server_key(server_name)
         server = _servers.get(key)
@@ -6120,10 +6355,15 @@ def _ensure_lazy_server_connected(server_name: str) -> bool:
     connect_timeout = config.get("connect_timeout", _DEFAULT_CONNECT_TIMEOUT)
 
     async def _connect():
+        policy.require()
         return await _discover_and_register_server(server_name, config)
 
     try:
         _run_on_mcp_loop(_connect, timeout=float(connect_timeout) + 30.0)
+    except _MCPPolicyDenied:
+        with _lock:
+            _server_connecting.discard(key)
+        return False
     except BaseException as exc:
         message = _format_connect_error(exc)
         with _lock:
@@ -6238,12 +6478,21 @@ def _ensure_healthy_or_recycle(server: Any, server_name: str) -> None:
     """
     if not getattr(server, "_suspect_reason", None):
         return
+    policy = _MCPInvocationPolicy(server_name)
+    if policy.check() is not None:
+        return
     with _lock:
         loop = _mcp_loop
     if loop is None or not loop.is_running():
         return  # no background loop — nothing to verify against
+    async def _probe():
+        policy.require()
+        return await server.ensure_healthy()
+
     try:
-        healthy = bool(_run_on_mcp_loop(server.ensure_healthy, timeout=15.0))
+        healthy = bool(_run_on_mcp_loop(_probe, timeout=15.0))
+    except _MCPPolicyDenied:
+        return
     except Exception as exc:  # never let the probe break dispatch
         logger.debug(
             "MCP server '%s': suspect health check errored: %s",
@@ -6251,6 +6500,8 @@ def _ensure_healthy_or_recycle(server: Any, server_name: str) -> None:
         )
         healthy = False
     if not healthy:
+        if policy.check() is not None:
+            return
         _signal_reconnect(server)
 
 
@@ -6266,9 +6517,16 @@ def _make_tool_handler(server_name: str, tool_name: str, tool_timeout: float):
         # servers configured ``trust: untrusted`` must be approved by the
         # user before ANY transport work happens — including the lazy
         # first-use spawn below. A denied call never touches the server.
+        policy = _MCPInvocationPolicy(server_name)
+        denied = policy.check()
+        if denied is not None:
+            return denied
         gate_error = _trust_gate_check(server_name, tool_name)
         if gate_error is not None:
             return gate_error
+        denied = policy.check()  # Approval may have awaited a user decision.
+        if denied is not None:
+            return denied
 
         # Circuit breaker: if this server has failed too many times
         # consecutively, short-circuit with a clear message so the model
@@ -6307,6 +6565,9 @@ def _make_tool_handler(server_name: str, tool_name: str, tool_timeout: float):
             # Cooldown elapsed → fall through as a half-open probe.
 
         server = _get_connected_server_for_call(server_name)
+        denied = policy.check()
+        if denied is not None:
+            return denied
         if not server:
             _bump_server_error(server_name)
             return tool_error(f"MCP server '{server_name}' is not connected")
@@ -6319,6 +6580,7 @@ def _make_tool_handler(server_name: str, tool_name: str, tool_timeout: float):
             # strike (#26892).
             if _wait_for_server_session_ready(
                 server, timeout=min(5.0, float(tool_timeout or 5.0)),
+                admission_check=policy.check,
             ):
                 pass  # Fresh session arrived; proceed below.
             else:
@@ -6332,6 +6594,9 @@ def _make_tool_handler(server_name: str, tool_name: str, tool_timeout: float):
                 # without burning iterations. The breaker resets once the
                 # fresh session initializes (_run_stdio/_run_http call
                 # _reset_server_error).
+                denied = policy.check()
+                if denied is not None:
+                    return denied
                 _bump_server_error(server_name)
                 if _signal_reconnect(server):
                     return tool_error(
@@ -6342,10 +6607,7 @@ def _make_tool_handler(server_name: str, tool_name: str, tool_timeout: float):
                 return tool_error(f"MCP server '{server_name}' is not connected")
 
         async def _call():
-            _mark_server_call_started(server)
-            async with server._rpc_lock, _track_inflight_rpc(
-                server, server_name, f"tools/call {tool_name}"
-            ):
+            async with _admit_mcp_rpc(server, policy, f"tools/call {tool_name}"):
                 # Snapshot the agent's context so an elicitation callback
                 # triggered during this call (fired on the MCP recv loop
                 # task, which doesn't inherit our contextvars) can replay
@@ -6364,6 +6626,7 @@ def _make_tool_handler(server_name: str, tool_name: str, tool_timeout: float):
                         and isinstance(_stdio_dead_result := _stdio_dead(), bool)
                         and _stdio_dead_result
                     ):
+                        policy.require()
                         # Dead children but stale server.session, so the
                         # transport-down path above never fired — signal the
                         # server task to respawn and return a clean
@@ -6421,6 +6684,7 @@ def _make_tool_handler(server_name: str, tool_name: str, tool_timeout: float):
                                 # nothing clears server.session, so without a
                                 # reconnect signal the server would stay dead
                                 # until the idle keepalive probe notices.
+                                policy.require()
                                 _signal_reconnect(server)
                                 raise TimeoutError(
                                     f"MCP stdio subprocess for '{server_name}' "
@@ -6587,15 +6851,21 @@ def _make_tool_handler(server_name: str, tool_name: str, tool_timeout: float):
             except (json.JSONDecodeError, TypeError):
                 _reset_server_error(server_name)  # non-JSON = success
             return result
+        except _MCPPolicyDenied as exc:
+            return exc.result
         except InterruptedError:
             return _interrupted_call_result()
         except Exception as exc:
+            denied = policy.check()
+            if denied is not None:
+                return denied
             # Auth-specific recovery path: consult the manager, signal
             # reconnect if viable, retry once. Returns None to fall
             # through for non-auth exceptions.
             recovered = _handle_auth_error_and_retry(
                 server_name, exc, _call_once,
                 f"tools/call {tool_name}",
+                admission_check=policy.check,
             )
             if recovered is not None:
                 return recovered
@@ -6606,6 +6876,7 @@ def _make_tool_handler(server_name: str, tool_name: str, tool_timeout: float):
             recovered = _handle_session_expired_and_retry(
                 server_name, exc, _call_once,
                 f"tools/call {tool_name}",
+                admission_check=policy.check,
             )
             if recovered is not None:
                 return recovered
@@ -6626,13 +6897,19 @@ def _make_list_resources_handler(server_name: str, tool_timeout: float):
     """Return a sync handler that lists resources from an MCP server."""
 
     def _handler(args: dict, **kwargs) -> str:
+        policy = _MCPInvocationPolicy(server_name)
+        denied = policy.check()
+        if denied is not None:
+            return denied
         server = _get_connected_server_for_call(server_name)
         if not server or not server.session:
+            denied = policy.check()
+            if denied is not None:
+                return denied
             return tool_error(f"MCP server '{server_name}' is not connected")
 
         async def _call():
-            _mark_server_call_started(server)
-            async with server._rpc_lock:
+            async with _admit_mcp_rpc(server, policy, "resources/list"):
                 all_resources = await _paginate_full_list(
                     server.session.list_resources, "resources", server_name
                 )
@@ -6658,16 +6935,18 @@ def _make_list_resources_handler(server_name: str, tool_timeout: float):
 
         try:
             return _call_once()
+        except _MCPPolicyDenied as exc:
+            return exc.result
         except InterruptedError:
             return _interrupted_call_result()
         except Exception as exc:
             recovered = _handle_auth_error_and_retry(
-                server_name, exc, _call_once, "resources/list",
+                server_name, exc, _call_once, "resources/list", admission_check=policy.check,
             )
             if recovered is not None:
                 return recovered
             recovered = _handle_session_expired_and_retry(
-                server_name, exc, _call_once, "resources/list",
+                server_name, exc, _call_once, "resources/list", admission_check=policy.check,
             )
             if recovered is not None:
                 return recovered
@@ -6685,8 +6964,15 @@ def _make_read_resource_handler(server_name: str, tool_timeout: float):
     """Return a sync handler that reads a resource by URI from an MCP server."""
 
     def _handler(args: dict, **kwargs) -> str:
+        policy = _MCPInvocationPolicy(server_name)
+        denied = policy.check()
+        if denied is not None:
+            return denied
         server = _get_connected_server_for_call(server_name)
         if not server or not server.session:
+            denied = policy.check()
+            if denied is not None:
+                return denied
             return tool_error(f"MCP server '{server_name}' is not connected")
 
         uri = args.get("uri")
@@ -6694,8 +6980,7 @@ def _make_read_resource_handler(server_name: str, tool_timeout: float):
             return tool_error("Missing required parameter 'uri'")
 
         async def _call():
-            _mark_server_call_started(server)
-            async with server._rpc_lock:
+            async with _admit_mcp_rpc(server, policy, "resources/read"):
                 result = await server.session.read_resource(uri)
             # read_resource returns ReadResourceResult with .contents list
             parts: List[str] = []
@@ -6719,16 +7004,18 @@ def _make_read_resource_handler(server_name: str, tool_timeout: float):
 
         try:
             return _call_once()
+        except _MCPPolicyDenied as exc:
+            return exc.result
         except InterruptedError:
             return _interrupted_call_result()
         except Exception as exc:
             recovered = _handle_auth_error_and_retry(
-                server_name, exc, _call_once, "resources/read",
+                server_name, exc, _call_once, "resources/read", admission_check=policy.check,
             )
             if recovered is not None:
                 return recovered
             recovered = _handle_session_expired_and_retry(
-                server_name, exc, _call_once, "resources/read",
+                server_name, exc, _call_once, "resources/read", admission_check=policy.check,
             )
             if recovered is not None:
                 return recovered
@@ -6746,13 +7033,19 @@ def _make_list_prompts_handler(server_name: str, tool_timeout: float):
     """Return a sync handler that lists prompts from an MCP server."""
 
     def _handler(args: dict, **kwargs) -> str:
+        policy = _MCPInvocationPolicy(server_name)
+        denied = policy.check()
+        if denied is not None:
+            return denied
         server = _get_connected_server_for_call(server_name)
         if not server or not server.session:
+            denied = policy.check()
+            if denied is not None:
+                return denied
             return tool_error(f"MCP server '{server_name}' is not connected")
 
         async def _call():
-            _mark_server_call_started(server)
-            async with server._rpc_lock:
+            async with _admit_mcp_rpc(server, policy, "prompts/list"):
                 all_prompts = await _paginate_full_list(
                     server.session.list_prompts, "prompts", server_name
                 )
@@ -6780,16 +7073,18 @@ def _make_list_prompts_handler(server_name: str, tool_timeout: float):
 
         try:
             return _call_once()
+        except _MCPPolicyDenied as exc:
+            return exc.result
         except InterruptedError:
             return _interrupted_call_result()
         except Exception as exc:
             recovered = _handle_auth_error_and_retry(
-                server_name, exc, _call_once, "prompts/list",
+                server_name, exc, _call_once, "prompts/list", admission_check=policy.check,
             )
             if recovered is not None:
                 return recovered
             recovered = _handle_session_expired_and_retry(
-                server_name, exc, _call_once, "prompts/list",
+                server_name, exc, _call_once, "prompts/list", admission_check=policy.check,
             )
             if recovered is not None:
                 return recovered
@@ -6807,8 +7102,15 @@ def _make_get_prompt_handler(server_name: str, tool_timeout: float):
     """Return a sync handler that gets a prompt by name from an MCP server."""
 
     def _handler(args: dict, **kwargs) -> str:
+        policy = _MCPInvocationPolicy(server_name)
+        denied = policy.check()
+        if denied is not None:
+            return denied
         server = _get_connected_server_for_call(server_name)
         if not server or not server.session:
+            denied = policy.check()
+            if denied is not None:
+                return denied
             return tool_error(f"MCP server '{server_name}' is not connected")
 
         name = args.get("name")
@@ -6817,8 +7119,7 @@ def _make_get_prompt_handler(server_name: str, tool_timeout: float):
         arguments = args.get("arguments", {})
 
         async def _call():
-            _mark_server_call_started(server)
-            async with server._rpc_lock:
+            async with _admit_mcp_rpc(server, policy, "prompts/get"):
                 result = await server.session.get_prompt(name, arguments=arguments)
             # GetPromptResult has .messages list
             messages = []
@@ -6845,16 +7146,18 @@ def _make_get_prompt_handler(server_name: str, tool_timeout: float):
 
         try:
             return _call_once()
+        except _MCPPolicyDenied as exc:
+            return exc.result
         except InterruptedError:
             return _interrupted_call_result()
         except Exception as exc:
             recovered = _handle_auth_error_and_retry(
-                server_name, exc, _call_once, "prompts/get",
+                server_name, exc, _call_once, "prompts/get", admission_check=policy.check,
             )
             if recovered is not None:
                 return recovered
             recovered = _handle_session_expired_and_retry(
-                server_name, exc, _call_once, "prompts/get",
+                server_name, exc, _call_once, "prompts/get", admission_check=policy.check,
             )
             if recovered is not None:
                 return recovered
@@ -7399,6 +7702,7 @@ def _register_server_tools(name: str, server: MCPServerTask, config: dict) -> Li
     """
     from tools.registry import registry
 
+    _remember_native_mcp_names()
     registered_names: List[str] = []
     toolset_name = f"mcp-{name}"
 
@@ -7665,6 +7969,7 @@ def _register_from_cache_sync(name: str, config: dict, entry: dict) -> List[str]
     ``_get_connected_server_for_call`` → ``_ensure_lazy_server_connected``.
     """
     from tools.registry import registry
+    _remember_native_mcp_names()
     from tools.mcp_schema_cache import (
         config_fingerprint,
         tools_from_cache_entry,
@@ -7899,6 +8204,10 @@ def register_connected_into_current_scope(servers: dict) -> int:
     profiles (token storage is per-profile). Adopters keep their own trust
     policy via :func:`_record_scope_trust`.
     """
+    # Direct adopters can retain handlers before their first invocation. Record
+    # this caller's native origin now so removing its entry cannot turn the
+    # sibling-owned connection into an implicit explicit-registration route.
+    _remember_native_mcp_names()
     scope = _mcp_registry_scope()
     if scope is None:
         return 0
@@ -7945,6 +8254,7 @@ def register_mcp_servers(servers: Dict[str, dict]) -> List[str]:
     Returns:
         List of all currently registered MCP tool names.
     """
+    _remember_native_mcp_names()
     if not _ensure_mcp_sdk():
         logger.debug("MCP SDK not available -- skipping explicit MCP registration")
         return []
@@ -7997,6 +8307,7 @@ def register_mcp_servers(servers: Dict[str, dict]) -> List[str]:
             _servers[keys[k]]
             for k in servers
             if keys[k] in _servers and getattr(_servers[keys[k]], "session", None) is None
+            and mcp_server_enabled(servers[k])
         ]
         for srv_name in new_servers:
             _server_connecting.add(keys[srv_name])
@@ -8013,6 +8324,16 @@ def register_mcp_servers(servers: Dict[str, dict]) -> List[str]:
                 _parallel_safe_servers.discard(own_key)
 
     for srv in stale_cached:
+        auth_park = getattr(srv, "_auth_park", None)
+        if auth_park is not None:
+            storage, parked_stamp = auth_park
+            try:
+                if storage.credential_stamp() == parked_stamp:
+                    continue
+            except Exception:
+                # Keep ordinary discovery wakeups available if metadata cannot
+                # be read; a failed stamp must never pin the server parked.
+                pass
         _signal_reconnect(srv)
 
     if not new_servers:

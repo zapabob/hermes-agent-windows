@@ -591,8 +591,13 @@ def _(rid, params: dict) -> dict:
                 target, exc,
             )
 
-        profile_resume_cwd = str(found.get("cwd") or "").strip() or _profile_configured_cwd(
-            profile_home
+        profile_resume_cwd = _resumable_stored_cwd(
+            found.get("cwd"), profile_home
+        ) or _profile_default_cwd(profile_home)
+        profile_resume_explicit_cwd = bool(
+            profile_home is not None
+            and profile_resume_cwd
+            and _profile_terminal_backend(profile_home) == "local"
         )
 
         def _reuse_live_payload(sid: str, session: dict) -> dict:
@@ -680,6 +685,7 @@ def _(rid, params: dict) -> dict:
                 close_on_disconnect=is_truthy_value(params.get("close_on_disconnect", False)),
                 profile_home=profile_home,
                 lazy=True,
+                explicit_cwd=profile_resume_explicit_cwd,
             )
             if (live := _claim_or_reuse_live(sid, target, record, lease)) is not None:
                 return _reuse_live_response(*live)
@@ -748,6 +754,7 @@ def _(rid, params: dict) -> dict:
                 profile_home=profile_home,
                 model_override=overrides.get("model_override"),
                 resume_runtime_overrides=overrides or None,
+                explicit_cwd=profile_resume_explicit_cwd,
             )
             record["resume_history_ready"] = threading.Event()
             record["resume_hydrating"] = True
@@ -755,6 +762,7 @@ def _(rid, params: dict) -> dict:
             if (live := _claim_or_reuse_live(sid, target, record, lease)) is not None:
                 return _reuse_live_response(*live)
 
+            _hydrate_profile_resume_cwd(sid, target, db, profile_home)
             _schedule_resume_hydration(sid, target, db, close_db=owns_db)
             # The hydration worker now owns a profile-scoped handle and closes it
             # after the transcript read. The shared launch DB is process-owned.
@@ -844,10 +852,12 @@ def _(rid, params: dict) -> dict:
                 profile_home=profile_home,
                 model_override=overrides.get("model_override"),
                 resume_runtime_overrides=overrides or None,
+                explicit_cwd=profile_resume_explicit_cwd,
             )
             if (live := _claim_or_reuse_live(sid, target, record, lease)) is not None:
                 return _reuse_live_response(*live)
 
+            _hydrate_profile_resume_cwd(sid, target, db, profile_home)
             _schedule_agent_build(sid)
             _schedule_session_cap_enforcement()  # trim detached idle sessions over the cap
             auto_continue = _maybe_schedule_auto_continue(sid, record, target)
@@ -978,6 +988,8 @@ def _(rid, params: dict) -> dict:
                         cwd=profile_resume_cwd,
                         session_db=db,
                         source=source,
+                        profile_home=str(profile_home) if profile_home is not None else None,
+                        explicit_cwd=profile_resume_explicit_cwd,
                     )
                     # Ownership TRANSFER — the registered session's agent now
                     # holds this handle for its whole life, and _init_session
@@ -3163,6 +3175,11 @@ def _(rid, params: dict) -> dict:
         new_key = _new_session_key()
         new_sid = uuid.uuid4().hex[:8]
         source = _session_source(session)
+        parent_prompt = None
+        try:
+            parent_prompt = (db.get_session(old_key) or {}).get("system_prompt")
+        except Exception:
+            logger.debug("branch parent prompt read failed", exc_info=True)
         lease = None  # claimed lazily on the first turn (_ensure_active_session_slot)
         branch_name = params.get("name", "")
         try:
@@ -3186,6 +3203,7 @@ def _(rid, params: dict) -> dict:
                 # thing that surfaces TUI branches. See issue #20856.
                 model_config={"_branched_from": old_key},
                 parent_session_id=old_key,
+                system_prompt=parent_prompt or None,
                 cwd=_session_cwd(session),
                 # The branch stays on its parent's profile. Explicit stamp (not
                 # just the parent-backfill) so it holds even when the parent row
@@ -3335,13 +3353,12 @@ def _(rid, params: dict) -> dict:
     if _session_uses_compute_host(session):
         sid = str(params.get("session_id") or "")
         try:
-            _interrupt_session_turn(sid, session, request_id=f"interrupt-{rid}")
+            _interrupt_session_turn(
+                sid, session, request_id=f"interrupt-{rid}", recover_stale=True
+            )
         except Exception as exc:
             return _err(rid, 5019, f"compute-host interrupt failed: {exc}")
         return _ok(rid, {"status": "interrupted", "turn_isolation": True})
-    session, err = _sess(params, rid)
-    if err:
-        return err
     _interrupt_session_turn(str(params.get("session_id") or ""), session)
     return _ok(rid, {"status": "interrupted"})
 
@@ -3568,22 +3585,23 @@ def _(rid, params: dict) -> dict:
     if agent is None or not hasattr(agent, "steer"):
         return _err(rid, 4010, "agent does not support steer")
     try:
-        accepted = agent.steer(text)
+        accepted = _try_session_steer(session, text, record_correction=True)
     except Exception as exc:
         return _err(rid, 5000, f"steer failed: {exc}")
-    if accepted:
-        # Record the correction on the live turn exactly like session.redirect
-        # does. Without this, a resume/reconnect while the turn is running
-        # rebuilds the transcript from the inflight snapshot and the steered
-        # text has no user bubble — the "my message vanished on reload" loss.
+    if accepted is None:
+        return _err(rid, 4009, "session interrupt settling")
+    if not accepted:
+        # A stale-busy client may reach an idle cached agent, or lose the
+        # finishing race. Preserve the text in the existing next-turn FIFO.
         with session["history_lock"]:
-            _record_inflight_correction(session, text)
-            # #84417: steer does not cancel the live original, but a server
-            # queue self-copy of that original must still not re-fire after
-            # settle (same class as redirect).
-            _drop_queued_duplicates_of_inflight_user(session)
+            if session.get("running") and session.get("_turn_cancel_requested"):
+                return _err(rid, 4009, "session interrupt settling")
+            if not session.get("running"):
+                session["_turn_cancel_requested"] = False
+            _enqueue_prompt(session, text, current_transport() or _stdio_transport, explicit_steer=True)
             session["last_active"] = time.time()
-    return _ok(rid, {"status": "queued" if accepted else "rejected", "text": text})
+        _drain_queued_prompt(rid, params["session_id"], session)
+    return _ok(rid, {"status": "queued", "text": text})
 
 
 @method("session.redirect")

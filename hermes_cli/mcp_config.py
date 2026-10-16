@@ -9,6 +9,7 @@ configuration in ~/.hermes/config.yaml under the ``mcp_servers`` key.
 """
 
 import asyncio
+from contextlib import contextmanager
 import logging
 import os
 import re
@@ -29,6 +30,15 @@ from hermes_cli.mcp_security import validate_mcp_server_entry
 from tools.mcp_tool import _ENV_VAR_PATTERN, _env_ref_name, mcp_server_enabled
 
 logger = logging.getLogger(__name__)
+
+
+@contextmanager
+def _config_rmw_lock():
+    """Serialize complete config read-modify-write cycles on the live lock."""
+    from hermes_cli import config as config_module
+
+    with config_module._CONFIG_LOCK:
+        yield
 
 _ENV_VAR_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -85,6 +95,32 @@ def _get_mcp_servers(config: Optional[dict] = None) -> Dict[str, dict]:
     return servers
 
 
+def _read_raw_mcp_config() -> dict:
+    """Read the current saved YAML document without defaults or env expansion."""
+    from hermes_cli import config as config_module
+
+    return config_module.require_readable_config_before_write(
+        config_module.get_config_path()
+    )
+
+
+def _write_raw_mcp_config(config: dict) -> None:
+    """Persist an already-mutated raw YAML document under the caller's lock."""
+    from hermes_cli import config as config_module, managed_scope
+    import copy
+
+    if config_module.is_managed():
+        raise RuntimeError("Configuration is managed and cannot be saved.")
+    managed_keys = managed_scope.managed_config_keys()
+    if managed_keys:
+        config, _stripped = config_module._strip_dotted_keys(
+            copy.deepcopy(config), managed_keys
+        )
+    config_module.atomic_config_write(
+        config_module.get_config_path(), config, sort_keys=False
+    )
+
+
 def _save_mcp_server(name: str, server_config: dict) -> bool:
     """Add or update a server entry in config.yaml.
 
@@ -98,22 +134,32 @@ def _save_mcp_server(name: str, server_config: dict) -> bool:
             _warning(issue)
         _warning(f"Server '{name}' was NOT saved due to suspicious configuration.")
         return False
-    config = load_config()
-    config.setdefault("mcp_servers", {})[name] = server_config
-    save_config(config)
+    with _config_rmw_lock():
+        config = _read_raw_mcp_config()
+        servers = config.get("mcp_servers")
+        if servers is None:
+            servers = {}
+            config["mcp_servers"] = servers
+        elif not isinstance(servers, dict):
+            raise RuntimeError("Refusing to overwrite malformed mcp_servers config.")
+        servers[name] = server_config
+        _write_raw_mcp_config(config)
     return True
 
 
 def _remove_mcp_server(name: str) -> bool:
     """Remove a server from config.yaml.  Returns True if it existed."""
-    config = load_config()
-    servers = config.get("mcp_servers", {})
-    if name not in servers:
-        return False
-    del servers[name]
-    if not servers:
-        config.pop("mcp_servers", None)
-    save_config(config)
+    with _config_rmw_lock():
+        config = _read_raw_mcp_config()
+        servers = config.get("mcp_servers", {})
+        if not isinstance(servers, dict):
+            raise RuntimeError("Refusing to overwrite malformed mcp_servers config.")
+        if name not in servers:
+            return False
+        del servers[name]
+        if not servers:
+            config.pop("mcp_servers", None)
+        _write_raw_mcp_config(config)
     return True
 
 
@@ -141,12 +187,13 @@ def _replace_mcp_servers(servers: Dict[str, dict]) -> Tuple[bool, List[str]]:
     if issues:
         return False, issues
 
-    config = load_config()
-    if servers:
-        config["mcp_servers"] = dict(servers)
-    else:
-        config.pop("mcp_servers", None)
-    save_config(config)
+    with _config_rmw_lock():
+        config = _read_raw_mcp_config()
+        if servers:
+            config["mcp_servers"] = dict(servers)
+        else:
+            config.pop("mcp_servers", None)
+        _write_raw_mcp_config(config)
     return True, []
 
 

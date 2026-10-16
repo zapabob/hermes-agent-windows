@@ -84,6 +84,13 @@ gateway:
     no_conversation:       "分岐する会話がありません — まずメッセージを送信してください。"
     create_failed:         "ブランチの作成に失敗しました: {error}"
     switch_failed:         "ブランチは作成されましたが、切り替えに失敗しました。"
+    created_thread_without_branch: "スレッド {thread} は作成されましたが、分岐セッションは作成されませんでした。元のチャットを引き続き選択しています。"
+    thread_location: "スレッド: {thread}"
+    persistence_incomplete: "分岐先を選択しましたが、履歴またはタイトルの保存は不完全か、確認できていません。\n元のセッション: `{parent}`\n分岐: `{new}`\n`/resume` で状態を確認するか、元のセッションへ戻れます。"
+    binding_incomplete: "分岐は保存されましたが、接続先のセッション切り替えを確認できませんでした。\n元のセッション: `{parent}`\n分岐: `{new}`\n`/resume` で保存済みの分岐を確認できます。"
+    branched_thread_one: "⑂ 新しいスレッドで **{title}** に分岐しました（{count} 件のメッセージをコピー）\nスレッド: {thread}\n元のセッション: `{parent}` — このチャットで続けられます\n分岐: `{new}`\nこのチャット内で分岐するには `/branch --here` を使います。"
+    branched_thread_many: "⑂ 新しいスレッドで **{title}** に分岐しました（{count} 件のメッセージをコピー）\nスレッド: {thread}\n元のセッション: `{parent}` — このチャットで続けられます\n分岐: `{new}`\nこのチャット内で分岐するには `/branch --here` を使います。"
+    thread_fallback: "ここではスレッドを作成できなかったため、このチャットのセッションを分岐先に切り替えました。"
     branched_one:          "⑂ **{title}** に分岐しました ({count} メッセージをコピー)\n元: `{parent}`\nブランチ: `{new}`\n元のセッションに戻るには `/resume` を使用してください。"
     branched_many:         "⑂ **{title}** に分岐しました ({count} メッセージをコピー)\n元: `{parent}`\nブランチ: `{new}`\n元のセッションに戻るには `/resume` を使用してください。"
 

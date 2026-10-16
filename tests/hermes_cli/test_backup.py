@@ -1215,7 +1215,10 @@ class TestSafeCopyDb:
             return next(connections)
 
         monkeypatch.setattr(backup_mod.sqlite3, "connect", fake_connect)
-        monkeypatch.setattr(backup_mod.time, "monotonic", lambda: next(clock))
+        from types import SimpleNamespace
+        # Keep the synthetic clock local; asyncio's Windows loop teardown also
+        # calls the process-wide time.monotonic after these three samples.
+        monkeypatch.setattr(backup_mod, "time", SimpleNamespace(monotonic=lambda: next(clock)))
         monkeypatch.setattr(Path, "unlink", assert_closed_before_unlink)
 
         assert backup_mod._safe_copy_db(src, dst, timeout_seconds=1.0) is False

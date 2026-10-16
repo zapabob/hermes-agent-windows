@@ -1237,7 +1237,8 @@ def _ws_session_is_orphaned(session: dict | None) -> bool:
 
 
 def _interrupt_session_turn(
-    sid: str, session: dict, *, request_id: str | None = None
+    sid: str, session: dict, *, request_id: str | None = None,
+    recover_stale: bool = False,
 ) -> bool:
     """Apply the shared ``session.interrupt`` contract to one claimed session.
 
@@ -1249,40 +1250,88 @@ def _interrupt_session_turn(
     use_compute_host = _session_uses_compute_host(session)
     should_interrupt = bool(session.get("running"))
     run_thread_alive = False
+    host_owner = None
+    supervisor = None
 
     if use_compute_host:
-        if should_interrupt:
+        if recover_stale:
+            supervisor = _get_compute_host_supervisor()
+        elif should_interrupt:
             _get_compute_host_supervisor().interrupt(sid, request_id=request_id)
     else:
         run_thread = session.get("_run_thread")
         run_thread_alive = run_thread is not None and run_thread.is_alive()
 
     with session["history_lock"]:
+        if use_compute_host and recover_stale:
+            host_owner = session.get("_compute_host_turn")
+            # Include admission/settlement; probe errors must not declare idle.
+            outstanding = host_owner is not None or supervisor.has_pending_turn(sid)
+            should_interrupt = bool(session.get("running")) and outstanding
+            if not outstanding:
+                # Reserve the session until old cards/approvals are resolved.
+                # A new prompt may queue meanwhile, but must not run yet.
+                host_owner = {"dispatching": False, "stale": True}
+                session["_compute_host_turn"] = host_owner
+                session["running"] = True
+            if host_owner is not None:
+                host_owner["cancel_requested"] = True
+                host_owner["interrupting"] = host_owner.get("interrupting", 0) + 1
+                if (host_owner.get("dispatching") or host_owner.get("stale")
+                        or host_owner.get("completion") is not None):
+                    should_interrupt = False
         session["_turn_cancel_requested"] = True
         session["queued_prompt"] = None
         session.pop("queued_prompts", None)
         session["_queued_prompt_generation"] = int(
             session.get("_queued_prompt_generation", 0)
         ) + 1
+        if not use_compute_host:
+            # Discard unconsumed local notes before interrupt/pending-card
+            # cleanup releases a parked tool. Admission takes this same lock.
+            drain_steer = getattr(session.get("agent"), "_drain_pending_steer", None)
+            if callable(drain_steer):
+                try:
+                    drain_steer()
+                except Exception:
+                    # Optional legacy agents must still receive hard Stop and
+                    # pending-card cleanup when their private drain fails.
+                    logger.warning("Pending steer discard failed; continuing session interrupt")
 
-    if not use_compute_host:
-        if should_interrupt:
-            from agent.interrupt_compat import request_hard_interrupt
-
-            request_hard_interrupt(session.get("agent"))
-        if not run_thread_alive:
-            with session["history_lock"]:
-                if session.get("running"):
-                    session["running"] = False
-                    _clear_inflight_turn(session)
-
-    _clear_pending(sid)
+    cleanup_succeeded = False
     try:
-        from tools.approval import resolve_gateway_approval
+        if use_compute_host and recover_stale and should_interrupt:
+            supervisor.interrupt(sid, request_id=request_id)
+        elif not use_compute_host:
+            if should_interrupt:
+                from agent.interrupt_compat import request_hard_interrupt
 
-        resolve_gateway_approval(session["session_key"], "deny", resolve_all=True)
-    except Exception:
-        pass
+                request_hard_interrupt(session.get("agent"))
+            if not run_thread_alive:
+                with session["history_lock"]:
+                    if session.get("running"):
+                        session["running"] = False
+                        _clear_inflight_turn(session)
+
+        _clear_pending(sid)
+        try:
+            from tools.approval import resolve_gateway_approval
+
+            resolve_gateway_approval(session["session_key"], "deny", resolve_all=True)
+        except Exception:
+            if host_owner is not None:
+                raise
+        cleanup_succeeded = True
+    finally:
+        if host_owner is not None:
+            with session["history_lock"]:
+                host_owner["interrupting"] -= 1
+                host_owner["cleanup_failed"] = not cleanup_succeeded
+                completion = host_owner.get("completion")
+                if host_owner.get("stale"):
+                    completion = {"type": "turn.end", "session_info_emitted": True}
+            if completion is not None:
+                _on_compute_host_turn_done("", sid, session, completion, owner=host_owner)
     return use_compute_host
 
 
@@ -2475,6 +2524,123 @@ def _profile_configured_cwd(profile_home: Path | None) -> str | None:
         return None
 
 
+def _profile_terminal_backend(profile_home: Path | None) -> str | None:
+    """Return a named profile's configured backend without borrowing its cwd.
+
+    A non-local process backend is authoritative for the running tool surface;
+    otherwise inspect the target profile's own config rather than the launch
+    profile's settings. Unknown config is kept unknown so resume validation
+    fails open instead of rewriting a possibly remote workspace.
+    """
+    if profile_home is None:
+        return None
+    process_backend = str(os.environ.get("TERMINAL_ENV") or "").strip().lower()
+    if process_backend and process_backend != "local":
+        return process_backend
+    try:
+        from hermes_cli.config import _expand_env_vars, read_user_config_raw
+
+        path = Path(profile_home) / "config.yaml"
+        if not path.exists():
+            return "local"
+        cfg = _expand_env_vars(_apply_managed(read_user_config_raw(path)))
+        terminal = cfg.get("terminal") if isinstance(cfg, dict) else None
+        if not isinstance(terminal, dict):
+            return "local"
+        return str(terminal.get("backend") or "local").strip().lower() or "local"
+    except Exception:
+        return None
+
+
+def _profile_default_cwd(profile_home: Path | None) -> str | None:
+    """Choose the target profile's configured workspace or its local home."""
+    if profile_home is None:
+        return None
+    configured = _profile_configured_cwd(profile_home)
+    if configured:
+        return configured
+    if _profile_terminal_backend(profile_home) == "local":
+        return str(Path(profile_home).expanduser().resolve())
+    return None
+
+
+def _resumable_stored_cwd(cwd: str | None, profile_home: Path | None) -> str:
+    """Reject stale local-profile state paths while retaining chosen workspaces."""
+    raw = str(cwd or "").strip()
+    if not raw or profile_home is None:
+        return raw
+    if _profile_terminal_backend(profile_home) != "local":
+        return raw
+    try:
+        from agent.runtime_cwd import _is_install_tree
+        from hermes_constants import get_default_hermes_root
+
+        candidate = Path(os.path.abspath(os.path.expanduser(raw))).resolve()
+        own_home = Path(profile_home).expanduser().resolve()
+        root = (
+            own_home.parent.parent
+            if own_home.parent.name.lower() == "profiles"
+            else get_default_hermes_root()
+        ).resolve()
+        profile_root = (root / "profiles").resolve()
+        if _is_install_tree(candidate) or not candidate.is_dir():
+            return ""
+        candidate.relative_to(root)
+        if candidate == root or candidate == (root / "home").resolve():
+            return ""
+        if candidate == own_home:
+            return ""
+        try:
+            candidate.relative_to(profile_root)
+            if own_home not in candidate.parents:
+                return ""
+        except ValueError:
+            pass
+    except ValueError:
+        # A path outside the profile root is a valid user-selected workspace.
+        try:
+            if not Path(os.path.abspath(os.path.expanduser(raw))).is_dir():
+                return ""
+        except Exception:
+            return ""
+    except Exception:
+        # Validation errors must not redirect a session to another profile.
+        return ""
+    return raw
+
+
+def _hydrate_profile_resume_cwd(
+    sid: str, key: str, db, profile_home: Path | str | None
+) -> None:
+    """Apply and persist a validated named-profile cwd using its owning DB."""
+    if (
+        profile_home is None
+        or db is None
+        or _profile_terminal_backend(Path(profile_home)) != "local"
+    ):
+        return
+    try:
+        row = db.get_session(key) if hasattr(db, "get_session") else None
+    except Exception:
+        logger.debug("failed to read profile resume cwd", exc_info=True)
+        return
+    original_cwd = row.get("cwd") if isinstance(row, dict) else None
+    stored = _resumable_stored_cwd(original_cwd, Path(profile_home))
+    repaired = not stored
+    with _sessions_lock:
+        session = _sessions.get(sid)
+        if session is None:
+            return
+        if stored:
+            session["cwd"] = stored
+        else:
+            stored = str(session.get("cwd") or "")
+        session["explicit_cwd"] = bool(stored)
+    _register_session_cwd(session)
+    if repaired and stored and hasattr(db, "update_session_cwd"):
+        _persist_session_cwd_and_schedule_git_meta(session, stored, db=db)
+
+
 def _launch_configured_cwd() -> str | None:
     """Resolve the launch profile's ``terminal.cwd`` from config.yaml.
 
@@ -2633,6 +2799,8 @@ def _turn_isolation_enabled(cfg: dict | None = None) -> bool:
 
 
 def _session_uses_compute_host(session: dict, cfg: dict | None = None) -> bool:
+    if session.get("_compute_host_inline_fallback"):
+        return False
     if not _turn_isolation_enabled(cfg):
         return False
     # Phase 1 routes lazy/dashboard sessions whose live AIAgent has not been
@@ -2734,9 +2902,18 @@ def _apply_compute_host_metadata_mirror(session: dict, frame: dict | None) -> No
         session["_metadata_mirror_updated_at"] = time.time()
 
 
-def _on_compute_host_turn_done(rid: str, sid: str, session: dict, frame: dict) -> None:
+def _on_compute_host_turn_done(
+    rid: str, sid: str, session: dict, frame: dict, *, owner: dict | None = None
+) -> None:
     is_error = frame.get("type") == "turn.error"
     with session["history_lock"]:
+        if owner is not None:
+            if session.get("_compute_host_turn") is not owner:
+                return
+            if owner.get("dispatching") or owner.get("interrupting") or owner.get("cleanup_failed"):
+                owner["completion"] = frame
+                return
+            session.pop("_compute_host_turn", None)
         if frame.get("session_key"):
             session["session_key"] = str(frame.get("session_key"))
         if frame.get("history_version") is not None:
@@ -2772,17 +2949,16 @@ def _submit_prompt_to_compute_host(
     queued_prompt_generation: int | None = None,
     display_kind: str | None = None,
 ) -> dict:
-    cfg = _load_dashboard_process_isolation_config()
-    frame = _compute_host_turn_frame(
-        rid,
-        sid,
-        session,
-        text,
-        image_paths=image_paths,
-        queued_prompt_generation=queued_prompt_generation,
-        display_kind=display_kind,
-    )
-
+    with session["history_lock"]:
+        owner = session.setdefault("_compute_host_turn", {"dispatching": True})
+        cancelled_before_dispatch = owner.get("cancel_requested")
+        if cancelled_before_dispatch:
+            owner["dispatching"] = False
+    if cancelled_before_dispatch:
+        _on_compute_host_turn_done(
+            rid, sid, session, {"type": "turn.end", "session_info_emitted": True}, owner=owner
+        )
+        return _ok(rid, {"status": "interrupted", "turn_isolation": True})
     def _complete(done: dict) -> None:
         # submit_turn reports a synchronous pipe failure through the callback
         # before re-raising. Leave the parent session untouched so prompt.submit
@@ -2790,16 +2966,53 @@ def _submit_prompt_to_compute_host(
         # duplicate terminal error.
         if done.get("reason") == "send_failed":
             return
-        _on_compute_host_turn_done(rid, sid, session, done)
+        _on_compute_host_turn_done(rid, sid, session, done, owner=owner)
 
     try:
-        _get_compute_host_supervisor(cfg).submit_turn(frame, on_complete=_complete)
+        cfg = _load_dashboard_process_isolation_config()
+        frame = _compute_host_turn_frame(
+            rid, sid, session, text, image_paths=image_paths,
+            queued_prompt_generation=queued_prompt_generation,
+            display_kind=display_kind,
+        )
+        supervisor = _get_compute_host_supervisor(cfg)
+        supervisor.submit_turn(frame, on_complete=_complete)
     except Exception as exc:
+        with session["history_lock"]:
+            if session.get("_compute_host_turn") is owner:
+                if queued_prompt_generation is None and not owner.get("cancel_requested"):
+                    # Normal prompt.submit falls back inline after this error.
+                    # Stop must follow that owner during the fallback handoff.
+                    session["_compute_host_inline_fallback"] = True
+                if owner.get("cancel_requested"):
+                    owner["dispatching"] = False
+                else:
+                    session.pop("_compute_host_turn", None)
+            cancelled = owner.get("cancel_requested")
+        if cancelled:
+            _on_compute_host_turn_done(
+                rid, sid, session, {"type": "turn.end", "session_info_emitted": True}, owner=owner
+            )
+            return _ok(rid, {"status": "interrupted", "turn_isolation": True})
         return _err(rid, 5019, f"compute-host dispatch failed: {exc}")
     with session["history_lock"]:
         session["_compute_host_active"] = True
         if image_paths is None:
             session["attached_images"] = []
+        cancelled = owner.get("cancel_requested")
+        if not cancelled:
+            # Transfer Stop responsibility atomically. A Stop after this point
+            # sends its own interrupt and holds completion until it returns.
+            owner["dispatching"] = False
+    try:
+        if cancelled:
+            supervisor.interrupt(sid)
+    finally:
+        with session["history_lock"]:
+            owner["dispatching"] = False
+            completion = owner.get("completion")
+        if completion is not None:
+            _on_compute_host_turn_done(rid, sid, session, completion, owner=owner)
     return _ok(rid, {"status": "streaming", "turn_isolation": True})
 
 
@@ -8809,6 +9022,7 @@ def _init_session(
     session_db=None,
     source: str | None = None,
     profile_home: str | None = None,
+    explicit_cwd: bool = False,
 ):
     now = time.time()
     with _sessions_lock:
@@ -8825,6 +9039,7 @@ def _init_session(
             "attached_images": [],
             "image_counter": 0,
             "cwd": cwd or _completion_cwd(),
+            "explicit_cwd": explicit_cwd,
             "cols": cols,
             "slash_worker": None,
             "show_reasoning": _load_show_reasoning(),
@@ -8867,7 +9082,9 @@ def _init_session(
     else:
         db = _get_db()
     try:
-        if db is not None:
+        if profile_home is not None:
+            _hydrate_profile_resume_cwd(sid, key, db, profile_home)
+        elif db is not None:
             row = db.get_session(key) if hasattr(db, "get_session") else None
             if row and row.get("cwd"):
                 with _sessions_lock:
@@ -9689,6 +9906,8 @@ def _enqueue_prompt(
     text: Any,
     transport: Any,
     image_paths: list[str] | None = None,
+    *,
+    explicit_steer: bool = False,
 ) -> None:
     """Stash a message to run as the very next turn once the live one ends.
 
@@ -9707,7 +9926,7 @@ def _enqueue_prompt(
     # Never queue a text-only self-copy of the live inflight user prompt. The
     # live turn already owns that text; draining it after settle would restart
     # the same user turn as a fresh agent invocation.
-    if not image_paths and isinstance(text, str):
+    if not explicit_steer and not image_paths and isinstance(text, str):
         turn = session.get("inflight_turn")
         original = (
             str(turn.get("user") or "").strip() if isinstance(turn, dict) else ""
@@ -9715,6 +9934,10 @@ def _enqueue_prompt(
         if original and text.strip() == original:
             return
     queued = {"text": text, "transport": transport}
+    if explicit_steer:
+        # Internal provenance: an accepted steer/retry is intentional even if
+        # it repeats the original. Never populate this from RPC parameters.
+        queued["_explicit_steer"] = True
     if image_paths:
         queued["image_paths"] = image_paths
     existing = session.get("queued_prompt")
@@ -9725,6 +9948,7 @@ def _enqueue_prompt(
         and not existing.get("image_paths")
         and not image_paths
         and not session.get("queued_prompts")
+        and bool(existing.get("_explicit_steer")) == explicit_steer
     ):
         prev = existing["text"]
         existing["text"] = f"{prev}\n\n{text}" if prev and text else (prev or text)
@@ -9749,7 +9973,7 @@ def _sanitize_queued_entry_vs_inflight_user(
     """
     if not original or not isinstance(entry, dict):
         return entry if isinstance(entry, dict) else None
-    if entry.get("image_paths"):
+    if entry.get("image_paths") or entry.get("_explicit_steer"):
         return entry
     text = entry.get("text")
     if not isinstance(text, str):
@@ -9846,6 +10070,32 @@ def _interrupt_busy_session(sid: str, session: dict, agent: Any) -> None:
     threading.Thread(target=interrupt, daemon=True, name=f"busy-interrupt-{sid}").start()
 
 
+def _try_session_steer(session: dict | None, text: str, *, record_correction: bool = False) -> bool | None:
+    """Serialize in-memory steer admission with the turn's idle transition.
+
+    A cached agent is not an active turn. AIAgent.steer only appends to its
+    local buffer; holding history_lock here prevents admission after settle.
+    None identifies a stopping turn; False keeps the idle/unsupported fallback.
+    Provider requests and interrupts do not belong inside this lock.
+    """
+    if session is None:
+        return False
+    with session["history_lock"]:
+        agent = session.get("agent")
+        if not session.get("running") or agent is None or not hasattr(agent, "steer"):
+            return False
+        if session.get("_turn_cancel_requested"):
+            return None
+        accepted = bool(agent.steer(text))
+        if accepted and record_correction:
+            # Settle must not replace this turn between admission and snapshot
+            # metadata; ordinary queued self-copies still need the old scrub.
+            _record_inflight_correction(session, text)
+            _drop_queued_duplicates_of_inflight_user(session)
+            session["last_active"] = time.time()
+        return accepted
+
+
 def _handle_busy_submit(
     rid, sid: str, session: dict, text: Any, transport: Any, queued: bool = False
 ) -> dict | None:
@@ -9887,11 +10137,10 @@ def _handle_busy_submit(
     plain_text = _coerce_message_text(text).strip() if text_only else ""
     if mode == "steer" and text_only and plain_text and agent is not None and hasattr(agent, "steer"):
         try:
-            if agent.steer(plain_text):
-                with session["history_lock"]:
-                    _record_inflight_correction(session, plain_text)
-                    _drop_queued_duplicates_of_inflight_user(session)
-                    session["last_active"] = time.time()
+            accepted = _try_session_steer(session, plain_text, record_correction=True)
+            if accepted is None:
+                return _err(rid, 4009, "session interrupt settling")
+            if accepted:
                 return _ok(rid, {"status": "steered"})
         except Exception:
             pass  # fall through to queue
@@ -9925,6 +10174,10 @@ def _handle_busy_submit(
             if image_paths:
                 session["attached_images"] = image_paths + list(session.get("attached_images", []))
             return None
+        if mode == "steer" and session.get("_turn_cancel_requested"):
+            if image_paths:
+                session["attached_images"] = image_paths + list(session.get("attached_images", []))
+            return _err(rid, 4009, "session interrupt settling")
         _enqueue_prompt(session, text, transport, image_paths=image_paths)
         session["last_active"] = time.time()
 
@@ -9951,6 +10204,7 @@ def _drain_queued_prompt(rid, sid: str, session: dict) -> bool:
     lower-priority follow-ups this cycle — the user's message wins). Mirrors the
     claim-under-lock pattern used by the goal-continuation re-fire.
     """
+    use_compute_host = _session_uses_compute_host(session)
     with session["history_lock"]:
         if session.get("_closing"):
             return False
@@ -9963,11 +10217,31 @@ def _drain_queued_prompt(rid, sid: str, session: dict) -> bool:
         if not queued_prompts:
             session.pop("queued_prompts", None)
         session["running"] = True
+        host_owner = None
+        if use_compute_host:
+            host_owner = {"dispatching": True}
+            session["_compute_host_turn"] = host_owner
         if queued.get("transport") is not None:
             session["transport"] = queued["transport"]
-    use_compute_host = _session_uses_compute_host(session)
     with session["history_lock"]:
         if int(session.get("_queued_prompt_generation", 0)) != queue_generation:
+            if host_owner is not None and session.get("_compute_host_turn") is host_owner:
+                if host_owner.get("cancel_requested") and (
+                    host_owner.get("interrupting") or host_owner.get("cleanup_failed")
+                ):
+                    host_owner["dispatching"] = False
+                    host_owner["completion"] = {"type": "turn.end", "session_info_emitted": True}
+                    return True
+                session.pop("_compute_host_turn", None)
+                if host_owner.get("cancel_requested"):
+                    session["running"] = False
+                    _clear_inflight_turn(session)
+                    return True
+            if queued.get("_explicit_steer") and session.get("_turn_cancel_requested"):
+                # Stop owns cancellation even after this explicit note was
+                # claimed. Preserve any newer envelopes, not the cancelled one.
+                session["running"] = False
+                return True
             # Generation cancelled the claim (Stop, compress re-anchor, …).
             # Do not dispatch — but put the claimed envelope back so a
             # legitimate follow-up is not silently dropped. Order: claimed
@@ -10224,6 +10498,7 @@ def _deferred_session_record(
     display_history_prefix: list | None = None,
     profile_home: Path | None = None,
     lazy: bool = False,
+    explicit_cwd: bool = False,
     model_override=None,
     resume_runtime_overrides: dict | None = None,
 ) -> dict:
@@ -10242,7 +10517,7 @@ def _deferred_session_record(
         "cwd": cwd,
         "display_history_prefix": display_history_prefix or [],
         "edit_snapshots": {},
-        "explicit_cwd": False,
+        "explicit_cwd": explicit_cwd,
         "history": history,
         "history_lock": threading.Lock(),
         "history_version": 0,
@@ -12432,15 +12707,34 @@ def _start_usage_ticker(
     return stop, thread
 
 
+def _settle_session_turn(session: dict, agent, result: dict | None, error_retained: bool) -> None:
+    """Hand off late accepted notes before making this turn available again."""
+    with session["history_lock"]:
+        # Keep this drain in the same critical section as running=False.
+        # A later turn may reuse this agent as soon as that flag is cleared.
+        drain = getattr(agent, "_drain_pending_steer", None)
+        late_steer = drain() if callable(drain) else None
+        earlier = result.pop("pending_steer", None) if isinstance(result, dict) else None
+        notes = [note for note in (earlier, late_steer)
+                 if isinstance(note, str) and note.strip()]
+        if notes and not session.get("_turn_cancel_requested"):
+            _enqueue_prompt(session, "\n".join(notes), session.get("transport"), explicit_steer=True)
+        session["running"] = False
+        session["last_active"] = time.time()
+        if not error_retained:
+            _clear_inflight_turn(session)
+
+
 def _run_post_turn_followups(
     rid: str, sid: str, session: dict, result: dict | None, goal_followup: str | None
 ) -> None:
     if not isinstance(result, dict):
         result = {}
-    _leftover_steer = result.get("pending_steer")
-    if isinstance(_leftover_steer, str) and _leftover_steer.strip():
-        with session["history_lock"]:
-            _enqueue_prompt(session, _leftover_steer, session.get("transport"))
+    with session["history_lock"]:
+        _leftover_steer = result.pop("pending_steer", None)
+        if (isinstance(_leftover_steer, str) and _leftover_steer.strip()
+                and not session.get("_turn_cancel_requested")):
+            _enqueue_prompt(session, _leftover_steer, session.get("transport"), explicit_steer=True)
     if _drain_queued_prompt(rid, sid, session):
         return
 
@@ -13351,11 +13645,7 @@ def _run_prompt_submit(
             # Clear the per-turn interim callback so a stale closure from
             # this turn can't fire during a later turn on the same agent.
             agent.interim_assistant_callback = None
-            with session["history_lock"]:
-                session["running"] = False
-                session["last_active"] = time.time()
-                if not turn_error_retained:
-                    _clear_inflight_turn(session)
+            _settle_session_turn(session, agent, result, turn_error_retained)
             # Closing bookend of the "tui prompt accepted" record above —
             # fires on every path (success, returned error, exception,
             # interrupt), so one accepted prompt always produces exactly one

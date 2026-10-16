@@ -1,3 +1,4 @@
+import { JsonRpcGatewayError } from '@hermes/shared'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { setApiRequestConnection, setApiRequestProfile } from '@/api/client'
@@ -144,6 +145,72 @@ describe('Desktop MCP client callback lifecycle', () => {
       60_000
     )
     expect(rpc.mock.calls.every(call => call[0] === 'remote-gateway' && call[1] === 'origin-profile')).toBe(true)
+    expect(api).not.toHaveBeenCalled()
+  })
+})
+
+const startupData = {
+  kind: 'mcp_oauth_startup_failure',
+  session_id: 'owned-startup_1',
+  server_name: 'reports'
+}
+
+describe('Desktop MCP reserved startup failure ownership', () => {
+  it.each([
+    ['local', false], ['remote-gateway', false],
+    ['local', true], ['remote-gateway', true]
+  ] as const)('retains %s scope and original cause when cleanup fails=%s', async (connectionId, cleanupFails) => {
+    const { bridge, rpc, openExternal, api } = harness()
+    setApiRequestConnection(connectionId)
+    setApiRequestProfile('origin-profile')
+    const failure = new JsonRpcGatewayError('Owned original worker startup cause', {
+      code: 5024, data: { ...startupData, future_metadata: 'ignored' }
+    })
+    rpc.mockImplementation(async (_connection, _profile, method) => {
+      if (method.endsWith('.start')) {
+        setApiRequestConnection('other-gateway')
+        setApiRequestProfile('other-profile')
+        throw failure
+      }
+      if (cleanupFails) { throw new Error('Owned backend cleanup failed') }
+      return { ok: true }
+    })
+    if (cleanupFails) { bridge.cancel.mockRejectedValue(new Error('Owned native cleanup failed')) }
+    await expect(completeMcpDesktopOAuth({ serverName: 'reports' })).rejects.toBe(failure)
+    expect(failure.message).toBe('Owned original worker startup cause')
+    expect(bridge.cancel).toHaveBeenCalledExactlyOnceWith('listener-1')
+    expect(rpc.mock.calls.map(call => call[2])).toEqual(['mcp.servers.oauth.start', 'mcp.servers.oauth.cancel'])
+    expect(rpc).toHaveBeenLastCalledWith(connectionId, 'origin-profile', 'mcp.servers.oauth.cancel', {
+      name: 'reports', session_id: startupData.session_id
+    }, 60_000)
+    expect(rpc.mock.calls.every(call => call[0] === connectionId && call[1] === 'origin-profile')).toBe(true)
+    expect(openExternal).not.toHaveBeenCalled()
+    expect(bridge.wait).not.toHaveBeenCalled()
+    expect(api).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['legacy', 5024, undefined],
+    ['unrelated code', 4001, startupData],
+    ['non-object', 5024, 'owned-startup_1'],
+    ['array', 5024, [startupData]],
+    ['wrong kind', 5024, { ...startupData, kind: 'other_failure' }],
+    ['wrong server', 5024, { ...startupData, server_name: 'other-server' }],
+    ['missing id', 5024, { kind: startupData.kind, server_name: 'reports' }],
+    ['empty id', 5024, { ...startupData, session_id: '' }],
+    ['non-string id', 5024, { ...startupData, session_id: 17 }],
+    ['invalid id', 5024, { ...startupData, session_id: '../foreign' }],
+    ['padded id', 5024, { ...startupData, session_id: ' owned-startup_1 ' }]
+  ] as const)('rejects %s metadata without inventing backend cleanup', async (_label, code, data) => {
+    const { bridge, rpc, openExternal, api } = harness()
+    const failure = new JsonRpcGatewayError('Owned unrecognized startup cause', { code, data })
+    rpc.mockRejectedValue(failure)
+    await expect(completeMcpDesktopOAuth({ serverName: 'reports' })).rejects.toBe(failure)
+    expect(bridge.cancel).toHaveBeenCalledExactlyOnceWith('listener-1')
+    expect(rpc).toHaveBeenCalledTimes(1)
+    expect(rpc.mock.calls[0][2]).toBe('mcp.servers.oauth.start')
+    expect(openExternal).not.toHaveBeenCalled()
+    expect(bridge.wait).not.toHaveBeenCalled()
     expect(api).not.toHaveBeenCalled()
   })
 })

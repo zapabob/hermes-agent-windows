@@ -439,7 +439,16 @@ class GatewayStreamConsumer:
         probe = getattr(type(self.adapter), "stream_is_message_for_chat", None)
         if callable(probe):
             try:
-                return probe(self.adapter, str(self.chat_id)) is True
+                try:
+                    inspect.signature(probe).bind(
+                        self.adapter, str(self.chat_id), metadata=self.metadata,
+                    )
+                except TypeError:
+                    # Native/plugin adapters may still expose the original
+                    # one-argument probe. A body error must not discard source
+                    # identity by retrying an otherwise metadata-aware probe.
+                    return probe(self.adapter, str(self.chat_id)) is True
+                return probe(self.adapter, str(self.chat_id), metadata=self.metadata) is True
             except Exception:
                 return False
         return getattr(self.adapter, "draft_stream_is_message", False) is True

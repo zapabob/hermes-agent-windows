@@ -2166,6 +2166,52 @@ class TestWebServerEndpoints:
         resp = self.client.get("/api/sessions/neg-limit-messages/messages?limit=-1")
         assert resp.status_code == 422
 
+    @pytest.mark.parametrize("profile,enabled", [(None, None), (None, True), (None, False), ("interim-off", False)])
+    def test_session_messages_interim_display_projection_preserves_history(self, monkeypatch, tmp_path, profile, enabled):
+        from hermes_cli import web_server
+        from hermes_cli.config import save_config
+        from hermes_constants import get_hermes_home
+        from hermes_state import SessionDB
+
+        config = {} if enabled is None else {"display": {"interim_assistant_messages": enabled}}
+        home = get_hermes_home()
+        if profile:
+            save_config({"display": {"interim_assistant_messages": True}})
+            home = tmp_path / profile
+            home.mkdir()
+            (home / "config.yaml").write_text(yaml.safe_dump(config), encoding="utf-8")
+            monkeypatch.setattr(web_server, "_resolve_profile_dir", lambda name: home)
+            monkeypatch.setattr(web_server, "_cron_profile_home", lambda name: (profile, home))
+        else:
+            save_config(config)
+
+        db = SessionDB(db_path=home / "state.db")
+        try:
+            db.create_session(session_id="interim-display", source="desktop")
+            db.append_messages_batch("interim-display", [
+                {"role": "user", "content": "question"},
+                {"role": "assistant", "content": "Checking the details.", "tool_calls": [
+                    {"id": "call-1", "type": "function", "function": {"name": "todo", "arguments": "{}"}}
+                ]},
+                {"role": "tool", "content": "tool result", "tool_call_id": "call-1"},
+                {"role": "assistant", "content": "Final answer."}
+            ])
+            before = db.get_messages("interim-display")
+            suffix = f"?profile={profile}" if profile else ""
+            response = self.client.get(f"/api/sessions/interim-display/messages{suffix}")
+            assert response.status_code == 200
+            messages = response.json()["messages"]
+            assert [message["content"] for message in messages] == [message["content"] for message in before]
+            assert messages[1]["tool_calls"] == before[1]["tool_calls"]
+            assert messages[2]["content"] == "tool result"
+            assert messages[3].get("display_content", messages[3]["content"]) == "Final answer."
+            assert messages[1].get("display_content", messages[1]["content"]) == (
+                "" if enabled is False else "Checking the details."
+            )
+            assert db.get_messages("interim-display") == before
+        finally:
+            db.close()
+
     def test_get_session_messages_rejects_negative_offset(self):
         from hermes_state import SessionDB
 

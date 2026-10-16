@@ -811,6 +811,8 @@ def _(rid, params: dict) -> dict:
             session["history_version"] = int(session.get("history_version", 0)) + 1
         session["running"] = True
         session["_turn_cancel_requested"] = False
+        if turn_isolation:
+            session["_compute_host_turn"] = {"dispatching": True}
         session["last_active"] = time.time()
         _start_inflight_turn(session, text)
 

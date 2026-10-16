@@ -218,6 +218,14 @@ def _copy_fallback(tmp_str: str, real_path: str) -> None:
 
 
 def atomic_replace(tmp_path: Union[str, Path], target: Union[str, Path]) -> str:
+    """Replace through the shared MCP configuration revision boundary."""
+    from tools.mcp_oauth_state import config_replace_guard
+
+    with config_replace_guard(tmp_path, target):
+        return _atomic_replace_unfenced(tmp_path, target)
+
+
+def _atomic_replace_unfenced(tmp_path: Union[str, Path], target: Union[str, Path]) -> str:
     """Atomically move *tmp_path* onto *target*, preserving symlinks.
 
     ``os.replace(tmp, target)`` atomically swaps ``tmp`` into place at

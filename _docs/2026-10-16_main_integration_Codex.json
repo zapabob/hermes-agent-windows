@@ -1,0 +1,81 @@
+{
+  "status": "LOCAL_MERGE_READY_FULL_CI_PENDING",
+  "main": "53b65c99587f7c1fe437a44c32d1566576376a17",
+  "source_branch": "bb4d2c0c8d8b91ebb3a08546ef365ecc00b83fc7",
+  "version_bump": false,
+  "regressions": {
+    "tests": 538,
+    "files": 26,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "independent_repeat": 36,
+  "mutants": 8,
+  "mutation_failures": 17,
+  "types": {
+    "renderer": 0,
+    "electron": 0,
+    "e2e_before": 2,
+    "e2e_after": 0
+  },
+  "eslint": {
+    "exit_code": 0,
+    "errors": 0,
+    "warnings": 164
+  },
+  "ruff": {
+    "exit_code": 0,
+    "diagnostics": 0
+  },
+  "footguns": {
+    "exit_code": 0,
+    "files": 1527
+  },
+  "policy_validation": 0,
+  "carry_metrics": "STALE; regenerate from committed merge HEAD before promotion",
+  "codegraph": {
+    "parsed_files": 11,
+    "input_hashes": 12,
+    "nodes": 938,
+    "edges": 2784,
+    "pending": 0,
+    "whole_repository": false
+  },
+  "github_cli_authenticated": false,
+  "git_transport_credentials": "NOT_TESTED",
+  "main_pushed": false,
+  "pr_operations": false,
+  "stable_release_proven": false,
+  "full_goal_complete": false,
+  "additional_settings_fix": "five explicit optional constructor assignments; three new consumer cases RED/GREEN;23 existing cases GREEN",
+  "unchanged_main_only_paths_now": 8,
+  "independent_scope": "Selected MCP resolution, explicit E2E include, Settings five optional fields and their new regressions; not whole-main or stable release approval",
+  "source": {
+    "tools/mcp_tool.py": "6deb4568cb0a487e923d67d482f9b559d190d47c83d09b5e58519b0f3ab9495f",
+    "plugins/lm-twitterer/core.py": "c72b0857cf0febcdde56c47cadb8810f93c58c53b1ca2dcc027dba83b31e5e38",
+    "apps/desktop/tsconfig.e2e.json": "c71010526885c167a34a73aa7355f5de2f1d9c645e61b24ab28becc176aea587",
+    "tests/tools/test_mcp_transport_configuration.py": "a2e3d06704bc76123aa7064ec10d78a5e6aaca7967ae0171fbc9c59b5029002a",
+    "tests/plugins/test_lm_twitterer_settings.py": "dcc1c89ae716c139a23da63b788e2dd45e365616be3f301b74a5457cdcd3b37d"
+  },
+  "evidence": {
+    "tmp/probes/main-integration-20261016/composite-final.json": "8c78c543846e757dfe758730403a098e36ea24999ef5c016e37e5ed039fa22d0",
+    "tmp/probes/main-integration-20261016/merge-resolution.json": "b2891cf700f087b69e013b461735d73a85d5b274b7d6443f2526f33cd066f35b",
+    "tmp/probes/main-integration-20261016/premerge-parse-red.json": "f8afe4b297a05b768d294895a92cba5ad536bfa103dcec420d640750e1368585",
+    "tmp/probes/main-integration-20261016/preserved-main-python-compile.json": "01549dad012f5eaa10feea3de3e375d2660769b614c61c11efddb79f8a809c00",
+    "tmp/probes/main-integration-20261016/mutations.json": "d082e7a102fcdd6889fab05753d48c1fb8450eb49bb9c8d68ed4e7e1c8211c15",
+    "tmp/probes/main-integration-20261016/settings-mutants.json": "84cc31d58f9b252f1ed3b7d6e6d086839fbe583c627f7ee388a5fec706f97c5a",
+    "tmp/probes/main-integration-20261016/settings-red.json": "646d796b5f798ca664747c999df3c93a49993ff4bf56ad869820d73ce3164387",
+    "tmp/probes/main-integration-20261016/settings-green.json": "2a0ecb04069f01f2d1791597e0f1e1c3811d26a2e319f89a36a77f9b12d56b3e",
+    "tmp/probes/main-integration-20261016/graph-final-binding.json": "8eafcfdd81a13c2c277899d2404014cb487e8e872c04e167953efcff1ee0aac2",
+    "tmp/probes/main-integration-20261016/graph-settings-final-status.json": "f893f3b262fcf7cd5fa274997e918ca3921a59e5a699145cada72de8d954c353",
+    "tmp/probes/main-integration-20261016/tsconfig-e2e-fix.json": "f79d9faf3f089e9bda2a029f3765e241c31efd3a24d2ae4dd9b1a8ba07535e68",
+    "tmp/probes/main-integration-20261016/desktop-typecheck.json": "25eca1cf3ad9fe9dceb8d835f0c9deda3286fc11ccd376a164b45ca281a2ba22",
+    "tmp/probes/main-integration-20261016/desktop-eslint.json": "31f219dcaa4fbc6de5f44c7cae7f4325f39bf26aff174b5e2672419c3d26f19d",
+    "tmp/probes/main-integration-20261016/ruff-final.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "tmp/probes/main-integration-20261016/preservation-final.json": "d2d9fd3b4606008932cdb5f20bba86f31ff3b82c6409186fa5932c6367e19bae",
+    "tmp/probes/main-integration-20261016/reviewer-transport/approval.json": "d3a04eae96626d1ba2c6440f531b07c0127da4ba46544b199bceb276f7f731aa",
+    "tmp/probes/main-integration-20261016/reviewer-transport/tsconfig-approval.json": "ced22a645195f5137b81f2a8d6dc069e56db74ada23f40a4e055fc81bffcbbc3",
+    "tmp/probes/main-integration-20261016/reviewer-settings/approval.json": "2c25f5fdd118022633b2ed70c0e187afd27b7a3caaa7dea2daaa1735c8f2bfd5"
+  }
+}

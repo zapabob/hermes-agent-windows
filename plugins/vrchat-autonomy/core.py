@@ -35,10 +35,8 @@ def _load_yaml(path: Path) -> dict[str, Any]:
 
 
 def _save_yaml(path: Path, data: dict[str, Any]) -> None:
-    import yaml
-
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    from utils import atomic_yaml_write
+    atomic_yaml_write(path, data, sort_keys=False)
 
 
 def plugin_config() -> dict[str, Any]:

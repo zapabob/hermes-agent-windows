@@ -1407,6 +1407,9 @@ class CLICommandsMixin:
         Inspired by Claude Code's /branch command.
         """
         from cli import _cprint, _sync_process_session_id
+        if getattr(self, "_agent_running", False):
+            _cprint("  Cannot branch while the agent is running. Wait for the current turn to finish.")
+            return
         if not self.conversation_history:
             _cprint("  No conversation to branch — send a message first.")
             return
@@ -1417,7 +1420,8 @@ class CLICommandsMixin:
             return
 
         parts = cmd_original.split(None, 1)
-        branch_name = parts[1].strip() if len(parts) > 1 else ""
+        from gateway.slash_commands_branch_thread import parse_branch_args
+        _, branch_name = parse_branch_args(parts[1] if len(parts) > 1 else "")
 
         # Generate the new session ID
         now = datetime.now()
@@ -1436,24 +1440,15 @@ class CLICommandsMixin:
             base = current_title or "branch"
             branch_title = self._session_db.get_next_title_in_lineage(base)
 
-        # Save the current session's state before branching
+        # Create before flush/end so a failed create leaves the parent open.
         parent_session_id = self.session_id
-
-        # Flush un-persisted messages before ending the old session (#47202).
-        if self.agent:
+        parent_prompt = getattr(self.agent, "_cached_system_prompt", None)
+        if not isinstance(parent_prompt, str) or not parent_prompt:
+            parent_prompt = None
             try:
-                self.agent._flush_messages_to_session_db(
-                    self.conversation_history,
-                    conversation_history=self.conversation_history,
-                )
+                parent_prompt = (self._session_db.get_session(parent_session_id) or {}).get("system_prompt")
             except Exception:
                 pass
-
-        # End the old session
-        try:
-            self._session_db.end_session(self.session_id, "branched")
-        except Exception:
-            pass
 
         # Create the new session with parent link.
         # Persist a stable ``_branched_from`` marker in model_config so
@@ -1471,10 +1466,25 @@ class CLICommandsMixin:
                     "_branched_from": parent_session_id,
                 },
                 parent_session_id=parent_session_id,
+                system_prompt=parent_prompt or None,
             )
         except Exception as e:
             _cprint(f"  Failed to create branch session: {e}")
             return
+
+        # Flush un-persisted messages before ending the old session (#47202).
+        if self.agent:
+            try:
+                self.agent._flush_messages_to_session_db(
+                    self.conversation_history,
+                    conversation_history=self.conversation_history,
+                )
+            except Exception:
+                pass
+        try:
+            self._session_db.end_session(parent_session_id, "branched")
+        except Exception:
+            pass
 
         # Copy conversation history to the new session in bounded-chunk
         # transactions (see #23254) instead of one txn per row. Best-effort
@@ -3905,9 +3915,15 @@ class CLICommandsMixin:
 
         parts = cmd.strip().split(maxsplit=1)
         if len(parts) < 2 or parts[1].strip().lower() == "status":
-            status = "fast" if self.service_tier == "priority" else "normal"
+            if self.service_tier == "ultrafast":
+                status = "ultrafast"
+            else:
+                status = "fast" if self.service_tier == "priority" else "normal"
             _cprint(f"  {_ACCENT}{feature_name}: {status}{_RST}")
-            _cprint(f"  {_DIM}Usage: /fast [normal|fast|status] [--global]{_RST}")
+            _cprint(
+                f"  {_DIM}Usage: /fast [normal|fast|ultrafast|ultra|status] "
+                f"[--global|--session]{_RST}"
+            )
             return
 
         arg_tokens = parts[1].strip().lower().split()
@@ -3916,8 +3932,14 @@ class CLICommandsMixin:
             token for token in arg_tokens
             if token not in ("--global", "--session")
         )
+        if arg == "ultra":
+            arg = "ultrafast"
 
-        if arg in {"fast", "on"}:
+        if arg == "ultrafast":
+            self.service_tier = "ultrafast"
+            saved_value = "ultrafast"
+            label = "ULTRAFAST"
+        elif arg in {"fast", "on"}:
             self.service_tier = "priority"
             saved_value = "fast"
             label = "FAST"
@@ -3927,7 +3949,10 @@ class CLICommandsMixin:
             label = "NORMAL"
         else:
             _cprint(f"  {_DIM}(._.) Unknown argument: {arg}{_RST}")
-            _cprint(f"  {_DIM}Usage: /fast [normal|fast|status] [--global]{_RST}")
+            _cprint(
+                f"  {_DIM}Usage: /fast [normal|fast|ultrafast|ultra|status] "
+                f"[--global|--session]{_RST}"
+            )
             return
 
         self.agent = None  # Force agent re-init with new service-tier config

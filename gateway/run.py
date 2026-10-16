@@ -14124,9 +14124,15 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         # synthetic turn still lands; just without thread isolation.
         thread_name = f"Hermes — {cli_title}"
         try:
-            new_thread_id = await adapter.create_handoff_thread(
-                str(home.chat_id), thread_name,
-            )
+            if transport.is_relay:
+                new_thread_id = await adapter.create_handoff_thread(
+                    str(home.chat_id), thread_name, logical_platform=platform,
+                    scope_id=home.scope_id, user_id=home.user_id,
+                )
+            else:
+                new_thread_id = await adapter.create_handoff_thread(
+                    str(home.chat_id), thread_name,
+                )
         except Exception as exc:
             logger.debug(
                 "Handoff: create_handoff_thread raised on %s: %s",
@@ -14188,9 +14194,11 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             chat_id=dest_chat_id,
             chat_name=home.name,
             chat_type=dest_chat_type,
-            user_id=dest_user_id,
+            user_id=home.user_id if transport.is_relay else dest_user_id,
             user_name="Handoff",
             thread_id=effective_thread_id,
+            scope_id=home.scope_id if transport.is_relay else None,
+            delivered_via_upstream_relay=transport.is_relay,
         )
 
         # Compute the gateway's session_key for that destination using the
@@ -14264,7 +14272,9 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         # (which may itself carry a thread_id). Send through the resolved
         # transport (not adapter.send directly) so a relay-fronted logical
         # platform is stamped on the outbound frame (send_for_platform).
-        send_metadata: Dict[str, Any] = {}
+        send_metadata: Dict[str, Any] = (
+            self._thread_metadata_for_source(dest_source) or {} if transport.is_relay else {}
+        )
         if effective_thread_id:
             send_metadata["thread_id"] = effective_thread_id
         try:
@@ -20507,8 +20517,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                                                     0.005,
                                                 ),
                                                 max(
-                                                    _hyg_total_ceiling_seconds
-                                                    - _hyg_waited,
+                                                    _hyg_commit_fence.remaining_total_seconds(),
                                                     0.005,
                                                 ),
                                             )
@@ -20519,11 +20528,16 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                                                 )
                                                 break
                                             except asyncio.TimeoutError:
+                                                # A completed worker may itself
+                                                # raise TimeoutError. Rewaiting
+                                                # that future would spin.
+                                                if _hyg_future.done():
+                                                    raise
                                                 _hyg_waited = time.monotonic() - _hyg_wait_started
                                                 _idle = _hyg_commit_fence.seconds_since_progress()
                                                 if (
                                                     _idle < _hyg_timeout_seconds
-                                                    and _hyg_waited < _hyg_total_ceiling_seconds
+                                                    and _hyg_commit_fence.remaining_total_seconds() > 0
                                                 ):
                                                     logger.info(
                                                         "Session hygiene compression for "
@@ -20539,8 +20553,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                                     except asyncio.TimeoutError:
                                         _hyg_waited = time.monotonic() - _hyg_wait_started
                                         _hyg_total_exhausted = (
-                                            _hyg_waited >= _hyg_total_ceiling_seconds
-                                            or _hyg_commit_fence.deadline_exceeded
+                                            _hyg_commit_fence.deadline_exceeded
                                         )
                                         if _hyg_total_exhausted:
                                             # The worker cooperatively checks this
@@ -24705,6 +24718,12 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             chat_type=getattr(source, "chat_type", None),
             reply_to_message_id=reply_to_message_id or getattr(source, "message_id", None),
         )
+        if getattr(source, "delivered_via_upstream_relay", False) is True:
+            metadata = dict(metadata or {})
+            metadata["_relay_logical_platform"] = source.platform.value
+            metadata["scope_id"] = getattr(source, "scope_id", None)
+            metadata["user_id"] = getattr(source, "user_id", None)
+            metadata["_relay_chat_type"] = getattr(source, "chat_type", None)
         if getattr(source, "platform", None) == Platform.SLACK:
             # Per-turn egress identity (R3-5, connector PR gateway-gateway#210).
             # Slack's chat.startStream requires recipient_user_id (+

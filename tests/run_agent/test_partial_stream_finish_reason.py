@@ -24,6 +24,13 @@ from hermes_constants import PARTIAL_STREAM_STUB_ID, FINISH_REASON_LENGTH
 from agent.conversation_loop import _get_continuation_prompt
 
 
+@pytest.fixture(autouse=True)
+def _fixed_context_metadata(monkeypatch):
+    # These are stream assembly/continuation contracts. A metadata lookup for
+    # the dummy provider must not make external HTTP calls during construction.
+    monkeypatch.setattr("agent.context_compressor.get_model_context_length", lambda *a, **k: 128_000)
+
+
 # ── Helpers (mirrors test_streaming.py) ────────────────────────────────────
 
 def _make_stream_chunk(content=None, tool_calls=None, finish_reason=None):

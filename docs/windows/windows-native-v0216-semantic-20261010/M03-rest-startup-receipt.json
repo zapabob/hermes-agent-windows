@@ -1,0 +1,285 @@
+{
+  "schema_version": 1,
+  "family": "M03",
+  "slice": "REST worker startup ownership",
+  "parent": "fd9d8a39c23a353d2d66009f9a0f6a3a2c31e6b2",
+  "status": "QUALIFIED_M03_REST_STARTUP_EVIDENCE_PENDING_LOCAL_COMMIT",
+  "reviewer": "/root/f03_contract_review",
+  "frozen": {
+    "u_release": "818c13be1dc4fd28987e1e881a9408224afd4535",
+    "r_after": "d3630f853239e8c41ce7201e09fbdf39bcbc5431",
+    "d_base": "606f7e557c13a0789a2420f7adf6181becf60d75"
+  },
+  "source": {
+    "hermes_cli/web_routers/mcp.py": "8fcc47305dbb77393a66ec2fe1f27581f69934ebd0bc3cfc61a9b0cc56de8e9f",
+    "tests/hermes_cli/test_mcp_oauth_rest_sdk_contract.py": "96d7954638267d13fe04c3043992b6558ae7f26241865e5c6a20bdddd4e73c28",
+    "tests/hermes_cli/test_mcp_oauth_rest_startup.py": "b4704514a23e8986f138c648e494e04fb1fa512f86fc8a7ccce90db087c8421c"
+  },
+  "candidate_source_binding": {
+    "file": "tmp/probes/v0216-20261010/evidence/m03-rest-startup-candidate-v1/pre-source.json",
+    "sha256": "a40a3dd5310e22f159e57ae8082665dc926886b1d5e1b17823f782dbea875d65",
+    "count": 32,
+    "source": {
+      "agent/secret_scope.py": {
+        "sha256": "51d91d280ef05d59c0c450dbfaecd6f50b314a4ff75614cb23b5288a308c645d",
+        "bytes": 14002
+      },
+      "hermes_cli/dashboard_auth/cookies.py": {
+        "sha256": "f0ef6ca781f85b07b88eb1d08027b24da5f60c07b3b7d9ae6e56daf5b80b79e9",
+        "bytes": 17867
+      },
+      "hermes_cli/dashboard_auth/registry.py": {
+        "sha256": "84b7bc8b40a56099ed2eb6bbf19f1703e6fdb534dac517febf7cc970b7423fc8",
+        "bytes": 5700
+      },
+      "hermes_cli/mcp_config.py": {
+        "sha256": "964c4a8f22b04f1514052ef422d2e396dec9b9214f75403ba05a8fa210f48acd",
+        "bytes": 48304
+      },
+      "hermes_cli/web_deps.py": {
+        "sha256": "9b7b53a502063122e73cf551b4d877e7a3ceef4b990fa2e36354798d0bb29eb5",
+        "bytes": 5313
+      },
+      "hermes_cli/web_routers/mcp.py": {
+        "sha256": "8fcc47305dbb77393a66ec2fe1f27581f69934ebd0bc3cfc61a9b0cc56de8e9f",
+        "bytes": 24904
+      },
+      "hermes_cli/web_server.py": {
+        "sha256": "cc0598b7d177ae4ddce310e2eb1f7e947cc3851fdebed6c8ab2c1d723fbabc41",
+        "bytes": 835304
+      },
+      "hermes_constants.py": {
+        "sha256": "70e75092fd443e586b4a344e8043f8020c84de7e2c7684c9c3a2880778d1a0aa",
+        "bytes": 68915
+      },
+      "pyproject.toml": {
+        "sha256": "43a16a1bc21d672a35c2551f6c52cf3b9a98dc6d4f683543aa31a19ca324cd78",
+        "bytes": 29335
+      },
+      "scripts/run_tests_parallel.py": {
+        "sha256": "545511ab00d011618538fd2cd72e6bc1c113d10e001e4b2a5d493f48f257143a",
+        "bytes": 58095
+      },
+      "tests/conftest.py": {
+        "sha256": "9780ba549bf6fb746ff08fc3ea793b9593fa636c13ee7f61537052082d7020b8",
+        "bytes": 74007
+      },
+      "tests/fakes/mcp_oauth_gateway.py": {
+        "sha256": "141da952ba25ddf81e39503728449085e7555ee0c1423e0606becb64073aeed7",
+        "bytes": 6697
+      },
+      "tests/fakes/mcp_oauth_issuer.py": {
+        "sha256": "c2b9f1e3b053344be405f59979929939161bdfd11f876ae9ec4356758f4914db",
+        "bytes": 9461
+      },
+      "tests/hermes_cli/test_dashboard_auth_password_login.py": {
+        "sha256": "6b0737e5b4c4dbeaac952c488a1c789705a658ead9ad3f51f441d6228737c208",
+        "bytes": 14121
+      },
+      "tests/hermes_cli/test_mcp_oauth_rest_retention.py": {
+        "sha256": "4fa1e611897838ac19c18bf575eab9c030b56d4d1fd1fbf3e1067a8f6dae0346",
+        "bytes": 8308
+      },
+      "tests/hermes_cli/test_mcp_oauth_rest_sdk_contract.py": {
+        "sha256": "96d7954638267d13fe04c3043992b6558ae7f26241865e5c6a20bdddd4e73c28",
+        "bytes": 8888
+      },
+      "tests/hermes_cli/test_mcp_oauth_rest_startup.py": {
+        "sha256": "b4704514a23e8986f138c648e494e04fb1fa512f86fc8a7ccce90db087c8421c",
+        "bytes": 21635
+      },
+      "tmp/probes/v0216-20261010/m03-python-mutants-v2.py": {
+        "sha256": "96df5f4de7762f1b6ab66c935b3b8af824a8fe0ff48bd93ea47c3c32b5c74af5",
+        "bytes": 21338
+      },
+      "tmp/probes/v0216-20261010/m03-rest-startup-fixture-draft-v1.patch": {
+        "sha256": "2f01c0316d1fa11b18d490120c2386e296bf4e2c95a3714a36d8c2457c72fd18",
+        "bytes": 726
+      },
+      "tmp/probes/v0216-20261010/m03-rest-worker-startup-plan-draft-v2.md": {
+        "sha256": "aa571b94d8a47be7ac871cd9350e4c8f1e7bc71d659b51380225ff3a1dbce686",
+        "bytes": 11649
+      },
+      "tmp/probes/v0216-20261010/m03_rest_mutation_exception_v1.py": {
+        "sha256": "0fc3b996a793e8cdf9263f422bf01d8c912cdbbf42bf5abd44f1f2633f748185",
+        "bytes": 596
+      },
+      "tmp/probes/v0216-20261010/m03_rest_startup_oracle_draft_v1.py": {
+        "sha256": "b4704514a23e8986f138c648e494e04fb1fa512f86fc8a7ccce90db087c8421c",
+        "bytes": 21635
+      },
+      "tmp/probes/v0216-20261010/run-m03-rest-startup-candidate-v1.py": {
+        "sha256": "c8aa488748b3ff70c5c47d65284ee120ec4efb4bd19676783ed2038d8352c592",
+        "bytes": 14197
+      },
+      "tools/mcp_dashboard_oauth.py": {
+        "sha256": "aa297e12e4be68eb062425242f74c29702d6021b9cb9efc5c6bd8ccf5e36fa85",
+        "bytes": 6684
+      },
+      "tools/mcp_oauth.py": {
+        "sha256": "f194aefcad8142e460fc374e94f7513d960e25fab3d488cbe6e6dcfb9b54ed33",
+        "bytes": 87336
+      },
+      "tools/mcp_oauth_manager.py": {
+        "sha256": "6c917252bc36ef3006a3d2aff1d8c2eb095859a3538a846e3b44f47d803e0125",
+        "bytes": 43889
+      },
+      "tools/mcp_tool.py": {
+        "sha256": "e8ab14a41c12d4996e0e8dc7ef494d9dd472f393f6b926d15b6de61267d51b82",
+        "bytes": 412028
+      },
+      "tools/registry.py": {
+        "sha256": "f95d011cae75f0426dd77cb1e25df6bebb61a067d795312df297cb877dd616f5",
+        "bytes": 56079
+      },
+      "tui_gateway/mcp_oauth_sessions.py": {
+        "sha256": "7f0e71e00010e9e98aaff1f940bbc90cb0fd2a294477ca9f11c00b7bc973587e",
+        "bytes": 20445
+      },
+      "tui_gateway/methods_tools.py": {
+        "sha256": "8fd5f6f9bf50fc6fe2bc07b5fb91c1e6643494854287141a37040515815f81f9",
+        "bytes": 104437
+      },
+      "tui_gateway/server.py": {
+        "sha256": "c00eac79e016eb39b7cf72faf1a7e9afa38443a6419b6f82ee192c3019dfa7b4",
+        "bytes": 731670
+      },
+      "uv.lock": {
+        "sha256": "45487f72f5fe438fd90f1c0839b83b747e6abfa37110e2e3305b54bc1cac601b",
+        "bytes": 733030
+      }
+    },
+    "runtime": {
+      "python": "owned-project-venv/Scripts/python.exe",
+      "version": "3.12.13 (main, Jun 23 2026, 15:23:43) [MSC v.1944 64 bit (AMD64)]",
+      "mcp": "2.0.0",
+      "native": true,
+      "sources": {
+        "threading.py": {
+          "location": "owned-uv-cpython-runtime/Lib/threading.py",
+          "sha256": "846f450ae794e4aab823a163f8c71d27751148af33e91dd3de886686a4e8ebfb",
+          "bytes": 60200
+        },
+        "mcp-client-auth-oauth2.py": {
+          "location": "owned-project-venv/Lib/site-packages/mcp/client/auth/oauth2.py",
+          "sha256": "912f43f60a023b66b05d102a5f2312affbccb6a626644f195aa6739d52c8717c",
+          "bytes": 38993
+        }
+      }
+    }
+  },
+  "original_red": {
+    "qualification": "QUALIFIED_M03_REST_STARTUP_ORIGINAL_RED_V3_ONLY",
+    "result_sha256": "426c8e851293122b4ea8755343999686bf77d4da4cf3adc5d87804c7a2942bb7",
+    "xml_sha256": "a90b04e7584d5a25ab1fe51b87ee4fd08978b31aa91c0863e52f5838e0443863",
+    "genuine_public_response_assertion_errors": 4,
+    "line": 335,
+    "setup_errors": 0,
+    "skips": 0,
+    "both_mandatory_cleanup_complete": true,
+    "commands": 7,
+    "observed_pid_births": 97
+  },
+  "candidate_green": {
+    "result_sha256": "84f2c89d3416b8c9aef23dacd79938c3d492ca45b389cbff05adcf77118e4a63",
+    "xml_sha256": "0d247ed98d364cd9b2282f9f3c5c0ad7f38b965e01488ab35b351fae7b0b644a",
+    "passed": 4,
+    "errors": 0,
+    "skips": 0,
+    "both_mandatory_cleanup_complete": true,
+    "commands": 7,
+    "observed_pid_births": 108
+  },
+  "mutation_qualification": {
+    "distinct_kills": 7,
+    "selected_green_controls": 14,
+    "inherited_first_three_only": "QUALIFIED_M03_REST_STARTUP_V3_FIRST_THREE_VARIANTS_ONLY",
+    "inheritance_manifest_sha256": "00c6d081917ad5806d3f961e1a73232fd685ddfead62fab16be193eb6c372de0",
+    "inherited_files": 156,
+    "fresh_remaining_four": "QUALIFIED_M03_REST_STARTUP_V4_REMAINING_FOUR_VARIANTS_AND_OWNER_REGRESSIONS_ONLY",
+    "fresh_receipt_sha256": "ccdc195a05f2bc216fa991705e11331c0c47fb58519921bd3cab3ba9d3734f9c",
+    "fresh_outer_sha256": "01b5e8029dc38a95ae4fd2969b8b8344e9bdcc49f84f0967c4da85ac95497e88",
+    "fresh_assertion_lines": [
+      350,
+      286,
+      349,
+      167
+    ],
+    "first_three_assertion_lines": [
+      335,
+      337,
+      361
+    ],
+    "both_mandatory_cleanup_complete": true,
+    "fresh_commands": 72,
+    "fresh_observed_pid_births": 1267,
+    "inherited_commands_observed": 58,
+    "inherited_pid_births_observed": 992,
+    "all_saved_process_births_confirmed_gone": true,
+    "candidate_sources_restored": true
+  },
+  "owner_regressions": {
+    "sdk_passed": 4,
+    "sdk_result_sha256": "4d4b985c6e32f6642a5adfb62ad568f348f57331a5cb2653efa50f82672ac88e",
+    "retention_passed": 3,
+    "retention_result_sha256": "aece7ede9b92c106f20df7c6fcfab0586b2a21e910b51e9b2b2e32aa893476b1"
+  },
+  "finite_retention": {
+    "inventory_sha256": "7a2429e27b30b337ddd923e1b1aa730fc6f4867d3c90e259d955988614f66089",
+    "receipt_sha256": "ea2ec45a85248dbc3dc351f27e9bc3ccd03695e972fe9ef9f88a93164931b912",
+    "archive_sha256": "a601fc0aa287dec9837fc540a2e3495c9feae0b72014f906b755f66d5c0b54d9",
+    "archive_bytes": 8992802,
+    "entries": 880,
+    "uncompressed_bytes": 36421539,
+    "entries_roundtrip_verified": 880,
+    "sources_pre_post_equal": true,
+    "whole_database_retained": false,
+    "old_archives_included": false
+  },
+  "codegraph": {
+    "actual_phase_commands": true,
+    "source_rows_and_nodes_retained": true,
+    "quick_check": "ok",
+    "final_database_sha256": "ff0b40c93c1cb1f8695edd15974430b48a27f06c7140e1286ac608f6da31edc1",
+    "final_database_bytes": 697413632,
+    "final_graph_record_sha256": "0705ddf48c6742e9a5e8ab5fef19aaa7e29d3caade1103673e480871f82185c8",
+    "runtime_coverage": false
+  },
+  "targeted_lint": {
+    "outer": "tmp/probes/v0216-20261010/evidence/m03-rest-startup-targeted-lint-v1.json",
+    "terminal_exit": 0,
+    "reviewed_python_files": 3
+  },
+  "excluded": [
+    "original v1 discovery failure",
+    "original v2 setup errors",
+    "partial mutant v2 restoration OSError22; separately recovered known candidate bytes",
+    "whole partial mutant v3 and fourth expected352 actual350 mismatch; only qualified first three inherited"
+  ],
+  "protected_primary": {
+    "head": "606f7e557c13a0789a2420f7adf6181becf60d75",
+    "dirty_items": 23,
+    "precommit_audit_sha256": "5afa9fc0efefbe61473bc4608a29ea0249d22d02fa46f1736af99aaae956d426",
+    "precommit_head_status_bytes_matched": true,
+    "postcommit_audit_pending": true
+  },
+  "local_commit": {
+    "created": false,
+    "endpoint": "isolated local product commit followed by actual identity metadata",
+    "independent_content_review_pending": true,
+    "explicit_stage_blob_review_pending": true
+  },
+  "transport_limits": "Actual REST handlers through TestClient and a synthetic signed cookie; owned loopback OAuth issuer and MCP SDK peer. No public-network REST, external browser/model, packaged runtime, cloud CI or production qualification.",
+  "startup_limits": "Native allocated-before-ident and post-SDK owner cases release and join exact captured threads. The unresolved seam intentionally retains ownership and proves no positive retry or automatic OS recovery. The response retains published URL; URL byte stability after worker exit is not asserted.",
+  "remaining": [
+    "Gateway worker/listener startup uncertainty and caller-visible failed-flow identity",
+    "in-place OAuth remint/revival",
+    "revoked-token/config replacement",
+    "plugin OAuth/module split",
+    "all other mandatory M03 and frozen campaign inventory"
+  ],
+  "bounded_acceptance": true,
+  "full_m03_accepted": false,
+  "full_campaign_accepted": false,
+  "publication": false
+}

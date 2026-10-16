@@ -33,9 +33,8 @@ def _load_yaml(path: Path) -> dict[str, Any]:
 
 
 def _save_yaml(path: Path, payload: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="\n") as handle:
-        yaml.safe_dump(payload, handle, sort_keys=False, allow_unicode=True)
+    from utils import atomic_yaml_write
+    atomic_yaml_write(path, payload, sort_keys=False)
 
 
 def enable_plugin(*, dry_run: bool = False) -> dict[str, Any]:

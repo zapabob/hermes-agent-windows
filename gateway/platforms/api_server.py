@@ -4810,11 +4810,10 @@ class APIServerAdapter(BasePlatformAdapter):
         if await asyncio.to_thread(db.get_session, fork_id):
             return web.json_response(_openai_error(f"Session already exists: {fork_id}", code="session_exists"), status=409)
 
-        # Match the CLI /branch semantics: mark the original as branched, then
-        # create a child session that carries the transcript forward. This uses
+        # Match the CLI /branch semantics: create the child before ending the
+        # original so a failed create leaves the parent open. This uses
         # SessionDB's native parent_session_id/end_reason visibility model rather
         # than inventing a parallel fork store.
-        await asyncio.to_thread(db.end_session, source_id, "branched")
         await asyncio.to_thread(db.create_session,
             fork_id,
             "api_server",
@@ -4822,6 +4821,7 @@ class APIServerAdapter(BasePlatformAdapter):
             system_prompt=source.get("system_prompt"),
             parent_session_id=source_id,
         )
+        await asyncio.to_thread(db.end_session, source_id, "branched")
         messages = await asyncio.to_thread(db.get_messages, source_id)
         await asyncio.to_thread(db.replace_messages, fork_id, messages)
         title = body.get("title")

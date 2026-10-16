@@ -844,6 +844,26 @@ class ProcessRegistry:
             return True
         return cls._safe_host_start_time(pid) == expected_start
 
+    @classmethod
+    def _host_pid_identity_state(
+        cls, pid: Optional[int], expected_start: Optional[int]
+    ) -> str:
+        """Return a fail-closed identity state for an owned Windows PTY PID.
+
+        Unlike the legacy best-effort check above, missing or unreadable start
+        time is not evidence that the process is ours or that it has exited.
+        """
+        if not pid or not cls._is_host_pid_alive(pid):
+            return "dead"
+        if expected_start is None:
+            return "owner_unknown"
+        actual_start = cls._safe_host_start_time(pid)
+        if actual_start is None:
+            return "owner_unknown"
+        if actual_start != expected_start:
+            return "reused"
+        return "ours"
+
     def _refresh_detached_session(self, session: Optional[ProcessSession]) -> Optional[ProcessSession]:
         """Update recovered host-PID sessions when the underlying process has exited."""
         if session is None or session.exited or not session.detached or session.pid_scope != "host":
@@ -899,7 +919,13 @@ class ProcessRegistry:
             return 2.0
 
     @classmethod
-    def _terminate_host_pid(cls, pid: int, expected_start: Optional[int] = None) -> None:
+    def _terminate_host_pid(
+        cls,
+        pid: int,
+        expected_start: Optional[int] = None,
+        *,
+        require_verified_identity: bool = False,
+    ) -> Optional[str]:
         """Terminate a host-visible PID and its descendants.
 
         ``expected_start`` is the kernel start time captured when we spawned the
@@ -938,10 +964,20 @@ class ProcessRegistry:
 
         ``psutil`` is a hard dependency (see ``pyproject.toml``); the
         bare-``os.kill`` fallback covers OSError / PermissionError on
-        POSIX and a missing ``taskkill.exe`` on Windows (effectively
-        unreachable on real Windows installs, but cheap insurance).
+        POSIX and, for legacy best-effort callers, a missing ``taskkill.exe``.
+        Callers requiring verified ownership receive an explicit result and
+        never use that PID-only fallback on Windows.
         """
-        if expected_start is not None and not cls._host_pid_is_ours(pid, expected_start):
+        if require_verified_identity:
+            identity_state = cls._host_pid_identity_state(pid, expected_start)
+            if identity_state != "ours":
+                if identity_state == "reused":
+                    logger.warning(
+                        "Refusing to terminate host pid %d: start-time mismatch — "
+                        "PID was recycled onto an unrelated process.", pid,
+                    )
+                return identity_state
+        elif expected_start is not None and not cls._host_pid_is_ours(pid, expected_start):
             # PID was recycled (start time changed) or is gone — never signal a
             # stranger. A leaked orphan is strictly preferable to killing e.g.
             # a browser whose session leader reused this dead session's PID.
@@ -952,7 +988,7 @@ class ProcessRegistry:
             return
         if _IS_WINDOWS:
             try:
-                subprocess.run(
+                completed = subprocess.run(
                     ["taskkill", "/PID", str(pid), "/T", "/F"],
                     capture_output=True,
                     text=True, encoding='utf-8', errors='replace',
@@ -960,12 +996,16 @@ class ProcessRegistry:
                     creationflags=windows_hide_flags(),
                     stdin=subprocess.DEVNULL,
                 )
+                if require_verified_identity:
+                    return "terminated" if completed.returncode == 0 else "failed"
             except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+                if require_verified_identity:
+                    return "failed"
                 try:
                     os.kill(pid, signal.SIGTERM)
                 except (OSError, ProcessLookupError, PermissionError):
                     pass
-            return
+            return None
 
         import psutil
         try:
@@ -2369,12 +2409,58 @@ class ProcessRegistry:
         # Kill via PTY, Popen (local), or env execute (non-local)
         try:
             if session._pty:
-                # PTY process -- terminate via ptyprocess
-                try:
-                    session._pty.terminate(force=True)
-                except Exception:
-                    if session.pid:
-                        os.kill(session.pid, signal.SIGTERM)
+                if _IS_WINDOWS:
+                    # pywinpty's terminate() signals only its root PID; it can
+                    # leave descendants running. Require a captured and
+                    # readable start time, then repeat the check immediately
+                    # before taskkill to avoid acting on a reused PID.
+                    # Unknown ownership leaves the session unresolved.
+                    termination = self._host_pid_identity_state(
+                        session.pid, session.host_start_time
+                    )
+                    if termination == "ours":
+                        termination = self._terminate_host_pid(
+                            session.pid,
+                            session.host_start_time,
+                            require_verified_identity=True,
+                        )
+
+                    if termination in ("dead", "reused"):
+                        with session._lock:
+                            session.exited = True
+                            session.exit_code = None
+                            output = strip_ansi(session.output_buffer[-2000:])
+                        if consume_output:
+                            self._completion_consumed.add(session_id)
+                        self._move_to_finished(session)
+                        return {
+                            "status": "already_exited",
+                            "exit_code": session.exit_code,
+                            "output": output,
+                        }
+                    if termination == "owner_unknown":
+                        return {
+                            "status": "error",
+                            "error": (
+                                "Cannot verify Windows PTY process ownership; "
+                                "termination was not attempted."
+                            ),
+                        }
+                    if termination != "terminated":
+                        return {
+                            "status": "error",
+                            "error": (
+                                "Windows PTY tree termination was not confirmed; "
+                                "the session remains active for retry."
+                            ),
+                        }
+                else:
+                    # POSIX PTY process -- terminate via ptyprocess.
+                    try:
+                        session._pty.terminate(force=True)
+                    except Exception:
+                        if session.pid:
+                            os.kill(session.pid, signal.SIGTERM)
             elif session.process:
                 # Local process -- kill the process tree. On Windows this
                 # must be taskkill /T /F; Popen.terminate() only kills the

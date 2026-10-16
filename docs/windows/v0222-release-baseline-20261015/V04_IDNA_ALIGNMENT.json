@@ -1,0 +1,502 @@
+{
+  "schema_version": 1,
+  "status": "SCOPED_IDNA_ALIGNMENT_VERIFIED_CAMPAIGN_OPEN",
+  "source_parent_commit": "20336f01c478392ad3d981819ba474c223a88b17",
+  "upstream_commit": "d923a5eb487a17c0a68801bba9ef0f56c81040a8",
+  "upstream_tree": "5a064077e8d1de9fc7a4b27efc04f0caa2cb06c0",
+  "candidate": "C04/V04 idna frozen-release record and behavior only",
+  "sources_sha256": {
+    "uv.lock": "bfd6c974796206cad6e29ab83dbdf553c200cfaf76821c574d666716407ea726",
+    "pyproject.toml": "43a16a1bc21d672a35c2551f6c52cf3b9a98dc6d4f683543aa31a19ca324cd78",
+    "tests/tools/test_idna_http_stack.py": "fcf96df7f1a97ad4bf85b40afe5b118f5b0eacd0d12cf9ee19adfc5312e80b2d",
+    "tests/tools/test_url_safety.py": "f88ada131f2ea018f6406c49529e62c094183ed7076269594ee78f7334737ccc",
+    "tests/tools/test_mcp_redirect_header_boundary.py": "74d4c4d9cc75d4b7b9fd31dd9a41ad7e6e8006fdae55c6d47a82b3c63fb9e209",
+    "tools/url_safety.py": "3eb0e875a5baf2eaf459cddf1f934f6eed182dfbb0354b9ee2706c4287c99636",
+    "tools/mcp_tool.py": "6deb4568cb0a487e923d67d482f9b559d190d47c83d09b5e58519b0f3ab9495f",
+    "tools/mcp_oauth_manager.py": "e96e4c8cacf937964aca1dc6f6c802837439d7d75a4141d2ba2d28c64f3eaa8f",
+    "tools/mcp_oauth.py": "3ad0d5af28de7ee2771fa139fe2dc861a6c6be808bbdf66de50bb046e663d678",
+    "tools/mcp_oauth_provider.py": "bc467202dab1aaab3f51cca712f3290505064fc19f35b245306c944801a5ebde",
+    "tools/mcp_oauth_state.py": "18eea2b7f0e1717c093ebcede040b637d2fa0571a9315d6dbd631ff1a7ee17a2"
+  },
+  "qualification": {
+    "counts": {
+      "tests": 126,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "files": [
+      {
+        "test_file": "tests/tools/test_idna_http_stack.py",
+        "exit_code": 0,
+        "tests": 48,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "xml_sha256": "fca636c1b49d8cf1d9123743924cdb333a7174fb0fb549369d4d77e8eb91a239"
+      },
+      {
+        "test_file": "tests/tools/test_url_safety.py",
+        "exit_code": 0,
+        "tests": 72,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "xml_sha256": "da5823d934da6565dbc411ababfe2891d5bb88ae2e311b6fd0344000386835b2"
+      },
+      {
+        "test_file": "tests/tools/test_mcp_redirect_header_boundary.py",
+        "exit_code": 0,
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "xml_sha256": "53a63d477d21027ebdc4773fed71f1a58fe47912cd319e827e358567ad4bf647"
+      }
+    ],
+    "platform": "win32",
+    "runtime": "3.12.13 (main, Jun 23 2026, 15:23:43) [MSC v.1944 64 bit (AMD64)]",
+    "fresh_process_per_file": true,
+    "verified_test_overlay": [
+      "idna==3.19",
+      "yarl==1.24.5",
+      "propcache==0.5.2"
+    ]
+  },
+  "red": {
+    "environment": "Existing base idna3.18; pre-existing yarl/propcache drift; not locked candidate",
+    "final_source_sha256": {
+      "uv.lock": "bfd6c974796206cad6e29ab83dbdf553c200cfaf76821c574d666716407ea726",
+      "pyproject.toml": "43a16a1bc21d672a35c2551f6c52cf3b9a98dc6d4f683543aa31a19ca324cd78",
+      "tests/tools/test_idna_http_stack.py": "fcf96df7f1a97ad4bf85b40afe5b118f5b0eacd0d12cf9ee19adfc5312e80b2d",
+      "tests/tools/test_url_safety.py": "f88ada131f2ea018f6406c49529e62c094183ed7076269594ee78f7334737ccc",
+      "tests/tools/test_mcp_redirect_header_boundary.py": "74d4c4d9cc75d4b7b9fd31dd9a41ad7e6e8006fdae55c6d47a82b3c63fb9e209",
+      "tools/url_safety.py": "3eb0e875a5baf2eaf459cddf1f934f6eed182dfbb0354b9ee2706c4287c99636",
+      "tools/mcp_tool.py": "6deb4568cb0a487e923d67d482f9b559d190d47c83d09b5e58519b0f3ab9495f",
+      "tools/mcp_oauth_manager.py": "e96e4c8cacf937964aca1dc6f6c802837439d7d75a4141d2ba2d28c64f3eaa8f",
+      "tools/mcp_oauth.py": "3ad0d5af28de7ee2771fa139fe2dc861a6c6be808bbdf66de50bb046e663d678",
+      "tools/mcp_oauth_provider.py": "bc467202dab1aaab3f51cca712f3290505064fc19f35b245306c944801a5ebde",
+      "tools/mcp_oauth_state.py": "18eea2b7f0e1717c093ebcede040b637d2fa0571a9315d6dbd631ff1a7ee17a2"
+    },
+    "files": [
+      {
+        "test_file": "tests/tools/test_idna_http_stack.py",
+        "exit_code": 1,
+        "tests": 48,
+        "failures": 17,
+        "errors": 0,
+        "skipped": 0,
+        "xml_sha256": "23c464ac14c40304dcb7f5abe43ad95237e4f5eba2d3ed67ddd92c81837f70a1"
+      }
+    ]
+  },
+  "mutations": [
+    {
+      "mode": "std3",
+      "tests": 48,
+      "failures": 6,
+      "errors": 0,
+      "skipped": 0,
+      "detected_by": [
+        "test_explicit_std3_rejects_ascii_and_mapped_punctuation[tenant_service.example]",
+        "test_explicit_std3_rejects_ascii_and_mapped_punctuation[tenant!service.example]",
+        "test_explicit_std3_rejects_ascii_and_mapped_punctuation[a\\u03b2_.example]",
+        "test_default_remap_rules_also_reject_non_ldh_ascii",
+        "test_mapping_error_remains_unicode_error_with_structured_context[tenant_service.example-95-7]",
+        "test_mapping_error_remains_unicode_error_with_structured_context[a\\u03b2_.example-95-3]"
+      ]
+    },
+    {
+      "mode": "canonical",
+      "tests": 48,
+      "failures": 8,
+      "errors": 0,
+      "skipped": 0,
+      "detected_by": [
+        "test_noncanonical_alabel_is_rejected_while_its_canonical_form_round_trips",
+        "test_noncanonical_label_is_rejected_by_public_entrypoints[ulabel]",
+        "test_noncanonical_label_is_rejected_by_public_entrypoints[alabel]",
+        "test_noncanonical_label_is_rejected_by_public_entrypoints[encode]",
+        "test_noncanonical_label_is_rejected_by_public_entrypoints[decode]",
+        "test_display_mode_keeps_invalid_wire_label_without_fabricating_unicode",
+        "test_ascii_url_constructor_and_decoded_host_have_distinct_contracts[httpx]",
+        "test_ascii_url_constructor_and_decoded_host_have_distinct_contracts[httpx2]"
+      ]
+    },
+    {
+      "mode": "optout",
+      "tests": 48,
+      "failures": 3,
+      "errors": 0,
+      "skipped": 0,
+      "detected_by": [
+        "test_explicit_non_std3_mapping_preserves_its_useful_behavior[TENANT_service.example-tenant_service.example]",
+        "test_explicit_non_std3_mapping_preserves_its_useful_behavior[tenant\\uff3fservice.example-tenant_service.example]",
+        "test_explicit_non_std3_mapping_preserves_its_useful_behavior[a\\uff01b.example-a!b.example]"
+      ]
+    }
+  ],
+  "preservation": {
+    "base_versions_file_sets_and_bytes_unchanged": true,
+    "base_packages": 16,
+    "base_files": 837,
+    "named_locked_runtime_payloads_unchanged": 372,
+    "other_lock_records_and_top_level_unchanged": true,
+    "changed_package": {
+      "name": "idna",
+      "before": "3.18",
+      "after": "3.19"
+    },
+    "idna_record_equals_frozen_release": true
+  },
+  "locked_payload_subset": {
+    "scope": "16 named IDNA/HTTP consumers; not the complete project dependency closure",
+    "packages": [
+      {
+        "name": "idna",
+        "version": "3.19",
+        "wheel": {
+          "url": "https://files.pythonhosted.org/packages/57/b0/0e52c878c53f245edd3a11020f20979b3f490f245af532c7cae3027754b5/idna-3.19-py3-none-any.whl",
+          "hash": "sha256:815e7be7a7806d54abb586dc943addc79e8b2ee16915059658cbeff4b1b43bf4",
+          "size": 68550,
+          "upload-time": "2026-08-18T05:14:22.343Z"
+        },
+        "payload_count": 11
+      },
+      {
+        "name": "yarl",
+        "version": "1.24.5",
+        "wheel": {
+          "url": "https://files.pythonhosted.org/packages/c4/27/41eb51bbd1b8d89546b83897cfb0164f1e109304fd408dbb151b639eec0f/yarl-1.24.5-cp312-cp312-win_amd64.whl",
+          "hash": "sha256:a929d878fec099030c292803b31e5d5540a7b6a31e6a3cc76cb4685fc2a2f51b",
+          "size": 97618,
+          "upload-time": "2026-07-20T02:05:55.57Z"
+        },
+        "payload_count": 11
+      },
+      {
+        "name": "propcache",
+        "version": "0.5.2",
+        "wheel": {
+          "url": "https://files.pythonhosted.org/packages/61/7c/5c0d34aa3024694d6dcb9271cdbdd08c4e47c1c0ad95ec7e7bc74cdea145/propcache-0.5.2-cp312-cp312-win_amd64.whl",
+          "hash": "sha256:d9ee8826a7d47863a08ac44e1a5f611a462eefc3a194b492da242128bec75b42",
+          "size": 42322,
+          "upload-time": "2026-05-08T21:00:32.918Z"
+        },
+        "payload_count": 7
+      },
+      {
+        "name": "httpx",
+        "version": "0.28.1",
+        "wheel": {
+          "url": "https://files.pythonhosted.org/packages/2a/39/e50c7c3a983047577ee07d2a9e53faf5a69493943ec3f6a384bdc792deb2/httpx-0.28.1-py3-none-any.whl",
+          "hash": "sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad",
+          "size": 73517,
+          "upload-time": "2024-12-06T15:37:21.509Z"
+        },
+        "payload_count": 24
+      },
+      {
+        "name": "httpx2",
+        "version": "2.12.0",
+        "wheel": {
+          "url": "https://files.pythonhosted.org/packages/c8/95/411ba65569158e862368917aaf56597f3e5fa3b91b0502919638465a08f3/httpx2-2.12.0-py3-none-any.whl",
+          "hash": "sha256:cc8b6eecb8661c146b8f89a60e97456ee086e91a784ed31ac450c3a9e613dd36",
+          "size": 95427,
+          "upload-time": "2026-08-18T13:22:06.834Z"
+        },
+        "payload_count": 31
+      },
+      {
+        "name": "httpcore",
+        "version": "1.0.9",
+        "wheel": {
+          "url": "https://files.pythonhosted.org/packages/7e/f5/f66802a942d491edb555dd61e3a9961140fd64c90bce1eafd741609d334d/httpcore-1.0.9-py3-none-any.whl",
+          "hash": "sha256:2d400746a40668fc9dec9810239072b40b4484b640a8c38fd654a024c7a1bf55",
+          "size": 78784,
+          "upload-time": "2025-04-24T22:06:20.566Z"
+        },
+        "payload_count": 32
+      },
+      {
+        "name": "httpcore2",
+        "version": "2.12.0",
+        "wheel": {
+          "url": "https://files.pythonhosted.org/packages/d2/74/d370e55600d9bcfa0d9794b0166126d49291a3d2b20c268fc98c453a4948/httpcore2-2.12.0-py3-none-any.whl",
+          "hash": "sha256:7e04258ce01013d7d615e5b910a3b27fac937d7a95038227e79652b4ba3b4ceb",
+          "size": 83074,
+          "upload-time": "2026-08-18T13:22:05.854Z"
+        },
+        "payload_count": 32
+      },
+      {
+        "name": "mcp",
+        "version": "2.0.0",
+        "wheel": {
+          "url": "https://files.pythonhosted.org/packages/67/72/7d7897418912c1d12e87556630dfb7bf0eac71160e9bef8b447960804ee3/mcp-2.0.0-py3-none-any.whl",
+          "hash": "sha256:1cb4c75d2d2c7b8c1d756355e5d82a39f2822cc7f13e22a2051d7ca3592349d6",
+          "size": 349980,
+          "upload-time": "2026-07-28T13:45:28.853Z"
+        },
+        "payload_count": 123
+      },
+      {
+        "name": "anyio",
+        "version": "4.14.2",
+        "wheel": {
+          "url": "https://files.pythonhosted.org/packages/da/35/f2287558c17e29fafc8ef3daf819bb9834061cfa43bff8014f7df7f63bdc/anyio-4.14.2-py3-none-any.whl",
+          "hash": "sha256:9f505dda5ac9f0c8309b5e8bd445a8c2bf7246f3ce950121e45ea15bc41d1494",
+          "size": 125813,
+          "upload-time": "2026-07-12T20:29:05.763Z"
+        },
+        "payload_count": 44
+      },
+      {
+        "name": "requests",
+        "version": "2.34.2",
+        "wheel": {
+          "url": "https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl",
+          "hash": "sha256:2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0",
+          "size": 73075,
+          "upload-time": "2026-05-14T19:25:26.443Z"
+        },
+        "payload_count": 20
+      },
+      {
+        "name": "multidict",
+        "version": "6.9.1",
+        "wheel": {
+          "url": "https://files.pythonhosted.org/packages/d7/2e/8c9c2591df01e5692ad1bf92febb082a17b1c6c3a19aa8b7ff49988fd989/multidict-6.9.1-cp312-cp312-win_amd64.whl",
+          "hash": "sha256:a16a1dc8529f9e734a41c3b856f3eae7ebacdc061dde3f8a844e0c7889c97203",
+          "size": 59622,
+          "upload-time": "2026-09-21T17:55:39.86Z"
+        },
+        "payload_count": 6
+      },
+      {
+        "name": "typing-extensions",
+        "version": "4.16.0",
+        "wheel": {
+          "url": "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl",
+          "hash": "sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8",
+          "size": 45571,
+          "upload-time": "2026-07-02T08:40:04.659Z"
+        },
+        "payload_count": 1
+      },
+      {
+        "name": "certifi",
+        "version": "2026.5.20",
+        "wheel": {
+          "url": "https://files.pythonhosted.org/packages/59/8c/57e832b7af6d7c5abe66eb3fbe3a3a32f4d11ea23a1aa7131371035be991/certifi-2026.5.20-py3-none-any.whl",
+          "hash": "sha256:3c52e209ba0a4ad7aebe60436a4ab349c39e1e602e8c134221e546902ad25897",
+          "size": 134134,
+          "upload-time": "2026-05-20T11:46:48.578Z"
+        },
+        "payload_count": 5
+      },
+      {
+        "name": "truststore",
+        "version": "0.10.4",
+        "wheel": {
+          "url": "https://files.pythonhosted.org/packages/19/97/56608b2249fe206a67cd573bc93cd9896e1efb9e98bce9c163bcdc704b88/truststore-0.10.4-py3-none-any.whl",
+          "hash": "sha256:adaeaecf1cbb5f4de3b1959b42d41f6fab57b2b1666adb59e89cb0b53361d981",
+          "size": 18660,
+          "upload-time": "2025-08-12T18:49:01.46Z"
+        },
+        "payload_count": 7
+      },
+      {
+        "name": "h11",
+        "version": "0.16.0",
+        "wheel": {
+          "url": "https://files.pythonhosted.org/packages/04/4b/29cac41a4d98d144bf5f6d33995617b185d14b22401f75ca86f384e87ff1/h11-0.16.0-py3-none-any.whl",
+          "hash": "sha256:63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86",
+          "size": 37515,
+          "upload-time": "2025-04-24T03:35:24.344Z"
+        },
+        "payload_count": 12
+      },
+      {
+        "name": "sniffio",
+        "version": "1.3.1",
+        "wheel": {
+          "url": "https://files.pythonhosted.org/packages/e9/44/75a9c9421471a6c4805dbf2356f7c181a29c1879239abab1ea2cc8f38b40/sniffio-1.3.1-py3-none-any.whl",
+          "hash": "sha256:2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2",
+          "size": 10235,
+          "upload-time": "2024-02-25T23:20:01.196Z"
+        },
+        "payload_count": 6
+      }
+    ],
+    "httpx_and_httpx2_reference_same_idna_module": true
+  },
+  "uv_validation": {
+    "version": "0.11.29",
+    "resolved_packages": 259,
+    "command": "uv lock --check --offline --no-build --no-python-downloads --python .venv/Scripts/python.exe --no-progress",
+    "before": "PASS",
+    "after": "PASS",
+    "offline_dry_upgrade": "Failed from absent certifi metadata in fresh cache for another Python fork; preserved, not behavioral RED",
+    "record_method": "Exact frozen-release idna record, other records and top-level fields equal; no broad regeneration or sync"
+  },
+  "codegraph": {
+    "version": "1.6.0",
+    "files": 9191,
+    "nodes": 198804,
+    "edges": 627599,
+    "pending_changes": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "index": {
+      "builtWithVersion": "1.6.0",
+      "builtWithExtractionVersion": 25,
+      "currentExtractionVersion": 25,
+      "reindexRecommended": false,
+      "state": "complete",
+      "pendingRefs": 0
+    }
+  },
+  "independent_review": {
+    "status": "APPROVED_SCOPED",
+    "binding": {
+      "path": "tmp/probes/v04-idna-20261016/reviewer-final-20261016/approval.json",
+      "sha256": "5b5990b9bba4d04c81989bafc81caa1b4629163f9e1279f9bda8d0391b43397d"
+    },
+    "final_source_pins": {
+      "uv.lock": "bfd6c974796206cad6e29ab83dbdf553c200cfaf76821c574d666716407ea726",
+      "pyproject.toml": "43a16a1bc21d672a35c2551f6c52cf3b9a98dc6d4f683543aa31a19ca324cd78",
+      "tests/tools/test_idna_http_stack.py": "fcf96df7f1a97ad4bf85b40afe5b118f5b0eacd0d12cf9ee19adfc5312e80b2d",
+      "tests/tools/test_url_safety.py": "f88ada131f2ea018f6406c49529e62c094183ed7076269594ee78f7334737ccc",
+      "tests/tools/test_mcp_redirect_header_boundary.py": "74d4c4d9cc75d4b7b9fd31dd9a41ad7e6e8006fdae55c6d47a82b3c63fb9e209",
+      "tools/url_safety.py": "3eb0e875a5baf2eaf459cddf1f934f6eed182dfbb0354b9ee2706c4287c99636",
+      "tools/mcp_tool.py": "6deb4568cb0a487e923d67d482f9b559d190d47c83d09b5e58519b0f3ab9495f",
+      "tools/mcp_oauth_manager.py": "e96e4c8cacf937964aca1dc6f6c802837439d7d75a4141d2ba2d28c64f3eaa8f",
+      "tools/mcp_oauth.py": "3ad0d5af28de7ee2771fa139fe2dc861a6c6be808bbdf66de50bb046e663d678",
+      "tools/mcp_oauth_provider.py": "bc467202dab1aaab3f51cca712f3290505064fc19f35b245306c944801a5ebde",
+      "tools/mcp_oauth_state.py": "18eea2b7f0e1717c093ebcede040b637d2fa0571a9315d6dbd631ff1a7ee17a2"
+    },
+    "independent_green": {
+      "tests": 48,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "paired_oracle_mutants": [
+      {
+        "consumer": "httpx",
+        "tests": 4,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "detected_by": "test_unicode_url_consumers_keep_the_same_ascii_wire_hostname[\\u4f8b\\u3048.test-xn--r8jz45g.test-\\u4f8b\\u3048.test-httpx]",
+        "xml_sha256": "248834e6560b126f3ca2cfa4cbc8252c81b7d19eb145359a8ce0b1b7825f736b"
+      },
+      {
+        "consumer": "httpx2",
+        "tests": 4,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "detected_by": "test_unicode_url_consumers_keep_the_same_ascii_wire_hostname[\\u4f8b\\u3048.test-xn--r8jz45g.test-\\u4f8b\\u3048.test-httpx2]",
+        "xml_sha256": "a5b89d3878d0f0562e41b6d9ea07287ccbfcfe1c5bdcdc0fa8b4f098a81e7daf"
+      },
+      {
+        "consumer": "requests",
+        "tests": 4,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "detected_by": "test_unicode_url_consumers_keep_the_same_ascii_wire_hostname[\\u4f8b\\u3048.test-xn--r8jz45g.test-\\u4f8b\\u3048.test-requests]",
+        "xml_sha256": "01fb2048ab766b973adb5f9df0449b6d8437bc109fa351b93706a3c2706bd74e"
+      },
+      {
+        "consumer": "yarl",
+        "tests": 4,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "detected_by": "test_unicode_url_consumers_keep_the_same_ascii_wire_hostname[\\u4f8b\\u3048.test-xn--r8jz45g.test-\\u4f8b\\u3048.test-yarl]",
+        "xml_sha256": "2a5c75b6f58ee5c2b538674244887ea049793375ebbafe92fcd7e543566ff7b5"
+      }
+    ],
+    "documentation": {
+      "path": "docs/windows/v0222-release-baseline-20261015/V04_IDNA_ALIGNMENT.md",
+      "sha256": "aaed050fdd42caf82604ec98645d7e8a42dcd4b520957550b6f253a21e47c95f",
+      "review": "No material overclaim or contradiction found; named subset, unassessed later release and open campaign explicitly scoped"
+    },
+    "resolved_finding": {
+      "status": "RESOLVED",
+      "issue": "Shared encoder/decoder as hostname oracle",
+      "historical_test_hashes": [
+        "bd2367ae52e1bb614de4636844ed36b5f0d1b0b9e3d2436c0fb8e22e281e73da",
+        "853cef6fa6fac63a5326780ec22e1f9039919b13c1c2420ef42402fa13fb5bd7"
+      ],
+      "accepted_final_test_hash": "fcf96df7f1a97ad4bf85b40afe5b118f5b0eacd0d12cf9ee19adfc5312e80b2d"
+    }
+  },
+  "evidence": [
+    {
+      "path": "tmp/probes/v04-idna-20261016/qualified-final/verification.json",
+      "sha256": "c72fbecb7e90587dd8f199053c911feedb281c1549cf61533b769cc20cc0865c"
+    },
+    {
+      "path": "tmp/probes/v04-idna-20261016/qualified-red-final/verification.json",
+      "sha256": "268be33e8c4d51f1fcc2de5a940fd514340dd2a74b50a73f6af3782b2ee655c5"
+    },
+    {
+      "path": "tmp/probes/v04-idna-20261016/mutation-final-result.json",
+      "sha256": "f19de9e2766a4dd770fdb1a799333062be34914f78cfe9b972d8ae703f2a2ac8"
+    },
+    {
+      "path": "tmp/probes/v04-idna-20261016/stack-proof.json",
+      "sha256": "597063c5ddae1189e7327feeb778f722615593a8d186bdcfffe068b1ed8e89eb"
+    },
+    {
+      "path": "tmp/probes/v04-idna-20261016/base-packages-before.json",
+      "sha256": "476a5513e33105192f5360d257471844149dcb29b70c8ded1b01d2b24740ddc2"
+    },
+    {
+      "path": "tmp/probes/v04-idna-20261016/preservation-final.json",
+      "sha256": "789236b8d44aa49c14928bf36c4c1b6b099f4d8b3b38799c6aac8134c5f2f9dc"
+    },
+    {
+      "path": "tmp/probes/v04-idna-20261016/codegraph-status-final.json",
+      "sha256": "d9f40e73c0b0475c4b2a14028717e6d12ff7304f507c7530b44e29c3961e2548"
+    },
+    {
+      "path": "tmp/probes/v04-idna-20261016/codegraph-final-owner.json",
+      "sha256": "ec89e82629f2603619213c29e8a86987b836270209322f31016abfca8873428e"
+    },
+    {
+      "path": "tmp/probes/v04-idna-20261016/uv-check-before.log",
+      "sha256": "89593ba7bd0c82fc486b28ee7231bede5318fdad194b3d258685e83ba8bccc68"
+    },
+    {
+      "path": "tmp/probes/v04-idna-20261016/uv-check-after.log",
+      "sha256": "d5b271c5bedaf787ae4f73fdf3ff60992ef2f7fddc531d815ccd0bafdf9b6dcb"
+    },
+    {
+      "path": "tmp/probes/v04-idna-20261016/uv-dry-run.log",
+      "sha256": "332cc02f5974e1f536559fef7b200bad7018e7eeb67a1561310b202c739064a8"
+    },
+    {
+      "path": "tmp/probes/v04-idna-20261016/reviewer-final-20261016/receipt.json",
+      "sha256": "f5e8c3c4cc1a1b384762f5f9f5da9db72a4f5edb4b26c5349dbdf01ab9b8d25d"
+    }
+  ],
+  "residuals": [
+    "Full V04 dependency closure/security review",
+    "Later idna3.20 incremental-codec changes unassessed; no latest/security-support claim",
+    "Remaining original U01-U18 and retained slices",
+    "V03 semantic history dispositions",
+    "V05 remaining acceptance gates",
+    "Eight-hour soak and three actual sleep/resume cycles unavailable without dedicated Windows environment",
+    "Whole campaign build/release acceptance"
+  ],
+  "local_commit_hook": "Stale shared launcher unchanged; LEFTHOOK=0 for this commit only; hook not claimed passed",
+  "production_changes_or_push": false,
+  "created_utc": "2026-10-15T22:14:52.585352+00:00"
+}

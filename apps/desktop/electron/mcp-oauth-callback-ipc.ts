@@ -42,6 +42,7 @@ interface CallbackResult {
   code: null | string
   error: null | string
   state: null | string
+  iss?: null | string
 }
 
 interface PendingListener {
@@ -112,6 +113,7 @@ export function registerMcpOauthCallbackIpc() {
       let code: null | string = null
       let state: null | string = null
       let error: null | string = null
+      let iss: null | string = null
 
       try {
         const parsed = new URL(url, 'http://127.0.0.1')
@@ -119,11 +121,12 @@ export function registerMcpOauthCallbackIpc() {
         code = parsed.searchParams.get('code')
         state = parsed.searchParams.get('state')
         error = parsed.searchParams.get('error')
+        iss = parsed.searchParams.get('iss')
       } catch {
         error = 'unparseable callback URL'
       }
 
-      settle(id, { code, error, state })
+      settle(id, { code, error, state, iss })
     })
 
     await new Promise<void>((resolve, reject) => {

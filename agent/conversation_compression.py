@@ -688,6 +688,9 @@ class CompressionCommitFence:
         # not killed by a fixed wall-clock deadline while tokens are moving.
         self._last_progress = time.monotonic()
         self._progress_observed = False
+        self._progress_closed = False
+        # Progress closing settles callbacks without waiting for a durable commit.
+        self._progress_lock = threading.Lock()
         self._deadline: float | None = None
         self._retain_cancelled_lock_until_worker_done = False
         if total_ceiling_seconds is not None:
@@ -696,19 +699,71 @@ class CompressionCommitFence:
     def set_total_ceiling_seconds(self, seconds: float) -> None:
         """Arm the wall-clock deadline shared by the host and worker."""
         seconds = float(seconds)
-        if seconds <= 0:
+        if not math.isfinite(seconds) or seconds <= 0:
             raise ValueError("total compression ceiling must be positive")
         self._deadline = time.monotonic() + seconds
+
+    @property
+    def deadline_monotonic(self) -> float | None:
+        """The original attempt's shared, possibly extended absolute deadline."""
+        return self._deadline
+
+    def remaining_total_seconds(self) -> float:
+        """Remaining shared budget; an unarmed fence has no total limit."""
+        deadline = self._deadline
+        return max(0.0, deadline - time.monotonic()) if deadline is not None else float("inf")
+
+    def extend_deadline(self, seconds: float) -> bool:
+        """Credit measured reading without reviving a closed/expired attempt."""
+        if not self._progress_lock.acquire(blocking=False):
+            return False
+        try:
+            if (not isinstance(seconds, (int, float)) or isinstance(seconds, bool)
+                    or not math.isfinite(seconds) or seconds <= 0
+                    or not self._lock.acquire(blocking=False)):
+                return False
+            try:
+                now = time.monotonic()
+                if (self._cancelled or self._admission_revoked or self._progress_closed
+                        or self._commit_started or self._deadline is None
+                        or now >= self._deadline):
+                    return False
+                self._deadline += seconds
+                return True
+            finally:
+                self._lock.release()
+        finally:
+            self._progress_lock.release()
+
+    def close_progress(self) -> None:
+        """Permanently retire this attempt's captured progress callbacks."""
+        with self._progress_lock:
+            self._progress_closed = True
 
     def touch_progress(self) -> None:
         """Record forward progress (e.g. a streamed summary token arriving).
 
         Called from the compression worker thread; read by async waiters via
-        :meth:`seconds_since_progress`. A bare float store is atomic in
-        CPython, so no lock is needed.
+        :meth:`seconds_since_progress`. Never wait behind commit/cancellation,
+        and never let a detached or closed attempt publish late activity.
         """
-        self._last_progress = time.monotonic()
-        self._progress_observed = True
+        if not self._progress_lock.acquire(blocking=False):
+            return None
+        try:
+            if not self._lock.acquire(blocking=False):
+                return
+            try:
+                now = time.monotonic()
+                if (self._cancelled or self._admission_revoked or self._progress_closed
+                        or self._commit_started
+                        or (self._deadline is not None and now >= self._deadline)):
+                    return
+                self._last_progress = now
+                self._progress_observed = True
+            finally:
+                self._lock.release()
+        finally:
+            self._progress_lock.release()
 
     @property
     def progress_observed(self) -> bool:
@@ -1525,7 +1580,7 @@ def run_compress_context_with_progress_timeout(
     try:
         while True:
             waited = time.monotonic() - wait_started
-            remaining_ceiling = ceiling - waited
+            remaining_ceiling = fence.remaining_total_seconds()
             if remaining_ceiling <= 0:
                 break
             # #76354 S3 analogue for this wait: charge the idle budget from
@@ -1541,12 +1596,16 @@ def run_compress_context_with_progress_timeout(
                 handled_exit = True
                 return result
             except concurrent.futures.TimeoutError:
+                # Future.result also propagates a worker's TimeoutError. A
+                # settled worker cannot make further progress; take fallback.
+                if future.done():
+                    break
                 waited = time.monotonic() - wait_started
                 since_progress = fence.seconds_since_progress()
                 if (
                     not fence.deadline_exceeded
                     and since_progress < idle
-                    and waited < ceiling
+                    and fence.remaining_total_seconds() > 0
                 ):
                     logger.info(
                         "Context compression still streaming after %.0fs "
@@ -1564,7 +1623,7 @@ def run_compress_context_with_progress_timeout(
         future.cancel()
 
         total_exhausted = (
-            time.monotonic() - wait_started >= ceiling or fence.deadline_exceeded
+            fence.deadline_exceeded
         )
         if total_exhausted:
             # A total-ceiling candidate can still be unwinding a healthy
@@ -1653,6 +1712,8 @@ def run_compress_context_with_progress_timeout(
                     handled_exit = True
                     return result
                 except concurrent.futures.TimeoutError:
+                    if future.done():
+                        raise
                     # Fence progress (commit-phase touch_progress) is
                     # informative only — the commit must complete regardless;
                     # loop and re-report with the updated overrun window.
@@ -2242,8 +2303,11 @@ class _CompressionActivityHeartbeat:
         # A new compression episode always republishes agent.compression even
         # if a prior timeout/cooldown stamp is still on the agent.
         self._suppressed = False
+        if self._stop.is_set() or self._should_suppress():
+            return self
         self._touch("context compression started", allow_terminal_overwrite=True)
-        self._thread.start()
+        if not self._should_suppress():
+            self._thread.start()
         return self
 
     def stop(self, desc: str = "context compression completed") -> None:
@@ -2280,6 +2344,8 @@ class _CompressionActivityHeartbeat:
         force_persist: bool = False,
     ) -> None:
         try:
+            if self._should_suppress():
+                return
             if not allow_terminal_overwrite:
                 if self._should_suppress():
                     return
@@ -2293,7 +2359,7 @@ class _CompressionActivityHeartbeat:
             if callable(touch):
                 # Re-check after reading provenance: host may cancel/stamp
                 # TIMEOUT between the earlier guard and the write.
-                if not allow_terminal_overwrite and self._should_suppress():
+                if self._should_suppress():
                     return
                 touch(
                     desc,
@@ -3982,8 +4048,13 @@ def compress_context(
                 )
                 compressed = messages
             else:
+                from agent.local_prompt_progress import prompt_reading_budget
+
                 with aux_progress_hook(_progress_hook), aux_interrupt_protection(
                     cancel_check=_compression_cancel_requested
+                ), prompt_reading_budget(
+                    commit_fence.extend_deadline if commit_fence is not None else None,
+                    (lambda: commit_fence.deadline_monotonic) if commit_fence is not None else None,
                 ):
                     compressed = compress_fn(messages, **compress_kwargs)
                     # Freeze a hard stop that arrived after the final provider
@@ -3996,6 +4067,7 @@ def compress_context(
                         raise AuxiliaryExplicitCancellation()
         finally:
             if commit_fence is not None:
+                commit_fence.close_progress()
                 _clear_compression_cancelled_check_if_owner(
                     agent.context_compressor, _attempt_generation
                 )

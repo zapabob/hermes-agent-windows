@@ -187,8 +187,14 @@ class TestAtomicSnapshotConcurrencyBehavioral:
     """
 
     def _run(self, script):
+        import os
         import subprocess
-        return subprocess.run(["/bin/bash", "-c", script], capture_output=True, text=True)
+        bash = "/bin/bash"
+        if os.name == "nt":
+            from tools.environments.local import _find_bash
+
+            bash = _find_bash()
+        return subprocess.run([bash, "-c", script], capture_output=True, text=True, timeout=180)
 
     def test_concurrent_writes_never_tear_the_snapshot(self, tmp_path):
         import shutil
@@ -196,7 +202,7 @@ class TestAtomicSnapshotConcurrencyBehavioral:
             import pytest
             pytest.skip("bash required")
         import shlex
-        snap = str(tmp_path / "hermes-snap-x.sh")
+        snap = (tmp_path / "hermes-snap-x.sh").as_posix()
         _q = shlex.quote
         _tmpl = _q(snap + ".tmp.XXXXXXXXXX")
         # One writer iteration = the exact atomic sequence _wrap_command emits.
@@ -235,7 +241,7 @@ class TestAtomicSnapshotConcurrencyBehavioral:
             import pytest
             pytest.skip("bash required")
         import shlex
-        snap = str(tmp_path / "snap.sh")
+        snap = (tmp_path / "snap.sh").as_posix()
         _q = shlex.quote
         self._run(f"echo 'export GOOD=1' > {_q(snap)}")  # seed good snapshot
         # Redirect export into an unwritable dir so the export side fails; mv
@@ -260,6 +266,9 @@ class TestSnapshotFileModes:
         import shutil
         import stat
         import subprocess
+        if os.name == "nt":
+            import pytest
+            pytest.skip("POSIX st_mode permission bits do not establish NTFS ACL permissions")
         if not shutil.which("bash"):
             import pytest
             pytest.skip("bash required")

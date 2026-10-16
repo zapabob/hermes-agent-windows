@@ -13,6 +13,17 @@ export interface McpTestResult {
   resources?: number
 }
 
+export interface McpSaveResult {
+  ok: boolean
+  /** Older backends omit the acknowledgement; do not claim live admission
+   *  enforcement from a successful config write alone. */
+  application?: {
+    policy_check: 'rpc_admission'
+    catalogue: 'new_session_or_explicit_reload'
+    admitted_calls: 'may_complete'
+  }
+}
+
 export interface McpOAuthFlow {
   flow_id: string
   server_name: string
@@ -39,8 +50,8 @@ export function testMcpServer(name: string, profile?: ProfileScope): Promise<Mcp
 export function saveMcpServers(
   servers: Record<string, Record<string, unknown>>,
   profile?: ProfileScope
-): Promise<{ ok: boolean }> {
-  return window.hermesDesktop.api<{ ok: boolean }>({
+): Promise<McpSaveResult> {
+  return window.hermesDesktop.api<McpSaveResult>({
     ...capabilityScoped(profile),
     path: '/api/mcp/servers',
     method: 'PUT',
@@ -132,8 +143,8 @@ export function removeMcpServer(name: string, scope?: ProfileScope): Promise<{ o
   })
 }
 
-export function setMcpServerEnabled(name: string, enabled: boolean, scope?: ProfileScope): Promise<{ ok: boolean }> {
-  return hermesApi<{ ok: boolean }>({
+export function setMcpServerEnabled(name: string, enabled: boolean, scope?: ProfileScope): Promise<McpSaveResult> {
+  return hermesApi<McpSaveResult>({
     ...capabilityScoped(scope),
     path: `/api/mcp/servers/${encodeURIComponent(name)}/enabled`,
     method: 'PUT',

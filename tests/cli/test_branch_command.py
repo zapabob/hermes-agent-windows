@@ -43,6 +43,7 @@ def cli_instance(tmp_path, session_db):
     cli.session_start = datetime.now()
     cli._pending_title = None
     cli._resumed = False
+    cli._agent_running = False
     cli.agent = None
     cli.conversation_history = [
         {"role": "user", "content": "Hello, can you help me?"},

@@ -1,0 +1,880 @@
+{
+  "schema_version": 1,
+  "family_ids": [
+    "M03"
+  ],
+  "lane": "MCP",
+  "status": "APPROVED_M03_BOUNDED_CONTENT_FOR_LOCAL_COMMIT",
+  "bounded_acceptance": true,
+  "independent_review": {
+    "status": "APPROVED_M03_BOUNDED_CONTENT_FOR_LOCAL_COMMIT",
+    "review_record": "tmp/probes/v0216-20261010/evidence/m03-independent-final-review-v2.json"
+  },
+  "scope": "Bounded issuer relay, profile/session authority, Gateway admission-aware cancellation and actual dev Electron effects.",
+  "parent": "3ab298018926b7846e8ef7fb3dc2abe2226a957b",
+  "contract": "M03-mini-plan.md",
+  "frozen_upstream": "818c13be1dc4fd28987e1e881a9408224afd4535",
+  "protected_d_base": "606f7e557c13a0789a2420f7adf6181becf60d75",
+  "source": {
+    "apps/desktop/electron/main.ts": "ed479c3b21e72a7509e5ff4a5bc0a9f9af7c926110b0c9e28f10e1f22dfb5128",
+    "apps/desktop/electron/mcp-oauth-callback-ipc.ts": "6c8013fa03679395e688e5488e450dc6b00dff57237fa3a2b675e27090ddce90",
+    "apps/desktop/src/global.d.ts": "a4aeb29e8d8132a163fb5ef9bde8719cadfab65c884de4b3d8eeaefa42c0461c",
+    "hermes_cli/web_routers/mcp.py": "80628cbce9d5365c7a94d59391e720b157327f54edc5ee14868936ec06a4f534",
+    "tests/hermes_cli/test_mcp_dashboard_oauth.py": "ef8f82ce01e60dbdd888a20897e6b7ddeda73970d9ce840803eaad15f75d07cf",
+    "tests/tools/test_mcp_dashboard_oauth.py": "4d6f545e9ffdb5c2678cac8217200bbd50b54a2934268f670af14d5850b9b167",
+    "tests/tui_gateway/test_mcp_oauth_client_callback.py": "c4546a0df9025a82566b7def2dae3729d8ab70ff745e5f5ede98aeeba1b064db",
+    "tools/mcp_dashboard_oauth.py": "aa297e12e4be68eb062425242f74c29702d6021b9cb9efc5c6bd8ccf5e36fa85",
+    "tools/mcp_oauth.py": "f194aefcad8142e460fc374e94f7513d960e25fab3d488cbe6e6dcfb9b54ed33",
+    "tui_gateway/mcp_oauth_sessions.py": "7f0e71e00010e9e98aaff1f940bbc90cb0fd2a294477ca9f11c00b7bc973587e",
+    "tui_gateway/methods_tools.py": "8fd5f6f9bf50fc6fe2bc07b5fb91c1e6643494854287141a37040515815f81f9",
+    "tests/fakes/mcp_oauth_issuer.py": "c2b9f1e3b053344be405f59979929939161bdfd11f876ae9ec4356758f4914db",
+    "tests/fakes/mcp_oauth_gateway.py": "141da952ba25ddf81e39503728449085e7555ee0c1423e0606becb64073aeed7",
+    "tests/tui_gateway/test_mcp_oauth_sdk_contract.py": "23eab48357e2d45ec24adb308ebbee87c9c0a8c2848abca1188a580733c8da5c",
+    "tests/fakes/mcp_oauth_admission.py": "7d3d6ffe39a6b22dbd000ef16113ef53ded83277da53706977cb0121d91f2fd1",
+    "tests/tui_gateway/test_mcp_oauth_admission_edges.py": "0b13f7770afb08009d22bc99d16c2f79c42520dc052f42f70fc02b65500a13f6",
+    "tests/tui_gateway/test_mcp_oauth_relay_authority.py": "f83bba724ee463987149a64c289ee0068229674438b545d4675af5984d3a1640",
+    "tests/tools/test_mcp_oauth_cli_issuer_presence.py": "c6bca8fdb9be9fc98e2c974a5d8947c10b3a6f96eca114c38a50a77b8d479fbc",
+    "tests/tui_gateway/test_mcp_oauth_native_cancellation.py": "1204141ec83b1d46b5d2fd4bf8da734a258f75f0d1e9ca1e17d9c5e8c0f1b624",
+    "tests/hermes_cli/test_mcp_oauth_rest_sdk_contract.py": "09e2c86010409e141135989edc0576e86a209c4d2f9e0bfdd31b27f6531e9ee9",
+    "tests/tui_gateway/test_mcp_oauth_persistent_retry.py": "12d1c8d910c8598121e4eb25615eed70000e3b1046bfa87911b4c5648cf1540f",
+    "tests/tui_gateway/test_mcp_oauth_admission_races.py": "4b2e8bb7d7d15c9ab750845fcbc69ee25e216363ee679b39e272d21f0600db02",
+    "tests/tui_gateway/test_mcp_oauth_cleanup_uncertainty.py": "4ef86ab388c4250727cecab5242169c0921f6095c55f7a6ef36e79fb8945ccd0",
+    "tests/tui_gateway/test_mcp_oauth_resource_lifecycle.py": "429f74e9dc6a81fe04580ab456f2e1d62a29ad60be2397f962b4a18098150273",
+    "tests/tui_gateway/test_mcp_oauth_anonymous_rejection.py": "73d9178e9a935876723c07ef5612789a4bc15a6cbed9e2ac833291d1a3a690c4",
+    "tests/tui_gateway/test_mcp_oauth_cold_process_contract.py": "0a8e6810b92fd7eb6c6831f49c838ba9dcf6e387edbc38cce6afd092428cb377",
+    "tests/fakes/mcp_oauth_cold_child.py": "0c2e500c300563ec9170469ab7237e475fce9eb8063b65cf757e9c43176bcd25",
+    "apps/desktop/e2e/mcp-oauth.spec.ts": "9e7475f5adf73763327ee4f249c742616dd0070f237da02a7ed8ce09e90d26d1",
+    "apps/desktop/e2e/mcp-oauth-issuer.py": "3737dd499edc08ea01f19bb94afb2d93da1736741fcace46e2e9785946c02e92",
+    "docs/windows/windows-native-v0216-semantic-20261010/M03-mini-plan.md": "7953fdea1a4873c4c30752d074b9c70a39c9c953bce5e23f8bf6409b6653bce0",
+    "docs/windows/windows-native-v0216-semantic-20261010/open-leads.md": "2483491d7a736fe94cd36554a5a8db4c90009dc523d1668d3513d6949c20a3ad"
+  },
+  "source_digest": "831dea66db737566bdd6f8f148443d8f2f851d7089ec4e21402411c0db55ce3f",
+  "source_counts": {
+    "changed_existing": 11,
+    "new_durable_tests_and_fakes": 18,
+    "contract_and_log": 2
+  },
+  "whole_input_counts": {
+    "owners": 13,
+    "support": 48,
+    "fixed_probes": 14,
+    "durable": 18,
+    "root_tested_build": 384
+  },
+  "unchanged_owners_and_locks": {
+    "tools/mcp_tool.py": "e8ab14a41c12d4996e0e8dc7ef494d9dd472f393f6b926d15b6de61267d51b82",
+    "tools/mcp_oauth_provider.py": "b1e22104faa784c488851c663844e9e71feefc7f50e5d1cb35b0b608d1a4c03c",
+    "tools/mcp_oauth_manager.py": "6c917252bc36ef3006a3d2aff1d8c2eb095859a3538a846e3b44f47d803e0125",
+    "tools/registry.py": "f95d011cae75f0426dd77cb1e25df6bebb61a067d795312df297cb877dd616f5",
+    "tools/mcp_stdio_watchdog.py": "b8607fbf4b63cf01658fbbb5657752848617954113f38cc9eb0938c8119f79fc",
+    "tools/mcp_schema_cache.py": "e24f2bdb98a1aa11bc21f8fc800a2723b2bf2d0e97704bc5323df187c17a8c7f",
+    "tools/mcp_tool_scope.py": "9d493f8c3e16a5b3ffa2a1b7c2362e2b12ea370ba8dfdeb42d1929cef66cfd37",
+    "tui_gateway/server.py": "c00eac79e016eb39b7cf72faf1a7e9afa38443a6419b6f82ee192c3019dfa7b4",
+    "tui_gateway/mcp_rpc_helpers.py": "cd99826bf07b23bfc39cbef1a61376642258d597e45d2e937f66e18d3950d3e7",
+    "tui_gateway/methods_config.py": "9b78b1a9effb4fa1ff431638e88a315e0b3044499a42bdd412e0f40b565c15e8",
+    "hermes_cli/web_server.py": "b8095d418f671c08b44c2fbe4b0dca7ba5ee83ef24b660aefa8013b9462cfc5a",
+    "hermes_cli/web_deps.py": "9b7b53a502063122e73cf551b4d877e7a3ceef4b990fa2e36354798d0bb29eb5",
+    "hermes_cli/web_models.py": "9e69ec698ce26592169f83569ffdd40ff0b478af56d1303289cf7ea0d26f9cd0",
+    "hermes_cli/mcp_config.py": "964c4a8f22b04f1514052ef422d2e396dec9b9214f75403ba05a8fa210f48acd",
+    "hermes_cli/profiles.py": "e813f2a0d20ab67cf3d4c98b08fdbb5d1e042c40e4d7b83292324ac878ae3702",
+    "agent/secret_scope.py": "51d91d280ef05d59c0c450dbfaecd6f50b314a4ff75614cb23b5288a308c645d",
+    "hermes_constants.py": "70e75092fd443e586b4a344e8043f8020c84de7e2c7684c9c3a2880778d1a0aa",
+    "apps/desktop/src/lib/mcp-dashboard-oauth.ts": "64a495bb0eb025f37f9e015d744701f9d8f308fffb6d1d52b68695d0ff930cdb",
+    "apps/desktop/electron/preload.ts": "872ec16e8f85e6cb3a60c6c6b79f36588d116e68f7c285a9aa0f9805262d3aaf",
+    "model_tools.py": "b24d49678cde1e2f12e0fbe5ed84ad34e0170a36376ebde1e952640222cfb0de",
+    "toolsets.py": "7f919448de649d119b603bcff22e44c31c408ebf37e432d72a65b880e63ac4bf",
+    "agent/prompt_builder.py": "fb1b1b2728372bf397ee5b0c50972e8ff9d91b74d68547e4051fa75f3deff983",
+    "pyproject.toml": "43a16a1bc21d672a35c2551f6c52cf3b9a98dc6d4f683543aa31a19ca324cd78",
+    "uv.lock": "45487f72f5fe438fd90f1c0839b83b747e6abfa37110e2e3305b54bc1cac601b",
+    "package.json": "dee5e3652ec78c2cc284b0a39a9a6b5a80b4ebf375177d995f18d70272c2db51",
+    "package-lock.json": "f4f7ca7cff4f371a46fd266bd0739c154e33298b50511e0d4003e70504296fe4",
+    "pnpm-lock.yaml": "0ffbf6a74d8b01b0f1c4d62f002a9de7d09527a1a5edab5d1ab26fd88ef5660e",
+    "apps/desktop/package.json": "cbc34763310fe110e99386afa2d55834c9386ca8ff3a7af6521f12ac98d916a2",
+    "apps/desktop/vite.config.ts": "0aee25e989c15752d9eec1a3855ed1b50e5b2ed29f2ceeb81b6a622814b616aa",
+    "tests/conftest.py": "9780ba549bf6fb746ff08fc3ea793b9593fa636c13ee7f61537052082d7020b8",
+    "apps/desktop/e2e/app-env.ts": "316c83e3d86d22008b769205febce2f0cf10d7c37e2c79adf7677b6e098dade0",
+    "apps/desktop/e2e/app-env.unit.test.ts": "35a6ca286e0f182580366077aa20cdd8c29f6e65598ebf969e7495df47a12c54",
+    "apps/desktop/e2e/at-rest-connection-token.spec.ts": "1c630d8fd31903a011b30cd16be5faf44312342bfb070ac4a1fc9a53041faa52",
+    "apps/desktop/e2e/backend-skin-wallpaper.spec.ts": "6e87af529a7f7fca56bb0557bc12e8a6b8c0a2659715e013d03d7c0fd48787ba",
+    "apps/desktop/e2e/batch-clarify.spec.ts": "8ca059a5a352e8f1ae99a5491992296cac36e4c8cd5892c20b025cf977bc316b",
+    "apps/desktop/e2e/boot-failure.spec.ts": "b69182bce205fe0d4c5fe3dc3e936912e7d288a7f30ee1fc1437d3feae941344",
+    "apps/desktop/e2e/boot.spec.ts": "bc384347024a6115e24e24bcd9487138618f29dfdfd4292285b620525d086940",
+    "apps/desktop/e2e/chat.spec.ts": "e81f29549452d801b1d885555610eae93906a50a78d2795ee0aab87659f9fded",
+    "apps/desktop/e2e/context-menu-editables.spec.ts": "2b05aba54b552a90a3caf9f920754d22141e6d88aaa64f16f0fd716d91619cd2",
+    "apps/desktop/e2e/correction-session-switch.spec.ts": "bdb183633412db3e24d9024de58dd368a1f300087e29dcd19cfb892d6b4e37fb",
+    "apps/desktop/e2e/electron-binary.ts": "dbeb4c4272d7522c47e48158d788d1ce693eef22bc1f8d6e4ebdc8310b3e934f",
+    "apps/desktop/e2e/electron-binary.unit.test.ts": "7571fc73792ae43d6be27d040227f6f6ad9945919a508e42d2f0d32ea134069d",
+    "apps/desktop/e2e/fix-electron-tracing.ts": "0fdb30dda1f0a7442488db0abf9d7e7a4f1003d71fd84839a6b8dbd328e54284",
+    "apps/desktop/e2e/fixtures.ts": "3c25389a6e095dae9b7515aad96cbc31c1310a0af56b258bcddbe7dec6f2862d",
+    "apps/desktop/e2e/fixtures.unit.test.ts": "5f840601a7455ae7e16f83882c76bb42768358681fdc448f489f976e72b45494",
+    "apps/desktop/e2e/fleet-profile-rail.spec.ts": "fd5164afd58a744a131edc1f5ebcd8a01c4bc80450239627f145066d844c3bdc",
+    "apps/desktop/e2e/git-history.spec.ts": "254bd65cfb01c86720b5beca43056d8921949be2cc8e62d2f89e97f54162eeb6",
+    "apps/desktop/e2e/glyph-spinner.spec.ts": "a0267426bf1310d1866936b7ea7000e6beb3a374a700b146c86fc0c7f77be8fc",
+    "apps/desktop/e2e/group-to-local-bot-handoff.spec.ts": "ede653a83faeb1c17b3a53c891c27f3ed0dbe395841f7f676c519eff0a59d708",
+    "apps/desktop/e2e/hidden-history-messages.spec.ts": "f1bbe1209227f2dadbe48b2350058acd92c8a211c1013770ed0c94f0606b9806",
+    "apps/desktop/e2e/image-attachment-resume.spec.ts": "b8fb68b69ef3b1969fc08af3bc98855574feeb3228737424ffd0356e8234c042",
+    "apps/desktop/e2e/interim-messages.spec.ts": "5c99909ec61697d61e26dbb55a1730ae49c755701975844e67843128f8deb18e",
+    "apps/desktop/e2e/large-session-resume.spec.ts": "e9b2306ffb54cf5c9153cf362cb1b375390a130e747d94e8b98503bd83a7bddb",
+    "apps/desktop/e2e/launch-packaged-app.spec.ts": "fb55e5092141f0fce8ec952ffb23115dd85ae1f2b0c8cb7d40b2e988e71f8b48",
+    "apps/desktop/e2e/mcp-saved-policy.spec.ts": "0044264f320e1058fbd6286d0951a334adf51da08d86ade33c1cd40ef559d6a8",
+    "apps/desktop/e2e/mock-backend-setup.spec.ts": "fc3152c7bef156d249e1cc52bed68aa49794f60617f43a9819ebc888dd44e6bb",
+    "apps/desktop/e2e/mock-server.ts": "a9952b1526332ef69eaaef1b53ebfe64fdbcb5b791a924ff514b444c28d4e38a",
+    "apps/desktop/e2e/model-switch-consistency.spec.ts": "2d24de54f8c6f4c769700edf550954f63ec45555dd612908f2e6dd400902bb70",
+    "apps/desktop/e2e/onboarding.spec.ts": "2789c96927b5eefe90750dd04ec3f4a7da00c8ef65ac9ab888852f4d7dc28e03",
+    "apps/desktop/e2e/owned-process-observer.ts": "cf245b6edf7785f84f4316424d135b347d7fd8bf80df422c1d964dba78b09550",
+    "apps/desktop/e2e/owned-process-observer.unit.test.ts": "dab38d2bd018c2e37944693a79be6b8a61a9b8027e9213084379a33fbf8ec6cd",
+    "apps/desktop/e2e/queue-turn-boundary.spec.ts": "2e357a8d12ffaa12242d4f6c98e636ff9b7db1e41cb55d99b4649bb0a85d691f",
+    "apps/desktop/e2e/real-session-builder.ts": "814cfbbd47a5d448d8501f95f151e8e67f2543dac4fcbefc9792d72c708db242",
+    "apps/desktop/e2e/right-pane.spec.ts": "b08d18fc387d92827a2aa2aa5d2acb9d93df6e9402f3f641ac8c54495de0fc1b",
+    "apps/desktop/e2e/security-center.spec.ts": "3c83915ff891dc57dfaf849981e3c9fc51c9c71893bcce305f6feb5f21c77d66",
+    "apps/desktop/e2e/session-compression-and-queue-stop.spec.ts": "5194408e81bd4f4164a90643de20b0ff8e7c0b58ee41c88fad1eb01acd550916",
+    "apps/desktop/e2e/sidebar-states.spec.ts": "37c0f0d223a2862374c54dff3e3a3222f62720176142c652f766607e9fc56307",
+    "apps/desktop/e2e/steer-alias-contract.spec.ts": "db0b6dcc7a88dd5efeeb1276fd888c8b10e20b865319cff98ac17562a5252171",
+    "apps/desktop/e2e/submit-drift.spec.ts": "4aef167624d0a55551d86fa292a0d73be4bec46ffcaf00d782cb8d0062811aea",
+    "apps/desktop/e2e/task-panel-clearance.spec.ts": "3523eb1f1f64fcb100c46f7257d94a66ac37926db8878fc6c4d5c124faf2c9fb",
+    "apps/desktop/e2e/test.ts": "3f4bd0ef39662774870878ee0d203c7d196d845e346dfa15311cef1e45f8542d",
+    "apps/desktop/e2e/tile-unread-bug.spec.ts": "b637225ded80a660b4f6bdd0efcf0f524b09ea07dc0d745fec0d34bd1c082192",
+    "apps/desktop/e2e/unread-dot-restart.spec.ts": "792a68642517d27bf626a57ee82bd22c0c556fde6cb4b5ef75c2b46e67ba65f6",
+    "apps/desktop/e2e/visual-snapshot.ts": "81d482905460b35336d011616a5964343d3ce31e636a4d1799e7fb7d94fa704e",
+    "apps/desktop/e2e/warm-resume-jitter.spec.ts": "50e50db1af9303179c0f3a1c21282a8480b8a6711944b3739ffd9eed32205d86",
+    "apps/desktop/e2e/worktree-branch-status.spec.ts": "2c8f5e2bdc78551fc9977cc289166d49f1f6f205a34cd527eaedc0cfdc64f209",
+    "apps/desktop/e2e/zoom-preservation.spec.ts": "2be04c6b3aba2ef9efff2ad9b5f2a04292f413b4ec411094d3c1c4e791b2e059",
+    "apps/desktop/scripts/bundle-electron-main.mjs": "be3011c8fa89ae3c353e7c3011bfe6a67554ade69b85df144ecd5c0ff773c847"
+  },
+  "credit": [
+    {
+      "sha": "0f5dd5c46e72c67f09d61e7b998bee15c02c45ac",
+      "author": "Teknium",
+      "committer": "Teknium",
+      "behavior": "Native main-process MCP OAuth callback IPC registration.",
+      "command": {
+        "file": "tmp/probes/v0216-20261010/evidence/m03-frozen-native-ipc-credit-v1.json",
+        "sha256": "a56530f378bf35512f2dece79ea9912d7f637900e009b3cceeae656f5f1e1ff1",
+        "bytes": 1443
+      },
+      "log": {
+        "file": "tmp/probes/v0216-20261010/evidence/m03-frozen-native-ipc-credit-v1.log",
+        "sha256": "c505796b4a6432a1490e1db7ba927b3c39eec3e1bb7a1a4f675b237fa44ffb6b",
+        "bytes": 2876
+      }
+    },
+    {
+      "sha": "1a6503a5203c16d53a419674f448ef78cedcc599",
+      "author": "OOOOOAO",
+      "committer": "kshitij",
+      "behavior": "RFC9207 issuer field propagation through callback relays.",
+      "command": {
+        "file": "tmp/probes/v0216-20261010/evidence/m03-frozen-oauth-credit-v1.json",
+        "sha256": "0035ca159fc48f29032f0ae9f05d047c70f9ba33bc9c629ee8937fd65278ee5e",
+        "bytes": 1495
+      },
+      "log": {
+        "file": "tmp/probes/v0216-20261010/evidence/m03-frozen-oauth-credit-v1.log",
+        "sha256": "27dcc6f9008027cfc55dc2b88e06130c2e173bc14ce9764ce818dd900ad03a92",
+        "bytes": 5606
+      }
+    },
+    {
+      "sha": "0a37960b2e4c49282925763385f7d4896e8964d5",
+      "author": "finn763",
+      "committer": "Teknium",
+      "behavior": "In-place ended-flow remint; inspected and remains a separate required adoption boundary."
+    }
+  ],
+  "mutation": {
+    "distinct_python": 26,
+    "distinct_dev_electron": 3,
+    "actual_assertion_failures_across_variants": 59,
+    "failures_are_not_unique_cases": true,
+    "unchanged_original_function_parameter_ast_and_canonical_predicates": true,
+    "assertion_only": true,
+    "real_mutant_and_restored_codegraph": true,
+    "before_and_known_restored_green": true,
+    "cases": [
+      {
+        "id": "state-check-removed",
+        "owner": "tools/mcp_dashboard_oauth.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-relay-mutants-v2/receipt.json",
+          "sha256": "88ea438753d2d85784ebd2e9032f9bb9b4fd7cc8a06bd9f650416adff030d100",
+          "bytes": 1463489
+        },
+        "actual_assertion_failures": 1,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "fccd6b4c85e092a3175e1adb0e1d8dbb085d5b60bd2e07975fa6cd8f5fa4920c",
+        "restored_graph_sha256": "279ff619ebf53655ad7db4c6085a0a84423fa13cb5e7c9deca4f018e6b99dc6b"
+      },
+      {
+        "id": "rpc-home-removed",
+        "owner": "tui_gateway/mcp_oauth_sessions.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-relay-mutants-v2/receipt.json",
+          "sha256": "88ea438753d2d85784ebd2e9032f9bb9b4fd7cc8a06bd9f650416adff030d100",
+          "bytes": 1463489
+        },
+        "actual_assertion_failures": 4,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "01d21487a5649ac506e99a95a95f116e0ca4a0e398e8244126302f69d23ee608",
+        "restored_graph_sha256": "56b705e1caa66d388ed5f4c4c18c11271759f754307801159b28929f221650f1"
+      },
+      {
+        "id": "rest-home-removed",
+        "owner": "hermes_cli/web_routers/mcp.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-relay-mutants-v2/receipt.json",
+          "sha256": "88ea438753d2d85784ebd2e9032f9bb9b4fd7cc8a06bd9f650416adff030d100",
+          "bytes": 1463489
+        },
+        "actual_assertion_failures": 2,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "4e51145592007d605bcea48eba5e4b61066f6d11b92392d562b8c35f7f1a1737",
+        "restored_graph_sha256": "82685a5477e9288590bd64a9c81b6ee1d9f2ad4f61fb457a113899ef2a9857cc"
+      },
+      {
+        "id": "rpc-issuer-dropped",
+        "owner": "tui_gateway/methods_tools.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-relay-mutants-v2/receipt.json",
+          "sha256": "88ea438753d2d85784ebd2e9032f9bb9b4fd7cc8a06bd9f650416adff030d100",
+          "bytes": 1463489
+        },
+        "actual_assertion_failures": 3,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "39f59c947ddafa979406b1081894506babdf2c30c6b6e719a18503ca6b53285a",
+        "restored_graph_sha256": "2f678c19ff7a76104b5a1f534a319fd2bdc83b57811d30a8fc48005daeb6a568"
+      },
+      {
+        "id": "gateway-issuer-dropped",
+        "owner": "tui_gateway/mcp_oauth_sessions.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-relay-mutants-v2/receipt.json",
+          "sha256": "88ea438753d2d85784ebd2e9032f9bb9b4fd7cc8a06bd9f650416adff030d100",
+          "bytes": 1463489
+        },
+        "actual_assertion_failures": 2,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "284843ddf6fe865b4e62b11302e96b3aabe0aa079ec66d7a09a1ad465883126f",
+        "restored_graph_sha256": "8acc963284403a75624254030668de509555abfc03cf8b956931c0fabccc119c"
+      },
+      {
+        "id": "rest-issuer-dropped",
+        "owner": "hermes_cli/web_routers/mcp.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-relay-mutants-v2/receipt.json",
+          "sha256": "88ea438753d2d85784ebd2e9032f9bb9b4fd7cc8a06bd9f650416adff030d100",
+          "bytes": 1463489
+        },
+        "actual_assertion_failures": 1,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "067c26b7a68d6ff18d4025be99b2a01fbb31f3a5f6bec3441e2f9cfab9ae9d28",
+        "restored_graph_sha256": "365ed25def1b2f4efb36de37f143ea01f7fe51339da35d7da107e8e372215573"
+      },
+      {
+        "id": "shared-issuer-dropped",
+        "owner": "tools/mcp_dashboard_oauth.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-relay-mutants-v2/receipt.json",
+          "sha256": "88ea438753d2d85784ebd2e9032f9bb9b4fd7cc8a06bd9f650416adff030d100",
+          "bytes": 1463489
+        },
+        "actual_assertion_failures": 6,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "5c9c777b9a71f6a6f4c1b9500bc013f72ade25f7bc2270187b1cfbdea8a28950",
+        "restored_graph_sha256": "7ab5ed910868295f0b91ab4f43f9ead930ec1f71eb80227d73d915f1fe5fd4ba"
+      },
+      {
+        "id": "sdk-result-issuer-dropped",
+        "owner": "tools/mcp_oauth.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-relay-mutants-v2/receipt.json",
+          "sha256": "88ea438753d2d85784ebd2e9032f9bb9b4fd7cc8a06bd9f650416adff030d100",
+          "bytes": 1463489
+        },
+        "actual_assertion_failures": 6,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "7a35ae6cda0385cb712cccffa06dfb03e13e8fff9e24630d90c72fd4766ff0f2",
+        "restored_graph_sha256": "a71e0f42e04831c7580389e57a42751e9d8eed439e2c7961cae89254beefbceb"
+      },
+      {
+        "id": "cli-http-issuer-dropped",
+        "owner": "tools/mcp_oauth.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-relay-mutants-v2/receipt.json",
+          "sha256": "88ea438753d2d85784ebd2e9032f9bb9b4fd7cc8a06bd9f650416adff030d100",
+          "bytes": 1463489
+        },
+        "actual_assertion_failures": 3,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "11c20e31df8b5d19f4d20ca8f13ec4f5d760c1effe816bda85ba787ed0a1f4d8",
+        "restored_graph_sha256": "84e9701f68b36a8083bdf1aaec673c6f247224a2f5df896732ae5edf221dc63d"
+      },
+      {
+        "id": "cli-paste-issuer-dropped",
+        "owner": "tools/mcp_oauth.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-relay-mutants-v2/receipt.json",
+          "sha256": "88ea438753d2d85784ebd2e9032f9bb9b4fd7cc8a06bd9f650416adff030d100",
+          "bytes": 1463489
+        },
+        "actual_assertion_failures": 3,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "58be2293be8ad11093f54e7cbe9302c0b60a113026a8ba143114bc274b115e23",
+        "restored_graph_sha256": "37bc8462cea54ee2c60638e9fcc015bf00bc7d53f834340dbb9379e3338582d7"
+      },
+      {
+        "id": "cancel-noop",
+        "owner": "tools/mcp_dashboard_oauth.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-relay-mutants-v2/receipt.json",
+          "sha256": "88ea438753d2d85784ebd2e9032f9bb9b4fd7cc8a06bd9f650416adff030d100",
+          "bytes": 1463489
+        },
+        "actual_assertion_failures": 1,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "2d17bd542d3bd82abf2abdc77e15605a233f6c283bafef9010e8f8f039d80541",
+        "restored_graph_sha256": "e84d7ec8d34f219fc0f860ec47fd5193c37281c885cd12ec92f4e91fea951249"
+      },
+      {
+        "id": "admitted-cancel-overwrite",
+        "owner": "tools/mcp_dashboard_oauth.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-relay-mutants-v2/receipt.json",
+          "sha256": "88ea438753d2d85784ebd2e9032f9bb9b4fd7cc8a06bd9f650416adff030d100",
+          "bytes": 1463489
+        },
+        "actual_assertion_failures": 1,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "368e950096a18515fea694cd1c8d123e4c77ce59170d641d6a6844686ccbf648",
+        "restored_graph_sha256": "497ec9b2c250ae16bc58fb80e9366060038762a466e03ea800e180aacb5c0113"
+      },
+      {
+        "id": "first-cause-overwrite",
+        "owner": "tools/mcp_dashboard_oauth.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-relay-mutants-v2/receipt.json",
+          "sha256": "88ea438753d2d85784ebd2e9032f9bb9b4fd7cc8a06bd9f650416adff030d100",
+          "bytes": 1463489
+        },
+        "actual_assertion_failures": 1,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "97f5cf4f4801f28b1226ab03ed5db392457e628cbc0ce4fd8a734e2e5f6b9dd8",
+        "restored_graph_sha256": "016c89bbeaece4a5b98e0a971758328547b6f312628db48112d03040e24453d5"
+      },
+      {
+        "id": "all-callbacks-denied",
+        "owner": "tools/mcp_dashboard_oauth.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-relay-mutants-v2/receipt.json",
+          "sha256": "88ea438753d2d85784ebd2e9032f9bb9b4fd7cc8a06bd9f650416adff030d100",
+          "bytes": 1463489
+        },
+        "actual_assertion_failures": 4,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "46f08a06c747ec7432a8d15f5e214f5c9e7f0877b823ab28fe363214073c9a9e",
+        "restored_graph_sha256": "be5ddcb021a7becd9e75e9dd7adcb500eb6dfe19e1dd3771cfc25d31b3385b1d"
+      },
+      {
+        "id": "sdk-issuer-all-allow",
+        "owner": "tools/mcp_oauth.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-relay-mutants-v2/receipt.json",
+          "sha256": "88ea438753d2d85784ebd2e9032f9bb9b4fd7cc8a06bd9f650416adff030d100",
+          "bytes": 1463489
+        },
+        "actual_assertion_failures": 5,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "57c9e1c6dae578437ba0bd40087ce10792d4ee9b03fd6c166712d547e29728e0",
+        "restored_graph_sha256": "fb6e0f561d7dfd3ed3fb7dbf22571a9ab45bf00c6a94d118af49c8c8474cf5ea"
+      },
+      {
+        "id": "retry-renewed-url-budget",
+        "owner": "tui_gateway/mcp_oauth_sessions.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-lifecycle-mutants-v1/receipt.json",
+          "sha256": "bff662f9fddea34b421a118db234ed70c0246508b4bf362a73952ce4ebd15fe7",
+          "bytes": 1545695
+        },
+        "actual_assertion_failures": 1,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "a30f53efd0c53a1611d9d50235339e32db7a18a3b6ca84e8a69a12d39568fac2",
+        "restored_graph_sha256": "e05d51ace3d62315e56477ece9a4b9d16da3d3b37f844d4e4da8803b12e8cdb8"
+      },
+      {
+        "id": "retry-reservation-after-listener",
+        "owner": "tui_gateway/mcp_oauth_sessions.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-lifecycle-mutants-v1/receipt.json",
+          "sha256": "bff662f9fddea34b421a118db234ed70c0246508b4bf362a73952ce4ebd15fe7",
+          "bytes": 1545695
+        },
+        "actual_assertion_failures": 2,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "e4ff8bdf52297d4b41910ecdb79ca1e3b374a852b9b128f39779806f3bf0916e",
+        "restored_graph_sha256": "27941ede43b9792d8e0d6a14cc1edca77017a1305e7781b42b98c93e1307a632"
+      },
+      {
+        "id": "retry-gc-forgets-live-owner",
+        "owner": "tui_gateway/mcp_oauth_sessions.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-lifecycle-mutants-v1/receipt.json",
+          "sha256": "bff662f9fddea34b421a118db234ed70c0246508b4bf362a73952ce4ebd15fe7",
+          "bytes": 1545695
+        },
+        "actual_assertion_failures": 1,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "ec1159c8e335abc6af54737a109467de428826affd3ab56cfd4bd3be6159751e",
+        "restored_graph_sha256": "3fcb86f9b55bef89506a1fb8eb7e7485882c87151c3e6fce13943c8d57a22c6b"
+      },
+      {
+        "id": "retry-uncertain-close-marks-done",
+        "owner": "tui_gateway/mcp_oauth_sessions.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-lifecycle-mutants-v1/receipt.json",
+          "sha256": "bff662f9fddea34b421a118db234ed70c0246508b4bf362a73952ce4ebd15fe7",
+          "bytes": 1545695
+        },
+        "actual_assertion_failures": 1,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "4619ffefa6e15cc668a4c6730736d36d139f05f7e747b1efa05ee26e3284cdba",
+        "restored_graph_sha256": "e4fe8e034c06ceffff19a9df76e13ea19112ee56a7f8a4ca300d2177b1fdba16"
+      },
+      {
+        "id": "retry-cancelled-worker-never-waits",
+        "owner": "tui_gateway/mcp_oauth_sessions.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-lifecycle-mutants-v1/receipt.json",
+          "sha256": "bff662f9fddea34b421a118db234ed70c0246508b4bf362a73952ce4ebd15fe7",
+          "bytes": 1545695
+        },
+        "actual_assertion_failures": 1,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "864633b46d286d14cdccf76f6114b113584e88c496a63e31350fbbc380825027",
+        "restored_graph_sha256": "9de47c95d74770f1fad752b0dabeb0b04c96c8536e7c6c777f16c8c7045b3c7f"
+      },
+      {
+        "id": "actual-listener-shutdown-noop",
+        "owner": "tui_gateway/mcp_oauth_sessions.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-lifecycle-mutants-v1/receipt.json",
+          "sha256": "bff662f9fddea34b421a118db234ed70c0246508b4bf362a73952ce4ebd15fe7",
+          "bytes": 1545695
+        },
+        "actual_assertion_failures": 2,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "75428033ca23fbca8a327efdfaee16349e6379959eb877840c36b93802871c37",
+        "restored_graph_sha256": "2a5790da0f6f34499f9e4966709df47035baaa8a050ed46e13e5999648a66c12"
+      },
+      {
+        "id": "actual-worker-done-before-close",
+        "owner": "tui_gateway/mcp_oauth_sessions.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-lifecycle-mutants-v1/receipt.json",
+          "sha256": "bff662f9fddea34b421a118db234ed70c0246508b4bf362a73952ce4ebd15fe7",
+          "bytes": 1545695
+        },
+        "actual_assertion_failures": 1,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "61be1169360481f944969856b39620f58466b8f6ee6635658660b5afc784f14e",
+        "restored_graph_sha256": "2c575fd8de7e3df7efc09581f13b4f3d95c3585e733030002c4810257d0b3348"
+      },
+      {
+        "id": "anonymous-catalogue-marked-authenticated",
+        "owner": "tui_gateway/mcp_oauth_sessions.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-lifecycle-mutants-v1/receipt.json",
+          "sha256": "bff662f9fddea34b421a118db234ed70c0246508b4bf362a73952ce4ebd15fe7",
+          "bytes": 1545695
+        },
+        "actual_assertion_failures": 1,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "02211635c1826c63d6d444a93d9c50cb79787133173e6f10a881e1b6ea4091d1",
+        "restored_graph_sha256": "9c0af6fd4e666ac64f9b77045a728863c0069401749e1a064f923e221898a300"
+      },
+      {
+        "id": "runtime-token-without-persistence",
+        "owner": "tools/mcp_oauth.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-lifecycle-mutants-v1/receipt.json",
+          "sha256": "bff662f9fddea34b421a118db234ed70c0246508b4bf362a73952ce4ebd15fe7",
+          "bytes": 1545695
+        },
+        "actual_assertion_failures": 1,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "1966bc3cdd7583d1ef61255ac8d84f53939dd9cc6260198cede75cb96471b610",
+        "restored_graph_sha256": "a29d8295aef176bb33d0da7872da1509634acc4850e6bea92690051149a2d38a"
+      },
+      {
+        "id": "persisted-token-without-runtime-wake",
+        "owner": "tools/mcp_tool.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-lifecycle-mutants-v1/receipt.json",
+          "sha256": "bff662f9fddea34b421a118db234ed70c0246508b4bf362a73952ce4ebd15fe7",
+          "bytes": 1545695
+        },
+        "actual_assertion_failures": 1,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "156593a2365ffad1fb869000c668e6b92d99038db044b152a8168d6afcf6b95a",
+        "restored_graph_sha256": "6d9ad630f868dd2e8d9ece192df86cb32e279fb18b52d1771355f66da6536210"
+      },
+      {
+        "id": "success-without-protected-effect",
+        "owner": "tools/mcp_tool.py",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-lifecycle-mutants-v1/receipt.json",
+          "sha256": "bff662f9fddea34b421a118db234ed70c0246508b4bf362a73952ce4ebd15fe7",
+          "bytes": 1545695
+        },
+        "actual_assertion_failures": 1,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "5a2dd3b94163037b45c3e409a9dda0210dd3d24cee89f069a0f249af254a4107",
+        "restored_graph_sha256": "b458ef74c8cb82545f1b1c9ce1bc80e5a1b3ecde94965d6224429158e2bab4de"
+      },
+      {
+        "id": "promoted-native-issuer-field-dropped",
+        "owner": "apps/desktop/electron/mcp-oauth-callback-ipc.ts",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-native-mutants-v1/receipt.json",
+          "sha256": "1fdf3b0dfae4cf888ef2b5b161f784b6b9826fe9cddaa6f64d51d7c77c598857",
+          "bytes": 2284156
+        },
+        "actual_assertion_failures": 1,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "e2a7087259b47bb33b4111ad8d47dbfe0bbb1faad34dbaa9b716c1df2a06e909",
+        "restored_graph_sha256": "d815085d91087e8e21a0ec671ca059d4844aea13f57b0d78d7704638b3957fc5"
+      },
+      {
+        "id": "promoted-native-registration-omitted",
+        "owner": "apps/desktop/electron/main.ts",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-native-mutants-v1/receipt.json",
+          "sha256": "1fdf3b0dfae4cf888ef2b5b161f784b6b9826fe9cddaa6f64d51d7c77c598857",
+          "bytes": 2284156
+        },
+        "actual_assertion_failures": 1,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "4dfdcccf4fe3299499863e910a527b6521ec54b603b254abc310eaa24f346201",
+        "restored_graph_sha256": "3492ecdb1eaa4906de7b6b2a657aeae7832e12be583dacc20cf93af33331c0eb"
+      },
+      {
+        "id": "promoted-late-scope",
+        "owner": "apps/desktop/src/lib/mcp-dashboard-oauth.ts",
+        "receipt": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-native-mutants-v1/receipt.json",
+          "sha256": "1fdf3b0dfae4cf888ef2b5b161f784b6b9826fe9cddaa6f64d51d7c77c598857",
+          "bytes": 2284156
+        },
+        "actual_assertion_failures": 1,
+        "before_and_known_restored_green": true,
+        "mutant_graph_sha256": "a19fe762512cdbb4c43147813b5eae2c9d6d2133e617456deddf791d1257145b",
+        "restored_graph_sha256": "b5b6f09dcd508141ae471b8f33972c79d97140042b7e2d1358af3f50f7d39536"
+      }
+    ],
+    "historical_runs_counted_again": false,
+    "qualified_variants_from_original_execution": 29,
+    "execution_source_digest": "a54c4cbb3fc129dcbfd001247747047713ddbb757341d3aab0df7b834bbcac37",
+    "final_semantics_inherited_through_exact_eof_projection": true,
+    "reexecuted_on_final_bytes": false
+  },
+  "canonical_python": {
+    "file_cases": {
+      "tests/tui_gateway/test_mcp_oauth_sdk_contract.py": 8,
+      "tests/tui_gateway/test_mcp_oauth_admission_edges.py": 8,
+      "tests/tui_gateway/test_mcp_oauth_relay_authority.py": 15,
+      "tests/tools/test_mcp_oauth_cli_issuer_presence.py": 8,
+      "tests/tui_gateway/test_mcp_oauth_native_cancellation.py": 4,
+      "tests/hermes_cli/test_mcp_oauth_rest_sdk_contract.py": 4,
+      "tests/tui_gateway/test_mcp_oauth_persistent_retry.py": 2,
+      "tests/tui_gateway/test_mcp_oauth_admission_races.py": 3,
+      "tests/tui_gateway/test_mcp_oauth_cleanup_uncertainty.py": 1,
+      "tests/tui_gateway/test_mcp_oauth_resource_lifecycle.py": 2,
+      "tests/tui_gateway/test_mcp_oauth_anonymous_rejection.py": 1,
+      "tests/tui_gateway/test_mcp_oauth_cold_process_contract.py": 1
+    },
+    "files": 12,
+    "passed": 57,
+    "failed": 0,
+    "skipped": 0,
+    "file_retries": 0,
+    "execution_source_digest": "a54c4cbb3fc129dcbfd001247747047713ddbb757341d3aab0df7b834bbcac37",
+    "final_semantics_inherited_through_exact_eof_projection": true,
+    "reexecuted_on_final_bytes": false
+  },
+  "cold_process": {
+    "cases": 1,
+    "children": [
+      {
+        "profile": "work",
+        "allowed": true,
+        "actual_birth_observed_and_exit_audited": true,
+        "conditional_existing_loop_and_thread_assertions_executed": true,
+        "loop_thread_flags_in_receipt": false
+      },
+      {
+        "profile": "other",
+        "allowed": false,
+        "actual_birth_observed_and_exit_audited": true,
+        "conditional_existing_loop_and_thread_assertions_executed": true,
+        "loop_thread_flags_in_receipt": false
+      }
+    ],
+    "foreign_child_no_contact": true,
+    "anonymous_401_control_is_separate": true,
+    "production_restart_proof": false,
+    "raw_xml": {
+      "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-cold-raw-proof-v1.xml",
+      "sha256": "c1f7196b0be7b8a93832509521be65e6cc562ab3c7565eb3ab8b8522dd2ed3f2",
+      "bytes": 3978
+    },
+    "raw_observations_per_child": 6,
+    "raw_child_observations_retained": 12,
+    "foreign_denial_is_not_foreign_authenticated_network_call": true
+  },
+  "dev_electron": {
+    "cases": [
+      {
+        "scenario": "native-success",
+        "passed": true,
+        "report_sha256": "5426824691633a2f8778570cdef6382e3b556d01c9b39e9a1d88e99d4886d210",
+        "config_sha256": "1afb14f66a82d93abce7d061e0848a2e1cc2833ff04912ea582d402dbaf843e7",
+        "trace_sha256": "9c253179c642addf072e8ce45fa59131ba165c849781d9f9f3bcdf751c84fb65",
+        "actual_token_redemptions": 1,
+        "exact_nonce_effect": true,
+        "owned_cleanup_passed": true,
+        "direct_python_thread_or_loop_proof": false
+      },
+      {
+        "scenario": "cancel-retry",
+        "passed": true,
+        "report_sha256": "b6e912fbac5921263903927eaf55dca44799b565855eb0eba357c7c85c7d2bb6",
+        "config_sha256": "c35ebfa823627e1c29a34ef28b063841cd2ffcf3074380969edaaf693c5df93c",
+        "trace_sha256": "16f0e0cd1396344f6cabcf5da1c53da35eb239bd2400b2f9c1b8a98e7ac87b18",
+        "actual_token_redemptions": 1,
+        "exact_nonce_effect": true,
+        "owned_cleanup_passed": true,
+        "direct_python_thread_or_loop_proof": false
+      },
+      {
+        "scenario": "admitted-profile-switch",
+        "passed": true,
+        "report_sha256": "498daf41bd857096fc85554de4a6ad962d44e765571ad3184377346bc956676d",
+        "config_sha256": "cda1c1c65fe8f1cfa551adddc3429277b7d6a0c9e16cdb9232ad900807d24c92",
+        "trace_sha256": "6e8ce9b5e3dd640c9e2f41c650092835a9d9529e28d5965c7f48e9ef0b910cb8",
+        "actual_token_redemptions": 1,
+        "exact_nonce_effect": true,
+        "owned_cleanup_passed": true,
+        "direct_python_thread_or_loop_proof": false
+      }
+    ],
+    "passed": 3,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0,
+    "receipt": {
+      "file": "tmp/probes/v0216-20261010/evidence/m03-promoted-native-controls-v1/receipt.json",
+      "sha256": "9badfc164c0b5e3153a8c323348c5db79427d2a974496517dca6ac2e43e3a2a4",
+      "bytes": 487866
+    },
+    "root_build_files": 384,
+    "actual_preload_rpc_sdk_token_and_effect": true,
+    "external_browser_launch_intercepted": true,
+    "inference_scripted": true,
+    "actual_external_browser_qualified": false,
+    "live_model_inference_qualified": false,
+    "packaged_runtime_qualified": false,
+    "execution_source_digest": "a54c4cbb3fc129dcbfd001247747047713ddbb757341d3aab0df7b834bbcac37",
+    "final_semantics_inherited_through_exact_eof_projection": true,
+    "reexecuted_on_final_bytes": false
+  },
+  "static": {
+    "ruff": "PASS",
+    "e2e_typescript": "PASS",
+    "desktop_lint_errors": 0,
+    "desktop_lint_retained_warnings": 44
+  },
+  "codegraph": {
+    "version": "1.6.0",
+    "real": true,
+    "database_sha256": "5cd948a3a1e60133526db0d445ec3bed308f288f6469511a9a733f92818ec47e",
+    "database_bytes": 695857152,
+    "compressed_sha256": "1aad4e0ae150d9e6175efe599eaa911afeb22832147910e4a94ffb73b03deae3",
+    "compressed_bytes": 156585989,
+    "roundtrip_sha256": "5cd948a3a1e60133526db0d445ec3bed308f288f6469511a9a733f92818ec47e",
+    "same_snapshot_quick_check": "ok",
+    "same_snapshot_table_counts": {
+      "edges": 621527,
+      "files": 9145,
+      "name_segment_vocab": 477077,
+      "nodes": 197314,
+      "nodes_fts": 197314,
+      "nodes_fts_config": 1,
+      "nodes_fts_data": 5005,
+      "nodes_fts_docsize": 197314,
+      "nodes_fts_idx": 6409,
+      "project_metadata": 5,
+      "schema_versions": 2,
+      "unresolved_refs": 536238
+    },
+    "live_pre_and_post_sha256_equal": true,
+    "nonempty_wal_or_journal_rejected": true,
+    "snapshot_is_real_codegraph": true,
+    "static_graph_is_not_exhaustive_dynamic_runtime_proof": true,
+    "dynamic_and_polymorphic_edges_not_exhaustive": true,
+    "fresh_final_source_navigation": {
+      "m03-fixture-eof-normalization-reviewed-v1": {
+        "command": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-fixture-eof-normalization-reviewed-v1.json",
+          "sha256": "439daff3b9ddc342bbd6df630df7d0e05613e708a651c6f11f4abae75875d3f3",
+          "bytes": 1756
+        },
+        "log": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-fixture-eof-normalization-reviewed-v1.log",
+          "sha256": "c23b9fa168b0053a0d573ee0f05bbcb9772a875f4df339aca7bea16e9e83291a",
+          "bytes": 162
+        }
+      },
+      "m03-eof-codegraph-sync-v1": {
+        "command": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-eof-codegraph-sync-v1.json",
+          "sha256": "4415ee1adbfdd1b59c5725a75a8948a979cf9d83734db136159c5f1f8d69255f",
+          "bytes": 1468
+        },
+        "log": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-eof-codegraph-sync-v1.log",
+          "sha256": "9bb68554d15e6532ef0313249fb552a18344a3da3afd01136d9e1e4133d85732",
+          "bytes": 154
+        }
+      },
+      "m03-eof-codegraph-status-v1": {
+        "command": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-eof-codegraph-status-v1.json",
+          "sha256": "547199c4b5ffe75badafca85b4e6ccd7c1d9f202110be64ec910da80f8d22114",
+          "bytes": 1470
+        },
+        "log": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-eof-codegraph-status-v1.log",
+          "sha256": "60e5153c38d0be076824d0e5e85cf53402a2250557314f9f34272a205743e019",
+          "bytes": 994
+        }
+      },
+      "m03-eof-codegraph-affected-v1": {
+        "command": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-eof-codegraph-affected-v1.json",
+          "sha256": "dc8d73b695b1712af831fa429ba930fca6094a54f308a765d500e035549681d2",
+          "bytes": 1650
+        },
+        "log": {
+          "file": "tmp/probes/v0216-20261010/evidence/m03-eof-codegraph-affected-v1.log",
+          "sha256": "9238df6954d1ce0ca6876f3cbbd15e14da25acd3487b6e5a2f03bd039ad1d9ff",
+          "bytes": 46463
+        },
+        "reported_affected_tests": 740,
+        "total_dependents_traversed": 7319,
+        "all_reported_tests_executed": false
+      }
+    }
+  },
+  "binding": {
+    "file": "tmp/probes/v0216-20261010/evidence/m03-final-format-source-binding-v2.json",
+    "sha256": "ed487d098d4b73edd47d643394f778ef9d436f3a31431d2fea3be57a89b55cb4",
+    "bytes": 3409121
+  },
+  "retention": {
+    "file": "tmp/probes/v0216-20261010/m03-retention-v2/manifest.json",
+    "sha256": "5709b99c05e9457dcf387a1419fbf6f2b4cd7ebfd53ddf807cb33a08148698dd",
+    "bytes": 3191278
+  },
+  "archive": {
+    "file": "tmp/probes/v0216-20261010/m03-retention-v2/proof.zip",
+    "sha256": "34e87d693ea2a2cea92c5503d93719242bcd4e3a27b64c0e0501a009c68224bb",
+    "bytes": 584520359
+  },
+  "mandatory_reference_count": 5983,
+  "mandatory_reference_closure_complete": true,
+  "retention_scope": "Original5958 immutable archived entries plus finite named EOF-normalization and fresh graph evidence; final-source namespace distinguishes normalized bytes.",
+  "all_original_attempts_archived": false,
+  "terminal_mutation_review": {
+    "file": "tmp/probes/v0216-20261010/evidence/m03-current-terminal-independent-review-v1.json",
+    "sha256": "369c113551bbca51c77e92c977a821091a70fa3d965985826d477d4d9e5450fb"
+  },
+  "protected_primary": {
+    "unchanged_dirty_entries": 23,
+    "baseline": {
+      "file": "tmp/probes/v0216-20261010/evidence/canonical-wip-before.json",
+      "sha256": "7b6bbcdf5013b1d7e202377b8f4d40951a53009e83ce9f7e6efc76d21d6929f6",
+      "bytes": 4501
+    },
+    "before_review": {
+      "file": "tmp/probes/v0216-20261010/evidence/m03-final-before-review-canonical-wip-audit.json",
+      "sha256": "5585d251e961d560776be15b84c4efe07fa15d5674c1aa0cc3e489f06153208e",
+      "bytes": 4551
+    }
+  },
+  "retained_excluded_attempts": {
+    "m03-late-ui-mutant-first-group-v1": "ERR_AMBIGUOUS_MODULE_SYNTAX before mutation; reviewed v3 and current native3 use explicit compiled owned Vite config.",
+    "m03-promoted-relay-reviewed-v1": "Import stdout parser failed before graph or mutation; replaced by structured import JSON.",
+    "m03-promoted-e2e-typecheck-v1": "Superseded by reviewed explicit Window type; v3 is qualified.",
+    "m03-promoted-e2e-typecheck-v2": "Superseded by reviewed explicit Window type; v3 is qualified.",
+    "m03-promoted-desktop-lint-v1": "Superseded by reviewed error cleanup/type correction and v3.",
+    "m03-promoted-desktop-lint-v2": "Passed intermediate bytes; final tested bytes are v3.",
+    "m03-public-relay-red-v1": "Unqualified initial RED; qualified historical RED is v2.",
+    "m03-native-ipc-red-v1": "Unqualified initial RED; qualified historical RED is v2.",
+    "m03-admission-edges-red-v1": "Oracle corrected before original RED rerun; amended original v2 qualified."
+  },
+  "resource_scope": "Real Gateway listener/worker cleanup assertions and controlled admission seams are separate from Electron process/listener cleanup; cold loop/thread assertions are conditional on their existence.",
+  "rollback": "Reviewed revert of the logical isolated-branch commit; preserve primary dirty work and production profiles.",
+  "open_boundaries": [
+    "In-place authorization remint/revival and token revocation/config rename/replacement contracts",
+    "REST startup uncertainty and TTL resource retention",
+    "Plugin OAuth/module split and remaining OAuth transports/surfaces",
+    "M01/M04/M05/M06 and complete runtime compatibility inventory",
+    "Remaining feature/security/Windows families including B07/B08/B12/B13",
+    "Actual browser/model, packaging, cloud exact-SHA CI, production and scheduled-task health"
+  ],
+  "local_commit_identity": {
+    "sha": "9e2b69aac59e673aa448e70ebeccf60a89905b4d",
+    "parent": "3ab298018926b7846e8ef7fb3dc2abe2226a957b",
+    "tree": "bdbf3ba616318d97e1db5143abad03d280fbff7b",
+    "patch_sha256": "5130d82e731f486ed37d8eef0736f46d7129a4a55d1b9de73230838c61665ba6"
+  },
+  "postcommit_proof": {
+    "file": "tmp/probes/v0216-20261010/evidence/m03-product-postcommit-binding-v2.json",
+    "sha256": "6dde1dcd98652ec34b3f02c7203e301b30142c08020e496db4a223186025b8a1",
+    "all_32_blobs_equal_reviewed_final_bytes": true,
+    "protected_primary_23_unchanged": true,
+    "root_tested_build_384_unchanged": true
+  },
+  "publication": false,
+  "full_m03_accepted": false,
+  "full_campaign_accepted": false,
+  "stable_or_release_ready": false,
+  "format_supersession": {
+    "original_execution_source_digest": "a54c4cbb3fc129dcbfd001247747047713ddbb757341d3aab0df7b834bbcac37",
+    "final_source_digest": "831dea66db737566bdd6f8f148443d8f2f851d7089ec4e21402411c0db55ce3f",
+    "projection": {
+      "file": "tmp/probes/v0216-20261010/evidence/m03-eof-format-supersession-v1/normalization.json",
+      "sha256": "2939a8452c0d03c73ed058f4fc0cc7674895035007f43a0071381bba73dbd838",
+      "bytes": 7337
+    },
+    "original_binding": {
+      "file": "tmp/probes/v0216-20261010/evidence/m03-final-source-binding-v1.json",
+      "sha256": "6a7198644f0c02e9eb832bae96de9edcba916004ab462fb1976fdfe8817e3488",
+      "bytes": 3135381
+    },
+    "original_accepted_receipt": {
+      "file": "tmp/probes/v0216-20261010/evidence/m03-eof-format-supersession-v1/original-accepted-receipt.json",
+      "sha256": "9e7be75cc4e754e7ebee3c4f3309b37965729601ee9baa604f82104101e85e2f",
+      "bytes": 43159
+    },
+    "original_retention": {
+      "file": "tmp/probes/v0216-20261010/m03-retention-v1/manifest.json",
+      "sha256": "0d38458ea174a8502c3383eb539833fc04198f965b5723c042b58642eefed919",
+      "bytes": 2901046
+    },
+    "exactly_two_fixture_files": true,
+    "only_three_terminal_lf_bytes_removed": true,
+    "located_ast_and_same_filename_compiled_bytes_equal": true,
+    "29_mutations_reexecuted_on_final_bytes": false,
+    "qualification_basis": "Original29 mutation executions and controls remain fixed to their executed bytes; only two fixture EOFs differ in final reviewed files, with identical located AST and compiled bytes. No final-byte re-execution is claimed.",
+    "staged_identity_requirement": "Staged blobs must match independently reviewed final bytes; inherited original execution bytes are separately bound through the exact EOF proof."
+  }
+}

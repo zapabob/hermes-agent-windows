@@ -682,10 +682,12 @@ class BaseEnvironment(ABC):
         """
         return "/tmp"
 
-    def __init__(self, cwd: str, timeout: int, env: dict = None):
+    def __init__(self, cwd: str, timeout: int, env: dict = None,
+                 persist_env: bool = True):
         self.cwd = cwd
         self.timeout = timeout
         self.env = env or {}
+        self._persist_env = persist_env
 
         self._session_id = uuid.uuid4().hex[:12]
         temp_dir = self.get_temp_dir().rstrip("/") or "/"
@@ -1010,7 +1012,7 @@ class BaseEnvironment(ABC):
         # first — the redirection inside _export_dump_excluding_session_vars is
         # attached to a brace group so the variable expands in the same shell
         # that later expands the ``mv`` operand, keeping both consistent.
-        if self._snapshot_ready:
+        if self._persist_env and self._snapshot_ready:
             parts.append(
                 f"__hermes_snap_tmp=$(mktemp {_snap_tmp_template}) && "
                 f"{{ {_export_dump_excluding_session_vars(_snap_tmp, passthrough_names)} "

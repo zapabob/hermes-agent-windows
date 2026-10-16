@@ -20,7 +20,6 @@
  * Prerequisite: `npm run build` must have been run so that `dist/` exists.
  */
 
-import { spawnSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
@@ -86,6 +85,10 @@ export function createSandbox(prefix: string): Sandbox {
     hermesHome,
     userDataDir,
     cleanup: () => {
+      if (path.dirname(path.resolve(root)) !== path.resolve(os.tmpdir()) ||
+          !path.basename(root).startsWith('hermes-e2e-')) {
+        throw new Error('Refusing cleanup outside the fixture-owned temporary directory')
+      }
       try {
         fs.rmSync(root, { recursive: true, force: true })
       } catch {
@@ -224,7 +227,13 @@ export async function launchDesktop(
     cwd: DESKTOP_ROOT,
   })
 
-  const page = await app.firstWindow()
+  let page: Page
+  try {
+    page = await app.firstWindow()
+  } catch (error) {
+    await closeDesktop(app)
+    throw error
+  }
 
   // Install the error-banner guard so any [role="alert"] that appears
   // during a test is collected and surfaced in afterEach.
@@ -239,7 +248,7 @@ export async function closeDesktop(app: ElectronApplication): Promise<void> {
   const child = app.process()
   const closePromise = app.close().then(
     () => true,
-    () => true,
+    () => false,
   )
   let gracefulTimer: ReturnType<typeof setTimeout> | undefined
   const closed = await Promise.race([
@@ -251,29 +260,22 @@ export async function closeDesktop(app: ElectronApplication): Promise<void> {
   if (gracefulTimer) {
     clearTimeout(gracefulTimer)
   }
-  if (closed || child.exitCode !== null || child.signalCode !== null) {
+  if (child.exitCode !== null || child.signalCode !== null) {
     return
-  }
-
-  if (globalThis.process.platform === 'win32' && child.pid) {
-    spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], {
-      encoding: 'utf8',
-      timeout: 10_000,
-      windowsHide: true,
-    })
-  } else {
-    child.kill('SIGKILL')
   }
 
   let forcedTimer: ReturnType<typeof setTimeout> | undefined
   await Promise.race([
-    closePromise,
+    new Promise<void>(resolve => child.once('exit', () => resolve())),
     new Promise<boolean>(resolve => {
       forcedTimer = setTimeout(() => resolve(false), 5_000)
     }),
   ])
   if (forcedTimer) {
     clearTimeout(forcedTimer)
+  }
+  if (child.exitCode === null && child.signalCode === null) {
+    throw new Error(`Owned Electron process ${child.pid} did not exit after close (resolved=${closed})`)
   }
 }
 
@@ -321,31 +323,49 @@ export async function setupMockBackend(options: MockBackendOptions = {}): Promis
   const mock = await startMockServer(options.mockServer)
 
   // 2. Create sandbox + write config
-  const sandbox = createSandbox('mock')
-  writeMockProviderConfig(
-    sandbox.hermesHome,
-    mock.url,
-    options.extraDisplayConfig,
-    options.extraConfig,
-    options.modelContextLength,
-    options.mockServer?.modelIds,
-  )
-  writeEnvFile(sandbox.hermesHome)
-
-  // 3. Build env + launch
-  const env = buildAppEnv(sandbox, options.extraEnv)
-  const { app, page } = await launchDesktop(env)
+  let sandbox: Sandbox | undefined
+  let launched: Awaited<ReturnType<typeof launchDesktop>>
+  try {
+    sandbox = createSandbox('mock')
+    writeMockProviderConfig(
+      sandbox.hermesHome,
+      mock.url,
+      options.extraDisplayConfig,
+      options.extraConfig,
+      options.modelContextLength,
+      options.mockServer?.modelIds,
+    )
+    writeEnvFile(sandbox.hermesHome)
+    // 3. Build env + launch
+    const env = buildAppEnv(sandbox, options.extraEnv)
+    launched = await launchDesktop(env)
+  } catch (error) {
+    try {
+      await mock.close()
+    } finally {
+      sandbox?.cleanup()
+    }
+    throw error
+  }
+  const { app, page } = launched
+  const ownedSandbox = sandbox
 
   return {
     app,
     page,
     mock,
     mockUrl: mock.url,
-    sandbox,
+    sandbox: ownedSandbox,
     cleanup: async () => {
-      await closeDesktop(app)
-      await mock.close()
-      sandbox.cleanup()
+      try {
+        await closeDesktop(app)
+      } finally {
+        try {
+          await mock.close()
+        } finally {
+          ownedSandbox.cleanup()
+        }
+      }
     },
   }
 }

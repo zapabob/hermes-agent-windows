@@ -202,8 +202,8 @@ async function connect(known: SuggestibleServer, sessionId: string | null, cance
       throw error
     }
 
-    // Tools reach the live session before the pill claims success — the
-    // same write-through the Capabilities tab and the setup card use.
+    // This connect action retains live activation before the pill reports
+    // success; saving settings in Capabilities does not perform this reload.
     await $gateway
       .get()
       ?.request('reload.mcp', { confirm: true, session_id: sessionId ?? undefined })

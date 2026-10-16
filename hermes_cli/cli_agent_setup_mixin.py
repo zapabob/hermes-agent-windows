@@ -346,6 +346,24 @@ class CLIAgentSetupMixin:
             overrides = resolve_fast_mode_overrides(route["model"])
         except Exception:
             overrides = None
+        if (
+            service_tier == "ultrafast"
+            and isinstance(overrides, dict)
+            and overrides.get("service_tier") == "priority"
+            and runtime["provider"] == "openai-codex"
+            and runtime["api_mode"] == "codex_responses"
+        ):
+            # Only request ultrafast on the official Codex route, where the
+            # request builder will validate the active account's advertised
+            # tier before constructing the API kwargs. Other eligible models
+            # retain their existing priority/speed mapping.
+            try:
+                from agent.auxiliary_client import _is_official_codex_base_url
+
+                if _is_official_codex_base_url(runtime["base_url"]):
+                    overrides["service_tier"] = "ultrafast"
+            except Exception:
+                pass
         route["request_overrides"] = overrides
         return route
 
