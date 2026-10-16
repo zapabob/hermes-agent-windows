@@ -4,12 +4,12 @@ Frozen upstream: b51c055a12220f8c7c18660e8599365012e19532
 
 | Metric | Value |
 | --- | ---: |
-| All fork-specific LOC | 3185573 |
-| Upstream-owned fork LOC | 1568955 |
-| Fork-owned LOC | 1616618 |
-| UTR | 0.492519 |
+| All fork-specific LOC | 3185756 |
+| Upstream-owned fork LOC | 1569012 |
+| Fork-owned LOC | 1616744 |
+| UTR | 0.492509 |
 | Carry Surface | 5147 files |
-| CWC | 87090089 |
+| CWC | 87091129 |
 
 LOC is added plus deleted lines relative to the frozen upstream tree.
 The `_docs/` tree (including these reports) is excluded to avoid
@@ -22,7 +22,7 @@ and 1 for tests, docs, workflows, and generated documentation.
 
 | Path | Frequency | Patch | Coupling | CWC |
 | --- | ---: | ---: | ---: | ---: |
-| gateway/run.py | 158 | 32784 | 2 | 10359744 |
+| gateway/run.py | 158 | 32787 | 2 | 10360692 |
 | hermes_cli/web_server.py | 95 | 21567 | 3 | 6146595 |
 | cli.py | 77 | 25131 | 2 | 3870174 |
 | tui_gateway/server.py | 96 | 19713 | 2 | 3784896 |

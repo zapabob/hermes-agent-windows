@@ -20,19 +20,19 @@
   "schema_version": 1,
   "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
   "summary": {
-    "all_fork_specific_loc": 3185573,
+    "all_fork_specific_loc": 3185756,
     "carry_surface_files": 5147,
-    "cwc": 87090089,
-    "fork_owned_loc": 1616618,
-    "upstream_owned_fork_loc": 1568955,
-    "utr": 0.492519
+    "cwc": 87091129,
+    "fork_owned_loc": 1616744,
+    "upstream_owned_fork_loc": 1569012,
+    "utr": 0.492509
   },
   "top_carry_risks": [
     {
-      "added": 29925,
-      "cwc": 10359744,
+      "added": 29928,
+      "cwc": 10360692,
       "deleted": 2859,
-      "patch_size": 32784,
+      "patch_size": 32787,
       "path": "gateway/run.py",
       "semantic_coupling": 2,
       "upstream_frequency": 158
