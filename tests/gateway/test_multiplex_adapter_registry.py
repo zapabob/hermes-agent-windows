@@ -207,6 +207,23 @@ def _install_secondary_reconnect_context(monkeypatch, runner, adapter, scoped_ho
     monkeypatch.setattr(runner, "_create_adapter", lambda platform, config: adapter)
 
 
+@pytest.mark.asyncio
+async def test_secondary_outbound_only_start_and_reconnect_never_construct_receivers(monkeypatch, tmp_path):
+    runner = _secondary_recovery_runner()
+    _install_secondary_reconnect_context(monkeypatch,runner,None)
+    config = GatewayConfig(multiplex_profiles=True,platforms={
+        Platform.DISCORD:PlatformConfig(enabled=True,token="synthetic",extra={"connection_enabled":False}),
+        Platform("line"):PlatformConfig(enabled=True,token="synthetic-line",extra={"connection_enabled":False}),
+    })
+    monkeypatch.setattr("gateway.config.load_gateway_config",lambda:config)
+    create = MagicMock(side_effect=AssertionError("No secondary receiver is allowed"))
+    monkeypatch.setattr(runner,"_create_adapter",create)
+    assert await runner._start_one_profile_adapters("reviewer",str(tmp_path),{}) == 0
+    await runner._run_secondary_profile_reconnect("reviewer",Platform.DISCORD)
+    create.assert_not_called()
+    assert not runner._profile_adapters.get("reviewer")
+
+
 class TestSecondaryProfileFatalRecovery:
     @pytest.mark.asyncio
     async def test_retryable_secondary_fatal_reconnects_with_its_profile_scope(

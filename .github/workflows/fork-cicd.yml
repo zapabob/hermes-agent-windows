@@ -152,7 +152,7 @@ jobs:
         # per-file runner rather than sharing legacy contract-test imports.
         run: >-
           uv run --no-sync python scripts/run_tests_parallel.py
-          --files 'tests/ci/test_cryptography_resolution.py;tests/tui_gateway/test_mcp_oauth_worker_startup.py;tests/plugins/model_providers/test_commandcode_profile.py;tests/gateway/test_runner_startup_failures.py;tests/gateway/test_shared_platform_ownership.py'
+          --files 'tests/ci/test_cryptography_resolution.py;tests/tui_gateway/test_mcp_oauth_worker_startup.py;tests/plugins/model_providers/test_commandcode_profile.py;tests/gateway/test_runner_startup_failures.py;tests/gateway/test_shared_platform_ownership.py;tests/gateway/test_platform_reconnect.py;tests/gateway/test_multiplex_adapter_registry.py;tests/hermes_cli/test_web_server_messaging_profiles.py;tests/hermes_cli/test_mcp_oauth_rest_startup.py;tests/hermes_cli/test_mcp_oauth_rest_retention.py;tests/tools/test_zombie_process_cleanup.py'
           -j 1 --file-retries 0 -q
 
   windows-native-desktop:

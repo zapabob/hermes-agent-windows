@@ -5,12 +5,11 @@ Reproduction for issue #7131: zombie process accumulation on long-running
 gateway deployments.
 """
 
-import os
-import signal
 import subprocess
 import sys
 import threading
 
+import psutil
 
 
 def _spawn_sleep(seconds: float = 60) -> subprocess.Popen:
@@ -22,11 +21,8 @@ def _spawn_sleep(seconds: float = 60) -> subprocess.Popen:
 
 def _pid_alive(pid: int) -> bool:
     """Return True if a process with the given PID is still running."""
-    try:
-        os.kill(pid, 0)
-        return True
-    except (ProcessLookupError, PermissionError):
-        return False
+    # os.kill(pid, 0) terminates processes on Windows rather than probing them.
+    return psutil.pid_exists(pid)
 
 
 class TestZombieReproduction:
@@ -58,8 +54,10 @@ class TestZombieReproduction:
         finally:
             for pid in pids:
                 try:
-                    os.kill(pid, signal.SIGKILL)
-                except (ProcessLookupError, PermissionError):
+                    process = psutil.Process(pid)
+                    process.kill()
+                    process.wait(timeout=5)
+                except psutil.NoSuchProcess:
                     pass
 
     def test_explicit_terminate_reaps_processes(self):
@@ -445,7 +443,7 @@ class TestDelegationCleanup:
         relay_host.unregister_subagent.assert_not_called()
 
     def test_timed_out_child_keeps_relay_session_until_its_turn_exits(
-        self, monkeypatch, tmp_path
+        self, monkeypatch, tmp_path, caplog
     ):
         from unittest.mock import MagicMock
 
@@ -454,14 +452,37 @@ class TestDelegationCleanup:
             reset_hermes_home_override,
             set_hermes_home_override,
         )
-        from tools.delegate_tool import _run_single_child
+        from tools import daemon_pool
+        from tools.delegate_tool import _run_single_child, _set_subagent_approval_cb
 
         relay_runtime._reset_for_tests()
         profile_home = tmp_path / "profile-timeout"
         profile_token = set_hermes_home_override(profile_home)
         child_started = threading.Event()
         release_child = threading.Event()
-        child_finished = threading.Event()
+        child_futures = []
+
+        class StartedChildExecutor(daemon_pool.DaemonThreadPoolExecutor):
+            def __init__(self, *args, **kwargs):
+                # Native Relay scope operations use this pool class too.
+                self.starts_child = (
+                    kwargs.get("initializer") is _set_subagent_approval_cb
+                )
+                super().__init__(*args, **kwargs)
+
+            def submit(self, *args, **kwargs):
+                future = super().submit(*args, **kwargs)
+                if not self.starts_child:
+                    return future
+                child_futures.append(future)
+                # This scenario times out an ACTIVE turn. Native Relay setup
+                # may take longer than the child timeout on a loaded CI host.
+                assert child_started.wait(timeout=5), "child turn did not start"
+                return future
+
+        monkeypatch.setattr(
+            daemon_pool, "DaemonThreadPoolExecutor", StartedChildExecutor
+        )
         parent = MagicMock()
         parent._active_children = []
         parent._active_children_lock = threading.Lock()
@@ -487,7 +508,9 @@ class TestDelegationCleanup:
             )
             child_started.set()
             try:
-                release_child.wait(timeout=5)
+                # Only the test owner may end the active turn; a second wall
+                # clock timeout would race assertions on a loaded CI host.
+                release_child.wait()
                 return {
                     "final_response": "late result",
                     "completed": True,
@@ -501,7 +524,6 @@ class TestDelegationCleanup:
                     outcome="cancelled",
                 )
                 relay_runtime.SESSION_COORDINATOR.release_conversation(lease)
-                child_finished.set()
 
         child.run_conversation.side_effect = run_conversation
         try:
@@ -521,12 +543,21 @@ class TestDelegationCleanup:
             relay_host.unregister_subagent.assert_not_called()
 
             release_child.set()
-            assert child_finished.wait(timeout=5)
+            assert child_futures[0].result(timeout=5)["completed"]
             assert not relay_runtime.SESSION_COORDINATOR.has_active_turn(
                 profile_key=str(profile_home),
                 session_id=child.session_id,
             )
         finally:
             release_child.set()
-            reset_hermes_home_override(profile_token)
-            relay_runtime._reset_for_tests()
+            try:
+                # Also drain after an assertion fails, before destroying the
+                # host the worker may still be using during begin/end_turn.
+                for future in child_futures:
+                    future.result(timeout=5)
+            finally:
+                reset_hermes_home_override(profile_token)
+                if all(future.done() for future in child_futures):
+                    relay_runtime._reset_for_tests()
+
+        assert "Hermes Relay runtime is shutting down" not in caplog.text

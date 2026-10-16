@@ -688,6 +688,16 @@ class PlatformConfig:
     # Platform-specific settings
     extra: Dict[str, Any] = field(default_factory=dict)
 
+    @property
+    def connection_enabled(self) -> bool:
+        """Allow inbound connections independently of configured outbound sends.
+
+        Set platforms.<name>.extra.connection_enabled to false on profiles
+        that share another profile's receiver. The existing enabled flag
+        still controls platform availability, including send_message.
+        """
+        return _coerce_bool(self.extra.get("connection_enabled"), True)
+
     def to_dict(self) -> Dict[str, Any]:
         result = {
             "enabled": self.enabled,

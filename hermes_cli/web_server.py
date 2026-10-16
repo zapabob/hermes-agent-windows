@@ -10794,7 +10794,7 @@ def _multiplex_port_binding_conflict(
     *enabling* is blocked; disabling/clearing stays allowed so users can
     repair an already-invalid profile.
     """
-    from gateway.config import PORT_BINDING_PLATFORM_VALUES, load_gateway_config
+    from gateway.config import PORT_BINDING_PLATFORM_VALUES, Platform, load_gateway_config
 
     if platform_id not in PORT_BINDING_PLATFORM_VALUES:
         return None
@@ -10812,6 +10812,11 @@ def _multiplex_port_binding_conflict(
         target = requested
     if target in ("default", "custom"):
         return None
+
+    with _config_profile_scope(target):
+        platform_config = load_gateway_config().platforms.get(Platform(platform_id))
+        if platform_config is not None and not getattr(platform_config, "connection_enabled", True):
+            return None
 
     # The multiplex flag that matters is the one the shared gateway reads at
     # startup: the DEFAULT profile's gateway config (plus the process-wide

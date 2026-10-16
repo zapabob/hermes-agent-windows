@@ -1,4 +1,5 @@
 """Unexecuted REST startup oracle; real native allocation and actual MCP SDK."""
+import asyncio
 import json
 import sys
 import threading
@@ -55,8 +56,7 @@ def manual_rest(owner, root, monkeypatch, record_property):
 class StartupOwner:
     """Capture the exact router worker without patching global Thread/Event APIs."""
 
-    def __init__(self, mode, owner, loops, monkeypatch):
-        from hermes_cli import mcp_config
+    def __init__(self, mode, owner, loops, monkeypatch, *, hold_retry=False):
         from hermes_cli.web_routers import mcp as router
         from tools import mcp_tool as core
 
@@ -70,12 +70,15 @@ class StartupOwner:
         self.bootstrap_release = threading.Event()
         self.cleanup_entered = threading.Event()
         self.cleanup_release = threading.Event()
+        self.callback_error = None
+        self.hold_retry = hold_retry
+        self.retry_entered = threading.Event()
+        self.retry_release = threading.Event()
         self.fault_patch = pytest.MonkeyPatch()
         self.trace_patch = pytest.MonkeyPatch()
         self.removed = False
         self.original_target = router._run_dashboard_mcp_oauth
         original_thread = threading.Thread
-        original_probe = mcp_config._probe_single_server
         original_loop = core._ensure_mcp_loop
 
         def observed_loop(*args, **kwargs):
@@ -87,16 +90,18 @@ class StartupOwner:
 
         self.set_attr(self.trace_patch, core, "_ensure_mcp_loop", observed_loop)
 
-        def real_probe(*args, **kwargs):
-            try:
-                return original_probe(*args, **kwargs)
-            finally:
-                if self.mode == "after_sdk_start" and self.rows and threading.current_thread() is self.rows[0]["thread"]:
-                    self.cleanup_entered.set()
-                    if not self.cleanup_release.wait(20):
-                        self.barrier_failures.append("Actual SDK cleanup barrier timed out")
+        if hold_retry:
+            original_jittered = core._jittered
 
-        self.set_attr(self.fault_patch, mcp_config, "_probe_single_server", real_probe)
+            def held_retry(seconds):
+                # Keep the real SDK and retry ladder; make their scheduling
+                # independent of the test's eight-second ownership observation.
+                self.retry_entered.set()
+                if not self.retry_release.wait(20):
+                    self.barrier_failures.append("Actual retry release barrier timed out")
+                return original_jittered(seconds)
+
+            self.set_attr(self.fault_patch, core, "_jittered", held_retry)
 
         def factory(*args, **kwargs):
             if kwargs.get("target") is not self.original_target or kwargs.get("name") != "mcp-oauth-reports":
@@ -128,6 +133,26 @@ class StartupOwner:
             if self.mode == "constructor":
                 row["intended_error_raised"] = True
                 raise RuntimeError(self.cause)
+            if self.mode == "after_sdk_start":
+                original_callback = flow.wait_for_callback
+
+                async def held_callback(*args, **kwargs):
+                    try:
+                        return await original_callback(*args, **kwargs)
+                    except RuntimeError as error:
+                        if str(error) != "OAuth authorization failed: " + self.cause:
+                            self.barrier_failures.append("Unexpected actual callback failure")
+                            raise
+                        # Observe the real callback failure before the SDK's
+                        # jittered retry ladder. Holding after the whole probe
+                        # made ownership checks race 1+2+4 seconds of backoff.
+                        self.callback_error = str(error)
+                        self.cleanup_entered.set()
+                        if not await asyncio.to_thread(self.cleanup_release.wait, 20):
+                            self.barrier_failures.append("Actual callback unwind barrier timed out")
+                        raise
+
+                self.set_attr(self.fault_patch, flow, "wait_for_callback", held_callback)
             worker = original_thread(*args, **kwargs)
             row["thread"] = worker
             original_start = worker.start
@@ -205,6 +230,9 @@ class StartupOwner:
     def release_and_finish(self, flow, worker):
         self.bootstrap_release.set()
         self.cleanup_release.set()
+        self.retry_release.set()
+        if self.hold_retry:
+            assert self.retry_entered.wait(8), "Actual failed SDK connection did not retry"
         self.remove_fault()
         assert worker._started.wait(12), "Actual captured worker did not bootstrap"
         settled(flow, worker, self.loops)
@@ -231,6 +259,7 @@ class StartupOwner:
         self.owner.token_release.set()
         self.bootstrap_release.set()
         self.cleanup_release.set()
+        self.retry_release.set()
         attempt("fault_seams_restore", self.remove_fault)
         for index, row in enumerate(self.rows):
             flow, worker = row["flow"], row["thread"]
@@ -256,6 +285,8 @@ class StartupOwner:
         record_property("captured_owner_cleanup", json.dumps({"completed": not failures, "failures": failures}))
         record_property("startup_native_observations", json.dumps({
             "mode": self.mode, "intended_cause": self.cause,
+            "callback_error": self.callback_error,
+            "retry_held": self.hold_retry, "retry_entered": self.retry_entered.is_set(),
             "barrier_failures": self.barrier_failures,
             "rows": [{**{key: value for key, value in row.items() if key not in {"flow", "thread"}},
                       "flow_id": row["flow"].flow_id, "snapshot": row["flow"].snapshot(),
@@ -306,14 +337,17 @@ def legitimate_retry(client, owner, homes, captured, record_property):
     assert not (homes / "profiles/other/mcp-tokens/reports.json").exists()
 
 
-@pytest.mark.parametrize("mode", ["constructor", "bootstrap_held", "after_sdk_start", "unresolved_start"])
-def test_rest_startup_public_error_ownership_and_actual_recovery(homes, monkeypatch, mode, record_property):
+@pytest.mark.parametrize("mode,hold_retry", [
+    pytest.param(mode, False, id=mode)
+    for mode in ("constructor", "bootstrap_held", "after_sdk_start", "unresolved_start")
+] + [pytest.param("after_sdk_start", True, id="after_sdk_start-retry_held")])
+def test_rest_startup_public_error_ownership_and_actual_recovery(homes, monkeypatch, mode, hold_retry, record_property):
     from hermes_cli import web_server
 
     with serve_issuer() as owner:
         with manual_rest(owner, homes, monkeypatch, record_property) as (client, loops):
             foreign_config = (homes / "profiles/other/config.yaml").read_bytes()
-            captured = StartupOwner(mode, owner, loops, monkeypatch)
+            captured = StartupOwner(mode, owner, loops, monkeypatch, hold_retry=hold_retry)
             try:
                 started = client.post("/api/mcp/servers/reports/auth?profile=work")
                 record_property("startup_http_status", started.status_code)
@@ -340,7 +374,10 @@ def test_rest_startup_public_error_ownership_and_actual_recovery(homes, monkeypa
                     assert data["authorization_url"] is None
                 else:
                     assert data["authorization_url"] == flow.authorization_url and flow.authorization_url
-                    assert captured.cleanup_entered.wait(8), "Actual failed probe did not enter cleanup hold"
+                    assert captured.cleanup_entered.wait(8), "Actual callback failure did not enter unwind hold"
+                    assert captured.callback_error == "OAuth authorization failed: " + captured.cause
+                    if hold_retry:
+                        assert not captured.retry_entered.is_set(), "Ownership observation ran after SDK retries"
                 url = f"/api/mcp/oauth/flows/{data['flow_id']}?profile=work"
                 with without_dashboard_cookie(client):
                     assert client.get(url).status_code == 401

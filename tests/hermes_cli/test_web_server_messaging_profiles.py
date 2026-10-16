@@ -163,11 +163,11 @@ class TestProfileScopedMessagingWrites:
 
         # Enablement lands in the target profile's config.yaml.
         worker_cfg = yaml.safe_load(
-            (isolated_profiles["worker_alpha"] / "config.yaml").read_text()
+            (isolated_profiles["worker_alpha"] / "config.yaml").read_text(encoding="utf-8")
         ) or {}
         assert worker_cfg.get("platforms", {}).get("telegram", {}).get("enabled") is True
         root_cfg = yaml.safe_load(
-            (isolated_profiles["default"] / "config.yaml").read_text()
+            (isolated_profiles["default"] / "config.yaml").read_text(encoding="utf-8")
         ) or {}
         assert "telegram" not in (root_cfg.get("platforms") or {})
 
@@ -216,6 +216,18 @@ class TestMultiplexPortBindingGuard:
         # multiplex flag under test comes from the default profile's config.
         monkeypatch.delenv("GATEWAY_MULTIPLEX_PROFILES", raising=False)
 
+    def test_secondary_outbound_only_line_can_remain_enabled(self, client, isolated_profiles):
+        _enable_multiplex(isolated_profiles["default"])
+        worker_home = isolated_profiles["worker_alpha"]
+        (worker_home / "config.yaml").write_text(
+            yaml.safe_dump({"platforms":{"line":{"enabled":True,"extra":{"connection_enabled":False}}}}),
+            encoding="utf-8",
+        )
+        response = client.put("/api/messaging/platforms/line",params={"profile":"worker_alpha"},json={"enabled":True})
+        assert response.status_code == 200
+        saved = yaml.safe_load((worker_home / "config.yaml").read_text(encoding="utf-8"))
+        assert saved["platforms"]["line"]["extra"]["connection_enabled"] is False
+
     def test_rejects_every_port_binding_platform_on_secondary(
         self, client, isolated_profiles
     ):
@@ -252,7 +264,7 @@ class TestMultiplexPortBindingGuard:
             json={"enabled": False},
         )
         assert resp.status_code == 200
-        cfg = yaml.safe_load((worker_home / "config.yaml").read_text())
+        cfg = yaml.safe_load((worker_home / "config.yaml").read_text(encoding="utf-8"))
         assert cfg["platforms"]["api_server"]["enabled"] is False
 
         catalog = client.get(

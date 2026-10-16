@@ -76,6 +76,28 @@ def _make_runner():
 
 # --- Startup queueing ---
 
+@pytest.mark.asyncio
+async def test_outbound_only_platform_is_removed_from_receiver_retry_queue(monkeypatch):
+    runner = _make_runner()
+    runner._failed_platforms[Platform.TELEGRAM] = {
+        "config": PlatformConfig(enabled=True,token="synthetic",extra={"connection_enabled":False}),
+        "attempts":1,"next_retry":0,
+    }
+    create = MagicMock(side_effect=AssertionError("Receiver must remain stopped"))
+    monkeypatch.setattr(runner,"_create_adapter",create)
+    real_sleep = asyncio.sleep
+    calls = 0
+    async def tick(_seconds):
+        nonlocal calls
+        calls += 1
+        if calls > 1:
+            runner._running = False
+        await real_sleep(0)
+    monkeypatch.setattr(asyncio,"sleep",tick)
+    await runner._platform_reconnect_watcher()
+    assert not runner._failed_platforms
+    create.assert_not_called()
+
 class TestStartupPlatformIsolation:
     """Verify one blocked platform cannot prevent later platforms from starting."""
 

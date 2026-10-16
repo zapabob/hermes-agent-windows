@@ -1,4 +1,5 @@
 """Real SDK REST ownership across expiry and observed worker cleanup."""
+import asyncio
 import json
 import sys
 import threading
@@ -126,34 +127,69 @@ def test_rest_expiry_retains_active_owner_until_real_cleanup(homes, monkeypatch,
                 finish_captured(flow, worker, owner, loops, record_property)
 
 
-def test_rest_expired_cancelled_owner_collects_after_actual_cleanup(homes, monkeypatch, record_property):
+@pytest.mark.parametrize("hold_retry", [False, True], ids=["normal", "retry_held"])
+def test_rest_expired_cancelled_owner_collects_after_actual_cleanup(homes, monkeypatch, record_property, hold_retry):
     from hermes_cli import web_server
     from hermes_cli import mcp_config
+    from tools.mcp_dashboard_oauth import get_dashboard_oauth_flow
 
     cleanup_entered = threading.Event()
     cleanup_release = threading.Event()
+    retry_entered = threading.Event()
+    retry_release = threading.Event()
+    captured_flows = []
+    callback_errors = []
     original_probe = mcp_config._probe_single_server
 
-    def held_probe_cleanup(*args, **kwargs):
-        try:
-            return original_probe(*args, **kwargs)
-        finally:
-            # Hold the actual worker before its token/manager rollback and
-            # profile/transaction cleanup. The SDK probe itself still runs.
-            cleanup_entered.set()
-            assert cleanup_release.wait(8), "Owned REST worker cleanup barrier was not released"
+    if hold_retry:
+        from tools import mcp_tool as core
 
-    monkeypatch.setattr(mcp_config, "_probe_single_server", held_probe_cleanup)
+        original_jittered = core._jittered
+
+        def held_retry(seconds):
+            retry_entered.set()
+            assert retry_release.wait(20), "Owned retry barrier was not released"
+            return original_jittered(seconds)
+
+        monkeypatch.setattr(core, "_jittered", held_retry)
+
+    def probe_with_callback_hold(*args, **kwargs):
+        owned_flow = get_dashboard_oauth_flow()
+        assert owned_flow is not None, "Actual probe has no dashboard flow owner"
+        captured_flows.append(owned_flow)
+        original_callback = owned_flow.wait_for_callback
+
+        async def held_callback(*args, **kwargs):
+            try:
+                return await original_callback(*args, **kwargs)
+            except RuntimeError as error:
+                if str(error) != "OAuth authorization failed: Cancelled by user":
+                    raise
+                # Hold the exact owner's real cancellation before the SDK's
+                # jittered retry ladder, not after the entire probe unwinds.
+                callback_errors.append(str(error))
+                cleanup_entered.set()
+                assert await asyncio.to_thread(cleanup_release.wait, 8), "Owned REST worker cleanup barrier was not released"
+                raise
+
+        monkeypatch.setattr(owned_flow, "wait_for_callback", held_callback)
+        return original_probe(*args, **kwargs)
+
+    monkeypatch.setattr(mcp_config, "_probe_single_server", probe_with_callback_hold)
 
     with serve_issuer() as owner:
         with preserved_rest(owner, homes, monkeypatch, record_property) as (client, data, flow, worker, loops):
             try:
+                assert len(captured_flows) == 1 and captured_flows[0] is flow
                 flow.created_at = time.time() - web_server._MCP_DASHBOARD_OAUTH_TTL - 1
                 status_url = f"/api/mcp/oauth/flows/{flow.flow_id}?profile=work"
                 assert client.get(status_url).status_code == 200
                 cancelled = client.delete(status_url)
                 assert cancelled.status_code == 200 and cancelled.json()["cancelled"] is True
-                assert cleanup_entered.wait(8), "Actual SDK probe did not enter owned cleanup barrier"
+                assert cleanup_entered.wait(8), "Actual callback cancellation did not enter unwind hold"
+                assert callback_errors == ["OAuth authorization failed: Cancelled by user"]
+                if hold_retry:
+                    assert not retry_entered.is_set(), "Ownership observation ran after SDK retries"
                 assert worker.is_alive() and not flow.worker_done
                 retained = client.get(status_url)
                 assert retained.status_code == 200, retained.text
@@ -163,6 +199,9 @@ def test_rest_expired_cancelled_owner_collects_after_actual_cleanup(homes, monke
                 assert duplicate.status_code == 409, duplicate.text
                 assert worker.is_alive() and not flow.worker_done
                 cleanup_release.set()
+                retry_release.set()
+                if hold_retry:
+                    assert retry_entered.wait(8), "Actual failed SDK connection did not retry"
                 settled(flow, worker, loops)
                 assert client.get(status_url).status_code == 404
                 assert flow.flow_id not in web_server._mcp_oauth_flows
@@ -170,4 +209,9 @@ def test_rest_expired_cancelled_owner_collects_after_actual_cleanup(homes, monke
                 assert not (homes / "profiles/work/mcp-tokens/reports.json").exists()
             finally:
                 cleanup_release.set()
+                retry_release.set()
                 finish_captured(flow, worker, owner, loops, record_property)
+                record_property("retry_schedule", json.dumps({
+                    "held": hold_retry, "entered": retry_entered.is_set(),
+                    "flow_id": flow.flow_id, "callback_errors": callback_errors,
+                }))

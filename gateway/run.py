@@ -2806,7 +2806,7 @@ _OWN_POLICY_OPEN_ENV = {
 def _own_policy_open_startup_violation(config) -> Optional[str]:
     """Return a startup-abort reason when open policy lacks allow-all opt-in."""
     for platform, platform_config in getattr(config, "platforms", {}).items():
-        if not getattr(platform_config, "enabled", False):
+        if not getattr(platform_config, "enabled", False) or not getattr(platform_config, "connection_enabled", True):
             continue
         open_env = _OWN_POLICY_OPEN_ENV.get(platform)
         if not open_env:
@@ -8975,7 +8975,9 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             return [
                 p
                 for p, pc in self.config.platforms.items()
-                if getattr(pc, "enabled", False) and p not in non_messaging
+                if getattr(pc, "enabled", False)
+                and getattr(pc, "connection_enabled", True)
+                and p not in non_messaging
             ]
         except Exception:  # noqa: BLE001
             return []
@@ -13315,7 +13317,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         for platform, platform_config in self.config.platforms.items():
             if await self._abort_startup_if_shutdown_requested():
                 return True
-            if not platform_config.enabled:
+            if not platform_config.enabled or not getattr(platform_config, "connection_enabled", True):
                 continue
             # Under multiplexing, a platform may be enabled on the default
             # profile's config.yaml while its bot token lives only in a
@@ -14920,6 +14922,9 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                     # between the snapshot above and this lookup. Not an
                     # error -- just nothing to do for it this pass.
                     continue
+                if not getattr(info["config"], "connection_enabled", True):
+                    del self._failed_platforms[platform]
+                    continue
                 # Skip paused platforms entirely — they need explicit
                 # /platform resume to come back.
                 if info.get("paused"):
@@ -15929,7 +15934,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         port_binding_platforms = sorted(
             platform.value
             for platform, platform_config in profile_cfg.platforms.items()
-            if platform_config.enabled
+            if platform_config.enabled and getattr(platform_config, "connection_enabled", True)
             and _platform_binds_port(platform.value, platform_config.extra)
         )
         if port_binding_platforms:
@@ -15946,7 +15951,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         profile_map = self._profile_adapters.setdefault(profile_name, {})
         connected = 0
         for platform, platform_config in profile_cfg.platforms.items():
-            if not platform_config.enabled:
+            if not platform_config.enabled or not getattr(platform_config, "connection_enabled", True):
                 continue
             # Relay is shared process-level ingress in multiplex mode. The
             # active profile owns the one connection; connector-stamped
@@ -16128,7 +16133,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                     profile_home = get_profile_dir(profile_name)
                     with _profile_runtime_scope(profile_home):
                         profile_config = load_gateway_config().platforms.get(platform)
-                        if profile_config is None or not profile_config.enabled:
+                        if profile_config is None or not profile_config.enabled or not getattr(profile_config, "connection_enabled", True):
                             return
                         adapter = self._create_adapter(platform, profile_config)
                         if adapter is None:
@@ -16622,6 +16627,8 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         Checks the platform_registry first (plugin adapters), then falls
         through to the built-in if/elif chain for core platforms.
         """
+        if not getattr(config, "connection_enabled", True):
+            return None
         if hasattr(config, "extra") and isinstance(config.extra, dict):
             config.extra.setdefault(
                 "group_sessions_per_user",
