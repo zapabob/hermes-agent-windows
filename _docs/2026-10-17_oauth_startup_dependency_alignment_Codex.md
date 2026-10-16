@@ -71,6 +71,40 @@ exact final-SHA cloud CI and final runtime receipts are collected separately
 in that evidence directory during publication/deployment. These are separate
 gates; this source log does not claim their success before they execute.
 
+## Full-suite provider catalog compatibility follow-up
+
+The first full run on045ae76 finished3832 files,45599 passed,one failed,
+668 skipped. OAuth startup passed all12 cases on its first attempt (12.3s).
+The only failure was CommandCode resolution: catalog data supplied CMD_API_KEY
+while the registered profile's established COMMANDCODE_API_KEY alias was lost.
+The catalog path preempted the existing plugin fallback. This exposes a real
+compatibility regression for existing credential configuration when catalog
+data changes, independent of the OAuth/cryptography repair.
+
+get_provider merges deduplicated credential aliases from a registered profile
+with a concrete endpoint into catalog-derived definitions. Existing catalog
+routing, transport, credential order, overlays and user-config priority stay
+unchanged. *_URL settings are excluded; placeholder profiles with no endpoint
+cannot inject aliases. This metadata merge reads no secret value.
+The plugin-only test now explicitly supplies catalog absence. Six immutable
+fixtures cover legacy/new/both key names and concrete/empty profile endpoints.
+The new-name fixture fails before the production fix (one RED failure).
+
+Native Windows canonical provider regression: five files,125 passed,zero failed,
+file retries0. The final hermetic CommandCode file separately passes40 tests
+in9.18s. Ruff passes. Real CodeGraph binds the provider owner slice before/after.
+The isolated Windows CI step adds the provider file alongside the two existing
+new regression files; all use fresh processes and retries0. No old contract
+test is removed. Independent reviewer01a14662-07ef-7160-9c33-e69545aa04dc approves
+the production/test change. Final-SHA cloud CI remains a separate gate.
+
+During the operational follow-up C: filled. The task-owned log write truncated
+this log; it was restored from its committed Git content plus this section,
+prepared on H: and replaced atomically. Protected operator/WIP files are separate.
+Only closed generated evidence directories were moved to H: with old-path
+junctions. Exact relocation receipts and any Windows-protection read failures
+are recorded in H:/HermesQualification-oauth-deps-20261017.
+
 ## Operational safety and rollback
 
 The candidate .venv is a junction to the protected SOURCE runtime. Do not run

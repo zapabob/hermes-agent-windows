@@ -257,7 +257,7 @@ class TestCommandCodeFetchModelsPickerContract:
         assert profile is not None
         assert "base_url" in inspect.signature(profile.fetch_models).parameters
 
-    def test_resolve_provider_full(self):
+    def test_resolve_provider_full(self, monkeypatch):
         """Both profiles must resolve through the model-switch path.
 
         Regression: ``resolve_provider_full`` only knew models.dev + overlay
@@ -265,7 +265,12 @@ class TestCommandCodeFetchModelsPickerContract:
         "Unknown provider" on /model switches even though the picker listed
         them.
         """
+        import agent.models_dev
         from hermes_cli.providers import resolve_provider_full
+
+        # This case owns the plugin-only path. Catalog-present credential
+        # compatibility is covered below with explicit, immutable fixtures.
+        monkeypatch.setattr(agent.models_dev, "get_provider_info", lambda *args, **kwargs: None)
 
         chat = resolve_provider_full("commandcode", {}, [])
         assert chat is not None and chat.id == "commandcode"
@@ -275,6 +280,34 @@ class TestCommandCodeFetchModelsPickerContract:
         anth = resolve_provider_full("commandcode-anthropic", {}, [])
         assert anth is not None and anth.id == "commandcode-anthropic"
         assert anth.transport == "anthropic_messages"
+
+    @pytest.mark.parametrize("catalog_env", [
+        ("CMD_API_KEY",),
+        ("COMMANDCODE_API_KEY",),
+        ("CMD_API_KEY", "COMMANDCODE_API_KEY"),
+    ])
+    @pytest.mark.parametrize("concrete_endpoint", [True, False])
+    def test_catalog_keeps_registered_credential_aliases(self, monkeypatch, catalog_env, concrete_endpoint):
+        from types import SimpleNamespace
+
+        import agent.models_dev
+        import providers
+        from hermes_cli.providers import resolve_provider_full
+
+        info = SimpleNamespace(
+            name="CommandCode", env=catalog_env,
+            api="https://api.commandcode.ai/provider/v1", doc="",
+        )
+        profile = SimpleNamespace(base_url=info.api if concrete_endpoint else "", env_vars=("COMMANDCODE_API_KEY", "COMMANDCODE_BASE_URL"))
+        monkeypatch.setattr(agent.models_dev, "get_provider_info", lambda name: info if name == "commandcode" else None)
+        monkeypatch.setattr(providers, "get_provider_profile", lambda name: profile if name == "commandcode" else None)
+        resolved = resolve_provider_full("commandcode", {}, [])
+        assert resolved is not None and resolved.transport == "openai_chat"
+        assert resolved.base_url == info.api
+        aliases = {"COMMANDCODE_API_KEY"} if concrete_endpoint else set()
+        assert set(resolved.api_key_env_vars) == set(catalog_env) | aliases
+        assert len(resolved.api_key_env_vars) == len(set(resolved.api_key_env_vars))
+        assert "COMMANDCODE_BASE_URL" not in resolved.api_key_env_vars
 
 
 # ── base_url endpoint override ───────────────────────────────────────────────

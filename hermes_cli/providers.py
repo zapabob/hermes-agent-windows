@@ -531,6 +531,20 @@ def get_provider(name: str, *, allow_network: bool = True) -> Optional[ProviderD
                 if ev not in env_vars:
                     env_vars.append(ev)
 
+        # A catalog entry can arrive after a plugin profile has shipped (or
+        # rename its key). Keep that profile's established credential aliases
+        # usable without replacing catalog routing or treating a URL as a key.
+        try:
+            from providers import get_provider_profile
+
+            profile = get_provider_profile(canonical)
+        except Exception:
+            profile = None
+        if profile is not None and (profile.base_url or "").strip():
+            for ev in profile.env_vars or ():
+                if ev and not ev.endswith("_URL") and ev not in env_vars:
+                    env_vars.append(ev)
+
         return ProviderDef(
             id=canonical,
             name=mdev_info.name,
