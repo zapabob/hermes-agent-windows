@@ -1,4 +1,4 @@
-"""Actual admitted MCP2/HTTPX2 redirect boundary through public discovery.
+"""Actual admitted MCP 2.2/HTTPX2 redirect boundary through public discovery.
 
 Owned callback delivery is a user terminal, not listener/UI qualification.
 Only the port origin dimension is exercised. No auth producer is replaced.
@@ -33,6 +33,11 @@ class NativeObserver:
         import httpx2._content as content
         from mcp.client.auth.oauth2 import OAuthClientProvider, OAuthContext
 
+        sdk_distribution = importlib.metadata.distribution("mcp")
+        assert sdk_distribution.version == "2.2.0"
+        sdk_source = Path(sdk_distribution.locate_file("mcp/client/auth/oauth2.py")).resolve()
+        assert Path(OAuthClientProvider._initialize.__code__.co_filename).resolve() == sdk_source
+
         self.core = core
         self.loop_thread = None
         self.byte_stream = content.ByteStream
@@ -61,7 +66,7 @@ class NativeObserver:
         root = Path(__file__).resolve().parents[2]
         self.oauth_sources = {}
         for relative, expected in {
-            ".venv/Lib/site-packages/mcp/client/auth/oauth2.py": "912f43f60a023b66b05d102a5f2312affbccb6a626644f195aa6739d52c8717c",
+            sdk_source: "e709fa1676352a417afb6d653599141072c562d4f0dd8ca1d67f1cee8d85b54f",
             # U02's independently reviewed and committed owner bytes; keep
             # this source guard rather than reverting the retirement fix.
             "tools/mcp_oauth_manager.py": "e96e4c8cacf937964aca1dc6f6c802837439d7d75a4141d2ba2d28c64f3eaa8f",
@@ -375,9 +380,13 @@ def owned_runtime(tmp_path, monkeypatch, record_property, peer, *, oauth=False):
                 "streamable_http_file": str(Path(sdk_http.__file__).resolve()),
                 "httpx2_client_file": str(Path(observer.codes["send"].co_filename).resolve())}
     record_property("redirect_native_imports", json.dumps(physical))
-    site_packages = Path(sys.prefix).resolve() / "Lib" / "site-packages"
-    assert all(Path(physical[key]).is_relative_to(site_packages)
-               for key in ("oauth2_file", "streamable_http_file", "httpx2_client_file"))
+    for key, distribution, relative in (
+        ("oauth2_file", "mcp", "mcp/client/auth/oauth2.py"),
+        ("streamable_http_file", "mcp", "mcp/client/streamable_http.py"),
+        ("httpx2_client_file", "httpx2", "httpx2/_client.py"),
+    ):
+        installed_source = importlib.metadata.distribution(distribution).locate_file(relative)
+        assert Path(physical[key]) == Path(installed_source).resolve()
     assert core._ensure_mcp_sdk() and core._MCP_NEW_HTTP
     assert core.sdk_httpx() is httpx2 and sdk_http.httpx2 is httpx2
     assert sdk_auth.OAuthContext.prepare_token_auth.__code__ is observer.codes["basic"]
@@ -566,12 +575,12 @@ def assert_generated(rows):
             assert row["headers"].get("mcp-protocol-version")
 
 
-def assert_absent(rows):
-    assert rows, "Foreign boundary was not exercised"
-    for row in rows:
-        assert "authorization" not in row["headers"], row
-        assert "x-api-key" not in row["headers"], row
-        assert "x-tenant" not in row["headers"], row
+def assert_foreign_rejected(peer):
+    attempted = [row for row in peer.wire(role="a")
+                 if row.get("location", "").startswith(peer.bases["b"] + "/")]
+    assert attempted, "No actual cross-origin redirect response"
+    assert not peer.wire(role="b"), "SDK followed a cross-origin redirect"
+    assert not peer.effects
 
 
 def assert_same_origin(peer):
@@ -579,15 +588,6 @@ def assert_same_origin(peer):
     assert protected, "No actual same-origin request; setup failure cannot qualify this oracle"
     assert all(all(row["headers"].get(key.lower()) == value for key, value in peer.headers().items())
                for row in protected), protected
-
-
-def assert_compatibility(peer):
-    foreign = peer.wire(role="b")
-    assert foreign, "No actual foreign request; setup failure cannot qualify this oracle"
-    assert all("authorization" not in row["headers"] for row in foreign), foreign
-    assert all(row["headers"].get("x-api-key") == peer.api_key
-               and row["headers"].get("x-tenant") == peer.tenant for row in foreign), foreign
-    assert_generated(foreign)
 
 
 def assert_basic(peer, observer, grant):
@@ -608,9 +608,16 @@ def assert_basic(peer, observer, grant):
     assert {row["context_id"] for row in prepared} == {client["context_id"] for client in clients}
 
 
-def test_same_origin_credentials_and_exact_protected_nonce(tmp_path, monkeypatch, record_property):
+@pytest.mark.parametrize("redirect_status", [307, 308])
+@pytest.mark.parametrize("strict", [True, False])
+def test_same_origin_credentials_and_exact_protected_nonce(tmp_path, monkeypatch, record_property, redirect_status, strict):
+    from hermes_cli.mcp_config import _replace_mcp_servers
+
     with redirect_peers(record_property) as peer:
+        peer.redirect_status = redirect_status
         with owned_runtime(tmp_path, monkeypatch, record_property, peer) as runtime:
+            ok, issues = _replace_mcp_servers({runtime[1]: dict(runtime[5], strict_redirect_headers=strict)})
+            assert ok and not issues
             tool, tools = discover(runtime, record_property, peer, lambda: assert_same_origin(peer))
             assert tool in tools
             nonce = uuid.uuid4().hex
@@ -623,30 +630,61 @@ def test_same_origin_credentials_and_exact_protected_nonce(tmp_path, monkeypatch
             assert_generated(peer.wire(role="a", path="/protected"))
 
 
+def test_explicit_final_endpoint_keeps_configured_credentials_and_tool_effect(tmp_path, monkeypatch, record_property):
+    from hermes_cli.mcp_config import _replace_mcp_servers
+
+    with redirect_peers(record_property, "foreign") as peer:
+        with owned_runtime(tmp_path, monkeypatch, record_property, peer) as runtime:
+            # Upgrade migration begins with the old, still-configured entry.
+            # The actual public status must explain recovery, not just fail.
+            missing, tools = discover(runtime, record_property, peer,
+                                      lambda: assert_foreign_rejected(peer))
+            assert missing not in tools
+            status = next(row for row in runtime[0].get_mcp_status() if row["name"] == runtime[1])
+            assert not status["connected"]
+            assert "use that URL as the endpoint" in status["error"]
+            assert peer.bases["b"] + "/mcp" in status["error"]
+            old_loop = runtime[0]._mcp_loop
+            old_thread = runtime[4].acquire_loop_thread()
+            # Match /mcp refresh's shutdown + fresh discovery lifecycle.
+            runtime[0].shutdown_mcp_servers()
+            assert old_loop.is_closed() and not old_thread.is_alive()
+            record_property("redirect_migration_old_loop_closed", True)
+            runtime[4].loop_thread = None
+            # A separate origin is usable when explicitly configured as the
+            # endpoint; it must not inherit credentials through a redirect.
+            config = dict(runtime[5], url=peer.bases["b"] + "/mcp")
+            ok, issues = _replace_mcp_servers({runtime[1]: config})
+            assert ok and not issues
+            tool, tools = discover(runtime, record_property, peer)
+            assert tool in tools
+            nonce = uuid.uuid4().hex
+            result = dispatch(tool, nonce)
+            record_wire(record_property, peer, runtime[4])
+            assert result.get("result") == "owned:" + nonce, result
+            assert len(peer.effects) == 1 and peer.effects[0]["role"] == "b"
+            assert peer.effects[0]["nonce"] == nonce
+            assert all(all(row["headers"].get(key.lower()) == value for key, value in peer.headers().items())
+                       for row in peer.wire(role="b", rpc_method="tools/call"))
+            assert_generated(peer.wire(role="b"))
+
+
 @pytest.mark.parametrize("route", ["foreign", "multi"])
 def test_strict_foreign_wire_absence_and_no_effect(tmp_path, monkeypatch, record_property, route):
     with redirect_peers(record_property, route) as peer:
         with owned_runtime(tmp_path, monkeypatch, record_property, peer) as runtime:
             tool, tools = discover(runtime, record_property, peer,
-                                   lambda: assert_absent(peer.wire(role="b")))
-            assert tool in tools
-            nonce = uuid.uuid4().hex
-            result = dispatch(tool, nonce)
-            record_wire(record_property, peer, runtime[4])
-            foreign = peer.wire(role="b")
-            assert_absent(foreign)
-            assert "error" not in result and not peer.effects, result
-            assert result.get("result") == "echo:" + nonce, result
-            assert peer.wire(role="b", rpc_method="tools/call")[-1]["protected_effect"] is False
-            assert_generated(foreign)
+                                   lambda: assert_foreign_rejected(peer))
+            assert tool not in tools
+            assert runtime[0]._server_connect_errors
+            assert any("not followed" in error for error in runtime[0]._server_connect_errors.values())
             if route == "multi":
                 local = peer.wire(role="a", path="/local")
                 assert local and all(all(row["headers"].get(key.lower()) == value
                                          for key, value in peer.headers().items()) for row in local)
-                assert peer.wire(role="b", path="/hop") and peer.wire(role="b", path="/mcp")
 
 
-def test_nonstrict_custom_header_compatibility(tmp_path, monkeypatch, record_property):
+def test_nonstrict_cannot_override_sdk_origin_boundary(tmp_path, monkeypatch, record_property):
     from hermes_cli.mcp_config import _replace_mcp_servers
 
     with redirect_peers(record_property, "foreign") as peer:
@@ -654,18 +692,9 @@ def test_nonstrict_custom_header_compatibility(tmp_path, monkeypatch, record_pro
             config = dict(runtime[5], strict_redirect_headers=False)
             ok, issues = _replace_mcp_servers({runtime[1]: config})
             assert ok and not issues
-            tool, tools = discover(runtime, record_property, peer, lambda: assert_compatibility(peer))
-            assert tool in tools
-            nonce = uuid.uuid4().hex
-            result = dispatch(tool, nonce)
-            record_wire(record_property, peer, runtime[4])
-            foreign = peer.wire(role="b")
-            assert foreign and all("authorization" not in row["headers"] for row in foreign)
-            assert all(row["headers"].get("x-api-key") == peer.api_key
-                       and row["headers"].get("x-tenant") == peer.tenant for row in foreign)
-            assert "error" not in result and not peer.effects
-            assert result.get("result") == "echo:" + nonce, result
-            assert_generated(foreign)
+            tool, tools = discover(runtime, record_property, peer, lambda: assert_foreign_rejected(peer))
+            assert tool not in tools
+            assert runtime[0]._server_connect_errors
 
 
 def test_preemptive_bound_basic_refresh_same_product_client(tmp_path, monkeypatch, record_property):
@@ -696,7 +725,7 @@ def test_preemptive_bound_basic_refresh_same_product_client(tmp_path, monkeypatc
             assert not runtime[3].authorization_url
 
 
-def test_actual_401_original_request_retry_then_live_foreign_call(tmp_path, monkeypatch, record_property):
+def test_actual_401_retry_then_foreign_rejection_and_recovery(tmp_path, monkeypatch, record_property):
     with redirect_peers(record_property) as peer:
         with owned_runtime(tmp_path, monkeypatch, record_property, peer, oauth=True) as runtime:
             runtime[6]()
@@ -707,7 +736,10 @@ def test_actual_401_original_request_retry_then_live_foreign_call(tmp_path, monk
             assert peer.wire(operation="authorization_terminal")
             protected = peer.wire(role="a", path="/protected", rpc_method="initialize")
             assert len(protected) >= 2 and protected[0]["status"] == 401 and protected[-1]["status"] == 200
-            sends = [row for row in runtime[4].rows if row["operation"] == "actual_send" and row["url"] == peer.url]
+            # SDK 2.2 owns the redirect first, so the OAuth challenge and
+            # exact-object retry belong to the redirected same-origin URL.
+            protected_url = peer.bases["a"] + "/protected"
+            sends = [row for row in runtime[4].rows if row["operation"] == "actual_send" and row["url"] == protected_url]
             observations = runtime[4].rows
             actual_401 = [row for row in observations if row["operation"] == "actual_response"
                           and row["url"] == peer.bases["a"] + "/protected" and row["status"] == 401]
@@ -715,14 +747,14 @@ def test_actual_401_original_request_retry_then_live_foreign_call(tmp_path, monk
                             and row["url"] == peer.bases["issuer"] + "/token" and row["status"] == 200]
             retried = [(first, denied, token_response, second)
                        for first in sends for denied in actual_401 for token_response in actual_token for second in sends
-                       if first["sequence"] < denied["send_sequence"] < denied["sequence"]
+                       if first["sequence"] == denied["send_sequence"] < denied["sequence"]
                        < token_response["send_sequence"] < token_response["sequence"] < second["sequence"]
                        and first["method"] == second["method"] == "POST"
                        and denied["method"] == token_response["method"] == "POST"
-                       and first["url"] == second["url"] == peer.url
+                       and first["url"] == second["url"] == protected_url
                        and first["body_hex"] == second["body_hex"]
                        and observations[denied["send_sequence"]]["body_hex"] == first["body_hex"]
-                       and denied["request_id"] != first["request_id"]
+                       and denied["request_id"] == first["request_id"]
                        and observations[token_response["send_sequence"]]["headers"].get("authorization") == peer.basic
                        and json.loads(bytes.fromhex(first["body_hex"]))["method"] == "initialize"
                        and runtime[4].requests[first["request_id"]] is runtime[4].requests[second["request_id"]]
@@ -736,7 +768,7 @@ def test_actual_401_original_request_retry_then_live_foreign_call(tmp_path, monk
                 "retained_request_same_object": True,
             }))
             copies = [row for row in runtime[4].rows if row["operation"] == "actual_send"
-                      and row["url"] == peer.bases["a"] + "/protected"]
+                      and row["url"] == peer.url]
             assert copies and all(copy["request_id"] != retried[0][0]["request_id"] for copy in copies)
             assert protected[0]["sequence"] < token["sequence"] < protected[-1]["sequence"]
             assert tool in tools
@@ -752,13 +784,21 @@ def test_actual_401_original_request_retry_then_live_foreign_call(tmp_path, monk
             second_nonce = uuid.uuid4().hex
             second_result = dispatch(tool, second_nonce)
             record_wire(record_property, peer, runtime[4])
-            foreign = peer.wire(role="b", rpc_method="tools/call")
-            assert_absent(foreign)
-            assert "error" not in second_result and len(peer.effects) == 1
-            assert second_result.get("result") == "echo:" + second_nonce, second_result
-            assert foreign[-1]["body"]["params"]["arguments"]["nonce"] == second_nonce
-            assert foreign[-1]["protected_effect"] is False
-            assert_generated(foreign)
+            assert not peer.wire(role="b")
+            assert "error" in second_result and len(peer.effects) == 1, second_result
+            rejected = [row for row in peer.wire(role="a", rpc_method="tools/call")
+                        if row["body"]["params"]["arguments"]["nonce"] == second_nonce]
+            assert rejected and rejected[-1]["location"].startswith(peer.bases["b"] + "/")
             foreign_sends = [row for row in runtime[4].rows if row["operation"] == "actual_send"
                              and row["url"].startswith(peer.bases["b"] + "/")]
-            assert {row["client_id"] for row in foreign_sends} == identity
+            assert not foreign_sends
+            with peer.lock:
+                peer.route = "same"
+            third_nonce = uuid.uuid4().hex
+            recovered = dispatch(tool, third_nonce)
+            record_wire(record_property, peer, runtime[4])
+            assert recovered.get("result") == "owned:" + third_nonce, recovered
+            assert [effect["nonce"] for effect in peer.effects] == [first_nonce, third_nonce]
+            recovered_sends = [row for row in runtime[4].rows if row["operation"] == "actual_send"
+                               and row["url"] == protected_url]
+            assert {row["client_id"] for row in recovered_sends} == identity

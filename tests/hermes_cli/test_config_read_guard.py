@@ -77,6 +77,10 @@ def _iter_source_files():
     # that disappears anyway.
     for dirpath, dirnames, filenames in os.walk(REPO_ROOT, onerror=lambda _e: None):
         dirnames[:] = [d for d in dirnames if d not in EXCLUDED_DIR_PARTS]
+        if Path(dirpath) == REPO_ROOT:
+            # The ignored root tmp/ tree holds build and probe copies, not
+            # product source. Keep scanning nested product directories normally.
+            dirnames[:] = [d for d in dirnames if d != "tmp"]
         for name in filenames:
             if not name.endswith(".py"):
                 continue
@@ -127,3 +131,15 @@ def test_read_user_config_raw_exists_and_documented():
     doc = read_user_config_raw.__doc__ or ""
     assert "ONLY legal for write-back round-trips and raw-file diagnostics" in doc
     assert "load_config()" in doc
+
+
+def test_guard_ignores_root_probe_copies_but_scans_product_tmp(tmp_path, monkeypatch):
+    import sys
+
+    monkeypatch.setattr(sys.modules[__name__], "REPO_ROOT", tmp_path)
+    for relative in ("tmp/probes/copied.py", "tools/tmp/product.py", "tools/owner.py"):
+        path = tmp_path / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text('config = "config.yaml"\nyaml.safe_load(contents)\n', encoding="utf-8")
+    scanned = {rel.as_posix() for rel, _ in _iter_source_files()}
+    assert scanned == {"tools/tmp/product.py", "tools/owner.py"}

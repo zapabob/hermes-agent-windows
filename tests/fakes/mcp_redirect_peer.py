@@ -20,6 +20,7 @@ from urllib.parse import parse_qs, quote, urlparse
 class RedirectPeers:
     def __init__(self, route="same"):
         self.route = route
+        self.redirect_status = 307
         self.lock = threading.RLock()
         self.ledger = []
         self.effects = []
@@ -192,7 +193,7 @@ class RedirectPeers:
                     else:
                         raise ValueError("Unknown owned route " + route)
                     row["location"] = target
-                    self.reply(row, 307, headers={"Location": target})
+                    self.reply(row, owner.redirect_status, headers={"Location": target})
                     return
                 if role == "b" and path == "/hop":
                     target = owner.bases["b"] + "/mcp"

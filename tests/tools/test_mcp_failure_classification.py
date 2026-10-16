@@ -46,6 +46,25 @@ class TestUnwrapExceptionGroup:
 # ── _classify_mcp_failure ────────────────────────────────────────────────────
 
 class TestClassifyMcpFailure:
+    @pytest.mark.parametrize("message", [
+        "Redirect to https://other.example.invalid/mcp not followed; use that URL as the endpoint if it is the intended server",
+        "Redirect to http://server.example.invalid/mcp not followed: it would downgrade this HTTPS endpoint to plain HTTP.",
+    ])
+    def test_sdk_redirect_refusal_is_actionable_without_retries(self, message):
+        from mcp.shared.exceptions import MCPError
+
+        assert _classify_mcp_failure(_group(MCPError(code=-32600, message=message))) == "permanent"
+
+    @pytest.mark.parametrize("code,message", [
+        (-32600, "Invalid request"),
+        (-32000, "Redirect to https://other.example.invalid not followed"),
+        (-32600, "Redirect to temporary backend failed"),
+    ])
+    def test_unrelated_rpc_errors_keep_normal_recovery(self, code, message):
+        from mcp.shared.exceptions import MCPError
+
+        assert _classify_mcp_failure(MCPError(code=code, message=message)) == "transient"
+
     @pytest.mark.parametrize("exc", [
         ConnectionError("connection refused"),
         ConnectionResetError("reset by peer"),

@@ -3477,6 +3477,18 @@ def read_raw_config() -> Dict[str, Any]:
         return data
 
 
+def read_user_config_document(config_path: Path) -> Any:
+    """Read a raw config document without normalizing its type or failures.
+
+    Only for raw-file diagnostics and authorization/write-back boundaries that
+    must distinguish a missing file from an empty or invalid document. No
+    cache, environment expansion, overlays, locks or filesystem writes occur.
+    Behavioral reads must use load_config()/load_config_readonly().
+    """
+    with open(config_path, encoding="utf-8") as stream:
+        return fast_safe_load(stream)
+
+
 def read_user_config_raw(config_path: Optional[Path] = None) -> Dict[str, Any]:
     """Read a user ``config.yaml`` EXACTLY as written on disk.
 
@@ -3519,8 +3531,7 @@ def read_user_config_raw(config_path: Optional[Path] = None) -> Dict[str, Any]:
     if config_path is None:
         config_path = get_config_path()
     try:
-        with open(config_path, encoding="utf-8") as f:
-            data = fast_safe_load(f) or {}
+        data = read_user_config_document(config_path)
     except FileNotFoundError:
         return {}
     return data if isinstance(data, dict) else {}

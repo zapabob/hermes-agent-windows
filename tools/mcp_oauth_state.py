@@ -117,9 +117,9 @@ def oauth_state_lock(home: str | Path):
 
 def config_entry(home: str | Path, name: str):
     """Read raw saved authority; a missing entry permits initial CLI setup."""
-    import yaml
+    from hermes_cli.config import read_user_config_document
     try:
-        document = yaml.safe_load((Path(home) / "config.yaml").read_text(encoding="utf-8"))
+        document = read_user_config_document(Path(home) / "config.yaml")
     except FileNotFoundError:
         return None
     if not isinstance(document, dict):
@@ -141,14 +141,15 @@ def config_replace_guard(temporary: str | Path, target: str | Path):
         yield
         return
     import yaml
+    from hermes_cli.config import read_user_config_document
     with oauth_state_lock(target.parent) as state:
         try:
-            previous = yaml.safe_load(target.read_text(encoding="utf-8")) or {}
+            previous = read_user_config_document(target) or {}
         except (FileNotFoundError, yaml.YAMLError):
             # A restore may repair malformed YAML. Every entry in the valid
             # replacement is still fenced; the existing journal is never reset.
             previous = {}
-        candidate = yaml.safe_load(Path(temporary).read_text(encoding="utf-8")) or {}
+        candidate = read_user_config_document(Path(temporary)) or {}
         old = previous.get("mcp_servers", {}) if isinstance(previous, dict) else {}
         new = candidate.get("mcp_servers", {}) if isinstance(candidate, dict) else {}
         old = old if isinstance(old, dict) else {}

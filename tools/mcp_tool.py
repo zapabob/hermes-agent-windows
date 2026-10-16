@@ -1468,6 +1468,18 @@ def _classify_mcp_failure(exc: BaseException) -> str:
         return "permanent"
     if isinstance(root, (NonMcpEndpointError, InvalidMcpUrlError)):
         return "permanent"
+    # SDK 2.2 refuses unsafe redirects as JSON-RPC INVALID_REQUEST. Retrying
+    # cannot change the configured endpoint and can exhaust the discovery
+    # timeout, replacing its actionable explanation with CancelledError.
+    rpc_error = getattr(root, "error", None)
+    rpc_message = getattr(rpc_error, "message", "")
+    if (
+        getattr(rpc_error, "code", None) == -32600
+        and isinstance(rpc_message, str)
+        and rpc_message.startswith("Redirect to ")
+        and " not followed" in rpc_message
+    ):
+        return "permanent"
     # Stdio command missing: FileNotFoundError, or an OSError carrying ENOENT.
     if isinstance(root, FileNotFoundError):
         return "permanent"
