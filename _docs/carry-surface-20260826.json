@@ -20,12 +20,12 @@
   "schema_version": 1,
   "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
   "summary": {
-    "all_fork_specific_loc": 3179192,
-    "carry_surface_files": 5141,
-    "cwc": 87072386,
-    "fork_owned_loc": 1611248,
-    "upstream_owned_fork_loc": 1567944,
-    "utr": 0.493189
+    "all_fork_specific_loc": 3180092,
+    "carry_surface_files": 5143,
+    "cwc": 87085808,
+    "fork_owned_loc": 1611831,
+    "upstream_owned_fork_loc": 1568261,
+    "utr": 0.49315
   },
   "top_carry_risks": [
     {
@@ -155,10 +155,10 @@
       "upstream_frequency": 73
     },
     {
-      "added": 7066,
-      "cwc": 1099280,
-      "deleted": 2749,
-      "patch_size": 9815,
+      "added": 7104,
+      "cwc": 1103424,
+      "deleted": 2748,
+      "patch_size": 9852,
       "path": "cron/scheduler.py",
       "semantic_coupling": 2,
       "upstream_frequency": 56
@@ -209,10 +209,10 @@
       "upstream_frequency": 36
     },
     {
-      "added": 9177,
-      "cwc": 892032,
+      "added": 9189,
+      "cwc": 893136,
       "deleted": 519,
-      "patch_size": 9696,
+      "patch_size": 9708,
       "path": "tools/mcp_tool.py",
       "semantic_coupling": 2,
       "upstream_frequency": 46
@@ -227,10 +227,10 @@
       "upstream_frequency": 30
     },
     {
-      "added": 4812,
-      "cwc": 762804,
-      "deleted": 2251,
-      "patch_size": 7063,
+      "added": 4876,
+      "cwc": 770472,
+      "deleted": 2258,
+      "patch_size": 7134,
       "path": "hermes_cli/config.py",
       "semantic_coupling": 2,
       "upstream_frequency": 54
