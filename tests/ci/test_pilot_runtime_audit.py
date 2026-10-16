@@ -122,24 +122,29 @@ def test_cpu_checkpoint_installs_keep_generic_dependencies_on_pypi():
 def test_windows_checkout_preserves_exact_private_wheel_license(checker, project, tmp_path, pinned_line_endings):
     checkout = tmp_path / "checkout"
     checkout.mkdir()
-    subprocess.run(["git", "init", "--quiet", str(checkout)], check=True)
+    git = ["git", "-c", "core.autocrlf=true", "-c", "core.safecrlf=false", "-c", "core.longpaths=true"]
+    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    subprocess.run([*git, "init", "--quiet", str(checkout)], check=True, creationflags=flags)
     shutil.copy2(ROOT / ".gitattributes", checkout / ".gitattributes")
     if not pinned_line_endings:
         attributes = checkout / ".gitattributes"
         text = attributes.read_text(encoding="utf-8")
         attributes.write_text("\n".join(line for line in text.splitlines() if "LICENSE.accelerate" not in line)
                               + "\n", encoding="utf-8")
-    relative = Path(PILOT) / "vendor/LICENSE.accelerate"
-    license_file = checkout / relative
-    license_file.parent.mkdir(parents=True)
-    shutil.copy2(project / "vendor/LICENSE.accelerate", license_file)
-    git = ["git", "-c", "core.autocrlf=true", "-c", "core.safecrlf=false", "-c", "core.longpaths=true"]
-    subprocess.run([*git, "add", ".gitattributes", relative.as_posix()], cwd=checkout, check=True)
+    names = ["vendor/LICENSE.accelerate", *json.loads((project / "frozen_inputs.json").read_text(encoding="utf-8"))]
+    relative_paths = [Path(PILOT) / name for name in names]
+    for name, relative in zip(names, relative_paths):
+        destination = checkout / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(project / name, destination)
+    subprocess.run([*git, "add", ".gitattributes", *(p.as_posix() for p in relative_paths)],
+                   cwd=checkout, check=True, creationflags=flags)
     output = tmp_path / "export"
     output.mkdir()
     subprocess.run([*git, "checkout-index", "--all",
-                    "--prefix=" + output.as_posix() + "/"], cwd=checkout, check=True)
-    shutil.copy2(output / relative, project / "vendor/LICENSE.accelerate")
+                    "--prefix=" + output.as_posix() + "/"], cwd=checkout, check=True, creationflags=flags)
+    for name, relative in zip(names, relative_paths):
+        shutil.copy2(output / relative, project / name)
     if pinned_line_endings:
         checker.inspect_project(project)
     else:

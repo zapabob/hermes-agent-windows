@@ -35,3 +35,4 @@ docker/entrypoint.sh text eol=lf
 
 # These bytes are verified against the private wheel and its frozen manifest.
 rsi/experiments/hakua-epistemic-r3-qlora-pilot/vendor/LICENSE.accelerate text eol=lf
+rsi/experiments/hakua-epistemic-r3-qlora-pilot/*.jsonl text eol=lf

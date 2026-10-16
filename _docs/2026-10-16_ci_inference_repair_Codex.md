@@ -26,6 +26,11 @@ uses `core.autocrlf=true`; removing the attribute in the fixture must still
 fail the existing integrity guard. Wheel bytes, hashes, frozen inputs and
 license checks are unchanged.
 
+Extending that checkout reproduction to all eight frozen input files exposed
+the same conversion problem for the two JSONL datasets. Their byte identity
+is now also pinned to LF. This follow-up was reproduced as `frozen input hash
+mismatch` before the attribute was added, rather than bypassing the hash guard.
+
 The live generation server has one 131072-token slot and multiple concurrent
 connections from the Desktop backend. It continues generating tokens, so
 transport health is distinct from request queue latency. The existing
@@ -90,6 +95,16 @@ isolated location with sufficient capacity. The original pre-hook environment
 cannot be claimed byte-identical. Subsequent Git operations use the hook's
 process-local `LEFTHOOK=0` guard; no global hooks/configuration are changed.
 Explicit lint, native tests, policy and cloud gates remain required.
+
+Recovery verification: the WIP environment now has an independent Python
+3.12.13 copy of the canonical dependency baseline, a regenerated editable
+package pointing at the protected source checkout, verified core imports,
+and 31 passing focused regressions. All nine protected WIP source hashes
+remain unchanged. `uv pip check` reports one mismatch with that older source
+manifest: it pins cryptography 50.0.0, while the canonical recovery baseline
+retains 50.0.2. No protected manifest was edited and no security dependency
+was downgraded. This functional recovery does not establish byte identity
+with the environment that the hook replaced.
 
 At this implementation commit, cloud validation and runtime deployment are
 pending. Keep private machine receipts outside the repository. Completion
