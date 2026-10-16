@@ -113,7 +113,7 @@ class TestCustomProviderModelSwitch:
         assert selected is not None
         assert selected.access_token == "sk-new"
 
-        config = yaml.safe_load(config_path.read_text()) or {}
+        config = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
         assert config["model"]["base_url"] == "https://new.example.test/v1"
 
 
@@ -157,10 +157,10 @@ class TestCustomProviderModelSwitch:
             headers=None,
             timeout=8.0,
         )
-        config = yaml.safe_load(config_path.read_text()) or {}
+        config = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
         assert config["model"]["api_key"] == "${EXAMPLE_PROVIDER_API_KEY}"
         assert config["custom_providers"][0]["api_key"] == "${EXAMPLE_PROVIDER_API_KEY}"
-        assert "sk-live-example-provider" not in config_path.read_text()
+        assert "sk-live-example-provider" not in config_path.read_text(encoding="utf-8")
 
     def test_key_env_custom_provider_persists_reference_not_secret(self, config_home, monkeypatch):
         """key_env custom providers should also avoid writing plaintext keys."""
@@ -193,10 +193,10 @@ class TestCustomProviderModelSwitch:
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
 
-        config = yaml.safe_load(config_path.read_text()) or {}
+        config = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
         assert config["model"]["api_key"] == "${EXAMPLE_PROVIDER_API_KEY}"
         assert config["custom_providers"][0]["key_env"] == "EXAMPLE_PROVIDER_API_KEY"
-        assert "sk-live-example-provider" not in config_path.read_text()
+        assert "sk-live-example-provider" not in config_path.read_text(encoding="utf-8")
 
     def test_env_ref_base_url_preserves_api_key_ref_through_picker(
         self, config_home, monkeypatch
@@ -257,7 +257,7 @@ class TestCustomProviderModelSwitch:
         assert probe_args[0] == "sk-live-neuralwatt-secret"
 
         # But config.yaml must keep the env reference, not the plaintext secret.
-        saved = config_path.read_text()
+        saved = config_path.read_text(encoding="utf-8")
         config = yaml.safe_load(saved) or {}
         assert config["model"]["api_key"] == "${NEURALWATT_API_KEY}"
         assert config["custom_providers"][0]["api_key"] == "${NEURALWATT_API_KEY}"
@@ -325,7 +325,7 @@ class TestCustomProviderModelSwitch:
 
         # The providers entry must NOT gain an api_key field — neither the
         # plaintext secret nor a synthesized ${KEY_ENV} template.
-        saved_text = config_path.read_text()
+        saved_text = config_path.read_text(encoding="utf-8")
         saved = yaml.safe_load(saved_text) or {}
         entry = saved["providers"]["crs-henkee"]
         assert saved["model"]["provider"] == "custom:crs-henkee"
@@ -431,7 +431,7 @@ class TestCustomProviderModelSwitch:
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
 
-        saved_text = config_path.read_text()
+        saved_text = config_path.read_text(encoding="utf-8")
         saved = yaml.safe_load(saved_text) or {}
         entry = saved["providers"]["crs-henkee"]
         # Existing api_key template must survive (the resolved secret must not
@@ -489,7 +489,7 @@ class TestCustomProviderDiscoverModels:
             _model_flow_named_custom({}, provider_info)
 
         mock_fetch.assert_not_called()
-        config = yaml.safe_load((config_home / "config.yaml").read_text()) or {}
+        config = yaml.safe_load((config_home / "config.yaml").read_text(encoding="utf-8")) or {}
         model = config.get("model")
         assert isinstance(model, dict)
         assert model["default"] == "glm-5"
@@ -515,7 +515,7 @@ class TestCustomProviderDiscoverModels:
              patch("builtins.print"):
             _model_flow_named_custom({}, provider_info)
 
-        config = yaml.safe_load((config_home / "config.yaml").read_text()) or {}
+        config = yaml.safe_load((config_home / "config.yaml").read_text(encoding="utf-8")) or {}
         model = config.get("model")
         assert isinstance(model, dict)
         assert model["default"] == "fallback-b"

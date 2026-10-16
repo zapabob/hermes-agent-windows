@@ -154,7 +154,9 @@ class TestSlashCommands:
     ):
         """Alias targets with args must reach the built-in command handler."""
         runner.config.quick_commands = {
-            "s": {"type": "alias", "target": "/status extra-arg"}
+            # /s is the registered /steer alias; custom commands retain the
+            # same built-in precedence as other registry-owned spellings.
+            "quick-status": {"type": "alias", "target": "/status extra-arg"}
         }
         async def _handle_status(event):
             assert event.get_command_args() == "extra-arg"
@@ -162,7 +164,7 @@ class TestSlashCommands:
 
         runner._handle_status_command = AsyncMock(side_effect=_handle_status)
 
-        send = await send_and_capture(adapter, "/s", platform)
+        send = await send_and_capture(adapter, "/quick-status", platform)
 
         send.assert_called_once()
         response_text = send.call_args[1].get("content") or send.call_args[0][1]

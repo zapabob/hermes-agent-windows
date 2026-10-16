@@ -49,7 +49,7 @@ def client(monkeypatch, isolated_profiles):
 
 
 def _cfg(home):
-    return yaml.safe_load((home / "config.yaml").read_text()) or {}
+    return yaml.safe_load((home / "config.yaml").read_text(encoding="utf-8")) or {}
 
 
 def _write_jobs(home, jobs):

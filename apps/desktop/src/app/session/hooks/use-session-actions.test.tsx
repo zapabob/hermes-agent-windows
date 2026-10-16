@@ -60,6 +60,7 @@ import {
   setCurrentCwd,
   setCurrentFastMode,
   setCurrentModel,
+  setCurrentModelSource,
   setCurrentProvider,
   setCurrentReasoningEffort,
   setMessages,
@@ -566,6 +567,7 @@ describe('createBackendSessionForSend profile routing', () => {
     $currentCwd.set('')
     $currentFastMode.set(false)
     $currentModel.set('')
+    setCurrentModelSource('')
     $currentProvider.set('')
     $currentReasoningEffort.set('')
     setNewChatWorkspaceTarget(undefined)
@@ -658,6 +660,7 @@ describe('createBackendSessionForSend profile routing', () => {
 
     setCurrentModel('anthropic/claude-sonnet-4.6')
     setCurrentProvider('anthropic')
+    setCurrentModelSource('manual')
     setCurrentReasoningEffort('high')
     setCurrentFastMode(false)
 
@@ -687,6 +690,7 @@ describe('createBackendSessionForSend profile routing', () => {
     // the profile is waking. This send must still use what was visible at Enter.
     setCurrentModel('openai/gpt-5.5')
     setCurrentProvider('openai-codex')
+    setCurrentModelSource('default')
     setCurrentReasoningEffort('low')
     setCurrentFastMode(true)
     profileReady.resolve()
