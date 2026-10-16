@@ -141,14 +141,19 @@ jobs:
           tests/test_hermes_state_wal_fallback.py
           tests/hermes_cli/test_fallback_chain.py
           tests/ci/test_pilot_runtime_audit.py
-          tests/ci/test_cryptography_resolution.py
-          tests/tui_gateway/test_mcp_oauth_worker_startup.py
           tests/local/test_llama_secretary_context_allocation.py
           tests/gateway/test_local_model_connection_reply.py
           tests/security/test_security_center.py
           tests/security/test_freshclam_progress.py
           tests/security/test_security_api.py
           -q
+      - name: Isolated OAuth startup and dependency contracts
+        # These tests own process-global OAuth registries. Match the canonical
+        # per-file runner rather than sharing legacy contract-test imports.
+        run: >-
+          uv run --no-sync python scripts/run_tests_parallel.py
+          --files 'tests/ci/test_cryptography_resolution.py;tests/tui_gateway/test_mcp_oauth_worker_startup.py'
+          -j 1 --file-retries 0 -q
 
   windows-native-desktop:
     name: Windows native Desktop

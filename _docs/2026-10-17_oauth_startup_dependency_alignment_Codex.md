@@ -34,9 +34,13 @@ requirement/override metadata change. Keep the patched floor and existing
 WeCom/Weixin cryptographic APIs. A regression checks declared exact pin,
 override and resolved version together without hardcoding a release number.
 
-Windows Tier-1 now runs both affected regression files in its existing native
-Python contract step. The YAML remains one folded command; existing tests
-and other gates are retained.
+Windows Tier-1 runs both affected regression files in an additional native
+Python step using the canonical per-file process runner, with retries disabled.
+An initial combined invocation exposed legacy module-registry contamination
+on hosted Windows (job 117159712963: four stale session-registry KeyErrors and
+one deadline patch applied to the wrong module instance). The original native
+contract command is restored unchanged; the two new files run in fresh
+processes. No assertion, original test, or other gate is removed or relaxed.
 
 ## Verification evidence
 
