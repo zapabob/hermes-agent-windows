@@ -117,7 +117,10 @@ class DefinitionUpdater:
         staging.mkdir()
         try:
             result = run_bounded(
-                [freshclam, f"--datadir={staging}"],
+                # Progress redraws can overflow the bounded capture even on a
+                # successful download. Quiet retains errors; database inventory
+                # and sigtool validation still gate activation below.
+                [freshclam, f"--datadir={staging}", "--quiet"],
                 timeout=self.timeout,
                 max_output_bytes_per_stream=MAX_UPDATE_OUTPUT_BYTES,
             )

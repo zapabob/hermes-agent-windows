@@ -141,6 +141,41 @@ are occupied by long work. No prompt cache, tool or reasoning capability was
 removed to obtain the warm response results. The separate Hikari re-launch
 script was backed up and given the same verified two-slot capacity.
 
+## Security Center progress-output follow-up
+
+The reported screenshot was traced to the read-only feed record: freshclam
+exited zero but `output_truncated` was true. Repeated download progress
+redraws exhausted the 16 KiB bounded capture, so activation was correctly
+refused under the existing incomplete-output policy. Successful bytecode
+download alone did not establish an activated feed.
+
+Pass freshclam's supported `--quiet` option to suppress routine progress and
+retain error messages. Do not raise the output cap, ignore truncation, change
+signature verification, or mark a failed update successful. The subsequent
+bounded inventory, sigtool checks, activation and post-activation identity
+verification remain unchanged. The installed 1.5.4 executable's help confirms
+the option; official usage documents scripted quiet updates at
+https://docs.clamav.net/manual/Usage/Configuration.html#freshclamconf.
+
+The new regression runs a harmless real child through the production bounded
+process helper. Before the fix, a zero-exit progress flood failed to activate;
+afterward it activates and preserves the preceding definitions. Nonzero exit,
+overflow even in quiet mode, and malformed definitions still fail and retain
+the existing active definitions. Native Windows combined result: 98 passed,
+four platform skips. Ruff passed. Real CodeGraph bound the updater/service/
+validation slice before editing; independent review and the final pushed-SHA
+workflows remain separate completion gates. Live definition rotation must
+first preserve the pre-existing previous directory under a unique backup
+name; do not let rotation erase retained user files.
+
+Independent read-only review found no actionable issue in the updater and
+new regression. The existing center suite initially exposed missing optional
+YARA in the recovered test environment. Installing the already-locked
+yara-python 4.5.4 Windows wheel with its uv.lock SHA-256 into that isolated
+environment produced 39 passing center/progress tests and one platform skip.
+The production environment was not changed by that test dependency install.
+The freshclam regression is included in the Windows-native CI lane.
+
 At this implementation commit, cloud validation and runtime deployment are
 pending. Keep private machine receipts outside the repository. Completion
 requires terminal-success workflows on the final main SHA, preserved WIP
