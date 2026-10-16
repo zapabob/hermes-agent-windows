@@ -79,6 +79,18 @@ two-slot responses as separate gates. Windows footgun scan (1528 files),
 downstream policy validation, private wheel/source and frozen-input integrity,
 and `git diff --check` passed locally.
 
+The first commit invoked the pre-existing broken Lefthook bootstrap, whose
+fallback `uv run lefthook -h` recreated the junction-shared WIP environment
+with Python 3.11 before the call was stopped. This was an execution mistake;
+the previously known bootstrap failure should have been isolated before the
+commit. WIP source-file hashes remained unchanged and the separate canonical
+production environment was unaffected. Recovery preserves the partial
+replacement and copies the known canonical Python 3.12 environment to a new
+isolated location with sufficient capacity. The original pre-hook environment
+cannot be claimed byte-identical. Subsequent Git operations use the hook's
+process-local `LEFTHOOK=0` guard; no global hooks/configuration are changed.
+Explicit lint, native tests, policy and cloud gates remain required.
+
 At this implementation commit, cloud validation and runtime deployment are
 pending. Keep private machine receipts outside the repository. Completion
 requires terminal-success workflows on the final main SHA, preserved WIP
