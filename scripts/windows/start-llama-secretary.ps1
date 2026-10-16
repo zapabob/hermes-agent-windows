@@ -6,7 +6,10 @@
 
 param(
     [switch]$SkipFallbackOnFailure,
-    [int]$WaitSeconds = 240
+    [int]$WaitSeconds = 240,
+    # Optional per-conversation capacity; omitted preserves the legacy total.
+    [ValidateRange(0, 2147483647)][int]$ContextPerSlot = 0,
+    [ValidateRange(0, 64)][int]$ParallelSlots = 0
 )
 
 $ErrorActionPreference = "Stop"
@@ -32,6 +35,22 @@ function Resolve-Default {
     $fromEnv = [Environment]::GetEnvironmentVariable($Name)
     if (-not [string]::IsNullOrWhiteSpace($fromEnv)) { return $fromEnv }
     return $Default
+}
+
+function Resolve-LlamaContextAllocation {
+    param(
+        [ValidateRange(1, 2147483647)][int]$Context,
+        [ValidateRange(1, 64)][int]$Parallel,
+        [ValidateRange(0, 2147483647)][int]$ContextPerSlot = 0
+    )
+    # llama.cpp divides a non-unified context among its parallel slots.
+    # Increasing parallelism must not silently halve the requested capacity.
+    if ($ContextPerSlot -eq 0) { return $Context }
+    $total = [long]$ContextPerSlot * $Parallel
+    if ($ContextPerSlot -lt 64000 -or $total -gt [int]::MaxValue) {
+        throw 'Requested per-slot context is below 64000 or exceeds the total context limit.'
+    }
+    return [int]$total
 }
 
 function Get-LlamaHelpText {
@@ -73,6 +92,8 @@ $UbatchSize = [int](Resolve-Default "HERMES_LLAMA_UBATCH_SIZE" "512")
 $Threads = [int](Resolve-Default "HERMES_LLAMA_THREADS" "8")
 # Parallel slots: 2 allows Hermes + subagent concurrent requests without queuing
 $Parallel = [int](Resolve-Default "HERMES_LLAMA_PARALLEL" "2")
+if ($ParallelSlots -gt 0) { $Parallel = $ParallelSlots }
+$Ctx = Resolve-LlamaContextAllocation -Context $Ctx -Parallel $Parallel -ContextPerSlot $ContextPerSlot
 $Profile = Resolve-Default "HERMES_LLAMA_PROFILE" "rtx5060ti"
 
 if ($Ctx -lt 64000) {

@@ -140,6 +140,8 @@ jobs:
           tests/gateway/test_multiplex_session_db_profile_scope.py
           tests/test_hermes_state_wal_fallback.py
           tests/hermes_cli/test_fallback_chain.py
+          tests/ci/test_pilot_runtime_audit.py
+          tests/local/test_llama_secretary_context_allocation.py
           tests/gateway/test_local_model_connection_reply.py
           tests/security/test_security_center.py
           tests/security/test_security_api.py
@@ -263,9 +265,11 @@ jobs:
           uv venv --python 3.10 $cpuEnvironment
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $python = Join-Path $cpuEnvironment 'Scripts/python.exe'
-          uv pip install --python $python 'torch==2.13.0+cpu' --index-url https://download.pytorch.org/whl/cpu
+          # The backend selector scopes PyTorch's index to Torch; generic
+          # dependencies stay on PyPI. The CPU lane has its own version pins.
+          uv pip install --no-config --python $python 'torch==2.13.0+cpu' --torch-backend cpu
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          uv pip install --python $python 'rsi/experiments/hakua-epistemic-r3-qlora-pilot/vendor/accelerate-1.15.0+hermes.1-py3-none-any.whl' 'safetensors==0.8.0' 'huggingface-hub==1.33.0' 'numpy==2.2.6'
+          uv pip install --no-config --python $python 'rsi/experiments/hakua-epistemic-r3-qlora-pilot/vendor/accelerate-1.15.0+hermes.1-py3-none-any.whl' 'safetensors==0.8.0' 'huggingface-hub==1.33.0' 'numpy==2.2.6'
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & $python -I -B -c "import torch, importlib.metadata as m; assert torch.__version__ == '2.13.0+cpu'; assert torch.version.cuda is None; assert m.version('accelerate') == '1.15.0+hermes.1'"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -103,3 +104,44 @@ def test_private_checkpoint_regression_runs_in_dedicated_cpu_environment():
     assert "test_accelerate_checkpoint_boundary.py" in commands
     assert "m.version('accelerate') == '1.15.0+hermes.1'" in commands
     assert "uv sync" not in commands
+
+
+def test_cpu_checkpoint_installs_keep_generic_dependencies_on_pypi():
+    workflow = yaml.safe_load((ROOT / ".github/workflows/fork-cicd.yml").read_text(encoding="utf-8"))
+    job = workflow["jobs"]["pilot-checkpoint-api"]
+    commands = "\n".join(step.get("run", "") for step in job["steps"])
+    installs = [line.strip() for line in commands.splitlines() if "uv pip install" in line]
+    assert installs
+    assert all("--no-config" in line for line in installs)
+    torch_install = next(line for line in installs if "torch==" in line)
+    assert "--torch-backend cpu" in torch_install
+    assert "--index-url" not in torch_install
+
+
+@pytest.mark.parametrize("pinned_line_endings", [True, False])
+def test_windows_checkout_preserves_exact_private_wheel_license(checker, project, tmp_path, pinned_line_endings):
+    checkout = tmp_path / "checkout"
+    checkout.mkdir()
+    subprocess.run(["git", "init", "--quiet", str(checkout)], check=True)
+    shutil.copy2(ROOT / ".gitattributes", checkout / ".gitattributes")
+    if not pinned_line_endings:
+        attributes = checkout / ".gitattributes"
+        text = attributes.read_text(encoding="utf-8")
+        attributes.write_text("\n".join(line for line in text.splitlines() if "LICENSE.accelerate" not in line)
+                              + "\n", encoding="utf-8")
+    relative = Path(PILOT) / "vendor/LICENSE.accelerate"
+    license_file = checkout / relative
+    license_file.parent.mkdir(parents=True)
+    shutil.copy2(project / "vendor/LICENSE.accelerate", license_file)
+    git = ["git", "-c", "core.autocrlf=true", "-c", "core.safecrlf=false", "-c", "core.longpaths=true"]
+    subprocess.run([*git, "add", ".gitattributes", relative.as_posix()], cwd=checkout, check=True)
+    output = tmp_path / "export"
+    output.mkdir()
+    subprocess.run([*git, "checkout-index", "--all",
+                    "--prefix=" + output.as_posix() + "/"], cwd=checkout, check=True)
+    shutil.copy2(output / relative, project / "vendor/LICENSE.accelerate")
+    if pinned_line_endings:
+        checker.inspect_project(project)
+    else:
+        with pytest.raises(ValueError, match="private wheel license mismatch"):
+            checker.inspect_project(project)

@@ -1,0 +1,89 @@
+# Windows Tier-1 CI and local inference repair
+
+## Scope and acceptance
+
+Continue from main `27b03caca183ea1665740e0b8e283df9b0c2bfea` without deleting
+existing files, changing unrelated WIP, or changing the product version.
+Repair both failed Tier-1 jobs without weakening integrity, advisory or
+checkpoint checks. Validate the same published SHA in cloud CI, then restart
+the canonical Hermes services and require actual chat, tool and embedding
+responses. A listening port or a healthy process alone is insufficient.
+
+## Findings and implementation
+
+The CPU checkpoint job replaced the default index with the PyTorch CPU index.
+Its transitive `filelock` dependency could not be resolved. The job now uses
+uv's CPU backend selection, which scopes the PyTorch index to Torch while
+ordinary dependencies use PyPI. `--no-config` isolates this separate CPU lane
+from the root project's resolver configuration. Torch and the private
+Accelerate version assertions, disabled CUDA, and checkpoint tests remain.
+Reference: <https://docs.astral.sh/uv/guides/integration/pytorch/>.
+
+The private wheel license is compared byte-for-byte. Windows checkout could
+convert the standalone license to CRLF while leaving the wheel unchanged.
+The license now explicitly checks out as LF. A real Git checkout regression
+uses `core.autocrlf=true`; removing the attribute in the fixture must still
+fail the existing integrity guard. Wheel bytes, hashes, frozen inputs and
+license checks are unchanged.
+
+The live generation server has one 131072-token slot and multiple concurrent
+connections from the Desktop backend. It continues generating tokens, so
+transport health is distinct from request queue latency. The existing
+Windows launcher gains optional `ContextPerSlot` and `ParallelSlots`
+parameters. Explicit per-slot capacity allocates the corresponding total
+context; omitted parameters preserve the legacy total-context behavior.
+Validation rejects invalid parallel counts, undersized per-slot context and
+integer overflow. The deployment candidate is two slots with 131072 tokens
+each, retaining the existing GGUF, q4_0 K/V cache, Flash Attention, speculative
+ngram decoding and tool templates. Live capacity and response proof remain
+deployment gates, rather than assumptions from arithmetic.
+
+## Preservation and verification
+
+Work occurs in the existing isolated integration worktree. Primary main was
+clean at entry. The nine dirty/untracked WIP files in the protected source
+worktree were hashed before edits. No reset, clean, broad stage, or cache
+deletion is used. Existing environments are not synchronized through their
+junctions. Local tests use `uv run --no-sync` with the existing Python 3.12
+environment; root metadata accepts Python 3.11 through 3.13, while uv also
+reports the checkout's preferred Python 3.11. Cloud lanes retain their own
+selected interpreters.
+
+Focused verification: 31 tests passed, including the actual PowerShell
+allocation function, invalid input paths, Git line-ending conversion, pilot
+integrity and downstream CI contracts. Ruff passed for both changed Python
+tests. The first allocation harness run had a PowerShell syntax error in the
+new test itself; that run is not claimed as a semantic RED. The corrected
+native test and fail-closed checkout fixture provide the regression evidence.
+
+An additional fresh CPU-only installation with the CI-pinned uv 0.9.28
+resolved Torch's dependencies but failed while extracting its wheel because
+the local disk filled. No files or caches were deleted. CPU environment
+creation must therefore pass on the cloud Windows runner before completion.
+Real CodeGraph 1.5.0 provides source-bound navigation; PowerShell behavior is
+verified with the native parser and execution, not claimed as graph coverage.
+
+## Process and remaining gates
+
+Applied the common engineering, implementation start, skill selection,
+security, deep research, LLMOps, application, network and Python SOPs. Skills:
+`milspec-codex-standard`, `gh-fix-ci`, `deepresearch-defense-standard`,
+`code-review-and-quality`, and the Windows Hermes runtime restart skill.
+The direct user request authorizes implementation, main publication and
+runtime restart; no additional PR workflow or reviewer messaging is needed.
+An independent local review is required before integration.
+
+Independent review completed on these five implementation/test files with no
+actionable findings. It explicitly leaves cloud CPU installation and live
+two-slot responses as separate gates. Windows footgun scan (1528 files),
+downstream policy validation, private wheel/source and frozen-input integrity,
+and `git diff --check` passed locally.
+
+At this implementation commit, cloud validation and runtime deployment are
+pending. Keep private machine receipts outside the repository. Completion
+requires terminal-success workflows on the final main SHA, preserved WIP
+hashes, visible responsive Desktop, Electron-owned backend agreement with Go,
+four current-version gateways, server health, final chat content, structured
+tool calls and finite nonzero embeddings. Preserve exact gateway/channel
+failures separately from process restart status. Rollback uses retained old
+model arguments and the prior Git commit; do not delete model or user data.
