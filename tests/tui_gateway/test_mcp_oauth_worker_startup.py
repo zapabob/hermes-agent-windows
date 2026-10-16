@@ -95,6 +95,7 @@ class GatewayStartupOwner:
         self.cause = "Owned Gateway startup failure: " + mode
         self.rows = []
         self.barrier_failures = []
+        self.retry_backoffs = []
         self.native_acquired = threading.Event()
         self.bootstrap_release = threading.Event()
         self.cleanup_entered = threading.Event()
@@ -115,6 +116,16 @@ class GatewayStartupOwner:
         original_thread = threading.Thread
         original_probe = mcp_config._probe_single_server
         original_loop = core._ensure_mcp_loop
+
+        if mode == "after_sdk_start":
+            # Exercise every real SDK retry without coupling this ownership
+            # oracle to 1+2+4 seconds of +/-20% production jitter (>8s).
+            # Patch only the delay policy, never asyncio.sleep or the probe.
+            def immediate_backoff(seconds):
+                self.retry_backoffs.append(seconds)
+                return 0.0
+
+            self.set_attr(self.fault_patch, core, "_jittered", immediate_backoff)
 
         def observed_loop(*args, **kwargs):
             result = original_loop(*args, **kwargs)
@@ -387,6 +398,7 @@ def test_gateway_startup_public_error_ownership_and_actual_recovery(homes, monke
                 if mode == "after_sdk_start":
                     assert status["auth_url"] == flow.authorization_url and flow.authorization_url
                     assert captured.cleanup_entered.wait(8), "Actual failed probe did not enter cleanup hold"
+                    assert captured.retry_backoffs == [1.0, 2.0, 4.0]
                 else:
                     assert status["auth_url"] is None
                 foreign = raw_rpc("poll", profile="other", session_id=sid)["result"]

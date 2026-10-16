@@ -141,6 +141,8 @@ jobs:
           tests/test_hermes_state_wal_fallback.py
           tests/hermes_cli/test_fallback_chain.py
           tests/ci/test_pilot_runtime_audit.py
+          tests/ci/test_cryptography_resolution.py
+          tests/tui_gateway/test_mcp_oauth_worker_startup.py
           tests/local/test_llama_secretary_context_allocation.py
           tests/gateway/test_local_model_connection_reply.py
           tests/security/test_security_center.py
