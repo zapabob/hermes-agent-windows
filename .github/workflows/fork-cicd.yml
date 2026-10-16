@@ -144,7 +144,7 @@ jobs:
           tests/local/test_llama_secretary_context_allocation.py
           tests/gateway/test_local_model_connection_reply.py
           tests/security/test_security_center.py
-            tests/security/test_freshclam_progress.py
+          tests/security/test_freshclam_progress.py
           tests/security/test_security_api.py
           -q
 

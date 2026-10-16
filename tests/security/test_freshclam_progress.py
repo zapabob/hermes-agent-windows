@@ -6,10 +6,21 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 from downstream.security import updates
 from downstream.security.bounded_process import run_bounded
 from downstream.security.store import SecurityStore
+
+
+def test_native_ci_keeps_security_tests_in_one_shell_command() -> None:
+    workflow = yaml.safe_load(
+        (Path(__file__).parents[2] / ".github/workflows/fork-cicd.yml").read_text(encoding="utf-8")
+    )
+    steps = [step for job in workflow["jobs"].values() for step in job.get("steps", [])]
+    command = next(step["run"] for step in steps if step.get("name") == "Cross-platform and native Windows contracts")
+    assert len(command.strip().splitlines()) == 1, "YAML indentation split the PowerShell pytest invocation"
+    assert "tests/security/test_freshclam_progress.py" in command.split()
 
 
 @pytest.mark.parametrize("mode", ["success", "failure", "overflow", "invalid"])

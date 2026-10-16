@@ -176,6 +176,14 @@ environment produced 39 passing center/progress tests and one platform skip.
 The production environment was not changed by that test dependency install.
 The freshclam regression is included in the Windows-native CI lane.
 
+The added folded-YAML command line initially had two excess spaces. Parsing
+the actual workflow exposed an embedded newline in the PowerShell command.
+A regression fails on that three-line expansion, then passes after aligning
+the entry with the other pytest arguments. It also requires the freshclam
+regression to remain in that invocation. This repairs command assembly
+without excluding tests or changing job timeout limits. Superseded cloud
+runs are not final-success evidence.
+
 At this implementation commit, cloud validation and runtime deployment are
 pending. Keep private machine receipts outside the repository. Completion
 requires terminal-success workflows on the final main SHA, preserved WIP
