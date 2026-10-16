@@ -147,12 +147,12 @@ jobs:
           tests/security/test_freshclam_progress.py
           tests/security/test_security_api.py
           -q
-      - name: Isolated OAuth, provider and dependency contracts
+      - name: Isolated OAuth, provider, dependency and gateway contracts
         # These tests own process-global OAuth registries. Match the canonical
         # per-file runner rather than sharing legacy contract-test imports.
         run: >-
           uv run --no-sync python scripts/run_tests_parallel.py
-          --files 'tests/ci/test_cryptography_resolution.py;tests/tui_gateway/test_mcp_oauth_worker_startup.py;tests/plugins/model_providers/test_commandcode_profile.py'
+          --files 'tests/ci/test_cryptography_resolution.py;tests/tui_gateway/test_mcp_oauth_worker_startup.py;tests/plugins/model_providers/test_commandcode_profile.py;tests/gateway/test_runner_startup_failures.py;tests/gateway/test_shared_platform_ownership.py'
           -j 1 --file-retries 0 -q
 
   windows-native-desktop:

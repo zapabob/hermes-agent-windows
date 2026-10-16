@@ -5,10 +5,10 @@ import { createRequire } from 'node:module'
 import os from 'node:os'
 import path from 'node:path'
 
-import { test } from 'vitest'
+import { afterEach, beforeEach, test } from 'vitest'
 
 import { GitPolicyError, rethrowGitPolicyError } from './git-execution-policy'
-import { gitBinary } from './git-test-runtime'
+import { gitBinary, isolateNativeGitConfig } from './git-test-runtime'
 import type * as WorktreeOpsModule from './git-worktree-ops'
 import {
   addWorktree,
@@ -19,6 +19,12 @@ import {
   sanitizeBranch,
   switchBranch
 } from './git-worktree-ops'
+
+let restoreGitConfig: () => void
+beforeEach(() => {
+  restoreGitConfig = isolateNativeGitConfig()
+})
+afterEach(() => restoreGitConfig())
 
 // Current-source pure contracts: only the explicitly supplied owner fake can
 // receive a Git request. No policy process, real repository or Git is used.

@@ -13020,6 +13020,9 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             write_runtime_status(
                 gateway_state="starting",
                 exit_reason=None,
+                # Health belongs to this launch, including primary adapters
+                # that were disabled or removed since the previous process.
+                platforms={},
                 clear_profile_platforms=True,
             )
         except Exception:

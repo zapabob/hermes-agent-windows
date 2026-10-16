@@ -65,6 +65,52 @@ class _SuccessfulAdapter(BasePlatformAdapter):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("live_failure", [False, True])
+async def test_fresh_start_discards_obsolete_platform_health_but_keeps_live_failures(
+    monkeypatch, tmp_path, live_failure
+):
+    """A prior process's disabled adapters cannot degrade a fresh gateway."""
+    import json
+
+    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+    (tmp_path / "gateway_state.json").write_text(
+        json.dumps({
+            "pid": 99999,
+            "start_time": 1,
+            "platforms": {
+                "buzz": {"state": "fatal", "error_code": "old_config"},
+                "photon": {"state": "retrying", "error_code": "old_sidecar"},
+                "removed:discord": {"state": "fatal"},
+            },
+        }),
+        encoding="utf-8",
+    )
+    configured = {
+        Platform.DISCORD: PlatformConfig(enabled=True, token="synthetic-discord")
+    }
+    if live_failure:
+        configured[Platform.TELEGRAM] = PlatformConfig(enabled=True, token="synthetic-telegram")
+    runner = GatewayRunner(GatewayConfig(platforms=configured, sessions_dir=tmp_path / "sessions"))
+    monkeypatch.setattr(
+        runner, "_create_adapter",
+        lambda platform, _config: _RetryableFailureAdapter()
+        if platform is Platform.TELEGRAM else _SuccessfulAdapter(),
+    )
+    monkeypatch.setattr(runner, "_start_secondary_profile_adapters", AsyncMock(return_value=0))
+    try:
+        assert await runner.start()
+        platforms = read_runtime_status()["platforms"]
+        assert not {"buzz", "photon", "removed:discord"}.intersection(platforms)
+        assert platforms["discord"]["state"] == "connected"
+        if live_failure:
+            assert platforms["telegram"]["state"] == "retrying"
+            assert platforms["telegram"]["error_code"] == "telegram_connect_error"
+            assert Platform.TELEGRAM in runner._failed_platforms
+    finally:
+        await runner.stop()
+
+
+@pytest.mark.asyncio
 async def test_start_gateway_verbosity_imports_redacting_formatter(monkeypatch, tmp_path):
     """Verbosity != None must not crash with NameError on RedactingFormatter (#8044)."""
     monkeypatch.setenv("HERMES_HOME", str(tmp_path))
