@@ -74,6 +74,18 @@ CASES = {
     "python source → python": (["run_agent.py"], _lanes(python=True, scan=True)),
     "dep manifest → python": (["pyproject.toml"], _lanes(python=True, scan=True, deps=True, uv_lock=True)),
     "uv.lock → python": (["uv.lock"], _lanes(python=True, uv_lock=True)),
+    "pilot manifest → dependency checks": (
+        ["rsi/experiments/hakua-epistemic-r3-qlora-pilot/pyproject.toml"],
+        _lanes(python=True, scan=True, deps=True, uv_lock=True),
+    ),
+    "pilot lock → lock checks": (
+        ["rsi/experiments/hakua-epistemic-r3-qlora-pilot/uv.lock"],
+        _lanes(python=True, uv_lock=True),
+    ),
+    "pilot wheel → lock integrity": (
+        ["rsi/experiments/hakua-epistemic-r3-qlora-pilot/vendor/accelerate-1.15.0+hermes.1-py3-none-any.whl"],
+        _lanes(python=True, scan=True, uv_lock=True),
+    ),
     "ts package → frontend": (["apps/desktop/src/app.tsx"], _lanes(frontend=True)),
     "ui-tui → frontend": (["ui-tui/src/entry.ts"], _lanes(frontend=True)),
     # Lockfile bump shifts every TS package's tree, but not the Python suite.

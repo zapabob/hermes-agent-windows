@@ -63,7 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      review_status: ${{ steps.verify.outputs.review_status }}
+      review_status: ${{ steps.pilot.outputs.review_status || steps.verify.outputs.review_status }}
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -167,6 +167,19 @@ jobs:
           review_status='[]'
           echo "review_status=${review_status}" >> "$GITHUB_OUTPUT"
           echo "review_status=${review_status}" > review-status.json
+
+      - name: Verify frozen pilot lock is up-to-date
+        id: pilot
+        run: |
+          if uv python install 3.10 && uv lock --check --project rsi/experiments/hakua-epistemic-r3-qlora-pilot --python 3.10; then
+            review_status='[]'
+            echo "review_status=${review_status}" >> "$GITHUB_OUTPUT"
+          else
+            review_status='[{"source":"pilot uv.lock check","results":[{"kind":"action_required","title":"Frozen pilot lock verification failed","summary":"The pilot lock or its registry access failed verification. Inspect the failed step log before changing the lock."}]}]'
+            echo "review_status=${review_status}" >> "$GITHUB_OUTPUT"
+            echo "review_status=${review_status}" > review-status.json
+            exit 1
+          fi
 
       - name: Upload review status artifact
         if: always() && steps.verify.outcome != 'skipped'

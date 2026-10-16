@@ -99,6 +99,9 @@ _CI_REVIEW_PATHS = (".github/workflows/", ".github/actions/")
 # Supply-chain scan: files that can execute code at install/import time.
 _SCAN_EXTS = (".py", ".pth")
 _SCAN_FILES = {"setup.cfg", "pyproject.toml"}
+_PILOT = "rsi/experiments/hakua-epistemic-r3-qlora-pilot/"
+_DEP_MANIFESTS = {"pyproject.toml", _PILOT + "pyproject.toml"}
+_LOCK_INPUTS = _DEP_MANIFESTS | {"uv.lock", _PILOT + "uv.lock"}
 
 # MCP catalog files that require explicit security review.
 _MCP_CATALOG_PATHS = ("optional-mcps/",)
@@ -151,7 +154,7 @@ def _py_test_only(p: str) -> bool:
 
 
 def _is_scan(p: str) -> bool:
-    return p.endswith(_SCAN_EXTS) or p in _SCAN_FILES
+    return p.endswith(_SCAN_EXTS) or p in _SCAN_FILES or p in _DEP_MANIFESTS or p.startswith(_PILOT + "vendor/")
 
 
 def _is_mcp_catalog(p: str) -> bool:
@@ -189,7 +192,7 @@ def classify(files: list[str]) -> dict[str, bool]:
     python = any(not _py_irrelevant(f) for f in files)
     python_prod = any(not _py_irrelevant(f) and not _py_test_only(f) for f in files)
     frontend = any(f.startswith(_FRONTEND) or f in _ROOT_NPM for f in files)
-    deps = any(f == "pyproject.toml" for f in files)
+    deps = any(f in _DEP_MANIFESTS for f in files)
     npm_lock = any(f.split("/")[-1] == "package-lock.json" for f in files)
     docker_meta = any(f.startswith(_DOCKER_META) for f in files)
 
@@ -202,7 +205,7 @@ def classify(files: list[str]) -> dict[str, bool]:
         "site": any(f.startswith(_SITE) for f in files),
         "scan": any(_is_scan(f) for f in files),
         "deps": deps,
-        "uv_lock": any(f in ("pyproject.toml", "uv.lock") for f in files),
+        "uv_lock": any(f in _LOCK_INPUTS or f.startswith(_PILOT + "vendor/") for f in files),
         "npm_lock": npm_lock,
         "installer": any(_is_installer(f) for f in files),
         "rust": any(_is_rust(f) for f in files),

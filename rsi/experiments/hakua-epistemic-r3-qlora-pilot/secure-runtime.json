@@ -1,0 +1,162 @@
+{
+  "runtime_revision": "security-20261016-r1",
+  "python": [
+    3,
+    10
+  ],
+  "cuda": "13.0",
+  "frozen_manifest_sha256": "9f5fd910d3ae83afb814dbf26c656cfa817e8c611406da6c78f7909673700886",
+  "distributions": {
+    "accelerate": "1.15.0+hermes.1",
+    "annotated-doc": "0.0.5",
+    "annotated-types": "0.8.0",
+    "anyio": "4.15.1",
+    "bitsandbytes": "0.48.1",
+    "certifi": "2026.7.22",
+    "click": "8.5.0",
+    "exceptiongroup": "1.3.1",
+    "filelock": "4.1.0",
+    "fsspec": "2026.9.0",
+    "h11": "0.16.0",
+    "hf-xet": "1.7.0",
+    "httpcore": "1.0.9",
+    "httpx": "0.28.1",
+    "huggingface-hub": "1.33.0",
+    "idna": "3.20",
+    "jinja2": "3.1.6",
+    "markdown-it-py": "4.2.0",
+    "markupsafe": "3.0.4",
+    "mdurl": "0.1.2",
+    "mpmath": "1.3.0",
+    "networkx": "3.4.2",
+    "numpy": "2.2.6",
+    "packaging": "26.3",
+    "peft": "0.21.2",
+    "psutil": "7.2.2",
+    "pydantic": "2.13.4",
+    "pydantic-core": "2.46.4",
+    "pygments": "2.21.0",
+    "pyyaml": "6.0.3",
+    "regex": "2026.9.29",
+    "rich": "15.0.0",
+    "safetensors": "0.8.0",
+    "setuptools": "84.0.0",
+    "shellingham": "1.5.4",
+    "sympy": "1.14.0",
+    "tokenizers": "0.23.3",
+    "tomli": "2.5.0",
+    "torch": "2.13.0+cu130",
+    "tqdm": "4.70.1",
+    "transformers": "5.17.0",
+    "typer": "0.27.3",
+    "typing-extensions": "4.16.0",
+    "typing-inspection": "0.4.4"
+  },
+  "platform_distributions": {
+    "win32": {"colorama": "0.4.6"}
+  },
+  "owners": [
+    {
+      "distribution": "torch",
+      "path": "torch/__init__.py",
+      "sha256": "767496b63c899ec3d1106a4c1eeac664a9b3947a9b2f9eefa7a901cdfe8a0288"
+    },
+    {
+      "distribution": "transformers",
+      "path": "transformers/__init__.py",
+      "sha256": "2725cadd5afaa29b2a12faec1960cb7ac1df77dc76d655310efb33d4607b35f5"
+    },
+    {
+      "distribution": "transformers",
+      "path": "transformers/generation/utils.py",
+      "sha256": "bb558d8676be95457126c82a32600dad206c13e4fb96b4f5d114f1f2483d7f62"
+    },
+    {
+      "distribution": "transformers",
+      "path": "transformers/integrations/bitsandbytes.py",
+      "sha256": "8e0498f945e0af7361ec3ee22507a65677deec19298c8b74b206d6b987674322"
+    },
+    {
+      "distribution": "peft",
+      "path": "peft/__init__.py",
+      "sha256": "0d75f5e7919bbc0906ba285d5b5309b0d49a16a9cd87524225eae1cd480f79af"
+    },
+    {
+      "distribution": "peft",
+      "path": "peft/utils/other.py",
+      "sha256": "6b87957915ba399bfb6bbd57b9404aa12f0e9f4e27b19ef1b6c68ac052148f9b"
+    },
+    {
+      "distribution": "bitsandbytes",
+      "path": "bitsandbytes/__init__.py",
+      "sha256": "66ebfe0d7f67b1b74abe3b3fcfcbfee6e13a587aeb5fd4d8a5a1b006d9bfdb73"
+    },
+    {
+      "distribution": "bitsandbytes",
+      "path": "bitsandbytes/nn/modules.py",
+      "sha256": "44c0669aa67bfdb29cbd31689ee7626ff63dd46967262816eb0d083cd8c8c491"
+    },
+    {
+      "distribution": "accelerate",
+      "path": "accelerate/__init__.py",
+      "sha256": "88f7740dc6ccadc4bb90c784241409e3465611ab22f35017f1534ad572706043"
+    },
+    {
+      "distribution": "accelerate",
+      "path": "accelerate/utils/modeling.py",
+      "sha256": "329f308f73851396623b21f3b075bd5ee02fd48e11c76ada28f8ed83bedb2a79"
+    },
+    {
+      "distribution": "accelerate",
+      "path": "accelerate/big_modeling.py",
+      "sha256": "aa5ff729d8177c29e757ab2fb8a4e9a2b2edd50b3a931d5d159e270066eab426"
+    },
+    {
+      "distribution": "accelerate",
+      "path": "accelerate/utils/bnb.py",
+      "sha256": "6e8847abe62acb5395f9e9cb1caafd0fbd0f6da731b97c8754622cdcc70aac02"
+    },
+    {
+      "distribution": "safetensors",
+      "path": "safetensors/__init__.py",
+      "sha256": "3bc1e524ebaba28b4de3b3ebad1edfc623190a1d4fc34e76b900fa34e0c37bbd"
+    },
+    {
+      "distribution": "huggingface-hub",
+      "path": "huggingface_hub/__init__.py",
+      "sha256": "284be6e001a015f9933e756c6f6552b7266d811aff7b5124c960b5f1fc66b27e"
+    },
+    {
+      "distribution": "numpy",
+      "path": "numpy/__init__.py",
+      "sha256": "ad238e76e8c6fbd56a19e6c894864cf466bd2ed76004cac89e78c019fa625607"
+    },
+    {
+      "distribution": "pydantic",
+      "path": "pydantic/__init__.py",
+      "sha256": "e62127278c07bf5384cdd2903f368a69929f3b8a524000bae4e0eb608ebf4bc6"
+    }
+  ],
+  "base_checkpoint_files": {
+    "config.json": "18e18afcaccafade98daf13a54092927904649e1dd4eba8299ab717d5d94ff45",
+    "generation_config.json": "e558847a8b4402616f1273797b015104dc266fe4b520056fca88823ba8f8ebe6",
+    "LICENSE": "832dd9e00a68dd83b3c3fb9f5588dad7dcf337a0db50f7d9483f310cd292e92e",
+    "merges.txt": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+    "model.safetensors": "fdf756fa7fcbe7404d5c60e26bff1a0c8b8aa1f72ced49e7dd0210fe288fb7fe",
+    "tokenizer.json": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+    "tokenizer_config.json": "5b5d4f65d0acd3b2d56a35b56d374a36cbc1c8fa5cf3b3febbbfabf22f359583",
+    "vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+  },
+  "artifacts": {
+    "torch": {
+      "url": "https://download-r2.pytorch.org/whl/cu130/torch-2.13.0%2Bcu130-cp310-cp310-win_amd64.whl",
+      "sha256": "e85d18b0c51744b25fab85dbf590a4f00644da432af0e9d03c62acbd2f96ea94"
+    },
+    "accelerate": {
+      "path": "vendor/accelerate-1.15.0+hermes.1-py3-none-any.whl",
+      "sha256": "674d973d22f4607a563648d009c482ea0c63f86d7c586210505123381c26d452",
+      "upstream_commit": "6afc1e5ee217051fde702b23de2813344dc0fd33",
+      "private_source_patch": true
+    }
+  }
+}

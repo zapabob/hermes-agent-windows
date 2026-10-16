@@ -33,6 +33,7 @@ def test_required_tier_one_jobs_exist() -> None:
         "upstream-api-compat",
         "windows-regression",
         "security-locks",
+        "pilot-checkpoint-api",
     }
 
 

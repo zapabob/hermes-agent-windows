@@ -1,0 +1,172 @@
+--- a/setup.py
++++ b/setup.py
+@@ -56,7 +56,7 @@
+ 
+ setup(
+     name="accelerate",
+-    version="1.15.0",
++    version="1.15.0+hermes.1",
+     description="Accelerate",
+     long_description=open("README.md", encoding="utf-8").read(),
+     long_description_content_type="text/markdown",
+--- a/src/accelerate/__init__.py
++++ b/src/accelerate/__init__.py
+@@ -11,7 +11,7 @@
+ # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+-__version__ = "1.15.0"
++__version__ = "1.15.0+hermes.1"
+ 
+ from .accelerator import Accelerator
+ from .big_modeling import (
+--- a/src/accelerate/utils/modeling.py
++++ b/src/accelerate/utils/modeling.py
+@@ -20,9 +20,11 @@
+ import os
+ import re
+ import shutil
++import stat
+ import tempfile
+ import warnings
+ from collections import OrderedDict, defaultdict
++from pathlib import Path, PureWindowsPath
+ from typing import Optional, Union
+ 
+ import torch
+@@ -1814,6 +1816,58 @@
+     return state_dict
+ 
+ 
++def _regular_checkpoint_file(filename):
++    """Reject nonregular checkpoint inputs before opening a potentially blocking file."""
++    try:
++        regular = stat.S_ISREG(os.stat(filename).st_mode)
++    except (OSError, ValueError, TypeError):
++        regular = False
++    if not regular:
++        raise ValueError("Checkpoint inputs must be existing regular files.")
++
++
++def _checkpoint_shard_path(checkpoint_folder, shard, require_local_file=True):
++    """Confine index-controlled paths while retaining trusted Hub snapshot links.
++
++    This validates an on-disk checkpoint tree, not concurrent modification by
++    another local filesystem writer. Keep the logical filename for safetensors
++    backend selection; a Hub blob's physical filename has no extension.
++    """
++    if not isinstance(shard, str) or not shard or "\x00" in shard:
++        raise ValueError("Checkpoint shard names must be nonempty strings without NUL.")
++    relative = Path(shard)
++    if relative.anchor or ".." in relative.parts:
++        raise ValueError("Checkpoint shard names must stay relative to the checkpoint folder.")
++    if os.name == "nt" and any(":" in part or PureWindowsPath(part).is_reserved() for part in relative.parts):
++        raise ValueError("Checkpoint shard names cannot contain Windows streams or devices.")
++    filename = os.path.join(checkpoint_folder, shard)
++    if not require_local_file:
++        # Broadcast receivers validate metadata but never open local shards.
++        return filename
++    folder = Path(os.path.realpath(checkpoint_folder))
++    target = Path(os.path.realpath(filename))
++    allowed = target.is_relative_to(folder)
++    if not allowed:
++        # A caller-selected Hub snapshot authorizes that repository's blob
++        # store, including when snapshot_download used an explicit cache_dir.
++        # Derive its repository only from the caller's checkpoint folder, never
++        # from index metadata. An escaping blob-store reparse point is invalid.
++        for snapshot in (folder, *folder.parents):
++            if (
++                snapshot.parent.name == "snapshots"
++                and snapshot.parent.parent.name.startswith("models--")
++                and re.fullmatch(r"[0-9a-fA-F]{40}", snapshot.name) is not None
++            ):
++                repository = snapshot.parent.parent
++                blob_store = Path(os.path.realpath(repository / "blobs"))
++                allowed = blob_store.is_relative_to(repository) and target.is_relative_to(blob_store)
++                break
++    if not allowed:
++        raise ValueError("Checkpoint shard resolves outside its authorized checkpoint storage.")
++    _regular_checkpoint_file(filename)
++    return filename
++
++
+ def load_checkpoint_in_model(
+     model: nn.Module,
+     checkpoint: Union[str, os.PathLike],
+@@ -1899,6 +1953,15 @@
+         dtype = dtype.replace("torch.", "")
+         dtype = getattr(torch, dtype)
+ 
++    model_devices = {t.device for t in model.state_dict().values() if isinstance(t, torch.Tensor)}
++    model_physical_devices = model_devices - {torch.device("meta")}
++    reads_checkpoint = not (
++        broadcast_from_rank0
++        and device_map is None
++        and is_torch_version(">=", "2.4.0")
++        and ((is_torch_version(">=", "2.7.0") and len(model_physical_devices) <= 1) or len(model_devices) <= 1)
++        and dist.get_rank() != 0
++    )
+     checkpoint_files = None
+     index_filename = None
+     if os.path.isfile(checkpoint):
+@@ -1911,9 +1974,9 @@
+         potential_state_bin = [f for f in os.listdir(checkpoint) if f == WEIGHTS_NAME]
+         potential_state_safetensor = [f for f in os.listdir(checkpoint) if f == SAFE_WEIGHTS_NAME]
+         if len(potential_state_bin) == 1:
+-            checkpoint_files = [os.path.join(checkpoint, potential_state_bin[0])]
++            checkpoint_files = [_checkpoint_shard_path(checkpoint, potential_state_bin[0])]
+         elif len(potential_state_safetensor) == 1:
+-            checkpoint_files = [os.path.join(checkpoint, potential_state_safetensor[0])]
++            checkpoint_files = [_checkpoint_shard_path(checkpoint, potential_state_safetensor[0])]
+         else:
+             # otherwise check for sharded checkpoints
+             potential_index = [f for f in os.listdir(checkpoint) if f.endswith(".index.json")]
+@@ -1922,7 +1985,7 @@
+                     f"{checkpoint} is not a folder containing a `.index.json` file or a {WEIGHTS_NAME} or a {SAFE_WEIGHTS_NAME} file"
+                 )
+             elif len(potential_index) == 1:
+-                index_filename = os.path.join(checkpoint, potential_index[0])
++                index_filename = _checkpoint_shard_path(checkpoint, potential_index[0])
+             else:
+                 raise ValueError(
+                     f"{checkpoint} containing more than one `.index.json` file, delete the irrelevant ones."
+@@ -1935,13 +1998,27 @@
+ 
+     if index_filename is not None:
+         checkpoint_folder = os.path.split(index_filename)[0]
+-        with open(index_filename) as f:
++        _regular_checkpoint_file(index_filename)
++        with open(index_filename, encoding="utf-8") as f:
+             index = json.loads(f.read())
+ 
++        if not isinstance(index, dict):
++            raise ValueError("A checkpoint index must contain a dictionary.")
+         if "weight_map" in index:
+             index = index["weight_map"]
+-        checkpoint_files = sorted(list(set(index.values())))
+-        checkpoint_files = [os.path.join(checkpoint_folder, f) for f in checkpoint_files]
++        if not isinstance(index, dict):
++            raise ValueError("A checkpoint weight_map must contain a dictionary.")
++        # Validate every entry before deduplication or any shard can change the
++        # model. Invalid types must not fail later inside set(), sort(), or IO.
++        validated = [
++            _checkpoint_shard_path(checkpoint_folder, shard, require_local_file=reads_checkpoint)
++            for shard in index.values()
++        ]
++        checkpoint_files = sorted(set(validated))
++
++    if reads_checkpoint:
++        for checkpoint_file in checkpoint_files:
++            _regular_checkpoint_file(checkpoint_file)
+ 
+     # Logic for missing/unexpected keys goes here.
+ 
+@@ -1953,8 +2030,6 @@
+     unexpected_keys = set()
+     model_keys = set(model.state_dict().keys())
+     buffer_names = [name for name, _ in model.named_buffers()]
+-    model_devices = {t.device for t in model.state_dict().values() if isinstance(t, torch.Tensor)}
+-    model_physical_devices = model_devices - {torch.device("meta")}
+     for checkpoint_file in checkpoint_files:
+         if device_map is None:
+             # exception for multi-device loading was made for the meta device in torch v2.7.0

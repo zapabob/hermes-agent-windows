@@ -3,13 +3,22 @@ name = "hakua-epistemic-r3-qlora-pilot"
 version = "0.1.0"
 requires-python = ">=3.10,<3.11"
 dependencies = [
-  "torch==2.10.0+cu128", "transformers==4.55.4", "peft==0.17.1",
-  "bitsandbytes==0.48.1", "accelerate==1.10.1", "safetensors==0.6.2",
-  "huggingface-hub==0.34.4", "numpy==2.2.6", "pydantic==2.13.4",
+  "torch==2.13.0+cu130", "transformers==5.17.0", "peft==0.21.2",
+  "bitsandbytes==0.48.1", "accelerate==1.15.0+hermes.1", "safetensors==0.8.0",
+  "huggingface-hub==1.33.0", "numpy==2.2.6", "pydantic==2.13.4",
 ]
 [dependency-groups]
 dev = ["pytest==9.0.3", "black==26.3.1", "flake8==7.2.0"]
 [tool.uv]
 package = false
-# CUDA Torch is borrowed read-only from the existing Python 3.10 runtime.
-# Do not uv sync this experiment: use the documented .venv-cuda overlay.
+# Install into a new dedicated environment; keep historical .venv-cuda intact.
+# secure_runtime.py checks the installed closure and frozen historical inputs.
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu130" }
+accelerate = { path = "vendor/accelerate-1.15.0+hermes.1-py3-none-any.whl" }
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true

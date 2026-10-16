@@ -242,6 +242,36 @@ jobs:
           tests/run_agent/test_provider_fallback.py
           -q
 
+  pilot-checkpoint-api:
+    name: Frozen pilot checkpoint API (CPU)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      CUDA_VISIBLE_DEVICES: "-1"
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          version: ${{ env.UV_VERSION }}
+      - name: Create separate CPU checkpoint regression environment
+        run: |
+          uv python install 3.10
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $cpuEnvironment = Join-Path $env:RUNNER_TEMP 'pilot-checkpoint-cpu'
+          uv venv --python 3.10 $cpuEnvironment
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $python = Join-Path $cpuEnvironment 'Scripts/python.exe'
+          uv pip install --python $python 'torch==2.13.0+cpu' --index-url https://download.pytorch.org/whl/cpu
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          uv pip install --python $python 'rsi/experiments/hakua-epistemic-r3-qlora-pilot/vendor/accelerate-1.15.0+hermes.1-py3-none-any.whl' 'safetensors==0.8.0' 'huggingface-hub==1.33.0' 'numpy==2.2.6'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $python -I -B -c "import torch, importlib.metadata as m; assert torch.__version__ == '2.13.0+cpu'; assert torch.version.cuda is None; assert m.version('accelerate') == '1.15.0+hermes.1'"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $python -I -B -X utf8=0 tests/rsi/test_accelerate_checkpoint_boundary.py
+          exit $LASTEXITCODE
+
   security-locks:
     name: Security and lockfiles
     runs-on: windows-latest
@@ -271,6 +301,19 @@ jobs:
           uvx --from pip-audit==2.10.1 pip-audit --require-hashes --disable-pip --requirement $requirements
       - name: Node production dependency advisory audit
         run: npm audit --omit=dev --audit-level=high
+      - name: Frozen pilot integrity and dependency advisory audit
+        # The frozen pilot has a separate dependency graph and private wheel.
+        # Its public-version advisory query must follow asset/source validation.
+        # No Torch import, CUDA initialization or training occurs in this step.
+        run: |
+          $requirements = Join-Path $env:RUNNER_TEMP 'hermes-pilot-audit-requirements.txt'
+          uv run --no-project --python 3.11 python scripts/ci/check_pilot_runtime.py --requirements $requirements
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          uvx --from pip-audit==2.10.1 pip-audit --strict --no-deps --disable-pip --requirement $requirements
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          uv python install 3.10
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          uv lock --check --project rsi/experiments/hakua-epistemic-r3-qlora-pilot --python 3.10
       - name: Go module integrity
         working-directory: scripts/windows/watchdog-go
         run: go mod verify
