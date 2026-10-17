@@ -255,7 +255,8 @@ describe('refreshOnboarding', () => {
 
     const ctx: OnboardingContext = {
       profile: 'beta',
-      requestGateway: async method => (method === 'setup.status' ? { provider_configured: true } : { ok: true }) as never
+      requestGateway: async method =>
+        (method === 'setup.status' ? { provider_configured: true } : { ok: true }) as never
     }
 
     $desktopOnboarding.set(baseState({ configured: true }))
@@ -322,7 +323,8 @@ describe('refreshOnboarding', () => {
 
     const ctx: OnboardingContext = {
       profile: 'beta',
-      requestGateway: async method => (method === 'setup.status' ? { provider_configured: true } : { ok: true }) as never,
+      requestGateway: async method =>
+        (method === 'setup.status' ? { provider_configured: true } : { ok: true }) as never,
       onCompleted
     }
 

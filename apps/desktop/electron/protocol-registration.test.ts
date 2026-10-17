@@ -31,7 +31,9 @@ function runRegistration(options: RegistrationOptions = {}) {
       setAsDefaultProtocolClient: (protocol, executable, args) => {
         calls.push({ protocol, executable, args })
 
-        if (options.throwOnRegistration) { throw new Error('owned registration failure') }
+        if (options.throwOnRegistration) {
+          throw new Error('owned registration failure')
+        }
 
         return options.registrationResult ?? true
       }
@@ -39,7 +41,9 @@ function runRegistration(options: RegistrationOptions = {}) {
     testWorkerIndex: options.workerIndex,
     defaultApp: options.defaultApp ?? false,
     execPath: ELECTRON_BINARY,
-    log: message => { logs.push(message) }
+    log: message => {
+      logs.push(message)
+    }
   })
 
   return { calls, logs, appPathReads }

@@ -32,6 +32,7 @@ function mockReview(overrides: Record<string, unknown> = {}) {
     const requireTest = createRequire(
       path.join(process.env.S06_DESKTOP_DEPS || path.join(root, 'apps/desktop'), 'package.json')
     )
+
     const esbuild = requireTest('esbuild')
 
     try {
@@ -75,6 +76,7 @@ function mockReview(overrides: Record<string, unknown> = {}) {
     'simple-git': {
       simpleGit: options => {
         calls.push([options])
+
         git.env = (value?: NodeJS.ProcessEnv) => {
           if (value) {
             environments.push(value)
@@ -107,6 +109,7 @@ function mockReview(overrides: Record<string, unknown> = {}) {
 function reviewGate<T>() {
   let resolve!: (value: T) => void
   let reject!: (error: unknown) => void
+
   const promise = new Promise<T>((yes, no) => {
     resolve = yes
     reject = no
@@ -286,6 +289,7 @@ test('pure S06 review: ordinary diff failure retains empty read fallback', async
       }
     }
   })
+
   assert.deepEqual(await ops.reviewList('renderer-repo', 'uncommitted', null, 'selected-git'), {
     files: [],
     base: null
