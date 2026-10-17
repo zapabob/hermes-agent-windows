@@ -3184,6 +3184,153 @@
           "git_blob": "00e7cc3a2ca5997ca3612617c3c4aed567000b52"
         }
       ]
+    },
+    "F04_metadata_prerequisite": {
+      "commit": "56f9d1fba272f556fff77cf8551e0fdf0ac7b1d1",
+      "scope": "Failure-atomic existing SessionStore metadata setter; F04 Gateway command remains unimplemented",
+      "red": {
+        "tests": 5,
+        "failures": 4,
+        "errors": 0,
+        "skipped": 0
+      },
+      "green": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "existing_session_file_suite": {
+        "tests": 65,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "included_in_historical_totals": false,
+      "mutations": [
+        {
+          "fault": "mutate-before-save",
+          "bindings": 1,
+          "source_sha256": "c2f303e82940648ae072f84ef68bbf832d3eddedfc6365ebaf345170061095ab",
+          "test_sha256": "374a29b9bcb6c1ee1527c3011319e5e088dc0f20a6e8ebc9465b59b58fc305ca",
+          "mutated_module_loaded": true,
+          "pytest_exit": 1,
+          "counts": {
+            "tests": 5,
+            "failures": 4,
+            "errors": 0,
+            "skipped": 0
+          },
+          "classification": "KILLED_ASSERTIONS"
+        },
+        {
+          "fault": "skip-durable-save",
+          "bindings": 1,
+          "source_sha256": "c2f303e82940648ae072f84ef68bbf832d3eddedfc6365ebaf345170061095ab",
+          "test_sha256": "374a29b9bcb6c1ee1527c3011319e5e088dc0f20a6e8ebc9465b59b58fc305ca",
+          "mutated_module_loaded": true,
+          "pytest_exit": 1,
+          "counts": {
+            "tests": 5,
+            "failures": 5,
+            "errors": 0,
+            "skipped": 0
+          },
+          "classification": "KILLED_ASSERTIONS"
+        }
+      ],
+      "source_bindings": [
+        {
+          "path": "gateway/session.py",
+          "worktree_sha256": "c2f303e82940648ae072f84ef68bbf832d3eddedfc6365ebaf345170061095ab",
+          "git_blob": "6a659d7314150dc955b9746dec369270ce852720",
+          "matches_independent_review_start_and_end_hash": true
+        },
+        {
+          "path": "tests/gateway/test_session_metadata_save_boundary.py",
+          "worktree_sha256": "374a29b9bcb6c1ee1527c3011319e5e088dc0f20a6e8ebc9465b59b58fc305ca",
+          "git_blob": "94106afd177de2534e35a211687bfbe9254420f7",
+          "matches_independent_review_start_and_end_hash": true
+        }
+      ],
+      "behavior": "Snapshot/reconcile first, persist a separate metadata candidate through the existing whole-index/legacy-mirror owner, publish only after durable success; failed updates cannot leak through a later unrelated save. Activity timestamp unchanged.",
+      "independent_review": {
+        "agent": "Confucius",
+        "result": "No actionable P1/P2 within setter/recovery/persistence/generation scope",
+        "source_hashes_matched_at_review_start_and_end": true,
+        "independent_runtime_execution": false
+      },
+      "checks": {
+        "ruff": "PASS",
+        "diff_hygiene": "PASS",
+        "codegraph": {
+          "initialized": true,
+          "version": "1.6.0",
+          "lastIndexed": "2026-10-17T05:41:53.149Z",
+          "fileCount": 9232,
+          "nodeCount": 199537,
+          "edgeCount": 631829,
+          "dbSizeBytes": 671895552,
+          "walSizeBytes": 0,
+          "backend": "node-sqlite",
+          "journalMode": "wal",
+          "nodesByKind": {
+            "class": 13318,
+            "component": 64,
+            "constant": 5903,
+            "enum": 8,
+            "enum_member": 25,
+            "field": 10,
+            "file": 8895,
+            "function": 63771,
+            "import": 44436,
+            "interface": 2195,
+            "method": 42930,
+            "namespace": 1,
+            "property": 1473,
+            "route": 397,
+            "struct": 33,
+            "type_alias": 890,
+            "variable": 15188
+          },
+          "languages": [
+            "c",
+            "cpp",
+            "csharp",
+            "go",
+            "javascript",
+            "liquid",
+            "nix",
+            "php",
+            "python",
+            "rust",
+            "tsx",
+            "typescript",
+            "yaml"
+          ],
+          "pendingChanges": {
+            "added": 0,
+            "modified": 0,
+            "removed": 0
+          },
+          "worktreeMismatch": null,
+          "index": {
+            "builtWithVersion": "1.6.0",
+            "builtWithExtractionVersion": 25,
+            "currentExtractionVersion": 25,
+            "reindexRecommended": false,
+            "state": "complete",
+            "pendingRefs": 0
+          }
+        }
+      },
+      "F04_intake": {
+        "registry": "CLI-only, no accepted Gateway /busy handler or dispatch change",
+        "required_boundary": "No propagation into another profile/chat; no resurrection of stopped queued messages; config save alone is insufficient",
+        "projection": "Four source-only files prepared with source/range hashes before this metadata fix. Initial index invocation resolved the parent campaign index (9230 files), not a projection index; snapshot is not qualified for current F04 implementation. Regenerate and explicitly initialize the projection before using it.",
+        "whole_gateway_run_graph_coverage": false
+      },
+      "production_operations": "No native Electron launch, watchdog write/clear/restart, real model or live gateway operation in this prerequisite slice"
     }
   }
 }

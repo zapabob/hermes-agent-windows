@@ -260,6 +260,31 @@ tests' isolation/false-acceptance scope. It started against the pre-commit
 working files; final diagnostic refinements proceeded in parallel, so it is
 not an exact-final-commit review or independent runtime attestation.
 
+F04 intake identified a prerequisite defect in the existing session-metadata
+setter: serialization or persistence failure left the requested value active
+in memory, allowing an unrelated later save to revive it. Commit
+`56f9d1fba272f556fff77cf8551e0fdf0ac7b1d1` persists a separate candidate before
+publishing it. It retains the existing whole-index write, primary DB/legacy
+mirror fallback, shared generation ordering and unchanged activity timestamp.
+Four confirmed behavioral RED failures and one positive primary-commit control
+became **5 passed**; the existing session test file separately passed **65**.
+These counts are supplemental, not added to the historical 655/15 totals.
+Two source-and-test-bound faults (mutate before save; skip durable save) were
+killed with four/five assertion failures and no collection errors. Ruff and diff
+hygiene pass. An independent read-only reviewer found no P1/P2 within the
+setter/recovery/persistence/generation scope; its start/end source hashes match
+the committed files. It did not independently execute the tests.
+
+This fixes the metadata prerequisite, not the Gateway `/busy` feature. The
+registry remains CLI-only. The inventory explicitly forbids another profile or
+chat receiving the mode and forbids stopped messages reviving; the upstream
+profile-wide config mutation cannot be copied without resolving that contract.
+A four-file source-only projection was prepared, but its first index invocation
+resolved the parent campaign index instead. It is not a qualified F04 graph,
+and its pre-fix session snapshot must be regenerated before use. The campaign's
+actual CodeGraph 1.6.0 index was refreshed for the metadata change with zero
+pending changes; whole `gateway/run.py` coverage is still not claimed.
+
 The dated `_docs/2026-10-17_v0222_selective_implementation_Codex.md` log remains
 local under its existing ignore rule; it was not force-added. This tracked
 checkpoint and JSON receipt provide the durable repository record.
