@@ -3122,8 +3122,17 @@ class SessionStore:
             entry = self._entries.get(session_key)
             if entry is None:
                 return False
-            entry.metadata[key] = value
-            self._save()
+            # Reconcile and snapshot before publishing the candidate. A failed
+            # serialization/write must not become effective in memory or leak
+            # into a later unrelated save. Keep the existing whole-index and
+            # legacy-mirror persistence contract for metadata updates.
+            data, generation = self._snapshot_routing_locked()
+            entry = self._entries[session_key]
+            metadata = dict(entry.metadata)
+            metadata[key] = value
+            data[session_key]["metadata"] = metadata
+            self._persist_routing_data(data, generation)
+            entry.metadata = metadata
             return True
 
     def set_model_override(
