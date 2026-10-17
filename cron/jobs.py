@@ -1442,10 +1442,8 @@ def load_jobs() -> List[Dict[str, Any]]:
             # key by id and omit the inline copy). Non-dict values are junk
             # (a flattened record would not be a job) — skip them with a
             # warning instead of crashing downstream.
-            # (_peek_jobs_unlocked() deliberately does NOT flatten —
-            # it returns None on a dict-shaped store so the save path never
-            # merges against an unrepaired baseline; the flatten lives only
-            # here at the load boundary.)
+            # The save-path peek accepts this same recoverable shape without
+            # writing it, so a concurrent create is still merged during repair.
             skipped = [k for k, v in jobs.items() if not isinstance(v, dict)]
             if skipped:
                 logger.warning(
@@ -1505,6 +1503,12 @@ def _peek_jobs_unlocked() -> Optional[List[Dict[str, Any]]]:
         return None
     if isinstance(data, dict):
         jobs = data.get("jobs", [])
+        if isinstance(jobs, dict):
+            return [
+                {**value, "id": value.get("id") or key}
+                for key, value in jobs.items()
+                if isinstance(value, dict)
+            ]
         return jobs if isinstance(jobs, list) else None
     if isinstance(data, list):
         return data
@@ -1577,7 +1581,10 @@ def _merge_unexpected_disk_jobs(
 
     disk_jobs = _peek_jobs_unlocked()
     if disk_jobs is None:
-        return jobs
+        raise RuntimeError(
+            "Cron database baseline is corrupt or unreadable; refusing normal "
+            "save. Recover the store explicitly before retrying."
+        )
 
     intended_remove = {str(i) for i in (removed_ids or ()) if i}
     new_ids: Set[str] = set()
@@ -1680,6 +1687,11 @@ def _save_jobs_unlocked(
                     _stamp is not None and _jobs_file_stamp(jobs_file) == _stamp
                 )
                 disk_jobs = None if _unchanged else _peek_jobs_unlocked()
+                if not _unchanged and disk_jobs is None:
+                    raise RuntimeError(
+                        "Cron database baseline became corrupt or unreadable "
+                        "after staging; refusing normal save."
+                    )
                 if disk_jobs is not None:
                     payload_ids = {
                         str(j["id"])
@@ -1716,25 +1728,9 @@ def _save_jobs_unlocked(
             _record_load_stamp(None)
             return
 
-        # Exhausted retries — last merge + write without another re-peek.
-        if not replace:
-            jobs = _merge_unexpected_disk_jobs(jobs, removed_ids=removed_ids)
-        fd, tmp_path = tempfile.mkstemp(
-            dir=str(jobs_file.parent), suffix=".tmp", prefix=".jobs_"
-        )
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(
-                {"jobs": jobs, "updated_at": _hermes_now().isoformat()},
-                f,
-                indent=2,
-                ensure_ascii=False,
-            )
-            f.flush()
-            os.fsync(f.fileno())
-        atomic_replace(tmp_path, jobs_file)
-        tmp_path = None
-        _secure_file(jobs_file)
-        _preserve_file_ownership(jobs_file, _stat_before)
+        # A continuously changing store is not a verified baseline. Keep the
+        # concurrent writer's data and let this operation retry under its lock.
+        raise RuntimeError("Cron database baseline kept changing; retry normal save.")
     except BaseException:
         if tmp_path is not None:
             try:
