@@ -110,6 +110,8 @@ export interface SandboxPaths {
  * Key env vars:
  *  - HERMES_HOME → sandbox hermes-home (isolated config/sessions)
  *  - HERMES_DESKTOP_USER_DATA_DIR → sandbox electron-user-data
+ *  - HERMES_WATCHDOG_DATA → owned path under sandbox HERMES_HOME; required
+ *    even with no watchdog running because Desktop writes its stop fence there
  *  - HERMES_DESKTOP_IGNORE_EXISTING=1 → don't pick up `hermes` from PATH
  *    (we want the dev checkout at REPO_ROOT)
  *  - HERMES_DESKTOP_HERMES_ROOT → REPO_ROOT (dev checkout resolution)
@@ -147,7 +149,11 @@ export function buildAppEnv(
     // mid-flight — otherwise the quit confirmation waits on a click that no
     // one is there to make, and the worker dies on a teardown timeout.
     HERMES_DESKTOP_SKIP_QUIT_CONFIRM: '1',
-    ...extra
+    ...withoutCaseVariantsOf(extra, ['HERMES_WATCHDOG_DATA']),
+    // HERMES_HOME alone does not scope the Windows lifecycle control file:
+    // watchdogMaintenancePath otherwise falls back to workstation LOCALAPPDATA.
+    // Fixture overrides cannot redirect this authority outside the test HOME.
+    HERMES_WATCHDOG_DATA: path.join(sandbox.hermesHome, 'watchdog-go')
   }
 
   return {

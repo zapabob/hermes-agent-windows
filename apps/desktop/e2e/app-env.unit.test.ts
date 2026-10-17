@@ -113,4 +113,20 @@ describe('buildAppEnv with a hostile inherited environment', () => {
     expect(env.HERMES_DESKTOP_SKIP_QUIT_CONFIRM).toBe('0')
     expect(valuesFor(env, 'HERMES_HOME')).toEqual([sandbox.hermesHome])
   })
+
+  it('isolates watchdog control even when LOCALAPPDATA would target the workstation', () => {
+    const env = buildAppEnv(sandbox, {}, { LOCALAPPDATA: FAKE_PRIMARY })
+
+    expect(valuesFor(env, 'HERMES_WATCHDOG_DATA')).toEqual([path.join(sandbox.hermesHome, 'watchdog-go')])
+  })
+
+  it('rejects inherited and explicit case variants of the workstation watchdog path', () => {
+    const inherited = { HERMES_WATCHDOG_DATA: FAKE_PRIMARY, hermes_watchdog_data: FAKE_PRIMARY }
+    const extra = { HERMES_WATCHDOG_DATA: FAKE_PRIMARY, Hermes_Watchdog_Data: FAKE_PRIMARY }
+    const env = buildAppEnv(sandbox, extra, inherited)
+
+    expect(valuesFor(env, 'HERMES_WATCHDOG_DATA')).toEqual([path.join(sandbox.hermesHome, 'watchdog-go')])
+    expect(inherited.HERMES_WATCHDOG_DATA).toBe(FAKE_PRIMARY)
+    expect(extra.Hermes_Watchdog_Data).toBe(FAKE_PRIMARY)
+  })
 })
