@@ -8,6 +8,8 @@ import os
 import sys
 import time
 import importlib.util
+import json
+import logging
 import subprocess  # noqa: F401 — re-exported for tests that monkeypatch status.subprocess to guard against regressions
 from pathlib import Path
 
@@ -26,6 +28,8 @@ from hermes_cli.runtime_provider import resolve_requested_provider
 from hermes_cli.vercel_auth import describe_vercel_auth
 from hermes_constants import OPENROUTER_MODELS_URL
 from tools.tool_backend_helpers import managed_nous_tools_enabled
+
+logger = logging.getLogger(__name__)
 
 def check_mark(ok: bool) -> str:
     if ok:
@@ -129,9 +133,74 @@ def _estop_status_line():
     return f"⏸️  PAUSED (global emergency stop{suffix}; `hermes resume` to lift)"
 
 
+def _show_status_summary() -> None:
+    """Report local observations without loading models or probing endpoints."""
+    try:
+        config = load_config()
+        model = _configured_model_label(config)
+    except Exception:
+        logger.debug("Status configuration unavailable", exc_info=True)
+        model = "unknown"
+    try:
+        provider = _effective_provider_label()
+    except Exception:
+        logger.debug("Status provider unavailable", exc_info=True)
+        provider = "unknown"
+    try:
+        from hermes_cli.gateway import get_gateway_runtime_snapshot
+
+        snapshot = get_gateway_runtime_snapshot()
+        gateway = "running" if snapshot.running else "stopped"
+    except Exception:
+        logger.debug("Status gateway observation unavailable", exc_info=True)
+        gateway = "unknown"
+    try:
+        from gateway.config import load_gateway_config
+        from gateway.platform_registry import platform_registry
+
+        connected = load_gateway_config().get_connected_platforms()
+        platforms = ", ".join(
+            getattr(platform_registry.get(platform.value), "label", platform.value)
+            for platform in connected
+        ) or "none configured"
+    except Exception:
+        logger.debug("Status platform observation unavailable", exc_info=True)
+        platforms = "unknown"
+    jobs = "0"
+    try:
+        jobs_file = get_hermes_home() / "cron" / "jobs.json"
+        if jobs_file.exists():
+            # Observe the existing store directly: load_jobs() may repair it.
+            with jobs_file.open(encoding="utf-8-sig") as handle:
+                records = json.load(handle)["jobs"]
+            if not isinstance(records, list) or any(not isinstance(job, dict) for job in records):
+                raise ValueError("Invalid jobs payload")
+            jobs = f"{sum(bool(job.get('enabled', True)) for job in records)} active, {len(records)} total"
+    except Exception:
+        logger.debug("Status job observation unavailable", exc_info=True)
+        jobs = "unknown (error reading jobs file)"
+    lines = ["", "Hermes Agent Status"]
+    paused = _estop_status_line()
+    if paused:
+        lines.append(paused)
+    lines.extend([
+        f"  Model:        {model}",
+        f"  Provider:     {provider}",
+        f"  Gateway:      {gateway}",
+        f"  Platforms:    {platforms}",
+        f"  Jobs:         {jobs}",
+        "  Run 'hermes status --full' for every section.",
+        "",
+    ])
+    sys.stdout.write("\n".join(lines) + "\n")
+
+
 def show_status(args):
-    """Show status of all Hermes Agent components."""
+    """Show a summary by default; --full/--all/--deep retain detailed status."""
     deep = getattr(args, 'deep', False)
+    if not (deep or getattr(args, "full", False) or getattr(args, "all", False)):
+        _show_status_summary()
+        return
 
     print()
     print(color("┌─────────────────────────────────────────────────────────┐", Colors.CYAN))

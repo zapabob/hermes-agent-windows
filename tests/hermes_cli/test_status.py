@@ -38,7 +38,7 @@ def test_show_status_termux_gateway_section_skips_systemctl(monkeypatch, capsys,
 
     monkeypatch.setattr(status_mod.subprocess, "run", _unexpected_systemctl)
 
-    status_mod.show_status(SimpleNamespace(all=False, deep=False))
+    status_mod.show_status(SimpleNamespace(all=False, full=True, deep=False))
 
     output = capsys.readouterr().out
     assert "Manager:      Termux / manual process" in output
@@ -62,7 +62,7 @@ def test_show_status_reports_vercel_backend_contract(monkeypatch, capsys, tmp_pa
     monkeypatch.setattr(auth_mod, "get_xai_oauth_auth_status", lambda: {}, raising=False)
     monkeypatch.setattr(gateway_mod, "find_gateway_pids", lambda exclude_pids=None: [], raising=False)
 
-    status_mod.show_status(SimpleNamespace(all=False, deep=False))
+    status_mod.show_status(SimpleNamespace(all=False, full=True, deep=False))
 
     output = capsys.readouterr().out
     assert "Backend:      vercel_sandbox" in output
@@ -106,7 +106,7 @@ def test_show_status_discovers_plugin_platforms(monkeypatch, capsys, tmp_path):
     monkeypatch.setattr(plugins_mod, "discover_plugins", lambda: None)
     monkeypatch.setattr(platform_registry, "plugin_entries", lambda: [entry])
 
-    status_mod.show_status(SimpleNamespace(all=False, deep=False))
+    status_mod.show_status(SimpleNamespace(all=False, full=True, deep=False))
     output = capsys.readouterr().out
     assert "StatusDemo" in output
     assert "(plugin)" in output
@@ -151,7 +151,7 @@ class TestShowStatusXaiOAuth:
                             lambda: {"logged_in": True, "auth_store": "/home/u/.hermes/auth.json"},
                             raising=False)
 
-        status_mod.show_status(SimpleNamespace(all=False, deep=False))
+        status_mod.show_status(SimpleNamespace(all=False, full=True, deep=False))
         out = capsys.readouterr().out
 
         assert "Auth file:  /home/u/.hermes/auth.json" in out
@@ -165,7 +165,7 @@ class TestShowStatusXaiOAuth:
                             lambda: {"logged_in": True},
                             raising=False)
 
-        status_mod.show_status(SimpleNamespace(all=False, deep=False))
+        status_mod.show_status(SimpleNamespace(all=False, full=True, deep=False))
         out = capsys.readouterr().out
 
         xai_section = out.split("xAI OAuth", 1)[1].split("◆", 1)[0]
@@ -188,7 +188,7 @@ class TestShowStatusXaiOAuth:
         status_mod = _base_xai_mocks(monkeypatch, tmp_path)
         monkeypatch.delattr(auth_mod, "get_xai_oauth_auth_status", raising=False)
 
-        status_mod.show_status(SimpleNamespace(all=False, deep=False))
+        status_mod.show_status(SimpleNamespace(all=False, full=True, deep=False))
         out = capsys.readouterr().out
 
         assert "◆ Auth Providers" in out
@@ -201,7 +201,7 @@ class TestShowStatusXaiOAuth:
                             lambda: {"logged_in": True}, raising=False)
         monkeypatch.delattr(auth_mod, "get_xai_oauth_auth_status", raising=False)
 
-        status_mod.show_status(SimpleNamespace(all=False, deep=False))
+        status_mod.show_status(SimpleNamespace(all=False, full=True, deep=False))
         out = capsys.readouterr().out
 
         assert "Nous Portal" in out
@@ -217,7 +217,7 @@ class TestShowStatusXaiOAuth:
 
         monkeypatch.setattr(auth_mod, "get_xai_oauth_auth_status", _raises, raising=False)
 
-        status_mod.show_status(SimpleNamespace(all=False, deep=False))
+        status_mod.show_status(SimpleNamespace(all=False, full=True, deep=False))
         out = capsys.readouterr().out
 
         assert "◆ Auth Providers" in out
@@ -229,7 +229,7 @@ class TestShowStatusXaiOAuth:
         monkeypatch.setattr(auth_mod, "get_xai_oauth_auth_status",
                             lambda: None, raising=False)
 
-        status_mod.show_status(SimpleNamespace(all=False, deep=False))
+        status_mod.show_status(SimpleNamespace(all=False, full=True, deep=False))
         out = capsys.readouterr().out
 
         assert "xAI OAuth" in out
@@ -269,7 +269,7 @@ def test_show_status_reports_gateway_session_last_activity(monkeypatch, capsys, 
 
     monkeypatch.setattr(hermes_state, "SessionDB", _FakeDB)
 
-    status_mod.show_status(SimpleNamespace(all=False, deep=False))
+    status_mod.show_status(SimpleNamespace(all=False, full=True, deep=False))
     output = capsys.readouterr().out
     assert "Active:       2 session(s)" in output
     assert "Last activity:" in output

@@ -19,9 +19,12 @@ def build_status_parser(subparsers, *, cmd_status: Callable) -> None:
         help="Show status of all components",
         description="Display status of Hermes Agent components",
     )
-    status_parser.add_argument(
+    detail = status_parser.add_mutually_exclusive_group()
+    detail.add_argument(
         "--all", action="store_true", help="Show all details (redacted for sharing)"
     )
+    detail.add_argument("--full", action="store_true", help="Show every status section")
+    detail.add_argument("--short", action="store_true", help="Show the default one-screen summary")
     status_parser.add_argument(
         "--deep", action="store_true", help="Run deep checks (may take longer)"
     )
