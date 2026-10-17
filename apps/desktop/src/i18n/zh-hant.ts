@@ -955,7 +955,8 @@ export const zhHant = defineLocale({
       reloadFailed: 'MCP 重新載入失敗',
       savedTitle: 'MCP 伺服器已儲存',
       savedMessage: name => `${name} 已儲存。工具清單的變更會在新對話或手動重新載入 MCP 後生效。`,
-      savedPolicyMessage: name => `${name} 已儲存。每次呼叫開始前都會檢查已儲存的使用設定。工具清單的變更會在新對話或手動重新載入 MCP 後生效。已在執行中的呼叫可能繼續完成。`,
+      savedPolicyMessage: name =>
+        `${name} 已儲存。每次呼叫開始前都會檢查已儲存的使用設定。工具清單的變更會在新對話或手動重新載入 MCP 後生效。已在執行中的呼叫可能繼續完成。`,
       newServer: '新伺服器',
       reload: '重新載入 MCP',
       reloading: '重新載入中...',

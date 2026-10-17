@@ -51,6 +51,7 @@ async function gitFor(cwd, gitBin, timeout = 30) {
   const transport = simpleGitTransport(cwd, policy, timeout)
   const policyEnvironment = Object.keys(policy.environment || {})
   const allowedEnvironment = new Set(policyEnvironment.map(key => key.toUpperCase()))
+
   const inheritedIdentityEnvironment = new Set([
     'GIT_AUTHOR_DATE',
     'GIT_AUTHOR_EMAIL',
@@ -59,9 +60,11 @@ async function gitFor(cwd, gitBin, timeout = 30) {
     'GIT_COMMITTER_EMAIL',
     'GIT_COMMITTER_NAME'
   ])
+
   const gitEnvironment = Object.fromEntries(
     Object.entries(transport.environment || {}).filter(([key]) => {
       const canonical = key.toUpperCase()
+
       const guarded =
         canonical.startsWith('GIT_') || ['EDITOR', 'VISUAL', 'PAGER', 'GCM_INTERACTIVE'].includes(canonical)
 

@@ -25,9 +25,14 @@ it('saves a manually entered model absent from discovery and reloads the saved i
   const model = 'local/unlisted-test-Q4_K_M.gguf'
 
   const endpoint: CustomEndpoint = {
-    id: 'owned-local', name: 'Owned Local', base_url: 'http://127.0.0.1:9999/v1',
-    model, models: ['discovered-only-model', model], discover_models: true,
-    has_api_key: false, is_current: true
+    id: 'owned-local',
+    name: 'Owned Local',
+    base_url: 'http://127.0.0.1:9999/v1',
+    model,
+    models: ['discovered-only-model', model],
+    discover_models: true,
+    has_api_key: false,
+    is_current: true
   }
 
   const changed = vi.fn()
@@ -49,15 +54,21 @@ it('saves a manually entered model absent from discovery and reloads the saved i
 
   fireEvent.click(screen.getByRole('button', { name: 'Save' }))
   await waitFor(() => expect(changed).toHaveBeenCalledWith(endpoint.id, model))
-  expect(api.saveCustomEndpoint).toHaveBeenCalledWith(expect.objectContaining({
-    id: endpoint.id, name: endpoint.name, base_url: endpoint.base_url,
-    model, make_default: true, models: ['discovered-only-model']
-  }))
+  expect(api.saveCustomEndpoint).toHaveBeenCalledWith(
+    expect.objectContaining({
+      id: endpoint.id,
+      name: endpoint.name,
+      base_url: endpoint.base_url,
+      model,
+      make_default: true,
+      models: ['discovered-only-model']
+    })
+  )
 
   view.unmount()
   api.getCustomEndpoints.mockResolvedValue({ endpoints: [endpoint] })
   render(<CustomEndpointsSettings />)
-  expect((await screen.findByLabelText('Default Model') as HTMLInputElement).value).toBe(model)
+  expect(((await screen.findByLabelText('Default Model')) as HTMLInputElement).value).toBe(model)
   expect((screen.getByLabelText('Provider ID') as HTMLInputElement).value).toBe(endpoint.id)
   expect(api.saveCustomEndpoint).toHaveBeenCalledOnce()
 })

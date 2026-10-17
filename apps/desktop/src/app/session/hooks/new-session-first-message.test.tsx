@@ -120,12 +120,7 @@ function Harness({
       resume: sessionActions.resumeSession,
       submitText: promptActions.submitText
     })
-  }, [
-    cache.sessionStateByRuntimeIdRef,
-    onReady,
-    promptActions.submitText,
-    sessionActions.resumeSession
-  ])
+  }, [cache.sessionStateByRuntimeIdRef, onReady, promptActions.submitText, sessionActions.resumeSession])
 
   return null
 }
@@ -284,5 +279,4 @@ describe('new-session first prompt and model selection', () => {
     await waitFor(() => expect(getLatestSessionMessages).toHaveBeenCalled())
     await waitFor(() => expect(userRows($messages.get())).toHaveLength(1))
   })
-
 })
