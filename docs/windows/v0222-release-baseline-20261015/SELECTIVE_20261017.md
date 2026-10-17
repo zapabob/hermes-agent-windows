@@ -371,7 +371,7 @@ reviewable canonical packaged-Hermes restore proposal are retained under
 `tmp/selective-20261017/protocol-association-incident/`. No pre-test registry
 baseline exists. A separate explicit human restore-target question is pending;
 the earlier watchdog-stop permission does not authorize this change. No registry
-restoration, application restart or forced descendant stop was performed.
+restoration, production application restart or forced descendant stop was performed.
 
 Native runs are HELD. V1 and V2 reported one Playwright pass each, but neither
 is accepted: V1 had a reduced-PATH process-identity fallback and weak request
