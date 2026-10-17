@@ -1933,6 +1933,10 @@ export interface Translations {
     lastSignatureUpdate: string
     notYet: string
     scanActions: string
+    scanResults: string
+    fileVerdict: string
+    engineHealth: string
+    executionDecision: string
     quickScan: string
     customScan: string
     pathPlaceholder: string

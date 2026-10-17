@@ -1,3 +1,4 @@
+import { useStore } from '@nanostores/react'
 import type * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -10,10 +11,13 @@ import { ErrorBanner } from '@/components/ui/error-state'
 import { Input } from '@/components/ui/input'
 import {
   deleteQuarantineItem,
+  getApiRequestConnection,
+  getApiRequestProfile,
   getSecurityStatus,
   type QuarantineItem,
   restoreQuarantineItem,
   runSecurityScan,
+  type SecurityScanResult,
   type SecurityStatus,
   setSecurityWatch,
   updateSecurityDefinitions
@@ -21,6 +25,7 @@ import {
 import { useI18n } from '@/i18n'
 import { cn } from '@/lib/utils'
 import { confirm } from '@/store/confirm'
+import { $activeGatewayRoute, $gateway, gatewayActivationEpoch } from '@/store/gateway'
 import { notify, notifyError } from '@/store/notifications'
 
 import type { SetStatusbarItemGroup } from '../shell/statusbar-controls'
@@ -105,34 +110,62 @@ export function SecurityView({
   const [busy, setBusy] = useState<null | string>(null)
   const [error, setError] = useState<null | string>(null)
   const [customPath, setCustomPath] = useState('')
+  const [scanResults, setScanResults] = useState<SecurityScanResult[]>([])
+  const activeRoute = useStore($activeGatewayRoute)
+  const activeGateway = useStore($gateway)
 
   const refresh = useCallback(async () => {
+    const epoch = gatewayActivationEpoch()
+
     try {
       setError(null)
-      setStatus(await getSecurityStatus())
+      const response = await getSecurityStatus()
+
+      if (epoch === gatewayActivationEpoch()) {
+        setStatus(response)
+      }
     } catch (err) {
+      if (epoch !== gatewayActivationEpoch()) {
+        return
+      }
+
       setError(err instanceof Error ? err.message : String(err))
       notifyError(err, s.failedLoad)
     }
   }, [s.failedLoad])
 
   useEffect(() => {
+    setScanResults([])
+    setStatus(null)
+    setBusy(null)
+    setError(null)
     void refresh()
-  }, [refresh])
+  }, [refresh, activeRoute, activeGateway])
 
   const run = useCallback(
     async (name: string, operation: () => Promise<unknown>) => {
+      const epoch = gatewayActivationEpoch()
+
       setBusy(name)
       setError(null)
 
       try {
         await operation()
-        await refresh()
+
+        if (epoch === gatewayActivationEpoch()) {
+          await refresh()
+        }
       } catch (err) {
+        if (epoch !== gatewayActivationEpoch()) {
+          return
+        }
+
         setError(err instanceof Error ? err.message : String(err))
         notifyError(err, s.actionFailed)
       } finally {
-        setBusy(null)
+        if (epoch === gatewayActivationEpoch()) {
+          setBusy(null)
+        }
       }
     },
     [refresh, s.actionFailed]
@@ -147,11 +180,25 @@ export function SecurityView({
       }
 
       await run(scope, async () => {
+        const connection = getApiRequestConnection()
+        const profile = getApiRequestProfile()
+        const activationEpoch = gatewayActivationEpoch()
+
         const response = await runSecurityScan({
           scope,
           quarantine: true,
           ...(scope === 'custom' ? { path: customPath.trim() } : {})
         })
+
+        if (
+          activationEpoch !== gatewayActivationEpoch() ||
+          connection !== getApiRequestConnection() ||
+          profile !== getApiRequestProfile()
+        ) {
+          return
+        }
+
+        setScanResults(response.results)
 
         notify({
           id: 'security-scan-complete',
@@ -339,6 +386,56 @@ export function SecurityView({
               </div>
             </section>
           </div>
+
+          {scanResults.length > 0 ? (
+            <section className="border-b border-(--ui-stroke-secondary) py-6">
+              <h2 className="text-sm font-semibold text-(--ui-text-primary)">{s.scanResults}</h2>
+              {scanResults.map((result, index) => {
+                // Legacy/malformed responses do not prove engine health or
+                // grant execution authority. Keep any known legacy verdict.
+                const file =
+                  typeof result.file_verdict === 'string' &&
+                  ['CLEAN', 'MALICIOUS', 'SUSPICIOUS', 'UNKNOWN'].includes(result.file_verdict)
+                    ? result.file_verdict
+                    : typeof result.verdict === 'string' &&
+                        ['CLEAN', 'MALICIOUS', 'SUSPICIOUS', 'UNKNOWN'].includes(result.verdict)
+                      ? result.verdict
+                      : 'UNKNOWN'
+
+                const health =
+                  typeof result.engine_health === 'string' &&
+                  ['HEALTHY', 'DEGRADED', 'UNAVAILABLE', 'ERROR'].includes(result.engine_health)
+                    ? result.engine_health
+                    : 'UNKNOWN'
+
+                const decision =
+                  typeof result.execution_decision === 'string' &&
+                  ['ALLOW', 'WARN', 'BLOCK', 'REVIEW'].includes(result.execution_decision)
+                    ? result.execution_decision
+                    : 'REVIEW'
+
+                return (
+                  <div className="mt-4 text-xs" key={`${result.path}:${index}`}>
+                    <p className="break-all font-mono text-(--ui-text-secondary)">{result.path}</p>
+                    <dl className="mt-2 grid grid-cols-[repeat(auto-fit,minmax(min(100%,9rem),1fr))] gap-3">
+                      <div>
+                        <dt>{s.fileVerdict}</dt>
+                        <dd className={toneForVerdict(file ?? null)}>{file}</dd>
+                      </div>
+                      <div>
+                        <dt>{s.engineHealth}</dt>
+                        <dd>{health}</dd>
+                      </div>
+                      <div>
+                        <dt>{s.executionDecision}</dt>
+                        <dd>{decision}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                )
+              })}
+            </section>
+          ) : null}
 
           <section className="border-b border-(--ui-stroke-secondary) py-6">
             <h2 className="text-sm font-semibold text-(--ui-text-primary)">{s.securitySummary}</h2>

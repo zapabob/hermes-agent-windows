@@ -11,6 +11,9 @@ export interface SecurityFinding {
 }
 
 export interface SecurityScanResult {
+  file_verdict?: 'CLEAN' | 'MALICIOUS' | 'SUSPICIOUS' | 'UNKNOWN'
+  engine_health?: 'DEGRADED' | 'ERROR' | 'HEALTHY' | 'UNAVAILABLE'
+  execution_decision?: 'ALLOW' | 'BLOCK' | 'REVIEW' | 'WARN'
   action: string
   cached: boolean
   engine_versions: Record<string, string>

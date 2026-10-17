@@ -1020,8 +1020,10 @@ export const ja = defineLocale({
       reloadedMessage: '新しいツールスキーマは新しいターンに適用されます。',
       reloadFailed: 'MCP の再読み込みに失敗しました',
       savedTitle: 'MCP サーバーを保存しました',
-      savedMessage: name => `${name} を保存しました。ツール一覧の変更は、新しい会話または明示的な MCP の再読み込みで反映されます。`,
-      savedPolicyMessage: name => `${name} を保存しました。各呼び出しの開始前に保存済みの利用設定を確認します。ツール一覧の変更は、新しい会話または明示的な MCP の再読み込みで反映されます。既に実行中の処理は完了する場合があります。`,
+      savedMessage: name =>
+        `${name} を保存しました。ツール一覧の変更は、新しい会話または明示的な MCP の再読み込みで反映されます。`,
+      savedPolicyMessage: name =>
+        `${name} を保存しました。各呼び出しの開始前に保存済みの利用設定を確認します。ツール一覧の変更は、新しい会話または明示的な MCP の再読み込みで反映されます。既に実行中の処理は完了する場合があります。`,
       newServer: '新しいサーバー',
       reload: 'MCP を再読み込み',
       reloading: '再読み込み中...',
@@ -1954,6 +1956,10 @@ export const ja = defineLocale({
     lastSignatureUpdate: '最終定義更新',
     notYet: '記録なし',
     scanActions: '検査操作',
+    scanResults: '検査結果',
+    fileVerdict: 'ファイルの判定',
+    engineHealth: '検査エンジンの状態',
+    executionDecision: '実行可否',
     quickScan: 'クイック検査',
     customScan: 'カスタム検査',
     pathPlaceholder: 'ファイルまたはディレクトリの絶対パス',
