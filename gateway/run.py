@@ -4240,6 +4240,17 @@ def _should_clear_resume_pending_after_turn(agent_result: dict) -> bool:
     return True
 
 
+def _cancelled_gateway_run_result(result=None, *, history=None) -> dict:
+    """Retire a run without publishing its reply or handing off old input."""
+    cancelled = dict(result) if isinstance(result, dict) else {}
+    for key in ("pending_steer", "pending_steer_generation", "pending_steer_handoff", "interrupt_message"):
+        cancelled.pop(key, None)
+    cancelled.update(final_response="", completed=False, interrupted=True, cancelled=True)
+    cancelled.setdefault("messages", history if history is not None else [])
+    cancelled.setdefault("api_calls", 0)
+    return cancelled
+
+
 def _preserve_queued_followup_history_offset(
     current_result: dict,
     followup_result: dict,
@@ -5441,6 +5452,13 @@ class TurnRunner:
 
     def run_sync(self):
         ctx = self._ctx
+
+        def _cancelled_run():
+            ctx.result_holder[0] = _cancelled_gateway_run_result(history=ctx.history)
+            return ctx.result_holder[0]
+
+        if not ctx._run_still_current():
+            return _cancelled_run()
         # Historical note: as a nested closure this body declared
         # `nonlocal message` because the conditional re-assignments below
         # (prepending model-switch / resume-recovery notes) would otherwise
@@ -5647,6 +5665,9 @@ class TurnRunner:
         _cache_lock = getattr(self._runner, "_agent_cache_lock", None)
         _cache = getattr(self._runner, "_agent_cache", None)
 
+        if not ctx._run_still_current():
+            return _cancelled_run()
+
         # Peek at the cached entry's snapshot session_id (if any) so we can
         # check, OUTSIDE the cache lock, whether THAT session_id is a DEAD
         # session in state.db. This closes a gap in the #54947 fix: that
@@ -5699,6 +5720,8 @@ class TurnRunner:
         _xproc_evicted_agent = None
         if _cache_lock and _cache is not None:
             with _cache_lock:
+                if not ctx._run_still_current():
+                    return _cancelled_run()
                 cached = _cache.get(ctx.session_key)
                 if cached and cached[1] == _sig:
                     # cached[2] is the message_count at cache time;
@@ -5836,6 +5859,8 @@ class TurnRunner:
 
         if agent is None:
             # Config changed or first message — create fresh agent
+            if not ctx._run_still_current():
+                return _cancelled_run()
             agent = ctx.AIAgent(
                 model=turn_route["model"],
                 **turn_route["runtime"],
@@ -5876,15 +5901,25 @@ class TurnRunner:
             )
             if _cache_lock and _cache is not None:
                 with _cache_lock:
+                    if not ctx._run_still_current():
+                        # This freshly constructed agent was never published;
+                        # release only its clients, outside the shared cache.
+                        unpublished_agent = agent
+                    else:
+                        unpublished_agent = None
                     # Record the session_id the snapshot was taken for
                     # alongside the message_count, so the cross-process
                     # guard can skip the (meaningless) count comparison
                     # when the active session_id later switches under
                     # the same session_key (#54947).
-                    _cache[ctx.session_key] = (
-                        agent, _sig, _current_msg_count, ctx.session_id,
-                    )
-                    self._runner._enforce_agent_cache_cap()
+                    if unpublished_agent is None:
+                        _cache[ctx.session_key] = (
+                            agent, _sig, _current_msg_count, ctx.session_id,
+                        )
+                        self._runner._enforce_agent_cache_cap()
+                if unpublished_agent is not None:
+                    self._runner._release_evicted_agent_soft(unpublished_agent)
+                    return _cancelled_run()
             logger.debug("Created new agent for session %s (sig=%s)", ctx.session_key, _sig)
 
         # Per-message state — callbacks and reasoning config change every
@@ -6604,6 +6639,8 @@ class TurnRunner:
                 _conversation_kwargs["moa_config"] = ctx.moa_config
             if _persist_user_timestamp_override is not None:
                 _conversation_kwargs["persist_user_timestamp"] = _persist_user_timestamp_override
+            if not ctx._run_still_current():
+                return _cancelled_run()
             result = agent.run_conversation(_api_run_message, **_conversation_kwargs)
         finally:
             unregister_gateway_notify(_approval_session_key)
@@ -23289,6 +23326,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         event: MessageEvent,
         adapter,
         thread_metadata: Optional[Dict[str, Any]] = None,
+        is_current: Optional[Callable[[], bool]] = None,
     ) -> None:
         """Extract explicit MEDIA: tags from a response and deliver them.
 
@@ -23309,6 +23347,8 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         from pathlib import Path
         from urllib.parse import quote as _quote
 
+        if is_current is not None and not is_current():
+            return
         try:
             # Capture [[as_document]] before extract_media strips it, so the
             # dispatch partition below can route image-extension files
@@ -23365,15 +23405,26 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             if image_paths:
                 try:
                     images = [(f"file://{_quote(p)}", "") for p in image_paths]
+                    # The shared fallback sends sequentially; let it recheck
+                    # ownership between awaits. Native overrides retain their
+                    # one batch invocation and existing call signature.
+                    batch_ownership = {}
+                    if (is_current is not None
+                            and getattr(adapter.send_multiple_images, "__func__", None)
+                            is BasePlatformAdapter.send_multiple_images):
+                        batch_ownership["is_current"] = is_current
                     await adapter.send_multiple_images(
                         chat_id=event.source.chat_id,
                         images=images,
                         metadata=_thread_meta,
+                        **batch_ownership,
                     )
                 except Exception as e:
                     logger.warning("[%s] Post-stream image batch delivery failed: %s", adapter.name, e)
 
             for media_path, is_voice in non_image_media:
+                if is_current is not None and not is_current():
+                    return
                 try:
                     ext = Path(media_path).suffix.lower()
                     if should_send_media_as_audio(event.source.platform, ext, is_voice=is_voice):
@@ -23410,8 +23461,11 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         text_already_delivered: bool = False,
         deliver_media: bool = True,
         stream_consumer=None,
+        is_current: Optional[Callable[[], bool]] = None,
     ) -> None:
         """Deliver a queued response using the normal text+attachment split."""
+        if is_current is not None and not is_current():
+            return
         if not text_already_delivered:
             text_content = _strip_response_attachments_for_direct_send(response, adapter)
             if text_content:
@@ -23449,6 +23503,8 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                             _qe,
                         )
                 if not _reconciled:
+                    if is_current is not None and not is_current():
+                        return
                     await adapter.send(
                         source.chat_id,
                         text_content,
@@ -23459,7 +23515,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         # but must not upload attachments as if the turn succeeded — mirrors
         # the ``not agent_result.get("failed")`` guard on the completed-turn
         # delivery path.
-        if not deliver_media:
+        if not deliver_media or (is_current is not None and not is_current()):
             return
 
         synthetic_event = MessageEvent(
@@ -23467,11 +23523,13 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             source=source,
             message_id=event_message_id,
         )
+        ownership = {"is_current": is_current} if is_current is not None else {}
         await self._deliver_media_from_response(
             response,
             synthetic_event,
             adapter,
             thread_metadata=metadata,
+            **ownership,
         )
 
     async def _run_background_task(
@@ -25959,6 +26017,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         *,
         metadata=None,
         log_context: str = "Transcript",
+        is_current: Optional[Callable[[], bool]] = None,
     ) -> None:
         """Echo pending-event STT transcripts to the chat at most once.
 
@@ -25976,12 +26035,15 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             not transcripts
             or not self._should_echo_stt_transcripts()
             or adapter is None
+            or (is_current is not None and not is_current())
         ):
             return
         already_echoed = int(getattr(event, "_gateway_pending_stt_echoed", 0) or 0)
         unsent = transcripts[already_echoed:]
         setattr(event, "_gateway_pending_stt_echoed", already_echoed + len(unsent))
         for tx in unsent:
+            if is_current is not None and not is_current():
+                return
             try:
                 await adapter.send(
                     source.chat_id,
@@ -26000,6 +26062,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         *,
         log_context: str,
         metadata=_UNSET,
+        is_current: Optional[Callable[[], bool]] = None,
     ) -> tuple[str, List[str]]:
         """Transcribe a pending voice event and echo transcripts once.
 
@@ -26019,6 +26082,8 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 event,
                 text,
             )
+            if is_current is not None and not is_current():
+                return text, []
             echo_meta = self._thread_metadata_for_source(
                 source,
                 self._reply_anchor_for_event(event),
@@ -26030,6 +26095,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 transcripts,
                 metadata=echo_meta,
                 log_context=log_context,
+                **({"is_current": is_current} if is_current is not None else {}),
             )
             return enriched_text or text, transcripts
         except Exception as trans_exc:
@@ -27835,7 +27901,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             self._evict_cached_agent(session_key)
 
     async def _refresh_agent_cache_message_count(
-        self, session_key: str, session_id: Optional[str]
+        self, session_key: str, session_id: Optional[str], *, run_generation: Optional[int] = None
     ) -> None:
         """Re-baseline a cached agent's stored message_count after THIS turn.
 
@@ -27874,6 +27940,10 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         _cache = getattr(self, "_agent_cache", None)
         if not _cache_lock or _cache is None:
             return
+        with _cache_lock:
+            expected_cached = _cache.get(session_key)
+            if run_generation is not None and not self._is_session_run_current(session_key, run_generation):
+                return
         try:
             _sess_row = await self._session_db.get_session(session_id)
             _live = _sess_row.get("message_count", 0) if _sess_row else None
@@ -27883,6 +27953,12 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             return
         with _cache_lock:
             cached = _cache.get(session_key)
+            # A DB await may outlive this run or its cached agent. Never write
+            # this turn's count into an entry installed by its replacement.
+            if cached is not expected_cached:
+                return
+            if run_generation is not None and not self._is_session_run_current(session_key, run_generation):
+                return
             # Only re-baseline a live 3-tuple entry; skip pending sentinels,
             # legacy 2-tuples (they intentionally opt out of the guard), and
             # the case where the entry was evicted/rebuilt mid-turn.
@@ -28838,6 +28914,8 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             return self._is_session_run_current(session_key, run_generation)
 
         # Build messages in OpenAI chat format --------------------------
+        if not _run_still_current():
+            return _cancelled_gateway_run_result(history=history)
         #
         # The remote api_server can maintain session continuity via
         # X-Hermes-Session-Id, so it loads its own history.  We only
@@ -28937,6 +29015,9 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
 
         try:
             _timeout = ClientTimeout(total=0, sock_read=1800)
+            # send_typing above can yield after this token was retired.
+            if not _run_still_current():
+                return _cancelled_gateway_run_result(history=history)
             async with _AioClientSession(timeout=_timeout) as session:
                 async with session.post(
                     f"{proxy_url}/v1/chat/completions",
@@ -29268,6 +29349,16 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         This is run in a thread pool to not block the event loop.
         Supports interruption via new messages.
         """
+        def _run_still_current() -> bool:
+            if run_generation is None or not session_key:
+                return True
+            return self._is_session_run_current(session_key, run_generation)
+
+        # A queued executor/follow-up may start after /stop or /new retired
+        # its token. Reject it before config, cache, or remote work begins.
+        if not _run_still_current():
+            return _cancelled_gateway_run_result(history=history)
+
         # ---- Proxy mode: delegate to remote API server ----
         if self._get_proxy_url():
             return await self._run_agent_via_proxy(
@@ -29284,11 +29375,6 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         from run_agent import AIAgent
         import queue
 
-        def _run_still_current() -> bool:
-            if run_generation is None or not session_key:
-                return True
-            return self._is_session_run_current(session_key, run_generation)
-        
         user_config = _load_gateway_config()
         platform_key = _platform_config_key(source.platform)
 
@@ -29956,10 +30042,13 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                                         source,
                                         pending_text,
                                         log_context="Voice-interrupt",
+                                        is_current=_run_still_current,
                                         metadata={"thread_id": source.thread_id} if source.thread_id else None,
                                     )
                                 elif not pending_text and _media_urls:
                                     pending_text = _build_media_placeholder(_peek_event)
+                            if not _run_still_current():
+                                return
                             logger.debug("Interrupt detected from adapter, signaling agent...")
                             agent.interrupt(pending_text)
                             _interrupt_detected.set()
@@ -30238,6 +30327,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                                         source,
                                         _bp_text or "",
                                         log_context="Voice-backup-interrupt",
+                                        is_current=_run_still_current,
                                         metadata={"thread_id": source.thread_id} if source.thread_id else None,
                                     )
                                 elif not _bp_text and _bp_media_urls:
@@ -30248,6 +30338,8 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                                 session_key,
                                 "done" if interrupt_monitor.done() else "running",
                             )
+                            if not _run_still_current():
+                                continue
                             _backup_agent.interrupt(_bp_text)
                             _interrupt_detected.set()
                             # Abort streaming TTS on barge-in (#60671).
@@ -30340,6 +30432,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                                         source,
                                         _bp_text or "",
                                         log_context="Voice-backup-interrupt",
+                                        is_current=_run_still_current,
                                         metadata={"thread_id": source.thread_id} if source.thread_id else None,
                                     )
                                 elif not _bp_text and _bp_media_urls:
@@ -30350,6 +30443,8 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                                 session_key,
                                 "done" if interrupt_monitor.done() else "running",
                             )
+                            if not _run_still_current():
+                                continue
                             _backup_agent.interrupt(_bp_text)
                             _interrupt_detected.set()
                             # Abort streaming TTS on barge-in (#60671).
@@ -30420,6 +30515,9 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                     "failed": True,
                 }
 
+            if not _run_still_current():
+                return _cancelled_gateway_run_result(result_holder[0], history=history)
+
             # Track fallback model state: if the agent switched to a
             # fallback model during this run, persist it so /model shows
             # the actually-active model instead of the config default.
@@ -30489,6 +30587,8 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             
             # Get pending message from adapter.
             # Use session_key (not source.chat_id) to match adapter's storage keys.
+            if not _run_still_current():
+                return _cancelled_gateway_run_result(result_holder[0], history=history)
             pending_event = None
             pending = None
             if result and adapter and session_key:
@@ -30526,6 +30626,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                             source,
                             _pending_text,
                             log_context="Voice-drain",
+                            is_current=_run_still_current,
                             metadata={"thread_id": source.thread_id} if source.thread_id else None,
                         )
                         if not pending:
@@ -30534,6 +30635,10 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                         pending = _pending_text or _build_media_placeholder(pending_event)
                     if pending:
                         logger.debug("Processing queued message after agent completion: '%s...'", pending[:40])
+
+            # A transcription await may outlive this run's claim.
+            if not _run_still_current():
+                return _cancelled_gateway_run_result(result_holder[0], history=history)
 
             # Leftover /steer: if a steer arrived after the last tool batch
             # (e.g. during the final API call), the agent couldn't inject it
@@ -30617,6 +30722,8 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                                 pass
                         except Exception as e:
                             logger.debug("Stream consumer wait before queued message failed: %s", e)
+                    if not _run_still_current():
+                        return _cancelled_gateway_run_result(result_holder[0], history=history)
                     # The queued branch needs raw ``result`` for interruption,
                     # history, and recursion state, but delivery must use the
                     # finalized task result. The latter contains empty/failure
@@ -30666,9 +30773,12 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                                 text_already_delivered=_already_streamed,
                                 deliver_media=not _delivery_result.get("failed"),
                                 stream_consumer=_sc,
+                                is_current=_run_still_current,
                             )
                         except Exception as e:
                             logger.warning("Failed to send first response before queued message: %s", e)
+                    if not _run_still_current():
+                        return _cancelled_gateway_run_result(result_holder[0], history=history)
                     # Release deferred bg-review notifications now that the
                     # first response has been delivered.  Pop from the
                     # adapter's callback dict (prevents double-fire in
@@ -30698,6 +30808,8 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 # interrupted." is just noise; the user already knows they sent a
                 # new message).
 
+                if not _run_still_current():
+                    return _cancelled_gateway_run_result(result_holder[0], history=history)
                 updated_history = result.get("messages", history)
                 next_source = source
                 next_message = pending
@@ -30744,6 +30856,11 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 # Clear the completed streaming marker from the prior logical
                 # turn so the recursive turn's streaming TTS is not suppressed
                 # by the prior turn's completion (#60671).
+                if not _run_still_current():
+                    return _cancelled_gateway_run_result(result_holder[0], history=history)
+                # A run token belongs to its original session key.
+                if run_generation is not None and next_session_key != session_key:
+                    return _cancelled_gateway_run_result(result_holder[0], history=history)
                 _clear_adapter = self._adapter_for_source(source)
                 if _clear_adapter is not None and session_key and run_generation is not None:
                     _completed_turns = getattr(_clear_adapter, "_streaming_tts_completed_turns", None)
@@ -30767,6 +30884,8 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                     except Exception:
                         pass
 
+                if not _run_still_current():
+                    return _cancelled_gateway_run_result(result_holder[0], history=history)
                 # Acknowledge the follow-up the way an idle-session message is:
                 # this in-band drain never enters base.py's hook site (#72502).
                 from gateway.run_turn_followup_ack import (
@@ -30796,7 +30915,22 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                     # follow-up.  Use the same (session_key, session_id) the
                     # recursive call runs under so the snapshot matches exactly
                     # what the follow-up's guard will consult.  Fail-safe in helper.
-                    await self._refresh_agent_cache_message_count(session_key, session_id)
+                    if not _run_still_current():
+                        await _run_followup_processing_hook(
+                            _hook_adapter, pending_event, "on_processing_complete", ProcessingOutcome.CANCELLED,
+                        )
+                        return _cancelled_gateway_run_result(result_holder[0], history=history)
+                    if run_generation is None:
+                        await self._refresh_agent_cache_message_count(session_key, session_id)
+                    else:
+                        await self._refresh_agent_cache_message_count(
+                            session_key, session_id, run_generation=run_generation,
+                        )
+                    if not _run_still_current():
+                        await _run_followup_processing_hook(
+                            _hook_adapter, pending_event, "on_processing_complete", ProcessingOutcome.CANCELLED,
+                        )
+                        return _cancelled_gateway_run_result(result_holder[0], history=history)
 
                     followup_result = await self._run_agent(
                         message=next_message,
@@ -30831,7 +30965,9 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                     _hook_adapter,
                     pending_event,
                     "on_processing_complete",
-                    ProcessingOutcome.SUCCESS,
+                    ProcessingOutcome.CANCELLED
+                    if not _run_still_current() or followup_result.get("cancelled")
+                    else ProcessingOutcome.SUCCESS,
                 )
                 return _preserve_queued_followup_history_offset(result, followup_result)
         finally:
@@ -30913,6 +31049,9 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                             "background turn task failed during cleanup",
                             exc_info=True,
                         )
+
+        if not _run_still_current():
+            return _cancelled_gateway_run_result(result_holder[0], history=history)
 
         # If streaming already delivered the response, mark it so the
         # caller's send() is skipped (avoiding duplicate messages).

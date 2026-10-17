@@ -138,6 +138,7 @@ class TestRunAgentProxyDispatch:
         monkeypatch.setenv("GATEWAY_PROXY_URL", "http://host:8642")
         runner = _make_runner()
         source = _make_source()
+        generation = runner._begin_session_run_generation("test-key")
 
         expected_result = {
             "final_response": "Hello from remote!",
@@ -158,12 +159,12 @@ class TestRunAgentProxyDispatch:
             source=source,
             session_id="test-session-123",
             session_key="test-key",
-            run_generation=7,
+            run_generation=generation,
         )
 
         assert result["final_response"] == "Hello from remote!"
         runner._run_agent_via_proxy.assert_called_once()
-        assert runner._run_agent_via_proxy.call_args.kwargs["run_generation"] == 7
+        assert runner._run_agent_via_proxy.call_args.kwargs["run_generation"] == generation
 
 
 class TestRunAgentViaProxy:

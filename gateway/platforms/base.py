@@ -4577,6 +4577,7 @@ class BasePlatformAdapter(ABC):
         images: List[Tuple[str, str]],
         metadata: Optional[Dict[str, Any]] = None,
         human_delay: float = 0.0,
+        is_current: Optional[Callable[[], bool]] = None,
     ) -> None:
         """Send a batch of images.
 
@@ -4595,6 +4596,8 @@ class BasePlatformAdapter(ABC):
         for image_url, alt_text in images:
             if human_delay > 0:
                 await asyncio.sleep(human_delay)
+            if is_current is not None and not is_current():
+                return
             try:
                 logger.info(
                     "[%s] Sending image: %s (alt=%s)",

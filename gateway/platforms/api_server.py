@@ -5093,6 +5093,10 @@ class APIServerAdapter(BasePlatformAdapter):
                     },
                 )
 
+        def _signal_cancelled() -> None:
+            queue.put_nowait(_event_payload("run.cancelled", {}))
+            self._set_run_status(run_id, "cancelled", last_event="run.cancelled")
+
         async def _run_and_signal() -> None:
             try:
                 await queue.put(_event_payload("run.started", {
@@ -5118,6 +5122,9 @@ class APIServerAdapter(BasePlatformAdapter):
                     confirmed_runtime_lock=lock_active,
                     **agent_overrides,
                 )
+                if run_id in self._stopping_run_ids:
+                    _signal_cancelled()
+                    return
                 final_response = _resolve_media_to_data_urls(result.get("final_response", "") if isinstance(result, dict) else "")
                 effective_session_id = result.get("session_id", session_id) if isinstance(result, dict) else session_id
                 turn_messages = self._turn_transcript_messages(history, user_message, result) if isinstance(result, dict) else []
@@ -5138,7 +5145,9 @@ class APIServerAdapter(BasePlatformAdapter):
                         else ""
                     ),
                 )
-                await queue.put(_event_payload("assistant.completed", {
+                # The queue is unbounded. Publish both terminal events and the
+                # status without yielding between the stop check and commit.
+                queue.put_nowait(_event_payload("assistant.completed", {
                     "session_id": effective_session_id,
                     "message_id": message_id,
                     "content": final_response,
@@ -5162,7 +5171,7 @@ class APIServerAdapter(BasePlatformAdapter):
                 }
                 if pending_steer:
                     completed_payload["pending_steer"] = pending_steer
-                await queue.put(_event_payload("run.completed", completed_payload))
+                queue.put_nowait(_event_payload("run.completed", completed_payload))
                 self._set_run_status(
                     run_id,
                     "completed",
@@ -5172,7 +5181,7 @@ class APIServerAdapter(BasePlatformAdapter):
                     **({"pending_steer": pending_steer} if pending_steer else {}),
                 )
             except asyncio.CancelledError:
-                self._set_run_status(run_id, "cancelled", last_event="run.cancelled")
+                _signal_cancelled()
                 raise
             except Exception as exc:
                 logger.exception("[api_server] session chat stream failed")
@@ -5185,8 +5194,11 @@ class APIServerAdapter(BasePlatformAdapter):
                 await queue.put(_event_payload("error", {"message": _redact_api_error_text(exc)}))
             finally:
                 self._active_run_agents.pop(run_id, None)
-                await queue.put(_event_payload("done", {}))
-                await queue.put(None)
+                # The executor can finish before this producer publishes its
+                # terminal result. Only the producer retires cancellation.
+                self._stopping_run_ids.discard(run_id)
+                queue.put_nowait(_event_payload("done", {}))
+                queue.put_nowait(None)
 
         # NOTE: deliberately NOT registered in _active_run_tasks — this turn
         # is already counted by active_agent_work_count() via
@@ -5210,8 +5222,8 @@ class APIServerAdapter(BasePlatformAdapter):
         if gateway_session_key:
             headers["X-Hermes-Session-Key"] = gateway_session_key
         response = web.StreamResponse(status=200, headers=headers)
-        await response.prepare(request)
         try:
+            await response.prepare(request)
             while True:
                 try:
                     item = await asyncio.wait_for(
@@ -5248,15 +5260,26 @@ class APIServerAdapter(BasePlatformAdapter):
         shield_wait: bool,
     ) -> None:
         """Preserve live run control refs until the executor-backed turn actually exits."""
+        if task.done():
+            return
+        self._set_run_status(run_id, "stopping", last_event="run.stopping")
+        self._stopping_run_ids.add(run_id)
         agent = self._active_run_agents.get(run_id)
         if agent is None:
-            if not task.done():
-                task.cancel()
-                with suppress(Exception):
-                    await task
+            # Construction may already be running in the executor. Cancelling
+            # its producer would drop the counter/marker before that worker
+            # exits; the worker observes this marker after construction.
+            with suppress(Exception):
+                await asyncio.shield(task)
             return
         with suppress(Exception):
-            agent.interrupt(interrupt_message)
+            request_hard_interrupt(agent, interrupt_message)
+        try:
+            _reap_disconnected_agent_processes(
+                agent, source="api_server_session_stream_disconnect"
+            )
+        except Exception:
+            logger.debug("Session SSE process reap failed for %s", run_id, exc_info=True)
         if not task.done():
             with suppress(Exception):
                 await (asyncio.shield(task) if shield_wait else task)
@@ -7796,6 +7819,21 @@ class APIServerAdapter(BasePlatformAdapter):
                     ),
                 )
                 agent = None
+
+                def _cancelled_before_conversation():
+                    request_hard_interrupt(agent, "Session stream cancelled before conversation")
+                    return (
+                        {
+                            "final_response": "",
+                            "messages": [],
+                            "session_id": session_id,
+                            "completed": False,
+                            "interrupted": True,
+                            "cancelled": True,
+                        },
+                        {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0},
+                    )
+
                 try:
                     agent = self._create_agent(
                         ephemeral_system_prompt=ephemeral_system_prompt,
@@ -7812,6 +7850,8 @@ class APIServerAdapter(BasePlatformAdapter):
                         session_model=session_model,
                         confirmed_runtime_lock=confirmed_runtime_lock,
                     )
+                    if active_run_id and active_run_id in self._stopping_run_ids:
+                        return _cancelled_before_conversation()
                     if agent_ref is not None:
                         agent_ref[0] = agent
                     if active_run_id:
@@ -7830,6 +7870,10 @@ class APIServerAdapter(BasePlatformAdapter):
                     # ``agent_ref``, and only /v1/runs has a run_id, so neither
                     # is a usable hook for the rest.
                     self._shutdown_interruptible_agents[id(agent)] = agent
+                    # Process-baseline publication can block after the first
+                    # check. A disconnect during it must still prevent a turn.
+                    if active_run_id and active_run_id in self._stopping_run_ids:
+                        return _cancelled_before_conversation()
                     result = agent.run_conversation(
                         user_message=user_message,
                         conversation_history=conversation_history,

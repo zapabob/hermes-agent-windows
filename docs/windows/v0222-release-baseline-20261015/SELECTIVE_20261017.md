@@ -553,3 +553,66 @@ Electron/native Desktop launch. Actual-model eight-hour soak and physical three
 sleep/resume remain NOT_RUN. Main, publication and cloud CI are untouched.
 Raw evidence, excluded attempts and exact source/harness bindings are in
 fxa02_cli_steer_acceptance in the JSON receipt.
+
+FX-A02 scoped Gateway/API cancellation supplement: stale run generations are
+rejected before local/proxy entry and delayed worker execution. Post-worker
+cleanup checks ownership before fallback-cache changes, pending-event intake,
+follow-up processing, and recursive entry. Cache re-baselining captures the
+original entry before the DB await and checks both identity and generation
+before updating it. A started follow-up hook receives one cancellation outcome
+when its run is retired; normal FIFO processing and recursive hook unwinding
+remain unchanged. Cancelled results contain no reply or pending guidance.
+
+Queued text/media delivery rechecks ownership after transport awaits. The base
+image fallback checks before each item; native batch overrides retain their
+existing one-invocation interface. Pending voice STT and each transcript echo
+check ownership, and primary/backup monitors recheck before interrupting the
+agent. A real monitor regression holds STT until after generation replacement,
+then waits for the monitor before releasing the worker so cleanup cannot mask
+the cancelled-agent interrupt bug.
+
+The API session SSE producer owns terminal cancellation and marker retirement.
+It commits completion events/status without yielding after the stop check.
+Transport prepare is inside the cancellation guard; disconnects request a hard
+interrupt and drain the actual executor-backed producer. Cancellation during
+agent construction retains the producer/inflight ownership until the worker
+exits, and the constructed worker checks the marker before conversation entry.
+The disconnect path now invokes the existing process-reaper owner, but this
+receipt establishes that dispatch only: process ownership qualification remains
+open as described below.
+
+Final selected evidence is 96 passes in eleven fresh per-file owned Windows
+Jobs, zero failures/errors/skips, and 21 explicit deselections.
+The deselections are fourteen API request/control cases outside this socketless
+selection and seven vendor image-batch cases; they are not qualified here.
+Nine source-bound in-memory fault sets are killed by assertion failures, without collection or
+fixture errors. All selected normal/fault Jobs have zero active descendants
+without forced recovery and no observed audit violations. Earlier fixture
+errors, blocked Bash discovery, failed fault bindings and the frozen-globals
+fault timeout are retained and excluded. Final proof checks current source,
+direct-helper and harness bytes against every selected run's before/after
+hashes. Models, transports and process discovery/reaping are declared leaves;
+these results establish state/dispatch boundaries, not live messaging, actual
+model quality or real-process termination safety.
+
+Pinned CodeGraph 1.6.0 indexes seventeen of eighteen exact selected files,
+1,724 nodes and 4,620 edges, with zero pending changes. gateway/run.py exceeds
+the CLI's fixed 1 MiB ceiling and is explicitly excluded from that index. The
+same pinned public SDK separately extracts its complete 1,588,816 bytes into
+787 nodes, 927 edges and 8,078 unresolved references, without parse errors.
+That SDK extraction is neither a persisted/resolved index nor whole-root
+coverage. Whole-root freshness and complete resolved-owner qualification stay
+open; no source truncation, runtime import from a projection, tool upgrade or
+index-cap modification was used.
+
+Independent source review leaves three P2 ownership items open: Gateway native
+image/model/skill-note consumption must claim the current generation atomically;
+Gateway approval/clarify registration and finally cleanup must belong to a run;
+API reaping must capture consistent task/baseline/epoch before interrupt and
+preserve replacement safety through candidate selection. Reaper-spy success
+does not close that last item. Full FX-A02 public new/resume/profile journeys,
+other surfaces and the broader five-lane/history campaign remain incomplete.
+The association/native-launch hold and NOT_RUN physical/model qualifications
+remain in force. Main, dependency locks, push, release and cloud CI are untouched.
+Exact evidence is in fxa02_gateway_api_cancellation in the JSON receipt and
+tmp/selective-20261017/fxa02-gateway-final-proof.json.
