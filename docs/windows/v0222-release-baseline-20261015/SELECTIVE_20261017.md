@@ -1,9 +1,11 @@
 # Selective implementation checkpoint — 2026-10-17
 
-Status: **PARTIAL campaign; seven scoped implementation candidates verified locally.**
-An additional native Electron probe subsequently exposed the watchdog-control
-isolation incident below. Production-control recovery is pending the human's
-expected prior-state answer; this checkpoint is not an operational closeout.
+Status: **PARTIAL campaign; initial seven candidates plus supplemental F02/F04 scoped proof below.**
+A native Electron probe exposed the watchdog-control isolation incident below.
+The human-authorized removal of its exact test-origin stop marker is complete;
+watchdog subsequently reports NORMAL but backend down and embedding disabled.
+This checkpoint is not an operational closeout. The eight-hour real-model soak
+and three physical sleep/resume cycles are NOT_RUN by the user's direction.
 This checkpoint does not supersede the historical V03/V04/V05 or U01–U18
 receipts and does not certify complete v0.22.2 parity, Windows release readiness,
 or vendor-runtime independence. The machine-readable companion is
@@ -46,6 +48,7 @@ No upstream source checkout was put on runtime import or executable search paths
 | --- | --- |
 | F01 — model favorites | Renderer preference persists provider/model identities, lists favorites first, retains unavailable catalog entries, and does not select a model when the star is clicked. Component and fresh-module storage tests passed; physical Electron restart and keyboard journey remain open. |
 | F03 — status summary | Default/`--short` reads a bounded local summary. `--full`, legacy `--all`, and `--deep` retain detailed diagnostics. A fresh native Python CLI subprocess rejected all socket connect/DNS attempts through an audit hook; summary made no attempts and did not repair/create cron state. |
+| F04 — Gateway busy policy | Per-conversation `/busy` persists queue/steer/interrupt through existing owners; accepted input keeps its order across text and queue commands during save, and stop cannot revive stopped backlog or remove a replacement run. Supplemental 218 Python cases and seven fault detections below; actual-channel/model acceptance remains open. |
 | B01 — cron baseline | Unknown/corrupt/unreadable stores are refused both before and after staging. Continuous degraded-lock races are refused after bounded retries. Explicit recovery remains possible, id-keyed repair survives, concurrent additions and intended removals retain their semantics. |
 | B02 — existing TTS output | Provider and delivery failures preserve existing audio. Publication reserves recoverable originals for the whole output set and rolls back a partial publish. A native Windows deny-delete handle on the second original restores the first; failed rollback retains the original backup with a recovery path. This is in-process rollback, not crash-atomic multi-file publication. |
 | B03 — support redaction | Shared reports, all bundle copies, local ZIP attachments and RPC client text use strict fail-closed scrubbing before truncation. Tests cover raw/encoded URL secrets and userinfo, headers/cookies, quoted/truncated/escaped argv, helper/privacy failure, real ZIP bytes, and actual HTTP bytes sent only to a test-owned loopback sink. Source logs and explicit CLI opt-out behavior remain covered. |
@@ -54,8 +57,9 @@ No upstream source checkout was put on runtime import or executable search paths
 
 The nine preserve decisions remain preserved source observations, not whole-family
 acceptance. F02 retains its existing custom-endpoint owner with the supplemental
-contract proof below; native acceptance remains open. F04 `/busy` and F09 local
-streaming STT remain conditional until their owner and requirements are resolved.
+contract proof below; native acceptance remains open. F04 `/busy` now has scoped
+owner/behavior proof below, while its actual-channel/model acceptance remains
+open. F09 still requires an actual local incremental recognizer and assets.
 An absent upstream filename or registry entry was not treated as a missing feature.
 
 ## Validation
@@ -309,3 +313,44 @@ directed recording the real-model eight-hour soak and three physical
 sleep/resume cycles as **NOT_RUN**. The user workstation will not substitute
 for those tests. Their absence is a qualification limitation, not a passing
 result or an outstanding request for an environment from the user.
+
+Follow-up recovery observation at 2026-10-17T06:17:13Z: watchdog state reports NORMAL, and its reported PID exists with process name hermes-watchdog. The same state reports desktop=up, backend=down, embedding=disabled; these are watchdog reports, not independent backend/model probes. The test stop marker remained absent. No forced restart was issued; complete running-model health is not claimed.
+
+
+F04 scoped implementation supplement: commit
+`ea150c8c08c0bea351b1ff2ad92edc142ae39a0d` adds Gateway `/busy
+queue|steer|interrupt|status` through the existing command, SessionStore,
+adapter and FIFO owners. The setting persists per conversation and overrides
+the routed profile default without modifying that default. Idle and active
+commands share the existing authorization gate. Save failure retains the prior
+mode; an existing conversation does not enter the expiration/reset path.
+Already accepted debounce input precedes both ordinary input and `/queue`/`/q`
+arriving while a worker's save is published but its reply is pending. `/stop`
+discards all stopped backlog before yielding, then guards cleanup against a
+replacement generation. No system prompt or toolset reload was introduced.
+
+Final native Python validation is **218 passed, zero failures/errors/skips**
+across 19 fresh test-file processes, including 31 feature cases. Seven final
+source/test-bound behavioral faults were killed with assertion failures and
+zero collection errors. These supplemental counts are separate from historical
+655 Python/15 UI results. The final alias-race RED was two failures/29 positive
+controls. An earlier expiry test failed its setup because reset defaults to
+none; that failure and the intermediate mutations containing it are excluded.
+Final expiry cases explicitly use idle/daily/both, and restoring the resetting
+creation call fails all three. Independent final source review found no P1/P2;
+all eight start/end source hashes match the tested committed source. Ruff and
+diff hygiene pass; the absent Lefthook executable is not reported as a pass.
+
+Real CodeGraph 1.6.0 was refreshed. The explicitly initialized final selected
+owner projection contains 11 files, 1,234 nodes and 3,224 edges, with no pending
+changes. `gateway/run.py` still exceeds the extraction cap, so full-file graph
+coverage is not claimed. The projection binds exact source ranges and is never
+executed as runtime code. The actual full source is used by the Python tests.
+F04 whole-family/live-channel/actual-model acceptance remains open: the active
+leaf agent is mocked, and no new native Electron or actual model run occurred.
+
+F09 read-only inventory confirmed that current local owners transcribe completed
+files, frozen upstream streaming excludes local/local_command, and the existing
+sherpa owner is a keyword spotter. An actual incremental ASR provider, matching
+local model and task-owned audio fixture remain to be established; no ABC-only,
+toggle-only or mocked-recognizer completion is claimed.

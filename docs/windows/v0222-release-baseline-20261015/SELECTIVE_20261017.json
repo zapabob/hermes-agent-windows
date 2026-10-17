@@ -329,8 +329,11 @@
       "title": "Gatewayでも/busy queue|steer|interrupt|status",
       "lane": "FEATURE",
       "review_decision": "CONDITIONAL_REVIEW",
-      "implementation": "CONDITIONAL_OWNER_OR_NATIVE_ACCEPTANCE_OPEN",
-      "existing_unit_links": [],
+      "implementation": "SCOPED_CONVERSATION_BUSY_POLICY_VERIFIED_NATIVE_ACCEPTANCE_OPEN",
+      "existing_unit_links": [
+        "tests/gateway/test_gateway_command_dispatch_minimal.py",
+        "tests/gateway/test_compression_interrupt_demotion_56391.py"
+      ],
       "whole_family_accepted": false,
       "source_ids": [
         "D_COMMANDS",
@@ -342,7 +345,9 @@
           "names": []
         },
         "upstream_implementation": "Preserve original commit/PR/co-author attribution when resolved; not inferred from reporter credit.",
-        "downstream_new_implementation_commits": []
+        "downstream_new_implementation_commits": [
+          "ea150c8c08c0bea351b1ff2ad92edc142ae39a0d"
+        ]
       }
     },
     {
@@ -2827,7 +2832,27 @@
       "receipt_sha256": "1f55c038708546b01fbd684e4cf9b235c3e8737613d899ddc7080618afc91369",
       "backup_sha256": "440370e8e1ff9aedaa0f62574a337520c8b30b0fd9984ba324a1449c513be702",
       "evidence_directory": "tmp/selective-20261017/watchdog-isolation-incident/authorized-recovery-20261017T061146Z-ac176a1e",
-      "runtime_health": "UNVERIFIED; marker removal does not attest watchdog/backend/model activity"
+      "runtime_health": "UNVERIFIED; marker removal does not attest watchdog/backend/model activity",
+      "followup_observation": {
+        "observed_at": "2026-10-17T06:17:13.8260727Z",
+        "state_updated_at": "2026-10-17T15:17:03.2010849+09:00",
+        "maintenance_state": "NORMAL",
+        "reported_watchdog_pid": 1748,
+        "pid_observed_process_name": "hermes-watchdog",
+        "reported_result": {
+          "desktop": "up",
+          "backend": "down",
+          "embedding": "disabled"
+        },
+        "reported_backend_health": "down",
+        "reported_consecutive_backend_fails": 0,
+        "marker_absent": true,
+        "exact_process_creation_identity_checked": false,
+        "independent_backend_probe_run": false,
+        "forced_restart_issued": false,
+        "observation_sha256": "0fa2dde8861af81754554a37f21c632845b6732b6b10bca9a1ead2b75b603457",
+        "interpretation": "Watchdog reports NORMAL; PID/name observed. Desktop up/backend down/embedding disabled are watchdog reports, not independent service or loaded-model proofs."
+      }
     },
     "native_electron_hold_resolution": "Production marker gate resolved; subsequent native probes still require fixed isolation and confirmed process teardown."
   },
@@ -2838,7 +2863,7 @@
       "deselected": 174,
       "included_in_checkpoint_totals": false
     },
-    "F04": "Gateway busy handler intake still pending scoped owner/behavior proof",
+    "F04": "Scoped conversation-mode implementation verified; real-channel/actual-agent whole-family acceptance remains open.",
     "F09": "Actual local streaming STT provider not established; no ABC-only completion claim",
     "F02_existing_owner_proof": {
       "verification_commit": "27a361d2d39feea36382d03f9b142b3ab42e3eea",
@@ -3346,6 +3371,527 @@
         "whole_gateway_run_graph_coverage": false
       },
       "production_operations": "No native Electron launch, watchdog write/clear/restart, real model or live gateway operation in this prerequisite slice"
+    },
+    "F04_scoped_proof": {
+      "commit": "ea150c8c08c0bea351b1ff2ad92edc142ae39a0d",
+      "status": "SCOPED_IMPLEMENTATION_VERIFIED_NOT_WHOLE_FAMILY_ACCEPTED",
+      "behavior": "Gateway idle and busy dispatch; persisted per-conversation override of routed profile defaults; queue FIFO, steer and interrupt via existing owners; already accepted debounce precedes ordinary text and /queue-/q during save publication; existing entry save never applies expiration reset policy; failed persistence retains previous mode. Stop clears stopped backlog before yielding and preserves a replacement generation afterwards.",
+      "green": {
+        "files": 19,
+        "tests": 218,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "per_file": [
+          {
+            "file": "tests/cli/test_busy_input_mode_command.py",
+            "exit": 0,
+            "tests": 6,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "file": "tests/gateway/test_busy_session_ack.py",
+            "exit": 0,
+            "tests": 10,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "file": "tests/gateway/test_busy_session_auth_bypass.py",
+            "exit": 0,
+            "tests": 3,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "file": "tests/gateway/test_command_bypass_active_session.py",
+            "exit": 0,
+            "tests": 35,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "file": "tests/gateway/test_queue_command.py",
+            "exit": 0,
+            "tests": 2,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "file": "tests/gateway/test_queue_consumption.py",
+            "exit": 0,
+            "tests": 5,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "file": "tests/gateway/test_stop_thread_sibling.py",
+            "exit": 0,
+            "tests": 3,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "file": "tests/gateway/test_steer_command.py",
+            "exit": 0,
+            "tests": 2,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "file": "tests/gateway/test_multiplex_busy_input_mode.py",
+            "exit": 0,
+            "tests": 15,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "file": "tests/gateway/test_session_state_cleanup.py",
+            "exit": 0,
+            "tests": 5,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "file": "tests/gateway/test_active_session_text_merge.py",
+            "exit": 0,
+            "tests": 7,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "file": "tests/gateway/test_gateway_command_dispatch_minimal.py",
+            "exit": 0,
+            "tests": 31,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "file": "tests/gateway/test_internal_event_never_interrupts_busy_session.py",
+            "exit": 0,
+            "tests": 1,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "file": "tests/gateway/test_compression_interrupt_demotion_56391.py",
+            "exit": 0,
+            "tests": 3,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "file": "tests/gateway/test_gateway_command_help.py",
+            "exit": 0,
+            "tests": 2,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "file": "tests/gateway/test_discord_slash_commands.py",
+            "exit": 0,
+            "tests": 13,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "file": "tests/gateway/test_session_metadata_save_boundary.py",
+            "exit": 0,
+            "tests": 5,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "file": "tests/gateway/test_queued_followup_processing_hooks.py",
+            "exit": 0,
+            "tests": 5,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "file": "tests/gateway/test_session.py",
+            "exit": 0,
+            "tests": 65,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          }
+        ],
+        "source_binding_sha256": "6b0b0d5a890228498ffe3f1d0a83dfa0e97712cc1d158ae3cc09c588be22fe62"
+      },
+      "included_in_historical_655_python_or_15_ui_totals": false,
+      "final_queue_alias_red": {
+        "tests": 31,
+        "failures": 2,
+        "errors": 0,
+        "skipped": 0
+      },
+      "excluded_evidence": "Earlier review-stage expiry test used default reset=none and failed its setup precondition. That failure and the seven intermediate mutation runs containing it are not accepted product/mutation evidence. Final expiry tests explicitly set idle/daily/both; the final reset-existing-session mutant fails all three behavioral assertions.",
+      "mutations": [
+        {
+          "fault": "profile-leak",
+          "module": "gateway.slash_commands",
+          "method": "_handle_busy_command",
+          "source_sha256": "a90fbbdf50284dfc590919c5b0104339d7aecae7b3e853d77be6d07773c3a92d",
+          "test_sha256": "a1bbe171c53fd7e1e4ace914c292afc159ebbe73165431e710b29b4a7d7d63e0",
+          "selection": "busy_mode_survives",
+          "source_unchanged": true,
+          "test_unchanged": true,
+          "bindings": 1,
+          "mutated_module_loaded": true,
+          "pytest_exit": 1,
+          "counts": {
+            "tests": 1,
+            "failures": 1,
+            "errors": 0,
+            "skipped": 0
+          },
+          "classification": "KILLED_ASSERTIONS"
+        },
+        {
+          "fault": "save-noop",
+          "module": "gateway.slash_commands",
+          "method": "_handle_busy_command",
+          "source_sha256": "a90fbbdf50284dfc590919c5b0104339d7aecae7b3e853d77be6d07773c3a92d",
+          "test_sha256": "a1bbe171c53fd7e1e4ace914c292afc159ebbe73165431e710b29b4a7d7d63e0",
+          "selection": "busy_command_dispatches or busy_mode_survives or busy_save_failure",
+          "source_unchanged": true,
+          "test_unchanged": true,
+          "bindings": 2,
+          "mutated_module_loaded": true,
+          "pytest_exit": 1,
+          "counts": {
+            "tests": 4,
+            "failures": 3,
+            "errors": 0,
+            "skipped": 0
+          },
+          "classification": "KILLED_ASSERTIONS"
+        },
+        {
+          "fault": "queue-fallthrough",
+          "module": "gateway.run",
+          "method": "_handle_active_session_busy_message",
+          "source_sha256": "6d20262bbf5677c1ecf9e791ab1b9dd853844f4de1a380fb4388972c9631d911",
+          "test_sha256": "a1bbe171c53fd7e1e4ace914c292afc159ebbe73165431e710b29b4a7d7d63e0",
+          "selection": "busy_selected_mode_controls",
+          "source_unchanged": true,
+          "test_unchanged": true,
+          "bindings": 1,
+          "mutated_module_loaded": true,
+          "pytest_exit": 1,
+          "counts": {
+            "tests": 3,
+            "failures": 1,
+            "errors": 0,
+            "skipped": 0
+          },
+          "classification": "KILLED_ASSERTIONS"
+        },
+        {
+          "fault": "retain-overflow",
+          "module": "gateway.run",
+          "method": "_interrupt_and_clear_session",
+          "source_sha256": "6d20262bbf5677c1ecf9e791ab1b9dd853844f4de1a380fb4388972c9631d911",
+          "test_sha256": "a1bbe171c53fd7e1e4ace914c292afc159ebbe73165431e710b29b4a7d7d63e0",
+          "selection": "stop_discards or queue_stop_discards",
+          "source_unchanged": true,
+          "test_unchanged": true,
+          "bindings": 1,
+          "mutated_module_loaded": true,
+          "pytest_exit": 1,
+          "counts": {
+            "tests": 2,
+            "failures": 2,
+            "errors": 0,
+            "skipped": 0
+          },
+          "classification": "KILLED_ASSERTIONS"
+        },
+        {
+          "fault": "ignore-generation",
+          "module": "gateway.run",
+          "method": "_interrupt_and_clear_session",
+          "source_sha256": "6d20262bbf5677c1ecf9e791ab1b9dd853844f4de1a380fb4388972c9631d911",
+          "test_sha256": "a1bbe171c53fd7e1e4ace914c292afc159ebbe73165431e710b29b4a7d7d63e0",
+          "selection": "stop_yield_does_not_clear",
+          "source_unchanged": true,
+          "test_unchanged": true,
+          "bindings": 1,
+          "mutated_module_loaded": true,
+          "pytest_exit": 1,
+          "counts": {
+            "tests": 1,
+            "failures": 1,
+            "errors": 0,
+            "skipped": 0
+          },
+          "classification": "KILLED_ASSERTIONS"
+        },
+        {
+          "fault": "skip-debounce-transfer",
+          "module": "gateway.run",
+          "method": "_drain_busy_text_debounce",
+          "source_sha256": "6d20262bbf5677c1ecf9e791ab1b9dd853844f4de1a380fb4388972c9631d911",
+          "test_sha256": "a1bbe171c53fd7e1e4ace914c292afc159ebbe73165431e710b29b4a7d7d63e0",
+          "selection": "busy_switch_preserves or busy_published_mode",
+          "source_unchanged": true,
+          "test_unchanged": true,
+          "bindings": 1,
+          "mutated_module_loaded": true,
+          "pytest_exit": 1,
+          "counts": {
+            "tests": 6,
+            "failures": 5,
+            "errors": 0,
+            "skipped": 0
+          },
+          "classification": "KILLED_ASSERTIONS"
+        },
+        {
+          "fault": "reset-existing-session",
+          "module": "gateway.slash_commands",
+          "method": "_handle_busy_command",
+          "source_sha256": "a90fbbdf50284dfc590919c5b0104339d7aecae7b3e853d77be6d07773c3a92d",
+          "test_sha256": "a1bbe171c53fd7e1e4ace914c292afc159ebbe73165431e710b29b4a7d7d63e0",
+          "selection": "busy_change_does_not_reset",
+          "source_unchanged": true,
+          "test_unchanged": true,
+          "bindings": 1,
+          "mutated_module_loaded": true,
+          "pytest_exit": 1,
+          "counts": {
+            "tests": 3,
+            "failures": 3,
+            "errors": 0,
+            "skipped": 0
+          },
+          "classification": "KILLED_ASSERTIONS"
+        }
+      ],
+      "source_bindings": [
+        {
+          "path": "gateway/run.py",
+          "reviewed_worktree_sha256": "6d20262bbf5677c1ecf9e791ab1b9dd853844f4de1a380fb4388972c9631d911",
+          "git_blob": "7eb566e177900f49841570fbfbb2f1da0b7d51ad",
+          "git_blob_sha256": "6d20262bbf5677c1ecf9e791ab1b9dd853844f4de1a380fb4388972c9631d911"
+        },
+        {
+          "path": "gateway/slash_commands.py",
+          "reviewed_worktree_sha256": "a90fbbdf50284dfc590919c5b0104339d7aecae7b3e853d77be6d07773c3a92d",
+          "git_blob": "70f3fc6700991bfa1dbeb2b20d92f3fb8d4ad0df",
+          "git_blob_sha256": "a90fbbdf50284dfc590919c5b0104339d7aecae7b3e853d77be6d07773c3a92d"
+        },
+        {
+          "path": "gateway/platforms/base.py",
+          "reviewed_worktree_sha256": "69f943dcd29bf2c6cd884eafa6901c745d77c1bb95743505ba0e1f7c72b54db3",
+          "git_blob": "63acce837874d4895e1c2017a1a2d5c0ada0bed6",
+          "git_blob_sha256": "69f943dcd29bf2c6cd884eafa6901c745d77c1bb95743505ba0e1f7c72b54db3"
+        },
+        {
+          "path": "hermes_cli/commands.py",
+          "reviewed_worktree_sha256": "baaca3fe42284958c998f5aa3dd6c7567614290109b600caa035f4fa37dd8959",
+          "git_blob": "528f9d8f607f3275601ccfc39d5d8933e22b7063",
+          "git_blob_sha256": "baaca3fe42284958c998f5aa3dd6c7567614290109b600caa035f4fa37dd8959"
+        },
+        {
+          "path": "locales/en.yaml",
+          "reviewed_worktree_sha256": "12f7c0cc98f8093d5f44e3ac40d9ab5c80603b140e51107f951c290f97a941a4",
+          "git_blob": "7a09cdc3784ed985a467e7a7368d72cf24b34085",
+          "git_blob_sha256": "12f7c0cc98f8093d5f44e3ac40d9ab5c80603b140e51107f951c290f97a941a4"
+        },
+        {
+          "path": "locales/ja.yaml",
+          "reviewed_worktree_sha256": "aceb20709790eacc3f89045aad8900b8edbc4d54db5e5e0cafc1dfb70e37c0ca",
+          "git_blob": "6fa58584ae69ffd8d6ffcd6ad1251fb0d619a5e4",
+          "git_blob_sha256": "aceb20709790eacc3f89045aad8900b8edbc4d54db5e5e0cafc1dfb70e37c0ca"
+        },
+        {
+          "path": "tests/gateway/test_gateway_command_dispatch_minimal.py",
+          "reviewed_worktree_sha256": "a1bbe171c53fd7e1e4ace914c292afc159ebbe73165431e710b29b4a7d7d63e0",
+          "git_blob": "cc69a3d33b631b803261ed001d01d1c1c6f80317",
+          "git_blob_sha256": "a1bbe171c53fd7e1e4ace914c292afc159ebbe73165431e710b29b4a7d7d63e0"
+        },
+        {
+          "path": "tests/gateway/test_compression_interrupt_demotion_56391.py",
+          "reviewed_worktree_sha256": "95c03d64c7ef645cafe4e48aeedf50dd42c7e5c36260453def76a660d1daba64",
+          "git_blob": "d95bd95b643342ca07b7891315096e9099ba6482",
+          "git_blob_sha256": "95c03d64c7ef645cafe4e48aeedf50dd42c7e5c36260453def76a660d1daba64"
+        }
+      ],
+      "independent_review": {
+        "agent": "Confucius",
+        "result": "No actionable P1/P2 after two ordering fixes; source-only review",
+        "start_end_source_hashes_match": true,
+        "independent_test_execution": false,
+        "receipt_sha256": "c93d0a4d942c7a7128e52d99d016d49d4bf9adee9b5a9925c92dee869bdd5a33"
+      },
+      "codegraph": {
+        "campaign": {
+          "initialized": true,
+          "version": "1.6.0",
+          "lastIndexed": "2026-10-17T06:24:20.444Z",
+          "fileCount": 9232,
+          "nodeCount": 199568,
+          "edgeCount": 631996,
+          "dbSizeBytes": 668909568,
+          "walSizeBytes": 0,
+          "backend": "node-sqlite",
+          "journalMode": "wal",
+          "nodesByKind": {
+            "class": 13319,
+            "component": 64,
+            "constant": 5903,
+            "enum": 8,
+            "enum_member": 25,
+            "field": 10,
+            "file": 8895,
+            "function": 63791,
+            "import": 44439,
+            "interface": 2195,
+            "method": 42936,
+            "namespace": 1,
+            "property": 1473,
+            "route": 397,
+            "struct": 33,
+            "type_alias": 890,
+            "variable": 15189
+          },
+          "languages": [
+            "c",
+            "cpp",
+            "csharp",
+            "go",
+            "javascript",
+            "liquid",
+            "nix",
+            "php",
+            "python",
+            "rust",
+            "tsx",
+            "typescript",
+            "yaml"
+          ],
+          "pendingChanges": {
+            "added": 0,
+            "modified": 0,
+            "removed": 0
+          },
+          "worktreeMismatch": null,
+          "index": {
+            "builtWithVersion": "1.6.0",
+            "builtWithExtractionVersion": 25,
+            "currentExtractionVersion": 25,
+            "reindexRecommended": false,
+            "state": "complete",
+            "pendingRefs": 0
+          }
+        },
+        "selected_owner_projection": {
+          "initialized": true,
+          "version": "1.6.0",
+          "lastIndexed": "2026-10-17T06:22:33.213Z",
+          "fileCount": 11,
+          "nodeCount": 1234,
+          "edgeCount": 3224,
+          "dbSizeBytes": 5013504,
+          "walSizeBytes": 0,
+          "backend": "node-sqlite",
+          "journalMode": "wal",
+          "nodesByKind": {
+            "class": 44,
+            "file": 9,
+            "function": 368,
+            "import": 168,
+            "method": 450,
+            "variable": 195
+          },
+          "languages": [
+            "python",
+            "yaml"
+          ],
+          "pendingChanges": {
+            "added": 0,
+            "modified": 0,
+            "removed": 0
+          },
+          "worktreeMismatch": null,
+          "index": {
+            "builtWithVersion": "1.6.0",
+            "builtWithExtractionVersion": 25,
+            "currentExtractionVersion": 25,
+            "reindexRecommended": false,
+            "state": "complete",
+            "pendingRefs": 0
+          }
+        },
+        "projection_binding_sha256": "b1c38cc45c9af8e5470f0fc5d173574c1192ab382c190db504218734b11c9288",
+        "whole_gateway_run_coverage": false,
+        "limitation": "gateway/run.py exceeds 1 MiB extraction cap. Exact selected method ranges and full selected owner files were analyzed in an explicitly initialized separate projection; projected code is never on runtime import/PATH.",
+        "debounce_callers": {
+          "symbol": "_drain_busy_text_debounce",
+          "callers": [
+            {
+              "name": "_enqueue_fifo",
+              "kind": "method",
+              "filePath": "gateway/run.py",
+              "startLine": 7097
+            },
+            {
+              "name": "_handle_active_session_busy_message",
+              "kind": "method",
+              "filePath": "gateway/run.py",
+              "startLine": 7412
+            },
+            {
+              "name": "_handle_busy_command",
+              "kind": "method",
+              "filePath": "gateway/slash_commands.py",
+              "startLine": 4222
+            }
+          ]
+        }
+      },
+      "checks": {
+        "ruff": "PASS",
+        "diff_hygiene": "PASS",
+        "git_hook": "Lefthook absent; direct checks run, hook success not claimed"
+      },
+      "runtime_boundary": "Actual native Python and BasePlatformAdapter/SessionStore with owned HOME/temp; active leaf agent mocked. No live messaging channel, actual model tool-boundary or native Electron acceptance claimed.",
+      "rollback": "Revert this implementation commit in the isolated branch. Previously saved metadata is inert on older code; no user-state deletion is needed or performed."
+    },
+    "F09_readonly_inventory": {
+      "status": "ACTUAL_LOCAL_INCREMENTAL_RECOGNIZER_NOT_YET_ESTABLISHED",
+      "existing_owners": [
+        "agent/transcription_provider.py",
+        "agent/transcription_registry.py",
+        "tools/transcription_tools.py",
+        "tools/voice_mode.py"
+      ],
+      "findings": "Current faster-whisper/local_command owners accept completed files; chunked completed WAV recognition is not incremental capture recognition. Frozen upstream cloud streaming adapters explicitly exclude local/local_command. Existing sherpa code is KeywordSpotter, not free-speech ASR.",
+      "next_requirement": "Establish an actual Windows-compatible incremental recognizer plus matching local ASR model and task-owned PCM fixture, then prove audio-derived partial before finalize, final/cancel and recording retention. ABC/toggle/mock session alone cannot satisfy F09.",
+      "reviewer": "Tesla",
+      "test_or_model_execution_in_inventory": false,
+      "whole_family_accepted": false
     }
   },
   "unexecuted_acceptance": {
