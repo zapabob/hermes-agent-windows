@@ -10,12 +10,26 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+import logging
 import time
 from typing import Callable, Dict, Optional, Tuple
 
 WS_CLOSE_PROCESS_EXITED = 4410
 WS_CLOSE_SUPERSEDED = 4409
 TUI_FORCE_REDRAW = b"\x0c"
+logger = logging.getLogger(__name__)
+
+
+def _bridge_exited(bridge) -> bool:
+    """Use the retained bridge's process identity; unavailable probes are unknown."""
+    probe = getattr(bridge, "is_alive", None)
+    if not callable(probe):
+        return False
+    try:
+        return not probe()
+    except Exception:
+        logger.debug("PTY liveness probe unavailable", exc_info=True)
+        return False
 
 
 async def _close_ws(ws, code: int) -> None:
@@ -206,14 +220,18 @@ class PtySessionRegistry:
 
     async def reap_idle(self, now: Optional[float] = None) -> None:
         now = time.monotonic() if now is None else now
-        doomed = [
-            key for key, s in self._sessions.items()
-            if (not s.alive)
-            or (not s.attached and s.last_detached_at is not None
-                and (now - s.last_detached_at) > self._ttl)
-        ]
-        for key in doomed:
-            await self._sessions.pop(key).close()
+        for key, session in list(self._sessions.items()):
+            # A close above yields: another reaper may have removed this
+            # object and attach_or_spawn may already own the same key anew.
+            if self._sessions.get(key) is session:
+                # Eligibility must also be current after each yielding close:
+                # the same live object may have acquired a new socket meanwhile.
+                if (not session.alive) or _bridge_exited(session.bridge) or (
+                    not session.attached and session.last_detached_at is not None
+                    and (now - session.last_detached_at) > self._ttl
+                ):
+                    self._sessions.pop(key)
+                    await session.close()
 
     def _reap_one_idle_or_raise(self) -> None:
         idle = [s for s in self._sessions.values()
@@ -228,8 +246,8 @@ class PtySessionRegistry:
         asyncio.create_task(oldest.close())
 
     async def close_all(self) -> None:
-        keys = list(self._sessions.keys())
-        for key in keys:
-            session = self._sessions.pop(key, None)
-            if session is not None:
+        sessions = list(self._sessions.items())
+        for key, session in sessions:
+            if self._sessions.get(key) is session:
+                self._sessions.pop(key)
                 await session.close()
