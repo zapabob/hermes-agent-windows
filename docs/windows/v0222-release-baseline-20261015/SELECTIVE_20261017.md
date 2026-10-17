@@ -1,11 +1,16 @@
 # Selective implementation checkpoint — 2026-10-17
 
 Status: **PARTIAL campaign; initial seven candidates plus supplemental F02/F04 scoped proof below.**
+**Native testing is HELD:** a subsequent probe changed the host `hermes://`
+registry command. Its current key is backed up; a separate explicit human
+restore-target question remains pending. F01 native acceptance is NOT_ACCEPTED.
 A native Electron probe exposed the watchdog-control isolation incident below.
 The human-authorized removal of its exact test-origin stop marker is complete;
 watchdog subsequently reports NORMAL but backend down and embedding disabled.
 This checkpoint is not an operational closeout. The eight-hour real-model soak
 and three physical sleep/resume cycles are NOT_RUN by the user's direction.
+The latest whole-project CodeGraph refresh is incomplete after database locking;
+the current protocol prevention proof uses a complete selected-owner graph.
 This checkpoint does not supersede the historical V03/V04/V05 or U01–U18
 receipts and does not certify complete v0.22.2 parity, Windows release readiness,
 or vendor-runtime independence. The machine-readable companion is
@@ -354,3 +359,42 @@ files, frozen upstream streaming excludes local/local_command, and the existing
 sherpa owner is a keyword spotter. An actual incremental ASR provider, matching
 local model and task-owned audio fixture remain to be established; no ABC-only,
 toggle-only or mocked-recognizer completion is claimed.
+
+
+Host protocol incident supplement: subsequent native probes exposed another
+escaped OS write. Startup unconditionally registered the real per-user
+`HKCU\Software\Classes\hermes\shell\open\command` default value, pointing
+it to the qualified test Electron with a candidate `--inspect=0` entry path.
+HOME/userData/watchdog confinement does not isolate this registry API. The
+current exact key snapshot (SHA-256 `33693e7fd5f627dfae4cf39e9e87f2fc646caeba4dd29667b8c99b6ab4cecad1`) and a
+reviewable canonical packaged-Hermes restore proposal are retained under
+`tmp/selective-20261017/protocol-association-incident/`. No pre-test registry
+baseline exists. A separate explicit human restore-target question is pending;
+the earlier watchdog-stop permission does not authorize this change. No registry
+restoration, application restart or forced descendant stop was performed.
+
+Native runs are HELD. V1 and V2 reported one Playwright pass each, but neither
+is accepted: V1 had a reduced-PATH process-identity fallback and weak request
+correlation; V2 lacked the final request-lifetime check. Both also registered
+the host scheme. V3 failed with a typed observer ETIMEDOUT in finally; its
+controller captured 210 identities and initially observed two remaining
+Electron identities. Both were ALREADY_EXITED at the later identity-specific
+check, without force. Its HOME/evidence remains retained. The watchdog marker
+was absent before/after all three runs. These observations do not make F01 a
+native acceptance success and do not weaken the completed F04 scoped proof.
+
+Prevention commit `ae9aed87962bafe2b03d3b2078b7ebdb9adcb20e` extracts the actual registration owner, wired
+from the existing startup wrapper. Direct-import fake-API tests replace the
+discarded source-reading/AST/VM draft. A pre-guard boundary counterfactual had
+three assertion failures and three positive controls; final direct-owner and
+existing fixture/fence suites pass 28 cases. Three actual helper faults are
+killed (two/one/one assertion failures, no collection errors). ESLint has zero
+warnings; Electron typecheck and diff hygiene pass. Independent final review
+found no P1/P2, with matching start/end hashes of all three committed files.
+No native run of the fixed source or new packaged build has occurred.
+
+The real CodeGraph 1.6.0 final selected-owner graph is complete: seven exact
+files, 861 nodes, 2,954 edges, zero pending changes. The two whole-project
+refreshes failed during WAL/checkpoint activity with database locking; their
+retained index is incomplete. No index deletion, unlock or tool upgrade was
+used. Whole-project graph freshness and full release acceptance remain open.

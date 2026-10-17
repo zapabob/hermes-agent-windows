@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "SCOPED_IMPLEMENTATION_VERIFIED_CAMPAIGN_PARTIAL_TEST_STOP_RECOVERED",
+  "status": "SCOPED_IMPLEMENTATION_VERIFIED_CAMPAIGN_PARTIAL_NATIVE_PROTOCOL_INCIDENT_OPEN",
   "downstream_base": "abad98beee2b74a135ce7e0e9310910c756514b4",
   "downstream_base_tree": "b8cde7b4a87a4ae8003f08b40680ec27dea0bf77",
   "upstream_release": "d923a5eb487a17c0a68801bba9ef0f56c81040a8",
@@ -2624,6 +2624,7 @@
     "explicit_checks": "Configured Ruff, changed frontend ESLint, renderer typecheck, per-file tests, UI tests, build and diff hygiene were run directly"
   },
   "mandatory_open": [
+    "Resolve test-written HKCU hermes protocol association under explicit human-selected restore authority and qualify startup isolation before further native launches",
     "Full history semantic classification and final public-surface inventory",
     "Conditional feature owners/acceptance and complete legacy U01-U18 qualification",
     "Complete Security Center and outbound/Control MCP effect and lifecycle acceptance",
@@ -2659,7 +2660,7 @@
     "production_restart_command_issued": false,
     "active_watchdog_consumption": "UNVERIFIED; lock/state absent in that default directory at inspection",
     "recovery_permission": "Human confirmed prior normal operation and explicitly authorized removing the test stop designation.",
-    "native_electron_runs_held": false,
+    "native_electron_runs_held": true,
     "repair": "Test helper forces watchdog path under sandbox HOME and removes inherited/explicit casing collisions",
     "focused_red": {
       "failed": 2,
@@ -2854,7 +2855,7 @@
         "interpretation": "Watchdog reports NORMAL; PID/name observed. Desktop up/backend down/embedding disabled are watchdog reports, not independent service or loaded-model proofs."
       }
     },
-    "native_electron_hold_resolution": "Production marker gate resolved; subsequent native probes still require fixed isolation and confirmed process teardown."
+    "native_electron_hold_resolution": "Watchdog stop marker was recovered under explicit authority; a separate host-protocol incident now holds native launches."
   },
   "conditional_followup": {
     "F02": "Existing Custom Endpoints owner retained; scoped save/fresh-process/catalogue/loopback protocol and UI contracts verified. Native Electron and real-model acceptance open.",
@@ -3892,7 +3893,8 @@
       "reviewer": "Tesla",
       "test_or_model_execution_in_inventory": false,
       "whole_family_accepted": false
-    }
+    },
+    "F01_native_journey": "NOT_ACCEPTED: two intermediate positive dev/mock journeys, then failed final observer/lifetime proof and confirmed OS association escape; prevention unit proof is separate from native acceptance."
   },
   "unexecuted_acceptance": {
     "real_model_eight_hour_soak": "NOT_RUN",
@@ -3900,5 +3902,299 @@
     "reason": "Human states no dedicated Windows test environment is available and directs recording these as unexecuted.",
     "using_user_workstation_instead": false,
     "release_qualification_pass_claimed": false
+  },
+  "native_protocol_association_incident": {
+    "status": "WAITING_FOR_EXPLICIT_HUMAN_RESTORE_TARGET_AUTHORIZATION",
+    "cause": "Desktop startup registered the host URL scheme unconditionally despite isolated HOME/userData/watchdog path. Development registration used debugger argv[1] as app entry.",
+    "escaped_control": "HKCU\\Software\\Classes\\hermes\\shell\\open\\command (Default)",
+    "observed_value_shape": "qualified test Electron + candidate desktop/--inspect=0 + URL argument",
+    "current_key_snapshot_sha256": "33693e7fd5f627dfae4cf39e9e87f2fc646caeba4dd29667b8c99b6ab4cecad1",
+    "pretest_registry_baseline_captured": false,
+    "registry_restore_performed": false,
+    "proposed_restore_target": "Existing canonical primary apps/desktop/release/win-unpacked/Hermes.exe with quoted URL argument; exact local proposal retained",
+    "proposed_application_launch_required": false,
+    "human_authority": "Asked to approve canonical packaged application association or hold; no answer received at this checkpoint. Prior watchdog-stop answer does not authorize this separate OS association change.",
+    "native_launches_held": true,
+    "native_attempts": [
+      {
+        "label": "native-favorites-retry-v1",
+        "raw_exit": 0,
+        "acceptance": "NOT_ACCEPTED",
+        "reason": "Minimal PATH omitted powershell.exe; weak request correlation; host protocol registration was not isolated",
+        "controller_receipt_sha256": "fe9daf396908aaa95f74321dc4518e4d00f45361676f8bf540e69ba15804eaa0",
+        "captured_process_count": 94,
+        "survivors_at_controller_exit": [],
+        "production_watchdog_marker_before": "ABSENT",
+        "production_watchdog_marker_after": "ABSENT"
+      },
+      {
+        "label": "native-favorites-retry-v2",
+        "raw_exit": 0,
+        "acceptance": "NOT_ACCEPTED",
+        "reason": "Only early matching-request check; final lifetime check missing; host protocol registration was not isolated",
+        "controller_receipt_sha256": "a9fddff25b5fc852780fabe4e1de8501f367fd78f4ab733f2b22899b7e23d722",
+        "captured_process_count": 137,
+        "survivors_at_controller_exit": [],
+        "production_watchdog_marker_before": "ABSENT",
+        "production_watchdog_marker_after": "ABSENT"
+      },
+      {
+        "label": "native-favorites-qualified-v3",
+        "raw_exit": 1,
+        "acceptance": "NOT_ACCEPTED",
+        "reason": "Observer ETIMEDOUT in finally; final route proof did not complete; host protocol registration was not isolated",
+        "controller_receipt_sha256": "67ce72a12db1e2f149b7c834f3e68b6b451d9225ba918ae2eeaed8fc5d19215e",
+        "captured_process_count": 210,
+        "survivors_at_controller_exit": [
+          {
+            "pid": 32140,
+            "created": 1792219478.1240833,
+            "executable": "electron.exe"
+          },
+          {
+            "pid": 17868,
+            "created": 1792219479.3498728,
+            "executable": "electron.exe"
+          }
+        ],
+        "production_watchdog_marker_before": "ABSENT",
+        "production_watchdog_marker_after": "ABSENT"
+      }
+    ],
+    "late_exit_observation": {
+      "checked_at": "2026-10-17T06:48:48.333017+00:00",
+      "captured_survivors_rechecked": [
+        {
+          "pid": 32140,
+          "created": 1792219478.1240833,
+          "result": "ALREADY_EXITED"
+        },
+        {
+          "pid": 17868,
+          "created": 1792219479.3498728,
+          "result": "ALREADY_EXITED"
+        }
+      ],
+      "termination_issued": false,
+      "evidence_deleted": false,
+      "receipt_sha256": "0ca8297f45c68a4cd14c773138359b140265a8041114a1cb843c54d617cdb067"
+    },
+    "evidence_home_retained": "Failed V3 HOME retained; no evidence deletion or forced descendant termination performed",
+    "prevention": {
+      "commit": "ae9aed87962bafe2b03d3b2078b7ebdb9adcb20e",
+      "behavior": "Startup delegates to directly tested injected OS owner. Existing TEST_WORKER_INDEX presence (including 0/empty) suppresses host API; normal packaged registration preserved; development uses app.getAppPath; false OS result is logged as refused.",
+      "direct_boundary_counterfactual_red": {
+        "tests": 6,
+        "failures": 3,
+        "errors": 0,
+        "skipped": 0
+      },
+      "red_scope": "Extracted dependency boundary before worker guard and API-result handling; not a live OS rollback or a rerun of the whole startup process",
+      "green": {
+        "tests": 28,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "mutations": [
+        {
+          "fault": "register-in-worker",
+          "bindings": 1,
+          "source_sha256": "72f12d1bb30c60ab5b386822e4d201726a922e3f0fc2e5cbe0e49cad5dece9e0",
+          "vite_input_sha256": "72f12d1bb30c60ab5b386822e4d201726a922e3f0fc2e5cbe0e49cad5dece9e0",
+          "input_equivalent_after_newline_normalization": true,
+          "test_sha256": "fd33092df3f402a35417715f7889f24ab68065b774663e176d22a1bbbb3c9ddb",
+          "counts": {
+            "tests": 6,
+            "failures": 2,
+            "errors": 0,
+            "skipped": 0
+          },
+          "source_and_test_unchanged": true,
+          "classification": "KILLED_ASSERTIONS"
+        },
+        {
+          "fault": "wrong-app-entry",
+          "bindings": 1,
+          "source_sha256": "72f12d1bb30c60ab5b386822e4d201726a922e3f0fc2e5cbe0e49cad5dece9e0",
+          "vite_input_sha256": "72f12d1bb30c60ab5b386822e4d201726a922e3f0fc2e5cbe0e49cad5dece9e0",
+          "input_equivalent_after_newline_normalization": true,
+          "test_sha256": "fd33092df3f402a35417715f7889f24ab68065b774663e176d22a1bbbb3c9ddb",
+          "counts": {
+            "tests": 6,
+            "failures": 1,
+            "errors": 0,
+            "skipped": 0
+          },
+          "source_and_test_unchanged": true,
+          "classification": "KILLED_ASSERTIONS"
+        },
+        {
+          "fault": "false-success-log",
+          "bindings": 1,
+          "source_sha256": "72f12d1bb30c60ab5b386822e4d201726a922e3f0fc2e5cbe0e49cad5dece9e0",
+          "vite_input_sha256": "72f12d1bb30c60ab5b386822e4d201726a922e3f0fc2e5cbe0e49cad5dece9e0",
+          "input_equivalent_after_newline_normalization": true,
+          "test_sha256": "fd33092df3f402a35417715f7889f24ab68065b774663e176d22a1bbbb3c9ddb",
+          "counts": {
+            "tests": 6,
+            "failures": 1,
+            "errors": 0,
+            "skipped": 0
+          },
+          "source_and_test_unchanged": true,
+          "classification": "KILLED_ASSERTIONS"
+        }
+      ],
+      "source_bindings": [
+        {
+          "path": "apps/desktop/electron/main.ts",
+          "reviewed_worktree_sha256": "3ff86cf5b0dc075d6db1635bfced517d6fa6669f9adffb650a34621ea2a615e7",
+          "git_blob": "a424038e29733ae4f904804615598f1a40423ddf",
+          "git_blob_sha256": "3ff86cf5b0dc075d6db1635bfced517d6fa6669f9adffb650a34621ea2a615e7"
+        },
+        {
+          "path": "apps/desktop/electron/protocol-registration.ts",
+          "reviewed_worktree_sha256": "72f12d1bb30c60ab5b386822e4d201726a922e3f0fc2e5cbe0e49cad5dece9e0",
+          "git_blob": "fbab00cef73af376cc1c872e82f76a07c956a934",
+          "git_blob_sha256": "72f12d1bb30c60ab5b386822e4d201726a922e3f0fc2e5cbe0e49cad5dece9e0"
+        },
+        {
+          "path": "apps/desktop/electron/protocol-registration.test.ts",
+          "reviewed_worktree_sha256": "fd33092df3f402a35417715f7889f24ab68065b774663e176d22a1bbbb3c9ddb",
+          "git_blob": "c4d275c1b2dc77d7ac80768609fb8abce594c39a",
+          "git_blob_sha256": "fd33092df3f402a35417715f7889f24ab68065b774663e176d22a1bbbb3c9ddb"
+        }
+      ],
+      "independent_review": {
+        "agent": "Tesla",
+        "result": "No actionable P1/P2 in final three files; startup wiring source-reviewed",
+        "start_end_hashes_match": true,
+        "independent_runtime_execution": false,
+        "receipt_sha256": "e52d8b091da51aaadf06908119df33739ae7ff2ff44c53b523dd371a1b11618b"
+      },
+      "checks": {
+        "eslint": "PASS zero warnings",
+        "electron_typecheck": "PASS",
+        "diff_hygiene": "PASS",
+        "git_hook": "Lefthook absent; direct checks run, hook success not claimed"
+      },
+      "excluded_drafts": "Source-reading AST/VM unit draft and its RED/mutations were replaced to satisfy AGENTS. Initial whole-file mutation needle ambiguity and first launcher MODULE_NOT_FOUND are harness failures, not accepted proof.",
+      "native_post_fix_qualification": "NOT_RUN; source not yet rebuilt into a new dev/package runtime and all native launches held",
+      "whole_family_accepted": false,
+      "rollback": "Revert only this source commit in the isolated branch; it does not restore or remove the OS registry association"
+    },
+    "selected_real_codegraph": {
+      "initialized": true,
+      "version": "1.6.0",
+      "lastIndexed": "2026-10-17T07:07:11.739Z",
+      "fileCount": 7,
+      "nodeCount": 861,
+      "edgeCount": 2954,
+      "dbSizeBytes": 4218880,
+      "walSizeBytes": 0,
+      "backend": "node-sqlite",
+      "journalMode": "wal",
+      "nodesByKind": {
+        "class": 1,
+        "constant": 188,
+        "file": 7,
+        "function": 424,
+        "import": 158,
+        "interface": 15,
+        "method": 1,
+        "property": 1,
+        "type_alias": 1,
+        "variable": 65
+      },
+      "languages": [
+        "typescript"
+      ],
+      "pendingChanges": {
+        "added": 0,
+        "modified": 0,
+        "removed": 0
+      },
+      "worktreeMismatch": null,
+      "index": {
+        "builtWithVersion": "1.6.0",
+        "builtWithExtractionVersion": 25,
+        "currentExtractionVersion": 25,
+        "reindexRecommended": false,
+        "state": "complete",
+        "pendingRefs": 0
+      }
+    },
+    "selected_projection_binding_sha256": "4871a417aee7119260f3632b2b36f03d8392c7cc04aff986666712066ab5ebd2",
+    "current_root_codegraph": {
+      "initialized": true,
+      "version": "1.6.0",
+      "lastIndexed": "2026-10-17T06:50:58.763Z",
+      "fileCount": 9232,
+      "nodeCount": 199572,
+      "edgeCount": 592789,
+      "dbSizeBytes": 569380864,
+      "walSizeBytes": 202081912,
+      "backend": "node-sqlite",
+      "journalMode": "wal",
+      "nodesByKind": {
+        "class": 13319,
+        "component": 64,
+        "constant": 5904,
+        "enum": 8,
+        "enum_member": 25,
+        "field": 10,
+        "file": 8895,
+        "function": 63793,
+        "import": 44440,
+        "interface": 2195,
+        "method": 42936,
+        "namespace": 1,
+        "property": 1473,
+        "route": 397,
+        "struct": 33,
+        "type_alias": 890,
+        "variable": 15189
+      },
+      "languages": [
+        "c",
+        "cpp",
+        "csharp",
+        "go",
+        "javascript",
+        "liquid",
+        "nix",
+        "php",
+        "python",
+        "rust",
+        "tsx",
+        "typescript",
+        "yaml"
+      ],
+      "pendingChanges": {
+        "added": 2,
+        "modified": 1,
+        "removed": 0
+      },
+      "worktreeMismatch": null,
+      "index": {
+        "builtWithVersion": null,
+        "builtWithExtractionVersion": null,
+        "currentExtractionVersion": 25,
+        "reindexRecommended": true,
+        "state": "indexing",
+        "pendingRefs": 82131
+      }
+    },
+    "current_root_graph_qualified": false,
+    "root_graph_limitation": "Two refreshes failed with database is locked during WAL backpressure/checkpoint. Index remains incomplete with pending references; no unlock/delete/config/dependency change attempted. Selected-owner CodeGraph 1.6.0 graph is complete; whole-repository freshness not claimed.",
+    "latest_registry_observation": {
+      "checked_at": "2026-10-17T07:11:56.430650+00:00",
+      "command_still_matches_recorded_test_value": true,
+      "command_value_sha256": "a5422fa482c717c46eba68116bfb2bd94d7270245825db7d774d8c9b5a7cf476",
+      "registry_type": 1,
+      "registry_write_performed": false,
+      "receipt_sha256": "833cfb5fda7c80228d6608f0f1a744221bcb66bfdbbd3b0303af852c38376e5c"
+    }
   }
 }
