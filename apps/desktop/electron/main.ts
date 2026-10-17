@@ -316,6 +316,7 @@ import {
   spliceRegistrySessionRows,
   tagRegistrySessionResponse
 } from './profile-session-routing'
+import { registerDeepLinkProtocol as registerHostDeepLinkProtocol } from './protocol-registration'
 import { pythonBackendCommand } from './python-backend-command'
 import { createQuickEntryShortcut, quickEntryWindowBounds, sanitizeQuickEntrySettings } from './quick-entry'
 import { type ActiveWork, mergeActiveWork, normalizeActiveWork, quitPromptFor } from './quit-guard'
@@ -17126,21 +17127,14 @@ ipcMain.handle('hermes:deep-link-ready', () => {
 })
 
 function registerDeepLinkProtocol() {
-  try {
-    if (process.defaultApp && process.argv.length >= 2) {
-      // Dev: register with the electron exec path + entry script so the OS can
-      // relaunch us with the URL. argv[1] is usually "." when launched via
-      // `electron .` from apps/desktop — resolve against cwd.
-      const entry = path.resolve(process.argv[1])
-      app.setAsDefaultProtocolClient(HERMES_PROTOCOL, process.execPath, [entry])
-    } else {
-      app.setAsDefaultProtocolClient(HERMES_PROTOCOL)
-    }
-
-    rememberLog(`[deeplink] registered ${HERMES_PROTOCOL}:// handler`)
-  } catch (err) {
-    rememberLog(`[deeplink] protocol registration failed: ${err.message}`)
-  }
+  registerHostDeepLinkProtocol({
+    app,
+    protocol: HERMES_PROTOCOL,
+    execPath: process.execPath,
+    defaultApp: process.defaultApp === true,
+    testWorkerIndex: process.env.TEST_WORKER_INDEX,
+    log: rememberLog
+  })
 }
 
 // Single-instance lock: deep links on a running app (Win/Linux) arrive as a
