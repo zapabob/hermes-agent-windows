@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "SCOPED_IMPLEMENTATION_VERIFIED_CAMPAIGN_PARTIAL_NATIVE_PROTOCOL_ASSOCIATION_HELD_BY_HUMAN",
+  "status": "HUMAN_REQUESTED_VERIFIED_SCOPE_CHECKPOINT_CAMPAIGN_PARTIAL",
   "downstream_base": "abad98beee2b74a135ce7e0e9310910c756514b4",
   "downstream_base_tree": "b8cde7b4a87a4ae8003f08b40680ec27dea0bf77",
   "upstream_release": "d923a5eb487a17c0a68801bba9ef0f56c81040a8",
@@ -2624,7 +2624,7 @@
     "explicit_checks": "Configured Ruff, changed frontend ESLint, renderer typecheck, per-file tests, UI tests, build and diff hygiene were run directly"
   },
   "mandatory_open": [
-    "Protocol association intentionally left unchanged per explicit human reply; qualify startup isolation before further native launches",
+    "Native E2E startup/teardown isolation and packaged user journeys remain unqualified; human permits production restart and normal URL registration only",
     "Full history semantic classification and final public-surface inventory",
     "FX-A02 Gateway/API cancellation handoff, full public session transitions and remaining surfaces",
     "Conditional feature owners/acceptance and complete legacy U01-U18 qualification",
@@ -7426,5 +7426,84 @@
     ],
     "host_holds": "No hermes:// association change or Electron/native Desktop launches; actual-model 8h and physical three sleep/resume NOT_RUN per human direction",
     "publication": "No main update, push, release, dependency install or cloud CI performed"
+  },
+  "checkpoint_20261017": {
+    "accepted_product_head": "23effd145acf06693cf786e6212e76d0a9c8e893",
+    "human_request": "Save remaining work, inventory and implementation logs; clean without deleting files; commit and push main; restart Hermes stack.",
+    "production_protocol_registration_authorized": true,
+    "native_e2e_acceptance": "NOT_ACCEPTED; production restart permission does not qualify test isolation",
+    "accepted_gateway_source_rechecked": {
+      "gateway/run.py": "2863a4fb728aca53374b4b9587e4d20541be69d23edff8b43e0f8342fa515910",
+      "gateway/platforms/base.py": "60f1d0d001621ecca1b8cdddbee5f1d6c3d1a0678e77cb22b5ac131ed8ae215e",
+      "gateway/platforms/api_server.py": "db0d86fa5b6a210a34d05311fce970242bf7318dfade8613e36a8c00bd1f5402",
+      "tests/gateway/test_gateway_generation_entry.py": "6c34ab7cb2fd4e275a3ce96845fb1136c44e7db48fdf48182193fe30ebb4ca58",
+      "tests/gateway/test_followup_run_generation.py": "a08148ee37bc0dce37d2242ce07766fd28d687d1e8539ebb35fdee6f9960b5ba",
+      "tests/gateway/test_stale_run_delivery_ownership.py": "29f685dd674ead8746cbd24a7519c3e2e7454e76e82340df676b9c2b6f6ef711",
+      "tests/gateway/test_session_stream_cancellation.py": "3ed1f545a0d0ed295083914f9ab75d30d0d32407dc07543c94c3ea4da2080112",
+      "tests/gateway/test_proxy_mode.py": "31e995d7ac8619594c7f4846fc951f6d30fb72ea7f1b4a5b565ee95a1066f100"
+    },
+    "wip_status": "NOT_ACCEPTED_NOT_INTEGRATED",
+    "wip_manifest": "tmp/selective-20261017/checkpoint-wip-20261017/manifest.json",
+    "wip_manifest_sha256": "ba6885e03981735600f69567ab1f78a18f74a7f32236eb410ea8980ea88ab939",
+    "wip_files": [
+      {
+        "path": "gateway/platforms/api_server.py",
+        "bytes": 414016,
+        "sha256": "f126ef3d30be1ffcc9e9e32bce0b8f80d530aa7274511a2ea8080091aa57dcc2",
+        "accepted": false,
+        "copy": "tmp/selective-20261017/checkpoint-wip-20261017/files/gateway/platforms/api_server.py",
+        "accepted_sha256": "db0d86fa5b6a210a34d05311fce970242bf7318dfade8613e36a8c00bd1f5402"
+      },
+      {
+        "path": "tools/process_registry.py",
+        "bytes": 156295,
+        "sha256": "5dee63d7f0bd13442ca28ca1c778383693ffc07c8f196b55fadc28953b459e10",
+        "accepted": false,
+        "copy": "tmp/selective-20261017/checkpoint-wip-20261017/files/tools/process_registry.py",
+        "accepted_sha256": "5edcafead2c06413b6b158920afbfedb9482bddaf48e3758596be773c19386bf"
+      },
+      {
+        "path": "tests/gateway/test_api_server.py",
+        "bytes": 131995,
+        "sha256": "b39201bf1d550bc9acd049cf431eba2c9a29721b195aa375b6c53fd10f114cce",
+        "accepted": false,
+        "copy": "tmp/selective-20261017/checkpoint-wip-20261017/files/tests/gateway/test_api_server.py",
+        "accepted_sha256": "578889a3278b782961ba23fcc2c909de990f4ff79d9ecd7b743a21a0cb70b120"
+      },
+      {
+        "path": "tests/gateway/test_session_stream_cancellation.py",
+        "bytes": 23738,
+        "sha256": "00d869d124bbf4ae537ba82454c33bfb573d2f01012ac29221c28c6a543b18ed",
+        "accepted": false,
+        "copy": "tmp/selective-20261017/checkpoint-wip-20261017/files/tests/gateway/test_session_stream_cancellation.py",
+        "accepted_sha256": "3ed1f545a0d0ed295083914f9ab75d30d0d32407dc07543c94c3ea4da2080112"
+      },
+      {
+        "path": "tests/gateway/test_api_reap_ownership.py",
+        "bytes": 26781,
+        "sha256": "47aad97f5c93d4a05377d1bd7bc23c728e81fd5a579bc0513bbf071792aec3ba",
+        "accepted": false,
+        "copy": "tmp/selective-20261017/checkpoint-wip-20261017/files/tests/gateway/test_api_reap_ownership.py"
+      },
+      {
+        "path": "tests/tools/test_process_registry_run_owner.py",
+        "bytes": 41472,
+        "sha256": "aa062e609f99baec50592cb1904b31908183747eb7860386ade99a7c4e795568",
+        "accepted": false,
+        "copy": "tmp/selective-20261017/checkpoint-wip-20261017/files/tests/tools/test_process_registry_run_owner.py"
+      },
+      {
+        "path": "apps/desktop/e2e/model-favorites.spec.ts",
+        "bytes": 10163,
+        "sha256": "35bcdb605916c67b4a9a46c140a66f5f9a494eb21e1e2d88dd9ad518d25c6012",
+        "accepted": false,
+        "copy": "tmp/selective-20261017/checkpoint-wip-20261017/files/apps/desktop/e2e/model-favorites.spec.ts"
+      }
+    ],
+    "no_evidence_files_deleted": true,
+    "publication": "PENDING_MAIN_FAST_FORWARD_AND_PUSH",
+    "runtime": "PENDING_AUTHORIZED_RESTART",
+    "record": "CHECKPOINT_20261017.md",
+    "implementation_log": "_docs/2026-10-17_v0222_checkpoint_Codex.md"
   }
 }
