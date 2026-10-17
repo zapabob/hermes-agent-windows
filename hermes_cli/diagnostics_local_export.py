@@ -43,6 +43,9 @@ def make_bundle_filename(when: Optional[datetime] = None) -> str:
 
 
 def _sanitize_extra_label(label: str) -> str:
+    from hermes_cli.debug import _redact_log_text
+
+    label = _redact_log_text(label)
     safe = "".join(ch for ch in label if ch.isalnum() or ch in "._- ()").strip()[:64]
     while ".." in safe:
         safe = safe.replace("..", ".")
@@ -65,7 +68,7 @@ def attach_client_artifacts(
     out = dict(bundle)
 
     if isinstance(error_context, str) and error_context.strip():
-        out["error-context.txt"] = _redact_log_text(error_context.strip()[:_MAX_ERROR_CONTEXT])
+        out["error-context.txt"] = _redact_log_text(error_context.strip())[:_MAX_ERROR_CONTEXT]
 
     if isinstance(extra_files, Mapping):
         for label, text in list(extra_files.items())[:_MAX_EXTRA_FILES]:
@@ -74,7 +77,7 @@ def attach_client_artifacts(
             safe_label = _sanitize_extra_label(label)
             if not safe_label or not text.strip():
                 continue
-            out[f"client/{safe_label}"] = _redact_log_text(text[:_MAX_EXTRA_BYTES])
+            out[f"client/{safe_label}"] = _redact_log_text(text)[:_MAX_EXTRA_BYTES]
 
     return out
 

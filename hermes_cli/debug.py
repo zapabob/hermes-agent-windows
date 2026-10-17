@@ -455,10 +455,14 @@ def _redact_log_text(text: str) -> str:
     """
     if not text:
         return text
-    from agent.redact import redact_sensitive_text
+    try:
+        from hermes_cli.debug_redaction import redact_debug_support_text
 
-    text = redact_sensitive_text(text, force=True)
-    return _redact_debug_share_privacy(text)
+        return _redact_debug_share_privacy(redact_debug_support_text(text))
+    except Exception:
+        # A failed secret/privacy pass must not expose either the input or an
+        # exception whose message can contain the same sensitive input.
+        return "[redaction unavailable]"
 
 
 def _redact_debug_share_privacy(text: str) -> str:
@@ -593,7 +597,12 @@ def _capture_log_snapshot(
 
         return LogSnapshot(path=log_path, tail_text=tail_text, full_text=full_text)
     except Exception as exc:
-        return LogSnapshot(path=log_path, tail_text=f"(error reading: {exc})", full_text=None)
+        error = f"(error reading: {exc})"
+        return LogSnapshot(
+            path=log_path,
+            tail_text=_redact_log_text(error) if redact else error,
+            full_text=None,
+        )
 
 
 def _capture_default_log_snapshots(
@@ -652,6 +661,7 @@ def collect_debug_report(
     log_lines: int = 200,
     dump_text: str = "",
     log_snapshots: Optional[dict[str, LogSnapshot]] = None,
+    redact: bool = True,
 ) -> str:
     """Build the summary debug report: system dump + log tails.
 
@@ -672,7 +682,7 @@ def collect_debug_report(
     buf.write(dump_text)
 
     if log_snapshots is None:
-        log_snapshots = _capture_default_log_snapshots(log_lines)
+        log_snapshots = _capture_default_log_snapshots(log_lines, redact=redact)
 
     # ── Sanitiser heal counters (#96870) ─────────────────────────────────
     # In-process, in-memory counters: populated when this report is built
@@ -717,7 +727,8 @@ def collect_debug_report(
     buf.write(log_snapshots["desktop"].tail_text)
     buf.write("\n")
 
-    return buf.getvalue()
+    report = buf.getvalue()
+    return _redact_log_text(report) if redact else report
 
 
 # ---------------------------------------------------------------------------
@@ -758,6 +769,7 @@ def collect_share_bundle(
         log_lines=log_lines,
         dump_text=dump_text,
         log_snapshots=log_snapshots,
+        redact=redact,
     )
     agent_log = log_snapshots["agent"].full_text
     gateway_log = log_snapshots["gateway"].full_text
@@ -795,7 +807,7 @@ def collect_share_bundle(
         bundle["gui.log"] = gui_log
     if desktop_log:
         bundle["desktop.log"] = desktop_log
-    return bundle
+    return {label: _redact_log_text(text) for label, text in bundle.items()} if redact else bundle
 
 
 def build_nous_bundle(bundle: dict[str, str], redact: bool = True) -> bytes:

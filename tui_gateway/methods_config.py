@@ -507,8 +507,8 @@ def _(rid, params: dict) -> dict:
         error_context = params.get("error_context")
         if isinstance(error_context, str) and error_context.strip():
             bundle["error-context.txt"] = _redact_log_text(
-                error_context.strip()[:8_000]
-            )
+                error_context.strip()
+            )[:8_000]
 
         # Client-side artifacts (local desktop.log on remote connections).
         # Bounded: at most 4 files, 512KB of text each, sanitized labels —
@@ -519,7 +519,7 @@ def _(rid, params: dict) -> dict:
                 if not isinstance(label, str) or not isinstance(text, str):
                     continue
                 safe_label = "".join(
-                    ch for ch in label if ch.isalnum() or ch in "._- ()"
+                    ch for ch in _redact_log_text(label) if ch.isalnum() or ch in "._- ()"
                 ).strip()[:64]
                 # Collapse dot-runs and leading dots so traversal-shaped labels
                 # ("../../etc/passwd") can't survive even cosmetically.
@@ -528,7 +528,7 @@ def _(rid, params: dict) -> dict:
                 safe_label = safe_label.lstrip(".").strip()
                 if not safe_label or not text.strip():
                     continue
-                bundle[f"client/{safe_label}"] = _redact_log_text(text[:524_288])
+                bundle[f"client/{safe_label}"] = _redact_log_text(text)[:524_288]
 
         blob = build_nous_bundle(bundle, redact=True)
         res = share_to_nous(blob)
