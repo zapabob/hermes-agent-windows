@@ -89,6 +89,7 @@ export function createSandbox(prefix: string): Sandbox {
           !path.basename(root).startsWith('hermes-e2e-')) {
         throw new Error('Refusing cleanup outside the fixture-owned temporary directory')
       }
+
       try {
         fs.rmSync(root, { recursive: true, force: true })
       } catch {
@@ -228,6 +229,7 @@ export async function launchDesktop(
   })
 
   let page: Page
+
   try {
     page = await app.firstWindow()
   } catch (error) {
@@ -242,24 +244,36 @@ export async function launchDesktop(
   return { app, page }
 }
 
+class UnconfirmedDesktopExitError extends Error {
+  constructor(pid: number | undefined, closed: boolean) {
+    super(`Owned Electron process ${pid} did not exit after close (resolved=${closed})`)
+    this.name = 'UnconfirmedDesktopExitError'
+  }
+}
+
 /** Bound teardown to the exact Electron tree launched by this fixture.
  * Windows can leave app.close() waiting while a backend turn is finalising. */
 export async function closeDesktop(app: ElectronApplication): Promise<void> {
   const child = app.process()
+
   const closePromise = app.close().then(
     () => true,
     () => false,
   )
+
   let gracefulTimer: ReturnType<typeof setTimeout> | undefined
+
   const closed = await Promise.race([
     closePromise,
     new Promise<boolean>(resolve => {
       gracefulTimer = setTimeout(() => resolve(false), 10_000)
     }),
   ])
+
   if (gracefulTimer) {
     clearTimeout(gracefulTimer)
   }
+
   if (child.exitCode !== null || child.signalCode !== null) {
     return
   }
@@ -271,11 +285,35 @@ export async function closeDesktop(app: ElectronApplication): Promise<void> {
       forcedTimer = setTimeout(() => resolve(false), 5_000)
     }),
   ])
+
   if (forcedTimer) {
     clearTimeout(forcedTimer)
   }
+
   if (child.exitCode === null && child.signalCode === null) {
-    throw new Error(`Owned Electron process ${child.pid} did not exit after close (resolved=${closed})`)
+    throw new UnconfirmedDesktopExitError(child.pid, closed)
+  }
+}
+
+/** Retain state when process ownership is still live or uncertain. */
+async function closeDesktopSandbox(
+  app: ElectronApplication,
+  sandbox: Sandbox,
+  closeServices?: () => Promise<void>,
+): Promise<void> {
+  let stopped = false
+
+  try {
+    await closeDesktop(app)
+    stopped = true
+  } finally {
+    try {
+      await closeServices?.()
+    } finally {
+      if (stopped) {
+        sandbox.cleanup()
+      }
+    }
   }
 }
 
@@ -325,6 +363,7 @@ export async function setupMockBackend(options: MockBackendOptions = {}): Promis
   // 2. Create sandbox + write config
   let sandbox: Sandbox | undefined
   let launched: Awaited<ReturnType<typeof launchDesktop>>
+
   try {
     sandbox = createSandbox('mock')
     writeMockProviderConfig(
@@ -343,10 +382,16 @@ export async function setupMockBackend(options: MockBackendOptions = {}): Promis
     try {
       await mock.close()
     } finally {
-      sandbox?.cleanup()
+      // A failed firstWindow can have a live Electron behind it. Its typed
+      // shutdown failure must preserve the HOME that process still owns.
+      if (!(error instanceof UnconfirmedDesktopExitError)) {
+        sandbox?.cleanup()
+      }
     }
+
     throw error
   }
+
   const { app, page } = launched
   const ownedSandbox = sandbox
 
@@ -356,17 +401,7 @@ export async function setupMockBackend(options: MockBackendOptions = {}): Promis
     mock,
     mockUrl: mock.url,
     sandbox: ownedSandbox,
-    cleanup: async () => {
-      try {
-        await closeDesktop(app)
-      } finally {
-        try {
-          await mock.close()
-        } finally {
-          ownedSandbox.cleanup()
-        }
-      }
-    },
+    cleanup: () => closeDesktopSandbox(app, ownedSandbox, () => mock.close()),
   }
 }
 
@@ -392,10 +427,7 @@ export async function setupNoProvider(): Promise<NoProviderFixture> {
     app,
     page,
     sandbox,
-    cleanup: async () => {
-      await app.close().catch(() => undefined)
-      sandbox.cleanup()
-    },
+    cleanup: () => closeDesktopSandbox(app, sandbox),
   }
 }
 
@@ -453,10 +485,7 @@ providers:
     app,
     page,
     sandbox,
-    cleanup: async () => {
-      await app.close().catch(() => undefined)
-      sandbox.cleanup()
-    },
+    cleanup: () => closeDesktopSandbox(app, sandbox),
   }
 }
 
@@ -539,10 +568,7 @@ export async function setupPackagedApp(): Promise<PackagedAppFixture> {
     app,
     page,
     sandbox,
-    cleanup: async () => {
-      await app.close().catch(() => undefined)
-      sandbox.cleanup()
-    },
+    cleanup: () => closeDesktopSandbox(app, sandbox),
   }
 }
 
@@ -591,6 +617,7 @@ export async function waitForAppReady(fixture: MockBackendFixture | NoProviderFi
       // `position: fixed; inset: 0`. If the hit element or an ancestor
       // is a full-viewport fixed overlay, we're still covered.
       let node: Element | null = el
+
       while (node) {
         const cs = window.getComputedStyle(node)
 
