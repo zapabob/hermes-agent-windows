@@ -447,3 +447,56 @@ messaging channels and model quality remain unaccepted. The campaign remains
 partial; Electron launches remain held for the separate protocol association
 restore question, and actual-model eight-hour/physical sleep acceptance stays
 NOT_RUN under the human instruction.
+
+
+Human decision supplement: the human explicitly instructed that the hermes://
+association remain unchanged and held. Earlier references to a pending restore
+question are historical and superseded. No registry restoration or additional
+Electron launch was performed. Actual-model eight-hour soak and three physical
+sleep/resume cycles remain NOT_RUN by explicit human instruction.
+
+FX-A04 scoped supplement: fresh CLI, REST and RPC profiles now inherit the raw
+launch model together with its selected endpoint. The adaptation credits
+kshitijk4poor, upstream commit 311155fade43d1993ea968909a2ad36762345bbc and
+profile-seed blob d9204eb5f72e7aa2ef3732a7d218635743920b4f. It reuses retained
+profile/config/runtime owners rather than adding an independent config loader.
+Only endpoint identity fields expand for selection; credential references and
+the chosen raw model/endpoint remain opaque when copied. Cross-schema alias
+collisions are replaced while unrelated settings, explicit pins, clones and
+RPC mirroring opt-out retain their contracts.
+
+The destination read, existing-model check, merge, canonical policy-aware save
+and readback share the existing thread lock and same-home process fence.
+Managed package/route refusal reports no model inheritance. This protects
+cooperating atomic config writers; it does not claim exclusion of external
+direct writes or prevent a later explicit model change.
+
+Final selected evidence is 154 passes, zero failures/errors, three skips and
+one intentional deselection, in five fresh per-file owned Windows Jobs:
+25 seed contracts, 64 runtime resolver cases, 58 profile cases, four existing
+RPC guard cases and three actual wire cases. Skip reasons and the unsafe
+backend-stop test exclusion are recorded in JSON. Historical/repeated runs and
+the earlier F06 totals are not added to these numbers.
+
+Each wire case creates a profile through its real entry point, uses the real
+CLI/agent/resolver/SDK to an owned HTTP/SSE peer, then resumes the same SQLite
+session in a second fresh Python process. All six workers exit normally and
+the strict two primary requests per entry preserve model, credentials and
+history. Synthetic peer responses and child-only supported title-generation
+opt-out are explicit fixture choices; actual model quality is not established.
+
+Five source-bound, in-memory faults are killed by assertions without collection
+errors: missing endpoint, missing process fence, managed false-success, expanded
+source credential and overwriting an existing model. The earlier target-side
+expansion mutant survived because existing credential scoping retained refs;
+that attempt is retained and excluded from the killed-fault count.
+
+Final harnesses scrub inherited mutation mode, prohibit mixed-file execution,
+suppress launcher self-repair before import and guard each fresh worker's
+network/registry effects. Normal and mutant Jobs finish with zero active
+processes and no forced recovery. Independent source reviews closed both
+product P2s and four harness P2s; no final P1/P2 remains in that scoped review.
+Real CodeGraph 1.6.0 completes 22 exact selected files, 3,071 nodes and 9,054
+edges with zero pending changes. Whole-repository graph/history classification
+and the broader five-lane campaign remain incomplete. Raw evidence and exact
+source bindings are under fxa04_profile_creation_acceptance in the JSON receipt.

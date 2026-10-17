@@ -743,7 +743,13 @@ def _lift_extra_headers(entry: Dict[str, Any], result: Dict[str, Any]) -> None:
         result["extra_headers"] = extra_headers
 
 
-def _get_named_custom_provider(requested_provider: str) -> Optional[Dict[str, Any]]:
+def _get_named_custom_provider(
+    requested_provider: str,
+    *,
+    config: Optional[Dict[str, Any]] = None,
+    resolve_credentials: bool = True,
+) -> Optional[Dict[str, Any]]:
+    """Resolve endpoint identity; metadata-only callers never read credentials."""
     requested_norm = _normalize_custom_provider_name(requested_provider or "")
     if not requested_norm:
         return None
@@ -782,7 +788,7 @@ def _get_named_custom_provider(requested_provider: str) -> Optional[Dict[str, An
             if (canonical or "").strip().lower() == requested_norm:
                 return None
 
-    config = load_config()
+    config = load_config() if config is None else config
     
     # First check providers: dict (new-style user-defined providers)
     providers = config.get("providers")
@@ -801,9 +807,9 @@ def _get_named_custom_provider(requested_provider: str) -> Optional[Dict[str, An
             key_env = str(
                 entry.get("key_env") or entry.get("api_key_env") or ""
             ).strip()
-            resolved_api_key = _getenv(key_env, "").strip() if key_env else ""
+            resolved_api_key = _getenv(key_env, "").strip() if key_env and resolve_credentials else ""
             # Fall back to inline api_key when key_env is absent or unresolvable
-            if not resolved_api_key:
+            if resolve_credentials and not resolved_api_key:
                 resolved_api_key = str(entry.get("api_key", "") or "").strip()
 
             display_name = entry.get("name", "")
@@ -814,6 +820,9 @@ def _get_named_custom_provider(requested_provider: str) -> Optional[Dict[str, An
                 # Found match by provider key
                 base_url = entry.get("api") or entry.get("url") or entry.get("base_url") or ""
                 if base_url:
+                    if not resolve_credentials:
+                        return {"name": entry.get("name", ep_name), "base_url": base_url.strip(),
+                                "provider_key": ep_name}
                     result = {
                         "name": entry.get("name", ep_name),
                         "base_url": base_url.strip(),
@@ -870,6 +879,9 @@ def _get_named_custom_provider(requested_provider: str) -> Optional[Dict[str, An
         provider_key = str(entry.get("provider_key", "") or "").strip()
         if requested_norm not in custom_provider_aliases(name, provider_key):
             continue
+        if not resolve_credentials:
+            return {"name": name.strip(), "base_url": base_url.strip(),
+                    **({"provider_key": provider_key} if provider_key else {})}
         result = {
             "name": name.strip(),
             "base_url": base_url.strip(),

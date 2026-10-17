@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "SCOPED_IMPLEMENTATION_VERIFIED_CAMPAIGN_PARTIAL_NATIVE_PROTOCOL_INCIDENT_OPEN",
+  "status": "SCOPED_IMPLEMENTATION_VERIFIED_CAMPAIGN_PARTIAL_NATIVE_PROTOCOL_ASSOCIATION_HELD_BY_HUMAN",
   "downstream_base": "abad98beee2b74a135ce7e0e9310910c756514b4",
   "downstream_base_tree": "b8cde7b4a87a4ae8003f08b40680ec27dea0bf77",
   "upstream_release": "d923a5eb487a17c0a68801bba9ef0f56c81040a8",
@@ -2624,7 +2624,7 @@
     "explicit_checks": "Configured Ruff, changed frontend ESLint, renderer typecheck, per-file tests, UI tests, build and diff hygiene were run directly"
   },
   "mandatory_open": [
-    "Resolve test-written HKCU hermes protocol association under explicit human-selected restore authority and qualify startup isolation before further native launches",
+    "Protocol association intentionally left unchanged per explicit human reply; qualify startup isolation before further native launches",
     "Full history semantic classification and final public-surface inventory",
     "Conditional feature owners/acceptance and complete legacy U01-U18 qualification",
     "Complete Security Center and outbound/Control MCP effect and lifecycle acceptance",
@@ -3921,7 +3921,7 @@
     "release_qualification_pass_claimed": false
   },
   "native_protocol_association_incident": {
-    "status": "WAITING_FOR_EXPLICIT_HUMAN_RESTORE_TARGET_AUTHORIZATION",
+    "status": "HELD_BY_HUMAN_LEAVE_ASSOCIATION_UNCHANGED",
     "cause": "Desktop startup registered the host URL scheme unconditionally despite isolated HOME/userData/watchdog path. Development registration used debugger argv[1] as app entry.",
     "escaped_control": "HKCU\\Software\\Classes\\hermes\\shell\\open\\command (Default)",
     "observed_value_shape": "qualified test Electron + candidate desktop/--inspect=0 + URL argument",
@@ -3930,7 +3930,7 @@
     "registry_restore_performed": false,
     "proposed_restore_target": "Existing canonical primary apps/desktop/release/win-unpacked/Hermes.exe with quoted URL argument; exact local proposal retained",
     "proposed_application_launch_required": false,
-    "human_authority": "Asked to approve canonical packaged application association or hold; no answer received at this checkpoint. Prior watchdog-stop answer does not authorize this separate OS association change.",
+    "human_authority": "Human explicitly selected leave the association unchanged. Do not restore or ask again without new human steering.",
     "native_launches_held": true,
     "native_attempts": [
       {
@@ -4212,6 +4212,15 @@
       "registry_type": 1,
       "registry_write_performed": false,
       "receipt_sha256": "833cfb5fda7c80228d6608f0f1a744221bcb66bfdbbd3b0303af852c38376e5c"
+    },
+    "human_hold_decision": {
+      "recorded_at": "2026-10-17T08:04:44.298796+00:00",
+      "answer": "関連付けを変更せず保留する",
+      "authority": "Direct human reply to the existing association restore-target question",
+      "registry_mutation_authorized": false,
+      "registry_mutation_performed": false,
+      "repeat_restore_question": false,
+      "scope": "hermes URL protocol association only; implementation goal continues"
     }
   },
   "fxa01_cli_runtime_acceptance": {
@@ -4524,7 +4533,7 @@
       "gateway_test_sha256": "86ddca0ac7dc8f043a0bf8d47b833a8b3dbadf87a805e416f2f329c1eeb48788"
     },
     "retained_excluded_attempts": "runtime v1-v3 failed fixture setup/protocol assumptions; v4 and later repeated passes not added. Job v1-v3 not qualified.",
-    "native_electron_status": "HELD: separate production protocol association restore target awaits human reply.",
+    "native_electron_status": "HELD per explicit human reply: leave scheme association unchanged; qualify startup isolation before further launches",
     "physical_acceptance": "Actual-model 8h soak and three physical sleep/resume remain NOT_RUN per human instruction.",
     "post_suite_host_observation": {
       "observed_at": "2026-10-17T07:51:55.871257+00:00",
@@ -4534,5 +4543,647 @@
       "production_stop_marker_absent": true,
       "command_still_matches_recorded_test_value": true
     }
+  },
+  "fxa04_profile_creation_acceptance": {
+    "status": "SCOPED_FXA04_CREATION_AND_FRESH_RESUME_VERIFIED_CAMPAIGN_PARTIAL",
+    "recorded_at": "2026-10-17T08:29:26.102163+00:00",
+    "candidate_parent_commit": "c20aee0007ec88fef0f18037345d54f2116d0fb5",
+    "upstream_credit": {
+      "author": "kshitijk4poor",
+      "commit": "311155fade43d1993ea968909a2ad36762345bbc",
+      "profile_seed_blob": "d9204eb5f72e7aa2ef3732a7d218635743920b4f"
+    },
+    "source_bindings": [
+      {
+        "path": "hermes_cli/profiles.py",
+        "sha256": "095c6d8aa0dc3e58b6bc8fb826d0c3ca5185b5df6373696764d0d36b5a7f3010"
+      },
+      {
+        "path": "hermes_cli/runtime_provider.py",
+        "sha256": "ebf5e55506e4fe741ed8b4a3735b67ba87185e015b8ea16dc05f9d338aada8c8"
+      },
+      {
+        "path": "tui_gateway/methods_profiles.py",
+        "sha256": "4ea16a5c15fd3de1a712bb3fb412c3384ba02bc2e2b113b146c382af502f1df6"
+      },
+      {
+        "path": "hermes_cli/web_routers/profiles.py",
+        "sha256": "dda8559e0cefb4148af1ee87dce32a84026e45d8cf11531be4ef916045e8b20c"
+      },
+      {
+        "path": "tests/hermes_cli/test_profile_launch_route_seed.py",
+        "sha256": "5238a347cef92fe01e0e7147e2c4478c3483099faaabeb198d5ea0aa622c0859"
+      },
+      {
+        "path": "tests/hermes_cli/test_profile_seed_runtime_wire.py",
+        "sha256": "ca7d6534d494584c99c6e17a1230360a1ee7cfefe9b2c5b327eeda77369ad2ef"
+      },
+      {
+        "path": "tests/hermes_cli/profile_seed_runtime_worker.py",
+        "sha256": "a7fea55cdbcc2b94d5b0dd67e06ea736f907ef41b5be150eb38c86869bc3ed01"
+      },
+      {
+        "path": "tests/hermes_cli/profile_seed_config_worker.py",
+        "sha256": "f829d3cafe3bfc3a79498a28541d6358d8e2d8d9822c1b957d6fae4012e6d104"
+      }
+    ],
+    "red": {
+      "initial": "fxa04-shared-rpc-red: 9 failures, 4 positive controls",
+      "review": "fxa04-review-red-v1: 6 failures, 17 positive controls"
+    },
+    "selected_final_runs": [
+      {
+        "label": "fxa04-accepted-seed-v1",
+        "counts": {
+          "passed": 25,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "skips": [],
+        "files": [
+          "tests/hermes_cli/test_profile_launch_route_seed.py"
+        ],
+        "selection": [],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 24360,
+          "thread_id": 37132,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-seed-v1/result.json",
+            "sha256": "a7cc0e23db2ccece65917d494b4bf8b420937300aedcf4a0827dde91b09f4f44"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-seed-v1/run.log",
+            "sha256": "1adc6e7fa2933fb3de6219a38bd506aa7af6e4dcd0c9164a4edb6844dab9f963"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-seed-v1/junit.xml",
+            "sha256": "44a2b91682f70e87f33912dbab6d75b741d31c7c559673c5e2f7275405c1f298"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-seed-v1/bootstrap-audit.json",
+            "sha256": "bdbd00b82f5a9208e042a3cee22afdf46740b67f7d814a1c74b8a0e459bf20ef"
+          }
+        ]
+      },
+      {
+        "label": "fxa04-accepted-runtime-v1",
+        "counts": {
+          "passed": 64,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "skips": [],
+        "files": [
+          "tests/hermes_cli/test_runtime_provider_resolution.py"
+        ],
+        "selection": [],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 34660,
+          "thread_id": 34268,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-runtime-v1/result.json",
+            "sha256": "a2edf9b4230d410b6dcf7f44fe0209a2aa0d10bc24aca496a65dc686d8a01670"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-runtime-v1/run.log",
+            "sha256": "0776d8e6919080f9cdfbacc3f6d57f50dd46c38dbd074e001c2a32af09391aa7"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-runtime-v1/junit.xml",
+            "sha256": "eda84abc37729bcbdecc3d349c5999dff8775136a632921055da76122aee1451"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-runtime-v1/bootstrap-audit.json",
+            "sha256": "4104c3e840e192ac4a1b41fadcc05a76954b433a844e21a664c6002959df10f4"
+          }
+        ]
+      },
+      {
+        "label": "fxa04-accepted-profiles-v1",
+        "counts": {
+          "passed": 58,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 3
+        },
+        "skips": [
+          {
+            "name": "test_creates_sh_on_posix",
+            "reason": "POSIX shell wrapper contract"
+          },
+          {
+            "name": "test_export_default_handles_broken_symlinks",
+            "reason": "symlink support is unavailable: [WinError 1314] クライアントは要求された特権を保有していません。: 'C:\\\\Users\\\\downl\\\\.codex\\\\worktrees\\\\v0222-selective-20261017\\\\hermes-agent\\\\tmp\\\\selective-20261017\\\\fxa04-accepted-profiles-v1\\\\cases\\\\test_export_default_handles_br0\\\\.symlink-probe-target' -> 'C:\\\\Users\\\\downl\\\\.codex\\\\worktrees\\\\v0222-selective-20261017\\\\hermes-agent\\\\tmp\\\\selective-20261017\\\\fxa04-accepted-profiles-v1\\\\cases\\\\test_export_default_handles_br0\\\\.symlink-probe-link'"
+          },
+          {
+            "name": "test_symlinked_profile_yaml_survives_the_write",
+            "reason": "symlink support is unavailable: [WinError 1314] クライアントは要求された特権を保有していません。: 'C:\\\\Users\\\\downl\\\\.codex\\\\worktrees\\\\v0222-selective-20261017\\\\hermes-agent\\\\tmp\\\\selective-20261017\\\\fxa04-accepted-profiles-v1\\\\cases\\\\test_symlinked_profile_yaml_su0\\\\.symlink-probe-target' -> 'C:\\\\Users\\\\downl\\\\.codex\\\\worktrees\\\\v0222-selective-20261017\\\\hermes-agent\\\\tmp\\\\selective-20261017\\\\fxa04-accepted-profiles-v1\\\\cases\\\\test_symlinked_profile_yaml_su0\\\\.symlink-probe-link'"
+          }
+        ],
+        "files": [
+          "tests/hermes_cli/test_profiles.py"
+        ],
+        "selection": [
+          "not test_rmtree_failure_raises"
+        ],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 39256,
+          "thread_id": 30256,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-profiles-v1/result.json",
+            "sha256": "5140e0a778f02ff3e8a08499c408de1dc7de527f419c647e394069ea1bae4436"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-profiles-v1/run.log",
+            "sha256": "32e28e7d84e16a2a28b3c4db6a0ded16dfae9a87409aa079b2f51709ba0aa2f5"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-profiles-v1/junit.xml",
+            "sha256": "df126ce4f4283e4ffd3191d5e7f9148c21625f7de2e3c108dcca9b05ff6456b2"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-profiles-v1/bootstrap-audit.json",
+            "sha256": "6f0535e9a9128b8d977d1a74499e3c241f812a2f97ee0e013e80c3167db9a6d3"
+          }
+        ]
+      },
+      {
+        "label": "fxa04-accepted-rpc-v1",
+        "counts": {
+          "passed": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "skips": [],
+        "files": [
+          "tests/tui_gateway/test_profiles_configure_model_guard.py"
+        ],
+        "selection": [],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 38904,
+          "thread_id": 35132,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-rpc-v1/result.json",
+            "sha256": "8d38a81298a6f6916b792dbca687b5a2adbcb78e8875315e1e6822cce9e03237"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-rpc-v1/run.log",
+            "sha256": "297ecc1ee0cd1c8d533b04596b6101a0b6c66d928fcd4053c88f8b8148884bd2"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-rpc-v1/junit.xml",
+            "sha256": "36b8f489b7c8ec74ac972f8e17adf17bfa4aebb7a37fd407f145d6aeea4cad6d"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-rpc-v1/bootstrap-audit.json",
+            "sha256": "316287ada0ef6e6dfac236435aaef6a1443c73a9c52082bcdfc90fd9341f1c81"
+          }
+        ]
+      },
+      {
+        "label": "fxa04-accepted-wire-v1",
+        "counts": {
+          "passed": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "skips": [],
+        "files": [
+          "tests/hermes_cli/test_profile_seed_runtime_wire.py"
+        ],
+        "selection": [],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 37896,
+          "thread_id": 36568,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-wire-v1/result.json",
+            "sha256": "1a37fd411127dd1a74b81063345c084af2bae28a48b07e647a57e4b1e068b272"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-wire-v1/run.log",
+            "sha256": "f79012df0f3aaf804067caf04a776a28d1fb396614c6b02a4695b7ec9b6baedd"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-wire-v1/junit.xml",
+            "sha256": "1ab7ca629b682a0fa250a28d255a545135d73ebaf98712b54852b58bad69958d"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-wire-v1/bootstrap-audit.json",
+            "sha256": "2284b0cf051d46ce32772491c66c13190447b17991fb02681d8b67a72e1c8dbd"
+          }
+        ]
+      }
+    ],
+    "totals_selected_runs_only": {
+      "passed": 154,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3
+    },
+    "deselected": "test_profiles.py::TestDeleteProfile::test_rmtree_failure_raises; live backend stop owner is not isolated by its fixture",
+    "wire": [
+      {
+        "entry": "cli",
+        "fresh_processes": 2,
+        "primary_requests": 2,
+        "evidence": {
+          "path": "tmp/selective-20261017/fxa04-accepted-wire-v1/cases/test_new_profile_first_turn_an0/profile-wire-evidence.json",
+          "sha256": "dc43c9d56243ca6b07afe9425b47f852722367880af0f9be5f8314aa9e34dae7"
+        }
+      },
+      {
+        "entry": "rest",
+        "fresh_processes": 2,
+        "primary_requests": 2,
+        "evidence": {
+          "path": "tmp/selective-20261017/fxa04-accepted-wire-v1/cases/test_new_profile_first_turn_an1/profile-wire-evidence.json",
+          "sha256": "ff9f01ea4e6b447191d30cdf437ceb2c42c320d85fc531d3364d00cf911a2777"
+        }
+      },
+      {
+        "entry": "rpc",
+        "fresh_processes": 2,
+        "primary_requests": 2,
+        "evidence": {
+          "path": "tmp/selective-20261017/fxa04-accepted-wire-v1/cases/test_new_profile_first_turn_an2/profile-wire-evidence.json",
+          "sha256": "37f35ae6505ec78b6e09716c8164e69cf337916fdb103ab4ff57074bc787df5c"
+        }
+      }
+    ],
+    "faults_killed": [
+      {
+        "label": "fxa04-accepted-mutant-endpoint",
+        "counts": {
+          "passed": 0,
+          "failures": 4,
+          "errors": 0,
+          "skipped": 0
+        },
+        "skips": [],
+        "files": [
+          "tests/hermes_cli/test_profile_launch_route_seed.py"
+        ],
+        "selection": [
+          "test_fresh_create_keeps_selected_endpoint_and_raw_credentials"
+        ],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 16932,
+          "thread_id": 33768,
+          "active_before_recovery": 0,
+          "exit": 1,
+          "active_after_recovery": 0
+        },
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-mutant-endpoint/result.json",
+            "sha256": "8184912916ae7c577e23bb62ae4dc00b904c323294843b1d695d87e881a5fc88"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-mutant-endpoint/run.log",
+            "sha256": "84e98a29f6b706a0f2d82e865e7944ffa0a6495cba43dbd40bccd683d38fa039"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-mutant-endpoint/junit.xml",
+            "sha256": "3a94c89d064c53ba4cd0dd8c9a13e86f49bb50a6eedd4712e806ea3634ee12f2"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-mutant-endpoint/bootstrap-audit.json",
+            "sha256": "316287ada0ef6e6dfac236435aaef6a1443c73a9c52082bcdfc90fd9341f1c81"
+          }
+        ],
+        "mutation": {
+          "mutation": "drop-endpoint",
+          "source": "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\hermes_cli\\profiles.py",
+          "source_sha256": "095c6d8aa0dc3e58b6bc8fb826d0c3ca5185b5df6373696764d0d36b5a7f3010",
+          "replacements": 1,
+          "in_memory_only": true
+        }
+      },
+      {
+        "label": "fxa04-accepted-mutant-fence",
+        "counts": {
+          "passed": 0,
+          "failures": 1,
+          "errors": 0,
+          "skipped": 0
+        },
+        "skips": [],
+        "files": [
+          "tests/hermes_cli/test_profile_launch_route_seed.py"
+        ],
+        "selection": [
+          "test_inheritance_retains_existing_process_fence_through_canonical_save"
+        ],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 16560,
+          "thread_id": 12576,
+          "active_before_recovery": 0,
+          "exit": 1,
+          "active_after_recovery": 0
+        },
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-mutant-fence/result.json",
+            "sha256": "4d2e2a2471d65e8d9e2def20b77f95d586432e5e9e2cf11732640f17ebb1d023"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-mutant-fence/run.log",
+            "sha256": "6bed46fd7f1b8c991fcbed842b0609379796d79173e561e4b02e41ee2e6b5969"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-mutant-fence/junit.xml",
+            "sha256": "d0458091bfe0b4450518f870ed6f2ec34fe125e0d2e47a87736326ee06865042"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-mutant-fence/bootstrap-audit.json",
+            "sha256": "519de4aaea4700d2b6e6cfab1e739789936e600e96bbe89287b4996d6d7acc4a"
+          }
+        ],
+        "mutation": {
+          "mutation": "drop-process-fence",
+          "source": "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\hermes_cli\\profiles.py",
+          "source_sha256": "095c6d8aa0dc3e58b6bc8fb826d0c3ca5185b5df6373696764d0d36b5a7f3010",
+          "replacements": 1,
+          "in_memory_only": true
+        }
+      },
+      {
+        "label": "fxa04-accepted-mutant-policy",
+        "counts": {
+          "passed": 0,
+          "failures": 4,
+          "errors": 0,
+          "skipped": 0
+        },
+        "skips": [],
+        "files": [
+          "tests/hermes_cli/test_profile_launch_route_seed.py"
+        ],
+        "selection": [
+          "test_rpc_does_not_claim_inheritance_when_managed_route_refuses_it"
+        ],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 37892,
+          "thread_id": 30656,
+          "active_before_recovery": 0,
+          "exit": 1,
+          "active_after_recovery": 0
+        },
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-mutant-policy/result.json",
+            "sha256": "448c8cf4985a05ff6d07e0d735a26f094752a22bf71da2dd92f15fc31556d0d0"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-mutant-policy/run.log",
+            "sha256": "d02db80bf50d9f4fdd6617ef3fd4ae5812c512cc1b5dd1461a39a6452a889aa5"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-mutant-policy/junit.xml",
+            "sha256": "f13ab7cc708d1b9486ac19e0bd34ce7aefe110ca4cb8e518aff4c8d671179925"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-mutant-policy/bootstrap-audit.json",
+            "sha256": "316287ada0ef6e6dfac236435aaef6a1443c73a9c52082bcdfc90fd9341f1c81"
+          }
+        ],
+        "mutation": {
+          "mutation": "managed-false-success",
+          "source": "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\hermes_cli\\profiles.py",
+          "source_sha256": "095c6d8aa0dc3e58b6bc8fb826d0c3ca5185b5df6373696764d0d36b5a7f3010",
+          "replacements": 1,
+          "in_memory_only": true
+        }
+      },
+      {
+        "label": "fxa04-accepted-mutant-secret",
+        "counts": {
+          "passed": 0,
+          "failures": 1,
+          "errors": 0,
+          "skipped": 0
+        },
+        "skips": [],
+        "files": [
+          "tests/hermes_cli/test_profile_launch_route_seed.py"
+        ],
+        "selection": [
+          "test_known_source_secret_is_never_serialized"
+        ],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 35072,
+          "thread_id": 37464,
+          "active_before_recovery": 0,
+          "exit": 1,
+          "active_after_recovery": 0
+        },
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-mutant-secret/result.json",
+            "sha256": "89107f4f792077e735f7f1fd4b882c57b0ff019925f04b00cbd38f4c1713f7e7"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-mutant-secret/run.log",
+            "sha256": "f128e9dfb9673753ba98dbee5d2ef72d2eb902a798ebb67e4b76ced75b62e7d8"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-mutant-secret/junit.xml",
+            "sha256": "d2fff0dc2908547dd41651e28c2405f81073f4a01ec6a01bd3458ed648ad75be"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-mutant-secret/bootstrap-audit.json",
+            "sha256": "519de4aaea4700d2b6e6cfab1e739789936e600e96bbe89287b4996d6d7acc4a"
+          }
+        ],
+        "mutation": {
+          "mutation": "expand-secrets",
+          "source": "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\hermes_cli\\profiles.py",
+          "source_sha256": "095c6d8aa0dc3e58b6bc8fb826d0c3ca5185b5df6373696764d0d36b5a7f3010",
+          "replacements": 1,
+          "in_memory_only": true
+        }
+      },
+      {
+        "label": "fxa04-accepted-mutant-existing",
+        "counts": {
+          "passed": 1,
+          "failures": 1,
+          "errors": 0,
+          "skipped": 0
+        },
+        "skips": [],
+        "files": [
+          "tests/hermes_cli/test_profile_launch_route_seed.py"
+        ],
+        "selection": [
+          "test_inheritance_reads_destination_after_selecting_source"
+        ],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 28928,
+          "thread_id": 33796,
+          "active_before_recovery": 0,
+          "exit": 1,
+          "active_after_recovery": 0
+        },
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-mutant-existing/result.json",
+            "sha256": "e8ece3d43e58f6672bce927324299e3902e06022ccb0dd0a26b56ce50738b600"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-mutant-existing/run.log",
+            "sha256": "eb7e02ff71c5b7679a5e96ce0d40833b7d63baf6e1f186a0c118b67bb3499cd9"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-mutant-existing/junit.xml",
+            "sha256": "c840fcb46fab18fd1a168e07bdf0c06b5ce6c1a01495d4d58fcc3641c0f893f1"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa04-accepted-mutant-existing/bootstrap-audit.json",
+            "sha256": "3b7c0a07120109f80e45ff60e9eb0652f8c291984faf3c5be539fc95784a5476"
+          }
+        ],
+        "mutation": {
+          "mutation": "ignore-existing-model",
+          "source": "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\hermes_cli\\profiles.py",
+          "source_sha256": "095c6d8aa0dc3e58b6bc8fb826d0c3ca5185b5df6373696764d0d36b5a7f3010",
+          "replacements": 1,
+          "in_memory_only": true
+        }
+      }
+    ],
+    "retained_not_killed_attempt": "fxa04-mutant-expand-secrets: target-side expansion survived because the existing profile credential scope kept placeholders opaque; excluded from killed faults",
+    "retained_failed_attempts": "Initial wire v1 had 3 primary+title requests versus expected 2; final uses supported child-only title opt-out. Intermediate import/socketpair fixture failures retained, excluded from acceptance.",
+    "harness": [
+      {
+        "path": "tmp/selective-20261017/run_profile_seed.py",
+        "sha256": "d6790338f3604b4b8429cd788176a4c2f963c546362a17958790f6e238668495"
+      },
+      {
+        "path": "tmp/selective-20261017/profile_seed_pytest.py",
+        "sha256": "ea4da014e2009a17413a55e4a3f0d0953545f2a413bdf32e462f04f372c90f6b"
+      },
+      {
+        "path": "tmp/selective-20261017/fxa01_owned_job.py",
+        "sha256": "ad3738f0d7fd0f63db2f7d41dcdb8209f3647eae36aa233592d726198b5c48e7"
+      }
+    ],
+    "isolation": {
+      "native_desktop_launched": false,
+      "registry_write_authorized": false,
+      "per_file_owned_job": true,
+      "launcher_self_repair_disabled_before_import": true,
+      "nonwire_models_dev": "existing fetch owner forced allow_network=False; socket/DNS attempts separately recorded and rejected; only stdlib-owned Windows wakeup socketpair constructor exempted",
+      "wire_peer": "only the owned loopback peer; synthetic credentials and responses; real CLI, runtime resolver, SDK, HTTP/SSE and SQLite",
+      "inherited_mutation_negative_control": "accepted-seed-v1 ran with parent PROFILE_SEED_MUTATION=ignore-existing-model, scrubbed before bootstrap; 25 pass and no mutation binding",
+      "mixed_files": "rejected before run_owned; one file required",
+      "process_fence_scope": "same-home cooperating atomic config writers; external direct writes are outside this scoped guarantee"
+    },
+    "graph": {
+      "scope": "22 exact selected owner/test files only; never runtime imports; whole-root graph remains incomplete",
+      "status": {
+        "initialized": true,
+        "version": "1.6.0",
+        "projectPath": "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\tmp\\selective-20261017\\fxa04-owner-graph-v4",
+        "indexPath": "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\tmp\\selective-20261017\\fxa04-owner-graph-v4\\.codegraph",
+        "lastIndexed": "2026-10-17T08:26:57.411Z",
+        "fileCount": 22,
+        "nodeCount": 3071,
+        "edgeCount": 9054,
+        "dbSizeBytes": 12525568,
+        "walSizeBytes": 0,
+        "backend": "node-sqlite",
+        "journalMode": "wal",
+        "nodesByKind": {
+          "class": 156,
+          "file": 22,
+          "function": 1876,
+          "import": 328,
+          "method": 134,
+          "variable": 555
+        },
+        "languages": [
+          "python"
+        ],
+        "pendingChanges": {
+          "added": 0,
+          "modified": 0,
+          "removed": 0
+        },
+        "worktreeMismatch": null,
+        "index": {
+          "builtWithVersion": "1.6.0",
+          "builtWithExtractionVersion": 25,
+          "currentExtractionVersion": 25,
+          "reindexRecommended": false,
+          "state": "complete",
+          "pendingRefs": 0
+        }
+      },
+      "binding": {
+        "path": "tmp/selective-20261017/fxa04-owner-graph-v4/source-binding.json",
+        "sha256": "4b4c643409de2873d8eb6e5d9f9c31aba13a84df114852ac3dc8a59f7dfaae8e"
+      }
+    },
+    "independent_review": {
+      "product_and_tests": "Confucius: no final P1/P2; source-only, final delta reviewed",
+      "locking_and_managed_policy": "Franklin: both P2s closed; source-only",
+      "harness": "Tesla: four harness P2s closed; source-only; no independent execution"
+    },
+    "qualification_limits": [
+      "Synthetic peer proves routing/auth/history, not actual-model quality or eight-hour soak",
+      "Physical three sleep/resume cycles NOT_RUN per explicit human instruction",
+      "Electron/native Desktop launches HELD; scheme association unchanged per human decision",
+      "No primary/main update, publication, CI, release, or complete five-lane acceptance claimed"
+    ]
   }
 }

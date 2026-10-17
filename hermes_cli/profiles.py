@@ -19,6 +19,7 @@ Usage::
     hermes profile delete coder          # remove profile + alias + service
 """
 
+import copy
 import json
 import logging
 import os
@@ -1123,6 +1124,137 @@ def profiles_to_serve(
     return serve
 
 
+def _profile_routing_view(config: dict) -> dict:
+    """Expand only endpoint identity fields; credential values remain opaque."""
+    from hermes_cli.config import _expand_env_vars
+
+    routing_fields = {"name", "provider_key", "api", "url", "base_url", "baseUrl", "enabled"}
+
+    def entry_view(entry):
+        if not isinstance(entry, dict):
+            return entry
+        return {key: _expand_env_vars(value) if key in routing_fields else value for key, value in entry.items()}
+
+    view = dict(config)
+    if isinstance(config.get("providers"), dict):
+        view["providers"] = {key: entry_view(value) for key, value in config["providers"].items()}
+    if isinstance(config.get("custom_providers"), list):
+        view["custom_providers"] = [entry_view(value) for value in config["custom_providers"]]
+    return view
+
+
+def _launch_profile_model_seed(source: dict) -> dict:
+    """Select raw model/endpoint with the existing runtime identity resolver.
+
+    Adapts the frozen v0.22.2 profile seed contract (upstream blob
+    d9204eb5f72e7aa2ef3732a7d218635743920b4f) to the retained profile owner.
+    """
+    from hermes_cli.config import _expand_env_vars, _normalize_custom_provider_entry, find_provider_entry
+    from hermes_cli.runtime_provider import _get_named_custom_provider
+
+    model = source.get("model")
+    if not model:
+        return {}
+    seed = {"model": copy.deepcopy(model)}
+    provider = model.get("provider") if isinstance(model, dict) else None
+    if not isinstance(provider, str):
+        return seed
+    provider = str(_expand_env_vars(provider))
+    view = _profile_routing_view(source)
+    selected = _get_named_custom_provider(provider, config=view, resolve_credentials=False)
+    if selected is None:
+        # Built-in and bare-custom tuning has no endpoint identity to resolve.
+        from hermes_cli.auth import AuthError, resolve_provider
+        try:
+            builtin = resolve_provider(provider)
+        except AuthError:
+            builtin = None
+        key, entry = find_provider_entry(source.get("providers"), provider)
+        if entry is not None and (provider.strip().lower() == "custom" or builtin == provider.strip().lower()):
+            seed["providers"] = {key: copy.deepcopy(entry)}
+        return seed
+
+    key, entry = find_provider_entry(source.get("providers"), selected.get("provider_key"))
+    if entry is not None:
+        seed["providers"] = {key: copy.deepcopy(entry)}
+        return seed
+    for raw, candidate in zip(source.get("custom_providers", []), view.get("custom_providers", [])):
+        normalized = _normalize_custom_provider_entry(candidate)
+        if normalized and (normalized["name"], normalized["base_url"]) == (selected["name"], selected["base_url"]):
+            seed["custom_providers"] = [copy.deepcopy(raw)]
+            break
+    return seed
+
+
+def _merge_profile_endpoint_seed(destination: dict, seed: dict) -> dict:
+    """Keep unrelated settings, replacing aliases that could select another URL."""
+    from hermes_cli.providers import custom_provider_aliases
+    from hermes_cli.runtime_provider import _get_named_custom_provider
+    from hermes_cli.config import _expand_env_vars
+
+    def aliases(entry, key=""):
+        if not isinstance(entry, dict):
+            return frozenset()
+        routed = _profile_routing_view({"providers": {key: entry}})["providers"][key]
+        return custom_provider_aliases(str(routed.get("name") or key), str(key or routed.get("provider_key") or ""))
+
+    providers = seed.get("providers") or {}
+    custom = seed.get("custom_providers") or []
+    model = seed.get("model")
+    provider = _expand_env_vars(model.get("provider")) if isinstance(model, dict) else None
+    claimed = frozenset()
+    if isinstance(provider, str) and _get_named_custom_provider(provider, config=_profile_routing_view(seed), resolve_credentials=False):
+        claimed = frozenset().union(*(aliases(entry, key) for key, entry in providers.items()),
+                                    *(aliases(entry) for entry in custom))
+    merged = copy.deepcopy(destination)
+    previous = destination.get("providers")
+    if isinstance(previous, dict) or providers:
+        merged["providers"] = {**copy.deepcopy(providers), **{
+            key: copy.deepcopy(entry) for key, entry in (previous if isinstance(previous, dict) else {}).items()
+            if key not in providers and not claimed.intersection(aliases(entry, key))
+        }}
+    previous_custom = destination.get("custom_providers")
+    if isinstance(previous_custom, list) or custom:
+        merged["custom_providers"] = copy.deepcopy(custom) + [
+            copy.deepcopy(entry) for entry in (previous_custom if isinstance(previous_custom, list) else [])
+            if not claimed.intersection(aliases(entry))
+        ]
+    merged["model"] = copy.deepcopy(seed["model"])
+    return merged
+
+
+def inherit_profile_model(profile_dir: Path) -> bool:
+    """Seed a fresh unconfigured profile, preserving source credential references."""
+    from hermes_cli import managed_scope
+    from hermes_cli.config import _CONFIG_LOCK, _explicit_config_paths, is_managed, read_user_config_raw, save_config
+    from hermes_constants import reset_hermes_home_override, set_hermes_home_override
+    from tools.mcp_oauth_state import oauth_state_lock
+
+    seed = _launch_profile_model_seed(read_user_config_raw())
+    if not seed:
+        return False
+    token = set_hermes_home_override(str(profile_dir))
+    try:
+        # Match save_config's lock order. All atomic config writers participate
+        # in the existing process fence through utils.atomic_replace; retain it
+        # across the destination read, merge and canonical policy-aware save.
+        with _CONFIG_LOCK, oauth_state_lock(profile_dir):
+            if is_managed() or any(
+                key.split(".", 1)[0] in {"model", "providers", "custom_providers"}
+                for key in managed_scope.managed_config_keys()
+            ):
+                return False
+            destination = read_user_config_raw(profile_dir / "config.yaml")
+            if destination.get("model"):
+                return False
+            merged = _merge_profile_endpoint_seed(destination, seed)
+            save_config(merged, preserve_keys=_explicit_config_paths(seed))
+            saved = read_user_config_raw(profile_dir / "config.yaml")
+            return all(saved.get(key) == merged.get(key) for key in ("model", "providers", "custom_providers"))
+    finally:
+        reset_hermes_home_override(token)
+
+
 def create_profile(
     name: str,
     clone_from: Optional[str] = None,
@@ -1131,6 +1263,7 @@ def create_profile(
     no_alias: bool = False,
     no_skills: bool = False,
     description: Optional[str] = None,
+    inherit_model: bool = True,
 ) -> Path:
     """Create a new profile directory.
 
@@ -1153,6 +1286,9 @@ def create_profile(
         a marker file so ``hermes update`` skips re-seeding this profile's
         skills. Mutually exclusive with ``clone_config``/``clone_all`` (those
         explicitly copy skills from the source).
+    inherit_model:
+        Copy the launch model and its selected endpoint into a fresh profile.
+        Callers with explicit mirroring policy can defer this step.
 
     Returns
     -------
@@ -1291,6 +1427,8 @@ def create_profile(
     # explicit runtime/history stripping above.
     if not clone_all:
         _migrate_profile_config_if_outdated(profile_dir)
+    if source_dir is None and inherit_model:
+        inherit_profile_model(profile_dir)
 
     # Persist description if the caller provided one. Done last so a
     # partial-create failure doesn't strand a description file in an

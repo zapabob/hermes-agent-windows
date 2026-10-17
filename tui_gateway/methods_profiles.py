@@ -385,6 +385,8 @@ def _(rid, params: dict) -> dict:
             clone_config=bool(clone_from) and not clone_all,
             no_skills=is_truthy_value(params.get("no_skills", False)),
             description=str(params.get("description") or "").strip() or None,
+            # This RPC applies its mirror_credentials/explicit-pin policy below.
+            inherit_model=False,
         )
     except (ValueError, FileExistsError, FileNotFoundError) as e:
         return _err(rid, 4062, str(e))
@@ -538,27 +540,7 @@ def _(rid, params: dict) -> dict:
         # ("No inference provider configured" on first message, tester
         # report). Clones bring their own model section and stay untouched.
         try:
-            from hermes_cli.config import load_config_readonly, read_user_config_raw
-            from hermes_cli.web_routers.profiles import _write_profile_model
-            from hermes_constants import (
-                reset_hermes_home_override,
-                set_hermes_home_override,
-            )
-
-            token = set_hermes_home_override(str(path))
-            try:
-                dst_model = (read_user_config_raw() or {}).get("model") or {}
-            finally:
-                reset_hermes_home_override(token)
-
-            if not (dst_model.get("provider") and dst_model.get("default")):
-                cfg = load_config_readonly() or {}
-                model_cfg = cfg.get("model") or {}
-                inherited_provider = str(model_cfg.get("provider") or "")
-                inherited_model = str(model_cfg.get("default") or "")
-                if inherited_provider and inherited_model:
-                    _write_profile_model(path, inherited_provider, inherited_model)
-                    mirrored["model_inherited"] = True
+            mirrored["model_inherited"] = profiles_mod.inherit_profile_model(path)
         except Exception:
             pass
 
