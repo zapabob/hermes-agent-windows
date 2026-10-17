@@ -2853,6 +2853,23 @@
         "forced_restart_issued": false,
         "observation_sha256": "0fa2dde8861af81754554a37f21c632845b6732b6b10bca9a1ead2b75b603457",
         "interpretation": "Watchdog reports NORMAL; PID/name observed. Desktop up/backend down/embedding disabled are watchdog reports, not independent service or loaded-model proofs."
+      },
+      "latest_followup_observation": {
+        "observed_at": "2026-10-17T07:15:31.258357+00:00",
+        "state_updated_at": "2026-10-17T16:15:25.7748702+09:00",
+        "reported_maintenance_state": "NORMAL",
+        "reported_backend_health": "healthy",
+        "reported_result": {
+          "desktop": "up",
+          "backend": "up",
+          "backendPid": 14620,
+          "backendPort": 63990,
+          "embedding": "disabled"
+        },
+        "production_stop_marker_absent": true,
+        "independent_inference_verified": false,
+        "production_restart_command_issued": false,
+        "receipt_sha256": "345298148e8f340e27953ef0204f0de6823d877fb9a22b275362692f1faa3bbd"
       }
     },
     "native_electron_hold_resolution": "Watchdog stop marker was recovered under explicit authority; a separate host-protocol incident now holds native launches."

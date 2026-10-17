@@ -398,3 +398,5 @@ files, 861 nodes, 2,954 edges, zero pending changes. The two whole-project
 refreshes failed during WAL/checkpoint activity with database locking; their
 retained index is incomplete. No index deletion, unlock or tool upgrade was
 used. Whole-project graph freshness and full release acceptance remain open.
+
+Later watchdog follow-up (2026-10-17 16:14 JST): its state reports NORMAL, desktop up, backend up/healthy and embedding disabled. The production stop marker is absent. This is a watchdog status report, not independent model inference or embedding-service proof. No production restart command was issued. The separate protocol association restoration remains pending.
