@@ -1,0 +1,2643 @@
+{
+  "schema_version": 1,
+  "status": "SCOPED_IMPLEMENTATION_VERIFIED_CAMPAIGN_PARTIAL",
+  "downstream_base": "abad98beee2b74a135ce7e0e9310910c756514b4",
+  "downstream_base_tree": "b8cde7b4a87a4ae8003f08b40680ec27dea0bf77",
+  "upstream_release": "d923a5eb487a17c0a68801bba9ef0f56c81040a8",
+  "upstream_tree": "5a064077e8d1de9fc7a4b27efc04f0caa2cb06c0",
+  "archive_sha256": "021f2c546766be94fc92e8ebca7ac3b642e2ed6d217545e0200bfa03b55117c8",
+  "archive_integrity": [
+    {
+      "file": "COVERAGE.json",
+      "sha256": "c8df7655057a5dbb77e7937f132a4fda18380b2ad920c0d5d816a9285f3719d7"
+    },
+    {
+      "file": "EXCLUSION_RULES.json",
+      "sha256": "2401fa46534da10a9e86c8f286ad4d975a6e1ae50b85317843d884aad38ab4c9"
+    },
+    {
+      "file": "README.md",
+      "sha256": "1153a2be707bf12a8e29a497a138927b7491f9358f62510f9769334e8a686131"
+    },
+    {
+      "file": "REVIEW_LEDGER.json",
+      "sha256": "beb6a38c2505a9f1c497829c67fc501b0e18992bf48af987738697e8909cf384"
+    },
+    {
+      "file": "REVIEW_RESULTS.md",
+      "sha256": "bda84ba03adfff1ea945ad6973fd48f3b84ee07e132d51e33123012782834d84"
+    },
+    {
+      "file": "SOURCES.json",
+      "sha256": "cec6e843d992bab8a6621ee4ff2ae92e09a97d400129c9edf57bee5c397e6d0b"
+    },
+    {
+      "file": "SOURCES.md",
+      "sha256": "725bcf442637a8d9604847000c2ee7490fcaa9e4b43d0c32cb671571e1e036a0"
+    },
+    {
+      "file": "UNREVIEWED_CARRY_FORWARD.json",
+      "sha256": "879ca1aec2861a84f77d01c6a232a4f292e0e805eb6d53528d595434767ddfb4"
+    },
+    {
+      "file": "validation.json",
+      "sha256": "7b17622d2729f4568a34ed6ac3cb539cf7e101f80ea36eaa545123fbf753aae1"
+    }
+  ],
+  "review_source_object_checks": [
+    {
+      "id": "D_COMMANDS",
+      "git_blob": "d83053434224e45ce7af0b0e862b0b952fe6dcb9",
+      "expected_blob": "d83053434224e45ce7af0b0e862b0b952fe6dcb9",
+      "verification": "MATCHED"
+    },
+    {
+      "id": "U_COMMANDS",
+      "git_blob": "07617d8eb0a0f9aaa5b934467cefc85ba841e0e0",
+      "expected_blob": "07617d8eb0a0f9aaa5b934467cefc85ba841e0e0",
+      "verification": "MATCHED",
+      "selected_upstream_index_source_sha256": "ea8a8ff56486c7a6006d592c3c1f12a36f8d42a2fc9d418ade6a9bd6a495c475"
+    },
+    {
+      "id": "D_BRANCH",
+      "git_blob": "3684da2c3badceedd84b53dc75ddb3c53f61901c",
+      "expected_blob": "3684da2c3badceedd84b53dc75ddb3c53f61901c",
+      "verification": "MATCHED"
+    },
+    {
+      "id": "D_PICKER",
+      "git_blob": "83deb56e7733ba1bbc50aac2fa3cfb9d58fd8d09",
+      "expected_blob": "83deb56e7733ba1bbc50aac2fa3cfb9d58fd8d09",
+      "verification": "MATCHED"
+    },
+    {
+      "id": "U_PICKER",
+      "git_blob": "7e344a747f94b1fd1221b035a346932de72ee76b",
+      "expected_blob": "7e344a747f94b1fd1221b035a346932de72ee76b",
+      "verification": "MATCHED",
+      "selected_upstream_index_source_sha256": "caf425a3baa588daa2339374f019b1f09c2c9804a09eac1e27c29ac452d08b2e"
+    },
+    {
+      "id": "U_FAVORITES",
+      "git_blob": "296ac3a8770a1f7bec2657657a821096fdefa985",
+      "expected_blob": "296ac3a8770a1f7bec2657657a821096fdefa985",
+      "verification": "MATCHED",
+      "selected_upstream_index_source_sha256": "ce3e03df20c540829edab7ba58242e0d3e671fea2ea7288c3b1a56b672ca06c7"
+    },
+    {
+      "id": "U_CUSTOM_MODELS",
+      "git_blob": "d7b494a6a480bdc3218e26e59654d6834d911f1c",
+      "expected_blob": "d7b494a6a480bdc3218e26e59654d6834d911f1c",
+      "verification": "MATCHED",
+      "selected_upstream_index_source_sha256": "caf8563245a4774c6a5f7f3978cad4f9530df4a6b7756b237557cd83ee266f65"
+    },
+    {
+      "id": "D_STATUS",
+      "git_blob": "cd78ba2480b3a259c296e6431861201f0bc2594e",
+      "expected_blob": "cd78ba2480b3a259c296e6431861201f0bc2594e",
+      "verification": "MATCHED"
+    },
+    {
+      "id": "U_STATUS",
+      "git_blob": "c83d0c9d1b65e7279792a25aa5949eedda189f33",
+      "expected_blob": "c83d0c9d1b65e7279792a25aa5949eedda189f33",
+      "verification": "MATCHED",
+      "selected_upstream_index_source_sha256": "98a0776756db3a2aeb29ffa5b762b155be6573ca9c1a962608a62c0b5f2df19a"
+    },
+    {
+      "id": "D_STT",
+      "git_blob": "a0f9597d3ce35b8de58e2cdc4e24a75239fe534e",
+      "expected_blob": "a0f9597d3ce35b8de58e2cdc4e24a75239fe534e",
+      "verification": "MATCHED"
+    },
+    {
+      "id": "U_STT",
+      "git_blob": "2935b19fc0e238263dfb96a31a5e72cf0e3d13e2",
+      "expected_blob": "2935b19fc0e238263dfb96a31a5e72cf0e3d13e2",
+      "verification": "MATCHED",
+      "selected_upstream_index_source_sha256": "76aac5716ada47cb61c067c2f0bb0908bcc1f11110676a61c6858506f9318e9c"
+    },
+    {
+      "id": "U_STT_STREAM",
+      "git_blob": "e29e9c567ef5d2915ec7f05853402a62ac67926c",
+      "expected_blob": "e29e9c567ef5d2915ec7f05853402a62ac67926c",
+      "verification": "MATCHED",
+      "selected_upstream_index_source_sha256": "40475ef76275a075035984dd58d9aa6236ab3d02086199490ac2283938e67e62"
+    },
+    {
+      "id": "D_CRON",
+      "git_blob": "0a34342e0d048b41c849cf1cd960cc390de0d673",
+      "expected_blob": "0a34342e0d048b41c849cf1cd960cc390de0d673",
+      "verification": "MATCHED"
+    },
+    {
+      "id": "U_CRON",
+      "git_blob": "7d165965189ee419cd17495d1a6518d4c8cdff4d",
+      "expected_blob": "7d165965189ee419cd17495d1a6518d4c8cdff4d",
+      "verification": "MATCHED",
+      "selected_upstream_index_source_sha256": "76ec76f0c3854c4ab23deb8a883633756dd8e3ca9223013af3edf658d2d41862"
+    },
+    {
+      "id": "D_TTS",
+      "git_blob": "6c786e433380a853d3c610e5e0643a7ad1334eb7",
+      "expected_blob": "6c786e433380a853d3c610e5e0643a7ad1334eb7",
+      "verification": "MATCHED"
+    },
+    {
+      "id": "U_TTS",
+      "git_blob": "b60cdf372f35761b70ea6ed686579335f4d013b1",
+      "expected_blob": "b60cdf372f35761b70ea6ed686579335f4d013b1",
+      "verification": "MATCHED",
+      "selected_upstream_index_source_sha256": "3f4f8d607f8f30ceb963581d1f7cdb4e3a72e9130ee7c49b502023153f1780c2"
+    },
+    {
+      "id": "D_DEBUG",
+      "git_blob": "759bf0abd8975238a324981a6d6a28fb2e12214d",
+      "expected_blob": "759bf0abd8975238a324981a6d6a28fb2e12214d",
+      "verification": "MATCHED"
+    },
+    {
+      "id": "U_DEBUG",
+      "git_blob": "910e215a17c323bca12bad8c11cbae68380fcba8",
+      "expected_blob": "910e215a17c323bca12bad8c11cbae68380fcba8",
+      "verification": "MATCHED",
+      "selected_upstream_index_source_sha256": "c074c1de9d878df10e5801e22eef35d82f2dce132a383adb70afeea11de7fdc4"
+    },
+    {
+      "id": "D_PTY",
+      "git_blob": "05914bc67e6ef4872d346edee791ca3a5269ef75",
+      "expected_blob": "05914bc67e6ef4872d346edee791ca3a5269ef75",
+      "verification": "MATCHED"
+    },
+    {
+      "id": "U_PTY",
+      "git_blob": "a69760239962dd5c20dbbd2d4d6590631cb70249",
+      "expected_blob": "a69760239962dd5c20dbbd2d4d6590631cb70249",
+      "verification": "MATCHED",
+      "selected_upstream_index_source_sha256": "7b612e05a0ab5de278a6d8873579466f79a8a4926134732248fb3bc4d7b60b18"
+    },
+    {
+      "id": "D_POSIX_PTY",
+      "git_blob": "cbdcdd6529142c04b0ceec49d236c362bd41f8bd",
+      "expected_blob": "cbdcdd6529142c04b0ceec49d236c362bd41f8bd",
+      "verification": "MATCHED"
+    },
+    {
+      "id": "D_WIN_PTY",
+      "git_blob": "39eafbef1e87b2167371e21dab0ad367d21245b0",
+      "expected_blob": "39eafbef1e87b2167371e21dab0ad367d21245b0",
+      "verification": "MATCHED"
+    },
+    {
+      "id": "D_WEB_PTY",
+      "git_blob": "4edad161b5b0c7e215c1ecddb025965fdf050fa9",
+      "expected_blob": null,
+      "verification": "NO_BLOB_CLAIM_IN_ATTACHMENT_PINNED_OBJECT_RESOLVED"
+    },
+    {
+      "id": "D_AUTHZ",
+      "git_blob": "c8edbbf545fd14acedcf683310f351737856a706",
+      "expected_blob": "c8edbbf545fd14acedcf683310f351737856a706",
+      "verification": "MATCHED"
+    },
+    {
+      "id": "D_SECRET_DECL",
+      "git_blob": "9680ed639c3f82cfb44e343ee9cc1e39370539a3",
+      "expected_blob": "9680ed639c3f82cfb44e343ee9cc1e39370539a3",
+      "verification": "MATCHED"
+    },
+    {
+      "id": "D_GIT_CALLER",
+      "git_blob": "0821154909c7dd1bf820aa9e0c1334b8dd6ac852",
+      "expected_blob": "0821154909c7dd1bf820aa9e0c1334b8dd6ac852",
+      "verification": "MATCHED"
+    },
+    {
+      "id": "D_PROGRESS",
+      "git_blob": "e3397d57bc42a8bc66fd9163b8a4f45a9b79c7d3",
+      "expected_blob": "e3397d57bc42a8bc66fd9163b8a4f45a9b79c7d3",
+      "verification": "MATCHED"
+    },
+    {
+      "id": "D_SC_UI",
+      "git_blob": "612cffd7e975877d0dee2b57542ff8acc578002e",
+      "expected_blob": "612cffd7e975877d0dee2b57542ff8acc578002e",
+      "verification": "MATCHED"
+    },
+    {
+      "id": "D_SC_MODEL",
+      "git_blob": "e056ebffc5f74995f9a9a85a81dcbd73dab16d1c",
+      "expected_blob": "e056ebffc5f74995f9a9a85a81dcbd73dab16d1c",
+      "verification": "MATCHED"
+    },
+    {
+      "id": "D_MCP_UI",
+      "git_blob": "f0c85b2715a984e677cf607438e57570fbacdee4",
+      "expected_blob": "f0c85b2715a984e677cf607438e57570fbacdee4",
+      "verification": "MATCHED"
+    },
+    {
+      "id": "D_V03_MD",
+      "git_blob": "9f1f88b2b511de1273ce84c8cea36a01281d90f0",
+      "expected_blob": "9f1f88b2b511de1273ce84c8cea36a01281d90f0",
+      "verification": "MATCHED"
+    },
+    {
+      "id": "D_V03_JSON",
+      "git_blob": "78c582a9a7f85c6ce9f3c88402bc1a38e89e80ac",
+      "expected_blob": "78c582a9a7f85c6ce9f3c88402bc1a38e89e80ac",
+      "verification": "MATCHED"
+    }
+  ],
+  "observations": [
+    {
+      "observation_id": "ZIP:F01",
+      "title": "モデルのお気に入り・先頭表示",
+      "lane": "FEATURE",
+      "review_decision": "INTAKE_CANDIDATE",
+      "implementation": "SCOPED_CANDIDATE_IMPLEMENTED",
+      "existing_unit_links": [
+        "U09",
+        "U15"
+      ],
+      "whole_family_accepted": false,
+      "source_ids": [
+        "D_PICKER",
+        "U_PICKER",
+        "U_FAVORITES"
+      ],
+      "credit": {
+        "reporter_discoverer": {
+          "status": "NOT_ESTABLISHED_THIS_REVIEW",
+          "names": []
+        },
+        "upstream_implementation": "Preserve original commit/PR/co-author attribution when resolved; not inferred from reporter credit.",
+        "downstream_new_implementation_commits": [
+          "52be3f44c222e26ac5536e21cf98a98cba50f142"
+        ]
+      }
+    },
+    {
+      "observation_id": "ZIP:F02",
+      "title": "未掲載model IDを手入力し、pickerへ記憶する導線",
+      "lane": "FEATURE",
+      "review_decision": "CONDITIONAL_REVIEW",
+      "implementation": "CONDITIONAL_OWNER_OR_NATIVE_ACCEPTANCE_OPEN",
+      "existing_unit_links": [],
+      "whole_family_accepted": false,
+      "source_ids": [
+        "D_PICKER",
+        "U_PICKER",
+        "U_CUSTOM_MODELS"
+      ],
+      "credit": {
+        "reporter_discoverer": {
+          "status": "NOT_ESTABLISHED_THIS_REVIEW",
+          "names": []
+        },
+        "upstream_implementation": "Preserve original commit/PR/co-author attribution when resolved; not inferred from reporter credit.",
+        "downstream_new_implementation_commits": []
+      }
+    },
+    {
+      "observation_id": "ZIP:F03",
+      "title": "hermes statusの要約既定表示と詳細表示の分離",
+      "lane": "FEATURE",
+      "review_decision": "INTAKE_CANDIDATE",
+      "implementation": "SCOPED_CANDIDATE_IMPLEMENTED",
+      "existing_unit_links": [
+        "U09"
+      ],
+      "whole_family_accepted": false,
+      "source_ids": [
+        "D_STATUS",
+        "U_STATUS"
+      ],
+      "credit": {
+        "reporter_discoverer": {
+          "status": "NOT_ESTABLISHED_THIS_REVIEW",
+          "names": []
+        },
+        "upstream_implementation": "Preserve original commit/PR/co-author attribution when resolved; not inferred from reporter credit.",
+        "downstream_new_implementation_commits": [
+          "31c7270d2604c11c4943066aeed00a0d8a293f7c"
+        ]
+      }
+    },
+    {
+      "observation_id": "ZIP:F04",
+      "title": "Gatewayでも/busy queue|steer|interrupt|status",
+      "lane": "FEATURE",
+      "review_decision": "CONDITIONAL_REVIEW",
+      "implementation": "CONDITIONAL_OWNER_OR_NATIVE_ACCEPTANCE_OPEN",
+      "existing_unit_links": [],
+      "whole_family_accepted": false,
+      "source_ids": [
+        "D_COMMANDS",
+        "U_COMMANDS"
+      ],
+      "credit": {
+        "reporter_discoverer": {
+          "status": "NOT_ESTABLISHED_THIS_REVIEW",
+          "names": []
+        },
+        "upstream_implementation": "Preserve original commit/PR/co-author attribution when resolved; not inferred from reporter credit.",
+        "downstream_new_implementation_commits": []
+      }
+    },
+    {
+      "observation_id": "ZIP:F05",
+      "title": "/branch --hereの既存handlerと案内整合",
+      "lane": "FEATURE",
+      "review_decision": "PRESERVE_EXISTING",
+      "implementation": "PRESERVED_SOURCE_NOT_WHOLE_CONTRACT_ACCEPTED",
+      "existing_unit_links": [],
+      "whole_family_accepted": false,
+      "source_ids": [
+        "D_BRANCH",
+        "D_COMMANDS",
+        "U_COMMANDS"
+      ],
+      "credit": {
+        "reporter_discoverer": {
+          "status": "NOT_ESTABLISHED_THIS_REVIEW",
+          "names": []
+        },
+        "upstream_implementation": "Preserve original commit/PR/co-author attribution when resolved; not inferred from reporter credit.",
+        "downstream_new_implementation_commits": []
+      }
+    },
+    {
+      "observation_id": "ZIP:F06",
+      "title": "/queue list/edit/rm/move/clear/add",
+      "lane": "FEATURE",
+      "review_decision": "PRESERVE_EXISTING",
+      "implementation": "PRESERVED_SOURCE_NOT_WHOLE_CONTRACT_ACCEPTED",
+      "existing_unit_links": [],
+      "whole_family_accepted": false,
+      "source_ids": [
+        "D_COMMANDS",
+        "U_COMMANDS"
+      ],
+      "credit": {
+        "reporter_discoverer": {
+          "status": "NOT_ESTABLISHED_THIS_REVIEW",
+          "names": []
+        },
+        "upstream_implementation": "Preserve original commit/PR/co-author attribution when resolved; not inferred from reporter credit.",
+        "downstream_new_implementation_commits": []
+      }
+    },
+    {
+      "observation_id": "ZIP:F07",
+      "title": "/s → /steer",
+      "lane": "FEATURE",
+      "review_decision": "PRESERVE_EXISTING",
+      "implementation": "PRESERVED_SOURCE_NOT_WHOLE_CONTRACT_ACCEPTED",
+      "existing_unit_links": [],
+      "whole_family_accepted": false,
+      "source_ids": [
+        "D_COMMANDS",
+        "U_COMMANDS"
+      ],
+      "credit": {
+        "reporter_discoverer": {
+          "status": "NOT_ESTABLISHED_THIS_REVIEW",
+          "names": []
+        },
+        "upstream_implementation": "Preserve original commit/PR/co-author attribution when resolved; not inferred from reporter credit.",
+        "downstream_new_implementation_commits": []
+      }
+    },
+    {
+      "observation_id": "ZIP:F08",
+      "title": "時刻表示・focus・diff・palette等の既存便利機能",
+      "lane": "FEATURE",
+      "review_decision": "PRESERVE_EXISTING",
+      "implementation": "PRESERVED_SOURCE_NOT_WHOLE_CONTRACT_ACCEPTED",
+      "existing_unit_links": [],
+      "whole_family_accepted": false,
+      "source_ids": [
+        "D_COMMANDS",
+        "U_COMMANDS"
+      ],
+      "credit": {
+        "reporter_discoverer": {
+          "status": "NOT_ESTABLISHED_THIS_REVIEW",
+          "names": []
+        },
+        "upstream_implementation": "Preserve original commit/PR/co-author attribution when resolved; not inferred from reporter credit.",
+        "downstream_new_implementation_commits": []
+      }
+    },
+    {
+      "observation_id": "ZIP:F09",
+      "title": "逐次STTの汎用インターフェース",
+      "lane": "FEATURE",
+      "review_decision": "CONDITIONAL_REVIEW",
+      "implementation": "CONDITIONAL_OWNER_OR_NATIVE_ACCEPTANCE_OPEN",
+      "existing_unit_links": [],
+      "whole_family_accepted": false,
+      "source_ids": [
+        "D_STT",
+        "U_STT",
+        "U_STT_STREAM"
+      ],
+      "credit": {
+        "reporter_discoverer": {
+          "status": "NOT_ESTABLISHED_THIS_REVIEW",
+          "names": []
+        },
+        "upstream_implementation": "Preserve original commit/PR/co-author attribution when resolved; not inferred from reporter credit.",
+        "downstream_new_implementation_commits": []
+      }
+    },
+    {
+      "observation_id": "ZIP:B01",
+      "title": "破損・読取り不能cron storeの上書き防止",
+      "lane": "BUG_SECURITY",
+      "review_decision": "INTAKE_CANDIDATE",
+      "implementation": "SCOPED_CANDIDATE_IMPLEMENTED",
+      "existing_unit_links": [],
+      "whole_family_accepted": false,
+      "source_ids": [
+        "D_CRON",
+        "U_CRON"
+      ],
+      "credit": {
+        "reporter_discoverer": {
+          "status": "NOT_ESTABLISHED_THIS_REVIEW",
+          "names": []
+        },
+        "upstream_implementation": "Preserve original commit/PR/co-author attribution when resolved; not inferred from reporter credit.",
+        "downstream_new_implementation_commits": [
+          "f88a2344bcf46799c42451a37e17d7ea41d69cb6"
+        ]
+      }
+    },
+    {
+      "observation_id": "ZIP:B02",
+      "title": "TTS生成失敗で利用者の既存ファイルを消さない",
+      "lane": "BUG_SECURITY",
+      "review_decision": "INTAKE_CANDIDATE",
+      "implementation": "SCOPED_CANDIDATE_IMPLEMENTED",
+      "existing_unit_links": [
+        "U16"
+      ],
+      "whole_family_accepted": false,
+      "source_ids": [
+        "D_TTS",
+        "U_TTS"
+      ],
+      "credit": {
+        "reporter_discoverer": {
+          "status": "NOT_ESTABLISHED_THIS_REVIEW",
+          "names": []
+        },
+        "upstream_implementation": "Preserve original commit/PR/co-author attribution when resolved; not inferred from reporter credit.",
+        "downstream_new_implementation_commits": [
+          "e068d11ca07433ecb8f2cbb1b3eb38c0d7140f49"
+        ]
+      }
+    },
+    {
+      "observation_id": "ZIP:B03",
+      "title": "support/debug出口のURL・header・argv秘密情報秘匿",
+      "lane": "BUG_SECURITY",
+      "review_decision": "INTAKE_CANDIDATE",
+      "implementation": "SCOPED_CANDIDATE_IMPLEMENTED",
+      "existing_unit_links": [
+        "U04",
+        "U15"
+      ],
+      "whole_family_accepted": false,
+      "source_ids": [
+        "D_DEBUG",
+        "U_DEBUG"
+      ],
+      "credit": {
+        "reporter_discoverer": {
+          "status": "NOT_ESTABLISHED_THIS_REVIEW",
+          "names": []
+        },
+        "upstream_implementation": "Preserve original commit/PR/co-author attribution when resolved; not inferred from reporter credit.",
+        "downstream_new_implementation_commits": [
+          "c34b43413071e6b73c9cc5dea55cfb3331e4714b"
+        ]
+      }
+    },
+    {
+      "observation_id": "ZIP:B04",
+      "title": "native PTYの死亡検出・並行回収",
+      "lane": "BUG_SECURITY",
+      "review_decision": "INTAKE_CANDIDATE",
+      "implementation": "SCOPED_CANDIDATE_IMPLEMENTED",
+      "existing_unit_links": [
+        "U08"
+      ],
+      "whole_family_accepted": false,
+      "source_ids": [
+        "D_PTY",
+        "U_PTY",
+        "D_WEB_PTY",
+        "D_WIN_PTY",
+        "D_POSIX_PTY"
+      ],
+      "credit": {
+        "reporter_discoverer": {
+          "status": "NOT_ESTABLISHED_THIS_REVIEW",
+          "names": []
+        },
+        "upstream_implementation": "Preserve original commit/PR/co-author attribution when resolved; not inferred from reporter credit.",
+        "downstream_new_implementation_commits": [
+          "6a586bb9f76c32d7b1bfc7b7c2dd1ff6266a9527"
+        ]
+      }
+    },
+    {
+      "observation_id": "ZIP:S01",
+      "title": "SimpleX安定ID・汎用@alias拒否",
+      "lane": "BUG_SECURITY",
+      "review_decision": "PRESERVE_EXISTING",
+      "implementation": "PRESERVED_SOURCE_NOT_WHOLE_CONTRACT_ACCEPTED",
+      "existing_unit_links": [],
+      "whole_family_accepted": false,
+      "source_ids": [
+        "D_AUTHZ"
+      ],
+      "credit": {
+        "reporter_discoverer": {
+          "status": "NOT_ESTABLISHED_THIS_REVIEW",
+          "names": []
+        },
+        "upstream_implementation": "Preserve original commit/PR/co-author attribution when resolved; not inferred from reporter credit.",
+        "downstream_new_implementation_commits": []
+      }
+    },
+    {
+      "observation_id": "ZIP:S02",
+      "title": "plugin secret declarationのfail-closed",
+      "lane": "BUG_SECURITY",
+      "review_decision": "PRESERVE_EXISTING",
+      "implementation": "PRESERVED_SOURCE_NOT_WHOLE_CONTRACT_ACCEPTED",
+      "existing_unit_links": [],
+      "whole_family_accepted": false,
+      "source_ids": [
+        "D_SECRET_DECL"
+      ],
+      "credit": {
+        "reporter_discoverer": {
+          "status": "NOT_ESTABLISHED_THIS_REVIEW",
+          "names": []
+        },
+        "upstream_implementation": "Preserve original commit/PR/co-author attribution when resolved; not inferred from reporter credit.",
+        "downstream_new_implementation_commits": []
+      }
+    },
+    {
+      "observation_id": "ZIP:S03",
+      "title": "subagent worktreeのGit共通実行owner",
+      "lane": "BUG_SECURITY",
+      "review_decision": "PRESERVE_EXISTING",
+      "implementation": "PRESERVED_SOURCE_NOT_WHOLE_CONTRACT_ACCEPTED",
+      "existing_unit_links": [],
+      "whole_family_accepted": false,
+      "source_ids": [
+        "D_GIT_CALLER"
+      ],
+      "credit": {
+        "reporter_discoverer": {
+          "status": "NOT_ESTABLISHED_THIS_REVIEW",
+          "names": []
+        },
+        "upstream_implementation": "Preserve original commit/PR/co-author attribution when resolved; not inferred from reporter credit.",
+        "downstream_new_implementation_commits": []
+      }
+    },
+    {
+      "observation_id": "ZIP:S04",
+      "title": "local prompt進捗の厳密な既存計測",
+      "lane": "LOCAL_RUNTIME",
+      "review_decision": "PRESERVE_EXISTING",
+      "implementation": "PRESERVED_SOURCE_NOT_WHOLE_CONTRACT_ACCEPTED",
+      "existing_unit_links": [],
+      "whole_family_accepted": false,
+      "source_ids": [
+        "D_PROGRESS"
+      ],
+      "credit": {
+        "reporter_discoverer": {
+          "status": "NOT_ESTABLISHED_THIS_REVIEW",
+          "names": []
+        },
+        "upstream_implementation": "Preserve original commit/PR/co-author attribution when resolved; not inferred from reporter credit.",
+        "downstream_new_implementation_commits": []
+      }
+    },
+    {
+      "observation_id": "ZIP:C01",
+      "title": "Security Centerのbackend3軸とDesktop型の不整合",
+      "lane": "CONTROL_PANEL",
+      "review_decision": "INTAKE_CANDIDATE",
+      "implementation": "SCOPED_CANDIDATE_IMPLEMENTED",
+      "existing_unit_links": [
+        "U05"
+      ],
+      "whole_family_accepted": false,
+      "source_ids": [
+        "D_SC_MODEL",
+        "D_SC_UI"
+      ],
+      "credit": {
+        "reporter_discoverer": {
+          "status": "NOT_ESTABLISHED_THIS_REVIEW",
+          "names": []
+        },
+        "upstream_implementation": "Preserve original commit/PR/co-author attribution when resolved; not inferred from reporter credit.",
+        "downstream_new_implementation_commits": [
+          "dd795de83330fc4ebb44fc76df3716a711c6e81d"
+        ]
+      }
+    },
+    {
+      "observation_id": "ZIP:C02",
+      "title": "MCP保存ack・profile/connection固定の既存実装",
+      "lane": "CONTROL_PANEL",
+      "review_decision": "PRESERVE_EXISTING",
+      "implementation": "PRESERVED_SOURCE_NOT_WHOLE_CONTRACT_ACCEPTED",
+      "existing_unit_links": [],
+      "whole_family_accepted": false,
+      "source_ids": [
+        "D_MCP_UI"
+      ],
+      "credit": {
+        "reporter_discoverer": {
+          "status": "NOT_ESTABLISHED_THIS_REVIEW",
+          "names": []
+        },
+        "upstream_implementation": "Preserve original commit/PR/co-author attribution when resolved; not inferred from reporter credit.",
+        "downstream_new_implementation_commits": []
+      }
+    }
+  ],
+  "historical_population": {
+    "metadata_commits": 22565,
+    "parent_edges": 23218,
+    "full_history_semantically_accepted_commits_this_run": 0,
+    "all_final_tree_contracts_enumerated": false,
+    "unmapped_contract_remaining": null,
+    "note": "19 contract observations cannot be subtracted from 22565 commits."
+  },
+  "prior_leads_preserved": 33,
+  "exclusion_rules_preserved": 8,
+  "python_tests_per_file_process": [
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_debug_support_secret_boundary.xml",
+      "tests": 30,
+      "passed": 30,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "3853d461ecc345028a858241dbea1a963f3272075dce082d7edc4e9f33fa37a8"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_jobs_corrupt_save_boundary.xml",
+      "tests": 9,
+      "passed": 9,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "d1075c379ec20c6998f0caf3be15894322c1dc04fdfcd5d95aa9063c2c217fef"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_jobs_shrink_merge_80624.xml",
+      "tests": 9,
+      "passed": 9,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "c3337786aab34c95e13f97df0983f01a2314682f2a8a424a38dcc1d1bb6b3a19"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_jobs.xml",
+      "tests": 80,
+      "passed": 80,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "046bf541d51cd3f3fdbe57f4978fdddf1345a320394b576bfd3478cd27466b0e"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_jobs_json_utf8_bom.xml",
+      "tests": 3,
+      "passed": 3,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "117b621c7210aac3baf45c595fd182a2fbcce2cab1608302bc3d2d61de5a0383"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_pty_reaper_process_liveness.xml",
+      "tests": 6,
+      "passed": 6,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "fce2a1e51fabeb7463e13161dfd1b46dedea973f107f537db9c9dc533dd22ad6"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_pty_session.xml",
+      "tests": 11,
+      "passed": 11,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "c1ce06844a3b86a1f828bb46dcf908244a708f7215772e4a086854a9724227f5"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_win_pty_bridge.xml",
+      "tests": 16,
+      "passed": 15,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 1,
+      "sha256": "5db3f31f1878abd19eb179ca31c59108bf1f20749eceed716d3d7ef666d3dec4"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_native_pty_registry_liveness.xml",
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "2be08fddbbb6ff56ae36a00c4ca4cd26daf6d3b2dd4e85258365325a69b0f556"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_tts_existing_output_preservation.xml",
+      "tests": 11,
+      "passed": 11,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "3f4d35e2188516bb35d6f04aa1e3cc25cdf5e0cc350bc8c4a781c998878f93f5"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_tts_long_form_chunking.xml",
+      "tests": 16,
+      "passed": 16,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "82f21fcaf018f5b6e2e0e7d5a01cff97ac0906541098b4ee3e46fb62372b199a"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_debug.xml",
+      "tests": 53,
+      "passed": 53,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "a94e23222f9af932f2ce0712230fbed9dc1cac745022ae2d9e1cd08de77fe97d"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_redact.xml",
+      "tests": 97,
+      "passed": 97,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "f16b6808e1d66a1dd991c129fe68ee478fb1a51fc37201e381ff6ef9b9475b74"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_redact_base_url.xml",
+      "tests": 17,
+      "passed": 17,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "b0bf02ceef8f3ee3eddea8a79e3061d0fb67cdbfbf145a6ec5c47f5384fae9a3"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_diagnostics_export_local.xml",
+      "tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "9f83f49f0b80acbaa7ab12c8c00b655f432067758fa19a7c8713c9408f9263a0"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_diagnostics_share_nous.xml",
+      "tests": 6,
+      "passed": 6,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "6c18f61218048d345d4a4e834c7590b58d122f86c0a8c5c462791f2cc7cb8bb0"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_diagnostics_upload.xml",
+      "tests": 8,
+      "passed": 8,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "c08b3757c57c43cabe2b9ed23820d15ccf7958811f8a867ce4339b374d33b57b"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_debug_command.xml",
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "e8af274d24e10224007b13429b719c0b5c0e1535c4705d5881a6f25dc6525e4e"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_status_summary.xml",
+      "tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "846065f867807e66c7cb320dc9a1f02c3789b24b211743ad3eaae1de0df185d8"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_status.xml",
+      "tests": 11,
+      "passed": 11,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "1657a5d5432bfdb00cbb94557a112b583d98929610b7dcaadf7f0a3c7665a60b"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_status_model_provider.xml",
+      "tests": 2,
+      "passed": 2,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "13c532e26208faf818bfd9b63599882b1669d1e86aa2de4710e8c9e16989690a"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_status_provider_label.xml",
+      "tests": 3,
+      "passed": 3,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "08c02f6c960f8e3862717a74aa7199f7d3431bc6cdfa2f99a0eb81261a5cb694"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_cli_queue_contract.xml",
+      "tests": 51,
+      "passed": 51,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "5fcdd0df70f397a4b571519c0cf24d78feab82b847a7909ae5195ffbc27ee466"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_steer_alias_contract.xml",
+      "tests": 11,
+      "passed": 11,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "456e027f29d5a4034211d3f04d730f61f131a3ed9130a1be8dcf79bbbb759beb"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_branch_api_contract.xml",
+      "tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "fdd0687e2d68e52ff0bbb32ebde9bdcf45e1d45db3f0c7d193867a73e7d179c8"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_queue_consumption.xml",
+      "tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "9c463d84ede493c476782bf5e302002f21816d77d6368efb3683aa657bd82915"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_aux_local_prompt_progress.xml",
+      "tests": 50,
+      "passed": 50,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "70924cfeee92d5c94109d7d0cc59473b210a7660f8d774c0b844dc7868568d48"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_mcp_oauth_retirement.xml",
+      "tests": 28,
+      "passed": 28,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "3ca7cbce3aedfd0e649af62bf6816bc7ac9662b4a12ffea2bfd1bbc0af30366b"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_t15_security_semantics.xml",
+      "tests": 27,
+      "passed": 27,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "b049ce8b9b40c84cff261b9c4b0c45b20a663d535dd4458e23910712893476e0"
+    },
+    {
+      "evidence": "tmp/selective-20261017/qualified-test_t16_bounded_security.xml",
+      "tests": 83,
+      "passed": 79,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 4,
+      "sha256": "e0fb07f9a2f325eb33de037bbcaecd474e35ffa9689048ebf8975186a1da39e8"
+    }
+  ],
+  "python_test_totals_unique_selected_runs": {
+    "tests": 660,
+    "passed": 655,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 5
+  },
+  "ui_tests": {
+    "tests": 15,
+    "passed": 15,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "sha256": "4d7d7a754f790642d4ba82adb44ee9adc6e84b0ae00cfbfb2186cea66893ea66",
+    "scope": "jsdom UI and fresh module persistence; not Electron user journey"
+  },
+  "mutations": [
+    {
+      "fault": "cron-all-deny",
+      "module": "cron.jobs",
+      "function": "save_jobs",
+      "source_sha256": "709013818348544f5a22c36978985a4bcd92f2898d4302ddc11da981d7d76163",
+      "bindings": 1,
+      "mutated_module_loaded": true,
+      "pytest_exit": 1,
+      "classification": "KILLED",
+      "test_counts": {
+        "tests": 9,
+        "passed": 0,
+        "failed": 9,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "f347cf6ab2b53f8cb492e25a1193707e43e1735a3ce262e6c9e5410dbbc985e5"
+      }
+    },
+    {
+      "fault": "cron-unknown-baseline-allowed",
+      "module": "cron.jobs",
+      "function": "_peek_jobs_unlocked",
+      "source_sha256": "709013818348544f5a22c36978985a4bcd92f2898d4302ddc11da981d7d76163",
+      "bindings": 1,
+      "mutated_module_loaded": true,
+      "pytest_exit": 1,
+      "classification": "KILLED",
+      "test_counts": {
+        "tests": 9,
+        "passed": 5,
+        "failed": 4,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "2ffc60328865ef6e20c98924a245aa51bf3b979cad3833f2e644abcebb15b247"
+      }
+    },
+    {
+      "fault": "debug-no-strict",
+      "module": "hermes_cli.debug",
+      "function": "_redact_log_text",
+      "source_sha256": "9338e2953250db4d0b1f201b7d8f7b4795bd1587d26b218acd0ca7ed24a44a8d",
+      "bindings": 1,
+      "mutated_module_loaded": true,
+      "pytest_exit": 1,
+      "classification": "KILLED",
+      "test_counts": {
+        "tests": 30,
+        "passed": 1,
+        "failed": 29,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "19933662ecc46b12da37416043fdc78f93af519e88c06da2943aef8a4bdeca5f"
+      }
+    },
+    {
+      "fault": "pty-no-liveness",
+      "module": "hermes_cli.pty_session",
+      "function": "_bridge_exited",
+      "source_sha256": "e528849ab7679ca53a01333e9ef5895998ed0198f1c3a84864fc820124b64fa9",
+      "bindings": 1,
+      "mutated_module_loaded": true,
+      "pytest_exit": 1,
+      "classification": "KILLED",
+      "test_counts": {
+        "tests": 6,
+        "passed": 5,
+        "failed": 1,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "f62abcaf68e1350ed07e7b34125cfd193af2f4afd9f2dafb375834f7dee450e0"
+      }
+    },
+    {
+      "fault": "pty-unguarded-pop",
+      "module": "hermes_cli.pty_session",
+      "function": "reap_idle",
+      "source_sha256": "e528849ab7679ca53a01333e9ef5895998ed0198f1c3a84864fc820124b64fa9",
+      "bindings": 1,
+      "mutated_module_loaded": true,
+      "pytest_exit": 1,
+      "classification": "KILLED",
+      "test_counts": {
+        "tests": 6,
+        "passed": 4,
+        "failed": 2,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "72a74e92f5bf0f7f46b555bc4f569046170ce44972a9a91f85ef87cdf50c6e1b"
+      }
+    },
+    {
+      "fault": "status-no-summary",
+      "module": "hermes_cli.status",
+      "function": "show_status",
+      "source_sha256": "fd16e32a0b4081fc8cf4b758065dcc382e4f326197c2c12088d4bcecd76d59bd",
+      "bindings": 1,
+      "mutated_module_loaded": true,
+      "pytest_exit": 1,
+      "classification": "KILLED",
+      "test_counts": {
+        "tests": 5,
+        "passed": 3,
+        "failed": 2,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "421788ddeaf8f8761613047dd0a9567f849bd4dcdc1b92f8f49691db6cf8db5e"
+      }
+    },
+    {
+      "fault": "tts-original-path",
+      "module": "tools.tts_tool",
+      "function": "text_to_speech_tool",
+      "source_sha256": "c043e66977e43ec82053e468f8ab90e7f2b2f920e9c514dbaa4147f7bfe7f797",
+      "bindings": 1,
+      "mutated_module_loaded": true,
+      "pytest_exit": 1,
+      "classification": "KILLED",
+      "test_counts": {
+        "tests": 11,
+        "passed": 5,
+        "failed": 6,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "3491339ad862846e391a787dd94e563d38508df6825a73b0cb0ffb9790e488e8"
+      }
+    },
+    {
+      "fault": "favorites-success-noop",
+      "id": "apps/desktop/src/store/favorite-models.ts",
+      "bindings": 1,
+      "source_sha256": "4c9a665a125847c64276402afb04c00087893148fd74bd099e825985fd217cad",
+      "classification": "KILLED",
+      "test_counts": {
+        "tests": 4,
+        "passed": 3,
+        "failed": 1,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "21e746b450ea78e53195c7c3e4a1d1b3bcd145ef97c593d8c8fce6e36f49404d"
+      }
+    },
+    {
+      "fault": "security-axes-noop",
+      "id": "apps/desktop/src/app/security/index.tsx",
+      "bindings": 1,
+      "source_sha256": "0b2fb510191f899d82b72bdcd1c720c9da15c3ab9d425fa09560884907bc23c3",
+      "classification": "KILLED",
+      "test_counts": {
+        "tests": 1,
+        "passed": 0,
+        "failed": 1,
+        "errors": 0,
+        "skipped": 0,
+        "sha256": "2bc24487b81f728a977caac0b097a432ccc9ee4984f9f280edae133047ea1bc8"
+      }
+    }
+  ],
+  "source_bindings": [
+    {
+      "path": "apps/desktop/src/api/security.ts",
+      "sha256": "d158f11c45e3508b36db15b50cd2fc40a5200b56aee9e9206ecc2e399e760d03",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "a7faa9a223f8d1bf9671e0843fa07d67ca0e6ec3",
+      "git_blob_sha256": "d158f11c45e3508b36db15b50cd2fc40a5200b56aee9e9206ecc2e399e760d03"
+    },
+    {
+      "path": "apps/desktop/src/app/security/index.test.tsx",
+      "sha256": "b7bbcfcf4de673d8dcef4b34734ca9002d43f957f28de8e3f7d3f04cacfa6cd9",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "0579a8c9eeb351b479534a6a169200ce81b3aa87",
+      "git_blob_sha256": "b7bbcfcf4de673d8dcef4b34734ca9002d43f957f28de8e3f7d3f04cacfa6cd9"
+    },
+    {
+      "path": "apps/desktop/src/app/security/index.tsx",
+      "sha256": "4d134a9dcbcbbff3e3af5460bcaa294bb5f233f5fe3a8c71a70437145c1cdb5d",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "0352d7cd6fbacbd4810075e8831b3eb82affdaed",
+      "git_blob_sha256": "4d134a9dcbcbbff3e3af5460bcaa294bb5f233f5fe3a8c71a70437145c1cdb5d"
+    },
+    {
+      "path": "apps/desktop/src/app/shell/model-catalog-menu.test.tsx",
+      "sha256": "f58ca2213089e2861efbdaf77a5844bcbed1da0695990d6ba068861219838cda",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "298e3c57343ae88fb438fcc5c414964e7c53c6d6",
+      "git_blob_sha256": "f58ca2213089e2861efbdaf77a5844bcbed1da0695990d6ba068861219838cda"
+    },
+    {
+      "path": "apps/desktop/src/app/shell/model-catalog-menu.tsx",
+      "sha256": "b298e9a0064d3574cf1dc0b50b4a98853f825ead90a641f553cea9e929351f8d",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "f8d9bede01bbe520c61a9cf755da3f67762c98f8",
+      "git_blob_sha256": "b298e9a0064d3574cf1dc0b50b4a98853f825ead90a641f553cea9e929351f8d"
+    },
+    {
+      "path": "apps/desktop/src/i18n/en.ts",
+      "sha256": "9ee6a5b201639c50cc5914795f992d5f5c268e61957e21bf8dac6978f2f9794a",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "1a30aaae7df6a6151309ed567a6e7b1666eefdad",
+      "git_blob_sha256": "9ee6a5b201639c50cc5914795f992d5f5c268e61957e21bf8dac6978f2f9794a"
+    },
+    {
+      "path": "apps/desktop/src/i18n/ja.ts",
+      "sha256": "2cb789f00795cca8eff910aa9d02bb241efa4c22486a102f8790039a30951294",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "b3014667744092e505ec03d4e89310577e9d5ae3",
+      "git_blob_sha256": "2cb789f00795cca8eff910aa9d02bb241efa4c22486a102f8790039a30951294"
+    },
+    {
+      "path": "apps/desktop/src/i18n/types.ts",
+      "sha256": "6296e97701ebb4b6c595e603fb8e71273f273894ff20acd6cd94eb0d6e2ee310",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "d5da78e6c9ca7b5151cb4cfe3e9602a56904d6e4",
+      "git_blob_sha256": "6296e97701ebb4b6c595e603fb8e71273f273894ff20acd6cd94eb0d6e2ee310"
+    },
+    {
+      "path": "apps/desktop/src/i18n/zh.ts",
+      "sha256": "600c4f80a12b01e2712fe8e2998bc191ce364d4bf0518880f9a0295a0b39ef3c",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "1af43ae215a6e06afc3e74d5d2db210397b7a0f7",
+      "git_blob_sha256": "600c4f80a12b01e2712fe8e2998bc191ce364d4bf0518880f9a0295a0b39ef3c"
+    },
+    {
+      "path": "apps/desktop/src/store/favorite-models.test.ts",
+      "sha256": "c9cbe8a607ad9af7fe032e5b4722a2361b7b6eb9d260926973420ff07cfd5fec",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "7029224100d66055c514146d26ad6e61722afbb9",
+      "git_blob_sha256": "c9cbe8a607ad9af7fe032e5b4722a2361b7b6eb9d260926973420ff07cfd5fec"
+    },
+    {
+      "path": "apps/desktop/src/store/favorite-models.ts",
+      "sha256": "4c9a665a125847c64276402afb04c00087893148fd74bd099e825985fd217cad",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "ae23609d668f78abe9e8a9d6975a1bf776f8204d",
+      "git_blob_sha256": "4c9a665a125847c64276402afb04c00087893148fd74bd099e825985fd217cad"
+    },
+    {
+      "path": "cron/jobs.py",
+      "sha256": "709013818348544f5a22c36978985a4bcd92f2898d4302ddc11da981d7d76163",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "d186892898841761e2e42929ee67b122e4d1d403",
+      "git_blob_sha256": "709013818348544f5a22c36978985a4bcd92f2898d4302ddc11da981d7d76163"
+    },
+    {
+      "path": "hermes_cli/debug.py",
+      "sha256": "9338e2953250db4d0b1f201b7d8f7b4795bd1587d26b218acd0ca7ed24a44a8d",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "33b5b8294134b77cd4db567ff2bf097d2dd4f9dd",
+      "git_blob_sha256": "9338e2953250db4d0b1f201b7d8f7b4795bd1587d26b218acd0ca7ed24a44a8d"
+    },
+    {
+      "path": "hermes_cli/debug_redaction.py",
+      "sha256": "9bd79e8ab0d90480557df656f954acffa305ad03b0666f5691bd5f5d1f591488",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "094b123c2e3d67fe76a5a314a8db2a4644c5cc8f",
+      "git_blob_sha256": "9bd79e8ab0d90480557df656f954acffa305ad03b0666f5691bd5f5d1f591488"
+    },
+    {
+      "path": "hermes_cli/diagnostics_local_export.py",
+      "sha256": "ab4bca9f3757bbee96b9e419af0e6e7f18836f49914c20444ed01de71cf5fb35",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "796d81bbb78e118083bc377a60b99aec6019933c",
+      "git_blob_sha256": "ab4bca9f3757bbee96b9e419af0e6e7f18836f49914c20444ed01de71cf5fb35"
+    },
+    {
+      "path": "hermes_cli/pty_session.py",
+      "sha256": "e528849ab7679ca53a01333e9ef5895998ed0198f1c3a84864fc820124b64fa9",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "adcd7a8cb548e2aff56da76cba49bd401c652881",
+      "git_blob_sha256": "e528849ab7679ca53a01333e9ef5895998ed0198f1c3a84864fc820124b64fa9"
+    },
+    {
+      "path": "hermes_cli/status.py",
+      "sha256": "fd16e32a0b4081fc8cf4b758065dcc382e4f326197c2c12088d4bcecd76d59bd",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "69619cbf6ee98a3555347f716eb1056b26a9fce2",
+      "git_blob_sha256": "fd16e32a0b4081fc8cf4b758065dcc382e4f326197c2c12088d4bcecd76d59bd"
+    },
+    {
+      "path": "hermes_cli/subcommands/status.py",
+      "sha256": "4a5a2ffaa61b36976fe8812428b850590cf28c5e863c174fc3bd5d8426bb7869",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "83f5a85e1510c1fd6585cb13dd6c4d852b375f8a",
+      "git_blob_sha256": "4a5a2ffaa61b36976fe8812428b850590cf28c5e863c174fc3bd5d8426bb7869"
+    },
+    {
+      "path": "tests/cron/test_jobs_corrupt_save_boundary.py",
+      "sha256": "c1498fe3bd6d59843b807d4348ff02fcc8c40347ed484a18d8b43350cdfc1099",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "b3095dfc62a12dffb0032ed2d8d3bfd4260fc7ba",
+      "git_blob_sha256": "c1498fe3bd6d59843b807d4348ff02fcc8c40347ed484a18d8b43350cdfc1099"
+    },
+    {
+      "path": "tests/cron/test_jobs_shrink_merge_80624.py",
+      "sha256": "020bb67e2ec997b2617b106bc4eccb1772ffdcd9a7e275570fbdb62fdf1cfbb8",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "a1acc81229ec94b1cbae9fba043e2e6d1f478a5f",
+      "git_blob_sha256": "020bb67e2ec997b2617b106bc4eccb1772ffdcd9a7e275570fbdb62fdf1cfbb8"
+    },
+    {
+      "path": "tests/hermes_cli/test_debug.py",
+      "sha256": "65a1cedb293e9a5bb91a245ca906a3662d7526d50ac101cd65fde917f8ec6aa7",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "2f3c06d7e43602dd5b1324e86eaa59f983179054",
+      "git_blob_sha256": "65a1cedb293e9a5bb91a245ca906a3662d7526d50ac101cd65fde917f8ec6aa7"
+    },
+    {
+      "path": "tests/hermes_cli/test_debug_support_secret_boundary.py",
+      "sha256": "b2ebd39db123e97021ceecc7cddd8ad82ba04237566d299352e57e43d99e24a0",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "a6bd2dec120827b3ec861f1aa8dff8a0a9703911",
+      "git_blob_sha256": "b2ebd39db123e97021ceecc7cddd8ad82ba04237566d299352e57e43d99e24a0"
+    },
+    {
+      "path": "tests/hermes_cli/test_native_pty_registry_liveness.py",
+      "sha256": "0f4c7fae67a1052552cabac7b005a228df16a51f92ad7d09634d35c34601a3f6",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "4c99822429b9fb2533720ae54e3bd4db23d5afe7",
+      "git_blob_sha256": "0f4c7fae67a1052552cabac7b005a228df16a51f92ad7d09634d35c34601a3f6"
+    },
+    {
+      "path": "tests/hermes_cli/test_pty_reaper_process_liveness.py",
+      "sha256": "e895b75e18895a669a3a5dceebebd5b58f66fe65646d896cc04ae3ef56f587f0",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "3350b352e67d92eade31430a7420dabef4c1a563",
+      "git_blob_sha256": "e895b75e18895a669a3a5dceebebd5b58f66fe65646d896cc04ae3ef56f587f0"
+    },
+    {
+      "path": "tests/hermes_cli/test_status.py",
+      "sha256": "45140b9e65e8d58f26c4ded5b0e5b13d1f88458a888224794e1dbf48608a60c7",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "5cd9d47233d7c3db689fd02c7a5544bc2b1f1cf1",
+      "git_blob_sha256": "45140b9e65e8d58f26c4ded5b0e5b13d1f88458a888224794e1dbf48608a60c7"
+    },
+    {
+      "path": "tests/hermes_cli/test_status_model_provider.py",
+      "sha256": "fa037f89e73d7eff2022d4d77f33fd0b3bd9efd8b49794852a9b09014d228ddb",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "80ae5b3b49b81d44ff23a1df41b3d835f30c615e",
+      "git_blob_sha256": "fa037f89e73d7eff2022d4d77f33fd0b3bd9efd8b49794852a9b09014d228ddb"
+    },
+    {
+      "path": "tests/hermes_cli/test_status_summary.py",
+      "sha256": "bbea467890a15fe2a7076e3dd512ddfb4960f045bf51600b33639847617ebc16",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "03963f8cb33c7e06fcd3a199e8a0c729171a0c13",
+      "git_blob_sha256": "bbea467890a15fe2a7076e3dd512ddfb4960f045bf51600b33639847617ebc16"
+    },
+    {
+      "path": "tests/tools/test_tts_existing_output_preservation.py",
+      "sha256": "9556287ae8dcb788c74fe03c335bc3e624991a52f4eb9860ede57b2d012e050a",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "4e2ca5fd731575b298ccdb87f226e00051031f56",
+      "git_blob_sha256": "9556287ae8dcb788c74fe03c335bc3e624991a52f4eb9860ede57b2d012e050a"
+    },
+    {
+      "path": "tools/tts_tool.py",
+      "sha256": "c043e66977e43ec82053e468f8ab90e7f2b2f920e9c514dbaa4147f7bfe7f797",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "2622c7fab16fbf67b402be1b84a0874ccd098d8d",
+      "git_blob_sha256": "c043e66977e43ec82053e468f8ab90e7f2b2f920e9c514dbaa4147f7bfe7f797"
+    },
+    {
+      "path": "tui_gateway/methods_config.py",
+      "sha256": "bcde13509f28db4e81878d3630991e1855abd46002aff0728f0169e44c6ccc1f",
+      "sha256_scope": "TESTED_WINDOWS_WORKTREE_BYTES",
+      "git_blob_oid": "663b5a987bc56cee3892420bd2f3febdceaf0897",
+      "git_blob_sha256": "bcde13509f28db4e81878d3630991e1855abd46002aff0728f0169e44c6ccc1f"
+    }
+  ],
+  "build_artifacts": [
+    {
+      "path": "apps/desktop/dist/index.html",
+      "sha256": "6a5cf8f0ee086777052d04dc9950bc3c3b5bbd789e0e0c4668b44af86c4bec1e"
+    },
+    {
+      "path": "apps/desktop/dist/electron-main.mjs",
+      "sha256": "c03ab4983a08df4c2721c9ea97af9b2f08c3f40ed532d732a53057b4455c7bab"
+    },
+    {
+      "path": "apps/desktop/dist/electron-preload.js",
+      "sha256": "c5c7c6f8964b988ff1debb56751f291c4203d0f01a9ba3798c648b463a311f1a"
+    },
+    {
+      "path": "apps/desktop/dist/node_modules/get-windows/lib/binding/napi-9-win32-unknown-x64/node-get-windows.node",
+      "sha256": "528cf76b3d7b85bcaf9c0fac928b3150bb338de41c9185ce1f06e2a4d998ebbf"
+    },
+    {
+      "path": "apps/desktop/dist/node_modules/node-pty/prebuilds/win32-x64/conpty.node",
+      "sha256": "ee8f4e6f4dad71939eecfda11de249400e34bfefe4c8b48af13f3b5476f4035b"
+    },
+    {
+      "path": "apps/desktop/dist/node_modules/node-pty/prebuilds/win32-x64/conpty_console_list.node",
+      "sha256": "879dd94cfc79f1e263a00077597ae9448a5394b7d193381aaa50d992a1f91090"
+    },
+    {
+      "path": "apps/desktop/dist/node_modules/node-pty/prebuilds/win32-x64/pty.node",
+      "sha256": "ae323edd0835ee7b9e18cc96a7b2bb4b8173ff768317d178af2788406feb71ff"
+    },
+    {
+      "path": "apps/desktop/dist/assets/agents-BA6wYq3B.js",
+      "sha256": "069718cc288931fcceba97addb6e5e020a61cc97008bca7d012cbcc351f949b9"
+    },
+    {
+      "path": "apps/desktop/dist/assets/alert-B2PF65Dv.js",
+      "sha256": "a5859bc6c61ea455f0eac372fef28e439e34eee47f8debd2f382db2f281fc03d"
+    },
+    {
+      "path": "apps/desktop/dist/assets/apl-gfMMiTNf.js",
+      "sha256": "9619f3fb6609168d82b468b6f950530bd23fafbc261f7b56696b10c483522d93"
+    },
+    {
+      "path": "apps/desktop/dist/assets/artifacts-BZqupyFC.js",
+      "sha256": "b846b6001d3cf30af8b029f643f80c7e8ae3c1666042f9d2254fb584ef0d62ec"
+    },
+    {
+      "path": "apps/desktop/dist/assets/asciiarmor-C_eisQCp.js",
+      "sha256": "d0d548398b732306f912bbd8cd04486543520e3882a05e98b20a86bfa2b70089"
+    },
+    {
+      "path": "apps/desktop/dist/assets/asn1-DCl_8MCW.js",
+      "sha256": "ecd2d25e2e3152f480db9d3e698b2ac94f01fc3dc90d7f51d53d71f5c2a0db33"
+    },
+    {
+      "path": "apps/desktop/dist/assets/asterisk-BEn0Cwpx.js",
+      "sha256": "2a2f286533f7527943a00fba13a31187ca2ddfdd1d8dac717175eb734f0dd14e"
+    },
+    {
+      "path": "apps/desktop/dist/assets/avatar-chip-CjOnTw53.js",
+      "sha256": "0c0b48e72e947aa407f40188866c8e9bf5da7c4d61b38980608e49f4f9fdc5e1"
+    },
+    {
+      "path": "apps/desktop/dist/assets/badge-DFUxQY8X.js",
+      "sha256": "49024cd3563abcefc2335c3f3b03e12d3764b0ef56a47e21ac70f73676d8901d"
+    },
+    {
+      "path": "apps/desktop/dist/assets/brainfuck-D5EjA2JK.js",
+      "sha256": "5475a1a35d2dd641d8cd989a938161509774ccd2b76150b09c4058185476df6e"
+    },
+    {
+      "path": "apps/desktop/dist/assets/bundle-mjs-DxdGK6Xj.js",
+      "sha256": "51faf219e23edbaa6302aee83315c633576f6f868dfabf7e7b96bd5402f2999c"
+    },
+    {
+      "path": "apps/desktop/dist/assets/button-BakCmJN4.js",
+      "sha256": "1dd0b89f927f6d1525ae53e9e1defd425e9ccb00488191d4fb22926721426519"
+    },
+    {
+      "path": "apps/desktop/dist/assets/chat-runtime-C4v0Jqzz.js",
+      "sha256": "9d643ba89cdc9be216355eaa12566683758054746124359c4666a708ffbf364f"
+    },
+    {
+      "path": "apps/desktop/dist/assets/checkbox-DCNr-K2k.js",
+      "sha256": "c5cb308ecd23f3621898a95284d5914de8ca7a9ad1e4a829afc3faf0cdb367fb"
+    },
+    {
+      "path": "apps/desktop/dist/assets/chunk-BO2N2NFS-CUSCrYrq.js",
+      "sha256": "eee1d3663dfe8314feb83cb5edb95f2b529f845bfbc4d613f817fe8222a040c4"
+    },
+    {
+      "path": "apps/desktop/dist/assets/clike-DfEtMM_h.js",
+      "sha256": "56ee4e7e1e971353f623bf7d288dbc5ea79b0f72b67f67b3c26dfa02fbacfd98"
+    },
+    {
+      "path": "apps/desktop/dist/assets/clojure-BflJGmDX.js",
+      "sha256": "3ccea67a7d55baa7ada3701e3382834b1c4b98caad17385635495df8ecf1b075"
+    },
+    {
+      "path": "apps/desktop/dist/assets/cmake-84nbDH0I.js",
+      "sha256": "b04b2d247760958ea0055bc5f2e6b71768ce16eb6c4c9ef107f9756832a49fbf"
+    },
+    {
+      "path": "apps/desktop/dist/assets/cobol-DHLQUbN7.js",
+      "sha256": "dbabfa9a971f5684d1ec67be806185042bec8f381ddc8d72f29671d403741e3d"
+    },
+    {
+      "path": "apps/desktop/dist/assets/code-card-zygAL7a0.js",
+      "sha256": "c179309c943456e7901184c03dc63f36c4a1793f98be1f5d19a149f5bb35cdc4"
+    },
+    {
+      "path": "apps/desktop/dist/assets/code-editor-Dl7KnAbN.js",
+      "sha256": "72795caa2cf05e039fcc6a7ed68d0d2e7197362d51bbd4044cc53d017c1b9afb"
+    },
+    {
+      "path": "apps/desktop/dist/assets/codicon-Cb77RV29.js",
+      "sha256": "83d55a9ca811cab4063f2fb7af41032f250cf2bb751a8662b3b819e8f9cc5966"
+    },
+    {
+      "path": "apps/desktop/dist/assets/coffeescript-De_zI4J0.js",
+      "sha256": "036cefc2b4652f1513a94c360f9131b00d05c2b91f8d1e1de998075eb2bb802c"
+    },
+    {
+      "path": "apps/desktop/dist/assets/combo-Dee3N4rp.js",
+      "sha256": "76d468e4d2d455fe4c175de374ab22f006af4e0d608666ccd18ecf21dfd942c1"
+    },
+    {
+      "path": "apps/desktop/dist/assets/command-center-6IhthIBy.js",
+      "sha256": "be53c96c1bd5cc555f939653694dccb7506f6d5be8a9b69620c1fe92039370ab"
+    },
+    {
+      "path": "apps/desktop/dist/assets/commonlisp-DgAKBe0r.js",
+      "sha256": "a5cf5425784f04223503bbebd02c95a25190604640b15c238143c65585dd3146"
+    },
+    {
+      "path": "apps/desktop/dist/assets/composer-status-BdsN1_Yi.js",
+      "sha256": "3266e8d5b04a2e8ed9cdfccbaf955b2e30923dea45130a22b6aed27581d0710b"
+    },
+    {
+      "path": "apps/desktop/dist/assets/confirm-dialog-CTD9I6b4.js",
+      "sha256": "f711082a91424ff1333154bd0f770432f775496ca069e2e481230541bf05fb1b"
+    },
+    {
+      "path": "apps/desktop/dist/assets/confirm-jAYaxQUQ.js",
+      "sha256": "8c5af7532b99cb2a75300c5dbd390b3f029076985c1b2c9d60941399370750fb"
+    },
+    {
+      "path": "apps/desktop/dist/assets/connection-display-R5BZK3MN.js",
+      "sha256": "3f557d75661d267da11ecb7498c9131e878919058c06c3dfc7a95040a180260c"
+    },
+    {
+      "path": "apps/desktop/dist/assets/connection-registry-state-Bnshorii.js",
+      "sha256": "c8c12a2c5bb7905ec92ac049f3d30daad43c06e09e87d60afce2edeaed5d2a8b"
+    },
+    {
+      "path": "apps/desktop/dist/assets/connections-BkE-OJGg.js",
+      "sha256": "088be685280bb47a94faa74950e94dc62cccbb82a2a023bd7a0d307614b169d9"
+    },
+    {
+      "path": "apps/desktop/dist/assets/context-BRirRcZo.js",
+      "sha256": "e719cdbcf18f2ed34d790db20a8c2a240d8b1a6d45079d8fadfceda4cca47409"
+    },
+    {
+      "path": "apps/desktop/dist/assets/context-menu-CPZqG5E0.js",
+      "sha256": "0410f72befac4df30384ecc31246751f10738b60996ee4f7eeead270460fbc01"
+    },
+    {
+      "path": "apps/desktop/dist/assets/copy-button-CSeD-e26.js",
+      "sha256": "631d9665bba557a67a0b96de741bc18c84e211ecbf42806edd9a5f24970e545c"
+    },
+    {
+      "path": "apps/desktop/dist/assets/credential-key-ui-BYP4lDNX.js",
+      "sha256": "0c05b193c750bf0e14df1c2dd93f41a8487031d336926c6d3a1044d0d201f3bd"
+    },
+    {
+      "path": "apps/desktop/dist/assets/cron-7ZJGHO0y.js",
+      "sha256": "7d324a9e64fa87a9208ae7a22bf1005d200e1a7a9f691c6a64af059e70a0e0d2"
+    },
+    {
+      "path": "apps/desktop/dist/assets/cron-CI0elohz.js",
+      "sha256": "b581a98b4a28d7d1afc46d338692d2a73d2775c0de54cde8a15bb84bf15d505e"
+    },
+    {
+      "path": "apps/desktop/dist/assets/crystal-Bsdphhtm.js",
+      "sha256": "13bbc57de4aebda33b48734f2b181e8f46383f7f4cd991c854fa30c3b63cf15a"
+    },
+    {
+      "path": "apps/desktop/dist/assets/css-CnaYoQib.js",
+      "sha256": "196216d43c6f0da651aed4b274a684b1ccb5b693a057e26e01ac66002f5434f6"
+    },
+    {
+      "path": "apps/desktop/dist/assets/cypher-p9eYesGn.js",
+      "sha256": "cd05736f31fba1aa9830d94e6b3799236e0b8cd2b989674fb9b074532a8bb42c"
+    },
+    {
+      "path": "apps/desktop/dist/assets/d-DWkQyNnU.js",
+      "sha256": "eb4116d03dcda3c7dcb1f8681fe9858eb6f7c7b24213a8397c4862151627d532"
+    },
+    {
+      "path": "apps/desktop/dist/assets/desktop-fs-DpZumzM6.js",
+      "sha256": "7c5dea950d3b88cc89bfb8d0f8ad0de95b5d32ba23bf2247e244d369771db8e6"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dialog-CseZe3ps.js",
+      "sha256": "964e698dacdde2d0df145927c58588b366220f88c921301b2dd0d2c7349af44f"
+    },
+    {
+      "path": "apps/desktop/dist/assets/diff-ChtP43wD.js",
+      "sha256": "cf4c32c773b4aec08498fd170b7f74733a695fdbcbb18170413e05c8d64d4848"
+    },
+    {
+      "path": "apps/desktop/dist/assets/display-path-BV46rQ4D.js",
+      "sha256": "cc5179584869ce0ade2424f0eaca310136e051f6d2cd0c4b04a76a744088ce81"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-BIBYNzFA.js",
+      "sha256": "d77fd0ceeee62339f3de123856fdde745656359b55948d1fe33c847ea9512ed3"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-BIDuaTo0.js",
+      "sha256": "74f2f50e5844feff8e2a40255d791373d8607a8cdfc3f435d4f8a85167c96bd7"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-BOiKAoU1.js",
+      "sha256": "03ab246f57483a1fdf049461926e37c63b4af46998f8bcc68ff2bdda0fad9cb5"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-bQt7K144.js",
+      "sha256": "26a51ff3db5aa9cd774fddcac735aa2d8dcbeb656fca2cff09aeacc7a037907f"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-C9FML95I.js",
+      "sha256": "70ae89f4f533330207eb6023893fc30c7dda3f157f3211332877399717cfa0c6"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-Cc3Z2DrY.js",
+      "sha256": "d0025c2091ed8564ede3ecea6f7b70e8778906f1f02213e28712230c50544e79"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-Ce5QqW20.js",
+      "sha256": "dec585c096694ff5006e65f5caa1660162b8b3d67cc4788741b0c9d314d64a5f"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-CfI0Z7w-.js",
+      "sha256": "4b6127f349558cdf853c9b72c5c1719f51978878f895f230a1df6c6cefc51f63"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-CflEw8bU.js",
+      "sha256": "ed4f2baca01787dee68e5b2b18033eda40b199fe55bb3d1f5118f602437fe3bf"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-CQeZwX-M.js",
+      "sha256": "1e3b1f257f6f878b46a6de7d9012b7cc88250c67f854ad01f5bc91d4c49e8cef"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-CV4Ndqoq.js",
+      "sha256": "d9bc5d9e82d74bdfc33bc52603b288d56c92f5cc0487aa859b5187bca5d82c5a"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-CWRm8h5f.js",
+      "sha256": "a07bacb937977b063e19a39997e9e67872d1c49731db7805ff0571ddcc042f64"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-Cy34BK_5.js",
+      "sha256": "3fd957807a72ba3fb644b958d56fe945891860231ca13dd4c1e4cb2a5abd130b"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-DhrnM-zi.js",
+      "sha256": "140caeb318cc6842ca2b3d8f5f32a7b75c95ad1a6f218f127f2f08e976197a55"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-Djd5AZj5.js",
+      "sha256": "e8b9bab4c5c188db4c5fb08a62613ddb625af7dd5421f3409d6fbc97d142bed1"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-DLV9mf6O.js",
+      "sha256": "edfae3b28a4ca9e7b559f28827ec91b4e92b2c8331c74295fa03f6b3e1c8bfda"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-Dmb_vQ2F.js",
+      "sha256": "cd5a785e668dd6fd0c0cee7c58f9365211558ac96e93f98dff3adc4c276a7b6e"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-DmyWFfxx.js",
+      "sha256": "d2299a57dbc659c89139f41780e67914f842ddb3d2362d77a7e20f4e2d579606"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-FGv56pCw.js",
+      "sha256": "70a9521f6d5839a0c161adddd7075cf14d2fd0dfdb1a7f3ce491cc2cdc2cf437"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-GEZKg7WE.js",
+      "sha256": "560c380b1eec04e1c84e21595422fc419d8a48c9892b901688e9c137f5c1be6f"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-KOMAEXc6.js",
+      "sha256": "fec09b7bfeba75b34c913ec85f0e10c73196b2c89a42a23670976495ec61d556"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-OhSADO_S.js",
+      "sha256": "16bf7e99a4984bdcb413f2b309760a0bdedd70259d633abed02f863bd7b0a81e"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-PlGiIvuU.js",
+      "sha256": "69d0fb427dc17abfe250de371826c55b63a2315f85095030cacb61563170768b"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-QuGB9Sgt.js",
+      "sha256": "94a454c7ad764fe039cf962148e609e9b492b412258366d9aeb87349b0f8f926"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dist-snIvpmp7.js",
+      "sha256": "29d3b6d8195d16e8b4dba2b7814731ecbdd223b79adc6ea96e894595f92d3db3"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dockerfile-DJkHQgkl.js",
+      "sha256": "c86168d3e36da3ebce319561f0be8af50366b8c9889ea2822b18aba45febe8fb"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dropdown-menu-DIgal32c.js",
+      "sha256": "79faf18aa17e8acdf54e443f56043b3dee26f7f612a32f0b37c40905a79cfa9a"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dtd-DTF72YNO.js",
+      "sha256": "8f289b3c0a603c2de057f44cfb513dcb9e24dfeff1ac299a0acde4f1279385a9"
+    },
+    {
+      "path": "apps/desktop/dist/assets/dylan-C6jEEEk-.js",
+      "sha256": "99f9413d9e91787727a9ecd6fef31a575ae64cf052c8497ddb687e34a62d02b9"
+    },
+    {
+      "path": "apps/desktop/dist/assets/ebnf-D4c0_ac3.js",
+      "sha256": "e39d883c18e1d0436f36926b7b46617128b40cfd7ed0a10bd66af695fcadfe97"
+    },
+    {
+      "path": "apps/desktop/dist/assets/ecl-BVIeWmwY.js",
+      "sha256": "fa4f1534359480b3174b2ca9ff915972f9475bdaa74aab645bfda1eca46074e9"
+    },
+    {
+      "path": "apps/desktop/dist/assets/eiffel-BEjRio4Q.js",
+      "sha256": "df2f416a891d40045c83ff1900af1cb87f72695ad4d87c50682738624c38a266"
+    },
+    {
+      "path": "apps/desktop/dist/assets/elm-Cshzl8qu.js",
+      "sha256": "7dc9b8c8a1289df3800c9ca773519840019d47deefb03dca7f7302b9882f12e9"
+    },
+    {
+      "path": "apps/desktop/dist/assets/erlang-BV0c4Hdn.js",
+      "sha256": "17d201413a70fc04906b3d0265bc6b80e7d8f176c38f46979c366ecbea144e77"
+    },
+    {
+      "path": "apps/desktop/dist/assets/error-boundary-BdUZzq2I.js",
+      "sha256": "32ed0ad8533f7dae79fc7ab5599eb32dc77ec54322212b285eaef106547f90aa"
+    },
+    {
+      "path": "apps/desktop/dist/assets/error-state-CYWVe0fs.js",
+      "sha256": "91546262a9a4f6a4d8c90bff386c90f9abe7b67ce4ea561de77662a949857b04"
+    },
+    {
+      "path": "apps/desktop/dist/assets/external-link-D6jJPDmX.js",
+      "sha256": "e28c39f2f4b8a030eda863c3c9a5dc4d7bfb103556de5d703fee8b2589814c7e"
+    },
+    {
+      "path": "apps/desktop/dist/assets/factor-LKH5gN8L.js",
+      "sha256": "985d490b848506f5c777d7a0584fc9343798e03d2a69c2a556a486d43db1237a"
+    },
+    {
+      "path": "apps/desktop/dist/assets/fcl-ClOhbFR7.js",
+      "sha256": "08ce5e646edb4d614970bead56bd5b06f14093bc904af846e33b1d60fa142052"
+    },
+    {
+      "path": "apps/desktop/dist/assets/field-CfXFsn-v.js",
+      "sha256": "dee5bd360fef12d76454f02829591c8657435a0d947c7a793bf61f84a0a54090"
+    },
+    {
+      "path": "apps/desktop/dist/assets/format-CYnFnnkk.js",
+      "sha256": "ca4bd853290659c50229547f704ab87d47bd80efec558f20b27dfefa970028ff"
+    },
+    {
+      "path": "apps/desktop/dist/assets/forth-Cezjo90N.js",
+      "sha256": "47d27b8b48a27e973c2395874d47df480293feee48bd5eb2c1c9e6446123e7e2"
+    },
+    {
+      "path": "apps/desktop/dist/assets/fortran-Bt6PBEDR.js",
+      "sha256": "0ee1b38b1c87eddf928e6d11929c96ad15d006d477182f4d6fb181475cbaaa25"
+    },
+    {
+      "path": "apps/desktop/dist/assets/frame-embed-Nd4ujZsm.js",
+      "sha256": "56b9d4f39141485b19055db6a30840ac650240434f7bac740789d6d0f10d50a3"
+    },
+    {
+      "path": "apps/desktop/dist/assets/gas-BHEdbvp9.js",
+      "sha256": "72ce032bf8e2f97291cb8070c844d7a36255c89a0b32f65d8f2865b9344ef472"
+    },
+    {
+      "path": "apps/desktop/dist/assets/gateway-noQSOtAj.js",
+      "sha256": "68558dc3e9808229ad39414de40966dd97765e1f5a8cc4653b7c0046a80effea"
+    },
+    {
+      "path": "apps/desktop/dist/assets/gateway-settings-DsiAo6lx.js",
+      "sha256": "97a5fc01fbe1f0bd97b5465e20f022119bbc730c75fbef2c1c197f2d6922ea93"
+    },
+    {
+      "path": "apps/desktop/dist/assets/gherkin-oBAE_ms0.js",
+      "sha256": "ca63055e8d4e39e3280607c357763a89ff08c3e719f48a2749f3d8cde1fea56d"
+    },
+    {
+      "path": "apps/desktop/dist/assets/glyph-spinner-3K5U7PsR.js",
+      "sha256": "5bb8a0aed5b7970b636c9380d99de512e6154cc05d0fded4c4adcbf38e1be000"
+    },
+    {
+      "path": "apps/desktop/dist/assets/groovy-D5BFAy6W.js",
+      "sha256": "de895c7c45bb2000cfc9e2f2b9917dfba3bddd48f2e64c52f97b260fb81deccf"
+    },
+    {
+      "path": "apps/desktop/dist/assets/haptics-Dpzf745U.js",
+      "sha256": "e8d905c1e4e296f7d99baf84340849a52826747e2e0bfa62ecd4f2f2121e39d3"
+    },
+    {
+      "path": "apps/desktop/dist/assets/haskell-BRsoo5mP.js",
+      "sha256": "868e8b21da5021140b51775df3d9ebb51bf5aa0925b2dba75b9923e71a717e6d"
+    },
+    {
+      "path": "apps/desktop/dist/assets/haxe-DjVOVvNP.js",
+      "sha256": "d82d48ac4fdb69dd2dca969ecfb5e59dca97e15d10ec4872afe73d5ac1253325"
+    },
+    {
+      "path": "apps/desktop/dist/assets/hermes-DXzgUWTr.js",
+      "sha256": "00551bb16ce881966db9b46df79e7817c3394a3d0985d0326238edbad976adfe"
+    },
+    {
+      "path": "apps/desktop/dist/assets/highlighted-body-OFNGDK62-DcCMLkhO.js",
+      "sha256": "871410053d959325ab21be5530643ec4368c8f7010f38d9b72b5f3a01586acbe"
+    },
+    {
+      "path": "apps/desktop/dist/assets/http-CLVgA2GD.js",
+      "sha256": "94a0d68f2fa36fd78ed3f3c9483b33062fee90c694f4e70797d9cc5a6715b914"
+    },
+    {
+      "path": "apps/desktop/dist/assets/i18n-DzHP1BXj.js",
+      "sha256": "08a264098b5577a87a383b3729be963e135dc29f9e17a90de77d9175a1558b9e"
+    },
+    {
+      "path": "apps/desktop/dist/assets/IconAlertCircle-CCrAINXN.js",
+      "sha256": "c42b10e404420695d9573cfe8a8d6e953a0d18dfe9f9a16cf44f50403421169d"
+    },
+    {
+      "path": "apps/desktop/dist/assets/IconAlertTriangle-DSsxkpXk.js",
+      "sha256": "0acdc011d9e2ea1c20b5dafc10bfe356351002548aa8b0dd08c621306bf69608"
+    },
+    {
+      "path": "apps/desktop/dist/assets/IconCheck-p-ryrdxF.js",
+      "sha256": "7dd71407271bf352df06c7abb3d43992ec795a83b153dce4f146aadc49bd1601"
+    },
+    {
+      "path": "apps/desktop/dist/assets/IconChevronDown-DTJGPBxz.js",
+      "sha256": "ce0bb82f745c53649af68958d7bf840dee282571ea8adc981139d2bb158c8d78"
+    },
+    {
+      "path": "apps/desktop/dist/assets/IconCopy--TA84hwl.js",
+      "sha256": "836c703b50517fdeb7c60a96ee4d89e1ed5175c5a32a3cc0ee266337a4d6c84c"
+    },
+    {
+      "path": "apps/desktop/dist/assets/IconDeviceFloppy-70wcczEM.js",
+      "sha256": "8694c45eb478ad72c1ecddf5c1bd4bbff891371c5964ba85c9a75440785e3d4b"
+    },
+    {
+      "path": "apps/desktop/dist/assets/IconFileText-D3_PnVWn.js",
+      "sha256": "8a133f02dcd615ebba11da220dd844e8fc7897242d55b017a75c1df90e20840f"
+    },
+    {
+      "path": "apps/desktop/dist/assets/IconLink-w5ozVr7l.js",
+      "sha256": "754110e861380e18c8088e139de98fb774475d247b50581b3eff06bdccf0d845"
+    },
+    {
+      "path": "apps/desktop/dist/assets/IconPhoto-Byj8pxpd.js",
+      "sha256": "f0b4a07c0c44fe9d088eadb6941419cf865e2fd708cc4c0a3bb99ba1b769efa7"
+    },
+    {
+      "path": "apps/desktop/dist/assets/IconPlus-B9kr-Tr5.js",
+      "sha256": "7fc4d8da2565afb1e10273cc7b82b97b42a9f08d94446bd625cb6cb40c98aba2"
+    },
+    {
+      "path": "apps/desktop/dist/assets/IconRefresh-1ZdUE3UX.js",
+      "sha256": "8ed90f288871bab44cea795ef0d40c7ab91f8e07787c0eabf12ed78c8d5ae654"
+    },
+    {
+      "path": "apps/desktop/dist/assets/IconSearch-B3-jHRZD.js",
+      "sha256": "09b2d98bc5a7ce079dedc1eb498ffd1ae735524dd56dd466ad78b1e48c671dfa"
+    },
+    {
+      "path": "apps/desktop/dist/assets/IconTerminal2-B_39j3tY.js",
+      "sha256": "4e9d77851a8ff45628705a5f134150bf213bc27484d447cd2e3646d67dbefe99"
+    },
+    {
+      "path": "apps/desktop/dist/assets/IconTrash-Dl8-rK3c.js",
+      "sha256": "d022034339f6524fb7bbb17bb399f47b6387c5353ef582ebf064b03c30116858"
+    },
+    {
+      "path": "apps/desktop/dist/assets/IconUpload-2r86SL0w.js",
+      "sha256": "fd278f5a53827cfa912bc6e43bf0e282cc06ababc3e1835ce9b41f015ee8d297"
+    },
+    {
+      "path": "apps/desktop/dist/assets/IconX-B54lSBPh.js",
+      "sha256": "a041ef1cd4ef54e5bb3f21cc718bbf01b48362f7e52782ec2913ea2d6ecf1b14"
+    },
+    {
+      "path": "apps/desktop/dist/assets/IconZoomOut-DapREX2a.js",
+      "sha256": "6bb2449dc1196bcc0839cfa19ace8e58f9d089caf5789974a91cea0082cb4adc"
+    },
+    {
+      "path": "apps/desktop/dist/assets/idl-BUZw3wgd.js",
+      "sha256": "438714d3559726d0a0a3ac7a0a08267c929d0bb690fa2eef514b82322be2f6a4"
+    },
+    {
+      "path": "apps/desktop/dist/assets/index-CvOzKEif.js",
+      "sha256": "32bb342c174a516074ee6aa4f8a03d7ed7c7425617f54dd4be803248a6322333"
+    },
+    {
+      "path": "apps/desktop/dist/assets/input-C7J-hpII.js",
+      "sha256": "cfbaadf41235769192a1367ca9a9698af258ae273f39d8e25557ee285fc15aa9"
+    },
+    {
+      "path": "apps/desktop/dist/assets/javascript-DoL9Wb-Q.js",
+      "sha256": "e08aee1ac6d8fa1b90dd2dbbe3bb6d71d27357eeaa073f763994365be84b5587"
+    },
+    {
+      "path": "apps/desktop/dist/assets/job-state-DHuJGymH.js",
+      "sha256": "3eadcf6e7a104cc13b74f134c8cc556c6557ffaf95eb04dcf5ca28d4e2a2a9c2"
+    },
+    {
+      "path": "apps/desktop/dist/assets/julia-CQfgDRfP.js",
+      "sha256": "0c2cf72d1ac90213c3b42a91c800c587f75ee81e2bcde2712dddfd386d8967eb"
+    },
+    {
+      "path": "apps/desktop/dist/assets/katex-DHtBcSK4.js",
+      "sha256": "be9b754bf44ace3745993ec430d1799a34d2f153f4a9c71d758386e2d57c9625"
+    },
+    {
+      "path": "apps/desktop/dist/assets/layout-constants-ByGyMn3R.js",
+      "sha256": "867d93f38190a1bdc3698738e5745e2fa3017fccc58b9f49e3af0de52af353b6"
+    },
+    {
+      "path": "apps/desktop/dist/assets/layout-DBXeQGBM.js",
+      "sha256": "9749cd7b59f8e660ac982d4e3e2ea4b48f4d4db9ccd792b95e6645425048f6fe"
+    },
+    {
+      "path": "apps/desktop/dist/assets/live-sync-x1xL7c1i.js",
+      "sha256": "c5d595765d204622e7240afc41fb4307a86a5ae8f1de99c4088c37cb15167452"
+    },
+    {
+      "path": "apps/desktop/dist/assets/livescript-BXxG0Yva.js",
+      "sha256": "fe8dcb554ae3e959a556e5e0d4c1d6b186818e451a4269ae603062c478094f96"
+    },
+    {
+      "path": "apps/desktop/dist/assets/log-tail-DB1YfRsj.js",
+      "sha256": "e90895d478ddd5634a0f6570e6704f9009559d4271516fc5dc466edad41d034c"
+    },
+    {
+      "path": "apps/desktop/dist/assets/lua-CiA1ziua.js",
+      "sha256": "090af1e4fd29be8231bae96f9d77d102b44102d3bd6dcb3b8b3f1c516c5ca3d8"
+    },
+    {
+      "path": "apps/desktop/dist/assets/markdown-code-DgWWVzNK.js",
+      "sha256": "165dc8d07e0480637be116de42130b4ababbe658e8df63fed322ab62bd459b95"
+    },
+    {
+      "path": "apps/desktop/dist/assets/mathematica-u8YMmbU0.js",
+      "sha256": "84ae4ba6bf879a4608696af785e17cedd8b581bdbea0c90f856585d451b34190"
+    },
+    {
+      "path": "apps/desktop/dist/assets/mbox-BEMVcqjs.js",
+      "sha256": "44dc8f20f0534aa78d31245211628291e31351f36bee1ac1d7aeb8a59a11d254"
+    },
+    {
+      "path": "apps/desktop/dist/assets/media-3Tyvec8e.js",
+      "sha256": "3df807134138507f2e68cc5acbab8ca723f2379d1ef57db4a772eda3e53d50a2"
+    },
+    {
+      "path": "apps/desktop/dist/assets/mermaid-BRsxXEPV.js",
+      "sha256": "c747f90b261b9d10956e9ab7c394ea60bc061643e433597b6b8c2066cc78b98c"
+    },
+    {
+      "path": "apps/desktop/dist/assets/mermaid-embed-CMTSC6Iz.js",
+      "sha256": "2120a6dc33359d62b2f3b93b44217af949976610839405938803d02edf16a9b2"
+    },
+    {
+      "path": "apps/desktop/dist/assets/mermaid-GHXKKRXX-hPZyTSzu.js",
+      "sha256": "78277e65c7e2e510519de6b9f7a0eddab60beedc779952da888d00852af86724"
+    },
+    {
+      "path": "apps/desktop/dist/assets/messaging-PGAkYE2p.js",
+      "sha256": "a299880ca00e3732fdfa3f38f21eec14f786541756dd1b54a1d33e89e1be1a35"
+    },
+    {
+      "path": "apps/desktop/dist/assets/mirc-C9zpzAZU.js",
+      "sha256": "edc1c63e88e0942b88240b589af3bc3e6ada91a4996eb5eff61d64d069d8085a"
+    },
+    {
+      "path": "apps/desktop/dist/assets/mllike-B45xgp2S.js",
+      "sha256": "0530b163f7297af3234377ec8d70cc26919c6e38f3dd34c8069a30387ff666a0"
+    },
+    {
+      "path": "apps/desktop/dist/assets/modelica-CqHI_q-D.js",
+      "sha256": "e620fa810ea18a71a5d491ea8da8638f6113f1ae435c7300b9a2f2d332c5691f"
+    },
+    {
+      "path": "apps/desktop/dist/assets/mscgen-qgSLujhx.js",
+      "sha256": "53b24ee7c56bc57af791aed5bc20b0cf51333dd20c6f48eb9dd7d7a222a4d96b"
+    },
+    {
+      "path": "apps/desktop/dist/assets/mumps-BSzj6Xyz.js",
+      "sha256": "b74f315529764ac8bd1dc5de0000a81e8ec336ca167b130a9380af3f8e2c2527"
+    },
+    {
+      "path": "apps/desktop/dist/assets/native-notifications-BYZ1PfFk.js",
+      "sha256": "b04979218f7c38dd75e4e39904592303f695125390e5f9e8ad4265ef30dea980"
+    },
+    {
+      "path": "apps/desktop/dist/assets/nginx-BMaDbqW3.js",
+      "sha256": "9d644ab2b41f3999d66c3bcb24d6edd1271b8ecf829d5e0c2fb887c21b459515"
+    },
+    {
+      "path": "apps/desktop/dist/assets/notifications-BOLm5Bq_.js",
+      "sha256": "a7e926dab0565ae59b4e7869744ce7f137f75057a0f9bc9a0e47b22ef9ebbbca"
+    },
+    {
+      "path": "apps/desktop/dist/assets/nsis-CfSuhXs5.js",
+      "sha256": "8a1e79c1f0b5ba3690b24a109000879389e50bd66aa700e89402298b08b559ff"
+    },
+    {
+      "path": "apps/desktop/dist/assets/ntriples-B9h1VB_g.js",
+      "sha256": "4cbb7f70c5252f4f7411a7dcd77fbf2a7eeb3401217580ea58454dbf61b39f77"
+    },
+    {
+      "path": "apps/desktop/dist/assets/octave-D2Q8cUp1.js",
+      "sha256": "435819b2e5cd3263138c94a8970bb09101e4c3f186594eb4649f8bc604eecad9"
+    },
+    {
+      "path": "apps/desktop/dist/assets/open-session-fKQ3D1Kf.js",
+      "sha256": "29d90dfc66b097dd0ac4e8928783acd2ad24c782b17c12d4be0c459010061cae"
+    },
+    {
+      "path": "apps/desktop/dist/assets/overlay-root-CvjW69rq.js",
+      "sha256": "4019fe6c320cd9205e2d78297e278cf8fd4fc77dd978c12884423d77ff62c77d"
+    },
+    {
+      "path": "apps/desktop/dist/assets/overlay-split-layout-DNWTqcLi.js",
+      "sha256": "058a93153b10a3f7836100cfeecb3d0f56e09b6f10e4a92c4c6ca8b9c4aa4670"
+    },
+    {
+      "path": "apps/desktop/dist/assets/overlay-view-CLqrr9WJ.js",
+      "sha256": "574ab715ffceb5732d7837c8de3d8e9dd323c1dff2252ac39865d55e0142a42b"
+    },
+    {
+      "path": "apps/desktop/dist/assets/oz-BwTct_5T.js",
+      "sha256": "122d799c67d18e54c5ef26e7786f81ae0fc4ce2dbdeb57aa2ff4b2e5f23fb0a8"
+    },
+    {
+      "path": "apps/desktop/dist/assets/page-loader-BDwSSkTe.js",
+      "sha256": "01305f1ecc4fa819d8b4675f73c08ab59973230a5a4863d83c92f16571e17c38"
+    },
+    {
+      "path": "apps/desktop/dist/assets/page-search-shell-C-fq6czB.js",
+      "sha256": "18a9ef5530b9025f32b48c12edbfa1be1e3eea728082379aa3fd6c8f82745da0"
+    },
+    {
+      "path": "apps/desktop/dist/assets/panel-D2yGyybj.js",
+      "sha256": "0fb467db0db1e1746450f8c713a615adf91d184d8fce600539141ef04ef17cc6"
+    },
+    {
+      "path": "apps/desktop/dist/assets/panes-CMhK1Taz.js",
+      "sha256": "d28d495d5a13ea78cdd40fc2158865d0a2284b2e514e8b13b2d7bebcabca21de"
+    },
+    {
+      "path": "apps/desktop/dist/assets/pascal-Dp_KdFgX.js",
+      "sha256": "2d5e3c493596b6ffcc688ab63c6501d11be92ccb669d92b5c2a36cc876b7acdd"
+    },
+    {
+      "path": "apps/desktop/dist/assets/perl-BkSkiI9m.js",
+      "sha256": "efd47f9ae8043b2e00b8ac2ecf12d5b3916d049fd230d4e2de748e79c633d125"
+    },
+    {
+      "path": "apps/desktop/dist/assets/pig-AF4Hwhju.js",
+      "sha256": "fff5fffe6757c1708a03dec395f9b3bd038d30fce56b70e00960da5ea203c78e"
+    },
+    {
+      "path": "apps/desktop/dist/assets/powershell-BcIto6Sf.js",
+      "sha256": "8024135b87241820f964efccd79e04a67b5a30366f474f54fdb5e63d8fb51a92"
+    },
+    {
+      "path": "apps/desktop/dist/assets/preview-act-BuPy5Va1.js",
+      "sha256": "0c0611b578c7ef2a6f0cd76cf69425f1fbb64e535dcec73eba99d40748ffef1a"
+    },
+    {
+      "path": "apps/desktop/dist/assets/preview-BSlQSDWV.js",
+      "sha256": "d11ed614cd9e4bf10c351a51c0e024ff2a2fa8d3765e68e931ee2fcae4a52d26"
+    },
+    {
+      "path": "apps/desktop/dist/assets/primitives-D-KX90gz.js",
+      "sha256": "38af0b922de2fd21ada1da710c241cb4995fc96003ad83b0566066cfbacb70bf"
+    },
+    {
+      "path": "apps/desktop/dist/assets/profile-fli_xS4k.js",
+      "sha256": "832ef2330d8901b0607e79fbaf74959a3a99a59efaacd9fd3a8d29f9222358a9"
+    },
+    {
+      "path": "apps/desktop/dist/assets/profile-scope-5ffCKIk5.js",
+      "sha256": "7c3267e0f65ae58a976e608332449447a9b149115d57c538f2a6e832b9712dd5"
+    },
+    {
+      "path": "apps/desktop/dist/assets/profiles-Bt92g09y.js",
+      "sha256": "9b4ff3ee82b42a767346fff6fa0cce4ebcc1e2f2df00792d6ba2487c12324854"
+    },
+    {
+      "path": "apps/desktop/dist/assets/properties-C357ku5U.js",
+      "sha256": "265cd5a3bc8e8e1426825db6da7dfd6398db08f4ca5dc266b3f432a982868452"
+    },
+    {
+      "path": "apps/desktop/dist/assets/protobuf-D1ij_kNL.js",
+      "sha256": "7c936836371bd94a649f756e6c07bb3f3139555c4a2c18c0ac6060ca26332d77"
+    },
+    {
+      "path": "apps/desktop/dist/assets/pug-Gsm0M45u.js",
+      "sha256": "85a9a4122f229dcd4131219fe7b9dd18b56013521ac65037f9d5538eccfd4f4a"
+    },
+    {
+      "path": "apps/desktop/dist/assets/puppet-BZyAS7I4.js",
+      "sha256": "a600a4c00b1745a13b1e619a137f2c67ae87352aa1ab57dad71cf94d633265a7"
+    },
+    {
+      "path": "apps/desktop/dist/assets/python-B5eWn6H5.js",
+      "sha256": "183df50df675b4455b08df8493ee9a1c520b88b6693cef355aff7f3f3235cac9"
+    },
+    {
+      "path": "apps/desktop/dist/assets/q-B9NhS7L_.js",
+      "sha256": "b1aacfc6dada3beff2530353c44dbd3b7c9fa39f6c315e27de6b44825fcd7cb4"
+    },
+    {
+      "path": "apps/desktop/dist/assets/quick-entry-BGIxK20A.js",
+      "sha256": "7f8b2dfc9cafdc08df119e97e866343e032b831fa491eb689812d6ff2553603d"
+    },
+    {
+      "path": "apps/desktop/dist/assets/quick-entry-root-C-ylteiV.js",
+      "sha256": "14010c3d79dc985622392c5a7008ecb07c3ec5755d7483ecb09769f2262a1d39"
+    },
+    {
+      "path": "apps/desktop/dist/assets/r-CxDmU1I4.js",
+      "sha256": "ce1385db9dc69828b103ea845015e5ebdad1b624eef79f4c9f5dc56d5d23a7ad"
+    },
+    {
+      "path": "apps/desktop/dist/assets/registry-DyYDUGUf.js",
+      "sha256": "ab80be4b14bfb4a98127ded3e02c75baf84c1c80547579a33d79f1f862a90f99"
+    },
+    {
+      "path": "apps/desktop/dist/assets/rolldown-runtime-C_s2cVnS.js",
+      "sha256": "5ad20d115dde331d723fdd7ddcbe48abe8e074b3f8fae1f40f70b7894cf87ad3"
+    },
+    {
+      "path": "apps/desktop/dist/assets/routes-BDZAB7mx.js",
+      "sha256": "43a952a0c6a20974324cd68344b194340b4ce4a274148f71ea291a9dd552e112"
+    },
+    {
+      "path": "apps/desktop/dist/assets/row-button-SdX8LEQH.js",
+      "sha256": "c8bdd3ddc254a37ac630c79e1d6b5b753a8f002ad767cd530da63f86de57e38c"
+    },
+    {
+      "path": "apps/desktop/dist/assets/rpm-gpDK5sbt.js",
+      "sha256": "5ad9e795d1d7fe0390cc015a03d54aef739a2244340e2deaf5df4f6ed013a8df"
+    },
+    {
+      "path": "apps/desktop/dist/assets/ruby-BjXV7-Qa.js",
+      "sha256": "6024d915337012cc22878c550651e886514abcfa661ffe1f7d9c8f2269f96285"
+    },
+    {
+      "path": "apps/desktop/dist/assets/sas-C2OyD2Y6.js",
+      "sha256": "9c51535bc98848d00a7a16101ad2ff162cb44106468b7a7d595f04719e082cab"
+    },
+    {
+      "path": "apps/desktop/dist/assets/scheme-tChLYBuY.js",
+      "sha256": "5d96d02c0ef2c317bff6cc9d2decee813692ab89daf0a19fb39f86ff74117c0e"
+    },
+    {
+      "path": "apps/desktop/dist/assets/search-field-Cf-dE7Mn.js",
+      "sha256": "8975d8a09496828d32d50420460789a611ca9d1c2628137d1260bde0512c9e11"
+    },
+    {
+      "path": "apps/desktop/dist/assets/security-CLgbIN9j.js",
+      "sha256": "2e2f2c4825fc70492124e6f44750d46cc556dbf3624e060ce662f1d96e6b01e5"
+    },
+    {
+      "path": "apps/desktop/dist/assets/segmented-control-DM8NZ1yn.js",
+      "sha256": "4b1691c673f27567402facc8db164e8f503c83c0ec0ac155a92479c003bd85ee"
+    },
+    {
+      "path": "apps/desktop/dist/assets/select-DR5_tzB4.js",
+      "sha256": "4e90f8314cbbccdfc68af16bf5c583cfa5e2abae330f48a486d555c33aa0e3e9"
+    },
+    {
+      "path": "apps/desktop/dist/assets/session-list-density-PYFdOYeb.js",
+      "sha256": "a5a500cec1398523dfd0d60b27c61fedcc0cc7d2d68095cbc3b73fd0e81b0ca0"
+    },
+    {
+      "path": "apps/desktop/dist/assets/session-states-Dkn0D7GG.js",
+      "sha256": "eec9360294b7416b82e3f0fd940f5a55aeb013927c3f1b0e5820684665dcae92"
+    },
+    {
+      "path": "apps/desktop/dist/assets/settings-Cke3Bvdy.js",
+      "sha256": "691887d9ee9fd1117ae4c8a451a444faba4a2588b2beddfd6c3733eacda8fc88"
+    },
+    {
+      "path": "apps/desktop/dist/assets/shell-DwuoZtxw.js",
+      "sha256": "eada594fb1134cc2dfb8874e055a8db889b2685fa6aa6342841343be30038937"
+    },
+    {
+      "path": "apps/desktop/dist/assets/shiki-AmrucX1Z.js",
+      "sha256": "4debb91f71f95213b34713a786e0f58f595deea0015aac20bf35ed5115ad9c41"
+    },
+    {
+      "path": "apps/desktop/dist/assets/shiki-block-BcFHESl6.js",
+      "sha256": "8c5d4416dbae0922ba8ff38c71790aa872a26efca20d1d2b6561b4f67543478d"
+    },
+    {
+      "path": "apps/desktop/dist/assets/sieve-BAxa3IjF.js",
+      "sha256": "5635d5ffda49d846ee9d85decc3b9a376a7eb8a23004ac1b47399ed3dd8c7b39"
+    },
+    {
+      "path": "apps/desktop/dist/assets/simple-mode-DXiLM1-G.js",
+      "sha256": "1da2ff3f952ded0f8e8080499e58b44d3b22bc7c5e2ae8db2f99a3a6105310b2"
+    },
+    {
+      "path": "apps/desktop/dist/assets/skeleton-CU7Yndmv.js",
+      "sha256": "5075e6cac10203a8dbbb917544fb5c17b5e7fafc16a423414dcb8928a12d1aeb"
+    },
+    {
+      "path": "apps/desktop/dist/assets/skills-BrMtSNCi.js",
+      "sha256": "226e113363701930abc0b3b08bff943f3d1de6ea07f6c96e89c60edc5de95089"
+    },
+    {
+      "path": "apps/desktop/dist/assets/smalltalk-BLp5-jwC.js",
+      "sha256": "559d0a977880456b4f916cf9b1592b375c96047cd9dd0a13b3598b4369072553"
+    },
+    {
+      "path": "apps/desktop/dist/assets/social-embed-B8cBQpTK.js",
+      "sha256": "a80081369cd162b25b26b55abbbf0ff1b6a881893da021b320160a9c3414a683"
+    },
+    {
+      "path": "apps/desktop/dist/assets/solr-BBopId9w.js",
+      "sha256": "85fb02343f917c8bc6f0fbfe6aeeb55afc1a46400f1637074b7279a4fc3e7876"
+    },
+    {
+      "path": "apps/desktop/dist/assets/sparql-Dz-mlCAC.js",
+      "sha256": "02e59f6539d324beb643eee727f0b4356549cafe15f7aaceb3d3c34ee5bdad0d"
+    },
+    {
+      "path": "apps/desktop/dist/assets/spotify-embed-YdFmmeMP.js",
+      "sha256": "3c7908562077ca5bc04aa3d9e622bfcbc9431b30334dab46ee309ca7dd5e6184"
+    },
+    {
+      "path": "apps/desktop/dist/assets/spreadsheet-CTIncYxj.js",
+      "sha256": "d3af197570b0a504e7c45dcd619b58422c5cb2f54b9028e556768e2213b070f6"
+    },
+    {
+      "path": "apps/desktop/dist/assets/sql-DuQMFDvy.js",
+      "sha256": "648b34cda3d7da91025ed7ec142ffbd5bf26528407740383bdf690643a16c73c"
+    },
+    {
+      "path": "apps/desktop/dist/assets/starmap-DzSNb_st.js",
+      "sha256": "d9961dff59a2818bad0f353b7af8a2d34847a805a8f36176161ee3b3dd40d7d9"
+    },
+    {
+      "path": "apps/desktop/dist/assets/status-dot-CSs2capH.js",
+      "sha256": "82c6b03b3f02703d8938e0b90c1b0a122af87eb72509e0d1580d1f3e2830d542"
+    },
+    {
+      "path": "apps/desktop/dist/assets/stex-DNzd62Q_.js",
+      "sha256": "f12ad11c2bff04c45c80f79d02250c76f0b1d01b254d04da7b195f4ad15b556f"
+    },
+    {
+      "path": "apps/desktop/dist/assets/storage-Qfg3Ykci.js",
+      "sha256": "473c1dc9e4e43baf38ffeb197505cdbb27b45bdd67e71800d43b61b3883bc87a"
+    },
+    {
+      "path": "apps/desktop/dist/assets/store-7JGBKYjM.js",
+      "sha256": "9ac277e020e250216ba7b0566ad6c770113b6a3ce259c82c9df75d9a407c795a"
+    },
+    {
+      "path": "apps/desktop/dist/assets/store-CoDUTn8f.js",
+      "sha256": "b3d5f2ba90ae61b7ae969289aaf2c3acf05a235eb94b107fe5248cf4a2d0c2d7"
+    },
+    {
+      "path": "apps/desktop/dist/assets/stylus-BOVgKnng.js",
+      "sha256": "8522dc37629aa3153da10fac7505ac8f289219c3eb79246bc6d9e05f1a5ed148"
+    },
+    {
+      "path": "apps/desktop/dist/assets/subagents-BNCyEM5L.js",
+      "sha256": "9dd9cbee3afdb0ce7b13497db488672ed9eb3bc3a2464db59504ab46a44e9fd4"
+    },
+    {
+      "path": "apps/desktop/dist/assets/svg-embed-DMzI_Ywj.js",
+      "sha256": "7791cdec6b1bd8ae6d8a8f13f642a7c00267424f136c36dd2ae374a50e74ac99"
+    },
+    {
+      "path": "apps/desktop/dist/assets/swift-DKB6_1j6.js",
+      "sha256": "f0835c04896ba11cf7884b2175e31574762723655d4e6461ce6ec7046479eaa3"
+    },
+    {
+      "path": "apps/desktop/dist/assets/syntax-diff-D73dksEc.js",
+      "sha256": "34a857b133d171d25a5db8f0302b751c717a1821f1678c6b8a62a1851476f899"
+    },
+    {
+      "path": "apps/desktop/dist/assets/system-actions-Bkx4nIiZ.js",
+      "sha256": "d8bdb2daa0c397ff314756f96b6184bf38b7a5768119997f869d0e1bd0e2edd1"
+    },
+    {
+      "path": "apps/desktop/dist/assets/tab-dropdown-BSxlRiAX.js",
+      "sha256": "b0d999c7291837744ada21551d3b2e567a872408d8ef6d4183e3f3e3c6eb9ebe"
+    },
+    {
+      "path": "apps/desktop/dist/assets/tcl-BGfruO1u.js",
+      "sha256": "3e07cc02b94880557cd297c19f467421a7f452c8240534e7e9e7dbc4607b1813"
+    },
+    {
+      "path": "apps/desktop/dist/assets/textarea-Ylww01Bh.js",
+      "sha256": "70aa0962dc599a511baf6176ee67004b57474179f33656c36399537d1f3df08d"
+    },
+    {
+      "path": "apps/desktop/dist/assets/textile-C4jVoHG1.js",
+      "sha256": "87165770d704543ebf20f4da7f1a84f4c97bd43dc707f71759b32239f9516f9e"
+    },
+    {
+      "path": "apps/desktop/dist/assets/tiddlywiki-VlUiK86J.js",
+      "sha256": "1bd675104bdfd2ac7ec250cefe80d8f48581bf103519f1c7407b2a4e3502da93"
+    },
+    {
+      "path": "apps/desktop/dist/assets/tiki-AK6FwT8q.js",
+      "sha256": "40f9417ef31d3a2a2671e52e8cf0d2a62f60f6c3e928dbaa831817ecdd77eead"
+    },
+    {
+      "path": "apps/desktop/dist/assets/time-C9cxykbR.js",
+      "sha256": "689eb3678ff8ca83a2f82dece9f1f70bc087ad9c4764ff96960982524f951f83"
+    },
+    {
+      "path": "apps/desktop/dist/assets/titlebar-icon-BDEV6ktD.js",
+      "sha256": "a5e7830fdf09d2d4b34deedad69571c66d8fd71e9b2cd6b391867180446b6bcc"
+    },
+    {
+      "path": "apps/desktop/dist/assets/toml-BPTmHmyx.js",
+      "sha256": "55c50c3d69b919264e6f1d9e6d9279d381d88c1c9a9e1cd4a75c82abe9680de8"
+    },
+    {
+      "path": "apps/desktop/dist/assets/tooltip-CLfqemYa.js",
+      "sha256": "928fda6af64087512192d90243ec12b607244f6d446351b76253c89e6934f594"
+    },
+    {
+      "path": "apps/desktop/dist/assets/tour-BuAVC2hb.js",
+      "sha256": "2b9371f9ae62a3dcd131d99a2d5b5aeedd005476604de8118fe2c6479833e795"
+    },
+    {
+      "path": "apps/desktop/dist/assets/trackpad-gestures-B3jbuTYy.js",
+      "sha256": "483a04a930a602ba75e0b422e8de7702d7a5c484375cf83dbf0f27172d4c61ea"
+    },
+    {
+      "path": "apps/desktop/dist/assets/troff-C2dAgh7P.js",
+      "sha256": "46bba1f3f4223fd204bf913bbeebdbc0256db1e69bd9a2e804175c5841ec8fe5"
+    },
+    {
+      "path": "apps/desktop/dist/assets/ttcn-cfg-2b4Gb5sE.js",
+      "sha256": "ac7fc0a6da171cc715153f966c7907e688604a7e78cc00db914af119e976eb68"
+    },
+    {
+      "path": "apps/desktop/dist/assets/ttcn-PPSTk1ow.js",
+      "sha256": "6d53eb1b3bceb8f3a212937286bfdaeed42149560fa0e815d735527686a7f6d2"
+    },
+    {
+      "path": "apps/desktop/dist/assets/turtle-Cx3rYX2g.js",
+      "sha256": "ceb6ee2aef9f2a911bd3d33a4913af35ce960f77ce309d0e3173e5f257c50afc"
+    },
+    {
+      "path": "apps/desktop/dist/assets/updates-B-TUnJbm.js",
+      "sha256": "345f33733b52037311b6837ba0642c364be2c94680ea3cda5c891d7111b4036b"
+    },
+    {
+      "path": "apps/desktop/dist/assets/use-media-query-CjsmpmMy.js",
+      "sha256": "377be5c9098e253bac22a1e9dfcadcb300d6d0a1d026c4faa0dc2d1f96c1925a"
+    },
+    {
+      "path": "apps/desktop/dist/assets/use-on-profile-switch-DG435kBj.js",
+      "sha256": "e0d207a23fde73f855f5857ab83d70468b6b4155722f6e5fe289862a05ad3528"
+    },
+    {
+      "path": "apps/desktop/dist/assets/use-refresh-hotkey-iYMwqMqi.js",
+      "sha256": "4257208839a8efb2d68b5d8a583d218aae9e7b44c1855e988aeacdc98e3fc989"
+    },
+    {
+      "path": "apps/desktop/dist/assets/use-resize-observer-BITdgeeZ.js",
+      "sha256": "7a2da3a827d8961bed343c771de6a316225c7eb951a0e4a842500d7681f34aa2"
+    },
+    {
+      "path": "apps/desktop/dist/assets/use-theme-epoch-ffO6z5PW.js",
+      "sha256": "fcb705b1d2a227219c80bf611661bfdef91a74bba574ab380b65d77755ad38d7"
+    },
+    {
+      "path": "apps/desktop/dist/assets/utils-BRwGVQJx.js",
+      "sha256": "5f777156b1d865320ba9db94c914d4cb0eb015a6929fe09a34f02a5f61d1485c"
+    },
+    {
+      "path": "apps/desktop/dist/assets/vb-BthdM_4N.js",
+      "sha256": "e025945bc97ae2640b26c11b737636cc735b0600387077412dbbae1e488d2686"
+    },
+    {
+      "path": "apps/desktop/dist/assets/vbscript-D9f6rSsU.js",
+      "sha256": "17756f99b070ecf14eb93e21030c15c6fb5f483d189b18d34943ebef3802b173"
+    },
+    {
+      "path": "apps/desktop/dist/assets/velocity-CqftRsjg.js",
+      "sha256": "73fe5a94c56d83b21ad4bca500a377e32d2ecaab55df875ecae446a65a680cbe"
+    },
+    {
+      "path": "apps/desktop/dist/assets/vendor-md-BPTkkidF.js",
+      "sha256": "f8b7c1ce5460dca6f294eac050202a7c03704b73b771af27f6776558ac20fb3a"
+    },
+    {
+      "path": "apps/desktop/dist/assets/vendor-react-BA5gow0i.js",
+      "sha256": "7790b9a43edcb0f4a25e5ce514ce2fb635ef1acfd960a608e0a90b5fae42f737"
+    },
+    {
+      "path": "apps/desktop/dist/assets/vendor-util-B9iD4-72.js",
+      "sha256": "fd549561136508202de8900701eb8d59c3476eac58cd942edbf3996aef082482"
+    },
+    {
+      "path": "apps/desktop/dist/assets/verilog-Be6GoVpy.js",
+      "sha256": "45842e742d23b2f9266b459670fa142f5e2c4384ca7530f192aabe36c5940e39"
+    },
+    {
+      "path": "apps/desktop/dist/assets/vhdl-kS471soi.js",
+      "sha256": "dcbd07bcd5b806eee08ab28b0b0819438abebb9b05aee10a5b983fec08e5b828"
+    },
+    {
+      "path": "apps/desktop/dist/assets/vibe-hearts-enabled-CsBlzdlQ.js",
+      "sha256": "1508cefaa3da0d40974b48f64d673667fa2f58a4d1b013cfb0d7813d32c0a47d"
+    },
+    {
+      "path": "apps/desktop/dist/assets/wake-indicator-root-NqVXP-uU.js",
+      "sha256": "fc5c98b91300e1c0e633ab93d1b3b702ba23244ee38ede9661e1c79a9022bbca"
+    },
+    {
+      "path": "apps/desktop/dist/assets/webhooks-DPyy0-n6.js",
+      "sha256": "85c7d4344e00dafeeba92ae46b0691e35def3afaa61045140750aa2891f5f81b"
+    },
+    {
+      "path": "apps/desktop/dist/assets/webidl-D5jiJvOU.js",
+      "sha256": "fc2dfdc276c574d2bbda79a675c05f6cebc4a24313b1c3a5743ef0b31290e05e"
+    },
+    {
+      "path": "apps/desktop/dist/assets/xquery-BOL914df.js",
+      "sha256": "df37cc393b9b3b5f3949ff48abe2e7e1aa23e66d7d3e4a9cdf1517ea893f931d"
+    },
+    {
+      "path": "apps/desktop/dist/assets/yacas-CXXgtw0p.js",
+      "sha256": "717ca22d8f94a5a221635a01bc506c11f0fe36088ed98f3a08532a7da9297831"
+    },
+    {
+      "path": "apps/desktop/dist/assets/youtube-embed-BurNE-_T.js",
+      "sha256": "3be387b148d9f9074fb7c1f9320de9da7ad319797cb6edea5f91e78533361c22"
+    },
+    {
+      "path": "apps/desktop/dist/assets/z80-CL1naaMV.js",
+      "sha256": "137aa1ae99e516077226e37e4b76756a11830ca30e5d91b9b837d02f68ffdca5"
+    },
+    {
+      "path": "apps/desktop/dist/assets/glyph-spinner-DL5QKO4M.css",
+      "sha256": "15417918dcbbc0f57cf5260a05ab27a116972101822355aaaac10f2c57bc546e"
+    },
+    {
+      "path": "apps/desktop/dist/assets/index-Bty1jYhb.css",
+      "sha256": "0c0c44d678b1c98c8bbb8334a4d94afcb6ced4634999b044b22f0cad8c31cb54"
+    },
+    {
+      "path": "apps/desktop/dist/assets/tour-d-2_L1ol.css",
+      "sha256": "3340414d5bffad614fe50efa1f5d861fe6e0c5aff2279e000ea505322abd41a3"
+    },
+    {
+      "path": "apps/desktop/dist/assets/wake-indicator-root-DH8JPTry.css",
+      "sha256": "7fb0bf09b773b2c5de133ee00f52b3293203a25f375b6faf68bdad77378bacd8"
+    }
+  ],
+  "build_scope": "Fresh candidate renderer/Electron bundles and staged Windows native addons; not a packaged installer or runtime acceptance",
+  "locks_unchanged": true,
+  "new_mandatory_vendor_runtime_added": false,
+  "whole_runtime_vendor_independence_accepted": false,
+  "model_effort_attestation": "NOT_EXPOSED_BY_PARENT_RUNTIME_TOOLS_NOT_FABRICATED",
+  "independent_review": {
+    "reviewer_id": "01a14810-844b-7c93-a3a0-6fb33be1bdeb",
+    "fresh_context": true,
+    "read_only": true,
+    "review_cycles": 1,
+    "findings": 7,
+    "confirmed_and_fixed": 7,
+    "resolution_proof": "Behavioral RED/GREEN plus native sharing and owned ZIP/wire evidence",
+    "post_fix_independent_rereview": false,
+    "clean_review_claimed": false
+  },
+  "codegraph": {
+    "version": "1.6.0",
+    "candidate_status": {
+      "initialized": true,
+      "version": "1.6.0",
+      "lastIndexed": "2026-10-17T04:40:07.448Z",
+      "fileCount": 9228,
+      "nodeCount": 199487,
+      "edgeCount": 631609,
+      "dbSizeBytes": 685350912,
+      "walSizeBytes": 0,
+      "backend": "node-sqlite",
+      "journalMode": "wal",
+      "nodesByKind": {
+        "class": 13316,
+        "component": 64,
+        "constant": 5898,
+        "enum": 8,
+        "enum_member": 25,
+        "field": 10,
+        "file": 8891,
+        "function": 63761,
+        "import": 44414,
+        "interface": 2195,
+        "method": 42925,
+        "namespace": 1,
+        "property": 1473,
+        "route": 397,
+        "struct": 33,
+        "type_alias": 890,
+        "variable": 15186
+      },
+      "languages": [
+        "c",
+        "cpp",
+        "csharp",
+        "go",
+        "javascript",
+        "liquid",
+        "nix",
+        "php",
+        "python",
+        "rust",
+        "tsx",
+        "typescript",
+        "yaml"
+      ],
+      "pendingChanges": {
+        "added": 0,
+        "modified": 0,
+        "removed": 0
+      },
+      "worktreeMismatch": null,
+      "index": {
+        "builtWithVersion": "1.6.0",
+        "builtWithExtractionVersion": 25,
+        "currentExtractionVersion": 25,
+        "reindexRecommended": false,
+        "state": "complete",
+        "pendingRefs": 0
+      }
+    },
+    "candidate_affected_sha256": "d1d56ade33e22f1c4e5ff025573a4ccf727e9400648c44f0769f71e133460b04",
+    "r_after_scope": "15-present-file source-bound projection, not whole-tree coverage",
+    "upstream_scope": "Frozen release existing 1.6.0 index plus selected Git-blob binding",
+    "base_scope": "Candidate indexed before edits at frozen D_BASE",
+    "excluded_unchanged_large_owner": "gateway/run.py exceeds 1 MiB extractor cap; no whole-file graph coverage claimed"
+  },
+  "product_commits": [
+    {
+      "observation": "B01",
+      "sha": "f88a2344bcf46799c42451a37e17d7ea41d69cb6",
+      "title": "fix(cron): refuse unknown or continuously changing save baselines",
+      "paths": [
+        "cron/jobs.py",
+        "tests/cron/test_jobs_corrupt_save_boundary.py",
+        "tests/cron/test_jobs_shrink_merge_80624.py"
+      ]
+    },
+    {
+      "observation": "B04",
+      "sha": "6a586bb9f76c32d7b1bfc7b7c2dd1ff6266a9527",
+      "title": "fix(pty): reap exited children without evicting replacement sessions",
+      "paths": [
+        "hermes_cli/pty_session.py",
+        "tests/hermes_cli/test_pty_reaper_process_liveness.py",
+        "tests/hermes_cli/test_native_pty_registry_liveness.py"
+      ]
+    },
+    {
+      "observation": "B02",
+      "sha": "e068d11ca07433ecb8f2cbb1b3eb38c0d7140f49",
+      "title": "fix(tts): preserve existing audio across generation and publication failures",
+      "paths": [
+        "tools/tts_tool.py",
+        "tests/tools/test_tts_existing_output_preservation.py"
+      ]
+    },
+    {
+      "observation": "B03",
+      "sha": "c34b43413071e6b73c9cc5dea55cfb3331e4714b",
+      "title": "fix(diagnostics): scrub all support copies and fail closed on redactor errors",
+      "paths": [
+        "hermes_cli/debug.py",
+        "hermes_cli/debug_redaction.py",
+        "hermes_cli/diagnostics_local_export.py",
+        "tui_gateway/methods_config.py",
+        "tests/hermes_cli/test_debug.py",
+        "tests/hermes_cli/test_debug_support_secret_boundary.py"
+      ]
+    },
+    {
+      "observation": "F03",
+      "sha": "31c7270d2604c11c4943066aeed00a0d8a293f7c",
+      "title": "feat(status): show a local summary by default and retain explicit full diagnostics",
+      "paths": [
+        "hermes_cli/status.py",
+        "hermes_cli/subcommands/status.py",
+        "tests/hermes_cli/test_status.py",
+        "tests/hermes_cli/test_status_model_provider.py",
+        "tests/hermes_cli/test_status_summary.py"
+      ]
+    },
+    {
+      "observation": "F01",
+      "sha": "52be3f44c222e26ac5536e21cf98a98cba50f142",
+      "title": "feat(desktop): persist provider-aware model favorites in the picker",
+      "paths": [
+        "apps/desktop/src/app/shell/model-catalog-menu.tsx",
+        "apps/desktop/src/app/shell/model-catalog-menu.test.tsx",
+        "apps/desktop/src/store/favorite-models.ts",
+        "apps/desktop/src/store/favorite-models.test.ts",
+        "apps/desktop/src/i18n/en.ts",
+        "apps/desktop/src/i18n/ja.ts",
+        "apps/desktop/src/i18n/zh.ts",
+        "apps/desktop/src/i18n/types.ts"
+      ]
+    },
+    {
+      "observation": "C01",
+      "sha": "dd795de83330fc4ebb44fc76df3716a711c6e81d",
+      "title": "fix(desktop): show separate security axes and fence results by connection",
+      "paths": [
+        "apps/desktop/src/api/security.ts",
+        "apps/desktop/src/app/security/index.tsx",
+        "apps/desktop/src/app/security/index.test.tsx",
+        "apps/desktop/src/i18n/en.ts",
+        "apps/desktop/src/i18n/ja.ts",
+        "apps/desktop/src/i18n/zh.ts",
+        "apps/desktop/src/i18n/types.ts"
+      ]
+    }
+  ],
+  "commands": {
+    "python": "native Python 3.12 -B -m pytest -p pytest_asyncio.plugin -o addopts= TESTFILE --basetemp OWNED_UNIQUE --junitxml=RECEIPT -q; one subprocess/file",
+    "isolation": "candidate cwd/PYTHONPATH; owned HERMES_HOME/TEMP/TMP; PYTHONUTF8=1; PYTEST_DISABLE_PLUGIN_AUTOLOAD=1",
+    "ui": "vitest run --project ui security/index.test.tsx model-catalog-menu.test.tsx favorite-models.test.ts --reporter=junit",
+    "renderer_typecheck": "tsc -p tsconfig.typecheck.json --noEmit",
+    "lint": "repo-configured Ruff on changed Python; ESLint on changed frontend; git diff --check",
+    "build": "npm run build --workspace apps/desktop; postbuild assert-dist-built",
+    "codegraph": "project-pinned 1.6.0 npm-shim.js sync/status/query/affected; CODEGRAPH_NO_DOWNLOAD=1; DO_NOT_TRACK=1"
+  },
+  "git_hook": {
+    "status": "LEFTHOOK_NOT_FOUND_IN_PATH",
+    "success_claimed": false,
+    "explicit_checks": "Configured Ruff, changed frontend ESLint, renderer typecheck, per-file tests, UI tests, build and diff hygiene were run directly"
+  },
+  "mandatory_open": [
+    "Full history semantic classification and final public-surface inventory",
+    "Conditional feature owners/acceptance and complete legacy U01-U18 qualification",
+    "Complete Security Center and outbound/Control MCP effect and lifecycle acceptance",
+    "Fresh packaged Windows user journey and actual model inference",
+    "Dedicated Windows eight-hour soak and three physical sleep/resume cycles",
+    "Full cold vendor-runtime independence closure"
+  ],
+  "publication": {
+    "push": false,
+    "merge": false,
+    "version_bump": false,
+    "production_restart": false,
+    "sleep_or_reboot": false
+  },
+  "preservation": {
+    "primary_head_unchanged": true,
+    "primary_tracked_clean": true,
+    "primary_untracked_names_match_initial": true,
+    "primary_wip_content_hashes_captured_at_start": false,
+    "prior_campaign_head": "bb4d2c0c8d8b91ebb3a08546ef365ecc00b83fc7",
+    "prior_campaign_wip_not_edited_by_this_task": true
+  }
+}
