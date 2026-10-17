@@ -439,6 +439,15 @@ gateway:
   credits:
     not_logged_in:            "Not logged into Nous Portal. Log in to see your credit balance and top up."
 
+  busy:
+    status: "Busy input mode for this conversation: `{mode}`.\n{behavior}"
+    saved: "Busy input mode saved for this conversation: `{mode}`.\n{behavior}"
+    usage: "Usage: /busy queue|steer|interrupt|status"
+    save_failed: "Could not save the busy input mode. The previous mode is still active."
+    behavior_queue: "Follow-up messages wait for their own turns in arrival order."
+    behavior_steer: "Follow-up messages steer the active turn; unavailable steering falls back to the queue."
+    behavior_interrupt: "Follow-up messages interrupt the active turn; existing subagent and compression protections still apply."
+
   verbose:
     not_enabled:           "The `/verbose` command is not enabled for messaging platforms.\n\nEnable it in `config.yaml`:\n```yaml\ndisplay:\n  tool_progress_command: true\n```"
     mode_off:              "⚙️ Tool progress: **OFF** — no tool activity shown."

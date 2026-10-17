@@ -5955,11 +5955,16 @@ class BasePlatformAdapter(ABC):
         )
         return True
 
-    def _discard_text_debounce(self, session_key: str) -> None:
-        """Cancel and drop pending text debounce state for control commands."""
+    def take_text_debounce(self, session_key: str) -> Optional[MessageEvent]:
+        """Transfer an accepted burst to the runner when its busy policy changes."""
         state = self._text_debounce_store().pop(session_key, None)
         if state is not None and state.task is not None and not state.task.done():
             state.task.cancel()
+        return state.event if state is not None else None
+
+    def _discard_text_debounce(self, session_key: str) -> None:
+        """Cancel and drop pending text debounce state for control commands."""
+        self.take_text_debounce(session_key)
 
     # ------------------------------------------------------------------
     # Session task + guard ownership helpers

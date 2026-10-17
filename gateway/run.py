@@ -9261,6 +9261,12 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         pending_slot = getattr(adapter, "_pending_messages", None)
         if pending_slot is None:
             return
+        if self._session_busy_input_mode(queued_event.source) is not None:
+            # Slash commands and synthetic queue producers can bypass ordinary
+            # busy admission. Drain before *any* new FIFO item overtakes an
+            # accepted burst. The drain pops first, so its own enqueue finds
+            # no remaining debounce state and cannot recurse again.
+            self._drain_busy_text_debounce(queued_event.source)
         if session_key in pending_slot:
             self._session_state(session_key).conversation.queued_events.append(
                 queued_event
@@ -9940,8 +9946,30 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 name = ""
         return name or None
 
+    def _session_busy_input_mode(self, source: SessionSource) -> Optional[str]:
+        """Read a persisted conversation override from the existing routing store."""
+        store = getattr(self, "session_store", None)
+        if store is None:
+            return None
+        mode = store.get_session_metadata(self._session_key_for_source(source), "busy_input_mode")
+        return mode if isinstance(mode, str) and mode in {"interrupt", "queue", "steer"} else None
+
+    def _drain_busy_text_debounce(self, source: SessionSource) -> None:
+        """Keep already accepted input ahead of messages using the new policy."""
+        adapter = self._adapter_for_source(source)
+        take = getattr(adapter, "take_text_debounce", None)
+        if not callable(take):
+            return
+        session_key = self._session_key_for_source(source)
+        pending = take(session_key)
+        if pending is not None:
+            self._enqueue_fifo(session_key, pending, adapter)
+
     def _effective_busy_input_mode(self, source: SessionSource) -> str:
-        """Resolve busy input mode from the routed profile startup snapshot."""
+        """Resolve a conversation override before the routed profile snapshot."""
+        override = self._session_busy_input_mode(source)
+        if override is not None:
+            return override
         fallback = getattr(self, "_busy_input_mode", "interrupt")
         profile_name = self._busy_profile_name_for_source(source)
         if not profile_name:
@@ -9950,7 +9978,10 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         return modes.get(profile_name, fallback) if isinstance(modes, dict) else fallback
 
     def _effective_busy_text_mode(self, source: SessionSource) -> str:
-        """Resolve legacy busy text mode from the routed profile snapshot."""
+        """Resolve conversation policy before the profile's legacy text mode."""
+        override = self._session_busy_input_mode(source)
+        if override is not None:
+            return "queue" if override == "queue" else "interrupt"
         fallback = getattr(self, "_busy_text_mode", "interrupt")
         profile_name = self._busy_profile_name_for_source(source)
         if not profile_name:
@@ -10583,6 +10614,12 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         if getattr(event, "internal", False) and not event.allow_gateway_control:
             self._queue_or_replace_pending_event(session_key, event)
             return True
+
+        # Metadata may become visible while its worker-thread save reply is
+        # still pending. Transfer the old burst synchronously at admission too,
+        # so a newly arriving message cannot overtake already accepted input.
+        if self._session_busy_input_mode(event.source) is not None:
+            self._drain_busy_text_debounce(event.source)
         if getattr(event, "internal", False):
             return False
 
@@ -10595,6 +10632,12 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             and busy_text_mode == "queue"
             and effective_mode != "steer"
         ):
+            if self._session_busy_input_mode(event.source) == "queue":
+                # The adapter's legacy debounce mode is profile-wide. A chat
+                # override must keep each follow-up in our existing FIFO
+                # without changing that shared adapter or merging messages.
+                self._queue_or_replace_pending_event(session_key, event)
+                return True
             return False
 
         # Steer mode: inject mid-run via running_agent.steer() instead of
@@ -17080,6 +17123,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 "heartbeat": self._handle_heartbeat_command,
                 "yolo": self._handle_yolo_command,
                 "verbose": self._handle_verbose_command,
+                "busy": self._handle_busy_command,
                 "footer": self._handle_footer_command,
                 "help": self._handle_help_command,
                 "commands": self._handle_commands_command,
@@ -18358,6 +18402,9 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
 
         if canonical == "verbose":
             return await self._handle_verbose_command(event)
+
+        if canonical == "busy":
+            return await self._handle_busy_command(event)
 
         if canonical == "footer":
             return await self._handle_footer_command(event)
@@ -27730,6 +27777,18 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         _generation_at_interrupt = self._invalidate_session_run_generation(
             session_key, reason=invalidation_reason
         )
+        # Discard only the stopped run's backlog before yielding to transport
+        # cleanup. Messages admitted by a replacement generation must survive.
+        adapter = self._adapter_for_source(source)
+        if _iac_state is not None:
+            _iac_state.conversation.queued_events.clear()
+            _iac_state.persistent.pending_command_text = None
+        if adapter is not None:
+            discard_debounce = getattr(adapter, "_discard_text_debounce", None)
+            if callable(discard_debounce):
+                discard_debounce(session_key)
+            if hasattr(adapter, "get_pending_message"):
+                adapter.get_pending_message(session_key)
         if _process_task_id and _process_baseline is not None:
             threading.Thread(
                 target=_reap_gateway_turn_processes,
@@ -27743,7 +27802,6 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 name=f"gateway-turn-reaper-{_process_task_id[:12]}",
                 daemon=True,
             ).start()
-        adapter = self._adapter_for_source(source)
         interrupt_session_activity = getattr(
             type(adapter), "interrupt_session_activity", None
         )
@@ -27763,11 +27821,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 )
             else:
                 await adapter.interrupt_session_activity(session_key, source.chat_id)
-        if adapter and hasattr(adapter, "get_pending_message"):
-            adapter.get_pending_message(session_key)  # consume and discard
-        if _iac_state is not None:
-            _iac_state.persistent.pending_command_text = None
-        if release_running_state:
+        if release_running_state and self._is_session_run_current(session_key, _generation_at_interrupt):
             self._release_running_agent_state(session_key)
             # Evict the cached agent: ``_interrupt_requested`` is only
             # cleared by the turn finalizer, so on a hung or still-draining

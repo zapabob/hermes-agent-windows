@@ -426,6 +426,15 @@ Future messages in this room will use that transcript until `/reset` or another 
   credits:
     not_logged_in:            "Nous Portal にログインしていません。ログインすると残高の確認とチャージができます。"
 
+  busy:
+    status: "この会話の実行中入力モード: `{mode}`。\n{behavior}"
+    saved: "この会話の実行中入力モードを `{mode}` に保存しました。\n{behavior}"
+    usage: "使い方: /busy queue|steer|interrupt|status"
+    save_failed: "実行中入力モードを保存できませんでした。以前のモードを維持しています。"
+    behavior_queue: "追加のメッセージは、受信順にそれぞれ次の実行を待ちます。"
+    behavior_steer: "追加のメッセージは実行中の処理へ渡します。注入できない場合はキューで待ちます。"
+    behavior_interrupt: "追加のメッセージで実行中の処理を中断します。サブエージェントと圧縮処理への既存の保護は維持します。"
+
   verbose:
     not_enabled:           "`/verbose` コマンドはメッセージングプラットフォームで有効になっていません。\n\n`config.yaml` で有効にしてください:\n```yaml\ndisplay:\n  tool_progress_command: true\n```"
     mode_off:              "⚙️ ツール進捗: **OFF** — ツールの動作は表示されません。"

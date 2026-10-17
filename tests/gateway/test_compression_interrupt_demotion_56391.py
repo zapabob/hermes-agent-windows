@@ -73,6 +73,7 @@ def _make_runner(*, session_id: str = "parent-session") -> GatewayRunner:
         _lock=threading.Lock(),
         _entries={session_key: entry},
         switch_session=MagicMock(),
+        get_session_metadata=lambda *_args, **_kwargs: None,
     )
     session_store._ensure_loaded_locked = lambda: None
     runner.session_store = session_store

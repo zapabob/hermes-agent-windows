@@ -63,6 +63,12 @@ class _BranchThreadSetupError(RuntimeError):
 # its worker thread. (#35994)
 _RESET_CLEANUP_TIMEOUT_S = 30.0
 
+_BUSY_BEHAVIOR_KEYS = {
+    "queue": "gateway.busy.behavior_queue",
+    "steer": "gateway.busy.behavior_steer",
+    "interrupt": "gateway.busy.behavior_interrupt",
+}
+
 
 def _clean_str(value: Any) -> str:
     """Strip and return a non-empty string value, or empty string."""
@@ -4212,6 +4218,34 @@ class GatewaySlashCommandsMixin:
         else:
             enable_session_yolo(session_key)
             return EphemeralReply(t("gateway.yolo.enabled"))
+
+    async def _handle_busy_command(self, event: MessageEvent) -> EphemeralReply:
+        """Persist busy policy on this conversation, leaving profile defaults intact."""
+        arg = event.get_command_args().strip().lower()
+        if not arg or arg == "status":
+            mode = self._effective_busy_input_mode(event.source)
+            return EphemeralReply(t("gateway.busy.status", mode=mode, behavior=t(_BUSY_BEHAVIOR_KEYS[mode])))
+        if arg not in _BUSY_BEHAVIOR_KEYS:
+            return EphemeralReply(t("gateway.busy.usage"))
+        try:
+            session_key = self._session_key_for_source(event.source)
+            saved = await self.async_session_store.set_session_metadata(
+                session_key, "busy_input_mode", arg,
+            )
+            if not saved:
+                # Existing conversations must bypass the creation/reset policy:
+                # an expired timestamp does not make an active turn replaceable.
+                entry = await self.async_session_store.get_or_create_session(event.source)
+                saved = await self.async_session_store.set_session_metadata(
+                    entry.session_key, "busy_input_mode", arg,
+                )
+            if not saved:
+                raise RuntimeError("Session disappeared before busy-mode save")
+        except Exception:
+            logger.warning("Failed to persist conversation busy-input mode", exc_info=True)
+            return EphemeralReply(t("gateway.busy.save_failed"))
+        self._drain_busy_text_debounce(event.source)
+        return EphemeralReply(t("gateway.busy.saved", mode=arg, behavior=t(_BUSY_BEHAVIOR_KEYS[arg])))
 
     async def _handle_verbose_command(self, event: MessageEvent) -> str:
         """Handle /verbose command — cycle tool progress display mode.
