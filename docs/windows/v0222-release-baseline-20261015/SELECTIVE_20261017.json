@@ -2655,7 +2655,7 @@
     "production_control_was_cleared": false,
     "production_restart_command_issued": false,
     "active_watchdog_consumption": "UNVERIFIED; lock/state absent in that default directory at inspection",
-    "recovery_permission": "Human was asked whether prior intent was normal operation or intentional stop; silence is not authority",
+    "recovery_permission": "Still awaiting the human expected prior-state answer; automatic goal continuation is not approval",
     "native_electron_runs_held": true,
     "repair": "Test helper forces watchdog path under sandbox HOME and removes inherited/explicit casing collisions",
     "focused_red": {
@@ -2686,7 +2686,135 @@
       "FAILED quit/restart after star/config-invariance/reorder; control escape confirmed"
     ],
     "known_electron_test_pids_at_inspection": "ABSENT",
-    "complete_descendant_teardown_proved": false
+    "complete_descendant_teardown_proved": false,
+    "supplemental_cleanup_proof": {
+      "commit": "5ed8a8d079489b97447851dc25f1bdfe09579974",
+      "scope": "Pure helper tests with fake Electron handle; actual loopback listener and owned temporary files",
+      "red": {
+        "tests": 8,
+        "failed": 4,
+        "errors": 0,
+        "skipped": 0
+      },
+      "green": {
+        "tests": 22,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "mutations": [
+        {
+          "fault": "delete-live-sandbox",
+          "path": "apps/desktop/e2e/fixtures.ts",
+          "bindings": 1,
+          "source_sha256": "b67b41cb25f8fd211d06a64c3e1875438ee84eba9bbd6da2031806254b1b9c95",
+          "tests": 8,
+          "failed": 3,
+          "errors": 0,
+          "skipped": 0,
+          "classification": "KILLED"
+        },
+        {
+          "fault": "retain-all-sandboxes",
+          "path": "apps/desktop/e2e/fixtures.ts",
+          "bindings": 1,
+          "source_sha256": "b67b41cb25f8fd211d06a64c3e1875438ee84eba9bbd6da2031806254b1b9c95",
+          "tests": 8,
+          "failed": 3,
+          "errors": 0,
+          "skipped": 0,
+          "classification": "KILLED"
+        },
+        {
+          "fault": "delete-failed-launch",
+          "path": "apps/desktop/e2e/fixtures.ts",
+          "bindings": 1,
+          "source_sha256": "b67b41cb25f8fd211d06a64c3e1875438ee84eba9bbd6da2031806254b1b9c95",
+          "tests": 8,
+          "failed": 1,
+          "errors": 0,
+          "skipped": 0,
+          "classification": "KILLED"
+        }
+      ],
+      "source_bindings": [
+        {
+          "path": "apps/desktop/e2e/fixtures.ts",
+          "worktree_sha256": "b67b41cb25f8fd211d06a64c3e1875438ee84eba9bbd6da2031806254b1b9c95",
+          "git_blob": "e31f265fb58109290af0c44e000747bd49e55310"
+        },
+        {
+          "path": "apps/desktop/e2e/fixtures.unit.test.ts",
+          "worktree_sha256": "d5a791894621b6d627a75f2225dbb32ef08e0e7bd570d1ad09e6236c8a8270b8",
+          "git_blob": "1b2efed041546439abd4c14d01b6228f5261d6c8"
+        }
+      ],
+      "typecheck": "PASS tsc -p tsconfig.e2e.json --noEmit",
+      "eslint": "PASS changed helper files",
+      "codegraph": {
+        "initialized": true,
+        "version": "1.6.0",
+        "lastIndexed": "2026-10-17T05:14:36.550Z",
+        "fileCount": 9229,
+        "nodeCount": 199506,
+        "edgeCount": 631695,
+        "dbSizeBytes": 685350912,
+        "walSizeBytes": 0,
+        "backend": "node-sqlite",
+        "journalMode": "wal",
+        "nodesByKind": {
+          "class": 13317,
+          "component": 64,
+          "constant": 5902,
+          "enum": 8,
+          "enum_member": 25,
+          "field": 10,
+          "file": 8892,
+          "function": 63765,
+          "import": 44422,
+          "interface": 2195,
+          "method": 42926,
+          "namespace": 1,
+          "property": 1473,
+          "route": 397,
+          "struct": 33,
+          "type_alias": 890,
+          "variable": 15186
+        },
+        "languages": [
+          "c",
+          "cpp",
+          "csharp",
+          "go",
+          "javascript",
+          "liquid",
+          "nix",
+          "php",
+          "python",
+          "rust",
+          "tsx",
+          "typescript",
+          "yaml"
+        ],
+        "pendingChanges": {
+          "added": 0,
+          "modified": 0,
+          "removed": 0
+        },
+        "worktreeMismatch": null,
+        "index": {
+          "builtWithVersion": "1.6.0",
+          "builtWithExtractionVersion": 25,
+          "currentExtractionVersion": 25,
+          "reindexRecommended": false,
+          "state": "complete",
+          "pendingRefs": 0
+        }
+      },
+      "native_electron_launched_this_continuation": false,
+      "packaged_fixture": "Uses the same cleanup owner; actual packaged binary branch not executed",
+      "independent_review_basis": "Earlier fresh reviewer P2 cites unsafe shared fixture deletion; no post-fix independent rereview"
+    }
   },
   "conditional_followup": {
     "F02": "Existing Custom Endpoints free-form model input/profile-scoped save found; no duplicate owner added",

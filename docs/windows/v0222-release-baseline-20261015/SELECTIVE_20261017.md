@@ -185,6 +185,31 @@ application handle and preserves sandbox state if closure or launch ownership
 is uncertain; the change is typechecked, not yet verified by a native rerun.
 No further Electron run has been used to claim safety or acceptance.
 
+The next goal continuation verified the same failure class in the shared fixture
+cleanup. Four behavioral RED cases (with four positive controls passing) exposed
+deletion after unconfirmed mock exit, silently accepted no-provider/dead-backend
+exits, and deletion after a failed first-window startup whose process could not
+be stopped. A common close-and-cleanup owner now preserves the sandbox until
+the captured process has a terminal exit state; a typed shutdown error preserves
+failed-start evidence too. All four fixture kinds, including packaged, use that
+owner. The packaged binary itself was not launched.
+
+Supplemental helper results are 22 passed, no failures/errors/skips. They use
+in-memory Electron handles, a real owned loopback listener and actual temporary
+files; they are not native Electron acceptance. Changed-file ESLint and the E2E
+TypeScript project passed. Three source-bound faults (delete a live sandbox,
+retain every sandbox, delete failed-start evidence) were killed with assertion
+failures and no collection errors. The repair is local commit
+`5ed8a8d079489b97447851dc25f1bdfe09579974`; the earlier reviewer identified
+the unsafe cleanup owner, and no post-fix independent clean review is claimed.
+The earlier 655 Python/15 UI and 15-helper receipts remain separate historical
+counts, not added to this 22-case rerun.
+
+No production control file was changed during this continuation. Its observed
+hash still matches the retained incident snapshot. The expected prior-state
+answer remains pending; automatic goal continuation supplies no clearing
+authority. The original objective remains active and unachieved.
+
 The preceding native attempts are distinct: the first could not resolve the
 binary after ignore-scripts installation; an exact-version existing Electron
 41.10.7 binary was then reused read-only through the test process PATH. The next
