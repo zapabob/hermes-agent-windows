@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "SCOPED_IMPLEMENTATION_VERIFIED_CAMPAIGN_PARTIAL_NATIVE_ISOLATION_INCIDENT_OPEN",
+  "status": "SCOPED_IMPLEMENTATION_VERIFIED_CAMPAIGN_PARTIAL_TEST_STOP_RECOVERED",
   "downstream_base": "abad98beee2b74a135ce7e0e9310910c756514b4",
   "downstream_base_tree": "b8cde7b4a87a4ae8003f08b40680ec27dea0bf77",
   "upstream_release": "d923a5eb487a17c0a68801bba9ef0f56c81040a8",
@@ -2619,12 +2619,10 @@
     "explicit_checks": "Configured Ruff, changed frontend ESLint, renderer typecheck, per-file tests, UI tests, build and diff hygiene were run directly"
   },
   "mandatory_open": [
-    "Resolve test-written workstation watchdog fence using the human expected prior-state answer",
     "Full history semantic classification and final public-surface inventory",
     "Conditional feature owners/acceptance and complete legacy U01-U18 qualification",
     "Complete Security Center and outbound/Control MCP effect and lifecycle acceptance",
     "Fresh packaged Windows user journey and actual model inference",
-    "Dedicated Windows eight-hour soak and three physical sleep/resume cycles",
     "Full cold vendor-runtime independence closure"
   ],
   "publication": {
@@ -2645,18 +2643,18 @@
   },
   "evidence_phase": "Seven-product-commit checkpoint; subsequent native probe is separately qualified below",
   "native_isolation_incident": {
-    "status": "WAITING_FOR_HUMAN_EXPECTED_PRIOR_CONTROL_STATE",
+    "status": "TEST_ORIGIN_STOP_REMOVED_AFTER_EXPLICIT_HUMAN_AUTHORIZATION",
     "cause": "Existing E2E helper isolated HOME/userData but not HERMES_WATCHDOG_DATA",
     "escaped_control": "Windows LOCALAPPDATA/HermesWatchdog/maintenance.json",
     "observed_record": "DESKTOP_STOP owned by the test sandbox lifecycle HOME",
     "observed_snapshot_sha256": "440370e8e1ff9aedaa0f62574a337520c8b30b0fd9984ba324a1449c513be702",
     "prior_bytes_captured": false,
     "production_control_was_written": true,
-    "production_control_was_cleared": false,
+    "production_control_was_cleared": true,
     "production_restart_command_issued": false,
     "active_watchdog_consumption": "UNVERIFIED; lock/state absent in that default directory at inspection",
-    "recovery_permission": "Still awaiting the human expected prior-state answer; automatic goal continuation is not approval",
-    "native_electron_runs_held": true,
+    "recovery_permission": "Human confirmed prior normal operation and explicitly authorized removing the test stop designation.",
+    "native_electron_runs_held": false,
     "repair": "Test helper forces watchdog path under sandbox HOME and removes inherited/explicit casing collisions",
     "focused_red": {
       "failed": 2,
@@ -2814,7 +2812,24 @@
       "native_electron_launched_this_continuation": false,
       "packaged_fixture": "Uses the same cleanup owner; actual packaged binary branch not executed",
       "independent_review_basis": "Earlier fresh reviewer P2 cites unsafe shared fixture deletion; no post-fix independent rereview"
-    }
+    },
+    "recovery": {
+      "target": "Windows LOCALAPPDATA/HermesWatchdog/maintenance.json",
+      "authorization": "Human confirmed prior normal operation and authorized removing the test stop designation.",
+      "expected_sha256": "440370e8e1ff9aedaa0f62574a337520c8b30b0fd9984ba324a1449c513be702",
+      "prior_pretest_bytes_captured": false,
+      "forced_restart_issued": false,
+      "status": "RECORDED_TEST_STOP_REMOVED",
+      "observed_sha256": "440370e8e1ff9aedaa0f62574a337520c8b30b0fd9984ba324a1449c513be702",
+      "same_handle_delete_disposition_set": true,
+      "target_absent_after_close": true,
+      "finished_at": "2026-10-17T06:11:46.382427+00:00",
+      "receipt_sha256": "1f55c038708546b01fbd684e4cf9b235c3e8737613d899ddc7080618afc91369",
+      "backup_sha256": "440370e8e1ff9aedaa0f62574a337520c8b30b0fd9984ba324a1449c513be702",
+      "evidence_directory": "tmp/selective-20261017/watchdog-isolation-incident/authorized-recovery-20261017T061146Z-ac176a1e",
+      "runtime_health": "UNVERIFIED; marker removal does not attest watchdog/backend/model activity"
+    },
+    "native_electron_hold_resolution": "Production marker gate resolved; subsequent native probes still require fixed isolation and confirmed process teardown."
   },
   "conditional_followup": {
     "F02": "Existing Custom Endpoints owner retained; scoped save/fresh-process/catalogue/loopback protocol and UI contracts verified. Native Electron and real-model acceptance open.",
@@ -3332,5 +3347,12 @@
       },
       "production_operations": "No native Electron launch, watchdog write/clear/restart, real model or live gateway operation in this prerequisite slice"
     }
+  },
+  "unexecuted_acceptance": {
+    "real_model_eight_hour_soak": "NOT_RUN",
+    "three_physical_sleep_resume_cycles": "NOT_RUN",
+    "reason": "Human states no dedicated Windows test environment is available and directs recording these as unexecuted.",
+    "using_user_workstation_instead": false,
+    "release_qualification_pass_claimed": false
   }
 }

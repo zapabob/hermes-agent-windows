@@ -288,3 +288,24 @@ pending changes; whole `gateway/run.py` coverage is still not claimed.
 The dated `_docs/2026-10-17_v0222_selective_implementation_Codex.md` log remains
 local under its existing ignore rule; it was not force-added. This tracked
 checkpoint and JSON receipt provide the durable repository record.
+
+
+Human-authorized recovery supplement (2026-10-17): the user confirmed the
+workstation was previously in normal operation and authorized removing the
+test-origin stop designation. The recovery opened the exact production marker
+with write/delete sharing denied, verified SHA-256
+`440370e8e1ff9aedaa0f62574a337520c8b30b0fd9984ba324a1449c513be702`
+and the recorded test lifecycle HOME/nonce/owner, durably backed up the bytes,
+then set deletion disposition on that same file handle. The path was absent
+after close. Evidence is retained under
+`tmp/selective-20261017/watchdog-isolation-incident/authorized-recovery-20261017T061146Z-ac176a1e/`.
+No forced restart was issued. This resolves the pending human-answer/removal
+gate, not runtime health or complete native acceptance; pre-test bytes were
+never captured, so byte-exact restoration is not claimed. Earlier open-incident
+statements above describe the historical checkpoints.
+
+The user also confirmed no dedicated Windows test environment is available and
+directed recording the real-model eight-hour soak and three physical
+sleep/resume cycles as **NOT_RUN**. The user workstation will not substitute
+for those tests. Their absence is a qualification limitation, not a passing
+result or an outstanding request for an environment from the user.
