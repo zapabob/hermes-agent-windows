@@ -53,8 +53,9 @@ No upstream source checkout was put on runtime import or executable search paths
 | C01 — Security results | Displays file verdict, engine health and execution decision separately; legacy/malformed values remain conservative. String arrays are rejected as enum values. Connection/socket changes clear displayed results even with the same profile name; activation epochs fence stale completions. Full quarantine/restore/watch/update/approval acceptance is not claimed. |
 
 The nine preserve decisions remain preserved source observations, not whole-family
-acceptance. F02 custom-model UI, F04 `/busy`, and F09 local streaming STT remain
-conditional until their actual owner and acceptance requirements are resolved.
+acceptance. F02 retains its existing custom-endpoint owner with the supplemental
+contract proof below; native acceptance remains open. F04 `/busy` and F09 local
+streaming STT remain conditional until their owner and requirements are resolved.
 An absent upstream filename or registry entry was not treated as a missing feature.
 
 ## Validation
@@ -223,6 +224,41 @@ free-form model field and profile-scoped save/activation owner. Twelve selected
 custom-endpoint tests passed (174 deselected, excluded from pass totals). This
 is additional existing-contract evidence, not full unlisted-model inference
 acceptance. No duplicate custom-model owner or streaming STT stub was added.
+
+F02 verification commit `27a361d2d39feea36382d03f9b142b3ab42e3eea` adds tests
+without product changes. One UI test enters a model absent from discovery,
+preserves it through validation/save and reloads the saved provider identity.
+Two Python cases save through the real profile-scoped REST owner, then use a
+fresh native Python process to read the shared picker inventory and runtime
+credentials. The SDK sends the saved model to an owned HTTP protocol fixture;
+both no-key and dedicated-profile-key cases pass. Default config bytes stay
+unchanged and the dedicated synthetic key is stored in the selected profile's
+`.env`, outside config YAML. A real `/v1/models` response deliberately omits
+the selected model; it remains in the saved picker row and chat request.
+
+These **2 Python / 1 UI** cases are supplemental, excluded from the historical
+655/15 totals. Two faults replacing the manually entered model with a discovered
+model were killed by assertions with no collection errors. Raw product hashes
+are distinguished from the Vite transform-input hash in the mutation record.
+Configured Ruff, zero-warning changed-file ESLint, renderer typechecking via
+`tsconfig.typecheck.json` and diff hygiene pass. CodeGraph 1.6.0 was synchronized
+with zero pending changes; this does not remove the existing large-file coverage
+limitation for `gateway/run.py`.
+
+Qualified fresh-process probes use owned user/config homes and PATH, deny helper
+subprocesses, deny foreign socket connections, and reject foreign DNS before
+resolution. Public catalogue and synthetic-key provider discovery still attempt
+DNS; the receipt records those blocked attempts rather than claiming discovery
+is offline. Earlier harness errors (an unsupported resolver-model assumption,
+unisolated gh discovery, and overstrict zero-DNS expectations) are excluded from
+product RED evidence. The final proof joins inventory and runtime credentials
+at the SDK boundary, not inside an AIAgent conversation. Separate UI stubs and
+backend probes do not certify a native Electron journey or loaded-model
+inference. The watchdog incident and expected-prior-state question remain open.
+An independent read-only review found no actionable P1/P2 within the two new
+tests' isolation/false-acceptance scope. It started against the pre-commit
+working files; final diagnostic refinements proceeded in parallel, so it is
+not an exact-final-commit review or independent runtime attestation.
 
 The dated `_docs/2026-10-17_v0222_selective_implementation_Codex.md` log remains
 local under its existing ignore rule; it was not force-added. This tracked

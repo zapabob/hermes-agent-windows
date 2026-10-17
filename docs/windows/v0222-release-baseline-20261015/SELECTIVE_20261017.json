@@ -282,7 +282,7 @@
       "title": "未掲載model IDを手入力し、pickerへ記憶する導線",
       "lane": "FEATURE",
       "review_decision": "CONDITIONAL_REVIEW",
-      "implementation": "CONDITIONAL_OWNER_OR_NATIVE_ACCEPTANCE_OPEN",
+      "implementation": "EXISTING_OWNER_SCOPED_CONTRACT_VERIFIED_NATIVE_ACCEPTANCE_OPEN",
       "existing_unit_links": [],
       "whole_family_accepted": false,
       "source_ids": [
@@ -2817,13 +2817,373 @@
     }
   },
   "conditional_followup": {
-    "F02": "Existing Custom Endpoints free-form model input/profile-scoped save found; no duplicate owner added",
+    "F02": "Existing Custom Endpoints owner retained; scoped save/fresh-process/catalogue/loopback protocol and UI contracts verified. Native Electron and real-model acceptance open.",
     "custom_endpoint_subset": {
       "passed": 12,
       "deselected": 174,
       "included_in_checkpoint_totals": false
     },
     "F04": "Gateway busy handler intake still pending scoped owner/behavior proof",
-    "F09": "Actual local streaming STT provider not established; no ABC-only completion claim"
+    "F09": "Actual local streaming STT provider not established; no ABC-only completion claim",
+    "F02_existing_owner_proof": {
+      "verification_commit": "27a361d2d39feea36382d03f9b142b3ab42e3eea",
+      "new_product_code": false,
+      "duplicate_model_store_added": false,
+      "python": {
+        "receipt": "tmp/selective-20261017/f02-route-final.xml",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "ui": {
+        "receipt": "tmp/selective-20261017/f02-ui-qualified.xml",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "included_in_historical_655_python_15_ui_totals": false,
+      "routes": [
+        {
+          "context_provider": "owned-local",
+          "context_model": "local/unlisted-test-Q4_K_M.gguf",
+          "providers": [
+            {
+              "slug": "owned-local",
+              "models": [
+                "local/unlisted-test-Q4_K_M.gguf",
+                "discovered-only-model"
+              ]
+            }
+          ],
+          "runtime": {
+            "provider": "custom",
+            "requested_provider": "owned-local",
+            "base_url": "http://127.0.0.1:54142/v1",
+            "api_mode": "chat_completions"
+          },
+          "reply": "route confirmed",
+          "attempts": [
+            [
+              "socket.getaddrinfo",
+              [
+                "127.0.0.1",
+                54142
+              ]
+            ],
+            [
+              "socket.connect",
+              [
+                "127.0.0.1",
+                54142
+              ]
+            ],
+            [
+              "socket.getaddrinfo",
+              [
+                "127.0.0.1",
+                54142
+              ]
+            ],
+            [
+              "socket.connect",
+              [
+                "127.0.0.1",
+                54142
+              ]
+            ]
+          ],
+          "blocked_dns": [
+            [
+              "models.dev",
+              443
+            ],
+            [
+              "raw.githubusercontent.com",
+              443
+            ],
+            [
+              "openrouter.ai",
+              443
+            ],
+            [
+              "api.openai.com",
+              null
+            ],
+            [
+              "api.openai.com",
+              443
+            ],
+            [
+              "api.openai.com",
+              null
+            ],
+            [
+              "api.openai.com",
+              443
+            ],
+            [
+              "opencode.ai",
+              443
+            ]
+          ],
+          "observed_requests": [
+            {
+              "path": "/v1/models",
+              "model": null,
+              "expected_authorization": false
+            },
+            {
+              "path": "/v1/chat/completions",
+              "model": "local/unlisted-test-Q4_K_M.gguf",
+              "expected_authorization": true
+            }
+          ]
+        },
+        {
+          "context_provider": "owned-local",
+          "context_model": "local/unlisted-test-Q4_K_M.gguf",
+          "providers": [
+            {
+              "slug": "owned-local",
+              "models": [
+                "local/unlisted-test-Q4_K_M.gguf",
+                "discovered-only-model"
+              ]
+            }
+          ],
+          "runtime": {
+            "provider": "custom",
+            "requested_provider": "owned-local",
+            "base_url": "http://127.0.0.1:54196/v1",
+            "api_mode": "chat_completions"
+          },
+          "reply": "route confirmed",
+          "attempts": [
+            [
+              "socket.getaddrinfo",
+              [
+                "127.0.0.1",
+                54196
+              ]
+            ],
+            [
+              "socket.connect",
+              [
+                "127.0.0.1",
+                54196
+              ]
+            ],
+            [
+              "socket.getaddrinfo",
+              [
+                "127.0.0.1",
+                54196
+              ]
+            ],
+            [
+              "socket.connect",
+              [
+                "127.0.0.1",
+                54196
+              ]
+            ]
+          ],
+          "blocked_dns": [
+            [
+              "models.dev",
+              443
+            ],
+            [
+              "raw.githubusercontent.com",
+              443
+            ],
+            [
+              "openrouter.ai",
+              443
+            ],
+            [
+              "api.openai.com",
+              null
+            ],
+            [
+              "api.openai.com",
+              443
+            ],
+            [
+              "api.openai.com",
+              null
+            ],
+            [
+              "api.openai.com",
+              443
+            ],
+            [
+              "opencode.ai",
+              443
+            ]
+          ],
+          "observed_requests": [
+            {
+              "path": "/v1/models",
+              "model": null,
+              "expected_authorization": true
+            },
+            {
+              "path": "/v1/chat/completions",
+              "model": "local/unlisted-test-Q4_K_M.gguf",
+              "expected_authorization": true
+            }
+          ]
+        }
+      ],
+      "mutations": [
+        {
+          "fault": "REST-replaces-manual-model-with-discovery",
+          "bindings": 1,
+          "source_sha256": "4fe68f79fc2b69a7d487eb6a1a0718d449c9e28c9e2fa194580b6d280dfa65f5",
+          "mutated_module_loaded": true,
+          "pytest_exit": 1,
+          "source": "hermes_cli/web_server.py",
+          "counts": {
+            "tests": 2,
+            "failures": 2,
+            "errors": 0,
+            "skipped": 0
+          },
+          "classification": "KILLED_ASSERTIONS"
+        },
+        {
+          "fault": "UI-replaces-manual-model-with-discovery",
+          "bindings": 1,
+          "source": "apps/desktop/src/app/settings/custom-endpoints-settings.tsx",
+          "source_sha256": "0d8ea181182cef2ba1d3e1bf27dc41f7b2059b589dc00535077feb590a6dfa63",
+          "transform_input_sha256": "16b01c83921cd1a6e8ed6e64d21b36ce352d8c4540fd1890a3b4cad217a06307",
+          "counts": {
+            "tests": 1,
+            "failures": 1,
+            "errors": 0,
+            "skipped": 0
+          },
+          "classification": "KILLED_ASSERTIONS"
+        }
+      ],
+      "mutation_test_scope": "Final committed tests; raw product-file hashes bound separately from the Vite transform input hash.",
+      "network_boundary": "Qualified fresh children deny foreign DNS before resolution, foreign socket connects, and helper subprocesses. Recorded blocked DNS includes public catalogues and synthetic-key provider discovery; no claim of zero discovery attempts.",
+      "credential_boundary": "Qualified tests use owned HOME/USERPROFILE/APPDATA/LOCALAPPDATA/XDG_CONFIG_HOME/GH_CONFIG_DIR and child PATH; provider keys are synthetic. Default config bytes preserved; dedicated key stored only in the selected profile .env.",
+      "limits": [
+        "Separate UI stub and REST/runtime tests, not an end-to-end Electron journey",
+        "Shared inventory model and runtime credentials are handed to OpenAI SDK; no AIAgent loop acceptance",
+        "Owned HTTP protocol fixture, not loaded-model inference",
+        "Initial harness failures are not product RED; initial unisolated gh discovery was corrected before qualified runs",
+        "Native watchdog incident recovery remains pending human expected-state answer"
+      ],
+      "checks": {
+        "ruff": "PASS",
+        "eslint_max_warnings_0": "PASS",
+        "renderer_tsc_typecheck_project": "PASS",
+        "git_diff_check": "PASS"
+      },
+      "independent_review": {
+        "agent": "Franklin",
+        "scope": "Read-only isolation/false-acceptance review of the two new test files",
+        "result": "No actionable P1/P2 within the requested scope",
+        "reported_checkout_head": "c86f1114be9b5da926d0c210dcadff7450cc98c8",
+        "boundary": "Working-file review started before verification commit; final diagnostics were refined in parallel. No exact-final-commit review or independent execution attestation claimed."
+      },
+      "codegraph": {
+        "initialized": true,
+        "version": "1.6.0",
+        "lastIndexed": "2026-10-17T05:27:41.894Z",
+        "fileCount": 9231,
+        "nodeCount": 199528,
+        "edgeCount": 631795,
+        "dbSizeBytes": 685416448,
+        "walSizeBytes": 0,
+        "backend": "node-sqlite",
+        "journalMode": "wal",
+        "nodesByKind": {
+          "class": 13318,
+          "component": 64,
+          "constant": 5903,
+          "enum": 8,
+          "enum_member": 25,
+          "field": 10,
+          "file": 8894,
+          "function": 63766,
+          "import": 44433,
+          "interface": 2195,
+          "method": 42930,
+          "namespace": 1,
+          "property": 1473,
+          "route": 397,
+          "struct": 33,
+          "type_alias": 890,
+          "variable": 15188
+        },
+        "languages": [
+          "c",
+          "cpp",
+          "csharp",
+          "go",
+          "javascript",
+          "liquid",
+          "nix",
+          "php",
+          "python",
+          "rust",
+          "tsx",
+          "typescript",
+          "yaml"
+        ],
+        "pendingChanges": {
+          "added": 0,
+          "modified": 0,
+          "removed": 0
+        },
+        "worktreeMismatch": null,
+        "index": {
+          "builtWithVersion": "1.6.0",
+          "builtWithExtractionVersion": 25,
+          "currentExtractionVersion": 25,
+          "reindexRecommended": false,
+          "state": "complete",
+          "pendingRefs": 0
+        }
+      },
+      "source_bindings": [
+        {
+          "path": "tests/hermes_cli/test_custom_endpoint_saved_route.py",
+          "sha256": "4f05b662ae5b73a1490f0febee24469f1d092680564d7b081c9f04239cb3acef",
+          "git_blob": "7daae1c42a8f8cc2efb184d6b7eff04b15baa680"
+        },
+        {
+          "path": "apps/desktop/src/app/settings/custom-endpoints-settings.test.tsx",
+          "sha256": "9373f97d3c21ecf592d48dde7a924a9d5970f7ed9c47ccec4e1abe28b7611b51",
+          "git_blob": "64485e7e095233fe060cc29c8ce172e184994627"
+        },
+        {
+          "path": "apps/desktop/src/app/settings/custom-endpoints-settings.tsx",
+          "sha256": "0d8ea181182cef2ba1d3e1bf27dc41f7b2059b589dc00535077feb590a6dfa63",
+          "git_blob": "d78a4e0017e847ec906d13ac71e06905389a54a0"
+        },
+        {
+          "path": "hermes_cli/web_server.py",
+          "sha256": "4fe68f79fc2b69a7d487eb6a1a0718d449c9e28c9e2fa194580b6d280dfa65f5",
+          "git_blob": "4edad161b5b0c7e215c1ecddb025965fdf050fa9"
+        },
+        {
+          "path": "hermes_cli/inventory.py",
+          "sha256": "d36456e900097db72194fa1e74dc2934732916649f333c77d3fc892f1339a6ed",
+          "git_blob": "41e660f904850852cb510a2bc9f2893bc081f35b"
+        },
+        {
+          "path": "hermes_cli/runtime_provider.py",
+          "sha256": "a00dd4f0a5cdeeb874a8c360117840a6d4389a409f6976589eec9eb2f9696dbe",
+          "git_blob": "00e7cc3a2ca5997ca3612617c3c4aed567000b52"
+        }
+      ]
+    }
   }
 }
