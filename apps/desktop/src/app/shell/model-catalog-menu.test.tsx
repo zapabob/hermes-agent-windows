@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DropdownMenu, DropdownMenuContent } from '@/components/ui/dropdown-menu'
+import { $favoriteModels } from '@/store/favorite-models'
 import {
   $modelVisibilityOpen,
   $visibleModels,
@@ -28,6 +29,8 @@ vi.mock('@/hermes', () => ({
 }))
 
 beforeEach(() => {
+  window.localStorage.removeItem('hermes.desktop.favorite-models')
+  $favoriteModels.set([])
   $visibleModels.set(null)
   setModelVisibilityOpen(false)
   getGlobalModelOptions.mockResolvedValue({
@@ -73,6 +76,27 @@ function renderMenu() {
 // the kanban board would end up disagreeing about what "my models" means —
 // which is exactly the drift extracting this component was meant to prevent.
 describe('the catalog owns model curation', () => {
+  it('stars a model without switching and places it first after the menu is reopened', async () => {
+    const select = renderMenu()
+    await screen.findByText(/Gemini 2\.5 Flash/i)
+    fireEvent.click(screen.getByRole('button', { name: /Favorite Gemini 2\.5 Flash/i }))
+    expect(select).not.toHaveBeenCalled()
+    expect(JSON.parse(window.localStorage.getItem('hermes.desktop.favorite-models') ?? '[]')).toContain(
+      modelVisibilityKey('google', 'gemini-2.5-flash')
+    )
+    cleanup()
+    const reopenedSelect = renderMenu()
+    await screen.findByText(/Favorites/)
+
+    const rows = screen
+      .getAllByRole('menuitem')
+      .filter(row => /Gemini (2\.5 Flash|3\.1 Pro)/i.test(row.textContent ?? ''))
+
+    expect(rows[0].textContent).toMatch(/Gemini 2\.5 Flash/i)
+    fireEvent.click(rows[0])
+    expect(reopenedSelect).toHaveBeenCalledWith('gemini-2.5-flash', 'google')
+  })
+
   it('honours the stored Edit Models shortlist', async () => {
     setVisibleModels(new Set([modelVisibilityKey('google', 'gemini-2.5-flash')]))
 

@@ -2,6 +2,7 @@ import { useStore } from '@nanostores/react'
 import { useQuery } from '@tanstack/react-query'
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
+import { Button } from '@/components/ui/button'
 import { Codicon } from '@/components/ui/codicon'
 import { DisclosureCaret } from '@/components/ui/disclosure-caret'
 import {
@@ -25,6 +26,7 @@ import { displayModelName, modelDisplayParts } from '@/lib/model-status-label'
 import { DEFAULT_REASONING_EFFORT, reasoningEffortLabel } from '@/lib/reasoning-effort'
 import { normalize } from '@/lib/text'
 import { cn } from '@/lib/utils'
+import { $favoriteModels, toggleFavoriteModel } from '@/store/favorite-models'
 import {
   $visibleModels,
   collapseModelFamilies,
@@ -111,6 +113,7 @@ interface ModelCatalogMenuProps {
 }
 
 interface ProviderGroup {
+  favorite?: boolean
   families: ModelFamily[]
   provider: ModelOptionProvider
 }
@@ -143,6 +146,7 @@ export function ModelCatalogMenu({
   // catalog must show the same shortlist. A per-caller opt-in is how the board
   // and the composer would end up disagreeing about what "my models" means.
   const visibleModels = useStore($visibleModels)
+  const favoriteKeys = useStore($favoriteModels)
 
   const modelOptions = useQuery({
     queryKey: modelOptionsQueryKey(profile, sessionId, ownerConnectionId),
@@ -184,10 +188,27 @@ export function ModelCatalogMenu({
     [visibleModels, pickerProviders]
   )
 
-  const groups = useMemo(
-    () => groupModels(pickerProviders, search, { model: current.model, provider: current.provider }, shownKeys),
-    [pickerProviders, search, current.model, current.provider, shownKeys]
-  )
+  const groups = useMemo(() => {
+    const favorites = new Set(favoriteKeys)
+    const currentRow = { model: current.model, provider: current.provider }
+
+    const favoriteGroups = groupModels(pickerProviders, search, currentRow, favorites)
+      .map(group => ({
+        ...group,
+        favorite: true,
+        families: group.families.filter(family => favorites.has(modelVisibilityKey(group.provider.slug, family.id)))
+      }))
+      .filter(group => group.families.length > 0)
+
+    const ordinary = groupModels(pickerProviders, search, currentRow, shownKeys)
+      .map(group => ({
+        ...group,
+        families: group.families.filter(family => !favorites.has(modelVisibilityKey(group.provider.slug, family.id)))
+      }))
+      .filter(group => group.families.length > 0)
+
+    return [...favoriteGroups, ...ordinary]
+  }, [pickerProviders, search, current.model, current.provider, shownKeys, favoriteKeys])
 
   const q = normalize(search)
 
@@ -240,7 +261,7 @@ export function ModelCatalogMenu({
   const kbRows = useMemo<KbRow[]>(
     () => [
       ...groups.flatMap(group =>
-        collapsedProviders.includes(group.provider.slug) && !search
+        !group.favorite && collapsedProviders.includes(group.provider.slug) && !search
           ? []
           : group.families.map((family): KbRow => ({
               family,
@@ -378,19 +399,23 @@ export function ModelCatalogMenu({
 
             // Collapsed when the user stored it (and not while searching, which
             // spans every model regardless of collapse state).
-            const collapsed = collapsedProviders.includes(slug) && !search
+            const collapsed = !group.favorite && collapsedProviders.includes(slug) && !search
 
             return (
-              <DropdownMenuGroup className="py-0.5" key={slug}>
+              <DropdownMenuGroup className="py-0.5" key={`${group.favorite ? 'favorite:' : ''}${slug}`}>
                 <DropdownMenuItem
                   className="group/label flex w-full items-center gap-1 px-2 pb-0.5 pt-0.5 text-[0.625rem] font-semibold uppercase tracking-wider text-(--ui-text-tertiary) cursor-pointer !bg-transparent focus:!bg-transparent"
                   onSelect={event => {
                     event.preventDefault()
-                    toggleCollapsedProvider(slug)
+
+                    if (!group.favorite) {
+                      toggleCollapsedProvider(slug)
+                    }
                   }}
                   textValue=""
                 >
                   <span className="truncate">
+                    {group.favorite ? `${copy.favorites} · ` : null}
                     <HighlightMatches query={search} text={group.provider.name} />
                   </span>
                   <DisclosureCaret
@@ -464,6 +489,24 @@ export function ModelCatalogMenu({
                           {isCurrent ? (
                             <Codicon className="ml-auto text-foreground" name="check" size="0.75rem" />
                           ) : null}
+                          <Button
+                            aria-label={`${favoriteKeys.includes(modelVisibilityKey(slug, family.id)) ? copy.unfavorite : copy.favorite} ${name}`}
+                            aria-pressed={favoriteKeys.includes(modelVisibilityKey(slug, family.id))}
+                            onClick={event => {
+                              event.preventDefault()
+                              event.stopPropagation()
+                              toggleFavoriteModel(slug, family.id)
+                            }}
+                            onKeyDown={event => event.stopPropagation()}
+                            size="icon-xs"
+                            variant="ghost"
+                          >
+                            <Codicon
+                              name={
+                                favoriteKeys.includes(modelVisibilityKey(slug, family.id)) ? 'star-full' : 'star-empty'
+                              }
+                            />
+                          </Button>
                         </DropdownMenuSubTrigger>
                         <ModelEditSubmenu
                           canDisableReasoning={caps?.can_disable_reasoning}

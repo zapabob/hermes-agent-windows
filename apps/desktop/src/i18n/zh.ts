@@ -3177,6 +3177,9 @@ export const zh: Translations = {
     paneControls: '面板控件',
     appControls: '应用控件',
     modelMenu: {
+      favorites: '收藏',
+      favorite: '收藏',
+      unfavorite: '取消收藏',
       search: '搜索模型',
       noModels: '未找到模型',
       editModels: '编辑模型…',

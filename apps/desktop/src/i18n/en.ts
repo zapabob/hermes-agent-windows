@@ -3018,6 +3018,9 @@ export const en: Translations = {
     paneControls: 'Pane controls',
     appControls: 'App controls',
     modelMenu: {
+      favorites: 'Favorites',
+      favorite: 'Favorite',
+      unfavorite: 'Unfavorite',
       search: 'Search models',
       noModels: 'No models found',
       editModels: 'Edit Models…',

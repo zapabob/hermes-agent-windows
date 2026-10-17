@@ -2575,6 +2575,9 @@ export interface Translations {
     paneControls: string
     appControls: string
     modelMenu: {
+      favorites: string
+      favorite: string
+      unfavorite: string
       search: string
       noModels: string
       editModels: string

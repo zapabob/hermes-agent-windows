@@ -2660,6 +2660,9 @@ export const ja = defineLocale({
     paneControls: 'ペインコントロール',
     appControls: 'アプリコントロール',
     modelMenu: {
+      favorites: 'お気に入り',
+      favorite: 'お気に入りに追加',
+      unfavorite: 'お気に入りから削除',
       search: 'モデルを検索',
       noModels: 'モデルが見つかりません',
       editModels: 'モデルを編集…',
