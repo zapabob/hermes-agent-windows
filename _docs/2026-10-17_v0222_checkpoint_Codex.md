@@ -28,3 +28,7 @@ full history、vendor runtime 独立性は未完了。8h 実モデル soak と�
 
 main / origin の最終 SHA、ファイル保全の結果、再起動・health の実結果、cloud CI 状態は
 `CHECKPOINT_RUNTIME_20261017.md` と運用 receipt へ追記する。
+
+運用追記: 保存点8fd4a69ff88をmain/originへ反映。新Desktopをbuild/packageし、旧package保存、461ファイル照合後に配置した。Desktop/backend/Go/Hikari/default Gateway/harness/dashboardを再起動し、個別healthとHikari 1token実生成を確認。embedding disabledと独立A2A/WebUI/memory graph/tunnelsは維持した。通常版URL登録は追加許可範囲で実行した。
+
+Windows Tier-1 CIはcarry metrics staleとfixtureのdist依存でfailure。全CI成功・stable releaseは未認定。途中の失敗・復旧はCHECKPOINT_RUNTIME_20261017.mdに記録。WIP・元ファイル・旧package・旧ログ・証拠は保存済み。最後の文書commit後に両checkoutのGit cleanとremote equalityを確認する。

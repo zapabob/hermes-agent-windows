@@ -2633,10 +2633,10 @@
     "Full cold vendor-runtime independence closure"
   ],
   "publication": {
-    "push": false,
-    "merge": false,
+    "push": true,
+    "merge": true,
     "version_bump": false,
-    "production_restart": false,
+    "production_restart": true,
     "sleep_or_reboot": false
   },
   "preservation": {
@@ -7501,9 +7501,16 @@
       }
     ],
     "no_evidence_files_deleted": true,
-    "publication": "PENDING_MAIN_FAST_FORWARD_AND_PUSH",
-    "runtime": "PENDING_AUTHORIZED_RESTART",
+    "publication": "MAIN_FAST_FORWARDED_AND_PUSHED",
+    "runtime": "SELECTED_SERVICES_RESTARTED_HEALTH_VERIFIED_CI_FAILURES_RECORDED",
     "record": "CHECKPOINT_20261017.md",
-    "implementation_log": "_docs/2026-10-17_v0222_checkpoint_Codex.md"
+    "implementation_log": "_docs/2026-10-17_v0222_checkpoint_Codex.md",
+    "published_revision": "8fd4a69ff88fbf691ec047e5fa4f752259c32d99",
+    "runtime_record": "CHECKPOINT_RUNTIME_20261017.md",
+    "runtime_evidence_sha256": "49013121294b37c7ee6ef5cbd8dc0095501f29b1722b3aadf48ddd9ad945c923",
+    "main_untracked_preserved_count": 11,
+    "cloud_ci_all_green": false,
+    "a2a_webui_memory_graph_restarted": false,
+    "llama_smoke_generated_tokens": 1
   }
 }
