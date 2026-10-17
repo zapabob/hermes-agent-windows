@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "SCOPED_IMPLEMENTATION_VERIFIED_CAMPAIGN_PARTIAL",
+  "status": "SCOPED_IMPLEMENTATION_VERIFIED_CAMPAIGN_PARTIAL_NATIVE_ISOLATION_INCIDENT_OPEN",
   "downstream_base": "abad98beee2b74a135ce7e0e9310910c756514b4",
   "downstream_base_tree": "b8cde7b4a87a4ae8003f08b40680ec27dea0bf77",
   "upstream_release": "d923a5eb487a17c0a68801bba9ef0f56c81040a8",
@@ -2516,7 +2516,8 @@
     "r_after_scope": "15-present-file source-bound projection, not whole-tree coverage",
     "upstream_scope": "Frozen release existing 1.6.0 index plus selected Git-blob binding",
     "base_scope": "Candidate indexed before edits at frozen D_BASE",
-    "excluded_unchanged_large_owner": "gateway/run.py exceeds 1 MiB extractor cap; no whole-file graph coverage claimed"
+    "excluded_unchanged_large_owner": "gateway/run.py exceeds 1 MiB extractor cap; no whole-file graph coverage claimed",
+    "evidence_scope": "Seven-product-commit checkpoint, before subsequent test-only isolation repair"
   },
   "product_commits": [
     {
@@ -2618,6 +2619,7 @@
     "explicit_checks": "Configured Ruff, changed frontend ESLint, renderer typecheck, per-file tests, UI tests, build and diff hygiene were run directly"
   },
   "mandatory_open": [
+    "Resolve test-written workstation watchdog fence using the human expected prior-state answer",
     "Full history semantic classification and final public-surface inventory",
     "Conditional feature owners/acceptance and complete legacy U01-U18 qualification",
     "Complete Security Center and outbound/Control MCP effect and lifecycle acceptance",
@@ -2638,6 +2640,62 @@
     "primary_untracked_names_match_initial": true,
     "primary_wip_content_hashes_captured_at_start": false,
     "prior_campaign_head": "bb4d2c0c8d8b91ebb3a08546ef365ecc00b83fc7",
-    "prior_campaign_wip_not_edited_by_this_task": true
+    "prior_campaign_wip_not_edited_by_this_task": true,
+    "production_control_unchanged_over_whole_run": false
+  },
+  "evidence_phase": "Seven-product-commit checkpoint; subsequent native probe is separately qualified below",
+  "native_isolation_incident": {
+    "status": "WAITING_FOR_HUMAN_EXPECTED_PRIOR_CONTROL_STATE",
+    "cause": "Existing E2E helper isolated HOME/userData but not HERMES_WATCHDOG_DATA",
+    "escaped_control": "Windows LOCALAPPDATA/HermesWatchdog/maintenance.json",
+    "observed_record": "DESKTOP_STOP owned by the test sandbox lifecycle HOME",
+    "observed_snapshot_sha256": "440370e8e1ff9aedaa0f62574a337520c8b30b0fd9984ba324a1449c513be702",
+    "prior_bytes_captured": false,
+    "production_control_was_written": true,
+    "production_control_was_cleared": false,
+    "production_restart_command_issued": false,
+    "active_watchdog_consumption": "UNVERIFIED; lock/state absent in that default directory at inspection",
+    "recovery_permission": "Human was asked whether prior intent was normal operation or intentional stop; silence is not authority",
+    "native_electron_runs_held": true,
+    "repair": "Test helper forces watchdog path under sandbox HOME and removes inherited/explicit casing collisions",
+    "focused_red": {
+      "failed": 2,
+      "passed": 5,
+      "errors": 0
+    },
+    "helper_tests": {
+      "passed": 15,
+      "failed": 0,
+      "skipped": 0,
+      "junit_sha256": "d481da6fbc6782d7685b233bb09c4abba7ac070cd97e9136573e78a9bf7d7390"
+    },
+    "helper_typecheck": "PASS: tsc -p tsconfig.e2e.json --noEmit",
+    "independent_reviewer": "01a14839-5844-71a2-98c5-40e229fec3e4",
+    "independent_review_status": "No P1/P2 in watchdog path confinement; one P2 in restart-probe cleanup, corrected in unqualified probe source",
+    "post_fix_independent_rereview": false,
+    "fixture_repair_commit": "1892a8f930692439cee066a4f8c02990f9b5d8a0",
+    "restart_probe_source": {
+      "path": "apps/desktop/e2e/model-favorites.spec.ts",
+      "sha256": "ecf02b173a114d44b89dd14f29bcf055a2fae4810d58e334f6c2b7fc535f32d2",
+      "git_state": "UNTRACKED_UNQUALIFIED_NATIVE_RERUN_HELD"
+    },
+    "native_favorites_restart_accepted": false,
+    "native_attempts": [
+      "SETUP_FAILED binary lookup after ignore-scripts",
+      "HARNESS pointer guard required actual movement",
+      "FAILED quit/restart after star/config-invariance/reorder; control escape confirmed"
+    ],
+    "known_electron_test_pids_at_inspection": "ABSENT",
+    "complete_descendant_teardown_proved": false
+  },
+  "conditional_followup": {
+    "F02": "Existing Custom Endpoints free-form model input/profile-scoped save found; no duplicate owner added",
+    "custom_endpoint_subset": {
+      "passed": 12,
+      "deselected": 174,
+      "included_in_checkpoint_totals": false
+    },
+    "F04": "Gateway busy handler intake still pending scoped owner/behavior proof",
+    "F09": "Actual local streaming STT provider not established; no ABC-only completion claim"
   }
 }

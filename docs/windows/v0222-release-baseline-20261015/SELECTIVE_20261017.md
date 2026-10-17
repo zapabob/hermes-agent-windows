@@ -1,6 +1,9 @@
 # Selective implementation checkpoint — 2026-10-17
 
 Status: **PARTIAL campaign; seven scoped implementation candidates verified locally.**
+An additional native Electron probe subsequently exposed the watchdog-control
+isolation incident below. Production-control recovery is pending the human's
+expected prior-state answer; this checkpoint is not an operational closeout.
 This checkpoint does not supersede the historical V03/V04/V05 or U01–U18
 receipts and does not certify complete v0.22.2 parity, Windows release readiness,
 or vendor-runtime independence. The machine-readable companion is
@@ -147,6 +150,54 @@ Machine-local graphs, dependencies and receipts remain in this candidate.
 No existing evidence was moved/deleted to recover capacity. No push, merge,
 version bump, production restart, sleep, or reboot was performed. Cloud CI was
 not run and is not reported green.
+
+## Subsequent native-probe isolation incident — OPEN
+
+After the seven product commits, a new native favorites/restart test reused the
+existing Electron fixture. HERMES_HOME and Electron userData were isolated,
+but Windows watchdog control was not: `watchdogMaintenancePath` defaults to
+`LOCALAPPDATA/HermesWatchdog/maintenance.json` unless HERMES_WATCHDOG_DATA is set.
+The test Desktop's quit wrote its own DESKTOP_STOP fence at that workstation
+control path. The record's lifecycle HOME is the owned E2E sandbox, not the
+production HOME. Its prior contents were not captured, so an exact restoration
+cannot be asserted or invented.
+
+Native Electron probes are stopped. The observed record was copied unchanged
+to ignored task-owned incident evidence; SHA-256 is
+`440370e8e1ff9aedaa0f62574a337520c8b30b0fd9984ba324a1449c513be702`.
+No stop-fence clearing, production restart or restoration was performed.
+No watchdog lock/state file was found in that default control directory at the
+inspection time; whether an active watchdog consumed the fence is unverified.
+The known Electron PIDs observed in these test attempts were absent when checked;
+complete descendant teardown was not independently captured in advance.
+
+The human was asked whether the prior intended state was normal operation or
+intentional stop. Clearing could resume watchdog activity and will not proceed
+on silence. Full native restart/model-route acceptance remains NOT ACCEPTED.
+
+The cause was reproduced in two focused environment-builder tests. The fixture
+now forces HERMES_WATCHDOG_DATA beneath the sandbox HOME and rejects inherited
+or explicit case variants that point elsewhere. Fifteen helper tests across
+environment, setup cleanup, binary lookup and listener ownership pass. A fresh
+independent read-only review found no P1/P2 escape in the watchdog-path repair,
+and one P2 in the new restart probe's teardown. That probe now tracks the current
+application handle and preserves sandbox state if closure or launch ownership
+is uncertain; the change is typechecked, not yet verified by a native rerun.
+No further Electron run has been used to claim safety or acceptance.
+
+The preceding native attempts are distinct: the first could not resolve the
+binary after ignore-scripts installation; an exact-version existing Electron
+41.10.7 binary was then reused read-only through the test process PATH. The next
+attempt hit the intentional parked-pointer guard (explicit real mouse movement
+fixed the harness). The later attempt successfully starred and reordered the
+model without changing config or inference, but failed at native quit/restart
+with the control-path escape above. These are not counted as a complete GREEN.
+
+Conditional F02 source tracing found the existing Custom Endpoints UI's
+free-form model field and profile-scoped save/activation owner. Twelve selected
+custom-endpoint tests passed (174 deselected, excluded from pass totals). This
+is additional existing-contract evidence, not full unlisted-model inference
+acceptance. No duplicate custom-model owner or streaming STT stub was added.
 
 The dated `_docs/2026-10-17_v0222_selective_implementation_Codex.md` log remains
 local under its existing ignore rule; it was not force-added. This tracked
