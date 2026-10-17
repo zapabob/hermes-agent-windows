@@ -1626,6 +1626,64 @@ def _concat_audio_files(
     return None
 
 
+def _publish_audio_delivery_files(packed: List[str], base: Path) -> List[str]:
+    """Publish the set with recoverable originals if any member fails.
+
+    This is an in-process rollback, not a crash-atomic multi-file transaction.
+    A failed rollback keeps its backup and reports its exact recovery path.
+    """
+    moves = []
+    for index, source in enumerate(packed, start=1):
+        suffix = Path(source).suffix or base.suffix
+        destination = base if len(packed) == 1 else base.with_name(
+            f"{base.stem}.part{index:02d}{suffix}"
+        )
+        moves.append((Path(source), destination))
+
+    backups: Dict[Path, Path] = {}
+    published: List[Path] = []
+    try:
+        # Reserve all originals before publishing any output. In particular a
+        # Windows sharing violation on a later original cannot leave earlier
+        # members replaced with a mixture of generations.
+        for source, destination in moves:
+            if os.path.abspath(source) == os.path.abspath(destination):
+                continue
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            if os.path.lexists(destination):
+                backup = destination.with_name(f".{destination.name}.{uuid.uuid4().hex}.rollback")
+                os.replace(destination, backup)
+                backups[destination] = backup
+        for source, destination in moves:
+            if os.path.abspath(source) != os.path.abspath(destination):
+                os.replace(source, destination)
+                published.append(destination)
+    except BaseException as exc:
+        recovery_errors = []
+        for destination in reversed(published):
+            if destination not in backups:
+                try:
+                    destination.unlink()
+                except OSError as restore_error:
+                    recovery_errors.append(f"{destination}: {restore_error}")
+        for destination, backup in reversed(list(backups.items())):
+            try:
+                os.replace(backup, destination)
+            except OSError as restore_error:
+                # Never sweep a backup that is now the only original copy.
+                recovery_errors.append(f"{backup} -> {destination}: {restore_error}")
+        if recovery_errors:
+            raise RuntimeError("TTS publication failed; retained recovery files: " + "; ".join(recovery_errors)) from exc
+        raise
+    else:
+        for backup in backups.values():
+            try:
+                backup.unlink()
+            except OSError:
+                logger.warning("TTS published; original backup retained at %s", backup)
+    return [str(destination) for _, destination in moves]
+
+
 def _build_audio_delivery_files(
     audio_paths: List[str],
     output_path: str,
@@ -1683,30 +1741,17 @@ def _build_audio_delivery_files(
         midpoint = max(1, len(group) // 2)
         return emit(group[:midpoint]) + emit(group[midpoint:])
 
-    packed: List[str] = []
-    for group in _pack_audio_files_for_delivery(audio_paths, profile):
-        packed.extend(emit(group))
-
     final_paths: List[str] = []
-    for index, source in enumerate(packed, start=1):
-        if len(packed) == 1:
-            destination = base
-        else:
-            source_suffix = Path(source).suffix or base.suffix
-            destination = base.with_name(
-                f"{base.stem}.part{index:02d}{source_suffix}"
-            )
-        if os.path.abspath(source) != os.path.abspath(destination):
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            os.replace(source, destination)
-        if destination.stat().st_size > profile.max_file_bytes:
-            raise ValueError(
-                f"Final TTS deliverable exceeds {profile.platform} delivery limit: "
-                f"{destination}"
-            )
-        final_paths.append(str(destination))
-
     try:
+        packed: List[str] = []
+        for group in _pack_audio_files_for_delivery(audio_paths, profile):
+            packed.extend(emit(group))
+        for source in packed:
+            if Path(source).stat().st_size > profile.max_file_bytes:
+                raise ValueError(
+                    f"Final TTS deliverable exceeds {profile.platform} delivery limit: {source}"
+                )
+        final_paths = _publish_audio_delivery_files(packed, base)
         return final_paths, combined_any
     finally:
         for scratch in scratch_outputs:
@@ -3619,6 +3664,13 @@ def text_to_speech_tool(
             else:
                 chunk_path = base_path.with_name(
                     f"{base_path.stem}.chunk{index:03d}{base_path.suffix}"
+                )
+            if os.path.lexists(chunk_path):
+                # Never let a failed provider truncate or sweep a pre-existing
+                # path (including a dangling link). Delivery publishes only
+                # after synthesis and validation succeed.
+                chunk_path = chunk_path.with_name(
+                    f".{chunk_path.stem}.{uuid.uuid4().hex}{chunk_path.suffix}"
                 )
             generated_artifacts.add(str(chunk_path))
             raw_result = _text_to_speech_single(
