@@ -135,5 +135,23 @@ async def test_queue_preserves_reply_context():
     assert queued.reply_to_author_name == "alice"
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("alias", ["queue", "q"])
+@pytest.mark.parametrize("payload", ["list", "edit 2 B2", "move 3 1", "rm 2", "add list"])
+async def test_gateway_queue_management_words_remain_literal(alias, payload):
+    """CLI management syntax must not become a Gateway control command."""
+    runner, adapter = _make_runner(_session_entry())
+    session_key = _running(runner)
+    active_agent = runner._running_agents[session_key]
+    event = MessageEvent(text=f"/{alias} {payload}", source=_make_source(), message_id="literal-queue")
+
+    result = await runner._handle_message(event)
+
+    assert result is not None and "queued" in result.lower()
+    assert adapter._pending_messages[session_key].text == payload
+    assert adapter._pending_messages[session_key].message_id == event.message_id
+    active_agent.interrupt.assert_not_called()
+
+
 if __name__ == "__main__":  # pragma: no cover
     pytest.main([__file__, "-v"])

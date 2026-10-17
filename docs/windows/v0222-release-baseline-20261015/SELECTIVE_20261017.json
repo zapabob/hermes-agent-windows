@@ -4213,5 +4213,326 @@
       "registry_write_performed": false,
       "receipt_sha256": "833cfb5fda7c80228d6608f0f1a744221bcb66bfdbbd3b0303af852c38376e5c"
     }
+  },
+  "fxa01_cli_runtime_acceptance": {
+    "status": "SCOPED_CLASSIC_CLI_QUEUE_RUNTIME_VERIFIED",
+    "family": "F06",
+    "plan_item": "FX-A01",
+    "whole_family_accepted": false,
+    "campaign_complete": false,
+    "product_behavior": "Existing CLI queue management retained; Gateway queue/q arguments stay literal.",
+    "new_automated_cases": 11,
+    "selected_fresh_process_runs": [
+      {
+        "file": "tests/cli/test_cli_queue_runtime_effects.py",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 39200,
+          "thread_id": 34504,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "receipt": "tmp/selective-20261017/fxa01-job-final-runtime/result.json",
+        "receipt_sha256": "d1ee0ec5fa1636c66453aca21a230669a661b428613f715d11871136d87e26f3"
+      },
+      {
+        "file": "tests/cli/test_cli_queue_contract.py",
+        "tests": 51,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 30900,
+          "thread_id": 20880,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "receipt": "tmp/selective-20261017/fxa01-job-final-contract/result.json",
+        "receipt_sha256": "0023c99143a060a76e1e56472f23401113deca30233346da650aa9350d65570f"
+      },
+      {
+        "file": "tests/gateway/test_queue_command.py",
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 19760,
+          "thread_id": 16724,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "receipt": "tmp/selective-20261017/fxa01-job-final-gateway-literals/result.json",
+        "receipt_sha256": "eb688a622e01af816746a9cd85f4c0a225c04ab579089b3540102153b2fd3b45"
+      },
+      {
+        "file": "tests/gateway/test_queue_consumption.py",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 38388,
+          "thread_id": 31052,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "receipt": "tmp/selective-20261017/fxa01-job-final-gateway-consumption/result.json",
+        "receipt_sha256": "6a4914414d366a9355f820c5183564d9417867299761773aeb87fb93a2c042f2"
+      }
+    ],
+    "selected_tests": 69,
+    "count_scope": "Four final file-per-process runs; do not add to historical totals or repeat-run counts.",
+    "actual_runtime_chain": [
+      "prompt_toolkit Application and Enter key binding",
+      "busy inline public queue/q dispatch",
+      "actual process_loop and _tui_process_one_input",
+      "HermesCLI.chat and AIAgent",
+      "OpenAI SDK over owned loopback HTTP/SSE",
+      "real model_tools/file_tool/ShellFileOperations",
+      "actual C.json then B2.json bytes",
+      "SQLite user and assistant transcript order"
+    ],
+    "runtime_limits": [
+      "Deterministic model peer and synthetic credential resolver; no actual model quality claim.",
+      "Pipe input and DummyOutput; no physical terminal or Electron UI claim.",
+      "Nonselected toolset availability and provider catalog inventory are offline fixture leaves.",
+      "Other CLI instance isolation is covered by existing contracts; same-instance new/resume/profile transitions remain open.",
+      "Gateway assertions use the existing synthetic runner/adapter fixture; no actual messaging channel claim.",
+      "Wire assertion covers the first system message; management-time history snapshot is separately compared."
+    ],
+    "runtime_trace": {
+      "path": "tmp/selective-20261017/fxa01-job-final-runtime/cases/test_keyboard_queue_edits_reac0/queue-runtime-evidence.json",
+      "sha256": "8fe3ac9288dd28b3975466bee9a96d2fd92dacc57fb56b43b8a982964dbb60bf",
+      "wire_requests": 5,
+      "write_order": [
+        "C",
+        "B2"
+      ],
+      "write_count": 2,
+      "real_backend_verified_writes": true,
+      "errors": [],
+      "violations_through_cleanup": []
+    },
+    "mutations": [
+      {
+        "fault": "move-noop",
+        "source_sha256": "1b4773b4a47998473940a02f8417ce406c2cc89b7e72903db8af1ae56d5a5597",
+        "test_sha256": "31f8725bd428c804151ce1a3b20c04227350427204a0050346b892e32ef60616",
+        "source_unchanged": true,
+        "test_unchanged": true,
+        "bindings": 1,
+        "mutated_module_loaded": true,
+        "pytest_exit": 1,
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "classification": "KILLED_BEHAVIOR_ASSERTION",
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 37184,
+          "thread_id": 10300,
+          "active_before_recovery": 0,
+          "exit": 1,
+          "active_after_recovery": 0
+        },
+        "receipt_sha256": "33f9210e84148435d8a337798d32d62a7296bf26b6c9e360f1a1a5635fbc3704"
+      },
+      {
+        "fault": "drop-followup-consumer",
+        "source_sha256": "ae9b95948b1776f7770191c96d2ddecc930b6e215ce03b3cd6b2b26d139dc6e4",
+        "test_sha256": "31f8725bd428c804151ce1a3b20c04227350427204a0050346b892e32ef60616",
+        "source_unchanged": true,
+        "test_unchanged": true,
+        "bindings": 1,
+        "mutated_module_loaded": true,
+        "pytest_exit": 1,
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "classification": "KILLED_BEHAVIOR_ASSERTION",
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 28608,
+          "thread_id": 29976,
+          "active_before_recovery": 0,
+          "exit": 1,
+          "active_after_recovery": 0
+        },
+        "receipt_sha256": "fb952bd3220708638a0797923a1e878fe7e7d9f0354579363c98ca0b826f0c30"
+      }
+    ],
+    "job_qualification": {
+      "sha256": "88ec32249630e184aeea3d875e7df99a4b69e11414c71b87ec9e8e55653d6700",
+      "positive": {
+        "job_assigned_before_resume": true,
+        "timed_out": false,
+        "pid": 32460,
+        "thread_id": 35736,
+        "active_before_recovery": 0,
+        "exit": 0,
+        "active_after_recovery": 0
+      },
+      "timeout": {
+        "job_assigned_before_resume": true,
+        "timed_out": true,
+        "pid": 31656,
+        "thread_id": 34740,
+        "active_before_recovery": 6,
+        "exit": 124,
+        "active_after_recovery": 0
+      },
+      "members": {
+        "child": {
+          "pid": 38196,
+          "in_job": true
+        },
+        "grandchild": {
+          "pid": 39756,
+          "in_job": true
+        }
+      },
+      "classification": "QUALIFIED_OWNED_JOB_EXIT_AND_TIMEOUT"
+    },
+    "selected_codegraph": {
+      "version": "1.6.0",
+      "fileCount": 12,
+      "nodeCount": 1739,
+      "edgeCount": 5096,
+      "pendingChanges": {
+        "added": 0,
+        "modified": 0,
+        "removed": 0
+      },
+      "index": {
+        "builtWithVersion": "1.6.0",
+        "builtWithExtractionVersion": 25,
+        "currentExtractionVersion": 25,
+        "reindexRecommended": false,
+        "state": "complete",
+        "pendingRefs": 0
+      }
+    },
+    "graph_scope": "Exact selected CLI/consumer/agent/file-tool owners and tests only; not whole repository or Gateway whole-file graph.",
+    "source_bindings": [
+      {
+        "path": "cli.py",
+        "source_sha256": "ae9b95948b1776f7770191c96d2ddecc930b6e215ce03b3cd6b2b26d139dc6e4",
+        "kind": "EXACT_SELECTED_SOURCE_FILE"
+      },
+      {
+        "path": "hermes_cli/cli_queue.py",
+        "source_sha256": "1b4773b4a47998473940a02f8417ce406c2cc89b7e72903db8af1ae56d5a5597",
+        "kind": "EXACT_SELECTED_SOURCE_FILE"
+      },
+      {
+        "path": "hermes_cli/commands.py",
+        "source_sha256": "baaca3fe42284958c998f5aa3dd6c7567614290109b600caa035f4fa37dd8959",
+        "kind": "EXACT_SELECTED_SOURCE_FILE"
+      },
+      {
+        "path": "hermes_cli/cli_agent_setup_mixin.py",
+        "source_sha256": "c7ba9e4398a3f0152c88ff32de89f8ab8fed4f6bb969bbc0e36858f7eeb5b6a4",
+        "kind": "EXACT_SELECTED_SOURCE_FILE"
+      },
+      {
+        "path": "run_agent.py",
+        "source_sha256": "343ab8f2822e095de3d0c5f98dfaf3b73e97d519bb0435de3ad70a5aac94c20b",
+        "kind": "EXACT_SELECTED_SOURCE_FILE"
+      },
+      {
+        "path": "model_tools.py",
+        "source_sha256": "b24d49678cde1e2f12e0fbe5ed84ad34e0170a36376ebde1e952640222cfb0de",
+        "kind": "EXACT_SELECTED_SOURCE_FILE"
+      },
+      {
+        "path": "tools/file_tools.py",
+        "source_sha256": "9216f03edc43c9b08526d294801141e2b4c92de7adfbad71582bceb207002ba4",
+        "kind": "EXACT_SELECTED_SOURCE_FILE"
+      },
+      {
+        "path": "tools/file_operations.py",
+        "source_sha256": "f137f0604838b804212173963b1162869fc502c3166999701077cffd15d67c0e",
+        "kind": "EXACT_SELECTED_SOURCE_FILE"
+      },
+      {
+        "path": "tools/registry.py",
+        "source_sha256": "f95d011cae75f0426dd77cb1e25df6bebb61a067d795312df297cb877dd616f5",
+        "kind": "EXACT_SELECTED_SOURCE_FILE"
+      },
+      {
+        "path": "toolsets.py",
+        "source_sha256": "7f919448de649d119b603bcff22e44c31c408ebf37e432d72a65b880e63ac4bf",
+        "kind": "EXACT_SELECTED_SOURCE_FILE"
+      },
+      {
+        "path": "tests/cli/test_cli_queue_contract.py",
+        "source_sha256": "38ed7e5cfa0cdfd003819663f040b3d363f6ffbc0e94ec0d4e24c6f677cf1035",
+        "kind": "EXACT_SELECTED_SOURCE_FILE"
+      },
+      {
+        "path": "tests/cli/test_cli_queue_runtime_effects.py",
+        "source_sha256": "31f8725bd428c804151ce1a3b20c04227350427204a0050346b892e32ef60616",
+        "kind": "EXACT_SELECTED_SOURCE_FILE"
+      },
+      {
+        "path": "tests/gateway/test_queue_command.py",
+        "source_sha256": "86ddca0ac7dc8f043a0bf8d47b833a8b3dbadf87a805e416f2f329c1eeb48788"
+      }
+    ],
+    "local_harness": [
+      {
+        "path": "tmp/selective-20261017/run_fxa01.py",
+        "sha256": "347928855ba84a560ac8324e6e1969e0e30549b224f66daa14b7ae8b9dacb0dc"
+      },
+      {
+        "path": "tmp/selective-20261017/fxa01_owned_job.py",
+        "sha256": "ad3738f0d7fd0f63db2f7d41dcdb8209f3647eae36aa233592d726198b5c48e7"
+      },
+      {
+        "path": "tmp/selective-20261017/fxa01_mutation_probe.py",
+        "sha256": "18f8aa988e09000339bca8ac2b9fd87c83dd53a008f7d8e88460082ee770d6ab"
+      },
+      {
+        "path": "tmp/selective-20261017/qualify_fxa01_job.py",
+        "sha256": "9f2c33562139b378e3563e6525ebd733bdcdbfa21989ed560ad1d7cc85b63c1a"
+      }
+    ],
+    "independent_review": {
+      "runtime_test_and_parent": "Franklin: no final P1/P2; timeout descendant recovery P2 closed after Job qualification v4.",
+      "runtime_test_sha256": "31f8725bd428c804151ce1a3b20c04227350427204a0050346b892e32ef60616",
+      "f06_scope_and_gateway_literal_table": "Confucius: no concrete P1/P2; read-only source review, no independent runtime execution.",
+      "gateway_test_sha256": "86ddca0ac7dc8f043a0bf8d47b833a8b3dbadf87a805e416f2f329c1eeb48788"
+    },
+    "retained_excluded_attempts": "runtime v1-v3 failed fixture setup/protocol assumptions; v4 and later repeated passes not added. Job v1-v3 not qualified.",
+    "native_electron_status": "HELD: separate production protocol association restore target awaits human reply.",
+    "physical_acceptance": "Actual-model 8h soak and three physical sleep/resume remain NOT_RUN per human instruction.",
+    "post_suite_host_observation": {
+      "observed_at": "2026-10-17T07:51:55.871257+00:00",
+      "command_value_sha256": "a5422fa482c717c46eba68116bfb2bd94d7270245825db7d774d8c9b5a7cf476",
+      "registry_type": 1,
+      "registry_write_performed": false,
+      "production_stop_marker_absent": true,
+      "command_still_matches_recorded_test_value": true
+    }
   }
 }

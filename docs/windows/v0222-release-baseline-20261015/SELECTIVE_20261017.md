@@ -400,3 +400,50 @@ retained index is incomplete. No index deletion, unlock or tool upgrade was
 used. Whole-project graph freshness and full release acceptance remain open.
 
 Later watchdog follow-up (2026-10-17 16:14 JST): its state reports NORMAL, desktop up, backend up/healthy and embedding disabled. The production stop marker is absent. This is a watchdog status report, not independent model inference or embedding-service proof. No production restart command was issued. The separate protocol association restoration remains pending.
+
+F06 / FX-A01 scoped CLI supplement: the existing queue implementation is
+retained. A new behavioral integration test drives the real prompt_toolkit
+Application through pipe keyboard input and the actual busy inline queue/q
+commands. After add/list/edit/move/rm/clear, the actual process loop calls
+HermesCLI.chat and AIAgent through the real OpenAI SDK to an owned HTTP/SSE
+model peer. The real file-tool dispatcher and ShellFileOperations write C.json
+then B2.json, once each, with the expected bytes. Removed/cleared inputs create
+no files. The test checks actual SQLite user/assistant transcript order,
+unchanged history during management, and the first system message across all
+five requests. Synthetic credentials/model responses, pipe I/O, offline catalog
+inventory and nonselected-tool availability are explicit fixture leaves.
+
+The final native-Windows proof is 69 passes in four fresh per-file processes
+(CLI runtime 1, existing CLI contracts 51, Gateway queue dispatch 12, Gateway
+consumption 5), with zero failures/errors/skips. The ten additional Gateway
+cases preserve queue/q literal payloads such as list, edit, move, rm and add;
+they do not add CLI management verbs to Gateway. Gateway uses the existing
+synthetic runner/adapter fixture. These counts are selected final runs and
+must not be added to historical or repeated-run totals.
+
+Two source-bound in-memory faults are killed by behavioral assertions: move
+becomes a no-op, and the actual input consumer omits chat after the first turn.
+Each binds once, loads the mutated owner, fails one test without collection
+errors, and leaves source/test bytes unchanged. Final runtime test SHA-256 is
+31f8725bd428c804151ce1a3b20c04227350427204a0050346b892e32ef60616.
+
+The local Windows runner assigns the suspended child to a dedicated
+KILL_ON_JOB_CLOSE Job before resume. All descendants inherit that ownership.
+Normal runs and both killed faults finish with zero active Job processes and
+no forced recovery. A separate qualification checks a normal exit and a
+three-second timeout: child and grandchild report Job membership, six active
+processes are observed before timeout recovery, and zero remain afterward.
+The runner rejects timeout or residual-recovery runs even if pytest exits 0.
+Independent review closed the timeout-descendant recovery P2; final test,
+scope and runner reviews found no remaining P1/P2. Ruff and diff hygiene pass.
+All proof, harness hashes and retained failed fixture attempts are referenced
+by the JSON receipt's fxa01_cli_runtime_acceptance field.
+
+Real CodeGraph 1.6.0 completed a new exact selected-owner graph: twelve files,
+1,739 nodes, 5,096 edges, zero pending changes. It covers the selected CLI,
+agent and file-tool owners/tests only. It is not runtime code or a fresh
+whole-repository/Gateway graph. Same-CLI new/resume/profile transitions, actual
+messaging channels and model quality remain unaccepted. The campaign remains
+partial; Electron launches remain held for the separate protocol association
+restore question, and actual-model eight-hour/physical sleep acceptance stays
+NOT_RUN under the human instruction.
