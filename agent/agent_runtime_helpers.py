@@ -5060,44 +5060,35 @@ def apply_pending_steer_to_tool_results(agent, messages: list, num_tool_msgs: in
     steer_text = agent._drain_pending_steer()
     if not steer_text:
         return
-    # Find the last tool-role message in the recent tail. Skipping
-    # non-tool messages defends against future code appending
-    # something else at the boundary.
-    target_idx = None
-    for j in range(len(messages) - 1, max(len(messages) - num_tool_msgs - 1, -1), -1):
-        msg = messages[j]
-        if isinstance(msg, dict) and msg.get("role") == "tool":
-            target_idx = j
-            break
-    if target_idx is None:
-        # No tool result in this batch (e.g. all skipped by interrupt);
-        # put the steer back so the caller's fallback path can deliver
-        # it as a normal next-turn user message.
-        _lock = getattr(agent, "_pending_steer_lock", None)
-        if _lock is not None:
-            with _lock:
-                if agent._pending_steer:
-                    agent._pending_steer = agent._pending_steer + "\n" + steer_text
-                else:
-                    agent._pending_steer = steer_text
-        else:
+    from contextlib import nullcontext
+    _lock = getattr(agent, "_pending_steer_lock", None)
+    # A hard stop and a history write have a single ordering point. Text
+    # already taken out of the slot cannot be restored after cancellation.
+    with _lock if _lock is not None else nullcontext():
+        stop = getattr(agent, "_hard_interrupt_requested", None)
+        if getattr(agent, "_steer_turn_cancelled", False) or (stop is not None and stop.is_set()):
+            return
+        target_idx = None
+        for j in range(len(messages) - 1, max(len(messages) - num_tool_msgs - 1, -1), -1):
+            msg = messages[j]
+            if isinstance(msg, dict) and msg.get("role") == "tool":
+                target_idx = j
+                break
+        if target_idx is None:
             existing = getattr(agent, "_pending_steer", None)
             agent._pending_steer = (existing + "\n" + steer_text) if existing else steer_text
-        return
-    marker = format_steer_marker(steer_text)
-    existing_content = messages[target_idx].get("content", "")
-    if not isinstance(existing_content, str):
-        # Anthropic multimodal content blocks — preserve them and append
-        # a text block at the end.
-        try:
-            blocks = list(existing_content) if existing_content else []
-            blocks.append({"type": "text", "text": marker.lstrip()})
-            messages[target_idx]["content"] = blocks
-        except Exception:
-            # Fall back to string replacement if content shape is unexpected.
-            messages[target_idx]["content"] = f"{existing_content}{marker}"
-    else:
-        messages[target_idx]["content"] = existing_content + marker
+            return
+        marker = format_steer_marker(steer_text)
+        existing_content = messages[target_idx].get("content", "")
+        if not isinstance(existing_content, str):
+            try:
+                blocks = list(existing_content) if existing_content else []
+                blocks.append({"type": "text", "text": marker.lstrip()})
+                messages[target_idx]["content"] = blocks
+            except Exception:
+                messages[target_idx]["content"] = f"{existing_content}{marker}"
+        else:
+            messages[target_idx]["content"] = existing_content + marker
     _ra().logger.info(
         "Delivered /steer to agent after tool batch (%d chars): %s",
         len(steer_text),

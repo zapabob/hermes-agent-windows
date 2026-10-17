@@ -942,6 +942,11 @@ def init_agent(
     # Explicit hard cancellation is separate from redirect/message state. A
     # thread-safe Event makes the cause atomic for auxiliary stream pollers.
     agent._hard_interrupt_requested = threading.Event()
+    agent._steer_cancel_generation = 0
+    agent._steer_turn_cancelled = False
+    agent._steer_accepting = True
+    agent._steer_handoff = None
+    agent._steer_handoff_id = 0
     agent._execution_thread_id: int | None = None  # Set at run_conversation() start
     agent._interrupt_thread_signal_pending = False
     agent._client_lock = threading.RLock()

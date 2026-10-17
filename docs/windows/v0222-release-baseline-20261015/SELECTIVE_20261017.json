@@ -2626,6 +2626,7 @@
   "mandatory_open": [
     "Protocol association intentionally left unchanged per explicit human reply; qualify startup isolation before further native launches",
     "Full history semantic classification and final public-surface inventory",
+    "FX-A02 Gateway/API cancellation handoff, full public session transitions and remaining surfaces",
     "Conditional feature owners/acceptance and complete legacy U01-U18 qualification",
     "Complete Security Center and outbound/Control MCP effect and lifecycle acceptance",
     "Fresh packaged Windows user journey and actual model inference",
@@ -5185,5 +5186,1084 @@
       "Electron/native Desktop launches HELD; scheme association unchanged per human decision",
       "No primary/main update, publication, CI, release, or complete five-lane acceptance claimed"
     ]
+  },
+  "fxa02_cli_steer_acceptance": {
+    "status": "SCOPED_CORE_CLASSIC_CLI_STEER_CANCEL_VERIFIED_FXA02_OTHER_SURFACES_OPEN",
+    "recorded_at": "2026-10-17T09:23:13.218278+00:00",
+    "candidate_parent_commit": "c0e5d746f8a29d8829c885e0310f2c7cf3770a91",
+    "source_bindings": [
+      {
+        "path": "run_agent.py",
+        "sha256": "c79ce8a95050b3de6e04428235cb08330cbdc33e8f7303cf216af742ed76e28c"
+      },
+      {
+        "path": "cli.py",
+        "sha256": "9cc83059ca95354d47337cf0165ced3dce029d025d0739153c0f609cf8e6eb7d"
+      },
+      {
+        "path": "agent/agent_init.py",
+        "sha256": "589fb863926eb13b5975ed6d248f0bd1bc295f1a45ba11822031413b32eca7b4"
+      },
+      {
+        "path": "agent/agent_runtime_helpers.py",
+        "sha256": "5b50cab6244022745da7b6f94320a5fb871af92c5ed70894853d47787ab0604d"
+      },
+      {
+        "path": "agent/conversation_loop.py",
+        "sha256": "88abce97af6a57876898eda25c8c412e17781d5c9a28920537bff808addd5f4a"
+      },
+      {
+        "path": "agent/turn_finalizer.py",
+        "sha256": "e256fc7d1eb56304fa28c47932d2dbf9b2ca750a1aa3bcf53c94647c30349444"
+      },
+      {
+        "path": "hermes_cli/cli_queue.py",
+        "sha256": "8623d3b2c86d4948a3c3368f576f8853497d46d3e6bee13d28f1ea5ebcbd804b"
+      },
+      {
+        "path": "tests/run_agent/test_steer_cancellation_delivery.py",
+        "sha256": "542cac1515b0ae7fc7b55cbfb8c74becd739d68b05ca8a5b8bacabe9cd1b545d"
+      },
+      {
+        "path": "tests/cli/test_cli_steer_delivery_ownership.py",
+        "sha256": "1c01b3cdb9b969ae4150cb8292f9c79da656b602cc59922bd3ba72c8ae5dbf93"
+      },
+      {
+        "path": "tests/cli/test_cli_steer_runtime_effects.py",
+        "sha256": "e3cde4896b3742f733dd06eb993947ec6af3e2d91813b37288a6275573b64e3a"
+      }
+    ],
+    "independent_review_bindings": {
+      "run_agent.py": "c79ce8a95050b3de6e04428235cb08330cbdc33e8f7303cf216af742ed76e28c",
+      "cli.py": "9cc83059ca95354d47337cf0165ced3dce029d025d0739153c0f609cf8e6eb7d",
+      "agent/agent_init.py": "589fb863926eb13b5975ed6d248f0bd1bc295f1a45ba11822031413b32eca7b4",
+      "agent/agent_runtime_helpers.py": "5b50cab6244022745da7b6f94320a5fb871af92c5ed70894853d47787ab0604d",
+      "agent/conversation_loop.py": "88abce97af6a57876898eda25c8c412e17781d5c9a28920537bff808addd5f4a",
+      "agent/turn_finalizer.py": "e256fc7d1eb56304fa28c47932d2dbf9b2ca750a1aa3bcf53c94647c30349444",
+      "hermes_cli/cli_queue.py": "8623d3b2c86d4948a3c3368f576f8853497d46d3e6bee13d28f1ea5ebcbd804b",
+      "tests/run_agent/test_steer_cancellation_delivery.py": "542cac1515b0ae7fc7b55cbfb8c74becd739d68b05ca8a5b8bacabe9cd1b545d",
+      "tests/cli/test_cli_steer_delivery_ownership.py": "1c01b3cdb9b969ae4150cb8292f9c79da656b602cc59922bd3ba72c8ae5dbf93",
+      "tests/cli/test_cli_steer_runtime_effects.py": "e3cde4896b3742f733dd06eb993947ec6af3e2d91813b37288a6275573b64e3a"
+    },
+    "behavior": "Retained /s and /steer dispatch; hard stop retires guidance atomically, preserves an epoch across Event clear, fences tool-history writes, closes admission at settlement, and transfers late guidance once in order through existing pending input owner",
+    "metadata": "pending_steer stays text; optional pending_steer_generation and pending_steer_handoff are integers; agent/record objects remain internal",
+    "red": [
+      "Initial actual core tests: five failures and one positive control before product edits; generic interrupted expectations later narrowed to explicit hard stop with soft controls",
+      "fxa02-late-admission-red-v1: public /s inside real finalizer cleanup was accepted then lost",
+      "fxa02-late-order-red-v1: actual consumer delivered Q,B,A instead of Q,A,B",
+      "fxa02-busy-enter-red-v1: actual ordinary Enter in busy steer mode delivered anchor,B,A,clean; final ordering assertion failed without a timeout"
+    ],
+    "selected_final_runs": [
+      {
+        "label": "fxa02-accepted-core-v1",
+        "counts": {
+          "passed": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "files": [
+          "tests/run_agent/test_steer_cancellation_delivery.py"
+        ],
+        "selection": [],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 39876,
+          "thread_id": 2196,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "bootstrap_sha256": "1fceaaf5f35bc996ffe2e124bae5fff4a6a2985085226c909074b22e0ecd70ae",
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-core-v1/result.json",
+            "sha256": "3a9287f91123f78f255da50a043b33e95dba7b29b66fc35f4f7d6b17d7691d8c"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-core-v1/run.log",
+            "sha256": "43e0a54d4fb33b74fa235bc52af7af7496d7045ebf99056e439dc603e021ee95"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-core-v1/junit.xml",
+            "sha256": "e62d2c09572ad066b0c1160d6d971596a4d26d68b50e972bd2193a6dc1099094"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-core-v1/bootstrap-audit.json",
+            "sha256": "7b5b9cd641d90587bf90b0e3c5c439787d7ba57ecd608d9a21729814ae65389f"
+          }
+        ]
+      },
+      {
+        "label": "fxa02-accepted-ownership-v1",
+        "counts": {
+          "passed": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "files": [
+          "tests/cli/test_cli_steer_delivery_ownership.py"
+        ],
+        "selection": [],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 35884,
+          "thread_id": 17632,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "bootstrap_sha256": "1fceaaf5f35bc996ffe2e124bae5fff4a6a2985085226c909074b22e0ecd70ae",
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-ownership-v1/result.json",
+            "sha256": "0d45c886bc22a8aaf7bf3d312ee736e321519a4d26f647cd430bfd8aa567223f"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-ownership-v1/run.log",
+            "sha256": "14b1071c9b3a292ad852d69743041133c94d5125a599b526c9ed9c264010553e"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-ownership-v1/junit.xml",
+            "sha256": "231236ebdb5a8a7694e72e7700c60ed70c709ca91d3c482af3ecffd878ac7a5e"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-ownership-v1/bootstrap-audit.json",
+            "sha256": "5c5ae6576eeb3ee093ad731a5bc82f6b41662dcda9a147072054e1a9b5631191"
+          }
+        ]
+      },
+      {
+        "label": "fxa02-accepted-runtime-v1",
+        "counts": {
+          "passed": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "files": [
+          "tests/cli/test_cli_steer_runtime_effects.py"
+        ],
+        "selection": [],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 33836,
+          "thread_id": 30312,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "bootstrap_sha256": "1fceaaf5f35bc996ffe2e124bae5fff4a6a2985085226c909074b22e0ecd70ae",
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-runtime-v1/result.json",
+            "sha256": "698a31e5905e75f8a29eea0082277bf5e336e13c9844c7527c077444400377a2"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-runtime-v1/run.log",
+            "sha256": "e57d75f67e853abc44c4171d9f3023f418e4690a38fa26ff0cbfeb1aaf930740"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-runtime-v1/junit.xml",
+            "sha256": "6024284652442661138ec30cca92eb0b0ac7581a6b20a90e852e102ff77fe88d"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-runtime-v1/bootstrap-audit.json",
+            "sha256": "09529d63246d41996e0343b1c9261048cccdeae7acf8a0af7a1234934591d2d3"
+          }
+        ]
+      },
+      {
+        "label": "fxa02-accepted-alias-v1",
+        "counts": {
+          "passed": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "files": [
+          "tests/cli/test_steer_alias_contract.py"
+        ],
+        "selection": [],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 36024,
+          "thread_id": 39520,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "bootstrap_sha256": "1fceaaf5f35bc996ffe2e124bae5fff4a6a2985085226c909074b22e0ecd70ae",
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-alias-v1/result.json",
+            "sha256": "1523f9f38eb7a11b06c30f8ce6402dd483f6c9e6d2afa322198a3793073dc3d7"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-alias-v1/run.log",
+            "sha256": "2f0dcfb4dd998391ce9cd192e89cf15b7e063fa57455c820b2bbbc9e8d5cd398"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-alias-v1/junit.xml",
+            "sha256": "729541de575778b0e287996af855b397bf7785a967f119a1b72ec418ede01d10"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-alias-v1/bootstrap-audit.json",
+            "sha256": "5c5ae6576eeb3ee093ad731a5bc82f6b41662dcda9a147072054e1a9b5631191"
+          }
+        ]
+      },
+      {
+        "label": "fxa02-accepted-steer-v1",
+        "counts": {
+          "passed": 34,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "files": [
+          "tests/run_agent/test_steer.py"
+        ],
+        "selection": [],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 32472,
+          "thread_id": 29616,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "bootstrap_sha256": "1fceaaf5f35bc996ffe2e124bae5fff4a6a2985085226c909074b22e0ecd70ae",
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-steer-v1/result.json",
+            "sha256": "c82048664df141e72d02408034fd6daf9c37a37bc98dda338bd58fcfcc29efcf"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-steer-v1/run.log",
+            "sha256": "eb48267930db7f25e7e1a547d9e0cd7833d852da97af20a9f3424a9a3e66d15c"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-steer-v1/junit.xml",
+            "sha256": "4754680cce6a02598c0ab5bba300539418d5c3d810a8866cd62f362f5abaf667"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-steer-v1/bootstrap-audit.json",
+            "sha256": "9ffbc6baf222e40b6bdbdddec11970cb9ba57a63f523ed267d063934c94f7863"
+          }
+        ]
+      },
+      {
+        "label": "fxa02-accepted-segments-v1",
+        "counts": {
+          "passed": 32,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "files": [
+          "tests/run_agent/test_tool_batch_segmentation.py"
+        ],
+        "selection": [
+          "not test_symlink_aliases_are_not_parallelized"
+        ],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 37820,
+          "thread_id": 32804,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "bootstrap_sha256": "1fceaaf5f35bc996ffe2e124bae5fff4a6a2985085226c909074b22e0ecd70ae",
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-segments-v1/result.json",
+            "sha256": "e7f9d4cb329115cce2d3ca2ac6bf85955bb93c8be8e2a58e84876636ccd1e131"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-segments-v1/run.log",
+            "sha256": "a340d18fc0d3eca36440683ee8b2049b691234cd58cd2ed2b45b131c07d0ef1f"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-segments-v1/junit.xml",
+            "sha256": "721bd9a563225866da19540e7e60053e8570f9523cd4b793af9adbd3b4853432"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-segments-v1/bootstrap-audit.json",
+            "sha256": "8d884ead19c987eaccf9cacde79eb2958d5568cb49177534498e971af7c481d0"
+          }
+        ]
+      },
+      {
+        "label": "fxa02-accepted-finalizer-v1",
+        "counts": {
+          "passed": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "files": [
+          "tests/agent/test_turn_finalizer.py"
+        ],
+        "selection": [],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 28628,
+          "thread_id": 37060,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "bootstrap_sha256": "1fceaaf5f35bc996ffe2e124bae5fff4a6a2985085226c909074b22e0ecd70ae",
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-finalizer-v1/result.json",
+            "sha256": "74d8e81f237f8982cd7c632ecaba4ff9de6feaff607c3117639d84799b0a6005"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-finalizer-v1/run.log",
+            "sha256": "da676c7f7838d1e20c090c331bfcc062877d9d7c7c785ce7b23a96367dcf4b2f"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-finalizer-v1/junit.xml",
+            "sha256": "538d26e56fb529689674c78ceb65206709187d84cb44d6c3069b2d39e38e933e"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-finalizer-v1/bootstrap-audit.json",
+            "sha256": "2d123b6ad718b696554e2637a48a79223bb57e2946e7f2dd5a09250330a3be4a"
+          }
+        ]
+      },
+      {
+        "label": "fxa02-accepted-cleanup-v1",
+        "counts": {
+          "passed": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "files": [
+          "tests/agent/test_turn_finalizer_cleanup_guard.py"
+        ],
+        "selection": [],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 28868,
+          "thread_id": 35508,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "bootstrap_sha256": "1fceaaf5f35bc996ffe2e124bae5fff4a6a2985085226c909074b22e0ecd70ae",
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-cleanup-v1/result.json",
+            "sha256": "d8b26c67daeab89dc55b61e96bcaf5f99d808beafdb2cb5fbaeaa46808e1e77c"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-cleanup-v1/run.log",
+            "sha256": "1471e40aa93bce26345477e49658e888e9c03450b88ba4f741d1367d7bf432f9"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-cleanup-v1/junit.xml",
+            "sha256": "d3b1e98a4cea7d1e35d28742915bfda79f1f7827d7a1d577cff3d87fd363e07e"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-cleanup-v1/bootstrap-audit.json",
+            "sha256": "626113579d7c9d3a2c73806b1f3a9877c8049da11ef932e16e7bfc808819dc64"
+          }
+        ]
+      },
+      {
+        "label": "fxa02-accepted-persist-v1",
+        "counts": {
+          "passed": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "files": [
+          "tests/agent/test_turn_finalizer_final_response_persistence.py"
+        ],
+        "selection": [],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 37028,
+          "thread_id": 19140,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "bootstrap_sha256": "1fceaaf5f35bc996ffe2e124bae5fff4a6a2985085226c909074b22e0ecd70ae",
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-persist-v1/result.json",
+            "sha256": "4b656c2ef041249eb20e7c32e3a2960997eee76be8952cd782344320f88324e7"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-persist-v1/run.log",
+            "sha256": "02ecae2facc1dac47b0d35516a0e88db35f30c5e9f4289b04d7093a1d54a543e"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-persist-v1/junit.xml",
+            "sha256": "b8ba8402dae5c734e87c2416aff3d318a4e712cbf823c03cb1d344a74186355a"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-persist-v1/bootstrap-audit.json",
+            "sha256": "50672c5d40c1f2a79eccf705d954d043ccaaeff58adeb722728d195d886ed12a"
+          }
+        ]
+      },
+      {
+        "label": "fxa02-accepted-alternation-v1",
+        "counts": {
+          "passed": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "files": [
+          "tests/agent/test_turn_finalizer_interrupt_alternation.py"
+        ],
+        "selection": [],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 36688,
+          "thread_id": 15724,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "bootstrap_sha256": "1fceaaf5f35bc996ffe2e124bae5fff4a6a2985085226c909074b22e0ecd70ae",
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-alternation-v1/result.json",
+            "sha256": "0f478f028d9b1b712ad4b6a9903a6427d03f37c2379b801c2f2ff0704410ffc6"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-alternation-v1/run.log",
+            "sha256": "cbb7169b7ac75d754dc3df122339358090c33832b1635d26ad165602a98187cf"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-alternation-v1/junit.xml",
+            "sha256": "db73bfb8c9c9b4b371d7ed6c400770a50ddbe9c2b9d769252ba2690235fabdb6"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-alternation-v1/bootstrap-audit.json",
+            "sha256": "2d123b6ad718b696554e2637a48a79223bb57e2946e7f2dd5a09250330a3be4a"
+          }
+        ]
+      },
+      {
+        "label": "fxa02-accepted-budget-v1",
+        "counts": {
+          "passed": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "files": [
+          "tests/agent/test_turn_finalizer_iteration_limit_exit.py"
+        ],
+        "selection": [],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 32284,
+          "thread_id": 29252,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "bootstrap_sha256": "1fceaaf5f35bc996ffe2e124bae5fff4a6a2985085226c909074b22e0ecd70ae",
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-budget-v1/result.json",
+            "sha256": "23d1b12ff54e7621a1761d7ad5d307be4183d19e5dfb3ae772d12486ad3e1705"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-budget-v1/run.log",
+            "sha256": "c004fadf263f9075f20d43169f027a821f73fe3c8ac0abcae36725f12de4f7f6"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-budget-v1/junit.xml",
+            "sha256": "379393a50a1c80f2fab80532037d2612535d5952bdb4bb04f7d169ee71ec71f0"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-budget-v1/bootstrap-audit.json",
+            "sha256": "5f39b7593d5ea5fab3b0a9cb27afbf416c2963be2637c8c483ab6e0558c7c917"
+          }
+        ]
+      },
+      {
+        "label": "fxa02-accepted-compat-v1",
+        "counts": {
+          "passed": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "files": [
+          "tests/agent/test_interrupt_compat.py"
+        ],
+        "selection": [],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 38428,
+          "thread_id": 31044,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "bootstrap_sha256": "1fceaaf5f35bc996ffe2e124bae5fff4a6a2985085226c909074b22e0ecd70ae",
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-compat-v1/result.json",
+            "sha256": "99f1509bb517f72101af92cd3b9a566191670b699c6ab4d9b4ad61ab48ce2a5d"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-compat-v1/run.log",
+            "sha256": "23ce9a7bfcbf4c72d043a8d8695bdb65e30f54cda5af0e8cfac5ee053c9a1ad6"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-compat-v1/junit.xml",
+            "sha256": "931a89d6f8f7920c9632103c9290a98499244ba037f5f9854f93fc448874c723"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-compat-v1/bootstrap-audit.json",
+            "sha256": "50672c5d40c1f2a79eccf705d954d043ccaaeff58adeb722728d195d886ed12a"
+          }
+        ]
+      },
+      {
+        "label": "fxa02-accepted-queue-v1",
+        "counts": {
+          "passed": 51,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "files": [
+          "tests/cli/test_cli_queue_contract.py"
+        ],
+        "selection": [],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 27380,
+          "thread_id": 32032,
+          "active_before_recovery": 0,
+          "exit": 0,
+          "active_after_recovery": 0
+        },
+        "bootstrap_sha256": "1fceaaf5f35bc996ffe2e124bae5fff4a6a2985085226c909074b22e0ecd70ae",
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-queue-v1/result.json",
+            "sha256": "be40270351af67e5f065cc6168dc2f4fb2474c927a9bd9df5bdcc62e07377b05"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-queue-v1/run.log",
+            "sha256": "214d5f408e1fb1bd6c1be1ef1b882b625bb8b32f46ec9d6b104c34e2b07c4d40"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-queue-v1/junit.xml",
+            "sha256": "db690d008cfde9f2c30c49f86b6d52117ecc02537d5f439a449bcffff77cd84d"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-queue-v1/bootstrap-audit.json",
+            "sha256": "37dda0d59ae0776ff3ca461568eeb33e5b6fb907d19292856a27a424b5e91c35"
+          }
+        ]
+      }
+    ],
+    "totals_selected_runs_only": {
+      "passed": 185,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "deselected": "One segmentation symlink node excluded for unavailable Windows symlink privilege; no privilege/configuration changes",
+    "wire": [
+      {
+        "mode": "tool",
+        "requests": 4,
+        "real_file_effects": 2,
+        "hard_observed": false,
+        "evidence": {
+          "path": "tmp/selective-20261017/fxa02-accepted-runtime-v1/cases/test_keyboard_steer_runtime_ef0/steer-runtime-tool-evidence.json",
+          "sha256": "fe199456f402a1c76c090a7d2ed3599591e667094a2d2a1f003f06b329874f2e"
+        }
+      },
+      {
+        "mode": "cancel-tool",
+        "requests": 2,
+        "real_file_effects": 1,
+        "hard_observed": true,
+        "evidence": {
+          "path": "tmp/selective-20261017/fxa02-accepted-runtime-v1/cases/test_keyboard_steer_runtime_ef1/steer-runtime-cancel-tool-evidence.json",
+          "sha256": "d455e41d76bf1733dd2a78068986408be3c10ec3051822d813453393ced23ccb"
+        }
+      },
+      {
+        "mode": "cancel-model",
+        "requests": 2,
+        "real_file_effects": 0,
+        "hard_observed": true,
+        "evidence": {
+          "path": "tmp/selective-20261017/fxa02-accepted-runtime-v1/cases/test_keyboard_steer_runtime_ef2/steer-runtime-cancel-model-evidence.json",
+          "sha256": "6c58e99d0567efadbed86bafc0861e29a16be38e0518ec0924c6a57950422f9d"
+        }
+      },
+      {
+        "mode": "late",
+        "requests": 3,
+        "real_file_effects": 0,
+        "hard_observed": false,
+        "evidence": {
+          "path": "tmp/selective-20261017/fxa02-accepted-runtime-v1/cases/test_keyboard_steer_runtime_ef3/steer-runtime-late-evidence.json",
+          "sha256": "2d79cf75da1aabbe2e45d9c698eff0f554a20f9345761a22d68f4dcd7f8b7b56"
+        }
+      },
+      {
+        "mode": "late-busy-text",
+        "requests": 4,
+        "real_file_effects": 0,
+        "hard_observed": false,
+        "evidence": {
+          "path": "tmp/selective-20261017/fxa02-accepted-runtime-v1/cases/test_keyboard_steer_runtime_ef4/steer-runtime-late-busy-text-evidence.json",
+          "sha256": "63587b461a56f4e5df7884c3b8885792689338d0e79b5177fc63feee45114296"
+        }
+      }
+    ],
+    "fixtures": "Real prompt_toolkit Application with pipe keyboard input, real CLI/agent/SDK HTTP(SSE)/file dispatcher/ShellFileOperations/SQLite; synthetic credentials, owned model peer, offline provider catalog and nonselected tool availability leaves",
+    "cancellation_history": "Before an assistant exists, canonical role repair merges adjacent users on wire/CLI history; SQLite retains separate original user rows. The fixture checks that exact existing behavior and rejects all cancelled guidance tokens",
+    "faults_killed": [
+      {
+        "label": "fxa02-accepted-fault-before-core",
+        "counts": {
+          "passed": 1,
+          "failures": 1,
+          "errors": 0,
+          "skipped": 0
+        },
+        "files": [
+          "tests/cli/test_cli_steer_runtime_effects.py"
+        ],
+        "selection": [
+          "(cancel-tool or late) and not busy"
+        ],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 28308,
+          "thread_id": 33364,
+          "active_before_recovery": 0,
+          "exit": 1,
+          "active_after_recovery": 0
+        },
+        "bootstrap_sha256": "1fceaaf5f35bc996ffe2e124bae5fff4a6a2985085226c909074b22e0ecd70ae",
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-fault-before-core/result.json",
+            "sha256": "9462ed3e488538d4e362c454c3bb7955b982ce0a7e40b79699e9a644b2017235"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-fault-before-core/run.log",
+            "sha256": "5f8ceb681f7132008f0ab80d38f32d8aaacec59d8c2a9911d23e71e7bfc2b120"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-fault-before-core/junit.xml",
+            "sha256": "02d50a5b60e0d93f755adf22857d82458b73ee4dedc57096e37c8d0d83e2a89c"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-fault-before-core/bootstrap-audit.json",
+            "sha256": "09529d63246d41996e0343b1c9261048cccdeae7acf8a0af7a1234934591d2d3"
+          }
+        ],
+        "mutation": {
+          "mutation": "before-fxa02",
+          "records": [
+            {
+              "path": "run_agent.py",
+              "function": "interrupt",
+              "class": "AIAgent",
+              "working_sha256": "c79ce8a95050b3de6e04428235cb08330cbdc33e8f7303cf216af742ed76e28c",
+              "source_sha256": "343ab8f2822e095de3d0c5f98dfaf3b73e97d519bb0435de3ad70a5aac94c20b",
+              "baseline": true,
+              "replacement_count": 0
+            },
+            {
+              "path": "run_agent.py",
+              "function": "steer",
+              "class": "AIAgent",
+              "working_sha256": "c79ce8a95050b3de6e04428235cb08330cbdc33e8f7303cf216af742ed76e28c",
+              "source_sha256": "343ab8f2822e095de3d0c5f98dfaf3b73e97d519bb0435de3ad70a5aac94c20b",
+              "baseline": true,
+              "replacement_count": 0
+            },
+            {
+              "path": "run_agent.py",
+              "function": "_drain_pending_steer",
+              "class": "AIAgent",
+              "working_sha256": "c79ce8a95050b3de6e04428235cb08330cbdc33e8f7303cf216af742ed76e28c",
+              "source_sha256": "343ab8f2822e095de3d0c5f98dfaf3b73e97d519bb0435de3ad70a5aac94c20b",
+              "baseline": true,
+              "replacement_count": 0
+            },
+            {
+              "path": "agent/agent_runtime_helpers.py",
+              "function": "apply_pending_steer_to_tool_results",
+              "class": null,
+              "working_sha256": "5b50cab6244022745da7b6f94320a5fb871af92c5ed70894853d47787ab0604d",
+              "source_sha256": "87f488e8afda677df18c247eaf6f5b70dffd1c4718cc56d5e92c445e3f9d5e0b",
+              "baseline": true,
+              "replacement_count": 0
+            },
+            {
+              "path": "agent/turn_finalizer.py",
+              "function": "finalize_turn",
+              "class": null,
+              "working_sha256": "e256fc7d1eb56304fa28c47932d2dbf9b2ca750a1aa3bcf53c94647c30349444",
+              "source_sha256": "dab1085ad3f77095b981d9005c94629a3baa7f07fee2a88a00667b6b0e7d5e6a",
+              "baseline": true,
+              "replacement_count": 0
+            }
+          ],
+          "in_memory_only": true,
+          "baseline_commit": "c0e5d746f8a29d8829c885e0310f2c7cf3770a91"
+        }
+      },
+      {
+        "label": "fxa02-accepted-fault-alias-noop",
+        "counts": {
+          "passed": 0,
+          "failures": 1,
+          "errors": 0,
+          "skipped": 0
+        },
+        "files": [
+          "tests/cli/test_cli_steer_runtime_effects.py"
+        ],
+        "selection": [
+          "tool and not cancel"
+        ],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 32916,
+          "thread_id": 24024,
+          "active_before_recovery": 0,
+          "exit": 1,
+          "active_after_recovery": 0
+        },
+        "bootstrap_sha256": "1fceaaf5f35bc996ffe2e124bae5fff4a6a2985085226c909074b22e0ecd70ae",
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-fault-alias-noop/result.json",
+            "sha256": "6b51e72f1f14d97265070c58d5376ec636033e0db129cc5ce74900838527a61c"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-fault-alias-noop/run.log",
+            "sha256": "c3f16954a2ed569660cb611041309e7525e6ba61414033635720d51a55c10308"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-fault-alias-noop/junit.xml",
+            "sha256": "49186f7e815c13d39137a9fe53208d7f1fcd99a2776579d363579607baf0e949"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-fault-alias-noop/bootstrap-audit.json",
+            "sha256": "09529d63246d41996e0343b1c9261048cccdeae7acf8a0af7a1234934591d2d3"
+          }
+        ],
+        "mutation": {
+          "mutation": "alias-noop",
+          "records": [
+            {
+              "path": "cli.py",
+              "function": "process_command",
+              "class": "HermesCLI",
+              "working_sha256": "9cc83059ca95354d47337cf0165ced3dce029d025d0739153c0f609cf8e6eb7d",
+              "source_sha256": "9cc83059ca95354d47337cf0165ced3dce029d025d0739153c0f609cf8e6eb7d",
+              "baseline": false,
+              "replacement_count": 1
+            }
+          ],
+          "in_memory_only": true,
+          "baseline_commit": "c0e5d746f8a29d8829c885e0310f2c7cf3770a91"
+        }
+      },
+      {
+        "label": "fxa02-accepted-fault-generation",
+        "counts": {
+          "passed": 0,
+          "failures": 1,
+          "errors": 0,
+          "skipped": 0
+        },
+        "files": [
+          "tests/cli/test_cli_steer_delivery_ownership.py"
+        ],
+        "selection": [
+          "test_real_hard_stop_keeps_guidance_revoked_after_the_event_is_cleared"
+        ],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 30048,
+          "thread_id": 39168,
+          "active_before_recovery": 0,
+          "exit": 1,
+          "active_after_recovery": 0
+        },
+        "bootstrap_sha256": "1fceaaf5f35bc996ffe2e124bae5fff4a6a2985085226c909074b22e0ecd70ae",
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-fault-generation/result.json",
+            "sha256": "e54bcacc7ae131303e1e25b6094e04f41d0a5ce02d4590f02d27add3ec93ff6c"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-fault-generation/run.log",
+            "sha256": "24655495d8d39cc7b3e341329f5e097ebfb8a7f8665cb71b0160c5520b48a2c5"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-fault-generation/junit.xml",
+            "sha256": "be21637d99b54a223572496b5ed7d41aba486a59f0a02516f7c4f5f71ed697b2"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-fault-generation/bootstrap-audit.json",
+            "sha256": "09036587ac27c713c01f57f1f0fc7890cfbc4722dfb7e826c9f5716c0a0ec83e"
+          }
+        ],
+        "mutation": {
+          "mutation": "no-stop-generation",
+          "records": [
+            {
+              "path": "run_agent.py",
+              "function": "interrupt",
+              "class": "AIAgent",
+              "working_sha256": "c79ce8a95050b3de6e04428235cb08330cbdc33e8f7303cf216af742ed76e28c",
+              "source_sha256": "c79ce8a95050b3de6e04428235cb08330cbdc33e8f7303cf216af742ed76e28c",
+              "baseline": false,
+              "replacement_count": 1
+            }
+          ],
+          "in_memory_only": true,
+          "baseline_commit": "c0e5d746f8a29d8829c885e0310f2c7cf3770a91"
+        }
+      },
+      {
+        "label": "fxa02-accepted-fault-owner",
+        "counts": {
+          "passed": 0,
+          "failures": 3,
+          "errors": 0,
+          "skipped": 0
+        },
+        "files": [
+          "tests/cli/test_cli_steer_delivery_ownership.py"
+        ],
+        "selection": [
+          "test_real_input_consumer_drops_stale_guidance_and_keeps_plain_user_input"
+        ],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 31028,
+          "thread_id": 38900,
+          "active_before_recovery": 0,
+          "exit": 1,
+          "active_after_recovery": 0
+        },
+        "bootstrap_sha256": "1fceaaf5f35bc996ffe2e124bae5fff4a6a2985085226c909074b22e0ecd70ae",
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-fault-owner/result.json",
+            "sha256": "70af92e701bead8faf54f94551e5f01827e39b6d364c4cd4d16ef71a472e5adb"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-fault-owner/run.log",
+            "sha256": "fa23e8257695053517106cd407a928e67f1d663d6b2a9fea2ff1fb397d7c2ccd"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-fault-owner/junit.xml",
+            "sha256": "55629187c25e7cd427d0538d67d2ff160d34c5187c01418ef6619fd2e8a98aa7"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-fault-owner/bootstrap-audit.json",
+            "sha256": "eabb277b16b1dbcd3b19c6d28bad14f95f4298b1af4457ac77f95b4cdb32ea5a"
+          }
+        ],
+        "mutation": {
+          "mutation": "ignore-delivery-owner",
+          "records": [
+            {
+              "path": "hermes_cli/cli_queue.py",
+              "function": "pending_steer_is_current",
+              "class": null,
+              "working_sha256": "8623d3b2c86d4948a3c3368f576f8853497d46d3e6bee13d28f1ea5ebcbd804b",
+              "source_sha256": "8623d3b2c86d4948a3c3368f576f8853497d46d3e6bee13d28f1ea5ebcbd804b",
+              "baseline": false,
+              "replacement_count": 1
+            }
+          ],
+          "in_memory_only": true,
+          "baseline_commit": "c0e5d746f8a29d8829c885e0310f2c7cf3770a91"
+        }
+      },
+      {
+        "label": "fxa02-accepted-fault-late",
+        "counts": {
+          "passed": 0,
+          "failures": 1,
+          "errors": 0,
+          "skipped": 0
+        },
+        "files": [
+          "tests/cli/test_cli_steer_delivery_ownership.py"
+        ],
+        "selection": [
+          "test_public_late_steer_at_finalizer_cleanup_is_delivered_once"
+        ],
+        "ownership": {
+          "job_assigned_before_resume": true,
+          "timed_out": false,
+          "pid": 25800,
+          "thread_id": 39744,
+          "active_before_recovery": 0,
+          "exit": 1,
+          "active_after_recovery": 0
+        },
+        "bootstrap_sha256": "1fceaaf5f35bc996ffe2e124bae5fff4a6a2985085226c909074b22e0ecd70ae",
+        "artifacts": [
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-fault-late/result.json",
+            "sha256": "22fc9d90d19ea8432bd42bd3302faed2abbc5a36289b9c2d79ef343cdcacc63c"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-fault-late/run.log",
+            "sha256": "6f37f2f49ac8099f68e7b73738ae6aa8939a1f96e318d3eeaf448057bd870b07"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-fault-late/junit.xml",
+            "sha256": "ed1729f4aed3392f5556c90bb12ba1add5f3e9a92939907ce3e6f27ec5d075ec"
+          },
+          {
+            "path": "tmp/selective-20261017/fxa02-accepted-fault-late/bootstrap-audit.json",
+            "sha256": "09036587ac27c713c01f57f1f0fc7890cfbc4722dfb7e826c9f5716c0a0ec83e"
+          }
+        ],
+        "mutation": {
+          "mutation": "late-admission-open",
+          "records": [
+            {
+              "path": "run_agent.py",
+              "function": "_settle_pending_steer",
+              "class": "AIAgent",
+              "working_sha256": "c79ce8a95050b3de6e04428235cb08330cbdc33e8f7303cf216af742ed76e28c",
+              "source_sha256": "c79ce8a95050b3de6e04428235cb08330cbdc33e8f7303cf216af742ed76e28c",
+              "baseline": false,
+              "replacement_count": 1
+            }
+          ],
+          "in_memory_only": true,
+          "baseline_commit": "c0e5d746f8a29d8829c885e0310f2c7cf3770a91"
+        }
+      }
+    ],
+    "fault_scope": "before-fxa02 restores five pinned baseline function owners in memory (not a whole old checkout); alias-noop, missing persistent stop generation, missing consumer ownership, and reopened final admission are separate source-bound faults",
+    "harness_archives": [
+      {
+        "path": "tmp/selective-20261017/steer_cancel_pytest.py",
+        "sha256": "1fceaaf5f35bc996ffe2e124bae5fff4a6a2985085226c909074b22e0ecd70ae"
+      },
+      {
+        "path": "tmp/selective-20261017/steer_cancel_pytest_pre_final_v1.py",
+        "sha256": "07df8e504854b23e35026d043d54977f7d895c216a624c993591846f5aaa11b8"
+      }
+    ],
+    "harness_version_scope": "All thirteen positive and five fault runs bind the current runner/bootstrap/Job helper; direct test helpers, ancestor conftest files, command/prompt/guard owners and selected product/test files are bound before and after each run",
+    "isolation": {
+      "owned_windows_job": "Suspended child assigned before resume; zero active members and no forced recovery in every selected normal and fault run",
+      "homes_temp_scratch": "owned before product imports; source-root dotenv asserted absent",
+      "env_loader": "owned home only, project_env=None, load_external_secrets=False",
+      "browser_orphan_reaper": "disabled through process exit; not part of this test scope",
+      "network": "nonwire socket/DNS denial with constructor-owned stdlib wakeup pairs; wire permits only owned localhost model peer",
+      "registry_and_launcher": "registry mutations denied; Windows launcher repair leaf suppressed before import",
+      "catalog_metadata": "models.dev offline; model metadata leaf empty/offline; no dependency installs"
+    },
+    "independent_review": {
+      "core_cli": "Tesla: all identified product P2s closed; source-only; no final P1/P2 in scoped core/CLI",
+      "runtime_test": "Franklin: late feeder P2 closed with content-based completion; source-only",
+      "secondary_and_harness": "Confucius: ordinary Enter fallback P2 closed; Tesla: direct helper manifest P2 closed; source-only, no final scoped P1/P2"
+    },
+    "graph": {
+      "scope": "19 exact selected owner/test files, never runtime imports; not whole repository/Gateway",
+      "status": {
+        "initialized": true,
+        "version": "1.6.0",
+        "projectPath": "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\tmp\\selective-20261017\\fxa02-owner-graph-v4",
+        "indexPath": "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\tmp\\selective-20261017\\fxa02-owner-graph-v4\\.codegraph",
+        "lastIndexed": "2026-10-17T09:18:41.342Z",
+        "fileCount": 19,
+        "nodeCount": 1917,
+        "edgeCount": 5709,
+        "dbSizeBytes": 8552448,
+        "walSizeBytes": 0,
+        "backend": "node-sqlite",
+        "journalMode": "wal",
+        "nodesByKind": {
+          "class": 38,
+          "file": 19,
+          "function": 722,
+          "import": 307,
+          "method": 626,
+          "variable": 205
+        },
+        "languages": [
+          "python"
+        ],
+        "pendingChanges": {
+          "added": 0,
+          "modified": 0,
+          "removed": 0
+        },
+        "worktreeMismatch": null,
+        "index": {
+          "builtWithVersion": "1.6.0",
+          "builtWithExtractionVersion": 25,
+          "currentExtractionVersion": 25,
+          "reindexRecommended": false,
+          "state": "complete",
+          "pendingRefs": 0
+        }
+      },
+      "source_binding": {
+        "path": "tmp/selective-20261017/fxa02-owner-graph-v4/source-binding.json",
+        "sha256": "01efbeb7c8111af79d98964d4a188704a968e8954b84e41d7d966b51935aefc4"
+      }
+    },
+    "retained_excluded_attempts": "Earlier fixture runs assumed distinct adjacent-user wire rows and counted duplicate after-turn callbacks; alias-noop v1 failed its replacement binding. None count as acceptance or a killed fault",
+    "mandatory_open": [
+      "Gateway leftover recursion requires run-generation fencing before taking pending guidance and again immediately before recursive execution",
+      "API session chat stream cancellation and pending_steer publication need owner-level closure",
+      "Full FX-A02 real public new/resume/profile transitions and remaining surfaces are not established by synthetic-agent ownership tests",
+      "Whole five-lane campaign/history classification and fresh whole-root graph remain incomplete"
+    ],
+    "host_holds": "hermes:// association unchanged per human decision; no Electron/native Desktop launches; actual-model eight-hour and physical three sleep/resume NOT_RUN per human instruction",
+    "publication": "No main update/push/release/cloud CI performed"
   }
 }

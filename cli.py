@@ -13069,8 +13069,9 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                 and self.agent is not None
                 and hasattr(self.agent, "steer")
             ):
+                steer_agent = self.agent
                 try:
-                    accepted = self.agent.steer(payload)
+                    accepted = steer_agent.steer(payload)
                 except Exception as exc:
                     _cprint(f"  Steer failed: {exc}")
                 else:
@@ -13079,7 +13080,12 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                             f"  ⏩ Steer queued — arrives after the next tool call: {payload[:80]}{'...' if len(payload) > 80 else ''}"
                         )
                     else:
-                        _cprint("  Steer rejected (empty payload).")
+                        from hermes_cli.cli_queue import enqueue_pending_steer
+                        if (not getattr(steer_agent, "_steer_accepting", True)
+                                and enqueue_pending_steer(self, {"pending_steer": payload}, source_agent=steer_agent)):
+                            _cprint("  Turn finished; steer queued as the next turn.")
+                        else:
+                            _cprint("  Steer rejected: the turn was stopped or is no longer active.")
             else:
                 # No active run — treat as a normal next-turn message.
                 self._pending_input.put(payload)
@@ -17950,11 +17956,12 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
             # batch could absorb it), deliver it as the next user turn.
             _leftover_steer = result.get("pending_steer") if result else None
             if _leftover_steer and hasattr(self, "_pending_input"):
-                preview = _leftover_steer[:60] + (
-                    "..." if len(_leftover_steer) > 60 else ""
-                )
-                print(f"\n⏩ Delivering leftover /steer as next turn: '{preview}'")
-                self._pending_input.put(_leftover_steer)
+                from hermes_cli.cli_queue import enqueue_pending_steer
+                if enqueue_pending_steer(self, result, source_agent=agent):
+                    preview = _leftover_steer[:60] + (
+                        "..." if len(_leftover_steer) > 60 else ""
+                    )
+                    print(f"\n⏩ Delivering leftover /steer as next turn: '{preview}'")
 
             return response
 
@@ -18435,6 +18442,9 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
 
     def _tui_process_one_input(self, user_input):
         """Route one submitted input: file drop, /resume pick, ! shell, slash command, or a chat turn."""
+        from hermes_cli.cli_queue import pending_steer_is_current
+        if not pending_steer_is_current(self, user_input):
+            return
         from tools.process_registry_notifications import SubagentNotification
         notification_preview = user_input if isinstance(user_input, SubagentNotification) else None
         user_input, is_voice_input, is_seeded_query = self._tui_unwrap_input(user_input)
@@ -19113,6 +19123,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                 )
                 if self._agent_running and not _is_local_dispatch:
                     _effective_mode = self.busy_input_mode
+                    _steer_queue_fallback_agent = None
                     redirected = False
                     if _effective_mode == "steer":
                         # Route Enter through /steer — inject mid-run after the
@@ -19124,11 +19135,12 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                             _effective_mode = "queue"
                         else:
                             accepted = False
+                            _steer_input_agent = self.agent
                             try:
-                                if self.agent is not None and hasattr(
-                                    self.agent, "steer"
+                                if _steer_input_agent is not None and hasattr(
+                                    _steer_input_agent, "steer"
                                 ):
-                                    accepted = bool(self.agent.steer(text))
+                                    accepted = bool(_steer_input_agent.steer(text))
                             except Exception as exc:
                                 _cprint(
                                     f"  {_DIM}Steer failed ({exc}) — queued for next turn.{_RST}"
@@ -19138,10 +19150,16 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                                 preview = text[:80] + ("..." if len(text) > 80 else "")
                                 _cprint(f"  {_ACCENT}⏩ Steered: '{preview}'{_RST}")
                             else:
+                                if not getattr(_steer_input_agent, "_steer_accepting", True):
+                                    _steer_queue_fallback_agent = _steer_input_agent
                                 _effective_mode = "queue"
                     if _effective_mode == "queue":
                         # Queue for the next turn instead of interrupting
-                        self._pending_input.put(payload)
+                        if _steer_queue_fallback_agent is not None:
+                            from hermes_cli.cli_queue import enqueue_busy_steer_fallback
+                            enqueue_busy_steer_fallback(self, payload, source_agent=_steer_queue_fallback_agent)
+                        else:
+                            self._pending_input.put(payload)
                         preview = (
                             text
                             if text

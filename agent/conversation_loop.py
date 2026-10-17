@@ -1949,6 +1949,9 @@ def run_conversation(
     Returns:
         Dict: Complete conversation result with final response and message history
     """
+    _open_steer_turn = getattr(agent, "_open_steer_turn", None)
+    if callable(_open_steer_turn):
+        _open_steer_turn()
     if moa_config is None:
         try:
             from hermes_cli.moa_config import decode_moa_turn
@@ -2248,51 +2251,8 @@ def run_conversation(
         # iteration, no tools yet), the steer stays pending for the next
         # tool batch — injecting into a user message would break role
         # alternation, and there's no tool output to piggyback on.
-        _pre_api_steer = agent._drain_pending_steer()
-        if _pre_api_steer:
-            _injected = False
-            for _si in range(len(messages) - 1, -1, -1):
-                _sm = messages[_si]
-                if isinstance(_sm, dict) and _sm.get("role") == "tool":
-                    from agent.prompt_builder import format_steer_marker
-
-                    marker = format_steer_marker(_pre_api_steer)
-                    existing = _sm.get("content", "")
-                    if isinstance(existing, str):
-                        _sm["content"] = existing + marker
-                    else:
-                        # Multimodal content blocks — append text block
-                        try:
-                            blocks = list(existing) if existing else []
-                            blocks.append({"type": "text", "text": marker})
-                            _sm["content"] = blocks
-                        except Exception:
-                            pass
-                    _injected = True
-                    logger.debug(
-                        "Pre-API-call steer drain: injected into tool msg at index %d",
-                        _si,
-                    )
-                    break
-            if not _injected:
-                # No tool message to inject into — put it back so
-                # the post-tool-execution drain picks it up later.
-                _lock = getattr(agent, "_pending_steer_lock", None)
-                if _lock is not None:
-                    with _lock:
-                        if agent._pending_steer:
-                            agent._pending_steer = (
-                                agent._pending_steer + "\n" + _pre_api_steer
-                            )
-                        else:
-                            agent._pending_steer = _pre_api_steer
-                else:
-                    existing = getattr(agent, "_pending_steer", None)
-                    agent._pending_steer = (
-                        (existing + "\n" + _pre_api_steer)
-                        if existing
-                        else _pre_api_steer
-                    )
+        from agent.agent_runtime_helpers import apply_pending_steer_to_tool_results
+        apply_pending_steer_to_tool_results(agent, messages, len(messages))
 
         # ── Wall-clock run-budget wrap-up notice ───────────────────────
         # One-shot: when a run budget (agent.run_budget_seconds /

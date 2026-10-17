@@ -3448,11 +3448,24 @@ class AIAgent:
                     getattr(self, "_inference_cancel_generation", 0) + 1
                 )
             if hard_cancel:
-                _hard_event = getattr(
-                    self, "_hard_interrupt_requested", None
-                )
-                if _hard_event is not None:
+                def retire_steer():
+                    _hard_event = getattr(self, "_hard_interrupt_requested", None)
+                    if _hard_event is None:
+                        _hard_event = self._hard_interrupt_requested = threading.Event()
                     _hard_event.set()
+                    self._steer_cancel_generation = getattr(self, "_steer_cancel_generation", 0) + 1
+                    self._steer_turn_cancelled = True
+                    self._pending_steer = None
+                    self._steer_handoff = None
+
+                # Publish only after a liveness claim has survived admission.
+                # Steer admission and tool-history commits use this same lock.
+                _steer_lock = getattr(self, "_pending_steer_lock", None)
+                if _steer_lock is None:
+                    retire_steer()
+                else:
+                    with _steer_lock:
+                        retire_steer()
 
         def _consume_claim_and_publish_first_state() -> bool:
             # Final mutation edge: when a generation claim is in play,
@@ -3693,25 +3706,28 @@ class AIAgent:
             text: The user text to inject. Empty strings are ignored.
 
         Returns:
-            True if the steer was accepted, False if the text was empty.
+            True if accepted by this turn; False for empty text, a hard stop,
+            or a settled turn whose frontend must handle next-turn delivery.
         """
         if not text or not text.strip():
             return False
         cleaned = text.strip()
         _lock = getattr(self, "_pending_steer_lock", None)
-        if _lock is None:
-            # Test stubs that built AIAgent via object.__new__ skip __init__.
-            # Fall back to direct attribute set; no concurrent callers expected
-            # in those stubs.
+
+        def accept():
+            stop = getattr(self, "_hard_interrupt_requested", None)
+            if ((stop is not None and stop.is_set())
+                    or getattr(self, "_steer_turn_cancelled", False)
+                    or not getattr(self, "_steer_accepting", True)):
+                return False
             existing = getattr(self, "_pending_steer", None)
             self._pending_steer = (existing + "\n" + cleaned) if existing else cleaned
             return True
+
+        if _lock is None:
+            return accept()
         with _lock:
-            if self._pending_steer:
-                self._pending_steer = self._pending_steer + "\n" + cleaned
-            else:
-                self._pending_steer = cleaned
-        return True
+            return accept()
 
     def redirect(self, text: str) -> bool:
         """Redirect the active turn without converting it into a new task.
@@ -3832,14 +3848,45 @@ class AIAgent:
         results. Returns None when no steer is pending.
         """
         _lock = getattr(self, "_pending_steer_lock", None)
-        if _lock is None:
+
+        def take():
             text = getattr(self, "_pending_steer", None)
             self._pending_steer = None
-            return text
+            stop = getattr(self, "_hard_interrupt_requested", None)
+            return None if getattr(self, "_steer_turn_cancelled", False) or (stop is not None and stop.is_set()) else text
+
+        if _lock is None:
+            return take()
         with _lock:
-            text = self._pending_steer
+            return take()
+
+    def _open_steer_turn(self) -> None:
+        """Open admission for a newly admitted turn, retaining a pending stop."""
+        from contextlib import nullcontext
+        lock = getattr(self, "_pending_steer_lock", None)
+        with lock if lock is not None else nullcontext():
+            stop = getattr(self, "_hard_interrupt_requested", None)
+            self._steer_turn_cancelled = bool(stop is not None and stop.is_set())
+            self._steer_accepting = True
+            self._steer_handoff = None
+
+    def _settle_pending_steer(self) -> tuple[Optional[str], int, int]:
+        """Close admission and claim the last guidance in one critical section."""
+        from contextlib import nullcontext
+        lock = getattr(self, "_pending_steer_lock", None)
+        with lock if lock is not None else nullcontext():
+            self._steer_accepting = False
+            text = getattr(self, "_pending_steer", None)
             self._pending_steer = None
-        return text
+            stop = getattr(self, "_hard_interrupt_requested", None)
+            if getattr(self, "_steer_turn_cancelled", False) or (stop is not None and stop.is_set()):
+                text = None
+            generation = getattr(self, "_steer_cancel_generation", 0)
+            handoff_id = self._steer_handoff_id = getattr(self, "_steer_handoff_id", 0) + 1
+            self._steer_handoff = ({"text": text, "generation": generation,
+                                    "session_id": getattr(self, "session_id", None), "id": handoff_id}
+                                   if text else None)
+            return text, generation, handoff_id
 
     def _record_file_mutation_result(
         self,

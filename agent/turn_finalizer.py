@@ -772,9 +772,25 @@ def finalize_turn(
     # If a /steer landed after the final assistant turn (no more tool
     # batches to drain into), hand it back to the caller so it can be
     # delivered as the next user turn instead of being silently lost.
-    _leftover_steer = agent._drain_pending_steer()
+    _settle_steer = getattr(agent, "_settle_pending_steer", None)
+    _steer_handoff_id = None
+    if callable(_settle_steer):
+        _leftover_steer, _steer_generation, _steer_handoff_id = _settle_steer()
+    else:
+        _steer_generation = getattr(agent, "_steer_cancel_generation", 0)
+        _leftover_steer = agent._drain_pending_steer()
     if _leftover_steer:
-        result["pending_steer"] = _leftover_steer
+        from contextlib import nullcontext
+        _steer_lock = getattr(agent, "_pending_steer_lock", None)
+        with _steer_lock if _steer_lock is not None else nullcontext():
+            stop = getattr(agent, "_hard_interrupt_requested", None)
+            if (stop is None or not stop.is_set()) and getattr(agent, "_steer_cancel_generation", 0) == _steer_generation:
+                result["pending_steer"] = _leftover_steer
+                # This epoch survives clear_interrupt(); frontends can reject a
+                # stop arriving after finalization but before actual delivery.
+                result["pending_steer_generation"] = _steer_generation
+                if _steer_handoff_id is not None:
+                    result["pending_steer_handoff"] = _steer_handoff_id
     agent._response_was_previewed = False
 
     # Include interrupt message if one triggered the interrupt

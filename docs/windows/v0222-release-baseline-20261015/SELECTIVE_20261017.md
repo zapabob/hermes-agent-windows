@@ -500,3 +500,56 @@ Real CodeGraph 1.6.0 completes 22 exact selected files, 3,071 nodes and 9,054
 edges with zero pending changes. Whole-repository graph/history classification
 and the broader five-lane campaign remain incomplete. Raw evidence and exact
 source bindings are under fxa04_profile_creation_acceptance in the JSON receipt.
+
+
+FX-A02 scoped core/classic CLI supplement: /s and /steer retain their existing
+dispatch. An admitted hard stop now retires pending guidance and advances a
+persistent cancellation generation under the same lock used for admission and
+tool-history writes. Declined liveness claims leave guidance intact. Soft
+interrupts and normal completion retain their existing delivery behavior.
+
+Final settlement closes admission and retains an internal handoff record in
+one critical section. The CLI claims that record once. A later /s during
+cleanup first delivers the earlier retained guidance, preserving Q,A,B order
+without prepending over ordinary queued input. Source agent/session/generation
+envelopes are checked by the actual input consumer before unwrapping; stale
+guidance cannot survive stop, session change or agent/profile replacement.
+Explicit queue edits become the user's new ordinary request.
+
+Final selected evidence is 185 passes, zero failures/errors/skips, in thirteen
+fresh per-file owned Windows Jobs, with one symlink-privilege node deliberately
+deselected. Repeated/historical tests and earlier F06/FX-A04 totals are not
+added. The actual keyboard/runtime test covers five cases: next-tool injection
+with two real file effects, cancel during a real tool, cancel during model
+wait, normal late guidance delivered once as the next turn, and ordinary Enter
+in busy steer mode during settled cleanup. The last case independently
+reproduced B,A before the fix and verifies A,B afterward. Earlier guidance is
+claimed first, while the new ordinary input remains ordinary input rather
+than becoming revocable guidance. Every case then completes a clean follow-up.
+Exact HTTP request counts are 4/2/2/3/4;
+system prefix, actual SQLite rows and cancelled-token absence are inspected
+after tracked resources finish cleanup. Synthetic peer responses establish
+dispatch/routing/state behavior, not actual model quality.
+
+The cancel-before-first-answer fixture respects the existing canonical role
+repair: adjacent user rows merge on wire/CLI history while SQLite keeps each
+original user row. Earlier fixture assumptions and duplicate after-turn counts
+were corrected and their failed evidence retained. Five source-bound in-memory
+faults are killed by assertions without collection errors, including the
+required busy alias no-op. All selected runs finish with zero active Job members
+and no forced recovery. The pre-fix counterfactual restores five exact function
+owners from parent c0e5d746f8a29d8829c885e0310f2c7cf3770a91; it is not a
+claim that an entire old checkout was run.
+
+CodeGraph 1.6.0 completes nineteen exact selected files, 1,917 nodes and 5,709
+edges with zero pending changes. Whole-root graph freshness is not established.
+Runtime-test and core/CLI source reviews closed their identified P2s. The
+remaining Gateway recursive-followup generation check, API stream delivery,
+full public new/resume/profile journeys and remaining FX-A02 surfaces stay open;
+the entire FX-A02 family and broad five-lane campaign are not accepted.
+
+The explicit human holds remain: no scheme association change or further
+Electron/native Desktop launch. Actual-model eight-hour soak and physical three
+sleep/resume remain NOT_RUN. Main, publication and cloud CI are untouched.
+Raw evidence, excluded attempts and exact source/harness bindings are in
+fxa02_cli_steer_acceptance in the JSON receipt.
