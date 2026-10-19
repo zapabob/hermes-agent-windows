@@ -14,7 +14,12 @@ export interface ProtocolRegistrationOptions {
 }
 
 export function registerDeepLinkProtocol({
-  app, protocol, execPath, defaultApp, testWorkerIndex, log
+  app,
+  protocol,
+  execPath,
+  defaultApp,
+  testWorkerIndex,
+  log
 }: ProtocolRegistrationOptions): void {
   // Isolating HOME/userData does not isolate Windows HKCU URL handlers.
   // Presence, including worker "0" and an empty value, must prevent host writes.
@@ -30,9 +35,11 @@ export function registerDeepLinkProtocol({
       ? app.setAsDefaultProtocolClient(protocol, execPath, [app.getAppPath()])
       : app.setAsDefaultProtocolClient(protocol)
 
-    log(registered
-      ? `[deeplink] registered ${protocol}:// handler`
-      : `[deeplink] could not register ${protocol}:// handler`)
+    log(
+      registered
+        ? `[deeplink] registered ${protocol}:// handler`
+        : `[deeplink] could not register ${protocol}:// handler`
+    )
   } catch (error) {
     log(`[deeplink] protocol registration failed: ${error instanceof Error ? error.message : String(error)}`)
   }

@@ -11,6 +11,7 @@ afterEach(() => {
   cleanup()
   queryClient.clear()
 })
+
 const commandsOf = (items: readonly Unstable_TriggerItem[]) =>
   items.map(i => (i.metadata as { command: string }).command)
 
@@ -31,6 +32,7 @@ it.each(['', 'f04'])('filters public live completion metadata for query %s', asy
   const request = vi.fn(async (method: string) =>
     method === 'commands.catalog' ? catalog : { items: rows.map(text => ({ text })) }
   )
+
   let search!: (q: string) => readonly Unstable_TriggerItem[]
 
   function Probe() {

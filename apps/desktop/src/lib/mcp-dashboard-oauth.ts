@@ -35,15 +35,24 @@ const defaultSleep = (milliseconds: number) => new Promise<void>(resolve => wind
 const UPDATE_BACKEND = 'Update the Hermes backend to support Desktop MCP OAuth callbacks.'
 
 function startupSessionId(error: unknown, serverName: string): string | undefined {
-  if (!(error instanceof JsonRpcGatewayError) || error.code !== 5024 ||
-      !error.data || typeof error.data !== 'object' || Array.isArray(error.data)) {
+  if (
+    !(error instanceof JsonRpcGatewayError) ||
+    error.code !== 5024 ||
+    !error.data ||
+    typeof error.data !== 'object' ||
+    Array.isArray(error.data)
+  ) {
     return undefined
   }
 
   const data = error.data as Record<string, unknown>
 
-  if (data.kind !== 'mcp_oauth_startup_failure' || data.server_name !== serverName ||
-      typeof data.session_id !== 'string' || !/^[A-Za-z0-9_-]+$/.test(data.session_id)) {
+  if (
+    data.kind !== 'mcp_oauth_startup_failure' ||
+    data.server_name !== serverName ||
+    typeof data.session_id !== 'string' ||
+    !/^[A-Za-z0-9_-]+$/.test(data.session_id)
+  ) {
     return undefined
   }
 
@@ -109,6 +118,7 @@ export async function completeMcpDesktopOAuth({
       sessionId = startupSessionId(error, serverName)
       throw error
     }
+
     sessionId = started.session_id
     authUrl = started.auth_url
     // Start may have created a flow while the user cancelled. Keep its id so

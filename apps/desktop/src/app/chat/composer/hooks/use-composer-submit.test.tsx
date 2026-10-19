@@ -449,7 +449,8 @@ describe('useComposerSubmit with a clarify parked on the session', () => {
   })
 
   it.each(['/steer KeepCase', '/s KeepCase', '/S KeepCase', '/s', '/s    ', '/status'])(
-    'preserves the parked question while dispatching control command %s', async text => {
+    'preserves the parked question while dispatching control command %s',
+    async text => {
       parkClarify('runtime-session')
       const { hook, onSubmit, onSteer } = renderSubmitHook({ busy: true, text })
       act(() => hook.result.current.submitDraft())
@@ -462,13 +463,20 @@ describe('useComposerSubmit with a clarify parked on the session', () => {
   )
 
   it.each(['/s KeepCase', '/steer KeepCase', '/status'])(
-    'preserves the pending MCP setup while dispatching %s', async text => {
+    'preserves the pending MCP setup while dispatching %s',
+    async text => {
       parkClarify('runtime-session')
       $clarifyRequests.set({})
-      $mcpSetupRequests.set({ 'runtime-session': {
-        requestId: 'mcp-owned', sessionId: 'runtime-session', server: 'fixture',
-        action: 'install', reason: 'fixture request', scope: gatewayScope(null, 'default')
-      } })
+      $mcpSetupRequests.set({
+        'runtime-session': {
+          requestId: 'mcp-owned',
+          sessionId: 'runtime-session',
+          server: 'fixture',
+          action: 'install',
+          reason: 'fixture request',
+          scope: gatewayScope(null, 'default')
+        }
+      })
       const { hook, onSubmit } = renderSubmitHook({ busy: true, text })
       act(() => hook.result.current.submitDraft())
       await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))
@@ -480,14 +488,23 @@ describe('useComposerSubmit with a clarify parked on the session', () => {
   it('still declines pending MCP setup for a plain follow-up', async () => {
     parkClarify('runtime-session')
     $clarifyRequests.set({})
-    $mcpSetupRequests.set({ 'runtime-session': {
-      requestId: 'mcp-owned', sessionId: 'runtime-session', server: 'fixture',
-      action: 'install', reason: 'fixture request', scope: gatewayScope(null, 'default')
-    } })
+    $mcpSetupRequests.set({
+      'runtime-session': {
+        requestId: 'mcp-owned',
+        sessionId: 'runtime-session',
+        server: 'fixture',
+        action: 'install',
+        reason: 'fixture request',
+        scope: gatewayScope(null, 'default')
+      }
+    })
     const { hook, onSteer } = renderSubmitHook({ busy: true, text: 'continue without it' })
     act(() => hook.result.current.submitDraft())
     await waitFor(() => expect(onSteer).toHaveBeenCalledWith('continue without it'))
-    expect(gatewayRequest).toHaveBeenCalledWith('mcp.setup.respond', expect.objectContaining({ request_id: 'mcp-owned' }))
+    expect(gatewayRequest).toHaveBeenCalledWith(
+      'mcp.setup.respond',
+      expect.objectContaining({ request_id: 'mcp-owned' })
+    )
     expect($mcpSetupRequests.get()['runtime-session']).toBeUndefined()
   })
 

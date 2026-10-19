@@ -36,6 +36,7 @@ afterEach(() => {
 const original: ModelOptionsResponse = {
   providers: [{ slug: 'owned-provider', name: 'Owned provider', models: ['listed-model'] }]
 }
+
 const refreshed: ModelOptionsResponse = {
   providers: [{ slug: 'other-provider', name: 'Other provider', models: ['first-fallback'] }]
 }
@@ -43,6 +44,7 @@ const refreshed: ModelOptionsResponse = {
 function panel(refresh: Promise<ModelOptionsResponse>) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const select = vi.fn()
+
   const request = vi.fn(async (_method: string, params?: Record<string, unknown>) =>
     params?.refresh ? refresh : original
   )
@@ -84,11 +86,13 @@ describe('public Refresh Models retains the workstation selection', () => {
 
   it('does not overwrite a newer user selection while refresh is waiting', async () => {
     let resolve!: (data: ModelOptionsResponse) => void
+
     const { select, request, view } = panel(
       new Promise(done => {
         resolve = done
       })
     )
+
     await view.findByText('Owned provider')
     fireEvent.click(await view.findByText('Refresh Models'))
     await vi.waitFor(() =>
@@ -110,11 +114,13 @@ describe('public Refresh Models retains the workstation selection', () => {
 
   it('keeps the successful catalogue on failure and only invalidates this owner', async () => {
     let reject!: (error: Error) => void
+
     const { client, select, view } = panel(
       new Promise((_done, fail) => {
         reject = fail
       })
     )
+
     await view.findByText('Owned provider')
     const other = modelOptionsQueryKey('work', 'owned-session', 'other-connection')
     client.setQueryData(other, refreshed)

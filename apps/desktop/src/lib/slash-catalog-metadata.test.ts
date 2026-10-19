@@ -76,6 +76,7 @@ describe('catalog argument metadata', () => {
 
   it('does not let an obsolete pending response repopulate an invalidated catalog', async () => {
     let finish!: (value: object) => void
+
     const pending = cachedSlashCompletion(
       'catalog',
       () =>
@@ -83,6 +84,7 @@ describe('catalog argument metadata', () => {
           finish = resolve
         })
     )
+
     const settled = pending.catch(() => undefined)
     invalidateSlashCompletions()
     finish({ commands: { '/draft-note': { argument_mode: 'text' } } })
@@ -97,6 +99,7 @@ describe('catalog argument metadata', () => {
     await cachedSlashCompletion('catalog', async () => ({ commands: { '/old': { argument_mode: 'text' } } }))
     await queryClient.invalidateQueries({ queryKey: ['slash-completions', 'catalog'] })
     let finish!: (value: object) => void
+
     const pending = cachedSlashCompletion(
       'catalog',
       () =>
@@ -104,10 +107,12 @@ describe('catalog argument metadata', () => {
           finish = resolve
         })
     )
+
     const settled = pending.then(
       () => 'delivered obsolete catalog',
       () => 'cancelled'
     )
+
     invalidateSlashCompletions()
     finish({ commands: { '/late': { argument_mode: 'text' } } })
     expect(await settled).toBe('cancelled')

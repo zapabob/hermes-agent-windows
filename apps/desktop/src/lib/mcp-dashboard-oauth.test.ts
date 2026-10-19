@@ -157,32 +157,51 @@ const startupData = {
 
 describe('Desktop MCP reserved startup failure ownership', () => {
   it.each([
-    ['local', false], ['remote-gateway', false],
-    ['local', true], ['remote-gateway', true]
+    ['local', false],
+    ['remote-gateway', false],
+    ['local', true],
+    ['remote-gateway', true]
   ] as const)('retains %s scope and original cause when cleanup fails=%s', async (connectionId, cleanupFails) => {
     const { bridge, rpc, openExternal, api } = harness()
     setApiRequestConnection(connectionId)
     setApiRequestProfile('origin-profile')
+
     const failure = new JsonRpcGatewayError('Owned original worker startup cause', {
-      code: 5024, data: { ...startupData, future_metadata: 'ignored' }
+      code: 5024,
+      data: { ...startupData, future_metadata: 'ignored' }
     })
+
     rpc.mockImplementation(async (_connection, _profile, method) => {
       if (method.endsWith('.start')) {
         setApiRequestConnection('other-gateway')
         setApiRequestProfile('other-profile')
         throw failure
       }
-      if (cleanupFails) { throw new Error('Owned backend cleanup failed') }
+
+      if (cleanupFails) {
+        throw new Error('Owned backend cleanup failed')
+      }
+
       return { ok: true }
     })
-    if (cleanupFails) { bridge.cancel.mockRejectedValue(new Error('Owned native cleanup failed')) }
+
+    if (cleanupFails) {
+      bridge.cancel.mockRejectedValue(new Error('Owned native cleanup failed'))
+    }
     await expect(completeMcpDesktopOAuth({ serverName: 'reports' })).rejects.toBe(failure)
     expect(failure.message).toBe('Owned original worker startup cause')
     expect(bridge.cancel).toHaveBeenCalledExactlyOnceWith('listener-1')
     expect(rpc.mock.calls.map(call => call[2])).toEqual(['mcp.servers.oauth.start', 'mcp.servers.oauth.cancel'])
-    expect(rpc).toHaveBeenLastCalledWith(connectionId, 'origin-profile', 'mcp.servers.oauth.cancel', {
-      name: 'reports', session_id: startupData.session_id
-    }, 60_000)
+    expect(rpc).toHaveBeenLastCalledWith(
+      connectionId,
+      'origin-profile',
+      'mcp.servers.oauth.cancel',
+      {
+        name: 'reports',
+        session_id: startupData.session_id
+      },
+      60_000
+    )
     expect(rpc.mock.calls.every(call => call[0] === connectionId && call[1] === 'origin-profile')).toBe(true)
     expect(openExternal).not.toHaveBeenCalled()
     expect(bridge.wait).not.toHaveBeenCalled()

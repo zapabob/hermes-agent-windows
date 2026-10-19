@@ -64,6 +64,25 @@ The next full run passed 2,153 cases and failed one SSH socket-length control
 because this task's deeply nested TEMP exceeded the contract's 104-byte limit.
 It is not accepted as all-green. A fresh short, owned TEMP run is pending.
 
+The short owned TEMP run completed: 2,154 cases passed, zero assertion
+failures, nine pending cases. Two suites failed collection because the local
+ignore-scripts dependency installation has no Electron binary. Therefore this
+local full run is not GREEN. No dependency or evidence deletion was used to
+remove that limitation. The candidate 7b800be41bb064484ce7678b2565d1af96f31c77
+passed every Windows Tier-1 job, including native Desktop and carry policy;
+Docker, Nix and the generic JS/TS job also passed. Other push jobs were still
+running when this follow-up was recorded.
+
+The JS autofix workflow proposed PR #167 with 20 TypeScript/TSX formatting
+changes. Its complete patch is preserved locally and was independently
+reviewed: no assertions, guards, dependencies, or translated string values
+were removed or relaxed. A separate read-only check found identical syntax
+trees after excluding redundant parentheses and JSX indentation, and identical
+emitted JavaScript syntax. Prettier check passed; changed-file ESLint reported
+zero errors and four existing pipeline-order whitespace warnings. The reviewed
+patch is incorporated directly into the authorized main repair, followed by a
+fresh carry report. No change to workflow gates or metric definitions is made.
+
 The full progress file has two separate pre-existing Windows file-URI failures;
 the repaired generation cases pass without changing those assertions. The
 scheduled full Windows qualification at the old SHA has 424 failures in 159

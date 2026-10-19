@@ -11,7 +11,13 @@ import { probeCache } from '@/lib/mcp-probe-cache'
 import { queryClient } from '@/lib/query-client'
 import { $activeSessionId, $busy } from '@/store/session'
 
-const effects = vi.hoisted(() => ({ save: vi.fn(), request: vi.fn(), probe: vi.fn(), config: vi.fn(), notify: vi.fn() }))
+const effects = vi.hoisted(() => ({
+  save: vi.fn(),
+  request: vi.fn(),
+  probe: vi.fn(),
+  config: vi.fn(),
+  notify: vi.fn()
+}))
 vi.mock('@/hermes', async importOriginal => ({
   ...(await importOriginal<typeof HermesApi>()),
   getHermesConfigRecord: () => effects.config(),
@@ -45,20 +51,32 @@ afterEach(() => {
 })
 
 describe('MCP saved policy preserves cached conversation catalogue', () => {
-  it.each([false, true])('saving disable in cached conversation busy=%s requires no automatic reload consent', async busy => {
-    $busy.set(busy)
-    const gateway = { request: effects.request } as unknown as HermesApi.HermesGateway
-    render(<QueryClientProvider client={queryClient}><MemoryRouter><McpTab gateway={gateway} profile="owned-profile" /></MemoryRouter></QueryClientProvider>)
-    const toggle = await screen.findByRole('switch', { name: 'owned' })
-    expect(toggle.getAttribute('aria-checked')).toBe('true')
-    fireEvent.click(toggle)
-    await waitFor(() => expect(effects.save).toHaveBeenCalledTimes(1))
-    await waitFor(() => expect(toggle.getAttribute('aria-checked')).toBe('false'))
-    expect(effects.save).toHaveBeenCalledWith({ owned: { url: 'http://127.0.0.1:1/mcp', enabled: false } }, 'owned-profile')
-    expect(effects.request).not.toHaveBeenCalled()
-    expect($activeSessionId.get()).toBe('owned-cached-conversation')
-    expect($busy.get()).toBe(busy)
-  })
+  it.each([false, true])(
+    'saving disable in cached conversation busy=%s requires no automatic reload consent',
+    async busy => {
+      $busy.set(busy)
+      const gateway = { request: effects.request } as unknown as HermesApi.HermesGateway
+      render(
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter>
+            <McpTab gateway={gateway} profile="owned-profile" />
+          </MemoryRouter>
+        </QueryClientProvider>
+      )
+      const toggle = await screen.findByRole('switch', { name: 'owned' })
+      expect(toggle.getAttribute('aria-checked')).toBe('true')
+      fireEvent.click(toggle)
+      await waitFor(() => expect(effects.save).toHaveBeenCalledTimes(1))
+      await waitFor(() => expect(toggle.getAttribute('aria-checked')).toBe('false'))
+      expect(effects.save).toHaveBeenCalledWith(
+        { owned: { url: 'http://127.0.0.1:1/mcp', enabled: false } },
+        'owned-profile'
+      )
+      expect(effects.request).not.toHaveBeenCalled()
+      expect($activeSessionId.get()).toBe('owned-cached-conversation')
+      expect($busy.get()).toBe(busy)
+    }
+  )
 })
 
 describe('MCP save feedback reflects the returned contract and profile', () => {
@@ -66,11 +84,20 @@ describe('MCP save feedback reflects the returned contract and profile', () => {
     [undefined, false],
     [{ policy_check: 'rpc_admission' }, false],
     [{ policy_check: 'unknown', catalogue: 'new_session_or_explicit_reload', admitted_calls: 'may_complete' }, false],
-    [{ policy_check: 'rpc_admission', catalogue: 'new_session_or_explicit_reload', admitted_calls: 'may_complete' }, true]
+    [
+      { policy_check: 'rpc_admission', catalogue: 'new_session_or_explicit_reload', admitted_calls: 'may_complete' },
+      true
+    ]
   ])('application %j reports admission only when complete', async (application, admission) => {
     effects.save.mockResolvedValue({ ok: true, application })
     const gateway = { request: effects.request } as unknown as HermesApi.HermesGateway
-    render(<QueryClientProvider client={queryClient}><MemoryRouter><McpTab gateway={gateway} profile="owned-profile" /></MemoryRouter></QueryClientProvider>)
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <McpTab gateway={gateway} profile="owned-profile" />
+        </MemoryRouter>
+      </QueryClientProvider>
+    )
     fireEvent.click(await screen.findByRole('switch', { name: 'owned' }))
     await waitFor(() => expect(effects.notify).toHaveBeenCalledTimes(1))
     const notification = effects.notify.mock.calls[0][0] as { kind: string; message: string }
@@ -83,9 +110,20 @@ describe('MCP save feedback reflects the returned contract and profile', () => {
 
   it('a pending profile-A save cannot notify or change profile-B settings', async () => {
     let finishSave: ((value: { ok: boolean }) => void) | undefined
-    effects.save.mockImplementation(() => new Promise<{ ok: boolean }>(resolve => { finishSave = resolve }))
+    effects.save.mockImplementation(
+      () =>
+        new Promise<{ ok: boolean }>(resolve => {
+          finishSave = resolve
+        })
+    )
     const gateway = { request: effects.request } as unknown as HermesApi.HermesGateway
-    const view = (profile: string) => <QueryClientProvider client={queryClient}><MemoryRouter><McpTab gateway={gateway} profile={profile} /></MemoryRouter></QueryClientProvider>
+    const view = (profile: string) => (
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <McpTab gateway={gateway} profile={profile} />
+        </MemoryRouter>
+      </QueryClientProvider>
+    )
     const rendered = render(view('owned-profile'))
     fireEvent.click(await screen.findByRole('switch', { name: 'owned' }))
     await waitFor(() => expect(effects.save).toHaveBeenCalledTimes(1))
@@ -95,7 +133,9 @@ describe('MCP save feedback reflects the returned contract and profile', () => {
     const second = await screen.findByRole('switch', { name: 'owned-b' })
     expect(second.getAttribute('aria-checked')).toBe('true')
     expect(finishSave).toBeDefined()
-    await act(async () => { finishSave!({ ok: true }) })
+    await act(async () => {
+      finishSave!({ ok: true })
+    })
     // The actual promise continuation must leave the new profile untouched.
     await waitFor(() => expect(screen.queryByRole('switch', { name: 'owned' })).toBeNull())
     expect(second.getAttribute('aria-checked')).toBe('true')
