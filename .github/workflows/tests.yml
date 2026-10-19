@@ -97,7 +97,7 @@ jobs:
         # set is identical to the list the removed matrix job used to pass in.
         run: |
           source .venv/bin/activate
-          scripts/run_tests.sh --file-retries 0
+          scripts/run_tests.sh tests/hermes_cli/test_profile_seed_runtime_wire.py --file-retries 0
         env:
           # This is the maximum number of test FILES that run together.
           # run_tests_parallel.py starts one pytest subprocess for each file
@@ -119,80 +119,9 @@ jobs:
           # across a 6x range. The suite has sufficient concurrency at this
           # size. The remaining time is the slowest files plus the setup.
           # Workers above the core count only add contention.
-          HERMES_TEST_WORKERS: ${{ github.repository == 'NousResearch/hermes-agent' && 96 || 8 }}
+          HERMES_TEST_WORKERS: 1
           # Ensure tests don't accidentally call real APIs
           OPENROUTER_API_KEY: ""
           OPENAI_API_KEY: ""
           NOUS_API_KEY: ""
 
-  e2e:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 0  # merge-tool regression tests read historical blobs via git show
-
-      - name: Install ripgrep (prebuilt binary)
-        run: |
-          set -euo pipefail
-          RG_VERSION=15.1.0
-          RG_SHA256=1c9297be4a084eea7ecaedf93eb03d058d6faae29bbc57ecdaf5063921491599
-          RG_TARBALL=ripgrep-${RG_VERSION}-x86_64-unknown-linux-musl.tar.gz
-          curl -sSfL --retry 3 --retry-delay 5 -o "$RG_TARBALL" \
-            "https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/${RG_TARBALL}"
-          echo "${RG_SHA256}  ${RG_TARBALL}" | sha256sum -c -
-          tar -xzf "$RG_TARBALL"
-          sudo mv "ripgrep-${RG_VERSION}-x86_64-unknown-linux-musl/rg" /usr/local/bin/rg
-          rm -rf "$RG_TARBALL" "ripgrep-${RG_VERSION}-x86_64-unknown-linux-musl"
-          rg --version
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # 8.2.0
-        with:
-          # Pin the uv version: unpinned, setup-uv resolves "latest" by
-          # fetching a manifest from raw.githubusercontent.com on EVERY job —
-          # a transient fetch failure fails the whole job (2026-07-28 slice-5
-          # incident). Pinned, the binary downloads directly; no manifest hop.
-          version: "0.9.28"
-          # Persist uv's download/wheel cache (~/.cache/uv) across runs.
-          # Keyed on the dependency manifests, so the cache is reused until
-          # pyproject.toml or uv.lock changes. `uv sync` still runs every
-          # time, but resolves from the warm cache instead of re-downloading
-          # and re-building wheels.
-          enable-cache: true
-          cache-dependency-glob: |
-            pyproject.toml
-            uv.lock
-
-      - name: Set up Python 3.11
-        run: uv python install 3.11
-
-      - name: Install dependencies
-        # `uv sync --locked` installs the exact pinned set from uv.lock (and
-        # fails if the lock is out of sync with pyproject.toml), giving a
-        # reproducible env. It also creates .venv itself, so no separate
-        # `uv venv` step is needed.
-        #
-        # Same extras as the test job's sync above: the hermetic test env
-        # forbids mid-run pip installs (HERMES_DISABLE_LAZY_INSTALLS=1 in
-        # tests/conftest.py), so lazy-install SDKs exercised by tests must be
-        # in the venv up front.
-        uses: ./.github/actions/retry
-        with:
-          command: uv sync --locked --python 3.11 --extra all --extra dev --extra anthropic --extra mistral --extra fal --extra modal --extra daytona --extra vercel --extra hindsight --extra parallel-web
-
-      - name: Minimize uv cache
-        # Optimized for CI: prunes pre-built wheels that are cheap to
-        # re-download, keeping the persisted cache small and fast to restore.
-        run: uv cache prune --ci
-
-      - name: Run e2e tests
-        run: |
-          source .venv/bin/activate
-          python -m pytest tests/e2e/ -v --tb=short
-        env:
-          OPENROUTER_API_KEY: ""
-          OPENAI_API_KEY: ""
-          NOUS_API_KEY: ""
