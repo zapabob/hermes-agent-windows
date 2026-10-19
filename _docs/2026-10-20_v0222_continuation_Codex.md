@@ -847,3 +847,11 @@ Fresh hash-required pip-audit 2.10.1 of the frozen all-extras export checked
 --check pass. No advisory exclusion, workflow condition, test assertion or
 runtime configuration is changed by this patch. Cloud all-green remains
 pending the next pushed SHA and all its applicable terminal workflow results.
+
+## Branch RPC formatting gate
+
+Applied the formatter's whitespace-only wrapping to the accepted session.branch
+RPC chain in ui-tui. Non-whitespace source equality is verified against HEAD;
+the branch response guard and session identity behavior are unchanged. Carry
+metrics are regenerated for the same formatting delta. No lint suppression or
+test expectation is changed. Exact-SHA cloud checks remain required.
