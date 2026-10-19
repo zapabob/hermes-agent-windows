@@ -296,18 +296,20 @@ export const sessionCommands: SlashCommand[] = [
     run: (arg, ctx) => {
       const prevSid = ctx.sid
 
-      ctx.gateway.rpc<SessionBranchResponse>('session.branch', { name: arg, parse_slash_args: true, session_id: ctx.sid }).then(
-        ctx.guarded<SessionBranchResponse>(r => {
-          if (!r.session_id) {
-            return
-          }
+      ctx.gateway
+        .rpc<SessionBranchResponse>('session.branch', { name: arg, parse_slash_args: true, session_id: ctx.sid })
+        .then(
+          ctx.guarded<SessionBranchResponse>(r => {
+            if (!r.session_id) {
+              return
+            }
 
-          void ctx.session.closeSession(prevSid)
-          patchUiState({ sid: r.session_id })
-          ctx.session.setSessionStartedAt(Date.now())
-          ctx.transcript.sys(`branched → ${r.title ?? ''}`)
-        })
-      )
+            void ctx.session.closeSession(prevSid)
+            patchUiState({ sid: r.session_id })
+            ctx.session.setSessionStartedAt(Date.now())
+            ctx.transcript.sys(`branched → ${r.title ?? ''}`)
+          })
+        )
     }
   },
 
