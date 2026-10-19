@@ -4168,7 +4168,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
         # events wedges the thread forever. on_event stamps this on EVERY
         # yielded Bedrock event (text/tool/metadata) — the poll loop below
         # trips a watchdog when the gap exceeds the stale timeout.
-        _bedrock_started_at = time.time()
+        _bedrock_started_at = time.monotonic()
         _bedrock_last_event = {"t": _bedrock_started_at}
         _bedrock_response_started = {"yes": False}
         # Region captured for the poll-loop client eviction below.  Read
@@ -4311,7 +4311,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
                     if agent.reasoning_callback or agent.stream_delta_callback or plugin_reasoning_observer
                     else None,
                     on_interrupt_check=lambda: agent._interrupt_requested,
-                    on_event=lambda: _bedrock_last_event.__setitem__("t", time.time()),
+                    on_event=lambda: _bedrock_last_event.__setitem__("t", time.monotonic()),
                 )
                 result["response"] = stream.final_response or streamed_response
             except Exception as e:
@@ -4331,7 +4331,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
                 if agent._interrupt_requested:
                     _record_interrupted_provider_wait(
                         agent,
-                        time.time() - _bedrock_started_at,
+                        time.monotonic() - _bedrock_started_at,
                         response_started=_bedrock_response_started["yes"],
                     )
                     # #81521 (sibling of the main streaming-path fix): give
@@ -4345,7 +4345,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
                 # timeout means the stream has wedged (open socket, keep-alives but
                 # no data, or a silently hung provider).  Without this the worker
                 # blocks in ``for event in event_stream`` indefinitely.
-                _stale_elapsed = time.time() - _bedrock_last_event["t"]
+                _stale_elapsed = time.monotonic() - _bedrock_last_event["t"]
                 if _stale_elapsed > _bedrock_stale_timeout:
                     logger.warning(
                         "Bedrock stream stale for %.0fs (threshold %.0fs) — no events "
@@ -4376,7 +4376,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
                         )
                     # Reset the timer so a repeated trip (should the worker somehow
                     # survive) waits a fresh interval rather than re-firing instantly.
-                    _bedrock_last_event["t"] = time.time()
+                    _bedrock_last_event["t"] = time.monotonic()
                     # Escalate across turns: raises RuntimeError once the streak
                     # crosses HERMES_STREAM_STALE_GIVEUP, so a persistently wedged
                     # Bedrock provider aborts fast instead of re-waiting the timeout.
@@ -4402,7 +4402,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
             if agent._interrupt_requested:
                 _record_interrupted_provider_wait(
                     agent,
-                    time.time() - _bedrock_started_at,
+                    time.monotonic() - _bedrock_started_at,
                     response_started=_bedrock_response_started["yes"],
                 )
                 raise InterruptedError("Agent interrupted during Bedrock API call (post-worker)")
@@ -4539,10 +4539,10 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
     _progress_tracker = _LlamaProgressTracker(agent, _effective_base_url, api_kwargs.get("model"))
     deltas_were_sent = {"yes": False}  # Track if any deltas were fired (for fallback)
     provider_tool_in_flight = {"yes": False}
-    # Wall-clock timestamp of the last real streaming chunk.  The outer
-    # poll loop uses this to detect stale connections that keep receiving
-    # SSE keep-alive pings but no actual data.
-    last_chunk_time = {"t": time.time()}
+    # All elapsed instants in this request use the same monotonic clock so
+    # wall-clock corrections cannot retire a healthy attempt or hide a stall.
+    # This does not qualify exclusion of Windows sleep time.
+    last_chunk_time = {"t": time.monotonic()}
     # Stale-stream patience, shared between the httpx socket read timeout
     # (built in ``_call_chat_completions`` below) and the stale-stream detector
     # (computed further down, before the worker thread starts).  Initialized
@@ -4750,7 +4750,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
                 str(getattr(request_client, "base_url", "") or ""), stream_kwargs,
             )
             attempt_request_client["value"] = request_client
-            last_chunk_time["t"] = time.time()
+            last_chunk_time["t"] = time.monotonic()
             agent._touch_activity("waiting for provider response (streaming)")
             return request_client.chat.completions.create(**stream_kwargs)
 
@@ -4796,9 +4796,9 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
                         or stream_attempt_id in stream_attempt_state["cancelled"]):
                     return False
                 if not (progress_receiving["value"] and prompt_progress.metadata_only(_chunk)):
-                    last_chunk_time["t"] = time.time()
+                    last_chunk_time["t"] = time.monotonic()
                 elif prompt_progress.advance(_chunk):
-                    last_chunk_time["t"] = time.time()
+                    last_chunk_time["t"] = time.monotonic()
             return True
 
         def _relay_final_response() -> dict[str, Any]:
@@ -4892,7 +4892,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
             try:
                 _diag["chunks"] = int(_diag.get("chunks", 0)) + 1
                 if _diag.get("first_chunk_at") is None:
-                    _diag["first_chunk_at"] = last_chunk_time["t"]
+                    _diag["first_chunk_at"] = time.time()
                 # Approximate byte size from the chunk's delta payload —
                 # exact wire bytes aren't exposed by the SDK. A full
                 # repr() per chunk was 5.5-8.8 µs of pure CPU on the
@@ -5333,7 +5333,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
         # fabricated "successful" empty turn.
         saw_stream_event = False
 
-        last_chunk_time["t"] = time.time()
+        last_chunk_time["t"] = time.monotonic()
         _diag = agent._stream_diag_init()
         request_client_holder["diag"] = _diag
         _writer_token = {"value": None}
@@ -5409,12 +5409,12 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
         try:
             for event in stream:
                 saw_stream_event = True
-                last_chunk_time["t"] = time.time()
+                last_chunk_time["t"] = time.monotonic()
                 agent._touch_activity("receiving stream response")
                 try:
                     _diag["chunks"] = int(_diag.get("chunks", 0)) + 1
                     if _diag.get("first_chunk_at") is None:
-                        _diag["first_chunk_at"] = last_chunk_time["t"]
+                        _diag["first_chunk_at"] = time.time()
                     _diag["bytes"] = int(_diag.get("bytes", 0)) + _estimate_chunk_bytes(event)
                 except Exception:
                     pass
@@ -5950,12 +5950,12 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
 
     t = threading.Thread(target=_context_thread_target(_call), daemon=True)
     t.start()
-    _last_heartbeat = time.time()
+    _last_heartbeat = time.monotonic()
     _HEARTBEAT_INTERVAL = 30.0  # seconds between gateway activity touches
     while t.is_alive():
         t.join(timeout=0.3)
 
-        _hb_now = time.time()
+        _hb_now = time.monotonic()
 
         # Periodic heartbeat: touch the agent's activity tracker so the
         # gateway's inactivity monitor knows we're alive while waiting
@@ -5996,7 +5996,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
         # Detect stale streams: connections kept alive by SSE pings
         # but delivering no real chunks.  Kill the client so the
         # inner retry loop can start a fresh connection.
-        _stale_elapsed = time.time() - last_chunk_time["t"]
+        _stale_elapsed = time.monotonic() - last_chunk_time["t"]
         if _stale_elapsed > _stream_stale_timeout:
             _est_ctx = estimate_request_context_tokens(api_kwargs)
             logger.warning(
@@ -6044,7 +6044,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
                 pass
             # Reset the timer so we don't kill repeatedly while
             # the inner thread processes the closure.
-            last_chunk_time["t"] = time.time()
+            last_chunk_time["t"] = time.monotonic()
             agent._emit_wait_notice(
                 f"⚠ no output from provider for {int(_stale_elapsed)}s — "
                 f"reconnecting..."

@@ -365,3 +365,36 @@ Fresh CodeGraph 1.6.0 covers nine complete current owner/test files, 699 nodes a
 1,804 edges, with complete state and zero pending changes/references. It identifies
 execute_code as the caller of execute_in_session_kernel. The graph is reference
 only and establishes neither whole-history nor dynamic runtime completeness.
+
+## T08 stream elapsed clocks and diagnostic timestamp compatibility
+
+Sixteen elapsed-time sites in interruptible_streaming_api_call now use monotonic,
+preventing wall-clock corrections from prematurely retiring healthy streams or
+postponing real stalls. Progress counts, attempt/writer fences, trial, route
+capability, auxiliary/compression and function-external behavior remain unchanged.
+Independent review found a P2: watchdog instants also fed wall-clock diagnostic
+TTFB. The two diagnostic assignments now retain wall time; real initializer and
+logger tests detect all four old mixed-clock normal/partial-failure cases. The
+same reviewer closed the P2 with no new concrete finding in this bounded scope.
+
+Final-source verification passes 206 cases: 112 in zero-refusal runs and 94 in
+guarded existing regression runs. Parent independently reran the focused 12 and
+audited all 16 accepted/RED/fault receipts. Actual OpenAI SDK/Relay finite SSE peers
+prove completion/stall/cancel/trial and diagnostic effects. Anthropic diagnostics
+use finite events/client fixtures with actual helper/Relay/logger; its SDK is not
+installed and remains unqualified. Wall-revert, mixed-receive and mixed-diagnostic
+faults fail five, four and four behavioral assertions respectively.
+
+All accepted runs have zero failure/error/skip, timeout, forced recovery and owned
+survivors. New focused cases/faults have zero audit refusals; existing guarded runs
+retain 36 refused external-DNS and 246 refused unowned-connect events. They do not
+establish whole-OS network silence. Actual loaded SDK/dependency paths and 1,392
+distinct files were rehashed; the final focused run binds 1,370 files. No install
+or environment synchronization occurred.
+
+Fresh CodeGraph 1.6.0 binds 15 complete selected files including stream_diag:
+1,695 nodes, 5,237 edges, complete state, zero pending changes/references. Dynamic
+dispatch is not completely resolved. Earlier 202-case mixed-diagnostic evidence is
+retained and superseded for final qualification. Windows sleep exclusion, managed
+ownership/capability, actual local model completion, soak, real Anthropic SDK,
+cloud CI and full T08/campaign acceptance remain OPEN.

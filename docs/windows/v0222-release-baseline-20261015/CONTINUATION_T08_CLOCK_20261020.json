@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "status": "SCOPED_STREAM_CLOCK_AND_DIAGNOSTICS_VERIFIED_FULL_T08_PARTIAL",
+  "requirement": "S04 / R20-V05 / T08 elapsed-time clock corrections",
+  "baseline": "d50995b06d636e6118214b68789f344882773f3a",
+  "source_sha256": {
+    "agent/chat_completion_helpers.py": "d09d9beb126875309289f353c75c13b5d2de25d63195b900928d40b1392c65f7",
+    "tests/run_agent/test_stream_elapsed_clock.py": "5cbd1a9645202732e44797370634a766f92259334b6fd153be7fea4d340b5cfc",
+    "agent/stream_diag.py": "5646417f843c910e5eb036c9f87747dbb7edf9ea4bd5d44fa03b6201dd8e1252"
+  },
+  "contract": "Sixteen elapsed instants in interruptible_streaming_api_call use monotonic consistently. Two diagnostic first-chunk assignments retain wall time to match the unchanged diagnostic consumer.",
+  "preserved": [
+    "Progress counts and high-water semantics",
+    "Attempt/writer fences, trial and breaker",
+    "Route capability and auxiliary/compression owners",
+    "Public timestamps and behavior outside the function"
+  ],
+  "qualified_cases": 206,
+  "existing_guarded_regression_cases": 94,
+  "zero_refusal_cases": 112,
+  "focused_cases": 12,
+  "independent_parent_focused_rerun": 12,
+  "failures": 0,
+  "errors": 0,
+  "skips": 0,
+  "timeouts": 0,
+  "forced_job_recovery": 0,
+  "surviving_owned_children": 0,
+  "behavior": "Finite actual OpenAI SDK/Relay SSE peers cover wall-clock forward healthy completion, backward genuine stall, duplicate progress, cancellation, one-trial reset/relatch and diagnostic normal/partial failure. Anthropic diagnostic cases use a finite client/event fixture with actual helper/Relay/diagnostic logger.",
+  "diagnostic_scope": {
+    "openai": "real loaded SDK + finite owned SSE peer, normal and partial failure",
+    "anthropic": "finite event fixture + real helper/Relay/diagnostic consumer, normal and partial failure; NOT real SDK qualification",
+    "anthropic_sdk": "not installed in existing qualified runtime; no install attempted"
+  },
+  "semantic_fault_failures": {
+    "watchdog_wall_revert": 5,
+    "mixed_receive_clock": 4,
+    "mixed_diagnostic_clock": 4
+  },
+  "red": "Original elapsed-clock suite: five behavioral failures and three controls; diagnostic correction RED/final fault: four actual logger TTFB failures. Intermediate setup/fixture attempts retained and excluded.",
+  "review": {
+    "reviewer": "01a15536-7bbe-72e0-8917-0ccc96a9f945",
+    "diagnostic_P2": "Confirmed, fixed and same-cycle independent source/evidence closure completed",
+    "remaining_concrete_findings": 0,
+    "scope": "Elapsed clock and two diagnostic assignments only; no full T08 acceptance"
+  },
+  "parent_audit": {
+    "relative_path": "tmp/continuation-20261020/clock-diag-parent-audit.json",
+    "sha256": "dd1c1ac3f3298cf58562cc525c58c1f1fc5ab0892fdd120ec7decede7997eb27",
+    "audited_runs": 16,
+    "sdk_files_rehashed": 1392
+  },
+  "sdk_evidence": {
+    "final_focused_loaded_module_files": 1370,
+    "all_accepted_and_fault_files": 1392,
+    "inventory_sha256": "ade9b7e9d1689e53f49be878cedfa5874f2df881552c4a353798336f0dbfffbe",
+    "scope": "Actual imported SDK/dependency paths and individual SHA256 retained privately; existing runtime only, no install."
+  },
+  "graph": {
+    "files": 15,
+    "nodes": 1695,
+    "edges": 5237,
+    "pending_refs": 0,
+    "version": "1.6.0",
+    "pending_changes": 0,
+    "state": "complete",
+    "scope": "15 complete selected files including real diagnostic initializer/logger; full SDK caller extraction, dynamic dispatch not completely resolved."
+  },
+  "containment": "New focused cases and final faults have zero audit refusals. Existing guarded cases retain 36 blocked external DNS and 246 blocked unowned-connect events; not blanket network-free or whole-OS observation.",
+  "supersedes": "Earlier 202-case mixed-diagnostic candidate and completed parent audit remain historical, not final acceptance.",
+  "not_claimed": [
+    "Windows sleep exclusion or actual sleep/resume",
+    "Managed runtime ownership/capability",
+    "Actual loaded local model E2E or soak",
+    "Actual Anthropic SDK",
+    "Cloud CI, full T08 or full campaign"
+  ],
+  "production_restart": false,
+  "published": false
+}
