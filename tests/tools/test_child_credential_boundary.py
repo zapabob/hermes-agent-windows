@@ -627,3 +627,127 @@ def test_startup_sdk_registration_preserves_general_aws_credentials(monkeypatch,
         monkeypatch.setenv(key, SECRET)
     env = child_env(surface)
     assert all(env.get(key) == SECRET for key in keys)
+
+
+@pytest.mark.windows_only
+@pytest.mark.parametrize("surface", ["terminal", "background", "cli", "credential-cli"])
+@pytest.mark.parametrize("declaration", ["valid", "malformed"])
+def test_cold_category_platform_declaration_controls_real_child(
+    tmp_path, surface, declaration,
+):
+    """Discovery-reachable category declarations protect a cold native spawn."""
+    from pathlib import Path
+    import uuid
+
+    root = Path(__file__).resolve().parents[2]
+    home = tmp_path / "日本語 profile space"
+    plugin = home / "plugins" / "local-category" / "owned-platform"
+    plugin.mkdir(parents=True)
+    manifest = plugin / "plugin.yaml"
+    manifest.write_text(
+        "name: owned-platform\nkind: platform\nrequires_env:\n"
+        "  - name: CUSTOM_LOGIN\n    secret: true\n",
+        encoding="utf-8",
+    )
+    # Manifest inspection must not execute even an explicitly enabled plugin.
+    imported = home / "plugin-imported"
+    (plugin / "__init__.py").write_text(
+        "from pathlib import Path\n"
+        f"Path({str(imported)!r}).write_text('unexpected import', encoding='utf-8')\n"
+        "def register(ctx):\n    pass\n",
+        encoding="utf-8",
+    )
+    (home / "config.yaml").write_text(
+        "plugins:\n  enabled: [local-category/owned-platform]\n",
+        encoding="utf-8",
+    )
+    observed = home / "child-effect.json"
+    receipt = home / "worker-receipt.json"
+    nonce = uuid.uuid4().hex
+    program = r'''
+import json, os, subprocess, sys
+from pathlib import Path
+root, home, surface, declaration, nonce = sys.argv[1:]
+root, home = Path(root), Path(home)
+from hermes_cli.plugins import PluginManager
+manager = PluginManager()
+found = manager._scan_directory(home / "plugins", source="user")
+assert any(m.key == "local-category/owned-platform" and m.kind == "platform" for m in found)
+assert not (home / "plugin-imported").exists()
+if declaration == "malformed":
+    (home / "plugins/local-category/owned-platform/plugin.yaml").write_text(
+        'kind: platform\nrequires_env: [\n', encoding="utf-8")
+from tools.environments import local
+assert Path(local.__file__).resolve() == root / "tools/environments/local.py"
+try:
+    if surface == "terminal":
+        env = local._make_run_env({})
+    elif surface == "background":
+        env = local._sanitize_subprocess_env(dict(os.environ))
+    else:
+        env = local.hermes_subprocess_env(inherit_credentials=surface == "credential-cli")
+except RuntimeError as exc:
+    result = {"blocked": True, "reason": str(exc)}
+else:
+    probe = "import json,os,pathlib,sys;pathlib.Path(sys.argv[1]).write_text(json.dumps({'login':os.environ.get('CUSTOM_LOGIN'),'ordinary':os.environ.get('BOUNDARY_BENIGN'),'nonce':sys.argv[2]}),encoding='utf-8')"
+    subprocess.run([sys.executable, "-I", "-B", "-c", probe,
+                    str(home / "child-effect.json"), nonce], env=env,
+                   stdin=subprocess.DEVNULL, capture_output=True, timeout=15, check=True)
+    result = {"blocked": False}
+assert not (home / "plugin-imported").exists()
+result.update(pid=os.getpid(), owner=str(Path(local.__file__).resolve()))
+(home / "worker-receipt.json").write_text(json.dumps(result), encoding="utf-8")
+'''
+    env = dict(
+        os.environ, HERMES_HOME=str(home), HOME=str(home), USERPROFILE=str(home),
+        CUSTOM_LOGIN=SECRET, BOUNDARY_BENIGN="ordinary-value",
+    )
+    completed = subprocess.run(
+        [sys.executable, "-B", "-c", program, str(root), str(home), surface,
+         declaration, nonce], cwd=root, env=env, stdin=subprocess.DEVNULL,
+        capture_output=True, text=True, encoding="utf-8", timeout=45,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    result = json.loads(receipt.read_text(encoding="utf-8"))
+    assert result["owner"] == str(root / "tools/environments/local.py")
+    assert not imported.exists()
+    if declaration == "malformed":
+        assert result["blocked"], "Malformed category declaration permitted a real spawn"
+        assert "declaration" in result["reason"].lower()
+        assert not observed.exists(), "Child ran before declaration validation"
+    else:
+        assert not result["blocked"], result
+        effect = json.loads(observed.read_text(encoding="utf-8"))
+        assert effect == {"login": None, "ordinary": "ordinary-value", "nonce": nonce}
+
+
+@pytest.mark.parametrize("boundary", ["depth", "native-owner", "portable-owner"])
+def test_platform_declarations_stop_at_discovery_boundaries(tmp_path, boundary):
+    from hermes_cli.config import platform_manifest_secret_envs
+
+    category = tmp_path / "plugins" / "local-category"
+    nested = category / "owned-platform"
+    nested.mkdir(parents=True)
+    if boundary == "depth":
+        nested = nested / "too-deep"
+        nested.mkdir()
+    elif boundary == "native-owner":
+        (category / "plugin.yaml").write_text("kind: standalone\n", encoding="utf-8")
+    else:
+        (category / "plugin.json").write_text('{"name":"portable-owner"}', encoding="utf-8")
+    (nested / "plugin.yaml").write_text("requires_env: [\n", encoding="utf-8")
+    assert "CUSTOM_LOGIN" not in platform_manifest_secret_envs(tmp_path)
+
+
+def test_category_platform_declaration_uses_native_yaml_precedence(tmp_path):
+    from hermes_cli.config import platform_manifest_secret_envs
+
+    plugin = tmp_path / "plugins" / "local-category" / "owned-platform"
+    plugin.mkdir(parents=True)
+    (plugin / "plugin.yml").write_text(
+        "kind: platform\noptional_env:\n  - name: CUSTOM_LOGIN\n    secret: true\n",
+        encoding="utf-8",
+    )
+    assert "CUSTOM_LOGIN" in platform_manifest_secret_envs(tmp_path)
+    (plugin / "plugin.yaml").write_text("kind: platform\noptional_env: []\n", encoding="utf-8")
+    assert "CUSTOM_LOGIN" not in platform_manifest_secret_envs(tmp_path)

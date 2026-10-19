@@ -281,3 +281,36 @@ dynamic completeness. Thirty-five managed persistent artifacts retain raw logs,
 JUnit, Job receipts, helper hashes and caller/impact evidence. The new YARA receipt
 records the scope; the earlier restore receipt remains historical. Cloud CI,
 ClamAV/feed accuracy, native Desktop and full campaign acceptance are still open.
+
+## T09 category plugin secret declaration discovery
+
+Actual PluginManager discovery reaches plugins/category/name, while secret-name
+discovery previously missed that category level. The existing declaration owner
+now descends one category only, preserving native/portable directory ownership,
+yaml precedence, malformed-declaration refusal and profile/core/provider precedence.
+No plugin is executed merely to inspect its declarations, and no shared cache or
+central approval/catalog policy is introduced.
+
+The owner suite passes 227, existing subprocess environments 21, category scanner
+12 and selected existing native CLI/terminal one each. Parent independently reran
+the eight cold native-child cases: synthetic CUSTOM_LOGIN is absent, ordinary
+values and exact nonce survive; malformed declarations prevent child effects.
+These are real environment-owner effects, not complete product-entry E2E. The
+missing-discovery and allow-all faults fail eight each; deny-all fails four valid
+positive cases. Historical RED predates the final whole-file test expansion;
+the final missing-discovery fault supplies the exact-final-test counterfactual.
+
+Independent source review reports no concrete finding in this two-file slice.
+Parent independently checked JUnit, source hashes, artifact hashes, containment
+and all 16 graph copies. CodeGraph 1.6.0 has 1,159 nodes and 3,010 edges in the
+selected graph; dynamic and repository-wide completeness are not established.
+Accepted runs have zero failure/error/skip, audit violation, timeout, forced
+recovery or surviving owned descendants.
+
+The separate full native file timed out after 180 seconds, without final JUnit;
+four owned processes were recovered and zero remained. Cause is unknown. Its
+progress dots supply no accepted passes and this record does not call it a known
+baseline issue. Full native qualification, vendor independence and full T09 remain
+PARTIAL. The continuation receipt records that limit and managed persistent audit
+identity; raw task-owned evidence remains retained. Dependencies, primary main,
+production processes and host security settings were not changed.

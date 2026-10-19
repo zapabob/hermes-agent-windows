@@ -6397,27 +6397,43 @@ def platform_manifest_secret_envs(home: Path | None) -> frozenset[str]:
     A known manifest that cannot be read or parsed cannot authorize a spawn.
     User declarations stay home-scoped and cannot demote core credentials.
     """
-    roots = [(Path(__file__).resolve().parents[1] / "plugins" / "platforms", True)]
+    from collections.abc import Iterator
+
+    def manifest_paths(root: Path, *, categories: bool) -> Iterator[Path]:
+        for child in root.iterdir():
+            if not child.is_dir():
+                if os.path.lexists(child) and not child.exists():
+                    raise ValueError("platform directory link is unreadable")
+                continue
+            path = child / "plugin.yaml"
+            if not os.path.lexists(path):
+                path = child / "plugin.yml"
+            if not os.path.lexists(path):
+                # Match native discovery's two-segment category layout. A
+                # portable manifest owns its directory, so it is not a category.
+                if categories and not os.path.lexists(child / "plugin.json"):
+                    yield from manifest_paths(child, categories=False)
+                continue
+            yield path
+
+    roots = [
+        (Path(__file__).resolve().parents[1] / "plugins" / "platforms", True, True)
+    ]
     if home is not None:
-        roots.extend(((Path(home) / "plugins" / "platforms", True), (Path(home) / "plugins", False)))
+        # The legacy platforms root already consumes the user's category level.
+        roots.extend((
+            (Path(home) / "plugins" / "platforms", True, False),
+            (Path(home) / "plugins", False, True),
+        ))
     keys: set[str] = set()
     try:
         provider_names = provider_profile_secret_envs()
-        for root, platform_directory in roots:
+        for root, platform_directory, categories in roots:
             if not root.exists():
                 if os.path.lexists(root):
                     raise ValueError("platform manifest root is unreadable")
                 continue
-            for child in root.iterdir():
-                if not child.is_dir():
-                    if os.path.lexists(child) and not child.exists():
-                        raise ValueError("platform directory link is unreadable")
-                    continue
-                path = child / "plugin.yaml"
-                if not os.path.lexists(path):
-                    path = child / "plugin.yml"
-                if not os.path.lexists(path):
-                    continue
+            for path in manifest_paths(root, categories=categories):
                 with path.open("r", encoding="utf-8") as stream:
                     manifest = fast_safe_load(stream)
                 if not isinstance(manifest, dict):
