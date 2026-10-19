@@ -997,7 +997,9 @@ def _approval_send_outcome(future, timeout: float) -> str:
     return "failed"
 
 
-def _clarify_send_disposition(fut, *, session_key: str, clarify_mod) -> "str | None":
+def _clarify_send_disposition(
+    fut, *, session_key: str, clarify_mod, clarify_id: str | None = None, entry=None,
+) -> "str | None":
     """Decide whether a clarify prompt send aborts the wait, per the boundary rule.
 
     Same physics as the exec-approval card: the scheduling future can hit its
@@ -1016,8 +1018,12 @@ def _clarify_send_disposition(fut, *, session_key: str, clarify_mod) -> "str | N
     if outcome == "failed":
         # Couldn't deliver the prompt — clean up and return the sentinel so
         # the agent can fall back to a sensible default rather than hanging.
-        logger.warning("Clarify send failed definitively; clearing registration")
-        clarify_mod.clear_session(session_key)
+        logger.warning("Clarify send failed definitively; clearing request registration")
+        if clarify_id is not None:
+            if entry is None:
+                clarify_mod.cancel_request(clarify_id)
+            else:
+                clarify_mod.cancel_request(clarify_id, entry=entry)
         return "[clarify prompt could not be delivered]"
     if outcome == "ambiguous":
         logger.warning(
@@ -1027,7 +1033,7 @@ def _clarify_send_disposition(fut, *, session_key: str, clarify_mod) -> "str | N
     return None
 
 
-def _clarify_send_then_wait(fut, *, clarify_id: str, session_key: str, clarify_mod) -> str:
+def _clarify_send_then_wait(fut, *, clarify_id: str, session_key: str, clarify_mod, entry=None) -> str:
     """Resolve a clarify prompt: send disposition, then the bounded wait.
 
     The full caller contract in one testable seam: a definitive send failure
@@ -1037,16 +1043,34 @@ def _clarify_send_then_wait(fut, *, clarify_id: str, session_key: str, clarify_m
     the (probably rendered) card still resolves.
     """
     abort = _clarify_send_disposition(
-        fut, session_key=session_key, clarify_mod=clarify_mod
+        fut, session_key=session_key, clarify_mod=clarify_mod, clarify_id=clarify_id, entry=entry,
     )
     if abort is not None:
+        if entry is not None and entry.event.is_set() and entry.response:
+            return entry.response
         return abort
     timeout = clarify_mod.get_clarify_timeout()
-    response = clarify_mod.wait_for_response(clarify_id, timeout=float(timeout))
+    if entry is None:
+        response = clarify_mod.wait_for_response(clarify_id, timeout=float(timeout))
+    else:
+        response = clarify_mod.wait_for_response(clarify_id, timeout=float(timeout), entry=entry)
     if response is None or response == "":
         # Timeout or session-boundary cancellation
         return f"[user did not respond within {int(timeout / 60)}m]"
     return response
+
+
+def _clarify_can_resume_typing(session_key: str, clarify_mod) -> bool:
+    """Read existing pause owners while the caller holds its session lock.
+
+    The lock order is session owner, clarify registry, then approval registry;
+    the registry locks are never held together or across transport operations.
+    """
+    if clarify_mod.get_pending_for_session(session_key, include_choice_prompts=True) is not None:
+        return False
+    from tools.approval import has_blocking_approval
+
+    return not has_blocking_approval(session_key)
 
 
 def _resolve_progress_thread_id(
@@ -6131,19 +6155,26 @@ class TurnRunner:
         # ------------------------------------------------------------------
         def _clarify_callback_sync(question: str, choices, multi_select: bool = False) -> str:
             from tools import clarify_gateway as _clarify_mod
+            from gateway.platforms.base import SendResult
+            from contextlib import nullcontext
             import uuid as _uuid
 
             if not ctx._status_adapter:
                 return ""
 
             clarify_id = _uuid.uuid4().hex[:10]
-            _clarify_mod.register(
-                clarify_id=clarify_id,
-                session_key=ctx.session_key or "",
-                question=question,
-                choices=list(choices) if choices else None,
-                multi_select=bool(multi_select),
-            )
+            _owner_lock = self._input_owner[1].shared_input_lock if self._input_owner is not None else nullcontext()
+            with _owner_lock:
+                if not ctx._run_still_current():
+                    return "[clarify run retired]"
+                _clarify_entry = _clarify_mod.register(
+                    clarify_id=clarify_id,
+                    session_key=ctx.session_key or "",
+                    question=question,
+                    choices=list(choices) if choices else None,
+                    multi_select=bool(multi_select),
+                    owner=ctx,
+                )
 
             # For WeCom native streaming: finalize the current stream before
             # showing the clarify prompt so the post-answer output opens a
@@ -6159,13 +6190,21 @@ class TurnRunner:
             _close_native_stream_boundary(
                 "Clarify", "💬 等待你的选择...", _reopen=True,
             )
+            with _owner_lock:
+                if not ctx._run_still_current():
+                    _clarify_mod.cancel_request(clarify_id, entry=_clarify_entry)
+                    return "[clarify run retired]"
 
             # Pause typing — like approval, we don't want a "thinking..."
             # status to obscure the prompt or block the user from typing
             # an "Other" response on platforms that disable input while
             # typing is active (Slack Assistant API).
             try:
-                ctx._status_adapter.pause_typing_for_chat(ctx._status_chat_id)
+                with _owner_lock:
+                    if not ctx._run_still_current():
+                        _clarify_mod.cancel_request(clarify_id, entry=_clarify_entry)
+                        return "[clarify run retired]"
+                    ctx._status_adapter.pause_typing_for_chat(ctx._status_chat_id)
             except Exception:
                 pass
 
@@ -6188,19 +6227,30 @@ class TurnRunner:
                     exc_info=True,
                 )
 
-            fut = safe_schedule_threadsafe(
-                ctx._status_adapter.send_clarify(
+            async def _send_current_clarify():
+                with _owner_lock:
+                    if not ctx._run_still_current():
+                        _clarify_mod.cancel_request(clarify_id, entry=_clarify_entry)
+                        return SendResult(success=False, error="Clarify run retired")
+                    if not _clarify_mod.is_pending(_clarify_entry):
+                        return SendResult(success=True)
+                return await ctx._status_adapter.send_clarify(
                     chat_id=ctx._status_chat_id,
                     question=question,
                     choices=list(choices) if choices else None,
                     clarify_id=clarify_id,
                     session_key=ctx.session_key or "",
                     metadata=ctx._status_thread_metadata,
-                ),
-                ctx._loop_for_step,
-                logger=logger,
-                log_message="Clarify send failed to schedule",
-            )
+                )
+
+            with _owner_lock:
+                if not ctx._run_still_current():
+                    _clarify_mod.cancel_request(clarify_id, entry=_clarify_entry)
+                    return "[clarify run retired]"
+                fut = safe_schedule_threadsafe(
+                    _send_current_clarify(), ctx._loop_for_step, logger=logger,
+                    log_message="Clarify send failed to schedule",
+                )
             # Boundary rule (see _approval_send_outcome): a send timeout is
             # AMBIGUOUS — the card may have posted with a late ack. Only a
             # definitive failure tears down the registration; ambiguous
@@ -6210,7 +6260,11 @@ class TurnRunner:
                 clarify_id=clarify_id,
                 session_key=ctx.session_key or "",
                 clarify_mod=_clarify_mod,
+                entry=_clarify_entry,
             )
+            with _owner_lock:
+                if not ctx._run_still_current():
+                    return "[clarify run retired]"
             # Only re-arm typing when the user actually answered — the
             # undeliverable sentinel and the timeout/cancellation strings
             # start with '[' and must pass through untouched.
@@ -6230,14 +6284,22 @@ class TurnRunner:
                 _sc_reopen = ctx.stream_consumer_holder[0] if ctx.stream_consumer_holder else None
                 if _sc_reopen is not None:
                     try:
-                        _sc_reopen.request_reopen_seed()
+                        with _owner_lock:
+                            if not ctx._run_still_current():
+                                return "[clarify run retired]"
+                            if _clarify_can_resume_typing(ctx.session_key or "", _clarify_mod):
+                                _sc_reopen.request_reopen_seed()
                     except Exception:
                         logger.debug(
                             "request_reopen_seed after clarify answer failed",
                             exc_info=True,
                         )
                 try:
-                    ctx._status_adapter.resume_typing_for_chat(ctx._status_chat_id)
+                    with _owner_lock:
+                        if not ctx._run_still_current():
+                            return "[clarify run retired]"
+                        if _clarify_can_resume_typing(ctx.session_key or "", _clarify_mod):
+                            ctx._status_adapter.resume_typing_for_chat(ctx._status_chat_id)
                 except Exception:
                     logger.debug(
                         "resume_typing_for_chat after clarify answer failed",
@@ -6684,7 +6746,7 @@ class TurnRunner:
             # completion, gateway shutdown).  Idempotent.
             try:
                 from tools.clarify_gateway import clear_session as _clear_clarify_session
-                _clear_clarify_session(_approval_session_key)
+                _clear_clarify_session(_approval_session_key, owner=ctx)
             except Exception:
                 pass
             reset_current_session_key(_approval_session_token)
@@ -11115,6 +11177,8 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         return snapshot, timed_out
 
     def _interrupt_running_agents(self, reason: str) -> None:
+        from tools.clarify_gateway import clear_session as _clear_clarify_session
+
         for session_key, agent in list(self._running_agents.items()):
             if agent is _AGENT_PENDING_SENTINEL:
                 continue
@@ -11123,6 +11187,14 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 logger.debug("Interrupted running agent for session %s during shutdown", session_key)
             except Exception as e:
                 logger.debug("Failed interrupting agent during shutdown: %s", e)
+            finally:
+                # Unlimited clarify waits poll their own event, not the agent's
+                # interrupt flag. Wake them so the worker can reach its finally.
+                _shutdown_state = self._session_state(session_key)
+                with _shutdown_state.shared_input_lock:
+                    if _shutdown_state.turn.agent is agent:
+                        self._invalidate_session_run_generation(session_key, reason=reason)
+                        _clear_clarify_session(session_key)
         # API-server / desk turns are adapter-owned and never enter
         # _running_agents, so the loop above cannot see them even though
         # _drain_active_agents() waited for them (#63529).
@@ -17819,6 +17891,9 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         # direct replies to multi-choice prompts are accepted too ("2" maps
         # to the second option). Slash
         # commands still bypass this path so /stop and friends keep working.
+        from contextlib import nullcontext
+
+        _clarify_routing_owner = None
         _clarify_mod = None
         try:
             from tools import clarify_gateway as _clarify_mod
@@ -17832,6 +17907,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             and _pending_clarify is not None
             and _clarify_mod is not None
         ):
+            _clarify_input_owner = self._capture_shared_input_owner(_quick_key)
             _clarify_has_audio = bool(self._pending_event_audio_paths(event))
             _raw_clarify_reply = await self._prepare_clarify_reply_text(event)
             if _clarify_has_audio and not _raw_clarify_reply:
@@ -17848,8 +17924,12 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             # with an empty response.
             if _raw_clarify_reply and not _raw_clarify_reply.startswith("/"):
                 _text_outcome = _clarify_mod.attempt_text_response_for_session(
-                    _quick_key, _raw_clarify_reply,
+                    _quick_key, _raw_clarify_reply, entry=_pending_clarify,
                 )
+                if _text_outcome == _clarify_mod.TEXT_NO_PENDING:
+                    # The captured question was retired or answered while STT
+                    # was pending. This reply cannot become a replacement turn.
+                    return ""
                 if _text_outcome == _clarify_mod.TEXT_RESOLVED:
                     logger.info(
                         "Gateway intercepted clarify text response (session=%s, id=%s)",
@@ -17864,7 +17944,10 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                     _clarify_adapter = self._adapter_for_source(source)
                     if _clarify_adapter:
                         try:
-                            _clarify_adapter.resume_typing_for_chat(source.chat_id)
+                            with _clarify_input_owner[1].shared_input_lock:
+                                if (self._shared_input_owner_is_current(_clarify_input_owner)
+                                        and _clarify_can_resume_typing(_quick_key, _clarify_mod)):
+                                    _clarify_adapter.resume_typing_for_chat(source.chat_id)
                         except Exception:
                             logger.debug(
                                 "Failed to resume typing after clarify response",
@@ -17891,10 +17974,15 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                     # routing. Release this clarify first: redirect()
                     # degrades to steer() while tools are executing, and
                     # that steer cannot drain until the clarify tool returns.
-                    _clarify_mod.resolve_gateway_clarify(
+                    if not _clarify_mod.resolve_gateway_clarify(
                         _pending_clarify.clarify_id,
                         "",
-                    )
+                        entry=_pending_clarify,
+                    ):
+                        # A worker may retire or answer the captured question
+                        # after coercion. Its old input cannot start a new turn.
+                        return ""
+                    _clarify_routing_owner = _clarify_input_owner
 
         # Intercept messages that are responses to a pending /reload-mcp
         # (or future) slash-confirm prompt.  Recognized confirm replies are
@@ -17953,6 +18041,9 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         # Special case: Telegram/photo bursts often arrive as multiple near-
         # simultaneous updates. Do NOT interrupt for photo-only follow-ups here;
         # let the adapter-level batching/queueing logic absorb them.
+        if (_clarify_routing_owner is not None
+                and not self._shared_input_owner_is_current(_clarify_routing_owner)):
+            return ""
 
         # Staleness eviction: detect leaked locks from hung/crashed handlers.
         # With inactivity-based timeout, active tasks can run for hours, so
@@ -18048,7 +18139,10 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 logger.debug("PRIORITY photo follow-up for session %s — queueing without interrupt", _quick_key)
                 adapter = self._adapter_for_source(source)
                 if adapter:
-                    merge_pending_message_event(adapter._pending_messages, _quick_key, event)
+                    if _clarify_routing_owner is not None:
+                        self._queue_or_replace_pending_event(_quick_key, event, shared_input_owner=_clarify_routing_owner)
+                    else:
+                        merge_pending_message_event(adapter._pending_messages, _quick_key, event)
                 return None
 
             effective_busy_input_mode = self._effective_busy_input_mode(source)
@@ -18071,7 +18165,9 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 )
                 adapter = self._adapter_for_source(source)
                 if adapter:
-                    if effective_busy_input_mode == "queue":
+                    if _clarify_routing_owner is not None:
+                        self._queue_or_replace_pending_event(_quick_key, event, shared_input_owner=_clarify_routing_owner)
+                    elif effective_busy_input_mode == "queue":
                         self._enqueue_fifo(_quick_key, event, adapter)
                     else:
                         merge_pending_message_event(
@@ -18082,8 +18178,12 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                         )
                 return None
 
-            _ra_state = self._peek_session_state(_quick_key)
-            running_agent = _ra_state.turn.agent if _ra_state else None
+            with (_clarify_routing_owner[1].shared_input_lock if _clarify_routing_owner is not None else nullcontext()):
+                if (_clarify_routing_owner is not None
+                        and not self._shared_input_owner_is_current(_clarify_routing_owner)):
+                    return ""
+                _ra_state = self._peek_session_state(_quick_key)
+                running_agent = _ra_state.turn.agent if _ra_state else None
             if running_agent is _AGENT_PENDING_SENTINEL:
                 # Agent is being set up but not ready yet.
                 if event.get_command() == "stop":
@@ -18095,19 +18195,22 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 # agent starts.
                 adapter = self._adapter_for_source(source)
                 if adapter:
-                    merge_pending_message_event(
-                        adapter._pending_messages,
-                        _quick_key,
-                        event,
-                        merge_text=True,
-                    )
+                    if _clarify_routing_owner is not None:
+                        self._queue_or_replace_pending_event(_quick_key, event, shared_input_owner=_clarify_routing_owner)
+                    else:
+                        merge_pending_message_event(
+                            adapter._pending_messages,
+                            _quick_key,
+                            event,
+                            merge_text=True,
+                        )
                 return None
             if self._draining:
                 queue_during_drain = self._queue_during_drain_enabled(
                     effective_busy_input_mode
                 )
                 if queue_during_drain:
-                    self._queue_or_replace_pending_event(_quick_key, event)
+                    self._queue_or_replace_pending_event(_quick_key, event, shared_input_owner=_clarify_routing_owner)
                 return (
                     f"⏳ Gateway {self._status_action_gerund()} — queued for the next turn after it comes back."
                     if queue_during_drain
@@ -18115,7 +18218,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 )
             if effective_busy_input_mode == "queue":
                 logger.debug("PRIORITY queue follow-up for session %s", _quick_key)
-                self._queue_or_replace_pending_event(_quick_key, event)
+                self._queue_or_replace_pending_event(_quick_key, event, shared_input_owner=_clarify_routing_owner)
                 return None
             if effective_busy_input_mode == "steer":
                 # Steer mode: inject text into the running agent mid-run via
@@ -18139,7 +18242,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                     logger.debug("PRIORITY steer for session %s", _quick_key)
                     return None
                 logger.debug("PRIORITY steer-fallback-to-queue for session %s", _quick_key)
-                self._queue_or_replace_pending_event(_quick_key, event)
+                self._queue_or_replace_pending_event(_quick_key, event, shared_input_owner=_clarify_routing_owner)
                 return None
             # #30170 — Subagent protection (PRIORITY path). Same rationale
             # as ``_handle_active_session_busy_message``: an interrupt
@@ -18155,7 +18258,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                     "because the running agent has active subagents (#30170)",
                     _quick_key,
                 )
-                self._queue_or_replace_pending_event(_quick_key, event)
+                self._queue_or_replace_pending_event(_quick_key, event, shared_input_owner=_clarify_routing_owner)
                 return None
             # #56391 — Compression protection (PRIORITY path). Same
             # rationale as ``_handle_active_session_busy_message``: context
@@ -18171,8 +18274,11 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                     "because context compression is in flight (#56391)",
                     _quick_key,
                 )
-                self._queue_or_replace_pending_event(_quick_key, event)
+                self._queue_or_replace_pending_event(_quick_key, event, shared_input_owner=_clarify_routing_owner)
                 return None
+            if (_clarify_routing_owner is not None
+                    and not self._shared_input_owner_is_current(_clarify_routing_owner)):
+                return ""
             # Text-only corrections redirect the live turn (preserving
             # displayed context) when the runtime supports it; media/voice and
             # older runtimes fall back to the proven interrupt path below.
@@ -18204,10 +18310,15 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                     source,
                     event.text or "",
                     log_context="Voice-priority-interrupt",
+                    is_current=(lambda: self._shared_input_owner_is_current(_clarify_routing_owner)) if _clarify_routing_owner is not None else None,
                 )
             elif not _interrupt_text and _media_urls:
                 _interrupt_text = _build_media_placeholder(event)
-            running_agent.interrupt(_interrupt_text)
+            with (_clarify_routing_owner[1].shared_input_lock if _clarify_routing_owner is not None else nullcontext()):
+                if (_clarify_routing_owner is not None
+                        and not self._shared_input_owner_is_current(_clarify_routing_owner)):
+                    return ""
+                running_agent.interrupt(_interrupt_text)
             # NOTE: self._pending_messages was write-only (never consumed).
             # The actual interrupt message is delivered via adapter._pending_messages
             # which is read by _run_agent. Removed to prevent unbounded growth.
@@ -18980,6 +19091,11 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             source, _routing_owner = await self._normalize_source_with_shared_input_owner(source)
             if _routing_owner is None:
                 return None
+            if _clarify_routing_owner is not None:
+                if (_routing_owner[0] != _clarify_routing_owner[0]
+                        or not self._shared_input_owner_is_current(_clarify_routing_owner)):
+                    return ""
+                _routing_owner = _clarify_routing_owner
             event.source = source
             if _routing_owner[0] != _quick_key:
                 _quick_key = _routing_owner[0]
@@ -18988,7 +19104,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                         and await self._handle_active_session_busy_message(event, _quick_key, shared_input_owner=_routing_owner)):
                     return None
         else:
-            _routing_owner = self._capture_shared_input_owner(_quick_key)
+            _routing_owner = _clarify_routing_owner or self._capture_shared_input_owner(_quick_key)
 
         # This check reads Telegram DM topic state.  Group and non-Telegram
         # traffic cannot be root lobbies, so do not queue their no-op checks on
@@ -27954,6 +28070,9 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                         e,
                     )
 
+            from tools.clarify_gateway import clear_session as _clear_clarify_session
+            _clear_clarify_session(session_key)
+
             try:
                 from tools.approval import clear_session as _clear_approval_session
             except Exception:
@@ -28055,9 +28174,12 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         # claim bumps the generation again. The closure below then sees a
         # stale generation and skips — the replacement turn's own baseline
         # covers its own cleanup, so nothing is left permanently unreaped.
-        _generation_at_interrupt = self._invalidate_session_run_generation(
-            session_key, reason=invalidation_reason
-        )
+        from tools.clarify_gateway import clear_session as _clear_clarify_session
+        with self._session_state(session_key).shared_input_lock:
+            _generation_at_interrupt = self._invalidate_session_run_generation(
+                session_key, reason=invalidation_reason
+            )
+            _clear_clarify_session(session_key)
         # Discard only the stopped run's backlog before yielding to transport
         # cleanup. Messages admitted by a replacement generation must survive.
         adapter = self._adapter_for_source(source)

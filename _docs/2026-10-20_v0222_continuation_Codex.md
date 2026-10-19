@@ -716,3 +716,49 @@ unchanged source. R4 reviewer snapshot readback released Nash's separate product
 hold for these minimal owner/generation repairs. Earlier 190 positive cases
 and legacy four failing teardown expectations are preserved separately from
 their ID-specific test migration. Whole T02/T06 acceptance remains OPEN.
+
+## Bounded clarify lifecycle and shared-pause integration
+
+The final clarify slice retains exact request identity across send ACK, wait,
+transcription and cleanup. Rejected prose is revalidated after coercion and
+requires successful exact resolution before ordinary routing; its original
+input owner is retained across compression, steering, queues and admission.
+Global interruption invalidates the captured still-current generation and
+clears its questions under the same existing session lock as registration,
+while signaling outside that lock. Retired callbacks cannot register again.
+
+Run-current checks alone did not protect the same run's next question. The
+final helper checks existing pending clarify and blocking approval state while
+the caller holds its existing owner lock. Both registry locks are acquired
+sequentially, not simultaneously or across transport waits. It protects inbound
+typing resume and the actual callback's typing and stream-reopen sites. Real
+same-owner sequential/parallel questions and a following approval keep their
+actual paused state and useful answers. A single answered question still
+reopens streaming and resumes typing immediately before body cleanup.
+
+Parent independently rehashed all 350 sealed files, 33 saved source/graph files
+and 30 exact complete projected methods, read immutable CodeGraph integrity
+and actual counts 3,052 nodes/8,985 edges, and reconciled all 36 JUnit/Job rows.
+Fourteen normal Jobs contain 267 unique passes with no failures/errors/skips.
+Twenty-two fault Jobs have 21 behavioral assertion kills, 29 failed occurrences
+over 25 unique nodes all normal GREEN, and one explicitly disclosed redundant
+generation-only removal survivor. It is not reported as 22 killed mutants.
+Guard refusals, recovery and owned survivors are zero in the qualified rows.
+
+The six planned source/test overlay files exactly match the sealed bytes, and
+all other 27 selected dependencies exactly match committed HEAD blobs. No LSP,
+registry, API, kernel or new approval WIP is included in this integration.
+Frozen approval ca3 and declared process import 5d2, empty process/reaper leaves
+and offline/model/transport stubs remain explicit qualification limits. The
+separately authorized approval working-tree change does not alter this saved
+proof or become a dependency of the commit. Four legacy session-clear assertions
+were minimally migrated to request-specific cancellation; original failing
+receipts, timeout/sent/log/no-wait behavior and real no-ID positives remain.
+
+Independent bounded final review finds no remaining P1/P2 in C1-C5 and the
+declared prose/global/same-run pause extensions. The canonical
+CONTINUATION_CLARIFY_OWNER_20261020.json records exact hashes and exclusions.
+Native channel transport, queued finalize, post-decision approval persistence,
+permanent save concurrency, live API/process/R6, whole T02/Python/P0, portable
+CI, complete SDK and whole-SHA acceptance remain OPEN. No production action or
+publication is performed.

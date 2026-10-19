@@ -55,6 +55,7 @@ class _ClarifyEntry:
     event: threading.Event = field(default_factory=threading.Event)
     response: Optional[str] = None
     awaiting_text: bool = False  # set when user picked "Other" or clarify is open-ended
+    owner: object = field(default=None, repr=False, compare=False)
 
     def signature(self) -> Dict[str, object]:
         return {
@@ -83,6 +84,8 @@ def register(
     question: str,
     choices: Optional[List[str]],
     multi_select: bool = False,
+    *,
+    owner: object = None,
 ) -> _ClarifyEntry:
     """Register a pending clarify request and return the entry.
 
@@ -97,14 +100,24 @@ def register(
         multi_select=bool(multi_select) and bool(choices),
         # Open-ended (no choices) → next message IS the response, no buttons needed.
         awaiting_text=not bool(choices),
+        owner=owner,
     )
     with _lock:
+        # A new gateway run retires the previous run's prompts. Parallel
+        # questions from the same run keep their FIFO positions.
+        if owner is not None:
+            for cid in list(_session_index.get(session_key, [])):
+                previous = _entries.get(cid)
+                if previous is not None and previous.owner is not None and previous.owner is not owner:
+                    cancel_request(cid, entry=previous)
         _entries[clarify_id] = entry
         _session_index.setdefault(session_key, []).append(clarify_id)
     return entry
 
 
-def wait_for_response(clarify_id: str, timeout: float) -> Optional[str]:
+def wait_for_response(
+    clarify_id: str, timeout: float, *, entry: Optional[_ClarifyEntry] = None,
+) -> Optional[str]:
     """Block on the entry's event until resolved or timeout fires.
 
     Polls in 1-second slices so the agent's inactivity heartbeat keeps
@@ -119,7 +132,10 @@ def wait_for_response(clarify_id: str, timeout: float) -> Optional[str]:
     Returns the resolved response string, or ``None`` on timeout.
     """
     with _lock:
-        entry = _entries.get(clarify_id)
+        if entry is None:
+            entry = _entries.get(clarify_id)
+        elif entry.clarify_id != clarify_id:
+            raise ValueError("Clarify entry does not match the requested ID")
     if entry is None:
         return None
 
@@ -147,12 +163,13 @@ def wait_for_response(clarify_id: str, timeout: float) -> Optional[str]:
 
     with _lock:
         # Remove from indices regardless of resolution outcome.
-        _entries.pop(clarify_id, None)
-        ids = _session_index.get(entry.session_key)
-        if ids and clarify_id in ids:
-            ids.remove(clarify_id)
-            if not ids:
-                _session_index.pop(entry.session_key, None)
+        if _entries.get(clarify_id) is entry:
+            _entries.pop(clarify_id, None)
+            ids = _session_index.get(entry.session_key)
+            if ids and clarify_id in ids:
+                ids.remove(clarify_id)
+                if not ids:
+                    _session_index.pop(entry.session_key, None)
 
     return entry.response
 
@@ -161,19 +178,45 @@ def wait_for_response(clarify_id: str, timeout: float) -> Optional[str]:
 # Public API — gateway / adapter side
 # =========================================================================
 
-def resolve_gateway_clarify(clarify_id: str, response: str) -> bool:
+def resolve_gateway_clarify(
+    clarify_id: str, response: str, *, entry: Optional[_ClarifyEntry] = None,
+) -> bool:
     """Unblock the agent thread waiting on ``clarify_id``.
 
     Returns True if an entry was found and resolved, False otherwise
     (already resolved, expired, or never existed).
     """
     with _lock:
-        entry = _entries.get(clarify_id)
-        if entry is None or entry.event.is_set():
+        current = _entries.get(clarify_id)
+        if current is None or (entry is not None and current is not entry) or current.event.is_set():
             return False
-        entry.response = str(response) if response is not None else ""
-        entry.event.set()
+        current.response = str(response) if response is not None else ""
+        current.event.set()
         return True
+
+
+def cancel_request(clarify_id: str, *, entry: Optional[_ClarifyEntry] = None) -> bool:
+    """Drop only this request, preserving an answer that already won."""
+    with _lock:
+        current = _entries.get(clarify_id)
+        if current is None or (entry is not None and current is not entry):
+            return False
+        _entries.pop(clarify_id)
+        ids = _session_index.get(current.session_key)
+        if ids and clarify_id in ids:
+            ids.remove(clarify_id)
+            if not ids:
+                _session_index.pop(current.session_key, None)
+        if not current.event.is_set():
+            current.response = ""
+            current.event.set()
+        return True
+
+
+def is_pending(entry: _ClarifyEntry) -> bool:
+    """Check the captured entry without selecting another session prompt."""
+    with _lock:
+        return _entries.get(entry.clarify_id) is entry and not entry.event.is_set()
 
 
 def get_pending_for_session(
@@ -194,7 +237,7 @@ def get_pending_for_session(
         ids = _session_index.get(session_key) or []
         for cid in ids:
             entry = _entries.get(cid)
-            if entry is None:
+            if entry is None or entry.event.is_set():
                 continue
             if include_choice_prompts or entry.awaiting_text:
                 return entry
@@ -425,7 +468,9 @@ def _coerce_multi_select_text(entry: _ClarifyEntry, text: str) -> Optional[str]:
     return _json.dumps(selected, ensure_ascii=False)
 
 
-def attempt_text_response_for_session(session_key: str, response: str) -> str:
+def attempt_text_response_for_session(
+    session_key: str, response: str, *, entry: Optional[_ClarifyEntry] = None,
+) -> str:
     """Try to resolve the oldest pending clarify in ``session_key`` from typed text.
 
     Returns one of:
@@ -436,17 +481,25 @@ def attempt_text_response_for_session(session_key: str, response: str) -> str:
         pending clarify armed so the user can retry
       - ``TEXT_NO_PENDING`` — no interceptable clarify for this session
     """
-    entry = get_pending_for_session(session_key, include_choice_prompts=True)
-    if entry is None:
-        return TEXT_NO_PENDING
+    with _lock:
+        if entry is None:
+            entry = get_pending_for_session(session_key, include_choice_prompts=True)
+        if (entry is None or entry.session_key != session_key
+                or _entries.get(entry.clarify_id) is not entry or entry.event.is_set()):
+            return TEXT_NO_PENDING
 
     coerced, reason = _coerce_text_response_detailed(entry, response)
     if coerced is None:
-        if reason == "invalid_selection":
-            return TEXT_REJECTED_SELECTION
-        return TEXT_REJECTED_PROSE
+        # Coercion may overlap a worker answering or retiring this question.
+        # Rejected prose must not gain ordinary-routing authority from it.
+        with _lock:
+            if _entries.get(entry.clarify_id) is not entry or entry.event.is_set():
+                return TEXT_NO_PENDING
+            if reason == "invalid_selection":
+                return TEXT_REJECTED_SELECTION
+            return TEXT_REJECTED_PROSE
 
-    if resolve_gateway_clarify(entry.clarify_id, coerced):
+    if resolve_gateway_clarify(entry.clarify_id, coerced, entry=entry):
         return TEXT_RESOLVED
     # Lost a race with a button/callback resolution — treat as no work left.
     return TEXT_NO_PENDING
@@ -483,7 +536,7 @@ def has_pending(session_key: str) -> bool:
         return any(_entries.get(cid) is not None for cid in ids)
 
 
-def clear_session(session_key: str) -> int:
+def clear_session(session_key: str, *, owner: object = None) -> int:
     """Resolve and drop every pending clarify for a session.
 
     Used by session-boundary cleanup (e.g. ``/new``, gateway shutdown,
@@ -499,7 +552,13 @@ def clear_session(session_key: str) -> int:
     user answered.  Only unresolved entries are cancelled here.
     """
     with _lock:
-        ids = list(_session_index.pop(session_key, []) or [])
+        ids = [cid for cid in _session_index.get(session_key, [])
+               if owner is None or (_entries.get(cid) is not None and _entries[cid].owner is owner)]
+        kept = [cid for cid in _session_index.get(session_key, []) if cid not in ids]
+        if kept:
+            _session_index[session_key] = kept
+        else:
+            _session_index.pop(session_key, None)
         entries = [_entries.pop(cid, None) for cid in ids]
         # The mutation loop must stay inside the lock: the pop above and the
         # event.is_set() check below have to be atomic with respect to

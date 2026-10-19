@@ -59,10 +59,11 @@ def test_definitive_error_result_tears_down_and_aborts():
     fut.result.return_value = _Result(False, "relay prompt op unavailable")
     clarify_mod = MagicMock()
     assert (
-        _clarify_send_disposition(fut, session_key="sk", clarify_mod=clarify_mod)
+        _clarify_send_disposition(fut, session_key="sk", clarify_mod=clarify_mod, clarify_id="cid123")
         == SENTINEL
     )
-    clarify_mod.clear_session.assert_called_once_with("sk")
+    clarify_mod.cancel_request.assert_called_once_with("cid123")
+    clarify_mod.clear_session.assert_not_called()
 
 
 def test_non_timeout_exception_tears_down_and_aborts():
@@ -70,19 +71,21 @@ def test_non_timeout_exception_tears_down_and_aborts():
     fut.result.side_effect = RuntimeError("loop unavailable")
     clarify_mod = MagicMock()
     assert (
-        _clarify_send_disposition(fut, session_key="sk", clarify_mod=clarify_mod)
+        _clarify_send_disposition(fut, session_key="sk", clarify_mod=clarify_mod, clarify_id="cid123")
         == SENTINEL
     )
-    clarify_mod.clear_session.assert_called_once_with("sk")
+    clarify_mod.cancel_request.assert_called_once_with("cid123")
+    clarify_mod.clear_session.assert_not_called()
 
 
 def test_missing_future_tears_down_and_aborts():
     clarify_mod = MagicMock()
     assert (
-        _clarify_send_disposition(None, session_key="sk", clarify_mod=clarify_mod)
+        _clarify_send_disposition(None, session_key="sk", clarify_mod=clarify_mod, clarify_id="cid123")
         == SENTINEL
     )
-    clarify_mod.clear_session.assert_called_once_with("sk")
+    clarify_mod.cancel_request.assert_called_once_with("cid123")
+    clarify_mod.clear_session.assert_not_called()
 
 
 # --- Caller-path contract: the disposition feeds the bounded wait ---------
@@ -136,7 +139,8 @@ def test_definitive_failure_never_waits():
         == SENTINEL
     )
     clarify_mod.wait_for_response.assert_not_called()
-    clarify_mod.clear_session.assert_called_once_with("sk")
+    clarify_mod.cancel_request.assert_called_once_with("cid123")
+    clarify_mod.clear_session.assert_not_called()
 
 
 def test_no_response_returns_timeout_sentinel():

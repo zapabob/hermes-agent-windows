@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "status": "BOUNDED_CLARIFY_OWNERSHIP_LOCALLY_INTEGRATED",
+  "scope": "C1-C5 clarify admission/send/wait/reply/cleanup, prose routing retirement, global late callback registration and same-run shared typing pause at three callsites.",
+  "owned_files": {
+    "gateway/run.py": "65dd84a8f288403af2b9fcd38edeac8498a48562529a815bd4a4cd62e3850003",
+    "tools/clarify_gateway.py": "a73fb1c2a1a7e8a8fccf5dbcdfae3081d90c5d9684be85fe9fc797fb5957fbf6",
+    "tests/gateway/test_clarify_send_timeout_ambiguity.py": "d0fd96f50592359236ac7ea0631dec43b5c8395c465887bf0617b440c72ac49c",
+    "tests/gateway/test_clarify_run_lifecycle.py": "448b8152eb6a943d1f09a43c342315c43e567d1f64162fb97781b6af895429e9",
+    "tests/gateway/test_clarify_routing_retirement.py": "d9d37e1bb59f03713c65b5a97fdde6d31aedc1d8ffedf7615de932cd08523c2d",
+    "tests/gateway/test_clarify_question_transition.py": "4d8582d9e3017b8ec9c607f231ab74fdf04ebc15a0db9f8d96c043e7e6ea5756"
+  },
+  "behavior": [
+    "Keep captured clarify entry across send ACK, wait and inbound transcription; retire or cancel only that exact entry.",
+    "Revalidate rejected prose after coercion and require successful exact resolution before ordinary routing; retain original input owner through awaits, queues and admission.",
+    "Serialize old callback admission and cleanup with existing session ownership; invalidate only the captured still-current agent generation on global interruption and wake its pending questions.",
+    "Resume typing or reopen streaming only for a current run with no pending clarify or blocking approval, including parallel questions under the same owner.",
+    "Keep legitimate answers, Other/freeform, FIFO, once-only reply consumption, profile isolation, ambiguous send ACK, useful replacement answers and immediate single-question typing restart."
+  ],
+  "sealed_evidence": {
+    "root": "tmp/continuation-20261020/t02c-fix-evidence/final-seal",
+    "handoff_sha256": "d4aecf8521f1b82c9a0fdad446b0ad3bc11cfbb5f11954c1e79bf545629a2bee",
+    "manifest_sha256": "34f638b755028484be3de20e2b55bc4330df348a72f6e0aa4ee68b5fa91147c6",
+    "manifest_files": 350,
+    "saved_source_and_graph_files": 33,
+    "complete_projected_methods": 30,
+    "normal_jobs": 14,
+    "positive_unique_passes": 267,
+    "positive_failures_errors_skips": 0,
+    "fault_jobs": 22,
+    "behaviorally_killed_fault_jobs": 21,
+    "fault_failure_occurrences": 29,
+    "fault_unique_failed_nodes": 25,
+    "all_failed_nodes_normal_green": true,
+    "disclosed_survivor": "fault-16 removes only the generation fence; the additional pending-question pause fence still blocks the attempted effect. This is one surviving redundant partial removal, not 22 killed faults.",
+    "qualified_jobs_guard_refusals_recovery_survivors": 0,
+    "parent_verified_before_after_bindings": 2056,
+    "independent_selected_before_after_bindings": 1188,
+    "parent_audit": "tmp/continuation-20261020/parent-clarify-final-audit.json",
+    "parent_head_overlay": "tmp/continuation-20261020/parent-clarify-head-overlay.json",
+    "exact_committed_dependencies": 27,
+    "planned_source_overlay_files": 6,
+    "unexpected_wip_dependencies": 0
+  },
+  "graph": {
+    "version": "1.6.0",
+    "immutable_db_sha256": "e9843aa5e89c24515a17b9c8d8fcb4c43e4849891e08008704130dbc82ff91c2",
+    "integrity": "ok",
+    "nodes": 3052,
+    "edges": 8985,
+    "scope": "33 complete selected files or explicitly complete method projections. No whole run.py/root/dynamic SDK acceptance."
+  },
+  "legacy_contract": "Production always supplies a request ID. Definitive send failure cancels only that request. A no-ID private classifier has no cleanup authority. Four old session-wide-clear expectations were minimally migrated with original failing receipts retained; timeout/sent/log/no-wait assertions remain and no session-wide clear is required.",
+  "qualification_dependencies": {
+    "tools/approval.py": "ca3d0baa1f4ec36b77376abb65d84a4b1f7120be394c6fe208209cf41f68d356",
+    "declared_process_import": "5d2d05b8aa4a66f85f530bf4aff1e179ed66602a3b4f9eb0ec807e7fc29c23a8",
+    "process_snapshot_reaper": "empty declared leaves; not live API/process proof",
+    "current_approval_working_tree": "Separate authorized post-decision WIP; not included in this commit or substituted into frozen evidence."
+  },
+  "independent_review": "No remaining P1/P2 found within the explicitly reviewed bounded source/evidence slice. Reviewer performed no tests/imports/edits/native effects.",
+  "excluded": [
+    "native transport, native channel rendering and queued-finalize pause",
+    "approval post-decision persistence, native request routing, permanent-save concurrency and effect leases",
+    "live API/process/R4/R5/R6 integration and native PYWINPTY completion",
+    "whole T02/P0, mandatory Python OPEN, broader eight-engine/platform qualification",
+    "portable CI, whole-current-SHA CI, production restart or release"
+  ],
+  "published": false
+}
