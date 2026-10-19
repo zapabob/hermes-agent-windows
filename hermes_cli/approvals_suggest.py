@@ -369,14 +369,8 @@ def apply_proposals(proposals: list[Proposal], indices: list[int]) -> set:
     """Merge chosen proposal patterns into command_allowlist and persist."""
     import tools.approval as approval_module
 
-    merged = set(approval_module.load_permanent_allowlist())
-    for idx in indices:
-        merged.add(proposals[idx].pattern)
-    approval_module.save_permanent_allowlist(merged)
-    # Keep the in-process allowlist consistent so a long-lived process sees
-    # the new entries immediately (mirrors the interactive 'always' path).
-    approval_module.load_permanent(merged)
-    return merged
+    additions = {proposals[idx].pattern for idx in indices}
+    return approval_module.merge_permanent_allowlist(additions)
 
 
 def _render_text(proposals: list[Proposal], days: int) -> None:

@@ -2708,6 +2708,9 @@ _pending: dict[str, dict] = {}
 _session_approved: dict[str, set] = {}
 _session_yolo: set[str] = set()
 _permanent_approved: set = set()
+# Reentrant so an additive transaction can call the replacement writer.
+# Never hold approval state or Gateway owner locks during config I/O.
+_permanent_save_lock = threading.RLock()
 
 
 # =========================================================================
@@ -3705,14 +3708,36 @@ def load_permanent_allowlist() -> set:
 
 
 def save_permanent_allowlist(patterns: set):
-    """Save permanently allowed command patterns to config."""
+    """Replace the saved allowlist with patterns, serializing local saves.
+
+    Snapshot after acquiring the save lock so callers passing the live
+    permanent set include grants committed while an earlier save ran.
+    Explicit sets, including an empty set, retain replacement semantics.
+    """
     try:
         from hermes_cli.config import load_config, save_config
-        config = load_config()
-        config["command_allowlist"] = list(patterns)
-        save_config(config)
+        with _permanent_save_lock:
+            with _lock:
+                snapshot = list(patterns)
+            config = load_config()
+            config["command_allowlist"] = snapshot
+            save_config(config)
     except Exception as e:
         logger.warning("Could not save allowlist: %s", e)
+
+
+def merge_permanent_allowlist(additions: set) -> set:
+    """Merge additions with current config and sync memory in one local save.
+
+    The saved merge starts from config, not potentially stale memory.
+    Preserve the existing warning-only load/save failure behavior.
+    """
+    with _permanent_save_lock:
+        merged = set(load_permanent_allowlist())
+        merged.update(additions)
+        save_permanent_allowlist(merged)
+        load_permanent(merged)
+        return merged
 
 
 # =========================================================================
