@@ -103,3 +103,30 @@ campaign acceptance remain separate. Main, production services, dependencies,
 version, publishing and physical sleep/reboot are unchanged by this work.
 Rollback of the isolated root slice is its explicit commit inverse after preserving
 later work; no reset/clean/stash or production rollback is performed.
+
+## Subsequent selected regressions
+
+The T03a product/test/receipt commit is e71ab4272b6, followed by the explicit
+implementation-log commit 9aab2ee6848. The hook reports lefthook unavailable;
+this is not recorded as a passed Git hook.
+
+T04 current existing-owner regressions pass 57 cases in five fresh Windows Jobs:
+cron baseline 9, TTS preservation/rollback 11, support secret boundary 30, PTY
+replacement/liveness 6, actual owned ConPTY child effect/release 1. No failures,
+errors or skips, no timeout/recovery and zero descendants. The existing feature
+owners are not reimplemented. These selected checks do not close fresh packaged
+UI, favorites/restart, actual channel/model, or full T04 acceptance.
+
+T00's pure Desktop protocol/app-env/fixture suites pass 23 cases, zero pending.
+They verify the actual protocol helper's undefined/empty/0 worker contracts;
+main's caller passes process.env.TEST_WORKER_INDEX. Electron is fake in this
+unit selection and no native Desktop is launched. No host association is read,
+repaired or registered. Exact source/commands are in the separate
+CONTINUATION_REGRESSION_20261020.json receipt; no Python/Desktop test totals
+are combined as campaign acceptance.
+
+The qualified dependency interpreter is Python 3.12.13 with pytest 9.1.1,
+pytest-asyncio 1.3.0, pywin32 311, openai 2.54.0 and Ruff 0.15.10. It is reused
+without installing/upgrading dependencies. Module lookup observes faster_whisper
+and sounddevice but no sherpa_onnx/vosk. No local incremental recognizer/assets
+or actual audio recognition is qualified, so T07 remains NOT_ACCEPTED.

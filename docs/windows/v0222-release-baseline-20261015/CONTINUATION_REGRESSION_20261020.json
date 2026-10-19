@@ -1,0 +1,226 @@
+{
+  "schema_version": 1,
+  "status": "SCOPED_REGRESSION_NOT_PACKAGED_ACCEPTANCE",
+  "t04": {
+    "runs": [
+      {
+        "label": "t04-cron",
+        "passed": 9,
+        "source_sha256": {
+          "cron/jobs.py": "709013818348544f5a22c36978985a4bcd92f2898d4302ddc11da981d7d76163",
+          "uv.lock": "5327b9052b23734235a76922f418ddfab825c17b1ab5368688a847cb2269b33d",
+          "pyproject.toml": "fb609dcb77da7e70cdddf5f49f02f32824df6a3968e0e55f18d1d294ba5bc4dd",
+          "tests/conftest.py": "9780ba549bf6fb746ff08fc3ea793b9593fa636c13ee7f61537052082d7020b8",
+          "tmp/continuation-20261020/run.py": "23fd1a3723eb3bba43f459bfa123eb072f4311ee9d56cce2f206c6b6246685b4",
+          "tmp/continuation-20261020/bootstrap.py": "6313458fc43fffee67bf1c7dfe04412ab1d185cb2f47cb25221226a3ddc671f1",
+          "tmp/selective-20261017/fxa01_owned_job.py": "ad3738f0d7fd0f63db2f7d41dcdb8209f3647eae36aa233592d726198b5c48e7",
+          "tests/cron/test_jobs_corrupt_save_boundary.py": "c1498fe3bd6d59843b807d4348ff02fcc8c40347ed484a18d8b43350cdfc1099"
+        },
+        "command": [
+          "C:\\Users\\downl\\.codex\\worktrees\\v0216-semantic-20261010\\hermes-agent\\.venv\\Scripts\\python.exe",
+          "-B",
+          "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\tmp\\continuation-20261020\\bootstrap.py",
+          "-p",
+          "pytest_asyncio.plugin",
+          "-o",
+          "addopts=",
+          "tests/cron/test_jobs_corrupt_save_boundary.py",
+          "--basetemp",
+          "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\continuation-tests-20261020\\t04-cron\\cases",
+          "--junitxml=C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\tmp\\continuation-20261020\\t04-cron\\junit.xml",
+          "-q"
+        ],
+        "owned_resources": "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\continuation-tests-20261020\\t04-cron",
+        "log_sha256": "906d7648de3f868f619bd339487cb3a07086cdadd4507782b66118ac8355dc23"
+      },
+      {
+        "label": "t04-tts",
+        "passed": 11,
+        "source_sha256": {
+          "tools/tts_tool.py": "c043e66977e43ec82053e468f8ab90e7f2b2f920e9c514dbaa4147f7bfe7f797",
+          "uv.lock": "5327b9052b23734235a76922f418ddfab825c17b1ab5368688a847cb2269b33d",
+          "pyproject.toml": "fb609dcb77da7e70cdddf5f49f02f32824df6a3968e0e55f18d1d294ba5bc4dd",
+          "tests/conftest.py": "9780ba549bf6fb746ff08fc3ea793b9593fa636c13ee7f61537052082d7020b8",
+          "tmp/continuation-20261020/run.py": "23fd1a3723eb3bba43f459bfa123eb072f4311ee9d56cce2f206c6b6246685b4",
+          "tmp/continuation-20261020/bootstrap.py": "6313458fc43fffee67bf1c7dfe04412ab1d185cb2f47cb25221226a3ddc671f1",
+          "tmp/selective-20261017/fxa01_owned_job.py": "ad3738f0d7fd0f63db2f7d41dcdb8209f3647eae36aa233592d726198b5c48e7",
+          "tests/tools/test_tts_existing_output_preservation.py": "9556287ae8dcb788c74fe03c335bc3e624991a52f4eb9860ede57b2d012e050a"
+        },
+        "command": [
+          "C:\\Users\\downl\\.codex\\worktrees\\v0216-semantic-20261010\\hermes-agent\\.venv\\Scripts\\python.exe",
+          "-B",
+          "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\tmp\\continuation-20261020\\bootstrap.py",
+          "-p",
+          "pytest_asyncio.plugin",
+          "-o",
+          "addopts=",
+          "tests/tools/test_tts_existing_output_preservation.py",
+          "--basetemp",
+          "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\continuation-tests-20261020\\t04-tts\\cases",
+          "--junitxml=C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\tmp\\continuation-20261020\\t04-tts\\junit.xml",
+          "-q"
+        ],
+        "owned_resources": "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\continuation-tests-20261020\\t04-tts",
+        "log_sha256": "8318db6131d706e89f142586a680fc28bd0c7a7147e4c6d2d714a7196e516e27"
+      },
+      {
+        "label": "t04-support",
+        "passed": 30,
+        "source_sha256": {
+          "hermes_cli/debug.py": "9338e2953250db4d0b1f201b7d8f7b4795bd1587d26b218acd0ca7ed24a44a8d",
+          "agent/redact.py": "664e39fc1b6a4fab7596240ababd060f8e693b2eb1da74fc18515d7f89cfbcdb",
+          "uv.lock": "5327b9052b23734235a76922f418ddfab825c17b1ab5368688a847cb2269b33d",
+          "pyproject.toml": "fb609dcb77da7e70cdddf5f49f02f32824df6a3968e0e55f18d1d294ba5bc4dd",
+          "tests/conftest.py": "9780ba549bf6fb746ff08fc3ea793b9593fa636c13ee7f61537052082d7020b8",
+          "tmp/continuation-20261020/run.py": "23fd1a3723eb3bba43f459bfa123eb072f4311ee9d56cce2f206c6b6246685b4",
+          "tmp/continuation-20261020/bootstrap.py": "6313458fc43fffee67bf1c7dfe04412ab1d185cb2f47cb25221226a3ddc671f1",
+          "tmp/selective-20261017/fxa01_owned_job.py": "ad3738f0d7fd0f63db2f7d41dcdb8209f3647eae36aa233592d726198b5c48e7",
+          "tests/hermes_cli/test_debug_support_secret_boundary.py": "b2ebd39db123e97021ceecc7cddd8ad82ba04237566d299352e57e43d99e24a0"
+        },
+        "command": [
+          "C:\\Users\\downl\\.codex\\worktrees\\v0216-semantic-20261010\\hermes-agent\\.venv\\Scripts\\python.exe",
+          "-B",
+          "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\tmp\\continuation-20261020\\bootstrap.py",
+          "-p",
+          "pytest_asyncio.plugin",
+          "-o",
+          "addopts=",
+          "tests/hermes_cli/test_debug_support_secret_boundary.py",
+          "--basetemp",
+          "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\continuation-tests-20261020\\t04-support\\cases",
+          "--junitxml=C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\tmp\\continuation-20261020\\t04-support\\junit.xml",
+          "-q"
+        ],
+        "owned_resources": "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\continuation-tests-20261020\\t04-support",
+        "log_sha256": "41399d853144b5d66954b8817bbbd5a37602b14e811d94768ff7efb7974676a7"
+      },
+      {
+        "label": "t04-pty-reaper",
+        "passed": 6,
+        "source_sha256": {
+          "hermes_cli/pty_session.py": "e528849ab7679ca53a01333e9ef5895998ed0198f1c3a84864fc820124b64fa9",
+          "hermes_cli/win_pty_bridge.py": "b0b06179217426dd0279c16cb74e8e6fd9a4c510f63b01d55fef9e3736b962a5",
+          "uv.lock": "5327b9052b23734235a76922f418ddfab825c17b1ab5368688a847cb2269b33d",
+          "pyproject.toml": "fb609dcb77da7e70cdddf5f49f02f32824df6a3968e0e55f18d1d294ba5bc4dd",
+          "tests/conftest.py": "9780ba549bf6fb746ff08fc3ea793b9593fa636c13ee7f61537052082d7020b8",
+          "tmp/continuation-20261020/run.py": "23fd1a3723eb3bba43f459bfa123eb072f4311ee9d56cce2f206c6b6246685b4",
+          "tmp/continuation-20261020/bootstrap.py": "6313458fc43fffee67bf1c7dfe04412ab1d185cb2f47cb25221226a3ddc671f1",
+          "tmp/selective-20261017/fxa01_owned_job.py": "ad3738f0d7fd0f63db2f7d41dcdb8209f3647eae36aa233592d726198b5c48e7",
+          "tests/hermes_cli/test_pty_reaper_process_liveness.py": "e895b75e18895a669a3a5dceebebd5b58f66fe65646d896cc04ae3ef56f587f0"
+        },
+        "command": [
+          "C:\\Users\\downl\\.codex\\worktrees\\v0216-semantic-20261010\\hermes-agent\\.venv\\Scripts\\python.exe",
+          "-B",
+          "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\tmp\\continuation-20261020\\bootstrap.py",
+          "-p",
+          "pytest_asyncio.plugin",
+          "-o",
+          "addopts=",
+          "tests/hermes_cli/test_pty_reaper_process_liveness.py",
+          "--basetemp",
+          "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\continuation-tests-20261020\\t04-pty-reaper\\cases",
+          "--junitxml=C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\tmp\\continuation-20261020\\t04-pty-reaper\\junit.xml",
+          "-q"
+        ],
+        "owned_resources": "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\continuation-tests-20261020\\t04-pty-reaper",
+        "log_sha256": "015b131408645cf6b3b8c8e2d222fb8819987fff5e05c6a6b280c87f853c4f54"
+      },
+      {
+        "label": "t04-native-conpty",
+        "passed": 1,
+        "source_sha256": {
+          "hermes_cli/pty_session.py": "e528849ab7679ca53a01333e9ef5895998ed0198f1c3a84864fc820124b64fa9",
+          "hermes_cli/win_pty_bridge.py": "b0b06179217426dd0279c16cb74e8e6fd9a4c510f63b01d55fef9e3736b962a5",
+          "uv.lock": "5327b9052b23734235a76922f418ddfab825c17b1ab5368688a847cb2269b33d",
+          "pyproject.toml": "fb609dcb77da7e70cdddf5f49f02f32824df6a3968e0e55f18d1d294ba5bc4dd",
+          "tests/conftest.py": "9780ba549bf6fb746ff08fc3ea793b9593fa636c13ee7f61537052082d7020b8",
+          "tmp/continuation-20261020/run.py": "23fd1a3723eb3bba43f459bfa123eb072f4311ee9d56cce2f206c6b6246685b4",
+          "tmp/continuation-20261020/bootstrap.py": "6313458fc43fffee67bf1c7dfe04412ab1d185cb2f47cb25221226a3ddc671f1",
+          "tmp/selective-20261017/fxa01_owned_job.py": "ad3738f0d7fd0f63db2f7d41dcdb8209f3647eae36aa233592d726198b5c48e7",
+          "tests/hermes_cli/test_native_pty_registry_liveness.py": "0f4c7fae67a1052552cabac7b005a228df16a51f92ad7d09634d35c34601a3f6"
+        },
+        "command": [
+          "C:\\Users\\downl\\.codex\\worktrees\\v0216-semantic-20261010\\hermes-agent\\.venv\\Scripts\\python.exe",
+          "-B",
+          "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\tmp\\continuation-20261020\\bootstrap.py",
+          "-p",
+          "pytest_asyncio.plugin",
+          "-o",
+          "addopts=",
+          "tests/hermes_cli/test_native_pty_registry_liveness.py",
+          "--basetemp",
+          "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\continuation-tests-20261020\\t04-native-conpty\\cases",
+          "--junitxml=C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\tmp\\continuation-20261020\\t04-native-conpty\\junit.xml",
+          "-q"
+        ],
+        "owned_resources": "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\continuation-tests-20261020\\t04-native-conpty",
+        "log_sha256": "b95dd913bf1d6c83fc97d08ec17411be79dabda555abb5a5b5e39d2ec23be9f2"
+      }
+    ],
+    "passed": 57,
+    "failed": 0,
+    "skipped": 0,
+    "scope": "current existing owners only; external synthesis is fixture, real filesystem rollback/support wire/native ConPTY effects remain",
+    "not_run": [
+      "fresh packaged UI",
+      "favorites keyboard/restart/send journey",
+      "real model/service quality",
+      "full busy/channel journey"
+    ]
+  },
+  "t00": {
+    "pure_desktop_units_passed": 23,
+    "failed": 0,
+    "pending": 0,
+    "source_sha256": {
+      "apps/desktop/electron/protocol-registration.test.ts": "552a30488650f88733cc0f4c64b29ccbebd8fda4df4463ba17be60bbe524d146",
+      "apps/desktop/e2e/app-env.unit.test.ts": "dbc94e8d8a19c449ddd0ed45e1d55651ba1a4275701abf0c55bcac8cc79e0f44",
+      "apps/desktop/e2e/fixtures.unit.test.ts": "c4b1c9fd33ab0af0a2de5b9f4a6b88461b8a12366a4337dc1bc0331622bafe48",
+      "apps/desktop/electron/protocol-registration.ts": "b528ddb4998be2275ec078803e03bea7f366bd341758f2fbbc10f7ad8eddc8ca",
+      "apps/desktop/electron/main.ts": "3ff86cf5b0dc075d6db1635bfced517d6fa6669f9adffb650a34621ea2a615e7",
+      "apps/desktop/e2e/app-env.ts": "47fdcf35245cad896cab67106672d14fa73fc1e4e3c927f27afd045b4d524c6a",
+      "apps/desktop/e2e/fixtures.ts": "b67b41cb25f8fd211d06a64c3e1875438ee84eba9bbd6da2031806254b1b9c95"
+    },
+    "command": [
+      "C:/Users/downl/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe",
+      "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\node_modules\\vitest\\vitest.mjs",
+      "run",
+      "--project",
+      "electron",
+      "electron/protocol-registration.test.ts",
+      "e2e/app-env.unit.test.ts",
+      "e2e/fixtures.unit.test.ts",
+      "--reporter=json",
+      "--outputFile=C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\tmp\\continuation-20261020\\protocol-units\\vitest.json"
+    ],
+    "caller": "apps/desktop/electron/main.ts registerDeepLinkProtocol passes process.env.TEST_WORKER_INDEX",
+    "contract": "undefined retains normal registration; present empty/0 suppress registration",
+    "native_electron_launched": false,
+    "host_registry_observed_or_repaired": false
+  },
+  "runtime": {
+    "python": "3.12.13",
+    "pytest": "9.1.1",
+    "pytest_asyncio": "1.3.0",
+    "pywin32": "311",
+    "openai": "2.54.0",
+    "ruff": "0.15.10",
+    "execution": "existing dependency interpreter via uv --no-project --offline; current source PYTHONPATH; no synchronization/install"
+  },
+  "local_stt_observation": {
+    "faster_whisper": true,
+    "sounddevice": true,
+    "sherpa_onnx": false,
+    "vosk": false,
+    "recognizer_assets_or_incremental_effect_qualified": false,
+    "acceptance": "NOT_ACCEPTED"
+  },
+  "production": {
+    "main_unchanged_at_observation": "d50995b06d636e6118214b68789f344882773f3a",
+    "restart": false,
+    "publish": false,
+    "version_change": false,
+    "os_configuration_write": false
+  },
+  "cleanup": "all accepted Jobs zero descendants before recovery; only task-owned output directories retained; no evidence deletion"
+}
