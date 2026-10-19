@@ -422,3 +422,29 @@ addon rebuild, pack, installer, registry write or local-model inference was run.
 The old F05 limited receipt remains historical; it is not rewritten as whole-TUI
 qualification. The new typecheck receipt records all six runs and the precise
 workspace link retained for review; no evidence or target directory was removed.
+
+## T04/T10 existing native staging and unqualified renderer bundle
+
+The actual existing stageNodePtyInto helper completed in a fresh owned Windows
+Job with zero guard refusals, timeout, recovery or survivors. It produced 27
+node-pty files (2,670,744 bytes); an additional empty run.stdin belongs to the Job
+harness. After-run comparison verifies 26 exact installed-source copies and the
+remaining unixTerminal.js contains exactly the helper's two existing ASAR path
+replacements. Installed dependency source was not bound before this experiment,
+so this is limited staging evidence, not native addon ABI/load or ConPTY proof.
+
+The actual Vite renderer build failed during config dependency externalization.
+Its Windows net use mapping probe encountered the child-process guard (213
+refusals); Rolldown also reported a native Tailwind dependency read as UTF-8. The
+secondary error is retained without asserting an independent product defect.
+No renderer bundle was produced and the guard was not relaxed. Both Jobs bound
+2,361 source/harness files before and after with unchanged bytes and zero owned
+survivors. Existing Vite temporary files and earlier build evidence are preserved.
+
+Installed Electron package metadata exists, but its dist directory and path.txt
+are absent. No binary was downloaded, installed or launched. Existing Desktop
+typecheck passes remain separate from renderer/native/runtime/packaging gates.
+CONTINUATION_DESKTOP_BUILD_20261020.json records both outcomes and their exact
+hashes. An initial audit incorrectly counted empty run.stdin as an asset and
+expected the helper's intentional ASAR rewrite to be a byte-identical copy;
+both audit assumptions were corrected before the receipt was published.

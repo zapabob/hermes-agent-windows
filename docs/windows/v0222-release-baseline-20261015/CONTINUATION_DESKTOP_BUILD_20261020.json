@@ -1,0 +1,211 @@
+{
+  "schema_version": 1,
+  "status": "NATIVE_ASSET_STAGING_PASS_RENDERER_BUILD_UNQUALIFIED",
+  "scope": "T04/T10 existing Desktop build qualification; no product changes",
+  "evidence_root": "C:/Users/downl/.codex/worktrees/v0222-selective-20261017/hermes-agent/artifacts/continuation-desktop-20261020",
+  "runs": [
+    {
+      "phase": "native-stage",
+      "result_sha256": "c9a8c5e3a603017fedf9409965f7301e6a31ba6d6f5694f8c7e55d29b1027002",
+      "log_sha256": "fbf095945e6425a7cc0b802ee9636c385fb10be64be55c79a641aef3f4a6a7e1",
+      "guard_sha256": "c2ce01372f096faa705f7475e19586f2a286f5669dbfa678e69d8b614c5c8b99",
+      "exit": 0,
+      "guard_refusals": 0,
+      "bound_source_files": 2361,
+      "source_unchanged": true,
+      "timeout": false,
+      "forced_recovery": false,
+      "owned_survivors": 0,
+      "output_files": [
+        {
+          "path": "run.stdin",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "node-pty/package.json",
+          "bytes": 1615,
+          "sha256": "f8b6a14f7022c14f1cd5d109486f5dacd32bffb63a9a63e38eced37dacb47439"
+        },
+        {
+          "path": "node-pty/lib/conpty_console_list_agent.js",
+          "bytes": 721,
+          "sha256": "0d010879bb6680a0253d44363183d53e631f42972594eb6dcb1fb842c8c85e52"
+        },
+        {
+          "path": "node-pty/lib/eventEmitter2.js",
+          "bytes": 1600,
+          "sha256": "f1c14613aa90c10def4ca7238329270871997eb26f919f7074dc25533e3e75dd"
+        },
+        {
+          "path": "node-pty/lib/eventEmitter2.test.js",
+          "bytes": 1266,
+          "sha256": "9cd06569c14d4cd180031ed4df914b817e75ceb104ac10ef65cae6815f46c568"
+        },
+        {
+          "path": "node-pty/lib/index.js",
+          "bytes": 2008,
+          "sha256": "c1b82c92c4c63aaa8e8441fc5a291c4727cd3f3550666d2fec7250e0f6d4b173"
+        },
+        {
+          "path": "node-pty/lib/interfaces.js",
+          "bytes": 233,
+          "sha256": "56e4173f09aad26173f9d4c79800fda0b808c34424f987ef8d671cc931119a0a"
+        },
+        {
+          "path": "node-pty/lib/terminal.js",
+          "bytes": 7454,
+          "sha256": "5ed5cd66a766afba4a04093284e999f8516d41936501839055800b10eca5d304"
+        },
+        {
+          "path": "node-pty/lib/terminal.test.js",
+          "bytes": 6250,
+          "sha256": "6f6ae435c9c6e93d8146fa7a79fe155ec3291880aa4de68fbad7ed8891e4f87b"
+        },
+        {
+          "path": "node-pty/lib/testUtils.test.js",
+          "bytes": 807,
+          "sha256": "eb13d8ffc04ef385604b37170bafa9914736d5c5be8bca857c9f32958f6fe7ec"
+        },
+        {
+          "path": "node-pty/lib/types.js",
+          "bytes": 228,
+          "sha256": "408bf8287717b6322cc380ea66caf1b5e366dcf697707ae2f3cc454e08f3b151"
+        },
+        {
+          "path": "node-pty/lib/unixTerminal.js",
+          "bytes": 13402,
+          "sha256": "e2749a3c39c5680061dcf205b70a7c3d3fdd068ff67a0451ce5dc87274cd6a56"
+        },
+        {
+          "path": "node-pty/lib/unixTerminal.test.js",
+          "bytes": 19310,
+          "sha256": "608d6c9bcfa07873440ed813b499d347e3e79dace1cc58ea3bd61b53356f0937"
+        },
+        {
+          "path": "node-pty/lib/utils.js",
+          "bytes": 1548,
+          "sha256": "f75ad341c13fbf1a9a6605d7ee42dff5bbc5d43b7b381e413fb97eb1b8300beb"
+        },
+        {
+          "path": "node-pty/lib/windowsConoutConnection.js",
+          "bytes": 6119,
+          "sha256": "1440f70908fb1f55911ac8e936a1230f68a9c00c03096fcef6788eac6aad9d62"
+        },
+        {
+          "path": "node-pty/lib/windowsPtyAgent.js",
+          "bytes": 12388,
+          "sha256": "8636d16b38266112204061a22b135734177c242837982fd3a4055be726efa64a"
+        },
+        {
+          "path": "node-pty/lib/windowsPtyAgent.test.js",
+          "bytes": 4147,
+          "sha256": "4c83dd76ec446031876dc81869e4c204715f72c0ba7ba3389e10b390b6d08da1"
+        },
+        {
+          "path": "node-pty/lib/windowsTerminal.js",
+          "bytes": 7852,
+          "sha256": "c3a65716f53fed0135a8a633373d5f9c2ab092544d651f27ef0a67096dd3bcd9"
+        },
+        {
+          "path": "node-pty/lib/windowsTerminal.test.js",
+          "bytes": 10760,
+          "sha256": "325567d8d6b461df3d3b7990a51bac09f662733988df653de7ee9113880e67a3"
+        },
+        {
+          "path": "node-pty/lib/shared/conout.js",
+          "bytes": 348,
+          "sha256": "6ae3b0532616da11aa2a11b4506bb89b0d40be005a9ea9fb369fb59eefdbda47"
+        },
+        {
+          "path": "node-pty/lib/worker/conoutSocketWorker.js",
+          "bytes": 848,
+          "sha256": "3e4bac095ac3870c3248a7302f5d10217de625f30c32b7000fe48a34788e47ac"
+        },
+        {
+          "path": "node-pty/prebuilds/win32-x64/conpty.node",
+          "bytes": 312320,
+          "sha256": "ee8f4e6f4dad71939eecfda11de249400e34bfefe4c8b48af13f3b5476f4035b"
+        },
+        {
+          "path": "node-pty/prebuilds/win32-x64/conpty_console_list.node",
+          "bytes": 134656,
+          "sha256": "879dd94cfc79f1e263a00077597ae9448a5394b7d193381aaa50d992a1f91090"
+        },
+        {
+          "path": "node-pty/prebuilds/win32-x64/pty.node",
+          "bytes": 303104,
+          "sha256": "ae323edd0835ee7b9e18cc96a7b2bb4b8173ff768317d178af2788406feb71ff"
+        },
+        {
+          "path": "node-pty/prebuilds/win32-x64/winpty-agent.exe",
+          "bytes": 307712,
+          "sha256": "0c4834a0ab2a4f8c855a2f1db9b21fa6e5fc324ae8e3c82addd53d503d999825"
+        },
+        {
+          "path": "node-pty/prebuilds/win32-x64/winpty.dll",
+          "bytes": 256000,
+          "sha256": "e1cb26d868c954ba26817bedf3e4a5744e4ca2030adf51a7156e5ff2fadb881b"
+        },
+        {
+          "path": "node-pty/prebuilds/win32-x64/conpty/conpty.dll",
+          "bytes": 109600,
+          "sha256": "7c7430632052ff703540b68371ec43821820aa1335d8e11dfbcd9ff00e9daaed"
+        },
+        {
+          "path": "node-pty/prebuilds/win32-x64/conpty/OpenConsole.exe",
+          "bytes": 1148448,
+          "sha256": "d1fe7faa62f9e955e2ac2371f95d7e5513df4d496255097158f979c94782c5fc"
+        }
+      ]
+    },
+    {
+      "phase": "renderer",
+      "result_sha256": "734030e267bc6303f569104df24646cbba7f01bd20c7f781f6c9a628e0293d6c",
+      "log_sha256": "8067afd6ce87993d84680c9fb0950325b2a388c6fc5c4d2ae879d194603539fa",
+      "guard_sha256": "f7991c07f90a19d674fc466a93e3e83ffeb5ad349609fc2d9508c46a65ba42cd",
+      "exit": 1,
+      "guard_refusals": 213,
+      "bound_source_files": 2361,
+      "source_unchanged": true,
+      "timeout": false,
+      "forced_recovery": false,
+      "owned_survivors": 0,
+      "output_files": [
+        {
+          "path": "run.stdin",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    }
+  ],
+  "installed_package_metadata_versions": {
+    "vite": "8.2.1",
+    "node-pty": "1.1.0",
+    "electron": "41.10.7"
+  },
+  "asset_comparison": "26 staged node-pty files match installed source bytes; unixTerminal.js matches exactly the two existing stage-helper ASAR replacements. The additional output is an empty Job stdin file. These are after-run comparisons; dependency source was not bound before this run.",
+  "native_stage_bytes": 2670744,
+  "renderer_failure": {
+    "qualification": "Harness-blocked; no renderer bundle produced",
+    "observed": "Vite config dependency externalization attempts its Windows net use mapping probe; child-process guard rejects it. Rolldown also reports a native Tailwind dependency parsed as UTF-8.",
+    "limitation": "The secondary error is retained without asserting an independently reproduced product defect. The guard was not relaxed and no mapped-drive probe was executed."
+  },
+  "electron_executable": "ABSENT in installed package; no download or launch",
+  "unqualified": [
+    "Renderer bundle",
+    "Electron native addon ABI/load",
+    "ConPTY runtime effect",
+    "Packaged app or installer",
+    "Desktop GUI/E2E",
+    "Release or full campaign acceptance"
+  ],
+  "preserved": "Existing Vite temporary files and previous build evidence were not deleted or overwritten.",
+  "harness_hashes": {
+    "audit.py": "f1d59acbc38df4d5ec5ef4d07caddc105dd46521d37c1339bbaf1caa4de8e1e9",
+    "build.mjs": "423c83164e8500127d56c8c07955c136f4ce6571645fec60b536d55a611d699d",
+    "guard.cjs": "32fe46816604ec0153b78a4940b2e1d0ad92c69102e898c34b3a9b78be2d7812",
+    "run.py": "1e657c31accb2534c7509574f21842df16679d7236e5c1be4fb3d4937053099f"
+  }
+}
