@@ -47,12 +47,14 @@ def main():
     from hermes_cli import _install_repair
     _install_repair.ensure_windows_bin_launchers = lambda *_a, **_kw: None
     import cli
+    from hermes_state import get_last_init_error
 
     shell = cli.HermesCLI(toolsets=[], max_turns=2, compact=True, ignore_rules=True,
                           reasoning="high", resume=manifest.get("resume"))
     shell.streaming_enabled = False
     shell._single_query_mode = True
     try:
+        assert shell._session_db is not None, get_last_init_error()
         answer = shell.chat(manifest["prompt"])
         assert answer == "Owned answer: " + manifest["prompt"], answer
         messages = shell._session_db.get_messages(shell.agent.session_id)
