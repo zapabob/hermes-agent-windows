@@ -161,6 +161,16 @@ class TestGatewayKnownCommands:
 
 class TestGatewayHelpLines:
 
+    def test_branch_flag_usage_is_shared_with_cli_and_aliases(self):
+        branch = resolve_command('branch')
+        assert resolve_command('fork') is branch
+        assert branch.args_hint == '[--here] [name]'
+        assert '/branch [--here] [name]' in COMMANDS['/branch']
+        assert '/branch [--here] [name]' in COMMANDS_BY_CATEGORY['Session']['/branch']
+        line = next(line for line in gateway_help_lines() if line.startswith('`/branch '))
+        assert line.startswith('`/branch [--here] [name]`')
+        assert '`/fork`' in line
+
     def test_excludes_cli_only_commands_without_config_gate(self):
         import re
         lines = gateway_help_lines()

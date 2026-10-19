@@ -534,14 +534,24 @@ describe('createSlashHandler', () => {
     expect(ctx.session.newSession).toHaveBeenCalledWith('new session started', undefined)
   })
 
-  it('keeps visible scrollback when branching a TUI session', async () => {
+  it.each([
+    ['/branch branch title', 'branch title'],
+    ['/fork MixedCase 日本語', 'MixedCase 日本語'],
+    ['/branch --here Child 日本語', '--here Child 日本語'],
+    ['/fork --HERE Other 日本語', '--HERE Other 日本語'],
+    ['/branch --here', '--here']
+  ])('keeps visible scrollback and marks typed branch syntax: %s', async (command, arg) => {
     patchUiState({ sid: 'sid-parent' })
     const rpc = vi.fn(() => Promise.resolve({ session_id: 'sid-branch', title: 'branch title' }))
     const ctx = buildCtx({ gateway: { ...buildGateway(), rpc } })
 
-    expect(createSlashHandler(ctx)('/branch branch title')).toBe(true)
+    expect(createSlashHandler(ctx)(command)).toBe(true)
 
-    expect(rpc).toHaveBeenCalledWith('session.branch', { name: 'branch title', session_id: 'sid-parent' })
+    expect(rpc).toHaveBeenCalledWith('session.branch', {
+      name: arg,
+      parse_slash_args: true,
+      session_id: 'sid-parent'
+    })
     await vi.waitFor(() => {
       expect(getUiState().sid).toBe('sid-branch')
       expect(ctx.transcript.sys).toHaveBeenCalledWith('branched → branch title')

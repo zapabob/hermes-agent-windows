@@ -3125,6 +3125,16 @@ def _(rid, params: dict) -> dict:
     session, err = _sess(params, rid)
     if err:
         return err
+    # Only typed slash input opts into flag parsing; structured RPC names are
+    # literal, including names beginning with --here. TUI branches stay in place.
+    parse_args = params.get("parse_slash_args", False)
+    branch_name = params.get("name", "")
+    if not isinstance(parse_args, bool) or (parse_args and not isinstance(branch_name, str)):
+        return _err(rid, -32602, "invalid branch params: parse_slash_args must be boolean and typed name must be text")
+    if parse_args:
+        from gateway.slash_commands_branch_thread import parse_branch_args
+
+        _, branch_name = parse_branch_args(branch_name)
     # Branch must write into the parent's profile-scoped state.db (app-global
     # remote mode). Using the launch handle would orphan branch rows + history.
     with _session_db(session) as db:
@@ -3181,7 +3191,6 @@ def _(rid, params: dict) -> dict:
         except Exception:
             logger.debug("branch parent prompt read failed", exc_info=True)
         lease = None  # claimed lazily on the first turn (_ensure_active_session_slot)
-        branch_name = params.get("name", "")
         try:
             if branch_name:
                 title = branch_name

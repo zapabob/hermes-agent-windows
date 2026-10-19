@@ -314,3 +314,29 @@ baseline issue. Full native qualification, vendor independence and full T09 rema
 PARTIAL. The continuation receipt records that limit and managed persistent audit
 identity; raw task-owned evidence remains retained. Dependencies, primary main,
 production processes and host security settings were not changed.
+
+## F05 typed TUI branch syntax and shared help
+
+Shared branch help now advertises the already existing --here flag. Source review
+found typed TUI input previously became a literal --here-prefixed title. The typed
+producer now supplies an explicit parse_slash_args boolean, and the existing RPC
+owner uses the shared leading-flag parser only for that typed input. Structured RPC
+names beginning with --here remain literal. Aliases, mixed case, Unicode, default
+names and non-leading flag text retain their intended behavior.
+
+Parent independently reviewed all seven changed files and reran the final bytes:
+145 Python owner/regression cases and 85 actual producer unit cases pass. A
+source-extracted callback bridge feeds the real RPC/SQLite owner and proves child
+prompt/history/linkage, unchanged parent bytes and reopened persistence. It is not
+an interactive frontend journey. Exact-final-source faults fail three cases when
+typed parsing is removed, three when structured names are globally parsed, five
+when the producer marker is removed and one when the help hint is removed.
+
+All eleven parent Jobs have zero timeout, forced recovery or surviving descendants;
+all accepted cases have zero failure/error/skip. The new CodeGraph 1.6.0 selected
+index has 18 files, 1,369 nodes and 4,462 edges, complete state and zero pending
+changes/references. Changing unrelated Gateway routing code is excluded from this
+graph; its separate regression receipt binds the bytes actually exercised. Old
+worker runs remain historical rather than substituting for the parent final-source
+runs. Full TUI build/typecheck, interactive TUI/Desktop and cloud CI remain open.
+No dependency installation, production restart or primary main edit was performed.

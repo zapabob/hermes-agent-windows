@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "status": "SCOPED_F05_TYPED_BRANCH_VERIFIED_CAMPAIGN_PARTIAL",
+  "requirement": "F05 branch syntax and shared help",
+  "baseline": "d50995b06d636e6118214b68789f344882773f3a",
+  "contract": "Only typed TUI slash input opts into existing leading --here parsing; structured RPC session names remain literal. Shared CLI/Gateway/TUI usage includes [--here] [name].",
+  "source_sha256": {
+    "hermes_cli/commands.py": "5eb5cd5f71445282255e0d433f8ba69eefc7935e392bdab20bd40a35d855cbf8",
+    "tui_gateway/methods_session.py": "d7d301ca2a7d1f81afc7b37ad4751f660c45d4b1e965d855fe32940512638663",
+    "ui-tui/src/app/slash/commands/session.ts": "f921857461117384fe46aa9ac9289a705a0e8df3182a6b876140968508d4f2ae",
+    "tests/hermes_cli/test_commands.py": "e7f7a1c6b6dd385bbe001d3dc560ef1c8324e2d90927c24c8dfae6cd40f2ed75",
+    "tests/tui_gateway/test_commands_catalog_metadata.py": "0f613a2b82ca0fd1b416602f4d8ceb1786f3b370cca438f8494ba4a0083d0c0b",
+    "tests/tui_gateway/test_branch_prompt_contract.py": "cb1c4db61bd9017997664eb77b3c39ea4617f222f69d0ef05432239d3d03bacd",
+    "ui-tui/src/__tests__/createSlashHandler.test.ts": "485710a55599b2ea15a4079fa26dcacc6ec5fcf2b4bc41226c464eb4c70c98b5"
+  },
+  "parent_final_source_passed": {
+    "python_owner_regressions": 145,
+    "actual_producer_unit_tests": 85
+  },
+  "real_effects": "Actual session.branch dispatch into SQLite; child name, history, parent linkage and prompt bytes read back, parent row/history bytes unchanged, reopened database persistence verified. Source-extracted typed callback requests bridge to that real dispatcher.",
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "timeouts": 0,
+  "forced_job_recovery": 0,
+  "surviving_owned_children": 0,
+  "semantic_fault_failures": {
+    "no_typed_parser": 3,
+    "parse_all_structured_names": 3,
+    "producer_marker_removed": 5,
+    "hint_removed": 1
+  },
+  "review": "Parent independently reviewed all seven changed files, actual parser/RPC/registry callers and final behavioral evidence; no concrete remaining finding in this scope.",
+  "graph": {
+    "version": "1.6.0",
+    "files": 18,
+    "nodes": 1369,
+    "edges": 4462,
+    "pending_refs": 0,
+    "pending_changes": 0,
+    "state": "complete"
+  },
+  "private_evidence": {
+    "audit": "tmp/probes/f05-branch-20261020/parent-final-audit.json",
+    "audit_sha256": "10caaa3215b44569e05006e208c22b1b0c6a5f888ff1717fb5be9d01a7a73254",
+    "final_owned_jobs": 11,
+    "retained_original_runs": true
+  },
+  "limits": [
+    "Source-extracted callback bridge and producer unit suite; no interactive TUI/Desktop.",
+    "Changing unrelated gateway/slash_commands.py is excluded from final graph; Gateway regression uses the separately recorded run bytes, not future T06 changes.",
+    "No full TUI build/typecheck or packaged qualification; task alias uses existing built Ink test dependency.",
+    "Loopback guard is a task Python guard, not OS-wide network observation."
+  ],
+  "not_claimed": [
+    "Interactive TUI/Desktop",
+    "Full TUI build/typecheck",
+    "Cloud CI or full campaign"
+  ],
+  "production_restart": false,
+  "published": false
+}

@@ -44,3 +44,10 @@ def test_catalog_dispatch_preserves_legacy_fields_and_includes_hidden_alias_meta
 def test_registry_argument_contract(kwargs, expected):
     from hermes_cli.commands import infer_argument_mode
     assert infer_argument_mode(CommandDef("fixture", "Fixture", "Session", **kwargs)) == expected
+
+
+def test_catalog_branch_hint_matches_typed_flag_contract(server):
+    payload = server.dispatch({'jsonrpc': '2.0', 'id': 505, 'method': 'commands.catalog', 'params': {}})['result']
+    branch = next(description for name, description in payload['pairs'] if name == '/branch')
+    assert '/branch [--here] [name]' in branch
+    assert payload['canon']['/fork'] == '/branch'

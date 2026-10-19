@@ -296,7 +296,7 @@ export const sessionCommands: SlashCommand[] = [
     run: (arg, ctx) => {
       const prevSid = ctx.sid
 
-      ctx.gateway.rpc<SessionBranchResponse>('session.branch', { name: arg, session_id: ctx.sid }).then(
+      ctx.gateway.rpc<SessionBranchResponse>('session.branch', { name: arg, parse_slash_args: true, session_id: ctx.sid }).then(
         ctx.guarded<SessionBranchResponse>(r => {
           if (!r.session_id) {
             return
