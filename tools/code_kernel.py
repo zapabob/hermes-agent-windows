@@ -231,6 +231,9 @@ class SessionKernel:
         self.key = key
         self.owner: str = key[0]
         self.lock = threading.Lock()
+        # Serialize process publication and authority installation with disposal,
+        # without making clear_session wait for a running cell to settle.
+        self.lifecycle_lock = threading.Lock()
         self.proc: Optional[subprocess.Popen] = None
         self.tmpdir: str = ""
         self.sock_path: Optional[str] = None
@@ -240,6 +243,9 @@ class SessionKernel:
         self.sentinel: str = ""
         self.tool_call_log: List = []
         self.tool_call_counter: List[int] = [0]
+        # Selected cells include callers waiting for the per-kernel lock.
+        # Only the last settled cell may dispose a detached kernel.
+        self.attached: int = 0
         self.response_q: "queue.Queue[dict]" = queue.Queue()
         self.raw_chunks: List[bytes] = []
         self.raw_bytes = [0]
@@ -252,8 +258,15 @@ class SessionKernel:
     def alive(self) -> bool:
         return self.proc is not None and self.proc.poll() is None
 
+    def dead(self) -> bool:
+        """A pending spawn has no process yet; only an exited process is dead."""
+        return self.proc is not None and self.proc.poll() is not None
+
 
 _KERNELS: Dict[Tuple, SessionKernel] = {}
+# Reuse entries can be removed before teardown runs. Keep every owned kernel
+# discoverable by session disposal until its actual teardown has completed.
+_OWNED_KERNELS: set[SessionKernel] = set()
 _KERNELS_LOCK = threading.Lock()
 
 # Bounded lifecycle defaults (config: code_execution.max_session_kernels /
@@ -330,7 +343,7 @@ def _kernel_key(owner: str, mode: str, child_python: str, child_cwd: str,
 def shutdown_all_kernels() -> None:
     """Kill every session kernel. Registered via atexit; also used by tests."""
     with _KERNELS_LOCK:
-        kernels = list(_KERNELS.values())
+        kernels = list(dict.fromkeys([*_KERNELS.values(), *_OWNED_KERNELS]))
         _KERNELS.clear()
     for kernel in kernels:
         _teardown(kernel)
@@ -347,7 +360,10 @@ def shutdown_kernels_for_owner(owner: str) -> None:
         return
     with _KERNELS_LOCK:
         doomed = [key for key in _KERNELS if key[0] == owner]
-        kernels = [_KERNELS.pop(key) for key in doomed]
+        kernels = list(dict.fromkeys([
+            *[_KERNELS.pop(key) for key in doomed],
+            *[kernel for kernel in _OWNED_KERNELS if kernel.owner == owner],
+        ]))
     for kernel in kernels:
         _teardown(kernel)
 
@@ -359,7 +375,7 @@ def _reap_unlocked() -> List[SessionKernel]:
     doomed = [
         key
         for key, kernel in _KERNELS.items()
-        if now - kernel.last_used > idle_timeout
+        if kernel.attached == 0 and now - kernel.last_used > idle_timeout
     ]
     return [_KERNELS.pop(key) for key in doomed]
 
@@ -370,7 +386,7 @@ def _evict_over_cap_unlocked(keep: Tuple) -> List[SessionKernel]:
     if len(_KERNELS) <= cap:
         return []
     by_age = sorted(
-        (key for key in _KERNELS if key != keep),
+        (key for key in _KERNELS if key != keep and _KERNELS[key].attached == 0),
         key=lambda key: _KERNELS[key].last_used,
     )
     doomed = by_age[: len(_KERNELS) - cap]
@@ -382,25 +398,29 @@ atexit.register(shutdown_all_kernels)
 
 def _teardown(kernel: SessionKernel) -> None:
     kernel.stop_event.set()
-    if kernel.proc is not None and kernel.proc.poll() is None:
-        from tools.code_execution_tool import _kill_process_group
+    with kernel.lifecycle_lock:
+        if kernel.proc is not None and kernel.proc.poll() is None:
+            from tools.code_execution_tool import _kill_process_group
 
-        _kill_process_group(kernel.proc, escalate=True)
-    if kernel.server_sock is not None:
-        try:
-            kernel.server_sock.close()
-        except OSError:
-            pass
-        kernel.server_sock = None
-    if kernel.sock_path:
-        try:
-            os.unlink(kernel.sock_path)
-        except OSError:
-            pass
-    if kernel.tmpdir:
-        import shutil
+            _kill_process_group(kernel.proc, escalate=True)
+        if kernel.server_sock is not None:
+            try:
+                kernel.server_sock.close()
+            except OSError:
+                pass
+            kernel.server_sock = None
+        if kernel.sock_path:
+            try:
+                os.unlink(kernel.sock_path)
+            except OSError:
+                pass
+        if kernel.tmpdir:
+            import shutil
 
-        shutil.rmtree(kernel.tmpdir, ignore_errors=True)
+            shutil.rmtree(kernel.tmpdir, ignore_errors=True)
+    with _KERNELS_LOCK:
+        if not kernel.alive():
+            _OWNED_KERNELS.discard(kernel)
 
 
 def _rpc_forever(kernel: SessionKernel, max_tool_calls: int,
@@ -524,73 +544,76 @@ def _stderr_reader(kernel: SessionKernel) -> None:
 
 def _spawn(kernel: SessionKernel, *, task_id: str, child_python: str,
            child_cwd: str, sandbox_tools: frozenset, max_tool_calls: int) -> None:
-    from tools.code_execution_tool import (
-        _build_child_env,
-        generate_hermes_tools_module,
-    )
+    with kernel.lifecycle_lock:
+        if kernel.stop_event.is_set():
+            raise RuntimeError("The session kernel was disposed before this cell could run.")
+        from tools.code_execution_tool import (
+            _build_child_env,
+            generate_hermes_tools_module,
+        )
 
-    kernel.tmpdir = tempfile.mkdtemp(prefix="hermes_kernel_")
-    _sock_tmpdir = "/tmp" if sys.platform == "darwin" else tempfile.gettempdir()
+        kernel.tmpdir = tempfile.mkdtemp(prefix="hermes_kernel_")
+        _sock_tmpdir = "/tmp" if sys.platform == "darwin" else tempfile.gettempdir()
 
-    kernel.rpc_token = secrets.token_urlsafe(32)
-    kernel.sentinel = "@@HERMES-KERNEL-" + secrets.token_urlsafe(16) + "@@"
+        kernel.rpc_token = secrets.token_urlsafe(32)
+        kernel.sentinel = "@@HERMES-KERNEL-" + secrets.token_urlsafe(16) + "@@"
 
-    if _IS_WINDOWS:
-        kernel.sock_path = None
-        server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server_sock.bind(("127.0.0.1", 0))
-        host, port = server_sock.getsockname()[:2]
-        rpc_endpoint = f"tcp://{host}:{port}"
-    else:
-        kernel.sock_path = os.path.join(_sock_tmpdir, f"hermes_rpc_{uuid.uuid4().hex}.sock")
-        server_sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        server_sock.bind(kernel.sock_path)
-        os.chmod(kernel.sock_path, 0o600)
-        rpc_endpoint = kernel.sock_path
-    server_sock.listen(1)
-    kernel.server_sock = server_sock
+        if _IS_WINDOWS:
+            kernel.sock_path = None
+            server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_sock.bind(("127.0.0.1", 0))
+            host, port = server_sock.getsockname()[:2]
+            rpc_endpoint = f"tcp://{host}:{port}"
+        else:
+            kernel.sock_path = os.path.join(_sock_tmpdir, f"hermes_rpc_{uuid.uuid4().hex}.sock")
+            server_sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            server_sock.bind(kernel.sock_path)
+            os.chmod(kernel.sock_path, 0o600)
+            rpc_endpoint = kernel.sock_path
+        server_sock.listen(1)
+        kernel.server_sock = server_sock
 
-    tools_src = generate_hermes_tools_module(list(sandbox_tools))
-    with open(os.path.join(kernel.tmpdir, "hermes_tools.py"), "w", encoding="utf-8") as f:
-        f.write(tools_src)
-    runner_path = os.path.join(kernel.tmpdir, "hermes_kernel_runner.py")
-    with open(runner_path, "w", encoding="utf-8") as f:
-        f.write(KERNEL_RUNNER_SOURCE)
+        tools_src = generate_hermes_tools_module(list(sandbox_tools))
+        with open(os.path.join(kernel.tmpdir, "hermes_tools.py"), "w", encoding="utf-8") as f:
+            f.write(tools_src)
+        runner_path = os.path.join(kernel.tmpdir, "hermes_kernel_runner.py")
+        with open(runner_path, "w", encoding="utf-8") as f:
+            f.write(KERNEL_RUNNER_SOURCE)
 
-    child_env = _build_child_env(
-        rpc_endpoint=rpc_endpoint,
-        rpc_token=kernel.rpc_token,
-        tmpdir=kernel.tmpdir,
-        child_python=child_python,
-    )
-    child_env["HERMES_KERNEL_SENTINEL"] = kernel.sentinel
-    # Tell the generated client to reconnect after the RPC server's idle
-    # timeout — a kernel outlives the 300s window between cells.
-    child_env["HERMES_RPC_PERSISTENT"] = "1"
+        child_env = _build_child_env(
+            rpc_endpoint=rpc_endpoint,
+            rpc_token=kernel.rpc_token,
+            tmpdir=kernel.tmpdir,
+            child_python=child_python,
+        )
+        child_env["HERMES_KERNEL_SENTINEL"] = kernel.sentinel
+        # Tell the generated client to reconnect after the RPC server's idle
+        # timeout — a kernel outlives the 300s window between cells.
+        child_env["HERMES_RPC_PERSISTENT"] = "1"
 
-    kernel.proc = subprocess.Popen(
-        [child_python, runner_path],
-        # Strict mode resolves an empty cwd: the kernel's own staging dir
-        # then plays the per-call tmpdir's role.
-        cwd=child_cwd or kernel.tmpdir,
-        env=child_env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        stdin=subprocess.PIPE,
-        start_new_session=True,
-        creationflags=subprocess.CREATE_NO_WINDOW if _IS_WINDOWS else 0,
-    )
+        kernel.proc = subprocess.Popen(
+            [child_python, runner_path],
+            # Strict mode resolves an empty cwd: the kernel's own staging dir
+            # then plays the per-call tmpdir's role.
+            cwd=child_cwd or kernel.tmpdir,
+            env=child_env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
+            start_new_session=True,
+            creationflags=subprocess.CREATE_NO_WINDOW if _IS_WINDOWS else 0,
+        )
 
-    # Deliberately NOT propagate_context_to_thread: that would freeze the
-    # spawning cell's context/callbacks into the server thread for the
-    # kernel's whole life. Authority is rebound per cell via CellAuthority.
-    threading.Thread(
-        target=_rpc_forever,
-        args=(kernel, max_tool_calls, sandbox_tools),
-        daemon=True,
-    ).start()
-    threading.Thread(target=_stdout_reader, args=(kernel,), daemon=True).start()
-    threading.Thread(target=_stderr_reader, args=(kernel,), daemon=True).start()
+        # Deliberately NOT propagate_context_to_thread: that would freeze the
+        # spawning cell's context/callbacks into the server thread for the
+        # kernel's whole life. Authority is rebound per cell via CellAuthority.
+        threading.Thread(
+            target=_rpc_forever,
+            args=(kernel, max_tool_calls, sandbox_tools),
+            daemon=True,
+        ).start()
+        threading.Thread(target=_stdout_reader, args=(kernel,), daemon=True).start()
+        threading.Thread(target=_stderr_reader, args=(kernel,), daemon=True).start()
 
 
 def _drain_raw(kernel: SessionKernel) -> str:
@@ -639,169 +662,190 @@ def execute_in_session_kernel(
     with _KERNELS_LOCK:
         expired = _reap_unlocked()
         kernel = _KERNELS.get(key)
-        if kernel is not None and (reset or not kernel.alive()):
+        if kernel is not None and (reset or kernel.dead()):
             _KERNELS.pop(key, None)
-            expired.append(kernel)
+            if kernel.attached == 0:
+                expired.append(kernel)
             kernel = None
             state_reset = True
         if kernel is None:
             kernel = SessionKernel(key)
             _KERNELS[key] = kernel
         kernel.last_used = time.monotonic()
+        kernel.attached += 1
+        _OWNED_KERNELS.add(kernel)
         expired.extend(_evict_over_cap_unlocked(keep=key))
-    for doomed in expired:
-        _teardown(doomed)
-    reused = kernel.proc is not None
+    try:
+        for doomed in expired:
+            _teardown(doomed)
 
-    # Captured on the calling thread BEFORE the cell runs — the same
-    # snapshot a per-call RPC thread would have received — and installed
-    # atomically on the kernel so the serving thread dispatches this cell's
-    # tool calls under this cell's approval/session/turn identity.
-    authority = CellAuthority(task_id)
+        # Captured on the calling thread BEFORE the cell runs — the same
+        # snapshot a per-call RPC thread would have received — and installed
+        # atomically on the kernel so the serving thread dispatches this cell's
+        # tool calls under this cell's approval/session/turn identity.
+        authority = CellAuthority(task_id)
 
-    with kernel.lock:
-        try:
-            if kernel.proc is None:
-                _spawn(
-                    kernel,
-                    task_id=task_id,
-                    child_python=child_python,
-                    child_cwd=child_cwd,
-                    sandbox_tools=sandbox_tools,
-                    max_tool_calls=max_tool_calls,
-                )
-            assert kernel.proc is not None and kernel.proc.stdin is not None
+        with kernel.lock:
+            reused = kernel.proc is not None
+            try:
+                if kernel.proc is None:
+                    _spawn(
+                        kernel,
+                        task_id=task_id,
+                        child_python=child_python,
+                        child_cwd=child_cwd,
+                        sandbox_tools=sandbox_tools,
+                        max_tool_calls=max_tool_calls,
+                    )
+                with kernel.lifecycle_lock:
+                    if kernel.stop_event.is_set():
+                        raise RuntimeError("The session kernel was disposed before this cell could run.")
+                    assert kernel.proc is not None and kernel.proc.stdin is not None
 
-            # Per-cell tool budget: the RPC loop enforces counter < max, so a
-            # fresh cell starts from zero without restarting the server.
-            kernel.tool_call_counter[0] = 0
-            # Anything raw that leaked between cells belongs to no cell.
-            _drain_raw(kernel)
-            _drain_stderr(kernel)
-            kernel.cell_authority = authority
+                    # Per-cell tool budget: the RPC loop enforces counter < max, so a
+                    # fresh cell starts from zero without restarting the server.
+                    kernel.tool_call_counter[0] = 0
+                    # Anything raw that leaked between cells belongs to no cell.
+                    _drain_raw(kernel)
+                    _drain_stderr(kernel)
+                    kernel.cell_authority = authority
 
-            request = json.dumps({"id": uuid.uuid4().hex, "code": code}) + "\n"
-            kernel.proc.stdin.write(request.encode("utf-8"))
-            kernel.proc.stdin.flush()
+                    request = json.dumps({"id": uuid.uuid4().hex, "code": code}) + "\n"
+                # Pipe I/O can block: keep disposal free to kill the child.
+                # A raced write after disposal returns reaches an exited child;
+                # cells still waiting for this lock reject stop_event above.
+                kernel.proc.stdin.write(request.encode("utf-8"))
+                kernel.proc.stdin.flush()
 
-            deadline = time.monotonic() + timeout if timeout else None
-            status = "success"
-            payload: Dict[str, Any] = {}
-            while True:
-                if is_interrupted():
-                    status = "interrupted"
+                deadline = time.monotonic() + timeout if timeout else None
+                status = "success"
+                payload: Dict[str, Any] = {}
+                while True:
+                    if is_interrupted():
+                        status = "interrupted"
+                        break
+                    if deadline is not None and time.monotonic() > deadline:
+                        status = "timeout"
+                        break
+                    try:
+                        payload = kernel.response_q.get(timeout=0.05)
+                    except queue.Empty:
+                        continue
+                    if payload.get("status") in ("kernel-eof", "protocol-error"):
+                        status = "error"
                     break
-                if deadline is not None and time.monotonic() > deadline:
-                    status = "timeout"
-                    break
-                try:
-                    payload = kernel.response_q.get(timeout=0.05)
-                except queue.Empty:
-                    continue
-                if payload.get("status") in ("kernel-eof", "protocol-error"):
-                    status = "error"
-                break
 
-            if status in ("timeout", "interrupted"):
-                # No safe way to interrupt one cell in place: kill the kernel,
-                # report the state loss, let the next call respawn.
-                with _KERNELS_LOCK:
-                    _KERNELS.pop(key, None)
-                _teardown(kernel)
+                if status in ("timeout", "interrupted"):
+                    # No safe way to interrupt one cell in place: kill the kernel,
+                    # report the state loss, let the next call respawn.
+                    with _KERNELS_LOCK:
+                        if _KERNELS.get(key) is kernel:
+                            _KERNELS.pop(key, None)
+                    _teardown(kernel)
 
-            duration = round(time.monotonic() - exec_start, 2)
-            kernel.execution_count = int(payload.get("execution_count", kernel.execution_count + 1))
+                duration = round(time.monotonic() - exec_start, 2)
+                kernel.execution_count = int(payload.get("execution_count", kernel.execution_count + 1))
 
-            raw_text = _drain_raw(kernel)
-            stderr_raw = _drain_stderr(kernel)
-            stdout_text = str(payload.get("stdout", ""))
-            if raw_text:
-                stdout_text = stdout_text + raw_text
-            cell_stderr = str(payload.get("stderr", ""))
-            if stderr_raw:
-                cell_stderr = cell_stderr + stderr_raw
+                raw_text = _drain_raw(kernel)
+                stderr_raw = _drain_stderr(kernel)
+                stdout_text = str(payload.get("stdout", ""))
+                if raw_text:
+                    stdout_text = stdout_text + raw_text
+                cell_stderr = str(payload.get("stderr", ""))
+                if stderr_raw:
+                    cell_stderr = cell_stderr + stderr_raw
 
-            stdout_text = redact_sensitive_text(strip_ansi(stdout_text), code_file=True)
-            cell_stderr = redact_sensitive_text(strip_ansi(cell_stderr), code_file=True)
-            stdout_text, stdout_metadata = _truncate_stdout_text(stdout_text)
+                stdout_text = redact_sensitive_text(strip_ansi(stdout_text), code_file=True)
+                cell_stderr = redact_sensitive_text(strip_ansi(cell_stderr), code_file=True)
+                stdout_text, stdout_metadata = _truncate_stdout_text(stdout_text)
 
-            cell_status = payload.get("status", "")
-            result: Dict[str, Any] = {
-                "status": status,
-                "output": stdout_text,
-                "exit_code": 0,
-                "tool_calls_made": kernel.tool_call_counter[0],
-                "duration_seconds": duration,
-                "kernel": {
-                    "mode": "session",
-                    "reused": reused,
-                    "execution_count": kernel.execution_count,
-                    "state_reset": state_reset,
-                },
-            }
-            result.update(stdout_metadata)
+                cell_status = payload.get("status", "")
+                result: Dict[str, Any] = {
+                    "status": status,
+                    "output": stdout_text,
+                    "exit_code": 0,
+                    "tool_calls_made": kernel.tool_call_counter[0],
+                    "duration_seconds": duration,
+                    "kernel": {
+                        "mode": "session",
+                        "reused": reused,
+                        "execution_count": kernel.execution_count,
+                        "state_reset": state_reset,
+                    },
+                }
+                result.update(stdout_metadata)
 
-            if status == "timeout":
-                message = (
-                    f"Cell timed out after {timeout}s; the session kernel was "
-                    "killed and its state was lost. The next execute_code call "
-                    "starts a fresh kernel."
-                )
-                result["exit_code"] = -1
-                result["error"] = message
-                result["output"] = (stdout_text + "\n\n⏰ " + message) if stdout_text else ("⏰ " + message)
-            elif status == "interrupted":
-                from tools.code_execution_tool import _format_interrupted_output
+                if status == "timeout":
+                    message = (
+                        f"Cell timed out after {timeout}s; the session kernel was "
+                        "killed and its state was lost. The next execute_code call "
+                        "starts a fresh kernel."
+                    )
+                    result["exit_code"] = -1
+                    result["error"] = message
+                    result["output"] = (stdout_text + "\n\n⏰ " + message) if stdout_text else ("⏰ " + message)
+                elif status == "interrupted":
+                    from tools.code_execution_tool import _format_interrupted_output
 
-                result["exit_code"] = -1
-                result["output"] = _format_interrupted_output(stdout_text)
-                result["error"] = "Interrupted; the session kernel was killed and its state was lost."
-            elif cell_status == "error":
-                trace = redact_sensitive_text(strip_ansi(str(payload.get("traceback", ""))), code_file=True)
-                result["status"] = "error"
-                result["exit_code"] = 1
-                result["error"] = trace or "Cell raised an exception."
-                joined = stdout_text
-                if cell_stderr or trace:
-                    joined = joined + "\n--- stderr ---\n" + cell_stderr + trace
-                result["output"] = joined
-                hint = _sandbox_failure_hint(trace, enabled_tools=sandbox_tools)
-                if hint:
-                    result["hint"] = hint
-            elif cell_status == "exit":
-                # The cell called sys.exit(): honor it as end-of-kernel.
-                with _KERNELS_LOCK:
-                    _KERNELS.pop(key, None)
-                _teardown(kernel)
-                result["kernel"]["ended"] = True
-                if cell_stderr:
+                    result["exit_code"] = -1
+                    result["output"] = _format_interrupted_output(stdout_text)
+                    result["error"] = "Interrupted; the session kernel was killed and its state was lost."
+                elif cell_status == "error":
+                    trace = redact_sensitive_text(strip_ansi(str(payload.get("traceback", ""))), code_file=True)
+                    result["status"] = "error"
+                    result["exit_code"] = 1
+                    result["error"] = trace or "Cell raised an exception."
+                    joined = stdout_text
+                    if cell_stderr or trace:
+                        joined = joined + "\n--- stderr ---\n" + cell_stderr + trace
+                    result["output"] = joined
+                    hint = _sandbox_failure_hint(trace, enabled_tools=sandbox_tools)
+                    if hint:
+                        result["hint"] = hint
+                elif cell_status == "exit":
+                    # The cell called sys.exit(): honor it as end-of-kernel.
+                    with _KERNELS_LOCK:
+                        if _KERNELS.get(key) is kernel:
+                            _KERNELS.pop(key, None)
+                    _teardown(kernel)
+                    result["kernel"]["ended"] = True
+                    if cell_stderr:
+                        result["output"] = stdout_text + "\n--- stderr ---\n" + cell_stderr
+                elif status == "error":
+                    result["exit_code"] = -1
+                    result["error"] = (
+                        "The session kernel died while running the cell"
+                        + (": " + stderr_raw.strip() if stderr_raw.strip() else ".")
+                    )
+                    with _KERNELS_LOCK:
+                        if _KERNELS.get(key) is kernel:
+                            _KERNELS.pop(key, None)
+                    _teardown(kernel)
+                elif cell_stderr:
                     result["output"] = stdout_text + "\n--- stderr ---\n" + cell_stderr
-            elif status == "error":
-                result["exit_code"] = -1
-                result["error"] = (
-                    "The session kernel died while running the cell"
-                    + (": " + stderr_raw.strip() if stderr_raw.strip() else ".")
-                )
-                with _KERNELS_LOCK:
-                    _KERNELS.pop(key, None)
-                _teardown(kernel)
-            elif cell_stderr:
-                result["output"] = stdout_text + "\n--- stderr ---\n" + cell_stderr
 
-            return json.dumps(result, ensure_ascii=False)
-        except Exception as exc:  # pragma: no cover - defensive parity with per-call
-            logger.error("session kernel failed: %s: %s", type(exc).__name__, exc, exc_info=True)
-            with _KERNELS_LOCK:
-                _KERNELS.pop(key, None)
+                return json.dumps(result, ensure_ascii=False)
+            except Exception as exc:  # pragma: no cover - defensive parity with per-call
+                logger.error("session kernel failed: %s: %s", type(exc).__name__, exc, exc_info=True)
+                with _KERNELS_LOCK:
+                    if _KERNELS.get(key) is kernel:
+                        _KERNELS.pop(key, None)
+                _teardown(kernel)
+                return json.dumps({
+                    "status": "error",
+                    "error": str(exc),
+                    "tool_calls_made": kernel.tool_call_counter[0],
+                    "duration_seconds": round(time.monotonic() - exec_start, 2),
+                }, ensure_ascii=False)
+            finally:
+                # The cell has settled on every path (success, exception,
+                # timeout, exit, kernel death): its tool authority retires with
+                # it, so nothing the cell left running can dispatch under it.
+                authority.retire()
+    finally:
+        with _KERNELS_LOCK:
+            kernel.attached -= 1
+            kernel.last_used = time.monotonic()
+            orphaned = kernel.attached == 0 and _KERNELS.get(key) is not kernel
+        if orphaned:
             _teardown(kernel)
-            return json.dumps({
-                "status": "error",
-                "error": str(exc),
-                "tool_calls_made": kernel.tool_call_counter[0],
-                "duration_seconds": round(time.monotonic() - exec_start, 2),
-            }, ensure_ascii=False)
-        finally:
-            # The cell has settled on every path (success, exception,
-            # timeout, exit, kernel death): its tool authority retires with
-            # it, so nothing the cell left running can dispatch under it.
-            authority.retire()

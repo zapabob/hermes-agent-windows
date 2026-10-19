@@ -602,3 +602,39 @@ excluded; the unchanged Windows symlink-privilege skip remains unqualified.
 Clarify, native adapter routing, post-decision persistence/effect boundaries,
 complete strict/native lifecycle, kernel/process/API integration and whole-SHA
 CI remain OPEN. Other owner WIP is excluded from this commit.
+
+## Bounded session kernel disposal lifecycle
+
+The kernel keeps every owned instance discoverable from selection until actual
+disposal is complete and the process is no longer alive. Removing a reuse-map
+entry or reaching zero attached callers does not remove disposal ownership.
+Owner/all clear therefore finds selected or settled kernels already awaiting
+teardown, and a second clear serializes with an in-progress native kill. Pending
+selection is distinguished from a dead process; attached cells are excluded
+from idle/cap eviction, and old settlement removes only its exact reuse entry.
+CellAuthority, context rules and defaults are unchanged.
+
+Final independent READONLY combined review supports only code_kernel.py and the
+new attached-cell tests within the known seven lifecycle windows. Parent audit
+rehashed all 682 evidence files, 46 current bound inputs and snapshots/runtime
+bindings, reconciled all 25 JUnit/Job records and native PID-parent/nonce pairs,
+and read the immutable graph: 2,875 nodes/8,350 edges. Independent span review
+verified 23 complete files and five projections containing all 636 Gateway
+methods. Full original-file SDK unresolved 8,157 remains OPEN.
+
+The refusal-free, skip-free positive subset is 77 passes: native 29, existing
+kernel 24 and approval-owner 24. The 56 launcher/interpreter pairs (112 distinct
+processes) all exited before harness recovery. Modes 30 passes/9 skips and env
+22 passes/1 skip are partial files. The approval cluster's 24 pytest passes have
+eight guard refusals and are excluded from refusal-free GREEN. Broad
+code_execution remains 1 failure/27 passes/16 skips plus five passing subtests,
+from an unchanged AF_UNIX Windows test. These outcomes are not combined into a
+fully qualified total. Eighteen fault Jobs/17 variants produce 68 failures over
+25 unique nodes that all pass in native29; eight fault Jobs also retain ver
+probe refusals and are classified separately from refusal-free success.
+
+CONTINUATION_KERNEL_LIFECYCLE_20261020.json retains all limits. The fixed registry
+import and empty Gateway reaper leaves do not accept live API/process r3. Old
+evidence, original baseline-contract attribution and 22,565 commits/23,218 edges
+with zero fully mapped edges remain unchanged. Arbitrary trees, kill-failure
+guarantees, POSIX, managed ownership/model effects and whole-SHA CI remain OPEN.

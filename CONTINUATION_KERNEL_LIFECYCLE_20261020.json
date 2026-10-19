@@ -1,0 +1,33 @@
+{
+  "status": "BOUNDED_SEVEN_WINDOW_KERNEL_LIFECYCLE_REVIEWED_LOCAL_INTEGRATION",
+  "sources": {
+    "tools/code_kernel.py": "fdc4370fd48a71978a5011e0e8bc2c8fda4d51d3a137a6ebea03c27ae3088d72",
+    "tests/tools/test_code_kernel_attached_cells.py": "9568a0f2722d914bd7267aa1962d9b83f18606c95b3059e16f01fb45b89d02f0"
+  },
+  "behavior": "Selected callers retain one pending kernel; attached cells survive idle/cap eviction. Old settlement removes only its exact reuse entry. All owned kernels remain discoverable after reuse-map removal until lifecycle-locked disposal has completed and the process is no longer alive. Owner/all clear can find selected or settled kernels already waiting for disposal and a second clear waits for in-progress native kill. Process publication and authority installation serialize with disposal without holding the lifecycle lock across blocking pipe writes.",
+  "preserved_contracts": "CellAuthority, context ownership and defaults unchanged; useful counter state/reuse, reset, settled cleanup, actual TCP authentication and retired-authority rejection retain positive/negative controls.",
+  "evidence": {
+    "receipt": "tmp/t01-kernel-final-20261020/receipt.json",
+    "manifest": "tmp/t01-kernel-final-20261020/freeze-bindings.json",
+    "manifest_sha256": "f5983ec7ca5c0697669a1c4dd6fa8e29977737f9f1d18c6abb18ee8419a3cc0e",
+    "parent_audit": "tmp/continuation-20261020/parent-kernel-final-audit.json",
+    "manifest_files_rehashed": 682,
+    "current_bound_inputs_rehashed": 46,
+    "listed_job_junit_records": 25,
+    "zero_refusal_zero_skip_positive": {"native": 29, "existing_kernel": 24, "approval_owner": 24, "total": 77},
+    "partial_files": {"modes": {"passed": 30, "skipped": 9}, "environment": {"passed": 22, "skipped": 1}},
+    "guarded_cluster_excluded": {"pytest_passed": 24, "guard_refusals": 8},
+    "broader_regression_open": {"passed": 27, "failed": 1, "skipped": 16, "passing_subtests": 5, "cause": "Unchanged existing Windows test directly uses unavailable socket.AF_UNIX."},
+    "faults": {"jobs": 18, "variants": 17, "failed_occurrences": 68, "unique_failed_nodes": 25, "all_failed_nodes_green_in_native29": true, "jobs_with_recorded_ver_probe_refusals": 8, "zero_refusal_green_claimed_for_faults": false},
+    "native_launcher_interpreter_pairs": 56,
+    "all_112_processes_exited_before_harness_recovery": true,
+    "native_guard_refusals_recovery_survivors": 0
+  },
+  "review": "Final independent READONLY combined review rehashed all 682 files and current required/source bindings, verified graph files/method spans and 25 JUnit/Job records, and found no new concrete P1/P2 within the scoped seven lifecycle windows. Parent independently reconciled hashes, outcomes, native nonce/PID-parent pairs and actual immutable graph. Acceptance is limited to these two product/test files.",
+  "graph": {"version": "1.6.0", "complete_files": 23, "gateway_projections": 5, "complete_gateway_method_spans": 636, "nodes": 2875, "edges": 8350, "pending_refs": 0, "immutable_db_sha256": "7dd482dd860e0fe93c5b6ae65ca76e759d1d5bce3d426278fc9ca7aeb5d5da8c", "full_gateway_sdk_unresolved": 8157, "resolved_original_root_claimed": false},
+  "dependency_composition": "Explicit fixed registry 5d2d05b8 source copy is an import dependency; Gateway snapshot/reaper leaves are empty. This does not accept live process registry r3 or API behavior. Kernel native spawn/disposal remain actual.",
+  "historical_evidence": "Old 1744-file candidate and subsequent 677-file disposal evidence remain preserved separately; superseded owner bindings are historical effect proof, not current combined qualification.",
+  "inventory": {"commits": 22565, "parent_edges": 23218, "fully_mapped_edges": 0, "classification": "Original kernel/LSP mixed implementation predates R_AFTER; bounded kernel baseline contract only, no whole-history or mixed-edge acceptance."},
+  "open": ["Best-effort kill failures and arbitrary full process trees.", "POSIX, model effects, managed ownership and awake-time/full runtime integration.", "Whole code_execution regression, full history, original root graph and whole-SHA CI.", "Live API/process r3 acceptance remains revoked for the new retained-PTY completion condition."],
+  "publication": "Local isolated-branch commit only; no main write, push, merge, restart, release or production action."
+}
