@@ -638,3 +638,25 @@ import and empty Gateway reaper leaves do not accept live API/process r3. Old
 evidence, original baseline-contract attribution and 22,565 commits/23,218 edges
 with zero fully mapped edges remain unchanged. Arbitrary trees, kill-failure
 guarantees, POSIX, managed ownership/model effects and whole-SHA CI remain OPEN.
+
+## Historical native credential proof after exact-listener qualification
+
+The unchanged native credential file passed 28 unique cases on historical r3
+registry 5d2d05b8; the separate actual PTY target pass overlaps that file. Both
+owned Jobs had zero failures/errors/skips, guard refusals, outer qualification
+timeouts, recovery and survivors. Exact-listener permissions are tied to the
+same listening socket object/token/descriptor/address/PID and pinned pywinpty
+reader/client, not arbitrary loopback. Parent and independent read-only audits
+reconciled results, artifacts and 2/15 published Python identity records; native
+and -I children remain Job-owned rather than Python-audited. Existing served
+profile and benign values stay useful while synthetic launch secrets are
+removed. The original 1,054 evidence files and excluded 180-second timeout remain
+unchanged.
+
+Codex Security managed storage retains 44 exact-byte artifacts plus a hash index
+and qualification note. The versioned canonical bookkeeping pointer is
+docs/windows/v0222-release-baseline-20261015/CONTINUATION_NATIVE_CREDENTIAL_HISTORY_20261020.json.
+The r3 integration revocation takes precedence over original accepted/local
+fields: retained PTY natural-completion monitoring is a later OPEN condition
+under R4 repair. These historical credential results do not accept R4, broad
+PTY/process lifecycle, complete product-entry E2E, vendor independence or T09.
