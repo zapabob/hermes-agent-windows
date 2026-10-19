@@ -197,7 +197,7 @@ def _which(*names: str) -> Optional[str]:
     return None
 
 
-def _root_or_workspace(file_path: str, workspace: str, markers: Sequence[str], excludes: Sequence[str] = ()) -> Optional[str]:
+def _root_or_workspace(file_path: str, workspace: str, markers: Sequence[str], excludes: Sequence[str] = (), *, skip_python_packages: bool = False) -> Optional[str]:
     """Common pattern: try ``nearest_root``, fall back to workspace root.
 
     Returns ``None`` if an exclude marker matches first (server gated off).
@@ -207,6 +207,7 @@ def _root_or_workspace(file_path: str, workspace: str, markers: Sequence[str], e
         markers,
         excludes=excludes,
         ceiling=os.path.dirname(workspace) if workspace else None,
+        skip_python_packages=skip_python_packages,
     )
     if found is None and excludes:
         # Distinguish "no marker found" from "exclude hit": when
@@ -217,6 +218,7 @@ def _root_or_workspace(file_path: str, workspace: str, markers: Sequence[str], e
             file_path,
             markers,
             ceiling=os.path.dirname(workspace) if workspace else None,
+            skip_python_packages=skip_python_packages,
         )
         if recheck is not None:
             return None  # exclude triggered
@@ -822,6 +824,7 @@ def _root_python(file_path: str, workspace: str) -> Optional[str]:
         file_path,
         workspace,
         ["pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", "Pipfile", "pyrightconfig.json"],
+        skip_python_packages=True,
     )
 
 

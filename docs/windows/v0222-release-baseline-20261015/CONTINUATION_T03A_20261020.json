@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "status": "SCOPED_VERIFIED_CAMPAIGN_PARTIAL",
+  "requirement": "R20-LSP-ROOT / T03a",
+  "baseline": "d50995b06d636e6118214b68789f344882773f3a",
+  "upstream_release": "d923a5eb487a17c0a68801bba9ef0f56c81040a8",
+  "source_sha256": {
+    "agent/lsp/workspace.py": "842298906597b335265b63fc5c8666e38d54bf92940960c30c09b47242f79452",
+    "agent/lsp/servers.py": "475ef28beb00e676dc6de4fd3fe28ff17911b6666504fb51a0b37f7516092f9f",
+    "tests/agent/lsp/test_python_package_root.py": "922770ad9689e734d18394ca971156612bcd710aef4b9ba4acd7190482686720"
+  },
+  "behavioral_red": {
+    "label": "root-red3",
+    "failed": 3,
+    "passed": 3,
+    "cause": "package setup.py selects package root and starts second real stdio child"
+  },
+  "accepted_runs": [
+    {
+      "label": "reg-backend-gate",
+      "file": "tests/agent/lsp/test_backend_gate.py",
+      "passed": 2,
+      "result_sha256": "36770827e149a73c6f35d16fd891757fe6a9eccafe31a4f849ed60178fb37083"
+    },
+    {
+      "label": "reg-client-e2e",
+      "file": "tests/agent/lsp/test_client_e2e.py",
+      "passed": 5,
+      "result_sha256": "377e16d4233bfbec66b4a73912c6041d9c4e4c3715c62374a45b3d41b8689ba7"
+    },
+    {
+      "label": "reg-delta-key",
+      "file": "tests/agent/lsp/test_delta_key.py",
+      "passed": 6,
+      "result_sha256": "624bf70a3bc33a713586c415c745d17cf0d7beab02c66c209ad2a67bf2ea8c81"
+    },
+    {
+      "label": "reg-eventlog",
+      "file": "tests/agent/lsp/test_eventlog.py",
+      "passed": 6,
+      "result_sha256": "9ea7d4aaa20302182678e846e6a36a44e1fcd567970ad96fbd5a15f38e119982"
+    },
+    {
+      "label": "reg-lifecycle",
+      "file": "tests/agent/lsp/test_lifecycle.py",
+      "passed": 3,
+      "result_sha256": "12b4624530f560d9931064a611d877fe442a94c20692bcd1390deedc6b0acad3"
+    },
+    {
+      "label": "reg-powershell-server",
+      "file": "tests/agent/lsp/test_powershell_server.py",
+      "passed": 3,
+      "result_sha256": "45e8f4d746b3e0310430015bb0bc5a23accb6c894dbd4a29abe6fb4a8600ed2e"
+    },
+    {
+      "label": "reg-protocol",
+      "file": "tests/agent/lsp/test_protocol.py",
+      "passed": 6,
+      "result_sha256": "cbeee59bb1031ee2398634aa1e5d0fa6b41c699f8b99024dc52fec4af8dfd598"
+    },
+    {
+      "label": "reg-reporter",
+      "file": "tests/agent/lsp/test_reporter.py",
+      "passed": 5,
+      "result_sha256": "76021a1e86b60939943251a060f850527887b26ae308bf9c86db87bd76976959"
+    },
+    {
+      "label": "reg-shell-linter-lsp-skip",
+      "file": "tests/agent/lsp/test_shell_linter_lsp_skip.py",
+      "passed": 7,
+      "result_sha256": "6f58315b195344a84ca712d0e2139871fc4fdeb03b5dbdfb00715ef705fde42f"
+    },
+    {
+      "label": "reg-stale-diagnostics",
+      "file": "tests/agent/lsp/test_stale_diagnostics.py",
+      "passed": 2,
+      "result_sha256": "dd2afb937981ff5ff5d64f458b68f79c58b9bc5abdeb75e7864a0ef3e736477f"
+    },
+    {
+      "label": "broken-qualified",
+      "file": "tests/agent/lsp/test_broken_set.py",
+      "passed": 3,
+      "result_sha256": "ad97c4553563bbfcafe5bb8136c0ffb158ec6c836bb95354931aa8794faba60f"
+    },
+    {
+      "label": "lint-fixes-qualified",
+      "file": "tests/agent/lsp/test_install_and_lint_fixes.py",
+      "passed": 6,
+      "result_sha256": "a4588b54ae97fe6600fc4449bffae244ce56aa41a3f7fa50d41c7f1156edbe2f"
+    },
+    {
+      "label": "diagnostics-qualified",
+      "file": "tests/agent/lsp/test_diagnostics_field.py",
+      "passed": 4,
+      "result_sha256": "b1488e5c972361e0d26e277a4cb65f84d24477cb841c7cde4e39d95c90a85c8b"
+    },
+    {
+      "label": "workspace-regression",
+      "file": "tests/agent/lsp/test_workspace.py",
+      "passed": 4,
+      "result_sha256": "f172318c89285ba1bb816bb9b9359e22f8a1cb34129e6c9c769c1c9ee16d288b"
+    },
+    {
+      "label": "service-regression",
+      "file": "tests/agent/lsp/test_service.py",
+      "passed": 6,
+      "result_sha256": "123a6c6ad05cd4fcbc379cca3b5fd67f03ab224f1d9b1cf12ee00af3b8b844a8"
+    },
+    {
+      "label": "root-qualified",
+      "file": "tests/agent/lsp/test_python_package_root.py",
+      "passed": 7,
+      "result_sha256": "88a5edb2c68b30dc4f85a134a905d1d0560c3217443f381e73b4cd44736a0d35"
+    }
+  ],
+  "passed": 75,
+  "failed": 0,
+  "skipped": 0,
+  "anti_fix": {
+    "package-check-removed": "3 behavioral failures",
+    "all-projects-one-root": "1 behavioral failure",
+    "deny-all-python": "3 behavioral failures",
+    "ceiling-removed": "3 behavioral failures; 2 ceiling assertions and fallback"
+  },
+  "independent_review": {
+    "agent_id": "01a1551b-ba37-79f2-bbba-84b5ec6753ec",
+    "initial": "one P2: vacuous ceiling assertion",
+    "resolution": "marker above ceiling plus unbounded contrast; fallback coverage added",
+    "rereview": "P2 closed; no further actionable finding in scoped rereview"
+  },
+  "graph": {
+    "tool_version": "1.6.0",
+    "selected_files": 23,
+    "nodes": 548,
+    "edges": 1470,
+    "pending": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "affected_tests": "CodeGraph returned none; explicit caller-based regression selection used",
+    "limit": "selected exact source only; no whole-repository/dynamic resolved coverage claim"
+  },
+  "evidence_scope": "Windows real manager/client/stdio child diagnostics with external deterministic LSP peer; no production owner mock",
+  "excluded_attempts": {
+    "root-red": "missing pytest, not RED",
+    "root-red2": "mixed behavioral failures and missing wait_mode fixture",
+    "reg-broken-set": "basetemp inside repo contradicts no-workspace fixture",
+    "reg-install-and-lint-fixes": "basetemp inside repo makes LSP gate bypass shell linter expected by fixture",
+    "reg-diagnostics-field": "assertions passed but 3 owned descendants required Job recovery; excluded, rerun sibling temp clean"
+  },
+  "not_run": [
+    "installed real Pyright engine capability/quality",
+    "packaged Desktop journey",
+    "full campaign acceptance",
+    "new cloud CI"
+  ],
+  "safety": {
+    "publication": false,
+    "production_restart": false,
+    "main_edit": false,
+    "dependencies_changed": false,
+    "cleanup": "owned Job descendants zero before recovery for all accepted runs; evidence and owned directories retained"
+  }
+}

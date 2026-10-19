@@ -116,6 +116,7 @@ def nearest_root(
     *,
     excludes: Optional[Iterable[str]] = None,
     ceiling: Optional[str] = None,
+    skip_python_packages: bool = False,
 ) -> Optional[str]:
     """Walk up from ``start`` looking for any of the given marker files.
 
@@ -128,6 +129,10 @@ def nearest_root(
     for that file.  Mirrors OpenCode's NearestRoot exclude semantics
     (e.g. typescript skips deno projects when ``deno.json`` is found
     before ``package.json``).
+
+    Python resolvers can set ``skip_python_packages`` so a package's
+    ordinary ``setup.py`` module does not create a second project. Other
+    languages keep their marker semantics even beside ``__init__.py``.
     """
     start_path = Path(normalize_path(start))
     try:
@@ -156,6 +161,8 @@ def nearest_root(
         # Then check markers.
         for marker in markers_list:
             try:
+                if skip_python_packages and (cur / "__init__.py").exists():
+                    break
                 if (cur / marker).exists():
                     return str(cur)
             except OSError:
