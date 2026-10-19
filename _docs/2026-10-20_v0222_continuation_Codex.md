@@ -572,3 +572,33 @@ T02 trust owners, so it remains qualification WIP rather than portable CI or a
 standalone HEAD slice. It is not staged with this record. Historical 167 T02
 passes plus the unchanged mandatory Python OPEN failure are preserved. Global
 Python startup closure, other engines and whole T02/P0 remain OPEN.
+
+## T06 first approval producer ownership phase
+
+Captured run registrations now qualify queue admission, callback scheduling and
+delivery disposition, and finally cleanup. Retired producer contexts never
+select the replacement registration. Entry allocation is followed by validation
+under owner RLock then approval lock; callback/transport/waits occur outside
+these locks. Replacement removes predecessor entries in the same transaction,
+then wakes waiters outside locks. The actual no-ID FIFO regression holds A's
+send ACK while B becomes visible and completes B before releasing A. Strict
+consent admission also retains the inherited producer across entry allocation;
+digest, presentation, ticket and once-consumption contracts remain unchanged.
+
+Parent rehashed 2,835 manifest files and reconciled all 72 accepted JUnits/Jobs:
+35 normal Jobs/470 unique passes, 36 fault variants/37 Jobs/98 failed occurrences
+and 81 unique failed nodes, every failed node GREEN normally. Errors, skips,
+guard violations, input drift, recovery and surviving Job members are zero in
+accepted evidence. A fresh parent run adds 24 dedicated ownership passes with
+the same three source hashes. Independent READONLY final review reports no new
+concrete P1/P2 in the declared first-phase scope. Actual immutable CodeGraph
+counts are 2,354 nodes/7,038 edges, with the current t06a-owners-p2 binding of
+16 files and 1,650 complete matching method spans; full SDK unresolved 8,157.
+
+CONTINUATION_APPROVAL_OWNER_20261020.json records this bounded local integration.
+The fixed registry import and empty snapshot/reaper leaves do not qualify native
+process cleanup. Initial deadlock/recovered and source-drift attempts remain
+excluded; the unchanged Windows symlink-privilege skip remains unqualified.
+Clarify, native adapter routing, post-decision persistence/effect boundaries,
+complete strict/native lifecycle, kernel/process/API integration and whole-SHA
+CI remain OPEN. Other owner WIP is excluded from this commit.

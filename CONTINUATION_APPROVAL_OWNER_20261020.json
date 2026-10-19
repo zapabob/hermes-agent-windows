@@ -1,0 +1,55 @@
+{
+  "status": "BOUNDED_FIRST_APPROVAL_PHASE_REVIEWED_LOCAL_INTEGRATION",
+  "baseline": "7d84b0e2a3e225a544556ce1fb5c67bdf0d7c5e0",
+  "scope": "Captured producer admission, callback scheduling/delivery disposition and exact-registration finally cleanup; strict inherited-producer admission and ordinary no-ID FIFO replacement.",
+  "sources": {
+    "gateway/run.py": "c2d927d9cf985c7ecd00624dadad2b32d15fc7c888a8ce85aa28627c72214297",
+    "tools/approval.py": "ca3d0baa1f4ec36b77376abb65d84a4b1f7120be394c6fe208209cf41f68d356",
+    "tests/gateway/test_approval_run_ownership.py": "ac2c7347c6fd7cbffa680410b8b757316df24b7690770f0699171a857e7deaec"
+  },
+  "behavior": "Producer context retains its registration even after retirement. Queue publication validates after allocation under owner RLock then approval lock. Replacement removes only predecessor entries atomically, then wakes outside locks. Old finally cannot remove the successor callback/entries. Callback checks suppress retired scheduling and stale fallback. Normal FIFO/parallel/once remain useful.",
+  "evidence": {
+    "receipt": "tmp/continuation-20261020/t06a-evidence/receipt.json",
+    "manifest": "tmp/continuation-20261020/t06a-evidence/evidence_hashes.json",
+    "manifest_sha256": "154a186fd90332bc75c96b7f14bd1a2509cc995c07cf840368d0af53a95ad35a",
+    "parent_audit": "tmp/continuation-20261020/parent-approval-phase-audit.json",
+    "manifest_files_rehashed": 2835,
+    "normal_jobs": 35,
+    "normal_unique_passes": 470,
+    "fault_jobs": 37,
+    "fault_variants": 36,
+    "fault_failed_occurrences": 98,
+    "fault_unique_failed_nodes": 81,
+    "all_fault_failed_nodes_normal_green": true,
+    "accepted_errors": 0,
+    "accepted_skips": 0,
+    "accepted_guard_violations": 0,
+    "accepted_timeout_recovery_survivors": 0,
+    "accepted_source_drift": 0,
+    "parent_fresh_run": "tmp/continuation-20261020/parent-approval-phase-01",
+    "parent_fresh_passes": 24,
+    "parent_fresh_failures_errors_skips": 0
+  },
+  "review": "Independent READONLY same-cycle review verified exact 3 hashes, all 2835 files, 72 JUnits/Jobs, lock ordering, strict admission and genuine A-ACK-held/B-visible no-ID oracle. No new concrete P1/P2 found in declared first-phase scope. Parent rehashed/reconciled evidence and repeated 24 dedicated cases.",
+  "graph": {
+    "version": "1.6.0",
+    "current_binding": "t06a-owners-p2",
+    "files": 16,
+    "matching_full_method_spans": 1650,
+    "nodes": 2354,
+    "edges": 7038,
+    "immutable_db_sha256": "cb89f325b9f3fcbae37e6921eff3e910230b9f5800b4852b6dec2928e13f9e30",
+    "full_run_sdk_unresolved": 8157,
+    "cap_unchanged": true,
+    "whole_root_graph_qualified": false
+  },
+  "preserved_nonfinal_results": "Initial nested-lock timeout recovered three owned processes; intermediate setup/drift results excluded. Existing Windows symlink-privilege skip retained and explicitly excluded by name from final selected suite; not counted GREEN.",
+  "process_scope": "Fixed declared process_registry import copy; snapshot/reaper leaves empty, native transport synthetic. No process r3, PTY, kernel or API proof follows.",
+  "open": [
+    "Clarify registration, answer ownership, boundary cancellation and finally cleanup.",
+    "Native adapter request_id presentation/routing and real channels.",
+    "Post-decision persistence and execution boundary; complete strict-control/native lifecycle.",
+    "Kernel/process/API integration, full SDK graph resolution and whole-SHA CI."
+  ],
+  "publication": "Local isolated-branch commit only; no primary write, push, merge, release or production action."
+}

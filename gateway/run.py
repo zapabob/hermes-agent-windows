@@ -6323,8 +6323,11 @@ class TurnRunner:
         # The callback bridges sync→async to send the approval request
         # to the user immediately.
         from tools.approval import (
+            get_gateway_approval_registration,
             register_gateway_notify,
+            reset_gateway_approval_registration,
             reset_current_session_key,
+            set_gateway_approval_registration,
             set_current_session_key,
             unregister_gateway_notify,
         )
@@ -6337,6 +6340,13 @@ class TurnRunner:
                 UX.  Otherwise fall back to a plain text message with
                 ``/approve`` instructions.
                 """
+            _notify_registration = get_gateway_approval_registration()
+
+            def _check_approval_owner():
+                if _notify_registration is None or not _notify_registration.is_current():
+                    raise RuntimeError("Gateway approval producer retired")
+
+            _check_approval_owner()
             # Pause the typing indicator while the agent waits for
             # user approval.  Critical for Slack's Assistant API where
             # assistant_threads_setStatus disables the compose box — the
@@ -6351,6 +6361,7 @@ class TurnRunner:
             # This goes through the consumer's queue for serial processing,
             # avoiding race conditions with pending deltas.
             _close_native_stream_boundary("Approval")
+            _check_approval_owner()
 
             cmd = approval_data.get("command", "")
             desc = approval_data.get("description", "dangerous command")
@@ -6368,8 +6379,9 @@ class TurnRunner:
             # false positives from MagicMock auto-attribute creation in tests.
             if getattr(type(ctx._status_adapter), "send_exec_approval", None) is not None:
                 try:
-                    _approval_fut = safe_schedule_threadsafe(
-                        ctx._status_adapter.send_exec_approval(
+                    async def _send_owned_exec_approval():
+                        _check_approval_owner()
+                        return await ctx._status_adapter.send_exec_approval(
                             chat_id=ctx._status_chat_id,
                             command=cmd,
                             session_key=_approval_session_key,
@@ -6378,7 +6390,9 @@ class TurnRunner:
                             allow_permanent=approval_data.get("allow_permanent", True),
                             allow_session=approval_data.get("allow_session", True),
                             smart_denied=approval_data.get("smart_denied", False),
-                        ),
+                        )
+                    _approval_fut = safe_schedule_threadsafe(
+                        _send_owned_exec_approval(),
                         ctx._loop_for_step,
                         logger=logger,
                         log_message="send_exec_approval scheduling error",
@@ -6386,6 +6400,7 @@ class TurnRunner:
                     if _approval_fut is None:
                         raise RuntimeError("send_exec_approval: loop unavailable")
                     _outcome = _approval_send_outcome(_approval_fut, timeout=15)
+                    _check_approval_owner()
                     if _outcome == "sent":
                         return
                     if _outcome == "ambiguous":
@@ -6411,6 +6426,7 @@ class TurnRunner:
                         "Button-based approval failed, falling back to text: %s", _e
                     )
 
+            _check_approval_owner()
             # Fallback: plain text approval prompt.  Use the adapter's
             # typed prefix so Slack/Matrix users are told the form they
             # can actually type (`!approve`) — typed "/" is blocked in
@@ -6429,12 +6445,16 @@ class TurnRunner:
                 _approval_metadata = dict(ctx._status_thread_metadata or {})
                 _approval_metadata["is_approval_prompt"] = True
 
-                _approval_send_fut = safe_schedule_threadsafe(
-                    ctx._status_adapter.send(
+                async def _send_owned_approval_text():
+                    _check_approval_owner()
+                    return await ctx._status_adapter.send(
                         ctx._status_chat_id,
                         msg,
                         metadata=_interim_metadata(_approval_metadata),
-                    ),
+                    )
+
+                _approval_send_fut = safe_schedule_threadsafe(
+                    _send_owned_approval_text(),
                     ctx._loop_for_step,
                     logger=logger,
                     log_message="Approval text-send scheduling error",
@@ -6589,7 +6609,12 @@ class TurnRunner:
 
         _approval_session_key = ctx.session_key or ""
         _approval_session_token = set_current_session_key(_approval_session_key)
-        register_gateway_notify(_approval_session_key, _approval_notify_sync)
+        _approval_registration = register_gateway_notify(
+            _approval_session_key, _approval_notify_sync,
+            is_current=ctx._run_still_current,
+            owner_lock=self._input_owner[1].shared_input_lock if self._input_owner is not None else None,
+        )
+        _approval_owner_token = set_gateway_approval_registration(_approval_registration)
         try:
             # If _prepare_inbound_message_text buffered image paths for native
             # attachment, wrap the user turn as an OpenAI-style multimodal
@@ -6652,7 +6677,8 @@ class TurnRunner:
                 return _cancelled_run()
             result = agent.run_conversation(_api_run_message, **_conversation_kwargs)
         finally:
-            unregister_gateway_notify(_approval_session_key)
+            unregister_gateway_notify(_approval_session_key, registration=_approval_registration)
+            reset_gateway_approval_registration(_approval_owner_token)
             # Cancel any pending clarify entries so blocked agent
             # threads don't hang past the end of the run (interrupt,
             # completion, gateway shutdown).  Idempotent.

@@ -2951,13 +2951,14 @@ def _denial_breaker_addendum(session_key: str) -> str:
 
 class _ApprovalEntry:
     """One pending dangerous-command approval inside a gateway session."""
-    __slots__ = ("event", "data", "result", "reason", "acknowledged")
+    __slots__ = ("event", "data", "result", "reason", "acknowledged", "owner")
 
     def __init__(self, data: dict):
         self.event = threading.Event()
         self.data = dict(data)
         self.data.setdefault("request_id", uuid.uuid4().hex)
         self.acknowledged = False
+        self.owner = None
         self.result: Optional[str] = None  # "once"|"session"|"always"|"deny"
         # Optional free-text reason supplied with an explicit deny
         # (``/deny <reason>``) so the agent can adapt instead of only
@@ -2967,9 +2968,79 @@ class _ApprovalEntry:
 
 _gateway_queues: dict[str, list] = {}        # session_key → [_ApprovalEntry, …]
 _gateway_notify_cbs: dict[str, object] = {}  # session_key → callable(approval_data)
+_gateway_approval_registration = contextvars.ContextVar("gateway_approval_registration", default=None)
 
 
-def register_gateway_notify(session_key: str, cb) -> None:
+class GatewayApprovalRegistration:
+    """One host-owned run registration, retained by its producer context.
+
+    Lock order is the captured run's owner lock, then the approval lock. Never
+    hold either while calling a transport callback or waiting for a decision.
+    """
+
+    def __init__(self, session_key, callback, is_current=None, owner_lock=None):
+        self.session_key = session_key
+        self.callback = callback
+        self._is_current = is_current
+        self._owner_lock = owner_lock
+        self.active = True
+
+    def owner_guard(self):
+        return self._owner_lock if self._owner_lock is not None else contextlib.nullcontext()
+
+    def _current_locked(self):
+        return (self.active and _gateway_notify_cbs.get(self.session_key) is self
+                and (self._is_current is None or self._is_current()))
+
+    def is_current(self):
+        with self.owner_guard(), _lock:
+            return self._current_locked()
+
+    def __call__(self, approval_data):
+        if not self.is_current():
+            raise RuntimeError("Gateway approval registration retired")
+        token = set_gateway_approval_registration(self)
+        try:
+            return self.callback(approval_data)
+        finally:
+            reset_gateway_approval_registration(token)
+
+
+def set_gateway_approval_registration(registration):
+    """Bind the captured producer handle; copied tool contexts retain it."""
+    return _gateway_approval_registration.set(registration)
+
+
+def reset_gateway_approval_registration(token):
+    _gateway_approval_registration.reset(token)
+
+
+def get_gateway_approval_registration():
+    return _gateway_approval_registration.get()
+
+
+def _gateway_notify_for_producer(session_key):
+    # Even a retired handle owns its producer's routing. Falling back to the
+    # map here could adopt a replacement or enter the legacy pending lane.
+    registration = get_gateway_approval_registration()
+    if registration is not None:
+        return registration
+    with _lock:
+        return _gateway_notify_cbs.get(session_key)
+
+
+def _remove_gateway_entries_locked(session_key, registration):
+    entries, remaining = [], []
+    for entry in _gateway_queues.get(session_key, []):
+        (entries if registration is None or entry.owner is registration else remaining).append(entry)
+    if remaining:
+        _gateway_queues[session_key] = remaining
+    else:
+        _gateway_queues.pop(session_key, None)
+    return entries
+
+
+def register_gateway_notify(session_key: str, cb, *, is_current=None, owner_lock=None) -> GatewayApprovalRegistration:
     """Register a per-session callback for sending approval requests to the user.
 
     The callback signature is ``cb(approval_data: dict) -> None`` where
@@ -2977,19 +3048,39 @@ def register_gateway_notify(session_key: str, cb) -> None:
     ``pattern_keys``.  The callback bridges sync→async (runs in the agent
     thread, must schedule the actual send on the event loop).
     """
-    with _lock:
-        _gateway_notify_cbs[session_key] = cb
+    registration = GatewayApprovalRegistration(session_key, cb, is_current, owner_lock)
+    entries = []
+    with registration.owner_guard(), _lock:
+        if is_current is not None and not is_current():
+            registration.active = False
+            return registration
+        previous = _gateway_notify_cbs.get(session_key)
+        if isinstance(previous, GatewayApprovalRegistration):
+            previous.active = False
+            # Retire its FIFO entries in the same transaction as replacement.
+            # Otherwise an ID-less approval for the newly displayed prompt
+            # could be consumed by a predecessor whose send ACK is still pending.
+            entries = _remove_gateway_entries_locked(session_key, previous)
+        _gateway_notify_cbs[session_key] = registration
+    for entry in entries:
+        entry.event.set()
+    return registration
 
 
-def unregister_gateway_notify(session_key: str) -> None:
+def unregister_gateway_notify(session_key: str, *, registration=None) -> None:
     """Unregister the per-session gateway approval callback.
 
-    Signals ALL blocked threads for this session so they don't hang forever
-    (e.g. when the agent run finishes or is interrupted).
+    With a registration, cancel only its entries and remove only its callback.
+    The legacy call without a handle cancels all blocked threads for the key.
     """
     with _lock:
-        _gateway_notify_cbs.pop(session_key, None)
-        entries = _gateway_queues.pop(session_key, [])
+        current = _gateway_notify_cbs.get(session_key)
+        if registration is None or current is registration:
+            _gateway_notify_cbs.pop(session_key, None)
+        retired = current if registration is None else registration
+        if isinstance(retired, GatewayApprovalRegistration):
+            retired.active = False
+        entries = _remove_gateway_entries_locked(session_key, registration)
     for entry in entries:
         entry.event.set()
 
@@ -3157,11 +3248,20 @@ def request_control_consent(binding: ControlApprovalBinding, *, session_key: str
     if (type(binding) is not ControlApprovalBinding or type(timeout_seconds) is not int
             or not 1 <= timeout_seconds <= 600 or stamp >= binding.expires_at):
         raise ValueError("invalid_control_approval")
+    cb = _gateway_notify_for_producer(session_key)
+    if cb is None:
+        raise RuntimeError("control_human_surface_unavailable")
+    registration = cb if isinstance(cb, GatewayApprovalRegistration) else None
     entry = _ControlApprovalEntry(binding, min(binding.expires_at, stamp + timeout_seconds))
-    with _lock:
-        cb = _gateway_notify_cbs.get(session_key)
-        if cb is None:
-            raise RuntimeError("control_human_surface_unavailable")
+    with (registration.owner_guard() if registration is not None else contextlib.nullcontext()), _lock:
+        if registration is not None and (
+            registration.session_key != session_key or not registration._current_locked()
+        ):
+            raise RuntimeError("control_approval_producer_retired")
+        # Preserve run-qualified cleanup for strict tickets without changing
+        # their digest-bound authorization or decision-consumption contract.
+        if isinstance(cb, GatewayApprovalRegistration):
+            entry.owner = cb
         # Bound pending and issued state; expired decisions confer no authority.
         for key, decision in tuple(_control_decisions.items()):
             if decision.deadline <= stamp:
@@ -3379,6 +3479,9 @@ def clear_session(session_key: str) -> None:
         _session_approved.pop(session_key, None)
         _session_yolo.discard(session_key)
         _pending.pop(session_key, None)
+        registration = _gateway_notify_cbs.pop(session_key, None)
+        if isinstance(registration, GatewayApprovalRegistration):
+            registration.active = False
         entries = _gateway_queues.pop(session_key, [])
     for entry in entries:
         # Session-boundary cleanup should cancel any blocked approval waits
@@ -4280,9 +4383,7 @@ def _run_approval_gate(
         # agent thread until the user answers; the agent never sees
         # "approval_required" on this path — it gets a definitive
         # approved/BLOCKED outcome.
-        notify_cb = None
-        with _lock:
-            notify_cb = _gateway_notify_cbs.get(session_key)
+        notify_cb = _gateway_notify_for_producer(session_key)
 
         if notify_cb is not None:
             from agent.redact import redact_sensitive_text
@@ -4922,6 +5023,26 @@ def _await_gateway_decision(session_key: str, notify_cb, approval_data: dict,
     notify callback raised.  Persistence of an approved choice and building
     the final tool-facing result dict remain the caller's responsibility.
     """
+    registration = get_gateway_approval_registration()
+    if registration is None and isinstance(notify_cb, GatewayApprovalRegistration):
+        registration = notify_cb
+    if registration is not None:
+        # A stale tool must not adopt a callback looked up after a new run
+        # registered under the same routing key.
+        notify_cb = registration
+
+    def current():
+        return registration is None or (registration.session_key == session_key and registration.is_current())
+
+    def current_locked():
+        return registration is None or (registration.session_key == session_key and registration._current_locked())
+
+    def owner_guard():
+        return registration.owner_guard() if registration is not None else contextlib.nullcontext()
+
+    def retired():
+        return {"resolved": True, "choice": "deny", "reason": "approval producer retired"}
+
     command = approval_data.get("command", "")
     description = approval_data.get("description", "")
     primary_key = approval_data.get("pattern_key", "")
@@ -4944,11 +5065,15 @@ def _await_gateway_decision(session_key: str, notify_cb, approval_data: dict,
     #   once             → single-use consent; it covers ONLY the leader's
     #     execution, so the follower falls through to a fresh prompt.
     leader = None
-    with _lock:
+    with owner_guard(), _lock:
+        if not current_locked():
+            return retired()
         for existing in _gateway_queues.get(session_key, []):
             data = existing.data
             if (
-                data.get("command") == approval_data.get("command")
+                not isinstance(existing, _ControlApprovalEntry)
+                and existing.owner is registration
+                and data.get("command") == approval_data.get("command")
                 and list(data.get("pattern_keys") or [])
                 == list(approval_data.get("pattern_keys") or [])
             ):
@@ -4958,12 +5083,17 @@ def _await_gateway_decision(session_key: str, notify_cb, approval_data: dict,
         adopted = _await_coalesced_leader(
             session_key, leader, approval_data, surface=surface
         )
+        if not current():
+            return retired()
         if adopted is not None:
             return adopted
         # Leader resolved "once" — fall through to a fresh prompt below.
 
     entry = _ApprovalEntry(approval_data)
-    with _lock:
+    entry.owner = registration
+    with owner_guard(), _lock:
+        if not current_locked():
+            return retired()
         _gateway_queues.setdefault(session_key, []).append(entry)
 
     def _drop_entry() -> None:
@@ -4988,6 +5118,9 @@ def _await_gateway_decision(session_key: str, notify_cb, approval_data: dict,
 
     # Notify the user (bridges sync agent thread → async gateway)
     try:
+        if not current():
+            _drop_entry()
+            return retired()
         notify_cb(dict(entry.data))
     except Exception as exc:
         logger.warning("Gateway approval notify failed: %s", exc)
@@ -5049,7 +5182,7 @@ def _await_gateway_decision(session_key: str, notify_cb, approval_data: dict,
             # reliable discriminator and would require new plumbing to make
             # so. Fail-closed deny preserves #8697 semantics; changing this
             # needs a dedicated interrupt-cause channel, not string matching.
-            if is_interrupted():
+            if not current() or is_interrupted():
                 logger.info(
                     "Approval wait interrupted by user signal — "
                     "returning deny for session %s",
@@ -5085,6 +5218,8 @@ def _await_gateway_decision(session_key: str, notify_cb, approval_data: dict,
         surface=surface,
         choice=_outcome,
     )
+    if not current():
+        return retired()
     return {"resolved": resolved, "choice": choice, "reason": entry.reason}
 
 
@@ -5561,9 +5696,7 @@ def check_all_command_guards(command: str, env_type: str,
     # input() flow.  The agent never sees "approval_required"; it either
     # gets the command output (approved) or a definitive "BLOCKED" message.
     if is_gateway or is_ask:
-        notify_cb = None
-        with _lock:
-            notify_cb = _gateway_notify_cbs.get(session_key)
+        notify_cb = _gateway_notify_for_producer(session_key)
 
         if notify_cb is not None:
             # --- Blocking gateway approval (queue-based) ---
@@ -6102,9 +6235,7 @@ def check_execute_code_guard(code: str, env_type: str,
                 "description": description,
             }
 
-    notify_cb = None
-    with _lock:
-        notify_cb = _gateway_notify_cbs.get(session_key)
+    notify_cb = _gateway_notify_for_producer(session_key)
 
     if notify_cb is None:
         # HERMES_EXEC_ASK (and sometimes a session platform marker) can leak
@@ -6328,8 +6459,7 @@ def request_elicitation_consent(
         return "decline"
 
     if _is_gateway_approval_context():
-        with _lock:
-            notify_cb = _gateway_notify_cbs.get(session_key)
+        notify_cb = _gateway_notify_for_producer(session_key)
         if notify_cb is None:
             logger.warning(
                 "Elicitation requested in gateway session %s but no "
