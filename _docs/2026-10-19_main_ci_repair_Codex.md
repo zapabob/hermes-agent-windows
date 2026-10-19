@@ -103,3 +103,44 @@ directories under tmp/selective-20261017/. Prior evidence files are untouched.
 Final commit binding and remote CI receipts will be saved locally after all
 applicable required main-push workflows reach terminal success. No all-green
 claim is made by this initial implementation record.
+
+## Linux profile-route follow-up
+
+Final-candidate 494bdf60cb98c2adf22f9993d92397dad1eed2ba passed Tier-1,
+Windows artifact qualification, Docker, Nix and the explicit autofix dispatch.
+Its first generic Python job lost hosted-runner communication; GitHub left the
+test step in_progress and published no job log. Official job details and the
+communication-loss annotations are retained. Failed jobs were retried at the
+same SHA without changing test conditions. No source cause is inferred from
+that infrastructure annotation.
+
+A separate diagnostic branch, codex/ci-profile-probe-20261019, retained the same
+product tree and locked Linux setup but limited execution to the profile file.
+Run 39187659640 reproduced all three failures after successful real model
+answers: shell._session_db was None. Diagnostic RED run 39188016795 also failed.
+Source inspection and CodeGraph locate the cause: the fixture set HOME to its
+temporary directory and HERMES_HOME to HOME/.hermes, placing the child profile
+DB exactly under the POSIX default root protected by the live-DB test guard.
+CLI catches that refusal and continues without indexing; the worker then fails
+when reading history. Windows resolves a different default root, which explains
+why the prior owned Windows runs did not expose the collision.
+
+The fixture now uses the explicit profile-route-owned directory outside the
+platform-default root. Production guard code, bypass variables, DB access,
+credentials, HTTP transport and history assertions are unchanged. The worker
+asserts a usable DB before inference and reports the owned path and existing
+initialization diagnostics. It does not substitute a DB or skip persistence.
+Independent review found no guard bypass or weakened assertion.
+
+Diagnostic GREEN run 39188126106, commit 0f17d1779a45dc05ded3be0b7ff7058b8937d4ec,
+passed all three profile journeys and all twelve existing live-DB guard tests
+(15 total, zero failures, zero file retries). The source hashes match the local
+fix. The fresh owned Windows run fxa04-ci-w2 passed all three journeys in 104s,
+with unchanged source bindings, no timeout and zero Job members before/after
+recovery. Ruff and diff checks pass. The diagnostic branch and evidence remain
+preserved; its reduced workflow is not merged to main or counted as full CI.
+
+Only the two test files and this record are integrated into the main repair.
+Carry reports must be refreshed from that committed code, followed by all
+required final-main workflows at the new exact SHA. The previous full CI's
+attempt 2 is superseded by this verified fixture fix; its metadata is retained.

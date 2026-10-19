@@ -20,7 +20,7 @@ import yaml
 
 @pytest.mark.parametrize("entry", ["cli", "rest", "rpc"])
 def test_new_profile_first_turn_and_fresh_resume_use_the_inherited_route(tmp_path, monkeypatch, entry):
-    home = tmp_path / ".hermes"
+    home = tmp_path / "profile-route-owned"
     home.mkdir()
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
     for key, value in {"HERMES_HOME": home, "HOME": tmp_path, "USERPROFILE": tmp_path}.items():
