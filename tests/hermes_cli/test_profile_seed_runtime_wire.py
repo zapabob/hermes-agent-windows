@@ -170,7 +170,14 @@ def test_new_profile_first_turn_and_fresh_resume_use_the_inherited_route(tmp_pat
                 result = subprocess.run([sys.executable, "-B", "-m", "tests.hermes_cli.profile_seed_runtime_worker", str(manifest_path)],
                                         env=env, cwd=Path(__file__).resolve().parents[2], stdout=log, stderr=subprocess.STDOUT,
                                         timeout=45, check=False)
-            assert result.returncode == 0, f"Fresh worker {index} failed; see {tmp_path / f'worker-{index}.log'}"
+            assert result.returncode == 0, (
+                f"Fresh worker {index} exited {result.returncode}; "
+                f"log: {tmp_path / f'worker-{index}.log'}\n"
+                "Worker log tail (owned token redacted):\n"
+                + (tmp_path / f"worker-{index}.log").read_text(
+                    encoding="utf-8", errors="replace"
+                ).replace(token, "<owned-profile-token>")[-16000:]
+            )
             reports.append(json.loads(Path(manifest["report_path"]).read_text(encoding="utf-8")))
         assert len(requests) == 2 and not errors, errors
         assert requests[0]["users"] == [f"{nonce}-0"]

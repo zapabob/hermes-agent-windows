@@ -426,6 +426,15 @@ Future messages in this room will use that transcript until `/reset` or another 
   credits:
     not_logged_in:            "Nicht bei Nous Portal angemeldet. Melde dich an, um dein Guthaben zu sehen und aufzuladen."
 
+  busy:
+    status: "Eingabemodus während der Ausführung für diese Unterhaltung: `{mode}`.\n{behavior}"
+    saved: "Eingabemodus während der Ausführung für diese Unterhaltung gespeichert: `{mode}`.\n{behavior}"
+    usage: "Verwendung: /busy queue|steer|interrupt|status"
+    save_failed: "Der Eingabemodus während der Ausführung konnte nicht gespeichert werden. Der vorherige Modus bleibt aktiv."
+    behavior_queue: "Folgenachrichten warten in der Reihenfolge ihres Eingangs auf ihre eigenen Gesprächsrunden."
+    behavior_steer: "Folgenachrichten steuern die laufende Gesprächsrunde; ist dies nicht möglich, werden sie in die Warteschlange gestellt."
+    behavior_interrupt: "Folgenachrichten unterbrechen die laufende Gesprächsrunde; bestehende Schutzmechanismen für Unteragenten und Komprimierung gelten weiterhin."
+
   verbose:
     not_enabled:           "Der Befehl `/verbose` ist für Messaging-Plattformen nicht aktiviert.\n\nIn `config.yaml` aktivieren:\n```yaml\ndisplay:\n  tool_progress_command: true\n```"
     mode_off:              "⚙️ Tool-Fortschritt: **OFF** — keine Tool-Aktivität angezeigt."

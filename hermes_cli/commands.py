@@ -1467,6 +1467,8 @@ _SLACK_PRIORITY_ALIASES: tuple[str, ...] = ()
 #     (session export is an interactive surface; platform is a rare
 #     informational lookup) — without this entry /save tips the registry
 #     past the 50-cap and silently clamps /platform, breaking parity.
+#   - busy: conversation input policy; reached via /hermes busy on Slack.
+#     Keep existing native /insights available at the 50-command cap.
 _SLACK_VIA_HERMES_ONLY = frozenset(
     {
         "topup",
@@ -1484,6 +1486,7 @@ _SLACK_VIA_HERMES_ONLY = frozenset(
         "pause",
         "whoami",
         "platform",
+        "busy",
     }
 )
 

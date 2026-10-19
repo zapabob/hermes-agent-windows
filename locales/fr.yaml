@@ -426,6 +426,15 @@ Future messages in this room will use that transcript until `/reset` or another 
   credits:
     not_logged_in:            "Non connecté à Nous Portal. Connecte-toi pour voir ton solde de crédits et recharger."
 
+  busy:
+    status: "Mode de saisie pendant l'exécution pour cette conversation : `{mode}`.\n{behavior}"
+    saved: "Mode de saisie pendant l'exécution enregistré pour cette conversation : `{mode}`.\n{behavior}"
+    usage: "Utilisation : /busy queue|steer|interrupt|status"
+    save_failed: "Impossible d'enregistrer le mode de saisie pendant l'exécution. Le mode précédent reste actif."
+    behavior_queue: "Les messages suivants attendent leur propre tour dans l'ordre d'arrivée."
+    behavior_steer: "Les messages suivants orientent le tour en cours ; si ce n'est pas possible, ils sont placés dans la file d'attente."
+    behavior_interrupt: "Les messages suivants interrompent le tour en cours ; les protections existantes pour les sous-agents et la compression restent applicables."
+
   verbose:
     not_enabled:           "La commande `/verbose` n'est pas activée pour les plateformes de messagerie.\n\nActivez-la dans `config.yaml` :\n```yaml\ndisplay:\n  tool_progress_command: true\n```"
     mode_off:              "⚙️ Progression des outils : **OFF** — aucune activité d'outil affichée."

@@ -4,15 +4,30 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 
 import { _electron, type ElectronApplication } from '@playwright/test'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@playwright/test', () => ({ _electron: { launch: vi.fn(() => { throw new Error('Fixture launch failure') }) } }))
 vi.mock('./electron-binary', () => ({ resolveElectronBinary: () => 'owned-synthetic-electron' }))
 vi.mock('./test', () => ({ installErrorBannerGuard: vi.fn() }))
+vi.mock('node:fs', async importOriginal => {
+  const actual = await importOriginal<typeof fs>()
+
+  return { ...actual, existsSync: vi.fn(actual.existsSync) }
+})
 
 import { setupDeadBackend, setupMockBackend, setupNoProvider } from './fixtures'
 import * as provider from './mock-server'
 import { assertLoopbackListenerStopped } from './owned-process-observer'
+
+const distArtifacts = ['electron-main.mjs', 'index.html'].map(name => path.resolve(import.meta.dirname, '..', 'dist', name))
+const realExists = vi.mocked(fs.existsSync).getMockImplementation()!
+
+beforeEach(() => {
+  // Exercise fixture lifecycle with the synthetic Electron, independently of
+  // any local build. Keep real filesystem behavior for owned sandbox checks.
+  vi.mocked(fs.existsSync).mockImplementation(file => distArtifacts.includes(String(file)) || realExists(file))
+  vi.mocked(_electron.launch).mockClear()
+})
 
 afterEach(() => {
   vi.useRealTimers()
@@ -60,6 +75,13 @@ function removeOwnedUnitSandbox(name: string): void {
 }
 
 describe('mock backend fixture resource ownership', () => {
+  it.each(distArtifacts)('rejects missing build artifact %s before launching Electron', async missing => {
+    vi.mocked(fs.existsSync).mockImplementation(file => String(file) !== missing && (distArtifacts.includes(String(file)) || realExists(file)))
+
+    await expect(setupMockBackend()).rejects.toThrow(`Missing: ${missing}`)
+    expect(_electron.launch).not.toHaveBeenCalled()
+  })
+
   it('closes its real loopback listener and sandbox when setup fails', async () => {
     const existing = new Set(fs.readdirSync(os.tmpdir()).filter(name => name.startsWith('hermes-e2e-mock-')))
     const start = provider.startMockServer
@@ -70,7 +92,8 @@ describe('mock backend fixture resource ownership', () => {
 
       return mock
     })
-    await expect(setupMockBackend()).rejects.toThrow()
+    await expect(setupMockBackend()).rejects.toThrow('Fixture launch failure')
+    expect(_electron.launch).toHaveBeenCalledOnce()
     expect(url).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/)
     await assertLoopbackListenerStopped(url)
     const added = fs.readdirSync(os.tmpdir()).filter(name => name.startsWith('hermes-e2e-mock-') && !existing.has(name))

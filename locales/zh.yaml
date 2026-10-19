@@ -426,6 +426,15 @@ Future messages in this room will use that transcript until `/reset` or another 
   credits:
     not_logged_in:            "未登录 Nous Portal。登录后即可查看额度余额并充值。"
 
+  busy:
+    status: "此对话的运行中输入模式：`{mode}`。\n{behavior}"
+    saved: "已保存此对话的运行中输入模式：`{mode}`。\n{behavior}"
+    usage: "用法：/busy queue|steer|interrupt|status"
+    save_failed: "无法保存运行中输入模式。之前的模式仍然有效。"
+    behavior_queue: "后续消息会按到达顺序，分别等待自己的轮次。"
+    behavior_steer: "后续消息会引导当前轮次的执行；若无法引导，则加入队列等待。"
+    behavior_interrupt: "后续消息会中断当前轮次的执行；子代理和压缩处理的现有保护仍然适用。"
+
   verbose:
     not_enabled:           "`/verbose` 命令未在消息平台启用。\n\n请在 `config.yaml` 中启用：\n```yaml\ndisplay:\n  tool_progress_command: true\n```"
     mode_off:              "⚙️ 工具进度：**OFF** — 不显示任何工具活动。"

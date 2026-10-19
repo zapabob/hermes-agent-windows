@@ -289,10 +289,7 @@ class TestPostStopInterruptSwallow:
         runner.adapters = {}
         runner._pending_messages = {}
 
-        invalidated = []
-        runner._invalidate_session_run_generation = (
-            lambda key, reason=None: invalidated.append((key, reason))
-        )
+        initial_generation = runner._begin_session_run_generation(session_key)
         released = []
         runner._release_running_agent_state = (
             lambda key, **kw: released.append(key)
@@ -316,6 +313,8 @@ class TestPostStopInterruptSwallow:
         )
 
         assert agent.interrupt_reasons == [_INTERRUPT_REASON_STOP]
+        assert not runner._is_session_run_current(session_key, initial_generation)
+        assert runner._is_session_run_current(session_key, initial_generation + 1)
         assert released == [session_key]
         assert reaped_event.wait(1)
         assert reaped == [

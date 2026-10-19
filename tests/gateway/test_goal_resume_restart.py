@@ -135,6 +135,10 @@ class _FakeSessionStore:
     def _generate_session_key(self, source):
         return _GW_KEY
 
+    def get_session_metadata(self, session_key, key, default=None):
+        # This session has no persisted busy-input policy override.
+        return default
+
 
 class _FakeAdapter:
     def __init__(self):
@@ -184,6 +188,8 @@ class TestGatewayResumeRestartsWork:
             "— otherwise the goal sits idle until the next real user message"
         )
         assert pending.text.startswith("[Continuing toward your standing goal]")
+        assert pending.text == goals.GoalManager(_GW_SID).next_continuation_prompt()
+        assert runner._queue_depth(_GW_KEY, adapter=adapter) == 1
         # The pause/clear stale-work guard must recognize the queued turn as
         # a synthetic goal continuation so it can be cleaned up on /goal pause.
         assert GatewayRunner._is_goal_continuation_event(pending)

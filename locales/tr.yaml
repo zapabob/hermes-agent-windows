@@ -426,6 +426,15 @@ Future messages in this room will use that transcript until `/reset` or another 
   credits:
     not_logged_in:            "Nous Portal'a giriş yapılmadı. Bakiyenizi görmek ve yükleme yapmak için giriş yapın."
 
+  busy:
+    status: "Bu konuşma için çalışma sırasındaki giriş modu: `{mode}`.\n{behavior}"
+    saved: "Bu konuşma için çalışma sırasındaki giriş modu kaydedildi: `{mode}`.\n{behavior}"
+    usage: "Kullanım: /busy queue|steer|interrupt|status"
+    save_failed: "Çalışma sırasındaki giriş modu kaydedilemedi. Önceki mod etkin kalır."
+    behavior_queue: "Sonraki mesajlar geliş sırasına göre kendi turlarını bekler."
+    behavior_steer: "Sonraki mesajlar etkin turu yönlendirir; yönlendirme mümkün değilse kuyruğa alınır."
+    behavior_interrupt: "Sonraki mesajlar etkin turu keser; alt ajanlar ve sıkıştırma için mevcut korumalar geçerliliğini korur."
+
   verbose:
     not_enabled:           "`/verbose` komutu mesajlaşma platformlarında etkin değil.\n\n`config.yaml` içinde etkinleştirin:\n```yaml\ndisplay:\n  tool_progress_command: true\n```"
     mode_off:              "⚙️ Araç ilerlemesi: **OFF** — araç etkinliği gösterilmez."

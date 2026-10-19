@@ -426,6 +426,15 @@ Future messages in this room will use that transcript until `/reset` or another 
   credits:
     not_logged_in:            "Nous Portal에 로그인되어 있지 않습니다. 로그인하면 크레딧 잔액 확인 및 충전을 할 수 있습니다."
 
+  busy:
+    status: "이 대화의 실행 중 입력 모드: `{mode}`.\n{behavior}"
+    saved: "이 대화의 실행 중 입력 모드를 `{mode}`(으)로 저장했습니다.\n{behavior}"
+    usage: "사용법: /busy queue|steer|interrupt|status"
+    save_failed: "실행 중 입력 모드를 저장하지 못했습니다. 이전 모드가 계속 적용됩니다."
+    behavior_queue: "후속 메시지는 도착 순서대로 각각 자신의 차례를 기다립니다."
+    behavior_steer: "후속 메시지는 진행 중인 차례에 지침을 전달합니다. 전달할 수 없으면 대기열에 추가됩니다."
+    behavior_interrupt: "후속 메시지는 진행 중인 차례를 중단합니다. 하위 에이전트 및 압축에 대한 기존 보호는 계속 적용됩니다."
+
   verbose:
     not_enabled:           "`/verbose` 명령은 메시징 플랫폼에서 활성화되어 있지 않습니다.\n\n`config.yaml`에서 활성화하세요:\n```yaml\ndisplay:\n  tool_progress_command: true\n```"
     mode_off:              "⚙️ 도구 진행 상황: **OFF** — 도구 활동이 표시되지 않습니다."

@@ -426,6 +426,15 @@ Future messages in this room will use that transcript until `/reset` or another 
   credits:
     not_logged_in:            "Nie by Nous Portal aangemeld nie. Meld aan om jou kredietsaldo te sien en op te laai."
 
+  busy:
+    status: "Invoermodus tydens uitvoering vir hierdie gesprek: `{mode}`.\n{behavior}"
+    saved: "Invoermodus tydens uitvoering vir hierdie gesprek gestoor: `{mode}`.\n{behavior}"
+    usage: "Gebruik: /busy queue|steer|interrupt|status"
+    save_failed: "Kon nie die invoermodus tydens uitvoering stoor nie. Die vorige modus is steeds aktief."
+    behavior_queue: "Opvolgboodskappe wag op hul eie beurte in die volgorde waarin hulle ontvang is."
+    behavior_steer: "Opvolgboodskappe gee verdere aanwysings vir die aktiewe beurt; as dit nie moontlik is nie, word hulle in die tou geplaas."
+    behavior_interrupt: "Opvolgboodskappe onderbreek die aktiewe beurt; bestaande beskerming vir subagente en kompressie bly van toepassing."
+
   verbose:
     not_enabled:           "Die `/verbose`-opdrag is nie vir boodskapplatforms geaktiveer nie.\n\nAktiveer dit in `config.yaml`:\n```yaml\ndisplay:\n  tool_progress_command: true\n```"
     mode_off:              "⚙️ Gereedskap-vordering: **AF** — geen gereedskap-aktiwiteit word vertoon nie."

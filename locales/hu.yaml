@@ -426,6 +426,15 @@ Future messages in this room will use that transcript until `/reset` or another 
   credits:
     not_logged_in:            "Nincs bejelentkezve a Nous Portalra. Jelentkezz be a kreditegyenleg megtekintéséhez és feltöltéséhez."
 
+  busy:
+    status: "A beszélgetés beviteli módja futás közben: `{mode}`.\n{behavior}"
+    saved: "A beszélgetés futás közbeni beviteli módja mentve: `{mode}`.\n{behavior}"
+    usage: "Használat: /busy queue|steer|interrupt|status"
+    save_failed: "Nem sikerült menteni a futás közbeni beviteli módot. Az előző mód marad aktív."
+    behavior_queue: "A további üzenetek érkezési sorrendben várnak a saját körükre."
+    behavior_steer: "A további üzenetek az aktív kört irányítják; ha ez nem lehetséges, várólistára kerülnek."
+    behavior_interrupt: "A további üzenetek megszakítják az aktív kört; az alügynökökre és a tömörítésre vonatkozó meglévő védelmek továbbra is érvényesek."
+
   verbose:
     not_enabled:           "A `/verbose` parancs nincs engedélyezve az üzenetküldő platformokon.\n\nEngedélyezd a `config.yaml` fájlban:\n```yaml\ndisplay:\n  tool_progress_command: true\n```"
     mode_off:              "⚙️ Eszközfolyamat: **OFF** — nem jelenik meg eszközaktivitás."

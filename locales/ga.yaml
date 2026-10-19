@@ -430,6 +430,15 @@ Future messages in this room will use that transcript until `/reset` or another 
   credits:
     not_logged_in:            "Níl tú logáilte isteach i Nous Portal. Logáil isteach chun d'iarmhéid creidmheasa a fheiceáil agus breis a chur leis."
 
+  busy:
+    status: "Mód ionchuir don chomhrá seo agus próiseáil ar siúl: `{mode}`.\n{behavior}"
+    saved: "Sábháladh an mód ionchuir don chomhrá seo agus próiseáil ar siúl: `{mode}`.\n{behavior}"
+    usage: "Úsáid: /busy queue|steer|interrupt|status"
+    save_failed: "Níorbh fhéidir an mód ionchuir le linn próiseála a shábháil. Tá an mód roimhe seo fós i bhfeidhm."
+    behavior_queue: "Fanann teachtaireachtaí leantacha lena seal féin san ord a fuarthas iad."
+    behavior_steer: "Treoraíonn teachtaireachtaí leantacha an seal reatha; mura féidir treorú, cuirtear sa scuaine iad."
+    behavior_interrupt: "Cuireann teachtaireachtaí leantacha isteach ar an seal reatha; tá na cosaintí atá ann d'fho-ghníomhairí agus do chomhbhrú fós i bhfeidhm."
+
   verbose:
     not_enabled:           "Níl an t-ordú `/verbose` cumasaithe d'ardáin teachtaireachtaí.\n\nCumasaigh in `config.yaml`:\n```yaml\ndisplay:\n  tool_progress_command: true\n```"
     mode_off:              "⚙️ Dul chun cinn uirlise: **AS** — gan aon ghníomhaíocht uirlise á thaispeáint."

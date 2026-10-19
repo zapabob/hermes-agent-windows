@@ -426,6 +426,15 @@ Future messages in this room will use that transcript until `/reset` or another 
   credits:
     not_logged_in:            "未登入 Nous Portal。登入後即可查看額度餘額並儲值。"
 
+  busy:
+    status: "此對話的執行中輸入模式：`{mode}`。\n{behavior}"
+    saved: "已儲存此對話的執行中輸入模式：`{mode}`。\n{behavior}"
+    usage: "用法：/busy queue|steer|interrupt|status"
+    save_failed: "無法儲存執行中輸入模式。先前的模式仍然有效。"
+    behavior_queue: "後續訊息會依抵達順序，分別等待自己的回合。"
+    behavior_steer: "後續訊息會引導目前回合的執行；若無法引導，則加入佇列等候。"
+    behavior_interrupt: "後續訊息會中斷目前回合的執行；子代理與壓縮處理的既有保護仍然適用。"
+
   verbose:
     not_enabled:           "`/verbose` 指令未在訊息平台上啟用。\n\n請在 `config.yaml` 中啟用：\n```yaml\ndisplay:\n  tool_progress_command: true\n```"
     mode_off:              "⚙️ 工具進度：**OFF** — 不顯示任何工具活動。"

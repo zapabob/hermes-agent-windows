@@ -1554,7 +1554,12 @@ async def test_run_agent_drops_tool_progress_after_generation_invalidation(monke
 
     all_progress_text = " ".join(call["content"] for call in adapter.sent)
     all_progress_text += " ".join(call["content"] for call in adapter.edits)
-    assert result["final_response"] == "done"
+    assert invalidated["done"]
+    assert not runner._is_session_run_current(session_key, 1)
+    assert result["final_response"] == ""
+    assert result["cancelled"] is True
+    assert result["interrupted"] is True
+    assert result["completed"] is False
     assert 'first command' in all_progress_text
     assert 'second command' not in all_progress_text
 
@@ -1614,7 +1619,12 @@ async def test_run_agent_drops_interim_commentary_after_generation_invalidation(
     )
 
     sent_texts = [call["content"] for call in adapter.sent]
-    assert result["final_response"] == "done"
+    assert invalidated["done"]
+    assert not runner._is_session_run_current(session_key, 1)
+    assert result["final_response"] == ""
+    assert result["cancelled"] is True
+    assert result["interrupted"] is True
+    assert result["completed"] is False
     assert "first interim" in sent_texts
     assert "second interim" not in sent_texts
 

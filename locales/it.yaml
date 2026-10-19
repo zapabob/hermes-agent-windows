@@ -426,6 +426,15 @@ Future messages in this room will use that transcript until `/reset` or another 
   credits:
     not_logged_in:            "Non hai effettuato l'accesso a Nous Portal. Accedi per vedere il saldo dei crediti e ricaricare."
 
+  busy:
+    status: "Modalità di input durante l'esecuzione per questa conversazione: `{mode}`.\n{behavior}"
+    saved: "Modalità di input durante l'esecuzione salvata per questa conversazione: `{mode}`.\n{behavior}"
+    usage: "Uso: /busy queue|steer|interrupt|status"
+    save_failed: "Impossibile salvare la modalità di input durante l'esecuzione. La modalità precedente resta attiva."
+    behavior_queue: "I messaggi successivi attendono il proprio turno in ordine di arrivo."
+    behavior_steer: "I messaggi successivi orientano il turno attivo; se non è possibile, vengono messi in coda."
+    behavior_interrupt: "I messaggi successivi interrompono il turno attivo; le protezioni esistenti per i sottoagenti e la compressione restano valide."
+
   verbose:
     not_enabled:           "Il comando `/verbose` non è abilitato per le piattaforme di messaggistica.\n\nAbilitalo in `config.yaml`:\n```yaml\ndisplay:\n  tool_progress_command: true\n```"
     mode_off:              "⚙️ Progresso strumenti: **OFF** — nessuna attività degli strumenti mostrata."

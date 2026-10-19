@@ -208,6 +208,9 @@ class TestTelegramBotCommands:
 
 
 class TestSlackSubcommandMap:
+    def test_busy_remains_available_through_hermes(self):
+        assert slack_subcommand_map()["busy"] == "/busy"
+
     def test_returns_dict(self):
         mapping = slack_subcommand_map()
         assert isinstance(mapping, dict)
@@ -295,6 +298,20 @@ class TestSlackAppManifest:
         m = slack_app_manifest()
         commands = [c["command"] for c in m["features"]["slash_commands"]]
         assert "/btw" in commands
+
+    def test_busy_preserves_native_insights_within_slack_cap(self, monkeypatch):
+        """Adding /busy must preserve existing native commands and its fallback."""
+        monkeypatch.setattr("hermes_cli.commands._resolve_config_gates", lambda: set())
+        monkeypatch.setattr("hermes_cli.commands._iter_plugin_command_entries", lambda: [])
+
+        manifest = slack_app_manifest()
+        commands = [entry["command"] for entry in manifest["features"]["slash_commands"]]
+
+        assert len(commands) <= 50
+        assert len(commands) == len(set(commands))
+        assert {"/hermes", "/insights"} <= set(commands)
+        assert "/busy" not in commands
+        assert slack_subcommand_map()["busy"] == "/busy"
 
 
 # ---------------------------------------------------------------------------

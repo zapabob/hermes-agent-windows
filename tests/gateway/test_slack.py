@@ -3477,6 +3477,28 @@ class TestSlashCommands:
         msg = adapter.handle_message.call_args[0][0]
         assert msg.text == "/btw run the tests"
 
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("mode", ["queue", "steer", "interrupt", "status"])
+    async def test_busy_routes_through_hermes_without_native_slot(self, adapter, mode):
+        """The capped manifest's /hermes route still delivers busy commands."""
+        command = {
+            "command": "/hermes",
+            "text": f"busy {mode}",
+            "user_id": "U1",
+            "channel_id": "C1",
+            "thread_ts": "123.456",
+        }
+
+        await adapter._handle_slash_command(command)
+
+        adapter.handle_message.assert_awaited_once()
+        event = adapter.handle_message.await_args.args[0]
+        assert event.message_type == MessageType.COMMAND
+        assert event.text == f"/busy {mode}"
+        assert event.source.chat_id == "C1"
+        assert event.source.user_id == "U1"
+        assert event.source.thread_id == "123.456"
+
 
 # ---------------------------------------------------------------------------
 # TestMessageSplitting

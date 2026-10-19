@@ -423,6 +423,15 @@ gateway:
   credits:
     not_logged_in:            "No has iniciado sesión en Nous Portal. Inicia sesión para ver tu saldo de créditos y recargar."
 
+  busy:
+    status: "Modo de entrada durante la ejecución para esta conversación: `{mode}`.\n{behavior}"
+    saved: "Modo de entrada durante la ejecución guardado para esta conversación: `{mode}`.\n{behavior}"
+    usage: "Uso: /busy queue|steer|interrupt|status"
+    save_failed: "No se pudo guardar el modo de entrada durante la ejecución. El modo anterior sigue activo."
+    behavior_queue: "Los mensajes posteriores esperan sus propios turnos en orden de llegada."
+    behavior_steer: "Los mensajes posteriores orientan el turno activo; si no es posible, se añaden a la cola."
+    behavior_interrupt: "Los mensajes posteriores interrumpen el turno activo; se siguen aplicando las protecciones existentes para los subagentes y la compresión."
+
   verbose:
     not_enabled:           "El comando `/verbose` no está habilitado para plataformas de mensajería.\n\nHabilítalo en `config.yaml`:\n```yaml\ndisplay:\n  tool_progress_command: true\n```"
     mode_off:              "⚙️ Progreso de herramientas: **OFF** — no se muestra actividad de herramientas."
