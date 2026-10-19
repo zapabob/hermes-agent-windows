@@ -660,3 +660,59 @@ The r3 integration revocation takes precedence over original accepted/local
 fields: retained PTY natural-completion monitoring is a later OPEN condition
 under R4 repair. These historical credential results do not accept R4, broad
 PTY/process lifecycle, complete product-entry E2E, vendor independence or T09.
+
+## R4 actual seal readback and retained integration hold
+
+Parent finally read both actual R4 files at 2026-10-19T21:17:15.1168861Z:
+handoff.json is 133,136 bytes with SHA256 247c26c891a4d5d727b6de73c90b2011458b0f8970b64cd064fe99568dfcc91a;
+delta-from-r3.patch is 13,467 bytes with SHA256 61c17a30c8850560a88f2928d25f64d9c4148a53eeec0229f86b00693ab9426f.
+JSON parsing and text readback succeeded. Complete absolute paths, literal
+hashes and actual filesystem readback were forwarded in the reviewer message
+body. Earlier absent-file notices were not treated as a freeze.
+
+The parent and independent READONLY reviewer reconciled all 14 candidate
+source/test files, 15 saved graph files/projection, 140 named evidence hashes,
+28 JUnits/Jobs and old r3 1,441/r2 5,969 preserved files. Normal unique passes
+are 223, consisting of 120 required-scope nodes plus 103 extra API nodes from
+an accidentally omitted -k filter. The original receipts retain that deviation.
+Eighteen fault variants produce 58 failed occurrences over 54 unique nodes,
+all GREEN normally; errors/skips/refusals/recovery/survivors are zero in the
+qualified rows. Immutable graph integrity is normal with 935 nodes/2,726 edges.
+Historical per-run cross-input bindings do not prove a current whole SHA.
+
+Independent source review supports the failed-monitoring natural completion
+correction but finds another P2 in the healthy-reader-reopened path. A normal
+PTY reader can end while an owned descendant remains; the registry correctly
+reopens the session, but after that descendant naturally exits it skips the
+public completion reconciliation because monitoring_failed is false. This is
+a source condition, not a reviewer native reproduction claim. R4 stays PARTIAL,
+P2 OPEN and integration HOLD; native PYWINPTY remains unqualified. R5 is
+authorized to obtain the actual owned healthy-reader RED and minimally fix it,
+while preserving this seal and all earlier evidence unchanged.
+
+CONTINUATION_PROCESS_R4_REVIEW_20261020.json records the complete readback and
+qualification boundaries. No R4 product files are committed by this checkpoint.
+
+## Approval persistence RED and next clarify generation
+
+Parent independently rehashed all 77 T06d RED evidence files, checked the eight
+graph files/321 complete spans against their frozen baseline, and read the
+immutable 618-node/1,795-edge database. Sixteen saved cases contain 11 legitimate
+scope/FIFO/once positives and five behavioral REDs: three retired caller session
+grants and two replacement denial tallies cleared by old callers. Independent
+review confirms the real wait/caller/boundary/persistence route. The same
+boundary retires registration and increments epoch, so these do not isolate
+the necessity of epoch alone. The denial values are actual _record_denial
+updates, not three real human denial interactions. Product approval remains
+unchanged pending the next stable Gateway generation.
+
+Clarify's older coercion retirement and already-registered global interrupt
+gaps have bounded corrections, while a new RED-only generation reproduces
+post-release prose entering a replacement queue, old reply typing resumption,
+and callback registration after global hard interrupt. The first attempted
+global case had a fixture setup defect and is excluded; the corrected run has
+three behavioral REDs and three current positives, zero errors/skips and
+unchanged source. R4 reviewer snapshot readback released Nash's separate product
+hold for these minimal owner/generation repairs. Earlier 190 positive cases
+and legacy four failing teardown expectations are preserved separately from
+their ID-specific test migration. Whole T02/T06 acceptance remains OPEN.

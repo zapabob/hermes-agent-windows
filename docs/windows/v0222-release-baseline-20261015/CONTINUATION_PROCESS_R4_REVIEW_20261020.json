@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "status": "PARTIAL_P2_OPEN_INTEGRATION_HOLD",
+  "scope": "API/process ownership and retained PTY monitoring lifecycle; no whole Gateway, clarify, native PYWINPTY or whole-SHA acceptance.",
+  "candidate": {
+    "gateway/platforms/api_server.py": "d6294b3ea1e04b014b2ba3692e7e2ca153cf6ba87186a0b030fbf17a559601c7",
+    "tools/process_registry.py": "7dfb2816d597541b96e4f86ba76d40b6c6a7c38ce7f9ddadb1cef1f137846168"
+  },
+  "seal": {
+    "parent_readback_at_utc": "2026-10-19T21:17:15.1168861Z",
+    "handoff": {
+      "path": "C:/Users/downl/.codex/worktrees/v0222-selective-20261017/hermes-agent/tmp/t06-api-process-20261020-r4/handoff.json",
+      "bytes": 133136,
+      "sha256": "247c26c891a4d5d727b6de73c90b2011458b0f8970b64cd064fe99568dfcc91a",
+      "json_readback": true
+    },
+    "delta": {
+      "path": "C:/Users/downl/.codex/worktrees/v0222-selective-20261017/hermes-agent/tmp/t06-api-process-20261020-r4/delta-from-r3.patch",
+      "bytes": 13467,
+      "sha256": "61c17a30c8850560a88f2928d25f64d9c4148a53eeec0229f86b00693ab9426f",
+      "first_line": "diff --git a/tools/process_registry.py b/tools/process_registry.py"
+    },
+    "reviewer_independent_readback_confirmed": true
+  },
+  "saved_evidence_reconciled": {
+    "candidate_source_test_files": 14,
+    "graph_files_including_projection": 15,
+    "named_receipt_hashes": 140,
+    "selected_jobs_and_junits": 28,
+    "normal_unique_passes": 223,
+    "required_scope_passes": 120,
+    "additional_api_passes": 103,
+    "api_selection_deviation": "Final API checkpoint omitted its -k filter, so 113 cases ran instead of 10. Additional 103 cases retained truthfully; receipts unchanged and no count-matching rerun.",
+    "fault_variants": 18,
+    "fault_failed_occurrences": 58,
+    "fault_unique_failed_nodes": 54,
+    "all_fault_failed_nodes_normal_green": true,
+    "r3_baseline_natural_completion_failures": 4,
+    "junit_errors": 0,
+    "junit_skips": 0,
+    "accepted_jobs_guard_refusals_recovery_survivors": 0,
+    "preserved_r3_files": 1441,
+    "preserved_r2_files": 5969,
+    "parent_audit": "tmp/continuation-20261020/parent-process-r4-audit.json",
+    "parent_audit_program": "tmp/continuation-20261020/parent_process_r4_audit.py"
+  },
+  "immutable_graph": {
+    "sha256": "d885aca725ebd4cd756132d40dd43a144543221df4ebed2e635d839cbc7bb7aa",
+    "integrity": "ok",
+    "nodes": 935,
+    "edges": 2726,
+    "current_reap_helper_equals_saved_projection_at_parent_audit": true
+  },
+  "supported_slice": "Failed reader construction/start monitoring now observes actual parent exit plus retained native Job emptiness through public poll/wait. Four owned parent/child Job cases support this slice. Earlier ownership, refusal/unknown lifecycle, repeated identity check, replay/capability retention, HANDLE, Unicode and pruning guards retain bounded source/evidence support.",
+  "open_p2": {
+    "kind": "SOURCE_CONDITION_NOT_NATIVE_REPRODUCED_BY_REVIEWER",
+    "trigger": "A successfully started PTY reader finishes at root EOF while a retained owned descendant is still alive; _move_to_finished reopens the session with termination pending.",
+    "remaining_failure": "After the descendant exits naturally and the Job is empty, monitoring_failed remains false, process is None and the reader is dead. Public refresh/reconcile skips this healthy-reader-reopened path, leaving running/wait timeout indefinitely.",
+    "coverage_gap": "The four new R4 completion cases inject reader construction/start failure. The reader lifetime case does not assert public completion after scope empties.",
+    "next_generation": "R5 owned healthy-reader parent/child public lifecycle RED before minimal correction; preserve R4 seal and receipts unchanged."
+  },
+  "cross_input_scope": "Historical per-job inputs only: 25 retained runs and three final rebindings. The shared run/clarify/approval/kernel checkpoint is not a current moving Gateway whole-SHA qualification.",
+  "r3_acceptance": "REVOKED; preserved historical evidence does not reinstate acceptance.",
+  "other_open": [
+    "native PYWINPTY monitoring qualification",
+    "existing fixture readiness read race and portable CI stability",
+    "clarify post-release routing, typing and global late-registration generation under separate repair",
+    "post-decision approval persistence under separate RED-only evidence",
+    "full process trees, POSIX, model/runtime/OS effects and whole-SHA CI"
+  ],
+  "product_committed_from_r4": false,
+  "published": false
+}
