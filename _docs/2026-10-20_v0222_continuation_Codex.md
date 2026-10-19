@@ -179,3 +179,34 @@ selected-source evidence, not whole-repository or whole-campaign acceptance.
 CONTINUATION_T03B_20261020.json binds the final source, commands and results;
 expanded private argv/resources stay under tmp, while canonical commands use
 workspace/runtime placeholders. The LSP trust WIP is not part of this slice.
+
+## T05 scoped MCP protocol qualification and Windows fixture repair
+
+The fresh-process qualification exposed a fixture sharing race: Windows could
+publish a marker path before its contents were readable. The helper now retries
+only missing-file and permission failures under the original eight-second
+monotonic deadline, and still rejects any marker other than exact observed bytes.
+No production MCP owner was modified and no assertion was removed.
+
+A real deny-read Windows handle supplies the deterministic RED control. The
+historical RED fails the expected behavioral wait assertion, without collection
+errors or forced cleanup. Later test scaffolding changes improve cleanup, so the
+record does not claim identical final test bytes across that historical RED.
+The final reviewed process suite passes five cases: real fresh-process saved
+disable/reenable, lock/unlock, abort while locked, invalid bytes, bounded missing
+marker. The actual stdio/loopback HTTP suite passes four more cases with nonce
+file effects. All accepted runs have zero failures, skips, timeout, forced Job
+recovery and surviving owned descendants, with unchanged bound source bytes.
+
+Independent review closed two P2 findings: cleanup must verify and terminate the
+actual worker separately from its venv launcher, and WriteFile must be inside
+the protected try with an independent finally for the Windows handle. Final
+source review has no remaining P1/P2 in this two-file scope. Parent independently
+audited the final JUnit and source hashes. Pinned CodeGraph 1.6.0 covers ten exact
+selected owner/test files, 1,555 nodes / 4,372 edges, zero pending changes; helper
+caller/impact outputs are retained. This is selected protocol qualification,
+not full Desktop/OAuth/profile acceptance or complete dynamic call coverage.
+
+CONTINUATION_MCP_20261020.json records the scoped result and exclusions. Failed
+and intermediate runs remain private under the task scratch directory. No
+production restart, dependency change, release or push was performed.

@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "status": "SCOPED_MCP_PROTOCOL_AND_FIXTURE_VERIFIED_CAMPAIGN_PARTIAL",
+  "requirement": "T05 / C02 saved-policy protocol qualification",
+  "baseline": "d50995b06d636e6118214b68789f344882773f3a",
+  "change": "Bounded retry of owned observation-marker sharing failures; strict marker bytes and eight-second monotonic deadline retained.",
+  "production_mcp_code_changed": false,
+  "source_sha256": {
+    "tests/fixtures/mcp_saved_policy_process.py": "9d8f095aac5abb7b19e02424bcff669d08a1d2c42d6c95d8a19189539dc4ef35",
+    "tests/tools/test_mcp_saved_policy_process_windows.py": "8ec6dd414eca6f36e290593bf4426ecf1a34164f9bc348e85cd3cdea4b425f99"
+  },
+  "runs": [
+    {
+      "label": "t05-native-final",
+      "cases": [
+        "test_real_transport_disable_reenable_retained_registry_and_restart[stdio]",
+        "test_real_transport_disable_reenable_retained_registry_and_restart[http]",
+        "test_real_transport_admitted_completion_then_explicit_interrupt_cleanup[stdio]",
+        "test_real_transport_admitted_completion_then_explicit_interrupt_cleanup[http]"
+      ],
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "exit": 0,
+      "timeout": false,
+      "forced_recovery": false,
+      "surviving_owned_processes": 0,
+      "junit_sha256": "d578c838ac08d584ac7dde72c7f67d9de98f7e7d6d34b5ef8a0455784db09cbf",
+      "result_sha256": "204ed3786f92fc72ae3825a63f8af5324bb9c85abfe5d7284fb72f5800a43da5"
+    },
+    {
+      "label": "t05-sharing-closed",
+      "cases": [
+        "test_public_saved_policy_disabled_and_reenabled_in_fresh_processes",
+        "test_fresh_worker_waits_for_observation_file_sharing_lock[unlock]",
+        "test_fresh_worker_waits_for_observation_file_sharing_lock[abort-after-observation]",
+        "test_observation_barrier_rejects_wrong_bytes",
+        "test_observation_barrier_missing_file_is_bounded"
+      ],
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "exit": 0,
+      "timeout": false,
+      "forced_recovery": false,
+      "surviving_owned_processes": 0,
+      "junit_sha256": "e6504b0b47259f8806d75850408313200bed9938bcbf36febcfb6b57073729c6",
+      "result_sha256": "ea2e47ef3517413d46de67b70b51d94b71b071c37c92a89abd8546d33bce4dee"
+    }
+  ],
+  "red": {
+    "label": "t05-sharing-red",
+    "cases": [
+      "test_fresh_worker_waits_for_observation_file_sharing_lock"
+    ],
+    "tests": 1,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0,
+    "exit": 1,
+    "timeout": false,
+    "forced_recovery": false,
+    "surviving_owned_processes": 0,
+    "junit_sha256": "194d839c10a16b884ed0ac40a16280eea5b6217679f358543ead1b0429f0c999",
+    "result_sha256": "0700b4b67b70595219a399ee281581061c528f3b03567a46dee73b9fe6ff025b"
+  },
+  "red_limit": "Historical real Windows deny-read assertion failed before helper fix. Later test cleanup scaffolding changed; not an identical-final-test-bytes RED claim.",
+  "effects": [
+    "Actual stdio and loopback HTTP MCP server nonce-file effects.",
+    "Saved disabled policy blocks cold child spawn and effects; saved reenable restores actual effects in a fresh child.",
+    "Retained registry references obey RPC admission after policy change; already admitted calls may complete.",
+    "Real Windows deny-read handle forces actual child read failure before unlock; worker waits and then completes.",
+    "Controlled failure before unlock closes handle and verified actual worker plus launcher; wrong bytes and missing marker fail boundedly."
+  ],
+  "review": {
+    "agent": "01a15536-7bbe-72e0-8917-0ccc96a9f945",
+    "mode": "independent read-only source review",
+    "findings_closed": [
+      "Venv launcher-only cleanup replaced by separately verified actual-worker cleanup.",
+      "WriteFile moved inside protected try; independent finally closes retained handle even if process cleanup raises."
+    ],
+    "remaining_P1_P2_in_scope": 0,
+    "source_review_is_not_execution_proof": true
+  },
+  "graph": {
+    "version": "1.6.0",
+    "files": 10,
+    "nodes": 1555,
+    "edges": 4372,
+    "pending_changes": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "scope": "Exact ten-file owner/test selection, plus helper callers/impact; no full repository or dynamic-edge completeness claim."
+  },
+  "excluded": [
+    "t05-mcp-fresh-process failed before fixture repair",
+    "intermediate sharing runs superseded by reviewed final sources"
+  ],
+  "not_run": [
+    "Desktop Security Center UI",
+    "OAuth/profile/connection full matrix",
+    "full T05 and full campaign integration",
+    "candidate cloud CI",
+    "full semantic mutation campaign"
+  ],
+  "production_restart": false,
+  "published": false
+}

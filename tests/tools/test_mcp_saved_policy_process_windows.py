@@ -141,3 +141,107 @@ def test_public_saved_policy_disabled_and_reenabled_in_fresh_processes(tmp_path,
             record_property("fresh_process_" + phase, json.dumps(receipt, sort_keys=True))
         assert seen_processes[0]["created"] != seen_processes[1]["created"]
         assert all(row.get("nonce") != "cold-disabled" for row in rows(effects))
+
+
+@pytest.mark.parametrize("fault", [False, True], ids=["unlock", "abort-after-observation"])
+def test_fresh_worker_waits_for_observation_file_sharing_lock(tmp_path, fault):
+    """A visible Windows handoff file is not necessarily readable yet."""
+    import win32con
+    import win32file
+    from contextlib import nullcontext
+
+    class OwnedControlStop(RuntimeError):
+        pass
+
+    owned = tmp_path / "mcp-admission-owned"
+    owned.mkdir()
+    home = owned / "owned-hermes"
+    home.mkdir()
+    receipt = owned / "lock-control.json"
+    go = receipt.with_suffix(".observed")
+    attempted = owned / "read-attempted"
+    program = """
+import sys
+from pathlib import Path
+from tests.fixtures import mcp_saved_policy_process as worker
+go, attempted = Path(sys.argv[1]), Path(sys.argv[2])
+original = Path.read_text
+def observed_read(path, *args, **kwargs):
+    if path == go:
+        attempted.write_text('attempted', encoding='utf-8')
+    return original(path, *args, **kwargs)
+Path.read_text = observed_read
+sys.argv = ['worker', *sys.argv[3:]]
+worker.main()
+"""
+    env = dict(os.environ, HERMES_HOME=str(home), HOME=str(owned), USERPROFILE=str(owned))
+    argv = [sys.executable, "-B", "-c", program, str(go), str(attempted),
+            "--owned", str(owned), "--name", "native_m02_stdio", "--nonce", "sharing-control",
+            "--receipt", str(receipt)]
+    # Create and retain a real deny-read handle before the worker can see it.
+    handle = win32file.CreateFile(str(go), win32con.GENERIC_WRITE, 0, None,
+                                 win32con.CREATE_ALWAYS, win32con.FILE_ATTRIBUTE_NORMAL, None)
+    child = None
+    launcher_identity = actual_identity = None
+    with pytest.raises(OwnedControlStop) if fault else nullcontext():
+        try:
+            win32file.WriteFile(handle, b"observed")
+            with (owned / "worker.log").open("wb") as log:
+                child = subprocess.Popen(argv, cwd=ROOT, env=env, stdin=subprocess.DEVNULL,
+                                         stdout=log, stderr=subprocess.STDOUT, creationflags=subprocess.CREATE_NO_WINDOW)
+                launcher = psutil.Process(child.pid)
+                launcher_identity = {"pid": launcher.pid, "created": launcher.create_time(),
+                                     "exe": launcher.exe(), "argv": launcher.cmdline()}
+                birth = receipt.with_suffix(".birth.json")
+                wait_for(lambda: birth.exists() or child.poll() is not None)
+                observed = json.loads(birth.read_text(encoding="utf-8"))
+                actual = _same_process(observed)
+                assert actual is not None
+                assert actual.pid == launcher.pid or actual.pid in {p.pid for p in launcher.children(recursive=True)}
+                assert "-c" in observed["argv"] and program in observed["argv"]
+                assert str(owned) in observed["argv"] and str(receipt) in observed["argv"]
+                actual_identity = observed  # Adopt only after exact identity/lineage checks.
+                wait_for(lambda: attempted.exists() or child.poll() is not None)
+                assert attempted.exists(), "Worker never reached the real locked read"
+                # Waiting is required while the retained handle denies reads.
+                with pytest.raises(subprocess.TimeoutExpired):
+                    child.wait(timeout=0.2)
+                if fault:
+                    raise OwnedControlStop("Exercise verified real-worker cleanup before unlock")
+                handle.Close()
+                handle = None
+                assert child.wait(timeout=30) == 0
+        finally:
+            # A venv shim is not the actual worker. Terminate only the separately
+            # verified descendant, while an unobserved worker keeps its barrier.
+            try:
+                if actual_identity is not None:
+                    actual = _same_process(actual_identity)
+                    if actual is not None:
+                        actual.terminate()
+                        actual.wait(timeout=8)
+                if child is not None:
+                    child.wait(timeout=8 if actual_identity is not None else 12)
+            finally:
+                if handle is not None:
+                    handle.Close()
+    assert _same_process(launcher_identity) is None
+    assert _same_process(actual_identity) is None
+    if not fault:
+        assert json.loads(receipt.read_text(encoding="utf-8"))["survivors"] == []
+
+
+def test_observation_barrier_rejects_wrong_bytes(tmp_path):
+    from tests.fixtures.mcp_saved_policy_process import wait_for_observation
+
+    marker = tmp_path / "wrong.observed"
+    marker.write_text("not-an-acknowledgement", encoding="utf-8")
+    with pytest.raises(ValueError, match="Invalid owned observation"):
+        wait_for_observation(marker, timeout=0)
+
+
+def test_observation_barrier_missing_file_is_bounded(tmp_path):
+    from tests.fixtures.mcp_saved_policy_process import wait_for_observation
+
+    with pytest.raises(TimeoutError, match="observation marker remained unavailable"):
+        wait_for_observation(tmp_path / "never-observed", timeout=0)

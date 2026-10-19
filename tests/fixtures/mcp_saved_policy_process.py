@@ -12,6 +12,23 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 
+def wait_for_observation(path: Path, *, timeout: float = 8.0) -> None:
+    """Wait for a readable handoff; Windows visibility can precede read access."""
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            marker = path.read_text(encoding="utf-8")
+        except (FileNotFoundError, PermissionError) as exc:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("Owned observation marker remained unavailable") from exc
+            time.sleep(min(0.025, remaining))
+            continue
+        if marker != "observed":
+            raise ValueError("Invalid owned observation marker")
+        return
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--owned", type=Path, required=True)
@@ -35,10 +52,7 @@ def main():
         json.dump(birth, stream)
     birth_temporary.replace(birth_path)
     # Hold only for actual identity/lineage observation; no product owner is mocked.
-    deadline = time.monotonic() + 8
-    while not go_path.exists() and time.monotonic() < deadline:
-        time.sleep(0.025)
-    assert go_path.read_text(encoding="utf-8") == "observed"
+    wait_for_observation(go_path)
     from tools import mcp_tool as core
     from tools.registry import registry
     receipt = {"process": {"pid": me.pid, "created": me.create_time(), "exe": me.exe(), "argv": me.cmdline()},
