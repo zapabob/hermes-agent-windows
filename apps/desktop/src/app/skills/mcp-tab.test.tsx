@@ -18,6 +18,7 @@ const effects = vi.hoisted(() => ({
   config: vi.fn(),
   notify: vi.fn()
 }))
+
 vi.mock('@/hermes', async importOriginal => ({
   ...(await importOriginal<typeof HermesApi>()),
   getHermesConfigRecord: () => effects.config(),
@@ -117,6 +118,7 @@ describe('MCP save feedback reflects the returned contract and profile', () => {
         })
     )
     const gateway = { request: effects.request } as unknown as HermesApi.HermesGateway
+
     const view = (profile: string) => (
       <QueryClientProvider client={queryClient}>
         <MemoryRouter>
@@ -124,6 +126,7 @@ describe('MCP save feedback reflects the returned contract and profile', () => {
         </MemoryRouter>
       </QueryClientProvider>
     )
+
     const rendered = render(view('owned-profile'))
     fireEvent.click(await screen.findByRole('switch', { name: 'owned' }))
     await waitFor(() => expect(effects.save).toHaveBeenCalledTimes(1))

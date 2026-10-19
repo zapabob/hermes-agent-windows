@@ -188,6 +188,7 @@ describe('Desktop MCP reserved startup failure ownership', () => {
     if (cleanupFails) {
       bridge.cancel.mockRejectedValue(new Error('Owned native cleanup failed'))
     }
+
     await expect(completeMcpDesktopOAuth({ serverName: 'reports' })).rejects.toBe(failure)
     expect(failure.message).toBe('Owned original worker startup cause')
     expect(bridge.cancel).toHaveBeenCalledExactlyOnceWith('listener-1')
