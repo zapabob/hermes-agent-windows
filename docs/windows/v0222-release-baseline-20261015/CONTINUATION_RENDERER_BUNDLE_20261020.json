@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "status": "RESTRICTED_RENDERER_BUNDLE_PASS_NATIVE_DESKTOP_OPEN",
+  "scope": "Actual existing Vite production config; output/cache redirected to new owned paths. Exact optional mapped-drive probe denied using asynchronous EPERM callback.",
+  "versions": {
+    "node": "24.19.0",
+    "vite": "8.2.1",
+    "rolldown": "1.2.2"
+  },
+  "run": {
+    "exit": 0,
+    "source_unchanged": true,
+    "source_runtime_harness_bindings": 2370,
+    "timeout": false,
+    "forced_recovery": false,
+    "owned_survivors": 0,
+    "result_sha256": "bfae8962a1cb7e6e6df206bc3d51a3fec266bb879df066a96d3139a536fc0291",
+    "log_sha256": "4a32b82b125cf485f740e4b82d825b08ac01152a1848f802bc885cec50a9a691",
+    "guard_sha256": "9246390d4f9855fc6d201da2a465e02362485264b69a3b0494f5c28f4077ed25"
+  },
+  "bundle": {
+    "path": "C:/Users/downl/.codex/worktrees/v0222-selective-20261017/hermes-agent/artifacts/continuation-desktop-restricted-20261020/renderer-app-temp/dist",
+    "files": 349,
+    "bytes": 40736870,
+    "manifest": "C:/Users/downl/.codex/worktrees/v0222-selective-20261017/hermes-agent/artifacts/continuation-desktop-restricted-20261020/bundle-manifest.json",
+    "manifest_sha256": "0ab149d712db221276e2688adef08cc273061ed29e257e7c0f3355ce5f650cd3",
+    "html_sha256": "6a5cf8f0ee086777052d04dc9950bc3c3b5bbd789e0e0c4668b44af86c4bec1e",
+    "module_and_stylesheet_entries": [
+      {
+        "path": "dist/assets/index-CvOzKEif.js",
+        "sha256": "32bb342c174a516074ee6aa4f8a03d7ed7c7425617f54dd4be803248a6322333"
+      },
+      {
+        "path": "dist/assets/glyph-spinner-DL5QKO4M.css",
+        "sha256": "15417918dcbbc0f57cf5260a05ab27a116972101822355aaaac10f2c57bc546e"
+      },
+      {
+        "path": "dist/assets/index-Bty1jYhb.css",
+        "sha256": "0c0c44d678b1c98c8bbb8334a4d94afcb6ced4634999b044b22f0cad8c31cb54"
+      }
+    ]
+  },
+  "guard": {
+    "refused": [
+      {
+        "kind": "optional-mapping-probe",
+        "command": "net use",
+        "executed": false,
+        "disposition": "callback EPERM, no stdout/stderr data"
+      }
+    ],
+    "snapshots": [
+      {
+        "sha256": "3ecb1f8262574665aaafe9388d684d29e2a18fcfbf741c4806a30c0110036b1b",
+        "bytes": 26287
+      }
+    ]
+  },
+  "evidence_root": "C:/Users/downl/.codex/worktrees/v0222-selective-20261017/hermes-agent/artifacts/continuation-desktop-restricted-20261020",
+  "prior_attempts": [
+    "Original strict synchronous-denial build failure retained unchanged.",
+    "Separate asynchronous-denial attempt failed at app-local .vite-temp mkdir; retained unchanged."
+  ],
+  "implementation": "Guard derivative only: exact verified Vite optional-probe caller receives policy error; no child process or external command data is supplied. Existing Vite error fallback and actual compilation execute.",
+  "binding_limit": "Tracked build inputs, Node executable, direct Vite implementation and Rolldown package metadata bound before/after. This is not a complete transitive/native dependency closure or whole-OS write/network monitor.",
+  "unqualified": [
+    "Uninstrumented unrestricted host build",
+    "Electron executable/addon ABI and ConPTY effect",
+    "GUI/E2E and packaged app",
+    "Installer/release",
+    "Full T04/T10 or whole-campaign acceptance"
+  ]
+}

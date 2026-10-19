@@ -516,3 +516,29 @@ import, model/recording read, download, capture, recognition or production
 inference occurred. No schema/ABC/toggle or fixed-text partial is added as a
 substitute for actual audio-derived partial/final results. The asset gate and
 all useful-effect/runtime requirements remain unaccepted.
+
+## T04/T10 renderer bundle under explicit probe denial
+
+A separate guard derivative returns asynchronous EPERM for the exact existing
+Vite optimizeSafeRealPathSync net use callback. It executes no command and
+supplies no external data; the refusal remains recorded. Other child operations
+remain rejected. This lets actual Vite config externalization use its existing
+error fallback. The intermediate attempt then stopped at the app-local config
+scratch mkdir. Both earlier attempts, helpers, receipts and logs remain intact.
+
+After verifying the app-local node_modules path and its ancestors are physical
+worktree directories, a new derivative permits only newly named Vite timestamp
+configuration files there. Existing files are not overwritten or removed. The
+actual production build succeeds in 75 seconds with 349 bundle files totaling
+40,736,870 bytes. Parent rehashed all outputs, checked three local HTML module/
+stylesheet entries and all 2,370 before/after source/runtime/harness bindings.
+The Job has zero timeout, forced recovery and survivors; sources are unchanged.
+One optional mapped-drive command remains refused and unexecuted. The generated
+26,287-byte config snapshot and complete bundle hash manifest are retained.
+
+CONTINUATION_RENDERER_BUNDLE_20261020.json qualifies this restricted renderer
+bundle only. Direct Vite implementation and Node executable are bound, but a
+complete transitive/native dependency closure and whole-OS write/network monitor
+are not established. Existing config deprecation and plugin-size warnings remain
+in the raw log. This does not accept Electron executable/native ABI, ConPTY,
+GUI/E2E, packaging, installer, unrestricted host build, full T04/T10 or release.
