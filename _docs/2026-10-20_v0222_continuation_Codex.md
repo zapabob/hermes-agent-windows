@@ -855,3 +855,12 @@ RPC chain in ui-tui. Non-whitespace source equality is verified against HEAD;
 the branch response guard and session identity behavior are unchanged. Carry
 metrics are regenerated for the same formatting delta. No lint suppression or
 test expectation is changed. Exact-SHA cloud checks remain required.
+
+## Committed HEAD carry report ordering
+
+The cloud 1f997f downstream-policy job correctly rejected a report generated
+before the dependency source commit. carry_metrics intentionally measures
+committed HEAD, so an uncommitted source change is absent from its input.
+Regenerated both reports after all source commits through 0b31f372e3a and
+committed only excluded _docs paths. The check is rerun after this reports-only
+commit and must remain current. The source and CI gate are unchanged.
