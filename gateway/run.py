@@ -2742,9 +2742,11 @@ from gateway.turn_lease import (
 from gateway.session_state import (
     SERVICE_TIER_UNSET as _SERVICE_TIER_UNSET,
     SessionState,
+    SharedInputRoute,
     legacy_dict_property,
     legacy_lease_token_property,
 )
+from gateway.session_state_store import SessionStateStore
 from gateway.authz_mixin import GatewayAuthorizationMixin
 from gateway.kanban_watchers import GatewayKanbanWatchersMixin
 from gateway.slash_commands import GatewaySlashCommandsMixin
@@ -4390,9 +4392,13 @@ class TurnRunner:
     same module exactly as before.
     """
 
-    def __init__(self, runner: "GatewayRunner", ctx: TurnContext) -> None:
+    def __init__(self, runner: "GatewayRunner", ctx: TurnContext, *, shared_input_owner=None) -> None:
         self._runner = runner
         self._ctx = ctx
+        capture = getattr(runner, "_capture_shared_input_owner", None)
+        self._input_owner = shared_input_owner or (
+            capture(ctx.session_key, ctx.run_generation) if ctx.session_key and callable(capture) else None
+        )
 
     def progress_callback(self, event_type: str, tool_name: str = None, preview: str = None, args: dict = None, **kwargs):
         """Callback invoked by agent on tool lifecycle events."""
@@ -6445,8 +6451,9 @@ class TurnRunner:
         _persist_user_timestamp_override: Optional[float] = ctx.persist_user_timestamp
 
         # Prepend pending model switch note so the model knows about the switch
-        _pending_notes = getattr(self._runner, '_pending_model_notes', {})
-        _msn = _pending_notes.pop(ctx.session_key, None) if ctx.session_key else None
+        _msn = self._runner._consume_pending_shared_input(
+            ctx.session_key, "_pending_model_notes", run_generation=ctx.run_generation, owner=self._input_owner
+        )
         if _msn:
             ctx.message = _msn + "\n\n" + ctx.message
 
@@ -6547,11 +6554,11 @@ class TurnRunner:
         # queue pattern as CLI: prepend to the NEXT user message, then
         # clear. Nothing was written to the transcript out-of-band, so
         # message alternation stays intact.
-        _pending_notes = getattr(self._runner, "_pending_skills_reload_notes", None)
-        if _pending_notes and ctx.session_key and ctx.session_key in _pending_notes:
-            _srn = _pending_notes.pop(ctx.session_key, None)
-            if _srn:
-                ctx.message = _srn + "\n\n" + ctx.message
+        _srn = self._runner._consume_pending_shared_input(
+            ctx.session_key, "_pending_skills_reload_notes", run_generation=ctx.run_generation, owner=self._input_owner
+        )
+        if _srn:
+            ctx.message = _srn + "\n\n" + ctx.message
 
         # Safety net: a startup auto-resume event carries empty
         # text and relies on the resume_pending branch above to supply the
@@ -6588,7 +6595,9 @@ class TurnRunner:
             # attachment, wrap the user turn as an OpenAI-style multimodal
             # content list. Consume-and-clear so subsequent turns on the same
             # runner instance don't re-attach stale images.
-            _native_imgs = self._runner._consume_pending_native_image_paths(ctx.session_key)
+            _native_imgs = self._runner._consume_pending_native_image_paths(
+                ctx.session_key, run_generation=ctx.run_generation, owner=self._input_owner
+            )
             if _native_imgs:
                 try:
                     from agent.image_routing import build_native_content_parts
@@ -7029,12 +7038,15 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
     _update_prompt_pending = legacy_dict_property("_update_prompt_pending")
 
     # -- SessionState accessors -----------------------------------------
-    def _sessions_map(self) -> Dict[str, "SessionState"]:
+    def _sessions_map(self) -> SessionStateStore:
         """The per-session state map; lazily created so bare test runners
         built via ``object.__new__`` work without ``__init__``."""
         sessions = self.__dict__.get("_sessions")
         if sessions is None:
-            sessions = {}
+            sessions = self.__dict__.setdefault("_sessions", SessionStateStore())
+        if not isinstance(sessions, SessionStateStore):
+            # Compatibility for bare test runners assigning the former dict.
+            sessions = SessionStateStore(sessions)
             self.__dict__["_sessions"] = sessions
         return sessions
 
@@ -7043,8 +7055,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         sessions = self._sessions_map()
         state = sessions.get(session_key)
         if state is None:
-            state = SessionState()
-            sessions[session_key] = state
+            state = sessions.setdefault(session_key, SessionState())
         return state
 
     def _peek_session_state(self, session_key: str) -> Optional["SessionState"]:
@@ -7210,7 +7221,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         # lives in one container — see gateway/session_state.py.  Access via
         # self._session_state(key) (get-or-create) or
         # self._peek_session_state(key) (read-only).
-        self._sessions: Dict[str, SessionState] = {}
+        self._sessions = SessionStateStore()
         # Per-SESSION_ID turn lease (#64934): serializes the
         # [load history → run → flush] region when two ROUTING KEYS resolve
         # to one session_id (switch_session's many-to-one mapping). The
@@ -10416,7 +10427,14 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
     # still small enough to never threaten memory.
     _BUSY_QUEUE_MAX_PENDING = 32
 
-    def _queue_or_replace_pending_event(self, session_key: str, event: MessageEvent) -> None:
+    def _queue_or_replace_pending_event(self, session_key: str, event: MessageEvent, *, shared_input_owner=None) -> None:
+        if shared_input_owner is not None:
+            with shared_input_owner[1].shared_input_lock:
+                if shared_input_owner[0] != session_key or not self._shared_input_owner_is_current(shared_input_owner):
+                    return
+                # Keep validation and both adapter-head / runner-tail writes
+                # in the same critical section as boundary and generation changes.
+                return self._queue_or_replace_pending_event(session_key, event)
         adapter = self._adapter_for_source(event.source)
         if not adapter:
             return
@@ -10473,7 +10491,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
 
         self._enqueue_fifo(session_key, event, adapter)
 
-    async def _prepare_busy_steer_text(self, event: MessageEvent) -> str:
+    async def _prepare_busy_steer_text(self, event: MessageEvent, *, shared_input_owner=None) -> str:
         """Return steerable text for a busy follow-up, transcribing voice first.
 
         Fresh and queued voice messages reach the normal inbound STT pipeline,
@@ -10505,12 +10523,13 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             event.source,
             text,
             log_context="Busy-steer",
+            is_current=(lambda: self._shared_input_owner_is_current(shared_input_owner)) if shared_input_owner else None,
         )
         if not successful_transcripts:
             return text
         return (enriched_text or text).strip()
 
-    async def _handle_active_session_busy_message(self, event: MessageEvent, session_key: str) -> bool:
+    async def _handle_active_session_busy_message(self, event: MessageEvent, session_key: str, *, shared_input_owner=None) -> bool:
         # --- Authorization gate (#17775) ---
         # The cold path (_handle_message) checks _is_user_authorized before
         # creating a session.  The busy path must enforce the same check;
@@ -10529,6 +10548,10 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
 
         effective_mode = self._effective_busy_input_mode(event.source)
 
+        _busy_owner = shared_input_owner or self._capture_shared_input_owner(session_key)
+        if _busy_owner[0] != session_key or not self._shared_input_owner_is_current(_busy_owner):
+            return True
+
         # --- Draining case (gateway restarting/stopping) ---
         if self._draining:
             adapter = self._adapter_for_source(event.source)
@@ -10538,7 +10561,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             reply_anchor = self._reply_anchor_for_event(event)
             thread_meta = self._thread_metadata_for_source(event.source, reply_anchor)
             if self._queue_during_drain_enabled(effective_mode):
-                self._queue_or_replace_pending_event(session_key, event)
+                self._queue_or_replace_pending_event(session_key, event, shared_input_owner=_busy_owner)
                 message = f"⏳ Gateway {self._status_action_gerund()} — queued for the next turn after it comes back."
             else:
                 message = f"⏳ Gateway is {self._status_action_gerund()} and is not accepting another turn right now."
@@ -10649,19 +10672,24 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         # payload text, so queue those through the gateway FIFO to keep their
         # security metadata separate from pending user input.
         if getattr(event, "internal", False) and not event.allow_gateway_control:
-            self._queue_or_replace_pending_event(session_key, event)
+            self._queue_or_replace_pending_event(session_key, event, shared_input_owner=_busy_owner)
             return True
 
         # Metadata may become visible while its worker-thread save reply is
         # still pending. Transfer the old burst synchronously at admission too,
         # so a newly arriving message cannot overtake already accepted input.
-        if self._session_busy_input_mode(event.source) is not None:
-            self._drain_busy_text_debounce(event.source)
+        with _busy_owner[1].shared_input_lock:
+            if not self._shared_input_owner_is_current(_busy_owner):
+                return True
+            if self._session_busy_input_mode(event.source) is not None:
+                self._drain_busy_text_debounce(event.source)
+            running_agent = _busy_owner[1].turn.agent
         if getattr(event, "internal", False):
             return False
 
-        _busy_state = self._peek_session_state(session_key)
-        running_agent = _busy_state.turn.agent if _busy_state else None
+        if not self._shared_input_owner_is_current(_busy_owner):
+            return True
+        _busy_state = _busy_owner[1]
 
         busy_text_mode = self._effective_busy_text_mode(event.source)
         if (
@@ -10673,7 +10701,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 # The adapter's legacy debounce mode is profile-wide. A chat
                 # override must keep each follow-up in our existing FIFO
                 # without changing that shared adapter or merging messages.
-                self._queue_or_replace_pending_event(session_key, event)
+                self._queue_or_replace_pending_event(session_key, event, shared_input_owner=_busy_owner)
                 return True
             return False
 
@@ -10704,6 +10732,8 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             effective_mode == "interrupt"
             and await self._session_has_compression_in_flight(session_key)
         )
+        if not self._shared_input_owner_is_current(_busy_owner):
+            return True
         if demoted_for_compression:
             logger.info(
                 "Demoting busy_input_mode 'interrupt' to 'queue' for session %s "
@@ -10714,7 +10744,9 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         steered = False
         redirected = False
         if effective_mode == "steer":
-            steer_text = await self._prepare_busy_steer_text(event)
+            steer_text = await self._prepare_busy_steer_text(event, shared_input_owner=_busy_owner)
+            if not self._shared_input_owner_is_current(_busy_owner):
+                return True
             # A follow-up qualifies for steering when it is plain text, OR
             # when every attachment is STT-eligible voice media whose
             # transcript was just folded into steer_text — otherwise a voice
@@ -10739,7 +10771,10 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             )
             if can_steer:
                 try:
-                    steered = bool(running_agent.steer(steer_text))
+                    with _busy_state.shared_input_lock:
+                        if not self._shared_input_owner_is_current(_busy_owner):
+                            return True
+                        steered = bool(running_agent.steer(steer_text))
                 except Exception as exc:
                     logger.warning("Gateway steer failed for session %s: %s", session_key, exc)
                     steered = False
@@ -10757,7 +10792,10 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             and hasattr(running_agent, "redirect")
         ):
             try:
-                redirected = bool(running_agent.redirect((event.text or "").strip()))
+                with _busy_state.shared_input_lock:
+                    if not self._shared_input_owner_is_current(_busy_owner):
+                        return True
+                    redirected = bool(running_agent.redirect((event.text or "").strip()))
             except Exception as exc:
                 logger.warning("Gateway redirect failed for session %s: %s", session_key, exc)
                 redirected = False
@@ -10778,7 +10816,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         # turn in arrival order while still preserving photo-burst / album
         # merge semantics for media.
         if not steered and not redirected:
-            self._queue_or_replace_pending_event(session_key, event)
+            self._queue_or_replace_pending_event(session_key, event, shared_input_owner=_busy_owner)
 
         is_queue_mode = effective_mode == "queue"
         is_steer_mode = effective_mode == "steer"
@@ -10803,10 +10841,14 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                         event.source,
                         event.text or "",
                         log_context="Voice-busy-interrupt",
+                        is_current=lambda: self._shared_input_owner_is_current(_busy_owner),
                     )
                 elif not _interrupt_text and _media_urls:
                     _interrupt_text = _build_media_placeholder(event)
-                running_agent.interrupt(_interrupt_text)
+                with _busy_state.shared_input_lock:
+                    if not self._shared_input_owner_is_current(_busy_owner):
+                        return True
+                    running_agent.interrupt(_interrupt_text)
             except Exception:
                 pass  # don't let interrupt failure block the ack
 
@@ -10851,7 +10893,10 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 logger.debug("Busy steer ack suppressed for session %s", session_key)
                 return True
 
-        self._session_state(session_key).turn.busy_ack_ts = now
+        with _busy_state.shared_input_lock:
+            if not self._shared_input_owner_is_current(_busy_owner):
+                return True
+            _busy_state.turn.busy_ack_ts = now
 
         # Build a status-rich acknowledgment. Mobile chat defaults keep this
         # terse; detailed iteration/tool state is still available in logs and
@@ -14417,6 +14462,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                     )
 
                 for key, entry in _expired_entries:
+                    _shared_input_owner = self._capture_shared_input_owner(key)
                     try:
                         try:
                             _parts = key.split(":")
@@ -14465,7 +14511,8 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                         # finalization, /new, and /reset clear them.) See
                         # _CONVERSATION_SCOPED_STATE.
                         self._clear_conversation_scope(
-                            key, reason="expiry_finalized"
+                            key, reason="expiry_finalized",
+                            shared_input_owner=_shared_input_owner,
                         )
                         # Persist the finalized flag to sessions.json AND
                         # state.db (single write-path, #9006) — also drops
@@ -18899,6 +18946,24 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         # No bare text matching — "yes" in normal conversation must not trigger
         # execution of a dangerous command.
 
+        # Resolve before claiming the execution key. Retain authority captured
+        # before the DB read; a completed normalization cannot adopt a newer
+        # destination. Other platforms do not need a thread-pool round trip.
+        if (source.platform == Platform.TELEGRAM and source.chat_type == "dm"
+                and source.chat_id and source.user_id):
+            source, _routing_owner = await self._normalize_source_with_shared_input_owner(source)
+            if _routing_owner is None:
+                return None
+            event.source = source
+            if _routing_owner[0] != _quick_key:
+                _quick_key = _routing_owner[0]
+                _destination_state = self._peek_session_state(_quick_key)
+                if (_destination_state is not None and _destination_state.turn.agent is not None
+                        and await self._handle_active_session_busy_message(event, _quick_key, shared_input_owner=_routing_owner)):
+                    return None
+        else:
+            _routing_owner = self._capture_shared_input_owner(_quick_key)
+
         # This check reads Telegram DM topic state.  Group and non-Telegram
         # traffic cannot be root lobbies, so do not queue their no-op checks on
         # the shared executor before the turn lease is acquired.
@@ -18944,28 +19009,34 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         # message arriving during any of those yields would pass the
         # "already running" guard and spin up a duplicate agent for the
         # same session — corrupting the transcript.
-        _active_session_lease, _limit_message = self._claim_active_session_slot(
-            _quick_key,
-            source,
-        )
-        if _limit_message is not None:
-            logger.info(
-                "Rejecting new active session %s: max_concurrent_sessions reached",
+        _claim_state = _routing_owner[1]
+        with _claim_state.shared_input_lock:
+            if not self._shared_input_owner_is_current(_routing_owner):
+                return None
+            _active_session_lease, _limit_message = self._claim_active_session_slot(
                 _quick_key,
+                source,
             )
-            return _limit_message
-        _claim_state = self._session_state(_quick_key)
-        if _active_session_lease is not None:
-            _claim_state.turn.lease = _active_session_lease
-        _claim_state.turn.agent = _AGENT_PENDING_SENTINEL
-        _claim_state.turn.started_ts = time.time()
+            if _limit_message is not None:
+                logger.info(
+                    "Rejecting new active session %s: max_concurrent_sessions reached",
+                    _quick_key,
+                )
+                return _limit_message
+            if _active_session_lease is not None:
+                _claim_state.turn.lease = _active_session_lease
+            _claim_state.turn.agent = _AGENT_PENDING_SENTINEL
+            _claim_state.turn.started_ts = time.time()
+            _run_generation = self._begin_session_run_generation(_quick_key)
+            _shared_input_owner = (_quick_key, _claim_state, _run_generation,
+                                   _routing_owner[3])
         self._persist_active_agents()
-        _run_generation = self._begin_session_run_generation(_quick_key)
 
         try:
             try:
                 _agent_result = await self._handle_message_with_agent(
-                    event, source, _quick_key, _run_generation
+                    event, source, _quick_key, _run_generation,
+                    shared_input_owner=_shared_input_owner,
                 )
             except TurnLeaseTimeoutError as exc:
                 # This is a rejected message, not a completed agent turn. Return
@@ -19061,6 +19132,8 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         source: SessionSource,
         history: List[Dict[str, Any]],
         session_key: Optional[str] = None,
+        run_generation: Optional[int] = None,
+        shared_input_owner: Optional[tuple[str, SessionState, int, int]] = None,
     ) -> Optional[str]:
         """Prepare inbound event text for the agent.
 
@@ -19088,9 +19161,13 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         # key matches the consume key at the run_conversation site. Fall back
         # to deriving it here for tests and legacy standalone callers.
         session_key = session_key or self._session_key_for_source(source)
-        # Reset only this session's per-call buffer; other sessions may be
-        # concurrently preparing multimodal turns on the same runner.
-        self._consume_pending_native_image_paths(session_key)
+        _input_owner = shared_input_owner or self._capture_shared_input_owner(session_key, run_generation)
+        if _input_owner[0] != session_key or not self._shared_input_owner_is_current(_input_owner):
+            return None
+        # A stale preparation must not clear a replacement's buffer at entry.
+        self._consume_pending_shared_input(
+            session_key, "_pending_native_image_paths_by_session", owner=_input_owner
+        )
 
         _is_shared_multi_user = is_shared_multi_user_session(
             source,
@@ -19165,9 +19242,10 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 )
                 if _img_mode == "native":
                     # Defer attachment to the run_conversation call site.
-                    self._session_state(
-                        session_key
-                    ).persistent.native_image_paths = list(image_paths)
+                    if not self._publish_pending_shared_input(
+                        _input_owner, "_pending_native_image_paths_by_session", list(image_paths)
+                    ):
+                        return None
                     logger.info(
                         "Image routing: native (model supports vision). %d image(s) will be attached inline.",
                         len(image_paths),
@@ -19469,6 +19547,8 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         source: SessionSource,
         history: List[Dict[str, Any]],
         session_key: Optional[str] = None,
+        run_generation: Optional[int] = None,
+        shared_input_owner: Optional[tuple[str, SessionState, int, int]] = None,
     ) -> Optional[str]:
         """Run inbound preprocessing under the routed profile when multiplexed."""
         if getattr(getattr(self, "config", None), "multiplex_profiles", False):
@@ -19478,12 +19558,14 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                     source=source,
                     history=history,
                     session_key=session_key,
+                    run_generation=run_generation, shared_input_owner=shared_input_owner,
                 )
         return await self._prepare_inbound_message_text(
             event=event,
             source=source,
             history=history,
             session_key=session_key,
+            run_generation=run_generation, shared_input_owner=shared_input_owner,
         )
 
     async def _prepare_clarify_reply_text(self, event) -> str:
@@ -19500,13 +19582,111 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             if transcript.strip()
         )
 
-    def _consume_pending_native_image_paths(self, session_key: str) -> List[str]:
-        state = self._peek_session_state(session_key)
-        if state is None or not state.persistent.native_image_paths:
-            return []
-        paths = list(state.persistent.native_image_paths)
-        state.persistent.native_image_paths = []
-        return paths
+    def _capture_shared_input_route(self, source: SessionSource) -> SharedInputRoute:
+        """Snapshot only possible destinations before blocking topic recovery.
+
+        Telegram DM keys are the chat key followed by an optional topic ID.
+        SessionState entries are never evicted. A destination absent here may
+        therefore be granted only if it is still absent after normalization;
+        an intervening creator must not donate its authority to this producer.
+        """
+        ingress = self._capture_shared_input_owner(self._session_key_for_source(source))
+        owners = {ingress[0]: ingress}
+        base = None
+        if source.platform == Platform.TELEGRAM and source.chat_type == "dm" and source.chat_id:
+            base = self._session_key_for_source(dataclasses.replace(source, thread_id=None))
+            for key, state in self._sessions_map().telegram_dm_items(base):
+                if key != ingress[0] and (key == base or key.startswith(base + ":")):
+                    with state.shared_input_lock:
+                        owners[key] = (key, state, state.persistent.run_generation,
+                                       state.persistent.shared_input_epoch)
+        return SharedInputRoute(ingress, owners, base)
+
+    def _resolve_shared_input_route(
+        self, route: SharedInputRoute, source: SessionSource,
+    ) -> Optional[tuple[str, SessionState, int, int]]:
+        """Resolve against the saved authority, never recapture an existing owner."""
+        if not self._shared_input_owner_is_current(route.ingress):
+            return None
+        key = self._session_key_for_source(source)
+        owner = route.owners.get(key)
+        if owner is None:
+            base = route.topic_base_key
+            if base is None or not (key == base or key.startswith(base + ":")):
+                return None
+            # setdefault arbitrates a concurrent first creator. Use the new
+            # object's initial counters, not whatever is current after yield.
+            state = SessionState()
+            if self._sessions_map().setdefault(key, state) is not state:
+                return None
+            owner = (key, state, 0, 0)
+        return owner if self._shared_input_owner_is_current(owner) else None
+
+    async def _normalize_source_with_shared_input_owner(
+        self, source: SessionSource,
+    ) -> tuple[SessionSource, Optional[tuple[str, SessionState, int, int]]]:
+        route = self._capture_shared_input_route(source)
+        resolved = await asyncio.to_thread(self._normalize_source_for_session_key, source)
+        return resolved, self._resolve_shared_input_route(route, resolved)
+
+    def _capture_shared_input_owner(
+        self, session_key: str, run_generation: Optional[int] = None,
+    ) -> tuple[str, SessionState, int, int]:
+        """Capture authority before a producer yields; queued values outlive turns."""
+        state = self._session_state(session_key)
+        with state.shared_input_lock:
+            generation = state.persistent.run_generation if run_generation is None else run_generation
+            return (session_key, state, generation, state.persistent.shared_input_epoch)
+
+    def _shared_input_owner_is_current(self, owner: tuple[str, SessionState, int, int]) -> bool:
+        key, state, generation, epoch = owner
+        with state.shared_input_lock:
+            return (self._peek_session_state(key) is state
+                    and state.persistent.run_generation == generation
+                    and state.persistent.shared_input_epoch == epoch)
+
+    def _publish_pending_shared_input(
+        self, owner: tuple[str, SessionState, int, int], attr: str, value: str | List[str],
+    ) -> bool:
+        """Publish only while the captured owner still holds this session."""
+        key, state, _, _ = owner
+        with state.shared_input_lock:
+            if not self._shared_input_owner_is_current(owner):
+                return False
+            if attr == "_pending_native_image_paths_by_session":
+                state.persistent.native_image_paths.extend(value)
+            else:
+                notes = self.__dict__.setdefault(attr, {})
+                prior = notes.get(key)
+                notes[key] = prior + "\n\n" + value if prior else value
+            return True
+
+    def _consume_pending_shared_input(
+        self, session_key: str, attr: str, *, run_generation: Optional[int] = None,
+        owner: Optional[tuple[str, SessionState, int, int]] = None,
+    ) -> str | List[str] | None:
+        """Validate and take in one critical section, without aging queued notes."""
+        if not session_key:
+            return None
+        state = self._session_state(session_key)
+        with state.shared_input_lock:
+            if owner is not None and (owner[0] != session_key or not self._shared_input_owner_is_current(owner)):
+                return None
+            if run_generation is not None and state.persistent.run_generation != run_generation:
+                return None
+            if attr == "_pending_native_image_paths_by_session":
+                paths = list(state.persistent.native_image_paths)
+                state.persistent.native_image_paths = []
+                return paths
+            return getattr(self, attr, {}).pop(session_key, None)
+
+    def _consume_pending_native_image_paths(
+        self, session_key: str, *, run_generation: Optional[int] = None,
+        owner: Optional[tuple[str, SessionState, int, int]] = None,
+    ) -> List[str]:
+        return self._consume_pending_shared_input(
+            session_key, "_pending_native_image_paths_by_session", run_generation=run_generation, owner=owner
+        ) or []
 
     def _cache_session_source(self, session_key: str, source) -> None:
         if not session_key or source is None:
@@ -19768,8 +19948,11 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 pass
         return source
 
-    async def _handle_message_with_agent(self, event, source, _quick_key: str, run_generation: int):
+    async def _handle_message_with_agent(
+        self, event, source, _quick_key: str, run_generation: int, *, shared_input_owner=None,
+    ):
         """Inner handler that runs under the _running_agents sentinel guard."""
+        _shared_input_owner = shared_input_owner or self._capture_shared_input_owner(_quick_key, run_generation)
         _msg_start_time = time.time()
         _platform_name = source.platform.value if hasattr(source.platform, "value") else str(source.platform)
         _msg_preview = (event.text or "")[:80].replace("\n", " ")
@@ -19781,34 +19964,8 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             source.chat_id or "unknown", _msg_preview, _reply_id, _reply_txt,
         )
 
-        # Get or create session
-        # Topic-mode DMs: rewrite a stale/foreign thread_id to the user's
-        # last-active topic so a cross-topic Reply or stripped plain reply
-        # doesn't fragment the conversation across sessions.
-        # Topic recovery can only apply to Telegram DM lanes.  Do not queue a
-        # thread-pool task for every other inbound message: under executor
-        # pressure even the no-op recovery path can postpone the session lease
-        # timeout and let unrelated group traffic wait behind it.
-        recovered = None
-        if (
-            source.platform == Platform.TELEGRAM
-            and source.chat_type == "dm"
-            and source.chat_id
-            and source.user_id
-        ):
-            recovered = await asyncio.to_thread(
-                self._recover_telegram_topic_thread_id, source
-            )
-        if recovered is not None:
-            logger.info(
-                "telegram topic recovery: chat=%s user=%s %r -> %s",
-                source.chat_id, source.user_id, source.thread_id, recovered,
-            )
-            source = dataclasses.replace(source, thread_id=recovered)
-            try:
-                event.source = source
-            except Exception:
-                pass
+        # Ingress already normalized the source before claiming its generation.
+        # Recovering again here could change the key after authority was bound.
 
         event_metadata = getattr(event, "metadata", None) or {}
 
@@ -19973,7 +20130,11 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             # model/reasoning overrides, a queued "/model switched" note, or
             # a stale resolved-model cache (#48031, #58403). See
             # _CONVERSATION_SCOPED_STATE.
-            self._clear_conversation_scope(session_key, reason="auto_reset")
+            if not self._clear_conversation_scope(
+                session_key, reason="auto_reset", shared_input_owner=_shared_input_owner
+            ):
+                return
+            _shared_input_owner = self._capture_shared_input_owner(session_key, run_generation)
             # Evict the cached agent so the fresh session does not inherit the
             # previous conversation's context_compressor._previous_summary —
             # the cache is keyed on the stable session_key, so an auto-reset
@@ -21174,6 +21335,8 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             source=source,
             history=history,
             session_key=session_key,
+            run_generation=run_generation,
+            shared_input_owner=_shared_input_owner,
         )
         if message_text is None:
             return
@@ -21257,6 +21420,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 session_id=_run_start_session_id,
                 session_key=session_key,
                 run_generation=run_generation,
+                shared_input_owner=_shared_input_owner,
                 event_message_id=self._reply_anchor_for_event(event),
                 channel_prompt=event.channel_prompt,
                 moa_config=getattr(event, "_moa_config", None),
@@ -21617,7 +21781,8 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 # conversation-scoped per-session dict (#58403 and siblings).
                 # See _CONVERSATION_SCOPED_STATE.
                 self._clear_conversation_scope(
-                    session_key, reason="compression_exhausted_reset"
+                    session_key, reason="compression_exhausted_reset",
+                    shared_input_owner=_shared_input_owner,
                 )
                 if new_entry is not None:
                     # Drop the stale reference to the bloated compressed child and
@@ -27661,7 +27826,10 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             logger.debug("Failed to rebind turn lease", exc_info=True)
             return False
 
-    def _clear_conversation_scope(self, session_key: str, *, reason: str) -> None:
+    def _clear_conversation_scope(
+        self, session_key: str, *, reason: str,
+        shared_input_owner: Optional[tuple[str, SessionState, int, int]] = None,
+    ) -> bool:
         """Clear ALL conversation-scoped per-session state for ``session_key``.
 
         THE single conversation-boundary funnel. Call this — and nothing
@@ -27694,69 +27862,86 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         access is getattr-guarded).
         """
         if not session_key:
-            return
-        # Structural clear: every conversation-scoped field resets in one
-        # call — no per-attribute pop-list to drift.
-        state = self._peek_session_state(session_key)
-        if state is not None:
-            state.conversation.clear()
-        # Legacy plain-dict stores still registered in
-        # _CONVERSATION_SCOPED_STATE (not yet folded into SessionState),
-        # e.g. _pending_model_notes.  SessionState-backed names resolve to
-        # MutableMapping views (not dict), so the isinstance(dict) guard
-        # skips them — already handled above.
-        for attr in _CONVERSATION_SCOPED_STATE:
-            store = getattr(self, attr, None)
-            if isinstance(store, dict):
-                store.pop(session_key, None)
-        self._clear_session_boundary_security_state(session_key)
-        logger.debug(
-            "Cleared conversation scope for %s (%s)", session_key, reason
-        )
+            return False
+        state = self._session_state(session_key)
+        with state.shared_input_lock:
+            if shared_input_owner is not None and (shared_input_owner[0] != session_key or not self._shared_input_owner_is_current(shared_input_owner)):
+                return False
+            state.persistent.shared_input_epoch += 1
+            state.persistent.native_image_paths = []
+            # Structural clear: every conversation-scoped field resets in one
+            # call — no per-attribute pop-list to drift.
+            state = self._peek_session_state(session_key)
+            if state is not None:
+                state.conversation.clear()
+            # Legacy plain-dict stores still registered in
+            # _CONVERSATION_SCOPED_STATE (not yet folded into SessionState),
+            # e.g. _pending_model_notes.  SessionState-backed names resolve to
+            # MutableMapping views (not dict), so the isinstance(dict) guard
+            # skips them — already handled above.
+            for attr in _CONVERSATION_SCOPED_STATE:
+                store = getattr(self, attr, None)
+                if isinstance(store, dict):
+                    store.pop(session_key, None)
+            self._clear_session_boundary_security_state(session_key)
+            logger.debug(
+                "Cleared conversation scope for %s (%s)", session_key, reason
+            )
 
-    def _clear_session_boundary_security_state(self, session_key: str) -> None:
+            return True
+
+    def _clear_session_boundary_security_state(
+        self, session_key: str, *,
+        shared_input_owner: Optional[tuple[str, SessionState, int, int]] = None,
+    ) -> bool:
         """Clear per-session control state that must not survive a boundary switch."""
         if not session_key:
-            return
+            return False
 
-        pending_skills_reload_notes = getattr(
-            self, "_pending_skills_reload_notes", None
-        )
-        if isinstance(pending_skills_reload_notes, dict):
-            pending_skills_reload_notes.pop(session_key, None)
+        state = self._session_state(session_key)
+        with state.shared_input_lock:
+            if shared_input_owner is not None and (shared_input_owner[0] != session_key or not self._shared_input_owner_is_current(shared_input_owner)):
+                return False
+            # /branch reaches this narrower funnel directly. Rejection must
+            # precede every clear, including approval and update state.
+            state.persistent.shared_input_epoch += 1
+            state.persistent.native_image_paths = []
+            for attr in ("_pending_model_notes", "_pending_skills_reload_notes"):
+                pending_notes = getattr(self, attr, None)
+                if isinstance(pending_notes, dict):
+                    pending_notes.pop(session_key, None)
 
-        _sec_state = self._peek_session_state(session_key)
-        if _sec_state is not None:
-            _sec_state.persistent.approvals = None
-            _sec_state.persistent.update_prompt_pending = False
+            state.persistent.approvals = None
+            state.persistent.update_prompt_pending = False
 
-        try:
-            from tools import slash_confirm as _slash_confirm_mod
-        except Exception:
-            _slash_confirm_mod = None
-        if _slash_confirm_mod is not None:
             try:
-                _slash_confirm_mod.clear(session_key)
+                from tools import slash_confirm as _slash_confirm_mod
+            except Exception:
+                _slash_confirm_mod = None
+            if _slash_confirm_mod is not None:
+                try:
+                    _slash_confirm_mod.clear(session_key)
+                except Exception as e:
+                    logger.debug(
+                        "Failed to clear slash-confirm state for session boundary %s: %s",
+                        session_key,
+                        e,
+                    )
+
+            try:
+                from tools.approval import clear_session as _clear_approval_session
+            except Exception:
+                return True
+
+            try:
+                _clear_approval_session(session_key)
             except Exception as e:
                 logger.debug(
-                    "Failed to clear slash-confirm state for session boundary %s: %s",
+                    "Failed to clear approval state for session boundary %s: %s",
                     session_key,
                     e,
                 )
-
-        try:
-            from tools.approval import clear_session as _clear_approval_session
-        except Exception:
-            return
-
-        try:
-            _clear_approval_session(session_key)
-        except Exception as e:
-            logger.debug(
-                "Failed to clear approval state for session boundary %s: %s",
-                session_key,
-                e,
-            )
+            return True
 
     def _begin_session_run_generation(self, session_key: str) -> int:
         """Claim a fresh run generation token for ``session_key``.
@@ -27768,14 +27953,18 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         """
         if not session_key:
             return 0
-        persistent = self._session_state(session_key).persistent
-        # Monotonic by design (#28686): incremented here, NEVER reset.
-        persistent.run_generation = int(persistent.run_generation) + 1
-        return persistent.run_generation
+        state = self._session_state(session_key)
+        with state.shared_input_lock:
+            # Normal turn transitions preserve already-published next-turn data.
+            state.persistent.run_generation = int(state.persistent.run_generation) + 1
+            return state.persistent.run_generation
 
     def _invalidate_session_run_generation(self, session_key: str, *, reason: str = "") -> int:
         """Invalidate any in-flight run token for ``session_key``."""
-        generation = self._begin_session_run_generation(session_key)
+        state = self._session_state(session_key)
+        with state.shared_input_lock:
+            generation = self._begin_session_run_generation(session_key)
+            state.persistent.native_image_paths = []
         if reason:
             logger.info(
                 "Invalidated run generation for %s → %d (%s)",
@@ -27789,9 +27978,9 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         """Return True when ``generation`` is still current for ``session_key``."""
         if not session_key:
             return True
-        state = self._peek_session_state(session_key)
-        current = state.persistent.run_generation if state is not None else 0
-        return int(current) == int(generation)
+        state = self._session_state(session_key)
+        with state.shared_input_lock:
+            return int(state.persistent.run_generation) == int(generation)
 
     def _bind_adapter_run_generation(
         self,
@@ -29160,6 +29349,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         persist_user_timestamp: Optional[float] = None,
         persist_user_display_kind: Optional[str] = None,
         message_type: Optional[str] = None,
+        shared_input_owner: Optional[tuple[str, SessionState, int, int]] = None,
     ) -> Dict[str, Any]:
         """Profile-scoping wrapper around the agent run.
 
@@ -29179,7 +29369,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 persist_user_message=persist_user_message,
                 persist_user_timestamp=persist_user_timestamp,
                 persist_user_display_kind=persist_user_display_kind,
-                message_type=message_type,
+                message_type=message_type, shared_input_owner=shared_input_owner,
             )
 
         profile_home = self._resolve_profile_home_for_source(source)
@@ -29192,7 +29382,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 persist_user_message=persist_user_message,
                 persist_user_timestamp=persist_user_timestamp,
                 persist_user_display_kind=persist_user_display_kind,
-                message_type=message_type,
+                message_type=message_type, shared_input_owner=shared_input_owner,
             )
 
     def _profile_name_for_source(self, source: SessionSource) -> Optional[str]:
@@ -29336,6 +29526,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         persist_user_timestamp: Optional[float] = None,
         persist_user_display_kind: Optional[str] = None,
         message_type: Optional[str] = None,
+        shared_input_owner: Optional[tuple[str, SessionState, int, int]] = None,
     ) -> Dict[str, Any]:
         """
         Run the agent with the given message and context.
@@ -29349,7 +29540,13 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         This is run in a thread pool to not block the event loop.
         Supports interruption via new messages.
         """
+        _shared_input_owner = shared_input_owner or (
+            self._capture_shared_input_owner(session_key, run_generation) if session_key else None
+        )
+
         def _run_still_current() -> bool:
+            if _shared_input_owner is not None and not self._shared_input_owner_is_current(_shared_input_owner):
+                return False
             if run_generation is None or not session_key:
                 return True
             return self._is_session_run_current(session_key, run_generation)
@@ -29651,7 +29848,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             persist_user_timestamp=persist_user_timestamp,
             persist_user_display_kind=persist_user_display_kind,
         )
-        turn_runner = TurnRunner(self, turn_ctx)
+        turn_runner = TurnRunner(self, turn_ctx, shared_input_owner=_shared_input_owner)
         # Callback invoked by agent on tool lifecycle events — extracted to
         # TurnRunner.progress_callback (bound method, same signature).
         turn_ctx.progress_callback = turn_runner.progress_callback
@@ -30816,6 +31013,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 next_message_id = None
                 next_channel_prompt = None
                 next_session_key = session_key
+                next_input_owner = _shared_input_owner
                 # #60671 — carry the pending event's message_type into the
                 # recursive call so queued voice turns can stream TTS and
                 # re-mark the generation for the final delivered turn.
@@ -30841,11 +31039,18 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                             session_key or "?",
                             exc_info=True,
                         )
+                    # Legacy unqualified callers may route a queued event to
+                    # its own key. Capture that destination before preparing;
+                    # a qualified run still cannot transfer its authority.
+                    if run_generation is None and next_session_key != session_key:
+                        next_input_owner = self._capture_shared_input_owner(next_session_key)
                     next_message = await self._prepare_profile_scoped_inbound_message_text(
                         event=pending_event,
                         source=next_source,
                         history=updated_history,
                         session_key=next_session_key,
+                        run_generation=run_generation,
+                        shared_input_owner=next_input_owner,
                     )
                     if next_message is None:
                         return result
@@ -30940,6 +31145,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                         session_id=session_id,
                         session_key=next_session_key,
                         run_generation=run_generation,
+                        shared_input_owner=next_input_owner,
                         _interrupt_depth=_interrupt_depth + 1,
                         event_message_id=next_message_id,
                         channel_prompt=next_channel_prompt,

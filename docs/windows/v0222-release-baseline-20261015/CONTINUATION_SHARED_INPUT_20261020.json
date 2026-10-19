@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "status": "SHARED_INPUT_OWNERSHIP_SCOPED_VERIFIED_FULL_T06_OPEN",
+  "requirement": "R20-FX-INPUT / shared-input producer, publication, consumption and normalized busy routing ownership",
+  "source_sha256": {
+    "gateway/run.py": "f9548e8842009c17b49e087c66e263f54b7abfef05c4598e2f6de58c26370cdd",
+    "gateway/session_state.py": "684cc8cbb290baa9b1be053d8a465917fa91b0534f8aa01bfc1c4b39b6a1422d",
+    "gateway/slash_commands.py": "81d037198331d1fe9d76595066f8784925e80c4db2b722ea5748ce3b9ef54d26",
+    "gateway/session_state_store.py": "a09fe431f8caf393329c08dd47bbf6a51c8084cef54ac97d7bfdc45ca03754ec",
+    "tests/gateway/test_shared_input_busy_route_ownership.py": "71b242cef9e28799686b6fcea341b9b43cb3052a245c4d90c9cf547c3cf67b84",
+    "tests/gateway/test_shared_input_normalized_ownership.py": "55b1f0ebc9d92d64a370bfa41ffbbf126405dd126691f954c644ac6a90e13c8f",
+    "tests/gateway/test_shared_input_run_ownership.py": "4c07ed67dbcb5e634e9ccf6aa9c91e0fd75c7c746d89fd35bf9043f11ef505e4"
+  },
+  "behavior": [
+    "Capture state identity, run generation and boundary epoch before waits; preserve that owner through normalization, callbacks and consumption.",
+    "Validate shared FIFO head/tail publication and busy agent mutation under the captured state lock after waits.",
+    "Publish states and Telegram chat-key index atomically through SessionStateStore; enumerate only the selected chat bucket."
+  ],
+  "normal": {
+    "unique_passed": 248,
+    "fresh_jobs": 27,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "controls": {
+    "behavioral_red_failures": 11,
+    "fault_variants": 20,
+    "fault_jobs": 21,
+    "failed_occurrences": 76,
+    "unique_failed_nodes": 61,
+    "all_failed_nodes_in_normal_green_union": true,
+    "errors": 0
+  },
+  "parent_fresh_runs": [
+    {
+      "label": "parent-t06p-busy",
+      "passed": 34,
+      "result_sha256": "d500dd9351683ceb8c9071be8d017f5ba1758609989b1bd50d1201194818bd8e",
+      "junit_sha256": "a870ca1ac93f5150a9e3b8e39229a02ec8c6676abe3d9f31b0f492d4c605dc43"
+    },
+    {
+      "label": "parent-t06p-normalized",
+      "passed": 31,
+      "result_sha256": "2d51a039ba603473b78a525c7148775aa3876cb781822cdc9c4b5abe949b073a",
+      "junit_sha256": "bcff257920e859556a9767f16c9788a7f93bf3d258158e72df6a7474f6b955e1"
+    }
+  ],
+  "independent_review": "Human-delivered final same-cycle READONLY review: both previous P2 closed; no additional concrete P1/P2 in the frozen scoped slice. Reviewer rehashed all 1646 evidence files, inspected 48 JUnits and actual immutable graph. No reviewer execution or edits.",
+  "graph": {
+    "projection": "C:\\Users\\downl\\.codex\\worktrees\\v0222-selective-20261017\\hermes-agent\\tmp\\continuation-20261020\\t06p-owners-v3",
+    "version": "1.6.0",
+    "files": 12,
+    "full_method_spans_verified": 1292,
+    "nodes": 1789,
+    "edges": 5661,
+    "binding_sha256": "c3ee6ae11ccbb7fd437fc2f82f5292754dc83a171dd464e4ca8d587d1af79114",
+    "pendingChanges": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "full_source_sha256": "f9548e8842009c17b49e087c66e263f54b7abfef05c4598e2f6de58c26370cdd",
+    "full_source_bytes": 1601410,
+    "full_source_errors": [],
+    "unresolved_full_source_references": 8144,
+    "claim": "Selected exact complete method projections and full owner files only; unchanged 1 MiB CLI cap. SDK extraction is not a resolved root graph or full dynamic channel/model coverage."
+  },
+  "evidence": {
+    "receipt": "tmp/continuation-20261020/t06p-evidence/receipt.json",
+    "receipt_sha256": "2670ef4d3c36a03a47bfbf92f27c30d5adbae80a49db914256f1ef62e96ccb1c",
+    "manifest_files": 1646,
+    "manifest_sha256": "3b0767eede52d44cca8fcec07795868ecb3969340fdb6feec0a7dad29aaad735",
+    "parent_audit": "tmp/continuation-20261020/parent-t06p-audit.json",
+    "parent_audit_sha256": "47ca51c8f0200685d18674ff7ac0ed6ac82c647db9b98200bb917516b56f753d"
+  },
+  "isolation": {
+    "qualified_jobs": "Pre-resume Job assignment, zero audit violations, timeout, forced recovery and owned survivors; source unchanged during each accepted Job.",
+    "leaves": "synthetic model/config/transport, process snapshot/reaper, offline metadata, fixture current-test-PID baseline",
+    "old_T06n_evidence": "All 507 prior evidence files and old 33/new 31 test source bytes retained unchanged."
+  },
+  "limits": [
+    "Full run.py SDK unresolved references remain 8144; selected projections are not whole-root/dynamic coverage.",
+    "Approval/clarify lifecycle, native channel/model behavior, API process cleanup, full T06 and whole-SHA CI remain outside this qualification.",
+    "Historical auxiliary process_registry bindings are preserved; they are not asserted current or accepted by this slice.",
+    "No installs, runtime restart, main merge/push or release."
+  ]
+}

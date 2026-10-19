@@ -474,3 +474,32 @@ useful-positive OPEN failure. Its test, WIP, native effects, assets and graphs a
 preserved. Native UNC shares, native POSIX processes, project-code sandboxing,
 full T02/P0, whole-SHA CI and release acceptance are not claimed. See
 CONTINUATION_LSP_URI_20261020.json and the retained parent URI audit.
+
+## Shared-input ownership and normalized busy-route scope
+
+The scoped shared-input candidate retains state identity, generation and boundary
+epoch through image/model/skill producers, normalization, callbacks, publication
+and consumption. The recovered busy path now receives the original captured
+owner. It rechecks after compression, steer and voice waits and validates FIFO
+head/tail publication and agent mutation under that state's lock. The sole
+SessionStateStore atomically publishes each state and its Telegram chat index;
+route capture visits only that chat bucket, preserving actual setdefault winners.
+
+Final qualification is 248 unique passes in 27 fresh Jobs, zero failures/errors/
+skips. Twenty semantic fault variants in 21 Jobs produce 76 failure occurrences
+over 61 unique cases, all successful in the normal union. Parent rehashed all
+1,646 sealed artifacts, checked every normal/fault Job and JUnit, and read the
+actual immutable 1,789-node/5,661-edge selected graph. Parent fresh reruns pass
+34 busy cases plus 31 normalized cases with zero source drift, timeout, recovery
+or owned survivors. Synthetic model/config/transport and process-snapshot leaves
+are explicit; these are not native channel/model qualification.
+
+The human-delivered same-cycle independent READONLY review confirms both prior
+P2 findings closed and no new concrete P1/P2 in the frozen slice. It independently
+verified all seven source/test hashes, 1,646 artifacts, 48 JUnits, 1,292 exact
+method spans and preserved T06n evidence. All 507 prior evidence files and old
+33/31 test bytes remain unchanged. No review-side tests, imports or edits were
+claimed. Whole run.py SDK unresolved references remain 8,144. Approval/clarify,
+API process cleanup, native channels, full T06 and whole-SHA CI remain OPEN.
+See CONTINUATION_SHARED_INPUT_20261020.json; no unrelated API/registry/kernel or
+LSP trust WIP is included in this local commit.

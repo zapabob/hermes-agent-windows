@@ -162,6 +162,7 @@ class GatewaySlashCommandsMixin:
         # Get existing session key
         session_key = self._session_key_for_source(source)
         self._invalidate_session_run_generation(session_key, reason="session_reset")
+        _shared_input_owner = self._capture_shared_input_owner(session_key)
         # Evict the running-agent slot now that the generation is bumped. The
         # in-flight run's own guarded release (run_generation=old) will return
         # False and leave its dead agent behind; clearing here keeps the slot
@@ -220,7 +221,10 @@ class GatewaySlashCommandsMixin:
         # state (model/reasoning overrides, one-turn restores, model notes,
         # last-resolved cache, /queue overflow) + security state in one
         # funnel call. See _CONVERSATION_SCOPED_STATE in gateway/run.py.
-        self._clear_conversation_scope(session_key, reason="session_reset")
+        if not self._clear_conversation_scope(
+            session_key, reason="session_reset", shared_input_owner=_shared_input_owner
+        ):
+            return t("gateway.model.error_prefix", error="Session reset superseded by a newer run.")
 
         # The old conversation's in-flight async delegations end WITH it
         # (#55578): after the reset rotates the session id, their completions
@@ -1853,7 +1857,9 @@ class GatewaySlashCommandsMixin:
         # (Telegram DM topic recovery) before deriving the override key, so
         # the override is stored under the key the next message turn reads
         # (#30479).
-        source = await asyncio.to_thread(self._normalize_source_for_session_key, source)
+        source, _model_note_owner = await self._normalize_source_with_shared_input_owner(source)
+        if _model_note_owner is None:
+            return t("gateway.model.error_prefix", error="Model switch superseded by a newer session run.")
         session_key = self._session_key_for_source(source)
         override = self._session_model_overrides.get(session_key, {})
         restore_snapshot = (
@@ -1908,6 +1914,8 @@ class GatewaySlashCommandsMixin:
                         _chat_id: str, model_id: str, provider_slug: str
                     ) -> str:
                         """Perform the model switch and return confirmation text."""
+                        if not _self._shared_input_owner_is_current(_model_note_owner):
+                            return t("gateway.model.error_prefix", error="Model switch superseded by a newer session run.")
                         skew_error = _model_switch_skew_guard()
                         if skew_error:
                             return skew_error
@@ -2014,13 +2022,14 @@ class GatewaySlashCommandsMixin:
                         from hermes_cli.model_switch import format_model_for_display
                         _display_cur = format_model_for_display(_cur_model)
                         _display_new = format_model_for_display(result.new_model)
-                        if not hasattr(_self, "_pending_model_notes"):
-                            _self._pending_model_notes = {}
-                        _self._pending_model_notes[_session_key] = (
+                        if not _self._publish_pending_shared_input(
+                            _model_note_owner, "_pending_model_notes", (
                             f"[Note: model was just switched from {_display_cur} to {_display_new} "
                             f"via {result.provider_label or result.target_provider}. "
                             f"Adjust your self-identification accordingly.]"
-                        )
+                            )
+                        ):
+                            return t("gateway.model.error_prefix", error="Model switch superseded by a newer session run.")
                         _self._session_model_overrides[_session_key] = {
                             "model": result.new_model,
                             "provider": result.target_provider,
@@ -2265,6 +2274,8 @@ class GatewaySlashCommandsMixin:
 
         async def _finish_switch() -> str:
             """Apply the resolved switch (agent, session, config) and build the reply."""
+            if not self._shared_input_owner_is_current(_model_note_owner):
+                return t("gateway.model.error_prefix", error="Model switch superseded by a newer session run.")
             # If there's a cached agent, update it in-place
             cached_entry = None
             _cache_lock = getattr(self, "_agent_cache_lock", None)
@@ -2324,14 +2335,15 @@ class GatewaySlashCommandsMixin:
             # Display form strips opaque Palantir RID prefixes; the override
             # map below keeps the full ID for the wire.
             from hermes_cli.model_switch import format_model_for_display
-            if not hasattr(self, "_pending_model_notes"):
-                self._pending_model_notes = {}
-            self._pending_model_notes[session_key] = (
+            if not self._publish_pending_shared_input(
+                _model_note_owner, "_pending_model_notes", (
                 f"[Note: model was just switched from {format_model_for_display(current_model)} to {format_model_for_display(result.new_model)} "
                 f"via {result.provider_label or result.target_provider}. "
                 f"{'This override applies to the next turn only. ' if one_turn else ''}"
                 f"Adjust your self-identification accordingly.]"
-            )
+                )
+            ):
+                return t("gateway.model.error_prefix", error="Model switch superseded by a newer session run.")
 
             # Store session override so next agent creation uses the new model
             self._session_model_overrides[session_key] = {
@@ -5046,9 +5058,9 @@ class GatewaySlashCommandsMixin:
             from hermes_state import format_session_db_unavailable
             return format_session_db_unavailable(prefix=t("gateway.shared.session_db_unavailable_prefix"))
 
-        source = await asyncio.to_thread(
-            self._normalize_source_for_session_key, event.source
-        )
+        source, _shared_input_owner = await self._normalize_source_with_shared_input_owner(event.source)
+        if _shared_input_owner is None:
+            return t("gateway.resume.switch_failed")
         session_key = self._session_key_for_source(source)
         raw_args = event.get_command_args().strip()
         try:
@@ -5186,7 +5198,10 @@ class GatewaySlashCommandsMixin:
         # notes, last-resolved cache #58403, /queue overflow) + security
         # state in one funnel call. See _CONVERSATION_SCOPED_STATE in
         # gateway/run.py.
-        self._clear_conversation_scope(session_key, reason="resume")
+        if not self._clear_conversation_scope(
+            session_key, reason="resume", shared_input_owner=_shared_input_owner
+        ):
+            return t("gateway.resume.switch_failed")
 
         # Evict any cached agent for this session so the next message
         # rebuilds with the correct session_id end-to-end — mirrors
@@ -5305,6 +5320,7 @@ class GatewaySlashCommandsMixin:
 
         source = event.source
         session_key = self._session_key_for_source(source)
+        _branch_input_owner = self._capture_shared_input_owner(session_key)
 
         # Load the current session and its transcript
         current_entry = await self.async_session_store.get_or_create_session(source)
@@ -5342,6 +5358,8 @@ class GatewaySlashCommandsMixin:
         if in_place:
             dest_source = source
         dest_key = session_key if in_place else self._session_key_for_source(dest_source)
+        if not in_place:
+            _branch_input_owner = self._capture_shared_input_owner(dest_key)
         thread_location = "" if in_place else "\n" + t(
             "gateway.branch.thread_location",
             thread=format_thread_ref(source.platform, dest_source.thread_id),
@@ -5462,7 +5480,10 @@ class GatewaySlashCommandsMixin:
             return t("gateway.branch.binding_incomplete", parent=parent_session_id, new=new_session_id) + thread_location
         if not new_entry:
             return t("gateway.branch.binding_incomplete", parent=parent_session_id, new=new_session_id) + thread_location
-        self._clear_session_boundary_security_state(dest_key)
+        if not self._clear_session_boundary_security_state(
+            dest_key, shared_input_owner=_branch_input_owner
+        ):
+            return t("gateway.branch.binding_incomplete", parent=parent_session_id, new=new_session_id) + thread_location
 
         # Evict any cached agent for this session
         self._evict_cached_agent(dest_key)
@@ -5937,6 +5958,8 @@ class GatewaySlashCommandsMixin:
         is written to the session transcript out-of-band, so message
         alternation is preserved.
         """
+        session_key = self._session_key_for_source(event.source)
+        _skill_note_owner = self._capture_shared_input_owner(session_key)
         loop = asyncio.get_running_loop()
         try:
             from agent.skill_commands import reload_skills
@@ -6010,11 +6033,10 @@ class GatewaySlashCommandsMixin:
             sections.append("Use skills_list to see the updated catalog.]")
             note = "\n".join(sections)
 
-            session_key = self._session_key_for_source(event.source)
-            if not hasattr(self, "_pending_skills_reload_notes"):
-                self._pending_skills_reload_notes = {}
             if session_key:
-                self._pending_skills_reload_notes[session_key] = note
+                self._publish_pending_shared_input(
+                    _skill_note_owner, "_pending_skills_reload_notes", note
+                )
 
             return "\n".join(lines)
 

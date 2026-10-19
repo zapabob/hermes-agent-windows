@@ -37,6 +37,7 @@ from __future__ import annotations
 
 from collections.abc import MutableMapping
 from dataclasses import dataclass, field
+from threading import RLock
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 
 # Presence-sensitive sentinel: /fast stores "priority" or None (explicit
@@ -148,6 +149,8 @@ class PersistentState:
     # Monotonic run-generation counter (#28686).  NEVER reset: clearing it
     # would break stale-run detection.
     run_generation: int = 0
+    # A conversation boundary also invalidates producers when no run starts.
+    shared_input_epoch: int = 0
     # Consecutive session-hygiene compression failures for this session
     # (#79624).  The in-agent compressor escalates repeat timeouts via
     # ContextCompressor._consecutive_timeout_failures, but hygiene builds a
@@ -172,9 +175,21 @@ class PersistentState:
 class SessionState:
     """All per-session gateway state, grouped by lifecycle scope."""
 
+    # Generation checks and shared input mutations use this same lock. It is
+    # never held across await; reentrant for the synchronous boundary funnel.
+    shared_input_lock: Any = field(default_factory=RLock, repr=False, compare=False)
     turn: TurnState = field(default_factory=TurnState)
     conversation: ConversationState = field(default_factory=ConversationState)
     persistent: PersistentState = field(default_factory=PersistentState)
+
+
+@dataclass(frozen=True)
+class SharedInputRoute:
+    """Pre-yield authority for one source and its Telegram DM topic candidates."""
+
+    ingress: tuple[str, SessionState, int, int]
+    owners: Dict[str, tuple[str, SessionState, int, int]]
+    topic_base_key: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
