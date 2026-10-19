@@ -12,17 +12,14 @@ from typing import Callable
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-from .models import ScanResult, Verdict
+from .models import ExecutionDecision, ScanResult, Verdict
 from .store import SecurityStore, utc_now
 
 
 _MAGIC = b"HERMESQ1"
 
 
-def _restrict_windows_acl(path: Path, directory: bool = False) -> None:
-    if sys.platform != "win32":
-        os.chmod(path, 0o700 if directory else 0o600)
-        return
+def _windows_acl_descriptor(directory: bool = False):
     ntsecuritycon = importlib.import_module("ntsecuritycon")
     win32api = importlib.import_module("win32api")
     win32security = importlib.import_module("win32security")
@@ -39,9 +36,56 @@ def _restrict_windows_acl(path: Path, directory: bool = False) -> None:
     descriptor = win32security.SECURITY_DESCRIPTOR()
     descriptor.SetSecurityDescriptorOwner(owner_sid, False)
     descriptor.SetSecurityDescriptorDacl(1, acl, 0)
+    descriptor.SetSecurityDescriptorControl(win32security.SE_DACL_PROTECTED, win32security.SE_DACL_PROTECTED)
+    return descriptor
+
+
+def _restrict_windows_acl(path: Path, directory: bool = False) -> None:
+    if sys.platform != "win32":
+        os.chmod(path, 0o700 if directory else 0o600)
+        return
+    win32security = importlib.import_module("win32security")
+    descriptor = _windows_acl_descriptor(directory)
     flags = win32security.OWNER_SECURITY_INFORMATION | win32security.DACL_SECURITY_INFORMATION
     flags |= win32security.PROTECTED_DACL_SECURITY_INFORMATION
     win32security.SetFileSecurity(str(path), flags, descriptor)
+
+
+def _write_private_restore_file(directory: Path, plaintext: bytes) -> Path:
+    if sys.platform == "win32":
+        win32con = importlib.import_module("win32con")
+        win32file = importlib.import_module("win32file")
+        win32security = importlib.import_module("win32security")
+        attributes = win32security.SECURITY_ATTRIBUTES()
+        attributes.SECURITY_DESCRIPTOR = _windows_acl_descriptor()
+        path = directory / f".hermes-restore-{uuid.uuid4().hex}"
+        handle = win32file.CreateFile(str(path), win32con.GENERIC_READ | win32con.GENERIC_WRITE,
+                                     0, attributes, win32con.CREATE_NEW,
+                                     win32con.FILE_ATTRIBUTE_NORMAL, None)
+        try:
+            try:
+                error, written = win32file.WriteFile(handle, plaintext)
+                if error != 0 or written != len(plaintext):
+                    raise OSError("restore staging write failed")
+                win32file.FlushFileBuffers(handle)
+            finally:
+                handle.Close()
+        except BaseException:
+            path.unlink(missing_ok=True)
+            raise
+        return path
+
+    descriptor, name = tempfile.mkstemp(prefix=".hermes-restore-", dir=directory)
+    path = Path(name)
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(plaintext)
+            stream.flush()
+            os.fsync(stream.fileno())
+    except BaseException:
+        path.unlink(missing_ok=True)
+        raise
+    return path
 
 
 class VaultKey:
@@ -163,13 +207,11 @@ class QuarantineVault:
         if hashlib.sha256(plaintext).hexdigest() != item["sha256"]:
             raise ValueError("quarantine blob hash mismatch")
         target.parent.mkdir(parents=True, exist_ok=True)
-        handle, temp_name = tempfile.mkstemp(prefix=".hermes-restore-", dir=target.parent)
-        os.close(handle)
-        temp_path = Path(temp_name)
+        temp_path = _write_private_restore_file(target.parent, plaintext)
         try:
-            temp_path.write_bytes(plaintext)
-            _restrict_windows_acl(temp_path)
             current = scan(temp_path)
+            if current.execution_decision == ExecutionDecision.REVIEW:
+                raise PermissionError("current scan requires review before restoration; retry after scanner recovery")
             if current.verdict == Verdict.MALICIOUS and not force:
                 raise PermissionError("current signatures still classify this item as malicious")
             os.replace(temp_path, target)

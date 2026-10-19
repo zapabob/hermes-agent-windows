@@ -8,7 +8,9 @@ Quarantine writes an encrypted staging blob, decrypts and authenticates it, veri
 
 ## Restore
 
-Restore decrypts into a restricted temporary file beside the requested destination, verifies the stored SHA-256, and scans the current bytes with current definitions without using the cache. An existing destination is never overwritten. A current malicious verdict refuses restoration unless the operator supplied the explicit `--force` option or confirmed the equivalent Desktop action.
+Restore decrypts into a restricted temporary file beside the requested destination, verifies the stored SHA-256, and scans the current bytes with current definitions without using the cache. On Windows the temporary file is created with a protected owner-and-LocalSystem DACL before any plaintext is written; the writing handle stays open through the write and flush. An existing destination is never overwritten. A current malicious verdict refuses restoration unless the operator supplied the explicit `--force` option or confirmed the equivalent Desktop action.
+
+A rescan decision of `REVIEW`, including unknown verdicts, unavailable scanners, scan errors, and suspicious results requiring review, refuses restoration even with `--force`. Retry after the scanner recovers and the current result no longer requires review. A refused restore leaves the encrypted blob and unrestored metadata intact and removes its temporary plaintext. Clean results and warning-only results remain restorable. The explicit force option still applies to a current malicious verdict; allowlisting alone does not remove that requirement.
 
 Restore and permanent quarantine deletion create durable detection events. Allowlisting is not implied by restoration.
 

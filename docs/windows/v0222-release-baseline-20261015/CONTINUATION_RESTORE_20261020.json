@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "status": "SCOPED_RESTORE_HARDENING_VERIFIED_CAMPAIGN_PARTIAL",
+  "requirement": "T05 / C01 quarantine restoration",
+  "baseline": "d50995b06d636e6118214b68789f344882773f3a",
+  "direct_human_policy": "Rescan requiring review must stop restoration even with force until recovery.",
+  "contract": "Reject typed REVIEW before destination publication; preserve healthy CLEAN/WARN, explicit forced MALICIOUS and existing allowlisted-MALICIOUS force requirement.",
+  "windows_staging": "Protected owner-and-LocalSystem DACL at CREATE_NEW, exclusive retained write/flush handle, owned staging cleanup on error/partial write.",
+  "source_sha256": {
+    "downstream/security/vault.py": "a4d00a1355d1940b3e7280964a76044c24c4ad8ceaaabec61f6c0242254c81cd",
+    "tests/security/test_restore_scan_decision.py": "a656a42283378efbb909c37d66ae1103a9b6a028fa0705f468fde518a3d857c1",
+    "docs/windows/QUARANTINE.md": "8aac0eef62e2bafbff28d90bd88ecfad9bb8177c7e7be6c1663428b1e47d3fec",
+    "tests/security/test_restore_private_staging_windows.py": "606d2050a697a99fe27d31c9e7cfb095f38faa0ed4f188ae6c6d88a44225d7b3"
+  },
+  "final_passed": {
+    "restore_policy": 23,
+    "native_windows_staging": 3,
+    "existing_security_api": 12,
+    "existing_security_dimensions": 27
+  },
+  "final_failures": 0,
+  "final_errors": 0,
+  "final_skipped": 0,
+  "timeouts": 0,
+  "forced_job_recovery": 0,
+  "surviving_owned_children": 0,
+  "outgoing_network_attempts": 0,
+  "red": {
+    "final_policy_test_bytes": "16 behavioral failures, 7 legitimate passes before policy change",
+    "historical_acl": "Actual inherited-reader DACL observed before first plaintext write; test later strengthened and scoped to restore parent identity.",
+    "final_acl_counterfactual": "All three final native cases reject restored inherited-ACL behavior."
+  },
+  "semantic_fault_failures": {
+    "removed_review_gate": 16,
+    "force_bypass": 8,
+    "deny_all": 6,
+    "success_without_effects": 23,
+    "inherited_staging": 3
+  },
+  "review": {
+    "investigator": "01a1554c-88b4-7220-8e8d-06ecf5533a4d",
+    "reviewer": "01a15553-2cdd-75e2-a0f6-d2923665f8fd",
+    "creation_time_acl_P1": "Confirmed by parent native RED, fixed and closed within same review cycle",
+    "remaining_concrete_findings": 0,
+    "execution_audit": "Parent independently verified JUnit, source bindings, graph and process/network results."
+  },
+  "graph": {
+    "version": "1.6.0",
+    "selected_files": 29,
+    "nodes": 2013,
+    "edges": 5234,
+    "pending_changes": 0,
+    "scope": "Selected exact Python/TypeScript owners and tests, direct CLI/API callers and Desktop sources; not full repository/dynamic completeness."
+  },
+  "private_evidence": {
+    "provider": "Codex Security target-bound persistent artifact collection",
+    "collection": "artifacts-139b8bb25f302d4e2925ff599547511237622e403912e521844273e888b13074",
+    "report": "findings/restore-hardening.md",
+    "report_sha256": "3e4c7065114e93a2d4255103dba43ce66d4e548100e3f13a92d48df1947b504a",
+    "execution_audit": "artifacts/restore-closed-audit.json",
+    "execution_audit_sha256": "33a1075329a842546031dbf8ee4c50854265044b75f0a772c5051cfc58cae7a3",
+    "retained_raw_artifacts": 39
+  },
+  "not_accepted": [
+    "Earlier EICAR-dependent run: four failures with source inputs absent on inspection, cause unestablished; no assertion or host-security-setting changes",
+    "Initial audit denied Windows asyncio wakeup, and intermediate ACL observer included independent scanner snapshot; preserved and excluded"
+  ],
+  "not_run": [
+    "Real ClamAV/YARA scanner or definition-asset qualification",
+    "Full Desktop/profile/connection journey",
+    "POSIX native runtime",
+    "Candidate cloud CI, full T05 and full campaign acceptance"
+  ],
+  "production_restart": false,
+  "published": false
+}

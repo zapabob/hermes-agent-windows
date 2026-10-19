@@ -210,3 +210,42 @@ not full Desktop/OAuth/profile acceptance or complete dynamic call coverage.
 CONTINUATION_MCP_20261020.json records the scoped result and exclusions. Failed
 and intermediate runs remain private under the task scratch directory. No
 production restart, dependency change, release or push was performed.
+
+## T05 explicit restoration policy and Windows private staging
+
+Current restore code rescan results requiring review did not prevent ordinary
+restoration. Independent investigation correctly identified an undocumented
+restoration-policy decision rather than treating execution policy as automatic
+restoration authority. The human explicitly chose refusal until scanner recovery,
+including force. The shared vault owner now rejects typed REVIEW before publishing
+plaintext, while keeping healthy CLEAN/WARN, explicitly forced malicious restores,
+and the existing force requirement for allowlisted malicious verdicts.
+
+Fresh independent review found a pre-existing creation-time Windows ACL exposure
+in the same staging path. Parent confirmed inherited reader access before the
+first actual plaintext write. Windows staging now supplies a protected owner and
+LocalSystem DACL to CREATE_NEW, keeps the exclusive HANDLE through full write and
+flush, and removes owned staging on failed/partial writes. POSIX retains the
+private mkstemp FD through writing. Same-cycle source review closes the confirmed
+P1 with no remaining concrete finding in this patch scope.
+
+Final frozen sources pass restoration policy 23, native Windows ACL/write-lifetime
+3, existing API 12 and existing three-dimension security 27. Each accepted run has
+zero failures/errors/skips, timeout, forced Job recovery, surviving owned children
+or outgoing network attempts. Real inert-file hash detection, AES-GCM vault,
+Windows DPAPI/ACL, metadata and CLI/API effects are used; external detector verdict
+fixtures do not establish real scanner accuracy. Final source-bound faults fail
+for removed review gate 16, force bypass 8, deny all 6, success-only 23 and unsafe
+inherited staging 3. Original policy RED shares final policy test bytes; historical
+ACL RED predates observer strengthening, with exact-final-test unsafe-staging
+counterfactual retained separately. No existing assertion was removed.
+
+Pinned CodeGraph 1.6.0 final selected graph covers 29 source/test files, 2,013 nodes,
+5,234 edges, zero pending changes. Private raw execution evidence and the scoped
+report are retained through Codex Security managed storage; the new continuation
+receipt records collection identity and digests without personal runtime paths.
+Earlier EICAR-dependent failures remain unaccepted: inputs were absent on later
+inspection, cause unestablished. Initial asyncio audit and snapshot-observer
+mistakes are preserved and excluded. Full scanner assets, Desktop journeys,
+POSIX native execution, CI and whole T05/campaign acceptance remain open. Host
+security settings, dependencies, production processes and main were not changed.
