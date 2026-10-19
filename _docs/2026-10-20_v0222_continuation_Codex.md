@@ -542,3 +542,33 @@ complete transitive/native dependency closure and whole-OS write/network monitor
 are not established. Existing config deprecation and plugin-size warnings remain
 in the raw log. This does not accept Electron executable/native ABI, ConPTY,
 GUI/E2E, packaging, installer, unrestricted host build, full T04/T10 or release.
+
+## T02 public TypeScript qualification and shutdown wording correction
+
+The real public write_file_tool/patch_tool path through LocalEnvironment and
+configured LSP owners returns actual TS2322 and then fresh clean diagnostics
+with the same client. Empty and invalid relative trust configurations both pass;
+document version and push counter advance 1 to 3. Four faults (no LSP, always
+clean, stale result, deny all) each produce two assertion failures, errors/skips
+zero. The five accepted Jobs have no timeout, source drift, guard violations,
+extra recovery or survivors. Eight pinned external engine asset hashes remain
+unchanged. No product change is claimed by this test-only qualification.
+
+Independent review identified unsupported natural-exit wording: ordinary
+shutdown_service can invoke terminate/kill and those leaf calls were not audited.
+The test now describes eventual exit after ordinary shutdown and records
+post_shutdown_exit_wait_seconds. Parent AST comparison confirms that the only
+executable difference is this metadata field rename; assertions are unchanged.
+Old test and all five historical Jobs are preserved, and the normal plus four
+fault Jobs were repeated against corrected test
+270d083d125c72fe6de530b5f74c83db661203c8950e8fc2cdf2d7e9553dd4e2.
+Parent rehashed all 44 current evidence files,
+73 historical files, 21 current sources and 21 reference copies, all 10 per-case
+receipts, and read the immutable CodeGraph DB: 1,418 nodes and 3,822 edges.
+
+CONTINUATION_PUBLIC_TS_20261020.json records the exact limits. This test depends
+on task scratch, prior asset receipts, installed absolute paths and uncommitted
+T02 trust owners, so it remains qualification WIP rather than portable CI or a
+standalone HEAD slice. It is not staged with this record. Historical 167 T02
+passes plus the unchanged mandatory Python OPEN failure are preserved. Global
+Python startup closure, other engines and whole T02/P0 remain OPEN.

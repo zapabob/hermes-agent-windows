@@ -1,0 +1,56 @@
+{
+  "status": "BOUNDED_PUBLIC_TYPESCRIPT_QUALIFICATION_WIP_FULL_T02_OPEN",
+  "scope": "Actual public write_file_tool/patch_tool through LocalEnvironment and configured LSP owners to existing external TypeScript engine, with empty or invalid relative workspace trust.",
+  "product_changes_in_this_record": false,
+  "test": {
+    "path": "tests/agent/lsp/test_public_file_operation_typescript.py",
+    "sha256": "270d083d125c72fe6de530b5f74c83db661203c8950e8fc2cdf2d7e9553dd4e2",
+    "disposition": "Uncommitted task-specific qualification; depends on uncommitted T02 trust owners, task scratch bindings, prior asset receipts and machine-specific installed paths. Not standalone portable CI."
+  },
+  "engine": {
+    "typescript_language_server": "5.3.0",
+    "typescript_sdk": "6.0.3",
+    "assets_before_after": "Eight previously pinned asset hashes identical; no install, download or runtime asset writes."
+  },
+  "evidence": {
+    "handoff": "tmp/continuation-20261020/t02-public-fileop-corrected-handoff.json",
+    "manifest": "tmp/continuation-20261020/t02-public-fileop-corrected-evidence/manifest.json",
+    "manifest_sha256": "c64f69988d618a53d14f577f0b099e335e15b2fe9af4d63e298e0f4c027c944b",
+    "parent_audit": "tmp/continuation-20261020/parent-public-ts-corrected-audit.json",
+    "source_and_reference_files": 21,
+    "manifest_files": 44,
+    "historical_files_preserved": 73,
+    "case_receipts": 10,
+    "jobs": 5,
+    "normal_passes": 2,
+    "fault_variants": 4,
+    "fault_assertion_failures": 8,
+    "errors": 0,
+    "skips": 0,
+    "job_active_before_recovery": 0,
+    "job_active_after_recovery": 0,
+    "source_unchanged": true,
+    "guard_violations": 0
+  },
+  "observed_behavior": "Public write returns actual TS2322; patch returns fresh clean diagnostics on the same configured client. Document version and push counter both advance from 1 to 3. Project SDK/plugin/runtime-hook sentinels remain absent.",
+  "faults": ["no LSP", "always clean", "stale result", "deny all"],
+  "shutdown_qualification": {
+    "supported": "Ordinary shutdown_service followed by eventual exit of captured PID/start identities, with no additional test recovery and Job counts zero.",
+    "not_observed": "Product terminate/kill leaf calls were not instrumented. All-process natural exit or absence of kills is not established.",
+    "correction": "Only comments and shutdown_natural_exit_wait_seconds -> post_shutdown_exit_wait_seconds metadata changed. Parent AST comparison confirms unchanged executable test logic after normalizing this field. Old test, receipts and wording preserved in t02-public-fileop-wording-history-01."
+  },
+  "graph": {
+    "version": "1.6.0",
+    "immutable_db_sha256": "fb93c216f4b15a73eb9abef8c71f94ecaa0691cdacbf36e0fcde3380e6d3088e",
+    "files": 21,
+    "nodes": 1418,
+    "edges": 3822,
+    "parent_read_actual_db": true
+  },
+  "open": [
+    "Original mandatory untrusted Python safe-positive remains unchanged and OPEN: historical T02 167 passes plus one OPEN failure.",
+    "Global Python site-packages/.pth/sitecustomize startup closure remains source/runtime qualification, not a demonstrated current-machine bypass.",
+    "Whole T02/P0, other engines, Dockerfile installed/transitive behavior, POSIX and native UNC/network qualification.",
+    "Portable CI and standalone HEAD qualification of this task-specific test."
+  ]
+}
