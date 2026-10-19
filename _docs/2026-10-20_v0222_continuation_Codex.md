@@ -249,3 +249,35 @@ inspection, cause unestablished. Initial asyncio audit and snapshot-observer
 mistakes are preserved and excluded. Full scanner assets, Desktop journeys,
 POSIX native execution, CI and whole T05/campaign acceptance remain open. Host
 security settings, dependencies, production processes and main were not changed.
+
+## T05 actual native YARA Unicode paths and CI selection
+
+Real installed yara-python 4.5.4 failed Windows Unicode filepath inputs, including
+a clean file. Windows scanning now opens through Python and supplies a read-only
+mapping to YARA, preserving the timeout and typed-error handling without a second
+full-payload copy. Empty files still execute rules. POSIX keeps the filepath API.
+
+Nine final native cases use inert owned bytes and actual YARA rules, Windows vault
+encryption/DPAPI, rescan failure and recovery, force/refusal, destination preservation
+and authenticated tamper rejection. Unicode/long/ASCII paths, empty-file matching
+and handle release pass. The native ACL suite gains only the windows_only marker;
+its assertions are unchanged. Both native files are discovered by the OS enumerator
+and pass the actual CI marker expression (nine plus three). The fork native list
+also includes these files and the restoration policy suite. No dependency changed.
+
+Existing bounded-security owners pass 79, with four excluded skips for a POSIX-only
+process-group case and unavailable Windows symlink privilege. Every accepted run
+has zero errors, timeout, forced recovery, surviving owned children or outgoing
+network attempts. Exact final test bytes fail for old filepath behavior five,
+empty-always-clean one, eager payload copying five, success-only seven and deny-all
+nine. Historical pre-expansion RED remains separate. Independent source review
+found no product issue and closed its native CI-selection P2 after the marker and
+workflow changes. Parent independently audited execution and unchanged source hashes.
+
+Pinned CodeGraph 1.6.0 has 31 exact binding entries, 30 indexed files, 1,939 nodes,
+4,966 edges, complete state and zero pending changes/references. The selected graph
+excludes unrelated changing config.py and does not establish repository-wide
+dynamic completeness. Thirty-five managed persistent artifacts retain raw logs,
+JUnit, Job receipts, helper hashes and caller/impact evidence. The new YARA receipt
+records the scope; the earlier restore receipt remains historical. Cloud CI,
+ClamAV/feed accuracy, native Desktop and full campaign acceptance are still open.

@@ -8,7 +8,8 @@ from downstream.security.models import Finding, Verdict
 from tests.security.test_restore_scan_decision import PAYLOAD, FixtureEngine, quarantined
 
 
-pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="Windows DACL creation-time contract")
+pytestmark = [pytest.mark.windows_only,
+              pytest.mark.skipif(sys.platform != "win32", reason="Windows DACL creation-time contract")]
 
 
 @pytest.mark.parametrize("write_mode", ["success", "error", "partial"])

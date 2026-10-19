@@ -146,6 +146,9 @@ jobs:
           tests/security/test_security_center.py
           tests/security/test_freshclam_progress.py
           tests/security/test_security_api.py
+          tests/security/test_restore_scan_decision.py
+          tests/security/test_restore_private_staging_windows.py
+          tests/security/test_yara_inert_restore_windows.py
           -q
       - name: Isolated OAuth, provider, dependency and gateway contracts
         # These tests own process-global OAuth registries. Match the canonical

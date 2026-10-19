@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import mmap
 import os
 import re
 import shutil
@@ -382,7 +383,17 @@ class YaraEngine:
             state = EngineState.ENGINE_ERROR if self._compile_errors else EngineState.SCANNER_UNAVAILABLE
             return [Finding(self.name, "YARA unavailable", 0, state, details)]
         try:
-            matches = self._compiled.match(str(path), timeout=self.timeout)
+            if os.name == "nt":
+                # The native filepath interface uses narrow strings. Python's
+                # opener handles Unicode paths; map bytes without a second copy.
+                with path.open("rb") as source:
+                    if os.fstat(source.fileno()).st_size:
+                        with mmap.mmap(source.fileno(), 0, access=mmap.ACCESS_READ) as contents:
+                            matches = self._compiled.match(data=contents, timeout=self.timeout)
+                    else:
+                        matches = self._compiled.match(data=b"", timeout=self.timeout)
+            else:
+                matches = self._compiled.match(str(path), timeout=self.timeout)
         except Exception as exc:
             return [Finding(self.name, "YARA scan error", 0, EngineState.ENGINE_ERROR, {"error": type(exc).__name__})]
         findings: list[Finding] = []
