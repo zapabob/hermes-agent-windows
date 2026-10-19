@@ -1,0 +1,443 @@
+{
+  "schema_version": 1,
+  "status": "SCOPED_VERIFIED_T03B_CAMPAIGN_PARTIAL",
+  "requirement": "R20-STATUS-LIST / T03b",
+  "baseline": "d50995b06d636e6118214b68789f344882773f3a",
+  "source_sha256": {
+    "hermes_cli/status.py": "c9fb0a48af4b7ddf7b0f8a4d2c3dbafad9c329502a0e331d676b977e464f6d50",
+    "hermes_cli/inventory.py": "948484ffe1637de2cfbf99ef54274a42fe2c7105c6f2b786511ed5f4bf31d02a",
+    "hermes_cli/model_switch.py": "efa3d73f6f8f65b332369b4b77ca60fd0ea13185749c7ca1c5f300abb6b936a4",
+    "hermes_cli/models.py": "5461c698db51492a8bab0b87417d8654494d87b59d4bcfffdc523aa8fb266993",
+    "agent/models_dev.py": "39013de06cfc81cbf603ce5fed0308a9987a80bae6036d71b7f60e728c645747",
+    "uv.lock": "5327b9052b23734235a76922f418ddfab825c17b1ab5368688a847cb2269b33d",
+    "pyproject.toml": "fb609dcb77da7e70cdddf5f49f02f32824df6a3968e0e55f18d1d294ba5bc4dd",
+    "tests/conftest.py": "9780ba549bf6fb746ff08fc3ea793b9593fa636c13ee7f61537052082d7020b8",
+    "tmp/continuation-20261020/run.py": "8af6f9cba40a80e4475686bbd9f06e993598063ae9c4c6a4a258e7683538a264",
+    "tmp/continuation-20261020/bootstrap.py": "6313458fc43fffee67bf1c7dfe04412ab1d185cb2f47cb25221226a3ddc671f1",
+    "tmp/selective-20261017/fxa01_owned_job.py": "ad3738f0d7fd0f63db2f7d41dcdb8209f3647eae36aa233592d726198b5c48e7",
+    "tests/hermes_cli/test_status_summary.py": "62839021474eda150a14e8ab06ec5af7d5d71ef4d167a09603fb5c4f54132bd8"
+  },
+  "positive_runs": [
+    {
+      "label": "status-final-units-t03b",
+      "passed": 28,
+      "argv": [
+        "<TEST_PYTHON>",
+        "-B",
+        "<REPO>\\tmp\\continuation-20261020\\bootstrap.py",
+        "-p",
+        "pytest_asyncio.plugin",
+        "-o",
+        "addopts=",
+        "tests/hermes_cli/test_status_summary.py",
+        "--basetemp",
+        "<OWNED_TEST_ROOT>\\status-final-units-t03b\\cases",
+        "--junitxml=<REPO>\\tmp\\continuation-20261020\\status-final-units-t03b\\junit.xml",
+        "-q"
+      ],
+      "junit_sha256": "0a2706a68252563639880b310a9bac960376b766fa46ffb2dc6a9fcec7b07eb6",
+      "result_sha256": "38afb41c3689f3a630043067b9e81f44e373614ccfb93262ec73369afb5936fa"
+    },
+    {
+      "label": "status-final-cli-configured-default-t03b",
+      "passed": 1,
+      "argv": [
+        "<TEST_PYTHON>",
+        "-B",
+        "<REPO>\\tmp\\continuation-20261020\\bootstrap.py",
+        "-p",
+        "pytest_asyncio.plugin",
+        "-o",
+        "addopts=",
+        "tests/hermes_cli/test_status_summary.py::test_public_provider_summary_observes_real_local_owners[configured-default]",
+        "--basetemp",
+        "<OWNED_TEST_ROOT>\\status-final-cli-configured-default-t03b\\cases",
+        "--junitxml=<REPO>\\tmp\\continuation-20261020\\status-final-cli-configured-default-t03b\\junit.xml",
+        "-q"
+      ],
+      "junit_sha256": "b7a856312718643e4e01e1b95438d33cf91e9015d6d3e5a0fed4cb27ff8f9982",
+      "result_sha256": "19361be108a1ae5e35c456e774d119b2c573bb95403466e5ad042ef5fe802a22"
+    },
+    {
+      "label": "status-final-cli-configured-short-t03b",
+      "passed": 1,
+      "argv": [
+        "<TEST_PYTHON>",
+        "-B",
+        "<REPO>\\tmp\\continuation-20261020\\bootstrap.py",
+        "-p",
+        "pytest_asyncio.plugin",
+        "-o",
+        "addopts=",
+        "tests/hermes_cli/test_status_summary.py::test_public_provider_summary_observes_real_local_owners[configured-short]",
+        "--basetemp",
+        "<OWNED_TEST_ROOT>\\status-final-cli-configured-short-t03b\\cases",
+        "--junitxml=<REPO>\\tmp\\continuation-20261020\\status-final-cli-configured-short-t03b\\junit.xml",
+        "-q"
+      ],
+      "junit_sha256": "5d4d5ee1651d6196f98eddf6a6f661afef29cd94d1b1b1d0b7fdf8b4fd466f44",
+      "result_sha256": "3894aedb79c896796c7cb16f5585b2902050a9d19aaa833d2df175dad71f4fe1"
+    },
+    {
+      "label": "status-final-cli-empty-default-t03b",
+      "passed": 1,
+      "argv": [
+        "<TEST_PYTHON>",
+        "-B",
+        "<REPO>\\tmp\\continuation-20261020\\bootstrap.py",
+        "-p",
+        "pytest_asyncio.plugin",
+        "-o",
+        "addopts=",
+        "tests/hermes_cli/test_status_summary.py::test_public_provider_summary_observes_real_local_owners[empty-default]",
+        "--basetemp",
+        "<OWNED_TEST_ROOT>\\status-final-cli-empty-default-t03b\\cases",
+        "--junitxml=<REPO>\\tmp\\continuation-20261020\\status-final-cli-empty-default-t03b\\junit.xml",
+        "-q"
+      ],
+      "junit_sha256": "80f6f7170e2b36355cffbe13010110f648668f519f3eb4ee0275b0e4a6bc1cb9",
+      "result_sha256": "6774bef53b33957bca7d00bba122cbbaa065364d39c77cfff712177b5a10a1a0"
+    },
+    {
+      "label": "status-final-cli-empty-short-t03b",
+      "passed": 1,
+      "argv": [
+        "<TEST_PYTHON>",
+        "-B",
+        "<REPO>\\tmp\\continuation-20261020\\bootstrap.py",
+        "-p",
+        "pytest_asyncio.plugin",
+        "-o",
+        "addopts=",
+        "tests/hermes_cli/test_status_summary.py::test_public_provider_summary_observes_real_local_owners[empty-short]",
+        "--basetemp",
+        "<OWNED_TEST_ROOT>\\status-final-cli-empty-short-t03b\\cases",
+        "--junitxml=<REPO>\\tmp\\continuation-20261020\\status-final-cli-empty-short-t03b\\junit.xml",
+        "-q"
+      ],
+      "junit_sha256": "29c86710ea3efda6a7c9926ab0552ab981e689ef00c70b3c8733a7aaa1000829",
+      "result_sha256": "4f441b9f16585b62966b3db7fba6313a86e6aa6393e69d183809440c83f91d80"
+    },
+    {
+      "label": "status-final-cli-stale-catalog-default-t03b",
+      "passed": 1,
+      "argv": [
+        "<TEST_PYTHON>",
+        "-B",
+        "<REPO>\\tmp\\continuation-20261020\\bootstrap.py",
+        "-p",
+        "pytest_asyncio.plugin",
+        "-o",
+        "addopts=",
+        "tests/hermes_cli/test_status_summary.py::test_public_provider_summary_observes_real_local_owners[stale-catalog-default]",
+        "--basetemp",
+        "<OWNED_TEST_ROOT>\\status-final-cli-stale-catalog-default-t03b\\cases",
+        "--junitxml=<REPO>\\tmp\\continuation-20261020\\status-final-cli-stale-catalog-default-t03b\\junit.xml",
+        "-q"
+      ],
+      "junit_sha256": "37e87fad0e00fa77f7b17b6fda99186f0cc4d08b86bed5891c4850ed6070094e",
+      "result_sha256": "cbff5b1a24dc211840a8fbcae1976c387711c4b118f4adb053bce8ee2c473379"
+    },
+    {
+      "label": "status-final-cli-stale-catalog-short-t03b",
+      "passed": 1,
+      "argv": [
+        "<TEST_PYTHON>",
+        "-B",
+        "<REPO>\\tmp\\continuation-20261020\\bootstrap.py",
+        "-p",
+        "pytest_asyncio.plugin",
+        "-o",
+        "addopts=",
+        "tests/hermes_cli/test_status_summary.py::test_public_provider_summary_observes_real_local_owners[stale-catalog-short]",
+        "--basetemp",
+        "<OWNED_TEST_ROOT>\\status-final-cli-stale-catalog-short-t03b\\cases",
+        "--junitxml=<REPO>\\tmp\\continuation-20261020\\status-final-cli-stale-catalog-short-t03b\\junit.xml",
+        "-q"
+      ],
+      "junit_sha256": "dc8e2a2660f7855ef4b20edd04cc5d3f7dade9724b97d2570361c991353130ea",
+      "result_sha256": "f6887f259312606669f608f37e9d4dfc916e9f591ac875d447275f7af0e5f5f7"
+    },
+    {
+      "label": "status-final-cli-mirror-catalog-default-t03b",
+      "passed": 1,
+      "argv": [
+        "<TEST_PYTHON>",
+        "-B",
+        "<REPO>\\tmp\\continuation-20261020\\bootstrap.py",
+        "-p",
+        "pytest_asyncio.plugin",
+        "-o",
+        "addopts=",
+        "tests/hermes_cli/test_status_summary.py::test_public_provider_summary_observes_real_local_owners[mirror-catalog-default]",
+        "--basetemp",
+        "<OWNED_TEST_ROOT>\\status-final-cli-mirror-catalog-default-t03b\\cases",
+        "--junitxml=<REPO>\\tmp\\continuation-20261020\\status-final-cli-mirror-catalog-default-t03b\\junit.xml",
+        "-q"
+      ],
+      "junit_sha256": "ccb33abe90a0493c10843c1e4d2c97790c19fccfe10672c6da6013d83be8aef4",
+      "result_sha256": "35c84ee815532e58d487ae0f3ee64f17bf19aee66344dda0493f2fd8f59f0c24"
+    },
+    {
+      "label": "status-final-cli-mirror-catalog-short-t03b",
+      "passed": 1,
+      "argv": [
+        "<TEST_PYTHON>",
+        "-B",
+        "<REPO>\\tmp\\continuation-20261020\\bootstrap.py",
+        "-p",
+        "pytest_asyncio.plugin",
+        "-o",
+        "addopts=",
+        "tests/hermes_cli/test_status_summary.py::test_public_provider_summary_observes_real_local_owners[mirror-catalog-short]",
+        "--basetemp",
+        "<OWNED_TEST_ROOT>\\status-final-cli-mirror-catalog-short-t03b\\cases",
+        "--junitxml=<REPO>\\tmp\\continuation-20261020\\status-final-cli-mirror-catalog-short-t03b\\junit.xml",
+        "-q"
+      ],
+      "junit_sha256": "76614d2da5a2aa405b09fcc4d06b9b4de9bc760a6b64f4d61a7ad20517f9f91f",
+      "result_sha256": "09385e85d96fb56fce7432485470bcae744643127a5b24b9c5314833eb7821c3"
+    },
+    {
+      "label": "status-final-cli-corrupt-catalog-default-t03b",
+      "passed": 1,
+      "argv": [
+        "<TEST_PYTHON>",
+        "-B",
+        "<REPO>\\tmp\\continuation-20261020\\bootstrap.py",
+        "-p",
+        "pytest_asyncio.plugin",
+        "-o",
+        "addopts=",
+        "tests/hermes_cli/test_status_summary.py::test_public_provider_summary_observes_real_local_owners[corrupt-catalog-default]",
+        "--basetemp",
+        "<OWNED_TEST_ROOT>\\status-final-cli-corrupt-catalog-default-t03b\\cases",
+        "--junitxml=<REPO>\\tmp\\continuation-20261020\\status-final-cli-corrupt-catalog-default-t03b\\junit.xml",
+        "-q"
+      ],
+      "junit_sha256": "f8473fd6d7945115c4fb0a5889855ac3b9afbbe3c99fadb049961e2479ecae43",
+      "result_sha256": "4734ef4135c9d826d0ce040b07bafb2ab929afb900f3cd5444973d9ce436b4ab"
+    },
+    {
+      "label": "status-final-cli-corrupt-catalog-short-t03b",
+      "passed": 1,
+      "argv": [
+        "<TEST_PYTHON>",
+        "-B",
+        "<REPO>\\tmp\\continuation-20261020\\bootstrap.py",
+        "-p",
+        "pytest_asyncio.plugin",
+        "-o",
+        "addopts=",
+        "tests/hermes_cli/test_status_summary.py::test_public_provider_summary_observes_real_local_owners[corrupt-catalog-short]",
+        "--basetemp",
+        "<OWNED_TEST_ROOT>\\status-final-cli-corrupt-catalog-short-t03b\\cases",
+        "--junitxml=<REPO>\\tmp\\continuation-20261020\\status-final-cli-corrupt-catalog-short-t03b\\junit.xml",
+        "-q"
+      ],
+      "junit_sha256": "a96af866b5bb823bac929c8978424f60bd94ea6257c9edc684998cb3c2824427",
+      "result_sha256": "e65081ee802ab5246a6f9bd5e3122d623ae9f5291873f3e6b119b58e87e35c12"
+    },
+    {
+      "label": "status-final-cli-corrupt-auth-default-t03b",
+      "passed": 1,
+      "argv": [
+        "<TEST_PYTHON>",
+        "-B",
+        "<REPO>\\tmp\\continuation-20261020\\bootstrap.py",
+        "-p",
+        "pytest_asyncio.plugin",
+        "-o",
+        "addopts=",
+        "tests/hermes_cli/test_status_summary.py::test_public_provider_summary_observes_real_local_owners[corrupt-auth-default]",
+        "--basetemp",
+        "<OWNED_TEST_ROOT>\\status-final-cli-corrupt-auth-default-t03b\\cases",
+        "--junitxml=<REPO>\\tmp\\continuation-20261020\\status-final-cli-corrupt-auth-default-t03b\\junit.xml",
+        "-q"
+      ],
+      "junit_sha256": "a30405ac0a8b5c8b57e9e874ae055e3846a5cd0446229828121862e14ef1e5bb",
+      "result_sha256": "5ae333366e836dda05fbb01e87ff2fe2915b38c26166e9123e0389e40a0b65b9"
+    },
+    {
+      "label": "status-final-cli-corrupt-auth-short-t03b",
+      "passed": 1,
+      "argv": [
+        "<TEST_PYTHON>",
+        "-B",
+        "<REPO>\\tmp\\continuation-20261020\\bootstrap.py",
+        "-p",
+        "pytest_asyncio.plugin",
+        "-o",
+        "addopts=",
+        "tests/hermes_cli/test_status_summary.py::test_public_provider_summary_observes_real_local_owners[corrupt-auth-short]",
+        "--basetemp",
+        "<OWNED_TEST_ROOT>\\status-final-cli-corrupt-auth-short-t03b\\cases",
+        "--junitxml=<REPO>\\tmp\\continuation-20261020\\status-final-cli-corrupt-auth-short-t03b\\junit.xml",
+        "-q"
+      ],
+      "junit_sha256": "85718472cb82dbb97b357b52d3486ada1065825dacca228e1b67f9d2ad39fdce",
+      "result_sha256": "d9ab8306b79fc68807323c969889b0130bd0fe9a88aef4231da1cce5fd5402f6"
+    },
+    {
+      "label": "status-final-cli-bedrock-default-t03b",
+      "passed": 1,
+      "argv": [
+        "<TEST_PYTHON>",
+        "-B",
+        "<REPO>\\tmp\\continuation-20261020\\bootstrap.py",
+        "-p",
+        "pytest_asyncio.plugin",
+        "-o",
+        "addopts=",
+        "tests/hermes_cli/test_status_summary.py::test_public_provider_summary_observes_real_local_owners[bedrock-default]",
+        "--basetemp",
+        "<OWNED_TEST_ROOT>\\status-final-cli-bedrock-default-t03b\\cases",
+        "--junitxml=<REPO>\\tmp\\continuation-20261020\\status-final-cli-bedrock-default-t03b\\junit.xml",
+        "-q"
+      ],
+      "junit_sha256": "4610a82791c46a18979f6facab47e4dcba74389e8148f7f1be01685ee430cf46",
+      "result_sha256": "4ff0b033757301c9ce58392308e719b725ed60aa002e00d7ec8e71faa28c5d3b"
+    },
+    {
+      "label": "status-final-cli-bedrock-short-t03b",
+      "passed": 1,
+      "argv": [
+        "<TEST_PYTHON>",
+        "-B",
+        "<REPO>\\tmp\\continuation-20261020\\bootstrap.py",
+        "-p",
+        "pytest_asyncio.plugin",
+        "-o",
+        "addopts=",
+        "tests/hermes_cli/test_status_summary.py::test_public_provider_summary_observes_real_local_owners[bedrock-short]",
+        "--basetemp",
+        "<OWNED_TEST_ROOT>\\status-final-cli-bedrock-short-t03b\\cases",
+        "--junitxml=<REPO>\\tmp\\continuation-20261020\\status-final-cli-bedrock-short-t03b\\junit.xml",
+        "-q"
+      ],
+      "junit_sha256": "f22a4dbd355a5b4765c675808d4437d6d170325c9da3920e5053f10b8625b204",
+      "result_sha256": "c0b31d5b8d1d4cbac7cea020cd76602ab1cc0287e77f1823609bcbae8802017f"
+    },
+    {
+      "label": "status-final-cli-profile-fallback-default-t03b",
+      "passed": 1,
+      "argv": [
+        "<TEST_PYTHON>",
+        "-B",
+        "<REPO>\\tmp\\continuation-20261020\\bootstrap.py",
+        "-p",
+        "pytest_asyncio.plugin",
+        "-o",
+        "addopts=",
+        "tests/hermes_cli/test_status_summary.py::test_public_provider_summary_observes_real_local_owners[profile-fallback-default]",
+        "--basetemp",
+        "<OWNED_TEST_ROOT>\\status-final-cli-profile-fallback-default-t03b\\cases",
+        "--junitxml=<REPO>\\tmp\\continuation-20261020\\status-final-cli-profile-fallback-default-t03b\\junit.xml",
+        "-q"
+      ],
+      "junit_sha256": "b899548d85ae298c243b2043517be6f05a1839aa3f27b4c089a6223e0a853275",
+      "result_sha256": "28a5ebbf69f0d7dedbd8d3924e6ca22ce356a25f17845cc17027a11217003dcb"
+    },
+    {
+      "label": "status-final-cli-profile-fallback-short-t03b",
+      "passed": 1,
+      "argv": [
+        "<TEST_PYTHON>",
+        "-B",
+        "<REPO>\\tmp\\continuation-20261020\\bootstrap.py",
+        "-p",
+        "pytest_asyncio.plugin",
+        "-o",
+        "addopts=",
+        "tests/hermes_cli/test_status_summary.py::test_public_provider_summary_observes_real_local_owners[profile-fallback-short]",
+        "--basetemp",
+        "<OWNED_TEST_ROOT>\\status-final-cli-profile-fallback-short-t03b\\cases",
+        "--junitxml=<REPO>\\tmp\\continuation-20261020\\status-final-cli-profile-fallback-short-t03b\\junit.xml",
+        "-q"
+      ],
+      "junit_sha256": "1d98e8d43c339e6cc6d2beb6d4b1e831e3fb20edfc19da800e3b339b57f1998d",
+      "result_sha256": "a469b4883b27e48e34e8c584e8a05921d6d48771bf9f7bbc1a056cff085e32a0"
+    }
+  ],
+  "collected_nodes": 44,
+  "passed_nodes": 44,
+  "duplicates": 0,
+  "omissions": 0,
+  "skipped": 0,
+  "anti_fix": [
+    {
+      "label": "status-fault-empty",
+      "failed_by_behavioral_assertion": 1,
+      "source_unchanged": true,
+      "real_cli_programs_mutated": 1,
+      "variant": "empty-list"
+    },
+    {
+      "label": "status-fault-error",
+      "failed_by_behavioral_assertion": 1,
+      "source_unchanged": true,
+      "real_cli_programs_mutated": 1,
+      "variant": "read-error-healthy"
+    },
+    {
+      "label": "status-fault-network",
+      "failed_by_behavioral_assertion": 1,
+      "source_unchanged": true,
+      "real_cli_programs_mutated": 1,
+      "variant": "network-probe"
+    },
+    {
+      "label": "status-fault-aws",
+      "failed_by_behavioral_assertion": 1,
+      "source_unchanged": true,
+      "real_cli_programs_mutated": 1,
+      "variant": "aws-signal-omitted"
+    },
+    {
+      "label": "status-fault-global",
+      "failed_by_behavioral_assertion": 1,
+      "source_unchanged": true,
+      "real_cli_programs_mutated": 1,
+      "variant": "global-pool-omitted"
+    }
+  ],
+  "owner_regressions": {
+    "models_dev": 68,
+    "xai_catalog": 5
+  },
+  "observation": "real CLI default/short, no socket/DNS/background/provider SDK or mutable auth loader; config/cron/auth/cache bytes preserved",
+  "provider_semantics": "configured or cached credential signal only, not verified token/endpoint health",
+  "review": {
+    "reviewer_agent_id": "01a15528-3daa-7160-af1f-5e3f6e2567a6",
+    "initial_P2": [
+      "explicit scoped AWS signals omitted",
+      "per-provider global stored-pool fallback omitted"
+    ],
+    "rereview": "Both P2 closed; frozen six-file whole diff has no further actionable finding",
+    "red_caveat": "Original focused RED/GREEN tests changed bytes; separate exact-final-test real CLI omission anti-fixes kill both missing AWS signal and global fallback"
+  },
+  "graph": {
+    "version": "1.6.0",
+    "selected_files": 10,
+    "nodes": 1311,
+    "edges": 3946,
+    "pending": {
+      "added": 0,
+      "modified": 0,
+      "removed": 0
+    },
+    "scope": "selected owners only, not complete repository/dynamic references"
+  },
+  "excluded": [
+    "initial mixed RED/fixture attempts",
+    "status-final-green-t03b timeout180 exit124",
+    "deselected nodes outside each batch"
+  ],
+  "not_run": [
+    "actual deep network diagnostics",
+    "whole campaign/full cloud CI",
+    "all-provider live health"
+  ],
+  "production_restart": false,
+  "published": false
+}

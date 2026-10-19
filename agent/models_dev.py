@@ -332,7 +332,7 @@ def _clear_etag() -> None:
         logger.debug("Failed to clear models.dev ETag: %s", e)
 
 
-def _get_models_dev_url() -> str:
+def _get_models_dev_url(*, read_only: bool = False) -> str:
     """Resolve the models.dev API URL, honoring a config.yaml override.
 
     The ``models_dev.url`` config key lets deployments point at a mirror
@@ -344,7 +344,7 @@ def _get_models_dev_url() -> str:
         return binding[0]
     try:
         from hermes_cli.config import cfg_get, load_config_readonly
-        cfg = load_config_readonly()
+        cfg = load_config_readonly(require_valid=True) if read_only else load_config_readonly()
         url = cfg_get(cfg, "models_dev", "url", default="")
         if isinstance(url, str) and url.strip():
             return url.strip()
@@ -360,19 +360,28 @@ def _validate_registry(data: Any) -> bool:
     return isinstance(data, dict) and len(data) > 0
 
 
-def _load_disk_cache() -> Dict[str, Any]:
+def _load_disk_cache(*, read_only: bool = False) -> Dict[str, Any]:
     """Load models.dev data from disk cache.
 
     A corrupt cache (invalid JSON, not a dict, or empty) is rejected with
     a warning so it doesn't silently masquerade as ``{}`` and break
     provider/model resolution for every caller.
+
+    ``read_only=True`` never initializes the home or quarantines a file;
+    invalid/unreadable data raises so observational callers can report unknown.
+    The default retains the repair behavior used by catalog refresh paths.
     """
     try:
-        cache_path = _get_cache_path()
+        cache_path = (
+            _get_cache_path(url=_get_models_dev_url(read_only=True))
+            if read_only else _get_cache_path()
+        )
         if cache_path.exists():
             with open(cache_path, encoding="utf-8") as f:
                 data = json.load(f)
             if not _validate_registry(data):
+                if read_only:
+                    raise ValueError("Invalid models.dev disk cache")
                 logger.warning(
                     "models.dev disk cache is corrupt or empty; "
                     "quarantining (will refetch from network)"
@@ -381,6 +390,8 @@ def _load_disk_cache() -> Dict[str, Any]:
                 return {}
             return data
     except Exception as e:
+        if read_only:
+            raise
         logger.warning(
             "Failed to load models.dev disk cache; quarantining: %s", e
         )

@@ -314,7 +314,8 @@ def _xai_curated_models() -> list[str]:
     """
     try:
         from agent.models_dev import _load_disk_cache
-        data = _load_disk_cache()
+        # This runs during module import: diagnostics must not repair files.
+        data = _load_disk_cache(read_only=True)
         xai = data.get("xai") if isinstance(data, dict) else None
         models = xai.get("models") if isinstance(xai, dict) else None
         if isinstance(models, dict) and models:

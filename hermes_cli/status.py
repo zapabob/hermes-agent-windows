@@ -147,6 +147,13 @@ def _show_status_summary() -> None:
         logger.debug("Status provider unavailable", exc_info=True)
         provider = "unknown"
     try:
+        from hermes_cli.inventory import list_connected_provider_names
+
+        providers = ", ".join(list_connected_provider_names()) or "none connected"
+    except Exception:
+        logger.debug("Status provider inventory unavailable", exc_info=True)
+        providers = "unknown"
+    try:
         from hermes_cli.gateway import get_gateway_runtime_snapshot
 
         snapshot = get_gateway_runtime_snapshot()
@@ -186,6 +193,7 @@ def _show_status_summary() -> None:
     lines.extend([
         f"  Model:        {model}",
         f"  Provider:     {provider}",
+        f"  Providers:    {providers}",
         f"  Gateway:      {gateway}",
         f"  Platforms:    {platforms}",
         f"  Jobs:         {jobs}",

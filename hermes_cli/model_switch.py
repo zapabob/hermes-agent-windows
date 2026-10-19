@@ -2421,6 +2421,24 @@ def _scoped_key_env(name: str) -> str:
 
 
 # --- Parallel prefetch for provider model catalogs -----------------------
+
+
+def _has_fast_aws_sdk_signal() -> bool:
+    """Observe explicit, profile-scoped AWS configuration without the SDK chain."""
+    if _scoped_key_env("AWS_BEARER_TOKEN_BEDROCK"):
+        return True
+    if _scoped_key_env("AWS_ACCESS_KEY_ID") and _scoped_key_env("AWS_SECRET_ACCESS_KEY"):
+        return True
+    return any(
+        _scoped_key_env(name)
+        for name in (
+            "AWS_PROFILE",
+            "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
+            "AWS_CONTAINER_CREDENTIALS_FULL_URI",
+            "AWS_WEB_IDENTITY_TOKEN_FILE",
+        )
+    )
+
 #
 # When the 1h disk cache lapses (or on first cold open), list_authenticated_providers()
 # calls cached_provider_model_ids() serially for each authed provider.  Each call
@@ -2810,31 +2828,6 @@ def list_authenticated_providers(
         normed = _norm_url(url)
         if normed:
             _builtin_endpoints.add(normed)
-
-    def _has_fast_aws_sdk_signal() -> bool:
-        """Return True when explicit AWS auth config is present.
-
-        This intentionally avoids botocore's full credential chain. Provider
-        picker/model-switch discovery can run for non-Bedrock providers, and
-        botocore may otherwise probe EC2 IMDS (169.254.169.254) on local
-        machines before returning no credentials.
-        """
-        if os.environ.get("AWS_BEARER_TOKEN_BEDROCK", "").strip():
-            return True
-        if (
-            os.environ.get("AWS_ACCESS_KEY_ID", "").strip()
-            and os.environ.get("AWS_SECRET_ACCESS_KEY", "").strip()
-        ):
-            return True
-        return any(
-            os.environ.get(name, "").strip()
-            for name in (
-                "AWS_PROFILE",
-                "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
-                "AWS_CONTAINER_CREDENTIALS_FULL_URI",
-                "AWS_WEB_IDENTITY_TOKEN_FILE",
-            )
-        )
 
     def _has_aws_sdk_creds_for_listing(slug: str) -> bool:
         """Credential check for AWS SDK providers in non-runtime discovery."""

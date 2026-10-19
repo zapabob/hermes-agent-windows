@@ -130,3 +130,52 @@ pytest-asyncio 1.3.0, pywin32 311, openai 2.54.0 and Ruff 0.15.10. It is reused
 without installing/upgrading dependencies. Module lookup observes faster_whisper
 and sounddevice but no sherpa_onnx/vosk. No local incremental recognizer/assets
 or actual audio recognition is qualified, so T07 remains NOT_ACCEPTED.
+
+Pinned Git history identifies the Python-package-root contract source as
+4dac5f28af54001b899c9b6fc8ba81cb58da2f0e, authored by Teknium. Its title also
+mentions execute_code process cleanup, which is not adopted or reviewed by the
+T03a slice. The contract is present in the frozen U final source. Downstream
+composition and tests are by Codex; this is distinct from upstream authorship.
+GHSA reporter/discoverer attribution is not applicable to this root-routing slice
+and no unverified security contributor identity is inferred.
+
+## T03b — observational provider summary
+
+The default/short summary adds one unique Providers display-name list, preserving
+the selected Provider and Model. Empty configuration renders none connected;
+corrupt/unreadable snapshots render unknown. Existing full/all/deep dispatch is
+preserved. Inventory reuses canonical provider identities/labels, custom config
+compatibility and the established current/global auth paths. It does not refresh
+catalogs, migrate/seed credential pools, start authentication or probe endpoints.
+These are configured credential signals, not live endpoint/token health.
+
+Real subprocess tests exposed an import-time side effect: models._xai_curated_models
+called the repairing cache loader and moved corrupt catalog files before status
+ran. The existing cache owner now has an explicit read_only path; its default
+quarantine/repair behavior remains covered. Source review also closed two P2s:
+explicit scoped Bedrock signals and per-provider global-pool fallback. The fast
+AWS signal helper is shared in the existing model-switch owner rather than
+duplicating SDK/admission logic. No SDK credential chain is added.
+
+The final collection is 44 nodes: 28 non-matrix cases plus 16 exact real CLI
+default/short cases. Parent verification independently compares JUnit node names
+to the collected union: 44/44, no repeats/omissions/failures/skips. Batch
+deselections are explicit and not counted as passes. A 180-second file-level
+timeout is excluded and preserved; bounded exact-node batches cover the complete
+same-source set. Additional models.dev 68 and xAI catalog 5 regressions pass.
+
+Five source-bound in-memory real-CLI anti-fixes fail behavioral assertions:
+empty list, read error presented healthy, added DNS probe, omitted AWS signal,
+and omitted global-pool fallback. Each mutant affects an actual fresh CLI worker,
+has zero collection errors/timeouts/recovery and leaves source unchanged. The
+last two use exact final positive-test bytes, resolving the evidence limitation
+that the original focused P2 RED/GREEN test-file hashes differed.
+
+Independent frozen six-file rereview closes both P2s and reports no further
+actionable findings. Parent pinned CodeGraph 1.6.0 indexes ten exact selected
+status/config/auth/catalog owners/tests, 1,311 nodes / 3,946 edges, zero pending;
+caller/impact identify the actual summary and direct test consumers. This remains
+selected-source evidence, not whole-repository or whole-campaign acceptance.
+CONTINUATION_T03B_20261020.json binds the final source, commands and results;
+expanded private argv/resources stay under tmp, while canonical commands use
+workspace/runtime placeholders. The LSP trust WIP is not part of this slice.

@@ -117,6 +117,130 @@ def load_picker_context() -> ConfigContext:
 # ─── Public: payload builder ────────────────────────────────────────────
 
 
+def list_connected_provider_names() -> list[str]:
+    """Observe configured provider names without model/credential discovery.
+
+    Unlike the picker, this never refreshes catalogs, seeds credential pools,
+    reads external login stores, or runs SDK credential chains. Stored auth
+    entries indicate configuration, not verified token or endpoint health.
+    Missing stores are empty; unreadable/invalid stores raise to the caller.
+    """
+    import json
+    from pathlib import Path
+
+    from agent.models_dev import PROVIDER_TO_MODELS_DEV, _load_disk_cache
+    from hermes_cli.auth import (
+        PROVIDER_REGISTRY,
+        SERVICE_PROVIDER_NAMES,
+        _auth_file_path,
+        _global_auth_file_path,
+    )
+    from hermes_cli.config import get_compatible_custom_providers, load_config_readonly
+    from hermes_cli.model_switch import _has_fast_aws_sdk_signal, _scoped_key_env
+    from hermes_cli.models import CANONICAL_PROVIDERS, provider_label
+    from hermes_cli.providers import (
+        HERMES_OVERLAYS,
+        normalize_provider,
+        resolve_custom_provider,
+    )
+    from providers import get_provider_profile
+
+    cfg = load_config_readonly(require_valid=True)
+
+    def read_mapping(path: Path) -> dict:
+        try:
+            value = json.loads(path.read_text(encoding="utf-8-sig"))
+        except FileNotFoundError:
+            return {}
+        if not isinstance(value, dict):
+            raise ValueError("Invalid provider status snapshot")
+        return value
+
+    catalog = _load_disk_cache(read_only=True)
+    for metadata in catalog.values():
+        if not isinstance(metadata, dict):
+            raise ValueError("Invalid provider catalog entry")
+        if not isinstance(metadata.get("name", ""), str):
+            raise ValueError("Invalid provider catalog name")
+        env_vars = metadata.get("env", [])
+        if not isinstance(env_vars, list) or any(not isinstance(key, str) for key in env_vars):
+            raise ValueError("Invalid provider catalog environment keys")
+    # The auth loader may preserve corrupt files or migrate legacy data.
+    # Read only the existing profile's current stored-auth schema here.
+    def auth_parts(auth: dict) -> tuple[dict, dict]:
+        stored = auth.get("providers", {})
+        pools = auth.get("credential_pool", {})
+        if not isinstance(stored, dict) or not isinstance(pools, dict):
+            raise ValueError("Invalid provider auth snapshot")
+        if "systems" in auth or any(not isinstance(state, dict) for state in stored.values()):
+            raise ValueError("Unsupported provider auth snapshot")
+        return stored, pools
+
+    stored, pools = auth_parts(read_mapping(_auth_file_path()))
+    global_path = _global_auth_file_path()
+    global_stored, global_pools = auth_parts(read_mapping(global_path)) if global_path else ({}, {})
+    if any(
+        not isinstance(pool, list) or any(not isinstance(entry, dict) for entry in pool)
+        for pool in pools.values()
+    ):
+        raise ValueError("Invalid stored credential pool")
+
+    canonical = {entry.slug: entry.label for entry in CANONICAL_PROVIDERS}
+    candidates = dict.fromkeys([*canonical, *PROVIDER_REGISTRY, *catalog])
+    names: set[str] = set()
+    seen: set[str] = set()
+    excluded = cfg.get("model_catalog", {}).get("excluded_providers") or []
+    if not isinstance(excluded, list):
+        raise ValueError("Invalid excluded providers")
+    excluded = {normalize_provider(str(slug)) for slug in excluded}
+    for candidate in candidates:
+        # Auth stores use Hermes profile IDs; catalog normalization may instead
+        # yield models.dev IDs (e.g. opencode-zen -> opencode).
+        profile = get_provider_profile(candidate)
+        slug = profile.name if profile else candidate
+        if slug in seen or normalize_provider(slug) in excluded or slug in SERVICE_PROVIDER_NAMES:
+            continue
+        seen.add(slug)
+        metadata = catalog.get(PROVIDER_TO_MODELS_DEV.get(slug, candidate), {})
+        if not isinstance(metadata, dict):
+            raise ValueError("Invalid provider catalog entry")
+        definition = PROVIDER_REGISTRY.get(slug)
+        overlay = HERMES_OVERLAYS.get(slug)
+        key_vars = list(definition.api_key_env_vars) if definition else [
+            key for key in (profile.env_vars if profile else metadata.get("env", []))
+            if not key.endswith("_URL")
+        ]
+        if overlay:
+            key_vars.extend(overlay.extra_env_vars)
+        # Match auth.read_credential_pool's per-provider fallback: a nonempty
+        # profile pool shadows root entries; an empty/missing pool inherits.
+        entries = pools.get(slug) or global_pools.get(slug, [])
+        if not isinstance(entries, list) or any(not isinstance(entry, dict) for entry in entries):
+            raise ValueError("Invalid stored credential pool")
+        state = stored.get(slug) if slug in stored else global_stored.get(slug)
+        configured = bool(state or entries)
+        configured = configured or any(_scoped_key_env(key) for key in key_vars)
+        if definition and definition.auth_type == "aws_sdk":
+            configured = configured or _has_fast_aws_sdk_signal()
+        if configured:
+            names.add(
+                canonical.get(slug)
+                or (definition.name if definition else metadata.get("name"))
+                or (profile.display_name if profile else "")
+                or provider_label(slug)
+            )
+
+    custom = get_compatible_custom_providers(cfg)
+    for entry in custom:
+        definition = resolve_custom_provider(entry.get("provider_key") or entry["name"], [entry])
+        if definition and normalize_provider(definition.id) not in excluded:
+            names.add(definition.name)
+    model = cfg.get("model", {})
+    if isinstance(model, dict) and model.get("base_url") and model.get("provider") == "custom":
+        names.add(provider_label("custom"))
+    return sorted(names, key=str.casefold)
+
+
 def build_models_payload(
     ctx: ConfigContext,
     *,
