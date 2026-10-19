@@ -20,19 +20,19 @@
   "schema_version": 1,
   "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
   "summary": {
-    "all_fork_specific_loc": 3186246,
-    "carry_surface_files": 5147,
-    "cwc": 87096286,
-    "fork_owned_loc": 1617088,
-    "upstream_owned_fork_loc": 1569158,
-    "utr": 0.492479
+    "all_fork_specific_loc": 3201608,
+    "carry_surface_files": 5151,
+    "cwc": 87187827,
+    "fork_owned_loc": 1630975,
+    "upstream_owned_fork_loc": 1570633,
+    "utr": 0.490576
   },
   "top_carry_risks": [
     {
-      "added": 29936,
-      "cwc": 10363536,
+      "added": 30129,
+      "cwc": 10424524,
       "deleted": 2860,
-      "patch_size": 32796,
+      "patch_size": 32989,
       "path": "gateway/run.py",
       "semantic_coupling": 2,
       "upstream_frequency": 158
@@ -47,10 +47,10 @@
       "upstream_frequency": 95
     },
     {
-      "added": 21626,
-      "cwc": 3870174,
+      "added": 21644,
+      "cwc": 3872946,
       "deleted": 3505,
-      "patch_size": 25131,
+      "patch_size": 25149,
       "path": "cli.py",
       "semantic_coupling": 2,
       "upstream_frequency": 77
@@ -101,10 +101,10 @@
       "upstream_frequency": 85
     },
     {
-      "added": 8646,
-      "cwc": 2444940,
+      "added": 8606,
+      "cwc": 2434740,
       "deleted": 942,
-      "patch_size": 9588,
+      "patch_size": 9548,
       "path": "agent/conversation_loop.py",
       "semantic_coupling": 3,
       "upstream_frequency": 85
@@ -119,10 +119,10 @@
       "upstream_frequency": 82
     },
     {
-      "added": 9284,
-      "cwc": 1520700,
-      "deleted": 991,
-      "patch_size": 10275,
+      "added": 9332,
+      "cwc": 1527952,
+      "deleted": 992,
+      "patch_size": 10324,
       "path": "run_agent.py",
       "semantic_coupling": 2,
       "upstream_frequency": 74
@@ -173,10 +173,10 @@
       "upstream_frequency": 67
     },
     {
-      "added": 6203,
-      "cwc": 1020554,
-      "deleted": 984,
-      "patch_size": 7187,
+      "added": 6231,
+      "cwc": 1023678,
+      "deleted": 978,
+      "patch_size": 7209,
       "path": "gateway/slash_commands.py",
       "semantic_coupling": 2,
       "upstream_frequency": 71
@@ -200,10 +200,10 @@
       "upstream_frequency": 57
     },
     {
-      "added": 5929,
-      "cwc": 905904,
-      "deleted": 2459,
-      "patch_size": 8388,
+      "added": 5940,
+      "cwc": 907416,
+      "deleted": 2462,
+      "patch_size": 8402,
       "path": "gateway/platforms/base.py",
       "semantic_coupling": 3,
       "upstream_frequency": 36
@@ -245,10 +245,10 @@
       "upstream_frequency": 30
     },
     {
-      "added": 4128,
-      "cwc": 692450,
-      "deleted": 2167,
-      "patch_size": 6295,
+      "added": 4124,
+      "cwc": 692560,
+      "deleted": 2172,
+      "patch_size": 6296,
       "path": "agent/agent_runtime_helpers.py",
       "semantic_coupling": 2,
       "upstream_frequency": 55
