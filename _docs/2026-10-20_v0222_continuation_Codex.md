@@ -830,3 +830,20 @@ Declared fixed5d2/empty-process/offline leaves remain limits. Permanent disk
 snapshot concurrency is separate OPEN evidence on both ca3 and 43872, not a
 durability fix. R6 explicit-kill output-drain proof, native adapter request IDs,
 effect leases, full strict/native lifecycle and whole-SHA CI remain open.
+
+## Main CI advisory repair
+
+Published main 2a04dd5041ff32392766e57e6c75e52b5df63562 triggered the full
+workflow set. Windows Tier-1 run 39335745576 Security and lockfiles failed
+its unchanged pip-audit gate on aiohttp 3.14.3: CVE-2026-111063,
+CVE-2026-111064 and GHSA-2g87-pp6c-29x5. All six extras now pin 3.14.4.
+The generated uv.lock changes only aiohttp 3.14.3 to 3.14.4 and its required
+yarl 1.24.5 to 1.25.1; all other package versions remain unchanged.
+The official PyPI metadata requires yarl>=1.25.1,<2.0 for this release.
+
+Fresh hash-required pip-audit 2.10.1 of the frozen all-extras export checked
+251 applicable dependencies and found no known vulnerabilities. uv lock
+--check, downstream policy validation, carry metrics --check and git diff
+--check pass. No advisory exclusion, workflow condition, test assertion or
+runtime configuration is changed by this patch. Cloud all-green remains
+pending the next pushed SHA and all its applicable terminal workflow results.
