@@ -54,7 +54,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Set
-from urllib.parse import quote, unquote
+from urllib.parse import quote, unquote, urlsplit
 
 from hermes_cli._subprocess_compat import windows_hide_flags
 from tools.environments.local import hermes_subprocess_env
@@ -99,6 +99,9 @@ def file_uri(path: str) -> str:
         # Windows: backslash → forward slash, prepend extra slash so
         # the drive letter shows up as part of the path component.
         abs_path = abs_path.replace("\\", "/")
+        if abs_path.startswith("//"):
+            # UNC server/share is URI authority, not a four-slash local path.
+            return "file:" + quote(abs_path, safe="/:")
         if not abs_path.startswith("/"):
             abs_path = "/" + abs_path
     return "file://" + quote(abs_path, safe="/:")
@@ -108,10 +111,24 @@ def uri_to_path(uri: str) -> str:
     """Inverse of :func:`file_uri`."""
     if not uri.startswith("file://"):
         return uri
-    raw = uri[len("file://"):]
+    parsed = urlsplit(uri)
+    raw = unquote(parsed.path)
+    authority = unquote(parsed.netloc)
+    if authority and authority.lower() != "localhost":
+        raw = "//" + authority + raw
     if os.name == "nt" and raw.startswith("/") and len(raw) > 2 and raw[2] == ":":
         raw = raw[1:]  # strip leading slash before drive letter
-    return os.path.normpath(unquote(raw))
+    return os.path.normpath(raw)
+
+
+def _document_key(path: str) -> str:
+    """Match server URI replies without changing outbound URI spelling.
+
+    Windows paths are case-insensitive, while POSIX case remains significant.
+    Keep this identity local to document stores; do not resolve symlinks or
+    alter the paths sent in protocol notifications and requests.
+    """
+    return os.path.normcase(os.path.abspath(path))
 
 
 def _end_position(text: str) -> Dict[str, int]:
@@ -719,7 +736,7 @@ class LSPClient:
         uri = params.get("uri")
         if not isinstance(uri, str):
             return
-        path = uri_to_path(uri)
+        path = _document_key(uri_to_path(uri))
         diagnostics = params.get("diagnostics") or []
         if not isinstance(diagnostics, list):
             diagnostics = []
@@ -771,7 +788,8 @@ class LSPClient:
             raise LSPProtocolError(f"cannot read {abs_path}: {e}") from e
 
         uri = file_uri(abs_path)
-        doc = self._docs.get(abs_path)
+        key = _document_key(abs_path)
+        doc = self._docs.get(key)
 
         if doc is not None and doc.version >= 0:
             # Re-open: bump version, fire didChangeWatchedFiles + didChange.
@@ -815,7 +833,7 @@ class LSPClient:
         )
         # Fresh doc state — anything stashed under this path by a
         # pre-open push (relatedDocuments spillover etc.) is discarded.
-        self._docs[abs_path] = _DocState(version=0, text=text)
+        self._docs[key] = _DocState(version=0, text=text)
         await self._send_notification(
             "textDocument/didOpen",
             {
@@ -854,7 +872,8 @@ class LSPClient:
         endpoint).
         """
         abs_path = os.path.abspath(path)
-        doc = self._docs.get(abs_path)
+        key = _document_key(abs_path)
+        doc = self._docs.get(key)
         sent_version = doc.version if doc else -1
         try:
             params: Dict[str, Any] = {
@@ -872,7 +891,7 @@ class LSPClient:
             return
         items = result.get("items")
         if isinstance(items, list):
-            doc = self._docs.setdefault(abs_path, _DocState(version=-1))
+            doc = self._docs.setdefault(key, _DocState(version=-1))
             doc.pull = items
             doc.pull_version = sent_version
         related = result.get("relatedDocuments")
@@ -882,7 +901,7 @@ class LSPClient:
                     continue
                 sub_items = sub.get("items")
                 if isinstance(sub_items, list):
-                    rel = self._docs.setdefault(uri_to_path(uri), _DocState(version=-1))
+                    rel = self._docs.setdefault(_document_key(uri_to_path(uri)), _DocState(version=-1))
                     rel.pull = sub_items
                     # Same send-anchored tagging: fresh only if that
                     # doc hasn't changed since the request went out.
@@ -919,6 +938,7 @@ class LSPClient:
             budget = DIAGNOSTICS_FULL_WAIT if mode == "full" else DIAGNOSTICS_DOCUMENT_WAIT
         deadline = asyncio.get_event_loop().time() + budget
         abs_path = os.path.abspath(path)
+        key = _document_key(abs_path)
 
         while True:
             if not self._connection_is_open():
@@ -946,7 +966,7 @@ class LSPClient:
                     pass
 
             # If we got a fresh push for our version, we're done.
-            doc = self._docs.get(abs_path)
+            doc = self._docs.get(key)
             if doc and doc.fresh_push(version):
                 return True
 
@@ -961,8 +981,9 @@ class LSPClient:
         """Wait until a fresh publishDiagnostics arrives for ``path`` at ``version``+."""
         deadline = asyncio.get_event_loop().time() + timeout
         baseline = self._push_counter
+        key = _document_key(path)
         while True:
-            doc = self._docs.get(path)
+            doc = self._docs.get(key)
             if doc and doc.fresh_push(version):
                 # Debounce — wait a tick in case more diagnostics arrive
                 # immediately after.  TS often emits in pairs.  We
@@ -1007,7 +1028,7 @@ class LSPClient:
         This is what report paths should use: after an edit, "stale
         errors" and "no errors" must not be conflated.
         """
-        doc = self._docs.get(os.path.abspath(path))
+        doc = self._docs.get(_document_key(path))
         if doc is None:
             return []
         if fresh_only:

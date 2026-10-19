@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "status": "URI_ONLY_SCOPED_VERIFIED_FULL_T02_OPEN",
+  "requirement": "LSP path/URI identity and diagnostic document-key correctness",
+  "source_sha256": {
+    "agent/lsp/client.py": "6f6a03723c0bc82a87aed966348f2cf70f9113d12a1a46ee75eb7cc3b0625721",
+    "tests/agent/lsp/test_uri_identity.py": "b96751ae8736b5a24b5548eeb9be8903ddd40d715f2abfabd13fca51c4d58905"
+  },
+  "composition": "Real Git HEAD LSP owners/config and original tests, plus candidate client/new URI test; source-bound in-memory loader, no fake manager or graph-source execution.",
+  "base_head": "ab69c40a4e1b222d738874c27f52d9ed18d2ee3b",
+  "normal": {
+    "files": 8,
+    "passed": 48,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "controls": {
+    "head_client_red_failures": 8,
+    "head_client_red_passes": 5,
+    "semantic_mutants_killed": 11,
+    "errors": 0,
+    "skipped": 0
+  },
+  "parent_fresh_run": {
+    "passed": 13,
+    "result_sha256": "a413271cc6d78c1a1df1667f25f7bdbeb1620130ef9a08f2a2c95df54d74d9f8",
+    "junit_sha256": "1be2b6c5a4cfda3af8cec7cf9a99d664301a13d182775f3ce4042edf3f9188b7"
+  },
+  "graph": {
+    "version": "1.6.0",
+    "selected_files": 21,
+    "nodes": 441,
+    "edges": 1146,
+    "pending": 0,
+    "scope": "Full candidate client and exact HEAD public owner/reference files; immutable DB inspected."
+  },
+  "independent_review": "Human-delivered same-cycle READONLY review supports exactly client.py plus test_uri_identity.py; no whole trust/Python acceptance.",
+  "evidence": {
+    "handoff": "tmp/continuation-20261020/t02-uri-slice-head-handoff.json",
+    "handoff_sha256": "bd063e85c65c3bb5a2af66432ef4271b31601b9b08772466cfb47d94861099da",
+    "binding_sha256": "b58ab7698f2c31b22e4c733ffbfcdb69d09a34311458d506a0dee02306a7534f",
+    "parent_audit": "tmp/continuation-20261020/parent-uri-slice-audit.json",
+    "parent_audit_sha256": "8663d41a8a3a8faaf990535f11777ae8dfc3572f0f30552121b18c19c27ffcec"
+  },
+  "limits": [
+    "Native Windows stdio diagnostic effect and path/URI algebra only; no native UNC share or native POSIX execution.",
+    "Full T02 retains 167 passed plus one mandatory untrusted-Python useful-positive OPEN failure. That assertion, WIP and evidence are preserved.",
+    "No trust manager/server/workspace/config changes or constructor-only test adaptations are part of this commit.",
+    "No whole-SHA CI, packaged app, release, main integration or production restart acceptance."
+  ]
+}

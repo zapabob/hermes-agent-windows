@@ -448,3 +448,29 @@ CONTINUATION_DESKTOP_BUILD_20261020.json records both outcomes and their exact
 hashes. An initial audit incorrectly counted empty run.stdin as an asset and
 expected the helper's intentional ASAR rewrite to be a byte-identical copy;
 both audit assumptions were corrected before the receipt was published.
+
+## Independently separable LSP URI/document identity slice
+
+Only agent/lsp/client.py and new test_uri_identity.py are selected here. URI
+components decode once, UNC authority survives the path round trip, encoded
+Windows drive replies resolve correctly, and document stores use platform path
+identity while outbound protocol spelling remains unchanged. No trust manager,
+server, workspace, config or constructor-adaptation WIP is selected.
+
+Real Git HEAD owner/config/test objects execute through a source-bound in-memory
+loader with the candidate client. All original assertions and constructors remain
+in force: 48 passes across eight fresh files, zero failures/errors/skips. The
+same URI cases with the HEAD client yield eight failures/five passes; eleven
+semantic mutants are detected without errors/skips. Parent independently audited
+21 source bindings and 20 Jobs, read the immutable 441-node/1,146-edge graph, and
+reran the exact 13 URI cases including two real Windows stdio peers. No graph
+copy executes and no fake manager supplies compatibility. During audit a receipt
+filename assumption was corrected from bootstrap-audit.json to actual audit.json;
+no product source or test assertion changed.
+
+The human-delivered final READONLY review supports exactly this two-file split.
+The original full T02 remains 167 passes plus one mandatory untrusted-Python
+useful-positive OPEN failure. Its test, WIP, native effects, assets and graphs are
+preserved. Native UNC shares, native POSIX processes, project-code sandboxing,
+full T02/P0, whole-SHA CI and release acceptance are not claimed. See
+CONTINUATION_LSP_URI_20261020.json and the retained parent URI audit.
