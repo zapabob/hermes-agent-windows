@@ -1,0 +1,82 @@
+{
+  "status": "PRE_BASELINE_PUBLIC_CONTRACT_SOURCE_REVIEW_PARTIAL",
+  "original_commit": "4dac5f28af54001b899c9b6fc8ba81cb58da2f0e",
+  "original_parent": "c368b145daaecae8b9faea8881a404c4df102bdb",
+  "original_paths": [
+    "agent/lsp/workspace.py",
+    "tests/agent/lsp/test_workspace.py",
+    "tests/tools/test_code_kernel.py",
+    "tools/code_kernel.py"
+  ],
+  "ancestry_state": "Original commit is ancestor of R_AFTER and U_RELEASE; predates release inventory base, absent from that delta inventory. Original edge verified directly from Git; baseline public-contract entry A applies.",
+  "upstream_final": "d923a5eb487a17c0a68801bba9ef0f56c81040a8",
+  "attribution": {
+    "discovery_report": "Incident described in original commit message; reporter independently unverified.",
+    "upstream_implementation": "Teknium, verified commit author/committer",
+    "downstream_kernel_implementation": "NOT_IMPLEMENTED",
+    "downstream_lsp_implementation": "Existing bounded continuation slice e71ab4272b6; original receipt retained."
+  },
+  "contracts": [
+    {
+      "id": "R20-LSP-ROOT",
+      "upstream_owner": "agent/lsp/workspace.py",
+      "upstream_blob": "400b15bee98a818a76bf80c918eca567d348f0cf",
+      "downstream_owner": "agent/lsp/workspace.py",
+      "caller": "LspManager root resolution -> nearest_root",
+      "existing_gap": "Python package setup.py incorrectly selected as a separate project root.",
+      "action": "Previously adopted language-specific bounded fix; do not port mixed execute_code changes implicitly.",
+      "evidence": "CONTINUATION_T03A_20261020.json; current trust-boundary edits require separate final T02 regression.",
+      "source_reviewed": true,
+      "runtime_acceptance": "Historical bounded slice; not current whole-campaign acceptance"
+    },
+    {
+      "id": "T01-KERNEL-ATTACHED-CELLS",
+      "upstream_owner": "tools/code_kernel.py",
+      "upstream_blob": "64c32569e62422676ea519e7b4116fffdb9385b4",
+      "downstream_owner": "tools/code_kernel.py",
+      "downstream_blob": "6101bdbf925f8d0acfe732d9fd626da9ced5bd51",
+      "downstream_sha256": "e526a891246f10b0498916eeb344ba25aa04cc08ae3c2fa3a8b95ba300fd514b",
+      "public_caller": "tools.code_execution_tool.execute_code -> execute_in_session_kernel when config kernel_mode=session",
+      "windows_reachable": "Shared Python entry; _spawn selects Windows loopback RPC and CREATE_NO_WINDOW subprocess path.",
+      "vendor_edges": {
+        "CODE_LIBRARY": "Python stdlib; existing tools/approval/redaction/environment helpers",
+        "LOCAL_RUNTIME": "User-selected local Python interpreter and generated local RPC runner",
+        "ONLINE_CONTROL": "No mandatory edge identified in this selected source route",
+        "OPTIONAL_PROVIDER": "Sandbox tool dispatch depends on separately selected tool capabilities; not runtime independence qualification"
+      },
+      "effect_in_final_tree": "Final U retains attached-cell protection and settled/dead distinction; later reaper/error/compatibility deltas remain individually unreviewed.",
+      "existing_behavior": "Pending proc=None reads as not alive, so concurrent acquisition replaces its registry entry; idle/cap sweeps do not test attached cells; old cell cleanup pops by key.",
+      "actual_gap": "Source-confirmed lifecycle gap; runtime concurrent-child RED is not yet reproduced in this continuation.",
+      "risk": "Live child may lose registry ownership; active cell staging may be removed; old cleanup may remove a replacement.",
+      "required_positive": "Concurrent same-owner cells share one observed owned child and preserve cell state; healthy sequential/per-call/reset behavior remains useful.",
+      "required_refusal_and_recovery": "Active acquisition is not idle/cap-evicted; timeout/reset/old cleanup cannot remove a replacement; every owned child is reaped.",
+      "required_tests": "Deterministic spawn/selection barriers, actual owned Windows processes/PIDs and state effects, idle/cap/reset/cleanup controls, meaningful no-op/deny-all/owner-drop faults.",
+      "action": "Runtime RED and minimum existing-owner lifecycle fix pending; no upstream refactor or POSIX pgrep test copied.",
+      "source_reviewed": true,
+      "behavior_reproduced": false,
+      "runtime_accepted": false
+    }
+  ],
+  "graph": {
+    "version": "1.6.0",
+    "selected_files": 9,
+    "nodes": 699,
+    "edges": 1804,
+    "pending_changes": 0,
+    "scope": "Nine complete current files and actual public caller; not upstream whole-history or dynamic completeness."
+  },
+  "counts": {
+    "original_commits": 22565,
+    "original_parent_edges": 23218,
+    "fully_semantically_mapped_edges": 0,
+    "release_inventory_edges_associated_here": 0,
+    "unmapped_or_incomplete_edges": 23218,
+    "coverage_percent": null,
+    "baseline_public_contract_rows": 2
+  },
+  "limits": [
+    "Later kernel cluster commits have not been individually classified.",
+    "Original inventory and previous zero-mapping receipt remain immutable.",
+    "Source association is not native acceptance or permission to bulk-port the mixed commit."
+  ]
+}

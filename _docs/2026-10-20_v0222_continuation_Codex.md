@@ -340,3 +340,28 @@ graph; its separate regression receipt binds the bytes actually exercised. Old
 worker runs remain historical rather than substituting for the parent final-source
 runs. Full TUI build/typecheck, interactive TUI/Desktop and cloud CI remain open.
 No dependency installation, production restart or primary main edit was performed.
+
+## T01 baseline public-contract review of the mixed kernel/root commit
+
+Original Teknium commit 4dac5f28af54001b899c9b6fc8ba81cb58da2f0e contains both
+the already bounded LSP package-root contract and a separate session-kernel
+attached-cell lifecycle fix. Original parent and all four changed paths were
+inspected. The commit is an ancestor of both R_AFTER and U_RELEASE, so it predates
+the release delta inventory; it must not be counted as a mapped edge in that
+22,565-commit/23,218-edge population. This uses the separate baseline public-contract
+entry required by the plan. The original inventory and zero-mapping receipt remain
+immutable, with full semantic coverage still null.
+
+Current code_kernel.py still treats proc=None as dead during concurrent acquire,
+reaps/evicts without attached-cell protection and removes entries by key in old
+cell cleanup. Final upstream retains the separate settled/dead and attached-cell
+protections. This is a source-confirmed gap, not a reproduced current native
+failure. No kernel implementation or upstream restructuring is adopted here.
+Later kernel cluster commits remain individually unreviewed. The new baseline
+contract receipt separates original attribution, final blobs, actual Windows public
+caller, vendor edges, risk, required positive/refusal/recovery tests and acceptance.
+
+Fresh CodeGraph 1.6.0 covers nine complete current owner/test files, 699 nodes and
+1,804 edges, with complete state and zero pending changes/references. It identifies
+execute_code as the caller of execute_in_session_kernel. The graph is reference
+only and establishes neither whole-history nor dynamic runtime completeness.
