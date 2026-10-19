@@ -4,12 +4,12 @@ Frozen upstream: b51c055a12220f8c7c18660e8599365012e19532
 
 | Metric | Value |
 | --- | ---: |
-| All fork-specific LOC | 3201759 |
-| Upstream-owned fork LOC | 1570694 |
-| Fork-owned LOC | 1631065 |
-| UTR | 0.490572 |
-| Carry Surface | 5151 files |
-| CWC | 87187899 |
+| All fork-specific LOC | 3211029 |
+| Upstream-owned fork LOC | 1571743 |
+| Fork-owned LOC | 1639286 |
+| UTR | 0.489483 |
+| Carry Surface | 5153 files |
+| CWC | 87340939 |
 
 LOC is added plus deleted lines relative to the frozen upstream tree.
 The `_docs/` tree (including these reports) is excluded to avoid
@@ -22,7 +22,7 @@ and 1 for tests, docs, workflows, and generated documentation.
 
 | Path | Frequency | Patch | Coupling | CWC |
 | --- | ---: | ---: | ---: | ---: |
-| gateway/run.py | 158 | 32989 | 2 | 10424524 |
+| gateway/run.py | 158 | 33369 | 2 | 10544604 |
 | hermes_cli/web_server.py | 95 | 21572 | 3 | 6148020 |
 | cli.py | 77 | 25149 | 2 | 3872946 |
 | tui_gateway/server.py | 96 | 19713 | 2 | 3784896 |
@@ -37,14 +37,14 @@ and 1 for tests, docs, workflows, and generated documentation.
 | hermes_cli/config_defaults.py | 64 | 6625 | 3 | 1272000 |
 | agent/chat_completion_helpers.py | 73 | 8210 | 2 | 1198660 |
 | cron/scheduler.py | 56 | 9852 | 2 | 1103424 |
-| hermes_cli/models.py | 67 | 7825 | 2 | 1048550 |
-| gateway/slash_commands.py | 71 | 7209 | 2 | 1023678 |
+| hermes_cli/models.py | 67 | 7826 | 2 | 1048684 |
+| gateway/slash_commands.py | 71 | 7237 | 2 | 1027654 |
 | hermes_cli/auth.py | 46 | 10823 | 2 | 995716 |
 | hermes_cli/gateway.py | 57 | 8378 | 2 | 955092 |
 | gateway/platforms/base.py | 36 | 8402 | 3 | 907416 |
 | tools/mcp_tool.py | 46 | 9708 | 2 | 893136 |
 | hermes_cli/kanban_db.py | 30 | 13908 | 2 | 834480 |
-| hermes_cli/config.py | 54 | 7134 | 2 | 770472 |
+| hermes_cli/config.py | 54 | 7148 | 2 | 771984 |
 | plugins/platforms/telegram/adapter.py | 30 | 11675 | 2 | 700500 |
 | agent/agent_runtime_helpers.py | 55 | 6296 | 2 | 692560 |
 

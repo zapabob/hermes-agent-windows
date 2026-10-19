@@ -20,19 +20,19 @@
   "schema_version": 1,
   "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
   "summary": {
-    "all_fork_specific_loc": 3201759,
-    "carry_surface_files": 5151,
-    "cwc": 87187899,
-    "fork_owned_loc": 1631065,
-    "upstream_owned_fork_loc": 1570694,
-    "utr": 0.490572
+    "all_fork_specific_loc": 3211029,
+    "carry_surface_files": 5153,
+    "cwc": 87340939,
+    "fork_owned_loc": 1639286,
+    "upstream_owned_fork_loc": 1571743,
+    "utr": 0.489483
   },
   "top_carry_risks": [
     {
-      "added": 30129,
-      "cwc": 10424524,
-      "deleted": 2860,
-      "patch_size": 32989,
+      "added": 30496,
+      "cwc": 10544604,
+      "deleted": 2873,
+      "patch_size": 33369,
       "path": "gateway/run.py",
       "semantic_coupling": 2,
       "upstream_frequency": 158
@@ -164,19 +164,19 @@
       "upstream_frequency": 56
     },
     {
-      "added": 6542,
-      "cwc": 1048550,
+      "added": 6543,
+      "cwc": 1048684,
       "deleted": 1283,
-      "patch_size": 7825,
+      "patch_size": 7826,
       "path": "hermes_cli/models.py",
       "semantic_coupling": 2,
       "upstream_frequency": 67
     },
     {
-      "added": 6231,
-      "cwc": 1023678,
-      "deleted": 978,
-      "patch_size": 7209,
+      "added": 6256,
+      "cwc": 1027654,
+      "deleted": 981,
+      "patch_size": 7237,
       "path": "gateway/slash_commands.py",
       "semantic_coupling": 2,
       "upstream_frequency": 71
@@ -227,10 +227,10 @@
       "upstream_frequency": 30
     },
     {
-      "added": 4876,
-      "cwc": 770472,
-      "deleted": 2258,
-      "patch_size": 7134,
+      "added": 4891,
+      "cwc": 771984,
+      "deleted": 2257,
+      "patch_size": 7148,
       "path": "hermes_cli/config.py",
       "semantic_coupling": 2,
       "upstream_frequency": 54
