@@ -398,3 +398,27 @@ dispatch is not completely resolved. Earlier 202-case mixed-diagnostic evidence 
 retained and superseded for final qualification. Windows sleep exclusion, managed
 ownership/capability, actual local model completion, soak, real Anthropic SDK,
 cloud CI and full T08/campaign acceptance remain OPEN.
+
+## T04/T10 actual surface typechecks and bounded workspace-link repair
+
+Actual Desktop renderer, Electron and E2E --noEmit compiler configs pass in three
+fresh owned Windows Jobs. Composite buildinfo goes into new owned directories;
+no old build evidence is cleaned or overwritten. Sources remain unchanged and
+all Jobs have zero timeout, recovery, survivors or guard refusals. Node 24.19.0
+and TypeScript 6.0.3 implementation hashes are retained; the entry shim and tracked
+compiler inputs were bound before/after, implementation/Node hashes after runs.
+
+TUI first reports 111 diagnostics because @hermes/ink is unresolved. The existing
+lockfile declares exactly a local workspace link. After checking all physical
+parent/target paths and absent destination, only that junction was created inside
+the isolated worktree. Lock bytes are unchanged and no package was installed or
+downloaded. This leaves 14 diagnostics: missing existing Ink dependencies plus
+two strict-type errors in unchanged Ink source. An in-memory CompilerHost overlay
+of the fixed D_REVIEW producer yields all 14 exact same diagnostics, so no added
+F05 producer diagnostic is observed. TUI typecheck remains NOT_ACCEPTED.
+
+This closes three Desktop compiler gates only. No frontend/native launch, bundle,
+addon rebuild, pack, installer, registry write or local-model inference was run.
+The old F05 limited receipt remains historical; it is not rewritten as whole-TUI
+qualification. The new typecheck receipt records all six runs and the precise
+workspace link retained for review; no evidence or target directory was removed.

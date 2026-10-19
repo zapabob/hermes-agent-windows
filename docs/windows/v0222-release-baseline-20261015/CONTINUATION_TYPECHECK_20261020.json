@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "status": "DESKTOP_TYPECHECKS_PASS_TUI_TYPECHECK_BLOCKED",
+  "requirement": "T04 / T10 existing surface compiler gates",
+  "runs": [
+    {
+      "label": "desktop-renderer",
+      "exit": 0,
+      "config": "apps/desktop/tsconfig.typecheck.json",
+      "result_sha256": "945817bce1792e55bdab259b594a1f6f48dc3c5353df05fca7b9b3f163963c55",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "guard_refusals": 0,
+      "timeout": false,
+      "forced_recovery": false,
+      "owned_survivors": 0,
+      "source_binding_entries": 2779
+    },
+    {
+      "label": "desktop-electron",
+      "exit": 0,
+      "config": "apps/desktop/tsconfig.electron.json",
+      "result_sha256": "edb556b841e7b065403b662561f634d9ea9638da3954d9ad42750feed7154cbe",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "guard_refusals": 0,
+      "timeout": false,
+      "forced_recovery": false,
+      "owned_survivors": 0,
+      "source_binding_entries": 2779
+    },
+    {
+      "label": "desktop-e2e",
+      "exit": 0,
+      "config": "apps/desktop/tsconfig.e2e.json",
+      "result_sha256": "f6c342d67db7993dfafbbf691713da57820067d26cc3a69f5044458ae86f00da",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "guard_refusals": 0,
+      "timeout": false,
+      "forced_recovery": false,
+      "owned_survivors": 0,
+      "source_binding_entries": 2779
+    },
+    {
+      "label": "tui",
+      "exit": 2,
+      "config": "ui-tui/tsconfig.json",
+      "result_sha256": "63252e837d679e0a0bacb1a8acfc1ca5e241f0e5ed5d1e29b84778ae5ac59ea9",
+      "log_sha256": "c305fb8f56b2512556f9b7ac87453ebba5c4a5a33bc92f42600fb59e46303459",
+      "guard_refusals": 0,
+      "timeout": false,
+      "forced_recovery": false,
+      "owned_survivors": 0,
+      "source_binding_entries": 2779
+    },
+    {
+      "label": "tui-linked",
+      "exit": 2,
+      "config": "ui-tui/tsconfig.json",
+      "result_sha256": "b3c5a04382a7390647515307fe70df327e489d7b3fad93ba94ac5cbbf2144576",
+      "log_sha256": "38edb3a138d8bb26c5d142116c9fee35e8d72b18a9f3eeb4ba492e6f966a9b64",
+      "guard_refusals": 0,
+      "timeout": false,
+      "forced_recovery": false,
+      "owned_survivors": 0,
+      "source_binding_entries": 2780
+    },
+    {
+      "label": "tui-overlay",
+      "exit": 0,
+      "config": "ui-tui/tsconfig.json",
+      "result_sha256": "3e9929c8149d24ad5fdeaa60afaaf69a04caf08281f36f4a6a8a49b183d8ccb4",
+      "log_sha256": "9e26011838691eb22360244068e8e7da38b211cd3bb8e029119287d74ff5b0dd",
+      "guard_refusals": 0,
+      "timeout": false,
+      "forced_recovery": false,
+      "owned_survivors": 0,
+      "source_binding_entries": 2782
+    }
+  ],
+  "runtime": {
+    "node_version": "24.19.0",
+    "node_sha256_collected_after_runs": "3602f2bb1a10f2cbab4c36886218a33c1ab3db87290e73b033c46c77147d0237",
+    "typescript_version": "6.0.3",
+    "typescript_file_hashes_collected_after_runs": {
+      "node_modules/typescript/package.json": "9332e97c30d3e53ed54910b89207ed657fb444066484df6e5b6965bf130865e9",
+      "node_modules/typescript/bin/tsc": "8d5fa5bd883fec0979fc2004f1fe1d99aef40570155d550eadc0b03b55513bf0",
+      "node_modules/typescript/lib/tsc.js": "2cffde0b8c6760dfb0b5b0382bbb7e00ba6a8b2d981b9205b256a700a481d983",
+      "node_modules/typescript/lib/_tsc.js": "1c59e77a54b186ec43fa7f3e0d3c4bb15ca5eb5ba43e96b1d3a267139eddd3e3"
+    },
+    "per_run_pin": "Compiler entry shim and tracked input sources bound before/after. Compiler implementation and Node hashes collected after runs; no install or compiler write occurred."
+  },
+  "desktop": "Actual existing renderer, Electron and E2E compiler configs pass --noEmit. Composite buildinfo is redirected into each fresh owned directory.",
+  "tui": {
+    "initial_diagnostics": 111,
+    "after_declared_workspace_link": 14,
+    "status": "NOT_ACCEPTED",
+    "missing_dependencies": [
+      "Cannot find module '@alcalzone/ansi-tokenize' or its corresponding type declarations.",
+      "Cannot find module 'auto-bind' or its corresponding type declarations.",
+      "Cannot find module 'cli-boxes' or its corresponding type declarations.",
+      "Cannot find module 'code-excerpt' or its corresponding type declarations.",
+      "Cannot find module 'indent-string' or its corresponding type declarations.",
+      "Cannot find module 'type-fest' or its corresponding type declarations.",
+      "Cannot find module 'usehooks-ts' or its corresponding type declarations."
+    ],
+    "other_diagnostics": [
+      {
+        "code": 2322,
+        "file": "ui-tui/packages/hermes-ink/src/ink/screen.ts",
+        "start": 5579,
+        "message": "Type 'string | undefined' is not assignable to type 'string'.\n  Type 'undefined' is not assignable to type 'string'."
+      },
+      {
+        "code": 2345,
+        "file": "ui-tui/packages/hermes-ink/src/ink/screen.ts",
+        "start": 5563,
+        "message": "Argument of type 'string | undefined' is not assignable to parameter of type 'string'.\n  Type 'undefined' is not assignable to type 'string'."
+      }
+    ],
+    "counterfactual": "In-memory CompilerHost overlay of only the F05 producer from fixed D_REVIEW yields the exact same 14 diagnostics. Neither source files nor assertions are changed.",
+    "overlay_baseline_sha256": "dfbd8adcf63147d49d6495a39e926ab2462aa033cadf68a3637504b0a9599afa"
+  },
+  "environment_repair": {
+    "created_only": "node_modules/@hermes/ink junction -> ui-tui/packages/hermes-ink inside this isolated worktree",
+    "authority": "Existing package-lock link entry; all physical parent/target directories checked within isolated worktree, missing destination only.",
+    "lock_sha256_unchanged": "6d71fb33b4e8bc8ec531bd253a001f4e58e87faf5865655912582e7eec533b98",
+    "new_packages_downloaded_or_installed": false,
+    "rollback": "Only the newly created junction can be unlinked; do not recursively remove its target. No cleanup performed."
+  },
+  "limits": [
+    "Compiler checks do not launch Electron, TUI or a local model.",
+    "No native addon rebuild, Vite bundle, pack, installer, protocol registration or UI journey.",
+    "Missing TUI packages and two unchanged Ink strict-type errors remain unresolved; no dependency installation or unrelated product repair."
+  ],
+  "production_restart": false,
+  "host_registry_changed": false,
+  "published": false
+}
