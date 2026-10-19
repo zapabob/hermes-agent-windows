@@ -3029,6 +3029,42 @@ def _gateway_notify_for_producer(session_key):
         return _gateway_notify_cbs.get(session_key)
 
 
+def _commit_gateway_approval_state(
+    session_key, producer, *, session_patterns=(), permanent_patterns=(),
+    reset_denials=False,
+):
+    """Commit a returned decision under its already captured producer owner.
+
+    No wait, transport, hook or disk I/O belongs in this critical section.
+    The public persistence helpers acquire the non-reentrant approval lock,
+    so these bounded set/dict writes must happen directly under that lock.
+    """
+    registration = producer if isinstance(producer, GatewayApprovalRegistration) else None
+    guard = registration.owner_guard() if registration is not None else contextlib.nullcontext()
+    with guard, _lock:
+        if registration is not None and (
+            registration.session_key != session_key or not registration._current_locked()
+        ):
+            return False
+        if session_patterns:
+            _session_approved.setdefault(session_key, set()).update(session_patterns)
+        _permanent_approved.update(permanent_patterns)
+        if reset_denials:
+            _denial_tally.pop(session_key, None)
+        return True
+
+
+def _retired_gateway_decision_result(pattern_key, description):
+    return {
+        "approved": False,
+        "message": "BLOCKED: Approval producer retired. Do NOT retry.",
+        "pattern_key": pattern_key,
+        "description": description,
+        "outcome": "producer_retired",
+        "user_consent": False,
+    }
+
+
 def _remove_gateway_entries_locked(session_key, registration):
     entries, remaining = [], []
     for entry in _gateway_queues.get(session_key, []):
@@ -4438,11 +4474,14 @@ def _run_approval_gate(
                     "deny_reason": deny_reason,
                 }
 
-            if choice == "session":
-                approve_session(session_key, pattern_key)
-            elif choice == "always":
-                approve_session(session_key, pattern_key)
-                approve_permanent(pattern_key)
+            session_patterns = (pattern_key,) if choice in ("session", "always") else ()
+            permanent_patterns = (pattern_key,) if choice == "always" else ()
+            if not _commit_gateway_approval_state(
+                session_key, notify_cb, session_patterns=session_patterns,
+                permanent_patterns=permanent_patterns,
+            ):
+                return _retired_gateway_decision_result(pattern_key, description)
+            if permanent_patterns:
                 save_permanent_allowlist(_permanent_approved)
             return {"approved": True, "message": None}
 
@@ -5787,18 +5826,21 @@ def check_all_command_guards(command: str, env_type: str,
             # A smart-DENY owner override is always one operation, even if an
             # older client returns "session" or "always". Manual and ESCALATE
             # choices retain their existing persistence semantics.
-            if not smart_denied_for_owner:
-                for key, _, is_tirith in warnings:
-                    if choice == "session" or (choice == "always" and is_tirith):
-                        approve_session(session_key, key)
-                    elif choice == "always":
-                        approve_session(session_key, key)
-                        approve_permanent(key)
-                        save_permanent_allowlist(_permanent_approved)
-
-            # A human approval (including an ESCALATE-then-approve or a
-            # smart-DENY owner override) resets the consecutive-denial tally.
-            _reset_denials(session_key)
+            session_patterns = tuple(key for key, _, _ in warnings) if (
+                not smart_denied_for_owner and choice in ("session", "always")
+            ) else ()
+            permanent_patterns = tuple(key for key, _, is_tirith in warnings if not is_tirith) if (
+                not smart_denied_for_owner and choice == "always"
+            ) else ()
+            # Include once and Smart-DENY owner overrides in the same guarded
+            # tally reset, without persisting their one-operation consent.
+            if not _commit_gateway_approval_state(
+                session_key, notify_cb, session_patterns=session_patterns,
+                permanent_patterns=permanent_patterns, reset_denials=True,
+            ):
+                return _retired_gateway_decision_result(primary_key, combined_desc)
+            if permanent_patterns:
+                save_permanent_allowlist(_permanent_approved)
             return {"approved": True, "message": None,
                     "user_approved": True, "description": combined_desc}
 
@@ -6412,17 +6454,19 @@ def check_execute_code_guard(code: str, env_type: str,
     # Never persist a smart-DENY override under the coarse execute_code key;
     # doing so would approve unrelated future scripts. Manual and ESCALATE
     # decisions preserve their existing session/permanent behavior.
-    if not smart_denied_for_owner:
-        if choice == "session":
-            approve_session(session_key, pattern_key)
-        elif choice == "always":
-            approve_session(session_key, pattern_key)
-            approve_permanent(pattern_key)
-            save_permanent_allowlist(_permanent_approved)
-    # choice == "once": no persistence — approval lasts this single call only.
-
-    # A human approval resets the consecutive-denial tally.
-    _reset_denials(session_key)
+    session_patterns = (pattern_key,) if (
+        not smart_denied_for_owner and choice in ("session", "always")
+    ) else ()
+    permanent_patterns = (pattern_key,) if not smart_denied_for_owner and choice == "always" else ()
+    # choice == "once" and Smart-DENY overrides persist nothing; their tally
+    # reset still belongs to the captured producer's decision transaction.
+    if not _commit_gateway_approval_state(
+        session_key, notify_cb, session_patterns=session_patterns,
+        permanent_patterns=permanent_patterns, reset_denials=True,
+    ):
+        return _retired_gateway_decision_result(pattern_key, description)
+    if permanent_patterns:
+        save_permanent_allowlist(_permanent_approved)
     return {"approved": True, "message": None,
             "user_approved": True, "description": description}
 

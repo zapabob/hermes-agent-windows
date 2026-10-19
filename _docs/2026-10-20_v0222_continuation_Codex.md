@@ -795,3 +795,38 @@ No native R6 execution or native completion acceptance has been authorized at
 this preparation checkpoint. The R5 credential target is historical and does
 not establish publication correctness. Cross-sensitive R6 jobs must bind the
 final approval checkpoint; old ca3 proof cannot qualify moving approval WIP.
+
+## Approval decision memory commit integration
+
+The reviewed approval43872 candidate closes the original five post-wait state
+regressions without changing their assertions. Each of the three callers uses
+the same pre-wait producer in a new bounded owner-guard then approval-lock
+transaction. Current identity and grant/denial memory changes now commit in
+the same critical section as retirement. Current once/session/always consent,
+parallel FIFO, Smart-DENY one-operation overrides and Tirith session limits
+remain useful. Combined permanent saves occur zero or one times outside both
+locks; transport, waits, hooks and disk I/O stay outside the transaction.
+
+Parent independently rehashed all 932 sealed files and retained 2835/77/7/116
+history files, reconciled 80 raw Jobs/JUnits and 3091 before/after binding pairs,
+and verified all 58 current/copied graph files and 1294 complete method spans.
+Actual immutable read-only DB integrity is ok at 2218 nodes/5657 edges/58 files.
+Normal49 Jobs contain 631 unique passes with no errors/skips/refusals/recovery;
+fault31 Jobs contain 29 variants, 61 failed occurrences over 39 unique nodes,
+all normal GREEN. Five older test/bootstrap/mutator input versions are saved
+by hash. Historical lock faults are distinct from final test7804 repeats.
+
+Independent read-only final review supports only this source/runtime slice,
+with no new concrete P1/P2. It did not execute tests or query the DB anew.
+Eight exploratory rows, including an admission-deny prompt TimeoutError and
+guard-refused cluster attempts, are excluded from qualified GREEN/kills.
+Three unchanged platform/native-effect cases are deselected explicitly; final
+pure cluster23 and selected CLI10 qualify their narrower state behavior.
+
+Only approval.py, original unchanged-assertion decision ownership testc173 and
+new commit/save-count test7804 are integrated as product/test changes. The
+canonical CONTINUATION_APPROVAL_COMMIT_20261020.json records exact seal hashes.
+Declared fixed5d2/empty-process/offline leaves remain limits. Permanent disk
+snapshot concurrency is separate OPEN evidence on both ca3 and 43872, not a
+durability fix. R6 explicit-kill output-drain proof, native adapter request IDs,
+effect leases, full strict/native lifecycle and whole-SHA CI remain open.

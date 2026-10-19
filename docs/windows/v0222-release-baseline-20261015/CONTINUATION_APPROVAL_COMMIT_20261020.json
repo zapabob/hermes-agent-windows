@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "status": "BOUNDED_POST_DECISION_MEMORY_COMMIT_ACCEPTED",
+  "product": {
+    "tools/approval.py": "43872bdde19efdd1dad0879cc7b79567a3920acfa22541c7f0c82e31aef36301",
+    "tests/gateway/test_approval_decision_ownership.py": "c1730db5bdb3a29530edcbd8cb1754401d0fe29fc7bfd029434f758c4f6aa5fc",
+    "tests/gateway/test_approval_decision_commit.py": "7804a91aa004fa27e989f0258f1ce1dd44d8167cb9e2b80cefaa3654b289570f"
+  },
+  "problem_and_result": "A Gateway caller could pass its final wait check, retire across a true session boundary, then restore old session grants or clear replacement denial state. Three callers now reuse the same captured producer for a post-wait owner-guard then approval-lock transaction. Current validation and bounded memory writes are atomic with retirement; stale once/session/always decisions return a typed denial.",
+  "supported_behavior": [
+    "Three retired caller grant regressions and two replacement denial reset regressions are closed without changing their original assertions.",
+    "Current once/session/always consent, parallel FIFO/nonsharing and exact unregister behavior remain useful.",
+    "Smart-DENY override remains one operation. Tirith warning scope stays session-only; combined permanent persistence is called zero or one times after the bounded memory transaction.",
+    "No transport, wait, hook or disk I/O is held under the new owner/approval lock section. Legacy bare callbacks retain their previous behavior without typed ownership qualification."
+  ],
+  "seal": {
+    "receipt_path": "C:/Users/downl/.codex/worktrees/v0222-selective-20261017/hermes-agent/tmp/continuation-20261020/t06f-evidence/receipt.json",
+    "receipt_sha256": "f125448233c1caa35ea3c9b7059fc8c5ad496e0dba4be54069ac5750bcf9a9d1",
+    "manifest_path": "C:/Users/downl/.codex/worktrees/v0222-selective-20261017/hermes-agent/tmp/continuation-20261020/t06f-evidence/evidence_hashes.json",
+    "manifest_sha256": "93d3fb3a07c83066888f7d8c088f4e95e8bc2ddb16deb3f69273162422b76d51",
+    "files": 932,
+    "parent_and_independent_hash_size_mismatches": 0,
+    "reviewed_proposal_sha256": "b3f80cebc034e4730ab796e7ff1d6d3f09789cf7dd00e411d48878829be9116e",
+    "applied_product_exactly_matches_reviewed_proposal": true
+  },
+  "verification": {
+    "normal_jobs": 49,
+    "normal_unique_passes": 631,
+    "normal_pass_occurrences": 631,
+    "fault_jobs": 31,
+    "fault_distinct_variants": 29,
+    "fault_failure_occurrences": 61,
+    "fault_unique_failed_nodes": 39,
+    "all_failed_nodes_normal_green": true,
+    "qualified_junit_errors_skips_timeouts_guard_refusals_recovery_survivors": 0,
+    "raw_before_after_binding_pairs": 3091,
+    "archived_noncurrent_input_versions": 5,
+    "input_version_scope": "Old commit test, old bootstrap and three mutator versions are retained by SHA. Two historical lock faults are distinct from their final test7804 repeats; normal final four-case commit suite and repeated lock faults use test7804.",
+    "parent_audit_program": "tmp/continuation-20261020/parent_approval_commit_audit.py",
+    "parent_audit_result": "tmp/continuation-20261020/parent-approval-commit-audit.json",
+    "independent_review": "Socrates read-only final source/evidence audit supports this bounded slice; no new concrete P1/P2. Reviewer did not execute tests, product imports, native effects or a new DB query."
+  },
+  "immutable_graph": {
+    "sha256": "0df7e959d1e73dfb9610f77ca2f2827b38668a996a876ca70b2002b2ed14f5ec",
+    "files": 58,
+    "full_files": 57,
+    "projections": 1,
+    "complete_matching_method_spans": 1294,
+    "nodes": 2218,
+    "edges": 5657,
+    "parent_actual_readonly_integrity": "ok",
+    "cli_cap_bytes": 1048576,
+    "full_gateway_sdk_unresolved_open": 8202
+  },
+  "preserved_history_files": {"first_phase": 2835, "original_red": 77, "proposal": 7, "separate_permanent_red": 116},
+  "exclusions": [
+    "Eight exploratory runs are retained separately. A prompt TimeoutError is not a behavioral mutant kill; guard-refused and initial observer/setup runs are not zero-refusal normal GREEN.",
+    "Three unchanged cases are deselected: Windows symlink privilege, real terminal backend serialization and fresh-interpreter import. Final pure cluster23 and selected CLI10 have no refusals.",
+    "Process import is fixed declared 5d2 with empty process snapshots/reapers, record-only kernel disposal, empty runtime identity and offline leaves. Live API/process/R6/kernel integration is not qualified by these rows.",
+    "Permanent stale-snapshot disk overwrite remains independently RED on ca3 and product43872, each one RED/four positives. No durability product change is included.",
+    "Legacy bare callback ownership, native adapter request IDs, post-decision effect lease, full strict/native lifecycle, full Gateway/root graph, whole-SHA CI, production and release remain open."
+  ],
+  "permanent_red_receipt": {
+    "path": "tmp/continuation-20261020/t06e-evidence/receipt.json",
+    "sha256": "34882375bea920924d8a26ad137c1ac00ed1f56e33b6c53a97865ebf1c7e359a",
+    "status": "SEPARATE_OPEN_NOT_ACCEPTED"
+  },
+  "integration": "Only approval.py, two new approval tests and canonical/parent logs. Other WIP is excluded; this is not live R6 or whole-SHA acceptance.",
+  "published": false
+}
