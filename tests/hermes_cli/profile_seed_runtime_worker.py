@@ -54,7 +54,9 @@ def main():
     shell.streaming_enabled = False
     shell._single_query_mode = True
     try:
-        assert shell._session_db is not None, get_last_init_error()
+        assert shell._session_db is not None, (
+            f"SessionDB unavailable for owned profile {home}: {get_last_init_error()}"
+        )
         answer = shell.chat(manifest["prompt"])
         assert answer == "Owned answer: " + manifest["prompt"], answer
         messages = shell._session_db.get_messages(shell.agent.session_id)

@@ -97,7 +97,7 @@ jobs:
         # set is identical to the list the removed matrix job used to pass in.
         run: |
           source .venv/bin/activate
-          scripts/run_tests.sh tests/hermes_cli/test_profile_seed_runtime_wire.py --file-retries 0
+          scripts/run_tests.sh tests/hermes_cli/test_profile_seed_runtime_wire.py tests/hermes_state/test_live_db_isolation_guard.py --file-retries 0
         env:
           # This is the maximum number of test FILES that run together.
           # run_tests_parallel.py starts one pytest subprocess for each file
