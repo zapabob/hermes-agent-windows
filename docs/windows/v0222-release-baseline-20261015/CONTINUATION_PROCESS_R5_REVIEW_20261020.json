@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "status": "PARTIAL_SOURCE_P2_OPEN_INTEGRATION_HOLD",
+  "scope": "Frozen R5 API/process ownership and retained healthy/failed-monitor completion; no R6, native PYWINPTY, full Gateway or whole-SHA acceptance.",
+  "candidate": {
+    "gateway/platforms/api_server.py": "d6294b3ea1e04b014b2ba3692e7e2ca153cf6ba87186a0b030fbf17a559601c7",
+    "tools/process_registry.py": "24223aaf9d5e7e0f44efa1058da0dbb0b6b598ef687bdeb2843c41c206b7b4da"
+  },
+  "seal": {
+    "handoff": {
+      "path": "C:/Users/downl/.codex/worktrees/v0222-selective-20261017/hermes-agent/tmp/t06-api-process-20261020-r5/handoff.json",
+      "bytes": 140255,
+      "sha256": "87ffa1f3edf256e70660b5b9f880909dfe081cc4af7c4454412f360c6f1f5790",
+      "parent_json_readback": true,
+      "reviewer_independent_readback": true
+    },
+    "delta": {
+      "path": "C:/Users/downl/.codex/worktrees/v0222-selective-20261017/hermes-agent/tmp/t06-api-process-20261020-r5/delta-from-r4.patch",
+      "bytes": 11056,
+      "sha256": "e0fe1f9fb326c8e8722cd74b4d1c90048bc84b9cbbf5217d64297f6b006f600e"
+    },
+    "parent_rehashed_after_final_review": true
+  },
+  "saved_evidence_reconciled": {
+    "owned_source_test_files": 16,
+    "saved_graph_files_including_projection": 17,
+    "named_evidence_hashes": 155,
+    "jobs_and_junits": 31,
+    "normal_unique_passes": 124,
+    "fault_variants": 20,
+    "fault_failed_occurrences": 66,
+    "fault_unique_failed_nodes": 58,
+    "all_fault_failed_nodes_normal_green": true,
+    "r4_baseline_failures": 4,
+    "junit_errors": 0,
+    "junit_skips": 0,
+    "selected_source_before_after_checks": 496,
+    "qualified_jobs_guard_refusals_recovery_survivors": 0,
+    "parent_audit": "tmp/continuation-20261020/parent-process-r5-audit.json",
+    "parent_audit_program": "tmp/continuation-20261020/parent_process_r5_audit.py",
+    "external_cross_input_drift_observational_only": ["anti-publication-core"],
+    "preserved_files": {"r4": 1645, "r3": 1441, "r2": 5969}
+  },
+  "immutable_graph": {
+    "sha256": "808ebd03714efd0e518957d43283a48cb193c3b2fc691abd2c433714d426c298",
+    "integrity": "ok",
+    "nodes": 964,
+    "edges": 2781
+  },
+  "supported_slice": "Healthy reader EOF with a retained live descendant reopens the session; after the descendant naturally exits, public observers can now reconcile the empty Job. Four healthy-reader cases and four failed-monitor controls support this bounded structural improvement.",
+  "open_p2": {
+    "classification": "SOURCE_CONDITION; reviewer performed no native reproduction",
+    "location": "Frozen R5 pipe reader lines 1883-1887 and PTY reader lines 1992-1995, before _move_to_finished scope validation",
+    "trigger": "Reader publishes session.exited and exit_code before entering _move_to_finished while an owned closed-stdio descendant remains alive in the retained Job.",
+    "observable_failure": "Concurrent public get/poll/wait can return or consume completion before the live/unknown scope guard reopens the session. Reconciliation returns early on the already-published exited flag.",
+    "coverage_gap": "The healthy completion cases join the reader before querying; they do not query at the reader-to-finalizer publication barrier.",
+    "next_generation": "R6 actual owned pipe/PTY reader-entry and unstarted-reader public observer regressions, followed by completion publication and reader-phase repair. R6 is separately moving and unsealed."
+  },
+  "cross_input_scope": "Historical per-run bindings only. Three final cross-sensitive rows matched run65dd/clarifya73/approvalca3/kernelfdc with R5/API at their checkpoint. They do not qualify the later approval or registry working tree, whole Gateway or whole SHA.",
+  "native_qualification": "The separate historical R5 credential target is one native PTY case, not publication/completion qualification. R5 completion cases use a pipe-backed PTY interface with actual owned Job/HANDLE observations; native provider completion prerequisites remain unproven.",
+  "r3_acceptance": "REVOKED; retained history does not reinstate acceptance",
+  "product_committed_from_r5": false,
+  "published": false
+}

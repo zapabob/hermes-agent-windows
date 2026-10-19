@@ -762,3 +762,36 @@ Native channel transport, queued finalize, post-decision approval persistence,
 permanent save concurrency, live API/process/R6, whole T02/Python/P0, portable
 CI, complete SDK and whole-SHA acceptance remain OPEN. No production action or
 publication is performed.
+
+## Frozen R5 review and R6 publication repair boundary
+
+Frozen R5 remains PARTIAL with integration held. Parent and independent review
+reconciled 16 owned source/test hashes, 17 graph copies, 155 named evidence
+hashes and 31 JUnit/Job rows: 124 unique normal passes, 20 fault variants with
+66 failed occurrences over 58 unique nodes, all normal GREEN, plus four R4
+baseline failures. Errors/skips and qualified Job/audit/recovery issues are
+zero. Immutable graph integrity is ok with 964 nodes and 2,781 edges. The
+handoff and delta retain their original 87ffa1f3 and e0fe1f9f hashes on parent
+readback. Earlier generations and source copies remain unchanged.
+
+R5 closes the healthy-reader-ended stuck-running condition structurally, but
+its reader sets exited and exit_code before entering the scope-aware finish
+helper. A public observer at that interval can report or consume completion
+while the actual retained Job still contains a live descendant. This is a
+source finding from independent review, not native execution by the reviewer.
+The four healthy cases query after joining the reader and miss that interval.
+The canonical CONTINUATION_PROCESS_R5_REVIEW_20261020.json preserves both the
+supported slice and this unresolved P2 without accepting R5 product changes.
+
+R6 is a separate unsealed author generation. Twelve corrected actual owned
+pipe/PTY publication and unstarted-reader cases fail behaviorally against R5;
+the initial four pipe CRLF setup mismatches remain preserved and excluded.
+An earlier R6 candidate passed those twelve, while subsequent compatibility
+and missing-scope guards require fresh final-source runs and a new seal.
+Native provider test preparation has separate timing and early cleanup
+findings: barrier expiry must remain a setup/precondition result, and all
+reader/launcher barriers must release and join before closing the provider.
+No native R6 execution or native completion acceptance has been authorized at
+this preparation checkpoint. The R5 credential target is historical and does
+not establish publication correctness. Cross-sensitive R6 jobs must bind the
+final approval checkpoint; old ca3 proof cannot qualify moving approval WIP.
