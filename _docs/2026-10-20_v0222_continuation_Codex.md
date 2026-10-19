@@ -503,3 +503,16 @@ claimed. Whole run.py SDK unresolved references remain 8,144. Approval/clarify,
 API process cleanup, native channels, full T06 and whole-SHA CI remain OPEN.
 See CONTINUATION_SHARED_INPUT_20261020.json; no unrelated API/registry/kernel or
 LSP trust WIP is included in this local commit.
+
+## T07 retained incremental-recognizer gate
+
+CONTINUATION_T07_20261020.json preserves the explicitly required
+BLOCKED_LOCAL_RECOGNIZER outcome. The bounded earlier metadata/cache inventory
+identified no qualified Windows incremental recognizer with a pinned matching
+ASR model and owned PCM fixtures. This publication verifies the three current
+transcription source hashes against that inventory; it does not refresh package
+or cache observations. Existing completed-file STT remains unchanged. No engine
+import, model/recording read, download, capture, recognition or production
+inference occurred. No schema/ABC/toggle or fixed-text partial is added as a
+substitute for actual audio-derived partial/final results. The asset gate and
+all useful-effect/runtime requirements remain unaccepted.

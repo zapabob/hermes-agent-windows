@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "status": "BLOCKED_LOCAL_RECOGNIZER",
+  "requirement": "T07 / F09 real local incremental PCM recognition",
+  "current_source_sha256": {
+    "agent/transcription_provider.py": "f0c58a641dc8b504004ade6af723290dbfed070449eabdcc37b885424ae0da67",
+    "agent/transcription_registry.py": "9b615c0b56a4dc1f79516e9d2df577579ec1036e8d4322d49aed2cbd1b351ce3",
+    "tools/transcription_tools.py": "002f31316c8187a00f4f38a5c6f75bfc3a6b860d3168eb1231e518ccac98d541"
+  },
+  "observed_inventory": {
+    "path": "tmp/continuation-20261020/t07-asset-inventory.json",
+    "sha256": "908eb1d4aadfd76686a0268d573c507c628fd4f4efd6d3f8bc670d4def7f884f",
+    "scope": "Retained bounded metadata/cache observation earlier this continuation; package/cache presence not refreshed by this publication."
+  },
+  "packages_metadata_only_observed": {
+    "faster-whisper": {
+      "present": true,
+      "version": "1.2.1"
+    },
+    "ctranslate2": {
+      "present": true,
+      "version": "4.8.2"
+    },
+    "sherpa-onnx": {
+      "present": false,
+      "version": null
+    },
+    "vosk": {
+      "present": false,
+      "version": null
+    },
+    "openai-whisper": {
+      "present": false,
+      "version": null
+    }
+  },
+  "qualified_incremental_engine_and_model": false,
+  "blocker": [
+    "Reviewed Windows incremental recognizer and pinned matching ASR asset",
+    "Task-owned speech PCM fixtures with distinct audio-derived partial/final effects"
+  ],
+  "preserved": "Existing completed-file transcription provider/registry/tool path; no product edit.",
+  "not_run": [
+    "Real PCM partial/final recognition",
+    "Distinct audio-derived results",
+    "Audio capture/load/fallback/cancel and worker disposal",
+    "ASR model or runtime download/install",
+    "Production model inference"
+  ],
+  "limits": "No exhaustive PC-wide asset search, model-byte or recording read, engine import, runtime recognition or incremental capability claim. Installed faster-whisper metadata alone does not establish a pinned incremental recognizer.",
+  "implementation_decision": "Preserve file-based STT and the explicit missing-engine/model gate. No empty ABC, UI toggle, fixed partial text or final-result character animation is introduced."
+}
