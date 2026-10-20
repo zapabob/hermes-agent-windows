@@ -32,7 +32,7 @@ def _runner(adapter=None):
         thread_sessions_per_user=False,
     )
     runner.adapters = {Platform.TELEGRAM: adapter} if adapter else {}
-    runner._consume_pending_native_image_paths = lambda _key: []
+    runner._consume_pending_native_image_paths = lambda _key, *, run_generation=None, owner=None: []
     runner._session_key_for_source = lambda _source: "telegram:dm:12345"
     runner._thread_metadata_for_source = lambda *_args, **_kwargs: {}
     runner._reply_anchor_for_event = lambda _event: None

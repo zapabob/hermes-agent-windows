@@ -18,6 +18,7 @@ import sys
 import threading
 import time
 from threading import Event
+from types import SimpleNamespace
 from typing import Any, Mapping, cast
 
 import pytest
@@ -841,6 +842,8 @@ def test_dns_stall_has_one_bounded_resolver_and_releases_profile_file_lock(tmp_p
 
 def test_resolved_https_connection_preserves_openrouter_tls_hostname(monkeypatch):
     seen = {}
+    # This TLS identity test consumes no simulated DNS/TCP/handshake time.
+    monkeypatch.setattr(free_routes, "time", SimpleNamespace(monotonic=lambda: 100.0))
 
     class Resolver:
         def resolve(self, hostname, port, timeout, *, lease=None):

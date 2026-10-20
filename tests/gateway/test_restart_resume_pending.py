@@ -966,8 +966,8 @@ async def test_auto_resume_runs_agent_exactly_once_through_full_path():
         GatewayRunner._release_running_agent_state.__get__(runner, GatewayRunner)
     )
     runner._check_slash_access = lambda *a, **k: None
-    runner._begin_session_run_generation = lambda session_key: 1
-    runner._is_session_run_current = lambda session_key, generation: True
+    runner._begin_session_run_generation = GatewayRunner._begin_session_run_generation.__get__(runner, GatewayRunner)
+    runner._is_session_run_current = GatewayRunner._is_session_run_current.__get__(runner, GatewayRunner)
     runner._invalidate_session_run_generation = lambda *a, **k: 0
     runner._claim_active_session_slot = lambda session_key, source: (object(), None)
     runner._active_session_leases = {}
@@ -978,7 +978,7 @@ async def test_auto_resume_runs_agent_exactly_once_through_full_path():
     # Count how many times an actual agent run is started for this session.
     agent_runs: list[str] = []
 
-    async def _fake_run(event, source, _quick_key, run_generation):
+    async def _fake_run(event, source, _quick_key, run_generation, *, shared_input_owner=None):
         agent_runs.append(_quick_key)
         return "RESUMED OK"
 

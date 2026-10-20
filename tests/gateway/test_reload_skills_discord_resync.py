@@ -181,7 +181,7 @@ class TestHandleReloadSkillsCallsRefreshSkillGroup:
             event = MagicMock()
             event.source = MagicMock()
             # _session_key_for_source may be called — make it safe.
-            runner._session_key_for_source = lambda src: None
+            runner._session_key_for_source = lambda src: "agent:main:discord:dm:reload-test"
             runner._pending_skills_reload_notes = {}
 
             result = asyncio.get_event_loop().run_until_complete(

@@ -72,7 +72,7 @@ async def test_internal_events_bypass_hook(monkeypatch):
         called["count"] += 1
         return [{"action": "skip"}]
 
-    async def _capture(event, source, _quick_key, _run_generation):
+    async def _capture(event, source, _quick_key, _run_generation, *, shared_input_owner=None):
         return "ok"
 
     monkeypatch.setattr("hermes_cli.plugins.invoke_hook", _fake_hook)

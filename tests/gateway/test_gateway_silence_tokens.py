@@ -45,7 +45,6 @@ def _runner(monkeypatch, tmp_path):
     runner._session_db = MagicMock()
     runner._recover_telegram_topic_thread_id = lambda _source: None
     runner._cache_session_source = lambda _key, _source: None
-    runner._is_session_run_current = lambda _key, _gen: True
     runner._reply_anchor_for_event = lambda _event: None
     runner._get_guild_id = lambda _event: None
     runner._should_send_voice_reply = lambda *_a, **_kw: False
@@ -109,7 +108,8 @@ async def test_silence_token_suppresses_delivery_but_preserves_transcript(monkey
     })
 
     response = await runner._handle_message_with_agent(
-        _event(), _source(), "agent:main:telegram:group:-1001:12345", 1
+        _event(), _source(), "agent:main:telegram:group:-1001:12345",
+        runner._begin_session_run_generation("agent:main:telegram:group:-1001:12345")
     )
 
     assert response == ""
@@ -135,7 +135,8 @@ async def test_empty_success_still_gets_empty_response_warning(monkeypatch, tmp_
     })
 
     response = await runner._handle_message_with_agent(
-        _event(), _source(), "agent:main:telegram:group:-1001:12345", 1
+        _event(), _source(), "agent:main:telegram:group:-1001:12345",
+        runner._begin_session_run_generation("agent:main:telegram:group:-1001:12345")
     )
 
     assert "no response was generated" in response
@@ -159,7 +160,8 @@ async def test_prose_mentioning_silence_token_is_delivered(monkeypatch, tmp_path
     })
 
     response = await runner._handle_message_with_agent(
-        _event(), _source(), "agent:main:telegram:group:-1001:12345", 1
+        _event(), _source(), "agent:main:telegram:group:-1001:12345",
+        runner._begin_session_run_generation("agent:main:telegram:group:-1001:12345")
     )
 
     assert response == text
@@ -185,7 +187,8 @@ async def test_agent_end_hook_includes_model_and_provider(monkeypatch, tmp_path)
     })
 
     await runner._handle_message_with_agent(
-        _event(), _source(), "agent:main:telegram:group:-1001:12345", 1
+        _event(), _source(), "agent:main:telegram:group:-1001:12345",
+        runner._begin_session_run_generation("agent:main:telegram:group:-1001:12345")
     )
 
     end_context = next(

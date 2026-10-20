@@ -784,6 +784,10 @@ async def test_session_hygiene_forces_in_place_compaction_with_bound_session_db(
         lambda gw, key: (reset_calls.append(key), _real_reset(gw, key))[1],
     )
 
+    # Keep the mocked store entry keyed exactly like real ingress authority.
+    runner.session_store.get_or_create_session.return_value.session_key = (
+        runner._session_key_for_source(event.source)
+    )
     result = await runner._handle_message(event)
 
     assert result == "ok"
@@ -911,6 +915,10 @@ async def test_session_hygiene_honors_configurable_hard_message_limit(
         message_id="1",
     )
 
+    # Keep the mocked store entry keyed exactly like real ingress authority.
+    runner.session_store.get_or_create_session.return_value.session_key = (
+        runner._session_key_for_source(event.source)
+    )
     result = await runner._handle_message(event)
 
     assert result == "ok"

@@ -46,8 +46,6 @@ def _bootstrap(monkeypatch, tmp_path):
     runner._session_db = MagicMock()
     runner._recover_telegram_topic_thread_id = lambda _source: None
     runner._cache_session_source = lambda _key, _source: None
-    runner._is_session_run_current = lambda _key, _gen: True
-    runner._begin_session_run_generation = lambda _key: 1
     runner._reply_anchor_for_event = lambda _event: None
     runner._get_guild_id = lambda _event: None
     runner._should_send_voice_reply = lambda *_a, **_kw: False
@@ -145,7 +143,8 @@ async def test_agent_failed_early_skip_db_when_agent_has_session_db(
     )
 
     await runner._handle_message_with_agent(
-        _event(), _source(), "agent:main:telegram:group:-1001:12345", 1
+        _event(), _source(), "agent:main:telegram:group:-1001:12345",
+        runner._begin_session_run_generation("agent:main:telegram:group:-1001:12345")
     )
 
     _assert_user_call_has_skip_db(
@@ -177,7 +176,8 @@ async def test_not_new_messages_skip_db_when_agent_has_session_db(
     )
 
     await runner._handle_message_with_agent(
-        _event(), _source(), "agent:main:telegram:group:-1001:12345", 1
+        _event(), _source(), "agent:main:telegram:group:-1001:12345",
+        runner._begin_session_run_generation("agent:main:telegram:group:-1001:12345")
     )
 
     _assert_user_call_has_skip_db(

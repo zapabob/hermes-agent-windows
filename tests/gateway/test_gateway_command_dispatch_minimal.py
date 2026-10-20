@@ -100,7 +100,6 @@ def _make_runner():
     runner._is_telegram_topic_root_lobby = lambda _source: False
     runner._should_send_telegram_lobby_reminder = lambda _source: False
     runner._check_slash_access = lambda _source, _command: None
-    runner._begin_session_run_generation = lambda _key: 1
     runner._release_running_agent_state = lambda key: runner._running_agents.pop(key, None)
     return runner, adapter
 
@@ -111,7 +110,7 @@ async def test_idle_queue_sends_payload_as_next_turn(command_text):
     runner, _adapter = _make_runner()
     captured = {}
 
-    async def fake_handle_message_with_agent(event, source, key, generation):
+    async def fake_handle_message_with_agent(event, source, key, generation, *, shared_input_owner=None):
         captured["text"] = event.text
         captured["command"] = event.get_command()
         captured["source"] = source

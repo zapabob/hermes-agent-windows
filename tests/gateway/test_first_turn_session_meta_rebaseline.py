@@ -76,8 +76,6 @@ def _bootstrap(monkeypatch, tmp_path, db):
     runner._session_db = AsyncSessionDB(db)
     runner._recover_telegram_topic_thread_id = lambda _source: None
     runner._cache_session_source = lambda _key, _source: None
-    runner._is_session_run_current = lambda _key, _gen: True
-    runner._begin_session_run_generation = lambda _key: 1
     runner._reply_anchor_for_event = lambda _event: None
     runner._get_guild_id = lambda _event: None
     runner._should_send_voice_reply = lambda *_a, **_kw: False
@@ -196,7 +194,7 @@ async def test_first_turn_session_meta_is_captured_by_rebaseline(
         }
     )
 
-    await runner._handle_message_with_agent(_event(), _source(), SESSION_KEY, 1)
+    await runner._handle_message_with_agent(_event(), _source(), SESSION_KEY, runner._begin_session_run_generation(SESSION_KEY))
 
     # The first-turn session_meta row was written → live count advanced.
     live = _live_count(db, SESSION_ID)

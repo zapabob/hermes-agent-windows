@@ -282,7 +282,6 @@ def _make_runner():
     runner._is_telegram_topic_root_lobby = lambda _source: False
     runner._should_send_telegram_lobby_reminder = lambda _source: False
     runner._check_slash_access = lambda _source, _command: None
-    runner._begin_session_run_generation = lambda _key: 1
     runner._release_running_agent_state = (
         lambda key: runner._running_agents.pop(key, None)
     )
@@ -301,7 +300,7 @@ async def test_gateway_fires_for_recognized_command(monkeypatch):
 
     runner, _adapter = _make_runner()
 
-    async def _fake_agent(event, source, key, generation):
+    async def _fake_agent(event, source, key, generation, *, shared_input_owner=None):
         return {"final_response": "", "messages": []}
 
     runner._handle_message_with_agent = _fake_agent
@@ -329,7 +328,7 @@ async def test_gateway_reports_canonical_name_for_alias(monkeypatch):
 
     runner, _adapter = _make_runner()
 
-    async def _fake_agent(event, source, key, generation):
+    async def _fake_agent(event, source, key, generation, *, shared_input_owner=None):
         return {"final_response": "", "messages": []}
 
     runner._handle_message_with_agent = _fake_agent
@@ -352,7 +351,7 @@ async def test_gateway_does_not_fire_for_plain_text(monkeypatch):
 
     runner, _adapter = _make_runner()
 
-    async def _fake_agent(event, source, key, generation):
+    async def _fake_agent(event, source, key, generation, *, shared_input_owner=None):
         return {"final_response": "ok", "messages": []}
 
     runner._handle_message_with_agent = _fake_agent
@@ -398,7 +397,7 @@ async def test_gateway_hook_failure_is_non_fatal(monkeypatch):
     runner, _adapter = _make_runner()
     captured = {}
 
-    async def _fake_agent(event, source, key, generation):
+    async def _fake_agent(event, source, key, generation, *, shared_input_owner=None):
         captured["text"] = event.text
         return {"final_response": "", "messages": []}
 

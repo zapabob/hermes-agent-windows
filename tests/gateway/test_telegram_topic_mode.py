@@ -153,8 +153,6 @@ def _make_runner(session_db=None):
     runner._capture_gateway_honcho_if_configured = lambda *args, **kwargs: None
     runner._emit_gateway_run_progress = AsyncMock()
     runner._invalidate_session_run_generation = MagicMock()
-    runner._begin_session_run_generation = MagicMock(return_value=1)
-    runner._is_session_run_current = MagicMock(return_value=True)
     # Bypass the destructive-slash confirm gate — these tests focus on
     # /new topic-mode mechanics, not the confirm prompt itself.
     runner._read_user_config = lambda: {
