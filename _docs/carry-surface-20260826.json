@@ -20,12 +20,12 @@
   "schema_version": 1,
   "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
   "summary": {
-    "all_fork_specific_loc": 3212101,
+    "all_fork_specific_loc": 3212258,
     "carry_surface_files": 5162,
-    "cwc": 87345940,
-    "fork_owned_loc": 1640009,
-    "upstream_owned_fork_loc": 1572092,
-    "utr": 0.489428
+    "cwc": 87347108,
+    "fork_owned_loc": 1640158,
+    "upstream_owned_fork_loc": 1572100,
+    "utr": 0.489407
   },
   "top_carry_risks": [
     {
@@ -146,10 +146,10 @@
       "upstream_frequency": 64
     },
     {
-      "added": 5435,
-      "cwc": 1198660,
-      "deleted": 2775,
-      "patch_size": 8210,
+      "added": 5441,
+      "cwc": 1199828,
+      "deleted": 2777,
+      "patch_size": 8218,
       "path": "agent/chat_completion_helpers.py",
       "semantic_coupling": 2,
       "upstream_frequency": 73
