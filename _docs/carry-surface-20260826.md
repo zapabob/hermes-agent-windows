@@ -4,10 +4,10 @@ Frozen upstream: b51c055a12220f8c7c18660e8599365012e19532
 
 | Metric | Value |
 | --- | ---: |
-| All fork-specific LOC | 3212258 |
+| All fork-specific LOC | 3212266 |
 | Upstream-owned fork LOC | 1572100 |
-| Fork-owned LOC | 1640158 |
-| UTR | 0.489407 |
+| Fork-owned LOC | 1640166 |
+| UTR | 0.489405 |
 | Carry Surface | 5162 files |
 | CWC | 87347108 |
 
