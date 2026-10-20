@@ -29,7 +29,7 @@ class ObservedLock:
         self.first_acquired = None
 
     def __enter__(self):
-        if threading.get_ident() == self.contender:
+        if threading.get_ident() == self.contender and self.first_acquired is None:
             acquired = self.delegate.acquire(blocking=False)
             self.first_acquired = acquired
             self.probed.set()
@@ -46,6 +46,14 @@ class ObservedLock:
 @pytest.mark.asyncio
 @pytest.mark.parametrize('contender', ['true-boundary', 'exact-unregister'])
 async def test_actual_caller_commit_serializes_boundary_and_retirement(monkeypatch, tmp_path, contender):
+    # This test deliberately parks a lock-owning caller. Keep unrelated UI
+    # consumers from blocking its event-loop controller on that same lock.
+    (tmp_path / 'config.yaml').write_text(yaml.safe_dump({
+        'display': {'platforms': {'telegram': {
+            'streaming': False, 'interim_assistant_messages': False,
+            'tool_progress': 'off', 'thinking_progress': False,
+        }}},
+    }), encoding='utf-8')
     runner, turn, results, _adapter = fixture_owner.install_turns(monkeypatch, tmp_path, 'plugin')
     gate = ThreadBarrier()
     state = runner._session_state(SESSION_KEY)
