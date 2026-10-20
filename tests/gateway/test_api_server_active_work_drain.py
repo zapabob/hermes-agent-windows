@@ -130,6 +130,7 @@ class TestDrainWaitsForApiWork:
         original_create_task = asyncio.create_task
         task_started = asyncio.Event()
         allow_task = asyncio.Event()
+        captured_tasks = []
 
         def delayed_create_task(coro):
             async def delayed():
@@ -137,7 +138,17 @@ class TestDrainWaitsForApiWork:
                 await allow_task.wait()
                 return await coro
 
-            return original_create_task(delayed())
+            task = original_create_task(delayed())
+            captured_tasks.append(task)
+            return task
+
+        class _APIAsyncioProxy:
+            # Patching shared asyncio.create_task also parks aiohttp's body
+            # writer on Python 3.11, before the request can release this gate.
+            create_task = staticmethod(delayed_create_task)
+
+            def __getattr__(self, name):
+                return getattr(asyncio, name)
 
         mock_agent = MagicMock()
         mock_agent.run_conversation.return_value = {"final_response": "done"}
@@ -145,23 +156,32 @@ class TestDrainWaitsForApiWork:
         mock_agent.session_completion_tokens = 0
         mock_agent.session_total_tokens = 0
 
+        drain_task = None
         with patch(
-            "gateway.platforms.api_server.asyncio.create_task",
-            side_effect=delayed_create_task,
+            "gateway.platforms.api_server.asyncio", _APIAsyncioProxy(),
         ), patch.object(api, "_create_agent", return_value=mock_agent):
-            async with TestClient(TestServer(app)) as client:
-                response = await client.post("/v1/runs", json={"input": "hello"})
-                assert response.status == 202
-                await task_started.wait()
+            try:
+                async with TestClient(TestServer(app)) as client:
+                    response = await client.post("/v1/runs", json={"input": "hello"})
+                    assert response.status == 202
+                    await task_started.wait()
 
-                assert api._active_run_agents == {}
-                assert runner._active_api_run_count() == 1
-                drain_task = original_create_task(runner._drain_active_agents(2.0))
-                await asyncio.sleep(0.1)
-                assert not drain_task.done()
+                    assert api._active_run_agents == {}
+                    assert runner._active_api_run_count() == 1
+                    drain_task = original_create_task(runner._drain_active_agents(2.0))
+                    await asyncio.sleep(0.1)
+                    assert not drain_task.done()
 
+                    allow_task.set()
+                    _snapshot, timed_out = await drain_task
+            finally:
                 allow_task.set()
-                _snapshot, timed_out = await drain_task
+                if captured_tasks:
+                    await asyncio.wait_for(
+                        asyncio.gather(*captured_tasks), _TURN_UNBLOCK_TIMEOUT,
+                    )
+                if drain_task is not None:
+                    await asyncio.wait_for(drain_task, _TURN_UNBLOCK_TIMEOUT)
 
         assert timed_out is False
 

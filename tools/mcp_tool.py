@@ -4000,6 +4000,11 @@ class MCPServerTask:
         Includes automatic reconnection with exponential backoff if the
         connection drops unexpectedly (unless shutdown was requested).
         """
+        from tools.mcp_dashboard_oauth import get_dashboard_oauth_flow
+
+        # This task inherits one authorization attempt, even if its caller
+        # subsequently binds a replacement flow while this connection yields.
+        dashboard_flow = get_dashboard_oauth_flow()
         self._config = config
         self.tool_timeout = _resolve_tool_timeout(config)
         self._auth_type = (config.get("auth") or "").lower().strip()
@@ -4086,6 +4091,12 @@ class MCPServerTask:
         from tools.mcp_oauth import suppress_interactive_oauth
 
         while True:
+            # Cancellation during backoff must not admit another transport.
+            if dashboard_flow is not None and dashboard_flow.cancelled:
+                if self._error is None:
+                    self._error = RuntimeError("MCP OAuth authorization cancelled")
+                self._ready.set()
+                return
             try:
                 # Explicit /auth and `hermes mcp login` may authorize the
                 # initial attempt. Every later lifecycle attempt is automatic,
@@ -4214,6 +4225,12 @@ class MCPServerTask:
             except Exception as exc:
                 self.session = None
                 self._error = exc
+                # An explicitly cancelled dashboard attempt cannot recover by
+                # reconnecting. Wake start() so its owner can reap the task
+                # and close the listener through the existing finally path.
+                if dashboard_flow is not None and dashboard_flow.cancelled:
+                    self._ready.set()
+                    return
                 # Unwrap anyio TaskGroup wrappers first: str(exc) on a
                 # BaseExceptionGroup is "unhandled errors in a TaskGroup
                 # (N sub-exceptions)" — useless in logs, and it hides the

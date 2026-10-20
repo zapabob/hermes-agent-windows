@@ -92,10 +92,25 @@ def test_profile_local_mcp_tool_is_visible_in_slash_worker(tmp_path):
         assert proc.stdin is not None
         assert proc.stdout is not None
         stdout = proc.stdout
-        threading.Thread(
-            target=lambda: output.put(stdout.readline()),
-            daemon=True,
-        ).start()
+
+        def read_responses():
+            for line in stdout:
+                output.put(line)
+
+        threading.Thread(target=read_responses, daemon=True).start()
+        # Cold imports, bounded MCP discovery and CLI construction precede
+        # command handling. Establish readiness through the public protocol.
+        proc.stdin.write(json.dumps({"id": 0, "command": "/tools"}) + "\n")
+        proc.stdin.flush()
+        try:
+            startup_line = output.get(timeout=60)
+        except queue.Empty:
+            pytest.fail("slash worker produced no startup /tools response within 60 seconds")
+        startup_response = json.loads(startup_line)
+        assert startup_response["id"] == 0
+        assert startup_response["ok"] is True
+        assert "mcp__profileprobe__hermes_61922_profile_probe" in startup_response["output"]
+
         proc.stdin.write(json.dumps({"id": 1, "command": "/tools"}) + "\n")
         proc.stdin.flush()
         try:
@@ -103,6 +118,7 @@ def test_profile_local_mcp_tool_is_visible_in_slash_worker(tmp_path):
         except queue.Empty:
             pytest.fail("slash worker produced no /tools response within 10 seconds")
         response = json.loads(line)
+        assert response["id"] == 1
         assert response["ok"] is True
         assert "mcp__profileprobe__hermes_61922_profile_probe" in response["output"]
     finally:
