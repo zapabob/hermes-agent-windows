@@ -165,8 +165,8 @@ def test_rest_expired_cancelled_owner_collects_after_actual_cleanup(homes, monke
             except RuntimeError as error:
                 if str(error) != "OAuth authorization failed: Cancelled by user":
                     raise
-                # Hold the exact owner's real cancellation before the SDK's
-                # jittered retry ladder, not after the entire probe unwinds.
+                # Hold the exact owner's real cancellation before the probe
+                # unwinds; explicit cancellation must not enter a retry.
                 callback_errors.append(str(error))
                 cleanup_entered.set()
                 assert await asyncio.to_thread(cleanup_release.wait, 8), "Owned REST worker cleanup barrier was not released"
@@ -200,9 +200,9 @@ def test_rest_expired_cancelled_owner_collects_after_actual_cleanup(homes, monke
                 assert worker.is_alive() and not flow.worker_done
                 cleanup_release.set()
                 retry_release.set()
-                if hold_retry:
-                    assert retry_entered.wait(8), "Actual failed SDK connection did not retry"
                 settled(flow, worker, loops)
+                if hold_retry:
+                    assert not retry_entered.is_set(), "Explicitly cancelled SDK connection retried"
                 assert client.get(status_url).status_code == 404
                 assert flow.flow_id not in web_server._mcp_oauth_flows
                 assert not owner.operations("token_request") and not owner.operations("sentinel")
