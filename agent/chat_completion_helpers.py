@@ -913,6 +913,10 @@ def _stale_streak(agent) -> int:
 
 def _bump_stale_streak(agent) -> None:
     try:
+        # The watchdog and worker may both report one recovered trial's
+        # failure. Restore its breaker floor in either order, only once.
+        if _settle_stream_stale_trial(agent, None):
+            return
         agent._consecutive_stale_streams = _stale_streak(agent) + 1
     except Exception:
         pass

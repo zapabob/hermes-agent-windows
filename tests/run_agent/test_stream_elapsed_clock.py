@@ -110,6 +110,8 @@ def test_native_stream_elapsed_clock(monkeypatch, record_property, mode):
             agent = AIAgent(api_key="owned-loopback-fixture", model="clock-fixture", provider="custom",
                             base_url=f"http://127.0.0.1:{server.server_port}/v1", quiet_mode=True,
                             skip_context_files=True, skip_memory=True, enabled_toolsets=[])
+        # Initialize real SDK resources before the request liveness budget.
+        _ = agent.client.chat.completions
         agent._current_turn_id = "owned-clock-turn"
         agent._consecutive_stale_streams = 0
         original_abort = agent._abort_request_openai_client

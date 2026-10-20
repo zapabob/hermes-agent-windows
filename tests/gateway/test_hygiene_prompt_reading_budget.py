@@ -21,6 +21,26 @@ from tests.gateway.test_session_hygiene import HygieneCaptureAdapter, _make_hist
 async def test_hygiene_uses_extended_fence_and_stops_waiting_for_completed_worker(monkeypatch, tmp_path, outcome):
     import gateway.run as gateway_run
     import run_agent
+    import agent.conversation_compression as conversation_compression
+
+    # Charge the budget only for this fixture's measured reading. Later gateway
+    # work must not expire a successfully committed fence before its assertions.
+    # Keep asyncio and the stdlib clock real so the actual gateway wait runs.
+    budget = SimpleNamespace(now=0.0)
+    budget_lock = threading.Lock()
+
+    def budget_monotonic():
+        with budget_lock:
+            return budget.now
+
+    def advance_reading(seconds):
+        with budget_lock:
+            budget.now += seconds
+
+    budget_time = SimpleNamespace(**vars(time))
+    budget_time.monotonic = budget_monotonic
+    monkeypatch.setattr(gateway_run, "time", budget_time)
+    monkeypatch.setattr(conversation_compression, "time", budget_time)
 
     fake_db = MagicMock()
     fake_db.get_compression_failure_cooldown.return_value = None
@@ -45,6 +65,7 @@ async def test_hygiene_uses_extended_fence_and_stops_waiting_for_completed_worke
                 raise TimeoutError("finished provider timeout")
             for _ in range(8):
                 time.sleep(0.1)
+                advance_reading(0.1)
                 assert commit_fence.extend_deadline(0.1)
                 commit_fence.touch_progress()
             commit_fence.close_progress()
