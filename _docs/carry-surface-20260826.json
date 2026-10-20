@@ -20,12 +20,12 @@
   "schema_version": 1,
   "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
   "summary": {
-    "all_fork_specific_loc": 3211805,
-    "carry_surface_files": 5161,
-    "cwc": 87344284,
-    "fork_owned_loc": 1639809,
-    "upstream_owned_fork_loc": 1571996,
-    "utr": 0.489443
+    "all_fork_specific_loc": 3212101,
+    "carry_surface_files": 5162,
+    "cwc": 87345940,
+    "fork_owned_loc": 1640009,
+    "upstream_owned_fork_loc": 1572092,
+    "utr": 0.489428
   },
   "top_carry_risks": [
     {
@@ -209,10 +209,10 @@
       "upstream_frequency": 36
     },
     {
-      "added": 9189,
-      "cwc": 893136,
+      "added": 9206,
+      "cwc": 894700,
       "deleted": 519,
-      "patch_size": 9708,
+      "patch_size": 9725,
       "path": "tools/mcp_tool.py",
       "semantic_coupling": 2,
       "upstream_frequency": 46
