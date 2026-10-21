@@ -23,6 +23,7 @@ product ledgers only. Everything else has a classified home:
 | `doc/reports/` | Generated Markdown reports | README + AGENTS only |
 | `doc/archive/` | Operator artifacts worth version-controlling | contents tracked |
 | `doc/desktop-inbox/` | Files relocated from the Windows Desktop, awaiting review | policy files only |
+| `doc/skill-vault/` | Vaulted inactive skills/plugins, quickly readable by the agent harness | policy files only |
 
 `README.md` and `AGENTS.md` in each folder are **force-included** in
 `.gitignore` (`!` negation), so every folder is self-describing in a fresh clone
