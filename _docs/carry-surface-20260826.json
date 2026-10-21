@@ -20,19 +20,19 @@
   "schema_version": 1,
   "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
   "summary": {
-    "all_fork_specific_loc": 3212266,
+    "all_fork_specific_loc": 3214296,
     "carry_surface_files": 5162,
-    "cwc": 87347108,
-    "fork_owned_loc": 1640166,
-    "upstream_owned_fork_loc": 1572100,
-    "utr": 0.489405
+    "cwc": 87426532,
+    "fork_owned_loc": 1641650,
+    "upstream_owned_fork_loc": 1572646,
+    "utr": 0.489266
   },
   "top_carry_risks": [
     {
-      "added": 30496,
-      "cwc": 10544604,
+      "added": 30529,
+      "cwc": 10555032,
       "deleted": 2873,
-      "patch_size": 33369,
+      "patch_size": 33402,
       "path": "gateway/run.py",
       "semantic_coupling": 2,
       "upstream_frequency": 158
@@ -101,55 +101,55 @@
       "upstream_frequency": 85
     },
     {
-      "added": 8606,
-      "cwc": 2434740,
+      "added": 8622,
+      "cwc": 2438820,
       "deleted": 942,
-      "patch_size": 9548,
+      "patch_size": 9564,
       "path": "agent/conversation_loop.py",
       "semantic_coupling": 3,
       "upstream_frequency": 85
     },
     {
-      "added": 6844,
-      "cwc": 1627536,
-      "deleted": 3080,
-      "patch_size": 9924,
+      "added": 7011,
+      "cwc": 1653284,
+      "deleted": 3070,
+      "patch_size": 10081,
       "path": "agent/context_compressor.py",
       "semantic_coupling": 2,
       "upstream_frequency": 82
     },
     {
-      "added": 9332,
-      "cwc": 1527952,
+      "added": 9344,
+      "cwc": 1529728,
       "deleted": 992,
-      "patch_size": 10324,
+      "patch_size": 10336,
       "path": "run_agent.py",
       "semantic_coupling": 2,
       "upstream_frequency": 74
     },
     {
-      "added": 4354,
-      "cwc": 1336840,
-      "deleted": 2682,
-      "patch_size": 7036,
+      "added": 4414,
+      "cwc": 1348810,
+      "deleted": 2685,
+      "patch_size": 7099,
       "path": "agent/conversation_compression.py",
       "semantic_coupling": 2,
       "upstream_frequency": 95
     },
     {
-      "added": 4586,
-      "cwc": 1272000,
+      "added": 4618,
+      "cwc": 1278144,
       "deleted": 2039,
-      "patch_size": 6625,
+      "patch_size": 6657,
       "path": "hermes_cli/config_defaults.py",
       "semantic_coupling": 3,
       "upstream_frequency": 64
     },
     {
-      "added": 5441,
-      "cwc": 1199828,
+      "added": 5493,
+      "cwc": 1207420,
       "deleted": 2777,
-      "patch_size": 8218,
+      "patch_size": 8270,
       "path": "agent/chat_completion_helpers.py",
       "semantic_coupling": 2,
       "upstream_frequency": 73

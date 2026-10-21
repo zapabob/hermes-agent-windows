@@ -38,7 +38,7 @@ dependencies = [
   # user picks that backend. Smaller `dependencies` = smaller blast
   # radius for the next supply-chain attack.
   "openai==2.54.0",
-  "certifi==2026.5.20",
+  "certifi==2026.10.19",
   "python-dotenv==1.2.2",
   "fire==0.7.1",
   "httpx[socks]==0.28.1",
@@ -144,7 +144,7 @@ dependencies = [
   # libs required for the codecs we use, so it's safe to ship in the base
   # install rather than gating it behind an extra + a mid-session lazy install
   # (which deadlocked the CLI under prompt_toolkit — see #40490).
-  "Pillow==12.3.0",
+  "Pillow==13.0.0",
   # HEIF/HEIC/AVIF decode for the vision tools: Pillow has no built-in HEIF
   # codec, so iPhone photos would be rejected. Prebuilt wheels bundle libheif.
   "pillow-heif>=1.4.0,<2",
@@ -442,7 +442,7 @@ exclude-newer = "14 days"
 # cutoff can still brick installs. Exempting exact pins is pure brick-risk
 # removal at no supply-chain cost. Guarded by
 # tests/test_packaging_metadata.py::test_build_system_requires_exempt_from_exclude_newer.
-exclude-newer-package = { vercel = false, nemo-relay = false, huggingface_hub = false, aiohttp = false, cryptography = false, defusedxml = false, python-olm = false, unpaddedbase64 = false, setuptools = false, pillow = false, mcp = false, oauthlib = false, pyjwt = false }
+exclude-newer-package = { vercel = false, nemo-relay = false, huggingface_hub = false, aiohttp = false, cryptography = false, defusedxml = false, python-olm = false, unpaddedbase64 = false, setuptools = false, pillow = false, mcp = false, oauthlib = false, pyjwt = false, certifi = false }
 
 [tool.setuptools]
 # Top-level single-file modules (not packages). Without this, uv2nix's
