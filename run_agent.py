@@ -8450,7 +8450,9 @@ class AIAgent:
                 # single-slot server is serving.
                 _compressor = getattr(self, "context_compressor", None)
                 _summary_base_url = str(
-                    getattr(_compressor, "base_url", "") or self.base_url or ""
+                    getattr(_compressor, "base_url", "")
+                    or getattr(self, "base_url", "")
+                    or ""
                 )
                 idle_timeout, total_ceiling = resolve_context_compression_timeouts(
                     base_url=_summary_base_url or None,

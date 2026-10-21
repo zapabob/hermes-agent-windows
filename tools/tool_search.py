@@ -281,6 +281,30 @@ def _toolset_of(name: str) -> str:
     return getattr(entry, "toolset", "") or "" if entry is not None else ""
 
 
+def _opt_in_deferrable(
+    name: str,
+    deferred_toolsets: Iterable[str] = (),
+    deferred_exceptions: Iterable[str] = (),
+) -> bool:
+    """True when the operator explicitly opted this tool's toolset into deferral.
+
+    The opt-in is what lets a FIRST-PARTY toolset (its tools live in
+    ``_HERMES_CORE_TOOLS``) defer its schemas anyway. It is kept separate from
+    :func:`is_deferrable_tool_name` so that a caller-supplied single-argument
+    override of the public helper still governs the base decision.
+    """
+    if not deferred_toolsets:
+        return False
+    exceptions = {str(n).strip().lower() for n in deferred_exceptions or ()}
+    if str(name or "").strip().lower() in exceptions:
+        return False
+    toolset = _toolset_of(name).strip().lower()
+    if not toolset:
+        return False
+    opted = {str(t).strip().lower() for t in deferred_toolsets}
+    return toolset in opted
+
+
 def is_deferrable_tool_name(
     name: str,
     *,
@@ -303,9 +327,12 @@ def is_deferrable_tool_name(
     """
     if name in BRIDGE_TOOL_NAMES:
         return False
-    exceptions = {str(n).strip().lower() for n in deferred_exceptions or ()}
-    if name.strip().lower() in exceptions:
-        return False
+    if _opt_in_deferrable(
+        name,
+        deferred_toolsets=deferred_toolsets,
+        deferred_exceptions=deferred_exceptions,
+    ):
+        return True
     # Check registry toolset for MCP prefix.
     try:
         from tools.registry import registry
@@ -317,10 +344,6 @@ def is_deferrable_tool_name(
             return True
         if entry.toolset in _DIRECT_SURFACE_TOOLSETS:
             return False
-        # Explicit operator opt-in wins over the first-party core list.
-        opt_in = {str(t).strip().lower() for t in deferred_toolsets or ()}
-        if opt_in and entry.toolset.strip().lower() in opt_in:
-            return True
         if name in _core_tool_names():
             return False
         # Non-MCP, non-core → plugin tool, eligible.
@@ -346,13 +369,18 @@ def _describe_classification(
         return "not_found"
     if name in BRIDGE_TOOL_NAMES:
         return "not_deferrable"
-    if is_deferrable_tool_name(
+    if _opt_in_deferrable(
         name,
         deferred_toolsets=deferred_toolsets,
         deferred_exceptions=deferred_exceptions,
     ):
         return "available"
-    return "not_deferrable"
+    if (
+        name in _core_tool_names()
+        or entry.toolset in _DIRECT_SURFACE_TOOLSETS
+    ):
+        return "not_deferrable"
+    return "available"
 
 
 def classify_tools(
@@ -379,7 +407,7 @@ def classify_tools(
             # Should never happen — bridge tools are added after classification —
             # but be defensive.
             continue
-        if is_deferrable_tool_name(
+        if is_deferrable_tool_name(name) or _opt_in_deferrable(
             name,
             deferred_toolsets=deferred_toolsets,
             deferred_exceptions=deferred_exceptions,
@@ -1311,10 +1339,13 @@ def scoped_deferrable_names(
     names: set[str] = set()
     for td in tool_defs:
         name = (td.get("function") or {}).get("name", "")
-        if name and is_deferrable_tool_name(
-            name,
-            deferred_toolsets=config.deferred_toolsets,
-            deferred_exceptions=config.deferred_exceptions,
+        if name and (
+            is_deferrable_tool_name(name)
+            or _opt_in_deferrable(
+                name,
+                deferred_toolsets=config.deferred_toolsets,
+                deferred_exceptions=config.deferred_exceptions,
+            )
         ):
             names.add(name)
     return frozenset(names)
@@ -1404,10 +1435,13 @@ def resolve_underlying_call(
             return None, {}, f"tool_call 'arguments' is not valid JSON: {e}"
     if not isinstance(raw_args, dict):
         return None, {}, "tool_call 'arguments' must be an object"
-    if not is_deferrable_tool_name(
-        name,
-        deferred_toolsets=config.deferred_toolsets,
-        deferred_exceptions=config.deferred_exceptions,
+    if not (
+        is_deferrable_tool_name(name)
+        or _opt_in_deferrable(
+            name,
+            deferred_toolsets=config.deferred_toolsets,
+            deferred_exceptions=config.deferred_exceptions,
+        )
     ):
         return None, {}, (
             f"'{name}' is not a deferrable tool. If it appears in the model-facing tools "
