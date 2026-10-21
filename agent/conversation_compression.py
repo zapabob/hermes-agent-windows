@@ -75,6 +75,7 @@ from agent.memory_provider import PRE_COMPRESS_CHECKPOINT_API_VERSION
 from agent.model_metadata import (
     estimate_messages_tokens_rough,
     estimate_request_tokens_rough,
+    is_local_endpoint,
 )
 from agent.session_activity import ActivityProvenance, normalize_activity_provenance
 
@@ -989,6 +990,19 @@ class CompressionCommitFence:
 DEFAULT_CONTEXT_TIMEOUT_SECONDS = 120.0
 DEFAULT_CONTEXT_TOTAL_CEILING_SECONDS = 600.0
 
+# Local llama.cpp / vLLM / Ollama endpoints need a longer no-progress window
+# than a hosted API. Two reasons, both specific to a local server:
+#   1. reading a 128K-token prompt takes tens of seconds before the first
+#      token is produced, and the summarizer request queues behind whatever
+#      else the (single-slot) server is already serving;
+#   2. the summary itself is generated at the model's own decode speed.
+# The main chat path already grants local endpoints the same tolerance for its
+# stream read timeout (see agent/chat_completion_helpers.py). This is the
+# compression-side equivalent, and it needs NO server-side extension: it
+# behaves identically on a stock llama.cpp build and on a PrismL build.
+_LOCAL_ENDPOINT_COMPRESSION_IDLE_SECONDS = 300.0
+_LOCAL_ENDPOINT_COMPRESSION_CEILING_SECONDS = 1800.0
+
 # Distinct from ``explicit_interrupt``: a /stop that arrived after the summary
 # stream had already crossed the no-progress stall window (#96775). Ordinary
 # early /stop stays cooldown-neutral; this class arms the durable backoff so
@@ -1120,15 +1134,27 @@ def _get_compress_timeout_executor():
 
 def resolve_context_compression_timeouts(
     compression_cfg: Optional[dict] = None,
+    *,
+    base_url: Optional[str] = None,
 ) -> Tuple[float, float]:
     """Return ``(idle_timeout_seconds, total_ceiling_seconds)``.
 
     ``idle_timeout_seconds <= 0`` disables the owned progress-aware wrapper.
     The ceiling is clamped to at least one idle window when the idle budget
     is positive, matching gateway hygiene semantics.
+
+    ``base_url`` is the endpoint the summarizer runs on. A LOCAL endpoint
+    gets a wider no-progress window and a wider total ceiling, because
+    reading a large prompt on a local server (and generating the summary at
+    the model's own decode speed) legitimately exceeds the hosted-API
+    defaults. An EXPLICIT ``compression.context_timeout_seconds`` /
+    ``compression.context_total_ceiling_seconds`` always wins — the local
+    widening only fills in the defaults.
     """
     idle = DEFAULT_CONTEXT_TIMEOUT_SECONDS
     ceiling = DEFAULT_CONTEXT_TOTAL_CEILING_SECONDS
+    idle_explicit = False
+    ceiling_explicit = False
     cfg = compression_cfg
     if cfg is None:
         try:
@@ -1146,6 +1172,7 @@ def resolve_context_compression_timeouts(
                 parsed = float(raw_idle)
                 # Explicit 0/negative disables; positive values win.
                 idle = parsed
+                idle_explicit = True
             except (TypeError, ValueError):
                 pass
         raw_ceiling = cfg.get("context_total_ceiling_seconds")
@@ -1154,8 +1181,14 @@ def resolve_context_compression_timeouts(
                 parsed = float(raw_ceiling)
                 if parsed > 0:
                     ceiling = parsed
+                    ceiling_explicit = True
             except (TypeError, ValueError):
                 pass
+    if base_url and is_local_endpoint(str(base_url)):
+        if not idle_explicit:
+            idle = max(idle, _LOCAL_ENDPOINT_COMPRESSION_IDLE_SECONDS)
+        if not ceiling_explicit:
+            ceiling = max(ceiling, _LOCAL_ENDPOINT_COMPRESSION_CEILING_SECONDS)
     if idle > 0:
         ceiling = max(ceiling, idle)
     return idle, ceiling
@@ -1166,6 +1199,7 @@ def compression_attempt_stalled(
     commit_fence: Optional[CompressionCommitFence],
     started_at: float,
     idle_timeout_seconds: Optional[float] = None,
+    base_url: Optional[str] = None,
 ) -> bool:
     """Return whether a pre-commit cancel landed after the stall window.
 
@@ -1174,10 +1208,15 @@ def compression_attempt_stalled(
     configured compression inactivity budget, the interrupt is a stalled
     attempt — the same condition the host timeout uses — and the next
     automatic turn must not blindly retry that strategy (#96775).
+
+    ``base_url`` is the summarizer endpoint: a local endpoint uses a wider
+    default inactivity budget (see
+    :func:`resolve_context_compression_timeouts`), so the stall
+    classification must use the same budget the host applied.
     """
     idle = idle_timeout_seconds
     if idle is None:
-        idle, _ceiling = resolve_context_compression_timeouts()
+        idle, _ceiling = resolve_context_compression_timeouts(base_url=base_url)
     try:
         idle = float(idle)
     except (TypeError, ValueError):
@@ -1228,11 +1267,13 @@ def _record_stall_interrupted_backoff(
     Must run *after* ``_restore_compressor_attempt_state`` so rollback cannot
     wipe the new row. Returns True when the stall backoff was recorded.
     """
+    compressor = getattr(agent, "context_compressor", None)
     if not compression_attempt_stalled(
-        commit_fence=commit_fence, started_at=started_at
+        commit_fence=commit_fence,
+        started_at=started_at,
+        base_url=str(getattr(compressor, "base_url", "") or "") or None,
     ):
         return False
-    compressor = getattr(agent, "context_compressor", None)
     record = getattr(compressor, "record_timeout_failure", None)
     if not callable(record):
         return False
@@ -2593,6 +2634,22 @@ def check_compression_model_feasibility(agent: Any) -> None:
             provider=(_aux_cfg_provider if _aux_cfg_provider and _aux_cfg_provider != "auto" else getattr(agent, "provider", "")),
             custom_providers=agent._custom_providers,
         )
+
+        # Publish the resolved summarizer window on the compressor so the
+        # summarizer prompt is bounded by the tokens the SUMMARIZER can read,
+        # not by the main model's window (and never by a bare character
+        # count — CJK text costs ~1 token per character, so a char budget
+        # can hand a 128K-token local llama-server a prompt it rejects).
+        _compressor = getattr(agent, "context_compressor", None)
+        if _compressor is not None and aux_context:
+            try:
+                _compressor.aux_context_length = int(aux_context)
+            except Exception:  # pragma: no cover - defensive only
+                logger.debug(
+                    "Publishing the auxiliary compression context length "
+                    "failed (non-fatal)",
+                    exc_info=True,
+                )
 
         # Hard floor: the auxiliary compression model must have at least
         # MINIMUM_CONTEXT_LENGTH (64K) tokens of context.  The main model

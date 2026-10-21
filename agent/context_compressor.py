@@ -811,14 +811,40 @@ _MICRO_COMPACT_MAX_CONSECUTIVE_FAILURES = 3
 # not enough: a compression window with hundreds of already-truncated turns
 # can still produce a multi-hundred-KB prompt that blows past slow auxiliary
 # backends' context limits or timeouts (Codex Responses fallback paths
-# especially). 160K chars ≈ 40K tokens — comfortably inside every supported
-# aux model's window while leaving room for the template + previous summary.
-# Applied AFTER per-message truncation, with head+tail retention and an
-# explicit omitted-middle marker (see _bound_summary_input). This is a
+# especially). Applied AFTER per-message truncation, with head+tail retention
+# and an explicit omitted-middle marker (see _bound_summary_input). This is a
 # prompt-side bound only — NEVER add a max_tokens wire cap on the summary
 # call (see the no-wire-cap contract test in
 # test_compression_small_ctx_threshold_floor.py).
+#
+# This character ceiling is an OUTER guard only. It says nothing about how
+# many TOKENS the summarizer will actually read: 160K chars is ~40K tokens of
+# English but ~160K tokens of CJK (the estimator in
+# agent.model_metadata counts token-dense scripts at ~1 token/char). Against a
+# 128K-token local llama-server that is (a) a request the server rejects
+# outright for exceeding its window and (b) a prefill long enough to trip the
+# compression no-progress watchdog — the "auto-compaction failed and the
+# conversation stopped" failure. The binding ceiling is therefore the
+# summarizer model's OWN token window (see
+# ``ContextCompressor._summary_input_token_budget``); this constant only
+# catches the pathological case where the token budget is not yet resolvable.
 _SUMMARY_INPUT_MAX_CHARS = 160_000
+
+# Share of the summarizer model's context window that the serialized input
+# block may occupy. The remaining headroom carries the fixed template, the
+# previous summary and the summary OUTPUT, so this is deliberately well
+# below 1.0: a quarter of the window leaves room for a 10K-token summary
+# plus scaffolding even on the smallest supported window (64K).
+_SUMMARY_INPUT_CONTEXT_FRACTION = 0.25
+# Absolute ceiling for the token budget. 40K tokens is the point where a
+# local llama-server prefill (~700-900 tok/s on a 27B model) already costs a
+# minute; beyond that the summarizer spends more time reading than the
+# compression budget can afford.
+_SUMMARY_INPUT_MAX_TOKENS = 40_000
+# Floor for the token budget. Never starve the summarizer below this, even
+# when the summarizer model reports a small window — a summary that sees
+# almost nothing is worse than a slightly larger prompt.
+_SUMMARY_INPUT_MIN_TOKENS = 8_000
 
 # Placeholder used when pruning old tool results
 _PRUNED_TOOL_PLACEHOLDER = "[Old tool output cleared to save context space]"
@@ -2504,6 +2530,52 @@ class ContextCompressor(ContextEngine):
     def max_summary_tokens(self, value: int) -> None:
         self._max_summary_tokens = value
 
+    @property
+    def aux_context_length(self) -> int:
+        """Context window of the model that actually runs the summarizer.
+
+        The summarizer is NOT necessarily the main model: when
+        ``auxiliary.compression.model`` names a different model, that model's
+        window is what bounds the summarizer prompt.  When no summary model is
+        configured the summary runs on the main model, so the main window is
+        the right bound.
+
+        The value is published by
+        ``agent.conversation_compression.check_compression_model_feasibility``
+        (which already resolves the auxiliary model's window) and falls back to
+        the main window until then.
+        """
+        aux = getattr(self, "_aux_context_length", None)
+        if isinstance(aux, int) and aux > 0:
+            return aux
+        return self.context_length
+
+    @aux_context_length.setter
+    def aux_context_length(self, value: Any) -> None:
+        try:
+            parsed = int(value)
+        except (TypeError, ValueError):
+            parsed = 0
+        self._aux_context_length = parsed if parsed > 0 else None
+
+    def _summary_input_token_budget(self) -> int:
+        """Token ceiling for the serialized block handed to the summarizer.
+
+        Derived from the SUMMARIZER's own window, not the main model's: the
+        prompt is read by the summarizer, so the summarizer's window is what
+        bounds it.  The block is capped at a fraction of that window (see
+        ``_SUMMARY_INPUT_CONTEXT_FRACTION``) so the template, the previous
+        summary and the summary output all still fit, and at an absolute
+        ceiling so a local llama-server never has to prefill more than it can
+        afford inside the compression budget.
+        """
+        aux_ctx = int(self.aux_context_length or 0)
+        if aux_ctx <= 0:
+            return _SUMMARY_INPUT_MAX_TOKENS
+        budget = int(aux_ctx * _SUMMARY_INPUT_CONTEXT_FRACTION)
+        budget = min(budget, _SUMMARY_INPUT_MAX_TOKENS)
+        return max(budget, _SUMMARY_INPUT_MIN_TOKENS)
+
     def on_session_end(self, session_id: str, messages: List[Dict[str, Any]]) -> None:
         """Clear all per-session compaction state at a real session boundary.
 
@@ -3101,6 +3173,12 @@ class ContextCompressor(ContextEngine):
         self.max_summary_tokens = min(
             int(context_length * 0.05), _SUMMARY_TOKENS_CEILING,
         )
+        # A main-model switch changes the window the summarizer reads from
+        # ONLY when the summary runs on the main model (no dedicated
+        # auxiliary.compression.model). A pinned auxiliary window belongs to
+        # that auxiliary model and survives the switch.
+        if runtime_changed and not self.summary_model:
+            self._aux_context_length = None
 
         # Reset cross-call calibration state captured under the PREVIOUS model.
         # These fields encode "the provider proved this prompt fit" / "preflight
@@ -3418,6 +3496,11 @@ class ContextCompressor(ContextEngine):
         self._threshold_tokens: int | None = None
         self._tail_token_budget: int | None = None
         self._max_summary_tokens: int | None = None
+        # Window of the model that actually runs the summarizer (see the
+        # aux_context_length property). None = "not resolved yet" → fall back
+        # to the main model's window, which is correct whenever the summary
+        # runs on the main model.
+        self._aux_context_length: int | None = None
         self.compression_count = 0
 
         # The "initialized" log reports resolved token budgets, which would
@@ -4818,7 +4901,9 @@ Summary generation was unavailable, so this is a best-effort deterministic fallb
         return summary
 
     @classmethod
-    def _bound_summary_input(cls, content: str) -> str:
+    def _bound_summary_input(
+        cls, content: str, max_tokens: Optional[int] = None,
+    ) -> str:
         """Cap total summarizer input while preserving beginning and recent tail.
 
         Per-message truncation alone is not enough for very long sessions: a
@@ -4827,7 +4912,26 @@ Summary generation was unavailable, so this is a best-effort deterministic fallb
         because the beginning often has task setup and the tail has the most
         recent state; explicitly mark the omitted middle so the summarizer knows
         context was intentionally compressed before it saw the prompt.
+
+        Two ceilings apply, and the TIGHTEST one wins:
+
+        * ``max_tokens`` — the summarizer model's own token window. This is
+          the binding bound: the summarizer reads tokens, not characters, and
+          a character budget says nothing about them. 160K characters is
+          ~40K tokens of English but ~160K tokens of CJK, so the character
+          ceiling alone can hand a 128K-token local llama-server a prompt it
+          rejects outright, or one whose prefill outruns the compression
+          no-progress window (the "auto-compaction failed and the turn was
+          dropped" failure).  None = character ceiling only.
+        * ``_SUMMARY_INPUT_MAX_CHARS`` — the historical outer guard.
         """
+        if not max_tokens or max_tokens <= 0:
+            return cls._bound_summary_input_by_chars(content)
+        return cls._bound_summary_input_by_tokens(content, int(max_tokens))
+
+    @classmethod
+    def _bound_summary_input_by_chars(cls, content: str) -> str:
+        """Character-bounded head/tail retention (historical behavior)."""
         if len(content) <= cls._SUMMARY_INPUT_MAX_CHARS:
             return content
 
@@ -4849,6 +4953,62 @@ Summary generation was unavailable, so this is a best-effort deterministic fallb
         tail_chars = remaining - head_chars
         tail = content[-tail_chars:].lstrip() if tail_chars else ""
         return content[:head_chars].rstrip() + marker + tail
+
+    @staticmethod
+    def _truncate_to_token_budget(text: str, max_tokens: int) -> str:
+        """Longest prefix of ``text`` whose rough token estimate fits the budget.
+
+        The estimator is monotone in length (the dense/sparse split only ever
+        grows as the text grows), so a binary search finds the exact cut.
+        """
+        if max_tokens <= 0 or not text:
+            return ""
+        if estimate_tokens_rough(text) <= max_tokens:
+            return text
+        low, high = 0, len(text)
+        while low < high:
+            mid = (low + high + 1) // 2
+            if estimate_tokens_rough(text[:mid]) <= max_tokens:
+                low = mid
+            else:
+                high = mid - 1
+        return text[:low]
+
+    @classmethod
+    def _bound_summary_input_by_tokens(cls, content: str, max_tokens: int) -> str:
+        """Token-bounded head/tail retention with an explicit omitted marker."""
+        if not content:
+            return content
+        total_tokens = estimate_tokens_rough(content)
+        if total_tokens <= max_tokens and len(content) <= cls._SUMMARY_INPUT_MAX_CHARS:
+            return content
+
+        marker_template = (
+            "\n\n...[summary input truncated: omitted "
+            "{omitted:,} tokens from the middle to keep the compression "
+            "prompt within the summarizer model's context window]...\n\n"
+        )
+        # The marker itself occupies the prompt budget: reserve its cost
+        # before splitting the remainder between head and tail. The
+        # reservation uses the LARGEST possible omitted count so the
+        # formatted marker can never exceed the reserved size.
+        marker_tokens = estimate_tokens_rough(
+            marker_template.format(omitted=total_tokens)
+        )
+        budget = max(max_tokens - marker_tokens, max_tokens // 2)
+        head_tokens = int(budget * 0.45)
+        tail_tokens = budget - head_tokens
+        head = cls._truncate_to_token_budget(content, head_tokens)
+        tail = cls._truncate_to_token_budget(content[::-1], tail_tokens)[::-1]
+        omitted = max(total_tokens - head_tokens - tail_tokens, 0)
+        marker = marker_template.format(omitted=omitted)
+        bounded = head.rstrip() + marker + tail.lstrip()
+        # The character ceiling stays an outer guard: a token budget can still
+        # produce a long string for text the estimator under-counts (emoji and
+        # other scripts the density table does not cover).
+        if len(bounded) > cls._SUMMARY_INPUT_MAX_CHARS:
+            bounded = cls._bound_summary_input_by_chars(bounded)
+        return bounded
 
     def _fallback_to_main_for_compression(self, e: Exception, reason: str) -> None:
         """Switch from a separate ``summary_model`` back to the main model.
@@ -4926,6 +5086,18 @@ Summary generation was unavailable, so this is a best-effort deterministic fallb
 
         summary_budget = self._compute_summary_budget(turns_to_summarize)
         content_to_summarize = self._serialize_for_summary(turns_to_summarize)
+        # Bound the serialized block by the SUMMARIZER's own token window.
+        # A character budget is not a token budget: CJK text costs ~1 token per
+        # character, so a char-bounded prompt can be several times larger than
+        # the summarizer's window — the request is then rejected outright by a
+        # local llama-server, or its prefill outruns the compression
+        # no-progress window and the whole turn is dropped.
+        summary_input_budget = self._summary_input_token_budget()
+        # An iterative update carries the previous summary AND the new turns,
+        # so the shared ceiling is split between the two blocks instead of
+        # letting each claim the whole budget.
+        _previous_share = 0.4 if self._previous_summary else 0.0
+        _new_turns_share = 1.0 - _previous_share
         # P2 ghost-skill defense (#32106): [SKILL_PRUNED: ...] markers entering
         # the summarizer are prompt INPUT only — LLMs routinely paraphrase them
         # into vague prose ("some skills were loaded"), which erases the reload
@@ -4942,7 +5114,9 @@ Summary generation was unavailable, so this is a best-effort deterministic fallb
             if _name not in _pruned_skill_names:
                 _pruned_skill_names.append(_name)
         del _pruned_skill_names[_MAX_PRUNED_SKILL_MARKERS:]
-        content_to_summarize = self._bound_summary_input(content_to_summarize)
+        content_to_summarize = self._bound_summary_input(
+            content_to_summarize, int(summary_input_budget * _new_turns_share),
+        )
         _sanitized_memory_context = sanitize_memory_context(memory_context)
         _serialized_memory_context = json.dumps(
             _sanitized_memory_context,
@@ -5153,9 +5327,12 @@ Write only the summary body. Do not include any preamble or prefix."""
             # (the output side is held to a ~10K-token ceiling), but a
             # pathological handoff rehydrated from a persisted session can be
             # arbitrarily large — the iterative prompt (previous summary +
-            # new turns) must stay bounded too.
+            # new turns) must stay bounded too. The two blocks SHARE the
+            # summarizer's token budget, so the previous summary takes its
+            # share of it rather than a second full allowance.
             _bounded_previous_summary = self._bound_summary_input(
-                self._previous_summary
+                self._previous_summary,
+                int(summary_input_budget * _previous_share),
             )
             prompt = f"""{_summarizer_preamble}
 

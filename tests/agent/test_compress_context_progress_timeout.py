@@ -528,7 +528,7 @@ class TestCompressContextForwarderOwnsTimeout:
         )
         monkeypatch.setattr(
             "agent.conversation_compression.resolve_context_compression_timeouts",
-            lambda compression_cfg=None: (0.05, 0.2),
+            lambda compression_cfg=None, **_kwargs: (0.05, 0.2),
         )
         monkeypatch.setattr(
             "agent.portal_tags.get_conversation_context",
@@ -596,7 +596,7 @@ class TestCompressContextForwarderOwnsTimeout:
         )
         monkeypatch.setattr(
             "agent.conversation_compression.resolve_context_compression_timeouts",
-            lambda compression_cfg=None: (0.05, 0.2),
+            lambda compression_cfg=None, **_kwargs: (0.05, 0.2),
         )
         monkeypatch.setattr(
             "agent.portal_tags.get_conversation_context",

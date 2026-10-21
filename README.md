@@ -91,165 +91,54 @@ semantic refresh 已全部完成。参见
 
 </details>
 
-## 1. Product identity
+## Recent fix: stable local-model sessions on a 128K llama-server
 
-The source and release identity is Windows Workstation Edition 0.21.5.
-Upstream provenance remains independent of the downstream semantic version.
+**Symptom.** Auto-compaction failed against a local llama-server with a large
+context window: the turn ended with `context_compression_timeout`, the user's
+message was never answered, and the model picker looked hung.
 
-## 2. Windows-first goals
+**Root causes — all measured on the workstation, not inferred.**
 
-Run directly on Windows with profile isolation, hidden background helpers,
-native terminal handling and explicit ownership of restarted processes.
+1. *The KV cache did not fit in VRAM.* A 27B model needs ~72 KiB of KV per
+   token, so a 131,072-token window needs 9.00 GiB of KV next to 6.71 GiB of
+   weights — more than a 16 GiB card holds. Windows WDDM backed the overflow
+   with system memory, so prompt reads crossed the bus: the measured prefill
+   rate fell from ~500–1,000 tokens/s to ~11 tokens/s and every client timed
+   out.
+2. *The summarizer prompt was bounded in characters, not tokens.* 160K
+   characters is ~40K tokens of English but ~160K tokens of CJK, so the
+   compression request could outgrow the summarizer model's own window.
+3. *The compression no-progress window did not allow for a local backend.*
+   Reading a 128K prompt can legitimately take minutes; the 120 s idle window
+   called that a stall and aborted the compaction.
 
-## 3. Who this is for
+**What changed.**
 
-Windows users who need Desktop, CLI or messaging surfaces and can configure
-a remote provider or separately supplied local model runtime.
+- `scripts/windows/Get-LlamaContextBudget.ps1` (new) reads the GGUF
+  architecture and reports the KV footprint, the effective per-slot context
+  (`-c` is divided across `--parallel` slots) and the largest context that
+  stays resident in VRAM. The launchers clamp the window to it, so a context
+  can no longer silently exceed the GPU.
+- The generation server now runs with a context whose KV cache is resident
+  (98304 tokens on the 27B/PQ2_0 profile), and Hermes' `context_length`
+  matches it. The launcher reads the agent's own configured window, so the
+  two can never disagree.
+- The compression summarizer input is bounded by the summarizer model's TOKEN
+  window (25% of it), keeping the head and the tail and marking the omitted
+  middle explicitly.
+- A local summarizer endpoint gets a wider no-progress window (300 s) and a
+  wider total ceiling (1800 s).
+- *Deferred tool loading* (`tools.tool_search.deferred_toolsets`): a
+  first-party toolset can keep every tool working while its schemas leave the
+  request. The measured request baseline fell from 58,189 to 41,757 tokens.
+- A rejected credential now suppresses that provider in the fallback chain
+  (one probe per provider instead of one per model).
+- A compression timeout now preserves the input and stays retryable: the
+  session is kept, the user message is persisted and the next turn retries
+  the compaction.
 
-## 4. Downstream advantages
-
-Windows background Git and web helper calls use hidden-process creation flags
-to avoid opening separate console windows. The Git wrapper also separates
-non-interactive probes from the user-facing terminal. This addresses known
-helper launch paths; it is not a claim that every possible console source has
-been eliminated.
-
-Credential leases remain bound to the selected entry, and an empty credential
-pool cannot silently start a delegated child with an inherited client.
-Telemetry consent follows the owning profile. Process completion and
-delegation work preserves parent ownership, durable results and retry state.
-Desktop backend exit handling checks the identity of the child it owns.
-
-The reviewed local feature set also includes paused-at-creation cron jobs,
-explicit MCP device login, foreign-session browsing/import, and Desktop media,
-todo and capability-scope handling. A similarity to upstream code is not used
-as a substitute for testing these contracts.
-
-## 5. Verified feature matrix
-
-| Area | Implementation and entry points |
-| --- | --- |
-| Desktop and terminal | Electron UI, profile-aware Python backend, native process and terminal handling in `apps/desktop/`, `tui_gateway/` and `tools/` |
-| CLI and messaging | Shared agent runtime with CLI and platform adapters in `hermes_cli/` and `gateway/` |
-| Local inference | llama.cpp/GGUF launch and hot-swap helpers under `scripts/windows/`; models remain operator configuration |
-| Recovery | External [Go watchdog](scripts/windows/watchdog-go/README.md) with read-only status and explicit auxiliary ownership; supported destructive scope is watchdog-owned embedding only |
-| Memory and retrieval | Profile-scoped state, memory-provider extensions and optional embedding services |
-| Optional capabilities | Plug-ins for voice, browser work, research, avatars and Unity/VR workflows |
-
-The [integration inventory](docs/windows/INTEGRATIONS.md) retains the plug-in
-and submodule catalogue. These integrations have their own dependencies and
-configuration. They are not all enabled or qualified by installing the CLI.
-The feature ledger is [FEATURES.yaml](FEATURES.yaml); direct carried changes are
-tracked in [CARRY.yaml](CARRY.yaml).
-
-The 2026-09-08 local Windows work has recorded Desktop type checking and 28
-focused Desktop tests, native child-process spawn/kill tests, hidden-console
-helper probes, credential-routing tests, and loopback completion/OAuth tests.
-These are scoped checks, not qualification of every optional integration.
-
-The initial combined Python run had failures and skips. Individual reruns
-separated missing test dependencies, blocked test-only loopback traffic,
-fixture synchronisation and real integration defects. Skipped POSIX permission
-tests do not establish Windows ACL correctness.
-
-Full upstream-history adoption, all private security contracts, clean-machine
-installation, signed artifacts, exact-head hosted CI and complete Desktop
-first-run readiness remain separate gates. An isolated packaged first-run
-probe reached the backend but remained on onboarding; that path is not yet
-qualified. Do not interpret this README, a build, or a version bump as a
-COMPLETE or stable-release certificate.
-
-## 6. Windows Tier-1 support contract
-
-Windows 11 x64 is the primary target. Native Python, Desktop, installer,
-portable, upgrade, watchdog and security checks are separate gates.
-Mock-only results and skipped P0 tests cannot qualify Windows support.
-
-## 7. Local AI architecture
-
-The Desktop and gateway can use a remote provider or an operator-managed
-llama.cpp server. Hot-swap presets select independently installed GGUF files.
-Inference readiness requires a real model response, not only an open port.
-
-## 8. Watchdog and recovery architecture
-
-The Desktop Python backend lifecycle is owned exclusively by Electron main in
-the supported Windows topology. Health observation, a PID, a port, a token or
-a manifest do not confer destructive lifecycle authority on another component.
-
-The external Go watchdog is an auxiliary supervisor with a read-only status
-surface. Its supported destructive scope is limited to an embedding
-`llama-server` instance that it explicitly launched and owns; it is not a
-second Desktop-backend owner. Legacy watchdog backend-prewarm compatibility
-paths are deprecated, disabled in the supported topology and do not qualify as
-Windows Tier-1 evidence. See the
-[watchdog guide](scripts/windows/watchdog-go/README.md) and the
-[Windows platform contract](.codex/WINDOWS_PLATFORM_CONTRACT.md).
-
-## 9. Memory and semantic retrieval
-
-Profiles scope configuration, credentials, sessions and memory. Embedding
-services and memory providers are optional and need their own configuration.
-No model files or personal memory are included in the source distribution.
-
-## 10. VRChat, Unity, and voice integrations
-
-Avatar, Unity/VRChat and voice plug-ins remain optional integrations. Their
-SDKs, applications and hardware must be configured separately. The retained
-[inventory](docs/windows/INTEGRATIONS.md) records available integration paths;
-it does not certify every path on the current workstation.
-
-## 11. Installation
-
-The target is Windows 11 x64. Use PowerShell, Git, `uv`, and Python 3.11–3.13.
-Dependency installation can take several minutes and may require native build
-tools for optional extras. WSL is not required for the native application.
-=======
-Windows 11 x64, PowerShell, Git, `uv` and Python 3.11–3.13 are the native
-baseline. Node.js is only required when building Desktop from source.
->>>>>>> origin/main
-
-```powershell
-git clone https://github.com/zapabob/hermes-agent-windows.git
-Set-Location hermes-agent-windows
-uv sync --locked --all-extras
-uv run hermes setup
-uv run hermes chat
-```
-
-Start the packaged Desktop flow from the same checkout with:
-
-```powershell
-uv run hermes desktop
-```
-
-For an installer or portable ZIP, first confirm that the matching asset exists on
-the [downstream Releases page](https://github.com/zapabob/hermes-agent-windows/releases)
-and verify `SHA256SUMS.txt`. The canonical Windows procedure is
-[docs/windows/INSTALL.md](docs/windows/INSTALL.md).
-
-<details open>
-<summary><strong>日本語</strong></summary>
-
-Windows向け独立派生版の現在のソース版は **0.21.5** です。CLI、Electron Desktop、
-複数profile、Gateway、OAuth/API key/local llama.cpp、Semantic Graph/Ebbinghaus、
-Windows固有のruntime管理を同じHermes coreの上で扱います。0.21.5という版番号は
-進行中の上流semantic refresh全件の完了宣言ではありません。詳しくは
-[日本語版README](README.ja.md) と
-[Windows導入ガイド](docs/windows/INSTALL.md) を参照してください。
-
-</details>
-<details>
-<summary><strong>简体中文</strong></summary>
-
-当前 Windows 下游源码版本为 **0.21.5**。CLI、Electron Desktop、多 profile、
-Gateway、OAuth/API key/local llama.cpp、Semantic Graph/Ebbinghaus 与 Windows
-runtime 管理共用同一 Hermes core。版本号 0.21.5 并不表示正在进行的上游
-semantic refresh 已全部完成。参见
-[简体中文 README](README.zh-CN.md) 与
-[Windows 安装指南](docs/windows/INSTALL.md)。
-
-</details>
+**Effect.** Prompt reads run at ~550–1,000 tokens/s instead of ~11, and
+auto-compaction completes again instead of dropping the turn.
 
 ## What this fork adds
 

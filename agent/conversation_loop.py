@@ -2030,11 +2030,15 @@ def run_conversation(
         # build_turn_context registered this turn's in-flight tripwire slot
         # (note_turn_start) but the early return skips the persist funnel
         # that normally clears it — clear it here so the next turn does not
-        # log a spurious "concurrent turns on one session" warning. The
-        # inbound user row is intentionally NOT persisted on this path: the
-        # gateway skips transcript persistence for compression_exhausted
-        # results to prevent the session-growth loop (#7100), and the
-        # auto-reset moves future input to a clean session.
+        # log a spurious "concurrent turns on one session" warning.
+        #
+        # The inbound user row IS persisted on this path: the failure is a
+        # compression TIMEOUT (transient), the transcript is intact, and the
+        # gateway keeps the session so the next turn can retry the
+        # compaction. Dropping the row here would lose the user's input
+        # exactly when the session is under pressure. The gateway still skips
+        # persistence for a genuine context overflow, so the #7100
+        # session-growth loop stays closed.
         from agent.agent_runtime_helpers import note_turn_persisted
 
         note_turn_persisted(agent)
@@ -2048,6 +2052,18 @@ def run_conversation(
             "partial": True,
             "failed": True,
             "compression_exhausted": True,
+            # A compression TIMEOUT is a TRANSIENT failure, not a verdict that
+            # the session is permanently uncompressible: the transcript is
+            # intact and the very same compaction succeeds once the provider
+            # is free again. The gateway therefore keeps the session (no
+            # auto-reset) and persists the inbound user row, so the input is
+            # preserved and the next turn can retry the compaction instead of
+            # the user having to retype it.
+            #
+            # Distinct from ``compression_deferred`` (a concurrent compressor
+            # holds the lock) and from a genuine context overflow (the request
+            # cannot fit any window): only the timeout case is retryable.
+            "compression_retryable": True,
             "turn_exit_reason": "context_compression_timeout",
         }
     user_message = _ctx.user_message

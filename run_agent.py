@@ -8442,7 +8442,19 @@ class AIAgent:
             direct_path = commit_fence is not None
             idle_timeout = total_ceiling = None
             if not direct_path:
-                idle_timeout, total_ceiling = resolve_context_compression_timeouts()
+                # A LOCAL summarizer endpoint (llama.cpp / vLLM / Ollama) gets
+                # a wider no-progress window: reading a 128K-token prompt and
+                # generating the summary at the model's own decode speed
+                # legitimately exceed the hosted-API defaults, and the
+                # summarizer request queues behind whatever else the
+                # single-slot server is serving.
+                _compressor = getattr(self, "context_compressor", None)
+                _summary_base_url = str(
+                    getattr(_compressor, "base_url", "") or self.base_url or ""
+                )
+                idle_timeout, total_ceiling = resolve_context_compression_timeouts(
+                    base_url=_summary_base_url or None,
+                )
                 if idle_timeout <= 0:
                     direct_path = True
 

@@ -22,7 +22,12 @@ param(
     [string]$LlamaServerExe = "$env:LOCALAPPDATA\Programs\llama-turboquant\bin\llama-server.exe",
     [string]$LlamaGgufPath = "C:\Users\downl\Desktop\SO8T\gguf_models\soyaakinohara\qwen3.8-27b-abliterated-3.69bpw-12GB-MTP.gguf\qwen3.8-27b-abliterated-3.69bpw-12GB-MTP.gguf",
     [int]$LlamaPort = 8080,
-    [int]$LlamaCtxSize = 131072,
+    # The launcher measures the model's real KV footprint and clamps this to
+    # what stays resident in VRAM (a context whose KV does not fit is served
+    # from system memory: prompt reads collapse to a fraction of their speed
+    # and the server looks wedged). 98304 is the largest window that fits
+    # next to the 6.71 GiB PQ2_0 weights on a 16 GiB card.
+    [int]$LlamaCtxSize = 98304,
     [string]$A2ARoot = "C:\Users\downl\go-a2a-servers",
     [int]$A2AHubPort = 9123
 )

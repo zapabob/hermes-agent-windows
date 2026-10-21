@@ -1,10 +1,17 @@
 # Start Qwen3.8-27B abliterated MTP llama-server for OpenManus harness.
-# Q8_0 K / Turbo3 V KV cache, 131072 context, MTP speculative decoding.
+# Q8_0 K / Turbo3 V KV cache, context sized against the KV footprint
+# (98304 requested, clamped to what stays resident in VRAM), MTP speculative
+# decoding.
 param(
     [string]$ServerExe = "$env:LOCALAPPDATA\Programs\llama-turboquant\bin\llama-server.exe",
     [string]$GgufPath = "C:\Users\downl\Desktop\SO8T\gguf_models\soyaakinohara\qwen3.8-27b-abliterated-3.69bpw-12GB-MTP.gguf\qwen3.8-27b-abliterated-3.69bpw-12GB-MTP.gguf",
     [int]$Port = 8080,
-    [int]$CtxSize = 131072,
+    # The KV cache of a 27B model costs ~72 KiB/token at q4_0, so the context
+    # must be sized against the WEIGHTS of the model actually loaded: this
+    # one is a 12 GB file, which leaves only a few GiB for the KV. The
+    # launcher measures the real footprint below and clamps the window to
+    # what stays resident in VRAM.
+    [int]$CtxSize = 98304,
     [int]$Parallel = 1,
     [int]$DraftNMax = 3,
     [switch]$CpuMoe,
@@ -15,6 +22,29 @@ $ErrorActionPreference = "Stop"
 
 if (-not (Test-Path -LiteralPath $ServerExe)) { throw "llama-server not found: $ServerExe" }
 if (-not (Test-Path -LiteralPath $GgufPath)) { throw "GGUF not found: $GgufPath" }
+
+# A context whose KV cache does not fit next to the weights is served from
+# system memory: every prompt read and generated token then crosses the bus
+# and the server looks wedged to Hermes' no-progress watchdogs. Report the
+# budget before starting so the operator sees the real cost of -c.
+try {
+    . (Join-Path $PSScriptRoot 'Get-LlamaContextBudget.ps1')
+    $CtxSize = Get-LlamaFittingContext `
+        -ModelPath $GgufPath `
+        -RequestedContext $CtxSize `
+        -ParallelSlots $Parallel `
+        -CacheTypeK 'q8_0' `
+        -CacheTypeV 'turbo3'
+    $Budget = Get-LlamaContextBudget `
+        -ModelPath $GgufPath `
+        -ContextTokens $CtxSize `
+        -ParallelSlots $Parallel `
+        -CacheTypeK 'q8_0' `
+        -CacheTypeV 'turbo3'
+    Write-Host (Format-LlamaContextBudget -Budget $Budget)
+} catch {
+    Write-Warning "llama.cpp KV-cache budget check skipped: $($_.Exception.Message)"
+}
 
 # Leftover LLAMA_ARG_* / LLAMA_TURBOQUANT_* env vars silently override CLI flags.
 Get-ChildItem Env: |

@@ -59,6 +59,43 @@ uv run hermes desktop
 已经发布对应 asset，并用 `SHA256SUMS.txt` 校验。完整步骤见
 [Windows 安装指南](docs/windows/INSTALL.md)。
 
+## 最新修复：128K llama-server 上本地模型会话的稳定性
+
+**症状** 在大上下文窗口的本地 llama-server 上，自动压缩失败：回合以
+`context_compression_timeout` 结束，用户的消息从未得到回答，模型选择器也像是卡住了。
+
+**根因——全部来自实机测量，而非推测。**
+
+1. *KV 缓存放不进显存。* 27B 模型每 token 需要约 72 KiB 的 KV，因此 131,072 token
+   的窗口需要 9.00 GiB KV 加上 6.71 GiB 权重——超过 16 GiB 显卡的容量。Windows WDDM
+   用系统内存补齐了溢出部分，于是 prompt 读取要跨总线：实测 prefill 从约
+   500–1,000 tokens/s 掉到约 11 tokens/s，所有客户端都超时。
+2. *摘要提示词按字符数而不是 token 数设限。* 160K 字符在英文里约合 40K token，在
+   CJK 里却约合 160K token，压缩请求因此可能超出摘要模型自己的窗口。
+3. *压缩的 no-progress 窗口没有考虑本地后端。* 读取 128K prompt 本来就要几分钟，
+   120 秒的空闲窗口却把它当成卡死并中止了压缩。
+
+**改动**
+
+- 新增 `scripts/windows/Get-LlamaContextBudget.ps1`：读取 GGUF 架构，给出 KV 占用、
+  实际 per-slot context（`-c` 会在 `--parallel` 槽位间分摊）以及能常驻显存的最大
+  context。启动脚本据此钳制窗口，context 不再能悄悄超出显卡容量。
+- 生成服务器现在以 KV 能常驻显存的 context 运行（27B/PQ2_0 配置下为 98304 token），
+  且与 Hermes 的 `context_length` 一致；启动脚本读取 agent 自己的配置值，两者不会
+  再出现偏差。
+- 压缩摘要输入按摘要模型的 TOKEN 窗口（25%）设限，保留首尾并在省略的中段留下明确
+  标记。
+- 本地摘要 endpoint 获得更宽的 no-progress 窗口（300 秒）与更宽的 total ceiling
+  （1800 秒）。
+- *延迟工具加载*（`tools.tool_search.deferred_toolsets`）：first-party 工具集可以
+  保持功能完好，同时把 schema 移出每个请求。实测请求基线从 58,189 降到 41,757 token。
+- 凭据被拒时，现在按 provider 整体抑制 fallback chain（每个 provider 探测一次，
+  而非每个模型一次）。
+- 压缩超时现在会保留输入并保持可重试：会话保留、用户消息落库，下一个 turn 重试压缩。
+
+**效果** prompt 读取从约 11 tokens/s 回到约 550–1,000 tokens/s，自动压缩会正常完成，
+而不是丢掉整个回合。
+
 ## 这个 fork 增加了什么
 
 - **把 Windows 作为一级运行目标。** 对 path、process identity、PowerShell、NTFS、

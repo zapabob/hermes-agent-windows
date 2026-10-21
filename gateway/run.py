@@ -6950,6 +6950,9 @@ class TurnRunner:
                 "interrupt_message": result.get("interrupt_message"),
                 "error": result.get("error"),
                 "compression_exhausted": result.get("compression_exhausted", False),
+                # Transient compression timeout: the input is preserved and
+                # the next turn retries the compaction (no auto-reset).
+                "compression_retryable": result.get("compression_retryable", False),
                 "compression_deferred": result.get("compression_deferred", False),
                 "tools": ctx.tools_holder[0] or [],
                 "history_offset": _effective_history_offset,
@@ -7024,6 +7027,10 @@ class TurnRunner:
             "interrupt_message": ctx.result_holder[0].get("interrupt_message") if ctx.result_holder[0] else None,
             "compression_exhausted": (
                 ctx.result_holder[0].get("compression_exhausted", False)
+                if ctx.result_holder[0] else False
+            ),
+            "compression_retryable": (
+                ctx.result_holder[0].get("compression_retryable", False)
                 if ctx.result_holder[0] else False
             ),
             # Soft lock-contention defer (#69870 consumer): distinct from
@@ -21860,11 +21867,19 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 agent_result
             )
             _err_str_for_classify = str(agent_result.get("error", "")).lower()
+            # A compression TIMEOUT is transient: the transcript is intact and
+            # the next turn can retry the compaction. The input must survive
+            # it, so the context-overflow persistence skip does NOT apply to
+            # a retryable compression failure (#7100's growth loop is about
+            # sessions that genuinely cannot fit, not about a slow server).
+            _compression_retryable = bool(
+                agent_result.get("compression_retryable")
+            )
             # Use specific multi-word phrases (not bare "exceed" or "token")
             # to avoid false positives on transient errors like "rate limit
             # exceeded" or "invalid auth token". Matches run_agent.py's
             # own context-length classifier.
-            is_context_overflow_failure = agent_failed_early and (
+            is_context_overflow_failure = agent_failed_early and not _compression_retryable and (
                 bool(agent_result.get("compression_exhausted"))
                 or any(p in _err_str_for_classify for p in (
                     "context length", "context size", "context window",
@@ -21912,7 +21927,25 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                     "session intact; the next message retries normally.",
                     session_entry.session_id if session_entry else "?",
                 )
-            elif agent_result.get("compression_exhausted") and session_entry and session_key:
+            elif _compression_retryable and session_entry:
+                # A compression TIMEOUT, not a verdict that the session is
+                # uncompressible. Keep the session and the (now persisted)
+                # user input: the next turn retries the compaction and the
+                # preserved message is answered there. Auto-resetting here
+                # would throw away a conversation that only lost a race
+                # with a busy provider.
+                logger.info(
+                    "Compression timed out for session %s — keeping the "
+                    "session and the pending input; the next message "
+                    "retries the compaction.",
+                    session_entry.session_id,
+                )
+            elif (
+                agent_result.get("compression_exhausted")
+                and session_entry
+                and session_key
+                and not _compression_retryable
+            ):
                 logger.info(
                     "Auto-resetting session %s after compression exhaustion.",
                     session_entry.session_id,

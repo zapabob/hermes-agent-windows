@@ -83,7 +83,7 @@ def test_f3_mutating_engine_cannot_touch_live_transcript_after_timeout(
     # Fast host timeout for the owned wrapper.
     monkeypatch.setattr(
         "agent.conversation_compression.resolve_context_compression_timeouts",
-        lambda cfg=None: (0.6, 1.2),
+        lambda cfg=None, **_kwargs: (0.6, 1.2),
     )
 
     engine_started = threading.Event()
@@ -159,7 +159,7 @@ def test_host_timeout_releases_pool_slot_while_protected_provider_is_still_block
     agent._cached_system_prompt = "sys"
     monkeypatch.setattr(
         "agent.conversation_compression.resolve_context_compression_timeouts",
-        lambda cfg=None: (0.3, 0.6),
+        lambda cfg=None, **_kwargs: (0.3, 0.6),
     )
 
     provider_started = threading.Event()
@@ -337,7 +337,7 @@ def test_f5_session_contextvar_rebound_after_rotation(
     # (the caller's ContextVar can only be repaired by the caller).
     monkeypatch.setattr(
         "agent.conversation_compression.resolve_context_compression_timeouts",
-        lambda cfg=None: (5.0, 10.0),
+        lambda cfg=None, **_kwargs: (5.0, 10.0),
     )
 
     # Simulate the gateway's bound session context for the caller.

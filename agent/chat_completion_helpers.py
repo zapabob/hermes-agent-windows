@@ -2789,6 +2789,50 @@ def _fallback_entry_unavailable_without_network(agent, fb: dict) -> Optional[str
     return None
 
 
+def _suppress_provider_fallback_entries(agent, provider: str) -> int:
+    """Mark every chain entry of ``provider`` unavailable for this session.
+
+    A rejected credential (401/403) is a PROVIDER-level fault, not a
+    model-level one: every remaining entry that names the same provider
+    would fail with the same rejection.  Without this, a dead provider with
+    twenty models in the chain costs twenty probes before the walk reaches
+    the next provider — which is what made the model picker's provider
+    list appear to hang.
+
+    Returns the number of entries suppressed.
+    """
+    provider = str(provider or "").strip().lower()
+    if not provider:
+        return 0
+    chain = getattr(agent, "_fallback_chain", None)
+    if not isinstance(chain, (list, tuple)):
+        return 0
+    unavailable = getattr(agent, "_unavailable_fallback_keys", None)
+    if unavailable is None:
+        unavailable = set()
+        agent._unavailable_fallback_keys = unavailable
+    suppressed = 0
+    for fb in chain:
+        if not isinstance(fb, dict):
+            continue
+        if (fb.get("provider") or "").strip().lower() != provider:
+            continue
+        key = _fallback_entry_key(fb)
+        if key in unavailable:
+            continue
+        unavailable.add(key)
+        suppressed += 1
+    if suppressed:
+        logger.warning(
+            "Auth failure on provider '%s': suppressed %d remaining fallback "
+            "entry/entries of that provider for this session (the credential "
+            "is provider-level, not model-level).",
+            provider,
+            suppressed,
+        )
+    return suppressed
+
+
 def _fallback_reason_text(reason: "FailoverReason | None") -> str:
     """Return a concise operator-facing explanation for a fallback switch."""
     if reason is None:
@@ -2868,6 +2912,14 @@ def try_activate_fallback(agent, reason: "FailoverReason | None" = None) -> bool
         agent._fallback_chain = []
         agent._fallback_index = 0
         return False
+
+    # A rejected credential is a provider-level fault: the remaining entries
+    # that name the same provider would fail the same way. Suppress them now
+    # so the chain costs one probe per provider instead of one per model.
+    if reason == FailoverReason.auth:
+        _suppress_provider_fallback_entries(
+            agent, getattr(agent, "provider", "") or ""
+        )
 
     # Walk candidates in one loop so skip/quarantine paths do not recurse
     # back through the rate-limit cooldown arming at the top of this

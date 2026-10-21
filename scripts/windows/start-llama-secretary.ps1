@@ -1,8 +1,14 @@
 # Local secretary runtime — llama.cpp primary launcher (RTX 5060 Ti 16GB profile)
 # Loads the configured model GGUF via local path or llama-server -hf/--hf-repo with --jinja for tool calling.
 # RTX 5060 Ti 16GB optimized: ngl=99 (all layers on GPU), fa, q8_0 KV cache, 6 threads (physical cores),
-# parallel=2 (Hermes + subagent concurrent requests), batch=2048, ubatch=512, ctx=131072.
+# parallel=2 (Hermes + subagent concurrent requests), batch=2048, ubatch=512, ctx=65536.
 # Hardware: RTX 5060 Ti 16GB (換装: 2026-07-22, 旧: RTX 3060 12GB)
+#
+# The context is sized against the KV cache of the model that is actually
+# loaded (see Get-LlamaContextBudget.ps1): a context whose KV does not fit
+# next to the weights is served from system memory, prompt reads collapse to
+# a fraction of their speed and the server looks wedged. 65536 is the
+# smallest window Hermes accepts (MINIMUM_CONTEXT_LENGTH).
 
 param(
     [switch]$SkipFallbackOnFailure,
@@ -77,7 +83,7 @@ $ModelPath = Resolve-Default "HERMES_LLAMA_GGUF_PATH" ""
 $Alias = Resolve-Default "HERMES_LLAMA_ALIAS" "yuxinlu1/gemma-4-12B-coder-fable5-composer2.5-v1-GGUF:Q4_K_M"
 $HostName = Resolve-Default "HERMES_LLAMA_HOST" "127.0.0.1"
 $Port = [int](Resolve-Default "HERMES_LLAMA_PORT" "8080")
-$Ctx = [int](Resolve-Default "HERMES_LLAMA_CTX" "131072")
+$Ctx = [int](Resolve-Default "HERMES_LLAMA_CTX" "65536")
 $CacheK = Resolve-Default "HERMES_LLAMA_CACHE_TYPE_K" "q8_0"
 # turbo3 = zapabob llama-turboquant custom KV type; falls back to q8_0 on standard builds via plan iteration
 $CacheV = Resolve-Default "HERMES_LLAMA_CACHE_TYPE_V" "turbo3"
@@ -98,6 +104,28 @@ $Profile = Resolve-Default "HERMES_LLAMA_PROFILE" "rtx5060ti"
 
 if ($Ctx -lt 64000) {
     throw "HERMES_LLAMA_CTX=$Ctx is below the Hermes Agent minimum of 64000. Set HERMES_LLAMA_CTX=65536."
+}
+
+# The KV cache for the requested context must fit next to the model weights,
+# otherwise the allocation is backed by system memory and every prompt read
+# and generated token crosses the bus: the server then looks wedged to
+# Hermes' no-progress watchdogs (the "auto-compaction failed and the turn was
+# dropped" failure on a 128K-context local server). The check is advisory —
+# the configured context is kept unless the operator asks for the fitting one.
+$BudgetCheck = $null
+if ($ModelPath -and (Test-Path -LiteralPath $ModelPath)) {
+    try {
+        . (Join-Path $PSScriptRoot 'Get-LlamaContextBudget.ps1')
+        $BudgetCheck = Test-LlamaContextFits `
+            -ModelPath $ModelPath `
+            -ContextTokens $Ctx `
+            -ParallelSlots $Parallel `
+            -CacheTypeK $CacheK `
+            -CacheTypeV $CacheV
+        Write-Output ("llama.cpp context budget: {0} tokens/slot, fits in VRAM={1}" -f $BudgetCheck.Budget.PerSlotContext, $BudgetCheck.FitsInVram)
+    } catch {
+        Write-Warning "llama.cpp KV-cache budget check skipped: $($_.Exception.Message)"
+    }
 }
 
 if (-not (Test-Path -LiteralPath $ServerExe)) {
@@ -253,7 +281,7 @@ foreach ($plan in $attemptPlans) {
                 $started = $true
                 Write-Output "llama.cpp secretary ready on $modelsUrl"
                 Write-Output "pid=$($attempt.Process.Id)"
-                Write-Output "profile=$Profile model=$ModelRepo alias=$Alias ctx=$Ctx ngl=$layers"
+                Write-Output "profile=$Profile model=$ModelRepo alias=$Alias ctx=$Ctx (=$($Ctx / $Parallel) tokens per slot over $Parallel slot(s)) ngl=$layers"
                 Write-Output "stdout=$stdoutPath"
                 Write-Output "stderr=$stderrPath"
                 exit 0

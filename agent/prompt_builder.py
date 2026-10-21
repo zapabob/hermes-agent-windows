@@ -20,7 +20,7 @@ from hermes_constants import (
     reset_hermes_home_override,
     set_hermes_home_override,
 )
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from agent.runtime_cwd import resolve_agent_cwd
 from agent.skill_utils import (
@@ -1663,6 +1663,122 @@ def _build_snapshot_entry(
 # Skills index
 # =========================================================================
 
+# Absolute cap on the skills index (the ``<available_skills>`` block) in
+# tokens. None = no cap (the full name+description manifest is rendered).
+# The operator pins this when the index has grown past what the request
+# prefix can carry: a workstation with 150+ skills measured 18,908 tokens of
+# index — more than the tool schemas — and the index is re-sent on EVERY
+# request.
+#
+# When the cap binds, the largest categories are demoted to the existing
+# names-only form until the index fits. Names always stay visible: skills
+# are the model's project memory and models do not re-discover what the
+# index stops showing.
+_SKILLS_LISTING_MAX_TOKENS_CONFIG_KEY = "skills_listing_max_tokens"
+
+
+def _get_skills_listing_max_tokens() -> Optional[int]:
+    """Return the operator-pinned skills-index token cap (None = no cap)."""
+    try:
+        from hermes_cli.config import load_config_readonly
+
+        raw = load_config_readonly().get(_SKILLS_LISTING_MAX_TOKENS_CONFIG_KEY)
+    except Exception as e:
+        logger.debug("Could not read %s from config: %s", _SKILLS_LISTING_MAX_TOKENS_CONFIG_KEY, e)
+        return None
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        return None
+    return value if value > 0 else None
+
+
+def _render_skills_index_lines(
+    skills_by_category: Dict[str, List[Tuple[str, str]]],
+    category_descriptions: Dict[str, str],
+    demoted: "frozenset[str] | set[str]",
+) -> List[str]:
+    """Render the skills index lines (name + description, or names-only)."""
+    index_lines: List[str] = []
+    for category in sorted(skills_by_category.keys()):
+        # Deduplicate and sort skills within each category
+        seen = set()
+        if category in demoted:
+            names = sorted({name for name, _ in skills_by_category[category]})
+            index_lines.append(f"  {category} [names only]: {', '.join(names)}")
+            continue
+        cat_desc = category_descriptions.get(category, "")
+        if cat_desc:
+            index_lines.append(f"  {category}: {cat_desc}")
+        else:
+            index_lines.append(f"  {category}:")
+        for name, desc in sorted(skills_by_category[category], key=lambda x: x[0]):
+            if name in seen:
+                continue
+            seen.add(name)
+            if desc:
+                index_lines.append(f"    - {name}: {desc}")
+            else:
+                index_lines.append(f"    - {name}")
+    return index_lines
+
+
+def _apply_skills_listing_budget(
+    skills_by_category: Dict[str, List[Tuple[str, str]]],
+    category_descriptions: Dict[str, str],
+    demoted: "frozenset[str] | set[str]",
+    budget: Optional[int] = None,
+) -> "frozenset[str]":
+    """Demote the largest categories until the index fits the token cap.
+
+    Deterministic: categories are demoted by rendered size (largest first),
+    ties broken by name, so the same catalog always renders the same index
+    (the request prefix stays cacheable).
+
+    ``budget`` is the token cap; None reads the operator's
+    ``skills_listing_max_tokens`` from the config.
+    """
+    if budget is None:
+        budget = _get_skills_listing_max_tokens()
+    if not budget or not skills_by_category:
+        return frozenset(demoted)
+
+    from agent.model_metadata import estimate_tokens_rough
+
+    demoted_set = set(demoted)
+    lines = _render_skills_index_lines(
+        skills_by_category, category_descriptions, demoted_set
+    )
+    if estimate_tokens_rough("\n".join(lines)) <= budget:
+        return frozenset(demoted_set)
+
+    def _category_cost(category: str) -> int:
+        entries = skills_by_category.get(category) or []
+        full = _render_skills_index_lines(
+            {category: entries}, category_descriptions, set()
+        )
+        names = _render_skills_index_lines(
+            {category: entries}, category_descriptions, {category}
+        )
+        return estimate_tokens_rough("\n".join(full)) - estimate_tokens_rough(
+            "\n".join(names)
+        )
+
+    # Largest description-block first; name breaks ties for determinism.
+    candidates = sorted(
+        (c for c in skills_by_category if c not in demoted_set),
+        key=lambda c: (-_category_cost(c), c),
+    )
+    for category in candidates:
+        if estimate_tokens_rough("\n".join(lines)) <= budget:
+            break
+        demoted_set.add(category)
+        lines = _render_skills_index_lines(
+            skills_by_category, category_descriptions, demoted_set
+        )
+    return frozenset(demoted_set)
+
+
 def _parse_skill_file(skill_file: Path) -> tuple[bool, dict, str]:
     """Read a SKILL.md once and return platform compatibility, frontmatter, and description.
 
@@ -2044,12 +2160,26 @@ def _build_skills_system_prompt_inner(
         if cat.split("/", 1)[0] in (compact_categories or frozenset())
     )
 
+    # Budget-driven demotion: the skills index is the LARGEST block of the
+    # system prompt on a workstation with many skills (a full name+description
+    # manifest of 150+ skills measured 18,908 tokens — more than the tool
+    # schemas). When the operator pins ``skills_listing_max_tokens``, the
+    # largest categories are demoted to the names-only form until the index
+    # fits. Names stay visible and every skill still loads with
+    # skill_view(name); only the per-skill DESCRIPTION — the part that tells
+    # the model WHEN a skill applies — is dropped, and only for the
+    # categories that cost the most.
+    demoted = _apply_skills_listing_budget(
+        skills_by_category, category_descriptions, demoted
+    )
+
     hidden_note = ""
     if demoted:
         hidden_note = (
-            "\n(Categories marked [names only] are outside the current coding "
-            "context, so their descriptions are omitted — the skills work "
-            "normally and load with skill_view(name) as usual.)"
+            "\n(Categories marked [names only] have their descriptions omitted "
+            "to keep this prompt small — the skills work normally and load "
+            "with skill_view(name) as usual. Run skills_list to browse the "
+            "full catalog with descriptions.)"
         )
 
     if not skills_by_category:
@@ -2060,27 +2190,9 @@ def _build_skills_system_prompt_inner(
         _basic_tools = "web_search or terminal"
         if available_tools is not None and "web_search" not in available_tools:
             _basic_tools = "terminal"
-        index_lines = []
-        for category in sorted(skills_by_category.keys()):
-            # Deduplicate and sort skills within each category
-            seen = set()
-            if category in demoted:
-                names = sorted({name for name, _ in skills_by_category[category]})
-                index_lines.append(f"  {category} [names only]: {', '.join(names)}")
-                continue
-            cat_desc = category_descriptions.get(category, "")
-            if cat_desc:
-                index_lines.append(f"  {category}: {cat_desc}")
-            else:
-                index_lines.append(f"  {category}:")
-            for name, desc in sorted(skills_by_category[category], key=lambda x: x[0]):
-                if name in seen:
-                    continue
-                seen.add(name)
-                if desc:
-                    index_lines.append(f"    - {name}: {desc}")
-                else:
-                    index_lines.append(f"    - {name}")
+        index_lines = _render_skills_index_lines(
+            skills_by_category, category_descriptions, demoted
+        )
 
         result = (
             "## Skills (mandatory)\n"

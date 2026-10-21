@@ -62,6 +62,50 @@ installer または portable ZIP を使う場合は、
 に対応 asset が公開されていることを確認し、`SHA256SUMS.txt` と照合してください。
 詳しい手順は [Windows 導入ガイド](docs/windows/INSTALL.md) にあります。
 
+## 最近の修正: 128K llama-server でのローカルモデルセッションの安定化
+
+**症状** 大きなコンテキスト窓のローカル llama-server に対してオートコンパクションが失敗し、
+ターンが `context_compression_timeout` で終了してユーザーの発話に答えず、モデルピッカーも
+固まったように見えた。
+
+**原因（すべて実測であり、推測ではない）**
+
+1. *KV キャッシュが VRAM に収まっていなかった。* 27B モデルは 1 token あたり約 72 KiB の
+   KV を必要とするため、131,072 トークン窓は KV 9.00 GiB と重み 6.71 GiB を合わせて
+   16 GiB カードの容量を超える。Windows WDDM が溢れ分を system memory で埋めたため
+   prompt 読み出しが bus を跨ぎ、実測 prefill は ~500-1,000 tok/s から ~11 tok/s へ劣化し、
+   全クライアントがタイムアウトした。
+2. *要約プロンプトの制限が文字数で、token 数ではなかった。* 160K 文字は英語なら約 40K
+   token だが日本語では約 160K token になるため、圧縮要求が要約モデル自身の窗口を
+   超えることがあった。
+3. *圧縮の no-progress 窓がローカルバックエンドを想定していなかった。* 128K prompt の
+   読み出しは数分かかるのが正当であり、120 秒の idle 窓がそれを停止扱いして圧縮を
+   中断していた。
+
+**変更点**
+
+- `scripts/windows/Get-LlamaContextBudget.ps1`（新規）: GGUF のアーキテクチャから
+  KV 容量・実効 per-slot context（`-c` は `--parallel` スロットで分割される）・
+  VRAM に収まる最大 context を算出し、launcher がその値にクランプする。context が
+  GPU 容量を黙って超えることはなくなった。
+- 生成サーバは KV が resident に収まる context（27B/PQ2_0 _profile で 98304 トークン）
+  で起動し、Hermes 側の `context_length` と同じ値になる。launcher は agent 自身の
+  設定値を読み取るので、両者が食い違うことはない。
+- 圧縮サマリザ入力は要約モデルの TOKEN 窓（25%）で制限し、先頭と末尾を保持して
+  落とした中間に明示的な marker を付ける。
+- ローカルの要約 endpoint には広い no-progress 窓（300 秒）と広い total ceiling
+  （1800 秒）を与える。
+- *Deferred tool loading*（`tools.tool_search.deferred_toolsets`）: first-party の
+  ツールセットは機能を保ったまま schema だけをリクエストから外せる。実測の
+  リクエストベースラインは 58,189 → 41,757 token になった。
+- 認証が拒否された場合は fallback chain 全体でその provider を無効化する
+  （provider ごとに 1 回、モデルごとに N 回で，不再走査しない）。
+- 圧縮 timeout は入力を保持して再試行可能になる。セッションは維持され、ユーザ行は
+  永続化され、次の turn が圧縮を再試行する。
+
+**効果** prompt 読み出しが ~11 tok/s から ~550-1,000 tok/s に戻り、オートコンパクションが
+turn を落とす代わりに完了するようになった。
+
 ## この fork が追加するもの
 
 - **Windows を第一級の実行対象として扱います。** path、process identity、PowerShell、

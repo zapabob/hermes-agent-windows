@@ -720,6 +720,20 @@ DEFAULT_CONFIG = {
     # and override the dynamic behavior. Separate from read_file tool limits.
     "context_file_max_chars": None,
 
+    # Absolute cap on the skills index (the <available_skills> block) in
+    # tokens. None = no cap: the full name+description manifest is rendered.
+    #
+    # The index is re-sent on EVERY request, and on a workstation with many
+    # skills it is the largest single block of the system prompt (a measured
+    # 150+ skill install rendered 18,908 tokens of index — more than the tool
+    # schemas). When the cap binds, the largest categories are demoted to the
+    # existing names-only form until the index fits: every skill NAME stays
+    # visible (skills are the model's project memory and it does not
+    # re-discover what the index stops showing), only the per-skill
+    # DESCRIPTION is dropped, and skills_list still returns the full catalog
+    # with descriptions.
+    "skills_listing_max_tokens": None,
+
     # Maximum characters returned by a single read_file call.  Reads that
     # exceed this are rejected with guidance to use offset+limit.
     # 100K chars ≈ 25–35K tokens across typical tokenisers.
@@ -3042,6 +3056,24 @@ DEFAULT_CONFIG = {
             # Absolute cap on the embedded listing in tokens (chars/4
             # estimate), regardless of context size. Range 200..60000.
             "listing_max_tokens": 4000,
+            # Deferred tool loading (operator opt-in). Names the TOOLSETS
+            # whose tool schemas leave the model-facing tools array even when
+            # their tools are first-party (in toolsets._HERMES_CORE_TOOLS).
+            # The tools keep working: they stay registered and enabled, and
+            # remain discoverable through tool_search / tool_describe and
+            # callable through tool_call (the bridge dispatches through the
+            # normal handler, so guardrails, plugin hooks and approval flows
+            # are identical to a direct call).
+            #
+            # This is the lever for a first-party toolset that costs a large
+            # share of every request (e.g. a 30-tool VRChat integration) but
+            # is needed only in some sessions. Empty by default: a toolset
+            # only moves when the operator names it.
+            "deferred_toolsets": [],
+            # Tool NAMES exempted from a toolsets deferral. The safety valve
+            # for a capability that must stay directly callable (e.g. the
+            # entry points an automation loop drives).
+            "deferred_exceptions": [],
         },
     },
 
