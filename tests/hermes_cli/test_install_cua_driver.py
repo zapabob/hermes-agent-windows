@@ -149,7 +149,7 @@ class TestInstallCuaDriverUpgrade:
 
         with patch.object(tools_config.shutil, "which",
                           side_effect=lambda n: "/usr/local/bin/" + n
-                                                 if n in {"cua-driver", "curl"} else None), \
+                                                 if n in {"cua-driver", "curl", "powershell"} else None), \
              patch.object(
                  tools_config,
                  "_cua_driver_contract_status",
@@ -167,7 +167,8 @@ class TestInstallCuaDriverUpgrade:
         from hermes_cli import tools_config
 
         with patch.object(tools_config.shutil, "which",
-                          side_effect=lambda n: "/usr/bin/curl" if n == "curl" else None), \
+                          side_effect=lambda n: "/usr/bin/" + n
+                                                 if n in {"curl", "powershell"} else None), \
              patch.object(tools_config, "_run_cua_driver_installer",
                           return_value=True) as runner:
             assert tools_config.install_cua_driver(upgrade=True) is True
@@ -263,6 +264,8 @@ class TestInstallCuaDriverUpgrade:
                  return_value="/usr/local/bin/cua-driver",
              ), \
              patch.object(tools_config, "_clear_stale_cua_install_lock"), \
+             patch.object(tools_config, "_cua_install_lock_held", return_value=False), \
+             patch.object(tools_config, "_cua_release_endpoint_reachable", return_value=True), \
              patch.object(
                  tools_config,
                  "_repair_cua_driver_autostart_windows",
@@ -287,7 +290,7 @@ class TestInstallCuaDriverUpgrade:
                  "which",
                  side_effect=lambda name: (
                      f"/usr/local/bin/{name}"
-                     if name in {"cua-driver", "curl"}
+                     if name in {"cua-driver", "curl", "powershell"}
                      else None
                  ),
              ), \
@@ -460,7 +463,8 @@ class TestInstallCuaDriverUpgrade:
         from hermes_cli import tools_config
 
         with patch.object(tools_config.shutil, "which",
-                          side_effect=lambda n: "/usr/bin/curl" if n == "curl" else None), \
+                          side_effect=lambda n: "/usr/bin/" + n
+                                                 if n in {"curl", "powershell"} else None), \
              patch.object(tools_config, "_run_cua_driver_installer",
                           return_value=True) as runner:
             assert tools_config.install_cua_driver(upgrade=False) is True
@@ -714,9 +718,12 @@ class TestUpdateCheckTimeoutDefaults:
         """
         assert self._captured_timeout() == 25.0
 
-    def test_posix_default_unchanged(self):
-        # Unmarked: the POSIX default is what this (Linux) host already picks,
-        # so no platform faking is involved.
+    @pytest.mark.linux_only
+    def test_linux_default_unchanged(self):
+        assert self._captured_timeout() == 8.0
+
+    @pytest.mark.macos_only
+    def test_macos_default_unchanged(self):
         assert self._captured_timeout() == 8.0
 
     def test_explicit_timeout_wins(self):

@@ -119,7 +119,10 @@ jobs:
           # across a 6x range. The suite has sufficient concurrency at this
           # size. The remaining time is the slowest files plus the setup.
           # Workers above the core count only add contention.
-          HERMES_TEST_WORKERS: ${{ github.repository == 'NousResearch/hermes-agent' && 96 || 8 }}
+          # Keep every file in the suite, with one worker per hosted fork core.
+          # Eight simultaneous SDK-heavy interpreters can starve the runner;
+          # the exact-SHA attempts lost communication or received shutdown.
+          HERMES_TEST_WORKERS: ${{ github.repository == 'NousResearch/hermes-agent' && 96 || 4 }}
           # Ensure tests don't accidentally call real APIs
           OPENROUTER_API_KEY: ""
           OPENAI_API_KEY: ""
