@@ -27,14 +27,13 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 26
+          node-version: 26.12.1
           cache: npm
 
       - name: grab npm 12
         run: |
-          # No-op once the bundled npm is already 12.x — saves ~5-15s/job and
-          # keeps the installed major aligned with the npm12 cache-key tag.
-          npm --version | grep -q '^12\.' || npm i -g npm@12
+          # Pin the policy implementation as well as the Node runtime.
+          npm install --global npm@12.2.1 --ignore-scripts
 
       # The ``cache: npm`` option of ``setup-node`` caches only the ~/.npm
       # tarball cache. The job then extracts the full workspace node_modules

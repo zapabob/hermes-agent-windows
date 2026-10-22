@@ -178,6 +178,8 @@ jobs:
         with:
           node-version: ${{ steps.node-version.outputs.version }}
           cache: npm
+      - name: Install reviewed npm policy implementation
+        run: npm install --global npm@12.2.1 --ignore-scripts
       - name: Frozen npm install
         run: npm ci --no-audit --no-fund
       - name: Desktop typecheck
@@ -207,6 +209,9 @@ jobs:
       - name: Native watchdog vet
         working-directory: scripts/windows/watchdog-go
         run: go vet ./...
+      - name: Go reachable vulnerability audit
+        working-directory: scripts/windows/watchdog-go
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
       - name: Build Windows watchdog artifact
         working-directory: scripts/windows/watchdog-go
         run: go build -trimpath -o hermes-watchdog.exe .
@@ -299,8 +304,10 @@ jobs:
           enable-cache: true
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 22.22.0
+          node-version: 22.23.4
           cache: npm
+      - name: Install reviewed npm policy implementation
+        run: npm install --global npm@12.2.1 --ignore-scripts
       - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
         with:
           go-version-file: scripts/windows/watchdog-go/go.mod
@@ -314,8 +321,16 @@ jobs:
           uv export --frozen --all-extras --no-dev --no-emit-project --no-header --output-file $requirements | Out-Null
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           uvx --from pip-audit==2.10.1 pip-audit --require-hashes --disable-pip --requirement $requirements
-      - name: Node production dependency advisory audit
-        run: npm audit --omit=dev --audit-level=high
+      - name: Node dependency advisory audit (all scopes)
+        run: npm audit --include=dev --include=optional --audit-level=low
+      - name: Website dependency advisory audit
+        working-directory: website
+        run: npm audit --include=dev --include=optional --audit-level=low
+      - name: Messaging sidecar dependency advisory audits
+        run: |
+          npm --prefix scripts/whatsapp-bridge audit --include=dev --include=optional --audit-level=low
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm --prefix plugins/platforms/photon/sidecar audit --include=dev --include=optional --audit-level=low
       - name: Frozen pilot integrity and dependency advisory audit
         # The frozen pilot has a separate dependency graph and private wheel.
         # Its public-version advisory query must follow asset/source validation.

@@ -5,6 +5,23 @@ packages:
   - 'web'
   - 'tests-js'
 
+# pnpm expresses the same 14-day resolution quarantine in minutes.
+minimumReleaseAge: 20160
+minimumReleaseAgeExclude:
+  - electron
+  - sanitize-html
+  - follow-redirects
+  - dompurify
+  - ip-address
+  - postcss
+  - vitest
+  - '@vitest/*'
+  - vite
+  # Required native bundler closure of the reviewed Vite security release.
+  - rolldown
+  - '@rolldown/binding-*'
+  - '@oxc-project/types'
+
 allowBuilds:
   agent-browser: set this to true or false
 

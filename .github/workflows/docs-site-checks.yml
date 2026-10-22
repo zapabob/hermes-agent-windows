@@ -15,13 +15,13 @@ jobs:
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 26
+          node-version: 26.12.1
           cache: npm
           cache-dependency-path: website/package-lock.json
 
       - name: grab npm 12
         run: |
-          npm i -g npm@12
+          npm install --global npm@12.2.1 --ignore-scripts
 
       - name: Install website dependencies
         uses: ./.github/actions/retry
