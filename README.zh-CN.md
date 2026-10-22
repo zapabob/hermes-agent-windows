@@ -19,12 +19,13 @@ Hermes Agent 的非官方 Windows 原生下游版本，提供 Electron 桌面端
 
 [![Windows Workstation Tier-1 CI](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml/badge.svg)](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml)
 
-**当前源码版本：0.21.5。** 产品元数据与 upstream stable R2
-`f97608f178d1ffeca59860195ab7da295f7c8e5f`（`v2026.9.24`）保持一致。
+**当前源码版本：0.22.0。** 这是包含依赖安全修复和 CI 加固的 downstream minor version。
+记录的 upstream 参照仍为 stable R2
+`f97608f178d1ffeca59860195ab7da295f7c8e5f`（`0.21.5`、`v2026.9.24`）。
 本 fork 继续使用 `version_source: downstream`，并保留历史 provenance snapshot
 `b51c055a12220f8c7c18660e8599365012e19532`。
 
-版本号 0.21.5 并不表示已经对之后所有 upstream commit 完成语义等价审查。当前
+版本号 0.22.0 并不表示已经对之后所有 upstream commit 完成语义等价审查。当前
 semantic-refresh campaign 固定到 ceiling
 `678a4762b887f3eabe5cad11254b2ab1ae859485`，按 family 分别核对 source、test、mutation、
 CodeGraph 与 review 证据。当前交接计划见
@@ -308,7 +309,7 @@ tag 发布前执行 clean install、启动与 upgrade E2E。只从
 [下游 Releases](https://github.com/zapabob/hermes-agent-windows/releases)
 获取已发布产物，并核对 `SHA256SUMS.txt`。除非 `release-manifest.json` 另有记录，
 当前 candidate 按 unsigned 处理。完整步骤以 [Windows 安装指南](docs/windows/INSTALL.md)
-为准；其中的旧版本示例并不能证明 0.21.5 已发布。
+为准；其中的旧版本示例并不能证明 0.22.0 已发布。
 
 官方 upstream installer 面向 upstream 产品；本发行版请使用本下游仓库或其已发布的
 release asset。
@@ -345,7 +346,7 @@ CodeGraph 与独立 review 按 family 闭合。
 
 当前 `main` 已包含多个经过映射的 Windows/runtime 修复，包括 process identity、
 relaunch/recovery 与 Desktop E2E isolation。但在所有 in-scope ledger row 都有证据映射或明确
-disposition 之前，整个 campaign 仍不算完成。0.21.5 是 product version，不是 semantic parity
+disposition 之前，整个 campaign 仍不算完成。0.22.0 是 product version，不是 semantic parity
 的捷径。
 
 更新流程保持 `plan → snapshot → apply → restart-per-kind → verify → report`。Desktop、gateway、

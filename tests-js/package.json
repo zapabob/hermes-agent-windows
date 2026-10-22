@@ -13,6 +13,7 @@
   "devDependencies": {
     "@types/plist": "3.0.5",
     "plist": "3.1.1",
+    "semver": "7.7.4",
     "typescript": "6.0.3",
     "vitest": "4.1.12"
   }

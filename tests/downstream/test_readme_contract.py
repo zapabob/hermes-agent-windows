@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from downstream.distribution import load_distribution
+
 ROOT = Path(__file__).resolve().parents[2]
 README = (ROOT / "README.md").read_text(encoding="utf-8")
 
@@ -46,7 +48,7 @@ def test_readme_exposes_verified_windows_install_surfaces() -> None:
     assert "https://github.com/zapabob/hermes-agent-windows/releases" in README
     assert "installer" in README.lower()
     assert "portable" in README.lower()
-    assert "0.21.5" in README
+    assert f"Current source version: {load_distribution().version}." in README
     assert "docs/windows/INSTALL.md" in README
     assert "curl -fsSL https://raw.githubusercontent.com/NousResearch" not in README
     assert "The official upstream installer targets the upstream distribution" in normalized
@@ -86,7 +88,7 @@ def test_translated_readmes_keep_distribution_metadata_in_parity() -> None:
             "README.zh-CN.md",
             "zapabob/hermes-agent-windows",
             "NousResearch/hermes-agent",
-            "0.21.5",
+            load_distribution().version,
             "b51c055a12220f8c7c18660e8599365012e19532",
             "stable",
             "preview",

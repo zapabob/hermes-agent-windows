@@ -25,13 +25,14 @@ developed by Nous Research. Both the upstream attribution and the
 
 [![Windows Workstation Tier-1 CI](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml/badge.svg)](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml)
 
-**Current source version: 0.21.5.** Product metadata is aligned with upstream
+**Current source version: 0.22.0.** This downstream minor version includes
+dependency security and CI hardening. The recorded upstream reference remains
 stable R2 `f97608f178d1ffeca59860195ab7da295f7c8e5f`
-(`v2026.9.24`). The downstream still owns its own release identity
+(`0.21.5`, `v2026.9.24`). The downstream still owns its own release identity
 (`version_source: downstream`) and retains the historical frozen provenance
 snapshot `b51c055a12220f8c7c18660e8599365012e19532`.
 
-The 0.21.5 version string does **not** claim blanket semantic parity with every
+The 0.22.0 version string does **not** claim blanket semantic parity with every
 later upstream commit. The current semantic-refresh campaign is mapped
 contract-by-contract through frozen ceiling
 `678a4762b887f3eabe5cad11254b2ab1ae859485`; open families remain open until
@@ -71,9 +72,9 @@ and verify `SHA256SUMS.txt`. The canonical Windows procedure is
 <details open>
 <summary><strong>日本語</strong></summary>
 
-Windows向け独立派生版の現在のソース版は **0.21.5** です。CLI、Electron Desktop、
+Windows向け独立派生版の現在のソース版は **0.22.0** です。CLI、Electron Desktop、
 複数profile、Gateway、OAuth/API key/local llama.cpp、Semantic Graph/Ebbinghaus、
-Windows固有のruntime管理を同じHermes coreの上で扱います。0.21.5という版番号は
+Windows固有のruntime管理を同じHermes coreの上で扱います。0.22.0という版番号は
 進行中の上流semantic refresh全件の完了宣言ではありません。詳しくは
 [日本語版README](README.ja.md) と
 [Windows導入ガイド](docs/windows/INSTALL.md) を参照してください。
@@ -82,9 +83,9 @@ Windows固有のruntime管理を同じHermes coreの上で扱います。0.21.5�
 <details>
 <summary><strong>简体中文</strong></summary>
 
-当前 Windows 下游源码版本为 **0.21.5**。CLI、Electron Desktop、多 profile、
+当前 Windows 下游源码版本为 **0.22.0**。CLI、Electron Desktop、多 profile、
 Gateway、OAuth/API key/local llama.cpp、Semantic Graph/Ebbinghaus 与 Windows
-runtime 管理共用同一 Hermes core。版本号 0.21.5 并不表示正在进行的上游
+runtime 管理共用同一 Hermes core。版本号 0.22.0 并不表示正在进行的上游
 semantic refresh 已全部完成。参见
 [简体中文 README](README.zh-CN.md) 与
 [Windows 安装指南](docs/windows/INSTALL.md)。
@@ -231,7 +232,7 @@ upstream-owned files are tracked in [CARRY.yaml](CARRY.yaml), and upstream
 adoption decisions are tracked in `UPSTREAM_ADOPTION.yaml`.
 
 The downstream product version and upstream semantic-adoption state are separate
-facts. Version 0.21.5 records the product/release identity; the semantic-refresh
+facts. Version 0.22.0 records the product/release identity; the semantic-refresh
 ledger records which upstream behaviours have actually been reviewed and adopted.
 
 ## 2. Windows-first goals
@@ -431,7 +432,7 @@ For the current campaign:
 The current `main` contains multiple mapped Windows/runtime fixes from the active
 campaign, including process-identity, relaunch/recovery and Desktop E2E isolation
 work. The campaign remains open until every in-scope ledger row is mapped or
-explicitly dispositioned. Version 0.21.5 therefore describes the product release
+explicitly dispositioned. Version 0.22.0 therefore describes the product release
 identity, not a shortcut around semantic review.
 
 The built-in updater follows the upstream transactional shape:

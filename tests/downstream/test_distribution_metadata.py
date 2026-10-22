@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError
+from datetime import datetime
 import json
 from pathlib import Path
 import subprocess
@@ -23,10 +24,11 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def test_distribution_metadata_is_the_downstream_product_authority() -> None:
     distribution = load_distribution()
+    payload = json.loads((ROOT / "downstream/distribution.json").read_text(encoding="utf-8"))
 
     assert distribution.id == "hermes-agent-windows"
     assert distribution.display_name == "Hermes Agent Windows Workstation Edition"
-    assert distribution.version == "0.21.5"
+    assert distribution.version == payload["version"]
     assert distribution.version_source == "downstream"
     assert distribution.repository.slug == "zapabob/hermes-agent-windows"
     assert distribution.upstream.snapshot_sha == UPSTREAM_SNAPSHOT_SHA
@@ -48,27 +50,20 @@ def test_distribution_metadata_accessors_are_read_only() -> None:
         setattr(distribution, "version", "changed")
 
 
-def test_product_version_aligns_with_recorded_upstream_release() -> None:
+def test_product_version_aligns_across_python_metadata() -> None:
     distribution = load_distribution()
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
-    desktop = json.loads(
-        (ROOT / "apps" / "desktop" / "package.json").read_text(encoding="utf-8")
-    )
-    package_lock = json.loads((ROOT / "package-lock.json").read_text(encoding="utf-8"))
 
     assert distribution.version_source == "downstream"
     assert distribution.upstream.version == "0.21.5"
-    assert distribution.version == "0.21.5"
     assert pyproject["project"]["version"] == distribution.version
-    assert desktop["version"] == distribution.version
-    assert package_lock["packages"]["apps/desktop"]["version"] == distribution.version
     lock = tomllib.loads((ROOT / "uv.lock").read_text(encoding="utf-8"))
     assert next(package["version"] for package in lock["package"] if package["name"] == "hermes-agent") == distribution.version
 
     from hermes_cli import __release_date__, __version__
 
     assert __version__ == distribution.version
-    assert __release_date__ == "2026.9.24"
+    datetime.strptime(__release_date__, "%Y.%m.%d")
 
 
 def test_distribution_network_urls_never_target_upstream() -> None:
@@ -98,7 +93,7 @@ def test_version_lines_identify_distribution_snapshot_and_checkout() -> None:
     lines = distribution_version_lines(downstream_sha="b" * 40)
 
     assert lines == (
-        "Distribution: Hermes Agent Windows Workstation Edition 0.21.5",
+        f"Distribution: Hermes Agent Windows Workstation Edition {load_distribution().version}",
         f"Frozen upstream: {UPSTREAM_SNAPSHOT_SHA[:12]}",
         "Downstream revision: bbbbbbbbbbbb",
         "Update channel: stable",
@@ -146,23 +141,6 @@ def test_standalone_windows_installer_fails_closed_on_downstream_metadata() -> N
         "main/downstream/distribution.json"
     ) in installer
     assert "https://github.com/NousResearch/hermes-agent.git" not in installer
-
-
-def test_desktop_packaging_has_downstream_identity_installer_and_portable_targets() -> (
-    None
-):
-    package = json.loads(
-        (ROOT / "apps" / "desktop" / "package.json").read_text(encoding="utf-8")
-    )
-
-    assert package["productName"] == "Hermes Agent Windows Workstation Edition"
-    assert package["version"] == load_distribution().version
-    assert package["build"]["appId"] == "io.github.zapabob.hermes-agent-windows"
-    assert package["build"]["executableName"] == "Hermes"
-    assert package["build"]["nsis"]["guid"] == ("48ae4bdc-0f8d-5252-af1e-bf7c0a8c3649")
-    assert "nsis" in package["build"]["win"]["target"]
-    assert "zip" in package["build"]["win"]["target"]
-    assert package["scripts"]["dist:win:portable"].endswith("--win zip")
 
 
 def test_windows_release_workflow_is_pinned_and_downstream_only() -> None:

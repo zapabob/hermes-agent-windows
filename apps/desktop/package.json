@@ -2,7 +2,7 @@
   "name": "hermes",
   "productName": "Hermes Agent Windows Workstation Edition",
   "private": true,
-  "version": "0.21.5",
+  "version": "0.22.0",
   "description": "Native desktop shell for Hermes Agent.",
   "author": "zapabob and Nous Research contributors",
   "repository": {
@@ -177,7 +177,7 @@
     "bippy": "0.5.43",
     "concurrently": "10.0.6",
     "cross-env": "10.1.0",
-    "electron": "42.11.3",
+    "electron": "42.11.16",
     "electron-builder": "26.15.3",
     "esbuild": "0.28.1",
     "jsdom": "29.1.1",
@@ -190,7 +190,7 @@
     "wait-on": "9.0.10"
   },
   "build": {
-    "electronVersion": "42.11.3",
+    "electronVersion": "42.11.16",
     "appId": "io.github.zapabob.hermes-agent-windows",
     "productName": "Hermes Agent Windows Workstation Edition",
     "executableName": "Hermes",

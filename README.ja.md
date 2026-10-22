@@ -20,12 +20,13 @@ Electron デスクトップ、CLI、メッセージング gateway と、任意�
 
 [![Windows Workstation Tier-1 CI](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml/badge.svg)](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml)
 
-**現在のソース版: 0.21.5。** 製品メタデータは upstream stable R2
-`f97608f178d1ffeca59860195ab7da295f7c8e5f`（`v2026.9.24`）に合わせています。
+**現在のソース版: 0.22.0。** 依存関係のセキュリティ対策と CI 強化を含む
+downstream の minor version です。記録済みの upstream 参照は stable R2
+`f97608f178d1ffeca59860195ab7da295f7c8e5f`（`0.21.5`、`v2026.9.24`）のままです。
 この fork は `version_source: downstream` を維持し、歴史的な provenance snapshot
 `b51c055a12220f8c7c18660e8599365012e19532` も保持します。
 
-0.21.5 という版番号は、それより後の upstream commit まで意味論的同等性を一括で宣言する
+0.22.0 という版番号は、それより後の upstream commit まで意味論的同等性を一括で宣言する
 ものではありません。現在の semantic-refresh campaign は固定 ceiling
 `678a4762b887f3eabe5cad11254b2ab1ae859485` までを family ごとに照合しており、未完の
 family は source、test、mutation、CodeGraph、review の証拠が閉じるまで未完のままです。
@@ -341,7 +342,7 @@ stable tag で公開する前に clean install、起動、upgrade E2E を実行�
 [ダウンストリーム Releases](https://github.com/zapabob/hermes-agent-windows/releases)
 からのみ取得し、`SHA256SUMS.txt` を確認してください。現在の candidate は
 `release-manifest.json` に別の記録がない限り unsigned です。手順の正本は
-[Windows 導入ガイド](docs/windows/INSTALL.md) です。そこにある旧版の例は 0.21.5 の
+[Windows 導入ガイド](docs/windows/INSTALL.md) です。そこにある旧版の例は 0.22.0 の
 release の証拠ではありません。
 
 公式 upstream の installer は upstream 製品を対象とします。この配布物には、この
@@ -380,7 +381,7 @@ semantic-refresh campaign は exact SHA、inventory、source/caller mapping、fo
 
 current `main` には Windows process identity、relaunch/recovery、Desktop E2E isolation など、
 campaign で写像済みの変更が複数入っています。ただし、in-scope ledger row がすべて証拠付きで
-写像または明示 disposition されるまで campaign 全体は完了扱いにしません。0.21.5 は product
+写像または明示 disposition されるまで campaign 全体は完了扱いにしません。0.22.0 は product
 version であり、semantic parity の近道ではありません。
 
 更新処理は `plan → snapshot → apply → restart-per-kind → verify → report` の段階を持ちます。
