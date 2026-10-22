@@ -297,12 +297,15 @@ acp = ["agent-client-protocol==0.9.0"]
 # tools/lazy_deps.py (stt.mistral / tts.mistral) at first use — deliberately
 # NOT re-added to [all] so a future quarantined release can't break fresh
 # installs (see [all] policy comment below).
-mistral = ["mistralai==2.4.8"]
+# 2.10.0 removes the semantic-conventions cap that conflicts with the patched
+# OTLP SDK; retain the existing v2 audio interface and optional-install policy.
+mistral = ["mistralai==2.10.0"]
 # OTLP gateway monitoring export (optional). Provides the OpenTelemetry SDK +
 # OTLP/HTTP exporter for monitoring.gateway_health_export. Lazy-installed via
 # tools/lazy_deps.py on first use; never a core dependency and deliberately
 # NOT in [all].
-otlp = ["opentelemetry-sdk==1.39.1", "opentelemetry-exporter-otlp-proto-http==1.39.1"]
+# 1.45.1 fixes CVE-2026-114603 in the SDK's exact-pinned API dependency.
+otlp = ["opentelemetry-sdk==1.45.1", "opentelemetry-exporter-otlp-proto-http==1.45.1"]
 bedrock = ["boto3==1.42.89"]
 vertex = ["google-auth==2.58.0"]
 azure-identity = ["azure-identity==1.25.3"]
@@ -471,6 +474,13 @@ py-modules = [
 
 [tool.setuptools.packages.find]
 include = ["agent", "agent.*", "tools", "tools.*", "hermes_cli", "hermes_cli.*", "gateway", "gateway.*", "tui_gateway", "tui_gateway.*", "cron", "cron.*", "acp_adapter", "plugins", "plugins.*", "providers", "providers.*", "downstream", "downstream.*"]
+# Namespace discovery follows directories even when their names do not match
+# include. Prune JS dependency trees before walking their workspace links;
+# otherwise local editable builds scan them and can package plugin vendoring.
+exclude = [
+  "node_modules", "node_modules.*", "*.node_modules", "*.node_modules.*",
+  "apps.*", "vendor.*", "website.*", "ui-tui.*", "tmp.*", "output.*", "doc.*",
+]
 
 [tool.setuptools.package-data]
 hermes_cli = ["observability/schemas/*.json", "data/*.json"]
