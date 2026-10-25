@@ -53,4 +53,7 @@
 	url = https://github.com/zapabob/artemis.git
 [submodule "vendor/Familiar"]
 	path = vendor/familiar
-	url = https://github.com/Shoalstone/familiar.git
+	url = https://github.com/zapabob/familiar.git
+[submodule "plugins/rustxng"]
+	path = plugins/rustxng
+	url = https://github.com/zapabob/RustXNG.git
