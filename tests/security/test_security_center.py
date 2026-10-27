@@ -27,6 +27,7 @@ from downstream.security.engines import (
 )
 from downstream.security.cli import _watch_disable, _watch_enable, resume_watch_if_enabled
 from downstream.security import cli as security_cli
+from downstream.security import execution_gate
 from downstream.security import watch_state, watcher as security_watcher
 from downstream.security.execution_gate import _candidates, preflight_command
 from downstream.security.models import EngineState, Finding, ScanResult, Verdict
@@ -247,6 +248,25 @@ def test_execution_gate_finds_local_high_risk_arguments(tmp_path: Path) -> None:
     ignored = tmp_path / "notes.txt"
     ignored.write_text("notes", encoding="utf-8")
     assert _candidates(f"powershell -File {script.name} {ignored.name}", tmp_path) == [script]
+
+
+def test_execution_gate_resolves_only_the_path_command(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    executable = tmp_path / "bin" / "powershell.exe"
+    executable.parent.mkdir()
+    executable.write_bytes(b"safe fixture")
+    path_only_argument = executable.parent / "payload.ps1"
+    path_only_argument.write_bytes(b"safe fixture")
+    monkeypatch.setattr(
+        execution_gate.shutil,
+        "which",
+        lambda command, path=None: str(executable) if command == "powershell.exe" else None,
+    )
+
+    assert _candidates("powershell.exe -NoProfile -Command ok", tmp_path) == [executable]
+    assert _candidates("python -File payload.ps1", tmp_path) == []
 
 
 def test_execution_gate_returns_stable_shape_without_candidates(tmp_path: Path) -> None:

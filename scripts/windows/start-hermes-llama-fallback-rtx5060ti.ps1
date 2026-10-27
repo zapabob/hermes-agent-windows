@@ -21,6 +21,17 @@ $stamp = Get-Date -Format 'yyyyMMdd_HHmmss'
 $outLog = Join-Path $logDir "llama-rtx5060ti-$stamp.out.log"
 $errLog = Join-Path $logDir "llama-rtx5060ti-$stamp.err.log"
 
+# RTX 5060 Ti Blackwell Deterministic Clocks & Power Pinning
+try {
+    if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) {
+        Write-Output "Pinning RTX 5060 Ti Clocks (2850MHz / 14001MHz / 180W)..."
+        nvidia-smi -lgc 2850,2850 2>$null
+        nvidia-smi -lmc 14001,14001 2>$null
+        nvidia-smi -pl 180.00 2>$null
+    }
+} catch {
+    Write-Warning "GPU Clock pinning skipped or requires elevation: $($_.Exception.Message)"
+}
 # RTX 5060 Ti 16GB + installed llama-turboquant v10264.
 # The installed Agents-A1-4B F16 model uses ~10.3GB VRAM with this profile.
 $args = @(
@@ -30,7 +41,8 @@ $args = @(
     '--n-gpu-layers', '99',
     '--flash-attn', 'on',
     '--cache-type-k', 'turbo4', '--cache-type-v', 'turbo4',
-    '--parallel', '1', '--batch-size', '1024', '--ubatch-size', '256',
+    '--threads', '6',
+    '--parallel', '1', '--batch-size', '2048', '--ubatch-size', '512',
     '--reasoning', 'off', '--reasoning-budget', '0',
     '--jinja', '--cont-batching',
     '--spec-type', 'ngram-mod',

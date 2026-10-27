@@ -62,6 +62,18 @@ if ($existing) {
     Start-Sleep -Seconds 3
 }
 
+# RTX 5060 Ti Blackwell Deterministic Clocks & Power Pinning
+try {
+    if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) {
+        Write-Host "Pinning RTX 5060 Ti Clocks (2850MHz / 14001MHz / 180W)..."
+        nvidia-smi -lgc 2850,2850 2>$null
+        nvidia-smi -lmc 14001,14001 2>$null
+        nvidia-smi -pl 180.00 2>$null
+    }
+} catch {
+    Write-Warning "GPU Clock pinning skipped or requires elevation: $($_.Exception.Message)"
+}
+
 $logDir = Join-Path $env:LOCALAPPDATA "Temp\hermes-llama"
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 $stdoutPath = Join-Path $logDir "qwen38-stdout.log"
@@ -75,6 +87,9 @@ $serverArgs = @(
     # collapses from ~38 tok/s to ~6 tok/s. One slot keeps the full context per
     # request and keeps the KV cache resident.
     "--parallel", "$Parallel",
+    "--threads", "6",
+    "--batch-size", "2048",
+    "--ubatch-size", "512",
     # Let llama.cpp fit the GPU/CPU split while retaining GPU offload.
     # -CpuMoe additionally keeps MoE expert weights on the CPU.
     "--fit", "on",

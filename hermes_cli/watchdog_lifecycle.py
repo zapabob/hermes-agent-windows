@@ -26,13 +26,14 @@ def _encoded_operator_command(
     lease: WatchdogMaintenanceLease,
     project_root: Path,
     hermes_home: Path,
+    action: str,
 ) -> str:
     command = " ".join(
         (
             "&",
             _powershell_literal(script),
             "-Action",
-            _powershell_literal("Uninstall"),
+            _powershell_literal(action),
             "-MaintenanceFile",
             _powershell_literal(lease.path),
             "-MaintenanceNonce",
@@ -47,15 +48,16 @@ def _encoded_operator_command(
     return base64.b64encode(command.encode("utf-16-le")).decode("ascii")
 
 
-def decommission_for_uninstall(
+def _run_elevated_lifecycle(
     *,
     project_root: Path,
     hermes_home: Path,
     lease: WatchdogMaintenanceLease,
-) -> None:
-    """Stop and unregister the watchdog through an elevated, fenced path."""
+    action: str,
+    failure_prefix: str,
+) -> str:
     if sys.platform != "win32":
-        return
+        return ""
 
     script = (
         project_root
@@ -66,13 +68,14 @@ def decommission_for_uninstall(
     if not script.is_file():
         raise RuntimeError(f"Missing operator watchdog lifecycle script: {script}")
     if not lease.path.is_file():
-        raise RuntimeError("Watchdog maintenance state disappeared before uninstall")
+        raise RuntimeError("Watchdog maintenance state disappeared before lifecycle")
 
     encoded = _encoded_operator_command(
         script=script,
         lease=lease,
         project_root=project_root,
         hermes_home=hermes_home,
+        action=action,
     )
     elevate = (
         "$process = Start-Process -FilePath 'powershell.exe' "
@@ -101,6 +104,41 @@ def decommission_for_uninstall(
     if result.returncode != 0:
         detail = (result.stderr or result.stdout or "operator approval was denied").strip()
         raise RuntimeError(
-            "Could not decommission the Go watchdog for uninstall "
-            f"(exit {result.returncode}): {detail}"
+            f"{failure_prefix} (exit {result.returncode}): {detail}"
         )
+    return (result.stdout or "").strip()
+
+
+def decommission_for_uninstall(
+    *,
+    project_root: Path,
+    hermes_home: Path,
+    lease: WatchdogMaintenanceLease,
+) -> None:
+    """Stop and unregister the watchdog through an elevated, fenced path."""
+    _run_elevated_lifecycle(
+        project_root=project_root,
+        hermes_home=hermes_home,
+        lease=lease,
+        action="Uninstall",
+        failure_prefix="Could not decommission the Go watchdog for uninstall",
+    )
+
+
+def verify_acknowledgement(
+    *,
+    project_root: Path,
+    hermes_home: Path,
+    lease: WatchdogMaintenanceLease,
+) -> str:
+    """Verify UPDATE_PREPARE acknowledgement through the elevated authority path.
+
+    Does not stop the watchdog and does not invent acknowledgement records.
+    """
+    return _run_elevated_lifecycle(
+        project_root=project_root,
+        hermes_home=hermes_home,
+        lease=lease,
+        action="VerifyAcknowledgement",
+        failure_prefix="Could not verify Go watchdog maintenance acknowledgement",
+    )

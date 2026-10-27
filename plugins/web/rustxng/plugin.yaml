@@ -1,0 +1,7 @@
+name: web-rustxng
+version: 1.0.0
+description: "RustXNG — SearXNG-compatible metasearch engine in Rust. Self-hosted, privacy-respecting, 200+ search engines. Requires RUSTXNG_URL pointing to your instance."
+author: NousResearch
+kind: backend
+provides_web_providers:
+  - rustxng

@@ -1,0 +1,15 @@
+name: hermes-strata
+version: 1.0.0
+description: "Strata native local inference engine bridge — offload large model inference (DeepSeek MLA, Spin(8), arbitrary GGUF) and synchronize Hakua SOUL.md / MEMORY.md persistent memory."
+author: "zapabob"
+kind: standalone
+platforms: [windows, linux, macos]
+config:
+  base_url:
+    type: string
+    default: "http://127.0.0.1:8080/v1"
+    description: "Strata OpenAI-compatible inference API base URL."
+  strata_bin:
+    type: string
+    default: ""
+    description: "Path to strata engine executable or wrapper."

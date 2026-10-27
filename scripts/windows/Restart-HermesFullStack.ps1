@@ -19,8 +19,8 @@ param(
     [switch]$SkipGateway,
     [switch]$SkipTunnels,
     [int]$LlamaWaitSeconds = 300,
-    [string]$LlamaServerExe = "$env:LOCALAPPDATA\Programs\llama-turboquant\bin\llama-server.exe",
-    [string]$LlamaGgufPath = "C:\Users\downl\Desktop\SO8T\gguf_models\soyaakinohara\qwen3.8-27b-abliterated-3.69bpw-12GB-MTP.gguf\qwen3.8-27b-abliterated-3.69bpw-12GB-MTP.gguf",
+    [string]$LlamaServerExe = "$env:USERPROFILE\.hermes\llama\prism-b10826-c9c34bc\bin\llama-server.exe",
+    [string]$LlamaGgufPath = "C:\Users\downl\Desktop\SO8T\gguf_models\zapabobouj\Hikari-Bonsai-27B-Nimble-LoRA-GGUF\Hikari-LoRA-fixed-scale-PQ2_0.gguf",
     [int]$LlamaPort = 8080,
     # The launcher measures the model's real KV footprint and clamps this to
     # what stays resident in VRAM (a context whose KV does not fit is served
@@ -275,11 +275,23 @@ if (-not $SkipA2A -and (Test-Path -LiteralPath $A2ARoot)) {
     }
 }
 
+# RTX 5060 Ti Blackwell Deterministic Clocks & Power Pinning
+try {
+    if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) {
+        Write-Step "Pinning RTX 5060 Ti Clocks (2850MHz / 14001MHz / 180W)..."
+        nvidia-smi -lgc 2850,2850 2>$null
+        nvidia-smi -lmc 14001,14001 2>$null
+        nvidia-smi -pl 180.00 2>$null
+    }
+} catch {
+    Write-Warning "GPU Clock pinning skipped or requires elevation: $($_.Exception.Message)"
+}
+
 # --- Step 4: Start Qwen3.8-27B llama-server (min 65536 ctx) ---
 if (-not $SkipLlama) {
     $hotswapPreset = Join-Path $HermesHome "llama\models-hotswap-primary-secondary.ini"
     $hotswapScript = Join-Path $PSScriptRoot "start-llama-hotswap.ps1"
-    $qwenScript = Join-Path $PSScriptRoot "start-llama-qwen38-openmanus.ps1"
+    $qwenScript = Join-Path $PSScriptRoot "start-llama-hikari-prism.ps1"
 
     if ($UseHotswapRouter -and (Test-Path -LiteralPath $hotswapPreset) -and (Test-Path -LiteralPath $hotswapScript)) {
         Write-Step "Starting Llama Hot-Swap Router with preset ($hotswapPreset)..."

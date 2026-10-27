@@ -13,8 +13,8 @@ param(
     [switch]$SkipTunnels,
     [int]$StartupDelaySeconds = 0,
     [int]$LlamaWaitSeconds = 300,
-    [string]$LlamaServerExe = "$env:LOCALAPPDATA\Programs\llama-turboquant\bin\llama-server.exe",
-    [string]$LlamaGgufPath = "C:\Users\downl\Desktop\SO8T\gguf_models\soyaakinohara\qwen3.8-27b-abliterated-3.69bpw-12GB-MTP.gguf\qwen3.8-27b-abliterated-3.69bpw-12GB-MTP.gguf",
+    [string]$LlamaServerExe = "$env:USERPROFILE\.hermes\llama\prism-b10826-c9c34bc\bin\llama-server.exe",
+    [string]$LlamaGgufPath = "C:\Users\downl\Desktop\SO8T\gguf_models\zapabobouj\Hikari-Bonsai-27B-Nimble-LoRA-GGUF\Hikari-LoRA-fixed-scale-PQ2_0.gguf",
     [int]$LlamaPort = 8080,
     # The launcher measures the model's real KV footprint and clamps this to
     # what stays resident in VRAM (a context whose KV does not fit is served
@@ -54,12 +54,24 @@ if (-not (Test-Path -LiteralPath $PythonExe) -and (Test-Path -LiteralPath $Share
     $PythonExe = $SharedVenvPython
 }
 
+# RTX 5060 Ti Blackwell Deterministic Clocks & Power Pinning
+try {
+    if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) {
+        Write-Step "Pinning RTX 5060 Ti Clocks (2850MHz / 14001MHz / 180W)..."
+        nvidia-smi -lgc 2850,2850 2>$null
+        nvidia-smi -lmc 14001,14001 2>$null
+        nvidia-smi -pl 180.00 2>$null
+    }
+} catch {
+    Write-Warning "GPU Clock pinning skipped or requires elevation: $($_.Exception.Message)"
+}
+
 # 1. Start Qwen3.8-27B llama-server
 if (-not $SkipLlama) {
     $existingLlama = Get-Process -Name "llama-server" -ErrorAction SilentlyContinue
     if (-not $existingLlama) {
         Write-Step "Starting Qwen3.8-27B llama-server (port $LlamaPort, ctx $LlamaCtxSize, MTP speculative decoding)..."
-        $qwenScript = Join-Path $PSScriptRoot "start-llama-qwen38-openmanus.ps1"
+        $qwenScript = Join-Path $PSScriptRoot "start-llama-hikari-prism.ps1"
         if (Test-Path -LiteralPath $qwenScript) {
             & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $qwenScript `
                 -ServerExe $LlamaServerExe `

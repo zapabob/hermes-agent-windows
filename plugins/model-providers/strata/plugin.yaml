@@ -1,0 +1,5 @@
+name: strata-provider
+kind: model-provider
+version: 1.0.0
+description: "Strata — High-performance native local inference engine (DeepSeek V4.1 MLA, Spin(8), 32GB RAM)"
+author: "zapabob"

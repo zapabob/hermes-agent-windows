@@ -1,0 +1,59 @@
+[submodule "vendor/openclaw-mirror/AI-Scientist"]
+	path = vendor/openclaw-mirror/AI-Scientist
+	url = https://github.com/zapabob/AI-Scientist.git
+[submodule "vendor/openclaw-mirror/ATLAS"]
+	path = vendor/openclaw-mirror/ATLAS
+	url = https://github.com/zapabob/ATLAS.git
+[submodule "vendor/openclaw-mirror/ShinkaEvolve"]
+	path = vendor/openclaw-mirror/ShinkaEvolve
+	url = https://github.com/zapabob/ShinkaEvolve.git
+[submodule "vendor/neuro-sdk"]
+	path = vendor/neuro-sdk
+	url = https://github.com/zapabob/neuro-sdk.git
+[submodule "vendor/openmanus"]
+	path = vendor/openmanus
+	url = https://github.com/zapabob/OpenManus.git
+[submodule "vendor/SillyTavern"]
+	path = vendor/SillyTavern
+	url = https://github.com/zapabob/SillyTavern.git
+	branch = release
+[submodule "vendor/shinka-osint"]
+	path = vendor/shinka-osint
+	url = https://github.com/zapabob/ShinkaEvolve-OSINT.git
+[submodule "vendor/buzz"]
+	path = vendor/buzz
+	url = https://github.com/zapabob/buzz.git
+[submodule "vendor/officecli"]
+	path = vendor/officecli
+	url = https://github.com/zapabob/OfficeCLI.git
+[submodule "vendor/akari-video"]
+	path = vendor/akari-video
+	url = https://github.com/zapabob/akari-video.git
+[submodule "vendor/cloakbrowser"]
+	path = vendor/cloakbrowser
+	url = https://github.com/zapabob/cloakbrowser.git
+[submodule "vendor/airi"]
+	path = vendor/airi
+	url = https://github.com/zapabob/airi.git
+[submodule "vendor/oh-my-hermes"]
+	path = vendor/oh-my-hermes
+	url = https://github.com/zapabob/oh-my-hermes.git
+[submodule "vendor/OpenMausBot"]
+	path = vendor/OpenMausBot
+	url = https://github.com/zapabob/OpenMausBot.git
+	branch = main
+[submodule "plugins/hermes-bot-mode/desktop"]
+	path = plugins/hermes-bot-mode/desktop
+	url = https://github.com/zapabob/Hermes-Bot-Mode.git
+[submodule "vendor/heygen-cli"]
+	path = vendor/heygen-cli
+	url = https://github.com/heygen-com/heygen-cli.git
+[submodule "plugins/artemis"]
+	path = plugins/artemis
+	url = https://github.com/zapabob/artemis.git
+[submodule "vendor/Familiar"]
+	path = vendor/familiar
+	url = https://github.com/zapabob/familiar.git
+[submodule "plugins/rustxng"]
+	path = plugins/rustxng
+	url = https://github.com/zapabob/RustXNG.git

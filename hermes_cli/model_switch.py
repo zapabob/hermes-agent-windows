@@ -3380,6 +3380,8 @@ def list_authenticated_providers(
                 continue
             if ep_name.lower() in seen_slugs:
                 continue
+            if ep_name.lower() in _excluded:
+                continue
             display_name = coerce_provider_id(ep_cfg.get("name")) or ep_name
             api_url = (
                 ep_cfg.get("base_url", "")
@@ -3733,6 +3735,14 @@ def list_authenticated_providers(
                 continue
 
             raw_name = coerce_provider_id(entry.get("name"))
+            provider_key = str(entry.get("provider_key") or "").strip()
+            
+            # Check exclusion for custom provider entries
+            if raw_name and raw_name.lower() in _excluded:
+                continue
+            if provider_key and provider_key.lower() in _excluded:
+                continue
+            
             api_url = str(
                 entry.get("base_url", "")
                 or entry.get("url", "")

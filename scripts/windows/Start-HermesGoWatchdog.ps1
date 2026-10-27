@@ -9,6 +9,8 @@ param(
     [switch]$BuildIfMissing,
     [switch]$ForceRestart,
     [switch]$Stop,
+    # Elevated identity probe only: print owned-lock JSON and exit. Never starts or stops.
+    [switch]$VerifyOwnedLock,
     # Bound go build so restart-hermes-stack never hangs on go mod tidy / network.
     [int]$BuildTimeoutSec = 180,
     # Default skip go test for operator start path (full test via Build-HermesGoWatchdog.ps1).
@@ -388,6 +390,23 @@ function Stop-PsDesktopBackendWatchdog {
     # lock files are deliberately preserved: only their proven owner may
     # remove them, and the Go watchdog never consumes that lock namespace.
     Write-Verbose "Legacy Desktop/backend watchdog shim has no restart authority."
+}
+
+if ($VerifyOwnedLock) {
+    $state = Get-GoWatchdogLockState
+    if ($state.Status -ne "owned") {
+        throw ("Go watchdog lock is not owned: {0} ({1})" -f $state.Status, $state.Reason)
+    }
+    [pscustomobject]@{
+        status = "owned"
+        pid = [int]$state.Pid
+        processCreated = [uint64]$state.ProcessCreated
+        executablePath = [string]$state.ExecutablePath
+        repoRoot = [string]$state.RepoRoot
+        sessionId = [int]$state.SessionId
+        reason = [string]$state.Reason
+    } | ConvertTo-Json -Compress
+    exit 0
 }
 
 if ($Stop) {

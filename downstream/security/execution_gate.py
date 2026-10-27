@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +23,7 @@ _MAX_CANDIDATE_REFERENCE_LENGTH = 2048
 
 
 CandidateSnapshot = dict[str, tuple[str, int, FileIdentity | None]]
+CandidateReference = tuple[str, bool]
 
 
 class CommandGateResult(dict[str, Any]):
@@ -38,7 +41,7 @@ class CommandGateResult(dict[str, Any]):
         self.candidate_snapshot = candidate_snapshot
 
 
-def _candidate_references(command: str) -> tuple[list[str] | None, str | None]:
+def _candidate_references(command: str) -> tuple[list[CandidateReference] | None, str | None]:
     """Return literal script-like argv values and a fixed refusal reason.
 
     Shell interpolation and command substitution without a literal recognized
@@ -50,8 +53,8 @@ def _candidate_references(command: str) -> tuple[list[str] | None, str | None]:
         tokens = split_command_line(command)
     except ValueError:
         return None, "candidate_parse_failed"
-    references: list[str] = []
-    for raw in tokens:
+    references: list[CandidateReference] = []
+    for index, raw in enumerate(tokens):
         token = raw.strip("\"';&|()")
         if not token or "://" in token:
             continue
@@ -66,20 +69,44 @@ def _candidate_references(command: str) -> tuple[list[str] | None, str | None]:
         if Path(candidate).suffix.lower() in _SCANNED_SUFFIXES:
             if len(candidate) > _MAX_CANDIDATE_REFERENCE_LENGTH:
                 return None, "candidate_reference_too_long"
-            references.append(candidate)
+            references.append((candidate, index == 0 and candidate == token))
             if len(references) > _MAX_CANDIDATE_REFERENCES:
                 return None, "candidate_limit_exceeded"
     return references, None
 
 
-def _resolve_references(references: list[str], cwd: Path) -> tuple[list[Path], list[str]]:
+def _path_without_cwd(cwd: Path) -> str:
+    """Return PATH without entries that implicitly resolve from ``cwd``."""
+    cwd_key = os.path.normcase(os.path.realpath(os.path.abspath(cwd)))
+    entries: list[str] = []
+    for raw in os.environ.get("PATH", "").split(os.pathsep):
+        entry = raw.strip().strip('"')
+        if not entry or entry == ".":
+            continue
+        expanded = os.path.expandvars(os.path.expanduser(entry))
+        entry_key = os.path.normcase(os.path.realpath(os.path.abspath(expanded)))
+        if entry_key == cwd_key:
+            continue
+        entries.append(entry)
+    return os.pathsep.join(entries)
+
+
+def _resolve_references(
+    references: list[CandidateReference],
+    cwd: Path,
+) -> tuple[list[Path], list[str]]:
     found: list[Path] = []
     unresolved: list[str] = []
     seen: set[str] = set()
-    for token in references:
+    for token, allow_path_lookup in references:
         candidate = Path(token)
         if not candidate.is_absolute():
-            candidate = cwd / candidate
+            local_candidate = cwd / candidate
+            if allow_path_lookup and candidate.parent == Path(".") and not local_candidate.exists():
+                resolved_command = shutil.which(token, path=_path_without_cwd(cwd))
+                candidate = Path(resolved_command) if resolved_command else local_candidate
+            else:
+                candidate = local_candidate
         try:
             resolved = candidate.resolve(strict=True)
             if not resolved.is_file():

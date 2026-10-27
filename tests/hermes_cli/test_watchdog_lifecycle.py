@@ -32,11 +32,15 @@ def test_operator_script_requires_identity_bound_update_lease():
     source = LIFECYCLE_SCRIPT.read_text(encoding="utf-8")
 
     assert "Test-IsElevatedOperator" in source
-    assert '[string]$state.state -ne "UPDATE"' in source
+    assert 'ValidateSet("Uninstall", "VerifyAcknowledgement")' in source
+    assert "$requiredState" in source
+    assert "UPDATE_PREPARE" in source
     assert "$state.nonce" in source
     assert "$state.repoRoot" in source
     assert "$state.processStartTime" in source
     assert "leaseExpiresAt" in source
+    assert "-VerifyOwnedLock" in source
+    assert "does not match the maintenance lease" in source
 
 
 def test_operator_script_disables_before_exact_stop_and_unregisters_after():
@@ -49,6 +53,7 @@ def test_operator_script_disables_before_exact_stop_and_unregisters_after():
     assert "Refusing to alter a foreign scheduled task" in source
     assert disable < stop < unregister
     assert "ForceRestart" not in source
+    assert source.index("VerifyAcknowledgement") < disable
 
 
 def test_lifecycle_runner_uses_uac_and_hides_nonce_in_encoded_command(
@@ -79,7 +84,37 @@ def test_lifecycle_runner_uses_uac_and_hides_nonce_in_encoded_command(
     encoded = outer.split("'-EncodedCommand','", 1)[1].split("'", 1)[0]
     inner = base64.b64decode(encoded).decode("utf-16-le")
     assert "Invoke-HermesGoWatchdogLifecycle.ps1" in inner
+    assert "-Action 'Uninstall'" in inner
     assert "-MaintenanceNonce 'test-nonce'" in inner
+
+
+def test_verify_acknowledgement_uses_elevated_verify_action(tmp_path, monkeypatch):
+    lease = _lease(tmp_path)
+    calls = []
+    monkeypatch.setattr(watchdog_lifecycle.sys, "platform", "win32")
+    monkeypatch.setattr(
+        watchdog_lifecycle.subprocess,
+        "run",
+        lambda argv, **kwargs: calls.append((argv, kwargs))
+        or type(
+            "Result",
+            (),
+            {"returncode": 0, "stdout": '{"acknowledged":true}', "stderr": ""},
+        )(),
+    )
+
+    out = watchdog_lifecycle.verify_acknowledgement(
+        project_root=REPO_ROOT,
+        hermes_home=tmp_path,
+        lease=lease,
+    )
+
+    assert out == '{"acknowledged":true}'
+    outer = calls[0][0][-1]
+    encoded = outer.split("'-EncodedCommand','", 1)[1].split("'", 1)[0]
+    inner = base64.b64decode(encoded).decode("utf-16-le")
+    assert "-Action 'VerifyAcknowledgement'" in inner
+    assert "-Verb RunAs" in outer
 
 
 def test_lifecycle_runner_fails_closed_when_operator_path_fails(
