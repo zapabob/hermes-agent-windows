@@ -1,6 +1,14 @@
+import { createRequire } from 'node:module'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import fs from 'node:fs'
 import { defineConfig } from 'vite'
 import babel from '@rolldown/plugin-babel'
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+
+// Vite's native ESM config loader does not provide `__dirname`.
+const __dirname = import.meta.dirname ?? path.dirname(fileURLToPath(import.meta.url))
 
 /** React Compiler preset scoped to modules that can actually contain
  *  components/hooks (JSX syntax or a react-ish import). The preset's default
@@ -13,10 +21,6 @@ function compilerPreset() {
   preset.rolldown.filter.code = /\/>|<\/|from\s*['"][^'"]*react/
   return preset
 }
-import tailwindcss from '@tailwindcss/vite'
-import path from 'path'
-import fs from 'fs'
-import { createRequire } from 'module'
 
 // `hgui` symlinks a worktree's node_modules to the main checkout. Vite realpaths
 // those before enforcing server.fs.allow, so codicon/font assets resolve outside

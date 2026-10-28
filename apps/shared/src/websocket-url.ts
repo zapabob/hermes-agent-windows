@@ -118,7 +118,10 @@ function readWindowLocation(): { host: string; protocol: string } {
   return { host: window.location.host, protocol: window.location.protocol }
 }
 
-function normalizeBasePath(basePath: string | undefined): string {
+/** The `native_dial` value on the browser-hosted Desktop's own socket URL. */
+export const BROWSER_NATIVE_DIAL = 'browser'
+
+export function normalizeBasePath(basePath: string | undefined): string {
   if (!basePath) {
     return ''
   }

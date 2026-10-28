@@ -104,7 +104,17 @@ export {
   WINDOWS_GLASS_MIN_BUILD,
   type WindowsBackgroundMaterial
 } from './translucency'
+export { externalUrlTarget } from './external-url'
+export { fileUrlToNativePath } from './file-url'
 export {
+  isStableOpen,
+  RECONNECT_STABLE_OPEN_MS,
+  reconnectBackoffDelayMs,
+  type ReconnectBackoffOptions
+} from './reconnect-backoff'
+export { randomUuid } from './session-http-mutations'
+export {
+  BROWSER_NATIVE_DIAL,
   buildHermesWebSocketUrl,
   type GatewayAuthMode,
   GatewayReauthRequiredError,
@@ -112,6 +122,7 @@ export {
   type GatewayWsUrlResult,
   type HermesWebSocketUrlOptions,
   isGatewayReauthRequired,
+  normalizeBasePath,
   resolveGatewayWsUrl,
   type ResolveGatewayWsUrlDeps,
   type WebSocketAuthParam
