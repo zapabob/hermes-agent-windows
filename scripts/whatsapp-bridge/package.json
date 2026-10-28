@@ -15,9 +15,9 @@
   },
   "overrides": {
     "protobufjs": "^7.5.5",
-    "body-parser": "1.20.6",
+    "body-parser": "1.20.9",
     "proxy-addr": "2.0.8",
-    "qs": "6.16.0",
+    "qs": "6.17.0",
     "sharp": "0.35.5",
     "music-metadata": "11.16.0"
   }

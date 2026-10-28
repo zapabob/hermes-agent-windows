@@ -16,6 +16,20 @@ import { createPluginFiles, type PluginFiles } from './plugin-files'
 const posix = process.platform !== 'win32'
 const unprivileged = posix && process.getuid?.() !== 0
 
+/** Win32 8.3 vs long-path equality for mock triggers (CI often mixes both). */
+const sameFsPath = (left: fs.PathLike, right: string): boolean => {
+  const a = String(left)
+  if (a === right) return true
+  if (process.platform !== 'win32') return false
+  const fold = (value: string) => value.replace(/\//g, '\\').toLowerCase()
+  if (fold(a) === fold(right)) return true
+  try {
+    return fold(fs.realpathSync.native(a)) === fold(fs.realpathSync.native(right))
+  } catch {
+    return false
+  }
+}
+
 let scratch: string
 let userData: string
 let hermesHome: string
@@ -151,7 +165,7 @@ describe('a swap between the check and the open is refused', () => {
       try {
         return await original(target, options)
       } finally {
-        if (!done && String(target) === checked) {
+        if (!done && sameFsPath(target, checked)) {
           done = true
           swap()
         }
@@ -219,7 +233,7 @@ describe('a swap before the final look is refused too', () => {
       try {
         return await original(target)
       } finally {
-        if (!done && String(target) === checked) {
+        if (!done && sameFsPath(target, checked)) {
           done = true
           swap()
         }
@@ -298,7 +312,7 @@ describe('rename, trash and list after a parent swap', () => {
       try {
         return await original(target, options)
       } finally {
-        if (String(target) === entry && ++seen === 2) {
+        if (sameFsPath(target, entry) && ++seen === 2) {
           fs.renameSync(notes, `${notes}-old`)
           linkDir(hermesHome, notes)
         }
@@ -412,7 +426,7 @@ describe('Hermes data mounted inside a granted folder', () => {
     vi.spyOn(fs.promises, 'stat').mockImplementation((async (target: fs.PathLike, options?: never) => {
       const real = await original(target, options)
 
-      return String(target) === mounted
+      return sameFsPath(target, mounted)
         ? Object.assign(Object.create(Object.getPrototypeOf(real)), real, { dev: home.dev, ino: home.ino })
         : real
     }) as never)
