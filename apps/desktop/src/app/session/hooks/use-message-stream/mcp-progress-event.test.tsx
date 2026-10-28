@@ -24,19 +24,20 @@ describe('MCP tool.progress events', () => {
         sessionInterrupted,
         updateSessionState,
         upsertToolCall
-      } as GatewayEventContext['deps'],
+      } as unknown as GatewayEventContext['deps'],
       payload: {
         tool_id: 'call-a',
         name: 'mcp__demo__work',
         progress: 3,
         total: 10,
         preview: 'step'
-      },
+      } as GatewayEventContext['payload'],
       sessionId: 'sess-1',
+      explicitSid: 'sess-1',
       isActiveEvent: true,
       occurredAt: 1,
       ...partial
-    }
+    } as GatewayEventContext
   }
 
   it('routes tool.progress to the running tool row for the call id', () => {

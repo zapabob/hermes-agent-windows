@@ -104,6 +104,10 @@ export type GatewayEventPayload = {
   context?: string
   input?: unknown
   preview?: string
+  /** MCP / long tool progress numerator (tool.progress). */
+  progress?: number
+  /** MCP / long tool progress denominator (tool.progress). */
+  total?: number
   result?: unknown
   summary?: string
   error?: string | boolean
