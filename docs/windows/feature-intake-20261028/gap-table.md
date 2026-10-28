@@ -16,7 +16,7 @@
 | T08 | vault keychain | IMPLEMENTED (native E2E UNIT-LEVEL ONLY / CI-lane NOT_RUN) | upstream `e5ea5fd9` を選択移植: `agent/vault_keychain.py` + `vault_errors.py` + `vault_store` 鍵保管/移行/跨process lock + `hermes vault key [migrate --to file\|keychain]` + `vault.key_storage` 既定file + `create_profile --clone-all` 鍵所有。`output/reports/feature-intake-20261028/T08_vault-keychain.md` | write→readback→復号→pointer commit→旧鍵削除。鍵欠落時に新規鍵を作らない。明示keychain失敗はfile fallbackせずerror | `keyring` extra の pyproject/uv.lock 宣言（他worker編集中のため未着手）, Windows CI lane E2E, Desktop UI |
 | T09 | R08 ctx.files | IMPLEMENTED (Windows E2E NOT_RUN) | upstream `e5ea5fd9` を選択移植: `electron/plugin-files{,-ops,-guards,-ipc,-roots}.ts` + `src/contrib/plugin-files.ts` + `fs-ipc`/`preload`/`global.d.ts`/`createPluginContext`。electron 164✓ 16skip（host条件）/ UI 12✓ / mutation 6件検出。output/reports/feature-intake-20261028/T09_ctx-files.md | picker専用grant / handle・plugin ID別 / Windows path別表記・junction・hardlink拒否 / 合成protected roots / list上限はerror / 不正grants.json fail-closed / **exact BigInt identity**（NTFS id > 2^53 の丸め不具合を修正） | 実picker・ゴミ箱・file symlink(権限)・local→remote E2E、grant一覧UI/uninstall連動revoke未配線、senderは app window 検証なし |
 | T10 | post_compaction hook | IMPLEMENTED (E2E NOT_RUN) | VALID_HOOKS + fire_post_compaction + durable notify配線 | commit後1回 | Windows listener E2E |
-| T04 | advanced delegation | DEFERRED | M2。今回scope外 | — | M1安定後 |
+| T04 | advanced delegation | IMPLEMENTED | unit PASS（48+3）。live E2E NOT_RUN | `agent/delegation_*`, `tools/delegate_tool_routes.py`, `plugins/advanced_delegation` | Desktop `/delegation` UXは任意follow-up |
 | T11–T14 | prepared/download/sleep/webapp | DEFERRED | M2/M3。今回scope外 | — | 指定時のみ |
 
 ## CodeGraph notes

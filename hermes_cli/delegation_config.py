@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 # Keys the dedicated subagent UI may set. Unknown keys are rejected so a
 # typo cannot silently widen the surface.
 _EDITABLE_KEYS = frozenset({
+    "backend",
+    "backends",
     "model",
     "provider",
     "base_url",
@@ -35,6 +37,8 @@ _EDITABLE_KEYS = frozenset({
 
 # Schema / tool-capability affecting — take effect on the next session.
 SCHEMA_AFFECTING_KEYS = frozenset({
+    "backend",
+    "backends",
     "max_concurrent_children",
     "max_spawn_depth",
     "orchestrator_enabled",
@@ -191,6 +195,35 @@ def validate_delegation_draft(draft: Mapping[str, Any]) -> dict[str, Any]:
 
     if "fallback_providers" in draft:
         out["fallback_providers"] = _normalize_fallback_providers(draft["fallback_providers"])
+
+    if "backend" in draft:
+        backend = draft["backend"]
+        if backend is None:
+            backend = "default"
+        if not isinstance(backend, str) or not backend.strip():
+            raise DelegationConfigError("backend must be a non-empty string")
+        out["backend"] = backend.strip().lower()
+
+    if "backends" in draft:
+        backends = draft["backends"]
+        if backends is None:
+            out["backends"] = {}
+        elif not isinstance(backends, Mapping):
+            raise DelegationConfigError("backends must be an object")
+        else:
+            cleaned_backends: dict[str, Any] = {}
+            for name, block in backends.items():
+                if not isinstance(name, str) or not name.strip():
+                    raise DelegationConfigError("backends keys must be non-empty strings")
+                if block is None:
+                    cleaned_backends[name.strip().lower()] = {}
+                elif not isinstance(block, Mapping):
+                    raise DelegationConfigError(
+                        f"backends.{name} must be an object"
+                    )
+                else:
+                    cleaned_backends[name.strip().lower()] = dict(block)
+            out["backends"] = cleaned_backends
 
     return out
 

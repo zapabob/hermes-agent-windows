@@ -1,0 +1,5 @@
+name: advanced_delegation
+version: 1.0.0
+description: "Advanced delegation backends: model_map and profile_routes."
+author: Hermes Agent
+kind: backend

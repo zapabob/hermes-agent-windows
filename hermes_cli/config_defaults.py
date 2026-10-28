@@ -2116,11 +2116,13 @@ DEFAULT_CONFIG = {
         },
     },
 
-    # Subagent delegation — override the provider:model used by delegate_task
-    # so child agents can run on a different (cheaper/faster) provider and model.
-    # Uses the same runtime provider resolution as CLI/gateway startup, so all
-    # configured providers (OpenRouter, Nous, Z.ai, Kimi, etc.) are supported.
+    # Subagent delegation: `backend` selects the task-routing strategy
+    # ("default" uses the keys below; plugins may add model_map / profile_routes).
+    # `backends.<name>` holds that strategy's own settings. Schema-affecting
+    # backend switches apply on the next session (prompt-cache safe).
     "delegation": {
+        "backend": "default",  # routing strategy; unknown values fail closed (no silent default)
+        "backends": {},        # per-backend settings keyed by backend name
         "model": "",       # e.g. "google/gemini-3-flash-preview" (empty = inherit parent model)
         "provider": "",    # e.g. "openrouter" (empty = inherit parent provider + credentials)
         "base_url": "",    # direct OpenAI-compatible endpoint for subagents
