@@ -26,6 +26,11 @@ _HERMES_HOME_OVERRIDE: ContextVar[str | object] = ContextVar(
 INDICATOR_STYLES: tuple[str, ...] = ("ascii", "emoji", "kaomoji", "unicode")
 DEFAULT_INDICATOR_STYLE: str = "kaomoji"
 
+# Browser Webapp chat attachments (staged uploads / body cap).
+WEBAPP_ATTACHMENT_MAX_BYTES: int = 16 * 1024 * 1024
+
+_DELETED_PROFILES_DIR = ".deleted"
+
 
 def named_profile_home(path: str | Path) -> Path | None:
     """Return ``<root>/profiles/<name>`` when *path* is that home or under it."""
@@ -56,6 +61,24 @@ def profile_name_for_home(path: str | Path | None) -> str | None:
     except (OSError, RuntimeError, ValueError):
         return None
     return None
+
+
+def profile_tombstone_path(profile_home: Path) -> Path:
+    return Path(profile_home).parent / _DELETED_PROFILES_DIR / Path(profile_home).name
+
+
+def named_profile_is_deleted(profile_home: str | Path) -> bool:
+    return profile_tombstone_path(Path(profile_home)).exists()
+
+
+def assert_named_profile_home_live(path: str | Path) -> None:
+    """Refuse missing or tombstoned named profile homes."""
+    home = named_profile_home(path)
+    if home is not None and (named_profile_is_deleted(home) or not home.exists()):
+        raise FileNotFoundError(
+            f"Named profile home does not exist: {home}. "
+            "Create the profile explicitly before using it."
+        )
 
 
 def set_hermes_home_override(path: str | Path | None) -> Token:

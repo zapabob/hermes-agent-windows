@@ -1,3 +1,7 @@
+// Install the loopback browser host before any store/App modules evaluate.
+// Electron preload remains authoritative: installBrowserDesktopBridge() is a
+// no-op when window.hermesDesktop already exists.
+import './lib/browser-desktop-bridge-install'
 import './styles.css'
 // Side-effect: reports in-flight turns to the main process for the quit guard.
 import './store/active-work'

@@ -913,6 +913,56 @@ def should_require_dashboard_auth(
     )
 
 
+
+def public_url_hosts(public_url: Optional[str]) -> frozenset[str]:
+    """Exact hostname set declared by a listener's own public URL, else empty."""
+    if not public_url:
+        return frozenset()
+    try:
+        hostname = urllib.parse.urlparse(public_url).hostname
+    except ValueError:
+        return frozenset()
+    if not hostname:
+        return frozenset()
+    return frozenset({hostname.lower()})
+
+
+def _desktop_loopback_auth_exempt(
+    host: str,
+    ssh_session_token: Optional[str],
+    ssh_owner_nonce: Optional[str],
+) -> bool:
+    """Desktop-owned loopback with a per-spawn session token skips ticket gate."""
+    return (
+        host in _LOOPBACK_HOST_VALUES
+        and bool(ssh_session_token)
+        and bool(ssh_owner_nonce)
+    )
+
+
+def _configure_auth_gate(
+    host: str,
+    allow_public: bool,
+    ssh_session_token: Optional[str],
+    ssh_owner_nonce: Optional[str],
+) -> None:
+    """Resolve trusted public hosts + auth-gate flag onto ``app.state``."""
+    own_url = getattr(app.state, "listener_public_url", None)
+    app.state.trusted_public_hosts = (
+        _dashboard_public_hosts() if own_url is None else public_url_hosts(own_url)
+    )
+    if own_url is None and _desktop_loopback_auth_exempt(host, ssh_session_token, ssh_owner_nonce):
+        app.state.auth_required = should_require_auth(host)
+    else:
+        app.state.auth_required = should_require_dashboard_auth(host, app.state.trusted_public_hosts)
+    if allow_public and host not in _LOOPBACK_HOST_VALUES:
+        _log.warning(
+            "--insecure no longer bypasses dashboard authentication. A "
+            "non-loopback bind (%s) now ALWAYS requires an auth provider.",
+            host,
+        )
+
+
 def _host_header_hostname(host_header: str) -> str:
     """Return a normalized hostname from a valid HTTP Host authority.
 
@@ -18596,7 +18646,11 @@ def mount_spa(application: FastAPI):
     # them unconditionally makes the dashboard recover the moment a build
     # appears on disk — no restart needed.
 
-    _index_path = WEB_DIST / "index.html"
+    def _active_web_dist():
+        dist = getattr(application.state, "web_dist", None)
+        return Path(dist) if dist else WEB_DIST
+
+    _index_path = _active_web_dist() / "index.html"
 
     def _serve_index(prefix: str = ""):
         """Return index.html with the session token + base-path injected.
@@ -18625,12 +18679,23 @@ def mount_spa(application: FastAPI):
         chat_js = "true" if _DASHBOARD_EMBEDDED_CHAT_ENABLED else "false"
         gated = bool(getattr(app.state, "auth_required", False))
         gated_js = "true" if gated else "false"
-        if gated:
+        from hermes_cli.web_server_surface import surface as _ui_surface_of
+        ui_surface = _ui_surface_of(application.state)
+        surface_js = json.dumps(ui_surface)
+        try:
+            from hermes_cli.web_server_profiles import serving_profile_name
+            profile_js = json.dumps(serving_profile_name() or "")
+        except Exception:
+            profile_js = '""'
+        withhold = bool(getattr(application.state, "withhold_session_token", False)) or ui_surface == "webapp"
+        if gated or withhold:
             bootstrap_script = (
                 f"<script>"
                 f"window.__HERMES_DASHBOARD_EMBEDDED_CHAT__={chat_js};"
                 f'window.__HERMES_BASE_PATH__="{prefix}";'
                 f"window.__HERMES_AUTH_REQUIRED__={gated_js};"
+                f"window.__HERMES_UI_SURFACE__={surface_js};"
+                f"window.__HERMES_DASHBOARD_PROFILE__={profile_js};"
                 f"</script>"
             )
         else:
@@ -18639,6 +18704,8 @@ def mount_spa(application: FastAPI):
                 f"window.__HERMES_DASHBOARD_EMBEDDED_CHAT__={chat_js};"
                 f'window.__HERMES_BASE_PATH__="{prefix}";'
                 f"window.__HERMES_AUTH_REQUIRED__={gated_js};"
+                f"window.__HERMES_UI_SURFACE__={surface_js};"
+                f"window.__HERMES_DASHBOARD_PROFILE__={profile_js};"
                 f"</script>"
             )
         if prefix:
@@ -18675,9 +18742,9 @@ def mount_spa(application: FastAPI):
     # when a prefix is in play.
     @application.get("/assets/{filename}.css")
     async def serve_css(filename: str, request: Request):
-        css_path = WEB_DIST / "assets" / f"{filename}.css"
+        css_path = _active_web_dist() / "assets" / f"{filename}.css"
         if not css_path.is_file() or not css_path.resolve().is_relative_to(
-            WEB_DIST.resolve()
+            _active_web_dist().resolve()
         ):
             return JSONResponse({"error": "not found"}, status_code=404)
         prefix = _normalise_prefix(request.headers.get("x-forwarded-prefix"))
@@ -18715,7 +18782,7 @@ def mount_spa(application: FastAPI):
         # check_dir=False: the dist (and its assets/ dir) may not exist yet —
         # the whole point of the dynamic recheck (#82614). StaticFiles then
         # 404s per-request until a build appears instead of raising at mount.
-        _ImmutableAssetFiles(directory=WEB_DIST / "assets", check_dir=False),
+        _ImmutableAssetFiles(directory=_active_web_dist() / "assets", check_dir=False),
         name="assets",
     )
 
@@ -18733,11 +18800,11 @@ def mount_spa(application: FastAPI):
                 {"detail": f"No such API endpoint: /{full_path}"},
                 status_code=404,
             )
-        file_path = WEB_DIST / full_path
+        file_path = _active_web_dist() / full_path
         # Prevent path traversal via url-encoded sequences (%2e%2e/)
         if (
             full_path
-            and file_path.resolve().is_relative_to(WEB_DIST.resolve())
+            and file_path.resolve().is_relative_to(_active_web_dist().resolve())
             and file_path.exists()
             and file_path.is_file()
         ):
@@ -20062,8 +20129,10 @@ _mount_plugin_api_routes()
 
 # Desktop Settings → Web access: status/start/stop/restart for the gateway-served Webapp.
 from hermes_cli.web_routers import webapp_access as _webapp_access_routes  # noqa: E402
+from hermes_cli.web_routers import webapp as _webapp_routes  # noqa: E402
 
 app.include_router(_webapp_access_routes.router)
+app.include_router(_webapp_routes.router)
 
 # Mount the dashboard auth routes (/login, /auth/*, /api/auth/*) before the
 # SPA catch-all so /{full_path:path} doesn't swallow them.  These are

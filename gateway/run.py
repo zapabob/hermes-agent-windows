@@ -32926,6 +32926,19 @@ async def start_gateway(config: Optional[GatewayConfig] = None, replace: bool = 
     )
     housekeeping_thread.start()
 
+    # Webapp / private gateway HTTP+WS listener (Settings → Web access).
+    # Prefer the configured webapp.port; fall back to a private ephemeral bind
+    # when that port is busy — never kill the occupant.
+    try:
+        from gateway.webapp_runtime import start_gateway_runtime_api
+
+        await start_gateway_runtime_api(runner)
+    except Exception:
+        logger.exception(
+            "Gateway HTTP/WS listener failed to start (Webapp / session API); "
+            "messaging adapters continue without it"
+        )
+
     # READY is emitted only after adapters, cron, and housekeeping have all
     # reached their running boundary. Missing config/systemd runtime state
     # leaves the watchdog disabled without changing gateway behavior.
@@ -32935,6 +32948,19 @@ async def start_gateway(config: Optional[GatewayConfig] = None, replace: bool = 
 
     # Wait for shutdown
     await runner.wait_for_shutdown()
+
+    # Tear down the Webapp / private HTTP+WS listener before the control socket
+    # so a successor can rebind webapp.port immediately.
+    session_api = getattr(runner, "session_api", None)
+    if session_api is not None:
+        try:
+            from gateway.run_api import stop_gateway_api
+
+            await stop_gateway_api(session_api)
+        except Exception:
+            logger.debug("Gateway HTTP/WS listener stop failed (non-fatal)", exc_info=True)
+        finally:
+            runner.session_api = None
 
     # Stop the control socket first: once shutdown begins this process is no
     # longer a truthful "the gateway is serving here" answer, and a successor

@@ -14,10 +14,17 @@ import logging
 import time
 from typing import Callable, Dict, Optional, Tuple
 
+from starlette.websockets import WebSocketDisconnect
+
 WS_CLOSE_PROCESS_EXITED = 4410
 WS_CLOSE_SUPERSEDED = 4409
 TUI_FORCE_REDRAW = b"\x0c"
 logger = logging.getLogger(__name__)
+
+WS_CLOSE_VIEWER_STALLED = 1001
+WS_CLOSE_VIEWER_STALLED_REASON = "Terminal viewer stopped reading; reconnect"
+_VIEWER_SEND_TIMEOUT_SECONDS = 5.0
+_VIEWER_SEND_ERRORS = (WebSocketDisconnect, RuntimeError, OSError)
 
 
 def _bridge_exited(bridge) -> bool:
