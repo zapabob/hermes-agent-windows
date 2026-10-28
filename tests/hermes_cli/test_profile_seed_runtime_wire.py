@@ -125,6 +125,12 @@ def test_new_profile_first_turn_and_fresh_resume_use_the_inherited_route(tmp_pat
             args.func(args)
             target = profiles.get_profile_dir("child")
         elif entry == "rpc":
+            # tui_gateway.server import-time prefetch hits api.github.com via
+            # hermes_cli.banner.prefetch_update_check (daemon thread). Keep this
+            # network-isolation fixture offline by stubbing before first import.
+            import hermes_cli.banner as banner
+
+            monkeypatch.setattr(banner, "prefetch_update_check", lambda: None)
             import tui_gateway.server as gateway
             response = gateway._methods["profiles.create"]("owned", {"name": "child", "no_skills": True, "share_auth": True})
             assert "error" not in response, response
