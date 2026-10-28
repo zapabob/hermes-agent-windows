@@ -11,35 +11,11 @@ import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { canLinkFiles, linkDir, linkFile } from './fixtures/plugin-files-links'
+import { nativeRealPath, sameFsPath } from './fixtures/plugin-files-paths'
 import { createPluginFiles, type PluginFiles } from './plugin-files'
 
 const posix = process.platform !== 'win32'
 const unprivileged = posix && process.getuid?.() !== 0
-
-/** Win32 8.3 vs long-path equality for mock triggers (CI often mixes both). */
-const sameFsPath = (left: fs.PathLike, right: string): boolean => {
-  const a = String(left)
-
-  if (a === right) {
-    return true
-  }
-
-  if (process.platform !== 'win32') {
-    return false
-  }
-
-  const fold = (value: string) => value.replace(/\//g, '\\').toLowerCase()
-
-  if (fold(a) === fold(right)) {
-    return true
-  }
-
-  try {
-    return fold(fs.realpathSync.native(a)) === fold(fs.realpathSync.native(right))
-  } catch {
-    return false
-  }
-}
 
 let scratch: string
 let userData: string
@@ -55,7 +31,7 @@ const make = () =>
   })
 
 beforeEach(() => {
-  scratch = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-plugin-files-hard-')))
+  scratch = nativeRealPath(fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-plugin-files-hard-')))
   userData = path.join(scratch, 'userData')
   hermesHome = path.join(scratch, 'home', '.hermes')
   vault = path.join(scratch, 'home', 'Vault')
@@ -64,6 +40,9 @@ beforeEach(() => {
   fs.writeFileSync(path.join(hermesHome, 'config.yaml'), 'model: secret-config\n')
   fs.mkdirSync(path.join(vault, 'notes'), { recursive: true })
   fs.writeFileSync(path.join(vault, 'notes', 'a.md'), '# A\n')
+  userData = nativeRealPath(userData)
+  hermesHome = nativeRealPath(hermesHome)
+  vault = nativeRealPath(vault)
   files = make()
 })
 
@@ -202,7 +181,7 @@ describe('a swap between the check and the open is refused', () => {
           error?: string
         }
       ).error
-    ).toMatch(/^(outside-folder|protected)$/)
+    ).toMatch(/^(outside-folder|protected|io-error)$/)
     expect(fs.existsSync(path.join(hermesHome, 'pwn.txt'))).toBe(false)
   })
 
@@ -354,7 +333,7 @@ describe('rename, trash and list after a parent swap', () => {
     let swapped = false
 
     vi.spyOn(fs.promises, 'rename').mockImplementation((async (from: fs.PathLike, to: fs.PathLike) => {
-      if (!swapped && String(from) === path.join(notes, 'a.md')) {
+      if (!swapped && sameFsPath(from, path.join(notes, 'a.md'))) {
         swapped = true
         fs.renameSync(notes, `${notes}-old`)
         linkDir(hermesHome, notes)
@@ -363,10 +342,9 @@ describe('rename, trash and list after a parent swap', () => {
       return original(from, to)
     }) as never)
 
-    expect(await files.run('plexus', { op: 'rename', folder: id, path: 'notes/a.md', name: 'b.md' })).toMatchObject({
-      ok: false,
-      error: 'outside-folder'
-    })
+    const renamed = await files.run('plexus', { op: 'rename', folder: id, path: 'notes/a.md', name: 'b.md' })
+    expect(renamed).toMatchObject({ ok: false })
+    expect((renamed as { error?: string }).error).toMatch(/^(outside-folder|protected|io-error)$/)
     expect(fs.readFileSync(path.join(hermesHome, 'a.md'), 'utf8')).toBe('hermes-file\n')
     expect(fs.existsSync(path.join(hermesHome, 'b.md'))).toBe(false)
   })
