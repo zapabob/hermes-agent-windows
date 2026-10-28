@@ -1487,6 +1487,10 @@ _SLACK_VIA_HERMES_ONLY = frozenset(
         "whoami",
         "platform",
         "busy",
+        # Delegation backend picker (T04) — Telegram/Desktop native; Slack
+        # keeps the 50-slash budget for higher-traffic verbs and reaches
+        # this via `/hermes delegation`.
+        "delegation",
     }
 )
 

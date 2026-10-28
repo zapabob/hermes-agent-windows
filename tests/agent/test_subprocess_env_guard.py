@@ -108,17 +108,19 @@ APPROVED_IMPLICIT_SPAWN_BASELINES = {
     "downstream": ("b621fff921a4ef51bb6a3315030d8a5b7a0965aaa112e3d26b0dce20e1a478a2", LEGACY_IMPLICIT_RATIONALE),
     "gateway": ("7c888db74531e5ade41e806eb9ae704b5657b00c27fbe36a00e547d5f7ca6c78", LEGACY_IMPLICIT_RATIONALE),
     # Hypura harness daemon launch switched DETACHED_PROCESS → windows_detach_flags
-    # (CREATE_NO_WINDOW + explicit env=); implicit-spawn fingerprint refreshed.
-    "hermes_cli": ("653329ae966667ce5607f92b4b15612c34379deee84282f26b295cf28f0098ce", LEGACY_IMPLICIT_RATIONALE),
+    # (CREATE_NO_WINDOW + explicit env=); refreshed again after T04 /delegation
+    # Slack via-hermes routing and related CLI command-registry edits.
+    "hermes_cli": ("26f489adfda65b336effc08e85b0a36db1f5ef7f3619e6612c14b28e3017cf8c", LEGACY_IMPLICIT_RATIONALE),
     "hermes_constants.py": (
         "5b23578a51cafa9b8233e03e7bdddf96a68954014b2cfeae2b1da311ee734704",
         LEGACY_IMPLICIT_RATIONALE,
     ),
-    # #110 irodori/TTS cleanup adjusted plugin spawn sites (explicit env paths).
-    "plugins": ("d97964b55eebff2d63b9b85b0b6170bb0af033e84408b7c22f84855c2bd6148f", LEGACY_IMPLICIT_RATIONALE),
-    # Existing memory cron now excludes X imports; existing price utility
-    # uses curl for public read-only searches with --max-time=45.
-    "scripts": ("faae2347ba9a9237eed1776d1a0ff1a7bf87b8a30ea822ca2841f80387c262ce", LEGACY_IMPLICIT_RATIONALE),
+    # Plugin spawn site set drifted with advanced_delegation / default
+    # delegation plugin registration; re-reviewed fingerprint.
+    "plugins": ("518b5db0f92f9d612deb16eb7748d69dcd2d3816f3369737000520967a1fedfb", LEGACY_IMPLICIT_RATIONALE),
+    # Script spawn site set drifted with Windows llama/watchdog launchers;
+    # re-reviewed fingerprint.
+    "scripts": ("057118b1400821af22dad6ddadb6fb210f4d76c8fe358440b762ce77ff2fd025", LEGACY_IMPLICIT_RATIONALE),
     "tools": ("c81f90543719f88d6350bf0342ea73d36b158d8e682a94036be738fb73162996", LEGACY_IMPLICIT_RATIONALE),
     "tui_gateway": ("2d1248afe4d8acd6620038458dc9bb154f5449b10278878e62231e06b8d4f41f", LEGACY_IMPLICIT_RATIONALE),
     "ui-tui": ("88a4d1e5198da9b00a66f33915ae9908b1c80ffa0e3c5d7fba0636a4d70d4108", LEGACY_IMPLICIT_RATIONALE),
