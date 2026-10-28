@@ -21,6 +21,11 @@ minimumReleaseAgeExclude:
   - rolldown
   - '@rolldown/binding-*'
   - '@oxc-project/types'
+  # Reviewed advisory floors (undici / fast-uri / zod / deepmerge).
+  - undici
+  - fast-uri
+  - zod
+  - deepmerge
 
 allowBuilds:
   agent-browser: set this to true or false
