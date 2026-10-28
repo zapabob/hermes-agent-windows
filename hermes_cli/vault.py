@@ -138,6 +138,8 @@ def _cmd_key(args) -> None:
     store = get_vault_store()
     target = getattr(args, "to", None)
     if target:
+        if target == "keychain" and not _ensure_keychain_extra(c):
+            return
         # A failed move raises VaultError before the setting changes: the original storage stays.
         store.migrate_key(target)
         _set_key_storage(target)
@@ -170,6 +172,26 @@ def _cmd_key(args) -> None:
         c.print("Vault key: [dim]none yet[/] (created with the first saved item)")
     c.print(f"New vaults use: vault.key_storage = {configured_key_storage()}")
     c.print(f"OS keychain here: {vault_keychain.backend_label()}")
+
+
+def _ensure_keychain_extra(c) -> bool:
+    """Lazy-install the ``keychain`` extra (``keyring``) before migrating to OS keychain.
+
+    Mirrors upstream ``pm.extras.ensure_import("keychain")`` using this fork's
+    ``tools.lazy_deps`` allowlist (``vault.keychain``). Returns False when the
+    install is blocked or fails so the CLI can abort without mutating config.
+    """
+    from tools.lazy_deps import FeatureUnavailable, ensure, is_available
+
+    if is_available("vault.keychain"):
+        return True
+    try:
+        ensure("vault.keychain", prompt=True)
+    except FeatureUnavailable as exc:
+        c.print(f"[red]The keychain feature is not installed:[/] {exc}")
+        c.print("[dim]Install with: uv sync --extra keychain[/]")
+        return False
+    return True
 
 
 def _set_key_storage(value: str) -> None:

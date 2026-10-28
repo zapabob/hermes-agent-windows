@@ -54,8 +54,9 @@ def os_keyring():
         import keyring  # optional dependency: absent installs keep the file layout
     except ImportError as exc:
         raise KeychainUnavailable(
-            "the optional `keyring` package is not installed (install it into the Hermes environment, "
-            "e.g. `uv pip install keyring`)") from exc
+            "the optional `keyring` package is not installed "
+            "(install the `keychain` extra: `uv sync --extra keychain`, "
+            "or run `hermes vault key migrate --to keychain` to lazy-install)") from exc
     try:
         backend = keyring.get_keyring()
     except Exception as exc:  # health: allow BLE001 -- backend discovery runs third-party entry points
