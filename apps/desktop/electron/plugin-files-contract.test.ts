@@ -407,7 +407,10 @@ describe.runIf(onWindows)('on a Windows host', () => {
       path: 'メモ 帳/日記 2.txt'
     })
     expect(await files.run('plexus', { op: 'trash', folder: id, path: 'メモ 帳/日記 2.txt' })).toEqual({ ok: true })
-    expect(trashed).toEqual([path.join(folder, 'メモ 帳', '日記 2.txt')])
+    // CI Windows may surface long paths while the fixture still holds 8.3.
+    expect(trashed.map(entry => fs.realpathSync.native(entry).toLowerCase())).toEqual([
+      fs.realpathSync.native(path.join(folder, 'メモ 帳', '日記 2.txt')).toLowerCase()
+    ])
   })
 })
 

@@ -65,7 +65,8 @@ describe('hermes:pluginFiles:request', () => {
 
     const granted = (await call('hermes:pluginFiles:request', 'plexus')) as { folder: { id: string; path: string } }
 
-    expect(granted.folder.path).toBe(vault)
+    // CI Windows often stores the long path while os.tmpdir() still yields 8.3.
+    expect(fs.realpathSync.native(granted.folder.path).toLowerCase()).toBe(fs.realpathSync.native(vault).toLowerCase())
     expect(
       await call('hermes:pluginFiles:op', 'plexus', { op: 'readText', folder: granted.folder.id, path: 'note.md' })
     ).toMatchObject({ ok: true, text: 'hello' })
