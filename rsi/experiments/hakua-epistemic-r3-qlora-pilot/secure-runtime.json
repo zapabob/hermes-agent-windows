@@ -40,7 +40,7 @@
     "regex": "2026.9.29",
     "rich": "15.0.0",
     "safetensors": "0.8.0",
-    "setuptools": "84.0.0",
+    "setuptools": "84.2.1",
     "shellingham": "1.5.4",
     "sympy": "1.14.0",
     "tokenizers": "0.23.3",

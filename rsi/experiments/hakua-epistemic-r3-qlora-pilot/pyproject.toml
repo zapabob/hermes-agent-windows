@@ -13,6 +13,15 @@ dev = ["pytest==9.0.3", "black==26.10.1", "flake8==7.2.0"]
 package = false
 # Install into a new dedicated environment; keep historical .venv-cuda intact.
 # secure_runtime.py checks the installed closure and frozen historical inputs.
+# setuptools floor for GHSA-xmj3-9gf7-h52w. filelock>=4.2.1 needs Python>=3.11,
+# so pin 4.1.0 (override) and ignore those CVEs in fork-cicd pilot pip-audit
+# until the pilot moves off the CPython 3.10 / cp310 Torch freeze.
+constraint-dependencies = [
+  "setuptools>=84.1.0",
+]
+override-dependencies = [
+  "filelock==4.1.0",
+]
 
 [tool.uv.sources]
 torch = { index = "pytorch-cu130" }
