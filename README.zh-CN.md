@@ -7,41 +7,42 @@
 </p>
 
 > [!NOTE]
-> 英文版 `README.md` 是规范正本。本简体中文版逐节跟随英文版更新。
+> 英文版 `README.md` 是规范正本。本简体中文版遵循相同的产品边界与安装契约。
 
-Hermes Agent 的非官方 Windows 原生下游版本，提供 Electron 桌面端、CLI、消息 gateway，
-以及可选的本地推理、记忆与语音集成。
+**[Hermes Agent](https://github.com/NousResearch/hermes-agent) 的非官方 Windows 原生下游**，
+面向把 Hermes 当作常驻工作站来运行的人：Electron Desktop、CLI、消息 Gateway、profile、
+本地推理、语义记忆、自动化与可选的边缘集成——**同一源码树、同一 core**。
 
-这个 fork 由一名维护者独立维护，不隶属于 Nous Research，也未获得其认可。下游仓库位于
-[zapabob/hermes-agent-windows](https://github.com/zapabob/hermes-agent-windows)。
-原版 [Hermes Agent](https://github.com/NousResearch/hermes-agent) 由 Nous Research 开发；
-本仓库保留 upstream 归属声明与 [MIT License](LICENSE)。
+维护仓库：
+[zapabob/hermes-agent-windows](https://github.com/zapabob/hermes-agent-windows)。  
+与 Nous Research 无隶属或背书关系。保留 upstream 归属与 [MIT License](LICENSE)。
 
 [![Windows Workstation Tier-1 CI](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml/badge.svg)](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml)
 
-**当前源码版本：0.23.0**（`2026.10.28`）。包含 Windows-native feature-intake M1
-（子 agent 设置 GUI、plugin OAuth broker、`ask_choice`→clarify、vault keychain、
-Desktop `ctx.files`、MCP progress、plugin 更新共用核心、`post_compaction`）。详见
-[docs/windows/feature-intake-20261028/](docs/windows/feature-intake-20261028/)。
-记录的 upstream 参照仍为 stable R2
-`f97608f178d1ffeca59860195ab7da295f7c8e5f`（`0.21.5`、`v2026.9.24`）。
-本 fork 继续使用 `version_source: downstream`，并保留历史 provenance snapshot
-`b51c055a12220f8c7c18660e8599365012e19532`。
+**源码版本：0.23.0**（`2026.10.28`）· channel：`stable` / `preview`
 
-版本号 0.23.0 并不表示已经对之后所有 upstream commit 完成语义等价审查。当前
-semantic-refresh campaign 固定到 ceiling
-`678a4762b887f3eabe5cad11254b2ab1ae859485`，按 family 分别核对 source、test、mutation、
-CodeGraph 与 review 证据。当前交接计划见
-[docs/windows/semantic-refresh-20260926/CURSOR_IMPLEMENTATION_PLAN_20260929.md](docs/windows/semantic-refresh-20260926/CURSOR_IMPLEMENTATION_PLAN_20260929.md)。
-支持的 channel 为 `stable` 与 `preview`；main 分支的 push 本身不是 stable installer 已发布的证据。
+---
 
-## 30 秒看懂安装
+## 一眼看懂范围
 
-> **TL;DR：**依次运行下面五条命令。模型提供商可在设置向导中配置；核心CLI无需安装
-> 可选插件或初始化Git子模块。
+| 你得到 | 你不破坏 |
+| --- | --- |
+| 将 Windows 11 x64 作为 Tier-1 运行目标 | 官方 Hermes CLI / session / profile / tool / MCP 契约 |
+| Electron Desktop（破坏性 backend owner 唯一） | upstream 的 MIT 历史与贡献者署名 |
+| 与远程 provider 并列的本地 llama.cpp/GGUF | 基于证据的 upstream 采纳（精确 SHA，禁止盲目 merge） |
+| Semantic Graph + Ebbinghaus 记忆接缝 | config / secret / session / gateway 的 profile 隔离 |
+| Gateway、cron、skills、MCP、delegation、kanban | prompt cache 稳定与角色交替不变量 |
 
-当前可立即使用的是源码安装。请准备 Windows 11 x64、PowerShell、Git、`uv` 和
-Python 3.11–3.13。只有构建 Desktop 时才需要 Node.js。
+`0.23.0` 是 **下游产品版本号**，并不表示已对之后所有 upstream commit 完成语义等价审查。
+未完成的 semantic-refresh family 在 source、测试、mutation、CodeGraph、review 证据齐备前
+保持开放。详见 [版本与 provenance](#版本与-provenance)。
+
+---
+
+## 快速开始（源码路径）
+
+**要求：** Windows 11 x64 · PowerShell · Git · [`uv`](https://docs.astral.sh/uv/) · Python 3.11–3.13  
+仅在从源码构建 Desktop 时需要 Node.js。
 
 ```powershell
 git clone https://github.com/zapabob/hermes-agent-windows.git
@@ -51,250 +52,171 @@ uv run hermes setup
 uv run hermes chat
 ```
 
-这是可在30秒内读完的命令路径；首次下载依赖和原生构建需要更长时间。要从同一 checkout
-启动 Desktop，请运行：
+同一 checkout 启动 Desktop：
 
 ```powershell
 uv run hermes desktop
 ```
 
-如果需要 installer 或 portable ZIP，请先确认
-[下游 Releases](https://github.com/zapabob/hermes-agent-windows/releases)
-已经发布对应 asset，并用 `SHA256SUMS.txt` 校验。完整步骤见
-[Windows 安装指南](docs/windows/INSTALL.md)。
+installer / portable ZIP：先在
+[Releases](https://github.com/zapabob/hermes-agent-windows/releases)
+确认资产存在，校验 `SHA256SUMS.txt`，再按
+[docs/windows/INSTALL.md](docs/windows/INSTALL.md) 操作。
 
-## 最新修复：128K llama-server 上本地模型会话的稳定性
+> 首次 `uv sync` 与原生构建耗时会超过命令列表的阅读时间。  
+> 向 `main` 的 push **不是** stable installer 已发布的证据。
 
-**症状** 在大上下文窗口的本地 llama-server 上，自动压缩失败：回合以
-`context_compression_timeout` 结束，用户的消息从未得到回答，模型选择器也像是卡住了。
+工作站重启仅限 Documents 下的 checkout——**切勿从 `.worktrees/` 启动**：
 
-**根因——全部来自实机测量，而非推测。**
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\windows\Restart-HermesFullStack.ps1
+```
 
-1. *KV 缓存放不进显存。* 27B 模型每 token 需要约 72 KiB 的 KV，因此 131,072 token
-   的窗口需要 9.00 GiB KV 加上 6.71 GiB 权重——超过 16 GiB 显卡的容量。Windows WDDM
-   用系统内存补齐了溢出部分，于是 prompt 读取要跨总线：实测 prefill 从约
-   500–1,000 tokens/s 掉到约 11 tokens/s，所有客户端都超时。
-2. *摘要提示词按字符数而不是 token 数设限。* 160K 字符在英文里约合 40K token，在
-   CJK 里却约合 160K token，压缩请求因此可能超出摘要模型自己的窗口。
-3. *压缩的 no-progress 窗口没有考虑本地后端。* 读取 128K prompt 本来就要几分钟，
-   120 秒的空闲窗口却把它当成卡死并中止了压缩。
+---
 
-**改动**
+## 表面（Surfaces）
 
-- 新增 `scripts/windows/Get-LlamaContextBudget.ps1`：读取 GGUF 架构，给出 KV 占用、
-  实际 per-slot context（`-c` 会在 `--parallel` 槽位间分摊）以及能常驻显存的最大
-  context。启动脚本据此钳制窗口，context 不再能悄悄超出显卡容量。
-- 生成服务器现在以 KV 能常驻显存的 context 运行（27B/PQ2_0 配置下为 98304 token），
-  且与 Hermes 的 `context_length` 一致；启动脚本读取 agent 自己的配置值，两者不会
-  再出现偏差。
-- 压缩摘要输入按摘要模型的 TOKEN 窗口（25%）设限，保留首尾并在省略的中段留下明确
-  标记。
-- 本地摘要 endpoint 获得更宽的 no-progress 窗口（300 秒）与更宽的 total ceiling
-  （1800 秒）。
-- *延迟工具加载*（`tools.tool_search.deferred_toolsets`）：first-party 工具集可以
-  保持功能完好，同时把 schema 移出每个请求。实测请求基线从 58,189 降到 41,757 token。
-- 凭据被拒时，现在按 provider 整体抑制 fallback chain（每个 provider 探测一次，
-  而非每个模型一次）。
-- 压缩超时现在会保留输入并保持可重试：会话保留、用户消息落库，下一个 turn 重试压缩。
+同一 `AIAgent` core 之上有四类操作面：
 
-**效果** prompt 读取从约 11 tokens/s 回到约 550–1,000 tokens/s，自动压缩会正常完成，
-而不是丢掉整个回合。
+| 表面 | 作用 |
+| --- | --- |
+| **CLI** | 交互聊天、setup、tools、skills、update、doctor |
+| **Electron Desktop** | 原生 UI、profile、Security Center、Bot Mode、Git/review |
+| **Gateway** | Telegram / Discord / Slack / LINE / Signal 等长驻消息 |
+| **TUI** | 基于 stdio JSON-RPC 的 Ink 终端 UI |
 
-## 这个 fork 增加了什么
+能力在 **边缘**（plug-in / skill / MCP / 服务门控工具）扩展，  
+避免把 core 工具集无限制地塞进每一次 API 调用。
 
-- **把 Windows 作为一级运行目标。** 对 path、process identity、PowerShell、NTFS、
-  Electron IPC、update/relaunch、installer/portable 与 Go watchdog 进行原生 Windows 验证。
-- **Desktop backend 只有一个破坏性 lifecycle owner。** Electron main 负责 Desktop backend；
-  Go watchdog 负责辅助 status/recovery，并且只有对它自己启动和拥有的 embedding
-  `llama-server` 才具有破坏性管理权限。
-- **保留正常的 Hermes provider/model picker。** OAuth、API key、custom/local endpoint 与
-  llama.cpp/GGUF 都走同一 provider architecture；fallback、普通 delegation、MoA 与
-  reasoning effort 仍是相互独立的功能。
-- **Semantic Graph 与 Ebbinghaus。** 可在官方 memory seam 上组合 graph storage、embedding、
-  hybrid retrieval 与独立 cognitive-memory provider。
-- **保持 Desktop 的 profile/session 契约。** Bot Mode 的 canonical forever-chat 通过
-  `(profile, "Bot Chat")` 解析，不持久化 canonical session-id pointer。
-- **长时间运行的 Gateway 与 automation。** messaging、cron、skills、MCP、delegation、
-  kanban 共用同一 core/session/profile model。
-- **VRChat/Unity、voice/TTS、AITuber、OSINT/Shinka 等保留在 edge integration。**
-  它们通过 plug-in/skill/provider seam 扩展，而不是分叉 core。
-- **Security Center。** 提供确定性的 scan、evidence、update state 与 encrypted quarantine，
-  mutation 必须经过明确确认。
-- **以证据方式吸收 upstream。** 使用 exact SHA 与 observable contract，整体 merge/rebase 或
-  版本号本身都不作为 compatibility 证明。
+---
 
-## 插件与Git子模块
+## 0.23.0 新内容
 
-按 profile 查看实际启用的插件：
+Windows-native feature intake —
+[`docs/windows/feature-intake-20261028/`](docs/windows/feature-intake-20261028/)：
+
+| 领域 | 行为 |
+| --- | --- |
+| 子 agent 设置 | Desktop Settings 专页；一次 Apply 在服务端 validate→merge 后保存完整 `delegation` 草案 |
+| Plugin OAuth | 清单 `oauth:` + `hermes auth …`；由 host 附加 Bearer——插件永不直接拿到 token |
+| `ask_choice` | `PluginContext.ask_choice` 绑定各表面的 clarify；未绑定/headless 返回 `None` |
+| Vault keychain | 可选 `vault.key_storage: keychain`；默认仍为 `file` |
+| `ctx.files` | Desktop grant API（仅选择器根目录、不透明句柄、Windows 路径加固） |
+| MCP / 更新 / 压缩 | 调用级 progress、共用插件更新核心、耐久 `post_compaction` |
+
+### 本地模型稳定性（128K llama-server）
+
+大本地上下文曾因 KV 溢出显存导致自动压缩以 `context_compression_timeout` 失败。本树：
+
+- 用 `scripts/windows/Get-LlamaContextBudget.ps1` 将上下文钳制在可常驻显存的预算内；
+- 以 **token**（而非字符）限制摘要输入，对 CJK 安全；
+- 放宽本地 no-progress / total ceiling；
+- 支持延迟工具 schema 以缩小请求基线；
+- 压缩超时可重试，不丢弃用户回合。
+
+参考 27B 路径实测：prefill 从约 11 tok/s 回到约 550–1,000 tok/s，自动压缩再次完成。
+
+---
+
+## 为何存在这个 fork
+
+- **把 Windows 当作一级运行时** — path、进程身份、PowerShell、NTFS、Electron IPC、
+  更新交接、installer/portable、Go watchdog 具备原生 Windows 测试。Linux 交叉编译
+  不能当作 Windows 证据。
+- **Desktop backend 的破坏性 owner 只有 Electron main** — 观察到 PID / 端口 / token
+  并不授予第二所有者权限。
+- **本地推理不分裂 provider 模型** — 同一选择器覆盖远程、OAuth 与 llama.cpp/GGUF。
+  生成与 embedding 是分离的服务与就绪证据。
+- **官方接缝上的记忆** — Semantic Graph 与 Ebbinghaus 通过 Hermes memory-provider
+  契约组合。
+- **Bot Mode 按名称解析** — 一个 bot = `(profile, 标题恰好为 "Bot Chat")`。
+  不持久化 canonical session-id 指针。
+- **长驻自动化** — Gateway / cron / skills / MCP / delegation / kanban 共享同一
+  session/profile 模型。
+- **边缘集成** — VRChat/Unity、语音、AITuber、OSINT 等作为 plug-in / 可选组件。
+- **Security Center** — 确定性扫描、证据、隔离区；变更需明确确认。
+- **证据驱动的 upstream 吸收** — 精确冻结 SHA 与可观测契约。版本号本身不是兼容性证明。
+
+产品台账：[`FEATURES.yaml`](FEATURES.yaml) · 携带补丁：[`CARRY.yaml`](CARRY.yaml) ·
+采纳：`UPSTREAM_ADOPTION.yaml` · 策略：[`DOWNSTREAM_POLICY.md`](DOWNSTREAM_POLICY.md)
+
+---
+
+## 架构速览
+
+```text
+┌─────────────┐  ┌──────────────┐  ┌──────────┐  ┌─────────┐
+│ CLI / setup │  │ Electron UI  │  │ Gateway  │  │   TUI   │
+└──────┬──────┘  └──────┬───────┘  └────┬─────┘  └────┬────┘
+       └────────────────┴───────────────┴─────────────┘
+                              ▼
+                        AIAgent core
+           (prompt cache · tools · memory · providers)
+                              │
+            ┌─────────────────┼──────────────────┐
+            ▼                 ▼                  ▼
+      plugins/skills   MCP / cron / kanban   local llama / embeddings
+```
+
+不可轻易破坏的不变量：
+
+1. **按会话的 prompt cache** — 中途改写历史或切换 toolset 会摧毁 KV cache、拉高 API 成本。
+2. **细腰、能力在边缘** — 新能力优先 CLI/skill → 服务门控工具 → plug-in → MCP。
+3. **表面能力按会话作用域解析** — Desktop 功能来自 `session.platform`，而非静态环境变量。
+4. **确定且可逆的执行** — 破坏性操作需要恢复路径、可审计性与批准。
+
+规范契约：
+[`.codex/WINDOWS_PLATFORM_CONTRACT.md`](.codex/WINDOWS_PLATFORM_CONTRACT.md)
+
+---
+
+## 所有权与恢复
+
+| 组件 | lifecycle owner |
+| --- | --- |
+| Desktop `serve` backend | 仅 Electron main |
+| 生成用 llama-server | 运维 / launcher |
+| embedding llama-server（由 watchdog 拉起时） | Go watchdog |
+| 消息 Gateway | Gateway 自身（设计上在 Desktop 退出后仍存活） |
+| WebUI / 固定端口 dashboard | 与 Desktop 的 `serve --port 0` 分离 |
+
+Go watchdog 负责观测，以及管理**它自己启动**的 embedding。不得成为 Desktop backend
+的并行所有者。精确进程身份优先于 argv 子串猜测。
+
+指南：[`scripts/windows/watchdog-go/README.md`](scripts/windows/watchdog-go/README.md)
+
+---
+
+## 插件与子模块
 
 ```powershell
 uv run hermes plugins
 ```
 
-仓库包含 workstation root plug-in，以及 `plugins/model-providers/`、`plugins/memory/`、
-`plugins/platforms/`、`plugins/web/` 等专用 family。数量会随代码树变化，因此 README 不再把
-固定计数当作契约。代表性的能力包括 `hermes-bot-mode`、`desktop-dashboard`、
-`semantic-graph`、`implementation_router`、`vrchat-autonomy`、`unity-vrchat-bridge`、
-`shinka-osint`、`openai-codex` 与 `qwen-oauth`。
+代表性家族（数量会变；是否启用取决于 profile 与凭据）：
 
-`implementation_router` 是 **opt-in** 的隔离顺序式 engineering workflow。它使用现有
-auxiliary picker 与 parent-owned inference，不替代普通 model picker、delegation、MoA 或
-fallback；也不会自动把验证后的 workspace 应用到 source checkout，或自行发布 PR。
+| 领域 | 示例 |
+| --- | --- |
+| Desktop / ops | `hermes-bot-mode`, `desktop-dashboard`, `implementation_router` |
+| Memory | `semantic_graph`, `memory/ebbinghaus`, `surfsense` |
+| Media / XR | `voicevox_tts`, `vrchat-autonomy`, `unity_vrchat_bridge`, `aituber_onair` |
+| Research | `shinka-osint`, `world-intel-osint` |
+| Providers | `openai-codex`, `qwen-oauth`, `xai`, `hypura` |
 
-Git submodule 只用于可选 integration；需要相应外部 runtime 时再初始化：
+`implementation_router` 为 **opt-in**：隔离的 planner→worker→verify→reviewer 流程。
+不替代普通选择器、delegation、MoA 或 fallback，也不会自动 apply / 发布。
+
+仅在需要对应外部 runtime 时初始化子模块：
 
 ```powershell
 git submodule update --init --recursive
 ```
 
-更广泛的清单见 [docs/windows/INTEGRATIONS.md](docs/windows/INTEGRATIONS.md)。该文档是 snapshot；
-当前 runtime inventory 应以 `uv run hermes plugins` 为准。
+清单快照：[`docs/windows/INTEGRATIONS.md`](docs/windows/INTEGRATIONS.md)
 
-## 1. 产品定位
+---
 
-Hermes Agent Windows Workstation Edition 是面向持续运行的本地 AI 工作站的 Windows 优先
-下游发行版。它保留 Hermes CLI 命令、公开契约、插件模型和 upstream 历史，同时为 Windows
-原生行为、本地模型、记忆、语音、VR/Unity 与恢复机制维护明确的下游策略。
-
-产品功能台账位于 [FEATURES.yaml](FEATURES.yaml)。保留在 upstream 所有文件中的直接补丁由
-[CARRY.yaml](CARRY.yaml) 单独追踪，upstream commit 在 `UPSTREAM_ADOPTION.yaml` 中分类。
-策略摘要见 [DOWNSTREAM_POLICY.md](DOWNSTREAM_POLICY.md)。
-
-## 2. Windows 优先目标
-
-主要目标平台是配备原生 Python、原生 Node/Electron、交互式桌面和消费级 NVIDIA GPU 的
-Windows 11 x64。设计支持本地 LLM 与 embedding 服务、语音服务、VRChat/Unity 集成及
-远程管理的持续运行。
-
-无论 upstream 如何安排平台优先级，Windows 都是独立的 Tier-1 目标。原生行为在
-`windows-latest` 上测试；Linux 交叉编译不能作为 Windows 运行时证据。后台 Git 与 web
-helper 调用使用隐藏进程创建标志，Git wrapper 将非交互 probe 与面向用户的 terminal 分离。
-这针对的是已知的 helper 启动路径，并不意味着已消除所有可能的控制台来源。
-
-## 3. 适用人群
-
-本发行版面向维护 Windows AI 工作站，并需要从源码层面控制本地推理、长期运行服务、记忆、
-桌面行为与恢复机制的运维人员和开发者。使用者应熟悉 PowerShell、Git、Python 环境、
-Node 工具以及 CI 结果的阅读。
-
-如果需要最简洁的 Hermes 官方安装方式和 upstream 支持模式，请使用第 15 节链接的原版项目。
-
-## 4. 下游优势
-
-- **无供应商锁定。** 所有 provider 均为可选。OAuth 登录（OpenAI Codex/ChatGPT、xAI Grok、
-  Qwen、MiniMax、Nous Portal）、已有的 Claude Code OAuth 凭据、自己的 API key 或本地
-  llama.cpp server 都通过同一个 provider registry 工作。`hermes proxy` 把 OAuth provider
-  暴露为本地 OpenAI 兼容 endpoint，`hermes fallback` 在主 provider 失败时串联其他 provider。
-- **Windows 运行时与恢复契约。** Desktop backend 只有一个所有者，Go watchdog 仅作辅助
-  （第 8 节）。
-- **本地推理。** `scripts/windows/` 下的 llama.cpp/GGUF fallback、hot-swap preset 与
-  按 GPU 区分的 launcher，以及 Hypura provider 与 harness（`hermes harness`）。
-- **记忆。** Semantic Graph hybrid retrieval 与 Ebbinghaus cognitive memory provider
-  （第 9 节）。
-- **工程 workflow。** `implementation_router` plugin 通过现有 auxiliary model picker
-  依次运行 planner、worker、确定性验证与 reviewer 阶段，入口为 `engineering_run` 或
-  `/engineer`。它是 opt-in 的隔离 workflow，不替代普通 model picker、delegation、MoA、
-  fallback，也不会自动 apply 或 publish。
-- **集成。** 本地秘书、VRChat/Unity、本地语音、AITuber、OSINT/Shinka、Desktop 的
-  Git/review pane，以及隔离的 Antigravity CLI bridge（`hermes-antigravity`）。
-- **凭据卫生。** credential lease 始终绑定所选 entry；空的 credential pool 无法以继承的
-  client 启动委派 child；provider base URL 在写入日志前会被遮蔽。
-
-这些能力通过官方 Hermes API 组合运行。本 fork 不会为 session、approval、profile、
-gateway、model catalogue 或 tool registry 建立并行的权威来源。
-
-## 5. 已验证功能矩阵
-
-| 领域 | 已验证实现 | 契约证据 |
-| --- | --- | --- |
-| Windows runtime | 原生 path、process、IPC、NTFS handoff、terminal、credential、power 与 GPU helper | `tests/downstream/test_windows_contracts.py` |
-| Desktop backend | 由 Electron main 负责的单一所有者 backend lifecycle | `apps/desktop/electron/single-owner-backend-lifecycle.test.ts` |
-| Recovery | 具备只读 status 与精确 identity 权限的外部 Go watchdog | `scripts/windows/watchdog-go/authority_test.go` |
-| Local inference | llama.cpp/GGUF fallback 与 hot-swap script | `tests/hermes_cli/test_llama_fallback_runtime.py` |
-| Local embeddings | watchdog embedding lifecycle 与 Semantic Graph backend | `scripts/windows/watchdog-go/embedding_test.go` |
-| Local secretary | 基于官方 agent boundary 的 read/write action 分离 | `tests/downstream/test_upstream_api_contracts.py` |
-| Providers | Hypura/local provider 集成 | `tests/fork/test_hypura_oai_proxy.py` |
-| Provider fallback | fallback chain 与 provider rotation | `tests/hermes_cli/test_fallback_chain.py` |
-| Memory | Semantic Graph hybrid retrieval 与 Ebbinghaus cognitive extension | `tests/plugins/test_semantic_graph_registration.py`, `tests/plugins/test_ebbinghaus_plugin.py` |
-| Engineering workflow | 带 route admission 的顺序式 planner/worker/reviewer router | `tests/implementation_router/test_route_admission.py` |
-| VR and Unity | VRChat autonomy tooling 与 Unity bridge | `tests/plugins/test_vrchat_autonomy_plugin.py` |
-| Voice | Irodori、VOICEVOX 与 local TTS route | `tests/plugins/test_irodori_tts_plugin.py` |
-| AITuber | AITuber OnAir 与 AITuber Kit plugin | `tests/plugins/test_aituber_onair_plugin.py` |
-| OSINT/Shinka | Shinka、SitDeck、WorldMonitor 与 OSINT plugin surface | `tests/plugins/test_shinka_osint_plugin.py` |
-| Desktop | 通过官方 Desktop IPC 与 pane contract 扩展 Git/review | `apps/desktop/electron/git-review-ops.test.ts` |
-| Bot Mode | 通过 `(profile, "Bot Chat")` 解析 canonical forever-chat | `apps/desktop/src/plugins/hermes-bots/tests/canonical-chat-registry.test.mjs` |
-| Security | security guidance 与强化的 approval/execution boundary | `tests/plugins/test_security_guidance_plugin.py` |
-| Control MCP | auth/journal/coordinator contract；production write 保持 DISABLED | `docs/control-mcp/IMPLEMENTATION_LOG.md` |
-
-每项功能的所有者、公开 surface、upstream 重叠范围、Windows 要求、测试和集成策略，
-均记录在 `FEATURES.yaml` 中。原先由 watchdog 管理的 Desktop backend 在其中标记为
-retired。这些是范围明确的检查，并非对每个可选集成的资格认定。
-
-## 6. Windows Tier-1 支持契约
-
-Tier-1 覆盖原生 drive path、MSYS `/c/...` 与受支持的 WSL `/mnt/c/...` alias、NTFS lock、
-已锁定 executable 与 extension module 的 update、process tree、适用的 Job Object 行为、
-PowerShell quoting、Git Bash boundary、CP932/UTF-8 boundary、CRLF、venv `Scripts\`，
-以及 Electron stdio pipe。
-
-运行时资格验证覆盖 sleep/resume、network 与 loopback provider 恢复、Desktop relaunch、
-updater handoff、watchdog 恢复、llama restart 与 hot-swap、embedding restart，
-以及 profile/session persistence。规范契约见
-[.codex/WINDOWS_PLATFORM_CONTRACT.md](.codex/WINDOWS_PLATFORM_CONTRACT.md)。
-原生 Python、Desktop、installer、portable、upgrade、watchdog 与 security 检查是彼此独立的
-gate；仅靠 mock 的结果或被跳过的 P0 测试不能认定 Windows 支持。
-
-## 7. 本地 AI 架构
-
-官方 Hermes provider 与 model catalogue 契约仍是权威来源。下游本地运行时通过这些契约接入：
-llama.cpp/GGUF 作为 local fallback runtime，Hypura 作为 provider plugin seam，local
-embedding 作为 Semantic Graph backend 并配合 watchdog 管理的 loopback service。hot-swap
-preset 选择单独安装的 GGUF 文件；推理就绪需要真实的模型响应，而不只是端口已打开。
-
-运维脚本位于 `scripts/windows/` 下（例如 `start-llama-hotswap.ps1`、
-`switch-llama-hotswap.ps1` 以及按 GPU 区分的 `start-hermes-llama-fallback-*.ps1`
-launcher）。运行时 plugin entrypoint 保留在 `plugins/` 下，使官方 discovery 能够继续工作。
-对本地服务的远程访问通过 `Manage-HermesTailscaleServe.ps1`（Tailscale Serve）配置，
-并提供仅验证模式。
-
-## 8. Watchdog 与恢复架构
-
-在受支持的 Windows 拓扑中，Desktop Python backend 的 lifecycle 由 Electron main 独占。
-health 观测、PID、端口、token 或 manifest 都不会授予其他组件破坏性的 lifecycle 权限。
-
-外部 Go watchdog 是具有只读 status surface 的辅助 supervisor。其受支持的破坏性操作范围
-仅限于它明确启动并拥有的 embedding `llama-server` 实例；它不是 Desktop backend 的第二个
-所有者。旧的 watchdog backend 所有权与 Desktop 重新启动路径均已移除。参见
-[watchdog 指南](scripts/windows/watchdog-go/README.md) 与
-[Windows platform contract](.codex/WINDOWS_PLATFORM_CONTRACT.md)。
-
-下游 Python service module 是无副作用的契约。实际的 operator startup 与 deployment
-仍由 `scripts/windows/` 下的 PowerShell 和 Go surface 负责。
-
-## 9. 记忆与 semantic retrieval
-
-profile 隔离配置、凭据、session 与记忆。Semantic Graph plugin 通过官方 plugin 与 memory
-interface 提供 graph storage、hybrid retrieval、embedding、fusion、abstention 和
-cognitive helper。Ebbinghaus provider 增加 experience 与 retention policy，并可连接
-Semantic Graph。两者均保留独立的 plugin entrypoint 与针对性的 test suite。
-
-外部 memory provider（上表中的 Honcho、Mem0、Supermemory、Hindsight 等）通过
-`hermes memory` 选择，`hermes journey` 可查看已学习的 skill 与记忆随时间的变化。
-源码发行包不包含模型文件或个人记忆。
-
-## 10. VRChat、Unity 与语音集成
-
-VRChat autonomy tool、observation/relay helper、Unity bridge package、VOICEVOX、
-Irodori 及其他 local TTS route 都是下游所有的功能。它们使用官方 plugin、tool 与
-TTS contract，而不会把 core 改造成 VR 或语音专用 runtime。相关 SDK、应用与硬件需单独配置。
-
-外部发布与写入 action 仍须明确 approval。本地生成不代表获得向外部 account 发布内容或
-修改其状态的授权。
-
-## 11. 安装
-
-目标平台为 Windows 11 x64。请使用 PowerShell、Git、`uv` 与 Python 3.11–3.13。依赖安装
-可能需要数分钟，可选 extra 可能需要原生构建工具。原生应用不需要 WSL。
+## 安装与 Desktop 构建
 
 ```powershell
 git clone https://github.com/zapabob/hermes-agent-windows.git
@@ -304,23 +226,8 @@ uv run hermes --version
 uv run hermes setup
 ```
 
-设置向导用于选择模型 provider。使用远程 provider 时 GPU 为可选。本地模型需要另行准备的
-模型文件与兼容的推理运行时；本仓库不包含模型权重。
-
-Windows release workflow 会生成用户级 NSIS installer 与 portable ZIP，并在 stable
-tag 发布前执行 clean install、启动与 upgrade E2E。只从
-[下游 Releases](https://github.com/zapabob/hermes-agent-windows/releases)
-获取已发布产物，并核对 `SHA256SUMS.txt`。除非 `release-manifest.json` 另有记录，
-当前 candidate 按 unsigned 处理。完整步骤以 [Windows 安装指南](docs/windows/INSTALL.md)
-为准；其中的旧版本示例并不能证明 0.23.0 已发布。
-
-官方 upstream installer 面向 upstream 产品；本发行版请使用本下游仓库或其已发布的
-release asset。
-
-### 构建 Desktop
-
-请使用 [`apps/desktop/package.json`](apps/desktop/package.json) 接受的 Node.js 版本。
-Desktop 是 npm workspace，因此请在仓库根目录安装 JavaScript 依赖。
+从源码构建 Desktop（Node 版本见
+[`apps/desktop/package.json`](apps/desktop/package.json)）：
 
 ```powershell
 npm ci
@@ -328,80 +235,69 @@ npm run typecheck --workspace apps/desktop
 npm run build --workspace apps/desktop
 ```
 
-构建会生成应用文件。打包与安装新的 Desktop binary 是单独的操作。请勿在进程运行时替换
-executable。
+打包 / 替换正在运行的 `Hermes.exe` 是另一项、需感知所有权的操作。交换二进制前先停止
+被拥有的进程。
 
-启用任何全天候 service 或 Scheduled Task 前，请先检查配置。API key 与 token 应存放在
-profile-scoped Hermes secret store 中，或按照 Hermes 文档保存到 `.env`；非 secret 设置
-应放入 `config.yaml`。
+密钥写入 profile 的 `.env`（或外部 vault）；非密钥设置写入 `config.yaml`。  
+切勿提交模型权重、profile 数据库或 token。
 
-## 12. 更新与 upstream 集成策略
+---
 
-upstream 是集成输入，不把持续变化的 source tree 直接作为下游正本。semantic-refresh
-campaign 以 exact SHA、inventory、source/caller mapping、focused regression、必要的 mutation、
-CodeGraph 与独立 review 按 family 闭合。
+## 版本与 provenance
 
-| 输入 | SHA | 含义 |
-| --- | --- | --- |
-| R2 | `f97608f178d1ffeca59860195ab7da295f7c8e5f` | upstream 0.21.5 / `v2026.9.24` stable release |
-| U1 | `678a4762b887f3eabe5cad11254b2ab1ae859485` | 当前 campaign 的固定 newer-upstream ceiling |
-| historical snapshot | `b51c055a12220f8c7c18660e8599365012e19532` | 保留的 provenance anchor |
+| 事实 | 值 |
+| --- | --- |
+| 下游产品版本 | `0.23.0`（`version_source: downstream`） |
+| Upstream stable 参照 (R2) | `f97608f178d1ffeca59860195ab7da295f7c8e5f`（`0.21.5` / `v2026.9.24`） |
+| 当前 semantic-refresh ceiling (U1) | `678a4762b887f3eabe5cad11254b2ab1ae859485` |
+| 历史 provenance snapshot | `b51c055a12220f8c7c18660e8599365012e19532` |
 
-当前 `main` 已包含多个经过映射的 Windows/runtime 修复，包括 process identity、
-relaunch/recovery 与 Desktop E2E isolation。但在所有 in-scope ledger row 都有证据映射或明确
-disposition 之前，整个 campaign 仍不算完成。0.23.0 是 product version，不是 semantic parity
-的捷径。
+交接计划：
+[`docs/windows/semantic-refresh-20260926/CURSOR_IMPLEMENTATION_PLAN_20260929.md`](docs/windows/semantic-refresh-20260926/CURSOR_IMPLEMENTATION_PLAN_20260929.md)
 
-更新流程保持 `plan → snapshot → apply → restart-per-kind → verify → report`。Desktop、gateway、
-generation llama、embedding 与 Go watchdog 各自具有独立 lifecycle，需要分别验证 owner 与
-readiness。
+更新流水线：
+`plan → snapshot → apply → restart-per-kind → verify → report`
 
-## 13. 架构
+---
 
-fork 所有的 Python boundary 位于 `downstream/`：`compat/hermes` 委托给官方 contract，
-`platform/windows` 负责 native policy，`services` 定义 long-lived service contract，
-`features` 验证 product ledger。项目刻意不创建名为 `platform` 的 top-level Python package。
+## 安全
 
-共享的 agent core 位于 CLI、消息 gateway、TUI 与 Electron Desktop 之后。围绕它的有集中式
-slash command registry、cron 调度、多 profile kanban board、subagent 委派、skill curator、
-Mixture of Agents（`hermes moa`）、MCP client 与 server（`hermes mcp`）、ACP 以及 profile。
-core 继续保持为狭窄的公共边界：capability 由 plugin 与 skill 承载，state path 由
-profile-aware 的官方 path helper 管理，prompt cache 与 message role invariant 始终是强制要求。
+- 勿提交密钥、个人 runtime 数据、模型文件或调查产物。
+- Security Center 的变更 API 需要明确确认。
+- `hermes security` / `hermes egress` / `hermes secrets` 覆盖扫描、出口策略与外部保险库。
+- provider base URL 在写入日志前会掩码；子进程只接收有界环境变量。
 
-Bot Mode 同样遵循 session/profile 契约。一个 bot 的 canonical chat 由该 profile 下 exact title
-`Bot Chat` 的 registry identity 每次重新解析，不持久化 canonical session-id pointer；side-chat
-继续作为独立 session 存在。
+**Control MCP：** 已有 auth / journal / coordinator 契约，但 **生产写入仍为 DISABLED**。
+在 host grant-revocation、线性化、可信生产者绑定与 writer fence 全部关闭前不得启用。
+仅凭测试通过不能授权该写入路径。见
+[`docs/control-mcp/IMPLEMENTATION_LOG.md`](docs/control-mcp/IMPLEMENTATION_LOG.md)。
 
-## 14. 安全
+---
 
-请勿 commit secret、个人 runtime data、profile database、model file、local artifact 或
-生成的 credential。write、publish、destructive 与 shell action 必须置于明确 approval
-之后。child service environment 只应传递必要 variable，不应继承 ambient credential。
+## 文档导航
 
-provider base URL 在写入日志前会被遮蔽。除非在 `config.yaml` 中设置
-`telemetry.relay.propagate_trace_headers: true`，Relay 0.8 的 trace-context header
-（`traceparent`、`tracestate`、`baggage`）会从 provider 调用中移除。`hermes security`
-执行 supply-chain 审计与 Windows 工作站恶意软件防护，`hermes egress` 管理凭据注入式
-egress 防火墙，`hermes secrets` 连接 Bitwarden、1Password 等外部 secret 来源。
+| 文档 | 用途 |
+| --- | --- |
+| [`docs/windows/INSTALL.md`](docs/windows/INSTALL.md) | Windows 安装正本 |
+| [`docs/windows/INTEGRATIONS.md`](docs/windows/INTEGRATIONS.md) | 可选集成快照 |
+| [`docs/windows/SECURITY_CENTER.md`](docs/windows/SECURITY_CENTER.md) | Security Center |
+| [`docs/windows/feature-intake-20261028/`](docs/windows/feature-intake-20261028/) | 0.23.0 intake |
+| [`AGENTS.md`](AGENTS.md) | 面向开发者与助手的工程契约 |
+| [`SECURITY.md`](SECURITY.md) | 安全策略 |
 
-security gate 会检查锁定的 Python graph、Python advisory、production npm advisory、
-Go module integrity、OSV result、supply-chain policy，以及本仓库的 security regression
-test。green 的 local unit test 不能代替 exact-head CI 或 live runtime evidence。请阅读
-[SECURITY.md](SECURITY.md)；未解决的 private contract 仍未获资格认定。
+---
 
-Control MCP 已有 auth、strict claim、journal、coordinator 与 evidence contract，但
-**production write 仍为 DISABLED**。当前 campaign 中 N07-A1、T06、T12 尚未闭合；real host
-grant-revocation writer、grant/claim/effect linearization、trusted producer、独立 apply approval
-与 actual writer fence 的证据仍不完整。test 或看似成功的 receipt 不能授权开启该 write path。
+## Upstream 项目
 
-## 15. Upstream 项目
+原项目：[NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)。  
+upstream 文档、安装程序、发行与支持仅适用于 **upstream 发行版**，并不安装或背书本下游。
 
-原版项目为 [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)。
-官方 upstream installer、website、documentation、issue tracker 与 support channel 仅适用于
-upstream distribution，它们不会安装或认可本下游仓库。upstream 贡献保留其作者身份与归属。
+---
 
-## 16. 许可证与归属
+## 许可与归属
 
-原版 Hermes Agent 由 Nous Research 开发，并采用 MIT License。本下游版本保留该归属声明、
-原版 copyright 与 contributor history，以及 [MIT License](LICENSE)。下游工作独立维护；
-upstream 与 downstream 的 issue、release 和产品声明必须清楚区分。
+Hermes Agent 由 Nous Research 在 MIT License 下开发。本下游保留其归属、版权与贡献者
+历史，并以相同的 [MIT License](LICENSE) 提供。
+
+Windows / 工作站相关变更由本仓库独立维护。upstream 与 downstream 的 issue、发行、
+支持声明与资格证据保持分离。

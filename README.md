@@ -7,54 +7,57 @@
 </p>
 
 > [!NOTE]
-> This English `README.md` is the canonical project overview. The Japanese and
-> Simplified Chinese READMEs mirror the same product boundaries and installation
+> This English `README.md` is the canonical overview. The Japanese and
+> Simplified Chinese READMEs mirror the same product boundaries and install
 > contract.
 
-An unofficial, Windows-native downstream of Hermes Agent for people who run
-Hermes as a long-lived Windows workstation service: Electron Desktop, CLI,
-messaging gateway, profiles, local inference, semantic memory, automation and
-optional workstation integrations from one source tree.
+**Unofficial Windows-native downstream of [Hermes Agent](https://github.com/NousResearch/hermes-agent)**
+for operators who run Hermes as a long-lived workstation: Electron Desktop,
+CLI, messaging gateway, profiles, local inference, semantic memory, automation
+and optional edge integrations — one source tree, one core.
 
-This single-maintainer fork is independent of, and not endorsed by, Nous Research.
-The downstream is maintained at
+Maintained independently at
 [zapabob/hermes-agent-windows](https://github.com/zapabob/hermes-agent-windows).
-The original [Hermes Agent](https://github.com/NousResearch/hermes-agent) is
-developed by Nous Research. Both the upstream attribution and the
+Not affiliated with or endorsed by Nous Research. Upstream attribution and the
 [MIT licence](LICENSE) are retained.
 
 [![Windows Workstation Tier-1 CI](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml/badge.svg)](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml)
 
-**Current source version: 0.23.0** (`2026.10.28`). This downstream minor version
-ships the Windows-native feature-intake M1 surface: Desktop subagent settings with
-atomic Apply, host-side plugin OAuth broker, `PluginContext.ask_choice` wired to
-clarify, opt-in vault keychain storage, Desktop `ctx.files` grants, MCP tool
-progress, shared plugin-update core, and durable `post_compaction` hooks. See
-[docs/windows/feature-intake-20261028/](docs/windows/feature-intake-20261028/).
+**Source version: 0.23.0** (`2026.10.28`) · channels: `stable`, `preview`
 
-The recorded upstream reference remains stable R2
-`f97608f178d1ffeca59860195ab7da295f7c8e5f` (`0.21.5`, `v2026.9.24`). The
-downstream still owns its own release identity (`version_source: downstream`) and
-retains the historical frozen provenance snapshot
-`b51c055a12220f8c7c18660e8599365012e19532`.
+<details>
+<summary><strong>日本語 / 简体中文 — short note</strong></summary>
 
-The 0.23.0 version string does **not** claim blanket semantic parity with every
-later upstream commit. The semantic-refresh campaign remains mapped
-contract-by-contract through frozen ceiling
-`678a4762b887f3eabe5cad11254b2ab1ae859485`; open families stay open until their
-source, tests, mutation evidence, CodeGraph binding and review are closed. See
-[the current handoff plan](docs/windows/semantic-refresh-20260926/CURSOR_IMPLEMENTATION_PLAN_20260929.md).
-Supported release channels are `stable` and `preview`. A source commit or
-main-branch push is not evidence that a stable installer has been published.
+- **日本語:** Windows 常時稼働向けの非公式派生です。CLI・Desktop・Gateway・profile・
+  ローカル推論・記憶・自動化を同一 core で扱います。詳細は [日本語版](README.ja.md)。
+- **简体中文:** 面向 Windows 常驻工作站的非官方下游。CLI、Desktop、Gateway、profile、
+  本地推理、记忆与自动化共用同一 core。详见 [简体中文版](README.zh-CN.md)。
 
-## Setup in 30 seconds
+</details>
 
-> **TL;DR:** clone the downstream, install the locked environment, configure a
-> provider, then start CLI chat. Optional plug-ins and local models can be added
-> later.
+---
 
-Windows 11 x64, PowerShell, Git, `uv` and Python 3.11–3.13 are the native
-baseline. Node.js is only required when building Desktop from source.
+## At a glance
+
+| You get | You keep |
+| --- | --- |
+| Native Windows 11 x64 as a Tier-1 target | Official Hermes CLI / session / profile / tool / MCP contracts |
+| Electron Desktop with a single backend owner | Upstream MIT history and contributor credit |
+| Local llama.cpp/GGUF beside remote providers | Evidence-based upstream adoption (exact SHAs, not blind merges) |
+| Semantic Graph + Ebbinghaus memory seams | Profile isolation for config, secrets, sessions and gateway state |
+| Gateway, cron, skills, MCP, delegation, kanban | Prompt-cache stability and role-alternation invariants |
+
+Version `0.23.0` is the **downstream product identity**. It does **not** claim
+blanket semantic parity with every later upstream commit. Open semantic-refresh
+families stay open until source, tests, mutation evidence, CodeGraph and review
+are closed. See [Version & provenance](#version--provenance).
+
+---
+
+## Quick start (source route)
+
+**Requirements:** Windows 11 x64 · PowerShell · Git · [`uv`](https://docs.astral.sh/uv/) · Python 3.11–3.13  
+Node.js is required only when building Desktop from source.
 
 ```powershell
 git clone https://github.com/zapabob/hermes-agent-windows.git
@@ -64,350 +67,192 @@ uv run hermes setup
 uv run hermes chat
 ```
 
-Start the packaged Desktop flow from the same checkout with:
+Same checkout, packaged Desktop flow:
 
 ```powershell
 uv run hermes desktop
 ```
 
-For an installer or portable ZIP, first confirm that the matching asset exists on
-the [downstream Releases page](https://github.com/zapabob/hermes-agent-windows/releases)
-and verify `SHA256SUMS.txt`. The canonical Windows procedure is
+Installer / portable ZIP: confirm the asset on
+[Releases](https://github.com/zapabob/hermes-agent-windows/releases), verify
+`SHA256SUMS.txt`, then follow
 [docs/windows/INSTALL.md](docs/windows/INSTALL.md).
 
-<details open>
-<summary><strong>日本語</strong></summary>
+> First `uv sync` and native builds take longer than the command list suggests.
+> A push to `main` is **not** proof that a stable installer was published.
 
-Windows向け独立派生版の現在のソース版は **0.23.0** です。CLI、Electron Desktop、
-複数profile、Gateway、OAuth/API key/local llama.cpp、Semantic Graph/Ebbinghaus、
-Windows固有のruntime管理を同じHermes coreの上で扱います。0.23.0は feature-intake
-M1（子agent GUI・plugin OAuth・ask_choice・vault keychain・ctx.files など）を含みます。
-版番号は進行中の上流semantic refresh全件の完了宣言ではありません。詳しくは
-[日本語版README](README.ja.md) と
-[Windows導入ガイド](docs/windows/INSTALL.md) を参照してください。
-
-</details>
-<details>
-<summary><strong>简体中文</strong></summary>
-
-当前 Windows 下游源码版本为 **0.23.0**。CLI、Electron Desktop、多 profile、
-Gateway、OAuth/API key/local llama.cpp、Semantic Graph/Ebbinghaus 与 Windows
-runtime 管理共用同一 Hermes core。0.23.0 包含 feature-intake M1（子 agent GUI、
-plugin OAuth、ask_choice、vault keychain、ctx.files 等）。版本号并不表示正在进行的上游
-semantic refresh 已全部完成。参见
-[简体中文 README](README.zh-CN.md) 与
-[Windows 安装指南](docs/windows/INSTALL.md)。
-
-</details>
-
-## What's new in 0.23.0
-
-Windows-native feature intake (`docs/windows/feature-intake-20261028/`):
-
-| Area | Behaviour |
-| --- | --- |
-| Subagent settings | Dedicated Desktop Settings page; one Apply saves the full `delegation` draft after server-side validate→merge; secrets never leave the disk key |
-| Plugin OAuth | Manifest `oauth:` + `hermes auth add\|status\|refresh\|logout <plugin>:<id>`; host attaches Bearer via `credentialed_provider_request` — plugins never receive tokens |
-| `ask_choice` | `PluginContext.ask_choice` binds to each surface's existing clarify prompt; unbound/async/headless paths return `None` |
-| Vault keychain | Opt-in `vault.key_storage: keychain` with ordered migrate/rollback; default remains `file` |
-| `ctx.files` | Desktop grant API (picker-only roots, opaque handles, Windows path hardening) |
-| MCP progress / plugin update / compaction | Call-unit progress sink, shared `update_user_plugin_core`, durable `post_compaction` hook |
-
-Workstation restart (Documents checkout only — never `.worktrees/`):
+Workstation restart from the Documents checkout only — **never** from `.worktrees/`:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\windows\Restart-HermesFullStack.ps1
 ```
 
-## Recent fix: stable local-model sessions on a 128K llama-server
+---
 
-**Symptom.** Auto-compaction failed against a local llama-server with a large
-context window: the turn ended with `context_compression_timeout`, the user's
-message was never answered, and the model picker looked hung.
+## Surfaces
 
-**Root causes — all measured on the workstation, not inferred.**
+One `AIAgent` core behind four operators:
 
-1. *The KV cache did not fit in VRAM.* A 27B model needs ~72 KiB of KV per
-   token, so a 131,072-token window needs 9.00 GiB of KV next to 6.71 GiB of
-   weights — more than a 16 GiB card holds. Windows WDDM backed the overflow
-   with system memory, so prompt reads crossed the bus: the measured prefill
-   rate fell from ~500–1,000 tokens/s to ~11 tokens/s and every client timed
-   out.
-2. *The summarizer prompt was bounded in characters, not tokens.* 160K
-   characters is ~40K tokens of English but ~160K tokens of CJK, so the
-   compression request could outgrow the summarizer model's own window.
-3. *The compression no-progress window did not allow for a local backend.*
-   Reading a 128K prompt can legitimately take minutes; the 120 s idle window
-   called that a stall and aborted the compaction.
+| Surface | Role |
+| --- | --- |
+| **CLI** | Interactive chat, setup wizard, tools, skills, update, doctor |
+| **Electron Desktop** | Native chat UI, profiles, Security Center, Bot Mode, Git/review panes |
+| **Gateway** | Long-lived messaging across Telegram, Discord, Slack, LINE, Signal, … |
+| **TUI** | Ink terminal UI over stdio JSON-RPC |
 
-**What changed.**
+Capabilities grow at the **edges** (plug-ins, skills, MCP, service-gated tools) —
+not by inflating the core tool footprint on every API call.
 
-- `scripts/windows/Get-LlamaContextBudget.ps1` (new) reads the GGUF
-  architecture and reports the KV footprint, the effective per-slot context
-  (`-c` is divided across `--parallel` slots) and the largest context that
-  stays resident in VRAM. The launchers clamp the window to it, so a context
-  can no longer silently exceed the GPU.
-- The generation server now runs with a context whose KV cache is resident
-  (98304 tokens on the 27B/PQ2_0 profile), and Hermes' `context_length`
-  matches it. The launcher reads the agent's own configured window, so the
-  two can never disagree.
-- The compression summarizer input is bounded by the summarizer model's TOKEN
-  window (25% of it), keeping the head and the tail and marking the omitted
-  middle explicitly.
-- A local summarizer endpoint gets a wider no-progress window (300 s) and a
-  wider total ceiling (1800 s).
-- *Deferred tool loading* (`tools.tool_search.deferred_toolsets`): a
-  first-party toolset can keep every tool working while its schemas leave the
-  request. The measured request baseline fell from 58,189 to 41,757 tokens.
-- A rejected credential now suppresses that provider in the fallback chain
-  (one probe per provider instead of one per model).
-- A compression timeout now preserves the input and stays retryable: the
-  session is kept, the user message is persisted and the next turn retries
-  the compaction.
+---
 
-**Effect.** Prompt reads run at ~550–1,000 tokens/s instead of ~11, and
-auto-compaction completes again instead of dropping the turn.
+## What's new in 0.23.0
 
-## What this fork adds
+Windows-native feature intake —
+[`docs/windows/feature-intake-20261028/`](docs/windows/feature-intake-20261028/):
 
-- **Native Windows as a first-class target.** Windows path handling, process
-  identity, PowerShell transport, NTFS behaviour, Electron IPC, update recovery,
-  installer/portable flows and the Go watchdog have native Windows tests.
-- **One Desktop backend owner.** Electron main owns the destructive Desktop
-  backend lifecycle. Other components may observe health, but they do not become
-  a second backend owner merely because they can see a PID, port or token.
-- **Local inference without replacing the Hermes provider model.** The same model
-  picker can use remote providers, OAuth-backed providers or local llama.cpp/GGUF.
-  Generation and embedding are separate services with separate lifecycle evidence.
-- **Provider choice remains normal Hermes behaviour.** OpenAI Codex OAuth,
-  Qwen OAuth, xAI, Anthropic, OpenRouter, Nous, Gemini, local/custom endpoints and
-  other bundled providers live in the normal provider registry. Fallback chains,
-  delegation, MoA and reasoning effort remain independent user-configured
-  capabilities.
-- **Semantic and cognitive memory.** Semantic Graph supplies graph storage,
-  embeddings and hybrid retrieval. Ebbinghaus supplies a separate cognitive
-  memory provider through the official memory-provider seam.
-- **Desktop workflows that stay on official session/profile contracts.** The
-  Desktop includes profile-aware sessions, model/effort controls, Git/review
-  surfaces, Security Center and Bot Mode. Bot Mode resolves one canonical
-  forever-chat per bot by `(profile, "Bot Chat")`, rather than storing a fragile
-  canonical session-id pointer.
-- **Long-running messaging and automation.** Gateway platforms, cron, profiles,
-  skills, MCP, delegation, kanban and scheduled work share the same core state
-  model instead of being separate downstream agents.
-- **Workstation integrations at the edges.** VRChat/Unity, voice/TTS, AITuber,
-  OSINT/Shinka, local research, Office and other integrations are plug-ins or
-  optional components rather than hard-wired core dependencies.
-- **Local workstation security.** The Windows Security Center provides scanning,
-  evidence, update state and encrypted quarantine with explicit confirmation for
-  mutations.
-- **Evidence-driven upstream adoption.** Upstream changes are mapped by observable
-  behaviour and exact frozen SHAs. This fork does not use a blind merge/rebase as
-  proof of compatibility.
+| Area | Behaviour |
+| --- | --- |
+| Subagent settings | Dedicated Desktop Settings page; one Apply saves the full `delegation` draft after server-side validate→merge |
+| Plugin OAuth | Manifest `oauth:` + `hermes auth …`; host attaches Bearer — plugins never receive tokens |
+| `ask_choice` | `PluginContext.ask_choice` binds to each surface's clarify prompt; unbound/headless → `None` |
+| Vault keychain | Opt-in `vault.key_storage: keychain`; default remains `file` |
+| `ctx.files` | Desktop grant API: picker-only roots, opaque handles, Windows path hardening |
+| MCP / updates / compaction | Call-unit progress sink, shared plugin-update core, durable `post_compaction` hooks |
 
-## Plug-ins and Git submodules
+### Local-model stability (128K llama-server)
 
-Hermes capabilities are discovered through the normal plug-in registry. Run:
+Auto-compaction against a large local context used to fail with
+`context_compression_timeout` when the KV cache spilled out of VRAM. This tree:
+
+- clamps context to a VRAM-resident budget via
+  `scripts/windows/Get-LlamaContextBudget.ps1`;
+- bounds summarizer input in **tokens** (not characters) for CJK-safe compression;
+- widens local no-progress / total ceilings;
+- supports deferred tool schemas to shrink request baselines;
+- keeps compression timeouts retryable without dropping the user turn.
+
+Measured effect on the reference 27B workstation path: prefill recovered from
+~11 tok/s to ~550–1,000 tok/s and auto-compaction completes again.
+
+---
+
+## Why this fork exists
+
+- **Windows as a first-class runtime** — paths, process identity, PowerShell
+  transport, NTFS locks, Electron IPC, update handoff, installer/portable and
+  the Go watchdog have native Windows tests. Linux cross-compile is not Windows
+  evidence.
+- **One Desktop backend owner** — Electron main owns the destructive Desktop
+  backend lifecycle. Observing a PID, port or token does **not** grant a second
+  owner authority.
+- **Local inference without forking the provider model** — the same picker
+  reaches remote providers, OAuth routes or local llama.cpp/GGUF. Generation and
+  embedding are separate services with separate readiness evidence.
+- **Memory at official seams** — Semantic Graph (graph + embeddings + hybrid
+  retrieval) and Ebbinghaus (cognitive retention) compose through the Hermes
+  memory-provider contract.
+- **Bot Mode by name, not by dangling pointer** — one bot = one forever-chat
+  resolved as `(profile, session titled exactly "Bot Chat")`. No canonical
+  session-id pin.
+- **Long-lived automation** — Gateway, cron, skills, MCP, delegation and kanban
+  share the same session/profile state model.
+- **Edge integrations** — VRChat/Unity, voice/TTS, AITuber, OSINT/Shinka, Office
+  and similar live as plug-ins or optionals, not hard-wired core deps.
+- **Security Center** — deterministic scan, evidence, update state and encrypted
+  quarantine; mutations require explicit confirmation.
+- **Evidence-driven upstream intake** — exact frozen SHAs and observable
+  contracts. Blind merge/rebase or a version string alone is not compatibility
+  proof.
+
+Product ledger: [`FEATURES.yaml`](FEATURES.yaml) · carried patches:
+[`CARRY.yaml`](CARRY.yaml) · adoption map: `UPSTREAM_ADOPTION.yaml` · policy:
+[`DOWNSTREAM_POLICY.md`](DOWNSTREAM_POLICY.md)
+
+---
+
+## Architecture in brief
+
+```text
+┌─────────────┐  ┌──────────────┐  ┌──────────┐  ┌─────────┐
+│ CLI / setup │  │ Electron UI  │  │ Gateway  │  │   TUI   │
+└──────┬──────┘  └──────┬───────┘  └────┬─────┘  └────┬────┘
+       │                │               │             │
+       └────────────┬───┴───────────────┴─────────────┘
+                    ▼
+              AIAgent core
+     (prompt cache · tools · memory · providers)
+                    │
+     ┌──────────────┼──────────────────────────┐
+     ▼              ▼                          ▼
+ plugins/skills   MCP / cron / kanban     local llama / embeddings
+```
+
+Sacred invariants (do not break casually):
+
+1. **Per-conversation prompt caching** — mutating past context or swapping
+   toolsets mid-turn destroys the KV cache and multiplies API cost.
+2. **Narrow waist, capability at the edges** — new work prefers CLI/skill →
+   service-gated tool → plug-in → MCP before a new core tool.
+3. **Session-scoped surface capability** — Desktop features resolve from
+   `session.platform`, not a static `HERMES_DESKTOP` environment bit.
+4. **Deterministic, reversible execution** — destructive ops need recovery paths,
+   auditability and approvals.
+
+Normative Windows contract:
+[`.codex/WINDOWS_PLATFORM_CONTRACT.md`](.codex/WINDOWS_PLATFORM_CONTRACT.md)
+
+---
+
+## Ownership & recovery
+
+| Component | Lifecycle owner |
+| --- | --- |
+| Desktop `serve` backend | Electron main only |
+| Generation llama-server | Operator / launcher scripts |
+| Embedding llama-server (when watchdog-spawned) | Go watchdog |
+| Messaging gateway | Gateway process (survives Desktop quit by design) |
+| WebUI / fixed-port dashboard | Separate from Desktop `serve --port 0` |
+
+The Go watchdog observes health and may manage an embedding server **it**
+started. It must not become a parallel Desktop backend owner. Exact process
+identity beats argv-substring guesses.
+
+Guide: [`scripts/windows/watchdog-go/README.md`](scripts/windows/watchdog-go/README.md)
+
+---
+
+## Plug-ins & submodules
 
 ```powershell
 uv run hermes plugins
 ```
 
-to see the actual enabled inventory for the active profile. The repository
-contains top-level workstation plug-ins plus specialised provider families under
-`plugins/model-providers/`, `plugins/memory/`, `plugins/platforms/`,
-`plugins/web/` and related directories. The current tree includes dozens of
-model providers and messaging adapters; runtime enablement still depends on
-profile configuration and credentials.
-
-Representative downstream plug-ins include:
+Representative families (counts change; runtime enablement depends on profile +
+credentials):
 
 | Area | Examples |
 | --- | --- |
-| Desktop / agent operations | `hermes-bot-mode`, `desktop-dashboard`, `hermes-gpt`, `hermes-antigravity`, `implementation_router` |
-| Memory / knowledge | `semantic_graph`, `memory/ebbinghaus`, `memory_llm_wiki`, `surfsense` |
-| Local media / XR | `voicevox_tts`, `irodori_tts`, `vrchat-autonomy`, `unity_vrchat_bridge`, `aituber_onair` |
-| Research / OSINT | `shinka-osint`, `sitdeck-osint`, `world-intel-osint`, `worldmonitor-osint` |
-| Providers / web | `openai-codex`, `qwen-oauth`, `xai`, `hypura`, `cloakbrowser`, `scrapling` |
+| Desktop / ops | `hermes-bot-mode`, `desktop-dashboard`, `implementation_router` |
+| Memory | `semantic_graph`, `memory/ebbinghaus`, `surfsense` |
+| Media / XR | `voicevox_tts`, `vrchat-autonomy`, `unity_vrchat_bridge`, `aituber_onair` |
+| Research | `shinka-osint`, `world-intel-osint` |
+| Providers | `openai-codex`, `qwen-oauth`, `xai`, `hypura` |
 
-`implementation_router` is **opt-in**. It is an isolated sequential engineering
-workflow that uses the existing auxiliary picker and parent-owned inference. It
-does not replace the normal model picker, ordinary delegation, MoA or provider
-fallback. It never applies its verified workspace to the source checkout and
-never publishes a PR by itself.
+`implementation_router` is **opt-in**: isolated planner→worker→verify→reviewer
+workflow. It does not replace the normal picker, delegation, MoA or fallback,
+and never auto-applies or publishes.
 
-Git submodules are optional integrations. Initialise them only when you need the
-corresponding external runtime:
+Optional Git submodules (only when you need that external runtime):
 
 ```powershell
 git submodule update --init --recursive
 ```
 
-The broader integration inventory is tracked in
-[docs/windows/INTEGRATIONS.md](docs/windows/INTEGRATIONS.md). That document is a
-snapshot; `uv run hermes plugins` is the better runtime inventory.
+Snapshot inventory: [`docs/windows/INTEGRATIONS.md`](docs/windows/INTEGRATIONS.md)
 
-## 1. Product identity
+---
 
-Hermes Agent Windows Workstation Edition is a Windows-first downstream
-distribution built on the Hermes core. It keeps upstream CLI/session/profile,
-provider, tool, skill, MCP and gateway contracts while adding Windows runtime
-policy and workstation integrations through downstream-owned edges.
-
-The product ledger is [FEATURES.yaml](FEATURES.yaml). Direct changes carried in
-upstream-owned files are tracked in [CARRY.yaml](CARRY.yaml), and upstream
-adoption decisions are tracked in `UPSTREAM_ADOPTION.yaml`.
-
-The downstream product version and upstream semantic-adoption state are separate
-facts. Version 0.23.0 records the product/release identity; the semantic-refresh
-ledger records which upstream behaviours have actually been reviewed and adopted.
-
-## 2. Windows-first goals
-
-The primary runtime target is native Windows 11 x64 with Python, Electron/Node,
-PowerShell and optional consumer NVIDIA hardware. WSL is not required for the
-main application.
-
-Windows support covers more than path syntax. It includes process incarnation,
-locked executables, PowerShell quoting, CP932/UTF-8 boundaries, CRLF, native venv
-`Scripts\`, Electron stdio/IPC, scheduled start-up, sleep/resume, update
-handoff and loopback service recovery.
-
-Native Windows evidence is kept separate from Linux cross-compilation and from
-GPU-less hosted CI.
-
-## 3. Who this is for
-
-This downstream is for operators and developers who want source-level control of
-an always-on Windows Hermes workstation: Desktop, local models, multiple profiles,
-gateway services, memory, automation and specialised plug-ins.
-
-If you want the simplest official Hermes installation and upstream support model,
-use the original project linked in section 15.
-
-## 4. Downstream advantages
-
-The main downstream properties are behavioural rather than cosmetic:
-
-- provider-agnostic auth through the normal picker, including OAuth, API keys and
-  local/custom endpoints;
-- Windows-native process and update contracts;
-- separate, testable lifecycle ownership for Desktop backend, generation model,
-  embedding model, gateway, dashboard and watchdog;
-- Semantic Graph and Ebbinghaus memory extensions through official seams;
-- profile isolation for config, credentials, sessions, memory and gateway state;
-- Desktop Bot Mode using a name-based canonical chat registry instead of a
-  persisted session-id pin;
-- downstream Security Center and security regression coverage;
-- optional workstation plug-ins for XR, voice, AITuber, research and OSINT;
-- semantic upstream adoption with exact frozen inputs and evidence receipts.
-
-The fork does not create a second source of truth for sessions, profiles, model
-catalogue, approvals, gateway state or the tool registry.
-
-## 5. Verified feature matrix
-
-| Area | Current implementation | Evidence / contract |
-| --- | --- | --- |
-| Windows runtime | Native path/process/IPC/update helpers | `tests/downstream/test_windows_contracts.py` |
-| Desktop backend | Electron main is the single destructive lifecycle owner | `apps/desktop/electron/single-owner-backend-lifecycle.test.ts` |
-| Desktop Bot Mode | One canonical `Bot Chat` registry row per profile/bot | `apps/desktop/src/plugins/hermes-bots/tests/canonical-chat-registry.test.mjs`, `tests/tui_gateway/test_profiles_list_canonical_session.py` |
-| Recovery | External Go watchdog with exact-identity lifecycle fencing | `scripts/windows/Start-HermesGoWatchdog.ps1`, `scripts/windows/watchdog-go/*_test.go` |
-| Local inference | llama.cpp/GGUF launch, fallback and hot-swap surfaces | `tests/hermes_cli/test_llama_fallback_runtime.py` |
-| Local embeddings | Watchdog-owned embedding lifecycle | `scripts/windows/watchdog-go/embedding_test.go` |
-| Providers | Normal Hermes provider registry, OAuth/API-key/custom/local routes | `plugins/model-providers/` |
-| Provider resilience | Explicit fallback chains and provider rotation | `tests/hermes_cli/test_fallback_chain.py` |
-| Memory | Semantic Graph + Ebbinghaus provider | `tests/plugins/test_semantic_graph_registration.py`, `tests/plugins/test_ebbinghaus_plugin.py` |
-| Profiles / gateway | Profile-scoped state and multi-platform messaging | `gateway/`, `tests/tui_gateway/` |
-| Automation | Cron, delegation, kanban, skills and MCP on the shared core | `cron/`, `plugins/kanban/`, `tools/delegate_tool.py` |
-| Desktop tooling | Git/review and profile-aware Desktop surfaces | `apps/desktop/electron/git-review-ops.test.ts` |
-| Security | Security Center, approval fences and security regression tests | `docs/windows/SECURITY_CENTER.md`, `downstream/security/` |
-| Optional engineering sandbox | `implementation_router` uses explicit picker routes and isolated workspaces | `plugins/implementation_router/` |
-| Control MCP | Auth/journal/coordinator contracts implemented; production write still disabled | `docs/control-mcp/IMPLEMENTATION_LOG.md` |
-
-`FEATURES.yaml` is the product ledger for verified/retired downstream features.
-Test counts and local green runs are evidence for their bounded contracts, not a
-claim that every optional integration or every upstream commit is qualified.
-
-## 6. Windows Tier-1 support contract
-
-The normative Windows contract is
-[.codex/WINDOWS_PLATFORM_CONTRACT.md](.codex/WINDOWS_PLATFORM_CONTRACT.md).
-Tier-1 work covers native drive paths, supported MSYS/WSL aliases, NTFS locks,
-process trees, applicable Job Object behaviour, PowerShell/native argument
-transport, Git Bash boundaries, CRLF, UTF-8/CP932, venv paths and Electron pipes.
-
-Runtime qualification is split into separate gates: Python, Desktop, installer,
-portable, upgrade, Go watchdog, security, local runtime and live workstation
-evidence. A green unit test, an open port or a merged PR does not automatically
-satisfy the other gates.
-
-## 7. Local AI architecture
-
-Hermes' normal provider and model-catalogue contracts remain authoritative.
-Local inference is another route through that architecture rather than a forked
-agent core.
-
-The Windows workstation can run a separately supplied llama.cpp executable and
-GGUF model on loopback. Generation and embedding are intentionally separate:
-
-- generation is a normal model endpoint and has its own operator lifecycle;
-- embedding is optional Semantic Graph infrastructure and may be supervised by
-  the Go watchdog when the watchdog launched that embedding process itself;
-- model readiness requires a real health/model response, not merely a listener.
-
-Operator scripts live under `scripts/windows/`, including llama launch/hot-swap
-and Tailscale Serve management. Model weights and private credentials are never
-part of the source repository.
-
-## 8. Watchdog and recovery architecture
-
-Electron main is the Desktop backend lifecycle owner. It may stop/restart the
-backend instance it owns; the Go watchdog must not become a parallel Desktop
-backend owner.
-
-The Go watchdog supplies observation, recovery state, a read-only status plane
-and the lifecycle for an embedding `llama-server` that it explicitly created.
-Its own launcher uses exact process identity evidence before destructive
-replacement. PID strings, command-line substrings or a stale lock file are not
-enough authority.
-
-Generation llama, gateway profiles, WebUI, dashboard and Desktop all have
-separate lifecycles. A full workstation restart therefore requires explicit
-verification of each service, not a single process-exists check.
-
-See [scripts/windows/watchdog-go/README.md](scripts/windows/watchdog-go/README.md).
-
-## 9. Memory and semantic retrieval
-
-Profiles isolate configuration, credentials, sessions and memory. Semantic Graph
-adds graph-backed storage, embeddings, hybrid retrieval and cognitive helpers
-through the plug-in/memory interfaces. Ebbinghaus is a separate memory provider
-for retention/experience policy and can compose with Semantic Graph.
-
-Other bundled memory providers remain available through the standard Hermes
-memory configuration. Use:
-
-```powershell
-uv run hermes memory
-```
-
-and the active profile configuration to see what is actually enabled. No personal
-memory database or model file is included in the repository.
-
-## 10. VRChat, Unity, and voice integrations
-
-VRChat autonomy, Unity bridge tooling, local TTS/VOICEVOX/Irodori, AITuber and
-related media integrations are downstream-owned plug-ins. They use the same
-Hermes tool/plug-in boundaries as other optional capabilities and require their
-external runtimes or SDKs to be installed separately.
-
-Publishing, account mutation and other external write actions remain explicit
-user-approved operations. Local generation never implies permission to publish.
-
-## 11. Installation
-
-The native target is Windows 11 x64. Install Git, `uv` and Python 3.11–3.13:
+## Install & Desktop build
 
 ```powershell
 git clone https://github.com/zapabob/hermes-agent-windows.git
@@ -417,14 +262,8 @@ uv run hermes --version
 uv run hermes setup
 ```
 
-The setup wizard configures the model/provider route. A GPU is optional when
-using a remote provider. Local inference requires a separately supplied model
-file and compatible runtime.
-
-### Build Desktop
-
-Use a Node.js version accepted by
-[`apps/desktop/package.json`](apps/desktop/package.json). Then:
+Desktop from source (Node version per
+[`apps/desktop/package.json`](apps/desktop/package.json)):
 
 ```powershell
 npm ci
@@ -432,106 +271,74 @@ npm run typecheck --workspace apps/desktop
 npm run build --workspace apps/desktop
 ```
 
-Packaging and replacing the running `Hermes.exe` are separate operations. A
-locked running executable must be stopped through its ownership-aware lifecycle
-before packaging replaces it.
+Packaging / replacing a running `Hermes.exe` is a separate, ownership-aware
+step. Stop the owned process before swapping the binary.
 
-The release pipeline can produce an NSIS installer and portable ZIP. Stable
-publication remains a separate exact-tag qualification step. The official
-upstream installer targets the upstream distribution; it is not the installer
-for this downstream.
+Secrets live in profile `.env` (or external secret stores). Non-secret settings
+live in `config.yaml`. Never commit model weights, profile DBs or tokens.
 
-## 12. Update and upstream integration policy
+---
 
-Upstream is an integration input, not a moving source tree that this fork merges
-blindly. Each semantic-refresh campaign uses exact frozen SHAs, repository
-inventory, source/caller mapping, focused regression evidence, mutation where
-needed, CodeGraph and independent review.
+## Version & provenance
 
-For the current campaign:
+| Fact | Value |
+| --- | --- |
+| Downstream product version | `0.23.0` (`version_source: downstream`) |
+| Upstream stable reference (R2) | `f97608f178d1ffeca59860195ab7da295f7c8e5f` (`0.21.5` / `v2026.9.24`) |
+| Active semantic-refresh ceiling (U1) | `678a4762b887f3eabe5cad11254b2ab1ae859485` |
+| Historical provenance snapshot | `b51c055a12220f8c7c18660e8599365012e19532` |
 
-| Input | SHA | Meaning |
-| --- | --- | --- |
-| R2 | `f97608f178d1ffeca59860195ab7da295f7c8e5f` | upstream 0.21.5 / `v2026.9.24` stable release |
-| U1 | `678a4762b887f3eabe5cad11254b2ab1ae859485` | frozen newer upstream ceiling for the active campaign |
-| historical snapshot | `b51c055a12220f8c7c18660e8599365012e19532` | retained provenance anchor |
+Handoff plan:
+[`docs/windows/semantic-refresh-20260926/CURSOR_IMPLEMENTATION_PLAN_20260929.md`](docs/windows/semantic-refresh-20260926/CURSOR_IMPLEMENTATION_PLAN_20260929.md)
 
-The current `main` contains multiple mapped Windows/runtime fixes from the active
-campaign, including process-identity, relaunch/recovery and Desktop E2E isolation
-work. The campaign remains open until every in-scope ledger row is mapped or
-explicitly dispositioned. Version 0.23.0 therefore describes the product release
-identity, not a shortcut around semantic review.
+Built-in updater shape:
+`plan → snapshot → apply → restart-per-kind → verify → report`.
 
-The built-in updater follows the upstream transactional shape:
-`plan → snapshot → apply → restart-per-kind → verify → report`. Update receipts,
-fleet version checks and deployment-kind handling are part of the update
-contract.
+---
 
-## 13. Architecture
+## Security
 
-The same `AIAgent` core sits behind CLI, Gateway, TUI and Electron Desktop.
-Capabilities are loaded at the edges through plug-ins, skills, MCP, provider
-adapters and configured toolsets.
+- Do not commit secrets, personal runtime data, model files or investigation artefacts.
+- Mutating Security Center APIs require explicit confirmation.
+- `hermes security`, `hermes egress`, `hermes secrets` cover scan / egress policy /
+  external vaults.
+- Provider base URLs are masked before logs; children receive bounded env maps.
 
-Important architectural boundaries are:
+**Control MCP:** auth / journal / coordinator contracts exist, but **production
+write remains DISABLED** until host grant-revocation, linearisation, trusted
+producer binding and writer fences are all closed. Tests alone do not authorise
+enabling that path. See
+[`docs/control-mcp/IMPLEMENTATION_LOG.md`](docs/control-mcp/IMPLEMENTATION_LOG.md).
 
-- profile-aware state paths through `HERMES_HOME`;
-- one session store and one profile model across surfaces;
-- prompt-cache stability during a conversation;
-- provider/model selection through the central registry;
-- normal delegation, fallback and MoA as distinct capabilities;
-- Desktop backend ownership in Electron main;
-- optional external supervisors that do not duplicate product ownership;
-- explicit approvals and receipts around mutations.
+---
 
-Bot Mode follows the same rule: one bot is one profile plus one canonical session
-titled exactly `Bot Chat`. The bot row resolves that registry entry by name on
-every open; it does not persist a canonical session-id pin.
+## Docs map
 
-## 14. Security
+| Doc | Purpose |
+| --- | --- |
+| [`docs/windows/INSTALL.md`](docs/windows/INSTALL.md) | Canonical Windows install |
+| [`docs/windows/INTEGRATIONS.md`](docs/windows/INTEGRATIONS.md) | Optional integrations snapshot |
+| [`docs/windows/SECURITY_CENTER.md`](docs/windows/SECURITY_CENTER.md) | Security Center |
+| [`docs/windows/feature-intake-20261028/`](docs/windows/feature-intake-20261028/) | 0.23.0 intake notes |
+| [`AGENTS.md`](AGENTS.md) | Engineering contracts for assistants & developers |
+| [`SECURITY.md`](SECURITY.md) | Security policy |
 
-Do not commit secrets, profile databases, personal runtime data, model files,
-OAuth tokens, generated credentials or investigation artefacts.
+---
 
-The downstream Security Center provides local scan policy, definition state,
-evidence and encrypted quarantine. Mutating Security Center API calls require
-explicit confirmation. `hermes security`, `hermes egress` and `hermes secrets`
-cover workstation scanning/supply-chain checks, credential-injection egress
-policy and external secret stores.
+## Upstream project
 
-Provider base URLs are masked before logs, and child processes receive bounded
-environment maps rather than ambient provider credentials.
+Original project: [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent).  
+Upstream docs, installers, releases and support apply to **upstream** only —
+they do not install or endorse this downstream.
 
-### Control MCP status
+---
 
-Control MCP has authentication, strict claims, operation journaling, coordinator
-and evidence contracts under `downstream/control_mcp/`, but **production write
-remains DISABLED**. The active campaign still records N07-A1, T06 and T12 as
-open: the real host grant-revocation writer, grant/claim/effect linearisation,
-trusted producer binding, separate apply approval and actual writer fence are not
-all closed. Tests or a successful-looking receipt do not authorise enabling that
-write path.
+## Licence & attribution
 
-See [docs/control-mcp/IMPLEMENTATION_LOG.md](docs/control-mcp/IMPLEMENTATION_LOG.md)
-and the semantic-refresh handoff plan for the current gates.
+Hermes Agent is developed by Nous Research under the MIT Licence. This
+downstream retains that attribution, copyright and contributor history, and
+ships under the same [MIT licence](LICENSE).
 
-## 15. Upstream project
-
-The original project is
-[NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent).
-Upstream documentation, installers, releases and support channels apply to the
-upstream distribution. They do not install or endorse this downstream fork.
-
-Upstream contributions retain their authorship and attribution. Where an
-upstream behaviour is adopted here, the semantic-refresh ledger records the
-source and local evidence rather than rewriting history.
-
-## 16. License and attribution
-
-The original Hermes Agent is developed by Nous Research and licensed under MIT.
-This downstream retains that attribution, the original copyright and contributor
-history, and the [MIT licence](LICENSE).
-
-Downstream Windows/workstation changes are maintained independently by this
-repository. Upstream and downstream issue trackers, releases, support claims and
-qualification evidence remain separate.
+Windows / workstation changes are maintained independently here. Issue
+trackers, releases, support claims and qualification evidence for upstream and
+downstream remain separate.
