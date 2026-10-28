@@ -20,12 +20,12 @@
   "schema_version": 1,
   "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
   "summary": {
-    "all_fork_specific_loc": 3235215,
+    "all_fork_specific_loc": 3235229,
     "carry_surface_files": 5166,
-    "cwc": 87517373,
+    "cwc": 87518451,
     "fork_owned_loc": 1660683,
-    "upstream_owned_fork_loc": 1574532,
-    "utr": 0.486685
+    "upstream_owned_fork_loc": 1574546,
+    "utr": 0.486688
   },
   "top_carry_risks": [
     {
@@ -38,10 +38,10 @@
       "upstream_frequency": 158
     },
     {
-      "added": 20428,
-      "cwc": 6173100,
+      "added": 20431,
+      "cwc": 6173955,
       "deleted": 1232,
-      "patch_size": 21660,
+      "patch_size": 21663,
       "path": "hermes_cli/web_server.py",
       "semantic_coupling": 3,
       "upstream_frequency": 95
