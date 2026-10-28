@@ -17,6 +17,7 @@ export type SettingsView =
   | 'sessions'
   | 'subagent'
   | 'vault'
+  | 'web-access'
   | `config:${string}`
 export type EnvPatch = Partial<Pick<EnvVarInfo, 'is_set' | 'redacted_value'>>
 

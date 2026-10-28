@@ -27,6 +27,37 @@ INDICATOR_STYLES: tuple[str, ...] = ("ascii", "emoji", "kaomoji", "unicode")
 DEFAULT_INDICATOR_STYLE: str = "kaomoji"
 
 
+def named_profile_home(path: str | Path) -> Path | None:
+    """Return ``<root>/profiles/<name>`` when *path* is that home or under it."""
+    current = Path(path)
+    for candidate in (current, *current.parents):
+        if candidate.parent.name == "profiles" and not candidate.name.startswith("."):
+            return candidate
+        if candidate.name == ".hermes":
+            return None
+    return None
+
+
+def profile_name_for_home(path: str | Path | None) -> str | None:
+    """Return the canonical profile id owning *path*, or ``None`` when it is not a profile home."""
+    if path is None or not str(path).strip():
+        return None
+    current = Path(path).expanduser()
+    try:
+        default_root = get_default_hermes_root()
+        for candidate in (current, current.resolve(strict=False)):
+            if candidate == default_root or candidate == default_root.resolve(strict=False):
+                return "default"
+            named = named_profile_home(candidate)
+            if named is not None:
+                return named.name
+            if candidate.parent.name == "profiles" and not candidate.name.startswith("."):
+                return candidate.name
+    except (OSError, RuntimeError, ValueError):
+        return None
+    return None
+
+
 def set_hermes_home_override(path: str | Path | None) -> Token:
     """Set a context-local Hermes home override and return its reset token.
 

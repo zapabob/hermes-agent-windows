@@ -5,7 +5,10 @@
 // partial locales should use `defineLocale()` so missing desktop-only strings
 // fall back to English while new keys remain type-checked.
 
+import type { WebAccessTranslations } from './types_gateway_host'
+
 export type Locale = 'en' | 'zh' | 'zh-hant' | 'ja' | 'ar'
+export type { WebAccessTranslations }
 
 export type ToolTitleKey =
   | 'browser_click'
@@ -858,6 +861,7 @@ export interface Translations {
       loading: string
       unavailableTitle: string
       unavailableDesc: string
+      webAccess: WebAccessTranslations
       title: string
       envOverride: string
       intro: string

@@ -17,6 +17,7 @@ import {
   Info,
   Keyboard,
   KeyRound,
+  Network,
   Package,
   RefreshCw,
   Search,
@@ -57,11 +58,13 @@ import { SessionsSettings } from './sessions-settings'
 import { SubagentSettings } from './subagent-settings'
 import type { SettingsPageProps, SettingsView as SettingsViewId } from './types'
 import { VaultSettings } from './vault-settings'
+import { useWebAccessAvailable, WebAccessSettings } from './web-access-settings'
 
 const SETTINGS_VIEWS: readonly SettingsViewId[] = [
   ...SECTIONS.map(s => `config:${s.id}` as SettingsViewId),
   'providers',
   'gateway',
+  'web-access',
   // Legacy alias: the Connections page merged into Gateways. Kept in the enum
   // so saved `?tab=connections` deep links still resolve (redirected below).
   'connections',
@@ -105,6 +108,15 @@ export function SettingsView({ onClose, onConfigSaved, onMainModelChanged }: Set
       setActiveView('gateway')
     }
   }, [activeView, setActiveView])
+
+  const webAccessAvailable = useWebAccessAvailable()
+
+  useEffect(() => {
+    if (activeView === 'web-access' && !webAccessAvailable) {
+      setActiveView('gateway')
+    }
+  }, [activeView, setActiveView, webAccessAvailable])
+
   // Providers subnav (Accounts vs API keys) lives in its own param so each
   // sub-view is deep-linkable and survives a refresh.
   const [providerView, setProviderView] = useRouteEnumParam<ProviderView>('pview', PROVIDER_VIEWS, 'accounts')
@@ -264,6 +276,17 @@ export function SettingsView({ onClose, onConfigSaved, onMainModelChanged }: Set
         label: t.settings.nav.gateway,
         onSelect: () => setActiveView('gateway')
       },
+      ...(webAccessAvailable
+        ? [
+            {
+              active: activeView === 'web-access',
+              icon: Network,
+              id: 'web-access',
+              label: t.settings.gateway.webAccess.title,
+              onSelect: () => setActiveView('web-access')
+            }
+          ]
+        : []),
       {
         active: activeView === 'keybinds',
         icon: Keyboard,
@@ -317,7 +340,7 @@ export function SettingsView({ onClose, onConfigSaved, onMainModelChanged }: Set
         onSelect: () => setActiveView('about')
       }
     ],
-    [activeView, keysView, providerView, t, setActiveView, openProviderView, openKeysView]
+    [activeView, keysView, providerView, t, webAccessAvailable, setActiveView, openProviderView, openKeysView]
   )
 
   // Type-to-search: printable keystrokes on the Settings surface (outside any
@@ -411,6 +434,8 @@ export function SettingsView({ onClose, onConfigSaved, onMainModelChanged }: Set
       // 'connections' renders the unified page too so the frame before
       // the alias redirect lands doesn't flash the fallback view.
       <GatewaySettings />
+    ) : activeView === 'web-access' ? (
+      <WebAccessSettings />
     ) : activeView === 'keybinds' ? (
       <KeybindSettings />
     ) : activeView.startsWith('config:') ? (

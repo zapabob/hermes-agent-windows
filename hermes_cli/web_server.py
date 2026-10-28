@@ -20060,6 +20060,11 @@ def _mount_plugin_api_routes():
 # Mount plugin API routes before the SPA catch-all.
 _mount_plugin_api_routes()
 
+# Desktop Settings → Web access: status/start/stop/restart for the gateway-served Webapp.
+from hermes_cli.web_routers import webapp_access as _webapp_access_routes  # noqa: E402
+
+app.include_router(_webapp_access_routes.router)
+
 # Mount the dashboard auth routes (/login, /auth/*, /api/auth/*) before the
 # SPA catch-all so /{full_path:path} doesn't swallow them.  These are
 # always mounted — the gate middleware decides whether to enforce auth,
