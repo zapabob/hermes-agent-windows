@@ -246,12 +246,23 @@ export function cancelOAuthSession(sessionId: string, profile?: null | string): 
   })
 }
 
+/** One selectable ``delegation.backend`` row from GET /api/delegation. */
+export interface DelegationBackendInfo {
+  name: string
+  label: string
+  description: string
+  available: boolean
+  reason?: string
+}
+
 /** Subagent / delegation block without secret values (GET /api/delegation). */
 export interface DelegationConfigResponse {
   ok: boolean
   delegation: Record<string, unknown>
   has_api_key: boolean
   schema_affecting_keys: string[]
+  /** Present on T04+ backends; empty/absent on older servers. */
+  available_backends?: DelegationBackendInfo[]
 }
 
 /** Atomic Apply result (PUT /api/delegation). */

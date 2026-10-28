@@ -203,6 +203,17 @@ def validate_delegation_draft(draft: Mapping[str, Any]) -> dict[str, Any]:
         if not isinstance(backend, str) or not backend.strip():
             raise DelegationConfigError("backend must be a non-empty string")
         out["backend"] = backend.strip().lower()
+        # Fail closed at save time (same class as route-time refusal).
+        try:
+            from agent.delegation_registry import backend_status
+
+            _provider, reason = backend_status(out["backend"])
+        except Exception as exc:
+            raise DelegationConfigError(
+                f"could not validate delegation.backend: {exc}"
+            ) from exc
+        if reason:
+            raise DelegationConfigError(reason)
 
     if "backends" in draft:
         backends = draft["backends"]
@@ -254,6 +265,22 @@ def merge_delegation_config(
                 current.pop("fallback_providers", None)
             else:
                 current["fallback_providers"] = value
+            continue
+        if key == "backends" and isinstance(value, Mapping):
+            # Draft wins for named backend blocks it sends (always includes
+            # model_map / profile_routes, even empty). Sibling backend keys
+            # not present in the draft are preserved — never wipe unrelated
+            # plugin backends under delegation.backends.
+            existing_backends = current.get("backends")
+            if not isinstance(existing_backends, dict):
+                existing_backends = {}
+            else:
+                existing_backends = copy.deepcopy(existing_backends)
+            for backend_name, backend_block in value.items():
+                existing_backends[backend_name] = (
+                    dict(backend_block) if isinstance(backend_block, Mapping) else backend_block
+                )
+            current["backends"] = existing_backends
             continue
         current[key] = value
 

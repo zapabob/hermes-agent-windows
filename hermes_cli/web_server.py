@@ -8182,6 +8182,9 @@ async def get_delegation_config(profile: Optional[str] = None):
     """Return the profile's ``delegation`` block without secret values."""
 
     def _run():
+        from dataclasses import asdict
+
+        from agent.delegation_backends import list_backends
         from hermes_cli.delegation_config import SCHEMA_AFFECTING_KEYS
 
         with _profile_scope(profile):
@@ -8191,11 +8194,17 @@ async def get_delegation_config(profile: Optional[str] = None):
             block = {}
         safe = {k: v for k, v in block.items() if k != "api_key"}
         has_api_key = bool(block.get("api_key"))
+        try:
+            catalog = [asdict(info) for info in list_backends()]
+        except Exception:
+            _log.debug("list_backends for GET /api/delegation failed", exc_info=True)
+            catalog = []
         return {
             "ok": True,
             "delegation": safe,
             "has_api_key": has_api_key,
             "schema_affecting_keys": sorted(SCHEMA_AFFECTING_KEYS),
+            "available_backends": catalog,
         }
 
     try:

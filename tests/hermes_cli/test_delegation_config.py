@@ -84,3 +84,65 @@ def test_schema_affecting_change_detection() -> None:
     before = {"max_spawn_depth": 1, "model": "a"}
     after = {"max_spawn_depth": 2, "model": "a"}
     assert schema_affecting_changes(before, after) == ["max_spawn_depth"]
+
+
+def test_unknown_backend_rejected_fail_closed(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "agent.delegation_registry.backend_status",
+        lambda name: (None, f"Delegation backend '{name}' is not installed"),
+    )
+    with pytest.raises(DelegationConfigError, match="not installed"):
+        validate_delegation_draft({"backend": "totally-missing"})
+
+
+def test_available_backend_accepted(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "agent.delegation_registry.backend_status",
+        lambda name: (object(), ""),
+    )
+    cleaned = validate_delegation_draft({"backend": "Model_Map"})
+    assert cleaned["backend"] == "model_map"
+
+
+def test_backend_change_is_schema_affecting() -> None:
+    assert schema_affecting_changes({"backend": "default"}, {"backend": "model_map"}) == [
+        "backend"
+    ]
+
+
+def test_backends_merge_preserves_sibling_keys(monkeypatch) -> None:
+    """Contract 1: empty model_map/profile_routes still merge; unrelated backends.* kept."""
+    monkeypatch.setattr(
+        "agent.delegation_registry.backend_status",
+        lambda name: (object(), ""),
+    )
+    existing = {
+        "delegation": {
+            "backend": "default",
+            "model": "keep-me",
+            "api_key": "secret-disk",
+            "backends": {
+                "custom_plugin": {"flag": True},
+                "model_map": {"default": "old", "options": [{"name": "old"}]},
+            },
+        },
+        "timezone": "UTC",
+    }
+    draft = {
+        "backend": "default",
+        "backends": {
+            "model_map": {"default": "", "options": []},
+            "profile_routes": {"default": "", "profiles": []},
+        },
+        "model": "keep-me",
+    }
+    merged = merge_delegation_config(existing, draft)
+    assert merged["timezone"] == "UTC"
+    assert merged["delegation"]["api_key"] == "secret-disk"
+    assert merged["delegation"]["model"] == "keep-me"
+    assert merged["delegation"]["backends"]["custom_plugin"] == {"flag": True}
+    assert merged["delegation"]["backends"]["model_map"] == {"default": "", "options": []}
+    assert merged["delegation"]["backends"]["profile_routes"] == {
+        "default": "",
+        "profiles": [],
+    }

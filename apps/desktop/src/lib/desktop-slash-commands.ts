@@ -356,6 +356,12 @@ const DESKTOP_COMMAND_SPECS: readonly DesktopCommandSpec[] = [
     argumentMode: 'options',
     desktopSubcommands: ['pending', 'approve', 'reject', 'diff', 'approval']
   },
+  {
+    name: '/delegation',
+    description: 'Select the delegation backend (default / model_map / profile_routes)',
+    surface: exec(),
+    argumentMode: 'mixed'
+  },
 
   // No desktop surface, but carry an alias (underscore spelling variants).
   { name: '/reload-mcp', aliases: ['/reload_mcp'], surface: unavailable('advanced') },

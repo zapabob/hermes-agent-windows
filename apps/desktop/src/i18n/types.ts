@@ -433,6 +433,23 @@ export interface Translations {
       schemaNote: string
       runtimeNote: string
       secretNote: string
+      backend: string
+      backendDesc: string
+      backendUnavailable: string
+      backendSchemaNote: string
+      backendsDefault: string
+      modelMapOptions: string
+      modelMapAdd: string
+      modelMapRemove: string
+      modelMapName: string
+      modelMapDescription: string
+      modelMapModel: string
+      modelMapProvider: string
+      profileRoutesProfiles: string
+      profileRoutesAdd: string
+      profileRoutesRemove: string
+      profileRoutesName: string
+      profileRoutesDescription: string
     }
     plugins: {
       title: string
