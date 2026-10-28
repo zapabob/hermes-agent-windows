@@ -27,6 +27,7 @@ const sameFsPath = (left: fs.PathLike, right: string): boolean => {
   if (process.platform !== 'win32') {
     return false
   }
+
   const fold = (value: string) => value.replace(/\//g, '\\').toLowerCase()
 
   if (fold(a) === fold(right)) {
