@@ -19,10 +19,21 @@ const unprivileged = posix && process.getuid?.() !== 0
 /** Win32 8.3 vs long-path equality for mock triggers (CI often mixes both). */
 const sameFsPath = (left: fs.PathLike, right: string): boolean => {
   const a = String(left)
-  if (a === right) return true
-  if (process.platform !== 'win32') return false
+
+  if (a === right) {
+    return true
+  }
+
+  if (process.platform !== 'win32') {
+    return false
+  }
+
   const fold = (value: string) => value.replace(/\//g, '\\').toLowerCase()
-  if (fold(a) === fold(right)) return true
+
+  if (fold(a) === fold(right)) {
+    return true
+  }
+
   try {
     return fold(fs.realpathSync.native(a)) === fold(fs.realpathSync.native(right))
   } catch {
