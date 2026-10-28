@@ -132,16 +132,32 @@ export async function resolveMediaDisplaySrc(path: string, scope?: DesktopFsSour
 // remote URLs untouched and route filesystem paths through the Electron media
 // protocol. Its main-process handler reads local files directly or proxies a
 // remote gateway with the connection's bearer/cookie/token authentication.
-export async function resolveMediaPlaybackSrc(path: string): Promise<string> {
+export async function resolveMediaPlaybackSrc(
+  path: string,
+  owner?: DesktopFsSourceScope,
+  sessionId?: string
+): Promise<string> {
   if (isInlineMediaSrc(path)) {
     return path
   }
 
   if (window.hermesDesktop && ['audio', 'video'].includes(mediaKind(path))) {
+    if (window.hermesDesktop.getGatewayFileStreamUrl) {
+      const conn = $connection.get()
+      const via = owner
+
+      return window.hermesDesktop.getGatewayFileStreamUrl({
+        connectionId: via?.connectionId || conn?.connectionId,
+        path,
+        profile: via?.profile || conn?.profile,
+        ...(sessionId ? { sessionId } : {})
+      })
+    }
+
     return isRemoteGateway() ? mediaGatewayStreamUrl(path) : mediaStreamUrl(path)
   }
 
-  return resolveMediaDisplaySrc(path)
+  return resolveMediaDisplaySrc(path, owner)
 }
 
 // Resolve a media path to a URL the shell can open. Remote mode rewrites
@@ -270,9 +286,18 @@ export async function gatewayMediaDataUrl(path: string, scope?: DesktopFsSourceS
 // used by preview endpoints.
 export async function downloadGatewayMediaFile(
   path: string,
-  origin?: { sessionId: string; profile?: string }
+  origin: {
+    owner?: DesktopFsSourceScope
+    profile?: string
+    sessionId?: string
+    suggestedName?: string
+  } = {}
 ): Promise<{ canceled?: boolean; path?: string; saved: boolean }> {
   // URI conversion belongs to the gateway OS, not the renderer's URL parser.
+  if (!path?.trim()) {
+    throw new Error('Missing gateway file path')
+  }
+
   const file = path
   const conn = $connection.get()
 
@@ -280,19 +305,38 @@ export async function downloadGatewayMediaFile(
     throw new Error('Desktop file download bridge is unavailable')
   }
 
+  const owner = origin.owner ?? { connectionId: conn?.connectionId, profile: origin.profile ?? conn?.profile }
+
   return window.hermesDesktop.saveGatewayFile({
-    connectionId: conn?.connectionId,
+    ...(owner.connectionId ? { connectionId: owner.connectionId } : {}),
     path: file,
-    profile: origin?.profile ?? conn?.profile,
-    ...(origin ? { sessionId: origin.sessionId } : {}),
-    suggestedName: mediaName(file).replace(/(?:%[0-9a-f]{2})+/gi, encoded => {
-      try {
-        return decodeURIComponent(encoded)
-      } catch {
-        return encoded
-      }
-    })
+    ...(owner.profile ? { profile: owner.profile } : {}),
+    ...(origin.sessionId ? { sessionId: origin.sessionId } : {}),
+    suggestedName:
+      origin.suggestedName ||
+      mediaName(file).replace(/(?:%[0-9a-f]{2})+/gi, encoded => {
+        try {
+          return decodeURIComponent(encoded)
+        } catch {
+          return encoded
+        }
+      })
   })
+}
+
+/** Capture a gateway file download alongside a REST read, never at click time. */
+export function captureGatewayFileDownload() {
+  const conn = $connection.get()
+  const owner = {
+    connectionId: conn?.connectionId ?? null,
+    profile: conn?.profile?.trim() || 'default'
+  }
+
+  return (path: string, suggestedName: string) =>
+    downloadGatewayMediaFile(path, { owner, suggestedName }).then(
+      () => undefined,
+      () => undefined
+    )
 }
 
 export function mediaDisplayLabel(path: string): string {

@@ -20,6 +20,7 @@ import { LOCAL_CONNECTION_ID, registryBackendScopeKey } from '@hermes/shared'
 import { atom, computed } from 'nanostores'
 
 import type { ClientSessionState } from '@/app/types'
+import { dropBrowserProfilePrefs, migrateBrowserProfilePrefs } from '@/lib/browser-profile-prefs'
 import { findGroup, findGroupOfPane, type LayoutNode } from '@/components/pane-shell/tree/model'
 import {
   $activeTreeGroup,
@@ -1698,6 +1699,32 @@ $selectedStoredSessionId.listen(selected => {
   noteActiveTreeGroup(null)
   revealTreePane('workspace')
 })
+
+/** Drop browser-hosted prefs owned by a deleted profile (folder + startup). */
+export function dropTilesForProfile(
+  profile: string,
+  route?: { connectionId?: string; profile?: string; targetProfile?: string }
+): void {
+  if (route && !route.profile?.trim()) {
+    throw new Error('dropTilesForProfile: route without profile cannot be scoped')
+  }
+
+  const name = profile.trim()
+
+  if (!name) {
+    return
+  }
+
+  dropBrowserProfilePrefs(name)
+}
+
+/**
+ * Rename counterpart of dropTilesForProfile: move browser-hosted prefs with the
+ * profile so folder/startup keys follow the new name.
+ */
+export function migrateTilesForProfile(oldProfile: string, newProfile: string): void {
+  migrateBrowserProfilePrefs(oldProfile, newProfile)
+}
 
 // Dev hook for automation (mirrors __HERMES_LAYOUT_TREE__).
 if ((import.meta.env.DEV || import.meta.env.VITE_PERF_PROBE === '1') && typeof window !== 'undefined') {

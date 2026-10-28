@@ -60,6 +60,8 @@ export type PreviewRecordSource = 'explicit-link' | 'file-browser' | 'manual' | 
 export interface PreviewTab {
   id: RightRailTabId
   target: PreviewTarget
+  /** Session sandbox that owns this preview when opened from a chat tile. */
+  sessionId?: string
 }
 
 const TABS_STORAGE_KEY = 'hermes.desktop.previewTabs.v2'

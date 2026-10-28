@@ -98,19 +98,41 @@ export async function readDesktopDir(path: string): Promise<HermesReadDirResult>
   return remoteFsApi<HermesReadDirResult>(fsPath('list', path))
 }
 
-export async function readDesktopFileText(path: string): Promise<HermesReadFileTextResult> {
+export interface DesktopFsSessionScope {
+  connectionId?: null | string
+  profile?: string
+  sessionId?: null | string
+}
+
+export async function readDesktopFileText(
+  path: string,
+  scope?: DesktopFsSessionScope
+): Promise<HermesReadFileTextResult> {
   if (!isDesktopFsRemoteMode()) {
     return bridge().readFileText(path)
   }
 
-  return remoteFsApi<HermesReadFileTextResult>(fsPath('read-text', path))
+  const session = scope?.sessionId ? `&session_id=${encodeURIComponent(scope.sessionId)}` : ''
+  const owner: DesktopFsSourceScope | undefined = scope?.profile
+    ? { connectionId: scope.connectionId ?? null, profile: scope.profile }
+    : undefined
+
+  return remoteFsApi<HermesReadFileTextResult>(
+    `/api/fs/read-text?path=${encodeURIComponent(path)}${session}`,
+    undefined,
+    owner
+  )
 }
 
 // Save UTF-8 text back to a file. Local writes go through the hardened Electron
 // IPC; remote writes hit the dashboard's POST /api/fs/write-text (same path
 // hardening, parent-must-exist, size cap) so the editor behaves identically in
 // both modes. Stale-on-disk detection is the caller's job (re-read before save).
-export async function writeDesktopFileText(path: string, content: string): Promise<{ path: string }> {
+export async function writeDesktopFileText(
+  path: string,
+  content: string,
+  scope?: DesktopFsSessionScope
+): Promise<{ path: string }> {
   const desktop = bridge()
 
   if (!isDesktopFsRemoteMode()) {
@@ -121,7 +143,19 @@ export async function writeDesktopFileText(path: string, content: string): Promi
     return desktop.writeTextFile(path, content)
   }
 
-  const result = await remoteFsApi<{ ok?: boolean; path?: string }>('/api/fs/write-text', { content, path })
+  const owner: DesktopFsSourceScope | undefined = scope?.profile
+    ? { connectionId: scope.connectionId ?? null, profile: scope.profile }
+    : undefined
+
+  const result = await remoteFsApi<{ ok?: boolean; path?: string }>(
+    '/api/fs/write-text',
+    {
+      content,
+      path,
+      ...(scope?.sessionId ? { session_id: scope.sessionId } : {})
+    },
+    owner
+  )
 
   return { path: result.path || path }
 }

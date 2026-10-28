@@ -20,6 +20,12 @@ export interface ComposerAttachment {
   thumbnailUrl?: string
   path?: string
   attachedSessionId?: string
+  /** Browser-hosted source identity returned when the host staged this file. */
+  stagedUpload?: {
+    install_id: string
+    path: string
+    profile_home: string
+  }
   /** Set while the file/image bytes are being staged into the session
    * workspace (remote upload or local stage), and 'error' if that failed.
    * Drives the spinner / error state on the composer attachment card. */

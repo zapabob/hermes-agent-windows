@@ -76,7 +76,7 @@ export function installBrowserDesktopBridge(): boolean {
   const uploads = createBrowserUploadsBridge({ api, bootstrap, currentProfile, objectUrls, previewUrls })
   const files = createBrowserFilesBridge({ api, bootstrap, currentProfile })
 
-  const bridge: Window['hermesDesktop'] = {
+  const bridge = {
     ...BROWSER_BRIDGE_STUBS,
     ...createBrowserClipboardBridge({ saveBuffer: uploads.saveImageBuffer }),
     ...createBrowserConnectionBridge({ api, bootstrap }),
@@ -109,7 +109,7 @@ export function installBrowserDesktopBridge(): boolean {
       return true
     },
     openExternal,
-    openPreviewInBrowser: async url => {
+    openPreviewInBrowser: async (url: string) => {
       // Only this install's sandbox wrappers may open as same-origin blobs.
       if (previewUrls.has(url)) {
         window.open(url, '_blank', 'noopener,noreferrer')
@@ -117,7 +117,10 @@ export function installBrowserDesktopBridge(): boolean {
         await openExternal(url)
       }
     },
-    openSessionWindow: async (sessionId, opts) => {
+    openSessionWindow: async (
+      sessionId: string,
+      opts?: { connectionId?: null | string; profile?: null | string; watch?: boolean }
+    ) => {
       const target = sessionWindowTarget(window.location.href, sessionId, opts)
 
       return target ? openWindow(target) : { error: 'invalid_session_id', ok: false }
@@ -144,7 +147,7 @@ export function installBrowserDesktopBridge(): boolean {
     ...createBrowserProfileBridge({ basePath: bootstrap.basePath, currentProfile, openWindow }),
     uiPreferences: createBrowserUiPreferences(api),
     zoom: createBrowserZoom(bootstrap.basePath)
-  }
+  } as unknown as Window['hermesDesktop']
 
   window.hermesDesktop = bridge
   document.documentElement.dataset.hermesDesktopHost = 'browser'

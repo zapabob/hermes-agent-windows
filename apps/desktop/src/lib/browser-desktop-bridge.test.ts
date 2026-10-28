@@ -270,9 +270,10 @@ describe('browser-hosted Desktop bridge', () => {
 
     expect(installBrowserDesktopBridge()).toBe(true)
     const controls = win.hermesDesktop!.windowControls
-    expect(controls.custom).toBe(false)
+    expect(controls).toBeDefined()
+    expect(controls!.custom).toBe(false)
 
-    for (const operation of [controls.minimize, controls.toggleMaximize, controls.close]) {
+    for (const operation of [controls!.minimize, controls!.toggleMaximize, controls!.close]) {
       expect(operation).toThrow()
     }
 

@@ -841,11 +841,18 @@ function activateOnCurrentSource(target: string): Promise<void> {
 // session list, where switching scope would throw away the browse state the user
 // is in. Points new chats at the profile and opens its backend so the next
 // message lands in the right place.
-export function newSessionInProfile(name: string): void {
+/** Pin the next new-chat draft to `name` without starting it yet. */
+export function pinNewChatProfile(name: string): string {
   const target = normalizeProfileKey(name)
   $newChatProfile.set(target)
   $newChatRoute.set(null)
   captureNewChatSource(profilePickConnectionId())
+
+  return target
+}
+
+export function newSessionInProfile(name: string): void {
+  const target = pinNewChatProfile(name)
   requestFreshSession()
   // #81094: surface the failed dial instead of failing silently.
   void activateOnCurrentSource(target).catch((error: unknown) => {

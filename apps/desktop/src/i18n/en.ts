@@ -987,6 +987,9 @@ export const en: Translations = {
       loading: 'Loading gateway settings...',
       unavailableTitle: 'Gateway settings unavailable',
       unavailableDesc: 'The desktop IPC bridge does not expose gateway settings.',
+      webappHostTitle: 'This host',
+      webappHostDesc:
+        'This Webapp is served by one Hermes host and can only talk to it. Sign out ends the browser session on this host.',
       webAccess: {
         title: 'Web access',
         intro:

@@ -226,9 +226,9 @@ function WebAccessForm({ queryKey, status, w }: FormProps): ReactElement {
 
   return (
     <SettingsContent>
-      <SectionHeading icon={Network} page title={w.title} />
+      <SectionHeading icon={Network} title={w.title} />
       <p className="mb-4 text-[length:var(--conversation-caption-font-size)] text-(--ui-text-tertiary)">{w.intro}</p>
-      <SettingsSection aside={<Pill tone={phase === 'serving' ? 'success' : 'muted'}>{pillLabel(phase, busy, w)}</Pill>} icon={Globe} title={w.title}>
+      <SettingsSection aside={<Pill tone={phase === 'serving' ? 'primary' : 'muted'}>{pillLabel(phase, busy, w)}</Pill>} icon={Globe} title={w.title}>
         {/* A web app served on this computer only has no network address to choose until it stops. */}
         {status.mode !== 'local' && (
           <WhereRow

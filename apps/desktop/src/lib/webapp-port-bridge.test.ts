@@ -5,16 +5,16 @@ type WindowStub = {
   addEventListener: (...args: unknown[]) => void
   removeEventListener: (...args: unknown[]) => void
   localStorage: Storage
-  location: { origin: string; href: string; pathname: string }
-  document: { documentElement: { dataset: Record<string, string> } }
+  location: Location & { origin: string; href: string; pathname: string }
+  document: Document & { documentElement: { dataset: Record<string, string> } }
 }
 
 function ensureWindow(): WindowStub {
-  const g = globalThis as typeof globalThis & { window?: WindowStub; document?: WindowStub['document'] }
+  const g = globalThis as { window?: WindowStub; document?: WindowStub['document'] }
   if (!g.window?.addEventListener) {
     const dataset: Record<string, string> = {}
     const document = { documentElement: { dataset } }
-    g.window = {
+    const stub: WindowStub = {
       addEventListener() {},
       removeEventListener() {},
       localStorage: {
@@ -29,12 +29,13 @@ function ensureWindow(): WindowStub {
         origin: 'http://127.0.0.1:9120',
         href: 'http://127.0.0.1:9120/',
         pathname: '/',
-      },
-      document,
+      } as WindowStub['location'],
+      document: document as unknown as WindowStub['document'],
     }
-    g.document = document
+    g.window = stub
+    g.document = stub.document
   }
-  return g.window
+  return g.window!
 }
 
 describe('webapp-port browser bridge install contract', () => {

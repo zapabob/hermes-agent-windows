@@ -861,6 +861,8 @@ export interface Translations {
       loading: string
       unavailableTitle: string
       unavailableDesc: string
+      webappHostTitle: string
+      webappHostDesc: string
       webAccess: WebAccessTranslations
       title: string
       envOverride: string

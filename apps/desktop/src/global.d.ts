@@ -49,12 +49,42 @@ declare global {
       // reaper spares it while its chat is active.
       touchBackend: (profile?: string | null) => Promise<{ ok: boolean }>
       getGatewayWsUrl: (profile?: null | string) => Promise<GatewayWsUrlResult>
+      // One-use voice stream socket URL whose ticket opens that stream alone,
+      // for a host whose gateway ticket opens only `/api/ws` (the browser-hosted
+      // Desktop). Absent where the gateway URL's own credential opens the stream.
+      getAudioWsUrl?: (payload: {
+        connectionId?: null | string
+        path: '/api/audio/speak-stream' | '/api/audio/transcribe-stream'
+        profile?: null | string
+      }) => Promise<string>
+      // Browser host only: before a pick routes `profile`, re-read the served
+      // set when its cached answer does not serve that profile.
+      refreshServedProfile?: (profile: string) => Promise<void>
+      getGatewayFileStreamUrl?: (payload: {
+        connectionId?: null | string
+        path: string
+        profile?: null | string
+        sessionId?: string
+      }) => Promise<string>
+      reconcileDesktopPlugins?: () => Promise<string[]>
+      // Machine-level UI preferences bridge (native IPC or browser /api).
+      uiPreferences?: import('./lib/ui-preferences/sync').UiPreferencesBridge
+      // Renderer-drawn min/max/close where the shell opts into custom chrome.
+      windowControls?: {
+        custom: boolean
+        minimize: () => void
+        toggleMaximize: () => void
+        close: () => void
+      }
       // Open (or focus) a standalone OS window for a single chat session so
       // the user can work with multiple chats side by side. Returns ok:false
       // with an error code when the sessionId is empty/invalid. `watch` opens
       // a spectator window (lazy resume — no agent build) for live-streaming
       // a running subagent's session.
-      openSessionWindow: (sessionId: string, opts?: { watch?: boolean }) => Promise<{ ok: boolean; error?: string }>
+      openSessionWindow: (
+        sessionId: string,
+        opts?: { connectionId?: null | string; profile?: null | string; watch?: boolean }
+      ) => Promise<{ ok: boolean; error?: string }>
       // Resume this session in the user's own terminal emulator (`hermes --tui
       // --resume <id>`) — the external terminal, not the in-app pane.
       openSessionInTerminal: (
@@ -62,9 +92,9 @@ declare global {
         opts?: { cwd?: string; profile?: string }
       ) => Promise<{ ok: boolean; error?: string }>
       // Open a new full-chrome app window — a peer instance of the primary that
-      // renders the complete app against the shared backend, so the user can run
-      // multiple GUI windows at once.
-      openWindow: () => Promise<{ ok: boolean; error?: string }>
+      // renders the complete app on an explicit connection/profile, or inherits
+      // the calling window's route when no options are supplied.
+      openWindow: (options?: DesktopProfileRoute) => Promise<{ ok: boolean; error?: string }>
       // Pop the in-app Browser (webview + address bar) into its own OS window.
       // `tabId` is the `$previewTabs` id; closing the window fires
       // `onBrowserPopoutClosed` so the caller can dock the tab again.
@@ -204,9 +234,12 @@ declare global {
         agentSignIn: (dashboardUrl: string) => Promise<DesktopCloudAgentSignInResult>
       }
       profile: {
+        getDefault: () => Promise<DesktopProfileRoute | null>
+        setDefault: (route: DesktopProfileRoute) => Promise<DesktopProfileRoute>
+        onDefaultChanged: (callback: (route: DesktopProfileRoute | null) => void) => () => void
         get: () => Promise<DesktopActiveProfile>
-        // Persists the profile used on the next Desktop launch without
-        // interrupting the live gateway workspace switch.
+        // Remembers last use without interrupting a live workspace switch or
+        // replacing an explicit default route.
         remember: (name: string | null) => Promise<DesktopActiveProfile>
         // Persists the desktop's profile choice and relaunches the local
         // backend under the new HERMES_HOME (reloads the window). Pass null to
@@ -287,8 +320,16 @@ declare global {
         viewport?: { height: number; width: number }
         webContentsId: number
       }) => Promise<string>
+      savePastedText: (text: string) => Promise<string>
       saveClipboardImage: () => Promise<string>
       getPathForFile: (file: File) => string
+      /** Browser-hosted drag/drop stages File bytes in authenticated,
+       *  profile-scoped host storage. Native shells already expose real paths. */
+      stageFileForAttach?: (file: File) => Promise<string>
+      /** Source ownership returned when this browser stages a file on its host. */
+      getStagedFileForAttach?: (path: string) => HermesStagedUpload | undefined
+      /** Browser-picked display name; never replaces the host path or source identity. */
+      getStagedFileDisplayName?: (path: string) => string | undefined
       normalizePreviewTarget: (target: string, baseDir?: string) => Promise<HermesPreviewTarget | null>
       watchPreviewFile: (url: string) => Promise<HermesPreviewWatch>
       /** Watch a directory for entry churn (disk-plugin door); same watcher
@@ -340,6 +381,19 @@ declare global {
       }
       revealLogs: () => Promise<{ ok: boolean; path: string; error?: string }>
       getRecentLogs: () => Promise<{ path: string; lines: string[] }>
+      /** Browser host: venv/plugin receipts live on the server; optional no-op. */
+      getSyncStatus?: () => Promise<null | Record<string, unknown>>
+      /** Update-hold boot gate; absent on browser-hosted Desktop. */
+      updateHold?: {
+        recheck: () => Promise<{ ok: boolean }>
+        quit: () => Promise<{ ok: boolean }>
+        startAnyway: () => Promise<{ ok: boolean }>
+      }
+      desktopMetrics?: {
+        setEnabled?: (on: boolean, profile: string) => Promise<void>
+        takeRendererCrashes?: () => Promise<{ reasons: Array<'crash' | 'killed' | 'oom' | 'other'> } | null>
+        ackRendererCrashes?: (sent: boolean) => Promise<void>
+      }
       /** Persist a renderer error-boundary catch to desktop.log (fire-and-forget). */
       reportRendererError?: (report: {
         label: string
@@ -468,15 +522,27 @@ declare global {
         ) => Promise<{ root: string; label: string }[]>
       }
       terminal: {
+        attach: (id: string) => Promise<boolean>
         /** Best-effort current working directory of the live PTY child (POSIX
          *  only; null on Windows or when unavailable). Used to reopen a tab
          *  where the user last `cd`'d. */
         cwd: (id: string) => Promise<string | null>
+        /** Explicit close: terminate the shell, including a disconnected attachment. */
         dispose: (id: string) => Promise<boolean>
-        onData: (id: string, callback: (payload: string) => void) => () => void
+        /** Browser cleanup releases the viewer without terminating its shell. */
+        detach?: (id: string) => Promise<boolean>
+        closeSaved?: (restoreKey: string) => Promise<boolean>
+        onState?: (id: string, callback: (state: HermesTerminalState) => void) => () => void
+        onData: (id: string, callback: (payload: string, options?: { replay: boolean }) => void) => () => void
         onExit: (id: string, callback: (payload: HermesTerminalExit) => void) => () => void
         resize: (id: string, size: { cols: number; rows: number }) => Promise<boolean>
-        start: (options?: { cols?: number; cwd?: string; rows?: number }) => Promise<HermesTerminalSession>
+        start: (options?: {
+          cols?: number
+          cwd?: string
+          rows?: number
+          restoreKey?: string
+          resumeOnly?: boolean
+        }) => Promise<HermesTerminalSession>
         write: (id: string, data: string) => Promise<boolean>
       }
       reachPreviewUrl?: (url: string) => Promise<string>
@@ -553,6 +619,7 @@ declare global {
       uninstall: {
         summary: () => Promise<DesktopUninstallSummary>
         run: (mode: DesktopUninstallMode) => Promise<DesktopUninstallResult>
+        openAppsSettings?: () => Promise<void>
       }
       themes: {
         // Download a VS Code Marketplace extension and return the raw color
@@ -600,15 +667,31 @@ export interface DesktopMarketplaceThemeResult {
   themes: DesktopMarketplaceThemeFile[]
 }
 
+export type HermesTerminalState = 'open' | 'reconnecting' | 'disconnected'
+
 export interface HermesTerminalSession {
   cwd: string
   id: string
   shell: string
+  /** Server-owned process and replay; do not restore renderer scrollback. */
+  persistent?: boolean
 }
 
 export interface HermesTerminalExit {
   code: number | null
   signal: string | null
+}
+
+export interface DesktopProfileRoute {
+  connectionId: null | string
+  profile: string
+}
+
+/** Backend-provided source identity, not an authorization token. */
+export interface HermesStagedUpload {
+  install_id: string
+  path: string
+  profile_home: string
 }
 
 export interface DesktopVersionInfo {
@@ -637,6 +720,9 @@ export interface DesktopUninstallSummary {
   platform: string
   running_app_path?: null | string
   probe?: string
+  /** Browser host: package removal belongs to the server, never this tab. */
+  code_removal_allowed?: boolean
+  native_removal_instructions?: null | string
 }
 
 export interface DesktopUninstallResult {
@@ -991,6 +1077,7 @@ export interface DesktopRosterAgent {
   profile: string
   targetProfile?: string
   handle: string
+  reachable?: boolean
 }
 
 export interface DesktopAgentRoster {
@@ -1195,6 +1282,8 @@ export interface DesktopBootstrapSetupChoice {
 
 export interface DesktopBootstrapState {
   active: boolean
+  /** Browser host never runs an in-app bundled payload. */
+  bundled?: boolean
   manifest: { type: 'manifest'; stages: DesktopBootstrapStageDescriptor[]; protocolVersion: number | null } | null
   stages: Record<string, DesktopBootstrapStageResult>
   error: string | null

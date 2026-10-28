@@ -91,6 +91,25 @@ export interface DroppedFile {
   lineEnd?: number
 }
 
+/** Resolve a drop candidate to a host path the composer can attach. Native
+ *  shells already carry a real path; browser hosts stage File bytes first. */
+export async function stageDroppedFilePath(candidate: DroppedFile): Promise<string> {
+  if (candidate.path) {
+    return candidate.path
+  }
+
+  // A folder without a host path has no bytes to stage.
+  if (candidate.isDirectory) {
+    throw new Error("Folders can't be attached by dropping them. Use Attach → Folder… instead.")
+  }
+
+  if (!candidate.file || !window.hermesDesktop?.stageFileForAttach) {
+    return ''
+  }
+
+  return window.hermesDesktop.stageFileForAttach(candidate.file)
+}
+
 /** MIME emitted by in-app drag sources (project tree, gutter line numbers).
  * Payload is JSON `{ path; isDirectory?; line?; lineEnd? }[]`. */
 export const HERMES_PATHS_MIME = 'application/x-hermes-paths'
@@ -723,6 +742,26 @@ export function useComposerActions({
     [activeSessionId, requestGateway, scope]
   )
 
+  const attachPastedText = useCallback(async (text: string) => {
+    const trimmed = text.trim()
+
+    if (!trimmed) {
+      return
+    }
+
+    const path = (await window.hermesDesktop?.savePastedText?.(trimmed)) || ''
+    const staged = path ? window.hermesDesktop?.getStagedFileForAttach?.(path) : undefined
+
+    attachToMain({
+      id: path || `pasted:${createComposerAttachmentOccurrenceId()}`,
+      occurrenceId: createComposerAttachmentOccurrenceId(),
+      kind: 'file',
+      label: window.hermesDesktop?.getStagedFileDisplayName?.(path) || 'pasted.txt',
+      path: path || undefined,
+      ...(staged ? { stagedUpload: staged } : {})
+    })
+  }, [attachToMain])
+
   return {
     addContextRefAttachment,
     addTerminalSelectionAttachment,
@@ -732,6 +771,7 @@ export function useComposerActions({
     attachDroppedItems,
     attachImageBlob,
     attachImagePath,
+    attachPastedText,
     attachPrCommentUrl,
     insertContextPathInlineRef,
     pasteClipboardImage,

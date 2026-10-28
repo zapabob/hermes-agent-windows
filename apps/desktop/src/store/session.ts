@@ -4,8 +4,10 @@ import { atom, computed } from 'nanostores'
 import { lastVisibleMessageIsUser } from '@/app/chat/thread-loading'
 import type { ContextSuggestion } from '@/app/types'
 import type { HermesConnection } from '@/global'
+import { browserPageBasePath, readBrowserDefaultProjectDir } from '@/lib/browser-settings'
 import type { ChatMessage } from '@/lib/chat-messages'
 import { activeConnectionScopeSuffix, rescopeConnectionScopedStores } from '@/lib/connection-scoped'
+import { hostHas } from '@/lib/host-capabilities'
 import { persistBoolean, persistString, readJson, storedBoolean, storedString, writeJson } from '@/lib/storage'
 import { syncCronModelImpactConnection } from '@/store/cron-model-impact-scope'
 import type { SessionInfo, UsageStats } from '@/types/hermes'
@@ -1252,7 +1254,16 @@ export const setNewChatWorkspaceTarget = (next: NewChatWorkspaceTarget): number 
   return generation
 }
 
-export const workspaceCwdForNewSession = (): string => {
+export const workspaceCwdForNewSession = (profile?: string): string => {
+  // A browser host stores that default folder per profile. The process cache
+  // holds the folder of the profile the window last synced; a rail switch does
+  // not refill it, so a browser new chat reads its own profile's key.
+  const owner = profile?.trim()
+
+  if (owner && hostHas('originScopedPrefs')) {
+    return readBrowserDefaultProjectDir(browserPageBasePath(), owner)
+  }
+
   if ($connection.get()?.mode === 'remote') {
     return getRememberedWorkspaceCwd()
   }
