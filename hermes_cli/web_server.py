@@ -1546,6 +1546,9 @@ _CATEGORY_MERGE: Dict[str, str] = {
     # `doctor.live_probe_timeout` is the only schema-surfaced doctor field —
     # fold it into general rather than spawning a one-field orphan category.
     "doctor": "general",
+    # `vault.key_storage` (file|keychain) is the only schema-surfaced vault
+    # field — fold it into security rather than spawning a one-field orphan.
+    "vault": "security",
     # `runtime.nofile_soft_limit` (#78873) is the only schema-surfaced runtime
     # field — fold it into the agent tab rather than spawning a one-field
     # orphan category.
