@@ -141,10 +141,7 @@ export function blockToDraft(block: Record<string, unknown>): SubagentDraft {
     max_summary_chars: asNumber(block.max_summary_chars, DEFAULT_DRAFT.max_summary_chars),
     child_timeout_seconds: asNumber(block.child_timeout_seconds, DEFAULT_DRAFT.child_timeout_seconds),
     reasoning_effort: asString(block.reasoning_effort, DEFAULT_DRAFT.reasoning_effort),
-    max_concurrent_children: asNumber(
-      block.max_concurrent_children,
-      DEFAULT_DRAFT.max_concurrent_children
-    ),
+    max_concurrent_children: asNumber(block.max_concurrent_children, DEFAULT_DRAFT.max_concurrent_children),
     max_spawn_depth: asNumber(block.max_spawn_depth, DEFAULT_DRAFT.max_spawn_depth),
     orchestrator_enabled: asBool(block.orchestrator_enabled, DEFAULT_DRAFT.orchestrator_enabled),
     subagent_auto_approve: asBool(block.subagent_auto_approve, DEFAULT_DRAFT.subagent_auto_approve),
@@ -254,11 +251,13 @@ export function SubagentSettings() {
   const setFallbackMode = (mode: FallbackMode) => {
     if (mode === 'inherit') {
       patch('fallback_providers', null)
+
       return
     }
 
     if (mode === 'disabled') {
       patch('fallback_providers', [])
+
       return
     }
 

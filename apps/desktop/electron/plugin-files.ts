@@ -121,7 +121,6 @@ export interface PluginFiles {
   run: (pluginId: unknown, request: PluginFilesRequest) => Promise<PluginFilesResult>
 }
 
-
 const isGrantRow = (row: unknown): row is PluginFolderGrant => {
   if (!row || typeof row !== 'object') {
     return false
@@ -314,7 +313,14 @@ export function createPluginFiles(deps: PluginFilesDeps): PluginFiles {
     }
 
     if (parts.length === 0) {
-      return { root, parts, parent: null, entry: root, target: root, stat: await fs.promises.stat(root, { bigint: true }) }
+      return {
+        root,
+        parts,
+        parent: null,
+        entry: root,
+        target: root,
+        stat: await fs.promises.stat(root, { bigint: true })
+      }
     }
 
     const parent = await realpathOrNull(path.join(root, ...parts.slice(0, -1)))
