@@ -13,6 +13,7 @@ import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { linkDir } from './fixtures/plugin-files-links'
+import { nativeRealPath } from './fixtures/plugin-files-paths'
 import { createPluginFiles, type PluginFiles } from './plugin-files'
 import { overlapsByIdentity } from './plugin-files-guards'
 import { registerPluginFilesIpc } from './plugin-files-ipc'
@@ -47,7 +48,7 @@ const grant = async (files: PluginFiles, pluginId = 'plexus', folder = vault): P
 }
 
 beforeEach(() => {
-  scratch = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-plugin-files-contract-')))
+  scratch = nativeRealPath(fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-plugin-files-contract-')))
   userData = path.join(scratch, 'userData')
   home = path.join(scratch, 'home')
   hermesHome = path.join(home, '.hermes')
@@ -58,6 +59,10 @@ beforeEach(() => {
   fs.writeFileSync(path.join(hermesHome, 'profiles', 'coder', '.env'), 'KEY=secret\n')
   fs.mkdirSync(path.join(vault, 'notes'), { recursive: true })
   fs.writeFileSync(path.join(vault, 'notes', 'a.md'), '# A\n')
+  userData = nativeRealPath(userData)
+  home = nativeRealPath(home)
+  hermesHome = nativeRealPath(hermesHome)
+  vault = nativeRealPath(vault)
   trashed = []
 })
 

@@ -10,6 +10,7 @@ import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { canLinkFiles, linkDir, linkFile } from './fixtures/plugin-files-links'
+import { nativeRealPath, sameFsPath } from './fixtures/plugin-files-paths'
 import { createPluginFiles, type PluginFiles } from './plugin-files'
 
 let scratch: string
@@ -30,7 +31,7 @@ const make = () =>
   })
 
 beforeEach(() => {
-  scratch = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-plugin-files-')))
+  scratch = nativeRealPath(fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-plugin-files-')))
   userData = path.join(scratch, 'userData')
   hermesHome = path.join(scratch, 'home', '.hermes')
   vault = path.join(scratch, 'home', 'Vault')
@@ -40,6 +41,9 @@ beforeEach(() => {
   fs.writeFileSync(path.join(hermesHome, 'config.yaml'), 'model: x\n')
   fs.mkdirSync(path.join(vault, 'notes'), { recursive: true })
   fs.writeFileSync(path.join(vault, 'notes', 'a.md'), '# A\n')
+  userData = nativeRealPath(userData)
+  hermesHome = nativeRealPath(hermesHome)
+  vault = nativeRealPath(vault)
   trashed = []
   files = make()
 })
@@ -404,7 +408,8 @@ describe('caps and shapes', () => {
     const id = await grantVault()
 
     expect(await files.run('plexus', { op: 'trash', folder: id, path: 'notes/a.md' })).toEqual({ ok: true })
-    expect(trashed).toEqual([path.join(vault, 'notes', 'a.md')])
+    expect(trashed).toHaveLength(1)
+    expect(sameFsPath(trashed[0], path.join(vault, 'notes', 'a.md'))).toBe(true)
   })
 })
 
