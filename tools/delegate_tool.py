@@ -2925,12 +2925,15 @@ def _run_single_child(
             _worker_thread_holder["t"] = threading.current_thread()
             from agent.delegation_context import delegated_child_context
 
+            from tools.delegate_tool_routes import child_profile_scope
+
             with delegated_child_context(str(getattr(child, "session_id", "") or "")):
-                return child.run_conversation(
-                    user_message=goal,
-                    task_id=child_task_id,
-                    stream_callback=_relay_child_text,
-                )
+                with child_profile_scope(child):
+                    return child.run_conversation(
+                        user_message=goal,
+                        task_id=child_task_id,
+                        stream_callback=_relay_child_text,
+                    )
 
         _child_context = contextvars.copy_context()
         _child_future = _timeout_executor.submit(
@@ -3271,6 +3274,9 @@ def _run_single_child(
             _cost_status if isinstance(_cost_status, str) and _cost_status
             else "unknown"
         )
+        _route_meta = getattr(child, "_delegation_route_meta", None)
+        if isinstance(_route_meta, dict):
+            entry["route"] = _route_meta
         if status == "failed":
             entry["error"] = result.get("error", "Subagent did not produce a response.")
 
@@ -3949,6 +3955,29 @@ def delegate_task(
     # Track goal labels for progress display (truncated for readability)
     task_labels = [t["goal"][:40] for t in task_list]
 
+    # Per-task routes from the active delegation backend (T04). A refused
+    # task does not abort independent siblings. credentials_cfg (internal
+    # callers such as /review) keeps today's single-route behaviour.
+    from agent.delegation_provider import DelegationRouteError
+    from tools.delegate_tool_routes import resolve_task_routes, route_for_config
+
+    task_routes = []
+    if credentials_cfg is not None:
+        try:
+            shared = route_for_config(routing_cfg, parent_agent)
+        except Exception as exc:
+            return tool_error(str(exc))
+        task_routes = [shared for _ in task_list]
+    else:
+        try:
+            task_routes = resolve_task_routes(task_list, cfg, parent_agent)
+        except DelegationRouteError as exc:
+            return tool_error(str(exc))
+    if task_routes and all(route.refused for route in task_routes):
+        return tool_error(
+            "; ".join(route.error or "task refused" for route in task_routes)
+        )
+
     # Live transcripts: one pre-headered append-only log per task under
     # cache/delegation/live/<delegation_id>/task-<n>.log so the caller can
     # tail each child's operations while it runs (side-channel only — zero
@@ -3992,6 +4021,17 @@ def delegate_task(
     # subagent-lifecycle API).
     children = []
     for i, t in enumerate(task_list):
+        route = task_routes[i] if i < len(task_routes) else None
+        if route is not None and route.refused:
+            results.append(
+                {
+                    "task_index": i,
+                    "status": "error",
+                    "error": route.error or "task refused by delegation backend",
+                    "route": route.public_metadata(),
+                }
+            )
+            continue
         # Per-task role beats top-level; normalise again so unknown
         # per-task values warn and degrade to leaf uniformly.
         effective_role = _normalize_role(t.get("role") or top_role)
@@ -4003,6 +4043,27 @@ def delegate_task(
             from tools.delegation_output_schema import append_output_contract
 
             _child_context = append_output_contract(_child_context, _task_schema)
+        child_creds = route.credential_bundle() if route is not None else creds
+        child_routing = (
+            {
+                **routing_cfg,
+                **{
+                    k: v
+                    for k, v in {
+                        "model": child_creds.get("model"),
+                        "provider": child_creds.get("provider"),
+                        "base_url": child_creds.get("base_url"),
+                        "api_key": child_creds.get("api_key"),
+                        "api_mode": child_creds.get("api_mode"),
+                        "request_overrides": child_creds.get("request_overrides"),
+                        "fallback_providers": getattr(route, "fallback_providers", None),
+                    }.items()
+                    if v is not None
+                },
+            }
+            if route is not None
+            else routing_cfg
+        )
         try:
             child = _build_child_preserving_parent_tools(
                 task_index=i,
@@ -4011,25 +4072,57 @@ def delegate_task(
                 # Subagents always inherit the parent's toolsets; the model
                 # cannot choose or narrow them (no model-facing toolsets arg).
                 toolsets=None,
-                model=creds["model"],
+                model=child_creds.get("model"),
                 max_iterations=effective_max_iter,
                 task_count=n_tasks,
                 parent_agent=parent_agent,
-                override_provider=creds["provider"],
-                override_base_url=creds["base_url"],
-                override_api_key=creds["api_key"],
-                override_api_mode=creds["api_mode"],
-                override_request_overrides=creds.get("request_overrides"),
-                override_max_tokens=creds.get("max_output_tokens"),
-                override_acp_command=creds.get("command"),
-                override_acp_args=creds.get("args"),
-                routing_cfg=routing_cfg,
+                override_provider=child_creds.get("provider"),
+                override_base_url=child_creds.get("base_url"),
+                override_api_key=child_creds.get("api_key"),
+                override_api_mode=child_creds.get("api_mode"),
+                override_request_overrides=child_creds.get("request_overrides"),
+                override_max_tokens=child_creds.get("max_output_tokens"),
+                override_acp_command=child_creds.get("command"),
+                override_acp_args=child_creds.get("args"),
+                routing_cfg=child_routing,
                 role=effective_role,
             )
         except ValueError as exc:
             # Explicit-pin preflight failures (e.g. pinned delegation.command
-            # missing from PATH) refuse the spawn loudly (#80450).
+            # missing from PATH) refuse the spawn loudly (#80450). Sibling
+            # independence: one bad pin does not cancel already-built children,
+            # but construction-time ValueError before any run still fails the
+            # whole call for parity with today's pin contract.
             return tool_error(str(exc))
+        except Exception as exc:
+            # Controlled-delegation InferencePortError and similar: refuse this
+            # task alone when siblings remain runnable.
+            from downstream.delegation.inference_port import InferencePortError
+
+            if isinstance(exc, InferencePortError):
+                results.append(
+                    {
+                        "task_index": i,
+                        "status": "error",
+                        "error": str(exc),
+                        "route": route.public_metadata() if route is not None else {
+                            "backend": "default",
+                            "refused": True,
+                        },
+                    }
+                )
+                continue
+            raise
+        if route is not None and route.profile_home is not None:
+            try:
+                child._delegation_profile_home = route.profile_home
+            except Exception:
+                logger.debug("Could not attach profile home to child %d", i)
+        if route is not None:
+            try:
+                child._delegation_route_meta = route.public_metadata()
+            except Exception:
+                logger.debug("Could not attach route metadata to child %d", i)
         # Attach the validated schema for the completion-side validation
         # hook in _run_single_child. Absent (None) on schema-less tasks.
         if _task_schema is not None:
@@ -4053,6 +4146,18 @@ def delegate_task(
         if live_deleg_id:
             setattr(child, "_delegation_id", live_deleg_id)
         children.append((i, t, child))
+
+    if not children and results:
+        # Every task was refused at routing/admission; return the per-task errors.
+        return json.dumps(
+            {
+                "results": sorted(results, key=lambda r: r.get("task_index", 0)),
+                "total_duration_seconds": round(time.monotonic() - overall_start, 2),
+            },
+            ensure_ascii=False,
+        )
+    if not children:
+        return tool_error("No tasks could be started.")
 
     def _execute_and_aggregate(*, honor_parent_interrupt: bool = True) -> dict:
         """Run all built children (1 or N), join on them, aggregate results,
@@ -4881,7 +4986,8 @@ def _build_dynamic_schema_overrides() -> dict:
 
     Plugged into ToolEntry.dynamic_schema_overrides so every
     get_definitions() pass rewrites the description fields to the user's
-    actual limits.
+    actual limits. Backend-declared per-task parameters are appended from
+    the active ``delegation.backend`` (config-only, cache-safe).
     """
     overrides_params = {
         **DELEGATE_TASK_SCHEMA["parameters"],
@@ -4891,9 +4997,30 @@ def _build_dynamic_schema_overrides() -> dict:
         k: dict(v) for k, v in DELEGATE_TASK_SCHEMA["parameters"]["properties"].items()
     }
     overrides_params["properties"]["tasks"]["description"] = _build_tasks_param_description()
+    tasks_items = overrides_params["properties"]["tasks"].get("items")
+    if isinstance(tasks_items, dict):
+        item_props = dict(tasks_items.get("properties") or {})
+        description = _build_top_level_description()
+        try:
+            from tools.delegate_tool_routes import schema_extension
+
+            extra_params, addendum = schema_extension(_load_config())
+            for name, schema in extra_params.items():
+                item_props[name] = dict(schema)
+            if addendum:
+                description = f"{description}{addendum}"
+            overrides_params["properties"]["tasks"]["items"] = {
+                **tasks_items,
+                "properties": item_props,
+            }
+        except Exception:
+            logger.debug("delegation schema_extension failed", exc_info=True)
+            description = _build_top_level_description()
+    else:
+        description = _build_top_level_description()
 
     return {
-        "description": _build_top_level_description(),
+        "description": description,
         "parameters": overrides_params,
     }
 

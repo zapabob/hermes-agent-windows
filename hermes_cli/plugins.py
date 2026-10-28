@@ -2897,6 +2897,38 @@ class PluginContext:
         )
         return handle
 
+    # -- delegation provider registration ------------------------------------
+
+    def register_delegation_provider(self, provider) -> None:
+        """Register a :class:`agent.delegation_provider.DelegationProvider`.
+
+        ``provider.name`` is matched by ``delegation.backend`` in config.yaml.
+        It decides each ``delegate_task`` task's route and may add per-task
+        schema parameters; core keeps the subagent lifecycle.
+        """
+        from agent.delegation_provider import DelegationProvider
+        from agent.delegation_registry import register_provider
+
+        if not isinstance(provider, DelegationProvider):
+            logger.warning(
+                "Plugin '%s' tried to register a delegation provider that does "
+                "not inherit from DelegationProvider. Ignoring.",
+                self.manifest.name,
+            )
+            return
+        register_provider(provider)
+        logger.info(
+            "Plugin '%s' registered delegation provider: %s",
+            self.manifest.name,
+            provider.name,
+        )
+
+    def delegation_backends(self) -> Any:
+        """Host facade for listing/switching delegation backends (``/delegation``)."""
+        from agent.delegation_backends import DelegationBackends
+
+        return DelegationBackends()
+
     # -- transcription (STT) provider registration ---------------------------
 
     @_serialized_replacement

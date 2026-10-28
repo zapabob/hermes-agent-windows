@@ -1,0 +1,5 @@
+name: default
+version: 1.0.0
+description: "Default delegation strategy: every delegate_task subagent follows the delegation section of config.yaml."
+author: Hermes Agent
+kind: backend
