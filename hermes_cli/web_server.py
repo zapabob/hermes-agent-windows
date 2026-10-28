@@ -1843,6 +1843,7 @@ def _schema_with_dynamic_provider_options() -> Dict[str, Dict[str, Any]]:
 
 from hermes_cli.web_models import (  # noqa: F401
     ConfigUpdate,
+    DelegationConfigUpdate,
     EnvVarUpdate,
     EnvVarDelete,
     EnvVarReveal,
@@ -8173,6 +8174,84 @@ async def update_config(body: ConfigUpdate, profile: Optional[str] = None):
         raise
     except Exception:
         _log.exception("PUT /api/config failed")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.get("/api/delegation")
+async def get_delegation_config(profile: Optional[str] = None):
+    """Return the profile's ``delegation`` block without secret values."""
+
+    def _run():
+        from hermes_cli.delegation_config import SCHEMA_AFFECTING_KEYS
+
+        with _profile_scope(profile):
+            raw = read_raw_config()
+        block = raw.get("delegation") if isinstance(raw, dict) else {}
+        if not isinstance(block, dict):
+            block = {}
+        safe = {k: v for k, v in block.items() if k != "api_key"}
+        has_api_key = bool(block.get("api_key"))
+        return {
+            "ok": True,
+            "delegation": safe,
+            "has_api_key": has_api_key,
+            "schema_affecting_keys": sorted(SCHEMA_AFFECTING_KEYS),
+        }
+
+    try:
+        return await asyncio.to_thread(_run)
+    except HTTPException:
+        raise
+    except Exception:
+        _log.exception("GET /api/delegation failed")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.put("/api/delegation")
+async def update_delegation_config(
+    body: DelegationConfigUpdate, profile: Optional[str] = None
+):
+    """Atomically validate+save the full ``delegation`` draft (Desktop Apply)."""
+
+    def _run():
+        from hermes_cli.delegation_config import (
+            DelegationConfigError,
+            merge_delegation_config,
+            schema_affecting_changes,
+        )
+
+        with _profile_scope(body.profile or profile):
+            with _CONFIG_MUTATION_LOCK:
+                existing = read_raw_config()
+                try:
+                    merged = merge_delegation_config(existing, body.delegation or {})
+                except DelegationConfigError as exc:
+                    raise HTTPException(status_code=400, detail=str(exc)) from exc
+                before = existing.get("delegation") if isinstance(existing, dict) else {}
+                after = merged.get("delegation") if isinstance(merged, dict) else {}
+                changed = schema_affecting_changes(
+                    before if isinstance(before, dict) else {},
+                    after if isinstance(after, dict) else {},
+                )
+                save_config(merged)
+        safe_after = {
+            k: v
+            for k, v in (after.items() if isinstance(after, dict) else [])
+            if k != "api_key"
+        }
+        return {
+            "ok": True,
+            "delegation": safe_after,
+            "schema_affecting_changed": changed,
+            "applies_on": "new_session" if changed else "next_child",
+        }
+
+    try:
+        return await asyncio.to_thread(_run)
+    except HTTPException:
+        raise
+    except Exception:
+        _log.exception("PUT /api/delegation failed")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 

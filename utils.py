@@ -377,6 +377,49 @@ def atomic_write_text(
         raise
 
 
+def atomic_write_bytes(
+    path: Union[str, Path],
+    data: bytes,
+    *,
+    mode: "int | None" = None,
+    fsync_dir: bool = False,
+) -> None:
+    """Write *data* to *path* via temp file + fsync + atomic rename.
+
+    Binary twin of :func:`atomic_write_text` for key material, where a torn
+    write must never be observable (a partial key file would shadow a working
+    credential).  *mode* is applied to the temp file before the replace so the
+    target never exists with looser permissions.  *fsync_dir* additionally
+    syncs the parent directory so the rename survives power loss; it is a
+    no-op on Windows, where directories cannot be opened for fsync.
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(dir=str(path.parent), prefix=".tmp_", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            if mode is not None and hasattr(os, "fchmod"):
+                os.fchmod(handle.fileno(), mode)
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        real_path = atomic_replace(tmp_path, path)
+        if mode is not None and not hasattr(os, "fchmod"):
+            _restore_file_mode(Path(real_path), mode)
+        if fsync_dir and os.name != "nt":
+            dir_fd = os.open(str(path.parent), os.O_RDONLY)
+            try:
+                os.fsync(dir_fd)
+            finally:
+                os.close(dir_fd)
+    except BaseException:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
+
+
 def atomic_json_write(
     path: Union[str, Path],
     data: Any,

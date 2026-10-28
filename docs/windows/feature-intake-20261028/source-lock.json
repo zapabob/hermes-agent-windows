@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "campaign": "feature-intake-20261028",
+  "created_at_jst": "2026-10-28T02:47:00+09:00",
+  "recorded_at_jst": "2026-10-28T03:30:00+09:00",
+  "status": "T00_COMPLETE_M1_IN_PROGRESS",
+  "checkout": {
+    "path": "C:\\Users\\downl\\Documents\\New project\\hermes-agent",
+    "branch": "main",
+    "tracking": "origin/main",
+    "head_sha": "5531c849b424cdfee17946935eec73363917e5e7",
+    "matches_plan_downstream_sha": true,
+    "remotes": {
+      "origin": "git@github.com:zapabob/hermes-agent-windows.git",
+      "upstream": "https://github.com/NousResearch/hermes-agent.git"
+    },
+    "dirty_worktree_at_start": {
+      "modified": [
+        "scripts/windows/start-llama-hikari-prism.ps1"
+      ],
+      "untracked": [
+        ".playwright-cli/",
+        "docs/windows/feature-intake-20261028/",
+        "plugins/gguf_quant_uncensor/",
+        "scripts/windows/Optimize-RTX5060Ti-Clocks.cmd",
+        "scripts/windows/Optimize-RTX5060Ti-Clocks.ps1"
+      ],
+      "policy": "preserve; no reset --hard; no git clean; no git add -A"
+    }
+  },
+  "upstream_reference": {
+    "repository": "NousResearch/hermes-agent",
+    "head_sha": "e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6",
+    "latest_formal_release": {
+      "tag": "v0.22.5",
+      "tag_target_sha": "bf0203a794a07aac3ff764972ab9087baa4e4f4e"
+    },
+    "policy": "do_not_merge_github_main; selective feature intake only"
+  },
+  "historical_snapshot_policy": {
+    "do_not_modify": ".codex/UPSTREAM_SNAPSHOT.json",
+    "this_campaign_records": [
+      "docs/windows/feature-intake-20261028/source-lock.json",
+      "docs/windows/feature-intake-20261028/gap-table.md",
+      "output/reports/feature-intake-20261028/"
+    ]
+  },
+  "codegraph": {
+    "cli": ".tools/codegraph-cli/node_modules/@colbymchenry/codegraph/npm-shim.js",
+    "version_locked": "1.6.0",
+    "npx_yes_avoided": true,
+    "reason": "npx --yes can resolve latest; local lock used instead",
+    "status": {
+      "files": 10245,
+      "nodes": 235597,
+      "edges": 509861,
+      "notes": [
+        "index truncated warning from interrupted prior run",
+        "373942 references awaiting resolution",
+        "usable for navigation; impact edges may be incomplete"
+      ]
+    },
+    "queries_run": [
+      "_on_tool_progress",
+      "call_tool",
+      "compress_context impact",
+      "mcp progress explore"
+    ]
+  },
+  "environment": {
+    "os": "Windows 11",
+    "python_py": "3.12.10",
+    "python_venv": "3.12.13",
+    "node": "v26.10.0",
+    "npm": "12.0.2",
+    "uv": "0.11.29",
+    "gpu": "NVIDIA GeForce RTX 5060 Ti",
+    "vram_mib": 16311,
+    "driver": "616.92",
+    "ram_gib": 31.87,
+    "disk_free_gb": {
+      "C": 21.3,
+      "H": 122.0
+    },
+    "venv_present": true,
+    "desktop_artifact": {
+      "path": "apps/desktop/release/win-unpacked/Hermes.exe",
+      "sha256": "B690BDB706F91D0B0470BE553F8BCED8BADA9BF9A7C2A945BC2C7AEAE80889A7",
+      "size_bytes": 235409920
+    },
+    "disk_caution": "C: free space is tight (21.3 GiB); avoid duplicating node_modules/models; prefer H: for large artifacts"
+  },
+  "mcp_sdk_lock": {
+    "package_path": ".venv/Lib/site-packages/mcp",
+    "ClientSession.call_tool_accepts_progress_callback": true,
+    "ProgressFnT": "async (progress: float, total: float | None, message: str | None) -> None",
+    "current_mcp_tool_passes_progress_callback": false
+  },
+  "scope": {
+    "in_scope_m1": ["T00", "T01", "T02", "T03", "T05", "T06", "T07", "T08", "T09", "T10"],
+    "out_of_scope_default": ["T04", "T11", "T12", "T13", "T14", "DFlash", "upstream_pm_migration"],
+    "forbidden_ops": [
+      "push_to_main",
+      "release_publish",
+      "stop_restart_production_desktop_llama",
+      "migrate_real_vault",
+      "update_real_user_plugins"
+    ]
+  },
+  "owners_confirmed": {
+    "tool_progress_gateway": "tui_gateway/server.py::_on_tool_progress",
+    "tool_start_complete": "tui_gateway/server.py::_on_tool_start/_on_tool_complete",
+    "desktop_tool_events": "apps/desktop/src/app/session/hooks/use-message-stream/gateway-event/tools.ts::handleToolEvent",
+    "mcp_call": "tools/mcp_tool.py::_make_tool_handler",
+    "compression": "agent/conversation_compression.py::compress_context",
+    "plugin_update_cli": "hermes_cli/plugins_cmd.py::cmd_update",
+    "plugin_update_gui": "hermes_cli/plugins_cmd.py::dashboard_update_user_plugin",
+    "desktop_backend_owner": "Electron main (apps/desktop) — not watchdog",
+    "vault": "agent/vault_store.py::VaultStore"
+  }
+}

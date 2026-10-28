@@ -3155,6 +3155,23 @@ def _notify_context_engine_compression_complete(
         )
     except Exception:
         logger.debug("relay segment rotation notification failed", exc_info=True)
+
+    # Plugin post_compaction: same durable-commit gate as the context-engine
+    # notify. Fires once per committed boundary; listener failures are isolated.
+    try:
+        from agent.compaction_events import fire_post_compaction
+
+        kind = "rotation" if (new_session_id or "") != (old_session_id or "") else "in_place"
+        fire_post_compaction(
+            session_id=new_session_id or "",
+            old_session_id=old_session_id or "",
+            kind=kind,
+            reason="compression",
+            commit_identity=f"{old_session_id or ''}->{new_session_id or ''}:{kind}",
+        )
+    except Exception:
+        logger.debug("post_compaction plugin hook failed", exc_info=True)
+
     callback = getattr(agent.context_compressor, "on_session_start", None)
     if not callable(callback):
         return False

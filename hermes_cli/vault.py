@@ -5,6 +5,7 @@ Subcommands:
   echoed, never accepted as argv).
 - ``hermes vault list``  metadata only — labels, kinds, origins, handles.
 - ``hermes vault rm``    remove an item by handle/id.
+- ``hermes vault key``   where the vault key lives; ``key migrate --to keychain|file`` moves it.
 
 The vault backs the model-blind browser autofill tools
 (``browser_vault_list`` / ``browser_vault_fill``): the agent gets opaque
@@ -128,6 +129,61 @@ def _cmd_rm(args) -> None:
         c.print(f"[red]No vault item with handle {args.handle!r}[/]")
 
 
+def _cmd_key(args) -> None:
+    """Show where the local vault's key lives, or move it between vault.key and the OS keychain."""
+    from agent import vault_keychain
+    from agent.vault_store import configured_key_storage, get_vault_store
+
+    c = _console()
+    store = get_vault_store()
+    target = getattr(args, "to", None)
+    if target:
+        # A failed move raises VaultError before the setting changes: the original storage stays.
+        store.migrate_key(target)
+        _set_key_storage(target)
+        if store.key_location()["storage"] == "none":  # nothing was moved or verified, only the setting
+            c.print(f"No vault key exists yet. The first saved item creates one in "
+                    f"{'the OS keychain' if target == 'keychain' else 'vault.key'} (vault.key_storage = {target}).")
+        elif target == "keychain":
+            c.print(f"[green]Vault key moved to the OS keychain[/] ({vault_keychain.backend_label()}); "
+                    "vault.key was removed after the keychain copy decrypted the vault.")
+            c.print("[dim]Backups of this profile now hold the encrypted vault without its key (it is not "
+                    "exported to another PC); `hermes vault key migrate --to file` before moving the "
+                    "profile to another machine or an older Hermes.[/]")
+        else:
+            where = store.key_location()
+            c.print(f"[green]Vault key moved to[/] {where.get('path')} (owner-only).")
+            if where.get("keychain_entry_left"):
+                c.print(f"[yellow]The keychain copy ({where['keychain_entry_left']}) could not be removed yet;[/] "
+                        "run this command again when the keychain is reachable.")
+            else:
+                c.print("Keychain entry removed.")
+        return
+    where = store.key_location()
+    if where["storage"] == "file":
+        c.print(f"Vault key: [bold]file[/] {where['path']} (owner-only, beside the encrypted vault)")
+        if where.get("keychain_entry_left"):
+            c.print("[yellow]A keychain copy is still recorded; run `hermes vault key migrate --to file` to clear it.[/]")
+    elif where["storage"] == "keychain":
+        c.print(f"Vault key: [bold]OS keychain[/] service {where.get('service')!r}, account {where['account']!r}")
+    else:
+        c.print("Vault key: [dim]none yet[/] (created with the first saved item)")
+    c.print(f"New vaults use: vault.key_storage = {configured_key_storage()}")
+    c.print(f"OS keychain here: {vault_keychain.backend_label()}")
+
+
+def _set_key_storage(value: str) -> None:
+    from hermes_cli.config import load_config, save_config
+
+    cfg = load_config()
+    section = cfg.get("vault")
+    if not isinstance(section, dict):
+        section = {}
+        cfg["vault"] = section
+    section["key_storage"] = value
+    save_config(cfg)
+
+
 def register_cli(subparser) -> None:
     """Build the ``hermes vault`` argparse tree (called from main.py)."""
     subs = subparser.add_subparsers(dest="vault_action")
@@ -149,10 +205,24 @@ def register_cli(subparser) -> None:
     p_rm.add_argument("handle", help="Item handle (see `hermes vault list`)")
     p_rm.set_defaults(_vault_handler=_cmd_rm)
 
+    p_key = subs.add_parser("key", help="Show where the local vault key is stored (vault.key file or OS keychain)")
+    p_key.set_defaults(_vault_handler=_cmd_key, to=None)
+    key_subs = p_key.add_subparsers(dest="vault_key_action")
+    p_migrate = key_subs.add_parser(
+        "migrate", help="Move the vault key to the OS keychain or back to vault.key (verified before the old copy is removed)")
+    p_migrate.add_argument("--to", choices=["keychain", "file"], required=True, help="Destination for the key")
+    p_migrate.set_defaults(_vault_handler=_cmd_key)
+
 
 def vault_command(args) -> None:
+    from agent.vault_store import VaultError
+
     handler = getattr(args, "_vault_handler", None)
-    if handler is None:
-        _cmd_list(args)
-        return
-    handler(args)
+    try:
+        if handler is None:
+            _cmd_list(args)
+            return
+        handler(args)
+    except VaultError as exc:
+        _console().print(f"[red]Error:[/] {exc}")
+        raise SystemExit(1) from exc

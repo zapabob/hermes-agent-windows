@@ -40,7 +40,7 @@ import uuid
 import textwrap
 from collections import deque
 from urllib.parse import unquote, urlparse
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Any, Optional, Mapping
@@ -13219,6 +13219,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                     )
             # Check for plugin-registered slash commands
             elif base_cmd.lstrip("/") in _get_plugin_cmd_handler_names():
+                from hermes_cli.plugin_choices import bind_asker, clarify_asker
                 from hermes_cli.plugins import (
                     get_plugin_command_handler,
                     resolve_plugin_command_result,
@@ -13228,9 +13229,17 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                 if plugin_handler:
                     user_args = cmd_original[len(base_cmd) :].strip()
                     try:
-                        result = resolve_plugin_command_result(
-                            plugin_handler(user_args)
-                        )
+                        # ask_choice rides this CLI's clarify picker, but only while the
+                        # prompt_toolkit app is up to paint and answer it; headless it
+                        # stays unbound and returns None (the handler's text fallback).
+                        with (
+                            bind_asker(clarify_asker(self._clarify_callback))
+                            if getattr(self, "_app", None) is not None
+                            else nullcontext()
+                        ):
+                            result = resolve_plugin_command_result(
+                                plugin_handler(user_args)
+                            )
                         if result:
                             _cprint(str(result))
                     except Exception as e:

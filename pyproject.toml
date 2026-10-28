@@ -2,7 +2,7 @@
 
 [project]
 name = "hermes-agent"
-version = "0.22.0"
+version = "0.23.0"
 description = "The self-improving AI agent — creates skills from experience, improves them during use, and runs anywhere"
 readme = "README.md"
 # Upper bound is load-bearing, not cosmetic. uv resolves the project's
@@ -476,7 +476,7 @@ py-modules = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["agent", "agent.*", "tools", "tools.*", "hermes_cli", "hermes_cli.*", "gateway", "gateway.*", "tui_gateway", "tui_gateway.*", "cron", "cron.*", "acp_adapter", "plugins", "plugins.*", "providers", "providers.*", "downstream", "downstream.*"]
+include = ["agent", "agent.*", "tools", "tools.*", "hermes_cli", "hermes_cli.*", "gateway", "gateway.*", "tui_gateway", "tui_gateway.*", "cron", "cron.*", "acp_adapter", "plugins", "plugins.*", "providers", "providers.*", "downstream", "downstream.*", "pm", "pm.*"]
 # Namespace discovery follows directories even when their names do not match
 # include. Prune JS dependency trees before walking their workspace links;
 # otherwise local editable builds scan them and can package plugin vendoring.

@@ -496,6 +496,10 @@ def _(rid, params: dict) -> dict:
 
         handler = get_plugin_command_handler(name)
         if handler:
+            # No asker is bound here on purpose: command.dispatch is not in _LONG_HANDLERS, so it
+            # runs on the reader thread that must also read the viewer's clarify.respond. Blocking
+            # in ask_choice would deadlock it until the clarify timeout; unbound it returns None
+            # and the handler falls back to its text usage. slash.exec (a pool thread) binds one.
             result = resolve_plugin_command_result(handler(arg))
             return _ok(rid, {"type": "plugin", "output": str(result or "")})
     except Exception:
@@ -1251,7 +1255,13 @@ def _(rid, params: dict) -> dict:
 
     if plugin_handler and resolve_plugin_command_result:
         try:
-            result = resolve_plugin_command_result(plugin_handler(_cmd_arg))
+            # Inline import: handler bodies are rebound onto server.py's globals
+            # (method_ctx.py), so module-level names here would not resolve.
+            from gateway.plugin_command_choice import viewer_choices
+
+            # ask_choice reaches this session's viewers via the clarify.request prompt.
+            with viewer_choices(_clarify_block, params.get("session_id", "")):
+                result = resolve_plugin_command_result(plugin_handler(_cmd_arg))
             return _ok(rid, {"output": str(result or "(no output)")})
         except Exception as e:
             return _ok(rid, {"output": f"Plugin command error: {e}"})

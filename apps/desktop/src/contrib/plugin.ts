@@ -17,9 +17,11 @@ import { createPluginI18n, type PluginI18n } from '@/i18n'
 import { readKey, writeKey } from '@/lib/storage'
 import { dispatchPluginNativeNotification, type PluginNativeNotificationInput } from '@/store/native-notifications'
 
+import { createPluginFiles, type PluginFiles } from './plugin-files'
 import { registry } from './registry'
 import type { Contribution } from './types'
 
+export type { PluginFileEntry, PluginFiles, PluginFilesResult, PluginFolder } from './plugin-files'
 export type { PluginRestOptions } from '@/hermes'
 export type { HermesOpenTarget } from '@/lib/hermes-open-target'
 export type { PluginNativeNotificationInput, PluginNotificationAction } from '@/store/native-notifications'
@@ -86,6 +88,14 @@ export interface PluginContext {
   os: PluginOs
   /** Plugin-scoped persistence. */
   storage: PluginStorage
+  /** Folder-scoped file access: the plugin's own data folder plus folders
+   *  the user grants it through the app's native picker, by relative path.
+   *  Grants are Desktop-local (never sent to the backend) and every call is
+   *  re-checked in the main process. Feature-detect on older hosts: every
+   *  member resolves `{ ok: false, error: 'unavailable' }` instead of
+   *  throwing. This bounds the door, not plugin code that reaches the raw
+   *  `window.hermesDesktop` bridge. */
+  files: PluginFiles
   /** Plugin-scoped i18n: ship + register locale bundles under this plugin,
    *  resolved against the app's active locale — no core `en.ts` edit. */
   i18n: PluginI18n
@@ -180,6 +190,7 @@ export function createPluginContext(pluginId: string, onDispose?: (dispose: () =
     socket: (path, onMessage) => track(pluginSocket(pluginId, path, onMessage)),
     os: createPluginOs(pluginId),
     storage: createPluginStorage(pluginId),
+    files: createPluginFiles(pluginId),
     i18n: createPluginI18n(pluginId, track)
   }
 }

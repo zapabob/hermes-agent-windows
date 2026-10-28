@@ -245,3 +245,40 @@ export function cancelOAuthSession(sessionId: string, profile?: null | string): 
     method: 'DELETE'
   })
 }
+
+/** Subagent / delegation block without secret values (GET /api/delegation). */
+export interface DelegationConfigResponse {
+  ok: boolean
+  delegation: Record<string, unknown>
+  has_api_key: boolean
+  schema_affecting_keys: string[]
+}
+
+/** Atomic Apply result (PUT /api/delegation). */
+export interface DelegationConfigSaveResponse {
+  ok: boolean
+  delegation: Record<string, unknown>
+  schema_affecting_changed: string[]
+  applies_on: 'new_session' | 'next_child'
+}
+
+export function getDelegationConfig(profile?: null | string): Promise<DelegationConfigResponse> {
+  return hermesApi<DelegationConfigResponse>({
+    ...profileScoped(profile),
+    path: '/api/delegation',
+    timeoutMs: STARTUP_REQUEST_TIMEOUT_MS
+  })
+}
+
+/** Persist the full subagent draft atomically. Never send api_key. */
+export function saveDelegationConfig(
+  delegation: Record<string, unknown>,
+  profile?: null | string
+): Promise<DelegationConfigSaveResponse> {
+  return hermesApi<DelegationConfigSaveResponse>({
+    ...profileScoped(profile),
+    path: '/api/delegation',
+    method: 'PUT',
+    body: { delegation }
+  })
+}

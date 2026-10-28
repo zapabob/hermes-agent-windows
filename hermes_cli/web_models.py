@@ -20,6 +20,13 @@ class ConfigUpdate(BaseModel):
     profile: Optional[str] = None
 
 
+class DelegationConfigUpdate(BaseModel):
+    """Atomic subagent/delegation draft Apply (Desktop T03)."""
+
+    delegation: dict
+    profile: Optional[str] = None
+
+
 class EnvVarUpdate(BaseModel):
     key: str
     value: str

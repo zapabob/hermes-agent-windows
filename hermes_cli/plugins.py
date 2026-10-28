@@ -66,6 +66,7 @@ from utils import env_var_enabled, fast_safe_load
 from hermes_cli.cli_command_names import BUILTIN_SUBCOMMANDS
 from hermes_cli.config import cfg_get, load_config_readonly
 from hermes_cli.middleware import OBSERVER_SCHEMA_VERSION, VALID_MIDDLEWARE
+from hermes_cli.plugin_choices import ask_choice as _ask_choice
 from hermes_cli.plugin_capabilities import (  # noqa: F401 — re-exported
     CAPABILITY_REGISTRY,
     VALID_CAPABILITY_IDS,
@@ -221,6 +222,11 @@ VALID_HOOKS: Set[str] = {
     "on_session_end",
     "on_session_finalize",
     "on_session_reset",
+    # Fired once after a durable compression commit (in-place or rotation).
+    # Observers only: exceptions must not roll back committed history.
+    # Kwargs: session_id, old_session_id, kind, reason, optional token counts /
+    # messages_removed / commit_identity. No conversation bodies.
+    "post_compaction",
     # Successful skill lifecycle facts. The local skill name is available to
     # plugins, while built-in shared metrics emit only bounded classifications.
     "on_skill_lifecycle",
@@ -2301,6 +2307,26 @@ class PluginContext:
         return registry.dispatch(
             tool_name, args, scope=self._manager.scope_key, **kwargs
         )
+
+    # -- interactive choice ---------------------------------------------------
+
+    def ask_choice(self, question: str, choices: List[Union[str, dict]]) -> Optional[str]:
+        """Ask the user who ran the current slash command to pick one option.
+
+        ``choices`` is a list of strings, or of ``{"value", "label"?, "description"?}``
+        dicts; the picked choice's ``value`` is returned. The prompt is the dispatching
+        surface's own clarify prompt (chat buttons or numbered list, the TUI/Desktop
+        clarify panel, the classic CLI picker).
+
+        Returns ``None`` when the user cancels, replies with something that is not one of
+        the choices, or the clarify timeout passes, and also when nothing can ask: outside a
+        slash command (hooks, cron), or from an async handler (blocking would stall the event
+        loop that delivers the answer). Handle ``None`` by falling back to text usage.
+
+        This is for picking between options only. It is not a permission or approval
+        mechanism: never treat a selection here as authorisation for a dangerous action.
+        """
+        return _ask_choice(question, choices)
 
     # -- context engine registration -----------------------------------------
 

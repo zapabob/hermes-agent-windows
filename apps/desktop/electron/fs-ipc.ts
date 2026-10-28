@@ -1,15 +1,18 @@
 // IPC surface for local filesystem operations the renderer's project/file
 // surfaces use: directory reads, reveal/open in the OS file manager, plugin
-// roots + git installs, rename/write/trash. Extracted from main.ts; path
-// hardening, HERMES_HOME resolution, and the git binary stay injected.
+// roots + git installs, rename/write/trash, and the plugin SDK's folder-scoped
+// file door (`ctx.files`). Extracted from main.ts; path hardening, HERMES_HOME
+// resolution, and the git binary stay injected.
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { ipcMain, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 
 import { installDesktopPluginFromGit, probePluginRepo } from './desktop-plugin-install'
 import { readDirForIpc } from './fs-read-dir'
 import { gitRootForIpc } from './git-root'
+import { registerPluginFilesIpc } from './plugin-files-ipc'
+import { pluginFilesProtectedRoots } from './plugin-files-roots'
 
 export interface FsIpcDeps {
   hermesHome: string
@@ -29,6 +32,30 @@ export function registerFsIpc({
   resolveGitBinary
 }: FsIpcDeps) {
   ipcMain.handle('hermes:fs:readDir', async (_event, dirPath) => readDirForIpc(dirPath))
+
+  // `ctx.files`: a plugin's own data folder plus folders the user grants it
+  // through the native picker. Desktop-local by construction (a remote
+  // backend never sees these calls), and the Hermes home, every profile, the
+  // vault and userData are composed into the protected set.
+  registerPluginFilesIpc({
+    ipcMain,
+    dialog,
+    windowFor: event => BrowserWindow.fromWebContents(event.sender),
+    // App windows only: preview guests and webviews never hear about grants.
+    broadcastChange: change => {
+      for (const window of BrowserWindow.getAllWindows()) {
+        window.webContents.send('hermes:pluginFiles:changed', change)
+      }
+    },
+    userDataDir: () => app.getPath('userData'),
+    hermesHomes: () =>
+      pluginFilesProtectedRoots({
+        hermesHome,
+        home: app.getPath('home'),
+        localAppData: process.env.LOCALAPPDATA
+      }),
+    trashItem: target => shell.trashItem(target)
+  })
 
   ipcMain.handle('hermes:fs:gitRoot', async (_event, startPath) => gitRootForIpc(startPath))
 

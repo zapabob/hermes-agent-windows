@@ -1255,6 +1255,24 @@ def inherit_profile_model(profile_dir: Path) -> bool:
         reset_hermes_home_override(token)
 
 
+def _own_cloned_vault_key(profile_dir: Path) -> None:
+    """A ``--clone-all`` copy of a keychain-backed vault carries the source's ``vault.keyref``. Give the
+    clone an OS-keychain entry of its own before it is used, so the source later moving its key (which
+    deletes the source's entry) cannot strand it. If that is impossible the half-made profile is removed
+    and the clone is refused rather than left sharing the source's key."""
+    vault_dir = profile_dir / "vault"
+    if not (vault_dir / "vault.keyref").exists():
+        return
+    # Lazy: keeps the vault/crypto stack off the import path of every profile command.
+    from agent.vault_store import VaultError, VaultStore
+
+    try:
+        VaultStore(vault_dir).own_copied_key(vault_dir)
+    except (VaultError, OSError) as exc:
+        shutil.rmtree(profile_dir, ignore_errors=True)
+        raise ValueError(f"Cannot clone the vault key: {exc}") from exc
+
+
 def create_profile(
     name: str,
     clone_from: Optional[str] = None,
@@ -1339,6 +1357,7 @@ def create_profile(
         # Strip runtime files
         for stale in _CLONE_ALL_STRIP:
             (profile_dir / stale).unlink(missing_ok=True)
+        _own_cloned_vault_key(profile_dir)
     else:
         # Bootstrap directory structure
         profile_dir.mkdir(parents=True, exist_ok=True)

@@ -1,0 +1,996 @@
+{
+  "schema_version": 1,
+  "title": "Hermes Windows-native Cursor feature implementation plan",
+  "created_date_jst": "2026-10-28",
+  "artifact_generated_at_utc": "2026-10-27 17:37:41 UTC",
+  "source_verification_date_utc": "2026-10-27",
+  "status": "PLAN_ONLY",
+  "source_baselines": {
+    "downstream": {
+      "repository": "zapabob/hermes-agent-windows",
+      "head_sha": "5531c849b424cdfee17946935eec73363917e5e7",
+      "tree_sha": "ebc64d1c7fb0ed6bcc773258ca676b192e17650d"
+    },
+    "upstream": {
+      "repository": "NousResearch/hermes-agent",
+      "head_sha": "e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6",
+      "tree_sha": "c6a19fa70a93ae408d7661eedc51cc621ff49dcb",
+      "latest_formal_release": {
+        "tag": "v0.22.5",
+        "tag_target_sha": "bf0203a794a07aac3ff764972ab9087baa4e4f4e",
+        "published_at": "2026-10-23T05:28:45Z",
+        "draft": false,
+        "prerelease": false
+      }
+    }
+  },
+  "verification_performed": {
+    "read_only_source_inspection": true,
+    "parallel_source_mapping_review": true,
+    "plan_design_review": true,
+    "codegraph_on_user_checkout": false,
+    "code_changes": false,
+    "python_tests": false,
+    "desktop_tests": false,
+    "windows_native_tests": false,
+    "mutation_tests": false
+  },
+  "unknowns": [
+    "User checkout may differ from inspected SHA",
+    "Absence claims are limited to inspected files/subtrees",
+    "Hardware/profile paths are assumptions to verify during T00",
+    "Source feature presence does not prove packaged installer distribution",
+    "Performance is unmeasured",
+    "Native path/ACL/keychain behavior requires Windows qualification"
+  ],
+  "design_decisions": [
+    {
+      "id": "D01",
+      "decision": "Preserve existing queue/prefill/runtime/delegation capabilities; implement verified gaps only",
+      "tasks": [
+        "T00",
+        "T01",
+        "T02",
+        "T03"
+      ]
+    },
+    {
+      "id": "D02",
+      "decision": "Classify delegation settings by runtime versus schema impact; new session default for parallel/depth/orchestrator changes",
+      "tasks": [
+        "T03",
+        "T04"
+      ]
+    },
+    {
+      "id": "D03",
+      "decision": "Explicit keychain request fails visibly without silent file downgrade; preserve old key until destination validated",
+      "tasks": [
+        "T08"
+      ]
+    },
+    {
+      "id": "D04",
+      "decision": "ctx.files grants remain Desktop-local by plugin ID; not a hostile-code sandbox",
+      "tasks": [
+        "T09"
+      ]
+    },
+    {
+      "id": "D05",
+      "decision": "OAuth broker guarantees only regular API path; manifest fingerprint binds grants",
+      "tasks": [
+        "T06"
+      ]
+    },
+    {
+      "id": "D06",
+      "decision": "Prepared compaction OFF by default; stricter prefix content/revision check than text-tolerant UID reuse; bounded cancel and no same-GPU overlap",
+      "tasks": [
+        "T11"
+      ]
+    },
+    {
+      "id": "D07",
+      "decision": "Webapp deferred local-only; resolve existing port 9120 conflict, preserve backend owner",
+      "tasks": [
+        "T14"
+      ]
+    },
+    {
+      "id": "D08",
+      "decision": "Do not overwrite historical upstream snapshot or claim whole-version parity",
+      "tasks": [
+        "T00"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "DS-01",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "README.md",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/README.md",
+      "observed": [
+        "source version 0.22.0",
+        "Windows-native downstream",
+        "existing memory/local-runtime features"
+      ],
+      "task": "All",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-02",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "AGENTS.md",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/AGENTS.md",
+      "observed": [
+        "CodeGraph required",
+        "Windows-native qualification",
+        "prompt prefix and ownership constraints"
+      ],
+      "task": "T00",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-03",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "DOWNSTREAM_POLICY.md",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/DOWNSTREAM_POLICY.md",
+      "observed": [
+        "downstream semantic contracts and provenance"
+      ],
+      "task": "T00",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-04",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "apps/desktop/AGENTS.md",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/apps/desktop/AGENTS.md",
+      "observed": [
+        "Electron machine authority",
+        "backend session authority",
+        "renderer ephemeral state",
+        "scope and stale-response guards"
+      ],
+      "task": "All Desktop",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-05",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "apps/desktop/src/store/composer-queue.ts",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/apps/desktop/src/store/composer-queue.ts",
+      "observed": [
+        "updateQueuedPrompt",
+        "migrateQueuedPrompts",
+        "parkQueuedPrompts",
+        "shouldAutoDrain"
+      ],
+      "task": "T02",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-06",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "apps/desktop/src/app/chat/composer/hooks/use-composer-queue.ts",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/apps/desktop/src/app/chat/composer/hooks/use-composer-queue.ts",
+      "observed": [
+        "beginQueuedEdit",
+        "exitQueuedEdit",
+        "steerQueuedNow",
+        "runDrain"
+      ],
+      "task": "T02",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-07",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "apps/desktop/src/app/session/hooks/use-background-queue-drain.ts",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/apps/desktop/src/app/session/hooks/use-background-queue-drain.ts",
+      "observed": [
+        "useBackgroundQueueDrain"
+      ],
+      "task": "T02",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-08",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "apps/desktop/src/app/settings/model-settings.tsx",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/apps/desktop/src/app/settings/model-settings.tsx",
+      "observed": [
+        "ModelSettings",
+        "profileEpoch",
+        "applyMainModel",
+        "applyAuxiliaryDraft"
+      ],
+      "task": "T03",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-09",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "apps/desktop/src/api/models.ts",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/apps/desktop/src/api/models.ts",
+      "observed": [
+        "setModelAssignment",
+        "main and auxiliary scope; do not assume subagent"
+      ],
+      "task": "T03",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-10",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "tools/delegate_tool.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/tools/delegate_tool.py",
+      "observed": [
+        "_load_config",
+        "_resolve_delegation_credentials",
+        "_resolve_child_fallback_chain",
+        "_build_child_agent",
+        "_build_tasks_param_description",
+        "_build_top_level_description",
+        "_build_dynamic_schema_overrides"
+      ],
+      "task": "T03,T04",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-11",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "downstream/delegation/inference_port.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/downstream/delegation/inference_port.py",
+      "observed": [
+        "ParentInferencePort",
+        "InferenceRouteBinding"
+      ],
+      "task": "T03,T04",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-12",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "downstream/delegation/admission.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/downstream/delegation/admission.py",
+      "observed": [
+        "DelegationAdmission"
+      ],
+      "task": "T04",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-13",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "downstream/delegation/free_routes.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/downstream/delegation/free_routes.py",
+      "observed": [
+        "FreeRoute",
+        "FreeRoutePolicy"
+      ],
+      "task": "T04",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-14",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "tools/mcp_tool.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/tools/mcp_tool.py",
+      "observed": [
+        "_call",
+        "server.session.call_tool",
+        "_admit_mcp_rpc"
+      ],
+      "task": "T01",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-15",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "tui_gateway/server.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/tui_gateway/server.py",
+      "observed": [
+        "_on_tool_progress",
+        "_enqueue_prompt",
+        "_try_session_steer",
+        "_drain_queued_prompt"
+      ],
+      "task": "T01,T02",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-16",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "apps/desktop/src/app/session/hooks/use-message-stream/gateway-event/tools.ts",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/apps/desktop/src/app/session/hooks/use-message-stream/gateway-event/tools.ts",
+      "observed": [
+        "handleToolEvent",
+        "tool.progress"
+      ],
+      "task": "T01",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-17",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "agent/local_prompt_progress.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/agent/local_prompt_progress.py",
+      "observed": [
+        "LocalPromptProgress",
+        "PromptReadingClock",
+        "with_prompt_progress",
+        "prompt_reading_budget"
+      ],
+      "task": "T02,T11,T13",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-18",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "agent/chat_completion_helpers.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/agent/chat_completion_helpers.py",
+      "observed": [
+        "_LlamaProgressTracker",
+        "_poll_local_llama_progress",
+        "_local_stale_health_check",
+        "_retry_recovered_local_server",
+        "_settle_stream_stale_trial"
+      ],
+      "task": "T02,T13",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-19",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "agent/auxiliary_client.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/agent/auxiliary_client.py",
+      "observed": [
+        "stream accumulation",
+        "PromptReadingClock"
+      ],
+      "task": "T02,T11,T13",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-20",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "hermes_cli/web_server.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/hermes_cli/web_server.py",
+      "observed": [
+        "_CONFIG_MUTATION_LOCK",
+        "update_config",
+        "_profile_scope"
+      ],
+      "task": "T03",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-21",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "hermes_cli/config.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/hermes_cli/config.py",
+      "observed": [
+        "atomic_config_write",
+        "save_config",
+        "_CONFIG_LOCK"
+      ],
+      "task": "T03",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-22",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "hermes_cli/plugins_cmd.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/hermes_cli/plugins_cmd.py",
+      "observed": [
+        "cmd_update",
+        "dashboard_update_user_plugin",
+        "_git_pull_plugin_dir",
+        "_restore_plugin_stash",
+        "_run_plugin_git"
+      ],
+      "task": "T05",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-23",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "hermes_cli/plugin_capabilities.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/hermes_cli/plugin_capabilities.py",
+      "observed": [
+        "plugin_capability_granted",
+        "record_consent",
+        "pending_capabilities"
+      ],
+      "task": "T05",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-24",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "hermes_cli/auth.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/hermes_cli/auth.py",
+      "observed": [
+        "_auth_store_lock",
+        "_load_auth_store",
+        "_save_auth_store",
+        "_provider_state_transaction"
+      ],
+      "task": "T06",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-25",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "agent/secret_scope.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/agent/secret_scope.py",
+      "observed": [
+        "get_secret",
+        "set_secret_scope",
+        "build_profile_secret_scope"
+      ],
+      "task": "T06",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-26",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "hermes_cli/plugins.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/hermes_cli/plugins.py",
+      "observed": [
+        "PluginContext",
+        "VALID_HOOKS",
+        "register_hook",
+        "PluginManager.invoke_hook"
+      ],
+      "task": "T06,T07,T10",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-27",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "tools/clarify_tool.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/tools/clarify_tool.py",
+      "observed": [
+        "existing clarification path"
+      ],
+      "task": "T07",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-28",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "agent/vault_store.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/agent/vault_store.py",
+      "observed": [
+        "VaultStore",
+        "_fernet",
+        "_restrict_windows_acl",
+        "_ensure_dir"
+      ],
+      "task": "T08",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-29",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "hermes_cli/vault.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/hermes_cli/vault.py",
+      "observed": [
+        "existing add/list/rm commands"
+      ],
+      "task": "T08",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-30",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "apps/desktop/electron/secret-storage-policy.ts",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/apps/desktop/electron/secret-storage-policy.ts",
+      "observed": [
+        "separate opt-in connection/OAuth storage; not browser vault"
+      ],
+      "task": "T08",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-31",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "apps/desktop/src/contrib/plugin.ts",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/apps/desktop/src/contrib/plugin.ts",
+      "observed": [
+        "PluginContext",
+        "createPluginContext",
+        "no files property in inspected revision"
+      ],
+      "task": "T09",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-32",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "apps/desktop/electron/fs-ipc.ts",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/apps/desktop/electron/fs-ipc.ts",
+      "observed": [
+        "registerFsIpc"
+      ],
+      "task": "T09",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-33",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "apps/desktop/electron/hardening.ts",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/apps/desktop/electron/hardening.ts",
+      "observed": [
+        "sensitiveFileBlockReason",
+        "resolveRequestedPathForIpc"
+      ],
+      "task": "T09",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-34",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "apps/desktop/electron/preload.ts",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/apps/desktop/electron/preload.ts",
+      "observed": [
+        "typed bridge entry"
+      ],
+      "task": "T09",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-35",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "apps/desktop/electron/plugin-profile-routes.ts",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/apps/desktop/electron/plugin-profile-routes.ts",
+      "observed": [
+        "routing scope"
+      ],
+      "task": "T09",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-36",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "agent/context_compressor.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/agent/context_compressor.py",
+      "observed": [
+        "_summary_input_token_budget",
+        "_bound_summary_input",
+        "_generate_summary",
+        "budget max(8000,min(aux_context*0.25,40000)) when aux context known"
+      ],
+      "task": "T10,T11",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-37",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "agent/conversation_compression.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/agent/conversation_compression.py",
+      "observed": [
+        "CompressionCommitFence",
+        "compress_context",
+        "_notify_context_engine_compression_complete",
+        "_queue_context_engine_compression_notification",
+        "finalize_context_engine_compression_notification"
+      ],
+      "task": "T10,T11",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-38",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "hermes_cli/llama_fallback_runtime.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/hermes_cli/llama_fallback_runtime.py",
+      "observed": [
+        "LlamaFallbackSettings",
+        "resolve_llama_fallback_settings",
+        "_build_server_args",
+        "ensure_llama_fallback_server"
+      ],
+      "task": "T12",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-39",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "scripts/windows/Get-LlamaContextBudget.ps1",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/scripts/windows/Get-LlamaContextBudget.ps1",
+      "observed": [
+        "Get-GgufArchitectureMetadata",
+        "Get-LlamaContextBudget",
+        "Get-LlamaFittingContext",
+        "Test-LlamaContextFits"
+      ],
+      "task": "T12",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-40",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "scripts/windows/download-huihui-gemma-agentic-q4km.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/scripts/windows/download-huihui-gemma-agentic-q4km.py",
+      "observed": [
+        "existing per-model download path"
+      ],
+      "task": "T12",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-41",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "pyproject.toml",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/pyproject.toml",
+      "observed": [
+        "Python >=3.11,<3.14",
+        "pytest testpaths and markers"
+      ],
+      "task": "T00",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-42",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "apps/desktop/package.json",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/apps/desktop/package.json",
+      "observed": [
+        "test:ui",
+        "test:desktop:platforms",
+        "typecheck",
+        "test:e2e uses playwright test e2e/",
+        "build"
+      ],
+      "task": "All Desktop",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-43",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "scripts/run_tests_parallel.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/scripts/run_tests_parallel.py",
+      "observed": [
+        "--jobs",
+        "--files",
+        "--paths",
+        "--file-retries",
+        "native file isolation"
+      ],
+      "task": "All Python",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-44",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "scripts/check-windows-footguns.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/scripts/check-windows-footguns.py",
+      "observed": [
+        "--diff",
+        "--all"
+      ],
+      "task": "All",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-45",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "scripts/ci/engineering_repair_mutations.py",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/scripts/ci/engineering_repair_mutations.py",
+      "observed": [
+        "scoped meaningful mutation pattern; not universal runner"
+      ],
+      "task": "All",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-46",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "scripts/windows/Test-HermesWindowsQualification.ps1",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/scripts/windows/Test-HermesWindowsQualification.ps1",
+      "observed": [
+        "RepoRoot",
+        "OutputDirectory",
+        "Scope",
+        "WorkstationEvidencePath"
+      ],
+      "task": "Windows",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-47",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": "scripts/windows/tests/Test-HermesDesktopLifecycle.ps1",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/scripts/windows/tests/Test-HermesDesktopLifecycle.ps1",
+      "observed": [
+        "RelaunchCycles",
+        "CrashCycles",
+        "RepoRoot",
+        "HermesHome",
+        "ArtifactsDir"
+      ],
+      "task": "T14/lifecycle changes",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-48",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": ".github/workflows/fork-cicd.yml",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/.github/workflows/fork-cicd.yml",
+      "observed": [
+        "native Windows required gates"
+      ],
+      "task": "Release candidate",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "DS-49",
+      "repository": "zapabob/hermes-agent-windows",
+      "ref": "5531c849b424cdfee17946935eec73363917e5e7",
+      "path": ".codex/UPSTREAM_SNAPSHOT.json",
+      "url": "https://github.com/zapabob/hermes-agent-windows/blob/5531c849b424cdfee17946935eec73363917e5e7/.codex/UPSTREAM_SNAPSHOT.json",
+      "observed": [
+        "historical campaign; preserve"
+      ],
+      "task": "T00",
+      "evidence_level": "source_inspection_not_execution"
+    },
+    {
+      "id": "UP-01",
+      "repository": "NousResearch/hermes-agent",
+      "ref": "e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6",
+      "path": "agent/vault_keychain.py",
+      "url": "https://github.com/NousResearch/hermes-agent/blob/e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6/agent/vault_keychain.py",
+      "task": "T08",
+      "evidence_level": "source_reference_not_downstream_execution"
+    },
+    {
+      "id": "UP-02",
+      "repository": "NousResearch/hermes-agent",
+      "ref": "e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6",
+      "path": "agent/vault_store.py",
+      "url": "https://github.com/NousResearch/hermes-agent/blob/e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6/agent/vault_store.py",
+      "task": "T08",
+      "evidence_level": "source_reference_not_downstream_execution"
+    },
+    {
+      "id": "UP-03",
+      "repository": "NousResearch/hermes-agent",
+      "ref": "e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6",
+      "path": "hermes_cli/plugin_oauth.py",
+      "url": "https://github.com/NousResearch/hermes-agent/blob/e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6/hermes_cli/plugin_oauth.py",
+      "task": "T06",
+      "evidence_level": "source_reference_not_downstream_execution"
+    },
+    {
+      "id": "UP-04",
+      "repository": "NousResearch/hermes-agent",
+      "ref": "e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6",
+      "path": "hermes_cli/plugin_provider_requests.py",
+      "url": "https://github.com/NousResearch/hermes-agent/blob/e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6/hermes_cli/plugin_provider_requests.py",
+      "task": "T06",
+      "evidence_level": "source_reference_not_downstream_execution"
+    },
+    {
+      "id": "UP-05",
+      "repository": "NousResearch/hermes-agent",
+      "ref": "e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6",
+      "path": "hermes_cli/plugin_choices.py",
+      "url": "https://github.com/NousResearch/hermes-agent/blob/e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6/hermes_cli/plugin_choices.py",
+      "task": "T07",
+      "evidence_level": "source_reference_not_downstream_execution"
+    },
+    {
+      "id": "UP-06",
+      "repository": "NousResearch/hermes-agent",
+      "ref": "e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6",
+      "path": "gateway/plugin_command_choice.py",
+      "url": "https://github.com/NousResearch/hermes-agent/blob/e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6/gateway/plugin_command_choice.py",
+      "task": "T07",
+      "evidence_level": "source_reference_not_downstream_execution"
+    },
+    {
+      "id": "UP-07",
+      "repository": "NousResearch/hermes-agent",
+      "ref": "e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6",
+      "path": "agent/compaction_events.py",
+      "url": "https://github.com/NousResearch/hermes-agent/blob/e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6/agent/compaction_events.py",
+      "task": "T10",
+      "evidence_level": "source_reference_not_downstream_execution"
+    },
+    {
+      "id": "UP-08",
+      "repository": "NousResearch/hermes-agent",
+      "ref": "e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6",
+      "path": "apps/desktop/electron/plugin-files.ts",
+      "url": "https://github.com/NousResearch/hermes-agent/blob/e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6/apps/desktop/electron/plugin-files.ts",
+      "task": "T09",
+      "evidence_level": "source_reference_not_downstream_execution"
+    },
+    {
+      "id": "UP-09",
+      "repository": "NousResearch/hermes-agent",
+      "ref": "e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6",
+      "path": "apps/desktop/electron/plugin-files-ops.ts",
+      "url": "https://github.com/NousResearch/hermes-agent/blob/e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6/apps/desktop/electron/plugin-files-ops.ts",
+      "task": "T09",
+      "evidence_level": "source_reference_not_downstream_execution"
+    },
+    {
+      "id": "UP-10",
+      "repository": "NousResearch/hermes-agent",
+      "ref": "e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6",
+      "path": "apps/desktop/electron/plugin-files-guards.ts",
+      "url": "https://github.com/NousResearch/hermes-agent/blob/e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6/apps/desktop/electron/plugin-files-guards.ts",
+      "task": "T09",
+      "evidence_level": "source_reference_not_downstream_execution"
+    },
+    {
+      "id": "UP-11",
+      "repository": "NousResearch/hermes-agent",
+      "ref": "e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6",
+      "path": "apps/desktop/electron/plugin-files-ipc.ts",
+      "url": "https://github.com/NousResearch/hermes-agent/blob/e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6/apps/desktop/electron/plugin-files-ipc.ts",
+      "task": "T09",
+      "evidence_level": "source_reference_not_downstream_execution"
+    },
+    {
+      "id": "UP-12",
+      "repository": "NousResearch/hermes-agent",
+      "ref": "e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6",
+      "path": "apps/desktop/src/contrib/plugin-files.ts",
+      "url": "https://github.com/NousResearch/hermes-agent/blob/e5ea5fd9ccdf2913c0b21b24eb3d22b321d2e2a6/apps/desktop/src/contrib/plugin-files.ts",
+      "task": "T09",
+      "evidence_level": "source_reference_not_downstream_execution"
+    }
+  ],
+  "upstream_pull_requests": [
+    {
+      "number": 142563,
+      "feature": "delegation backend / advanced delegation",
+      "status": "included_in_v0.22.5",
+      "tasks": [
+        "T04"
+      ],
+      "url": "https://github.com/NousResearch/hermes-agent/pull/142563"
+    },
+    {
+      "number": 144246,
+      "feature": "vault OS keychain",
+      "merge_sha": "d778246c84480cbf7f62f615fc0766f9ce6448b0",
+      "status": "main_at_inspection",
+      "tasks": [
+        "T08"
+      ],
+      "url": "https://github.com/NousResearch/hermes-agent/pull/144246"
+    },
+    {
+      "number": 143688,
+      "feature": "Desktop ctx.files",
+      "merge_sha": "c421c930fe955880aa92d19bf5d9e8527b9f87a7",
+      "status": "main_at_inspection",
+      "tasks": [
+        "T09"
+      ],
+      "url": "https://github.com/NousResearch/hermes-agent/pull/143688"
+    },
+    {
+      "number": 144684,
+      "feature": "prepared compaction",
+      "merge_sha": "7f64198bc16a260880f542713793cb46a97dcc0d",
+      "status": "main_at_inspection",
+      "tasks": [
+        "T11"
+      ],
+      "url": "https://github.com/NousResearch/hermes-agent/pull/144684"
+    },
+    {
+      "number": 141864,
+      "feature": "gateway-owned Webapp",
+      "merge_sha": "d6b868b7abd44d9bad3621cea3dca59b0dde8a08",
+      "status": "main_at_inspection",
+      "tasks": [
+        "T14"
+      ],
+      "url": "https://github.com/NousResearch/hermes-agent/pull/141864"
+    },
+    {
+      "number": 143964,
+      "feature": "login backend plugin",
+      "merge_sha": "850efff14f0d2a6de205eb1363c35dac35906763",
+      "status": "conditional_deferred",
+      "tasks": [],
+      "url": "https://github.com/NousResearch/hermes-agent/pull/143964"
+    },
+    {
+      "number": 144259,
+      "feature": "Windows read-only process plugin catalog",
+      "merge_sha": "581abf215c8e5b0772327a4196ecd9f7d3e49e2c",
+      "status": "optional_catalog_entry",
+      "tasks": [],
+      "url": "https://github.com/NousResearch/hermes-agent/pull/144259"
+    },
+    {
+      "number": 139703,
+      "feature": "DFlash local model support",
+      "status": "deferred_for_standard_16GB_plan",
+      "tasks": [],
+      "url": "https://github.com/NousResearch/hermes-agent/pull/139703"
+    }
+  ],
+  "primary_platform_sources": [
+    {
+      "id": "MS-01",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/realtimeapiset/nf-realtimeapiset-queryunbiasedinterrupttime",
+      "supports": "Unbiased interrupt time excludes sleep and hibernation; counts in 100ns units",
+      "task": "T13"
+    },
+    {
+      "id": "MS-02",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/realtimeapiset/nf-realtimeapiset-queryunbiasedinterrupttimeprecise",
+      "supports": "Precise API Windows 10+; precision/cost tradeoff",
+      "task": "T13"
+    }
+  ],
+  "review_findings_resolved": [
+    "OAuth normal API versus in-process sandbox limitation",
+    "OAuth declaration fingerprint and refresh/logout race",
+    "Vault DACL and clone/rename ownership",
+    "Prepared worker cancellation on new interactive input, bounded cancel, OFF rollback",
+    "Resume content identity including same-size different-content",
+    "Delegation parallel/depth limits affect dynamic schema",
+    "Targeted Playwright command avoids broad e2e/ script filter"
+  ]
+}

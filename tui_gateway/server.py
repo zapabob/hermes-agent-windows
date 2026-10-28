@@ -7,6 +7,7 @@ import hashlib
 import inspect
 import json
 import logging
+import math
 import os
 import queue
 import subprocess
@@ -7864,6 +7865,36 @@ def _on_tool_progress(
     # Subagent lifecycle is application state (Desktop status stack, TUI spawn tree), not
     # tool-progress chrome: it must survive display.tool_progress=off like todo.updated does.
     if not event_type.startswith("subagent.") and not _tool_progress_enabled(sid):
+        return
+    if event_type == "tool.progress" and name:
+        # Mid-call MCP (and similar) progress. Never treat as a tool result.
+        raw_progress = _kwargs.get("progress")
+        raw_total = _kwargs.get("total")
+        try:
+            progress_val = float(raw_progress)
+        except (TypeError, ValueError):
+            return
+        if not math.isfinite(progress_val) or progress_val < 0:
+            return
+        total_val = None
+        if raw_total is not None:
+            try:
+                total_candidate = float(raw_total)
+            except (TypeError, ValueError):
+                return
+            if not math.isfinite(total_candidate) or total_candidate <= 0:
+                return
+            total_val = total_candidate
+        payload: dict[str, object] = {
+            "tool_id": str(_kwargs.get("tool_call_id") or ""),
+            "name": str(name),
+            "progress": progress_val,
+        }
+        if total_val is not None:
+            payload["total"] = total_val
+        if preview:
+            payload["preview"] = str(preview)[:500]
+        _emit("tool.progress", sid, payload)
         return
     if event_type == "tool.output_risk" and name:
         metadata = _kwargs.get("risk_metadata")

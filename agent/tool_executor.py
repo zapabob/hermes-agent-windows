@@ -760,12 +760,26 @@ def _run_agent_tool_execution_middleware(
         )
         _hb_thread.start()
         try:
+            from agent.tool_progress_sink import (
+                install_tool_progress_sink,
+                reset_tool_progress_sink,
+            )
             from tools.skill_manager_tool import capture_background_review_skill_reads
 
-            with capture_background_review_skill_reads() as reads:
-                result = execute(final_args)
-            state["review_reads"] = reads
-            return result
+            # Per-call progress identity for MCP (and similar) mid-tool
+            # notifications. ContextVar keeps concurrent workers isolated.
+            _progress_token = install_tool_progress_sink(
+                tool_call_id=tool_call_id or "",
+                tool_name=function_name,
+                callback=getattr(agent, "tool_progress_callback", None),
+            )
+            try:
+                with capture_background_review_skill_reads() as reads:
+                    result = execute(final_args)
+                state["review_reads"] = reads
+                return result
+            finally:
+                reset_tool_progress_sink(_progress_token)
         finally:
             _hb_stop.set()
             _hb_thread.join(timeout=2.0)

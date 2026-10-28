@@ -23,6 +23,7 @@ import {
   Settings2,
   ShieldLock,
   Upload,
+  Users,
   Wrench,
   Zap
 } from '@/lib/icons'
@@ -54,6 +55,7 @@ import { PluginsSettings } from './plugins-settings'
 import { PROVIDER_VIEWS, ProvidersSettings, type ProviderView } from './providers-settings'
 import { SessionsSettings } from './sessions-settings'
 import type { SettingsPageProps, SettingsView as SettingsViewId } from './types'
+import { SubagentSettings } from './subagent-settings'
 import { VaultSettings } from './vault-settings'
 
 const SETTINGS_VIEWS: readonly SettingsViewId[] = [
@@ -66,6 +68,7 @@ const SETTINGS_VIEWS: readonly SettingsViewId[] = [
   'keybinds',
   'keys',
   'vault',
+  'subagent',
   'notifications',
   'billing',
   'plugins',
@@ -217,6 +220,14 @@ export function SettingsView({ onClose, onConfigSaved, onMainModelChanged }: Set
         onSelect: () => setActiveView('billing')
       },
       {
+        active: activeView === 'subagent',
+        gapBefore: true,
+        icon: Users,
+        id: 'subagent',
+        label: t.settings.nav.subagent,
+        onSelect: () => setActiveView('subagent')
+      },
+      {
         active: activeView === 'providers',
         children: [
           {
@@ -241,7 +252,6 @@ export function SettingsView({ onClose, onConfigSaved, onMainModelChanged }: Set
             onSelect: () => openProviderView('custom-endpoints')
           }
         ],
-        gapBefore: true,
         icon: Zap,
         id: 'providers',
         label: t.settings.nav.providers,
@@ -429,6 +439,8 @@ export function SettingsView({ onClose, onConfigSaved, onMainModelChanged }: Set
       <PluginsSettings />
     ) : activeView === 'vault' ? (
       <VaultSettings />
+    ) : activeView === 'subagent' ? (
+      <SubagentSettings />
     ) : (
       <SessionsSettings />
     )

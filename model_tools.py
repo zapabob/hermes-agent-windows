@@ -1611,6 +1611,7 @@ def handle_function_call(
                         task_id=task_id,
                         session_id=session_id,
                         enabled_tools=sandbox_enabled,
+                        tool_call_id=tool_call_id or "",
                     )
 
             else:
@@ -1622,6 +1623,7 @@ def handle_function_call(
                         task_id=task_id,
                         session_id=session_id,
                         user_task=user_task,
+                        tool_call_id=tool_call_id or "",
                     )
             if skip_tool_execution_middleware:
                 result = _dispatch(function_args)

@@ -21,11 +21,13 @@ import subprocess
 import sys
 import tempfile
 import urllib.parse
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 
 from hermes_constants import get_hermes_home
 from hermes_cli._subprocess_compat import GitPolicyError, clone_git_repository, noninteractive_git_env, run_internal_git
+from hermes_cli import plugin_oauth
 from hermes_cli.config import cfg_get
 from hermes_cli.secret_prompt import masked_secret_prompt
 from utils import atomic_write_text, remove_owned_tree
@@ -1054,125 +1056,47 @@ def cmd_install(
 def cmd_update(name: str) -> None:
     """Update an installed plugin by pulling latest from its git remote."""
     from rich.console import Console
-    from rich.markup import escape
 
     console = Console()
     plugins_dir = _plugins_dir()
 
     try:
-        target = _require_installed_plugin(name, plugins_dir, console)
+        _require_installed_plugin(name, plugins_dir, console)
     except ValueError as e:
         console.print(f"[red]Error:[/red] {e}")
         sys.exit(1)
 
-    try:
-        metadata = _read_install_metadata()
-    except PluginOperationError as exc:
-        console.print(f"[red]Error:[/red] {exc}")
-        sys.exit(1)
-    install_record = metadata.get(target.name, {})
-    if install_record.get("pinned") is True:
-        recorded_source = escape(str(install_record.get("source", "<source>")))
-        console.print(
-            f"[red]Error:[/red] Plugin '{name}' is pinned to "
-            f"{install_record.get('revision')}. To move it, run "
-            f"`hermes plugins install {recorded_source} --force "
-            "--ref <40-character commit SHA>`."
-        )
-        sys.exit(1)
-
-    if not (target / ".git").exists():
-        console.print(
-            f"[red]Error:[/red] Plugin '{name}' was not installed from git "
-            f"(no .git directory). Cannot update."
-        )
-        sys.exit(1)
-
     console.print(f"[dim]Updating {name}...[/dim]")
-
-    ok, output = _git_pull_plugin_dir(target)
-    if not ok:
-        console.print(f"[red]Error:[/red] {output}")
+    outcome = update_user_plugin_core(
+        name, interactive_consent=True, console=console
+    )
+    if not outcome.ok:
+        console.print(f"[red]Error:[/red] {outcome.error}")
         sys.exit(1)
 
-    if install_record:
-        git_exe = _resolve_git_executable()
-        if git_exe:
-            install_record["revision"] = _git_head_revision(target, git_exe)
-            metadata[target.name] = install_record
-            _write_install_metadata(metadata)
-
-    # Re-scan after update — Cowork re-scans skills/plugins on edit, and an
-    # update can introduce malicious content into a previously clean plugin.
-    # The pull has already mutated the tree, so a dangerous verdict disables
-    # the plugin rather than leaving it active.
-    if _scan_on_install_enabled():
-        from tools.plugin_guard import (
-            format_scan_report,
-            scan_plugin,
-            should_allow_plugin_install,
-        )
-
-        scan_result = scan_plugin(target, source=name)
-        allowed, reason = should_allow_plugin_install(scan_result)
-        if allowed is not True:
-            console.print()
-            console.print(
-                f"[yellow]⚠ Security scan flagged the updated plugin:[/yellow] {reason}",
-            )
-            console.print(format_scan_report(scan_result))
-            if scan_result.verdict == "dangerous":
-                enabled = _get_enabled_set()
-                disabled = _get_disabled_set()
-                if name in enabled or name not in disabled:
-                    enabled.discard(name)
-                    disabled.add(name)
-                    _save_enabled_set(enabled)
-                    _save_disabled_set(disabled)
-                console.print(
-                    f"[red]Plugin '{name}' has been disabled.[/red] Review the "
-                    f"findings, then re-enable with `hermes plugins enable {name}` "
-                    f"if you trust them.",
-                )
-
-    # Same stale-bytecode class as the main checkout (#6207/#60242): the
-    # pull just changed .py files under this plugin dir, so drop any
-    # __pycache__ compiled from the previous revision.
-    _clear_plugin_bytecode(target)
-
-    # Copy any new .example files
-    _copy_example_files(target, console)
-
-    # Update-time re-consent (#64228): if the new version declares
-    # capabilities the granted set lacks, surface the diff and require
-    # re-consent for the additions. The stored consent hash detects a
-    # changed declaration; additions stay ungranted until the user says yes
-    # (non-interactive updates leave them ungranted — fail closed).
-    updated_manifest = _read_manifest(target)
-    plugin_id = updated_manifest.get("name") or target.name
-    declared_caps = _declared_capabilities_from_manifest(
-        updated_manifest, plugin_id
-    )
-    if declared_caps:
-        from hermes_cli.plugin_capabilities import (
-            declared_set_changed,
-            pending_capabilities,
-        )
-        if pending_capabilities(plugin_id, declared_caps) or declared_set_changed(
-            plugin_id, declared_caps
-        ):
-            _run_capability_consent(
-                console, plugin_id, declared_caps, context="update"
-            )
-
-    out = output.strip()
-    if "Already up to date" in out:
+    out = (outcome.output or "").strip()
+    if outcome.status == "unchanged" or outcome.unchanged:
         console.print(
             f"[green]✓[/green] Plugin [bold]{name}[/bold] is already up to date."
         )
+    elif outcome.status == "disabled":
+        console.print(
+            f"[yellow]![/yellow] Plugin [bold]{name}[/bold] was updated but disabled "
+            f"after the security scan."
+        )
+        if out:
+            console.print(f"[dim]{out}[/dim]")
+    elif outcome.status == "needs_consent":
+        console.print(
+            f"[yellow]![/yellow] Plugin [bold]{name}[/bold] updated; new capabilities "
+            f"still need consent."
+        )
+        if out:
+            console.print(f"[dim]{out}[/dim]")
     else:
         console.print(f"[green]✓[/green] Plugin [bold]{name}[/bold] updated.")
-        console.print(f"[dim]{out}[/dim]")
+        if out:
+            console.print(f"[dim]{out}[/dim]")
 
 
 def _remove_plugin_core(target: Path) -> None:
@@ -1217,11 +1141,17 @@ def cmd_remove(name: str) -> None:
         console.print(f"[red]Error:[/red] {e}")
         sys.exit(1)
 
+    grant_key = plugin_oauth.plugin_key(target)  # resolved before the directory disappears
     try:
         _remove_plugin_core(target)
     except (OSError, PluginOperationError) as exc:
         console.print(f"[red]Error:[/red] Could not remove plugin '{name}': {exc}")
         sys.exit(1)
+    try:
+        # A later plugin installed under the same key must not inherit the removed plugin's sign-in.
+        plugin_oauth.forget_plugin_grants(grant_key)
+    except OSError as exc:
+        logger.warning("Could not drop the OAuth grants of removed plugin '%s': %s", grant_key, exc)
     _display_removed(name, plugins_dir)
 
 
@@ -2175,6 +2105,19 @@ def _configure_context_engine() -> bool:
 # ---------------------------------------------------------------------------
 
 
+def _find_plugin_entry(name: str) -> Optional[tuple]:
+    """The discovered plugin whose display name or registry key is *name*, else None.
+
+    Entry shape matches :func:`_discover_all_plugins`:
+    ``(name, version, description, source, dir_path, key)``. Shared by ``hermes plugins show`` and
+    ``hermes auth <action> <plugin>:<oauth-id>`` so both resolve a plugin the same way.
+    """
+    for entry in _discover_all_plugins():
+        if entry[0] == name or entry[5] == name:
+            return entry
+    return None
+
+
 def cmd_show(name: str) -> None:
     """Show details for a single plugin, including declared emits/listens.
 
@@ -2186,13 +2129,7 @@ def cmd_show(name: str) -> None:
     from rich.console import Console
 
     console = Console()
-    entries = _discover_all_plugins()
-    match = None
-    for entry in entries:
-        # entry = (name, version, description, source, dir_path, key)
-        if entry[0] == name or entry[5] == name:
-            match = entry
-            break
+    match = _find_plugin_entry(name)
 
     if match is None:
         console.print(f"[red]Plugin '{name}' not found.[/red]")
@@ -2840,40 +2777,75 @@ def _user_installed_plugin_dir(name: str) -> Optional[Path]:
     return target if target.is_dir() else None
 
 
-def dashboard_update_user_plugin(name: str) -> dict[str, Any]:
-    """``git pull`` inside ``~/.hermes/plugins/<name>``."""
+@dataclass
+class PluginUpdateOutcome:
+    """Typed result shared by CLI and GUI plugin update paths."""
+
+    ok: bool
+    status: str
+    name: str
+    output: str = ""
+    error: str | None = None
+    unchanged: bool = False
+    disabled: bool = False
+    needs_consent: bool = False
+    scan_reason: str | None = None
+
+
+def update_user_plugin_core(
+    name: str,
+    *,
+    interactive_consent: bool = False,
+    console: Any = None,
+) -> PluginUpdateOutcome:
+    """Shared plugin update: pin/git checks, pull, scan, disable, consent.
+
+    Non-interactive callers (GUI/dashboard) never auto-grant new capabilities.
+    Dangerous scan verdicts disable the plugin on both paths.
+    """
     target = _user_installed_plugin_dir(name)
     if target is None:
-        return {
-            "ok": False,
-            "error": f"Plugin '{name}' was not found under {_plugins_dir()}.",
-        }
+        return PluginUpdateOutcome(
+            ok=False,
+            status="not_found",
+            name=name,
+            error=f"Plugin '{name}' was not found under {_plugins_dir()}.",
+        )
 
     try:
         metadata = _read_install_metadata()
     except PluginOperationError as exc:
-        return {"ok": False, "error": str(exc)}
+        return PluginUpdateOutcome(
+            ok=False, status="failed", name=name, error=str(exc)
+        )
+
     install_record = metadata.get(target.name, {})
     if install_record.get("pinned") is True:
         recorded_source = install_record.get("source", "<source>")
-        return {
-            "ok": False,
-            "error": (
+        return PluginUpdateOutcome(
+            ok=False,
+            status="pinned",
+            name=name,
+            error=(
                 f"Plugin '{name}' is pinned to {install_record.get('revision')}; "
                 f"run `hermes plugins install {recorded_source} --force "
                 "--ref <40-character commit SHA>` to move it."
             ),
-        }
+        )
 
     if not (target / ".git").exists():
-        return {
-            "ok": False,
-            "error": f"Plugin '{name}' is not a git checkout; cannot pull updates.",
-        }
+        return PluginUpdateOutcome(
+            ok=False,
+            status="not_git",
+            name=name,
+            error=f"Plugin '{name}' is not a git checkout; cannot pull updates.",
+        )
 
     ok, msg = _git_pull_plugin_dir(target)
     if not ok:
-        return {"ok": False, "error": msg}
+        return PluginUpdateOutcome(
+            ok=False, status="failed", name=name, error=msg, output=str(msg)
+        )
 
     if install_record:
         git_exe = _resolve_git_executable()
@@ -2882,15 +2854,111 @@ def dashboard_update_user_plugin(name: str) -> dict[str, Any]:
             metadata[target.name] = install_record
             _write_install_metadata(metadata)
 
-    # Sibling of the CLI ``hermes plugins update`` path: drop bytecode
-    # compiled from the pre-pull plugin revision.
+    disabled = False
+    scan_reason: str | None = None
+    if _scan_on_install_enabled():
+        from tools.plugin_guard import (
+            format_scan_report,
+            scan_plugin,
+            should_allow_plugin_install,
+        )
+
+        scan_result = scan_plugin(target, source=name)
+        allowed, reason = should_allow_plugin_install(scan_result)
+        if allowed is not True:
+            scan_reason = str(reason)
+            if console is not None:
+                console.print()
+                console.print(
+                    f"[yellow]⚠ Security scan flagged the updated plugin:[/yellow] {reason}",
+                )
+                console.print(format_scan_report(scan_result))
+            if scan_result.verdict == "dangerous":
+                enabled = _get_enabled_set()
+                disabled_set = _get_disabled_set()
+                if name in enabled or name not in disabled_set:
+                    enabled.discard(name)
+                    disabled_set.add(name)
+                    _save_enabled_set(enabled)
+                    _save_disabled_set(disabled_set)
+                disabled = True
+                if console is not None:
+                    console.print(
+                        f"[red]Plugin '{name}' has been disabled.[/red] Review the "
+                        f"findings, then re-enable with `hermes plugins enable {name}` "
+                        f"if you trust them.",
+                    )
+
     _clear_plugin_bytecode(target)
 
-    from rich.console import Console
+    if console is None:
+        from rich.console import Console
 
-    _copy_example_files(target, Console())
-    unchanged = "Already up to date" in msg
-    return {"ok": True, "name": name, "output": msg, "unchanged": unchanged}
+        console_for_copy = Console()
+    else:
+        console_for_copy = console
+    _copy_example_files(target, console_for_copy)
+
+    needs_consent = False
+    updated_manifest = _read_manifest(target)
+    plugin_id = updated_manifest.get("name") or target.name
+    declared_caps = _declared_capabilities_from_manifest(updated_manifest, plugin_id)
+    if declared_caps:
+        from hermes_cli.plugin_capabilities import (
+            declared_set_changed,
+            pending_capabilities,
+        )
+
+        if pending_capabilities(plugin_id, declared_caps) or declared_set_changed(
+            plugin_id, declared_caps
+        ):
+            needs_consent = True
+            if interactive_consent and console is not None:
+                _run_capability_consent(
+                    console, plugin_id, declared_caps, context="update"
+                )
+                needs_consent = bool(
+                    pending_capabilities(plugin_id, declared_caps)
+                    or declared_set_changed(plugin_id, declared_caps)
+                )
+
+    unchanged = "Already up to date" in str(msg)
+    if disabled:
+        status = "disabled"
+    elif needs_consent:
+        status = "needs_consent"
+    elif unchanged:
+        status = "unchanged"
+    else:
+        status = "updated"
+
+    return PluginUpdateOutcome(
+        ok=True,
+        status=status,
+        name=name,
+        output=str(msg),
+        unchanged=unchanged,
+        disabled=disabled,
+        needs_consent=needs_consent,
+        scan_reason=scan_reason,
+    )
+
+
+def dashboard_update_user_plugin(name: str) -> dict[str, Any]:
+    """GUI/dashboard plugin update — same scan/disable/consent gates as CLI."""
+    outcome = update_user_plugin_core(name, interactive_consent=False, console=None)
+    if not outcome.ok:
+        return {"ok": False, "error": outcome.error or "update failed", "status": outcome.status}
+    return {
+        "ok": True,
+        "name": outcome.name,
+        "output": outcome.output,
+        "unchanged": outcome.unchanged,
+        "status": outcome.status,
+        "disabled": outcome.disabled,
+        "needs_consent": outcome.needs_consent,
+        "scan_reason": outcome.scan_reason,
+    }
 
 
 def _clear_plugin_bytecode(target: Path) -> int:

@@ -1824,6 +1824,15 @@ DEFAULT_CONFIG = {
         "redact_pii": False,  # When True, hash user IDs and strip phone numbers from LLM context
     },
 
+    # Browser autofill vault (agent/vault_store.py)
+    "vault": {
+        # Where a NEW vault's encryption key lives: "file" (vault.key beside the
+        # ciphertext, the default) or "keychain" (OS credential store, e.g. Windows
+        # Credential Manager; needs the optional `keyring` package). Existing vaults
+        # keep working wherever their key is; move one with `hermes vault key migrate`.
+        "key_storage": "file",
+    },
+
     # Text-to-speech configuration
     # Each provider supports an optional `max_text_length:` override for the
     # per-request input-character cap. Omit it to use the provider's documented

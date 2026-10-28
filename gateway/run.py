@@ -2774,6 +2774,7 @@ from gateway.session_state_store import SessionStateStore
 from gateway.authz_mixin import GatewayAuthorizationMixin
 from gateway.kanban_watchers import GatewayKanbanWatchersMixin
 from gateway.slash_commands import GatewaySlashCommandsMixin
+from gateway.plugin_command_choice import run_plugin_handler
 from gateway.turn_context import TurnContext
 from gateway.platforms.base import (
     BasePlatformAdapter,
@@ -18932,9 +18933,11 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 plugin_handler = get_plugin_command_handler(command.replace("_", "-"))
                 if plugin_handler:
                     user_args = event.get_command_args().strip()
-                    result = plugin_handler(user_args)
-                    if asyncio.iscoroutine(result):
-                        result = await result
+                    # ``PluginContext.ask_choice`` prompts through this chat's clarify card;
+                    # sync handlers run off the event loop so the wait cannot block the reply.
+                    result = await run_plugin_handler(
+                        self, source, _quick_key, plugin_handler, user_args
+                    )
                     return str(result) if result else None
             except Exception as e:
                 logger.warning("Plugin command dispatch failed: %s", e)

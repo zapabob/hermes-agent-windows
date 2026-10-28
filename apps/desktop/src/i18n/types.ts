@@ -388,7 +388,51 @@ export interface Translations {
       billing: string
       notifications: string
       plugins: string
+      subagent: string
       vault: string
+    }
+    subagent: {
+      title: string
+      blurb: string
+      loadFailed: string
+      saveFailed: string
+      savedNextChild: string
+      savedNewSession: string
+      apply: string
+      applying: string
+      dirty: string
+      hasApiKey: string
+      provider: string
+      model: string
+      baseUrl: string
+      apiMode: string
+      apiModeInherit: string
+      reasoningEffort: string
+      reasoningInherit: string
+      maxIterations: string
+      maxSummaryChars: string
+      childTimeout: string
+      maxConcurrent: string
+      maxSpawnDepth: string
+      inheritMcp: string
+      inheritMcpDesc: string
+      orchestrator: string
+      orchestratorDesc: string
+      autoApprove: string
+      autoApproveDesc: string
+      surfaceChildNotify: string
+      surfaceChildNotifyDesc: string
+      fallbackMode: string
+      fallbackInherit: string
+      fallbackDisabled: string
+      fallbackCustom: string
+      fallbackAdd: string
+      fallbackRemove: string
+      fallbackProvider: string
+      fallbackModel: string
+      schemaNote: string
+      runtimeNote: string
+      secretNote: string
     }
     plugins: {
       title: string

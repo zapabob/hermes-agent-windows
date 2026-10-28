@@ -6673,64 +6673,116 @@ def _make_tool_handler(server_name: str, tool_name: str, tool_timeout: float):
                             f"exited; failing the call fast instead of "
                             f"waiting {float(tool_timeout):.0f}s"
                         )
-                    _call_coro = server.session.call_tool(tool_name, arguments=args)
-                    _call_is_coroutine = asyncio.iscoroutine(_call_coro)
-                    _watch_children = getattr(server, "_watch_stdio_children", None)
-                    _watch_awaitable = (
-                        _watch_children()
-                        if callable(_watch_children) and _call_is_coroutine
-                        else None
+                    # Per-call MCP progress: detect SDK support *before* the
+                    # side-effecting call so a TypeError never triggers a silent
+                    # retry of the same tool invocation.
+                    from agent.tool_progress_sink import (
+                        emit_tool_progress,
+                        get_tool_progress_sink,
                     )
-                    _watch_ok = inspect.isawaitable(_watch_awaitable)
-                    if not _watch_ok:
-                        # Stubbed sessions (MagicMock in tests) return a
-                        # non-awaitable, or there is no child-watcher to race
-                        # against: plain await is exactly the pre-#81995
-                        # semantics.
-                        result = (
-                            await _call_coro
-                            if _call_is_coroutine
-                            else _call_coro
+                    from tools.mcp_progress import (
+                        build_mcp_progress_callback,
+                        close_mcp_progress,
+                        mcp_call_tool_supports_progress,
+                    )
+
+                    _progress_closed = {"closed": False}
+                    _call_tool_fn = server.session.call_tool
+                    _progress_cb = None
+                    if mcp_call_tool_supports_progress(_call_tool_fn):
+                        _sink = get_tool_progress_sink()
+                        _registered_name = (
+                            f"mcp__{server_name}__{tool_name}"
+                            if server_name and tool_name
+                            else tool_name
                         )
-                    else:
-                        # Fast-fail machinery (#81995): the RPC races a
-                        # stdio-children watcher so a dead subprocess fails
-                        # the call immediately instead of riding out the full
-                        # tool timeout.
-                        rpc_task = asyncio.ensure_future(_call_coro)
-                        # Reuse the awaitable inspected above; creating a second
-                        # coroutine leaks the first one.
-                        watch_task = asyncio.ensure_future(_watch_awaitable)
-                        try:
-                            done, _pending = await asyncio.wait(
-                                {rpc_task, watch_task},
-                                return_when=asyncio.FIRST_COMPLETED,
+                        _call_id = str(
+                            kwargs.get("tool_call_id")
+                            or (getattr(_sink, "tool_call_id", None) if _sink else "")
+                            or ""
+                        )
+                        _bound_name = str(
+                            (getattr(_sink, "tool_name", None) if _sink else None)
+                            or _registered_name
+                        )
+                        _generation = int(
+                            getattr(_sink, "generation", 0) if _sink else 0
+                        )
+                        _progress_cb = build_mcp_progress_callback(
+                            tool_call_id=_call_id,
+                            tool_name=_bound_name,
+                            generation=_generation,
+                            emit=emit_tool_progress,
+                            closed_flag=_progress_closed,
+                        )
+                    try:
+                        if _progress_cb is not None:
+                            _call_coro = _call_tool_fn(
+                                tool_name,
+                                arguments=args,
+                                progress_callback=_progress_cb,
                             )
-                            if watch_task in done and not rpc_task.done():
-                                rpc_task.cancel()
-                                # Same stale-session problem as the pre-call
-                                # gate above: the subprocess died mid-call but
-                                # nothing clears server.session, so without a
-                                # reconnect signal the server would stay dead
-                                # until the idle keepalive probe notices.
-                                policy.require()
-                                _signal_reconnect(server)
-                                raise TimeoutError(
-                                    f"MCP stdio subprocess for '{server_name}' "
-                                    f"exited mid-call; failing the call fast "
-                                    f"instead of waiting "
-                                    f"{float(tool_timeout):.0f}s; reconnect "
-                                    f"requested — give it a few seconds to "
-                                    f"respawn before retrying"
+                        else:
+                            _call_coro = _call_tool_fn(tool_name, arguments=args)
+                        _call_is_coroutine = asyncio.iscoroutine(_call_coro)
+                        _watch_children = getattr(server, "_watch_stdio_children", None)
+                        _watch_awaitable = (
+                            _watch_children()
+                            if callable(_watch_children) and _call_is_coroutine
+                            else None
+                        )
+                        _watch_ok = inspect.isawaitable(_watch_awaitable)
+                        if not _watch_ok:
+                            # Stubbed sessions (MagicMock in tests) return a
+                            # non-awaitable, or there is no child-watcher to race
+                            # against: plain await is exactly the pre-#81995
+                            # semantics.
+                            result = (
+                                await _call_coro
+                                if _call_is_coroutine
+                                else _call_coro
+                            )
+                        else:
+                            # Fast-fail machinery (#81995): the RPC races a
+                            # stdio-children watcher so a dead subprocess fails
+                            # the call immediately instead of riding out the full
+                            # tool timeout.
+                            rpc_task = asyncio.ensure_future(_call_coro)
+                            # Reuse the awaitable inspected above; creating a second
+                            # coroutine leaks the first one.
+                            watch_task = asyncio.ensure_future(_watch_awaitable)
+                            try:
+                                done, _pending = await asyncio.wait(
+                                    {rpc_task, watch_task},
+                                    return_when=asyncio.FIRST_COMPLETED,
                                 )
-                            result = await rpc_task
-                        finally:
-                            watch_task.cancel()
-                            if not rpc_task.done():
-                                rpc_task.cancel()
-                            await asyncio.gather(
-                                rpc_task, watch_task, return_exceptions=True
-                            )
+                                if watch_task in done and not rpc_task.done():
+                                    rpc_task.cancel()
+                                    # Same stale-session problem as the pre-call
+                                    # gate above: the subprocess died mid-call but
+                                    # nothing clears server.session, so without a
+                                    # reconnect signal the server would stay dead
+                                    # until the idle keepalive probe notices.
+                                    policy.require()
+                                    _signal_reconnect(server)
+                                    raise TimeoutError(
+                                        f"MCP stdio subprocess for '{server_name}' "
+                                        f"exited mid-call; failing the call fast "
+                                        f"instead of waiting "
+                                        f"{float(tool_timeout):.0f}s; reconnect "
+                                        f"requested — give it a few seconds to "
+                                        f"respawn before retrying"
+                                    )
+                                result = await rpc_task
+                            finally:
+                                watch_task.cancel()
+                                if not rpc_task.done():
+                                    rpc_task.cancel()
+                                await asyncio.gather(
+                                    rpc_task, watch_task, return_exceptions=True
+                                )
+                    finally:
+                        close_mcp_progress(_progress_closed)
                 finally:
                     server._pending_call_context = None
             # The RPC round-trip completed — the session is demonstrably

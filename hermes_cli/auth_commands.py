@@ -30,6 +30,7 @@ from agent.credential_pool import (
     load_pool,
 )
 import hermes_cli.auth as auth_mod
+from hermes_cli import plugin_oauth
 from hermes_cli.auth import PROVIDER_REGISTRY
 from hermes_constants import OPENROUTER_BASE_URL
 from hermes_cli.secret_prompt import masked_secret_prompt
@@ -246,7 +247,18 @@ def _format_exhausted_status(entry) -> str:
     return f" {label}{reason_text}{code} ({wait} left)"
 
 
+def _plugin_oauth_action(action: str, args) -> bool:
+    """True when ``<plugin>:<oauth-id>`` named a plugin's ``oauth:`` client and *action* ran for it.
+
+    Tried before any model-provider handling: a plugin's client is not a provider, and ``custom:<name>``
+    stays the custom-provider pool (``handle_auth_action`` returns None for it).
+    """
+    return plugin_oauth.handle_auth_action(action, args, str(getattr(args, "provider", "") or "").strip()) is not None
+
+
 def auth_add_command(args) -> None:
+    if _plugin_oauth_action("add", args):
+        return
     provider = _normalize_provider(getattr(args, "provider", ""))
     configured_provider = _configured_provider_entry(provider)
     if not _is_known_provider(provider, configured_provider):
@@ -697,6 +709,8 @@ def auth_refresh_command(args) -> None:
     exhaustion block via the existing pool authority. Multi-entry pools require
     an explicit target (fail closed).
     """
+    if _plugin_oauth_action("refresh", args):
+        return
     provider = _normalize_provider(getattr(args, "provider", ""))
     target = getattr(args, "target", None)
     pool = load_pool(provider)
@@ -742,6 +756,8 @@ def auth_refresh_command(args) -> None:
 
 
 def auth_status_command(args) -> None:
+    if _plugin_oauth_action("status", args):
+        return
     provider = _normalize_provider(getattr(args, "provider", "") or "")
     if not provider:
         raise SystemExit("Provider is required. Example: `hermes auth status spotify`.")
@@ -762,6 +778,8 @@ def auth_status_command(args) -> None:
 
 
 def auth_logout_command(args) -> None:
+    if _plugin_oauth_action("logout", args):
+        return
     auth_mod.logout_command(SimpleNamespace(provider=getattr(args, "provider", None)))
 
 
