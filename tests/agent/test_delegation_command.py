@@ -89,3 +89,61 @@ def test_cancel_ask_choice_keeps_current(monkeypatch):
     msg = handle_delegation_slash("", ask_choice=lambda *_: None)
     set_mock.assert_not_called()
     assert "Current delegation backend: default" in msg
+
+
+def test_catalog_only_registered_when_advanced_disabled(monkeypatch):
+    """Contract 3: without advanced_delegation, choices are registered-only (default)."""
+    from agent.delegation_command import _choice_rows
+
+    seen: list[list] = []
+
+    monkeypatch.setattr(
+        "agent.delegation_command.list_backends",
+        lambda: [
+            _Info("default", "Default", "parent"),
+            _Info("model_map", "Model map", "m", available=False),
+        ],
+    )
+    monkeypatch.setattr("agent.delegation_command.saved_backend", lambda: "default")
+    monkeypatch.setattr("agent.delegation_command.set_global_backend", MagicMock())
+
+    handle_delegation_slash(
+        "",
+        ask_choice=lambda _q, choices: seen.append(list(choices)) or None,
+    )
+    assert len(seen) == 1
+    # Direct ask_choice injection receives _choice_rows dicts; unavailable filtered out.
+    assert [c["value"] for c in seen[0]] == ["default"]
+
+    monkeypatch.setattr(
+        "agent.delegation_command.list_backends",
+        lambda: [_Info("default", "Default", "parent")],
+    )
+    rows = _choice_rows()
+    assert [r["value"] for r in rows] == ["default"]
+    assert "model_map" not in {r["value"] for r in rows}
+    assert "profile_routes" not in {r["value"] for r in rows}
+
+
+def test_default_plugin_registers_slash_without_advanced(monkeypatch):
+    """Contract 3: /delegation remains owned by plugins/delegation/default."""
+    from plugins.delegation.default import register as register_default
+
+    registered: dict[str, object] = {}
+
+    class _Ctx:
+        def register_delegation_provider(self, provider):
+            registered["provider"] = provider.name
+
+        def register_command(self, name, handler, description="", args_hint=""):
+            registered["command"] = name
+            registered["handler"] = handler
+            registered["description"] = description
+
+        def ask_choice(self, question, choices):
+            return None
+
+    register_default(_Ctx())
+    assert registered["provider"] == "default"
+    assert registered["command"] == "delegation"
+    assert callable(registered["handler"])

@@ -266,6 +266,22 @@ def merge_delegation_config(
             else:
                 current["fallback_providers"] = value
             continue
+        if key == "backends" and isinstance(value, Mapping):
+            # Draft wins for named backend blocks it sends (always includes
+            # model_map / profile_routes, even empty). Sibling backend keys
+            # not present in the draft are preserved — never wipe unrelated
+            # plugin backends under delegation.backends.
+            existing_backends = current.get("backends")
+            if not isinstance(existing_backends, dict):
+                existing_backends = {}
+            else:
+                existing_backends = copy.deepcopy(existing_backends)
+            for backend_name, backend_block in value.items():
+                existing_backends[backend_name] = (
+                    dict(backend_block) if isinstance(backend_block, Mapping) else backend_block
+                )
+            current["backends"] = existing_backends
+            continue
         current[key] = value
 
     if preserved_api_key not in (None, ""):

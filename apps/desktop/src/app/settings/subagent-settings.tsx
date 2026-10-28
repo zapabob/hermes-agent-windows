@@ -20,23 +20,12 @@ import { ListRow, SectionHeading, SettingsContent, ToggleRow } from './primitive
 
 const REASONING_EFFORTS = ['', 'xhigh', 'high', 'medium', 'low', 'minimal'] as const
 const API_MODES = ['', 'chat_completions', 'codex_responses', 'anthropic_messages'] as const
-const FALLBACK_BACKENDS: DelegationBackendInfo[] = [
+/** Degraded older servers with no catalog: show only ``default`` — never invent advanced backends. */
+const DEGRADED_DEFAULT_CATALOG: DelegationBackendInfo[] = [
   {
     name: 'default',
     label: 'Default',
     description: 'Every subagent uses delegation.model / delegation.provider, else the parent.',
-    available: true
-  },
-  {
-    name: 'model_map',
-    label: 'Model map',
-    description: 'Pick a titled model option per task.',
-    available: true
-  },
-  {
-    name: 'profile_routes',
-    label: 'Profile routes',
-    description: 'Run a child as an allowlisted Hermes profile.',
     available: true
   }
 ]
@@ -309,15 +298,15 @@ export function draftToPayload(draft: SubagentDraft): Record<string, unknown> {
   }
 }
 
+/**
+ * Catalog authority is the server list (registered backends only).
+ * Never invent ``model_map`` / ``profile_routes`` when they are not registered.
+ */
 export function mergeBackendCatalog(
   catalog: DelegationBackendInfo[] | undefined,
   currentBackend: string
 ): DelegationBackendInfo[] {
   const byName = new Map<string, DelegationBackendInfo>()
-
-  for (const row of FALLBACK_BACKENDS) {
-    byName.set(row.name, row)
-  }
 
   for (const row of catalog ?? []) {
     if (!row?.name) {
@@ -331,6 +320,12 @@ export function mergeBackendCatalog(
       available: Boolean(row.available),
       reason: row.reason || ''
     })
+  }
+
+  if (byName.size === 0) {
+    for (const row of DEGRADED_DEFAULT_CATALOG) {
+      byName.set(row.name, row)
+    }
   }
 
   if (currentBackend && !byName.has(currentBackend)) {
@@ -383,7 +378,7 @@ export function SubagentSettings() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [hasApiKey, setHasApiKey] = useState(false)
-  const [backendCatalog, setBackendCatalog] = useState<DelegationBackendInfo[]>(FALLBACK_BACKENDS)
+  const [backendCatalog, setBackendCatalog] = useState<DelegationBackendInfo[]>(DEGRADED_DEFAULT_CATALOG)
   const [baseline, setBaseline] = useState<SubagentDraft>(DEFAULT_DRAFT)
   const [draft, setDraft] = useState<SubagentDraft>(DEFAULT_DRAFT)
 
@@ -431,7 +426,7 @@ export function SubagentSettings() {
     setDraft(DEFAULT_DRAFT)
     setBaseline(DEFAULT_DRAFT)
     setHasApiKey(false)
-    setBackendCatalog(FALLBACK_BACKENDS)
+    setBackendCatalog(DEGRADED_DEFAULT_CATALOG)
     void load()
   })
 
@@ -466,6 +461,8 @@ export function SubagentSettings() {
     setSaving(true)
 
     try {
+      // Contract 2: Settings Apply is always the atomic PUT path (deferred).
+      // Never pass --now / apply_now — that opt-in lives only on /delegation slash.
       const res = await saveDelegationConfig(draftToPayload(snapshot), requestProfile)
 
       if (profileEpoch.current !== epoch) {
@@ -479,6 +476,8 @@ export function SubagentSettings() {
       triggerHaptic('success')
       notify({
         kind: 'info',
+        // Backend / schema keys report new_session; other fields next_child.
+        // Both are deferred relative to --now tool rebuild.
         message: res.applies_on === 'new_session' ? copy.savedNewSession : copy.savedNextChild
       })
     } catch (err) {

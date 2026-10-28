@@ -108,3 +108,41 @@ def test_backend_change_is_schema_affecting() -> None:
     assert schema_affecting_changes({"backend": "default"}, {"backend": "model_map"}) == [
         "backend"
     ]
+
+
+def test_backends_merge_preserves_sibling_keys(monkeypatch) -> None:
+    """Contract 1: empty model_map/profile_routes still merge; unrelated backends.* kept."""
+    monkeypatch.setattr(
+        "agent.delegation_registry.backend_status",
+        lambda name: (object(), ""),
+    )
+    existing = {
+        "delegation": {
+            "backend": "default",
+            "model": "keep-me",
+            "api_key": "secret-disk",
+            "backends": {
+                "custom_plugin": {"flag": True},
+                "model_map": {"default": "old", "options": [{"name": "old"}]},
+            },
+        },
+        "timezone": "UTC",
+    }
+    draft = {
+        "backend": "default",
+        "backends": {
+            "model_map": {"default": "", "options": []},
+            "profile_routes": {"default": "", "profiles": []},
+        },
+        "model": "keep-me",
+    }
+    merged = merge_delegation_config(existing, draft)
+    assert merged["timezone"] == "UTC"
+    assert merged["delegation"]["api_key"] == "secret-disk"
+    assert merged["delegation"]["model"] == "keep-me"
+    assert merged["delegation"]["backends"]["custom_plugin"] == {"flag": True}
+    assert merged["delegation"]["backends"]["model_map"] == {"default": "", "options": []}
+    assert merged["delegation"]["backends"]["profile_routes"] == {
+        "default": "",
+        "profiles": [],
+    }

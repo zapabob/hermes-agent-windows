@@ -160,11 +160,14 @@ describe('SubagentSettings', () => {
       max_concurrent_children: 4,
       fallback_providers: []
     })
-    expect(payload.backends).toMatchObject({
+    // Contract 1: always send both blocks even when empty.
+    expect(payload.backends).toEqual({
       model_map: { default: '', options: [] },
       profile_routes: { default: '', profiles: [] }
     })
     expect(payload).not.toHaveProperty('api_key')
+    // Contract 2: Settings Apply uses atomic PUT only — never --now / apply_now.
+    expect(JSON.stringify(payload)).not.toMatch(/apply_now|--now/)
   })
 
   it('shows model_map fields when that backend is selected and saves them', async () => {
@@ -297,8 +300,29 @@ describe('draft helpers', () => {
       [{ name: 'model_map', label: 'Model map', description: '', available: false, reason: 'disabled' }],
       'custom_backend'
     )
-    expect(catalog.some(row => row.name === 'default')).toBe(true)
+    // Registered-only: do not invent default / profile_routes when the server omitted them.
+    expect(catalog.map(row => row.name).sort()).toEqual(['custom_backend', 'model_map'])
     expect(catalog.find(row => row.name === 'model_map')?.available).toBe(false)
     expect(catalog.find(row => row.name === 'custom_backend')?.available).toBe(false)
+  })
+
+  it('contract: Apply payload always sends empty model_map + profile_routes blocks', async () => {
+    const { blockToDraft, draftToPayload } = await import('./subagent-settings')
+    const payload = draftToPayload(blockToDraft({ model: 'x' }))
+    expect(payload.backends).toEqual({
+      model_map: { default: '', options: [] },
+      profile_routes: { default: '', profiles: [] }
+    })
+  })
+
+  it('contract: catalog shows only registered backends (no invented advanced)', async () => {
+    const { mergeBackendCatalog } = await import('./subagent-settings')
+    const onlyDefault = mergeBackendCatalog(
+      [{ name: 'default', label: 'Default', description: '', available: true, reason: '' }],
+      'default'
+    )
+    expect(onlyDefault.map(row => row.name)).toEqual(['default'])
+    expect(onlyDefault.some(row => row.name === 'model_map')).toBe(false)
+    expect(onlyDefault.some(row => row.name === 'profile_routes')).toBe(false)
   })
 })
