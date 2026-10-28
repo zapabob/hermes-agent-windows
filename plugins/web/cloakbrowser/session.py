@@ -37,7 +37,7 @@ def _ensure_cloakbrowser() -> None:
     except ImportError as exc:
         raise ImportError(
             "cloakbrowser is not installed — run `hermes tools` and select "
-            "CloakBrowser, or: uv pip install 'cloakbrowser>=0.4.3,<0.5'"
+            "CloakBrowser, or: uv pip install 'cloakbrowser>=0.6.0,<0.7'"
         ) from exc
 
 

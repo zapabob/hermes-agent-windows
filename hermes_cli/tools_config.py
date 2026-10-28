@@ -2280,7 +2280,7 @@ def _run_post_setup(post_setup_key: str):
             _print_info("    Installing cloakbrowser (stealth Chromium)...")
             try:
                 result = _pip_install(
-                    ["-U", "cloakbrowser>=0.4.3,<0.5", "--quiet"],
+                    ["-U", "cloakbrowser>=0.6.0,<0.7", "--quiet"],
                     timeout=600,
                 )
                 if result.returncode == 0:
@@ -2289,13 +2289,13 @@ def _run_post_setup(post_setup_key: str):
                     _print_warning("    cloakbrowser install failed:")
                     _print_info(f"      {(result.stderr or '').strip()[:300]}")
                     _print_info(
-                        "    Run manually: uv pip install 'cloakbrowser>=0.4.3,<0.5'"
+                        "    Run manually: uv pip install 'cloakbrowser>=0.6.0,<0.7'"
                     )
                     return
             except subprocess.TimeoutExpired:
                 _print_warning("    cloakbrowser install timed out (>10min)")
                 _print_info(
-                    "    Run manually: uv pip install 'cloakbrowser>=0.4.3,<0.5'"
+                    "    Run manually: uv pip install 'cloakbrowser>=0.6.0,<0.7'"
                 )
                 return
         _print_info(
