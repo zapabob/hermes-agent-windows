@@ -54,8 +54,8 @@ import { NotificationsSettings } from './notifications-settings'
 import { PluginsSettings } from './plugins-settings'
 import { PROVIDER_VIEWS, ProvidersSettings, type ProviderView } from './providers-settings'
 import { SessionsSettings } from './sessions-settings'
-import type { SettingsPageProps, SettingsView as SettingsViewId } from './types'
 import { SubagentSettings } from './subagent-settings'
+import type { SettingsPageProps, SettingsView as SettingsViewId } from './types'
 import { VaultSettings } from './vault-settings'
 
 const SETTINGS_VIEWS: readonly SettingsViewId[] = [

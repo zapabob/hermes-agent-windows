@@ -139,7 +139,10 @@ describe('a damaged grants record fails closed', () => {
       'a row with a bad id',
       JSON.stringify({ grants: { plexus: [{ id: '../../x', name: 'v', path: '/', grantedAt: 'now' }] } })
     ],
-    ['a row with a relative path', JSON.stringify({ grants: { plexus: [{ id: 'a'.repeat(16), name: 'v', path: 'vault', grantedAt: 'now' }] } })]
+    [
+      'a row with a relative path',
+      JSON.stringify({ grants: { plexus: [{ id: 'a'.repeat(16), name: 'v', path: 'vault', grantedAt: 'now' }] } })
+    ]
   ])('treats %s as no grants and refuses use of its ids', async (_label, content) => {
     plant(content)
     const files = make()
@@ -247,10 +250,14 @@ describe('a grant is minted only by the native picker', () => {
     picked = { canceled: false, filePaths: [vault] }
     const result = (await call('hermes:pluginFiles:request', 'plexus')) as { folder: { id: string } }
 
-    expect(await call('hermes:pluginFiles:op', 'plexus', { op: 'list', folder: result.folder.id, path: '' })).toMatchObject({
+    expect(
+      await call('hermes:pluginFiles:op', 'plexus', { op: 'list', folder: result.folder.id, path: '' })
+    ).toMatchObject({
       ok: true
     })
-    expect(await call('hermes:pluginFiles:op', 'other', { op: 'list', folder: result.folder.id, path: '' })).toMatchObject({
+    expect(
+      await call('hermes:pluginFiles:op', 'other', { op: 'list', folder: result.folder.id, path: '' })
+    ).toMatchObject({
       ok: false,
       error: 'not-granted'
     })
@@ -364,7 +371,9 @@ describe.runIf(onWindows)('on a Windows host', () => {
     const files = make()
     const id = await grant(files)
 
-    expect(await files.run('plexus', { op: 'writeText', folder: id, path: 'notes/a.md:hidden', text: 'x' })).toMatchObject({
+    expect(
+      await files.run('plexus', { op: 'writeText', folder: id, path: 'notes/a.md:hidden', text: 'x' })
+    ).toMatchObject({
       ok: false,
       error: 'invalid-path'
     })
@@ -391,7 +400,9 @@ describe.runIf(onWindows)('on a Windows host', () => {
       ok: true,
       entries: [{ name: '日記 1.txt', path: 'メモ 帳/日記 1.txt', isDirectory: false }]
     })
-    expect(await files.run('plexus', { op: 'rename', folder: id, path: 'メモ 帳/日記 1.txt', name: '日記 2.txt' })).toEqual({
+    expect(
+      await files.run('plexus', { op: 'rename', folder: id, path: 'メモ 帳/日記 1.txt', name: '日記 2.txt' })
+    ).toEqual({
       ok: true,
       path: 'メモ 帳/日記 2.txt'
     })
@@ -408,7 +419,10 @@ describe('file identity is exact (NTFS ids exceed 2^53)', () => {
     const b = path.join(scratch, 'id-b')
     fs.mkdirSync(a)
     fs.mkdirSync(b)
-    const original = fs.promises.stat.bind(fs.promises) as (target: fs.PathLike, options?: { bigint: true }) => Promise<fs.BigIntStats>
+    const original = fs.promises.stat.bind(fs.promises) as (
+      target: fs.PathLike,
+      options?: { bigint: true }
+    ) => Promise<fs.BigIntStats>
 
     const forced = new Map([
       [a, 2n ** 60n + 1n],
@@ -419,7 +433,9 @@ describe('file identity is exact (NTFS ids exceed 2^53)', () => {
       const real = await original(target, options)
       const ino = forced.get(String(target))
 
-      return ino === undefined ? real : Object.assign(Object.create(Object.getPrototypeOf(real)), real, { dev: 7n, ino })
+      return ino === undefined
+        ? real
+        : Object.assign(Object.create(Object.getPrototypeOf(real)), real, { dev: 7n, ino })
     }) as never)
 
     expect(Number(2n ** 60n + 1n)).toBe(Number(2n ** 60n + 2n))

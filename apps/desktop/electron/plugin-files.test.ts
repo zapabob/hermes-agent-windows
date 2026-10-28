@@ -148,9 +148,10 @@ describe('path containment', () => {
       ok: false,
       error: 'invalid-path'
     })
-    expect(
-      await files.run('plexus', { op: 'writeText', folder: id, path: target, text: 'pwned' })
-    ).toMatchObject({ ok: false, error: 'invalid-path' })
+    expect(await files.run('plexus', { op: 'writeText', folder: id, path: target, text: 'pwned' })).toMatchObject({
+      ok: false,
+      error: 'invalid-path'
+    })
     expect(fs.readFileSync(path.join(hermesHome, 'config.yaml'), 'utf8')).toBe('model: x\n')
   })
 
@@ -177,7 +178,9 @@ describe('path containment', () => {
 
     linkDir(hermesHome, path.join(vault, 'home'))
 
-    for (const rel of canLinkFiles ? ['cfg.md', 'home/config.yaml', 'home/new.md'] : ['home/config.yaml', 'home/new.md']) {
+    for (const rel of canLinkFiles
+      ? ['cfg.md', 'home/config.yaml', 'home/new.md']
+      : ['home/config.yaml', 'home/new.md']) {
       expect(await files.run('plexus', { op: 'writeText', folder: id, path: rel, text: 'pwned' })).toMatchObject({
         ok: false,
         error: 'outside-folder'
@@ -193,9 +196,9 @@ describe('path containment', () => {
     const outside = path.join(scratch, 'created-outside.md')
     linkFile(outside, path.join(vault, 'dangling.md'))
 
-    expect(
-      await files.run('plexus', { op: 'writeText', folder: id, path: 'dangling.md', text: 'x' })
-    ).toMatchObject({ ok: false })
+    expect(await files.run('plexus', { op: 'writeText', folder: id, path: 'dangling.md', text: 'x' })).toMatchObject({
+      ok: false
+    })
     expect(fs.existsSync(outside)).toBe(false)
   })
 
@@ -226,7 +229,10 @@ describe('path containment', () => {
     const listed = await files.run('plexus', { op: 'list', folder: id, path: '' })
 
     expect(listed).toMatchObject({ ok: true })
-    expect((listed as unknown as { entries: { name: string }[] }).entries.map(e => e.name).sort()).toEqual(['alias', 'notes'])
+    expect((listed as unknown as { entries: { name: string }[] }).entries.map(e => e.name).sort()).toEqual([
+      'alias',
+      'notes'
+    ])
   })
 
   it('rename keeps the item in its folder and refuses a name with a separator or traversal', async () => {
@@ -270,9 +276,7 @@ describe('plugin data folder', () => {
       ok: true,
       text: '{"a":1}'
     })
-    expect(fs.readFileSync(path.join(userData, 'plugin-files', 'data', 'plexus', 'state.json'), 'utf8')).toBe(
-      '{"a":1}'
-    )
+    expect(fs.readFileSync(path.join(userData, 'plugin-files', 'data', 'plexus', 'state.json'), 'utf8')).toBe('{"a":1}')
   })
 
   it("cannot reach another plugin's data folder or the grants record", async () => {
@@ -286,7 +290,10 @@ describe('plugin data folder', () => {
       })
     }
 
-    linkDir(path.join(userData, 'plugin-files', 'data', 'other'), path.join(userData, 'plugin-files', 'data', 'plexus', 'peek'))
+    linkDir(
+      path.join(userData, 'plugin-files', 'data', 'other'),
+      path.join(userData, 'plugin-files', 'data', 'plexus', 'peek')
+    )
 
     expect(await files.run('plexus', { op: 'readText', folder: 'data', path: 'peek/secret.json' })).toMatchObject({
       ok: false,

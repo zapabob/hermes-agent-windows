@@ -40,7 +40,11 @@ const IMAGE_MIME: Record<string, string> = {
   '.webp': 'image/webp'
 }
 
-export const fail = (error: PluginFilesErrorCode, message: string): PluginFilesFailure => ({ ok: false, error, message })
+export const fail = (error: PluginFilesErrorCode, message: string): PluginFilesFailure => ({
+  ok: false,
+  error,
+  message
+})
 
 export class Refusal extends Error {
   constructor(readonly failure: PluginFilesFailure) {
@@ -375,7 +379,13 @@ export function createPluginFileOps({
       const { stat } = await resolve(pluginId, req.folder, req.path)
 
       return stat
-        ? { ok: true, exists: true, isDirectory: stat.isDirectory(), size: Number(stat.size), mtimeMs: Number(stat.mtimeMs) }
+        ? {
+            ok: true,
+            exists: true,
+            isDirectory: stat.isDirectory(),
+            size: Number(stat.size),
+            mtimeMs: Number(stat.mtimeMs)
+          }
         : { ok: true, exists: false }
     },
 

@@ -33,7 +33,8 @@ const PICKER_COPY: Record<string, PickerCopy> = {
   ja: {
     button: 'アクセスを許可',
     title: plugin => `「${plugin}」に共有するフォルダを選択`,
-    refusedProtected: plugin => `そのフォルダには Hermes のデータが含まれるため、「${plugin}」にはアクセスを許可できません。`
+    refusedProtected: plugin =>
+      `そのフォルダには Hermes のデータが含まれるため、「${plugin}」にはアクセスを許可できません。`
   }
 }
 
@@ -56,8 +57,7 @@ export interface PluginFileEntry {
 }
 
 export type PluginFilesResult<T extends object = object> =
-  | ({ ok: true } & T)
-  | { ok: false; error: string; message: string }
+  ({ ok: true } & T) | { ok: false; error: string; message: string }
 
 export interface PluginFiles {
   /** Handle of this plugin's private data folder (always available). */
@@ -76,7 +76,10 @@ export interface PluginFiles {
     path: string
   ) => Promise<PluginFilesResult<{ exists: boolean; isDirectory?: boolean; mtimeMs?: number; size?: number }>>
   /** UTF-8 text up to 4 MiB; a binary or larger file is refused, never truncated. */
-  readText: (folder: string, path: string) => Promise<PluginFilesResult<{ mtimeMs: number; size: number; text: string }>>
+  readText: (
+    folder: string,
+    path: string
+  ) => Promise<PluginFilesResult<{ mtimeMs: number; size: number; text: string }>>
   /** A file (up to 16 MiB) as a `data:` URL, for image previews. */
   readDataUrl: (folder: string, path: string) => Promise<PluginFilesResult<{ url: string }>>
   /** Write up to 4 MiB of UTF-8 text. The parent folder must exist;
@@ -93,7 +96,11 @@ export interface PluginFiles {
   trash: (folder: string, path: string) => Promise<PluginFilesResult>
 }
 
-const unavailable = { ok: false as const, error: 'unavailable', message: 'This Hermes Desktop build has no plugin file access.' }
+const unavailable = {
+  ok: false as const,
+  error: 'unavailable',
+  message: 'This Hermes Desktop build has no plugin file access.'
+}
 
 const bridge = () => (typeof window === 'undefined' ? undefined : window.hermesDesktop?.pluginFiles)
 
