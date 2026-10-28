@@ -430,6 +430,9 @@ override-dependencies = [
   # GHSA-v4x8-3wr5-3wq8 is fixed in filelock 4.2.1. Keep every transitive
   # consumer above the vulnerable 4.0.12 release.
   "filelock>=4.2.1,<5",
+  # fal-client pulls msgpack; CVE-2026-114613 is fixed in 1.2.3. Keep the
+  # floor so pip-audit / exclude-newer cannot regress the lock to 1.2.1.
+  "msgpack>=1.2.3,<2",
 ]
 exclude-newer = "14 days"
 # aiohttp, cryptography: same shape — the advisory fixes are newer than the
