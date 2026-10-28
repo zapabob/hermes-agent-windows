@@ -26,7 +26,14 @@ DEFAULT_PORT = 8888
 
 def run_cmd(cmd: list, cwd: Path = None, capture: bool = True) -> subprocess.CompletedProcess:
     """Run a command and return the result."""
-    return subprocess.run(cmd, cwd=cwd or RUSTXNG_DIR, capture_output=capture, text=True)
+    return subprocess.run(
+        cmd,
+        cwd=cwd or RUSTXNG_DIR,
+        capture_output=capture,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
 
 
 def check_running(port: int = DEFAULT_PORT) -> bool:
