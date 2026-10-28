@@ -199,6 +199,7 @@ import {
   pumpStreamToFile,
   resolveGatewayFileBackend
 } from './gateway-file-download'
+import { resolveGatewayVersion } from './gateway-version'
 import { probeGatewayWebSocket } from './gateway-ws-probe'
 import { registerGitIpc } from './git-ipc'
 import { readAndConsumeHandoffResult } from './handoff-result'
@@ -1318,13 +1319,13 @@ if (IS_WINDOWS) {
   app.setAppUserModelId('com.nousresearch.hermes')
 }
 
-// Seed the native About panel with the live Hermes version. This is refreshed
-// on every open via the explicit "About" menu handler (refreshAboutPanel), so
-// an in-place `hermes update` mid-session is reflected without an app restart;
-// the seed here just covers the first open and any non-menu invocation path.
+// Seed the native About panel with the checkout Hermes version. This is
+// refreshed on every open via the explicit "About" menu handler
+// (showAboutPanelFresh), which prefers the live connected gateway's
+// /api/health version once the backend is up.
 app.setAboutPanelOptions({
   applicationName: APP_NAME,
-  applicationVersion: resolveHermesVersion(),
+  applicationVersion: resolveCheckoutHermesVersion(),
   copyright: 'Copyright © 2026 Nous Research'
 })
 
@@ -16741,12 +16742,8 @@ ipcMain.handle('hermes:updates:branch:set', async (_event, name) => {
   return { branch }
 })
 
-// Resolve the canonical Hermes version (the one `release.py` bumps in
-// hermes_cli/__init__.py + pyproject.toml) so the desktop About panel shows the
-// real Hermes version instead of the Electron app's own package.json version,
-// which historically drifted (stuck at 0.0.2). Falls back to app.getVersion()
-// when the source tree can't be read (e.g. a packaged build without the repo).
-function resolveHermesVersion() {
+/** Checkout `__init__.py` version when the live gateway is offline. */
+function resolveCheckoutHermesVersion(): string {
   try {
     const root = resolveUpdateRoot()
     const initPath = path.join(root, 'hermes_cli', '__init__.py')
@@ -16764,6 +16761,19 @@ function resolveHermesVersion() {
   }
 
   return app.getVersion()
+}
+
+/**
+ * Prefer the connected process's `/api/health` version (displayVersion when
+ * present). Offline gateways fall back to the checkout `__init__.py` value so
+ * About still shows a real Hermes version instead of package.json drift.
+ */
+async function resolveHermesVersion(scope: { connectionId?: string; profile?: string } = {}): Promise<string> {
+  const live = await resolveGatewayVersion(path =>
+    handleHermesApiRequest({ ...scope, path, timeoutMs: 5000 })
+  )
+
+  return live || resolveCheckoutHermesVersion()
 }
 
 // Renderer-bundle skew: `hermes update` moves the SOURCE TREE, but the UI
@@ -16784,27 +16794,29 @@ async function detectRendererSkew() {
 // an app restart. macOS only — `showAboutPanel()` is a no-op elsewhere, and the
 // other platforms don't use this menu item.
 function showAboutPanelFresh() {
-  void detectRendererSkew().then(skew => {
+  void Promise.all([detectRendererSkew(), resolveHermesVersion()]).then(([skew, version]) => {
     app.setAboutPanelOptions({
       applicationName: APP_NAME,
       applicationVersion: skew.outOfSync
-        ? `${resolveHermesVersion()} — app build out of date, update the desktop app`
-        : resolveHermesVersion(),
+        ? `${version} — app build out of date, update the desktop app`
+        : version,
       copyright: 'Copyright © 2026 Nous Research'
     })
     app.showAboutPanel()
   })
 }
 
-ipcMain.handle('hermes:version', async () => {
-  const skew = await detectRendererSkew()
+ipcMain.handle('hermes:version', async (_event, scope?: { connectionId?: string; profile?: string }) => {
+  const [skew, version] = await Promise.all([detectRendererSkew(), resolveHermesVersion(scope)])
 
   return {
-    appVersion: resolveHermesVersion(),
+    appVersion: version,
+    backendVersion: version,
     electronVersion: process.versions.electron,
     nodeVersion: process.versions.node,
     platform: process.platform,
     hermesRoot: resolveUpdateRoot(),
+    hermesHome: HERMES_HOME,
     bundleOutOfSync: skew.outOfSync,
     bundleCommitsBehind: skew.desktopCommitsBehind
   }
