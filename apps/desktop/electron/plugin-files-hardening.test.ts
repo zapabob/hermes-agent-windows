@@ -144,6 +144,7 @@ describe('a swap between the check and the open is refused', () => {
       target: fs.PathLike,
       options?: object
     ) => Promise<fs.Stats>
+
     let done = false
 
     vi.spyOn(fs.promises, method).mockImplementation((async (target: fs.PathLike, options?: object) => {

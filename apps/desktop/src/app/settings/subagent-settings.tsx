@@ -20,6 +20,7 @@ import { ListRow, SectionHeading, SettingsContent, ToggleRow } from './primitive
 
 const REASONING_EFFORTS = ['', 'xhigh', 'high', 'medium', 'low', 'minimal'] as const
 const API_MODES = ['', 'chat_completions', 'codex_responses', 'anthropic_messages'] as const
+
 /** Degraded older servers with no catalog: show only ``default`` — never invent advanced backends. */
 const DEGRADED_DEFAULT_CATALOG: DelegationBackendInfo[] = [
   {
@@ -383,10 +384,9 @@ export function SubagentSettings() {
   const [draft, setDraft] = useState<SubagentDraft>(DEFAULT_DRAFT)
 
   const dirty = useMemo(() => !draftsEqual(draft, baseline), [baseline, draft])
-  const backends = useMemo(
-    () => mergeBackendCatalog(backendCatalog, draft.backend),
-    [backendCatalog, draft.backend]
-  )
+
+  const backends = useMemo(() => mergeBackendCatalog(backendCatalog, draft.backend), [backendCatalog, draft.backend])
+
   const selectedBackend = backends.find(row => row.name === draft.backend)
   const backendUnavailable = Boolean(selectedBackend && !selectedBackend.available)
 
@@ -717,10 +717,7 @@ export function SubagentSettings() {
             <Button
               disabled={loading}
               onClick={() =>
-                patch('profile_routes_profiles', [
-                  ...draft.profile_routes_profiles,
-                  { name: '', description: '' }
-                ])
+                patch('profile_routes_profiles', [...draft.profile_routes_profiles, { name: '', description: '' }])
               }
               type="button"
               variant="secondary"

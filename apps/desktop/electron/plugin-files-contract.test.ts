@@ -419,6 +419,7 @@ describe('file identity is exact (NTFS ids exceed 2^53)', () => {
     const b = path.join(scratch, 'id-b')
     fs.mkdirSync(a)
     fs.mkdirSync(b)
+
     const original = fs.promises.stat.bind(fs.promises) as (
       target: fs.PathLike,
       options?: { bigint: true }

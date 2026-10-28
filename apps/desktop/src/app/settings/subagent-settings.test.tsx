@@ -55,7 +55,13 @@ beforeEach(() => {
       surface_child_process_notifications: false
     },
     has_api_key: true,
-    schema_affecting_keys: ['backend', 'backends', 'max_concurrent_children', 'max_spawn_depth', 'orchestrator_enabled'],
+    schema_affecting_keys: [
+      'backend',
+      'backends',
+      'max_concurrent_children',
+      'max_spawn_depth',
+      'orchestrator_enabled'
+    ],
     available_backends: [
       { name: 'default', label: 'Default', description: 'parent route', available: true, reason: '' },
       { name: 'model_map', label: 'Model map', description: 'named options', available: true, reason: '' },
@@ -133,7 +139,13 @@ describe('SubagentSettings', () => {
         fallback_providers: []
       },
       has_api_key: true,
-      schema_affecting_keys: ['backend', 'backends', 'max_concurrent_children', 'max_spawn_depth', 'orchestrator_enabled'],
+      schema_affecting_keys: [
+        'backend',
+        'backends',
+        'max_concurrent_children',
+        'max_spawn_depth',
+        'orchestrator_enabled'
+      ],
       available_backends: [
         { name: 'default', label: 'Default', description: '', available: true, reason: '' },
         { name: 'model_map', label: 'Model map', description: '', available: true, reason: '' }
@@ -283,6 +295,7 @@ describe('draft helpers', () => {
         }
       }
     })
+
     expect(draft.backend).toBe('profile_routes')
     expect(draft.profile_routes_default).toBe('coder')
     expect(draft.profile_routes_profiles).toEqual([{ name: 'coder', description: 'coding profile' }])
@@ -300,6 +313,7 @@ describe('draft helpers', () => {
       [{ name: 'model_map', label: 'Model map', description: '', available: false, reason: 'disabled' }],
       'custom_backend'
     )
+
     // Registered-only: do not invent default / profile_routes when the server omitted them.
     expect(catalog.map(row => row.name).sort()).toEqual(['custom_backend', 'model_map'])
     expect(catalog.find(row => row.name === 'model_map')?.available).toBe(false)
@@ -317,10 +331,12 @@ describe('draft helpers', () => {
 
   it('contract: catalog shows only registered backends (no invented advanced)', async () => {
     const { mergeBackendCatalog } = await import('./subagent-settings')
+
     const onlyDefault = mergeBackendCatalog(
       [{ name: 'default', label: 'Default', description: '', available: true, reason: '' }],
       'default'
     )
+
     expect(onlyDefault.map(row => row.name)).toEqual(['default'])
     expect(onlyDefault.some(row => row.name === 'model_map')).toBe(false)
     expect(onlyDefault.some(row => row.name === 'profile_routes')).toBe(false)
