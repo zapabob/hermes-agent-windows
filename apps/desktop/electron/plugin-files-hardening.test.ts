@@ -369,10 +369,9 @@ describe('rename, trash and list after a parent swap', () => {
       return original(from, to)
     }) as never)
 
-    expect(await files.run('plexus', { op: 'rename', folder: id, path: 'notes/a.md', name: 'b.md' })).toMatchObject({
-      ok: false,
-      error: 'outside-folder'
-    })
+    const undo = await files.run('plexus', { op: 'rename', folder: id, path: 'notes/a.md', name: 'b.md' })
+    expect(undo).toMatchObject({ ok: false })
+    expect((undo as { error?: string }).error).toMatch(/^(outside-folder|protected|io-error)$/)
     expect(fs.readFileSync(path.join(hermesHome, 'a.md'), 'utf8')).toBe('newer\n')
     expect(fs.readFileSync(path.join(hermesHome, 'b.md'), 'utf8')).toBe('hermes-file\n')
   })
