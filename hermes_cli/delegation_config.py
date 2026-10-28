@@ -203,6 +203,17 @@ def validate_delegation_draft(draft: Mapping[str, Any]) -> dict[str, Any]:
         if not isinstance(backend, str) or not backend.strip():
             raise DelegationConfigError("backend must be a non-empty string")
         out["backend"] = backend.strip().lower()
+        # Fail closed at save time (same class as route-time refusal).
+        try:
+            from agent.delegation_registry import backend_status
+
+            _provider, reason = backend_status(out["backend"])
+        except Exception as exc:
+            raise DelegationConfigError(
+                f"could not validate delegation.backend: {exc}"
+            ) from exc
+        if reason:
+            raise DelegationConfigError(reason)
 
     if "backends" in draft:
         backends = draft["backends"]

@@ -84,3 +84,27 @@ def test_schema_affecting_change_detection() -> None:
     before = {"max_spawn_depth": 1, "model": "a"}
     after = {"max_spawn_depth": 2, "model": "a"}
     assert schema_affecting_changes(before, after) == ["max_spawn_depth"]
+
+
+def test_unknown_backend_rejected_fail_closed(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "agent.delegation_registry.backend_status",
+        lambda name: (None, f"Delegation backend '{name}' is not installed"),
+    )
+    with pytest.raises(DelegationConfigError, match="not installed"):
+        validate_delegation_draft({"backend": "totally-missing"})
+
+
+def test_available_backend_accepted(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "agent.delegation_registry.backend_status",
+        lambda name: (object(), ""),
+    )
+    cleaned = validate_delegation_draft({"backend": "Model_Map"})
+    assert cleaned["backend"] == "model_map"
+
+
+def test_backend_change_is_schema_affecting() -> None:
+    assert schema_affecting_changes({"backend": "default"}, {"backend": "model_map"}) == [
+        "backend"
+    ]

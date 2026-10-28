@@ -76,3 +76,21 @@ def test_get_delegation_strips_api_key(delegation_client) -> None:
     body = res.json()
     assert body["has_api_key"] is True
     assert "api_key" not in body["delegation"]
+    assert isinstance(body.get("available_backends"), list)
+    names = {row["name"] for row in body["available_backends"]}
+    assert "default" in names
+
+
+def test_put_unknown_backend_rejected(delegation_client, monkeypatch) -> None:
+    client, home = delegation_client
+    before = (home / "config.yaml").read_text(encoding="utf-8")
+    monkeypatch.setattr(
+        "agent.delegation_registry.backend_status",
+        lambda name: (None, f"Delegation backend '{name}' is not installed"),
+    )
+    res = client.put(
+        "/api/delegation",
+        json={"delegation": {"backend": "nope-backend"}},
+    )
+    assert res.status_code == 400
+    assert (home / "config.yaml").read_text(encoding="utf-8") == before

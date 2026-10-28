@@ -1,6 +1,7 @@
 import { useStore } from '@nanostores/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import type { DelegationBackendInfo } from '@/api/config'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -19,6 +20,26 @@ import { ListRow, SectionHeading, SettingsContent, ToggleRow } from './primitive
 
 const REASONING_EFFORTS = ['', 'xhigh', 'high', 'medium', 'low', 'minimal'] as const
 const API_MODES = ['', 'chat_completions', 'codex_responses', 'anthropic_messages'] as const
+const FALLBACK_BACKENDS: DelegationBackendInfo[] = [
+  {
+    name: 'default',
+    label: 'Default',
+    description: 'Every subagent uses delegation.model / delegation.provider, else the parent.',
+    available: true
+  },
+  {
+    name: 'model_map',
+    label: 'Model map',
+    description: 'Pick a titled model option per task.',
+    available: true
+  },
+  {
+    name: 'profile_routes',
+    label: 'Profile routes',
+    description: 'Run a child as an allowlisted Hermes profile.',
+    available: true
+  }
+]
 
 type FallbackMode = 'inherit' | 'disabled' | 'custom'
 
@@ -27,7 +48,20 @@ interface FallbackEntry {
   model: string
 }
 
+export interface ModelMapOption {
+  name: string
+  description: string
+  model: string
+  provider: string
+}
+
+export interface ProfileRouteEntry {
+  name: string
+  description: string
+}
+
 export interface SubagentDraft {
+  backend: string
   model: string
   provider: string
   base_url: string
@@ -44,9 +78,14 @@ export interface SubagentDraft {
   surface_child_process_notifications: boolean
   /** null = inherit (omit); [] = explicitly disabled */
   fallback_providers: null | FallbackEntry[]
+  model_map_default: string
+  model_map_options: ModelMapOption[]
+  profile_routes_default: string
+  profile_routes_profiles: ProfileRouteEntry[]
 }
 
 const DEFAULT_DRAFT: SubagentDraft = {
+  backend: 'default',
   model: '',
   provider: '',
   base_url: '',
@@ -61,7 +100,11 @@ const DEFAULT_DRAFT: SubagentDraft = {
   orchestrator_enabled: true,
   subagent_auto_approve: false,
   surface_child_process_notifications: false,
-  fallback_providers: null
+  fallback_providers: null,
+  model_map_default: '',
+  model_map_options: [],
+  profile_routes_default: '',
+  profile_routes_profiles: []
 }
 
 function asString(value: unknown, fallback = ''): string {
@@ -130,8 +173,75 @@ function parseFallback(raw: unknown): null | FallbackEntry[] {
   return entries
 }
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {}
+}
+
+export function parseModelMapOptions(raw: unknown): ModelMapOption[] {
+  if (!Array.isArray(raw)) {
+    return []
+  }
+
+  const rows: ModelMapOption[] = []
+
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') {
+      continue
+    }
+
+    const row = item as Record<string, unknown>
+    const name = asString(row.name).trim()
+
+    if (!name) {
+      continue
+    }
+
+    rows.push({
+      name,
+      description: asString(row.description),
+      model: asString(row.model),
+      provider: asString(row.provider)
+    })
+  }
+
+  return rows
+}
+
+export function parseProfileRoutes(raw: unknown): ProfileRouteEntry[] {
+  if (!Array.isArray(raw)) {
+    return []
+  }
+
+  const rows: ProfileRouteEntry[] = []
+
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') {
+      continue
+    }
+
+    const row = item as Record<string, unknown>
+    const name = asString(row.name).trim()
+
+    if (!name) {
+      continue
+    }
+
+    rows.push({
+      name,
+      description: asString(row.description)
+    })
+  }
+
+  return rows
+}
+
 export function blockToDraft(block: Record<string, unknown>): SubagentDraft {
+  const backends = asRecord(block.backends)
+  const modelMap = asRecord(backends.model_map)
+  const profileRoutes = asRecord(backends.profile_routes)
+
   return {
+    backend: asString(block.backend, DEFAULT_DRAFT.backend).trim().toLowerCase() || 'default',
     model: asString(block.model, DEFAULT_DRAFT.model),
     provider: asString(block.provider, DEFAULT_DRAFT.provider),
     base_url: asString(block.base_url, DEFAULT_DRAFT.base_url),
@@ -149,13 +259,38 @@ export function blockToDraft(block: Record<string, unknown>): SubagentDraft {
       block.surface_child_process_notifications,
       DEFAULT_DRAFT.surface_child_process_notifications
     ),
-    fallback_providers: 'fallback_providers' in block ? parseFallback(block.fallback_providers) : null
+    fallback_providers: 'fallback_providers' in block ? parseFallback(block.fallback_providers) : null,
+    model_map_default: asString(modelMap.default),
+    model_map_options: parseModelMapOptions(modelMap.options),
+    profile_routes_default: asString(profileRoutes.default),
+    profile_routes_profiles: parseProfileRoutes(profileRoutes.profiles)
   }
 }
 
 /** Wire payload for PUT — full draft, never includes api_key. */
 export function draftToPayload(draft: SubagentDraft): Record<string, unknown> {
+  const backends: Record<string, unknown> = {
+    model_map: {
+      default: draft.model_map_default,
+      options: draft.model_map_options.map(row => ({
+        name: row.name,
+        description: row.description,
+        model: row.model,
+        provider: row.provider
+      }))
+    },
+    profile_routes: {
+      default: draft.profile_routes_default,
+      profiles: draft.profile_routes_profiles.map(row => ({
+        name: row.name,
+        description: row.description
+      }))
+    }
+  }
+
   return {
+    backend: draft.backend || 'default',
+    backends,
     model: draft.model,
     provider: draft.provider,
     base_url: draft.base_url,
@@ -172,6 +307,53 @@ export function draftToPayload(draft: SubagentDraft): Record<string, unknown> {
     surface_child_process_notifications: draft.surface_child_process_notifications,
     fallback_providers: draft.fallback_providers
   }
+}
+
+export function mergeBackendCatalog(
+  catalog: DelegationBackendInfo[] | undefined,
+  currentBackend: string
+): DelegationBackendInfo[] {
+  const byName = new Map<string, DelegationBackendInfo>()
+
+  for (const row of FALLBACK_BACKENDS) {
+    byName.set(row.name, row)
+  }
+
+  for (const row of catalog ?? []) {
+    if (!row?.name) {
+      continue
+    }
+
+    byName.set(row.name, {
+      name: row.name,
+      label: row.label || row.name,
+      description: row.description || '',
+      available: Boolean(row.available),
+      reason: row.reason || ''
+    })
+  }
+
+  if (currentBackend && !byName.has(currentBackend)) {
+    byName.set(currentBackend, {
+      name: currentBackend,
+      label: currentBackend,
+      description: '',
+      available: false,
+      reason: 'not listed by the backend catalog'
+    })
+  }
+
+  return [...byName.values()].sort((a, b) => {
+    if (a.name === 'default') {
+      return -1
+    }
+
+    if (b.name === 'default') {
+      return 1
+    }
+
+    return a.name.localeCompare(b.name)
+  })
 }
 
 function fallbackModeOf(draft: SubagentDraft): FallbackMode {
@@ -201,10 +383,17 @@ export function SubagentSettings() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [hasApiKey, setHasApiKey] = useState(false)
+  const [backendCatalog, setBackendCatalog] = useState<DelegationBackendInfo[]>(FALLBACK_BACKENDS)
   const [baseline, setBaseline] = useState<SubagentDraft>(DEFAULT_DRAFT)
   const [draft, setDraft] = useState<SubagentDraft>(DEFAULT_DRAFT)
 
   const dirty = useMemo(() => !draftsEqual(draft, baseline), [baseline, draft])
+  const backends = useMemo(
+    () => mergeBackendCatalog(backendCatalog, draft.backend),
+    [backendCatalog, draft.backend]
+  )
+  const selectedBackend = backends.find(row => row.name === draft.backend)
+  const backendUnavailable = Boolean(selectedBackend && !selectedBackend.available)
 
   const load = useCallback(async () => {
     const epoch = profileEpoch.current
@@ -221,6 +410,7 @@ export function SubagentSettings() {
       setBaseline(next)
       setDraft(next)
       setHasApiKey(Boolean(res.has_api_key))
+      setBackendCatalog(mergeBackendCatalog(res.available_backends, next.backend))
     } catch (err) {
       if (profileEpoch.current === epoch) {
         notifyError(err, copy.loadFailed)
@@ -241,6 +431,7 @@ export function SubagentSettings() {
     setDraft(DEFAULT_DRAFT)
     setBaseline(DEFAULT_DRAFT)
     setHasApiKey(false)
+    setBackendCatalog(FALLBACK_BACKENDS)
     void load()
   })
 
@@ -324,6 +515,222 @@ export function SubagentSettings() {
           </Button>
         </div>
       </div>
+
+      <ListRow
+        action={
+          <Select disabled={loading} onValueChange={v => patch('backend', v)} value={draft.backend || 'default'}>
+            <SelectTrigger aria-label={copy.backend} className={cn('min-w-56', CONTROL_TEXT)}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {backends.map(row => (
+                <SelectItem disabled={!row.available && row.name !== draft.backend} key={row.name} value={row.name}>
+                  {row.label || row.name}
+                  {!row.available ? ' (unavailable)' : ''}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        }
+        description={copy.backendDesc}
+        title={copy.backend}
+      />
+      <p className={cn(CAPTION, 'mb-2 leading-(--conversation-caption-line-height)')}>{copy.backendSchemaNote}</p>
+      {backendUnavailable ? (
+        <p className={cn(CAPTION, 'mb-2 text-(--ui-danger) leading-(--conversation-caption-line-height)')}>
+          {selectedBackend?.reason || copy.backendUnavailable}
+        </p>
+      ) : null}
+
+      {draft.backend === 'model_map' ? (
+        <>
+          <ListRow
+            action={
+              <Input
+                aria-label={copy.backendsDefault}
+                className={CONTROL_TEXT}
+                disabled={loading}
+                onChange={e => patch('model_map_default', e.target.value)}
+                placeholder="(none)"
+                value={draft.model_map_default}
+              />
+            }
+            title={copy.backendsDefault}
+          />
+          <p className={cn(CAPTION, 'mb-1 mt-2 leading-(--conversation-caption-line-height)')}>
+            {copy.modelMapOptions}
+          </p>
+          {draft.model_map_options.map((option, index) => (
+            <ListRow
+              action={
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    aria-label={`${copy.modelMapName} ${index + 1}`}
+                    className={cn('min-w-24', CONTROL_TEXT)}
+                    disabled={loading}
+                    onChange={e => {
+                      const next = [...draft.model_map_options]
+                      next[index] = { ...next[index], name: e.target.value }
+                      patch('model_map_options', next)
+                    }}
+                    placeholder={copy.modelMapName}
+                    value={option.name}
+                  />
+                  <Input
+                    aria-label={`${copy.modelMapProvider} ${index + 1}`}
+                    className={cn('min-w-24', CONTROL_TEXT)}
+                    disabled={loading}
+                    onChange={e => {
+                      const next = [...draft.model_map_options]
+                      next[index] = { ...next[index], provider: e.target.value }
+                      patch('model_map_options', next)
+                    }}
+                    placeholder={copy.modelMapProvider}
+                    value={option.provider}
+                  />
+                  <Input
+                    aria-label={`${copy.modelMapModel} ${index + 1}`}
+                    className={cn('min-w-28', CONTROL_TEXT)}
+                    disabled={loading}
+                    onChange={e => {
+                      const next = [...draft.model_map_options]
+                      next[index] = { ...next[index], model: e.target.value }
+                      patch('model_map_options', next)
+                    }}
+                    placeholder={copy.modelMapModel}
+                    value={option.model}
+                  />
+                  <Input
+                    aria-label={`${copy.modelMapDescription} ${index + 1}`}
+                    className={cn('min-w-28', CONTROL_TEXT)}
+                    disabled={loading}
+                    onChange={e => {
+                      const next = [...draft.model_map_options]
+                      next[index] = { ...next[index], description: e.target.value }
+                      patch('model_map_options', next)
+                    }}
+                    placeholder={copy.modelMapDescription}
+                    value={option.description}
+                  />
+                  <Button
+                    disabled={loading}
+                    onClick={() =>
+                      patch(
+                        'model_map_options',
+                        draft.model_map_options.filter((_, i) => i !== index)
+                      )
+                    }
+                    type="button"
+                    variant="ghost"
+                  >
+                    {copy.modelMapRemove}
+                  </Button>
+                </div>
+              }
+              key={`model-map-${index}`}
+              title={`${copy.modelMapOptions} ${index + 1}`}
+            />
+          ))}
+          <div className="py-2">
+            <Button
+              disabled={loading}
+              onClick={() =>
+                patch('model_map_options', [
+                  ...draft.model_map_options,
+                  { name: '', description: '', model: '', provider: '' }
+                ])
+              }
+              type="button"
+              variant="secondary"
+            >
+              {copy.modelMapAdd}
+            </Button>
+          </div>
+        </>
+      ) : null}
+
+      {draft.backend === 'profile_routes' ? (
+        <>
+          <ListRow
+            action={
+              <Input
+                aria-label={copy.backendsDefault}
+                className={CONTROL_TEXT}
+                disabled={loading}
+                onChange={e => patch('profile_routes_default', e.target.value)}
+                placeholder="(none)"
+                value={draft.profile_routes_default}
+              />
+            }
+            title={copy.backendsDefault}
+          />
+          <p className={cn(CAPTION, 'mb-1 mt-2 leading-(--conversation-caption-line-height)')}>
+            {copy.profileRoutesProfiles}
+          </p>
+          {draft.profile_routes_profiles.map((profile, index) => (
+            <ListRow
+              action={
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    aria-label={`${copy.profileRoutesName} ${index + 1}`}
+                    className={cn('min-w-28', CONTROL_TEXT)}
+                    disabled={loading}
+                    onChange={e => {
+                      const next = [...draft.profile_routes_profiles]
+                      next[index] = { ...next[index], name: e.target.value }
+                      patch('profile_routes_profiles', next)
+                    }}
+                    placeholder={copy.profileRoutesName}
+                    value={profile.name}
+                  />
+                  <Input
+                    aria-label={`${copy.profileRoutesDescription} ${index + 1}`}
+                    className={cn('min-w-36', CONTROL_TEXT)}
+                    disabled={loading}
+                    onChange={e => {
+                      const next = [...draft.profile_routes_profiles]
+                      next[index] = { ...next[index], description: e.target.value }
+                      patch('profile_routes_profiles', next)
+                    }}
+                    placeholder={copy.profileRoutesDescription}
+                    value={profile.description}
+                  />
+                  <Button
+                    disabled={loading}
+                    onClick={() =>
+                      patch(
+                        'profile_routes_profiles',
+                        draft.profile_routes_profiles.filter((_, i) => i !== index)
+                      )
+                    }
+                    type="button"
+                    variant="ghost"
+                  >
+                    {copy.profileRoutesRemove}
+                  </Button>
+                </div>
+              }
+              key={`profile-route-${index}`}
+              title={`${copy.profileRoutesProfiles} ${index + 1}`}
+            />
+          ))}
+          <div className="py-2">
+            <Button
+              disabled={loading}
+              onClick={() =>
+                patch('profile_routes_profiles', [
+                  ...draft.profile_routes_profiles,
+                  { name: '', description: '' }
+                ])
+              }
+              type="button"
+              variant="secondary"
+            >
+              {copy.profileRoutesAdd}
+            </Button>
+          </div>
+        </>
+      ) : null}
 
       <ListRow
         action={
