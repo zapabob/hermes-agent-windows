@@ -408,8 +408,10 @@ describe.runIf(onWindows)('on a Windows host', () => {
     })
     expect(await files.run('plexus', { op: 'trash', folder: id, path: 'メモ 帳/日記 2.txt' })).toEqual({ ok: true })
     // CI Windows may surface long paths while the fixture still holds 8.3.
-    expect(trashed.map(entry => fs.realpathSync.native(entry).toLowerCase())).toEqual([
-      fs.realpathSync.native(path.join(folder, 'メモ 帳', '日記 2.txt')).toLowerCase()
+    // realpath the live parent only — the trashed leaf is already gone.
+    const expectedTrashed = path.join(fs.realpathSync.native(folder), 'メモ 帳', '日記 2.txt')
+    expect(trashed.map(entry => entry.replace(/\//g, '\\').toLowerCase())).toEqual([
+      expectedTrashed.replace(/\//g, '\\').toLowerCase()
     ])
   })
 })
