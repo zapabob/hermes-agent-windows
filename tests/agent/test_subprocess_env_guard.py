@@ -115,12 +115,12 @@ APPROVED_IMPLICIT_SPAWN_BASELINES = {
         "5b23578a51cafa9b8233e03e7bdddf96a68954014b2cfeae2b1da311ee734704",
         LEGACY_IMPLICIT_RATIONALE,
     ),
-    # Plugin spawn site set drifted with advanced_delegation / default
-    # delegation plugin registration; re-reviewed fingerprint.
-    "plugins": ("518b5db0f92f9d612deb16eb7748d69dcd2d3816f3369737000520967a1fedfb", LEGACY_IMPLICIT_RATIONALE),
-    # Script spawn site set drifted with Windows llama/watchdog launchers;
-    # re-reviewed fingerprint.
-    "scripts": ("057118b1400821af22dad6ddadb6fb210f4d76c8fe358440b762ce77ff2fd025", LEGACY_IMPLICIT_RATIONALE),
+    # Plugin spawn site set drifted again after cursor-sub bridge / vendor
+    # plugin adoption on tip; re-reviewed fingerprint from CI actuals.
+    "plugins": ("edb6181d42c9623fa5a564358dfc516306bdb2fd0dd47b768bf7868524b1167b", LEGACY_IMPLICIT_RATIONALE),
+    # Script spawn site set drifted with Windows llama/watchdog and related
+    # launcher edits on tip; re-reviewed fingerprint from CI actuals.
+    "scripts": ("8254877ce526a76852de3e18af346d19dcbc1aae6d9bcb14cebb0cf86a612dd4", LEGACY_IMPLICIT_RATIONALE),
     "tools": ("c81f90543719f88d6350bf0342ea73d36b158d8e682a94036be738fb73162996", LEGACY_IMPLICIT_RATIONALE),
     "tui_gateway": ("2d1248afe4d8acd6620038458dc9bb154f5449b10278878e62231e06b8d4f41f", LEGACY_IMPLICIT_RATIONALE),
     "ui-tui": ("88a4d1e5198da9b00a66f33915ae9908b1c80ffa0e3c5d7fba0636a4d70d4108", LEGACY_IMPLICIT_RATIONALE),
