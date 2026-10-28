@@ -1,0 +1,11 @@
+name: cursor_sub_bridge
+version: 1.0.0
+description: "Loopback OpenAI shim + MCP drain for Cursor subscription models."
+author: zapabob
+kind: standalone
+platforms:
+  - linux
+  - macos
+  - windows
+provides_cli:
+  - cursor-sub

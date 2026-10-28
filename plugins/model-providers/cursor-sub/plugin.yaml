@@ -1,0 +1,5 @@
+name: cursor-sub-provider
+kind: model-provider
+version: 1.0.0
+description: Cursor subscription via local OpenAI shim + MCP drain
+author: zapabob
