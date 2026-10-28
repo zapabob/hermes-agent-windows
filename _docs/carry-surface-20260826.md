@@ -4,12 +4,12 @@ Frozen upstream: b51c055a12220f8c7c18660e8599365012e19532
 
 | Metric | Value |
 | --- | ---: |
-| All fork-specific LOC | 3231525 |
-| Upstream-owned fork LOC | 1574480 |
-| Fork-owned LOC | 1657045 |
-| UTR | 0.487225 |
+| All fork-specific LOC | 3234270 |
+| Upstream-owned fork LOC | 1574818 |
+| Fork-owned LOC | 1659452 |
+| UTR | 0.486916 |
 | Carry Surface | 5166 files |
-| CWC | 87497857 |
+| CWC | 87517298 |
 
 LOC is added plus deleted lines relative to the frozen upstream tree.
 The `_docs/` tree (including these reports) is excluded to avoid
@@ -23,7 +23,7 @@ and 1 for tests, docs, workflows, and generated documentation.
 | Path | Frequency | Patch | Coupling | CWC |
 | --- | ---: | ---: | ---: | ---: |
 | gateway/run.py | 158 | 33405 | 2 | 10555980 |
-| hermes_cli/web_server.py | 95 | 21651 | 3 | 6170535 |
+| hermes_cli/web_server.py | 95 | 21660 | 3 | 6173100 |
 | cli.py | 77 | 25158 | 2 | 3874332 |
 | tui_gateway/server.py | 96 | 19744 | 2 | 3790848 |
 | hermes_state.py | 112 | 16246 | 2 | 3639104 |
@@ -34,7 +34,7 @@ and 1 for tests, docs, workflows, and generated documentation.
 | agent/context_compressor.py | 82 | 10081 | 2 | 1653284 |
 | run_agent.py | 74 | 10338 | 2 | 1530024 |
 | agent/conversation_compression.py | 95 | 7122 | 2 | 1353180 |
-| hermes_cli/config_defaults.py | 64 | 6666 | 3 | 1279872 |
+| hermes_cli/config_defaults.py | 64 | 6668 | 3 | 1280256 |
 | agent/chat_completion_helpers.py | 73 | 8270 | 2 | 1207420 |
 | cron/scheduler.py | 56 | 9852 | 2 | 1103424 |
 | hermes_cli/models.py | 67 | 7826 | 2 | 1048684 |

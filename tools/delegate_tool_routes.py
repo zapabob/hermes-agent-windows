@@ -174,8 +174,10 @@ def delegated_profile_scope(home: Any) -> Iterator[None]:
 
 
 def child_profile_scope(child: Any) -> Any:
+    # MagicMock (and similar auto-attr stubs) invent truthy values for any
+    # getattr name — only honor a real filesystem home, never a mock object.
     home = getattr(child, "_delegation_profile_home", None)
-    if home is None:
+    if not isinstance(home, (str, Path)):
         return nullcontext()
     return delegated_profile_scope(home)
 
