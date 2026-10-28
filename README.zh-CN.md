@@ -23,6 +23,37 @@
 
 ---
 
+## 30 秒看懂：TL;DR 与安装
+
+> **TL;DR：** clone 本下游 → `uv sync --locked --all-extras` →
+> `uv run hermes setup` → `uv run hermes chat`。可选插件、Git 子模块与本地 GGUF
+> 可以稍后再说。在设置向导里选择 provider（OAuth / API key / 本地 llama.cpp）。
+
+| | |
+| --- | --- |
+| **需要** | Windows 11 x64 · PowerShell · Git · [`uv`](https://docs.astral.sh/uv/) · Python 3.11–3.13 |
+| **需要 Node.js？** | 仅在从源码构建 Desktop 时 |
+| **耗时** | 命令路径约 30 秒可读完；首次 `uv sync` / 原生构建更久 |
+
+```powershell
+git clone https://github.com/zapabob/hermes-agent-windows.git
+Set-Location hermes-agent-windows
+uv sync --locked --all-extras
+uv run hermes setup
+uv run hermes chat
+```
+
+| 目标 | 命令 / 链接 |
+| --- | --- |
+| 同一 checkout 打开 Desktop | `uv run hermes desktop` |
+| installer / portable ZIP | 在 [Releases](https://github.com/zapabob/hermes-agent-windows/releases) 确认资产 → 校验 `SHA256SUMS.txt` → 见 [docs/windows/INSTALL.md](docs/windows/INSTALL.md) |
+| Windows 安装正本 | [docs/windows/INSTALL.md](docs/windows/INSTALL.md) |
+| 重启工作站栈 | `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\windows\Restart-HermesFullStack.ps1`（仅 Documents 下的 checkout——**切勿从 `.worktrees/` 启动**） |
+
+> 向 `main` 的 push **不是** stable installer 已发布的证据。
+
+---
+
 ## 一眼看懂范围
 
 | 你得到 | 你不破坏 |
@@ -36,41 +67,6 @@
 `0.23.0` 是 **下游产品版本号**，并不表示已对之后所有 upstream commit 完成语义等价审查。
 未完成的 semantic-refresh family 在 source、测试、mutation、CodeGraph、review 证据齐备前
 保持开放。详见 [版本与 provenance](#版本与-provenance)。
-
----
-
-## 快速开始（源码路径）
-
-**要求：** Windows 11 x64 · PowerShell · Git · [`uv`](https://docs.astral.sh/uv/) · Python 3.11–3.13  
-仅在从源码构建 Desktop 时需要 Node.js。
-
-```powershell
-git clone https://github.com/zapabob/hermes-agent-windows.git
-Set-Location hermes-agent-windows
-uv sync --locked --all-extras
-uv run hermes setup
-uv run hermes chat
-```
-
-同一 checkout 启动 Desktop：
-
-```powershell
-uv run hermes desktop
-```
-
-installer / portable ZIP：先在
-[Releases](https://github.com/zapabob/hermes-agent-windows/releases)
-确认资产存在，校验 `SHA256SUMS.txt`，再按
-[docs/windows/INSTALL.md](docs/windows/INSTALL.md) 操作。
-
-> 首次 `uv sync` 与原生构建耗时会超过命令列表的阅读时间。  
-> 向 `main` 的 push **不是** stable installer 已发布的证据。
-
-工作站重启仅限 Documents 下的 checkout——**切勿从 `.worktrees/` 启动**：
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\windows\Restart-HermesFullStack.ps1
-```
 
 ---
 
@@ -217,6 +213,9 @@ git submodule update --init --recursive
 ---
 
 ## 安装与 Desktop 构建
+
+最快路径见 [30 秒看懂：TL;DR 与安装](#30-秒看懂tldr-与安装)。以下是同一源码路径，
+并附带 `--version` 检查与 Desktop 构建步骤。
 
 ```powershell
 git clone https://github.com/zapabob/hermes-agent-windows.git

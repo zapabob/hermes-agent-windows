@@ -24,6 +24,38 @@ Nous Research との提携・承認はありません。upstream の帰属と [M
 
 ---
 
+## 30秒でわかる TL;DR と導入
+
+> **TL;DR:** この派生を clone → `uv sync --locked --all-extras` →
+> `uv run hermes setup` → `uv run hermes chat`。任意プラグイン・Git サブモジュール・
+> ローカル GGUF は後回しでよい。プロバイダー（OAuth / API key / ローカル llama.cpp）は
+> セットアップウィザードで選ぶ。
+
+| | |
+| --- | --- |
+| **必要なもの** | Windows 11 x64 · PowerShell · Git · [`uv`](https://docs.astral.sh/uv/) · Python 3.11–3.13 |
+| **Node.js は？** | Desktop をソースからビルドするときだけ |
+| **所要時間** | コマンド経路は約30秒で読める。初回 `uv sync` / ネイティブビルドはさらにかかる |
+
+```powershell
+git clone https://github.com/zapabob/hermes-agent-windows.git
+Set-Location hermes-agent-windows
+uv sync --locked --all-extras
+uv run hermes setup
+uv run hermes chat
+```
+
+| やりたいこと | コマンド / リンク |
+| --- | --- |
+| 同じ checkout から Desktop | `uv run hermes desktop` |
+| installer / portable ZIP | [Releases](https://github.com/zapabob/hermes-agent-windows/releases) で asset 確認 → `SHA256SUMS.txt` 検証 → [docs/windows/INSTALL.md](docs/windows/INSTALL.md) |
+| Windows 導入の正本 | [docs/windows/INSTALL.md](docs/windows/INSTALL.md) |
+| フルスタック再起動 | `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\windows\Restart-HermesFullStack.ps1`（Documents 配下の checkout のみ。**`.worktrees/` からは起動しない**） |
+
+> `main` への push は **stable installer 公開の証拠ではありません**。
+
+---
+
 ## ひと目でわかる範囲
 
 | 得られるもの | 崩さないもの |
@@ -38,41 +70,6 @@ Nous Research との提携・承認はありません。upstream の帰属と [M
 同等を一括宣言するものではありません。未完の semantic-refresh family は source・test・
 mutation・CodeGraph・review が閉じるまで未完のままです。詳細は
 [版と provenance](#版と-provenance)。
-
----
-
-## すぐ始める（ソース経路）
-
-**前提:** Windows 11 x64 · PowerShell · Git · [`uv`](https://docs.astral.sh/uv/) · Python 3.11–3.13  
-Node.js は Desktop をソースからビルドするときだけ必要です。
-
-```powershell
-git clone https://github.com/zapabob/hermes-agent-windows.git
-Set-Location hermes-agent-windows
-uv sync --locked --all-extras
-uv run hermes setup
-uv run hermes chat
-```
-
-同じ checkout から Desktop:
-
-```powershell
-uv run hermes desktop
-```
-
-installer / portable ZIP は
-[Releases](https://github.com/zapabob/hermes-agent-windows/releases)
-で asset の有無を確認し、`SHA256SUMS.txt` を検証したうえで
-[docs/windows/INSTALL.md](docs/windows/INSTALL.md) に従ってください。
-
-> 初回の `uv sync` とネイティブビルドはコマンド一覧より時間がかかります。  
-> `main` への push は **stable installer 公開の証拠ではありません**。
-
-ワークステーション再起動は Documents 配下の checkout のみ — **`.worktrees/` からは起動しない**:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\windows\Restart-HermesFullStack.ps1
-```
 
 ---
 
@@ -222,6 +219,9 @@ git submodule update --init --recursive
 ---
 
 ## インストールと Desktop ビルド
+
+最短経路は [30秒でわかる TL;DR と導入](#30秒でわかる-tldr-と導入) です。以下は同じ
+ソース経路に `--version` 確認と Desktop ビルドを足した版です。
 
 ```powershell
 git clone https://github.com/zapabob/hermes-agent-windows.git

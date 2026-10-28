@@ -37,6 +37,38 @@ Not affiliated with or endorsed by Nous Research. Upstream attribution and the
 
 ---
 
+## Setup in 30 seconds
+
+> **TL;DR:** Clone this downstream → `uv sync --locked --all-extras` →
+> `uv run hermes setup` → `uv run hermes chat`. Optional plug-ins, Git
+> submodules and local GGUF models can wait. Pick a provider in the setup
+> wizard (OAuth, API key, or local llama.cpp).
+
+| | |
+| --- | --- |
+| **Need** | Windows 11 x64 · PowerShell · Git · [`uv`](https://docs.astral.sh/uv/) · Python 3.11–3.13 |
+| **Also need Node?** | Only when building Desktop from source |
+| **How long?** | Commands fit in ~30 seconds of reading; first `uv sync` / native builds take longer |
+
+```powershell
+git clone https://github.com/zapabob/hermes-agent-windows.git
+Set-Location hermes-agent-windows
+uv sync --locked --all-extras
+uv run hermes setup
+uv run hermes chat
+```
+
+| Goal | Command / link |
+| --- | --- |
+| Open Desktop from the same checkout | `uv run hermes desktop` |
+| Installer or portable ZIP | Confirm the asset on [Releases](https://github.com/zapabob/hermes-agent-windows/releases), verify `SHA256SUMS.txt`, then follow [docs/windows/INSTALL.md](docs/windows/INSTALL.md) |
+| Full Windows procedure | [docs/windows/INSTALL.md](docs/windows/INSTALL.md) |
+| Restart the workstation stack | `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\windows\Restart-HermesFullStack.ps1` (Documents checkout only — **never** `.worktrees/`) |
+
+> A push to `main` is **not** proof that a stable installer was published.
+
+---
+
 ## At a glance
 
 | You get | You keep |
@@ -51,41 +83,6 @@ Version `0.23.0` is the **downstream product identity**. It does **not** claim
 blanket semantic parity with every later upstream commit. Open semantic-refresh
 families stay open until source, tests, mutation evidence, CodeGraph and review
 are closed. See [Version & provenance](#version--provenance).
-
----
-
-## Quick start (source route)
-
-**Requirements:** Windows 11 x64 · PowerShell · Git · [`uv`](https://docs.astral.sh/uv/) · Python 3.11–3.13  
-Node.js is required only when building Desktop from source.
-
-```powershell
-git clone https://github.com/zapabob/hermes-agent-windows.git
-Set-Location hermes-agent-windows
-uv sync --locked --all-extras
-uv run hermes setup
-uv run hermes chat
-```
-
-Same checkout, packaged Desktop flow:
-
-```powershell
-uv run hermes desktop
-```
-
-Installer / portable ZIP: confirm the asset on
-[Releases](https://github.com/zapabob/hermes-agent-windows/releases), verify
-`SHA256SUMS.txt`, then follow
-[docs/windows/INSTALL.md](docs/windows/INSTALL.md).
-
-> First `uv sync` and native builds take longer than the command list suggests.
-> A push to `main` is **not** proof that a stable installer was published.
-
-Workstation restart from the Documents checkout only — **never** from `.worktrees/`:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\windows\Restart-HermesFullStack.ps1
-```
 
 ---
 
@@ -253,6 +250,9 @@ Snapshot inventory: [`docs/windows/INTEGRATIONS.md`](docs/windows/INTEGRATIONS.m
 ---
 
 ## Install & Desktop build
+
+The fastest path is [Setup in 30 seconds](#setup-in-30-seconds). Below is the
+same source route with an explicit `--version` check and Desktop build steps.
 
 ```powershell
 git clone https://github.com/zapabob/hermes-agent-windows.git
