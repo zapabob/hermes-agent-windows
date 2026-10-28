@@ -209,6 +209,12 @@ matrix = ["mautrix[encryption]==0.21.1", "aiosqlite==0.22.1", "asyncpg==0.31.0",
 # and XXE. aiohttp/httpx are already in [messaging]; defusedxml lands
 # here to keep the dependency local to wecom_callback's threat model.
 wecom = ["defusedxml==0.7.1"]
+# Opt-in OS-keychain storage for the local credential vault key
+# (vault.key_storage: keychain). Lazy-installed by
+# `hermes vault key migrate --to keychain` via tools/lazy_deps.py
+# (`vault.keychain`), so NOT in [all]. Package pin matches upstream
+# NousResearch/hermes-agent keychain extra (keyring==25.7.0).
+keychain = ["keyring==25.7.0"]
 tts-premium = ["elevenlabs==1.59.0"]
 voice = [
   # Local STT pulls in wheel-only transitive deps (ctranslate2, onnxruntime).

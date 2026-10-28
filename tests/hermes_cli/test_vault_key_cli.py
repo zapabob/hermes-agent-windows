@@ -13,6 +13,7 @@ import pytest
 from agent import vault_keychain
 from agent.vault_store import VaultStore
 from hermes_cli import config as hermes_config
+from hermes_cli import vault as vault_cli
 from hermes_cli.vault import register_cli, vault_command
 
 _LOGIN = {"identifier_type": "email", "identifier": "jane@example.com", "password": "dummy-pw-not-real-42"}
@@ -38,6 +39,8 @@ class MemoryKeychain:
 def keychain(monkeypatch) -> MemoryKeychain:
     backend = MemoryKeychain()
     monkeypatch.setattr(vault_keychain, "os_keyring", lambda: backend)
+    # Unit tests inject a memory keychain; skip the real keyring lazy-install path.
+    monkeypatch.setattr(vault_cli, "_ensure_keychain_extra", lambda _c: True)
     return backend
 
 
@@ -79,6 +82,7 @@ def test_a_refused_migration_exits_nonzero_and_changes_neither_key_nor_setting(m
         raise vault_keychain.KeychainUnavailable("no OS keychain is reachable from this session")
 
     monkeypatch.setattr(vault_keychain, "os_keyring", refuse)
+    monkeypatch.setattr(vault_cli, "_ensure_keychain_extra", lambda _c: True)
     store = VaultStore()
     item = store.add_item("login", "Example", dict(_LOGIN), origin="https://example.com").id
     with pytest.raises(SystemExit) as excinfo:
@@ -95,3 +99,32 @@ def test_migrate_before_any_vault_exists_only_records_the_setting(keychain, caps
     assert "No vault key exists yet" in capsys.readouterr().out
     assert _configured() == "keychain"
     assert keychain.entries == {}
+
+
+def test_migrate_aborts_when_keychain_extra_cannot_be_installed(monkeypatch, capsys):
+    monkeypatch.setattr(vault_cli, "_ensure_keychain_extra", lambda _c: False)
+    store = VaultStore()
+    item = store.add_item("login", "Example", dict(_LOGIN), origin="https://example.com").id
+    _run("key", "migrate", "--to", "keychain")
+    assert store.key_location()["storage"] == "file"
+    assert _configured() == "file"
+    assert VaultStore().resolve_secret(item)["password"] == _LOGIN["password"]
+
+
+def test_ensure_keychain_extra_surfaces_feature_unavailable(monkeypatch, capsys):
+    from tools.lazy_deps import FeatureUnavailable
+
+    class _C:
+        def print(self, *args, **kwargs):
+            print(*args)
+
+    monkeypatch.setattr("tools.lazy_deps.is_available", lambda _f: False)
+
+    def _boom(feature, prompt=True):
+        raise FeatureUnavailable(feature, ("keyring==25.7.0",), "blocked in test")
+
+    monkeypatch.setattr("tools.lazy_deps.ensure", _boom)
+    assert vault_cli._ensure_keychain_extra(_C()) is False
+    out = capsys.readouterr().out
+    assert "keychain feature is not installed" in out
+    assert "uv sync --extra keychain" in out
