@@ -351,11 +351,18 @@ class TestReadmeNoLongerSaysWindowsUnsupported:
     def test_readme_uses_downstream_source_installation(self):
         root = Path(__file__).resolve().parents[2]
         source = (root / "README.md").read_text(encoding="utf-8")
-        normalized = " ".join(source.split())
+        # Contract: newcomers get a downstream clone + 30-second setup path,
+        # release assets are pointed at this fork's Releases, and the upstream
+        # installer is not presented as installing this downstream. Assert the
+        # install route and ownership split — not a frozen marketing sentence.
         assert "git clone https://github.com/zapabob/hermes-agent-windows.git" in source
-        assert "The release pipeline can produce an NSIS installer and portable ZIP." in normalized
-        assert "The official upstream installer targets the upstream distribution" in normalized
+        assert "## Setup in 30 seconds" in source
+        assert "uv run hermes setup" in source
+        assert "uv run hermes chat" in source
         assert "https://github.com/zapabob/hermes-agent-windows/releases" in source
+        assert "docs/windows/INSTALL.md" in source
+        assert "SHA256SUMS.txt" in source
+        assert "do not install or endorse this downstream" in source
         assert "no verified fork-specific binary installer" not in source
 
 

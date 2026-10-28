@@ -224,8 +224,9 @@ Guide: [`scripts/windows/watchdog-go/README.md`](scripts/windows/watchdog-go/REA
 uv run hermes plugins
 ```
 
-Representative families (counts change; runtime enablement depends on profile +
-credentials):
+Families live under `plugins/` (including `plugins/model-providers/`,
+`plugins/memory/`, `plugins/platforms/`, `plugins/web/`). Counts change; runtime
+enablement depends on profile + credentials.
 
 | Area | Examples |
 | --- | --- |
@@ -305,9 +306,10 @@ Built-in updater shape:
 - Provider base URLs are masked before logs; children receive bounded env maps.
 
 **Control MCP:** auth / journal / coordinator contracts exist, but **production
-write remains DISABLED** until host grant-revocation, linearisation, trusted
-producer binding and writer fences are all closed. Tests alone do not authorise
-enabling that path. See
+write remains DISABLED**. Open gates still include **N07-A1**, **T06** and
+**T12** (host grant-revocation writer, grant/claim/effect linearisation, trusted
+producer binding, separate apply approval and writer fence). Tests alone do not
+authorise enabling that path. See
 [`docs/control-mcp/IMPLEMENTATION_LOG.md`](docs/control-mcp/IMPLEMENTATION_LOG.md).
 
 ---

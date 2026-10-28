@@ -189,7 +189,8 @@ Go watchdog 负责观测，以及管理**它自己启动**的 embedding。不得
 uv run hermes plugins
 ```
 
-代表性家族（数量会变；是否启用取决于 profile 与凭据）：
+位于 `plugins/`（含 `plugins/model-providers/`、`plugins/memory/`、
+`plugins/platforms/`、`plugins/web/`）。数量会变；是否启用取决于 profile 与凭据。
 
 | 领域 | 示例 |
 | --- | --- |
@@ -267,7 +268,8 @@ npm run build --workspace apps/desktop
 - provider base URL 在写入日志前会掩码；子进程只接收有界环境变量。
 
 **Control MCP：** 已有 auth / journal / coordinator 契约，但 **生产写入仍为 DISABLED**。
-在 host grant-revocation、线性化、可信生产者绑定与 writer fence 全部关闭前不得启用。
+未关闭的门禁仍包括 **N07-A1**、**T06**、**T12**（host grant-revocation writer、
+grant/claim/effect 线性化、可信生产者绑定、单独 apply 批准与 writer fence）。
 仅凭测试通过不能授权该写入路径。见
 [`docs/control-mcp/IMPLEMENTATION_LOG.md`](docs/control-mcp/IMPLEMENTATION_LOG.md)。
 

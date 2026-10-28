@@ -195,7 +195,9 @@ Go watchdog は観測と、**自ら起動した** embedding の管理まで。De
 uv run hermes plugins
 ```
 
-代表例（件数は変動。有効化は profile と credential 次第）:
+`plugins/` 配下（`plugins/model-providers/`、`plugins/memory/`、
+`plugins/platforms/`、`plugins/web/` を含む）。件数は変動。有効化は profile と
+credential 次第。
 
 | 領域 | 例 |
 | --- | --- |
@@ -272,8 +274,9 @@ npm run build --workspace apps/desktop
 - provider base URL はログ前にマスク。子プロセスは制限された環境変数のみ受け取る。
 
 **Control MCP:** auth / journal / coordinator 契約はあるが、**production write は
-DISABLED**。host grant-revocation・線形化・trusted producer・writer fence がすべて
-閉じるまで有効化しない。テスト合格だけでは許可にならない。  
+DISABLED**。未完ゲートは **N07-A1**、**T06**、**T12**（host grant-revocation writer、
+grant/claim/effect 線形化、trusted producer、別 apply 承認、writer fence）を含む。
+テスト合格だけでは有効化を許可しない。  
 [`docs/control-mcp/IMPLEMENTATION_LOG.md`](docs/control-mcp/IMPLEMENTATION_LOG.md)
 
 ---

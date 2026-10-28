@@ -10,33 +10,28 @@ README = (ROOT / "README.md").read_text(encoding="utf-8")
 
 def test_readme_has_downstream_identity_and_attribution() -> None:
     assert README.startswith("# Hermes Agent Windows Workstation Edition\n")
-    assert "An unofficial, Windows-native downstream of Hermes Agent" in README
-    assert "This single-maintainer fork is independent of" in README
-    assert "not endorsed by, Nous Research" in README
-    assert (
-        "The original Hermes Agent is developed by Nous Research and licensed under MIT."
-        in README
-    )
+    assert "Unofficial Windows-native downstream" in README
+    assert "Not affiliated with or endorsed by Nous Research" in README
+    assert "Hermes Agent is developed by Nous Research under the MIT Licence" in README
+    assert "[MIT licence](LICENSE)" in README or "[MIT License](LICENSE)" in README
 
 
 def test_readme_uses_required_section_order() -> None:
     headings = [
-        "## 1. Product identity",
-        "## 2. Windows-first goals",
-        "## 3. Who this is for",
-        "## 4. Downstream advantages",
-        "## 5. Verified feature matrix",
-        "## 6. Windows Tier-1 support contract",
-        "## 7. Local AI architecture",
-        "## 8. Watchdog and recovery architecture",
-        "## 9. Memory and semantic retrieval",
-        "## 10. VRChat, Unity, and voice integrations",
-        "## 11. Installation",
-        "## 12. Update and upstream integration policy",
-        "## 13. Architecture",
-        "## 14. Security",
-        "## 15. Upstream project",
-        "## 16. License and attribution",
+        "## Setup in 30 seconds",
+        "## At a glance",
+        "## Surfaces",
+        "## What's new in 0.23.0",
+        "## Why this fork exists",
+        "## Architecture in brief",
+        "## Ownership & recovery",
+        "## Plug-ins & submodules",
+        "## Install & Desktop build",
+        "## Version & provenance",
+        "## Security",
+        "## Docs map",
+        "## Upstream project",
+        "## Licence & attribution",
     ]
     positions = [README.index(heading) for heading in headings]
     assert positions == sorted(positions)
@@ -48,18 +43,21 @@ def test_readme_exposes_verified_windows_install_surfaces() -> None:
     assert "https://github.com/zapabob/hermes-agent-windows/releases" in README
     assert "installer" in README.lower()
     assert "portable" in README.lower()
-    assert f"Current source version: {load_distribution().version}." in README
+    assert f"**Source version: {load_distribution().version}**" in README
     assert "docs/windows/INSTALL.md" in README
+    assert "SHA256SUMS.txt" in README
     assert "curl -fsSL https://raw.githubusercontent.com/NousResearch" not in README
-    assert "The official upstream installer targets the upstream distribution" in normalized
-    assert "<details open>" in README
-    assert "<summary><strong>日本語</strong>" in README
-    assert "<summary><strong>简体中文</strong>" in README
-    assert "## Plug-ins and Git submodules" in README
+    assert "do not install or endorse this downstream" in normalized
+    assert "README.ja.md" in README
+    assert "README.zh-CN.md" in README
+    assert "## Plug-ins & submodules" in README
     assert "uv run hermes plugins" in README
     assert "docs/windows/INTEGRATIONS.md" in README
     assert "plugins/model-providers/" in README
     assert "production write remains DISABLED" in normalized
+    assert "N07-A1" in README
+    assert "T06" in README
+    assert "T12" in README
 
 
 def test_readme_preserves_upstream_identity() -> None:
@@ -71,13 +69,13 @@ def test_readme_preserves_upstream_identity() -> None:
 def test_translated_readmes_keep_distribution_metadata_in_parity() -> None:
     localized_quick_start = {
         "README.md": "## Setup in 30 seconds",
-        "README.ja.md": "## 30秒でわかる導入",
-        "README.zh-CN.md": "## 30 秒看懂安装",
+        "README.ja.md": "## 30秒でわかる TL;DR と導入",
+        "README.zh-CN.md": "## 30 秒看懂：TL;DR 与安装",
     }
     localized_inventory = {
-        "README.md": "## Plug-ins and Git submodules",
-        "README.ja.md": "## プラグインとGitサブモジュール",
-        "README.zh-CN.md": "## 插件与Git子模块",
+        "README.md": "## Plug-ins & submodules",
+        "README.ja.md": "## プラグインとサブモジュール",
+        "README.zh-CN.md": "## 插件与子模块",
     }
     for name, quick_start_heading in localized_quick_start.items():
         content = (ROOT / name).read_text(encoding="utf-8")
@@ -106,7 +104,7 @@ def test_translated_readmes_keep_distribution_metadata_in_parity() -> None:
             "T06",
             "T12",
         ):
-            assert value in content, f"{name}: {value}"
-        assert quick_start_heading in content
-        assert "TL;DR" in content
-        assert localized_inventory[name] in content
+            assert value in content, f"{name}: missing {value!r}"
+        assert quick_start_heading in content, f"{name}: missing {quick_start_heading!r}"
+        assert "TL;DR" in content or "TLDR" in content, f"{name}: missing TL;DR"
+        assert localized_inventory[name] in content, f"{name}: missing inventory heading"
