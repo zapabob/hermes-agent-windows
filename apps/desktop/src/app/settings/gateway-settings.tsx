@@ -159,6 +159,7 @@ export function GatewaySettings({ embedded = false }: { embedded?: boolean } = {
   if (!hostHas('gatewayManagement')) {
     return <WebappGatewaySettings embedded={embedded} />
   }
+
   return <NativeGatewaySettings embedded={embedded} />
 }
 

@@ -4,11 +4,7 @@
  */
 import { describe, expect, it } from 'vitest'
 
-import {
-  bindBrowserSurface,
-  type BrowserSurfaceBinding,
-  rejectStaleProfileResponse,
-} from './webapp-port-profile'
+import { bindBrowserSurface, type BrowserSurfaceBinding, rejectStaleProfileResponse } from './webapp-port-profile'
 
 describe('webapp-port profile binding', () => {
   it('binds stored and logical ids to one profile name', () => {
@@ -16,8 +12,9 @@ describe('webapp-port profile binding', () => {
       profile: 'coder',
       storedSessionId: 'sess-stored-1',
       logicalSessionId: 'sess-logical-1',
-      generation: 'gen-a',
+      generation: 'gen-a'
     })
+
     expect(binding.profile).toBe('coder')
     expect(binding.storedSessionId).toBe('sess-stored-1')
     expect(binding.logicalSessionId).toBe('sess-logical-1')
@@ -29,8 +26,9 @@ describe('webapp-port profile binding', () => {
       profile: 'coder',
       storedSessionId: 'a',
       logicalSessionId: 'a',
-      generation: 'g1',
+      generation: 'g1'
     }
+
     const delayed = { ...live, profile: 'writer', generation: 'g1' }
     expect(rejectStaleProfileResponse(live, delayed)).toBe(true)
   })
@@ -40,8 +38,9 @@ describe('webapp-port profile binding', () => {
       profile: 'coder',
       storedSessionId: 'a',
       logicalSessionId: 'a',
-      generation: 'g1',
+      generation: 'g1'
     }
+
     expect(rejectStaleProfileResponse(live, { ...live, generation: 'g2' })).toBe(true)
     expect(rejectStaleProfileResponse(live, live)).toBe(false)
   })
@@ -51,14 +50,16 @@ describe('webapp-port profile binding', () => {
       profile: 'coder',
       storedSessionId: 'shared-store',
       logicalSessionId: 'tab-1',
-      generation: 'g1',
+      generation: 'g1'
     })
+
     const tab2 = bindBrowserSurface({
       profile: 'coder',
       storedSessionId: 'shared-store',
       logicalSessionId: 'tab-2',
-      generation: 'g1',
+      generation: 'g1'
     })
+
     expect(tab1.storedSessionId).toBe(tab2.storedSessionId)
     expect(tab1.logicalSessionId).not.toBe(tab2.logicalSessionId)
   })

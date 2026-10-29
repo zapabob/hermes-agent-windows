@@ -1019,8 +1019,7 @@ export const en: Translations = {
         restartGateway: 'Restart gateway',
         modeLan: 'This network',
         modeLanDetail: url => `Devices on your Wi-Fi open ${url}. Use it only on a network you trust.`,
-        lanUnencrypted:
-          'The connection is not encrypted: others on this network could read what you send and receive.',
+        lanUnencrypted: 'The connection is not encrypted: others on this network could read what you send and receive.',
         noLan: 'This computer has no network address other devices can reach.',
         modePublic: 'My own URL',
         modePublicDetail: port =>
