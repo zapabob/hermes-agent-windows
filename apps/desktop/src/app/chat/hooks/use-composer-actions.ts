@@ -114,10 +114,7 @@ export async function stageDroppedFilePath(candidate: DroppedFile): Promise<stri
 
 /** Stage a drop for the main composer's chips. A rejected stage keeps its
  * reason in the failure the drop warning shows, not a bare "Could not attach". */
-async function stageDropForChip(
-  candidate: DroppedFile,
-  name: string
-): Promise<{ failure: DropFailure; path: string }> {
+async function stageDropForChip(candidate: DroppedFile, name: string): Promise<{ failure: DropFailure; path: string }> {
   try {
     return { failure: { name }, path: await stageDroppedFilePath(candidate) }
   } catch (error) {
@@ -349,9 +346,7 @@ export function useComposerActions({
           : undefined
 
       const displayName =
-        attachment.kind === 'file' &&
-        attachment.path &&
-        attachment.label === pathLabel(attachment.path)
+        attachment.kind === 'file' && attachment.path && attachment.label === pathLabel(attachment.path)
           ? window.hermesDesktop?.getStagedFileDisplayName?.(attachment.path)
           : undefined
 
@@ -808,25 +803,28 @@ export function useComposerActions({
     [activeSessionId, requestGateway, scope]
   )
 
-  const attachPastedText = useCallback(async (text: string) => {
-    const trimmed = text.trim()
+  const attachPastedText = useCallback(
+    async (text: string) => {
+      const trimmed = text.trim()
 
-    if (!trimmed) {
-      return
-    }
+      if (!trimmed) {
+        return
+      }
 
-    const path = (await window.hermesDesktop?.savePastedText?.(trimmed)) || ''
-    const staged = path ? window.hermesDesktop?.getStagedFileForAttach?.(path) : undefined
+      const path = (await window.hermesDesktop?.savePastedText?.(trimmed)) || ''
+      const staged = path ? window.hermesDesktop?.getStagedFileForAttach?.(path) : undefined
 
-    attachToMain({
-      id: path || `pasted:${createComposerAttachmentOccurrenceId()}`,
-      occurrenceId: createComposerAttachmentOccurrenceId(),
-      kind: 'file',
-      label: window.hermesDesktop?.getStagedFileDisplayName?.(path) || 'pasted.txt',
-      path: path || undefined,
-      ...(staged ? { stagedUpload: staged } : {})
-    })
-  }, [attachToMain])
+      attachToMain({
+        id: path || `pasted:${createComposerAttachmentOccurrenceId()}`,
+        occurrenceId: createComposerAttachmentOccurrenceId(),
+        kind: 'file',
+        label: window.hermesDesktop?.getStagedFileDisplayName?.(path) || 'pasted.txt',
+        path: path || undefined,
+        ...(staged ? { stagedUpload: staged } : {})
+      })
+    },
+    [attachToMain]
+  )
 
   return {
     addContextRefAttachment,

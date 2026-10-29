@@ -334,6 +334,7 @@ export function captureGatewayFileDownload() {
   // Capture the request profile/connection at bind time so a later foreground
   // switch cannot steal a download that was started against another backend.
   const { connectionId, profile } = capabilityScoped()
+
   const owner = {
     connectionId: connectionId ?? null,
     profile: profile?.trim() || 'default'
