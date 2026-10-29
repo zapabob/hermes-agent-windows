@@ -39,6 +39,9 @@ const PY_PATH = 'from hermes_cli.ui_preferences import store_path; print(store_p
 const electronStorePath = (home: string, hermesHome: string) =>
   uiPreferencesPath(uiPreferencesRoot(resolveDesktopHermesHome({ env: { HERMES_HOME: hermesHome }, home })))
 
+/** Match `uiPreferencesRoot`: Windows short vs long TEMP paths must compare equal. */
+const nativeReal = (p: string) => fs.realpathSync.native(p)
+
 test('native Desktop and the Webapp server resolve the same store from a profile home', () => {
   const home = scratchHome()
   const root = path.join(home, 'custom-root')
@@ -53,8 +56,9 @@ test('native Desktop and the Webapp server resolve the same store from a profile
     env: pythonEnv(home, profileHome)
   }).trim()
 
-  assert.equal(electronFile, path.join(fs.realpathSync(root), 'ui-preferences.json'))
-  assert.equal(pythonFile, electronFile)
+  assert.equal(electronFile, path.join(nativeReal(root), 'ui-preferences.json'))
+  assert.equal(nativeReal(path.dirname(pythonFile)), nativeReal(path.dirname(electronFile)))
+  assert.equal(path.basename(pythonFile), path.basename(electronFile))
 })
 
 test.skipIf(process.platform === 'win32')(
@@ -74,8 +78,9 @@ test.skipIf(process.platform === 'win32')(
       env: pythonEnv(home, profileHome)
     }).trim()
 
-    assert.equal(electronStorePath(home, profileHome), path.join(fs.realpathSync(root), 'ui-preferences.json'))
-    assert.equal(pythonFile, electronStorePath(home, profileHome))
+    assert.equal(electronStorePath(home, profileHome), path.join(nativeReal(root), 'ui-preferences.json'))
+    assert.equal(nativeReal(path.dirname(pythonFile)), nativeReal(path.dirname(electronStorePath(home, profileHome))))
+    assert.equal(path.basename(pythonFile), path.basename(electronStorePath(home, profileHome)))
   }
 )
 
@@ -92,8 +97,9 @@ test('a custom home inside the default home resolves the same store on both side
     env: pythonEnv(home, sandbox)
   }).trim()
 
-  assert.equal(electronFile, path.join(fs.realpathSync(sandbox), 'ui-preferences.json'))
-  assert.equal(fs.realpathSync(path.dirname(pythonFile)), fs.realpathSync(path.dirname(electronFile)))
+  assert.equal(electronFile, path.join(nativeReal(sandbox), 'ui-preferences.json'))
+  assert.equal(nativeReal(path.dirname(pythonFile)), nativeReal(path.dirname(electronFile)))
+  assert.equal(path.basename(pythonFile), path.basename(electronFile))
 })
 
 test('concurrent native and Webapp writers keep every key the other wrote', async () => {

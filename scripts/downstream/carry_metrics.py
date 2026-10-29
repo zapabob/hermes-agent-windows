@@ -204,7 +204,11 @@ def main() -> int:
             JSON_REPORT.read_text(encoding="utf-8") != json_text
             or MD_REPORT.read_text(encoding="utf-8") != md_text
         ):
+            stored = json.loads(JSON_REPORT.read_text(encoding="utf-8"))
+            computed = json.loads(json_text)
             print("Carry metrics are stale. Regenerate without --check.")
+            print(f"stored summary:   {stored.get('summary')}")
+            print(f"computed summary: {computed.get('summary')}")
             return 1
         print("Carry metrics are current.")
         return 0

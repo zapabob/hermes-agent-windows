@@ -35,12 +35,20 @@ jobs:
         run: |
           $snapshot = Get-Content -Raw -LiteralPath .codex/UPSTREAM_SNAPSHOT.json | ConvertFrom-Json
           $snapshotSha = [string]$snapshot.upstream_head_sha
-          git cat-file -e "$snapshotSha^{commit}" 2>$null
-          if ($LASTEXITCODE -ne 0) {
-            git fetch --no-tags https://github.com/NousResearch/hermes-agent.git $snapshotSha
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          }
+          $mergeBase = [string]$snapshot.merge_base_sha
+          # Tip alone is not enough: carry CWC walks merge_base..upstream frequencies.
+          git fetch --no-tags https://github.com/NousResearch/hermes-agent.git `
+            "+${mergeBase}:refs/hermes-carry/merge-base" `
+            "+${snapshotSha}:refs/hermes-carry/upstream"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git cat-file -e "$snapshotSha^{commit}"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git cat-file -e "$mergeBase^{commit}"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $rangeCount = [int](git rev-list --count "${mergeBase}..${snapshotSha}")
+          if ($rangeCount -lt 1) {
+            throw "Frozen upstream range ${mergeBase}..${snapshotSha} is empty or incomplete"
+          }
       - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
         with:
           version: ${{ env.UV_VERSION }}
