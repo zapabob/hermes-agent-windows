@@ -13,9 +13,11 @@ type WindowStub = {
 
 function ensureWindow(): WindowStub {
   const g = globalThis as { window?: WindowStub; document?: WindowStub['document'] }
+
   if (!g.window?.addEventListener) {
     const dataset: Record<string, string> = {}
     const document = { documentElement: { dataset } }
+
     const stub: WindowStub = {
       addEventListener() {},
       removeEventListener() {},
@@ -25,25 +27,27 @@ function ensureWindow(): WindowStub {
         removeItem() {},
         clear() {},
         key: () => null,
-        length: 0,
+        length: 0
       } as Storage,
       location: {
         origin: 'http://127.0.0.1:9120',
         href: 'http://127.0.0.1:9120/',
-        pathname: '/',
+        pathname: '/'
       } as WindowStub['location'],
-      document: document as unknown as WindowStub['document'],
+      document: document as unknown as WindowStub['document']
     }
+
     g.window = stub
     g.document = stub.document
   }
+
   return g.window!
 }
 
 describe('webapp-port browser bridge install contract', () => {
   beforeEach(() => {
     ensureWindow()
-    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+
     delete ensureWindow().hermesDesktop
     vi.resetModules()
   })
@@ -51,7 +55,7 @@ describe('webapp-port browser bridge install contract', () => {
   afterEach(() => {
     vi.restoreAllMocks()
     vi.resetModules()
-    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+
     delete ensureWindow().hermesDesktop
   })
 
@@ -68,9 +72,10 @@ describe('webapp-port browser bridge install contract', () => {
   it('does not install when browser bootstrap is absent', async () => {
     vi.doMock('./browser-transport', async () => {
       const actual = await vi.importActual<typeof BrowserTransport>('./browser-transport')
+
       return {
         ...actual,
-        browserBootstrap: () => null,
+        browserBootstrap: () => null
       }
     })
     const { installBrowserDesktopBridge } = await import('./browser-desktop-bridge')
