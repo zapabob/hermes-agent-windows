@@ -7,8 +7,8 @@ import {
   type SyntaxHighlighterProps,
   tailBoundedRemend
 } from '@assistant-ui/react-streamdown'
-import type { code as streamdownCode } from '@streamdown/code'
 import { useStore } from '@nanostores/react'
+import type { code as streamdownCode } from '@streamdown/code'
 import { type ComponentProps, memo, useEffect, useMemo, useState } from 'react'
 
 import { useSessionView } from '@/app/chat/session-view'

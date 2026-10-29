@@ -341,14 +341,25 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           # filelock 4.1.0 is the newest release that still supports CPython 3.10;
           # fixes start at 4.2.1 (Python>=3.11) and this pilot is frozen on the
-          # cp310 Torch wheel, so these six IDs are accepted residual risk.
+          # cp310 Torch wheel, so these IDs are accepted residual risk.
           uvx --from pip-audit==2.10.1 pip-audit --strict --no-deps --disable-pip --requirement $requirements `
             --ignore-vuln CVE-2026-112906 `
-            --ignore-vuln CVE-2026-112940 `
-            --ignore-vuln CVE-2026-112914 `
+            --ignore-vuln CVE-2026-112907 `
+            --ignore-vuln CVE-2026-112908 `
+            --ignore-vuln CVE-2026-112909 `
+            --ignore-vuln CVE-2026-112910 `
+            --ignore-vuln CVE-2026-112911 `
+            --ignore-vuln CVE-2026-112912 `
             --ignore-vuln CVE-2026-112913 `
+            --ignore-vuln CVE-2026-112914 `
+            --ignore-vuln CVE-2026-112915 `
+            --ignore-vuln CVE-2026-112934 `
+            --ignore-vuln CVE-2026-112935 `
             --ignore-vuln CVE-2026-112937 `
-            --ignore-vuln CVE-2026-112907
+            --ignore-vuln CVE-2026-112938 `
+            --ignore-vuln CVE-2026-112939 `
+            --ignore-vuln CVE-2026-112940 `
+            --ignore-vuln CVE-2026-112941
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           uv python install 3.10
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
