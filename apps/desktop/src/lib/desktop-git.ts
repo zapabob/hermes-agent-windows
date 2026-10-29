@@ -111,11 +111,11 @@ const remoteGit: GitBridge = {
     historyDiff: async (repoPath, sha) =>
       (await gitGet<{ diff: string }>('review/history-diff', { path: repoPath, sha })).diff,
 
-    stage: (repoPath, filePath) => gitPost('review/stage', { file: filePath ?? null, path: repoPath }),
+    stage: (repoPath, filePath) => gitPost('review/stage', { file: filePath || null, path: repoPath }),
 
-    unstage: (repoPath, filePath) => gitPost('review/unstage', { file: filePath ?? null, path: repoPath }),
+    unstage: (repoPath, filePath) => gitPost('review/unstage', { file: filePath || null, path: repoPath }),
 
-    revert: (repoPath, filePath) => gitPost('review/revert', { file: filePath ?? null, path: repoPath }),
+    revert: (repoPath, filePath) => gitPost('review/revert', { file: filePath || null, path: repoPath }),
 
     revParse: async (repoPath, ref) =>
       (await gitGet<{ sha: null | string }>('review/rev-parse', { path: repoPath, ref })).sha,
@@ -148,5 +148,10 @@ export function desktopGit(): GitBridge | undefined {
     return undefined
   }
 
-  return isDesktopFsRemoteMode() ? remoteGit : window.hermesDesktop?.git
+  // Browser-hosted Desktop has no Electron git IPC; route through the same
+  // REST facade remote gateways use so worktrees/review hit the serving backend.
+  const browserHost =
+    typeof document !== 'undefined' && document.documentElement.dataset.hermesDesktopHost === 'browser'
+
+  return isDesktopFsRemoteMode() || browserHost ? remoteGit : window.hermesDesktop?.git
 }

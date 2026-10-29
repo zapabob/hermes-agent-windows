@@ -132,6 +132,8 @@ interface PreviewPaneProps {
   embedded?: boolean
   onRestartServer?: (url: string, context?: string) => Promise<string>
   reloadRequest?: number
+  /** Workspace/session owner for local-file FS reads on browser hosts. */
+  sessionId?: string
   /** The preview tab this pane renders. Keys the per-tab console store the
    *  browser bar's console toggle and the console panel both read. */
   tabId?: string
@@ -244,7 +246,14 @@ function PreviewLoadError({
   )
 }
 
-export function PreviewPane({ embedded = false, onRestartServer, reloadRequest = 0, tabId, target }: PreviewPaneProps) {
+export function PreviewPane({
+  embedded = false,
+  onRestartServer,
+  reloadRequest = 0,
+  sessionId,
+  tabId,
+  target
+}: PreviewPaneProps) {
   const { t } = useI18n()
   const copy = t.preview.web
   // The console store belongs to the TAB, not this render: the toggles live on
@@ -1340,7 +1349,7 @@ export function PreviewPane({ embedded = false, onRestartServer, reloadRequest =
             (target.kind === 'artifact' ? (
               <ArtifactPreview target={target} />
             ) : (
-              <LocalFilePreview reloadKey={localReloadKey} target={target} />
+              <LocalFilePreview reloadKey={localReloadKey} sessionId={sessionId} target={target} />
             ))}
           {isBlankPage && (
             <div className="absolute inset-0 grid bg-background">

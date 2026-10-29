@@ -265,9 +265,9 @@ function dataUrlToBlob(dataUrl: string) {
   return new Blob([bytes], { type: 'application/pdf' })
 }
 
-async function readTextPreview(filePath: string) {
+async function readTextPreview(filePath: string, sessionId?: string) {
   try {
-    return await readDesktopFileText(filePath)
+    return await readDesktopFileText(filePath, sessionId ? { sessionId } : undefined)
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
 
@@ -685,7 +685,7 @@ export type PreviewViewMode = 'diff' | 'rendered' | 'source'
 
 export function LocalFilePreview({
   reloadKey,
-  sessionId: _sessionId,
+  sessionId,
   target
 }: {
   reloadKey: number
@@ -774,7 +774,7 @@ export function LocalFilePreview({
           return
         }
 
-        const result = await readTextPreview(filePath)
+        const result = await readTextPreview(filePath, sessionId)
 
         if (active) {
           const shouldBlock = !forcePreview && (result.binary || (result.byteSize ?? 0) > TEXT_PREVIEW_MAX_BYTES)
@@ -963,7 +963,7 @@ export function LocalFilePreview({
       // choice. `force` is the user picking "overwrite" from that banner.
       if (!force) {
         try {
-          const current = await readTextPreview(filePath)
+          const current = await readTextPreview(filePath, sessionId)
 
           if (!current.binary && (current.text ?? '') !== baselineRef.current) {
             setConflict(true)
@@ -976,7 +976,7 @@ export function LocalFilePreview({
         }
       }
 
-      await writeDesktopFileText(filePath, draftRef.current)
+      await writeDesktopFileText(filePath, draftRef.current, sessionId ? { sessionId } : undefined)
       baselineRef.current = draftRef.current
       setDirty(false)
       setConflict(false)

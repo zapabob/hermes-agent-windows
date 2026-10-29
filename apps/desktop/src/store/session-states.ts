@@ -19,6 +19,7 @@
 import { LOCAL_CONNECTION_ID, registryBackendScopeKey } from '@hermes/shared'
 import { atom, computed } from 'nanostores'
 
+import { setSessionOwnerResolver } from '@/api/client'
 import type { ClientSessionState } from '@/app/types'
 import { findGroup, findGroupOfPane, type LayoutNode } from '@/components/pane-shell/tree/model'
 import {
@@ -982,6 +983,10 @@ export function knownOwnerForSession(sessionId: null | string | undefined): Sess
     knownSessionOwner(ownerLookupSessionRows(), storedSessionId)
   )
 }
+
+// Session-scoped REST/file reads resolve their profile/connection pin through
+// the same owner ladder as RPC dispatch.
+setSessionOwnerResolver(knownOwnerForSession)
 
 /**
  * Whether the connection that OWNS `sessionId` is remote — never the ambient

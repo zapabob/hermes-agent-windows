@@ -1,7 +1,32 @@
 import DOMPurify from 'dompurify'
 
-import { isDesktopFsRemoteMode, readDesktopFileDataUrl, readDesktopFileText } from '@/lib/desktop-fs'
+import { sessionFileOwnerScope } from '@/api/client'
+import {
+  type DesktopFsSessionScope,
+  type DesktopFsSourceScope,
+  isDesktopFsRemoteMode,
+  readDesktopFileDataUrl,
+  readDesktopFileText
+} from '@/lib/desktop-fs'
 import type { PreviewTarget } from '@/store/preview'
+
+function ownerFromSessionScope(scope?: DesktopFsSessionScope): DesktopFsSourceScope | undefined {
+  if (!scope) {
+    return undefined
+  }
+
+  if (scope.profile) {
+    return { connectionId: scope.connectionId ?? null, profile: scope.profile }
+  }
+
+  const sessionId = scope.sessionId?.trim()
+
+  if (!sessionId) {
+    return undefined
+  }
+
+  return sessionFileOwnerScope(sessionId) ?? undefined
+}
 
 const HTML_EXTENSIONS = new Set(['.htm', '.html'])
 const IMAGE_EXTENSIONS = new Set(['.bmp', '.gif', '.jpeg', '.jpg', '.png', '.svg', '.webp'])
@@ -220,7 +245,10 @@ export function localPreviewTarget(rawTarget: string, cwd?: string | null): Prev
   }
 }
 
-async function enrichPreviewTarget(target: PreviewTarget | null): Promise<PreviewTarget | null> {
+async function enrichPreviewTarget(
+  target: PreviewTarget | null,
+  scope?: DesktopFsSessionScope
+): Promise<PreviewTarget | null> {
   if (
     !isDesktopFsRemoteMode() ||
     !target ||
@@ -233,7 +261,9 @@ async function enrichPreviewTarget(target: PreviewTarget | null): Promise<Previe
 
   if (target.previewKind === 'html') {
     try {
-      const dataUrl = validatedRemoteHtmlDataUrl(await readDesktopFileDataUrl(target.path || target.source))
+      const dataUrl = validatedRemoteHtmlDataUrl(
+        await readDesktopFileDataUrl(target.path || target.source, ownerFromSessionScope(scope))
+      )
 
       return dataUrl ? { ...target, dataUrl } : { ...target, renderMode: 'source', transient: true }
     } catch {
@@ -242,7 +272,7 @@ async function enrichPreviewTarget(target: PreviewTarget | null): Promise<Previe
   }
 
   try {
-    const result = await readDesktopFileText(target.path || target.source)
+    const result = await readDesktopFileText(target.path || target.source, scope)
 
     return {
       ...target,
@@ -260,18 +290,18 @@ async function enrichPreviewTarget(target: PreviewTarget | null): Promise<Previe
 export async function normalizeOrLocalPreviewTarget(
   rawTarget: string,
   cwd?: string | null,
-  _scope?: { sessionId?: null | string }
+  scope?: DesktopFsSessionScope
 ): Promise<PreviewTarget | null> {
   try {
     const normalized = await window.hermesDesktop?.normalizePreviewTarget?.(rawTarget, cwd || undefined)
 
     if (normalized) {
-      return enrichPreviewTarget(normalized)
+      return enrichPreviewTarget(normalized, scope)
     }
   } catch {
     // Running Electron may still have the old HTML-only preview IPC. Fall
     // through to renderer-side local classification so text/images still open.
   }
 
-  return enrichPreviewTarget(localPreviewTarget(rawTarget, cwd))
+  return enrichPreviewTarget(localPreviewTarget(rawTarget, cwd), scope)
 }

@@ -24,7 +24,8 @@ export function PreviewTilePane({ tabId }: PreviewTilePaneProps) {
   const previewReloadRequest = useStore($previewReloadRequest)
   const previewTabs = useStore($previewTabs)
   const restartPreviewServer = useStore($restartPreviewServer)
-  const target = previewTabs.find(tab => tab.id === tabId)?.target
+  const tab = previewTabs.find(candidate => candidate.id === tabId)
+  const target = tab?.target
 
   // The tab closed while this pane was still mounted (the mirror disposes it a
   // tick later).
@@ -37,6 +38,7 @@ export function PreviewTilePane({ tabId }: PreviewTilePaneProps) {
       embedded
       onRestartServer={target.kind === 'url' ? (restartPreviewServer ?? undefined) : undefined}
       reloadRequest={previewReloadRequest}
+      sessionId={tab?.sessionId}
       tabId={tabId}
       target={target}
     />

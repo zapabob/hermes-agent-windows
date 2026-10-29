@@ -8,8 +8,10 @@ import {
   tailBoundedRemend
 } from '@assistant-ui/react-streamdown'
 import type { code as streamdownCode } from '@streamdown/code'
+import { useStore } from '@nanostores/react'
 import { type ComponentProps, memo, useEffect, useMemo, useState } from 'react'
 
+import { useSessionView } from '@/app/chat/session-view'
 import { ExpandableBlock } from '@/components/chat/expandable-block'
 import { PreviewAttachment } from '@/components/chat/preview-attachment'
 import { chunkByLines, SyntaxHighlighter } from '@/components/chat/shiki-highlighter'
@@ -104,12 +106,16 @@ function preprocessWithTailRepair(text: string): string {
 }
 
 function useOpenMediaFile(path: string) {
+  const view = useSessionView()
+  const storedId = useStore(view.$storedId)
+  const runtimeId = useStore(view.$runtimeId)
+  const sessionId = storedId || runtimeId || ''
   const [openFailed, setOpenFailed] = useState(false)
 
   const open = () => {
     if (window.hermesDesktop && isRemoteGateway()) {
       setOpenFailed(false)
-      void downloadGatewayMediaFile(path).catch(() => setOpenFailed(true))
+      void downloadGatewayMediaFile(path, sessionId ? { sessionId } : undefined).catch(() => setOpenFailed(true))
     } else {
       openExternalLink(mediaExternalUrl(path))
     }
@@ -149,6 +155,10 @@ function MediaAttachment({ path }: { path: string }) {
   const { open, openFailed } = useOpenMediaFile(path)
   const kind = mediaKind(path)
   const name = mediaName(path)
+  const view = useSessionView()
+  const storedId = useStore(view.$storedId)
+  const runtimeId = useStore(view.$runtimeId)
+  const sessionId = storedId || runtimeId || undefined
 
   useEffect(() => {
     let cancelled = false
@@ -165,7 +175,7 @@ function MediaAttachment({ path }: { path: string }) {
       }
     }
 
-    void resolveMediaPlaybackSrc(path)
+    void resolveMediaPlaybackSrc(path, undefined, sessionId)
       .then(value => {
         if (value.startsWith('blob:')) {
           objectUrl = value
@@ -190,7 +200,7 @@ function MediaAttachment({ path }: { path: string }) {
         URL.revokeObjectURL(objectUrl)
       }
     }
-  }, [kind, path])
+  }, [kind, path, sessionId])
 
   if (kind === 'image' && src) {
     return (

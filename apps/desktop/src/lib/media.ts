@@ -1,3 +1,4 @@
+import { capabilityScoped, sessionFileOwnerScope } from '@/api/client'
 import { type DesktopFsSourceScope, readDesktopFileDataUrl } from '@/lib/desktop-fs'
 import { capitalize } from '@/lib/text'
 import { $connection } from '@/store/session'
@@ -144,13 +145,17 @@ export async function resolveMediaPlaybackSrc(
   if (window.hermesDesktop && ['audio', 'video'].includes(mediaKind(path))) {
     if (window.hermesDesktop.getGatewayFileStreamUrl) {
       const conn = $connection.get()
-      const via = owner
+      // A session id only rides with the profile that owns it; unknown owners
+      // drop the session tag so the gateway does not 404 against the window profile.
+      const fileOwner = sessionId ? sessionFileOwnerScope(sessionId) : null
+      const via = fileOwner ?? owner
+      const namedSession = fileOwner ? sessionId : undefined
 
       return window.hermesDesktop.getGatewayFileStreamUrl({
         connectionId: via?.connectionId || conn?.connectionId,
         path,
         profile: via?.profile || conn?.profile,
-        ...(sessionId ? { sessionId } : {})
+        ...(namedSession ? { sessionId: namedSession } : {})
       })
     }
 
@@ -326,10 +331,12 @@ export async function downloadGatewayMediaFile(
 
 /** Capture a gateway file download alongside a REST read, never at click time. */
 export function captureGatewayFileDownload() {
-  const conn = $connection.get()
+  // Capture the request profile/connection at bind time so a later foreground
+  // switch cannot steal a download that was started against another backend.
+  const { connectionId, profile } = capabilityScoped()
   const owner = {
-    connectionId: conn?.connectionId ?? null,
-    profile: conn?.profile?.trim() || 'default'
+    connectionId: connectionId ?? null,
+    profile: profile?.trim() || 'default'
   }
 
   return (path: string, suggestedName: string) =>

@@ -30,13 +30,16 @@ import json
 import os
 import secrets
 import shutil
+import tempfile
 import threading
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Callable, Iterator, Mapping, Optional
+from typing import Any, Callable, Iterator, Mapping, Optional
 
-from utils import atomic_json_write
+# Stdlib-only write path: Desktop Electron tests invoke this module with bare
+# ``python3`` (no uv env), so importing ``utils`` (and thus PyYAML) would fail
+# Tier-1 / JS platform suites on a ModuleNotFoundError for ``yaml``.
 
 STORE_NAME = "ui-preferences.json"
 KEY_PREFIXES = ("hermes.desktop.", "hermes-desktop-", "hermes-onboarding-")
@@ -48,6 +51,36 @@ _LOCK_WAIT_S = 3.0
 _LOCK_STALE_S = 10.0
 _LOCK_POLL_S = 0.02
 _thread_lock = threading.Lock()
+
+
+def _atomic_json_write(path: Path, data: Any, *, mode: int | None = None) -> None:
+    """Atomically replace *path* with JSON *data* (temp + fsync + os.replace)."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(
+        dir=str(path.parent),
+        prefix=f".{path.stem}_",
+        suffix=".tmp",
+    )
+    try:
+        if mode is not None and hasattr(os, "fchmod"):
+            os.fchmod(fd, mode)
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            json.dump(data, handle, indent=2, ensure_ascii=False)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp_path, path)
+        if mode is not None:
+            try:
+                os.chmod(path, mode)
+            except OSError:
+                pass
+    except Exception:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
 
 
 class PreferencesError(ValueError):
@@ -228,6 +261,9 @@ def write_preferences(changes: Mapping[str, Optional[str]], *, seed: bool = Fals
         if corrupt:
             # Kept aside, never silently replaced: it may hold preferences worth recovering.
             shutil.copy2(path, path.with_name(f"{path.name}.corrupt-{int(time.time() * 1000)}"))
-        atomic_json_write(path, {"version": 1, "generation": generation, "revision": revision,
-                                 "values": values}, mode=0o600)
+        _atomic_json_write(
+            path,
+            {"version": 1, "generation": generation, "revision": revision, "values": values},
+            mode=0o600,
+        )
     return {"exists": True, "revision": revision, "values": values, "generation": generation}

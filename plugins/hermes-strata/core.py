@@ -21,18 +21,33 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 DEFAULT_STRATA_URL = "http://127.0.0.1:8080/v1"
+
+
+def _hermes_home() -> Path:
+    return Path(os.environ.get("HERMES_HOME") or Path.home() / ".hermes").expanduser()
+
+
+def _hakua_profile_root() -> Path:
+    override = os.environ.get("HAKUA_HERMES_PROFILE", "").strip()
+    if override:
+        return Path(override).expanduser()
+    hakua = Path(os.environ.get("HAKUA_MEMORY_HOME") or Path.home() / ".hakua-memory").expanduser()
+    principal = os.environ.get("HAKUA_HERMES_PRINCIPAL", "hermes").strip() or "hermes"
+    return hakua / "profiles" / principal
+
+
+# Prefer Hakua consented profile (SOT), then Hermes home. No hardcoded user paths.
 SOUL_PATHS = [
-    Path("C:/Users/downl/.hermes/SOUL.md"),
-    Path(os.path.expanduser("~/.hermes/SOUL.md")),
-    Path("C:/Users/downl/SOUL.md"),
-    Path(os.path.expanduser("~/SOUL.md")),
+    _hakua_profile_root() / "SOUL.md",
+    _hermes_home() / "SOUL.md",
+    Path.home() / "SOUL.md",
 ]
 MEMORY_PATHS = [
-    Path("C:/Users/downl/.hermes/memories/MEMORY.md"),
-    Path(os.path.expanduser("~/.hermes/memories/MEMORY.md")),
-    Path("C:/Users/downl/Documents/hermes-memory-vault/brain/MEMORY.md"),
+    _hakua_profile_root() / "MEMORY.md",
+    _hermes_home() / "memories" / "MEMORY.md",
+    _hermes_home() / "MEMORY.md",
 ]
-HAKUA_DIR = Path("C:/Users/downl/.hakua-memory")
+HAKUA_DIR = Path(os.environ.get("HAKUA_MEMORY_HOME") or Path.home() / ".hakua-memory").expanduser()
 
 
 def get_base_url() -> str:

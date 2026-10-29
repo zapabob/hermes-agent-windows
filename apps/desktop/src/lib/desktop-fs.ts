@@ -1,4 +1,4 @@
-import { hermesApi } from '@/api/client'
+import { hermesApi, sessionFileOwnerScope } from '@/api/client'
 import type {
   HermesConnection,
   HermesReadDirResult,
@@ -104,6 +104,31 @@ export interface DesktopFsSessionScope {
   sessionId?: null | string
 }
 
+/** Where a gateway file request goes. A session id travels only with the profile
+ *  that owns it; with no known owner the request names no session and goes to
+ *  the window's ambient profile. */
+function fsSessionRoute(scope?: DesktopFsSessionScope): {
+  owner?: DesktopFsSourceScope
+  sessionId?: string
+} {
+  const sessionId = scope?.sessionId?.trim() || undefined
+
+  if (scope?.profile) {
+    return {
+      owner: { connectionId: scope.connectionId ?? null, profile: scope.profile },
+      sessionId
+    }
+  }
+
+  if (!sessionId) {
+    return {}
+  }
+
+  const owner = sessionFileOwnerScope(sessionId)
+
+  return owner ? { owner, sessionId } : {}
+}
+
 export async function readDesktopFileText(
   path: string,
   scope?: DesktopFsSessionScope
@@ -112,15 +137,13 @@ export async function readDesktopFileText(
     return bridge().readFileText(path)
   }
 
-  const session = scope?.sessionId ? `&session_id=${encodeURIComponent(scope.sessionId)}` : ''
-  const owner: DesktopFsSourceScope | undefined = scope?.profile
-    ? { connectionId: scope.connectionId ?? null, profile: scope.profile }
-    : undefined
+  const route = fsSessionRoute(scope)
+  const session = route.sessionId ? `&session_id=${encodeURIComponent(route.sessionId)}` : ''
 
   return remoteFsApi<HermesReadFileTextResult>(
     `/api/fs/read-text?path=${encodeURIComponent(path)}${session}`,
     undefined,
-    owner
+    route.owner
   )
 }
 
@@ -143,18 +166,16 @@ export async function writeDesktopFileText(
     return desktop.writeTextFile(path, content)
   }
 
-  const owner: DesktopFsSourceScope | undefined = scope?.profile
-    ? { connectionId: scope.connectionId ?? null, profile: scope.profile }
-    : undefined
+  const route = fsSessionRoute(scope)
 
   const result = await remoteFsApi<{ ok?: boolean; path?: string }>(
     '/api/fs/write-text',
     {
       content,
       path,
-      ...(scope?.sessionId ? { session_id: scope.sessionId } : {})
+      ...(route.sessionId ? { session_id: route.sessionId } : {})
     },
-    owner
+    route.owner
   )
 
   return { path: result.path || path }

@@ -158,3 +158,52 @@ export function profileScopeKey(scope?: ProfileScope): string {
 export function getApiRequestConnection(): null | string {
   return _apiConnectionId
 }
+
+function ambientOwnerConnectionId(): string | undefined {
+  return _apiConnectionId || undefined
+}
+
+export interface SessionReadOwnerRoute {
+  connectionId?: null | string
+  profile?: null | string
+  targetProfile?: null | string
+}
+
+export type SessionOwnerResolver = (sessionId: string) => SessionReadOwnerRoute | null | string | undefined
+
+let _sessionOwnerResolver: SessionOwnerResolver | null = null
+
+export function setSessionOwnerResolver(resolver: SessionOwnerResolver | null): void {
+  _sessionOwnerResolver = resolver
+}
+
+/** The backend a gateway FILE request naming session `id` must go to: the owner's
+ *  backend-facing profile, plus its connection when that is not the ambient one.
+ *  Null when no owner profile is known. A file route looks `session_id` up in
+ *  the profile the request names, so the id must never travel with another
+ *  profile: a caller that gets null names no session at all. */
+export function sessionFileOwnerScope(id: string): { connectionId: null | string; profile: string } | null {
+  const owner = _sessionOwnerResolver?.(id)
+
+  if (!owner) {
+    return null
+  }
+
+  if (typeof owner === 'string') {
+    const profile = owner.trim()
+
+    return profile ? { connectionId: null, profile } : null
+  }
+
+  const profile = String(owner.targetProfile || owner.profile || '').trim()
+
+  if (!profile) {
+    return null
+  }
+
+  const connectionId = String(owner.connectionId ?? '').trim()
+
+  return connectionId && connectionId !== (ambientOwnerConnectionId() ?? 'local')
+    ? { connectionId, profile }
+    : { connectionId: null, profile }
+}

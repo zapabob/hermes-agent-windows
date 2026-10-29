@@ -433,6 +433,10 @@ override-dependencies = [
   # fal-client pulls msgpack; CVE-2026-114613 is fixed in 1.2.3. Keep the
   # floor so pip-audit / exclude-newer cannot regress the lock to 1.2.1.
   "msgpack>=1.2.3,<2",
+  # python-telegram-bot[webhooks] pulls tornado; CVE-2026-116577 / CVE-2026-115927 /
+  # CVE-2026-116578 are fixed in 6.6. Keep the floor so pip-audit cannot regress
+  # the optional webhook graph to 6.5.9.
+  "tornado>=6.6,<7",
 ]
 exclude-newer = "14 days"
 # aiohttp, cryptography: same shape — the advisory fixes are newer than the
@@ -457,7 +461,7 @@ exclude-newer = "14 days"
 # cutoff can still brick installs. Exempting exact pins is pure brick-risk
 # removal at no supply-chain cost. Guarded by
 # tests/test_packaging_metadata.py::test_build_system_requires_exempt_from_exclude_newer.
-exclude-newer-package = { vercel = false, nemo-relay = false, huggingface_hub = false, aiohttp = false, brotlicffi = false, filelock = false, cryptography = false, defusedxml = false, python-olm = false, unpaddedbase64 = false, setuptools = false, pillow = false, mcp = false, oauthlib = false, pyjwt = false, certifi = false }
+exclude-newer-package = { vercel = false, nemo-relay = false, huggingface_hub = false, aiohttp = false, brotlicffi = false, filelock = false, cryptography = false, defusedxml = false, python-olm = false, unpaddedbase64 = false, setuptools = false, pillow = false, mcp = false, oauthlib = false, pyjwt = false, certifi = false, tornado = false }
 
 [tool.setuptools]
 # Top-level single-file modules (not packages). Without this, uv2nix's
