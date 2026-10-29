@@ -8,6 +8,7 @@ import { Tip } from '@/components/ui/tooltip'
 import type { DesktopAuthProvider, DesktopCloudAgent, DesktopCloudOrg, DesktopConnectionProbeResult } from '@/global'
 import { useI18n } from '@/i18n'
 import { ExternalLink } from '@/lib/external-link'
+import { hostHas } from '@/lib/host-capabilities'
 import {
   AlertCircle,
   Check,
@@ -21,7 +22,6 @@ import {
   RefreshCw,
   Terminal
 } from '@/lib/icons'
-import { hostHas } from '@/lib/host-capabilities'
 import { coerceRemoteUrlScheme } from '@/lib/remote-url'
 import { selectableCardClass } from '@/lib/selectable-card'
 import { cn } from '@/lib/utils'

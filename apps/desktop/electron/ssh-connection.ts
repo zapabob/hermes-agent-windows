@@ -36,6 +36,8 @@ import net from 'node:net'
 import os from 'node:os'
 import path from 'node:path'
 
+import { platformDefaultHermesHome } from './data-paths'
+
 const DEFAULT_CONNECT_TIMEOUT_MS = 15_000
 const DEFAULT_EXEC_TIMEOUT_MS = 20_000
 const DEFAULT_FORWARD_TIMEOUT_MS = 15_000
@@ -189,14 +191,26 @@ function controlSocketPath(user, host, port, baseDir?, identity: any = {}) {
   return path.join(dir, `${id}.sock`)
 }
 
-function defaultControlDir() {
+function shortControlDir(): string {
+  // no-tmp: ok — AF_UNIX's short path budget rules out a deep HOME/TMPDIR; the parent and child are checked before use.
+  return `/tmp/hermes-ssh-${process.getuid!()}`
+}
+
+function defaultControlDir(): string {
   // POSIX: a SHORT, PER-USER base stays under the socket limit AND avoids a
   // world-shared /tmp dir (no symlink-hijack surface). Created 0700 in open().
+  // Honor HERMES_DATA_DIR_SUFFIX via platformDefaultHermesHome so CI/isolation
+  // sockets never collide with a developer's real ~/.hermes.
   if (process.platform === 'win32') {
     return path.join(os.tmpdir(), 'hermes-desktop-ssh')
   }
 
-  return path.join(os.homedir(), '.hermes', 'desktop-ssh')
+  const homeDir = path.join(platformDefaultHermesHome(os.homedir()), 'desktop-ssh')
+
+  // Include the filename and OpenSSH's temporary-listener suffix in the byte budget.
+  return Buffer.byteLength(path.join(homeDir, '0123456789abcdef.sock.0123456789abcdef')) <= 104
+    ? homeDir
+    : shortControlDir()
 }
 
 // Command construction (pure — the unit tests exercise these directly)

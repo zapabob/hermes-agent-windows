@@ -6,8 +6,8 @@ import { describe, expect, it } from 'vitest'
 
 import {
   bindBrowserSurface,
-  rejectStaleProfileResponse,
   type BrowserSurfaceBinding,
+  rejectStaleProfileResponse,
 } from './webapp-port-profile'
 
 describe('webapp-port profile binding', () => {

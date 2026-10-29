@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import type * as BrowserTransport from './browser-transport'
+
 type WindowStub = {
   hermesDesktop?: unknown
   addEventListener: (...args: unknown[]) => void
@@ -65,7 +67,7 @@ describe('webapp-port browser bridge install contract', () => {
 
   it('does not install when browser bootstrap is absent', async () => {
     vi.doMock('./browser-transport', async () => {
-      const actual = await vi.importActual<typeof import('./browser-transport')>('./browser-transport')
+      const actual = await vi.importActual<typeof BrowserTransport>('./browser-transport')
       return {
         ...actual,
         browserBootstrap: () => null,

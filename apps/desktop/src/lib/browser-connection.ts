@@ -3,7 +3,6 @@ import { LOCAL_CONNECTION_ID } from '@hermes/shared'
 import type { HermesApiRequest, HermesConnection } from '@/global'
 import { webappSignInRequired } from '@/lib/browser-launch-session'
 import { createServedProfiles, SERVED_SET_READ_TIMEOUT_MS, UnservedProfileError } from '@/lib/browser-served-profiles'
-import { rejectStaleProfileResponse, type BrowserSurfaceBinding } from '@/lib/webapp-port-profile'
 import {
   type AudioSocketPath,
   type BrowserBootstrap,
@@ -14,6 +13,7 @@ import {
   ticketedWebsocketUrl
 } from '@/lib/browser-transport'
 import { browserLaunchProfileOrDefault } from '@/lib/platform'
+import { type BrowserSurfaceBinding, rejectStaleProfileResponse } from '@/lib/webapp-port-profile'
 import { withTimeout } from '@/lib/with-timeout'
 
 /** The serving origin is the only connection a browser-hosted Desktop has. */

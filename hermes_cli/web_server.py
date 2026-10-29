@@ -20128,11 +20128,17 @@ def _mount_plugin_api_routes():
 _mount_plugin_api_routes()
 
 # Desktop Settings → Web access: status/start/stop/restart for the gateway-served Webapp.
+from fastapi import Depends as _Depends  # noqa: E402
+from hermes_cli.web_routers import ui_preferences as _ui_preferences_routes  # noqa: E402
 from hermes_cli.web_routers import webapp_access as _webapp_access_routes  # noqa: E402
 from hermes_cli.web_routers import webapp as _webapp_routes  # noqa: E402
+from hermes_cli.web_server_surface import route_on as _route_on  # noqa: E402
 
 app.include_router(_webapp_access_routes.router)
 app.include_router(_webapp_routes.router)
+app.include_router(
+    _ui_preferences_routes.router, dependencies=[_Depends(_route_on("ui_preferences"))]
+)
 
 # Mount the dashboard auth routes (/login, /auth/*, /api/auth/*) before the
 # SPA catch-all so /{full_path:path} doesn't swallow them.  These are

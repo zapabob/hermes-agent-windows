@@ -3,6 +3,7 @@ import type { TranslucencyState } from '@hermes/shared/translucency'
 
 import type { HermesNotification } from '../electron/notification-types'
 
+import type { UiPreferencesBridge } from './lib/ui-preferences/sync'
 import type { WakeIndicatorState } from './lib/wake-indicator'
 import type {
   PetOverlayBounds,
@@ -68,7 +69,7 @@ declare global {
       }) => Promise<string>
       reconcileDesktopPlugins?: () => Promise<string[]>
       // Machine-level UI preferences bridge (native IPC or browser /api).
-      uiPreferences?: import('./lib/ui-preferences/sync').UiPreferencesBridge
+      uiPreferences?: UiPreferencesBridge
       // Renderer-drawn min/max/close where the shell opts into custom chrome.
       windowControls?: {
         custom: boolean
