@@ -33,3 +33,13 @@ Independent read-only investigation and one fresh candidate review were performe
 Self-review-event: qa_defect; response: review-only. Fresh clean installs, actual dependency consumers, both package managers and archive-source identity belong in the acceptance evidence. No governance, skills or automation instructions were rewritten.
 
 Unrelated _p6.py is preserved and excluded from this commit. Running Hermes services were not stopped for dependency installation.
+
+## CI archive boundary follow-up
+
+The unconditional profile archive guard initially rejected the public npm source tarball by suffix. Its exception is restricted to the one reviewed repository-relative path, exact 1,942-byte size and SHA-256 above. Symlinks, directories, changed bytes and identical archives at another path remain rejected. Reads are bounded to the expected size plus one byte. Behavioral tests cover these cases and retain the original profile-secret non-disclosure controls. Source changes require archive regeneration, lock updates, source identity verification and a reviewed update of the boundary digest.
+
+Additional security regression coverage exercises preprocessing amplification limits at optimization level two through upstream and compatibility entry points, plus cancellation during actual filesystem reads. The direct advisory boundary is checked in addition to audit metadata.
+
+Local final focused verification passed 22 tests plus tests-js typecheck and lint. The archive boundary suite passed seven tests on Windows; the symlink creation test is Unix-only and remains active in Linux CI. Root path-scurry is explicitly pinned at 3.0.0, matching the reviewed installed graph; unused website glob/path-scurry release-age exceptions were removed.
+
+The initial full local workspace run was not counted as passing: native fixtures encountered runtime selection, nested npm lookup and timeout failures. Repeated long local guard/native runs were stopped rather than used as evidence. Clean GitHub Windows Tier-1 validation on a47aaac645c passed all eight jobs, including native Desktop, Python, Go and all four Node audits. The main JS workflow passed ten of eleven workspace checks; its one failure was the new HTTP cleanup callback type, now corrected and locally typechecked. The remaining profile-artifact CI failure is addressed by the bounded, digest-checked source-archive exception above. The final commit must be checked by remote CI before closeout.

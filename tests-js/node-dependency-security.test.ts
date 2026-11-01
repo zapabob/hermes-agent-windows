@@ -18,7 +18,7 @@ interface CallableMatcher {
   match(list: string[], pattern: string, options?: MatcherOptions): string[]
   defaults(options: MatcherOptions): CallableMatcher
   braceExpand(pattern: string, options?: MatcherOptions): string[]
-  Minimatch: new (pattern: string, options?: MatcherOptions) => { match(input: string): boolean }
+  Minimatch: new (pattern: string, options?: MatcherOptions) => { match(input: string): boolean; set: unknown[][] }
 }
 interface LegacyGlob {
   (pattern: string, options: MatcherOptions, callback: (error: Error | null, files: string[]) => void): void
@@ -53,6 +53,7 @@ test('committed matcher archive contains exactly the reviewed source files', asy
   const extracted = path.join(directory, 'package')
   const files = fs.readdirSync(source).sort()
   assert.deepEqual(fs.readdirSync(extracted).sort(), files)
+
   for (const name of files) {
     assert.deepEqual(fs.readFileSync(path.join(extracted, name)), fs.readFileSync(path.join(source, name)), name)
   }
@@ -69,6 +70,20 @@ test('legacy callable matching retains options, defaults and upstream input vali
   assert.deepEqual(matcher.match(['a.js', 'b.txt'], '*.js'), ['a.js'])
   assert.deepEqual(matcher.braceExpand('file.{js,ts}'), ['file.js', 'file.ts'])
   assert.throws(() => matcher('file', null as unknown as string), TypeError)
+})
+
+test('pattern preprocessing enforces the upstream amplification bound through both entry points', () => {
+  const engine = rootRequire('minimatch-engine') as Pick<CallableMatcher, 'Minimatch'>
+  const legacy = rootRequire('minimatch') as CallableMatcher
+  const pattern = Array.from({ length: 24 }, (_, index) => `**/../segment-${index}/leaf`).join('/')
+
+  for (const Matcher of [engine.Minimatch, legacy.Minimatch]) {
+    for (const bound of [32, 64]) {
+      const parsed = new Matcher(pattern, { optimizationLevel: 2, braceExpandMax: bound })
+      assert.ok(parsed.set.length > 1, 'fixture must exercise pattern amplification')
+      assert.ok(parsed.set.length <= bound, 'preprocessing must obey the configured expansion limit')
+    }
+  }
 })
 
 test('glob 7 retains synchronous and callback traversal, dotfiles, braces and ignore rules', async () => {
@@ -143,6 +158,35 @@ test('modern glob retains ordinary traversal and respects an already cancelled s
   await assert.rejects(modern.glob('**/*', { cwd: directory, signal: AbortSignal.abort(new Error('fixture cancellation')) }), /fixture cancellation/)
 })
 
+test('aborted glob walks stop filesystem reads after their rejected promise', async () => {
+  const directory = fixture()
+
+  for (let index = 0; index < 4; index += 1) {
+    fs.mkdirSync(path.join(directory, `branch-${index}`, 'deep'), { recursive: true })
+  }
+
+  const modernRequire = createRequire(rootRequire.resolve('cacache'))
+  const modern = modernRequire('glob') as { glob(pattern: string, options: MatcherOptions): Promise<string[]> }
+  const controller = new AbortController()
+  let reads = 0
+
+  const readdir = new Proxy(fs.readdir, {
+    apply(target, receiver, args) {
+      reads += 1
+
+      if (reads === 1) {controller.abort(new Error('fixture mid-walk cancellation'))}
+
+      return Reflect.apply(target, receiver, args)
+    }
+  })
+
+  await assert.rejects(modern.glob('**/*', {
+    cwd: directory, fs: { ...fs, readdir }, signal: controller.signal
+  }), /fixture mid-walk cancellation/)
+  await new Promise(resolve => setTimeout(resolve, 100))
+  assert.equal(reads, 1, 'the first read may finish; no descendant read may start after abort')
+})
+
 test('wait-on Joi preserves multiple-email validation', { timeout: 15_000 }, () => {
   const waitRequire = createRequire(rootRequire.resolve('wait-on'))
 
@@ -196,8 +240,8 @@ test('redirects retain ordinary headers and strip cross-realm custom credentials
 
     assert.deepEqual(JSON.parse(result), { ordinary: 'preserved' })
   } finally {
-    await Promise.all(servers.map(server => new Promise<void>(resolve => {
-      server.close(resolve)
+    await Promise.all(servers.map(server => new Promise<void>((resolve, reject) => {
+      server.close(error => error ? reject(error) : resolve())
       server.closeAllConnections()
     })))
   }

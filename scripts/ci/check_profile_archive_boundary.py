@@ -11,10 +11,36 @@ Git's index so a generated archive cannot enter a build after checkout.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 from pathlib import Path
 
 _PROFILE_ARCHIVE_SUFFIXES = (".tar.gz", ".tgz")
+
+# Public npm source archive, reviewed alongside its unpacked source and checked
+# byte-for-byte by tests-js/node-dependency-security.test.ts. A profile export
+# cannot use this path: different bytes, size, directories and symlinks fail closed.
+_REVIEWED_VENDOR_ARCHIVES = {
+    "website/vendor/hermes-agent-minimatch-compat-1.0.0.tgz": (
+        1942,
+        "a1c829bac733a04ecffc08fac07c54460b104f960a6e15c983a38e62a7869eef",
+    ),
+}
+
+
+def _is_reviewed_vendor_archive(path: Path, root: Path) -> bool:
+    expected = _REVIEWED_VENDOR_ARCHIVES.get(path.relative_to(root).as_posix())
+    if expected is None or path.is_symlink() or not path.is_file():
+        return False
+    size, digest = expected
+    try:
+        if path.stat().st_size != size:
+            return False
+        with path.open("rb") as archive:
+            data = archive.read(size + 1)
+        return len(data) == size and hashlib.sha256(data).hexdigest() == digest
+    except OSError:
+        return False
 
 
 def find_forbidden_profile_archives(root: Path) -> list[Path]:
@@ -32,7 +58,9 @@ def find_forbidden_profile_archives(root: Path) -> list[Path]:
         ]
         for name in (*dirnames, *filenames):
             if name.casefold().endswith(_PROFILE_ARCHIVE_SUFFIXES):
-                offenders.append((Path(directory) / name).relative_to(root))
+                archive = Path(directory) / name
+                if not _is_reviewed_vendor_archive(archive, root):
+                    offenders.append(archive.relative_to(root))
 
     return sorted(offenders, key=lambda path: path.as_posix().casefold())
 
