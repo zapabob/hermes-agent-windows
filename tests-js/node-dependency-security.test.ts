@@ -53,6 +53,7 @@ test('committed matcher archive contains exactly the reviewed source files', asy
   const extracted = path.join(directory, 'package')
   const files = fs.readdirSync(source).sort()
   assert.deepEqual(fs.readdirSync(extracted).sort(), files)
+
   for (const name of files) {
     assert.deepEqual(fs.readFileSync(path.join(extracted, name)), fs.readFileSync(path.join(source, name)), name)
   }
