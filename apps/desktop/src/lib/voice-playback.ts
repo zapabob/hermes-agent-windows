@@ -126,6 +126,14 @@ export async function resolveSpeakStreamUrl(): Promise<null | string> {
     const profile = getApiRequestProfile()
     const connectionId = getApiRequestConnection()
 
+    if (desktop.getAudioWsUrl) {
+      return await withTimeout(
+        desktop.getAudioWsUrl({ connectionId, profile, path: '/api/audio/speak-stream' }),
+        RECONNECT_ATTEMPT_TIMEOUT_MS,
+        'Timed out minting the speech stream WebSocket URL'
+      )
+    }
+
     // Both awaits below are IPC round-trips into the main process with no
     // timeout of their own (#93454) — a wedged main-process round-trip
     // otherwise hangs voice mode's "speaking" state forever instead of

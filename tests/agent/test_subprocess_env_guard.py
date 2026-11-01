@@ -90,6 +90,10 @@ LEGACY_IMPLICIT_RATIONALE = (
 LEGACY_RAW_ENV_RATIONALE = (
     "Exact pre-existing raw environment set outside SEC-001 through SEC-015; any hash change requires review."
 )
+# 2026-11-02: reviewed main 31d7333864a0 source deltas against 265cb44c84e.
+# Additions are local Windows ACL/posture utilities, managed build wrappers,
+# and runtime-version/update probes; web-server lifecycle calls moved owners.
+# Preserve exact per-scope hashes and every audited/sanitized boundary below.
 APPROVED_IMPLICIT_SPAWN_BASELINES = {
     # Source comparison against 265cb44c84e: former Git calls moved to the
     # bounded shared owner. Record reductions, not new spawn exemptions.
@@ -97,7 +101,7 @@ APPROVED_IMPLICIT_SPAWN_BASELINES = {
     "apps/desktop/electron": (
         # Git routes share one bounded policy discovery process. Native test
         # runtime adds one isolated, five-second interpreter identity probe.
-        "597bba1d73326763fca6f762cfe9ea8775291d335712c528884124cfa19b2da2",
+        "b2b2139b445772ba51a360e1ebce29df0f33e86375847817637c871107d862cf",
         LEGACY_IMPLICIT_RATIONALE,
     ),
     "apps/desktop/scripts": (
@@ -105,12 +109,12 @@ APPROVED_IMPLICIT_SPAWN_BASELINES = {
         LEGACY_IMPLICIT_RATIONALE,
     ),
     "cron": ("e3b322c51645ed1dab6a817a4c24bc210b7ebeb5a32edfc726f55ebfc9c86ce9", LEGACY_IMPLICIT_RATIONALE),
-    "downstream": ("b621fff921a4ef51bb6a3315030d8a5b7a0965aaa112e3d26b0dce20e1a478a2", LEGACY_IMPLICIT_RATIONALE),
-    "gateway": ("7c888db74531e5ade41e806eb9ae704b5657b00c27fbe36a00e547d5f7ca6c78", LEGACY_IMPLICIT_RATIONALE),
+    "downstream": ("dc60833d65c1a5020a9e2792d7e15813e855dd1af152e77248cabc26c2bf8f8d", LEGACY_IMPLICIT_RATIONALE),
+    "gateway": ("01f6aba7a19ef999c76ba411acc22450fe8a71e7b0664a3bd07bd5fe81294e52", LEGACY_IMPLICIT_RATIONALE),
     # Hypura harness daemon launch switched DETACHED_PROCESS → windows_detach_flags
     # (CREATE_NO_WINDOW + explicit env=); refreshed again after T04 /delegation
     # Slack via-hermes routing and related CLI command-registry edits.
-    "hermes_cli": ("26f489adfda65b336effc08e85b0a36db1f5ef7f3619e6612c14b28e3017cf8c", LEGACY_IMPLICIT_RATIONALE),
+    "hermes_cli": ("58a99e8fcde5145f38ee1fbecfcb99aea6dfc060d28d14999d4110de30f31ac5", LEGACY_IMPLICIT_RATIONALE),
     "hermes_constants.py": (
         "5b23578a51cafa9b8233e03e7bdddf96a68954014b2cfeae2b1da311ee734704",
         LEGACY_IMPLICIT_RATIONALE,
@@ -120,7 +124,7 @@ APPROVED_IMPLICIT_SPAWN_BASELINES = {
     "plugins": ("edb6181d42c9623fa5a564358dfc516306bdb2fd0dd47b768bf7868524b1167b", LEGACY_IMPLICIT_RATIONALE),
     # Script spawn site set drifted with Windows llama/watchdog and related
     # launcher edits on tip; re-reviewed fingerprint from CI actuals.
-    "scripts": ("8254877ce526a76852de3e18af346d19dcbc1aae6d9bcb14cebb0cf86a612dd4", LEGACY_IMPLICIT_RATIONALE),
+    "scripts": ("b5c96999561b3a43781bd04c1946379b30a3054034ca63bb01f4b6304db2da6d", LEGACY_IMPLICIT_RATIONALE),
     "tools": ("c81f90543719f88d6350bf0342ea73d36b158d8e682a94036be738fb73162996", LEGACY_IMPLICIT_RATIONALE),
     "tui_gateway": ("2d1248afe4d8acd6620038458dc9bb154f5449b10278878e62231e06b8d4f41f", LEGACY_IMPLICIT_RATIONALE),
     "ui-tui": ("88a4d1e5198da9b00a66f33915ae9908b1c80ffa0e3c5d7fba0636a4d70d4108", LEGACY_IMPLICIT_RATIONALE),

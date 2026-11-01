@@ -103,7 +103,12 @@ export function pluginSocket(pluginId: string, path: string, onMessage: (data: u
 
     // No bridge / OAuth cookie auth (WS tickets are single-use, core-managed):
     // stay on the polling fallback rather than half-working.
-    if (disposed || !connection || connection.authMode === 'oauth') {
+    if (
+      disposed ||
+      !connection ||
+      connection.authMode === 'oauth' ||
+      document.documentElement.dataset.hermesDesktopHost === 'browser'
+    ) {
       return
     }
 

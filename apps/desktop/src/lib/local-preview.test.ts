@@ -41,7 +41,7 @@ describe('remote HTML previews', () => {
       ...remoteTarget,
       dataUrl
     })
-    expect(readDesktopFileDataUrl).toHaveBeenCalledWith('/srv/report.html')
+    expect(readDesktopFileDataUrl).toHaveBeenCalledWith('/srv/report.html', undefined)
   })
 
   it('falls back to source mode when the transport is not canonical HTML', async () => {

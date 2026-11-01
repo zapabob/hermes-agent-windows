@@ -180,7 +180,12 @@ async function runWindowOpen(call: () => Promise<WindowOpenResult>, failMessage:
 
     return true
   } catch (err) {
-    notifyError(err, failMessage)
+    const notificationId =
+      err instanceof Error && 'notificationId' in err && typeof err.notificationId === 'string'
+        ? err.notificationId
+        : undefined
+
+    notifyError(err, failMessage, notificationId)
 
     return false
   }

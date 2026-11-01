@@ -10,6 +10,8 @@ import {
 } from '@/lib/desktop-fs'
 import type { PreviewTarget } from '@/store/preview'
 
+import { filePathFromMediaPath, isNetworkFilePath } from './media'
+
 function ownerFromSessionScope(scope?: DesktopFsSessionScope): DesktopFsSourceScope | undefined {
   if (!scope) {
     return undefined
@@ -206,7 +208,7 @@ export async function openPreviewTargetInBrowser(target: PreviewTarget): Promise
 export function localPreviewTarget(rawTarget: string, cwd?: string | null): PreviewTarget | null {
   const raw = rawTarget.trim().replace(/^`|`$/g, '')
 
-  if (!raw) {
+  if (!raw || (/^file:/i.test(raw) && isNetworkFilePath(raw))) {
     return null
   }
 
@@ -218,7 +220,7 @@ export function localPreviewTarget(rawTarget: string, cwd?: string | null): Prev
 
   if (/^file:\/\//i.test(raw)) {
     try {
-      path = decodeURIComponent(new URL(raw).pathname)
+      path = filePathFromMediaPath(raw)
     } catch {
       path = raw.replace(/^file:\/\//i, '')
     }

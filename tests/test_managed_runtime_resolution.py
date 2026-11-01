@@ -58,6 +58,15 @@ _EXEMPT_DIRS = (
 # (path, command) -> why. Keep this list short and justified — the default
 # answer for a new call site is a managed-aware helper, not a new exemption.
 _ALLOWED: dict[tuple[str, str], str] = {
+    ("hermes_cli/source_build.py", "node"): (
+        "Source builders resolve exclusively against the explicit env[PATH] returned "
+        "by pm.ensure('npm'), which owns and prepends the verified managed Node. "
+        "Consulting the ambient profile helper would select a different runtime."
+    ),
+    ("hermes_cli/source_build.py", "npm"): (
+        "Desktop packaging uses that same pm.ensure('npm') build environment; "
+        "the lookup has an explicit path and never consults the ambient PATH."
+    ),
     ("tools/env_probe.py", "uv"): (
         "Reports the environment the MODEL sees in the terminal tool. The model "
         "can only run what is on that subshell's PATH, which local.py populates "

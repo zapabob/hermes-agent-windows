@@ -37,7 +37,7 @@ def test_real_read_tool_binaries_confirm_option_ownership(
     [
         ("rg", ["--pre", "-payload-marker", "needle", "{input}"], None, False),
         ("rg", ["--hostname-bin=-payload-marker", "needle", "{input}"], None, False),
-        ("sort", ["--buffer-size=1K", "--compress-program", "-payload-marker"], "{bulk}", False),
+        ("sort", ["--parallel=1", "--buffer-size=1K", "--compress-program", "-payload-marker"], "{bulk}", False),
         ("ag", ["--pager=-payload-marker", "needle", "{input}"], None, True),
         ("man", ["--pager", "-payload-marker", "ls"], None, True),
         ("man", ["-P", "-payload-marker", "ls"], None, True),
@@ -52,13 +52,13 @@ def test_real_binaries_execute_leading_dash_program_payload(
 
     marker = tmp_path / "executed"
     payload = tmp_path / "-payload-marker"
-    payload.write_text("#!/bin/sh\nprintf executed > \"$MARKER\"\ncat\n")
+    payload.write_text("#!/bin/sh\nprintf executed > \"$MARKER\"\ncat\n", encoding="utf-8")
     payload.chmod(0o755)
     input_file = tmp_path / "input.txt"
-    input_file.write_text("needle\n")
+    input_file.write_text("needle\n", encoding="utf-8")
     resolved_args = [arg.format(input=str(input_file)) for arg in args]
     input_text = (
-        "\n".join(str(number) for number in range(10_000, 0, -1)) + "\n"
+        "\n".join(str(number) for number in range(100_000, 0, -1)) + "\n"
         if stdin == "{bulk}"
         else stdin
     )

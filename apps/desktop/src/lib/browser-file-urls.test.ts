@@ -12,10 +12,7 @@ import { resolveMediaDisplaySrc, resolveMediaPlaybackSrc } from './media'
 // The Webapp asks its gateway for a Windows drive-letter or UNC file in the forms the gateway
 // resolves: reads by the native path, streams by the file: URL itself. The gateway half,
 // tests/hermes_cli/test_webapp_file_urls.py, answers these exact requests.
-const FILES = [
-  { dir: 'file:///C:/Users/me/renders', native: 'C:\\Users\\me\\renders' },
-  { dir: 'file://nas/share/renders', native: '\\\\nas\\share\\renders' }
-]
+const FILES = [{ dir: 'file:///C:/Users/me/renders', native: 'C:/Users/me/renders' }]
 
 const OWNER = { connectionId: LOCAL_CONNECTION_ID, profile: 'default' }
 const win = window
@@ -63,7 +60,7 @@ describe.each(FILES)('a Webapp file under $dir', ({ dir, native }) => {
     const [read] = requests
 
     expect(read.url.pathname).toBe('/api/fs/read-data-url')
-    expect(read.url.searchParams.get('path')).toBe(`${native}\\shot one.png`)
+    expect(read.url.searchParams.get('path')).toBe(`${native}/shot one.png`)
   })
 
   it('previews a page by its native path', async () => {
@@ -76,7 +73,7 @@ describe.each(FILES)('a Webapp file under $dir', ({ dir, native }) => {
     const [read] = requests
 
     expect(read.url.pathname).toBe('/api/fs/read-text')
-    expect(read.url.searchParams.get('path')).toBe(`${native}\\report #1.html`)
+    expect(read.url.searchParams.get('path')).toBe(`${native}/report #1.html`)
   })
 
   it('streams a clip by its file URL, ticketed for that URL', async () => {
@@ -100,5 +97,12 @@ it('refuses to stream a file URL that encodes a separator', async () => {
     )
   }
 
+  expect(requests).toEqual([])
+})
+
+it('refuses network-share previews and image reads before a filesystem request', async () => {
+  const file = 'file://nas/share/renders/report.html'
+  expect(localPreviewTarget(file)).toBeNull()
+  await expect(resolveMediaDisplaySrc(file, OWNER)).rejects.toThrow('Network-share media paths are not allowed')
   expect(requests).toEqual([])
 })

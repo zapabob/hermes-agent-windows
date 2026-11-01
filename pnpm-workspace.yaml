@@ -26,6 +26,13 @@ minimumReleaseAgeExclude:
   - fast-uri
   - zod
   - deepmerge
+  # Reviewed minimatch/glob/Joi fixes and their required engine closure.
+  - minimatch
+  - minimatch-engine
+  - '@isaacs/nonrecursive-glob-match'
+  - glob
+  - path-scurry
+  - joi
 
 allowBuilds:
   agent-browser: set this to true or false
