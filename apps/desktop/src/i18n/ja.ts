@@ -966,7 +966,8 @@ export const ja = defineLocale({
         unavailableDetail: reason => `ゲートウェイが Web アプリを配信できませんでした: ${reason}`,
         restartBusy:
           '保存しました。チャット実行中のためゲートウェイは再起動していません。終了後に「ゲートウェイを再起動」を選んでください。',
-        restartFailed: '保存しましたが、ゲートウェイを再起動できませんでした。「ゲートウェイを再起動」で再試行してください。',
+        restartFailed:
+          '保存しましたが、ゲートウェイを再起動できませんでした。「ゲートウェイを再起動」で再試行してください。',
         restartFailedBecause: reason => `ゲートウェイを再起動できませんでした: ${reason}`,
         startTimedOut: '90秒以内にゲートウェイが Web アプリを配信しませんでした。',
         stopTimedOut: '90秒以内にゲートウェイが Web アプリの配信を停止しませんでした。',

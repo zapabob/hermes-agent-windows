@@ -19,28 +19,28 @@ export interface BindBrowserSurfaceInput {
 
 export function bindBrowserSurface(input: BindBrowserSurfaceInput): BrowserSurfaceBinding {
   const profile = input.profile.trim()
+
   if (!profile) {
     throw new Error('browser surface binding requires a non-empty profile')
   }
+
   if (!input.storedSessionId || !input.logicalSessionId || !input.generation) {
     throw new Error('browser surface binding requires stored, logical, and generation ids')
   }
+
   return {
     profile,
     storedSessionId: input.storedSessionId,
     logicalSessionId: input.logicalSessionId,
-    generation: input.generation,
+    generation: input.generation
   }
 }
 
 /** True when *candidate* must not be applied to the live binding. */
-export function rejectStaleProfileResponse(
-  live: BrowserSurfaceBinding,
-  candidate: BrowserSurfaceBinding,
-): boolean {
+export function rejectStaleProfileResponse(live: BrowserSurfaceBinding, candidate: BrowserSurfaceBinding): boolean {
   return (
-    live.profile !== candidate.profile
-    || live.generation !== candidate.generation
-    || live.storedSessionId !== candidate.storedSessionId
+    live.profile !== candidate.profile ||
+    live.generation !== candidate.generation ||
+    live.storedSessionId !== candidate.storedSessionId
   )
 }

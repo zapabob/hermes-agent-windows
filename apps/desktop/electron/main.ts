@@ -16769,9 +16769,7 @@ function resolveCheckoutHermesVersion(): string {
  * About still shows a real Hermes version instead of package.json drift.
  */
 async function resolveHermesVersion(scope: { connectionId?: string; profile?: string } = {}): Promise<string> {
-  const live = await resolveGatewayVersion(path =>
-    handleHermesApiRequest({ ...scope, path, timeoutMs: 5000 })
-  )
+  const live = await resolveGatewayVersion(path => handleHermesApiRequest({ ...scope, path, timeoutMs: 5000 }))
 
   return live || resolveCheckoutHermesVersion()
 }
@@ -16797,9 +16795,7 @@ function showAboutPanelFresh() {
   void Promise.all([detectRendererSkew(), resolveHermesVersion()]).then(([skew, version]) => {
     app.setAboutPanelOptions({
       applicationName: APP_NAME,
-      applicationVersion: skew.outOfSync
-        ? `${version} — app build out of date, update the desktop app`
-        : version,
+      applicationVersion: skew.outOfSync ? `${version} — app build out of date, update the desktop app` : version,
       copyright: 'Copyright © 2026 Nous Research'
     })
     app.showAboutPanel()

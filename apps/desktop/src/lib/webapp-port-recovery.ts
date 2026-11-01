@@ -22,20 +22,24 @@ export function journalStorageKey(origin: string, profile: string): string {
 /** Merge *incoming* into *existing* by id; never drop an entry the other tab still holds. */
 export function mergePreparedSubmissionJournals(
   existing: PreparedSubmissionJournal,
-  incoming: PreparedSubmissionJournal,
+  incoming: PreparedSubmissionJournal
 ): PreparedSubmissionJournal {
   const byId = new Map<string, PreparedSubmissionEntry>()
+
   for (const entry of existing.entries) {
     byId.set(entry.id, entry)
   }
+
   for (const entry of incoming.entries) {
     const prior = byId.get(entry.id)
+
     if (!prior || entry.createdAt >= prior.createdAt) {
       byId.set(entry.id, entry)
     }
   }
+
   return {
-    entries: [...byId.values()].sort((a, b) => a.createdAt - b.createdAt),
+    entries: [...byId.values()].sort((a, b) => a.createdAt - b.createdAt)
   }
 }
 
@@ -43,20 +47,23 @@ export function parsePreparedSubmissionJournal(raw: string | null): PreparedSubm
   if (!raw) {
     return { entries: [] }
   }
+
   try {
     const parsed = JSON.parse(raw) as PreparedSubmissionJournal
+
     if (!parsed || !Array.isArray(parsed.entries)) {
       return { entries: [] }
     }
+
     return {
       entries: parsed.entries.filter(
         (e): e is PreparedSubmissionEntry =>
-          !!e
-          && typeof e.id === 'string'
-          && typeof e.profile === 'string'
-          && typeof e.createdAt === 'number'
-          && typeof e.payloadDigest === 'string',
-      ),
+          !!e &&
+          typeof e.id === 'string' &&
+          typeof e.profile === 'string' &&
+          typeof e.createdAt === 'number' &&
+          typeof e.payloadDigest === 'string'
+      )
     }
   } catch {
     return { entries: [] }
