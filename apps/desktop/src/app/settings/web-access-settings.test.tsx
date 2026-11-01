@@ -273,6 +273,7 @@ describe('WebAccessSettings', () => {
       ...OFF,
       gateway: { reason: 'port 9120 is in use', state: 'unavailable', url: null }
     }
+
     mocked.stopWebAccess.mockResolvedValue({ ...unavailable, restart_pid: 7, restart_started: true })
     renderPane({ ...unavailable, enabled: true, mode: 'lan' })
     const stop = await screen.findByRole('button', { name: 'Stop' })

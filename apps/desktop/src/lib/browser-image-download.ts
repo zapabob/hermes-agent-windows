@@ -37,6 +37,7 @@ export async function fetchBrowserImage(url: URL): Promise<Blob> {
       if (done) {
         break
       }
+
       received += value.byteLength
 
       // Content-Length may be absent, incorrect, or describe compressed bytes.

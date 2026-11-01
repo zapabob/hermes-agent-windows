@@ -79,6 +79,7 @@ function settleOpen(state: TerminalState): void {
   if (isStableOpen(state.openedAt)) {
     state.retry = 0
   }
+
   state.openedAt = null
 }
 
@@ -89,6 +90,7 @@ function sendResumeSize(socket: WebSocket, state: TerminalState, trimmed?: boole
   if (trimmed) {
     socket.send(`\u001b[RESIZE:${state.cols};${state.rows > 1 ? state.rows - 1 : state.rows + 1}]`)
   }
+
   socket.send(`\u001b[RESIZE:${state.cols};${state.rows}]`)
 }
 
@@ -173,6 +175,7 @@ async function dialTerminal(state: TerminalState, context: DialContext): Promise
   if (state.terminalId) {
     url.searchParams.set('attach', state.terminalId)
   }
+
   const resuming = Boolean(state.terminalId)
   const socket = (state.socket = new WebSocket(url))
   socket.binaryType = 'arraybuffer'
@@ -188,6 +191,7 @@ async function dialTerminal(state: TerminalState, context: DialContext): Promise
       if (settled) {
         return
       }
+
       settled = true
       window.clearTimeout(timer)
       state.cancelDial = undefined
@@ -206,6 +210,7 @@ async function dialTerminal(state: TerminalState, context: DialContext): Promise
       if (!current()) {
         return
       }
+
       emitData(state, data, replayNext)
       replayNext = false
     }
@@ -267,6 +272,7 @@ async function dialTerminal(state: TerminalState, context: DialContext): Promise
           if (resuming) {
             sendResumeSize(socket, state, meta.truncated)
           }
+
           setStatus(state, 'open')
           state.openedAt = Date.now()
 
@@ -307,6 +313,7 @@ async function dialTerminal(state: TerminalState, context: DialContext): Promise
       if (!current()) {
         return
       }
+
       settleOpen(state)
       const signal = CLOSE_SIGNALS[event.code] ?? 'disconnected'
       const exited = event.code === 4410 && event.reason === PROCESS_EXITED_REASON
@@ -344,6 +351,7 @@ export function createBrowserTerminal(options: BrowserTerminalOptions): Terminal
   const terminals = new Map<string, TerminalState>()
   let sequence = 0
   let paused = false
+
   const storageKey = (key: string) =>
     `hermes.webapp.terminal.v1:${JSON.stringify([window.location.origin, options.basePath, key])}`
 
@@ -368,6 +376,7 @@ export function createBrowserTerminal(options: BrowserTerminalOptions): Terminal
     if (state.status === status) {
       return
     }
+
     state.status = status
     state.stateListeners.forEach(listener => listener(status))
   }
@@ -441,6 +450,7 @@ export function createBrowserTerminal(options: BrowserTerminalOptions): Terminal
           if (paused || state.stopped || generation !== state.generation) {
             return
           }
+
           stopSocket(state)
 
           // A 401 from the ticket route: signed out, and every further attempt would be refused.
@@ -478,6 +488,7 @@ export function createBrowserTerminal(options: BrowserTerminalOptions): Terminal
     if (!state) {
       return false
     }
+
     state.stopped = true
     stopSocket(state)
     terminals.delete(id)
@@ -491,6 +502,7 @@ export function createBrowserTerminal(options: BrowserTerminalOptions): Terminal
     if (!state) {
       return false
     }
+
     // Closing a tab during startup must wait for its server-minted identity.
     await state.started?.catch(() => undefined)
     state.stopped = true
@@ -526,6 +538,7 @@ export function createBrowserTerminal(options: BrowserTerminalOptions): Terminal
     if (!event.persisted || !paused || window.hermesDesktop?.terminal !== api) {
       return
     }
+
     paused = false
     terminals.forEach(state => {
       if (state.stopped) {
@@ -560,11 +573,13 @@ export function createBrowserTerminal(options: BrowserTerminalOptions): Terminal
       if (state) {
         return dispose(state.id)
       }
+
       const saved = load(restoreKey)
 
       if (saved) {
         await closeSavedShell(saved, options.websocketUrl)
       }
+
       forget({ restoreKey })
 
       return true
@@ -575,6 +590,7 @@ export function createBrowserTerminal(options: BrowserTerminalOptions): Terminal
       if (!state) {
         return () => undefined
       }
+
       state.dataListeners.add(callback)
       const pending = state.pendingData.splice(0)
 
@@ -596,6 +612,7 @@ export function createBrowserTerminal(options: BrowserTerminalOptions): Terminal
       if (!state) {
         return () => undefined
       }
+
       state.exitListeners.add(callback)
 
       if (state.exit) {
@@ -616,6 +633,7 @@ export function createBrowserTerminal(options: BrowserTerminalOptions): Terminal
       if (!state) {
         return () => undefined
       }
+
       state.stateListeners.add(callback)
       callback(state.status)
 
@@ -629,12 +647,14 @@ export function createBrowserTerminal(options: BrowserTerminalOptions): Terminal
       if (!state) {
         return false
       }
+
       state.cols = Math.max(1, Math.round(size.cols))
       state.rows = Math.max(1, Math.round(size.rows))
 
       if (state.status !== 'open' || state.socket?.readyState !== WebSocket.OPEN) {
         return false
       }
+
       state.socket.send(`\u001b[RESIZE:${state.cols};${state.rows}]`)
 
       return true
@@ -711,6 +731,7 @@ export function createBrowserTerminal(options: BrowserTerminalOptions): Terminal
       if (!state || state.stopped || state.status !== 'open' || state.socket?.readyState !== WebSocket.OPEN) {
         return false
       }
+
       state.socket.send(data)
 
       return true

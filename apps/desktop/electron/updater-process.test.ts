@@ -487,9 +487,11 @@ test.skipIf(process.platform === 'win32')(
   'launcherInstallDirectory returns the root the launcher reports',
   async () => {
     const dir = await realpathMkdtemp('launcher-install-')
+
     const reported = await fs.realpath(
       await fs.mkdir(path.join(dir, 'hermes-agent')).then(() => path.join(dir, 'hermes-agent'))
     )
+
     const launcher = await writeLauncher(dir, `printf 'Hermes Agent v0.22.1\\nInstall directory: ${reported}\\n'`)
 
     assert.equal(launcherInstallDirectory(launcher), reported)
@@ -516,15 +518,20 @@ test.skipIf(process.platform === 'win32')(
   'launcherInstallRoot probes off the main thread, once for concurrent callers',
   async () => {
     const dir = await realpathMkdtemp('launcher-root-')
+
     const reported = await fs.realpath(
       await fs.mkdir(path.join(dir, 'hermes-agent')).then(() => path.join(dir, 'hermes-agent'))
     )
+
     const calls = path.join(dir, 'calls')
+
     const launcher = await writeLauncher(
       dir,
       `echo x >> ${calls}; sleep 0.4; printf 'Install directory: ${reported}\\n'`
     )
+
     let ticked = false
+
     const timer = setTimeout(() => {
       ticked = true
     }, 50)
@@ -546,9 +553,11 @@ test.skipIf(process.platform === 'win32')(
   'launcherInstallRoot caches a miss for a short window, then retries and keeps the root',
   async () => {
     const dir = await realpathMkdtemp('launcher-root-')
+
     const reported = await fs.realpath(
       await fs.mkdir(path.join(dir, 'hermes-agent')).then(() => path.join(dir, 'hermes-agent'))
     )
+
     const calls = path.join(dir, 'calls')
     const launcher = await writeLauncher(dir, `echo x >> ${calls}; printf 'Hermes Agent v0.22.1\\n'`)
     const count = async () => (await fs.readFile(calls, 'utf8')).trim().split('\n').length

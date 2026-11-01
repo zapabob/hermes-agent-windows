@@ -138,9 +138,7 @@ export function getSecurityStatus(): Promise<SecurityStatus> {
   return hermesApi<SecurityStatus>({ ...profileScoped(), path: '/api/security/status' })
 }
 
-export function runSecurityPostureAudit(request: {
-  include_supply_chain: boolean
-}): Promise<SecurityPostureReport> {
+export function runSecurityPostureAudit(request: { include_supply_chain: boolean }): Promise<SecurityPostureReport> {
   return hermesApi<SecurityPostureReport>({
     ...profileScoped(),
     path: '/api/security/posture',

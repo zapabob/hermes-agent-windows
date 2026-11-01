@@ -80,6 +80,7 @@ it.each([
   if (declaredLength !== null) {
     headers.set('content-length', declaredLength)
   }
+
   const response = new Response(body, { headers })
   const fetchMock = vi.fn().mockResolvedValue(response)
   vi.stubGlobal('fetch', fetchMock)

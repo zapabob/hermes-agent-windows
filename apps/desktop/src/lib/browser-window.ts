@@ -146,12 +146,14 @@ function openLaunchLinkWindow(target: URL, api: BrowserWindowOptions['api'], bas
             if (closed) {
               return
             }
+
             channel.postMessage({ ticket })
           })
           .catch(error => {
             if (closed) {
               return
             }
+
             channel.postMessage({
               error: 'Could not authorize this window. Try opening it again from the original tab.'
             })
@@ -184,12 +186,14 @@ export function announceWebappWindow(): void {
   if (id === null) {
     return
   }
+
   url.searchParams.delete(HELLO_PARAM)
   window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
 
   if (!UUID_PATTERN.test(id)) {
     return
   }
+
   const channel = new BroadcastChannel(HELLO_CHANNEL_PREFIX + id)
   channel.postMessage({ type: 'ready' })
   channel.close()
@@ -206,6 +210,7 @@ export function sessionWindowTarget(
   if (!id) {
     return null
   }
+
   const target = new URL(currentHref)
   target.searchParams.set('win', 'secondary')
 

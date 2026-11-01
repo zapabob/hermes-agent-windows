@@ -2051,7 +2051,8 @@ export const ja = defineLocale({
     engineAvailability: 'スキャナーの利用状況',
     activeFeeds: '有効なフィード状態',
     postureTitle: 'Windows とエージェントの防御態勢',
-    postureDescription: '有効なポリシー、ホスト制御、実際の待受、監視、依存関係を読み取り専用で検証します。設定は変更しません。',
+    postureDescription:
+      '有効なポリシー、ホスト制御、実際の待受、監視、依存関係を読み取り専用で検証します。設定は変更しません。',
     runPostureAudit: '防御態勢を監査',
     postureNotRun: '防御態勢の監査を実行すると、有効な制御をセキュア基準と比較できます。',
     postureRisk: '限定範囲の判定',
