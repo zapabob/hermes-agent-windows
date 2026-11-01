@@ -2362,14 +2362,20 @@ export const en: Translations = {
     engineAvailability: 'Scanner availability',
     activeFeeds: 'Active feed status',
     postureTitle: 'Windows and agent posture',
-    postureDescription: 'Read-only blue-team checks for effective policy, host controls, live binds, monitoring, and dependencies. No settings are changed.',
+    postureDescription:
+      'Read-only blue-team checks for effective policy, host controls, live binds, monitoring, and dependencies. No settings are changed.',
     runPostureAudit: 'Run posture audit',
     postureNotRun: 'Run the posture audit to compare effective controls with the secure baseline.',
     postureRisk: 'Bounded posture',
     postureLastRun: 'Evidence captured',
     control: 'Control',
     status: 'Status',
-    postureOverall: { attention: 'Needs review', critical: 'Critical', high_risk: 'High risk', pass: 'No blocking findings' },
+    postureOverall: {
+      attention: 'Needs review',
+      critical: 'Critical',
+      high_risk: 'High risk',
+      pass: 'No blocking findings'
+    },
     postureStates: { fail: 'Failed', pass: 'Passed', review: 'Review', unavailable: 'Unavailable', warn: 'Warning' },
     postureChecks: {
       'approvals.interactive': 'Interactive approvals',

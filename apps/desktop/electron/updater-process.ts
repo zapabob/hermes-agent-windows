@@ -259,6 +259,7 @@ export function launcherInstallDirectory(launcher: string, root?: string): strin
     if (!probe) {
       return null
     }
+
     const result: SpawnSyncReturns<string> = spawnSync(probe.command, probe.args, {
       ...probe.options,
       encoding: 'utf8'

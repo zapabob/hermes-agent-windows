@@ -212,6 +212,7 @@ describe('browser profile prefs follow rename and delete', () => {
 
   it('leaves a stored startup route the profile bridge does not read as one', async () => {
     host()
+
     const bridge = createBrowserProfileBridge({
       basePath: '/hermes',
       currentProfile: () => null,

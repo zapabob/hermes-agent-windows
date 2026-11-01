@@ -271,6 +271,7 @@ export async function fileEndpointUrl(
     if (!ticket) {
       throw new Error('Hermes did not return a file ticket')
     }
+
     url.searchParams.set('ticket', ticket)
   }
 

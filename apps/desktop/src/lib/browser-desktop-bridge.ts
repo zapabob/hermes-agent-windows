@@ -118,6 +118,7 @@ export function installBrowserDesktopBridge(): boolean {
       if (Notification.permission !== 'granted') {
         return false
       }
+
       new Notification(title || 'Hermes', { body })
 
       return true
@@ -144,6 +145,7 @@ export function installBrowserDesktopBridge(): boolean {
       if (!navigator.mediaDevices?.getUserMedia) {
         return false
       }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       stream.getTracks().forEach(track => track.stop())
 

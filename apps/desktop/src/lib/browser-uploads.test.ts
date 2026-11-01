@@ -65,6 +65,7 @@ describe('browser file stage size', () => {
   // which doesn't say what the limit is, and a refused image pick used to show nothing at all.
   const tooLarge = (name: string, type: string) =>
     new File([new Uint8Array(BROWSER_UPLOAD_MAX_BYTES + 1)], name, { type })
+
   const limitMessage = 'The file is larger than 16 MiB, the largest file the browser can attach.'
 
   async function installBrowser() {

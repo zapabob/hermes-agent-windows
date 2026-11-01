@@ -449,7 +449,9 @@ export function SecurityView({
                   <div>
                     <dt className="text-(--ui-text-tertiary)">{s.postureRisk}</dt>
                     <dd className="mt-1 flex items-center gap-2 font-medium text-(--ui-text-primary)">
-                      <StatusDot tone={posture.overall === 'pass' ? 'good' : posture.overall === 'attention' ? 'warn' : 'bad'} />
+                      <StatusDot
+                        tone={posture.overall === 'pass' ? 'good' : posture.overall === 'attention' ? 'warn' : 'bad'}
+                      />
                       {s.postureOverall[posture.overall]}
                     </dd>
                   </div>

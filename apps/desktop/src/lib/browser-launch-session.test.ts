@@ -219,6 +219,7 @@ it('asks a tab without a working credential to sign in, so reconnecting stops', 
       () => null,
       (error: unknown) => error
     )
+
   win.__HERMES_UI_SURFACE__ = 'webapp'
   vi.stubGlobal(
     'fetch',

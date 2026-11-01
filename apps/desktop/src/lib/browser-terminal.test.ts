@@ -301,6 +301,7 @@ describe('persistent browser terminals', () => {
       socket.metadata({ closed: true })
       socket.close()
     }
+
     await expect(api.closeSaved!('tab-one')).resolves.toBe(true)
     expect(localStorage.length).toBe(0)
   })

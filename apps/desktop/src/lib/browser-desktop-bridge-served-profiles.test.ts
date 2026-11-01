@@ -134,6 +134,7 @@ describe('profiles the serving gateway does not serve', () => {
       profiles: ['default', 'research', 'solo'],
       status: reports(['default', 'research'])
     })
+
     const desktop = installServedBridge()
     await desktop.getProfileRoutes?.(['solo'])
 
@@ -249,6 +250,7 @@ describe('the served set read', () => {
       profiles: ['default', 'research', 'solo'],
       status: reports(['default', 'research'])
     })
+
     const desktop = installServedBridge()
 
     const [rail, statusbar] = await Promise.all([desktop.getAgentRoster?.(), desktop.getAgentRoster?.()])

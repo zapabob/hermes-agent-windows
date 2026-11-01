@@ -881,6 +881,7 @@ describe('browser-hosted Desktop bridge', () => {
     // A base before <head> would open an implicit head, and the authored tag's attributes would be lost.
     const report =
       '<!DOCTYPE html><HTML lang="en"><Head id="report-assets" data-x="1"><title>r</title></Head><body><a href="#sec">x</a></body></HTML>'
+
     const withHead = await parsedSrcdocOf(report)
     expect(withHead.srcdoc).toBe(report.replace('data-x="1">', 'data-x="1"><base href="about:srcdoc">'))
     expect(withHead.doc.compatMode).toBe('CSS1Compat')
