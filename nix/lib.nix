@@ -209,6 +209,12 @@ let
   # keep in sync with it.
   npmDeps = importNpmLock.importNpmLock {
     npmRoot = npmDepsSrc;
+    # importNpmLock treats a relative file: tarball as a literal path with
+    # the scheme still attached. Supply the reviewed source as a store path;
+    # the lockfile integrity remains the npm verification boundary.
+    packageSourceOverrides = {
+      "node_modules/minimatch" = repoRoot + "/website/vendor/hermes-agent-minimatch-compat-1.0.0.tgz";
+    };
   };
 
   # Build a per-package npm source: workspace resolution files + the
