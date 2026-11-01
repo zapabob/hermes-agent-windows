@@ -7,6 +7,9 @@ import { parseArgs } from 'node:util'
 
 export const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 
+// Reviewed local npm sources are inputs even in a manifest-only prepared workspace.
+export const localNpmSources = ['website/vendor/hermes-agent-minimatch-compat-1.0.0.tgz']
+
 // Look only in the prepared workspace, not a parent checkout's dependency tree.
 // Package symlinks themselves are valid inputs (including Nix store references).
 export function workspaceTool(source, workspace, name) {

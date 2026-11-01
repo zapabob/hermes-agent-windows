@@ -47,3 +47,11 @@ The initial full local workspace run was not counted as passing: native fixtures
 ## Nix local-package integration
 
 The Nix check exposed importNpmLock resolving a relative file: tarball as a literal source path containing the scheme. Supply the one reviewed local package through packageSourceOverrides, the upstream-supported interface, so npm receives its real Nix store path while retaining lockfile integrity. Other dependency fetching and source-filter behavior remain unchanged. Owning implementation inspected at NixOS/nixpkgs 0954f7ee2f6bb3dc7d4e3d0d8bcb8fd4bde4cfc5, pkgs/build-support/node/import-npm-lock/default.nix. The required nix flake check provides end-to-end verification on Linux; no local Nix runtime is available on this Windows host.
+
+## Prepared workspace and Docker inputs
+
+The local archive must also exist before dependency installation in filtered build contexts. Docker now copies only the reviewed archive in the dependency-cache layer; its ignore rules retain exclusion of documentation, secrets and every other archive. Validation with Docker's official moby/patternmatcher v0.6.0 passed 13 allow/deny cases. The local Docker daemon is unavailable, so a full local image build was not claimed; the fork's Docker publication job was already gated to upstream only and was not weakened or enabled for publishing.
+
+The existing frontend-common input table now supplies the same local source to product freshness and dependency-install receipts. The private Webapp mirror therefore copies it before npm ci, and archive-byte changes invalidate TUI, dashboard, Desktop and Webapp receipts. A behavioral filesystem test checks mirror identity and all four invalidations. The focused Node suite now has 23 passing tests, with typechecking.
+
+Nix validation passed on 03e19dd2bb4 after the supported packageSourceOverrides fix. A separate clean npm installation reproduced the store-style absolute package reference successfully without a relative archive in the build root. Windows Tier-1 also passed on that commit. Final CI is required again after the prepared-workspace/Docker source-input follow-up.

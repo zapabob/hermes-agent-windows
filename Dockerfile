@@ -177,6 +177,8 @@ WORKDIR /opt/hermes
 # ui-tui/package.json.  Copying the tree up front lets npm resolve the
 # workspace to real content instead of stopping at a bare package.json.
 COPY package.json package-lock.json ./
+# Reviewed root npm dependency, needed before the cached dependency install.
+COPY website/vendor/hermes-agent-minimatch-compat-1.0.0.tgz website/vendor/
 COPY web/package.json web/
 COPY ui-tui/package.json ui-tui/
 COPY ui-tui/packages/hermes-ink/ ui-tui/packages/hermes-ink/

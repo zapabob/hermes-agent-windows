@@ -4,6 +4,7 @@ import http from 'node:http'
 import { createRequire } from 'node:module'
 import os from 'node:os'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import vm from 'node:vm'
 
 import { afterEach, test } from 'vitest'
@@ -57,6 +58,48 @@ test('committed matcher archive contains exactly the reviewed source files', asy
   for (const name of files) {
     assert.deepEqual(fs.readFileSync(path.join(extracted, name)), fs.readFileSync(path.join(source, name)), name)
   }
+})
+
+test('prepared webapp workspaces retain local npm inputs and product hashes track their bytes', async () => {
+  const source = fixture()
+  const workspace = fixture()
+
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')) as {
+    devDependencies: { minimatch: string }
+  }
+
+  assert.ok(manifest.devDependencies.minimatch.startsWith('file:'))
+  const relative = manifest.devDependencies.minimatch.slice('file:'.length)
+  const archive = path.resolve(source, relative)
+  const original = path.resolve(root, relative)
+  assert.ok(archive.startsWith(source + path.sep), 'fixture writes must remain inside their temporary source')
+  assert.ok(original.startsWith(root + path.sep), 'local package must belong to the repository')
+  fs.mkdirSync(path.dirname(archive), { recursive: true })
+  fs.copyFileSync(original, archive)
+  fs.copyFileSync(path.join(root, 'package.json'), path.join(source, 'package.json'))
+  fs.copyFileSync(path.join(root, 'package-lock.json'), path.join(source, 'package-lock.json'))
+
+  const fresh = await import(pathToFileURL(path.join(root, 'scripts/build/freshness.mjs')).href) as {
+    sourceHash(source: string, product: string): string
+  }
+
+  const webapp = await import(pathToFileURL(path.join(root, 'apps/desktop/scripts/build-webapp.mjs')).href) as {
+    mirrorWebappInputs(source: string, workspace: string): void
+  }
+
+  const products = ['tui', 'web', 'desktop', 'webapp']
+  const before = products.map(product => fresh.sourceHash(source, product))
+  webapp.mirrorWebappInputs(source, workspace)
+  assert.deepEqual(fs.readFileSync(path.join(workspace, relative)), fs.readFileSync(archive))
+  assert.equal(fresh.sourceHash(workspace, 'webapp'), fresh.sourceHash(source, 'webapp'))
+  fs.appendFileSync(archive, 'fixture dependency change', 'utf8')
+
+  for (const [index, product] of products.entries()) {
+    assert.notEqual(fresh.sourceHash(source, product), before[index], product)
+  }
+
+  webapp.mirrorWebappInputs(source, workspace)
+  assert.deepEqual(fs.readFileSync(path.join(workspace, relative)), fs.readFileSync(archive))
 })
 
 test('legacy callable matching retains options, defaults and upstream input validation', () => {

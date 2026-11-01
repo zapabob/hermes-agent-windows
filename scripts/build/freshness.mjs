@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto'
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
-import { isMain } from './frontend-common.mjs'
+import { isMain, localNpmSources } from './frontend-common.mjs'
 
 const receiptName = 'hermes-build.json'
 // What `hermes update` leaves in a product it could not rebuild (STALE_MARKER in hermes_cli/webapp.py).
@@ -29,7 +29,7 @@ const tuiInputs = [
   ...['ui-tui', 'ui-tui/packages/hermes-ink', 'apps/shared'].flatMap(root => [
     `${root}/src`, `${root}/package.json`, `${root}/tsconfig.json`,
   ]),
-  'tsconfig.json', 'package.json', 'package-lock.json', '.npmrc', 'pm/lock.json',
+  'tsconfig.json', 'package.json', 'package-lock.json', '.npmrc', ...localNpmSources, 'pm/lock.json',
   'scripts/build/tui.mjs', 'scripts/build/frontend-common.mjs', 'scripts/build/freshness.mjs',
   'ui-tui/scripts/gateway_bootstrap.py', 'ui-tui/scripts/clipboard_image.py',
 ]
@@ -37,7 +37,7 @@ const tuiInputs = [
 // The browser renderer compiles Desktop and its shared package in a prepared
 // workspace. Release metadata (pyproject.toml, uv.lock, icons) is not its input.
 const webappInputs = [
-  'apps/desktop', 'apps/shared', 'package.json', 'package-lock.json', '.npmrc', 'pm/lock.json',
+  'apps/desktop', 'apps/shared', 'package.json', 'package-lock.json', '.npmrc', ...localNpmSources, 'pm/lock.json',
   'scripts/build/webapp.mjs', 'scripts/build/node-deps.mjs', 'scripts/build/frontend-common.mjs',
   'scripts/build/freshness.mjs',
 ]
@@ -48,7 +48,7 @@ function productInputs(product) {
   const workspace = workspaces[product]
   if (!workspace) throw new Error(`Unknown frontend product: ${product}`)
   return [
-    workspace, 'apps/shared', 'package.json', 'package-lock.json', '.npmrc', 'pm/lock.json',
+    workspace, 'apps/shared', 'package.json', 'package-lock.json', '.npmrc', ...localNpmSources, 'pm/lock.json',
     'scripts/build',
     'scripts/generate-icons.mjs', 'scripts/generate_icons.py',
     // The root install-stamp.json is runtime identity rewritten after every install; desktop's

@@ -9,6 +9,7 @@ import { pathToFileURL } from 'node:url'
 import { parseArgs } from 'node:util'
 
 import { prepareElectronRuntime } from './electron-runtime.mjs'
+import { localNpmSources } from './frontend-common.mjs'
 
 // npm.cmd needs a shell. Use npm's JS entrypoint so paths remain argv on Windows.
 export function npmCommand({ env = process.env } = {}) {
@@ -165,7 +166,7 @@ export function prepareNodeDependencies({ source, workspaces, env = process.env,
     config: Object.entries(env).filter(([key]) => /^npm_config_/i.test(key) && !/^npm_config_(cache|offline|prefer_offline)$/i.test(key))
       .map(([key, value]) => [key.toLowerCase(), value]).sort(),
   }))
-  const files = ['package-lock.json', '.npmrc', ...Object.keys(lock.packages)
+  const files = ['package-lock.json', '.npmrc', ...localNpmSources, ...Object.keys(lock.packages)
     .filter(path => !path.split('/').includes('node_modules'))
     .map(path => join(path, 'package.json'))].sort()
   for (const file of files) {

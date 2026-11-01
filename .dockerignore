@@ -113,3 +113,10 @@ plans/
 /*.png.bak
 *.tar.gz
 *.tgz
+
+# Include only the reviewed npm input; docs, secrets and other archives stay excluded.
+!website/
+website/*
+!website/vendor/
+website/vendor/*
+!website/vendor/hermes-agent-minimatch-compat-1.0.0.tgz
