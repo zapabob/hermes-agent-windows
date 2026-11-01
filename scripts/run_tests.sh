@@ -55,9 +55,10 @@ for candidate in "$REPO_ROOT/.venv" "$REPO_ROOT/venv" "$HOME/.hermes/hermes-agen
   candidate_python=""
   if [ -f "$candidate/bin/activate" ] && [ -f "$candidate/bin/python" ]; then
     candidate_python="$candidate/bin/python"
-  elif [ -f "$candidate/Scripts/Activate.ps1" ] && [ -f "$candidate/Scripts/python.exe" ]; then
-    # Windows virtualenvs use Scripts/ rather than bin/.  Git Bash can invoke
-    # the native interpreter directly, so activation is not required here.
+  elif [ -f "$candidate/Scripts/python.exe" ]; then
+    # Windows virtualenvs use Scripts/ rather than bin/. Git Bash can invoke
+    # the native interpreter directly, so activation scripts are not required.
+    # uv-managed environments can intentionally contain only python.exe.
     candidate_python="$candidate/Scripts/python.exe"
   fi
   if [ -n "$candidate_python" ]; then
