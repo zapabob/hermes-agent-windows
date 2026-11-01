@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 from pathlib import Path
 from typing import Any
@@ -20,6 +21,7 @@ _SCANNED_SUFFIXES = {
 _MAX_COMMAND_LENGTH = 64 * 1024
 _MAX_CANDIDATE_REFERENCES = 32
 _MAX_CANDIDATE_REFERENCE_LENGTH = 2048
+_ENV_ASSIGNMENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=.*$")
 
 
 CandidateSnapshot = dict[str, tuple[str, int, FileIdentity | None]]
@@ -54,7 +56,22 @@ def _candidate_references(command: str) -> tuple[list[CandidateReference] | None
     except ValueError:
         return None, "candidate_parse_failed"
     references: list[CandidateReference] = []
-    for index, raw in enumerate(tokens):
+    command_seen = False
+    assignment_quote: str | None = None
+    for raw in tokens:
+        shell_token = raw.strip().strip(";&|()")
+        if not command_seen:
+            if assignment_quote is not None:
+                if raw.count(assignment_quote) % 2 == 1:
+                    assignment_quote = None
+                continue
+            if _ENV_ASSIGNMENT_RE.fullmatch(shell_token):
+                value = shell_token.split("=", 1)[1]
+                if value[:1] in {"\"", "'"} and value.count(value[0]) % 2 == 1:
+                    assignment_quote = value[0]
+                continue
+        is_command = not command_seen
+        command_seen = True
         token = raw.strip("\"';&|()")
         if not token or "://" in token:
             continue
@@ -69,9 +86,11 @@ def _candidate_references(command: str) -> tuple[list[CandidateReference] | None
         if Path(candidate).suffix.lower() in _SCANNED_SUFFIXES:
             if len(candidate) > _MAX_CANDIDATE_REFERENCE_LENGTH:
                 return None, "candidate_reference_too_long"
-            references.append((candidate, index == 0 and candidate == token))
+            references.append((candidate, is_command and candidate == token))
             if len(references) > _MAX_CANDIDATE_REFERENCES:
                 return None, "candidate_limit_exceeded"
+    if assignment_quote is not None:
+        return None, "candidate_parse_failed"
     return references, None
 
 

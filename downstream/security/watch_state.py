@@ -184,6 +184,62 @@ def runtime_lock(root: Path) -> Iterator[bool]:
         yield acquired
 
 
+def runtime_lock_available(root: Path) -> bool:
+    """Probe whether a watcher can claim the singleton runtime lock."""
+    with runtime_lock(root) as acquired:
+        return acquired
+
+
+def runtime_lock_is_held(root: Path) -> bool | None:
+    """Read-only probe for an existing singleton lock file.
+
+    Returns ``None`` when the file cannot be inspected without creating or
+    modifying it. Status callers must not materialize Security Center state.
+    """
+    path = root / "watch-runtime.lock"
+    try:
+        handle = path.open("r+b")
+    except FileNotFoundError:
+        return False
+    except OSError:
+        return None
+    acquired = False
+    try:
+        if path.stat().st_size < 1:
+            return None
+        handle.seek(0)
+        try:
+            if os.name == "nt":
+                import msvcrt
+
+                msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            acquired = True
+            return False
+        except ImportError:
+            return None
+        except OSError:
+            return True
+    finally:
+        if acquired:
+            try:
+                handle.seek(0)
+                if os.name == "nt":
+                    import msvcrt
+
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+                else:
+                    import fcntl
+
+                    fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+            except (ImportError, OSError):
+                pass
+        handle.close()
+
+
 @contextmanager
 def control_lock(root: Path) -> Iterator[None]:
     """Serialize enable, disable, migration, and boot recovery."""
@@ -450,6 +506,13 @@ def read_watch_status(root: Path) -> dict[str, Any]:
     if error is not None:
         return {"enabled": False, "pid": None, "running": False, "error": error}
     process, identity_error = _process_for_state(root, state)
+    if (
+        identity_error is None
+        and state.get("enabled") is True
+        and state.get("pid") is None
+        and runtime_lock_is_held(root) is True
+    ):
+        identity_error = "watcher runtime lock is held by an unverified process"
     result: dict[str, Any] = {
         "enabled": bool(state.get("enabled")),
         "pid": state.get("pid"),

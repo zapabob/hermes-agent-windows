@@ -91,6 +91,24 @@ def test_legacy_pid_without_process_identity_is_not_running(tmp_path: Path) -> N
     assert status["error"] == "watcher identity is incomplete"
 
 
+def test_enabled_request_reports_an_unverified_runtime_lock_owner(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "security"
+    watch_state.set_watch_enabled(root, True)
+    monkeypatch.setattr(watch_state, "runtime_lock_is_held", lambda _root: True, raising=False)
+
+    status = watch_state.read_watch_status(root)
+
+    assert status == {
+        "enabled": True,
+        "pid": None,
+        "running": False,
+        "error": "watcher runtime lock is held by an unverified process",
+    }
+
+
 def test_profile_mismatch_cannot_authenticate_watcher(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

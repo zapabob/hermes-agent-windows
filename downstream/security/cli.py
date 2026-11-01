@@ -31,6 +31,7 @@ from .watch_state import (
     prepare_watch_disable,
     preserve_watch_enable_intent,
     read_watch_status,
+    runtime_lock_available,
     set_watch_enabled,
     verified_watch_owner,
 )
@@ -137,6 +138,14 @@ def _watch_enable_locked(service: _WatchService) -> dict[str, Any]:
             "ok": False,
             **current,
             "error": "previous watcher is still stopping",
+        }
+    if not runtime_lock_available(root):
+        return {
+            "ok": False,
+            "enabled": bool(current.get("enabled")),
+            "pid": None,
+            "running": False,
+            "error": "watcher runtime lock is held by an unverified process",
         }
     request_nonce = begin_watch_enable(root)
     owner_nonce = secrets.token_hex(16)

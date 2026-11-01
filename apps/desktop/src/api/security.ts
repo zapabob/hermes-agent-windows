@@ -80,8 +80,74 @@ export interface SecurityStatus {
   watch: { enabled: boolean; error?: string; pid: null | number; running: boolean }
 }
 
+export type SecurityPostureState = 'fail' | 'pass' | 'review' | 'unavailable' | 'warn'
+export type SecurityPostureSeverity = 'critical' | 'high' | 'info' | 'low' | 'medium'
+
+export interface SecurityPostureCheck {
+  expected: unknown
+  id: string
+  observed: unknown
+  severity: SecurityPostureSeverity
+  status: SecurityPostureState
+}
+
+export interface SecurityPostureListener {
+  address: string
+  exposure: 'loopback' | 'network'
+  pid: null | number
+  port: number
+  process_name: string
+}
+
+export interface SecurityPostureReport {
+  checks: SecurityPostureCheck[]
+  counts: Partial<Record<SecurityPostureState, number>>
+  generated_at: string
+  host: {
+    defender: {
+      antivirus_enabled: boolean | null
+      realtime_enabled: boolean | null
+      signature_age_hours: null | number
+      status: string
+    }
+    disk: { free_bytes: null | number }
+    firewall: {
+      profiles: Record<string, { default_inbound_action: string; enabled: boolean }>
+    }
+    listeners: {
+      api_addresses: string[]
+      api_owner_verified: boolean | null
+      loopback: null | number
+      network: null | number
+      records: SecurityPostureListener[]
+    }
+    platform: string
+  }
+  overall: 'attention' | 'critical' | 'high_risk' | 'pass'
+  schema: 'hermes-security-posture-v1'
+  supply_chain: {
+    finding_count: number
+    findings: Array<Record<string, unknown>>
+    findings_truncated: boolean
+    severity_counts: Record<string, number>
+    total_components_scanned: number
+  }
+}
+
 export function getSecurityStatus(): Promise<SecurityStatus> {
   return hermesApi<SecurityStatus>({ ...profileScoped(), path: '/api/security/status' })
+}
+
+export function runSecurityPostureAudit(request: {
+  include_supply_chain: boolean
+}): Promise<SecurityPostureReport> {
+  return hermesApi<SecurityPostureReport>({
+    ...profileScoped(),
+    path: '/api/security/posture',
+    method: 'POST',
+    body: request,
+    timeoutMs: 180_000
+  })
 }
 
 export function runSecurityScan(request: {

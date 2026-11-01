@@ -16,7 +16,10 @@ import {
   getSecurityStatus,
   type QuarantineItem,
   restoreQuarantineItem,
+  runSecurityPostureAudit,
   runSecurityScan,
+  type SecurityPostureReport,
+  type SecurityPostureState,
   type SecurityScanResult,
   type SecurityStatus,
   setSecurityWatch,
@@ -99,6 +102,26 @@ function formatEvidence(serialized: string): string {
   }
 }
 
+function postureTone(status: SecurityPostureState): StatusTone {
+  if (status === 'pass') {
+    return 'good'
+  }
+
+  return status === 'fail' ? 'bad' : 'warn'
+}
+
+function formatPostureValue(value: unknown): string {
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value)
+  }
+
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return '—'
+  }
+}
+
 export function SecurityView({
   setStatusbarItemGroup: _setStatusbarItemGroup,
   className,
@@ -110,6 +133,7 @@ export function SecurityView({
   const [busy, setBusy] = useState<null | string>(null)
   const [error, setError] = useState<null | string>(null)
   const [customPath, setCustomPath] = useState('')
+  const [posture, setPosture] = useState<SecurityPostureReport | null>(null)
   const [scanResults, setScanResults] = useState<SecurityScanResult[]>([])
   const activeRoute = useStore($activeGatewayRoute)
   const activeGateway = useStore($gateway)
@@ -135,6 +159,7 @@ export function SecurityView({
   }, [s.failedLoad])
 
   useEffect(() => {
+    setPosture(null)
     setScanResults([])
     setStatus(null)
     setBusy(null)
@@ -211,6 +236,25 @@ export function SecurityView({
     [customPath, run, s]
   )
 
+  const auditPosture = useCallback(async () => {
+    await run('posture', async () => {
+      const connection = getApiRequestConnection()
+      const profile = getApiRequestProfile()
+      const activationEpoch = gatewayActivationEpoch()
+      const response = await runSecurityPostureAudit({ include_supply_chain: true })
+
+      if (
+        activationEpoch !== gatewayActivationEpoch() ||
+        connection !== getApiRequestConnection() ||
+        profile !== getApiRequestProfile()
+      ) {
+        return
+      }
+
+      setPosture(response)
+    })
+  }, [run])
+
   const updateDefinitions = useCallback(async () => {
     if (!(await confirm({ title: s.confirmUpdate, confirmLabel: s.updateDefinitions }))) {
       return
@@ -262,7 +306,7 @@ export function SecurityView({
     ([name, version]) => ['clamav', 'yara'].includes(name) && toneForEngine(version) === 'good'
   )
 
-  const protectionReady = Boolean(status?.enabled && scannerReady)
+  const protectionReady = Boolean(status?.enabled && scannerReady && status.watch.running)
 
   if (!status && !error) {
     return <PageLoader label={s.refresh} />
@@ -386,6 +430,66 @@ export function SecurityView({
               </div>
             </section>
           </div>
+
+          <section className="border-b border-(--ui-stroke-secondary) py-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <h2 className="text-sm font-semibold text-(--ui-text-primary)">{s.postureTitle}</h2>
+                <p className="mt-1 max-w-3xl text-xs leading-5 text-(--ui-text-secondary)">{s.postureDescription}</p>
+              </div>
+              <Button disabled={busy !== null} onClick={() => void auditPosture()} variant="outline">
+                <Codicon name="shield" />
+                {s.runPostureAudit}
+              </Button>
+            </div>
+
+            {posture ? (
+              <>
+                <dl className="mt-5 flex flex-wrap gap-x-8 gap-y-3 text-xs">
+                  <div>
+                    <dt className="text-(--ui-text-tertiary)">{s.postureRisk}</dt>
+                    <dd className="mt-1 flex items-center gap-2 font-medium text-(--ui-text-primary)">
+                      <StatusDot tone={posture.overall === 'pass' ? 'good' : posture.overall === 'attention' ? 'warn' : 'bad'} />
+                      {s.postureOverall[posture.overall]}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-(--ui-text-tertiary)">{s.postureLastRun}</dt>
+                    <dd className="mt-1 text-(--ui-text-primary)">{formatTime(posture.generated_at)}</dd>
+                  </div>
+                </dl>
+                <div className="mt-5 overflow-x-auto">
+                  <table className="w-full min-w-3xl border-collapse text-left text-xs">
+                    <thead className="text-(--ui-text-tertiary)">
+                      <tr>
+                        <th className="pb-2 font-medium">{s.control}</th>
+                        <th className="pb-2 font-medium">{s.status}</th>
+                        <th className="pb-2 font-medium">{s.evidence}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {posture.checks.map(check => (
+                        <tr className="border-t border-(--ui-stroke-secondary)" key={check.id}>
+                          <td className="py-2 pr-4">{s.postureChecks[check.id] ?? check.id}</td>
+                          <td className="py-2 pr-4">
+                            <span className="flex items-center gap-2">
+                              <StatusDot tone={postureTone(check.status)} />
+                              {s.postureStates[check.status]}
+                            </span>
+                          </td>
+                          <td className="max-w-xl py-2 font-mono text-[11px] text-(--ui-text-secondary)">
+                            {formatPostureValue(check.observed)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            ) : (
+              <p className="mt-4 text-xs text-(--ui-text-tertiary)">{s.postureNotRun}</p>
+            )}
+          </section>
 
           {scanResults.length > 0 ? (
             <section className="border-b border-(--ui-stroke-secondary) py-6">

@@ -2,13 +2,14 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { SecurityStatus } from '@/hermes'
+import type { SecurityPostureReport, SecurityStatus } from '@/hermes'
 import { $gateway } from '@/store/gateway'
 
 import { SecurityView } from './index'
 
 const getSecurityStatus = vi.fn()
 const runSecurityScan = vi.fn()
+const runSecurityPostureAudit = vi.fn()
 const updateSecurityDefinitions = vi.fn()
 const setSecurityWatch = vi.fn()
 const activation = vi.hoisted(() => ({ epoch: 0 }))
@@ -29,6 +30,7 @@ vi.mock('@/hermes', () => ({
   deleteQuarantineItem: vi.fn(),
   getSecurityStatus: () => getSecurityStatus(),
   restoreQuarantineItem: vi.fn(),
+  runSecurityPostureAudit: (request: unknown) => runSecurityPostureAudit(request),
   runSecurityScan: (request: unknown) => runSecurityScan(request),
   setSecurityWatch: (action: unknown) => setSecurityWatch(action),
   updateSecurityDefinitions: () => updateSecurityDefinitions()
@@ -60,11 +62,54 @@ const status: SecurityStatus = {
   watch: { enabled: false, pid: null, running: false }
 }
 
+const posture: SecurityPostureReport = {
+  schema: 'hermes-security-posture-v1',
+  generated_at: '2026-11-01T00:00:00+00:00',
+  overall: 'high_risk',
+  counts: { fail: 2, pass: 5 },
+  checks: [
+    { id: 'approvals.interactive', status: 'fail', severity: 'high', observed: 'off', expected: 'smart' },
+    {
+      id: 'supply_chain.known_vulnerabilities',
+      status: 'fail',
+      severity: 'high',
+      observed: { critical: 0, high: 1, moderate: 0 },
+      expected: 0
+    }
+  ],
+  host: {
+    platform: 'win32',
+    defender: {
+      status: 'running',
+      antivirus_enabled: true,
+      realtime_enabled: true,
+      signature_age_hours: 1
+    },
+    firewall: { profiles: { Public: { enabled: true, default_inbound_action: 'block' } } },
+    disk: { free_bytes: 20 * 1024 ** 3 },
+    listeners: {
+      api_addresses: ['127.0.0.1'],
+      api_owner_verified: true,
+      loopback: 4,
+      network: 2,
+      records: []
+    }
+  },
+  supply_chain: {
+    total_components_scanned: 10,
+    finding_count: 1,
+    severity_counts: { HIGH: 1 },
+    findings: [],
+    findings_truncated: false
+  }
+}
+
 beforeEach(() => {
   activation.epoch = 0
   $gateway.set(null)
   getSecurityStatus.mockResolvedValue(status)
   runSecurityScan.mockResolvedValue({ results: [] })
+  runSecurityPostureAudit.mockResolvedValue(posture)
 })
 
 afterEach(() => {
@@ -203,6 +248,17 @@ describe('SecurityView', () => {
     render(<SecurityView />)
     fireEvent.click(await screen.findByRole('button', { name: 'Quick scan' }))
     await waitFor(() => expect(runSecurityScan).toHaveBeenCalledWith({ scope: 'quick', quarantine: true }))
+  })
+
+  it('runs a bounded posture audit and exposes failed controls without changing them', async () => {
+    render(<SecurityView />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Run posture audit' }))
+
+    await waitFor(() => expect(runSecurityPostureAudit).toHaveBeenCalledWith({ include_supply_chain: true }))
+    expect(await screen.findByRole('heading', { name: 'Windows and agent posture' })).toBeTruthy()
+    expect(screen.getByText('High risk')).toBeTruthy()
+    expect(screen.getByText('Interactive approvals')).toBeTruthy()
+    expect(screen.getByText('Known dependency vulnerabilities')).toBeTruthy()
   })
 
   it('shows durable scan totals, feed state, and exact detection evidence', async () => {

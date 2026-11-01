@@ -123,7 +123,6 @@ def run(interval: float, request_nonce: str, owner_nonce: str) -> int:
     with runtime_lock(root) as acquired:
         if not acquired:
             return 0
-        service = SecurityService()
         stopping = False
         if os.name == "nt":
             try:
@@ -141,6 +140,7 @@ def run(interval: float, request_nonce: str, owner_nonce: str) -> int:
         if claim_watch_owner(root, request_nonce, owner_nonce) is None:
             return 0
         try:
+            service = SecurityService()
             inventory_event_state: dict[str, float | str] = {}
             seen = reconcile_once(service, {}, scan_changes=False, inventory_event_state=inventory_event_state)
             while not stopping:

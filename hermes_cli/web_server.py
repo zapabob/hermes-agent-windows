@@ -14933,6 +14933,10 @@ class SecurityScanRequest(BaseModel):
     confirmed: bool = False
 
 
+class SecurityPostureRequest(BaseModel):
+    include_supply_chain: bool = True
+
+
 class SecurityMutationRequest(BaseModel):
     confirmed: bool = False
 
@@ -14971,6 +14975,29 @@ async def security_status(profile: Optional[str] = None):
         _call_security_for_profile,
         profile,
         lambda service: service.status(),
+        read_only=True,
+    )
+
+
+@app.post("/api/security/posture")
+async def security_posture(body: SecurityPostureRequest, profile: Optional[str] = None):
+    def _run(service):
+        from downstream.security.posture import collect_host_evidence, run_posture_audit
+
+        return run_posture_audit(
+            config=load_config(),
+            security_status=service.status(),
+            host_collector=lambda config: collect_host_evidence(
+                config,
+                expected_api_pid=get_running_pid(),
+            ),
+            include_supply_chain=body.include_supply_chain,
+        )
+
+    return await asyncio.to_thread(
+        _call_security_for_profile,
+        profile,
+        _run,
         read_only=True,
     )
 

@@ -19,6 +19,7 @@ def test_security_routes_are_registered() -> None:
         for method in route.methods
     }
     assert ("GET", "/api/security/status") in routes
+    assert ("POST", "/api/security/posture") in routes
     assert ("POST", "/api/security/scan") in routes
     assert ("POST", "/api/security/update") in routes
     assert ("DELETE", "/api/security/quarantine/{item_id}") in routes
@@ -119,6 +120,61 @@ def test_security_status_uses_requested_profile(monkeypatch: pytest.MonkeyPatch,
 
     assert observed == [requested_home]
     assert result == {"profile_home": str(requested_home)}
+
+
+def test_security_posture_is_profile_scoped_and_read_only(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    from downstream.security import posture
+
+    requested_home = tmp_path / "profiles" / "research"
+    requested_home.mkdir(parents=True)
+    observed: list[tuple[Path, bool]] = []
+    host_collections: list[tuple[dict[str, object], int | None]] = []
+    monkeypatch.setattr(web_server, "_resolve_profile_dir", lambda _name: requested_home)
+    monkeypatch.setattr(web_server, "load_config", lambda: {"approvals": {"mode": "smart"}})
+    monkeypatch.setattr(web_server, "get_running_pid", lambda: 4242)
+    monkeypatch.setattr(
+        posture,
+        "collect_host_evidence",
+        lambda config, *, expected_api_pid=None: host_collections.append((config, expected_api_pid)) or {},
+    )
+
+    class FakeService:
+        def __init__(self, read_only: bool = False) -> None:
+            from hermes_constants import get_hermes_home
+
+            observed.append((get_hermes_home(), read_only))
+
+        def status(self) -> dict[str, object]:
+            return {"watch": {}, "engines": {}}
+
+    monkeypatch.setitem(__import__("sys").modules, "downstream.security.service", SimpleNamespace(SecurityService=FakeService))
+    def _run_posture_audit(**kwargs):
+        kwargs["host_collector"](kwargs["config"])
+        return {
+            "config": kwargs["config"],
+            "include_supply_chain": kwargs["include_supply_chain"],
+            "status": kwargs["security_status"],
+        }
+
+    monkeypatch.setattr(posture, "run_posture_audit", _run_posture_audit)
+
+    result = asyncio.run(
+        web_server.security_posture(
+            web_server.SecurityPostureRequest(include_supply_chain=False),
+            profile="research",
+        )
+    )
+
+    assert observed == [(requested_home, True)]
+    assert host_collections == [({"approvals": {"mode": "smart"}}, 4242)]
+    assert result == {
+        "config": {"approvals": {"mode": "smart"}},
+        "include_supply_chain": False,
+        "status": {"watch": {}, "engines": {}},
+    }
 
 
 def test_security_gets_do_not_materialize_named_profile_state(

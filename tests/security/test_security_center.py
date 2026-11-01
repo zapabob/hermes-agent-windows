@@ -29,7 +29,7 @@ from downstream.security.cli import _watch_disable, _watch_enable, resume_watch_
 from downstream.security import cli as security_cli
 from downstream.security import execution_gate
 from downstream.security import watch_state, watcher as security_watcher
-from downstream.security.execution_gate import _candidates, preflight_command
+from downstream.security.execution_gate import _candidate_references, _candidates, preflight_command
 from downstream.security.models import EngineState, Finding, ScanResult, Verdict
 from downstream.security.service import SecurityService
 from downstream.security.store import SecurityStore
@@ -269,6 +269,29 @@ def test_execution_gate_resolves_only_the_path_command(
     assert _candidates("python -File payload.ps1", tmp_path) == []
 
 
+def test_execution_gate_ignores_leading_environment_assignments() -> None:
+    references, error = _candidate_references(
+        'HERMES_PYTHON="C:/workspace/New project/.venv/Scripts/python.exe" '
+        '"C:/Program Files/Git/bin/bash.exe" --noprofile --norc '
+        'scripts/run_tests.sh tests/security/test_security_posture.py'
+    )
+
+    assert error is None
+    assert references == [
+        ("C:/Program Files/Git/bin/bash.exe", True),
+        ("tests/security/test_security_posture.py", False),
+    ]
+
+
+def test_execution_gate_rejects_unclosed_environment_assignment_quotes() -> None:
+    references, error = _candidate_references(
+        'HERMES_PYTHON="C:/workspace/New project/.venv/Scripts/python.exe'
+    )
+
+    assert references is None
+    assert error == "candidate_parse_failed"
+
+
 def test_execution_gate_returns_stable_shape_without_candidates(tmp_path: Path) -> None:
     assert preflight_command("python -c 'print(1)'", str(tmp_path)) == {
         "allowed": True,
@@ -371,6 +394,28 @@ def test_watch_enable_timeout_cleans_up_child_and_preserves_request(tmp_path: Pa
     persisted = json.loads((service.store.root / "watch-state.json").read_text(encoding="utf-8"))
     assert persisted["enabled"] is True
     assert persisted["pid"] is None
+
+
+def test_watch_enable_refuses_an_unverified_runtime_lock_owner(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    service = WatchControlServiceStub(tmp_path / "security")
+    service._statuses = iter(({"enabled": True, "pid": None, "running": False},))
+    popen = Mock(side_effect=AssertionError("must not replace an unverified lock owner"))
+    monkeypatch.setattr(security_cli, "runtime_lock_available", lambda _root: False, raising=False)
+    monkeypatch.setattr(security_cli.subprocess, "Popen", popen)
+
+    result = _watch_enable(cast(SecurityService, service))
+
+    assert result == {
+        "ok": False,
+        "enabled": True,
+        "pid": None,
+        "running": False,
+        "error": "watcher runtime lock is held by an unverified process",
+    }
+    popen.assert_not_called()
 
 
 def test_windows_watcher_spawn_retries_without_breakaway(
@@ -533,6 +578,43 @@ def test_watcher_claims_owner_before_initial_inventory(
         security_watcher.run(30, "1" * 32, "2" * 32)
 
     assert calls == ["claim", "inventory", "clear"]
+
+
+def test_watcher_claims_owner_before_service_initialization(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    calls: list[str] = []
+
+    @contextmanager
+    def _runtime_lock(_root: Path):
+        yield True
+
+    class _Service:
+        def __init__(self) -> None:
+            calls.append("service")
+            raise RuntimeError("fixture initialization failure")
+
+    monkeypatch.setattr(security_watcher, "get_hermes_home", lambda: tmp_path)
+    monkeypatch.setattr(security_watcher, "runtime_lock", _runtime_lock)
+    monkeypatch.setattr(security_watcher, "SecurityService", _Service)
+    monkeypatch.setattr(
+        security_watcher,
+        "claim_watch_owner",
+        lambda _root, _request, _owner: calls.append("claim") or {"enabled": True},
+    )
+    monkeypatch.setattr(
+        security_watcher,
+        "clear_watch_owner",
+        lambda _root, _request, _owner: calls.append("clear") or True,
+    )
+    monkeypatch.setattr(security_watcher.psutil, "Process", lambda: SimpleNamespace(nice=Mock()))
+    monkeypatch.setattr(security_watcher.signal, "signal", Mock())
+
+    with pytest.raises(RuntimeError, match="fixture initialization failure"):
+        security_watcher.run(30, "1" * 32, "2" * 32)
+
+    assert calls == ["claim", "service", "clear"]
 
 
 def test_watcher_reconciles_new_and_changed_files_once(tmp_path: Path) -> None:

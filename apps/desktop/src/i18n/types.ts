@@ -1992,6 +1992,17 @@ export interface Translations {
     vaultProtection: string
     engineAvailability: string
     activeFeeds: string
+    postureTitle: string
+    postureDescription: string
+    runPostureAudit: string
+    postureNotRun: string
+    postureRisk: string
+    postureLastRun: string
+    control: string
+    status: string
+    postureOverall: Record<'attention' | 'critical' | 'high_risk' | 'pass', string>
+    postureStates: Record<'fail' | 'pass' | 'review' | 'unavailable' | 'warn', string>
+    postureChecks: Record<string, string>
     securitySummary: string
     filesScanned: string
     detections: string
