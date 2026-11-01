@@ -638,3 +638,42 @@ def test_dm_dir_rejects_precreated_symlink(tmp_path, monkeypatch):
 
     with pytest.raises(PermissionError, match="not a directory"):
         bot_mode_dm._dm_dir()
+
+
+def test_write_failure_keeps_reused_descriptor_open(tmp_path, monkeypatch):
+    """Failure cleanup owns only the payload descriptor, even after reuse."""
+    probes = []
+    probe_path = tmp_path / "unrelated-writer.txt"
+    real_fdopen = bot_mode_dm.os.fdopen
+
+    class FailingWriter:
+        def __init__(self, fd, *args, **kwargs):
+            self.stream = real_fdopen(fd, *args, **kwargs)
+
+        def __enter__(self):
+            self.stream.__enter__()
+            return self
+
+        def write(self, content):
+            raise OSError("disk full")
+
+        def __exit__(self, *exc_info):
+            self.stream.__exit__(*exc_info)
+            probes.append(probe_path.open("w", encoding="utf-8"))
+            return False
+
+    monkeypatch.setattr(bot_mode_dm, "_dm_dir", lambda: tmp_path)
+    monkeypatch.setattr(bot_mode_dm.os, "fdopen", FailingWriter)
+    try:
+        with pytest.raises(OSError, match="disk full"):
+            bot_mode_dm._write_dm_file("owned payload")
+        assert not list(tmp_path.glob("dm-*.txt"))
+        probes[0].write("still open")
+        probes[0].flush()
+        assert probe_path.read_text(encoding="utf-8") == "still open"
+    finally:
+        for probe in probes:
+            try:
+                probe.close()
+            except OSError:
+                pass

@@ -802,14 +802,12 @@ def ensure_ca_cert(*, force: bool = False) -> Tuple[Path, Path]:
             pass
         fd = os.open(str(key_staged), open_flags, 0o600)
         try:
-            with os.fdopen(fd, "wb") as f:
+            # Borrow the descriptor; this scope owns the one raw close even
+            # when writing fails and a different file could reuse the number.
+            with os.fdopen(fd, "wb", closefd=False) as f:
                 f.write(key_bytes)
-        except Exception:
-            try:
-                os.close(fd)
-            except OSError:
-                pass
-            raise
+        finally:
+            os.close(fd)
         os.replace(key_staged, ca_key)
 
         # Cert is public — 0o644 is fine and matches typical PEM layout.

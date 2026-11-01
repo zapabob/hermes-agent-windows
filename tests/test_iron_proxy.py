@@ -814,3 +814,46 @@ def test_bitwarden_importerror_raise_without_fallback(
         )
 
 
+
+
+def test_ca_write_failure_keeps_reused_descriptor_open(hermes_home, tmp_path, monkeypatch):
+    """A failed CA write must not close an unrelated file reusing its fd."""
+    probes = []
+    probe_path = tmp_path / "unrelated-writer.txt"
+    real_fdopen = ip.os.fdopen
+
+    def fake_run(argv, **kwargs):
+        Path(argv[argv.index("-out") + 1]).write_bytes(b"owned test material")
+        return MagicMock(returncode=0)
+
+    class FailingWriter:
+        def __init__(self, fd, *args, **kwargs):
+            self.stream = real_fdopen(fd, *args, **kwargs)
+
+        def __enter__(self):
+            self.stream.__enter__()
+            return self
+
+        def write(self, content):
+            raise OSError("disk full")
+
+        def __exit__(self, *exc_info):
+            self.stream.__exit__(*exc_info)
+            probes.append(probe_path.open("w", encoding="utf-8"))
+            return False
+
+    monkeypatch.setattr(ip.shutil, "which", lambda name: "owned-openssl")
+    monkeypatch.setattr(ip.subprocess, "run", fake_run)
+    monkeypatch.setattr(ip.os, "fdopen", FailingWriter)
+    try:
+        with pytest.raises(OSError, match="disk full"):
+            ip.ensure_ca_cert()
+        probes[0].write("still open")
+        probes[0].flush()
+        assert probe_path.read_text(encoding="utf-8") == "still open"
+    finally:
+        for probe in probes:
+            try:
+                probe.close()
+            except OSError:
+                pass

@@ -497,15 +497,14 @@ def _write_dm_file(content: str) -> str:
     _sweep_stale_dm_files()
     fd, path = tempfile.mkstemp(prefix="dm-", suffix=".txt", dir=_dm_dir(), text=True)
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            f.write(content)
-    except BaseException:
-        # fdopen owns the descriptor once it succeeds, but if fdopen itself
-        # failed the raw descriptor is still ours. Closing twice is harmless.
+        # Keep raw-fd ownership here even if wrapper creation or writing fails.
+        # A second close after fdopen's context exits can hit a reused fd.
         try:
+            with os.fdopen(fd, "w", encoding="utf-8", closefd=False) as f:
+                f.write(content)
+        finally:
             os.close(fd)
-        except OSError:
-            pass
+    except BaseException:
         _unlink_dm_file(path)
         raise
     return path

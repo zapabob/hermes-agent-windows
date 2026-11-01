@@ -147,3 +147,36 @@ def test_deliver_write_failure_still_removes_tempfile(home, monkeypatch, tmp_pat
     assert "error" in err
     assert made, "mkstemp was never reached"
     assert not glob.glob(str(tmp_path / "hermes-relay-dm-*")), "tempfile leaked"
+
+
+def test_deliver_keeps_descriptor_reused_after_turn_open(home, monkeypatch, tmp_path):
+    """Delivery cleanup must not close a different file using the old fd slot."""
+    from contextlib import contextmanager
+    from types import SimpleNamespace
+
+    probe_path = tmp_path / "unrelated-writer.txt"
+    probes = []
+    real_lock = bot_relay.acquire_turn_lock
+
+    @contextmanager
+    def lock_then_open_probe(*args, **kwargs):
+        with real_lock(*args, **kwargs) as held:
+            yield held
+        probes.append(probe_path.open("w", encoding="utf-8"))
+
+    monkeypatch.setattr(bot_relay, "acquire_turn_lock", lock_then_open_probe)
+    monkeypatch.setattr("subprocess.run", lambda *a, **k: SimpleNamespace(
+        returncode=0, stdout="pong", stderr=""))
+    try:
+        out = _result(srv._methods["bot_relay.deliver"](
+            1, {"profile": "ops", "message": "ping"}))
+        assert out["reply"] == "pong"
+        probes[0].write("still open")
+        probes[0].flush()
+        assert probe_path.read_text(encoding="utf-8") == "still open"
+    finally:
+        for probe in probes:
+            try:
+                probe.close()
+            except OSError:
+                pass

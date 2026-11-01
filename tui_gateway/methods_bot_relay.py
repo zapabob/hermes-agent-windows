@@ -111,8 +111,13 @@ def _(rid, params: dict) -> dict:
 
         fd, tmp = tempfile.mkstemp(prefix="hermes-relay-dm-", suffix=".txt", text=True)
         try:
-            with os.fdopen(fd, "w", encoding="utf-8") as f:
-                f.write(message)
+            # Borrow the raw descriptor so this scope closes it exactly once,
+            # before another thread or the turn lock can reuse its number.
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8", closefd=False) as f:
+                    f.write(message)
+            finally:
+                os.close(fd)
             # Per-profile turn lock (#93091): serialize with any other
             # delivery turn into this profile (relay or local message_agent).
             # The lock covers only the turn execution window. Worst-case
@@ -154,14 +159,6 @@ def _(rid, params: dict) -> dict:
                             timeout=600,
                         )
         finally:
-            # ``os.fdopen`` normally owns and closes ``fd``, but a write/open
-            # failure can leave the raw descriptor alive. On Windows an open
-            # descriptor prevents unlinking the tempfile, so close it
-            # defensively before removal; EBADF means the context already did.
-            try:
-                os.close(fd)
-            except OSError:
-                pass
             try:
                 os.unlink(tmp)
             except OSError:
