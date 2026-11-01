@@ -26,7 +26,7 @@ def test_real_read_tool_binaries_confirm_option_ownership(
     if shutil.which(argv[0]) is None:
         pytest.skip(f"{argv[0]} is not installed")
 
-    completed = subprocess.run(argv, input=stdin, text=True, capture_output=True)
+    completed = subprocess.run(argv, input=stdin, text=True, encoding="utf-8", errors="replace", capture_output=True)
 
     assert completed.returncode == expected_returncode
     assert completed.stdout == expected_output
@@ -72,9 +72,9 @@ def test_real_binaries_execute_leading_dash_program_payload(
     if needs_tty:
         argv = ["script", "-qec", shlex.join(argv), "/dev/null"]
 
-    subprocess.run(argv, input=input_text, text=True, capture_output=True, env=env, timeout=20)
+    subprocess.run(argv, input=input_text, text=True, encoding="utf-8", errors="replace", capture_output=True, env=env, timeout=20)
 
-    assert marker.read_text() == "executed"
+    assert marker.read_text(encoding="utf-8") == "executed"
 
 
 @pytest.mark.parametrize(
