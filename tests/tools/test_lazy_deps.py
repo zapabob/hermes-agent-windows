@@ -250,21 +250,21 @@ class TestIsSatisfiedVersionAware:
                     "google-auth-oauthlib": "1.3.1",
                     "google-auth-httplib2": "0.3.1",
                     "httplib2": "0.31.2",
-                    "pyasn1": "0.6.3",
+                    "pyasn1": "0.6.4",
                 },
                 (
                     "google-auth==2.58.0",
                     "httplib2==0.32.0",
-                    "pyasn1==0.6.4",
+                    "pyasn1==0.6.5",
                 ),
             ),
             (
                 "provider.vertex",
                 {
                     "google-auth": "2.58.0",
-                    "pyasn1": "0.6.3",
+                    "pyasn1": "0.6.4",
                 },
-                ("pyasn1==0.6.4",),
+                ("pyasn1==0.6.5",),
             ),
         ],
     )

@@ -16,7 +16,7 @@ def test_stale_google_transitives_are_reported_missing(monkeypatch):
         "google-auth-oauthlib": "1.3.1",
         "google-auth-httplib2": "0.3.1",
         "httplib2": "0.31.2",
-        "pyasn1": "0.6.3",
+        "pyasn1": "0.6.4",
     }
 
     def fake_version(name):
@@ -30,7 +30,7 @@ def test_stale_google_transitives_are_reported_missing(monkeypatch):
     assert oauth._missing_required_packages() == [
         "google-auth==2.58.0",
         "httplib2==0.32.0",
-        "pyasn1==0.6.4",
+        "pyasn1==0.6.5",
     ]
 
 
@@ -40,7 +40,7 @@ def test_installer_repairs_stale_transitives(monkeypatch):
             [
                 "google-auth==2.58.0",
                 "httplib2==0.32.0",
-                "pyasn1==0.6.4",
+                "pyasn1==0.6.5",
             ],
             [],
         ]
@@ -58,6 +58,6 @@ def test_installer_repairs_stale_transitives(monkeypatch):
             "--quiet",
             "google-auth==2.58.0",
             "httplib2==0.32.0",
-            "pyasn1==0.6.4",
+            "pyasn1==0.6.5",
         ]
     ]

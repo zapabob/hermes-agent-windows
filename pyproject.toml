@@ -349,9 +349,9 @@ google = [
   # The Google SDKs permit older vulnerable transitives, so unlocked installs
   # must carry the same fixed floors as uv.lock and the runtime installers:
   # httplib2 0.32.0 (GHSA-j5g9-f88f-gfj3 decompression bomb DoS),
-  # pyasn1 0.6.4, google-auth 2.58.0.
+  # pyasn1 0.6.5, google-auth 2.58.0.
   "httplib2==0.32.0",
-  "pyasn1==0.6.4",
+  "pyasn1==0.6.5",
 ]
 youtube = [
   # Required by skills/media/youtube-content and
@@ -461,7 +461,7 @@ exclude-newer = "14 days"
 # cutoff can still brick installs. Exempting exact pins is pure brick-risk
 # removal at no supply-chain cost. Guarded by
 # tests/test_packaging_metadata.py::test_build_system_requires_exempt_from_exclude_newer.
-exclude-newer-package = { vercel = false, nemo-relay = false, huggingface_hub = false, aiohttp = false, brotlicffi = false, filelock = false, cryptography = false, defusedxml = false, python-olm = false, unpaddedbase64 = false, setuptools = false, pillow = false, mcp = false, oauthlib = false, pyjwt = false, certifi = false, tornado = false }
+exclude-newer-package = { vercel = false, nemo-relay = false, huggingface_hub = false, aiohttp = false, brotlicffi = false, filelock = false, cryptography = false, defusedxml = false, python-olm = false, unpaddedbase64 = false, setuptools = false, pillow = false, mcp = false, oauthlib = false, pyjwt = false, certifi = false, tornado = false, pyasn1 = false }
 
 [tool.setuptools]
 # Top-level single-file modules (not packages). Without this, uv2nix's
