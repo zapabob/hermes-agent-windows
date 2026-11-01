@@ -72,6 +72,7 @@ def test_keyboard_steer_runtime_effects(tmp_path, monkeypatch, mode):
     cleanup_observations = []
     commands, wire, effects, errors, violations, threads, wakeups = [], [], [], [], [], [], []
     final_turns, settled_turns, aborted_replies, handler_threads = [], [], [], []
+    aborted_probes = []
     persisted = []
     guard = {"active": True}
     server = peer_thread = shell = feeder = None
@@ -136,6 +137,11 @@ def test_keyboard_steer_runtime_effects(tmp_path, monkeypatch, mode):
         def do_GET(self):
             try:
                 self.reply(200, [] if self.path.startswith("/slots") else {"data": []})
+            except (BrokenPipeError, ConnectionResetError) as exc:
+                # Progress probes have a 0.5s client timeout. A loaded runner
+                # can close one before this peer writes; it does not cancel
+                # the model POST or invalidate steering/file/SQLite oracles.
+                aborted_probes.append({"path": self.path, "error": type(exc).__name__})
             except BaseException as exc:
                 errors.append(f"peer GET: {exc!r}")
 
@@ -654,6 +660,7 @@ def test_keyboard_steer_runtime_effects(tmp_path, monkeypatch, mode):
             "persisted": persisted, "final_turns": final_turns, "settled_turns": settled_turns,
             "errors": errors, "violations": violations, "owned_socketpairs": wakeups,
             "aborted_replies": aborted_replies, "hard_observed": hard_seen.is_set(),
+            "aborted_probes": aborted_probes,
             "cleanup_entered": cleanup_entered.is_set(), "cleanup_released": release_cleanup.is_set(),
             "cleanup_observations": cleanup_observations, "busy_text": busy_text,
             "body_error": repr(active_error) if active_error else None,

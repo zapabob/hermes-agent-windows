@@ -23,8 +23,10 @@ def test_real_read_tool_binaries_confirm_option_ownership(
     argv, stdin, expected_returncode, expected_output
 ):
     """Pin the CLI grammar that the approval detector models."""
-    if shutil.which(argv[0]) is None:
+    executable = shutil.which(argv[0])
+    if executable is None:
         pytest.skip(f"{argv[0]} is not installed")
+    argv = [executable, *argv[1:]]
 
     completed = subprocess.run(argv, input=stdin, text=True, encoding="utf-8", errors="replace", capture_output=True)
 
@@ -37,7 +39,10 @@ def test_real_read_tool_binaries_confirm_option_ownership(
     [
         ("rg", ["--pre", "-payload-marker", "needle", "{input}"], None, False),
         ("rg", ["--hostname-bin=-payload-marker", "needle", "{input}"], None, False),
-        ("sort", ["--parallel=1", "--buffer-size=1K", "--compress-program", "-payload-marker"], "{bulk}", False),
+        # A two-way merge over three sorted inputs must create a compressed
+        # intermediate file, without a large or timing-sensitive input.
+        ("sort", ["--merge", "--batch-size=2", "--compress-program", "-payload-marker",
+                  "{input}", "{input}", "{input}"], None, False),
         ("ag", ["--pager=-payload-marker", "needle", "{input}"], None, True),
         ("man", ["--pager", "-payload-marker", "ls"], None, True),
         ("man", ["-P", "-payload-marker", "ls"], None, True),
@@ -47,7 +52,13 @@ def test_real_binaries_execute_leading_dash_program_payload(
     tmp_path, tool, args, stdin, needs_tty
 ):
     """A PATH marker proves these binaries do not reparse '-program' as an option."""
-    if shutil.which(tool) is None or (needs_tty and shutil.which("script") is None):
+    if tool == "sort":
+        # Ubuntu 26.04's default sort is uutils, whose option parsing differs
+        # here. Exercise GNU's contract against its explicitly named binary;
+        # gsort is the equivalent Homebrew name on macOS.
+        tool = shutil.which("gnusort") or shutil.which("gsort") or tool
+    executable = shutil.which(tool)
+    if executable is None or (needs_tty and shutil.which("script") is None):
         pytest.skip(f"{tool} or script is not installed")
 
     marker = tmp_path / "executed"
@@ -57,23 +68,19 @@ def test_real_binaries_execute_leading_dash_program_payload(
     input_file = tmp_path / "input.txt"
     input_file.write_text("needle\n", encoding="utf-8")
     resolved_args = [arg.format(input=str(input_file)) for arg in args]
-    input_text = (
-        "\n".join(str(number) for number in range(100_000, 0, -1)) + "\n"
-        if stdin == "{bulk}"
-        else stdin
-    )
     env = {
         **os.environ,
         "PATH": f"{tmp_path}{os.pathsep}{os.environ['PATH']}",
         "MARKER": str(marker),
         "TERM": "xterm",
     }
-    argv = [tool, *resolved_args]
+    argv = [executable, *resolved_args]
     if needs_tty:
         argv = ["script", "-qec", shlex.join(argv), "/dev/null"]
 
-    subprocess.run(argv, input=input_text, text=True, encoding="utf-8", errors="replace", capture_output=True, env=env, timeout=20)
+    completed = subprocess.run(argv, input=stdin, text=True, encoding="utf-8", errors="replace", capture_output=True, env=env, timeout=20)
 
+    assert marker.is_file(), (argv, completed.returncode, completed.stderr)
     assert marker.read_text(encoding="utf-8") == "executed"
 
 
