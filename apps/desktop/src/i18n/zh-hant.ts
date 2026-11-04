@@ -2589,6 +2589,9 @@ export const zhHant = defineLocale({
       fast: '快速'
     },
     modelOptions: {
+      daybreak: 'Daybreak',
+      daybreakFailed: 'Daybreak 更新失敗',
+      daybreakReadFailed: '無法載入 Daybreak。請重新開啟模型選單重試。',
       noOptions: '此模型沒有可用選項',
       options: '選項',
       thinking: '思考',

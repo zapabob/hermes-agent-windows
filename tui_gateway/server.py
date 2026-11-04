@@ -5881,6 +5881,24 @@ def _write_config_key(key_path: str, value):
     _save_cfg(cfg)
 
 
+def _load_daybreak() -> bool:
+    agent_cfg = _load_cfg().get("agent")
+    return isinstance(agent_cfg, dict) and agent_cfg.get("daybreak") is True
+
+
+def _sync_agent_daybreak(agent) -> None:
+    """Refresh after selecting the turn's agent, inside its profile scope.
+
+    Preserve upstream's own-surface boundary: messaging/plugin sessions and
+    delegated agents do not inherit the Desktop profile's switch.
+    """
+    if agent is not None:
+        agent.daybreak = (
+            getattr(agent, "platform", None) in {"desktop", "tui", "cli"}
+            and _load_daybreak()
+        )
+
+
 _STATUSBAR_MODES = frozenset({"off", "top", "bottom"})
 _APPROVAL_MODES = frozenset({"manual", "smart", "off"})
 
@@ -12951,6 +12969,7 @@ def _run_prompt_submit(
             # the turn runs. No-op for every other session shape.
             _sync_bot_capabilities(sid, session)
             agent = session["agent"]
+            _sync_agent_daybreak(agent)
             # Snapshot after turn-start model sync. A deferred switch mutates
             # history and its version; that mutation belongs to this turn.
             with session["history_lock"]:
@@ -14035,8 +14054,30 @@ def _respond(rid, params, key, *, allow_expired=False):
 @method("config.set")
 @_profile_scoped
 def _(rid, params: dict) -> dict:
+    global _cfg_cache, _cfg_mtime, _cfg_path
     key, value = params.get("key", ""), params.get("value", "")
     session = _sessions.get(params.get("session_id", ""))
+
+    if key == "daybreak":
+        on = {"true": True, "false": False}.get(str(value).strip().lower())
+        if on is None:
+            return _err(rid, 4002, "daybreak takes true or false")
+        try:
+            from hermes_cli import managed_scope
+            from hermes_cli.config_backend import write_config_key
+
+            if managed_scope.is_key_managed("agent.daybreak"):
+                return _err(rid, 4002, "agent.daybreak is managed by your administrator")
+            # The legacy _save_cfg writes the launch home. Use the existing
+            # atomic leaf writer with the explicit target home instead; this
+            # also preserves unrelated edits made since the last config read.
+            home = Path(get_hermes_home_override() or _hermes_home)
+            write_config_key(home / "config.yaml", "agent.daybreak", on)
+            with _cfg_lock:
+                _cfg_cache = _cfg_mtime = _cfg_path = None
+        except Exception as exc:
+            return _err(rid, 5001, str(exc))
+        return _ok(rid, {"key": key, "value": on})
 
     if key == "model":
         try:

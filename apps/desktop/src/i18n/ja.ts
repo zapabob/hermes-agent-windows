@@ -2807,6 +2807,9 @@ export const ja = defineLocale({
       fast: '高速'
     },
     modelOptions: {
+      daybreak: 'Daybreak',
+      daybreakFailed: 'Daybreakの更新に失敗しました',
+      daybreakReadFailed: 'Daybreakを読み込めませんでした。モデルメニューを開き直して再試行してください。',
       noOptions: 'このモデルにはオプションがありません',
       options: 'オプション',
       thinking: '思考',

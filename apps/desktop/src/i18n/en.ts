@@ -3167,6 +3167,9 @@ export const en: Translations = {
       fast: 'Fast'
     },
     modelOptions: {
+      daybreak: 'Daybreak',
+      daybreakFailed: 'Daybreak update failed',
+      daybreakReadFailed: 'Could not load Daybreak. Reopen the model menu to retry.',
       noOptions: 'No options for this model',
       options: 'Options',
       thinking: 'Thinking',

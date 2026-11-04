@@ -2348,6 +2348,9 @@ export const ar = defineLocale({
       fast: 'سريع'
     },
     modelOptions: {
+      daybreak: 'Daybreak',
+      daybreakFailed: 'فشل تحديث Daybreak',
+      daybreakReadFailed: 'تعذر تحميل Daybreak. أعد فتح قائمة النماذج للمحاولة مجدداً.',
       noOptions: 'لا توجد خيارات لهذا النموذج',
       options: 'الخيارات',
       thinking: 'التفكير',

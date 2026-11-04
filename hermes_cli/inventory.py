@@ -602,6 +602,7 @@ def _apply_capabilities(rows: list[dict], *, cache_only: bool = False) -> None:
     ``minimal`` at its lowest thinking), so filtering the picker by that list
     would hide levels that demonstrably work.
     """
+    from agent.codex_service_tiers import daybreak_offered
     from hermes_cli.models import model_supports_fast_mode
 
     try:
@@ -629,6 +630,11 @@ def _apply_capabilities(rows: list[dict], *, cache_only: bool = False) -> None:
                 "fast": bool(model_supports_fast_mode(model)),
                 "reasoning": reasoning,
             }
+            if not row.get("is_user_defined") and daybreak_offered(
+                model, provider=slug, base_url=row.get("api_url"),
+                allow_network=not cache_only,
+            ):
+                entry["daybreak"] = True
 
             if reasoning and read_reasoning_catalog is not None:
                 try:
