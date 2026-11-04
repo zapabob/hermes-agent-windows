@@ -430,6 +430,8 @@ export interface ModelOptionProvider {
 }
 
 export interface ModelCapabilities {
+  /** True only when this account's Codex catalogue advertises Daybreak. */
+  daybreak?: boolean
   /** False when the route rejects a reasoning disable ("mandatory" in the
    *  provider catalog), so the Thinking toggle must not be offered. Absent
    *  when the catalog doesn't say. */

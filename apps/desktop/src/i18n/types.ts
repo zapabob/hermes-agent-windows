@@ -2667,6 +2667,9 @@ export interface Translations {
       fast: string
     }
     modelOptions: {
+      daybreak: string
+      daybreakFailed: string
+      daybreakReadFailed: string
       noOptions: string
       options: string
       thinking: string

@@ -3318,6 +3318,9 @@ export const zh: Translations = {
       fast: '快速'
     },
     modelOptions: {
+      daybreak: 'Daybreak',
+      daybreakFailed: 'Daybreak 更新失败',
+      daybreakReadFailed: '无法加载 Daybreak。请重新打开模型菜单重试。',
       noOptions: '此模型没有可用选项',
       options: '选项',
       thinking: '思考',

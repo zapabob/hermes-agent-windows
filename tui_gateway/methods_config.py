@@ -285,6 +285,8 @@ def _(rid, params: dict) -> dict:
         if tier is None:
             tier = _load_service_tier()
         return _ok(rid, {"value": "fast" if tier == "priority" else "normal"})
+    if key == "daybreak":
+        return _ok(rid, {"value": _load_daybreak()})
     if key == "busy":
         return _ok(rid, {"value": _load_busy_input_mode()})
     if key in {"approval_mode", "approvals.mode"}:

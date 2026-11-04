@@ -8,7 +8,7 @@ import {
   DropdownMenuSubTrigger
 } from '@/components/ui/dropdown-menu'
 
-import { type FastControl, ModelEditSubmenu } from './model-edit-submenu'
+import { type DaybreakControl, type FastControl, ModelEditSubmenu } from './model-edit-submenu'
 
 // Radix calls these on open; jsdom doesn't implement them.
 beforeAll(() => {
@@ -24,6 +24,7 @@ afterEach(() => {
 
 // Render the submenu inside an open menu/sub so its content (switches) mounts.
 function renderSubmenu(opts: {
+  daybreak?: DaybreakControl
   defaultEffort?: string
   effort?: string
   fastControl: FastControl
@@ -38,6 +39,7 @@ function renderSubmenu(opts: {
         <DropdownMenuSub open>
           <DropdownMenuSubTrigger>edit</DropdownMenuSubTrigger>
           <ModelEditSubmenu
+            daybreak={opts.daybreak}
             defaultEffort={opts.defaultEffort ?? 'medium'}
             effort={opts.effort ?? 'medium'}
             fastControl={opts.fastControl}
@@ -60,6 +62,61 @@ function renderSubmenu(opts: {
 // ever writes directly again, picking an effort for a kanban card would reach
 // over and change the user's live chat.
 describe('ModelEditSubmenu reports edits without performing them', () => {
+  it('Daybreak changes only the profile switch, even without fast or reasoning controls', () => {
+    const set = vi.fn()
+    const onSetOptions = vi.fn()
+    const onSelectModel = vi.fn()
+    renderSubmenu({
+      daybreak: { on: true, set },
+      fastControl: { kind: 'none' },
+      onSelectModel,
+      onSetOptions,
+      reasoning: false
+    })
+
+    fireEvent.click(screen.getByRole('switch', { name: 'Daybreak' }))
+
+    expect(set).toHaveBeenCalledWith(false)
+    expect(onSetOptions).not.toHaveBeenCalled()
+    expect(onSelectModel).not.toHaveBeenCalled()
+  })
+
+  it('keeps Daybreak, Fast Mode and reasoning effort independent', () => {
+    const set = vi.fn()
+    const onSetOptions = vi.fn()
+    renderSubmenu({
+      daybreak: { on: false, set },
+      fastControl: { kind: 'param', on: false },
+      onSetOptions,
+      reasoning: true
+    })
+
+    fireEvent.click(screen.getByRole('switch', { name: 'Daybreak' }))
+    expect(set).toHaveBeenCalledWith(true)
+    expect(onSetOptions).not.toHaveBeenCalled()
+
+    fireEvent.click(
+      screen.getAllByRole('switch').find(node => node.closest('[role="menuitem"]')?.textContent === 'Fast')!
+    )
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'High' }))
+    expect(onSetOptions.mock.calls).toEqual([[{ fast: true }], [{ effort: 'high' }]])
+    expect(set).toHaveBeenCalledTimes(1)
+  })
+
+  it('cannot write Daybreak before the owner value has loaded', () => {
+    const set = vi.fn()
+    renderSubmenu({
+      daybreak: { disabled: true, on: false, set },
+      fastControl: { kind: 'none' },
+      onSetOptions: vi.fn(),
+      reasoning: false
+    })
+    const toggle = screen.getByRole('switch', { name: 'Daybreak' })
+    expect(toggle.hasAttribute('disabled')).toBe(true)
+    fireEvent.click(toggle)
+    expect(set).not.toHaveBeenCalled()
+  })
+
   it('param fast: reports the toggle', () => {
     const onSetOptions = vi.fn()
     renderSubmenu({ fastControl: { kind: 'param', on: true }, onSetOptions, reasoning: false })

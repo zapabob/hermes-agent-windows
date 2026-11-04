@@ -22,6 +22,13 @@ import { isThinkingEnabled, REASONING_EFFORTS, resolveReasoningEffort } from '@/
 export type FastControl =
   { kind: 'none' } | { kind: 'param'; on: boolean } | { kind: 'variant'; baseId: string; fastId: string; on: boolean }
 
+/** Profile-wide setting, written by the owning connection rather than a model preset. */
+export interface DaybreakControl {
+  disabled?: boolean
+  on: boolean
+  set: (on: boolean) => void
+}
+
 /** Resolve the fast mechanism for a model: prefer the speed=fast parameter
  *  when the backend supports it, else fall back to a `…-fast` sibling model. */
 export function resolveFastControl(
@@ -63,6 +70,8 @@ interface ModelEditSubmenuProps {
    *  routes, whose upstream rejects a disable — the toggle is hidden rather
    *  than offered as a control that silently does nothing. */
   canDisableReasoning?: boolean
+  /** Only supplied for an account-catalogue-supported Codex model. */
+  daybreak?: DaybreakControl
   /** The profile's configured default effort — what an unset row inherits.
    *  Passed in (not read from a store) so this submenu stays pure. */
   defaultEffort: string
@@ -103,6 +112,7 @@ export function ModelEditSubmenu(props: ModelEditSubmenuProps) {
 
 function ModelEditSubmenuBody({
   canDisableReasoning,
+  daybreak,
   defaultEffort,
   effort,
   fastControl,
@@ -140,7 +150,7 @@ function ModelEditSubmenuBody({
   const hasFast = fastControl.kind !== 'none'
   const fastOn = fastControl.kind === 'none' ? false : fastControl.on
 
-  return !hasFast && !reasoning ? (
+  return !hasFast && !daybreak && !reasoning ? (
     <div className="px-2.5 py-3 text-xs text-(--ui-text-tertiary)">{copy.noOptions}</div>
   ) : (
     <>
@@ -160,6 +170,19 @@ function ModelEditSubmenuBody({
         <DropdownMenuItem className={dropdownMenuRow} onSelect={event => event.preventDefault()}>
           {copy.fast}
           <Switch checked={fastOn} className="ml-auto" onCheckedChange={setFast} size="xs" />
+        </DropdownMenuItem>
+      ) : null}
+      {daybreak ? (
+        <DropdownMenuItem className={dropdownMenuRow} onSelect={event => event.preventDefault()}>
+          {copy.daybreak}
+          <Switch
+            aria-label={copy.daybreak}
+            checked={daybreak.on}
+            className="ml-auto"
+            disabled={daybreak.disabled}
+            onCheckedChange={daybreak.set}
+            size="xs"
+          />
         </DropdownMenuItem>
       ) : null}
       {reasoning ? (

@@ -40,7 +40,7 @@ import { $collapsedProviders, toggleCollapsedProvider } from '@/store/provider-c
 import { $defaultReasoningEffort } from '@/store/session'
 import type { ModelOptionProvider, ModelOptionsResponse } from '@/types/hermes'
 
-import { type FastControl, ModelEditSubmenu, resolveFastControl } from './model-edit-submenu'
+import { type DaybreakControl, type FastControl, ModelEditSubmenu, resolveFastControl } from './model-edit-submenu'
 
 /** Whether a catalog row represents the session's current provider. Custom
  *  providers report the canonical `custom:<key>` identity from `model.options`
@@ -80,6 +80,8 @@ export interface ModelMenuController {
    *  need to batch it. Values are already capability-gated by the menu. */
   applyPreset: (preset: { effort?: string; fast?: boolean }, row: { model: string; provider: string }) => void
   current: ModelChoice
+  /** Optional on chat surfaces; detached task overrides do not edit profile settings. */
+  daybreak?: DaybreakControl
   presetFor: (provider: string, model: string) => { effort?: string; fast?: boolean }
   /** Commit a model row. Return false to abort (a failed session switch). */
   select: (model: string, provider: string) => Promise<boolean | void> | void
@@ -437,6 +439,14 @@ export function ModelCatalogMenu({
                     const isCurrent = activeId !== null
                     const name = modelDisplayParts(family.id).name
                     const caps = group.provider.capabilities?.[family.id]
+                    const daybreakCaps = group.provider.capabilities?.[activeId ?? family.id]
+
+                    const daybreak =
+                      group.provider.slug === 'openai-codex' &&
+                      !group.provider.is_user_defined &&
+                      daybreakCaps?.daybreak === true
+                        ? controller.daybreak
+                        : undefined
 
                     // Effective settings for this row: the live choice when it's
                     // the active model, otherwise its remembered preset. Row
@@ -454,6 +464,7 @@ export function ModelCatalogMenu({
 
                     const meta = [
                       fastControl.kind !== 'none' && fastControl.on ? copy.fast : null,
+                      daybreak?.on ? t.shell.modelOptions.daybreak : null,
                       (caps?.reasoning ?? true) ? reasoningEffortLabel(effEffort || defaultEffort) : null
                     ]
                       .filter(Boolean)
@@ -510,6 +521,7 @@ export function ModelCatalogMenu({
                         </DropdownMenuSubTrigger>
                         <ModelEditSubmenu
                           canDisableReasoning={caps?.can_disable_reasoning}
+                          daybreak={daybreak}
                           defaultEffort={defaultEffort}
                           effort={effEffort}
                           fastControl={fastControl}

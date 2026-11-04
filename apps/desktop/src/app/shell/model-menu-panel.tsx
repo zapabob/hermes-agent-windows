@@ -1,6 +1,6 @@
 import { useStore } from '@nanostores/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { useSessionView } from '@/app/chat/session-view'
 import { Codicon } from '@/components/ui/codicon'
@@ -11,9 +11,10 @@ import { modelOptionsQueryKey, requestModelOptions } from '@/lib/model-options'
 import { currentPickerSelection } from '@/lib/model-status-label'
 import { DEFAULT_REASONING_EFFORT } from '@/lib/reasoning-effort'
 import { cn } from '@/lib/utils'
+import { $daybreakByProfile, daybreakKey, setDaybreak, syncDaybreak } from '@/store/daybreak'
 import { $modelPresets, applyModelPreset, modelPresetKey, setModelPreset } from '@/store/model-presets'
 import { $visibleModels } from '@/store/model-visibility'
-import { notifyError } from '@/store/notifications'
+import { notify, notifyError } from '@/store/notifications'
 import {
   $defaultReasoningEffort,
   markComposerSelectionManual,
@@ -88,6 +89,32 @@ export function ModelMenuPanel({
     { model: currentModel, provider: currentProvider },
     modelOptions.data
   )
+
+  const daybreakListed = (modelOptions.data?.providers ?? []).some(
+    row =>
+      row.slug === 'openai-codex' &&
+      !row.is_user_defined &&
+      Object.values(row.capabilities ?? {}).some(caps => caps?.daybreak === true)
+  )
+
+  const daybreakValue = useStore($daybreakByProfile)[daybreakKey(profile, ownerConnectionId)]
+
+  // The primary requester follows focus. Capture its gateway so a queued write
+  // stays on the clicked connection; tile requesters are already owner-bound.
+  const daybreakRequester = gateway
+    ? (method: string, params?: Record<string, unknown>) => gateway.request(method, params)
+    : requestGateway
+
+  const daybreakRequest = useRef(daybreakRequester)
+  daybreakRequest.current = daybreakRequester
+
+  useEffect(() => {
+    if (daybreakListed) {
+      void syncDaybreak(daybreakRequest.current, profile, ownerConnectionId).catch(error =>
+        notifyError(error, t.shell.modelOptions.daybreakReadFailed)
+      )
+    }
+  }, [daybreakListed, ownerConnectionId, profile, t.shell.modelOptions.daybreakReadFailed])
 
   // Explicit "Refresh Models": re-fetch the catalog with refresh:true so the
   // backend busts its 1h provider-model disk cache and re-pulls each provider's
@@ -203,6 +230,24 @@ export function ModelMenuPanel({
       model: optionsModel,
       provider: optionsProvider
     },
+
+    daybreak: daybreakListed
+      ? {
+          disabled: daybreakValue === undefined,
+          on: daybreakValue ?? false,
+          set: on => {
+            void setDaybreak(daybreakRequester, profile, on, ownerConnectionId).then(ok => {
+              if (!ok) {
+                notify({
+                  id: `daybreak-update-failed-${daybreakKey(profile, ownerConnectionId)}`,
+                  kind: 'error',
+                  message: t.shell.modelOptions.daybreakFailed
+                })
+              }
+            })
+          }
+        }
+      : undefined,
 
     presetFor: (provider, model) => modelPresets[modelPresetKey(provider, model)] ?? {},
 
