@@ -27,7 +27,7 @@ Not affiliated with or endorsed by Nous Research. Upstream attribution and the
 **Source version: 0.23.0** (`2026.10.28`) · channels: `stable`, `preview`
 
 <details>
-<summary><strong>日本語 / 简体中文 — short note</strong></summary>
+<summary><strong>Notes in the translated READMEs</strong></summary>
 
 - **日本語:** Windows 常時稼働向けの非公式派生です。CLI・Desktop・Gateway・profile・
   ローカル推論・記憶・自動化を同一 core で扱います。詳細は [日本語版](README.ja.md)。
