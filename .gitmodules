@@ -56,7 +56,7 @@
 	url = https://github.com/zapabob/familiar.git
 [submodule "plugins/rustxng"]
 	path = plugins/rustxng
-	url = https://github.com/zapabob/RustXNG.git
+	url = https://github.com/sahenjp/RustXNG.git
 [submodule "plugins/muse"]
 	path = plugins/muse
 	url = https://github.com/zapabob/muse4ai.git
