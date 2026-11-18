@@ -20,12 +20,12 @@
   "schema_version": 1,
   "snapshot_sha": "b51c055a12220f8c7c18660e8599365012e19532",
   "summary": {
-    "all_fork_specific_loc": 3264307,
-    "carry_surface_files": 5192,
-    "cwc": 87614449,
-    "fork_owned_loc": 1686420,
-    "upstream_owned_fork_loc": 1577887,
-    "utr": 0.483376
+    "all_fork_specific_loc": 3266542,
+    "carry_surface_files": 5196,
+    "cwc": 87623981,
+    "fork_owned_loc": 1687650,
+    "upstream_owned_fork_loc": 1578892,
+    "utr": 0.483353
   },
   "top_carry_risks": [
     {
@@ -56,10 +56,10 @@
       "upstream_frequency": 77
     },
     {
-      "added": 17170,
-      "cwc": 3790848,
+      "added": 17211,
+      "cwc": 3798720,
       "deleted": 2574,
-      "patch_size": 19744,
+      "patch_size": 19785,
       "path": "tui_gateway/server.py",
       "semantic_coupling": 2,
       "upstream_frequency": 96
@@ -146,10 +146,10 @@
       "upstream_frequency": 64
     },
     {
-      "added": 5493,
-      "cwc": 1207420,
+      "added": 5492,
+      "cwc": 1207274,
       "deleted": 2777,
-      "patch_size": 8270,
+      "patch_size": 8269,
       "path": "agent/chat_completion_helpers.py",
       "semantic_coupling": 2,
       "upstream_frequency": 73
