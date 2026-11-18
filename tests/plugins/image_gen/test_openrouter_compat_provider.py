@@ -689,11 +689,12 @@ class TestImageApiSurface:
 
     # -- response handling -------------------------------------------------
 
-    def test_cost_and_extras_are_surfaced(self):
+    def test_cost_and_extras_are_surfaced(self, tmp_path):
+        image_path = tmp_path / "i.png"
         with patch(_RUNTIME, return_value=_runtime_ok()), \
              patch("requests.post", return_value=_mock_image_api_response(
                  usage={"cost": 0.0336, "total_tokens": 1128})), \
-             patch("plugins.image_gen.openrouter.save_b64_image", return_value=Path("/tmp/i.png")):
+             patch("plugins.image_gen.openrouter.save_b64_image", return_value=image_path):
             result = _openrouter_image_api().generate(
                 prompt="p", aspect_ratio="portrait", model="krea/krea-2-medium"
             )
@@ -701,21 +702,22 @@ class TestImageApiSurface:
         assert result["cost_usd"] == 0.0336
         assert result["total_tokens"] == 1128
         assert result["exact_aspect_ratio"] == "9:16"
-        assert result["image"] == "/tmp/i.png"
+        assert result["image"] == str(image_path)
 
-    def test_multiple_images_land_in_additional_images(self):
+    def test_multiple_images_land_in_additional_images(self, tmp_path):
         entries = [
             {"b64_json": "AA==", "media_type": "image/png"},
             {"b64_json": "BB==", "media_type": "image/png"},
         ]
+        image_paths = [tmp_path / "a.png", tmp_path / "b.png"]
         with patch(_RUNTIME, return_value=_runtime_ok()), \
              patch("requests.post", return_value=_mock_image_api_response(entries)), \
              patch("plugins.image_gen.openrouter.save_b64_image",
-                   side_effect=[Path("/tmp/a.png"), Path("/tmp/b.png")]):
+                   side_effect=image_paths):
             result = _openrouter_image_api().generate(prompt="p", model="openai/gpt-image-2")
 
-        assert result["image"] == "/tmp/a.png"
-        assert result["additional_images"] == ["/tmp/b.png"]
+        assert result["image"] == str(image_paths[0])
+        assert result["additional_images"] == [str(image_paths[1])]
 
     def test_empty_data_is_typed(self):
         with patch(_RUNTIME, return_value=_runtime_ok()), \
@@ -756,13 +758,30 @@ class TestImageApiSurface:
         assert "_retryable" not in result
 
     def test_catalog_models_are_offered_only_by_openrouter(self):
-        from plugins.image_gen.openrouter import _IMAGE_API_MODELS, _build_providers
+        from plugins.image_gen.openrouter import (
+            DEFAULT_MODEL,
+            _FALLBACK_MODEL,
+            _IMAGE_API_MODELS,
+            _build_providers,
+        )
 
         by_name = {p.name: p for p in _build_providers()}
-        openrouter_ids = {m["id"] for m in by_name["openrouter"].list_models()}
-        nous_ids = {m["id"] for m in by_name["nous"].list_models()}
+        chat_catalog = [{"id": DEFAULT_MODEL}, {"id": _FALLBACK_MODEL}]
+        with patch.object(
+            by_name["openrouter"],
+            "_image_api_live_models",
+            return_value=[{"id": "example/new-image-model"}],
+        ), patch.object(
+            by_name["openrouter"], "_live_models", return_value=chat_catalog
+        ), patch.object(
+            by_name["nous"], "_live_models", return_value=chat_catalog
+        ):
+            openrouter_ids = {m["id"] for m in by_name["openrouter"].list_models()}
+            nous_ids = {m["id"] for m in by_name["nous"].list_models()}
+
         assert "openai/gpt-image-2" in openrouter_ids
         assert set(_IMAGE_API_MODELS) <= openrouter_ids
+        assert "example/new-image-model" in openrouter_ids
         assert not (set(_IMAGE_API_MODELS) & nous_ids)
 
     def test_default_model_is_unchanged_by_the_new_surface(self):

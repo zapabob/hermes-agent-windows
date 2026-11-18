@@ -870,11 +870,11 @@ class OpenRouterCompatImageProvider(ImageGenProvider):
         For Image-API-capable backends (OpenRouter) this is the union of the
         dedicated ``GET /images/models`` catalog (40+ models: Seedream, Flux,
         Recraft, Qwen, MAI, Krea, ...) and the chat-completions image models,
-        so every image model the endpoint serves — including ones released
-        after this code shipped — is selectable in ``hermes tools``. Nous
-        Portal (no ``/images`` route) lists the chat-completions catalog only.
-        Offline fallback: the static default chain plus the curated Image API
-        snapshot.
+        plus the curated Image API snapshot as a lower-precedence fallback.
+        This keeps known Image API models selectable when a live catalog is
+        partial or temporarily unavailable. New live models are still added
+        immediately. Nous Portal (no ``/images`` route) lists only the
+        chat-completions catalog.
         """
         merged: Dict[str, Dict[str, Any]] = {}
         if self._supports_image_api:
@@ -882,6 +882,16 @@ class OpenRouterCompatImageProvider(ImageGenProvider):
                 merged[entry["id"]] = entry
         for entry in self._live_models():
             merged.setdefault(entry["id"], entry)
+        if self._supports_image_api:
+            for model_id, meta in _IMAGE_API_MODELS.items():
+                merged.setdefault(
+                    model_id,
+                    {
+                        "id": model_id,
+                        "display": meta["display"],
+                        "strengths": f"{meta['strengths']} (Image API)",
+                    },
+                )
         if merged:
             priority = {DEFAULT_MODEL: 0, _FALLBACK_MODEL: 1}
             return sorted(
@@ -900,17 +910,6 @@ class OpenRouterCompatImageProvider(ImageGenProvider):
                 "strengths": "Fast, reliable fallback with good layout adherence",
             },
         ]
-        if self._supports_image_api:
-            # Curated snapshot keeps the Image API models pickable offline.
-            models.extend(
-                {
-                    "id": model_id,
-                    "display": meta["display"],
-                    "strengths": f"{meta['strengths']} (Image API)",
-                }
-                for model_id, meta in _IMAGE_API_MODELS.items()
-                if model_id not in (DEFAULT_MODEL, _FALLBACK_MODEL)
-            )
         return models
 
     def _image_api_live_models(self) -> List[Dict[str, Any]]:
