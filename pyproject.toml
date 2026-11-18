@@ -92,8 +92,9 @@ dependencies = [
   # GHSA-gh4c-6fx4-qh6g (Deflate progress), and GHSA-8988-9cw3-xx77 (proxy TLS).
   # Retain the 2.7.0 decompression and cross-origin header protections.
   "urllib3>=2.8.0,<3",
-  # oauthlib 4.0.0 fixes CVE-2026-49265
-  "oauthlib==4.0.0",
+  # oauthlib 4.0.1 fixes device-code validation (CVE-2026-49272);
+  # 4.0.0 already contains the prior CVE-2026-49265 fix.
+  "oauthlib==4.0.1",
   # PyJWT[crypto] pulls cryptography in transitively. Pin it here as well, so
   # that the WeCom and Weixin crypto paths cannot fall below the patched
   # version. 50.0.0 is the floor: it fixes CVE-2026-69247, a Bleichenbacher
@@ -310,8 +311,9 @@ mistral = ["mistralai==2.10.0"]
 # OTLP/HTTP exporter for monitoring.gateway_health_export. Lazy-installed via
 # tools/lazy_deps.py on first use; never a core dependency and deliberately
 # NOT in [all].
-# 1.45.1 fixes CVE-2026-114603 in the SDK's exact-pinned API dependency.
-otlp = ["opentelemetry-sdk==1.45.1", "opentelemetry-exporter-otlp-proto-http==1.45.1"]
+# 1.45.2 includes the prior CVE-2026-114603 fix and fixes
+# CVE-2026-126360 (traceparent parsing) in opentelemetry-api.
+otlp = ["opentelemetry-sdk==1.45.2", "opentelemetry-exporter-otlp-proto-http==1.45.2"]
 bedrock = ["boto3==1.42.89"]
 vertex = ["google-auth==2.58.0"]
 azure-identity = ["azure-identity==1.25.3"]
@@ -433,10 +435,10 @@ override-dependencies = [
   # fal-client pulls msgpack; CVE-2026-114613 is fixed in 1.2.3. Keep the
   # floor so pip-audit / exclude-newer cannot regress the lock to 1.2.1.
   "msgpack>=1.2.3,<2",
-  # python-telegram-bot[webhooks] pulls tornado; CVE-2026-116577 / CVE-2026-115927 /
-  # CVE-2026-116578 are fixed in 6.6. Keep the floor so pip-audit cannot regress
-  # the optional webhook graph to 6.5.9.
-  "tornado>=6.6,<7",
+  # python-telegram-bot[webhooks] pulls tornado; the prior webhook fixes shipped
+  # in 6.6 and the open-redirect follow-up (CVE-2026-126347) in 6.6.1.
+  # Keep the floor so pip-audit cannot regress the optional graph.
+  "tornado>=6.6.1,<7",
 ]
 exclude-newer = "14 days"
 # aiohttp, cryptography: same shape — the advisory fixes are newer than the
