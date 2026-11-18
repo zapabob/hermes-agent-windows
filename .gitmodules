@@ -57,3 +57,6 @@
 [submodule "plugins/rustxng"]
 	path = plugins/rustxng
 	url = https://github.com/zapabob/RustXNG.git
+[submodule "plugins/muse"]
+	path = plugins/muse
+	url = https://github.com/zapabob/muse4ai.git
