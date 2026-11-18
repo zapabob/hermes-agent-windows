@@ -3,13 +3,14 @@
 <p align="center">
   <a href="README.md" lang="en-GB"><strong>King's English</strong></a> ·
   <a href="README.ja.md" lang="ja">日本語</a> ·
-  <a href="README.zh-CN.md" lang="zh-CN">简体中文</a>
+  <a href="README.zh-CN.md" lang="zh-CN">简体中文</a> ·
+  <a href="README.es.md" lang="es">Español</a> ·
+  <a href="README.ur-pk.md" lang="ur-PK">اردو</a>
 </p>
 
 > [!NOTE]
-> This English `README.md` is the canonical overview. The Japanese and
-> Simplified Chinese READMEs mirror the same product boundaries and install
-> contract.
+> This English `README.md` is the canonical overview. The translated READMEs
+> describe the same product boundaries and installation contract.
 
 **Unofficial Windows-native downstream of [Hermes Agent](https://github.com/NousResearch/hermes-agent)**
 for operators who run Hermes as a long-lived workstation: Electron Desktop,
@@ -32,6 +33,10 @@ Not affiliated with or endorsed by Nous Research. Upstream attribution and the
   ローカル推論・記憶・自動化を同一 core で扱います。詳細は [日本語版](README.ja.md)。
 - **简体中文:** 面向 Windows 常驻工作站的非官方下游。CLI、Desktop、Gateway、profile、
   本地推理、记忆与自动化共用同一 core。详见 [简体中文版](README.zh-CN.md)。
+- **Español:** Edición downstream no oficial para estaciones Windows siempre activas.
+  Consulta el [resumen en español](README.es.md).
+- **اردو:** مسلسل چلنے والے Windows ورک اسٹیشن کے لیے غیر سرکاری downstream۔
+  [اردو خلاصہ](README.ur-pk.md) دیکھیں۔
 
 </details>
 
@@ -130,6 +135,38 @@ Auto-compaction against a large local context used to fail with
 
 Measured effect on the reference 27B workstation path: prefill recovered from
 ~11 tok/s to ~550–1,000 tok/s and auto-compaction completes again.
+
+### Optional local web search with RustXNG
+
+The bundled RustXNG provider connects Hermes' existing `web_search` tool to a
+self-hosted metasearch service. Hermes uses web search for current facts; the
+operator can also add a prompt instruction for more proactive source checking.
+This is opt-in, does not browse every message, and is **search-only**—page
+extraction needs a separate provider.
+
+Build the pinned RustXNG submodule and bind it to loopback:
+
+```powershell
+git submodule update --init plugins/rustxng
+cargo build --manifest-path plugins/rustxng/Cargo.toml --locked --release
+.\plugins\rustxng\target\release\rustxng.exe --profile standard --bind 127.0.0.1 --port 8888
+```
+
+In the environment that starts the Hermes CLI or Gateway, set
+`RUSTXNG_URL=http://127.0.0.1:8888`, then select the search backend in the
+active profile:
+
+```powershell
+uv run hermes config set web.search_backend rustxng
+```
+
+Use the `standard` profile by default. RustXNG sends queries to the upstream
+sources enabled in its profile; do not put secrets or private conversation
+text in queries. Keep the listener on loopback unless you have separately
+designed and secured a network deployment. Review RustXNG's provider conditions
+before enabling other profiles—private use does not override source terms.
+The full Windows setup and safe search example are in
+[`plugins/web/rustxng/README.md`](plugins/web/rustxng/README.md).
 
 ---
 
@@ -322,6 +359,7 @@ authorise enabling that path. See
 | [`docs/windows/INTEGRATIONS.md`](docs/windows/INTEGRATIONS.md) | Optional integrations snapshot |
 | [`docs/windows/SECURITY_CENTER.md`](docs/windows/SECURITY_CENTER.md) | Security Center |
 | [`docs/windows/feature-intake-20261028/`](docs/windows/feature-intake-20261028/) | 0.23.0 intake notes |
+| [`plugins/web/rustxng/README.md`](plugins/web/rustxng/README.md) | Optional RustXNG-backed `web_search` |
 | [`AGENTS.md`](AGENTS.md) | Engineering contracts for assistants & developers |
 | [`SECURITY.md`](SECURITY.md) | Security policy |
 

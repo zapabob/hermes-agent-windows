@@ -3,11 +3,13 @@
 <p align="center">
   <a href="README.md" lang="en-GB">King's English</a> ·
   <a href="README.ja.md" lang="ja"><strong>日本語</strong></a> ·
-  <a href="README.zh-CN.md" lang="zh-CN">简体中文</a>
+  <a href="README.zh-CN.md" lang="zh-CN">简体中文</a> ·
+  <a href="README.es.md" lang="es">Español</a> ·
+  <a href="README.ur-pk.md" lang="ur-PK">اردو</a>
 </p>
 
 > [!NOTE]
-> 英語版の `README.md` が正本です。この日本語版は同じ製品境界と導入契約に追随します。
+> 英語版の `README.md` が正本です。各言語版は同じ製品境界と導入契約を説明します。
 
 **[Hermes Agent](https://github.com/NousResearch/hermes-agent) の非公式 Windows ネイティブ派生**です。  
 常時稼働のワークステーションとして Hermes を運用する人向けに、Electron Desktop・CLI・
@@ -116,6 +118,35 @@ Windows-native feature intake —
 
 参照 27B 経路での実測: prefill が約 11 tok/s から約 550–1,000 tok/s に戻り、
 オートコンパクションが再び完了します。
+
+### RustXNG によるローカル Web 検索（任意）
+
+同梱の RustXNG provider を設定すると、Hermes の既存 `web_search` ツールを
+セルフホスト型メタ検索サービス経由で使えます。現在の情報を扱うときは Hermes が
+Web 検索を利用します。さらに積極的な出典確認を行わせたい場合は、profile の prompt
+にも指示を追加できます。全メッセージを自動で検索する機能ではありません。
+RustXNG は検索専用のため、ページ本文の取得には別の provider が必要です。
+
+固定された RustXNG submodule をビルドし、loopback のみで待ち受けます。
+
+```powershell
+git submodule update --init plugins/rustxng
+cargo build --manifest-path plugins/rustxng/Cargo.toml --locked --release
+.\plugins\rustxng\target\release\rustxng.exe --profile standard --bind 127.0.0.1 --port 8888
+```
+
+Hermes CLI または Gateway を起動する環境に
+`RUSTXNG_URL=http://127.0.0.1:8888` を設定し、対象 profile の検索先を選びます。
+
+```powershell
+uv run hermes config set web.search_backend rustxng
+```
+
+既定では `standard` profile を使ってください。RustXNG は選択中 profile で有効な
+外部検索元へ query を送るため、秘密情報や会話の非公開内容を検索語に含めないでください。
+別の profile を有効化する前に各検索元の利用条件を確認します。個人利用であっても
+提供元の条件を上書きするものではありません。Windows の設定例と検索時の注意点:
+[`plugins/web/rustxng/README.md`](plugins/web/rustxng/README.md)。
 
 ---
 
@@ -289,6 +320,7 @@ grant/claim/effect 線形化、trusted producer、別 apply 承認、writer fenc
 | [`docs/windows/INTEGRATIONS.md`](docs/windows/INTEGRATIONS.md) | 任意連携のスナップショット |
 | [`docs/windows/SECURITY_CENTER.md`](docs/windows/SECURITY_CENTER.md) | Security Center |
 | [`docs/windows/feature-intake-20261028/`](docs/windows/feature-intake-20261028/) | 0.23.0 intake |
+| [`plugins/web/rustxng/README.md`](plugins/web/rustxng/README.md) | RustXNG を使う任意の `web_search` |
 | [`AGENTS.md`](AGENTS.md) | 開発者・アシスタント向け契約 |
 | [`SECURITY.md`](SECURITY.md) | セキュリティ方針 |
 

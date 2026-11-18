@@ -3,11 +3,13 @@
 <p align="center">
   <a href="README.md" lang="en-GB">King's English</a> ·
   <a href="README.ja.md" lang="ja">日本語</a> ·
-  <a href="README.zh-CN.md" lang="zh-CN"><strong>简体中文</strong></a>
+  <a href="README.zh-CN.md" lang="zh-CN"><strong>简体中文</strong></a> ·
+  <a href="README.es.md" lang="es">Español</a> ·
+  <a href="README.ur-pk.md" lang="ur-PK">اردو</a>
 </p>
 
 > [!NOTE]
-> 英文版 `README.md` 是规范正本。本简体中文版遵循相同的产品边界与安装契约。
+> 英文版 `README.md` 是规范正本。各语言版介绍相同的产品边界与安装契约。
 
 **[Hermes Agent](https://github.com/NousResearch/hermes-agent) 的非官方 Windows 原生下游**，
 面向把 Hermes 当作常驻工作站来运行的人：Electron Desktop、CLI、消息 Gateway、profile、
@@ -111,6 +113,34 @@ Windows-native feature intake —
 - 压缩超时可重试，不丢弃用户回合。
 
 参考 27B 路径实测：prefill 从约 11 tok/s 回到约 550–1,000 tok/s，自动压缩再次完成。
+
+### RustXNG 本地网页搜索（可选）
+
+配置随附的 RustXNG provider 后，Hermes 现有的 `web_search` 工具可以通过自托管元搜索
+服务检索网页。Hermes 在处理当前信息时会使用网页搜索；如需更积极地核验来源，也可在
+profile 的 prompt 中加入相应指令。它不会自动搜索每条消息。RustXNG 只负责搜索，
+抓取页面正文仍需另外配置 provider。
+
+初始化固定版本的 RustXNG 子模块，并仅绑定本机回环地址：
+
+```powershell
+git submodule update --init plugins/rustxng
+cargo build --manifest-path plugins/rustxng/Cargo.toml --locked --release
+.\plugins\rustxng\target\release\rustxng.exe --profile standard --bind 127.0.0.1 --port 8888
+```
+
+在启动 Hermes CLI 或 Gateway 的环境中设置
+`RUSTXNG_URL=http://127.0.0.1:8888`，并为当前 profile 选择搜索后端：
+
+```powershell
+uv run hermes config set web.search_backend rustxng
+```
+
+默认使用 `standard` profile。RustXNG 会把查询发送给该 profile 启用的上游来源；
+不要在搜索词中放入密钥或私人对话内容。除非已另行设计并保护网络部署，否则请保持
+loopback 监听。启用其他搜索 profile 前，应阅读对应来源的使用条件；个人使用不等于
+获得额外授权。Windows 设置方法与安全搜索示例见
+[`plugins/web/rustxng/README.md`](plugins/web/rustxng/README.md)。
 
 ---
 
@@ -283,6 +313,7 @@ grant/claim/effect 线性化、可信生产者绑定、单独 apply 批准与 wr
 | [`docs/windows/INTEGRATIONS.md`](docs/windows/INTEGRATIONS.md) | 可选集成快照 |
 | [`docs/windows/SECURITY_CENTER.md`](docs/windows/SECURITY_CENTER.md) | Security Center |
 | [`docs/windows/feature-intake-20261028/`](docs/windows/feature-intake-20261028/) | 0.23.0 intake |
+| [`plugins/web/rustxng/README.md`](plugins/web/rustxng/README.md) | 可选的 RustXNG `web_search` |
 | [`AGENTS.md`](AGENTS.md) | 面向开发者与助手的工程契约 |
 | [`SECURITY.md`](SECURITY.md) | 安全策略 |
 
