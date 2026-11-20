@@ -2328,7 +2328,12 @@ export const ar = defineLocale({
     proNeedsSubscription: 'يتطلب اشتراكا',
     free: 'مجاني',
     freeTier: 'طبقة مجانية',
-    priceTitle: 'السعر'
+    priceTitle: 'السعر',
+    asOf: (time) => `حتى ${time}`,
+    curated: 'لقطة مُنسّقة',
+    stale: 'كتالوج قديم',
+    notListed: 'لم يعد مدرجًا لدى هذا المزوّد',
+    refreshHint: 'حدّث للتحديث'
   },
   modelVisibility: {
     title: 'النماذج',

@@ -2782,7 +2782,12 @@ export const ja = defineLocale({
     free: '無料',
     freeTier: '無料プラン',
     priceTitle: '100 万トークンあたりの入力/出力価格',
-    wasPrice: '旧価格'
+    wasPrice: '旧価格',
+    asOf: (time) => `${time} 時点`,
+    curated: '静的スナップショット',
+    stale: '古いカタログ',
+    notListed: 'このプロバイダーでは提供されなくなりました',
+    refreshHint: '更新して最新にする'
   },
 
   modelVisibility: {

@@ -1029,10 +1029,10 @@ def init_agent(
         agent._anthropic_prompt_cache_policy()
     )
     agent._cache_disabled = False
-    # Anthropic supports "5m" (default) and "1h" cache TTL tiers. Read from
-    # config.yaml under prompt_caching.cache_ttl; unknown values keep "5m".
-    # 1h tier costs 2x on write vs 1.25x for 5m, but amortizes across long
-    # sessions with >5-minute pauses between turns (#14971).
+    # Anthropic supports "5m" (default), "1h" (2x write cost; pays off with
+    # >5-minute pauses) and "auto" (1h when a person paces the session, 5m
+    # when a machine does). Read from config.yaml under
+    # prompt_caching.cache_ttl; unknown values keep "5m".
     #
     # Setting cache_ttl to a falsy value (false / null / "off" / "disabled" /
     # "no" / "none") disables prompt caching entirely. This is useful for
@@ -1046,11 +1046,21 @@ def init_agent(
         from hermes_cli.config import load_config_readonly as _load_pc_cfg
 
         from agent.agent_runtime_helpers import cache_ttl_means_disabled
+        from agent.prompt_caching import AUTO_CACHE_TTL, auto_cache_ttl_for_source
 
         _pc_cfg = _load_pc_cfg().get("prompt_caching", {}) or {}
         _ttl = _pc_cfg.get("cache_ttl", "5m")
         if _ttl in {"5m", "1h"}:
             agent._cache_ttl = _ttl
+        elif _ttl == AUTO_CACHE_TTL:
+            # Decided once per session from its source. A delegated child is
+            # clamped back to 5m by delegate_tool, so it cannot inherit a
+            # human-paced 1h tier.
+            from run_agent import _session_source_for_agent  # late: run_agent imports this module
+
+            agent._cache_ttl = auto_cache_ttl_for_source(
+                _session_source_for_agent(getattr(agent, "platform", None))
+            )
         elif cache_ttl_means_disabled(_ttl):
             agent._use_prompt_caching = False
             agent._use_native_cache_layout = False

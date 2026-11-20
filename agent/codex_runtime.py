@@ -153,8 +153,13 @@ def _record_codex_app_server_usage(agent, turn) -> dict[str, Any]:
 
     from agent.usage_pricing import CanonicalUsage, estimate_usage_cost
 
-    input_tokens = _coerce_usage_int(usage.get("inputTokens"))
     cache_read_tokens = _coerce_usage_int(usage.get("cachedInputTokens"))
+    # ``inputTokens`` is INCLUSIVE of ``cachedInputTokens`` (same contract as
+    # the Responses API). CanonicalUsage.prompt_tokens re-adds cache_read on
+    # top of input_tokens, so the canonical input bucket must be the uncached
+    # remainder or cached tokens are counted twice — inflating cost estimates
+    # and context_compressor.last_prompt_tokens into premature compaction.
+    input_tokens = max(0, _coerce_usage_int(usage.get("inputTokens")) - cache_read_tokens)
     output_tokens = _coerce_usage_int(usage.get("outputTokens"))
     reasoning_tokens = _coerce_usage_int(usage.get("reasoningOutputTokens"))
     reported_total = _coerce_usage_int(usage.get("totalTokens"))

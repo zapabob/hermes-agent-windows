@@ -4311,6 +4311,17 @@ class CuratedFallbackModels(list[str]):
     """Curated placeholder returned when a supported live catalog is unavailable."""
 
 
+class StaticCatalogModels(list[str]):
+    """In-repo curated snapshot for a provider with no live discovery path.
+
+    ``provider_model_ids`` returns this when no live catalog implementation
+    matched the provider. Tagging the value (rather than handing back a bare
+    list) lets the disk cache record ``source="curated"`` so pickers can label
+    the catalog honestly and never treat an in-repo snapshot as freshly
+    discovered truth when deciding whether a selected model still exists.
+    """
+
+
 def provider_model_ids(provider: Optional[str], *, force_refresh: bool = False) -> list[str]:
     """Return the best known model catalog for a provider.
 
@@ -4633,7 +4644,16 @@ def provider_model_ids(provider: Optional[str], *, force_refresh: bool = False) 
         if normalized in {"xai", "xai-oauth"}:
             merged = _xai_finalize_catalog(merged)
         return CuratedFallbackModels(merged) if degraded_profile else merged
-    return CuratedFallbackModels(curated_static) if degraded_profile else curated_static
+    if degraded_profile:
+        return CuratedFallbackModels(curated_static)
+    # `moa` is the one static catalog Hermes owns outright: preset names, not a
+    # snapshot of an external provider's state. It stays authoritative.
+    if normalized == "moa":
+        return curated_static
+    # Nothing live matched this provider: the catalog is the in-repo snapshot.
+    # Tag it so the cache records `source="curated"` instead of passing a
+    # static list off as freshly discovered live data.
+    return StaticCatalogModels(curated_static)
 
 
 # ---------------------------------------------------------------------------
@@ -4659,6 +4679,15 @@ def provider_model_ids(provider: Optional[str], *, force_refresh: bool = False) 
 
 _PROVIDER_MODELS_CACHE_TTL = 3600  # 1h
 _PROVIDER_MODELS_FALLBACK_TTL = 60
+# Bumped whenever the *shape* or *meaning* of a cache row changes. Rows from an
+# older schema describe a superseded fetch contract, so they are discarded on
+# read instead of being served until their TTL lapses — otherwise a fix to the
+# fetch path cannot take effect until the old rows age out (up to 7 days).
+_PROVIDER_MODELS_CACHE_SCHEMA = 2
+# Static catalogs (``StaticCatalogModels``) are in-repo snapshots, not live
+# discovery results. They stay usable, but past this age they count as
+# unverified rather than authoritative and are background-revalidated.
+_PROVIDER_MODELS_CURATED_TTL = 7 * 24 * 3600
 # Providers whose catalog is served with NO credential and therefore gets a
 # stable (constant) credential fingerprint in the disk cache. The opencode-free
 # catalog is anonymous — its freshness comes from TTL revalidation, not from
@@ -4860,8 +4889,13 @@ def _credential_fingerprint(provider: str) -> str:
     return hashlib.blake2b(blob, digest_size=8).hexdigest()
 
 
-def _load_provider_models_cache() -> dict:
-    """Return the full cache dict, or {} on any error."""
+def _load_provider_models_cache_raw() -> dict:
+    """Return the cache dict verbatim, without the schema gate.
+
+    Only maintenance paths that must be able to *remove* rows (targeted
+    cache clears) use this. Serving paths go through
+    :func:`_load_provider_models_cache`.
+    """
     try:
         path = _provider_models_cache_path()
         if not path.exists():
@@ -4873,6 +4907,18 @@ def _load_provider_models_cache() -> dict:
         return {}
 
 
+def _load_provider_models_cache() -> dict:
+    """Return the full cache dict, or {} on any error or schema mismatch."""
+    data = _load_provider_models_cache_raw()
+    if not data:
+        return {}
+    if data.get("_schema") != _PROVIDER_MODELS_CACHE_SCHEMA:
+        # Written by a different fetch contract (older Hermes, or a
+        # hand-edited file): treat as a miss so the live path repopulates.
+        return {}
+    return data
+
+
 _cache_write_lock = threading.Lock()
 
 
@@ -4882,16 +4928,34 @@ def _save_provider_models_cache(data: dict) -> None:
         from utils import atomic_json_write
         path = _provider_models_cache_path()
         path.parent.mkdir(parents=True, exist_ok=True)
-        atomic_json_write(path, data, indent=None)
+        payload = dict(data) if isinstance(data, dict) else {}
+        payload["_schema"] = _PROVIDER_MODELS_CACHE_SCHEMA
+        payload["_saved_at"] = time.time()
+        atomic_json_write(path, payload, indent=None)
     except Exception:
         pass
 
 
 def _provider_result_entry(fp: str, models: list[str]) -> dict[str, Any]:
-    """Capture provenance before converting a raw provider result to a list."""
-    entry = {"fp": fp, "at": time.time(), "models": list(models)}
-    if isinstance(models, CuratedFallbackModels):
+    """Capture provenance (including its expiry) before converting to a list.
+
+    The trust window is stamped at write time rather than recomputed from the
+    current TTL constants on every read: a curated snapshot must keep its
+    7-day window even if the live TTL is tuned later, and a fallback retry
+    must keep its short 60-second window.
+    """
+    now = time.time()
+    entry = {"fp": fp, "at": now, "models": list(models)}
+    if isinstance(models, StaticCatalogModels):
+        # In-repo snapshot for a provider with no live discovery path. Not a
+        # failure (no retry is owed) but never "authoritative live data".
+        entry["source"] = "curated"
+        entry["expires_at"] = now + _PROVIDER_MODELS_CURATED_TTL
+    elif isinstance(models, CuratedFallbackModels):
         entry["fallback"] = True
+        entry["expires_at"] = now + _PROVIDER_MODELS_FALLBACK_TTL
+    else:
+        entry["expires_at"] = now + _PROVIDER_MODELS_CACHE_TTL
     return entry
 
 
@@ -4925,6 +4989,11 @@ def _disk_serve_tier(
     age = now - entry["at"]
     if entry.get("fallback"):
         return "fresh" if age < _PROVIDER_MODELS_FALLBACK_TTL else None
+    if entry.get("source") == "curated":
+        # Static snapshot: cheap to re-derive, never authoritative. Serve it
+        # inside the trust ceiling, then revalidate off-thread instead of
+        # leaving the picker on an unexamined in-repo list indefinitely.
+        return "fresh" if age < _PROVIDER_MODELS_CURATED_TTL else "stale"
     if age < ttl_seconds:
         return "fresh"
     if entry["models"] and age < _PROVIDER_MODELS_STALE_SERVE_MAX:
@@ -5044,7 +5113,10 @@ def clear_provider_models_cache(provider: Optional[str] = None) -> None:
             if path.exists():
                 path.unlink()
             return
-        cache = _load_provider_models_cache()
+        # Prefer the serving view, but fall back to the raw file when the
+        # schema gate rejected it: an explicit clear must be able to remove a
+        # row written by an older build instead of silently leaving it behind.
+        cache = _load_provider_models_cache() or _load_provider_models_cache_raw()
         requested = str(provider or "").strip().lower()
         normalized = requested if requested == "ollama" else (normalize_provider(provider) or provider or "")
         changed = False
@@ -5055,6 +5127,212 @@ def clear_provider_models_cache(provider: Optional[str] = None) -> None:
             _save_provider_models_cache(cache)
     except Exception:
         pass
+
+
+def _provider_cache_key(provider: Optional[str]) -> str:
+    """Cache key used by :func:`provider_catalog_provenance`.
+
+    Mirrors :func:`cached_provider_model_ids` so the provenance lookup reads
+    the same row the picker actually rendered from.
+    """
+    requested = str(provider or "").strip().lower()
+    if not requested:
+        return ""
+    if requested == "ollama" or requested.startswith("custom:"):
+        return requested
+    return normalize_provider(provider) or requested
+
+
+def catalog_freshness_meta(
+    *,
+    generated_at: Optional[float] = None,
+    refresh: bool = False,
+) -> dict:
+    """Describe the cache contract a payload was built under.
+
+    Picker UIs render "as of …" and decide when a manual refresh is due from
+    this block, so it travels with the payload instead of being re-derived (and
+    drifting) in each surface.
+    """
+    return {
+        "generated_at": time.time() if generated_at is None else float(generated_at),
+        "cache_schema": _PROVIDER_MODELS_CACHE_SCHEMA,
+        "live_ttl_seconds": _PROVIDER_MODELS_CACHE_TTL,
+        "curated_ttl_seconds": _PROVIDER_MODELS_CURATED_TTL,
+        "stale_serve_max_seconds": _PROVIDER_MODELS_STALE_SERVE_MAX,
+        "fallback_ttl_seconds": _PROVIDER_MODELS_FALLBACK_TTL,
+        "stamps_expiry": True,
+        "refresh": bool(refresh),
+    }
+
+
+def provider_catalog_provenance(
+    provider: Optional[str],
+    *,
+    cache: Optional[dict] = None,
+    now: Optional[float] = None,
+    fingerprint: Optional[str] = None,
+    cache_key: Optional[str] = None,
+) -> dict:
+    """Describe how trustworthy the picker catalog for *provider* is.
+
+    Returns a JSON-friendly dict so every picker surface can render the same
+    freshness contract:
+
+    - ``source``: ``"live"`` (fresh discovery), ``"stale"`` (served while
+      revalidating), ``"curated"`` (in-repo snapshot), ``"fallback"``
+      (live fetch failed), ``"expired"`` or ``"unknown"``.
+    - ``authoritative``: True only for fresh live data. This is the sole
+      source of truth for "model no longer exists" claims.
+    - ``fetched_at`` / ``age_seconds`` / ``trust_expires_at``: what the user
+      sees as "as of …" and when a refresh is due.
+    """
+    normalized = _provider_cache_key(provider)
+    # ``cache_key`` lets a row cached under a different key (custom endpoints
+    # are cached by URL, not by their picker slug) describe the data it
+    # actually rendered from. ``fingerprint`` does the same for the probe
+    # credentials, which only the row builder holds.
+    key = str(cache_key or "").strip() or normalized
+    provenance: dict[str, Any] = {
+        "provider": normalized or key,
+        "cache_key": key,
+        "source": "unknown",
+        "fetched_at": None,
+        "age_seconds": None,
+        "stale": True,
+        "fallback": False,
+        "authoritative": False,
+        "model_count": 0,
+        "ttl_seconds": _PROVIDER_MODELS_CACHE_TTL,
+        "trust_expires_at": None,
+        "cache_schema": _PROVIDER_MODELS_CACHE_SCHEMA,
+    }
+    # Custom endpoints are cached by URL and fingerprinted over the
+    # api_key/api_mode/headers they were probed with, which the payload builder
+    # does not hold. A caller that does hold them (the picker row builder)
+    # passes ``fingerprint``; everyone else gets ``unknown`` rather than a
+    # guess from another row.
+    if not key:
+        return provenance
+    if key.startswith("custom:") and fingerprint is None:
+        return provenance
+
+    if cache is None:
+        cache = _load_provider_models_cache()
+    entry = cache.get(key) if isinstance(cache, dict) else None
+    if not isinstance(entry, dict):
+        # No row: nothing to describe, and no reason to pay for the credential
+        # fingerprint scan that validation would need.
+        return provenance
+    if fingerprint is None:
+        try:
+            fingerprint = _credential_fingerprint(normalized or key)
+        except Exception:
+            fingerprint = ""
+    if not fingerprint or not _cache_entry_valid(entry, fingerprint):
+        return provenance
+
+    current = time.time() if now is None else float(now)
+    fetched_at = float(entry["at"])
+    age = max(0.0, current - fetched_at)
+    if entry.get("source") == "curated":
+        source = "curated"
+        ttl = _PROVIDER_MODELS_CURATED_TTL
+    elif entry.get("fallback"):
+        source = "fallback"
+        ttl = _PROVIDER_MODELS_FALLBACK_TTL
+    elif age < _PROVIDER_MODELS_CACHE_TTL:
+        source = "live"
+        ttl = _PROVIDER_MODELS_CACHE_TTL
+    elif age < _PROVIDER_MODELS_STALE_SERVE_MAX:
+        source = "stale"
+        ttl = _PROVIDER_MODELS_CACHE_TTL
+    else:
+        source = "expired"
+        ttl = _PROVIDER_MODELS_CACHE_TTL
+
+    # Rows written with the freshness contract carry their own expiry. Honour
+    # it so a curated snapshot keeps its longer trust window; older rows fall
+    # back to the TTL in effect for the derived source.
+    stamped_expiry = entry.get("expires_at")
+    if isinstance(stamped_expiry, (int, float)) and not isinstance(stamped_expiry, bool):
+        trust_expires_at = float(stamped_expiry)
+    else:
+        trust_expires_at = fetched_at + ttl
+
+    provenance.update(
+        {
+            "source": source,
+            "fetched_at": fetched_at,
+            "age_seconds": age,
+            "stale": source in {"stale", "expired", "fallback"},
+            "fallback": bool(entry.get("fallback")),
+            "authoritative": source == "live",
+            "model_count": len(entry.get("models") or []),
+            "ttl_seconds": ttl,
+            "trust_expires_at": trust_expires_at,
+        }
+    )
+    return provenance
+
+
+def current_model_catalog_status(
+    provider: Optional[str],
+    model: Optional[str],
+    *,
+    cache: Optional[dict] = None,
+    now: Optional[float] = None,
+    fingerprint: Optional[str] = None,
+    catalog: Optional[dict] = None,
+) -> dict:
+    """Check the selected model against the provider's authoritative catalog.
+
+    ``state`` is deliberately conservative:
+
+    - ``"listed"`` — present in fresh live discovery.
+    - ``"not_listed"`` — absent from *authoritative* live discovery, i.e. the
+      provider is no longer serving it under that id.
+    - ``"unverified"`` — the catalog is curated/stale/unknown, so absence
+      proves nothing. Never label a model retired on stale data.
+    """
+    catalog = catalog or provider_catalog_provenance(
+        provider, cache=cache, now=now, fingerprint=fingerprint
+    )
+    model_id = str(model or "").strip()
+    checked_at = time.time() if now is None else float(now)
+    status: dict[str, Any] = {
+        "state": "unverified",
+        "reason": "no_model_selected",
+        "provider": catalog.get("provider") or "",
+        "model": model_id,
+        "catalog_source": catalog.get("source") or "unknown",
+        "catalog_fetched_at": catalog.get("fetched_at"),
+        "catalog_age_seconds": catalog.get("age_seconds"),
+        "checked_at": checked_at,
+    }
+    if not model_id:
+        return status
+    if not catalog.get("authoritative"):
+        status["reason"] = "catalog_not_authoritative"
+        return status
+
+    key = str(catalog.get("cache_key") or "").strip() or _provider_cache_key(provider)
+    if cache is None:
+        cache = _load_provider_models_cache()
+    entry = cache.get(key) if isinstance(cache, dict) else None
+    models = entry.get("models") if isinstance(entry, dict) else None
+    if not isinstance(models, list):
+        status["reason"] = "catalog_unavailable"
+        return status
+
+    wanted = _model_dedup_key(model_id)
+    if any(_model_dedup_key(candidate) == wanted for candidate in models):
+        status["state"] = "listed"
+        status["reason"] = "in_live_catalog"
+    else:
+        status["state"] = "not_listed"
+        status["reason"] = "missing_from_live_catalog"
+    return status
 
 
 def _resolve_anthropic_pool_catalog_credentials() -> tuple[str, str]:

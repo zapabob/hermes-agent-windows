@@ -381,6 +381,49 @@ export interface ModelPricing {
   was_output?: string
 }
 
+/** Where a picker's model list came from and how far it can still be trusted.
+ *  Emitted by `build_models_payload`; the same contract reaches every surface. */
+export interface ModelCatalogProvenance {
+  provider: string
+  /** Cache row actually read (custom endpoints are keyed by URL, not slug). */
+  cache_key?: string
+  /** live | stale | curated | fallback | expired | unknown */
+  source: string
+  fetched_at?: number | null
+  age_seconds?: number | null
+  stale: boolean
+  fallback: boolean
+  authoritative: boolean
+  model_count: number
+  ttl_seconds: number
+  trust_expires_at?: number | null
+  cache_schema: number
+}
+
+export interface ModelCatalogMeta {
+  generated_at: number
+  cache_schema: number
+  live_ttl_seconds: number
+  curated_ttl_seconds: number
+  stale_serve_max_seconds: number
+  fallback_ttl_seconds: number
+  stamps_expiry?: boolean
+  refresh: boolean
+}
+
+/** Result of checking the selected model against authoritative live discovery. */
+export interface CurrentModelStatus {
+  /** listed | not_listed | unverified */
+  state: string
+  reason: string
+  provider: string
+  model: string
+  catalog_source: string
+  catalog_fetched_at?: number | null
+  catalog_age_seconds?: number | null
+  checked_at: number
+}
+
 export interface ModelOptionProvider {
   access_note?: string
   auth_label?: string
@@ -427,6 +470,8 @@ export interface ModelOptionProvider {
   /** Per-model option support, keyed by model id (present when the picker
    *  requested capabilities). Lets the UI gate fast/reasoning controls. */
   capabilities?: Record<string, ModelCapabilities>
+  /** Provenance of this row's model list. Absent on older backends. */
+  catalog?: ModelCatalogProvenance
 }
 
 export interface ModelCapabilities {
@@ -444,6 +489,10 @@ export interface ModelOptionsResponse {
   model?: string
   provider?: string
   providers?: ModelOptionProvider[]
+  /** Whether the selected model still exists in authoritative live discovery.
+   *  Only a fresh live catalog may claim `not_listed`. */
+  current_model_status?: CurrentModelStatus
+  catalog_meta?: ModelCatalogMeta
 }
 
 export interface PaginatedSessions {

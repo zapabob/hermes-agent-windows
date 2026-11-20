@@ -6484,6 +6484,26 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
             return "class:status-bar-warn"
         return "class:status-bar-good"
 
+    def _cache_hit_rate(self, snapshot: dict, precision: int = 1) -> "tuple[float, str] | None":
+        """Return (cache_pct, formatted label), or None when no cache data exists.
+
+        Both the plain-text and prompt-toolkit status bars share this formula.
+        """
+        cache_read = snapshot.get("session_cache_read_tokens", 0) or 0
+        prompt_total = snapshot.get("session_prompt_tokens", 0) or 0
+        if cache_read > 0 and prompt_total > 0:
+            cache_pct = cache_read / prompt_total * 100
+            return cache_pct, f"\u25ce{cache_pct:.{precision}f}%"
+        return None
+
+    def _cache_hit_rate_style(self, cache_pct: float) -> str:
+        """Style for cache hit rate - higher is better (opposite of context %)."""
+        if cache_pct >= 70:
+            return "class:status-bar-good"
+        if cache_pct >= 40:
+            return "class:status-bar-warn"
+        return "class:status-bar-bad"
+
     @staticmethod
     def _battery_status_style(category: str) -> str:
         """Map a battery colour category to a status-bar style class."""
@@ -7446,6 +7466,9 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                 return self._right_align_status_title(text, session_title, width)
             if width < 76:
                 parts = [f"⚕ {snapshot['model_short']}", percent_label]
+                cache = self._cache_hit_rate(snapshot, precision=0)
+                if cache:
+                    parts.append(cache[1])
                 if battery_label:
                     parts.insert(0, battery_label)
                 compressions = snapshot.get("compressions", 0)
@@ -7478,6 +7501,9 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
 
             compressions = snapshot.get("compressions", 0)
             parts = [f"⚕ {snapshot['model_short']}", context_label, percent_label]
+            cache = self._cache_hit_rate(snapshot)
+            if cache:
+                parts.append(cache[1])
             if battery_label:
                 parts.insert(0, battery_label)
             if compressions:
@@ -7558,6 +7584,10 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                         ("class:status-bar-dim", " · "),
                         (self._status_bar_context_style(percent), percent_label),
                     ]
+                    cache = self._cache_hit_rate(snapshot, precision=0)
+                    if cache:
+                        frags.append(("class:status-bar-dim", " \u00b7 "))
+                        frags.append((self._cache_hit_rate_style(cache[0]), cache[1]))
                     if compressions:
                         frags.append(("class:status-bar-dim", " · "))
                         frags.append((
@@ -7612,6 +7642,10 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                         ("class:status-bar-dim", " "),
                         (bar_style, percent_label),
                     ]
+                    cache = self._cache_hit_rate(snapshot)
+                    if cache:
+                        frags.append(("class:status-bar-dim", " \u2501 "))
+                        frags.append((self._cache_hit_rate_style(cache[0]), cache[1]))
                     if compressions:
                         frags.append(("class:status-bar-dim", " │ "))
                         frags.append((
@@ -11559,7 +11593,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
         except Exception:
             logger.debug("command palette prefill failed", exc_info=True)
 
-    def _open_model_picker(self, providers: list, current_model: str, current_provider: str, user_provs=None, custom_provs=None) -> None:
+    def _open_model_picker(self, providers: list, current_model: str, current_provider: str, user_provs=None, custom_provs=None, catalog_meta=None, current_model_status=None) -> None:
         """Open prompt_toolkit-native /model picker modal."""
         self._capture_modal_input_snapshot()
         default_idx = next(
@@ -11574,6 +11608,8 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
             "user_provs": user_provs,
             "custom_provs": custom_provs,
             "filter": "",
+            "catalog_meta": catalog_meta,
+            "current_model_status": current_model_status,
         }
         self._invalidate(min_interval=0.0)
 
@@ -12094,11 +12130,14 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
             try:
                 if ctx is None:
                     raise RuntimeError("inventory context unavailable")
-                providers = build_models_payload(
+                picker_payload = build_models_payload(
                     ctx,
                     probe_custom_providers=force_refresh,
                     probe_current_custom_provider=not force_refresh,
-                )["providers"]
+                )
+                providers = picker_payload.get("providers") or []
+                picker_catalog_meta = picker_payload.get("catalog_meta")
+                picker_model_status = picker_payload.get("current_model_status")
             except Exception:
                 providers = []
 
@@ -12120,6 +12159,8 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                 provider_display,
                 user_provs=user_provs,
                 custom_provs=custom_provs,
+                catalog_meta=picker_catalog_meta,
+                current_model_status=picker_model_status,
             )
             return
 
@@ -21140,6 +21181,10 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                     label = f"{p['name']} ({count} model{'s' if count != 1 else ''})"
                     if p.get("is_current"):
                         label += "  ← current"
+                    # Never present an unexamined catalog as fresh live data.
+                    _source = (p.get("catalog") or {}).get("source")
+                    if _source in {"curated", "stale", "expired", "fallback"}:
+                        label += f"  [{_source}]"
                     choices.append(label)
                 choices.append("Cancel")
                 hint = f"Current: {state.get('current_model', 'unknown')} on {state.get('current_provider', 'unknown')}"
@@ -21166,8 +21211,18 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                 else:
                     hint = "No models listed for this provider. Use Back or Cancel."
 
+            # Only a fresh live catalog may claim the selected model is gone.
+            _status = state.get("current_model_status") or {}
+            warn_text = None
+            if _status.get("state") == "not_listed":
+                warn_text = (
+                    f"  ! {_status.get('model', 'current model')} is no longer listed "
+                    "by a fresh live catalog"
+                )
+
             box_width = _panel_box_width(
-                title, [hint] + choices, min_width=46, max_width=84
+                title, [hint] + ([warn_text] if warn_text else []) + choices,
+                min_width=46, max_width=84,
             )
             inner_text_width = max(8, box_width - 6)
             selected = state.get("selected", 0)
@@ -21201,6 +21256,10 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
             _append_panel_line(
                 lines, "class:clarify-border", "class:clarify-hint", hint, box_width
             )
+            if warn_text:
+                _append_panel_line(
+                    lines, "class:clarify-border", "class:approval-title", warn_text, box_width
+                )
             _append_blank_panel_line(lines, "class:clarify-border", box_width)
             for idx in range(scroll_offset, scroll_offset + visible):
                 choice = choices[idx]

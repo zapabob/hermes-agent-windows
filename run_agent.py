@@ -4816,6 +4816,15 @@ class AIAgent:
         hard teardown for actual session boundaries (/new, /reset, session
         expiry).
         """
+        # A cache-evicted agent must not keep replaying a warmed request on a
+        # background timer while another agent may own the session.
+        try:
+            from agent.prompt_cache_warmer import cancel_prompt_cache_warming
+
+            cancel_prompt_cache_warming(self, "release_clients")
+        except Exception:
+            pass
+
         # Close active child agents (per-turn; no cross-turn persistence).
         try:
             with self._active_children_lock:
@@ -4872,6 +4881,14 @@ class AIAgent:
         Safe to call multiple times (idempotent).  Each cleanup step is
         independently guarded so a failure in one does not prevent the rest.
         """
+        # No background replay may outlive the agent (every turn-exit path).
+        try:
+            from agent.prompt_cache_warmer import cancel_prompt_cache_warming
+
+            cancel_prompt_cache_warming(self, "agent_close")
+        except Exception:
+            pass
+
         # AIAgent.close() is the hard owner boundary. Gateway cleanup may
         # call shutdown_memory_provider() first; its idempotence prevents
         # duplicate extraction while direct callers cannot skip provider close.

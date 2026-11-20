@@ -3144,6 +3144,11 @@ def run_conversation(
                     pass  # Never let rate guard break the agent loop
 
             try:
+                # The real request about to go out refreshes the cache entry
+                # itself, so any earlier one-token replay is obsolete.
+                from agent.prompt_cache_warmer import cancel_prompt_cache_warming
+
+                cancel_prompt_cache_warming(agent, "new request in flight")
                 agent._reset_stream_delivery_tracking()
                 # api_messages is built once, before this retry loop, while the
                 # primary provider is active.  A mid-conversation fallback can
@@ -3855,6 +3860,13 @@ def run_conversation(
                     continue  # Retry the API call
 
                 agent._turn_received_provider_response = True
+
+                # Arm a one-token replay of THIS request before its Anthropic
+                # cache entry expires, so a tool round longer than the TTL
+                # does not turn the next request into a full-price write.
+                from agent.prompt_cache_warmer import start_prompt_cache_warming
+
+                start_prompt_cache_warming(agent, api_kwargs, response)
 
                 # Check finish_reason before proceeding
                 if agent.api_mode == "codex_responses":
@@ -9245,6 +9257,12 @@ def run_conversation(
                 # _tail_role != "assistant"), matching the pattern at other
                 # break sites that set final_response without appending.
                 break
+
+    # Every normal turn exit settles the warmer: streaming mode stops, idle
+    # mode keeps the entry warm between turns.
+    from agent.prompt_cache_warmer import settle_prompt_cache_warming
+
+    settle_prompt_cache_warming(agent)
 
     # Post-loop turn finalization extracted to agent/turn_finalizer.finalize_turn
     # (god-file decomposition Phase 1 step 4). Behavior-neutral: the assembled

@@ -3293,7 +3293,12 @@ export const zh: Translations = {
     free: '免费',
     freeTier: '免费层',
     priceTitle: '每百万 token 的输入/输出价格',
-    wasPrice: '原价'
+    wasPrice: '原价',
+    asOf: (time) => `截至 ${time}`,
+    curated: '静态快照',
+    stale: '过期目录',
+    notListed: '该提供商已不再提供此模型',
+    refreshHint: '刷新以更新'
   },
 
   modelVisibility: {

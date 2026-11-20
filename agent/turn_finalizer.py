@@ -150,6 +150,12 @@ def finalize_turn(
     loop). See module docstring.
     """
     from agent.conversation_loop import logger
+    from agent.prompt_cache_warmer import settle_prompt_cache_warming
+
+    # Also settle here: finalize_turn is reached by every exit path, including
+    # early ones the caller's post-loop hook may skip. Idempotent with the
+    # caller's settle.
+    settle_prompt_cache_warming(agent)
 
     budget_exhausted = (
         api_call_count >= agent.max_iterations

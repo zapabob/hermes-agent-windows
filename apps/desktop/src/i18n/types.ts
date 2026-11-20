@@ -2643,6 +2643,11 @@ export interface Translations {
     freeTier: string
     priceTitle: string
     wasPrice: string
+    asOf: (time: string) => string
+    curated: string
+    stale: string
+    notListed: string
+    refreshHint: string
   }
 
   modelVisibility: {

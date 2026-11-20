@@ -1234,6 +1234,9 @@ def build_cache_parity_fork(
         skip_memory=True,
         **_fork_kwargs,
     )
+    # The parent already keeps this shared prefix warm; a fork replaying the
+    # same request would double-pay for reads on the same cache entry.
+    review_agent._cache_warming_mode = "off"
     review_agent._memory_write_origin = write_origin
     review_agent._memory_write_context = write_origin
     # The review fork pins the parent's cached system prompt and keeps

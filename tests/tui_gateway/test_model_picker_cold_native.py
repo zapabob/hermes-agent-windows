@@ -288,6 +288,7 @@ def test_successful_stale_disk_is_immediate_without_selection_change(native):
         reset_hermes_home_override(token)
     path = home / "provider_models_cache.json"
     rows = json.loads(path.read_text(encoding="utf-8"))
+    rows["_schema"] = 2
     rows["deepseek"]["at"] = time.time() - 3601
     path.write_text(json.dumps(rows), encoding="utf-8")
     owner, at = submit(n)
@@ -362,7 +363,7 @@ def test_custom_stale_refresh_is_actual_live_and_failure_cannot_retimestamp(nati
     path = n.root / "profiles/work/provider_models_cache.json"
     key = "custom:" + endpoint
     fp = n.models._custom_endpoint_fingerprint("", None, None)
-    path.write_text(json.dumps({key: {"fp": fp, "at": time.time() - 3601,
+    path.write_text(json.dumps({"_schema": 2, key: {"fp": fp, "at": time.time() - 3601,
                                      "models": ["p04-stale-custom"]}}), encoding="utf-8")
     before = path.read_bytes()
     n.state.failed = failed
@@ -424,7 +425,7 @@ def test_saved_native_empty_obeys_300s_ttl_without_fetch_or_swr(native, age, kin
         cfgpath.write_text(yaml.safe_dump(cfg), encoding="utf-8")
         n.before[cfgpath] = cfgpath.read_bytes()
     path = n.root / "profiles/work/provider_models_cache.json"
-    path.write_text(json.dumps({"custom:" + endpoint: {
+    path.write_text(json.dumps({"_schema": 2, "custom:" + endpoint: {
         "fp": n.models._custom_endpoint_fingerprint("", None, None),
         "at": time.time() - age, "models": [], "native": True,
     }}), encoding="utf-8")
@@ -451,6 +452,7 @@ def test_failed_stale_refresh_preserves_exact_successful_disk_bytes(native):
         reset_hermes_home_override(token)
     path = home / "provider_models_cache.json"
     rows = json.loads(path.read_text(encoding="utf-8"))
+    rows["_schema"] = 2
     rows["deepseek"]["at"] = time.time() - 3601
     path.write_text(json.dumps(rows), encoding="utf-8")
     before = path.read_bytes()

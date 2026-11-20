@@ -168,6 +168,7 @@ _CREDENTIAL_NAMES = frozenset({
     "NOUS_API_KEY",
     "GEMINI_API_KEY",
     "GOOGLE_API_KEY",
+    "OLLAMA_HOST",
     "GROQ_API_KEY",
     "XAI_API_KEY",
     "MISTRAL_API_KEY",

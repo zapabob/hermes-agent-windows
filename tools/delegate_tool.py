@@ -1636,6 +1636,18 @@ def _resolve_child_fallback_chain(parent_agent, routing_cfg: Any, pinned: bool) 
     return normalized or default
 
 
+def _apply_child_cache_ttl(child) -> None:
+    """A delegated child never uses the 1h cache tier.
+
+    That tier is priced for a person who steps away between turns (2x write
+    vs 1.25x for 5m); a subagent calls every few seconds for minutes and is
+    gone, so it pays 2x on every tool result without ever collecting the
+    retention. Caching itself is unchanged — disabled stays disabled.
+    """
+    if getattr(child, "_cache_ttl", None) == "1h":
+        child._cache_ttl = "5m"
+
+
 def _build_child_agent(
     task_index: int,
     goal: str,
@@ -2106,6 +2118,7 @@ def _build_child_agent(
                     pass
             raise
     child._print_fn = getattr(parent_agent, "_print_fn", None)
+    _apply_child_cache_ttl(child)
     # Ownership transfer for the dedicated handle: the child's close() must
     # release it (nothing else holds a reference), and no parent teardown can
     # close it out from under a background child (#81267).

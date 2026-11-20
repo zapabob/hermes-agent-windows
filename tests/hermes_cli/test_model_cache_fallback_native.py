@@ -181,6 +181,7 @@ def test_real_credentialed_opener_installs_redirect_policy_without_connection(na
 
 def seed(n, slug, models, age=0, fallback=False):
     rows = disk(n) if n.path.exists() else {}
+    rows['_schema'] = n.mod._PROVIDER_MODELS_CACHE_SCHEMA
     row = {'fp': n.mod._credential_fingerprint(slug), 'at': time.time() - age, 'models': models}
     if fallback:
         row['fallback'] = True
@@ -371,7 +372,10 @@ def test_custom_cache_only_cannot_serve_expired_fallback(native):
     base = n.profiles[0].base_url
     fp = n.mod._custom_endpoint_fingerprint(n.state.key, None, None)
     row = {'fp': fp, 'at': time.time() - 61, 'models': ['P03-placeholder'], 'fallback': True}
-    n.path.write_text(json.dumps({'custom:' + base: row}), encoding='utf-8')
+    n.path.write_text(json.dumps({
+        '_schema': n.mod._PROVIDER_MODELS_CACHE_SCHEMA,
+        'custom:' + base: row,
+    }), encoding='utf-8')
     assert n.mod.cached_fetch_api_models(n.state.key, base, cache_only=True) is None
     assert not n.requests
 

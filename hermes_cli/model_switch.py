@@ -2792,6 +2792,37 @@ def list_authenticated_providers(
     def _can_probe_custom_provider(*, row_is_current: bool) -> bool:
         return bool(probe_custom_providers or (probe_current_custom_provider and row_is_current))
 
+    # Custom endpoint rows are cached under ``custom:<base_url>`` with a
+    # fingerprint over the api_key / api_mode / headers they were probed with,
+    # none of which survive into the payload. Describe those rows here, where
+    # the credentials are still in hand, so ``build_models_payload`` does not
+    # have to report every custom endpoint as "unknown". The cache file is read
+    # at most once per picker build.
+    _row_catalog_cache: dict = {}
+
+    def _custom_row_catalog(
+        slug: str,
+        api_url: str,
+        api_key: str,
+        api_mode: str | None,
+        headers: dict[str, str] | None,
+    ) -> dict:
+        from hermes_cli.models import (
+            _custom_endpoint_fingerprint,
+            _load_provider_models_cache,
+            provider_catalog_provenance,
+        )
+
+        if not _row_catalog_cache:
+            _row_catalog_cache.update(_load_provider_models_cache() or {})
+        cache_key = f"custom:{str(api_url).strip().rstrip('/').lower()}"
+        return provider_catalog_provenance(
+            slug,
+            cache=_row_catalog_cache,
+            cache_key=cache_key,
+            fingerprint=_custom_endpoint_fingerprint(api_key, api_mode, headers),
+        )
+
     # Normalize the excluded-providers list once for fast membership checks.
     # Compared against hermes_id / mdev_id (section 1), pid / hermes_slug
     # (section 2) and canonical slug (section 2b) so a single entry like
@@ -3616,6 +3647,13 @@ def list_authenticated_providers(
                 "source": "user-config",
                 "api_url": api_url,
                 "native_catalog_empty": native_catalog_empty,
+                "catalog": _custom_row_catalog(
+                    ep_name,
+                    api_url,
+                    api_key,
+                    ep_cfg.get("api_mode"),
+                    _extra_headers_from_config(ep_cfg) or None,
+                ),
             })
             seen_slugs.add(ep_name.lower())
             seen_slugs.update(_ep_aliases)
@@ -3703,6 +3741,9 @@ def list_authenticated_providers(
             "source": "model-config",
             "api_url": str(current_base_url).strip().rstrip("/"),
             "native_catalog_empty": native_catalog_empty,
+            "catalog": _custom_row_catalog(
+                "custom", str(current_base_url).strip().rstrip("/"), "", None, None
+            ),
         })
         seen_slugs.add("custom")
 
@@ -4025,6 +4066,13 @@ def list_authenticated_providers(
                 "source": "user-config",
                 "api_url": grp["api_url"],
                 "native_catalog_empty": native_catalog_empty,
+                "catalog": _custom_row_catalog(
+                    slug,
+                    api_url,
+                    api_key,
+                    grp.get("api_mode"),
+                    grp.get("extra_headers") or None,
+                ),
             })
             seen_slugs.add(slug.lower())
             _section4_emitted_slugs.add(slug.lower())

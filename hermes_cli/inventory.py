@@ -314,6 +314,19 @@ def build_models_payload(
       list. Rate limits are per-model, so a different model under the same
       provider may still work; hiding the provider strands the user. Set for
       any surface a human is choosing from, not for programmatic resolution.
+
+    Beyond the ``{providers, model, provider}`` shape, every payload carries
+    the catalog freshness contract so no picker has to re-derive it:
+
+    - ``providers[].catalog``: ``source`` (live / stale / curated / fallback /
+      expired / unknown), ``fetched_at``, ``age_seconds``, ``authoritative``,
+      ``trust_expires_at``.
+    - ``current_model_status``: ``listed`` / ``not_listed`` / ``unverified``
+      for the selected model against authoritative live discovery. Only a
+      fresh live catalog may claim a model is gone; curated or stale rows are
+      reported as unverified instead of retired.
+    - ``catalog_meta``: cache schema plus the live/curated TTLs, so the UI can
+      explain when a refresh is due.
     """
     from hermes_cli.model_switch import list_authenticated_providers
 
@@ -420,10 +433,45 @@ def build_models_payload(
         _apply_featured(rows, cache_only=pricing_cache_only and not refresh)
     _apply_custom_aliases(rows)
 
+    # Freshness contract shared by every picker surface. Rows carry the
+    # catalog's provenance ("as of …" / curated snapshot / stale-serve) and the
+    # payload answers the one question a picker cannot: is the currently
+    # selected model still present in authoritative live discovery?
+    from hermes_cli.models import (
+        _load_provider_models_cache,
+        catalog_freshness_meta,
+        current_model_catalog_status,
+        provider_catalog_provenance,
+    )
+
+    catalog_cache = _load_provider_models_cache()
+    for row in rows:
+        slug = str(row.get("slug") or "")
+        if slug and "catalog" not in row:
+            # Custom endpoint rows describe themselves in
+            # ``list_authenticated_providers`` (their cache key and probe
+            # fingerprint are only known there); leave those untouched.
+            row["catalog"] = provider_catalog_provenance(slug, cache=catalog_cache)
+
+    current_catalog = next(
+        (
+            row.get("catalog")
+            for row in rows
+            if str(row.get("slug") or "").strip().lower()
+            == str(ctx.current_provider or "").strip().lower()
+            and isinstance(row.get("catalog"), dict)
+        ),
+        None,
+    )
+
     return {
         "providers": rows,
         "model": ctx.current_model,
         "provider": ctx.current_provider,
+        "current_model_status": current_model_catalog_status(
+            ctx.current_provider, ctx.current_model, cache=catalog_cache, catalog=current_catalog
+        ),
+        "catalog_meta": catalog_freshness_meta(refresh=refresh),
     }
 
 

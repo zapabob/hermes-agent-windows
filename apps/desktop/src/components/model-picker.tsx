@@ -108,6 +108,18 @@ export function ModelPickerDialog({
             {copy.current} {optionsModel || currentModel || copy.unknown}
             {optionsProvider || currentProvider ? ` · ${optionsProvider || currentProvider}` : ''}
           </DialogDescription>
+          {modelOptions.data?.current_model_status?.state === 'not_listed' && (
+            <div className="flex items-center gap-2 border-t border-amber-500/20 bg-amber-500/10 px-4 py-2 text-xs text-amber-700 dark:text-amber-400">
+              <span>{copy.notListed}</span>
+              <button
+                className="shrink-0 underline underline-offset-2"
+                onClick={() => void modelOptions.refetch()}
+                type="button"
+              >
+                {copy.refreshHint}
+              </button>
+            </div>
+          )}
         </DialogHeader>
 
         <Command className="rounded-none bg-card" shouldFilter={false}>
@@ -355,12 +367,43 @@ function ProviderHeading({ provider }: { provider: ModelOptionProvider }) {
       </span>
     ) : null
 
+  // The backend paints provenance onto every row. Show it so a curated
+  // snapshot or a stale catalog is never mistaken for a live model list —
+  // the model list can be genuinely out of date even when it renders fine.
+  const catalog = provider.catalog
+
+  const freshnessBadge = catalog
+    ? catalog.source === 'curated'
+      ? (
+        <span className="shrink-0 rounded-sm bg-amber-500/15 px-1 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+          {copy.curated}
+        </span>
+      )
+      : catalog.source === 'stale' || catalog.source === 'expired'
+        ? (
+          <span className="shrink-0 rounded-sm bg-amber-500/15 px-1 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+            {copy.stale}
+          </span>
+        )
+        : null
+    : null
+
+  const asOf = catalog?.fetched_at
+    ? (
+      <span className="shrink-0 font-mono text-[0.6rem] font-normal normal-case tracking-normal text-muted-foreground">
+        {copy.asOf(new Date(catalog.fetched_at * 1000).toLocaleString())}
+      </span>
+    )
+    : null
+
   return (
     <span className="flex min-w-0 items-center gap-2">
       <span className="truncate">{provider.name}</span>
       <span className="font-mono text-xs font-normal normal-case tracking-normal text-muted-foreground">
         {provider.slug} · {provider.total_models ?? provider.models?.length ?? 0}
       </span>
+      {freshnessBadge}
+      {asOf}
       {tierBadge}
     </span>
   )
