@@ -3143,7 +3143,7 @@ export const en: Translations = {
     freeTier: 'Free tier',
     priceTitle: 'Input / Output price per million tokens',
     wasPrice: 'was',
-    asOf: (time) => `as of ${time}`,
+    asOf: time => `as of ${time}`,
     curated: 'curated snapshot',
     stale: 'stale catalog',
     notListed: 'No longer listed by this provider',

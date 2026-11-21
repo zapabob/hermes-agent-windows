@@ -191,21 +191,23 @@ export function reconcileVisibleKeysAfterCatalogRefresh(
 
   const keysOf = (providers: readonly ModelOptionProvider[]): Set<string> => {
     const keys = new Set<string>()
+
     for (const provider of providers) {
       for (const model of provider.models ?? []) {
         keys.add(modelVisibilityKey(provider.slug, model))
       }
     }
+
     return keys
   }
 
   const previousKeys = keysOf(previousProviders)
   const nextKeys = keysOf(nextProviders)
-  const hiddenProviders = new Set(
-    [...stored].filter(isProviderSentinel).map(key => key.slice(0, -2))
-  )
+
+  const hiddenProviders = new Set([...stored].filter(isProviderSentinel).map(key => key.slice(0, -2)))
 
   const next = new Set<string>()
+
   for (const key of stored) {
     if (isProviderSentinel(key)) {
       next.add(key)
@@ -221,10 +223,13 @@ export function reconcileVisibleKeysAfterCatalogRefresh(
     if (next.has(key) || previousKeys.has(key)) {
       continue
     }
+
     const slug = key.slice(0, key.indexOf('::'))
+
     if (hiddenProviders.has(slug)) {
       continue
     }
+
     next.add(key)
   }
 
