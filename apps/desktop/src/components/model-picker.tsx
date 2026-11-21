@@ -6,16 +6,16 @@ import { modelOptionsQueryKey, requestModelOptions } from '@/lib/model-options'
 import { modelSearchText } from '@/lib/model-search-text'
 import { currentPickerSelection } from '@/lib/model-status-label'
 import { normalize } from '@/lib/text'
-import type { ModelOptionsResponse, ModelOptionProvider, ModelPricing } from '@/types/hermes'
+import type { ModelOptionProvider, ModelOptionsResponse, ModelPricing } from '@/types/hermes'
 
 import type { HermesGateway } from '../hermes'
 import { cn } from '../lib/utils'
-import { startManualOnboarding } from '../store/onboarding'
 import {
   $visibleModels,
   reconcileVisibleKeysAfterCatalogRefresh,
   setVisibleModels
 } from '../store/model-visibility'
+import { startManualOnboarding } from '../store/onboarding'
 
 import { InlineNotice } from './notifications'
 import { Button } from './ui/button'
