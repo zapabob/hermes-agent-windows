@@ -13,11 +13,7 @@ import { DEFAULT_REASONING_EFFORT } from '@/lib/reasoning-effort'
 import { cn } from '@/lib/utils'
 import { $daybreakByProfile, daybreakKey, setDaybreak, syncDaybreak } from '@/store/daybreak'
 import { $modelPresets, applyModelPreset, modelPresetKey, setModelPreset } from '@/store/model-presets'
-import {
-  $visibleModels,
-  reconcileVisibleKeysAfterCatalogRefresh,
-  setVisibleModels
-} from '@/store/model-visibility'
+import { $visibleModels, reconcileVisibleKeysAfterCatalogRefresh, setVisibleModels } from '@/store/model-visibility'
 import { notify, notifyError } from '@/store/notifications'
 import {
   $defaultReasoningEffort,
@@ -144,13 +140,10 @@ export function ModelMenuPanel({
 
       if (previous?.providers) {
         setVisibleModels(
-          reconcileVisibleKeysAfterCatalogRefresh(
-            $visibleModels.get(),
-            previous.providers,
-            next.providers ?? []
-          )
+          reconcileVisibleKeysAfterCatalogRefresh($visibleModels.get(), previous.providers, next.providers ?? [])
         )
       }
+
       queryClient.setQueryData<ModelOptionsResponse>(queryKey, next)
 
       // Catalogues are hints, not authority to retarget a user's selection.

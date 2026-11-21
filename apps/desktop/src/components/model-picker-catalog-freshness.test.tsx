@@ -68,21 +68,20 @@ describe('model picker catalog freshness', () => {
     buttons[0].click()
 
     await vi.waitFor(() => {
-      expect(view.request).toHaveBeenCalledWith(
-        'model.options',
-        expect.objectContaining({ refresh: true })
-      )
+      expect(view.request).toHaveBeenCalledWith('model.options', expect.objectContaining({ refresh: true }))
     })
   })
 
   it('labels a curated snapshot so it is never mistaken for live data', async () => {
     const view = picker({
-      providers: [{
-        slug: 'openrouter',
-        name: 'OpenRouter',
-        models: ['m1'],
-        catalog: { ...catalog, source: 'curated', authoritative: false, stale: false }
-      }]
+      providers: [
+        {
+          slug: 'openrouter',
+          name: 'OpenRouter',
+          models: ['m1'],
+          catalog: { ...catalog, source: 'curated', authoritative: false, stale: false }
+        }
+      ]
     })
 
     expect(await view.findByText('curated snapshot')).toBeTruthy()
@@ -91,12 +90,14 @@ describe('model picker catalog freshness', () => {
 
   it('labels a stale catalog', async () => {
     const view = picker({
-      providers: [{
-        slug: 'openrouter',
-        name: 'OpenRouter',
-        models: ['m1'],
-        catalog: { ...catalog, source: 'stale', authoritative: false, stale: true }
-      }]
+      providers: [
+        {
+          slug: 'openrouter',
+          name: 'OpenRouter',
+          models: ['m1'],
+          catalog: { ...catalog, source: 'stale', authoritative: false, stale: true }
+        }
+      ]
     })
 
     expect(await view.findByText('stale catalog')).toBeTruthy()
@@ -120,12 +121,14 @@ describe('model picker catalog freshness', () => {
 
   it('stays quiet when the catalog is not authoritative', async () => {
     const view = picker({
-      providers: [{
-        slug: 'openrouter',
-        name: 'OpenRouter',
-        models: ['other'],
-        catalog: { ...catalog, source: 'curated', authoritative: false }
-      }],
+      providers: [
+        {
+          slug: 'openrouter',
+          name: 'OpenRouter',
+          models: ['other'],
+          catalog: { ...catalog, source: 'curated', authoritative: false }
+        }
+      ],
       current_model_status: {
         state: 'unverified',
         reason: 'catalog_not_authoritative',
