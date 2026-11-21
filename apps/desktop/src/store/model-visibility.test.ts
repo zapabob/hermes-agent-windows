@@ -40,10 +40,12 @@ describe('model visibility', () => {
       modelVisibilityKey('local-ollama', 'qwen3:latest'),
       modelVisibilityKey('nous', 'hermes-3-llama-3.1-8b')
     ])
+
     const previous = [
       provider('local-ollama', ['qwen3:latest', 'qwen3-coder:hidden']),
       provider('nous', ['hermes-3-llama-3.1-8b'])
     ]
+
     const refreshed = [
       provider('local-ollama', ['qwen3:latest', 'qwen3-coder:hidden', 'qwen3.5:new']),
       provider('nous', ['hermes-3-llama-3.1-8b', 'hermes-4-new'])

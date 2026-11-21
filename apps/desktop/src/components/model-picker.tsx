@@ -10,11 +10,7 @@ import type { ModelOptionProvider, ModelOptionsResponse, ModelPricing } from '@/
 
 import type { HermesGateway } from '../hermes'
 import { cn } from '../lib/utils'
-import {
-  $visibleModels,
-  reconcileVisibleKeysAfterCatalogRefresh,
-  setVisibleModels
-} from '../store/model-visibility'
+import { $visibleModels, reconcileVisibleKeysAfterCatalogRefresh, setVisibleModels } from '../store/model-visibility'
 import { startManualOnboarding } from '../store/onboarding'
 
 import { InlineNotice } from './notifications'
@@ -113,13 +109,10 @@ export function ModelPickerDialog({
 
       if (previous?.providers) {
         setVisibleModels(
-          reconcileVisibleKeysAfterCatalogRefresh(
-            $visibleModels.get(),
-            previous.providers,
-            next.providers ?? []
-          )
+          reconcileVisibleKeysAfterCatalogRefresh($visibleModels.get(), previous.providers, next.providers ?? [])
         )
       }
+
       queryClient.setQueryData<ModelOptionsResponse>(queryKey, next)
     } catch {
       void queryClient.invalidateQueries({ queryKey, exact: true })
@@ -186,12 +179,7 @@ export function ModelPickerDialog({
         </Command>
 
         <DialogFooter className="flex-row items-center justify-end gap-2 bg-card p-3">
-          <Button
-            className="mr-auto"
-            disabled={refreshing}
-            onClick={() => void refreshModels()}
-            variant="ghost"
-          >
+          <Button className="mr-auto" disabled={refreshing} onClick={() => void refreshModels()} variant="ghost">
             {copy.refreshHint}
           </Button>
           <Button onClick={addProvider} variant="ghost">
@@ -427,29 +415,23 @@ function ProviderHeading({ provider }: { provider: ModelOptionProvider }) {
   // the model list can be genuinely out of date even when it renders fine.
   const catalog = provider.catalog
 
-  const freshnessBadge = catalog
-    ? catalog.source === 'curated'
-      ? (
-        <span className="shrink-0 rounded-sm bg-amber-500/15 px-1 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
-          {copy.curated}
-        </span>
-      )
-      : catalog.source === 'stale' || catalog.source === 'expired'
-        ? (
-          <span className="shrink-0 rounded-sm bg-amber-500/15 px-1 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
-            {copy.stale}
-          </span>
-        )
-        : null
-    : null
-
-  const asOf = catalog?.fetched_at
-    ? (
-      <span className="shrink-0 font-mono text-[0.6rem] font-normal normal-case tracking-normal text-muted-foreground">
-        {copy.asOf(new Date(catalog.fetched_at * 1000).toLocaleString())}
+  const freshnessBadge = catalog ? (
+    catalog.source === 'curated' ? (
+      <span className="shrink-0 rounded-sm bg-amber-500/15 px-1 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+        {copy.curated}
       </span>
-    )
-    : null
+    ) : catalog.source === 'stale' || catalog.source === 'expired' ? (
+      <span className="shrink-0 rounded-sm bg-amber-500/15 px-1 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+        {copy.stale}
+      </span>
+    ) : null
+  ) : null
+
+  const asOf = catalog?.fetched_at ? (
+    <span className="shrink-0 font-mono text-[0.6rem] font-normal normal-case tracking-normal text-muted-foreground">
+      {copy.asOf(new Date(catalog.fetched_at * 1000).toLocaleString())}
+    </span>
+  ) : null
 
   return (
     <span className="flex min-w-0 items-center gap-2">

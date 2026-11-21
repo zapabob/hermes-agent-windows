@@ -2329,7 +2329,7 @@ export const ar = defineLocale({
     free: 'مجاني',
     freeTier: 'طبقة مجانية',
     priceTitle: 'السعر',
-    asOf: (time) => `حتى ${time}`,
+    asOf: time => `حتى ${time}`,
     curated: 'لقطة مُنسّقة',
     stale: 'كتالوج قديم',
     notListed: 'لم يعد مدرجًا لدى هذا المزوّد',
