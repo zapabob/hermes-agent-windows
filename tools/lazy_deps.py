@@ -125,8 +125,8 @@ LAZY_DEPS: dict[str, tuple[str, ...]] = {
     # monitoring.gateway_health_export / monitoring.export.otlp. Tracks the
     # `otlp` extra in pyproject.toml — bump both together.
     "export.otlp": (
-        "opentelemetry-sdk==1.45.1",
-        "opentelemetry-exporter-otlp-proto-http==1.45.1",
+        "opentelemetry-sdk==1.45.2",
+        "opentelemetry-exporter-otlp-proto-http==1.45.2",
     ),
 
     # ─── TTS providers ─────────────────────────────────────────────────────
@@ -201,7 +201,7 @@ LAZY_DEPS: dict[str, tuple[str, ...]] = {
     # ensure() call at the import site, the SDK never installs on a hosted
     # instance and the provider silently reports itself unavailable.
     "memory.supermemory": ("supermemory==3.50.0",),
-    "memory.mem0": ("mem0ai==2.0.10",),
+    "memory.mem0": ("mem0ai==2.0.18",),
     # Optional store backend for the local Ebbinghaus plugin
     # (plugins.ebbinghaus.store_backend: hakua). Only bump to a release whose
     # Ebbinghaus schema is identical to the builtin store's; otherwise the

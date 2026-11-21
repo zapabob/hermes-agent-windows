@@ -250,7 +250,7 @@ honcho = ["honcho-ai==2.2.0"]
 # excluded from [all] like honcho/hindsight so a quarantined upstream release
 # can't break fresh installs.
 supermemory = ["supermemory==3.50.0"]
-mem0 = ["mem0ai==2.0.10"]
+mem0 = ["mem0ai==2.0.18"]
 # Optional store backend for the local Ebbinghaus memory plugin
 # (plugins.ebbinghaus.store_backend: hakua), lazy-installed via
 # tools/lazy_deps.py ("memory.hakua"). Same pin-sync and [all]-exclusion rules
