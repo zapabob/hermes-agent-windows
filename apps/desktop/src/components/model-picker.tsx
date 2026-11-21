@@ -11,6 +11,11 @@ import type { ModelOptionsResponse, ModelOptionProvider, ModelPricing } from '@/
 import type { HermesGateway } from '../hermes'
 import { cn } from '../lib/utils'
 import { startManualOnboarding } from '../store/onboarding'
+import {
+  $visibleModels,
+  reconcileVisibleKeysAfterCatalogRefresh,
+  setVisibleModels
+} from '../store/model-visibility'
 
 import { InlineNotice } from './notifications'
 import { Button } from './ui/button'
@@ -95,6 +100,7 @@ export function ModelPickerDialog({
 
     setRefreshing(true)
     const queryKey = modelOptionsQueryKey(profile, sessionId, ownerConnectionId)
+    const previous = queryClient.getQueryData<ModelOptionsResponse>(queryKey)
 
     try {
       const next = await requestModelOptions({
@@ -105,6 +111,15 @@ export function ModelPickerDialog({
         sessionId
       })
 
+      if (previous?.providers) {
+        setVisibleModels(
+          reconcileVisibleKeysAfterCatalogRefresh(
+            $visibleModels.get(),
+            previous.providers,
+            next.providers ?? []
+          )
+        )
+      }
       queryClient.setQueryData<ModelOptionsResponse>(queryKey, next)
     } catch {
       void queryClient.invalidateQueries({ queryKey, exact: true })

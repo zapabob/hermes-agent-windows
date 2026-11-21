@@ -1,5 +1,5 @@
 import { useStore } from '@nanostores/react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,7 @@ import {
   collapseModelFamilies,
   effectiveVisibleKeys,
   modelVisibilityKey,
+  reconcileVisibleKeysAfterCatalogRefresh,
   setProviderVisibility,
   setVisibleModels,
   toggleModelVisibility
@@ -49,6 +50,8 @@ export function ModelVisibilityDialog({
   const { t } = useI18n()
   const copy = t.modelVisibility
   const [search, setSearch] = useState('')
+  const [refreshing, setRefreshing] = useState(false)
+  const queryClient = useQueryClient()
   const stored = useStore($visibleModels)
   const collapsedProviders = useStore($collapsedProviders)
 
@@ -62,6 +65,36 @@ export function ModelVisibilityDialog({
     () => (modelOptions.data?.providers ?? []).filter(provider => (provider.models ?? []).length > 0),
     [modelOptions.data]
   )
+
+  // This dialog is the "model list" surface: give it its own real refresh so
+  // newly published models can be reconciled into the visible set here too.
+  const refreshModels = async () => {
+    if (refreshing) {
+      return
+    }
+
+    setRefreshing(true)
+    const queryKey = modelOptionsQueryKey(profile, sessionId, ownerConnectionId)
+    const previous = queryClient.getQueryData<ModelOptionsResponse>(queryKey)
+
+    try {
+      const next = await requestModelOptions({ gateway: gw, profile, refresh: true, sessionId })
+      if (previous?.providers) {
+        setVisibleModels(
+          reconcileVisibleKeysAfterCatalogRefresh(
+            $visibleModels.get(),
+            previous.providers,
+            next.providers ?? []
+          )
+        )
+      }
+      queryClient.setQueryData<ModelOptionsResponse>(queryKey, next)
+    } catch {
+      void queryClient.invalidateQueries({ queryKey, exact: true })
+    } finally {
+      setRefreshing(false)
+    }
+  }
 
   const visible = effectiveVisibleKeys(stored, providers)
 
@@ -81,8 +114,15 @@ export function ModelVisibilityDialog({
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent bodyClassName="gap-0 overflow-hidden p-0" className="max-w-xs">
-        <DialogHeader className="px-3 pb-1 pt-3">
+        <DialogHeader className="flex-row items-center justify-between px-3 pb-1 pt-3">
           <DialogTitle className="text-[0.8125rem]">{copy.title}</DialogTitle>
+          <Button
+            disabled={refreshing}
+            onClick={() => void refreshModels()}
+            variant="ghost"
+          >
+            {refreshing ? <GlyphSpinner /> : t.shell.modelMenu.refreshModels}
+          </Button>
         </DialogHeader>
 
         <div className="flex items-center gap-1.5 px-3 py-1.5">

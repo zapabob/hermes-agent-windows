@@ -9,6 +9,7 @@ import {
   emptyProviderSentinelKey,
   isProviderSentinel,
   modelVisibilityKey,
+  reconcileVisibleKeysAfterCatalogRefresh,
   resolveVisibleKeys,
   setProviderVisibility,
   toggleModelVisibility
@@ -32,6 +33,29 @@ describe('model visibility', () => {
     expect(visible.has(modelVisibilityKey('copilot', 'claude-sonnet-4.6'))).toBe(true)
     expect(visible.has(modelVisibilityKey('local-ollama', 'qwen3:latest'))).toBe(true)
     expect(visible.has(modelVisibilityKey('local-ollama', 'llama3.2:latest'))).toBe(true)
+  })
+
+  it('reflects models added by a catalog refresh without re-showing hidden ones', () => {
+    const stored = new Set([
+      modelVisibilityKey('local-ollama', 'qwen3:latest'),
+      modelVisibilityKey('nous', 'hermes-3-llama-3.1-8b')
+    ])
+    const previous = [
+      provider('local-ollama', ['qwen3:latest', 'qwen3-coder:hidden']),
+      provider('nous', ['hermes-3-llama-3.1-8b'])
+    ]
+    const refreshed = [
+      provider('local-ollama', ['qwen3:latest', 'qwen3-coder:hidden', 'qwen3.5:new']),
+      provider('nous', ['hermes-3-llama-3.1-8b', 'hermes-4-new'])
+    ]
+
+    const next = reconcileVisibleKeysAfterCatalogRefresh(stored, previous, refreshed)
+
+    // Genuinely new models now appear on both providers.
+    expect(next.has(modelVisibilityKey('local-ollama', 'qwen3.5:new'))).toBe(true)
+    expect(next.has(modelVisibilityKey('nous', 'hermes-4-new'))).toBe(true)
+    // A model that was already in the catalog but hidden stays hidden.
+    expect(next.has(modelVisibilityKey('local-ollama', 'qwen3-coder:hidden'))).toBe(false)
   })
 
   it('does not re-add models from a provider that already has stored choices', () => {

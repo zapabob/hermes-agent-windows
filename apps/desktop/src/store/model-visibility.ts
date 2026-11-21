@@ -164,6 +164,73 @@ export function resolveVisibleKeys(stored: Set<string> | null, providers: readon
   return next
 }
 
+/** Reconcile the persisted visibility set after an explicit catalog refresh.
+ *
+ * `resolveVisibleKeys` deliberately never re-expands defaults for a provider
+ * the user has customized (so a hidden model stays hidden). That also means a
+ * model published AFTER the set was saved stays invisible forever. A manual
+ * refresh is an explicit signal that the catalog changed: add only keys that
+ * are genuinely new since the previous payload, and drop keys for models that
+ * disappeared. Explicit hide-all sentinels and already-hidden models are kept
+ * hidden.
+ */
+export function reconcileVisibleKeysAfterCatalogRefresh(
+  stored: Set<string> | null,
+  previousProviders: readonly ModelOptionProvider[],
+  nextProviders: readonly ModelOptionProvider[]
+): Set<string> {
+  // Never customized: let the normal default expansion run on next render.
+  if (stored === null) {
+    return defaultVisibleKeys(nextProviders)
+  }
+
+  // Empty set means "everything hidden" — keep it that way.
+  if (stored.size === 0 || previousProviders.length === 0) {
+    return new Set(stored)
+  }
+
+  const keysOf = (providers: readonly ModelOptionProvider[]): Set<string> => {
+    const keys = new Set<string>()
+    for (const provider of providers) {
+      for (const model of provider.models ?? []) {
+        keys.add(modelVisibilityKey(provider.slug, model))
+      }
+    }
+    return keys
+  }
+
+  const previousKeys = keysOf(previousProviders)
+  const nextKeys = keysOf(nextProviders)
+  const hiddenProviders = new Set(
+    [...stored].filter(isProviderSentinel).map(key => key.slice(0, -2))
+  )
+
+  const next = new Set<string>()
+  for (const key of stored) {
+    if (isProviderSentinel(key)) {
+      next.add(key)
+      // A model that vanished from the catalog must not keep its visible key.
+    } else if (previousKeys.has(key) && !nextKeys.has(key)) {
+      continue
+    } else {
+      next.add(key)
+    }
+  }
+
+  for (const key of nextKeys) {
+    if (next.has(key) || previousKeys.has(key)) {
+      continue
+    }
+    const slug = key.slice(0, key.indexOf('::'))
+    if (hiddenProviders.has(slug)) {
+      continue
+    }
+    next.add(key)
+  }
+
+  return next
+}
+
 /** Resolve which keys are currently visible for DISPLAY: the resolved working
  *  set with bookkeeping sentinels stripped (they are not real models). */
 export function effectiveVisibleKeys(
