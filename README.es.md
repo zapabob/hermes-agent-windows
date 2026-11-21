@@ -24,7 +24,7 @@ upstream y la [licencia MIT](LICENSE).
 
 [![Windows Workstation Tier-1 CI](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml/badge.svg)](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml)
 
-**Versión del código fuente: 0.23.0** (`2026.10.28`) · canales: `stable`, `preview`
+**Versión del código fuente: 0.24.0** (`2026.11.22`) · canales: `stable`, `preview`
 
 ## Funciones principales
 

@@ -21,7 +21,7 @@ def test_readme_uses_required_section_order() -> None:
         "## Setup in 30 seconds",
         "## At a glance",
         "## Surfaces",
-        "## What's new in 0.23.0",
+        "## What's new in 0.24.0",
         "## Why this fork exists",
         "## Architecture in brief",
         "## Ownership & recovery",

@@ -24,7 +24,7 @@ Not affiliated with or endorsed by Nous Research. Upstream attribution and the
 
 [![Windows Workstation Tier-1 CI](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml/badge.svg)](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml)
 
-**Source version: 0.23.0** (`2026.10.28`) · channels: `stable`, `preview`
+**Source version: 0.24.0** (`2026.11.22`) · channels: `stable`, `preview`
 
 <details>
 <summary><strong>Notes in the translated READMEs</strong></summary>
@@ -107,7 +107,7 @@ not by inflating the core tool footprint on every API call.
 
 ---
 
-## What's new in 0.23.0
+## What's new in 0.24.0
 
 Windows-native feature intake —
 [`docs/windows/feature-intake-20261028/`](docs/windows/feature-intake-20261028/):

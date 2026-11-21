@@ -22,7 +22,7 @@ Nous Research との提携・承認はありません。upstream の帰属と [M
 
 [![Windows Workstation Tier-1 CI](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml/badge.svg)](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml)
 
-**ソース版: 0.23.0**（`2026.10.28`）· channel: `stable` / `preview`
+**ソース版: 0.24.0**（`2026.11.22`）· channel: `stable` / `preview`
 
 ---
 
@@ -68,7 +68,7 @@ uv run hermes chat
 | Semantic Graph + Ebbinghaus の memory seam | config / secret / session / gateway の profile 隔離 |
 | Gateway・cron・skills・MCP・delegation・kanban | prompt cache 安定性と role 交互の invariant |
 
-`0.23.0` は **downstream の製品版番号** です。後続の upstream commit すべてとの意味論的
+`0.24.0` は **downstream の製品版番号** です。後続の upstream commit すべてとの意味論的
 同等を一括宣言するものではありません。未完の semantic-refresh family は source・test・
 mutation・CodeGraph・review が閉じるまで未完のままです。詳細は
 [版と provenance](#版と-provenance)。
@@ -91,7 +91,7 @@ core のツールを毎 API 呼び出しに載せ続ける成長は避けます�
 
 ---
 
-## 0.23.0 の新機能
+## 0.24.0 の新機能
 
 Windows-native feature intake —
 [`docs/windows/feature-intake-20261028/`](docs/windows/feature-intake-20261028/):
@@ -284,7 +284,7 @@ npm run build --workspace apps/desktop
 
 | 事実 | 値 |
 | --- | --- |
-| Downstream 製品版 | `0.23.0`（`version_source: downstream`） |
+| Downstream 製品版 | `0.24.0`（`version_source: downstream`） |
 | Upstream stable 参照 (R2) | `f97608f178d1ffeca59860195ab7da295f7c8e5f`（`0.21.5` / `v2026.9.24`） |
 | 現行 semantic-refresh ceiling (U1) | `678a4762b887f3eabe5cad11254b2ab1ae859485` |
 | 歴史的 provenance snapshot | `b51c055a12220f8c7c18660e8599365012e19532` |
@@ -319,7 +319,7 @@ grant/claim/effect 線形化、trusted producer、別 apply 承認、writer fenc
 | [`docs/windows/INSTALL.md`](docs/windows/INSTALL.md) | Windows 導入の正本 |
 | [`docs/windows/INTEGRATIONS.md`](docs/windows/INTEGRATIONS.md) | 任意連携のスナップショット |
 | [`docs/windows/SECURITY_CENTER.md`](docs/windows/SECURITY_CENTER.md) | Security Center |
-| [`docs/windows/feature-intake-20261028/`](docs/windows/feature-intake-20261028/) | 0.23.0 intake |
+| [`docs/windows/feature-intake-20261028/`](docs/windows/feature-intake-20261028/) | 0.24.0 intake |
 | [`plugins/web/rustxng/README.md`](plugins/web/rustxng/README.md) | RustXNG を使う任意の `web_search` |
 | [`AGENTS.md`](AGENTS.md) | 開発者・アシスタント向け契約 |
 | [`SECURITY.md`](SECURITY.md) | セキュリティ方針 |

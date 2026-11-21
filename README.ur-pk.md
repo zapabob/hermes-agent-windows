@@ -26,7 +26,7 @@ semantic memory اور automation ایک ہی source tree اور core میں ف�
 
 [![Windows Workstation Tier-1 CI](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml/badge.svg)](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml)
 
-**ماخذ ورژن: 0.23.0** (`2026.10.28`) · چینلز: `stable`, `preview`
+**ماخذ ورژن: 0.24.0** (`2026.11.22`) · چینلز: `stable`, `preview`
 
 ## بنیادی سہولتیں
 

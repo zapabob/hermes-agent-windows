@@ -21,7 +21,7 @@
 
 [![Windows Workstation Tier-1 CI](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml/badge.svg)](https://github.com/zapabob/hermes-agent-windows/actions/workflows/fork-cicd.yml)
 
-**源码版本：0.23.0**（`2026.10.28`）· channel：`stable` / `preview`
+**源码版本：0.24.0**（`2026.11.22`）· channel：`stable` / `preview`
 
 ---
 
@@ -66,7 +66,7 @@ uv run hermes chat
 | Semantic Graph + Ebbinghaus 记忆接缝 | config / secret / session / gateway 的 profile 隔离 |
 | Gateway、cron、skills、MCP、delegation、kanban | prompt cache 稳定与角色交替不变量 |
 
-`0.23.0` 是 **下游产品版本号**，并不表示已对之后所有 upstream commit 完成语义等价审查。
+`0.24.0` 是 **下游产品版本号**，并不表示已对之后所有 upstream commit 完成语义等价审查。
 未完成的 semantic-refresh family 在 source、测试、mutation、CodeGraph、review 证据齐备前
 保持开放。详见 [版本与 provenance](#版本与-provenance)。
 
@@ -88,7 +88,7 @@ uv run hermes chat
 
 ---
 
-## 0.23.0 新内容
+## 0.24.0 新内容
 
 Windows-native feature intake —
 [`docs/windows/feature-intake-20261028/`](docs/windows/feature-intake-20261028/)：
@@ -277,7 +277,7 @@ npm run build --workspace apps/desktop
 
 | 事实 | 值 |
 | --- | --- |
-| 下游产品版本 | `0.23.0`（`version_source: downstream`） |
+| 下游产品版本 | `0.24.0`（`version_source: downstream`） |
 | Upstream stable 参照 (R2) | `f97608f178d1ffeca59860195ab7da295f7c8e5f`（`0.21.5` / `v2026.9.24`） |
 | 当前 semantic-refresh ceiling (U1) | `678a4762b887f3eabe5cad11254b2ab1ae859485` |
 | 历史 provenance snapshot | `b51c055a12220f8c7c18660e8599365012e19532` |
@@ -312,7 +312,7 @@ grant/claim/effect 线性化、可信生产者绑定、单独 apply 批准与 wr
 | [`docs/windows/INSTALL.md`](docs/windows/INSTALL.md) | Windows 安装正本 |
 | [`docs/windows/INTEGRATIONS.md`](docs/windows/INTEGRATIONS.md) | 可选集成快照 |
 | [`docs/windows/SECURITY_CENTER.md`](docs/windows/SECURITY_CENTER.md) | Security Center |
-| [`docs/windows/feature-intake-20261028/`](docs/windows/feature-intake-20261028/) | 0.23.0 intake |
+| [`docs/windows/feature-intake-20261028/`](docs/windows/feature-intake-20261028/) | 0.24.0 intake |
 | [`plugins/web/rustxng/README.md`](plugins/web/rustxng/README.md) | 可选的 RustXNG `web_search` |
 | [`AGENTS.md`](AGENTS.md) | 面向开发者与助手的工程契约 |
 | [`SECURITY.md`](SECURITY.md) | 安全策略 |
