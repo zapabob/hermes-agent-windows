@@ -4094,6 +4094,27 @@ def _model_dedup_key(model_id: str) -> str:
         return key
 
 
+def refresh_models_dev_catalog() -> bool:
+    """Force ONE live refresh of the shared models.dev registry.
+
+    A picker refresh busts the per-provider disk cache, but models.dev keeps a
+    separate 4-hour snapshot. Without this, new models published in the last
+    few hours are re-wrapped from the same stale registry and never appear in
+    the picker. Called once per refresh (not once per provider) so opening a
+    picker with 20 providers does not download the registry 20 times.
+
+    Returns True when a live registry was loaded. Never raises: an offline
+    machine keeps its existing snapshot and the picker still renders.
+    """
+    try:
+        from agent.models_dev import fetch_models_dev
+
+        return bool(fetch_models_dev(force_refresh=True))
+    except Exception as exc:
+        logger.debug("models.dev forced refresh failed: %s", exc)
+        return False
+
+
 def _merge_with_models_dev(provider: str, curated: list[str], *, allow_network: bool = True) -> list[str]:
     """Merge curated list with fresh models.dev entries for a preferred provider.
 

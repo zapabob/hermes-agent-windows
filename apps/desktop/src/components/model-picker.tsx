@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { useI18n } from '@/i18n'
@@ -6,7 +6,7 @@ import { modelOptionsQueryKey, requestModelOptions } from '@/lib/model-options'
 import { modelSearchText } from '@/lib/model-search-text'
 import { currentPickerSelection } from '@/lib/model-status-label'
 import { normalize } from '@/lib/text'
-import type { ModelOptionProvider, ModelPricing } from '@/types/hermes'
+import type { ModelOptionsResponse, ModelOptionProvider, ModelPricing } from '@/types/hermes'
 
 import type { HermesGateway } from '../hermes'
 import { cn } from '../lib/utils'
@@ -60,6 +60,8 @@ export function ModelPickerDialog({
   // it and do a plain substring filter that preserves array order — matching
   // the `hermes model` CLI picker, which shows the curated list verbatim.
   const [search, setSearch] = useState('')
+  const [refreshing, setRefreshing] = useState(false)
+  const queryClient = useQueryClient()
 
   const modelOptions = useQuery({
     queryKey: modelOptionsQueryKey(profile, sessionId, ownerConnectionId),
@@ -81,6 +83,35 @@ export function ModelPickerDialog({
       ? modelOptions.error.message
       : String(modelOptions.error)
     : null
+
+  // A plain refetch re-reads the same cached payload and never reaches the
+  // backend refresh path. Mirror the model menu's "Refresh Models": pass
+  // refresh:true so the gateway busts its provider cache AND refreshes the
+  // models.dev registry underneath it.
+  const refreshModels = async () => {
+    if (refreshing) {
+      return
+    }
+
+    setRefreshing(true)
+    const queryKey = modelOptionsQueryKey(profile, sessionId, ownerConnectionId)
+
+    try {
+      const next = await requestModelOptions({
+        gateway: gw,
+        profile,
+        refresh: true,
+        request,
+        sessionId
+      })
+
+      queryClient.setQueryData<ModelOptionsResponse>(queryKey, next)
+    } catch {
+      void queryClient.invalidateQueries({ queryKey, exact: true })
+    } finally {
+      setRefreshing(false)
+    }
+  }
 
   const selectModel = (provider: ModelOptionProvider, model: string) => {
     onSelect({ provider: provider.slug, model })
@@ -112,8 +143,9 @@ export function ModelPickerDialog({
             <div className="flex items-center gap-2 border-t border-amber-500/20 bg-amber-500/10 px-4 py-2 text-xs text-amber-700 dark:text-amber-400">
               <span>{copy.notListed}</span>
               <button
-                className="shrink-0 underline underline-offset-2"
-                onClick={() => void modelOptions.refetch()}
+                className="shrink-0 underline underline-offset-2 disabled:opacity-50"
+                disabled={refreshing}
+                onClick={() => void refreshModels()}
                 type="button"
               >
                 {copy.refreshHint}
@@ -139,6 +171,14 @@ export function ModelPickerDialog({
         </Command>
 
         <DialogFooter className="flex-row items-center justify-end gap-2 bg-card p-3">
+          <Button
+            className="mr-auto"
+            disabled={refreshing}
+            onClick={() => void refreshModels()}
+            variant="ghost"
+          >
+            {copy.refreshHint}
+          </Button>
           <Button onClick={addProvider} variant="ghost">
             {copy.addProvider}
           </Button>

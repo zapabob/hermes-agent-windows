@@ -41,7 +41,7 @@ function picker(data: ModelOptionsResponse) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const request = vi.fn(async () => data)
 
-  return render(
+  const view = render(
     <QueryClientProvider client={client}>
       <ModelPickerDialog
         currentModel="m1"
@@ -53,9 +53,28 @@ function picker(data: ModelOptionsResponse) {
       />
     </QueryClientProvider>
   )
+
+  return { ...view, client, request }
 }
 
 describe('model picker catalog freshness', () => {
+  it('refresh sends refresh:true so the backend updates the upstream registry', async () => {
+    const view = picker({
+      providers: [{ slug: 'openrouter', name: 'OpenRouter', models: ['m1'], catalog }]
+    })
+
+    await view.findByText('OpenRouter')
+    const buttons = view.getAllByRole('button', { name: /refresh/i })
+    buttons[0].click()
+
+    await vi.waitFor(() => {
+      expect(view.request).toHaveBeenCalledWith(
+        'model.options',
+        expect.objectContaining({ refresh: true })
+      )
+    })
+  })
+
   it('labels a curated snapshot so it is never mistaken for live data', async () => {
     const view = picker({
       providers: [{

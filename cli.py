@@ -12132,6 +12132,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin, CLIProces
                     raise RuntimeError("inventory context unavailable")
                 picker_payload = build_models_payload(
                     ctx,
+                    refresh=force_refresh,
                     probe_custom_providers=force_refresh,
                     probe_current_custom_provider=not force_refresh,
                 )

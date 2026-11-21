@@ -328,6 +328,14 @@ def build_models_payload(
     - ``catalog_meta``: cache schema plus the live/curated TTLs, so the UI can
       explain when a refresh is due.
     """
+    # An explicit refresh must reach the upstream registry too: the
+    # per-provider cache is only the outer wrapper around models.dev, which
+    # has its own 4-hour TTL. Do this once, before any row asks for models.
+    if refresh:
+        from hermes_cli.models import refresh_models_dev_catalog
+
+        refresh_models_dev_catalog()
+
     from hermes_cli.model_switch import list_authenticated_providers
 
     rows = list_authenticated_providers(
