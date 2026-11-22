@@ -79,15 +79,13 @@ export function ModelVisibilityDialog({
 
     try {
       const next = await requestModelOptions({ gateway: gw, profile, refresh: true, sessionId })
+
       if (previous?.providers) {
         setVisibleModels(
-          reconcileVisibleKeysAfterCatalogRefresh(
-            $visibleModels.get(),
-            previous.providers,
-            next.providers ?? []
-          )
+          reconcileVisibleKeysAfterCatalogRefresh($visibleModels.get(), previous.providers, next.providers ?? [])
         )
       }
+
       queryClient.setQueryData<ModelOptionsResponse>(queryKey, next)
     } catch {
       void queryClient.invalidateQueries({ queryKey, exact: true })
@@ -116,11 +114,7 @@ export function ModelVisibilityDialog({
       <DialogContent bodyClassName="gap-0 overflow-hidden p-0" className="max-w-xs">
         <DialogHeader className="flex-row items-center justify-between px-3 pb-1 pt-3">
           <DialogTitle className="text-[0.8125rem]">{copy.title}</DialogTitle>
-          <Button
-            disabled={refreshing}
-            onClick={() => void refreshModels()}
-            variant="ghost"
-          >
+          <Button disabled={refreshing} onClick={() => void refreshModels()} variant="ghost">
             {refreshing ? <GlyphSpinner /> : t.shell.modelMenu.refreshModels}
           </Button>
         </DialogHeader>
