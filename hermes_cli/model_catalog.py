@@ -369,6 +369,14 @@ DEFAULT_TTL_HOURS = 4
 DEFAULT_FETCH_TIMEOUT = 8.0
 SUPPORTED_SCHEMA_VERSION = 1
 
+# The Nous-hosted curated manifest is authoritative for Nous Portal's model
+# list. The general models.dev catalog lags it (2026-11-22: no Nous block at
+# all), so keep the official manifest in its own cache rather than folding it
+# into the general registry.
+NOUS_CATALOG_CACHE_NAME = "nous_model_catalog.json"
+_nous_catalog_cache: dict[str, Any] | None = None
+_nous_catalog_cache_mtime: float = 0.0
+
 _HERMES_USER_AGENT = f"hermes-cli/{_HERMES_VERSION}"
 
 # In-process cache to avoid repeated disk + parse work across multiple
@@ -790,12 +798,101 @@ def get_curated_openrouter_models() -> list[tuple[str, str]] | None:
     return out or None
 
 
+def _nous_cache_path() -> Path:
+    """Profile-scoped path for the official Nous manifest cache."""
+    from hermes_constants import get_hermes_home
+
+    return get_hermes_home() / "cache" / NOUS_CATALOG_CACHE_NAME
+
+
+def get_nous_catalog(*, force_refresh: bool = False, cache_only: bool = False) -> dict[str, Any]:
+    """Return the official Nous-hosted model manifest.
+
+    Fresh disk data is served without network. A missing cache fetches once;
+    ``force_refresh`` (used by the picker's Refresh action) always re-fetches.
+    Never raises: an offline machine keeps its last good manifest or {}.
+    """
+    global _nous_catalog_cache, _nous_catalog_cache_mtime
+
+    path = _nous_cache_path()
+    try:
+        mtime = path.stat().st_mtime
+    except OSError:
+        mtime = 0.0
+    fresh = bool(mtime) and (time.time() - mtime) < DEFAULT_TTL_HOURS * 3600
+
+    disk: dict[str, Any] | None = None
+    if mtime:
+        try:
+            loaded = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(loaded, dict):
+                disk = loaded
+        except (OSError, ValueError):
+            disk = None
+
+    if cache_only:
+        return disk or {}
+
+    if (
+        not force_refresh
+        and _nous_catalog_cache is not None
+        and mtime == _nous_catalog_cache_mtime
+        and fresh
+    ):
+        return _nous_catalog_cache
+
+    if not force_refresh and fresh and disk is not None:
+        _nous_catalog_cache = disk
+        _nous_catalog_cache_mtime = mtime
+        return disk
+
+    fetched = _fetch_manifest_with_fallback(
+        NOUS_CATALOG_URL, DEFAULT_FETCH_TIMEOUT, NOUS_CATALOG_FALLBACK_URLS
+    )
+    if fetched:
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = path.with_suffix(f".{os.getpid()}_{threading.get_ident()}.tmp")
+            with open(tmp, "w", encoding="utf-8") as fh:
+                json.dump(fetched, fh, indent=None)
+            atomic_replace(tmp, path)
+            _nous_catalog_cache = fetched
+            _nous_catalog_cache_mtime = path.stat().st_mtime
+        except OSError as exc:
+            logger.info("nous catalog cache write failed: %s", exc)
+            _nous_catalog_cache = fetched
+            _nous_catalog_cache_mtime = time.time()
+        return fetched
+
+    if disk is not None:
+        _nous_catalog_cache = disk
+        _nous_catalog_cache_mtime = mtime
+        return disk
+    return {}
+
+
+def refresh_nous_catalog() -> bool:
+    """Force a live refresh of the official Nous manifest. Never raises."""
+    try:
+        return bool(get_nous_catalog(force_refresh=True).get("providers"))
+    except Exception as exc:
+        logger.debug("nous catalog forced refresh failed: %s", exc)
+        return False
+
+
 def get_curated_nous_models(*, cache_only: bool = False) -> list[str] | None:
     """Return Nous Portal's curated list of model ids from the manifest.
 
-    Returns ``None`` when the manifest is unavailable.
+    Prefer the official Nous-hosted manifest; fall back to the general catalog
+    block only when the official one is unavailable. Returns ``None`` when no
+    manifest exists at all.
     """
-    block = _get_provider_block("nous", cache_only=True) if cache_only else _get_provider_block("nous")
+    official = get_nous_catalog(cache_only=cache_only)
+    block = official.get("providers", {}).get("nous")
+    if not isinstance(block, dict):
+        block = None
+    if block is None:
+        block = _get_provider_block("nous", cache_only=True) if cache_only else _get_provider_block("nous")
     if not block:
         return None
     out: list[str] = []

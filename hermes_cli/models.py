@@ -4106,13 +4106,24 @@ def refresh_models_dev_catalog() -> bool:
     Returns True when a live registry was loaded. Never raises: an offline
     machine keeps its existing snapshot and the picker still renders.
     """
+    ok = False
     try:
         from agent.models_dev import fetch_models_dev
 
-        return bool(fetch_models_dev(force_refresh=True))
+        ok = bool(fetch_models_dev(force_refresh=True))
     except Exception as exc:
         logger.debug("models.dev forced refresh failed: %s", exc)
-        return False
+
+    # Nous Portal's model list comes from its own vendor-hosted manifest, which
+    # models.dev does not mirror. Refresh it in the same action so "Refresh"
+    # actually updates Nous models (Fable 5.2, Opus 5.5, GPT-6.x, ...).
+    try:
+        from hermes_cli.model_catalog import refresh_nous_catalog
+
+        ok = refresh_nous_catalog() or ok
+    except Exception as exc:
+        logger.debug("nous catalog forced refresh failed: %s", exc)
+    return ok
 
 
 def _merge_with_models_dev(provider: str, curated: list[str], *, allow_network: bool = True) -> list[str]:

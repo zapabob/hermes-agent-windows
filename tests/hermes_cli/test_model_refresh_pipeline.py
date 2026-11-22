@@ -53,11 +53,51 @@ def test_normal_picker_open_does_not_force_a_registry_fetch():
     refresh_catalog.assert_not_called()
 
 
+def test_forced_refresh_also_updates_the_nous_manifest(monkeypatch):
+    import hermes_cli.model_catalog as model_catalog
+
+    calls = []
+
+    def fake_nous_refresh():
+        calls.append("nous")
+        return True
+
+    monkeypatch.setattr(model_catalog, "refresh_nous_catalog", fake_nous_refresh)
+    models_mod.refresh_models_dev_catalog()
+    assert calls == ["nous"]
+
+
+def test_nous_curated_models_prefer_the_vendor_manifest(monkeypatch):
+    import hermes_cli.model_catalog as model_catalog
+
+    official = {
+        "providers": {
+            "nous": {
+                "models": [
+                    {"id": "anthropic/claude-fable-5.2"},
+                    {"id": "openai/gpt-6.2-astra"},
+                ]
+            }
+        }
+    }
+    monkeypatch.setattr(model_catalog, "get_nous_catalog", lambda **kwargs: official)
+    monkeypatch.setattr(
+        model_catalog,
+        "_get_provider_block",
+        lambda provider, **kwargs: {"models": [{"id": "anthropic/claude-fable-5"}]},
+    )
+
+    ids = model_catalog.get_curated_nous_models()
+    assert ids == ["anthropic/claude-fable-5.2", "openai/gpt-6.2-astra"]
+
+
 def test_helper_swallows_network_failures(monkeypatch):
     import agent.models_dev as models_dev
+    import hermes_cli.model_catalog as model_catalog
 
     def boom(**kwargs):
         raise RuntimeError("offline")
 
     monkeypatch.setattr(models_dev, "fetch_models_dev", boom)
+    monkeypatch.setattr(model_catalog, "refresh_nous_catalog", boom)
     assert models_mod.refresh_models_dev_catalog() is False
