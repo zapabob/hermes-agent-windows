@@ -4247,6 +4247,24 @@ def is_nous_free_model_alias(model_id: Optional[str]) -> bool:
     return str(model_id or "").strip().lower() in NOUS_FREE_FALLBACK_MODEL_ALIASES
 
 
+def nous_free_only_enabled() -> bool:
+    """Whether pickers should show only Nous Portal's free models.
+
+    Opt-in via ``model_catalog.providers.nous.free_only: true`` in config.yaml.
+    Paid models are then removed from the picker entirely (not just grayed out)
+    for operators who only want the free tier.
+    """
+    try:
+        from hermes_cli.config import load_config
+
+        cfg = load_config() or {}
+        providers = cfg.get("model_catalog", {}).get("providers", {}) or {}
+        nous = providers.get("nous", {}) or {}
+        return bool(nous.get("free_only"))
+    except Exception:
+        return False
+
+
 def is_nvidia_auto_model_alias(model_id: Optional[str]) -> bool:
     """Return True when *model_id* requests rotating across NVIDIA NIM models."""
     return str(model_id or "").strip().lower() in NVIDIA_AUTO_FALLBACK_MODEL_ALIASES

@@ -33,8 +33,11 @@ Substrate facts (verified May 2026):
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, replace
 from typing import Any, Optional
+
+logger = logging.getLogger(__name__)
 
 
 # ─── Public types ───────────────────────────────────────────────────────
@@ -440,6 +443,49 @@ def build_models_payload(
     if featured:
         _apply_featured(rows, cache_only=pricing_cache_only and not refresh)
     _apply_custom_aliases(rows)
+
+    # Opt-in: free-tier-only Nous pickers drop paid models entirely instead of
+    # merely graying them out. Portal free recommendations are the source of
+    # truth for the current free set.
+    try:
+        from hermes_cli.models import nous_free_model_ids, nous_free_only_enabled
+
+        if nous_free_only_enabled():
+            free_ids = nous_free_model_ids()
+            for row in rows:
+                if str(row.get("slug") or "").strip().lower() != "nous":
+                    continue
+                if not free_ids:
+                    row["models"] = []
+                    row["total_models"] = 0
+                    row["featured_models"] = []
+                    row["pricing"] = {}
+                    row["free_tier"] = True
+                    row["unavailable_models"] = []
+                    continue
+                wanted = set(free_ids)
+                row["models"] = [
+                    mid for mid in (row.get("models") or []) if mid in wanted
+                ] + [mid for mid in free_ids if mid not in (row.get("models") or [])]
+                row["total_models"] = len(row["models"])
+                row["featured_models"] = [
+                    mid for mid in (row.get("featured_models") or []) if mid in wanted
+                ]
+                pricing = {
+                    mid: value
+                    for mid, value in (row.get("pricing") or {}).items()
+                    if mid in wanted
+                }
+                for mid in free_ids:
+                    pricing.setdefault(
+                        mid,
+                        {"input": "free", "output": "free", "cache": None, "free": True},
+                    )
+                row["pricing"] = pricing
+                row["free_tier"] = True
+                row["unavailable_models"] = []
+    except Exception:
+        logger.debug("nous free-only picker filter failed", exc_info=True)
 
     # Freshness contract shared by every picker surface. Rows carry the
     # catalog's provenance ("as of …" / curated snapshot / stale-serve) and the

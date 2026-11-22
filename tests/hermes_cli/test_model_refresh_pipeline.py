@@ -53,6 +53,80 @@ def test_normal_picker_open_does_not_force_a_registry_fetch():
     refresh_catalog.assert_not_called()
 
 
+def _nous_payload_rows():
+    return [
+        {
+            "slug": "nous",
+            "name": "Nous Portal",
+            "models": ["anthropic/claude-fable-5.2", "upstage/solar-mini4:free"],
+            "total_models": 2,
+            "is_current": True,
+            "source": "built-in",
+        },
+        {
+            "slug": "openrouter",
+            "name": "OpenRouter",
+            "models": ["a"],
+            "total_models": 1,
+            "is_current": False,
+            "source": "built-in",
+        },
+    ]
+
+
+def test_nous_free_only_hides_paid_models(monkeypatch):
+    import hermes_cli.config as config_mod
+    import hermes_cli.models as models_mod
+    from hermes_cli.inventory import build_models_payload, load_picker_context
+
+    monkeypatch.setattr(
+        config_mod,
+        "load_config",
+        lambda: {"model_catalog": {"providers": {"nous": {"free_only": True}}}},
+    )
+    monkeypatch.setattr(
+        models_mod,
+        "nous_free_model_ids",
+        lambda: ["upstage/solar-mini4:free", "tencent/hy4-flash:free"],
+    )
+    ctx = load_picker_context().with_overrides(current_provider="openrouter", current_model="a")
+    with patch(
+        "hermes_cli.model_switch.list_authenticated_providers",
+        return_value=_nous_payload_rows(),
+    ):
+        payload = build_models_payload(ctx)
+
+    nous = next(r for r in payload["providers"] if r["slug"] == "nous")
+    openrouter = next(r for r in payload["providers"] if r["slug"] == "openrouter")
+    assert nous["models"] == ["upstage/solar-mini4:free", "tencent/hy4-flash:free"]
+    assert nous["unavailable_models"] == []
+    assert nous["free_tier"] is True
+    assert "anthropic/claude-fable-5.2" not in nous["pricing"]
+    assert openrouter["models"] == ["a"]
+
+
+def test_nous_free_only_is_opt_in(monkeypatch):
+    import hermes_cli.config as config_mod
+    import hermes_cli.models as models_mod
+    from hermes_cli.inventory import build_models_payload, load_picker_context
+
+    monkeypatch.setattr(config_mod, "load_config", lambda: {})
+    monkeypatch.setattr(
+        models_mod,
+        "nous_free_model_ids",
+        lambda: ["upstage/solar-mini4:free"],
+    )
+    ctx = load_picker_context().with_overrides(current_provider="openrouter", current_model="a")
+    with patch(
+        "hermes_cli.model_switch.list_authenticated_providers",
+        return_value=_nous_payload_rows(),
+    ):
+        payload = build_models_payload(ctx)
+
+    nous = next(r for r in payload["providers"] if r["slug"] == "nous")
+    assert "anthropic/claude-fable-5.2" in nous["models"]
+
+
 def test_forced_refresh_also_updates_the_nous_manifest(monkeypatch):
     import hermes_cli.model_catalog as model_catalog
 
